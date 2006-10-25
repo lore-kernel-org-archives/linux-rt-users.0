@@ -1,14 +1,78 @@
-From: "Theodore Ts'o" <tytso@mit.edu>
-Subject: Testing gmane mail archive
-Date: Thu, 19 Oct 2006 22:48:46 -0400
-Message-ID: <E1GakRC-0005PH-92@candygram.thunk.org>
+From: Sergio Monteiro Basto <sergio@sergiomb.no-ip.org>
+Subject: WARNING: "monotonic_clock" [drivers/char/hangcheck-timer.ko]
+	undefined!
+Date: Wed, 25 Oct 2006 01:52:59 +0100
+Message-ID: <1161737579.2922.24.camel@localhost.portugal>
+Reply-To: sergio@sergiomb.no-ip.org
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-fOO8D9R/WYRH1iATRtze"
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from THUNK.ORG ([69.25.196.29]:39325 "EHLO thunker.thunk.org")
-	by vger.kernel.org with ESMTP id S2992433AbWJTCst (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Oct 2006 22:48:49 -0400
+Received: from smtp1.netcabo.pt ([212.113.174.28]:61100 "EHLO
+	exch01smtp10.hdi.tvcabo") by vger.kernel.org with ESMTP
+	id S1161298AbWJYAxJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Oct 2006 20:53:09 -0400
 To: linux-rt-users@vger.kernel.org
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is a test, please ignore.
+
+--=-fOO8D9R/WYRH1iATRtze
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: quoted-printable
+
+Hi I got this warning when try the patch-2.6.18-rt7
+
+I had try the patch suggest in  http://lkml.org/lkml/2006/6/21/77
+but don't change nothing=20
+
+Thanks
+--=20
+S=E9rgio M.B.
+
+--=-fOO8D9R/WYRH1iATRtze
+Content-Type: application/x-pkcs7-signature; name=smime.p7s
+Content-Disposition: attachment; filename=smime.p7s
+Content-Transfer-Encoding: base64
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIGSTCCAwIw
+ggJroAMCAQICAw/vkjANBgkqhkiG9w0BAQQFADBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhh
+d3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVt
+YWlsIElzc3VpbmcgQ0EwHhcNMDUxMTI4MjIyODU2WhcNMDYxMTI4MjIyODU2WjBLMR8wHQYDVQQD
+ExZUaGF3dGUgRnJlZW1haWwgTWVtYmVyMSgwJgYJKoZIhvcNAQkBFhlzZXJnaW9Ac2VyZ2lvbWIu
+bm8taXAub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApCNuKD3pz8GRKd1q+36r
+m0z7z+TBsbTrVa45UQsEeh9OQGZIASJMH5erC0u6KbKJ+km97RLOdsgSlKG6+5xuzsk+aqU7A0Gp
+kMjzIJT7UH/bbPnIFMQNnWJxluuYq1u+v8iIbfezQy1+SXyAyBv+OC7LnCOiOar/L9AD9zDy2fPX
+EqEDlbO3CJsoaR4Va8sgtoV0NmKnAt7DA0iZ2dmlsw6Qh+4euI+FgZ2WHPBQnfJ7PfSH5GIWl/Nx
+eUqnYpDaJafk/l94nX71UifdPXDMxJJlEOGqV9l4omhNlPmsZ/zrGXgLdBv9JuPjJ9mxhgwZsZbz
+VBc8emB0i3A7E6D6rwIDAQABo1kwVzAOBgNVHQ8BAf8EBAMCBJAwEQYJYIZIAYb4QgEBBAQDAgUg
+MCQGA1UdEQQdMBuBGXNlcmdpb0BzZXJnaW9tYi5uby1pcC5vcmcwDAYDVR0TAQH/BAIwADANBgkq
+hkiG9w0BAQQFAAOBgQBIVheRn3oHTU5rgIFHcBRxkIhOYPQHKk/oX4KakCrDCxp33XAqTG3aIG/v
+dsUT/OuFm5w0GlrUTrPaKYYxxfQ00+3d8y87aX22sUdj8oXJRYiPgQiE6lqu9no8axH6UXCCbKTi
+8383JcxReoXyuP000eUggq3tWr6fE/QmONUARzCCAz8wggKooAMCAQICAQ0wDQYJKoZIhvcNAQEF
+BQAwgdExCzAJBgNVBAYTAlpBMRUwEwYDVQQIEwxXZXN0ZXJuIENhcGUxEjAQBgNVBAcTCUNhcGUg
+VG93bjEaMBgGA1UEChMRVGhhd3RlIENvbnN1bHRpbmcxKDAmBgNVBAsTH0NlcnRpZmljYXRpb24g
+U2VydmljZXMgRGl2aXNpb24xJDAiBgNVBAMTG1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBDQTEr
+MCkGCSqGSIb3DQEJARYccGVyc29uYWwtZnJlZW1haWxAdGhhd3RlLmNvbTAeFw0wMzA3MTcwMDAw
+MDBaFw0xMzA3MTYyMzU5NTlaMGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3Vs
+dGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWlu
+ZyBDQTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxKY8VXNV+065yplaHmjAdQRwnd/p/6Me
+7L3N9VvyGna9fww6YfK/Uc4B1OVQCjDXAmNaLIkVcI7dyfArhVqqP3FWy688Cwfn8R+RNiQqE88r
+1fOCdz0Dviv+uxg+B79AgAJk16emu59l0cUqVIUPSAR/p7bRPGEEQB5kGXJgt/sCAwEAAaOBlDCB
+kTASBgNVHRMBAf8ECDAGAQH/AgEAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwudGhhd3Rl
+LmNvbS9UaGF3dGVQZXJzb25hbEZyZWVtYWlsQ0EuY3JsMAsGA1UdDwQEAwIBBjApBgNVHREEIjAg
+pB4wHDEaMBgGA1UEAxMRUHJpdmF0ZUxhYmVsMi0xMzgwDQYJKoZIhvcNAQEFBQADgYEASIzRUIPq
+Cy7MDaNmrGcPf6+svsIXoUOWlJ1/TCG4+DYfqi2fNi/A9BxQIJNwPP2t4WFiw9k6GX6EsZkbAMUa
+C4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341YheILcIRk13iSx
+0x1G/11fZU8xggHvMIIB6wIBATBpMGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29u
+c3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNz
+dWluZyBDQQIDD++SMAkGBSsOAwIaBQCgXTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqG
+SIb3DQEJBTEPFw0wNjEwMjUwMDUyNTlaMCMGCSqGSIb3DQEJBDEWBBTJKDhM5gVCn+f4EhDsq9uv
+eLil9zANBgkqhkiG9w0BAQEFAASCAQB/rw4IhCZeXJmw5xaBKGi5sIMiYggwvf5L7uXjAzYfaqkT
+XfX4/6joTwHjrrgEnimkIaTHVyffXyQQXifI4/l6GoPQeqIpEvFHNQJR3xSzcSy37O2PLURL13w9
+KkY5PF5Gssmc1hEyU5UBDpcLwRbGGA+XIsQuYIzeqwsxbxeJXpC6ZcmBnsrIyKTYKAgLx+dga8Jh
+Ws4RtzL5LSQ4RctYhE0ECPRTwoEqKzmZeth52RqZCTpmxssqdAT1YKqrHKcUxwfE9a8EQL/CcH4e
+ZRBVk5LhE0RBwPOFWMCJXXpNvuwXSVQwh+XBwALzH1smGZpuSEmLuwuq/vx2Rj08lE9gAAAAAAAA
+
+
+
+--=-fOO8D9R/WYRH1iATRtze--
