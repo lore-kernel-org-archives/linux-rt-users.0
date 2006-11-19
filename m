@@ -1,63 +1,44 @@
-From: Dave Sperry <dave_sperry@ieee.nospam.dot.org>
-Subject: RT Patch set, SystemTap, tcp test fails
-Date: Sun, 19 Nov 2006 06:12:21 -0500
-Message-ID: <1163934741.6306.20.camel@fc6-rt>
-Reply-To: dave_sperry@ieee.nospam.dot.org
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: Missing figures in RT_PREEMPT_HOWTO
+Date: Sun, 19 Nov 2006 17:48:46 +0100
+Message-ID: <20061119164846.GO18636@pengutronix.de>
+References: <45608487.4020309@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-15
+Cc: l.fu@pengutronix.de, Juergen Beisert <jbe@pengutronix.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rwcrmhc11.comcast.net ([216.148.227.151]:25070 "EHLO
-	rwcrmhc11.comcast.net") by vger.kernel.org with ESMTP
-	id S1756573AbWKSLMY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 19 Nov 2006 06:12:24 -0500
-To: systemtap@sources.redhat.com, linux-rt-users@vger.kernel.org
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:1714 "EHLO
+	metis.extern.pengutronix.de") by vger.kernel.org with ESMTP
+	id S1756775AbWKSQst (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 19 Nov 2006 11:48:49 -0500
+To: Dirk Behme <dirk.behme@googlemail.com>
+Content-Disposition: inline
+In-Reply-To: <45608487.4020309@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi I'm trying to get systemtap to work with Ingo Molnar's RT patch set
-and have run into a few problems. My test setup is a dual Xeon IBM
-intellistation with fc6 and 2.6.18-rt7 #1 SMP PREEMPT.
+Dirk, 
 
-Running the last systemtap snapshot I get the results
+On Sun, Nov 19, 2006 at 05:21:27PM +0100, Dirk Behme wrote:
+> can you please check the missing figures 3 & 4 & 5 in
+> 
+> http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Patching_the_Kernel
 
+As the document states, the primary source is still the DocBook, not the
+Wiki. Juergen has reworked quite some parts of the documents, including
+the 2pt screenshots :-) , I assume he will check it in during the next
+days.  
 
-                === systemtap Summary ===
+I've added your changes in the Wiki to the DocBook document, to make
+sure they don't disappear at the next update. Next time better check out
+the svn from our server and send me patches against the latest version.
 
-# of expected passes            147
-# of unexpected failures        4
-# of expected failures          116
-# of unknown successes          2
-# of known failures             3
-# of untested testcases         74
-
-The the tcp test fails because the symbol HRTIMER_REL cannot be found.
-detail for the tcp tests is.
-
- /home/sperryd/kernels/systap18rt7/src/testsuite/buildok/tcp_test.stp
--vvvv
-
- probe_1509 probe_1511 probe_1512 enter_kprobe_probe
-enter_kretprobe_probe enter_hrtimer_probe systemtap_module_init
-/tmp/stapc3sTb9/stap_638ce45d23c34f17540fb6c3ee1929a7_3720.c: In
-function 'systemtap_module_init':
-/tmp/stapc3sTb9/stap_638ce45d23c34f17540fb6c3ee1929a7_3720.c:1544:
-error: 'HRTIMER_REL' undeclared (first use in this function)
-/tmp/stapc3sTb9/stap_638ce45d23c34f17540fb6c3ee1929a7_3720.c:1544:
-error: (Each undeclared identifier is reported only once
-/tmp/stapc3sTb9/stap_638ce45d23c34f17540fb6c3ee1929a7_3720.c:1544:
-error: for each function it appears in.)
-cc1: warnings being treated as errors
-/tmp/stapc3sTb9/stap_638ce45d23c34f17540fb6c3ee1929a7_3720.c:1545:
-warning: assignment from incompatible pointer type
- systemtap_module_exit probe_start probe_exit __check_send_bytes
-__check_recv_bytes __check_ports __check_rtos __check_state __check_mss
-__check_ssthresh __check_cwnd
-
-
-Is there a way to make systemtap RT aware?
-
-Thanks
-Dave
-
+Robert 
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
 
