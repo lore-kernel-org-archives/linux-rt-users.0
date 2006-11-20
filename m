@@ -1,75 +1,51 @@
-From: "David Sperry" <dave_sperry@ieee.org>
-Subject: RE: RT Patch set, SystemTap, tcp test fails
-Date: Sun, 19 Nov 2006 21:26:02 -0500
-Message-ID: <001001c70c4b$397ca8e0$7901a8c0@dad>
-References: <y0mvelb1ciu.fsf@ton.toronto.redhat.com>
+From: "Bill Rugolsky Jr." <brugolsky@telemetry-investments.com>
+Subject: Re: RT Patch set, SystemTap, tcp test fails
+Date: Sun, 19 Nov 2006 22:33:41 -0500
+Message-ID: <20061120033341.GA20408@ti64.telemetry-investments.com>
+References: <1163934741.6306.20.camel@fc6-rt> <y0mvelb1ciu.fsf@ton.toronto.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; 	charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: <systemtap@sources.redhat.com>, 	<linux-rt-users@vger.kernel.org>
-Return-path: <systemtap-return-4928-gls-systemtap=m.gmane.org@sourceware.org>
-To: <fche@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: dave_sperry@ieee.org, systemtap@sources.redhat.com,
+	linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gw1a.telemetry-investments.com ([64.20.161.180]:32396 "EHLO
+	sv1.telemetry-investments.com") by vger.kernel.org with ESMTP
+	id S933907AbWKTDdp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 19 Nov 2006 22:33:45 -0500
+To: "Frank Ch. Eigler" <fche@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <y0mvelb1ciu.fsf@ton.toronto.redhat.com>
-List-Unsubscribe: <mailto:systemtap-unsubscribe-gls-systemtap=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:systemtap-subscribe@sourceware.org>
-List-Post: <mailto:systemtap@sourceware.org>
-List-Help: <mailto:systemtap-help@sourceware.org>, <http://sourceware.org/lists.html#faqs>
-Sender: systemtap-owner@sourceware.org
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thanks for the response. Just to get a workaround I changed tapsets.cxx and
-cleared up that particular error for my system. 
-
-
---- src_orig/tapsets.cxx	2006-11-17 15:35:47.000000000 -0500
-+++ src/tapsets.cxx	2006-11-19 19:09:02.000000000 -0500
-@@ -4332,13 +4332,13 @@ hrtimer_derived_probe_group::emit_module
- 
-   s.op->newline() << "for (i=0; i<" << probes.size() << "; i++) {";
-   s.op->newline(1) << "struct stap_hrtimer_probe* stp = &
-stap_hrtimer_probes [i];";
--  s.op->newline() << "hrtimer_init (& stp->hrtimer, CLOCK_MONOTONIC,
-HRTIMER_REL);";
--  s.op->newline() << "stp->hrtimer.function = & enter_hrtimer_probe;";
-+  s.op->newline() << "hrtimer_init (& stp->hrtimer, CLOCK_MONOTONIC,
-HRTIMER_MODE_REL);";
-+  s.op->newline() << "stp->hrtimer.function = (void *)(&
-enter_hrtimer_probe);";
-   // There is no hrtimer field to identify *this* (i-th) probe handler
-   // callback.  So instead we'll deduce it at entry time.
-   s.op->newline() << "(void) hrtimer_start (& stp->hrtimer, ";
-   emit_interval (s.op);
--  s.op->line() << ", HRTIMER_REL);";
-+  s.op->line() << ", HRTIMER_MODE_REL);";
-   // Note: no partial failure rollback is needed: hrtimer_start only
-   // "fails" if the timer was already active, which cannot be.
-   s.op->newline(-1) << "}"; // for loop
-
-Hopefully I didn't break something else
-
-Dave
-
-> -----Original Message-----
-> From: fche@redhat.com [mailto:fche@redhat.com]
-> Sent: Sunday, November 19, 2006 2:07 PM
-> To: dave_sperry@ieee.org
-> Cc: systemtap@sources.redhat.com; linux-rt-users@vger.kernel.org
-> Subject: Re: RT Patch set, SystemTap, tcp test fails
-> 
-> Dave Sperry <dave_sperry@ieee.nospam.dot.org> writes:
-> 
-> > Hi I'm trying to get systemtap to work with Ingo Molnar's RT patch set
-> > and have run into a few problems. My test setup is a dual Xeon IBM
-> > intellistation with fc6 and 2.6.18-rt7 #1 SMP PREEMPT.
-> > [...]
-> > The the tcp test fails because the symbol HRTIMER_REL cannot be found.
-> > detail for the tcp tests is.
-> 
+On Sun, Nov 19, 2006 at 02:07:05PM -0500, Frank Ch. Eigler wrote:
 > According to mingo's patch set, HRTIMER_REL and HRTIMER_ABS were
 > simply renamed to HRTIMER_MODE_REL and HRTIMER_MODE_ABS.  Since these
 > are enums instead of macros, a little #ifndef/#define hack would not
 > work.  Unless the RT patches identify themselves at compile time, it
 > may be tricky to generate code that works with both base and patched
 > kernel.
-> 
-> - FChE
+
+The real-time patch replaces the enumeration constants:
+
+ enum hrtimer_mode {
+-       HRTIMER_ABS,    /* Time value is absolute */
+-       HRTIMER_REL,    /* Time value is relative to now */
++       HRTIMER_MODE_ABS,       /* Time value is absolute */
++       HRTIMER_MODE_REL,       /* Time value is relative to now */
+ };
+
+It is possible to achieve backwards compatibility in enumerations by
+simply declaring the deprecated names to have the values assigned to
+the new names:
+
+enum hrtimer_mode {
+	HRTIMER_MODE_ABS,	/* Time value is absolute */
+	HRTIMER_ABS = HRTIMER_MODE_ABS,	/* backwards compatibility */
+	HRTIMER_MODE_REL,	/* Time value is relative to now */
+	HRTIMER_REL = HRTIMER_MODE_REL,	/* backwards compatibility */
+};
+
+Regards,
+
+	Bill Rugolsky
