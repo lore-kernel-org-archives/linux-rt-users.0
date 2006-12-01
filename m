@@ -1,57 +1,87 @@
-From: Michal Schmidt <xschmi00@stud.feec.vutbr.cz>
-Subject: Re: Kernel 2.6.19-rt1 question
-Date: Thu, 30 Nov 2006 13:08:17 +0100
-Message-ID: <456EC9B1.2090407@stud.feec.vutbr.cz>
-References: <20061130125136.28d2e5d3@tkielan.ente.local>
+From: Pavel Pisa <ppisa4lists@pikron.com>
+Subject: ARM 920T build problems for patch-2.6.19-rt1
+Date: Fri, 1 Dec 2006 14:12:56 +0100
+Message-ID: <200612011412.57777.ppisa4lists@pikron.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-2; format=flowed
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fest.stud.feec.vutbr.cz ([147.229.72.16]:43249 "EHLO
-	fest.stud.feec.vutbr.cz") by vger.kernel.org with ESMTP
-	id S936209AbWK3MI1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Nov 2006 07:08:27 -0500
-To: Tymoteusz Kielan <t.kielan@ente.com.pl>
-In-Reply-To: <20061130125136.28d2e5d3@tkielan.ente.local>
+Received: from av4.karneval.cz ([81.27.192.11]:40419 "EHLO av2.karneval.cz")
+	by vger.kernel.org with ESMTP id S936495AbWLANML (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 1 Dec 2006 08:12:11 -0500
+To: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Tymoteusz Kielan wrote:
-> Hello,
-> I'm new here, and I don't know how to start.
-> 
-> I'm trying to setup an x86 costom platform on Linux RT branch.
-> 
-> Today, I was able to get 2.6.19-rt1 and run some tests.
-> 
-> I wrote some module that uses RT API an during modprobe, some thing unexpexted happened:
-> 
-> root@test:~# modprobe someModule
-> [  257.391000] softirq-tasklet/8[CPU#0]: BUG in rt_mutex_debug_task_free at kernel/rtmutex-debug.c:66
-> [  257.391000]  [<c0103e68>] dump_trace+0x82/0x20d
-> [  257.391000]  [<c01040cb>] show_trace_log_lvl+0x34/0x4a
-> [  257.391000]  [<c010410d>] show_trace+0x2c/0x2e
-> [  257.391000]  [<c010422a>] dump_stack+0x2b/0x2d
-> [  257.391000]  [<c011930b>] __WARN_ON+0x65/0x77
-> [  257.391000]  [<c0139c6a>] rt_mutex_debug_task_free+0x4b/0x88
-> [  257.391000]  [<c01151e4>] free_task+0x21/0x37
-> [  257.391000]  [<c01152bf>] __put_task_struct_cb+0xc5/0xcb
-> [  257.391000]  [<c0144c61>] rcu_process_callbacks+0x53/0x5e
-> [  257.391000]  [<c011d4fc>] __tasklet_action+0xc9/0xfc
-> [  257.391000]  [<c011d565>] tasklet_action+0x36/0x3b
-> [  257.391000]  [<c011d71c>] ksoftirqd+0xef/0x177
-> [  257.391000]  [<c012beb7>] kthread+0x90/0xb8
-> [  257.391000]  [<c0103d2f>] kernel_thread_helper+0x7/0x10
-> [  257.391000]  =======================
+Hello Thomas and others,
 
-Looks to me like a task has exited while still holding a mutex.
+I have tried to build patch-2.6.19-rt1 patched 2.6.19 kernel
+for MX1 (PiMX1). There seems to be some problems.
+One is corrected by attached patch, there is another one
+I have not solved yet
 
-> This bug is not critical, but I don't know what to expect from kernel giving me such
-> messages.
-> Is it my fault? This trace do not show any function calling from my someModule.
+make ARCH=arm CROSS_COMPILE=arm-linux- -C /usr/src/linux-2.6.19-rt O=/usr/src/l
+inux-2.6.19-rt/_build/arm
+  CHK     include/linux/version.h
+...
+  LD      init/built-in.o
+  LD      .tmp_vmlinux1
+arch/arm/kernel/built-in.o(.text+0x40c0): In function `do_settimeofday':
+/usr/src/linux-2.6.19-rt/include/linux/hrtimer.h:264: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0xa6bc): In function `do_sys_settimeofday':
+/usr/src/linux-2.6.19-rt/kernel/time.c:138: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0xa700): In function `do_sys_settimeofday':
+/usr/src/linux-2.6.19-rt/include/linux/hrtimer.h:264: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x1dfec): In function `hrtimer_notify_resume':
+/usr/src/linux-2.6.19-rt/include/linux/hrtimer.h:264: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x1f62c): In function `second_overflow':
+/usr/src/linux-2.6.19-rt/include/linux/hrtimer.h:264: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x1f674):/usr/src/linux-2.6.19-rt/include/linux/hrtimer.h:264: more undefined references to `warp_check_clock_was_changed' follow
+kernel/built-in.o(.text+0x2745c): In function `setup_preempt_thresh':
+/usr/src/linux-2.6.19-rt/kernel/latency_trace.c:1647: undefined reference to `usecs_to_cycles'
 
-It probably is. We would know for sure if you showed us your module's 
-source.
+Have you idea where is a problem or should I dig deeper.
 
-Michal Schmidt
+There is required next simple change for ARM architectures < 6
+
+-----------------------------------------------------------------------------------
+ include/asm-arm/atomic.h |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: linux-2.6.19-rt/include/asm-arm/atomic.h
+===================================================================
+--- linux-2.6.19-rt.orig/include/asm-arm/atomic.h
++++ linux-2.6.19-rt/include/asm-arm/atomic.h
+@@ -188,10 +188,10 @@ static inline unsigned long __cmpxchg(vo
+ 	volatile unsigned long *p = ptr;
+ 
+ 	if (size == 4) {
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		if ((prev = *p) == old)
+ 			*p = new;
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
+ 		return(prev);
+ 	} else
+ 		return wrong_size_cmpxchg(ptr);
+-----------------------------------------------------------------------------------
+
+Best wishes
+
+                Pavel Pisa
+        e-mail: pisa@cmp.felk.cvut.cz
+        www:    http://cmp.felk.cvut.cz/~pisa
+        work:   http://www.pikron.com
+
+
+PS: Please CC to me, I am not on the list
+
+PS2: Thomas, have you already found time to look at my e-mails/questions/patches
+     about SC520 and i.MX HRT and Profibus.
+     ( The initial version of Tran's Profibus work can be loaded
+     at http://sourceforge.net/projects/pbmaster )
