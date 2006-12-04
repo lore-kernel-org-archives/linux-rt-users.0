@@ -1,7 +1,7 @@
 From: Darren Hart <dvhltc@us.ibm.com>
 Subject: Re: Looking for "Hello world"
-Date: Mon, 4 Dec 2006 08:10:37 -0800
-Message-ID: <200612040810.38126.dvhltc@us.ibm.com>
+Date: Mon, 4 Dec 2006 08:13:18 -0800
+Message-ID: <200612040813.19018.dvhltc@us.ibm.com>
 References: <45743DAF.6020205@evosoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -9,19 +9,20 @@ Content-Type: text/plain;
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:44552 "EHLO e3.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S937053AbWLDQK4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Dec 2006 11:10:56 -0500
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e3.ny.us.ibm.com (8.13.8/8.12.11) with ESMTP id kB4GAkGY023534
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 11:10:46 -0500
-Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
-	by d01relay04.pok.ibm.com (8.13.6/8.13.6/NCO v8.1.1) with ESMTP id kB4GAjNZ215030
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 11:10:45 -0500
-Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
-	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id kB4GAjAq027717
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 11:10:45 -0500
+Received: from e33.co.us.ibm.com ([32.97.110.151]:60663 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S937062AbWLDQNd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 4 Dec 2006 11:13:33 -0500
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e33.co.us.ibm.com (8.13.8/8.12.11) with ESMTP id kB4GDMao029795
+	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 11:13:22 -0500
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d03relay04.boulder.ibm.com (8.13.6/8.13.6/NCO v8.1.1) with ESMTP id kB4GDLmK530592
+	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 09:13:22 -0700
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id kB4GDLMe021286
+	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 09:13:21 -0700
 To: Vucsics Krisztian <krisztian.vucsics@evosoft.com>
 In-Reply-To: <45743DAF.6020205@evosoft.com>
 Content-Disposition: inline
@@ -39,17 +40,14 @@ On Monday 04 December 2006 07:24, Vucsics Krisztian wrote:
 >
 > Could you please send me an example for that?
 
-The general approach would be to setup an event that wakes a thread to do the 
-writing to the serial port at a specific time.  There are several ways to 
-accomplish this.  The simplest approach would be to check the time using 
-clock_gettime() (using CLOCK_MONOTONIC) and then sleep for the exact interval 
-between that time and the time you want to write your 'H' using 
-clock_nanosleep (again with CLOCK_MONOTONIC).  The clock routines have 
-nanosecond resolution (and probably 10s of microsecond accuracy, depending on 
-your platform).  When you wakeup, write the 'H', then repeat to schedule the 
-next write.  There are certainly more advanced approaches using 
-pthread_cond_wait() and pthread_cond_signal() from master and slave threads, 
-etc.
+Also, if you are looking for code examples, I suggest taking a look at the 
+numerous test cases provided here (linked off the wiki):
+
+http://www.kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
+
+These tests use a simple pthread/realtime wrapper called librt.h.  You will 
+find numerous uses of clock_gettime() and clock_nanosleep() as well as the 
+pthread_cond_* routines.
 
 >
 > Thank you in advance,
