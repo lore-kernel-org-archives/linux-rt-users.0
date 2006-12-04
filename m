@@ -1,53 +1,42 @@
-From: Dirk Behme <dirk.behme@googlemail.com>
-Subject: Re: ARM 920T build problems for patch-2.6.19-rt1
-Date: Fri, 01 Dec 2006 17:33:17 +0100
-Message-ID: <4570594D.2090900@gmail.com>
-References: <200612011412.57777.ppisa4lists@pikron.com>
+From: Robert Schwebel <robert@schwebel.de>
+Subject: Re: Missing figures in RT_PREEMPT_HOWTO
+Date: Mon, 4 Dec 2006 11:18:24 +0100
+Message-ID: <20061204101824.GJ1434@pengutronix.de>
+References: <45608487.4020309@gmail.com> <20061119164846.GO18636@pengutronix.de> <45617BD4.7030103@stud.feec.vutbr.cz> <20061122120330.GD18636@pengutronix.de> <456B54F1.3030408@stud.feec.vutbr.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Pavel Pisa <ppisa4lists@pikron.com>
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
+	Dirk Behme <dirk.behme@googlemail.com>, l.fu@pengutronix.de,
+	Juergen Beisert <jbe@pengutronix.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.184]:48483 "EHLO
-	nf-out-0910.google.com") by vger.kernel.org with ESMTP
-	id S936490AbWLAQdV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Dec 2006 11:33:21 -0500
-Received: by nf-out-0910.google.com with SMTP id o25so3597680nfa
-        for <linux-rt-users@vger.kernel.org>; Fri, 01 Dec 2006 08:33:20 -0800 (PST)
-To: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-In-Reply-To: <200612011412.57777.ppisa4lists@pikron.com>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:21706 "EHLO
+	metis.extern.pengutronix.de") by vger.kernel.org with ESMTP
+	id S935596AbWLDKSa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 4 Dec 2006 05:18:30 -0500
+To: Michal Schmidt <xschmi00@stud.feec.vutbr.cz>
+Content-Disposition: inline
+In-Reply-To: <456B54F1.3030408@stud.feec.vutbr.cz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Pavel Pisa wrote:
-> I have tried to build patch-2.6.19-rt1 patched 2.6.19 kernel
-> for MX1 (PiMX1). There seems to be some problems.
-> One is corrected by attached patch,
-> -----------------------------------------------------------------------------------
->  include/asm-arm/atomic.h |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+On Mon, Nov 27, 2006 at 10:13:21PM +0100, Michal Schmidt wrote:
+> Robert Schwebel skrev:
+> >I've ported the changes from the wiki diff output; please send me a diff
+> >with a correct credit line for the document header. I suppose I've not
+> >correctly seen who made which changes.
 > 
-> Index: linux-2.6.19-rt/include/asm-arm/atomic.h
-> ===================================================================
-> --- linux-2.6.19-rt.orig/include/asm-arm/atomic.h
-> +++ linux-2.6.19-rt/include/asm-arm/atomic.h
-> @@ -188,10 +188,10 @@ static inline unsigned long __cmpxchg(vo
->  	volatile unsigned long *p = ptr;
->  
->  	if (size == 4) {
-> -		local_irq_save(flags);
-> +		raw_local_irq_save(flags);
->  		if ((prev = *p) == old)
->  			*p = new;
-> -		local_irq_restore(flags);
-> +		raw_local_irq_restore(flags);
->  		return(prev);
->  	} else
->  		return wrong_size_cmpxchg(ptr);
+> Here's a patch fixing a slight confusion, where the description of 
+> threaded IRQs seemed to suggest that they're executed either in user or 
+> kernel context, while the real distinction is interrupt/process context.
+> It also adds myself to the document header and updates the revhistory.
 
-Yeah, same is necessary to get OMAP1 ARM926 compiled.
+Committed, please re-check.
 
-Best regards
-
-Dirk
+Robert 
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
