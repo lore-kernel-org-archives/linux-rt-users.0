@@ -1,64 +1,40 @@
-From: Tymoteusz Kielan <t.kielan@ente.com.pl>
-Subject: Changelog
-Date: Tue, 5 Dec 2006 10:00:19 +0100
-Message-ID: <20061205100019.6cef73cd@tkielan.ente.local>
+From: Vucsics Krisztian <krisztian.vucsics@evosoft.com>
+Subject: Re: Looking for "Hello world"
+Date: Tue, 05 Dec 2006 16:27:57 +0100
+Message-ID: <45758FFD.3030401@evosoft.com>
+References: <45743DAF.6020205@evosoft.com> <200612040813.19018.dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from res-243-25.sdc.pl ([193.178.243.25]:45596 "EHLO
-	tartar.ente.com.pl" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S968115AbWLEI6T (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 5 Dec 2006 03:58:19 -0500
-Received: from tkielan.ente.local (unknown [192.168.233.24])
-	by tartar.ente.com.pl (Postfix) with ESMTP id 44F9D49DE9
-	for <linux-rt-users@vger.kernel.org>; Tue,  5 Dec 2006 09:58:12 +0100 (CET)
-To: linux-rt-users@vger.kernel.org
+Received: from evo2.evosoft.com ([195.228.139.85]:55837 "HELO evo2.evosoft.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S967540AbWLEQHC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 5 Dec 2006 11:07:02 -0500
+To: Darren Hart <dvhltc@us.ibm.com>
+In-Reply-To: <200612040813.19018.dvhltc@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+Hi Darren,
 
-short question
+> http://www.kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
 
-Is there any changelog for the linux RT kernel patchset?
+I've downloaded your testcases but some of them cannot be compiled, e.g.
+ func/prio-preempt:
+../../include/librt.h:597: error: `PTHREAD_PRIO_INHERIT' undeclared
+(first use in this function)
 
-I would like to track changes between releases.
+I've google'd this error and I've found some bug reports for that at
+January 2006 -- those bugs are reported as "fix in mext versions" but I
+have the same problem with the most recent kernel also.
 
-greets, Tim
+coms01:~ # uname -a
+Linux coms01 2.6.19 #1 PREEMPT Tue Dec 5 14:51:33 PST 2006 i686 i686
+i386 GNU/Linux
 
--- 
-Tim Kielan
-Embedded Software Engineer
-tel: +48 32 33 82 219
-fax: +48 32 33 82 210
-email: t.kielan@ente.eu
-------------------------------------
-ENTE Ltd.
-44-100 Gliwice, Gaudiego 7
-POLAND
-------------------------------------
+Do I need perhaps a patch for that?
 
-Wiadomosc ta oraz wszelkie jej zalaczniki (wiadomosc) sa przeznaczone
-wylacznie dla ich odbiorcow i sa poufne. Jesli nie jestescie Panstwo
-adresatami tej wiadomosci,  prosimy o jej usuniecie oraz o szybkie
-powiadomienie o tym fakcie: nadawcy tej wiadomosci, lub ENTE Sp. z o.o. pod
-numer telefonu + 48 32 33 82 200 lub adres e-mail postmaster@ente.com.pl
-
-Kazde przegladanie, przekazywanie, rozpowszechnianie oraz kazde inne uzycie,
-takze uzycie w zaufany sposob przez osoby inne niz zamierzony odbiorca, jest
-zakazane.
-
-Dziekujemy.
-
-This e-mail message and any attachments (the message) is intended solely for
-the addressees and is confidential. If you receive this message in error,
-please delete it and immediately notify: the sender, or ENTE Sp. z o.o. at
-+48 32 33 82 200, or at e-mail postmaster@ente.com.pl
-
-Any review, retransmission, dissemination or other use of, or taking of any
-action in reliance upon, this message by persons or entities other than the
-intended recipient is prohibited.
-
-Thank you.
+Thanks,
+Krisztian
