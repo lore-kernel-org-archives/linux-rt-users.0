@@ -1,65 +1,64 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: Looking for "Hello world"
-Date: Mon, 4 Dec 2006 08:13:18 -0800
-Message-ID: <200612040813.19018.dvhltc@us.ibm.com>
-References: <45743DAF.6020205@evosoft.com>
+From: Tymoteusz Kielan <t.kielan@ente.com.pl>
+Subject: Changelog
+Date: Tue, 5 Dec 2006 10:00:19 +0100
+Message-ID: <20061205100019.6cef73cd@tkielan.ente.local>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:60663 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S937062AbWLDQNd (ORCPT
+Received: from res-243-25.sdc.pl ([193.178.243.25]:45596 "EHLO
+	tartar.ente.com.pl" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S968115AbWLEI6T (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Dec 2006 11:13:33 -0500
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e33.co.us.ibm.com (8.13.8/8.12.11) with ESMTP id kB4GDMao029795
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 11:13:22 -0500
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay04.boulder.ibm.com (8.13.6/8.13.6/NCO v8.1.1) with ESMTP id kB4GDLmK530592
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 09:13:22 -0700
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id kB4GDLMe021286
-	for <linux-rt-users@vger.kernel.org>; Mon, 4 Dec 2006 09:13:21 -0700
-To: Vucsics Krisztian <krisztian.vucsics@evosoft.com>
-In-Reply-To: <45743DAF.6020205@evosoft.com>
-Content-Disposition: inline
+	Tue, 5 Dec 2006 03:58:19 -0500
+Received: from tkielan.ente.local (unknown [192.168.233.24])
+	by tartar.ente.com.pl (Postfix) with ESMTP id 44F9D49DE9
+	for <linux-rt-users@vger.kernel.org>; Tue,  5 Dec 2006 09:58:12 +0100 (CET)
+To: linux-rt-users@vger.kernel.org
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Monday 04 December 2006 07:24, Vucsics Krisztian wrote:
-> Hello Everybody,
->
-> I've checked the RT_PREEMPT_HOWTO but there is no "Hello World" example
-> at the moment. I don't know, whether and how it is possible to send
-> something via the serial port exactly scheduled, "without changing the
-> given programming APIs". I would like to send at least a single 'H' :-)
-> to a given serial port, precisely scheduled.
->
-> Could you please send me an example for that?
+Hi all,
 
-Also, if you are looking for code examples, I suggest taking a look at the 
-numerous test cases provided here (linked off the wiki):
+short question
 
-http://www.kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
+Is there any changelog for the linux RT kernel patchset?
 
-These tests use a simple pthread/realtime wrapper called librt.h.  You will 
-find numerous uses of clock_gettime() and clock_nanosleep() as well as the 
-pthread_cond_* routines.
+I would like to track changes between releases.
 
->
-> Thank you in advance,
-> Krisztian
->
->
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
-> in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+greets, Tim
 
 -- 
-Darren Hart
-IBM Linux Technology Center
-Realtime Linux Team
+Tim Kielan
+Embedded Software Engineer
+tel: +48 32 33 82 219
+fax: +48 32 33 82 210
+email: t.kielan@ente.eu
+------------------------------------
+ENTE Ltd.
+44-100 Gliwice, Gaudiego 7
+POLAND
+------------------------------------
+
+Wiadomosc ta oraz wszelkie jej zalaczniki (wiadomosc) sa przeznaczone
+wylacznie dla ich odbiorcow i sa poufne. Jesli nie jestescie Panstwo
+adresatami tej wiadomosci,  prosimy o jej usuniecie oraz o szybkie
+powiadomienie o tym fakcie: nadawcy tej wiadomosci, lub ENTE Sp. z o.o. pod
+numer telefonu + 48 32 33 82 200 lub adres e-mail postmaster@ente.com.pl
+
+Kazde przegladanie, przekazywanie, rozpowszechnianie oraz kazde inne uzycie,
+takze uzycie w zaufany sposob przez osoby inne niz zamierzony odbiorca, jest
+zakazane.
+
+Dziekujemy.
+
+This e-mail message and any attachments (the message) is intended solely for
+the addressees and is confidential. If you receive this message in error,
+please delete it and immediately notify: the sender, or ENTE Sp. z o.o. at
++48 32 33 82 200, or at e-mail postmaster@ente.com.pl
+
+Any review, retransmission, dissemination or other use of, or taking of any
+action in reliance upon, this message by persons or entities other than the
+intended recipient is prohibited.
+
+Thank you.
