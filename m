@@ -1,48 +1,39 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: v2.6.19-rt6, yum/rpm
-Date: Thu, 07 Dec 2006 13:42:03 -0800
-Message-ID: <1165527723.9244.45.camel@cmn3.stanford.edu>
-References: <20061205171114.GA25926@elte.hu>
-	 <1165524358.9244.33.camel@cmn3.stanford.edu>
-	 <20061207205819.GA21953@elte.hu>
-	 <1165525665.9244.39.camel@cmn3.stanford.edu>
+Date: Thu, 7 Dec 2006 22:44:34 +0100
+Message-ID: <20061207214434.GA29357@elte.hu>
+References: <20061205171114.GA25926@elte.hu> <1165524358.9244.33.camel@cmn3.stanford.edu> <20061207205819.GA21953@elte.hu> <1165526445.27217.59.camel@laptopd505.fenrus.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Mike Galbraith <efault@gmx.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Mike Galbraith <efault@gmx.de>,
 	Clark Williams <williams@redhat.com>,
 	Sergei Shtylyov <sshtylyov@ru.mvista.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Giandomenico De Tullio <ghisha@email.it>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1163440AbWLGVmJ@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
-In-Reply-To: <1165525665.9244.39.camel@cmn3.stanford.edu>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx2.mail.elte.hu ([157.181.151.9]:41938 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1163449AbWLGVpq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 7 Dec 2006 16:45:46 -0500
+To: Arjan van de Ven <arjan@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <1165526445.27217.59.camel@laptopd505.fenrus.org>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2006-12-07 at 13:07 -0800, Fernando Lopez-Lezcano wrote:
-> On Thu, 2006-12-07 at 21:58 +0100, Ingo Molnar wrote:
-> > * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-> > 
-> > > Much better performance in terms of xruns with Jackd. Hardly any at 
-> > > all as it should be. I'm starting to test -rt8 right now.
-> > > 
-> > > Now, I still don't have an smp machine to test so the improvement 
-> > > could be because I'm just running 64 bit up instead of smp. Or it 
-> > > could have been the hardware on that other machine that had some 
-> > > problem (either because it was starting to fail or because the kernel 
-> > > drivers for that hardware were somehow triggering the xruns).
-> > 
+
+* Arjan van de Ven <arjan@infradead.org> wrote:
+
 > > i think it's the UP vs. SMP difference. We are chasing some SMP 
 > > latencies right now that trigger on boxes that have deeper C sleep 
 > > states. idle=poll seems to work around those problems.
 > 
-> Oh well, it looked too good, anyway, it is winter here so the extra
-> heating should be fine :-)
+> well C-states do cause latencies... as advertized in the 
+> /proc/acpi/processor/CPU0/power file.
 
-Hmmm, when I was testing on smp I was running with the speed set to the
-top speed of the processors (through the small gnome cpuspeed applet). I
-imagine that the C states would not have been the problem...
+no, this is a plain logic bug somewhere, not a hardware latency. 
+Sometimes the latency is in the seconds range, etc.
 
--- Fernando
+	Ingo
