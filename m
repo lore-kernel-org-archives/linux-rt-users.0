@@ -1,37 +1,73 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Cyclictest on non apic plattforms
-Date: Tue, 05 Dec 2006 21:13:57 +0100
-Message-ID: <1165349637.24604.169.camel@localhost.localdomain>
-References: <20061205200223.48889.qmail@web28012.mail.ukl.yahoo.com>
-Reply-To: tglx@linutronix.de
+From: "K.R. Foley" <kr@cybsft.com>
+Subject: Re: v2.6.19-rt6, yum/rpm
+Date: Thu, 07 Dec 2006 05:33:53 -0600
+Message-ID: <4577FC21.1080407@cybsft.com>
+References: <20061205171114.GA25926@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: multipart/mixed;
+ boundary="------------040804080503080406040706"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Mike Galbraith <efault@gmx.de>,
+	Clark Williams <williams@redhat.com>,
+	Sergei Shtylyov <sshtylyov@ru.mvista.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Giandomenico De Tullio <ghisha@email.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:41733 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1030945AbWLEUKv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 5 Dec 2006 15:10:51 -0500
-To: cinetic bellini <cinetic19@yahoo.de>
-In-Reply-To: <20061205200223.48889.qmail@web28012.mail.ukl.yahoo.com>
+Received: from mail.charter.net ([209.225.8.178]:52890 "EHLO
+	mtao04.charter.net" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1032066AbWLGLeD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 7 Dec 2006 06:34:03 -0500
+To: Ingo Molnar <mingo@elte.hu>
+In-Reply-To: <20061205171114.GA25926@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2006-12-05 at 20:02 +0000, cinetic bellini wrote:
->
+This is a multi-part message in MIME format.
+--------------040804080503080406040706
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Please configure your MUA to make line breaks at 78 characters. Thanks.
-
-> I uses the the RT patch on different x86 platforms (rt cyclictest).
-> On Pentium 4  systems I got perfect results: around 50us jitter. 
-> On older platforms like  P3 oder P1 I got a much worse jitter: bigger
-> than 1000us. I think they use an older timer unit like the 8254.
+Ingo Molnar wrote:
+> i have released the 2.6.19-rt6 tree, which can be downloaded from the 
+> usual place:
 > 
-> It's possible to get a high resolution posix timer even on older x86
-> systems?
 
-Yes, we use the PIT for high resolution timers on UP systems. Can you
-provide a bootlog please ?
+Attached patch fixes rtc histogram. Looks like it got broken around
+2.6.18-rt?, probably during the merge for 2.6.18?
 
-	tglx
+-- 
+	kr
+
+--------------040804080503080406040706
+Content-Type: text/x-patch;
+ name="rtcfix1.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="rtcfix1.patch"
+
+--- linux-2.6.19/drivers/char/rtc.c.orig	2006-12-06 21:46:16.000000000 -0600
++++ linux-2.6.19/drivers/char/rtc.c	2006-12-06 21:46:48.000000000 -0600
+@@ -427,9 +427,9 @@ irqreturn_t rtc_interrupt(int irq, void 
+ 	if (rtc_callback)
+ 		rtc_callback->func(rtc_callback->private_data);
+ 	spin_unlock(&rtc_task_lock);
+-	wake_up_interruptible(&rtc_wait);
+ 
+-	kill_fasync (&rtc_async_queue, SIGIO, POLL_IN);
++	rtc_wake_event();
++	wake_up_interruptible(&rtc_wait);
+ 
+ 	return IRQ_HANDLED;
+ }
+@@ -1328,7 +1328,6 @@ static void rtc_dropped_irq(unsigned lon
+ 	printk(KERN_WARNING "rtc: lost some interrupts at %ldHz.\n", freq);
+ 
+ 	/* Now we have new data */
+-	rtc_wake_event();
+ 	wake_up_interruptible(&rtc_wait);
+ 
+ 	kill_fasync (&rtc_async_queue, SIGIO, POLL_IN);
+
+--------------040804080503080406040706--
