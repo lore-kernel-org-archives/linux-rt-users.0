@@ -1,10 +1,11 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: "K.R. Foley" <kr@cybsft.com>
 Subject: Re: v2.6.19-rt6, yum/rpm
-Date: Thu, 7 Dec 2006 17:57:51 +0100
-Message-ID: <20061207165751.GA2720@elte.hu>
-References: <20061205171114.GA25926@elte.hu> <4577FC21.1080407@cybsft.com> <20061207121344.GA19749@elte.hu> <4578391E.40001@cybsft.com>
+Date: Thu, 07 Dec 2006 13:40:34 -0600
+Message-ID: <45786E32.3010201@cybsft.com>
+References: <20061205171114.GA25926@elte.hu> <4577FC21.1080407@cybsft.com> <20061207121344.GA19749@elte.hu> <4578391E.40001@cybsft.com> <20061207165751.GA2720@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed;
+ boundary="------------090709080209010705000209"
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Mike Galbraith <efault@gmx.de>,
 	Clark Williams <williams@redhat.com>,
@@ -13,98 +14,58 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
 	Giandomenico De Tullio <ghisha@email.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:47299 "EHLO mx2.mail.elte.hu"
+Received: from mail1.utc.com ([192.249.46.190]:43682 "EHLO mail1.utc.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1032473AbWLGQ7j (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Dec 2006 11:59:39 -0500
-To: "K.R. Foley" <kr@cybsft.com>
-Content-Disposition: inline
-In-Reply-To: <4578391E.40001@cybsft.com>
+	id S938006AbWLGTkr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 7 Dec 2006 14:40:47 -0500
+To: Ingo Molnar <mingo@elte.hu>
+In-Reply-To: <20061207165751.GA2720@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This is a multi-part message in MIME format.
+--------------090709080209010705000209
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-* K.R. Foley <kr@cybsft.com> wrote:
-
-> Ingo Molnar wrote:
+Ingo Molnar wrote:
+> * K.R. Foley <kr@cybsft.com> wrote:
 > 
-> The attached patch is necessary to build 2.6.19-rt8 without KEXEC 
-> enabled. Without KEXEC enabled crash.c doesn't get included. I believe 
-> this is correct.
+>> Ingo Molnar wrote:
+>>
+>> The attached patch is necessary to build 2.6.19-rt8 without KEXEC 
+>> enabled. Without KEXEC enabled crash.c doesn't get included. I believe 
+>> this is correct.
+> 
+> ah, indeed. I went for a slightly different approach - see the patch 
+> below. Sending an NMI to all CPUs is not something that is tied to 
+> KEXEC, it belongs into nmi.c.
+> 
+> 	Ingo
 
-ah, indeed. I went for a slightly different approach - see the patch 
-below. Sending an NMI to all CPUs is not something that is tied to 
-KEXEC, it belongs into nmi.c.
+Much better I think. It still requires the patch below, which includes
+mach_ipi.h, to build here.
 
-	Ingo
 
-Index: linux/arch/i386/kernel/crash.c
-===================================================================
---- linux.orig/arch/i386/kernel/crash.c
-+++ linux/arch/i386/kernel/crash.c
-@@ -132,14 +132,6 @@ static int crash_nmi_callback(struct not
- 	return 1;
- }
+-- 
+   kr
+
+--------------090709080209010705000209
+Content-Type: text/x-patch;
+ name="nmifix2.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="nmifix2.patch"
+
+--- linux-2.6.19/arch/i386/kernel/nmi.c.orig	2006-12-07 13:03:12.000000000 -0600
++++ linux-2.6.19/arch/i386/kernel/nmi.c	2006-12-07 13:03:21.000000000 -0600
+@@ -30,6 +30,7 @@
+ #include <asm/intel_arch_perfmon.h>
  
--void smp_send_nmi_allbutself(void)
--{
--	cpumask_t mask = cpu_online_map;
--	cpu_clear(safe_smp_processor_id(), mask);
--	if (!cpus_empty(mask))
--		send_IPI_mask(mask, NMI_VECTOR);
--}
--
- static struct notifier_block crash_nmi_nb = {
- 	.notifier_call = crash_nmi_callback,
- };
-Index: linux/arch/i386/kernel/nmi.c
-===================================================================
---- linux.orig/arch/i386/kernel/nmi.c
-+++ linux/arch/i386/kernel/nmi.c
-@@ -1133,6 +1133,14 @@ int proc_nmi_enabled(struct ctl_table *t
+ #include "mach_traps.h"
++#include <mach_ipi.h>
  
- #endif
- 
-+void smp_send_nmi_allbutself(void)
-+{
-+	cpumask_t mask = cpu_online_map;
-+	cpu_clear(safe_smp_processor_id(), mask);
-+	if (!cpus_empty(mask))
-+		send_IPI_mask(mask, NMI_VECTOR);
-+}
-+
- EXPORT_SYMBOL(nmi_active);
- EXPORT_SYMBOL(nmi_watchdog);
- EXPORT_SYMBOL(avail_to_resrv_perfctr_nmi);
-Index: linux/arch/x86_64/kernel/crash.c
-===================================================================
---- linux.orig/arch/x86_64/kernel/crash.c
-+++ linux/arch/x86_64/kernel/crash.c
-@@ -127,11 +127,6 @@ static int crash_nmi_callback(struct not
- 	return 1;
- }
- 
--void smp_send_nmi_allbutself(void)
--{
--	send_IPI_allbutself(NMI_VECTOR);
--}
--
- /*
-  * This code is a best effort heuristic to get the
-  * other cpus to stop executing. So races with
-Index: linux/arch/x86_64/kernel/nmi.c
-===================================================================
---- linux.orig/arch/x86_64/kernel/nmi.c
-+++ linux/arch/x86_64/kernel/nmi.c
-@@ -1015,6 +1015,11 @@ int proc_nmi_enabled(struct ctl_table *t
- 
- #endif
- 
-+void smp_send_nmi_allbutself(void)
-+{
-+	send_IPI_allbutself(NMI_VECTOR);
-+}
-+
- EXPORT_SYMBOL(nmi_active);
- EXPORT_SYMBOL(nmi_watchdog);
- EXPORT_SYMBOL(avail_to_resrv_perfctr_nmi);
+ int unknown_nmi_panic;
+ int nmi_watchdog_enabled;
+
+--------------090709080209010705000209--
