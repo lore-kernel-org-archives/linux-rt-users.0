@@ -1,39 +1,68 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: v2.6.19-rt6, yum/rpm
-Date: Thu, 7 Dec 2006 22:44:34 +0100
-Message-ID: <20061207214434.GA29357@elte.hu>
-References: <20061205171114.GA25926@elte.hu> <1165524358.9244.33.camel@cmn3.stanford.edu> <20061207205819.GA21953@elte.hu> <1165526445.27217.59.camel@laptopd505.fenrus.org>
+From: Dirk Behme <dirk.behme@googlemail.com>
+Subject: Ethernet transmit timeouts, was: v2.6.19-rt6, yum/rpm
+Date: Fri, 08 Dec 2006 20:40:54 +0100
+Message-ID: <4579BFC6.6000605@gmail.com>
+References: <20061205171114.GA25926@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Mike Galbraith <efault@gmx.de>,
-	Clark Williams <williams@redhat.com>,
-	Sergei Shtylyov <sshtylyov@ru.mvista.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Giandomenico De Tullio <ghisha@email.it>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:41938 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1163449AbWLGVpq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Dec 2006 16:45:46 -0500
-To: Arjan van de Ven <arjan@infradead.org>
-Content-Disposition: inline
-In-Reply-To: <1165526445.27217.59.camel@laptopd505.fenrus.org>
+Received: from nf-out-0910.google.com ([64.233.182.185]:14065 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1426165AbWLHTlC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Dec 2006 14:41:02 -0500
+Received: by nf-out-0910.google.com with SMTP id o25so1219325nfa
+        for <linux-rt-users@vger.kernel.org>; Fri, 08 Dec 2006 11:41:01 -0800 (PST)
+In-Reply-To: <20061205171114.GA25926@elte.hu>
+To: unlisted-recipients:; (no To-header on input)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Ingo Molnar wrote:
+> this is a fixes-only release. Changes since -rt1:
+...
+>  - e1000: update to driver 7.3.15-k2 to fix latency problem
 
-* Arjan van de Ven <arjan@infradead.org> wrote:
+Any hint what the "latency problem" was here?
 
-> > i think it's the UP vs. SMP difference. We are chasing some SMP 
-> > latencies right now that trigger on boxes that have deeper C sleep 
-> > states. idle=poll seems to work around those problems.
-> 
-> well C-states do cause latencies... as advertized in the 
-> /proc/acpi/processor/CPU0/power file.
+On ARM926 with patch-2.6.19-rt10 we use SMC91C94 ethernet 
+(smc91x.c). With rt10 applied we get NETDEV WATCHDOG 
+transmit timouts (see below) while using NFS. We don't get 
+them without rt patch.
 
-no, this is a plain logic bug somewhere, not a hardware latency. 
-Sometimes the latency is in the seconds range, etc.
+Dirk
 
-	Ingo
+Btw: Any idea why /proc/interrupts doesn't look like Figure 
+8 of http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO ? 
+The [........N/  0] info is missing here.
+
+
+eth0: SMC91C94 (rev 9) at c2850300 IRQ 160 [nowait]
+eth0: Ethernet addr: 00:0e:99:02:02:42
+
+# cat /proc/interrupts
+            CPU0
+...
+  93:          0         MPU  DMA
+  94:          0         MPU  DMA
+160:         28        GPIO  eth0
+164:          1        GPIO  spi2.0
+197:          0        GPIO  serial wakeup
+...
+
+# madplay /mnt/nfs/foo.mp3
+...
+NETDEV WATCHDOG: eth0: transmit timed out
+NETDEV WATCHDOG: eth0: transmit timed out
+NETDEV WATCHDOG: eth0: transmit timed out
+nfs: server 192.0.0.1 not responding, still trying
+nfs: server 192.0.0.1 not responding, still trying
+NETDEV WATCHDOG: eth0: transmit timed out
+nfs: server 192.0.0.1 not responding, still trying
+NETDEV WATCHDOG: eth0: transmit timed out
+nfs: server 192.0.0.1 not responding, still trying
+nfs: server 192.0.0.1 not responding, still trying
+nfs: server 192.0.0.1 not responding, still trying
+NETDEV WATCHDOG: eth0: transmit timed out
