@@ -1,118 +1,137 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 04/10] [ARM] 4012/1: Clocksource for pxa
-Date: Fri, 15 Dec 2006 23:37:02 +0100
-Message-ID: <20061215224326.338722000@metis.extern.pengutronix.de>
+Subject: [patch 09/10] [ARM] clockevent driver for arm/ep93xx
+Date: Fri, 15 Dec 2006 23:37:07 +0100
+Message-ID: <20061215224329.323692000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51289 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51301 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030379AbWLOXMx (ORCPT
+	by vger.kernel.org with ESMTP id S1030388AbWLOXPZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:12:53 -0500
+	Fri, 15 Dec 2006 18:15:25 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=clocksource-driver-for-arm-pxa2xx.diff
+Content-Disposition: inline; filename=clockevents-driver-for-arm-ep93xx.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sascha Hauer <s.hauer@pengutronix.de>
+From: Luotao Fu <lfu@pengutronix.de>
 
-commit c80204e5d67d1452ac0b761d980f1651dc2c66dc
-Author: Sascha Hauer <s.hauer@pengutronix.de>
-Date:   Tue Dec 12 09:21:50 2006 +0100
+Add a clockevent driver for ep93xx systems.
 
-    [ARM] 4012/1: Clocksource for pxa
-    
-Add a clocksource driver for pxa2xx systems
-    
 Signed-off-by: Luotao Fu <lfu@pengutronix.de>
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
-Signed-off-by: Nicolas Pitre <nico@cam.org>
-Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
 
-Index: linux-2.6.19-rt15/arch/arm/mach-pxa/time.c
+Index: arch/arm/mach-ep93xx/core.c
 ===================================================================
---- linux-2.6.19-rt15.orig/arch/arm/mach-pxa/time.c
-+++ linux-2.6.19-rt15/arch/arm/mach-pxa/time.c
-@@ -18,6 +18,7 @@
- #include <linux/signal.h>
- #include <linux/errno.h>
- #include <linux/sched.h>
-+#include <linux/clocksource.h>
+--- arch/arm/mach-ep93xx/core.c.orig
++++ arch/arm/mach-ep93xx/core.c
+@@ -33,6 +33,7 @@
+ #include <linux/amba/bus.h>
+ #include <linux/amba/serial.h>
+ #include <linux/clocksource.h>
++#include <linux/clockchips.h>
  
- #include <asm/system.h>
- #include <asm/hardware.h>
-@@ -48,27 +49,6 @@ static int pxa_set_rtc(void)
- 	return 0;
+ #include <asm/types.h>
+ #include <asm/setup.h>
+@@ -51,6 +52,8 @@
+ 
+ #include <asm/hardware/vic.h>
+ 
++static int __init ep93xx_clockevent_init(void);
++static struct clock_event_device clockevent_ep93xx;
+ 
+ /*************************************************************************
+  * Static I/O mappings that are needed for all EP93xx platforms
+@@ -99,18 +102,15 @@ void __init ep93xx_map_io(void)
+ 
+ static int ep93xx_timer_interrupt(int irq, void *dev_id)
+ {
+-	write_seqlock(&xtime_lock);
+-
+ 	__raw_writel(1, EP93XX_TIMER1_CLEAR);
+ 	while ((signed long)
+ 		(__raw_readl(EP93XX_TIMER4_VALUE_LOW) - last_jiffy_time)
+ 						>= TIMER4_TICKS_PER_JIFFY) {
+ 		last_jiffy_time += TIMER4_TICKS_PER_JIFFY;
+-		timer_tick();
++		if (clockevent_ep93xx.event_handler)
++			clockevent_ep93xx.event_handler(regs);
+ 	}
+ 
+-	write_sequnlock(&xtime_lock);
+-
+ 	return IRQ_HANDLED;
  }
  
--/* IRQs are disabled before entering here from do_gettimeofday() */
--static unsigned long pxa_gettimeoffset (void)
--{
--	long ticks_to_match, elapsed, usec;
--
--	/* Get ticks before next timer match */
--	ticks_to_match = OSMR0 - OSCR;
--
--	/* We need elapsed ticks since last match */
--	elapsed = LATCH - ticks_to_match;
--
--	/* don't get fooled by the workaround in pxa_timer_interrupt() */
--	if (elapsed <= 0)
--		return 0;
--
--	/* Now convert them to usec */
--	usec = (unsigned long)(elapsed * (tick_nsec / 1000))/LATCH;
--
--	return usec;
--}
--
- #ifdef CONFIG_NO_IDLE_HZ
- static unsigned long initial_match;
- static int match_posponed;
-@@ -121,6 +101,20 @@ static struct irqaction pxa_timer_irq = 
- 	.handler	= pxa_timer_interrupt,
- };
+@@ -128,6 +128,8 @@ static void __init ep93xx_timer_init(voi
+ 	__raw_writel(0xc8, EP93XX_TIMER1_CONTROL);
  
-+cycle_t pxa_get_cycles(void)
+ 	setup_irq(IRQ_EP93XX_TIMER1, &ep93xx_timer_irq);
++
++	ep93xx_clockevent_init();
+ }
+ 
+ /* timer4 is a 40 Bit timer, separated in a 32bit and a 8 bit register, EP93XX_TIMER4_VALUE_LOW
+@@ -491,3 +493,41 @@ void __init ep93xx_init_devices(void)
+ 	platform_device_register(&ep93xx_rtc_device);
+ 	platform_device_register(&ep93xx_ohci_device);
+ }
++
++static enum clock_event_mode clockevent_mode = CLOCK_EVT_PERIODIC;
++
++static void ep93xx_set_next_event(unsigned long evt,
++                                  struct clock_event_device *unused)
 +{
-+	return OSCR;
++        u32 mode = (clockevent_mode == CLOCK_EVT_ONESHOT) ?
++                0 : EP93XX_TC123_PERIODIC;
++	__raw_writel(evt, EP93XX_TIMER1_LOAD);
++	__raw_writel( mode | EP93XX_TC123_ENABLE | EP93XX_TC123_SEL_508KHZ, EP93XX_TIMER1_CONTROL);
 +}
 +
-+static struct clocksource clocksource_pxa = {
-+	.name           = "pxa_timer",
-+	.rating         = 200,
-+	.read           = pxa_get_cycles,
-+	.mask           = CLOCKSOURCE_MASK(32),
-+	.shift          = 20,
-+	.is_continuous  = 1,
++static void ep93xx_set_mode(enum clock_event_mode mode, struct clock_event_device *evt)
++{
++	clockevent_mode = mode;
++}
++
++static struct clock_event_device clockevent_ep93xx = {
++	.name           = "ep93xx timer1",
++	.capabilities   = CLOCK_CAP_NEXTEVT | CLOCK_CAP_TICK |
++			  CLOCK_CAP_UPDATE | CLOCK_CAP_PROFILE,
++	.shift          = 32,
++	.set_mode       = ep93xx_set_mode,
++	.set_next_event = ep93xx_set_next_event,
 +};
 +
- static void __init pxa_timer_init(void)
- {
- 	struct timespec tv;
-@@ -138,6 +132,13 @@ static void __init pxa_timer_init(void)
- 	setup_irq(IRQ_OST0, &pxa_timer_irq);
- 	OIER = OIER_E0;		/* enable match on timer 0 to cause interrupts */
- 	OSCR = 0;		/* initialize free-running timer */
++static int __init ep93xx_clockevent_init(void)
++{
++	clockevent_ep93xx.mult = div_sc(CLOCK_TICK_RATE, NSEC_PER_SEC,
++					clockevent_ep93xx.shift);
++	clockevent_ep93xx.max_delta_ns =
++		clockevent_delta2ns(0xfffffffe, &clockevent_ep93xx);
++	clockevent_ep93xx.min_delta_ns =
++		clockevent_delta2ns(0xf, &clockevent_ep93xx);
++	register_local_clockevent(&clockevent_ep93xx);
 +
-+	/* on PXA OSCR runs continiously and is not written to, so we can use it
-+	 * as clock source directly.
-+	 */
-+	clocksource_pxa.mult =
-+		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_pxa.shift);
-+	clocksource_register(&clocksource_pxa);
- }
++	return 0;
++}
+Index: include/asm-arm/arch-ep93xx/ep93xx-regs.h
+===================================================================
+--- include/asm-arm/arch-ep93xx/ep93xx-regs.h.orig
++++ include/asm-arm/arch-ep93xx/ep93xx-regs.h
+@@ -67,6 +67,12 @@
+ #define EP93XX_TIMER3_CONTROL		EP93XX_TIMER_REG(0x88)
+ #define EP93XX_TIMER3_CLEAR		EP93XX_TIMER_REG(0x8c)
  
- #ifdef CONFIG_NO_IDLE_HZ
-@@ -210,7 +211,6 @@ struct sys_timer pxa_timer = {
- 	.init		= pxa_timer_init,
- 	.suspend	= pxa_timer_suspend,
- 	.resume		= pxa_timer_resume,
--	.offset		= pxa_gettimeoffset,
- #ifdef CONFIG_NO_IDLE_HZ
- 	.dyn_tick	= &pxa_dyn_tick,
- #endif
++#define EP93XX_TC_CLEAR			0x00000001
++#define EP93XX_TC123_ENABLE		0x00000080
++#define EP93XX_TC123_PERIODIC		0x00000040
++#define EP93XX_TC123_SEL_508KHZ		0x00000008
++#define EP93XX_TC4_ENABLE		0x00000100
++
+ #define EP93XX_I2S_BASE			(EP93XX_APB_VIRT_BASE + 0x00020000)
+ 
+ #define EP93XX_SECURITY_BASE		(EP93XX_APB_VIRT_BASE + 0x00030000)
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
