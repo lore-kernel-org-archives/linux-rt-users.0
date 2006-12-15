@@ -1,84 +1,121 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 10/10] [ARM] enable generic time and generic clock events for arm
-Date: Fri, 15 Dec 2006 23:37:08 +0100
-Message-ID: <20061215224329.875791000@metis.extern.pengutronix.de>
+Subject: [patch 07/10] [ARM] clockevent driver for arm/netx
+Date: Fri, 15 Dec 2006 23:37:05 +0100
+Message-ID: <20061215224328.103209000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51229 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51230 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753349AbWLOXIG (ORCPT
+	by vger.kernel.org with ESMTP id S1030310AbWLOXII (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:08:06 -0500
+	Fri, 15 Dec 2006 18:08:08 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=high-res-timers-dynticks-enable-arm-support.patch
+Content-Disposition: inline; filename=clockevents-driver-for-arm-netx.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Luotao Fu <lfu@pengutronix.de>
 
-Turns hrt config options on for arm. It does this unconditionally
-so it currently breaks platforms that don't support a clocksource.
+Add a clockevent driver for netx systems.
 
 Signed-off-by: Luotao Fu <lfu@pengutronix.de>
+Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
 
-Index: arch/arm/Kconfig
+Index: arch/arm/mach-netx/time.c
 ===================================================================
---- arch/arm/Kconfig.orig
-+++ arch/arm/Kconfig
-@@ -21,6 +21,11 @@ config GENERIC_TIME
- 	bool
- 	default n
+--- arch/arm/mach-netx/time.c.orig
++++ arch/arm/mach-netx/time.c
+@@ -21,27 +21,28 @@
+ #include <linux/interrupt.h>
+ #include <linux/irq.h>
+ #include <linux/clocksource.h>
++#include <linux/clockchips.h>
  
-+config GENERIC_CLOCKEVENTS
-+	bool
-+	default y
+ #include <asm/hardware.h>
+ #include <asm/io.h>
+ #include <asm/mach/time.h>
+ #include <asm/arch/netx-regs.h>
+ 
++static int __init netx_clockevent_init(void);
++static struct clock_event_device clockevent_netx;
 +
+ /*
+  * IRQ handler for the timer
+  */
+ static irqreturn_t
+ netx_timer_interrupt(int irq, void *dev_id)
+ {
+-	write_seqlock(&xtime_lock);
+-
+-	timer_tick();
+-
+-	write_sequnlock(&xtime_lock);
+-
+ 	/* acknowledge interrupt */
+ 	writel(COUNTER_BIT(0), NETX_GPIO_IRQ);
+ 
++	if (clockevent_netx.event_handler)
++		clockevent_netx.event_handler();
 +
- config MMU
- 	bool
- 	default y
-@@ -179,6 +184,7 @@ config ARCH_EP93XX
- 	bool "EP93xx-based"
- 	select ARM_AMBA
- 	select ARM_VIC
-+	select GENERIC_TIME
- 	help
- 	  This enables support for the Cirrus EP93xx series of CPUs.
+ 	return IRQ_HANDLED;
+ }
  
-@@ -192,6 +198,7 @@ config ARCH_FOOTBRIDGE
- config ARCH_NETX
- 	bool "Hilscher NetX based"
- 	select ARM_VIC
-+	select GENERIC_TIME
- 	help
- 	  This enables support for systems based on the Hilscher NetX Soc
- 
-@@ -203,6 +210,7 @@ config ARCH_H720X
- 
- config ARCH_IMX
- 	bool "IMX"
-+	select GENERIC_TIME
- 	help
- 	  Support for Motorola's i.MX family of processors (MX1, MXL).
- 
-@@ -265,6 +273,7 @@ config ARCH_PNX4008
- config ARCH_PXA
- 	bool "PXA2xx-based"
- 	depends on MMU
-+	select GENERIC_TIME
- 	select ARCH_MTD_XIP
- 	help
- 	  Support for Intel's PXA2XX processor line.
-@@ -443,6 +452,8 @@ endmenu
- 
- menu "Kernel Features"
- 
-+source "kernel/time/Kconfig"
+@@ -99,8 +100,54 @@ static void __init netx_timer_init(void)
+ 	clocksource_netx.mult =
+ 		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_netx.shift);
+ 	clocksource_register(&clocksource_netx);
 +
- config SMP
- 	bool "Symmetric Multi-Processing (EXPERIMENTAL)"
- 	depends on EXPERIMENTAL && REALVIEW_MPCORE
++	netx_clockevent_init();
+ }
+ 
+ struct sys_timer netx_timer = {
+ 	.init		= netx_timer_init,
+ };
++
++static u32 clockevent_mode = 0;
++
++static void netx_set_next_event(unsigned long evt,
++				  struct clock_event_device *unused)
++{
++	u32 rst;
++
++	writel(0, NETX_GPIO_COUNTER_CTRL(0));
++	writel(0, NETX_GPIO_COUNTER_CURRENT(0));
++	writel(evt, NETX_GPIO_COUNTER_MAX(0));
++
++	rst = (clockevent_mode == CLOCK_EVT_PERIODIC) ? 0 : 1<<5;
++
++	writel( rst | NETX_GPIO_COUNTER_CTRL_RUN | NETX_GPIO_COUNTER_CTRL_IRQ_EN ,
++		NETX_GPIO_COUNTER_CTRL(0));
++}
++
++static void netx_set_mode(enum clock_event_mode mode, struct clock_event_device *evt)
++{
++	clockevent_mode = mode;
++}
++
++static struct clock_event_device clockevent_netx = {
++	.name		= "netx_timer1",
++	.capabilities	= CLOCK_CAP_NEXTEVT | CLOCK_CAP_TICK |
++			  CLOCK_CAP_UPDATE | CLOCK_CAP_PROFILE,
++	.shift		= 20,
++	.set_mode	= netx_set_mode,
++	.set_next_event	= netx_set_next_event,
++};
++
++static int __init netx_clockevent_init(void)
++{
++	clockevent_netx.mult = div_sc(CLOCK_TICK_RATE, NSEC_PER_SEC,
++					clockevent_netx.shift);
++	clockevent_netx.max_delta_ns =
++		clockevent_delta2ns(0xfffffffe, &clockevent_netx);
++	clockevent_netx.min_delta_ns =
++		clockevent_delta2ns(0xf, &clockevent_netx);
++	register_local_clockevent(&clockevent_netx);
++
++	return 0;
++}
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
