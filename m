@@ -1,37 +1,63 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: v2.6.19-rt6, yum/rpm
-Date: Fri, 15 Dec 2006 17:19:52 +0100
-Message-ID: <20061215161952.GA29191@elte.hu>
-References: <20061205171114.GA25926@elte.hu> <4582CAD6.9040404@ru.mvista.com>
+From: Pavel Pisa <pisa@cmp.felk.cvut.cz>
+Subject: Fix of problem in cyclictest-v0.11
+Date: Fri, 15 Dec 2006 21:24:53 +0100
+Message-ID: <200612152124.54387.pisa@cmp.felk.cvut.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from av4.karneval.cz ([81.27.192.11]:45511 "EHLO av2.karneval.cz"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S964825AbWLOUwI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Dec 2006 15:52:08 -0500
+To: linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752837AbWLOQWu@vger.kernel.org>
-To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Content-Disposition: inline
-In-Reply-To: <4582CAD6.9040404@ru.mvista.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello Thomas and others,
 
-* Sergei Shtylyov <sshtylyov@ru.mvista.com> wrote:
+there is bug in cyclictest-v0.11 which prevents it to corectly
+wait for finishing of all threads.
+The allstopped is signaled even if only one thread reaches
+maximal count. The result is different loops count
+for lower priority threads.
 
-> >as usual, bugreports, fixes and suggestions are welcome,
-> 
->    Be aware that even with the newest -rt patch, the PowerPC TOD 
-> vsyscalls are still broken, i.e. glibc may return imprecise/incorrect 
-> results for the related calls -- despite arch/powerpc/kernel/time.c 
-> has been at last fixed to at least compile, the PowerPC clocksource 
-> patch removed the important part of TOD vsyscall support, and this 
-> hasn't been dealt with.  I've sent to Thomas Gleixner a patch removing 
-> the affected vsyscalls altogether for the time being in the early 
-> November (unfortunately, I came to know of the breakage too late, and 
-> hadn't time to deal with it propery due to othr woes), however, I'm 
-> not seeing any of my patches (I've also done PowerPC clockevents 
-> support) merged to -rt (or otherwise published). Most of the patches 
-> can be found in the linuxppc-dev list archives, for the interested...
+Best wishes
 
-could you resend them to me please?
+                Pavel Pisa
+        e-mail: pisa@cmp.felk.cvut.cz
+        www:    http://cmp.felk.cvut.cz/~pisa
+        work:   http://www.pikron.com
 
-	Ingo
+
+--- cyclictest.c.orig	2006-12-15 21:04:16.000000000 +0100
++++ cyclictest.c	2006-12-15 21:23:19.000000000 +0100
+@@ -480,7 +480,7 @@
+ 
+ 	while (!shutdown) {
+ 		char lavg[256];
+-		int fd, len, allstopped = 0;
++		int fd, len, allstopped;
+ 
+ 		if (!verbose && !quiet) {
+ 			fd = open("/proc/loadavg", O_RDONLY, 0666);
+@@ -490,11 +490,13 @@
+ 			printf("%s          \n\n", lavg);
+ 		}
+ 
++		allstopped = max_cycles ? 1 : 0;
++
+ 		for (i = 0; i < num_threads; i++) {
+ 
+ 			print_stat(&par[i], i, verbose);
+-			if(max_cycles && stat[i].cycles >= max_cycles)
+-				allstopped++;
++			if(stat[i].cycles < max_cycles)
++				allstopped = 0;
+ 		}
+ 		usleep(10000);
+ 		if (shutdown || allstopped)
