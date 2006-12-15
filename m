@@ -1,109 +1,122 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 05/10] [ARM] clocksource driver for ep93xx
-Date: Fri, 15 Dec 2006 23:37:03 +0100
-Message-ID: <20061215224326.947861000@metis.extern.pengutronix.de>
+Subject: [patch 03/10] [ARM] 4013/1: clocksource driver for netx
+Date: Fri, 15 Dec 2006 23:37:01 +0100
+Message-ID: <20061215224325.753537000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51286 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51285 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030376AbWLOXL4 (ORCPT
+	by vger.kernel.org with ESMTP id S1030375AbWLOXLz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:11:56 -0500
+	Fri, 15 Dec 2006 18:11:55 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=clocksource-driver-for-arm-ep93xx.diff
+Content-Disposition: inline; filename=clocksource-driver-for-arm-netx.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Luotao Fu <lfu@pengutronix.de>
+From: Sascha Hauer <s.hauer@pengutronix.de>
 
-Add a clocksource driver for ep93xx systems.
+commit 1a815aed1e03c73fcd0390109c7da9c69dc97490
+Author: Sascha Hauer <s.hauer@pengutronix.de>
+Date:   Tue Dec 12 09:23:45 2006 +0100
 
+    [ARM] 4013/1: clocksource driver for netx
+    
+Add a clocksource driver for netx systems
+    
 Signed-off-by: Luotao Fu <lfu@pengutronix.de>
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
 
-Index: linux-2.6.19-rt15/arch/arm/mach-ep93xx/core.c
+Index: linux-2.6.19-rt15/arch/arm/mach-netx/time.c
 ===================================================================
---- linux-2.6.19-rt15.orig/arch/arm/mach-ep93xx/core.c
-+++ linux-2.6.19-rt15/arch/arm/mach-ep93xx/core.c
-@@ -32,6 +32,7 @@
- #include <linux/termios.h>
- #include <linux/amba/bus.h>
- #include <linux/amba/serial.h>
+--- linux-2.6.19-rt15.orig/arch/arm/mach-netx/time.c
++++ linux-2.6.19-rt15/arch/arm/mach-netx/time.c
+@@ -19,6 +19,8 @@
+ 
+ #include <linux/init.h>
+ #include <linux/interrupt.h>
++#include <linux/irq.h>
 +#include <linux/clocksource.h>
  
- #include <asm/types.h>
- #include <asm/setup.h>
-@@ -93,7 +94,6 @@ void __init ep93xx_map_io(void)
-  * to use this timer for something else.  We also use timer 4 for keeping
-  * track of lost jiffies.
+ #include <asm/hardware.h>
+ #include <asm/io.h>
+@@ -26,15 +28,6 @@
+ #include <asm/arch/netx-regs.h>
+ 
+ /*
+- * Returns number of us since last clock interrupt.  Note that interrupts
+- * will have been disabled by do_gettimeoffset()
+- */
+-static unsigned long netx_gettimeoffset(void)
+-{
+-	return readl(NETX_GPIO_COUNTER_CURRENT(0)) / 100;
+-}
+-
+-/*
+  * IRQ handler for the timer
   */
--static unsigned int last_jiffy_time;
+ static irqreturn_t
+@@ -43,6 +36,7 @@ netx_timer_interrupt(int irq, void *dev_
+ 	write_seqlock(&xtime_lock);
  
- #define TIMER4_TICKS_PER_JIFFY		((CLOCK_TICK_RATE + (HZ/2)) / HZ)
+ 	timer_tick();
++
+ 	write_sequnlock(&xtime_lock);
  
-@@ -127,28 +127,42 @@ static void __init ep93xx_timer_init(voi
- 	__raw_writel((508469 / HZ) - 1, EP93XX_TIMER1_LOAD);
- 	__raw_writel(0xc8, EP93XX_TIMER1_CONTROL);
- 
--	/* Enable lost jiffy timer.  */
--	__raw_writel(0x100, EP93XX_TIMER4_VALUE_HIGH);
--
- 	setup_irq(IRQ_EP93XX_TIMER1, &ep93xx_timer_irq);
+ 	/* acknowledge interrupt */
+@@ -51,13 +45,26 @@ netx_timer_interrupt(int irq, void *dev_
+ 	return IRQ_HANDLED;
  }
  
--static unsigned long ep93xx_gettimeoffset(void)
-+/* timer4 is a 40 Bit timer, separated in a 32bit and a 8 bit register, EP93XX_TIMER4_VALUE_LOW
-+ * stores 32 bit word. The controlregister is in EP93XX_TIMER4_VALUE_HIGH
-+ */
-+
-+cycle_t ep93xx_get_cycles(void)
- {
--	int offset;
-+	return __raw_readl(EP93XX_TIMER4_VALUE_LOW);
-+}
+-
+ static struct irqaction netx_timer_irq = {
+ 	.name           = "NetX Timer Tick",
+ 	.flags          = IRQF_DISABLED | IRQF_TIMER,
+ 	.handler        = netx_timer_interrupt,
+ };
  
--	offset = __raw_readl(EP93XX_TIMER4_VALUE_LOW) - last_jiffy_time;
-+static struct clocksource clocksource_ep93xx = {
-+	.name           = "ep93xx timer2",
-+	.rating         = 200,
-+	.read           = ep93xx_get_cycles,
-+	.mask           = 0xFFFFFFFF,
-+	.shift          = 20,
-+	.is_continuous  = 1,
-+};
- 
--	/* Calculate (1000000 / 983040) * offset.  */
--	return offset + (53 * offset / 3072);
-+static void __init ep93xx_clocksource_init(void)
++cycle_t netx_get_cycles(void)
 +{
-+	/* Reset time-stamp counter */
-+	__raw_writel(0x100, EP93XX_TIMER4_VALUE_HIGH);
++	return readl(NETX_GPIO_COUNTER_CURRENT(1));
++}
 +
-+	clocksource_ep93xx.mult =
-+		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_ep93xx.shift);
-+	clocksource_register(&clocksource_ep93xx);
++static struct clocksource clocksource_netx = {
++	.name 		= "netx_timer",
++	.rating		= 200,
++	.read		= netx_get_cycles,
++	.mask		= CLOCKSOURCE_MASK(32),
++	.shift 		= 20,
++	.is_continuous 	= 1,
++};
++
+ /*
+  * Set up timer interrupt
+  */
+@@ -80,9 +87,20 @@ static void __init netx_timer_init(void)
+ 		NETX_GPIO_COUNTER_CTRL(0));
+ 
+ 	setup_irq(NETX_IRQ_TIMER0, &netx_timer_irq);
++
++	/* Setup timer one for clocksource */
++        writel(0, NETX_GPIO_COUNTER_CTRL(1));
++        writel(0, NETX_GPIO_COUNTER_CURRENT(1));
++        writel(0xFFFFFFFF, NETX_GPIO_COUNTER_MAX(1));
++
++        writel(NETX_GPIO_COUNTER_CTRL_RUN,
++                NETX_GPIO_COUNTER_CTRL(1));
++
++	clocksource_netx.mult =
++		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_netx.shift);
++	clocksource_register(&clocksource_netx);
  }
  
- struct sys_timer ep93xx_timer = {
--	.init		= ep93xx_timer_init,
--	.offset		= ep93xx_gettimeoffset,
-+	.init			= ep93xx_timer_init,
-+	.clocksource_init	= ep93xx_clocksource_init,
+ struct sys_timer netx_timer = {
+-	.init           = netx_timer_init,
+-	.offset         = netx_gettimeoffset,
++	.init		= netx_timer_init,
  };
- 
--
- /*************************************************************************
-  * GPIO handling for EP93xx
-  *************************************************************************/
-@@ -456,7 +470,6 @@ static struct platform_device ep93xx_ohc
- 	.resource	= ep93xx_ohci_resources,
- };
- 
--
- void __init ep93xx_init_devices(void)
- {
- 	unsigned int v;
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
