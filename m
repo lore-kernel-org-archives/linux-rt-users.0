@@ -1,113 +1,109 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 06/10] [ARM] clockevent driver for arm/imx
-Date: Fri, 15 Dec 2006 23:37:04 +0100
-Message-ID: <20061215224327.489301000@metis.extern.pengutronix.de>
+Subject: [patch 05/10] [ARM] clocksource driver for ep93xx
+Date: Fri, 15 Dec 2006 23:37:03 +0100
+Message-ID: <20061215224326.947861000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51287 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51286 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030378AbWLOXL7 (ORCPT
+	by vger.kernel.org with ESMTP id S1030376AbWLOXL4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:11:59 -0500
+	Fri, 15 Dec 2006 18:11:56 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=clockevents-driver-for-arm-imx.diff
+Content-Disposition: inline; filename=clocksource-driver-for-arm-ep93xx.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sascha Hauer <s.hauer@pengutronix.de>
+From: Luotao Fu <lfu@pengutronix.de>
 
-Add a clockevent driver for i.MX systems.
+Add a clocksource driver for ep93xx systems.
 
 Signed-off-by: Luotao Fu <lfu@pengutronix.de>
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
 
-Index: arch/arm/mach-imx/time.c
+Index: linux-2.6.19-rt15/arch/arm/mach-ep93xx/core.c
 ===================================================================
---- arch/arm/mach-imx/time.c.orig
-+++ arch/arm/mach-imx/time.c
-@@ -15,6 +15,7 @@
- #include <linux/irq.h>
- #include <linux/time.h>
- #include <linux/clocksource.h>
-+#include <linux/clockchips.h>
+--- linux-2.6.19-rt15.orig/arch/arm/mach-ep93xx/core.c
++++ linux-2.6.19-rt15/arch/arm/mach-ep93xx/core.c
+@@ -32,6 +32,7 @@
+ #include <linux/termios.h>
+ #include <linux/amba/bus.h>
+ #include <linux/amba/serial.h>
++#include <linux/clocksource.h>
  
- #include <asm/hardware.h>
- #include <asm/io.h>
-@@ -25,6 +26,9 @@
- /* Use timer 1 as system timer */
- #define TIMER_BASE IMX_TIM1_BASE
+ #include <asm/types.h>
+ #include <asm/setup.h>
+@@ -93,7 +94,6 @@ void __init ep93xx_map_io(void)
+  * to use this timer for something else.  We also use timer 4 for keeping
+  * track of lost jiffies.
+  */
+-static unsigned int last_jiffy_time;
  
-+static int __init imx_clockevent_init(void);
-+static struct clock_event_device clockevent_imx;
-+enum clock_event_mode clockevent_mode = 0;
- static unsigned long evt_diff;
+ #define TIMER4_TICKS_PER_JIFFY		((CLOCK_TICK_RATE + (HZ/2)) / HZ)
  
- /*
-@@ -42,9 +46,12 @@ imx_timer_interrupt(int irq, void *dev_i
- 	if (tstat & TSTAT_COMP) {
- 		do {
+@@ -127,28 +127,42 @@ static void __init ep93xx_timer_init(voi
+ 	__raw_writel((508469 / HZ) - 1, EP93XX_TIMER1_LOAD);
+ 	__raw_writel(0xc8, EP93XX_TIMER1_CONTROL);
  
--			write_seqlock(&xtime_lock);
--			timer_tick();
--			write_sequnlock(&xtime_lock);
-+			if (clockevent_imx.event_handler)
-+				clockevent_imx.event_handler();
+-	/* Enable lost jiffy timer.  */
+-	__raw_writel(0x100, EP93XX_TIMER4_VALUE_HIGH);
+-
+ 	setup_irq(IRQ_EP93XX_TIMER1, &ep93xx_timer_irq);
+ }
+ 
+-static unsigned long ep93xx_gettimeoffset(void)
++/* timer4 is a 40 Bit timer, separated in a 32bit and a 8 bit register, EP93XX_TIMER4_VALUE_LOW
++ * stores 32 bit word. The controlregister is in EP93XX_TIMER4_VALUE_HIGH
++ */
 +
-+			if (clockevent_mode != CLOCK_EVT_PERIODIC)
-+				break;
-+
- 			IMX_TCMP(TIMER_BASE) += evt_diff;
- 
- 		} while (unlikely((int32_t)(IMX_TCMP(TIMER_BASE)
-@@ -104,6 +111,9 @@ static void __init imx_timer_init(void)
- 	imx_timer_hardware_init();
- 	imx_clocksource_init();
- 
-+	evt_diff = LATCH;
-+ 	imx_clockevent_init();
-+
- 	/*
- 	 * Make irqs happen for the system timer
- 	 */
-@@ -113,3 +123,37 @@ static void __init imx_timer_init(void)
- struct sys_timer imx_timer = {
- 	.init		= imx_timer_init,
- };
-+
-+static void imx_set_next_event(unsigned long evt,
-+				  struct clock_event_device *unused)
-+{
-+	evt_diff = evt;
-+	IMX_TCMP(IMX_TIM1_BASE) = IMX_TCN(IMX_TIM1_BASE) + evt;
++cycle_t ep93xx_get_cycles(void)
+ {
+-	int offset;
++	return __raw_readl(EP93XX_TIMER4_VALUE_LOW);
 +}
-+
-+static void imx_set_mode(enum clock_event_mode mode, struct clock_event_device *evt)
-+{
-+	clockevent_mode = mode;
-+}
-+
-+static struct clock_event_device clockevent_imx = {
-+	.name		= "imx_timer1",
-+	.capabilities	= CLOCK_CAP_NEXTEVT | CLOCK_CAP_TICK |
-+			  CLOCK_CAP_UPDATE | CLOCK_CAP_PROFILE,
-+	.shift		= 32,
-+	.set_mode	= imx_set_mode,
-+	.set_next_event	= imx_set_next_event,
+ 
+-	offset = __raw_readl(EP93XX_TIMER4_VALUE_LOW) - last_jiffy_time;
++static struct clocksource clocksource_ep93xx = {
++	.name           = "ep93xx timer2",
++	.rating         = 200,
++	.read           = ep93xx_get_cycles,
++	.mask           = 0xFFFFFFFF,
++	.shift          = 20,
++	.is_continuous  = 1,
 +};
-+
-+static int __init imx_clockevent_init(void)
+ 
+-	/* Calculate (1000000 / 983040) * offset.  */
+-	return offset + (53 * offset / 3072);
++static void __init ep93xx_clocksource_init(void)
 +{
-+	clockevent_imx.mult = div_sc(imx_get_perclk1(), NSEC_PER_SEC,
-+					clockevent_imx.shift);
-+	clockevent_imx.max_delta_ns =
-+		clockevent_delta2ns(0xfffffffe, &clockevent_imx);
-+	clockevent_imx.min_delta_ns =
-+		clockevent_delta2ns(0xf, &clockevent_imx);
-+	register_local_clockevent(&clockevent_imx);
++	/* Reset time-stamp counter */
++	__raw_writel(0x100, EP93XX_TIMER4_VALUE_HIGH);
 +
-+	return 0;
-+}
++	clocksource_ep93xx.mult =
++		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_ep93xx.shift);
++	clocksource_register(&clocksource_ep93xx);
+ }
+ 
+ struct sys_timer ep93xx_timer = {
+-	.init		= ep93xx_timer_init,
+-	.offset		= ep93xx_gettimeoffset,
++	.init			= ep93xx_timer_init,
++	.clocksource_init	= ep93xx_clocksource_init,
+ };
+ 
+-
+ /*************************************************************************
+  * GPIO handling for EP93xx
+  *************************************************************************/
+@@ -456,7 +470,6 @@ static struct platform_device ep93xx_ohc
+ 	.resource	= ep93xx_ohci_resources,
+ };
+ 
+-
+ void __init ep93xx_init_devices(void)
+ {
+ 	unsigned int v;
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
