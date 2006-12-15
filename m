@@ -1,122 +1,118 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 03/10] [ARM] 4013/1: clocksource driver for netx
-Date: Fri, 15 Dec 2006 23:37:01 +0100
-Message-ID: <20061215224325.753537000@metis.extern.pengutronix.de>
+Subject: [patch 04/10] [ARM] 4012/1: Clocksource for pxa
+Date: Fri, 15 Dec 2006 23:37:02 +0100
+Message-ID: <20061215224326.338722000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51285 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51289 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030375AbWLOXLz (ORCPT
+	by vger.kernel.org with ESMTP id S1030379AbWLOXMx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:11:55 -0500
+	Fri, 15 Dec 2006 18:12:53 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=clocksource-driver-for-arm-netx.diff
+Content-Disposition: inline; filename=clocksource-driver-for-arm-pxa2xx.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Sascha Hauer <s.hauer@pengutronix.de>
 
-commit 1a815aed1e03c73fcd0390109c7da9c69dc97490
+commit c80204e5d67d1452ac0b761d980f1651dc2c66dc
 Author: Sascha Hauer <s.hauer@pengutronix.de>
-Date:   Tue Dec 12 09:23:45 2006 +0100
+Date:   Tue Dec 12 09:21:50 2006 +0100
 
-    [ARM] 4013/1: clocksource driver for netx
+    [ARM] 4012/1: Clocksource for pxa
     
-Add a clocksource driver for netx systems
+Add a clocksource driver for pxa2xx systems
     
 Signed-off-by: Luotao Fu <lfu@pengutronix.de>
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
+Signed-off-by: Nicolas Pitre <nico@cam.org>
 Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
 
-Index: linux-2.6.19-rt15/arch/arm/mach-netx/time.c
+Index: linux-2.6.19-rt15/arch/arm/mach-pxa/time.c
 ===================================================================
---- linux-2.6.19-rt15.orig/arch/arm/mach-netx/time.c
-+++ linux-2.6.19-rt15/arch/arm/mach-netx/time.c
-@@ -19,6 +19,8 @@
- 
- #include <linux/init.h>
- #include <linux/interrupt.h>
-+#include <linux/irq.h>
+--- linux-2.6.19-rt15.orig/arch/arm/mach-pxa/time.c
++++ linux-2.6.19-rt15/arch/arm/mach-pxa/time.c
+@@ -18,6 +18,7 @@
+ #include <linux/signal.h>
+ #include <linux/errno.h>
+ #include <linux/sched.h>
 +#include <linux/clocksource.h>
  
+ #include <asm/system.h>
  #include <asm/hardware.h>
- #include <asm/io.h>
-@@ -26,15 +28,6 @@
- #include <asm/arch/netx-regs.h>
+@@ -48,27 +49,6 @@ static int pxa_set_rtc(void)
+ 	return 0;
+ }
  
- /*
-- * Returns number of us since last clock interrupt.  Note that interrupts
-- * will have been disabled by do_gettimeoffset()
-- */
--static unsigned long netx_gettimeoffset(void)
+-/* IRQs are disabled before entering here from do_gettimeofday() */
+-static unsigned long pxa_gettimeoffset (void)
 -{
--	return readl(NETX_GPIO_COUNTER_CURRENT(0)) / 100;
+-	long ticks_to_match, elapsed, usec;
+-
+-	/* Get ticks before next timer match */
+-	ticks_to_match = OSMR0 - OSCR;
+-
+-	/* We need elapsed ticks since last match */
+-	elapsed = LATCH - ticks_to_match;
+-
+-	/* don't get fooled by the workaround in pxa_timer_interrupt() */
+-	if (elapsed <= 0)
+-		return 0;
+-
+-	/* Now convert them to usec */
+-	usec = (unsigned long)(elapsed * (tick_nsec / 1000))/LATCH;
+-
+-	return usec;
 -}
 -
--/*
-  * IRQ handler for the timer
-  */
- static irqreturn_t
-@@ -43,6 +36,7 @@ netx_timer_interrupt(int irq, void *dev_
- 	write_seqlock(&xtime_lock);
- 
- 	timer_tick();
-+
- 	write_sequnlock(&xtime_lock);
- 
- 	/* acknowledge interrupt */
-@@ -51,13 +45,26 @@ netx_timer_interrupt(int irq, void *dev_
- 	return IRQ_HANDLED;
- }
- 
--
- static struct irqaction netx_timer_irq = {
- 	.name           = "NetX Timer Tick",
- 	.flags          = IRQF_DISABLED | IRQF_TIMER,
- 	.handler        = netx_timer_interrupt,
+ #ifdef CONFIG_NO_IDLE_HZ
+ static unsigned long initial_match;
+ static int match_posponed;
+@@ -121,6 +101,20 @@ static struct irqaction pxa_timer_irq = 
+ 	.handler	= pxa_timer_interrupt,
  };
  
-+cycle_t netx_get_cycles(void)
++cycle_t pxa_get_cycles(void)
 +{
-+	return readl(NETX_GPIO_COUNTER_CURRENT(1));
++	return OSCR;
 +}
 +
-+static struct clocksource clocksource_netx = {
-+	.name 		= "netx_timer",
-+	.rating		= 200,
-+	.read		= netx_get_cycles,
-+	.mask		= CLOCKSOURCE_MASK(32),
-+	.shift 		= 20,
-+	.is_continuous 	= 1,
++static struct clocksource clocksource_pxa = {
++	.name           = "pxa_timer",
++	.rating         = 200,
++	.read           = pxa_get_cycles,
++	.mask           = CLOCKSOURCE_MASK(32),
++	.shift          = 20,
++	.is_continuous  = 1,
 +};
 +
- /*
-  * Set up timer interrupt
-  */
-@@ -80,9 +87,20 @@ static void __init netx_timer_init(void)
- 		NETX_GPIO_COUNTER_CTRL(0));
- 
- 	setup_irq(NETX_IRQ_TIMER0, &netx_timer_irq);
+ static void __init pxa_timer_init(void)
+ {
+ 	struct timespec tv;
+@@ -138,6 +132,13 @@ static void __init pxa_timer_init(void)
+ 	setup_irq(IRQ_OST0, &pxa_timer_irq);
+ 	OIER = OIER_E0;		/* enable match on timer 0 to cause interrupts */
+ 	OSCR = 0;		/* initialize free-running timer */
 +
-+	/* Setup timer one for clocksource */
-+        writel(0, NETX_GPIO_COUNTER_CTRL(1));
-+        writel(0, NETX_GPIO_COUNTER_CURRENT(1));
-+        writel(0xFFFFFFFF, NETX_GPIO_COUNTER_MAX(1));
-+
-+        writel(NETX_GPIO_COUNTER_CTRL_RUN,
-+                NETX_GPIO_COUNTER_CTRL(1));
-+
-+	clocksource_netx.mult =
-+		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_netx.shift);
-+	clocksource_register(&clocksource_netx);
++	/* on PXA OSCR runs continiously and is not written to, so we can use it
++	 * as clock source directly.
++	 */
++	clocksource_pxa.mult =
++		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_pxa.shift);
++	clocksource_register(&clocksource_pxa);
  }
  
- struct sys_timer netx_timer = {
--	.init           = netx_timer_init,
--	.offset         = netx_gettimeoffset,
-+	.init		= netx_timer_init,
- };
+ #ifdef CONFIG_NO_IDLE_HZ
+@@ -210,7 +211,6 @@ struct sys_timer pxa_timer = {
+ 	.init		= pxa_timer_init,
+ 	.suspend	= pxa_timer_suspend,
+ 	.resume		= pxa_timer_resume,
+-	.offset		= pxa_gettimeoffset,
+ #ifdef CONFIG_NO_IDLE_HZ
+ 	.dyn_tick	= &pxa_dyn_tick,
+ #endif
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
