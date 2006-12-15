@@ -1,181 +1,128 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 02/10] [ARM] 3991/1: i.MX/MX1 high resolution time source
-Date: Fri, 15 Dec 2006 23:37:00 +0100
-Message-ID: <20061215224325.112546000@metis.extern.pengutronix.de>
+Subject: [patch 08/10] [ARM] clockevent driver for arm/pxa2xx
+Date: Fri, 15 Dec 2006 23:37:06 +0100
+Message-ID: <20061215224328.706830000@metis.extern.pengutronix.de>
 References: <20061215223658.009035000@metis.extern.pengutronix.de>
 Cc: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:51231 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51238 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030362AbWLOXIN (ORCPT
+	by vger.kernel.org with ESMTP id S1753533AbWLOXJl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Dec 2006 18:08:13 -0500
+	Fri, 15 Dec 2006 18:09:41 -0500
 To: linux-rt-users@vger.kernel.org
-Content-Disposition: inline; filename=clocksource-driver-for-arm-imx.diff
+Content-Disposition: inline; filename=clockevents-driver-for-arm-pxa.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Pavel Pisa <ppisa@pikron.com>
+From: Luotao Fu <lfu@pengutronix.de>
 
-commit 86987d5bf4db7850a8dfb073c6a3506d4e0d2bcc
-Author: Pavel Pisa <ppisa@pikron.com>
-Date:   Wed Dec 6 17:19:44 2006 +0100
+Add a clockevent driver for pxa systems.
 
-    [ARM] 3991/1: i.MX/MX1 high resolution time source
-    
-Enhanced resolution for time measurement functions.
-    
-Signed-off-by: Pavel Pisa <pisa@cmp.felk.cvut.cz>
+Signed-off-by: Luotao Fu <lfu@pengutronix.de>
 Signed-off-by: Sascha Hauer <s.hauer@pengutronix.de>
-Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
 
-Index: linux-2.6.19-rt15/arch/arm/mach-imx/time.c
+Index: arch/arm/mach-pxa/time.c
 ===================================================================
---- linux-2.6.19-rt15.orig/arch/arm/mach-imx/time.c
-+++ linux-2.6.19-rt15/arch/arm/mach-imx/time.c
-@@ -14,6 +14,7 @@
- #include <linux/interrupt.h>
- #include <linux/irq.h>
- #include <linux/time.h>
-+#include <linux/clocksource.h>
+--- arch/arm/mach-pxa/time.c.orig
++++ arch/arm/mach-pxa/time.c
+@@ -19,6 +19,7 @@
+ #include <linux/errno.h>
+ #include <linux/sched.h>
+ #include <linux/clocksource.h>
++#include <linux/clockchips.h>
  
+ #include <asm/system.h>
  #include <asm/hardware.h>
- #include <asm/io.h>
-@@ -24,33 +25,7 @@
- /* Use timer 1 as system timer */
- #define TIMER_BASE IMX_TIM1_BASE
+@@ -30,6 +31,11 @@
+ #include <asm/arch/pxa-regs.h>
  
--/*
-- * Returns number of us since last clock interrupt.  Note that interrupts
-- * will have been disabled by do_gettimeoffset()
-- */
--static unsigned long imx_gettimeoffset(void)
--{
--	unsigned long ticks;
--
--	/*
--	 * Get the current number of ticks.  Note that there is a race
--	 * condition between us reading the timer and checking for
--	 * an interrupt.  We get around this by ensuring that the
--	 * counter has not reloaded between our two reads.
--	 */
--	ticks = IMX_TCN(TIMER_BASE);
--
--	/*
--	 * Interrupt pending?  If so, we've reloaded once already.
--	 */
--	if (IMX_TSTAT(TIMER_BASE) & TSTAT_COMP)
--		ticks += LATCH;
--
--	/*
--	 * Convert the ticks to usecs
--	 */
--	return (1000000 / CLK32) * ticks;
--}
-+static unsigned long evt_diff;
  
- /*
-  * IRQ handler for the timer
-@@ -58,14 +33,23 @@ static unsigned long imx_gettimeoffset(v
- static irqreturn_t
- imx_timer_interrupt(int irq, void *dev_id)
++static int __init pxa_clockevent_init(void);
++static struct clock_event_device clockevent_pxa;
++static enum clock_event_mode evt_diff;
++static u32 clockevent_mode = 0;
++
+ static inline unsigned long pxa_get_rtc_time(void)
  {
+ 	return RCNR;
+@@ -59,8 +65,6 @@ pxa_timer_interrupt(int irq, void *dev_i
+ {
+ 	int next_match;
+ 
 -	write_seqlock(&xtime_lock);
-+	uint32_t tstat;
- 
- 	/* clear the interrupt */
--	if (IMX_TSTAT(TIMER_BASE))
--		IMX_TSTAT(TIMER_BASE) = 0;
-+	tstat = IMX_TSTAT(TIMER_BASE);
-+	IMX_TSTAT(TIMER_BASE) = 0;
+-
+ #ifdef CONFIG_NO_IDLE_HZ
+ 	if (match_posponed) {
+ 		match_posponed = 0;
+@@ -85,13 +89,16 @@ pxa_timer_interrupt(int irq, void *dev_i
+ 	 * exactly one tick period which should be a pretty rare event.
+ 	 */
+ 	do {
+-		timer_tick();
++		if (clockevent_pxa.event_handler)
++			clockevent_pxa.event_handler();
+ 		OSSR = OSSR_M0;  /* Clear match on timer 0 */
 +
-+	if (tstat & TSTAT_COMP) {
-+		do {
++		if (clockevent_mode != CLOCK_EVT_PERIODIC)
++			break;
++
+ 		next_match = (OSMR0 += LATCH);
+ 	} while( (signed long)(next_match - OSCR) <= 8 );
  
--	timer_tick();
 -	write_sequnlock(&xtime_lock);
-+			write_seqlock(&xtime_lock);
-+			timer_tick();
-+			write_sequnlock(&xtime_lock);
-+			IMX_TCMP(TIMER_BASE) += evt_diff;
-+
-+		} while (unlikely((int32_t)(IMX_TCMP(TIMER_BASE)
-+					- IMX_TCN(TIMER_BASE)) < 0));
-+	}
- 
+-
  	return IRQ_HANDLED;
  }
-@@ -77,9 +61,9 @@ static struct irqaction imx_timer_irq = 
- };
  
- /*
-- * Set up timer interrupt, and return the current time in seconds.
-+ * Set up timer hardware into expected mode and state.
-  */
--static void __init imx_timer_init(void)
-+static void __init imx_timer_hardware_init(void)
- {
- 	/*
- 	 * Initialise to a known state (all timers off, and timing reset)
-@@ -87,7 +71,38 @@ static void __init imx_timer_init(void)
- 	IMX_TCTL(TIMER_BASE) = 0;
- 	IMX_TPRER(TIMER_BASE) = 0;
- 	IMX_TCMP(TIMER_BASE) = LATCH - 1;
--	IMX_TCTL(TIMER_BASE) = TCTL_CLK_32 | TCTL_IRQEN | TCTL_TEN;
+@@ -139,6 +146,9 @@ static void __init pxa_timer_init(void)
+ 	clocksource_pxa.mult =
+ 		clocksource_hz2mult(CLOCK_TICK_RATE, clocksource_pxa.shift);
+ 	clocksource_register(&clocksource_pxa);
 +
-+	IMX_TCTL(TIMER_BASE) = TCTL_FRR | TCTL_CLK_PCLK1 | TCTL_IRQEN | TCTL_TEN;
 +	evt_diff = LATCH;
-+}
++	pxa_clockevent_init();
+ }
+ 
+ #ifdef CONFIG_NO_IDLE_HZ
+@@ -215,3 +225,37 @@ struct sys_timer pxa_timer = {
+ 	.dyn_tick	= &pxa_dyn_tick,
+ #endif
+ };
 +
-+cycle_t imx_get_cycles(void)
++static void pxa_set_next_event(unsigned long evt,
++				  struct clock_event_device *unused)
 +{
-+	return IMX_TCN(TIMER_BASE);
++	OSMR0 = OSCR + evt;
++	evt_diff = evt;
 +}
 +
-+static struct clocksource clocksource_imx = {
-+	.name 		= "imx_timer1",
-+	.rating		= 200,
-+	.read		= imx_get_cycles,
-+	.mask		= 0xFFFFFFFF,
-+	.shift 		= 20,
-+	.is_continuous 	= 1,
++static void pxa_set_mode(enum clock_event_mode mode, struct clock_event_device *evt)
++{
++	clockevent_mode = mode;
++}
++
++static struct clock_event_device clockevent_pxa = {
++	.name		= "pxa_timer1",
++	.capabilities	= CLOCK_CAP_NEXTEVT | CLOCK_CAP_TICK |
++			  CLOCK_CAP_UPDATE | CLOCK_CAP_PROFILE,
++	.shift		= 32,
++	.set_mode	= pxa_set_mode,
++	.set_next_event	= pxa_set_next_event,
 +};
 +
-+static int __init imx_clocksource_init(void)
++static int __init pxa_clockevent_init(void)
 +{
-+	clocksource_imx.mult =
-+		clocksource_hz2mult(imx_get_perclk1(), clocksource_imx.shift);
-+	clocksource_register(&clocksource_imx);
++	clockevent_pxa.mult = div_sc(CLOCK_TICK_RATE, NSEC_PER_SEC,
++					clockevent_pxa.shift);
++	clockevent_pxa.max_delta_ns =
++		clockevent_delta2ns(0xfffffffe, &clockevent_pxa);
++	clockevent_pxa.min_delta_ns =
++		clockevent_delta2ns(0xf, &clockevent_pxa);
++	register_local_clockevent(&clockevent_pxa);
 +
 +	return 0;
 +}
-+
-+static void __init imx_timer_init(void)
-+{
-+	imx_timer_hardware_init();
-+	imx_clocksource_init();
- 
- 	/*
- 	 * Make irqs happen for the system timer
-@@ -97,5 +112,4 @@ static void __init imx_timer_init(void)
- 
- struct sys_timer imx_timer = {
- 	.init		= imx_timer_init,
--	.offset		= imx_gettimeoffset,
- };
-Index: linux-2.6.19-rt15/include/asm-arm/arch-imx/timex.h
-===================================================================
---- linux-2.6.19-rt15.orig/include/asm-arm/arch-imx/timex.h
-+++ linux-2.6.19-rt15/include/asm-arm/arch-imx/timex.h
-@@ -21,7 +21,6 @@
- #ifndef __ASM_ARCH_TIMEX_H
- #define __ASM_ARCH_TIMEX_H
- 
--#include <asm/hardware.h>
--#define CLOCK_TICK_RATE		(CLK32)
-+#define CLOCK_TICK_RATE		(16000000)
- 
- #endif
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
