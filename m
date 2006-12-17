@@ -1,200 +1,82 @@
-From: Pavel Pisa <pisa@cmp.felk.cvut.cz>
-Subject: Re: ARM 920T build problems for patch-2.6.19-rt1 - the second try
-Date: Sat, 16 Dec 2006 22:07:13 +0100
-Message-ID: <200612162207.14454.pisa@cmp.felk.cvut.cz>
-References: <200612152153.45910.pisa@cmp.felk.cvut.cz> <1166261139.29505.230.camel@localhost.localdomain>
+From: Sergio Monteiro Basto <sergio@sergiomb.no-ip.org>
+Subject: kernel-rt-15 give NETDEV WATCHDOG: eth1: transmit timed out
+Date: Sun, 17 Dec 2006 00:20:48 +0000
+Message-ID: <1166314848.11625.9.camel@monteirov>
+Reply-To: sergio@sergiomb.no-ip.org
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-2"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from av1.karneval.cz ([81.27.192.123]:13096 "EHLO av1.karneval.cz"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1161495AbWLPVLF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 16 Dec 2006 16:11:05 -0500
-To: tglx@linutronix.de, Sascha Hauer <s.hauer@pengutronix.de>
-In-Reply-To: <1166261139.29505.230.camel@localhost.localdomain>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-CAKYrO8MjPRobFYGc2IN"
+Cc: linux-rt <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1750706AbWLQAYT@vger.kernel.org>
+To: Kernel Mailing List <linux-kernel@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Thomas and Sascha,
 
-On Saturday 16 December 2006 10:25, Thomas Gleixner wrote:
-> On Fri, 2006-12-15 at 21:53 +0100, Pavel Pisa wrote:
-> > Index: linux-2.6.19-rt/include/asm-arm/atomic.h
-> > ===================================================================
-> > --- linux-2.6.19-rt.orig/include/asm-arm/atomic.h
-> > +++ linux-2.6.19-rt/include/asm-arm/atomic.h
-> > @@ -188,10 +188,10 @@ static inline unsigned long __cmpxchg(vo
-> >  	volatile unsigned long *p = ptr;
-> >
-> >  	if (size == 4) {
-> > -		local_irq_save(flags);
-> > +		raw_local_irq_save(flags);
-......
->
-> Ok
+--=-CAKYrO8MjPRobFYGc2IN
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: quoted-printable
 
-Thanks.
+Hi,=20
+kernel-rt-14 rocks but wiht kernel-rt-15 I got kernel: NETDEV WATCHDOG:
+eth1: transmit timed out, I downgrade to kernel-rt-14 and that got this
+problem anymore.
 
-> > ===================================================================
-> > --- linux-2.6.19-rt.orig/arch/arm/Kconfig
-> > +++ linux-2.6.19-rt/arch/arm/Kconfig
-> > @@ -19,7 +19,11 @@ config ARM
-> >
-> >  config GENERIC_TIME
-> >  	bool
-> > -	default n
-> > +	default y
-> > +
-> > +config GENERIC_CLOCKEVENTS
-> > +	bool
-> > +	default y
->
-> No. Both have to be set to default n and selected when the mach has the
-> support for it.
+I not use my on-board via-rhine II Ethernet.=20
+This tests has been made with one external Ethernet card, one Realtek
+Semiconductor Co., Ltd. RTL-8139/8139C/8139C+ (rev 10)
 
-OK
+kernel-rt-14 without notsc option and boot clean, don't have any oops
+anymore.
 
-As for high resolution timers on i.MX, I have compared
-Sascha's an my patch version and there are slight differences.
+Thanks,
+--=20
+S=E9rgio M.B.
 
-My version honors original define for selection of timer (TIMER_BASE).
-You use directly IMX_TIM1_BASE.
-On the other hand imx_timer_init() hardcodes IRQ to TIM1_INT
-	setup_irq(TIM1_INT, &imx_timer_irq);
+--=-CAKYrO8MjPRobFYGc2IN
+Content-Type: application/x-pkcs7-signature; name=smime.p7s
+Content-Disposition: attachment; filename=smime.p7s
+Content-Transfer-Encoding: base64
 
-I have tried to keep file such way, that inclusion of clock event
-is optional. I used CONFIG_HIGH_RES_TIMERS to conditionalize it,
-may it be, that CONFIG_GENERIC_CLOCKEVENTS should be used instead ???
-
-Clock events init is separated from hardware timer init in my version.
-
-But all these are minor things to choose and not important so much.
-
-The actual copy from my Linux patch stack is attached bellow.
-
-I have run more tests and when I used intervals, which are not
-aligned to power oft two, the worst cases has extended up to 550 usec
-on our board. What are experiences with other ARM based machines?
-
-Best wishes
-
-            Pavel Pisa
-
-PS: Thomas, please, can you send me pointer to the Profibus card driver
-    you have recommended to me. I have tried to contact you more times
-    about that, because my university colleagues ask for that
-    urgently, but it seems that all my e-mails have been discarded
-    somewhere on the way.
-
-===================================================================
-Subject: arm: i.MX/MX1 high resolution time events
-
-Support for POSIX high resolution times.
-
-Signed-off-by: Pavel Pisa <pisa@cmp.felk.cvut.cz>
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIGSTCCAwIw
+ggJroAMCAQICAw/vkjANBgkqhkiG9w0BAQQFADBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhh
+d3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVt
+YWlsIElzc3VpbmcgQ0EwHhcNMDUxMTI4MjIyODU2WhcNMDYxMTI4MjIyODU2WjBLMR8wHQYDVQQD
+ExZUaGF3dGUgRnJlZW1haWwgTWVtYmVyMSgwJgYJKoZIhvcNAQkBFhlzZXJnaW9Ac2VyZ2lvbWIu
+bm8taXAub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApCNuKD3pz8GRKd1q+36r
+m0z7z+TBsbTrVa45UQsEeh9OQGZIASJMH5erC0u6KbKJ+km97RLOdsgSlKG6+5xuzsk+aqU7A0Gp
+kMjzIJT7UH/bbPnIFMQNnWJxluuYq1u+v8iIbfezQy1+SXyAyBv+OC7LnCOiOar/L9AD9zDy2fPX
+EqEDlbO3CJsoaR4Va8sgtoV0NmKnAt7DA0iZ2dmlsw6Qh+4euI+FgZ2WHPBQnfJ7PfSH5GIWl/Nx
+eUqnYpDaJafk/l94nX71UifdPXDMxJJlEOGqV9l4omhNlPmsZ/zrGXgLdBv9JuPjJ9mxhgwZsZbz
+VBc8emB0i3A7E6D6rwIDAQABo1kwVzAOBgNVHQ8BAf8EBAMCBJAwEQYJYIZIAYb4QgEBBAQDAgUg
+MCQGA1UdEQQdMBuBGXNlcmdpb0BzZXJnaW9tYi5uby1pcC5vcmcwDAYDVR0TAQH/BAIwADANBgkq
+hkiG9w0BAQQFAAOBgQBIVheRn3oHTU5rgIFHcBRxkIhOYPQHKk/oX4KakCrDCxp33XAqTG3aIG/v
+dsUT/OuFm5w0GlrUTrPaKYYxxfQ00+3d8y87aX22sUdj8oXJRYiPgQiE6lqu9no8axH6UXCCbKTi
+8383JcxReoXyuP000eUggq3tWr6fE/QmONUARzCCAz8wggKooAMCAQICAQ0wDQYJKoZIhvcNAQEF
+BQAwgdExCzAJBgNVBAYTAlpBMRUwEwYDVQQIEwxXZXN0ZXJuIENhcGUxEjAQBgNVBAcTCUNhcGUg
+VG93bjEaMBgGA1UEChMRVGhhd3RlIENvbnN1bHRpbmcxKDAmBgNVBAsTH0NlcnRpZmljYXRpb24g
+U2VydmljZXMgRGl2aXNpb24xJDAiBgNVBAMTG1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBDQTEr
+MCkGCSqGSIb3DQEJARYccGVyc29uYWwtZnJlZW1haWxAdGhhd3RlLmNvbTAeFw0wMzA3MTcwMDAw
+MDBaFw0xMzA3MTYyMzU5NTlaMGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3Vs
+dGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWlu
+ZyBDQTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxKY8VXNV+065yplaHmjAdQRwnd/p/6Me
+7L3N9VvyGna9fww6YfK/Uc4B1OVQCjDXAmNaLIkVcI7dyfArhVqqP3FWy688Cwfn8R+RNiQqE88r
+1fOCdz0Dviv+uxg+B79AgAJk16emu59l0cUqVIUPSAR/p7bRPGEEQB5kGXJgt/sCAwEAAaOBlDCB
+kTASBgNVHRMBAf8ECDAGAQH/AgEAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwudGhhd3Rl
+LmNvbS9UaGF3dGVQZXJzb25hbEZyZWVtYWlsQ0EuY3JsMAsGA1UdDwQEAwIBBjApBgNVHREEIjAg
+pB4wHDEaMBgGA1UEAxMRUHJpdmF0ZUxhYmVsMi0xMzgwDQYJKoZIhvcNAQEFBQADgYEASIzRUIPq
+Cy7MDaNmrGcPf6+svsIXoUOWlJ1/TCG4+DYfqi2fNi/A9BxQIJNwPP2t4WFiw9k6GX6EsZkbAMUa
+C4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341YheILcIRk13iSx
+0x1G/11fZU8xggHvMIIB6wIBATBpMGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29u
+c3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNz
+dWluZyBDQQIDD++SMAkGBSsOAwIaBQCgXTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqG
+SIb3DQEJBTEPFw0wNjEyMTcwMDIwMzVaMCMGCSqGSIb3DQEJBDEWBBRpq+gCg2qvLrcySPrMlPz8
+yrI1LTANBgkqhkiG9w0BAQEFAASCAQAGJnmr/qmUbfjPAtdc26ivaxxJr6eUj7X12s198pfroAgT
+lXI46yP4HTVY7+koRG/xQu70CtvqWLOgWoqRTAQ82Q14Wq24uwqMZH5vM84QdH3NhB870Wp1Okke
+g5Ue2r5Ik3yNJNK/6eZwXeQBVqY7f+dSMHUCfrRh7MgbyCXgBNAjfuqjz6wlVv5R+7xNDoK1/i9s
+dHJ+Ljbrc1EwqP9SH0jcTJZ9UYdbhsm1+YldV58omSZ4F0FevmdKtsNui6gUQQ6G2yh2OxwvrEAB
+ZARw1i6IqFa+WsGbSo7rqR43c6lf9SW/6pYiRcCbnBW5cbRCf+ctEzqRBzVRFDoGyYxLAAAAAAAA
 
 
- arch/arm/mach-imx/time.c |   57 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 57 insertions(+)
 
-Index: linux-2.6.19-rt/arch/arm/mach-imx/time.c
-===================================================================
---- linux-2.6.19-rt.orig/arch/arm/mach-imx/time.c
-+++ linux-2.6.19-rt/arch/arm/mach-imx/time.c
-@@ -15,6 +15,9 @@
- #include <linux/irq.h>
- #include <linux/time.h>
- #include <linux/clocksource.h>
-+#ifdef CONFIG_HIGH_RES_TIMERS
-+#include <linux/clockchips.h>
-+#endif
- 
- #include <asm/hardware.h>
- #include <asm/io.h>
-@@ -25,6 +28,11 @@
- /* Use timer 1 as system timer */
- #define TIMER_BASE IMX_TIM1_BASE
- 
-+#ifdef CONFIG_HIGH_RES_TIMERS
-+static struct clock_event_device clockevent_imx;
-+static enum clock_event_mode clockevent_mode = CLOCK_EVT_PERIODIC;
-+#endif
-+
- static unsigned long evt_diff;
- 
- /*
-@@ -42,9 +50,16 @@ imx_timer_interrupt(int irq, void *dev_i
- 	if (tstat & TSTAT_COMP) {
- 		do {
- 
-+#ifdef CONFIG_HIGH_RES_TIMERS
-+			if (clockevent_imx.event_handler)
-+				clockevent_imx.event_handler();
-+			if  (likely(clockevent_mode != CLOCK_EVT_PERIODIC))
-+				break;
-+#else
- 			write_seqlock(&xtime_lock);
- 			timer_tick();
- 			write_sequnlock(&xtime_lock);
-+#endif
- 			IMX_TCMP(TIMER_BASE) += evt_diff;
- 
- 		} while (unlikely((int32_t)(IMX_TCMP(TIMER_BASE)
-@@ -99,11 +114,53 @@ static int __init imx_clocksource_init(v
- 	return 0;
- }
- 
-+#ifdef CONFIG_HIGH_RES_TIMERS
-+
-+static void imx_set_next_event(unsigned long evt,
-+				  struct clock_event_device *unused)
-+{
-+	evt_diff = evt;
-+	IMX_TCMP(TIMER_BASE) = IMX_TCN(TIMER_BASE) + evt;
-+}
-+
-+static void imx_set_mode(enum clock_event_mode mode, struct clock_event_device *evt)
-+{
-+	clockevent_mode = mode;
-+}
-+
-+static struct clock_event_device clockevent_imx = {
-+	.name		= "imx_timer1",
-+	.capabilities	= CLOCK_CAP_NEXTEVT | CLOCK_CAP_TICK |
-+			  CLOCK_CAP_UPDATE | CLOCK_CAP_PROFILE,
-+	.shift		= 32,
-+	.set_mode	= imx_set_mode,
-+	.set_next_event	= imx_set_next_event,
-+};
-+
-+static int __init imx_clockevent_init(void)
-+{
-+	clockevent_imx.mult = div_sc(imx_get_perclk1(), NSEC_PER_SEC,
-+					clockevent_imx.shift);
-+	clockevent_imx.max_delta_ns =
-+		clockevent_delta2ns(0xfffffffe, &clockevent_imx);
-+	clockevent_imx.min_delta_ns =
-+		clockevent_delta2ns(0xf, &clockevent_imx);
-+	register_local_clockevent(&clockevent_imx);
-+
-+	return 0;
-+}
-+#endif
-+
-+
- static void __init imx_timer_init(void)
- {
- 	imx_timer_hardware_init();
- 	imx_clocksource_init();
- 
-+#ifdef CONFIG_HIGH_RES_TIMERS
-+	imx_clockevent_init();
-+#endif
-+
- 	/*
- 	 * Make irqs happen for the system timer
- 	 */
+--=-CAKYrO8MjPRobFYGc2IN--
