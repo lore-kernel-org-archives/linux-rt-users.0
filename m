@@ -1,39 +1,53 @@
 From: Sergio Monteiro Basto <sergio@sergiomb.no-ip.org>
-Subject: kernel-rt-15 give NETDEV WATCHDOG: eth1: transmit timed out
-Date: Sun, 17 Dec 2006 00:20:48 +0000
-Message-ID: <1166314848.11625.9.camel@monteirov>
+Subject: Re: kernel-rt-15 give NETDEV WATCHDOG: eth1: transmit timed out
+Date: Mon, 18 Dec 2006 00:28:26 +0000
+Message-ID: <1166401706.3575.5.camel@monteirov>
+References: <1166314848.11625.9.camel@monteirov>
 Reply-To: sergio@sergiomb.no-ip.org
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-CAKYrO8MjPRobFYGc2IN"
+Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-JDM4Y5LHfRVs5OJB4h2j"
 Cc: linux-rt <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1750706AbWLQAYT@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp4.netcabo.pt ([212.113.174.31]:51622 "EHLO
+	exch01smtp11.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S932119AbWLRA2Z (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 17 Dec 2006 19:28:25 -0500
 To: Kernel Mailing List <linux-kernel@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <1166314848.11625.9.camel@monteirov>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
---=-CAKYrO8MjPRobFYGc2IN
+--=-JDM4Y5LHfRVs5OJB4h2j
 Content-Type: text/plain; charset=ISO-8859-15
 Content-Transfer-Encoding: quoted-printable
 
-Hi,=20
-kernel-rt-14 rocks but wiht kernel-rt-15 I got kernel: NETDEV WATCHDOG:
-eth1: transmit timed out, I downgrade to kernel-rt-14 and that got this
-problem anymore.
+After many hours of stressing network I could reproduce once NETDEV
+WATCHDOG: eth1: transmit timed out on rt-14, but is not so frequently as
+on rt15. I just reproduce one time on rt14 with many many stress, on
+rt15 is much more frequently.
 
-I not use my on-board via-rhine II Ethernet.=20
-This tests has been made with one external Ethernet card, one Realtek
-Semiconductor Co., Ltd. RTL-8139/8139C/8139C+ (rev 10)
 
-kernel-rt-14 without notsc option and boot clean, don't have any oops
-anymore.
-
-Thanks,
+On Sun, 2006-12-17 at 00:20 +0000, Sergio Monteiro Basto wrote:
+> Hi,=20
+> kernel-rt-14 rocks but wiht kernel-rt-15 I got kernel: NETDEV WATCHDOG:
+> eth1: transmit timed out, I downgrade to kernel-rt-14 and that got this
+> problem anymore.
+>=20
+> I not use my on-board via-rhine II Ethernet.=20
+> This tests has been made with one external Ethernet card, one Realtek
+> Semiconductor Co., Ltd. RTL-8139/8139C/8139C+ (rev 10)
+>=20
+> kernel-rt-14 without notsc option and boot clean, don't have any oops
+> anymore.
+>=20
+> Thanks,
 --=20
 S=E9rgio M.B.
 
---=-CAKYrO8MjPRobFYGc2IN
+--=-JDM4Y5LHfRVs5OJB4h2j
 Content-Type: application/x-pkcs7-signature; name=smime.p7s
 Content-Disposition: attachment; filename=smime.p7s
 Content-Transfer-Encoding: base64
@@ -70,13 +84,13 @@ C4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341YheILcIRk13iSx
 0x1G/11fZU8xggHvMIIB6wIBATBpMGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29u
 c3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNz
 dWluZyBDQQIDD++SMAkGBSsOAwIaBQCgXTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqG
-SIb3DQEJBTEPFw0wNjEyMTcwMDIwMzVaMCMGCSqGSIb3DQEJBDEWBBRpq+gCg2qvLrcySPrMlPz8
-yrI1LTANBgkqhkiG9w0BAQEFAASCAQAGJnmr/qmUbfjPAtdc26ivaxxJr6eUj7X12s198pfroAgT
-lXI46yP4HTVY7+koRG/xQu70CtvqWLOgWoqRTAQ82Q14Wq24uwqMZH5vM84QdH3NhB870Wp1Okke
-g5Ue2r5Ik3yNJNK/6eZwXeQBVqY7f+dSMHUCfrRh7MgbyCXgBNAjfuqjz6wlVv5R+7xNDoK1/i9s
-dHJ+Ljbrc1EwqP9SH0jcTJZ9UYdbhsm1+YldV58omSZ4F0FevmdKtsNui6gUQQ6G2yh2OxwvrEAB
-ZARw1i6IqFa+WsGbSo7rqR43c6lf9SW/6pYiRcCbnBW5cbRCf+ctEzqRBzVRFDoGyYxLAAAAAAAA
+SIb3DQEJBTEPFw0wNjEyMTgwMDI4MThaMCMGCSqGSIb3DQEJBDEWBBQ2cYnfgb8WdY2lrc25QMns
+MZVvlTANBgkqhkiG9w0BAQEFAASCAQCZXDrL7Hjobz7G0sbsjr/QkRh8vVFLkCVbx7YccImWttsu
+xARESL7m0tf7/XTByfuTbi8kK0ldrFHP280BKkFo8fLyiSxfF+EhdHBtV8BLD3Sl2l4GqfVPabSE
+kGteHaDJlvrr18vNXxpHlklNV7cLXuNvtkbPfI8lleqw2Ovc3d8HrwIdBxzaOFvClnhMW/GfavdL
+szCW3lMTG8CnGoRzMoaxIXD7x4hy5GSKRRu8xuIKXvnYnLftHA3OZ6IIsES16Sn2UXw2i51cVblj
+HDQgG44sfOtWVtSNnpVn8Sh34b3BDfEyhzY763ONqGORlWVPQekdSr3FG0ndqKuQcE38AAAAAAAA
 
 
 
---=-CAKYrO8MjPRobFYGc2IN--
+--=-JDM4Y5LHfRVs5OJB4h2j--
