@@ -1,62 +1,43 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: 2.6.20-rc1-rt1 Panic on reboot after fresh kernel compile
-Date: Thu, 21 Dec 2006 16:31:45 +0100
-Message-ID: <20061221153142.GA19242@elte.hu>
-References: <458AA2F4.4080601@atl.lmco.com>
+From: Dirk Behme <dirk.behme@googlemail.com>
+Subject: Re: Patch serie sent to linux-rt-user failed to apply
+Date: Fri, 22 Dec 2006 08:16:53 +0100
+Message-ID: <458B8665.9040606@gmail.com>
+References: <a0580c510612210603o36539246w8e9be6cf3427d69e@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org,
-	"Gautam H. Thaker" <gthaker@atl.lmco.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:46969 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1422868AbWLUPej (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Dec 2006 10:34:39 -0500
-To: Jonathan Walsh <jwalsh@atl.lmco.com>
-Content-Disposition: inline
-In-Reply-To: <458AA2F4.4080601@atl.lmco.com>
+Received: from ug-out-1314.google.com ([66.249.92.171]:63581 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1945954AbWLVHRA (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Dec 2006 02:17:00 -0500
+Received: by ug-out-1314.google.com with SMTP id 44so2894559uga
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Dec 2006 23:16:59 -0800 (PST)
+To: Eduardo Valentin <edubezval@gmail.com>
+In-Reply-To: <a0580c510612210603o36539246w8e9be6cf3427d69e@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Eduardo Valentin wrote:
+>   I'm trying to apply your patch serie sent to linux-rt-user and they
+> are failing while applying.
+> I followed the instructions as in
+> http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00079.html
+> 
+> linux-2.6.19 + patch-2.6.20-rc1 + patch-2.6.20-rc1-rt0 + your patch serie
+> 
+>  Do you have any idea?
 
-* Jonathan Walsh <jwalsh@atl.lmco.com> wrote:
+I think you are working on OMAP?
 
-> I also saw this yesterday in 2.6.19.1-rt15, retried today with the ne=
-w=20
-> patch and saw the same result.  This error only occurs with the RT=20
-> patches applied, 2.6.20-rc1 (and 2.6.19.1) boots fine with the same=20
-> config.  After a clean compilation and install run, I reboot and=20
-> receive the following console error message before hanging:
->=20
-> ...
-> isapnp: Scanning for PnP cards...
-> isapnp: No Plug & Play device found
-> Real Time Clock Driver v1.12ac
-> Serial: 8250/16550 driver $Revision: 1.90 $ 4 ports, IRQ sharing enab=
-led
-> =FFserial8250: ttyS0 at I/O 0x3f8 (irq =3D 4) is a NS16550A
-> [a few hundred junk characters]
-> Creating root deKernel panic - not syncing: Attempted to kill init!
-> [<c0118c60>] panic+0x50/0x100
-> [<c011bd59>] do_exit+0x6d9/0xa50
-> [<c0158fe9>] remove_vma+0x39/0x50
-> [<c015a56a>] do_munmap+0x19a/0x1f0
-> [<c011c104>] do_group_exit+0x34/0xb0
-> [<c015a608>] sys_munmap+0x48/0x60
-> [<c010316f>] syscall_call+0x7/0xb
-> [<c044007b>] packet_seq_start+0x2b/0x80
->=20
-> This is of course snipped to the last few relevant lines.  This is a=20
-> reproducible message so I can rerun and give the entire console log i=
-f=20
-> it would be helpful, or if any other information at all would be=20
-> useful.
+Where/What fails?
 
-yeah, please try to capture a full (serial?) log of the incident. Also=20
-please enable CONFIG_UNWIND_INFO and CONFIG_STACK_UNWIND to get easier=20
-to read stack-traces. (the packet_seq_start() entry looks really out of=
-=20
-place in the trace above)
+Can you try patch-2.6.20-rc1-rt3 instead? So
 
-	Ingo
+linux-2.6.19 + patch-2.6.20-rc1 + patch-2.6.20-rc1-rt3
+
+My patch series should be included in it now.
+
+Dirk
