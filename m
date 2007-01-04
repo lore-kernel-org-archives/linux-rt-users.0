@@ -1,35 +1,35 @@
-From: Steven Scholz <steven.scholz@imc-berlin.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: cyclictest hangs with posix interval timers !?
-Date: Thu, 04 Jan 2007 14:32:51 +0100
-Message-ID: <459D0203.5070202@imc-berlin.de>
-References: <459CE84F.8000009@imc-berlin.de> <1167917413.23138.20.camel@localhost.localdomain>
+Date: Thu, 04 Jan 2007 14:47:31 +0100
+Message-ID: <1167918451.23138.31.camel@localhost.localdomain>
+References: <459CE84F.8000009@imc-berlin.de>
+	 <20070104115215.GN29495@pengutronix.de>  <459CFDF1.80807@imc-berlin.de>
+	 <1167917257.23138.17.camel@localhost.localdomain>
+	 <459D019E.1070906@imc-berlin.de>
+Reply-To: tglx@linutronix.de
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
+Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.imc-berlin.de ([217.110.46.186]:2395 "EHLO
-	mail.imc-berlin.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S964831AbXADNc4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jan 2007 08:32:56 -0500
-To: tglx@linutronix.de
-In-Reply-To: <1167917413.23138.20.camel@localhost.localdomain>
+Received: from www.osadl.org ([213.239.205.134]:49206 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S964828AbXADNmI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Jan 2007 08:42:08 -0500
+To: Steven Scholz <steven.scholz@imc-berlin.de>
+In-Reply-To: <459D019E.1070906@imc-berlin.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
-> On Thu, 2007-01-04 at 12:43 +0100, Steven Scholz wrote:
->> So I recon it has something to do with the rootfs I am using (created with
->> PTXdist).
+On Thu, 2007-01-04 at 14:31 +0100, Steven Scholz wrote:
+> > cyclictest does not need any extra functionality. You only need a new
+> > glibc if you want to use priority inheritance mutexes.
 > 
-> Can you try to use a standard root filesystem (fedora, debian or
-> whatever you have handy) ?
+> Ok. Then any idea how I could find out why sigwait() is blocking?
 
-Nothing handy. :-(
+Can you strace cyclictest and send me the output ?
 
-But of course I could download some and install it.
+# strace -f cyclictest -t 1 -p 80 -i 10000 -l 10 -q
 
-Which would you recommend? Shell I try some recent Fedora?
-
-Steven
+	tglx
