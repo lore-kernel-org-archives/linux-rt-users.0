@@ -1,35 +1,59 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: cyclictest hangs with posix interval timers !?
-Date: Thu, 4 Jan 2007 12:52:15 +0100
-Message-ID: <20070104115215.GN29495@pengutronix.de>
-References: <459CE84F.8000009@imc-berlin.de>
+From: Steven Scholz <steven.scholz@imc-berlin.de>
+Subject: cyclictest hangs with posix interval timers !?
+Date: Thu, 04 Jan 2007 12:43:11 +0100
+Message-ID: <459CE84F.8000009@imc-berlin.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:48696 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S964802AbXADLwO (ORCPT
+Received: from mail.imc-berlin.de ([217.110.46.186]:4703 "EHLO
+	mail.imc-berlin.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S964807AbXADMDl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jan 2007 06:52:14 -0500
-To: Steven Scholz <steven.scholz@imc-berlin.de>
-Content-Disposition: inline
-In-Reply-To: <459CE84F.8000009@imc-berlin.de>
+	Thu, 4 Jan 2007 07:03:41 -0500
+To: linux-rt-users@vger.kernel.org
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jan 04, 2007 at 12:43:11PM +0100, Steven Scholz wrote:
-> Will I need a special version of glibc or libpthread? NTPL?
-> I am using a cross tool chain gcc-3.4.4-glibc-2.3.5 for i686 built with
-> "crosstool".
+Hi,
 
-You usually need NPTL, and if I remember correctly you also needed the
-hrtimer-support lib for older glibcs.
+These are my very first steps into CONFIG_PREEMPT_RT.
 
-Robert 
--- 
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+I built a kernel 2.6.20-rc3-rt0, booted it on a x86 based single board
+computer and tried to run cyclictest.
+
+"cyclictest -t 1 -p 80 -i 10000 -l 10000 -n" runs fine.
+
+But "cyclictest -t 1 -p 80 -i 10000 -l 10000" hangs.
+
+Putting in some printfs I got the impression that the timerthread() blocks
+at sigwait()
+
+		case MODE_SYS_ITIMER:
+			if (sigwait(&sigset, &sigs) < 0) {
+				goto out;
+			}
+			break;
+
+So I I booted the OSADL Live CD provided at
+
+	http://www.osadl.org/projects-live-cd.0.html
+
+on the same board and cyclictest runs fine in both modes.
+
+I build a kernel 2.6.17 + 2.6.17-rt3 patch with the same kernel config used
+on this CD. But cyclictest hangs when using interval timer.
+
+So I recon it has something to do with the rootfs I am using (created with
+PTXdist).
+
+Will I need a special version of glibc or libpthread? NTPL?
+I am using a cross tool chain gcc-3.4.4-glibc-2.3.5 for i686 built with
+"crosstool".
+
+Any ideas what I could be missing? Or how I could find out.
+
+Thanks a million!
+
+--
+Steven
