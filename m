@@ -1,56 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
 Subject: Re: cyclictest hangs with posix interval timers !?
-Date: Fri, 05 Jan 2007 09:48:02 +0100
-Message-ID: <1167986882.23138.52.camel@localhost.localdomain>
-References: <459CE84F.8000009@imc-berlin.de>
-	 <20070104115215.GN29495@pengutronix.de>  <459CFDF1.80807@imc-berlin.de>
-	 <1167917257.23138.17.camel@localhost.localdomain>
-	 <459D16D1.4040306@imc-berlin.de>
-Reply-To: tglx@linutronix.de
+Date: Fri, 5 Jan 2007 10:16:28 +0100
+Message-ID: <20070105091628.GU29495@pengutronix.de>
+References: <459CE84F.8000009@imc-berlin.de> <20070104115215.GN29495@pengutronix.de> <459CFDF1.80807@imc-berlin.de> <1167917257.23138.17.camel@localhost.localdomain> <459D16D1.4040306@imc-berlin.de> <1167986882.23138.52.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Steven Scholz <steven.scholz@imc-berlin.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:40068 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1030374AbXAEImg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Jan 2007 03:42:36 -0500
-To: Steven Scholz <steven.scholz@imc-berlin.de>
-In-Reply-To: <459D16D1.4040306@imc-berlin.de>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:34775 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S965101AbXAEJQ2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Jan 2007 04:16:28 -0500
+To: Thomas Gleixner <tglx@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <1167986882.23138.52.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-01-04 at 16:01 +0100, Steven Scholz wrote:
-> > cyclictest does not need any extra functionality. You only need a new
-> > glibc if you want to use priority inheritance mutexes.
-> 
-> So IIUC the cyclictest should run and give results even on kernels with no
-> real time, preempt, lowlatency support at all?
+On Fri, Jan 05, 2007 at 09:48:02AM +0100, Thomas Gleixner wrote:
+> This looks like a serious problem with your cross compiler / glibc
+> setup. Can you compile cyclictest on one of your desktop machines and
+> link it statically?
 
-Right.
+Steven, if this is a standard ptxdist toolchain it is built with stock
+crosstool, so if there is really a problem with the toolchain you might
+want to check if crosstool does everything right. However, we havn't
+seen such effects, although all our realtime testing is currently done
+with the soon-to-be-released OSELAS.Toolchain() toolchains, which are
+built with native PTXdist instead of crosstool.
 
-> Just tried it on a plain 2.6.19. posix timer version still hangs ...
-
-That's caused by user space breakage. Looking at the strace you sent:
-
-[pid   932] getpid()                    = 932
-[pid   932] rt_sigprocmask(SIG_SETMASK, [ALRM RTMIN], NULL, 8) = 0
-[pid   932] gettid()                    = 932
-[pid   932] rt_sigprocmask(SIG_BLOCK, [ALRM], NULL, 8) = 0
-[pid   932] sched_setscheduler(0, SCHED_FIFO, { 80 }) = 0
-[pid   932] clock_gettime(CLOCK_MONOTONIC, {325, 223507890}) = 0
-[pid   932] rt_sigaction(SIGALRM, {0xb7ed72c0, ~[], 0}, NULL, 8) = 0
-[pid   932] rt_sigprocmask(SIG_BLOCK, NULL, [ALRM RTMIN], 8) = 0
-[pid   932] rt_sigsuspend(~[ALRM RT_1] <unfinished ...>
-[pid   930] <... nanosleep resumed> NULL) = 0
-
-There is neither a call of timer_create() nor of timer_settime(). So the
-posix timer is not setup, which results in the endless wait for the
-signal.
-
-This looks like a serious problem with your cross compiler / glibc
-setup. Can you compile cyclictest on one of your desktop machines and
-link it statically ?
-
-	tglx
+Robert
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
