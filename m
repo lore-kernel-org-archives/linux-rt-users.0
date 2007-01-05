@@ -1,49 +1,56 @@
-From: Steven Scholz <steven.scholz@imc-berlin.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: cyclictest hangs with posix interval timers !?
-Date: Thu, 04 Jan 2007 16:01:37 +0100
-Message-ID: <459D16D1.4040306@imc-berlin.de>
-References: <459CE84F.8000009@imc-berlin.de>	 <20070104115215.GN29495@pengutronix.de>  <459CFDF1.80807@imc-berlin.de> <1167917257.23138.17.camel@localhost.localdomain>
+Date: Fri, 05 Jan 2007 09:48:02 +0100
+Message-ID: <1167986882.23138.52.camel@localhost.localdomain>
+References: <459CE84F.8000009@imc-berlin.de>
+	 <20070104115215.GN29495@pengutronix.de>  <459CFDF1.80807@imc-berlin.de>
+	 <1167917257.23138.17.camel@localhost.localdomain>
+	 <459D16D1.4040306@imc-berlin.de>
+Reply-To: tglx@linutronix.de
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.imc-berlin.de ([217.110.46.186]:4956 "EHLO
-	mail.imc-berlin.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S964890AbXADPBn (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jan 2007 10:01:43 -0500
-Received: from mailserver.berlin.imc-berlin.de (mailserver.berlin.imc-berlin.de [10.0.0.19])
-	by mail.imc-berlin.de (Postfix) with ESMTP id E3AE02F02C
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Jan 2007 16:55:58 +0100 (CET)
-Received: from localhost (localhost [127.0.0.1])
-	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id 1BA1510B46
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Jan 2007 16:01:41 +0100 (CET)
-Received: from [10.0.2.10] (scholz.berlin.imc-berlin.de [10.0.2.10])
-	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id 34C1B10760
-	for <linux-rt-users@vger.kernel.org>; Thu,  4 Jan 2007 16:01:40 +0100 (CET)
-In-Reply-To: <1167917257.23138.17.camel@localhost.localdomain>
-To: unlisted-recipients:; (no To-header on input)
+Received: from www.osadl.org ([213.239.205.134]:40068 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1030374AbXAEImg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Jan 2007 03:42:36 -0500
+To: Steven Scholz <steven.scholz@imc-berlin.de>
+In-Reply-To: <459D16D1.4040306@imc-berlin.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
-> On Thu, 2007-01-04 at 14:15 +0100, Steven Scholz wrote:
->> Robert Schwebel wrote:
->>> On Thu, Jan 04, 2007 at 12:43:11PM +0100, Steven Scholz wrote:
->>>> Will I need a special version of glibc or libpthread? NTPL?
->>>> I am using a cross tool chain gcc-3.4.4-glibc-2.3.5 for i686 built with
->>>> "crosstool".
->>> You usually need NPTL, and if I remember correctly you also needed the
->>> hrtimer-support lib for older glibcs.
->> Any pointers where I could find this hrtimer-support?
+On Thu, 2007-01-04 at 16:01 +0100, Steven Scholz wrote:
+> > cyclictest does not need any extra functionality. You only need a new
+> > glibc if you want to use priority inheritance mutexes.
 > 
-> cyclictest does not need any extra functionality. You only need a new
-> glibc if you want to use priority inheritance mutexes.
+> So IIUC the cyclictest should run and give results even on kernels with no
+> real time, preempt, lowlatency support at all?
 
-So IIUC the cyclictest should run and give results even on kernels with no
-real time, preempt, lowlatency support at all?
+Right.
 
-Just tried it on a plain 2.6.19. posix timer version still hangs ...
---
-Steven
+> Just tried it on a plain 2.6.19. posix timer version still hangs ...
+
+That's caused by user space breakage. Looking at the strace you sent:
+
+[pid   932] getpid()                    = 932
+[pid   932] rt_sigprocmask(SIG_SETMASK, [ALRM RTMIN], NULL, 8) = 0
+[pid   932] gettid()                    = 932
+[pid   932] rt_sigprocmask(SIG_BLOCK, [ALRM], NULL, 8) = 0
+[pid   932] sched_setscheduler(0, SCHED_FIFO, { 80 }) = 0
+[pid   932] clock_gettime(CLOCK_MONOTONIC, {325, 223507890}) = 0
+[pid   932] rt_sigaction(SIGALRM, {0xb7ed72c0, ~[], 0}, NULL, 8) = 0
+[pid   932] rt_sigprocmask(SIG_BLOCK, NULL, [ALRM RTMIN], 8) = 0
+[pid   932] rt_sigsuspend(~[ALRM RT_1] <unfinished ...>
+[pid   930] <... nanosleep resumed> NULL) = 0
+
+There is neither a call of timer_create() nor of timer_settime(). So the
+posix timer is not setup, which results in the endless wait for the
+signal.
+
+This looks like a serious problem with your cross compiler / glibc
+setup. Can you compile cyclictest on one of your desktop machines and
+link it statically ?
+
+	tglx
