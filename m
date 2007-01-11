@@ -1,40 +1,58 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: Realtime preemption patches
-Date: Wed, 10 Jan 2007 11:36:46 +0100
-Message-ID: <1168425406.29937.1.camel@godzilla.tecnorama.it>
+From: Steven Scholz <steven.scholz@imc-berlin.de>
+Subject: appearance of /proc/interrupts ?
+Date: Thu, 11 Jan 2007 10:51:28 +0100
+Message-ID: <45A608A0.1050407@imc-berlin.de>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:55881 "EHLO hermes.xcon.it"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S964840AbXAJK5s (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Jan 2007 05:57:48 -0500
+Received: from mail.imc-berlin.de ([217.110.46.186]:2502 "EHLO
+	mail.imc-berlin.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965359AbXAKJvb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Jan 2007 04:51:31 -0500
+Received: from mailserver.berlin.imc-berlin.de (mailserver.berlin.imc-berlin.de [10.0.0.19])
+	by mail.imc-berlin.de (Postfix) with ESMTP id 606ED2F02B
+	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 11:45:47 +0100 (CET)
 Received: from localhost (localhost [127.0.0.1])
-	by hermes.xcon.it (Postfix) with ESMTP id AB0F76080EE
-	for <linux-rt-users@vger.kernel.org>; Wed, 10 Jan 2007 11:37:05 +0100 (CET)
-Received: from hermes.xcon.it ([127.0.0.1])
-	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id bVhbCQzTHlkO for <linux-rt-users@vger.kernel.org>;
-	Wed, 10 Jan 2007 11:36:57 +0100 (CET)
-Received: from [192.168.100.121] (unknown [213.203.157.83])
-	(Authenticated sender: aib@texware.it)
-	by hermes.xcon.it (Postfix) with ESMTP id 5DB426080E9
-	for <linux-rt-users@vger.kernel.org>; Wed, 10 Jan 2007 11:36:57 +0100 (CET)
+	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id 6EAA610B6D
+	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 10:51:29 +0100 (CET)
+Received: from [10.0.2.10] (scholz.berlin.imc-berlin.de [10.0.2.10])
+	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id 89701108D3
+	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 10:51:28 +0100 (CET)
 To: linux-rt-users@vger.kernel.org
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi to All,
+Hi,
 
-Excuse me for my very bad english. Feel free to offend me for this in
-private. :-)
+with Linux 2.6.17-rt3 /proc/interrupts looks as described on
 
-I have noticed that in the last realtime preemption patches there are
-parts that seems not closely relating with full preemption or high
-resolution timers (i refer to kvm). It si true? There are other?
+	http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO
 
-Thanks in advance.
+           CPU0
+  0:      11188  XT-PIC         [........N/  0]-level    pit
+  1:          8  XT-PIC         [........./  0]-level    i8042
+  2:          0  XT-PIC         [........N/  0]-level    cascade
+  4:        131  XT-PIC         [........./ 10]-level    serial
+ 11:         10  XT-PIC         [........./  0]-level    eth0
+ 14:       4087  XT-PIC         [........./  0]-level    ide0
 
-Best regards,
-Alessio
+But when using a Linux 2.6.19.1-rt15 it looks like
+
+           CPU0
+  0:      15499   IO-APIC-edge      timer
+  1:          8   IO-APIC-edge      i8042
+  4:        161   IO-APIC-edge      serial
+  9:          0   IO-APIC-fasteoi   acpi
+ 12:          3   IO-APIC-edge      i8042
+ 14:       4082   IO-APIC-edge      ide0
+ 16:         93   IO-APIC-fasteoi   eth0
+
+which is pretty much the same as a vanilla 2.6.19.
+
+What does it mean? Is RT PREEMPT not working correctly?
+
+Thanks,
+
+Steven
