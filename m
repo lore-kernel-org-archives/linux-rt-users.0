@@ -1,40 +1,36 @@
-From: Steven Scholz <steven.scholz@imc-berlin.de>
-Subject: generating 100% load for cyclictest ?
-Date: Thu, 11 Jan 2007 15:56:09 +0100
-Message-ID: <45A65009.8070902@imc-berlin.de>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: generating 100% load for cyclictest ?
+Date: Thu, 11 Jan 2007 16:10:27 +0100
+Message-ID: <20070111151027.GS29495@pengutronix.de>
+References: <45A65009.8070902@imc-berlin.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-15
+Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.imc-berlin.de ([217.110.46.186]:4945 "EHLO
-	mail.imc-berlin.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1030240AbXAKO4M (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:51725 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750696AbXAKPK2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Jan 2007 09:56:12 -0500
-Received: from mailserver.berlin.imc-berlin.de (mailserver.berlin.imc-berlin.de [10.0.0.19])
-	by mail.imc-berlin.de (Postfix) with ESMTP id 8BDDC2F02E
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 16:50:28 +0100 (CET)
-Received: from localhost (localhost [127.0.0.1])
-	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id 9174910B6D
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 15:56:10 +0100 (CET)
-Received: from [10.0.2.10] (scholz.berlin.imc-berlin.de [10.0.2.10])
-	by mailserver.berlin.imc-berlin.de (Postfix) with ESMTP id AE29CA0AD
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Jan 2007 15:56:09 +0100 (CET)
-To: linux-rt-users@vger.kernel.org
+	Thu, 11 Jan 2007 10:10:28 -0500
+To: Steven Scholz <steven.scholz@imc-berlin.de>
+Content-Disposition: inline
+In-Reply-To: <45A65009.8070902@imc-berlin.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Thu, Jan 11, 2007 at 03:56:09PM +0100, Steven Scholz wrote:
+> How is this load created? Any recommendations?
 
-on http://rt.wiki.kernel.org/index.php/Cyclictest some test cases mention a
-"100% load".
+At least these should generate significant load:
 
-How is this load created? Any recommendations?
+- hackbench
+- while true; do find /; done
+- calibrator (for cache load)
 
-I am testing on an embedded system with a small rootfs. So I don't have a
-gcc running on the target that could compile the kernel or something ...
-
-Thanks.
-
+Robert
 -- 
-Steven
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
