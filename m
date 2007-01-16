@@ -1,111 +1,268 @@
-From: Sascha Hauer <s.hauer@pengutronix.de>
-Subject: Re: 2.6.20-rc4-rt3 on i.MX oopses !?
-Date: Fri, 12 Jan 2007 20:20:47 +0100
-Message-ID: <20070112192047.GA6111@himalia.labnet.pengutronix.de>
-References: <45A7C96F.90609@imc-berlin.de>
+From: "Rui Nuno Capela" <rncbc@rncbc.org>
+Subject: Two 2.6.20-rc5-rt2 issues
+Date: Tue, 16 Jan 2007 10:29:23 -0000 (WET)
+Message-ID: <5114.194.65.103.1.1168943363.squirrel@www.rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed;boundary="----=_20070116102923_25525"
+Content-Transfer-Encoding: 8bit
 Cc: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:38526 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S964956AbXALTVA (ORCPT
+Received: from smtp3.netcabo.pt ([212.113.174.30]:36207 "EHLO
+	exch01smtp12.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1750860AbXAPKjf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Jan 2007 14:21:00 -0500
-To: Steven Scholz <steven.scholz@imc-berlin.de>
-Content-Disposition: inline
-In-Reply-To: <45A7C96F.90609@imc-berlin.de>
+	Tue, 16 Jan 2007 05:39:35 -0500
+To: "Ingo Molnar" <mingo@elte.hu>
+References: 
+In-Reply-To: 
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jan 12, 2007 at 06:46:23PM +0100, Steven Scholz wrote:
-> Hi all,
-> 
-> anyone tried 2.6.20-rc4-rt3 on an i.MX board?
+------=_20070116102923_25525
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: 8bit
 
-Yes
+Hi,
 
-> 
-> On my mx1ads I get
-> 
-> RAMDISK: Compressed image found at block 0
-> Unable to handle kernel NULL pointer dereference at virtual address 00000004
-> pgd = c0004000
-> [00000004] *pgd=00000000
-> Internal error: Oops: 5 [#1]
-> Modules linked in:
-> CPU: 0
-> PC is at get_next_event_device+0x48/0x64
-> LR is at clockevents_next_event_available+0x24/0x60
-> pc : [<c0058104>]    lr : [<c0058144>]    Not tainted
-> sp : c0bb9ea0  ip : 00000000  fp : c0bb9eac
-> r10: ffffffff  r9 : c01d8438  r8 : c01c6bf0
-> r7 : c01c4d34  r6 : c0bb8000  r5 : c01c6bf0  r4 : 20000013
-> r3 : c01da08c  r2 : 00000000  r1 : 00000004  r0 : 00000000
-> Flags: nZCv  IRQs off  FIQs on  Mode SVC_32  Segment kernel
-> Control: C000717F
-> Table: 08004000  DAC: 00000017
-> Process softirq-timer/0 (pid: 4, stack limit = 0xc0bb8250)
-> Stack: (0xc0bb9ea0 to 0xc0bba000)
-> < - snip - >
-> Backtrace:
-> [<c00580bc>] (get_next_event_device+0x0/0x64) from [<c0058144>]
-> (clockevents_next_event_available+0x24/0x60)
-> [<c0058120>] (clockevents_next_event_available+0x0/0x60) from [<c0055704>]
-> (hrtimer_run_queues+0x230/0x3c8) r5 = C01C6BF0  r4 = 00000001
-> [<c00554d4>] (hrtimer_run_queues+0x0/0x3c8) from [<c0045608>]
-> (run_timer_softirq+0xbc/0xe18)
-> [<c004554c>] (run_timer_softirq+0x0/0xe18) from [<c0040a08>]
-> (ksoftirqd+0x100/0x1b0)
-> [<c0040908>] (ksoftirqd+0x0/0x1b0) from [<c0051000>] (kthread+0x110/0x13c)
-> [<c0050ef0>] (kthread+0x0/0x13c) from [<c003d268>] (do_exit+0x0/0x8ac)
->  r8 = 00000000  r7 = 00000000  r6 = 00000000  r5 = 00000000
->  r4 = 00000000
-> Code: e15c0000 cafffff8 e59f3018 e5932000 (e5921004)
->  <6>note: softirq-timer/0[4] exited with preempt_count 1
-> VFS: Mounted root (ext2 filesystem).
-> Freeing init memory: 88K
+Sorry to interrupt :) I have two issues to report here, while running
+2.6.20-rc5-rt2.
 
-get_next_event_device() looks like this:
+First one is about building for UP (CONFIG_SMP not set) on my old P4
+laptop. As it seems, all my build attempts failed at the final link stage,
+with undefined references to paravirt_enable. After disabling
+CONFIG_PARAVIRT I get a similar failure, but this time for a couple kvm*
+symbols. I could only get a clean build when CONFIG_SMP is set, which is
+(IMHO) overkill for a machine which is neither HyperThread/SMT enabled nor
+multi-core. Its plain dead UP and it used to run PREEMPT_RT kernels for a
+long time now.
 
-static int get_next_event_device(void)
-{
-        struct local_events *devices = &__get_cpu_var(local_eventdevices);
-        int i;
+Second one is already about running SMP, on a Dual Core2 T7200, for which
+the build goes fine but run-time is haunted by a crippling BUG:
 
-        for (i = 0; i < devices->installed; i++) {
-                struct clock_event_device *evt;
+BUG: unable to handle kernel NULL pointer dereference at virtual address
+0000001c
+ printing eip:
+c01181a5
+*pde = 2e68e067
+stopped custom tracer.
+Oops: 0000 [#1]
+PREEMPT SMP
+Modules linked in: arc4 ecb blkcipher ieee80211_crypt_wep af_packet i915
+drm rfcomm hidp l2cap bluetooth cpufreq_conservative cpufreq_ondemand
+cpufreq_userspace cpufreq_powersave speedstep_centrino freq_table
+snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device button battery ac loop
+dm_mod ohci1394 ieee1394 ipw3945 e100 mii sdhci ieee80211 mmc_core
+ieee80211_crypt firmware_class ehci_hcd ide_cd snd_hda_intel snd_hda_codec
+snd_pcm snd_timer i2c_i801 snd iTCO_wdt cdrom soundcore snd_page_alloc
+intel_agp i2c_core agpgart uhci_hcd usbcore ext3 mbcache jbd sg edd fan
+ahci libata piix thermal processor sd_mod scsi_mod ide_disk ide_core
+CPU:    0
+EIP:    0060:[<c01181a5>]    Not tainted VLI
+EFLAGS: 00010282   (2.6.20-rc5-rt2.0-smp #1)
+EIP is at try_to_wake_up+0x11/0x395
+eax: 00000000   ebx: dfc7f5c0   ecx: 00000000   edx: dfc5fee0
+esi: 00000000   edi: dfc7fb76   ebp: dfc5fef0   esp: dfc5fea4
+ds: 007b   es: 007b   ss: 0068   preempt: 00000001
+Process IRQ-9 (pid: 56, ti=dfc5e000 task=dfc541f0 task.ti=dfc5e000)
+Stack: 00003000 00000061 0000001f 00000100 00000000 00000000 00000000
+00000000
+       00000002 00000001 00000000 00000000 dfc541f0 c03764c0 dfc541f0
+c0102dad
+       dfc7f5c0 00000017 dfc7fb76 dfc5fefc c01185c8 00000000 c19faa40
+c01fe568
+Call Trace:
+ [<c0102dad>] __switch_to+0xcc/0x176
+ [<c01185c8>] wake_up_process+0x19/0x1b
+ [<c01fe568>] acpi_ec_gpe_handler+0x1f/0x53
+ [<c01ec6c6>] acpi_ev_gpe_dispatch+0x64/0x163
+ [<c01eca06>] acpi_ev_gpe_detect+0x94/0xd7
+ [<c01eb182>] acpi_ev_sci_xrupt_handler+0x12/0x19
+ [<c01e6091>] acpi_irq+0xb/0x14
+ [<c0142cf5>] handle_IRQ_event+0x4a/0xd2
+ [<c0143188>] thread_simple_irq+0x31/0x5f
+ [<c0143820>] do_irqd+0xe2/0x29e
+ [<c014373e>] do_irqd+0x0/0x29e
+ [<c012e2e3>] kthread+0xb2/0xdb
+ [<c012e231>] kthread+0x0/0xdb
+ [<c0104b13>] kernel_thread_helper+0x7/0x10
+ =======================
+Code: 8b 5d f0 89 4f 40 89 5f 44 8b 55 e8 89 f8 83 c4 0c 5b 5e 5f 5d e9 24
+e1 ff ff 55 89 e5 57 56 89 c6 53 83 ec 40 89 55 bc 8d 55 f0 <83> 78 1c 63
+b8 00 00 00 00 0f 4f c1 89 45 b8 89 f0 e8 64 e1 ff
+EIP: [<c01181a5>] try_to_wake_up+0x11/0x395 SS:ESP 0068:dfc5fea4
+ <3>hub 5-0:1.0: connect-debounce failed, port 6 disabled
 
-                evt = devices->events[i].event;
-                if (evt->capabilities & CLOCK_CAP_NEXTEVT)
-                        return i;
-        }
 
-        if (global_eventdevice.event->capabilities & CLOCK_CAP_NEXTEVT)
-                return GLOBAL_CLOCK_EVENT;
+Complete dmesg is attached.
 
-        return -ENODEV;
-}
+I think this one is specific to this hardware combination, most probably
+to some ACPI idiosyncrasy. Note that the system only gets partially
+unresponsive but to my knowledge the only reasonable action to take on
+this situation is forcing a reboot.
 
-Loop through all available devices and search for one with CLOCK_CAP_NEXTEVT.
-If none is found global_eventdevice is dereferenced, which isn't set
-when you have no clock_event_device at all. Have you got the i.MX
-clockevent patch applied? You can get the latest version here:
-http://www.ussg.iu.edu/hypermail/linux/kernel/0701.1/0478.html
+Any ideas on where to look would be much appreciated, as always.
 
-Maybe we could emit a warning message here instead of oopsing.
-
-> 
-> Sascha, do you know if your clocksource/clockevent patches made it into
-> mainline?
-
-Clocksource yes, clockevent no
-
-Sascha
-
+Cheers.
 -- 
- Dipl.-Ing. Sascha Hauer | http://www.pengutronix.de
-  Pengutronix - Linux Solutions for Science and Industry
-    Handelsregister: Amtsgericht Hildesheim, HRA 2686
-      Hannoversche Str. 2, 31134 Hildesheim, Germany
-    Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
+
+------=_20070116102923_25525
+Content-Type: application/x-gzip-compressed;
+      name="dmesg-2.6.20-rc5-rt2.0-smp.0.gz"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="dmesg-2.6.20-rc5-rt2.0-smp.0.gz"
+
+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
+EqvEKrFKrBKrxCqxSqwSq8T6D5LuYTIJjAAA
+------=_20070116102923_25525--
