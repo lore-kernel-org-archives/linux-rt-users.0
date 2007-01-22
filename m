@@ -1,40 +1,62 @@
-From: "Sunil Naidu" <akula2.shark@gmail.com>
-Subject: Re: Realtime-preemption for 2.6.20-rc5 ?
-Date: Sat, 20 Jan 2007 08:26:40 +0530
-Message-ID: <8355959a0701191856t5cadf684jdabb939d103de020@mail.gmail.com>
-References: <8355959a0701180215s7824cea5m20a5d7b95d80c0e@mail.gmail.com>
-	 <20070118101949.GA22671@elte.hu>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: compilation error
+Date: Mon, 22 Jan 2007 11:29:24 +0100
+Message-ID: <1169461764.26596.10.camel@godzilla.tecnorama.it>
+References: <5114.194.65.103.1.1168943363.squirrel@www.rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ug-out-1314.google.com ([66.249.92.174]:15822 "EHLO
-	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932881AbXATC4m (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Jan 2007 21:56:42 -0500
-Received: by ug-out-1314.google.com with SMTP id 44so613643uga
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Jan 2007 18:56:41 -0800 (PST)
-To: "Ingo Molnar" <mingo@elte.hu>
-In-Reply-To: <20070118101949.GA22671@elte.hu>
-Content-Disposition: inline
+Received: from hermes.xcon.it ([62.48.35.101]:49977 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751454AbXAVK3i (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Jan 2007 05:29:38 -0500
+Received: from localhost (localhost [127.0.0.1])
+	by hermes.xcon.it (Postfix) with ESMTP id 4F5F56080C7
+	for <linux-rt-users@vger.kernel.org>; Mon, 22 Jan 2007 11:29:33 +0100 (CET)
+Received: from hermes.xcon.it ([127.0.0.1])
+	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id SRKHnR79EDeb for <linux-rt-users@vger.kernel.org>;
+	Mon, 22 Jan 2007 11:29:25 +0100 (CET)
+Received: from [192.168.100.121] (adsl203-157-083.mclink.it [213.203.157.83])
+	(Authenticated sender: aib@texware.it)
+	by hermes.xcon.it (Postfix) with ESMTP id E56556080B8
+	for <linux-rt-users@vger.kernel.org>; Mon, 22 Jan 2007 11:29:24 +0100 (CET)
+To: linux-rt-users@vger.kernel.org
+In-Reply-To: <5114.194.65.103.1.1168943363.squirrel@www.rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 1/18/07, Ingo Molnar <mingo@elte.hu> wrote:
-> the best place to start is:
->
->   http://rt.wiki.kernel.org
->
->         Ingo
+Hi,
 
-I did refer the same. Is it necessary to use only base kernel, say
-2.6.19? Or, can I go ahead with 2.6.19 + 2.6.19.2 patch + 2.6.19-rt
-patch?
+I have this error trying to compile a minimal 2.6.20-rc5-rt7 i386
+kernel:
 
-If yes, any reason why we need to apply rt patch only to a base kernel?
+[...]
+  CHK     include/linux/compile.h
+  UPD     include/linux/compile.h
+  CC      init/version.o
+  LD      init/built-in.o
+  LD      .tmp_vmlinux1
+arch/i386/kernel/built-in.o: In function `init_intel':
+intel.c:(.init.text+0x3c01): undefined reference to `paravirt_enabled'
+make: *** [.tmp_vmlinux1] Error 1
 
-Thanks,
+With this trivial patch i can compile kernel successfully:
 
-~Akula2
+--- intel.c.orig	2007-01-22 11:03:06.000000000 +0100
++++ intel.c	2007-01-22 11:03:36.000000000 +0100
+@@ -6,6 +6,7 @@
+ #include <linux/smp.h>
+ #include <linux/thread_info.h>
+ #include <linux/module.h>
++#include <linux/paravirt.h>
+ 
+ #include <asm/processor.h>
+ #include <asm/msr.h>
+
+
+But i don't know if it is the best way to resolve this problem.
+
+Ciao,
+Alessio
