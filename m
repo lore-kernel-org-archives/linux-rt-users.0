@@ -1,13 +1,13 @@
 From: David A Sperry <David_A_Sperry@raytheon.com>
-Subject: Re: Out of order timings of gettimeofday_us() Part 1
-Date: Wed, 24 Jan 2007 07:41:00 -0500
-Message-ID: <OF3F07179B.7C6255FB-ON8525726D.0043F717-8525726D.0045AC7A@mck.us.ray.com>
+Subject: Re: Out of order timings of gettimeofday_us() Part 2
+Date: Wed, 24 Jan 2007 09:01:40 -0500
+Message-ID: <OF7779C460.3A29EA68-ON8525726D.004A0578-8525726D.004D0F34@mck.us.ray.com>
 References: <44506.128.165.0.81.1169591628.squirrel@webmail.lanl.gov>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Cc: systemtap@sourceware.org, linux-rt-users@vger.kernel.org
-To: ndebard@lanl.gov
-Return-path: <systemtap-return-5409-gls-systemtap=m.gmane.org@sourceware.org>
+Cc: ndebard@lanl.gov
+To: systemtap@sourceware.org, linux-rt-users@vger.kernel.org
+Return-path: <systemtap-return-5410-gls-systemtap=m.gmane.org@sourceware.org>
 In-Reply-To: <44506.128.165.0.81.1169591628.squirrel@webmail.lanl.gov>
 List-Unsubscribe: <mailto:systemtap-unsubscribe-gls-systemtap=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:systemtap-subscribe@sourceware.org>
@@ -16,73 +16,185 @@ List-Help: <mailto:systemtap-help@sourceware.org>, <http://sourceware.org/lists.
 Sender: systemtap-owner@sourceware.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I have seen similar behavior with some of my scripts. I thought
-it was due to my lack of kernel systemTap knowledge.
-The first example I have is a modification of top.stp that looks
-at how long real-time threads are running sorted by priority
-(We use this for doing rate monotonic scheduling analysis). I
-get similar results on a different SMP boxes, one box is running
-RHEL4U2 with a 2.6.16-rt22 kernel and the other one running fc6
-with a 2.6.19.1-rt15 kernel. The script records the time
-statistics between scheduler.cpu_on and scheduler.cpu_off
+Hi
 
-The output of the script looks like:
+I also have a second script that shows time going backwards.
+This script is used to find priority inversions and unexpected
+priority inheritance coupling in commercial middleware we are
+using. The program under test loops though a test that
+should take less than 600 usec. Roughly 1 out of 1,000,000
+iterations the execution time takes longer than 600uS.
+The script traces the scheduler and syscalls between the two
+timing points and prints the trace out if the time exceeds
+600 usec. During some of the dumps, negative time steps are
+recorded and the timestamps are also shown to be tied to a CPU.
+In the example below the softirq-timer/x seems to adjust time
+stamps on a particular CPU (line 10,13 and 46,49) this makes
+understanding the time sequence difficult. The output of
+the script looks as follows:
+(sorry about the csv formatting)
 
------------------------------------------------------------------
-Time = 36 seconds
-                              | prio  |sched | Time on CPU (usec)|
-Name                pid   tid |max min| Hz   | sum/s  ave   max  |
-posix_cpu_timer      15    15  99  99    250    604     2     6
-posix_cpu_timer       3     3  99  99    250    587     2     8
-IRQ 16              389   389  95  95     61   2190    35    44
-IRQ 15              323   323  95  95     42    767    18    40
-IRQ 18             2941  2941  95  95      1      9     5     8
-ktg3_timer         1381  1381  91  91      2      9     4     6
-softirq-net-rx/       7     7  90  90      1     23    14    22
-softirq-timer/0       5     5  53  50    250  -6369   -25     3
-subscriber         3813  3813  53  53      1      6     6    12
-publisher          3819  3819  53  53      0     23    69    69
-subscriber         3813  3815  51  51      1     33    20    30
-publisher          3819  3821  51  51      1     31    23    30
-softirq-timer/1      17    17  50  50    250  -7229   -28   469
-softirq-tasklet      21    21  50  50     66   2716    40    55
-softirq-tasklet       9     9  50  50      1      3     3     5
------------------------------------------------------------------
+Any thoughts?
 
-The softirq-timer/x typically has a negative execution time. Any thoughts?
-
-Thanks
 Dave
 
+event,time, tid,  prio, CPU,  event,      name, Trip=982288
+0,    0,    7,    90,   0,    cpu_off,    softirq-net-rx/
+1,    4,    10902,53,   1,    sys_sigreturn,    publisher
+2,    7,    10899,52,   0,    cpu_on,     subscriber
+3,    12,   10902,53,   1,    sys_gettimeofday, publisher
+4,    19,   10902,53,   1,    sys_gettimeofday, publisher
+5,    22,   10899,52,   0,    sys_socketcall,   subscriber
+6,    26,   10899,52,   0,    sys_recvfrom,     subscriber
+7,    31,   10902,53,   1,    sys_socketcall,   publisher
+8,    34,   10899,52,   0,    cpu_off,    subscriber
+9,    39,   10902,53,   1,    sys_sendmsg,      publisher
+10,   42,   5,    50,   0,    cpu_on,     softirq-timer/0 <---
+11,   201,  10902,53,   1,    cpu_off,    publisher
+12,   210,  19,   90,   1,    cpu_on,     softirq-net-rx/
+13,   183,  5,    50,   0,    cpu_off,    softirq-timer/0 <--- Backwards
+time  Adj
+14,   191,  10902,53,   0,    cpu_on,     publisher
+15,   233,  19,   90,   1,    cpu_off,    softirq-net-rx/
+16,   241,  10906,52,   1,    cpu_on,     publisher
+17,   212,  10902,53,   0,    sys_gettimeofday, publisher
+18,   249,  10906,52,   1,    sys_gettimeofday, publisher
+19,   220,  10902,53,   0,    sys_clock_gettime,      publisher
+20,   258,  10906,52,   1,    sys_socketcall,   publisher
+21,   229,  10902,53,   0,    sys_futex,  publisher
+22,   266,  10906,52,   1,    sys_recvfrom,     publisher
+23,   239,  10902,53,   0,    cpu_off,    publisher
+24,   276,  10906,52,   1,    cpu_off,    publisher
+25,   247,  10899,52,   0,    cpu_on,     subscriber
+26,   284,  0,    -41,  1,    cpu_on,     swapper
+27,   256,  10899,52,   0,    sys_gettimeofday, subscriber
+28,   270,  10899,52,   0,    sys_gettimeofday, subscriber
+29,   275,  10899,52,   0,    sys_gettimeofday, subscriber
+30,   282,  10899,52,   0,    cpu_off,    subscriber
+31,   286,  2933, 95,   0,    cpu_on,     IRQ 18
+32,   327,  0,    -41,  1,    cpu->idle,  swapper
+33,   298,  2933, 95,   0,    cpu_off,    IRQ 18
+34,   336,  10899,52,   1,    cpu_on,     subscriber
+35,   307,  7,    90,   0,    cpu_on,     softirq-net-rx/
+36,   314,  7,    90,   0,    cpu_off,    softirq-net-rx/
+37,   350,  10899,52,   1,    sys_socketcall,   subscriber
+38,   321,  5180, -16,  0,    cpu_on,     firefox-bin
+39,   358,  10899,52,   1,    sys_sendmsg,      subscriber
+40,   333,  5180, -16,  0,    sys_gettimeofday, firefox-bin
+41,   369,  10899,52,   1,    cpu_off,    subscriber
+42,   377,  15,   99,   1,    cpu_on,     posix_cpu_timer
+43,   350,  5180, -16,  0,    cpu_off,    firefox-bin
+44,   387,  15,   99,   1,    cpu_off,    posix_cpu_timer
+45,   358,  10899,52,   0,    cpu_on,     subscriber
+46,   395,  17,   50,   1,    cpu_on,     softirq-timer/1 <--
+47,   371,  10899,52,   0,    cpu_off,    subscriber
+48,   376,  7,    90,   0,    cpu_on,     softirq-net-rx/
+49,   381,  17,   50,   1,    cpu_off,    softirq-timer/1 <-- backwards
+50,   388,  10899,52,   1,    cpu_on,     subscriber
+51,   398,  7,    90,   0,    cpu_off,    softirq-net-rx/
+52,   405,  10906,52,   0,    cpu_on,     publisher
+53,   411,  10906,52,   0,    sys_gettimeofday, publisher
+54,   413,  10899,52,   1,    sys_socketcall,   subscriber
+55,   418,  10899,52,   1,    sys_recvfrom,     subscriber
+56,   423,  10899,52,   1,    sys_gettimeofday, subscriber
+57,   430,  10906,52,   0,    sys_gettimeofday, publisher
+58,   433,  10899,52,   1,    sys_socketcall,   subscriber
+59,   439,  10906,52,   0,    sys_futex,  publisher
+60,   442,  10899,52,   1,    sys_recvfrom,     subscriber
+61,   447,  10906,52,   0,    cpu_off,    publisher
+62,   453,  10902,53,   0,    cpu_on,     publisher
+63,   459,  10899,52,   1,    cpu_off,    subscriber
+64,   466,  10906,52,   1,    cpu_on,     publisher
+65,   474,  10902,53,   0,    cpu_off,    publisher
+66,   480,  5180, -16,  0,    cpu_on,     firefox-bin
+67,   487,  10906,52,   1,    cpu_off,    publisher
+68,   494,  10902,53,   1,    cpu_on,     publisher
+69,   500,  5180, -16,  0,    cpu_off,    firefox-bin
+70,   503,  10902,53,   1,    sys_futex,  publisher
+71,   508,  2933, 95,   0,    cpu_on,     IRQ 18
+72,   511,  10902,53,   1,    cpu_off,    publisher
+73,   518,  2933, 95,   0,    cpu_off,    IRQ 18
+74,   520,  10906,53,   1,    cpu_on,     publisher
+75,   526,  7,    90,   0,    cpu_on,     softirq-net-rx/
+76,   529,  10906,52,   1,    cpu_off,    publisher
+77,   535,  10902,53,   1,    cpu_on,     publisher
+78,   540,  10902,53,   1,    cpu_off,    publisher
+79,   544,  10906,52,   1,    cpu_on,     publisher
+80,   548,  10906,52,   1,    sys_futex,  publisher
+81,   553,  7,    90,   0,    cpu_off,    softirq-net-rx/
+82,   556,  10906,52,   1,    cpu_off,    publisher
+83,   561,  5180, -16,  0,    cpu_on,     firefox-bin
+84,   564,  10902,53,   1,    cpu_on,     publisher
+85,   573,  5180, -16,  0,    cpu_off,    firefox-bin
+86,   579,  10906,52,   0,    cpu_on,     publisher
+87,   585,  10902,53,   1,    cpu_off,    publisher
+88,   590,  10916,-11,  1,    cpu_on,     systemtap/1
+89,   596,  10916,-11,  1,    cpu_off,    systemtap/1
+90,   600,  10902,53,   1,    cpu_on,     publisher
+91,   605,  10906,52,   0,    sys_socketcall,   publisher
+92,   608,  10902,53,   1,    sys_gettimeofday, publisher
+93,   613,  10906,52,   0,    sys_recvfrom,     publisher
+94,   616,  10902,53,   1,    sys_futex,  publisher
+95,   621,  10906,52,   0,    cpu_off,    publisher
+96,   624,  10902,53,   1,    sys_tgkill, publisher
+97,   630,  5180, -16,  0,    cpu_on,     firefox-bin
 
-Script follows:
+
+The script:
 
 #!/usr/bin/env stap
 #
-# This script continuously lists the history of the top 30 real-time
-priority
-# threads on the system
+# A script to detect why some real-time action took too long
+# This script records all thread schedulings in a buffer AND monitors
+# the time between signal 36 and 37. If the time between 36 and 37 is less
+# than 1 millisec the buffer is cleared. If the time is >1 millisecond the
+# buffer is printed out and then cleared.
 #
-global tids      /* long array of active thread IDs */
-global pids      /* long array of active process IDs index by tid */
-global rtPrios   /* statistical array of  RT Prios measured index by tid */
-global names     /* string array of process names indexed by tid */
-global compTimes /* statistical array of thread "on cpu" run times */
-                 /* indexed by tid */
-global compStrt  /* long array containing "on cpu" start time indexed by
-tid */
-global validStart /* long array indicating threads being timed indexed by
-tid */
+global todHist
+global tidHist
+global eventHist
+global names
+global cpuIdHist
+global prioHist
 
-/* globals used for printing */
-global prioSort    /* long array of maximum priorities each thread has seen
-*/
-global startTime   /* long when measurement started */
-global lastPrint_s /* long time of last print */
+global eventCnt, isCollecting, collectionStart
+global completedTrips
 
-/* print top rtPrios every 3 seconds */
-probe timer.ms(3000) {
-      print_top ()
+
+
+/* capture signals to mark the start and end of an event */
+probe signal.send
+{
+      /*
+       * available variables on this probe:
+       * pid_name, sig, sig_name, sig_pid
+       */
+       t=gettimeofday_us();
+
+         /* start of timed event */
+       if (sig == 36 && isCollecting == 0)
+       {
+         collectionStart=t;
+         isCollecting = 1;
+       }
+
+       /* end of timed event */
+       if (sig == 37 && isCollecting == 1)
+       {
+         isCollecting = 0;
+         if (t - collectionStart > 600 || completedTrips == 1001)
+         {
+            printTrace();
+         }
+         clearHistory();
+         completedTrips++;
+       }
+
+}
+
+probe kernel.function("sys_*") {
+
+       logEvent (probefunc());
 }
 
 
@@ -98,6 +210,8 @@ probe timer.ms(3000) {
  *  task_prev - the process that was previously running on this cpu.
  *  idle - boolean indicating whether current is the idle process
  */
+
+
  probe scheduler.cpu_on
 {
      /*
@@ -105,35 +219,8 @@ probe timer.ms(3000) {
       * idle, task_prev
       */
      /* capture context to find priority */
-     c = task_current();
-     prio = 0-(1+task_prio(c));
+      logEvent ("cpu_on");
 
-     if (prio > 1) /* capture only RT priorities */
-     {
-       tid_ = tid();
-       t=gettimeofday_us();
-
-       /* store current priority in stat array */
-       rtPrios[tid_] <<< prio
-
-       /* store current time in long array */
-       compStrt[tid_] = t;
-
-       /* If thread is not in database, add it */
-       if (tids[tid_]!=1)
-       {
-         tids[tid_]=1
-         /* store off useful info about thread once */
-         names[tid_] = execname();
-         pids[tid_]=pid();
-       }
-       /* since there is priority inheritance it is possible
-        * for a thread to start non-realtime and end real-time
-        * right now only count threads that started real-time
-       */
-       validStart[tid_] = 1;
-
-     }/* if (prio > 1) */
 
 }/* probe scheduler.cpu_on */
 
@@ -157,82 +244,67 @@ probe scheduler.cpu_off
      * available variables on this probe:
      * idle, task_next, task_prev
      */
-     tid_=tid();
-     /* to reduce load, only look for threads we've seen before */
-     if (tids[tid_]==1)
-     {
-        /* check we are timing the thread */
-        if(validStart[tid_] == 1)
-        {
-           t=gettimeofday_us();
-           deltaT = t - compStrt[tid_];
-           compTimes[tid_] <<< deltaT; /* collect time on cpu */
-           validStart[tid_] = 0; /* done timing this action */
-        }
-     }
-
-}
-
-/* function print_top()
- *
- *  Prints to standard out data collected since last print
- *
- * Arguments:
- *  none
- */
-function print_top () {
-      cnt=0;
-    /* sort by maximum priority recorded for thread */
-    foreach ([tid_] in tids+)
-    {
-       prioSort[tid_]=@max(rtPrios[tid_])
-    }
-
-    /* compute elapse time since last call */
-    now_s=gettimeofday_s();
-    timeSinceLastPrint = now_s - lastPrint_s;
-    lastPrint_s = now_s;
-
-    /* print the big table header */
-    printf ("Time = %d seconds\n", now_s - startTime);
-    printf ("                              | prio  |sched | Time on CPU
-(usec)|\n");
-    printf ("Name                pid   tid |max min| Hz   | sum/s  ave
-max  |\n");
-
-    /* print each row sorted by highest to lowest */
-    foreach ([tid_] in prioSort-)
-    {
-        /* print a line if there is valid data */
-        if (@count(compTimes[tid_]) > 0)
-        {
-          printf("%-16s  %5d %5d %3d %3d %6d %6d %5d %5d\n",
-          names[tid_],
-          pids[tid_],
-          tid_,
-          @max(rtPrios[tid_]),
-          @min(rtPrios[tid_]),
-          @count(compTimes[tid_])/timeSinceLastPrint,
-          @sum(compTimes[tid_])/timeSinceLastPrint,
-          @avg(compTimes[tid_]),
-          @max(compTimes[tid_])
-          );
-          cnt++;
+      if (idle)
+      {
+          logEvent ("cpu->idle")
       }
-        if (cnt == 60)
-          break
-    }/* foreach */
+      else
+      {
+         logEvent ("cpu_off");
+      }
 
-
-printf("-----------------------------------------------------------------\n")
-
-      /* reset arrays */
-      delete compTimes
-    delete tids
-    delete rtPrios
-    delete prioSort
 }
 
+
+function logEvent (eventName)
+{
+       if( isCollecting == 1 )
+       {
+       tod=gettimeofday_us();
+       tid_ = tid();
+
+       /* record items of interest */
+       todHist[eventCnt]=tod;
+       tidHist[eventCnt]=tid_;
+       eventHist[eventCnt]=eventName;
+       names[eventCnt]=execname();
+       cpuIdHist[eventCnt]=cpu();
+       c = task_current();
+       prioHist[eventCnt] = 0-(1+task_prio(c));
+       eventCnt++;
+       }
+}
+
+function clearHistory ()
+{
+       delete todHist;
+       delete tidHist;
+       delete eventHist;
+       delete cpuIdHist;
+       delete names;
+       delete prioHist;
+       eventCnt=0;
+}
+
+function printTrace()
+{
+
+
+      printf("event,time,tid,prio,CPU,event,name,Trip=%d\n",completedTrips)
+      foreach ([event] in eventHist)
+      {
+         printf ("%d,%d,%d,%d,%d,%s,%s\n",
+                event,
+              todHist[event]-todHist[0],
+              tidHist[event],
+              prioHist[event],
+                    cpuIdHist[event],
+              eventHist[event],
+              names[event]
+            );
+       }
+
+}
 
 /* probe begin
  *
@@ -246,9 +318,9 @@ printf("-----------------------------------------------------------------\n")
  */
 probe begin
 {
-  printf ("starting rtPrio TOP\n")
-  startTime=gettimeofday_s();
-  lastPrint_s=startTime;
+printf ("starting\n");
+eventCnt=0
+isCollecting=0
 }
 
 /* probe end
@@ -256,68 +328,47 @@ probe begin
 */
 probe end
 {
+   printTrace()
    printf ("done\n");
 }
 
 
+systemtap-owner@sourceware.org wrote on 01/23/2007 05:33:48 PM:
 
-
-                                                                           
-                                                                           
-             "Nathan A.                                                    
-             Debardeleben"                                                 
-             <ndebard@lanl.gov                                          To 
-             >                         systemtap@sourceware.org            
-             Sent by:                                                   cc 
-             systemtap-owner@s                                             
-             ourceware.org                                         Subject 
-                                       Out of order timings of             
-                                       gettimeofday_us()                   
-             01/23/2007 05:33                                              
-             PM                                                            
-                                                                           
-                                                                           
-             Please respond to                                             
-             ndebard@lanl.gov                                              
-                                                                           
-                                                                           
-                                                                           
-
-
-
-
-I have a very simple script which seems to demonstrate time values coming
-out of gettimeofday_us() being out of order.  I believe this function I am
-probing is extremely fast - but, regardless, it shouldn't take negative
-time to complete. :)
-
-Here's the probe:
-
-probe kernel.function("cbe_system_reset_exception") {
-   printf(" IN: %d\n", gettimeofday_us());
-}
-
-probe kernel.function("cbe_system_reset_exception").return {
-   printf("OUT: %d\n", gettimeofday_us());
-}
-
-Here's some output from it:
-
- IN: 1169591399721428
-OUT: 1169591399721437
- IN: 1169591399721484
-OUT: 1169591399721492
- IN: 1169591399722383
-OUT: 1169591399722298 **** ERROR - NOTICE this is before the above "IN"
+> I have a very simple script which seems to demonstrate time values coming
+> out of gettimeofday_us() being out of order.  I believe this function I
+am
+> probing is extremely fast - but, regardless, it shouldn't take negative
+> time to complete. :)
+>
+> Here's the probe:
+>
+> probe kernel.function("cbe_system_reset_exception") {
+>    printf(" IN: %d\n", gettimeofday_us());
+> }
+>
+> probe kernel.function("cbe_system_reset_exception").return {
+>    printf("OUT: %d\n", gettimeofday_us());
+> }
+>
+> Here's some output from it:
+>
+>  IN: 1169591399721428
+> OUT: 1169591399721437
+>  IN: 1169591399721484
+> OUT: 1169591399721492
+>  IN: 1169591399722383
+> OUT: 1169591399722298 **** ERROR - NOTICE this is before the above "IN"
 line
- IN: 1169591399723387
-OUT: 1169591399723302 **** ALSO OUT OF ORDER!
- . . .
-
-I annotated the above line where I see an error.  This happens very often
-with this probe.
-
-Is the us() timing just too fine grained?  If it's acting like this here I
-question its values in other places.
-
-Please advise.
+>  IN: 1169591399723387
+> OUT: 1169591399723302 **** ALSO OUT OF ORDER!
+>  . . .
+>
+> I annotated the above line where I see an error.  This happens very often
+> with this probe.
+>
+> Is the us() timing just too fine grained?  If it's acting like this here
+I
+> question its values in other places.
+>
+> Please advise.
