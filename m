@@ -1,29 +1,45 @@
-From: Junior <ejr@inbox.com>
-Subject: RT example
-Date: Wed, 24 Jan 2007 10:58:41 -0800
-Message-ID: <DBDBE3A7EF0.0000058Dejr@inbox.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: RT example
+Date: Thu, 25 Jan 2007 08:01:33 +0100
+Message-ID: <20070125070133.GY28808@pengutronix.de>
+References: <DBDBE3A7EF0.0000058Dejr@inbox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-15
+Cc: linux-rt-users@vger.kernel.org
+To: Junior <ejr@inbox.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wm28.inbox.com ([208.50.6.28]:1080 "HELO WM28.inbox.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S932085AbXAXTD5 convert rfc822-to-8bit (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:59032 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S965575AbXAYHBe (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Jan 2007 14:03:57 -0500
-Received: from inbox.com (127.0.0.1:25)
-	by inbox.com with [InBox.Com SMTP Server]
-	id <701240206125.WM28> for <linux-rt-users@vger.kernel.org> from <ejr@inbox.com>;
-	Wed, 24 Jan 2007 10:58:41 AM -0800
+	Thu, 25 Jan 2007 02:01:34 -0500
+Content-Disposition: inline
+In-Reply-To: <DBDBE3A7EF0.0000058Dejr@inbox.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi All,
-Does anyone have example code using the PREEMPT_RT patch?
+On Wed, Jan 24, 2007 at 10:58:41AM -0800, Junior wrote:
+> Does anyone have example code using the PREEMPT_RT patch?
 
-I've installed the patch for 2.6.18 and notice I'm actually runiing slower that without the patch.
-I'm pretty sure it's something I'm doing or not doing and an example or some other docs should be enough to get me started.
+You could for example start with cyclictest. It is also a good example
+for how to write cyclic realtime programs on Linux.
 
-Thanks,
-PS. I'm using an ARM9 platform 
+> I've installed the patch for 2.6.18 and notice I'm actually runiing
+> slower that without the patch.  I'm pretty sure it's something I'm
+> doing or not doing and an example or some other docs should be enough
+> to get me started.
+
+Note that realtime is not about running fast, but running "in time".
+That may often mean that the overall system performance goes down.
+
+> PS. I'm using an ARM9 platform 
+
+Do you have clocksource/clockevent support for your ARM9 chip?
+
+Robert
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
