@@ -1,45 +1,124 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: RT example
-Date: Thu, 25 Jan 2007 08:01:33 +0100
-Message-ID: <20070125070133.GY28808@pengutronix.de>
-References: <DBDBE3A7EF0.0000058Dejr@inbox.com>
+From: "Rui Nuno Capela" <rncbc@rncbc.org>
+Subject: 2.6.20-rc6-rt1 timekeeping_is_continuous question
+Date: Thu, 25 Jan 2007 11:36:47 -0000 (WET)
+Message-ID: <11401.194.65.103.1.1169725008.squirrel@www.rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: linux-rt-users@vger.kernel.org
-To: Junior <ejr@inbox.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:59032 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S965575AbXAYHBe (ORCPT
+Received: from smtp4.netcabo.pt ([212.113.174.31]:30974 "EHLO
+	exch01smtp11.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752076AbXAYLhm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Jan 2007 02:01:34 -0500
-Content-Disposition: inline
-In-Reply-To: <DBDBE3A7EF0.0000058Dejr@inbox.com>
+	Thu, 25 Jan 2007 06:37:42 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Jan 24, 2007 at 10:58:41AM -0800, Junior wrote:
-> Does anyone have example code using the PREEMPT_RT patch?
+Hi,
 
-You could for example start with cyclictest. It is also a good example
-for how to write cyclic realtime programs on Linux.
+I'm having the following traces on every boot; are they of any concern, or
+should I just ignore and carry on?
 
-> I've installed the patch for 2.6.18 and notice I'm actually runiing
-> slower that without the patch.  I'm pretty sure it's something I'm
-> doing or not doing and an example or some other docs should be enough
-> to get me started.
+(machine is an Intel Core2 Duo T7200 2.0Ghz laptop)
 
-Note that realtime is not about running fast, but running "in time".
-That may often mean that the overall system performance goes down.
+Linux version 2.6.20-rc6-rt1.0 (root@zeta) (gcc version 4.1.2 20061115
+(prerelease) (SUSE Linux)) #1 SMP PREEMPT Thu Jan 25 10:02:28 WET 2007
+[...]
+Total of 2 processors activated (7985.17 BogoMIPS).
+ENABLING IO-APIC IRQs
+..TIMER: vector=0x31 apic1=0 pin1=2 apic2=-1 pin2=-1
+timekeeping_is_continuous(jiffies): 0
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+checking TSC synchronization [CPU#0 -> CPU#1]: passed.
+Brought up 2 CPUs
+timekeeping_is_continuous(jiffies): 0
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+migration_cost=34
+Booting paravirtualized kernel on bare hardware
+[...]
+Time: tsc clocksource has been installed.
+timekeeping_is_continuous(tsc): 0
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+timekeeping_is_continuous(tsc): 0
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+Write protecting the kernel read-only data: 794k
+timekeeping_is_continuous(tsc): 1
+timekeeping_is_continuous(tsc): 1
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+Switched to high resolution mode on CPU 1
+ [<c0105068>] dump_trace+0x63/0x1ec
+ [<c010520b>] show_trace_log_lvl+0x1a/0x2f
+ [<c0105836>] show_trace+0x12/0x14
+ [<c01058c9>] dump_stack+0x16/0x18
+ [<c012715f>] timekeeping_is_continuous+0x58/0x60
+ [<c0135c71>] tick_check_oneshot_change+0x3e/0x111
+ [<c013220b>] hrtimer_run_queues+0x40/0x26a
+ [<c012680b>] run_timer_softirq+0x785/0x975
+ [<c012313a>] ksoftirqd+0xfd/0x1a2
+ [<c012f947>] kthread+0xb5/0xde
+ [<c0104c33>] kernel_thread_helper+0x7/0x10
+ =======================
+Switched to high resolution mode on CPU 0
+[...]
 
-> PS. I'm using an ARM9 platform 
-
-Do you have clocksource/clockevent support for your ARM9 chip?
-
-Robert
+Bye.
 -- 
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
