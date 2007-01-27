@@ -1,52 +1,50 @@
-From: Junior <ejr@inbox.com>
-Subject: Re: RT example
-Date: Thu, 25 Jan 2007 07:11:30 -0800
-Message-ID: <E672C199FC4.000002A6ejr@inbox.com>
-References: <dbdbe3a7ef0.0000058dejr@inbox.com>
-  <20070125070133.gy28808@pengutronix.de>
+From: Dirk Behme <dirk.behme@googlemail.com>
+Subject: Clockevent API change
+Date: Sat, 27 Jan 2007 08:12:44 +0100
+Message-ID: <45BAFB6C.9070703@googlemail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Robert Schwebel <r.schwebel@pengutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wm28.inbox.com ([208.50.6.28]:2091 "HELO WM28.inbox.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S965375AbXAYPLh convert rfc822-to-8bit (ORCPT
+Received: from nf-out-0910.google.com ([64.233.182.187]:55189 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752181AbXA0HMs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Jan 2007 10:11:37 -0500
-Received: from inbox.com (127.0.0.1:25)
-	by inbox.com with [InBox.Com SMTP Server]
-	id <701250071894.WM28> for <linux-rt-users@vger.kernel.org> from <ejr@inbox.com>;
-	Thu, 25 Jan 2007 7:11:31 AM -0800
-In-Reply-To: <E617BEE4136.0000021Fejr@inbox.com>
+	Sat, 27 Jan 2007 02:12:48 -0500
+Received: by nf-out-0910.google.com with SMTP id o25so1377651nfa
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Jan 2007 23:12:46 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> On Wed, Jan 24, 2007 at 10:58:41AM -0800, Junior wrote:
->> Does anyone have example code using the PREEMPT_RT patch?
-> 
-> You could for example start with cyclictest. It is also a good example
-> for how to write cyclic realtime programs on Linux.
+Hi,
 
-Thanks, I will start there.
+it looks to me from patch-2.6.20-rc5-rt2 to 
+patch-2.6.20-rc6-rt2 (the versions I tested ;) ) the 
+clockevent interface changed?
 
-Where do I get the rt library? (-lrt in makefile)?
+At least arch/arm/plat-omap/timer32k.c int rc6-rt2 won't 
+compile any more.
 
-cyclictest.c: In function `timerthread':
-cyclictest.c:153: error: `SIGEV_THREAD_ID' undeclared (first use in this function)
+Changes I noticed:
 
-Someone got this before but no solution on how to fix it.
+- CLOCK_EVT_xxx moved to CLOCK_EVT_MODE_xxx
 
+- register_global_clockevent() is replaced by 
+clockevents_register_device() and something like
 
-> Note that realtime is not about running fast, but running "in time".
-> That may often mean that the overall system performance goes down.
-> 
->> PS. I'm using an ARM9 platform
-> 
-> Do you have clocksource/clockevent support for your ARM9 chip?
+extern struct clock_event_device *global_clock_event
 
-Aparently I don't. It's set as IS_TICK_BASED. How does this affect the system?
+(from arch/i386/kernel/hpet.c)
 
-Thanks,
---Jr.
+- .capabilities is switched to .features
+
+- .is_continuous is switched to .flags (clocksource)
+
+Any more changes necessary I not found yet? Any small 
+examples what to consider while moving to rc6-rt2? At least 
+how to replace register_global_clockevent() correctly?
+
+Many thanks
+
+Dirk
