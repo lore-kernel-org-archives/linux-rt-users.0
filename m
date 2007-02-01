@@ -1,47 +1,46 @@
-From: "Rui Nuno Capela" <rncbc@rncbc.org>
-Subject: 2.6.20-rc6-rt4 register_cpu_notification undefined
-Date: Tue, 30 Jan 2007 11:26:49 -0000 (WET)
-Message-ID: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Subject: Re: v2.6.19-rt6, yum/rpm
+Date: Thu, 01 Feb 2007 18:52:38 +0300
+Message-ID: <45C20CC6.2070201@ru.mvista.com>
+References: <20061205171114.GA25926@elte.hu> <4582CAD6.9040404@ru.mvista.com> <20061215161952.GA29191@elte.hu>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;boundary="----=_20070130112649_50732"
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: "Ingo Molnar" <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.netcabo.pt ([212.113.174.29]:37607 "EHLO
-	exch01smtp09.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S964865AbXA3L1s (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Jan 2007 06:27:48 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751855AbXBAPwx@vger.kernel.org>
+In-Reply-To: <20061215161952.GA29191@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_20070130112649_50732
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: 8bit
+Hello.
 
-Hi,
+Ingo Molnar wrote:
 
-Just to let you know that this my simple patch solves the
-'register_cpu_notifier' being undefined when SMP is set but not
-HOTPLUG_CPU.
+>>>as usual, bugreports, fixes and suggestions are welcome,
 
-Dunno if its the right thing, tho.
+>>   Be aware that even with the newest -rt patch, the PowerPC TOD 
+>>vsyscalls are still broken, i.e. glibc may return imprecise/incorrect 
+>>results for the related calls -- despite arch/powerpc/kernel/time.c 
+>>has been at last fixed to at least compile, the PowerPC clocksource 
+>>patch removed the important part of TOD vsyscall support, and this 
+>>hasn't been dealt with.  I've sent to Thomas Gleixner a patch removing 
+>>the affected vsyscalls altogether for the time being in the early 
+>>November (unfortunately, I came to know of the breakage too late, and 
+>>hadn't time to deal with it propery due to othr woes), however, I'm 
+>>not seeing any of my patches (I've also done PowerPC clockevents 
+>>support) merged to -rt (or otherwise published). Most of the patches 
+>>can be found in the linuxppc-dev list archives, for the interested...
 
-Cheers
--- 
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
-------=_20070130112649_50732
-Content-Type: application/octet-stream;
-      name="linux-2.6.20-rc6-rt4-cpu.patch"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="linux-2.6.20-rc6-rt4-cpu.patch"
+> could you resend them to me please?
 
-LS0tIGxpbnV4L2tlcm5lbC9jcHUuYy5vcmlnCTIwMDctMDEtMjUgMDI6MTk6MjguMDAwMDAwMDAw
-ICswMDAwCisrKyBsaW51eC9rZXJuZWwvY3B1LmMJMjAwNy0wMS0zMCAwOTo0MzoyMi4wMDAwMDAw
-MDAgKzAwMDAKQEAgLTc1LDEwICs3NSwxMCBAQAogCXJldHVybiByZXQ7CiB9CiAKLSNpZmRlZiBD
-T05GSUdfSE9UUExVR19DUFUKLQogRVhQT1JUX1NZTUJPTChyZWdpc3Rlcl9jcHVfbm90aWZpZXIp
-OwogCisjaWZkZWYgQ09ORklHX0hPVFBMVUdfQ1BVCisKIHZvaWQgdW5yZWdpc3Rlcl9jcHVfbm90
-aWZpZXIoc3RydWN0IG5vdGlmaWVyX2Jsb2NrICpuYikKIHsKIAltdXRleF9sb2NrKCZjcHVfYWRk
-X3JlbW92ZV9sb2NrKTsK
-------=_20070130112649_50732--
+    Seeing that GENERIC_TIME has been thrown out from the -rt patch, it makes 
+no sense now (even if I had time -- I also decided to leave this to Thomas as 
+the HRT maintainer). Concerning this change: tghe patch that comments out 
+recalc_time_offset() call in arch/powerpc/kernel/time.c must have be thrown 
+out as well since it's breaking TOD vsyscall support now.
+
+> 	Ingo
+
+WBR, Sergei
