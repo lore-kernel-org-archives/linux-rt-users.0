@@ -1,47 +1,86 @@
-From: "Gerhard Olsson" <gerhard.nospam@gmail.com>
-Subject: Re: 2.6.20-rc7 (today's git) + -rt3 compilation problem
-Date: Fri, 2 Feb 2007 12:52:24 +0100
-Message-ID: <d4209ca0702020352t6d7db425vf63e44a2b7cbe3c6@mail.gmail.com>
-References: <45C30438.5070208@joow.be>
+From: Junior <ejr@inbox.com>
+Subject: Re: RT example
+Date: Fri, 2 Feb 2007 07:37:50 -0800
+Message-ID: <4B42CE81E46.0000049Dejr@inbox.com>
+References: <dbdbe3a7ef0.0000058dejr@inbox.com>
+  <20070125070133.gy28808@pengutronix.de>
+  <e672c199fc4.000002a6ejr@inbox.com> <e617bee4136.0000021fejr@inbox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: "Pieter Palmers" <pieterp@joow.be>, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ug-out-1314.google.com ([66.249.92.168]:16715 "EHLO
-	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1422775AbXBBLw0 (ORCPT
+Received: from wm28.inbox.com ([208.50.6.28]:4701 "HELO WM28.inbox.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1945942AbXBBPhz convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Feb 2007 06:52:26 -0500
-Received: by ug-out-1314.google.com with SMTP id 44so737495uga
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 Feb 2007 03:52:24 -0800 (PST)
-In-Reply-To: <45C30438.5070208@joow.be>
-Content-Disposition: inline
+	Fri, 2 Feb 2007 10:37:55 -0500
+Received: from inbox.com (127.0.0.1:25)
+	by inbox.com with [InBox.Com SMTP Server]
+	id <702020112789.WM28> for <linux-rt-users@vger.kernel.org> from <ejr@inbox.com>;
+	Fri, 2 Feb 2007 7:37:50 AM -0800
+In-Reply-To: <01E2F9E9290.000004B7ejr@inbox.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Another workaround is to modify the config:
-CONFIG_PARAVIRT=y
+With no response, perhaps someone can tell me what are the basic needs for a ARM platform to use the rt patches.
+So far, the pactches hurt rather than help me and I've remove them. So, there must be something I don't know I'm missing.
 
-(There was similar problems with SMP a while ago, a hint to enable
-functionality related to compile errors should possibly be mentioned
-in the wiki?
+Your help will be appreciated.
+--Jr.
 
-/Gerhard
 
-On 2/2/07, Pieter Palmers <pieterp@joow.be> wrote:
-> The following occurred when compiling today's git with the
-> patch-2.6.20-rc7-rt3 patch applied:
->
-> arch/i386/mm/built-in.o: In function `flush_cr3_cache':
-> arch/i386/mm/pgtable.c:303: undefined reference to `paravirt_enabled'
-> arch/i386/mm/pgtable.c:306: undefined reference to `hypercall'
-> make: *** [.tmp_vmlinux1] Error 1
->
-> Adding
-> #include <linux/paravirt.h>
-> to pgtable.c fixed the compilation issue, but is that the correct way to go?
->
-> Greets,
->
-> Pieter Palmers
+> -----Original Message-----
+> From: ejr@inbox.com
+> Sent: Sat, 27 Jan 2007 11:34:05 -0800
+> To: ejr@inbox.com, r.schwebel@pengutronix.de
+> Subject: Re: RT example
+> 
+> Hi All,
+> Does anyone have any comments on my quesions below.
+> I'm really looking for a good place to start and it would be a great help
+> if someone could suggest one.
+> 
+> Or, someone could guide me in the right direction with a serial driver
+> I'm working on. I'm trying to make the serial driver interrupt
+> get serviced with 10-12ms when its fired. Do I use a timer or is there
+> something in the rt patch that I can adjust in response to interrupts?
+> 
+> Thanks much.
+> --Junior
+> 
+>> -----Original Message-----
+>> From: ejr@inbox.com
+>> Sent: Thu, 25 Jan 2007 07:11:30 -0800
+>> To: r.schwebel@pengutronix.de
+>> Subject: Re: RT example
+>> 
+>>> On Wed, Jan 24, 2007 at 10:58:41AM -0800, Junior wrote:
+>>>> Does anyone have example code using the PREEMPT_RT patch?
+>>> 
+>>> You could for example start with cyclictest. It is also a good example
+>>> for how to write cyclic realtime programs on Linux.
+>> 
+>> Thanks, I will start there.
+>> 
+>> Where do I get the rt library? (-lrt in makefile)?
+>> 
+>> cyclictest.c: In function `timerthread':
+>> cyclictest.c:153: error: `SIGEV_THREAD_ID' undeclared (first use in this
+>> function)
+>> 
+>> Someone got this before but no solution on how to fix it.
+>> 
+>> 
+>>> Note that realtime is not about running fast, but running "in time".
+>>> That may often mean that the overall system performance goes down.
+>>> 
+>>>> PS. I'm using an ARM9 platform
+>>> 
+>>> Do you have clocksource/clockevent support for your ARM9 chip?
+>> 
+>> Aparently I don't. It's set as IS_TICK_BASED. How does this affect the
+>> system?
+>> 
+>> Thanks,
+>> --Jr.
