@@ -1,39 +1,47 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: "Michal Piotrowski" <michal.k.k.piotrowski@gmail.com>
 Subject: Re: v2.6.20-rt1, yum/rpm
-Date: Mon, 5 Feb 2007 11:22:49 +0100
-Message-ID: <20070205102249.GA16652@elte.hu>
-References: <20070205065636.GA1652@elte.hu> <8355959a0702050236k14aa8c98g29fdbac2c1370def@mail.gmail.com> <1170672153.4672.1.camel@twins>
+Date: Mon, 5 Feb 2007 13:59:56 +0100
+Message-ID: <6bffcb0e0702050459y692359ai67cbd4f93e11d06e@mail.gmail.com>
+References: <20070205065636.GA1652@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sunil Naidu <akula2.shark@gmail.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:40674 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932077AbXBELQf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Feb 2007 06:16:35 -0500
+Received: from ug-out-1314.google.com ([66.249.92.174]:62972 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932258AbXBEM76 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Feb 2007 07:59:58 -0500
+Received: by ug-out-1314.google.com with SMTP id 44so1285387uga
+        for <linux-rt-users@vger.kernel.org>; Mon, 05 Feb 2007 04:59:57 -0800 (PST)
+In-Reply-To: <20070205065636.GA1652@elte.hu>
 Content-Disposition: inline
-In-Reply-To: <1170672153.4672.1.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi,
 
-* Peter Zijlstra <a.p.zijlstra@chello.nl> wrote:
+On 05/02/07, Ingo Molnar <mingo@elte.hu> wrote:
+> i have released the v2.6.20-rt1 kernel, which can be downloaded from the
+> usual place:
+>
+>   http://redhat.com/~mingo/realtime-preempt/
+>
 
-> > But here is an interesting dmesg:
-> > 
-> > rcu_boost_dat: idx=1 b=0 ul=0 ub=0 boost: a=0 b=0
-> > rcu_boost_dat block:    0  0  0  0?
-> > rcu_boost_dat boost:    0! 0  0  0?
-> > rcu_boost_dat unlock:   0? 0  0  0?
-> > 
-> > I didn'tunderstand this with ? Am I missing anything here or please
-> > give some inputs.
-> 
-> That is Paul McKenney's RCU priority boosting stuff.
+It looks like a bug to me
 
-yeah, those messages are diagnostic. You can turn them off by disabling 
-CONFIG_PREEMPT_RCU_BOOST_STATS.
+BUG: MAX_LOCKDEP_ENTRIES too low!
+turning off the locking correctness validator.
 
-	Ingo
+http://www.stardust.webpages.pl/files/tbf/euridica/2.6.20-rt1/rt-dmesg
+http://www.stardust.webpages.pl/files/tbf/euridica/2.6.20-rt1/rt-config
+
+Regards,
+Michal
+
+-- 
+Michal K. K. Piotrowski
+LTG - Linux Testers Group
+(http://www.stardust.webpages.pl/ltg/)
