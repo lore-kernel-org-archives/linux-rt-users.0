@@ -1,192 +1,111 @@
-From: Arjan van de Ven <arjan@infradead.org>
+From: "Sunil Naidu" <akula2.shark@gmail.com>
 Subject: Re: v2.6.20-rt1, yum/rpm
-Date: Tue, 06 Feb 2007 11:10:44 +0100
-Message-ID: <1170756645.7324.8.camel@laptopd505.fenrus.org>
+Date: Tue, 6 Feb 2007 16:00:57 +0530
+Message-ID: <8355959a0702060230y2ca161f8seff65d2791d64c87@mail.gmail.com>
 References: <20070205065636.GA1652@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:40628 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751998AbXBFKKr (ORCPT
+Received: from ug-out-1314.google.com ([66.249.92.175]:23067 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751539AbXBFKa7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Feb 2007 05:10:47 -0500
+	Tue, 6 Feb 2007 05:30:59 -0500
+Received: by ug-out-1314.google.com with SMTP id 44so1563791uga
+        for <linux-rt-users@vger.kernel.org>; Tue, 06 Feb 2007 02:30:57 -0800 (PST)
 In-Reply-To: <20070205065636.GA1652@elte.hu>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-02-05 at 07:56 +0100, Ingo Molnar wrote:
-> i have released the v2.6.20-rt1 kernel, which can be downloaded from the 
-> usual place:
-> 
->   http://redhat.com/~mingo/realtime-preempt/
-> 
-> more info about the -rt patchset can be found in the RT wiki:
-> 
->   http://rt.wiki.kernel.org
-> 
-> This is a fixes-only release. Since the -rt tree has been closely 
-> tracking Linus' upstream kernel since -rc1, no new issues are expected - 
-> please re-report if anything is still unfixed.
+On 2/5/07, Ingo Molnar <mingo@elte.hu> wrote:
+> i have released the v2.6.20-rt1 kernel, which can be downloaded from the
+
+This is about 2.6.20-rt2, no issues here.
+
+PID TTY      STAT   TIME COMMAND
+    1 ?        Ss     0:00 init [5]
+    2 ?        S      0:00 [migration/0]
+    3 ?        S      0:00 [posix_cpu_timer]
+    4 ?        S      0:00 [softirq-high/0]
+    5 ?        S      0:00 [softirq-timer/0]
+    6 ?        S      0:00 [softirq-net-tx/]
+    7 ?        S      0:00 [softirq-net-rx/]
+    8 ?        S      0:00 [softirq-block/0]
+    9 ?        S      0:00 [softirq-tasklet]
+   10 ?        S      0:00 [softirq-sched/0]
+   11 ?        S      0:00 [softirq-hrtimer]
+   12 ?        S      0:00 [softirq-rcu/0]
+   13 ?        S<     0:00 [desched/0]
+   14 ?        S      0:00 [migration/1]
+   15 ?        S      0:00 [posix_cpu_timer]
+   16 ?        S      0:00 [softirq-high/1]
+   17 ?        S      0:00 [softirq-timer/1]
+   18 ?        S      0:00 [softirq-net-tx/]
+   19 ?        S      0:00 [softirq-net-rx/]
+   20 ?        S      0:00 [softirq-block/1]
+   21 ?        S      0:00 [softirq-tasklet]
+   22 ?        S      0:00 [softirq-sched/1]
+   23 ?        S      0:00 [softirq-hrtimer]
+   24 ?        S      0:00 [softirq-rcu/1]
+   25 ?        S<     0:00 [desched/1]
+   26 ?        S<     0:00 [events/0]
+   27 ?        S<     0:00 [events/1]
+   28 ?        S<     0:00 [khelper]
+   29 ?        S      0:00 [RCU Prio Booste]
+   30 ?        S<     0:00 [kthread]
+   63 ?        S<     0:00 [kblockd/0]
+   64 ?        S<     0:00 [kblockd/1]
+   65 ?        S<     0:00 [kacpid]
+   66 ?        S<     0:00 [IRQ-9]
+  157 ?        S<     0:00 [cqueue/0]
+  158 ?        S<     0:00 [cqueue/1]
+  159 ?        S<     0:00 [ksuspend_usbd]
+  162 ?        S<     0:00 [khubd]
+  164 ?        S<     0:00 [kseriod]
+  189 ?        S      0:00 [pdflush]
+  190 ?        S      0:00 [pdflush]
+  191 ?        S<     0:00 [kswapd0]
+  192 ?        S<     0:00 [flush_filesd/0]
+  193 ?        S<     0:00 [flush_filesd/1]
+  194 ?        S<     0:00 [aio/0]
+  195 ?        S<     0:00 [aio/1]
+  285 ?        S<     0:00 [IRQ-8]
+  317 ?        S<     0:00 [IRQ-14]
+  332 ?        S<     0:00 [IRQ-12]
+  333 ?        S<     0:00 [IRQ-1]
+  339 ?        S<     0:00 [kpsmoused]
+  343 ?        S      0:00 [kirqd]
+  351 ?        S<     0:00 [IRQ-20]
+  352 ?        S<     0:00 [IRQ-19]
+  353 ?        S<     0:00 [IRQ-18]
+  354 ?        S<     0:00 [IRQ-16]
+  376 ?        S<     0:00 [ata/0]
+  377 ?        S<     0:00 [ata/1]
+  378 ?        S<     0:00 [ata_aux]
+  382 ?        S<     0:00 [scsi_eh_0]
+  383 ?        S<     0:00 [scsi_eh_1]
+  384 ?        S<     0:00 [kjournald]
+  412 ?        S<     0:00 [kauditd]
+  449 ?        S<s    0:00 /sbin/udevd -d
+ 1153 ?        S<     0:00 [hda_codec]
+ 1552 ?        S<     0:00 [kmpathd/0]
+ 1553 ?        S<     0:00 [kmpathd/1]
+ 1561 ?        S<     0:00 [kmirrord]
+ 1582 ?        S<     0:00 [kjournald]
+................
+.................
+................
+
+Wanted to ask, is there any (performance) problem with multi-sessions
+(on the same box) with these kernels? I read some time back about Real
+Time sound (exact terminology I don't remember), how to test this
+using Intel hda? Any pointers?
 
 
-patch below has 2 tweaks
-1) the new RCU feature wakes up once per second, make sure this is using
-the new round_jiffies() infrastructure
-2) the slab background reap code is waking up once per 2 seconds per
-cpu. The patch makes this more dynamic; if no work was done (no activity
-on the cpu happened) then this is made to be 4 seconds
+Thanks,
 
-Signed-off-by: Arjan van de Ven <arjan@linux.intel.com>
-
-
-Index: linux-2.6.20-rt2/kernel/rcupreempt.c
-===================================================================
---- linux-2.6.20-rt2.orig/kernel/rcupreempt.c
-+++ linux-2.6.20-rt2/kernel/rcupreempt.c
-@@ -465,7 +465,7 @@ static int rcu_booster(void *arg)
- 		 * adjust, or eliminate in case of OOM.
- 		 */
- 
--		schedule_timeout_interruptible(HZ);
-+		schedule_timeout_interruptible(round_jiffies_relative(HZ));
- 
- 		/* Print stats if enough time has passed. */
- 
-Index: linux-2.6.20-rt2/kernel/rcutorture.c
-===================================================================
---- linux-2.6.20-rt2.orig/kernel/rcutorture.c
-+++ linux-2.6.20-rt2/kernel/rcutorture.c
-@@ -288,7 +288,7 @@ static int rcu_torture_preempt(void *arg
- 			cond_resched();
- 		if (rcu_torture_completed() == completedstart)
- 			rcu_torture_preempt_errors++;
--		schedule_timeout_interruptible(HZ);
-+		schedule_timeout_interruptible(round_jiffies_relative(HZ));
- 	} while (!kthread_should_stop());
- 	return 0;
- }
-@@ -660,7 +660,7 @@ rcu_torture_reader(void *arg)
- 		if (p == NULL) {
- 			/* Wait for rcu_torture_writer to get underway */
- 			cur_ops->readunlock(idx);
--			schedule_timeout_interruptible(HZ);
-+			schedule_timeout_interruptible(round_jiffies_relative(HZ));
- 			continue;
- 		}
- 		if (p->rtort_mbtest == 0)
-Index: linux-2.6.20-rt2/mm/slab.c
-===================================================================
---- linux-2.6.20-rt2.orig/mm/slab.c
-+++ linux-2.6.20-rt2/mm/slab.c
-@@ -1062,7 +1062,7 @@ static int transfer_objects(struct array
- #ifndef CONFIG_NUMA
- 
- #define drain_alien_cache(cachep, alien) do { } while (0)
--#define reap_alien(cachep, l3, this_cpu) do { } while (0)
-+#define reap_alien(cachep, l3, this_cpu) 0
- 
- static inline struct array_cache **alloc_alien_cache(int node, int limit)
- {
-@@ -1160,7 +1160,7 @@ static void __drain_alien_cache(struct k
- /*
-  * Called from cache_reap() to regularly drain alien caches round robin.
-  */
--static void
-+static int
- reap_alien(struct kmem_cache *cachep, struct kmem_list3 *l3, int *this_cpu)
- {
- 	int node = per_cpu(reap_node, *this_cpu);
-@@ -1171,8 +1171,10 @@ reap_alien(struct kmem_cache *cachep, st
- 		if (ac && ac->avail && spin_trylock_irq(&ac->lock)) {
- 			__drain_alien_cache(cachep, ac, node, this_cpu);
- 			spin_unlock_irq(&ac->lock);
-+			return 1;
- 		}
- 	}
-+	return 0;
- }
- 
- static void drain_alien_cache(struct kmem_cache *cachep,
-@@ -2473,7 +2475,7 @@ static void check_spinlock_acquired_node
- #define check_spinlock_acquired_node(x, y) do { } while(0)
- #endif
- 
--static void drain_array(struct kmem_cache *cachep, struct kmem_list3 *l3,
-+static int drain_array(struct kmem_cache *cachep, struct kmem_list3 *l3,
- 			struct array_cache *ac,
- 			int force, int node);
- 
-@@ -4114,15 +4116,16 @@ static int enable_cpucache(struct kmem_c
-  * Drain an array if it contains any elements taking the l3 lock only if
-  * necessary. Note that the l3 listlock also protects the array_cache
-  * if drain_array() is used on the shared array.
-+ * returns non-zero if some work is done
-  */
--void drain_array(struct kmem_cache *cachep, struct kmem_list3 *l3,
-+int drain_array(struct kmem_cache *cachep, struct kmem_list3 *l3,
- 		 struct array_cache *ac, int force, int node)
- {
- 	int this_cpu = smp_processor_id();
- 	int tofree;
- 
- 	if (!ac || !ac->avail)
--		return;
-+		return 0;
- 	if (ac->touched && !force) {
- 		ac->touched = 0;
- 	} else {
-@@ -4138,6 +4141,7 @@ void drain_array(struct kmem_cache *cach
- 		}
- 		slab_spin_unlock_irq(&l3->list_lock, this_cpu);
- 	}
-+	return 1;
- }
- 
- /**
-@@ -4157,6 +4161,7 @@ static void cache_reap(struct work_struc
- 	int this_cpu = raw_smp_processor_id(), node = cpu_to_node(this_cpu);
- 	struct kmem_cache *searchp;
- 	struct kmem_list3 *l3;
-+	int work_done = 0;
- 
- 	if (!mutex_trylock(&cache_chain_mutex)) {
- 		/* Give up. Setup the next iteration. */
-@@ -4175,10 +4180,10 @@ static void cache_reap(struct work_struc
- 		 */
- 		l3 = searchp->nodelists[node];
- 
--		reap_alien(searchp, l3, &this_cpu);
-+		work_done += reap_alien(searchp, l3, &this_cpu);
- 
--		drain_array(searchp, l3, cpu_cache_get(searchp, this_cpu),
--			    0, node);
-+		work_done += drain_array(searchp, l3,
-+			    cpu_cache_get(searchp, this_cpu), 0, node);
- 
- 		/*
- 		 * These are racy checks but it does not matter
-@@ -4189,7 +4194,7 @@ static void cache_reap(struct work_struc
- 
- 		l3->next_reap = jiffies + REAPTIMEOUT_LIST3;
- 
--		drain_array(searchp, l3, l3->shared, 0, node);
-+		work_done += drain_array(searchp, l3, l3->shared, 0, node);
- 
- 		if (l3->free_touched)
- 			l3->free_touched = 0;
-@@ -4207,9 +4212,10 @@ next:
- 	mutex_unlock(&cache_chain_mutex);
- 	next_reap_node();
- 	refresh_cpu_vm_stats(smp_processor_id());
-+
- 	/* Set up the next iteration */
- 	schedule_delayed_work(&__get_cpu_var(reap_work),
--		round_jiffies_relative(REAPTIMEOUT_CPUC));
-+		round_jiffies_relative((1+!work_done) * REAPTIMEOUT_CPUC));
- }
- 
- #ifdef CONFIG_PROC_FS
+Akula2
