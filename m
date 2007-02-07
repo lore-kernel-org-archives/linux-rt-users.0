@@ -1,81 +1,32 @@
-From: "K.R. Foley" <kr@cybsft.com>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: v2.6.20-rt1, yum/rpm
-Date: Tue, 06 Feb 2007 14:08:27 -0600
-Message-ID: <45C8E03B.2020307@cybsft.com>
-References: <20070205065636.GA1652@elte.hu> <Pine.LNX.4.64.0702061136340.659@ghostwheel.llnl.gov>
+Date: Wed, 7 Feb 2007 13:32:17 +0100
+Message-ID: <20070207123217.GA12977@elte.hu>
+References: <20070205065636.GA1652@elte.hu> <1170756645.7324.8.camel@laptopd505.fenrus.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org
-To: Chuck Harding <charding@llnl.gov>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Arjan van de Ven <arjan@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay00.pair.com ([209.68.5.9]:2933 "HELO relay00.pair.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S965416AbXBFUPL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Feb 2007 15:15:11 -0500
-In-Reply-To: <Pine.LNX.4.64.0702061136340.659@ghostwheel.llnl.gov>
+Received: from mx2.mail.elte.hu ([157.181.151.9]:60295 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1030618AbXBGMcD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 Feb 2007 07:32:03 -0500
+Content-Disposition: inline
+In-Reply-To: <1170756645.7324.8.camel@laptopd505.fenrus.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Chuck Harding wrote:
-> On Mon, 5 Feb 2007, Ingo Molnar wrote:
-> 
->> i have released the v2.6.20-rt1 kernel, which can be downloaded from the
->> usual place:
->>
->>  http://redhat.com/~mingo/realtime-preempt/
-> 
-> I find no patch-2.6.20-rt1 there. Is it somewhere else, perhaps?
-> 
-rt1 is now in older:
-http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.20-rt1
 
-However, looks like Ingo is up to rt4 now but there is no rt4 patch,
-only RPMs? Ingo?
+* Arjan van de Ven <arjan@infradead.org> wrote:
 
->>
->> more info about the -rt patchset can be found in the RT wiki:
->>
->>  http://rt.wiki.kernel.org
->>
->> This is a fixes-only release. Since the -rt tree has been closely
->> tracking Linus' upstream kernel since -rc1, no new issues are expected -
->> please re-report if anything is still unfixed.
->>
->> There are lots of changes relative to 2.6.19-rt6 (the last stable
->> release), but these are mostly fixes and other gradual improvements. KVM
->> is now enabled in the yum kernel on both i686 and x86_64 (and has been
->> enabled since around -rc1-rt1), the -rt tree tracks kvm-trunk (which is
->> a bit fresher than upstream KVM) and has a few additional paravirt
->> speedups implemented and enabled.
->>
->> to build a 2.6.20-rt1 tree, the following patches should be applied:
->>
->>  http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.20.tar.bz2
->>  http://redhat.com/~mingo/realtime-preempt/patch-2.6.20-rt1
->>
->> the -rt YUM repository for Fedora Core 6 and 5, for architectures i686
->> and x86_64 can be activated via:
->>
->>   cd /etc/yum.repos.d
->>   wget http://people.redhat.com/~mingo/realtime-preempt/rt.repo
->>
->>   yum install kernel-rt.x86_64   # on x86_64
->>   yum install kernel-rt          # on i686
->>
->>   yum update kernel-rt           # refresh - or enable yum-updatesd
->>
->> as usual, bugreports, fixes and suggestions are welcome,
->>
->>     Ingo
->> -
->> To unsubscribe from this list: send the line "unsubscribe
->> linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
-> 
+> patch below has 2 tweaks
+> 1) the new RCU feature wakes up once per second, make sure this is using
+> the new round_jiffies() infrastructure
+> 2) the slab background reap code is waking up once per 2 seconds per
+> cpu. The patch makes this more dynamic; if no work was done (no activity
+> on the cpu happened) then this is made to be 4 seconds
 
+thanks, i've applied both tweaks.
 
--- 
-   kr
+	Ingo
