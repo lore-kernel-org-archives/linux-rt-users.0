@@ -1,56 +1,34 @@
-From: Esben Nielsen <nielsen.esben@googlemail.com>
-Subject: Re: 2.6.20-rt5 Oops on boot
-Date: Wed, 14 Feb 2007 21:06:26 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0702142104310.11160@frodo.shire>
-References: <200702101551.l1AFpKUf019229@cichlid.com>
- <Pine.LNX.4.64.0702141451540.7817@frodo.shire>  <1171462485.6360.7.camel@godzilla.tecnorama.it>
-  <Pine.LNX.4.64.0702141528420.7817@frodo.shire> <1171465426.8573.11.camel@godzilla.tecnorama.it>
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: Re: 2.6.20-rt5 Oops on boot [-rt8 OK]
+Date: Fri, 16 Feb 2007 00:46:52 +0000
+Message-ID: <45D4FEFC.5070306@rncbc.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <45CCC3CF.4090604@rncbc.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Cc: linux-rt-users@vger.kernel.org
-To: Alessio Igor Bogani <abogani@texware.it>
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nz-out-0506.google.com ([64.233.162.231]:34148 "EHLO
-	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932532AbXBNUGf (ORCPT
+Received: from smtpa3.netcabo.pt ([212.113.174.18]:11209 "EHLO
+	exch01smtp02.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1422935AbXBPAnd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Feb 2007 15:06:35 -0500
-Received: by nz-out-0506.google.com with SMTP id s1so313579nze
-        for <linux-rt-users@vger.kernel.org>; Wed, 14 Feb 2007 12:06:35 -0800 (PST)
-In-Reply-To: <1171465426.8573.11.camel@godzilla.tecnorama.it>
+	Thu, 15 Feb 2007 19:43:33 -0500
+In-Reply-To: <45CCC3CF.4090604@rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 14 Feb 2007, Alessio Igor Bogani wrote:
+Rui Nuno Capela (me) wrote:
+> 
+> I have terrible news: 2.6.20-rt5 does not boot at all on a couple
+> machines I was brave enough to try -- a P4@3.3Ghz SMP/HT desktop, and a
+> Core2 Duo T7200@2.0Ghz laptop. For the first case I could capture the
+> following dump via serial console:
+> ...
 
-> Esben please excuse me for my very bad english.
->
-> [...]
->>>> 2.6.20-rt5 doesn't boot on my hyperthreaded Pentium 4 2.80GHz either. I
->>>> don't have serial console but I can see that it stops at exit.c:877.
->>>
->>> Only for feedback:
->>> On my P4 3.0GHz HT the 2.6.20-rt5 (Ubuntu) boot perfectly.
->>
->> Let us compare configs then. I have attached my .config.
->
-> config-2.6.20-8-realtime is my complete kernel config.
+News are that 2.6.20-rt8 got it all back to business :)
 
-I tried with your config - modified to my setup. It gets furthrer but 
-crashes in the assert net/netlink/ad_netlink.c:145.
-
-Something is definitely wrong with 2.6.20-rt5!
-
-Esben
-
->
-> config.common are common options between us configurations
->
-> config.Esben is your specific part
-> config.Alessio is my specific part
->
-> Do you have already tried a pre-compiled kernel?
->
-> Ciao,
-> Alessio
->
+Cheers.
+-- 
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
