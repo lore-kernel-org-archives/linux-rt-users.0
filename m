@@ -1,35 +1,26 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Sergio Monteiro Basto <sergio@sergiomb.no-ip.org>
 Subject: Re: 2.6.20-rt5 Oops on boot [-rt8 OK]
-Date: Fri, 16 Feb 2007 09:25:51 +0100
-Message-ID: <20070216082551.GA26948@elte.hu>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <45CCC3CF.4090604@rncbc.org> <45D4FEFC.5070306@rncbc.org>
+Date: Mon, 19 Feb 2007 12:38:46 +0000
+Message-ID: <1171888726.3784.1.camel@localhost.localdomain>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
+	 <45CCC3CF.4090604@rncbc.org> <45D4FEFC.5070306@rncbc.org>
+	 <20070216082551.GA26948@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Rui Nuno Capela <rncbc@rncbc.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:48004 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S966222AbXBPI3A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Feb 2007 03:29:00 -0500
-Content-Disposition: inline
-In-Reply-To: <45D4FEFC.5070306@rncbc.org>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Rui Nuno Capela <rncbc@rncbc.org>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932206AbXBSMig@vger.kernel.org>
+In-Reply-To: <20070216082551.GA26948@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 2007-02-16 at 09:25 +0100, Ingo Molnar wrote:
+> >=20
+> > News are that 2.6.20-rt8 got it all back to business :)=20
 
-* Rui Nuno Capela <rncbc@rncbc.org> wrote:
+yes!, my Pentium D back in business too  .
 
-> Rui Nuno Capela (me) wrote:
-> > 
-> > I have terrible news: 2.6.20-rt5 does not boot at all on a couple
-> > machines I was brave enough to try -- a P4@3.3Ghz SMP/HT desktop, and a
-> > Core2 Duo T7200@2.0Ghz laptop. For the first case I could capture the
-> > following dump via serial console:
-> > ...
-> 
-> News are that 2.6.20-rt8 got it all back to business :)
-
-great! The fix is from Michal/Clark/Steve.
-
-	Ingo
+--
+S=C3=A9rgio M .B.=20
