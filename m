@@ -1,64 +1,45 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: David Miller <davem@davemloft.net>
 Subject: Re: BUG in 2.6.20-rt8
-Date: Sun, 25 Feb 2007 17:52:30 -0800
-Message-ID: <20070226015230.GN5049@linux.vnet.ibm.com>
-References: <20070225050212.GA17258@linux.vnet.ibm.com> <20070225062747.GA13432@elte.hu> <20070224.223744.59470086.davem@davemloft.net>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Sun, 25 Feb 2007 18:09:27 -0800 (PST)
+Message-ID: <20070225.180927.112620704.davem@davemloft.net>
+References: <20070225062747.GA13432@elte.hu>
+	<20070224.223744.59470086.davem@davemloft.net>
+	<20070226015230.GN5049@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Cc: mingo@elte.hu, tglx@linutronix.de, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: David Miller <davem@davemloft.net>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pool-71-111-73-6.ptldor.dsl-w.verizon.net ([71.111.73.6]:27960
-	"EHLO IBM-8EC8B5596CA.beaverton.ibm.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751029AbXBZBwX (ORCPT
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:50022
+	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1751050AbXBZCJ2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 Feb 2007 20:52:23 -0500
-Content-Disposition: inline
-In-Reply-To: <20070224.223744.59470086.davem@davemloft.net>
+	Sun, 25 Feb 2007 21:09:28 -0500
+In-Reply-To: <20070226015230.GN5049@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, Feb 24, 2007 at 10:37:44PM -0800, David Miller wrote:
-> From: Ingo Molnar <mingo@elte.hu>
-> Date: Sun, 25 Feb 2007 07:27:47 +0100
-> 
-> > 
-> > * Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> > 
-> > > I got the following running stock 2.6.20-rt8 on an 4-CPU 1.8GHz 
-> > > Opteron box.  The machine continued to run a few rounds of kernbench 
-> > > and LTP. Looks a bit scary -- a tasklet was "stolen" from 
-> > > __tasklet_action().
-> > > 
-> > > Thoughts?  In the meantime, kicking it off again to see if it repeats.
-> > 
-> > > BUG: at kernel/softirq.c:559 __tasklet_action()
-> > 
-> > this seems to happen very sporadically. Seems to happen more likely on 
-> > hyperthreading CPUs. It is very likely caused by the 
-> > redesign-tasklet-locking-to-be-sane patch below - which is a quick hack 
-> > of mine from early -rt days. Can you see any obvious bug in it? The 
-> > cmpxchg logic is certainly a bit ... tricky, locking-wise.
-> 
-> Ingo, please don't use cmpxchg() in generic code, we support several
-> processors that simply cannot do it.
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Date: Sun, 25 Feb 2007 17:52:30 -0800
 
-OK, I will bite...
+> Why doesn't the traditional hash table of locks work here?  Use the
+> cache-line address as input to the hash function, take the corresponding
+> lock, do the compare-and-exchange by hand, and then release the lock.
+> What am I missing here?  Address aliasing do to memory being mapped into
+> multiple locations or something?  (In that case, use only the portion
+> of the address within the page, right?)
 
-Why doesn't the traditional hash table of locks work here?  Use the
-cache-line address as input to the hash function, take the corresponding
-lock, do the compare-and-exchange by hand, and then release the lock.
-What am I missing here?  Address aliasing do to memory being mapped into
-multiple locations or something?  (In that case, use only the portion
-of the address within the page, right?)
+It doesn't protect against pure stores.
 
-I will agree that cmpxchg() has been abused pretty thoroughly in
-some venues, but it does have legitimate uses.
+Even ignoring that you'll also need to disable interrupts, always,
+which therefore will always perform very poorly compared to an
+open-coded spinlock variant.
 
-						Thanx, Paul
+There are zero gains to cmpxchg(), in my opinion, you dirty and
+grab exclusive access to a cacheline with cmpxchg() just the
+same as a spinlock, so the real cost is the same.
 
-> Instead of saying "it's just something special in -rt for now", take
-> it out now so that what you do eventually push upstream does get
-> tested.
+There is zero justification for using this primitive in generic
+code.
