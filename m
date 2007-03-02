@@ -1,51 +1,72 @@
-From: "K.R. Foley" <kr@cybsft.com>
-Subject: Re: v2.6.20-rt1, yum/rpm
-Date: Wed, 28 Feb 2007 04:16:04 -0600
-Message-ID: <45E55664.90407@cybsft.com>
-References: <20070205065636.GA1652@elte.hu> <45E46CB4.1080009@cybsft.com> <20070228081132.GA32405@elte.hu>
+From: Guennadi Liakhovetski <gl-o/hVf8ie6tKzQB+pC5nmwQ@public.gmane.org>
+Subject: 2.6.18-rt6 IrDA strangeness
+Date: Fri, 2 Mar 2007 15:11:23 +0100 (CET)
+Message-ID: <Pine.LNX.4.63.0703021500020.1799@pcgl.dsa-ac.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay00.pair.com ([209.68.5.9]:3357 "HELO relay00.pair.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S932131AbXB1KQH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Feb 2007 05:16:07 -0500
-In-Reply-To: <20070228081132.GA32405@elte.hu>
-Sender: linux-rt-users-owner@vger.kernel.org
+To: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, irda-users-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Return-path: <irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/irda-users>,
+	<mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum=irda-users>
+List-Post: <mailto:irda-users-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/irda-users>,
+	<mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Sender: irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Errors-To: irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar wrote:
-> * K.R. Foley <kr@cybsft.com> wrote:
-> 
->> Ingo Molnar wrote:
->>> i have released the v2.6.20-rt1 kernel, which can be downloaded from the 
->>> usual place:
->>>
->> I have a couple of questions regarding priorities of the softirqs, IRQ 
->> handlers, etc.
->>
->> With some exceptions, back in 2.6.18 and prior patches the IRQ threads 
->> were prioritized between 50 and 25 and the most of the softirqs were 
->> prioritized at 1? In newer patches it looks like they are all 
->> prioritized at 50?
->>
->> I was just curious what went into making these choices? I am just 
->> trying to better understand these decisions.
-> 
-> The basically random order-of-request_irq() prioritization was causing 
-> problems (it worked for some but didnt work for others), so i got rid of 
-> trying to auto-guess some priority order. Also, now that we've got 
-> tools/scripts like set_kthread_prio and rtprio it seemed more consistent 
-> to just not attempt to prioritize interrupts and softirqs at all, but to 
-> keep them all 'in the middle' of the RT priority range.
-> 
-> 	Ingo
-> 
+Hi
 
-Thanks.
+Ok, the kernel is a bit old, but maybe someone has an idea... Running ppp 
+over irnet, one side with the above kernel, another is a verified 
+reference system. The following strange fenomena are observed:
 
--- 
-	kr
+1. irdadump on the 2.6.18-rt6 side shows only incoming packets
+2. sometimes, especially after a connection break down, the connection is 
+re-established, but the reference side has empty /proc/net/irda/discovery, 
+the reason being a couple of missing packets during re-negotiation:
+
+15:06:43.854376 xid:cmd c62da07d > ffffffff S=6 s=0 (14)
+15:06:43.944244 xid:cmd c62da07d > ffffffff S=6 s=1 (14)
+15:06:44.034244 xid:cmd c62da07d > ffffffff S=6 s=2 (14)
+15:06:44.124245 xid:cmd c62da07d > ffffffff S=6 s=3 (14)
+15:06:44.214281 xid:cmd c62da07d > ffffffff S=6 s=4 (14)
+15:06:44.304289 xid:cmd c62da07d > ffffffff S=6 s=5 (14)
+15:06:44.394282 xid:cmd c62da07d > ffffffff S=6 s=* TESTNODE hint=4400 [ Computer LAN Access ] (25)
+
+15:06:46.864376 xid:cmd c62da07d > ffffffff S=6 s=0 (14)
+15:06:46.954286 xid:cmd c62da07d > ffffffff S=6 s=1 (14)
+15:06:47.044280 xid:cmd c62da07d > ffffffff S=6 s=2 (14)
+15:06:47.134293 xid:cmd c62da07d > ffffffff S=6 s=3 (14)
+15:06:47.224281 xid:cmd c62da07d > ffffffff S=6 s=4 (14)
+15:06:47.314250 xid:cmd c62da07d > ffffffff S=6 s=5 (14)
+15:06:47.404249 xid:cmd c62da07d > ffffffff S=6 s=* TESTNODE hint=4400 [ Computer LAN Access ] (25)
+
+15:06:49.391225 snrm:cmd ca=fe pf=1 c62da07d < 0ad5eb46 new-ca=58 (33)
+15:06:49.391389 ua:rsp ca=58 pf=1 c62da07d > 0ad5eb46 (32)
+15:06:49.448100 rr:cmd < ca=58 pf=1 nr=0 (2)
+15:06:49.448172 rr:rsp > ca=58 pf=1 nr=0 (2)
+15:06:49.450636 i:cmd  < ca=58 pf=1 nr=0 ns=0 LM slsap=16 dlsap=00 CONN_CMD (6)
+15:06:49.450817 i:rsp  > ca=58 pf=1 nr=1 ns=0 LM slsap=00 dlsap=16 CONN_RSP (6)
+
+I.e., we see 2 discovery packets from TESTNODE, and then the 2.6.18-rt6 
+host sends directly an SNRM packet without presenting itself first with 
+its nick... Looks like some timers are confused through highres timers?...
+
+Thanks
+Guennadi
+---------------------------------
+Guennadi Liakhovetski, Ph.D.
+DSA Daten- und Systemtechnik GmbH
+Pascalstr. 28
+D-52076 Aachen
+Germany
+
+-------------------------------------------------------------------------
+Take Surveys. Earn Cash. Influence the Future of IT
+Join SourceForge.net's Techsay panel and you'll get the chance to share your
+opinions on IT & business topics through brief surveys-and earn cash
+http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
