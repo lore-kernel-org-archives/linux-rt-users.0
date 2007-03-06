@@ -1,42 +1,40 @@
 From: Guennadi Liakhovetski <gl@dsa-ac.de>
-Subject: error in 2.6.20-rt8
-Date: Tue, 6 Mar 2007 15:09:45 +0100 (CET)
-Message-ID: <Pine.LNX.4.63.0703061509340.534@pcgl.dsa-ac.de>
+Subject: Re: [irda-users] 2.6.18-rt6 IrDA strangeness
+Date: Tue, 6 Mar 2007 15:37:06 +0100 (CET)
+Message-ID: <Pine.LNX.4.63.0703061533400.534@pcgl.dsa-ac.de>
+References: <FvWAtRUd.1173190966.6915950.samuel@sortiz.org>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Cc: Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org, irda-users@lists.sourceforge.net,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Samuel Ortiz <samuel@sortiz.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.dsa-ac.de ([62.112.80.99]:53866 "EHLO mail.dsa-ac.de"
+Received: from mail.dsa-ac.de ([62.112.80.99]:54163 "EHLO mail.dsa-ac.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S965036AbXCFOJr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Mar 2007 09:09:47 -0500
+	id S965103AbXCFOhJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 6 Mar 2007 09:37:09 -0500
+In-Reply-To: <FvWAtRUd.1173190966.6915950.samuel@sortiz.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas,
+(I think, we can remove Thomas and linux-rt-users from CC: now that it's 
+clearly not a -rt bug, unless they express their interest in this 
+thread:-))
 
-I believe here:
+On Tue, 6 Mar 2007, Samuel Ortiz wrote:
 
-Index: linux/drivers/char/lpptest.c
-===================================================================
---- /dev/null
-+++ linux/drivers/char/lpptest.c
-@@ -0,0 +1,178 @@
-+/*
-+ * /dev/lpptest device: test IRQ handling latencies over parallel port
+> On 3/6/2007, "Guennadi Liakhovetski" <gl@dsa-ac.de> wrote:
+>
+>> On Tue, 6 Mar 2007, Guennadi Liakhovetski wrote:
+>>
+>> Ok, I also managed to reproduce this with non-rt kernel, so, it's just
+>> some incompatibility between 2.4 and 2.6... Might be considered as a nug
+>> on the 2.4 "reference" side.
+>
+> If you don't see the problem with two 2.6 peers, then it's definitely a
+> 2.4 bug...Have you tried that ?
 
-[snip]
-
-+/*
-+ * API wrappers so that the code can be shared with the -rt tree:
-+ */
-+#ifndef local_irq_disable
-+# define local_irq_disable     local_irq_disable
-+# define local_irq_enable      local_irq_enable
-+#endif
-
-that's, probably, not what was meant there...
+No, not yet. As soon as I get a chance, will verify that.
 
 Thanks
 Guennadi
