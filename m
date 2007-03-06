@@ -1,77 +1,94 @@
-From: Guennadi Liakhovetski <gl@dsa-ac.de>
-Subject: Re: [irda-users] 2.6.18-rt6 IrDA strangeness
-Date: Fri, 2 Mar 2007 17:49:47 +0100 (CET)
-Message-ID: <Pine.LNX.4.63.0703021741160.534@pcgl.dsa-ac.de>
-References: <Pine.LNX.4.63.0703021500020.1799@pcgl.dsa-ac.de>
+From: pradyumna.sampath@in.abb.com
+Subject: Re: Status of -rt for linux-2.6.20/arch/powerpc
+Date: Tue, 6 Mar 2007 13:32:26 +0530
+Message-ID: <OF77E4A7D3.89DEBB42-ON65257296.002B7648-65257296.002B9862@abbasiapacific.com.sg>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Cc: Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users@vger.kernel.org, irda-users@lists.sourceforge.net
+Content-Type: multipart/mixed;
+	Boundary="0__=EABBF805DFB8F0D88f9e8a93df938690918cEABBF805DFB8F0D8"
+Cc: wg@grandegger.com, r.schwebel@pengutronix.de,
+	linux-rt-users@vger.kernel.org
+To: tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.dsa-ac.de ([62.112.80.99]:54092 "EHLO mail.dsa-ac.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S2992608AbXCBQtw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Mar 2007 11:49:52 -0500
-In-Reply-To: <Pine.LNX.4.63.0703021500020.1799@pcgl.dsa-ac.de>
+Received: from apisx02.abbasiapacific.com.sg ([210.24.147.18]:3700 "EHLO
+	apisx02.abbasiapacific.com.sg" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752201AbXCFILm (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 6 Mar 2007 03:11:42 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Added Thomas to CC: as it is a PXA270 CPU and it looks like the kernel has 
-some other peculiarities that the no-rt one doesn't have. In principle, 
-the kernel runs fine, many various hardware drivers, realtime threads. 
-But, I just noticed, klogd doesn't get woken up from printk(). I.e., 
-syslog(2) doesn't work right. If you wake it up somehow, say, with a kill 
--CONT, you get buffers out of the kernel.
+--0__=EABBF805DFB8F0D88f9e8a93df938690918cEABBF805DFB8F0D8
+Content-type: text/plain; charset=us-ascii
 
-Thomas, is it something known and (hopefully) fixed in newer kernels, or 
-something unknown?
 
-Below is the original Ir problem with this kernel.
+Hi Everyone,
 
-Thanks
-Guennadi
+I came across the errors that Wolfgang Grandegger describes
+http://article.gmane.org/gmane.linux.rt.user/224 . I downloaded the latest
+patch , -rt8 and I continue to get the same merge errors and the make fail
+in arch/powerpc/kernel/time.c .
 
-On Fri, 2 Mar 2007, Guennadi Liakhovetski wrote:
+Is there a patch which has these fixed ? Im trying to get RT-PREEMPT
+working on my Lite5200 board.
 
-> Ok, the kernel is a bit old, but maybe someone has an idea... Running ppp
-> over irnet, one side with the above kernel, another is a verified
-> reference system. The following strange fenomena are observed:
+Thanks in advance.
+
+regards
+prady
+
+
+
+
+                                                                                                     
+ (Embedded     Thomas Gleixner <tglx@linutronix.de>@vger.kernel.org                                  
+ image moved   02/11/2007 10:09 PM                                                                   
+ to file:                                                                                            
+ pic04031.pcx)                                                                                       
+                                                                                                     
+                                                                                                     
+
+
+Sent by:    linux-rt-users-owner@vger.kernel.org
+
+
+To:    Wolfgang Grandegger <wg@grandegger.com>
+cc:    Robert Schwebel <r.schwebel@pengutronix.de>,
+       linux-rt-users@vger.kernel.org
+Subject:    Re: Status of -rt for linux-2.6.20/arch/powerpc
+
+Security Level:?              Internal
+
+On Sun, 2007-02-11 at 17:37 +0100, Wolfgang Grandegger wrote:
+> > Yup, I did not come around to do the fixups. Is top on my todo list
+> > though.
 >
-> 1. irdadump on the 2.6.18-rt6 side shows only incoming packets
-> 2. sometimes, especially after a connection break down, the connection is
-> re-established, but the reference side has empty /proc/net/irda/discovery,
-> the reason being a couple of missing packets during re-negotiation:
->
-> 15:06:43.854376 xid:cmd c62da07d > ffffffff S=6 s=0 (14)
-> 15:06:43.944244 xid:cmd c62da07d > ffffffff S=6 s=1 (14)
-> 15:06:44.034244 xid:cmd c62da07d > ffffffff S=6 s=2 (14)
-> 15:06:44.124245 xid:cmd c62da07d > ffffffff S=6 s=3 (14)
-> 15:06:44.214281 xid:cmd c62da07d > ffffffff S=6 s=4 (14)
-> 15:06:44.304289 xid:cmd c62da07d > ffffffff S=6 s=5 (14)
-> 15:06:44.394282 xid:cmd c62da07d > ffffffff S=6 s=* TESTNODE hint=4400 [ Computer LAN Access ] (25)
->
-> 15:06:46.864376 xid:cmd c62da07d > ffffffff S=6 s=0 (14)
-> 15:06:46.954286 xid:cmd c62da07d > ffffffff S=6 s=1 (14)
-> 15:06:47.044280 xid:cmd c62da07d > ffffffff S=6 s=2 (14)
-> 15:06:47.134293 xid:cmd c62da07d > ffffffff S=6 s=3 (14)
-> 15:06:47.224281 xid:cmd c62da07d > ffffffff S=6 s=4 (14)
-> 15:06:47.314250 xid:cmd c62da07d > ffffffff S=6 s=5 (14)
-> 15:06:47.404249 xid:cmd c62da07d > ffffffff S=6 s=* TESTNODE hint=4400 [ Computer LAN Access ] (25)
->
-> 15:06:49.391225 snrm:cmd ca=fe pf=1 c62da07d < 0ad5eb46 new-ca=58 (33)
-> 15:06:49.391389 ua:rsp ca=58 pf=1 c62da07d > 0ad5eb46 (32)
-> 15:06:49.448100 rr:cmd < ca=58 pf=1 nr=0 (2)
-> 15:06:49.448172 rr:rsp > ca=58 pf=1 nr=0 (2)
-> 15:06:49.450636 i:cmd  < ca=58 pf=1 nr=0 ns=0 LM slsap=16 dlsap=00 CONN_CMD (6)
-> 15:06:49.450817 i:rsp  > ca=58 pf=1 nr=1 ns=0 LM slsap=00 dlsap=16 CONN_RSP (6)
->
-> I.e., we see 2 discovery packets from TESTNODE, and then the 2.6.18-rt6
-> host sends directly an SNRM packet without presenting itself first with
-> its nick... Looks like some timers are confused through highres timers?...
+> Apart from that, I also realized that it's not possible to enable
+> HIGH_RES_TIMERS, because GENERIC_CLOCKEVENTS is not selected or
+> available for PowerPC.
 
----------------------------------
-Guennadi Liakhovetski, Ph.D.
-DSA Daten- und Systemtechnik GmbH
-Pascalstr. 28
-D-52076 Aachen
-Germany
+Yup, the whole bunch is missing. It got dropped at some point.
+
+             tglx
+
+
+-
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
+in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
+
+--0__=EABBF805DFB8F0D88f9e8a93df938690918cEABBF805DFB8F0D8
+Content-type: application/octet-stream;
+	name="pic04031.pcx"
+Content-Disposition: attachment; filename="pic04031.pcx"
+Content-transfer-encoding: base64
+
+CgUBCAAAAABBADEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAABQgABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAA=
+
+--0__=EABBF805DFB8F0D88f9e8a93df938690918cEABBF805DFB8F0D8--
