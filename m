@@ -1,33 +1,118 @@
-From: pradyumna.sampath@in.abb.com
-Subject: Re: Status of -rt for linux-2.6.20/arch/powerpc
-Date: Wed, 7 Mar 2007 14:32:14 +0530
-Message-ID: <OF43F95AAA.FC2CE7A9-ON65257297.00314A00-65257297.0031110A@abbasiapacific.com.sg>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Subject: Re: v2.6.19-rt6, yum/rpm
+Date: Wed, 07 Mar 2007 17:55:28 +0300
+Message-ID: <45EED260.80109@ru.mvista.com>
+References: <20061205171114.GA25926@elte.hu> <4582CAD6.9040404@ru.mvista.com> <20061215161952.GA29191@elte.hu> <45C20CC6.2070201@ru.mvista.com> <20070201173855.GA29309@elte.hu> <20070201174900.GA31866@elte.hu> <45C22AFF.6060102@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de,
-	pradyumna.sampath@in.abb.com
-To: r.schwebel@pengutronix.de
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from apisx02.abbasiapacific.com.sg ([210.24.147.18]:4553 "EHLO
-	apisx02.abbasiapacific.com.sg" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1030502AbXCGJCG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Mar 2007 04:02:06 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev@ozlabs.org
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965548AbXCGOzi@vger.kernel.org>
+In-Reply-To: <45C22AFF.6060102@ru.mvista.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello, I wrote:
 
-Hi robert,
+>>>>> could you resend them to me please?
 
+>>>>   Seeing that GENERIC_TIME has been thrown out from the -rt patch, 
+>>>> [...]
 
+>>> hm, i did that accidentally during a rebase. That was certainly not 
+>>> meant to be a persistent condition.
 
-> We have a very raw patch series which makes rt-preempt working on
-> MPC5200B (tested on phyCORE-MPC5200B-tiny, but it should not be that
-> much different from your lite board).
+>> ok, the delta below is what i've managed to restore from your PPC 
+>> patches so far. Looks like this was truly a comedy of errors: i 
+>> accidentally dropped the big ppc-gtod patch,
 
-Thats is quite ok. Im willing to try that out. I could try out this raw
-patch out here. Do you have a link to that ?
+[...]
 
-thanks in advance
-regards
-prady
+>>     Ingo
+
+>> Index: linux/arch/powerpc/platforms/cell/interrupt.c
+>> ===================================================================
+>> --- linux.orig/arch/powerpc/platforms/cell/interrupt.c
+>> +++ linux/arch/powerpc/platforms/cell/interrupt.c
+>> @@ -90,6 +90,7 @@ static struct irq_chip iic_chip = {
+>>      .typename = " CELL-IIC ",
+>>      .mask = iic_mask,
+>>      .unmask = iic_unmask,
+>> +    .ack = iic_eoi,
+>>      .eoi = iic_eoi,
+>>  };
+>>  
+>> Index: linux/arch/powerpc/platforms/iseries/irq.c
+>> ===================================================================
+>> --- linux.orig/arch/powerpc/platforms/iseries/irq.c
+>> +++ linux/arch/powerpc/platforms/iseries/irq.c
+>> @@ -279,6 +279,7 @@ static struct irq_chip iseries_pic = {
+>>      .shutdown    = iseries_shutdown_IRQ,
+>>      .unmask        = iseries_enable_IRQ,
+>>      .mask        = iseries_disable_IRQ,
+>> +    .ack        = iseries_end_IRQ,
+>>      .eoi        = iseries_end_IRQ
+>>  };
+>>  
+>> Index: linux/arch/powerpc/platforms/pseries/xics.c
+>> ===================================================================
+>> --- linux.orig/arch/powerpc/platforms/pseries/xics.c
+>> +++ linux/arch/powerpc/platforms/pseries/xics.c
+>> @@ -456,6 +456,7 @@ static struct irq_chip xics_pic_direct =
+>>      .startup = xics_startup,
+>>      .mask = xics_mask_irq,
+>>      .unmask = xics_unmask_irq,
+>> +    .ack = xics_eoi_direct,
+>>      .eoi = xics_eoi_direct,
+>>      .set_affinity = xics_set_affinity
+>>  };
+>> @@ -466,6 +467,7 @@ static struct irq_chip xics_pic_lpar = {
+>>      .startup = xics_startup,
+>>      .mask = xics_mask_irq,
+>>      .unmask = xics_unmask_irq,
+>> +    .ack = xics_eoi_lpar,
+>>      .eoi = xics_eoi_lpar,
+>>      .set_affinity = xics_set_affinity
+>>  };
+>> Index: linux/arch/powerpc/sysdev/mpic.c
+>> ===================================================================
+>> --- linux.orig/arch/powerpc/sysdev/mpic.c
+>> +++ linux/arch/powerpc/sysdev/mpic.c
+>> @@ -767,6 +767,7 @@ static int mpic_set_irq_type(unsigned in
+>>  static struct irq_chip mpic_irq_chip = {
+>>      .mask        = mpic_mask_irq,
+>>      .unmask        = mpic_unmask_irq,
+>> +    .ack        = mpic_end_irq,
+>>      .eoi        = mpic_end_irq,
+>>      .set_type    = mpic_set_irq_type,
+>>  };
+
+>    These changes have been refused in favor of "fasetoi" flow fix.
+
+    Ugh, seeing them 2.6.20-rt8 still -- *please* remove, they're now useless 
+and quite ugly...
+
+>> Index: linux/kernel/latency_trace.c
+>> ===================================================================
+>> --- linux.orig/kernel/latency_trace.c
+>> +++ linux/kernel/latency_trace.c
+>> @@ -1774,8 +1774,8 @@ check_critical_timing(int cpu, struct cp
+>>  #ifndef CONFIG_CRITICAL_LATENCY_HIST
+>>      if (!preempt_thresh && preempt_max_latency > delta) {
+>>          printk("bug: updating %016Lx > %016Lx?\n",
+>> -            preempt_max_latency, delta);
+>> -        printk("  [%016Lx %016Lx %016Lx]\n", T0, T1, T2);
+>> +            (u64)preempt_max_latency, (u64)delta);
+>> +        printk("  [%016Lx %016Lx %016Lx]\n", (u64)T0, (u64)T1, (u64)T2);
+>>      }
+>>  #endif
+
+>    IIRC, this is a fragment of my another refused patch (maybe the first 
+> take on it?)... Should be outdated now.
+
+    Ugh, I'm seeing this one in 2.6.20-rt8 still... *Please* remove it -- it's 
+*useless* with the current -rt code.
+
+WBR, Sergei
