@@ -1,51 +1,45 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Patch to stop backtrace on 2.6.20-rt8
-Date: Thu, 08 Mar 2007 17:22:09 -0600
-Message-ID: <45F09AA1.3060909@redhat.com>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: IBM RT Test Cases
+Date: Fri, 9 Mar 2007 00:02:49 -0800
+Message-ID: <200703090002.49644.dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:44525 "EHLO mx1.redhat.com"
+Received: from e2.ny.us.ibm.com ([32.97.182.142]:41022 "EHLO e2.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1161107AbXCHXWM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2007 18:22:12 -0500
-Received: from int-mx1.corp.redhat.com (int-mx1.corp.redhat.com [172.16.52.254])
-	by mx1.redhat.com (8.13.1/8.13.1) with ESMTP id l28NMAdN029290
-	for <linux-rt-users@vger.kernel.org>; Thu, 8 Mar 2007 18:22:10 -0500
+	id S2993106AbXCIICv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 Mar 2007 03:02:51 -0500
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e2.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2982o2a027583
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
+Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2982oXi257372
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
+Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
+	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2982oq7018402
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+It has been a while since I've updated our RT test cases.  I've added a couple 
+convenience "libraries" for simulating RT noise (libjvmsim) and doing some 
+basic statistical analysis of results (libstats.h).  There are some minor 
+improvements to the test cases as well as a couple additional tests.
 
-Ingo,
+I understand that the packaging of these tests is sub-par and collecting their 
+results into a meaningful report is still painful.  It is something we are 
+working to improve, but please don't let that stop you from sending in a 
+patch for your own personal itch.
 
-This patch fixes a backtrace I get when disconnecting USB storage
-devices (well ok, my iPod :)):
+You can find the tests here:
 
+http://kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
 
-diff --git a/mm/slab.c b/mm/slab.c
-index 8761f4f..948007e 100644
-- --- a/mm/slab.c
-+++ b/mm/slab.c
-@@ -4121,7 +4121,7 @@ static int enable_cpucache(struct kmem_cache *cachep)
- int drain_array(struct kmem_cache *cachep, struct kmem_list3 *l3,
-                 struct array_cache *ac, int force, int node)
- {
-- -       int this_cpu = smp_processor_id();
-+       int this_cpu = raw_smp_processor_id();
-        int tofree;
-
-        if (!ac || !ac->avail)
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.7 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iD8DBQFF8JqhHyuj/+TTEp0RAghfAKDnOZyOs8cusB4tulxTKtlI1wyrawCglEX3
-GqENx7vnk9jrwD5w7WRfV2I=
-=9qJX
------END PGP SIGNATURE-----
+-- 
+Darren Hart
+IBM Linux Technology Center
+Realtime Linux Team
