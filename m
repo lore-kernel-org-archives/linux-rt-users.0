@@ -1,45 +1,43 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: IBM RT Test Cases
-Date: Fri, 9 Mar 2007 00:02:49 -0800
-Message-ID: <200703090002.49644.dvhltc@us.ibm.com>
+From: "Luca Abeni" <lucabe72@gmail.com>
+Subject: Does the RT patch contain unrelated hunks?
+Date: Wed, 14 Mar 2007 13:21:53 +0100
+Message-ID: <185eca360703140521h4ad44ae3wf13506c118bcc8e2@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e2.ny.us.ibm.com ([32.97.182.142]:41022 "EHLO e2.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S2993106AbXCIICv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Mar 2007 03:02:51 -0500
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e2.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2982o2a027583
-	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
-Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2982oXi257372
-	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
-Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
-	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2982oq7018402
-	for <linux-rt-users@vger.kernel.org>; Fri, 9 Mar 2007 03:02:50 -0500
+Received: from nf-out-0910.google.com ([64.233.182.189]:53625 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1161195AbXCNMWG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Mar 2007 08:22:06 -0400
+Received: by nf-out-0910.google.com with SMTP id o25so189029nfa
+        for <linux-rt-users@vger.kernel.org>; Wed, 14 Mar 2007 05:22:04 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-It has been a while since I've updated our RT test cases.  I've added a couple 
-convenience "libraries" for simulating RT noise (libjvmsim) and doing some 
-basic statistical analysis of results (libstats.h).  There are some minor 
-improvements to the test cases as well as a couple additional tests.
+Hi all,
 
-I understand that the packaging of these tests is sub-par and collecting their 
-results into a meaningful report is still painful.  It is something we are 
-working to improve, but please don't let that stop you from sending in a 
-patch for your own personal itch.
+Looking at patch-2.6.21-rc3-rt0, it seems to me that it contains a lot
+of unrelated stuff, such as:
+--- linux.orig/Documentation/kernel-parameters.txt
++++ linux/Documentation/kernel-parameters.txt
+@@ -79,6 +79,7 @@ parameter is applicable:
+                        Documentation/scsi/.
+        SELINUX SELinux support is enabled.
+        SERIAL  Serial support is enabled.
++     SH      SuperH architecture is enabled.
+        SMP     The kernel is an SMP kernel.
+        SPARC   Sparc architecture is enabled.
+        SWSUSP  Software suspend is enabled.
+and so on (there are changes to the sparse documentation, etc...).
 
-You can find the tests here:
+I am trying to understand the RT patch by looking at the code, so I am
+wondering if it's possible to have a version of the patch which
+contains only RT-related changes.
 
-http://kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Realtime Linux Team
+                                                       Thanks,
+                                                             Luca
