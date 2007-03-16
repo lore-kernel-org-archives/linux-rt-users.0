@@ -1,67 +1,38 @@
-From: "Samuel Ortiz" <samuel@sortiz.org>
-Subject: Re: [irda-users] [2.6.20-rt8] "Neighbour table overflow."
-Date: 16 Mar 2007 16:45:41 -0000
-Message-ID: <gd3M42Jr.1174063541.4027990.samuel@sortiz.org>
-References: <xzU03ang.1174063266.3162320.samuel@sortiz.org>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [2.6.20-rt8] "Neighbour table overflow."
+Date: Fri, 16 Mar 2007 12:15:39 -0700 (PDT)
+Message-ID: <20070316.121539.78711178.davem@davemloft.net>
+References: <Pine.LNX.4.63.0703161653400.534@pcgl.dsa-ac.de>
+	<20070316161653.GC9413@elte.hu>
+	<Pine.LNX.4.63.0703161722280.534@pcgl.dsa-ac.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "irda-users@lists.sourceforge.net" <irda-users@lists.sourceforge.net>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: gl@dsa-ac.de, mingo@elte.hu
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org,
+	irda-users@lists.sourceforge.net
+To: gl@dsa-ac.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 25.mail-out.ovh.net ([213.186.37.103]:41821 "HELO
-	25.mail-out.ovh.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1753582AbXCPQp6 convert rfc822-to-8bit (ORCPT
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:49941
+	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S965881AbXCPTPl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Mar 2007 12:45:58 -0400
-In-Reply-To: <xzU03ang.1174063266.3162320.samuel@sortiz.org>
+	Fri, 16 Mar 2007 15:15:41 -0400
+In-Reply-To: <Pine.LNX.4.63.0703161722280.534@pcgl.dsa-ac.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Guennadi Liakhovetski <gl@dsa-ac.de>
+Date: Fri, 16 Mar 2007 17:26:57 +0100 (CET)
 
-Here you go, Ingo:
+> it comes from net/ipv4/route.c::rt_intern_hash()... That's all I can say 
+> so far. Any debug ideas? Could you try on any your rt-test system just a 
+> loop like
 
- Index: net/irda/irttp.c
-===================================================================
-RCS file: /home/dsa/cvs/linux-2_6/net/irda/irttp.c,v
-retrieving revision 1.1.1.11
-diff -u -r1.1.1.11 irttp.c
---- a/net/irda/irttp.c 5 Mar 2007 13:18:59 -0000 1.1.1.11
-+++ b/net/irda/irttp.c 16 Mar 2007 11:04:31 -0000
-@@ -1455,6 +1468,7 @@
+There is an SKB leak somewhere, and that leaked SKB has references to
+a route, that's what that message usually means.
 
-/* Not everything should be copied */
-new->notify.instance = instance;
-+ spin_lock_init(&new->lock);
-init_timer(&new->todo_timer);
+After you accumulate enough leaked packets with routed attached them,
+the system refuses to create any more of them.
 
-skb_queue_head_init(&new->rx_queue);
-
-
-On 3/16/2007, "Samuel Ortiz" <samuel@sortiz.org> wrote:
-
->
->Reply from Ingo, got mistakenly discarded by the irda-users mailing list:
->
->* Guennadi Liakhovetski <gl@dsa-ac.de> wrote:
->
->> > could you send the patch for that? Is it upstream already?
->>
->> It's indeed an IrDA bug (though mainly visible under rt-preempt) and
->> the patch has been sent to the maintainer and to stable.
->
->could you please bounce it to me too? I usually put such patches into
->-rt straight away and i drop them when they show up upstream.
->
->Ingo
->
->-------------------------------------------------------------------------
->Take Surveys. Earn Cash. Influence the Future of IT
->Join SourceForge.net's Techsay panel and you'll get the chance to share your
->opinions on IT & business topics through brief surveys-and earn cash
->http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
->_______________________________________________
->irda-users mailing list
->irda-users@lists.sourceforge.net
->http://lists.sourceforge.net/lists/listinfo/irda-users
+Probably if you look at /proc/slabinfo you'll see a lot of allocated
+sk_buff and rtinfo objects.
