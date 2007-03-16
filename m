@@ -1,36 +1,58 @@
-From: "Luca Abeni" <lucabe72@gmail.com>
-Subject: Re: Fwd: Does the RT patch contain unrelated hunks?
-Date: Wed, 14 Mar 2007 15:39:47 +0100
-Message-ID: <185eca360703140739l95699b6sc92c8c454fedfcc7@mail.gmail.com>
-References: <185eca360703140521h4ad44ae3wf13506c118bcc8e2@mail.gmail.com>
-	 <20070314122529.GB5775@elte.hu>
-	 <185eca360703140535r16610e98uce769073f821934a@mail.gmail.com>
-	 <185eca360703140625t57439a7ev30a3c81b8e481bf8@mail.gmail.com>
-	 <20070314133535.GA13486@elte.hu>
+From: Guennadi Liakhovetski <gl@dsa-ac.de>
+Subject: [2.6.20-rt8] "Neighbour table overflow."
+Date: Fri, 16 Mar 2007 17:13:58 +0100 (CET)
+Message-ID: <Pine.LNX.4.63.0703161653400.534@pcgl.dsa-ac.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Ingo Molnar" <mingo@elte.hu>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+To: linux-rt-users@vger.kernel.org, irda-users@lists.sourceforge.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.186]:11666 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161304AbXCNOlK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Mar 2007 10:41:10 -0400
-Received: by nf-out-0910.google.com with SMTP id o25so245347nfa
-        for <linux-rt-users@vger.kernel.org>; Wed, 14 Mar 2007 07:41:08 -0700 (PDT)
-In-Reply-To: <20070314133535.GA13486@elte.hu>
-Content-Disposition: inline
+Received: from mail.dsa-ac.de ([62.112.80.99]:54246 "EHLO mail.dsa-ac.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S965427AbXCPQOB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Mar 2007 12:14:01 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ingo,
+Hi
 
-On 3/14/07, Ingo Molnar <mingo@elte.hu> wrote:
-[...]
-> i've attached the -git delta ontop of -rc3. The rest is pure -rt.
-Thank you, that helped.
+After fixing the irda spinlock init bug, here's the next one I've run 
+into: after a long irnet/ppp test with a periodic disturbance, whereby the 
+ppp connection is broken and restored every ~20 secnds, I've got this from 
+the kernel:
 
-                                    Thanks,
-                                           Luca
+user.warn kernel: Neighbour table overflow.
+
+and the system cannot build any new outgoing network connections - ppp or 
+ethernet. I can connect from outside, but from the system produces:
+
+# ping 192.168.1.1
+connect: No buffer space available
+
+where "new" connections is to new hosts. To known hosts connections can be 
+further built. And, here's another one:
+
+# ping 192.168.1.5
+PING 192.168.1.5 (192.168.1.5) 56(84) bytes of data.
+64 bytes from 192.168.1.5: icmp_seq=1 ttl=64 time=3.45 ms
+64 bytes from 192.168.1.5: icmp_seq=1 ttl=64 time=8.34 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=1 ttl=64 time=9.29 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=1 ttl=64 time=11.5 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=2 ttl=64 time=4.79 ms
+64 bytes from 192.168.1.5: icmp_seq=2 ttl=64 time=7.86 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=2 ttl=64 time=10.8 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=2 ttl=64 time=12.0 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=3 ttl=64 time=4.04 ms
+64 bytes from 192.168.1.5: icmp_seq=3 ttl=64 time=8.17 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=3 ttl=64 time=11.1 ms (DUP!)
+64 bytes from 192.168.1.5: icmp_seq=3 ttl=64 time=13.2 ms (DUP!)
+
+any ideas?...
+
+Thanks
+Guennadi
+---------------------------------
+Guennadi Liakhovetski, Ph.D.
+DSA Daten- und Systemtechnik GmbH
+Pascalstr. 28
+D-52076 Aachen
+Germany
