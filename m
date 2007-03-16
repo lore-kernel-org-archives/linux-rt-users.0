@@ -1,56 +1,54 @@
-From: "Samuel Ortiz" <samuel@sortiz.org>
-Subject: Re: [irda-users] [2.6.20-rt8] "Neighbour table overflow."
-Date: 16 Mar 2007 16:23:18 -0000
-Message-ID: <BPfiEnM7.1174062198.0464040.samuel@sortiz.org>
-References: <20070316161653.GC9413@elte.hu>
+From: Guennadi Liakhovetski <gl@dsa-ac.de>
+Subject: Re: [2.6.20-rt8] "Neighbour table overflow."
+Date: Fri, 16 Mar 2007 17:26:57 +0100 (CET)
+Message-ID: <Pine.LNX.4.63.0703161722280.534@pcgl.dsa-ac.de>
+References: <Pine.LNX.4.63.0703161653400.534@pcgl.dsa-ac.de>
+ <20070316161653.GC9413@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "irda-users@lists.sourceforge.net" <irda-users@lists.sourceforge.net>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: mingo@elte.hu, gl@dsa-ac.de
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Cc: linux-rt-users@vger.kernel.org, irda-users@lists.sourceforge.net
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 25.mail-out.ovh.net ([213.186.37.103]:38854 "HELO
-	25.mail-out.ovh.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1753566AbXCPQXf convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Mar 2007 12:23:35 -0400
+Received: from mail.dsa-ac.de ([62.112.80.99]:54364 "EHLO mail.dsa-ac.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753570AbXCPQ1A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Mar 2007 12:27:00 -0400
 In-Reply-To: <20070316161653.GC9413@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 16 Mar 2007, Ingo Molnar wrote:
 
-Hi Ingo,
-
-On 3/16/2007, "Ingo Molnar" <mingo@elte.hu> wrote:
-
->
->* Guennadi Liakhovetski <gl@dsa-ac.de> wrote:
->
->> Hi
+> * Guennadi Liakhovetski <gl@dsa-ac.de> wrote:
 >>
 >> After fixing the irda spinlock init bug, [...]
 >
->could you send the patch for that? Is it upstream already?
-Guennadi sent it to me earlier this afternoon. I will forward it upstream
-later today.
+> could you send the patch for that? Is it upstream already?
 
-Cheers,
-Samuel.
-
+It's indeed an IrDA bug (though mainly visible under rt-preempt) and the 
+patch has been sent to the maintainer and to stable.
 
 >> user.warn kernel: Neighbour table overflow.
 >
->hm, i havent seen this one yet.
->
->	Ingo
->
->-------------------------------------------------------------------------
->Take Surveys. Earn Cash. Influence the Future of IT
->Join SourceForge.net's Techsay panel and you'll get the chance to share your
->opinions on IT & business topics through brief surveys-and earn cash
->http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
->_______________________________________________
->irda-users mailing list
->irda-users@lists.sourceforge.net
->http://lists.sourceforge.net/lists/listinfo/irda-users
+> hm, i havent seen this one yet.
+
+it comes from net/ipv4/route.c::rt_intern_hash()... That's all I can say 
+so far. Any debug ideas? Could you try on any your rt-test system just a 
+loop like
+
+while true; do
+ 	ifdown eth0
+ 	ifup eth0
+ 	ping -c 1 host
+done
+
+or similar. Or, better yet with starting / stopping pppd?
+
+Thanks
+Guennadi
+---------------------------------
+Guennadi Liakhovetski, Ph.D.
+DSA Daten- und Systemtechnik GmbH
+Pascalstr. 28
+D-52076 Aachen
+Germany
