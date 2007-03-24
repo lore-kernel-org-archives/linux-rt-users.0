@@ -1,65 +1,52 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 03/11] fix format to use correct types
-Date: Sat, 24 Mar 2007 13:10:48 +0100
-Message-ID: <20070324121653.080913000@metis.extern.pengutronix.de>
+Subject: [patch 02/11] unused variables
+Date: Sat, 24 Mar 2007 13:10:47 +0100
+Message-ID: <20070324121650.789971000@metis.extern.pengutronix.de>
 References: <20070324121045.396218000@metis.extern.pengutronix.de>
 Cc: Darren Hart <dvhltc@us.ibm.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:45140 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:45123 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752701AbXCXMQy (ORCPT
+	by vger.kernel.org with ESMTP id S1752620AbXCXMQw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 Mar 2007 08:16:54 -0400
-Content-Disposition: inline; filename=libstats-format-errors.diff
+	Sat, 24 Mar 2007 08:16:52 -0400
+Content-Disposition: inline; filename=libstats-unused-x.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch fixes
+This fixes an unused variable.
 
 In file included from libstats_test.c:1:
-../include/libstats.h: In function 'stats_hist_print':
-../include/libstats.h:207: warning: format '%d' expects type 'int', but argument 2 has type 'long int'
-../include/libstats.h:207: warning: format '%d' expects type 'int', but argument 3 has type 'long int'
-../include/libstats.h:207: warning: format '%d' expects type 'int', but argument 4 has type 'long int'
-../include/libstats.h:209: warning: format '%d' expects type 'int', but argument 2 has type 'long int'
-../include/libstats.h:209: warning: format '%d' expects type 'int', but argument 3 has type 'long int'
-../include/libstats.h: In function 'stats_container_save':
-../include/libstats.h:245: warning: format '%d' expects type 'int', but argument 3 has type 'long int'
-../include/libstats.h:245: warning: format '%d' expects type 'int', but argument 4 has type 'long int'
-make[1]: *** [libstats_test-libstats_test.o] Error 1
+../include/libstats.h:161: warning: unused variable 'x'
 
 Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
 
- include/libstats.h |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ include/libstats.h |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 Index: include/libstats.h
 ===================================================================
 --- include/libstats.h.orig
 +++ include/libstats.h
-@@ -203,10 +203,10 @@ void stats_hist_print(stats_container_t 
+@@ -158,7 +158,7 @@ int stats_hist(stats_container_t *hist, 
+ 	int i;
+ 	int ret;
+ 	long min, max, width;
+-	long x, y, b;
++	long /* x, */ y, b;
+ 	
+ 	ret = 0;
+ 
+@@ -199,7 +199,7 @@ int stats_hist(stats_container_t *hist, 
+ 
+ void stats_hist_print(stats_container_t *hist)
+ {
+-	long i, x, x1;
++	long i, x /* , x1 */;
  	for (i = 0; i < hist->size; i++) {
  		x = hist->records[i].x;
  		if (i < hist->size-1)
--			printf("[%d,%d) = %d\n", x, 
-+			printf("[%ld,%ld) = %ld\n", x, 
- 				hist->records[i+1].x, hist->records[i].y);
- 		else
--			printf("[%d,-) = %d\n", x, hist->records[i].y);
-+			printf("[%ld,-) = %ld\n", x, hist->records[i].y);
- 	}
- }
- 
-@@ -242,7 +242,7 @@ int stats_container_save(char *filename,
-             maxx = MAX(maxx, rec->x);            
-             miny = MIN(miny, rec->y);            
-             maxy = MAX(maxy, rec->y);            
--            fprintf(dat_fd, "%d %d\n", rec->x, rec->y);
-+            fprintf(dat_fd, "%ld %ld\n", rec->x, rec->y);
-         }
-         fclose(dat_fd);
-     } 
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
