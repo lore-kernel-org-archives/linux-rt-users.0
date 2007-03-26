@@ -1,42 +1,35 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 10/11] return something in non-void functions
-Date: Sat, 24 Mar 2007 13:10:55 +0100
-Message-ID: <20070324121709.059866000@metis.extern.pengutronix.de>
-References: <20070324121045.396218000@metis.extern.pengutronix.de>
-Cc: Darren Hart <dvhltc@us.ibm.com>
-To: linux-rt-users@vger.kernel.org
+From: =?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>
+Subject: profile_tick not called anymore?
+Date: Mon, 26 Mar 2007 15:57:59 +0200
+Message-ID: <20070326155759.5dc54703@frecb000686.frec.bull.fr>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Ingo Molnar <mingo@elte.hu>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:45165 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753413AbXCXMRK (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:33938 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752678AbXCZOBM convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 Mar 2007 08:17:10 -0400
-Content-Disposition: inline; filename=perf-latency-pthread-cond-many-void.diff
+	Mon, 26 Mar 2007 10:01:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Subject says it all ...
 
-Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
+  Hi all,
 
- perf/latency/pthread_cond_many.c |    2 ++
- 1 file changed, 2 insertions(+)
+  I see that the calls to profile_tick() have been commented out in the
+different timer handlers. Why is this so?
 
-Index: perf/latency/pthread_cond_many.c
-===================================================================
---- perf/latency/pthread_cond_many.c.orig
-+++ perf/latency/pthread_cond_many.c
-@@ -248,4 +248,6 @@ main(int argc, char *argv[])
- 	}
- 
- 	test_signal(iter, nthreads);
-+
-+	return 0;
- }
+  The only remaining place calling profile_tick() (well, in fact
+__profile_tick()) is the NMI watchdog ticker, but I don't enable it
+on my box.
 
---
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+  For info, I run the 2.6.21-rc5-rt3 kernel with high res timers turned=
+ on,
+NO_HZ turned off on a dual xeon box.
+
+
+  S=E9bastien.
