@@ -1,66 +1,50 @@
-From: Chirag Jog <chirag@linux.vnet.ibm.com>
-Subject: Re: autotoolize tests
-Date: Thu, 29 Mar 2007 22:10:27 +0530
-Message-ID: <20070329164027.GA16331@linux.vnet.ibm.com>
-References: <20070328152625.GA2470@linux.vnet.ibm.com> <20070329130830.GH32369@pengutronix.de> <20070329153654.GC4300@linux.vnet.ibm.com> <20070329154418.GK32369@pengutronix.de>
-Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: [patch 00/11] Autotool support for IBM RT Cases
+Date: Thu, 29 Mar 2007 13:08:18 -0700
+Message-ID: <460C1CB2.80707@us.ibm.com>
+References: <20070324121045.396218000@metis.extern.pengutronix.de> <460B2B35.4090108@us.ibm.com> <20070329073452.GE32369@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>
 To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e1.ny.us.ibm.com ([32.97.182.141]:56093 "EHLO e1.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1030376AbXC2Qkb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Mar 2007 12:40:31 -0400
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e1.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2TGeSAG029110
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 12:40:28 -0400
-Received: from d01av02.pok.ibm.com (d01av02.pok.ibm.com [9.56.224.216])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2TGeSCI306692
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 12:40:28 -0400
-Received: from d01av02.pok.ibm.com (loopback [127.0.0.1])
-	by d01av02.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2TGeS1g010109
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 12:40:28 -0400
-Content-Disposition: inline
-In-Reply-To: <20070329154418.GK32369@pengutronix.de>
+Received: from e34.co.us.ibm.com ([32.97.110.152]:41564 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1030660AbXC2UIi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Mar 2007 16:08:38 -0400
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2TK8bna005900
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 16:08:37 -0400
+Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2TK8b4o201292
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 14:08:37 -0600
+Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2TK8aBr027870
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 14:08:37 -0600
+In-Reply-To: <20070329073452.GE32369@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Mar 29, 2007 at 05:44:18PM +0200, Robert Schwebel wrote:
-> On Thu, Mar 29, 2007 at 09:06:54PM +0530, Chirag Jog wrote:
-> > > Hmm, which autoreconf version are you using? It works here, with automake 1.9
-> > 
-> > > and autoconf 2.61:
-> > 
-> > I was using autoconf 2.59
-> > I have upgraded to 2.61
-> > It works now!!
-> 
-> They seem to have fixed autoreconf; are you ok with using 2.61, or shall
-> I send a patch that adds a manual autogen.sh which works without
-> autoreconf?
-I am good. Not a problem.
-I will add a README indicating which versions of automake and autoconf should be there.
-> 
-> Robert
-> -- 
->  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
->  Pengutronix - Linux Solutions for Science and Industry
->    Handelsregister:  Amtsgericht Hildesheim, HRA 2686
->      Hannoversche Str. 2, 31134 Hildesheim, Germany
->    Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Robert Schwebel wrote:
 
--- 
-Cheers,
-Chirag Jog
-Real Time Linux Team,
-Linux Technology Centre,
-Bangalore, India
+>> What we'd like to do, however, is integrate these tests into the LTP
+>> project. I'm hoping people will still find it as convenient to use.
+>> Anyone foresee any issues with that move?
+> 
+> However that might end - I think it is important to have cross compiling
+> support in LTP; last time I looked it was really difficult to achieve,
+> because you more or less had to care about every single piece of
+> sourcecode.
 
-"Never agree with an Idiot, They will bring you down to their level and beat you with experience"
+Yes, we're looking into all those issues now :(. It's probably
+a bit more than we wanted to chew off at the moment. I agree
+with wanting to have cross-compiling support, we might keep
+some interim solution around perhaps.
+
+Thanks a lot for your input! We'll discuss with the list
+in greater detail next week.
+
+thanks,
+Nivedita
