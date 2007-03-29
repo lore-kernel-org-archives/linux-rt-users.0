@@ -1,56 +1,67 @@
-From: =?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>
-Subject: Re: profile_tick not called anymore?
-Date: Mon, 26 Mar 2007 16:28:40 +0200
-Message-ID: <20070326162840.28b2422e@frecb000686.frec.bull.fr>
-References: <20070326155759.5dc54703@frecb000686.frec.bull.fr>
-	<20070326140751.GB6797@elte.hu>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: [patch 00/11] Autotool support for IBM RT Cases
+Date: Wed, 28 Mar 2007 19:57:57 -0700
+Message-ID: <460B2B35.4090108@us.ibm.com>
+References: <20070324121045.396218000@metis.extern.pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:45158 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752725AbXCZObn convert rfc822-to-8bit (ORCPT
+Received: from e34.co.us.ibm.com ([32.97.110.152]:35472 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965918AbXC2C6G (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Mar 2007 10:31:43 -0400
-In-Reply-To: <20070326140751.GB6797@elte.hu>
+	Wed, 28 Mar 2007 22:58:06 -0400
+Received: from westrelay02.boulder.ibm.com (westrelay02.boulder.ibm.com [9.17.195.11])
+	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2T2w6s7016137
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 22:58:06 -0400
+Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
+	by westrelay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2T2w60r175232
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 20:58:06 -0600
+Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2T2w56i031081
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 20:58:05 -0600
+In-Reply-To: <20070324121045.396218000@metis.extern.pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 26 Mar 2007 16:07:51 +0200 Ingo Molnar <mingo@elte.hu> wrote:
+Robert Schwebel wrote:
+> Darren,
+> 
+> Here is a first raw cut for autotool support for your rt testcases. It
+> is against the version on your website. The series survives a basic
+> distcheck.
+> 
+> Known issues & discussion points:
+> 
+> - test programs which use pthread_mutexattr_setprotocol and
+>   pthread_mutexattr_setrobust_np could not be tested (debian unstable
+>   does not have a recent enough glibc)
+> 
+> - due to the above, I assume the tests in question will have a similar
+>   quantity of warnings, so I see if I can get access to a box which is
+>   recent enough to do the rest of the fixes.
+> 
+> - a sane version number and contact mail address should be added to
+>   configure.ac; I've just taken our template here, please adjust
+>   according to your needs.
+> 
+> Robert
 
->=20
-> * S=E9bastien Dugu=E9 <sebastien.dugue@bull.net> wrote:
->=20
-> >   I see that the calls to profile_tick() have been commented out in=
-=20
-> > the different timer handlers. Why is this so?
-> >=20
-> >   The only remaining place calling profile_tick() (well, in fact=20
-> > __profile_tick()) is the NMI watchdog ticker, but I don't enable it=
- on=20
-> > my box.
->=20
-> i'm using nmi_watchdog=3D2 to do profiling - if it's NMI-driven then =
-the=20
-> readprofile results are alot more informative.
->=20
+Hey Robert!
 
-  Thanks Ingo,
+Thanks a lot for the patches. I believe Chirag Jog who's
+working on cleaning up some of the tests responded to you
+offline already. I thought I'd let everyone know we'll
+be rolling out an updated tarball once we have that
+working.
 
-  but then I have to explicitly enable it.
+What we'd like to do, however, is integrate these tests
+into the LTP project. I'm hoping people will still find
+it as convenient to use. Anyone foresee any issues with
+that move?
 
-  Are there any drawbacks to uncommenting those calls to profile_tick()=
- in
-tick_periodic(), tick_nohz_handler() and tick_sched_timer()?
-
-  The reason I ask is that systemtap scripts using the profile probe do=
-n't
-work on an RT kernel unless nmi_watchdog is set.
-
-  Thanks,
-
-  S=E9bastien.
+thanks,
+Nivedita
