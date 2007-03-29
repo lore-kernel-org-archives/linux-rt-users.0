@@ -1,67 +1,50 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
 Subject: Re: [patch 00/11] Autotool support for IBM RT Cases
-Date: Wed, 28 Mar 2007 19:57:57 -0700
-Message-ID: <460B2B35.4090108@us.ibm.com>
-References: <20070324121045.396218000@metis.extern.pengutronix.de>
+Date: Thu, 29 Mar 2007 09:34:52 +0200
+Message-ID: <20070329073452.GE32369@pengutronix.de>
+References: <20070324121045.396218000@metis.extern.pengutronix.de> <460B2B35.4090108@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-15
 Cc: linux-rt-users@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>
-To: Robert Schwebel <r.schwebel@pengutronix.de>
+To: Nivedita Singhvi <niv@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:35472 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965918AbXC2C6G (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:57775 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753296AbXC2He7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Mar 2007 22:58:06 -0400
-Received: from westrelay02.boulder.ibm.com (westrelay02.boulder.ibm.com [9.17.195.11])
-	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2T2w6s7016137
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 22:58:06 -0400
-Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
-	by westrelay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2T2w60r175232
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 20:58:06 -0600
-Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2T2w56i031081
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 Mar 2007 20:58:05 -0600
-In-Reply-To: <20070324121045.396218000@metis.extern.pengutronix.de>
+	Thu, 29 Mar 2007 03:34:59 -0400
+Content-Disposition: inline
+In-Reply-To: <460B2B35.4090108@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Robert Schwebel wrote:
-> Darren,
-> 
-> Here is a first raw cut for autotool support for your rt testcases. It
-> is against the version on your website. The series survives a basic
-> distcheck.
-> 
-> Known issues & discussion points:
-> 
-> - test programs which use pthread_mutexattr_setprotocol and
->   pthread_mutexattr_setrobust_np could not be tested (debian unstable
->   does not have a recent enough glibc)
-> 
-> - due to the above, I assume the tests in question will have a similar
->   quantity of warnings, so I see if I can get access to a box which is
->   recent enough to do the rest of the fixes.
-> 
-> - a sane version number and contact mail address should be added to
->   configure.ac; I've just taken our template here, please adjust
->   according to your needs.
-> 
-> Robert
+Hi Nivedita,
 
-Hey Robert!
+On Wed, Mar 28, 2007 at 07:57:57PM -0700, Nivedita Singhvi wrote:
+> Thanks a lot for the patches. I believe Chirag Jog who's
+> working on cleaning up some of the tests responded to you
+> offline already. 
 
-Thanks a lot for the patches. I believe Chirag Jog who's
-working on cleaning up some of the tests responded to you
-offline already. I thought I'd let everyone know we'll
-be rolling out an updated tarball once we have that
-working.
+Nope, not yet...
 
-What we'd like to do, however, is integrate these tests
-into the LTP project. I'm hoping people will still find
-it as convenient to use. Anyone foresee any issues with
-that move?
+> I thought I'd let everyone know we'll be rolling out an updated
+> tarball once we have that working.
 
-thanks,
-Nivedita
+Great!
+
+> What we'd like to do, however, is integrate these tests into the LTP
+> project. I'm hoping people will still find it as convenient to use.
+> Anyone foresee any issues with that move?
+
+However that might end - I think it is important to have cross compiling
+support in LTP; last time I looked it was really difficult to achieve,
+because you more or less had to care about every single piece of
+sourcecode.
+
+Robert
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
