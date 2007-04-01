@@ -1,50 +1,46 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
-Subject: Re: [patch 00/11] Autotool support for IBM RT Cases
-Date: Thu, 29 Mar 2007 13:08:18 -0700
-Message-ID: <460C1CB2.80707@us.ibm.com>
-References: <20070324121045.396218000@metis.extern.pengutronix.de> <460B2B35.4090108@us.ibm.com> <20070329073452.GE32369@pengutronix.de>
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: 2.6.21-rc5-rt6 make errors
+Date: Sun, 01 Apr 2007 18:12:19 +0100
+Message-ID: <460FE7F3.4060303@rncbc.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>
-To: Robert Schwebel <r.schwebel@pengutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:41564 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1030660AbXC2UIi (ORCPT
+Received: from smtpa2.netcabo.pt ([212.113.174.17]:6260 "EHLO
+	exch01smtp01.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S933666AbXDARTJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Mar 2007 16:08:38 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id l2TK8bna005900
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 16:08:37 -0400
-Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l2TK8b4o201292
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 14:08:37 -0600
-Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l2TK8aBr027870
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Mar 2007 14:08:37 -0600
-In-Reply-To: <20070329073452.GE32369@pengutronix.de>
+	Sun, 1 Apr 2007 13:19:09 -0400
+In-Reply-To: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Robert Schwebel wrote:
+Hi,
 
->> What we'd like to do, however, is integrate these tests into the LTP
->> project. I'm hoping people will still find it as convenient to use.
->> Anyone foresee any issues with that move?
-> 
-> However that might end - I think it is important to have cross compiling
-> support in LTP; last time I looked it was really difficult to achieve,
-> because you more or less had to care about every single piece of
-> sourcecode.
+Just tried to build 2.6.21-rc5-rt6 and it is failing on build time.
 
-Yes, we're looking into all those issues now :(. It's probably
-a bit more than we wanted to chew off at the moment. I agree
-with wanting to have cross-compiling support, we might keep
-some interim solution around perhaps.
+=2E..
+kernel/sched.c: In function =E2=80=98__schedule=E2=80=99:
+kernel/sched.c:3830: error: =E2=80=98print_functions=E2=80=99 undeclare=
+d (first use in
+this function)
+kernel/sched.c:3830: error: (Each undeclared identifier is reported onl=
+y
+once
+kernel/sched.c:3830: error: for each function it appears in.)
+=2E..
+arch/i386/kernel/apic.c: In function =E2=80=98smp_apic_timer_interrupt=E2=
+=80=99:
+arch/i386/kernel/apic.c:589: error: invalid lvalue in assignment
+arch/i386/kernel/apic.c:608: error: invalid lvalue in assignment
+=2E..
 
-Thanks a lot for your input! We'll discuss with the list
-in greater detail next week.
+Just to let you know that -rt5 was doing fine with very same .config .
 
-thanks,
-Nivedita
+Cheers.
+--=20
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
