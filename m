@@ -1,115 +1,78 @@
-From: dasperry@comcast.net (dave_sperry@ieee.org)
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: Poor UDP performance using 2.6.21-rc5-rt5
-Date: Mon, 02 Apr 2007 17:50:49 +0000
-Message-ID: <040220071750.11488.461142790008679B00002CE02206424413979D9D0A9F9C0E0B@comcast.net>
+Date: Mon, 2 Apr 2007 21:04:45 +0200
+Message-ID: <20070402190445.GB2081@elte.hu>
+References: <040220071750.11488.461142790008679B00002CE02206424413979D9D0A9F9C0E0B@comcast.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Cc: Dave Sperry <dave_sperry@ieee.org>, linux-rt-users@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+To: "dave_sperry@ieee.org" <dasperry@comcast.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rwcrmhc14.comcast.net ([216.148.227.154]:57923 "EHLO
-	rwcrmhc14.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752863AbXDBRyw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Apr 2007 13:54:52 -0400
+Received: from mx2.mail.elte.hu ([157.181.151.9]:51091 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S965692AbXDBTE5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Apr 2007 15:04:57 -0400
+Content-Disposition: inline
+In-Reply-To: <040220071750.11488.461142790008679B00002CE02206424413979D9D0A9F9C0E0B@comcast.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I have a new data point to add to the confusion.
 
-The box I'm testing has 2 nics in it. The one I have been testing so far is:
+* dave_sperry@ieee.org <dasperry@comcast.net> wrote:
 
-00:08.0 Bridge: nVidia Corporation MCP55 Ethernet (rev a3)
+> The Intel NIC seems to behave better under RT
 
-The other NIC is an Intel 1gig fiber 
+yeah.
 
-09:00.0 Ethernet controller: Intel Corporation 82571EB Gigabit Ethernet Controller (rev 06)
+> I think there is some kind of bad behavior happening in the Nvidia 
+> driver with respect to softirq-net-tx and IRQ-8406.
 
-The Intel controller did not work 2.6.20 but under 2.6.21-rc5-rt8 it does.
+yes. Part of the problem is that the forcedeth.c driver does not fully 
+support NAPI - today i've implemented those bits (see them below), based 
+on your testcase. The other part is that the Intel NIC uses MSI, while 
+foredeth uses fasteoi, correct? [you can see this in /proc/interrupts]
 
-Running the same netperf tests with the Intel NIC produces very different results for the RT case:
+there are a few other things i'm working on to improve this. I've 
+uploaded -rt9 which is the current state of affairs. Note that using 
+-rt9 you'll likely only see IRQ-8406 overhead in the system, because 
+i've added an optimization to do process the softirq-net-tx workload in 
+the hardirq thread if the priority of the two is the same (which is the 
+default behavior). But -rt9 is still work in progress that is not fully 
+finished yet: in some cases i'm seeing 'fluctuating performance' 
+problems on forcedeth that werent there before.
 
+	Ingo
 
-setup                    Thruput      CPU% 
-Nvidia
-2.6.21-rc5 vanilla       935          29%
-   netperf @51
-   hardirq @50
-   softirq @50
+--------------------->
+From: Ingo Molnar <mingo@elte.hu>
+Subject: [patch] forcedeth.c: improve NAPI handler
 
-Intel
-2.6.21-rc5 vanilla       933          30%
-   netperf @51
-   hardirq @50
-   softirq @50
+another forcedeth.c thing: i noticed that its NAPI handler does not do 
+tx-ring processing. The patch below implements this - tested on 
+DESC_VER_2 hardware, with CONFIG_FORCEDETH_NAPI=y.
 
-##################################################
-Nvidia
-2.6.21-rc5-rt8           938          65%
-   netperf @51
-   hardirq @50
-   softirq @50
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
 
-Intel
-2.6.21-rc5-rt8           938          34%
-   netperf @51
-   hardirq @50
-   softirq @50
-
-The Intel NIC seems to behave better under RT 
-
-top for each NIC under test yields some interesting results:
-
-Nvidia 2.6.21-rc5-rt8:
-top - 11:03:46 up  1:23,  2 users,  load average: 1.75, 1.31, 0.70
-Tasks: 167 total,   2 running, 165 sleeping,   0 stopped,   0 zombie
-Cpu(s):  0.8%us, 29.7%sy,  0.0%ni, 34.8%id,  0.0%wa, 22.1%hi, 10.6%si,  0.0%st
-Mem:   2035436k total,   618276k used,  1417160k free,    31744k buffers
-Swap:  3068372k total,        0k used,  3068372k free,   386060k cached
-
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
- 4139 root     -52   0  6440  636  480 S   60  0.0   0:19.14 netperf
- 2706 root     -51  -5     0    0    0 R   44  0.0   2:00.70 IRQ-8406
-   19 root     -51   0     0    0    0 S   21  0.0   0:38.50 softirq-net-tx/
- 4012 eadi      16   0  229m 6852 5584 S    1  0.3   0:05.39 multiload-apple
-    6 root     -51   0     0    0    0 S    1  0.0   0:00.95 softirq-net-tx/
- 3014 dbus      15   0 21352  896  548 S    1  0.0   0:00.04 dbus-daemon
-    1 root      15   0 10308  668  552 S    0  0.0   0:00.74 init
-    2 root      RT   0     0    0    0 S    0  0.0   0:00.00 migration/0
-    3 root      RT   0     0    0    0 S    0  0.0   0:00.00 posix_cpu_timer
-    4 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-high/0
-    5 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-timer/0
-    7 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-net-rx/
-    8 root     -51   0     0    0    0 S    0  0.0   0:00.01 softirq-block/0
-
-########################
-Intel 2.6.21-rc5-rt8
-top - 11:10:27 up 3 min,  2 users,  load average: 0.00, 0.00, 0.00
-Tasks: 167 total,   1 running, 166 sleeping,   0 stopped,   0 zombie
-Cpu(s):  0.5%us, 21.6%sy,  0.0%ni, 65.9%id,  0.0%wa,  3.0%hi,  9.0%si,  0.0%st
-Mem:   2035436k total,   618012k used,  1417424k free,    29972k buffers
-Swap:  3068372k total,        0k used,  3068372k free,   386084k cached
-
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
- 3955 root     -52   0  6436  636  480 S   43  0.0   0:19.74 netperf
-   20 root     -51   0     0    0    0 S   11  0.0   0:04.86 softirq-net-rx/
-    7 root     -51   0     0    0    0 S    7  0.0   0:03.28 softirq-net-rx/
- 2370 root     -51  -5     0    0    0 S    6  0.0   0:02.62 IRQ-8408
- 3858 eadi      16   0  229m 6848 5584 S    1  0.3   0:01.45 multiload-apple
- 3954 eadi      15   0 12712 1096  788 R    0  0.1   0:00.19 top
-    1 root      15   0 10304  664  552 S    0  0.0   0:00.75 init
-    2 root      RT   0     0    0    0 S    0  0.0   0:00.00 migration/0
-    3 root      RT   0     0    0    0 S    0  0.0   0:00.00 posix_cpu_timer
-    4 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-high/0
-    5 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-timer/0
-    6 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-net-tx/
-    8 root     -51   0     0    0    0 S    0  0.0   0:00.01 softirq-block/0
-    9 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-tasklet
-   10 root     -51   0     0    0    0 S    0  0.0   0:00.00 softirq-sched/0
-############################
-
-I think there is some kind of bad behavior happening in the Nvidia driver
- with respect to softirq-net-tx and IRQ-8406.
-
-Any thoughts? If you want I can post the oprofile from both test cases.
-
--Dave
+Index: linux/drivers/net/forcedeth.c
+===================================================================
+--- linux.orig/drivers/net/forcedeth.c
++++ linux/drivers/net/forcedeth.c
+@@ -3118,9 +3118,17 @@ static int nv_napi_poll(struct net_devic
+ 	int retcode;
+ 
+ 	if (np->desc_ver == DESC_VER_1 || np->desc_ver == DESC_VER_2) {
++		spin_lock_irqsave(&np->lock, flags);
++		nv_tx_done(dev);
++		spin_unlock_irqrestore(&np->lock, flags);
++
+ 		pkts = nv_rx_process(dev, limit);
+ 		retcode = nv_alloc_rx(dev);
+ 	} else {
++		spin_lock_irqsave(&np->lock, flags);
++		nv_tx_done_optimized(dev, np->tx_ring_size);
++		spin_unlock_irqrestore(&np->lock, flags);
++
+ 		pkts = nv_rx_process_optimized(dev, limit);
+ 		retcode = nv_alloc_rx_optimized(dev);
+ 	}
