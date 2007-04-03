@@ -1,46 +1,39 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: Improved UDP performance using 2.6.21-rc5-rt10
-Date: Tue, 3 Apr 2007 23:26:11 +0200
-Message-ID: <20070403212611.GC28093@elte.hu>
-References: <040320071326.11440.461256000007192600002CB02207300793979D9D0A9F9C0E0B@comcast.net>
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: 2.6.21-rc5-rt10 troubles
+Date: Wed, 04 Apr 2007 00:49:23 +0100
+Message-ID: <4612E803.8070600@rncbc.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: David Sperry <dave_sperry@ieee.org>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: "dave_sperry@ieee.org" <dasperry@comcast.net>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:46288 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1945964AbXDCV0Q (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Apr 2007 17:26:16 -0400
-Content-Disposition: inline
-In-Reply-To: <040320071326.11440.461256000007192600002CB02207300793979D9D0A9F9C0E0B@comcast.net>
+Received: from smtpa1.netcabo.pt ([212.113.174.16]:19269 "EHLO
+	exch01smtp03.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1030275AbXDCXtO (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Apr 2007 19:49:14 -0400
+In-Reply-To: <20070401183928.GB27614@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Ingo et al.
 
-* dave_sperry@ieee.org <dasperry@comcast.net> wrote:
+I'm afraid having no good news (once again). After building
+2.6.21-rc5-rt8 and recently on -rt10 I've found some trouble running on
+a Core2 T7200 laptop (SMP). Somehow, specially after starting jackd, the
+whole system starts crawling to death. It just slows down to some kind
+of Big Freeze, with no evidence over the console whatsoever, so that I'm
+ultimately left with a brick on my hands.
 
-> rt10 shows a big improvement over rt8
-> 
-> ##################################################
-> etup                    Thruput      CPU% 
-> Nvidia
-> 2.6.21-rc5-rt8           938          65%
->    netperf @51
->    hardirq @50
->    softirq @50
-> 
-> Nvidia
-> 2.6.21-rc5-rt10           938          32%
->    netperf @51
->    hardirq @50
->    softirq @50
+This behavior is consistent and occurs every time after jackd is
+started. It does not seem to occur on -rt5 and earlier.
 
-cool! Btw., could you run the same but without running cyclesoak, and 
-only watching the 'idle' metric in 'top' or vmstat? I found in my 
-experiments that cyclesoak sometimes interfers with the workload - and 
-the idle stats are precise and accurate on -rt. (they are not on 
-vanilla)
+I wish I could give you more details, but fact is I don't know where to
+look. The machine just freezes silently.
 
-	Ingo
+Bye now.
+-- 
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
