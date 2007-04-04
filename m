@@ -1,48 +1,36 @@
 From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: 2.6.21-rc5-rt10 troubles
-Date: Wed, 4 Apr 2007 10:49:27 +0200
-Message-ID: <20070404084927.GA2521@elte.hu>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu> <4612E803.8070600@rncbc.org>
+Date: Wed, 4 Apr 2007 11:42:44 +0200
+Message-ID: <20070404094243.GA16385@elte.hu>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu> <4612E803.8070600@rncbc.org> <20070404084927.GA2521@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Rui Nuno Capela <rncbc@rncbc.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:60483 "EHLO mx3.mail.elte.hu"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:50976 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S2992761AbXDDItb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Apr 2007 04:49:31 -0400
+	id S2992789AbXDDJmv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 4 Apr 2007 05:42:51 -0400
 Content-Disposition: inline
-In-Reply-To: <4612E803.8070600@rncbc.org>
+In-Reply-To: <20070404084927.GA2521@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Rui Nuno Capela <rncbc@rncbc.org> wrote:
+* Ingo Molnar <mingo@elte.hu> wrote:
 
-> Ingo et al.
-> 
-> I'm afraid having no good news (once again). After building 
-> 2.6.21-rc5-rt8 and recently on -rt10 I've found some trouble running 
-> on a Core2 T7200 laptop (SMP). Somehow, specially after starting 
-> jackd, the whole system starts crawling to death. It just slows down 
-> to some kind of Big Freeze, with no evidence over the console 
-> whatsoever, so that I'm ultimately left with a brick on my hands.
-> 
-> This behavior is consistent and occurs every time after jackd is 
-> started. It does not seem to occur on -rt5 and earlier.
-> 
-> I wish I could give you more details, but fact is I don't know where 
-> to look. The machine just freezes silently.
+> could you try rt11 (which fixes two bad bugs in rt10)? If rt11 freezes 
+> too then could you try to unapply the attached patch? This patch is 
+> the main delta between rt5 and rt11. (plus upstream changes but those 
+> shouldnt matter for this problem)
 
-could you try rt11 (which fixes two bad bugs in rt10)? If rt11 freezes 
-too then could you try to unapply the attached patch? This patch is the 
-main delta between rt5 and rt11. (plus upstream changes but those 
-shouldnt matter for this problem)
+FYI, i've released -rt12 meanwhile - and the patch to unapply from -rt12 
+is below.
 
 	Ingo
 
------------------------>
+------------------->
 Subject: [patch] softirq preemption: optimization
 From: Ingo Molnar <mingo@elte.hu>
 
@@ -53,8 +41,8 @@ Signed-off-by: Ingo Molnar <mingo@elte.hu>
 ---
  include/linux/interrupt.h |    1 
  kernel/irq/manage.c       |   24 +++----
- kernel/softirq.c          |  139 +++++++++++++++++++++++++++++++++++++---------
- 3 files changed, 123 insertions(+), 41 deletions(-)
+ kernel/softirq.c          |  150 ++++++++++++++++++++++++++++++++++++----------
+ 3 files changed, 131 insertions(+), 44 deletions(-)
 
 Index: linux/include/linux/interrupt.h
 ===================================================================
@@ -300,8 +288,18 @@ Index: linux/kernel/softirq.c
  
  	trace_softirq_exit();
  
-@@ -350,8 +418,9 @@ void do_softirq_from_hardirq(void)
+@@ -345,20 +413,29 @@ void do_softirq_from_hardirq(void)
+ 	if (!local_softirq_pending())
+ 		return;
+ 	/*
+-	 * 'immediate' softirq execution:
++	 * 'immediate' softirq execution, from hardirq context:
+ 	 */
++	local_irq_disable();
  	__local_bh_disable((unsigned long)__builtin_return_address(0));
++#ifndef CONFIG_PREEMPT_SOFTIRQS
++	trace_softirq_enter();
++#endif
  	p_flags = current->flags & PF_HARDIRQ;
  	current->flags &= ~PF_HARDIRQ;
 +	current->flags |= PF_SOFTIRQ;
@@ -309,19 +307,22 @@ Index: linux/kernel/softirq.c
 -	___do_softirq();
 +	___do_softirq(1);
  
++#ifndef CONFIG_PREEMPT_SOFTIRQS
  	trace_softirq_exit();
- 
-@@ -359,6 +428,9 @@ void do_softirq_from_hardirq(void)
- 	_local_bh_enable();
+-
++#endif
+ 	account_system_vtime(current);
+-	_local_bh_enable();
  
  	current->flags |= p_flags;
 +	current->flags &= ~PF_SOFTIRQ;
 +
++	_local_bh_enable();
 +	local_irq_enable();
  }
  
  #ifndef __ARCH_HAS_DO_SOFTIRQ
-@@ -669,8 +741,9 @@ static int ksoftirqd(void * __data)
+@@ -669,8 +746,9 @@ static int ksoftirqd(void * __data)
  {
  	struct sched_param param = { .sched_priority = MAX_USER_RT_PRIO/2 };
  	struct softirqdata *data = __data;
@@ -332,7 +333,7 @@ Index: linux/kernel/softirq.c
  
  	sys_sched_setscheduler(current->pid, SCHED_FIFO, &param);
  //	set_user_nice(current, -10);
-@@ -684,7 +757,8 @@ static int ksoftirqd(void * __data)
+@@ -684,7 +762,8 @@ static int ksoftirqd(void * __data)
  
  	while (!kthread_should_stop()) {
  		preempt_disable();
@@ -342,7 +343,7 @@ Index: linux/kernel/softirq.c
  			__preempt_enable_no_resched();
  			schedule();
  			preempt_disable();
-@@ -694,16 +768,26 @@ static int ksoftirqd(void * __data)
+@@ -694,16 +773,26 @@ static int ksoftirqd(void * __data)
  #endif
  		__set_current_state(TASK_RUNNING);
  
@@ -372,7 +373,7 @@ Index: linux/kernel/softirq.c
  			local_bh_disable();
  			local_irq_enable();
  
-@@ -713,6 +797,7 @@ static int ksoftirqd(void * __data)
+@@ -713,6 +802,7 @@ static int ksoftirqd(void * __data)
  			rcu_bh_qsctr_inc(data->cpu);
  
  			local_irq_disable();
