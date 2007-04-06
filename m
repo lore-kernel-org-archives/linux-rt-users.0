@@ -1,64 +1,116 @@
 From: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
-Subject: [PATCH 2.6.21-rc5-rt12] IPV6: Flag bit of ebitmask is not set in
- __inet6_hash.
-Date: Thu, 05 Apr 2007 11:45:09 -0700
-Message-ID: <461543B5.6080605@ncos.nec.co.jp>
+Subject: Re: [PATCH 2.6.21-rc5-rt12] IPV6: Flag bit of ebitmask is not set
+ in __inet6_hash.
+Date: Fri, 06 Apr 2007 16:05:09 -0700
+Message-ID: <4616D225.3030601@ncos.nec.co.jp>
+References: <461543B5.6080605@ncos.nec.co.jp> <20070405190714.GB22092@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: dwalker@mvista.com, Mark Huth <mhuth@mvista.com>,
-	linux-rt-users@vger.kernel.org
-To: mingo@elte.hu
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from homer.mvista.com ([63.81.120.158]:31084 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S1767211AbXDESqw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Apr 2007 14:46:52 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
+Cc: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>,
+	linux-kernel@vger.kernel.org, Adrian Bunk <bunk@stusta.de>,
+	"David S. Miller" <davem@davemloft.net>,
+	linux-rt-users@vger.kernel.org, Mark Huth <mhuth@mvista.com>,
+	dwalker@mvista.com
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933368AbXDFXFs@vger.kernel.org>
+In-Reply-To: <20070405190714.GB22092@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I found an issue with -rt patch. It is that netstat doesn't show
-IPv6 sockets in ESTABLISHED state. This issue happens because a
-flag bit of ebitmask is not set when the IPv6 socket connection
-is established.
+Ingo-san
 
-The fix is to set the flag bit in __inet6_hash().
+This is a RT specific issue, and this fix is not needed in mainline.
 
-Signed-off-by: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
+When searching in-use sockets via netstat, RT uses a bitmap(ebitmask)
+for fast search.
+Non-RT doesn't use the bitmap.
+Following patch is abstracted from RT patch(patch-2.6.21-rc5-rt12).
 
-Index: linus-kernel.git/net/ipv6/inet6_hashtables.c
+----------------------- Abstracted from RT patch
+----------------------------
+Index: linux/include/net/inet_hashtables.h
 ===================================================================
---- linus-kernel.git.orig/net/ipv6/inet6_hashtables.c
-+++ linus-kernel.git/net/ipv6/inet6_hashtables.c
-@@ -27,6 +27,8 @@ void __inet6_hash(struct inet_hashinfo *
- {
- 	struct hlist_head *list;
- 	rwlock_t *lock;
-+	unsigned long *bitmask = NULL;
-+	unsigned int index = 0;
+--- linux.orig/include/net/inet_hashtables.h
++++ linux/include/net/inet_hashtables.h
+@@ -101,6 +101,7 @@ struct inet_hashinfo {
+         * TIME_WAIT sockets use a separate chain (twchain).
+         */
+        struct inet_ehash_bucket        *ehash;
++       unsigned long                   *ebitmask;
 
- 	BUG_TRAP(sk_unhashed(sk));
-
-@@ -35,15 +37,16 @@ void __inet6_hash(struct inet_hashinfo *
- 		lock = &hashinfo->lhash_lock;
- 		inet_listen_wlock(hashinfo);
- 	} else {
--		unsigned int hash;
--		sk->sk_hash = hash = inet6_sk_ehashfn(sk);
--		hash &= (hashinfo->ehash_size - 1);
--		list = &hashinfo->ehash[hash].chain;
--		lock = &hashinfo->ehash[hash].lock;
-+		sk->sk_hash = inet6_sk_ehashfn(sk);
-+		index = inet_ehash_index(hashinfo, sk->sk_hash);
-+		list = &hashinfo->ehash[index].chain;
-+		lock = &hashinfo->ehash[index].lock;
-+		bitmask = hashinfo->ebitmask;
- 		write_lock(lock);
- 	}
-
- 	__sk_add_node(sk, list);
-+	__inet_hash_setbit(bitmask, index);
- 	sock_prot_inc_use(sk->sk_prot);
- 	write_unlock(lock);
+        /* Ok, let's try this, I give up, we do need a local binding
+         * TCP hash as well as the others for fast bind/connect.
+@@ -135,6 +136,13 @@ static inline struct inet_ehash_bucket *
+        return &hashinfo->ehash[hash & (hashinfo->ehash_size - 1)];
  }
+
+snip...
+
+ static inline void __inet_hash(struct inet_hashinfo *hashinfo,
+                               struct sock *sk, const int listen_possible)
+ {
+        struct hlist_head *list;
+        rwlock_t *lock;
++       unsigned long *bitmask = NULL;
++       unsigned int index = 0;
+
+        BUG_TRAP(sk_unhashed(sk));
+        if (listen_possible && sk->sk_state == TCP_LISTEN) {
+@@ -221,12 +243,15 @@ static inline void __inet_hash(struct in
+        } else {
+                struct inet_ehash_bucket *head;
+                sk->sk_hash = inet_sk_ehashfn(sk);
++               index = inet_ehash_index(hashinfo, sk->sk_hash);
+                head = inet_ehash_bucket(hashinfo, sk->sk_hash);
+                list = &head->chain;
+                lock = &head->lock;
++               bitmask = hashinfo->ebitmask;
+                write_lock(lock);
+        }
+        __sk_add_node(sk, list);
++       __inet_hash_setbit(bitmask, index);
+        sock_prot_inc_use(sk->sk_prot);
+        write_unlock(lock);
+        if (listen_possible && sk->sk_state == TCP_LISTEN)
+-------------------------------------------------------------------------------
+
+You can see that a flag bit is set properly into the bitmap in
+__inet_hash(). This function is
+called when IPv4 connection is established.
+But when IPv6 connection is established, a flag bit is NOT set into the
+bitmap, because
+the code setting a flag bit is missing in __inet6_hash(). Therefore it
+is impossible to find the
+IPv6 sockets in established state, when searching in-use sockets via
+netstat.
+
+In the same way as __inet_hash(), setting a flag bit is needed in
+__inet6_hash().
+
+Thanks,
+Masayuki Nakagawa
+
+
+Ingo Molnar wrote:
+> * Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp> wrote:
+>
+>   
+>> I found an issue with -rt patch. It is that netstat doesn't show IPv6 
+>> sockets in ESTABLISHED state. This issue happens because a flag bit of 
+>> ebitmask is not set when the IPv6 socket connection is established.
+>>
+>> The fix is to set the flag bit in __inet6_hash().
+>>     
+>
+> thanks. I'm wondering, should this fix be done in mainline too? -rt12 is 
+> based on Linus' -git kernel from yesterday.
+>
+> 	Ingo
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
+>   
