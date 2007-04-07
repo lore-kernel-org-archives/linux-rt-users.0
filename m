@@ -1,116 +1,86 @@
-From: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
-Subject: Re: [PATCH 2.6.21-rc5-rt12] IPV6: Flag bit of ebitmask is not set
- in __inet6_hash.
-Date: Fri, 06 Apr 2007 16:05:09 -0700
-Message-ID: <4616D225.3030601@ncos.nec.co.jp>
-References: <461543B5.6080605@ncos.nec.co.jp> <20070405190714.GB22092@elte.hu>
+From: Samuel Ortiz <samuel-jcdQHdrhKHMdnm+yROfE0A@public.gmane.org>
+Subject: Re: [BUG] 2.6.20.1-rt8 irnet + pppd recursive
+	spinlock...
+Date: Sat, 7 Apr 2007 03:59:26 +0300
+Message-ID: <20070407005926.GE4177@sortiz.org>
+References: <Pine.LNX.4.63.0704050846480.534@pcgl.dsa-ac.de>
+	<Pine.LNX.4.63.0704051250170.534@pcgl.dsa-ac.de>
+Reply-To: Samuel Ortiz <samuel-jcdQHdrhKHMdnm+yROfE0A@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>,
-	linux-kernel@vger.kernel.org, Adrian Bunk <bunk@stusta.de>,
-	"David S. Miller" <davem@davemloft.net>,
-	linux-rt-users@vger.kernel.org, Mark Huth <mhuth@mvista.com>,
-	dwalker@mvista.com
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933368AbXDFXFs@vger.kernel.org>
-In-Reply-To: <20070405190714.GB22092@elte.hu>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: irda-users-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org,
+	Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Guennadi Liakhovetski <gl-o/hVf8ie6tKzQB+pC5nmwQ@public.gmane.org>
+Return-path: <irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.63.0704051250170.534-pjC7uWgG1yLsj6RlE8knwQ@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/irda-users>,
+	<mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum=irda-users>
+List-Post: <mailto:irda-users-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/irda-users>,
+	<mailto:irda-users-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Sender: irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Errors-To: irda-users-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo-san
+Hi Guennadi,
 
-This is a RT specific issue, and this fix is not needed in mainline.
+On Thu, Apr 05, 2007 at 12:59:40PM +0200, Guennadi Liakhovetski wrote:
+> Ok, a simple analysis reveals the recursive spinlock:
+> 
+> On Thu, 5 Apr 2007, Guennadi Liakhovetski wrote:
+> 
+> > [<bf12b220>] (ppp_channel_push+0x0/0xc8 [ppp_generic]) from [<bf12bf98>] (ppp_output_wakeup+0x18/0x1c [ppp_generic])
+> ===>		^^^^^^^^^^^^^^^^
+> >  r7 = C38F42BC  r6 = C38F4200  r5 = C38F4200  r4 = 00000000
+> 
+> ===>	spin_lock_bh(&pch->downl);
+> 
+> > [<bf12bf80>] (ppp_output_wakeup+0x0/0x1c [ppp_generic]) from [<bf132c98>] (irnet_flow_indication+0x38/0x3c [irnet])
+> > [<bf132c60>] (irnet_flow_indication+0x0/0x3c [irnet]) from [<bf104e4c>] (irttp_run_tx_queue+0x1c0/0x1d4 [irda])
+> > [<bf104c8c>] (irttp_run_tx_queue+0x0/0x1d4 [irda]) from [<bf104f88>] (irttp_data_request+0x128/0x4f8 [irda])
+> >  r8 = BF121560  r7 = 00000002  r6 = C38F4200  r5 = C21418B8
+> >  r4 = C21418B8 
+> > [<bf104e60>] (irttp_data_request+0x0/0x4f8 [irda]) from [<bf1321bc>] (ppp_irnet_send+0x134/0x238 [irnet])
+> > [<bf132088>] (ppp_irnet_send+0x0/0x238 [irnet]) from [<bf12a600>] (ppp_push+0x80/0xb8 [ppp_generic])
+> >  r7 = C3A436E0  r6 = 00000000  r5 = C21418B8  r4 = C1489600
+> > [<bf12a580>] (ppp_push+0x0/0xb8 [ppp_generic]) from [<bf12a8d8>] (ppp_xmit_process+0x34/0x50c [ppp_generic])
+> ===>		^^^^^^^^
+> >  r7 = 00000021  r6 = C21418B8  r5 = C1489600  r4 = 00000000
+> 
+> ===>		spin_lock_bh(&pch->downl);
+> 
+> > [<bf12a8a4>] (ppp_xmit_process+0x0/0x50c [ppp_generic]) from [<bf12aed8>] (ppp_start_xmit+0x128/0x254 [ppp_generic])
+> > [<bf12adb0>] (ppp_start_xmit+0x0/0x254 [ppp_generic]) from [<c0186fa4>] (dev_hard_start_xmit+0x170/0x268)
+> > [<c0186e34>] (dev_hard_start_xmit+0x0/0x268) from [<c01979b8>] (__qdisc_run+0x60/0x270)
+> >  r8 = C1BBC914  r7 = C21418B8  r6 = 00000000  r5 = C21418B8
+> >  r4 = C1BBC800 
+> > [<c0197958>] (__qdisc_run+0x0/0x270) from [<c0187250>] (dev_queue_xmit+0x1b4/0x25c)
+> 
+> Now, does anyone have an idea how best to fix it?
+> 
+> 1. Should re-entrance in ppp_channel_push() be prevented, and if yes - at 
+> which level? Or
+> 
+> 2. Should re-entrance be allowed and only recursive spin_lock_bh() 
+> avoided?
+IMHO, irnet_flow_indication() should be called asynchronously by
+irttp_run_tx_queue(), through some bottom-half mechanism. That would fix your
+locking issues, and that would reduce the time we spend in the IrDA code with
+this lock taken.
 
-When searching in-use sockets via netstat, RT uses a bitmap(ebitmask)
-for fast search.
-Non-RT doesn't use the bitmap.
-Following patch is abstracted from RT patch(patch-2.6.21-rc5-rt12).
+I will try to come up with some patches for you later this weekend.
 
------------------------ Abstracted from RT patch
-----------------------------
-Index: linux/include/net/inet_hashtables.h
-===================================================================
---- linux.orig/include/net/inet_hashtables.h
-+++ linux/include/net/inet_hashtables.h
-@@ -101,6 +101,7 @@ struct inet_hashinfo {
-         * TIME_WAIT sockets use a separate chain (twchain).
-         */
-        struct inet_ehash_bucket        *ehash;
-+       unsigned long                   *ebitmask;
-
-        /* Ok, let's try this, I give up, we do need a local binding
-         * TCP hash as well as the others for fast bind/connect.
-@@ -135,6 +136,13 @@ static inline struct inet_ehash_bucket *
-        return &hashinfo->ehash[hash & (hashinfo->ehash_size - 1)];
- }
-
-snip...
-
- static inline void __inet_hash(struct inet_hashinfo *hashinfo,
-                               struct sock *sk, const int listen_possible)
- {
-        struct hlist_head *list;
-        rwlock_t *lock;
-+       unsigned long *bitmask = NULL;
-+       unsigned int index = 0;
-
-        BUG_TRAP(sk_unhashed(sk));
-        if (listen_possible && sk->sk_state == TCP_LISTEN) {
-@@ -221,12 +243,15 @@ static inline void __inet_hash(struct in
-        } else {
-                struct inet_ehash_bucket *head;
-                sk->sk_hash = inet_sk_ehashfn(sk);
-+               index = inet_ehash_index(hashinfo, sk->sk_hash);
-                head = inet_ehash_bucket(hashinfo, sk->sk_hash);
-                list = &head->chain;
-                lock = &head->lock;
-+               bitmask = hashinfo->ebitmask;
-                write_lock(lock);
-        }
-        __sk_add_node(sk, list);
-+       __inet_hash_setbit(bitmask, index);
-        sock_prot_inc_use(sk->sk_prot);
-        write_unlock(lock);
-        if (listen_possible && sk->sk_state == TCP_LISTEN)
--------------------------------------------------------------------------------
-
-You can see that a flag bit is set properly into the bitmap in
-__inet_hash(). This function is
-called when IPv4 connection is established.
-But when IPv6 connection is established, a flag bit is NOT set into the
-bitmap, because
-the code setting a flag bit is missing in __inet6_hash(). Therefore it
-is impossible to find the
-IPv6 sockets in established state, when searching in-use sockets via
-netstat.
-
-In the same way as __inet_hash(), setting a flag bit is needed in
-__inet6_hash().
-
-Thanks,
-Masayuki Nakagawa
+Cheers,
+Samuel.
 
 
-Ingo Molnar wrote:
-> * Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp> wrote:
->
->   
->> I found an issue with -rt patch. It is that netstat doesn't show IPv6 
->> sockets in ESTABLISHED state. This issue happens because a flag bit of 
->> ebitmask is not set when the IPv6 socket connection is established.
->>
->> The fix is to set the flag bit in __inet6_hash().
->>     
->
-> thanks. I'm wondering, should this fix be done in mainline too? -rt12 is 
-> based on Linus' -git kernel from yesterday.
->
-> 	Ingo
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->
->   
+-------------------------------------------------------------------------
+Take Surveys. Earn Cash. Influence the Future of IT
+Join SourceForge.net's Techsay panel and you'll get the chance to share your
+opinions on IT & business topics through brief surveys-and earn cash
+http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
