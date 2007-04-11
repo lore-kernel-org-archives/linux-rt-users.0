@@ -1,39 +1,37 @@
-From: Free Ekanayaka <free@64studio.com>
-Subject: patch-2.6.21-rc6-rt0 hangs on boot on amd64
-Date: Tue, 10 Apr 2007 17:27:06 +0200
-Message-ID: <873b38i71x.fsf__17103.0844947838$1176296977$gmane$org@64studio.com>
+From: Peter Feuerer <peter@piie.net>
+Subject: Geode GX1 + RT-Preempt + ACPI
+Date: Wed, 11 Apr 2007 11:03:57 +0200
+Message-ID: <1176282238.4593.22.camel@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from serverina.hacknight.org ([80.68.90.101]:3406 "EHLO
-	serverina.hacknight.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751243AbXDKIWp (ORCPT
+Received: from smtprelay05.ispgateway.de ([80.67.18.43]:60232 "EHLO
+	smtprelay05.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751581AbXDKJLW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Apr 2007 04:22:45 -0400
-Received: from localhost.localdomain (unknown [89.196.63.149])
-	by serverina.hacknight.org (Postfix) with ESMTP id 39CCB14122
-	for <linux-rt-users@vger.kernel.org>; Wed, 11 Apr 2007 08:56:48 +0100 (BST)
+	Wed, 11 Apr 2007 05:11:22 -0400
+Received: from unknown (HELO [192.168.0.16]) (650477@[89.53.103.182])
+          (envelope-sender <peter@piie.net>)
+          by smtprelay05.ispgateway.de (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 11 Apr 2007 09:04:00 -0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-I'm new to the list.
-I've built the 2.6.21-rc6 kernel release and it seems to work fine on
-an amd64 HP Pavillon zv5000 laptop, using this config:
-http://people.64studio.com/~free/config-2.6.21-rc6
-However the system hangs on boot if I try to apply the 2.6.21-rc6-rt0
-realtime patch, with this config:
-http://people.64studio.com/~free/config-2.6.21-rc6-rt0
-(diffing the two configs shows a lot of differences, but as far as I
-can tell what I did was simply to run makeconfig from the first config
-after having applied the patch).
-The systems hangs when the on of the script contained in the standard
-Debian ramfs image tries to launch udevsettle. 
-The script is /scripts/init-premount/udev, inside the ramfs image, you
-find a copy here:
-http://people.64studio.com/~free/udev
-If I try to boot the patch kernel using qemu, than everything works,
-so it might also be a problem specific to this hardware.
-Hints?
-Ciao!
-Free
+Hello everybody,
+
+I'm currently trying to get linux kernel 2.6.21-rc6 with the RT-Preempt
+patch running on an embedded board with an Geode GX1 processor.
+The kernel itself boots up but cannot initialise ACPI. And seems like
+that's why the high resolution timer cannot be started, so the RT-Preemt
+functionality does not work correctly.
+On a "normal" x86 desktop system (amd athlon) exactly this kernel with
+the Preempt patch is running fine.
+When I'm booting linux 2.6.18 with RT-Preempt (patch-2.6.18-rt5) without
+using acpi it's working on the GX1 system.
+Is there a way to run recent linux kernels and recent RT-Preempt patches
+without using ACPI? Or should I stick to 2.6.18-rt5?
+
+kind regards,
+--peter
