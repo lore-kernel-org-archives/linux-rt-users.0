@@ -1,39 +1,22 @@
-From: Guennadi Liakhovetski <gl@dsa-ac.de>
-Subject: Re: [irda-users] [BUG] 2.6.20.1-rt8 irnet + pppd recursive spinlock...
-Date: Wed, 11 Apr 2007 12:02:41 +0200 (CEST)
-Message-ID: <Pine.LNX.4.63.0704111158530.534@pcgl.dsa-ac.de>
-References: <Pine.LNX.4.63.0704050846480.534@pcgl.dsa-ac.de>
- <Pine.LNX.4.63.0704051250170.534@pcgl.dsa-ac.de> <20070407005926.GE4177@sortiz.org>
- <20070410181037.GA3780@sortiz.org>
+From: "Ankita Garg" <love4linux@gmail.com>
+Subject: (unknown)
+Date: Thu, 12 Apr 2007 16:42:36 +0530
+Message-ID: <367b12a30704120412i30d998b8k34f9e2426d761263@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Paul Mackerras <paulus@samba.org>,
-	irda-users@lists.sourceforge.net, linux-rt-users@vger.kernel.org,
-	netdev@vger.kernel.org
-To: Samuel Ortiz <samuel@sortiz.org>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20070410181037.GA3780@sortiz.org>
-Sender: netdev-owner@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from an-out-0708.google.com ([209.85.132.249]:58104 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S2992499AbXDLLMg (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Apr 2007 07:12:36 -0400
+Received: by an-out-0708.google.com with SMTP id b33so521555ana
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 Apr 2007 04:12:36 -0700 (PDT)
+Subject: 
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 10 Apr 2007, Samuel Ortiz wrote:
-
-> The patch below schedules irnet_flow_indication() asynchronously. Could
-> you please give it a try (it builds, but I couldn't test it...) ? :
-
-I'm afraid, your patch makes it worse - with my patch to ppp_generic it 
-worked 5 hours before Ir stopped, remaining at 4mbaud, and only discovery 
-timer was expiring periodically without actually doing anything; with your 
-patch the same happens in about 5 minutes.
-
-I'll double-verify it, and then will try the same work-queue approach, but 
-from ppp_generic, rather than from irttp, combining our 2 patches.
-
-Thanks
-Guennadi
----------------------------------
-Guennadi Liakhovetski, Ph.D.
-DSA Daten- und Systemtechnik GmbH
-Pascalstr. 28
-D-52076 Aachen
-Germany
+Subsribe linux-rt-users
