@@ -1,30 +1,41 @@
-From: Peter Feuerer <peter@piie.net>
-Subject: arm and ppc plattforms
-Date: Fri, 20 Apr 2007 12:56:35 +0200
-Message-ID: <1177066595.5648.33.camel@localhost.localdomain>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: GPL SYMBOL
+Date: Fri, 20 Apr 2007 12:48:00 +0200
+Message-ID: <1177066081.11356.5.camel@godzilla>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay06.ispgateway.de ([80.67.18.44]:35032 "EHLO
-	smtprelay06.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754444AbXDTK4i (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Apr 2007 06:56:38 -0400
-Received: from unknown (HELO [192.168.0.16]) (650477@[89.53.102.229])
-          (envelope-sender <peter@piie.net>)
-          by smtprelay06.ispgateway.de (qmail-ldap-1.03) with SMTP
-          for <linux-rt-users@vger.kernel.org>; 20 Apr 2007 10:56:36 -0000
+Received: from hermes.xcon.it ([62.48.35.101]:53968 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754472AbXDTLGS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Apr 2007 07:06:18 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by hermes.xcon.it (Postfix) with ESMTP id DD7466080F2
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Apr 2007 12:48:02 +0200 (CEST)
+Received: from hermes.xcon.it ([127.0.0.1])
+	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id A33Tk076R50g for <linux-rt-users@vger.kernel.org>;
+	Fri, 20 Apr 2007 12:48:02 +0200 (CEST)
+Received: from [192.168.1.112] (unknown [151.16.232.180])
+	(Authenticated sender: aib@texware.it)
+	by hermes.xcon.it (Postfix) with ESMTP id 27B456080F0
+	for <linux-rt-users@vger.kernel.org>; Fri, 20 Apr 2007 12:48:02 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello everybody,
+Hi all,
 
-what ARM and PowerPC processors have been tested with the rt-preempt
-patch?
-Which evalkits or developement boards for those processors are you
-using?
+Sorry for the stupid question.
 
-kind regards,
---peter
+What is the reason to declare pagefault_enable() and pagefault_disable()
+as only GPL symbol in mm/memory.c (obviously when applied ingo's
+realtime patch)? 
+
+There aren't closed source driver that expect to use these?
+
+Thanks in advance!
+
+Ciao,
+Alessio
