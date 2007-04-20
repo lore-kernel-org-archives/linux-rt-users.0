@@ -1,28 +1,40 @@
-From: Andrew Burgess <aab@cichlid.com>
-Subject: Re: patch-2.6.21-rc6-rt0 hangs on boot on amd64
-Date: Sat, 14 Apr 2007 08:31:51 -0700
-Message-ID: <200704141531.l3EFVppX013708@cichlid.com>
+From: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>
+Subject: How to dedicate a CPU for real time applications?
+Date: Fri, 20 Apr 2007 04:04:56 +0200
+Message-ID: <46281FC8.2000209@l1nuxh4ck3r.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from dsl-63-249-106-23.cruzio.com ([63.249.106.23]:53697 "EHLO
-	cichlid.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751042AbXDNP7B (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 14 Apr 2007 11:59:01 -0400
-Received: from cichlid.com (cichlid.com [127.0.0.1])
-	by cichlid.com (8.13.8/8.13.1) with ESMTP id l3EFVpvY013712
-	for <linux-rt-users@vger.kernel.org>; Sat, 14 Apr 2007 08:31:52 -0700
+Received: from mo-p00-ob.rzone.de ([81.169.146.160]:32511 "EHLO
+	mo-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754333AbXDTCKd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Apr 2007 22:10:33 -0400
+Received: from [192.168.0.1]
+	(ppp-88-217-43-44.dynamic.mnet-online.de [88.217.43.44])
+	by post.webmailer.de (mrclete mo7) (RZmta 5.5)
+	with ESMTP id R00198j3JIQHPk for <linux-rt-users@vger.kernel.org>;
+	Fri, 20 Apr 2007 04:04:32 +0200 (MEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
->I've built the 2.6.21-rc6 kernel release and it seems to work fine on
->an amd64 HP Pavillon zv5000 laptop, using this config:
->http://people.64studio.com/~free/config-2.6.21-rc6
->However the system hangs on boot if I try to apply the 2.6.21-rc6-rt0
->realtime patch, with this config:
->http://people.64studio.com/~free/config-2.6.21-rc6-rt0
-..
->The systems hangs when the on of the script contained in the standard
->Debian ramfs image tries to launch udevsettle. 
 
-My AMD64 X2 non-laptop hangs as well. The screen blanks so I'm guessing it was
-in the middle of switching to X11. Vanilla rc6 works fine. Compiled as SMP x86_64.
+Hi!
+
+Although -rt provides exceptionaly low latencies, i'd like
+to try out further optimization by dedicating one CPU in
+a SMP system for real time application ("Shielded CPU").
+
+If applying "isolcpus=1", then most processes will be
+bound to CPU0 as expected (per CPU kernel threads need
+to stay), but, interrupts are still distributed amongst
+CPUs. I tried to modify /proc/irq/*/smp_affinity, but
+the cpu mask doesn't change for most interrupts.
+
+Any ideas what could be the problem? TIA!
+
+regards
+
+Bernhard
