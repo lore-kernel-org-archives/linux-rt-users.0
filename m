@@ -1,58 +1,30 @@
-From: "Robert de Vries" <robert.h.de.vries@gmail.com>
-Subject: Re: How to dedicate a CPU for real time applications?
-Date: Fri, 20 Apr 2007 11:09:14 +0200
-Message-ID: <47db5b910704200209j311ecc16r1967739eec7810b4@mail.gmail.com>
-References: <46281FC8.2000209@l1nuxh4ck3r.de>
+From: Peter Feuerer <peter@piie.net>
+Subject: arm and ppc plattforms
+Date: Fri, 20 Apr 2007 12:56:35 +0200
+Message-ID: <1177066595.5648.33.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Bernhard Kuhn" <kuhn@l1nuxh4ck3r.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nz-out-0506.google.com ([64.233.162.235]:60171 "EHLO
-	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S2992705AbXDTJJP (ORCPT
+Received: from smtprelay06.ispgateway.de ([80.67.18.44]:35032 "EHLO
+	smtprelay06.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754444AbXDTK4i (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Apr 2007 05:09:15 -0400
-Received: by nz-out-0506.google.com with SMTP id s1so691975nze
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Apr 2007 02:09:14 -0700 (PDT)
-In-Reply-To: <46281FC8.2000209@l1nuxh4ck3r.de>
-Content-Disposition: inline
+	Fri, 20 Apr 2007 06:56:38 -0400
+Received: from unknown (HELO [192.168.0.16]) (650477@[89.53.102.229])
+          (envelope-sender <peter@piie.net>)
+          by smtprelay06.ispgateway.de (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 20 Apr 2007 10:56:36 -0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 4/20/07, Bernhard Kuhn <kuhn@l1nuxh4ck3r.de> wrote:
->
-> Hi!
->
-> Although -rt provides exceptionaly low latencies, i'd like
-> to try out further optimization by dedicating one CPU in
-> a SMP system for real time application ("Shielded CPU").
->
-> If applying "isolcpus=1", then most processes will be
-> bound to CPU0 as expected (per CPU kernel threads need
-> to stay), but, interrupts are still distributed amongst
-> CPUs. I tried to modify /proc/irq/*/smp_affinity, but
-> the cpu mask doesn't change for most interrupts.
->
-> Any ideas what could be the problem? TIA!
+Hello everybody,
 
-You have to enable IRQBALANCE in the kernel.
-Then you have to disable the irqbalance daemon or else your carefully
-redirected interrupts are directed back behind your back.
-Then you can do /bin/echo 1 > /proc/irq/10/smp_affinity.
-Beware that the mask is not updated immediately. It is updated the
-next time an interrupt is serviced. This may take a long time if there
-are only a few interrupts sent or none.
+what ARM and PowerPC processors have been tested with the rt-preempt
+patch?
+Which evalkits or developement boards for those processors are you
+using?
 
-I'll write something up about this in the Real-Time Linux Wiki.
-
-On a related note: I am working on a user space library to make it
-easy to do CPU shielding of other processes (what you do with
-isolcpus=1, but then dynamic) using the cpuset feature of the kernel.
-I have only just begun to develop this library so only the very basic
-features are implemented.
-
-Let me know if someone is interested in using it.
-
-     Robert
+kind regards,
+--peter
