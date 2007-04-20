@@ -1,154 +1,44 @@
-From: "Pradyumna Sampath" <pradyumna.sampath@gmail.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
 Subject: Re: arm and ppc plattforms
-Date: Fri, 20 Apr 2007 16:53:47 +0530
-Message-ID: <f87351060704200423n45dc5b66h73a399a4df1bfd68@mail.gmail.com>
-References: <1177066595.5648.33.camel@localhost.localdomain>
-	 <20070420110819.GN9554@pengutronix.de>
+Date: Fri, 20 Apr 2007 13:34:11 +0200
+Message-ID: <20070420113411.GO9554@pengutronix.de>
+References: <1177066595.5648.33.camel@localhost.localdomain> <20070420110819.GN9554@pengutronix.de> <f87351060704200423n45dc5b66h73a399a4df1bfd68@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_25619_12995579.1177068227089"
-Cc: "Peter Feuerer" <peter@piie.net>, linux-rt-users@vger.kernel.org
-To: "Robert Schwebel" <r.schwebel@pengutronix.de>
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
+	Peter Feuerer <peter@piie.net>, linux-rt-users@vger.kernel.org
+To: Pradyumna Sampath <pradyumna.sampath@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.181]:47567 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754472AbXDTLXr (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:58794 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S2992953AbXDTLcB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Apr 2007 07:23:47 -0400
-Received: by py-out-1112.google.com with SMTP id a29so745465pyi
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Apr 2007 04:23:47 -0700 (PDT)
-In-Reply-To: <20070420110819.GN9554@pengutronix.de>
+	Fri, 20 Apr 2007 07:32:01 -0400
+Content-Disposition: inline
+In-Reply-To: <f87351060704200423n45dc5b66h73a399a4df1bfd68@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_25619_12995579.1177068227089
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On Fri, Apr 20, 2007 at 04:53:47PM +0530, Pradyumna Sampath wrote:
+> I tried the 2.6.21-rc6-rt0 for MPC5200B (ARCH=ppc
+> CROSS_COMPILE=ppc_6xx-) and it died with a bunch of compile errors. So
+> I was under the impression that the port for PowerPC was'nt complete.
+> So I hacked up a small patch (attached) through I could atleast get it
+> to compile. But of course it was far from having the implementation
+> for the complete -rt patch set.
+ 
 
-Hi Robert
+You'll probably have no luck with ARCH=ppc, our port runs with
+ARCH=powerpc (and still has some crude hacks inside). You can find the
+code in the OSELAS.BSP() for the phyCORE-MPC5200B-tiny module, which can
+be found here:
 
-> We have it running on
->
-> - MPC5200B (PowerPC 603e), phyCORE-MPC5200B-tiny module (Phytec AG)
->   Works like a charm...
->
-> - PXA270 (XScale ARMv5), phyCORE-PXA270 (Phytec AG)
->   Still under development, we've seen sporadic hangs with the last
->   kernels we checked, have to re-test on -rt-current.
+http://www.pengutronix.de/oselas/bsp/phytec/index_en.html#phyCORE-MPC5200B-tiny
 
-<snip..>
-
-I tried the 2.6.21-rc6-rt0 for MPC5200B (ARCH=ppc
-CROSS_COMPILE=ppc_6xx-) and it died with a bunch of compile errors. So
-I was under the impression that the port for PowerPC was'nt complete.
-So I hacked up a small patch (attached) through I could atleast get it
-to compile. But of course it was far from having the implementation
-for the complete -rt patch set.
-
-But this is good news. So I assume this will enter the upstream kernel 2.6.22 ?
-
-thanks in advance
-regards
-prady
-
-------=_Part_25619_12995579.1177068227089
-Content-Type: application/octet-stream; name="patch-2.6.21-rc6-rt0-pr0"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="patch-2.6.21-rc6-rt0-pr0"
-X-Attachment-Id: f_f0qkdf62
-
-ZGlmZiAtdSAtciByYzYtcnQwL2xpbnV4LTIuNi4yMC9hcmNoL3BwYy9LY29uZmlnIGxpbnV4LTIu
-Ni4yMC9hcmNoL3BwYy9LY29uZmlnCi0tLSByYzYtcnQwL2xpbnV4LTIuNi4yMC9hcmNoL3BwYy9L
-Y29uZmlnCTIwMDctMDQtMTggMTY6NDE6NTYuMDAwMDAwMDAwICswNTMwCisrKyBsaW51eC0yLjYu
-MjAvYXJjaC9wcGMvS2NvbmZpZwkyMDA3LTA0LTE4IDEyOjA1OjMxLjAwMDAwMDAwMCArMDUzMApA
-QCAtNTgsNiArNTgsMTQgQEAKIAlkZWZhdWx0IHkKIAlkZXBlbmRzIG9uIEJVRwogCitjb25maWcg
-VFJBQ0VfSVJRRkxBR1NfU1VQUE9SVAorCWJvb2wKKwlkZWZhdWx0IHkKKworY29uZmlnIEdFTkVS
-SUNfVElNRQorCWJvb2wKKwlkZWZhdWx0IHkKKwogc291cmNlICJpbml0L0tjb25maWciCiAKIG1l
-bnUgIlByb2Nlc3NvciIKZGlmZiAtdSAtciByYzYtcnQwL2xpbnV4LTIuNi4yMC9hcmNoL3BwYy9r
-ZXJuZWwvdGltZS5jIGxpbnV4LTIuNi4yMC9hcmNoL3BwYy9rZXJuZWwvdGltZS5jCi0tLSByYzYt
-cnQwL2xpbnV4LTIuNi4yMC9hcmNoL3BwYy9rZXJuZWwvdGltZS5jCTIwMDctMDQtMTggMTY6NDE6
-NTYuMDAwMDAwMDAwICswNTMwCisrKyBsaW51eC0yLjYuMjAvYXJjaC9wcGMva2VybmVsL3RpbWUu
-YwkyMDA3LTA0LTE4IDEzOjE0OjQ0LjAwMDAwMDAwMCArMDUzMApAQCAtMjAwLDYgKzIwMCw3IEBA
-CiAvKgogICogVGhpcyB2ZXJzaW9uIG9mIGdldHRpbWVvZmRheSBoYXMgbWljcm9zZWNvbmQgcmVz
-b2x1dGlvbi4KICAqLworI2lmbmRlZiBDT05GSUdfR0VORVJJQ19USU1FCiB2b2lkIGRvX2dldHRp
-bWVvZmRheShzdHJ1Y3QgdGltZXZhbCAqdHYpCiB7CiAJdW5zaWduZWQgbG9uZyBmbGFnczsKQEAg
-LTI4Miw2ICsyODMsNyBAQAogfQogCiBFWFBPUlRfU1lNQk9MKGRvX3NldHRpbWVvZmRheSk7Cisj
-ZW5kaWYgLyogIUNPTkZJR19HRU5FUklDX1RJTUUgKi8KIAogLyogVGhpcyBmdW5jdGlvbiBpcyBv
-bmx5IGNhbGxlZCBvbiB0aGUgYm9vdCBwcm9jZXNzb3IgKi8KIHZvaWQgX19pbml0IHRpbWVfaW5p
-dCh2b2lkKQpPbmx5IGluIGxpbnV4LTIuNi4yMC86IC5jb25maWcKT25seSBpbiBsaW51eC0yLjYu
-MjAvOiAuY29uZmlnLm9sZApkaWZmIC11IC1yIHJjNi1ydDAvbGludXgtMi42LjIwL2RyaXZlcnMv
-bXRkL21hcHMvS2NvbmZpZyBsaW51eC0yLjYuMjAvZHJpdmVycy9tdGQvbWFwcy9LY29uZmlnCi0t
-LSByYzYtcnQwL2xpbnV4LTIuNi4yMC9kcml2ZXJzL210ZC9tYXBzL0tjb25maWcJMjAwNy0wNC0x
-OCAxNjo0MTo0MS4wMDAwMDAwMDAgKzA1MzAKKysrIGxpbnV4LTIuNi4yMC9kcml2ZXJzL210ZC9t
-YXBzL0tjb25maWcJMjAwNy0wNC0xOCAxNToyMTozMS4wMDAwMDAwMDAgKzA1MzAKQEAgLTM3NCw2
-ICszNzQsMTggQEAKIAkgIFJlZHdvb2QgYm9hcmQuIElmIHlvdSBoYXZlIG9uZSBvZiB0aGVzZSBi
-b2FyZHMgYW5kIHdvdWxkIGxpa2UgdG8KIAkgIHVzZSB0aGUgZmxhc2ggY2hpcHMgb24gaXQsIHNh
-eSAnWScuCiAKK2NvbmZpZyBNVERfTElURTUyMDAKKwl0cmlzdGF0ZSAiQ0ZJIEZsYXNoIGRldmlj
-ZXMgbWFwcGVkIG9uIE1ldHJvd2Vya3MgTGl0ZTUyMDAiCisJZGVwZW5kcyBvbiBNVERfQ0ZJICYm
-IFBQQ19NUEM1Mnh4ICYmIExJVEU1MjAwCisKK2NvbmZpZyBNVERfTElURTUyMDBCCisJdHJpc3Rh
-dGUgIkNGSSBGbGFzaCBkZXZpY2VzIG1hcHBlZCBvbiBGcmVlc2NhbGUgTGl0ZTUyMDBCIgorCWRl
-cGVuZHMgb24gTVREX0NGSSAmJiBQUENfTVBDNTJ4eCAmJiBMSVRFNTIwMEIKKworY29uZmlnIE1U
-RF9NRURJQTUyMDAKKwl0cmlzdGF0ZSAiQ0ZJIEZsYXNoIGRldmljZXMgbWFwcGVkIG9uIEZyZWVz
-Y2FsZSBNZWRpYTUyMDAiCisJZGVwZW5kcyBvbiBNVERfQ0ZJICYmIFBQQ19NUEM1Mnh4ICYmIE1F
-RElBNTIwMAorCiBjb25maWcgTVREX1RRTTgzNHgKIAl0cmlzdGF0ZSAiRmxhc2ggZGV2aWNlIG1h
-cHBlZCBvbiBUUSBDb21wb25lbnRzIFRRTTgzNHggQm9hcmRzIgogCWRlcGVuZHMgb24gTVREX0NG
-SSAmJiBUUU04MzR4Ck9ubHkgaW4gbGludXgtMi42LjIwL2RyaXZlcnMvbXRkL21hcHM6IEtjb25m
-aWcub3JpZwpPbmx5IGluIGxpbnV4LTIuNi4yMC9kcml2ZXJzL210ZC9tYXBzOiBsaXRlNTIwMC5j
-CmRpZmYgLXUgLXIgcmM2LXJ0MC9saW51eC0yLjYuMjAvZHJpdmVycy9tdGQvbWFwcy9NYWtlZmls
-ZSBsaW51eC0yLjYuMjAvZHJpdmVycy9tdGQvbWFwcy9NYWtlZmlsZQotLS0gcmM2LXJ0MC9saW51
-eC0yLjYuMjAvZHJpdmVycy9tdGQvbWFwcy9NYWtlZmlsZQkyMDA3LTAyLTA1IDAwOjE0OjU0LjAw
-MDAwMDAwMCArMDUzMAorKysgbGludXgtMi42LjIwL2RyaXZlcnMvbXRkL21hcHMvTWFrZWZpbGUJ
-MjAwNy0wNC0xOCAxNToyMTozMS4wMDAwMDAwMDAgKzA1MzAKQEAgLTUxLDYgKzUxLDEwIEBACiBv
-YmotJChDT05GSUdfTVREX0lNUEE3KQkJKz0gaW1wYTcubwogb2JqLSQoQ09ORklHX01URF9GT1JU
-VU5FVCkJKz0gZm9ydHVuZXQubwogb2JqLSQoQ09ORklHX01URF9SRURXT09EKQkrPSByZWR3b29k
-Lm8KK29iai0kKENPTkZJR19NVERfTElURTUyMDApCSs9IGxpdGU1MjAwLm8KK29iai0kKENPTkZJ
-R19NVERfTElURTUyMDBCKQkrPSBsaXRlNTIwMC5vCitvYmotJChDT05GSUdfTVREX01FRElBNTIw
-MCkJKz0gbWVkaWE1MjAwLm8KK29iai0kKENPTkZJR19NVERfQ0hFU1ROVVQpCSs9IGNoZXN0bnV0
-Lm8KIG9iai0kKENPTkZJR19NVERfVUNMSU5VWCkJKz0gdWNsaW51eC5vCiBvYmotJChDT05GSUdf
-TVREX05FVHRlbCkJKz0gbmV0dGVsLm8KIG9iai0kKENPTkZJR19NVERfU0NCMl9GTEFTSCkJKz0g
-c2NiMl9mbGFzaC5vCk9ubHkgaW4gbGludXgtMi42LjIwL2RyaXZlcnMvbXRkL21hcHM6IE1ha2Vm
-aWxlLm9yaWcKT25seSBpbiBsaW51eC0yLjYuMjAvZHJpdmVycy9tdGQvbWFwczogbWVkaWE1MjAw
-LmMKT25seSBpbiBsaW51eC0yLjYuMjAvaW5jbHVkZTogYXNtCmRpZmYgLXUgLXIgcmM2LXJ0MC9s
-aW51eC0yLjYuMjAvaW5jbHVkZS9hc20tcG93ZXJwYy9pcnFmbGFncy5oIGxpbnV4LTIuNi4yMC9p
-bmNsdWRlL2FzbS1wb3dlcnBjL2lycWZsYWdzLmgKLS0tIHJjNi1ydDAvbGludXgtMi42LjIwL2lu
-Y2x1ZGUvYXNtLXBvd2VycGMvaXJxZmxhZ3MuaAkyMDA3LTAyLTA1IDAwOjE0OjU0LjAwMDAwMDAw
-MCArMDUzMAorKysgbGludXgtMi42LjIwL2luY2x1ZGUvYXNtLXBvd2VycGMvaXJxZmxhZ3MuaAky
-MDA3LTA0LTE4IDEyOjA1OjA4LjAwMDAwMDAwMCArMDUzMApAQCAtMTQsMTQgKzE0LDE4IEBACiAg
-KiBHZXQgZGVmaW5pdGlvbnMgZm9yIHJhd19sb2NhbF9zYXZlX2ZsYWdzKHgpLCBldGMuCiAgKi8K
-ICNpbmNsdWRlIDxhc20tcG93ZXJwYy9od19pcnEuaD4KLQogLyoKICAqIERvIHRoZSBDUFUncyBJ
-UlEtc3RhdGUgdHJhY2luZyBmcm9tIGFzc2VtYmx5IGNvZGUuIFdlIGNhbGwgYQogICogQyBmdW5j
-dGlvbiwgc28gc2F2ZSBhbGwgdGhlIEMtY2xvYmJlcmVkIHJlZ2lzdGVyczoKICAqLwogI2lmZGVm
-IENPTkZJR19UUkFDRV9JUlFGTEFHUwogCi0jZXJyb3IgTm8gc3VwcG9ydCBvbiBQb3dlclBDIHll
-dCBmb3IgQ09ORklHX1RSQUNFX0lSUUZMQUdTCisvLyNlcnJvciBObyBzdXBwb3J0IG9uIFBvd2Vy
-UEMgeWV0IGZvciBDT05GSUdfVFJBQ0VfSVJRRkxBR1MKKyNkZWZpbmUgVFJBQ0VfSVJRU19PTiAJ
-CQlcCisJYmwJdHJhY2VfaGFyZGlycXNfb247CVwKKworI2RlZmluZQlUUkFDRV9JUlFTX09GRgkJ
-CVwKKwlibAl0cmFjZV9oYXJkaXJxc19vZmY7CVwKIAogI2Vsc2UKICMgZGVmaW5lIFRSQUNFX0lS
-UVNfT04KT25seSBpbiBsaW51eC0yLjYuMjAvaW5jbHVkZTogY29uZmlnCk9ubHkgaW4gbGludXgt
-Mi42LjIwL2luY2x1ZGUvbGludXg6IGF1dG9jb25mLmgKT25seSBpbiBsaW51eC0yLjYuMjAvaW5j
-bHVkZS9saW51eDogdXRzcmVsZWFzZS5oCk9ubHkgaW4gbGludXgtMi42LjIwL2luY2x1ZGUvbGlu
-dXg6IHZlcnNpb24uaApkaWZmIC11IC1yIHJjNi1ydDAvbGludXgtMi42LjIwL01ha2VmaWxlIGxp
-bnV4LTIuNi4yMC9NYWtlZmlsZQotLS0gcmM2LXJ0MC9saW51eC0yLjYuMjAvTWFrZWZpbGUJMjAw
-Ny0wNC0xOCAxNjo0MTo1Ni4wMDAwMDAwMDAgKzA1MzAKKysrIGxpbnV4LTIuNi4yMC9NYWtlZmls
-ZQkyMDA3LTA0LTE4IDE2OjM5OjA3LjAwMDAwMDAwMCArMDUzMApAQCAtMSw4ICsxLDggQEAKIFZF
-UlNJT04gPSAyCiBQQVRDSExFVkVMID0gNgogU1VCTEVWRUwgPSAyMQotRVhUUkFWRVJTSU9OID0g
-LXJjNi1ydDAKLU5BTUUgPSBOb2N0dXJuYWwgTW9uc3RlciBQdXBweQorRVhUUkFWRVJTSU9OID0g
-LXJjNi1ydDAtcHIwCitOQU1FID0gaW5jcmMgYmxhY2sgZHVzdGJpbnMKIAogIyAqRE9DVU1FTlRB
-VElPTioKICMgVG8gc2VlIGEgbGlzdCBvZiB0eXBpY2FsIHRhcmdldHMgZXhlY3V0ZSAibWFrZSBo
-ZWxwIgpPbmx5IGluIGxpbnV4LTIuNi4yMC86IE1vZHVsZS5zeW12ZXJzCk9ubHkgaW4gbGludXgt
-Mi42LjIwL3NjcmlwdHMvYmFzaWM6IGRvY3Byb2MKT25seSBpbiBsaW51eC0yLjYuMjAvc2NyaXB0
-cy9iYXNpYzogZml4ZGVwCk9ubHkgaW4gbGludXgtMi42LjIwL3NjcmlwdHM6IGNvbm1ha2VoYXNo
-Ck9ubHkgaW4gbGludXgtMi42LjIwL3NjcmlwdHMvZ2Vua3N5bXM6IGdlbmtzeW1zCk9ubHkgaW4g
-bGludXgtMi42LjIwL3NjcmlwdHMvZ2Vua3N5bXM6IGtleXdvcmRzLmMKT25seSBpbiBsaW51eC0y
-LjYuMjAvc2NyaXB0cy9nZW5rc3ltczogbGV4LmMKT25seSBpbiBsaW51eC0yLjYuMjAvc2NyaXB0
-cy9nZW5rc3ltczogcGFyc2UuYwpPbmx5IGluIGxpbnV4LTIuNi4yMC9zY3JpcHRzL2dlbmtzeW1z
-OiBwYXJzZS5oCk9ubHkgaW4gbGludXgtMi42LjIwL3NjcmlwdHM6IGthbGxzeW1zCk9ubHkgaW4g
-bGludXgtMi42LjIwL3NjcmlwdHMva2NvbmZpZzogY29uZgpPbmx5IGluIGxpbnV4LTIuNi4yMC9z
-Y3JpcHRzL2tjb25maWc6IGxleC56Y29uZi5jCk9ubHkgaW4gbGludXgtMi42LjIwL3NjcmlwdHMv
-a2NvbmZpZzogbWNvbmYKT25seSBpbiBsaW51eC0yLjYuMjAvc2NyaXB0cy9rY29uZmlnOiB6Y29u
-Zi5oYXNoLmMKT25seSBpbiBsaW51eC0yLjYuMjAvc2NyaXB0cy9rY29uZmlnOiB6Y29uZi50YWIu
-YwpPbmx5IGluIGxpbnV4LTIuNi4yMC9zY3JpcHRzL21vZDogZWxmY29uZmlnLmgKT25seSBpbiBs
-aW51eC0yLjYuMjAvc2NyaXB0cy9tb2Q6IG1rX2VsZmNvbmZpZwpPbmx5IGluIGxpbnV4LTIuNi4y
-MC9zY3JpcHRzL21vZDogbW9kcG9zdApPbmx5IGluIGxpbnV4LTIuNi4yMC9zY3JpcHRzOiB0cmFj
-ZS1pdApPbmx5IGluIGxpbnV4LTIuNi4yMC86IC52ZXJzaW9uCg==
-------=_Part_25619_12995579.1177068227089--
+Robert
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
