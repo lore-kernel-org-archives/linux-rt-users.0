@@ -1,64 +1,54 @@
-From: Wolfgang Grandegger <wg@grandegger.com>
+From: Theodore Tso <tytso@mit.edu>
 Subject: Re: arm and ppc plattforms
-Date: Fri, 20 Apr 2007 18:02:30 +0200
-Message-ID: <4628E416.7050003@grandegger.com>
-References: <1177066595.5648.33.camel@localhost.localdomain> <20070420110819.GN9554@pengutronix.de> <f87351060704200423n45dc5b66h73a399a4df1bfd68@mail.gmail.com> <20070420113411.GO9554@pengutronix.de> <4628C75F.1080407@dutchspace.nl>
+Date: Fri, 20 Apr 2007 12:01:06 -0400
+Message-ID: <20070420160106.GA21151@thunk.org>
+References: <1177066595.5648.33.camel@localhost.localdomain> <20070420110819.GN9554@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Johan Borkhuis <j.borkhuis@dutchspace.nl>
+Content-Type: text/plain; charset=us-ascii
+Cc: Peter Feuerer <peter@piie.net>, linux-rt-users@vger.kernel.org
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-out.m-online.net ([212.18.0.9]:52938 "EHLO
-	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S2993261AbXDTP7m (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Apr 2007 11:59:42 -0400
-In-Reply-To: <4628C75F.1080407@dutchspace.nl>
+Received: from THUNK.ORG ([69.25.196.29]:46105 "EHLO thunker.thunk.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1767152AbXDTQBO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Apr 2007 12:01:14 -0400
+Content-Disposition: inline
+In-Reply-To: <20070420110819.GN9554@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Johan Borkhuis wrote:
-> Robert Schwebel wrote:
->> You'll probably have no luck with ARCH=ppc, our port runs with
->> ARCH=powerpc (and still has some crude hacks inside).   
-> I am in the same situation: I have a board (MVME3100, PPC8540) that uses 
-> the ARCH=ppc, but I have some strict realtime requirements. As far as I 
-> understand from the discussions on this list (and on other places) the 
-> ARCH=ppc will be dropped in favor of ARCH=powerpc, and the -rt patch 
-> will not support the ppc-architecture.
+On Fri, Apr 20, 2007 at 01:08:19PM +0200, Robert Schwebel wrote:
+> On Fri, Apr 20, 2007 at 12:56:35PM +0200, Peter Feuerer wrote:
+> > what ARM and PowerPC processors have been tested with the rt-preempt
+> > patch? Which evalkits or developement boards for those processors are
+> > you using?
+> 
+> We have it running on 
+> 
+> - MPC5200B (PowerPC 603e), phyCORE-MPC5200B-tiny module (Phytec AG)
+>   Works like a charm...
+> 
+> - PXA270 (XScale ARMv5), phyCORE-PXA270 (Phytec AG)
+>   Still under development, we've seen sporadic hangs with the last
+>   kernels we checked, have to re-test on -rt-current.
+> 
+> - netX (ARM926EZ-J), all Hilscher Boards (Hilscher)
+>   Works, although more testing needs to be done.
+> 
+> - IXP425 (XScale Big Endian), customer specific board
+>   Works perfectly.
 
-Not dropped but almost frozen. Already today there is little interest in 
-maintaining the ppc tree. And for real-time preemption and the 
-high-resolution timers the generic IRQ and timer layer seems now 
-mandatory, which is not available for ppc. What is mainly missing for 
-PowerPC is the support of clock events to get the high-resolution timers 
-working.
-Pengutronix has a temporary solution for that. See Robert's mail:
+Hi Robert,
 
-http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00343.html
 
-> But before I start working on the powerpc-version of the BSP I would 
-> like to know how stable the patch runs on powerpc (and specifically on 
-> ppc85xx), and how good the realtime performance of the patch is on 
-> powerpc. Are there any (recent) performance measurements available for 
-> the patch on a powerpc platform?
+You mind if I add these to along with your name/conctact to:
 
-I think MPC 85xx is well supported and in arch/powerpc/configs there are 
-already a few MPC85xx boards available.
+http://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch#Platforms_Tested_and_in_Use_with_CONFIG_PREEMPT_RT
 
-> Also a question that is not directly related to this list, but maybe 
-> someone can help me with it. Is there some information available on 
-> porting a BSP from ppc to powerpc? I was not able to find information on 
-> this except for the fact that the ppc architecture will be dropped, but 
-> no information on what impact this has on a BSP.
+... or maybe you could add these platforms yourself?  
 
-Unfortunately, porting takes some effort, especially because of the 
-mandatory Open Firmware flattened device tree (DTF). Please read 
-Documentation/powerpc/booting-without-of.txt for further information. 
-But there are already examples for the MPC85xx. There are more new 
-things like the generic IRQ and timer layer, but that should be already 
-available for your boards. For more details, please ask on the 
-linuxppc-embedded ML.
+I think it would be useful if we had a collated set of tested
+platforms on the real-time wiki.  I'm sure Peter isn't the only one
+who might be interested in this kind of information!
 
-Wolfgang.
+						- Ted
