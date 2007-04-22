@@ -1,55 +1,79 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: arm and ppc plattforms
-Date: Fri, 20 Apr 2007 18:40:52 +0200
-Message-ID: <20070420164052.GV9554@pengutronix.de>
-References: <1177066595.5648.33.camel@localhost.localdomain> <20070420110819.GN9554@pengutronix.de> <20070420160106.GA21151@thunk.org>
+From: James Cloos <cloos@jhcloos.com>
+Subject: using the rt patch with rc7 (or git HEAD)
+Date: Sun, 22 Apr 2007 13:50:27 -0400
+Message-ID: <m3irbo2t8l.fsf@lugabout.jhcloos.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Peter Feuerer <peter@piie.net>, linux-rt-users@vger.kernel.org,
-	Darren Hart <dvhltc@us.ibm.com>
-To: Theodore Tso <tytso@mit.edu>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:60842 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S2993269AbXDTQin (ORCPT
+Received: from eagle.jhcloos.com ([207.210.242.212]:2390 "EHLO
+	eagle.jhcloos.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754017AbXDVSA2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Apr 2007 12:38:43 -0400
-Content-Disposition: inline
-In-Reply-To: <20070420160106.GA21151@thunk.org>
+	Sun, 22 Apr 2007 14:00:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ted,
+This recipe results in only two conflicts.  The obvious and easily fixed
+EXTRAVERSION conflict as well as the conflict shown below from kernel/sched.c:
 
-[added Darren to Cc, as he is working on rt tests]
+#!/bin/sh
+git clone -n git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git 2.6.21-rc7-rt
+cd 2.6.21-rc7-rt
+git branch rc6 v2.6.21-rc6
+git branch rc7 v2.6.21-rc7
+git branch rc6-rt0 rc6
+git checkout rc6-rt0
+git pull git://people.freedesktop.org/~cloos/rt-2.6.git 2.6.21-rc6-rt0
+git branch rc7-rt
+git checkout rc7-rt
+git pull . rc7
 
-On Fri, Apr 20, 2007 at 12:01:06PM -0400, Theodore Tso wrote:
-> You mind if I add these to along with your name/conctact to:
-> 
-> http://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch#Platforms_Tested_and_in_Use_with_CONFIG_PREEMPT_RT
-> 
-> ... or maybe you could add these platforms yourself?  
-> 
-> I think it would be useful if we had a collated set of tested
-> platforms on the real-time wiki. I'm sure Peter isn't the only one who
-> might be interested in this kind of information!
- 
-Yep, good idea. Nevertheless, I'd like to see a "standardized"
-measurement process plus nice latency plots, like this one:
+The conlict is:
 
-http://www.pengutronix.de/oselas/realtime/results/20070211-1/phyCORE-MPC5200B-tiny-20070211-1.png
+,----( conflict from kernel/sched.c from pulling rc7 into rc6-rt0 )
+| <<<<<<< HEAD:kernel/sched.c
+| static inline struct task_struct *eldest_child(struct task_struct *p)
+| {
+|         if (list_empty(&p->children))
+|                 return NULL;
+|         return list_entry(p->children.next,struct task_struct,sibling);
+| }
+| 
+| static inline struct task_struct *older_sibling(struct task_struct *p)
+| {
+|         if (p->sibling.prev==&p->parent->children)
+|                 return NULL;
+|         return list_entry(p->sibling.prev,struct task_struct,sibling);
+| }
+| 
+| static inline struct task_struct *younger_sibling(struct task_struct *p)
+| {
+|         if (p->sibling.next==&p->parent->children)
+|                 return NULL;
+|         return list_entry(p->sibling.next,struct task_struct,sibling);
+| }
+| 
+| static const char stat_nam[] = "RMSDTtZX";
+| =======
+| static const char stat_nam[] = "RSDTtZX";
+| >>>>>>> 94a05509a9e11806acd797153d03019706e466f1:kernel/sched.c
+`----
 
-to have a good comparism base. These plots are basically be done without
-a sane realtime workload (well, some while true; do find /; done loops,
-plus ping -f, but that can probably be done better). 
+Resolving that conflict (I tried using the <<<<<<< version) and the
+EXTRAVERSION conflict allows a subsequent git pull . master to complete
+w/o conflicts.
 
-Any idea for a good realtime workload scenario which is valid to all
-supported platforms?
+Obviously keeping the three functions in won't harm the resulting
+kernel, but is leaving the M in stat_nam[] the correct resolution?
 
-Robert
+I'll be testing this kernel later this afternoon.  (As soon as I
+can do the reboot.)
+
+Incidently, has anyone tried combining the rt patches with any of
+the scheduler patches?
+
+-JimC
 -- 
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+James Cloos <cloos@jhcloos.com>         OpenPGP: 1024D/ED7DAEA6
