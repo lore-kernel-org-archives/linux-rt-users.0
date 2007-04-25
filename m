@@ -1,79 +1,44 @@
-From: James Cloos <cloos@jhcloos.com>
-Subject: using the rt patch with rc7 (or git HEAD)
-Date: Sun, 22 Apr 2007 13:50:27 -0400
-Message-ID: <m3irbo2t8l.fsf@lugabout.jhcloos.org>
+From: Free Ekanayaka <free@64studio.com>
+Subject: Re: patch-2.6.21-rc6-rt0 hangs on boot on amd64
+Date: Wed, 25 Apr 2007 14:52:19 +0200
+Message-ID: <87irbk7h18.fsf@64studio.com>
+References: <200704141531.l3EFVppX013708@cichlid.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+Cc: Andrew Burgess <aab@cichlid.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from eagle.jhcloos.com ([207.210.242.212]:2390 "EHLO
-	eagle.jhcloos.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754017AbXDVSA2 (ORCPT
+Received: from serverina.hacknight.org ([80.68.90.101]:1241 "EHLO
+	serverina.hacknight.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965589AbXDYMwe (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 22 Apr 2007 14:00:28 -0400
+	Wed, 25 Apr 2007 08:52:34 -0400
+In-Reply-To: <200704141531.l3EFVppX013708@cichlid.com> (Andrew Burgess's message of "Sat, 14 Apr 2007 08:31:51 -0700")
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This recipe results in only two conflicts.  The obvious and easily fixed
-EXTRAVERSION conflict as well as the conflict shown below from kernel/sched.c:
+|--==> Andrew Burgess writes:
 
-#!/bin/sh
-git clone -n git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git 2.6.21-rc7-rt
-cd 2.6.21-rc7-rt
-git branch rc6 v2.6.21-rc6
-git branch rc7 v2.6.21-rc7
-git branch rc6-rt0 rc6
-git checkout rc6-rt0
-git pull git://people.freedesktop.org/~cloos/rt-2.6.git 2.6.21-rc6-rt0
-git branch rc7-rt
-git checkout rc7-rt
-git pull . rc7
+  >>I've built the 2.6.21-rc6 kernel release and it seems to work fine on
+  >>an amd64 HP Pavillon zv5000 laptop, using this config:
+  >>http://people.64studio.com/~free/config-2.6.21-rc6
+  >>However the system hangs on boot if I try to apply the 2.6.21-rc6-rt0
+  >>realtime patch, with this config:
+  >>http://people.64studio.com/~free/config-2.6.21-rc6-rt0
+  AB> ..
+  >>The systems hangs when the on of the script contained in the standard
+  >>Debian ramfs image tries to launch udevsettle. 
 
-The conlict is:
+  AB> My AMD64 X2 non-laptop hangs as well. The screen blanks so I'm guessing it was
+  AB> in the middle of switching to X11. Vanilla rc6 works fine. Compiled as SMP x86_64.
 
-,----( conflict from kernel/sched.c from pulling rc7 into rc6-rt0 )
-| <<<<<<< HEAD:kernel/sched.c
-| static inline struct task_struct *eldest_child(struct task_struct *p)
-| {
-|         if (list_empty(&p->children))
-|                 return NULL;
-|         return list_entry(p->children.next,struct task_struct,sibling);
-| }
-| 
-| static inline struct task_struct *older_sibling(struct task_struct *p)
-| {
-|         if (p->sibling.prev==&p->parent->children)
-|                 return NULL;
-|         return list_entry(p->sibling.prev,struct task_struct,sibling);
-| }
-| 
-| static inline struct task_struct *younger_sibling(struct task_struct *p)
-| {
-|         if (p->sibling.next==&p->parent->children)
-|                 return NULL;
-|         return list_entry(p->sibling.next,struct task_struct,sibling);
-| }
-| 
-| static const char stat_nam[] = "RMSDTtZX";
-| =======
-| static const char stat_nam[] = "RSDTtZX";
-| >>>>>>> 94a05509a9e11806acd797153d03019706e466f1:kernel/sched.c
-`----
+Hi all,
 
-Resolving that conflict (I tried using the <<<<<<< version) and the
-EXTRAVERSION conflict allows a subsequent git pull . master to complete
-w/o conflicts.
+I've just tested 2.6.21-rc7 plus patch-2.6.21-rc6-rt0, it still hangs
+when the boot scripts try to run udevtrigger. Please let me know if
+there are traces/logs I could provide to help the developers debug
+this problem.
 
-Obviously keeping the three functions in won't harm the resulting
-kernel, but is leaving the M in stat_nam[] the correct resolution?
+Thanks,
 
-I'll be testing this kernel later this afternoon.  (As soon as I
-can do the reboot.)
-
-Incidently, has anyone tried combining the rt patches with any of
-the scheduler patches?
-
--JimC
--- 
-James Cloos <cloos@jhcloos.com>         OpenPGP: 1024D/ED7DAEA6
+Free
