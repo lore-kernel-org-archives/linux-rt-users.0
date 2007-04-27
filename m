@@ -1,57 +1,44 @@
-From: Free Ekanayaka <free@64studio.com>
-Subject: Re: v2.6.21-rt1
-Date: Thu, 26 Apr 2007 22:53:54 +0200
-Message-ID: <87mz0u502l.fsf@64studio.com>
-References: <20070205065636.GA1652@elte.hu> <20070426135730.GA2116@elte.hu>
+From: Johan Borkhuis <j.borkhuis@dutchspace.nl>
+Subject: Performance of RT-patch on PowerPC
+Date: Fri, 27 Apr 2007 14:56:16 +0200
+Message-ID: <4631F2F0.4010907@dutchspace.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from serverina.hacknight.org ([80.68.90.101]:4122 "EHLO
-	serverina.hacknight.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755057AbXDZUyB (ORCPT
+Received: from kirk.dutchspace.nl ([82.161.242.14]:34784 "EHLO
+	kirk.dutchspace.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755779AbXD0M4T (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Apr 2007 16:54:01 -0400
-In-Reply-To: <20070426135730.GA2116@elte.hu> (Ingo Molnar's message of "Thu, 26 Apr 2007 15:57:30 +0200")
+	Fri, 27 Apr 2007 08:56:19 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+Hello all,
 
-|--==> Ingo Molnar writes:
+As I understood from several emails the arch/ppc branch is not supported 
+by the RT-patch, and also will not because of missing functionality. My 
+BSP (MVME3100, PPC 8540) is based on the ppc architecture however, but I 
+do need hard realtime performance.
 
-  IM> i have released the v2.6.20-rt1 kernel, which can be downloaded from the 
-  IM> usual place:
+As far as I know there are a couple of choices I have:
+- Port the BSP to the powerpc architecture branch
+- Use Xenomai.
 
-  IM>     http://redhat.com/~mingo/realtime-preempt/
- 
-  IM> more info about the -rt patchset can be found in the RT wiki:
- 
-  IM>     http://rt.wiki.kernel.org
+I know that Xenomai runs on the ppc-branch, so this would be my first 
+choice at this moment. But I like to keep my options open, so I am also 
+looking at porting the BSP.
 
-  IM> This is a fixes-only release.
+Before I start on the port of the BSP I would like to know what the 
+status of the RT-patch on PowerPC is. How good and stable does the patch 
+run on PowerPC, and how good is the real time performance on the PowerPC?
 
-  IM> to build a 2.6.21-rt1 tree, the following patches should be applied:
+Also I like to know how the RT-patch and Xenomai compare. I did see some 
+measurements and discussions from a couple of years back between Ingo 
+and Kristian Benoit. The RT patch and Xenomai had comparable results, 
+but how is the current situation? Are the current results substantial 
+better for one of these or for both, or are they still on the same level?
 
-  IM>   http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.tar.bz2
-  IM>   http://redhat.com/~mingo/realtime-preempt/patch-2.6.21-rt1
-
-I've tested the patch on a Pavillon zv5000 laptop (amd64) and
-apparently the kernel still hangs when one of the script in the
-initramfs [0] tries to run udevsettle.
-
-Booting with noapic doesn't seem to help, and differently from the
-2.6.21-rc6-rt0 release [1] this time the kernel won't boot even with
-qemu.
-
-Here's the config I used:
-
-http://people.64studio.com/~free/config-2.6.21-rt1
-
-Ciao,
-
-Free
-
-[0] http://people.64studio.com/~free/udev
-[1] http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00332.html
+Kind regards,
+    Johan Borkhuis
