@@ -1,518 +1,171 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Measure only latency of the actual signal.
-Date: Mon, 30 Apr 2007 10:45:40 -0400
-Message-ID: <1177944340.19619.11.camel@localhost.localdomain>
+From: Samuel Ortiz <samuel@sortiz.org>
+Subject: Re: [irda-users] [BUG] 2.6.20.1-rt8 irnet + pppd recursive spinlock...
+Date: Tue, 1 May 2007 03:53:23 +0300
+Message-ID: <20070501005323.GB3407@sortiz.org>
+References: <Pine.LNX.4.63.0704050846480.534@pcgl.dsa-ac.de> <Pine.LNX.4.63.0704051250170.534@pcgl.dsa-ac.de> <20070407005926.GE4177@sortiz.org> <20070410181037.GA3780@sortiz.org> <Pine.LNX.4.63.0704301451510.19781@pcgl.dsa-ac.de>
+Reply-To: Samuel Ortiz <samuel@sortiz.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-zL1x5X6eC/JjsWpwNQjF"
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: irda-users@lists.sourceforge.net,
+	Paul Mackerras <paulus@samba.org>,
+	linux-rt-users@vger.kernel.org, netdev@vger.kernel.org
+To: Guennadi Liakhovetski <gl@dsa-ac.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:57842 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1423326AbXD3Ops (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Apr 2007 10:45:48 -0400
+Received: from smtp23.orange.fr ([80.12.242.50]:28005 "EHLO smtp23.orange.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1423409AbXEAAwi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 30 Apr 2007 20:52:38 -0400
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.63.0704301451510.19781@pcgl.dsa-ac.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, Apr 30, 2007 at 03:24:05PM +0200, Guennadi Liakhovetski wrote:
+> On Tue, 10 Apr 2007, Samuel Ortiz wrote:
+> 
+> > Hi Guennadi,
+> > 
+> > The patch below schedules irnet_flow_indication() asynchronously. Could
+> > you please give it a try (it builds, but I couldn't test it...) ? :
+> 
+> Ok, your patch (still below) works too (now that I fixed that state 
+> machine race, btw, we still have to decide on the final form how it goes 
+> in the mainline) __after__ you also add the line
+> 
+> +	INIT_WORK(&new->irnet_flow_work, irttp_flow_restart);
+> 
+> in irttp_dup() (remember spinlock_init()?:-)), otherwise it oopses.
+good catch, again...Yes, I do remember the irttp_dup bug ;-)
 
---=-zL1x5X6eC/JjsWpwNQjF
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-Thomas,
-
-Here's a patch and code to your signaltest.c.
-
-I see a lot of code being run between the recording of before and after.
-This patch makes "now" global to all threads, which is recorded just
-before the "kill". The after is still recorded after the second thread
-receives the signal.  Then the "before" is assigned to the shared "now"
-to use to calculate the latency.  This should work nicely since the
-signals are sent and received serially among the threads.
-
--- Steve
-
-
---=-zL1x5X6eC/JjsWpwNQjF
-Content-Disposition: attachment; filename=signaltest.patch
-Content-Type: text/x-patch; name=signaltest.patch; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
---- /root/signaltest.c	2007-04-30 10:22:52.000000000 -0400
-+++ ../signaltest.c	2007-04-30 10:20:20.000000000 -0400
-@@ -89,6 +89,8 @@
- 	return diff;
- }
  
-+struct timespec now;
-+
- /*
-  * signal thread
-  *
-@@ -136,10 +138,7 @@
- 			prctl(0, 1);
- 	}
- 
--	clock_gettime(CLOCK_MONOTONIC, &before);
--
- 	while (!shutdown) {
--		struct timespec now;
- 		long diff;
- 		int sigs;
- 
-@@ -147,6 +146,7 @@
- 			goto out;
- 
- 		clock_gettime(CLOCK_MONOTONIC, &after);
-+		before = now;
- 
- 		/*
- 		 * If it is the first thread, sleep after every 16
-@@ -162,12 +162,10 @@
- 		/* Skip the first cycle */
- 		if (first) {
- 			first = 0;
--			before = now;
- 			continue;
- 		}
- 
- 		diff = calcdiff(after, before);
--		before = now;
- 		if (diff < stat->min)
- 			stat->min = diff;
- 		if (diff > stat->max)
-
---=-zL1x5X6eC/JjsWpwNQjF
-Content-Disposition: attachment; filename=signaltest-new.c
-Content-Type: text/x-csrc; name=signaltest-new.c; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-/*
- * RT timer test software
- *
- * (C) 2005,2006 Thomas Gleixner <tglx@linutronix.de>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License Veriosn
- * 2 as published by the Free Software Foundation;
- *
- */
-
-#define VERSION_STRING "V 0.1"
-
-#include <fcntl.h>
-#include <getopt.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-
-#include <linux/unistd.h>
-
-#include <sys/prctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/time.h>
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
-/* Ugly, but .... */
-#define gettid() syscall(__NR_gettid)
-#define sigev_notify_thread_id _sigev_un._tid
-
-extern int clock_nanosleep(clockid_t __clock_id, int __flags,
-			   __const struct timespec *__req,
-			   struct timespec *__rem);
-
-#define USEC_PER_SEC		1000000
-#define NSEC_PER_SEC		1000000000
-
-/* Must be power of 2 ! */
-#define VALBUF_SIZE		16384
-
-/* Struct to transfer parameters to the thread */
-struct thread_param {
-	int id;
-	int prio;
-	int signal;
-	unsigned long max_cycles;
-	struct thread_stat *stats;
-	int bufmsk;
-};
-
-/* Struct for statistics */
-struct thread_stat {
-	unsigned long cycles;
-	unsigned long cyclesread;
-	long min;
-	long max;
-	long act;
-	double avg;
-	long *values;
-	pthread_t thread;
-	pthread_t tothread;
-	int threadstarted;
-	int tid;
-};
-
-static int shutdown;
-static int tracelimit = 0;
-static int oldtrace = 0;
-
-static inline void tsnorm(struct timespec *ts)
-{
-	while (ts->tv_nsec >= NSEC_PER_SEC) {
-		ts->tv_nsec -= NSEC_PER_SEC;
-		ts->tv_sec++;
-	}
-}
-
-static inline long calcdiff(struct timespec t1, struct timespec t2)
-{
-	long diff;
-	diff = USEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
-	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
-	return diff;
-}
-
-struct timespec now;
-
-/*
- * signal thread
- *
- */
-void *signalthread(void *param)
-{
-	struct thread_param *par = param;
-	struct sched_param schedp;
-	sigset_t sigset;
-	struct timespec before, after;
-	struct thread_stat *stat = par->stats;
-	int policy = par->prio ? SCHED_FIFO : SCHED_OTHER;
-	int stopped = 0;
-	int first = 1;
-
-	if (tracelimit) {
-		system("echo 1 > /proc/sys/kernel/trace_all_cpus");
-		system("echo 1 > /proc/sys/kernel/trace_enabled");
-		system("echo 1 > /proc/sys/kernel/trace_freerunning");
-		system("echo 0 > /proc/sys/kernel/trace_print_at_crash");
-		system("echo 1 > /proc/sys/kernel/trace_user_triggered");
-		system("echo -1 > /proc/sys/kernel/trace_user_trigger_irq");
-		system("echo 0 > /proc/sys/kernel/trace_verbose");
-		system("echo 0 > /proc/sys/kernel/preempt_thresh");
-		system("echo 0 > /proc/sys/kernel/wakeup_timing");
-		system("echo 0 > /proc/sys/kernel/preempt_max_latency");
-	}
-
-	stat->tid = gettid();
-
-	sigemptyset(&sigset);
-	sigaddset(&sigset, par->signal);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
-
-	memset(&schedp, 0, sizeof(schedp));
-	schedp.sched_priority = par->prio;
-	sched_setscheduler(0, policy, &schedp);
-
-	stat->threadstarted++;
-
-	if (tracelimit) {
-		if (oldtrace)
-			gettimeofday(0,(struct timezone *)1);
-		else
-			prctl(0, 1);
-	}
-
-	while (!shutdown) {
-		long diff;
-		int sigs;
-
-		if (sigwait(&sigset, &sigs) < 0)
-			goto out;
-
-		clock_gettime(CLOCK_MONOTONIC, &after);
-		before = now;
-
-		/*
-		 * If it is the first thread, sleep after every 16
-		 * round trips.
-		 */
-		if (!par->id && !(stat->cycles & 0x0F))
-			usleep(10000);
-
-		/* Get current time */
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		pthread_kill(stat->tothread, SIGUSR1);
-
-		/* Skip the first cycle */
-		if (first) {
-			first = 0;
-			continue;
-		}
-
-		diff = calcdiff(after, before);
-		if (diff < stat->min)
-			stat->min = diff;
-		if (diff > stat->max)
-			stat->max = diff;
-		stat->avg += (double) diff;
-
-		if (!stopped && tracelimit && (diff > tracelimit)) {
-			stopped++;
-			if (oldtrace)
-				gettimeofday(0,0);
-			else
-				prctl(0, 0);
-			shutdown++;
-		}
-		stat->act = diff;
-		stat->cycles++;
-
-		if (par->bufmsk)
-			stat->values[stat->cycles & par->bufmsk] = diff;
-
-		if (par->max_cycles && par->max_cycles == stat->cycles)
-			break;
-	}
-
-out:
-	/* switch to normal */
-	schedp.sched_priority = 0;
-	sched_setscheduler(0, SCHED_OTHER, &schedp);
-
-	stat->threadstarted = -1;
-
-	return NULL;
-}
-
-
-/* Print usage information */
-static void display_help(void)
-{
-	printf("signaltest %s\n", VERSION_STRING);
-	printf("Usage:\n"
-	       "signaltest <options>\n\n"
-	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
-	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
-	       "-q       --quiet           print only a summary on exit\n"
-	       "-t NUM   --threads=NUM     number of threads: default=2\n"
-	       "-v       --verbose         output values on stdout for statistics\n"
-	       "                           format: n:c:v n=tasknum c=count v=value in us\n");
-	exit(0);
-}
-
-static int priority;
-static int num_threads = 2;
-static int max_cycles;
-static int verbose;
-static int quiet;
-
-/* Process commandline options */
-static void process_options (int argc, char *argv[])
-{
-	int error = 0;
-	for (;;) {
-		int option_index = 0;
-		/** Options for getopt */
-		static struct option long_options[] = {
-			{"breaktrace", required_argument, NULL, 'b'},
-			{"loops", required_argument, NULL, 'l'},
-			{"priority", required_argument, NULL, 'p'},
-			{"quiet", no_argument, NULL, 'q'},
-			{"threads", required_argument, NULL, 't'},
-			{"verbose", no_argument, NULL, 'v'},
-			{"help", no_argument, NULL, '?'},
-			{NULL, 0, NULL, 0}
-		};
-		int c = getopt_long (argc, argv, "b:c:d:i:l:np:qrst:v",
-			long_options, &option_index);
-		if (c == -1)
-			break;
-		switch (c) {
-		case 'b': tracelimit = atoi(optarg); break;
-		case 'l': max_cycles = atoi(optarg); break;
-		case 'p': priority = atoi(optarg); break;
-		case 'q': quiet = 1; break;
-		case 't': num_threads = atoi(optarg); break;
-		case 'v': verbose = 1; break;
-		case '?': error = 1; break;
-		}
-	}
-
-	if (priority < 0 || priority > 99)
-		error = 1;
-
-	if (num_threads < 2)
-		error = 1;
-
-	if (error)
-		display_help ();
-}
-
-static void check_kernel(void)
-{
-	size_t len;
-	char ver[256];
-	int fd, maj, min, sub;
-
-	fd = open("/proc/version", O_RDONLY, 0666);
-	len = read(fd, ver, 255);
-	close(fd);
-	ver[len-1] = 0x0;
-	sscanf(ver, "Linux version %d.%d.%d", &maj, &min, &sub);
-	if (maj == 2 && min == 6 && sub < 18)
-		oldtrace = 1;
-}
-
-static void sighand(int sig)
-{
-	shutdown = 1;
-}
-
-static void print_stat(struct thread_param *par, int index, int verbose)
-{
-	struct thread_stat *stat = par->stats;
-
-	if (!verbose) {
-		if (quiet != 1) {
-			printf("T:%2d (%5d) P:%2d C:%7lu "
-			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
-			       index, stat->tid, par->prio,
-			       stat->cycles, stat->min, stat->act,
-			       stat->cycles ?
-			       (long)(stat->avg/stat->cycles) : 0, stat->max);
-		}
-	} else {
-		while (stat->cycles != stat->cyclesread) {
-			long diff = stat->values[stat->cyclesread & par->bufmsk];
-			printf("%8d:%8lu:%8ld\n", index, stat->cyclesread, diff);
-			stat->cyclesread++;
-		}
-	}
-}
-
-int main(int argc, char **argv)
-{
-	sigset_t sigset;
-	int signum = SIGUSR1;
-	struct thread_param *par;
-	struct thread_stat *stat;
-	int i, ret = -1;
-
-	if (geteuid()) {
-		printf("need to run as root!\n");
-		exit(-1);
-	}
-
-	process_options(argc, argv);
-
-	check_kernel();
-
-	sigemptyset(&sigset);
-	sigaddset(&sigset, signum);
-	sigprocmask (SIG_BLOCK, &sigset, NULL);
-
-	signal(SIGINT, sighand);
-	signal(SIGTERM, sighand);
-
-	par = calloc(num_threads, sizeof(struct thread_param));
-	if (!par)
-		goto out;
-	stat = calloc(num_threads, sizeof(struct thread_stat));
-	if (!stat)
-		goto outpar;
-
-	for (i = 0; i < num_threads; i++) {
-		if (verbose) {
-			stat[i].values = calloc(VALBUF_SIZE, sizeof(long));
-			if (!stat[i].values)
-				goto outall;
-			par[i].bufmsk = VALBUF_SIZE - 1;
-		}
-
-		par[i].id = i;
-		par[i].prio = priority;
-#if 0
-		if (priority)
-			priority--;
-#endif
-		par[i].signal = signum;
-		par[i].max_cycles = max_cycles;
-		par[i].stats = &stat[i];
-		stat[i].min = 1000000;
-		stat[i].max = -1000000;
-		stat[i].avg = 0.0;
-		pthread_create(&stat[i].thread, NULL, signalthread, &par[i]);
-		stat[i].threadstarted = 1;
-	}
-
-	while (!shutdown) {
-		int allstarted = 1;
-
-		for (i = 0; i < num_threads; i++) {
-			if (stat[i].threadstarted != 2)
-				allstarted = 0;
-		}
-		if (!allstarted)
-			continue;
-
-		for (i = 0; i < num_threads - 1; i++)
-			stat[i].tothread = stat[i+1].thread;
-		stat[i].tothread = stat[0].thread;
-		break;
-	}
-	pthread_kill(stat[0].thread, signum);
-
-	while (!shutdown) {
-		char lavg[256];
-		int fd, len, allstopped = 0;
-
-		if (!verbose && !quiet) {
-			fd = open("/proc/loadavg", O_RDONLY, 0666);
-			len = read(fd, &lavg, 255);
-			close(fd);
-			lavg[len-1] = 0x0;
-			printf("%s          \n\n", lavg);
-		}
-
-		print_stat(&par[0], 0, verbose);
-		if(max_cycles && stat[0].cycles >= max_cycles)
-			allstopped++;
-
-		usleep(10000);
-		if (shutdown || allstopped)
-			break;
-		if (!verbose && !quiet)
-			printf("\033[%dA", 3);
-	}
-	ret = 0;
- outall:
-	shutdown = 1;
-	usleep(50000);
-	if (quiet)
-		quiet = 2;
-	for (i = 0; i < num_threads; i++) {
-		if (stat[i].threadstarted > 0)
-			pthread_kill(stat[i].thread, SIGTERM);
-		if (stat[i].threadstarted) {
-			pthread_join(stat[i].thread, NULL);
-			if (quiet)
-				print_stat(&par[i], i, 0);
-		}
-		if (stat[i].values)
-			free(stat[i].values);
-	}
-	free(stat);
- outpar:
-	free(par);
- out:
-	exit(ret);
-}
-
---=-zL1x5X6eC/JjsWpwNQjF--
+> Generally, I like your patch better than mine to ppp_generic.c, where I 
+> explicitly check if a recursion is occurring. Still, I am a bit concerned 
+> about introducing yet another execution context into irda... We have seen 
+> a couple of locking issues there already in the last 2-3 months especially 
+> under rt-preempt... Would you be able to run some tests too? 
+I think I can run some tests here as well, but probably not as many as you:
+I'm not doing IrDA stuff full time while it seems you currently are.
+But I will definitely spend some time this week running my IrDA stack with this
+patch applied. I didn't bother to do that earlier as you first reported some
+oops with this patch applied.
+
+> I will be 
+> testing it too, but don't know how much longer and how intensively. Do you 
+> think we might get some new problems with this new context?
+It seems quite safe to me. But more importantly, I thing we do want to call
+the flow indication routine asynchronously in that specific case. 
+There is one thing that this patch is missing though: we should probably
+clean the worqueue right before we destroy the TTP instance. The work routine
+checks for NULL pointer, but still...
+
+Cheers,
+Samuel.
+
+
+> Thanks
+> Guennadi
+> 
+> > 
+> > diff --git a/include/net/irda/irttp.h b/include/net/irda/irttp.h
+> > index a899e58..941f0f1 100644
+> > --- a/include/net/irda/irttp.h
+> > +++ b/include/net/irda/irttp.h
+> > @@ -128,6 +128,7 @@ struct tsap_cb {
+> >  
+> >  	struct net_device_stats stats;
+> >  	struct timer_list todo_timer; 
+> > +	struct work_struct irnet_flow_work;   /* irttp asynchronous flow restart */
+> >  
+> >  	__u32 max_seg_size;     /* Max data that fit into an IrLAP frame */
+> >  	__u8  max_header_size;
+> > diff --git a/net/irda/irnet/irnet.h b/net/irda/irnet/irnet.h
+> > diff --git a/net/irda/irttp.c b/net/irda/irttp.c
+> > index 7069e4a..a0d0f26 100644
+> > --- a/net/irda/irttp.c
+> > +++ b/net/irda/irttp.c
+> > @@ -367,6 +367,29 @@ static int irttp_param_max_sdu_size(void *instance, irda_param_t *param,
+> >  /*************************** CLIENT CALLS ***************************/
+ > >  /************************** LMP CALLBACKS **************************/
+> >  /* Everything is happily mixed up. Waiting for next clean up - Jean II */
+> > +static void irttp_flow_restart(struct work_struct *work)
+> > +{
+> > +	struct tsap_cb * self =
+> > +		container_of(work, struct tsap_cb, irnet_flow_work);
+> > +
+> > +	if (self == NULL)
+> > +		return;
+> > +
+> > +	/* Check if we can accept more frames from client. */
+> > +	if ((self->tx_sdu_busy) &&
+> > +	    (skb_queue_len(&self->tx_queue) < TTP_TX_LOW_THRESHOLD) &&
+> > +	    (!self->close_pend)) {
+> > +		if (self->notify.flow_indication)
+> > +			self->notify.flow_indication(self->notify.instance,
+> > +						     self, FLOW_START);
+> > +
+> > +		/* self->tx_sdu_busy is the state of the client.
+> > +		 * We don't really have a race here, but it's always safer
+> > +		 * to update our state after the client - Jean II */
+> > +		self->tx_sdu_busy = FALSE;
+> > +	}
+> > +}
+> > +
+> >  
+> >  /*
+> >   * Function irttp_open_tsap (stsap, notify)
+> > @@ -402,6 +425,8 @@ struct tsap_cb *irttp_open_tsap(__u8 stsap_sel, int credit, notify_t *notify)
+> >  	self->todo_timer.data     = (unsigned long) self;
+> >  	self->todo_timer.function = &irttp_todo_expired;
+> >  
+> > +	INIT_WORK(&self->irnet_flow_work, irttp_flow_restart);
+> > +
+> >  	/* Initialize callbacks for IrLMP to use */
+> >  	irda_notify_init(&ttp_notify);
+> >  	ttp_notify.connect_confirm = irttp_connect_confirm;
+> > @@ -761,25 +786,10 @@ static void irttp_run_tx_queue(struct tsap_cb *self)
+> >  		self->stats.tx_packets++;
+> >  	}
+> >  
+> > -	/* Check if we can accept more frames from client.
+> > -	 * We don't want to wait until the todo timer to do that, and we
+> > -	 * can't use tasklets (grr...), so we are obliged to give control
+> > -	 * to client. That's ok, this test will be true not too often
+> > -	 * (max once per LAP window) and we are called from places
+> > -	 * where we can spend a bit of time doing stuff. - Jean II */
+> >  	if ((self->tx_sdu_busy) &&
+> >  	    (skb_queue_len(&self->tx_queue) < TTP_TX_LOW_THRESHOLD) &&
+> >  	    (!self->close_pend))
+> > -	{
+> > -		if (self->notify.flow_indication)
+> > -			self->notify.flow_indication(self->notify.instance,
+> > -						     self, FLOW_START);
+> > -
+> > -		/* self->tx_sdu_busy is the state of the client.
+> > -		 * We don't really have a race here, but it's always safer
+> > -		 * to update our state after the client - Jean II */
+> > -		self->tx_sdu_busy = FALSE;
+> > -	}
+> > +		schedule_work(&self->irnet_flow_work);
+> >  
+> >  	/* Reset lock */
+> >  	self->tx_queue_lock = 0;
+> > 
+> > 
+> > 
+> 
+> ---------------------------------
+> Guennadi Liakhovetski, Ph.D.
+> DSA Daten- und Systemtechnik GmbH
+> Pascalstr. 28
+> D-52076 Aachen
+> Germany
+> 
+> -------------------------------------------------------------------------
+> This SF.net email is sponsored by DB2 Express
+> Download DB2 Express C - the FREE version of DB2 express and take
+> control of your XML. No limits. Just data. Click to get it now.
+> http://sourceforge.net/powerbar/db2/
+> _______________________________________________
+> irda-users mailing list
+> irda-users@lists.sourceforge.net
+> http://lists.sourceforge.net/lists/listinfo/irda-users
