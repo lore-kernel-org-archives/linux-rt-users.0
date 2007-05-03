@@ -1,40 +1,98 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: pagefault_enable & pagefault_disable
-Date: Wed, 02 May 2007 11:03:03 -0400
-Message-ID: <1178118183.19619.20.camel@localhost.localdomain>
-References: <1178099954.5300.13.camel@godzilla.tecnorama.it>
+From: Tim Bird <tim.bird@am.sony.com>
+Subject: Re: v2.6.21-rt1 - bug in asm-mips/atomic.h
+Date: Thu, 03 May 2007 12:16:34 -0700
+Message-ID: <463A3512.4020508@am.sony.com>
+References: <20070205065636.GA1652@elte.hu> <20070426135730.GA2116@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>
-To: Alessio Igor Bogani <abogani@texware.it>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:50452 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S2993193AbXEBPDV (ORCPT
+Received: from outbound-blu.frontbridge.com ([65.55.251.16]:33967 "EHLO
+	outbound5-blu-R.bigfish.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1767719AbXECTNr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 May 2007 11:03:21 -0400
-In-Reply-To: <1178099954.5300.13.camel@godzilla.tecnorama.it>
+	Thu, 3 May 2007 15:13:47 -0400
+In-Reply-To: <20070426135730.GA2116@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Ingo Molnar wrote:
+> i have released the v2.6.20-rt1 kernel...
 Ingo,
 
-Looks like setting pagefault_enable and pagefault_disable as export GPL
-only has broken those evil video modules.  So I guess until we can make
-the daemons of NVidia and ATI into angels, we probably want to keep
-those exports non-GPL. :-(
+There appears to be a bug in the patch for include/asm-mips/atomic.h
+In the hunk for line 554, it has 2 #endifs.
+I think it should only have one.
 
--- Steve
+A portion of the patch reads:
+
+Index: new-linux/include/asm-mips/atomic.h
+===================================================================
+--- new-linux.orig/include/asm-mips/atomic.h	2007-04-25 20:08:32.000000000 -0700
++++ new-linux/include/asm-mips/atomic.h	2007-04-26 16:15:14.000000000 -0700
+@@ -545,7 +554,9 @@
+ 		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
+ 		: "Ir" (i), "m" (v->counter)
+ 		: "memory");
+-	} else {
++	}
++#if !defined(CONFIG_NO_SPINLOCK) && !defined(CONFIG_PREEMPT_RT)
++	else {
+ 		unsigned long flags;
+
+ 		raw_local_irq_save(flags);
+@@ -554,6 +565,8 @@
+ 		v->counter = result;
+ 		raw_local_irq_restore(flags);
+ 	}
++#endif
++#endif
+
+ 	smp_mb();
 
 
-On Wed, 2007-05-02 at 11:59 +0200, Alessio Igor Bogani wrote:
-> Hi,
-> 
-> What is the reason for declare pagefault_enable and pagefault_disable
-> as only GPL symbols in mm/memory.c (obviously with Ingo's
-> realtime patch applied)? 
-> 
-> I violate license if i change those two EXPORT_SYMBOL_GPL in EXPORT_SYMBOL?
-> 
-> Thanks in advance!
+When I applied the patch to 2.6.21 and tried to compile for MIPS I got:
+  CHK     include/linux/utsrelease.h
+  CC      arch/mips/kernel/asm-offsets.s
+In file included from /home/tbird/work/alp-3.0/alp-linux/include/linux/rt_lock.h:14,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/spinlock.h:116,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/capability.h:45,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/sched.h:47,
+                 from /home/tbird/work/alp-3.0/alp-linux/arch/mips/kernel/asm-offsets.c:14:
+include2/asm/atomic.h:571: error: expected '(' before 'volatile'
+include2/asm/atomic.h:573: error: expected identifier or '(' before 'return'
+include2/asm/atomic.h:574: error: expected identifier or '(' before '}' token
+include2/asm/atomic.h:576: error: expected declaration specifiers or '...' before 'atomic64_t'
+include2/asm/atomic.h: In function 'atomic64_sub_return':
+include2/asm/atomic.h:593: error: 'v' undeclared (first use in this function)
+include2/asm/atomic.h:593: error: (Each undeclared identifier is reported only once
+include2/asm/atomic.h:593: error: for each function it appears in.)
+include2/asm/atomic.h:585: error: invalid lvalue in asm output 2
+include2/asm/atomic.h:585: error: memory input 4 is not directly addressable
+include2/asm/atomic.h:599: error: invalid lvalue in asm output 2
+include2/asm/atomic.h:599: error: memory input 4 is not directly addressable
+include2/asm/atomic.h: At top level:
+include2/asm/atomic.h:638: error: expected declaration specifiers or '...' before 'atomic64_t'
+include2/asm/atomic.h: In function 'atomic64_sub_if_positive':
+include2/asm/atomic.h:659: error: 'v' undeclared (first use in this function)
+include2/asm/atomic.h:647: error: invalid lvalue in asm output 2
+include2/asm/atomic.h:647: error: memory input 4 is not directly addressable
+include2/asm/atomic.h:665: error: invalid lvalue in asm output 2
+include2/asm/atomic.h:665: error: memory input 4 is not directly addressable
+In file included from /home/tbird/work/alp-3.0/alp-linux/include/linux/rt_lock.h:14,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/spinlock.h:116,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/capability.h:45,
+                 from /home/tbird/work/alp-3.0/alp-linux/include/linux/sched.h:47,
+                 from /home/tbird/work/alp-3.0/alp-linux/arch/mips/kernel/asm-offsets.c:14:
+include2/asm/atomic.h:779:2: error: #endif without #if
+
+After removing the second #endif in the second hunk above, things compiled better.
+ -- Tim
+
+=============================
+Tim Bird
+Architecture Group Chair, CE Linux Forum
+Senior Staff Engineer, Sony Electronics
+=============================
