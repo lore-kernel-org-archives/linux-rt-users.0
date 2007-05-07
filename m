@@ -1,70 +1,36 @@
-From: Tim Bird <tim.bird@am.sony.com>
-Subject: Re: v2.6.21-rt1 - mips compile bugs
-Date: Thu, 03 May 2007 12:35:44 -0700
-Message-ID: <463A3990.9010006@am.sony.com>
-References: <20070205065636.GA1652@elte.hu> <20070426135730.GA2116@elte.hu> <463A3512.4020508@am.sony.com>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: Geode GX1 + RT-Preempt + ACPI
+Date: Mon, 07 May 2007 17:20:32 +0200
+Message-ID: <1178551232.5312.3.camel@godzilla.tecnorama.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Tim Bird <tim.bird@am.sony.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from outbound-dub.frontbridge.com ([213.199.154.16]:21112 "EHLO
-	outbound3-dub-R.bigfish.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1767819AbXECTc6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 May 2007 15:32:58 -0400
-In-Reply-To: <463A3512.4020508@am.sony.com>
+Received: from hermes.xcon.it ([62.48.35.101]:41430 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S934257AbXEGPUn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 May 2007 11:20:43 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by hermes.xcon.it (Postfix) with ESMTP id 1034C6080EA
+	for <linux-rt-users@vger.kernel.org>; Mon,  7 May 2007 17:20:41 +0200 (CEST)
+Received: from hermes.xcon.it ([127.0.0.1])
+	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id Ij4HqHNjFvld for <linux-rt-users@vger.kernel.org>;
+	Mon,  7 May 2007 17:20:40 +0200 (CEST)
+Received: from [192.168.100.121] (adsl203-157-083.mclink.it [213.203.157.83])
+	(Authenticated sender: aib@texware.it)
+	by hermes.xcon.it (Postfix) with ESMTP id 1F4B66080DC
+	for <linux-rt-users@vger.kernel.org>; Mon,  7 May 2007 17:20:40 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar wrote:
-> i have released the v2.6.20-rt1 kernel...
+Hi,
 
-There was also a problem with the patch for arch/mips/kernel/entry.S
-Some kind of cruft was in the patch.
+I have this same problem
+(http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00333.html).
 
-Below is a patch which fixes both issues.  It at least allows compilation.
-I haven't turned anything on, or looked at runtime yet.
+Someone can give me some suggestions?
 
-Index: alp-linux/arch/mips/kernel/entry.S
-===================================================================
---- alp-linux.orig/arch/mips/kernel/entry.S	2007-05-03 12:28:38.000000000 -0700
-+++ alp-linux/arch/mips/kernel/entry.S	2007-05-03 12:21:47.000000000 -0700
-@@ -21,8 +21,6 @@
- #endif
-
- #ifndef CONFIG_PREEMPT
--<<<<<<< delete 	local_irq_disable
--	raw_local_irq_disable
- #define resume_kernel	restore_all
- #else
- #define __ret_from_irq	ret_from_exception
-@@ -32,7 +30,7 @@
- 	.align	5
- #ifndef CONFIG_PREEMPT
- FEXPORT(ret_from_exception)
--	local_irq_disable			# preempt stop
-+	raw_local_irq_disable			# preempt stop
- 	b	__ret_from_irq
- #endif
- FEXPORT(ret_from_irq)
-Index: alp-linux/include/asm-mips/atomic.h
-===================================================================
---- alp-linux.orig/include/asm-mips/atomic.h	2007-05-03 12:28:38.000000000 -0700
-+++ alp-linux/include/asm-mips/atomic.h	2007-05-03 11:56:58.000000000 -0700
-@@ -566,7 +566,6 @@
- 		raw_local_irq_restore(flags);
- 	}
- #endif
--#endif
-
- 	smp_mb();
-
-
-=============================
-Tim Bird
-Architecture Group Chair, CE Linux Forum
-Senior Staff Engineer, Sony Electronics
-=============================
+Ciao,
+Alessio
