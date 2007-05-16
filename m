@@ -1,50 +1,55 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: Geode GX1 + RT-Preempt + ACPI
-Date: Wed, 16 May 2007 12:12:24 +0200
-Message-ID: <20070516101224.GG12319@pengutronix.de>
-References: <1178551232.5312.3.camel@godzilla.tecnorama.it> <1179228729.5139.6.camel@godzilla.tecnorama.it> <1179229315.5704.25.camel@localhost.localdomain> <200705152008.54949.jbe@pengutronix.de> <1179309761.7610.16.camel@godzilla.tecnorama.it>
+Date: Wed, 16 May 2007 12:47:07 +0200
+Message-ID: <1179312428.3764.29.camel@chaos>
+References: <1178551232.5312.3.camel@godzilla.tecnorama.it>
+	 <1179228729.5139.6.camel@godzilla.tecnorama.it>
+	 <1179229315.5704.25.camel@localhost.localdomain>
+	 <200705152008.54949.jbe@pengutronix.de>
+	 <1179309761.7610.16.camel@godzilla.tecnorama.it>
+	 <20070516101224.GG12319@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Juergen Beisert <jbe@pengutronix.de>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Alessio Igor Bogani <abogani@texware.it>,
+	Juergen Beisert <jbe@pengutronix.de>,
 	Peter Feuerer <peter@piie.net>, linux-rt-users@vger.kernel.org
-To: Alessio Igor Bogani <abogani@texware.it>
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:56716 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754139AbXEPKM2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 May 2007 06:12:28 -0400
-Content-Disposition: inline
-In-Reply-To: <1179309761.7610.16.camel@godzilla.tecnorama.it>
+Received: from www.osadl.org ([213.239.205.134]:39145 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1756773AbXEPKm4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 May 2007 06:42:56 -0400
+In-Reply-To: <20070516101224.GG12319@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, May 16, 2007 at 12:02:41PM +0200, Alessio Igor Bogani wrote:
-> On Tue, 2007-05-15 at 20:08 +0200, Juergen Beisert wrote:
-> [...] 
-> > > > I'm trying 2.6.21-rt1 and it _seems_ works (not tested yet).
-> > > 
-> > > The kernel itself was booting up, and running fine, but cyclictest and
-> > > my little square wave example
-> > > (http://rt.wiki.kernel.org/index.php/Squarewave-example) were not able
-> > > to achieve stable timings.
+On Wed, 2007-05-16 at 12:12 +0200, Robert Schwebel wrote:
+> > > Once again. On this piece of hardware there is no other useful timer as the 
+> > > PIT.
 > > 
-> > Once again. On this piece of hardware there is no other useful timer as the 
-> > PIT.
+> > Cyclictest tell me this:
+> > 
+> > "WARNING: High resolution timers not available"
+> > 
+> > also if i add "clocksource=pit" in the kernel command line!  :-(
 > 
-> Cyclictest tell me this:
-> 
-> "WARNING: High resolution timers not available"
-> 
-> also if i add "clocksource=pit" in the kernel command line!  :-(
+> Looks like it didn't switch to highres mode. You can check this by
+> looking into /proc/timer_list.
 
-Looks like it didn't switch to highres mode. You can check this by
-looking into /proc/timer_list.
+It can _NOT_ switch into highres mode on a machine, where the only clock
+source is the PIT.
 
-Robert 
--- 
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+Highres / dyntick mode requires a reliable continuous counting clock
+source to keep track of time.
+
+PIT is not continuous. We can use PIT as clock source only when PIT is
+in periodic mode, but it is slow and unreliable.
+
+If we would switch to highres/dyntick with PIT we would lose track of
+time completely, because we would try to read the time from the device
+which we use to program the next event interrupt.
+
+There is no way to solve this on systems, which have only a PIT.
+
+	tglx
