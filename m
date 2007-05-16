@@ -1,81 +1,52 @@
-From: Juergen Beisert <jbe@pengutronix.de>
-Subject: Re: Geode GX1 + RT-Preempt + ACPI
-Date: Tue, 15 May 2007 20:08:54 +0200
-Message-ID: <200705152008.54949.jbe@pengutronix.de>
-References: <1178551232.5312.3.camel@godzilla.tecnorama.it> <1179228729.5139.6.camel@godzilla.tecnorama.it> <1179229315.5704.25.camel@localhost.localdomain>
+From: Tim Bird <tim.bird@am.sony.com>
+Subject: Rt-preempt testing best practices
+Date: Tue, 15 May 2007 17:26:44 -0700
+Message-ID: <464A4FC4.6030606@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Alessio Igor Bogani <abogani@texware.it>,
-	linux-rt-users@vger.kernel.org
-To: Peter Feuerer <peter@piie.net>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: CE Linux Developers List <celinux-dev@tree.celinuxforum.org>,
+	linux-rt-users@vger.kernel.org, RTWG@LIST.CELINUXFORUM.ORG
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:47919 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755879AbXEOSI7 convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2007 14:08:59 -0400
-In-Reply-To: <1179229315.5704.25.camel@localhost.localdomain>
-Content-Disposition: inline
+Received: from outbound-dub.frontbridge.com ([213.199.154.16]:20982 "EHLO
+	outbound2-dub-R.bigfish.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1757053AbXEPA02 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 May 2007 20:26:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tuesday 15 May 2007 13:41, Peter Feuerer wrote:
-> Hi Alessio,
->
-> On Tue, 2007-05-15 at 13:32 +0200, Alessio Igor Bogani wrote:
-> > Hi Peter,
-> >
-> > On Tue, 2007-05-15 at 13:26 +0200, Peter Feuerer wrote:
-> > [...]
-> >
-> > > > First of all, running a realtime OS on such a machine is no goo=
-d
-> > > > idea, as it is full of system management software that steals y=
-ou the
-> > > > CPU.
-> > >
-> > > What do you mean by "system management software"? The only softwa=
-re
-> > > running on my gx1 hardware is my linux system with kernel 2.6.18 =
-using
-> > > rt preempt patch and compiled for x86.
-> >
-> > This type of software is implemented into BIOS.
->
-> I see. Thanks for this information, that's realy annoying!
+Hi all,
 
-No, it makes this x86 system compatible to standard pc. Try to run any =
-time=20
-critical software and scroll your text console screen (it must be a tex=
-t=20
-console, no graphical one). You will get very nice results....
-(side note: Text mode is completely emulated in SMM)
+I'm writing to tell you about a project I'm working on.
+I'm trying to collect as much information as I can about
+testing real time performance of Linux.
 
-> > [...]
-> >
-> > > I tried this for rt-preempt patched kernels > 2.6.18 (where acpi =
-is
-> > > needed for the highres timer) but still no hard realtime capabili=
-ty.
-> >
-> > I'm trying 2.6.21-rt1 and it _seems_ works (not tested yet).
->
-> The kernel itself was booting up, and running fine, but cyclictest an=
-d
-> my little square wave example
-> (http://rt.wiki.kernel.org/index.php/Squarewave-example) were not abl=
-e
-> to achieve stable timings.
+I've started a wiki page at:
+http://tree.celinuxforum.org/CelfPubWiki/RealtimeTestingBestPractices
+(which is on CELF's wiki)
 
-Once again. On this piece of hardware there is no other useful timer as=
- the=20
-PIT.
+However, I think this material would be better placed
+on the Linux RT wiki at: http://rt.wiki.kernel.org/index.php/Main_Page
+Does anyone have any problem with me moving the content to there,
+and continuing my attempt to document this on that site?
 
-Juergen
---=20
-Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
-=A0Pengutronix - Linux Solutions for Science and Industry
-=A0   Handelsregister: Amtsgericht Hildesheim, HRA 2686
-=A0 =A0 =A0    Vertretung Sued/Muenchen, Germany
-   Phone: +49-5121-206917-7 |  Fax: +49-5121-206917-9
+Note that there's some duplication of content with other
+pages on the RT wiki.  I'll try to clean this up during the move.
+
+Any comments or suggestions are welcome.
+
+If you have done RT testing, and especially if you have published
+information I can look at (and link to), please contact me.
+
+Thanks!
+ -- Tim
+
+P.S. This is based on a discussion we had at the RT BOF at
+ELC last month.
+
+=============================
+Tim Bird
+Architecture Group Chair, CE Linux Forum
+Senior Staff Engineer, Sony Electronics
+=============================
