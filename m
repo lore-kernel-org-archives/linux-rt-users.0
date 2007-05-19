@@ -1,52 +1,35 @@
 From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: v2.6.21-rt3
-Date: Fri, 18 May 2007 23:27:24 -0700
-Message-ID: <200705182327.25384.dvhltc@us.ibm.com>
-References: <20070517194143.GA25394@elte.hu>
+Subject: maxcpus=1 fails to boot
+Date: Sat, 19 May 2007 00:15:52 -0700
+Message-ID: <200705190015.53518.dvhltc@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-  charset="iso-8859-1"
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Cc: "lkml, " <linux-kernel@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:54695 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753643AbXESG1k (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 May 2007 02:27:40 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e32.co.us.ibm.com (8.12.11.20060308/8.13.8) with ESMTP id l4J6NpFC025870
-	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 02:23:51 -0400
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l4J6RXb2216276
-	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 00:27:33 -0600
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l4J6RX5M011848
-	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 00:27:33 -0600
-In-Reply-To: <20070517194143.GA25394@elte.hu>
+Received: from e4.ny.us.ibm.com ([32.97.182.144]:40345 "EHLO e4.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754515AbXESHP5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 19 May 2007 03:15:57 -0400
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thursday 17 May 2007 12:41:43 you wrote:
-> i'm pleased to announce the v2.6.21-rt3 kernel, which can be downloaded
-> from the usual place:
-> ...
-> to build a 2.6.21-rt3 tree, the following patches should be applied:
->
->   http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.tar.bz2
->   http://redhat.com/~mingo/realtime-preempt/patch-2.6.21-rt3
+When trying to boot with the maxcpus=1 option, the -rt kernel seems to hang 
+somewhere in acpi_processor_init().
 
-Ingo, 
+I tested mainline 2.6.21 and it does boot with maxcpus=1.  2.6.20-rt8, 
+2.6.21-rt1, 2, and 4 all hang at:
 
-I have found that dealing with the current and older patches to be problematic 
-for scripts that also deal with other trees that typically don't keep the 
-current patch in a separate location.  Would you be agreeable to using a 
-symlink at the top level to the latest patch so that all the patches are in 
-the same directory?  Or possibly just uploading the latest patch to both the 
-top level directory and older at the same time?  Would greatly simplify some 
-scripting...
+Calling initcall 0xffffffff817a41df: acpi_processor_init+0x0/0xdf()
+
+when booted with initcall_debug and maxcpus=1.  I traced this only as far as 
+the call to acpi_bus_register_driver.  So this seems to have been introduced 
+by the -rt patch.  I'm not sure if I should try and see when it was 
+introduced (as 2.6.16-rt22 does not fail) or if I should head "down the acpi 
+rabbit hole"...
 
 Thanks,
 
