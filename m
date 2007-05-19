@@ -1,35 +1,56 @@
-From: Wolfgang Grandegger <wg@grandegger.com>
+From: Darren Hart <dvhltc@us.ibm.com>
 Subject: Re: v2.6.21-rt3
-Date: Fri, 18 May 2007 10:52:33 +0200
-Message-ID: <464D6951.9050909@grandegger.com>
-References: <20070517194143.GA25394@elte.hu>	 <2cf1ee820705180039l1d72005fq2169f8fa36e12377@mail.gmail.com>	 <1179474804.12981.57.camel@chaos>	 <2cf1ee820705180110y740de989ma48553d4b2188845@mail.gmail.com> <1179477092.12981.61.camel@chaos>
+Date: Fri, 18 May 2007 23:27:24 -0700
+Message-ID: <200705182327.25384.dvhltc@us.ibm.com>
+References: <20070517194143.GA25394@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: emin ak <eminak71@gmail.com>, Ingo Molnar <mingo@elte.hu>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-out.m-online.net ([212.18.0.9]:56703 "EHLO
-	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755142AbXERIrc (ORCPT
+Received: from e32.co.us.ibm.com ([32.97.110.150]:54695 "EHLO
+	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753643AbXESG1k (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 May 2007 04:47:32 -0400
-In-Reply-To: <1179477092.12981.61.camel@chaos>
+	Sat, 19 May 2007 02:27:40 -0400
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e32.co.us.ibm.com (8.12.11.20060308/8.13.8) with ESMTP id l4J6NpFC025870
+	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 02:23:51 -0400
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.3) with ESMTP id l4J6RXb2216276
+	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 00:27:33 -0600
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l4J6RX5M011848
+	for <linux-rt-users@vger.kernel.org>; Sat, 19 May 2007 00:27:33 -0600
+In-Reply-To: <20070517194143.GA25394@elte.hu>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
-> Please do not top post !
-> 
-> On Fri, 2007-05-18 at 11:10 +0300, emin ak wrote:
->> Yes, 2.6.21 was compiled and boot successfully for ppc, Is 85xx family
->> supported for powerpc arch?
-> 
-> I don't know. You might ask the folks on the ppc mailing list.
+On Thursday 17 May 2007 12:41:43 you wrote:
+> i'm pleased to announce the v2.6.21-rt3 kernel, which can be downloaded
+> from the usual place:
+> ...
+> to build a 2.6.21-rt3 tree, the following patches should be applied:
+>
+>   http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.tar.bz2
+>   http://redhat.com/~mingo/realtime-preempt/patch-2.6.21-rt3
 
-E.g. check http://lxr.free-electrons.com/source/arch/powerpc/configs/. 
-Even your board seems supported. But you need a boot loader aware of the 
-  Open Firmware Flat Device Tree.
+Ingo, 
 
-Wolfgang.
+I have found that dealing with the current and older patches to be problematic 
+for scripts that also deal with other trees that typically don't keep the 
+current patch in a separate location.  Would you be agreeable to using a 
+symlink at the top level to the latest patch so that all the patches are in 
+the same directory?  Or possibly just uploading the latest patch to both the 
+top level directory and older at the same time?  Would greatly simplify some 
+scripting...
+
+Thanks,
+
+-- 
+Darren Hart
+IBM Linux Technology Center
+Realtime Linux Team
