@@ -1,40 +1,72 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: maxcpus=1 fails to boot
-Date: Sat, 19 May 2007 11:02:30 +0200
-Message-ID: <1179565350.12981.107.camel@chaos>
-References: <200705190015.53518.dvhltc@us.ibm.com>
+From: "K.R. Foley" <kr@cybsft.com>
+Subject: Re: v2.6.21-rt3
+Date: Mon, 21 May 2007 11:04:32 -0500
+Message-ID: <4651C310.1090008@cybsft.com>
+References: <20070517194143.GA25394@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	"lkml," <linux-kernel@vger.kernel.org>
-To: Darren Hart <dvhltc@us.ibm.com>
+Content-Type: multipart/mixed;
+ boundary="------------020805030708060904050208"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:58091 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753643AbXESI4x (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 May 2007 04:56:53 -0400
-In-Reply-To: <200705190015.53518.dvhltc@us.ibm.com>
+Received: from relay00.pair.com ([209.68.5.9]:4558 "HELO relay00.pair.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1754957AbXEUQEf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 May 2007 12:04:35 -0400
+In-Reply-To: <20070517194143.GA25394@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2007-05-19 at 00:15 -0700, Darren Hart wrote:
-> When trying to boot with the maxcpus=1 option, the -rt kernel seems to hang 
-> somewhere in acpi_processor_init().
-> 
-> I tested mainline 2.6.21 and it does boot with maxcpus=1.  2.6.20-rt8, 
-> 2.6.21-rt1, 2, and 4 all hang at:
-> 
-> Calling initcall 0xffffffff817a41df: acpi_processor_init+0x0/0xdf()
-> 
-> when booted with initcall_debug and maxcpus=1.  I traced this only as far as 
-> the call to acpi_bus_register_driver.  So this seems to have been introduced 
-> by the -rt patch.  I'm not sure if I should try and see when it was 
-> introduced (as 2.6.16-rt22 does not fail) or if I should head "down the acpi 
-> rabbit hole"...
+This is a multi-part message in MIME format.
+--------------020805030708060904050208
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Be careful, when sticking your head into this hole !
+Ingo Molnar wrote:
+> i'm pleased to announce the v2.6.21-rt3 kernel, which can be downloaded 
+> from the usual place:
+> 
 
-I try to nail it down. 
+This is actually regarding v2.6.21-rt5 but I don't remember seeing an
+announcement for that one. The attached patch is necessary if you happen
+to have RTC_HISTOGRAM enabled, which I'm guessing most folks don't.
 
-	tglx
+BTW, what was the consensus on pagefault_enable and pagefault_disable?
+
+-- 
+   kr
+
+--------------020805030708060904050208
+Content-Type: text/x-patch;
+ name="fixrtc.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="fixrtc.patch"
+
+--- linux-2.6.21/drivers/char/rtc.c.orig	2007-05-21 08:32:42.000000000 -0500
++++ linux-2.6.21/drivers/char/rtc.c	2007-05-21 08:33:49.000000000 -0500
+@@ -93,6 +93,10 @@
+ #include <asm/isa.h>
+ #endif
+ 
++static unsigned long rtc_port;
++static int rtc_irq = PCI_IRQ_NONE;
++#endif
++
+ #ifdef CONFIG_MIPS
+ # include <asm/time.h>
+ #endif
+@@ -119,10 +123,6 @@ enum rtc_states {
+ 
+ #endif
+ 
+-static unsigned long rtc_port;
+-static int rtc_irq = PCI_IRQ_NONE;
+-#endif
+-
+ #ifdef	CONFIG_HPET_RTC_IRQ
+ #undef	RTC_IRQ
+ #endif
+
+--------------020805030708060904050208--
