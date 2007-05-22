@@ -1,47 +1,72 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: v2.6.21-rt3
-Date: Tue, 22 May 2007 10:25:50 +0200
-Message-ID: <20070522082550.GA8161@elte.hu>
-References: <20070517194143.GA25394@elte.hu> <1179778266.15427.38.camel@imap.mvista.com> <1179779053.12708.45.camel@chaos> <1179779142.15427.44.camel@imap.mvista.com> <1179779765.12708.50.camel@chaos> <1179780072.15427.51.camel@imap.mvista.com>
+Date: Tue, 22 May 2007 08:20:09 -0700
+Message-ID: <1179847209.15427.75.camel@imap.mvista.com>
+References: <20070517194143.GA25394@elte.hu>
+	 <1179778266.15427.38.camel@imap.mvista.com>
+	 <1179779053.12708.45.camel@chaos>
+	 <1179779142.15427.44.camel@imap.mvista.com>
+	 <1179779765.12708.50.camel@chaos>
+	 <1179780072.15427.51.camel@imap.mvista.com> <20070522082550.GA8161@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:52511 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756197AbXEVI0G (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 May 2007 04:26:06 -0400
-Content-Disposition: inline
-In-Reply-To: <1179780072.15427.51.camel@imap.mvista.com>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:37762 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965997AbXEVPWd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 May 2007 11:22:33 -0400
+In-Reply-To: <20070522082550.GA8161@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Tue, 2007-05-22 at 10:25 +0200, Ingo Molnar wrote:
+> * Daniel Walker <dwalker@mvista.com> wrote:
+> 
+> > I copied the patch into the first email, I did look at it which is why 
+> > you got an email. Your introducing the patch , it's for you to explain 
+> > why it needs to be there.. considering that the comment says "hack" in 
+> > it, I have to wonder what the non-hack version is ..
+> 
+> you might not have realized it, but the problem i think was the attitude 
+> you showed in the very first sentence:
 
-* Daniel Walker <dwalker@mvista.com> wrote:
+I was not intending any attitude. I had no idea where those changes came
+from ..
 
-> I copied the patch into the first email, I did look at it which is why 
-> you got an email. Your introducing the patch , it's for you to explain 
-> why it needs to be there.. considering that the comment says "hack" in 
-> it, I have to wonder what the non-hack version is ..
+> > Where did the arm ep93xx changes come from? It looks like patch below 
+> > came in with them in 2.6.21-rt6 ..
+> 
+> AFAICS Thomas just mirrored that snotty comment back to you, and yes, 
+> when you are on the receiving end it feels nasty, doesnt it? So please 
+> restart and rephrase that into a more polite form and you might get an 
+> answer (although i certainly do not talk for Thomas). Something like:
 
-you might not have realized it, but the problem i think was the attitude 
-you showed in the very first sentence:
+I don't read the sentence you quoted as snotty at all ..  I had no idea
+where the changes came from, and I was simply asking that.. Since there
+isn't a history for the -rt patch, I honestly don't know where some of
+the code comes from ..
 
-> Where did the arm ep93xx changes come from? It looks like patch below 
-> came in with them in 2.6.21-rt6 ..
+Since I had no idea that Thomas wrote that code, there's no premeditated
+aggravation, or flame bait there.. 
 
-AFAICS Thomas just mirrored that snotty comment back to you, and yes, 
-when you are on the receiving end it feels nasty, doesnt it? So please 
-restart and rephrase that into a more polite form and you might get an 
-answer (although i certainly do not talk for Thomas). Something like:
+> > Thomas, could you give me a bit more information about why the arm 
+> > ep93xx changes were done in 2.6.21-rt6? I do not seem to understand 
+> > the reason behind that change. I've attached the change below. Thanks!
+> 
+> You are asking Thomas a favor after all... Be a bit more polite when 
+> asking others, and a completely new world might open up for you :-)
 
-> Thomas, could you give me a bit more information about why the arm 
-> ep93xx changes were done in 2.6.21-rt6? I do not seem to understand 
-> the reason behind that change. I've attached the change below. Thanks!
+I don't see that as me asking a favor.. If a patch crosses LKML and I
+ask "Why does this hunk exist?" that's not a favor. That is pure code
+review, which is exactly what I was doing in this thread. Which is
+reviewing code and asking questions..
 
-You are asking Thomas a favor after all... Be a bit more polite when 
-asking others, and a completely new world might open up for you :-)
+I hope you don't read my comments above as snotty cause it's not suppose
+to be, just conversation..
 
-	Ingo
+Daniel
