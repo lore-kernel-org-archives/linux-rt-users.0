@@ -1,72 +1,69 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: v2.6.21-rt3
-Date: Tue, 22 May 2007 08:20:09 -0700
-Message-ID: <1179847209.15427.75.camel@imap.mvista.com>
-References: <20070517194143.GA25394@elte.hu>
-	 <1179778266.15427.38.camel@imap.mvista.com>
-	 <1179779053.12708.45.camel@chaos>
-	 <1179779142.15427.44.camel@imap.mvista.com>
-	 <1179779765.12708.50.camel@chaos>
-	 <1179780072.15427.51.camel@imap.mvista.com> <20070522082550.GA8161@elte.hu>
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: 2.6.21-rt2..8 troubles
+Date: Fri, 25 May 2007 21:58:12 +0100
+Message-ID: <46574DE4.2080900@rncbc.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:37762 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965997AbXEVPWd (ORCPT
+Received: from smtpa3.netcabo.pt ([212.113.174.18]:40202 "EHLO
+	exch01smtp02.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1756325AbXEYVIo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 May 2007 11:22:33 -0400
-In-Reply-To: <20070522082550.GA8161@elte.hu>
+	Fri, 25 May 2007 17:08:44 -0400
+In-Reply-To: <20070401183928.GB27614@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-05-22 at 10:25 +0200, Ingo Molnar wrote:
-> * Daniel Walker <dwalker@mvista.com> wrote:
-> 
-> > I copied the patch into the first email, I did look at it which is why 
-> > you got an email. Your introducing the patch , it's for you to explain 
-> > why it needs to be there.. considering that the comment says "hack" in 
-> > it, I have to wonder what the non-hack version is ..
-> 
-> you might not have realized it, but the problem i think was the attitude 
-> you showed in the very first sentence:
+Hi Ingo et al.
 
-I was not intending any attitude. I had no idea where those changes came
-from ..
+It's been quite a while, since last time I've complained about the -rt
+kernel patch series. This time I'm afraid I have a nasty specialty I've
+been trying to figure out and isolate but to no definitive results.
 
-> > Where did the arm ep93xx changes come from? It looks like patch below 
-> > came in with them in 2.6.21-rt6 ..
-> 
-> AFAICS Thomas just mirrored that snotty comment back to you, and yes, 
-> when you are on the receiving end it feels nasty, doesnt it? So please 
-> restart and rephrase that into a more polite form and you might get an 
-> answer (although i certainly do not talk for Thomas). Something like:
+Fact is, since 2.6.21-rt2 and still on latest -rt8, that I'm facing
+troubled behavior while running on a Core2 T7200 laptop (SMP). Somehow,
+soon or later, the whole system starts crawling to death. It just slows
+down to some kind of Big Freeze, with no evidence over the console
+whatsoever, so that I'm ultimately left with a brick on my hands.
 
-I don't read the sentence you quoted as snotty at all ..  I had no idea
-where the changes came from, and I was simply asking that.. Since there
-isn't a history for the -rt patch, I honestly don't know where some of
-the code comes from ..
+This behavior is consistent and occurs every time after a while. It
+surely does not occur on 2.6.21-rt1 and earlier. Even stranger, it does
+not occur on another but older P4@3.3Ghz desktop (HT/SMP) where a very
+identical system image is deployed (openSUSE 10.2 i386, gcc 4.1.2, KDE
+3.5.7)
 
-Since I had no idea that Thomas wrote that code, there's no premeditated
-aggravation, or flame bait there.. 
+I wish I could give you more details, but the fact is I don't know where
+to look. The machine just freezes silently, again and again, with all
+kernels from -rt2 to -rt8 inclusive, with no traceable evidence, at
+least to my knowledge. The only symptom that I can come about is that,
+from some moment on and ever since, the system cannot start any new
+process anymore, or otherwise takes forever to realize and launch any
+new started process thread.
 
-> > Thomas, could you give me a bit more information about why the arm 
-> > ep93xx changes were done in 2.6.21-rt6? I do not seem to understand 
-> > the reason behind that change. I've attached the change below. Thanks!
-> 
-> You are asking Thomas a favor after all... Be a bit more polite when 
-> asking others, and a completely new world might open up for you :-)
+A sample dmesg output:
+   http://www.rncbc.org/datahub/dmesg-2.6.21-rt5.0
+The corresponding .config:
+   http://www.rncbc.org/datahub/config-2.6.21-rt5.0
 
-I don't see that as me asking a favor.. If a patch crosses LKML and I
-ask "Why does this hunk exist?" that's not a favor. That is pure code
-review, which is exactly what I was doing in this thread. Which is
-reviewing code and asking questions..
+Again, there's no logged evidence of the problem, which is as nasty as
+repeatable after each boot. Unfortunately, it's not quite
+deterministically reproducible, this behavior of turning into an
+unresponsive brick ;) It's just a matter of time, or so I think. That's
+why I have no clues.
 
-I hope you don't read my comments above as snotty cause it's not suppose
-to be, just conversation..
+Is there anything I can do better to help myself figuring out this
+issue? As this is a  modern laptop such things like a serial console are
+unavailable, but it would be nice to track things up over netconsole
+perhaps?
 
-Daniel
+I just need some bright and nice directions now ;) Hope someone finds
+this worth of attention too. Meanwhile, I'll be happy with 2.6.21-rt1 :)
+
+Cheers.
+-- 
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
