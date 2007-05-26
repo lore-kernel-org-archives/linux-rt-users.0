@@ -1,69 +1,41 @@
-From: Rui Nuno Capela <rncbc@rncbc.org>
-Subject: 2.6.21-rt2..8 troubles
-Date: Fri, 25 May 2007 21:58:12 +0100
-Message-ID: <46574DE4.2080900@rncbc.org>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: 2.6.22
+Date: Sat, 26 May 2007 09:23:51 +0200
+Message-ID: <1180164231.5067.30.camel@godzilla>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpa3.netcabo.pt ([212.113.174.18]:40202 "EHLO
-	exch01smtp02.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756325AbXEYVIo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 25 May 2007 17:08:44 -0400
-In-Reply-To: <20070401183928.GB27614@elte.hu>
+Received: from hermes.xcon.it ([62.48.35.101]:46017 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753397AbXEZHX4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 26 May 2007 03:23:56 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by hermes.xcon.it (Postfix) with ESMTP id 2C1A360811E
+	for <linux-rt-users@vger.kernel.org>; Sat, 26 May 2007 09:23:54 +0200 (CEST)
+Received: from hermes.xcon.it ([127.0.0.1])
+	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id sa6p8MnmVQAC for <linux-rt-users@vger.kernel.org>;
+	Sat, 26 May 2007 09:23:53 +0200 (CEST)
+Received: from [192.168.0.4] (host-84-222-57-139.cust-adsl.tiscali.it [84.222.57.139])
+	(Authenticated sender: aib@texware.it)
+	by hermes.xcon.it (Postfix) with ESMTP id 7C4EB60811A
+	for <linux-rt-users@vger.kernel.org>; Sat, 26 May 2007 09:23:53 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ingo et al.
+Hi,
 
-It's been quite a while, since last time I've complained about the -rt
-kernel patch series. This time I'm afraid I have a nasty specialty I've
-been trying to figure out and isolate but to no definitive results.
+I'm trying to adapt patch-2.6.21-rt7 for 2.6.22.
 
-Fact is, since 2.6.21-rt2 and still on latest -rt8, that I'm facing
-troubled behavior while running on a Core2 T7200 laptop (SMP). Somehow,
-soon or later, the whole system starts crawling to death. It just slows
-down to some kind of Big Freeze, with no evidence over the console
-whatsoever, so that I'm ultimately left with a brick on my hands.
+Now i can compile this but it start only without ide support.
 
-This behavior is consistent and occurs every time after a while. It
-surely does not occur on 2.6.21-rt1 and earlier. Even stranger, it does
-not occur on another but older P4@3.3Ghz desktop (HT/SMP) where a very
-identical system image is deployed (openSUSE 10.2 i386, gcc 4.1.2, KDE
-3.5.7)
+When i boot with a kernel which have ide support system freeze on
+ide_generic_init() function.
 
-I wish I could give you more details, but the fact is I don't know where
-to look. The machine just freezes silently, again and again, with all
-kernels from -rt2 to -rt8 inclusive, with no traceable evidence, at
-least to my knowledge. The only symptom that I can come about is that,
-from some moment on and ever since, the system cannot start any new
-process anymore, or otherwise takes forever to realize and launch any
-new started process thread.
+Do you have any suggestions? How can deeply investigate? Which tools are
+available to help in this situation?
 
-A sample dmesg output:
-   http://www.rncbc.org/datahub/dmesg-2.6.21-rt5.0
-The corresponding .config:
-   http://www.rncbc.org/datahub/config-2.6.21-rt5.0
-
-Again, there's no logged evidence of the problem, which is as nasty as
-repeatable after each boot. Unfortunately, it's not quite
-deterministically reproducible, this behavior of turning into an
-unresponsive brick ;) It's just a matter of time, or so I think. That's
-why I have no clues.
-
-Is there anything I can do better to help myself figuring out this
-issue? As this is a  modern laptop such things like a serial console are
-unavailable, but it would be nice to track things up over netconsole
-perhaps?
-
-I just need some bright and nice directions now ;) Hope someone finds
-this worth of attention too. Meanwhile, I'll be happy with 2.6.21-rt1 :)
-
-Cheers.
--- 
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
+Thanks,
+Alessio
