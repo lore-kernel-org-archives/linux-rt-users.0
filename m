@@ -1,44 +1,49 @@
-From: "Pradyumna Sampath" <pradyumna.sampath@gmail.com>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Subject: Re: [PATCH] Powerpc compiler error fix for 2.6.21-rt8
-Date: Tue, 29 May 2007 11:06:03 +0530
-Message-ID: <f87351060705282236v103e505cy79e306b385516297@mail.gmail.com>
+Date: Tue, 29 May 2007 18:41:02 +0400
+Message-ID: <465C3B7E.1000209@ru.mvista.com>
 References: <f87351060705282124q6d6b1562ic1dd4da4b8a62886@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linuxppc-embedded@ozlabs.org, linux-rt-users@vger.kernel.org
+Cc: linuxppc-embedded@ozlabs.org, linux-rt-users@vger.kernel.org
+To: Pradyumna Sampath <pradyumna.sampath@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.177]:37455 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755013AbXE2FgE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 May 2007 01:36:04 -0400
-Received: by py-out-1112.google.com with SMTP id a29so714023pyi
-        for <linux-rt-users@vger.kernel.org>; Mon, 28 May 2007 22:36:04 -0700 (PDT)
+Received: from h155.mvista.com ([63.81.120.155]:28809 "EHLO imap.sh.mvista.com"
+	rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752020AbXE2Oj2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 May 2007 10:39:28 -0400
 In-Reply-To: <f87351060705282124q6d6b1562ic1dd4da4b8a62886@mail.gmail.com>
-Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Oops !
+Hello.
 
-Sorry missed this http://patchwork.ozlabs.org/linuxppc/patch?id=11304 .
+Pradyumna Sampath wrote:
 
-regards
-prady
-
-On 5/29/07, Pradyumna Sampath <pradyumna.sampath@gmail.com> wrote:
-> Hi everyone,
->
 > Attached is a small patch to fix compile time errors which is broken
 > in 2.6.21-rt8 for powerpc.
->
-> thanks
-> regards
-> prady
->
->
 
+    NAK. It's been deleted on purpose (not used anymore), and I've already 
+sent a patch to kill the leftover reference.
 
--- 
-htp://prady.livejournal.com
+> ------------------------------------------------------------------------
+> 
+> diff -ur latest/linux-2.6.21/arch/powerpc/kernel/time.c linux-2.6.21/arch/powerpc/kernel/time.c
+> --- latest/linux-2.6.21/arch/powerpc/kernel/time.c	2007-05-29 09:58:12.000000000 +0530
+> +++ linux-2.6.21/arch/powerpc/kernel/time.c	2007-05-29 08:58:56.000000000 +0530
+> @@ -95,6 +95,8 @@
+>  #define SCALE_XSEC(xsec, max)	mulhwu((xsec) << 12, max)
+>  #endif
+>  
+> +unsigned long cpu_khz;  /* Detected as we calibrate the TSC */
+> +EXPORT_SYMBOL(cpu_khz);
+>  unsigned long tb_ticks_per_jiffy;
+>  unsigned long tb_ticks_per_usec = 100; /* sane default */
+>  EXPORT_SYMBOL(tb_ticks_per_usec);
+> Only in linux-2.6.21/arch/powerpc/kernel: vmlinux.lds
+> Only in linux-2.6.21/scripts/kconfig: mconf
+
+    Please cut off such garbage from yoour patches...
+
+WBR, Sergei
