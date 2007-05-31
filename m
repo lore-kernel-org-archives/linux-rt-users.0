@@ -1,38 +1,41 @@
-From: "K.R. Foley" <kr@cybsft.com>
+From: Alessio Igor Bogani <abogani@texware.it>
 Subject: Re: 2.6.22  - Mission Impossible :-) -
-Date: Thu, 31 May 2007 08:48:13 -0500
-Message-ID: <465ED21D.1060108@cybsft.com>
-References: <1170.213.45.135.240.1180481698.squirrel@www.xcon.it>    <1180481835.32594.89.camel@imap.mvista.com> <1261.213.45.135.240.1180482297.squirrel@www.xcon.it>
+Date: Thu, 31 May 2007 17:14:09 +0200
+Message-ID: <1180624449.5478.43.camel@godzilla.tecnorama.it>
+References: <1170.213.45.135.240.1180481698.squirrel@www.xcon.it>
+	 <1180481835.32594.89.camel@imap.mvista.com>
+	 <1261.213.45.135.240.1180482297.squirrel@www.xcon.it>
+	 <465ED21D.1060108@cybsft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: Daniel Walker <dwalker@mvista.com>, linux-rt-users@vger.kernel.org
-To: Alessio Igor Bogani <abogani@texware.it>
+To: "K.R. Foley" <kr@cybsft.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay00.pair.com ([209.68.5.9]:2982 "HELO relay00.pair.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1752183AbXEaNsP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 May 2007 09:48:15 -0400
-In-Reply-To: <1261.213.45.135.240.1180482297.squirrel@www.xcon.it>
+Received: from hermes.xcon.it ([62.48.35.101]:32815 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752777AbXEaPOc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 31 May 2007 11:14:32 -0400
+In-Reply-To: <465ED21D.1060108@cybsft.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Alessio Igor Bogani wrote:
-> Hi Daniel,
-> 
->> Why do you need to do this?
-> 
-> For two reasons:
-> 
-> 1) For study realtime patch
-> 2) For include it into next Ubuntu release
-> 
-> Ciao,
-> Alessio
-> 
+Hi K.R. Foley,
 
-The study part I can kind of understand, but for both reasons wouldn't
-it make more sense to wait until 2.6.22 settles out?
+Excuse me for my poor english.
 
--- 
-   kr
+> The study part I can kind of understand, but for both reasons wouldn't
+> it make more sense to wait until 2.6.22 settles out?
+
+For study part:
+When the things are already done it _seems_ more easy than are in
+true. :-) 
+
+For Ubuntu part:
+My objective is include a realtime kernel (install & play) into the next
+Ubuntu Linux distribution (will be release in October). This permit to
+have it in more widespread use for testing (and finally this is very
+main reason).
+
+Ciao,
+Alessio
