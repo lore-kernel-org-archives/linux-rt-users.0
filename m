@@ -1,41 +1,36 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: Re: 2.6.22  - Mission Impossible :-) -
-Date: Thu, 31 May 2007 17:14:09 +0200
-Message-ID: <1180624449.5478.43.camel@godzilla.tecnorama.it>
-References: <1170.213.45.135.240.1180481698.squirrel@www.xcon.it>
-	 <1180481835.32594.89.camel@imap.mvista.com>
-	 <1261.213.45.135.240.1180482297.squirrel@www.xcon.it>
-	 <465ED21D.1060108@cybsft.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 2.6.21-rt2..8 troubles
+Date: Thu, 31 May 2007 11:56:11 -0400
+Message-ID: <20070531155611.GA9207@goodmis.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org> <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu> <46574DE4.2080900@rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Daniel Walker <dwalker@mvista.com>, linux-rt-users@vger.kernel.org
-To: "K.R. Foley" <kr@cybsft.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:32815 "EHLO hermes.xcon.it"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752777AbXEaPOc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 May 2007 11:14:32 -0400
-In-Reply-To: <465ED21D.1060108@cybsft.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Rui Nuno Capela <rncbc@rncbc.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759910AbXEaP5Y@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <46574DE4.2080900@rncbc.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi K.R. Foley,
 
-Excuse me for my poor english.
+On Fri, May 25, 2007 at 09:58:12PM +0100, Rui Nuno Capela wrote:
+>
+> I wish I could give you more details, but the fact is I don't know
+> where
+> to look. The machine just freezes silently, again and again, with all
+> kernels from -rt2 to -rt8 inclusive, with no traceable evidence, at
+> least to my knowledge. The only symptom that I can come about is that,
+> from some moment on and ever since, the system cannot start any new
+> process anymore, or otherwise takes forever to realize and launch any
+> new started process thread.
+>
 
-> The study part I can kind of understand, but for both reasons wouldn't
-> it make more sense to wait until 2.6.22 settles out?
+I have a box that looks like it's doing the same thing. Unfortunately
+for now it's being used to test other things.
 
-For study part:
-When the things are already done it _seems_ more easy than are in
-true. :-) 
+But I did do a show-task and see a bunch of D processes. I'll post that
+output when I get that box free again.
 
-For Ubuntu part:
-My objective is include a realtime kernel (install & play) into the next
-Ubuntu Linux distribution (will be release in October). This permit to
-have it in more widespread use for testing (and finally this is very
-main reason).
-
-Ciao,
-Alessio
+-- Steve
