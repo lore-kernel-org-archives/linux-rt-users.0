@@ -1,44 +1,93 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: BUG: at kernel/sched.c:4031 __schedule()
-Date: Thu, 07 Jun 2007 09:33:57 -0700
-Message-ID: <1181234037.11539.41.camel@imap.mvista.com>
-References: <4668112B.4090406@gmail.com>
-	 <1181230780.10408.0.camel@localhost.localdomain>
-	 <1181231910.3841.55.camel@bender>
-	 <1181232783.10408.8.camel@localhost.localdomain>
-	 <1181233286.11539.38.camel@imap.mvista.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] convert RCU Preempt tasklet into softirq.
+Date: Thu, 07 Jun 2007 14:26:59 -0400
+Message-ID: <1181240819.10408.14.camel@localhost.localdomain>
+References: <1181180051.18444.31.camel@localhost.localdomain>
+	 <20070607041411.GB1783@linux.vnet.ibm.com>
+	 <1181226138.18444.54.camel@localhost.localdomain>
+	 <20070607161754.GA11941@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Jan Altenberg <jan.altenberg@linutronix.de>,
-	Oleg Kechin <okechin@gmail.com>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from h155.mvista.com ([63.81.120.158]:30549 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S1752341AbXFGQhA (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:41542 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933770AbXFGS1v (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Jun 2007 12:37:00 -0400
-In-Reply-To: <1181233286.11539.38.camel@imap.mvista.com>
+	Thu, 7 Jun 2007 14:27:51 -0400
+In-Reply-To: <20070607161754.GA11941@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-06-07 at 09:21 -0700, Daniel Walker wrote:
-> .
-> 
-> + *
-> + * The new debugging code in __schedule() expects that interrupts
-> + * are disabled across a switch_to. Need to investigate which
-> + * consequences this has.
->   */
-> -#if 0 // preempt_rt hack, because warn_on in shedule.c triggers
-> +#ifndef CONFIG_PREEMPT_RT
->  #define __ARCH_WANT_INTERRUPTS_ON_CTXSW
->  #endif
-> 
+Following Dipankar's lead, I converted the tasklet in rcupreempt.c into
+a softirq.
 
-It is starting to look like a real fix now, thanks for updating it
-Thomas .
+I've compiled and booted with this patch, but ran no other tests.
 
-Daniel
+Paul,  I'm disappointed, this was so trivial I didn't get a chance to
+learn anything ;-)
+
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.21-rt9/include/linux/rcupreempt.h
+===================================================================
+--- linux-2.6.21-rt9.orig/include/linux/rcupreempt.h
++++ linux-2.6.21-rt9/include/linux/rcupreempt.h
+@@ -63,7 +63,9 @@ extern void rcu_check_callbacks(int cpu,
+ extern void rcu_restart_cpu(int cpu);
+ extern long rcu_batches_completed(void);
+ 
+-extern void rcu_process_callbacks(unsigned long unused);
++struct softirq_action;
++
++extern void rcu_process_callbacks(struct softirq_action *unused);
+ 
+ #endif /* __KERNEL__ */
+ #endif /* __LINUX_RCUPREEMPT_H */
+Index: linux-2.6.21-rt9/kernel/rcupreempt.c
+===================================================================
+--- linux-2.6.21-rt9.orig/kernel/rcupreempt.c
++++ linux-2.6.21-rt9/kernel/rcupreempt.c
+@@ -57,7 +57,6 @@
+ struct rcu_data {
+ 	raw_spinlock_t	lock;
+ 	long		completed;	/* Number of last completed batch. */
+-	struct tasklet_struct rcu_tasklet;
+ 	struct rcu_head *nextlist;
+ 	struct rcu_head **nexttail;
+ 	struct rcu_head *waitlist;
+@@ -255,7 +254,7 @@ void rcu_check_callbacks(int cpu, int us
+ 		spin_unlock_irqrestore(&rcu_data.lock, oldirq);
+ 	} else {
+ 		spin_unlock_irqrestore(&rcu_data.lock, oldirq);
+-		tasklet_schedule(&rcu_data.rcu_tasklet);
++		raise_softirq(RCU_SOFTIRQ);
+ 	}
+ }
+ 
+@@ -279,7 +278,7 @@ void rcu_advance_callbacks(int cpu, int 
+ 	spin_unlock_irqrestore(&rcu_data.lock, oldirq);
+ }
+ 
+-void rcu_process_callbacks(unsigned long unused)
++void rcu_process_callbacks(struct softirq_action *unused)
+ {
+ 	unsigned long flags;
+ 	struct rcu_head *next, *list;
+@@ -367,7 +366,7 @@ void __init __rcu_init(void)
+ 	rcu_data.waittail = &rcu_data.waitlist;
+ 	rcu_data.donelist = NULL;
+ 	rcu_data.donetail = &rcu_data.donelist;
+-	tasklet_init(&rcu_data.rcu_tasklet, rcu_process_callbacks, 0UL);
++	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks, NULL);
+ }
+ 
+ /*
