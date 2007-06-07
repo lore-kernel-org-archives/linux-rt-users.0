@@ -1,47 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: BUG: at kernel/sched.c:4031 __schedule()
-Date: Thu, 07 Jun 2007 12:13:03 -0400
-Message-ID: <1181232783.10408.8.camel@localhost.localdomain>
+Date: Thu, 07 Jun 2007 09:20:01 -0700
+Message-ID: <1181233202.11539.36.camel@imap.mvista.com>
 References: <4668112B.4090406@gmail.com>
 	 <1181230780.10408.0.camel@localhost.localdomain>
 	 <1181231910.3841.55.camel@bender>
+	 <1181232783.10408.8.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Oleg Kechin <okechin@gmail.com>, linux-rt-users@vger.kernel.org,
-	tglx@linutronix.de
-To: Jan Altenberg <jan.altenberg@linutronix.de>
+Cc: Jan Altenberg <jan.altenberg@linutronix.de>,
+	Oleg Kechin <okechin@gmail.com>,
+	linux-rt-users@vger.kernel.org, tglx@linutronix.de
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:35213 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753127AbXFGQNh (ORCPT
+Received: from h155.mvista.com ([63.81.120.158]:13718 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1754470AbXFGQXI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Jun 2007 12:13:37 -0400
-In-Reply-To: <1181231910.3841.55.camel@bender>
+	Thu, 7 Jun 2007 12:23:08 -0400
+In-Reply-To: <1181232783.10408.8.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-06-07 at 17:58 +0200, Jan Altenberg wrote:
-> Hi,
+On Thu, 2007-06-07 at 12:13 -0400, Steven Rostedt wrote:
+
 > 
-> > > in prepare_task_switch(rq, next); interrupts are enabled,
-> > 
-> > That's a bug.  __schedule should not have interrupts enabled.
-> > What's the back trace of this?
-> 
-> I've also seen this in the past. Interrupts are enabled in
-> prepare_lock_switch because ARM defines __ARCH_WANT_INTERRUPTS_ON_CTXSW.
+> What arch is innovator1510 (OMAP5910 cpu) anyway?
+
+It's an ARM .
+
+> /me has been away from embedded systems for some time.
 > 
 
-Heh, silly me.  I've been focused so much on x86 that I forgot what
-other archs do.
+The "fix" went into -rt6 , then was dropped in -rt7 .. I guess a better
+fix is being working on, not sure..
 
-> IIRC Thomas fixed this for the current -rt release.
-
-Thomas, perhaps you want to post the fix.
-
-What arch is innovator1510 (OMAP5910 cpu) anyway?
-
-/me has been away from embedded systems for some time.
-
--- Steve
+Daniel
