@@ -1,7 +1,7 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: BUG: at kernel/sched.c:4031 __schedule()
-Date: Thu, 07 Jun 2007 09:20:01 -0700
-Message-ID: <1181233202.11539.36.camel@imap.mvista.com>
+Date: Thu, 07 Jun 2007 09:21:26 -0700
+Message-ID: <1181233286.11539.38.camel@imap.mvista.com>
 References: <4668112B.4090406@gmail.com>
 	 <1181230780.10408.0.camel@localhost.localdomain>
 	 <1181231910.3841.55.camel@bender>
@@ -14,26 +14,47 @@ Cc: Jan Altenberg <jan.altenberg@linutronix.de>,
 	linux-rt-users@vger.kernel.org, tglx@linutronix.de
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from h155.mvista.com ([63.81.120.158]:13718 "EHLO
+Received: from h155.mvista.com ([63.81.120.158]:15352 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S1754470AbXFGQXI (ORCPT
+	with ESMTP id S1753865AbXFGQYa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Jun 2007 12:23:08 -0400
+	Thu, 7 Jun 2007 12:24:30 -0400
 In-Reply-To: <1181232783.10408.8.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Thu, 2007-06-07 at 12:13 -0400, Steven Rostedt wrote:
-
+> On Thu, 2007-06-07 at 17:58 +0200, Jan Altenberg wrote:
+> > Hi,
+> > 
+> > > > in prepare_task_switch(rq, next); interrupts are enabled,
+> > > 
+> > > That's a bug.  __schedule should not have interrupts enabled.
+> > > What's the back trace of this?
+> > 
+> > I've also seen this in the past. Interrupts are enabled in
+> > prepare_lock_switch because ARM defines __ARCH_WANT_INTERRUPTS_ON_CTXSW.
+> > 
+> 
+> Heh, silly me.  I've been focused so much on x86 that I forgot what
+> other archs do.
+> 
+> > IIRC Thomas fixed this for the current -rt release.
+> 
+> Thomas, perhaps you want to post the fix.
 > 
 > What arch is innovator1510 (OMAP5910 cpu) anyway?
-
-It's an ARM .
-
-> /me has been away from embedded systems for some time.
 > 
+> /me has been away from embedded systems for some time.
 
-The "fix" went into -rt6 , then was dropped in -rt7 .. I guess a better
-fix is being working on, not sure..
+I was wrong, I guess it's still in there .. Below I think..
 
-Daniel
++ *
++ * The new debugging code in __schedule() expects that interrupts
++ * are disabled across a switch_to. Need to investigate which
++ * consequences this has.
+  */
+-#if 0 // preempt_rt hack, because warn_on in shedule.c triggers
++#ifndef CONFIG_PREEMPT_RT
+ #define __ARCH_WANT_INTERRUPTS_ON_CTXSW
+ #endif
