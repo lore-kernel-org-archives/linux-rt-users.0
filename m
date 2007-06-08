@@ -1,58 +1,65 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 2.6.21-rt2..8 troubles
-Date: Fri, 08 Jun 2007 20:50:36 +0200
-Message-ID: <1181328636.4404.335.camel@chaos>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
-	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
-	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
-	 <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>
-	 <1181317625.4404.332.camel@chaos>
-	 <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH RT] convert RCU Preempt tasklet into softirq.
+Date: Fri, 8 Jun 2007 12:36:55 -0700
+Message-ID: <20070608193655.GA18399@linux.vnet.ibm.com>
+References: <1181180051.18444.31.camel@localhost.localdomain> <20070607041411.GB1783@linux.vnet.ibm.com> <1181226138.18444.54.camel@localhost.localdomain> <20070607161754.GA11941@linux.vnet.ibm.com> <1181240819.10408.14.camel@localhost.localdomain> <20070607210247.GA9390@linux.vnet.ibm.com> <1181316428.10408.30.camel@localhost.localdomain>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Rui Nuno Capela <rncbc@rncbc.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:52828 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S937576AbXFHSui (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Jun 2007 14:50:38 -0400
-In-Reply-To: <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
+Received: from e6.ny.us.ibm.com ([32.97.182.146]:33348 "EHLO e6.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752483AbXFHTg6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Jun 2007 15:36:58 -0400
+Content-Disposition: inline
+In-Reply-To: <1181316428.10408.30.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2007-06-08 at 19:21 +0100, Rui Nuno Capela wrote:
-> >> There's no way around. On one box it works flawlessly (desktop,
-> >> P4@3.3Ghz) while on the patient one (laptop, core2 T7200) it bricks
-> >> silently.
-> >
-> > Sorry for responding late. To have some idea where the breakage comes
-> > from, can you please try
-> >
-> > http://www.tglx.de/projects/hrtimers/2.6.22-rc4/patch-2.6.22-rc4-hrt5.pat
-> > ch
-> >
-> > whether it has the same behaviour.
-> >
+On Fri, Jun 08, 2007 at 11:27:08AM -0400, Steven Rostedt wrote:
+> On Thu, 2007-06-07 at 14:02 -0700, Paul E. McKenney wrote:
 > 
-> Just built from linux-2.6.22-rc4.tar.bz2, with patch-2.6.22-rc4-hrt5.
-> All's working apparentely nice on this offending machine (laptop, intel
-> core2 T7200). In fact, I'm writing this very reply under it and through
-> ipw3945 wifi module--which never was so pragmatic on -rt2..9 ;)
+> > Some nits below.
+> > 
+> > 						Thanx, Paul
+> > 
+> > > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> > > 
+> > > Index: linux-2.6.21-rt9/include/linux/rcupreempt.h
+> > > ===================================================================
+> > > --- linux-2.6.21-rt9.orig/include/linux/rcupreempt.h
+> > > +++ linux-2.6.21-rt9/include/linux/rcupreempt.h
+> > > @@ -63,7 +63,9 @@ extern void rcu_check_callbacks(int cpu,
+> > >  extern void rcu_restart_cpu(int cpu);
+> > >  extern long rcu_batches_completed(void);
+> > > 
+> > > -extern void rcu_process_callbacks(unsigned long unused);
+> > > +struct softirq_action;
+> > > +
+> > > +extern void rcu_process_callbacks(struct softirq_action *unused);
+> > 
+> > I don't understand why the above is needed -- interrupt.h is included,
+> > and the use of rcu_process_callbacks() follows the definition.
+> > 
+> > >  #endif /* __KERNEL__ */
+> > >  #endif /* __LINUX_RCUPREEMPT_H */
 > 
-> Nevertheless, this is not preempt-realtime (-rt) is it? And I it never
-> complained about vanilla.
-> 
-> Is this good news though?
+> The first time I compiled it, I forgot the ';' and got a warning there.
+> But the warning also included "declaring structure softirq_action in
+> prototype", so I fixed both the ';' and added the struct. I can try
+> compile without it. But I also know that adding #include <interrupt.h>
+> in rcupreempt.h caused issues too.
 
-Well, the patch carries the same high resolution timer fixes as -rt, so
-I just wanted to exclude those. Thanks for testing.
+If I leave out both the "struct softirq_action" and the
+rcu_process_callbacks() declaration,, it compiles for me.
 
-I'm spinning -rt10 with a couple of fixes. Should be out sometimes
-tomorrow. If the problem persists, we need to dig deeper.
+So I guess the rcu_process_callbacks() should be declared static...
 
-Thanks,
-
-	tglx
+						Thanx, Paul
