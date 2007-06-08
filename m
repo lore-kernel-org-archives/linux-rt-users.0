@@ -1,48 +1,64 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT] convert RCU Preempt tasklet into softirq.
-Date: Fri, 8 Jun 2007 08:00:10 -0700
-Message-ID: <20070608150010.GA24579@linux.vnet.ibm.com>
-References: <1181180051.18444.31.camel@localhost.localdomain> <20070607041411.GB1783@linux.vnet.ibm.com> <1181226138.18444.54.camel@localhost.localdomain> <20070607161754.GA11941@linux.vnet.ibm.com> <1181240819.10408.14.camel@localhost.localdomain> <1181242307.10408.17.camel@localhost.localdomain> <1181247369.10408.20.camel@localhost.localdomain> <20070608041651.GA19912@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Fri, 08 Jun 2007 11:27:08 -0400
+Message-ID: <1181316428.10408.30.camel@localhost.localdomain>
+References: <1181180051.18444.31.camel@localhost.localdomain>
+	 <20070607041411.GB1783@linux.vnet.ibm.com>
+	 <1181226138.18444.54.camel@localhost.localdomain>
+	 <20070607161754.GA11941@linux.vnet.ibm.com>
+	 <1181240819.10408.14.camel@localhost.localdomain>
+	 <20070607210247.GA9390@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Oleg Nesterov <oleg@tv-sign.ru>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Dipankar Sarma <dipankar@in.ibm.com>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:33274 "EHLO e3.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755968AbXFHPAO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Jun 2007 11:00:14 -0400
-Content-Disposition: inline
-In-Reply-To: <20070608041651.GA19912@linux.vnet.ibm.com>
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:60968 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934002AbXFHP2H (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Jun 2007 11:28:07 -0400
+In-Reply-To: <20070607210247.GA9390@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jun 07, 2007 at 09:16:51PM -0700, Paul E. McKenney wrote:
-> On Thu, Jun 07, 2007 at 04:16:09PM -0400, Steven Rostedt wrote:
-> > On Thu, 2007-06-07 at 14:51 -0400, Steven Rostedt wrote:
-> > 
-> > > There might still be an issue here. With the patch I'm getting a really
-> > > slow response time on networking. But that be because of other patches I
-> > > have applied.
-> > 
-> > I removed this patch and I can still get the network slowdown/hang. So
-> > this patch is unrelated to this issue. RCU on the otherhand has not been
-> > cleared of suspicion.
-> 
-> Might the slowdown be due to different kernel threads running at different
-> priorities?  I could easily believe that changing the priority of the
-> kernel thread processing RCU callbacks could have a noticeable effect
-> on performance in some cases.
-> 
-> In other news, passed a set of kernbenches at this end, so starting
-> an rcutorture.
+On Thu, 2007-06-07 at 14:02 -0700, Paul E. McKenney wrote:
 
-And rcutorture passed 8 hours on a 4-CPU Opteron box.
+> Some nits below.
+> 
+> 						Thanx, Paul
+> 
+> > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> > 
+> > Index: linux-2.6.21-rt9/include/linux/rcupreempt.h
+> > ===================================================================
+> > --- linux-2.6.21-rt9.orig/include/linux/rcupreempt.h
+> > +++ linux-2.6.21-rt9/include/linux/rcupreempt.h
+> > @@ -63,7 +63,9 @@ extern void rcu_check_callbacks(int cpu,
+> >  extern void rcu_restart_cpu(int cpu);
+> >  extern long rcu_batches_completed(void);
+> > 
+> > -extern void rcu_process_callbacks(unsigned long unused);
+> > +struct softirq_action;
+> > +
+> > +extern void rcu_process_callbacks(struct softirq_action *unused);
+> 
+> I don't understand why the above is needed -- interrupt.h is included,
+> and the use of rcu_process_callbacks() follows the definition.
+> 
+> >  #endif /* __KERNEL__ */
+> >  #endif /* __LINUX_RCUPREEMPT_H */
 
-							Thanx, Paul
+The first time I compiled it, I forgot the ';' and got a warning there.
+But the warning also included "declaring structure softirq_action in
+prototype", so I fixed both the ';' and added the struct. I can try
+compile without it. But I also know that adding #include <interrupt.h>
+in rcupreempt.h caused issues too.
+
+-- Steve
