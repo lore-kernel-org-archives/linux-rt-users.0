@@ -1,64 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] convert RCU Preempt tasklet into softirq.
-Date: Fri, 08 Jun 2007 11:27:08 -0400
-Message-ID: <1181316428.10408.30.camel@localhost.localdomain>
-References: <1181180051.18444.31.camel@localhost.localdomain>
-	 <20070607041411.GB1783@linux.vnet.ibm.com>
-	 <1181226138.18444.54.camel@localhost.localdomain>
-	 <20070607161754.GA11941@linux.vnet.ibm.com>
-	 <1181240819.10408.14.camel@localhost.localdomain>
-	 <20070607210247.GA9390@linux.vnet.ibm.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 2.6.21-rt2..8 troubles
+Date: Fri, 08 Jun 2007 17:47:05 +0200
+Message-ID: <1181317625.4404.332.camel@chaos>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
+	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
+	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
+	 <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: paulmck@linux.vnet.ibm.com
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Rui Nuno Capela <rncbc@rncbc.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:60968 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934002AbXFHP2H (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Jun 2007 11:28:07 -0400
-In-Reply-To: <20070607210247.GA9390@linux.vnet.ibm.com>
+Received: from www.osadl.org ([213.239.205.134]:42972 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1762558AbXFHPrJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Jun 2007 11:47:09 -0400
+In-Reply-To: <46660369.2070104@rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-06-07 at 14:02 -0700, Paul E. McKenney wrote:
+On Wed, 2007-06-06 at 01:44 +0100, Rui Nuno Capela wrote:
+> Just for the heads-up, I'm still suffering from this same illness, and
+> it seems even worse (big freeze happens earlier) on 2.6.21.3-rt9.
+> 
+> There's no way around. On one box it works flawlessly (desktop,
+> P4@3.3Ghz) while on the patient one (laptop, core2 T7200) it bricks
+> silently.
 
-> Some nits below.
-> 
-> 						Thanx, Paul
-> 
-> > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-> > 
-> > Index: linux-2.6.21-rt9/include/linux/rcupreempt.h
-> > ===================================================================
-> > --- linux-2.6.21-rt9.orig/include/linux/rcupreempt.h
-> > +++ linux-2.6.21-rt9/include/linux/rcupreempt.h
-> > @@ -63,7 +63,9 @@ extern void rcu_check_callbacks(int cpu,
-> >  extern void rcu_restart_cpu(int cpu);
-> >  extern long rcu_batches_completed(void);
-> > 
-> > -extern void rcu_process_callbacks(unsigned long unused);
-> > +struct softirq_action;
-> > +
-> > +extern void rcu_process_callbacks(struct softirq_action *unused);
-> 
-> I don't understand why the above is needed -- interrupt.h is included,
-> and the use of rcu_process_callbacks() follows the definition.
-> 
-> >  #endif /* __KERNEL__ */
-> >  #endif /* __LINUX_RCUPREEMPT_H */
+Sorry for responding late. To have some idea where the breakage comes
+from, can you please try
 
-The first time I compiled it, I forgot the ';' and got a warning there.
-But the warning also included "declaring structure softirq_action in
-prototype", so I fixed both the ';' and added the struct. I can try
-compile without it. But I also know that adding #include <interrupt.h>
-in rcupreempt.h caused issues too.
+http://www.tglx.de/projects/hrtimers/2.6.22-rc4/patch-2.6.22-rc4-hrt5.patch
 
--- Steve
+whether it has the same behaviour.
+
+Thanks,
+
+	tglx
