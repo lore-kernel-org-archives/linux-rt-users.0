@@ -1,65 +1,54 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT] convert RCU Preempt tasklet into softirq.
-Date: Fri, 8 Jun 2007 12:36:55 -0700
-Message-ID: <20070608193655.GA18399@linux.vnet.ibm.com>
-References: <1181180051.18444.31.camel@localhost.localdomain> <20070607041411.GB1783@linux.vnet.ibm.com> <1181226138.18444.54.camel@localhost.localdomain> <20070607161754.GA11941@linux.vnet.ibm.com> <1181240819.10408.14.camel@localhost.localdomain> <20070607210247.GA9390@linux.vnet.ibm.com> <1181316428.10408.30.camel@localhost.localdomain>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Fri, 08 Jun 2007 15:43:48 -0400
+Message-ID: <1181331828.10408.34.camel@localhost.localdomain>
+References: <1181180051.18444.31.camel@localhost.localdomain>
+	 <20070607041411.GB1783@linux.vnet.ibm.com>
+	 <1181226138.18444.54.camel@localhost.localdomain>
+	 <20070607161754.GA11941@linux.vnet.ibm.com>
+	 <1181240819.10408.14.camel@localhost.localdomain>
+	 <20070607210247.GA9390@linux.vnet.ibm.com>
+	 <1181316428.10408.30.camel@localhost.localdomain>
+	 <20070608193655.GA18399@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Oleg Nesterov <oleg@tv-sign.ru>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Dipankar Sarma <dipankar@in.ibm.com>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e6.ny.us.ibm.com ([32.97.182.146]:33348 "EHLO e6.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752483AbXFHTg6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Jun 2007 15:36:58 -0400
-Content-Disposition: inline
-In-Reply-To: <1181316428.10408.30.camel@localhost.localdomain>
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:39135 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1031793AbXFHTo2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Jun 2007 15:44:28 -0400
+In-Reply-To: <20070608193655.GA18399@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jun 08, 2007 at 11:27:08AM -0400, Steven Rostedt wrote:
-> On Thu, 2007-06-07 at 14:02 -0700, Paul E. McKenney wrote:
+On Fri, 2007-06-08 at 12:36 -0700, Paul E. McKenney wrote:
+> On Fri, Jun 08, 2007 at 11:27:08AM -0400, Steven Rostedt wrote:
+
+> > The first time I compiled it, I forgot the ';' and got a warning there.
+> > But the warning also included "declaring structure softirq_action in
+> > prototype", so I fixed both the ';' and added the struct. I can try
+> > compile without it. But I also know that adding #include <interrupt.h>
+> > in rcupreempt.h caused issues too.
 > 
-> > Some nits below.
-> > 
-> > 						Thanx, Paul
-> > 
-> > > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-> > > 
-> > > Index: linux-2.6.21-rt9/include/linux/rcupreempt.h
-> > > ===================================================================
-> > > --- linux-2.6.21-rt9.orig/include/linux/rcupreempt.h
-> > > +++ linux-2.6.21-rt9/include/linux/rcupreempt.h
-> > > @@ -63,7 +63,9 @@ extern void rcu_check_callbacks(int cpu,
-> > >  extern void rcu_restart_cpu(int cpu);
-> > >  extern long rcu_batches_completed(void);
-> > > 
-> > > -extern void rcu_process_callbacks(unsigned long unused);
-> > > +struct softirq_action;
-> > > +
-> > > +extern void rcu_process_callbacks(struct softirq_action *unused);
-> > 
-> > I don't understand why the above is needed -- interrupt.h is included,
-> > and the use of rcu_process_callbacks() follows the definition.
-> > 
-> > >  #endif /* __KERNEL__ */
-> > >  #endif /* __LINUX_RCUPREEMPT_H */
+> If I leave out both the "struct softirq_action" and the
+> rcu_process_callbacks() declaration,, it compiles for me.
 > 
-> The first time I compiled it, I forgot the ';' and got a warning there.
-> But the warning also included "declaring structure softirq_action in
-> prototype", so I fixed both the ';' and added the struct. I can try
-> compile without it. But I also know that adding #include <interrupt.h>
-> in rcupreempt.h caused issues too.
+> So I guess the rcu_process_callbacks() should be declared static...
 
-If I leave out both the "struct softirq_action" and the
-rcu_process_callbacks() declaration,, it compiles for me.
+OK, I can update the patch to reflect that. Remember, I didn't learn
+anything from doing this patch, so I have no idea why
+rcu_procell_callbacks was global. I was just keeping to the norm. :-)
 
-So I guess the rcu_process_callbacks() should be declared static...
+Actually, I'll make a separate patch for this change. This is a
+different issue.
 
-						Thanx, Paul
+-- Steve
