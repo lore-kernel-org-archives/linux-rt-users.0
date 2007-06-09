@@ -1,53 +1,43 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH RT] convert RCU Preempt tasklet into softirq.
-Date: Fri, 8 Jun 2007 13:00:58 -0700
-Message-ID: <20070608200058.GC18399@linux.vnet.ibm.com>
-References: <1181180051.18444.31.camel@localhost.localdomain> <20070607041411.GB1783@linux.vnet.ibm.com> <1181226138.18444.54.camel@localhost.localdomain> <20070607161754.GA11941@linux.vnet.ibm.com> <1181240819.10408.14.camel@localhost.localdomain> <20070607210247.GA9390@linux.vnet.ibm.com> <1181316428.10408.30.camel@localhost.localdomain> <20070608193655.GA18399@linux.vnet.ibm.com> <1181331828.10408.34.camel@localhost.localdomain>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Ingo Molnar <mingo@elte.hu>
+Subject: v2.6.21.4-rt10
+Date: Sat, 9 Jun 2007 22:40:54 +0200
+Message-ID: <20070609204054.GA24503@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: john stultz <johnstul@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:53460 "EHLO e3.ny.us.ibm.com"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:55408 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751057AbXFHUBB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Jun 2007 16:01:01 -0400
+	id S1750838AbXFIUlA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 9 Jun 2007 16:41:00 -0400
 Content-Disposition: inline
-In-Reply-To: <1181331828.10408.34.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jun 08, 2007 at 03:43:48PM -0400, Steven Rostedt wrote:
-> On Fri, 2007-06-08 at 12:36 -0700, Paul E. McKenney wrote:
-> > On Fri, Jun 08, 2007 at 11:27:08AM -0400, Steven Rostedt wrote:
-> 
-> > > The first time I compiled it, I forgot the ';' and got a warning there.
-> > > But the warning also included "declaring structure softirq_action in
-> > > prototype", so I fixed both the ';' and added the struct. I can try
-> > > compile without it. But I also know that adding #include <interrupt.h>
-> > > in rcupreempt.h caused issues too.
-> > 
-> > If I leave out both the "struct softirq_action" and the
-> > rcu_process_callbacks() declaration,, it compiles for me.
-> > 
-> > So I guess the rcu_process_callbacks() should be declared static...
-> 
-> OK, I can update the patch to reflect that. Remember, I didn't learn
-> anything from doing this patch, so I have no idea why
-> rcu_procell_callbacks was global. I was just keeping to the norm. :-)
+i'm pleased to announce the v2.6.21.4-rt10 kernel, which can be 
+downloaded from the usual place:
 
-Hey, -I- learned something from your doing the patch -- namely that
-rcu_process_callbacks() was needlessly non-static.  ;-)
+     http://redhat.com/~mingo/realtime-preempt/
+  
+more info about the -rt patchset can be found in the RT wiki:
+  
+     http://rt.wiki.kernel.org
 
-> Actually, I'll make a separate patch for this change. This is a
-> different issue.
+This is a fixes-only release assembled by Thomas Gleixner again. On 
+popular request this -rt tree is against the stable dot kernel - i.e. 
+apply it to a v2.6.21.4 tree, not a v2.6.21 tree.
 
-Sounds good!
+-rt10 includes the futex fixes and the latest hrtimer updates from 
+Thomas Gleixner, latency tracer fixes from Carsten Emde, tasklet fix 
+from John Stultz, rcu tasklet -> softirq conversion and the 
+enable-irqs-in-pagefaults fix from Steven Rostedt, and other, smaller 
+fixes.
 
-						Thanx, Paul
+to build a 2.6.21.4-rt10 tree, the following patches should be applied:
+ 
+   http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.4.tar.bz2
+   http://redhat.com/~mingo/realtime-preempt/patch-2.6.21.4-rt10
+ 
+	Ingo
