@@ -1,48 +1,47 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: v2.6.21.4-rt11
-Date: Mon, 11 Jun 2007 10:18:06 -0700
-Message-ID: <20070611171806.GH9102@linux.vnet.ibm.com>
-References: <20070609210507.GA29194@elte.hu> <20070611011954.GG27982@linux.vnet.ibm.com> <20070611073634.GB32446@elte.hu> <20070611144401.GA9102@linux.vnet.ibm.com> <20070611153855.GA21136@elte.hu> <20070611155527.GD9102@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: Re: 2.6.21-rt2..8 troubles
+Date: Mon, 11 Jun 2007 20:36:10 +0100
+Message-ID: <466DA42A.6010600@rncbc.org>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>	 <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>	 <1181317625.4404.332.camel@chaos>	 <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org> <1181328636.4404.335.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Dinakar Guniguntala <dino@in.ibm.com>
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:54216 "EHLO e5.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751322AbXFKRSI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Jun 2007 13:18:08 -0400
-Content-Disposition: inline
-In-Reply-To: <20070611155527.GD9102@linux.vnet.ibm.com>
+Received: from smtpa1.netcabo.pt ([212.113.174.16]:19191 "EHLO
+	exch01smtp03.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752480AbXFKTiR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Jun 2007 15:38:17 -0400
+In-Reply-To: <1181328636.4404.335.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jun 11, 2007 at 08:55:27AM -0700, Paul E. McKenney wrote:
-> On Mon, Jun 11, 2007 at 05:38:55PM +0200, Ingo Molnar wrote:
-> > 
-> > * Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> > 
-> > > > hm, what affinity do they start out with? Could they all be pinned 
-> > > > to CPU#0 by default?
-> > > 
-> > > They start off with affinity masks of 0xf on a 4-CPU system.  I would 
-> > > expect them to load-balance across the four CPUs, but they stay all on 
-> > > the same CPU until long after I lose patience (many minutes).
-> > 
-> > ugh. Would be nice to figure out why this happens. I enabled rcutorture 
-> > on a dual-core CPU and all the threads are spread evenly.
+Thomas Gleixner wrote:
+> On Fri, 2007-06-08 at 19:21 +0100, Rui Nuno Capela wrote:
+>> Just built from linux-2.6.22-rc4.tar.bz2, with patch-2.6.22-rc4-hrt5.
+>> All's working apparentely nice on this offending machine (laptop, intel
+>> core2 T7200). In fact, I'm writing this very reply under it and through
+>> ipw3945 wifi module--which never was so pragmatic on -rt2..9 ;)
+>>
+>> Nevertheless, this is not preempt-realtime (-rt) is it? And I it never
+>> complained about vanilla.
+>>
+>> Is this good news though?
 > 
-> Here is the /proc/cpuinfo in case this helps.  I am starting up a test
-> on a dual-core CPU to see if that works better.
+> Well, the patch carries the same high resolution timer fixes as -rt, so
+> I just wanted to exclude those. Thanks for testing.
+> 
+> I'm spinning -rt10 with a couple of fixes. Should be out sometimes
+> tomorrow. If the problem persists, we need to dig deeper.
+> 
 
-And this quickly load-balanced to put a pair of readers on each CPU.
-Later, it moved one of the readers so that it is now running with
-one reader on one of the CPUs, and the remaining three readers on the
-other CPU.
+Uhoh. I'm sorry to tell, but the problem is still creeping on
+2.6.21.4-rt11 and -rt12 :(
 
-Argh...  this is with 2.6.21-rt1...  Need to reboot with 2.6.21.4-rt12...
-
-						Thanx, Paul
+So sorry.
+-- 
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
