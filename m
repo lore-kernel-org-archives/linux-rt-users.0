@@ -1,7 +1,7 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: 2.6.21-rt2..8 troubles
-Date: Mon, 11 Jun 2007 21:45:22 +0200
-Message-ID: <1181591122.8176.159.camel@chaos>
+Date: Mon, 11 Jun 2007 12:55:33 -0700
+Message-ID: <1181591733.11539.217.camel@imap.mvista.com>
 References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
 	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
 	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
@@ -9,32 +9,38 @@ References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
 	 <1181317625.4404.332.camel@chaos>
 	 <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
 	 <1181328636.4404.335.camel@chaos>  <466DA42A.6010600@rncbc.org>
+	 <1181591122.8176.159.camel@chaos>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Rui Nuno Capela <rncbc@rncbc.org>
+Cc: Rui Nuno Capela <rncbc@rncbc.org>, Ingo Molnar <mingo@elte.hu>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:42813 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752507AbXFKTp1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Jun 2007 15:45:27 -0400
-In-Reply-To: <466DA42A.6010600@rncbc.org>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:44543 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752430AbXFKT6t (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Jun 2007 15:58:49 -0400
+In-Reply-To: <1181591122.8176.159.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-06-11 at 20:36 +0100, Rui Nuno Capela wrote:
-> > I'm spinning -rt10 with a couple of fixes. Should be out sometimes
-> > tomorrow. If the problem persists, we need to dig deeper.
+On Mon, 2007-06-11 at 21:45 +0200, Thomas Gleixner wrote:
+> On Mon, 2007-06-11 at 20:36 +0100, Rui Nuno Capela wrote:
+> > > I'm spinning -rt10 with a couple of fixes. Should be out sometimes
+> > > tomorrow. If the problem persists, we need to dig deeper.
+> > > 
 > > 
+> > Uhoh. I'm sorry to tell, but the problem is still creeping on
+> > 2.6.21.4-rt11 and -rt12 :(
+> > 
+> > So sorry.
 > 
-> Uhoh. I'm sorry to tell, but the problem is still creeping on
-> 2.6.21.4-rt11 and -rt12 :(
-> 
-> So sorry.
+> Hmm. Does it happen, when you boot with maxcpus=1 on the kernel
+> commandline ?
 
-Hmm. Does it happen, when you boot with maxcpus=1 on the kernel
-commandline ?
+I think 2.6.21-rt2 had some apic updates also, (along with hpet updates)
+so testing with "noapic" on the command line might be helpful too .. 
 
-	tglx
+Daniel
