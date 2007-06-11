@@ -1,114 +1,47 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: v2.6.21.4-rt11
-Date: Mon, 11 Jun 2007 15:18:03 -0700
-Message-ID: <20070611221803.GL9102@linux.vnet.ibm.com>
-References: <20070609210507.GA29194@elte.hu> <20070611011954.GG27982@linux.vnet.ibm.com> <20070611073634.GB32446@elte.hu> <20070611144401.GA9102@linux.vnet.ibm.com> <20070611153855.GA21136@elte.hu> <20070611155527.GD9102@linux.vnet.ibm.com> <20070611171806.GH9102@linux.vnet.ibm.com> <20070611204427.GK9102@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: 2.6.21-rt2..8 troubles
+Date: Mon, 11 Jun 2007 15:34:40 -0700
+Message-ID: <1181601280.11539.219.camel@imap.mvista.com>
+References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
+	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
+	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
+	 <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>
+	 <1181317625.4404.332.camel@chaos>
+	 <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
+	 <1181328636.4404.335.camel@chaos>  <466DA42A.6010600@rncbc.org>
+	 <1181591122.8176.159.camel@chaos>
+	 <1181591733.11539.217.camel@imap.mvista.com>  <466DB581.8050306@rncbc.org>
+	 <1181596473.8176.162.camel@chaos>  <466DBDC2.8030509@rncbc.org>
+	 <1181598178.8176.180.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Dinakar Guniguntala <dino@in.ibm.com>
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Rui Nuno Capela <rncbc@rncbc.org>, Ingo Molnar <mingo@elte.hu>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e6.ny.us.ibm.com ([32.97.182.146]:50389 "EHLO e6.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756192AbXFKWSJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Jun 2007 18:18:09 -0400
-Content-Disposition: inline
-In-Reply-To: <20070611204427.GK9102@linux.vnet.ibm.com>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:51507 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752237AbXFKWh4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Jun 2007 18:37:56 -0400
+In-Reply-To: <1181598178.8176.180.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jun 11, 2007 at 01:44:27PM -0700, Paul E. McKenney wrote:
-> On Mon, Jun 11, 2007 at 10:18:06AM -0700, Paul E. McKenney wrote:
-> > On Mon, Jun 11, 2007 at 08:55:27AM -0700, Paul E. McKenney wrote:
-> > > On Mon, Jun 11, 2007 at 05:38:55PM +0200, Ingo Molnar wrote:
-> > > > 
-> > > > * Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> > > > 
-> > > > > > hm, what affinity do they start out with? Could they all be pinned 
-> > > > > > to CPU#0 by default?
-> > > > > 
-> > > > > They start off with affinity masks of 0xf on a 4-CPU system.  I would 
-> > > > > expect them to load-balance across the four CPUs, but they stay all on 
-> > > > > the same CPU until long after I lose patience (many minutes).
-> > > > 
-> > > > ugh. Would be nice to figure out why this happens. I enabled rcutorture 
-> > > > on a dual-core CPU and all the threads are spread evenly.
-> > > 
-> > > Here is the /proc/cpuinfo in case this helps.  I am starting up a test
-> > > on a dual-core CPU to see if that works better.
-> > 
-> > And this quickly load-balanced to put a pair of readers on each CPU.
-> > Later, it moved one of the readers so that it is now running with
-> > one reader on one of the CPUs, and the remaining three readers on the
-> > other CPU.
-> > 
-> > Argh...  this is with 2.6.21-rt1...  Need to reboot with 2.6.21.4-rt12...
+On Mon, 2007-06-11 at 23:42 +0200, Thomas Gleixner wrote:
+> On Mon, 2007-06-11 at 22:25 +0100, Rui Nuno Capela wrote:
+> > Nope. It's a Fujitsu-Siemens Amilo Si 1520 -- Intel Core2 Duo T7200@2.0Ghz.
 > 
-> OK, here are a couple of snapshots from "top" on a two-way system.
-> It seems to cycle back and forth between these two states.
+> Yeah, there are Dell ones which have similar or worse symptoms.
+> 
+> > Works great with 2.6.21-rt1, and 2.6.22-rc4-hrt5, but that you already
+> > know :)
+> 
+> Ok. I go back and figure out which differences we have between
+> 2.6.21-rt>8 and the -hrt queue.
 
-And on the 4-CPU box:
+Are you sure it's strictly and HRT issue? I didn't see a
+!CONFIG_HIGH_RES_TIMERS test ..
 
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND           
- 3112 root      39  19     0    0    0 R 11.6  0.0   0:44.34 rcu_torture_rea   
- 3114 root      39  19     0    0    0 R 11.6  0.0   0:44.34 rcu_torture_rea   
- 3115 root      39  19     0    0    0 R 11.6  0.0   0:44.34 rcu_torture_rea   
- 3116 root      39  19     0    0    0 R 11.6  0.0   0:44.34 rcu_torture_rea   
- 3109 root      39  19     0    0    0 R 11.3  0.0   0:44.33 rcu_torture_rea   
- 3110 root      39  19     0    0    0 R 11.3  0.0   0:44.33 rcu_torture_rea   
- 3111 root      39  19     0    0    0 R 11.3  0.0   0:44.34 rcu_torture_rea   
- 3113 root      39  19     0    0    0 R 11.3  0.0   0:44.34 rcu_torture_rea   
- 3108 root      39  19     0    0    0 D  6.0  0.0   0:24.35 rcu_torture_wri   
-
-All are on CPU zero:
-
-elm3b6:~# cat /proc/3109/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3110/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3111/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3112/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3113/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3114/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3115/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3116/stat | awk '{print $(NF-3)}'
-0
-elm3b6:~# cat /proc/3108/stat | awk '{print $(NF-3)}'
-0
-
-All have their affinity masks at f (allowing them to run on all CPUs):
-
-elm3b6:~# taskset -p 3109
-pid 3109's current affinity mask: f
-elm3b6:~# taskset -p 3110
-pid 3110's current affinity mask: f
-elm3b6:~# taskset -p 3111
-pid 3111's current affinity mask: f
-elm3b6:~# taskset -p 3112
-pid 3112's current affinity mask: f
-elm3b6:~# taskset -p 3113
-pid 3113's current affinity mask: f
-elm3b6:~# taskset -p 3114
-pid 3114's current affinity mask: f
-elm3b6:~# taskset -p 3115
-pid 3115's current affinity mask: f
-elm3b6:~# taskset -p 3116
-pid 3116's current affinity mask: f
-elm3b6:~# taskset -p 3108
-pid 3108's current affinity mask: f
-
-Not a biggie for me, since I can easily do the taskset commands to
-force the processes to spread out, but I am worried that casual users
-of rcutorture won't know to do this -- thus not really torturing RCU.
-It would not be hard to modify rcutorture to affinity the tasks so as
-to spread them, but this seems a bit ugly.
-
-						Thanx, Paul
+Daniel
