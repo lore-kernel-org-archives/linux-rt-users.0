@@ -1,53 +1,54 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 2.6.21-rt2..8 troubles
-Date: Tue, 12 Jun 2007 01:08:26 +0200
-Message-ID: <1181603306.8176.183.camel@chaos>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
-	 <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
-	 <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
-	 <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>
-	 <1181317625.4404.332.camel@chaos>
-	 <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
-	 <1181328636.4404.335.camel@chaos>  <466DA42A.6010600@rncbc.org>
-	 <1181591122.8176.159.camel@chaos>
-	 <1181591733.11539.217.camel@imap.mvista.com>  <466DB581.8050306@rncbc.org>
-	 <1181596473.8176.162.camel@chaos>  <466DBDC2.8030509@rncbc.org>
-	 <1181598178.8176.180.camel@chaos>
-	 <1181601280.11539.219.camel@imap.mvista.com>
+From: Eric St-Laurent <ericstl34@sympatico.ca>
+Subject: Re: v2.6.21.4-rt11
+Date: Tue, 12 Jun 2007 02:03:01 -0400
+Message-ID: <1181628181.7641.15.camel@perkele>
+References: <20070609210507.GA29194@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Rui Nuno Capela <rncbc@rncbc.org>, Ingo Molnar <mingo@elte.hu>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Dinakar Guniguntala <dino@in.ibm.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:44632 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1756468AbXFKXI2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Jun 2007 19:08:28 -0400
-In-Reply-To: <1181601280.11539.219.camel@imap.mvista.com>
+Received: from tomts36.bellnexxia.net ([209.226.175.93]:60587 "EHLO
+	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750954AbXFLGuU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jun 2007 02:50:20 -0400
+In-Reply-To: <20070609210507.GA29194@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-06-11 at 15:34 -0700, Daniel Walker wrote:
-> On Mon, 2007-06-11 at 23:42 +0200, Thomas Gleixner wrote:
-> > On Mon, 2007-06-11 at 22:25 +0100, Rui Nuno Capela wrote:
-> > > Nope. It's a Fujitsu-Siemens Amilo Si 1520 -- Intel Core2 Duo T7200@2.0Ghz.
-> > 
-> > Yeah, there are Dell ones which have similar or worse symptoms.
-> > 
-> > > Works great with 2.6.21-rt1, and 2.6.22-rc4-hrt5, but that you already
-> > > know :)
-> > 
-> > Ok. I go back and figure out which differences we have between
-> > 2.6.21-rt>8 and the -hrt queue.
-> 
-> Are you sure it's strictly and HRT issue? I didn't see a
-> !CONFIG_HIGH_RES_TIMERS test ..
+On Sat, 2007-09-06 at 23:05 +0200, Ingo Molnar wrote:
+> i'm pleased to announce the v2.6.21.4-rt11 kernel, which can be 
+> downloaded from the usual place:
+>  
 
-The main difference between -rt1 and -rt2 was the update of -hrt, which
-not only affects CONFIG_HIGH_RES_TIMERS. There are enough
-CONFIG_HIGH_RES_TIMERS=n related changes to clock events and friends as
-well.
+I'm running 2.6.21.4-rt12-cfs-v17 (x86_64), so far no problems. I like
+this kernel a lot, it's feels quite smooth.
 
-	tglx
+One little thing, no HPET timer is detected. By looking at the patch,
+even the force detect code is there, it should work.
+
+The hpet timer is not available as a clocksource and only one hpet
+related message is present in dmesg:
+
+PM: Adding info for No Bus:hpet
+
+This is on a Asus P5LD2-VM motherboard (ICH7)
+
+Relevant config bits:
+
+CONFIG_HPET_TIMER=y
+# CONFIG_HPET_EMULATE_RTC is not set
+CONFIG_HPET=y
+# CONFIG_HPET_RTC_IRQ is not set
+CONFIG_HPET_MMAP=y
+
+Should I enable one of the two other options? Any ideas?
+
+
+Best regards,
+
+- Eric
