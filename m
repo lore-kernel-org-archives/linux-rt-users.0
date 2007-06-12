@@ -1,73 +1,83 @@
-From: "Rui Nuno Capela" <rncbc@rncbc.org>
-Subject: Re: 2.6.21-rt2..8 troubles
-Date: Tue, 12 Jun 2007 11:10:50 +0100 (WEST)
-Message-ID: <35572.194.65.103.1.1181643050.squirrel@www.rncbc.org>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>
-    <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>
-    <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>
-    <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>
-    <1181317625.4404.332.camel@chaos>
-    <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>
-    <1181328636.4404.335.camel@chaos>  <466DA42A.6010600@rncbc.org>
-    <1181591122.8176.159.camel@chaos>
-    <1181591733.11539.217.camel@imap.mvista.com>
-    <466DB581.8050306@rncbc.org>  <1181596473.8176.162.camel@chaos>
-    <466DBDC2.8030509@rncbc.org>  <1181598178.8176.180.camel@chaos>
-    <1181601280.11539.219.camel@imap.mvista.com>
-    <1181603306.8176.183.camel@chaos>
+From: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>
+Subject: RE: v2.6.21.4-rt11
+Date: Tue, 12 Jun 2007 06:00:10 -0700
+Message-ID: <653FFBB4508B9042B5D43DC9E18836F50101D9F6@scsmsx415.amr.corp.intel.com>
+References: <20070612073207.GA32646@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "Daniel Walker" <dwalker@mvista.com>,
-	"Ingo Molnar" <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: "Thomas Gleixner" <tglx@linutronix.de>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Dinakar Guniguntala" <dino@in.ibm.com>
+To: "Ingo Molnar" <mingo@elte.hu>,
+	"Eric St-Laurent" <ericstl34@sympatico.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.netcabo.pt ([212.113.174.31]:38368 "EHLO
-	exch01smtp12.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752003AbXFLKLf (ORCPT
+Received: from mga09.intel.com ([134.134.136.24]:16277 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755285AbXFLNA0 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jun 2007 06:11:35 -0400
-In-Reply-To: <1181603306.8176.183.camel@chaos>
+	Tue, 12 Jun 2007 09:00:26 -0400
+Content-class: urn:content-classes:message
+In-Reply-To: <20070612073207.GA32646@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+ 
 
-On Tue, June 12, 2007 00:08, Thomas Gleixner wrote:
-> On Mon, 2007-06-11 at 15:34 -0700, Daniel Walker wrote:
+>-----Original Message-----
+>From: Ingo Molnar [mailto:mingo@elte.hu] 
+>Sent: Tuesday, June 12, 2007 12:32 AM
+>To: Eric St-Laurent
+>Cc: linux-kernel@vger.kernel.org; 
+>linux-rt-users@vger.kernel.org; Thomas Gleixner; Dinakar 
+>Guniguntala; Pallipadi, Venkatesh
+>Subject: Re: v2.6.21.4-rt11
 >
->> On Mon, 2007-06-11 at 23:42 +0200, Thomas Gleixner wrote:
->>
->>> On Mon, 2007-06-11 at 22:25 +0100, Rui Nuno Capela wrote:
->>>
->>>> Nope. It's a Fujitsu-Siemens Amilo Si 1520 -- Intel Core2 Duo
->>>> T7200@2.0Ghz.
->>>>
->>>
->>> Yeah, there are Dell ones which have similar or worse symptoms.
->>>
->>>
->>>> Works great with 2.6.21-rt1, and 2.6.22-rc4-hrt5, but that you
->>>> already know :)
->>>
->>> Ok. I go back and figure out which differences we have between
->>> 2.6.21-rt>8 and the -hrt queue.
->>>
->>
->> Are you sure it's strictly and HRT issue? I didn't see a
->> !CONFIG_HIGH_RES_TIMERS test ..
->>
 >
-> The main difference between -rt1 and -rt2 was the update of -hrt, which
-> not only affects CONFIG_HIGH_RES_TIMERS. There are enough
-> CONFIG_HIGH_RES_TIMERS=n related changes to clock events and friends as
-> well.
+>(Cc:-ed Venki for the force-hpet issue below)
+>
+>* Eric St-Laurent <ericstl34@sympatico.ca> wrote:
+>
+>> On Sat, 2007-09-06 at 23:05 +0200, Ingo Molnar wrote:
+>> > i'm pleased to announce the v2.6.21.4-rt11 kernel, which can be 
+>> > downloaded from the usual place:
+>> 
+>> I'm running 2.6.21.4-rt12-cfs-v17 (x86_64), so far no 
+>problems. I like 
+>> this kernel a lot, it's feels quite smooth.
+>
+>yeah, that's probably CFS in the works :-) That combined with 
+>PREEMPT_RT 
+>makes for a really snappy desktop.
+>
+>> One little thing, no HPET timer is detected. By looking at 
+>the patch, 
+>> even the force detect code is there, it should work.
+>> 
+>> The hpet timer is not available as a clocksource and only one hpet
+>> related message is present in dmesg:
+>> 
+>> PM: Adding info for No Bus:hpet
+>> 
+>> This is on a Asus P5LD2-VM motherboard (ICH7)
+>> 
+>> Relevant config bits:
+>> 
+>> CONFIG_HPET_TIMER=y
+>> # CONFIG_HPET_EMULATE_RTC is not set
+>> CONFIG_HPET=y
+>> # CONFIG_HPET_RTC_IRQ is not set
+>> CONFIG_HPET_MMAP=y
+>> 
+>> Should I enable one of the two other options? Any ideas?
+>
+>Venki, is this ICH7 board supposed to work with force-hpet?
 >
 
-In deed, FWIW and IIRC, I can confirm that the show-stopper problem was
-still present when tried with CONFIG_HIGH_RES_TIMERS not set (=N).
+Yes. Force_hpet part is should have worked..
+Eric: Can you send me the output of 'lspci -n on your system.
+We need to double check we are covering all ICH7 ids.
 
-Bye now.
--- 
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
+Thanks,
+Venki
