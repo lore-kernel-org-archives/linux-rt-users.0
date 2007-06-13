@@ -1,90 +1,84 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: v2.6.21.4-rt11
-Date: Tue, 12 Jun 2007 18:27:46 -0700
-Message-ID: <20070613012746.GH8544@linux.vnet.ibm.com>
-References: <20070609210507.GA29194@elte.hu> <20070611011954.GG27982@linux.vnet.ibm.com> <20070611073634.GB32446@elte.hu> <20070611144401.GA9102@linux.vnet.ibm.com> <20070611153855.GA21136@elte.hu> <20070611155527.GD9102@linux.vnet.ibm.com> <20070611171806.GH9102@linux.vnet.ibm.com> <20070611204427.GK9102@linux.vnet.ibm.com> <20070611221803.GL9102@linux.vnet.ibm.com> <20070612213758.GA6173@elte.hu>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Eric St-Laurent <ericstl34@sympatico.ca>
+Subject: RE: v2.6.21.4-rt11
+Date: Tue, 12 Jun 2007 21:37:55 -0400
+Message-ID: <1181698675.6220.10.camel@perkele>
+References: <653FFBB4508B9042B5D43DC9E18836F50101D9F6@scsmsx415.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Dinakar Guniguntala <dino@in.ibm.com>
-To: Ingo Molnar <mingo@elte.hu>
+To: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:41463 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751389AbXFMB1x (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jun 2007 21:27:53 -0400
-Content-Disposition: inline
-In-Reply-To: <20070612213758.GA6173@elte.hu>
+Received: from tomts36.bellnexxia.net ([209.226.175.93]:61836 "EHLO
+	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752132AbXFMBh5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jun 2007 21:37:57 -0400
+In-Reply-To: <653FFBB4508B9042B5D43DC9E18836F50101D9F6@scsmsx415.amr.corp.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Jun 12, 2007 at 11:37:58PM +0200, Ingo Molnar wrote:
+On Tue, 2007-12-06 at 06:00 -0700, Pallipadi, Venkatesh wrote:
 > 
-> * Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> 
-> > Not a biggie for me, since I can easily do the taskset commands to 
-> > force the processes to spread out, but I am worried that casual users 
-> > of rcutorture won't know to do this -- thus not really torturing RCU. 
-> > It would not be hard to modify rcutorture to affinity the tasks so as 
-> > to spread them, but this seems a bit ugly.
-> 
-> does it get any better if you renice them from +19 to 0? (and then back 
-> to +19?)
+> >-----Original Message-----
 
-Interesting!
+> Yes. Force_hpet part is should have worked..
+> Eric: Can you send me the output of 'lspci -n on your system.
+> We need to double check we are covering all ICH7 ids.
 
-That did spread them evenly across two CPUs, but not across all four.
+Here it is:
 
-I took a look at CFS, which seems to operate in terms of milliseconds.
-Since the rcu_torture_reader() code enters the scheduler on each
-interation, it would not give CFS millisecond-scale bursts of CPU
-consumption, perhaps not allowing it to do reasonable load balancing.
+00:00.0 0600: 8086:2770 (rev 02)
+00:02.0 0300: 8086:2772 (rev 02)
+00:1b.0 0403: 8086:27d8 (rev 01)
+00:1c.0 0604: 8086:27d0 (rev 01)
+00:1c.1 0604: 8086:27d2 (rev 01)
+00:1d.0 0c03: 8086:27c8 (rev 01)
+00:1d.1 0c03: 8086:27c9 (rev 01)
+00:1d.2 0c03: 8086:27ca (rev 01)
+00:1d.3 0c03: 8086:27cb (rev 01)
+00:1d.7 0c03: 8086:27cc (rev 01)
+00:1e.0 0604: 8086:244e (rev e1)
+00:1f.0 0601: 8086:27b8 (rev 01)
+00:1f.1 0101: 8086:27df (rev 01)
+00:1f.2 0101: 8086:27c0 (rev 01)
+00:1f.3 0c05: 8086:27da (rev 01)
+01:0a.0 0604: 3388:0021 (rev 11)
+02:0c.0 0c03: 1033:0035 (rev 41)
+02:0c.1 0c03: 1033:0035 (rev 41)
+02:0c.2 0c03: 1033:00e0 (rev 02)
+02:0d.0 0c00: 1106:3044 (rev 46)
+03:00.0 0200: 8086:109a
 
-So I inserted the following code at the beginning of rcu_torture_reader():
+Adding the id for PCI_DEVICE_ID_INTEL_ICH7_0 (27b8) should do the trick.
 
-	set_user_nice(current, 19);
-	set_user_nice(current, 0);
-	for (idx = 0; idx < 1000; idx++) {
-		udelay(10);
-	}
-	set_user_nice(current, 19);
+I've patched my kernel and was ready to test it, but in the meantime I
+did a BIOS upgrade (bad idea...) and with the new version the HPET timer
+is detected via ACPI.
 
-This worked much better:
+Unfortunately it seems that downgrading the BIOS is a lot more trouble
+than upgrading it. So I cannot easily test the force enable anymore.
 
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND           
-18600 root      39  19     0    0    0 R   50  0.0   0:09.57 rcu_torture_rea    
-18599 root      39  19     0    0    0 R   50  0.0   0:09.56 rcu_torture_rea    
-18598 root      39  19     0    0    0 R   49  0.0   0:10.33 rcu_torture_rea    
-18602 root      39  19     0    0    0 R   49  0.0   0:10.34 rcu_torture_rea    
-18596 root      39  19     0    0    0 R   47  0.0   0:09.48 rcu_torture_rea    
-18601 root      39  19     0    0    0 R   46  0.0   0:09.56 rcu_torture_rea    
-18595 root      39  19     0    0    0 R   45  0.0   0:09.23 rcu_torture_rea    
-18597 root      39  19     0    0    0 R   44  0.0   0:10.92 rcu_torture_rea    
-18590 root      39  19     0    0    0 R   10  0.0   0:02.23 rcu_torture_wri    
-18591 root      39  19     0    0    0 D    2  0.0   0:00.34 rcu_torture_fak    
-18592 root      39  19     0    0    0 D    2  0.0   0:00.35 rcu_torture_fak    
-18593 root      39  19     0    0    0 D    2  0.0   0:00.35 rcu_torture_fak    
-18594 root      39  19     0    0    0 D    2  0.0   0:00.33 rcu_torture_fak    
-18603 root      15  -5     0    0    0 S    1  0.0   0:00.06 rcu_torture_sta    
+Anyway it works now. Here is my patch if it's any use to you:
 
-(The first eight tasks are readers, while the last six tasks are update
-and statistics threads that don't consume so much CPU, so the above is
-pretty close to optimal.)
 
-I stopped and restarted rcutorture several times, and it spread nicely
-each time, at least aside from the time that makewhatis decided to fire
-up just as I started rcutorture.
+diff -uprN linux-2.6.21.4.orig/arch/i386/kernel/quirks.c linux-2.6.21.4/arch/i386/kernel/quirks.c
+--- linux-2.6.21.4.orig/arch/i386/kernel/quirks.c	Tue Jun 12 10:03:18 2007
++++ linux-2.6.21.4/arch/i386/kernel/quirks.c	Tue Jun 12 10:08:02 2007
+@@ -149,6 +149,8 @@ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_I
+                          ich_force_enable_hpet);
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1,
+                          ich_force_enable_hpet);
++DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,
++                         ich_force_enable_hpet);
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,
+                          ich_force_enable_hpet);
+ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,
 
-But this is admittedly a -very- crude hack.
 
-One approach would be to make them all spin until a few milliseconds
-after the last one was created.  I would like to spread the readers
-separately from the other tasks, which could be done by taking a two-stage
-approach, spreading the writer and fakewriter tasks first, then spreading
-the readers.  This seems a bit nicer, and I will play with it a bit.
+Best regards,
 
-In the meantime, thoughts on more-maintainable ways of making this work?
-
-						Thanx, Paul
+- Eric
