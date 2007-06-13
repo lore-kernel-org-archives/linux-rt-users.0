@@ -1,84 +1,44 @@
-From: Eric St-Laurent <ericstl34@sympatico.ca>
-Subject: RE: v2.6.21.4-rt11
-Date: Tue, 12 Jun 2007 21:37:55 -0400
-Message-ID: <1181698675.6220.10.camel@perkele>
-References: <653FFBB4508B9042B5D43DC9E18836F50101D9F6@scsmsx415.amr.corp.intel.com>
+From: Peter Feuerer <peter@piie.net>
+Subject: Re: catching interrupts
+Date: Wed, 13 Jun 2007 09:58:25 +0200
+Message-ID: <1181721505.5703.7.camel@localhost.localdomain>
+References: <1181679431.4904.2.camel@localhost.localdomain>
+	 <466F3484.3000202@l1nuxh4ck3r.de>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Dinakar Guniguntala <dino@in.ibm.com>
-To: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts36.bellnexxia.net ([209.226.175.93]:61836 "EHLO
-	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752132AbXFMBh5 (ORCPT
+Received: from smtprelay02.ispgateway.de ([80.67.18.14]:44152 "EHLO
+	smtprelay02.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756012AbXFMH63 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jun 2007 21:37:57 -0400
-In-Reply-To: <653FFBB4508B9042B5D43DC9E18836F50101D9F6@scsmsx415.amr.corp.intel.com>
+	Wed, 13 Jun 2007 03:58:29 -0400
+In-Reply-To: <466F3484.3000202@l1nuxh4ck3r.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-12-06 at 06:00 -0700, Pallipadi, Venkatesh wrote:
+On Wed, 2007-06-13 at 02:04 +0200, Bernhard Kuhn wrote:
+> Peter Feuerer wrote:
 > 
-> >-----Original Message-----
+> > is it possible to catch e.g. the interrupt of the Parallelport (IRQ7 in
+> > my case) in userspace with a RT-Rreempt patched kernel?
+> 
+> A very simple solution would be to create a small kernel device driver
+> that implements a blocking read function that always gets woken up
+> by the parport interrupt service routine, then sending one dummy byte.
 
-> Yes. Force_hpet part is should have worked..
-> Eric: Can you send me the output of 'lspci -n on your system.
-> We need to double check we are covering all ICH7 ids.
+That would be a very fast and easy to implement solution, but then I
+have to touch the kernel again. I wanted not to do that.
 
-Here it is:
+> But i guess a better variant would be to adopt the IIO framework
+> for your purpose (http://lkml.org/lkml/2006/8/30/22)
 
-00:00.0 0600: 8086:2770 (rev 02)
-00:02.0 0300: 8086:2772 (rev 02)
-00:1b.0 0403: 8086:27d8 (rev 01)
-00:1c.0 0604: 8086:27d0 (rev 01)
-00:1c.1 0604: 8086:27d2 (rev 01)
-00:1d.0 0c03: 8086:27c8 (rev 01)
-00:1d.1 0c03: 8086:27c9 (rev 01)
-00:1d.2 0c03: 8086:27ca (rev 01)
-00:1d.3 0c03: 8086:27cb (rev 01)
-00:1d.7 0c03: 8086:27cc (rev 01)
-00:1e.0 0604: 8086:244e (rev e1)
-00:1f.0 0601: 8086:27b8 (rev 01)
-00:1f.1 0101: 8086:27df (rev 01)
-00:1f.2 0101: 8086:27c0 (rev 01)
-00:1f.3 0c05: 8086:27da (rev 01)
-01:0a.0 0604: 3388:0021 (rev 11)
-02:0c.0 0c03: 1033:0035 (rev 41)
-02:0c.1 0c03: 1033:0035 (rev 41)
-02:0c.2 0c03: 1033:00e0 (rev 02)
-02:0d.0 0c00: 1106:3044 (rev 46)
-03:00.0 0200: 8086:109a
+Great, seems like that's what I'm searching for. I will have a deeper
+look into this. Because if this is going to be in the mainline kernel, I
+don't have to touch the kernel at all.
+Thanks.
 
-Adding the id for PCI_DEVICE_ID_INTEL_ICH7_0 (27b8) should do the trick.
-
-I've patched my kernel and was ready to test it, but in the meantime I
-did a BIOS upgrade (bad idea...) and with the new version the HPET timer
-is detected via ACPI.
-
-Unfortunately it seems that downgrading the BIOS is a lot more trouble
-than upgrading it. So I cannot easily test the force enable anymore.
-
-Anyway it works now. Here is my patch if it's any use to you:
-
-
-diff -uprN linux-2.6.21.4.orig/arch/i386/kernel/quirks.c linux-2.6.21.4/arch/i386/kernel/quirks.c
---- linux-2.6.21.4.orig/arch/i386/kernel/quirks.c	Tue Jun 12 10:03:18 2007
-+++ linux-2.6.21.4/arch/i386/kernel/quirks.c	Tue Jun 12 10:08:02 2007
-@@ -149,6 +149,8 @@ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_I
-                          ich_force_enable_hpet);
- DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH6_1,
-                          ich_force_enable_hpet);
-+DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_0,
-+                         ich_force_enable_hpet);
- DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_1,
-                          ich_force_enable_hpet);
- DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH7_31,
-
-
-Best regards,
-
-- Eric
+regards,
+--peter
