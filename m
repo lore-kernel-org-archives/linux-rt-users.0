@@ -1,52 +1,97 @@
-From: Peter Feuerer <peter@piie.net>
-Subject: Re: catching interrupts
-Date: Wed, 13 Jun 2007 10:47:41 +0200
-Message-ID: <1181724461.5703.20.camel@localhost.localdomain>
-References: <1181679431.4904.2.camel@localhost.localdomain>
-	 <466F3484.3000202@l1nuxh4ck3r.de>
-	 <1181721505.5703.7.camel@localhost.localdomain>
-	 <1181722808.8176.255.camel@chaos>
-	 <1181723468.5703.17.camel@localhost.localdomain>
-	 <1181724234.8176.260.camel@chaos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] fix migrating softirq [cause of network hang]
+Date: Wed, 13 Jun 2007 08:47:16 -0400
+Message-ID: <1181738836.10408.54.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>, linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	john stultz <johnstul@us.ibm.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay03.ispgateway.de ([80.67.18.15]:51365 "EHLO
-	smtprelay03.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754088AbXFMIrp (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:62703 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757878AbXFMMr4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Jun 2007 04:47:45 -0400
-In-Reply-To: <1181724234.8176.260.camel@chaos>
+	Wed, 13 Jun 2007 08:47:56 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-06-13 at 10:43 +0200, Thomas Gleixner wrote:
-> On Wed, 2007-06-13 at 10:31 +0200, Peter Feuerer wrote:
-> > > > Great, seems like that's what I'm searching for. I will have a deeper
-> > > > look into this. Because if this is going to be in the mainline kernel, I
-> > > > don't have to touch the kernel at all.
-> > > 
-> > > You have to touch it. You still need to write a kernel module which
-> > > handles the interrupt in the first place.
-> > > 
-> > 
-> > But wouldn't it be a good idea to create a kernel driver which offers an
-> > abstract interface and add it to the mainline kernel or to the preempt
-> > patch? So that handling interrupts can really just happen by coding a
-> > userspace program?
-> > Or is there no way to accomplish that? Sorry if this questions may sound
-> > stupid, I'm not that deep in the code,.. yet.
-> 
-> No. This can not work. The kernel side must be able to mask the device
-> interrupt before invoking the user space handler. Otherwise it would not
-> work with shared interrupts. Also the kernel needs control to shut down
-> the device interrupt in case that the user space driver is broken, not
-> running or whatever. Please read the UIO documentation, it explains this
-> in detail.
+Softirqs are bound to a single CPU.  That is to say, that once a softirq
+function starts to run, it will stay on the CPU that it is running on
+while it's running.
 
-Okay, I'm going to read it as soon as possible. Thanks for the answers.
+In RT, softirqs are threads, and we have a softirq thread per cpu. Each
+softirq thread is bound to a single CPU that it represents.
 
---peter
+In order to speed things up and lower context switches in RT, if a
+softirq thread is of the same priority as an interrupt thread, then when
+the interrupt thread is about to exit, it tests to see if any softirq
+threads need to be run on that cpu. Instead of running the softirq
+thread, it simply performs the functions for the softirq within the
+interrupt thread.
+
+The problem is, nothing prevents the interrupt thread from migrating.
+
+So while the interrupt thread is running the softirq function, it may
+migrate to another CPU in the middle of that function. This means that
+any CPU data that the softirq is touching can be corrupted.
+
+I was experiencing a network hang that sometimes would come back, and
+sometimes not. Using my logdev debugger, I started to debug this
+problem.  I came across this at the moment of the hang:
+
+
+[  389.131279] cpu:0 (IRQ-11:427) tcp_rcv_established:4056 rcv_nxt=-1665585797
+[  389.131615] cpu:1 192.168.23.72:22 <== 192.168.23.60:41352 ack:2629381499 seq:1773074099 (----A-) len:0 win:790 end_seq:1773074099
+[  389.131626] cpu:1 (IRQ-11:427) ip_finish_output2:187 dst->hh=ffff81003b213080
+[  389.131635] cpu:1 (IRQ-11:427) ip_finish_output2:189 hh_output=ffffffff80429009
+
+
+Here we see IRQ-11 in the process of finishing up the softirq-net-tx
+function. In the middle of it, we receive a packet, and that must have
+pushed the interrupt thread over to CPU 1, and it finished up the
+softirq there.
+
+This patch temporarily binds the hardirq thread on the CPU that it runs
+the softirqs on.  With this patch I have not seen my network hang. I ran
+it over night, doing compiles and such, and it seems fine. I would be
+able to cause the hang with various loads within a minute, now I can't
+cause it after several minutes.
+
+I'm assuming that this fix may fix other bugs too.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.21.4-rt12/kernel/softirq.c
+===================================================================
+--- linux-2.6.21.4-rt12.orig/kernel/softirq.c
++++ linux-2.6.21.4-rt12/kernel/softirq.c
+@@ -426,8 +426,25 @@ void do_softirq_from_hardirq(void)
+ 	current->flags &= ~PF_HARDIRQ;
+ 	current->flags |= PF_SOFTIRQ;
+ 
++#ifdef CONFIG_PREEMPT_HARDIRQS
++	{
++	cpumask_t save_cpus_allowed, cpus_allowed;
++
++	/* Don't let ourselves migrate */
++	save_cpus_allowed = current->cpus_allowed;
++	cpu_set(smp_processor_id(), cpus_allowed);
++	set_cpus_allowed(current, cpus_allowed);
++#endif
++
+ 	___do_softirq(1);
+ 
++#ifdef CONFIG_PREEMPT_HARDIRQS
++	/* Put back our original mask. */
++	WARN_ON(!cpus_equal(current->cpus_allowed, cpus_allowed));
++	set_cpus_allowed(current, save_cpus_allowed);
++	}
++#endif
++
+ #ifndef CONFIG_PREEMPT_SOFTIRQS
+ 	trace_softirq_exit();
+ #endif
