@@ -1,42 +1,66 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Shane <gnome42@gmail.com>
 Subject: Re: [PATCH RT] fix migrating softirq [cause of network hang]
-Date: Thu, 14 Jun 2007 09:08:34 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0706140907570.32607@gandalf.stny.rr.com>
-References: <1181738836.10408.54.camel@localhost.localdomain>
- <200706140002.17411.dvhltc@us.ibm.com>
+Date: Thu, 14 Jun 2007 10:10:40 -0400
+Message-ID: <fa4052ef0706140710s547115d5o13f3dba018caaa78@mail.gmail.com>
+References: <fa4052ef0706131414o27b2281bp81d3f5b3d3104f87@mail.gmail.com>
+	 <Pine.LNX.4.58.0706131723430.20636@gandalf.stny.rr.com>
+	 <fa4052ef0706131520x619ff3f5ke23cf649b8ff2b79@mail.gmail.com>
+	 <Pine.LNX.4.58.0706131954220.20636@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>
-To: Darren Hart <dvhltc@us.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:58579 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751333AbXFNNJP (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.180]:51071 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751162AbXFNOKk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Jun 2007 09:09:15 -0400
-In-Reply-To: <200706140002.17411.dvhltc@us.ibm.com>
+	Thu, 14 Jun 2007 10:10:40 -0400
+Received: by wa-out-1112.google.com with SMTP id v27so688931wah
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Jun 2007 07:10:40 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0706131954220.20636@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 14 Jun 2007, Darren Hart wrote:
-
-> On Wednesday 13 June 2007 05:47:16 Steven Rostedt wrote:
->
-> >
-> > I'm assuming that this fix may fix other bugs too.
+On 6/13/07, Steven Rostedt <rostedt@goodmis.org> wrote:
+> > Heh, I spoke too soon. This patch doesn't seem to help my problem after all. :/
 > >
 >
-> I ran 2.6.21-rt10 + this patch with kernbench and then loops building a kernel
-> (which would previously rapidly exhaust memory).  It successfully built 400
-> kernels with "make -j 32" on an 8 opteron machine with 8 GB of RAM and has so
-> far completed 25 "make -j" on the same system.  Looks like a winner to me so
-> far.
+> Really?  Darn.
 >
+> So it seemed to work? Just curious to why you thought it worked and but it
+> didn't?
 
+Yeah, I can't reproduce the problem at will, it takes from minutes to
+hours to happen. After a few hours of problem free operation with your
+patch I thought it was solved but then, the same problem. Applications
+accessing this nfs filesystem on this host will just hang and the df,
+lsof etc commands also started to  hang. Other nfs clients have no
+problem accessing that filesystem its only this host, which is the
+only core2 (smp) box in the mix so the description you gave with the
+patch sounded pretty good to me.
 
-This is great news! Darren (and team), thanks a lot for testing it.
+I'm not even sure it's a kernel problem, although I just updated my
+nfs user space stuff and half of user space that came along with it
+and still no luck. I've been using this nfs mount for years but I just
+changed the nfs exports slightly. I mounted and exported two other
+file systems under the original export. I added the 'nohide' export
+option and to my amazement these filesystems appeared on the client
+having only mounted the original export. I thought I was lucky, I
+didn't have to mount all these other sub-filesystems.
 
--- Steve
+I would summarize as:
+2.6.21.4-rt13 core2, smp nfs client access hangs when using nohide export option
+
+So, smp and the more recent kernel seem to be suspect. Also cpufreq,
+which I just disabled.
+
+These UP clients have no problems accessing the same nfs export:
+celeronA -  2.6.21-rc5-rt11
+pII -  2.6.17-rc6-mm1
+
+I'll let you know if I am able to pin it down.
+
+Shane
