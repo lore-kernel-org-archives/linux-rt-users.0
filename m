@@ -1,74 +1,190 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Shane <gnome42@gmail.com>
 Subject: Re: [PATCH RT] fix migrating softirq [cause of network hang]
-Date: Thu, 14 Jun 2007 10:20:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0706141017090.891@gandalf.stny.rr.com>
+Date: Thu, 14 Jun 2007 10:46:59 -0400
+Message-ID: <fa4052ef0706140746h487114deqe5b28451ac87e0b2@mail.gmail.com>
 References: <fa4052ef0706131414o27b2281bp81d3f5b3d3104f87@mail.gmail.com>
- <Pine.LNX.4.58.0706131723430.20636@gandalf.stny.rr.com>
- <fa4052ef0706131520x619ff3f5ke23cf649b8ff2b79@mail.gmail.com>
- <Pine.LNX.4.58.0706131954220.20636@gandalf.stny.rr.com>
- <fa4052ef0706140710s547115d5o13f3dba018caaa78@mail.gmail.com>
+	 <Pine.LNX.4.58.0706131723430.20636@gandalf.stny.rr.com>
+	 <fa4052ef0706131520x619ff3f5ke23cf649b8ff2b79@mail.gmail.com>
+	 <Pine.LNX.4.58.0706131954220.20636@gandalf.stny.rr.com>
+	 <fa4052ef0706140710s547115d5o13f3dba018caaa78@mail.gmail.com>
+	 <Pine.LNX.4.58.0706141017090.891@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: multipart/mixed;
+	boundary="----=_Part_41422_8825890.1181832419624"
 Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu
-To: Shane <gnome42@gmail.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:41270 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751441AbXFNOUT (ORCPT
+Received: from nz-out-0506.google.com ([64.233.162.235]:46444 "EHLO
+	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751429AbXFNOrB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Jun 2007 10:20:19 -0400
-In-Reply-To: <fa4052ef0706140710s547115d5o13f3dba018caaa78@mail.gmail.com>
+	Thu, 14 Jun 2007 10:47:01 -0400
+Received: by nz-out-0506.google.com with SMTP id n1so613324nzf
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Jun 2007 07:47:00 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0706141017090.891@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 14 Jun 2007, Shane wrote:
+------=_Part_41422_8825890.1181832419624
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> On 6/13/07, Steven Rostedt <rostedt@goodmis.org> wrote:
+On 6/14/07, Steven Rostedt <rostedt@goodmis.org> wrote:
+> Before the patch was applied, was it easier (quicker) to trigger the bug?
 
-> Yeah, I can't reproduce the problem at will, it takes from minutes to
-> hours to happen. After a few hours of problem free operation with your
-> patch I thought it was solved but then, the same problem. Applications
-> accessing this nfs filesystem on this host will just hang and the df,
-> lsof etc commands also started to  hang. Other nfs clients have no
-> problem accessing that filesystem its only this host, which is the
-> only core2 (smp) box in the mix so the description you gave with the
-> patch sounded pretty good to me.
+I can't say with confidence one way or the other. :/
 
-Before the patch was applied, was it easier (quicker) to trigger the bug?
-I'm just thinking that my patch may have solved part of your problem, but
-you are facing another. There's another bug we have that my patch seems to
-help, but not fix the problem. Which means that there are two bugs at
-play.
+> I'm just thinking that my patch may have solved part of your problem, but
+> you are facing another. There's another bug we have that my patch seems to
+> help, but not fix the problem. Which means that there are two bugs at
+> play.
 
+..snip..
 
->
-> I'm not even sure it's a kernel problem, although I just updated my
-> nfs user space stuff and half of user space that came along with it
-> and still no luck. I've been using this nfs mount for years but I just
-> changed the nfs exports slightly. I mounted and exported two other
-> file systems under the original export. I added the 'nohide' export
-> option and to my amazement these filesystems appeared on the client
-> having only mounted the original export. I thought I was lucky, I
-> didn't have to mount all these other sub-filesystems.
+> When I get a chance, I'll start testing NFS on my boxes. But I'm a bit
+> buried in other issues at the moment, so it might be a while.
 
-When I get a chance, I'll start testing NFS on my boxes. But I'm a bit
-buried in other issues at the moment, so it might be a while.
+Yeah, no problem. I didn't even really mean to make a bug report. :)
 
->
-> I would summarize as:
-> 2.6.21.4-rt13 core2, smp nfs client access hangs when using nohide export option
->
-> So, smp and the more recent kernel seem to be suspect. Also cpufreq,
-> which I just disabled.
->
-> These UP clients have no problems accessing the same nfs export:
-> celeronA -  2.6.21-rc5-rt11
-> pII -  2.6.17-rc6-mm1
->
+> Could you also do sysrq-T when you see the hang. Could you post the dmesg
+> as well as the sysrq-T somewhere so I can take a look?
 
-Could you also do sysrq-T when you see the hang. Could you post the dmesg
-as well as the sysrq-T somewhere so I can take a look?
+Sure, dmesg is attached. I'll send the sysrq-T after the hang.
 
-Thanks,
+Maybe disabling cpufreq was the key, one hour of uptime and counting. :)
 
--- Steve
+Shane
+
+------=_Part_41422_8825890.1181832419624
+Content-Type: application/x-gzip; name=dmesg-2.6.21.4-rt13.out.gz
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_f2xcc4sx
+Content-Disposition: attachment; filename="dmesg-2.6.21.4-rt13.out.gz"
+
+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
+vm+gtrmSyTRGrx/vdYu8xr8UitMn5F0AAA==
+------=_Part_41422_8825890.1181832419624--
