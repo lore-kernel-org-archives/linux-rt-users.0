@@ -1,74 +1,45 @@
-From: "Nelson Castillo" <nelsoneci@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: v2.6.21.4-rt11
-Date: Sun, 17 Jun 2007 11:15:35 -0500
-Message-ID: <2accc2ff0706170915h7cc0ce97ofc16bc33f1714567@mail.gmail.com>
+Date: Sun, 17 Jun 2007 18:43:25 +0200
+Message-ID: <1182098605.8176.422.camel@chaos>
 References: <20070609210507.GA29194@elte.hu>
+	 <2accc2ff0706170915h7cc0ce97ofc16bc33f1714567@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: "Ingo Molnar" <mingo@elte.hu>
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Nelson Castillo <nelsoneci@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.180]:47023 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753379AbXFQQPh (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 17 Jun 2007 12:15:37 -0400
-Received: by py-out-1112.google.com with SMTP id a29so2617296pyi
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 Jun 2007 09:15:36 -0700 (PDT)
-In-Reply-To: <20070609210507.GA29194@elte.hu>
-Content-Disposition: inline
+Received: from www.osadl.org ([213.239.205.134]:40151 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1753244AbXFQQnc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 17 Jun 2007 12:43:32 -0400
+In-Reply-To: <2accc2ff0706170915h7cc0ce97ofc16bc33f1714567@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 6/9/07, Ingo Molnar <mingo@elte.hu> wrote:
->
-> i'm pleased to announce the v2.6.21.4-rt11 kernel, which can be
-> downloaded from the usual place:
->
->      http://people.redhat.com/mingo/realtime-preempt/
->
-> more info about the -rt patchset can be found in the RT wiki:
->
->      http://rt.wiki.kernel.org
+On Sun, 2007-06-17 at 11:15 -0500, Nelson Castillo wrote:
+> >      http://rt.wiki.kernel.org
+> 
+> Not for ARM yet :(
+> 
+> What should I try for the ARM architecture? 
 
-Not for ARM yet :(
+ARM has a lot of sub architectures and not all of them are supported
+yet.
 
-What should I try for the ARM architecture? There are many choices and
-I don't know what is the more friendly. By friendly I mean the one that
-is likely to be merged and that cooperate with you.
+> There are many choices and
+> I don't know what is the more friendly. By friendly I mean the one that
+> is likely to be merged and that cooperate with you.
 
-> to build a 2.6.21.4-rt11 tree, the following patches should be applied:
->
->     http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.4.tar.bz2
->     http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt11
->
+Which choices do you mean ?
 
+>   http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt14
+> 
+> : undefined reference to `usecs_to_cycles'
+> make: *** [.tmp_vmlinux1] Error 1
 
-Using this patch:
+Which ARM sub arch ?
 
-  http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt14
-
-  LD      init/built-in.o
-  LD      .tmp_vmlinux1
-kernel/built-in.o(.text+0xd3f0): In function `do_sys_settimeofday':
-: undefined reference to `warp_check_clock_was_changed'
-kernel/built-in.o(.text+0x12588): In function `timekeeping_resume':
-: undefined reference to `warp_check_clock_was_changed'
-kernel/built-in.o(.text+0x132f8): In function `do_sysinfo':
-: undefined reference to `__get_nsec_offset'
-kernel/built-in.o(.text+0x20a04): In function `ktime_get_ts':
-: undefined reference to `__get_nsec_offset'
-kernel/built-in.o(.text+0x221c0): In function `$a':
-: undefined reference to `warp_check_clock_was_changed'
-kernel/built-in.o(.text+0x22208): In function `$a':
-: undefined reference to `warp_check_clock_was_changed'
-kernel/built-in.o(.text+0x2b9dc): In function `$a':
-: undefined reference to `usecs_to_cycles'
-make: *** [.tmp_vmlinux1] Error 1
-
-Regards.
-
--- 
-http://arhuaco.org
-http://emQbit.com
+	tglx
