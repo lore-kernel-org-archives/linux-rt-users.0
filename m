@@ -1,72 +1,74 @@
-From: Dragan Noveski <perodog@gmx.net>
-Subject: Re: 2.6.21.5-rt14 wont'compile here
-Date: Sun, 17 Jun 2007 15:44:24 +0200
-Message-ID: <46753AB8.6070305@gmx.net>
-References: <46752AF7.10508@gmx.net> <20070617131041.GD18095@elte.hu>
+From: "Nelson Castillo" <nelsoneci@gmail.com>
+Subject: Re: v2.6.21.4-rt11
+Date: Sun, 17 Jun 2007 11:15:35 -0500
+Message-ID: <2accc2ff0706170915h7cc0ce97ofc16bc33f1714567@mail.gmail.com>
+References: <20070609210507.GA29194@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:34444 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1750744AbXFQNpF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 17 Jun 2007 09:45:05 -0400
-In-Reply-To: <20070617131041.GD18095@elte.hu>
+Received: from py-out-1112.google.com ([64.233.166.180]:47023 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753379AbXFQQPh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 17 Jun 2007 12:15:37 -0400
+Received: by py-out-1112.google.com with SMTP id a29so2617296pyi
+        for <linux-rt-users@vger.kernel.org>; Sun, 17 Jun 2007 09:15:36 -0700 (PDT)
+In-Reply-To: <20070609210507.GA29194@elte.hu>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar wrote:
-> * Dragan Noveski <perodog@gmx.net> wrote:
+On 6/9/07, Ingo Molnar <mingo@elte.hu> wrote:
 >
->   
->> hi list,
->> since i am trying to compile 2.6.24/25 kernel with the rt-patches, no 
->> one version will compile here and i always get the same output.
->> this is how it looks like while trying to compile 2.6.21.4-rt13, but it 
->> looks the same for 2.6.21.5-rt14 :
->>     
+> i'm pleased to announce the v2.6.21.4-rt11 kernel, which can be
+> downloaded from the usual place:
 >
->   
->>  LD      .tmp_vmlinux1
->> kernel/built-in.o:(.data+0x5d8): undefined reference to 
->> `preempt_mark_thresh'
->> make: *** [.tmp_vmlinux1] Fehler 1
->>     
+>      http://people.redhat.com/mingo/realtime-preempt/
 >
-> does the patch below fix this?
+> more info about the -rt patchset can be found in the RT wiki:
 >
-> 	Ingo
->
-> Index: linux-rt.q/kernel/sysctl.c
-> ===================================================================
-> --- linux-rt.q.orig/kernel/sysctl.c
-> +++ linux-rt.q/kernel/sysctl.c
-> @@ -382,6 +382,8 @@ static ctl_table kern_table[] = {
->  		.mode		= 0644,
->  		.proc_handler	= &proc_doulongvec_minmax,
->  	},
-> +#endif
-> +#ifdef CONFIG_EVENT_TRACE
->  	{
->  		.ctl_name	= CTL_UNNUMBERED,
->  		.procname	= "preempt_mark_thresh",
-> @@ -390,8 +392,6 @@ static ctl_table kern_table[] = {
->  		.mode		= 0644,
->  		.proc_handler	= &proc_doulongvec_minmax,
->  	},
-> -#endif
-> -#ifdef CONFIG_EVENT_TRACE
->  	{
->  		.ctl_name	= CTL_UNNUMBERED,
->  		.procname	= "trace_enabled",
->
->   
-hi ingo, very much thanks for the patch, it is fixing the issue here.
-i applied it to the 2.6.21.5-rt14 with '- p1' and the kernel just 
-compiled successfully!
+>      http://rt.wiki.kernel.org
 
-i am hurrying to do a reboot and check the performance now -thanks again!
+Not for ARM yet :(
 
-cheers,
-doc
+What should I try for the ARM architecture? There are many choices and
+I don't know what is the more friendly. By friendly I mean the one that
+is likely to be merged and that cooperate with you.
+
+> to build a 2.6.21.4-rt11 tree, the following patches should be applied:
+>
+>     http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.4.tar.bz2
+>     http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt11
+>
+
+
+Using this patch:
+
+  http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt14
+
+  LD      init/built-in.o
+  LD      .tmp_vmlinux1
+kernel/built-in.o(.text+0xd3f0): In function `do_sys_settimeofday':
+: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x12588): In function `timekeeping_resume':
+: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x132f8): In function `do_sysinfo':
+: undefined reference to `__get_nsec_offset'
+kernel/built-in.o(.text+0x20a04): In function `ktime_get_ts':
+: undefined reference to `__get_nsec_offset'
+kernel/built-in.o(.text+0x221c0): In function `$a':
+: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x22208): In function `$a':
+: undefined reference to `warp_check_clock_was_changed'
+kernel/built-in.o(.text+0x2b9dc): In function `$a':
+: undefined reference to `usecs_to_cycles'
+make: *** [.tmp_vmlinux1] Error 1
+
+Regards.
+
+-- 
+http://arhuaco.org
+http://emQbit.com
