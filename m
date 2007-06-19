@@ -1,174 +1,58 @@
-From: Michal Schmidt <mschmidt@redhat.com>
-Subject: [PATCH -rt] irq nobody cared workaround for i386
-Date: Tue, 19 Jun 2007 15:18:39 +0200
-Message-ID: <4677D7AF.7040700@redhat.com>
-References: <4676CF81.2000205@redhat.com>
+From: Manfred Gruber <manfred.gruber@contec.at>
+Subject: 2.6.21-rt17 arm compile error
+Date: Tue, 19 Jun 2007 16:10:05 +0200
+Message-ID: <200706191610.05137.manfred.gruber@contec.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Steven Rostedt <srostedt@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:33068 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757069AbXFSNTP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 09:19:15 -0400
-In-Reply-To: <4676CF81.2000205@redhat.com>
+Received: from 85-126-107-146.static.sdsl-line.inode.at ([85.126.107.146]:2922
+	"EHLO mail.contec.at" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752935AbXFSO2p (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Jun 2007 10:28:45 -0400
+Received: from comixs.contec-int.at (unknown [192.168.1.250])
+	by mail.contec.at (Firewall Mailer Daemon) with ESMTP id D8935C08A2
+	for <linux-rt-users@vger.kernel.org>; Tue, 19 Jun 2007 16:10:39 +0200 (CEST)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
-> This is the final "design" for the nobody cared bug. For all IO-APICS 
-> other than the first one (the chained IO-APICS) we use the PCIX version 
-> of the mask and unmask interrupt routines.  This changes the interrupt 
-> from level to edge for mask and edge to level for unmask. This keeps the 
-> PCI-E from thinking it's in legacy mode and assert an old fashion INT# 
-> interrupt which might spread to other interrupts.
->
->   
+hi !
 
-Here's a port of the workaround to i386. I tested it successfully on IBM
-LS21.
-Notice I had to disable the quirk handling in ack_ioapic_quirk_irq. The
-code path was triggering on LS21 and because it plays with the Interrupt
-Mask bit, it produced the doubled interrupts again. I don't like it and
-I need to think about a solution which would handle both quirks correctly.
+i get foillowing compile error on arm:
 
-Michal
+In file included from kernel/sched.c:752:
+kernel/sched_debug.c: In function 'print_cpu':
+kernel/sched_debug.c:107: error: 'cpu_khz' undeclared (first use in this 
+function)
+kernel/sched_debug.c:107: error: (Each undeclared identifier is reported only 
+once
+kernel/sched_debug.c:107: error: for each function it appears in.)
+make[1]: *** [kernel/sched.o] Fehler 1
 
---- arch/i386/kernel/io_apic.c.orig	2007-06-19 08:40:05.000000000 -0400
-+++ arch/i386/kernel/io_apic.c	2007-06-19 08:58:00.000000000 -0400
-@@ -261,6 +261,18 @@ static void __unmask_IO_APIC_irq (unsign
- 	__modify_IO_APIC_irq(irq, 0, 0x00010000);
- }
- 
-+/* trigger = 0 (edge mode) */
-+static void __pcix_mask_IO_APIC_irq (unsigned int irq)
-+{
-+	__modify_IO_APIC_irq(irq, 0, 0x00008000);
-+}
-+
-+/* mask = 0, trigger = 1 (level mode) */
-+static void __pcix_unmask_IO_APIC_irq (unsigned int irq)
-+{
-+	__modify_IO_APIC_irq(irq, 0x00008000, 0x00010000);
-+}
-+
- static void mask_IO_APIC_irq (unsigned int irq)
+someone any idea ?
+
+i don't think this fix is correct, but it helps to compile:
+
+Index: linux-2.6/kernel/sched_debug.c
+===================================================================
+--- linux-2.6.orig/kernel/sched_debug.c
++++ linux-2.6/kernel/sched_debug.c
+@@ -104,7 +104,11 @@ static void print_rq_runtime_sum(struct 
+ static void print_cpu(struct seq_file *m, int cpu, u64 now)
  {
- 	unsigned long flags;
-@@ -279,6 +291,24 @@ static void unmask_IO_APIC_irq (unsigned
- 	spin_unlock_irqrestore(&ioapic_lock, flags);
- }
- 
-+static void pcix_mask_IO_APIC_irq (unsigned int irq)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&ioapic_lock, flags);
-+	__pcix_mask_IO_APIC_irq(irq);
-+	spin_unlock_irqrestore(&ioapic_lock, flags);
-+}
-+
-+static void pcix_unmask_IO_APIC_irq (unsigned int irq)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&ioapic_lock, flags);
-+	__pcix_unmask_IO_APIC_irq(irq);
-+	spin_unlock_irqrestore(&ioapic_lock, flags);
-+}
-+
- static void clear_IO_APIC_pin(unsigned int apic, unsigned int pin)
- {
- 	struct IO_APIC_route_entry entry;
-@@ -1257,22 +1287,27 @@ static int assign_irq_vector(int irq)
- 
- 	return vector;
- }
-+
- static struct irq_chip ioapic_chip;
-+static struct irq_chip pcix_ioapic_chip;
- 
- #define IOAPIC_AUTO	-1
- #define IOAPIC_EDGE	0
- #define IOAPIC_LEVEL	1
- 
--static void ioapic_register_intr(int irq, int vector, unsigned long trigger)
-+static void ioapic_register_intr(int irq, int vector, unsigned long trigger,
-+				 int pcix)
- {
-+	struct irq_chip *chip = pcix ? &pcix_ioapic_chip : &ioapic_chip;
-+
- 	if ((trigger == IOAPIC_AUTO && IO_APIC_irq_trigger(irq)) ||
- 			trigger == IOAPIC_LEVEL)
--		set_irq_chip_and_handler_name(irq, &ioapic_chip,
--					 handle_fasteoi_irq, "fasteoi");
--	else {
--		set_irq_chip_and_handler_name(irq, &ioapic_chip,
--					 handle_edge_irq, "edge");
--	}
-+		set_irq_chip_and_handler_name(irq, chip, handle_fasteoi_irq,
-+					      pcix ? "pcix-fasteoi" : "fasteoi");
-+	else
-+		set_irq_chip_and_handler_name(irq, chip, handle_edge_irq,
-+					      pcix ? "pcix-edge" : "edge");
-+	
- 	set_intr_gate(vector, interrupt[irq]);
- }
- 
-@@ -1336,7 +1371,7 @@ static void __init setup_IO_APIC_irqs(vo
- 		if (IO_APIC_IRQ(irq)) {
- 			vector = assign_irq_vector(irq);
- 			entry.vector = vector;
--			ioapic_register_intr(irq, vector, IOAPIC_AUTO);
-+			ioapic_register_intr(irq, vector, IOAPIC_AUTO, apic>0);
- 		
- 			if (!apic && (irq < 16))
- 				disable_8259A_irq(irq);
-@@ -2027,6 +2062,7 @@ static void ack_ioapic_quirk_irq(unsigne
- 
- 	ack_APIC_irq();
- 
-+#if 0
- 	if (!(v & (1 << (i & 0x1f)))) {
- 		atomic_inc(&irq_mis_count);
- 		spin_lock(&ioapic_lock);
-@@ -2036,6 +2072,7 @@ static void ack_ioapic_quirk_irq(unsigne
- 		__modify_IO_APIC_irq(irq, 0x00008000, 0x00010000);
- 		spin_unlock(&ioapic_lock);
- 	}
+        struct rq *rq = &per_cpu(runqueues, cpu);
++#ifdef CONFIG_X86
+        unsigned int freq = cpu_khz ? : 1;
++#else
++       unsigned int freq = 1;
 +#endif
- }
  
- static int ioapic_retrigger_irq(unsigned int irq)
-@@ -2058,6 +2095,18 @@ static struct irq_chip ioapic_chip __rea
- 	.retrigger	= ioapic_retrigger_irq,
- };
- 
-+static struct irq_chip pcix_ioapic_chip __read_mostly = {
-+	.name 		= "IO-APIC",
-+	.startup 	= startup_ioapic_irq,
-+	.mask	 	= pcix_mask_IO_APIC_irq,
-+	.unmask	 	= pcix_unmask_IO_APIC_irq,
-+	.ack 		= ack_ioapic_irq,
-+	.eoi 		= ack_ioapic_quirk_irq,
-+#ifdef CONFIG_SMP
-+	.set_affinity 	= set_ioapic_affinity_irq,
-+#endif
-+	.retrigger	= ioapic_retrigger_irq,
-+};
- 
- static inline void init_IO_APIC_traps(void)
- {
-@@ -2858,7 +2907,7 @@ int io_apic_set_pci_routing (int ioapic,
- 		mp_ioapics[ioapic].mpc_apicid, pin, entry.vector, irq,
- 		edge_level, active_high_low);
- 
--	ioapic_register_intr(irq, entry.vector, edge_level);
-+	ioapic_register_intr(irq, entry.vector, edge_level, ioapic>0);
- 
- 	if (!ioapic && (irq < 16))
- 		disable_8259A_irq(irq);
+        SEQ_printf(m, "\ncpu#%d, %u.%03u MHz\n",
+                   cpu, freq / 1000, (freq % 1000));
+
+
+regards manfred
