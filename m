@@ -1,166 +1,51 @@
-From: Katsuya MATSUBARA <matsu@igel.co.jp>
-Subject: Re: v2.6.21.4-rt11
-Date: Tue, 19 Jun 2007 01:14:40 +0900 (JST)
-Message-ID: <20070619.011440.260207451.matsu@igel.co.jp>
-References: <1182098605.8176.422.camel@chaos>
-	<2accc2ff0706170949j26c391aek7ed32e0e55d9a3d1@mail.gmail.com>
-	<1182099558.8176.436.camel@chaos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Don't call mcount from vsyscall_fn's
+Date: Mon, 18 Jun 2007 22:41:09 -0400
+Message-ID: <1182220869.15228.10.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: nelsoneci@gmail.com, mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: tglx@linutronix.de
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailhost.igel.co.jp ([219.106.231.130]:39376 "EHLO
-	mailhost.igel.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752489AbXFRQfX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Jun 2007 12:35:23 -0400
-In-Reply-To: <1182099558.8176.436.camel@chaos>
-Sender: linux-rt-users-owner@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933162AbXFSCmA@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This bit me in the butt.
 
-From: Thomas Gleixner <tglx@linutronix.de>
-Date: Sun, 17 Jun 2007 18:59:18 +0200
+I couldn't understand why my init app was segfaulting, with a kernel
+address, but a user RIP and RSP.  Well, the RIP I think was bogus, but
+the kernel address was always the start of "mcount".  Looking deeper, I
+printed out what was in the RSP (even though it was a user stack).  It
+ended up showing me that the calling address was from the VDSO area.
+Looking even further, I found the offending culprit, which was
+vread_hpet.
 
-> On Sun, 2007-06-17 at 11:49 -0500, Nelson Castillo wrote:
-> > > > There are many choices and
-> > > > I don't know what is the more friendly. By friendly I mean the one that
-> > > > is likely to be merged and that cooperate with you.
-> > >
-> > > Which choices do you mean ?
-> > 
-> > I mean implementations. I've seen lot of them but i don't know which one
-> > to try (I'm new to RT and the implementation in this thread seems to
-> > be very nice).
-> 
-> Thanks :)
-> 
-> > > >   http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.4-rt14
-> > > >
-> > > > : undefined reference to `usecs_to_cycles'
-> > > > make: *** [.tmp_vmlinux1] Error 1
-> > >
-> > > Which ARM sub arch ?
-> > 
-> > sub arch AT91 -- (Atmel AT91RM9200 processor).
-> 
-> It lacks support for the generic timeofday and clock event layers, which
-> causes the compile breakage.
+Looking at the assembly dump, I saw the vread_hpet was calling mcount,
+but I could not see it in the code. Nor could I see it in hpet.i (-E
+option of compiling).
 
- I am working on Renesas SuperH platforms.
- I faced the similar compile errors
- because 2.6.21.X in SH does not support GENERIC_TIME yet.
- I made a workaround patch. Is this correct?
+Well, I guess Ingo is a magician when it comes to compiler tricks, and
+has the mcount being called by "every!!" function, unless you add the
+"notrace" option.
 
- Thanks,
----
- Katsuya Matsubara @ Igel Co., Ltd
- matsu@igel.co.jp
+This patch adds the notrace to vsyscall_fn, so that we don't have user
+land apps calling mcount and crashing!
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6-rt-test/include/asm-x86_64/vsyscall.h
+===================================================================
+--- linux-2.6-rt-test.orig/include/asm-x86_64/vsyscall.h
++++ linux-2.6-rt-test/include/asm-x86_64/vsyscall.h
+@@ -22,7 +22,7 @@ enum vsyscall_num {
+ /* Definitions for CONFIG_GENERIC_TIME definitions */
+ #define __section_vsyscall_gtod_data __attribute__ \
+ 	((unused, __section__ (".vsyscall_gtod_data"),aligned(16)))
+-#define __vsyscall_fn __attribute__ ((unused,__section__(".vsyscall_fn")))
++#define __vsyscall_fn __attribute__ ((unused,__section__(".vsyscall_fn"))) notrace
  
- diff -cr linux-2.6.21.5-rt14/kernel/hrtimer.c linux-2.6.21.5-rt14-nogt/kernel/hrtimer.c
-*** linux-2.6.21.5-rt14/kernel/hrtimer.c	2007-06-18 19:55:55.000000000 +0900
---- linux-2.6.21.5-rt14-nogt/kernel/hrtimer.c	2007-06-16 16:36:10.000000000 +0900
-***************
-*** 119,127 ****
---- 119,131 ----
-  
-  	do {
-  		seq = read_seqbegin(&xtime_lock);
-+ #ifdef CONFIG_GENERIC_TIME
-  		*ts = xtime;
-  		nsecs = __get_nsec_offset();
-  		timespec_add_ns(ts, nsecs);
-+ #else
-+ 		getnstimeofday(ts);
-+ #endif
-  		tomono = wall_to_monotonic;
-  
-  	} while (read_seqretry(&xtime_lock, seq));
-diff -cr linux-2.6.21.5-rt14/kernel/time/ntp.c linux-2.6.21.5-rt14-nogt/kernel/time/ntp.c
-*** linux-2.6.21.5-rt14/kernel/time/ntp.c	2007-06-18 19:55:56.000000000 +0900
---- linux-2.6.21.5-rt14-nogt/kernel/time/ntp.c	2007-06-16 16:37:46.000000000 +0900
-***************
-*** 120,126 ****
---- 120,128 ----
-  			 */
-  			time_interpolator_update(-NSEC_PER_SEC);
-  			time_state = TIME_OOP;
-+ #ifdef CONFIG_GENERIC_TIME
-  			warp_check_clock_was_changed();
-+ #endif
-  			clock_was_set();
-  			printk(KERN_NOTICE "Clock: inserting leap second "
-  					"23:59:60 UTC\n");
-***************
-*** 136,142 ****
---- 138,146 ----
-  			 */
-  			time_interpolator_update(NSEC_PER_SEC);
-  			time_state = TIME_WAIT;
-+ #ifdef CONFIG_GENERIC_TIME
-  			warp_check_clock_was_changed();
-+ #endif
-  			clock_was_set();
-  			printk(KERN_NOTICE "Clock: deleting leap second "
-  					"23:59:59 UTC\n");
-diff -cr linux-2.6.21.5-rt14/kernel/time.c linux-2.6.21.5-rt14-nogt/kernel/time.c
-*** linux-2.6.21.5-rt14/kernel/time.c	2007-06-18 19:55:56.000000000 +0900
---- linux-2.6.21.5-rt14-nogt/kernel/time.c	2007-06-16 16:36:10.000000000 +0900
-***************
-*** 135,141 ****
---- 135,143 ----
-  	wall_to_monotonic.tv_sec -= sys_tz.tz_minuteswest * 60;
-  	xtime.tv_sec += sys_tz.tz_minuteswest * 60;
-  	time_interpolator_reset();
-+ #ifdef CONFIG_GENERIC_TIME
-  	warp_check_clock_was_changed();
-+ #endif
-  	write_sequnlock_irq(&xtime_lock);
-  	clock_was_set();
-  }
-***************
-*** 320,326 ****
---- 322,330 ----
-  		time_esterror = NTP_PHASE_LIMIT;
-  		time_interpolator_reset();
-  	}
-+ #ifdef CONFIG_GENERIC_TIME
-  	warp_check_clock_was_changed();
-+ #endif
-  	write_sequnlock_irq(&xtime_lock);
-  	clock_was_set();
-  	return 0;
-diff -cr linux-2.6.21.5-rt14/kernel/timer.c linux-2.6.21.5-rt14-nogt/kernel/timer.c
-*** linux-2.6.21.5-rt14/kernel/timer.c	2007-06-18 19:55:56.000000000 +0900
---- linux-2.6.21.5-rt14-nogt/kernel/timer.c	2007-06-16 16:36:10.000000000 +0900
-***************
-*** 1165,1171 ****
---- 1165,1173 ----
-  	clock->cycle_accumulated = 0;
-  	clock->error = 0;
-  	timekeeping_suspended = 0;
-+ #ifdef CONFIG_GENERIC_TIME
-  	warp_check_clock_was_changed();
-+ #endif
-  	write_sequnlock_irqrestore(&xtime_lock, flags);
-  
-  	touch_softlockup_watchdog();
-***************
-*** 1728,1736 ****
---- 1730,1742 ----
-  		 * too.
-  		 */
-  
-+ #ifdef CONFIG_GENERIC_TIME
-  		tp = xtime;
-  		nsecs = __get_nsec_offset();
-  		timespec_add_ns(&tp, nsecs);
-+ #else
-+ 		getnstimeofday(&tp);
-+ #endif
-  
-  		tp.tv_sec += wall_to_monotonic.tv_sec;
-  		tp.tv_nsec += wall_to_monotonic.tv_nsec;
+ #define VGETCPU_RDTSCP	1
+ #define VGETCPU_LSL	2
