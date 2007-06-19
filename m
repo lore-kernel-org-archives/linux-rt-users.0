@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Only allow atomic safe consoles to print in atomic
-	areas.
-Date: Tue, 19 Jun 2007 14:52:32 -0400
-Message-ID: <1182279152.15228.14.camel@localhost.localdomain>
+Subject: [PATCH RT] Only check IRQ Thread affinity update if CPU affinity
+	changed.
+Date: Tue, 19 Jun 2007 15:41:31 -0400
+Message-ID: <1182282091.15228.19.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -11,99 +11,58 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:63775 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763170AbXFSSxM (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:56116 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761176AbXFSTmG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 14:53:12 -0400
+	Tue, 19 Jun 2007 15:42:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Since PREEMPT_RT makes spin_locks schedule, and some consoles (namely
-serial) use spin locks in the write method.  This patch creates a new
-console flag called CON_ATOMIC which is set by safe consoles that do not
-grab spinlocks.
+This patch cleans up the softirq in hardirq change. The hard irq threads
+pin themselves to one of the CPUs that the IRQ affinity is on.
 
-On PREEMPT_RT only safe consoles will write within non atomic operations
-(and not in a oops).
+This patch cleans up this by only updating the cpu affinity, if the cpu
+that the thread is pinned on is no longer part of the IRQ affinity.
 
-Signed-off-by: Steven Rostedt
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-2.6-rt-test/arch/x86_64/kernel/early_printk.c
+Index: linux-2.6-rt-test/kernel/irq/manage.c
 ===================================================================
---- linux-2.6-rt-test.orig/arch/x86_64/kernel/early_printk.c
-+++ linux-2.6-rt-test/arch/x86_64/kernel/early_printk.c
-@@ -56,7 +56,7 @@ static void early_vga_write(struct conso
- static struct console early_vga_console = {
- 	.name =		"earlyvga",
- 	.write =	early_vga_write,
--	.flags =	CON_PRINTBUFFER,
-+	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
- 	.index =	-1,
- };
+--- linux-2.6-rt-test.orig/kernel/irq/manage.c
++++ linux-2.6-rt-test/kernel/irq/manage.c
+@@ -762,13 +762,15 @@ static int do_irqd(void * __desc)
  
-@@ -152,7 +152,7 @@ static __init void early_serial_init(cha
- static struct console early_serial_console = {
- 	.name =		"earlyser",
- 	.write =	early_serial_write,
--	.flags =	CON_PRINTBUFFER,
-+	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
- 	.index =	-1,
- };
+ #ifdef CONFIG_SMP
+ 	cpumask_t cpus_allowed, mask;
++	int pinned_cpu;
  
-@@ -193,7 +193,7 @@ static void simnow_write(struct console 
- static struct console simnow_console = {
- 	.name =		"simnow",
- 	.write =	simnow_write,
--	.flags =	CON_PRINTBUFFER,
-+	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
- 	.index =	-1,
- };
- 
-Index: linux-2.6-rt-test/drivers/char/vt.c
-===================================================================
---- linux-2.6-rt-test.orig/drivers/char/vt.c
-+++ linux-2.6-rt-test/drivers/char/vt.c
-@@ -2317,7 +2317,7 @@ static struct console vt_console_driver 
- 	.write		= vt_console_print,
- 	.device		= vt_console_device,
- 	.unblank	= unblank_screen,
--	.flags		= CON_PRINTBUFFER,
-+	.flags		= CON_PRINTBUFFER | CON_ATOMIC,
- 	.index		= -1,
- };
+ 	cpus_allowed = desc->affinity;
+ 	/*
+ 	 * Restrict it to one cpu so we avoid being migrated inside of
+ 	 * do_softirq_from_hardirq()
+ 	 */
+-	mask = cpumask_of_cpu(first_cpu(desc->affinity));
++	pinned_cpu = first_cpu(desc->affinity);
++	mask = cpumask_of_cpu(pinned_cpu);
+ 	set_cpus_allowed(current, mask);
  #endif
-Index: linux-2.6-rt-test/include/linux/console.h
-===================================================================
---- linux-2.6-rt-test.orig/include/linux/console.h
-+++ linux-2.6-rt-test/include/linux/console.h
-@@ -92,6 +92,17 @@ void give_up_console(const struct consw 
- #define CON_ENABLED	(4)
- #define CON_BOOT	(8)
- #define CON_ANYTIME	(16) /* Safe to call when cpu is offline */
-+#define CON_ATOMIC	(32) /* Safe to call in PREEMPT_RT atomic */
-+
-+#ifdef CONFIG_PREEMPT_RT
-+# define console_atomic_safe(con)		\
-+	(((con)->flags & CON_ATOMIC) ||		\
-+	 (!in_atomic() && !irqs_disabled()) ||	\
-+	 (system_state != SYSTEM_RUNNING) ||	\
-+	 oops_in_progress)
-+#else
-+# define console_atomic_safe(con) (1)
-+#endif
- 
- struct console
- {
-Index: linux-2.6-rt-test/kernel/printk.c
-===================================================================
---- linux-2.6-rt-test.orig/kernel/printk.c
-+++ linux-2.6-rt-test/kernel/printk.c
-@@ -328,6 +328,7 @@ static void __call_console_drivers(unsig
- 	touch_critical_timing();
- 	for (con = console_drivers; con; con = con->next) {
- 		if ((con->flags & CON_ENABLED) && con->write &&
-+				console_atomic_safe(con) &&
- 				(cpu_online(raw_smp_processor_id()) ||
- 				(con->flags & CON_ANYTIME))) {
+ 	current->flags |= PF_NOFREEZE | PF_HARDIRQ;
+@@ -793,14 +795,15 @@ static int do_irqd(void * __desc)
+ 		/*
+ 		 * Did IRQ affinities change?
+ 		 */
+-		if (!cpus_equal(cpus_allowed, desc->affinity)) {
++		if (!cpu_isset(pinned_cpu, desc->affinity)) {
+ 			cpus_allowed = desc->affinity;
  			/*
+ 			 * Restrict it to one cpu so we avoid being
+ 			 * migrated inside of
+ 			 * do_softirq_from_hardirq()
+ 			 */
+-			mask = cpumask_of_cpu(first_cpu(desc->affinity));
++			pinned_cpu = first_cpu(desc->affinity);
++			mask = cpumask_of_cpu(pinned_cpu);
+ 			set_cpus_allowed(current, mask);
+ 		}
+ #endif
