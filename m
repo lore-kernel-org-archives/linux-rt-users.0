@@ -1,44 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Remove double warning print with faulty preempt disable
-	nesting
-Date: Tue, 19 Jun 2007 16:23:47 -0400
-Message-ID: <1182284627.15228.31.camel@localhost.localdomain>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH RT] disable preemption on running show all regs.
+Date: Tue, 19 Jun 2007 13:57:13 -0700
+Message-ID: <1182286634.18168.48.camel@imap.mvista.com>
+References: <1182284276.15228.25.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:63918 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755142AbXFSUYY (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:21834 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752860AbXFSVAs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 16:24:24 -0400
+	Tue, 19 Jun 2007 17:00:48 -0400
+In-Reply-To: <1182284276.15228.25.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On a faulty preempt disable bug we print out a warning but then we go
-and call preempt_enable_no_resched, which also can print out a warning.
-This is redundant.
+On Tue, 2007-06-19 at 16:17 -0400, Steven Rostedt wrote:
+> The show all regs sysrq uses the nmi function to do it. But this
+> function expects preemption to be off, or funny things happen.
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> 
+> Index: linux-2.6.21-rt9/drivers/char/sysrq.c
+> ===================================================================
+> --- linux-2.6.21-rt9.orig/drivers/char/sysrq.c
+> +++ linux-2.6.21-rt9/drivers/char/sysrq.c
+> @@ -213,7 +213,9 @@ static struct sysrq_key_op sysrq_showreg
+>  
+>  static void sysrq_handle_showallregs(int key, struct tty_struct *tty)
+>  {
+> +        preempt_disable();
+>  	nmi_show_all_regs();
+> +        preempt_enable();
+>  }
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Looks like you have a whitespace issue here.. Should be tabs, not
+spaces.
 
-Index: linux-2.6.21-rt9/lib/smp_processor_id.c
-===================================================================
---- linux-2.6.21-rt9.orig/lib/smp_processor_id.c
-+++ linux-2.6.21-rt9/lib/smp_processor_id.c
-@@ -47,7 +47,11 @@ unsigned int notrace debug_smp_processor
- 	dump_stack();
- 
- out_enable:
--	preempt_enable_no_resched();
-+	/*
-+	 * Don't print message if we enable to zero.
-+	 * We arleady printed a warning up above.
-+	 */
-+	__preempt_enable_no_resched();
- out:
- 	return this_cpu;
- }
+Daniel
