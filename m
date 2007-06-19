@@ -1,21 +1,21 @@
-From: Manfred Gruber <manfred.gruber@contec.at>
+From: Manfred Gruber <m.gruber@tirol.com>
 Subject: 2.6.21-rt17 arm compile error
-Date: Tue, 19 Jun 2007 16:10:05 +0200
-Message-ID: <200706191610.05137.manfred.gruber@contec.at>
+Date: Tue, 19 Jun 2007 16:34:48 +0200
+Message-ID: <200706191634.49079.m.gruber@tirol.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
   charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 85-126-107-146.static.sdsl-line.inode.at ([85.126.107.146]:2922
+Received: from 85-126-107-146.static.sdsl-line.inode.at ([85.126.107.146]:4394
 	"EHLO mail.contec.at" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752935AbXFSO2p (ORCPT
+	with ESMTP id S1752990AbXFSPCF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 10:28:45 -0400
+	Tue, 19 Jun 2007 11:02:05 -0400
 Received: from comixs.contec-int.at (unknown [192.168.1.250])
-	by mail.contec.at (Firewall Mailer Daemon) with ESMTP id D8935C08A2
-	for <linux-rt-users@vger.kernel.org>; Tue, 19 Jun 2007 16:10:39 +0200 (CEST)
+	by mail.contec.at (Firewall Mailer Daemon) with ESMTP id 25A12C086E
+	for <linux-rt-users@vger.kernel.org>; Tue, 19 Jun 2007 16:34:49 +0200 (CEST)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
