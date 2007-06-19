@@ -1,32 +1,109 @@
-From: Manfred Gruber <m.gruber@tirol.com>
-Subject: top on a arm 2.6.21-rt17 system
-Date: Tue, 19 Jun 2007 17:30:59 +0200
-Message-ID: <200706191730.59706.m.gruber@tirol.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Only allow atomic safe consoles to print in atomic
+	areas.
+Date: Tue, 19 Jun 2007 14:52:32 -0400
+Message-ID: <1182279152.15228.14.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 85-126-107-146.static.sdsl-line.inode.at ([85.126.107.146]:2195
-	"EHLO mail.contec.at" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755985AbXFSPbA (ORCPT
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:63775 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1763170AbXFSSxM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 11:31:00 -0400
-Received: from comixs.contec-int.at (unknown [192.168.1.250])
-	by mail.contec.at (Firewall Mailer Daemon) with ESMTP id 8E54AC086E
-	for <linux-rt-users@vger.kernel.org>; Tue, 19 Jun 2007 17:30:59 +0200 (CEST)
-Content-Disposition: inline
+	Tue, 19 Jun 2007 14:53:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi !
+Since PREEMPT_RT makes spin_locks schedule, and some consoles (namely
+serial) use spin locks in the write method.  This patch creates a new
+console flag called CON_ATOMIC which is set by safe consoles that do not
+grab spinlocks.
 
-When I start top I get:
-Unknown HZ value! (87) Assume 100.
-any idea ??
+On PREEMPT_RT only safe consoles will write within non atomic operations
+(and not in a oops).
 
-regards
--- 
-mfg
-	Manfred Gruber
+Signed-off-by: Steven Rostedt
+
+Index: linux-2.6-rt-test/arch/x86_64/kernel/early_printk.c
+===================================================================
+--- linux-2.6-rt-test.orig/arch/x86_64/kernel/early_printk.c
++++ linux-2.6-rt-test/arch/x86_64/kernel/early_printk.c
+@@ -56,7 +56,7 @@ static void early_vga_write(struct conso
+ static struct console early_vga_console = {
+ 	.name =		"earlyvga",
+ 	.write =	early_vga_write,
+-	.flags =	CON_PRINTBUFFER,
++	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
+ 	.index =	-1,
+ };
+ 
+@@ -152,7 +152,7 @@ static __init void early_serial_init(cha
+ static struct console early_serial_console = {
+ 	.name =		"earlyser",
+ 	.write =	early_serial_write,
+-	.flags =	CON_PRINTBUFFER,
++	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
+ 	.index =	-1,
+ };
+ 
+@@ -193,7 +193,7 @@ static void simnow_write(struct console 
+ static struct console simnow_console = {
+ 	.name =		"simnow",
+ 	.write =	simnow_write,
+-	.flags =	CON_PRINTBUFFER,
++	.flags =	CON_PRINTBUFFER | CON_ATOMIC,
+ 	.index =	-1,
+ };
+ 
+Index: linux-2.6-rt-test/drivers/char/vt.c
+===================================================================
+--- linux-2.6-rt-test.orig/drivers/char/vt.c
++++ linux-2.6-rt-test/drivers/char/vt.c
+@@ -2317,7 +2317,7 @@ static struct console vt_console_driver 
+ 	.write		= vt_console_print,
+ 	.device		= vt_console_device,
+ 	.unblank	= unblank_screen,
+-	.flags		= CON_PRINTBUFFER,
++	.flags		= CON_PRINTBUFFER | CON_ATOMIC,
+ 	.index		= -1,
+ };
+ #endif
+Index: linux-2.6-rt-test/include/linux/console.h
+===================================================================
+--- linux-2.6-rt-test.orig/include/linux/console.h
++++ linux-2.6-rt-test/include/linux/console.h
+@@ -92,6 +92,17 @@ void give_up_console(const struct consw 
+ #define CON_ENABLED	(4)
+ #define CON_BOOT	(8)
+ #define CON_ANYTIME	(16) /* Safe to call when cpu is offline */
++#define CON_ATOMIC	(32) /* Safe to call in PREEMPT_RT atomic */
++
++#ifdef CONFIG_PREEMPT_RT
++# define console_atomic_safe(con)		\
++	(((con)->flags & CON_ATOMIC) ||		\
++	 (!in_atomic() && !irqs_disabled()) ||	\
++	 (system_state != SYSTEM_RUNNING) ||	\
++	 oops_in_progress)
++#else
++# define console_atomic_safe(con) (1)
++#endif
+ 
+ struct console
+ {
+Index: linux-2.6-rt-test/kernel/printk.c
+===================================================================
+--- linux-2.6-rt-test.orig/kernel/printk.c
++++ linux-2.6-rt-test/kernel/printk.c
+@@ -328,6 +328,7 @@ static void __call_console_drivers(unsig
+ 	touch_critical_timing();
+ 	for (con = console_drivers; con; con = con->next) {
+ 		if ((con->flags & CON_ENABLED) && con->write &&
++				console_atomic_safe(con) &&
+ 				(cpu_online(raw_smp_processor_id()) ||
+ 				(con->flags & CON_ANYTIME))) {
+ 			/*
