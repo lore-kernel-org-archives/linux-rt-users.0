@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Only check IRQ Thread affinity update if CPU affinity
-	changed.
-Date: Tue, 19 Jun 2007 15:41:31 -0400
-Message-ID: <1182282091.15228.19.camel@localhost.localdomain>
+Subject: [PATCH RT] Use raw spinlocks in NMI print sequencing.
+Date: Tue, 19 Jun 2007 16:11:34 -0400
+Message-ID: <1182283894.15228.23.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -11,58 +10,29 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:56116 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1761176AbXFSTmG (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:40301 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761233AbXFSUMM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 15:42:06 -0400
+	Tue, 19 Jun 2007 16:12:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch cleans up the softirq in hardirq change. The hard irq threads
-pin themselves to one of the CPUs that the IRQ affinity is on.
-
-This patch cleans up this by only updating the cpu affinity, if the cpu
-that the thread is pinned on is no longer part of the IRQ affinity.
+Currently NMI uses spinlocks to serialize the prints. We need these to
+be raw spinlocks for PREEMPT_RT
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-2.6-rt-test/kernel/irq/manage.c
+Index: linux-2.6.21-rt9/arch/x86_64/kernel/nmi.c
 ===================================================================
---- linux-2.6-rt-test.orig/kernel/irq/manage.c
-+++ linux-2.6-rt-test/kernel/irq/manage.c
-@@ -762,13 +762,15 @@ static int do_irqd(void * __desc)
+--- linux-2.6.21-rt9.orig/arch/x86_64/kernel/nmi.c
++++ linux-2.6.21-rt9/arch/x86_64/kernel/nmi.c
+@@ -949,7 +949,7 @@ int __kprobes nmi_watchdog_tick(struct p
+ 	}
  
- #ifdef CONFIG_SMP
- 	cpumask_t cpus_allowed, mask;
-+	int pinned_cpu;
+ 	if (cpu_isset(cpu, backtrace_mask)) {
+-		static DEFINE_SPINLOCK(lock);	/* Serialise the printks */
++		static DEFINE_RAW_SPINLOCK(lock);	/* Serialise the printks */
  
- 	cpus_allowed = desc->affinity;
- 	/*
- 	 * Restrict it to one cpu so we avoid being migrated inside of
- 	 * do_softirq_from_hardirq()
- 	 */
--	mask = cpumask_of_cpu(first_cpu(desc->affinity));
-+	pinned_cpu = first_cpu(desc->affinity);
-+	mask = cpumask_of_cpu(pinned_cpu);
- 	set_cpus_allowed(current, mask);
- #endif
- 	current->flags |= PF_NOFREEZE | PF_HARDIRQ;
-@@ -793,14 +795,15 @@ static int do_irqd(void * __desc)
- 		/*
- 		 * Did IRQ affinities change?
- 		 */
--		if (!cpus_equal(cpus_allowed, desc->affinity)) {
-+		if (!cpu_isset(pinned_cpu, desc->affinity)) {
- 			cpus_allowed = desc->affinity;
- 			/*
- 			 * Restrict it to one cpu so we avoid being
- 			 * migrated inside of
- 			 * do_softirq_from_hardirq()
- 			 */
--			mask = cpumask_of_cpu(first_cpu(desc->affinity));
-+			pinned_cpu = first_cpu(desc->affinity);
-+			mask = cpumask_of_cpu(pinned_cpu);
- 			set_cpus_allowed(current, mask);
- 		}
- #endif
+ 		spin_lock(&lock);
+ 		printk("NMI backtrace for cpu %d\n", cpu);
