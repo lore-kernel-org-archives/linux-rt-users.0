@@ -1,78 +1,42 @@
-From: Steven Rostedt <srostedt@redhat.com>
-Subject: Re: [PATCH -rt] irq nobody cared workaround for i386
-Date: Wed, 20 Jun 2007 10:17:34 -0400
-Message-ID: <467936FE.8050704@redhat.com>
-References: <4676CF81.2000205@redhat.com> <4677D7AF.7040700@redhat.com> <467932B4.6030800@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] have x86_64 nmi watchdog also count irq 0
+Date: Wed, 20 Jun 2007 14:51:03 -0400
+Message-ID: <1182365463.15228.39.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Michal Schmidt <mschmidt@redhat.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:57322 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751416AbXFTOTx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Jun 2007 10:19:53 -0400
-In-Reply-To: <467932B4.6030800@redhat.com>
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:43558 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1764376AbXFTSwN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Jun 2007 14:52:13 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Michal Schmidt wrote:
-> Michal Schmidt wrote:
+I was getting false reports about NMI lockups on CPU 3.  For some reason
+CPU 0,1 and 2 where using apic timer, and CPU 3 was using the irq 0
+timer.
 
-> I came to the conclusion that the IO-APICs which need the fix for the
-> nobody cared bug don't have the issue ack_ioapic_quirk_irq is designed
-> to work-around. It should be safe simply to use the normal
-> ack_ioapic_irq as the .eoi method in pcix_ioapic_chip.
-> So this is the port of Steven's fix for the nobody cared bug to i386. It
-> works fine on IBM LS21 I have access to.
-> 
+This patch makes the NMI watchdog count both the apic timer and the irq0
+timer.
 
-Thanks Michal for doing this!
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-> Signed-off-by: Michal Schmidt <mschmidt@redhat.com>
-
-
-> @@ -1336,7 +1371,7 @@ static void __init setup_IO_APIC_irqs(vo
->  		if (IO_APIC_IRQ(irq)) {
->  			vector = assign_irq_vector(irq);
->  			entry.vector = vector;
-> -			ioapic_register_intr(irq, vector, IOAPIC_AUTO);
-> +			ioapic_register_intr(irq, vector, IOAPIC_AUTO, apic>0);
-
-You want to make that "apic > 0".  Note the spacing. If it breaks
-80 characters, then simply put it to a new line.
-
->  		
->  			if (!apic && (irq < 16))
->  				disable_8259A_irq(irq);
-> @@ -2058,6 +2093,18 @@ static struct irq_chip ioapic_chip __rea
->  	.retrigger	= ioapic_retrigger_irq,
->  };
->  
-
-[...]
-
->  static inline void init_IO_APIC_traps(void)
->  {
-> @@ -2858,7 +2905,7 @@ int io_apic_set_pci_routing (int ioapic,
->  		mp_ioapics[ioapic].mpc_apicid, pin, entry.vector, irq,
->  		edge_level, active_high_low);
->  
-> -	ioapic_register_intr(irq, entry.vector, edge_level);
-> +	ioapic_register_intr(irq, entry.vector, edge_level, ioapic>0);
-
-Again, add the spaces.
-
->  
->  	if (!ioapic && (irq < 16))
->  		disable_8259A_irq(irq);
-> 
-> 
-
-
-ACK
-
--- Steve
+Index: linux-2.6-rt-test/arch/x86_64/kernel/nmi.c
+===================================================================
+--- linux-2.6-rt-test.orig/arch/x86_64/kernel/nmi.c
++++ linux-2.6-rt-test/arch/x86_64/kernel/nmi.c
+@@ -938,7 +938,7 @@ int notrace __kprobes nmi_watchdog_tick(
+ 		touched = 1;
+ 	}
+ 
+-	sum = read_pda(apic_timer_irqs);
++	sum = read_pda(apic_timer_irqs) + kstat_cpu(cpu).irqs[0];
+ 
+ 	if (__get_cpu_var(nmi_touch)) {
+ 		__get_cpu_var(nmi_touch) = 0;
