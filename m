@@ -1,50 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] disable preemption on running show all regs.
-Date: Tue, 19 Jun 2007 17:36:01 -0400
-Message-ID: <1182288961.15228.35.camel@localhost.localdomain>
-References: <1182284276.15228.25.camel@localhost.localdomain>
-	 <1182286634.18168.48.camel@imap.mvista.com>
+From: Free Ekanayaka <free@64studio.com>
+Subject: Should I apply the forcedeth-rt-tweak?
+Date: Wed, 20 Jun 2007 13:24:47 +0200
+Message-ID: <87vedivpfk.fsf@64studio.com>
+References: <1182284627.15228.31.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:48683 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752467AbXFSVgz (ORCPT
+Received: from serverina.hacknight.org ([80.68.90.101]:32801 "EHLO
+	serverina.hacknight.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753215AbXFTLYv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Jun 2007 17:36:55 -0400
-In-Reply-To: <1182286634.18168.48.camel@imap.mvista.com>
+	Wed, 20 Jun 2007 07:24:51 -0400
+Received: from localhost.localdomain (unknown [89.196.9.185])
+	by serverina.hacknight.org (Postfix) with ESMTP id 9791B14078
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Jun 2007 12:24:49 +0100 (BST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-06-19 at 13:57 -0700, Daniel Walker wrote:
+Hi all,
 
-> Looks like you have a whitespace issue here.. Should be tabs, not
-> spaces.
+I've noticed that since patch-2.6.21.4-rt13 (included) the
+forcedeth-rt-tweak patch
 
+http://people.redhat.com/mingo/realtime-preempt/testing/forcedeth-rt-tweak.patch
 
-Bah, there's a "/* -*- linux-c -*- " at the top of that file that's
-messing up with my emacs!
+has been drop from the main rt patch. Does this mean that it should be
+no longer necessary?
 
-Is this better :-p
+This little patch is supposed to prevent nVidia ethernet cards to
+permanently suck about 3% of the CPU, even though it didn't work for
+me. So far I've tried with
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+2.6.21 + 2.6.21.3 patch + rt9 patch (which includes the nforce patch)
 
-Index: linux-2.6.21.5-rt15/drivers/char/sysrq.c
-===================================================================
---- linux-2.6.21.5-rt15.orig/drivers/char/sysrq.c
-+++ linux-2.6.21.5-rt15/drivers/char/sysrq.c
-@@ -213,7 +213,9 @@ static struct sysrq_key_op sysrq_showreg
- 
- static void sysrq_handle_showallregs(int key, struct tty_struct *tty)
- {
-+	preempt_disable();
- 	nmi_show_all_regs();
-+	preempt_enable();
- }
- 
- static struct sysrq_key_op sysrq_showallregs_op = {
+2.6.21 + 2.6.21.4 patch + rt13 patch + nforce patch
+
+Thanks,
+
+Free
