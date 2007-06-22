@@ -1,46 +1,41 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: Spam on RT Wiki
-Date: Fri, 22 Jun 2007 10:12:24 +0200
-Message-ID: <1182499944.16453.4.camel@godzilla.tecnorama.it>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH -rt] CONFIG_PARAVIRT and CONFIG_MCOUNT don't play well
+	together
+Date: Fri, 22 Jun 2007 10:33:30 +0200
+Message-ID: <20070622083330.GB19382@elte.hu>
+References: <20070622080634.GP3723@sequoia.sous-sol.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Chris Wright <chrisw@sous-sol.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:34818 "EHLO hermes.xcon.it"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:60740 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751547AbXFVIM1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Jun 2007 04:12:27 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by hermes.xcon.it (Postfix) with ESMTP id 5ED9E608171
-	for <linux-rt-users@vger.kernel.org>; Fri, 22 Jun 2007 10:12:26 +0200 (CEST)
-Received: from hermes.xcon.it ([127.0.0.1])
-	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id SDi59k52eGP8 for <linux-rt-users@vger.kernel.org>;
-	Fri, 22 Jun 2007 10:12:25 +0200 (CEST)
-Received: from [192.168.100.121] (adsl203-157-083.mclink.it [213.203.157.83])
-	(Authenticated sender: aib@texware.it)
-	by hermes.xcon.it (Postfix) with ESMTP id 985F96080FB
-	for <linux-rt-users@vger.kernel.org>; Fri, 22 Jun 2007 10:12:25 +0200 (CEST)
+	id S1751882AbXFVIdf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jun 2007 04:33:35 -0400
+Content-Disposition: inline
+In-Reply-To: <20070622080634.GP3723@sequoia.sous-sol.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-Who is rt wiki maintainer?
+* Chris Wright <chrisw@sous-sol.org> wrote:
 
-These seems spam.
+> Current -rt is broken when compiling with CONFIG_PARAVIRT and 
+> CONFIG_MCOUNT both enabled.  Because CONFIG_MCOUNT disables 
+> CONFIG_REGPARM, the calling convention must once again be explicit 
+> with fastcall.  However, this was only half-way addressed in the -rt 
+> patch (adding fastcall back to paravirt_ops function ptr declaration 
+> but not the actual function definitions) so the compiled kernel has 
+> caller putting stuff in registers and callee pulling things from the 
+> stack. Impressive how far into boot it can get despite that ;-) Thanks 
+> to Steven Rostedt for prodding me and starting the initial debugging.
 
-------
-User:Zhangpeng; 05:13 . . Zhangpeng (Talk)
-Giu 7, 2007
-      * (diff) (cron) . . N! Zhangpengg; 10:04 . . Zhangpengss (Talk)
-      * (diff) (cron) . . N! Zhangpengf; 10:03 . . Zhangpengss (Talk)
-      * (diff) (cron) . . N! Zhangpengd; 10:03 . . Zhangpengss (Talk)
-      * (diff) (cron) . . N! Zhangpens; 10:02 . . Zhangpengss (Talk)
-      * (diff) (cron) . . N! User:Zhangpengss; 10:01 . . Zhangpengss
-        (Talk)
-------
+thanks! I ran into this before and asked for the fastcalls to not be 
+removed from upstream paravirt.c but to no avail it seems. It does no 
+harm to anyone to keep the 'fastcall' declarations and definitions for 
+places where _actual assembly code_ depends on the calling convention. 
+Could someone please send this upstream-wards too?
 
-Ciao,
-Alessio
+	Ingo
