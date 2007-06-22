@@ -1,392 +1,46 @@
-From: Chris Wright <chrisw@sous-sol.org>
-Subject: [PATCH -rt] CONFIG_PARAVIRT and CONFIG_MCOUNT don't play well
-	together
-Date: Fri, 22 Jun 2007 01:06:34 -0700
-Message-ID: <20070622080634.GP3723@sequoia.sous-sol.org>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: Spam on RT Wiki
+Date: Fri, 22 Jun 2007 10:12:24 +0200
+Message-ID: <1182499944.16453.4.camel@godzilla.tecnorama.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 216-99-217-87.dsl.aracnet.com ([216.99.217.87]:34529 "EHLO
-	sous-sol.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751142AbXFVIGw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Jun 2007 04:06:52 -0400
-Content-Disposition: inline
+Received: from hermes.xcon.it ([62.48.35.101]:34818 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751547AbXFVIM1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jun 2007 04:12:27 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by hermes.xcon.it (Postfix) with ESMTP id 5ED9E608171
+	for <linux-rt-users@vger.kernel.org>; Fri, 22 Jun 2007 10:12:26 +0200 (CEST)
+Received: from hermes.xcon.it ([127.0.0.1])
+	by localhost (hermes.xcon.it [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id SDi59k52eGP8 for <linux-rt-users@vger.kernel.org>;
+	Fri, 22 Jun 2007 10:12:25 +0200 (CEST)
+Received: from [192.168.100.121] (adsl203-157-083.mclink.it [213.203.157.83])
+	(Authenticated sender: aib@texware.it)
+	by hermes.xcon.it (Postfix) with ESMTP id 985F96080FB
+	for <linux-rt-users@vger.kernel.org>; Fri, 22 Jun 2007 10:12:25 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Current -rt is broken when compiling with CONFIG_PARAVIRT and
-CONFIG_MCOUNT both enabled.  Because CONFIG_MCOUNT disables
-CONFIG_REGPARM, the calling convention must once again be explicit
-with fastcall.  However, this was only half-way addressed in the -rt
-patch (adding fastcall back to paravirt_ops function ptr declaration but
-not the actual function definitions) so the compiled kernel has caller
-putting stuff in registers and callee pulling things from the stack.
-Impressive how far into boot it can get despite that ;-)  Thanks to
-Steven Rostedt for prodding me and starting the initial debugging.
+Hi,
 
-Signed-off-by: Chris Wright <chrisw@sous-sol.org>
----
-Patch against patch-2.6.21.5-rt17
+Who is rt wiki maintainer?
 
- arch/i386/kernel/paravirt.c |   98 ++++++++++++++++++++++----------------------
- 1 file changed, 49 insertions(+), 49 deletions(-)
+These seems spam.
 
+------
+User:Zhangpeng; 05:13 . . Zhangpeng (Talk)
+Giu 7, 2007
+      * (diff) (cron) . . N! Zhangpengg; 10:04 . . Zhangpengss (Talk)
+      * (diff) (cron) . . N! Zhangpengf; 10:03 . . Zhangpengss (Talk)
+      * (diff) (cron) . . N! Zhangpengd; 10:03 . . Zhangpengss (Talk)
+      * (diff) (cron) . . N! Zhangpens; 10:02 . . Zhangpengss (Talk)
+      * (diff) (cron) . . N! User:Zhangpengss; 10:01 . . Zhangpengss
+        (Talk)
+------
 
-diff --git a/arch/i386/kernel/paravirt.c b/arch/i386/kernel/paravirt.c
-index 2ec331e..595cd6f 100644
---- a/arch/i386/kernel/paravirt.c
-+++ b/arch/i386/kernel/paravirt.c
-@@ -93,7 +93,7 @@ static unsigned native_patch(u8 type, u16 clobbers, void *insns, unsigned len)
- 	return insn_len;
- }
- 
--static unsigned long native_get_debugreg(int regno)
-+static fastcall unsigned long native_get_debugreg(int regno)
- {
- 	unsigned long val = 0; 	/* Damn you, gcc! */
- 
-@@ -116,7 +116,7 @@ static unsigned long native_get_debugreg(int regno)
- 	return val;
- }
- 
--static void native_set_debugreg(int regno, unsigned long value)
-+static fastcall void native_set_debugreg(int regno, unsigned long value)
- {
- 	switch (regno) {
- 	case 0:
-@@ -147,55 +147,55 @@ void init_IRQ(void)
- 	paravirt_ops.init_IRQ();
- }
- 
--static void native_clts(void)
-+static fastcall void native_clts(void)
- {
- 	asm volatile ("clts");
- }
- 
--static unsigned long native_read_cr0(void)
-+static fastcall unsigned long native_read_cr0(void)
- {
- 	unsigned long val;
- 	asm volatile("movl %%cr0,%0\n\t" :"=r" (val));
- 	return val;
- }
- 
--static void native_write_cr0(unsigned long val)
-+static fastcall void native_write_cr0(unsigned long val)
- {
- 	asm volatile("movl %0,%%cr0": :"r" (val));
- }
- 
--static unsigned long native_read_cr2(void)
-+static fastcall unsigned long native_read_cr2(void)
- {
- 	unsigned long val;
- 	asm volatile("movl %%cr2,%0\n\t" :"=r" (val));
- 	return val;
- }
- 
--static void native_write_cr2(unsigned long val)
-+static fastcall void native_write_cr2(unsigned long val)
- {
- 	asm volatile("movl %0,%%cr2": :"r" (val));
- }
- 
--static unsigned long native_read_cr3(void)
-+static fastcall unsigned long native_read_cr3(void)
- {
- 	unsigned long val;
- 	asm volatile("movl %%cr3,%0\n\t" :"=r" (val));
- 	return val;
- }
- 
--static void native_write_cr3(unsigned long val)
-+static fastcall void native_write_cr3(unsigned long val)
- {
- 	asm volatile("movl %0,%%cr3": :"r" (val));
- }
- 
--static unsigned long native_read_cr4(void)
-+static fastcall unsigned long native_read_cr4(void)
- {
- 	unsigned long val;
- 	asm volatile("movl %%cr4,%0\n\t" :"=r" (val));
- 	return val;
- }
- 
--static unsigned long native_read_cr4_safe(void)
-+static fastcall unsigned long native_read_cr4_safe(void)
- {
- 	unsigned long val;
- 	/* This could fault if %cr4 does not exist */
-@@ -208,51 +208,51 @@ static unsigned long native_read_cr4_safe(void)
- 	return val;
- }
- 
--static void native_write_cr4(unsigned long val)
-+static fastcall void native_write_cr4(unsigned long val)
- {
- 	asm volatile("movl %0,%%cr4": :"r" (val));
- }
- 
--static unsigned long native_save_fl(void)
-+static fastcall unsigned long native_save_fl(void)
- {
- 	unsigned long f;
- 	asm volatile("pushfl ; popl %0":"=g" (f): /* no input */);
- 	return f;
- }
- 
--static void native_restore_fl(unsigned long f)
-+static fastcall void native_restore_fl(unsigned long f)
- {
- 	asm volatile("pushl %0 ; popfl": /* no output */
- 			     :"g" (f)
- 			     :"memory", "cc");
- }
- 
--static void native_irq_disable(void)
-+static fastcall void native_irq_disable(void)
- {
- 	asm volatile("cli": : :"memory");
- }
- 
--static void native_irq_enable(void)
-+static fastcall void native_irq_enable(void)
- {
- 	asm volatile("sti": : :"memory");
- }
- 
--static void native_safe_halt(void)
-+static fastcall void native_safe_halt(void)
- {
- 	asm volatile("sti; hlt": : :"memory");
- }
- 
--static void native_halt(void)
-+static fastcall void native_halt(void)
- {
- 	asm volatile("hlt": : :"memory");
- }
- 
--static void native_wbinvd(void)
-+static fastcall void native_wbinvd(void)
- {
- 	asm volatile("wbinvd": : :"memory");
- }
- 
--static unsigned long long native_read_msr(unsigned int msr, int *err)
-+static fastcall unsigned long long native_read_msr(unsigned int msr, int *err)
- {
- 	unsigned long long val;
- 
-@@ -271,7 +271,7 @@ static unsigned long long native_read_msr(unsigned int msr, int *err)
- 	return val;
- }
- 
--static int native_write_msr(unsigned int msr, unsigned long long val)
-+static fastcall int native_write_msr(unsigned int msr, unsigned long long val)
- {
- 	int err;
- 	asm volatile("2: wrmsr ; xorl %0,%0\n"
-@@ -289,53 +289,53 @@ static int native_write_msr(unsigned int msr, unsigned long long val)
- 	return err;
- }
- 
--static unsigned long long native_read_tsc(void)
-+static fastcall unsigned long long native_read_tsc(void)
- {
- 	unsigned long long val;
- 	asm volatile("rdtsc" : "=A" (val));
- 	return val;
- }
- 
--static unsigned long long native_read_pmc(void)
-+static fastcall unsigned long long native_read_pmc(void)
- {
- 	unsigned long long val;
- 	asm volatile("rdpmc" : "=A" (val));
- 	return val;
- }
- 
--static void native_load_tr_desc(void)
-+static fastcall void native_load_tr_desc(void)
- {
- 	asm volatile("ltr %w0"::"q" (GDT_ENTRY_TSS*8));
- }
- 
--static void native_load_gdt(const struct Xgt_desc_struct *dtr)
-+static fastcall void native_load_gdt(const struct Xgt_desc_struct *dtr)
- {
- 	asm volatile("lgdt %0"::"m" (*dtr));
- }
- 
--static void native_load_idt(const struct Xgt_desc_struct *dtr)
-+static fastcall void native_load_idt(const struct Xgt_desc_struct *dtr)
- {
- 	asm volatile("lidt %0"::"m" (*dtr));
- }
- 
--static void native_store_gdt(struct Xgt_desc_struct *dtr)
-+static fastcall void native_store_gdt(struct Xgt_desc_struct *dtr)
- {
- 	asm ("sgdt %0":"=m" (*dtr));
- }
- 
--static void native_store_idt(struct Xgt_desc_struct *dtr)
-+static fastcall void native_store_idt(struct Xgt_desc_struct *dtr)
- {
- 	asm ("sidt %0":"=m" (*dtr));
- }
- 
--static unsigned long native_store_tr(void)
-+static fastcall unsigned long native_store_tr(void)
- {
- 	unsigned long tr;
- 	asm ("str %0":"=r" (tr));
- 	return tr;
- }
- 
--static void native_load_tls(struct thread_struct *t, unsigned int cpu)
-+static fastcall void native_load_tls(struct thread_struct *t, unsigned int cpu)
- {
- #define C(i) get_cpu_gdt_table(cpu)[GDT_ENTRY_TLS_MIN + i] = t->tls_array[i]
- 	C(0); C(1); C(2);
-@@ -349,22 +349,22 @@ static inline void native_write_dt_entry(void *dt, int entry, u32 entry_low, u32
- 	lp[1] = entry_high;
- }
- 
--static void native_write_ldt_entry(void *dt, int entrynum, u32 low, u32 high)
-+static fastcall void native_write_ldt_entry(void *dt, int entrynum, u32 low, u32 high)
- {
- 	native_write_dt_entry(dt, entrynum, low, high);
- }
- 
--static void native_write_gdt_entry(void *dt, int entrynum, u32 low, u32 high)
-+static fastcall void native_write_gdt_entry(void *dt, int entrynum, u32 low, u32 high)
- {
- 	native_write_dt_entry(dt, entrynum, low, high);
- }
- 
--static void native_write_idt_entry(void *dt, int entrynum, u32 low, u32 high)
-+static fastcall void native_write_idt_entry(void *dt, int entrynum, u32 low, u32 high)
- {
- 	native_write_dt_entry(dt, entrynum, low, high);
- }
- 
--static void native_load_esp0(struct tss_struct *tss,
-+static fastcall void native_load_esp0(struct tss_struct *tss,
- 				      struct thread_struct *thread)
- {
- 	tss->esp0 = thread->esp0;
-@@ -376,12 +376,12 @@ static void native_load_esp0(struct tss_struct *tss,
- 	}
- }
- 
--static void native_io_delay(void)
-+static fastcall void native_io_delay(void)
- {
- 	asm volatile("outb %al,$0x80");
- }
- 
--static void native_flush_tlb(void)
-+static fastcall void native_flush_tlb(void)
- {
- 	__native_flush_tlb();
- }
-@@ -390,49 +390,49 @@ static void native_flush_tlb(void)
-  * Global pages have to be flushed a bit differently. Not a real
-  * performance problem because this does not happen often.
-  */
--static void native_flush_tlb_global(void)
-+static fastcall void native_flush_tlb_global(void)
- {
- 	__native_flush_tlb_global();
- }
- 
--static void native_flush_tlb_single(u32 addr)
-+static fastcall void native_flush_tlb_single(u32 addr)
- {
- 	__native_flush_tlb_single(addr);
- }
- 
- #ifndef CONFIG_X86_PAE
--static void native_set_pte(pte_t *ptep, pte_t pteval)
-+static fastcall void native_set_pte(pte_t *ptep, pte_t pteval)
- {
- 	*ptep = pteval;
- }
- 
--static void native_set_pte_at(struct mm_struct *mm, u32 addr, pte_t *ptep, pte_t pteval)
-+static fastcall void native_set_pte_at(struct mm_struct *mm, u32 addr, pte_t *ptep, pte_t pteval)
- {
- 	*ptep = pteval;
- }
- 
--static void native_set_pmd(pmd_t *pmdp, pmd_t pmdval)
-+static fastcall void native_set_pmd(pmd_t *pmdp, pmd_t pmdval)
- {
- 	*pmdp = pmdval;
- }
- 
- #else /* CONFIG_X86_PAE */
- 
--static void native_set_pte(pte_t *ptep, pte_t pte)
-+static fastcall void native_set_pte(pte_t *ptep, pte_t pte)
- {
- 	ptep->pte_high = pte.pte_high;
- 	smp_wmb();
- 	ptep->pte_low = pte.pte_low;
- }
- 
--static void native_set_pte_at(struct mm_struct *mm, u32 addr, pte_t *ptep, pte_t pte)
-+static fastcall void native_set_pte_at(struct mm_struct *mm, u32 addr, pte_t *ptep, pte_t pte)
- {
- 	ptep->pte_high = pte.pte_high;
- 	smp_wmb();
- 	ptep->pte_low = pte.pte_low;
- }
- 
--static void native_set_pte_present(struct mm_struct *mm, unsigned long addr, pte_t *ptep, pte_t pte)
-+static fastcall void native_set_pte_present(struct mm_struct *mm, unsigned long addr, pte_t *ptep, pte_t pte)
- {
- 	ptep->pte_low = 0;
- 	smp_wmb();
-@@ -441,29 +441,29 @@ static void native_set_pte_present(struct mm_struct *mm, unsigned long addr, pte
- 	ptep->pte_low = pte.pte_low;
- }
- 
--static void native_set_pte_atomic(pte_t *ptep, pte_t pteval)
-+static fastcall void native_set_pte_atomic(pte_t *ptep, pte_t pteval)
- {
- 	set_64bit((unsigned long long *)ptep,pte_val(pteval));
- }
- 
--static void native_set_pmd(pmd_t *pmdp, pmd_t pmdval)
-+static fastcall void native_set_pmd(pmd_t *pmdp, pmd_t pmdval)
- {
- 	set_64bit((unsigned long long *)pmdp,pmd_val(pmdval));
- }
- 
--static void native_set_pud(pud_t *pudp, pud_t pudval)
-+static fastcall void native_set_pud(pud_t *pudp, pud_t pudval)
- {
- 	*pudp = pudval;
- }
- 
--static void native_pte_clear(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
-+static fastcall void native_pte_clear(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
- {
- 	ptep->pte_low = 0;
- 	smp_wmb();
- 	ptep->pte_high = 0;
- }
- 
--static void native_pmd_clear(pmd_t *pmd)
-+static fastcall void native_pmd_clear(pmd_t *pmd)
- {
- 	u32 *tmp = (u32 *)pmd;
- 	*tmp = 0;
+Ciao,
+Alessio
