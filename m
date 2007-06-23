@@ -1,46 +1,31 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Sporadic server implementation
-Date: Sat, 23 Jun 2007 00:39:28 +0200
-Message-ID: <1182551968.20203.142.camel@chaos>
-References: <JK1U9G$D52764843ADF4807127CBE557A79E846@libero.it>
+Subject: Re: [PATCH 2.6.21.5-rt17] IPV6: estalished connections are not
+	shown with "cat /proc/net/tcp6"
+Date: Sat, 23 Jun 2007 09:13:43 +0200
+Message-ID: <1182582823.20203.161.camel@chaos>
+References: <467C40D3.206@ncos.nec.co.jp>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	David Miller <davem@davemloft.net>
-To: fla83tn <fla83tn@libero.it>
+Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org, dwalker@mvista.com,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:33977 "EHLO mail.tglx.de"
+Received: from www.osadl.org ([213.239.205.134]:35051 "EHLO mail.tglx.de"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751266AbXFVWja (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Jun 2007 18:39:30 -0400
-In-Reply-To: <JK1U9G$D52764843ADF4807127CBE557A79E846@libero.it>
+	id S1751598AbXFWHNs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 23 Jun 2007 03:13:48 -0400
+In-Reply-To: <467C40D3.206@ncos.nec.co.jp>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Flavio,
+On Fri, 2007-06-22 at 14:36 -0700, Masayuki Nakagawa wrote:
 
-first off, please use a mail client which does proper line wraps at
-column 78, when sending mail to mailing lists, or configure your mail
-client to do so.
+> So, I suggest a following change.
+> The change is to set the flag bit appropriately in __inet6_hash().
+> 
+> Signed-off-by: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
 
-On Fri, 2007-06-22 at 20:05 +0200, fla83tn wrote:
-> Hi to all,
-> I'm a Computer Science student who has patched the linux-2.6.19 for
-> supporting the POSIX Sporadic server specifications.
-
-Interesting.
-
->  It is not yet perfect (mainly because actually it does not use
-> hrtimers) because it was only a kind of exercise but I think it can be
-> a very good point where to start. If you think this  work can be
-> useful in the RT patch let me know about it and I will post the
-> patch..
-
-Post it in any case. It implements something which is not yet there and
-that's the best way to get some feedback (which might be negative as
-well).
-
-Thanks,
+Thanks, applied.
 
 	tglx
