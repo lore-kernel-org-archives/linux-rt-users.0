@@ -1,108 +1,148 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: =?ISO-8859-2?Q?P=E1sztor_Szil=E1rd?= <szilard.pasztor@evosoft.com>
 Subject: Re: Mysterious delay (interrupt?)
-Date: Mon, 25 Jun 2007 08:01:46 -0400
-Message-ID: <1182772906.5493.153.camel@localhost.localdomain>
+Date: Mon, 25 Jun 2007 14:57:30 +0200
+Message-ID: <20070625145730.6dae3e9b.szilard.pasztor@evosoft.com>
 References: <20070625095538.6b642a7b.szilard.pasztor@evosoft.com>
+	<1182772906.5493.153.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: =?ISO-8859-1?Q?P=E1sztor_Szil=E1rd?= <szilard.pasztor@evosoft.com>
+Content-Type: multipart/signed; protocol="application/pgp-signature";
+ micalg="PGP-SHA1";
+ boundary="Signature=_Mon__25_Jun_2007_14_57_30_+0200_X=QsdyQPwRJ32lpY"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:46210 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751180AbXFYMBu convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jun 2007 08:01:50 -0400
-In-Reply-To: <20070625095538.6b642a7b.szilard.pasztor@evosoft.com>
+Received: from evo2.evosoft.com ([195.228.139.85]:45565 "HELO evo2.evosoft.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1753830AbXFYM7K (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jun 2007 08:59:10 -0400
+Received: from EVOXCH1.evosoft.com (unknown [10.10.110.13])
+	by mail2.evosoft.hu (Postfix) with ESMTP id B8CE21BB1C1A
+	for <linux-rt-users@vger.kernel.org>; Mon, 25 Jun 2007 15:13:25 +0200 (CEST)
+In-Reply-To: <1182772906.5493.153.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi P=E1sztor,
+--Signature=_Mon__25_Jun_2007_14_57_30_+0200_X=QsdyQPwRJ32lpY
+Content-Type: text/plain; charset=US-ASCII
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Not sure if it would help you trace this down further but have you trie=
-d
-running your load with the Latency Tracer configured in? The Latency
-Tracer will generate its own over head latency but might track the
-problem down further.
+Hi,
 
+Steven Rostedt:
+> Not sure if it would help you trace this down further but have you tried
+> running your load with the Latency Tracer configured in?
 
-On Mon, 2007-06-25 at 09:55 +0200, P=E1sztor Szil=E1rd wrote:
-> Hi,
->=20
->   I'm using the RT patch for a project where I have to communicate ov=
-er
-> ethernet and 8 serial ports (via a pci multi-interface card). I must =
-gain CPU
-> time for a while in every millisecond which is my periodic cycle time=
-=2E
+Not yet, I'll give it a try.
 
-Is the thread that needs to gain CPU time dependent on the accessing of
-the serial and ethernet ports?
+> Is the thread that needs to gain CPU time dependent on the accessing of
+> the serial and ethernet ports?
 
->   Most things seem ok, but for some strange reason, 2-3 ms latencies =
-show up
-> rarely about once out of 200000 cycle runs or so when the machine is =
-under
-> load, mostly of interrupts.
+If you by this question suppose that the thread may get blocked because of =
+the
+ports, the answer is no: all ports are configured asynchronous. I'm all one
+thread anyway.
 
-Can you post the code to your program somewhere, and also show us
-exactly where you see the latency?
+> Can you post the code to your program somewhere, and also show us
+> exactly where you see the latency?
 
->   It took a while for me to track it down but finally found that this=
- latency
-> is not related to a slower part of my cycle, but is caused indirectly=
- by an
-> ioctl() call in the cycle with TIOCMGET read command on the serial po=
-rts that
-> translates to a driver-dependent get_mctrl call inside the kernel. If=
- the call
-> is in, the delay shows up elsewhere every time, spread across the cyc=
-le (found
-> that with extensive timestamping) so I'm thinking of some interrupt k=
-icking in
-> a while after the ioctl() call. Commenting the call out eliminates th=
-e problem
-> completely, but it unfortunately eliminates the functionality of my c=
-ode as
-> well since things depend on the line states so I cannot spare the rea=
-d of the
-> modem status register.
+I'm afraid I can't post the code due to industrial reasons but it's probably
+possible to show some snippets.
 
-The only real thing that happens in get_mctrl that I see is a wake_up.
-So if something is sleeping on an ioctl TIOCMWAIT, it will wake up and
-run.  Do you have something that does this?  Your latency that you are
-seeing, might just be another thread taking up the CPU.
+It looks like this, commented where necessary:
+-----------------------------------------------------------------------
+    get_rt_priority();
+                   =20
+    while (1)  =20
+    {      =20
+        if (begin_timer)
+        {
+            clock_gettime(CLOCK_REALTIME, &now);
+            begin_timer =3D 0;
+        }
+        prev =3D next =3D now;
+        next.tv_nsec +=3D RT_DELAY;	// RT_DELAY is 980000 ns by default
+        tsnorm(&next);
 
->=20
-> I'm currently using 2.6.19-rt15 but this problem shows up with every =
-kernel
-> and patch version I've tried (starting from 2.6.16 to 2.6.20) and I'm=
- not
-> really able to test newer versions currently because the server is un=
-der heavy
+        [...]
 
-Your personal server or are you talking about the server to download th=
-e
-patch?
+	if (sleep_allowed)
+            clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next, NULL);
 
-> use. However, I suspect that this problem is not an easy sight to com=
-e by and
-> probably still persists. Of course my task is running with the highes=
-t
-> real-time priority. The lower level serial driver that is in use is
-> drivers/serial/8250.c.
+	// read klok
+        clock_gettime(CLOCK_REALTIME, &now);
 
-As I said, check your application. I think there's another thread you
-may have that is competing with the thread you are timing.
+	// Few calculations to time cyclic jobs
+        handle_timers(calcdiff(now, prev));
 
->=20
->   I'm afraid I don't have a deep enough insight to track it down any =
-further,
-> so I thought I'd try if this description rings a bell with more knowl=
-edgeable
-> persons.
->=20
-> Any help would be greatly appreciated.
+	[...various data handling...]
 
--- Steve
+	ioctl(zlvStatus[port].fd, TIOCMGET, &flags); // this ioctl is to blame
+
+	[...some more tinkering with data...]
+
+#ifdef _SHOWTIMER_
+        if (!begin_timer)
+        {      =20
+            /* Now we remember the longest cycle runtime */
+            clock_gettime(CLOCK_REALTIME, &next);
+            tmp =3D calcdiff(next, now);
+            if (tmp > runtime)
+                runtime =3D tmp;
+        }
+#endif
+
+    }
+------------------------------------------------------------------------
+
+The symptom is that latency can kick in anywhere within this while() loop.
+After timestamping almost every single line, I was unable to bind the delay=
+ to
+one location. Sometimes a simple variable assignment was shown to last 2-3
+milliseconds. This led me to believe that the latency is not directly relat=
+ed
+to the code but rather an interruption of the running code at "random"
+locations.
+The latency is not present with the ioctl() call busted out, but the ioctl()
+itself is completed in a few microseconds or so.
+
+> The only real thing that happens in get_mctrl that I see is a wake_up.
+> So if something is sleeping on an ioctl TIOCMWAIT, it will wake up and
+> run.  Do you have something that does this?  Your latency that you are
+> seeing, might just be another thread taking up the CPU.
+
+My task is the only one toying with the serial ports, kind of. I generated =
+the
+high interrupt load with a ping -f and copying over NFS.
+
+> Your personal server or are you talking about the server to download the
+> patch?
+
+The server I'm running the code on is the one under use.
+But I think it's all the same for the different versions anyway.
+
+> As I said, check your application. I think there's another thread you
+> may have that is competing with the thread you are timing.
+
+I'll then try to prevent multiple opens on the serial ports then to avoid r=
+ace
+conditions. (Do I have to modify the serial driver for that?)
+
+Thanks for the tips,
+s.
+
+       -----------------------------------------------------------------
+       |  You are one of those bad things that happen to good people.  |
+       -----------------------------------------------------------------
+
+--Signature=_Mon__25_Jun_2007_14_57_30_+0200_X=QsdyQPwRJ32lpY
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQFGf7u6xoToz8jNC5ARAlYlAJ4kwacanFX6Z+M94aI3bUhbhRiRZwCg6cKm
+9um+PZZlx6QlszQ7vVJ7BO8=
+=/nmZ
+-----END PGP SIGNATURE-----
+
+--Signature=_Mon__25_Jun_2007_14_57_30_+0200_X=QsdyQPwRJ32lpY--
