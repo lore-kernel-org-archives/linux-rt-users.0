@@ -1,44 +1,68 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Question about latency tracer output
-Date: Mon, 2 Jul 2007 18:07:01 -0300
-Message-ID: <20070702210701.GE4827@unix.sh>
+From: John Sigler <linux.kernel@free.fr>
+Subject: [CONFIG_PREEMPT_RT] High frequency periodic timer
+Date: Tue, 03 Jul 2007 15:37:12 +0200
+Message-ID: <468A5108.5010504@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ivoti.hst.terra.com.br ([200.176.10.212]:50275 "EHLO
-	ivoti.terra.com.br" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755398AbXGBVKV (ORCPT
+Received: from postfix2-g20.free.fr ([212.27.60.43]:56015 "EHLO
+	postfix2-g20.free.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756841AbXGCOed (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Jul 2007 17:10:21 -0400
-Received: from sr03-07.mta.terra.com.br (sr03-07.mta.terra.com.br [200.154.152.46])
-	by ivoti.terra.com.br (Postfix) with ESMTP id B6FE04A536C
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Jul 2007 18:10:18 -0300 (BRT)
-Received: from disraeli.terra.com.br (disraeli.terra.com.br [200.176.10.19])
-	by bungunia.hst.terra.com.br (Postfix) with ESMTP id 1823B1944239
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Jul 2007 18:08:16 -0300 (BRT)
-Received: from lclaudio.dyndns.org (unknown [189.4.11.102])
-	(authenticated user lc_poa)
-	by disraeli.terra.com.br (Postfix) with ESMTP id 0454A3840BF
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Jul 2007 18:08:15 -0300 (BRT)
-Content-Disposition: inline
+	Tue, 3 Jul 2007 10:34:33 -0400
+Received: from smtp4-g19.free.fr (smtp4-g19.free.fr [212.27.42.30])
+	by postfix2-g20.free.fr (Postfix) with ESMTP id 8DF3A15C2ED3
+	for <linux-rt-users@vger.kernel.org>; Tue,  3 Jul 2007 14:40:05 +0200 (CEST)
+Received: from [10.10.10.208] (ims92-1-88-163-235-69.fbx.proxad.net [88.163.235.69])
+	by smtp4-g19.free.fr (Postfix) with ESMTP id 82F846F14E
+	for <linux-rt-users@vger.kernel.org>; Tue,  3 Jul 2007 15:37:24 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello!
+Hello everyone,
 
-What's the meaning of VP and KP, as in the log exerpt bellow? I saw that
-they are hardcoded to 0... are they just placeholders?
+[ Please include my address in the CC list ]
 
-    [root@dexterlab ~]# cat /proc/latency_trace
-    preemption latency trace v1.1.5 on 2.6.21-rc3-rt0
-    --------------------------------------------------------------------
-    latency: 65 us, #20/20, CPU#3 | (M:rt VP:0, KP:0, SP:1 HP:1 #P:4)
+I have been experimenting with the CONFIG_PREEMPT_RT patch for a few
+months. Specifically kernel 2.6.20.7-rt8.
 
-Thanks,
-Luis
--- 
-[ Luis Claudio R. Goncalves                   lclaudio at uudg dot org ]
-[ Fingerprint:   4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8    ]
-[ Linux-HA Developer - LateNite Programmer - Gospel User - Bass Player ]
-[ Fault Tolerance - Real-Time - Distributed Systems - IECLB - Is 40:31 ]
+http://rt.wiki.kernel.org/index.php/Main_Page
+
+I've been running into some unexpected problems, so I wanted to ask
+those who have some experience with this patch what they thought.
+
+Here's a brief description of my application:
+
+System A periodically sends timestamped packets. These packets travel
+over a network, or through a network emulator, and get randomly dropped
+or delayed by a random amount of time. These packets reach system B at
+some point. System B uses the timestamp to re-send the packets smoothly=
+,
+as if they had been produced on B, with only a constant time-shift.
+Basically, B acts as a "dejittering" router.
+
+I have implemented this with high-resolution timers. Every time the
+timer fires, I send one packet. In "parallel", I buffer incoming packet=
+s
+that arrive from system A.
+
+Consider 1316-byte packets and a 80 Mbit/s stream bit rate.
+
+This means the timer period is 1316*8 / 80 =3D 131.6 =B5s
+
+I've been wondering whether having such a small period (high frequency)
+might be a problem / challenge for the real-time kernel (scheduler, IRQ
+handler, other component).
+
+The CPUs used are mid-range (i.e. 1.3 GHz P3 and 1.5 GHz Celeron M)=20
+single core, and they easily copes with just the receiving part.
+
+But I have seen some odd behavior (random crashes in my program) that
+must mean I have made some incorrect assumptions.
+
+What do you all think?
+
+Regards.
