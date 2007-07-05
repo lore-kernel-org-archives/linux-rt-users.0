@@ -1,63 +1,36 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: v2.6.21.5-rt19
-Date: Wed, 04 Jul 2007 22:49:15 +0200
-Message-ID: <1183582155.3291.160.camel@chaos>
+From: "Jayabrata Chakrabarty" <jayabrata.chakrabarty@gmail.com>
+Subject: Realfeel benchmark tool
+Date: Thu, 5 Jul 2007 23:57:47 +1000
+Message-ID: <3df244bc0707050657i730de682n7b9ac7c2fa57d058@mail.gmail.com>
+References: <3df244bc0707050655h6a0bfabcrb6e1ad51ad50b5c1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
-	Carsten Emde <Carsten.Emde@osadl.org>
-To: LKML <linux-kernel@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:48729 "EHLO mail.tglx.de"
-	rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1755307AbXGDUtj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Jul 2007 16:49:39 -0400
+Received: from nz-out-0506.google.com ([64.233.162.236]:4081 "EHLO
+	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757794AbXGEN5s (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 5 Jul 2007 09:57:48 -0400
+Received: by nz-out-0506.google.com with SMTP id s18so1856920nze
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2007 06:57:48 -0700 (PDT)
+In-Reply-To: <3df244bc0707050655h6a0bfabcrb6e1ad51ad50b5c1@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I'm pleased to announce the v2.6.21.5-rt19 kernel on behalf of Ingo.
+Hello Everyone,
 
-It can be downloaded from the usual place:
- 
-     http://people.redhat.com/mingo/realtime-preempt/
-  
-More info about the -rt patch set can be found in the RT wiki:
-   
-     http://rt.wiki.kernel.org
+I have a query, Can i use Realfeel benchmark tool,
+to test the interrupt latency on an smp machine. I have a non-smp machine,
+on which i tested the 2.6.19-rt11 kernel, and i got very impressive
+interrupt latency (< 30 us, with tests carried over 10 hours, on heavy load).
+But i am not getting the same performance on an smp machine, which i
+recently acquired. I used the latest 2.6.21.5-rt19 kernel.
+But still the same results. Am i doing something wrong, or is Realfeel not
+meant for smp? In that case, which tool can i use? I have used the Realfeel
+tool from the amlat package.
 
-Changes since 2.6.21.5-rt18:
-
-- Fixed a nasty and hard to track down slowness / boot problem on SMP
-machines with CONFIG_NOHZ enabled. The problem was caused by the timer
-wheel base lock held during the get_next_timer_interrupt() call in the
-idle path, which eventually led to a bogus PI boosting of the idle task
-and in consequence a stale wrong scheduler selection for the affected
-idle task.
-
-Kudos to Carsten Emde, who patiently and meticulously isolated the
-problem and provided the traces, which allowed to identify the root
-cause.
-
-Problem solution: Prevent idle task boosting
-
-- back port of the ntp / clock_was_set fix
-
-- integration of the processor_idle fix from Venki Pallipadi, which
-resolves boot issues on some platforms
-
-- ep93xx clock events fix from Manfred Gruber
-
-
-To build a 2.6.21.5-rt19 tree, the following patches should be applied:
-  
-    http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.21.5.tar.bz2
-    http://people.redhat.com/mingo/realtime-preempt/patch-2.6.21.5-rt19
-
-Thanks,
-
-	tglx
+Regards
+Jayabrata
