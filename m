@@ -1,81 +1,85 @@
-From: "Rui Nuno Capela" <rncbc@rncbc.org>
-Subject: Re: 2.6.21-rt2..8 troubles
-Date: Fri, 6 Jul 2007 15:16:02 +0100 (WEST)
-Message-ID: <37651.194.65.103.1.1183731362.squirrel@www.rncbc.org>
-References: <23932.213.58.131.130.1170156409.squirrel@www.rncbc.org>       
-    <460FE7F3.4060303@rncbc.org> <20070401183928.GB27614@elte.hu>       
-    <46574DE4.2080900@rncbc.org> <1180195709.4264.7.camel@chaos>       
-    <4658A4F4.1080204@rncbc.org>  <46660369.2070104@rncbc.org>       
-    <1181317625.4404.332.camel@chaos>       
-    <59605.213.13.107.141.1181326897.squirrel@www.rncbc.org>       
-    <1181328636.4404.335.camel@chaos>  <466DA42A.6010600@rncbc.org>       
-    <1181591122.8176.159.camel@chaos>       
-    <1181591733.11539.217.camel@imap.mvista.com>       
-    <466DB581.8050306@rncbc.org>  <1181596473.8176.162.camel@chaos>       
-    <466DBDC2.8030509@rncbc.org>  <1181598178.8176.180.camel@chaos>       
-    <1181601280.11539.219.camel@imap.mvista.com>      
-    <1181603306.8176.183.camel@chaos>   
-    <35572.194.65.103.1.1181643050.squirrel@www.rncbc.org>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: v2.6.21.5-rt19
+Date: Fri, 06 Jul 2007 14:49:04 -0700
+Message-ID: <1183758545.20747.34.camel@cmn3.stanford.edu>
+References: <1183582155.3291.160.camel@chaos>
+	 <9609.194.65.103.1.1183731007.squirrel@www.rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "Daniel Walker" <dwalker@mvista.com>,
-	"Ingo Molnar" <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: "Thomas Gleixner" <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.netcabo.pt ([212.113.174.28]:2852 "EHLO
-	exch01smtp11.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752464AbXGFORa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Jul 2007 10:17:30 -0400
-In-Reply-To: <35572.194.65.103.1.1181643050.squirrel@www.rncbc.org>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT-Users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
+	Carsten Emde <carsten.emde@osadl.org>
+To: Rui Nuno Capela <rncbc@rncbc.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763268AbXGFVtV@vger.kernel.org>
+In-Reply-To: <9609.194.65.103.1.1183731007.squirrel@www.rncbc.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Fri, 2007-07-06 at 15:10 +0100, Rui Nuno Capela wrote:
+> Hi,
+> 
+> On Wed, July 4, 2007 21:49, Thomas Gleixner wrote:
+> > I'm pleased to announce the v2.6.21.5-rt19 kernel on behalf of Ingo.
+> >
+> >
+> > It can be downloaded from the usual place:
+> >
+> > http://people.redhat.com/mingo/realtime-preempt/
+> >
+> > More info about the -rt patch set can be found in the RT wiki:
+> >
+> > http://rt.wiki.kernel.org
+> >
+> > Changes since 2.6.21.5-rt18:
+> >
+> > - Fixed a nasty and hard to track down slowness / boot problem on SMP
+> > machines with CONFIG_NOHZ enabled. The problem was caused by the timer
+> > wheel base lock held during the get_next_timer_interrupt() call in the
+> > idle path, which eventually led to a bogus PI boosting of the idle task
+> > and in consequence a stale wrong scheduler selection for the affected idle
+> > task.
+> >
+> > Kudos to Carsten Emde, who patiently and meticulously isolated the
+> > problem and provided the traces, which allowed to identify the root cause.
+> >
+> > Problem solution: Prevent idle task boosting
+> >
+> > - back port of the ntp / clock_was_set fix
+> >
+> > - integration of the processor_idle fix from Venki Pallipadi, which
+> > resolves boot issues on some platforms
+> >
+> > - ep93xx clock events fix from Manfred Gruber
+> >
+> 
+> Maybe someone remember me whining about troubles with 2.6.21-rt2..18 on my
+> Core2 T7200 laptop (fujitsu-siemens amilo i1520).
+> 
+> Althought I'm still with my fingers crossed, I can tell the good news are
+> that 2.6.21.5-rt19 (and -rt20) does behave far better now on the very same
+> box.
 
-I'm back but with good news this time :)...
+Yes, it works much better indeed...
 
-On Tue, June 12, 2007 11:10, Rui Nuno Capela wrote:
-> On Tue, June 12, 2007 00:08, Thomas Gleixner wrote:
->> On Mon, 2007-06-11 at 15:34 -0700, Daniel Walker wrote:
->>> On Mon, 2007-06-11 at 23:42 +0200, Thomas Gleixner wrote:
->>>> On Mon, 2007-06-11 at 22:25 +0100, Rui Nuno Capela wrote:
->>>>
->>>>> Nope. It's a Fujitsu-Siemens Amilo Si 1520 -- Intel Core2 Duo
->>>>> T7200@2.0Ghz.
->>>>>
->>>> Yeah, there are Dell ones which have similar or worse symptoms.
->>>>
->>>>> Works great with 2.6.21-rt1, and 2.6.22-rc4-hrt5, but that you
->>>>> already know :)
->>>>
->>>> Ok. I go back and figure out which differences we have between
->>>> 2.6.21-rt>8 and the -hrt queue.
->>>
->>> Are you sure it's strictly and HRT issue? I didn't see a
->>> !CONFIG_HIGH_RES_TIMERS test ..
->>
->> The main difference between -rt1 and -rt2 was the update of -hrt, which
->>  not only affects CONFIG_HIGH_RES_TIMERS. There are enough
->> CONFIG_HIGH_RES_TIMERS=n related changes to clock events and friends as
->>  well.
->
-> In deed, FWIW and IIRC, I can confirm that the show-stopper problem was
-> still present when tried with CONFIG_HIGH_RES_TIMERS not set (=N).
->
+Ingo: is there a place where I can read about the changes in different
+rtxx releases? What is new/better/fixed in rt20? (I see scheduler stuff
+in a diff from rt19 to rt20 but I don't really know what it means). 
 
-Although I'm still with my fingers crossed, I can tell that 2.6.21.5-rt19
-(and -rt20) does behave far better now on the very same box.
+-- Fernando
 
-I've more than 8 hours up and running now, without a single glimpse of the
-bad symptoms, which used to show in a matter of minutes if not earlier
-during init time.
-
-Congratulations, -rt is usable again here and that just makes me happier :)
-
-Cheers.
--- 
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
+> I've more than 8 hours up and running now, without a single glimpse of the
+> bad symptoms, which used to show in a matter of minutes if not earlier
+> during init time.
+> 
+> Congratulations. I'm not sure whether this problem can be closed for good,
+> though, just because you mention the slowness fix applies to CONFIG_NOHZ=Y
+> and I'm quite sure my badness surged either way.
+> 
+> But at least -rt is usable again here and that just makes me happier :)
+> 
+> Cheers.
