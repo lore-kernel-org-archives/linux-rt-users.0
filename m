@@ -1,7 +1,7 @@
 From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: v2.6.21.5-rt19
-Date: Sat, 7 Jul 2007 11:15:27 +0200
-Message-ID: <20070707091527.GA21234@elte.hu>
+Date: Sat, 7 Jul 2007 11:24:01 +0200
+Message-ID: <20070707092401.GB21234@elte.hu>
 References: <1183582155.3291.160.camel@chaos> <9609.194.65.103.1.1183731007.squirrel@www.rncbc.org> <1183758545.20747.34.camel@cmn3.stanford.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -13,19 +13,32 @@ Cc: Rui Nuno Capela <rncbc@rncbc.org>,
 	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
 	Carsten Emde <carsten.emde@osadl.org>
 To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:50090 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751220AbXGGJQO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 7 Jul 2007 05:16:14 -0400
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754445AbXGGJYu@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <1183758545.20747.34.camel@cmn3.stanford.edu>
-Sender: linux-rt-users-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
 
+> > > Changes since 2.6.21.5-rt18:
+> > >
+> > > - Fixed a nasty and hard to track down slowness / boot problem on SMP
+> > > machines with CONFIG_NOHZ enabled. The problem was caused by the timer
+> > > wheel base lock held during the get_next_timer_interrupt() call in the
+> > > idle path, which eventually led to a bogus PI boosting of the idle task
+> > > and in consequence a stale wrong scheduler selection for the affected idle
+> > > task.
+> > >
+> > > Kudos to Carsten Emde, who patiently and meticulously isolated the
+> > > problem and provided the traces, which allowed to identify the root cause.
+> > >
+> > > Problem solution: Prevent idle task boosting
+
+> > Maybe someone remember me whining about troubles with 2.6.21-rt2..18 
+> > on my Core2 T7200 laptop (fujitsu-siemens amilo i1520).
+> > 
 > > Althought I'm still with my fingers crossed, I can tell the good 
 > > news are that 2.6.21.5-rt19 (and -rt20) does behave far better now 
 > > on the very same box.
@@ -37,6 +50,25 @@ List-Id: linux-rt-users.vger.kernel.org
 > stuff in a diff from rt19 to rt20 but I don't really know what it 
 > means).
 
-rt19 -> rt20 was a pure CFS update - from v18 to v19-almost-final.
+and rt18 was a -rt-only NOHZ fix, that bug got introduced in rt11 when 
+CFS was merged.
+
+i _think_ Rui might have seen two separate problems. Perhaps by the time 
+we fixed the first problem (which Rui saw since -rt2) we introduced the 
+other one via -rt11 - which then got fixed in -rt19.
+
+btw., we'd love to get more feedback regarding CFS. CFS is a completely 
+new scheduler for Linux. It has a design centered around keeping 
+application latencies down, so it is ultimately real-time friendly, and 
+it should also make things work better for desktop-ish and audio-ish 
+stuff as well. (even under SCHED_OTHER)
+
+So it would be nice if you could keep an extra eye on any scheduling 
+artifacts or regressions, and make sure your favorite workload is still 
+handled by the Linux scheduler in the utmost best way. I'd like to hear 
+about any sort of "scheduling behavior / interactivity" regression you 
+might see, relative to the vanilla kernel. Or if you can see no such 
+problems then a line of "it works as well as the previous scheduler" is 
+important info to us too. Thanks!
 
 	Ingo
