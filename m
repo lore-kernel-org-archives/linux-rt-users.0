@@ -1,74 +1,23 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: v2.6.21.5-rt19
-Date: Sat, 7 Jul 2007 11:24:01 +0200
-Message-ID: <20070707092401.GB21234@elte.hu>
-References: <1183582155.3291.160.camel@chaos> <9609.194.65.103.1.1183731007.squirrel@www.rncbc.org> <1183758545.20747.34.camel@cmn3.stanford.edu>
+From: "Jayabrata Chakrabarty" <jayabrata.chakrabarty@gmail.com>
+Subject: Benchmarking interrupt latency
+Date: Sun, 8 Jul 2007 11:11:10 +1000
+Message-ID: <3df244bc0707071811p6e0d0ab5kb7d0f191ccf87911@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Rui Nuno Capela <rncbc@rncbc.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
-	Carsten Emde <carsten.emde@osadl.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754445AbXGGJYu@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wa-out-1112.google.com ([209.85.146.178]:44061 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753804AbXGHBLL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 7 Jul 2007 21:11:11 -0400
+Received: by wa-out-1112.google.com with SMTP id v27so846312wah
+        for <linux-rt-users@vger.kernel.org>; Sat, 07 Jul 2007 18:11:10 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <1183758545.20747.34.camel@cmn3.stanford.edu>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello everyone,
 
-* Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-
-> > > Changes since 2.6.21.5-rt18:
-> > >
-> > > - Fixed a nasty and hard to track down slowness / boot problem on SMP
-> > > machines with CONFIG_NOHZ enabled. The problem was caused by the timer
-> > > wheel base lock held during the get_next_timer_interrupt() call in the
-> > > idle path, which eventually led to a bogus PI boosting of the idle task
-> > > and in consequence a stale wrong scheduler selection for the affected idle
-> > > task.
-> > >
-> > > Kudos to Carsten Emde, who patiently and meticulously isolated the
-> > > problem and provided the traces, which allowed to identify the root cause.
-> > >
-> > > Problem solution: Prevent idle task boosting
-
-> > Maybe someone remember me whining about troubles with 2.6.21-rt2..18 
-> > on my Core2 T7200 laptop (fujitsu-siemens amilo i1520).
-> > 
-> > Althought I'm still with my fingers crossed, I can tell the good 
-> > news are that 2.6.21.5-rt19 (and -rt20) does behave far better now 
-> > on the very same box.
-> 
-> Yes, it works much better indeed...
-> 
-> Ingo: is there a place where I can read about the changes in different 
-> rtxx releases? What is new/better/fixed in rt20? (I see scheduler 
-> stuff in a diff from rt19 to rt20 but I don't really know what it 
-> means).
-
-and rt18 was a -rt-only NOHZ fix, that bug got introduced in rt11 when 
-CFS was merged.
-
-i _think_ Rui might have seen two separate problems. Perhaps by the time 
-we fixed the first problem (which Rui saw since -rt2) we introduced the 
-other one via -rt11 - which then got fixed in -rt19.
-
-btw., we'd love to get more feedback regarding CFS. CFS is a completely 
-new scheduler for Linux. It has a design centered around keeping 
-application latencies down, so it is ultimately real-time friendly, and 
-it should also make things work better for desktop-ish and audio-ish 
-stuff as well. (even under SCHED_OTHER)
-
-So it would be nice if you could keep an extra eye on any scheduling 
-artifacts or regressions, and make sure your favorite workload is still 
-handled by the Linux scheduler in the utmost best way. I'd like to hear 
-about any sort of "scheduling behavior / interactivity" regression you 
-might see, relative to the vanilla kernel. Or if you can see no such 
-problems then a line of "it works as well as the previous scheduler" is 
-important info to us too. Thanks!
-
-	Ingo
+Can i use Realfeel to find the interrupt latency of an SMP machine?
