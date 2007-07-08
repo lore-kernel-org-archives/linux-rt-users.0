@@ -1,47 +1,37 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: PI mutex support on ARM
-Date: Sun, 8 Jul 2007 11:58:41 +0200
-Message-ID: <20070708095841.GA4601@elte.hu>
-References: <3efb10970707080124i7a9323c5o9257b4adcb2ac493@mail.gmail.com>
+From: jayabrata_c@dataone.in
+Subject: Interrupt latency benchmark
+Date: Mon, 09 Jul 2007 02:40:16 +1000
+Message-ID: <f5f0cd74458f.4691a010@dataone.in>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: linux@bohmer.net
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:39998 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753155AbXGHJ6s (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 8 Jul 2007 05:58:48 -0400
-Content-Disposition: inline
-In-Reply-To: <3efb10970707080124i7a9323c5o9257b4adcb2ac493@mail.gmail.com>
+Received: from bglbbmr1-a-fixed.dataone.in ([218.248.240.59]:43156 "EHLO
+	bglbbmr1.dataone.in" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753262AbXGHQkr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 8 Jul 2007 12:40:47 -0400
+Received: from dataone.in ([10.16.18.23])
+ by bglbbmr1.dataone.in (Sun Java System Messaging Server 6.2-6.01 (built Apr
+ 3 2006)) with ESMTP id <0JKV00JHPCRKI700@bglbbmr1.dataone.in> for
+ linux-rt-users@vger.kernel.org; Sun, 08 Jul 2007 22:05:44 +0530 (IST)
+Content-language: en
+Content-disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello All,
 
-* Remy Bohmer <l.pinguin@gmail.com> wrote:
+I have a query, Can i use Realfeel benchmark tool,
+to test the interrupt latency on an smp machine. I have a non-smp machine,
+on which i tested the 2.6.19-rt11 kernel, and i got very impressive
+interrupt latency (< 30 us, with tests carried over 10 hours, on heavy load).
+But i am not getting the same performance on an smp machine, which i
+recently acquired. I used the latest 2.6.21.5-rt19 kernel.
+But still the same results. Am i doing something wrong, or is Realfeel not
+meant for smp? In that case, which tool can i use? I have used the Realfeel
+tool from the amlat package.
 
-> --- linux-2.6.21.orig/include/asm/futex.h	2007-04-26 05:08:32.000000000 +0200
-
-patch format problem: never diff the asm/ files, diff the asm-arm/ 
-files.
-
-> +	local_irq_save(flags);
-> +
-> +	err = get_user(uval, uaddr);
-
-is it safe to do a get_user() with irqs off?
-
-> +	if (err)
-> +	{
-> +		local_irq_restore(flags);
-> +		 return -EFAULT;
-> +	}
-
-(style problems. Use scripts/checkpatch.pl to verify your patches.)
-
-> +	local_irq_restore(flags);
-
-is this method of atomic ops SMP-safe?
-
-	Ingo
+Regards
+Jayabrata
