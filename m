@@ -1,55 +1,35 @@
-From: Matthieu CASTET <matthieu.castet@parrot.com>
+From: Arjan van de Ven <arjan@infradead.org>
 Subject: Re: PI mutex support on ARM
-Date: Mon, 9 Jul 2007 07:20:40 +0000 (UTC)
-Message-ID: <loom.20070709T091457-860@post.gmane.org>
+Date: Mon, 09 Jul 2007 07:46:06 -0700
+Message-ID: <1183992366.2668.0.camel@laptopd505.fenrus.org>
 References: <3efb10970707080124i7a9323c5o9257b4adcb2ac493@mail.gmail.com>
+	 <20070708095841.GA4601@elte.hu>
+	 <3efb10970707081317k22de079dr9a5cad6a42cf5b3b@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: linux@bohmer.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:57162 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751176AbXGIHZG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jul 2007 03:25:06 -0400
-Received: from root by ciao.gmane.org with local (Exim 4.43)
-	id 1I7ncE-000870-8h
-	for linux-rt-users@vger.kernel.org; Mon, 09 Jul 2007 09:25:02 +0200
-Received: from ASt-Lambert-152-1-73-132.w86-217.abo.wanadoo.fr ([86.217.67.132])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Jul 2007 09:25:02 +0200
-Received: from matthieu.castet by ASt-Lambert-152-1-73-132.w86-217.abo.wanadoo.fr with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Jul 2007 09:25:02 +0200
+Received: from pentafluge.infradead.org ([213.146.154.40]:47894 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752619AbXGIOqf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Jul 2007 10:46:35 -0400
+In-Reply-To: <3efb10970707081317k22de079dr9a5cad6a42cf5b3b@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
-
-Remy Bohmer <l.pinguin <at> gmail.com> writes:
-
+On Sun, 2007-07-08 at 22:17 +0200, Remy Bohmer wrote:
+> Hello Ingo,
 > 
-> Hello Thomas,
+> > patch format problem: never diff the asm/ files, diff the asm-arm/ files.
+> Yeah, of course, I know, I believe I made a real mess of this one ...
 > 
-> I have build an implementation for the routine
-> futex_atomic_cmpxchg_inatomic() to make PTHREAD_PRIO_INHERIT mutex
-> work on ARM.
-> Compared to other architectures where CPU specific assembler is used,
-> it is probably not the most optimal implementation possible, but I
-> tested it successfully on a Atmel AT91RM9200 core, and it could work
-> on other (UP) architectures as well.
-> 
-> What do you think of it?
-> Or do you know a better solution?
+> > is it safe to do a get_user() with irqs off?
+> rhetorical question ;-))
+> I was wondering, Is it safe to use a normal spinlock here, like this?
 
-May be you could have a look at __kuser_cmpxchg (arch/arm/kernel/entry-armv.S).
-There stuff for smp for armv6 and newer.
-For armv5 and older, maybe masking interrupt is the best solution.
-
-
-But I believe you should CC arm linux mailling list. You should find more arm
-expert :)
-
-
-Matthieu
+if get_user() isn't allowed with irq's off (and in general it's not,
+maybe arm is special) then it also isn't allowed with spinlocks held..
