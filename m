@@ -1,23 +1,63 @@
-From: Serge Belyshev <belyshev@depni.sinp.msu.ru>
-Subject: Re: [announce] split-up -rt patch-queue, v2.6.22.1-rt2
-Date: Fri, 13 Jul 2007 01:10:25 +0400
-Message-ID: <873azt2uri.fsf@depni.sinp.msu.ru>
-References: <20070712153717.GA7442@elte.hu>
+From: Michael Gerdau <mgd@technosis.de>
+Subject: Re: v2.6.22.1-rt1
+Date: Thu, 12 Jul 2007 23:31:52 +0200
+Message-ID: <200707122332.04193.mgd@technosis.de>
+References: <20070712121355.GA10949@elte.hu> <200707121645.46206.mgd@technosis.de> <20070712160139.GB8252@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed;
+  boundary="nextPart1240844.KQ6A0WQCvD";
+  protocol="application/pgp-signature";
+  micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S964885AbXGLVKu@vger.kernel.org>
-In-Reply-To: <20070712153717.GA7442@elte.hu> (Ingo Molnar's message of "Thu\, 12 Jul 2007 17\:37\:17 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from server021.webpack.hosteurope.de ([80.237.130.29]:37071 "EHLO
+	server021.webpack.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1757843AbXGLVcI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Jul 2007 17:32:08 -0400
+In-Reply-To: <20070712160139.GB8252@elte.hu>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar <mingo@elte.hu> writes:
+--nextPart1240844.KQ6A0WQCvD
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-> We are pleased to announce something we've been working on for some 
-> time: a finegrained, split-up patch queue of the -rt kernel patch. From 
-> now on (as of 2.6.22.1-rt2) it will be part of every upstream -rt 
-> release and it is available from the -rt download site:
+> > > to build a 2.6.22.1-rt1 tree, the following patches should be applied:
+> > > =A0
+> > > =A0 =A0http://kernel.org/pub/linux/kernel/v2.6/linux-2.6.22.1.tar.bz2
+> > > =A0 =A0http://redhat.com/~mingo/realtime-preempt/patch-2.6.22.1-rt1
+> >=20
+> > I get a compile error on my x86_64 dualcore sytem.
+>=20
+> could you check it builds fine with -rt2?
 
-Better late than never. Thank You.
+It builds fine now with -rt2.
+
+Thanks, best wishes,
+Michael
+=2D-=20
+ Technosis GmbH, Gesch=E4ftsf=FChrer: Michael Gerdau, Tobias Dittmar
+ Sitz Hamburg; HRB 89145 Amtsgericht Hamburg
+ Vote against SPAM - see http://www.politik-digital.de/spam/
+ Michael Gerdau       email: mgd@technosis.de
+ GPG-keys available on request or at public keyserver
+
+--nextPart1240844.KQ6A0WQCvD
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQBGlp3UUYYhyuxDQc4RArnNAJ96App9OeaOrW7i6SmCo/qF5fjGDACgjVis
+v+7dIJDSH6aTjGz5qsEva40=
+=zQWo
+-----END PGP SIGNATURE-----
+
+--nextPart1240844.KQ6A0WQCvD--
