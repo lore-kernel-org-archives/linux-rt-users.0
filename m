@@ -1,62 +1,58 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to 2.6.22
 	available
-Date: Thu, 12 Jul 2007 12:26:48 -0400
-Message-ID: <46961E080200005A000276AE@mcclure.wal.novell.com>
+Date: Thu, 12 Jul 2007 18:33:41 +0200
+Message-ID: <20070712163341.GA9622@elte.hu>
+References: <46961E080200005A000276AE@mcclure.wal.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <jim.houston@ccur.com>, <joe.korty@ccur.com>,
-	<rostedt@goodmis.org>, <tglx@linutronix.de>, <dwalker@mvista.com>,
-	"David Bahi" <DBahi@novell.com>,
-	"Moiz Kohari" <MKohari@novell.com>,
-	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
-	<williams@redhat.com>, <abogani@texware.it>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <mingo@elte.hu>
+Content-Type: text/plain; charset=us-ascii
+Cc: jim.houston@ccur.com, joe.korty@ccur.com, rostedt@goodmis.org,
+	tglx@linutronix.de, dwalker@mvista.com,
+	David Bahi <DBahi@novell.com>,
+	Moiz Kohari <MKohari@novell.com>,
+	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
+	williams@redhat.com, abogani@texware.it,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:46855 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1758383AbXGLQ04 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Jul 2007 12:26:56 -0400
+Received: from mx2.mail.elte.hu ([157.181.151.9]:36246 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1763981AbXGLQfM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Jul 2007 12:35:12 -0400
 Content-Disposition: inline
+In-Reply-To: <46961E080200005A000276AE@mcclure.wal.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-07-12 at 14:07 +0200, Ingo Molnar wrote:
-> great! We had the upstream -rt port to .22 in the works too, it was just 
-> held up by the hpet breakage - which Thomas managed to fix earlier 
-> today. I've released the 2.6.22.1-rt1 patch to the usual place:
+
+* Gregory Haskins <ghaskins@novell.com> wrote:
+
+>   For the most part, it seems you guys have resolved most of the 
+> issues that we ran into as well (e.g. early-flush-tlb, relocated 
+> die-notifier, etc, come to mind).  I found one patch that was missing 
+> that allows debug configurations to build properly.  Heres that patch:
 > 
->     http://redhat.com/~mingo/realtime-preempt/
+> --- linux-2.6.21.orig/kernel/latency_trace.c
+> +++ linux-2.6.21/kernel/latency_trace.c
+> @@ -24,6 +24,7 @@
+>  #include <linux/utsrelease.h>
+>  #include <asm/uaccess.h>
+>  #include <asm/unistd.h>
+> +#include <asm/asm-offsets.h>
 
-Hi Ingo,
-  For the most part, it seems you guys have resolved most of the issues
-that we ran into as well (e.g. early-flush-tlb, relocated die-notifier,
-etc, come to mind).  I found one patch that was missing that allows
-debug configurations to build properly.  Heres that patch:
+i think this breaks PPC (which has no asm-offsets.h file). In any case i 
+saw this build breakage too and the fix is in -rt2.
 
---- linux-2.6.21.orig/kernel/latency_trace.c
-+++ linux-2.6.21/kernel/latency_trace.c
-@@ -24,6 +24,7 @@
- #include <linux/utsrelease.h>
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
-+#include <asm/asm-offsets.h>
- #include <asm/rtc.h>
- #include <linux/stacktrace.h>
+> We did find a regression.  I was mistaken earlier when I mentioned our 
+> T60p laptops couldn't boot.  It turns out that issue was resolved 
+> somewhere along the way and our published patches based on 21.5-rt19 
+> do allow the laptop to boot event with acpi=on.  With 22.1-rt1 the 
+> laptop crashes unless acpi=off.  Now that we have your queue we will 
+> bisect this and post that fix as well.
 
-With this patch in place, I am able to build/boot both a 21.1-rt1 kernel
-with a standard x86_64 PREEMPT_RT+SMP both with and without the usual
-debug options, so that is great!
+ok. Make sure you check rt2 as well - and note that it's not fully 
+bisectable with PREEMPT_RT enabled (but should probably be fully 
+bisectable with PREEMPT_RT disabled). So check out first whether the 
+problem still persists with PREEMPT_RT disabled.
 
-We did find a regression.  I was mistaken earlier when I mentioned our
-T60p laptops couldn't boot.  It turns out that issue was resolved
-somewhere along the way and our published patches based on 21.5-rt19 do
-allow the laptop to boot event with acpi=on.  With 22.1-rt1 the laptop
-crashes unless acpi=off.  Now that we have your queue we will bisect
-this and post that fix as well.
-
-Thanks!
--Greg
+	Ingo
