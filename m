@@ -1,32 +1,53 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to 2.6.22
-	available
-Date: Thu, 12 Jul 2007 07:14:03 +0200
-Message-ID: <1184217243.12353.205.camel@chaos>
-References: <469544710200005A000275CC@mcclure.wal.novell.com>
+From: =?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>
+Subject: Re: [Patch RT] Fix CFS load balancing for RT tasks
+Date: Thu, 12 Jul 2007 08:28:54 +0200
+Message-ID: <20070712082854.12a385d3@frecb000686.frec.bull.fr>
+References: <20070711164708.48907792@frecb000686.frec.bull.fr>
+	<1184173580.12353.105.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, jim.houston@ccur.com, joe.korty@ccur.com,
-	dwalker@mvista.com, David Bahi <DBahi@novell.com>,
-	Moiz Kohari <MKohari@novell.com>,
-	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Ingo Molnar <mingo@elte.hu>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>,
+	Darren Hart <dvhltc@us.ibm.com>,
+	john stultz <johnstul@us.ibm.com>,
+	Jean Pierre Dion <jean-pierre.dion@bull.net>,
+	Gilles Carry <Gilles.Carry@ext.bull.net>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:59609 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751310AbXGLFOH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Jul 2007 01:14:07 -0400
-In-Reply-To: <469544710200005A000275CC@mcclure.wal.novell.com>
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:37206 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751245AbXGLGbA convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Jul 2007 02:31:00 -0400
+In-Reply-To: <1184173580.12353.105.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-07-11 at 20:58 -0400, Gregory Haskins wrote:
-> 	Note also that we find that the resulting kernel does not boot on some
-> T60p thinkpads without "acpi=off".  We are still investigating the root
-> cause here.
+On Wed, 11 Jul 2007 19:06:20 +0200 Thomas Gleixner <tglx@linutronix.de>=
+ wrote:
 
-Try "nohpet" for now. I'm investigating it on the -hrt side as well.
+> On Wed, 2007-07-11 at 16:47 +0200, S=C3=A9bastien Dugu=C3=A9 wrote:
+> >   The following patch fixes this by re-enabling the RT overload det=
+ection
+> > for the CFS. It may not be the right solution, maybe it should be i=
+ncorporated
+> > into the other load balancing mechanisms. I did not digg deep enoug=
+h yet
+> > to make that call ;-)
+> >=20
+> >   P.S. Thanks to Steven Rostedt for logdev which is proving invalua=
+ble in
+> >        cases like this.
+> >=20
+> >   S=C3=A9bastien.
+>=20
+> Nice catch. That was dropped during the CFS -> -rt merge.
+>=20
+> 	tglx
 
-	tglx
+  Thanks, and sorry, I forgot to CC you :(
+
+  S=C3=A9bastien.
