@@ -1,37 +1,67 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: v2.6.22.1-rt3 - Early INT13 boot crash
-Date: Fri, 13 Jul 2007 19:18:29 +0200
-Message-ID: <4697B3E5.1050907@osadl.org>
-References: <1184325752.12353.312.camel@chaos>
+From: "David Bahi" <dbahi@novell.com>
+Subject: Re: v2.6.22.1-rt3
+Date: Fri, 13 Jul 2007 14:21:42 -0600
+Message-ID: <46978A760200006C00014998@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/mixed; boundary="=__PartA1867DC6.3__="
+Cc: <mingo@elte.hu>, <tglx@linutronix.de>,
+	<linux-rt-users@vger.kernel.org>
+To: <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:43323 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1760633AbXGMS07 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 14:26:59 -0400
-In-Reply-To: <1184325752.12353.312.camel@chaos>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:25639 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757229AbXGMUVu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 16:21:50 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas,
+--=__PartA1867DC6.3__=
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-> we are pleased to announce the v2.6.22.1-rt3 kernel
-Thanks a lot!
+On Fri, 2007-07-13 at 09:29 -0700, Daniel Walker wrote:
+> On Fri, 2007-07-13 at 10:11 -0600, David Bahi wrote:
+> > On Fri, 2007-07-13 at 13:36 +0200, Remy Bohmer wrote:
+> > > Thomas,
+> > >=20
+> >=20
+> > > It should be: http://www.tglx.de/projects/preempt-rt/2.6.22.1-rt3/
+> > >=20
 
-Using the .config file from the previous stable version (2.6.21.6-rt21), 
-the new version runs okay on an x86_64 system. On an i386 system, 
-however, the system is crashing at an early boot stage displaying an 
-INT13 reg dump at the window bottom.
+> Below is an only compile tested patch to drop the spinlocks out of the
+> c3 enter idle function, and use atomics instead. It looks related to
+> your panic.. I'm in the process of testing it, but you more than welcome
+> to try it..
 
-After disabling paravirtualization support (CONFIG_PARAVIRT), the new 
-version is working fine on i386 as well.
+outstanding!
 
-Just in case someone out there is experiencing the same problem.
+2.6.22.1-rt3-rt #1 SMP PREEMPT RT Fri Jul 13 16:08:12 EDT 2007 \
+ x86_64 x86_64 x86_64 GNU/Linux
 
-	--cbe
+thank you very much - this is a confirmed fix for my t60p laptop.=20
+
+cyclictest results ran as i typed this:
+
+./cyclictest -p80 -t2 -n
+0.15 0.04 0.01 3/217 5011
+
+T: 0 ( 4963) P:80 I:1000 C: 168698 Min:      4 Act:   67 Avg:   33 Max:
+832
+T: 1 ( 4964) P:79 I:1500 C: 112466 Min:      4 Act:   50 Avg:   34 Max:
+825
+
+
+
+--=__PartA1867DC6.3__=
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4yIChHTlUv
+TGludXgpCgppRDhEQlFCR2w5N1FIMjhKSFlhekxhUVJBaXp5QUtDWndvTkVCcFVyZ1NaQzdROG1j
+WlRBYkZld053Q2dqWnBICnU5Umg1bWYvaHZzaHpTeW9XM0gxYm9jPQo9ME5vegotLS0tLUVORCBQ
+R1AgU0lHTkFUVVJFLS0tLS0KCg==
+
+--=__PartA1867DC6.3__=--
