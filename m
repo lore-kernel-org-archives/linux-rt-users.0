@@ -1,57 +1,33 @@
-From: Stephane Eranian <eranian@hpl.hp.com>
-Subject: Re: Counting CPU_CLK_UNHALTED on an idle system
-Date: Fri, 13 Jul 2007 06:09:34 -0700
-Message-ID: <20070713130934.GD28939@frankl.hpl.hp.com>
-References: <46977105.6020604@free.fr> <20070713123712.GC28939@frankl.hpl.hp.com> <469777D4.6060900@free.fr>
-Reply-To: eranian@hpl.hp.com
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: v2.6.22.1-rt3
+Date: Fri, 13 Jul 2007 18:05:11 +0200
+Message-ID: <1184342711.12353.315.camel@chaos>
+References: <1184325752.12353.312.camel@chaos>
+	 <3efb10970707130436v70ddbae2w51af0a19fa5c297c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, oprofile-list@lists.sourceforge.net
-To: John Sigler <linux.kernel@free.fr>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT-Users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>
+To: linux@bohmer.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tayrelbas01.tay.hp.com ([161.114.80.244]:40016 "EHLO
-	tayrelbas01.tay.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755253AbXGMNRq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 09:17:46 -0400
-Content-Disposition: inline
-In-Reply-To: <469777D4.6060900@free.fr>
+Received: from www.osadl.org ([213.239.205.134]:36707 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752419AbXGMQFx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 12:05:53 -0400
+In-Reply-To: <3efb10970707130436v70ddbae2w51af0a19fa5c297c@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-John,
+On Fri, 2007-07-13 at 13:36 +0200, Remy Bohmer wrote:
+> Thomas,
+> 
+> >  http://www.tglx.de/projects/preempt-rt/2.6.22.1
+> 
+> This is a dead link...
+> It should be: http://www.tglx.de/projects/preempt-rt/2.6.22.1-rt3/
 
+Grmbl, the publishing script choked.
 
-On Fri, Jul 13, 2007 at 03:02:12PM +0200, John Sigler wrote:
-> Stephane Eranian wrote:
-> 
-> > On PIII, CPU_CLK_UNHALTED is broken and keeps on counting while in HALT state.
-> 
-> Stephane,
-> 
-> Would you have a reference?
-> 
-No references, just my presonal experience. You'd have to ask Intel for a confirmation
-or just file a bug report. I don't know where, unfortunately.
-
-Note that the event works on Pentium M.
-
-> There is no such mention in the latest Specification Update (May 2007).
-> 
-> http://developer.intel.com/design/intarch/specupdt/244453.htm
-> 
-> Regards.
-> 
-> -------------------------------------------------------------------------
-> This SF.net email is sponsored by DB2 Express
-> Download DB2 Express C - the FREE version of DB2 express and take
-> control of your XML. No limits. Just data. Click to get it now.
-> http://sourceforge.net/powerbar/db2/
-> _______________________________________________
-> oprofile-list mailing list
-> oprofile-list@lists.sourceforge.net
-> https://lists.sourceforge.net/lists/listinfo/oprofile-list
-
--- 
-
--Stephane
+	tglx
