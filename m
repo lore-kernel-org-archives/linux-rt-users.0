@@ -1,123 +1,115 @@
-From: =?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>
-Subject: Re: [Patch RT] Fix CFS load balancing for RT tasks
-Date: Fri, 13 Jul 2007 09:01:51 +0200
-Message-ID: <20070713090151.13554f72@frecb000686.frec.bull.fr>
-References: <20070711164708.48907792@frecb000686.frec.bull.fr>
-	<1184258515.3000.11.camel@josh-work.beaverton.ibm.com>
-	<1184260438.3000.16.camel@josh-work.beaverton.ibm.com>
+From: Peter Williams <pwil3058@bigpond.net.au>
+Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to 2.6.22	available
+Date: Fri, 13 Jul 2007 16:25:32 +1000
+Message-ID: <46971ADC.3030700@bigpond.net.au>
+References: <4695E5BB0200005A0002763E@mcclure.wal.novell.com> <20070712130958.GB17494@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Ingo Molnar <mingo@elte.hu>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>,
-	Darren Hart <dvhltc@us.ibm.com>,
-	john stultz <johnstul@us.ibm.com>,
-	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Gilles Carry <Gilles.Carry@ext.bull.net>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Josh Triplett <josht@linux.vnet.ibm.com>
+Content-Type: multipart/mixed;
+ boundary="------------040700070604070106090803"
+Cc: Gregory Haskins <ghaskins@novell.com>, jim.houston@ccur.com,
+	joe.korty@ccur.com, rostedt@goodmis.org, tglx@linutronix.de,
+	dwalker@mvista.com, David Bahi <DBahi@novell.com>,
+	Moiz Kohari <MKohari@novell.com>,
+	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
+	williams@redhat.com, abogani@texware.it,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:37493 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752074AbXGMHEC convert rfc822-to-8bit (ORCPT
+Received: from qsrv01ps.mx.bigpond.com ([144.140.82.181]:50987 "EHLO
+	qsrv01ps.mx.bigpond.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752041AbXGMHOp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 03:04:02 -0400
-In-Reply-To: <1184260438.3000.16.camel@josh-work.beaverton.ibm.com>
+	Fri, 13 Jul 2007 03:14:45 -0400
+In-Reply-To: <20070712130958.GB17494@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This is a multi-part message in MIME format.
+--------------040700070604070106090803
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
- Hi Josh,
+Ingo Molnar wrote:
+> * Gregory Haskins <ghaskins@novell.com> wrote:
+> 
+>> On Thu, 2007-07-12 at 14:07 +0200, Ingo Molnar wrote:
+>>> * Gregory Haskins <ghaskins@novell.com> wrote:
+>>>
+>>>> Hi Ingo, Thomas, and the greater linux-rt community,
+>>>>   
+>>>> 	I just wanted to let you guys know that our team has a port of 
+>>>> the 21.5-rt20 patch for the 2.6.22 kernel available. [...]
+>>> great! We had the upstream -rt port to .22 in the works too, it was just 
+>>> held up by the hpet breakage - which Thomas managed to fix earlier 
+>>> today. I've released the 2.6.22.1-rt1 patch to the usual place:
+>>>
+>>>     http://redhat.com/~mingo/realtime-preempt/
+>> Thats awesome, Ingo!  Thanks!  Could you publish a broken out version 
+>> as well?  We found it extremely valuable to be able to bisect this 
+>> beast while working on the 21-22 port.
+> 
+> we are working on something in this area :) Stay tuned ...
 
-On Thu, 12 Jul 2007 10:13:57 -0700 Josh Triplett <josht@linux.vnet.ibm.=
-com> wrote:
+I've just been reviewing these patches and have spotted an error in the
+file mm/slob.c at lines 500-501 whereby a non existent variable "c" is
+referenced.  The attached patch is a proposed fix to the problem.
 
-> On Thu, 2007-07-12 at 09:41 -0700, Josh Triplett wrote:
-> > On Wed, 2007-07-11 at 16:47 +0200, S=C3=A9bastien Dugu=C3=A9 wrote:
-> > >   there seems to be something wrong with the way the CFS balances=
- (or does not
-> > > balance) RT tasks. This was evidenced using the sched_football te=
-stcase
-> > > available from the RT wiki (http://rt.wiki.kernel.org/index.php/I=
-BM_Test_Cases)
-> > > which I modified and attached to this mail.
-> > >=20
-> > >   The testcase starts a number of threads which fall into 3 categ=
-ories:
-> > >=20
-> > > 	1 referee thread: SCHED_FIFO, RT prio 5
-> > > 	ncpus defensive threads: SCHED_FIFO, RT prio 4
-> > > 	ncpus offensive threads: SCHED_FIFO, RT prio 3
-> > >=20
-> > > 	(ncpus being the number of CPUs)
-> > >=20
-> > >   To make a long story short, the defensive threads should end up=
- distributed
-> > > among all CPUs, but that's not the case. For example, on a dual H=
-T Xeon box,
-> > > after task migration stabilizes we have the following running on =
-the different
-> > > CPUs:
-> > >=20
-> > >   CPU 0: defense2
-> > >   CPU 1: referee offense2 offense3 offense4 defense3
-> > >   CPU 2: offense1
-> > >   CPU 3: defense1 defense4
-> > >=20
-> > > which clearly show the imbalance between CPU 2 and CPU 3 where of=
-fense1
-> > > should not be allowed to run while the higher prio defense1 and d=
-efense4
-> > > are sharing the same CPU.
-> > >=20
-> > >   The following patch fixes this by re-enabling the RT overload d=
-etection
-> > > for the CFS. It may not be the right solution, maybe it should be=
- incorporated
-> > > into the other load balancing mechanisms. I did not digg deep eno=
-ugh yet
-> > > to make that call ;-)
-> >=20
-> > 2.6.21.5-rt20 plus this patch passed 1000 runs of the standard
-> > sched_football on an 8 processor (quad dual-core) x86-64 box.  Nice
-> > work.
->=20
-> Hmmm, seems I spoke a bit too soon; due to a bug in the test log
-> checker, the test failed but the log checker said PASS.  Actual resul=
-ts:
-> $ grep 'Final ball position' rt-tests.log | sort | uniq -c
->     960 Final ball position: 0
->      39 Final ball position: 1
->       1 Final ball position: 2
->=20
-> So it failed 4% of the runs.  However, it failed much less
-> spectacularly; rather than overrunning the integer maximum, it only
-> reached 1-2.  Still a huge improvement despite not solving the proble=
-m
-> completely.
+-- 
+Peter Williams                                   pwil3058@bigpond.net.au
 
+"Learning, n. The kind of ignorance distinguishing the studious."
+ -- Ambrose Bierce
 
-  Yeah, I had a 5000 iterations test run last night which failed with
-one of the runs having a final ball position of 1. So it's not yet
-perfect. I think we're hitting the same bug as with the O(1) scheduler
-in 2.6.21-rt8.
+--------------040700070604070106090803
+Content-Type: text/x-patch;
+ name="fix-slob-error.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="fix-slob-error.patch"
 
-  It seems that the more CPUs there are, the easier it is to reproduce.
-Hopefully I should have access to a quad dual core box soon now to
-verify this.
+Fix error in realtime-preempt patch for mm/slob.c
 
-  One more thing, the bug seems even harder to reproduce if I have
-a logdev LD_MARK (direct marker, no kprobe) in context_switch().
+This error was caused by a change to slob_free()'s interface.
 
-  Ingo, Thomas, any ideas, opinions? It looks like there might be a rac=
-e in
-the RT balancing code that prevents pulling the highest prio task and
-instead selects a lower one to run.
+Signed-off-by: Peter Williams <pwil3058@bigpond.net.au>
 
-  In the mean time I'll continue poring over the 2.6.21-rt8 scheduler
-to try to find something.
+diff -r cb0010b7bffe mm/slob.c
+--- a/mm/slob.c	Fri Jul 13 15:24:45 2007 +1000
++++ b/mm/slob.c	Fri Jul 13 16:23:02 2007 +1000
+@@ -493,14 +493,14 @@ void *kmem_cache_zalloc(struct kmem_cach
+ }
+ EXPORT_SYMBOL(kmem_cache_zalloc);
+ 
+-static void __kmem_cache_free(void *b, int size)
++static void __kmem_cache_free(struct kmem_cache *c, void *b)
+ {
+ 	atomic_dec(&c->items);
+ 
+ 	if (c->size <= MAX_SLOB_CACHE_SIZE)
+ 		slob_free(c, b, c->size);
+ 	else
+-		free_pages((unsigned long)b, get_order(size));
++		free_pages((unsigned long)b, get_order(c->size));
+ }
+ 
+ static void kmem_rcu_free(struct rcu_head *head)
+@@ -508,7 +508,7 @@ static void kmem_rcu_free(struct rcu_hea
+ 	struct slob_rcu *slob_rcu = (struct slob_rcu *)head;
+ 	void *b = (void *)slob_rcu - (slob_rcu->size - sizeof(struct slob_rcu));
+ 
+-	__kmem_cache_free(b, slob_rcu->size);
++	__kmem_cache_free(slob_rcu, b);
+ }
+ 
+ void kmem_cache_free(struct kmem_cache *c, void *b)
+@@ -520,7 +520,7 @@ void kmem_cache_free(struct kmem_cache *
+ 		slob_rcu->size = c->size;
+ 		call_rcu(&slob_rcu->head, kmem_rcu_free);
+ 	} else {
+-		__kmem_cache_free(b, c->size);
++		__kmem_cache_free(c, b);
+ 	}
+ }
+ EXPORT_SYMBOL(kmem_cache_free);
 
-
-  S=C3=A9bastien.
+--------------040700070604070106090803--
