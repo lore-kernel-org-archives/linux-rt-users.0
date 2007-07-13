@@ -1,75 +1,196 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
-Date: Fri, 13 Jul 2007 01:02:00 -0700
-Message-ID: <1184313720.8462.35.camel@sx.thebigcorporation.com>
-References: <4696C0720200005A0002776A@mcclure.wal.novell.com>
-	 <1184300099.7974.79.camel@dhcp193.mvista.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Fri, 13 Jul 2007 10:32:37 +0200
+Message-ID: <469738A5.2040306@free.fr>
+References: <469600F7.3060603@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	tglx@linutronix.de, David Bahi <DBahi@novell.com>,
-	linux-rt-users@vger.kernel.org, johnstul@us.ibm.com
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org, oprofile-list@lists.sourceforge.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sccrmhc12.comcast.net ([204.127.200.82]:60267 "EHLO
-	sccrmhc12.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751774AbXGMICF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 04:02:05 -0400
-In-Reply-To: <1184300099.7974.79.camel@dhcp193.mvista.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:57759 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756535AbXGMIck (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 04:32:40 -0400
+In-Reply-To: <469600F7.3060603@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-07-12 at 21:14 -0700, Daniel Walker wrote:
-> 
-> It looks like your patch might be line wrapped ?
-> 
+John Sigler wrote:
 
-I reconstituted the patch to clear the white space damage.
+> [ Note: cross-posted to linux-rt-users and oprofile-list ]
+>=20
+> I'm running kernel 2.6.20.7-rt8 on x86 (1267-MHz P3) with the
+> following debug options:
+>=20
+> CONFIG_TRACE_IRQFLAGS_SUPPORT=3Dy
+> # CONFIG_PRINTK_TIME is not set
+> # CONFIG_ENABLE_MUST_CHECK is not set
+> # CONFIG_MAGIC_SYSRQ is not set
+> # CONFIG_UNUSED_SYMBOLS is not set
+> # CONFIG_DEBUG_FS is not set
+> # CONFIG_HEADERS_CHECK is not set
+> # CONFIG_DEBUG_KERNEL is not set
+> CONFIG_LOG_BUF_SHIFT=3D14
+> CONFIG_STACKTRACE=3Dy
+> CONFIG_EVENT_TRACE=3Dy
+> CONFIG_FUNCTION_TRACE=3Dy
+> CONFIG_WAKEUP_TIMING=3Dy
+> CONFIG_LATENCY_TRACE=3Dy
+> # CONFIG_CRITICAL_PREEMPT_TIMING is not set
+> # CONFIG_CRITICAL_IRQSOFF_TIMING is not set
+> CONFIG_WAKEUP_LATENCY_HIST=3Dy
+> CONFIG_LATENCY_TIMING=3Dy
+> CONFIG_LATENCY_HIST=3Dy
+> CONFIG_MCOUNT=3Dy
+> CONFIG_DEBUG_BUGVERBOSE=3Dy
+> CONFIG_FRAME_POINTER=3Dy
+> CONFIG_UNWIND_INFO=3Dy
+> CONFIG_STACK_UNWIND=3Dy
+> CONFIG_EARLY_PRINTK=3Dy
+> CONFIG_X86_FIND_SMP_CONFIG=3Dy
+> CONFIG_X86_MPPARSE=3Dy
+> CONFIG_DOUBLEFAULT=3Dy
+>=20
+> http://linux.kernel.free.fr/latency/config-2.6.20.7-rt8-adlink-latenc=
+y
+>=20
+> Here's my situation:
+>=20
+> A SCHED_RR process with priority 80 is performing blocking reads of=20
+> 1316-byte chunks from a PCI device. The data comes in at ~38 Mbit/s.
+>=20
+> Therefore, in a perfect world, my process would wake up periodically=20
+> every 1316*8 / 38e6 =3D 277 =B5s to handle the latest chunk.
+>=20
+> However, periodically, my process blocks up to 400 =B5s instead of 27=
+7 =B5s.
+> Naturally, the next iteration, my process blocks less than 277 =B5s (=
+the=20
+> PCI board has 1316 bytes ready every 277 =B5s regardless).
+>=20
+> I've captured a histogram of read latencies.
+> It is expressed in units of 512 ns.
+> e.g. there were 23,126,460 occurences of LAT=3D278 =B5s (543 * 512 ns=
+)
+> http://linux.kernel.free.fr/latency/histogram.txt
+> http://linux.kernel.free.fr/latency/read_latency.png
+>=20
+> The system is otherwise completely idle. In other words, 100% of the =
+CPU=20
+> is dedicated to the single task of waiting for an interrupt request,=20
+> servicing it, and pushing the data to user land.
+>=20
+> I used OProfile to frequently sample the instruction pointer while my=
+=20
+> application ran all night long.
+>=20
+> http://linux.kernel.free.fr/latency/oprofile_report_all_night.txt
+>=20
+> CPU: PIII, speed 1266.7 MHz (estimated)
+> Counted CPU_CLK_UNHALTED events (clocks processor is not halted) with=
+ a=20
+> unit mask of 0x00 (No unit mask) count 60000
+> samples      %      symbol name
+> 958075714  90.6470   default_idle
+> 25637397    2.4256   mask_and_ack_8259A
+> 10697948    1.0122   __copy_to_user_ll
+> 9345347     0.8842   oprofiled
+> 9246368     0.8748   Dta1xxIsr
+> 6732131     0.6370   enable_8259A_irq
+> 5153650     0.4876   __schedule
+> 1873157     0.1772   irq_entries_start
+> 1729897     0.1637   increment_tail
+> 1565354     0.1481   clock_gettime
+> 1429908     0.1353   Dta1xxDmaTransfer
+> 1428107     0.1351   ioread16
+> 1252095     0.1185   system_call
+> 1081768     0.1023   try_to_wake_up
+> 983687      0.0931   cpu_idle
+>=20
+> I thought default_idle called HLT via safe_halt(). Since I'm only=20
+> counting UNHALTED clock cycles, I'm surprised to see so many samples=20
+> taken in default_idle. Does someone understand that?
+>=20
+> Is it possible that one of these functions periodically delays the=20
+> delivery of data to my SCHED_RR application?
+>=20
+> Here's a /proc/latency_trace dump. What is there to understand?
+>=20
+> # cat /proc/latency_trace
+> preemption latency trace v1.1.5 on 2.6.20.7-rt8
+> --------------------------------------------------------------------
+>  latency: 26 us, #2/2, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
+>     -----------------
+>     | task: softirq-timer/0-4 (uid:0 nice:0 policy:1 rt_prio:50)
+>     -----------------
+>=20
+>                  _------=3D> CPU#
+>                 / _-----=3D> irqs-off
+>                | / _----=3D> need-resched
+>                || / _---=3D> hardirq/softirq
+>                ||| / _--=3D> preempt-depth
+>                |||| /
+>                |||||     delay
+>    cmd     pid ||||| time  |   caller
+>       \   /    |||||   \   |   /
+>    <...>-4     0D..1   26us : trace_stop_sched_switched=20
+> (__sched_text_start)
+>=20
+>=20
+> vim:ft=3Dhelp
 
-- Sven
+Shouldn't there be many lines in this output?
+Do I need an additional kernel configuration option?
 
->From ghaskins@novell.com Thu Jul 12 21:59:46 2007
-Mime-Version: 1.0
-X-Mailer: GroupWise 7.0.2 HP
-Subject: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
-Date: Thu, 12 Jul 2007 21:59:46 -0600
-Message-ID: <4696C0720200005A0002776A@novell.com>
-From: "Gregory Haskins" <ghaskins@novell.com>
-To: "Ingo Molnar" <mingo@elte.hu>, tglx@linutronix.de
-Cc: "Sven Dietrich" <SDietrich@novell.com>, "David Bahi" <DBahi@novell.com>, linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-X-Evolution-Source: imap://sdietrich@imap.novell.com/
-Content-Transfer-Encoding: 8bit
+> Is there a different diagnostic I can run to tell why data delivery
+> to my app is periodically delayed 100 =B5s?
 
-2.6.22 changed the vsyscall mechanism to store a more cache-thrash
-friendly version of the gtod data.  The original gtod cache code used an
-entire struct clock + structure-copy, whereas the new code uses a
-pseudo/shadow version + explicit-copy. 
+I'm open to all suggestions. I'm running out of ideas.
 
-clock.cycle_accumulated was added to RT prior to 2.6.22 so the vsyscall
-code must also be updated for the port to 22.
+> # cat /proc/latency_hist/wakeup_latency/CPU0
+> #Minimum latency: 0 microseconds.
+> #Average latency: 0 microseconds.
+> #Maximum latency: 26 microseconds.
+> #Total samples: 14925698
+> #There are 0 samples greater or equal than 10240 microseconds
+> #usecs           samples
+>     0            3682745
+>     1            9487737
+>     2            1748372
+>     3               1192
+>     4               3689
+>     5                 50
+>     6                 14
+>     7                 14
+>     8                  9
+>     9                 46
+>    10                995
+>    11                799
+>    12                  6
+>    13                  8
+>    14                  4
+>    15                  6
+>    16                  3
+>    17                  0
+>    18                  1
+>    19                  0
+>    20                  0
+>    21                  0
+>    22                  3
+>    23                  1
+>    24                  0
+>    25                  1
+>    26                  3
+>=20
+> I would think that I might have a clearer picture if I could request =
+the=20
+> last N instruction pointer samples from OProfile, to figure out what =
+the=20
+> CPU has been doing for the past several hundred =B5s.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+I'd like to hear what OProfile devs think of this approach.
+I seems far from trivial to implement?
 
-Acked-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-
---- 
-
- vsyscall.c |    1 +
- 1 file changed, 1 insertion(+)
-
-Index: linux-2.6.22/arch/x86_64/kernel/vsyscall.c
-===================================================================
---- linux-2.6.22.orig/arch/x86_64/kernel/vsyscall.c
-+++ linux-2.6.22/arch/x86_64/kernel/vsyscall.c
-@@ -90,6 +90,7 @@ void update_vsyscall(struct timespec *wa
- 	/* copy vsyscall data */
- 	vsyscall_gtod_data.clock.vread = clock->vread;
- 	vsyscall_gtod_data.clock.cycle_last = clock->cycle_last;
-+       vsyscall_gtod_data.clock.cycle_accumulated = clock->cycle_accumulated;
- 	vsyscall_gtod_data.clock.mask = clock->mask;
- 	vsyscall_gtod_data.clock.mult = clock->mult;
- 	vsyscall_gtod_data.clock.shift = clock->shift;
+Regards.
