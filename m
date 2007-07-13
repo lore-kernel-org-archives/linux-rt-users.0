@@ -1,32 +1,44 @@
 From: Kevin Hilman <khilman@mvista.com>
-Subject: [PATCH -rt 1/6] Re-add GENERIC_TIME to OMAP
-Date: Fri, 13 Jul 2007 10:52:15 -0700
-Message-ID: <20070713175227.687367584@mvista.com>
+Subject: [PATCH -rt 6/6] Compile fix for PREEMPT_TIMING on and IRQSOFF_TIMING off
+Date: Fri, 13 Jul 2007 10:52:20 -0700
+Message-ID: <20070713175229.239602308@mvista.com>
 References: <20070713175214.336577416@mvista.com>
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: tglx@linutronix.de, mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from deeprooted.net ([216.254.16.51]:38942 "EHLO paris.hilman.org"
+Received: from deeprooted.net ([216.254.16.51]:38937 "EHLO paris.hilman.org"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1760352AbXGMSNI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 14:13:08 -0400
-Content-Disposition: inline; filename=omap-fix.patch
+	id S1760102AbXGMSNH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 14:13:07 -0400
+Content-Disposition: inline; filename=trace-cpu-idle.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Signed-off-by: Kevin Hilman <khilman@mvista.com>
+The per-cpu trace_cpu_idle variable is used when timing *either*
+IRQs-off or preempt sections.
+
 ---
-Index: linux-2.6/arch/arm/Kconfig
+ kernel/latency_trace.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+Index: linux-2.6/kernel/latency_trace.c
 ===================================================================
---- linux-2.6.orig/arch/arm/Kconfig
-+++ linux-2.6/arch/arm/Kconfig
-@@ -394,6 +394,7 @@ config ARCH_DAVINCI
- config ARCH_OMAP
- 	bool "TI OMAP"
- 	select GENERIC_GPIO
-+	select GENERIC_TIME
- 	help
- 	  Support for TI's OMAP platform (OMAP1 and OMAP2).
+--- linux-2.6.orig/kernel/latency_trace.c
++++ linux-2.6/kernel/latency_trace.c
+@@ -85,9 +85,13 @@ static inline int DEBUG_WARN_ON(int cond
+ }
+ #endif
  
++#if defined(CONFIG_CRITICAL_IRQSOFF_TIMING) || \
++    defined(CONFIG_CRITICAL_PREEMPT_TIMING)
++   static DEFINE_PER_CPU(int, trace_cpu_idle);
++#endif
++
+ #ifdef CONFIG_CRITICAL_IRQSOFF_TIMING
+ # ifdef CONFIG_CRITICAL_PREEMPT_TIMING
+-   static DEFINE_PER_CPU(int, trace_cpu_idle);
+ #  define irqs_off_preempt_count() (preempt_count() && !__get_cpu_var(trace_cpu_idle))
+ # else
+ #  define irqs_off_preempt_count() 0
 
 --
