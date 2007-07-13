@@ -1,67 +1,93 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: v2.6.22.1-rt3
-Date: Fri, 13 Jul 2007 10:25:09 -0700
-Message-ID: <1184347509.18465.2.camel@cmn3.stanford.edu>
-References: <1184325752.12353.312.camel@chaos>
+From: john stultz <johnstul@us.ibm.com>
+Subject: Re: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
+Date: Fri, 13 Jul 2007 11:05:51 -0700
+Message-ID: <1184349951.6205.1.camel@localhost.localdomain>
+References: <4696C0720200005A0002776A@mcclure.wal.novell.com>
+	 <1184300099.7974.79.camel@dhcp193.mvista.com>
+	 <1184313720.8462.35.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Daniel Walker <dwalker@mvista.com>,
+	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	tglx@linutronix.de, David Bahi <DBahi@novell.com>,
+	linux-rt-users@vger.kernel.org
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.Stanford.EDU ([171.67.22.28]:59738 "EHLO
-	smtp1.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756300AbXGMRZM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 13:25:12 -0400
-In-Reply-To: <1184325752.12353.312.camel@chaos>
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:50837 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1759058AbXGMSGr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 14:06:47 -0400
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e3.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l6DH2uof008754
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Jul 2007 13:02:56 -0400
+Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l6DI6jXL558858
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Jul 2007 14:06:45 -0400
+Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
+	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l6DI6ifh023632
+	for <linux-rt-users@vger.kernel.org>; Fri, 13 Jul 2007 14:06:45 -0400
+In-Reply-To: <1184313720.8462.35.camel@sx.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2007-07-13 at 13:22 +0200, Thomas Gleixner wrote:
-> we are pleased to announce the v2.6.22.1-rt3 kernel
+On Fri, 2007-07-13 at 01:02 -0700, Sven-Thorsten Dietrich wrote:
+> On Thu, 2007-07-12 at 21:14 -0700, Daniel Walker wrote:
+> > 
+> > It looks like your patch might be line wrapped ?
+> > 
 > 
-> Attention! 
+> I reconstituted the patch to clear the white space damage.
 > 
-> Ingo is off for a long weekend and therefor the download location for
-> this release is:
+> - Sven
 > 
->  http://www.tglx.de/projects/preempt-rt/2.6.22.1
->   
-> more info about the -rt patchset can be found in the RT wiki:
->   
->    http://rt.wiki.kernel.org
->  
-> This release is bugfix release:
+> >From ghaskins@novell.com Thu Jul 12 21:59:46 2007
+> Mime-Version: 1.0
+> X-Mailer: GroupWise 7.0.2 HP
+> Subject: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
+> Date: Thu, 12 Jul 2007 21:59:46 -0600
+> Message-ID: <4696C0720200005A0002776A@novell.com>
+> From: "Gregory Haskins" <ghaskins@novell.com>
+> To: "Ingo Molnar" <mingo@elte.hu>, tglx@linutronix.de
+> Cc: "Sven Dietrich" <SDietrich@novell.com>, "David Bahi" <DBahi@novell.com>, linux-rt-users@vger.kernel.org
+> Content-Type: text/plain; charset=utf-8
+> Content-Disposition: inline
+> X-Evolution-Source: imap://sdietrich@imap.novell.com/
+> Content-Transfer-Encoding: 8bit
 > 
-> - update of the x8664 -hrt queue (resolve boot problems)
-> - gtod vsyscall fix from Gregory Haskins
+> 2.6.22 changed the vsyscall mechanism to store a more cache-thrash
+> friendly version of the gtod data.  The original gtod cache code used an
+> entire struct clock + structure-copy, whereas the new code uses a
+> pseudo/shadow version + explicit-copy. 
+> 
+> clock.cycle_accumulated was added to RT prior to 2.6.22 so the vsyscall
+> code must also be updated for the port to 22.
+> 
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> 
+> Acked-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 
-Same problem as reported yesterday in 2.6.22.1-rt2 in a T61 laptop, boot
-hangs, last BUG printed is similar to this (numbers changed since
-yesterday, of course, functions listed appear to be the same). No serial
-port available to dump everything...
+Good catch!
 
-This was copied from the screen yesterday:
+Acked-by: John Stultz <johnstul@us.ibm.com>
 
-BUG: spinlock lockup on CPU#1, swapper/0, c318da88
-[<c0405f34>] show_trace_log_lvl+0x1a/0x2f
-[<c0406a09>] show_trace+-x12/0x14
-[<c0406a71>] dump_stack+0x16/0x18
-[<c0617a91>] _raw_spin_lock+0xc1/0xe2
-[<c061743f>] __spin_lock_irq+0x14/0x16
-[<c061541d>] __sched_tex_start+0xd5/0xaef
-[<c061600e>] schedule+0xe0/0xfa
-[<c0616c15>] rt_spin_lock_slowlock+0xcf/0x14f
-[<c061724b>] __rt_spin_lock+0x3d/0x40
-[<c0617256>] rt_spin_lock+0x8/0xa
-[<c052f95c>] acpi_idle_enter_c3+0x12d/0x232
-[<c059af51>] cpuidle_idle_call+0x56/0x79
-[<c04033a5>] cpu_idle+0x9d/0xda
-[<c0419e21>] start_secondary+0x34e/0x356
-[<00000000>] 0x0
 
-Same .config as before.
--- Fernando
+
+
+> --- 
+> 
+>  vsyscall.c |    1 +
+>  1 file changed, 1 insertion(+)
+> 
+> Index: linux-2.6.22/arch/x86_64/kernel/vsyscall.c
+> ===================================================================
+> --- linux-2.6.22.orig/arch/x86_64/kernel/vsyscall.c
+> +++ linux-2.6.22/arch/x86_64/kernel/vsyscall.c
+> @@ -90,6 +90,7 @@ void update_vsyscall(struct timespec *wa
+>  	/* copy vsyscall data */
+>  	vsyscall_gtod_data.clock.vread = clock->vread;
+>  	vsyscall_gtod_data.clock.cycle_last = clock->cycle_last;
+> +       vsyscall_gtod_data.clock.cycle_accumulated = clock->cycle_accumulated;
+>  	vsyscall_gtod_data.clock.mask = clock->mask;
+>  	vsyscall_gtod_data.clock.mult = clock->mult;
+>  	vsyscall_gtod_data.clock.shift = clock->shift;
