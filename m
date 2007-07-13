@@ -1,115 +1,75 @@
-From: Peter Williams <pwil3058@bigpond.net.au>
-Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to 2.6.22	available
-Date: Fri, 13 Jul 2007 16:25:32 +1000
-Message-ID: <46971ADC.3030700@bigpond.net.au>
-References: <4695E5BB0200005A0002763E@mcclure.wal.novell.com> <20070712130958.GB17494@elte.hu>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
+Date: Fri, 13 Jul 2007 01:02:00 -0700
+Message-ID: <1184313720.8462.35.camel@sx.thebigcorporation.com>
+References: <4696C0720200005A0002776A@mcclure.wal.novell.com>
+	 <1184300099.7974.79.camel@dhcp193.mvista.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------040700070604070106090803"
-Cc: Gregory Haskins <ghaskins@novell.com>, jim.houston@ccur.com,
-	joe.korty@ccur.com, rostedt@goodmis.org, tglx@linutronix.de,
-	dwalker@mvista.com, David Bahi <DBahi@novell.com>,
-	Moiz Kohari <MKohari@novell.com>,
-	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
-	williams@redhat.com, abogani@texware.it,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	tglx@linutronix.de, David Bahi <DBahi@novell.com>,
+	linux-rt-users@vger.kernel.org, johnstul@us.ibm.com
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qsrv01ps.mx.bigpond.com ([144.140.82.181]:50987 "EHLO
-	qsrv01ps.mx.bigpond.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752041AbXGMHOp (ORCPT
+Received: from sccrmhc12.comcast.net ([204.127.200.82]:60267 "EHLO
+	sccrmhc12.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751774AbXGMICF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 03:14:45 -0400
-In-Reply-To: <20070712130958.GB17494@elte.hu>
+	Fri, 13 Jul 2007 04:02:05 -0400
+In-Reply-To: <1184300099.7974.79.camel@dhcp193.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------040700070604070106090803
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-
-Ingo Molnar wrote:
-> * Gregory Haskins <ghaskins@novell.com> wrote:
+On Thu, 2007-07-12 at 21:14 -0700, Daniel Walker wrote:
 > 
->> On Thu, 2007-07-12 at 14:07 +0200, Ingo Molnar wrote:
->>> * Gregory Haskins <ghaskins@novell.com> wrote:
->>>
->>>> Hi Ingo, Thomas, and the greater linux-rt community,
->>>>   
->>>> 	I just wanted to let you guys know that our team has a port of 
->>>> the 21.5-rt20 patch for the 2.6.22 kernel available. [...]
->>> great! We had the upstream -rt port to .22 in the works too, it was just 
->>> held up by the hpet breakage - which Thomas managed to fix earlier 
->>> today. I've released the 2.6.22.1-rt1 patch to the usual place:
->>>
->>>     http://redhat.com/~mingo/realtime-preempt/
->> Thats awesome, Ingo!  Thanks!  Could you publish a broken out version 
->> as well?  We found it extremely valuable to be able to bisect this 
->> beast while working on the 21-22 port.
+> It looks like your patch might be line wrapped ?
 > 
-> we are working on something in this area :) Stay tuned ...
 
-I've just been reviewing these patches and have spotted an error in the
-file mm/slob.c at lines 500-501 whereby a non existent variable "c" is
-referenced.  The attached patch is a proposed fix to the problem.
+I reconstituted the patch to clear the white space damage.
 
--- 
-Peter Williams                                   pwil3058@bigpond.net.au
+- Sven
 
-"Learning, n. The kind of ignorance distinguishing the studious."
- -- Ambrose Bierce
+>From ghaskins@novell.com Thu Jul 12 21:59:46 2007
+Mime-Version: 1.0
+X-Mailer: GroupWise 7.0.2 HP
+Subject: [PATCH] RT: add clock.cycle_accumulated to vsyscall gtod update
+Date: Thu, 12 Jul 2007 21:59:46 -0600
+Message-ID: <4696C0720200005A0002776A@novell.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+To: "Ingo Molnar" <mingo@elte.hu>, tglx@linutronix.de
+Cc: "Sven Dietrich" <SDietrich@novell.com>, "David Bahi" <DBahi@novell.com>, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+X-Evolution-Source: imap://sdietrich@imap.novell.com/
+Content-Transfer-Encoding: 8bit
 
---------------040700070604070106090803
-Content-Type: text/x-patch;
- name="fix-slob-error.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="fix-slob-error.patch"
+2.6.22 changed the vsyscall mechanism to store a more cache-thrash
+friendly version of the gtod data.  The original gtod cache code used an
+entire struct clock + structure-copy, whereas the new code uses a
+pseudo/shadow version + explicit-copy. 
 
-Fix error in realtime-preempt patch for mm/slob.c
+clock.cycle_accumulated was added to RT prior to 2.6.22 so the vsyscall
+code must also be updated for the port to 22.
 
-This error was caused by a change to slob_free()'s interface.
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 
-Signed-off-by: Peter Williams <pwil3058@bigpond.net.au>
+Acked-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 
-diff -r cb0010b7bffe mm/slob.c
---- a/mm/slob.c	Fri Jul 13 15:24:45 2007 +1000
-+++ b/mm/slob.c	Fri Jul 13 16:23:02 2007 +1000
-@@ -493,14 +493,14 @@ void *kmem_cache_zalloc(struct kmem_cach
- }
- EXPORT_SYMBOL(kmem_cache_zalloc);
- 
--static void __kmem_cache_free(void *b, int size)
-+static void __kmem_cache_free(struct kmem_cache *c, void *b)
- {
- 	atomic_dec(&c->items);
- 
- 	if (c->size <= MAX_SLOB_CACHE_SIZE)
- 		slob_free(c, b, c->size);
- 	else
--		free_pages((unsigned long)b, get_order(size));
-+		free_pages((unsigned long)b, get_order(c->size));
- }
- 
- static void kmem_rcu_free(struct rcu_head *head)
-@@ -508,7 +508,7 @@ static void kmem_rcu_free(struct rcu_hea
- 	struct slob_rcu *slob_rcu = (struct slob_rcu *)head;
- 	void *b = (void *)slob_rcu - (slob_rcu->size - sizeof(struct slob_rcu));
- 
--	__kmem_cache_free(b, slob_rcu->size);
-+	__kmem_cache_free(slob_rcu, b);
- }
- 
- void kmem_cache_free(struct kmem_cache *c, void *b)
-@@ -520,7 +520,7 @@ void kmem_cache_free(struct kmem_cache *
- 		slob_rcu->size = c->size;
- 		call_rcu(&slob_rcu->head, kmem_rcu_free);
- 	} else {
--		__kmem_cache_free(b, c->size);
-+		__kmem_cache_free(c, b);
- 	}
- }
- EXPORT_SYMBOL(kmem_cache_free);
+--- 
 
---------------040700070604070106090803--
+ vsyscall.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-2.6.22/arch/x86_64/kernel/vsyscall.c
+===================================================================
+--- linux-2.6.22.orig/arch/x86_64/kernel/vsyscall.c
++++ linux-2.6.22/arch/x86_64/kernel/vsyscall.c
+@@ -90,6 +90,7 @@ void update_vsyscall(struct timespec *wa
+ 	/* copy vsyscall data */
+ 	vsyscall_gtod_data.clock.vread = clock->vread;
+ 	vsyscall_gtod_data.clock.cycle_last = clock->cycle_last;
++       vsyscall_gtod_data.clock.cycle_accumulated = clock->cycle_accumulated;
+ 	vsyscall_gtod_data.clock.mask = clock->mask;
+ 	vsyscall_gtod_data.clock.mult = clock->mult;
+ 	vsyscall_gtod_data.clock.shift = clock->shift;
