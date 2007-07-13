@@ -1,196 +1,67 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Fri, 13 Jul 2007 10:32:37 +0200
-Message-ID: <469738A5.2040306@free.fr>
-References: <469600F7.3060603@free.fr>
+From: Gene Heskett <gene.heskett@gmail.com>
+Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to
+ =?utf-8?q?2=2E6=2E22=09available?=
+Date: Fri, 13 Jul 2007 04:43:08 -0400
+Message-ID: <200707130443.11356.gene.heskett@gmail.com>
+References: <4695E5BB0200005A0002763E@mcclure.wal.novell.com>
+ <20070712130958.GB17494@elte.hu> <46971ADC.3030700@bigpond.net.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org, oprofile-list@lists.sourceforge.net
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Gregory Haskins <ghaskins@novell.com>,
+	jim.houston@ccur.com, joe.korty@ccur.com, rostedt@goodmis.org,
+	tglx@linutronix.de, dwalker@mvista.com,
+	David Bahi <DBahi@novell.com>,
+	Moiz Kohari <MKohari@novell.com>,
+	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
+	williams@redhat.com, abogani@texware.it,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Peter Williams <pwil3058@bigpond.net.au>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:57759 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756535AbXGMIck (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 04:32:40 -0400
-In-Reply-To: <469600F7.3060603@free.fr>
+Received: from vms040pub.verizon.net ([206.46.252.40]:53765 "EHLO
+	vms040pub.verizon.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759077AbXGMInU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 04:43:20 -0400
+In-reply-to: <46971ADC.3030700@bigpond.net.au>
+Content-disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-John Sigler wrote:
+On Friday 13 July 2007, Peter Williams wrote:
+>Ingo Molnar wrote:
+>> * Gregory Haskins <ghaskins@novell.com> wrote:
+>>> On Thu, 2007-07-12 at 14:07 +0200, Ingo Molnar wrote:
+>>>> * Gregory Haskins <ghaskins@novell.com> wrote:
+>>>>> Hi Ingo, Thomas, and the greater linux-rt community,
+>>>>>
+>>>>> 	I just wanted to let you guys know that our team has a port of
+>>>>> the 21.5-rt20 patch for the 2.6.22 kernel available. [...]
+>>>>
+>>>> great! We had the upstream -rt port to .22 in the works too, it was just
+>>>> held up by the hpet breakage - which Thomas managed to fix earlier
+>>>> today. I've released the 2.6.22.1-rt1 patch to the usual place:
+>>>>
+>>>>     http://redhat.com/~mingo/realtime-preempt/
+>>>
+>>> Thats awesome, Ingo!  Thanks!  Could you publish a broken out version
+>>> as well?  We found it extremely valuable to be able to bisect this
+>>> beast while working on the 21-22 port.
+>>
+>> we are working on something in this area :) Stay tuned ...
+>
+>I've just been reviewing these patches and have spotted an error in the
+>file mm/slob.c at lines 500-501 whereby a non existent variable "c" is
+>referenced.  The attached patch is a proposed fix to the problem.
 
-> [ Note: cross-posted to linux-rt-users and oprofile-list ]
->=20
-> I'm running kernel 2.6.20.7-rt8 on x86 (1267-MHz P3) with the
-> following debug options:
->=20
-> CONFIG_TRACE_IRQFLAGS_SUPPORT=3Dy
-> # CONFIG_PRINTK_TIME is not set
-> # CONFIG_ENABLE_MUST_CHECK is not set
-> # CONFIG_MAGIC_SYSRQ is not set
-> # CONFIG_UNUSED_SYMBOLS is not set
-> # CONFIG_DEBUG_FS is not set
-> # CONFIG_HEADERS_CHECK is not set
-> # CONFIG_DEBUG_KERNEL is not set
-> CONFIG_LOG_BUF_SHIFT=3D14
-> CONFIG_STACKTRACE=3Dy
-> CONFIG_EVENT_TRACE=3Dy
-> CONFIG_FUNCTION_TRACE=3Dy
-> CONFIG_WAKEUP_TIMING=3Dy
-> CONFIG_LATENCY_TRACE=3Dy
-> # CONFIG_CRITICAL_PREEMPT_TIMING is not set
-> # CONFIG_CRITICAL_IRQSOFF_TIMING is not set
-> CONFIG_WAKEUP_LATENCY_HIST=3Dy
-> CONFIG_LATENCY_TIMING=3Dy
-> CONFIG_LATENCY_HIST=3Dy
-> CONFIG_MCOUNT=3Dy
-> CONFIG_DEBUG_BUGVERBOSE=3Dy
-> CONFIG_FRAME_POINTER=3Dy
-> CONFIG_UNWIND_INFO=3Dy
-> CONFIG_STACK_UNWIND=3Dy
-> CONFIG_EARLY_PRINTK=3Dy
-> CONFIG_X86_FIND_SMP_CONFIG=3Dy
-> CONFIG_X86_MPPARSE=3Dy
-> CONFIG_DOUBLEFAULT=3Dy
->=20
-> http://linux.kernel.free.fr/latency/config-2.6.20.7-rt8-adlink-latenc=
-y
->=20
-> Here's my situation:
->=20
-> A SCHED_RR process with priority 80 is performing blocking reads of=20
-> 1316-byte chunks from a PCI device. The data comes in at ~38 Mbit/s.
->=20
-> Therefore, in a perfect world, my process would wake up periodically=20
-> every 1316*8 / 38e6 =3D 277 =B5s to handle the latest chunk.
->=20
-> However, periodically, my process blocks up to 400 =B5s instead of 27=
-7 =B5s.
-> Naturally, the next iteration, my process blocks less than 277 =B5s (=
-the=20
-> PCI board has 1316 bytes ready every 277 =B5s regardless).
->=20
-> I've captured a histogram of read latencies.
-> It is expressed in units of 512 ns.
-> e.g. there were 23,126,460 occurences of LAT=3D278 =B5s (543 * 512 ns=
-)
-> http://linux.kernel.free.fr/latency/histogram.txt
-> http://linux.kernel.free.fr/latency/read_latency.png
->=20
-> The system is otherwise completely idle. In other words, 100% of the =
-CPU=20
-> is dedicated to the single task of waiting for an interrupt request,=20
-> servicing it, and pushing the data to user land.
->=20
-> I used OProfile to frequently sample the instruction pointer while my=
-=20
-> application ran all night long.
->=20
-> http://linux.kernel.free.fr/latency/oprofile_report_all_night.txt
->=20
-> CPU: PIII, speed 1266.7 MHz (estimated)
-> Counted CPU_CLK_UNHALTED events (clocks processor is not halted) with=
- a=20
-> unit mask of 0x00 (No unit mask) count 60000
-> samples      %      symbol name
-> 958075714  90.6470   default_idle
-> 25637397    2.4256   mask_and_ack_8259A
-> 10697948    1.0122   __copy_to_user_ll
-> 9345347     0.8842   oprofiled
-> 9246368     0.8748   Dta1xxIsr
-> 6732131     0.6370   enable_8259A_irq
-> 5153650     0.4876   __schedule
-> 1873157     0.1772   irq_entries_start
-> 1729897     0.1637   increment_tail
-> 1565354     0.1481   clock_gettime
-> 1429908     0.1353   Dta1xxDmaTransfer
-> 1428107     0.1351   ioread16
-> 1252095     0.1185   system_call
-> 1081768     0.1023   try_to_wake_up
-> 983687      0.0931   cpu_idle
->=20
-> I thought default_idle called HLT via safe_halt(). Since I'm only=20
-> counting UNHALTED clock cycles, I'm surprised to see so many samples=20
-> taken in default_idle. Does someone understand that?
->=20
-> Is it possible that one of these functions periodically delays the=20
-> delivery of data to my SCHED_RR application?
->=20
-> Here's a /proc/latency_trace dump. What is there to understand?
->=20
-> # cat /proc/latency_trace
-> preemption latency trace v1.1.5 on 2.6.20.7-rt8
-> --------------------------------------------------------------------
->  latency: 26 us, #2/2, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
->     -----------------
->     | task: softirq-timer/0-4 (uid:0 nice:0 policy:1 rt_prio:50)
->     -----------------
->=20
->                  _------=3D> CPU#
->                 / _-----=3D> irqs-off
->                | / _----=3D> need-resched
->                || / _---=3D> hardirq/softirq
->                ||| / _--=3D> preempt-depth
->                |||| /
->                |||||     delay
->    cmd     pid ||||| time  |   caller
->       \   /    |||||   \   |   /
->    <...>-4     0D..1   26us : trace_stop_sched_switched=20
-> (__sched_text_start)
->=20
->=20
-> vim:ft=3Dhelp
+Could this explain why 2.6.22.1-rt1 seems to use a lot of swap?  I've been as 
+high as 570 megs into swap, currently at 286megs after doing a 
+swapoff --a;swapon -a about 8 hours ago.
 
-Shouldn't there be many lines in this output?
-Do I need an additional kernel configuration option?
-
-> Is there a different diagnostic I can run to tell why data delivery
-> to my app is periodically delayed 100 =B5s?
-
-I'm open to all suggestions. I'm running out of ideas.
-
-> # cat /proc/latency_hist/wakeup_latency/CPU0
-> #Minimum latency: 0 microseconds.
-> #Average latency: 0 microseconds.
-> #Maximum latency: 26 microseconds.
-> #Total samples: 14925698
-> #There are 0 samples greater or equal than 10240 microseconds
-> #usecs           samples
->     0            3682745
->     1            9487737
->     2            1748372
->     3               1192
->     4               3689
->     5                 50
->     6                 14
->     7                 14
->     8                  9
->     9                 46
->    10                995
->    11                799
->    12                  6
->    13                  8
->    14                  4
->    15                  6
->    16                  3
->    17                  0
->    18                  1
->    19                  0
->    20                  0
->    21                  0
->    22                  3
->    23                  1
->    24                  0
->    25                  1
->    26                  3
->=20
-> I would think that I might have a clearer picture if I could request =
-the=20
-> last N instruction pointer samples from OProfile, to figure out what =
-the=20
-> CPU has been doing for the past several hundred =B5s.
-
-I'd like to hear what OProfile devs think of this approach.
-I seems far from trivial to implement?
-
-Regards.
+-- 
+Cheers, Gene
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+Humorists always sit at the children's table.
+		-- Woody Allen
