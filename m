@@ -1,63 +1,105 @@
-From: Peter Williams <pwil3058@bigpond.net.au>
-Subject: Re: Forward port of latest RT patch (2.6.21.5-rt20) to 2.6.22 available
-Date: Sat, 14 Jul 2007 10:27:01 +1000
-Message-ID: <46981855.8040904@bigpond.net.au>
-References: <4695E5BB0200005A0002763E@mcclure.wal.novell.com> <20070712130958.GB17494@elte.hu> <46971ADC.3030700@bigpond.net.au> <200707130443.11356.gene.heskett@gmail.com>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: [PATCH -rt 6/6] Compile fix for PREEMPT_TIMING on and
+	IRQSOFF_TIMING off
+Date: Fri, 13 Jul 2007 19:08:14 -0700
+Message-ID: <1184378894.16207.14.camel@sx.thebigcorporation.com>
+References: <20070713175214.336577416@mvista.com>
+	 <20070713175229.239602308@mvista.com>  <46980935.3060509@mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Gregory Haskins <ghaskins@novell.com>,
-	jim.houston@ccur.com, joe.korty@ccur.com, rostedt@goodmis.org,
-	tglx@linutronix.de, dwalker@mvista.com,
-	David Bahi <DBahi@novell.com>,
-	Moiz Kohari <MKohari@novell.com>,
-	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
-	williams@redhat.com, abogani@texware.it,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Gene Heskett <gene.heskett@gmail.com>
+Cc: tglx@linutronix.de, mingo@elte.hu, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Kevin Hilman <khilman@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qsrv03sl.mx.bigpond.com ([144.140.92.183]:45703 "EHLO
-	qsrv03sl.mx.bigpond.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758049AbXGNBw6 (ORCPT
+Received: from rwcrmhc11.comcast.net ([216.148.227.151]:38099 "EHLO
+	rwcrmhc11.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758741AbXGNCIR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jul 2007 21:52:58 -0400
-In-Reply-To: <200707130443.11356.gene.heskett@gmail.com>
+	Fri, 13 Jul 2007 22:08:17 -0400
+In-Reply-To: <46980935.3060509@mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Gene Heskett wrote:
-> On Friday 13 July 2007, Peter Williams wrote:
->> Ingo Molnar wrote:
->>> * Gregory Haskins <ghaskins@novell.com> wrote:
->>>> On Thu, 2007-07-12 at 14:07 +0200, Ingo Molnar wrote:
->>>>> * Gregory Haskins <ghaskins@novell.com> wrote:
->>>>>> Hi Ingo, Thomas, and the greater linux-rt community,
->>>>>>
->>>>>> 	I just wanted to let you guys know that our team has a port of
->>>>>> the 21.5-rt20 patch for the 2.6.22 kernel available. [...]
->>>>> great! We had the upstream -rt port to .22 in the works too, it was just
->>>>> held up by the hpet breakage - which Thomas managed to fix earlier
->>>>> today. I've released the 2.6.22.1-rt1 patch to the usual place:
->>>>>
->>>>>     http://redhat.com/~mingo/realtime-preempt/
->>>> Thats awesome, Ingo!  Thanks!  Could you publish a broken out version
->>>> as well?  We found it extremely valuable to be able to bisect this
->>>> beast while working on the 21-22 port.
->>> we are working on something in this area :) Stay tuned ...
->> I've just been reviewing these patches and have spotted an error in the
->> file mm/slob.c at lines 500-501 whereby a non existent variable "c" is
->> referenced.  The attached patch is a proposed fix to the problem.
+On Fri, 2007-07-13 at 16:22 -0700, Kevin Hilman wrote:
+> [Minor update to avoid a compiler warning in the case of DEBUG_KERNEL=n]
 > 
-> Could this explain why 2.6.22.1-rt1 seems to use a lot of swap?  I've been as 
-> high as 570 megs into swap, currently at 286megs after doing a 
-> swapoff --a;swapon -a about 8 hours ago.
 
-No.  This problem would have caused the build to fail if slob was
-configured.
+The resent patch (v2) had white space damage - 
 
-Peter
--- 
-Peter Williams                                   pwil3058@bigpond.net.au
+Here is a reconstituted version that applies for me on 2.6.22-rt3
 
-"Learning, n. The kind of ignorance distinguishing the studious."
- -- Ambrose Bierce
+Acked-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+
+>From linux-rt-users-owner@vger.kernel.org Fri Jul 13 16:22:34 2007
+Return-Path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sx.thebigcorporation.com ([unix socket]) by
+	sx.thebigcorporation.com (Cyrus v2.3.8-Fedora-RPM-2.3.8-3.fc7) with LMTPA;
+	Fri, 13 Jul 2007 16:22:34 -0700
+X-Sieve: CMU Sieve 2.3
+Received: from vger.kernel.org (vger.kernel.org [209.132.176.167]) by
+	sx.thebigcorporation.com (8.14.1/8.13.8) with ESMTP id l6DNMXP6017382 for
+	<sven@thebigcorporation.com>; Fri, 13 Jul 2007 16:22:33 -0700
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand id
+	S1759195AbXGMXW1 (ORCPT <rfc822;sven@thebigcorporation.com>); Fri, 13 Jul
+	2007 19:22:27 -0400
+Received: (majordomo@vger.kernel.org) by vger.kernel.org id
+	S1760623AbXGMXW1 (ORCPT <rfc822;linux-rt-users-outgoing>); Fri, 13 Jul 2007
+	19:22:27 -0400
+Received: from h155.mvista.com ([63.81.120.158]:7301 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org with
+	ESMTP id S1759161AbXGMXW1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2007 19:22:27 -0400
+Received: from [127.0.0.1] (asshur.mvista.com [10.0.0.11]) by
+	hermes.mvista.com (Postfix) with ESMTP id 69F871DE39; Fri, 13 Jul 2007
+	16:22:25 -0700 (PDT)
+Message-ID: <46980935.3060509@mvista.com>
+Date:	Fri, 13 Jul 2007 16:22:29 -0700
+From: Kevin Hilman <khilman@mvista.com>
+User-Agent: Thunderbird 1.5.0.12 (X11/20070604)
+MIME-Version: 1.0
+To: Kevin Hilman <khilman@mvista.com>
+Cc: tglx@linutronix.de, mingo@elte.hu, linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH -rt 6/6] Compile fix for PREEMPT_TIMING on and
+	IRQSOFF_TIMING off
+References: <20070713175214.336577416@mvista.com>
+	 <20070713175229.239602308@mvista.com>
+In-Reply-To: <20070713175229.239602308@mvista.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Sender: linux-rt-users-owner@vger.kernel.org
+Precedence: bulk
+X-Mailing-List:	linux-rt-users@vger.kernel.org
+X-Evolution-Source: imap://sven@sx.thebigcorporation.com/
+Content-Transfer-Encoding: 8bit
+
+[Minor update to avoid a compiler warning in the case of DEBUG_KERNEL=n]
+
+Compile fix for PREEMPT_TIMING on and IRQSOFF_TIMING off
+
+The per-cpu trace_cpu_idle variable is used when timing *either*
+IRQs-off or preempt sections.
+
+Signed-off-by: Kevin Hilman <khilman@mvista.com>
+---
+ kernel/latency_trace.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+Index: linux-2.6.22/kernel/latency_trace.c
+===================================================================
+--- linux-2.6.22.orig/kernel/latency_trace.c
++++ linux-2.6.22/kernel/latency_trace.c
+@@ -85,9 +85,13 @@ static inline int DEBUG_WARN_ON(int cond
+ }
+ #endif
+ 
++#if defined(CONFIG_CRITICAL_IRQSOFF_TIMING) || \
++   (defined(CONFIG_CRITICAL_PREEMPT_TIMING) && defined(CONFIG_TRACE_IRQFLAGS))
++   static DEFINE_PER_CPU(int, trace_cpu_idle);
++#endif
++
+ #ifdef CONFIG_CRITICAL_IRQSOFF_TIMING
+ # ifdef CONFIG_CRITICAL_PREEMPT_TIMING
+-   static DEFINE_PER_CPU(int, trace_cpu_idle);
+ #  define irqs_off_preempt_count() (preempt_count() && !__get_cpu_var(trace_cpu_idle))
+ # else
+ #  define irqs_off_preempt_count() 0
