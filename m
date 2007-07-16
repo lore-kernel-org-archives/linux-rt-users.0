@@ -1,97 +1,68 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+From: "Remy Bohmer" <l.pinguin@gmail.com>
 Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Mon, 16 Jul 2007 16:07:00 -0400
-Message-ID: <20070716200700.GA1119@Krystal>
+Date: Mon, 16 Jul 2007 22:17:08 +0200
+Message-ID: <3efb10970707161317h72b30aabq208150b2abde8e5e@mail.gmail.com>
 References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com>
+	 <1184615557.2698.3.camel@laptopd505.fenrus.org>
+Reply-To: linux@bohmer.net
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: linux@bohmer.net, Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762935AbXGPUHi@vger.kernel.org>
+	mathieu.desnoyers@polymtl.ca, "Ingo Molnar" <mingo@elte.hu>
+To: "Arjan van de Ven" <arjan@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from py-out-1112.google.com ([64.233.166.180]:4934 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751215AbXGPURI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2007 16:17:08 -0400
+Received: by py-out-1112.google.com with SMTP id d32so2502373pye
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Jul 2007 13:17:08 -0700 (PDT)
+In-Reply-To: <1184615557.2698.3.camel@laptopd505.fenrus.org>
 Content-Disposition: inline
-In-Reply-To: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Remy Bohmer (l.pinguin@gmail.com) wrote:
-> Hello,
->=20
-> I am looking for some tool/kernel machanism that enables me to track
-> every schedule change on the CFS scheduler of the RT-kernel for some
-> period of time.
-> Thus a tool that gives me an overview after some time which task got
-> "scheduled in/out" at "which timestamp" and at "which CPU". ( I need
-> the raw data)
->=20
-> In a far past (on Montavista kernels) I used LTT for this to log for
-> some time with only the SCHED_CHANGE filter and text output. But, I
-> cannot find any LTT(ng) support for any RT-kernel, and support for th=
-e
-> new CFS (like in 2.6.22.1-rt4) is even harder.
->=20
-> So I was wondering if anybody knows some tool/kernel mechanism which
-> can do this?
-> If not, I will build a kernel extension for it myself (new extension
-> to 'latency_trace' ?)
-> In that case can anybody with in depth CFS scheduler knowledge please
-> point me which hooks are safe to use for this?
->=20
-> I need it to get a detailed insight in my RT-system with its RT and
-> non-RT applications.
-> Thus to know when a certain task gets scheduled (and to calculate its
-> per thread min/max/avg latencies), which task preempts another task,
-> and to get a complete overview of what the RT system (and scheduler)
-> is doing during time etc.
->=20
+Hello Arjan,
 
-Hi Remy,
+Thanks for this suggestion.
+But I looked at Systemtap before, and as I remember, it is very
+flexible, but it only traces function calls. (or am I missing
+something?)
+I also need this scheduler-tracer, besides for fully fledged X86
+systems, also for ARM based boards also with a very minimal userland,
+and limited flash. So, it has to be lightweight also. I can only use
+cross-compilers to build the tools... (something Systemtap is not good
+at as I remember...)
 
-I think Thomas may have worked on a port of recent LTTng to the -RT
-kernel.
+So, I am missing something here, or it is unfortunately not what I am
+looking for...
 
-If not, I think you needs are quite easy to fulfill with a small amount
-of work.
 
-Basically, you could take a recent copy of LTTng, which comes in a set
-of logically separated patches:
+Kind Regards,
 
-http://ltt.polymtl.ca/lttng/patch-2.6.22-rc4-mm2-lttng-0.9.10.tar.bz2
+Remy
 
-=46ollow the Compatibility List to see which other packages you need
-(ltt-control and lttv) :
-http://ltt.polymtl.ca/svn/ltt/branches/poly/doc/developer/lttng-lttv-co=
-mpatibility.html
 
-Then, when applying the LTTng patches to the -RT kernel, a few things
-must be taken care of:
-
-1 - "instrumentation" patches : you won't care about most of the
-rejects, since you only care about the schedule() calls.
-
-2 - You'll have to see how schedule() is instrumented and port that to
-the CFS.
-
-3 - Make sure the Linux Kernel Markers (linux/marker.h) _really_ call
-preempt_disable()/preempt_enable() (is it a underscored function in
--rt ?).=A0It is used for correct teardown of probe handlers with
-synchronize_sched(). Probe sites execute very quickly, do it won't add
-significant latency to your system.
-
-4 - Ping me for problematic rejects.
-
-Mathieu
-
->=20
-> Kind Regards,
->=20
-> Remy B=F6hmer
->=20
-
---=20
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE =
-9A68
+2007/7/16, Arjan van de Ven <arjan@infradead.org>:
+> On Mon, 2007-07-16 at 21:46 +0200, Remy Bohmer wrote:
+> > So I was wondering if anybody knows some tool/kernel mechanism which
+> > can do this?
+> > If not, I will build a kernel extension for it myself (new extension
+> > to 'latency_trace' ?)
+>
+> systemtap has been able to do such things for me in the past...
+>
+> --
+> if you want to mail me at work (you don't), use arjan (at)
+> linux.intel.com
+> Test the interaction between Linux and your BIOS via
+> http://www.linuxfirmwarekit.org
+>
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
