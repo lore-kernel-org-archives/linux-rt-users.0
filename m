@@ -1,40 +1,41 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Mon, 16 Jul 2007 23:12:22 +0200
-Message-ID: <20070716211222.GA18661@elte.hu>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <3efb10970707161317h72b30aabq208150b2abde8e5e@mail.gmail.com>
+From: Kevin Hilman <khilman@mvista.com>
+Subject: Re: [PATCH -rt 0/6] misc. ARM fixup and compile fixes
+Date: Mon, 16 Jul 2007 14:24:19 -0700
+Message-ID: <1184621059.32422.7.camel@vence.hilman.org>
+References: <20070713175214.336577416@mvista.com>
+	 <1184517119.12353.355.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Arjan van de Ven <arjan@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	mathieu.desnoyers@polymtl.ca
-To: linux@bohmer.net
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:53535 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751706AbXGPVM3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Jul 2007 17:12:29 -0400
-Content-Disposition: inline
-In-Reply-To: <3efb10970707161317h72b30aabq208150b2abde8e5e@mail.gmail.com>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:45579 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759137AbXGPVYW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2007 17:24:22 -0400
+In-Reply-To: <1184517119.12353.355.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
-* Remy Bohmer <l.pinguin@gmail.com> wrote:
-
-> Hello Arjan,
+On Sun, 2007-07-15 at 18:31 +0200, Thomas Gleixner wrote:
+> On Fri, 2007-07-13 at 10:52 -0700, Kevin Hilman wrote:
+> > Thomas, Ingo,
+> > 
+> > Here's a handful of small fixes for -rt3.  They are either ARM-related
+> > fixups or compile fixes for various .config combinations.
+> > 
+> > The first couple I already reported, but here they're all together.
 > 
-> Thanks for this suggestion.
+> Kevin, please check your mailer, editor or whatever involved. Most of
+> your patches are white space damaged. Fixed them up manually.
 
-(please dont top-post, ever. See:
- www.zipworld.com.au/~akpm/linux/patches/stuff/top-posting.txt)
+Hmm, strange.  Just used 'quilt mail' as usual, including a
+'--strip-trailing-whitespace' in ~/.quiltrc's QUILT_REFRESH_ARGS
 
-> But I looked at Systemtap before, and as I remember, it is very 
-> flexible, but it only traces function calls. (or am I missing 
-> something?)
+will investigate.
 
-systemtap it should be able to trace variables as well. (as long as 
-those variables are not eliminated by gcc)
+Sorry,
 
-	Ingo
+Kevin
