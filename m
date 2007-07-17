@@ -1,114 +1,42 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: LTTng for 2.6.22.1-rt4 (timestamping)
-Date: Tue, 17 Jul 2007 10:45:09 -0400
-Message-ID: <20070717144509.GA27528@Krystal>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <20070716230313.GA8358@Krystal> <3efb10970707170034t3e1dabe5wc70d41f6ab209c7e@mail.gmail.com>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: v2.6.21.5-rt19 (sched_getaffinity?)
+Date: Tue, 17 Jul 2007 21:32:23 +0200
+Message-ID: <20070717193223.GJ26283@elte.hu>
+References: <1183582155.3291.160.camel@chaos> <9609.194.65.103.1.1183731007.squirrel@www.rncbc.org> <1183758545.20747.34.camel@cmn3.stanford.edu> <20070707092401.GB21234@elte.hu> <1183934205.11854.11.camel@cmn3.stanford.edu> <46917678.70700@googlemail.com> <Pine.LNX.4.63.0707082047130.12404@cmn3.stanford.edu> <1183957703.12681.4.camel@cmn3.stanford.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Gabriel C <nix.or.die@googlemail.com>,
+	Carsten Emde <carsten.emde@osadl.org>,
+	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, ltt-dev@shafik.org
-To: linux@bohmer.net
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts10-srv.bellnexxia.net ([209.226.175.54]:40939 "EHLO
-	tomts10-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751725AbXGQOpM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jul 2007 10:45:12 -0400
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Rui Nuno Capela <rncbc@rncbc.org>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764953AbXGQTdY@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <3efb10970707170034t3e1dabe5wc70d41f6ab209c7e@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+In-Reply-To: <1183957703.12681.4.camel@cmn3.stanford.edu>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Remy Bohmer (l.pinguin@gmail.com) wrote:
-> Hello Mathieu,
+
+* Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
+
+> I do get flash 9 (I know, not the best example) and tomboy to hang as 
+> reported by one of my Planet CCRMA users - flash 9 tested working on 
+> stock fedora 7 kernel - and both seem to hang in the same system call:
 > 
-> Thank you very much for this patch.
-> It will be very useful.
+> sched_getaffinity(3528, 32, <unfinished ...>
 > 
-> But, I have a suggestion for the future.
-> >For your ARM needs, you may have to tweak include/asm-arm/ltt.h so it
-> >reads a time base register (or the equivalent).
-> 
-> Every RT-kernel, (and currently also the mainline kernel) has support
-> for high-resolution timers.
-> If selected, the time-of-day in the kernel will be as accurate as the
-> hardware clock can provide. The time is kept in nanoseconds
-> resolution. On X86 it will be TSC based, on ARM it can be based om
-> some other clock.
-> It could be an idea to always use this normal HR timebase instead of
-> assuming there is a TSC available. This would make your code more
-> architecture independent, and eliminates the need for any time
-> conversion routines.
-> 
-> Just an idea...
-> 
+> Full output of strace attached for both cases.
 
-I have considered the option, but the two reasons why I don't use the
-standard gettimeofday are (I'll reply publicly so that people can have
-an idea of the constraints of the tracing field regarding timestamping).
-Since LTTng needs to have its tracing site called from potentially
-_everywhere_ in the kernel, and that timestamping is the only thing that
-reorders the events written in the different subbuffers:
+hm, that's weird. Is it completely unkillable at that time? Could you do 
+a few things: enable CONFIG_PROVE_LOCKING (lockdep), and also try to get 
+a full task state dump via:
 
-1 - In gettimeofday, there is often a fallback, in the worse case, to a
-very low granularity time base which is useless for a tracer (RTC
-clock).
+  echo t > /proc/sysrq-trigger
 
-2 - A read seqlock surrounds every operation. This is odd for me, since
-I want to read this counter from a NMI handler (which can nest ofer a
-write seqlock irqsave and deadlock).
+thanks,
 
-3 - I currently don't need to disable interrupts at tracing site, and I
-prefer it this way. It lessens the impact of my tracer on the system's
-normal behavior.
-
-4 - Even the HPET reads are too slow for _many_ users, although it's the
-fallback on a lot of modern Intel and AMD chips with non synchronized
-TSCs. These users often prefer to have a very high performance logical
-clock than a slow HPET read.
-
-5 - I have not seen raceless 32 to 64 bits timestamp extension wrt NMI
-handlers yet. Roughly, people assume they can increment a counter for
-their MSB whenever they receive an interrupt from the timer when it
-overflows. If a higher priority interrupt arrives during the period
-between the overflow and the actual MSB increment, time will appear to
-go backward. I have created, in ltt/ltt-heartbeat.c, a "synthetic 64
-TSC" which keeps a coherent state of a full 64 bits TSC based on a 32
-bits time base input. I just don't care about the overflow/underflow
-interrupt: I just let the counter run free, read it periodically to
-detect wrap-arounds, and wrap every read of this counter and return the
-full 64 bits.
-
-If I could find a way to integrate my asm-*/ltt.h timestamping read
-infrastructure into the Linux kernel, that would be awesome. I guess it
-could be done by adding some flags to the clocksource mechanism, giving
-the ability to specify "high granularity but low accuracy" clock sources
-and also to specify that an atomic clocksource must be used (no seqlock).
-
-I see in the 2.6.22.1-rt4 kernel that
-include/asm-arm/arch-ep93xx/timex.h defines CLOCK_TICK_RATE and
-mach_read_cycles(), which is basically what we need: a microsecond
-precision is good. I wonder how much time takes this timer read
-(performance impact).
-
-When such timer is available on an architecture, it should really be
-made LTTng's default choice.
-
-And BTW, with such a 32 bits timer, you would need to use my "32->64
-bits synthetic TSC" (see how asm-mips/ltt.h is implemented).
-
-Regards,
-
-Mathieu
-
-> Thanks!
-> 
-> Remy
-
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+	Ingo
