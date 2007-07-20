@@ -1,121 +1,158 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: v2.6.21.5-rt19 (sched_getaffinity?)
-Date: Wed, 18 Jul 2007 11:02:00 -0700
-Message-ID: <1184781720.29703.11.camel@cmn3.stanford.edu>
-References: <1183758545.20747.34.camel@cmn3.stanford.edu>
-	 <20070707092401.GB21234@elte.hu>
-	 <1183934205.11854.11.camel@cmn3.stanford.edu>
-	 <46917678.70700@googlemail.com>
-	 <Pine.LNX.4.63.0707082047130.12404@cmn3.stanford.edu>
-	 <1183957703.12681.4.camel@cmn3.stanford.edu>
-	 <20070717193223.GJ26283@elte.hu>
-	 <1184702217.21931.19.camel@cmn3.stanford.edu>
-	 <20070717201242.GB2426@elte.hu>
-	 <1184716305.21931.39.camel@cmn3.stanford.edu>
-	 <20070718071852.GB1516@elte.hu>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: v2.6.22.1-rt3
+Date: Thu, 19 Jul 2007 20:37:05 -0700
+Message-ID: <1184902625.25414.8.camel@dhcp193.mvista.com>
+References: <1184325752.12353.312.camel@chaos>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, Gabriel C <nix.or.die@googlemail.com>,
-	Carsten Emde <carsten.emde@osadl.org>,
-	"jcaceres@ccrma.Stanford.EDU" <jcaceres@ccrma.Stanford.EDU>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Rui Nuno Capela <rncbc@rncbc.org>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>
-To: Ingo Molnar <mingo@elte.hu>
+	Ingo Molnar <mingo@elte.hu>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp3.Stanford.EDU ([171.67.20.26]:57383 "EHLO
-	smtp3.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935704AbXGRSCH (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:49420 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752966AbXGTDoh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Jul 2007 14:02:07 -0400
-In-Reply-To: <20070718071852.GB1516@elte.hu>
+	Thu, 19 Jul 2007 23:44:37 -0400
+In-Reply-To: <1184325752.12353.312.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-07-18 at 09:18 +0200, Ingo Molnar wrote:
-> * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-> 
-> > > does lockdep pinpoint anything?
-> > 
-> > Lots of stuff, and at the end the lock report for the problem. 
-> > Hopefully some of this will help... I have attached the whole bootup 
-> > sequence as logged in /var/log/messages.
-> 
-> yeah, it pinpointed the bug. It seems to be an interaction between 
-> RCU-preempt (Paul Cc:-ed) and sched_mc_power_savings_store(): 
-> detach_destroy_domains() uses synchronize_sched() which uses 
-> getaffinity, which takes sched_hotcpu_mutex, and 
-> arch_reinit_sched_domains does it too - see the lockdep report below. 
-> I've added a quick workaround below as well, which should keep your box 
-> from hanging.
 
-I can confirm that flash9 does not hang with the patch. 
-Thanks!!!
-I presume the same would apply to 2.6.21.x and, say, rt21. I'll test.
+I reworked the broken out series for 2.6.22.1-rt5 (note not -rt3) so
+that it's a little more bisectable. I found that many of the patches
+would compile but wouldn't boot. 
 
-But (of course, there's always a but somewhere) I just experienced a
-complete hang - 2.6.22.1-rt4 with the little patch. This time there was
-something in the logs, maybe it will help? This was when finishing the
-install of an additional kernel module rpm package (ipw3945 drivers). 
+Combined patch,
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.22.1-rt4-dw1
 
--- Fernando
 
---------
-Jul 18 10:48:15 localhost kernel: BUG: sleeping function called from
-invalid context modprobe(5001) at kernel/rtmutex.c:636
-Jul 18 10:48:15 localhost kernel: in_atomic():1 [00000001],
-irqs_disabled():0
-Jul 18 10:48:15 localhost kernel:  [<c0405f34>] show_trace_log_lvl
-+0x1a/0x2f
-Jul 18 10:48:15 localhost kernel:  [<c0406a09>] show_trace+0x12/0x14
-Jul 18 10:48:15 localhost kernel:  [<c0406a71>] dump_stack+0x16/0x18
-Jul 18 10:48:15 localhost kernel:  [<c0423bfc>] __might_sleep+0xeb/0xf2
-Jul 18 10:48:15 localhost kernel:  [<c0617242>] __rt_spin_lock+0x24/0x40
-Jul 18 10:48:15 localhost kernel:  [<c0617266>] rt_spin_lock+0x8/0xa
-Jul 18 10:48:15 localhost kernel:  [<c04621c9>] get_zone_pcp+0x23/0x33
-Jul 18 10:48:15 localhost kernel:  [<c0462702>] free_hot_cold_page
-+0xcf/0x148
-Jul 18 10:48:15 localhost kernel:  [<c04627b2>] free_hot_page+0xa/0xc
-Jul 18 10:48:15 localhost kernel:  [<c0462a82>] __free_pages+0x25/0x30
-Jul 18 10:48:15 localhost kernel:  [<c0462ab6>] free_pages+0x29/0x2b
-Jul 18 10:48:15 localhost kernel:  [<c047abf3>] quicklist_trim+0xd0/0xf5
-Jul 18 10:48:15 localhost kernel:  [<c041f5d9>] check_pgt_cache
-+0x1e/0x20
-Jul 18 10:48:15 localhost kernel:  [<c046aedf>] free_pgtables+0x52/0x147
-Jul 18 10:48:15 localhost kernel:  [<c046cdf7>] unmap_region+0xe6/0x135
-Jul 18 10:48:15 localhost kernel:  [<c046d764>] do_munmap+0x153/0x1b4
-Jul 18 10:48:15 localhost kernel:  [<c046f3de>] do_mremap+0x413/0x4c3
-Jul 18 10:48:15 localhost kernel:  [<c046f4c4>] sys_mremap+0x36/0x56
-Jul 18 10:48:15 localhost kernel:  [<c0404fca>] syscall_call+0x7/0xb
-Jul 18 10:48:15 localhost kernel:  =======================
-Jul 18 10:48:16 localhost kernel: BUG: sleeping function called from
-invalid context head(5652) at kernel/rtmutex.c:636
-Jul 18 10:48:16 localhost kernel: in_atomic():1 [00000001],
-irqs_disabled():0
-Jul 18 10:48:16 localhost kernel:  [<c0405f34>] show_trace_log_lvl
-+0x1a/0x2f
-Jul 18 10:48:16 localhost kernel:  [<c0406a09>] show_trace+0x12/0x14
-Jul 18 10:48:16 localhost kernel:  [<c0406a71>] dump_stack+0x16/0x18
-Jul 18 10:48:16 localhost kernel:  [<c0423bfc>] __might_sleep+0xeb/0xf2
-Jul 18 10:48:16 localhost kernel:  [<c0617242>] __rt_spin_lock+0x24/0x40
-Jul 18 10:48:16 localhost kernel:  [<c0617266>] rt_spin_lock+0x8/0xa
-Jul 18 10:48:16 localhost kernel:  [<c04621c9>] get_zone_pcp+0x23/0x33
-Jul 18 10:48:16 localhost kernel:  [<c0462702>] free_hot_cold_page
-+0xcf/0x148
-Jul 18 10:48:16 localhost kernel:  [<c04627b2>] free_hot_page+0xa/0xc
-Jul 18 10:48:16 localhost kernel:  [<c0462a82>] __free_pages+0x25/0x30
-Jul 18 10:48:16 localhost kernel:  [<c0462ab6>] free_pages+0x29/0x2b
-Jul 18 10:48:16 localhost kernel:  [<c047abf3>] quicklist_trim+0xd0/0xf5
-Jul 18 10:48:16 localhost kernel:  [<c041f5d9>] check_pgt_cache
-+0x1e/0x20
-Jul 18 10:48:16 localhost kernel:  [<c046aedf>] free_pgtables+0x52/0x147
-Jul 18 10:48:16 localhost kernel:  [<c046cdf7>] unmap_region+0xe6/0x135
-Jul 18 10:48:16 localhost kernel:  [<c046d764>] do_munmap+0x153/0x1b4
-Jul 18 10:48:16 localhost kernel:  [<c046d7f5>] sys_munmap+0x30/0x3f
-Jul 18 10:48:16 localhost kernel:  [<c0404fca>] syscall_call+0x7/0xb
-Jul 18 10:48:16 localhost kernel:  =======================
-Jul 18 10:50:22 localhost syslogd 1.4.2: restart.
+The broken out series is here,
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.22.1-rt4-dw1.tar.gz
+
+Below is a diff between the 2.6.22.1-rt4 series and mine, and a
+interdiff between the two combined patches.
+
+--- patches-2.6.22.1-rt4/series	2007-07-16 02:29:51.000000000 -0700
++++ patches/series	2007-07-19 20:40:00.000000000 -0700
+@@ -306,18 +306,21 @@
+ #
+ # IRQ threading
+ #
++preempt-softirqs-core.patch
+ preempt-irqs-core.patch
++preempt-irqs-softirq-in-hardirq.patch
++preempt-irqs-direct-debug-keyboard.patch
+ preempt-irqs-timer.patch
+ preempt-irqs-hrtimer.patch
+ 
+ preempt-irqs-i386.patch
++preempt-irqs-i386-ioapic-mask-quirk.patch
+ 
+ preempt-irqs-mips.patch
+ 
+ preempt-irqs-x86-64.patch
+ preempt-irqs-x86-64-ioapic-mask-quirk.patch
+ 
+-preempt-irqs-i386-ioapic-mask-quirk.patch
+ preempt-irqs-arm.patch
+ preempt-irqs-arm-fix-oprofile.patch
+ 
+@@ -352,7 +355,7 @@
+ rt-mutex-mips.patch
+ 
+ rt-mutex-ppc.patch
+-rt-mtex-ppc-fix-a5.patch
++rt-mutex-ppc-fix-a5.patch
+ 
+ rt-mutex-x86-64.patch
+ 
+@@ -402,6 +405,7 @@
+ #
+ # Posix-cpu-timers in a thread
+ #
++preempt-realtime-warn-and-bug-on.patch
+ cputimer-thread-rt_A0.patch
+ cputimer-thread-rt-fix.patch
+ posix-cpu-timers-fix.patch
+@@ -501,7 +505,6 @@
+ preempt-realtime-timer.patch
+ preempt-realtime-usb.patch
+ 
+-preempt-realtime-warn-and-bug-on.patch
+ preempt-realtime-warn-and-bug-on-fix.patch
+ 
+ #
+@@ -611,7 +614,6 @@
+ # Softirq modifications
+ #
+ new-softirq-code.patch
+-new-softirq-code-fixlets.patch
+ softirq-per-cpu-assumptions-fixes.patch
+ smp-processor-id-fixups.patch
+ fix-migrating-softirq.patch
+@@ -659,13 +661,9 @@
+ #
+ # not yet backmerged tail patches:
+ #
+-hrt-rt-fix-merge-artifact.patch
+ preempt-rt-no-slub.patch
+ rfkill-input-fix.patch
+-fork.c-takeover-tasklets-warning-fix.patch
+ 
+ paravirt-function-pointer-fix.patch
+-hpet-build-fix.patch
+-rtc.c-build-fix.patch
+ version.patch
+ 
+
+diff -u linux/arch/i386/kernel/hpet.c linux-2.6.22.1/arch/i386/kernel/hpet.c
+--- linux/arch/i386/kernel/hpet.c
++++ linux-2.6.22.1/arch/i386/kernel/hpet.c	2007-07-20 02:22:56.000000000 +0000
+@@ -9,7 +9,6 @@
+ #include <linux/pm.h>
+ 
+ #include <asm/fixmap.h>
+-#include <asm/i8253.h>
+ #include <asm/hpet.h>
+ #include <asm/i8253.h>
+ #include <asm/io.h>
+diff -u linux/include/asm-generic/bug.h linux-2.6.22.1/include/asm-generic/bug.h
+--- linux/include/asm-generic/bug.h
++++ linux-2.6.22.1/include/asm-generic/bug.h	2007-07-20 03:15:15.000000000 +0000
+@@ -94,14 +94,2 @@
+ 
+-#ifdef CONFIG_PREEMPT_RT
+-# define BUG_ON_RT(c)			BUG_ON(c)
+-# define BUG_ON_NONRT(c)		do { } while (0)
+-# define WARN_ON_RT(condition)		WARN_ON(condition)
+-# define WARN_ON_NONRT(condition)	do { } while (0)
+-#else
+-# define BUG_ON_RT(c)			do { } while (0)
+-# define BUG_ON_NONRT(c)		BUG_ON(c)
+-# define WARN_ON_RT(condition)		do { } while (0)
+-# define WARN_ON_NONRT(condition)	WARN_ON(condition)
+-#endif
+-
+ #endif
+diff -u linux/kernel/softirq.c linux-2.6.22.1/kernel/softirq.c
+--- linux/kernel/softirq.c
++++ linux-2.6.22.1/kernel/softirq.c	2007-07-20 03:15:17.000000000 +0000
+@@ -102,7 +102,6 @@
+ 
+ 	if (unlikely(!tsk))
+ 		return;
+-#if 1
+ #if defined(CONFIG_PREEMPT_SOFTIRQS) && defined(CONFIG_PREEMPT_HARDIRQS)
+ 	/*
+ 	 * Optimization: if we are in a hardirq thread context, and
+@@ -117,7 +116,6 @@
+ 			(tsk->normal_prio == current->normal_prio))
+ 		return;
+ #endif
+-#endif
+ 	/*
+ 	 * Wake up the softirq task:
+ 	 */
