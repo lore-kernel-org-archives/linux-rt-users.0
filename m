@@ -1,97 +1,69 @@
-From: Rui Nuno Capela <rncbc@rncbc.org>
-Subject: 2.6.22.1-rt4 lockups
-Date: Sat, 21 Jul 2007 23:07:29 +0100
-Message-ID: <46A283A1.6030005@rncbc.org>
-References: <1184325752.12353.312.camel@chaos>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: [PATCH -rt] temporary WARN_ON removal
+Date: Sun, 22 Jul 2007 10:22:41 -0700
+Message-ID: <1185124961.2573.14.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S935381AbXGUWLj@vger.kernel.org>
-In-Reply-To: <1184325752.12353.312.camel@chaos>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: mingo@elte.hu
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from homer.mvista.com ([63.81.120.158]:50820 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1757391AbXGVRc7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 22 Jul 2007 13:32:59 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-As with -rt3, I was able to capture one more crash trace, via serial
-console, with nmi_watchdog=1.
+These two WARN_ON calls send my system into a boot hang. They trigger
+over and over , some examples below.
 
-Yes, current 2.6.22.1-rt4 is still locking-up on my ix86 SMT/SMP boxes.
-I'll have to wait for some hours of uptime and normal desktop use and
-then it just locks-up without warning.
+[   58.438501] WARNING: at kernel/sched.c:3785 schedule()
+[   58.443444]  [<c039b224>] schedule+0x74/0x110
+[   58.447772]  [<c039a67f>] rest_init+0x4f/0x60
+[   58.452092]  [<c0490a8f>] start_kernel+0x2cf/0x310
+[   58.456848]  [<c0490210>] unknown_bootoption+0x0/0x250
+[   58.461951]  =======================
+[   58.465496] WARNING: at kernel/sched.c:3683 schedule_debug()
+[   58.471118]  [<c039ae0c>] __schedule+0x4cc/0x760
+[   58.475702]  [<c010511a>] print_trace_address+0x1a/0x30
+[   58.480893]  [<c0129a2b>] printk+0x1b/0x20
+[   58.484957]  [<c01051f8>] show_trace_log_lvl+0x28/0x30
+[   58.490060]  [<c039b1de>] schedule+0x2e/0x110
+[   58.494385]  [<c039a67f>] rest_init+0x4f/0x60
+[   58.498709]  [<c0490a8f>] start_kernel+0x2cf/0x310
+[   58.503465]  [<c0490210>] unknown_bootoption+0x0/0x250
+[   58.508569]  =======================
 
-Last couple of occurrences were all while browsing with firefox
-(2.0.0.5) or using openoffice.org (2.0.4) but in rare and
-non-deterministic fashion I must say.
+On closer inspection I'm not sure they are correctly placed. They could
+trigger or not depending on when/if certain threads run.
 
-It looks very similar to the previous ones I've reported before for
--rt3, but I am no expert in these things.
+Here is a patch to comment them out. This should go into the
+preempt-realtime-sched.patch 
 
-...
-Oops: 0000 [#1]
-PREEMPT SMP
-Modules linked in: tun appletalk ax25 ipx p8023 snd_rtctimer
-snd_seq_dummy snd_pcm_oss snd_mixer_oss snd_seq_midi snd_seq_midi_event
-snd_seq w83627hf hwmon_vid hwmon eeprom button battery ac loop dm_mod
-wacom usbhid hid ff_memless ohci1394 ieee1394 nvidia(P) snd_cs46xx
-gameport firewire_ohci snd_ice1712 snd_ice17xx_ak4xxx snd_ak4xxx_adda
-snd_cs8427 snd_i2c snd_mpu401_uart snd_rawmidi snd_seq_device
-firewire_core sk98lin snd_intel8x0 crc_itu_t snd_ac97_codec ac97_bus
-ide_cd snd_pcm cdrom snd_timer uhci_hcd ehci_hcd i2c_i801 snd rtc_cmos
-shpchp iTCO_wdt i2c_core usbcore rtc_core pci_hotplug soundcore
-intel_agp rtc_lib agpgart snd_page_alloc ext3 mbcache jbd edd fan piix
-thermal processor ide_disk ide_core
-CPU:    0
-EIP:    0060:[<00000000>]    Tainted: P       VLI
-EFLAGS: 00213006   (2.6.22.1-rt4.0 #1)
-EIP is at _stext+0x3feff000/0x20
-eax: c1812a80   ebx: c03bb540   ecx: 00000001   edx: c038e3c0
-esi: c038e3c0   edi: 00000001   ebp: f6fe1d6c   esp: f6fe1d50
-ds: 007b   es: 007b   fs: 00d8  gs: 0033  ss: 0068  preempt:00000003
-Process Xorg (pid: 4101, ti=f6fe1000 task=f754ec30 task.ti=f6fe1000)
-Stack: c011a94c 04882eab 00000ca9 c1812a80 c1812a80 04882eab 00000ca9
-f6fe1d90
-       c011b4af 04882eab 00000ca9 00000001 c038e3c0 00000000 00000000
-c038e3c0
-       f6fe1df4 c011e09d f6fe1dfc c011de3b 00000000 0000001f c1812a80
-0000001f
-Call Trace:
- [<c010622a>] show_trace_log_lvl+0x1a/0x30
- [<c01062f6>] show_stack_log_lvl+0xb6/0xe0
- [<c0106521>] show_registers+0x201/0x330
- [<c0106768>] die+0x118/0x260
- [<c0304233>] do_page_fault+0x193/0x600
- [<c030294a>] error_code+0x72/0x78
- [<c011b4af>] activate_task+0x4f/0xb0
- [<c011e09d>] try_to_wake_up+0x2bd/0x420
- [<c011e279>] wake_up_process_mutex+0x19/0x20
- [<c01425cc>] wakeup_next_waiter+0xec/0x1a0
- [<c030173c>] rt_spin_lock_slowunlock+0x4c/0x70
- [<c0301ff6>] rt_spin_unlock+0x26/0x30
- [<c015b3e4>] put_zone_pcp+0x14/0x20
- [<c015c265>] get_page_from_freelist+0x145/0x380
- [<c015c4f4>] __alloc_pages+0x54/0x2d0
- [<c01652bd>] __handle_mm_fault+0x7dd/0x9a0
- [<c0304398>] do_page_fault+0x2f8/0x600
- [<c030294a>] error_code+0x72/0x78
- =======================
-Code:  Bad EIP value.
-EIP: [<00000000>] _stext+0x3feff000/0x20 SS:ESP 0068:f6fe1d50
-NMI watchdog detected lockup on CPU#1 (5000/5000)
-...
+Signed-Off-By: Daniel Walker <dwalker@mvista.com>
 
-
-Complete serial console capture:
-
-  http://www.rncbc.org/datahub/console-2.6.22.1-rt4.0-1.log
-
-.config evidence:
-
-  http://www.rncbc.org/datahub/config-2.6.22.1-rt4.0
-
-Cheers.
---
-rncbc aka Rui Nuno Capela
+Index: linux-2.6.22.1/kernel/sched.c
+===================================================================
+--- linux-2.6.22.1.orig/kernel/sched.c	2007-07-22 17:18:38.000000000 +0000
++++ linux-2.6.22.1/kernel/sched.c	2007-07-22 17:17:48.000000000 +0000
+@@ -3680,7 +3680,7 @@ static noinline void __schedule_bug(stru
+  */
+ static inline void schedule_debug(struct task_struct *prev)
+ {
+-	WARN_ON(system_state == SYSTEM_BOOTING);
++	//WARN_ON(system_state == SYSTEM_BOOTING);
+ 
+ 	/*
+ 	 * Test if we are atomic.  Since do_exit() needs to call into
+@@ -3782,7 +3782,7 @@ asmlinkage void __sched __schedule(void)
+  */
+ asmlinkage void __sched schedule(void)
+ {
+-	WARN_ON(system_state == SYSTEM_BOOTING);
++	//WARN_ON(system_state == SYSTEM_BOOTING);
+ 	/*
+ 	 * Test if we have interrupts disabled.
+ 	 */
