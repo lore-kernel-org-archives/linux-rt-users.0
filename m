@@ -1,100 +1,203 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH -rt] drop spurious rcu unlock
-Date: Sun, 22 Jul 2007 20:13:59 -0700
-Message-ID: <20070723031359.GA25590@linux.vnet.ibm.com>
-References: <1185124958.2573.13.camel@imap.mvista.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Mon, 23 Jul 2007 10:25:29 +0200
+Message-ID: <46A465F9.90601@free.fr>
+References: <469600F7.3060603@free.fr> <469738A5.2040306@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org, oprofile-list@lists.sourceforge.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:43020 "EHLO e4.ny.us.ibm.com"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:41501 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750853AbXGWDOB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 22 Jul 2007 23:14:01 -0400
-Content-Disposition: inline
-In-Reply-To: <1185124958.2573.13.camel@imap.mvista.com>
+	id S1754429AbXGWIYv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Jul 2007 04:24:51 -0400
+In-Reply-To: <469738A5.2040306@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, Jul 22, 2007 at 10:22:37AM -0700, Daniel Walker wrote:
-> 
-> Strange rcu_read_unlock() which causes a imbalance, and boot hang.. I
-> didn't notice a reason for it, and removing it allows my system to make
-> progress.
-> 
-> This should go into the preempt-realtime-sched.patch
+John Sigler wrote:
 
-Strange.  I have been getting boots, kernbench runs, and rcutorture
-tests despite its being present.  Though perhaps it was the cause
-of the (non-fatal) "scheduling while atomic" I got during a kernbench
-run -- I was assuming it was my fault somehow.  Non-reproducible.  :-/
+> John Sigler wrote:
+>=20
+>> [ Note: cross-posted to linux-rt-users and oprofile-list ]
+>>
+>> I'm running kernel 2.6.20.7-rt8 on x86 (1267-MHz P3) with the
+>> following debug options:
+>>
+>> CONFIG_TRACE_IRQFLAGS_SUPPORT=3Dy
+>> # CONFIG_PRINTK_TIME is not set
+>> # CONFIG_ENABLE_MUST_CHECK is not set
+>> # CONFIG_MAGIC_SYSRQ is not set
+>> # CONFIG_UNUSED_SYMBOLS is not set
+>> # CONFIG_DEBUG_FS is not set
+>> # CONFIG_HEADERS_CHECK is not set
+>> # CONFIG_DEBUG_KERNEL is not set
+>> CONFIG_LOG_BUF_SHIFT=3D14
+>> CONFIG_STACKTRACE=3Dy
+>> CONFIG_EVENT_TRACE=3Dy
+>> CONFIG_FUNCTION_TRACE=3Dy
+>> CONFIG_WAKEUP_TIMING=3Dy
+>> CONFIG_LATENCY_TRACE=3Dy
+>> # CONFIG_CRITICAL_PREEMPT_TIMING is not set
+>> # CONFIG_CRITICAL_IRQSOFF_TIMING is not set
+>> CONFIG_WAKEUP_LATENCY_HIST=3Dy
+>> CONFIG_LATENCY_TIMING=3Dy
+>> CONFIG_LATENCY_HIST=3Dy
+>> CONFIG_MCOUNT=3Dy
+>> CONFIG_DEBUG_BUGVERBOSE=3Dy
+>> CONFIG_FRAME_POINTER=3Dy
+>> CONFIG_UNWIND_INFO=3Dy
+>> CONFIG_STACK_UNWIND=3Dy
+>> CONFIG_EARLY_PRINTK=3Dy
+>> CONFIG_X86_FIND_SMP_CONFIG=3Dy
+>> CONFIG_X86_MPPARSE=3Dy
+>> CONFIG_DOUBLEFAULT=3Dy
+>>
+>> http://linux.kernel.free.fr/latency/config-2.6.20.7-rt8-adlink-laten=
+cy
+>>
+>> Here's my situation:
+>>
+>> A SCHED_RR process with priority 80 is performing blocking reads of=20
+>> 1316-byte chunks from a PCI device. The data comes in at ~38 Mbit/s.
+>>
+>> Therefore, in a perfect world, my process would wake up periodically=
+=20
+>> every 1316*8 / 38e6 =3D 277 =B5s to handle the latest chunk.
+>>
+>> However, periodically, my process blocks up to 400 =B5s instead of 2=
+77 =B5s.
+>> Naturally, the next iteration, my process blocks less than 277 =B5s =
+(the=20
+>> PCI board has 1316 bytes ready every 277 =B5s regardless).
+>>
+>> I've captured a histogram of read latencies.
+>> It is expressed in units of 512 ns.
+>> e.g. there were 23,126,460 occurences of LAT=3D278 =B5s (543 * 512 n=
+s)
+>> http://linux.kernel.free.fr/latency/histogram.txt
+>> http://linux.kernel.free.fr/latency/read_latency.png
+>>
+>> The system is otherwise completely idle. In other words, 100% of the=
+=20
+>> CPU is dedicated to the single task of waiting for an interrupt=20
+>> request, servicing it, and pushing the data to user land.
+>>
+>> I used OProfile to frequently sample the instruction pointer while m=
+y=20
+>> application ran all night long.
+>>
+>> http://linux.kernel.free.fr/latency/oprofile_report_all_night.txt
+>>
+>> CPU: PIII, speed 1266.7 MHz (estimated)
+>> Counted CPU_CLK_UNHALTED events (clocks processor is not halted) wit=
+h=20
+>> a unit mask of 0x00 (No unit mask) count 60000
+>> samples      %      symbol name
+>> 958075714  90.6470   default_idle
+>> 25637397    2.4256   mask_and_ack_8259A
+>> 10697948    1.0122   __copy_to_user_ll
+>> 9345347     0.8842   oprofiled
+>> 9246368     0.8748   Dta1xxIsr
+>> 6732131     0.6370   enable_8259A_irq
+>> 5153650     0.4876   __schedule
+>> 1873157     0.1772   irq_entries_start
+>> 1729897     0.1637   increment_tail
+>> 1565354     0.1481   clock_gettime
+>> 1429908     0.1353   Dta1xxDmaTransfer
+>> 1428107     0.1351   ioread16
+>> 1252095     0.1185   system_call
+>> 1081768     0.1023   try_to_wake_up
+>> 983687      0.0931   cpu_idle
+>>
+>> I thought default_idle called HLT via safe_halt(). Since I'm only=20
+>> counting UNHALTED clock cycles, I'm surprised to see so many samples=
+=20
+>> taken in default_idle. Does someone understand that?
+>>
+>> Is it possible that one of these functions periodically delays the=20
+>> delivery of data to my SCHED_RR application?
+>>
+>> Here's a /proc/latency_trace dump. What is there to understand?
+>>
+>> # cat /proc/latency_trace
+>> preemption latency trace v1.1.5 on 2.6.20.7-rt8
+>> --------------------------------------------------------------------
+>>  latency: 26 us, #2/2, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
+>>     -----------------
+>>     | task: softirq-timer/0-4 (uid:0 nice:0 policy:1 rt_prio:50)
+>>     -----------------
+>>
+>>                  _------=3D> CPU#
+>>                 / _-----=3D> irqs-off
+>>                | / _----=3D> need-resched
+>>                || / _---=3D> hardirq/softirq
+>>                ||| / _--=3D> preempt-depth
+>>                |||| /
+>>                |||||     delay
+>>    cmd     pid ||||| time  |   caller
+>>       \   /    |||||   \   |   /
+>>    <...>-4     0D..1   26us : trace_stop_sched_switched=20
+>> (__sched_text_start)
+>>
+>>
+>> vim:ft=3Dhelp
+>=20
+> Shouldn't there be many lines in this output?
+> Do I need an additional kernel configuration option?
+>=20
+>> Is there a different diagnostic I can run to tell why data delivery
+>> to my app is periodically delayed 100 =B5s?
+>=20
+> I'm open to all suggestions. I'm running out of ideas.
+>=20
+>> # cat /proc/latency_hist/wakeup_latency/CPU0
+>> #Minimum latency: 0 microseconds.
+>> #Average latency: 0 microseconds.
+>> #Maximum latency: 26 microseconds.
+>> #Total samples: 14925698
+>> #There are 0 samples greater or equal than 10240 microseconds
+>> #usecs           samples
+>>     0            3682745
+>>     1            9487737
+>>     2            1748372
+>>     3               1192
+>>     4               3689
+>>     5                 50
+>>     6                 14
+>>     7                 14
+>>     8                  9
+>>     9                 46
+>>    10                995
+>>    11                799
+>>    12                  6
+>>    13                  8
+>>    14                  4
+>>    15                  6
+>>    16                  3
+>>    17                  0
+>>    18                  1
+>>    19                  0
+>>    20                  0
+>>    21                  0
+>>    22                  3
+>>    23                  1
+>>    24                  0
+>>    25                  1
+>>    26                  3
+>>
+>> I would think that I might have a clearer picture if I could request=
+=20
+>> the last N instruction pointer samples from OProfile, to figure out=20
+>> what the CPU has been doing for the past several hundred =B5s.
+>=20
+> I'd like to hear what OProfile devs think of this approach.
+> I seems far from trivial to implement?
 
-						Thanx, Paul
+Is there some (any) additional information I could provide?
 
-BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
-in_atomic():1 [00000001], irqs_disabled():0
- [<c0119f50>] __might_sleep+0xf3/0xf9
- [<c031600e>] __rt_spin_lock+0x21/0x3c
- [<c014102c>] get_zone_pcp+0x20/0x29
- [<c0141a40>] free_hot_cold_page+0xdc/0x167
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c0110d92>] pgd_dtor+0x0/0x1
- [<c015d865>] quicklist_trim+0xb7/0xe3
- [<c0111025>] check_pgt_cache+0x19/0x1c
- [<c0148df5>] free_pgtables+0x54/0x12c
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c014e5be>] unmap_region+0xeb/0x13b
-BUG: scheduling while atomic: cc1/0x00000002/29745, CPU#0
- [<c03146c8>] __sched_text_start+0xb0/0x4fe
- [<c0116432>] try_to_wake_up+0x31b/0x326
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c0314bfc>] schedule+0xe6/0x100
- [<c03158db>] rt_spin_lock_slowlock+0xc5/0x145
- [<c0316027>] __rt_spin_lock+0x3a/0x3c
- [<c014102c>] get_zone_pcp+0x20/0x29
- [<c0141a40>] free_hot_cold_page+0xdc/0x167
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c0110d92>] pgd_dtor+0x0/0x1
- [<c015d865>] quicklist_trim+0xb7/0xe3
- [<c0111025>] check_pgt_cache+0x19/0x1c
- [<c0148df5>] free_pgtables+0x54/0x12c
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c014e5be>] unmap_region+0xeb/0x13b
- [<c014e861>] do_munmap+0xea/0xff
- [<c014e8a7>] sys_munmap+0x31/0x40
- [<c010276a>] syscall_call+0x7/0xb
- [<c0310000>] _shift_data_right_pages+0xb9/0xd1
- =======================
----------------------------
-| preempt count: 00000002 ]
-| 2-level deep critical section nesting:
-----------------------------------------
-.. [<c015d7c8>] .... quicklist_trim+0x1a/0xe3
-.....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
-.. [<c031462b>] .... __sched_text_start+0x13/0x4fe
-.....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
+I'm open (really) to all comments and suggestions.
 
-> Signed-Off-By: Daniel Walker <dwalker@mvista.com>
-> 
-> Index: linux-2.6.22.1/kernel/sched.c
-> ===================================================================
-> --- linux-2.6.22.1.orig/kernel/sched.c	2007-07-22 16:47:37.000000000 +0000
-> +++ linux-2.6.22.1/kernel/sched.c	2007-07-22 16:16:48.000000000 +0000
-> @@ -4900,7 +4900,6 @@ asmlinkage long sys_sched_yield(void)
->  	 * no need to preempt or enable interrupts:
->  	 */
->  	spin_unlock_no_resched(&rq->lock);
-> -	rcu_read_unlock();
-> 
->  	__schedule();
-> 
-> 
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Regards.
