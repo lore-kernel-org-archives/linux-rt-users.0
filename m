@@ -1,120 +1,95 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH -rt] drop spurious rcu unlock
-Date: Mon, 23 Jul 2007 07:28:15 -0700
-Message-ID: <1185200895.2573.46.camel@imap.mvista.com>
-References: <1185124958.2573.13.camel@imap.mvista.com>
-	 <20070723031359.GA25590@linux.vnet.ibm.com>
-	 <1185197839.2573.32.camel@imap.mvista.com>
-	 <20070723140623.GD9400@linux.vnet.ibm.com>
+From: ankita@in.ibm.com (Ankita Garg)
+Subject: Re: [PATCH] Display -rt related stats in /proc/schedstat
+Date: Mon, 23 Jul 2007 20:28:43 +0530
+Message-ID: <20070723145843.GA7478@in.ibm.com>
+References: <20070723125925.GE8055@in.ibm.com> <200707231424.35306.joachim.deguara@amd.com>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Dinakar Guniguntala <dino@in.ibm.com>
+To: Joachim Deguara <joachim.deguara@amd.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:50753 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750933AbXGWOjD (ORCPT
+Received: from ausmtp05.au.ibm.com ([202.81.18.154]:50180 "EHLO
+	ausmtp05.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753747AbXGWO7P (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 10:39:03 -0400
-In-Reply-To: <20070723140623.GD9400@linux.vnet.ibm.com>
+	Mon, 23 Jul 2007 10:59:15 -0400
+Received: from d23relay01.au.ibm.com (d23relay01.au.ibm.com [202.81.18.232])
+	by ausmtp05.au.ibm.com (8.13.8/8.13.8) with ESMTP id l6NF02k34481170
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 01:00:03 +1000
+Received: from d23av01.au.ibm.com (d23av01.au.ibm.com [9.190.250.242])
+	by d23relay01.au.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l6NEwFsq128660
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 00:58:15 +1000
+Received: from d23av01.au.ibm.com (loopback [127.0.0.1])
+	by d23av01.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l6NEwo76022188
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 00:58:50 +1000
+Content-Disposition: inline
+In-Reply-To: <200707231424.35306.joachim.deguara@amd.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-07-23 at 07:06 -0700, Paul E. McKenney wrote:
-
-> > I was wondering what kind of side effects would happen with the
-> > preemptible RCU ..
+On Mon, Jul 23, 2007 at 02:24:34PM +0200, Joachim Deguara wrote:
+> On Monday 23 July 2007 14:59:25 Ankita Garg wrote:
+> > Hi,
+> >
+> > This patch adds support to display captured -rt stats under
+> > /proc/schedstat.
 > 
-> Well, if you had only one rcu_read_lock() outstanding in the system,
-> it would appear to be in a quiescent state, which would not be good.
-> Given enough executions of that code, grace periods would cease and
-> you would OOM.
-> 
-> I didn't see any OOMs despite overnight rcutorture runs -- which would
-> definitely have spotted halted grace periods -- so perhaps I just happened
-> to never invoke sched_yield?
+> You need to +1 SCHEDSTAT_VERSION if you are going to do this.  I would also 
+> suggest the number of fields printed out it in schedstats is invariable of 
+> CONFIG_PREEMPT_RT rather whether the fields have meaning data or zeros 
+> depends on the define.  Finally an addition to Documentation/sched-stats.txt 
+> is always desirable with such a change.
 
-Seems pretty unlikely that yield() wouldn't get called .. Isn't the
-effect per-task since rcu_read_unlock() touches
-current->rcu_read_lock_nesting?
+Yep, that sounds fine to me, because the fields are being defined
+irrespective of CONFIG_PREEMPT_RT. Besides, it looks much cleaner!
+Have updated the SCHEDSTAT_VERSION to 15.
 
-> > > BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
-> > > in_atomic():1 [00000001], irqs_disabled():0
-> > >  [<c0119f50>] __might_sleep+0xf3/0xf9
-> > >  [<c031600e>] __rt_spin_lock+0x21/0x3c
-> > >  [<c014102c>] get_zone_pcp+0x20/0x29
-> > >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c0110d92>] pgd_dtor+0x0/0x1
-> > >  [<c015d865>] quicklist_trim+0xb7/0xe3
-> > >  [<c0111025>] check_pgt_cache+0x19/0x1c
-> > >  [<c0148df5>] free_pgtables+0x54/0x12c
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c014e5be>] unmap_region+0xeb/0x13b
-> > 
-> > This looks a little like what Rui Nuno Capela is seeing , but his kernel
-> > hangs.
-> 
-> Hmmm...  In this particular case, the test (kernbench) was fairly
-> short, so maybe I just didn't let it run long enough.
+As for documentation update, Documentation/sched-stats.txt seems to be a little old.
+Under CPU statistics, it indicates 28 fields being printed, but version 14 
+seems to be printing only 12 (iiuc). So, requires some update. Will send it along 
+in the next patch.
 
-Looks like quicklist_trim() disabled preemption to access the per-cpu
-variable "quicklist" then calls free_pages() which takes a mutex.. Below
-looks like the same deal ..
 
-> 						Thanx, Paul
-> 
-> > > BUG: scheduling while atomic: cc1/0x00000002/29745, CPU#0
-> > >  [<c03146c8>] __sched_text_start+0xb0/0x4fe
-> > >  [<c0116432>] try_to_wake_up+0x31b/0x326
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c0314bfc>] schedule+0xe6/0x100
-> > >  [<c03158db>] rt_spin_lock_slowlock+0xc5/0x145
-> > >  [<c0316027>] __rt_spin_lock+0x3a/0x3c
-> > >  [<c014102c>] get_zone_pcp+0x20/0x29
-> > >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c0110d92>] pgd_dtor+0x0/0x1
-> > >  [<c015d865>] quicklist_trim+0xb7/0xe3
-> > >  [<c0111025>] check_pgt_cache+0x19/0x1c
-> > >  [<c0148df5>] free_pgtables+0x54/0x12c
-> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> > >  [<c014e5be>] unmap_region+0xeb/0x13b
-> > >  [<c014e861>] do_munmap+0xea/0xff
-> > >  [<c014e8a7>] sys_munmap+0x31/0x40
-> > >  [<c010276a>] syscall_call+0x7/0xb
-> > >  [<c0310000>] _shift_data_right_pages+0xb9/0xd1
-> > >  =======================
-> > > ---------------------------
-> > > | preempt count: 00000002 ]
-> > > | 2-level deep critical section nesting:
-> > > ----------------------------------------
-> > > .. [<c015d7c8>] .... quicklist_trim+0x1a/0xe3
-> > > .....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
-> > > .. [<c031462b>] .... __sched_text_start+0x13/0x4fe
-> > > .....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
-> > > 
-> > > > Signed-Off-By: Daniel Walker <dwalker@mvista.com>
-> > > > 
-> > > > Index: linux-2.6.22.1/kernel/sched.c
-> > > > ===================================================================
-> > > > --- linux-2.6.22.1.orig/kernel/sched.c	2007-07-22 16:47:37.000000000 +0000
-> > > > +++ linux-2.6.22.1/kernel/sched.c	2007-07-22 16:16:48.000000000 +0000
-> > > > @@ -4900,7 +4900,6 @@ asmlinkage long sys_sched_yield(void)
-> > > >  	 * no need to preempt or enable interrupts:
-> > > >  	 */
-> > > >  	spin_unlock_no_resched(&rq->lock);
-> > > > -	rcu_read_unlock();
-> > > > 
-> > > >  	__schedule();
-> > > > 
-> > > > 
-> > > > 
-> > > > -
-> > > > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> > > > the body of a message to majordomo@vger.kernel.org
-> > > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > 
+Signed-off-by: Ankita Garg <ankita@in.ibm.com>
+--
+ sched_stats.h |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+Index: linux-2.6.22.1/kernel/sched_stats.h
+===================================================================
+--- linux-2.6.22.1.orig/kernel/sched_stats.h	2007-07-23 18:15:57.000000000 +0530
++++ linux-2.6.22.1/kernel/sched_stats.h	2007-07-23 20:19:21.000000000 +0530
+@@ -4,7 +4,7 @@
+  * bump this up when changing the output format or the meaning of an existing
+  * format, so that tools can adapt (or abort)
+  */
+-#define SCHEDSTAT_VERSION 14
++#define SCHEDSTAT_VERSION 15
+ 
+ static int show_schedstat(struct seq_file *seq, void *v)
+ {
+@@ -21,12 +21,13 @@
+ 
+ 		/* runqueue-specific stats */
+ 		seq_printf(seq,
+-		    "cpu%d %lu %lu %lu %lu %lu %lu %lu %lu %lu %llu %llu %lu",
++		    "cpu%d %lu %lu %lu %lu %lu %lu %lu %lu %lu %llu %lu %lu %lu %llu %lu",
+ 		    cpu, rq->yld_both_empty,
+ 		    rq->yld_act_empty, rq->yld_exp_empty, rq->yld_cnt,
+ 		    rq->sched_switch, rq->sched_cnt, rq->sched_goidle,
+ 		    rq->ttwu_cnt, rq->ttwu_local,
+ 		    rq->rq_sched_info.cpu_time,
++		    rq->rto_schedule, rq->rto_wakeup, rq->rto_pulled,
+ 		    rq->rq_sched_info.run_delay, rq->rq_sched_info.pcnt);
+ 
+ 		seq_printf(seq, "\n");
+
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
