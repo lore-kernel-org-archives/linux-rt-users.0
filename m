@@ -1,147 +1,53 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: [PATCH] release quicklist before free_page
-Date: Mon, 23 Jul 2007 18:32:58 +0200
-Message-ID: <1185208378.8197.20.camel@twins>
+Date: Mon, 23 Jul 2007 09:26:19 -0700
+Message-ID: <1185207979.2573.55.camel@imap.mvista.com>
 References: <20070723152129.036573829@mvista.com>
+	 <1185208378.8197.20.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: mingo@elte.hu, paulmck@linux.vnet.ibm.com,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:51606 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759769AbXGWQdL (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:30790 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1765548AbXGWQh2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 12:33:11 -0400
-In-Reply-To: <20070723152129.036573829@mvista.com>
+	Mon, 23 Jul 2007 12:37:28 -0400
+In-Reply-To: <1185208378.8197.20.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-07-23 at 08:21 -0700, Daniel Walker wrote:
-> Resolves,
+On Mon, 2007-07-23 at 18:32 +0200, Peter Zijlstra wrote:
+> On Mon, 2007-07-23 at 08:21 -0700, Daniel Walker wrote:
+> > Resolves,
+> > 
+> > BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
+> > in_atomic():1 [00000001], irqs_disabled():0
+> >  [<c0119f50>] __might_sleep+0xf3/0xf9
+> >  [<c031600e>] __rt_spin_lock+0x21/0x3c
+> >  [<c014102c>] get_zone_pcp+0x20/0x29
+> >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
+> >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> >  [<c0110d92>] pgd_dtor+0x0/0x1
+> >  [<c015d865>] quicklist_trim+0xb7/0xe3
+> >  [<c0111025>] check_pgt_cache+0x19/0x1c
+> >  [<c0148df5>] free_pgtables+0x54/0x12c
+> >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> >  [<c014e5be>] unmap_region+0xeb/0x13b
+> > 
+> > 
+> > It looks like the quicklist isn't used after a few variables are evaluated.
+> > So no need to keep preemption disabled over the whole function.
 > 
-> BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
-> in_atomic():1 [00000001], irqs_disabled():0
->  [<c0119f50>] __might_sleep+0xf3/0xf9
->  [<c031600e>] __rt_spin_lock+0x21/0x3c
->  [<c014102c>] get_zone_pcp+0x20/0x29
->  [<c0141a40>] free_hot_cold_page+0xdc/0x167
->  [<c013a3f4>] add_preempt_count+0x12/0xcc
->  [<c0110d92>] pgd_dtor+0x0/0x1
->  [<c015d865>] quicklist_trim+0xb7/0xe3
->  [<c0111025>] check_pgt_cache+0x19/0x1c
->  [<c0148df5>] free_pgtables+0x54/0x12c
->  [<c013a3f4>] add_preempt_count+0x12/0xcc
->  [<c014e5be>] unmap_region+0xeb/0x13b
+> Not quite, it uses preempt_disable() to avoid migration and stick to a
+> cpu. Without that it might end up freeing pages from another quicklist.
 > 
-> 
-> It looks like the quicklist isn't used after a few variables are evaluated.
-> So no need to keep preemption disabled over the whole function.
+> How about this - compile tested only
 
-Not quite, it uses preempt_disable() to avoid migration and stick to a
-cpu. Without that it might end up freeing pages from another quicklist.
+How about a comment to go with it ?  Which says something like what's
+above, notes on how the locking is getting used..
 
-How about this - compile tested only
----
-
-We cannot call the page allocator with preemption-disabled, use the
-per_cpu_locked construct to allow preemption while guarding the per cpu
-data.
-
-Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
----
- include/linux/quicklist.h |   19 +++++++++++++++----
- mm/quicklist.c            |    9 +++++----
- 2 files changed, 20 insertions(+), 8 deletions(-)
-
-Index: linux-2.6/include/linux/quicklist.h
-===================================================================
---- linux-2.6.orig/include/linux/quicklist.h
-+++ linux-2.6/include/linux/quicklist.h
-@@ -18,7 +18,7 @@ struct quicklist {
- 	int nr_pages;
- };
- 
--DECLARE_PER_CPU(struct quicklist, quicklist)[CONFIG_NR_QUICK];
-+DECLARE_PER_CPU_LOCKED(struct quicklist, quicklist)[CONFIG_NR_QUICK];
- 
- /*
-  * The two key functions quicklist_alloc and quicklist_free are inline so
-@@ -30,19 +30,30 @@ DECLARE_PER_CPU(struct quicklist, quickl
-  * The fast patch in quicklist_alloc touched only a per cpu cacheline and
-  * the first cacheline of the page itself. There is minmal overhead involved.
-  */
--static inline void *quicklist_alloc(int nr, gfp_t flags, void (*ctor)(void *))
-+static inline void *__quicklist_alloc(int cpu, int nr, gfp_t flags, void (*ctor)(void *))
- {
- 	struct quicklist *q;
- 	void **p = NULL;
- 
--	q =&get_cpu_var(quicklist)[nr];
-+	q = &__get_cpu_var_locked(quicklist, cpu)[nr];
- 	p = q->page;
- 	if (likely(p)) {
- 		q->page = p[0];
- 		p[0] = NULL;
- 		q->nr_pages--;
- 	}
--	put_cpu_var(quicklist);
-+	return p;
-+}
-+
-+static inline void *quicklist_alloc(int nr, gfp_t flags, void (*ctor)(void *))
-+{
-+	struct quicklist *q;
-+	void **p = NULL;
-+	int cpu;
-+
-+	(void)get_cpu_var_locked(quicklist, &cpu)[nr];
-+	p = __quicklist_alloc(cpu, nr, flags, ctor);
-+	put_cpu_var_locked(quicklist, cpu);
- 	if (likely(p))
- 		return p;
- 
-Index: linux-2.6/mm/quicklist.c
-===================================================================
---- linux-2.6.orig/mm/quicklist.c
-+++ linux-2.6/mm/quicklist.c
-@@ -19,7 +19,7 @@
- #include <linux/module.h>
- #include <linux/quicklist.h>
- 
--DEFINE_PER_CPU(struct quicklist, quicklist)[CONFIG_NR_QUICK];
-+DEFINE_PER_CPU_LOCKED(struct quicklist, quicklist)[CONFIG_NR_QUICK];
- 
- #define FRACTION_OF_NODE_MEM	16
- 
-@@ -51,8 +51,9 @@ void quicklist_trim(int nr, void (*dtor)
- {
- 	long pages_to_free;
- 	struct quicklist *q;
-+	int cpu;
- 
--	q = &get_cpu_var(quicklist)[nr];
-+	q = &get_cpu_var_locked(quicklist, &cpu)[nr];
- 	if (q->nr_pages > min_pages) {
- 		pages_to_free = min_pages_to_free(q, min_pages, max_free);
- 
-@@ -61,7 +62,7 @@ void quicklist_trim(int nr, void (*dtor)
- 			 * We pass a gfp_t of 0 to quicklist_alloc here
- 			 * because we will never call into the page allocator.
- 			 */
--			void *p = quicklist_alloc(nr, 0, NULL);
-+			void *p = __quicklist_alloc(cpu, nr, 0, NULL);
- 
- 			if (dtor)
- 				dtor(p);
-@@ -69,7 +70,7 @@ void quicklist_trim(int nr, void (*dtor)
- 			pages_to_free--;
- 		}
- 	}
--	put_cpu_var(quicklist);
-+	put_cpu_var_locked(quicklist, cpu);
- }
- 
- unsigned long quicklist_total_size(void)
+Daniel
