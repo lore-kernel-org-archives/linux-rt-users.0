@@ -1,179 +1,120 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Mon, 23 Jul 2007 16:14:26 +0200
-Message-ID: <46A4B7C2.1070304@free.fr>
-References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH -rt] drop spurious rcu unlock
+Date: Mon, 23 Jul 2007 07:28:15 -0700
+Message-ID: <1185200895.2573.46.camel@imap.mvista.com>
+References: <1185124958.2573.13.camel@imap.mvista.com>
+	 <20070723031359.GA25590@linux.vnet.ibm.com>
+	 <1185197839.2573.32.camel@imap.mvista.com>
+	 <20070723140623.GD9400@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	oprofile-list@lists.sourceforge.net, linux-kernel@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:50484 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752446AbXGWONw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 10:13:52 -0400
-In-Reply-To: <20070723095357.GA886@elte.hu>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:50753 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750933AbXGWOjD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Jul 2007 10:39:03 -0400
+In-Reply-To: <20070723140623.GD9400@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar wrote:
+On Mon, 2007-07-23 at 07:06 -0700, Paul E. McKenney wrote:
 
-> John Sigler wrote:
+> > I was wondering what kind of side effects would happen with the
+> > preemptible RCU ..
 > 
->> Here's a /proc/latency_trace dump. What is there to understand?
->>
->> # cat /proc/latency_trace
->> preemption latency trace v1.1.5 on 2.6.20.7-rt8
->> --------------------------------------------------------------------
->>  latency: 26 us, #2/2, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
->>     -----------------
->>     | task: softirq-timer/0-4 (uid:0 nice:0 policy:1 rt_prio:50)
->>     -----------------
->>
->>                  _------=> CPU#
->>                 / _-----=> irqs-off
->>                | / _----=> need-resched
->>                || / _---=> hardirq/softirq
->>                ||| / _--=> preempt-depth
->>                |||| /
->>                |||||     delay
->>    cmd     pid ||||| time  |   caller
->>       \   /    |||||   \   |   /
->>    <...>-4     0D..1   26us : trace_stop_sched_switched 
->> (__sched_text_start)
+> Well, if you had only one rcu_read_lock() outstanding in the system,
+> it would appear to be in a quiescent state, which would not be good.
+> Given enough executions of that code, grace periods would cease and
+> you would OOM.
 > 
-> could you try:
+> I didn't see any OOMs despite overnight rcutorture runs -- which would
+> definitely have spotted halted grace periods -- so perhaps I just happened
+> to never invoke sched_yield?
+
+Seems pretty unlikely that yield() wouldn't get called .. Isn't the
+effect per-task since rcu_read_unlock() touches
+current->rcu_read_lock_nesting?
+
+> > > BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
+> > > in_atomic():1 [00000001], irqs_disabled():0
+> > >  [<c0119f50>] __might_sleep+0xf3/0xf9
+> > >  [<c031600e>] __rt_spin_lock+0x21/0x3c
+> > >  [<c014102c>] get_zone_pcp+0x20/0x29
+> > >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c0110d92>] pgd_dtor+0x0/0x1
+> > >  [<c015d865>] quicklist_trim+0xb7/0xe3
+> > >  [<c0111025>] check_pgt_cache+0x19/0x1c
+> > >  [<c0148df5>] free_pgtables+0x54/0x12c
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c014e5be>] unmap_region+0xeb/0x13b
+> > 
+> > This looks a little like what Rui Nuno Capela is seeing , but his kernel
+> > hangs.
 > 
->  http://redhat.com/~mingo/latency-tracing-patches/trace-it.c
+> Hmmm...  In this particular case, the test (kernbench) was fairly
+> short, so maybe I just didn't let it run long enough.
+
+Looks like quicklist_trim() disabled preemption to access the per-cpu
+variable "quicklist" then calls free_pages() which takes a mutex.. Below
+looks like the same deal ..
+
+> 						Thanx, Paul
 > 
-> and run it like this:
-> 
->  ./trace-it 1 > trace.txt
-> 
-> does it produce lots of trace entries? If not then 
-> CONFIG_FUNCTION_TRACING is not enabled. Once you see lots of output in 
-> the file, the tracer is up and running and you can start tracing the 
-> latency in your app.
-
-# ./trace-it 1 >/tmp/trace.txt
-# wc /tmp/trace.txt
-   65555  393277 4096317 /tmp/trace.txt
-
-preemption latency trace v1.1.5 on 2.6.20.7-rt8
---------------------------------------------------------------------
-  latency: 1020019 us, #65536/76272, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
-     -----------------
-     | task: trace-it-939 (uid:0 nice:0 policy:0 rt_prio:0)
-     -----------------
-
-                  _------=> CPU#
-                 / _-----=> irqs-off
-                | / _----=> need-resched
-                || / _---=> hardirq/softirq
-                ||| / _--=> preempt-depth
-                |||| /
-                |||||     delay
-    cmd     pid ||||| time  |   caller
-       \   /    |||||   \   |   /
-    <...>-939   0D...    0us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    3us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D...    3us : read_tsc (get_monotonic_cycles)
-[SNIP]
-    <...>-939   0D... 19763us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19763us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19763us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19764us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19764us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19764us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-939   0D... 19765us : read_tsc (get_monotonic_cycles)
-
-
-vim:ft=help
-
-(I snipped ~65500 lines where only the number of "us" changes.)
-
-Shouldn't there be other functions in the output?
-
-Am I reading correctly that some read_tsc calls take 20 ms?
-
-dmesg reports:
-(        trace-it-939  |#0): new 1020019 us user-latency.
-
-> To track it down, use the method that trace-it.c uses to start/stop 
-> tracing, i.e. put the prctl(0,1); / prctl(0,0); calls into your app to 
-> start/stop tracing and the kernel will do the rest once you've set 
-> /proc/sys/kernel/preempt_max_latency back to 0: /proc/latency_trace will 
-> always contain the longest latency that your app triggered, of the 
-> critical path you programmed into it.
-
-Here's what I came up with:
-http://linux.kernel.free.fr/latency/check_dektec_input3.cxx
-(I enable tracing only 1% of the time.)
-
-The output looks very much like the one I got when I ran trace-it
-
-preemption latency trace v1.1.5 on 2.6.20.7-rt8
---------------------------------------------------------------------
-  latency: 19996 us, #65536/65815, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
-     -----------------
-     | task: check_dektec_in-1151 (uid:0 nice:0 policy:2 rt_prio:80)
-     -----------------
-
-                  _------=> CPU#
-                 / _-----=> irqs-off
-                | / _----=> need-resched
-                || / _---=> hardirq/softirq
-                ||| / _--=> preempt-depth
-                |||| /
-                |||||     delay
-    cmd     pid ||||| time  |   caller
-       \   /    |||||   \   |   /
-    <...>-1151  0D...    0us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    1us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    2us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    3us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    3us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    3us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D...    4us : read_tsc (get_monotonic_cycles)
-[...]
-    <...>-1151  0D... 19764us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19764us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19765us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19766us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19766us : read_tsc (get_monotonic_cycles)
-    <...>-1151  0D... 19766us : read_tsc (get_monotonic_cycles)
-
-Remarks:
-
-1. Again, shouldn't there be other functions in the output?
-
-2. How much overhead do the prctl calls incur? Is it possible that they 
-are somehow masking my problem? (I'll let the program run all night to 
-maximize the chances of capturing the anomalous latency.)
-
-> also check the cyclictest source of how to do app-driven latency 
-> tracing.
-
-Are you talking about this code:
-http://git.kernel.org/?p=linux/kernel/git/tglx/rt-tests.git;a=blob_plain;f=cyclictest/cyclictest.c;hb=HEAD
-I will study it.
-
-Regards.
+> > > BUG: scheduling while atomic: cc1/0x00000002/29745, CPU#0
+> > >  [<c03146c8>] __sched_text_start+0xb0/0x4fe
+> > >  [<c0116432>] try_to_wake_up+0x31b/0x326
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c0314bfc>] schedule+0xe6/0x100
+> > >  [<c03158db>] rt_spin_lock_slowlock+0xc5/0x145
+> > >  [<c0316027>] __rt_spin_lock+0x3a/0x3c
+> > >  [<c014102c>] get_zone_pcp+0x20/0x29
+> > >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c0110d92>] pgd_dtor+0x0/0x1
+> > >  [<c015d865>] quicklist_trim+0xb7/0xe3
+> > >  [<c0111025>] check_pgt_cache+0x19/0x1c
+> > >  [<c0148df5>] free_pgtables+0x54/0x12c
+> > >  [<c013a3f4>] add_preempt_count+0x12/0xcc
+> > >  [<c014e5be>] unmap_region+0xeb/0x13b
+> > >  [<c014e861>] do_munmap+0xea/0xff
+> > >  [<c014e8a7>] sys_munmap+0x31/0x40
+> > >  [<c010276a>] syscall_call+0x7/0xb
+> > >  [<c0310000>] _shift_data_right_pages+0xb9/0xd1
+> > >  =======================
+> > > ---------------------------
+> > > | preempt count: 00000002 ]
+> > > | 2-level deep critical section nesting:
+> > > ----------------------------------------
+> > > .. [<c015d7c8>] .... quicklist_trim+0x1a/0xe3
+> > > .....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
+> > > .. [<c031462b>] .... __sched_text_start+0x13/0x4fe
+> > > .....[<00000000>] ..   ( <= _stext+0x3fefff50/0x14)
+> > > 
+> > > > Signed-Off-By: Daniel Walker <dwalker@mvista.com>
+> > > > 
+> > > > Index: linux-2.6.22.1/kernel/sched.c
+> > > > ===================================================================
+> > > > --- linux-2.6.22.1.orig/kernel/sched.c	2007-07-22 16:47:37.000000000 +0000
+> > > > +++ linux-2.6.22.1/kernel/sched.c	2007-07-22 16:16:48.000000000 +0000
+> > > > @@ -4900,7 +4900,6 @@ asmlinkage long sys_sched_yield(void)
+> > > >  	 * no need to preempt or enable interrupts:
+> > > >  	 */
+> > > >  	spin_unlock_no_resched(&rq->lock);
+> > > > -	rcu_read_unlock();
+> > > > 
+> > > >  	__schedule();
+> > > > 
+> > > > 
+> > > > 
+> > > > -
+> > > > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> > > > the body of a message to majordomo@vger.kernel.org
+> > > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > 
