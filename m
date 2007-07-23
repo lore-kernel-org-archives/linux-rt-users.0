@@ -1,81 +1,51 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Mon, 23 Jul 2007 18:04:42 +0200
-Message-ID: <20070723160442.GA7995@elte.hu>
-References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>
-	<46A4B7C2.1070304@free.fr>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: 2.6.22.1-rt4 lockups
+Date: Mon, 23 Jul 2007 09:08:25 -0700
+Message-ID: <1185206905.2573.52.camel@imap.mvista.com>
+References: <1184325752.12353.312.camel@chaos>  <46A283A1.6030005@rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	oprofile-list@lists.sourceforge.net, linux-kernel@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
-Return-path: <oprofile-list-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <46A4B7C2.1070304@free.fr>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/oprofile-list>,
-	<mailto:oprofile-list-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=oprofile-list>
-List-Post: <mailto:oprofile-list@lists.sourceforge.net>
-List-Help: <mailto:oprofile-list-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/oprofile-list>,
-	<mailto:oprofile-list-request@lists.sourceforge.net?subject=subscribe>
-Sender: oprofile-list-bounces@lists.sourceforge.net
-Errors-To: oprofile-list-bounces@lists.sourceforge.net
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT-Users <linux-rt-users@vger.kernel.org>
+To: Rui Nuno Capela <rncbc@rncbc.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:14854 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757205AbXGWQTb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Jul 2007 12:19:31 -0400
+In-Reply-To: <46A283A1.6030005@rncbc.org>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Sat, 2007-07-21 at 23:07 +0100, Rui Nuno Capela wrote:
 
-* John Sigler <linux.kernel@free.fr> wrote:
+> Call Trace:
+>  [<c010622a>] show_trace_log_lvl+0x1a/0x30
+>  [<c01062f6>] show_stack_log_lvl+0xb6/0xe0
+>  [<c0106521>] show_registers+0x201/0x330
+>  [<c0106768>] die+0x118/0x260
+>  [<c0304233>] do_page_fault+0x193/0x600
+>  [<c030294a>] error_code+0x72/0x78
+>  [<c011b4af>] activate_task+0x4f/0xb0
+>  [<c011e09d>] try_to_wake_up+0x2bd/0x420
+>  [<c011e279>] wake_up_process_mutex+0x19/0x20
+>  [<c01425cc>] wakeup_next_waiter+0xec/0x1a0
+>  [<c030173c>] rt_spin_lock_slowunlock+0x4c/0x70
+>  [<c0301ff6>] rt_spin_unlock+0x26/0x30
+>  [<c015b3e4>] put_zone_pcp+0x14/0x20
+>  [<c015c265>] get_page_from_freelist+0x145/0x380
+>  [<c015c4f4>] __alloc_pages+0x54/0x2d0
+>  [<c01652bd>] __handle_mm_fault+0x7dd/0x9a0
+>  [<c0304398>] do_page_fault+0x2f8/0x600
+>  [<c030294a>] error_code+0x72/0x78
+>  =======================
 
-> > ./trace-it 1 > trace.txt
-> >
-> > does it produce lots of trace entries? If not then 
-> > CONFIG_FUNCTION_TRACING is not enabled. Once you see lots of output 
-> > in the file, the tracer is up and running and you can start tracing 
-> > the latency in your app.
-> 
-> # ./trace-it 1 >/tmp/trace.txt
-> # wc /tmp/trace.txt
->   65555  393277 4096317 /tmp/trace.txt
-> 
-> preemption latency trace v1.1.5 on 2.6.20.7-rt8
+I was able to reproduce a similar looking hang when I combine kernbench
+running with another load (I used ltpstress.sh from LTP) ..
 
->    <...>-939   0D...    0us : read_tsc (get_monotonic_cycles)
+I'm debugging it now ..
 
-add 'notrace' to the definition of read_tsc in arch/i386/kernel/tsc.c. 
-(check recent -rt's read_tsc() definition) (or do echo 1 > 
-/proc/sys/kernel/trace_use_raw_cycles - if you are using recent enough 
--rt)
-
-> >To track it down, use the method that trace-it.c uses to start/stop 
-> >tracing, i.e. put the prctl(0,1); / prctl(0,0); calls into your app 
-> >to start/stop tracing and the kernel will do the rest once you've set 
-> >/proc/sys/kernel/preempt_max_latency back to 0: /proc/latency_trace 
-> >will always contain the longest latency that your app triggered, of 
-> >the critical path you programmed into it.
-> 
-> Here's what I came up with:
-> http://linux.kernel.free.fr/latency/check_dektec_input3.cxx
-> (I enable tracing only 1% of the time.)
-> 
-> The output looks very much like the one I got when I ran trace-it
-
-> 1. Again, shouldn't there be other functions in the output?
-
-there should be, once you fix read_tsc().
-
-> 2. How much overhead do the prctl calls incur? Is it possible that 
-> they are somehow masking my problem? (I'll let the program run all 
-> night to maximize the chances of capturing the anomalous latency.)
-
-it's not the prctl calls that matter but the fact that every kernel 
-function will be traced if you have FUNCTION_TRACING on. It mask any 
-races - but latencies are usually not masked (they are enlarged).
-
-	Ingo
-
--------------------------------------------------------------------------
-This SF.net email is sponsored by: Splunk Inc.
-Still grepping through log files to find problems?  Stop.
-Now Search log events and configuration files using AJAX and a browser.
-Download your FREE copy of Splunk now >>  http://get.splunk.com/
+Daniel
