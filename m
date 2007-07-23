@@ -1,68 +1,81 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: [PATCH] release quicklist before free_page
-Date: Mon, 23 Jul 2007 08:21:29 -0700
-Message-ID: <20070723152129.036573829@mvista.com>
-Cc: paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: mingo@elte.hu
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:59274 "EHLO
-	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1759646AbXGWPX3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 11:23:29 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Mon, 23 Jul 2007 18:04:42 +0200
+Message-ID: <20070723160442.GA7995@elte.hu>
+References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>
+	<46A4B7C2.1070304@free.fr>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	oprofile-list@lists.sourceforge.net, linux-kernel@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
+Return-path: <oprofile-list-bounces@lists.sourceforge.net>
+Content-Disposition: inline
+In-Reply-To: <46A4B7C2.1070304@free.fr>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/oprofile-list>,
+	<mailto:oprofile-list-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=oprofile-list>
+List-Post: <mailto:oprofile-list@lists.sourceforge.net>
+List-Help: <mailto:oprofile-list-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/oprofile-list>,
+	<mailto:oprofile-list-request@lists.sourceforge.net?subject=subscribe>
+Sender: oprofile-list-bounces@lists.sourceforge.net
+Errors-To: oprofile-list-bounces@lists.sourceforge.net
 List-Id: linux-rt-users.vger.kernel.org
 
-Resolves,
 
-BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
-in_atomic():1 [00000001], irqs_disabled():0
- [<c0119f50>] __might_sleep+0xf3/0xf9
- [<c031600e>] __rt_spin_lock+0x21/0x3c
- [<c014102c>] get_zone_pcp+0x20/0x29
- [<c0141a40>] free_hot_cold_page+0xdc/0x167
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c0110d92>] pgd_dtor+0x0/0x1
- [<c015d865>] quicklist_trim+0xb7/0xe3
- [<c0111025>] check_pgt_cache+0x19/0x1c
- [<c0148df5>] free_pgtables+0x54/0x12c
- [<c013a3f4>] add_preempt_count+0x12/0xcc
- [<c014e5be>] unmap_region+0xeb/0x13b
+* John Sigler <linux.kernel@free.fr> wrote:
 
+> > ./trace-it 1 > trace.txt
+> >
+> > does it produce lots of trace entries? If not then 
+> > CONFIG_FUNCTION_TRACING is not enabled. Once you see lots of output 
+> > in the file, the tracer is up and running and you can start tracing 
+> > the latency in your app.
+> 
+> # ./trace-it 1 >/tmp/trace.txt
+> # wc /tmp/trace.txt
+>   65555  393277 4096317 /tmp/trace.txt
+> 
+> preemption latency trace v1.1.5 on 2.6.20.7-rt8
 
-It looks like the quicklist isn't used after a few variables are evaluated.
-So no need to keep preemption disabled over the whole function.
+>    <...>-939   0D...    0us : read_tsc (get_monotonic_cycles)
 
-Signed-Off-By: Daniel Walker <dwalker@mvista.com>
+add 'notrace' to the definition of read_tsc in arch/i386/kernel/tsc.c. 
+(check recent -rt's read_tsc() definition) (or do echo 1 > 
+/proc/sys/kernel/trace_use_raw_cycles - if you are using recent enough 
+-rt)
 
----
- mm/quicklist.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+> >To track it down, use the method that trace-it.c uses to start/stop 
+> >tracing, i.e. put the prctl(0,1); / prctl(0,0); calls into your app 
+> >to start/stop tracing and the kernel will do the rest once you've set 
+> >/proc/sys/kernel/preempt_max_latency back to 0: /proc/latency_trace 
+> >will always contain the longest latency that your app triggered, of 
+> >the critical path you programmed into it.
+> 
+> Here's what I came up with:
+> http://linux.kernel.free.fr/latency/check_dektec_input3.cxx
+> (I enable tracing only 1% of the time.)
+> 
+> The output looks very much like the one I got when I ran trace-it
 
-Index: linux-2.6.22.1/mm/quicklist.c
-===================================================================
---- linux-2.6.22.1.orig/mm/quicklist.c
-+++ linux-2.6.22.1/mm/quicklist.c
-@@ -55,6 +55,7 @@ void quicklist_trim(int nr, void (*dtor)
- 	q = &get_cpu_var(quicklist)[nr];
- 	if (q->nr_pages > min_pages) {
- 		pages_to_free = min_pages_to_free(q, min_pages, max_free);
-+		put_cpu_var(quicklist);
- 
- 		while (pages_to_free > 0) {
- 			/*
-@@ -68,8 +69,8 @@ void quicklist_trim(int nr, void (*dtor)
- 			free_page((unsigned long)p);
- 			pages_to_free--;
- 		}
--	}
--	put_cpu_var(quicklist);
-+	} else
-+		put_cpu_var(quicklist);
- }
- 
- unsigned long quicklist_total_size(void)
--- 
+> 1. Again, shouldn't there be other functions in the output?
 
--- 
+there should be, once you fix read_tsc().
+
+> 2. How much overhead do the prctl calls incur? Is it possible that 
+> they are somehow masking my problem? (I'll let the program run all 
+> night to maximize the chances of capturing the anomalous latency.)
+
+it's not the prctl calls that matter but the fact that every kernel 
+function will be traced if you have FUNCTION_TRACING on. It mask any 
+races - but latencies are usually not masked (they are enlarged).
+
+	Ingo
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now >>  http://get.splunk.com/
