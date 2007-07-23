@@ -1,53 +1,82 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH] release quicklist before free_page
-Date: Mon, 23 Jul 2007 09:26:19 -0700
-Message-ID: <1185207979.2573.55.camel@imap.mvista.com>
-References: <20070723152129.036573829@mvista.com>
-	 <1185208378.8197.20.camel@twins>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Mon, 23 Jul 2007 18:44:21 +0200
+Message-ID: <46A4DAE5.4010302@free.fr>
+References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu> <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, paulmck@linux.vnet.ibm.com,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-rt-users@vger.kernel.org,
+	oprofile-list@lists.sourceforge.net, linux-kernel@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:30790 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765548AbXGWQh2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 12:37:28 -0400
-In-Reply-To: <1185208378.8197.20.camel@twins>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:39085 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1762701AbXGWQnu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Jul 2007 12:43:50 -0400
+In-Reply-To: <20070723160442.GA7995@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-07-23 at 18:32 +0200, Peter Zijlstra wrote:
-> On Mon, 2007-07-23 at 08:21 -0700, Daniel Walker wrote:
-> > Resolves,
-> > 
-> > BUG: sleeping function called from invalid context cc1(29651) at kernel/rtmutex.c:636
-> > in_atomic():1 [00000001], irqs_disabled():0
-> >  [<c0119f50>] __might_sleep+0xf3/0xf9
-> >  [<c031600e>] __rt_spin_lock+0x21/0x3c
-> >  [<c014102c>] get_zone_pcp+0x20/0x29
-> >  [<c0141a40>] free_hot_cold_page+0xdc/0x167
-> >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> >  [<c0110d92>] pgd_dtor+0x0/0x1
-> >  [<c015d865>] quicklist_trim+0xb7/0xe3
-> >  [<c0111025>] check_pgt_cache+0x19/0x1c
-> >  [<c0148df5>] free_pgtables+0x54/0x12c
-> >  [<c013a3f4>] add_preempt_count+0x12/0xcc
-> >  [<c014e5be>] unmap_region+0xeb/0x13b
-> > 
-> > 
-> > It looks like the quicklist isn't used after a few variables are evaluated.
-> > So no need to keep preemption disabled over the whole function.
-> 
-> Not quite, it uses preempt_disable() to avoid migration and stick to a
-> cpu. Without that it might end up freeing pages from another quicklist.
-> 
-> How about this - compile tested only
+Ingo Molnar wrote:
 
-How about a comment to go with it ?  Which says something like what's
-above, notes on how the locking is getting used..
+> add 'notrace' to the definition of read_tsc in arch/i386/kernel/tsc.c
 
-Daniel
+OK.
+
+> (or do echo 1 > /proc/sys/kernel/trace_use_raw_cycles
+> if you are using recent enough -rt)
+
+Is patch-2.6.20-rt8 recent enough?
+
+# ./trace-it 1 >trace
+# cat trace
+preemption latency trace v1.1.5 on 2.6.20.7-rt8
+--------------------------------------------------------------------
+  latency: 1000034 us, #10083/10083, CPU#0 | (M:rt VP:0, KP:0, SP:1 HP:1)
+     -----------------
+     | task: trace-it-939 (uid:0 nice:0 policy:0 rt_prio:0)
+     -----------------
+
+                  _------=> CPU#
+                 / _-----=> irqs-off
+                | / _----=> need-resched
+                || / _---=> hardirq/softirq
+                ||| / _--=> preempt-depth
+                |||| /
+                |||||     delay
+    cmd     pid ||||| time  |   caller
+       \   /    |||||   \   |   /
+trace-it-939   0D...    0us : user_trace_start (sys_prctl)
+trace-it-939   0....    0us : rt_up (user_trace_start)
+trace-it-939   0...1    1us : rt_mutex_unlock (rt_up)
+trace-it-939   0D...    1us+< (0)
+trace-it-939   0....    4us > sys_rt_sigprocmask (00000000 bfadff4c 
+000000d8)
+trace-it-939   0....    5us : sys_rt_sigprocmask (sysenter_past_esp)
+trace-it-939   0....    5us : copy_from_user (sys_rt_sigprocmask)
+trace-it-939   0....    5us : __copy_from_user_ll (copy_from_user)
+trace-it-939   0....    5us : sigprocmask (sys_rt_sigprocmask)
+trace-it-939   0....    5us : __lock_text_start (sigprocmask)
+trace-it-939   0....    6us : recalc_sigpending (sigprocmask)
+[...]
+   <idle>-0     0DN.. 1000027us : __sched_text_start (cpu_idle)
+   <idle>-0     0DN.1 1000027us : __sched_text_start (c0100f30 0 0)
+   <idle>-0     0DN.1 1000027us : sched_clock (__sched_text_start)
+   <idle>-0     0D..2 1000028us : __switch_to (__sched_text_start)
+trace-it-939   0D..2 1000028us : __sched_text_start <<idle>-0> (20 -2)
+trace-it-939   0D..1 1000029us : trace_stop_sched_switched 
+(__sched_text_start)
+trace-it-939   0.... 1000029us : hrtimer_cancel (do_nanosleep)
+trace-it-939   0.... 1000030us : hrtimer_try_to_cancel (hrtimer_cancel)
+trace-it-939   0D... 1000031us < (0)
+trace-it-939   0.... 1000032us > sys_prctl (00000000 00000000 000000d8)
+trace-it-939   0.... 1000032us : sys_prctl (sysenter_past_esp)
+trace-it-939   0.... 1000032us : user_trace_stop (sys_prctl)
+trace-it-939   0D... 1000033us : user_trace_stop (sys_prctl)
+
+This looks better.
+
+I will let my test program run overnight.
+
+Regards.
