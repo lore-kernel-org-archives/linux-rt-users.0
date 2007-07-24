@@ -1,37 +1,48 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Subject: Re: v2.6.22.1-rt5
-Date: Tue, 24 Jul 2007 22:05:46 +0200
-Message-ID: <20070724200546.GA24964@elte.hu>
-References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org> <20070724073932.GA18740@elte.hu> <1185305679.16400.17.camel@cmn3.stanford.edu> <1185305725.16400.19.camel@cmn3.stanford.edu>
+Date: Tue, 24 Jul 2007 13:23:43 -0700
+Message-ID: <1185308623.16400.28.camel@cmn3.stanford.edu>
+References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
+	 <20070724073932.GA18740@elte.hu>
+	 <1185305679.16400.17.camel@cmn3.stanford.edu>
+	 <1185305725.16400.19.camel@cmn3.stanford.edu>
+	 <20070724200546.GA24964@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Rui Nuno Capela <rncbc@rncbc.org>, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764113AbXGXUGu@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1185305725.16400.19.camel@cmn3.stanford.edu>
-Sender: linux-kernel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp2.Stanford.EDU ([171.67.20.25]:45951 "EHLO
+	smtp2.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753702AbXGXUXq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 16:23:46 -0400
+In-Reply-To: <20070724200546.GA24964@elte.hu>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
-* Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-
-> On Tue, 2007-07-24 at 12:34 -0700, Fernando Lopez-Lezcano wrote:
-> > On Tue, 2007-07-24 at 09:39 +0200, Ingo Molnar wrote:
-> > > * Rui Nuno Capela <rncbc@rncbc.org> wrote:
-> > > 
-> > > > Maybe I was too quick, but `make all` on is failing here:
-> > > 
-> > > does -rt6 work better?
-> > 
-> > Hmmm, -rt6 seems to be gone... was about to download it and it
-> > dissapeared. 
+On Tue, 2007-07-24 at 22:05 +0200, Ingo Molnar wrote:
+> * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
 > 
-> Never mind, I see it migrated back to the main page. 
+> > On Tue, 2007-07-24 at 12:34 -0700, Fernando Lopez-Lezcano wrote:
+> > > On Tue, 2007-07-24 at 09:39 +0200, Ingo Molnar wrote:
+> > > > * Rui Nuno Capela <rncbc@rncbc.org> wrote:
+> > > > 
+> > > > > Maybe I was too quick, but `make all` on is failing here:
+> > > > 
+> > > > does -rt6 work better?
+> > > 
+> > > Hmmm, -rt6 seems to be gone... was about to download it and it
+> > > dissapeared. 
+> > 
+> > Never mind, I see it migrated back to the main page. 
+> 
+> apparently you caught that 3 seconds window where the .23-rc1-rt1 
+> release script moved old patches into the older/ directory :-)
 
-apparently you caught that 3 seconds window where the .23-rc1-rt1 
-release script moved old patches into the older/ directory :-)
-
-	Ingo
+Yup, good timing... :-) Hard to do again...
+(BTW, will you keep 2.6.22.x patches going for a while?)
+-- Fernando
