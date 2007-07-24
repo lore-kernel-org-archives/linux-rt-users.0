@@ -1,38 +1,28 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: v2.6.22.1-rt5
-Date: Tue, 24 Jul 2007 00:11:08 +0200
-Message-ID: <1185228668.3318.46.camel@chaos>
-References: <20070723210236.GA25104@elte.hu>  <46A51D9E.8040104@rncbc.org>
-	 <1185226226.2573.147.camel@imap.mvista.com>
-	 <1185228302.3318.40.camel@chaos>
+Date: Tue, 24 Jul 2007 09:39:32 +0200
+Message-ID: <20070724073932.GA18740@elte.hu>
+References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Rui Nuno Capela <rncbc@rncbc.org>, Ingo Molnar <mingo@elte.hu>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Rui Nuno Capela <rncbc@rncbc.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:50192 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1759747AbXGWWLO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jul 2007 18:11:14 -0400
-In-Reply-To: <1185228302.3318.40.camel@chaos>
+Received: from mx3.mail.elte.hu ([157.181.1.138]:41409 "EHLO mx3.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752772AbXGXHkK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 03:40:10 -0400
+Content-Disposition: inline
+In-Reply-To: <46A51D9E.8040104@rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-24 at 00:05 +0200, Thomas Gleixner wrote:
-> On Mon, 2007-07-23 at 14:30 -0700, Daniel Walker wrote:
-> > Yeah, the quicklist patch wasn't fully tested .. The delta patch below
-> > is what I had to change to get it working ..
-> 
-> My bad. I pushed the wrong queue to Ingo.
-> 
-> -ENOTENOUGHSLEEP
-> 
-> This is the delta. We'll do a -rt6 tomorrow morning.
 
--EWAYNOTENOUGHSLEEP
+* Rui Nuno Capela <rncbc@rncbc.org> wrote:
 
-I sent out the wrong delta. /me goes to sleep and fixes tomorrow.
+> Maybe I was too quick, but `make all` on is failing here:
 
-	tglx
+does -rt6 work better?
+
+	Ingo
