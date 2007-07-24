@@ -1,28 +1,111 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: v2.6.22.1-rt5
-Date: Tue, 24 Jul 2007 09:39:32 +0200
-Message-ID: <20070724073932.GA18740@elte.hu>
-References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Tue, 24 Jul 2007 10:31:31 +0200
+Message-ID: <46A5B8E3.4060004@free.fr>
+References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu> <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Rui Nuno Capela <rncbc@rncbc.org>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	oprofile-list@lists.sourceforge.net, linux-kernel@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:41409 "EHLO mx3.mail.elte.hu"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:59091 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752772AbXGXHkK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 03:40:10 -0400
-Content-Disposition: inline
-In-Reply-To: <46A51D9E.8040104@rncbc.org>
+	id S1750944AbXGXIbJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 04:31:09 -0400
+In-Reply-To: <20070723160442.GA7995@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Ingo Molnar wrote:
 
-* Rui Nuno Capela <rncbc@rncbc.org> wrote:
+> add 'notrace' to the definition of read_tsc in arch/i386/kernel/tsc.c
 
-> Maybe I was too quick, but `make all` on is failing here:
+( check_dektec_in-1095 |#0): new 271 us user-latency.
+( check_dektec_in-1095 |#0): new 275 us user-latency.
+( check_dektec_in-1095 |#0): new 290 us user-latency.
+( check_dektec_in-1095 |#0): new 297 us user-latency.
+( check_dektec_in-1095 |#0): new 345 us user-latency.
+( check_dektec_in-1095 |#0): new 358 us user-latency.
+( check_dektec_in-1095 |#0): new 384 us user-latency.
+( check_dektec_in-1095 |#0): new 392 us user-latency.
+( check_dektec_in-1095 |#0): new 395 us user-latency.
+( check_dektec_in-1095 |#0): new 396 us user-latency.
+( check_dektec_in-1095 |#0): new 1031 us user-latency.
+( check_dektec_in-1095 |#0): new 1100 us user-latency.
+( check_dektec_in-1095 |#0): new 1105 us user-latency.
+( check_dektec_in-1095 |#0): new 1106 us user-latency.
 
-does -rt6 work better?
+Here's the function trace for the 1106-=B5s latency:
 
-	Ingo
+http://linux.kernel.free.fr/latency/1106-us-trace.txt
+
+These two lines repeat ~2000 times for ~800 =B5s:
+
+softirq--4     0....  272us : __lock_text_start (rt_run_flush)
+softirq--4     0....  272us : rt_spin_unlock (rt_run_flush)
+
+With a pair of the following in the middle:
+
+softirq--4     0....  670us : call_rcu (rt_run_flush)
+softirq--4     0D..1  670us : __rcu_advance_callbacks (call_rcu)
+
+PID 4 is [softirq-timer/0] and has priority 50 in SCHED_FIFO.
+My process has priority 80 in SCHED_RR. It is waiting for IRQ10.
+
+# cat /proc/interrupts
+            CPU0
+   0:         37    XT-PIC-XT        timer
+   1:          2    XT-PIC-XT        i8042
+   2:          0    XT-PIC-XT        cascade
+   7:          0    XT-PIC-XT        acpi
+  10:  151250933    XT-PIC-XT        eth2, Dta1xx
+  11:      12435    XT-PIC-XT        eth0
+  12:          4    XT-PIC-XT        eth1
+  14:      17154    XT-PIC-XT        ide0
+NMI:          0
+LOC:    5786548
+ERR:          0
+MIS:          0
+
+> or do echo 1 > /proc/sys/kernel/trace_use_raw_cycles
+> if you are using recent enough -rt
+
+http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.20-rt8
+
++int trace_use_raw_cycles =3D 0;
++
++#ifdef CONFIG_EVENT_TRACE
++/*
++ * Convert raw cycles to usecs.
++ * Note: this is not the 'clocksource cycles' value, it's the raw
++ * cycle counter cycles. We use GTOD to timestamp latency start/end
++ * points, but the trace entries inbetween are timestamped with
++ * get_cycles().
++ */
++static unsigned long notrace cycles_to_us(cycle_t delta)
++{
++	if (!trace_use_raw_cycles)
++		return cycles_to_usecs(delta);
++#ifdef CONFIG_X86
++	do_div(delta, cpu_khz/1000+1);
++#elif defined(CONFIG_PPC)
++	delta =3D mulhwu(tb_to_us, delta);
++#elif defined(CONFIG_ARM)
++	delta =3D mach_cycles_to_usecs(delta);
++#else
++	#error Implement cycles_to_usecs.
++#endif
++
++	return (unsigned long) delta;
++}
++#endif
+
+# cat /proc/sys/kernel/trace_use_raw_cycles
+0
+
+Should I set trace_use_raw_cycles=3D1 even if I notrace read_tsc?
+
+Regards.
