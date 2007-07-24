@@ -1,51 +1,29 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: v2.6.22.1-rt5
-Date: 24 Jul 2007 15:18:04 +0200
-Message-ID: <p73644aszxv.fsf@bingen.suse.de>
-References: <20070724120436.GA14466@elte.hu>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: v2.6.23-rc1-rt0
+Date: Tue, 24 Jul 2007 14:27:58 +0200
+Message-ID: <20070724122758.GB21709@elte.hu>
+References: <20070724120436.GA14466@elte.hu> <p73644aszxv.fsf@bingen.suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Ingo Molnar <mingo@elte.hu>
+To: Andi Kleen <andi@firstfloor.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ns1.suse.de ([195.135.220.2]:51396 "EHLO mx1.suse.de"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:56987 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752903AbXGXMXO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 08:23:14 -0400
-In-Reply-To: <20070724120436.GA14466@elte.hu>
+	id S1752903AbXGXM2C (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 08:28:02 -0400
+Content-Disposition: inline
+In-Reply-To: <p73644aszxv.fsf@bingen.suse.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo Molnar <mingo@elte.hu> writes:
->    
-> more info about the -rt patchset can be found in the RT wiki:
->     
->   http://rt.wiki.kernel.org
->  
-> to build a 2.6.22.1-rt5 tree, the following patches should be applied:
-> 
->  http://kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.23-rc1.tar.bz2
->  http://redhat.com/~mingo/realtime-preempt/patch-2.6.23-rc1-rt0
 
-This patch is needed to build on x86-64 with only the tracing options,
-but no preempt enabled.
+* Andi Kleen <andi@firstfloor.org> wrote:
 
--Andi
+> This patch is needed to build on x86-64 with only the tracing options, 
+> but no preempt enabled.
 
-Fix build in latency_hist.c
+thanks, applied.
 
-Signed-off-by: Andi Kleen <ak@suse.de>
-
-Index: linux-2.6.23-rc1-rt0/kernel/latency_hist.c
-===================================================================
---- linux-2.6.23-rc1-rt0.orig/kernel/latency_hist.c
-+++ linux-2.6.23-rc1-rt0/kernel/latency_hist.c
-@@ -15,6 +15,7 @@
- #include <linux/percpu.h>
- #include <linux/latency_hist.h>
- #include <asm/atomic.h>
-+#include <asm/div64.h>
- 
- typedef struct hist_data_struct {
- 	atomic_t hist_mode; /* 0 log, 1 don't log */
+	Ingo
