@@ -1,42 +1,90 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: v2.6.22.1-rt5
-Date: Tue, 24 Jul 2007 13:38:20 -0700
-Message-ID: <1185309500.16400.29.camel@cmn3.stanford.edu>
-References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
-	 <20070724073932.GA18740@elte.hu>
-	 <1185305679.16400.17.camel@cmn3.stanford.edu>
-	 <1185305725.16400.19.camel@cmn3.stanford.edu>
-	 <20070724200546.GA24964@elte.hu>
-	 <1185308623.16400.28.camel@cmn3.stanford.edu>
-	 <20070724203417.GA29343@elte.hu>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: [patch 07/15] distribute all necessary files
+Date: Tue, 24 Jul 2007 13:51:24 -0700
+Message-ID: <200707241351.25063.dvhltc@us.ibm.com>
+References: <20070724092517.390730736@metis.extern.pengutronix.de> <20070724092601.047964714@metis.extern.pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain;
+  charset="iso-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Rui Nuno Capela <rncbc@rncbc.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Ingo Molnar <mingo@elte.hu>
+Cc: linux-rt-users@vger.kernel.org
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.Stanford.EDU ([171.67.22.28]:51522 "EHLO
-	smtp1.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1764273AbXGXUiW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 16:38:22 -0400
-In-Reply-To: <20070724203417.GA29343@elte.hu>
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:48809 "EHLO e1.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932715AbXGXUv1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 16:51:27 -0400
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e1.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l6OKpQTE028156
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 16:51:26 -0400
+Received: from d01av02.pok.ibm.com (d01av02.pok.ibm.com [9.56.224.216])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l6OKpQSS414614
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 16:51:26 -0400
+Received: from d01av02.pok.ibm.com (loopback [127.0.0.1])
+	by d01av02.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l6OKpPsD009387
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Jul 2007 16:51:26 -0400
+In-Reply-To: <20070724092601.047964714@metis.extern.pengutronix.de>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-24 at 22:34 +0200, Ingo Molnar wrote:
-> * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-> 
-> > > apparently you caught that 3 seconds window where the .23-rc1-rt1 
-> > > release script moved old patches into the older/ directory :-)
-> > 
-> > Yup, good timing... :-) Hard to do again...
-> > (BTW, will you keep 2.6.22.x patches going for a while?)
-> 
-> yeah, that's the plan: to keep .22-rt updated until .23 is released. 
-> (Thomas agrees with that approach too)
+On Tuesday 24 July 2007 02:25:24 Robert Schwebel wrote:
+> Some files are missing in the distro kit, add them. We also add config
+> to the list of subdirs.
+>
+> Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
 
-Thank you thank you to all involved! That's very good news...
--- Fernando
+Acked-by: Darren Hart <dvhltc@us.ibm.com>
+
+
+>
+> ---
+>  GNUmakefile.am               |    3 +++
+>  func/pi-tests/GNUmakefile.am |    3 +++
+>  2 files changed, 6 insertions(+)
+>
+> Index: func/pi-tests/GNUmakefile.am
+> ===================================================================
+> --- func/pi-tests/GNUmakefile.am.orig
+> +++ func/pi-tests/GNUmakefile.am
+> @@ -40,6 +40,9 @@ testpi_7_CPPFLAGS = \
+>  	$(AM_CPPFLAGS) \
+>  	-I$(srcdir)
+>
+> +EXTRA_DIST = \
+> +	test-skeleton.c
+> +
+>  MAINTAINERCLEANFILES = \
+>  	GNUmakefile.in
+>
+> Index: GNUmakefile.am
+> ===================================================================
+> --- GNUmakefile.am.orig
+> +++ GNUmakefile.am
+> @@ -1,9 +1,12 @@
+>  SUBDIRS = \
+> +	config \
+>          include \
+>          func \
+>          perf \
+>          stress
+>
+> +EXTRA_DIST = \
+> +	autogen.sh
+>
+>  MAINTAINERCLEANFILES = \
+>          GNUmakefile.in
+>
+> --
+>  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+>  Pengutronix - Linux Solutions for Science and Industry
+>    Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+>      Hannoversche Str. 2, 31134 Hildesheim, Germany
+>    Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+
+
+
+-- 
+Darren Hart
+IBM Linux Technology Center
+Realtime Linux Team
