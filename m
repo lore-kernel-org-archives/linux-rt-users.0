@@ -1,38 +1,37 @@
-From: =?iso-8859-1?q?Hans-J=FCrgen_Koch?= <hjk@linutronix.de>
-Subject: [RT-PATCH] v2.6.23-rc1-rt0 Add missing header in sch_generic.c
-Date: Tue, 24 Jul 2007 21:03:41 +0200
-Message-ID: <200707242103.41880.hjk@linutronix.de>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: v2.6.22.1-rt5
+Date: Tue, 24 Jul 2007 21:10:27 +0200
+Message-ID: <20070724191027.GA13268@elte.hu>
+References: <20070724120436.GA14466@elte.hu> <200707241156.03149.gene.heskett@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Gene Heskett <gene.heskett@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:55282 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1755430AbXGXTDp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 15:03:45 -0400
+Received: from mx2.mail.elte.hu ([157.181.151.9]:51211 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750787AbXGXTKf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 15:10:35 -0400
 Content-Disposition: inline
+In-Reply-To: <200707241156.03149.gene.heskett@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-v2.6.23-rc1-rt0 adds an msleep(1) in net/sched/sch_generic.c
-without including the neceessary header. This patches fixes it.
 
-Signed-off-by: Hans J. Koch <hjk@linutronix.de>
+* Gene Heskett <gene.heskett@gmail.com> wrote:
 
-----
-Index: linux-2.6.23-rc/net/sched/sch_generic.c
-===================================================================
---- linux-2.6.23-rc.orig/net/sched/sch_generic.c	2007-07-24 20:09:18.000000000 +0200
-+++ linux-2.6.23-rc/net/sched/sch_generic.c	2007-07-24 20:10:13.000000000 +0200
-@@ -25,6 +25,7 @@
- #include <linux/init.h>
- #include <linux/rcupdate.h>
- #include <linux/list.h>
-+#include <linux/delay.h>
- #include <net/pkt_sched.h>
- 
- /* Main transmission queue. */
+> The above stanza still needs some tlc.  I built a 2.6.22.1-rt6 (rt5 
+> wouldn't build) using the same old config that a make oldconfig didn't 
+> fuss about, but the reboot never completed, see the attached, heavily 
+> smunched camera shot of the panic.
+> 
+> Kinda looks like hda/sda confusion, with rt3 (this boot), its hda*, 
+> what is it now?  fstab or kernel config error?
+
+yeah, as long as your filesystems are created with a proper label, all 
+that you need to do is to change all 'hda' to 'sda' in the new kernel's 
+/etc/grub.conf entry. (or enable the old IDE code in the .config, under 
+CONFIG_IDE)
+
+	Ingo
