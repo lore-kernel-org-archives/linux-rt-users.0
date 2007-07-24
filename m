@@ -1,43 +1,45 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 11/15] periodic_cpuload_single needs support libs
-Date: Tue, 24 Jul 2007 11:25:28 +0200
-Message-ID: <20070724092610.124184533@metis.extern.pengutronix.de>
+Subject: [patch 10/15] fixup maintainerclean
+Date: Tue, 24 Jul 2007 11:25:27 +0200
+Message-ID: <20070724092607.856146831@metis.extern.pengutronix.de>
 References: <20070724092517.390730736@metis.extern.pengutronix.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:60035 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:60036 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1764184AbXGXKAO (ORCPT
+	by vger.kernel.org with ESMTP id S1764184AbXGXKAP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 06:00:14 -0400
-Content-Disposition: inline; filename=periodic_cpuload_single_needs_supportlibs.diff
+	Tue, 24 Jul 2007 06:00:15 -0400
+Content-Disposition: inline; filename=complete_maintainerclean.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This file needs the support libraries, so link against them.
+Add some more things which have to be cleaned on maintainer-clean; this
+does also remove directories in the case that something went wrong
+during development, leaving the tree in a non-clean state.
 
 Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
 
 ---
- func/periodic_cpu_load/GNUmakefile.am |    5 +++++
- 1 file changed, 5 insertions(+)
+ GNUmakefile.am |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-Index: func/periodic_cpu_load/GNUmakefile.am
+Index: GNUmakefile.am
 ===================================================================
---- func/periodic_cpu_load/GNUmakefile.am.orig
-+++ func/periodic_cpu_load/GNUmakefile.am
-@@ -21,6 +21,11 @@ periodic_cpu_load_LDADD = \
-          ${top_builddir}/include/librt.a \
-          ${top_builddir}/include/libstats.a
+--- GNUmakefile.am.orig
++++ GNUmakefile.am
+@@ -9,5 +9,10 @@ EXTRA_DIST = \
+ 	autogen.sh
  
-+periodic_cpu_load_single_LDADD = \
-+	$(top_builddir)/include/libjvmsim.a \
-+	$(top_builddir)/include/librt.a \
-+	$(top_builddir)/include/libstats.a
-+
  MAINTAINERCLEANFILES = \
-         GNUmakefile.in
+-        GNUmakefile.in 
++	GNUmakefile.in \
++	$(DIST_ARCHIVES)
++
++maintainer-clean-local:
++	-chmod -R a+rw $(distdir)
++	-rm -fr $(distdir)
  
 
 --
