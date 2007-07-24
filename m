@@ -1,46 +1,61 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: [patch 10/15] fixup maintainerclean
-Date: Tue, 24 Jul 2007 11:25:27 +0200
-Message-ID: <20070724092607.856146831@metis.extern.pengutronix.de>
+Subject: [patch 07/15] distribute all necessary files
+Date: Tue, 24 Jul 2007 11:25:24 +0200
+Message-ID: <20070724092601.047964714@metis.extern.pengutronix.de>
 References: <20070724092517.390730736@metis.extern.pengutronix.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:60036 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:60037 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1764184AbXGXKAP (ORCPT
+	by vger.kernel.org with ESMTP id S1765384AbXGXKAR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 06:00:15 -0400
-Content-Disposition: inline; filename=complete_maintainerclean.diff
+	Tue, 24 Jul 2007 06:00:17 -0400
+Content-Disposition: inline; filename=distribute_all_necessary_files.diff
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add some more things which have to be cleaned on maintainer-clean; this
-does also remove directories in the case that something went wrong
-during development, leaving the tree in a non-clean state.
+Some files are missing in the distro kit, add them. We also add config
+to the list of subdirs.
 
 Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
 
 ---
- GNUmakefile.am |    7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ GNUmakefile.am               |    3 +++
+ func/pi-tests/GNUmakefile.am |    3 +++
+ 2 files changed, 6 insertions(+)
 
+Index: func/pi-tests/GNUmakefile.am
+===================================================================
+--- func/pi-tests/GNUmakefile.am.orig
++++ func/pi-tests/GNUmakefile.am
+@@ -40,6 +40,9 @@ testpi_7_CPPFLAGS = \
+ 	$(AM_CPPFLAGS) \
+ 	-I$(srcdir)
+ 
++EXTRA_DIST = \
++	test-skeleton.c
++
+ MAINTAINERCLEANFILES = \
+ 	GNUmakefile.in
+ 
 Index: GNUmakefile.am
 ===================================================================
 --- GNUmakefile.am.orig
 +++ GNUmakefile.am
-@@ -9,5 +9,10 @@ EXTRA_DIST = \
- 	autogen.sh
+@@ -1,9 +1,12 @@
+ SUBDIRS = \
++	config \
+         include \
+         func \
+         perf \
+         stress
+ 
++EXTRA_DIST = \
++	autogen.sh
  
  MAINTAINERCLEANFILES = \
--        GNUmakefile.in 
-+	GNUmakefile.in \
-+	$(DIST_ARCHIVES)
-+
-+maintainer-clean-local:
-+	-chmod -R a+rw $(distdir)
-+	-rm -fr $(distdir)
- 
+         GNUmakefile.in 
 
 --
  Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
