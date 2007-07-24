@@ -1,42 +1,51 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: v2.6.23-rc1-rt0
-Date: Tue, 24 Jul 2007 14:12:27 +0200
-Message-ID: <20070724121227.GA18670@elte.hu>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: v2.6.22.1-rt5
+Date: 24 Jul 2007 15:18:04 +0200
+Message-ID: <p73644aszxv.fsf@bingen.suse.de>
+References: <20070724120436.GA14466@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-To: linux-kernel@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:51676 "EHLO mx2.mail.elte.hu"
+Received: from ns1.suse.de ([195.135.220.2]:51396 "EHLO mx1.suse.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756624AbXGXMMe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 08:12:34 -0400
-Content-Disposition: inline
+	id S1752903AbXGXMXO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jul 2007 08:23:14 -0400
+In-Reply-To: <20070724120436.GA14466@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Ingo Molnar <mingo@elte.hu> writes:
+>    
+> more info about the -rt patchset can be found in the RT wiki:
+>     
+>   http://rt.wiki.kernel.org
+>  
+> to build a 2.6.22.1-rt5 tree, the following patches should be applied:
+> 
+>  http://kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.23-rc1.tar.bz2
+>  http://redhat.com/~mingo/realtime-preempt/patch-2.6.23-rc1-rt0
 
-[ repost with the correct subject line ]
+This patch is needed to build on x86-64 with only the tracing options,
+but no preempt enabled.
 
-i've released the v2.6.23-rc1-rt0 kernel, which can be downloaded from 
-the usual place:
+-Andi
+
+Fix build in latency_hist.c
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+
+Index: linux-2.6.23-rc1-rt0/kernel/latency_hist.c
+===================================================================
+--- linux-2.6.23-rc1-rt0.orig/kernel/latency_hist.c
++++ linux-2.6.23-rc1-rt0/kernel/latency_hist.c
+@@ -15,6 +15,7 @@
+ #include <linux/percpu.h>
+ #include <linux/latency_hist.h>
+ #include <asm/atomic.h>
++#include <asm/div64.h>
  
-   http://redhat.com/~mingo/realtime-preempt/
- 
-as the rt0 name suggests it, this is a devel release, the first one 
-after a rebase to 2.6.23-rc1. There's lots of changes and a reduction of 
-50 patches (we are now at 320 patches) - so code from -rt is moving 
-upstream at a steady pace. (latest bigger chunks that moved were CFS, 
-lockstat, most of the -hrt queue, plus various fixes)
-    
-more info about the -rt patchset can be found in the RT wiki:
-     
-  http://rt.wiki.kernel.org
-  
-to build a 2.6.22.1-rt5 tree, the following patches should be applied:
- 
-  http://kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.23-rc1.tar.bz2
-  http://redhat.com/~mingo/realtime-preempt/patch-2.6.23-rc1-rt0
-  
-	Ingo
+ typedef struct hist_data_struct {
+ 	atomic_t hist_mode; /* 0 log, 1 don't log */
