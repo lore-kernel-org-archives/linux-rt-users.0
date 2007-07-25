@@ -1,43 +1,47 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH RT] Fix RT balancing tasks pulling
-Date: Wed, 25 Jul 2007 09:27:00 +0200
-Message-ID: <20070725072700.GC26955@elte.hu>
-References: <20070724154202.224f12e8@frecb000686.frec.bull.fr>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: Re: v2.6.22.1-rt5
+Date: Wed, 25 Jul 2007 09:34:53 +0200
+Message-ID: <1185348893.5230.0.camel@godzilla.tecnorama.it>
+References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
+	 <20070724073932.GA18740@elte.hu>
+	 <1185305679.16400.17.camel@cmn3.stanford.edu>
+	 <1185305725.16400.19.camel@cmn3.stanford.edu>
+	 <20070724200546.GA24964@elte.hu>
+	 <1185308623.16400.28.camel@cmn3.stanford.edu>
+	 <20070724203417.GA29343@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Darren Hart <dvhltc@us.ibm.com>,
-	john stultz <johnstul@us.ibm.com>,
-	Josh Triplett <josht@linux.vnet.ibm.com>
-To: =?iso-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Rui Nuno Capela <rncbc@rncbc.org>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:39221 "EHLO mx3.mail.elte.hu"
+Received: from hermes.xcon.it ([62.48.35.101]:38749 "EHLO hermes.xcon.it"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755123AbXGYH1w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 03:27:52 -0400
-Content-Disposition: inline
-In-Reply-To: <20070724154202.224f12e8@frecb000686.frec.bull.fr>
+	id S1752287AbXGYHfA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 03:35:00 -0400
+In-Reply-To: <20070724203417.GA29343@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi,
 
-* S=E9bastien Dugu=E9 <sebastien.dugue@bull.net> wrote:
+On Tue, 2007-07-24 at 22:34 +0200, Ingo Molnar wrote:
 
->   Hi Ingo, Thomas,
->=20
->   this one-liner fixes a bug in balance_rt_tasks() which sometimes=20
-> manifests by having a lower prio task being scheduled while a higher=20
-> prio task is sitting waiting on another runqueue.
->=20
->   This is pretty hard to reproduce on low cpu count machines, for=20
-> example, I had to have sched_football run in a loop for ~38h before i=
-t=20
-> failed on a dual HT Xeon box.
+> > * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
+[...] 
+> > (BTW, will you keep 2.6.22.x patches going for a while?)
 
-really nice catch! Applied.
+> yeah, that's the plan: to keep .22-rt updated until .23 is released. 
+> (Thomas agrees with that approach too)
 
-	Ingo
+When .23 will be released could you explain changes for every following
+-rt release in more detailed fashion, please? For whom is interested to
+keep .22 updated also when .23 is released.
+
+Thanks.
+
+Ciao,
+Alessio
