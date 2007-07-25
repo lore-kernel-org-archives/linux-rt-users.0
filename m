@@ -1,57 +1,144 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Kernel Bug when entering something after login
-Date: Wed, 25 Jul 2007 21:06:38 +0200
-Message-ID: <1185390398.3227.8.camel@chaos>
-References: <200707251900.47704.juergen127@kreuzholzen.de>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: [BUG] 2.6.23-rc1-rt2
+Date: Wed, 25 Jul 2007 12:38:18 -0700
+Message-ID: <1185392298.5146.80.camel@sven.thebigcorporation.com>
+References: <20070725175925.GA2992@ittc.ku.edu>
+	 <1185389357.2573.229.camel@imap.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Juergen Beisert <juergen127@kreuzholzen.de>
+Cc: Noah Watkins <nwatkins@ittc.ku.edu>, mingo@elte.hu,
+	linux-rt-users@vger.kernel.org
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:56790 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752692AbXGYTGr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 15:06:47 -0400
-In-Reply-To: <200707251900.47704.juergen127@kreuzholzen.de>
+Received: from alnrmhc16.comcast.net ([204.127.225.96]:61889 "EHLO
+	alnrmhc16.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758415AbXGYTiX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 15:38:23 -0400
+In-Reply-To: <1185389357.2573.229.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-07-25 at 19:00 +0200, Juergen Beisert wrote:
-> [c0245db0] [c01bdb98] rt_spin_lock_slowlock+0x4c/0x224 (unreliable)
-> [c0245e10] [c011823c] uart_start+0x24/0x48
-> [c0245e30] [c0113ff4] n_tty_receive_buf+0x170/0xfd4
-> [c0245ef0] [c010f0dc] flush_to_ldisc+0xe0/0x130
-> [c0245f20] [c011b51c] mpc52xx_uart_int+0x194/0x350
-> [c0245f50] [c0046dfc] handle_IRQ_event+0x6c/0x110
-> [c0245f80] [c00475ec] thread_simple_irq+0x90/0xf8
-> [c0245fa0] [c00479a0] do_irqd+0x34c/0x3cc
-> [c0245fd0] [c0033380] kthread+0x48/0x84
-> [c0245ff0] [c00104ac] kernel_thread+0x44/0x60
-> Instruction dump:
-> 70090008 40820144 80010064 bb410048 38210060 7c0803a6 4e800020 801c0010
-> 5400003a 7c001278 7c000034 5400d97e <0f000000> 39600004 91610008 80010008
-> note: IRQ-131[93] exited with preempt_count 1
+On Wed, 2007-07-25 at 11:49 -0700, Daniel Walker wrote:
+> 
+> > Also, this kernel boots up EXTREMELY slow. once it is booted, the
+> timer
+> > soft-irqs on both cpus run (according to top) at about 4% of the CPU
+> > constantly. X is very jerky, I assume because of the soft-irqs
+> running
+> > so much...?
+> 
 
-Yup. That's a deadlock. In mainline this does not happen, as the
-spinlock is a NOP. Turn on CONFIG_PROVE_LOCKING in mainline and you see
-the problem as well.
 
-Solution below
+On my 8 core, I consistently get a watchdog after applying the following
+patch:
 
-	tglx
+After the watchdog pops, things go back to normal speed.
 
-Index: linux-2.6.22/drivers/serial/mpc52xx_uart.c
+Date:	Tue, 17 Jul 2007 17:49:34 +0200
+From: Ingo Molnar <mingo@elte.hu>
+To: Jeremy Fitzhardinge <jeremy@goop.org>
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, stable@kernel.org, Greg KH <greg@kroah.com>, Chris Wright <chrisw@sous-sol.org>
+Subject: [patch] fix the softlockup watchdog to actually work
+Message-ID: <20070717154934.GA24231@elte.hu>
+References: <20070717114453.GA8212@elte.hu> <469CCF8F.4010107@goop.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <469CCF8F.4010107@goop.org>
+User-Agent: Mutt/1.5.14 (2007-02-12)
+Received-SPF: softfail (mx3: transitioning domain of elte.hu does not
+	designate 157.181.1.14 as permitted sender) client-ip=157.181.1.14;
+	envelope-from=mingo@elte.hu; helo=elvis.elte.hu;
+X-ELTE-VirusStatus: clean
+X-ELTE-SpamScore: -1.0
+X-ELTE-SpamLevel: 
+X-ELTE-SpamCheck: no
+X-ELTE-SpamVersion: ELTE 2.0 
+X-ELTE-SpamCheck-Details: score=-1.0 required=5.9 tests=BAYES_00
+	autolearn=no SpamAssassin version=3.0.3 -1.0 BAYES_00               BODY:
+	Bayesian spam probability is 0 to 1% [score: 0.0000]
+Sender: linux-kernel-owner@vger.kernel.org
+Precedence: bulk
+X-Mailing-List:	linux-kernel@vger.kernel.org
+X-Evolution-Source: imap://sven@sx.thebigcorporation.com/
+Content-Transfer-Encoding: 8bit
+
+
+* Jeremy Fitzhardinge <jeremy@goop.org> wrote:
+
+> Ingo Molnar wrote:
+> > Subject: softlockup: fix Xen bogosity
+> > From: Ingo Molnar <mingo@elte.hu>
+> >
+> > this Xen related commit:
+> >   
+> 
+> Well, not just Xen.  It relates to any virtual environment: kvm, 
+> lguest, vmi, xen...  (Not that they all implement a measure of 
+> unstolen time.)
+> 
+> How about a more descriptive patch title, along the lines of 
+> "softlockup watchdog: fix rate limiting"?
+
+uhm, the problem was that it did not work _at all_, not something about 
+'rate limiting'. Yes, i got quite a bit grumpy when i found this, 
+because you completely broke the softlockup watchdog via a pretty 
+intrusive commit and you apparently didnt even do a minimal check 
+whether its functionality was preserved! Updated patch for Andrew/Linus 
+and for -stable attached.
+
+	Ingo
+
+----------------------------->
+Subject: fix the softlockup watchdog to actually work
+From: Ingo Molnar <mingo@elte.hu>
+
+this Xen related commit:
+
+   commit 966812dc98e6a7fcdf759cbfa0efab77500a8868
+   Author: Jeremy Fitzhardinge <jeremy@goop.org>
+   Date:   Tue May 8 00:28:02 2007 -0700
+
+       Ignore stolen time in the softlockup watchdog
+
+broke the softlockup watchdog to never report any lockups. (!)
+
+print_timestamp defaults to 0, this makes the following condition
+always true:
+
+	if (print_timestamp < (touch_timestamp + 1) ||
+
+and we'll in essence never report soft lockups.
+
+apparently the functionality of the soft lockup watchdog was never
+actually tested with that patch applied ...
+
+[this is -stable material too.]
+
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+---
+ kernel/softlockup.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+Index: linux/kernel/softlockup.c
 ===================================================================
---- linux-2.6.22.orig/drivers/serial/mpc52xx_uart.c	2007-07-09 01:32:17.000000000 +0200
-+++ linux-2.6.22/drivers/serial/mpc52xx_uart.c	2007-07-25 21:06:11.000000000 +0200
-@@ -501,7 +501,9 @@ mpc52xx_uart_int_rx_chars(struct uart_po
- 		}
- 	}
+--- linux.orig/kernel/softlockup.c
++++ linux/kernel/softlockup.c
+@@ -79,10 +79,11 @@ void softlockup_tick(void)
+ 	print_timestamp = per_cpu(print_timestamp, this_cpu);
  
-+	spin_unlock(&port->lock);
- 	tty_flip_buffer_push(tty);
-+	spin_lock(&port->lock);
+ 	/* report at most once a second */
+-	if (print_timestamp < (touch_timestamp + 1) ||
+-		did_panic ||
+-			!per_cpu(watchdog_task, this_cpu))
++	if ((print_timestamp >= touch_timestamp &&
++			print_timestamp < (touch_timestamp + 1)) ||
++			did_panic || !per_cpu(watchdog_task, this_cpu)) {
+ 		return;
++	}
  
- 	return in_be16(&PSC(port)->mpc52xx_psc_status) & MPC52xx_PSC_SR_RXRDY;
- }
+ 	/* do not print during early bootup: */
+ 	if (unlikely(system_state != SYSTEM_RUNNING)) {
+-
