@@ -1,47 +1,31 @@
-From: Alessio Igor Bogani <abogani@texware.it>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: v2.6.22.1-rt5
-Date: Wed, 25 Jul 2007 09:34:53 +0200
-Message-ID: <1185348893.5230.0.camel@godzilla.tecnorama.it>
-References: <20070723210236.GA25104@elte.hu> <46A51D9E.8040104@rncbc.org>
-	 <20070724073932.GA18740@elte.hu>
-	 <1185305679.16400.17.camel@cmn3.stanford.edu>
-	 <1185305725.16400.19.camel@cmn3.stanford.edu>
-	 <20070724200546.GA24964@elte.hu>
-	 <1185308623.16400.28.camel@cmn3.stanford.edu>
-	 <20070724203417.GA29343@elte.hu>
+Date: Wed, 25 Jul 2007 09:52:47 +0200
+Message-ID: <20070725075247.GB5125@elte.hu>
+References: <20070724120436.GA14466@elte.hu> <200707241156.03149.gene.heskett@gmail.com> <20070724191027.GA13268@elte.hu> <200707242136.21457.gene.heskett@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Rui Nuno Capela <rncbc@rncbc.org>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Ingo Molnar <mingo@elte.hu>
+To: Gene Heskett <gene.heskett@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:38749 "EHLO hermes.xcon.it"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:55286 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752287AbXGYHfA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 03:35:00 -0400
-In-Reply-To: <20070724203417.GA29343@elte.hu>
+	id S1751966AbXGYHxA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 03:53:00 -0400
+Content-Disposition: inline
+In-Reply-To: <200707242136.21457.gene.heskett@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-On Tue, 2007-07-24 at 22:34 +0200, Ingo Molnar wrote:
+* Gene Heskett <gene.heskett@gmail.com> wrote:
 
-> > * Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-[...] 
-> > (BTW, will you keep 2.6.22.x patches going for a while?)
+> Changing the "root (hd0,0)" to (sd0,0) failed.  Grub can't parse the 
+> (sd0,0).
 
-> yeah, that's the plan: to keep .22-rt updated until .23 is released. 
-> (Thomas agrees with that approach too)
+that (hd0,0) is a BIOS identification and needs no changing.
 
-When .23 will be released could you explain changes for every following
--rt release in more detailed fashion, please? For whom is interested to
-keep .22 updated also when .23 is released.
+could you send me your grub.conf?
 
-Thanks.
-
-Ciao,
-Alessio
+	Ingo
