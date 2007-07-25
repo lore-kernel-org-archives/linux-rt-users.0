@@ -1,81 +1,60 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: [patch 10/15] fixup maintainerclean
-Date: Wed, 25 Jul 2007 01:11:58 +0200
-Message-ID: <20070724231158.GO1678@pengutronix.de>
-References: <20070724092517.390730736@metis.extern.pengutronix.de> <20070724092607.856146831@metis.extern.pengutronix.de> <200707241427.04043.dvhltc@us.ibm.com>
+From: Gene Heskett <gene.heskett@gmail.com>
+Subject: Re: v2.6.22.1-rt5
+Date: Tue, 24 Jul 2007 21:29:07 -0400
+Message-ID: <200707242129.07251.gene.heskett@gmail.com>
+References: <20070724120436.GA14466@elte.hu>
+ <200707241156.03149.gene.heskett@gmail.com> <20070724191027.GA13268@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:56476 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756410AbXGXXMA (ORCPT
+Received: from vms048pub.verizon.net ([206.46.252.48]:47151 "EHLO
+	vms048pub.verizon.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758934AbXGYB3V (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jul 2007 19:12:00 -0400
-Received: from rsc by metis.extern.pengutronix.de with local (Exim 3.36 #1 (Debian))
-	id 1IDTXq-0003KM-00
-	for <linux-rt-users@vger.kernel.org>; Wed, 25 Jul 2007 01:11:58 +0200
-Content-Disposition: inline
-In-Reply-To: <200707241427.04043.dvhltc@us.ibm.com>
+	Tue, 24 Jul 2007 21:29:21 -0400
+In-reply-to: <20070724191027.GA13268@elte.hu>
+Content-disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Jul 24, 2007 at 02:27:03PM -0700, Darren Hart wrote:
-> On Tuesday 24 July 2007 02:25:27 Robert Schwebel wrote:
-> > Add some more things which have to be cleaned on maintainer-clean; this
-> > does also remove directories in the case that something went wrong
-> > during development, leaving the tree in a non-clean state.
-> >
-> 
-> Couple questions on this one - we do have to understand it to maintain it :-)
-> 
-> > Signed-off-by: Robert Schwebel <r.schwebel@pengutronix.de>
-> >
-> > ---
-> >  GNUmakefile.am |    7 ++++++-
-> >  1 file changed, 6 insertions(+), 1 deletion(-)
-> >
-> > Index: GNUmakefile.am
-> > ===================================================================
-> > --- GNUmakefile.am.orig
-> > +++ GNUmakefile.am
-> > @@ -9,5 +9,10 @@ EXTRA_DIST = \
-> >  	autogen.sh
-> >
-> >  MAINTAINERCLEANFILES = \
-> > -        GNUmakefile.in
-> > +	GNUmakefile.in \
-> > +	$(DIST_ARCHIVES)
-> 
-> What are these?
+On Tuesday 24 July 2007, Ingo Molnar wrote:
+>* Gene Heskett <gene.heskett@gmail.com> wrote:
+>> The above stanza still needs some tlc.  I built a 2.6.22.1-rt6 (rt5
+>> wouldn't build) using the same old config that a make oldconfig didn't
+>> fuss about, but the reboot never completed, see the attached, heavily
+>> smunched camera shot of the panic.
+>>
+>> Kinda looks like hda/sda confusion, with rt3 (this boot), its hda*,
+>> what is it now?  fstab or kernel config error?
+>
+>yeah, as long as your filesystems are created with a proper label, all
+>that you need to do is to change all 'hda' to 'sda' in the new kernel's
+>/etc/grub.conf entry. (or enable the old IDE code in the .config, under
+>CONFIG_IDE)
+>
+>	Ingo
 
-"make dist" creates rt-tests-x.y.tar.{bz2,gz}. This entry removes them
-if you do a "make maintainer-clean" (which you wanna do before checking
-stuff into some rcs.
+Damn, I didn't say it clear enough, the / is on an LVM volume.  /Boot is 
+on /dev/hda1, aka (hd0,0) in the first line.  Since the msg pointed at 0,0, 
+I'll switch that line to "root (sd0,0)" just for grins.
 
-> > +
-> > +maintainer-clean-local:
-> > +	-chmod -R a+rw $(distdir)
-> > +	-rm -fr $(distdir)
-> 
-> And this?
+I take it that was an auto-conversion?  I did nothing to confirm any changes 
+when I ran a make oldconfig, using the 2.6.22.1-rt3 .config as the src 
+config.
 
-On "make distcheck" the autotools build the tarballs, extract them
-again, into a temporary directory called like the package, make the
-sources read only, create an out-of-tree directory, run configure there,
-build and cleanup afterwards. If everything goes right, the temporary
-directory is removed again. If something goes wrong, it remains there.
-This entry instructs "make maintainer-clean" to make the directory
-read/write again, then remove it.
+Thanks.
 
-This is a handy shortcut which makes sure that, after make
-maintainer-clean, everything is back to the state where it can be
-checked in.
-
-Robert
 -- 
- Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
- Pengutronix - Linux Solutions for Science and Industry
-   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
-     Hannoversche Str. 2, 31134 Hildesheim, Germany
-   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
+Cheers, Gene
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+But I was there and I saw what you did,
+I saw it with my own two eyes.
+So you can wipe off that grin;
+I know where you've been--
+It's all been a pack of lies!
