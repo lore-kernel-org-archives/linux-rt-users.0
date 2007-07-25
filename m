@@ -1,33 +1,202 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH] Display -rt related stats in /proc/schedstat
-Date: Wed, 25 Jul 2007 10:05:04 +0200
-Message-ID: <20070725080504.GD5125@elte.hu>
-References: <20070723125925.GE8055@in.ibm.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [rt patch] [Fwd: Re: 2.6.23-rc1: BUG_ON in kmap_atomic_prot()]
+Date: Wed, 25 Jul 2007 11:09:49 +0200
+Message-ID: <1185354589.6700.6.camel@Homer.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Dinakar Guniguntala <dino@in.ibm.com>
-To: Ankita Garg <ankita@in.ibm.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:54187 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751603AbXGYIFM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 04:05:12 -0400
-Content-Disposition: inline
-In-Reply-To: <20070723125925.GE8055@in.ibm.com>
+Received: from mail.gmx.net ([213.165.64.20]:45544 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1750944AbXGYJJy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 05:09:54 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Greetings,
 
-* Ankita Garg <ankita@in.ibm.com> wrote:
+Below is a patchlet from akpm (rebased against 2.6.23-rc1-rt1) which
+addresses $subject, should rt1 testers encounter the same BUG().
 
-> Hi,
+--- linux-2.6.23-rc1-rt1/mm/slab.c.org	2007-07-25 08:55:23.000000000
++0200
++++ linux-2.6.23-rc1-rt1/mm/slab.c	2007-07-25 10:37:00.000000000 +0200
+@@ -2890,7 +2890,7 @@ static int cache_grow(struct kmem_cache 
+ 	 * 'nodeid'.
+ 	 */
+ 	if (!objp)
+-		objp = kmem_getpages(cachep, flags, nodeid);
++		objp = kmem_getpages(cachep, local_flags, nodeid);
+ 	if (!objp)
+ 		goto failed;
+ 
+
+
+-------- Forwarded Message --------
+From: Andrew Morton <akpm@linux-foundation.org>
+To: Mike Galbraith <efault@gmx.de>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, Linus Torvalds
+<torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org,
+netdev@vger.kernel.org, Christoph Lameter <clameter@sgi.com>
+Subject: Re: 2.6.23-rc1: BUG_ON in kmap_atomic_prot()
+Date: Tue, 24 Jul 2007 09:28:39 -0700
+
+On Tue, 24 Jul 2007 12:01:09 +0200 Mike Galbraith <efault@gmx.de> wrote:
+
+> On Mon, 2007-07-23 at 13:24 -0700, Andrew Morton wrote:
 > 
-> This patch adds support to display captured -rt stats under 
-> /proc/schedstat.
+> > You're using DEBUG_PAGEALLOC, but I was not, so I think we can rule that out.
+> 
+> My box bugged during boot the first time I booted 23-rc1, but nothing
+> made it to the console, and I didn't have a serial console running.  I
+> didn't have DEBUG_PAGEALLOC or friends set.
+> 
+> > I haven't worked out where that kmap_atomic() call is coming from yet. 
+> > Both traces point up into the page allocator, but I _think_ that's stack
+> > gunk.
+> 
+> I just enabled all debug options, and was just rewarded with the below.
 
-hm, could you add it to /proc/sched_debug instead? That's where all the 
-runqueue values are showing up normally. I'm also a bit wary about 
-introducing a new schedstats version for -rt.
+doh.  It's a slab bug.
 
-	Ingo
+> [  119.079531] eth1: link up, 100Mbps, full-duplex, lpa 0x45E1
+> [  119.558867] ------------[ cut here ]------------
+> [  119.572197] kernel BUG at arch/i386/mm/highmem.c:38!
+> [  119.585804] invalid opcode: 0000 [#1]
+> [  119.598013] PREEMPT SMP DEBUG_PAGEALLOC
+> [  119.610103] Modules linked in: edd button battery ac ip6t_REJECT xt_tcpudp ipt_REJECT xt_state iptable_mangle iptable_nat nf_nat iptable_filter ip6table_mangle nf_conntrack_ipv4 nf_conntrack nfnetlink ip_tables ip6table_filter ip6_tables x_tables nls_iso8859_1 nls_cp437 nls_utf8 snd_intel8x0 snd_ac97_codec ac97_bus snd_mpu401 snd_pcm prism54 snd_timer snd_mpu401_uart snd_rawmidi snd_seq_device snd intel_agp agpgart soundcore snd_page_alloc i2c_i801 fan thermal processor
+> [  119.698063] CPU:    1
+> [  119.698065] EIP:    0060:[<c011cd2d>]    Not tainted VLI
+> [  119.698067] EFLAGS: 00010006   (2.6.23-rc1-smp #75)
+> [  119.736358] EIP is at kmap_atomic_prot+0xa7/0xab
+> [  119.749647] eax: 3d07f163   ebx: c166db80   ecx: c0750e60   edx: 00000007
+> [  119.765417] esi: 00000022   edi: 00000163   ebp: c069dcd4   esp: c069dcc8
+> [  119.781273] ds: 007b   es: 007b   fs: 00d8  gs: 0033  ss: 0068
+> [  119.796378] Process udevd (pid: 4775, ti=c069d000 task=f31aea60 task.ti=f477d000)
+> [  119.804068] Stack: c166db80 00000000 c166db80 c069dcdc c011cd3f c069dd40 c015b6e0 00000001 
+> [  119.822272]        00000044 00000163 00000000 00000001 c165f4e0 00000001 c165f4e0 00000001 
+> [  119.840762]        00000000 00028020 c061e71c c166db80 00000046 00000080 00000001 c011e4de 
+> [  119.859389] Call Trace:
+> [  119.881302]  [<c0105144>] show_trace_log_lvl+0x1a/0x30
+> [  119.896319]  [<c01051ff>] show_stack_log_lvl+0xa5/0xca
+> [  119.911171]  [<c0105420>] show_registers+0x1fc/0x343
+> [  119.925756]  [<c0105689>] die+0x122/0x249
+> [  119.939241]  [<c0105834>] do_trap+0x84/0xad
+> [  119.952897]  [<c0105b1c>] do_invalid_op+0x88/0x92
+> [  119.967118]  [<c04cf3c2>] error_code+0x72/0x78
+> [  119.980948]  [<c011cd3f>] kmap_atomic+0xe/0x10
+> [  119.994642]  [<c015b6e0>] get_page_from_freelist+0x39e/0x45e
+> [  120.009485]  [<c015b7fb>] __alloc_pages+0x5b/0x2db
+> [  120.023342]  [<c0172872>] cache_alloc_refill+0x380/0x6f2
+> [  120.037623]  [<c0172e7a>] kmem_cache_alloc+0xa1/0xa5
+> [  120.051426]  [<c03fb397>] neigh_create+0x5f/0x506
+> [  120.064894]  [<c046e25d>] ndisc_dst_alloc+0x122/0x151
+> [  120.078769]  [<c0471b0b>] __ndisc_send+0x8d/0x4fa
+> [  120.092340]  [<c0472915>] ndisc_send_ns+0x5f/0x7d
+> [  120.105848]  [<c0469ff5>] addrconf_dad_timer+0xdb/0xe0
+> [  120.119758]  [<c012f8a0>] run_timer_softirq+0x130/0x191
+> [  120.133717]  [<c012c06d>] __do_softirq+0x76/0xe4
+> [  120.147475]  [<c0106b48>] do_softirq+0x63/0xac
+> [  120.147488]  [<c012bff5>] 
+
+
+> (gdb) list *neigh_create+0x5f
+> 0xc03fb397 is in neigh_create (include/linux/slab.h:259).
+> 254     /*
+> 255      * Shortcuts
+> 256      */
+> 257     static inline void *kmem_cache_zalloc(struct kmem_cache *k, gfp_t flags)
+> 258     {
+> 259             return kmem_cache_alloc(k, flags | __GFP_ZERO);
+> 260     }
+
+See, networking's kmem_cache_alloc(..., __GFP_ZERO) ended up calling into
+the page allocator with __GFP_ZERO.  This is the bug - slab isn't supposed
+to do that: the __GFP_ZERO is supposed to be removed.
+
+Now, it's not a highmem page, so prep_zero_page() won't actually establish
+a kmap, but it will check that the kmap slot is presently unused on this
+CPU.
+
+But networking calls in here from softirq context (illegal for KM_USER0)
+and sometimes that KM_USER0 slot *will* be in use, so kmap_atomic_prot()
+will go BUG.
+
+I must say it's really really scary that such a low-level function as
+prep_zero_page() is using KM_USER0.  I don't think it has enough debugging
+checks in there to prevent Bad Stuff from going undetected.
+
+I guess this was the bug:
+
+--- a/mm/slab.c~a
++++ a/mm/slab.c
+@@ -2776,7 +2776,7 @@ static int cache_grow(struct kmem_cache 
+ 	 * 'nodeid'.
+ 	 */
+ 	if (!objp)
+-		objp = kmem_getpages(cachep, flags, nodeid);
++		objp = kmem_getpages(cachep, local_flags, nodeid);
+ 	if (!objp)
+ 		goto failed;
+ 
+_
+
+
+I don't see why you later got fs corruption - afacit we won't actually
+modify the KM_USER0 slot in this scenario.
+
+
+> 262     /**
+> 263      * kzalloc - allocate memory. The memory is set to zero.
+> (gdb) list *kmem_cache_alloc+0xa1
+> 0xc0172e7a is in kmem_cache_alloc (mm/slab.c:3176).
+> 3171                    STATS_INC_ALLOCHIT(cachep);
+> 3172                    ac->touched = 1;
+> 3173                    objp = ac->entry[--ac->avail];
+> 3174            } else {
+> 3175                    STATS_INC_ALLOCMISS(cachep);
+> 3176                    objp = cache_alloc_refill(cachep, flags);
+> 3177            }
+> 3178            return objp;
+> 3179    }
+> 3180
+> (gdb) list *cache_alloc_refill+0x380
+> 0xc0172872 is in cache_alloc_refill (include/linux/gfp.h:154).
+> 149
+> 150             /* Unknown node is current node */
+> 151             if (nid < 0)
+> 152                     nid = numa_node_id();
+> 153
+> 154             return __alloc_pages(gfp_mask, order,
+> 155                     NODE_DATA(nid)->node_zonelists + gfp_zone(gfp_mask));
+> 156     }
+> 157
+> 158     #ifdef CONFIG_NUMA
+> (gdb) list *__alloc_pages+0x5b
+> 0xc015b7fb is in __alloc_pages (mm/page_alloc.c:1248).
+> 1243            if (unlikely(*z == NULL)) {
+> 1244                    /* Should this ever happen?? */
+> 1245                    return NULL;
+> 1246            }
+> 1247
+> 1248            page = get_page_from_freelist(gfp_mask|__GFP_HARDWALL, order,
+> 1249                                    zonelist, ALLOC_WMARK_LOW|ALLOC_CPUSET);
+> 1250            if (page)
+> 1251                    goto got_pg;
+> 1252
+> (gdb) list *get_page_from_freelist+0x39e
+> 0xc015b6e0 is in get_page_from_freelist (include/linux/highmem.h:122).
+> 117             return __alloc_zeroed_user_highpage(__GFP_MOVABLE, vma, vaddr);
+> 118     }
+> 119
+> 120     static inline void clear_highpage(struct page *page)
+> 121     {
+> 122             void *kaddr = kmap_atomic(page, KM_USER0);
+> 123             clear_page(kaddr);
+> 124             kunmap_atomic(kaddr, KM_USER0);
+> 125     }
+> 126
+> 
+> 
