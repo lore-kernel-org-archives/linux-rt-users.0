@@ -1,48 +1,55 @@
-From: Alessio Igor Bogani <abogani@texware.it>
+From: John Sigler <linux.kernel@free.fr>
 Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Wed, 25 Jul 2007 17:35:16 +0200
-Message-ID: <1185377716.30975.11.camel@godzilla.tecnorama.it>
-References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>
-	 <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu>
-	 <46A5B8E3.4060004@free.fr> <46A74A58.1070704@free.fr>
-	 <20070725130536.GA12334@elte.hu> <46A74E05.50504@free.fr>
-	 <20070725133835.GA17616@elte.hu>  <46A758B5.9070602@free.fr>
-	 <1185372808.23485.2.camel@godzilla.tecnorama.it> <46A75F97.8000103@free.fr>
-	 <1185375620.29693.1.camel@godzilla.tecnorama.it> <46A76A7C.3090805@free.fr>
+Date: Wed, 25 Jul 2007 17:46:28 +0200
+Message-ID: <46A77054.8040203@free.fr>
+References: <469600F7.3060603@free.fr> <20070725133835.GA17616@elte.hu> <46A758B5.9070602@free.fr> <200707251728.00207.fzu@wemgehoertderstaat.de>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
+Cc: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Karsten Wiese <fzu@wemgehoertderstaat.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:39546 "EHLO hermes.xcon.it"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:50196 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1760339AbXGYPfU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 11:35:20 -0400
-In-Reply-To: <46A76A7C.3090805@free.fr>
+	id S1751451AbXGYPqc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 11:46:32 -0400
+In-Reply-To: <200707251728.00207.fzu@wemgehoertderstaat.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi John,
+Karsten Wiese wrote:
 
-On Wed, 2007-07-25 at 17:21 +0200, John Sigler wrote:
-[...]
-> > Do you have a regular distro or custom system on this machine?
+> John Sigler wrote:
 > 
-> The system is based on Linux From Scratch.
-> Why do you ask? What did you see in the output I provided?
+>> Is there some form of priority inheritance? Does the IRQ handler get a 
+>> priority boost if a high priority task is waiting for it?
+> 
+> No. But that would be "nice to have".
 
-Because i never see output as you provided to this list.
+No to the first question? to the second question? or to both? :-)
 
-In any case i suggest you to install an hard drive to this machine,
-install Fedora* or Ubuntu, install a -rt precompiled kernel package
-(with yum or apt) and finally test you application.
+In kernel/futex.c does "PI" stand for Priority Inheritance?
 
-In this way you can discover if the problem is into your kernel,
-application or hardware.
+e.g.
 
-Ciao,
-Alessio
+/*
+  * Priority Inheritance state:
+  */
+struct futex_pi_state {
+	/*
+	 * list of 'owned' pi_state instances - these have to be
+	 * cleaned up in do_exit() if the task exits prematurely:
+	 */
+	struct list_head list;
 
-(*) Precompiled kernel package with rt patchset for Fedora is packaged
-by Ingo Molnar. 
+	/*
+	 * The PI object:
+	 */
+	struct rt_mutex pi_mutex;
+
+	struct task_struct *owner;
+	atomic_t refcount;
+
+	union futex_key key;
+};
