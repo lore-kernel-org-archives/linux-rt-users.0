@@ -1,36 +1,26 @@
-From: John Sigler <linux.kernel@free.fr>
+From: Karsten Wiese <fzu@wemgehoertderstaat.de>
 Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Wed, 25 Jul 2007 17:21:32 +0200
-Message-ID: <46A76A7C.3090805@free.fr>
-References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>	 <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu>	 <46A5B8E3.4060004@free.fr> <46A74A58.1070704@free.fr>	 <20070725130536.GA12334@elte.hu> <46A74E05.50504@free.fr>	 <20070725133835.GA17616@elte.hu>  <46A758B5.9070602@free.fr>	 <1185372808.23485.2.camel@godzilla.tecnorama.it> <46A75F97.8000103@free.fr> <1185375620.29693.1.camel@godzilla.tecnorama.it>
+Date: Wed, 25 Jul 2007 17:28:00 +0200
+Message-ID: <200707251728.00207.fzu@wemgehoertderstaat.de>
+References: <469600F7.3060603@free.fr> <20070725133835.GA17616@elte.hu> <46A758B5.9070602@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Alessio Igor Bogani <abogani@texware.it>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:37290 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932587AbXGYPVe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 11:21:34 -0400
-In-Reply-To: <1185375620.29693.1.camel@godzilla.tecnorama.it>
-Sender: linux-rt-users-owner@vger.kernel.org
+Cc: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932593AbXGYP1T@vger.kernel.org>
+In-Reply-To: <46A758B5.9070602@free.fr>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Alessio Igor Bogani wrote:
-
-> John Sigler wrote:
->
->>>> # cat /proc/interrupts
->>>>             CPU0
->>>>    0:         37    XT-PIC-XT        timer
->>> Just curious: Can you post the output of the "cat /proc/timer_list" ?
->> Kernel command line: [...] lpj=12667000 lapic nmi_watchdog=0 idle=halt
->>
->> Kernel configuration:
->> http://linux.kernel.free.fr/latency/config-2.6.20.7-rt8-adlink-latency
+Am Mittwoch, 25. Juli 2007 schrieb John Sigler:
 > 
-> Do you have a regular distro or custom system on this machine?
+> Is there some form of priority inheritance? Does the IRQ handler get a 
+> priority boost if a high priority task is waiting for it?
 
-The system is based on Linux From Scratch.
-Why do you ask? What did you see in the output I provided?
+No. But that would be "nice to have".
+
+      Karsten
