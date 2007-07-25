@@ -1,31 +1,33 @@
 From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: v2.6.22.1-rt5
-Date: Wed, 25 Jul 2007 09:52:47 +0200
-Message-ID: <20070725075247.GB5125@elte.hu>
-References: <20070724120436.GA14466@elte.hu> <200707241156.03149.gene.heskett@gmail.com> <20070724191027.GA13268@elte.hu> <200707242136.21457.gene.heskett@gmail.com>
+Subject: Re: [PATCH] Display -rt related stats in /proc/schedstat
+Date: Wed, 25 Jul 2007 10:05:04 +0200
+Message-ID: <20070725080504.GD5125@elte.hu>
+References: <20070723125925.GE8055@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Gene Heskett <gene.heskett@gmail.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Dinakar Guniguntala <dino@in.ibm.com>
+To: Ankita Garg <ankita@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:55286 "EHLO mx2.mail.elte.hu"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:54187 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751966AbXGYHxA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 03:53:00 -0400
+	id S1751603AbXGYIFM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 04:05:12 -0400
 Content-Disposition: inline
-In-Reply-To: <200707242136.21457.gene.heskett@gmail.com>
+In-Reply-To: <20070723125925.GE8055@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Gene Heskett <gene.heskett@gmail.com> wrote:
+* Ankita Garg <ankita@in.ibm.com> wrote:
 
-> Changing the "root (hd0,0)" to (sd0,0) failed.  Grub can't parse the 
-> (sd0,0).
+> Hi,
+> 
+> This patch adds support to display captured -rt stats under 
+> /proc/schedstat.
 
-that (hd0,0) is a BIOS identification and needs no changing.
-
-could you send me your grub.conf?
+hm, could you add it to /proc/sched_debug instead? That's where all the 
+runqueue values are showing up normally. I'm also a bit wary about 
+introducing a new schedstats version for -rt.
 
 	Ingo
