@@ -1,55 +1,36 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [patch 08/15] use static libs for supportlibs
-Date: Wed, 25 Jul 2007 08:49:59 -0700
-Message-ID: <200707250849.59962.dvhltc@us.ibm.com>
-References: <20070724092517.390730736@metis.extern.pengutronix.de> <200707241359.05333.dvhltc@us.ibm.com> <20070724211419.GM1678@pengutronix.de>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Wed, 25 Jul 2007 17:53:31 +0200
+Message-ID: <46A771FB.2030002@free.fr>
+References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu>	 <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu>	 <46A5B8E3.4060004@free.fr> <46A74A58.1070704@free.fr>	 <20070725130536.GA12334@elte.hu> <46A74E05.50504@free.fr>	 <20070725133835.GA17616@elte.hu>  <46A758B5.9070602@free.fr>	 <1185372808.23485.2.camel@godzilla.tecnorama.it> <46A75F97.8000103@free.fr>	 <1185375620.29693.1.camel@godzilla.tecnorama.it> <46A76A7C.3090805@free.fr> <1185377716.30975.11.camel@godzilla.tecnorama.it>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-15"
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: Robert Schwebel <r.schwebel@pengutronix.de>
+To: Alessio Igor Bogani <abogani@texware.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e6.ny.us.ibm.com ([32.97.182.146]:56922 "EHLO e6.ny.us.ibm.com"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:54144 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755001AbXGYPuC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 11:50:02 -0400
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e6.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l6PFpGNH010970
-	for <linux-rt-users@vger.kernel.org>; Wed, 25 Jul 2007 11:51:16 -0400
-Received: from d01av02.pok.ibm.com (d01av02.pok.ibm.com [9.56.224.216])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l6PFo1PK464556
-	for <linux-rt-users@vger.kernel.org>; Wed, 25 Jul 2007 11:50:01 -0400
-Received: from d01av02.pok.ibm.com (loopback [127.0.0.1])
-	by d01av02.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l6PFo0rS016497
-	for <linux-rt-users@vger.kernel.org>; Wed, 25 Jul 2007 11:50:00 -0400
-In-Reply-To: <20070724211419.GM1678@pengutronix.de>
-Content-Disposition: inline
+	id S1753011AbXGYPxe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 11:53:34 -0400
+In-Reply-To: <1185377716.30975.11.camel@godzilla.tecnorama.it>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tuesday 24 July 2007 14:14:19 Robert Schwebel wrote:
-> On Tue, Jul 24, 2007 at 01:59:05PM -0700, Darren Hart wrote:
-> > We were trying to avoid libraries in a futile effort to keep the make
-> > process simple.... ah well.  This doesn't complicate things at all
-> > really it turns out, so I'm fine with it.
->
-> That's why I made it static libs - that's simple and works without
-> libtool.
->
-> > > Note: the libs should really be renamed, because calling a local
-> > > library "librt" is a very, very bad idea.
-> >
-> > Agreed.  We were thinking of changing it to librttest - any other
-> > suggestions?
->
-> Sounds good. You should also think about taking it out of include/ and
-> put it into something like lib/ or libs/.
+Alessio Igor Bogani wrote:
 
-Agreed, they started out as just header files - but they evolved into the 
-static libraries they are now - time to rename and move them indeed.
+> John Sigler wrote:
+> 
+>> Alessio Igor Bogani wrote:
+>> 
+>>> Do you have a regular distro or custom system on this machine?
+>> 
+>> The system is based on Linux From Scratch.
+>> Why do you ask? What did you see in the output I provided?
+> 
+> Because I never see output as you provided to this list.
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Realtime Linux Team
+Which specific part of the output?
+
+By the way, I'm using a vanilla 2.6.20.7 kernel patched with 
+patch-2.6.20-rt8.
