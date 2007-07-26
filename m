@@ -1,69 +1,42 @@
-From: ankita@in.ibm.com (Ankita Garg)
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 13:19:57 +0530
-Message-ID: <20070726074957.GA19398@in.ibm.com>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 2/3] proc-interrupts-missing-vectors
+Date: Thu, 26 Jul 2007 09:51:44 +0200
+Message-ID: <20070726075144.GB18994@elte.hu>
+References: <20070725205816.GA9032@tsunami.ccur.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	mathieu.desnoyers@polymtl.ca
-To: Ingo Molnar <mingo@elte.hu>
+Cc: tglx@linutronix.de, sdietrich@novell.com,
+	linux-rt-users@vger.kernel.org
+To: Joe Korty <joe.korty@ccur.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ausmtp04.au.ibm.com ([202.81.18.152]:48937 "EHLO
-	ausmtp04.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755006AbXGZHvL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 03:51:11 -0400
+Received: from mx3.mail.elte.hu ([157.181.1.138]:46064 "EHLO mx3.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757495AbXGZHwS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2007 03:52:18 -0400
 Content-Disposition: inline
-In-Reply-To: <20070726073520.GA12206@elte.hu>
+In-Reply-To: <20070725205816.GA9032@tsunami.ccur.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jul 26, 2007 at 09:35:20AM +0200, Ingo Molnar wrote:
-> 
-> * Ankita Garg <ankita@in.ibm.com> wrote:
-> 
-> > The probe point did get triggered, and soon after that I had the 
-> > following in dmesg, leading to system hang...
-> > 
-> > BUG: scheduling while atomic: softirq-rcu/3/0x00000004/52, CPU#3
-> > 
-> > Call Trace:
-> >  <#DB>  [<ffffffff81033555>] __schedule_bug+0x4b/0x4f
-> >  [<ffffffff8128b414>] __sched_text_start+0xcc/0xaaa
-> >  [<ffffffff8100b574>] dump_trace+0x248/0x25d
-> >  [<ffffffff81068334>] print_traces+0x9/0xb
-> >  [<ffffffff8100b5e5>] show_trace+0x5c/0x64
-> >  [<ffffffff8128c1c2>] schedule+0xe4/0x104
-> >  [<ffffffff8128d10c>] rt_spin_lock_slowlock+0xfc/0x19e
-> >  [<ffffffff8128d9de>] __rt_spin_lock+0x1f/0x21
-> >  [<ffffffff8128d9e9>] rt_spin_lock+0x9/0xb
-> >  [<ffffffff88387dcc>]
-> > :stap_c1a10b1292b5f87a563f56d89ddfc765_606:_stp_print_flush+0x5f/0xdf
-> >  [<ffffffff88389e41>]
-> > :stap_c1a10b1292b5f87a563f56d89ddfc765_606:probe_1493+0x1f6/0x257
-> >  [<ffffffff8838bdc3>]
-> 
-> I'd suggest to not put a probe into a preempt-off section - put it to 
-> the beginning and to the end of schedule() to capture context-switches. 
-> _stp_print_flush() is in the systemtap-generated module, right? Maybe 
-> the problem is resolved by changing that spinlock to use raw_spinlock_t 
-> / DEFINE_RAW_SPIN_LOCK.
 
-Yes, _stp_print_flush is in the systemtap-generated kprobe module.
-Placing the probe at the beginning of schedule() also has the same
-effect. Will try by changing the spinlock to raw_spinlock_t...
+* Joe Korty <joe.korty@ccur.com> wrote:
 
+> Add missing IRQs to /proc/interrupts.
 > 
+> /proc/interrupts is not truly useful unless it displays every IRQ 
+> vector, not just those somebody thought would be interesting.  For 
+> example, since the default /proc/interrupts setup did not display the 
+> rescheduling interrupt, the occurance of rescheduling interrupt floods 
+> ends up affecting latencies, yet without an entry in /proc/interrupts, 
+> it is difficult to discern why latencies are being affected.
 > 
-> 	Ingo
+> Also does a silly little expansion of the 'ERR:' display to be per 
+> cpu.  This makes its layout identical to all the other display lines 
+> in /proc/interrupts.
 
--- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+we cannot really change the format of /proc/interrupts, tools might rely 
+on it - i undid previous -rt changes to the format. An acceptable 
+approach would be to introduce a new /proc/irq_debug file and put all 
+this (and other) information into it.
+
+	Ingo
