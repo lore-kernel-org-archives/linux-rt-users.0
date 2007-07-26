@@ -1,90 +1,31 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: Pin-pointing the root of unusual application latencies
-Date: Thu, 26 Jul 2007 10:35:53 +0200
-Message-ID: <46A85CE9.7070506@free.fr>
-References: <469600F7.3060603@free.fr> <20070725133835.GA17616@elte.hu> <46A758B5.9070602@free.fr> <200707251309.54240.lenb@kernel.org>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH rt[78]] Update externs in wait.h
+Date: Thu, 26 Jul 2007 10:37:39 +0200
+Message-ID: <20070726083739.GB27774@elte.hu>
+References: <1185438039.17414.64.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Len Brown <lenb@kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	RT Users List <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:36307 "EHLO smtp4-g19.free.fr"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:49465 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761203AbXGZIgI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 04:36:08 -0400
-In-Reply-To: <200707251309.54240.lenb@kernel.org>
+	id S933376AbXGZIhr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2007 04:37:47 -0400
+Content-Disposition: inline
+In-Reply-To: <1185438039.17414.64.camel@sx.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Len Brown wrote:
 
-> John Sigler wrote:
+* Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
+
+> This patch syncs up the extern declarations with the changes in 
+> sched.c made in rt7 (drop FASTCALL, change signed long to long)
 > 
->> # cat /proc/interrupts
->>             CPU0
->>    0:         37    XT-PIC-XT        timer
->>    1:          2    XT-PIC-XT        i8042
->>    2:          0    XT-PIC-XT        cascade
->>    7:          0    XT-PIC-XT        acpi
->>   10:        175    XT-PIC-XT        eth2, Dta1xx
->>   11:       1129    XT-PIC-XT        eth0
->>   12:          4    XT-PIC-XT        eth1
->>   14:      21482    XT-PIC-XT        ide0
->> NMI:          0
->> LOC:     161632
->> ERR:          0
->> MIS:          0
->>
->> IRQ 10 is shared between a NIC and an I/O board.
->>
->> For eth2, the kernel said:
->> ACPI: PCI Interrupt 0000:00:0a.0[A] -> Link [LNKC]
->>    -> GSI 10 (level, low) -> IRQ 10
->>
->> For Dta1xx, the kernel said:
->> ACPI: PCI Interrupt 0000:02:0e.0[A] -> Link [LNKC]
->>    -> GSI 10 (level, low) -> IRQ 10
->>
->> Is it possible to avoid the two boards sharing IRQ 10?
-> 
-> Maybe.  In this configuration, INTA of the two devices
-> is physically connected to the same wire on the device-side
-> of the interrupt re-mapper -- so you'd have to change the configuration.
-> If you have an IOAPIC and can enable it, that will not hurt --
+> This fixes a compile error in my debug config for i386.
 
-I believe this board does not provide an IO-APIC.
-Even the LAPIC is disabled in the BIOS.
-(Why would they do that??)
+thx, applied.
 
-> though unless something else changes, these devices are still
-> tied together on the device-side of the mapper.
-> So if you can physically move one of the devices to another slot
-> that is your best bet.
-
-I will try.
-
-> I'd need a bunch of info from your system to tell you what
-> you can do ahead of time, including full dmesg, lspci -vv
-> and acpidump.
-
-The motherboard is an Adlink EBC-2000T with 3 on-board Intel 82559 NICs.
-http://www.adlinktech.com/PD/web/PD_detail.php?pid=213
-
-VIA Pro133T (VT82C694T + VT82C686B) chipset.
-http://www.viaarena.com/default.aspx?PageID=40&STypeID=12
-
-Kernel config:
-http://linux.kernel.free.fr/latency/config-2.6.20.7-rt8-adlink-latency
-
-dmesg:
-http://linux.kernel.free.fr/latency/dmesg.adlink
-
-lspci:
-http://linux.kernel.free.fr/latency/lspci.adlink
-
-acpidump:
-http://linux.kernel.free.fr/latency/acpidump.adlink
-
-Regards.
+	Ingo
