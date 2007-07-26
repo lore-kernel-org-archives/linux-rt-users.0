@@ -1,82 +1,89 @@
-From: ankita@in.ibm.com (Ankita Garg)
+From: "David J. Wilder" <dwilder@us.ibm.com>
 Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 22:02:50 +0530
-Message-ID: <20070726163250.GB8644@in.ibm.com>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726133138.GA30559@Krystal> <y0mps2f1asz.fsf@ton.toronto.redhat.com> <20070726150226.GB1299@Krystal> <20070726162231.GB30643@redhat.com>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+Date: Thu, 26 Jul 2007 10:45:56 -0700
+Message-ID: <46A8DDD4.9090600@us.ibm.com>
+References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu> <20070726074957.GA19398@in.ibm.com> <20070726075353.GA19885@elte.hu> <20070726095948.GB19398@in.ibm.com> <20070726110504.GB7673@elte.hu> <20070726130632.GB28556@Krystal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>,
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Ankita Garg <ankita@in.ibm.com>,
 	Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: "Frank Ch. Eigler" <fche@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ausmtp04.au.ibm.com ([202.81.18.152]:54676 "EHLO
-	ausmtp04.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934363AbXGZQeO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 12:34:14 -0400
-Content-Disposition: inline
-In-Reply-To: <20070726162231.GB30643@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+	zanussi@linux.vnet.ibm.com
+To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934281AbXGZRqZ@vger.kernel.org>
+In-Reply-To: <20070726130632.GB28556@Krystal>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jul 26, 2007 at 12:22:31PM -0400, Frank Ch. Eigler wrote:
-> Hi -
-> 
-> On Thu, Jul 26, 2007 at 11:02:26AM -0400, Mathieu Desnoyers wrote:
-> > [...]
-> > > > The problem is also in _stp_print_flush, not *only* in relay code:
-> > > > void _stp_print_flush (void)
-> > > > ...
-> > > >                 spin_lock(&_stp_print_lock);
-> > > >                 spin_unlock(&_stp_print_lock);
-> > > > 
-> > > > Those will turn into mutexes with -rt.
-> > > 
-> > > Indeed,
-> 
-> (Though actually that bug was fixed some time ago.)
-> 
-> 
-> > > plus systemtap-generated locking code uses rwlocks,
-> > > local_irq_save/restore or preempt_disable, in various places.  Could
-> > > someone point to a place that spells out what would be more
-> > > appropriate way of ensuring atomicity while being compatible with -rt?
-> > 
-> > AFAIK, for your needs either:
-> > [...]
-> > - Use per-cpu data with preempt disabling/irq disabling
-> 
-> As in local_irq_save / preempt_disable?  Yes, already done.
-> 
-> > - Use the original "real" spin locks/rwlocks (raw_*).
-> > [...]
-> 
-> It was unclear from the OLS paper whether the spin_lock_irq* family of
-> functions also had to be moved to the raw forms.
 
-By making the locks of the raw_* type, spin_lock_irq* functions would
-then automatically disable hardware interrupts.
+> I guess they might have to switch to such an asynchronous delivery
+> system if they want to do this properly. Simply put, your polling
+> solution is exactly what I do, but I check a flag set by the writer
+> instead of waking up the readers unconditionally.
+>
+> Mathieu
+>   
 
-> 
-> > You just don't want to sleep in the tracing code. [...]  Since you
-> > will likely disable preemption, make sure your tracing code executes
-> > in a deterministic time.
-> 
-> Definitely, that has always been the case.
-> 
-> > Make sure that the sub-buffer switch code respects that too [...]
-> 
-> We will review that part of the related code.
-> 
-> - FChE
+Ingo's solution could call waitqueue_active() inside wakeup_readers() to 
+determine if there are waiters. Right?
 
--- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+>   
+>> 	Ingo
+>>
+>> ------------------------------------->
+>> Subject: relay: fix timer madness
+>> From: Ingo Molnar <mingo@elte.hu>
+>>
+>> remove timer calls (!!!) from deep within the tracing infrastructure.
+>> This was totally bogus code that can cause lockups and worse.
+>> Poll the buffer every 2 jiffies for now.
+>>
+>> Signed-off-by: Ingo Molnar <mingo@elte.hu>
+>> ---
+>>  kernel/relay.c |   14 +++++---------
+>>  1 file changed, 5 insertions(+), 9 deletions(-)
+>>
+>> Index: linux-rt-rebase.q/kernel/relay.c
+>> ===================================================================
+>> --- linux-rt-rebase.q.orig/kernel/relay.c
+>> +++ linux-rt-rebase.q/kernel/relay.c
+>> @@ -319,6 +319,10 @@ static void wakeup_readers(unsigned long
+>>  {
+>>  	struct rchan_buf *buf = (struct rchan_buf *)data;
+>>  	wake_up_interruptible(&buf->read_wait);
+>> +	/*
+>> +	 * Stupid polling for now:
+>> +	 */
+>> +	mod_timer(&buf->timer, jiffies + 1);
+>>  }
+>>  
+>>  /**
+>> @@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
+>>  		init_waitqueue_head(&buf->read_wait);
+>>  		kref_init(&buf->kref);
+>>  		setup_timer(&buf->timer, wakeup_readers, (unsigned long)buf);
+>> +		mod_timer(&buf->timer, jiffies + 1);
+>>  	} else
+>>  		del_timer_sync(&buf->timer);
+>>  
+>> @@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
+>>  		buf->subbufs_produced++;
+>>  		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
+>>  			buf->padding[old_subbuf];
+>> -		smp_mb();
+>> -		if (waitqueue_active(&buf->read_wait))
+>> -			/*
+>> -			 * Calling wake_up_interruptible() from here
+>> -			 * will deadlock if we happen to be logging
+>> -			 * from the scheduler (trying to re-grab
+>> -			 * rq->lock), so defer it.
+>> -			 */
+>> -			__mod_timer(&buf->timer, jiffies + 1);
+>>  	}
+>>  
+>>  	old = buf->data;
+>>     
+>
+>   
