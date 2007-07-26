@@ -1,67 +1,74 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 11:02:26 -0400
-Message-ID: <20070726150226.GB1299@Krystal>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726133138.GA30559@Krystal> <y0mps2f1asz.fsf@ton.toronto.redhat.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Thu, 26 Jul 2007 17:16:24 +0200
+Message-ID: <46A8BAC8.9000306@free.fr>
+References: <469600F7.3060603@free.fr> <20070723095357.GA886@elte.hu> <46A4B7C2.1070304@free.fr> <20070723160442.GA7995@elte.hu> <46A5B8E3.4060004@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: Ankita Garg <ankita@in.ibm.com>,
-	Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: "Frank Ch. Eigler" <fche@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-net@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts36-srv.bellnexxia.net ([209.226.175.93]:53885 "EHLO
-	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755719AbXGZPCa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 11:02:30 -0400
-Content-Disposition: inline
-In-Reply-To: <y0mps2f1asz.fsf@ton.toronto.redhat.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:49437 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754320AbXGZPQm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2007 11:16:42 -0400
+In-Reply-To: <46A5B8E3.4060004@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Frank Ch. Eigler (fche@redhat.com) wrote:
-> Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca> writes:
-> 
-> > [...]
-> > The problem is also in _stp_print_flush, not *only* in relay code:
-> > void _stp_print_flush (void)
-> > ...
-> >                 spin_lock(&_stp_print_lock);
-> >                 ...
-> >                 spin_unlock(&_stp_print_lock);
-> > 
-> > Those will turn into mutexes with -rt.
-> 
-> Indeed, plus systemtap-generated locking code uses rwlocks,
-> local_irq_save/restore or preempt_disable, in various places.  Could
-> someone point to a place that spells out what would be more
-> appropriate way of ensuring atomicity while being compatible with -rt?
-> 
-> - FChE
+[ Adding linux-net to the mix ]
 
-AFAIK, for your needs either:
-- Use atomic ops
-- Use per-cpu data with preempt disabling/irq disabling
-- Use the original "real" spin locks/rwlocks (raw_*).
-- Don't play with timers or wakeups, since this kernel code uses the
-  "standard" spin locks (sleepable in -rt).
+John Sigler wrote:
 
-You just don't want to sleep in the tracing code.
+> ( check_dektec_in-1095 |#0): new 271 us user-latency.
+> ( check_dektec_in-1095 |#0): new 275 us user-latency.
+> ( check_dektec_in-1095 |#0): new 290 us user-latency.
+> ( check_dektec_in-1095 |#0): new 297 us user-latency.
+> ( check_dektec_in-1095 |#0): new 345 us user-latency.
+> ( check_dektec_in-1095 |#0): new 358 us user-latency.
+> ( check_dektec_in-1095 |#0): new 384 us user-latency.
+> ( check_dektec_in-1095 |#0): new 392 us user-latency.
+> ( check_dektec_in-1095 |#0): new 395 us user-latency.
+> ( check_dektec_in-1095 |#0): new 396 us user-latency.
+> ( check_dektec_in-1095 |#0): new 1031 us user-latency.
+> ( check_dektec_in-1095 |#0): new 1100 us user-latency.
+> ( check_dektec_in-1095 |#0): new 1105 us user-latency.
+> ( check_dektec_in-1095 |#0): new 1106 us user-latency.
+>=20
+> Here's the function trace for the 1106-=B5s latency:
+>=20
+> http://linux.kernel.free.fr/latency/1106-us-trace.txt
+>=20
+> These two lines repeat ~2000 times for ~800 =B5s:
+>=20
+> softirq--4     0....  272us : __lock_text_start (rt_run_flush)
+> softirq--4     0....  272us : rt_spin_unlock (rt_run_flush)
+>=20
+> With a pair of the following in the middle:
+>=20
+> softirq--4     0....  670us : call_rcu (rt_run_flush)
+> softirq--4     0D..1  670us : __rcu_advance_callbacks (call_rcu)
 
-Make sure that the sub-buffer switch code respects that too: it is the
-most tricky and yet less executed part of the tracing code, so it's easy
-for bugs to slip there and yet be undetected for a while.
+Could someone explain why the kernel is "spinning" in rt_run_flush.
+http://lxr.linux.no/source/net/ipv4/route.c#L692
+What is the kernel trying to do?
 
-Since you will likely disable preemption, make sure your tracing code
-executes in a deterministic time.
+Is the kernel in the following loop?
 
-Mathieu
+701         for (i =3D rt_hash_mask; i >=3D 0; i--) {
+702                 spin_lock_bh(rt_hash_lock_addr(i));
+703                 rth =3D rt_hash_table[i].chain;
+704                 if (rth)
+705                         rt_hash_table[i].chain =3D NULL;
+706                 spin_unlock_bh(rt_hash_lock_addr(i));
 
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+Line 702 would be __lock_text_start (rt_run_flush)
+Line 706 would be rt_spin_unlock
+Is that correct?
+
+And this would be done 2000 times because rt_hash_mask=3D2000?
+
+Regards.
