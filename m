@@ -1,35 +1,28 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 09:53:53 +0200
-Message-ID: <20070726075353.GA19885@elte.hu>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu> <20070726074957.GA19398@in.ibm.com>
+From: Juergen Beisert <juergen127@kreuzholzen.de>
+Subject: Re: Kernel Bug when entering something after login
+Date: Thu, 26 Jul 2007 10:00:24 +0200
+Message-ID: <200707261000.25465.juergen127@kreuzholzen.de>
+References: <200707251900.47704.juergen127@kreuzholzen.de> <1185390398.3227.8.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	mathieu.desnoyers@polymtl.ca
-To: Ankita Garg <ankita@in.ibm.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932810AbXGZHyW@vger.kernel.org>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from bill.weihenstephan.org ([82.135.35.21]:57130 "EHLO
+	bill.weihenstephan.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754667AbXGZIAa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2007 04:00:30 -0400
+In-Reply-To: <1185390398.3227.8.camel@chaos>
 Content-Disposition: inline
-In-Reply-To: <20070726074957.GA19398@in.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Wednesday 25 July 2007 21:06, Thomas Gleixner wrote:
+> Solution below
 
-* Ankita Garg <ankita@in.ibm.com> wrote:
+Seems to work now. Thanks.
 
-> > I'd suggest to not put a probe into a preempt-off section - put it 
-> > to the beginning and to the end of schedule() to capture 
-> > context-switches. _stp_print_flush() is in the systemtap-generated 
-> > module, right? Maybe the problem is resolved by changing that 
-> > spinlock to use raw_spinlock_t / DEFINE_RAW_SPIN_LOCK.
-> 
-> Yes, _stp_print_flush is in the systemtap-generated kprobe module. 
-> Placing the probe at the beginning of schedule() also has the same 
-> effect. Will try by changing the spinlock to raw_spinlock_t...
-
-could you send us that module source ST generates? Perhaps there are 
-preempt_disable() (or local_irq_disable()) calls in it too.
-
-	Ingo
+Juergen
