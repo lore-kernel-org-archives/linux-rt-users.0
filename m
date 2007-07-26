@@ -1,28 +1,30 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+From: ankita@in.ibm.com (Ankita Garg)
 Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 09:06:33 -0400
-Message-ID: <20070726130632.GB28556@Krystal>
+Date: Thu, 26 Jul 2007 18:50:55 +0530
+Message-ID: <20070726132055.GC19398@in.ibm.com>
 References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu> <20070726074957.GA19398@in.ibm.com> <20070726075353.GA19885@elte.hu> <20070726095948.GB19398@in.ibm.com> <20070726110504.GB7673@elte.hu>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: Ankita Garg <ankita@in.ibm.com>,
-	Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
+Cc: Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
 	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>
+	RT-Users <linux-rt-users@vger.kernel.org>,
+	mathieu.desnoyers@polymtl.ca
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts22-srv.bellnexxia.net ([209.226.175.184]:36749 "EHLO
-	tomts22-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754028AbXGZNLr (ORCPT
+Received: from ausmtp05.au.ibm.com ([202.81.18.154]:59704 "EHLO
+	ausmtp05.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758876AbXGZNVR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 09:11:47 -0400
+	Thu, 26 Jul 2007 09:21:17 -0400
 Content-Disposition: inline
 In-Reply-To: <20070726110504.GB7673@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Ingo Molnar (mingo@elte.hu) wrote:
+Hi Ingo,
+
+On Thu, Jul 26, 2007 at 01:05:04PM +0200, Ingo Molnar wrote:
 > 
 > * Ankita Garg <ankita@in.ibm.com> wrote:
 > 
@@ -56,27 +58,10 @@ List-Id: linux-rt-users.vger.kernel.org
 > the smp_mb() is rubbish too.
 > 
 > could you try the patch below, does it fix the problem?
+
+This patch did not fix my problem. I still get similar traces...
+
 > 
-
-Hi Ingo,
-
-I did not have this problem with LTTng, since I only touch atomic
-variables in tracing code. However, I iterate on a rcu list of active
-traces in a timer interrupt to see if subbuffers must be read and, if
-yes, I send a wakeup to my user-space daemon. I had to change the
-protection around this rcu list read from preempt disable to mutex lock
-in this timer because try_to_wakeup is called in it, which takes a
-spinlock.
-
-Note: I don't use relay code at my tracing site.
-
-I guess they might have to switch to such an asynchronous delivery
-system if they want to do this properly. Simply put, your polling
-solution is exactly what I do, but I check a flag set by the writer
-instead of waking up the readers unconditionally.
-
-Mathieu
-
 > 	Ingo
 > 
 > ------------------------------------->
@@ -105,7 +90,7 @@ Mathieu
 > +	 */
 > +	mod_timer(&buf->timer, jiffies + 1);
 >  }
->  
+> 
 >  /**
 > @@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
 >  		init_waitqueue_head(&buf->read_wait);
@@ -114,7 +99,7 @@ Mathieu
 > +		mod_timer(&buf->timer, jiffies + 1);
 >  	} else
 >  		del_timer_sync(&buf->timer);
->  
+> 
 > @@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
 >  		buf->subbufs_produced++;
 >  		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
@@ -129,10 +114,12 @@ Mathieu
 > -			 */
 > -			__mod_timer(&buf->timer, jiffies + 1);
 >  	}
->  
+> 
 >  	old = buf->data;
 
 -- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
