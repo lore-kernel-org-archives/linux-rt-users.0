@@ -1,86 +1,51 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 14:25:10 -0400
-Message-ID: <20070726182510.GB10324@Krystal>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726133138.GA30559@Krystal> <y0mps2f1asz.fsf@ton.toronto.redhat.com> <20070726150226.GB1299@Krystal> <20070726162231.GB30643@redhat.com>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [PATCH] create /proc/all-interrupts
+Date: Thu, 26 Jul 2007 11:56:56 -0700
+Message-ID: <46A8EE78.4040702@zytor.com>
+References: <20070726180522.GA1486@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Ankita Garg <ankita@in.ibm.com>,
-	Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: "Frank Ch. Eigler" <fche@redhat.com>
+Cc: mingo@elte.hu, tglx@linutronix.de, sdietrich@novell.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	jason.baietto@ccur.com
+To: Joe Korty <joe.korty@ccur.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts25-srv.bellnexxia.net ([209.226.175.188]:64418 "EHLO
-	tomts25-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S934413AbXGZSfY (ORCPT
+Received: from terminus.zytor.com ([198.137.202.10]:45371 "EHLO
+	terminus.zytor.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934213AbXGZS6Y (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 14:35:24 -0400
-Content-Disposition: inline
-In-Reply-To: <20070726162231.GB30643@redhat.com>
+	Thu, 26 Jul 2007 14:58:24 -0400
+In-Reply-To: <20070726180522.GA1486@tsunami.ccur.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Frank Ch. Eigler (fche@redhat.com) wrote:
-> Hi -
+Joe Korty wrote:
+> Create /proc/all-interrupts for some architectures.
 > 
-> On Thu, Jul 26, 2007 at 11:02:26AM -0400, Mathieu Desnoyers wrote:
-> > [...]
-> > > > The problem is also in _stp_print_flush, not *only* in relay code:
-> > > > void _stp_print_flush (void)
-> > > > ...
-> > > >                 spin_lock(&_stp_print_lock);
-> > > >                 spin_unlock(&_stp_print_lock);
-> > > > 
-> > > > Those will turn into mutexes with -rt.
-> > > 
-> > > Indeed,
+> Create a version of /proc/interrupts that displays _every_
+> IRQ vector, not just those that someone thought might be
+> interesting, and add an entry in the commentary column
+> for those vectors which lacked such a comment.
 > 
-> (Though actually that bug was fixed some time ago.)
+> Rationale: /proc/interrupts is not truly useful unless it
+> displays every IRQ vector, not just those somebody thought
+> would be interesting.  For example, since /proc/interrupts
+> does not display the rescheduling interrupt, the occurance
+> of rescheduling interrupt floods ends up affecting
+> latencies, yet without an entry in /proc/interrupts, it
+> is difficult to discern why latencies are being affected.
 > 
-> 
-> > > plus systemtap-generated locking code uses rwlocks,
-> > > local_irq_save/restore or preempt_disable, in various places.  Could
-> > > someone point to a place that spells out what would be more
-> > > appropriate way of ensuring atomicity while being compatible with -rt?
-> > 
-> > AFAIK, for your needs either:
-> > [...]
-> > - Use per-cpu data with preempt disabling/irq disabling
-> 
-> As in local_irq_save / preempt_disable?  Yes, already done.
-> 
-> > - Use the original "real" spin locks/rwlocks (raw_*).
-> > [...]
-> 
-> It was unclear from the OLS paper whether the spin_lock_irq* family of
-> functions also had to be moved to the raw forms.
-> 
+> Rather than modify /proc/interrupts, this patch creates
+> a new version of /proc/interrupts, on the off-chance
+> that adding new lines to /proc/interrupts, and appending
+> new fields to the end of old lines, might break some
+> longstanding script.  However, these kinds of changes
+> traditionally do not affect scripts, so it might be
+> reasonable to fold /proc/all-interrupts back into
+> /proc/interrupts.
 
-Yes, you have them to move them too:
+I think that would be the right thing to do.  We have added things to
+/proc/interrupts in the past.
 
-linux/spinlock.h:
-#ifdef CONFIG_PREEMPT_RT
-# define _spin_lock(l)                  rt_spin_lock(l)
-# define _spin_lock_nested(l, s)        rt_spin_lock_nested(l, s)
-# define _spin_lock_bh(l)               rt_spin_lock(l)
-# define _spin_lock_irq(l)              rt_spin_lock(l)
-# define _spin_unlock(l)                rt_spin_unlock(l)
-# define _spin_unlock_no_resched(l)     rt_spin_unlock(l)
-# define _spin_unlock_bh(l)             rt_spin_unlock(l)
-# define _spin_unlock_irq(l)            rt_spin_unlock(l)
-# define _spin_unlock_irqrestore(l, f)  rt_spin_unlock(l)
-..
-
-And below, both spin_lock and spin_lock_irqsave use PICK_OP to turn into
-their _spin_lock_* equivalent, which are both mapped to rt_spin_lock in
--rt.
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+	-hpa
