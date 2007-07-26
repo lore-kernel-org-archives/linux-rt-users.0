@@ -1,110 +1,140 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 13:05:04 +0200
-Message-ID: <20070726110504.GB7673@elte.hu>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu> <20070726074957.GA19398@in.ibm.com> <20070726075353.GA19885@elte.hu> <20070726095948.GB19398@in.ibm.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: Pin-pointing the root of unusual application latencies
+Date: Thu, 26 Jul 2007 14:02:38 +0200
+Message-ID: <46A88D5E.9060204@free.fr>
+References: <469600F7.3060603@free.fr> <20070725133835.GA17616@elte.hu> <46A758B5.9070602@free.fr> <200707251309.54240.lenb@kernel.org> <46A85CE9.7070506@free.fr> <46A87B3D.3020003@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-Users <linux-rt-users@vger.kernel.org>,
-	mathieu.desnoyers@polymtl.ca
-To: Ankita Garg <ankita@in.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Len Brown <lenb@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:50370 "EHLO mx3.mail.elte.hu"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:34581 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756590AbXGZLFX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 07:05:23 -0400
-Content-Disposition: inline
-In-Reply-To: <20070726095948.GB19398@in.ibm.com>
+	id S1751982AbXGZMCy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2007 08:02:54 -0400
+In-Reply-To: <46A87B3D.3020003@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+> John Sigler wrote:
+> 
+>> Len Brown wrote:
+>>
+>>> John Sigler wrote:
+>>>
+>>>> # cat /proc/interrupts
+>>>>             CPU0
+>>>>    0:         37    XT-PIC-XT        timer
+>>>>    1:          2    XT-PIC-XT        i8042
+>>>>    2:          0    XT-PIC-XT        cascade
+>>>>    7:          0    XT-PIC-XT        acpi
+>>>>   10:        175    XT-PIC-XT        eth2, Dta1xx
+>>>>   11:       1129    XT-PIC-XT        eth0
+>>>>   12:          4    XT-PIC-XT        eth1
+>>>>   14:      21482    XT-PIC-XT        ide0
+>>>> NMI:          0
+>>>> LOC:     161632
+>>>> ERR:          0
+>>>> MIS:          0
+>>>>
+>>>> IRQ 10 is shared between a NIC and an I/O board.
+>>>>
+>>>> For eth2, the kernel said:
+>>>> ACPI: PCI Interrupt 0000:00:0a.0[A] -> Link [LNKC]
+>>>>    -> GSI 10 (level, low) -> IRQ 10
+>>>>
+>>>> For Dta1xx, the kernel said:
+>>>> ACPI: PCI Interrupt 0000:02:0e.0[A] -> Link [LNKC]
+>>>>    -> GSI 10 (level, low) -> IRQ 10
+>>>>
+>>>> Is it possible to avoid the two boards sharing IRQ 10?
+>>>
+>>> Maybe.  In this configuration, INTA of the two devices
+>>> is physically connected to the same wire on the device-side
+>>> of the interrupt re-mapper -- so you'd have to change the configuration.
+>>> If you have an IOAPIC and can enable it, that will not hurt --
+>>
+>> I believe this board does not provide an IO-APIC.
+>> Even the LAPIC is disabled in the BIOS.
+>> (Why would they do that??)
+>>
+>>> though unless something else changes, these devices are still
+>>> tied together on the device-side of the mapper.
+>>> So if you can physically move one of the devices to another slot
+>>> that is your best bet.
+> 
+> The NICs are on-board, therefore it is not possible to move them.
+> 
+> The motherboard only has one PCI slot, so the manufacturer includes
+> a backplane (is that what it's called?) to provide two PCI slots.
+> 
+> The results I've given so far were with the I/O board inserted in
+> the bottom slot. If it is inserted in the top slot, the results are
+> different indeed.
+> 
+> # cat /proc/interrupts
+>            CPU0
+>   0:         37    XT-PIC-XT        timer
+>   1:          2    XT-PIC-XT        i8042
+>   2:          0    XT-PIC-XT        cascade
+>   5:      20270    XT-PIC-XT        Dta1xx
+>   7:          0    XT-PIC-XT        acpi
+>  10:          4    XT-PIC-XT        eth2
+>  11:       2639    XT-PIC-XT        eth0
+>  12:          4    XT-PIC-XT        eth1
+>  14:      13984    XT-PIC-XT        ide0
+> NMI:          0
+> LOC:     518501
+> ERR:          0
+> MIS:          0
 
-* Ankita Garg <ankita@in.ibm.com> wrote:
+With a 4-port NIC (instead of the I/O board) inserted in the top slot.
 
->         local_irq_save(flags);
->         buf = _stp_chan->buf[smp_processor_id()];
->         if (unlikely(buf->offset + length > _stp_chan->subbuf_size))
->                 length = relay_switch_subbuf(buf, length);
->         memcpy(buf->data + buf->offset, data, length);
->         buf->offset += length;
->         local_irq_restore(flags);
+# cat /proc/interrupts
+            CPU0
+   0:         37    XT-PIC-XT        timer
+   1:          2    XT-PIC-XT        i8042
+   2:          0    XT-PIC-XT        cascade
+   5:          0    XT-PIC-XT        eth3
+   7:          0    XT-PIC-XT        acpi
+  10:          4    XT-PIC-XT        eth1, eth5
+  11:          4    XT-PIC-XT        eth2, eth6
+  12:        265    XT-PIC-XT        eth0, eth4
+  14:      12726    XT-PIC-XT        ide0
+NMI:          0
+LOC:      12704
+ERR:          0
+MIS:          0
 
-oh, what a fine piece of s^H^H :-/ Who in their right mind calls this 
-from _tracing_ code:
+With the 4-port NIC inserted in the bottom slot.
 
-                smp_mb();
-                if (waitqueue_active(&buf->read_wait))
-                        /*
-                         * Calling wake_up_interruptible() from here
-                         * will deadlock if we happen to be logging
-                         * from the scheduler (trying to re-grab
-                         * rq->lock), so defer it.
-                         */
-                        __mod_timer(&buf->timer, jiffies + 1);
+# cat /proc/interrupts
+            CPU0
+   0:         37    XT-PIC-XT        timer
+   1:          2    XT-PIC-XT        i8042
+   2:          0    XT-PIC-XT        cascade
+   5:          4    XT-PIC-XT        eth2, eth3
+   7:          0    XT-PIC-XT        acpi
+  10:         99    XT-PIC-XT        eth0, eth5
+  11:          4    XT-PIC-XT        eth1, eth6
+  12:          0    XT-PIC-XT        eth4
+  14:      12138    XT-PIC-XT        ide0
+NMI:          0
+LOC:       3554
+ERR:          0
+MIS:          0
 
-and the comment is utter rubbish: __mod_timer() can lock up just as 
-much. Just use an adaptive-polling method to drive the draining of the 
-relay buffer, instead of mucking with timers from within the tracing 
-code. Whoever implemented this has absolutely zero clue i have to say 
-...
+As far as I understand, this board has 4 interrupt lines, and they are 
+mapped (by the BIOS? by Linux?) to ISA IRQs 5, 10, 11, and 12.
 
-the smp_mb() is rubbish too.
+If I insert another 4-port NIC in the remaining slot, eth7 through eth10 
+will spread to these IRQs. Correct?
 
-could you try the patch below, does it fix the problem?
+Suppose 3 NICs share the same interrupt line, and each receives 1500 
+packets per second. (I suppose that translates to 1500 interrupt 
+requests per second.) Will the system cope with 4500 interrupt requests 
+from 3 different devices on the same interrupt line? How different is it 
+from 4500 interrupt requests from a single device not sharing the line?
 
-	Ingo
-
-------------------------------------->
-Subject: relay: fix timer madness
-From: Ingo Molnar <mingo@elte.hu>
-
-remove timer calls (!!!) from deep within the tracing infrastructure.
-This was totally bogus code that can cause lockups and worse.
-Poll the buffer every 2 jiffies for now.
-
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/relay.c |   14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
-
-Index: linux-rt-rebase.q/kernel/relay.c
-===================================================================
---- linux-rt-rebase.q.orig/kernel/relay.c
-+++ linux-rt-rebase.q/kernel/relay.c
-@@ -319,6 +319,10 @@ static void wakeup_readers(unsigned long
- {
- 	struct rchan_buf *buf = (struct rchan_buf *)data;
- 	wake_up_interruptible(&buf->read_wait);
-+	/*
-+	 * Stupid polling for now:
-+	 */
-+	mod_timer(&buf->timer, jiffies + 1);
- }
- 
- /**
-@@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
- 		init_waitqueue_head(&buf->read_wait);
- 		kref_init(&buf->kref);
- 		setup_timer(&buf->timer, wakeup_readers, (unsigned long)buf);
-+		mod_timer(&buf->timer, jiffies + 1);
- 	} else
- 		del_timer_sync(&buf->timer);
- 
-@@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
- 		buf->subbufs_produced++;
- 		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
- 			buf->padding[old_subbuf];
--		smp_mb();
--		if (waitqueue_active(&buf->read_wait))
--			/*
--			 * Calling wake_up_interruptible() from here
--			 * will deadlock if we happen to be logging
--			 * from the scheduler (trying to re-grab
--			 * rq->lock), so defer it.
--			 */
--			__mod_timer(&buf->timer, jiffies + 1);
- 	}
- 
- 	old = buf->data;
+Regards.
