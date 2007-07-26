@@ -1,480 +1,92 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: [PATCH 2/3] proc-interrupts-missing-vectors
-Date: Wed, 25 Jul 2007 16:58:16 -0400
-Message-ID: <20070725205816.GA9032@tsunami.ccur.com>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Peter Williams <pwil3058@bigpond.net.au>
+Subject: Minor errors in 2.6.23-rc1-rt2 series
+Date: Thu, 26 Jul 2007 11:24:14 +1000
+Message-ID: <46A7F7BE.1030100@bigpond.net.au>
+References: <4695E5BB0200005A0002763E@mcclure.wal.novell.com> <20070712130958.GB17494@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: tglx@linutronix.de, sdietrich@novell.com,
-	linux-rt-users@vger.kernel.org
-To: mingo@elte.hu
+Content-Type: multipart/mixed;
+ boundary="------------050100050505060704070002"
+Cc: Gregory Haskins <ghaskins@novell.com>, jim.houston@ccur.com,
+	joe.korty@ccur.com, rostedt@goodmis.org, tglx@linutronix.de,
+	dwalker@mvista.com, David Bahi <DBahi@novell.com>,
+	Moiz Kohari <MKohari@novell.com>,
+	Sven Dietrich <SDietrich@novell.com>, dsaxena@plexity.net,
+	williams@redhat.com, abogani@texware.it,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from users.ccur.com ([66.10.65.2]:37156 "EHLO gamx.iccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1755538AbXGYVRF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jul 2007 17:17:05 -0400
-Content-Disposition: inline
+Received: from qsrv03ps.mx.bigpond.com ([144.140.82.183]:25110 "EHLO
+	qsrv03ps.mx.bigpond.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756550AbXGZDbZ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jul 2007 23:31:25 -0400
+In-Reply-To: <20070712130958.GB17494@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add missing IRQs to /proc/interrupts.
+This is a multi-part message in MIME format.
+--------------050100050505060704070002
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-/proc/interrupts is not truly useful unless it displays
-every IRQ vector, not just those somebody thought
-would be interesting.  For example, since the default
-/proc/interrupts setup did not display the rescheduling
-interrupt, the occurance of rescheduling interrupt floods
-ends up affecting latencies, yet without an entry in
-/proc/interrupts, it is difficult to discern why latencies
-are being affected.
+I've just been reviewing these patches and have spotted a couple of
+errors that look like they were caused by fuzz during the patch process.
 
-Also does a silly little expansion of the 'ERR:' display
-to be per cpu.  This makes its layout identical to all
-the other display lines in /proc/interrupts.
+A patch that corrects the errors is attached.
 
-Signed-off-by: Joe Korty <joe.korty@ccur.com>
+Cheers
+Peter
+-- 
+Peter Williams                                   pwil3058@bigpond.net.au
 
-Index: 2.6.22.1-rt8/arch/i386/kernel/apic.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/apic.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/apic.c	2007-07-25 16:07:43.000000000 -0400
-@@ -1268,6 +1268,8 @@
- {
- 	unsigned long v;
+"Learning, n. The kind of ignorance distinguishing the studious."
+ -- Ambrose Bierce
+
+
+--------------050100050505060704070002
+Content-Type: text/plain;
+ name="fix-fuzz-related-errors"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="fix-fuzz-related-errors"
+
+diff -r e02fd64426b9 arch/i386/boot/compressed/Makefile
+--- a/arch/i386/boot/compressed/Makefile	Thu Jul 26 10:33:58 2007 +1000
++++ b/arch/i386/boot/compressed/Makefile	Thu Jul 26 11:17:35 2007 +1000
+@@ -9,10 +9,9 @@ EXTRA_AFLAGS	:= -traditional
+ EXTRA_AFLAGS	:= -traditional
  
-+	atomic_inc(&__get_cpu_var(irq_spur_counts));
-+
- 	irq_enter();
- 	/*
- 	 * Check if this really is a spurious interrupt and ACK it
-@@ -1297,7 +1299,7 @@
- 	apic_write(APIC_ESR, 0);
- 	v1 = apic_read(APIC_ESR);
- 	ack_APIC_irq();
--	atomic_inc(&irq_err_count);
-+	atomic_inc(&__get_cpu_var(irq_err_counts));
+ LDFLAGS_vmlinux := -T
+-CFLAGS := -m32 -D__KERNEL__ -Iinclude -O2  -fno-strict-aliasing
+ hostprogs-y	:= relocs
  
- 	/* Here is what the APIC error bits mean:
- 	   0: Send CS error
-Index: 2.6.22.1-rt8/arch/i386/kernel/cpu/mcheck/p4.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-25 16:07:43.000000000 -0400
-@@ -60,6 +60,7 @@
- fastcall void smp_thermal_interrupt(struct pt_regs *regs)
- {
- 	irq_enter();
-+	atomic_inc(&__get_cpu_var(irq_thermal_counts));
- 	vendor_thermal_interrupt(regs);
- 	irq_exit();
- }
-Index: 2.6.22.1-rt8/arch/i386/kernel/i8259.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/i8259.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/i8259.c	2007-07-25 16:07:43.000000000 -0400
-@@ -209,7 +209,7 @@
- 			printk(KERN_DEBUG "spurious 8259A interrupt: IRQ%d.\n", irq);
- 			spurious_irq_mask |= irqmask;
- 		}
--		atomic_inc(&irq_err_count);
-+		atomic_inc(&__get_cpu_var(irq_err_counts));
- 		/*
- 		 * Theoretically we do not have to handle this IRQ,
- 		 * but in Linux this does not cause problems and is
-Index: 2.6.22.1-rt8/arch/i386/kernel/io_apic.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/io_apic.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/io_apic.c	2007-07-25 16:07:43.000000000 -0400
-@@ -51,7 +51,6 @@
- #include "io_ports.h"
- 
- int (*ioapic_renumber_irq)(int ioapic, int irq);
--atomic_t irq_mis_count;
- 
- /* Where if anywhere is the i8259 connect in external int mode */
- static struct { int pin, apic; } ioapic_i8259 = { -1, -1 };
-@@ -2031,7 +2030,7 @@
- 	ack_APIC_irq();
- 
- 	if (!(v & (1 << (i & 0x1f)))) {
--		atomic_inc(&irq_mis_count);
-+		atomic_inc(&__get_cpu_var(irq_mis_counts));
- 		spin_lock(&ioapic_lock);
- 		/* mask = 1, trigger = 0 */
- 		__modify_IO_APIC_irq(irq, 0x00010000, 0x00008000);
-Index: 2.6.22.1-rt8/arch/i386/kernel/irq.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/irq.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/irq.c	2007-07-25 16:23:12.000000000 -0400
-@@ -252,7 +252,13 @@
-  * Interrupt statistics:
-  */
- 
--atomic_t irq_err_count;
-+DEFINE_PER_CPU(atomic_t, irq_resched_counts);
-+DEFINE_PER_CPU(atomic_t, irq_call_counts);
-+DEFINE_PER_CPU(atomic_t, irq_spur_counts);
-+DEFINE_PER_CPU(atomic_t, irq_tlb_counts);
-+DEFINE_PER_CPU(atomic_t, irq_thermal_counts);
-+DEFINE_PER_CPU(atomic_t, irq_err_counts);
-+DEFINE_PER_CPU(atomic_t, irq_mis_counts);
- 
- /*
-  * /proc/interrupts printing:
-@@ -305,9 +311,60 @@
- 				per_cpu(irq_stat,j).apic_timer_irqs);
- 		seq_putc(p, '\n');
- #endif
--		seq_printf(p, "ERR: %10u\n", atomic_read(&irq_err_count));
--#if defined(CONFIG_X86_IO_APIC)
--		seq_printf(p, "MIS: %10u\n", atomic_read(&irq_mis_count));
-+#ifdef CONFIG_SMP
-+#ifdef RESCHEDULE_VECTOR
-+		seq_printf(p, "RES: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_resched_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef CONFIG_SMP
-+#ifdef CALL_FUNCTION_VECTOR
-+		seq_printf(p, "CAL: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_call_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef CONFIG_SMP
-+#ifdef INVALIDATE_TLB_VECTOR
-+		seq_printf(p, "TLB: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_tlb_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef THERMAL_APIC_VECTOR
-+		seq_printf(p, "TRM: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_thermal_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef SPURIOUS_APIC_VECTOR
-+		seq_printf(p, "SPU: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_spur_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef ERROR_APIC_VECTOR
-+		seq_printf(p, "ERR: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_err_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#if defined(CONFIG_X86_IO_APIC) && defined(APIC_MISMATCH_DEBUG)
-+		seq_printf(p, "MIS: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ",
-+				atomic_read(&per_cpu(irq_mis_counts, j)));
-+		seq_putc(p, '\n');
- #endif
- 	}
- 	return 0;
-Index: 2.6.22.1-rt8/arch/i386/kernel/smp.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/i386/kernel/smp.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/i386/kernel/smp.c	2007-07-25 16:07:43.000000000 -0400
-@@ -315,6 +315,7 @@
- 	unsigned long cpu;
- 
- 	cpu = get_cpu();
-+	atomic_inc(&__get_cpu_var(irq_tlb_counts));
- 
- 	if (!cpu_isset(cpu, flush_cpumask))
- 		goto out;
-@@ -658,6 +659,7 @@
+-CFLAGS  := -m32 -D__KERNEL__ $(LINUX_INCLUDE) -O2 \
++CFLAGS  := -m32 -D__KERNEL__ $(LINUX_INCLUDE) -Iinclude -O2 \
+ 	   -fno-strict-aliasing -fPIC \
+ 	   $(call cc-option,-ffreestanding) \
+ 	   $(call cc-option,-fno-stack-protector)
+diff -r e02fd64426b9 arch/i386/kernel/smp.c
+--- a/arch/i386/kernel/smp.c	Thu Jul 26 10:33:58 2007 +1000
++++ b/arch/i386/kernel/smp.c	Thu Jul 26 11:17:35 2007 +1000
+@@ -651,7 +651,6 @@ fastcall notrace void smp_reschedule_int
+ fastcall notrace void smp_reschedule_interrupt(struct pt_regs *regs)
  {
  	trace_special(regs->eip, 0, 0);
+-	trace_special(regs->eip, 0, 0);
  	ack_APIC_irq();
-+	atomic_inc(&__get_cpu_var(irq_resched_counts));
  	set_tsk_need_resched(current);
  }
- 
-@@ -668,6 +670,7 @@
- 	int wait = call_data->wait;
- 
- 	ack_APIC_irq();
-+	atomic_inc(&__get_cpu_var(irq_call_counts));
- 	/*
- 	 * Notify initiating CPU that I've grabbed the data and am
- 	 * about to execute the function
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/apic.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/apic.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/apic.c	2007-07-25 16:07:43.000000000 -0400
-@@ -1099,6 +1099,9 @@
- asmlinkage void smp_spurious_interrupt(void)
- {
- 	unsigned int v;
-+
-+	atomic_inc(&__get_cpu_var(irq_spur_counts));
-+
- 	exit_idle();
- 	irq_enter();
- 	/*
-@@ -1127,7 +1130,7 @@
- 	apic_write(APIC_ESR, 0);
- 	v1 = apic_read(APIC_ESR);
- 	ack_APIC_irq();
--	atomic_inc(&irq_err_count);
-+	atomic_inc(&__get_cpu_var(irq_err_counts));
- 
- 	/* Here is what the APIC error bits mean:
- 	   0: Send CS error
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/i8259.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/i8259.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/i8259.c	2007-07-25 16:07:43.000000000 -0400
-@@ -273,7 +273,7 @@
- 			printk(KERN_DEBUG "spurious 8259A interrupt: IRQ%d.\n", irq);
- 			spurious_irq_mask |= irqmask;
- 		}
--		atomic_inc(&irq_err_count);
-+		atomic_inc(&__get_cpu_var(irq_err_counts));
- 		/*
- 		 * Theoretically we do not have to handle this IRQ,
- 		 * but in Linux this does not cause problems and is
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/irq.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/irq.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/irq.c	2007-07-25 16:23:12.000000000 -0400
-@@ -20,7 +20,18 @@
- #include <asm/idle.h>
- #include <asm/smp.h>
- 
--atomic_t irq_err_count;
-+DEFINE_PER_CPU(atomic_t, irq_resched_counts);
-+DEFINE_PER_CPU(atomic_t, irq_call_counts);
-+DEFINE_PER_CPU(atomic_t, irq_spur_counts);
-+DEFINE_PER_CPU(atomic_t, irq_tlb_counts);
-+DEFINE_PER_CPU(atomic_t, irq_threshold_counts);
-+DEFINE_PER_CPU(atomic_t, irq_thermal_counts);
-+DEFINE_PER_CPU(atomic_t, irq_err_counts);
-+#ifdef CONFIG_X86_IO_APIC
-+#ifdef APIC_MISMATCH_DEBUG
-+DEFINE_PER_CPU(atomic_t, irq_mis_counts);
-+#endif
-+#endif
- 
- #ifdef CONFIG_DEBUG_STACKOVERFLOW
- /*
-@@ -93,7 +104,62 @@
- 		for_each_online_cpu(j)
- 			seq_printf(p, "%10u ", cpu_pda(j)->apic_timer_irqs);
- 		seq_putc(p, '\n');
--		seq_printf(p, "ERR: %10u\n", atomic_read(&irq_err_count));
-+#ifdef CONFIG_SMP
-+#ifdef RESCHEDULE_VECTOR
-+		seq_printf(p, "RES: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_resched_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef CONFIG_SMP
-+#ifdef CALL_FUNCTION_VECTOR
-+		seq_printf(p, "CAL: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_call_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef CONFIG_SMP
-+#ifdef INVALIDATE_TLB_VECTOR_START
-+		seq_printf(p, "TLB: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_tlb_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
-+#ifdef THERMAL_APIC_VECTOR
-+		seq_printf(p, "TRM: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_thermal_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef THRESHOLD_APIC_VECTOR
-+		seq_printf(p, "THR: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_threshold_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef SPURIOUS_APIC_VECTOR
-+		seq_printf(p, "SPU: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_spur_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef ERROR_APIC_VECTOR
-+		seq_printf(p, "ERR: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_err_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#ifdef CONFIG_X86_IO_APIC
-+#ifdef APIC_MISMATCH_DEBUG
-+		seq_printf(p, "MIS: ");
-+		for_each_online_cpu(j)
-+			seq_printf(p, "%10u ", atomic_read(&per_cpu(irq_mis_counts, j)));
-+		seq_putc(p, '\n');
-+#endif
-+#endif
- 	}
- 	return 0;
- }
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/mce_amd.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/mce_amd.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/mce_amd.c	2007-07-25 16:07:43.000000000 -0400
-@@ -186,6 +186,8 @@
- 	exit_idle();
- 	irq_enter();
- 
-+	atomic_inc(&__get_cpu_var(irq_threshold_counts));
-+
- 	memset(&m, 0, sizeof(m));
- 	rdtscll(m.tsc);
- 	m.cpu = smp_processor_id();
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/mce_intel.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/mce_intel.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/mce_intel.c	2007-07-25 16:07:43.000000000 -0400
-@@ -21,6 +21,7 @@
- 
- 	exit_idle();
- 	irq_enter();
-+	atomic_inc(&__get_cpu_var(irq_thermal_counts));
- 
- 	rdmsrl(MSR_IA32_THERM_STATUS, msr_val);
- 	if (therm_throt_process(msr_val & 1))
-Index: 2.6.22.1-rt8/include/asm-i386/apic.h
-===================================================================
---- 2.6.22.1-rt8.orig/include/asm-i386/apic.h	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/include/asm-i386/apic.h	2007-07-25 16:07:43.000000000 -0400
-@@ -7,6 +7,7 @@
- #include <asm/apicdef.h>
- #include <asm/processor.h>
- #include <asm/system.h>
-+#include <asm/atomic.h>
- 
- #define Dprintk(x...)
- 
-@@ -118,6 +119,9 @@
- 
- extern void smp_send_nmi_allbutself(void);
- 
-+DECLARE_PER_CPU(atomic_t, irq_spur_counts);
-+DECLARE_PER_CPU(atomic_t, irq_thermal_counts);
-+
- #else /* !CONFIG_X86_LOCAL_APIC */
- static inline void lapic_shutdown(void) { }
- 
-Index: 2.6.22.1-rt8/include/asm-i386/hw_irq.h
-===================================================================
---- 2.6.22.1-rt8.orig/include/asm-i386/hw_irq.h	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/include/asm-i386/hw_irq.h	2007-07-25 16:07:43.000000000 -0400
-@@ -13,6 +13,7 @@
-  */
- 
- #include <linux/profile.h>
-+#include <linux/percpu.h>
- #include <asm/atomic.h>
- #include <asm/irq.h>
- #include <asm/sections.h>
-@@ -58,8 +59,11 @@
- 
- extern unsigned long io_apic_irqs;
- 
--extern atomic_t irq_err_count;
--extern atomic_t irq_mis_count;
-+DECLARE_PER_CPU(atomic_t, irq_resched_counts);
-+DECLARE_PER_CPU(atomic_t, irq_call_counts);
-+DECLARE_PER_CPU(atomic_t, irq_tlb_counts);
-+DECLARE_PER_CPU(atomic_t, irq_err_counts);
-+DECLARE_PER_CPU(atomic_t, irq_mis_counts);
- 
- #define IO_APIC_IRQ(x) (((x) >= 16) || ((1<<(x)) & io_apic_irqs))
- 
-Index: 2.6.22.1-rt8/include/asm-x86_64/apic.h
-===================================================================
---- 2.6.22.1-rt8.orig/include/asm-x86_64/apic.h	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/include/asm-x86_64/apic.h	2007-07-25 16:07:43.000000000 -0400
-@@ -6,6 +6,7 @@
- #include <asm/fixmap.h>
- #include <asm/apicdef.h>
- #include <asm/system.h>
-+#include <asm/atomic.h>
- 
- #define Dprintk(x...)
- 
-@@ -101,4 +102,7 @@
- extern unsigned boot_cpu_id;
- extern int local_apic_timer_c2_ok;
- 
-+DECLARE_PER_CPU(atomic_t, irq_spur_counts);
-+DECLARE_PER_CPU(atomic_t, irq_thermal_counts);
-+
- #endif /* __ASM_APIC_H */
-Index: 2.6.22.1-rt8/include/asm-x86_64/hw_irq.h
-===================================================================
---- 2.6.22.1-rt8.orig/include/asm-x86_64/hw_irq.h	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/include/asm-x86_64/hw_irq.h	2007-07-25 16:07:43.000000000 -0400
-@@ -123,8 +123,12 @@
- 
- extern unsigned long io_apic_irqs;
- 
--extern atomic_t irq_err_count;
--extern atomic_t irq_mis_count;
-+DECLARE_PER_CPU(atomic_t, irq_resched_counts);
-+DECLARE_PER_CPU(atomic_t, irq_call_counts);
-+DECLARE_PER_CPU(atomic_t, irq_tlb_counts);
-+DECLARE_PER_CPU(atomic_t, irq_threshold_counts);
-+DECLARE_PER_CPU(atomic_t, irq_err_counts);
-+DECLARE_PER_CPU(atomic_t, irq_mis_counts);
- 
- #define IO_APIC_IRQ(x) (((x) >= 16) || ((1<<(x)) & io_apic_irqs))
- 
-Index: 2.6.22.1-rt8/arch/x86_64/kernel/smp.c
-===================================================================
---- 2.6.22.1-rt8.orig/arch/x86_64/kernel/smp.c	2007-07-25 16:07:23.000000000 -0400
-+++ 2.6.22.1-rt8/arch/x86_64/kernel/smp.c	2007-07-25 16:07:43.000000000 -0400
-@@ -133,6 +133,8 @@
- 	int sender;
- 	union smp_flush_state *f;
- 
-+	atomic_inc(&__get_cpu_var(irq_tlb_counts));
-+
- 	cpu = smp_processor_id();
- 	/*
- 	 * orig_rax contains the negated interrupt vector.
-@@ -508,6 +510,7 @@
- asmlinkage void smp_reschedule_interrupt(void)
- {
- 	ack_APIC_irq();
-+	atomic_inc(&__get_cpu_var(irq_resched_counts));
- }
- 
- asmlinkage void smp_call_function_interrupt(void)
-@@ -517,6 +520,7 @@
- 	int wait = call_data->wait;
- 
- 	ack_APIC_irq();
-+	atomic_inc(&__get_cpu_var(irq_call_counts));
- 	/*
- 	 * Notify initiating CPU that I've grabbed the data and am
- 	 * about to execute the function
+diff -r e02fd64426b9 include/asm-mips/mipsregs.h
+--- a/include/asm-mips/mipsregs.h	Thu Jul 26 10:33:58 2007 +1000
++++ b/include/asm-mips/mipsregs.h	Thu Jul 26 11:17:35 2007 +1000
+@@ -710,7 +710,7 @@ do {									\
+ 	unsigned long long __val;					\
+ 	unsigned long __flags;						\
+ 									\
+-	local_irq_save(flags);					\
++	local_irq_save(__flags);					\
+ 	if (sel == 0)							\
+ 		__asm__ __volatile__(					\
+ 			".set\tmips64\n\t"				\
+
+--------------050100050505060704070002--
