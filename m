@@ -1,125 +1,124 @@
-From: ankita@in.ibm.com (Ankita Garg)
+From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
 Subject: Re: [Question] Hooks for scheduler tracing (CFS)
-Date: Thu, 26 Jul 2007 18:50:55 +0530
-Message-ID: <20070726132055.GC19398@in.ibm.com>
-References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com> <20070726073520.GA12206@elte.hu> <20070726074957.GA19398@in.ibm.com> <20070726075353.GA19885@elte.hu> <20070726095948.GB19398@in.ibm.com> <20070726110504.GB7673@elte.hu>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+Date: Thu, 26 Jul 2007 09:31:38 -0400
+Message-ID: <20070726133138.GA30559@Krystal>
+References: <3efb10970707161246se06ab22i32872cfe6fa4f2f6@mail.gmail.com> <1184615557.2698.3.camel@laptopd505.fenrus.org> <20070726072858.GC13061@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Cc: Arjan van de Ven <arjan@infradead.org>, linux@bohmer.net,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	mathieu.desnoyers@polymtl.ca
-To: Ingo Molnar <mingo@elte.hu>
+	Ingo Molnar <mingo@elte.hu>
+To: Ankita Garg <ankita@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ausmtp05.au.ibm.com ([202.81.18.154]:59704 "EHLO
-	ausmtp05.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758876AbXGZNVR (ORCPT
+Received: from tomts40.bellnexxia.net ([209.226.175.97]:53130 "EHLO
+	tomts40-srv.bellnexxia.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754429AbXGZNbl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jul 2007 09:21:17 -0400
+	Thu, 26 Jul 2007 09:31:41 -0400
 Content-Disposition: inline
-In-Reply-To: <20070726110504.GB7673@elte.hu>
+In-Reply-To: <20070726072858.GC13061@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ingo,
+See below,
 
-On Thu, Jul 26, 2007 at 01:05:04PM +0200, Ingo Molnar wrote:
+* Ankita Garg (ankita@in.ibm.com) wrote:
+> Hi,
 > 
-> * Ankita Garg <ankita@in.ibm.com> wrote:
+> On Mon, Jul 16, 2007 at 12:52:37PM -0700, Arjan van de Ven wrote:
+> > On Mon, 2007-07-16 at 21:46 +0200, Remy Bohmer wrote:
+> > > So I was wondering if anybody knows some tool/kernel mechanism which
+> > > can do this?
+> > > If not, I will build a kernel extension for it myself (new extension
+> > > to 'latency_trace' ?)
+> > 
+> > systemtap has been able to do such things for me in the past...
 > 
-> >         local_irq_save(flags);
-> >         buf = _stp_chan->buf[smp_processor_id()];
-> >         if (unlikely(buf->offset + length > _stp_chan->subbuf_size))
-> >                 length = relay_switch_subbuf(buf, length);
-> >         memcpy(buf->data + buf->offset, data, length);
-> >         buf->offset += length;
-> >         local_irq_restore(flags);
+> Was trying to capture similar data as mentioned by Remy using Systemtap.
+> The tapset/systemtap script that I used is :
 > 
-> oh, what a fine piece of s^H^H :-/ Who in their right mind calls this 
-> from _tracing_ code:
+> probe kernel.function("balance_rt_tasks").inline {
+>         printf("%s (pid: %d, tid: %d argstr: %s ) \n", execname(),
+> pid(), tid(), argstr);
+> }
 > 
->                 smp_mb();
->                 if (waitqueue_active(&buf->read_wait))
->                         /*
->                          * Calling wake_up_interruptible() from here
->                          * will deadlock if we happen to be logging
->                          * from the scheduler (trying to re-grab
->                          * rq->lock), so defer it.
->                          */
->                         __mod_timer(&buf->timer, jiffies + 1);
+> The probe point did get triggered, and soon after that I had the
+> following in dmesg, leading to system hang...
 > 
-> and the comment is utter rubbish: __mod_timer() can lock up just as 
-> much. Just use an adaptive-polling method to drive the draining of the 
-> relay buffer, instead of mucking with timers from within the tracing 
-> code. Whoever implemented this has absolutely zero clue i have to say 
-> ...
+> BUG: scheduling while atomic: softirq-rcu/3/0x00000004/52, CPU#3
 > 
-> the smp_mb() is rubbish too.
-> 
-> could you try the patch below, does it fix the problem?
+> Call Trace:
+>  <#DB>  [<ffffffff81033555>] __schedule_bug+0x4b/0x4f
+>  [<ffffffff8128b414>] __sched_text_start+0xcc/0xaaa
+>  [<ffffffff8100b574>] dump_trace+0x248/0x25d
+>  [<ffffffff81068334>] print_traces+0x9/0xb
+>  [<ffffffff8100b5e5>] show_trace+0x5c/0x64
+>  [<ffffffff8128c1c2>] schedule+0xe4/0x104
+>  [<ffffffff8128d10c>] rt_spin_lock_slowlock+0xfc/0x19e
+>  [<ffffffff8128d9de>] __rt_spin_lock+0x1f/0x21
+>  [<ffffffff8128d9e9>] rt_spin_lock+0x9/0xb
+>  [<ffffffff88387dcc>]
+> :stap_c1a10b1292b5f87a563f56d89ddfc765_606:_stp_print_flush+0x5f/0xdf
 
-This patch did not fix my problem. I still get similar traces...
+The problem is also in _stp_print_flush, not *only* in relay code:
 
+void _stp_print_flush (void)
+...
+                spin_lock(&_stp_print_lock);
+                ...
+                spin_unlock(&_stp_print_lock);
+
+Those will turn into mutexes with -rt.
+
+Mathieu
+
+
+>  [<ffffffff88389e41>]
+> :stap_c1a10b1292b5f87a563f56d89ddfc765_606:probe_1493+0x1f6/0x257
+>  [<ffffffff8838bdc3>]
+> :stap_c1a10b1292b5f87a563f56d89ddfc765_606:enter_kprobe_probe+0x105/0x22a
+>  [<ffffffff8128b511>] __sched_text_start+0x1c9/0xaaa
+>  [<ffffffff8128f8ee>] kprobe_handler+0x1b3/0x1f5
+>  [<ffffffff8128f96b>] kprobe_exceptions_notify+0x3b/0x7f
+>  [<ffffffff81290604>] notifier_call_chain+0x33/0x5b
+>  [<ffffffff810461d5>] __raw_notifier_call_chain+0x9/0xb
+>  [<ffffffff810461e6>] raw_notifier_call_chain+0xf/0x11
+>  [<ffffffff8105098b>] notify_die+0x2e/0x33
+>  [<ffffffff8128ef6d>] do_int3+0x30/0x8d
+>  [<ffffffff8128e8a3>] int3+0x93/0xb0
+>  [<ffffffff8128b512>] __sched_text_start+0x1ca/0xaaa
+>  <<EOE>>  [<ffffffff8107b585>] __free_pages+0x18/0x21
+>  [<ffffffff8107b5e3>] free_pages+0x55/0x5a
+>  [<ffffffff8109945d>] kmem_freepages+0x112/0x11b
+>  [<ffffffff8128c1c2>] schedule+0xe4/0x104
+>  [<ffffffff8103edf5>] ksoftirqd+0xbc/0x26f
+>  [<ffffffff8103ed39>] ksoftirqd+0x0/0x26f
+>  [<ffffffff8103ed39>] ksoftirqd+0x0/0x26f
+>  [<ffffffff8104c917>] kthread+0x49/0x76
+>  [<ffffffff8100af18>] child_rip+0xa/0x12
+>  [<ffffffff8128be67>] thread_return+0x75/0x1d5
+>  [<ffffffff8104c8ce>] kthread+0x0/0x76
+>  [<ffffffff8100af0e>] child_rip+0x0/0x12
 > 
-> 	Ingo
+> Looks like printing the data in the tapset resulted in some lock
+> issues. The above script is just one of the many probe points that I
+> tried. In all cases, printing data from within the probe point resulted in the 
+> hang (as when I do the printing at the time the script is stopped,
+> everything works just fine!).
 > 
-> ------------------------------------->
-> Subject: relay: fix timer madness
-> From: Ingo Molnar <mingo@elte.hu>
+> Any idea why this could be happening? An -rt issue or systemtap bug??
 > 
-> remove timer calls (!!!) from deep within the tracing infrastructure.
-> This was totally bogus code that can cause lockups and worse.
-> Poll the buffer every 2 jiffies for now.
 > 
-> Signed-off-by: Ingo Molnar <mingo@elte.hu>
-> ---
->  kernel/relay.c |   14 +++++---------
->  1 file changed, 5 insertions(+), 9 deletions(-)
-> 
-> Index: linux-rt-rebase.q/kernel/relay.c
-> ===================================================================
-> --- linux-rt-rebase.q.orig/kernel/relay.c
-> +++ linux-rt-rebase.q/kernel/relay.c
-> @@ -319,6 +319,10 @@ static void wakeup_readers(unsigned long
->  {
->  	struct rchan_buf *buf = (struct rchan_buf *)data;
->  	wake_up_interruptible(&buf->read_wait);
-> +	/*
-> +	 * Stupid polling for now:
-> +	 */
-> +	mod_timer(&buf->timer, jiffies + 1);
->  }
-> 
->  /**
-> @@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
->  		init_waitqueue_head(&buf->read_wait);
->  		kref_init(&buf->kref);
->  		setup_timer(&buf->timer, wakeup_readers, (unsigned long)buf);
-> +		mod_timer(&buf->timer, jiffies + 1);
->  	} else
->  		del_timer_sync(&buf->timer);
-> 
-> @@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
->  		buf->subbufs_produced++;
->  		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
->  			buf->padding[old_subbuf];
-> -		smp_mb();
-> -		if (waitqueue_active(&buf->read_wait))
-> -			/*
-> -			 * Calling wake_up_interruptible() from here
-> -			 * will deadlock if we happen to be logging
-> -			 * from the scheduler (trying to re-grab
-> -			 * rq->lock), so defer it.
-> -			 */
-> -			__mod_timer(&buf->timer, jiffies + 1);
->  	}
-> 
->  	old = buf->data;
+> -- 
+> Regards,
+> Ankita Garg (ankita@in.ibm.com)
+> Linux Technology Center
+> IBM India Systems & Technology Labs, 
+> Bangalore, India   
 
 -- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+Mathieu Desnoyers
+Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
