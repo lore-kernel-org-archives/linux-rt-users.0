@@ -1,45 +1,70 @@
 From: Daniel Walker <dwalker@mvista.com>
-Subject: [PATCH -rt 4/9] ifdef raise_softirq_irqoff wakeup
-Date: Sun, 29 Jul 2007 19:45:38 -0700
-Message-ID: <20070730024719.782847315@mvista.com>
+Subject: [PATCH -rt 6/9] spinlock/rt_lock random cleanups
+Date: Sun, 29 Jul 2007 19:45:40 -0700
+Message-ID: <20070730024720.357083990@mvista.com>
 References: <20070730024534.369897977@mvista.com>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:41611 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:41609 "EHLO
 	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S936593AbXG3CrW (ORCPT
+	with ESMTP id S936573AbXG3CrW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Sun, 29 Jul 2007 22:47:22 -0400
-Content-Disposition: inline; filename=softirq-raise-wakeup-fix.patch
+Content-Disposition: inline; filename=locking-cleanup.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-raise_softirq is called every timer interrupt in run_local_timers(),
-which causes a thread wakeup to happen every timer interrupt. This
-happens in !CONFIG_PREEMPT_SOFTIRQS, which means the wakeup is most
-likely not needed. In addition it also fouls calc_load() since it's,
-agian, observing at least one thread running on every invocation.
-
 Signed-off-by: Daniel Walker <dwalker@mvista.com>
- 
----
- kernel/softirq.c |    2 ++
- 1 file changed, 2 insertions(+)
 
-Index: linux-2.6.22/kernel/softirq.c
+---
+ include/linux/rt_lock.h  |    6 ++++--
+ include/linux/spinlock.h |    5 +++--
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+Index: linux-2.6.22/include/linux/rt_lock.h
 ===================================================================
---- linux-2.6.22.orig/kernel/softirq.c
-+++ linux-2.6.22/kernel/softirq.c
-@@ -508,7 +508,9 @@ inline fastcall void raise_softirq_irqof
- {
- 	__do_raise_softirq_irqoff(nr);
+--- linux-2.6.22.orig/include/linux/rt_lock.h
++++ linux-2.6.22/include/linux/rt_lock.h
+@@ -128,12 +128,14 @@ struct semaphore name = \
+  */
+ #define DECLARE_MUTEX_LOCKED COMPAT_DECLARE_MUTEX_LOCKED
  
-+#ifdef CONFIG_PREEMPT_SOFTIRQS
- 	wakeup_softirqd(nr);
-+#endif
- }
+-extern void fastcall __sema_init(struct semaphore *sem, int val, char *name, char *file, int line);
++extern void fastcall
++__sema_init(struct semaphore *sem, int val, char *name, char *file, int line);
  
- EXPORT_SYMBOL(raise_softirq_irqoff);
+ #define rt_sema_init(sem, val) \
+ 		__sema_init(sem, val, #sem, __FILE__, __LINE__)
+ 
+-extern void fastcall __init_MUTEX(struct semaphore *sem, char *name, char *file, int line);
++extern void fastcall
++__init_MUTEX(struct semaphore *sem, char *name, char *file, int line);
+ #define rt_init_MUTEX(sem) \
+ 		__init_MUTEX(sem, #sem, __FILE__, __LINE__)
+ 
+Index: linux-2.6.22/include/linux/spinlock.h
+===================================================================
+--- linux-2.6.22.orig/include/linux/spinlock.h
++++ linux-2.6.22/include/linux/spinlock.h
+@@ -126,7 +126,7 @@ extern int __lockfunc generic__raw_read_
+ 
+ #ifdef CONFIG_DEBUG_SPINLOCK
+  extern __lockfunc void _raw_spin_lock(raw_spinlock_t *lock);
+-#define _raw_spin_lock_flags(lock, flags) _raw_spin_lock(lock)
++# define _raw_spin_lock_flags(lock, flags) _raw_spin_lock(lock)
+  extern __lockfunc int _raw_spin_trylock(raw_spinlock_t *lock);
+  extern __lockfunc void _raw_spin_unlock(raw_spinlock_t *lock);
+  extern __lockfunc void _raw_read_lock(raw_rwlock_t *lock);
+@@ -325,7 +325,8 @@ do {							\
+ 
+ # define _read_trylock(rwl)	rt_read_trylock(rwl)
+ # define _write_trylock(rwl)	rt_write_trylock(rwl)
+-#define _write_trylock_irqsave(rwl, flags)  rt_write_trylock_irqsave(rwl, flags)
++# define _write_trylock_irqsave(rwl, flags) \
++	rt_write_trylock_irqsave(rwl, flags)
+ 
+ # define _read_lock(rwl)	rt_read_lock(rwl)
+ # define _write_lock(rwl)	rt_write_lock(rwl)
 
 -- 
