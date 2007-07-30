@@ -1,55 +1,37 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH -rt 1/9] preempt rcu: check for underflow
-Date: Sun, 29 Jul 2007 22:26:53 -0700
-Message-ID: <20070730052653.GD26610@linux.vnet.ibm.com>
-References: <20070730024534.369897977@mvista.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: "Girish kathalagiri" <girish.sk@gmail.com>
+Subject: Re: BUG: scheduling while atomic: stress
+Date: Mon, 30 Jul 2007 05:37:17 +0000
+Message-ID: <34ac6d890707292237t591af349i5a0144afda98d091@mail.gmail.com>
+References: <34ac6d890707260635m1d1165d1m5e01b7faa925e86c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:52733 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761049AbXG3F05 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jul 2007 01:26:57 -0400
+Received: from an-out-0708.google.com ([209.85.132.241]:44593 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756505AbXG3FhS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 30 Jul 2007 01:37:18 -0400
+Received: by an-out-0708.google.com with SMTP id d31so259720and
+        for <linux-rt-users@vger.kernel.org>; Sun, 29 Jul 2007 22:37:17 -0700 (PDT)
+In-Reply-To: <34ac6d890707260635m1d1165d1m5e01b7faa925e86c@mail.gmail.com>
 Content-Disposition: inline
-In-Reply-To: <20070730024534.369897977@mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, Jul 29, 2007 at 07:45:35PM -0700, Daniel Walker wrote:
-> Simple WARN_ON to catch any underflow in rcu_read_lock_nesting.
-> 
-> Signed-off-by: Daniel Walker <dwalker@mvista.com>
+> ./stress --cpu 8 --io 4 --vm 2 --vm-bytes 2M --timeout 300s
+The problem seems to be caused by the vm part of the stress code.
+When I run this with vm = 1 it works fine , when the vm thread is
+increased it causes the problem.
+The thread does sync
 
-Acked-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+while (1){
+   sync ();
+ }
 
-> ---
->  kernel/rcupreempt.c |    6 ++++++
->  1 file changed, 6 insertions(+)
-> 
-> Index: linux-2.6.22/kernel/rcupreempt.c
-> ===================================================================
-> --- linux-2.6.22.orig/kernel/rcupreempt.c
-> +++ linux-2.6.22/kernel/rcupreempt.c
-> @@ -157,6 +157,12 @@ void __rcu_read_unlock(void)
->  	}
-> 
->  	local_irq_restore(oldirq);
-> +
-> +	/*
-> +	 * If our rcu_read_lock_nesting went negative, likely
-> +	 * something is wrong..
-> +	 */
-> +	WARN_ON(current->rcu_read_lock_nesting < 0);
->  }
-> 
->  static void __rcu_advance_callbacks(void)
-> 
-> -- 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Anyone got any suggestions.
+Thanks in advance
+
+Regards
+Giri
