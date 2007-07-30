@@ -1,64 +1,26 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: Re: [PATCH] create /proc/all-interrupts
-Date: Mon, 30 Jul 2007 15:42:06 -0400
-Message-ID: <20070730194206.GA17509@tsunami.ccur.com>
-References: <20070726180522.GA1486@tsunami.ccur.com> <46A8EE78.4040702@zytor.com> <1185816797.3170.1.camel@sven.thebigcorporation.com> <20070730123206.abeab890.akpm@linux-foundation.org>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/2] VFCIPI support v2
+Date: Mon, 30 Jul 2007 17:15:34 -0400
+Message-ID: <20070730211350.5162.99143.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, jason.baietto@ccur.com
-To: Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: ghaskins@novell.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from users.ccur.com ([66.10.65.2]:54388 "EHLO gamx.iccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1763081AbXG3Tnd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jul 2007 15:43:33 -0400
-Content-Disposition: inline
-In-Reply-To: <20070730123206.abeab890.akpm@linux-foundation.org>
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:50651
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S938872AbXG3VPr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 30 Jul 2007 17:15:47 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jul 30, 2007 at 12:32:06PM -0700, Andrew Morton wrote:
-> On Mon, 30 Jul 2007 10:33:17 -0700
-> Sven-Thorsten Dietrich <sdietrich@novell.com> wrote:
-> > On Thu, 2007-07-26 at 11:56 -0700, H. Peter Anvin wrote: 
-> > > Joe Korty wrote:
-> > > > Create /proc/all-interrupts for some architectures.
+The following series Virtual Function-Call IPI support.  Changes from v1:
 
-> > Would it make sense to drop this patch into -mm for feedback?
-> > 
-> 
-> It's a lot of code for something which might be useful to someone sometime.
-> 
-> It's a bit of a crappy changelog too.  I'd at least like to see a list of
-> all the new fields.
-> 
-> It should be OK to add new lines to /proc/interrupts?  That file varies a
-> lot between machines adn between architectures - as long as the new lines
-> have similar layout it is unlikely that anything will break.
-> 
-> +	atomic_inc(&__get_cpu_var(irq_thermal_counts));
-> 
-> The patch does atomic ops on cpu-local variables.  This isn't needed, and
-> is expensive.
-> 
-> If the field is only ever modified from hard interrupt context then you can
-> make the field unsigned long and use plain old `foo++'.
-> 
-> If the field is modified from both hard-IRQ and from non-IRQ then use a
-> local_t and local_inc.
-> 
-> Or even, given that this is just a statistic and grrat precision is not
-> needed, use unsigned long and f++ even if that _is_ racy.  Because the
-> consequences of a race will just be a single lost count, which we dont'
-> care about enough to add the additional overhead of an atomic op.
+1) Support for platforms other than x86_64
+2) Support for priority-inheritance.
 
-Hi Andrew,
-Thanks for the comments.  I'll, at least, make the changes you suggested.
+Built/tested on x86_64 four-way SMP machine.  Other platforms untested.
 
-(the /proc/interrupts version has the benefit of being smaller too).
-
-Joe
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
