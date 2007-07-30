@@ -1,37 +1,43 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: System clock frequency offset changes drastically across reboots
-Date: Fri, 27 Jul 2007 13:56:42 +0200
-Message-ID: <46A9DD7A.80104@free.fr>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: [PATCH -rt 1/9] preempt rcu: check for underflow
+Date: Sun, 29 Jul 2007 19:45:35 -0700
+Message-ID: <20070730024534.369897977@mvista.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:51791 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759268AbXG0L5M (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jul 2007 07:57:12 -0400
+Received: from gateway-1237.mvista.com ([63.81.120.158]:41605 "EHLO
+	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1754109AbXG3CrW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 29 Jul 2007 22:47:22 -0400
+Content-Disposition: inline; filename=add-warn-on-rcu-read-unlock-imbalance.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello everyone,
+Simple WARN_ON to catch any underflow in rcu_read_lock_nesting.
 
-I'm using 2.6.20.7-rt8 on a P3.
+Signed-off-by: Daniel Walker <dwalker@mvista.com>
 
-I've noticed that the frequency offset of my system clock (computed 
-either by ntpd, or by hand) changes drastically across reboots.
+---
+ kernel/rcupreempt.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
 
-By drastically, I mean +/- 60 ppm every time I reboot.
+Index: linux-2.6.22/kernel/rcupreempt.c
+===================================================================
+--- linux-2.6.22.orig/kernel/rcupreempt.c
++++ linux-2.6.22/kernel/rcupreempt.c
+@@ -157,6 +157,12 @@ void __rcu_read_unlock(void)
+ 	}
+ 
+ 	local_irq_restore(oldirq);
++
++	/*
++	 * If our rcu_read_lock_nesting went negative, likely
++	 * something is wrong..
++	 */
++	WARN_ON(current->rcu_read_lock_nesting < 0);
+ }
+ 
+ static void __rcu_advance_callbacks(void)
 
-Apparently this is caused by some imprecision in the frequency 
-estimation done in calculate_cpu_khz() (arch/i386/kernel/tsc.c)
-
-My brutally crude work-around was to skip the computation altogether and 
-hard-code the "correct" value for cpu_khz.
-
-http://linux.kernel.free.fr/cpu_khz.adlink
-
-Has this issue been investigated more thoroughly by other users?
-
-Regards.
+-- 
