@@ -1,34 +1,76 @@
-From: Dragan Noveski <perodog@gmx.net>
-Subject: wrong system time with 2.6.22.1-rt9
-Date: Mon, 30 Jul 2007 17:33:11 +0200
-Message-ID: <46AE04B7.80102@gmx.net>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH -rt 6/9] spinlock/rt_lock random cleanups
+Date: Mon, 30 Jul 2007 08:48:16 -0700
+Message-ID: <1185810496.2636.14.camel@imap.mvista.com>
+References: <20070730024534.369897977@mvista.com>
+	 <20070730024720.357083990@mvista.com>  <20070730045804.GA7124@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Ankita Garg <ankita@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:37643 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1756147AbXG3Ndb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jul 2007 09:33:31 -0400
+Received: from gateway-1237.mvista.com ([63.81.120.158]:11537 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759242AbXG3P6p (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 30 Jul 2007 11:58:45 -0400
+In-Reply-To: <20070730045804.GA7124@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-hi to the list,
-since i managed to compile my kernel with high-res-timer and tickless 
-option (2.6.21 series), the system time is always displaying wrong time, 
-so if it is 2 o'clock, the time showed will be 4 o'clock.
-for being able to run stable with high-res.timers and tickless option, i 
-configured the acpi stuff as explained in 
-'http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO'.
-if i adjust the time now in the bios or via gnome-control-center, on the 
-next reboot the time again will be wrong.
-i do not realize any other issues with the 2.6.22.1-rt9, it runs very 
-smooth and stable, although my setup is not that much complicated 
-(ibm-thinkpad-R50e, rme-multiface, debian-lenny).
-i could provide you every information you think it could help to resolve 
-that clock issue, so if any one has any idea, just ask me and i will 
-answer everything about the configuration here.
+On Mon, 2007-07-30 at 10:28 +0530, Ankita Garg wrote:
+> On Sun, Jul 29, 2007 at 07:45:40PM -0700, Daniel Walker wrote:
+> > Signed-off-by: Daniel Walker <dwalker@mvista.com>
+> > 
+> > ---
+> >  include/linux/rt_lock.h  |    6 ++++--
+> >  include/linux/spinlock.h |    5 +++--
+> >  2 files changed, 7 insertions(+), 4 deletions(-)
+> > 
+> > Index: linux-2.6.22/include/linux/rt_lock.h
+> > ===================================================================
+> > --- linux-2.6.22.orig/include/linux/rt_lock.h
+> > +++ linux-2.6.22/include/linux/rt_lock.h
+> > @@ -128,12 +128,14 @@ struct semaphore name = \
+> >   */
+> >  #define DECLARE_MUTEX_LOCKED COMPAT_DECLARE_MUTEX_LOCKED
+> > 
+> > -extern void fastcall __sema_init(struct semaphore *sem, int val, char *name, char *file, int line);
+> > +extern void fastcall
+> > +__sema_init(struct semaphore *sem, int val, char *name, char *file, int line);
+> > 
+> >  #define rt_sema_init(sem, val) \
+> >  		__sema_init(sem, val, #sem, __FILE__, __LINE__)
+> > 
+> > -extern void fastcall __init_MUTEX(struct semaphore *sem, char *name, char *file, int line);
+> > +extern void fastcall
+> > +__init_MUTEX(struct semaphore *sem, char *name, char *file, int line);
+> >  #define rt_init_MUTEX(sem) \
+> >  		__init_MUTEX(sem, #sem, __FILE__, __LINE__)
+> > 
+> > Index: linux-2.6.22/include/linux/spinlock.h
+> > ===================================================================
+> > --- linux-2.6.22.orig/include/linux/spinlock.h
+> > +++ linux-2.6.22/include/linux/spinlock.h
+> > @@ -126,7 +126,7 @@ extern int __lockfunc generic__raw_read_
+> > 
+> >  #ifdef CONFIG_DEBUG_SPINLOCK
+> >   extern __lockfunc void _raw_spin_lock(raw_spinlock_t *lock);
+> > -#define _raw_spin_lock_flags(lock, flags) _raw_spin_lock(lock)
+> > +# define _raw_spin_lock_flags(lock, flags) _raw_spin_lock(lock)
+> 
+> Any reason behind including a space here?
 
-cheers,
-doc
+Yes . Sometimes a space is added when a define is embedded inside
+#ifdefs , example below.
+
+#ifdef CONFIG_DEBUG_SPINLOCK
+# define DEBUG_MACRO do_somedebug_here()
+#endif
+
+That's usually the method Ingo uses, and it matches the code surrounding
+it in this particular patch.
+
+Daniel
