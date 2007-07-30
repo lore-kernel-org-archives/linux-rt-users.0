@@ -1,310 +1,359 @@
 From: Daniel Walker <dwalker@mvista.com>
-Subject: [PATCH -rt 9/9] seqlocks: use PICK_FUNCTION
-Date: Sun, 29 Jul 2007 19:45:43 -0700
-Message-ID: <20070730024721.274774887@mvista.com>
-References: <20070730024534.369897977@mvista.com>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: mingo@elte.hu
+Subject: v2.6.23-rc1-rt6-dw1
+Date: Sun, 29 Jul 2007 20:22:20 -0700
+Message-ID: <1185765740.2636.2.camel@imap.mvista.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:41616 "EHLO
-	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S936595AbXG3CrX (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:44741 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933427AbXG3DcZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 29 Jul 2007 22:47:23 -0400
-Content-Disposition: inline; filename=pickop-seqlocks.patch
+	Sun, 29 Jul 2007 23:32:25 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Replace the old PICK_OP style macros with PICK_FUNCTION. Although,
-seqlocks has some alien code, which I also replaced as can be seen
-from the line count below.
 
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
+I've released another version of the real-time tree. It's just a
+slightly more bisectable tree, and it includes the fixes I've just
+released.
 
----
- include/linux/seqlock.h |  234 +++++++++++++++++++++++++++---------------------
- 1 file changed, 134 insertions(+), 100 deletions(-)
+You can download a combined patch from, 
 
-Index: linux-2.6.22/include/linux/seqlock.h
-===================================================================
---- linux-2.6.22.orig/include/linux/seqlock.h
-+++ linux-2.6.22/include/linux/seqlock.h
-@@ -90,6 +90,12 @@ static inline void __write_seqlock(seqlo
- 	smp_wmb();
- }
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc1-rt6-dw1
+
+Or a broken out set from,
+
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc1-rt6-dw1.tar.gz
+
+Below I've included a per patch delta (as good as interdiff can make).
+In the hopes that it will help integration. The changes are additions to
+preempt-realtime-sched.patch which are extracted from patches later in
+the series. This allow preempt-realtime-sched.patch to compile
+standalone .. There was also a stray hunk in the version.patch which I
+moved to another location. 
+
+:: start series ::
+--- tmp/patches/series	2007-07-26 14:47:21.000000000 -0700
++++ patches/series	2007-07-29 19:48:07.000000000 -0700
+@@ -670,3 +670,12 @@
+ schedule_on_each_cpu-enhance.patch
+ schedule_on_each_cpu-enhance-rt.patch
+ version.patch
++add-warn-on-rcu-read-unlock-imbalance.patch
++preempt-hardirqs-selects-preempt-softirqs.patch
++initialize-last_tick-in-calc_load.patch
++softirq-raise-wakeup-fix.patch
++preempt-realtime-net-mismerge.patch
++locking-cleanup.patch
++pickop-rt_lock_h.patch
++pickop-spinlock-rwlocks.patch
++pickop-seqlocks.patch
+:: end series ::
+:: start preempt-realtime-i386.patch ::
+--- linux-2.6.22.orig/include/linux/smp.h	2007-07-27 00:20:49.000000000 +0000
++++ linux-2.6.22/include/linux/smp.h	2007-07-27 00:20:50.000000000 +0000
+@@ -33,6 +33,16 @@ extern void smp_send_stop(void);
+  */
+ extern void smp_send_reschedule(int cpu);
  
-+static __always_inline unsigned long __write_seqlock_irqsave(seqlock_t *sl)
-+{
-+	__write_seqlock(sl);
-+	return 0;
-+}
-+
- static inline void __write_sequnlock(seqlock_t *sl)
- {
- 	smp_wmb();
-@@ -97,6 +103,8 @@ static inline void __write_sequnlock(seq
- 	spin_unlock(&sl->lock);
- }
- 
-+#define __write_sequnlock_irqrestore(sl, flags)	__write_sequnlock(sl)
-+
- static inline int __write_tryseqlock(seqlock_t *sl)
- {
- 	int ret = spin_trylock(&sl->lock);
-@@ -149,6 +157,28 @@ static __always_inline void __write_seql
- 	smp_wmb();
- }
- 
-+static __always_inline unsigned long
-+__write_seqlock_irqsave_raw(raw_seqlock_t *sl)
-+{
-+	unsigned long flags;
-+
-+	local_irq_save(flags);
-+	__write_seqlock_raw(sl);
-+	return flags;
-+}
-+
-+static __always_inline void __write_seqlock_irq_raw(raw_seqlock_t *sl)
-+{
-+	local_irq_disable();
-+	__write_seqlock_raw(sl);
-+}
-+
-+static __always_inline void __write_seqlock_bh_raw(raw_seqlock_t *sl)
-+{
-+	local_bh_disable();
-+	__write_seqlock_raw(sl);
-+}
-+
- static __always_inline void __write_sequnlock_raw(raw_seqlock_t *sl)
- {
- 	smp_wmb();
-@@ -156,6 +186,27 @@ static __always_inline void __write_sequ
- 	spin_unlock(&sl->lock);
- }
- 
-+static __always_inline void
-+__write_sequnlock_irqrestore_raw(raw_seqlock_t *sl, unsigned long flags)
-+{
-+	__write_sequnlock_raw(sl);
-+	local_irq_restore(flags);
-+	preempt_check_resched();
-+}
-+
-+static __always_inline void __write_sequnlock_irq_raw(raw_seqlock_t *sl)
-+{
-+	__write_sequnlock_raw(sl);
-+	local_irq_enable();
-+	preempt_check_resched();
-+}
-+
-+static __always_inline void __write_sequnlock_bh_raw(raw_seqlock_t *sl)
-+{
-+	__write_sequnlock_raw(sl);
-+	local_bh_enable();
-+}
-+
- static __always_inline int __write_tryseqlock_raw(raw_seqlock_t *sl)
- {
- 	int ret = spin_trylock(&sl->lock);
-@@ -182,60 +233,92 @@ static __always_inline int __read_seqret
- 
- extern int __bad_seqlock_type(void);
- 
--#define PICK_SEQOP(op, lock)					\
 +/*
-+ * PICK_SEQ_OP() is a small redirector to allow less typing of the lock
-+ * types raw_seqlock_t, seqlock_t, at the front of the PICK_FUNCTION
-+ * macro.
++ * trigger a reschedule on all other CPUs:
 + */
-+#define PICK_SEQ_OP(...) PICK_FUNCTION(raw_seqlock_t, seqlock_t, ##__VA_ARGS__)
-+#define PICK_SEQ_OP_RET(...) \
-+	PICK_FUNCTION_RET(raw_seqlock_t, seqlock_t, ##__VA_ARGS__)
++extern void smp_send_reschedule_allbutself(void);
 +
-+#define write_seqlock(sl) PICK_SEQ_OP(__write_seqlock_raw, __write_seqlock, sl)
++/*
++ * trigger a reschedule on all other CPUs:
++ */
++extern void smp_send_reschedule_allbutself(void);
 +
-+#define write_sequnlock(sl)	\
-+	PICK_SEQ_OP(__write_sequnlock_raw, __write_sequnlock, sl)
-+
-+#define write_tryseqlock(sl)	\
-+	PICK_SEQ_OP_RET(__write_tryseqlock_raw, __write_tryseqlock, sl)
-+
-+#define read_seqbegin(sl) 	\
-+	PICK_SEQ_OP_RET(__read_seqbegin_raw, __read_seqbegin, sl)
-+
-+#define read_seqretry(sl, iv)	\
-+	PICK_SEQ_OP_RET(__read_seqretry_raw, __read_seqretry, sl, iv)
-+
-+#define write_seqlock_irqsave(lock, flags)			\
- do {								\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
--		op##_raw((raw_seqlock_t *)(lock));		\
--	else if (TYPE_EQUAL((lock), seqlock_t))			\
--		op((seqlock_t *)(lock));			\
--	else __bad_seqlock_type();				\
-+	flags = PICK_SEQ_OP_RET(__write_seqlock_irqsave_raw,	\
-+		__write_seqlock_irqsave, lock);			\
- } while (0)
- 
--#define PICK_SEQOP_RET(op, lock)				\
--({								\
--	unsigned long __ret;					\
--								\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
--		__ret = op##_raw((raw_seqlock_t *)(lock));	\
--	else if (TYPE_EQUAL((lock), seqlock_t))			\
--		__ret = op((seqlock_t *)(lock));		\
--	else __ret = __bad_seqlock_type();			\
--								\
--	__ret;							\
--})
--
--#define PICK_SEQOP_CONST_RET(op, lock)				\
--({								\
--	unsigned long __ret;					\
--								\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
--		__ret = op##_raw((const raw_seqlock_t *)(lock));\
--	else if (TYPE_EQUAL((lock), seqlock_t))			\
--		__ret = op((seqlock_t *)(lock));		\
--	else __ret = __bad_seqlock_type();			\
--								\
--	__ret;							\
--})
--
--#define PICK_SEQOP2_CONST_RET(op, lock, arg)				\
-- ({									\
--	unsigned long __ret;						\
--									\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))				\
--		__ret = op##_raw((const raw_seqlock_t *)(lock), (arg));	\
--	else if (TYPE_EQUAL((lock), seqlock_t))				\
--		__ret = op((seqlock_t *)(lock), (arg));			\
--	else __ret = __bad_seqlock_type();				\
--									\
--	__ret;								\
--})
--
--
--#define write_seqlock(sl)	PICK_SEQOP(__write_seqlock, sl)
--#define write_sequnlock(sl)	PICK_SEQOP(__write_sequnlock, sl)
--#define write_tryseqlock(sl)	PICK_SEQOP_RET(__write_tryseqlock, sl)
--#define read_seqbegin(sl)	PICK_SEQOP_CONST_RET(__read_seqbegin, sl)
--#define read_seqretry(sl, iv)	PICK_SEQOP2_CONST_RET(__read_seqretry, sl, iv)
-+#define write_seqlock_irq(lock)	\
-+	PICK_SEQ_OP(__write_seqlock_irq_raw, __write_seqlock, lock)
-+
-+#define write_seqlock_bh(lock)	\
-+	PICK_SEQ_OP(__write_seqlock_bh_raw, __write_seqlock, lock)
-+
-+#define write_sequnlock_irqrestore(lock, flags)		\
-+	PICK_SEQ_OP(__write_sequnlock_irqrestore_raw,	\
-+		__write_sequnlock_irqrestore, lock, flags)
-+
-+#define write_sequnlock_bh(lock)	\
-+	PICK_SEQ_OP(__write_sequnlock_bh_raw, __write_sequnlock, lock)
-+
-+#define write_sequnlock_irq(lock)	\
-+	PICK_SEQ_OP(__write_sequnlock_irq_raw, __write_sequnlock, lock)
-+
-+static __always_inline
-+unsigned long __read_seqbegin_irqsave_raw(raw_seqlock_t *sl)
-+{
-+	unsigned long flags;
-+
-+	local_irq_save(flags);
-+	__read_seqbegin_raw(sl);
-+	return flags;
-+}
-+
-+static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
-+{
-+	__read_seqbegin(sl);
-+	return 0;
-+}
-+
-+#define read_seqbegin_irqsave(lock, flags)			\
-+do {								\
-+	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
-+		__read_seqbegin_irqsave, lock);			\
-+} while (0)
-+
-+static __always_inline int
-+__read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
-+{
-+	return __read_seqretry(sl, iv);
-+}
-+
-+static __always_inline int
-+__read_seqretry_irqrestore_raw(raw_seqlock_t *sl, unsigned iv,
-+			       unsigned long flags)
-+{
-+	int ret = read_seqretry(sl, iv);
-+	local_irq_restore(flags);
-+	preempt_check_resched();
-+	return ret;
-+}
-+
-+#define read_seqretry_irqrestore(lock, iv, flags)			\
-+	PICK_SEQ_OP_RET(__read_seqretry_irqrestore_raw, 		\
-+		__read_seqretry_irqrestore, lock, iv, flags)
  
  /*
-  * Version using sequence counter only.
-@@ -286,53 +369,4 @@ static inline void write_seqcount_end(se
- 	smp_wmb();
- 	s->sequence++;
+  * Prepare machine for booting other CPUs.
+@@ -97,6 +107,7 @@ static inline int up_smp_call_function(v
+ 		0;				\
+ 	})
+ static inline void smp_send_reschedule(int cpu) { }
++static inline void smp_send_reschedule_allbutself(void) { }
+ #define num_booting_cpus()			1
+ #define smp_prepare_boot_cpu()			do {} while (0)
+ #define smp_call_function_single(cpuid, func, info, retry, wait) \
+:: end preempt-realtime-i386.patch ::
+:: start preempt-realtime-sched.patch ::
+--- linux-2.6.22.orig/include/linux/kernel.h
++++ linux-2.6.22/include/linux/kernel.h
+@@ -88,7 +88,7 @@ extern int cond_resched(void);
+ # define might_resched() do { } while (0)
+ #endif
+ 
+-#ifdef CONFIG_DEBUG_SPINLOCK_SLEEP
++#if defined(CONFIG_DEBUG_SPINLOCK_SLEEP) || defined(CONFIG_DEBUG_PREEMPT)
+   void __might_sleep(char *file, int line);
+ # define might_sleep() \
+ 	do { __might_sleep(__FILE__, __LINE__); might_resched(); } while (0)
+@@ -198,6 +198,7 @@ extern void add_taint(unsigned);
+ /* Values used for system_state */
+ extern enum system_states {
+ 	SYSTEM_BOOTING,
++	SYSTEM_BOOTING_SCHEDULER_OK,
+ 	SYSTEM_RUNNING,
+ 	SYSTEM_HALT,
+ 	SYSTEM_POWER_OFF,
+--- linux-2.6.22.orig/init/main.c
++++ linux-2.6.22/init/main.c
+@@ -438,6 +438,8 @@ static void noinline __init_refok rest_i
+ {
+ 	int pid;
+ 
++	system_state = SYSTEM_BOOTING_SCHEDULER_OK;
++
+ 	kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);
+ 	numa_default_policy();
+ 	pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
+--- linux-2.6.22.orig/lib/kernel_lock.c
++++ linux-2.6.22/lib/kernel_lock.c
+@@ -35,22 +35,25 @@ DECLARE_MUTEX(kernel_sem);
+  * about recursion, both due to the down() and due to the enabling of
+  * preemption. schedule() will re-check the preemption flag after
+  * reacquiring the semaphore.
++ *
++ * Called with interrupts disabled.
+  */
+ int __lockfunc __reacquire_kernel_lock(void)
+ {
+ 	struct task_struct *task = current;
+ 	int saved_lock_depth = task->lock_depth;
+ 
++	local_irq_enable();
+ 	BUG_ON(saved_lock_depth < 0);
+ 
+ 	task->lock_depth = -1;
+-	__preempt_enable_no_resched();
+ 
+ 	down(&kernel_sem);
+ 
+-	preempt_disable();
+ 	task->lock_depth = saved_lock_depth;
+ 
++	local_irq_disable();
++
+ 	return 0;
  }
--
--#define PICK_IRQOP(op, lock)					\
--do {								\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
--		op();						\
--	else if (TYPE_EQUAL((lock), seqlock_t))			\
--		{ /* nothing */ }				\
--	else __bad_seqlock_type();				\
--} while (0)
--
--#define PICK_IRQOP2(op, arg, lock)				\
--do {								\
--	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
--		op(arg);					\
--	else if (TYPE_EQUAL(lock, seqlock_t))			\
--		{ /* nothing */ }				\
--	else __bad_seqlock_type();				\
--} while (0)
--
--
+ 
+@@ -67,11 +70,15 @@ void __lockfunc lock_kernel(void)
+ 	struct task_struct *task = current;
+ 	int depth = task->lock_depth + 1;
+ 
+-	if (likely(!depth))
++	if (likely(!depth)) {
+ 		/*
+ 		 * No recursion worries - we set up lock_depth _after_
+ 		 */
+ 		down(&kernel_sem);
++#ifdef CONFIG_DEBUG_RT_MUTEXES
++		current->last_kernel_lock = __builtin_return_address(0);
++#endif
++	}
+ 
+ 	task->lock_depth = depth;
+ }
+@@ -82,8 +89,12 @@ void __lockfunc unlock_kernel(void)
+ 
+ 	BUG_ON(task->lock_depth < 0);
+ 
+-	if (likely(--task->lock_depth < 0))
++	if (likely(--task->lock_depth == -1)) {
++#ifdef CONFIG_DEBUG_RT_MUTEXES
++		current->last_kernel_lock = NULL;
++#endif
+ 		up(&kernel_sem);
++	}
+ }
+ 
+ #else
+@@ -116,11 +127,9 @@ static  __cacheline_aligned_in_smp DEFIN
+  */
+ int __lockfunc __reacquire_kernel_lock(void)
+ {
+-	while (!_raw_spin_trylock(&kernel_flag)) {
+-		if (test_thread_flag(TIF_NEED_RESCHED))
+-			return -EAGAIN;
+-		cpu_relax();
+-	}
++	local_irq_enable();
++	_raw_spin_lock(&kernel_flag);
++	local_irq_disable();
+ 	preempt_disable();
+ 	return 0;
+ }
+:: end preempt-realtime-sched.patch ::
+:: start preempt-realtime-core.patch ::
+diff -u linux-rt-rebase.q/include/linux/kernel.h linux-2.6.22/include/linux/kernel.h
+--- linux-rt-rebase.q/include/linux/kernel.h
++++ linux-2.6.22/include/linux/kernel.h	2007-07-27 01:32:15.000000000 +0000
+@@ -88,7 +88,7 @@
+ # define might_resched() do { } while (0)
+ #endif
+ 
+-#if defined(CONFIG_DEBUG_SPINLOCK_SLEEP) || defined(CONFIG_DEBUG_PREEMPT)
++#ifdef CONFIG_DEBUG_SPINLOCK_SLEEP
+   void __might_sleep(char *file, int line);
+ # define might_sleep() \
+ 	do { __might_sleep(__FILE__, __LINE__); might_resched(); } while (0)
+@@ -210,7 +210,6 @@
+ /* Values used for system_state */
+ extern enum system_states {
+ 	SYSTEM_BOOTING,
+-	SYSTEM_BOOTING_SCHEDULER_OK,
+ 	SYSTEM_RUNNING,
+ 	SYSTEM_HALT,
+ 	SYSTEM_POWER_OFF,
+reverted:
+--- linux-rt-rebase.q/include/linux/smp.h
++++ linux-rt-rebase.q.orig/include/linux/smp.h
+@@ -33,16 +33,6 @@
+  */
+ extern void smp_send_reschedule(int cpu);
+ 
+-/*
+- * trigger a reschedule on all other CPUs:
+- */
+-extern void smp_send_reschedule_allbutself(void);
 -
 -/*
-- * Possible sw/hw IRQ protected versions of the interfaces.
+- * trigger a reschedule on all other CPUs:
 - */
--#define write_seqlock_irqsave(lock, flags)				\
--	do { PICK_IRQOP2(local_irq_save, flags, lock); write_seqlock(lock); } while (0)
--#define write_seqlock_irq(lock)						\
--	do { PICK_IRQOP(local_irq_disable, lock); write_seqlock(lock); } while (0)
--#define write_seqlock_bh(lock)						\
--        do { PICK_IRQOP(local_bh_disable, lock); write_seqlock(lock); } while (0)
+-extern void smp_send_reschedule_allbutself(void);
 -
--#define write_sequnlock_irqrestore(lock, flags)				\
--	do { write_sequnlock(lock); PICK_IRQOP2(local_irq_restore, flags, lock); preempt_check_resched(); } while(0)
--#define write_sequnlock_irq(lock)					\
--	do { write_sequnlock(lock); PICK_IRQOP(local_irq_enable, lock); preempt_check_resched(); } while(0)
--#define write_sequnlock_bh(lock)					\
--	do { write_sequnlock(lock); PICK_IRQOP(local_bh_enable, lock); } while(0)
+ 
+ /*
+  * Prepare machine for booting other CPUs.
+@@ -107,7 +97,6 @@
+ 		0;				\
+ 	})
+ static inline void smp_send_reschedule(int cpu) { }
+-static inline void smp_send_reschedule_allbutself(void) { }
+ #define num_booting_cpus()			1
+ #define smp_prepare_boot_cpu()			do {} while (0)
+ #define smp_call_function_single(cpuid, func, info, retry, wait) \
+reverted:
+--- linux-rt-rebase.q/lib/kernel_lock.c
++++ linux-rt-rebase.q.orig/lib/kernel_lock.c
+@@ -35,25 +35,22 @@
+  * about recursion, both due to the down() and due to the enabling of
+  * preemption. schedule() will re-check the preemption flag after
+  * reacquiring the semaphore.
+- *
+- * Called with interrupts disabled.
+  */
+ int __lockfunc __reacquire_kernel_lock(void)
+ {
+ 	struct task_struct *task = current;
+ 	int saved_lock_depth = task->lock_depth;
+ 
+-	local_irq_enable();
+ 	BUG_ON(saved_lock_depth < 0);
+ 
+ 	task->lock_depth = -1;
++	__preempt_enable_no_resched();
+ 
+ 	down(&kernel_sem);
+ 
++	preempt_disable();
+ 	task->lock_depth = saved_lock_depth;
+ 
+-	local_irq_disable();
 -
--#define read_seqbegin_irqsave(lock, flags)				\
--	({ PICK_IRQOP2(local_irq_save, flags, lock); read_seqbegin(lock); })
+ 	return 0;
+ }
+ 
+@@ -70,15 +67,11 @@
+ 	struct task_struct *task = current;
+ 	int depth = task->lock_depth + 1;
+ 
++	if (likely(!depth))
+-	if (likely(!depth)) {
+ 		/*
+ 		 * No recursion worries - we set up lock_depth _after_
+ 		 */
+ 		down(&kernel_sem);
+-#ifdef CONFIG_DEBUG_RT_MUTEXES
+-		current->last_kernel_lock = __builtin_return_address(0);
+-#endif
+-	}
+ 
+ 	task->lock_depth = depth;
+ }
+@@ -89,12 +82,8 @@
+ 
+ 	BUG_ON(task->lock_depth < 0);
+ 
++	if (likely(--task->lock_depth < 0))
+-	if (likely(--task->lock_depth == -1)) {
+-#ifdef CONFIG_DEBUG_RT_MUTEXES
+-		current->last_kernel_lock = NULL;
+-#endif
+ 		up(&kernel_sem);
+-	}
+ }
+ 
+ #else
+@@ -127,9 +116,11 @@
+  */
+ int __lockfunc __reacquire_kernel_lock(void)
+ {
++	while (!_raw_spin_trylock(&kernel_flag)) {
++		if (test_thread_flag(TIF_NEED_RESCHED))
++			return -EAGAIN;
++		cpu_relax();
++	}
+-	local_irq_enable();
+-	_raw_spin_lock(&kernel_flag);
+-	local_irq_disable();
+ 	preempt_disable();
+ 	return 0;
+ }
+:: end preempt-realtime-core.patch ::
+:: start preempt-realtime-init-show-enabled-debugs.patch ::
+diff -u linux-rt-rebase.q/init/main.c linux-2.6.22/init/main.c
+--- linux-rt-rebase.q/init/main.c
++++ linux-2.6.22/init/main.c	2007-07-27 01:22:46.000000000 +0000
+@@ -438,8 +438,6 @@
+ {
+ 	int pid;
+ 
+-	system_state = SYSTEM_BOOTING_SCHEDULER_OK;
 -
--#define read_seqretry_irqrestore(lock, iv, flags)			\
--	({								\
--		int ret = read_seqretry(lock, iv);			\
--		PICK_IRQOP2(local_irq_restore, flags, lock);		\
--		preempt_check_resched(); 				\
--		ret;							\
--	})
--
- #endif /* __LINUX_SEQLOCK_H */
-
--- 
+ 	kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND);
+ 	numa_default_policy();
+ 	pid = kernel_thread(kthreadd, NULL, CLONE_FS | CLONE_FILES);
+:: end preempt-realtime-init-show-enabled-debugs.patch ::
+:: start schedule_on_each_cpu-enhance.patch ::
+diff -u linux-rt-rebase.q/kernel/workqueue.c linux-2.6.22/kernel/workqueue.c
+--- linux-rt-rebase.q/kernel/workqueue.c
++++ linux-2.6.22/kernel/workqueue.c	2007-07-29 00:41:17.000000000 +0000
+@@ -647,6 +647,7 @@
+ 
+ 	return err;
+ }
++EXPORT_SYMBOL(schedule_on_each_cpu);
+ 
+ /**
+  * schedule_on_each_cpu_wq - call a function on each online CPU on a per-CPU wq
+:: end schedule_on_each_cpu-enhance.patch ::
+:: start version.patch ::
+reverted:
+--- linux-rt-rebase.q/kernel/workqueue.c
++++ linux-rt-rebase.q.orig/kernel/workqueue.c
+@@ -647,7 +647,6 @@
+ 
+ 	return err;
+ }
+-EXPORT_SYMBOL(schedule_on_each_cpu);
+ 
+ /**
+  * schedule_on_each_cpu_wq - call a function on each online CPU on a per-CPU wq
+:: end version.patch ::
