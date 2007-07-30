@@ -1,75 +1,45 @@
-From: "Girish kathalagiri" <girish.sk@gmail.com>
-Subject: Re: BUG: scheduling while atomic: stress
-Date: Mon, 30 Jul 2007 06:26:39 +0000
-Message-ID: <34ac6d890707292326w1aa1c7e0p8aa7992eff9a2379@mail.gmail.com>
-References: <34ac6d890707260635m1d1165d1m5e01b7faa925e86c@mail.gmail.com>
-	 <34ac6d890707292237t591af349i5a0144afda98d091@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: System clock frequency offset changes drastically across reboots
+Date: Mon, 30 Jul 2007 09:59:48 +0200
+Message-ID: <46AD9A74.8070302@free.fr>
+References: <46A9DD7A.80104@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: johnstul@us.ibm.com, tglx@linutronix.de
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.245]:11937 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1762953AbXG3G0k (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jul 2007 02:26:40 -0400
-Received: by an-out-0708.google.com with SMTP id d31so261057and
-        for <linux-rt-users@vger.kernel.org>; Sun, 29 Jul 2007 23:26:39 -0700 (PDT)
-In-Reply-To: <34ac6d890707292237t591af349i5a0144afda98d091@mail.gmail.com>
-Content-Disposition: inline
+Received: from smtp4-g19.free.fr ([212.27.42.30]:40763 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753565AbXG3IAa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 30 Jul 2007 04:00:30 -0400
+In-Reply-To: <46A9DD7A.80104@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> ./stress --cpu 8 --io 4 --vm 2 --vm-bytes 2M --timeout 300s
-> The problem seems to be caused by the vm part of the stress code.
-> When I run this with vm = 1 it works fine , when the vm thread is
-> increased it causes the problem.
-> The thread does sync
->
-> while (1){
->    sync ();
->  }
-Sorry of the terrible mistake
-VM thread does malloc and free.
-while (1)
-    {
-      if (do_malloc)
-        {
-          dbg (stdout, "allocating %lli bytes ...\n", bytes);
-          if (!(ptr = (char *) malloc (bytes * sizeof (char))))
-            {
-              err (stderr, "hogvm malloc failed: %s\n", strerror (errno));
-              return 1;
-            }
-          if (keep)
-            do_malloc = 0;
-        }
+[ Expanding recipients list ]
 
-      dbg (stdout, "touching bytes in strides of %lli bytes ...\n", stride);
-      for (i = 0; i < bytes; i += stride)
-        ptr[i] = 'Z';           /* Ensure that COW happens.  */
+John Sigler wrote:
 
-      if (hang == 0)
-        {
-          dbg (stdout, "sleeping forever with allocated memory\n");
-          while (1)
-            sleep (1024);
-        }
-      else if (hang > 0)
-        {
-          dbg (stdout, "sleeping for %llis with allocated memory\n", hang);
-          sleep (hang);
-        }
+> I'm using 2.6.20.7-rt8 on a P3.
 
-      if (do_malloc)
-        {
-          free (ptr);
-          dbg (stdout, "freed %lli bytes\n", bytes);
-        }
-    }
+But some ntpd users have reported the problem with mainline kernels and 
+different versions.
 
+> I've noticed that the frequency offset of my system clock (computed 
+> either by ntpd, or by hand) changes drastically across reboots.
+> 
+> By drastically, I mean +/- 60 ppm every time I reboot.
+> 
+> Apparently this is caused by some imprecision in the frequency 
+> estimation done in calculate_cpu_khz() (arch/i386/kernel/tsc.c)
+> 
+> My brutally crude work-around was to skip the computation altogether and 
+> hard-code the "correct" value for cpu_khz.
+> 
+> http://linux.kernel.free.fr/cpu_khz.adlink
+> 
+> Has this issue been investigated more thoroughly by other users?
 
---
-Regards,
-Giri
+Regards.
