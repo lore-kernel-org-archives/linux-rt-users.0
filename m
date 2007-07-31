@@ -1,67 +1,53 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 1/2] RT: Preemptible Function-Call-IPI Support
-Date: Tue, 31 Jul 2007 08:11:17 -0400
-Message-ID: <46AEEEA50200005A00028665@mcclure.wal.novell.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: BIOS implementors disabling the LAPIC
+Date: Tue, 31 Jul 2007 14:32:56 +0200
+Message-ID: <46AF2BF8.3000601@free.fr>
+References: <46AEED9E.1050904@free.fr> <Pine.LNX.4.64N.0707311119350.16158@blysk.ds.pg.gda.pl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <mingo@elte.hu>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Maciej W. Rozycki" <macro@linux-mips.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:17932 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754314AbXGaML0 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 08:11:26 -0400
-Content-Disposition: inline
+Received: from smtp4-g19.free.fr ([212.27.42.30]:55502 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751121AbXGaMdz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Jul 2007 08:33:55 -0400
+In-Reply-To: <Pine.LNX.4.64N.0707311119350.16158@blysk.ds.pg.gda.pl>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-31 at 11:25 +0200, Ingo Molnar wrote:
-> * Ingo Molnar <mingo@elte.hu> wrote:
+Maciej W. Rozycki wrote:
+
+> John Sigler wrote:
 > 
-> > * Gregory Haskins <ghaskins@novell.com> wrote:
-> >  
-> > > This code allows FUNCTION_CALL IPIs to become preemptible by 
-> > > executing them in kthread context instead of interrupt context.  
-> > > They are referred to as "Virtual Function Call IPIs" (VFCIPI) 
-> > > because we no longer rely on the actual FCIPI facility.  Instead we 
-> > > schedule a thread to run.  This essentially replaces the synchronous 
-> > > FCIPI with an async RESCHEDULE IPI.
-> > 
-> > why do we need this? It's quite complex and brings little extra 
-> > AFAICS. See the "schedule_on_each_cpu-enhance.patch" from Peter 
-> > Ziljstra that lets a function to be executed on all CPUs. That should 
-> > be extended (trivially) to execute a function on another CPU. That's 
-> > all we need.
+>> As far as I understand, the Local APIC was integrated directly to the CPU
+>> 12-15 years ago. Why would a BIOS implementor choose to disable it?
 > 
-> as far as the prioritization of function calls goes, _that_ makes sense, 
-> but it should not be a separate API but should be done to our normal 
-> workqueue APIs. That not only extends the effects of priorities to all 
-> current workqueue using kernel subsystems, but also keeps the API more 
-> unified. We really dont want to have too many -rt specific APIs.
+> Because they are lazy/incapable/out-of-time/select-your-favourite-excuse.
+> For the chip to work you have to provide some minimal support in the
+> firmware, in particular for the trickier paths of execution in the system
+> management mode.  The system still works with the Local APIC disabled, so
+> why bother?
 
-I agree with you that having some kind of priority and cpu-binding
-specifiers for work-queues would be very cool indeed.  However, note
-that I didn't actually introduce a new API(*), per se.  I simply worked
-under the existing smp_call_function[_single]() API.
+The motherboard manufacturer (well, their level 1 support, anyway) told 
+me I could "safely enable the LAPIC". If it is safe to enable the LAPIC, 
+then why are they disabling it in the BIOS? (They weren't able to tell 
+me whether their BIOS triggers SMIs or not...)
 
-Using the smp_call_functions is critical design factor, however.  I
-really want clients of this function to seamlessly transition to
-threaded mode.  So even if we ultimately can modify work-queues to have
-those features mentioned, IMO we still need to modify the underlying
-smp_call_function API to use the new workqueue stuff.  And more
-importantly, the new workqueue APIs will have to be as flexible as the
-current implementation to work in various modes (e.g. in_atomic=1 or 0,
-etc).
+Is this a "either works or doesn't" situation where hell should break 
+loose if I try to enable the LAPIC and it's not supported by the 
+motherboard, or is this a "you will silently lose data at the worst 
+possible time" situation?
 
-(*)Ok, ok...i admit...There is one new API:  That is the legacy access
-to the real FCIPI calls (which BTW, ive changed from
-"smp_call_function__nodelay" to "raw_smp_call_function" in my latest
-(and unreleased) series.  This makes them more in sync with some of the
-other naming conventions in -rt).  So technically you are right ;) but
-that is more of an implementation detail.  There are no users of the new
-API other than the VFCIPI code.
+>> (And what does it mean to "disable" the LAPIC?)
+> 
+> The LINT0 and LINT1 inputs of the APIC are routed straight to the INT and
+> NMI inputs of the CPU respectively and the rest of the APIC logic becomes
+> inactive (tri-stated, etc.).
 
-Regards,
--Greg  
+If that were the case, then I could not enable the LAPIC and have NMIs 
+work, right?
+
+Regards.
