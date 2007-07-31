@@ -1,66 +1,49 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
+From: "Maciej W. Rozycki" <macro@linux-mips.org>
 Subject: Re: BIOS implementors disabling the LAPIC
-Date: Tue, 31 Jul 2007 08:53:10 -0400
-Message-ID: <46AEF8760200005A00028671@mcclure.wal.novell.com>
+Date: Tue, 31 Jul 2007 13:55:51 +0100 (BST)
+Message-ID: <Pine.LNX.4.64N.0707311343410.16158@blysk.ds.pg.gda.pl>
+References: <46AEED9E.1050904@free.fr> <Pine.LNX.4.64N.0707311119350.16158@blysk.ds.pg.gda.pl>
+ <46AF2BF8.3000601@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <macro@linux-mips.org>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: <linux.kernel@free.fr>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:18685 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750978AbXGaMxP convert rfc822-to-8bit (ORCPT
+Received: from pollux.ds.pg.gda.pl ([153.19.208.7]:4864 "EHLO
+	pollux.ds.pg.gda.pl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751167AbXGaMzw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 08:53:15 -0400
-Content-Disposition: inline
+	Tue, 31 Jul 2007 08:55:52 -0400
+In-Reply-To: <46AF2BF8.3000601@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-31 at 14:32 +0200, John Sigler wrote:
+On Tue, 31 Jul 2007, John Sigler wrote:
 
-> The motherboard manufacturer (well, their level 1 support, anyway) told 
-> me I could "safely enable the LAPIC". If it is safe to enable the LAPIC, 
-> then why are they disabling it in the BIOS?
+> The motherboard manufacturer (well, their level 1 support, anyway) told me I
+> could "safely enable the LAPIC". If it is safe to enable the LAPIC, then why
+> are they disabling it in the BIOS? (They weren't able to tell me whether
+> their BIOS triggers SMIs or not...)
 
-I would guess that because they don't have an IOAPIC, they figured they
-don't need the APIC and didn't bother to write support for it.  In
-reality, other features of the APIC are useful other than IOAPIC routing
-(e.g. LVTT) so as you have discovered, you end up with reduced
-functionality for probably no good reason. 
+ Ask them.
 
+> Is this a "either works or doesn't" situation where hell should break loose if
+> I try to enable the LAPIC and it's not supported by the motherboard, or is
+> this a "you will silently lose data at the worst possible time" situation?
 
+ It could be either.  For example some IBM hardware used to be known to 
+have problems, like the 8254 timer freezing occasionally, when the APIC 
+was used and the NMI watchdog enabled.  On some laptops you would get an 
+instant hard lockup if you enabled the APIC and used one of the special 
+key combinations (whether on purpose or by chance) used to adjust display 
+brightness, etc..
 
+> If that were the case, then I could not enable the LAPIC and have NMIs work,
+> right?
 
-> Is this a "either works or doesn't" situation where hell should break 
-> loose if I try to enable the LAPIC and it's not supported by the 
-> motherboard, or is this a "you will silently lose data at the worst 
-> possible time" situation?
+ It depends on what you want to use NMIs for.  For their PC/AT compatible 
+purpose, that is reporting of memory parity/ECC and bus errors, it works 
+in either mode.  For any other purpose you need an APIC.
 
-You will most likely be fine.
-
-
-> 
-> >> (And what does it mean to "disable" the LAPIC?)
-> > 
-> > The LINT0 and LINT1 inputs of the APIC are routed straight to the INT and
-> > NMI inputs of the CPU respectively and the rest of the APIC logic becomes
-> > inactive (tri-stated, etc.).
-> 
-> If that were the case, then I could not enable the LAPIC and have NMIs 
-> work, right?
-
-No, again you should be fine.  All this means is that LINT0/1 go to
-defaults of "EXTINT" and "NMI" when the APIC is disabled.  When they are
-enabled, the programming of the LVT for LINT0/1 defines what they are.
-When you enable it, linux will start programming the LVT and should
-continue to use NMI in whatever way it sees fit.
-
-The one way you will get screwed is if there is some routing information
-that *should* be in the ACPI tables that is missing due to the lack of
-support.  I don't think you will have an issue, but I figured it should
-mention its not guaranteed you wont either.  So don't sue me... ;)
-
-Regards,
--Greg
+  Maciej
