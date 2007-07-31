@@ -1,114 +1,65 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH] expand /proc/interrupts to include missing vectors, v3
-Date: 31 Jul 2007 19:02:01 +0200
-Message-ID: <p73wswgpkvq.fsf@bingen.suse.de>
-References: <20070726180522.GA1486@tsunami.ccur.com>
-	<46A8EE78.4040702@zytor.com>
-	<1185816797.3170.1.camel@sven.thebigcorporation.com>
-	<20070730123206.abeab890.akpm@linux-foundation.org>
-	<20070731001718.GA14295@tsunami.ccur.com>
-	<20070731141941.GA3112@tsunami.ccur.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [PATCH 0/2][RFC] VFCIPI v3
+Date: Tue, 31 Jul 2007 12:14:42 -0400
+Message-ID: <46AF2752.BA47.005A.0@novell.com>
+References: <20070731132153.4790.37217.stgit@novell1.haskins.net>
+ <1185891957.12034.12.camel@twins> <46AF1DA6.BA47.005A.0@novell.com>
+ <1185896412.12034.17.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, jason.baietto@ccur.com
-To: Joe Korty <joe.korty@ccur.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: "Ingo Molnar" <mingo@elte.hu>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "Peter Zijlstra" <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ns.suse.de ([195.135.220.2]:50861 "EHLO mx1.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758655AbXGaQH0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 12:07:26 -0400
-In-Reply-To: <20070731141941.GA3112@tsunami.ccur.com>
+Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:22607 "EHLO
+	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753039AbXGaQOv convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Jul 2007 12:14:51 -0400
+In-Reply-To: <1185896412.12034.17.camel@twins>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Joe Korty <joe.korty@ccur.com> writes:
-> 	spurious interrupts
+>>> On Tue, Jul 31, 2007 at 11:40 AM, in message <1185896412.12034.17.camel@twins>,
+Peter Zijlstra <peterz@infradead.org> wrote: 
+> On Tue, 2007-07-31 at 11:33 -0400, Gregory Haskins wrote:
+>> 
+>> If there was anything more than what you already mention here, please
+>> point them out so I don't "port" them over to the workqueues
+>> implemenation ;)
 > 
-> A threshold interrupt occurs when ECC memory correction
-> is occuring at too high a frequency. 
+> The two that jumped out at me while skimming over the code were:
+> 
+>  - use of raw_spinlock_t (while not always a bug, it does need _very_
+>    good justification)
 
-It's configurable and the default is off. Also 
-it's only on AMD hardware.
+Ah, yes.  This was done on purpose based on the design parameters.  I needed the calls to work from atomic context (which smp_call_function() often is called under).  However, note that I am sensitive to the impact this decision causes and you will see that the lock scopes are all very tight and light (at least, IMHO).
 
-Your description is a little misleading.
+>  - not cpu hotplug safe
 
-> Thresholds are used
-> by the ECC hardware as occasional ECC failures are part
-> of normal operation,
-
-Not really.
+Yeah, agreed.  I was aware of this potential race against the "for_each_online_cpu()".   However, I am not knowledgeable enough (yet) to have even attempted a cursory stab at how to support the notification mechanism, so I just left the gaping hole.   It will definitely need to be addressed before any serious merge consideration for whatever final form this thing takes.  I should have commented that.
 
 
-> ===================================================================
-> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/apic.c	2007-07-30 19:08:05.000000000 -0400
-> +++ 2.6.23-rc1-git7/arch/i386/kernel/apic.c	2007-07-30 19:08:07.000000000 -0400
-> @@ -1280,6 +1280,7 @@
->  	printk(KERN_INFO "spurious APIC interrupt on CPU#%d, "
->  	       "should never happen.\n", smp_processor_id());
->  	irq_exit();
-> +	__get_cpu_var(irq_stat).irq_spur_counts++;
+> 
+> The thing is, we should never need to allocate from a real atomic
+> context
 
-Wouldn't it be safer on preemptible kernels to have that inside
-the irq_exit? 
+I agree with you on principle.  Making unnecessary external calls within a lock scope should always be avoided when possible.  However, in this case I had the following design parameters:
 
->  }
->  
->  /*
-> Index: 2.6.23-rc1-git7/arch/i386/kernel/cpu/mcheck/p4.c
-> ===================================================================
-> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-30 19:08:05.000000000 -0400
-> +++ 2.6.23-rc1-git7/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-30 19:08:07.000000000 -0400
-> @@ -62,6 +62,7 @@
->  	irq_enter();
->  	vendor_thermal_interrupt(regs);
->  	irq_exit();
-> +	__get_cpu_var(irq_stat).irq_thermal_counts++;
->  }
->  
->  /* P4/Xeon Thermal regulation detect and init */
-> Index: 2.6.23-rc1-git7/arch/i386/kernel/irq.c
-> ===================================================================
-> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/irq.c	2007-07-30 19:08:05.000000000 -0400
-> +++ 2.6.23-rc1-git7/arch/i386/kernel/irq.c	2007-07-31 09:40:58.000000000 -0400
-> @@ -284,14 +284,41 @@
->  		seq_printf(p, "NMI: ");
->  		for_each_online_cpu(j)
->  			seq_printf(p, "%10u ", nmi_count(j));
-> -		seq_putc(p, '\n');
-> +		seq_printf(p, "  Non-maskable interrupts\n");
->  #ifdef CONFIG_X86_LOCAL_APIC
->  		seq_printf(p, "LOC: ");
->  		for_each_online_cpu(j)
->  			seq_printf(p, "%10u ",
->  				per_cpu(irq_stat,j).apic_timer_irqs);
-> -		seq_putc(p, '\n');
-> +		seq_printf(p, "  Local interrupts\n");
->  #endif
-> +#ifdef CONFIG_SMP
-> +		seq_printf(p, "RES: ");
+1) "heap" allocations over something like static/stack allocations allowed a higher degree of parallelization while supporting asynchronous calls, which was an existing feature of smp_call().
 
-I think it would be better to use 5-6 char identifiers even
-when it whacks the columns a bit; otherwise
-nobody will know what it means. e.g. SCHED here. 
+2) The context in which the function could be invoked is beyond my control, and is often atomic.
 
-Also there you should update proc(5) and send a patch
-to the manpage maintainer.
+> every time you end up in that situation, ask yourself if the
+> problem can be solved differently. 
 
-> Index: 2.6.23-rc1-git7/arch/x86_64/kernel/apic.c
-> ===================================================================
-> --- 2.6.23-rc1-git7.orig/arch/x86_64/kernel/apic.c	2007-07-30 19:08:05.000000000 -0400
-> +++ 2.6.23-rc1-git7/arch/x86_64/kernel/apic.c	2007-07-30 19:08:07.000000000 -0400
-> @@ -1118,6 +1118,7 @@
->  asmlinkage void smp_spurious_interrupt(void)
->  {
->  	unsigned int v;
-> +
+Ah, but it was.  I wrote my own cheeseball heap manager ;)  And it was nicely abstracted and conditionally compiled in case GFP_ATOMIC (or equivalent) ever popped up on the radar.
 
-Don't add white space.
+The fact is, when deciding between finer grained parallelism and managing a simple heap myself....the heap code really isn't rocket science ;)
 
+Out of curiosity and for my own edification:  What *is* GFP_ATOMIC meant for?
 
--Andi
+Regards,
+-Greg
