@@ -1,60 +1,114 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 0/2][RFC] VFCIPI v3
-Date: Tue, 31 Jul 2007 17:40:12 +0200
-Message-ID: <1185896412.12034.17.camel@twins>
-References: <20070731132153.4790.37217.stgit@novell1.haskins.net>
-	 <1185891957.12034.12.camel@twins>  <46AF1DA6.BA47.005A.0@novell.com>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: [PATCH] expand /proc/interrupts to include missing vectors, v3
+Date: 31 Jul 2007 19:02:01 +0200
+Message-ID: <p73wswgpkvq.fsf@bingen.suse.de>
+References: <20070726180522.GA1486@tsunami.ccur.com>
+	<46A8EE78.4040702@zytor.com>
+	<1185816797.3170.1.camel@sven.thebigcorporation.com>
+	<20070730123206.abeab890.akpm@linux-foundation.org>
+	<20070731001718.GA14295@tsunami.ccur.com>
+	<20070731141941.GA3112@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	"H. Peter Anvin" <hpa@zytor.com>, mingo@elte.hu,
+	tglx@linutronix.de, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, jason.baietto@ccur.com
+To: Joe Korty <joe.korty@ccur.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:34879 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751064AbXGaPkQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 11:40:16 -0400
-In-Reply-To: <46AF1DA6.BA47.005A.0@novell.com>
+Received: from ns.suse.de ([195.135.220.2]:50861 "EHLO mx1.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758655AbXGaQH0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Jul 2007 12:07:26 -0400
+In-Reply-To: <20070731141941.GA3112@tsunami.ccur.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-31 at 11:33 -0400, Gregory Haskins wrote:
-> >>> On Tue, Jul 31, 2007 at 10:25 AM, in message <1185891957.12034.12.camel@twins>,
-> Peter Zijlstra <peterz@infradead.org> wrote: 
-
-> >(with mistakes).
+Joe Korty <joe.korty@ccur.com> writes:
+> 	spurious interrupts
 > 
-> If there was anything more than what you already mention here, please
-> point them out so I don't "port" them over to the workqueues
-> implemenation ;)
+> A threshold interrupt occurs when ECC memory correction
+> is occuring at too high a frequency. 
 
-The two that jumped out at me while skimming over the code were:
+It's configurable and the default is off. Also 
+it's only on AMD hardware.
 
- - use of raw_spinlock_t (while not always a bug, it does need _very_
-   good justification)
- - not cpu hotplug safe
+Your description is a little misleading.
+
+> Thresholds are used
+> by the ECC hardware as occasional ECC failures are part
+> of normal operation,
+
+Not really.
 
 
-> > Your idea that GFP_ATOMIC is broken in -rt is unfortunate, it isn't. The
-> > whole allocator is preemptable - that is a feature!
-> 
-> Heh...that may be, and I can see how it is useful to have the
-> allocatorr be generally preemptible.  However, I would have thought
-> that "GFP_ATOMIC" means I can call it from atomic code, which is not
-> the case apparently.  It's probably just my own ignorance again of
-> what that flag should really mean ;)
-> 
-> In any case I abstracted the heap_allocator away so that I could make
-> an in_atomic friendly allocation.  If the GFP_ATOMIC allocator ever
-> supports in_atomic in the future, all we have to do is change
-> vfcipi/heap.h.  I am open to other suggestions to this problem, of
-> course.
+> ===================================================================
+> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/apic.c	2007-07-30 19:08:05.000000000 -0400
+> +++ 2.6.23-rc1-git7/arch/i386/kernel/apic.c	2007-07-30 19:08:07.000000000 -0400
+> @@ -1280,6 +1280,7 @@
+>  	printk(KERN_INFO "spurious APIC interrupt on CPU#%d, "
+>  	       "should never happen.\n", smp_processor_id());
+>  	irq_exit();
+> +	__get_cpu_var(irq_stat).irq_spur_counts++;
 
-The thing is, we should never need to allocate from a real atomic
-context, every time you end up in that situation, ask yourself if the
-problem can be solved differently. That is, it often points at a design
-flaw.
+Wouldn't it be safer on preemptible kernels to have that inside
+the irq_exit? 
 
-Peter
+>  }
+>  
+>  /*
+> Index: 2.6.23-rc1-git7/arch/i386/kernel/cpu/mcheck/p4.c
+> ===================================================================
+> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-30 19:08:05.000000000 -0400
+> +++ 2.6.23-rc1-git7/arch/i386/kernel/cpu/mcheck/p4.c	2007-07-30 19:08:07.000000000 -0400
+> @@ -62,6 +62,7 @@
+>  	irq_enter();
+>  	vendor_thermal_interrupt(regs);
+>  	irq_exit();
+> +	__get_cpu_var(irq_stat).irq_thermal_counts++;
+>  }
+>  
+>  /* P4/Xeon Thermal regulation detect and init */
+> Index: 2.6.23-rc1-git7/arch/i386/kernel/irq.c
+> ===================================================================
+> --- 2.6.23-rc1-git7.orig/arch/i386/kernel/irq.c	2007-07-30 19:08:05.000000000 -0400
+> +++ 2.6.23-rc1-git7/arch/i386/kernel/irq.c	2007-07-31 09:40:58.000000000 -0400
+> @@ -284,14 +284,41 @@
+>  		seq_printf(p, "NMI: ");
+>  		for_each_online_cpu(j)
+>  			seq_printf(p, "%10u ", nmi_count(j));
+> -		seq_putc(p, '\n');
+> +		seq_printf(p, "  Non-maskable interrupts\n");
+>  #ifdef CONFIG_X86_LOCAL_APIC
+>  		seq_printf(p, "LOC: ");
+>  		for_each_online_cpu(j)
+>  			seq_printf(p, "%10u ",
+>  				per_cpu(irq_stat,j).apic_timer_irqs);
+> -		seq_putc(p, '\n');
+> +		seq_printf(p, "  Local interrupts\n");
+>  #endif
+> +#ifdef CONFIG_SMP
+> +		seq_printf(p, "RES: ");
+
+I think it would be better to use 5-6 char identifiers even
+when it whacks the columns a bit; otherwise
+nobody will know what it means. e.g. SCHED here. 
+
+Also there you should update proc(5) and send a patch
+to the manpage maintainer.
+
+> Index: 2.6.23-rc1-git7/arch/x86_64/kernel/apic.c
+> ===================================================================
+> --- 2.6.23-rc1-git7.orig/arch/x86_64/kernel/apic.c	2007-07-30 19:08:05.000000000 -0400
+> +++ 2.6.23-rc1-git7/arch/x86_64/kernel/apic.c	2007-07-30 19:08:07.000000000 -0400
+> @@ -1118,6 +1118,7 @@
+>  asmlinkage void smp_spurious_interrupt(void)
+>  {
+>  	unsigned int v;
+> +
+
+Don't add white space.
+
+
+-Andi
