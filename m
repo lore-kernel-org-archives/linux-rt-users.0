@@ -1,31 +1,35 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: BIOS implementors disabling the LAPIC
-Date: Tue, 31 Jul 2007 10:06:54 +0200
-Message-ID: <46AEED9E.1050904@free.fr>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 1/2] RT: Preemptible Function-Call-IPI Support
+Date: Tue, 31 Jul 2007 11:19:03 +0200
+Message-ID: <20070731091903.GA15822@elte.hu>
+References: <20070730211350.5162.99143.stgit@novell1.haskins.net> <20070730211539.5162.87483.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:37345 "EHLO smtp4-g19.free.fr"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:34045 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752327AbXGaIHv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 04:07:51 -0400
+	id S1753892AbXGaJTS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Jul 2007 05:19:18 -0400
+Content-Disposition: inline
+In-Reply-To: <20070730211539.5162.87483.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I have several systems here where Linux tells me:
-Local APIC disabled by BIOS -- you can enable it with "lapic"
 
-As far as I understand, the Local APIC was integrated directly to the 
-CPU 12-15 years ago. Why would a BIOS implementor choose to disable it?
+* Gregory Haskins <ghaskins@novell.com> wrote:
 
-(And what does it mean to "disable" the LAPIC?)
+> This code allows FUNCTION_CALL IPIs to become preemptible by executing 
+> them in kthread context instead of interrupt context.  They are 
+> referred to as "Virtual Function Call IPIs" (VFCIPI) because we no 
+> longer rely on the actual FCIPI facility.  Instead we schedule a 
+> thread to run.  This essentially replaces the synchronous FCIPI with 
+> an async RESCHEDULE IPI.
 
-Note: the motherboard does not provide an IO-APIC.
+why do we need this? It's quite complex and brings little extra AFAICS. 
+See the "schedule_on_each_cpu-enhance.patch" from Peter Ziljstra that 
+lets a function to be executed on all CPUs. That should be extended 
+(trivially) to execute a function on another CPU. That's all we need.
 
-I've ask the kernel to re-enable the LAPIC, and was able to use OProfile 
-in hardware counter mode, i.e. it seems to work fine.
-
-Regards.
+	Ingo
