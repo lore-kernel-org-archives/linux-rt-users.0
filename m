@@ -1,46 +1,44 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 0/2][RFC] VFCIPI v3
-Date: Tue, 31 Jul 2007 16:25:57 +0200
-Message-ID: <1185891957.12034.12.camel@twins>
-References: <20070731132153.4790.37217.stgit@novell1.haskins.net>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [PATCH 1/2] RT: Preemptible Function-Call-IPI Support
+Date: Tue, 31 Jul 2007 10:26:36 -0400
+Message-ID: <46AF0DF9.BA47.005A.0@novell.com>
+References: <20070730211350.5162.99143.stgit@novell1.haskins.net>
+ <20070730211539.5162.87483.stgit@novell1.haskins.net>
+ <20070731091903.GA15822@elte.hu> <20070731092119.GA15968@elte.hu>
+ <20070731092521.GA16177@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Ingo Molnar <mingo@elte.hu>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:34228 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752309AbXGaO0B (ORCPT
+Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:20487 "EHLO
+	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1758189AbXGaO0r convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 10:26:01 -0400
-In-Reply-To: <20070731132153.4790.37217.stgit@novell1.haskins.net>
+	Tue, 31 Jul 2007 10:26:47 -0400
+In-Reply-To: <20070731092521.GA16177@elte.hu>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+>>> On Tue, Jul 31, 2007 at  5:25 AM, in message <20070731092521.GA16177@elte.hu>,
+Ingo Molnar <mingo@elte.hu> wrote: 
 
-Hi Gregory,
 
-This patch set approaches the problem from the wrong angle (and has a
-few problems due to that).
+> as far as the prioritization of function calls goes, _that_ makes sense, 
+> but it should not be a separate API but should be done to our normal 
+> workqueue APIs. That not only extends the effects of priorities to all 
+> current workqueue using kernel subsystems, but also keeps the API more 
+> unified. We really dont want to have too many -rt specific APIs.
 
-The idea to use a workqueue (or in your case workqueue-like) solution to
-the problem is valid, however instead of re-using (and improving) the
-current workqueue infrastructure, you re-implement it (with mistakes).
+I just took a look at the workqueue code .  There are two immediate problems that I see:
 
-The solution currently in -rt uses regular workqueues to implement
-schedule_on_each_cpu() - a drop in replacement for on_each_cpu() in the
-context of -rt and useful outside of that if people do require such
-functionality.
+1) cpu_workqueue_struct->lock is a spinlock_t and will need to become a raw_spinlock_t
 
-Your idea of using priority arrays in the workqueue is a good one,
-please implement that for the regular workqueues.
+2) The lock is held for the duration of the execution of workqueue items.  We will need to revamp this such that new workqueue items can still be queued even while executing others.
 
-Your idea that GFP_ATOMIC is broken in -rt is unfortunate, it isn't. The
-whole allocator is preemptable - that is a feature!
+Are these acceptable changes?  If so, I will put together a prototype based around this concept.
 
-Please keep up the good work, looking forward to those prio-workqueue
-patches.
-
-Peter
+Regards,
+-Greg
