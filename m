@@ -1,90 +1,69 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 1/2] RT: Preemptible Function-Call-IPI Support
-Date: Tue, 31 Jul 2007 07:44:02 -0400
-Message-ID: <46AEE8420200005A0002865A@mcclure.wal.novell.com>
+From: =?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>
+Subject: Re: [PATCH RT] Fix RT balancing tasks pulling
+Date: Tue, 31 Jul 2007 13:48:24 +0200
+Message-ID: <20070731134824.6ec78447@frecb000686.frec.bull.fr>
+References: <20070724154202.224f12e8@frecb000686.frec.bull.fr>
+	<1185832234.3334.35.camel@josh-work.beaverton.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <mingo@elte.hu>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Jean Pierre Dion <jean-pierre.dion@bull.net>,
+	Darren Hart <dvhltc@us.ibm.com>,
+	john stultz <johnstul@us.ibm.com>
+To: Josh Triplett <josht@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:17481 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750864AbXGaLoP convert rfc822-to-8bit (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:46621 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751805AbXGaLvJ convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 07:44:15 -0400
-Content-Disposition: inline
+	Tue, 31 Jul 2007 07:51:09 -0400
+In-Reply-To: <1185832234.3334.35.camel@josh-work.beaverton.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-07-31 at 11:21 +0200, Ingo Molnar wrote:
-> [ mail re-sent with lkml Cc:-ed. _Please_ Cc: all patches to lkml too! 
->   Unless you want -rt to suffer the fate of -ck, keep upstream involved 
->   all the time. The recent /proc/interrupts-all discussion with upstream 
->   folks showed the clear benefits of that approach. ]
 
-My apologies.  I wasn't getting really any responses to my proposal, so
-I shortened the distribution to avoid becoming a pest to people that
-didn't care.  I will CC both from now on.
+  Hi Josh,
 
+On Mon, 30 Jul 2007 14:50:34 -0700 Josh Triplett <josht@linux.vnet.ibm.=
+com> wrote:
 
-> 
-> why do we need this? 
+> On Tue, 2007-07-24 at 15:42 +0200, S=C3=A9bastien Dugu=C3=A9 wrote:
+> >   this one-liner fixes a bug in balance_rt_tasks() which sometimes =
+manifests by
+> > having a lower prio task being scheduled while a higher prio task i=
+s sitting
+> > waiting on another runqueue.
+> >=20
+> >   This is pretty hard to reproduce on low cpu count machines, for e=
+xample, I
+> > had to have sched_football run in a loop for ~38h before it failed =
+on a dual HT
+> > Xeon box.
+>=20
+> Very impressive find, and this does seem to improve things in some
+> cases.
+>=20
+> However, with 2.6.22.1-rt8, which includes this patch, I still manage=
+d
+> to get some failures after a few hours on an 8-way (quad dual-core) b=
+ox.
+> Preliminary results so far:
+>     420 Final ball position: 0
+>       2 Final ball position: 1
+>=20
 
-I wrote this when I discovered that KVM was having problems with
-smp_call_function() on -rt.  It was utilizing spinlock_t which of course
-was transparently converted to rt_mutex.  This blew up in the interrupt
-context of the FUNCTION_CALL whenever the lock was acquired.  I was
-thinking to myself "why is the FCIPI vector being treated any different
-that other IRQs?".  That question drove the design/implementation of
-this series.
+  Darn, I thought it was it :(
 
+  I had a ~60h run on my box with the very same kernel without a single
+failure.
 
-> It's quite complex 
+  Do you have any other user RT load running when those failures pop up=
+?
 
+  Anyway, back to scheduler code dissection now.
 
-I think if you look closely at the code you will see its actually pretty
-straight forward.  However, for whatever complexity you may perceive,
-note that I made the choices I did (as opposed to something like
-modifying the work-queue infrastructure) because I felt it had the
-minimum impact on other subsystems unrelated to FCIPI.  There are, of
-course, many ways to skin a rabbit. ;)
-
-> and brings little extra AFAICS.
-
-Brings little extra to what?  Do you think the whole concept of "FCIPIs
-in a thread" is a waste of time, or do you just think my implementation
-choices are bad?
-
-> See the "schedule_on_each_cpu-enhance.patch" from Peter Ziljstra that 
-> lets a function to be executed on all CPUs. That should be extended 
-> (trivially) to execute a function on another CPU. That's all we need.
-
-I haven't seen that.  I will take a look.  
-
-The key part of my design is as follows:
-
-1) No new API: smp_call_function_[single]) must just transparently
-switch over to threaded mode (Just like the IRQ handler in
-PREEMPT_HARDIRQs does)
-2) Support priority inheritance:  Unlike normal HARDIRQs which can use a
-relatively static priority assignment, FCIPIs are driven by another
-software entity which may or may not have RT priority.  Therefore, being
-able to execute the call in the same priority as the caller is critical,
-IMO.  Calls are sorted and scheduled by priority.
-3) More robust parallelism:  mainline smp_call_function has a system
-wide serialization point when a call is made.  We should be able to
-support a high degree of parallel access to prevent priority inversion.
-This means more than one call can be in-flight at a time.  
-4) Preemptible/sleepable code on both the caller and callee sides.
-Today, both the caller and callee sides of the link are critical
-sections with preemption disabled.
-5) The API must work from both in_atomic()==1 and in_atomic()==0 modes.
-In addition, it will opportunistically sleep while waiting for replies
-if in_atomic()==0.
-
-If we can make Peter's patch work within this criteria and people like
-it better than what I put forth, that is fine by me.
-
-Regards,
--Greg
+  S=C3=A9bastien.
