@@ -1,45 +1,46 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH 1/2] RT: Preemptible Function-Call-IPI Support
-Date: Tue, 31 Jul 2007 16:22:35 +0200
-Message-ID: <20070731142235.GB22209@elte.hu>
-References: <46AEEEA50200005A00028665@mcclure.wal.novell.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 0/2][RFC] VFCIPI v3
+Date: Tue, 31 Jul 2007 16:25:57 +0200
+Message-ID: <1185891957.12034.12.camel@twins>
+References: <20070731132153.4790.37217.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Ingo Molnar <mingo@elte.hu>
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:51814 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761775AbXGaOWm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 10:22:42 -0400
-Content-Disposition: inline
-In-Reply-To: <46AEEEA50200005A00028665@mcclure.wal.novell.com>
+Received: from pentafluge.infradead.org ([213.146.154.40]:34228 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752309AbXGaO0B (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Jul 2007 10:26:01 -0400
+In-Reply-To: <20070731132153.4790.37217.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Gregory Haskins <ghaskins@novell.com> wrote:
+Hi Gregory,
 
-> > as far as the prioritization of function calls goes, _that_ makes 
-> > sense, but it should not be a separate API but should be done to our 
-> > normal workqueue APIs. That not only extends the effects of 
-> > priorities to all current workqueue using kernel subsystems, but 
-> > also keeps the API more unified. We really dont want to have too 
-> > many -rt specific APIs.
-> 
-> I agree with you that having some kind of priority and cpu-binding 
-> specifiers for work-queues would be very cool indeed.  However, note 
-> that I didn't actually introduce a new API(*), per se.  I simply 
-> worked under the existing smp_call_function[_single]() API.
-> 
-> Using the smp_call_functions is critical design factor, however.  I 
-> really want clients of this function to seamlessly transition to 
-> threaded mode. [...]
+This patch set approaches the problem from the wrong angle (and has a
+few problems due to that).
 
-well, 'clients' of this function are low-level architectural bits like 
-the scheduler and the TLB flush code which stays atomic nevertheless. 
-smp_call_function() is _not_ a true generic framework and to 'thread' it 
-is wrong and misplaced and leads to the kind of over-complification that 
-your patch shows. Please work based on the workqueue APIs.
+The idea to use a workqueue (or in your case workqueue-like) solution to
+the problem is valid, however instead of re-using (and improving) the
+current workqueue infrastructure, you re-implement it (with mistakes).
 
-	Ingo
+The solution currently in -rt uses regular workqueues to implement
+schedule_on_each_cpu() - a drop in replacement for on_each_cpu() in the
+context of -rt and useful outside of that if people do require such
+functionality.
+
+Your idea of using priority arrays in the workqueue is a good one,
+please implement that for the regular workqueues.
+
+Your idea that GFP_ATOMIC is broken in -rt is unfortunate, it isn't. The
+whole allocator is preemptable - that is a feature!
+
+Please keep up the good work, looking forward to those prio-workqueue
+patches.
+
+Peter
