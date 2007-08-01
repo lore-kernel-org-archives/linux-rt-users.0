@@ -1,61 +1,53 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
-	workqueue infrastructure
-Date: Wed, 01 Aug 2007 08:55:52 -0700
-Message-ID: <1185983752.2636.116.camel@imap.mvista.com>
-References: <20070801002407.4973.54778.stgit@novell1.haskins.net>
-	 <1185940340.2636.97.camel@imap.mvista.com>
-	 <1185969554.9513.106.camel@ghaskins-t60p.haskins.net>
-	 <1185981025.2636.102.camel@imap.mvista.com>
-	 <1185981585.9513.119.camel@ghaskins-t60p.haskins.net>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Old -rt patches
+Date: Wed, 01 Aug 2007 18:41:08 +0200
+Message-ID: <46B0B7A4.8060805@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Cc: linux-kernel@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:27196 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754564AbXHAP53 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Aug 2007 11:57:29 -0400
-In-Reply-To: <1185981585.9513.119.camel@ghaskins-t60p.haskins.net>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:38647 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751131AbXHAQm3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Aug 2007 12:42:29 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-08-01 at 11:19 -0400, Gregory Haskins wrote:
-> On Wed, 2007-08-01 at 08:10 -0700, Daniel Walker wrote:
-> 
-> > 
-> > rt_mutex_setprio() is just a function. It was also designed specifically
-> > for PI , so it seems fairly sane to use it in other PI type
-> > situations ..
-> > 
-> 
-> Yes.  It is designed for PI and I wasn't suggesting you shouldn't use
-> the logic itself.  What I was suggesting is that dealing with an API
-> that has "rt_mutex" in it for something that has nothing to do with
-> rt_mutexes is, well...
+Hello,
 
-It's fine for now .. One step at a time..
+I wrote a Linux app where I need high-resolution timers. I went all the 
+way and installed the -rt patch, which includes the -hrt patches, as far 
+as I understand.
 
-> All I was suggesting is that we break out the PI subsystem from rt_mutex
-> code so its an independent PI API and have the rt_mutex subsystem become
-> a user.   That's a far cleaner way to do it, IMHO.
+Since I could not afford to change kernels with every new release, I 
+decided to track the 2.6.20 branch (arbitrarily).
 
-The workqueues don't really need full blown transitive PI. So without
-that your back to the rt_mutex_setprio function .. Which could be
-renamed ..
+At this point I'm using 2.6.20.7-rt8 (-rt8 was the last patch to the 
+2.6.20 branch). (I see 2.6.20 is already up to .15)
 
-Here was my attempt years ago , 
+I see a lot of patches going into the -rt patch, but development moved 
+on to 2.6.21, then 2.6.22, and now 2.6.23, following mainline.
 
-http://lkml.org/lkml/2005/5/31/288
+I'm not a kernel hacker, so I don't claim to understand the patches, but 
+the comments sound like a few bugs are fixed here and there. I can't 
+tell whether these bugs also exist in previous kernels or only appeared 
+in newer kernels. Even if I knew, I probably wouldn't have the expertise 
+to back-port the patch.
 
-Looking back on it, I'm not sure what users I was planning to implement
-along with it .. I'm sure I was thinking "There must be other blocking
-primitives that could use this.." , but now I don't think there are ..
-Everything pretty much runs through the rt mutex.. workqueues are just
-"dancing" , or changing priorities up/down which is really only the
-lowest level of what the rt-mutex does.
+I'm seeing weird behavior in my app, when it has been running 2-4 days. 
+The timers start to act out, and all hell breaks loose. Basically, I 
+have no idea what's going on...
 
-Daniel
+My question is: is it possible that there is a bug in 2.6.20-rt8 that 
+has been fixed in subsequent -rt patches (there's a 2.6.21.6-rt21 and a 
+2.6.22.1-rt9)? In other words, if I give 2.6.21.6-rt8 or 2.6.22.1-rt9 a 
+spin, is it possible that my weird behavior disappears?
+
+I'm not saying that it's impossible for the bug to be in my app, but the 
+app is small enough that I'm fairly confident there's no problem there.
+
+Thanks for reading this far,
+
+John
