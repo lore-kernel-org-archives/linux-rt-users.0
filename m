@@ -1,103 +1,257 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Move RECURSION_LIMIT define up for more global use (take
- 2)
-Date: Tue, 31 Jul 2007 23:26:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0707312315210.10742@gandalf.stny.rr.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
+	workqueue infrastructure
+Date: Tue, 31 Jul 2007 20:52:20 -0700
+Message-ID: <1185940340.2636.97.camel@imap.mvista.com>
+References: <20070801002407.4973.54778.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:35883 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752467AbXHAD1Z (ORCPT
+Received: from homer.mvista.com ([63.81.120.158]:59799 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1755988AbXHADxm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 31 Jul 2007 23:27:25 -0400
+	Tue, 31 Jul 2007 23:53:42 -0400
+In-Reply-To: <20070801002407.4973.54778.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Tue, 2007-07-31 at 20:26 -0400, Gregory Haskins wrote:
+> The following workqueue related patch is a port of the original VFCIPI PI
+> patch I submitted earlier.  There is still more work to be done to add the
+> "schedule_on_cpu()" type behavior, and even more if we want to use this as
+> part of KVM.  But for now, this patch can stand alone so I thought I would
+> get it out there.
+> 
+> ------------------------------------------------------------------
+> 
+> Mainline workqueues treat all requests the same.  This patch prioritizes
+> requests in the queue based on the callers current rt_priority.  It also
+> adds a priority-inheritance feature to avoid inversion.
+> 
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> ---
+> 
+>  include/linux/workqueue.h |    2 
+>  kernel/workqueue.c        |  198 +++++++++++++++++++++++++++++++++------------
+>  2 files changed, 149 insertions(+), 51 deletions(-)
 
-OK, I sent this out once before but it must have slipped under the radar.
-http://lkml.org/lkml/2007/6/28/325
+Here's a simpler version .. uses the plist data structure instead of the
+100 queues, which makes for a cleaner patch ..
 
-My config fails miserably with lockdep:
+Signed-off-by: Daniel Walker <dwalker@mvista.com>
 
-kernel/lockdep.c: In function 'find_usage_forwards':
-kernel/lockdep.c:814: error: 'RECURSION_LIMIT' undeclared (first use in
-this function)
-kernel/lockdep.c:814: error: (Each undeclared identifier is reported only
-once
-kernel/lockdep.c:814: error: for each function it appears in.)
-kernel/lockdep.c:815: warning: implicit declaration of function
-'print_infinite_recursion_bug'
-kernel/lockdep.c: In function 'find_usage_backwards':
-kernel/lockdep.c:856: error: 'RECURSION_LIMIT' undeclared (first use in
-this function)
-make[1]: *** [kernel/lockdep.o] Error 1
+---
+ include/linux/workqueue.h |    7 ++++---
+ kernel/power/poweroff.c   |    1 +
+ kernel/sched.c            |    4 ----
+ kernel/workqueue.c        |   40 +++++++++++++++++++++++++---------------
+ 4 files changed, 30 insertions(+), 22 deletions(-)
 
-But this patch fixes it nicely.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-2.6.22.1-rt9/kernel/lockdep.c
+Index: linux-2.6.22/include/linux/workqueue.h
 ===================================================================
---- linux-2.6.22.1-rt9.orig/kernel/lockdep.c	2007-07-31 23:14:12.000000000 -0400
-+++ linux-2.6.22.1-rt9/kernel/lockdep.c	2007-07-31 23:25:04.000000000 -0400
-@@ -683,6 +683,21 @@ static void print_kernel_version(void)
- 		init_utsname()->version);
+--- linux-2.6.22.orig/include/linux/workqueue.h
++++ linux-2.6.22/include/linux/workqueue.h
+@@ -8,6 +8,7 @@
+ #include <linux/timer.h>
+ #include <linux/linkage.h>
+ #include <linux/bitops.h>
++#include <linux/plist.h>
+ #include <asm/atomic.h>
+ 
+ struct workqueue_struct;
+@@ -26,7 +27,7 @@ struct work_struct {
+ #define WORK_STRUCT_PENDING 0		/* T if work item pending execution */
+ #define WORK_STRUCT_FLAG_MASK (3UL)
+ #define WORK_STRUCT_WQ_DATA_MASK (~WORK_STRUCT_FLAG_MASK)
+-	struct list_head entry;
++	struct plist_node entry;
+ 	work_func_t func;
+ };
+ 
+@@ -43,7 +44,7 @@ struct execute_work {
+ 
+ #define __WORK_INITIALIZER(n, f) {				\
+ 	.data = WORK_DATA_INIT(),				\
+-	.entry	= { &(n).entry, &(n).entry },			\
++	.entry	= PLIST_NODE_INIT(n.entry, MAX_PRIO),		\
+ 	.func = (f),						\
+ 	}
+ 
+@@ -79,7 +80,7 @@ struct execute_work {
+ #define INIT_WORK(_work, _func)						\
+ 	do {								\
+ 		(_work)->data = (atomic_long_t) WORK_DATA_INIT();	\
+-		INIT_LIST_HEAD(&(_work)->entry);			\
++		plist_node_init(&(_work)->entry, -1);			\
+ 		PREPARE_WORK((_work), (_func));				\
+ 	} while (0)
+ 
+Index: linux-2.6.22/kernel/power/poweroff.c
+===================================================================
+--- linux-2.6.22.orig/kernel/power/poweroff.c
++++ linux-2.6.22/kernel/power/poweroff.c
+@@ -8,6 +8,7 @@
+ #include <linux/sysrq.h>
+ #include <linux/init.h>
+ #include <linux/pm.h>
++#include <linux/sched.h>
+ #include <linux/workqueue.h>
+ #include <linux/reboot.h>
+ 
+Index: linux-2.6.22/kernel/sched.c
+===================================================================
+--- linux-2.6.22.orig/kernel/sched.c
++++ linux-2.6.22/kernel/sched.c
+@@ -4379,8 +4379,6 @@ long __sched sleep_on_timeout(wait_queue
  }
-
-+#if defined(CONFIG_PROVE_LOCKING) || defined(CONFIG_TRACE_IRQFLAGS)
-+
-+#define RECURSION_LIMIT 40
-+
-+static int noinline print_infinite_recursion_bug(void)
-+{
-+	if (!debug_locks_off_graph_unlock())
-+		return 0;
-+
-+	WARN_ON(1);
-+
-+	return 0;
-+}
-+#endif /* CONFIG_PROVE_LOCKING || CONFIG_TRACE_IRQFLAGS */
-+
- #ifdef CONFIG_PROVE_LOCKING
+ EXPORT_SYMBOL(sleep_on_timeout);
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-
  /*
-  * When a circular dependency is detected, print the
-@@ -736,18 +751,6 @@ static noinline int print_circular_bug_t
- 	return 0;
+  * rt_mutex_setprio - set the current priority of a task
+  * @p: task
+@@ -4457,8 +4455,6 @@ out_unlock:
+ 	task_rq_unlock(rq, &flags);
  }
-
--#define RECURSION_LIMIT 40
+ 
+-#endif
 -
--static int noinline print_infinite_recursion_bug(void)
--{
--	if (!debug_locks_off_graph_unlock())
--		return 0;
--
--	WARN_ON(1);
--
--	return 0;
--}
--
- /*
-  * Prove that the dependency graph starting at <entry> can not
-  * lead to <target>. Print an error and return 0 if it does.
-@@ -874,6 +877,7 @@ find_usage_backwards(struct lock_class *
- 	return 1;
+ void set_user_nice(struct task_struct *p, long nice)
+ {
+ 	int old_prio, delta, on_rq;
+Index: linux-2.6.22/kernel/workqueue.c
+===================================================================
+--- linux-2.6.22.orig/kernel/workqueue.c
++++ linux-2.6.22/kernel/workqueue.c
+@@ -44,7 +44,7 @@ struct cpu_workqueue_struct {
+ 
+ 	spinlock_t lock;
+ 
+-	struct list_head worklist;
++	struct plist_head worklist;
+ 	wait_queue_head_t more_work;
+ 	struct work_struct *current_work;
+ 
+@@ -127,16 +127,19 @@ struct cpu_workqueue_struct *get_wq_data
+ static void insert_work(struct cpu_workqueue_struct *cwq,
+ 				struct work_struct *work, int tail)
+ {
++	int prio = current->normal_prio;
++
+ 	set_wq_data(work, cwq);
+ 	/*
+ 	 * Ensure that we get the right work->data if we see the
+ 	 * result of list_add() below, see try_to_grab_pending().
+ 	 */
+ 	smp_wmb();
+-	if (tail)
+-		list_add_tail(&work->entry, &cwq->worklist);
+-	else
+-		list_add(&work->entry, &cwq->worklist);
++	plist_node_init(&work->entry, prio);
++	plist_add(&work->entry, &cwq->worklist);
++
++	if (prio < cwq->thread->prio)
++		rt_mutex_setprio(cwq->thread, prio);
+ 	wake_up(&cwq->more_work);
  }
-
-+#ifdef CONFIG_PROVE_LOCKING
- static int
- print_bad_irq_dependency(struct task_struct *curr,
- 			 struct held_lock *prev,
-@@ -956,6 +960,7 @@ check_usage(struct task_struct *curr, st
- 	return print_bad_irq_dependency(curr, prev, next,
- 			bit_backwards, bit_forwards, irqclass);
+ 
+@@ -168,7 +171,7 @@ int fastcall queue_work(struct workqueue
+ 	int ret = 0, cpu = raw_smp_processor_id();
+ 
+ 	if (!test_and_set_bit(WORK_STRUCT_PENDING, work_data_bits(work))) {
+-		BUG_ON(!list_empty(&work->entry));
++		BUG_ON(!plist_node_empty(&work->entry));
+ 		__queue_work(wq_per_cpu(wq, cpu), work);
+ 		ret = 1;
+ 	}
+@@ -222,7 +225,7 @@ int queue_delayed_work_on(int cpu, struc
+ 
+ 	if (!test_and_set_bit(WORK_STRUCT_PENDING, work_data_bits(work))) {
+ 		BUG_ON(timer_pending(timer));
+-		BUG_ON(!list_empty(&work->entry));
++		BUG_ON(!plist_node_empty(&work->entry));
+ 
+ 		/* This stores cwq for the moment, for the timer_fn */
+ 		set_wq_data(work, wq_per_cpu(wq, raw_smp_processor_id()));
+@@ -264,13 +267,17 @@ static void run_workqueue(struct cpu_wor
+ 			__FUNCTION__, cwq->run_depth);
+ 		dump_stack();
+ 	}
+-	while (!list_empty(&cwq->worklist)) {
+-		struct work_struct *work = list_entry(cwq->worklist.next,
++	while (!plist_head_empty(&cwq->worklist)) {
++		struct work_struct *work = plist_first_entry(&cwq->worklist,
+ 						struct work_struct, entry);
+ 		work_func_t f = work->func;
+ 
++		if (likely(cwq->thread->prio != work->entry.prio))
++			rt_mutex_setprio(cwq->thread, work->entry.prio);
++
+ 		cwq->current_work = work;
+-		list_del_init(cwq->worklist.next);
++		plist_del(&work->entry, &cwq->worklist);
++		plist_node_init(&work->entry, MAX_PRIO);
+ 		spin_unlock_irq(&cwq->lock);
+ 
+ 		BUG_ON(get_wq_data(work) != cwq);
+@@ -283,6 +290,7 @@ static void run_workqueue(struct cpu_wor
+ 		spin_lock_irq(&cwq->lock);
+ 		cwq->current_work = NULL;
+ 	}
++	rt_mutex_setprio(cwq->thread, current->normal_prio);
+ 	cwq->run_depth--;
+ 	spin_unlock_irq(&cwq->lock);
  }
-+#endif /* CONFIG_PROVE_LOCKING */
-
- #endif
+@@ -301,7 +309,7 @@ static int worker_thread(void *__cwq)
+ 		prepare_to_wait(&cwq->more_work, &wait, TASK_INTERRUPTIBLE);
+ 		if (!freezing(current) &&
+ 		    !kthread_should_stop() &&
+-		    list_empty(&cwq->worklist))
++		    plist_head_empty(&cwq->worklist))
+ 			schedule();
+ 		finish_wait(&cwq->more_work, &wait);
+ 
+@@ -354,7 +362,8 @@ static int flush_cpu_workqueue(struct cp
+ 
+ 		active = 0;
+ 		spin_lock_irq(&cwq->lock);
+-		if (!list_empty(&cwq->worklist) || cwq->current_work != NULL) {
++		if (!plist_head_empty(&cwq->worklist) ||
++			cwq->current_work != NULL) {
+ 			insert_wq_barrier(cwq, &barr, 1);
+ 			active = 1;
+ 		}
+@@ -413,7 +422,7 @@ static int try_to_grab_pending(struct wo
+ 		return ret;
+ 
+ 	spin_lock_irq(&cwq->lock);
+-	if (!list_empty(&work->entry)) {
++	if (!plist_node_empty(&work->entry)) {
+ 		/*
+ 		 * This work is queued, but perhaps we locked the wrong cwq.
+ 		 * In that case we must see the new value after rmb(), see
+@@ -421,7 +430,8 @@ static int try_to_grab_pending(struct wo
+ 		 */
+ 		smp_rmb();
+ 		if (cwq == get_wq_data(work)) {
+-			list_del_init(&work->entry);
++			plist_del(&work->entry, &cwq->worklist);
++			plist_node_init(&work->entry, MAX_PRIO);
+ 			ret = 1;
+ 		}
+ 	}
+@@ -747,7 +757,7 @@ init_cpu_workqueue(struct workqueue_stru
+ 
+ 	cwq->wq = wq;
+ 	spin_lock_init(&cwq->lock);
+-	INIT_LIST_HEAD(&cwq->worklist);
++	plist_head_init(&cwq->worklist, NULL);
+ 	init_waitqueue_head(&cwq->more_work);
+ 
+ 	return cwq;
