@@ -1,165 +1,118 @@
-From: Daniel Walker <dwalker@mvista.com>
+From: Gregory Haskins <ghaskins@novell.com>
 Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
 	workqueue infrastructure
-Date: Wed, 01 Aug 2007 10:10:43 -0700
-Message-ID: <1185988243.2636.126.camel@imap.mvista.com>
+Date: Wed, 01 Aug 2007 13:32:31 -0400
+Message-ID: <1185989551.9513.163.camel@ghaskins-t60p.haskins.net>
 References: <20070801002407.4973.54778.stgit@novell1.haskins.net>
 	 <1185940340.2636.97.camel@imap.mvista.com>
-	 <1185987663.12034.99.camel@twins>
+	 <1185969554.9513.106.camel@ghaskins-t60p.haskins.net>
+	 <1185981025.2636.102.camel@imap.mvista.com>
+	 <1185981585.9513.119.camel@ghaskins-t60p.haskins.net>
+	 <1185983752.2636.116.camel@imap.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Oleg Nesterov <oleg@tv-sign.ru>,
-	Gregory Haskins <ghaskins@novell.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:14153 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755206AbXHARMX (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:36439 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754269AbXHAReM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Aug 2007 13:12:23 -0400
-In-Reply-To: <1185987663.12034.99.camel@twins>
+	Wed, 1 Aug 2007 13:34:12 -0400
+In-Reply-To: <1185983752.2636.116.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-08-01 at 19:01 +0200, Peter Zijlstra wrote:
-> (you guys forgot to CC Ingo, Oleg and me)
-> 
-> On Tue, 2007-07-31 at 20:52 -0700, Daniel Walker wrote:
-> 
-> > Here's a simpler version .. uses the plist data structure instead of the
-> > 100 queues, which makes for a cleaner patch ..
+On Wed, 2007-08-01 at 08:55 -0700, Daniel Walker wrote:
+> On Wed, 2007-08-01 at 11:19 -0400, Gregory Haskins wrote:
+> > On Wed, 2007-08-01 at 08:10 -0700, Daniel Walker wrote:
 > > 
-> > Signed-off-by: Daniel Walker <dwalker@mvista.com>
-> 
-> looks good, assuming you actually ran the code:
-
-No faith huh? I boot tested a few times, but it could be tested more.
-
-> Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
-> 
-> small nit below though..
-> 
-> > ---
-> >  include/linux/workqueue.h |    7 ++++---
-> >  kernel/power/poweroff.c   |    1 +
-> >  kernel/sched.c            |    4 ----
-> >  kernel/workqueue.c        |   40 +++++++++++++++++++++++++---------------
-> >  4 files changed, 30 insertions(+), 22 deletions(-)
+> > > 
+> > > rt_mutex_setprio() is just a function. It was also designed specifically
+> > > for PI , so it seems fairly sane to use it in other PI type
+> > > situations ..
+> > > 
 > > 
-> > Index: linux-2.6.22/include/linux/workqueue.h
-> > ===================================================================
-> > --- linux-2.6.22.orig/include/linux/workqueue.h
-> > +++ linux-2.6.22/include/linux/workqueue.h
-> > @@ -8,6 +8,7 @@
-> >  #include <linux/timer.h>
-> >  #include <linux/linkage.h>
-> >  #include <linux/bitops.h>
-> > +#include <linux/plist.h>
-> >  #include <asm/atomic.h>
-> >  
-> >  struct workqueue_struct;
-> > @@ -26,7 +27,7 @@ struct work_struct {
-> >  #define WORK_STRUCT_PENDING 0		/* T if work item pending execution */
-> >  #define WORK_STRUCT_FLAG_MASK (3UL)
-> >  #define WORK_STRUCT_WQ_DATA_MASK (~WORK_STRUCT_FLAG_MASK)
-> > -	struct list_head entry;
-> > +	struct plist_node entry;
-> >  	work_func_t func;
-> >  };
-> >  
-> > @@ -43,7 +44,7 @@ struct execute_work {
-> >  
-> >  #define __WORK_INITIALIZER(n, f) {				\
-> >  	.data = WORK_DATA_INIT(),				\
-> > -	.entry	= { &(n).entry, &(n).entry },			\
-> > +	.entry	= PLIST_NODE_INIT(n.entry, MAX_PRIO),		\
-> >  	.func = (f),						\
-> >  	}
-> >  
-> > @@ -79,7 +80,7 @@ struct execute_work {
-> >  #define INIT_WORK(_work, _func)						\
-> >  	do {								\
-> >  		(_work)->data = (atomic_long_t) WORK_DATA_INIT();	\
-> > -		INIT_LIST_HEAD(&(_work)->entry);			\
-> > +		plist_node_init(&(_work)->entry, -1);			\
-> >  		PREPARE_WORK((_work), (_func));				\
-> >  	} while (0)
-> >  
-> > Index: linux-2.6.22/kernel/power/poweroff.c
-> > ===================================================================
-> > --- linux-2.6.22.orig/kernel/power/poweroff.c
-> > +++ linux-2.6.22/kernel/power/poweroff.c
-> > @@ -8,6 +8,7 @@
-> >  #include <linux/sysrq.h>
-> >  #include <linux/init.h>
-> >  #include <linux/pm.h>
-> > +#include <linux/sched.h>
-> >  #include <linux/workqueue.h>
-> >  #include <linux/reboot.h>
-> >  
-> > Index: linux-2.6.22/kernel/sched.c
-> > ===================================================================
-> > --- linux-2.6.22.orig/kernel/sched.c
-> > +++ linux-2.6.22/kernel/sched.c
-> > @@ -4379,8 +4379,6 @@ long __sched sleep_on_timeout(wait_queue
-> >  }
-> >  EXPORT_SYMBOL(sleep_on_timeout);
-> >  
-> > -#ifdef CONFIG_RT_MUTEXES
-> > -
-> >  /*
-> >   * rt_mutex_setprio - set the current priority of a task
-> >   * @p: task
-> > @@ -4457,8 +4455,6 @@ out_unlock:
-> >  	task_rq_unlock(rq, &flags);
-> >  }
-> >  
-> > -#endif
-> > -
-> >  void set_user_nice(struct task_struct *p, long nice)
-> >  {
-> >  	int old_prio, delta, on_rq;
-> > Index: linux-2.6.22/kernel/workqueue.c
-> > ===================================================================
-> > --- linux-2.6.22.orig/kernel/workqueue.c
-> > +++ linux-2.6.22/kernel/workqueue.c
-> > @@ -44,7 +44,7 @@ struct cpu_workqueue_struct {
-> >  
-> >  	spinlock_t lock;
-> >  
-> > -	struct list_head worklist;
-> > +	struct plist_head worklist;
-> >  	wait_queue_head_t more_work;
-> >  	struct work_struct *current_work;
-> >  
-> > @@ -127,16 +127,19 @@ struct cpu_workqueue_struct *get_wq_data
-> >  static void insert_work(struct cpu_workqueue_struct *cwq,
-> >  				struct work_struct *work, int tail)
-> >  {
-> > +	int prio = current->normal_prio;
-> > +
-> >  	set_wq_data(work, cwq);
-> >  	/*
-> >  	 * Ensure that we get the right work->data if we see the
-> >  	 * result of list_add() below, see try_to_grab_pending().
-> >  	 */
-> >  	smp_wmb();
-> > -	if (tail)
-> > -		list_add_tail(&work->entry, &cwq->worklist);
-> > -	else
-> > -		list_add(&work->entry, &cwq->worklist);
-> > +	plist_node_init(&work->entry, prio);
-> > +	plist_add(&work->entry, &cwq->worklist);
+> > Yes.  It is designed for PI and I wasn't suggesting you shouldn't use
+> > the logic itself.  What I was suggesting is that dealing with an API
+> > that has "rt_mutex" in it for something that has nothing to do with
+> > rt_mutexes is, well...
 > 
-> perhaps we ought to handle tail, perhaps not, not sure what the
-> consequences are.
+> It's fine for now .. One step at a time..
 
-The plist doesn't distinguish since it's a sorted list. There is no way
-to force something to the back of the list ..
+I can live with that.
 
-It seems like the "tail" option was the old way to prioritize..  I think
-It could be removed since we're always priority ordering now anyway..
+> 
+> > All I was suggesting is that we break out the PI subsystem from rt_mutex
+> > code so its an independent PI API and have the rt_mutex subsystem become
+> > a user.   That's a far cleaner way to do it, IMHO.
+> 
+> The workqueues don't really need full blown transitive PI. So without
+> that your back to the rt_mutex_setprio function .. Which could be
+> renamed ..
 
-Daniel
+Right ;)  That's all I am really saying, but its not a big deal.
+
+> 
+> Here was my attempt years ago , 
+> 
+> http://lkml.org/lkml/2005/5/31/288
+
+Cool!  I haven't looked at the patches in depth yet, but perhaps that
+concept should be revisited.
+
+> Looking back on it, I'm not sure what users I was planning to implement
+> along with it .. I'm sure I was thinking "There must be other blocking
+> primitives that could use this.." , but now I don't think there are ..
+> Everything pretty much runs through the rt mutex.. 
+
+Well, not necessarily.  I think your first instinct was right.  Really
+any form of waiting can potentially be subject to inversion, IMHO.
+Waiting for a mutex is an obvious form, and also easy to solve since you
+have clear delineation between the waiters (and their priorities) and
+the resource holder.  
+
+However, inversion can happen any time you are waiting on a resource
+regardless of the blocking mechanism...for instance, waiting on a
+wait_queue.  Consider the situation of three RT tasks A, B, C.  A is the
+highest, C the lowest.  Assume C is a threaded IRQ handler for, say,
+diskio, and C will signal a wait_queue when IO completes.  In this
+scenario, A can get inverted behind B if it does diskio.  (In fact, I
+think someone was reporting a similar problem on the list last week, and
+the response was that we don't support that yet...I would like to change
+that :).
+
+The problem with something like a wait_queue, as previously mentioned,
+is you don't have a clear way to delineate who should get PI boosted.  I
+am wondering if we can put our heads together and come up with a
+comprehensive solution to this problem (even if it only works in certain
+situations..e.g. threads that explicitly register with a waitqueue,
+etc).
+
+The solution here might be as simple as the previously mentioned
+registration API, it might be something that can be done automatically
+in the infrastructure, or it might be something along the lines of
+converting more things over to use rt_mutex?  I don't know what the
+answer will be yet.  All have their challenges.  But I do think its a
+problem worth solving.
+
+I think the workqueue stuff we are doing is really the first step in
+this direction...but really some parts of that work are just special
+casing one form of the "wait_queue" scenario.  I would like to
+generalize this going forward.
+
+> workqueues are just
+> "dancing" , or changing priorities up/down which is really only the
+> lowest level of what the rt-mutex does.
+
+I totally agree that what the workqueues are currently doing in our
+patches are just a subset of PI.  But I absolutely think there are
+potential users of at least some of PI like facilities other than just
+mutexes.
+
+I appreciate your review, discussion, and contribution on this matter,
+Daniel.  Thank you!  I will take a look at your PI patches to see if I
+think it aligns with my current thoughts.
+
+-Greg
