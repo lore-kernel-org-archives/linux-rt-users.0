@@ -1,80 +1,47 @@
-From: lsorense@csclub.uwaterloo.ca (Lennart Sorensen)
-Subject: Re: [PATCH] expand /proc/interrupts to include missing vectors, v2
-Date: Wed, 1 Aug 2007 09:29:04 -0400
-Message-ID: <20070801132904.GA14084@csclub.uwaterloo.ca>
-References: <20070726180522.GA1486@tsunami.ccur.com> <46A8EE78.4040702@zytor.com> <1185816797.3170.1.camel@sven.thebigcorporation.com> <20070730123206.abeab890.akpm@linux-foundation.org> <20070731001718.GA14295@tsunami.ccur.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
+	workqueue infrastructure
+Date: Wed, 01 Aug 2007 08:10:25 -0700
+Message-ID: <1185981025.2636.102.camel@imap.mvista.com>
+References: <20070801002407.4973.54778.stgit@novell1.haskins.net>
+	 <1185940340.2636.97.camel@imap.mvista.com>
+	 <1185969554.9513.106.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, jason.baietto@ccur.com
-To: Joe Korty <joe.korty@ccur.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764908AbXHAN31@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070731001718.GA14295@tsunami.ccur.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:15407 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757637AbXHAPMA (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Aug 2007 11:12:00 -0400
+In-Reply-To: <1185969554.9513.106.camel@ghaskins-t60p.haskins.net>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jul 30, 2007 at 08:17:18PM -0400, Joe Korty wrote:
-> Add missing IRQs and IRQ descriptions to /proc/interrupts.
+On Wed, 2007-08-01 at 07:59 -0400, Gregory Haskins wrote:
+> On Tue, 2007-07-31 at 20:52 -0700, Daniel Walker wrote:
 > 
-> /proc/interrupts is most useful when it displays every
-> IRQ vector in use by the system, not just those somebody
-> thought would be interesting.
+> > 
+> > Here's a simpler version .. uses the plist data structure instead of the
+> > 100 queues, which makes for a cleaner patch ..
 > 
-> This patch inserts the following vector displays to the
-> i386 and x86_64 platforms, as appropriate:
-> 	
-> 	rescheduling interrupts
-> 	TLB flush interrupts
-> 	function call interrupts
-> 	thermal event interrupts
-> 	threshold interrupts
-> 	spurious interrupts
+> Hi Daniel,
 > 
-> A threshold interrupt occurs when ECC memory correction
-> is occuring at too high a frequency.  Thresholds are used
-> by the ECC hardware as occasional ECC failures are part
-> of normal operation, but long sequences of ECC failures
-> usually indicate a memory chip that is about to fail.
+> I like your idea on the plist simplification a lot.  I will definitely
+> roll that into my series.
 > 
-> Thermal event interrupts occur when a temperature threshold
-> has been exceeded for some CPU chip.  IIRC, a thermal
-> interrupt is also generated when the temperature drops
-> back to a normal level.
-> 
-> A spurious interrupt is an interrupt that was raised then
-> lowered by the device before it could be fully processed
-> by the APIC.  Hence the apic sees the interrupt but does
-> not know what device it came from.  For this case the APIC
-> hardware will assume a vector of 0xff.
-> 
-> Rescheduling, call, and TLB flush interrupts are sent from
-> one CPU to another per the needs of the OS.  Typically,
-> their statistics would be used to discover if an
-> interrupt flood of the given type has been occuring.
+> I am not too psyched about using the rt_mutex_setprio() API directly,
+> however.  It seems broken to be calling that directly from non rt_mutex
+> code, IMHO.  Perhaps the PI subsystem should be broken out from the
+> rt_mutex code so it can be used generally?  There are other areas where
+> PI could potentially be used besides rt_mutex (this patch as a prime
+> example), so this might make sense.
 
-Since you are playing with /proc/interrupts, is there any chance you
-could make it make sense too?
+rt_mutex_setprio() is just a function. It was also designed specifically
+for PI , so it seems fairly sane to use it in other PI type
+situations ..
 
-Right now I have the annoying issue that /proc/interrupts only shows
-interrupts that it sees a handler for, and ignores the rest.  For some
-reason irq 3 never shows up in /proc/interrupts on my system, even
-though I have serial ports on both IRQ 3 and 4.  Only irq 4 shows
-'serial' as the handler, and is the only one shown.  irq 3 is getting
-lots of interrupts, and the serial driver is handling them, it just
-doesn't show up in /proc/interrupts.  procinfo does show irq 3 although
-with no handler listed.  I think any interrupt with a handler AND any
-interrupt with a non zero count ought to be shown.  I only happened to
-try procinfo by chance and discover that while I thought IRQ 3 wasn't
-working, the only issue was that /proc/interrupts simply wasn't showing
-all the relevant information.
-
-Of course I would also love to know why irq 3 isn't showing serial as
-the handler, but I have no idea why that is.  This is all using Debian's
-2.6.18 kernel.
-
---
-Len Sorensen
+Daniel
