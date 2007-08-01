@@ -1,109 +1,110 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
-	workqueue infrastructure
-Date: Wed, 01 Aug 2007 17:59:58 -0400
-Message-ID: <1186005598.9513.261.camel@ghaskins-t60p.haskins.net>
-References: <20070801002407.4973.54778.stgit@novell1.haskins.net>
-	 <1185940340.2636.97.camel@imap.mvista.com>
-	 <1185987663.12034.99.camel@twins> <20070801181253.GA90@tv-sign.ru>
-	 <1185992994.2636.142.camel@imap.mvista.com>
-	 <20070801201802.GA225@tv-sign.ru>
-	 <1186000468.2636.168.camel@imap.mvista.com>
-	 <20070801205053.GA263@tv-sign.ru>
-	 <1186002783.9513.228.camel@ghaskins-t60p.haskins.net>
-	 <20070801213422.GA280@tv-sign.ru>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
+Date: Thu, 2 Aug 2007 02:22:01 +0400
+Message-ID: <20070801222201.GA316@tv-sign.ru>
+References: <1185940340.2636.97.camel@imap.mvista.com> <1185987663.12034.99.camel@twins> <20070801181253.GA90@tv-sign.ru> <1185992994.2636.142.camel@imap.mvista.com> <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: Daniel Walker <dwalker@mvista.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-To: Oleg Nesterov <oleg@tv-sign.ru>
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:41447 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752390AbXHAWBj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Aug 2007 18:01:39 -0400
-In-Reply-To: <20070801213422.GA280@tv-sign.ru>
+Received: from mail.screens.ru ([213.234.233.54]:35774 "EHLO mail.screens.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752890AbXHAWWD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Aug 2007 18:22:03 -0400
+Content-Disposition: inline
+In-Reply-To: <1186005598.9513.261.camel@ghaskins-t60p.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-08-02 at 01:34 +0400, Oleg Nesterov wrote:
-> On 08/01, Gregory Haskins wrote:
-> >
-> > On Thu, 2007-08-02 at 00:50 +0400, Oleg Nesterov wrote:
-> > > On 08/01, Daniel Walker wrote:
-> > > >
-> > > > It's translating priorities through the work queues, which doesn't seem
-> > > > to happen with the current implementation. A high priority, say
-> > > > SCHED_FIFO priority 99, task may have to wait for a nice -5 work queue
-> > > > to finish..
+On 08/01, Gregory Haskins wrote:
+>
+> On Thu, 2007-08-02 at 01:34 +0400, Oleg Nesterov wrote:
+> > On 08/01, Gregory Haskins wrote:
+> > >
+> > > On Thu, 2007-08-02 at 00:50 +0400, Oleg Nesterov wrote:
+> > > > On 08/01, Daniel Walker wrote:
+> > > > >
+> > > > > It's translating priorities through the work queues, which doesn't seem
+> > > > > to happen with the current implementation. A high priority, say
+> > > > > SCHED_FIFO priority 99, task may have to wait for a nice -5 work queue
+> > > > > to finish..
+> > > > 
+> > > > Why should that task wait?
 > > > 
-> > > Why should that task wait?
+> > > I assume "that task" = the RT99 task?  If so, that is precisely the
+> > > question.  It shouldn't wait.  ;)  With mainline, it is simply queued
+> > > with every other request.  There could be an RT40, and a SCHED_NORMAL in
+> > > front of it in the queue that will get processed first.  In addition,
+> > > the system could suffer from a priority inversion if some unrelated but
+> > > lower priority task (say RT98) was blocking the workqueue thread from
+> > > making forward progress on the nice -5 job. 
+> > > 
+> > > To clarify: when a design utilizes a singlethread per workqueue (such as
+> > > in both mainline and this patch), the RT99 will always have to wait
+> > > behind any already dispatched jobs.
 > > 
-> > I assume "that task" = the RT99 task?  If so, that is precisely the
-> > question.  It shouldn't wait.  ;)  With mainline, it is simply queued
-> > with every other request.  There could be an RT40, and a SCHED_NORMAL in
-> > front of it in the queue that will get processed first.  In addition,
-> > the system could suffer from a priority inversion if some unrelated but
-> > lower priority task (say RT98) was blocking the workqueue thread from
-> > making forward progress on the nice -5 job. 
+> > It is not that "RT99 will always have to wait". But yes, the work_struct
+> > queued by RT99 has to wait.
+> 
+> Agreed.  We are talking only within the scope of workqueues here.
+> 
+> 
+> > > 1) The RT99 task would move ahead in the queue of anything else that was
+> > > also scheduled on the workqueue that is < RT99.
 > > 
-> > To clarify: when a design utilizes a singlethread per workqueue (such as
-> > in both mainline and this patch), the RT99 will always have to wait
-> > behind any already dispatched jobs.
+> > this itself is wrong, breaks flush_workqueue() semantics
 > 
-> It is not that "RT99 will always have to wait". But yes, the work_struct
-> queued by RT99 has to wait.
+> Perhaps in Daniels patch.
 
-Agreed.  We are talking only within the scope of workqueues here.
+No.
 
+> However, IIUC the point of flush_workqueue() is a barrier only relative
+> to your own submissions, correct?.  E.g. to make sure *your* requests
+> are finished, not necessarily the entire queue.
 
-> > 1) The RT99 task would move ahead in the queue of anything else that was
-> > also scheduled on the workqueue that is < RT99.
+No,
+
+> If flush_workqueue is supposed to behave differently than I describe,
+> then I agree its broken even in my original patch.
+
+The comment near flush_workqueue() says:
+
+	* We sleep until all works which were queued on entry have been handled,
+	* but we are not livelocked by new incoming ones.
+
+> > > 2) The priority of the workqueue task would be temporarily elevated to
+> > > RT99 so that the currently dispatched task will complete at the same
+> > > priority as the waiter.
+> > 
+> > _Which_ waiter?
 > 
-> this itself is wrong, breaks flush_workqueue() semantics
+> The RT99 task that submitted the request.
 
-Perhaps in Daniels patch.  I am not familiar enough with plist to be
-able to tell you if it has a problem there or not.  However, I think
-this works in the original patch I submitted with had a different
-queuing mechanism.  Daniels patch was derived from that so he may have
-inadvertently picked up something from mine which was no longer true in
-the new design.  I'll defer to Daniel for clarification there.
+Now, again, why do you think this task should wait?
 
-However, IIUC the point of flush_workqueue() is a barrier only relative
-to your own submissions, correct?.  E.g. to make sure *your* requests
-are finished, not necessarily the entire queue.
-
-If thats true, the flush would be injected at the same priority(*) as
-your other pending tasks at the tail of that priority level.  Then you
-would still block until all of your tasks complete.
-
-If flush_workqueue is supposed to behave differently than I describe,
-then I agree its broken even in my original patch.
-
-(*) We would probably have to protect against somebody else PI-boosting
-*us* ;)
-
+> >  I can't understand at all why work_struct should "inherit"
+> > the priority of the task which queued it. 
 > 
-> > 2) The priority of the workqueue task would be temporarily elevated to
-> > RT99 so that the currently dispatched task will complete at the same
-> > priority as the waiter.
-> 
-> _Which_ waiter?
+> Think about it:  If you are an RT99 task and you have work to do,
+> shouldn't *all* of the work you need be done at RT99 if possible. 
 
-The RT99 task that submitted the request.
+No, I don't think so. Quite opposite, I think sometimes it makes
+sense to "offload" some low-priority work from RT99 to workqueue
+thread exactly because it has no rt policy.
 
->  I can't understand at all why work_struct should "inherit"
-> the priority of the task which queued it. 
+And what about queue_work() from irq? Why should that work take a
+"random" priority?
 
-Think about it:  If you are an RT99 task and you have work to do,
-shouldn't *all* of the work you need be done at RT99 if possible.  Why
-should something like a measly RT98 task block you from completing your
-work. ;) The fact that you need to do some work via a workqueue (perhaps
-because you need specific cpu routing) is inconsequential, IMHO.
+> Why
+> should something like a measly RT98 task block you from completing your
+> work. ;) The fact that you need to do some work via a workqueue (perhaps
+> because you need specific cpu routing) is inconsequential, IMHO.
 
-Regards,
--Greg
+In that case I think it is better to create a special workqueue
+and raise its priority.
+
+Oleg.
