@@ -1,62 +1,58 @@
 From: Oleg Nesterov <oleg@tv-sign.ru>
 Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
-Date: Wed, 1 Aug 2007 22:12:53 +0400
-Message-ID: <20070801181253.GA90@tv-sign.ru>
-References: <20070801002407.4973.54778.stgit@novell1.haskins.net> <1185940340.2636.97.camel@imap.mvista.com> <1185987663.12034.99.camel@twins>
+Date: Wed, 1 Aug 2007 22:26:58 +0400
+Message-ID: <20070801182658.GB90@tv-sign.ru>
+References: <20070801002407.4973.54778.stgit@novell1.haskins.net> <1185940340.2636.97.camel@imap.mvista.com> <1185987663.12034.99.camel@twins> <1185988243.2636.126.camel@imap.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Daniel Walker <dwalker@mvista.com>, Ingo Molnar <mingo@elte.hu>,
+Cc: Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@elte.hu>,
 	Gregory Haskins <ghaskins@novell.com>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.screens.ru ([213.234.233.54]:52802 "EHLO mail.screens.ru"
+Received: from mail.screens.ru ([213.234.233.54]:54555 "EHLO mail.screens.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750811AbXHASNR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Aug 2007 14:13:17 -0400
+	id S1760065AbXHAS0m (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Aug 2007 14:26:42 -0400
 Content-Disposition: inline
-In-Reply-To: <1185987663.12034.99.camel@twins>
+In-Reply-To: <1185988243.2636.126.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/01, Peter Zijlstra wrote:
+On 08/01, Daniel Walker wrote:
 >
-> On Tue, 2007-07-31 at 20:52 -0700, Daniel Walker wrote:
+> On Wed, 2007-08-01 at 19:01 +0200, Peter Zijlstra wrote:
+> > >  static void insert_work(struct cpu_workqueue_struct *cwq,
+> > >  				struct work_struct *work, int tail)
+> > >  {
+> > > +	int prio = current->normal_prio;
+> > > +
+> > >  	set_wq_data(work, cwq);
+> > >  	/*
+> > >  	 * Ensure that we get the right work->data if we see the
+> > >  	 * result of list_add() below, see try_to_grab_pending().
+> > >  	 */
+> > >  	smp_wmb();
+> > > -	if (tail)
+> > > -		list_add_tail(&work->entry, &cwq->worklist);
+> > > -	else
+> > > -		list_add(&work->entry, &cwq->worklist);
+> > > +	plist_node_init(&work->entry, prio);
+> > > +	plist_add(&work->entry, &cwq->worklist);
+> > 
+> > perhaps we ought to handle tail, perhaps not, not sure what the
+> > consequences are.
 > 
-> >  static void insert_work(struct cpu_workqueue_struct *cwq,
-> >  				struct work_struct *work, int tail)
-> >  {
-> > +	int prio = current->normal_prio;
-> > +
-> >  	set_wq_data(work, cwq);
-> >  	/*
-> >  	 * Ensure that we get the right work->data if we see the
-> >  	 * result of list_add() below, see try_to_grab_pending().
-> >  	 */
-> >  	smp_wmb();
-> > -	if (tail)
-> > -		list_add_tail(&work->entry, &cwq->worklist);
-> > -	else
-> > -		list_add(&work->entry, &cwq->worklist);
-> > +	plist_node_init(&work->entry, prio);
-> > +	plist_add(&work->entry, &cwq->worklist);
+> The plist doesn't distinguish since it's a sorted list. There is no way
+> to force something to the back of the list ..
+> 
+> It seems like the "tail" option was the old way to prioritize..  I think
+> It could be removed since we're always priority ordering now anyway..
 
-Sorry, this patch is completely wrong. It immediately breaks
-flush_workqueue/cancel_workqueue functions.
+No, the "tail" option has nothing to do with prioritize, we can't remove
+it. Please look at the code.
 
-And I personally think it is not very useful, even if it was correct.
-You can create your own workqueue and change the priority of cwq->thread.
-
-> > @@ -168,7 +171,7 @@ int fastcall queue_work(struct workqueue
-> >  	int ret = 0, cpu = raw_smp_processor_id();
-> >  
-> >  	if (!test_and_set_bit(WORK_STRUCT_PENDING, work_data_bits(work))) {
-> > -		BUG_ON(!list_empty(&work->entry));
-> > +		BUG_ON(!plist_node_empty(&work->entry));
-> >  		__queue_work(wq_per_cpu(wq, cpu), work);
-> >  		ret = 1;
-
-Side note, looks like you use some strange kernel. This raw_smp_processor_id()
-above is wrong.
+Also, flush_workqueue() must not be delayed by the new incoming work_struct's,
+the change like this breaks this assumption.
 
 Oleg.
