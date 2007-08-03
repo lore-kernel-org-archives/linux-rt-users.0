@@ -1,47 +1,58 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: System clock frequency offset changes drastically across reboots
-Date: Fri, 03 Aug 2007 09:47:17 +0200
-Message-ID: <46B2DD85.2030100@free.fr>
-References: <46A9DD7A.80104@free.fr> <46AD9A74.8070302@free.fr>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH RFC -rt] Allow rcutorture to handle synchronize_sched()
+Date: Fri, 3 Aug 2007 11:44:49 -0700
+Message-ID: <20070803184449.GA2196@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, johnstul@us.ibm.com,
-	tglx@linutronix.de, questions@lists.ntp.org
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, mingo@elte.hu, dipankar@in.ibm.com,
+	ego@in.ibm.com, vatsa@in.ibm.com, josht@linux.vnet.ibm.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:57333 "EHLO smtp4-g19.free.fr"
+Received: from e2.ny.us.ibm.com ([32.97.182.142]:49124 "EHLO e2.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750818AbXHCHsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Aug 2007 03:48:20 -0400
-In-Reply-To: <46AD9A74.8070302@free.fr>
+	id S1753737AbXHCSov (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 Aug 2007 14:44:51 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-[ Expanding recipients list to include NTP mailing list ]
+The rcutorture module uses a random-number generator that periodically
+calls get_random_bytes() to add entropy.  This random-number generator
+is invoked from within the RCU read-side critical section, which, in the
+case of the synchronize_sched() variant of RCU, has preeemption disabled.
+Unfortunately, get_random_bytes() ends up acquiring normal spinlocks,
+which can block in -rt, resulting in very large numbers of "scheduling
+while atomic" messages.
 
-> John Sigler wrote:
-> 
->> I'm using 2.6.20.7-rt8 on a P3.
-> 
-> (But some ntpd users have reported the problem with mainline kernels and 
-> different versions.)
-> 
->> I've noticed that the frequency offset of my system clock (computed 
->> either by ntpd, or by hand) changes drastically across reboots.
->>
->> By drastically, I mean +/- 60 ppm every time I reboot.
->>
->> Apparently this is caused by some imprecision in the frequency 
->> estimation done in calculate_cpu_khz() (arch/i386/kernel/tsc.c)
->>
->> My brutally crude work-around was to skip the computation altogether 
->> and hard-code the "correct" value for cpu_khz.
->>
->> http://linux.kernel.free.fr/cpu_khz.adlink
->>
->> Has this issue been investigated more thoroughly by other users?
+This patch takes a very crude approach, simply substituting the time
+of day for get_random_bytes().
 
-Is there, perhaps, more appropriate a forum to discuss such matters?
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
 
-Regards.
+ rcutorture.c |    7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff -urpNa -X dontdiff linux-2.6.22.1-rt4/kernel/rcutorture.c linux-2.6.22.1-rt4-rcutorturesched/kernel/rcutorture.c
+--- linux-2.6.22.1-rt4/kernel/rcutorture.c	2007-07-21 16:58:22.000000000 -0700
++++ linux-2.6.22.1-rt4-rcutorturesched/kernel/rcutorture.c	2007-08-02 16:38:09.000000000 -0700
+@@ -165,16 +165,13 @@ struct rcu_random_state {
+ 
+ /*
+  * Crude but fast random-number generator.  Uses a linear congruential
+- * generator, with occasional help from get_random_bytes().
++ * generator, with occasional help from the time-of-day clock.
+  */
+ static unsigned long
+ rcu_random(struct rcu_random_state *rrsp)
+ {
+-	long refresh;
+-
+ 	if (--rrsp->rrs_count < 0) {
+-		get_random_bytes(&refresh, sizeof(refresh));
+-		rrsp->rrs_state += refresh;
++		rrsp->rrs_state += xtime.tv_nsec;
+ 		rrsp->rrs_count = RCU_RANDOM_REFRESH;
+ 	}
+ 	rrsp->rrs_state = rrsp->rrs_state * RCU_RANDOM_MULT + RCU_RANDOM_ADD;
