@@ -1,33 +1,48 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [BUG  RT] - rcupreempt.c:133 on 2.6.23-rc1-rt7
-Date: Sun, 05 Aug 2007 01:05:32 -0400
-Message-ID: <1186290332.636.8.camel@localhost.localdomain>
-References: <1186289484.636.5.camel@localhost.localdomain>
+Subject: [BUG RT] WARNING: at kernel/sched.c:5071 2.6.23-rc1-rt7
+Date: Sun, 05 Aug 2007 01:13:36 -0400
+Message-ID: <1186290816.636.14.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: "Paul E. McKenney" <paulmck@us.ibm.com>
+	"Paul E. McKenney" <paulmck@us.ibm.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:45391 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751732AbXHEFFl (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:58350 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752360AbXHEFN7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Aug 2007 01:05:41 -0400
-In-Reply-To: <1186289484.636.5.camel@localhost.localdomain>
+	Sun, 5 Aug 2007 01:13:59 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 2007-08-05 at 00:51 -0400, Steven Rostedt wrote:
+Ingo,
 
-> I don't have time to look further now, and it's something that isn't
-> easily reproducible (Well, it happened once out of two boots). If you
-> need me to look further, or need a config or dmesg (I have both), then
-> just give me a holler.
+The below ifndef, shouldn't that be ifndef CONFIG_PREEMPT_SOFTIRQS ?
+I hit that warning while I was running !PREEMPT_RT but with both hard
+and softiqs as threads.
 
-Silly me. FYI, I was running with !PREEMPT_RT, but with Hard and
-Softirqs as threads.  Must have copied the wrong config over :-/
+
+int __sched cond_resched_softirq(void)
+{
+#ifndef CONFIG_PREEMPT_RT
+	WARN_ON_ONCE(!in_softirq());
+#endif
+	if (need_resched() && system_state == SYSTEM_RUNNING) {
+		local_bh_enable();
+		__cond_resched();
+		local_bh_disable();
+		return 1;
+	}
+	return 0;
+}
+
 
 -- Steve
+
+P.S. I really found out that the system becomes VERY non-responsive when
+you run with both hard and softirqs as threads, but with
+PREEMPT_NONE ;-)
