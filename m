@@ -1,37 +1,71 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [BUG  RT] - rcupreempt.c:133 on 2.6.23-rc1-rt7
-Date: Sun, 5 Aug 2007 17:26:27 +0200
-Message-ID: <20070805152627.GA14029@elte.hu>
-References: <1186289484.636.5.camel@localhost.localdomain> <1186290332.636.8.camel@localhost.localdomain> <20070805065948.GB515@elte.hu> <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] put in a relatively high number for rcu read lock upper
+	limit.
+Date: Sun, 05 Aug 2007 11:35:00 -0400
+Message-ID: <1186328100.636.19.camel@localhost.localdomain>
+References: <1186289484.636.5.camel@localhost.localdomain>
+	 <1186290332.636.8.camel@localhost.localdomain>
+	 <20070805065948.GB515@elte.hu>
+	 <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
+	 <20070805150449.GA19418@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: "Paul E. McKenney" <paulmck@us.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:35691 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752334AbXHEP0y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Aug 2007 11:26:54 -0400
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:57351 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752447AbXHEPfW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Aug 2007 11:35:22 -0400
+In-Reply-To: <20070805150449.GA19418@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Paul and Ingo,
 
-* Steven Rostedt <rostedt@goodmis.org> wrote:
+Should we just remove the upper limit check, or is something like this
+patch sound?
 
-> The code on line 133 is:
-> 
-> 	WARN_ON_ONCE(current->rcu_read_lock_nesting > NR_CPUS);
-> 
-> I have NR_CPUS set to 2 since the box I'm running this on only has 2 
-> cpus and I see no reason to waste more data structures.
-> 
-> Is rcu read lock nesting deeper than 2?
+-- Steve
 
-ah, silly me - that should indeed be something fixed like 128.
+When DEBUG_KERNEL is set, place an upper bound limit on the rcu read
+lock set to 100. If we go that deep, then a warn on will print.
 
-	Ingo
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.23-rc1-rt7/kernel/rcupreempt.c
+===================================================================
+--- linux-2.6.23-rc1-rt7.orig/kernel/rcupreempt.c	2007-08-05 11:25:38.000000000 -0400
++++ linux-2.6.23-rc1-rt7/kernel/rcupreempt.c	2007-08-05 11:30:33.000000000 -0400
+@@ -50,6 +50,14 @@
+ #include <linux/cpumask.h>
+ #include <linux/rcupreempt_trace.h>
+ 
++#ifdef CONFIG_DEBUG_KERNEL
++/* Picking 100 as a high enough limit on rcu read lock nesting. */
++# define rcu_read_lock_check_upper_limit() \
++		WARN_ON_ONCE(current->rcu_read_lock_nesting > 100);
++#else
++# define rcu_read_lock_check_upper_limit() do { } while(0)
++#endif
++
+ /*
+  * PREEMPT_RCU data structures.
+  */
+@@ -129,9 +137,9 @@ void __rcu_read_lock(void)
+ 			atomic_inc(current->rcu_flipctr2);
+ 			smp_mb__after_atomic_inc();  /* might optimize out... */
+ 		}
+-	} else {
+-		WARN_ON_ONCE(current->rcu_read_lock_nesting > NR_CPUS);
+-	}
++	} else
++		rcu_read_lock_check_upper_limit();
++
+ 	local_irq_restore(oldirq);
+ }
+ 
