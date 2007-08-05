@@ -1,52 +1,71 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [BUG  RT] - rcupreempt.c:133 on 2.6.23-rc1-rt7
-Date: Sun, 5 Aug 2007 10:24:15 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
-References: <1186289484.636.5.camel@localhost.localdomain>
- <1186290332.636.8.camel@localhost.localdomain> <20070805065948.GB515@elte.hu>
+Date: Sun, 5 Aug 2007 08:04:49 -0700
+Message-ID: <20070805150449.GA19418@linux.vnet.ibm.com>
+References: <1186289484.636.5.camel@localhost.localdomain> <1186290332.636.8.camel@localhost.localdomain> <20070805065948.GB515@elte.hu> <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "Paul E. McKenney" <paulmck@us.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:50964 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752418AbXHEOYZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Aug 2007 10:24:25 -0400
-In-Reply-To: <20070805065948.GB515@elte.hu>
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:38428 "EHLO e1.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751250AbXHEPEx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Aug 2007 11:04:53 -0400
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
---
-
-On Sun, 5 Aug 2007, Ingo Molnar wrote:
-
->
-> * Steven Rostedt <rostedt@goodmis.org> wrote:
->
-> > > I don't have time to look further now, and it's something that isn't
-> > > easily reproducible (Well, it happened once out of two boots). If
-> > > you need me to look further, or need a config or dmesg (I have
-> > > both), then just give me a holler.
+On Sun, Aug 05, 2007 at 10:24:15AM -0400, Steven Rostedt wrote:
+> 
+> --
+> 
+> On Sun, 5 Aug 2007, Ingo Molnar wrote:
+> 
 > >
-> > Silly me. FYI, I was running with !PREEMPT_RT, but with Hard and
-> > Softirqs as threads.  Must have copied the wrong config over :-/
->
-> it's still not supposed to happen ... rcu read lock nesting that deep?
->
+> > * Steven Rostedt <rostedt@goodmis.org> wrote:
+> >
+> > > > I don't have time to look further now, and it's something that isn't
+> > > > easily reproducible (Well, it happened once out of two boots). If
+> > > > you need me to look further, or need a config or dmesg (I have
+> > > > both), then just give me a holler.
+> > >
+> > > Silly me. FYI, I was running with !PREEMPT_RT, but with Hard and
+> > > Softirqs as threads.  Must have copied the wrong config over :-/
+> >
+> > it's still not supposed to happen ... rcu read lock nesting that deep?
+> >
+> 
+> The code on line 133 is:
+> 
+> 	WARN_ON_ONCE(current->rcu_read_lock_nesting > NR_CPUS);
+> 
+> I have NR_CPUS set to 2 since the box I'm running this on only has
+> 2 cpus and I see no reason to waste more data structures.
+> 
+> Is rcu read lock nesting deeper than 2?
 
-The code on line 133 is:
+In networking, I would not be at all surprised, given things like fib_trie
+and netfilter usage.  In addition, if rcu_read_lock() is called from
+hardirq or NMI/SMI, it is necessary to add the nesting levels in these
+environments as well.  In any case, rcu_read_lock() is freely nestable,
+so there is no penalty for nesting pretty deeply.  I must have missed this
+WARN_ON_ONCE() being added to rcu_read_lock() -- I did ack Daniel Walker's
+check for negative values of rcu_read_lock_nesting in rcu_read_unlock(),
+but saw no upper-limit checks.
 
-	WARN_ON_ONCE(current->rcu_read_lock_nesting > NR_CPUS);
+So, are you running into a situation where rcu_read_lock_nesting is
+growing unboundedly?
 
-I have NR_CPUS set to 2 since the box I'm running this on only has
-2 cpus and I see no reason to waste more data structures.
+I would not expect the per-task nesting level to normally be a function
+of the number of CPUs -- unless one was doing some sort of nested scan
+of RCU-protected per-CPU data structures or some such.  So if you are
+adding this to your local build as a debug check, I would suggest a fixed
+limit -- but would -not- suggest putting such a check into a production
+build, at least not for a small limit.
 
-Is rcu read lock nesting deeper than 2?
-
--- Steve
+							Thanx, Paul
