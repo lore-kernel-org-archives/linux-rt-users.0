@@ -1,52 +1,164 @@
-From: Guennadi Liakhovetski <gl@dsa-ac.de>
-Subject: "BUG" fixed by -rt* kernel, why not in mainline?
-Date: Mon, 6 Aug 2007 15:42:17 +0200 (CEST)
-Message-ID: <Pine.LNX.4.63.0708061527240.8578@pcgl.dsa-ac.de>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
+Date: Mon, 6 Aug 2007 18:26:16 +0400
+Message-ID: <20070806142616.GA210@tv-sign.ru>
+References: <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <1186400154.21381.40.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Walker <dwalker@mvista.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.dsa-ac.de ([62.112.80.99]:54824 "EHLO mail.dsa-ac.de"
+Received: from mail.screens.ru ([213.234.233.54]:33742 "EHLO mail.screens.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1765068AbXHFODI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 10:03:08 -0400
-Received: from localhost (unknown [127.0.0.1])
-	by mail.dsa-ac.de (Postfix) with ESMTP id 419773D6A9
-	for <linux-rt-users@vger.kernel.org>; Mon,  6 Aug 2007 13:42:18 +0000 (UTC)
-Received: from pcgl.dsa-ac.de (PCGL.dsa-ac.de [172.29.17.23])
-	by mail.dsa-ac.de (Postfix) with ESMTP id 3172B3C3D1
-	for <linux-rt-users@vger.kernel.org>; Mon,  6 Aug 2007 15:42:17 +0200 (CEST)
+	id S1762086AbXHFOYQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 10:24:16 -0400
+Content-Disposition: inline
+In-Reply-To: <1186400154.21381.40.camel@ghaskins-t60p.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On 08/06, Gregory Haskins wrote:
+>
+> On Thu, 2007-08-02 at 23:50 +0400, Oleg Nesterov wrote: 
+> 
+> > I strongly believe you guys take a _completely_ wrong approach.
+> > queue_work() should _not_ take the priority of the caller into
+> > account, this is bogus.
+> 
+> I think you have argued very effectively that there are situations in
+> which the priority should not be taken into account.  I also think a
+> case could easily be made to say that this RT business may be too
+> complex to justifiably pollute the workqueue infrastructure.
 
-there's a hunk in patch-2.6.23-rc2-rt2, which looks like a bug-fix, 
-also relevant for the mainline kernel:
+Yes, perhaps we can make a separate inreface...
 
-@@ -477,8 +550,8 @@ static inline void finish_lock_switch(st
-        smp_wmb();
-        prev->oncpu = 0;
- #endif
--#ifndef __ARCH_WANT_INTERRUPTS_ON_CTXSW
--       local_irq_enable();
-+#ifdef __ARCH_WANT_INTERRUPTS_ON_CTXSW
-+       local_irq_disable();
- #endif
- }
- #endif /* __ARCH_WANT_UNLOCKED_CTXSW */
+> However, I assure you this:  The concept of a priority ordered queue
+> coupled with PI-boost is *very* desirable (IMHO) in the RT kernel for
+> use as an RPC mechanism.  Couple that with the fact that there are many
+> many parallels to what we need to do for an RT/RPC as there is for
+> workqueues.
 
-But it is not in the mainline until now, although this seems to be 
-affecting both platforms defining __ARCH_WANT_INTERRUPTS_ON_CTXSW and 
-those not defining it. So, my question is - has it been submitted into 
-mainline? If not - why, and what can be consequences of this bug (resp. of 
-fixing it)?
+As I said, I do not understand what the problem exactly is, but surely
+I undestand you didn't start this thread without any reason :)
 
-Thanks
-Guennadi
----------------------------------
-Guennadi Liakhovetski, Ph.D.
-DSA Daten- und Systemtechnik GmbH
-Pascalstr. 28
-D-52076 Aachen
-Germany
+> To say outright that priority *can* never or *should* never
+> be taken into account is equally as bogus.
+
+This is true of course, and I didn't claim this.
+
+> > Once again. Why do you think that queue_work() from RT99 should
+> > be considered as more important? This is just not true _unless_
+> > this task has to _wait_ for this work.
+> 
+> But that's just it.  The thing we are building *does* have to wait, thus
+> the concern.
+
+Yes, as I said before when we have to wait, it makes sense to do
+some tricks.
+
+> > So, perhaps, perhaps, it makes sense to modify insert_wq_barrier()
+> > so that it temporary raises the priority of cwq->thread to match
+> > that of the caller of flush_workqueue() or cancel_work_sync().
+> 
+> That is not a bad idea, actually.
+
+Great ;)
+
+> > However, I think even this is not needed. Please show us the real
+> > life example why the current implementation sucks.
+> 
+> Assume the following: 
+> 
+> 1) Three tasks: A, B, and C where A has the highest priority and C the
+> lowest.  
+> 
+> 2) C is your workqueue-daemon, and is bound to processor 0.
+
+...workqueue has a thread for each CPU...
+
+> 3) B is cpu bound and is currently scheduled on processor 0, and A is on
+> processor 1.
+> 
+> 4) A inserts work to C's workqueue.  
+> 
+> When will the job complete?
+
+Immediately, A inserts the work on CPU 1.
+
+But yes, I see what you mean, but again, again, unless A has to wait
+for result etc, etc.
+
+> > OK. Suppose that we re-order work_struct's according to the caller's
+> > priority.
+> > 
+> > Now, a niced thread doing flush_workqueue() can livelock if workqueue
+> > is actively used.
+> 
+> No, that's not livelock. That's preemption and it's by design.  Work
+> will continue when the higher-priority items are finished.  Livelock
+> would be logic like "while (!queue_empty());".  Here you are still
+> retaining your position in the queue relative to others at your priority
+> and below.  
+
+It can livelock if other higher-priority threads add works to this wq
+repeteadly.
+
+> > Actually a niced (so that its priority is lower than cwq->thread's one)
+> > can deadlock. Suppose it does
+> > 
+> > 	lock(LOCK);
+> > 	flush_workueue(wq);
+> > 
+> > and we have a pending work_struct which does:
+> > 
+> > 	void work_handler(struct work_struct *self)
+> > 	{
+> > 		if (!try_lock(LOCK)) {
+> > 			// try again later...
+> > 			queue_work(wq, self);
+> > 			return;
+> > 		}
+> > 
+> > 		do_something();
+> > 	}
+> > 
+> > Deadlock.
+> 
+> That code is completely broken, so I don't think it matters much.  But
+> regardless, the new API changes will address that.
+
+Sorry. This code is not very nice, but it is correct currently.
+
+And I'll give you another example. Let's suppose the task does
+
+	rt_mutex_lock(some_unrelated_lock);
+
+	queue_work(WORK1);
+	// WINDOW
+	queue_work(WORK2);
+
+I think it would be very natural to expect that these works will be
+executed in order, do you agree?
+
+Now suppose that the current's priority was boosted because another
+higher-priority task tries to take rt_mutex in the WINDOW above?
+
+Still, still I believe we should not re-order work_structs. If we do
+this, we should add another, simplified and specialized interface imho.
+
+> > But again, I think we can just create a special workqueue for that and
+> > make it RT99. No re-ordering, no playing games with re-niceing.
+> 
+> No, that's just broken in the other direction.  We might as well use
+> smp_call() at that point.
+
+Well, if we can use smp_call_() we don't need these complications?
+
+> I will submit a new patch later which addresses these concerns.
+
+Please cc me ;)
+
+Oleg.
