@@ -1,68 +1,71 @@
-From: Oleg Nesterov <oleg@tv-sign.ru>
-Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
-Date: Mon, 6 Aug 2007 17:18:14 +0400
-Message-ID: <20070806131814.GC91@tv-sign.ru>
-References: <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <20070806114954.GC1903@elte.hu>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
+	workqueue infrastructure
+Date: Mon, 06 Aug 2007 15:29:23 +0200
+Message-ID: <1186406963.7182.13.camel@twins>
+References: <20070801201802.GA225@tv-sign.ru>
+	 <1186000468.2636.168.camel@imap.mvista.com>
+	 <20070801205053.GA263@tv-sign.ru>
+	 <1186002783.9513.228.camel@ghaskins-t60p.haskins.net>
+	 <20070801213422.GA280@tv-sign.ru>
+	 <1186005598.9513.261.camel@ghaskins-t60p.haskins.net>
+	 <20070801222201.GA316@tv-sign.ru>
+	 <1186012439.9513.321.camel@ghaskins-t60p.haskins.net>
+	 <20070802195049.GA361@tv-sign.ru> <20070806114954.GC1903@elte.hu>
+	 <20070806131814.GC91@tv-sign.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Gregory Haskins <ghaskins@novell.com>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Gregory Haskins <ghaskins@novell.com>,
 	Daniel Walker <dwalker@mvista.com>,
-	Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+To: Oleg Nesterov <oleg@tv-sign.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.screens.ru ([213.234.233.54]:38827 "EHLO mail.screens.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1764089AbXHFNQU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 09:16:20 -0400
-Content-Disposition: inline
-In-Reply-To: <20070806114954.GC1903@elte.hu>
+Received: from pentafluge.infradead.org ([213.146.154.40]:53702 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933332AbXHFN3f (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 09:29:35 -0400
+In-Reply-To: <20070806131814.GC91@tv-sign.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Gregory, Ingo,
+On Mon, 2007-08-06 at 17:18 +0400, Oleg Nesterov wrote:
 
-On 08/06, Ingo Molnar wrote:
+> Yes, I still disagree with the whole idea because I hope we can make
+> something more simpler to solve the problem, but I must admit I don't
+> quite understand what the problem is.
 > 
-> * Oleg Nesterov <oleg@tv-sign.ru> wrote:
-> 
-> > On 08/01, Gregory Haskins wrote:
-> > >
-> > > On Thu, 2007-08-02 at 02:22 +0400, Oleg Nesterov wrote:
-> > > 
-> > > > No,
-> > > 
-> > > You sure are a confident one ;)
-> > 
-> > Yeah, this is a rare case when I am very sure I am right ;)
-> > 
-> > I strongly believe you guys take a _completely_ wrong approach. 
-> > queue_work() should _not_ take the priority of the caller into 
-> > account, this is bogus.
-> 
-> Oleg, i'd like to make it sure that the role of Gregory Haskins is clear 
-> here: he submitted some new infrastructure into the -rt tree, and i 
-> reviewed that but found it quite complex and duplicative and suggested 
-> him to think about enhancing workqueues with priority properties - which 
-> might or might not make sense.
-> 
-> It is not the intention of the -rt project to pester any upstream 
-> maintainer with -rt issues if that upstream maintainer is not interested 
-> in it ... so please just forget about all this if you are not interested 
-> in it, we'll sort it out within -rt. Thanks,
+> So, please consider a noise from my side as my attempt to help. And
+> in fact, I am very curious about -rt tree, just I never had a time
+> to study it :)
 
-I am not trying to sabotage these changes, and I am sorry if it looked
-that way.
 
-I jumped into this discuassion because both patches I saw (Daniel's and
-Gregory's) were very wrong technically.
+Well, the thing is, suppose we have 2 drivers both using keventd say a
+NIC and some USB thingy.
 
-Yes, I still disagree with the whole idea because I hope we can make
-something more simpler to solve the problem, but I must admit I don't
-quite understand what the problem is.
+Now the NIC is deemed important hand gets irq thread prio 90, and the
+USB could not be cared less about and gets 10 (note that on -rt irq
+handlers are threaded and run SCHED_FIFO).
 
-So, please consider a noise from my side as my attempt to help. And
-in fact, I am very curious about -rt tree, just I never had a time
-to study it :)
+So now you can get priority inversion in keventd. Say the USB thingy
+schedules a work item which will be executed. Then during the execution
+of this work the NIC will also schedule a work item. Now the NIC (fifo
+90) will have to wait for the USB work (fifo 10) to complete.
 
-Oleg.
+The typical solution is priority inheritance, where the highest prio of
+any waiter is propagated to the currently running work, so that it can
+finish and get on with the more important work.
+
+
+So these patches aimed to provide proper PI in the workqueue structure
+to avoid this problem.
+
+However as you rightly noted, this horribly breaks the barrier/flush
+semantics.
+
+I suspect most of the barrier/flush semantics could be replaced with
+completions from specific work items. Doing this will be a lot of work
+though.
+
+I hope this rambling is not confusing you any further :-)
