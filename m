@@ -1,52 +1,68 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to
-	workqueue infrastructure
-Date: Mon, 6 Aug 2007 13:49:54 +0200
-Message-ID: <20070806114954.GC1903@elte.hu>
-References: <1185992994.2636.142.camel@imap.mvista.com> <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
+Date: Mon, 6 Aug 2007 17:18:14 +0400
+Message-ID: <20070806131814.GC91@tv-sign.ru>
+References: <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <20070806114954.GC1903@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Gregory Haskins <ghaskins@novell.com>,
 	Daniel Walker <dwalker@mvista.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Oleg Nesterov <oleg@tv-sign.ru>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:60868 "EHLO mx2.mail.elte.hu"
+Received: from mail.screens.ru ([213.234.233.54]:38827 "EHLO mail.screens.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753670AbXHFLuM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 07:50:12 -0400
+	id S1764089AbXHFNQU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 09:16:20 -0400
 Content-Disposition: inline
-In-Reply-To: <20070802195049.GA361@tv-sign.ru>
+In-Reply-To: <20070806114954.GC1903@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Gregory, Ingo,
 
-* Oleg Nesterov <oleg@tv-sign.ru> wrote:
-
-> On 08/01, Gregory Haskins wrote:
-> >
-> > On Thu, 2007-08-02 at 02:22 +0400, Oleg Nesterov wrote:
-> > 
-> > > No,
-> > 
-> > You sure are a confident one ;)
+On 08/06, Ingo Molnar wrote:
 > 
-> Yeah, this is a rare case when I am very sure I am right ;)
+> * Oleg Nesterov <oleg@tv-sign.ru> wrote:
 > 
-> I strongly believe you guys take a _completely_ wrong approach. 
-> queue_work() should _not_ take the priority of the caller into 
-> account, this is bogus.
+> > On 08/01, Gregory Haskins wrote:
+> > >
+> > > On Thu, 2007-08-02 at 02:22 +0400, Oleg Nesterov wrote:
+> > > 
+> > > > No,
+> > > 
+> > > You sure are a confident one ;)
+> > 
+> > Yeah, this is a rare case when I am very sure I am right ;)
+> > 
+> > I strongly believe you guys take a _completely_ wrong approach. 
+> > queue_work() should _not_ take the priority of the caller into 
+> > account, this is bogus.
+> 
+> Oleg, i'd like to make it sure that the role of Gregory Haskins is clear 
+> here: he submitted some new infrastructure into the -rt tree, and i 
+> reviewed that but found it quite complex and duplicative and suggested 
+> him to think about enhancing workqueues with priority properties - which 
+> might or might not make sense.
+> 
+> It is not the intention of the -rt project to pester any upstream 
+> maintainer with -rt issues if that upstream maintainer is not interested 
+> in it ... so please just forget about all this if you are not interested 
+> in it, we'll sort it out within -rt. Thanks,
 
-Oleg, i'd like to make it sure that the role of Gregory Haskins is clear 
-here: he submitted some new infrastructure into the -rt tree, and i 
-reviewed that but found it quite complex and duplicative and suggested 
-him to think about enhancing workqueues with priority properties - which 
-might or might not make sense.
+I am not trying to sabotage these changes, and I am sorry if it looked
+that way.
 
-It is not the intention of the -rt project to pester any upstream 
-maintainer with -rt issues if that upstream maintainer is not interested 
-in it ... so please just forget about all this if you are not interested 
-in it, we'll sort it out within -rt. Thanks,
+I jumped into this discuassion because both patches I saw (Daniel's and
+Gregory's) were very wrong technically.
 
-	Ingo
+Yes, I still disagree with the whole idea because I hope we can make
+something more simpler to solve the problem, but I must admit I don't
+quite understand what the problem is.
+
+So, please consider a noise from my side as my attempt to help. And
+in fact, I am very curious about -rt tree, just I never had a time
+to study it :)
+
+Oleg.
