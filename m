@@ -1,120 +1,50 @@
 From: Oleg Nesterov <oleg@tv-sign.ru>
 Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
-Date: Mon, 6 Aug 2007 20:40:33 +0400
-Message-ID: <20070806164033.GA4021@tv-sign.ru>
-References: <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <20070806114954.GC1903@elte.hu> <20070806131814.GC91@tv-sign.ru> <1186406963.7182.13.camel@twins> <1186407173.7182.16.camel@twins> <20070806144536.GA232@tv-sign.ru> <1186411921.7182.24.camel@twins>
+Date: Mon, 6 Aug 2007 20:50:07 +0400
+Message-ID: <20070806165007.GB4021@tv-sign.ru>
+References: <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <1186400154.21381.40.camel@ghaskins-t60p.haskins.net> <20070806142616.GA210@tv-sign.ru> <1186412235.21381.82.camel@ghaskins-t60p.haskins.net> <20070806153655.GA245@tv-sign.ru> <1186415403.21381.100.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Ingo Molnar <mingo@elte.hu>, Gregory Haskins <ghaskins@novell.com>,
-	Daniel Walker <dwalker@mvista.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: Daniel Walker <dwalker@mvista.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.screens.ru ([213.234.233.54]:60258 "EHLO mail.screens.ru"
+Received: from mail.screens.ru ([213.234.233.54]:59864 "EHLO mail.screens.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753780AbXHFQiR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 12:38:17 -0400
+	id S1755453AbXHFQsI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 12:48:08 -0400
 Content-Disposition: inline
-In-Reply-To: <1186411921.7182.24.camel@twins>
+In-Reply-To: <1186415403.21381.100.camel@ghaskins-t60p.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/06, Peter Zijlstra wrote:
+On 08/06, Gregory Haskins wrote:
 >
-> On Mon, 2007-08-06 at 18:45 +0400, Oleg Nesterov wrote:
-> > On 08/06, Peter Zijlstra wrote:
+> On Mon, 2007-08-06 at 19:36 +0400, Oleg Nesterov wrote:
 > 
-> > > > I suspect most of the barrier/flush semantics could be replaced with
-> > > > completions from specific work items.
+> > > E.g. whatever work was being flushed was allowed to escape
+> > > out from behind the barrier.  If you don't care about the flush working,
+> > > why do it at all?
 > > 
-> > Hm. But this is exactly how it works?
+> > The caller of flush_workueue() doesn't necessary know we have such a work
+> > on list. It just wants to flush its own works.
 > 
-> Yes, barriers work by enqueueing work and waiting for that one work item
-> to fall out, thereby knowing that all previous work has been completed.
-> 
-> My point was that most flushes are there to wait for a previously
-> enqueued work item, and might as well wait for that one.
-> 
-> Let me try to illustrate: a regular pattern is, we enqueue work A and
-> then flush the whole queue to ensure A is processed. So instead of
-> enqueueing A, then B in the barrier code, and wait for B to pop out, we
-> might as well wait for A to begin with.
+> I was assuming that the work being flushed was submitted by the same
+> context, but I think I see what you are saying now.  Essentially if that
+> queued work was unrelated to the thread that was doing the flush, it
+> doesn't care if it gets rescheduled.
 
-This is a bit off-topic, but in that particular case we can do
+Yes.
 
-	if (cancel_work_sync(&A))
-		A->func(&A);
+> Do you agree that if the context was the same there is a bug?  Or did I
+> miss something else?
 
-unless we want to execute ->func() on another CPU of course. It is easy to
-implement flush_work() which waits for a single work_strcut, but it is not
-so useful when it comes to schedule_on_each_cpu().
+Yes sure. We can't expect we can "flush" work_struct with flush_workqueue()
+unless we know it doesn't re-schedule itself.
 
-But I agree, flush_workqueue() should be avoided if possible. Not sure
-it makes sense, but we can do something like below.
+OTOH, it is not the bug to call flush_workqueue() even if that work was
+queued by us, it should complete.
 
 Oleg.
-
---- kernel/workqueue.c~	2007-07-28 16:58:17.000000000 +0400
-+++ kernel/workqueue.c	2007-08-06 20:33:25.000000000 +0400
-@@ -572,25 +572,54 @@ EXPORT_SYMBOL(schedule_delayed_work_on);
-  *
-  * schedule_on_each_cpu() is very slow.
-  */
-+
-+struct xxx
-+{
-+	atomic_t count;
-+	struct completion done;
-+	work_func_t func;
-+};
-+
-+struct yyy
-+{
-+	struct work_struct work;
-+	struct xxx *xxx;
-+};
-+
-+static void yyy_func(struct work_struct *work)
-+{
-+	struct xxx *xxx = container_of(work, struct yyy, work)->xxx;
-+	xxx->func(work);
-+
-+	if (atomic_dec_and_test(&xxx->count))
-+		complete(&xxx->done);
-+}
-+
- int schedule_on_each_cpu(work_func_t func)
- {
- 	int cpu;
--	struct work_struct *works;
-+	struct xxx xxx;
-+	struct yyy *works;
- 
--	works = alloc_percpu(struct work_struct);
-+	init_completion(&xxx.done);
-+	xxx.func = func;
-+
-+	works = alloc_percpu(struct yyy);
- 	if (!works)
- 		return -ENOMEM;
- 
- 	preempt_disable();		/* CPU hotplug */
-+	atomic_set(&xxx.count, num_online_cpus());
- 	for_each_online_cpu(cpu) {
--		struct work_struct *work = per_cpu_ptr(works, cpu);
-+		struct yyy *yyy = per_cpu_ptr(works, cpu);
- 
--		INIT_WORK(work, func);
--		set_bit(WORK_STRUCT_PENDING, work_data_bits(work));
--		__queue_work(per_cpu_ptr(keventd_wq->cpu_wq, cpu), work);
-+		yyy->xxx = &xxx;
-+		INIT_WORK(&yyy->work, yyy_func);
-+		set_bit(WORK_STRUCT_PENDING, work_data_bits(&yyy->work));
-+		__queue_work(per_cpu_ptr(keventd_wq->cpu_wq, cpu), &yyy->work);
- 	}
- 	preempt_enable();
--	flush_workqueue(keventd_wq);
-+	wait_for_completion(&xxx.done);
- 	free_percpu(works);
- 	return 0;
- }
