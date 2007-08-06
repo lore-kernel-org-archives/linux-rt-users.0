@@ -1,29 +1,40 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: RT 2.6.22.1-rt4 minor fixes for StGit import
-Date: Mon, 6 Aug 2007 09:36:25 +0200
-Message-ID: <20070806073625.GL5359@elte.hu>
-References: <469BC184.9080203@redhat.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: PROFILE_NMI kernel config symbol
+Date: Mon, 06 Aug 2007 10:52:54 +0200
+Message-ID: <46B6E166.6090507@free.fr>
+References: <46B1D26E.2010508@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:40368 "EHLO mx2.mail.elte.hu"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:51845 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758715AbXHFHgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 03:36:33 -0400
-Content-Disposition: inline
-In-Reply-To: <469BC184.9080203@redhat.com>
+	id S1754892AbXHFIw5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 04:52:57 -0400
+In-Reply-To: <46B1D26E.2010508@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+John Sigler wrote:
 
-* Clark Williams <williams@redhat.com> wrote:
+> The -rt patch includes the following update:
+> 
+> Index: linux/arch/i386/oprofile/Kconfig
+> ===================================================================
+> --- linux.orig/arch/i386/oprofile/Kconfig
+> +++ linux/arch/i386/oprofile/Kconfig
+> @@ -15,3 +15,6 @@ config OPROFILE
+> 
+>        If unsure, say N.
+> 
+> +config PROFILE_NMI
+> +    bool
+> +    default y
+> 
+> 
+> What is the purpose of the PROFILE_NMI config symbol?
+> (It does not seem to be used anywhere else in the -rt patch.)
 
-> Attached is a minor patch against the broken out -rt4 which fixes a 
-> couple of things that break an StGit import of the patch series.
-
-thanks, applied this to the .23-rc2 queue.
-
-	Ingo
+Should I provide a patch removing this configuration option?
