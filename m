@@ -1,34 +1,29 @@
 From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH] CFS: Mark print_cfs_stats static
-Date: Mon, 6 Aug 2007 09:32:58 +0200
-Message-ID: <20070806073258.GK5359@elte.hu>
-References: <1184957097.2630.17.camel@josh-work.beaverton.ibm.com>
+Subject: Re: RT 2.6.22.1-rt4 minor fixes for StGit import
+Date: Mon, 6 Aug 2007 09:36:25 +0200
+Message-ID: <20070806073625.GL5359@elte.hu>
+References: <469BC184.9080203@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, akpm@linux-foundation.org,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users@vger.kernel.org
-To: josh@kernel.org, josht@linux.vnet.ibm.com
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:58840 "EHLO mx3.mail.elte.hu"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:40368 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754476AbXHFHdX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 03:33:23 -0400
+	id S1758715AbXHFHgd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 03:36:33 -0400
 Content-Disposition: inline
-In-Reply-To: <1184957097.2630.17.camel@josh-work.beaverton.ibm.com>
+In-Reply-To: <469BC184.9080203@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Josh Triplett <josh@kernel.org> wrote:
+* Clark Williams <williams@redhat.com> wrote:
 
-> sched_fair.c defines print_cfs_stats, and sched_debug.c uses it, but 
-> sched.c includes both sched_fair.c and sched_debug.c, so all the 
-> references to print_cfs_stats occur in the same compilation unit.  
-> Thus, mark print_cfs_stats static.
-> 
-> Eliminates a sparse warning: warning: symbol 'print_cfs_stats' was not 
-> declared. Should it be static?
+> Attached is a minor patch against the broken out -rt4 which fixes a 
+> couple of things that break an StGit import of the patch series.
 
-thanks, applied.
+thanks, applied this to the .23-rc2 queue.
 
 	Ingo
