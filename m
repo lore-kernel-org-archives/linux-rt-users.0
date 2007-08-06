@@ -1,164 +1,70 @@
-From: Oleg Nesterov <oleg@tv-sign.ru>
-Subject: Re: [PATCH] RT: Add priority-queuing and priority-inheritance to workqueue infrastructure
-Date: Mon, 6 Aug 2007 18:26:16 +0400
-Message-ID: <20070806142616.GA210@tv-sign.ru>
-References: <20070801201802.GA225@tv-sign.ru> <1186000468.2636.168.camel@imap.mvista.com> <20070801205053.GA263@tv-sign.ru> <1186002783.9513.228.camel@ghaskins-t60p.haskins.net> <20070801213422.GA280@tv-sign.ru> <1186005598.9513.261.camel@ghaskins-t60p.haskins.net> <20070801222201.GA316@tv-sign.ru> <1186012439.9513.321.camel@ghaskins-t60p.haskins.net> <20070802195049.GA361@tv-sign.ru> <1186400154.21381.40.camel@ghaskins-t60p.haskins.net>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Old -rt patches
+Date: Mon, 6 Aug 2007 07:41:58 -0700
+Message-ID: <20070806144158.GA9309@linux.vnet.ibm.com>
+References: <46B0B7A4.8060805@free.fr> <46B6E210.9090502@free.fr>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Daniel Walker <dwalker@mvista.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	mingo@elte.hu, tglx@linutronix.de
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.screens.ru ([213.234.233.54]:33742 "EHLO mail.screens.ru"
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:44891 "EHLO e1.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1762086AbXHFOYQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Aug 2007 10:24:16 -0400
+	id S1753283AbXHFOmC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Aug 2007 10:42:02 -0400
 Content-Disposition: inline
-In-Reply-To: <1186400154.21381.40.camel@ghaskins-t60p.haskins.net>
+In-Reply-To: <46B6E210.9090502@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/06, Gregory Haskins wrote:
->
-> On Thu, 2007-08-02 at 23:50 +0400, Oleg Nesterov wrote: 
+On Mon, Aug 06, 2007 at 10:55:44AM +0200, John Sigler wrote:
+> John Sigler wrote:
 > 
-> > I strongly believe you guys take a _completely_ wrong approach.
-> > queue_work() should _not_ take the priority of the caller into
-> > account, this is bogus.
+> >I wrote a Linux app where I need high-resolution timers. I went all the 
+> >way and installed the -rt patch, which includes the -hrt patches, as far 
+> >as I understand.
+> >
+> >Since I could not afford to change kernels with every new release, I 
+> >decided to track the 2.6.20 branch (arbitrarily).
+> >
+> >At this point I'm using 2.6.20.7-rt8 (-rt8 was the last patch to the 
+> >2.6.20 branch). (I see 2.6.20 is already up to .15)
+> >
+> >I see a lot of patches going into the -rt patch, but development moved 
+> >on to 2.6.21, then 2.6.22, and now 2.6.23, following mainline.
+> >
+> >I'm not a kernel hacker, so I don't claim to understand the patches, but 
+> >the comments sound like a few bugs are fixed here and there. I can't 
+> >tell whether these bugs also exist in previous kernels or only appeared 
+> >in newer kernels. Even if I knew, I probably wouldn't have the expertise 
+> >to back-port the patch.
+> >
+> >I'm seeing weird behavior in my app, when it has been running 2-4 days. 
+> >The timers start to act out, and all hell breaks loose. Basically, I 
+> >have no idea what's going on...
+> >
+> >My question is: is it possible that there is a bug in 2.6.20-rt8 that 
+> >has been fixed in subsequent -rt patches (there's a 2.6.21.6-rt21 and a 
+> >2.6.22.1-rt9)? In other words, if I give 2.6.21.6-rt8 or 2.6.22.1-rt9 a 
+> >spin, is it possible that my weird behavior disappears?
+> >
+> >I'm not saying that it's impossible for the bug to be in my app, but the 
+> >app is small enough that I'm fairly confident there's no problem there.
 > 
-> I think you have argued very effectively that there are situations in
-> which the priority should not be taken into account.  I also think a
-> case could easily be made to say that this RT business may be too
-> complex to justifiably pollute the workqueue infrastructure.
+> Would anyone care to comment?
 
-Yes, perhaps we can make a separate inreface...
+Would you be willing to post your app so people could try to reproduce
+your bug?
 
-> However, I assure you this:  The concept of a priority ordered queue
-> coupled with PI-boost is *very* desirable (IMHO) in the RT kernel for
-> use as an RPC mechanism.  Couple that with the fact that there are many
-> many parallels to what we need to do for an RT/RPC as there is for
-> workqueues.
+							Thanx, Paul
 
-As I said, I do not understand what the problem exactly is, but surely
-I undestand you didn't start this thread without any reason :)
-
-> To say outright that priority *can* never or *should* never
-> be taken into account is equally as bogus.
-
-This is true of course, and I didn't claim this.
-
-> > Once again. Why do you think that queue_work() from RT99 should
-> > be considered as more important? This is just not true _unless_
-> > this task has to _wait_ for this work.
+> Perhaps I could also test a different strategy, such as xenomai?
+> http://www.xenomai.org/
 > 
-> But that's just it.  The thing we are building *does* have to wait, thus
-> the concern.
-
-Yes, as I said before when we have to wait, it makes sense to do
-some tricks.
-
-> > So, perhaps, perhaps, it makes sense to modify insert_wq_barrier()
-> > so that it temporary raises the priority of cwq->thread to match
-> > that of the caller of flush_workqueue() or cancel_work_sync().
-> 
-> That is not a bad idea, actually.
-
-Great ;)
-
-> > However, I think even this is not needed. Please show us the real
-> > life example why the current implementation sucks.
-> 
-> Assume the following: 
-> 
-> 1) Three tasks: A, B, and C where A has the highest priority and C the
-> lowest.  
-> 
-> 2) C is your workqueue-daemon, and is bound to processor 0.
-
-...workqueue has a thread for each CPU...
-
-> 3) B is cpu bound and is currently scheduled on processor 0, and A is on
-> processor 1.
-> 
-> 4) A inserts work to C's workqueue.  
-> 
-> When will the job complete?
-
-Immediately, A inserts the work on CPU 1.
-
-But yes, I see what you mean, but again, again, unless A has to wait
-for result etc, etc.
-
-> > OK. Suppose that we re-order work_struct's according to the caller's
-> > priority.
-> > 
-> > Now, a niced thread doing flush_workqueue() can livelock if workqueue
-> > is actively used.
-> 
-> No, that's not livelock. That's preemption and it's by design.  Work
-> will continue when the higher-priority items are finished.  Livelock
-> would be logic like "while (!queue_empty());".  Here you are still
-> retaining your position in the queue relative to others at your priority
-> and below.  
-
-It can livelock if other higher-priority threads add works to this wq
-repeteadly.
-
-> > Actually a niced (so that its priority is lower than cwq->thread's one)
-> > can deadlock. Suppose it does
-> > 
-> > 	lock(LOCK);
-> > 	flush_workueue(wq);
-> > 
-> > and we have a pending work_struct which does:
-> > 
-> > 	void work_handler(struct work_struct *self)
-> > 	{
-> > 		if (!try_lock(LOCK)) {
-> > 			// try again later...
-> > 			queue_work(wq, self);
-> > 			return;
-> > 		}
-> > 
-> > 		do_something();
-> > 	}
-> > 
-> > Deadlock.
-> 
-> That code is completely broken, so I don't think it matters much.  But
-> regardless, the new API changes will address that.
-
-Sorry. This code is not very nice, but it is correct currently.
-
-And I'll give you another example. Let's suppose the task does
-
-	rt_mutex_lock(some_unrelated_lock);
-
-	queue_work(WORK1);
-	// WINDOW
-	queue_work(WORK2);
-
-I think it would be very natural to expect that these works will be
-executed in order, do you agree?
-
-Now suppose that the current's priority was boosted because another
-higher-priority task tries to take rt_mutex in the WINDOW above?
-
-Still, still I believe we should not re-order work_structs. If we do
-this, we should add another, simplified and specialized interface imho.
-
-> > But again, I think we can just create a special workqueue for that and
-> > make it RT99. No re-ordering, no playing games with re-niceing.
-> 
-> No, that's just broken in the other direction.  We might as well use
-> smp_call() at that point.
-
-Well, if we can use smp_call_() we don't need these complications?
-
-> I will submit a new patch later which addresses these concerns.
-
-Please cc me ;)
-
-Oleg.
+> Regards.
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
