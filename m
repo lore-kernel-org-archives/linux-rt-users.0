@@ -1,43 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [BUG RT] WARNING: at kernel/sched.c:5071 2.6.23-rc1-rt7
-Date: Sun, 05 Aug 2007 18:36:46 -0400
-Message-ID: <1186353406.13885.2.camel@localhost.localdomain>
-References: <1186290816.636.14.camel@localhost.localdomain>
-	 <20070805065646.GA515@elte.hu>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH RT] put in a relatively high number for rcu read lock upper limit.
+Date: Sun, 5 Aug 2007 20:20:31 -0700
+Message-ID: <20070806032031.GE13916@linux.vnet.ibm.com>
+References: <1186289484.636.5.camel@localhost.localdomain> <1186290332.636.8.camel@localhost.localdomain> <20070805065948.GB515@elte.hu> <Pine.LNX.4.58.0708051019560.8421@gandalf.stny.rr.com> <20070805150449.GA19418@linux.vnet.ibm.com> <1186328100.636.19.camel@localhost.localdomain> <20070805175310.GB3244@elte.hu>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>
+	LKML <linux-kernel@vger.kernel.org>
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:52282 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754718AbXHEWhC (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Aug 2007 18:37:02 -0400
-In-Reply-To: <20070805065646.GA515@elte.hu>
-Sender: linux-rt-users-owner@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762062AbXHFDUs@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20070805175310.GB3244@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 2007-08-05 at 08:56 +0200, Ingo Molnar wrote:
+On Sun, Aug 05, 2007 at 07:53:10PM +0200, Ingo Molnar wrote:
+> 
 > * Steven Rostedt <rostedt@goodmis.org> wrote:
-
 > 
-> > P.S. I really found out that the system becomes VERY non-responsive 
-> > when you run with both hard and softirqs as threads, but with 
-> > PREEMPT_NONE ;-)
+> > Paul and Ingo,
+> > 
+> > Should we just remove the upper limit check, or is something like this 
+> > patch sound?
 > 
-> hm. That's not supposed to happen. Could there be some wakeup or softirq 
-> processing problem?
+> i've changed the limit to 30 (the same depth limit is used by lockdep).
 > 
-> 	Ingo
+> beyond that we could get stack overflow, etc.
 
-Well, it happened right after I installed the ath driver (from
-http://svn.madwifi.org/trunk ).  But I've recompiled my system with
-PREEMPT_RT and it works fine now.  I can investigate it later, but I
-currently need this system working with a PREEMPT_RT kernel.
+Works for me!
 
--- Steve
+						Thanx, Paul
