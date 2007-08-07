@@ -1,64 +1,65 @@
 From: John Sigler <linux.kernel@free.fr>
 Subject: Re: Old -rt patches
-Date: Tue, 07 Aug 2007 10:27:09 +0200
-Message-ID: <46B82CDD.7020503@free.fr>
-References: <46B0B7A4.8060805@free.fr>  <46B6E210.9090502@free.fr> <1186466508.22044.8.camel@imap.mvista.com>
+Date: Tue, 07 Aug 2007 10:52:32 +0200
+Message-ID: <46B832D0.5030803@free.fr>
+References: <46B0B7A4.8060805@free.fr> <46B6E210.9090502@free.fr> <20070806144158.GA9309@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	mingo@elte.hu, tglx@linutronix.de
-To: Daniel Walker <dwalker@mvista.com>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:43384 "EHLO smtp4-g19.free.fr"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:60944 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752853AbXHGI11 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Aug 2007 04:27:27 -0400
-In-Reply-To: <1186466508.22044.8.camel@imap.mvista.com>
+	id S1757570AbXHGIwu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 7 Aug 2007 04:52:50 -0400
+In-Reply-To: <20070806144158.GA9309@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Daniel Walker wrote:
+Paul E. McKenney wrote:
 
 > John Sigler wrote:
 > 
->> Would anyone care to comment?
+>> I wrote a Linux app where I need high-resolution timers. I went all the 
+>> way and installed the -rt patch, which includes the -hrt patches, as far 
+>> as I understand.
+>>
+>> Since I could not afford to change kernels with every new release, I 
+>> decided to track the 2.6.20 branch (arbitrarily).
+>>
+>> At this point I'm using 2.6.20.7-rt8 (-rt8 was the last patch to the 
+>> 2.6.20 branch). (I see 2.6.20 is already up to .15)
+>>
+>> I see a lot of patches going into the -rt patch, but development moved 
+>> on to 2.6.21, then 2.6.22, and now 2.6.23, following mainline.
+>>
+>> I'm not a kernel hacker, so I don't claim to understand the patches, but 
+>> the comments sound like a few bugs are fixed here and there. I can't 
+>> tell whether these bugs also exist in previous kernels or only appeared 
+>> in newer kernels. Even if I knew, I probably wouldn't have the expertise 
+>> to back-port the patch.
+>>
+>> I'm seeing weird behavior in my app, when it has been running 2-4 days. 
+>> The timers start to act out, and all hell breaks loose. Basically, I 
+>> have no idea what's going on...
+>>
+>> My question is: is it possible that there is a bug in 2.6.20-rt8 that 
+>> has been fixed in subsequent -rt patches (there's a 2.6.21.6-rt21 and a 
+>> 2.6.22.1-rt9)? In other words, if I give 2.6.21.6-rt8 or 2.6.22.1-rt9 a 
+>> spin, is it possible that my weird behavior disappears?
+>>
+>> I'm not saying that it's impossible for the bug to be in my app, but the 
+>> app is small enough that I'm fairly confident there's no problem there.
 > 
-> I'm not sure if this is the answer that you're looking for, but yes you
-> certainly will find fixed bug is older version of the tree.
+> Would you be willing to post your app so people could try to reproduce
+> your bug?
 
-I am not a kernel hacker, therefore I can only imagine how complex it is 
-to bring real-time to Linux. For some reason, I had come to believe that 
-the case of a single CPU without dynticks had been "solved" in the more 
-recent kernels (say 2.6.20), and that development had moved on, and was 
-now active in more "complex" areas like SMP/multi-core, dynticks, etc.
+Hello Paul,
 
->> Perhaps I could also test a different strategy, such as xenomai?
->> http://www.xenomai.org/
-> 
-> If it's a kernel bug it's not going to matter if you use a xenomai skin
-> or not.. If you use some other real time layer that might fix it ..
-
-*If* it is a bug in the -rt patch, then Adeos/Xenomai coupled with a 
-vanilla Linux kernel should not be affected by the same bug. Unless my 
-logic is broken somewhere.
-
-> you really need to test your app on a current version of the kernel ..
-> We as developers generally don't support out dated trees..
-
-This is the part I don't understand. I work for a tiny company with 
-limited resources. It's infeasible for me to track every new kernel 
-release and upgrade every time. I need to pick a kernel version that has 
-the functionality we need, test it thoroughly with my app, and then 
-never touch that kernel again.
-
-Unless I am mistaken, some people (like Thomas) have been deploying 
-systems based on PREEMPT_RT (or just -hrt) in indutrial settings for a 
-long time. (As far back as 2.6.15?) Obviously many bugs have been fixed 
-since then, which means that these versions contained many bugs.
-
-How does one react when an important bug in found in a system that is 
-already in the field? Do they provide a way to upgrade the kernel (like 
-consumer-grade network routers)? Do they replace the complete system?
+I cannot provide the app "as is" (I fear the paranoid PHB would 
+spontaneously combust). If time permits, I will try to make a small 
+testcase to exhibit the problem.
 
 Regards.
