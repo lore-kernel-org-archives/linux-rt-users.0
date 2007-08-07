@@ -1,85 +1,49 @@
 From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: Old -rt patches
-Date: Tue, 07 Aug 2007 08:10:52 -0700
-Message-ID: <1186499452.22044.32.camel@imap.mvista.com>
-References: <46B0B7A4.8060805@free.fr>  <46B6E210.9090502@free.fr>
-	 <1186466508.22044.8.camel@imap.mvista.com>  <46B82CDD.7020503@free.fr>
+Subject: Re: Hang on 8-way with 2.6.23-rc2-rt2
+Date: Tue, 07 Aug 2007 10:03:37 -0700
+Message-ID: <1186506217.22044.38.camel@imap.mvista.com>
+References: <1186427253.21381.135.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	mingo@elte.hu, tglx@linutronix.de
-To: John Sigler <linux.kernel@free.fr>
+Cc: Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:23835 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:1390 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752160AbXHGPPf (ORCPT
+	with ESMTP id S1754575AbXHGRIX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Aug 2007 11:15:35 -0400
-In-Reply-To: <46B82CDD.7020503@free.fr>
+	Tue, 7 Aug 2007 13:08:23 -0400
+In-Reply-To: <1186427253.21381.135.camel@ghaskins-t60p.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-08-07 at 10:27 +0200, John Sigler wrote:
-> Daniel Walker wrote:
+On Mon, 2007-08-06 at 15:07 -0400, Gregory Haskins wrote:
+> Hi Ingo,
+>   I think there is a latent race condition somewhere in the code.  We
+> find that -rt works on our 4-way (and under) systems, but have problems
+> on our 8-ways.
 > 
-> > John Sigler wrote:
-> > 
-> >> Would anyone care to comment?
-> > 
-> > I'm not sure if this is the answer that you're looking for, but yes you
-> > certainly will find fixed bug is older version of the tree.
+> If you run without nmi_watchdog, the system will sometimes boot (but
+> very very very slow), and sometimes it will softlockup.  If you turn on
+> nmi_watchdog, the system detects a hang (probably at the point where the
+> system gets really slow without it).  We notice no problems on the
+> 4-ways.
 > 
-> I am not a kernel hacker, therefore I can only imagine how complex it is 
-> to bring real-time to Linux. For some reason, I had come to believe that 
-> the case of a single CPU without dynticks had been "solved" in the more 
-> recent kernels (say 2.6.20), and that development had moved on, and was 
-> now active in more "complex" areas like SMP/multi-core, dynticks, etc.
+> The system where we can reproduce this is a Dell 690 with Dual 2Ghz
+> Quad-core Xeon 5335s.  I've attached some relevant info.  Let me know if
+> you need more.
 
-There is always a chance of something not working, or a regression
-getting introduced in any of the code .. -rt is all still a development
-tree too, so it may not always be stable.
+Could you drop the following config options and test again?
 
-> >> Perhaps I could also test a different strategy, such as xenomai?
-> >> http://www.xenomai.org/
-> > 
-> > If it's a kernel bug it's not going to matter if you use a xenomai skin
-> > or not.. If you use some other real time layer that might fix it ..
-> 
-> *If* it is a bug in the -rt patch, then Adeos/Xenomai coupled with a 
-> vanilla Linux kernel should not be affected by the same bug. Unless my 
-> logic is broken somewhere.
+#
+# Processor type and features
+#
+CONFIG_TICK_ONESHOT=y
+CONFIG_NO_HZ=y
+CONFIG_HIGH_RES_TIMERS=y
 
-I wouldn't think so, but then what if Adeos/Xenomai has a new bug?
-
-> > you really need to test your app on a current version of the kernel ..
-> > We as developers generally don't support out dated trees..
-> 
-> This is the part I don't understand. I work for a tiny company with 
-> limited resources. It's infeasible for me to track every new kernel 
-> release and upgrade every time. I need to pick a kernel version that has 
-> the functionality we need, test it thoroughly with my app, and then 
-> never touch that kernel again.
-
-Ok ..
-
-> Unless I am mistaken, some people (like Thomas) have been deploying 
-> systems based on PREEMPT_RT (or just -hrt) in indutrial settings for a 
-> long time. (As far back as 2.6.15?) Obviously many bugs have been fixed 
-> since then, which means that these versions contained many bugs.
-
-It's not a stretch to imagine. These real time chance has already been
-included in commercial distros, and are generally getting made into
-various products right now .. Just like what your doing .
-
-> How does one react when an important bug in found in a system that is 
-> already in the field? Do they provide a way to upgrade the kernel (like 
-> consumer-grade network routers)? Do they replace the complete system?
-
-I don't really know the details of this , but I would imagine there is
-some sort of upgrade path for say routers .. I've heard people talk
-about cell phone upgrading their software over the air.. It would be a
-difficult proposition to say make some specific kernel static forever ..
-Even the mainline stable kernel has bugs that get fixed..
+(btw, added LKML to the CC list ..)
 
 Daniel
