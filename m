@@ -1,69 +1,44 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH] Workaround for rq->lock deadlock
-Date: Tue, 07 Aug 2007 11:43:55 -0600
-Message-ID: <20070807173827.3210.85330.stgit@lsg>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH 0/4 RFC] preemptible RCU
+Date: Tue, 7 Aug 2007 11:39:46 -0700
+Message-ID: <20070807183946.GA32110@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, dwalker@mvista.com, mingo@elte.hu,
-	ghaskins@novell.com
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu,
+	akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nds154-200.nds.lab.novell.com ([151.155.154.200]:6913 "EHLO
-	lsg.lab.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755174AbXHGSIW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Aug 2007 14:08:22 -0400
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:47705 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750813AbXHGSjs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 7 Aug 2007 14:39:48 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The following patch converts double_lock_balance to a full DP alogorithm to
-work around a deadlock in the scheduler when running on an 8-way SMP system.
+Hello!
 
-I think the original algorithm in this function is technically correct.  So
-really this patch is plastering over another lurking issue.  However, it does
-fix the observed deadlock on our systems here so I thought I would at least
-share the discovery.
+This patchset is an update of that posted by Dipankar last January
+(http://lkml.org/lkml/2007/1/15/133).  This is work in progress, not yet
+ready for inclusion.  It passes rcutorture on i386, x86_64, and ppc64
+boxes as well as kernbench, so should be safe for experimentation.  As
+with Dipankar's previous post, this variant of preemptible rcu_read_lock()
+and rcu_read_unlock may be invoked from NMI/SMI handlers, and do not
+contain any heavyweight atomic operations or memory barriers (although
+they do still momentarily disable IRQs).  This patchset features
+a fully parallel grace-period computation, which will become increasingly
+important with upcoming multicore/multi-threaded CPUs.  In addition,
+this patchset provides a preemptible-RCU variant of synchronize_sched()
+that avoids the previous deadlock with CPU hotplug -- this variant may
+eventually prove unnecessary, but is offered in the spirit of separating
+concerns.
 
-The actual problem is probably related to a code path which takes
-task_rq_locks without using the balancer code.  It might also be a race
-between an rq_lock and something else. TBD
+Next steps:  (1) Integrate with CPU hotplug.  (2) Re-merge RCU priority
+boosting.  (3) Fix some naming issues.  Longer term work includes
+optimized dyntick operation and eliminating the interrupt disabling
+in rcu_read_lock() and rcu_read_unlock().
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-
----
-
- kernel/sched.c |   19 ++++++++++++-------
- 1 files changed, 12 insertions(+), 7 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 6f2cf6a..e946e3f 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -2507,14 +2507,19 @@ static int double_lock_balance(struct rq *this_rq, struct rq *busiest)
- 		BUG_ON(1);
- 	}
- 	if (unlikely(!spin_trylock(&busiest->lock))) {
--		if (busiest < this_rq) {
--			spin_unlock(&this_rq->lock);
--			spin_lock(&busiest->lock);
--			spin_lock(&this_rq->lock);
-+		struct rq *rq_l =  busiest < this_rq ? busiest : this_rq;
-+		struct rq *rq_h =  busiest > this_rq ? busiest : this_rq;
- 
--			return 1;
--		} else
--			spin_lock(&busiest->lock);
-+		spin_unlock(&this_rq->lock);
-+
-+		while (1) {
-+			if (spin_trylock(&rq_l->lock)) {
-+				if (spin_trylock(&rq_h->lock))
-+					return 1;
-+				else
-+					spin_unlock(&rq_l->lock);
-+			}
-+		}
- 	}
- 	return 0;
- }
+						Thanx, Paul
