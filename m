@@ -1,52 +1,36 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: John Sigler <linux.kernel@free.fr>
 Subject: Re: [PATCH 3/4 RFC] RCU: preemptible RCU
-Date: Tue, 7 Aug 2007 22:32:56 -0700
-Message-ID: <20070808053256.GA5024@linux.vnet.ibm.com>
-References: <20070807183946.GA32110@linux.vnet.ibm.com> <20070807184812.GC10068@linux.vnet.ibm.com> <1186514309.11797.171.camel@lappy>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Wed, 08 Aug 2007 11:10:32 +0200
+Message-ID: <46B98888.6030600@free.fr>
+References: <20070807183946.GA32110@linux.vnet.ibm.com> <20070807184812.GC10068@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:32868 "EHLO e4.ny.us.ibm.com"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:43638 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S934869AbXHHFdD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Aug 2007 01:33:03 -0400
-Content-Disposition: inline
-In-Reply-To: <1186514309.11797.171.camel@lappy>
+	id S1751004AbXHHJLG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Aug 2007 05:11:06 -0400
+In-Reply-To: <20070807184812.GC10068@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Aug 07, 2007 at 09:18:29PM +0200, Peter Zijlstra wrote:
-> On Tue, 2007-08-07 at 11:48 -0700, Paul E. McKenney wrote:
-> > This patch implements a new version of RCU which allows its read-side
-> > critical sections to be preempted. It uses a set of counter pairs
-> > to keep track of the read-side critical sections and flips them
-> > when all tasks exit read-side critical section. The details
-> > of this implementation can be found in this paper -
-> > 
-> > http://www.rdrop.com/users/paulmck/RCU/OLSrtRCU.2006.08.11a.pdf
-> > 
-> > This patch was developed as a part of the -rt kernel development and
-> > meant to provide better latencies when read-side critical sections of
-> > RCU don't disable preemption.  As a consequence of keeping track of RCU
-> > readers, the readers have a slight overhead (optimizations in the paper).
-> > This implementation co-exists with the "classic" RCU implementations
-> > and can be switched to at compiler.
-> > 
-> > Also includes RCU tracing summarized in debugfs and RCU_SOFTIRQ for
-> > the preemptible variant of RCU.
-> 
-> Whickedly complex but very cool stuff!
-> 
-> Unfortunately I have nothing to contribute other than praise at the
-> complex yet elegant way you dodged the need for synchronisation.
+[ Recipients list trimmed ]
 
-I am glad you like it!  Heck, I may have to print this email out,
-frame it, and hang it on my cube wall.  ;-)
+Paul E. McKenney wrote:
 
-						Thanx, Paul
+> This patch was developed as a part of the -rt kernel development and
+> meant to provide better latencies when read-side critical sections of
+> RCU don't disable preemption.  As a consequence of keeping track of RCU
+> readers, the readers have a slight overhead (optimizations in the paper).
+> This implementation co-exists with the "classic" RCU implementations
+> and can be switched to at compiler.
+
+I cannot parse the last sentence :-)
+
+Did you mean that this new implementation can be chosen (over the 
+classic implementation) at compile-time?
+
+Regards.
