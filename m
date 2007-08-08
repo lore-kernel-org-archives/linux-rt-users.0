@@ -1,40 +1,58 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Add missing semicolon in percpu_list.h
-Date: Wed, 08 Aug 2007 15:03:12 -0400
-Message-ID: <1186599792.29097.7.camel@localhost.localdomain>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH -rt 9/9] seqlocks: use PICK_FUNCTION
+Date: Wed, 08 Aug 2007 12:40:33 -0700
+Message-ID: <1186602033.22044.67.camel@imap.mvista.com>
+References: <20070730024534.369897977@mvista.com>
+	 <20070730024721.274774887@mvista.com>  <20070806072153.GH5359@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:47268 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756674AbXHHTDz (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:24454 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755883AbXHHTp7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Aug 2007 15:03:55 -0400
+	Wed, 8 Aug 2007 15:45:59 -0400
+In-Reply-To: <20070806072153.GH5359@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Ingo,
+On Mon, 2007-08-06 at 09:21 +0200, Ingo Molnar wrote:
+> * Daniel Walker <dwalker@mvista.com> wrote:
+> 
+> > Replace the old PICK_OP style macros with PICK_FUNCTION. Although, 
+> > seqlocks has some alien code, which I also replaced as can be seen 
+> > from the line count below.
+> 
+> ok, i very much like the cleanup effects here, could you resend your 
+> latest version of this (with Peter's suggested cleanup) against -rc2-rt2 
+> so that i can apply it?
 
-This patch adds a missing semicolon in the percpu_list.h under 
-!CONFIG_SMP.
+Ok, sent them privately. Updated to 2.6.23-rc2-rt2 w/ Peter's
+suggestion. You'll get two sets the first had some unrefreshed hunks in
+the 3/3 patch .
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+There is one thing I was wondering about in seqlock.h . There was a
+class of these macro's like below,
 
-Index: linux-2.6.23-rc2-rt2/include/linux/percpu_list.h
-===================================================================
---- linux-2.6.23-rc2-rt2.orig/include/linux/percpu_list.h
-+++ linux-2.6.23-rc2-rt2/include/linux/percpu_list.h
-@@ -84,7 +84,7 @@ void percpu_list_fold(struct percpu_list
- 
- struct percpu_list {
- 	struct lock_list_head list;
--}
-+};
- 
- static inline
- void percpu_list_init(struct percpu_list *pcl)
+#define PICK_SEQOP_CONST_RET(op, lock)                          \
+({                                                              \
+        unsigned long __ret;                                    \
+                                                                \
+        if (TYPE_EQUAL((lock), raw_seqlock_t))                  \
+                __ret = op##_raw((const raw_seqlock_t *)(lock));\
+        else if (TYPE_EQUAL((lock), seqlock_t))                 \
+                __ret = op((seqlock_t *)(lock));                \
+        else __ret = __bad_seqlock_type();                      \
+                                                                \
+        __ret;                                                  \
+})
+
+Where the variable is specifically casted to "const raw_seqlock_t *".. I
+ended up dropping these all together, and I'm wonder what the adverse
+effects of that are .. The casting seems superfluous to me since you
+know already that the type are compatible at that point. Any thoughts?
+
+Daniel
