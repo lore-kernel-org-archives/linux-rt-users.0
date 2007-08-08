@@ -1,54 +1,32 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH 3/4 RFC] RCU: preemptible RCU
-Date: Wed, 8 Aug 2007 06:09:20 -0700
-Message-ID: <20070808130920.GC5024@linux.vnet.ibm.com>
-References: <20070807183946.GA32110@linux.vnet.ibm.com> <20070807184812.GC10068@linux.vnet.ibm.com> <46B98888.6030600@free.fr>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Juergen Beisert <jbe@pengutronix.de>
+Subject: How to control IRQ thread priority from inside the driver
+Date: Wed, 8 Aug 2007 15:14:31 +0200
+Message-ID: <200708081514.31864.jbe@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:54034 "EHLO e3.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754940AbXHHNJX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Aug 2007 09:09:23 -0400
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e3.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l78C4d6I013404
-	for <linux-rt-users@vger.kernel.org>; Wed, 8 Aug 2007 08:04:39 -0400
-Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l78D9MGZ448142
-	for <linux-rt-users@vger.kernel.org>; Wed, 8 Aug 2007 09:09:22 -0400
-Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
-	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l78D9MHf010644
-	for <linux-rt-users@vger.kernel.org>; Wed, 8 Aug 2007 09:09:22 -0400
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:35611 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751825AbXHHN6t (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Aug 2007 09:58:49 -0400
+Received: from themisto.extern.pengutronix.de ([83.236.181.29] helo=localhost)
+	by metis.extern.pengutronix.de with esmtp (Exim 3.36 #1 (Debian))
+	id 1IIlMu-0002r7-00
+	for <linux-rt-users@vger.kernel.org>; Wed, 08 Aug 2007 15:14:32 +0200
 Content-Disposition: inline
-In-Reply-To: <46B98888.6030600@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Aug 08, 2007 at 11:10:32AM +0200, John Sigler wrote:
-> [ Recipients list trimmed ]
-> 
-> Paul E. McKenney wrote:
-> 
-> >This patch was developed as a part of the -rt kernel development and
-> >meant to provide better latencies when read-side critical sections of
-> >RCU don't disable preemption.  As a consequence of keeping track of RCU
-> >readers, the readers have a slight overhead (optimizations in the paper).
-> >This implementation co-exists with the "classic" RCU implementations
-> >and can be switched to at compiler.
-> 
-> I cannot parse the last sentence :-)
+Hi,
 
-Oops...  :-/
+with the rt-preempt patch the IRQs are all kernelthreads started with priority 
+50. Is there a way to change this priority from inside the driver, after I 
+did the request_irq() call? I need a higher priority for one interrupt source 
+but I do not want to change it with chrt from userspace. It should be done 
+inside the driver.
 
-> Did you mean that this new implementation can be chosen (over the 
-> classic implementation) at compile-time?
-
-Yes, via config variables.  CONFIG_CLASSIC_RCU selects the "classic"
-RCU implementation, and CONFIG_PREEMPT_RCU selects the preemptible RCU.
-CONFIG_PREEMPT_CPU depends on CONFIG_PREEMPT, so that you only are
-permitted to specify CONFIG_PREEMPT_RT in preemptible kernels.
-
-						Thanx, Paul
+Juergen
