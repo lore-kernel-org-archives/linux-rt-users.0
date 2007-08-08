@@ -1,58 +1,141 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH -rt 9/9] seqlocks: use PICK_FUNCTION
-Date: Wed, 08 Aug 2007 12:40:33 -0700
-Message-ID: <1186602033.22044.67.camel@imap.mvista.com>
-References: <20070730024534.369897977@mvista.com>
-	 <20070730024721.274774887@mvista.com>  <20070806072153.GH5359@elte.hu>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Only run softirqs from the irq thread if the irq
+	affinity is set to 1 CPU
+Date: Wed, 08 Aug 2007 16:42:32 -0400
+Message-ID: <1186605752.29097.18.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	john stultz <johnstul@us.ibm.com>
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:24454 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755883AbXHHTp7 (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:59763 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754194AbXHHUnY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Aug 2007 15:45:59 -0400
-In-Reply-To: <20070806072153.GH5359@elte.hu>
+	Wed, 8 Aug 2007 16:43:24 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-08-06 at 09:21 +0200, Ingo Molnar wrote:
-> * Daniel Walker <dwalker@mvista.com> wrote:
-> 
-> > Replace the old PICK_OP style macros with PICK_FUNCTION. Although, 
-> > seqlocks has some alien code, which I also replaced as can be seen 
-> > from the line count below.
-> 
-> ok, i very much like the cleanup effects here, could you resend your 
-> latest version of this (with Peter's suggested cleanup) against -rc2-rt2 
-> so that i can apply it?
+Ingo and Thomas,
 
-Ok, sent them privately. Updated to 2.6.23-rc2-rt2 w/ Peter's
-suggestion. You'll get two sets the first had some unrefreshed hunks in
-the 3/3 patch .
+John and I have been discussing all the "run softirq from IRQ thread"
+lately and discovered something nasty.
 
-There is one thing I was wondering about in seqlock.h . There was a
-class of these macro's like below,
+Now it is a nice optimization to run softirqs from the IRQ thread, but
+it may not be feasible because of the semantics of the IRQ thread
+compared with the softirq thread. Namely, the softirq thread is bound to
+a single CPU and the IRQ thread is not.
 
-#define PICK_SEQOP_CONST_RET(op, lock)                          \
-({                                                              \
-        unsigned long __ret;                                    \
-                                                                \
-        if (TYPE_EQUAL((lock), raw_seqlock_t))                  \
-                __ret = op##_raw((const raw_seqlock_t *)(lock));\
-        else if (TYPE_EQUAL((lock), seqlock_t))                 \
-                __ret = op((seqlock_t *)(lock));                \
-        else __ret = __bad_seqlock_type();                      \
-                                                                \
-        __ret;                                                  \
-})
+We use to think that it would be fine to simply bind an IRQ thread to a
+single CPU, either at the start of the IRQ thread code, or just while it
+is running the softirq code.  But this has a major flaw as John Stultz
+discovered.
 
-Where the variable is specifically casted to "const raw_seqlock_t *".. I
-ended up dropping these all together, and I'm wonder what the adverse
-effects of that are .. The casting seems superfluous to me since you
-know already that the type are compatible at that point. Any thoughts?
+If a RT hog that is of higher priority than the IRQ thread preempts the
+IRQ thread while it is bound to the CPU (more likely with the latest
+code that always binds the IRQ thread to 1 CPU), then that IRQ is, in
+essence, masked.  That means no more actions will be taken place by that
+IRQ while the RT thread is running.  Normally, one would expect, that if
+the IRQ has its affinity set to all CPUS, if a RT thread were to preempt
+the IRQ thread and run for a long time, it would be expected that the
+IRQ thread would migrate to another CPU and finish. Letting more
+interrupts from the IRQ line in (remember that the IRQ line is masked
+until the IRQ finishes its handler).
 
-Daniel
+This patch will only run the softirq functions if the IRQ thread and the
+softirq thread have the same priority **and** the IRQ thread is already
+bound to a single CPU.  If we are running on UP or the IRQ thread is
+bound to a single CPU, we already have the possibility of having a RT
+hog starve the IRQ.  But we should not add that scenario when the IRQ
+thread has its affinity set to run on other CPUS that don't have RT hogs
+on them.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.23-rc2-rt2/kernel/irq/manage.c
+===================================================================
+--- linux-2.6.23-rc2-rt2.orig/kernel/irq/manage.c
++++ linux-2.6.23-rc2-rt2/kernel/irq/manage.c
+@@ -769,17 +769,28 @@ static int do_irqd(void * __desc)
+ {
+ 	struct sched_param param = { 0, };
+ 	struct irq_desc *desc = __desc;
++	int run_softirq = 1;
+ 
+ #ifdef CONFIG_SMP
+ 	cpumask_t cpus_allowed, mask;
+ 
+ 	cpus_allowed = desc->affinity;
+ 	/*
+-	 * Restrict it to one cpu so we avoid being migrated inside of
+-	 * do_softirq_from_hardirq()
++	 * If the irqd is bound to one CPU we let it run softirqs
++	 * that have the same priority as the irqd thread. We do
++	 * not run it if the irqd is bound to more than one CPU
++	 * due to the fact that it can
++	 *  1) migrate to other CPUS while running the softirqd
++	 *  2) if we pin the irqd to a CPU to run the softirqd, then
++	 *     we risk a high priority process from waking up and
++	 *     preempting the irqd. Although the irqd may be able to
++	 *     run on other CPUS due to its irq affinity, it will not
++	 *     be able to since we bound it to a CPU to run softirqs.
++	 *     So a RT hog could starve the irqd from running on
++	 *     other CPUS that it's allowed to run on.
+ 	 */
+-	mask = cpumask_of_cpu(first_cpu(desc->affinity));
+-	set_cpus_allowed(current, mask);
++	if (cpus_weight(cpus_allowed) != 1)
++		run_softirq = 0; /* turn it off */
+ #endif
+ 	current->flags |= PF_NOFREEZE | PF_HARDIRQ;
+ 
+@@ -795,7 +806,8 @@ static int do_irqd(void * __desc)
+ 		do {
+ 			set_current_state(TASK_INTERRUPTIBLE);
+ 			do_hardirq(desc);
+-			do_softirq_from_hardirq();
++			if (run_softirq)
++				do_softirq_from_hardirq();
+ 		} while (current->state == TASK_RUNNING);
+ 
+ 		local_irq_enable_nort();
+@@ -806,12 +818,10 @@ static int do_irqd(void * __desc)
+ 		if (!cpus_equal(cpus_allowed, desc->affinity)) {
+ 			cpus_allowed = desc->affinity;
+ 			/*
+-			 * Restrict it to one cpu so we avoid being
+-			 * migrated inside of
+-			 * do_softirq_from_hardirq()
++			 * Only allow the irq thread to run the softirqs
++			 * if it is bound to a single CPU.
+ 			 */
+-			mask = cpumask_of_cpu(first_cpu(desc->affinity));
+-			set_cpus_allowed(current, mask);
++			run_softirq = (cpus_weight(cpus_allowed) == 1);
+ 		}
+ #endif
+ 		schedule();
+Index: linux-2.6.23-rc2-rt2/kernel/softirq.c
+===================================================================
+--- linux-2.6.23-rc2-rt2.orig/kernel/softirq.c
++++ linux-2.6.23-rc2-rt2/kernel/softirq.c
+@@ -114,7 +114,14 @@ static void wakeup_softirqd(int softirq)
+ 	 * context processing it later on.
+ 	 */
+ 	if ((current->flags & PF_HARDIRQ) && !hardirq_count() &&
+-			(tsk->normal_prio == current->normal_prio))
++			(tsk->normal_prio == current->normal_prio) &&
++	    /*
++	     * The hard irq thread must be bound to a single CPU to run
++	     * a softirq. Don't worry about locking, the irq thread
++	     * should be the only one to modify the cpus_allowed, when
++	     * the irq affinity changes.
++	     */
++	    (cpus_weight(current->cpus_allowed) == 1))
+ 		return;
+ #endif
+ 	/*
