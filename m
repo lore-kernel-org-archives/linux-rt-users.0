@@ -1,59 +1,54 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] Only run softirqs from the irq thread if the irq
- affinity is set to 1 CPU
-Date: Thu, 9 Aug 2007 08:38:34 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708090832070.29847@gandalf.stny.rr.com>
-References: <1186605752.29097.18.camel@localhost.localdomain>
- <200708081416.27500.dvhltc@us.ibm.com>  <1186609529.14769.8.camel@localhost.localdomain>
- <47db5b910708090249k2c80e3e8tdc062d89ed4359fc@mail.gmail.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: How to control IRQ thread priority from inside the driver
+Date: Thu, 9 Aug 2007 14:47:19 +0200
+Message-ID: <3efb10970708090547j3e4c597fi88ff51c5c4d8e61c@mail.gmail.com>
+References: <200708081514.31864.jbe@pengutronix.de>
+	 <200708081409.28105.dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Darren Hart <dvhltc@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>
-To: Robert de Vries <robert.h.de.vries@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	"Juergen Beisert" <jbe@pengutronix.de>
+To: "Darren Hart" <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:48430 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932690AbXHIMjN (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.176]:22755 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S939659AbXHIMrV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Aug 2007 08:39:13 -0400
-In-Reply-To: <47db5b910708090249k2c80e3e8tdc062d89ed4359fc@mail.gmail.com>
+	Thu, 9 Aug 2007 08:47:21 -0400
+Received: by py-out-1112.google.com with SMTP id d32so786629pye
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Aug 2007 05:47:19 -0700 (PDT)
+In-Reply-To: <200708081409.28105.dvhltc@us.ibm.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello Darren,
 
---
-On Thu, 9 Aug 2007, Robert de Vries wrote:
-> On 8/8/07, Steven Rostedt <rostedt@goodmis.org> wrote:
->
-> Wouldn't a developer of a real-time system configure the system so
-> that interrupts do not interfere with the real-time tasks running on a
-> specific CPU?
+> I disagree.  The point of real-time is to provide user-space with more control
+> of what get's run, when, instead of something else - including system
+> interrupts, etc.  For instance, if networking should take a higher priority
+> than their application, but disk i/o should take a lower one, the user needs
+> to be able to control that.  chrt is the correct approach for -rt in my
+> opinion.
 
-You would think. But that's something that the Linux kernel should expect.
-This can happen on a system where it's not no RT, but more soft RT (God I
-hate that term). Meaning, the "optimization" of running softirqs as
-threads can actually cause longer latencies to the interrupt. Since any
-time an RT task preempts the IRQ while running bounded to a CPU, it will
-be like masking that interrupt for the full time the RT task is running.
+I believe this depends on the environment where the RT-kernel is used.
+Therefor this might be true for Realtime Desktop/Server applications,
+but, for RT-Embedded systems it is possible (likely) that the entire
+kernel is pre-configured for 1 single purpose, and that some developer
+wants to set the priorities for that purpose only. In that case there
+is usually no user that cares anything about what is running on the
+system, as long as his device works, so that user will never come to
+the idea to use 'chrt'.
 
-> In other words, is this problem not simply a misconfiguration of the system?
-> I personally redirect all interrupts away from the CPU's where my
-> real-time tasks run and only allow the interrupts that I want to
-> handle in my application on the CPU's where I handle them so as to
-> minimize latency.
+In these case the default priorities at 50 are useless and the
+developer has to have a way to configure the priorities. So I
+understand the question of Juergen.
+To suit my needs, I did this by just patching the kernel thread
+priorities at the places where they are started. (And I am still happy
+with my solution. Note that because it is very application specific, I
+never expect a patch like this to get to the mainline)
 
-This can't always be done. Say you only have two CPUS, and there's two RT
-tasks that run at high priorities, on each. But it could be period that
-the two don't always run at the same time. You don't want to stop
-an IRQ when it gets preempted by one of the RT tasks.
+Kind Regards,
 
-So my answer to you is, no, it is not just a misconfiguration of the
-system. By making an optimization, we just added a latency that would not
-be there without that optimization. And it wouldn't be something that one
-would expect.
-
--- Steve
+Remy
