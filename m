@@ -1,97 +1,74 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/2] Some stacks show up untracable,
-	so fall back to old method in this case
-Date: Fri, 10 Aug 2007 08:14:18 -0600
-Message-ID: <20070810141418.12966.28540.stgit@lsg>
-References: <20070810140745.12966.8464.stgit@lsg>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: How to control IRQ thread priority from inside the driver
+Date: Fri, 10 Aug 2007 11:18:59 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0708101112490.20808@gandalf.stny.rr.com>
+References: <200708081514.31864.jbe@pengutronix.de>  <200708081409.28105.dvhltc@us.ibm.com>
+  <200708091610.58134.jbe@pengutronix.de>  <200708091128.44043.dvhltc@us.ibm.com>
+ <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	ghaskins@novell.com
-To: mingo@elte.hu
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Darren Hart <dvhltc@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
+	Juergen Beisert <jbe@pengutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nds154-200.nds.lab.novell.com ([151.155.154.200]:16746 "EHLO
-	lsg.lab.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S934842AbXHJOOT (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:44905 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758760AbXHJPTI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Aug 2007 10:14:19 -0400
-In-Reply-To: <20070810140745.12966.8464.stgit@lsg>
+	Fri, 10 Aug 2007 11:19:08 -0400
+In-Reply-To: <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
 
- arch/x86_64/kernel/stacktrace.c |   10 ++++++++--
- include/linux/stacktrace.h      |    1 +
- kernel/latency_trace.c          |   12 ++++++++++++
- 3 files changed, 21 insertions(+), 2 deletions(-)
+--
+When I'm asked what language is my mother tongue,
+I simply answer "C".
 
-diff --git a/arch/x86_64/kernel/stacktrace.c b/arch/x86_64/kernel/stacktrace.c
-index cb91091..054f627 100644
---- a/arch/x86_64/kernel/stacktrace.c
-+++ b/arch/x86_64/kernel/stacktrace.c
-@@ -24,7 +24,7 @@ static int save_stack_stack(void *data, char *name)
- 	return -1;
- }
- 
--static void save_stack_address(void *data, unsigned long addr)
-+static void _save_stack_address(void *data, unsigned long addr)
- {
- 	struct stack_trace *trace = (struct stack_trace *)data;
- 	if (trace->skip > 0) {
-@@ -39,7 +39,7 @@ static struct stacktrace_ops save_stack_ops = {
- 	.warning = save_stack_warning,
- 	.warning_symbol = save_stack_warning_symbol,
- 	.stack = save_stack_stack,
--	.address = save_stack_address,
-+	.address = _save_stack_address,
- };
- 
- /*
-@@ -52,3 +52,9 @@ void save_stack_trace(struct stack_trace *trace)
- 		trace->entries[trace->nr_entries++] = ULONG_MAX;
- }
- EXPORT_SYMBOL(save_stack_trace);
-+
-+void save_stack_address(struct stack_trace *trace, unsigned long addr)
-+{
-+	_save_stack_address(trace, addr);
-+}
-+EXPORT_SYMBOL(save_stack_address);
-diff --git a/include/linux/stacktrace.h b/include/linux/stacktrace.h
-index e7fa657..5acad27 100644
---- a/include/linux/stacktrace.h
-+++ b/include/linux/stacktrace.h
-@@ -9,6 +9,7 @@ struct stack_trace {
- };
- 
- extern void save_stack_trace(struct stack_trace *trace);
-+extern void save_stack_address(struct stack_trace *trace, unsigned long addr);
- 
- extern void print_stack_trace(struct stack_trace *trace, int spaces);
- #else
-diff --git a/kernel/latency_trace.c b/kernel/latency_trace.c
-index 9b83262..82c04ac 100644
---- a/kernel/latency_trace.c
-+++ b/kernel/latency_trace.c
-@@ -2058,6 +2058,18 @@ void notrace add_preempt_count(unsigned int val)
- 			trace->entries = current->preempt_trace[idx].data;
- 
- 			save_stack_trace(trace);
-+
-+			/*
-+			 * If we couldnt get our trace, the first entry will
-+			 * have the ULONG_MAX marker.  In that case, we
-+			 * rewind and save our simple two level stack
-+			 */
-+			if ((trace->nr_entries == 1)
-+			    && (trace->entries[0] == ULONG_MAX)) {
-+				trace->nr_entries = 0;
-+				save_stack_address(trace, eip);
-+				save_stack_address(trace, parent_eip);
-+			}
- 		}
- 	}
- #endif
+On Fri, 10 Aug 2007, Remy Bohmer wrote:
+> Hello Darren, Juergen and Ingo,
+>
+> Maybe Ingo can look at it, and find a way to implement it more
+> generic? (In the softirq_info struct we could default set all prios
+> back to 50, and than from functional point of view there will be no
+> change for other RT-patch users, but makes Embedded-users life easier.
+
+Hi Remy,
+
+I'm taking your concern seriously, and we are seeing other areas that it
+would be nice to set up a different irq priority than the default at boot.
+Perhaps adding in a new command line interface (We may need to extend the
+command line size limit). Where one could do
+irq_priority_map=10-51,21-40,...  Where the first number is the irq number
+followed by the irq priority. We can also do something similar to
+softirqs.
+
+Would something like that satisfy your needs?
+
+>
+> While looking at the IRQ-threads: Notice that setting all IRQ-threads
+> priorities to 50 with SCHED_FIFO is a bit strange to begin with,
+> because on a non-RT kernel all IRQ's have different priorities and a
+> higher prio irq can preempt a lower prio one. (on X86) The current
+
+Only if the lower one enabled interrupts ;-)
+
+Also that's hardware defined, not user defined. Note that the sofitrqs are
+not prioritized either. Well, they are by their position in the pending
+bitmask. But one softirq will not preempt another.
+
+> implementation will not preempt another irq-thread due to the same
+> prios and fifo scheduling.
+> The implementation I have in this patch follows the original behaviour
+> more closely, but changing that also could lead to some discussion...
+>
+
+We originally had a special "priority" for each new irq, but found that it
+really didn't make sense, and we had pressure to make them all the same,
+and let the user change them. What we need is a way to pass information to
+the kernel to set a userdefined default.
+
+When I get time, I can write up a patch to do something like this.
+
+-- Steve
