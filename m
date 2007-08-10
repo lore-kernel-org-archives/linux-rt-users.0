@@ -1,158 +1,61 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: How to control IRQ thread priority from inside the driver
-Date: Fri, 10 Aug 2007 13:21:15 +0200
-Message-ID: <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
-References: <200708081514.31864.jbe@pengutronix.de>
-	 <200708081409.28105.dvhltc@us.ibm.com>
-	 <200708091610.58134.jbe@pengutronix.de>
-	 <200708091128.44043.dvhltc@us.ibm.com>
+From: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
+Subject: megaraid_sas problems on rt
+Date: Fri, 10 Aug 2007 10:21:57 -0300
+Message-ID: <20070810132157.GG3375@ghostprotocols.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_10262_23259814.1186744875399"
-Cc: linux-rt-users@vger.kernel.org
-To: "Darren Hart" <dvhltc@us.ibm.com>, "Ingo Molnar" <mingo@elte.hu>,
-	"Juergen Beisert" <jbe@pengutronix.de>
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.180]:37549 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757782AbXHJLVQ (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.229]:42379 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759970AbXHJNWG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Aug 2007 07:21:16 -0400
-Received: by py-out-1112.google.com with SMTP id d32so1310473pye
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Aug 2007 04:21:15 -0700 (PDT)
-In-Reply-To: <200708091128.44043.dvhltc@us.ibm.com>
+	Fri, 10 Aug 2007 09:22:06 -0400
+Received: by wr-out-0506.google.com with SMTP id 36so49710wra
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Aug 2007 06:22:05 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_10262_23259814.1186744875399
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hi,
 
-Hello Darren, Juergen and Ingo,
+      I've been experiencing problems with the megaraid_sas driver under
+some simple stress testing when using the rt patch. Simply running:
 
-> > All I need is one IRQ at priority 51, all other can still run at 50. And I
-> > don't want to search at system's runtime for the right PID of driver's
-> > thread to set its priority via "chrt". There is no user at this system, its
-> > an embedded one.
->
-> It seems reasonable then, for such a specialized case, to consider Remy's
-> reply to my previous mail:
->
-> "To suit my needs, I did this by just patching the kernel thread
-> priorities at the places where they are started.
+cat /dev/sda > /dev/null
 
-Attached I have put my patch to change the priorities of the
-soft-irq's and the IRQ threads.
-Maybe Juergen can use it so suit his needs. (Sorry for attaching
-instead of inlining, but I have not find a way to inline a patch
-without corrupting it while using Gmail from within Firefox)
+will after a while make the driver start sending this to the logs:
 
-But, I think that the mechanism to change the soft-irq priorities can
-be integrated in the mainline RT-patch, I have modified the
-softirq_info struct with the soft-irq thread names such that it also
-contains the thread priority per soft-irq. For customisation it is
-easier to adapt this struct, than to apply the entire patch over and
-over. Until now the code seems to change that frequently that I have
-to reimplement this patch over and over...
+sd 0:2:0:0: [sda] megasas: RESET -285224 cmd=28 retries=0
+megasas: [ 0]waiting for 2 commands to complete
+megasas: [ 5]waiting for 2 commands to complete
+megasas: [10]waiting for 2 commands to complete
 
-Maybe Ingo can look at it, and find a way to implement it more
-generic? (In the softirq_info struct we could default set all prios
-back to 50, and than from functional point of view there will be no
-change for other RT-patch users, but makes Embedded-users life easier.
 
-While looking at the IRQ-threads: Notice that setting all IRQ-threads
-priorities to 50 with SCHED_FIFO is a bit strange to begin with,
-because on a non-RT kernel all IRQ's have different priorities and a
-higher prio irq can preempt a lower prio one. (on X86) The current
-implementation will not preempt another irq-thread due to the same
-prios and fifo scheduling.
-The implementation I have in this patch follows the original behaviour
-more closely, but changing that also could lead to some discussion...
+Till it gets to:
 
-Kind Regards,
+megasas: cannot recover from previous reset failures
+sd 0:2:0:0: scsi: Device offlined - not ready after error recovery
 
-Remy
+And then no more I/O goes thru.
 
-------=_Part_10262_23259814.1186744875399
-Content-Type: text/x-patch; name=adjust_kthread_priorities.patch;
-	charset=ANSI_X3.4-1968
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f56koxnv
-Content-Disposition: attachment; filename="adjust_kthread_priorities.patch"
+This happens with 2.6.21 + patch-2.6.21.5-rt10 and 2.6.23-rc2 +
+patch-2.6.23-rc2-rt2, while not happening without the rt patch.
 
-VGhpcyBwYXRjaCBjaGFuZ2VzIHRoZSBzb2Z0LWlycSBwcmlvcml0eSBmb3IgYWxsIGtlcm5lbCBk
-YWVtb24gdGhyZWFkcwpsaWtlIEludGVycnVwdCB0aHJlYWRzIGFuZCBzb2Z0LWlycXMgdG8gbWF0
-Y2ggdGhlbSB3aXRoIG91cgphcHBsaWNhdGlvbnMuCgpTaWduZWQtb2ZmLWJ5OiBSZW15IEJvaG1l
-ciA8bGludXhAYm9obWVyLm5ldD4KLS0tCiBrZXJuZWwvaXJxL21hbmFnZS5jIHwgICAxMiArKysr
-KysrKystLQoga2VybmVsL3NvZnRpcnEuYyAgICB8ICAgNTMgKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLQogMiBmaWxlcyBjaGFuZ2VkLCA0NCBpbnNl
-cnRpb25zKCspLCAyMSBkZWxldGlvbnMoLSkKCkluZGV4OiBsaW51eC0yLjYuMjIva2VybmVsL2ly
-cS9tYW5hZ2UuYwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09Ci0tLSBsaW51eC0yLjYuMjIub3JpZy9rZXJuZWwvaXJxL21h
-bmFnZS5jCTIwMDctMDctMjQgMTY6NDA6MTUuMDAwMDAwMDAwICswMjAwCisrKyBsaW51eC0yLjYu
-MjIva2VybmVsL2lycS9tYW5hZ2UuYwkyMDA3LTA3LTI0IDE2OjQ2OjUyLjAwMDAwMDAwMCArMDIw
-MApAQCAtNzU3LDEwICs3NTcsMTMgQEAgc3RhdGljIHZvaWQgZG9faGFyZGlycShzdHJ1Y3QgaXJx
-X2Rlc2MgKgogCQl3YWtlX3VwKCZkZXNjLT53YWl0X2Zvcl9oYW5kbGVyKTsKIH0KIAorI2RlZmlu
-ZSBiYXNlX2lycV9wcmlvICA0NQorCiBzdGF0aWMgaW50IGRvX2lycWQodm9pZCAqIF9fZGVzYykK
-IHsKIAlzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW0gPSB7IDAsIH07CiAJc3RydWN0IGlycV9kZXNj
-ICpkZXNjID0gX19kZXNjOworCWludCBpcnEgPSBkZXNjIC0gaXJxX2Rlc2M7CiAKICNpZmRlZiBD
-T05GSUdfU01QCiAJY3B1bWFza190IGNwdXNfYWxsb3dlZCwgbWFzazsKQEAgLTc3NiwxMiArNzc5
-LDE3IEBAIHN0YXRpYyBpbnQgZG9faXJxZCh2b2lkICogX19kZXNjKQogCWN1cnJlbnQtPmZsYWdz
-IHw9IFBGX05PRlJFRVpFIHwgUEZfSEFSRElSUTsKIAogCS8qCi0JICogU2V0IGlycSB0aHJlYWQg
-cHJpb3JpdHkgdG8gU0NIRURfRklGTy81MDoKKwkgKiBVc2UgYSBjdXN0b20gaXJxIHRocmVhZCBw
-cmlvcml0eSBtZWNoYW5pc206CiAJICovCi0JcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSBNQVhfVVNF
-Ul9SVF9QUklPLzI7CisJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSBiYXNlX2lycV9wcmlvIC0gaXJx
-OworCWlmIChwYXJhbS5zY2hlZF9wcmlvcml0eSA8IDEpCisJCXBhcmFtLnNjaGVkX3ByaW9yaXR5
-ID0gMTsKIAogCXN5c19zY2hlZF9zZXRzY2hlZHVsZXIoY3VycmVudC0+cGlkLCBTQ0hFRF9GSUZP
-LCAmcGFyYW0pOwogCisJcHJpbnRrKEtFUk5fSU5GTyAiW0lSUS0lZF0gc3RhcnRlZCB3aXRoIHBy
-aW86JWlcbiIsCisJCWlycSwgcGFyYW0uc2NoZWRfcHJpb3JpdHkpOworCiAJd2hpbGUgKCFrdGhy
-ZWFkX3Nob3VsZF9zdG9wKCkpIHsKIAkJbG9jYWxfaXJxX2Rpc2FibGVfbm9ydCgpOwogCQlkbyB7
-CkluZGV4OiBsaW51eC0yLjYuMjIva2VybmVsL3NvZnRpcnEuYwo9PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSBsaW51
-eC0yLjYuMjIub3JpZy9rZXJuZWwvc29mdGlycS5jCTIwMDctMDctMjQgMTY6NDA6MTUuMDAwMDAw
-MDAwICswMjAwCisrKyBsaW51eC0yLjYuMjIva2VybmVsL3NvZnRpcnEuYwkyMDA3LTA3LTI0IDE2
-OjQ5OjA1LjAwMDAwMDAwMCArMDIwMApAQCAtNzY0LDEwICs3NjQsMzAgQEAgRVhQT1JUX1NZTUJP
-TCh0YXNrbGV0X3VubG9ja193YWl0KTsKIAogI2VuZGlmCiAKK3N0YXRpYyBzdHJ1Y3QKK3sKKwlj
-b25zdCBjaGFyICpuYW1lOworCWNvbnN0IGludCAgIHByaW87Cit9IHNvZnRpcnFfaW5mbyBbXSA9
-Cit7CisgIFtISV9TT0ZUSVJRXSAgICAgID0geyJoaWdoIiwgICAgMzN9LAorICBbU0NIRURfU09G
-VElSUV0gICA9IHsic2NoZWQiLCAgIDczfSwKKyAgW1RJTUVSX1NPRlRJUlFdICAgPSB7InRpbWVy
-IiwgICA3Mn0sCisgIFtORVRfVFhfU09GVElSUV0gID0geyJuZXQtdHgiLCAgMjB9LAorICBbTkVU
-X1JYX1NPRlRJUlFdICA9IHsibmV0LXJ4IiwgIDIwfSwKKyAgW0JMT0NLX1NPRlRJUlFdICAgPSB7
-ImJsb2NrIiwgICAzMn0sCisgIFtUQVNLTEVUX1NPRlRJUlFdID0geyJ0YXNrbGV0IiwgMzF9LAor
-I2lmZGVmIENPTkZJR19ISUdIX1JFU19USU1FUlMKKyAgW0hSVElNRVJfU09GVElSUV0gPSB7Imhy
-dGltZXIiLCA3Mn0sCisjZW5kaWYKKyAgW1JDVV9TT0ZUSVJRXSAgICAgPSB7InJjdSIsICAgICAy
-MH0KK307CisKIHN0YXRpYyBpbnQga3NvZnRpcnFkKHZvaWQgKiBfX2RhdGEpCiB7Ci0Jc3RydWN0
-IHNjaGVkX3BhcmFtIHBhcmFtID0geyAuc2NoZWRfcHJpb3JpdHkgPSBNQVhfVVNFUl9SVF9QUklP
-LzIgfTsKIAlzdHJ1Y3Qgc29mdGlycWRhdGEgKmRhdGEgPSBfX2RhdGE7CisJc3RydWN0IHNjaGVk
-X3BhcmFtIHBhcmFtID0geworCQkuc2NoZWRfcHJpb3JpdHkgPSBzb2Z0aXJxX2luZm9bZGF0YS0+
-bnJdLnByaW8gfTsKIAl1MzIgc29mdGlycV9tYXNrID0gKDEgPDwgZGF0YS0+bnIpOwogCXN0cnVj
-dCBzb2Z0aXJxX2FjdGlvbiAqaDsKIAlpbnQgY3B1ID0gZGF0YS0+Y3B1OwpAQCAtNzc2LDYgKzc5
-NiwxNiBAQCBzdGF0aWMgaW50IGtzb2Z0aXJxZCh2b2lkICogX19kYXRhKQogCWluaXRfd2FpdHF1
-ZXVlX2hlYWQoJmRhdGEtPndhaXQpOwogI2VuZGlmCiAKKwlpZiAoIChwYXJhbS5zY2hlZF9wcmlv
-cml0eSA8IDEpIHx8CisJCSAocGFyYW0uc2NoZWRfcHJpb3JpdHkgPiBNQVhfUlRfUFJJTykgKSB7
-CisJCUJVRygpOworCQlwYXJhbS5zY2hlZF9wcmlvcml0eSA9IDE7CisJfQorCisJcHJpbnRrKEtF
-Uk5fSU5GTyAic29mdGlycS0lcy8lbHUgc3RhcnRlZCB1cCwgcGlkOiVkLCBSVCBwcmlvOiAlZC5c
-biIsCisJCXNvZnRpcnFfaW5mb1tkYXRhLT5ucl0ubmFtZSwgZGF0YS0+Y3B1LAorCQljdXJyZW50
-LT5waWQsIHBhcmFtLnNjaGVkX3ByaW9yaXR5KTsKKwogCXN5c19zY2hlZF9zZXRzY2hlZHVsZXIo
-Y3VycmVudC0+cGlkLCBTQ0hFRF9GSUZPLCAmcGFyYW0pOwogCWN1cnJlbnQtPmZsYWdzIHw9IFBG
-X05PRlJFRVpFIHwgUEZfU09GVElSUTsKIApAQCAtOTA2LDIxICs5MzYsNiBAQCB2b2lkIHRha2Vv
-dmVyX3Rhc2tsZXRzKHVuc2lnbmVkIGludCBjcHUpCiB9CiAjZW5kaWYgLyogQ09ORklHX0hPVFBM
-VUdfQ1BVICovCiAKLXN0YXRpYyBjb25zdCBjaGFyICpzb2Z0aXJxX25hbWVzIFtdID0KLXsKLSAg
-W0hJX1NPRlRJUlFdCQk9ICJoaWdoIiwKLSAgW1NDSEVEX1NPRlRJUlFdCT0gInNjaGVkIiwKLSAg
-W1RJTUVSX1NPRlRJUlFdCT0gInRpbWVyIiwKLSAgW05FVF9UWF9TT0ZUSVJRXQk9ICJuZXQtdHgi
-LAotICBbTkVUX1JYX1NPRlRJUlFdCT0gIm5ldC1yeCIsCi0gIFtCTE9DS19TT0ZUSVJRXQk9ICJi
-bG9jayIsCi0gIFtUQVNLTEVUX1NPRlRJUlFdCT0gInRhc2tsZXQiLAotI2lmZGVmIENPTkZJR19I
-SUdIX1JFU19USU1FUlMKLSAgW0hSVElNRVJfU09GVElSUV0JPSAiaHJ0aW1lciIsCi0jZW5kaWYK
-LSAgW1JDVV9TT0ZUSVJRXQkJPSAicmN1IiwKLX07Ci0KIHN0YXRpYyBpbnQgX19jcHVpbml0IGNw
-dV9jYWxsYmFjayhzdHJ1Y3Qgbm90aWZpZXJfYmxvY2sgKm5mYiwKIAkJCQkgIHVuc2lnbmVkIGxv
-bmcgYWN0aW9uLAogCQkJCSAgdm9pZCAqaGNwdSkKQEAgLTkzOCw5ICs5NTMsOSBAQCBzdGF0aWMg
-aW50IF9fY3B1aW5pdCBjcHVfY2FsbGJhY2soc3RydWN0CiAJCX0KIAkJZm9yIChpID0gMDsgaSA8
-IE1BWF9TT0ZUSVJROyBpKyspIHsKIAkJCXAgPSBrdGhyZWFkX2NyZWF0ZShrc29mdGlycWQsCi0J
-CQkJCSAgICZwZXJfY3B1KGtzb2Z0aXJxZCwgaG90Y3B1KVtpXSwKLQkJCQkJICAgInNvZnRpcnEt
-JXMvJWQiLCBzb2Z0aXJxX25hbWVzW2ldLAotCQkJCQkgICBob3RjcHUpOworCQkJCQkmcGVyX2Nw
-dShrc29mdGlycWQsIGhvdGNwdSlbaV0sCisJCQkJCSJzb2Z0aXJxLSVzLyVkIiwgc29mdGlycV9p
-bmZvW2ldLm5hbWUsCisJCQkJCWhvdGNwdSk7CiAJCQlpZiAoSVNfRVJSKHApKSB7CiAJCQkJcHJp
-bnRrKCJrc29mdGlycWQgJWQgZm9yICVpIGZhaWxlZFxuIiwgaSwKIAkJCQkgICAgICAgaG90Y3B1
-KTsK
-------=_Part_10262_23259814.1186744875399--
+I looked at driver/scsi/megaraid/megaraid_sas.c and as what its
+interrupt handler does is to just ack the int to the firmware and
+schedule its tasklet I tried using IRQ_NODELAY and it made the problem
+go away, after more than 20 hours of stress testing the system doesn't
+exhibits the problem.
+
+Ah, of course in the two machines were I tested, both Dell Poweredge
+systems, the IRQ used by the cards was not shared with any other device.
+
+I'm trying some ideas, such as making tasklet_schedule, when run from an
+interrupt handler routine to run the tasklet action right away, not
+waiting for the tasklet kthread to be scheduled, but the problem only
+seems to take more time to happen.
+
+Ideas?
+
+- Arnaldo
