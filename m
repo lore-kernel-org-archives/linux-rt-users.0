@@ -1,74 +1,114 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: How to control IRQ thread priority from inside the driver
-Date: Fri, 10 Aug 2007 11:18:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708101112490.20808@gandalf.stny.rr.com>
-References: <200708081514.31864.jbe@pengutronix.de>  <200708081409.28105.dvhltc@us.ibm.com>
-  <200708091610.58134.jbe@pengutronix.de>  <200708091128.44043.dvhltc@us.ibm.com>
- <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Request for comments on dejittering app
+Date: Fri, 10 Aug 2007 17:39:17 +0200
+Message-ID: <46BC86A5.4010506@free.fr>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Darren Hart <dvhltc@us.ibm.com>, Ingo Molnar <mingo@elte.hu>,
-	Juergen Beisert <jbe@pengutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Remy Bohmer <linux@bohmer.net>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:44905 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758760AbXHJPTI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Aug 2007 11:19:08 -0400
-In-Reply-To: <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:42518 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1760616AbXHJPjw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Aug 2007 11:39:52 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello,
 
---
-When I'm asked what language is my mother tongue,
-I simply answer "C".
+I'd like to describe what I'm trying to do, so people can comment.
 
-On Fri, 10 Aug 2007, Remy Bohmer wrote:
-> Hello Darren, Juergen and Ingo,
->
-> Maybe Ingo can look at it, and find a way to implement it more
-> generic? (In the softirq_info struct we could default set all prios
-> back to 50, and than from functional point of view there will be no
-> change for other RT-patch users, but makes Embedded-users life easier.
+Basically I'm just transfering data between two systems over a network=20
+(possibly the Internet, but not necessarily).
 
-Hi Remy,
+(Systems A and B are synchronized by NTP.)
 
-I'm taking your concern seriously, and we are seeing other areas that it
-would be nice to set up a different irq priority than the default at boot.
-Perhaps adding in a new command line interface (We may need to extend the
-command line size limit). Where one could do
-irq_priority_map=10-51,21-40,...  Where the first number is the irq number
-followed by the irq priority. We can also do something similar to
-softirqs.
+System A receives data from an input device on the PCI bus. This input=20
+device provides data at constant bit rate R, meaning if the driver=20
+requests B bytes, the DMA will take approximately B/R seconds.
 
-Would something like that satisfy your needs?
+I wrote a 'send' (user space) app on system A which requests 1316 bytes=
+=20
+from the input device, adds an RTP header, and sends this data in a UDP=
+=20
+datagram to system B. The RTP header provides, notably, a sequence=20
+number and a timestamp.
 
->
-> While looking at the IRQ-threads: Notice that setting all IRQ-threads
-> priorities to 50 with SCHED_FIFO is a bit strange to begin with,
-> because on a non-RT kernel all IRQ's have different priorities and a
-> higher prio irq can preempt a lower prio one. (on X86) The current
+The datagrams travel over several networks, a few get lost, some arrive=
+=20
+at system B, not necessarily in the order they were sent, and definitel=
+y=20
+not every B/R seconds.
 
-Only if the lower one enabled interrupts ;-)
+I wrote a 'recv' (user space) app on system B whose job is to receive=20
+the packets from system A and re-send them (either to an output device=20
+on the PCI bus, or to another system on the LAN) after having removed=20
+the network jitter.
 
-Also that's hardware defined, not user defined. Note that the sofitrqs are
-not prioritized either. Well, they are by their position in the pending
-bitmask. But one softirq will not preempt another.
+Here's my implementation:
 
-> implementation will not preempt another irq-thread due to the same
-> prios and fifo scheduling.
-> The implementation I have in this patch follows the original behaviour
-> more closely, but changing that also could lead to some discussion...
->
+Note: Packet P{i} contains a timestamp T{i}
 
-We originally had a special "priority" for each new irq, but found that it
-really didn't make sense, and we had pressure to make them all the same,
-and let the user change them. What we need is a way to pass information to
-the kernel to set a userdefined default.
+buffer N packets
+grab the current (absolute, CLOCK_REALTIME) time H{0}
+send P0
 
-When I get time, I can write up a patch to do something like this.
+for i=3D1 to infinity
+{
+   recv() a few packets (e.g. 3 at most)
+   compute H{i} =3D H{i-1} + (T{i} - T{i-1})
+   sleep until H{i}
+   send packet P_i
+}
 
--- Steve
+The packets were timestamped on system A,
+thus for every i, T{i} - T{i-1} =3D ~B/R
+Therefore, most of the network jitter will be removed.
+
+Any comments so far?
+
+Now all this seems nice in theory, but I'd also like to make it work in=
+=20
+practice! (And I'm having some problems.)
+
+R is typically 38 Mbit/s =3D> B/R is typically 277 =B5s
+Obviously, I'm going to need high-resolution timers if I want to sleep=20
+for so small an interval.
+
+As far as I understand, each packet received will generate one IRQ, and=
+=20
+each write to the PCI output device will generate one IRQ. This means=20
+3600 IRQs per second from the NIC, and 3600 IRQs per second from the PC=
+I=20
+device. Is that reasonable? (Considering a 1267 MHz P3 with no IO-APIC.=
+)
+
+It is easy to reduce the number of IRQs from the PCI device by grouping=
+=20
+several packets for a single write. It might be worthwhile.
+
+One problem I have is that the PCI device's driver blocks until the=20
+device has acknowledged the data, and the write operation sometimes=20
+blocks for 200, 300, even 400 =B5s (I have not been able to tell why).
+
+I might not need -rt, if I'm willing to handle several packets every=20
+time I wake up?
+
+buffer N packets
+grab the current (absolute) time H{0}
+send P0
+
+for i=3D1 to infinity
+{
+   sleep for at least X ms
+   recv() some packets (how many? as much as I can?)
+   grab the current time Hnow
+   while H{i} < Hnow send P{i}
+}
+
+(Rough pseudo-code.)
+
+I'm eager to hear anyone's comments and suggestions.
+
+Regards.
