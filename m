@@ -1,68 +1,158 @@
-From: Darren Hart <dvhltc@us.ibm.com>
+From: "Remy Bohmer" <linux@bohmer.net>
 Subject: Re: How to control IRQ thread priority from inside the driver
-Date: Thu, 9 Aug 2007 11:28:43 -0700
-Message-ID: <200708091128.44043.dvhltc@us.ibm.com>
-References: <200708081514.31864.jbe@pengutronix.de> <200708081409.28105.dvhltc@us.ibm.com> <200708091610.58134.jbe@pengutronix.de>
+Date: Fri, 10 Aug 2007 13:21:15 +0200
+Message-ID: <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
+References: <200708081514.31864.jbe@pengutronix.de>
+	 <200708081409.28105.dvhltc@us.ibm.com>
+	 <200708091610.58134.jbe@pengutronix.de>
+	 <200708091128.44043.dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;
+	boundary="----=_Part_10262_23259814.1186744875399"
 Cc: linux-rt-users@vger.kernel.org
-To: Juergen Beisert <jbe@pengutronix.de>
+To: "Darren Hart" <dvhltc@us.ibm.com>, "Ingo Molnar" <mingo@elte.hu>,
+	"Juergen Beisert" <jbe@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:47037 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752028AbXHIS2r (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.180]:37549 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757782AbXHJLVQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Aug 2007 14:28:47 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e31.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id l79ISkSK030581
-	for <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2007 14:28:46 -0400
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.4) with ESMTP id l79ISjXx214774
-	for <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2007 12:28:45 -0600
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l79ISiR4032741
-	for <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2007 12:28:44 -0600
-In-Reply-To: <200708091610.58134.jbe@pengutronix.de>
-Content-Disposition: inline
+	Fri, 10 Aug 2007 07:21:16 -0400
+Received: by py-out-1112.google.com with SMTP id d32so1310473pye
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Aug 2007 04:21:15 -0700 (PDT)
+In-Reply-To: <200708091128.44043.dvhltc@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thursday 09 August 2007 07:10:57 Juergen Beisert wrote:
-> Darren,
+------=_Part_10262_23259814.1186744875399
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Hello Darren, Juergen and Ingo,
+
+> > All I need is one IRQ at priority 51, all other can still run at 50. And I
+> > don't want to search at system's runtime for the right PID of driver's
+> > thread to set its priority via "chrt". There is no user at this system, its
+> > an embedded one.
 >
-> On Wednesday 08 August 2007 23:09, Darren Hart wrote:
-> > On Wednesday 08 August 2007 06:14:31 you wrote:
-> > > Hi,
-> > >
-> > > with the rt-preempt patch the IRQs are all kernelthreads started with
-> > > priority 50. Is there a way to change this priority from inside the
-> > > driver, after I did the request_irq() call? I need a higher priority
-> > > for one interrupt source but I do not want to change it with chrt from
-> > > userspace. It should be done inside the driver.
-> >
-> > I disagree.  The point of real-time is to provide user-space with more
-> > control of what get's run, when, instead of something else - including
-> > system interrupts, etc.  For instance, if networking should take a higher
-> > priority than their application, but disk i/o should take a lower one,
-> > the user needs to be able to control that.  chrt is the correct approach
-> > for -rt in my opinion.
+> It seems reasonable then, for such a specialized case, to consider Remy's
+> reply to my previous mail:
 >
-> All I need is one IRQ at priority 51, all other can still run at 50. And I
-> don't want to search at system's runtime for the right PID of driver's
-> thread to set its priority via "chrt". There is no user at this system, its
-> an embedded one.
+> "To suit my needs, I did this by just patching the kernel thread
+> priorities at the places where they are started.
 
-It seems reasonable then, for such a specialized case, to consider Remy's 
-reply to my previous mail:
+Attached I have put my patch to change the priorities of the
+soft-irq's and the IRQ threads.
+Maybe Juergen can use it so suit his needs. (Sorry for attaching
+instead of inlining, but I have not find a way to inline a patch
+without corrupting it while using Gmail from within Firefox)
 
-"To suit my needs, I did this by just patching the kernel thread
-priorities at the places where they are started. (And I am still happy
-with my solution. Note that because it is very application specific, I
-never expect a patch like this to get to the mainline)"
+But, I think that the mechanism to change the soft-irq priorities can
+be integrated in the mainline RT-patch, I have modified the
+softirq_info struct with the soft-irq thread names such that it also
+contains the thread priority per soft-irq. For customisation it is
+easier to adapt this struct, than to apply the entire patch over and
+over. Until now the code seems to change that frequently that I have
+to reimplement this patch over and over...
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Realtime Linux Team
+Maybe Ingo can look at it, and find a way to implement it more
+generic? (In the softirq_info struct we could default set all prios
+back to 50, and than from functional point of view there will be no
+change for other RT-patch users, but makes Embedded-users life easier.
+
+While looking at the IRQ-threads: Notice that setting all IRQ-threads
+priorities to 50 with SCHED_FIFO is a bit strange to begin with,
+because on a non-RT kernel all IRQ's have different priorities and a
+higher prio irq can preempt a lower prio one. (on X86) The current
+implementation will not preempt another irq-thread due to the same
+prios and fifo scheduling.
+The implementation I have in this patch follows the original behaviour
+more closely, but changing that also could lead to some discussion...
+
+Kind Regards,
+
+Remy
+
+------=_Part_10262_23259814.1186744875399
+Content-Type: text/x-patch; name=adjust_kthread_priorities.patch;
+	charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_f56koxnv
+Content-Disposition: attachment; filename="adjust_kthread_priorities.patch"
+
+VGhpcyBwYXRjaCBjaGFuZ2VzIHRoZSBzb2Z0LWlycSBwcmlvcml0eSBmb3IgYWxsIGtlcm5lbCBk
+YWVtb24gdGhyZWFkcwpsaWtlIEludGVycnVwdCB0aHJlYWRzIGFuZCBzb2Z0LWlycXMgdG8gbWF0
+Y2ggdGhlbSB3aXRoIG91cgphcHBsaWNhdGlvbnMuCgpTaWduZWQtb2ZmLWJ5OiBSZW15IEJvaG1l
+ciA8bGludXhAYm9obWVyLm5ldD4KLS0tCiBrZXJuZWwvaXJxL21hbmFnZS5jIHwgICAxMiArKysr
+KysrKystLQoga2VybmVsL3NvZnRpcnEuYyAgICB8ICAgNTMgKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLQogMiBmaWxlcyBjaGFuZ2VkLCA0NCBpbnNl
+cnRpb25zKCspLCAyMSBkZWxldGlvbnMoLSkKCkluZGV4OiBsaW51eC0yLjYuMjIva2VybmVsL2ly
+cS9tYW5hZ2UuYwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09Ci0tLSBsaW51eC0yLjYuMjIub3JpZy9rZXJuZWwvaXJxL21h
+bmFnZS5jCTIwMDctMDctMjQgMTY6NDA6MTUuMDAwMDAwMDAwICswMjAwCisrKyBsaW51eC0yLjYu
+MjIva2VybmVsL2lycS9tYW5hZ2UuYwkyMDA3LTA3LTI0IDE2OjQ2OjUyLjAwMDAwMDAwMCArMDIw
+MApAQCAtNzU3LDEwICs3NTcsMTMgQEAgc3RhdGljIHZvaWQgZG9faGFyZGlycShzdHJ1Y3QgaXJx
+X2Rlc2MgKgogCQl3YWtlX3VwKCZkZXNjLT53YWl0X2Zvcl9oYW5kbGVyKTsKIH0KIAorI2RlZmlu
+ZSBiYXNlX2lycV9wcmlvICA0NQorCiBzdGF0aWMgaW50IGRvX2lycWQodm9pZCAqIF9fZGVzYykK
+IHsKIAlzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW0gPSB7IDAsIH07CiAJc3RydWN0IGlycV9kZXNj
+ICpkZXNjID0gX19kZXNjOworCWludCBpcnEgPSBkZXNjIC0gaXJxX2Rlc2M7CiAKICNpZmRlZiBD
+T05GSUdfU01QCiAJY3B1bWFza190IGNwdXNfYWxsb3dlZCwgbWFzazsKQEAgLTc3NiwxMiArNzc5
+LDE3IEBAIHN0YXRpYyBpbnQgZG9faXJxZCh2b2lkICogX19kZXNjKQogCWN1cnJlbnQtPmZsYWdz
+IHw9IFBGX05PRlJFRVpFIHwgUEZfSEFSRElSUTsKIAogCS8qCi0JICogU2V0IGlycSB0aHJlYWQg
+cHJpb3JpdHkgdG8gU0NIRURfRklGTy81MDoKKwkgKiBVc2UgYSBjdXN0b20gaXJxIHRocmVhZCBw
+cmlvcml0eSBtZWNoYW5pc206CiAJICovCi0JcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSBNQVhfVVNF
+Ul9SVF9QUklPLzI7CisJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSBiYXNlX2lycV9wcmlvIC0gaXJx
+OworCWlmIChwYXJhbS5zY2hlZF9wcmlvcml0eSA8IDEpCisJCXBhcmFtLnNjaGVkX3ByaW9yaXR5
+ID0gMTsKIAogCXN5c19zY2hlZF9zZXRzY2hlZHVsZXIoY3VycmVudC0+cGlkLCBTQ0hFRF9GSUZP
+LCAmcGFyYW0pOwogCisJcHJpbnRrKEtFUk5fSU5GTyAiW0lSUS0lZF0gc3RhcnRlZCB3aXRoIHBy
+aW86JWlcbiIsCisJCWlycSwgcGFyYW0uc2NoZWRfcHJpb3JpdHkpOworCiAJd2hpbGUgKCFrdGhy
+ZWFkX3Nob3VsZF9zdG9wKCkpIHsKIAkJbG9jYWxfaXJxX2Rpc2FibGVfbm9ydCgpOwogCQlkbyB7
+CkluZGV4OiBsaW51eC0yLjYuMjIva2VybmVsL3NvZnRpcnEuYwo9PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tLSBsaW51
+eC0yLjYuMjIub3JpZy9rZXJuZWwvc29mdGlycS5jCTIwMDctMDctMjQgMTY6NDA6MTUuMDAwMDAw
+MDAwICswMjAwCisrKyBsaW51eC0yLjYuMjIva2VybmVsL3NvZnRpcnEuYwkyMDA3LTA3LTI0IDE2
+OjQ5OjA1LjAwMDAwMDAwMCArMDIwMApAQCAtNzY0LDEwICs3NjQsMzAgQEAgRVhQT1JUX1NZTUJP
+TCh0YXNrbGV0X3VubG9ja193YWl0KTsKIAogI2VuZGlmCiAKK3N0YXRpYyBzdHJ1Y3QKK3sKKwlj
+b25zdCBjaGFyICpuYW1lOworCWNvbnN0IGludCAgIHByaW87Cit9IHNvZnRpcnFfaW5mbyBbXSA9
+Cit7CisgIFtISV9TT0ZUSVJRXSAgICAgID0geyJoaWdoIiwgICAgMzN9LAorICBbU0NIRURfU09G
+VElSUV0gICA9IHsic2NoZWQiLCAgIDczfSwKKyAgW1RJTUVSX1NPRlRJUlFdICAgPSB7InRpbWVy
+IiwgICA3Mn0sCisgIFtORVRfVFhfU09GVElSUV0gID0geyJuZXQtdHgiLCAgMjB9LAorICBbTkVU
+X1JYX1NPRlRJUlFdICA9IHsibmV0LXJ4IiwgIDIwfSwKKyAgW0JMT0NLX1NPRlRJUlFdICAgPSB7
+ImJsb2NrIiwgICAzMn0sCisgIFtUQVNLTEVUX1NPRlRJUlFdID0geyJ0YXNrbGV0IiwgMzF9LAor
+I2lmZGVmIENPTkZJR19ISUdIX1JFU19USU1FUlMKKyAgW0hSVElNRVJfU09GVElSUV0gPSB7Imhy
+dGltZXIiLCA3Mn0sCisjZW5kaWYKKyAgW1JDVV9TT0ZUSVJRXSAgICAgPSB7InJjdSIsICAgICAy
+MH0KK307CisKIHN0YXRpYyBpbnQga3NvZnRpcnFkKHZvaWQgKiBfX2RhdGEpCiB7Ci0Jc3RydWN0
+IHNjaGVkX3BhcmFtIHBhcmFtID0geyAuc2NoZWRfcHJpb3JpdHkgPSBNQVhfVVNFUl9SVF9QUklP
+LzIgfTsKIAlzdHJ1Y3Qgc29mdGlycWRhdGEgKmRhdGEgPSBfX2RhdGE7CisJc3RydWN0IHNjaGVk
+X3BhcmFtIHBhcmFtID0geworCQkuc2NoZWRfcHJpb3JpdHkgPSBzb2Z0aXJxX2luZm9bZGF0YS0+
+bnJdLnByaW8gfTsKIAl1MzIgc29mdGlycV9tYXNrID0gKDEgPDwgZGF0YS0+bnIpOwogCXN0cnVj
+dCBzb2Z0aXJxX2FjdGlvbiAqaDsKIAlpbnQgY3B1ID0gZGF0YS0+Y3B1OwpAQCAtNzc2LDYgKzc5
+NiwxNiBAQCBzdGF0aWMgaW50IGtzb2Z0aXJxZCh2b2lkICogX19kYXRhKQogCWluaXRfd2FpdHF1
+ZXVlX2hlYWQoJmRhdGEtPndhaXQpOwogI2VuZGlmCiAKKwlpZiAoIChwYXJhbS5zY2hlZF9wcmlv
+cml0eSA8IDEpIHx8CisJCSAocGFyYW0uc2NoZWRfcHJpb3JpdHkgPiBNQVhfUlRfUFJJTykgKSB7
+CisJCUJVRygpOworCQlwYXJhbS5zY2hlZF9wcmlvcml0eSA9IDE7CisJfQorCisJcHJpbnRrKEtF
+Uk5fSU5GTyAic29mdGlycS0lcy8lbHUgc3RhcnRlZCB1cCwgcGlkOiVkLCBSVCBwcmlvOiAlZC5c
+biIsCisJCXNvZnRpcnFfaW5mb1tkYXRhLT5ucl0ubmFtZSwgZGF0YS0+Y3B1LAorCQljdXJyZW50
+LT5waWQsIHBhcmFtLnNjaGVkX3ByaW9yaXR5KTsKKwogCXN5c19zY2hlZF9zZXRzY2hlZHVsZXIo
+Y3VycmVudC0+cGlkLCBTQ0hFRF9GSUZPLCAmcGFyYW0pOwogCWN1cnJlbnQtPmZsYWdzIHw9IFBG
+X05PRlJFRVpFIHwgUEZfU09GVElSUTsKIApAQCAtOTA2LDIxICs5MzYsNiBAQCB2b2lkIHRha2Vv
+dmVyX3Rhc2tsZXRzKHVuc2lnbmVkIGludCBjcHUpCiB9CiAjZW5kaWYgLyogQ09ORklHX0hPVFBM
+VUdfQ1BVICovCiAKLXN0YXRpYyBjb25zdCBjaGFyICpzb2Z0aXJxX25hbWVzIFtdID0KLXsKLSAg
+W0hJX1NPRlRJUlFdCQk9ICJoaWdoIiwKLSAgW1NDSEVEX1NPRlRJUlFdCT0gInNjaGVkIiwKLSAg
+W1RJTUVSX1NPRlRJUlFdCT0gInRpbWVyIiwKLSAgW05FVF9UWF9TT0ZUSVJRXQk9ICJuZXQtdHgi
+LAotICBbTkVUX1JYX1NPRlRJUlFdCT0gIm5ldC1yeCIsCi0gIFtCTE9DS19TT0ZUSVJRXQk9ICJi
+bG9jayIsCi0gIFtUQVNLTEVUX1NPRlRJUlFdCT0gInRhc2tsZXQiLAotI2lmZGVmIENPTkZJR19I
+SUdIX1JFU19USU1FUlMKLSAgW0hSVElNRVJfU09GVElSUV0JPSAiaHJ0aW1lciIsCi0jZW5kaWYK
+LSAgW1JDVV9TT0ZUSVJRXQkJPSAicmN1IiwKLX07Ci0KIHN0YXRpYyBpbnQgX19jcHVpbml0IGNw
+dV9jYWxsYmFjayhzdHJ1Y3Qgbm90aWZpZXJfYmxvY2sgKm5mYiwKIAkJCQkgIHVuc2lnbmVkIGxv
+bmcgYWN0aW9uLAogCQkJCSAgdm9pZCAqaGNwdSkKQEAgLTkzOCw5ICs5NTMsOSBAQCBzdGF0aWMg
+aW50IF9fY3B1aW5pdCBjcHVfY2FsbGJhY2soc3RydWN0CiAJCX0KIAkJZm9yIChpID0gMDsgaSA8
+IE1BWF9TT0ZUSVJROyBpKyspIHsKIAkJCXAgPSBrdGhyZWFkX2NyZWF0ZShrc29mdGlycWQsCi0J
+CQkJCSAgICZwZXJfY3B1KGtzb2Z0aXJxZCwgaG90Y3B1KVtpXSwKLQkJCQkJICAgInNvZnRpcnEt
+JXMvJWQiLCBzb2Z0aXJxX25hbWVzW2ldLAotCQkJCQkgICBob3RjcHUpOworCQkJCQkmcGVyX2Nw
+dShrc29mdGlycWQsIGhvdGNwdSlbaV0sCisJCQkJCSJzb2Z0aXJxLSVzLyVkIiwgc29mdGlycV9p
+bmZvW2ldLm5hbWUsCisJCQkJCWhvdGNwdSk7CiAJCQlpZiAoSVNfRVJSKHApKSB7CiAJCQkJcHJp
+bnRrKCJrc29mdGlycWQgJWQgZm9yICVpIGZhaWxlZFxuIiwgaSwKIAkJCQkgICAgICAgaG90Y3B1
+KTsK
+------=_Part_10262_23259814.1186744875399--
