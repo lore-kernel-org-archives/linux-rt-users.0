@@ -1,55 +1,94 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: How to control IRQ thread priority from inside the driver
-Date: Fri, 10 Aug 2007 22:20:24 +0200
-Message-ID: <3efb10970708101320l79179b3eu652a82ed52731d99@mail.gmail.com>
-References: <200708081514.31864.jbe@pengutronix.de>
-	 <200708081409.28105.dvhltc@us.ibm.com>
-	 <200708091610.58134.jbe@pengutronix.de>
-	 <200708091128.44043.dvhltc@us.ibm.com>
-	 <3efb10970708100421s1f058d45qa7c9c7b265c0933d@mail.gmail.com>
-	 <Pine.LNX.4.58.0708101112490.20808@gandalf.stny.rr.com>
-	 <3efb10970708100900q6f799f4cmd72d9f6abc27f7fe@mail.gmail.com>
-	 <Pine.LNX.4.58.0708101209350.21632@gandalf.stny.rr.com>
-	 <3efb10970708101247k30d375a6p274b8ae37fcedca7@mail.gmail.com>
-	 <Pine.LNX.4.58.0708101555290.24727@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Request for comments on dejittering app
+Date: Mon, 13 Aug 2007 08:55:18 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0708130849230.11768@gandalf.stny.rr.com>
+References: <46BC86A5.4010506@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Darren Hart" <dvhltc@us.ibm.com>, "Ingo Molnar" <mingo@elte.hu>,
-	linux-rt-users@vger.kernel.org
-To: "Steven Rostedt" <rostedt@goodmis.org>,
-	"Juergen Beisert" <jbe@pengutronix.de>
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.180]:37347 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765667AbXHJUU0 (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:52325 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1030771AbXHMMzW convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Aug 2007 16:20:26 -0400
-Received: by py-out-1112.google.com with SMTP id d32so1526965pye
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Aug 2007 13:20:25 -0700 (PDT)
-In-Reply-To: <Pine.LNX.4.58.0708101555290.24727@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Mon, 13 Aug 2007 08:55:22 -0400
+In-Reply-To: <46BC86A5.4010506@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Steven,
 
->> Arnaldo mentioned to use the irq-name for this, and to me this sounds good.
->Yeah, that wouldn't be too hard to implement.
+--
+On Fri, 10 Aug 2007, John Sigler wrote:
 
-I am going to take a look at it... I can propose a patch in a few days
-to a week...
+> Hello,
 
-I hope Juergen also thinks this is a good idea?
+Hi John,
 
-> I've been developing Ingo's patches for a few years now too.  I'm one of
-> the authors of the rt-mutex.c code.  Actually, I started out on RT Linux
-> programing as a kernel developer at TimeSys working on their Linux 2.2
+>
+> I'd like to describe what I'm trying to do, so people can comment.
+>
 
-I already thought I saw your name listed somewhere ;-))))
+>
+> Any comments so far?
 
-> port.  Now I'm at Red Hat with Ingo, but I'm on other projects that keep
+Well, some NICs buffer writes, and some even buffer receives. So your N=
+IC
+may be buffering underneath you too.
 
-This is **really** a small world ;-)
+>
+> Now all this seems nice in theory, but I'd also like to make it work =
+in
+> practice! (And I'm having some problems.)
+>
+> R is typically 38 Mbit/s =3D> B/R is typically 277 =B5s
+> Obviously, I'm going to need high-resolution timers if I want to slee=
+p
+> for so small an interval.
+>
+> As far as I understand, each packet received will generate one IRQ, a=
+nd
+> each write to the PCI output device will generate one IRQ. This means
+> 3600 IRQs per second from the NIC, and 3600 IRQs per second from the =
+PCI
+> device. Is that reasonable? (Considering a 1267 MHz P3 with no IO-API=
+C.)
 
-Remy
+As mentioned above, the NIC may buffer too, so it may not be sending th=
+e
+packets out immediately.  Usually, a driver would send out several pack=
+ets
+before sending a transmit IRQ. In fact, that transmit IRQ is usually so
+to tell the driver that it can write more after a certain threshold has
+been reached. (It's been several years since I wrote a NIC driver, so I=
+'m
+going off of my old memory ;-)
+
+
+>
+> It is easy to reduce the number of IRQs from the PCI device by groupi=
+ng
+> several packets for a single write. It might be worthwhile.
+
+May not be needed if the driver already does it.
+
+>
+> One problem I have is that the PCI device's driver blocks until the
+> device has acknowledged the data, and the write operation sometimes
+> blocks for 200, 300, even 400 =B5s (I have not been able to tell why)=
+=2E
+
+Not sure what you mean by saying the driver "blocks". Is it a sleeping
+thread (in -rt) or from an interrupt?  Can you be more specific here.
+
+>
+> I might not need -rt, if I'm willing to handle several packets every
+> time I wake up?
+
+=46or any reaction time less than 100 us (or maybe even higher), you wi=
+ll
+need -rt.
+
+
+-- Steve
