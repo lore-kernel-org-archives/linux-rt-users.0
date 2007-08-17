@@ -1,101 +1,50 @@
-From: John Blackwood <john.blackwood@ccur.com>
-Subject: Re: [PATCH] select: fix sys_select to not leak ERESTARTNOHAND to
- userspace
-Date: Fri, 17 Aug 2007 11:41:20 -0400
-Message-ID: <46C5C1A0.7060708@ccur.com>
-Reply-To: john.blackwood@ccur.com
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] Fixes spurious system load spikes in /proc/loadavgrt
+Date: Fri, 17 Aug 2007 09:24:05 -0700
+Message-ID: <1187367845.23789.62.camel@imap.mvista.com>
+References: <20070817003751.GN3954@unix.sh>
+	 <1187323117.23789.55.camel@imap.mvista.com>
+	 <1187339967.7007.71.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Tom Horsley <tom.horsley@ccur.com>
-To: Neil Horman <nhorman@tuxdriver.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763344AbXHQPle@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Ingo Molnar <mingo@elte.hu>, linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:65384 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752705AbXHQQZi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 17 Aug 2007 12:25:38 -0400
+In-Reply-To: <1187339967.7007.71.camel@chaos>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Neil,
+On Fri, 2007-08-17 at 10:39 +0200, Thomas Gleixner wrote:
+> On Thu, 2007-08-16 at 20:58 -0700, Daniel Walker wrote:
+> > On Thu, 2007-08-16 at 21:37 -0300, Luis Claudio R. Goncalves wrote:
+> > > Fixes spurious system load spikes observed in /proc/loadavgrt, as described in:
+> > > 
+> > >   Bug 253103: /proc/loadavgrt issues weird results
+> > >   https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=253103
+> >
+> > It would be nice if you explained better what the code defect was, and
+> > how you fixed it .. One could extract that from the code, but it's nice
+> > if it's backed up with a text description.. Also you should CC lkml next
+> > time.
+> 
+> It would be nice if you'd stop being uber schoolmasterly. Luis
+> explanation of the defect is entirely clear and the resulting fix is
+> obvious. .. You could really look at the patch and figure out your self,
+> that it needs no text description at all. Also you should comment on the
+> nice patch itself next time.
 
-We've been having problems with this select patch change.
+If all you've said was true I wouldn't have commented on it. There was
+no text description of the code defect, and yes as I said I can get it
+from the code but it's _nice_ when it's backed up with a text
+description ..
 
-Specifically -- previously, when a ptrace attach was done to a task
-blocked in a select() call and that task had a timeout value,
-the task would restart the select() call with an updated timeout value.
+If your just going to start flames Thomas take it off list.
 
-With this patch in place, the task now instead returns EINTR.
-
-A test that shows this issue is provided below.
-
-We also confirmed that attaching to a program sitting
-in select() with gdb makes the select get an EINTR, so this
-behavior also shows up in gdb.
-
-Thank you for your considerations in this matter.
-
-------------------- -------------------
-#include <stdio.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/ptrace.h>
-
-int
-main(int argc, char ** argv) {
-    pid_t kid;
-    if ((kid = fork()) == 0) {
-       int ms_wait = 2000;
-       int rval;
-       struct timeval timeout;
-
-       timeout.tv_sec = ms_wait / 1000;
-       timeout.tv_usec = (ms_wait % 1000) * 1000;
-       rval = select(0, NULL, NULL, NULL, &timeout);
-       if (rval == -1) {
-          int errcode = errno;
-          printf("Hey! Why did my select error off with errno %d (%s)?\n",
-                 errcode, strerror(errcode));
-          fflush(stdout);
-       } else {
-          printf("select call completed, return value: %d\n", rval);
-       }
-       exit(0);
-    } else if (kid == (pid_t)-1) {
-       perror("fork");
-    } else {
-       int ms_wait = 500;
-       int rval;
-       struct timeval timeout;
-
-       /* Wait a bit to make sure kid has a chance to get into its
-        * select call
-        */
-       timeout.tv_sec = ms_wait / 1000;
-       timeout.tv_usec = (ms_wait % 1000) * 1000;
-       rval = select(0, NULL, NULL, NULL, &timeout);
-
-       /* Now attach to the kid, then continue him.
-        */
-       if (ptrace(PTRACE_ATTACH, kid, (void *)0, (void *)0) != 0) {
-          perror("ptrace");
-       }
-       if (waitpid(kid, &rval, 0) != kid) {
-          perror("waitpid");
-       }
-       if (ptrace(PTRACE_CONT, kid, (void *)0, (void *)0) != 0) {
-          perror("ptrace");
-       }
-       if (waitpid(kid, &rval, 0) != kid) {
-          perror("waitpid");
-       }
-    }
-    return 0;
-}
+Daniel
