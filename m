@@ -1,27 +1,46 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Date: 20 Aug 2007 20:26:38 +0200
-Message-ID: <p73tzquysdd.fsf@bingen.suse.de>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: PI mutex support on ARM
+Date: Mon, 20 Aug 2007 20:59:38 +0200
+Message-ID: <3efb10970708201159q69a8757ay605e8567b4233922@mail.gmail.com>
+References: <200708201453.14641.m.gruber@tirol.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+	linux@arm.linux.org.uk, mingo@elte.hu
+To: "Manfred Gruber" <m.gruber@tirol.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.suse.de ([195.135.220.15]:33704 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755322AbXHTRcx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Aug 2007 13:32:53 -0400
-In-Reply-To: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
+Received: from nz-out-0506.google.com ([64.233.162.236]:48396 "EHLO
+	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753182AbXHTS7k (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 20 Aug 2007 14:59:40 -0400
+Received: by nz-out-0506.google.com with SMTP id s18so500890nze
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Aug 2007 11:59:40 -0700 (PDT)
+In-Reply-To: <200708201453.14641.m.gruber@tirol.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Konstantin Baydarov <kbaidarov@ru.mvista.com> writes:
+Hello Manfred,
 
-> Hi, I've faced problem:
-> I have two x86_64 kernels with HPET enabled:
+At http://www.spinics.net/lists/arm-kernel/msg42349.html you can find
+a patch that will probably work. Due to the lack of proper atomic
+instructions on the ARM-v4 core this patch is likely to be the best
+possible solution.
 
-Is this for a standard kernel or for a RT kernel?
+Kind Regards,
 
--Andi
+Remy
+
+2007/8/20, Manfred Gruber <m.gruber@tirol.com>:
+> hi !
+>
+> Is about the PI Mutex issue on ARM some work going on?
+> Or does someone have an information for me how to implement this for a armv4
+> correct ?
+>
+> thanks
+>         fred
+>
+>
