@@ -1,137 +1,191 @@
-From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Date: Tue, 21 Aug 2007 17:01:41 +0400
-Message-ID: <20070821170141.70a95dac@windmill.dev.rtsoft.ru>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
-	<46CA035A.5050202@ru.mvista.com>
-	<1187645464.7732.43.camel@imap.mvista.com>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: [LOCKDEP][2.6.23-rc2-rt]
+Date: Tue, 21 Aug 2007 17:25:01 -0700
+Message-ID: <1187742301.21808.61.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Daniel Walker <dwalker@mvista.com>
+Cc: RT Users List <linux-rt-users@vger.kernel.org>,
+	LKML <Linux-kernel@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft2.corbina.net ([85.21.88.2]:37624 "HELO
-	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with SMTP id S1752690AbXHUMzc (ORCPT
+Received: from rwcrmhc11.comcast.net ([204.127.192.81]:51971 "EHLO
+	rwcrmhc11.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751066AbXHVAZG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Aug 2007 08:55:32 -0400
-In-Reply-To: <1187645464.7732.43.camel@imap.mvista.com>
+	Tue, 21 Aug 2007 20:25:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 20 Aug 2007 14:31:04 -0700
-Daniel Walker <dwalker@mvista.com> wrote:
+Hi Ingo,
 
-> On Tue, 2007-08-21 at 01:10 +0400, Konstantin Baydarov wrote:
-> 
-> It was in your original email ..  Are you saying this it is not a
-> problem in plain 2.6.23-rc2? I thought I read that it was a problem on
-> i386 ..
-> 
-> Daniel
-> 
+here is a lockdep trace I just encountered in the latest rt patch series.
 
-I can reproduce bug with plain 2.6.23-rc3 i386 kernel, without RT patch,
-on pentiumd.
-So I fixed this issue the same way as I fixed RT kernel. The side effect
-of this fix is that when kernel 2 executes both Local APIC timer and HPET
-are enabled and produce timer interrupts:
-root@192.168.40.10:~# cat /proc/interrupts
-           CPU0       CPU1
-  0:       5643          0   IO-APIC-edge      timer
-  1:          8          0   IO-APIC-edge      i8042
-  2:          0          0    XT-PIC-XT        cascade
-  4:        303        181   IO-APIC-edge      serial
-  6:          3          0   IO-APIC-edge      floppy
- 12:          4          0   IO-APIC-edge      i8042
- 14:         11          0   IO-APIC-edge      ide0
- 17:       5701         16   IO-APIC-fasteoi   uhci_hcd:usb3, eth0
- 18:          0          0   IO-APIC-fasteoi   uhci_hcd:usb4
- 19:          0          0   IO-APIC-fasteoi   uhci_hcd:usb5
- 20:         38          0   IO-APIC-fasteoi   ehci_hcd:usb1, uhci_hcd:usb2
- 23:          3          0   IO-APIC-fasteoi   libata
-NMI:          0          0
-LOC:       5525       5489
-ERR:          0
-MIS:          0
-root@192.168.40.10:~#
+(which has gotten a bit stale, btw.)
 
-IRQ0 and LOC values practically the same.
+Enjoy,
 
-Also I didn't see this bug on linux-rt-users@vger.kernel.org, maybe I should
-resend it?
+Sven
 
-Patch against 2.6.23-rc3.
-
-Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-
- arch/i386/kernel/hpet.c          |   15 +++++++++++++++
- arch/i386/kernel/machine_kexec.c |    5 +++++
- include/asm-i386/hpet.h          |    3 +++
- 3 files changed, 23 insertions(+)
-
-Index: linux-2.6.23-rc3-i386/arch/i386/kernel/hpet.c
-===================================================================
---- linux-2.6.23-rc3-i386.orig/arch/i386/kernel/hpet.c
-+++ linux-2.6.23-rc3-i386/arch/i386/kernel/hpet.c
-@@ -340,6 +340,21 @@ out_nohpet:
- 	return 0;
- }
- 
-+#ifdef CONFIG_KEXEC
-+/*
-+ * reenable HPET timer
-+ */
-+int hpet_reenable(void)
-+{
-+	if (!is_hpet_capable())
-+		return -1;
-+
-+	if (hpet_clockevent.mode != CLOCK_EVT_MODE_PERIODIC)
-+		hpet_set_mode(CLOCK_EVT_MODE_PERIODIC, &hpet_clockevent);
-+
-+	return 0;
-+}
-+#endif
- 
- #ifdef CONFIG_HPET_EMULATE_RTC
- 
-Index: linux-2.6.23-rc3-i386/arch/i386/kernel/machine_kexec.c
-===================================================================
---- linux-2.6.23-rc3-i386.orig/arch/i386/kernel/machine_kexec.c
-+++ linux-2.6.23-rc3-i386/arch/i386/kernel/machine_kexec.c
-@@ -19,6 +19,7 @@
- #include <asm/cpufeature.h>
- #include <asm/desc.h>
- #include <asm/system.h>
-+#include <asm/hpet.h>
- 
- #define PAGE_ALIGNED __attribute__ ((__aligned__(PAGE_SIZE)))
- static u32 kexec_pgd[1024] PAGE_ALIGNED;
-@@ -109,6 +110,10 @@ NORET_TYPE void machine_kexec(struct kim
- 	/* Interrupts aren't acceptable while we reboot */
- 	local_irq_disable();
- 
-+#ifdef CONFIG_HPET_TIMER
-+	hpet_reenable();
-+#endif
-+
- 	control_page = page_address(image->control_code_page);
- 	memcpy(control_page, relocate_kernel, PAGE_SIZE);
- 
-Index: linux-2.6.23-rc3-i386/include/asm-i386/hpet.h
-===================================================================
---- linux-2.6.23-rc3-i386.orig/include/asm-i386/hpet.h
-+++ linux-2.6.23-rc3-i386/include/asm-i386/hpet.h
-@@ -66,6 +66,9 @@
- extern unsigned long hpet_address;
- extern int is_hpet_enabled(void);
- extern int hpet_enable(void);
-+#ifdef CONFIG_KEXEC
-+extern int hpet_reenable(void);
-+#endif
- 
- #ifdef CONFIG_HPET_EMULATE_RTC
- 
+                                                                                
+=====================================                                           
+[ BUG: bad unlock balance detected! ]                                           
+-------------------------------------                                           
+swapper/1 is trying to release lock (per_cpu_lock__slab_irq_locks_locked) at:   
+[<ffffffff802b8d24>] kmem_cache_alloc+0xb4/0x150                                
+but there are no more locks to release!                                         
+                                                                                
+other info that might help us debug this:                                       
+1 lock held by swapper/1:                                                       
+ #0:  (per_cpu_lock__slab_irq_locks_locked#7){--..}, at: [<ffffffff802b7a24>] c0
+                                                                                
+stack backtrace:                                                                
+                                                                                
+Call Trace:                                                                     
+ [<ffffffff802620c7>] print_unlock_inbalance_bug+0xf7/0x100                     
+ [<ffffffff802653d1>] lock_release_non_nested+0x111/0x1a0                       
+ [<ffffffff802b8d24>] kmem_cache_alloc+0xb4/0x150                               
+ [<ffffffff80265532>] lock_release+0xd2/0x1f0                                   
+ [<ffffffff8048cc16>] rt_spin_unlock+0x26/0x40                                  
+ [<ffffffff802b8d24>] kmem_cache_alloc+0xb4/0x150                               
+ [<ffffffff8034adbc>] kobject_uevent_env+0x13c/0x520                            
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803d8f59>] get_bus+0x9/0x40                                          
+ [<ffffffff8034b1b0>] kobject_uevent+0x10/0x20                                  
+ [<ffffffff803d79f6>] device_add+0x516/0x680                                    
+ [<ffffffff803d7b7e>] device_register+0x1e/0x30                                 
+ [<ffffffff803d821c>] device_create+0xec/0x130                                  
+ [<ffffffff8034fc5d>] sprintf+0x6d/0x70                                         
+ [<ffffffff8027b45b>] add_preempt_count+0x2b/0x150                              
+ [<ffffffff80260df3>] put_lock_stats+0x13/0x40                                  
+ [<ffffffff80260e8b>] lock_release_holdtime+0x6b/0x90                           
+ [<ffffffff80263740>] mark_held_locks+0x10/0x90                                 
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff803af594>] tty_register_device+0x74/0x100                            
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803b0aec>] tty_register_driver+0x16c/0x2a0                           
+ [<ffffffff808981be>] pty_init+0x22e/0x570                                      
+ [<ffffffff80879b64>] kernel_init+0x194/0x490                                   
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff80263740>] mark_held_locks+0x10/0x90                                 
+ [<ffffffff8048c5e8>] trace_hardirqs_on_thunk+0x3a/0x3c                         
+ [<ffffffff80263957>] trace_hardirqs_on_caller+0xd7/0x170                       
+ [<ffffffff8020d2f8>] child_rip+0xa/0x12                                        
+ [<ffffffff8020c9e0>] restore_args+0x0/0x30                                     
+ [<ffffffff808799d0>] kernel_init+0x0/0x490                                     
+ [<ffffffff8020d2ee>] child_rip+0x0/0x12                                        
+                                                                                
+INFO: lockdep is turned off.                                                    
+---------------------------                                                     
+| preempt count: 00000000 ]                                                     
+| 0-level deep critical section nesting:                                        
+----------------------------------------                                        
+                                                                                
+------------[ cut here ]------------                                            
+kernel BUG at kernel/rtmutex.c:682!                                             
+invalid opcode: 0000 [1] PREEMPT SMP                                            
+CPU 6                                                                           
+Modules linked in:                                                              
+Pid: 1, comm: swapper Not tainted 2.6.23-rc2-rt1-debug #1                       
+RIP: 0010:[<ffffffff8048c0d4>]  [<ffffffff8048c0d4>] rt_spin_lock_slowlock+0x1b0
+RSP: 0018:ffff81041d837a10  EFLAGS: 00010046                                    
+RAX: ffff81031d836040 RBX: ffff81032c1542a0 RCX: 00000000ffffffff               
+RDX: ffff81031d836040 RSI: ffff81032c1542b8 RDI: ffff81032c1542a0               
+RBP: ffff81041d837ad0 R08: 0000000000000002 R09: 0000000000000001               
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000246               
+R13: 00000000000080d0 R14: ffff81011b9009c0 R15: ffffffff805606b4               
+FS:  0000000000000000(0000) GS:ffff81041d8ef3c0(0000) knlGS:0000000000000000    
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b                               
+CR2: 0000000000000000 CR3: 0000000000201000 CR4: 00000000000006e0               
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000               
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400               
+Process swapper (pid: 1, threadinfo ffff81041d836000, task ffff81031d836040)    
+Stack:  111111110000008c ffff81041d837a18 ffff81041d837a18 ffff81041d837a28     
+ ffff81041d837a28 0000000000000000 111111110000008c ffff81041d837a48            
+ ffff81041d837a48 ffff81041d837a58 ffff81041d837a58 0000000000000000            
+Call Trace:                                                                     
+ [<ffffffff8048cb1d>] __rt_spin_lock+0x3d/0x50                                  
+ [<ffffffff8048ccf8>] rt_spin_lock+0x58/0x70                                    
+ [<ffffffff802b81eb>] __kmalloc+0x9b/0x1c0                                      
+ [<ffffffff8034a62e>] kobject_get_path+0x7e/0xf0                                
+ [<ffffffff8034ade3>] kobject_uevent_env+0x163/0x520                            
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803d8f59>] get_bus+0x9/0x40                                          
+ [<ffffffff8034b1b0>] kobject_uevent+0x10/0x20                                  
+ [<ffffffff803d79f6>] device_add+0x516/0x680                                    
+ [<ffffffff803d7b7e>] device_register+0x1e/0x30                                 
+ [<ffffffff803d821c>] device_create+0xec/0x130                                  
+ [<ffffffff8034fc5d>] sprintf+0x6d/0x70                                         
+ [<ffffffff8027b45b>] add_preempt_count+0x2b/0x150                              
+ [<ffffffff80260df3>] put_lock_stats+0x13/0x40                                  
+ [<ffffffff80260e8b>] lock_release_holdtime+0x6b/0x90                           
+ [<ffffffff80263740>] mark_held_locks+0x10/0x90                                 
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff803af594>] tty_register_device+0x74/0x100                            
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803b0aec>] tty_register_driver+0x16c/0x2a0                           
+ [<ffffffff808981be>] pty_init+0x22e/0x570                                      
+ [<ffffffff80879b64>] kernel_init+0x194/0x490                                   
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff80263740>] mark_held_locks+0x10/0x90                                 
+ [<ffffffff8048c5e8>] trace_hardirqs_on_thunk+0x3a/0x3c                         
+ [<ffffffff80263957>] trace_hardirqs_on_caller+0xd7/0x170                       
+ [<ffffffff8020d2f8>] child_rip+0xa/0x12                                        
+ [<ffffffff8020c9e0>] restore_args+0x0/0x30                                     
+ [<ffffffff808799d0>] kernel_init+0x0/0x490                                     
+ [<ffffffff8020d2ee>] child_rip+0x0/0x12                                        
+                                                                                
+INFO: lockdep is turned off.                                                    
+---------------------------                                                     
+| preempt count: 00000001 ]                                                     
+| 1-level deep critical section nesting:                                        
+----------------------------------------                                        
+.. [<ffffffff8048db6f>] .... __spin_lock_irqsave+0x2f/0x90                      
+.....[<ffffffff8048bf58>] ..   ( <= rt_spin_lock_slowlock+0x38/0x220)           
+                                                                                
+                                                                                
+Code: 0f 0b eb fe 49 89 f4 45 31 ff 66 90 e9 1b ff ff ff 48 8d 53               
+RIP  [<ffffffff8048c0d4>] rt_spin_lock_slowlock+0x1b4/0x220                     
+ RSP <ffff81041d837a10>                                                         
+Kernel panic - not syncing: Attempted to kill init!                             
+                                                                                
+Call Trace:                                                                     
+ [<ffffffff8023f2f4>] panic+0xb4/0x190                                          
+ [<ffffffff80261ef7>] print_lock_contention_bug+0x27/0x100                      
+ [<ffffffff8024f1f1>] __blocking_notifier_call_chain+0x21/0x80                  
+ [<ffffffff8024f266>] blocking_notifier_call_chain+0x16/0x20                    
+ [<ffffffff80243d1c>] do_exit+0xa1c/0xa20                                       
+ [<ffffffff8048be14>] rt_spin_lock_slowunlock+0x54/0x90                         
+ [<ffffffff8023f029>] do_oops_enter_exit+0x9/0xe0                               
+ [<ffffffff8020de2a>] die+0x5a/0x80                                             
+ [<ffffffff8048f5f1>] do_trap+0x131/0x140                                       
+ [<ffffffff8020e3a5>] do_invalid_op+0x95/0xb0                                   
+ [<ffffffff8048c0d4>] rt_spin_lock_slowlock+0x1b4/0x220                         
+ [<ffffffff802640b6>] __lock_acquire+0x16/0x1150                                
+ [<ffffffff803514d9>] debug_locks_off+0x9/0x90                                  
+ [<ffffffff8048a236>] thread_return+0xac/0xb56                                  
+ [<ffffffff8048ec7d>] error_exit+0x0/0x96                                       
+ [<ffffffff8048c0d4>] rt_spin_lock_slowlock+0x1b4/0x220                         
+ [<ffffffff8048cb1d>] __rt_spin_lock+0x3d/0x50                                  
+ [<ffffffff8048ccf8>] rt_spin_lock+0x58/0x70                                    
+ [<ffffffff802b81eb>] __kmalloc+0x9b/0x1c0                                      
+ [<ffffffff8034a62e>] kobject_get_path+0x7e/0xf0                                
+ [<ffffffff8034ade3>] kobject_uevent_env+0x163/0x520                            
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803d8f59>] get_bus+0x9/0x40                                          
+ [<ffffffff8034b1b0>] kobject_uevent+0x10/0x20                                  
+ [<ffffffff803d79f6>] device_add+0x516/0x680                                    
+ [<ffffffff803d7b7e>] device_register+0x1e/0x30                                 
+ [<ffffffff803d821c>] device_create+0xec/0x130                                  
+ [<ffffffff8034fc5d>] sprintf+0x6d/0x70                                         
+ [<ffffffff8027b45b>] add_preempt_count+0x2b/0x150                              
+ [<ffffffff80260df3>] put_lock_stats+0x13/0x40                                  
+ [<ffffffff80260e8b>] lock_release_holdtime+0x6b/0x90                           
+ [<ffffffff80263740>] mark_held_locks+0x10/0x90                                 
+ [<ffffffff802639fd>] trace_hardirqs_on+0xd/0x10                                
+ [<ffffffff803af594>] tty_register_device+0x74/0x100                            
+ [<ffffffff8048bea4>] rt_mutex_slowunlock+0x54/0x90                             
+ [<ffffffff803b0aec>] tty_register_driver+0x16c/0x2a0                           
