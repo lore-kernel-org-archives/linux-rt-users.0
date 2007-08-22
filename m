@@ -1,234 +1,109 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH RFC] rcutorture for priority boosting for preemptible RCU
-Date: Wed, 22 Aug 2007 12:48:19 -0700
-Message-ID: <20070822194819.GA8399@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Josh Triplett <josht@linux.vnet.ibm.com>
+Subject: Re: [PATCH RFC] Priority boosting for preemptible RCU
+Date: Wed, 22 Aug 2007 13:23:55 -0700
+Message-ID: <1187814235.3223.43.camel@josh-work.beaverton.ibm.com>
+References: <20070822190254.GA1135@linux.vnet.ibm.com>
+	 <20070822124340.16a891f2.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu,
-	akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, ego@in.ibm.com
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: paulmck@linux.vnet.ibm.com, Andy Whitcroft <apw@shadowen.org>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, dipankar@in.ibm.com, tytso@us.ibm.com,
+	dvhltc@us.ibm.com, tglx@linutronix.de
+To: Andrew Morton <akpm@linux-foundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:35302 "EHLO e5.ny.us.ibm.com"
+Received: from e2.ny.us.ibm.com ([32.97.182.142]:36475 "EHLO e2.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932360AbXHVTsW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Aug 2007 15:48:22 -0400
-Content-Disposition: inline
+	id S1762043AbXHVUYa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 22 Aug 2007 16:24:30 -0400
+In-Reply-To: <20070822124340.16a891f2.akpm@linux-foundation.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch modifies rcutorture to also torture RCU priority boosting.
-Tested for some hours on x86_64 and POWER, so OK for experimentation,
-but not ready for inclusion.
+On Wed, 2007-08-22 at 12:43 -0700, Andrew Morton wrote:
+> On Wed, 22 Aug 2007 12:02:54 -0700
+> "Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
+> > This patch is a forward-port of RCU priority boosting (described in
+> > http://lwn.net/Articles/220677/).  It applies to 2.6.22 on top of
+> > the patches sent in the http://lkml.org/lkml/2007/8/7/276 series and
+> > the hotplug patch (http://lkml.org/lkml/2007/8/17/262).  Passes several
+> > hours of rcutorture on x86_64 and POWER, so OK for experimentation but
+> > not ready for inclusion.
+> 
+> It'd be nice to have a brief summary of why we might want this code in Linux.
 
-Patches yet to come include making the priority-boost task more
-power-consumption friendly and some cleanup patches.
+RCU reclamation callbacks have to wait for all current RCU readers to
+finish.  With preemptible RCU read-side critical sections, other tasks
+may block an RCU reader for an arbitrarily long time, and thus
+indirectly block the execution of memory reclamation callbacks
+(including anything using synchronize_rcu), leading to an OOM situation.
+This patch adds priority boosting of RCU readers to avoid this scenario.
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
----
+> > +#ifdef CONFIG_PREEMPT_RCU_BOOST
+> 
+> Do we really need this?  Why not just enable the feature all the time?
 
- rcutorture.c |   90 +++++++++++++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 76 insertions(+), 14 deletions(-)
+It involves both space and computation overhead, which you might want to
+avoid if you don't need it.  That said, it might make sense to turn it
+on by default.
 
-diff -urpNa -X dontdiff linux-2.6.22-f-boost/kernel/rcutorture.c linux-2.6.22-g-boosttorture/kernel/rcutorture.c
---- linux-2.6.22-f-boost/kernel/rcutorture.c	2007-07-08 16:32:17.000000000 -0700
-+++ linux-2.6.22-g-boosttorture/kernel/rcutorture.c	2007-08-21 10:58:18.000000000 -0700
-@@ -58,6 +58,7 @@ static int stat_interval;	/* Interval be
- static int verbose;		/* Print more debug info. */
- static int test_no_idle_hz;	/* Test RCU's support for tickless idle CPUs. */
- static int shuffle_interval = 5; /* Interval between shuffles (in sec)*/
-+static int preempt_torture = 0;	/* Realtime task preempts torture readers. */
- static char *torture_type = "rcu"; /* What RCU implementation to torture. */
- 
- module_param(nreaders, int, 0444);
-@@ -72,6 +73,8 @@ module_param(test_no_idle_hz, bool, 0444
- MODULE_PARM_DESC(test_no_idle_hz, "Test support for tickless idle CPUs");
- module_param(shuffle_interval, int, 0444);
- MODULE_PARM_DESC(shuffle_interval, "Number of seconds between shuffles");
-+module_param(preempt_torture, bool, 0444);
-+MODULE_PARM_DESC(preempt_torture, "Enable realtime preemption torture");
- module_param(torture_type, charp, 0444);
- MODULE_PARM_DESC(torture_type, "Type of RCU to torture (rcu, rcu_bh, srcu)");
- 
-@@ -194,6 +197,8 @@ struct rcu_torture_ops {
- 	int (*completed)(void);
- 	void (*deferredfree)(struct rcu_torture *p);
- 	void (*sync)(void);
-+	long (*preemptstart)(void);
-+	void (*preemptend)(void);
- 	int (*stats)(char *page);
- 	char *name;
- };
-@@ -258,16 +263,74 @@ static void rcu_torture_deferred_free(st
- 	call_rcu(&p->rtort_rcu, rcu_torture_cb);
- }
- 
-+static struct task_struct *rcu_preeempt_task;
-+static unsigned long rcu_torture_preempt_errors = 0;
-+
-+static int rcu_torture_preempt(void *arg)
-+{
-+	int completedstart;
-+	int err;
-+	time_t gcstart;
-+	struct sched_param sp;
-+
-+	sp.sched_priority = MAX_RT_PRIO - 1;
-+	err = sched_setscheduler(current, SCHED_RR, &sp);
-+	if (err != 0)
-+		printk(KERN_ALERT "rcu_torture_preempt() priority err: %d\n",
-+		       err);
-+	current->flags |= PF_NOFREEZE;
-+
-+	do {
-+		completedstart = rcu_torture_completed();
-+		gcstart = xtime.tv_sec;
-+		while ((xtime.tv_sec - gcstart < 10) &&
-+		       (rcu_torture_completed() == completedstart))
-+			cond_resched();
-+		if (rcu_torture_completed() == completedstart)
-+			rcu_torture_preempt_errors++;
-+		schedule_timeout_interruptible(HZ);
-+	} while (!kthread_should_stop());
-+	return 0;
-+}
-+
-+static long rcu_preempt_start(void)
-+{
-+	long retval = 0;
-+
-+	rcu_preeempt_task = kthread_run(rcu_torture_preempt, NULL,
-+					"rcu_torture_preempt");
-+	if (IS_ERR(rcu_preeempt_task)) {
-+		VERBOSE_PRINTK_ERRSTRING("Failed to create preempter");
-+		retval = PTR_ERR(rcu_preeempt_task);
-+		rcu_preeempt_task = NULL;
-+	}
-+	return retval;
-+}
-+
-+static void rcu_preempt_end(void)
-+{
-+	if (rcu_preeempt_task != NULL) {
-+		VERBOSE_PRINTK_STRING("Stopping rcu_preempt task");
-+		kthread_stop(rcu_preeempt_task);
-+	}
-+	rcu_preeempt_task = NULL;
-+}
-+
-+static int rcu_preempt_stats(char *page) {
-+	return sprintf(page,
-+		       "Preemption stalls: %lu\n", rcu_torture_preempt_errors);
-+}
-+
- static struct rcu_torture_ops rcu_ops = {
--	.init = NULL,
--	.cleanup = NULL,
- 	.readlock = rcu_torture_read_lock,
- 	.readdelay = rcu_read_delay,
- 	.readunlock = rcu_torture_read_unlock,
- 	.completed = rcu_torture_completed,
- 	.deferredfree = rcu_torture_deferred_free,
- 	.sync = synchronize_rcu,
--	.stats = NULL,
-+	.preemptstart = rcu_preempt_start,
-+	.preemptend = rcu_preempt_end,
-+	.stats = rcu_preempt_stats,
- 	.name = "rcu"
- };
- 
-@@ -299,14 +362,12 @@ static void rcu_sync_torture_init(void)
- 
- static struct rcu_torture_ops rcu_sync_ops = {
- 	.init = rcu_sync_torture_init,
--	.cleanup = NULL,
- 	.readlock = rcu_torture_read_lock,
- 	.readdelay = rcu_read_delay,
- 	.readunlock = rcu_torture_read_unlock,
- 	.completed = rcu_torture_completed,
- 	.deferredfree = rcu_sync_torture_deferred_free,
- 	.sync = synchronize_rcu,
--	.stats = NULL,
- 	.name = "rcu_sync"
- };
- 
-@@ -358,28 +419,23 @@ static void rcu_bh_torture_synchronize(v
- }
- 
- static struct rcu_torture_ops rcu_bh_ops = {
--	.init = NULL,
--	.cleanup = NULL,
- 	.readlock = rcu_bh_torture_read_lock,
- 	.readdelay = rcu_read_delay,  /* just reuse rcu's version. */
- 	.readunlock = rcu_bh_torture_read_unlock,
- 	.completed = rcu_bh_torture_completed,
- 	.deferredfree = rcu_bh_torture_deferred_free,
- 	.sync = rcu_bh_torture_synchronize,
--	.stats = NULL,
- 	.name = "rcu_bh"
- };
- 
- static struct rcu_torture_ops rcu_bh_sync_ops = {
- 	.init = rcu_sync_torture_init,
--	.cleanup = NULL,
- 	.readlock = rcu_bh_torture_read_lock,
- 	.readdelay = rcu_read_delay,  /* just reuse rcu's version. */
- 	.readunlock = rcu_bh_torture_read_unlock,
- 	.completed = rcu_bh_torture_completed,
- 	.deferredfree = rcu_sync_torture_deferred_free,
- 	.sync = rcu_bh_torture_synchronize,
--	.stats = NULL,
- 	.name = "rcu_bh_sync"
- };
- 
-@@ -491,14 +547,12 @@ static void sched_torture_synchronize(vo
- 
- static struct rcu_torture_ops sched_ops = {
- 	.init = rcu_sync_torture_init,
--	.cleanup = NULL,
- 	.readlock = sched_torture_read_lock,
- 	.readdelay = rcu_read_delay,  /* just reuse rcu's version. */
- 	.readunlock = sched_torture_read_unlock,
- 	.completed = sched_torture_completed,
- 	.deferredfree = rcu_sync_torture_deferred_free,
- 	.sync = sched_torture_synchronize,
--	.stats = NULL,
- 	.name = "sched"
- };
- 
-@@ -793,9 +847,10 @@ rcu_torture_print_module_parms(char *tag
- 	printk(KERN_ALERT "%s" TORTURE_FLAG
- 		"--- %s: nreaders=%d nfakewriters=%d "
- 		"stat_interval=%d verbose=%d test_no_idle_hz=%d "
--		"shuffle_interval = %d\n",
-+		"shuffle_interval=%d preempt_torture=%d\n",
- 		torture_type, tag, nrealreaders, nfakewriters,
--		stat_interval, verbose, test_no_idle_hz, shuffle_interval);
-+		stat_interval, verbose, test_no_idle_hz, shuffle_interval,
-+		preempt_torture);
- }
- 
- static void
-@@ -848,6 +903,8 @@ rcu_torture_cleanup(void)
- 		kthread_stop(stats_task);
- 	}
- 	stats_task = NULL;
-+	if (preempt_torture && (cur_ops->preemptend != NULL))
-+		cur_ops->preemptend();
- 
- 	/* Wait for all RCU callbacks to fire.  */
- 	rcu_barrier();
-@@ -990,6 +1047,11 @@ rcu_torture_init(void)
- 			goto unwind;
- 		}
- 	}
-+	if (preempt_torture && (cur_ops->preemptstart != NULL)) {
-+		firsterr = cur_ops->preemptstart();
-+		if (firsterr != 0)
-+			goto unwind;
-+	}
- 	return 0;
- 
- unwind:
+> > +config PREEMPT_RCU_BOOST_STATS_INTERVAL
+> 
+> Four new config options?  Sob.  Zero would be preferable.
+
+I only saw three new options.
+
+At a minimum, having the debug toggle as a config option would make
+debugging this significantly simpler.
+
+> > +	struct list_head rbs_toboost;
+> > +	struct list_head rbs_boosted;
+> > +	unsigned long rbs_blocked;
+> > +	unsigned long rbs_boost_attempt;
+> > +	unsigned long rbs_boost;
+> > +	unsigned long rbs_unlock;
+> > +	unsigned long rbs_unboosted;
+> > +#ifdef CONFIG_PREEMPT_RCU_BOOST_STATS
+> > +	unsigned long rbs_stats[N_RCU_BOOST_DAT_EVENTS][N_RCU_BOOST_STATE];
+> > +#endif /* #ifdef CONFIG_PREEMPT_RCU_BOOST_STATS */
+> > +};
+> > +#define RCU_BOOST_ELEMENTS 4
+> > +
+> > +int rcu_boost_idx = -1; /* invalid value in case someone uses RCU early. */
+> > +DEFINE_PER_CPU(struct rcu_boost_dat, rcu_boost_dat[RCU_BOOST_ELEMENTS]);
+> 
+> Do these need global scope?
+
+No, neither one does.  They should both become static.
+
+> > +void init_rcu_boost_late(void)
+> > +{
+> > +
+> > +	/* Spawn RCU-boost task. */
+> > +
+> > +	printk(KERN_INFO "Starting RCU priority booster\n");
+> > +	rcu_boost_task = kthread_run(rcu_booster, NULL, "RCU Prio Booster");
+> > +	if (IS_ERR(rcu_boost_task)) {
+> > +		printk(KERN_ALERT
+> > +		       "Unable to create RCU Priority Booster, errno %ld\n",
+> > +		       -PTR_ERR(rcu_boost_task));
+> > +
+> > +		/*
+> > +		 * Continue running, but tasks permanently blocked
+> > +		 * in RCU read-side critical sections will be able
+> > +		 * to stall grace-period processing, potentially
+> > +		 * OOMing the machine.
+> > +		 */
+> 
+> I don't think we want to try to struggle along like that.  This thread is a
+> piece of core infrastructure: if we couldn't start it then just panic
+> rather than trying to run the kernel in unknown and untested regions of
+> operation.
+
+In this situation, the kernel would behave precisely as it would with
+CONFIG_RCU_BOOST=n.  However, I agree that with CONFIG_RCU_BOOST=y you
+would expect to always have priority boosting available, so I think
+panic() makes sense here.
+
+- Josh Triplett
