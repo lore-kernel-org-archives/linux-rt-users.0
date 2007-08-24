@@ -1,42 +1,77 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH RT] - trivial branch in scheduler.
-Date: Fri, 24 Aug 2007 10:32:22 +0200
-Message-ID: <20070824083222.GA22260@elte.hu>
-References: <1187943548.16573.10.camel@sx.thebigcorporation.com>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: [PATCH RT] - rebalance_domains incorrect parameter
+Date: Fri, 24 Aug 2007 02:09:22 -0700
+Message-ID: <1187946562.16573.47.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: RT Users List <linux-rt-users@vger.kernel.org>,
-	LKML <Linux-kernel@vger.kernel.org>,
-	Peter Williams <pwil3058@bigpond.net.au>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+	LKML <Linux-kernel@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:56748 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1764251AbXHXIcd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 04:32:33 -0400
-Content-Disposition: inline
-In-Reply-To: <1187943548.16573.10.camel@sx.thebigcorporation.com>
+Received: from rwcrmhc12.comcast.net ([204.127.192.82]:52186 "EHLO
+	rwcrmhc12.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751252AbXHXJO1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Aug 2007 05:14:27 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
+Hi Ingo,
 
-> 
-> Hi Ingo,
-> 
-> the trivial code is in various RT patches as well as in 2.6.23-rc git's
-> scheduler.
-> 
-> Thanks
-> 
-> Sven
-> 
-> Remove trivial conditional branch in Linux RT CFS 
-> scheduler's can_migrate_task function.
-> 
-> signed-off-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+the RT patches for .22 and .23 are passing an incorrect parameter to
+rebalance_domains.
 
-thanks, applied.
+I had this queued up for a few days - its still wrong in .22 and .23 RT
+patches.
 
-	Ingo
+Same issue has been fixed in mainline by: 
+
+diff-tree de0cf899bbf06b6f64a5dce9c59d74c41b6b4232 (from
+5d2b3d3695a841231b65b55
+Author: Oleg Nesterov <oleg@tv-sign.ru>
+Date:   Sun Aug 12 18:08:19 2007 +0200
+
+    sched: run_rebalance_domains: s/SCHED_IDLE/CPU_IDLE/
+    
+    rebalance_domains(SCHED_IDLE) looks strange (typo), change it to
+CPU_IDLE.
+    
+    the effect of this bug was slightly more agressive idle-balancing on
+    SMP than intended.
+    
+    Signed-off-by: Oleg Nesterov <oleg@tv-sign.ru>
+    Signed-off-by: Ingo Molnar <mingo@elte.hu>
+
+
+Thanks,
+
+Sven
+
+
+
+This parameter was missed when SCHED_IDLE was replaced by CPU_IDLE.
+
+Fixed in mainline by:
+commit de0cf899bbf06b6f64a5dce9c59d74c41b6b4232
+Author: Oleg Nesterov <oleg@tv-sign.ru>
+Date:   Sun Aug 12 18:08:19 2007 +0200
+
+
+signed-off-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+
+
+Index: linux-2.6.22.1-rt9-broken-out/kernel/sched.c
+===================================================================
+--- linux-2.6.22.1-rt9-broken-out.orig/kernel/sched.c
++++ linux-2.6.22.1-rt9-broken-out/kernel/sched.c
+@@ -3479,7 +3479,7 @@ static void run_rebalance_domains(struct
+ 			if (need_resched())
+ 				break;
+ 
+-			rebalance_domains(balance_cpu, SCHED_IDLE);
++			rebalance_domains(balance_cpu, CPU_IDLE);
+ 
+ 			rq = cpu_rq(balance_cpu);
+ 			if (time_after(this_rq->next_balance, rq->next_balance))
