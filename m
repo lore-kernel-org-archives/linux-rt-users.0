@@ -1,43 +1,46 @@
-From: Andy Whitcroft <apw@shadowen.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [PATCH RFC] Priority boosting for preemptible RCU
-Date: Fri, 24 Aug 2007 11:09:05 +0100
-Message-ID: <46CEAE41.7060001@shadowen.org>
-References: <20070822190254.GA1135@linux.vnet.ibm.com> <20070822124340.16a891f2.akpm@linux-foundation.org>
+Date: Fri, 24 Aug 2007 10:27:59 -0700
+Message-ID: <20070824172759.GC8589@linux.vnet.ibm.com>
+References: <20070822190254.GA1135@linux.vnet.ibm.com> <20070823042639.GA28026@in.ibm.com> <20070823085456.GA18627@linux.vnet.ibm.com> <20070823101444.GB11258@in.ibm.com> <20070823131501.GC18627@linux.vnet.ibm.com> <20070823142211.GC11258@in.ibm.com> <20070823155526.GB8371@linux.vnet.ibm.com> <20070824082121.GA16301@in.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, mingo@elte.hu, dipankar@in.ibm.com,
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
 	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
 	tglx@linutronix.de
-To: Andrew Morton <akpm@linux-foundation.org>
+To: Gautham R Shenoy <ego@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hellhawk.shadowen.org ([80.68.90.175]:2430 "EHLO
-	hellhawk.shadowen.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765821AbXHXKJt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 06:09:49 -0400
-In-Reply-To: <20070822124340.16a891f2.akpm@linux-foundation.org>
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:45800 "EHLO e1.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758273AbXHXR2E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Aug 2007 13:28:04 -0400
+Content-Disposition: inline
+In-Reply-To: <20070824082121.GA16301@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Andrew Morton wrote:
-
->> +	for_each_possible_cpu(cpu) {
->> +		rbdp = per_cpu(rcu_boost_dat, cpu);
->> +		for (i = 0; i < RCU_BOOST_ELEMENTS; i++) {
->> +			rbdp[i].rbs_mutex = SPIN_LOCK_UNLOCKED;
+On Fri, Aug 24, 2007 at 01:51:21PM +0530, Gautham R Shenoy wrote:
+> On Thu, Aug 23, 2007 at 08:55:26AM -0700, Paul E. McKenney wrote:
+> > > Even if we use another cpumask_t, whenever a cpu goes down or comes up,
+> > > that will be reflected in this map, no? So what's the additional
+> > > advantage of using it?
+> > 
+> > The additional map allows the code to use something other than the
+> > lock_cpu_hotplug/unlock_cpu_hotplug, and also is robust against any
+> > changes to the hotplug synchronization mechanism.  Might well be
+> > better just to use the current hotplug synchronization mechanism,
+> > but I was feeling paranoid.  ;-)
 > 
-> Doesn't this confound lockdep?   We're supposed to use spin_lock_init().
+> If it was doing something more complicated in the critical section other
+> than summing stuff up, I would probably recommend going for another map
+> instead of using the current hotplug synchronization. But for this case
+> the current hotplug synchronization would work just fine.
 > 
-> Andy, can we have a checkpatch rule for SPIN_LOCK_UNLOCKED please?  It's
-> basically always wrong.
+> I can very well understand your paranoia, but let me assure you, you are
+> not the only one ;-)
 
-ERROR: Use of SPIN_LOCK_UNLOCKED is deprecated: see
-Documentation/spinlocks.txt
-#58: FILE: Z17.c:55:
-+       rbdp[i].rbs_mutex = SPIN_LOCK_UNLOCKED;
+OK, will try to keep an open mind...  ;-)
 
-Also picks up the RW_LOCK_UNLOCKED version too.
-
--apw
+							Thanx, Paul
