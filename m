@@ -1,46 +1,52 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH RFC] Priority boosting for preemptible RCU
-Date: Fri, 24 Aug 2007 10:27:59 -0700
-Message-ID: <20070824172759.GC8589@linux.vnet.ibm.com>
-References: <20070822190254.GA1135@linux.vnet.ibm.com> <20070823042639.GA28026@in.ibm.com> <20070823085456.GA18627@linux.vnet.ibm.com> <20070823101444.GB11258@in.ibm.com> <20070823131501.GC18627@linux.vnet.ibm.com> <20070823142211.GC11258@in.ibm.com> <20070823155526.GB8371@linux.vnet.ibm.com> <20070824082121.GA16301@in.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/3] initialize the clock source to jiffies clock.
+Date: Fri, 24 Aug 2007 13:57:14 -0400
+Message-ID: <1187978234.2941.18.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de
-To: Gautham R Shenoy <ego@in.ibm.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	john stultz <johnstul@us.ibm.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e1.ny.us.ibm.com ([32.97.182.141]:45800 "EHLO e1.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758273AbXHXR2E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 13:28:04 -0400
-Content-Disposition: inline
-In-Reply-To: <20070824082121.GA16301@in.ibm.com>
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:40924 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1765698AbXHXR6U (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Aug 2007 13:58:20 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Aug 24, 2007 at 01:51:21PM +0530, Gautham R Shenoy wrote:
-> On Thu, Aug 23, 2007 at 08:55:26AM -0700, Paul E. McKenney wrote:
-> > > Even if we use another cpumask_t, whenever a cpu goes down or comes up,
-> > > that will be reflected in this map, no? So what's the additional
-> > > advantage of using it?
-> > 
-> > The additional map allows the code to use something other than the
-> > lock_cpu_hotplug/unlock_cpu_hotplug, and also is robust against any
-> > changes to the hotplug synchronization mechanism.  Might well be
-> > better just to use the current hotplug synchronization mechanism,
-> > but I was feeling paranoid.  ;-)
-> 
-> If it was doing something more complicated in the critical section other
-> than summing stuff up, I would probably recommend going for another map
-> instead of using the current hotplug synchronization. But for this case
-> the current hotplug synchronization would work just fine.
-> 
-> I can very well understand your paranoia, but let me assure you, you are
-> not the only one ;-)
+The latency tracer can call clocksource_read very early in bootup and
+before the clock source variable has been initialized. This results in a
+crash at boot up (even before earlyprintk is initialized). Since the
+clock->read variable is points to NULL.
 
-OK, will try to keep an open mind...  ;-)
+This patch simply initializes the clock to use clocksource_jiffies, so
+that any early user of clocksource_read will not crash.
 
-							Thanx, Paul
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6-rt/kernel/time/timekeeping.c
+===================================================================
+--- linux-2.6-rt.orig/kernel/time/timekeeping.c	2007-08-24 11:38:11.000000000 -0400
++++ linux-2.6-rt/kernel/time/timekeeping.c	2007-08-24 13:41:03.000000000 -0400
+@@ -43,7 +43,15 @@ struct timespec wall_to_monotonic __attr
+ EXPORT_SYMBOL(xtime);
+ 
+ 
+-static struct clocksource *clock; /* pointer to current clocksource */
++extern struct clocksource clocksource_jiffies;
++
++/*
++ * pointer to current clocksource
++ *  Just in case we use clocksource_read before we initialize
++ *  the actual clock source. Instead of calling a NULL read pointer
++ *  we return jiffies.
++ */
++static struct clocksource *clock = &clocksource_jiffies;
+ 
+ 
+ #ifdef CONFIG_GENERIC_TIME
