@@ -1,71 +1,43 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: [PATCH RT] - Mellanox IB driver patch
-Date: Fri, 24 Aug 2007 02:25:26 -0700
-Message-ID: <1187947526.16573.56.camel@sx.thebigcorporation.com>
+From: Andy Whitcroft <apw@shadowen.org>
+Subject: Re: [PATCH RFC] Priority boosting for preemptible RCU
+Date: Fri, 24 Aug 2007 11:09:05 +0100
+Message-ID: <46CEAE41.7060001@shadowen.org>
+References: <20070822190254.GA1135@linux.vnet.ibm.com> <20070822124340.16a891f2.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: "Michael S. Tsirkin" <mst@dev.mellanox.co.il>,
-	LKML <Linux-kernel@vger.kernel.org>,
-	RT Users List <linux-rt-users@vger.kernel.org>,
-	Linux Solutions Group List <lsg@lists.novell.com>
-To: Ingo Molnar <mingo@elte.hu>
+Cc: paulmck@linux.vnet.ibm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, mingo@elte.hu, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de
+To: Andrew Morton <akpm@linux-foundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:55526 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755219AbXHXJZd (ORCPT
+Received: from hellhawk.shadowen.org ([80.68.90.175]:2430 "EHLO
+	hellhawk.shadowen.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1765821AbXHXKJt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 05:25:33 -0400
+	Fri, 24 Aug 2007 06:09:49 -0400
+In-Reply-To: <20070822124340.16a891f2.akpm@linux-foundation.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Andrew Morton wrote:
 
-Hi Ingo,
+>> +	for_each_possible_cpu(cpu) {
+>> +		rbdp = per_cpu(rcu_boost_dat, cpu);
+>> +		for (i = 0; i < RCU_BOOST_ELEMENTS; i++) {
+>> +			rbdp[i].rbs_mutex = SPIN_LOCK_UNLOCKED;
+> 
+> Doesn't this confound lockdep?   We're supposed to use spin_lock_init().
+> 
+> Andy, can we have a checkpatch rule for SPIN_LOCK_UNLOCKED please?  It's
+> basically always wrong.
 
-RT driver patch to eliminate in_atomic stack dump.
+ERROR: Use of SPIN_LOCK_UNLOCKED is deprecated: see
+Documentation/spinlocks.txt
+#58: FILE: Z17.c:55:
++       rbdp[i].rbs_mutex = SPIN_LOCK_UNLOCKED;
 
-The problem code was identified by Michael S. Tsirkin, and he suggested
-the fix.
+Also picks up the RW_LOCK_UNLOCKED version too.
 
-I adapted to use RT's _nort primitives- should work correctly in all
-configs.
-
-Thanks,
-
-Sven
-
-
-Fixes in_atomic stack-dump, when Mellanox module 
-is loaded into the RT Kernel.
-
-From: Michael S. Tsirkin <mst@dev.mellanox.co.il> 
-
-"Basically, if you just make spin_lock_irqsave (and spin_lock_irq) not disable
-interrupts for non-raw spinlocks, I think all of infiniband will be fine without
-changes."
-
-signed-off-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-
-
-Index: linux-2.6.21/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
-===================================================================
---- linux-2.6.21.orig/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
-+++ linux-2.6.21/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
-@@ -788,7 +788,7 @@ void ipoib_mcast_restart_task(struct wor
- 
- 	ipoib_mcast_stop_thread(dev, 0);
- 
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	netif_tx_lock(dev);
- 	spin_lock(&priv->lock);
- 
-@@ -863,7 +863,7 @@ void ipoib_mcast_restart_task(struct wor
- 
- 	spin_unlock(&priv->lock);
- 	netif_tx_unlock(dev);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
- 
- 	/* We have to cancel outside of the spinlock */
- 	list_for_each_entry_safe(mcast, tmcast, &remove_list, list) {
+-apw
