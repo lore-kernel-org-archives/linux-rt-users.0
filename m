@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3] initialize the clock source to jiffies clock.
-Date: Fri, 24 Aug 2007 13:57:14 -0400
-Message-ID: <1187978234.2941.18.camel@localhost.localdomain>
+Subject: [PATCH RT 1/3]  time keeping add cycle_raw for actual
+	incrementation
+Date: Fri, 24 Aug 2007 13:57:09 -0400
+Message-ID: <1187978229.2941.17.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -10,43 +11,58 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	john stultz <johnstul@us.ibm.com>
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:40924 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765698AbXHXR6U (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 13:58:20 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1765702AbXHXR6U@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The latency tracer can call clocksource_read very early in bootup and
-before the clock source variable has been initialized. This results in a
-crash at boot up (even before earlyprintk is initialized). Since the
-clock->read variable is points to NULL.
+The get_monotonic_cycles needs to produce a monotonic counter as output.
+Currently it uses cycles_last as the base to add the delta too.
+cycles_last only is the counter that was last measured and is cyclic in
+nature (not monotonic).
 
-This patch simply initializes the clock to use clocksource_jiffies, so
-that any early user of clocksource_read will not crash.
+This patch adds a cycle_raw to produce an accumulative counter.
+Unfortunately there is already an cycle_accumulate variable, but that is
+used to avoid clock source overflow and can also be decremented
+(probably that name should be changed and we should use that for this
+patch).
 
+
+From: John Stultz <johnstul@us.ibm.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
+
+
+Index: linux-2.6-rt/include/linux/clocksource.h
+===================================================================
+--- linux-2.6-rt.orig/include/linux/clocksource.h	2007-08-24 11:35:27.000000000 -0400
++++ linux-2.6-rt/include/linux/clocksource.h	2007-08-24 11:35:36.000000000 -0400
+@@ -77,7 +77,7 @@ struct clocksource {
+ 	void (*resume)(void);
+ 
+ 	/* timekeeping specific data, ignore */
+-	cycle_t cycle_accumulated, cycle_interval;
++	cycle_t cycle_accumulated, cycle_interval, cycle_raw;
+ 	u64	xtime_interval;
+ 	/*
+ 	 * Second part is written at each timer interrupt
+@@ -198,6 +198,7 @@ static inline void clocksource_accumulat
+ 	cycle_t offset = (now - cs->cycle_last) & cs->mask;
+ 	cs->cycle_last = now;
+ 	cs->cycle_accumulated += offset;
++	cs->cycle_raw += offset;
+ }
+ 
+ /**
 Index: linux-2.6-rt/kernel/time/timekeeping.c
 ===================================================================
---- linux-2.6-rt.orig/kernel/time/timekeeping.c	2007-08-24 11:38:11.000000000 -0400
-+++ linux-2.6-rt/kernel/time/timekeeping.c	2007-08-24 13:41:03.000000000 -0400
-@@ -43,7 +43,15 @@ struct timespec wall_to_monotonic __attr
- EXPORT_SYMBOL(xtime);
+--- linux-2.6-rt.orig/kernel/time/timekeeping.c	2007-08-24 11:35:27.000000000 -0400
++++ linux-2.6-rt/kernel/time/timekeeping.c	2007-08-24 11:35:47.000000000 -0400
+@@ -75,7 +75,7 @@ cycle_t notrace get_monotonic_cycles(voi
+ 	/* calculate the delta since the last update_wall_time: */
+ 	cycle_delta = (cycle_now - clock->cycle_last) & clock->mask;
  
+-	return clock->cycle_last + cycle_delta;
++	return clock->cycle_raw + cycle_delta;
+ }
  
--static struct clocksource *clock; /* pointer to current clocksource */
-+extern struct clocksource clocksource_jiffies;
-+
-+/*
-+ * pointer to current clocksource
-+ *  Just in case we use clocksource_read before we initialize
-+ *  the actual clock source. Instead of calling a NULL read pointer
-+ *  we return jiffies.
-+ */
-+static struct clocksource *clock = &clocksource_jiffies;
- 
- 
- #ifdef CONFIG_GENERIC_TIME
+ unsigned long notrace cycles_to_usecs(cycle_t cycles)
