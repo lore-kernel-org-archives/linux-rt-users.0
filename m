@@ -1,39 +1,71 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH RT] - rebalance_domains incorrect parameter
-Date: Fri, 24 Aug 2007 11:15:33 +0200
-Message-ID: <20070824091533.GA31142@elte.hu>
-References: <1187946562.16573.47.camel@sx.thebigcorporation.com>
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Subject: [PATCH RT] - Mellanox IB driver patch
+Date: Fri, 24 Aug 2007 02:25:26 -0700
+Message-ID: <1187947526.16573.56.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: RT Users List <linux-rt-users@vger.kernel.org>,
-	LKML <Linux-kernel@vger.kernel.org>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: "Michael S. Tsirkin" <mst@dev.mellanox.co.il>,
+	LKML <Linux-kernel@vger.kernel.org>,
+	RT Users List <linux-rt-users@vger.kernel.org>,
+	Linux Solutions Group List <lsg@lists.novell.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:48048 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755415AbXHXJPf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2007 05:15:35 -0400
-Content-Disposition: inline
-In-Reply-To: <1187946562.16573.47.camel@sx.thebigcorporation.com>
+Received: from victor.provo.novell.com ([137.65.250.26]:55526 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755219AbXHXJZd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Aug 2007 05:25:33 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-* Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
+Hi Ingo,
 
-> Same issue has been fixed in mainline by: 
-> 
-> diff-tree de0cf899bbf06b6f64a5dce9c59d74c41b6b4232 (from
-> 5d2b3d3695a841231b65b55
-> Author: Oleg Nesterov <oleg@tv-sign.ru>
-> Date:   Sun Aug 12 18:08:19 2007 +0200
+RT driver patch to eliminate in_atomic stack dump.
 
-> signed-off-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+The problem code was identified by Michael S. Tsirkin, and he suggested
+the fix.
 
-ah, you mean we should pick up an upstream fix for -rt? We'll do that 
-and we'll pick up much more: all the other ~100 CFS commits that 
-happened meanwhile. (Btw., there's no need to sign off on patch 
-forwarding or backport requests - the signoff made me first believe this 
-is some new patch.)
+I adapted to use RT's _nort primitives- should work correctly in all
+configs.
 
-	Ingo
+Thanks,
+
+Sven
+
+
+Fixes in_atomic stack-dump, when Mellanox module 
+is loaded into the RT Kernel.
+
+From: Michael S. Tsirkin <mst@dev.mellanox.co.il> 
+
+"Basically, if you just make spin_lock_irqsave (and spin_lock_irq) not disable
+interrupts for non-raw spinlocks, I think all of infiniband will be fine without
+changes."
+
+signed-off-by: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+
+
+Index: linux-2.6.21/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
+===================================================================
+--- linux-2.6.21.orig/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
++++ linux-2.6.21/drivers/infiniband/ulp/ipoib/ipoib_multicast.c
+@@ -788,7 +788,7 @@ void ipoib_mcast_restart_task(struct wor
+ 
+ 	ipoib_mcast_stop_thread(dev, 0);
+ 
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	netif_tx_lock(dev);
+ 	spin_lock(&priv->lock);
+ 
+@@ -863,7 +863,7 @@ void ipoib_mcast_restart_task(struct wor
+ 
+ 	spin_unlock(&priv->lock);
+ 	netif_tx_unlock(dev);
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
+ 
+ 	/* We have to cancel outside of the spinlock */
+ 	list_for_each_entry_safe(mcast, tmcast, &remove_list, list) {
