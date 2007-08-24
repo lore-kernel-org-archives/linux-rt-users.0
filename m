@@ -1,114 +1,54 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: [PATCH] Fixes spurious system load spikes in /proc/loadavgrt
-Date: Thu, 23 Aug 2007 13:13:04 -0300
-Message-ID: <20070823161304.GA27162@unix.sh>
-References: <20070817003751.GN3954@unix.sh> <1187883233.1453.60.camel@sx.thebigcorporation.com> <20070823155105.GA29405@elte.hu> <1187884653.1453.67.camel@sx.thebigcorporation.com>
+From: Gautham R Shenoy <ego@in.ibm.com>
+Subject: Re: [PATCH RFC] Priority boosting for preemptible RCU
+Date: Fri, 24 Aug 2007 13:51:21 +0530
+Message-ID: <20070824082121.GA16301@in.ibm.com>
+References: <20070822190254.GA1135@linux.vnet.ibm.com> <20070823042639.GA28026@in.ibm.com> <20070823085456.GA18627@linux.vnet.ibm.com> <20070823101444.GB11258@in.ibm.com> <20070823131501.GC18627@linux.vnet.ibm.com> <20070823142211.GC11258@in.ibm.com> <20070823155526.GB8371@linux.vnet.ibm.com>
+Reply-To: ego@in.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from itaqui.hst.terra.com.br ([200.176.10.211]:41134 "EHLO
-	itaqui.hst.terra.com.br" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756628AbXHWQWg (ORCPT
+Received: from e36.co.us.ibm.com ([32.97.110.154]:42065 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750815AbXHXIVp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Aug 2007 12:22:36 -0400
-Received: from sr01-01.mta.terra.com.br (sr01-01.mta.terra.com.br [200.154.152.20])
-	by itaqui.hst.terra.com.br (Postfix) with ESMTP id 68376FC08C
-	for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2007 13:19:48 -0300 (BRT)
+	Fri, 24 Aug 2007 04:21:45 -0400
 Content-Disposition: inline
-In-Reply-To: <1187884653.1453.67.camel@sx.thebigcorporation.com>
+In-Reply-To: <20070823155526.GB8371@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Aug 23, 2007 at 08:57:32AM -0700, Sven-Thorsten Dietrich wrote:
-| On Thu, 2007-08-23 at 17:51 +0200, Ingo Molnar wrote:
-| > * Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
-| > 
-| > > On Thu, 2007-08-16 at 21:37 -0300, Luis Claudio R. Goncalves wrote:
-| > > > Hello,
-| > > > 
-| > > > The values in /proc/loadavgrt are sometimes the real load and sometimes
-| > > > garbage. As you can see in th tests below, it occurs from in 2.6.21.5-rt20 
-| > > > to 2.6.23-rc2-rt2. The code for calc_load(), in kernel/timer.c has not
-| > > > changed much in -rt patches.
-...
-| > > >  		active_tasks = count_active_tasks();
-| > > > +		active_rt_tasks = count_active_rt_tasks();
-| > > 
-| > > Where is this used?
-| > 
-| > what is "this"? /proc/loadavg? Or the code/patch you quoted?
-| 
-| active_rt_tasks
+On Thu, Aug 23, 2007 at 08:55:26AM -0700, Paul E. McKenney wrote:
+> > Even if we use another cpumask_t, whenever a cpu goes down or comes up,
+> > that will be reflected in this map, no? So what's the additional
+> > advantage of using it?
+> 
+> The additional map allows the code to use something other than the
+> lock_cpu_hotplug/unlock_cpu_hotplug, and also is robust against any
+> changes to the hotplug synchronization mechanism.  Might well be
+> better just to use the current hotplug synchronization mechanism,
+> but I was feeling paranoid.  ;-)
 
-Good point! I misspelled it in my first patch. 
-This one should be better!
+If it was doing something more complicated in the critical section other
+than summing stuff up, I would probably recommend going for another map
+instead of using the current hotplug synchronization. But for this case
+the current hotplug synchronization would work just fine.
 
----------->
+I can very well understand your paranoia, but let me assure you, you are
+not the only one ;-)
 
-Fixes spurious system load spikes observed in /proc/loadavgrt, as described in:
+Regards
+gautham.
+> 
+> 						Thanx, Paul
 
-  Bug 253103: /proc/loadavgrt issues weird results
-  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=253103
-
-Signed-off-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
----
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 811a502..c61609a 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -2520,6 +2520,13 @@ unsigned long rt_nr_uninterruptible(void)
- 	for_each_online_cpu(i)
- 		sum += cpu_rq(i)->rt_nr_uninterruptible;
- 
-+	/*
-+	 * Since we read the counters lockless, it might be slightly
-+	 * inaccurate. Do not allow it to go below zero though:
-+	 */
-+	if (unlikely((long)sum < 0))
-+		sum = 0;
-+
- 	return sum;
- }
- 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 882ca9d..0e49bf6 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1432,23 +1432,25 @@ unsigned long avenrun_rt[3];
- static inline void calc_load(unsigned long ticks)
- {
- 	unsigned long active_tasks; /* fixed-point */
-+	unsigned long active_rt_tasks; /* fixed-point */
- 	static int count = LOAD_FREQ;
- 
- 	count -= ticks;
- 	if (unlikely(count < 0)) {
- 		active_tasks = count_active_tasks();
-+		active_rt_tasks = count_active_rt_tasks();
- 		do {
- 			CALC_LOAD(avenrun[0], EXP_1, active_tasks);
- 			CALC_LOAD(avenrun[1], EXP_5, active_tasks);
- 			CALC_LOAD(avenrun[2], EXP_15, active_tasks);
--			count += LOAD_FREQ;
--		} while (count < 0);
- #ifdef CONFIG_PREEMPT_RT
--		active_tasks = count_active_rt_tasks();
--		CALC_LOAD(avenrun_rt[0], EXP_1, active_tasks);
--		CALC_LOAD(avenrun_rt[1], EXP_5, active_tasks);
--		CALC_LOAD(avenrun_rt[2], EXP_15, active_tasks);
-+			CALC_LOAD(avenrun_rt[0], EXP_1, active_rt_tasks);
-+			CALC_LOAD(avenrun_rt[1], EXP_5, active_rt_tasks);
-+			CALC_LOAD(avenrun_rt[2], EXP_15, active_rt_tasks);
- #endif
-+			count += LOAD_FREQ;
-+
-+		} while (count < 0);
- 	}
- }
- 
--
 -- 
+Gautham R Shenoy
+Linux Technology Center
+IBM India.
+"Freedom comes with a price tag of responsibility, which is still a bargain,
+because Freedom is priceless!"
