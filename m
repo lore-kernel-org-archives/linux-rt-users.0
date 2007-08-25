@@ -1,40 +1,48 @@
-From: fche@redhat.com (Frank Ch. Eigler)
-Subject: Re: [PATCH RT 3/3 - take two ] fix get_monotonic_cycles for latency tracer
-Date: Sat, 25 Aug 2007 07:06:54 -0400
-Message-ID: <y0modgv50vl.fsf@ton.toronto.redhat.com>
-References: <1187978236.2941.19.camel@localhost.localdomain>
-	<1187982149.4574.1.camel@localhost.localdomain>
+From: Calin Culianu <cculianu@yahoo.com>
+Subject: How to talk to DAQ Hardware?
+Date: Sat, 25 Aug 2007 08:45:05 -0700 (PDT)
+Message-ID: <154208.12082.qm@web36102.mail.mud.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:45251 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1764295AbXHYLHr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 25 Aug 2007 07:07:47 -0400
-In-Reply-To: <1187982149.4574.1.camel@localhost.localdomain> (Steven Rostedt's message of "Fri, 24 Aug 2007 15:02:29 -0400")
+Received: from web36102.mail.mud.yahoo.com ([66.163.179.216]:39785 "HELO
+	web36102.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1751462AbXHYPvq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 25 Aug 2007 11:51:46 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi,
 
-Steven Rostedt <rostedt@goodmis.org> writes:
 
-> [...]
-> +		 * [...] We don't need to grab
-> +		 * any locks, we just keep trying until get all the
-> +		 * calculations together in one state.
-> +		 *
-> +		 * In fact, we __cant__ grab any locks. This
-> +		 * function is called from the latency_tracer which can
-> +		 * be called anywhere. To grab any locks (including
-> +		 * seq_locks) we risk putting ourselves into a deadlock.
+I'm coming from the RTAI and RTLinux world and I just learned about the great
+strides you guys have made in hard RT.  Anyway, I was wondering -- currently
+how would one go about talking to DAQ hardware using the RT_PREEMPT patch(es)?
+Will this "just work" with COMEDI?  What happens when a userspace hard rt app
+calls into a kernel device driver in the simple case of an inb() or outb()
+instruction?
 
-Perhaps you could add a comment about why the loop, which appears
-potentially infinite as written, avoids livelock.  (It looks rather
-like a seqlock read loop.)
+I am hoping I can use this patch to do some basic input/output from a data
+acquisition card that is driver by COMEDI -- using just synchronous acquisition
+and output (basically writing to registers on the card, etc.. no IRQ's).
 
-- FChE
+Will this work?
+
+Thanks..
+
+PS: I also posted on the comedi mailing list but wanted to ask you guys too.
+
+Thanks again,
+
+-Calin
+
+
+
+       
+____________________________________________________________________________________
+Yahoo! oneSearch: Finally, mobile search 
+that gives answers, not web links. 
+http://mobile.yahoo.com/mobileweb/onesearch?refer=1ONXIC
