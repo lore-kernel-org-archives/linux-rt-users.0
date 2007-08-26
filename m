@@ -1,67 +1,53 @@
-From: Calin Culianu <cculianu@yahoo.com>
-Subject: Re: How to talk to DAQ Hardware?
-Date: Sat, 25 Aug 2007 12:49:16 -0700 (PDT)
-Message-ID: <664539.31533.qm@web36101.mail.mud.yahoo.com>
-References: <1188064824.2435.163.camel@dhcp193.mvista.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 3/3 - take two ] fix get_monotonic_cycles for latency
+ tracer
+Date: Sat, 25 Aug 2007 21:26:42 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0708252121310.26667@gandalf.stny.rr.com>
+References: <1187978236.2941.19.camel@localhost.localdomain>
+ <1187982149.4574.1.camel@localhost.localdomain> <y0modgv50vl.fsf@ton.toronto.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from web36101.mail.mud.yahoo.com ([66.163.179.215]:32330 "HELO
-	web36101.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1758751AbXHYTtR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 25 Aug 2007 15:49:17 -0400
-In-Reply-To: <1188064824.2435.163.camel@dhcp193.mvista.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	john stultz <johnstul@us.ibm.com>
+To: "Frank Ch. Eigler" <fche@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934838AbXHZB1t@vger.kernel.org>
+In-Reply-To: <y0modgv50vl.fsf@ton.toronto.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
---- Daniel Walker <dwalker@mvista.com> wrote:
+--
+On Sat, 25 Aug 2007, Frank Ch. Eigler wrote:
 
-> On Sat, 2007-08-25 at 08:45 -0700, Calin Culianu wrote:
-> > Hi,
-> > 
-> > 
-> > I'm coming from the RTAI and RTLinux world and I just learned about the
-> great
-> > strides you guys have made in hard RT.  Anyway, I was wondering --
-> currently
-> > how would one go about talking to DAQ hardware using the RT_PREEMPT
-> patch(es)?
-> > Will this "just work" with COMEDI?  What happens when a userspace hard rt
-> app
-> > calls into a kernel device driver in the simple case of an inb() or outb()
-> > instruction?
-> 
-> PREEMPT_RT doesn't change the way that users call into drivers .. The
-> users perspective of things is just same as regular linux .. 
-> 
-> Daniel
-> 
-> 
+>
+> Steven Rostedt <rostedt@goodmis.org> writes:
+>
+> > [...]
+> > +		 * [...] We don't need to grab
+> > +		 * any locks, we just keep trying until get all the
+> > +		 * calculations together in one state.
+> > +		 *
+> > +		 * In fact, we __cant__ grab any locks. This
+> > +		 * function is called from the latency_tracer which can
+> > +		 * be called anywhere. To grab any locks (including
+> > +		 * seq_locks) we risk putting ourselves into a deadlock.
+>
+> Perhaps you could add a comment about why the loop, which appears
+> potentially infinite as written, avoids livelock.  (It looks rather
+> like a seqlock read loop.)
+>
 
-Cool!  That's what I figured but I wanted to double-check.
+I guess I need to rewrite that comment. It shouldn't appear infinitely
+looping, since it is basically: do { x=A; func() } while (x != A); which
+to me seems that while is most likely to fail unless something touches A.
 
-Now, there is no way to raise the priority of particular driver's ISRs is
-there?  So that a specific ISR can preempt anything including a hard realtime
-process?
+But yes, it _is_ basically a seq lock, but its on what we are working
+with.  And we don't even need any memory barriers that a seq lock might
+do, since it is very obvious to gcc that the function call can modify the
+variables that we are testing.
 
-I know in the shared IRQ situation it would introduce lots of jitter but having
-really high priority interrupts would be nice.  Is that possible?
+But do you still think that looks inifinte?  If so, I'll reword it.
 
-Anyway thanks for answering my question -- this basically means I can throw
-away rtlinux and use the latest 2.6 kernels with the RT_PREEMPT patches!  :)
-
--Calin
-
-
-
-
-
-       
-____________________________________________________________________________________
-Building a website is a piece of cake. Yahoo! Small Business gives you all the tools to get online.
-http://smallbusiness.yahoo.com/webhosting 
+-- Steve
