@@ -1,57 +1,63 @@
-From: Daniel Walker <dwalker@mvista.com>
+From: Calin Culianu <cculianu@yahoo.com>
 Subject: Re: How to talk to DAQ Hardware?
-Date: Sat, 25 Aug 2007 18:46:11 -0700
-Message-ID: <1188092771.2435.170.camel@dhcp193.mvista.com>
-References: <664539.31533.qm@web36101.mail.mud.yahoo.com>
+Date: Sat, 25 Aug 2007 19:08:03 -0700 (PDT)
+Message-ID: <42568.15578.qm@web36109.mail.mud.yahoo.com>
+References: <1188092771.2435.170.camel@dhcp193.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Cc: linux-rt-users@vger.kernel.org
-To: Calin Culianu <cculianu@yahoo.com>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:58026 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765401AbXHZBxY (ORCPT
+Received: from web36109.mail.mud.yahoo.com ([66.163.179.223]:27413 "HELO
+	web36109.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S933724AbXHZCIF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 25 Aug 2007 21:53:24 -0400
-In-Reply-To: <664539.31533.qm@web36101.mail.mud.yahoo.com>
+	Sat, 25 Aug 2007 22:08:05 -0400
+In-Reply-To: <1188092771.2435.170.camel@dhcp193.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2007-08-25 at 12:49 -0700, Calin Culianu wrote:
 
-> Cool!  That's what I figured but I wanted to double-check.
+--- Daniel Walker <dwalker@mvista.com> wrote:
+
+> > process?
 > 
-> Now, there is no way to raise the priority of particular driver's ISRs is
-> there?  So that a specific ISR can preempt anything including a hard realtime
-> process?
+> ISR's are kernel threads, and you can change the priority of them .. If
+> you look 'ps' or 'top' you'll notice some processes that looks like,
 
-ISR's are kernel threads, and you can change the priority of them .. If
-you look 'ps' or 'top' you'll notice some processes that looks like,
+Wow, thanks for the thorough answer.  So basically interrupts come in from
+hardware, are dispatched by waking up a thread.. and then the thread decides to
+call a device driver's ISR or not?  So if another lower priority interupt calls
+in, the thread is woken up but processing resumes again in the
+previously-running higher priority thread?  I guess I should just read the
+sources..
 
-m0nster-mash ~ # ps alx | grep IRQ
-5     0   119     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-20]
-5     0   898     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-8]
-5     0   930     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-14]
-5     0   948     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-18]
-5     0   957     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-16]
-5     0   964     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-19]
-5     0   974     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-12]
-5     0   975     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-1]
-5     0  1002     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-4]
-m0nster-mash ~ #
+Anyway thanks for anwering my questions.  Now I must rave:
 
-So you change the priority just like with any process.. Using chrt from
-sched utils ..
+I seriously think you guys are AMAZING -- or at least your work on this is.  I
+am so happy to be rid of RTLinux.  I liked RTAI, but it was really horribly
+unstable and the API was all over the place.  So I was forced to use RTLinux.
 
-> I know in the shared IRQ situation it would introduce lots of jitter but having
-> really high priority interrupts would be nice.  Is that possible?
+RTLinux was not free, unless you used an ancient version that only really ran
+on 2.4 kernels.
 
-yeah, if they're shared then both handlers will get the same priority .
+This RT patch is amazing.  I really want to say.. KUDOS.  You guys are my
+heroes!  I have been pulling my hair out for 6 years now with sub-standard open
+RTOS's like RTAI and RTLinux and having this done "the right way" by you guys
+feels awesome..  I know RTAI had userspace realtime for some time but its
+administration and configuration was messy and buggy and RTLinux's userspace
+realtime was not open.  In the end it always felt like a hack somehow.. And if
+you called into libraries or kernel facilities that weren't hard-rt.. BOOM,
+your app exploded!  So kludgy..
 
-> Anyway thanks for answering my question -- this basically means I can throw
-> away rtlinux and use the latest 2.6 kernels with the RT_PREEMPT patches!  :)
+Thanks again!!
 
-Yeah, hopefully it works out for you..
+-Calin
 
-Daniel
+
+
+      ____________________________________________________________________________________
+Luggage? GPS? Comic books? 
+Check out fitting gifts for grads at Yahoo! Search
+http://search.yahoo.com/search?fr=oni_on_mail&p=graduation+gifts&cs=bz
