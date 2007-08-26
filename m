@@ -1,53 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 3/3 - take two ] fix get_monotonic_cycles for latency
- tracer
-Date: Sat, 25 Aug 2007 21:26:42 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708252121310.26667@gandalf.stny.rr.com>
-References: <1187978236.2941.19.camel@localhost.localdomain>
- <1187982149.4574.1.camel@localhost.localdomain> <y0modgv50vl.fsf@ton.toronto.redhat.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: How to talk to DAQ Hardware?
+Date: Sat, 25 Aug 2007 18:46:11 -0700
+Message-ID: <1188092771.2435.170.camel@dhcp193.mvista.com>
+References: <664539.31533.qm@web36101.mail.mud.yahoo.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>
-To: "Frank Ch. Eigler" <fche@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934838AbXHZB1t@vger.kernel.org>
-In-Reply-To: <y0modgv50vl.fsf@ton.toronto.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Calin Culianu <cculianu@yahoo.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:58026 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1765401AbXHZBxY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 25 Aug 2007 21:53:24 -0400
+In-Reply-To: <664539.31533.qm@web36101.mail.mud.yahoo.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Sat, 2007-08-25 at 12:49 -0700, Calin Culianu wrote:
 
---
-On Sat, 25 Aug 2007, Frank Ch. Eigler wrote:
+> Cool!  That's what I figured but I wanted to double-check.
+> 
+> Now, there is no way to raise the priority of particular driver's ISRs is
+> there?  So that a specific ISR can preempt anything including a hard realtime
+> process?
 
->
-> Steven Rostedt <rostedt@goodmis.org> writes:
->
-> > [...]
-> > +		 * [...] We don't need to grab
-> > +		 * any locks, we just keep trying until get all the
-> > +		 * calculations together in one state.
-> > +		 *
-> > +		 * In fact, we __cant__ grab any locks. This
-> > +		 * function is called from the latency_tracer which can
-> > +		 * be called anywhere. To grab any locks (including
-> > +		 * seq_locks) we risk putting ourselves into a deadlock.
->
-> Perhaps you could add a comment about why the loop, which appears
-> potentially infinite as written, avoids livelock.  (It looks rather
-> like a seqlock read loop.)
->
+ISR's are kernel threads, and you can change the priority of them .. If
+you look 'ps' or 'top' you'll notice some processes that looks like,
 
-I guess I need to rewrite that comment. It shouldn't appear infinitely
-looping, since it is basically: do { x=A; func() } while (x != A); which
-to me seems that while is most likely to fail unless something touches A.
+m0nster-mash ~ # ps alx | grep IRQ
+5     0   119     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-20]
+5     0   898     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-8]
+5     0   930     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-14]
+5     0   948     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-18]
+5     0   957     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-16]
+5     0   964     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-19]
+5     0   974     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-12]
+5     0   975     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-1]
+5     0  1002     2 -51   -      0     0 irqd   S<   ?          0:00 [IRQ-4]
+m0nster-mash ~ #
 
-But yes, it _is_ basically a seq lock, but its on what we are working
-with.  And we don't even need any memory barriers that a seq lock might
-do, since it is very obvious to gcc that the function call can modify the
-variables that we are testing.
+So you change the priority just like with any process.. Using chrt from
+sched utils ..
 
-But do you still think that looks inifinte?  If so, I'll reword it.
+> I know in the shared IRQ situation it would introduce lots of jitter but having
+> really high priority interrupts would be nice.  Is that possible?
 
--- Steve
+yeah, if they're shared then both handlers will get the same priority .
+
+> Anyway thanks for answering my question -- this basically means I can throw
+> away rtlinux and use the latest 2.6 kernels with the RT_PREEMPT patches!  :)
+
+Yeah, hopefully it works out for you..
+
+Daniel
