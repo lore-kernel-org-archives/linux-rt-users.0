@@ -1,83 +1,36 @@
-From: Vivek Goyal <vgoyal@in.ibm.com>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Date: Mon, 27 Aug 2007 11:06:56 +0530
-Message-ID: <20070827053656.GC9809@in.ibm.com>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru> <20070823090845.GA13065@in.ibm.com> <20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
-Reply-To: vgoyal@in.ibm.com
+From: Guennadi Liakhovetski <gl@dsa-ac.de>
+Subject: Re: How to talk to DAQ Hardware?
+Date: Mon, 27 Aug 2007 09:56:15 +0200 (CEST)
+Message-ID: <Pine.LNX.4.63.0708270954340.8578@pcgl.dsa-ac.de>
+References: <664539.31533.qm@web36101.mail.mud.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	"Eric W. Biederman" <ebiederm@xmission.com>,
-	Andi Kleen <ak@suse.de>
-To: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754217AbXH0FhR@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Daniel Walker <dwalker@mvista.com>, linux-rt-users@vger.kernel.org
+To: Calin Culianu <cculianu@yahoo.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.dsa-ac.de ([62.112.80.99]:47768 "EHLO mail.dsa-ac.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751358AbXH0H4V (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Aug 2007 03:56:21 -0400
+In-Reply-To: <664539.31533.qm@web36101.mail.mud.yahoo.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Aug 23, 2007 at 03:49:36PM +0400, Konstantin Baydarov wrote:
-> On Thu, 23 Aug 2007 14:38:45 +0530
-> Vivek Goyal <vgoyal@in.ibm.com> wrote:
-> > Does your kernel 2 boot normally? I mean through BIOS and boot-loader?
-> > This explanation seems to be suggesting that because PM and ACPI is
-> > disabled, kernel 2 does not search for HPET. If this is the case,
-> > this kernel will not boot even through normal boot-loader and will
-> > try to use PIT instead?
-> > 
-> > If so, it is not an kexec issue at all.
-> > 
-> > Thanks
-> > Vivek
-> 
-> kernel 2 boots normally through BIOS and boot-loader. I agree with your
-> explanation.
-> It seems that kernel 2 can't enable PIT, when it is executed by kexec.
-> As kernel 1 disabled HPET(IRQ0 source) and PIT is "broken"(or isn't
-> enabled) IRQ0 are not triggered at all, and kernel 2 hangs.
+On Sat, 25 Aug 2007, Calin Culianu wrote:
 
-My hunch is that PIT might be disabled here. Because when first kernel
-must have detected HPET and enabled it, then it might have disabled
-PIT and second kernel never sees the interrupts from PIT. But it should
-have seen the interrupts from HPET as no body disabled it?
+> Now, there is no way to raise the priority of particular driver's ISRs is
+> there?  So that a specific ISR can preempt anything including a hard realtime
+> process?
 
-I think kexec does not enable/disable any timer devices. It just tries
-to bring LAPIC/IOAPIC in a state so that next kernel still seems
-timer interrupts before next kernel sets up LAPIC and IPAOIC.
- 
-> As kernel 2 boots normally through BIOS and boot-loader, than
-> additional code needed(in Linux kernel init code) for PIT or ACPI
-> or APIC initialization, I mean the same code as executed on BIOS stage.
-
-I am not sure which initial code you are referring to? During kexec, we
-will run kernel initial code (except real mode code). But one thing to find
-out here will be how does BIOS pass the control to the OS when HPET device is
-present. Does it enable the HPET and put LAPIC and IOAPIC in virtual wire
-mode or it enables PIT and then later kernel switches from PIT to HPET?
-
-> I agree that it's not an kexec issue. But can we use my fix as a
-> workaround(to make kexec work) until PIT will be fixed?
-> Everything above is correct for i386/x86_64 RT(2.6.23-rc2-rt2) kernel
-> and for i368 "plain"(2.6.23-rc3) kernel. Bug isn't reproduced in 2.6.23-rc3
-> x86_64 kernel, because x86_64 code never disables HPET. So on every
-> boot(initiated by kexec or BIOS) IRQ0 are triggered.
-
-I think we should dive little deeper to find out the root cause of the problem
-instead of putting the intermediate patch. These timer issues are tricky
-ones and we have already solved few of these.
-
-Going back to your original mail where you specify root cause.
-
-- You mentioned that first kernel disables HPET while enabling Local APIC
-timer. Can you please point me when exactly it happens. I had thought local
-APIC timer and HPET server different purpose and co-exist.
-
-- You also mentioned that kernel tries to setup PIT as it does not find
-HPET in second kernel. Where exactly does it do that? I think we need to
-then go deeper to find out why PIT is not working now? Is it disabled? or
-LAPIC/IOAPIC have not been setup properly and PIT interrupts never reach
-CPU? 
+It's the second time you say "hard" real-time, so, just wanted to warn - 
+it is not hard. It is still only soft real time, but a pretty good one, I 
+think.
 
 Thanks
-Vivek
+Guennadi
+---------------------------------
+Guennadi Liakhovetski, Ph.D.
+DSA Daten- und Systemtechnik GmbH
+Pascalstr. 28
+D-52076 Aachen
+Germany
