@@ -1,262 +1,74 @@
 Return-Path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:65038 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:64975 "EHLO
 	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753343AbXH1ViR (ORCPT
+	with ESMTP id S1752938AbXH1ViJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 28 Aug 2007 17:38:17 -0400
-Message-Id: <20070828213748.790253419@mvista.com>
-Date: Tue, 28 Aug 2007 14:37:49 -0700
+	Tue, 28 Aug 2007 17:38:09 -0400
+Message-Id: <20070828213802.338192076@mvista.com>
+References: <20070828213748.790253419@mvista.com>
+Date: Tue, 28 Aug 2007 14:37:56 -0700
 From: Daniel Walker <dwalker@mvista.com>
-Content-Disposition: inline; filename=pickop-rt_lock_h.patch
-Subject: [PATCH -rt 1/8] introduce PICK_FUNCTION
+Content-Disposition: inline; filename=fix-idle-latency-tracing.patch
+Subject: [PATCH -rt 8/8] stop critical timing in idle.
 Sender: linux-rt-users-owner@vger.kernel.org
 To: mingo@elte.hu
-Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
+Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-PICK_FUNCTION() is similar to the other PICK_OP style macros, and was
-created to replace them all. I used variable argument macros to handle
-PICK_FUNC_2ARG/PICK_FUNC_1ARG. Otherwise the marcos are similar to the
-original macros used for semaphores. The entire system is used to do a
-compile time switch between two different locking APIs. For example,
-real spinlocks (raw_spinlock_t) and mutexes (or sleeping spinlocks).
-
-This new macro replaces all the duplication from lock type to lock type.
-The result of this patch, and the next two, is a fairly nice simplification,
-and consolidation. Although the seqlock changes are larger than the originals
-I think over all the patchset is worth while.
-
-Incorporated peterz's suggestion to not require TYPE_EQUAL() to only
-use pointers.
+without this the idle routine still gets traced.. This is done already
+for ACPI idle , but it should also be done for other idle routines.
 
 Signed-off-by: Daniel Walker <dwalker@mvista.com>
-
+ 
 ---
- include/linux/pickop.h  |   36 +++++++++++++
- include/linux/rt_lock.h |  129 +++++++++++++++---------------------------------
- 2 files changed, 77 insertions(+), 88 deletions(-)
+ arch/i386/kernel/process.c   |    9 +++++++++
+ arch/x86_64/kernel/process.c |   10 ++++++++++
+ 2 files changed, 19 insertions(+)
 
-Index: linux-2.6.22/include/linux/pickop.h
+Index: linux-2.6.22/arch/i386/kernel/process.c
 ===================================================================
---- /dev/null
-+++ linux-2.6.22/include/linux/pickop.h
-@@ -0,0 +1,36 @@
-+#ifndef _LINUX_PICKOP_H
-+#define _LINUX_PICKOP_H
+--- linux-2.6.22.orig/arch/i386/kernel/process.c
++++ linux-2.6.22/arch/i386/kernel/process.c
+@@ -197,8 +197,17 @@ void cpu_idle(void)
+ 			if (cpu_is_offline(cpu))
+ 				play_dead();
+ 
++			/*
++			 * We have irqs disabled here, so stop latency tracing
++			 * at this point and restart it after we return:
++			 */
++			stop_critical_timing();
 +
-+#undef TYPE_EQUAL
-+#define TYPE_EQUAL(var, type) \
-+		__builtin_types_compatible_p(typeof(var), type *)
+ 			__get_cpu_var(irq_stat).idle_timestamp = jiffies;
+ 			idle();
 +
-+#undef PICK_TYPE_EQUAL
-+#define PICK_TYPE_EQUAL(var, type) \
-+		__builtin_types_compatible_p(typeof(var), type)
++ 			touch_critical_timing();
 +
-+extern int __bad_func_type(void);
-+
-+#define PICK_FUNCTION(type1, type2, func1, func2, arg0, ...)		\
-+do {									\
-+	if (PICK_TYPE_EQUAL((arg0), type1))				\
-+		func1((type1)(arg0), ##__VA_ARGS__);			\
-+	else if (PICK_TYPE_EQUAL((arg0), type2))			\
-+		func2((type2)(arg0), ##__VA_ARGS__);			\
-+	else __bad_func_type();						\
-+} while (0)
-+
-+#define PICK_FUNCTION_RET(type1, type2, func1, func2, arg0, ...)	\
-+({									\
-+	unsigned long __ret;						\
-+									\
-+	if (PICK_TYPE_EQUAL((arg0), type1))				\
-+		__ret = func1((type1)(arg0), ##__VA_ARGS__);		\
-+	else if (PICK_TYPE_EQUAL((arg0), type2))			\
-+		__ret = func2((type2)(arg0), ##__VA_ARGS__);		\
-+	else __ret = __bad_func_type();					\
-+									\
-+	__ret;								\
-+})
-+
-+#endif /* _LINUX_PICKOP_H */
-Index: linux-2.6.22/include/linux/rt_lock.h
+ 		}
+ 		local_irq_disable();
+ 		trace_preempt_exit_idle();
+Index: linux-2.6.22/arch/x86_64/kernel/process.c
 ===================================================================
---- linux-2.6.22.orig/include/linux/rt_lock.h
-+++ linux-2.6.22/include/linux/rt_lock.h
-@@ -156,76 +156,40 @@ extern void fastcall rt_up(struct semaph
- 
- extern int __bad_func_type(void);
- 
--#undef TYPE_EQUAL
--#define TYPE_EQUAL(var, type) \
--		__builtin_types_compatible_p(typeof(var), type *)
--
--#define PICK_FUNC_1ARG(type1, type2, func1, func2, arg)			\
--do {									\
--	if (TYPE_EQUAL((arg), type1))					\
--		func1((type1 *)(arg));					\
--	else if (TYPE_EQUAL((arg), type2))				\
--		func2((type2 *)(arg));					\
--	else __bad_func_type();						\
--} while (0)
-+#include <linux/pickop.h>
- 
--#define PICK_FUNC_1ARG_RET(type1, type2, func1, func2, arg)		\
--({									\
--	unsigned long __ret;						\
--									\
--	if (TYPE_EQUAL((arg), type1))					\
--		__ret = func1((type1 *)(arg));				\
--	else if (TYPE_EQUAL((arg), type2))				\
--		__ret = func2((type2 *)(arg));				\
--	else __ret = __bad_func_type();					\
--									\
--	__ret;								\
--})
--
--#define PICK_FUNC_2ARG(type1, type2, func1, func2, arg0, arg1)		\
--do {									\
--	if (TYPE_EQUAL((arg0), type1))					\
--		func1((type1 *)(arg0), arg1);				\
--	else if (TYPE_EQUAL((arg0), type2))				\
--		func2((type2 *)(arg0), arg1);				\
--	else __bad_func_type();						\
--} while (0)
-+/*
-+ * PICK_SEM_OP() is a small redirector to allow less typing of the lock
-+ * types struct compat_semaphore, struct semaphore, at the front of the
-+ * PICK_FUNCTION macro.
-+ */
-+#define PICK_SEM_OP(...) PICK_FUNCTION(struct compat_semaphore *,	\
-+	struct semaphore *, ##__VA_ARGS__)
-+#define PICK_SEM_OP_RET(...) PICK_FUNCTION_RET(struct compat_semaphore *,\
-+	struct semaphore *, ##__VA_ARGS__)
- 
- #define sema_init(sem, val) \
--	PICK_FUNC_2ARG(struct compat_semaphore, struct semaphore, \
--		compat_sema_init, rt_sema_init, sem, val)
-+	PICK_SEM_OP(compat_sema_init, rt_sema_init, sem, val)
- 
--#define init_MUTEX(sem) \
--	PICK_FUNC_1ARG(struct compat_semaphore, struct semaphore, \
--		compat_init_MUTEX, rt_init_MUTEX, sem)
-+#define init_MUTEX(sem) PICK_SEM_OP(compat_init_MUTEX, rt_init_MUTEX, sem)
- 
- #define init_MUTEX_LOCKED(sem) \
--	PICK_FUNC_1ARG(struct compat_semaphore, struct semaphore, \
--		compat_init_MUTEX_LOCKED, rt_init_MUTEX_LOCKED, sem)
-+	PICK_SEM_OP(compat_init_MUTEX_LOCKED, rt_init_MUTEX_LOCKED, sem)
- 
--#define down(sem) \
--	PICK_FUNC_1ARG(struct compat_semaphore, struct semaphore, \
--		compat_down, rt_down, sem)
-+#define down(sem) PICK_SEM_OP(compat_down, rt_down, sem)
- 
- #define down_interruptible(sem) \
--	PICK_FUNC_1ARG_RET(struct compat_semaphore, struct semaphore, \
--		compat_down_interruptible, rt_down_interruptible, sem)
-+	PICK_SEM_OP_RET(compat_down_interruptible, rt_down_interruptible, sem)
- 
- #define down_trylock(sem) \
--	PICK_FUNC_1ARG_RET(struct compat_semaphore, struct semaphore, \
--		compat_down_trylock, rt_down_trylock, sem)
-+	PICK_SEM_OP_RET(compat_down_trylock, rt_down_trylock, sem)
- 
--#define up(sem) \
--	PICK_FUNC_1ARG(struct compat_semaphore, struct semaphore, \
--		compat_up, rt_up, sem)
-+#define up(sem) PICK_SEM_OP(compat_up, rt_up, sem)
- 
- #define sem_is_locked(sem) \
--	PICK_FUNC_1ARG_RET(struct compat_semaphore, struct semaphore, \
--		compat_sem_is_locked, rt_sem_is_locked, sem)
-+	PICK_SEM_OP_RET(compat_sem_is_locked, rt_sem_is_locked, sem)
- 
--#define sema_count(sem) \
--	PICK_FUNC_1ARG_RET(struct compat_semaphore, struct semaphore, \
--		compat_sema_count, rt_sema_count, sem)
-+#define sema_count(sem) PICK_SEM_OP_RET(compat_sema_count, rt_sema_count, sem)
- 
- /*
-  * rwsems:
-@@ -272,58 +236,47 @@ extern void fastcall rt_downgrade_write(
- 
- # define rt_rwsem_is_locked(rws)	(rt_mutex_is_locked(&(rws)->lock))
- 
--#define init_rwsem(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_init_rwsem, rt_init_rwsem, rwsem)
--
--#define down_read(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_read, rt_down_read, rwsem)
-+#define PICK_RWSEM_OP(...) PICK_FUNCTION(struct compat_rw_semaphore *,	\
-+	struct rw_semaphore *, ##__VA_ARGS__)
-+#define PICK_RWSEM_OP_RET(...) PICK_FUNCTION_RET(struct compat_rw_semaphore *,\
-+	struct rw_semaphore *, ##__VA_ARGS__)
+--- linux-2.6.22.orig/arch/x86_64/kernel/process.c
++++ linux-2.6.22/arch/x86_64/kernel/process.c
+@@ -223,8 +223,18 @@ void cpu_idle (void)
+ 			 * Otherwise, idle callbacks can misfire.
+ 			 */
+ 			local_irq_disable();
 +
-+#define init_rwsem(rwsem) PICK_RWSEM_OP(compat_init_rwsem, rt_init_rwsem, rwsem)
++			/*
++			 * We have irqs disabled here, so stop latency tracing
++			 * at this point and restart it after we return:
++			 */
++			stop_critical_timing();
 +
-+#define down_read(rwsem) PICK_RWSEM_OP(compat_down_read, rt_down_read, rwsem)
- 
- #define down_read_non_owner(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_read_non_owner, rt_down_read_non_owner, rwsem)
-+	PICK_RWSEM_OP(compat_down_read_non_owner, rt_down_read_non_owner, rwsem)
- 
- #define down_read_trylock(rwsem) \
--	PICK_FUNC_1ARG_RET(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_read_trylock, rt_down_read_trylock, rwsem)
-+	PICK_RWSEM_OP_RET(compat_down_read_trylock, rt_down_read_trylock, rwsem)
- 
--#define down_write(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_write, rt_down_write, rwsem)
-+#define down_write(rwsem) PICK_RWSEM_OP(compat_down_write, rt_down_write, rwsem)
- 
- #define down_read_nested(rwsem, subclass) \
--	PICK_FUNC_2ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_read_nested, rt_down_read_nested, rwsem, subclass)
--
-+	PICK_RWSEM_OP(compat_down_read_nested, rt_down_read_nested,	\
-+		rwsem, subclass)
- 
- #define down_write_nested(rwsem, subclass) \
--	PICK_FUNC_2ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_write_nested, rt_down_write_nested, rwsem, subclass)
-+	PICK_RWSEM_OP(compat_down_write_nested, rt_down_write_nested,	\
-+		rwsem, subclass)
- 
- #define down_write_trylock(rwsem) \
--	PICK_FUNC_1ARG_RET(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_down_write_trylock, rt_down_write_trylock, rwsem)
-+	PICK_RWSEM_OP_RET(compat_down_write_trylock, rt_down_write_trylock,\
-+		rwsem)
- 
--#define up_read(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_up_read, rt_up_read, rwsem)
-+#define up_read(rwsem) PICK_RWSEM_OP(compat_up_read, rt_up_read, rwsem)
- 
- #define up_read_non_owner(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_up_read_non_owner, rt_up_read_non_owner, rwsem)
-+	PICK_RWSEM_OP(compat_up_read_non_owner, rt_up_read_non_owner, rwsem)
- 
--#define up_write(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_up_write, rt_up_write, rwsem)
-+#define up_write(rwsem) PICK_RWSEM_OP(compat_up_write, rt_up_write, rwsem)
- 
- #define downgrade_write(rwsem) \
--	PICK_FUNC_1ARG(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_downgrade_write, rt_downgrade_write, rwsem)
-+	PICK_RWSEM_OP(compat_downgrade_write, rt_downgrade_write, rwsem)
- 
- #define rwsem_is_locked(rwsem) \
--	PICK_FUNC_1ARG_RET(struct compat_rw_semaphore, struct rw_semaphore, \
--		compat_rwsem_is_locked, rt_rwsem_is_locked, rwsem)
-+	PICK_RWSEM_OP_RET(compat_rwsem_is_locked, rt_rwsem_is_locked, rwsem)
- 
- #endif /* CONFIG_PREEMPT_RT */
- 
+ 			enter_idle();
+ 			idle();
++
++			touch_critical_timing();
++
+ 			/* In many cases the interrupt that ended idle
+ 			   has already called exit_idle. But some idle
+ 			   loops can be woken up without interrupt. */
 
 -- 
