@@ -1,74 +1,263 @@
 Return-Path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:64975 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:65114 "EHLO
 	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752938AbXH1ViJ (ORCPT
+	with ESMTP id S1754958AbXH1Vin (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 28 Aug 2007 17:38:09 -0400
-Message-Id: <20070828213802.338192076@mvista.com>
+	Tue, 28 Aug 2007 17:38:43 -0400
+Message-Id: <20070828213801.758943975@mvista.com>
 References: <20070828213748.790253419@mvista.com>
-Date: Tue, 28 Aug 2007 14:37:56 -0700
+Date: Tue, 28 Aug 2007 14:37:55 -0700
 From: Daniel Walker <dwalker@mvista.com>
-Content-Disposition: inline; filename=fix-idle-latency-tracing.patch
-Subject: [PATCH -rt 8/8] stop critical timing in idle.
+Content-Disposition: inline; filename=latency_tracing_histogram_reset.patch
+Subject: [PATCH -rt 7/8] latency hist: add resetting for all timing options
 Sender: linux-rt-users-owner@vger.kernel.org
 To: mingo@elte.hu
-Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, Carsten Emde <cbe@osadl.org>
 List-ID: <linux-rt-users.vger.kernel.org>
 
-without this the idle routine still gets traced.. This is done already
-for ACPI idle , but it should also be done for other idle routines.
+I dropped parts of the prior reset method, and added a file called
+"reset" into the /proc/latency_hist/ timing directories. It allows
+any of the timing options to get their histograms reset.
+
+I also fixed a couple of oddities in the code. Instead of creating a 
+file for all NR_CPUS , I just used num_possible_cpus() . I also drop
+a string which only hold "CPU" and just inserted it where it was used.
 
 Signed-off-by: Daniel Walker <dwalker@mvista.com>
- 
----
- arch/i386/kernel/process.c   |    9 +++++++++
- arch/x86_64/kernel/process.c |   10 ++++++++++
- 2 files changed, 19 insertions(+)
 
-Index: linux-2.6.22/arch/i386/kernel/process.c
+---
+ include/linux/latency_hist.h |    1 
+ kernel/latency_hist.c        |  119 ++++++++++++++++++++++++++++---------------
+ kernel/latency_trace.c       |   13 ----
+ 3 files changed, 80 insertions(+), 53 deletions(-)
+
+Index: linux-2.6.22/include/linux/latency_hist.h
 ===================================================================
---- linux-2.6.22.orig/arch/i386/kernel/process.c
-+++ linux-2.6.22/arch/i386/kernel/process.c
-@@ -197,8 +197,17 @@ void cpu_idle(void)
- 			if (cpu_is_offline(cpu))
- 				play_dead();
+--- linux-2.6.22.orig/include/linux/latency_hist.h
++++ linux-2.6.22/include/linux/latency_hist.h
+@@ -23,7 +23,6 @@ enum {
  
-+			/*
-+			 * We have irqs disabled here, so stop latency tracing
-+			 * at this point and restart it after we return:
-+			 */
-+			stop_critical_timing();
-+
- 			__get_cpu_var(irq_stat).idle_timestamp = jiffies;
- 			idle();
-+
-+ 			touch_critical_timing();
-+
- 		}
- 		local_irq_disable();
- 		trace_preempt_exit_idle();
-Index: linux-2.6.22/arch/x86_64/kernel/process.c
+ #ifdef CONFIG_LATENCY_HIST
+ extern void latency_hist(int latency_type, int cpu, unsigned long latency);
+-extern void latency_hist_reset(void);
+ # define latency_hist_flag 1
+ #else
+ # define latency_hist(a,b,c) do { (void)(cpu); } while (0)
+Index: linux-2.6.22/kernel/latency_hist.c
 ===================================================================
---- linux-2.6.22.orig/arch/x86_64/kernel/process.c
-+++ linux-2.6.22/arch/x86_64/kernel/process.c
-@@ -223,8 +223,18 @@ void cpu_idle (void)
- 			 * Otherwise, idle callbacks can misfire.
- 			 */
- 			local_irq_disable();
+--- linux-2.6.22.orig/kernel/latency_hist.c
++++ linux-2.6.22/kernel/latency_hist.c
+@@ -16,6 +16,7 @@
+ #include <linux/latency_hist.h>
+ #include <asm/atomic.h>
+ #include <asm/div64.h>
++#include <asm/uaccess.h>
+ 
+ typedef struct hist_data_struct {
+ 	atomic_t hist_mode; /* 0 log, 1 don't log */
+@@ -31,8 +32,6 @@ typedef struct hist_data_struct {
+ static struct proc_dir_entry * latency_hist_root = NULL;
+ static char * latency_hist_proc_dir_root = "latency_hist";
+ 
+-static char * percpu_proc_name = "CPU";
+-
+ #ifdef CONFIG_INTERRUPT_OFF_HIST
+ static DEFINE_PER_CPU(hist_data_t, interrupt_off_hist);
+ static char * interrupt_off_hist_proc_dir = "interrupt_off_latency";
+@@ -56,7 +55,7 @@ static inline u64 u64_div(u64 x, u64 y)
+         return x;
+ }
+ 
+-void latency_hist(int latency_type, int cpu, unsigned long latency)
++void notrace latency_hist(int latency_type, int cpu, unsigned long latency)
+ {
+ 	hist_data_t * my_hist;
+ 
+@@ -205,6 +204,69 @@ static struct file_operations latency_hi
+ 	.release = seq_release,
+ };
+ 
++static void hist_reset(hist_data_t *hist)
++{
++	atomic_dec(&hist->hist_mode);
 +
-+			/*
-+			 * We have irqs disabled here, so stop latency tracing
-+			 * at this point and restart it after we return:
-+			 */
-+			stop_critical_timing();
++	memset(hist->hist_array, 0, sizeof(hist->hist_array));
++	hist->beyond_hist_bound_samples = 0UL;
++	hist->min_lat = 0xFFFFFFFFUL;
++	hist->max_lat = 0UL;
++	hist->total_samples = 0UL;
++	hist->accumulate_lat = 0UL;
++	hist->avg_lat = 0UL;
 +
- 			enter_idle();
- 			idle();
++	atomic_inc(&hist->hist_mode);
++}
 +
-+			touch_critical_timing();
++ssize_t latency_hist_reset(struct file *file, const char __user *a, size_t size, loff_t *off)
++{
++	int cpu;
++	hist_data_t *hist;
++	struct proc_dir_entry *entry_ptr = PDE(file->f_dentry->d_inode);
++	int latency_type = (int)entry_ptr->data;
 +
- 			/* In many cases the interrupt that ended idle
- 			   has already called exit_idle. But some idle
- 			   loops can be woken up without interrupt. */
++	switch (latency_type) {
++
++#ifdef CONFIG_WAKEUP_LATENCY_HIST
++		case WAKEUP_LATENCY:
++			for_each_online_cpu(cpu) {
++				hist = &per_cpu(wakeup_latency_hist, cpu);
++				hist_reset(hist);
++			}
++			break;
++#endif
++
++#ifdef CONFIG_PREEMPT_OFF_HIST
++		case PREEMPT_LATENCY:
++			for_each_online_cpu(cpu) {
++				hist = &per_cpu(preempt_off_hist, cpu);
++				hist_reset(hist);
++			}
++			break;
++#endif
++
++#ifdef CONFIG_INTERRUPT_OFF_HIST
++		case INTERRUPT_LATENCY:
++			for_each_online_cpu(cpu) {
++				hist = &per_cpu(interrupt_off_hist, cpu);
++				hist_reset(hist);
++			}
++			break;
++#endif
++	}
++
++	return size;
++}
++
++static struct file_operations latency_hist_reset_seq_fops = {
++	.write = latency_hist_reset,
++};
++
++static struct proc_dir_entry *interrupt_off_reset;
++static struct proc_dir_entry *preempt_off_reset;
++static struct proc_dir_entry *wakeup_latency_reset;
++
+ static __init int latency_hist_init(void)
+ {
+ 	struct proc_dir_entry *tmp_parent_proc_dir;
+@@ -214,11 +276,10 @@ static __init int latency_hist_init(void
+ 
+ 	latency_hist_root = proc_mkdir(latency_hist_proc_dir_root, NULL);
+ 
+-
+ #ifdef CONFIG_INTERRUPT_OFF_HIST
+ 	tmp_parent_proc_dir = proc_mkdir(interrupt_off_hist_proc_dir, latency_hist_root);
+-	for (i = 0; i < NR_CPUS; i++) {
+-		len = sprintf(procname, "%s%d", percpu_proc_name, i);
++	for (i = 0; i < num_possible_cpus(); i++) {
++		len = sprintf(procname, "CPU%d", i);
+ 		procname[len] = '\0';
+ 		entry[INTERRUPT_LATENCY][i] =
+ 			create_proc_entry(procname, 0, tmp_parent_proc_dir);
+@@ -228,12 +289,15 @@ static __init int latency_hist_init(void
+ 		atomic_set(&my_hist->hist_mode,1);
+ 		my_hist->min_lat = 0xFFFFFFFFUL;
+ 	}
++	interrupt_off_reset = create_proc_entry("reset", 0, tmp_parent_proc_dir);
++	interrupt_off_reset->data = INTERRUPT_LATENCY;
++	interrupt_off_reset->proc_fops = &latency_hist_reset_seq_fops;
+ #endif
+ 
+ #ifdef CONFIG_PREEMPT_OFF_HIST
+ 	tmp_parent_proc_dir = proc_mkdir(preempt_off_hist_proc_dir, latency_hist_root);
+-	for (i = 0; i < NR_CPUS; i++) {
+-		len = sprintf(procname, "%s%d", percpu_proc_name, i);
++	for (i = 0; i < num_possible_cpus(); i++) {
++		len = sprintf(procname, "CPU%d", i);
+ 		procname[len] = '\0';
+ 		entry[PREEMPT_LATENCY][i] =
+ 			create_proc_entry(procname, 0, tmp_parent_proc_dir);
+@@ -243,12 +307,15 @@ static __init int latency_hist_init(void
+ 		atomic_set(&my_hist->hist_mode,1);
+ 		my_hist->min_lat = 0xFFFFFFFFUL;
+ 	}
++	preempt_off_reset = create_proc_entry("reset", 0, tmp_parent_proc_dir);
++	preempt_off_reset->data = PREEMPT_LATENCY;
++	preempt_off_reset->proc_fops = &latency_hist_reset_seq_fops;
+ #endif
+ 
+ #ifdef CONFIG_WAKEUP_LATENCY_HIST
+ 	tmp_parent_proc_dir = proc_mkdir(wakeup_latency_hist_proc_dir, latency_hist_root);
+-	for (i = 0; i < NR_CPUS; i++) {
+-		len = sprintf(procname, "%s%d", percpu_proc_name, i);
++	for (i = 0; i < num_possible_cpus(); i++) {
++		len = sprintf(procname, "CPU%d", i);
+ 		procname[len] = '\0';
+ 		entry[WAKEUP_LATENCY][i] =
+ 			create_proc_entry(procname, 0, tmp_parent_proc_dir);
+@@ -258,38 +325,12 @@ static __init int latency_hist_init(void
+ 		atomic_set(&my_hist->hist_mode,1);
+ 		my_hist->min_lat = 0xFFFFFFFFUL;
+ 	}
++	wakeup_latency_reset = create_proc_entry("reset", 0, tmp_parent_proc_dir);
++	wakeup_latency_reset->data = WAKEUP_LATENCY;
++	wakeup_latency_reset->proc_fops = &latency_hist_reset_seq_fops;
+ #endif
+ 	return 0;
+ 
+ }
+ 
+ __initcall(latency_hist_init);
+-
+-
+-#ifdef CONFIG_WAKEUP_LATENCY_HIST
+-static void hist_reset(hist_data_t *hist)
+-{
+-	atomic_dec(&hist->hist_mode);
+-
+-	memset(hist->hist_array, 0, sizeof(hist->hist_array));
+-	hist->beyond_hist_bound_samples = 0UL;
+-	hist->min_lat = 0xFFFFFFFFUL;
+-	hist->max_lat = 0UL;
+-	hist->total_samples = 0UL;
+-	hist->accumulate_lat = 0UL;
+-	hist->avg_lat = 0UL;
+-
+-	atomic_inc(&hist->hist_mode);
+-}
+-
+-void latency_hist_reset(void)
+-{
+-	int cpu;
+-	hist_data_t *hist;
+-
+-	for_each_online_cpu(cpu) {
+-		hist = &per_cpu(wakeup_latency_hist, cpu);
+-		hist_reset(hist);
+-	}
+-}
+-#endif
+Index: linux-2.6.22/kernel/latency_trace.c
+===================================================================
+--- linux-2.6.22.orig/kernel/latency_trace.c
++++ linux-2.6.22/kernel/latency_trace.c
+@@ -2207,19 +2207,6 @@ check_wakeup_timing(struct cpu_trace *tr
+ 	if (!report_latency(delta))
+ 		goto out;
+ 
+-#ifdef CONFIG_WAKEUP_LATENCY_HIST
+-	/*
+-	 * Was preempt_max_latency reset?
+-	 * If so, we reinitialize the latency histograms to keep them in sync.
+-	 *
+-	 * FIXME: Remove the poll and write our own procfs handler, so
+-	 * we can trigger on the write to preempt_max_latency
+-	 */
+-	if (last_preempt_max_latency > 0 && preempt_max_latency == 0)
+-		latency_hist_reset();
+-	last_preempt_max_latency = preempt_max_latency;
+-#endif
+-
+ 	____trace(smp_processor_id(), TRACE_FN, tr, CALLER_ADDR0, parent_eip,
+ 		  0, 0, 0, *flags);
+ 
 
 -- 
