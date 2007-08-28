@@ -1,44 +1,327 @@
 Return-Path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:64970 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:64983 "EHLO
 	localhost.localdomain" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751898AbXH1ViJ (ORCPT
+	with ESMTP id S1753421AbXH1ViM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 28 Aug 2007 17:38:09 -0400
-Message-Id: <20070828213800.807730609@mvista.com>
+	Tue, 28 Aug 2007 17:38:12 -0400
+Message-Id: <20070828213800.527408621@mvista.com>
 References: <20070828213748.790253419@mvista.com>
-Date: Tue, 28 Aug 2007 14:37:52 -0700
+Date: Tue, 28 Aug 2007 14:37:51 -0700
 From: Daniel Walker <dwalker@mvista.com>
-Content-Disposition: inline; filename=fix-ia64-comment-in-desched-thread.patch
-Subject: [PATCH -rt 4/8] fork: desched_thread comment rework.
+Content-Disposition: inline; filename=pickop-seqlocks.patch
+Subject: [PATCH -rt 3/8] seqlocks: use PICK_FUNCTION
 Sender: linux-rt-users-owner@vger.kernel.org
 To: mingo@elte.hu
 Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Lines are too long..
+Replace the old PICK_OP style macros with PICK_FUNCTION. Although,
+seqlocks has some alien code, which I also replaced as can be seen
+from the line count below.
 
 Signed-off-by: Daniel Walker <dwalker@mvista.com>
 
 ---
- kernel/fork.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ include/linux/pickop.h  |    4 
+ include/linux/seqlock.h |  235 +++++++++++++++++++++++++++---------------------
+ 2 files changed, 135 insertions(+), 104 deletions(-)
 
-Index: linux-2.6.22/kernel/fork.c
+Index: linux-2.6.22/include/linux/pickop.h
 ===================================================================
---- linux-2.6.22.orig/kernel/fork.c
-+++ linux-2.6.22/kernel/fork.c
-@@ -1787,8 +1787,10 @@ static int desched_thread(void * __bind_
- 			continue;
- 		schedule();
+--- linux-2.6.22.orig/include/linux/pickop.h
++++ linux-2.6.22/include/linux/pickop.h
+@@ -1,10 +1,6 @@
+ #ifndef _LINUX_PICKOP_H
+ #define _LINUX_PICKOP_H
  
--		/* This must be called from time to time on ia64, and is a no-op on other archs.
--		 * Used to be in cpu_idle(), but with the new -rt semantics it can't stay there.
-+		/*
-+ 		 * This must be called from time to time on ia64, and is a
-+ 		 * no-op on other archs. Used to be in cpu_idle(), but with
-+ 		 * the new -rt semantics it can't stay there.
- 		 */
- 		check_pgt_cache();
+-#undef TYPE_EQUAL
+-#define TYPE_EQUAL(var, type) \
+-		__builtin_types_compatible_p(typeof(var), type *)
+-
+ #undef PICK_TYPE_EQUAL
+ #define PICK_TYPE_EQUAL(var, type) \
+ 		__builtin_types_compatible_p(typeof(var), type)
+Index: linux-2.6.22/include/linux/seqlock.h
+===================================================================
+--- linux-2.6.22.orig/include/linux/seqlock.h
++++ linux-2.6.22/include/linux/seqlock.h
+@@ -90,6 +90,12 @@ static inline void __write_seqlock(seqlo
+ 	smp_wmb();
+ }
  
++static __always_inline unsigned long __write_seqlock_irqsave(seqlock_t *sl)
++{
++	__write_seqlock(sl);
++	return 0;
++}
++
+ static inline void __write_sequnlock(seqlock_t *sl)
+ {
+ 	smp_wmb();
+@@ -97,6 +103,8 @@ static inline void __write_sequnlock(seq
+ 	spin_unlock(&sl->lock);
+ }
+ 
++#define __write_sequnlock_irqrestore(sl, flags)	__write_sequnlock(sl)
++
+ static inline int __write_tryseqlock(seqlock_t *sl)
+ {
+ 	int ret = spin_trylock(&sl->lock);
+@@ -149,6 +157,28 @@ static __always_inline void __write_seql
+ 	smp_wmb();
+ }
+ 
++static __always_inline unsigned long
++__write_seqlock_irqsave_raw(raw_seqlock_t *sl)
++{
++	unsigned long flags;
++
++	local_irq_save(flags);
++	__write_seqlock_raw(sl);
++	return flags;
++}
++
++static __always_inline void __write_seqlock_irq_raw(raw_seqlock_t *sl)
++{
++	local_irq_disable();
++	__write_seqlock_raw(sl);
++}
++
++static __always_inline void __write_seqlock_bh_raw(raw_seqlock_t *sl)
++{
++	local_bh_disable();
++	__write_seqlock_raw(sl);
++}
++
+ static __always_inline void __write_sequnlock_raw(raw_seqlock_t *sl)
+ {
+ 	smp_wmb();
+@@ -156,6 +186,27 @@ static __always_inline void __write_sequ
+ 	spin_unlock(&sl->lock);
+ }
+ 
++static __always_inline void
++__write_sequnlock_irqrestore_raw(raw_seqlock_t *sl, unsigned long flags)
++{
++	__write_sequnlock_raw(sl);
++	local_irq_restore(flags);
++	preempt_check_resched();
++}
++
++static __always_inline void __write_sequnlock_irq_raw(raw_seqlock_t *sl)
++{
++	__write_sequnlock_raw(sl);
++	local_irq_enable();
++	preempt_check_resched();
++}
++
++static __always_inline void __write_sequnlock_bh_raw(raw_seqlock_t *sl)
++{
++	__write_sequnlock_raw(sl);
++	local_bh_enable();
++}
++
+ static __always_inline int __write_tryseqlock_raw(raw_seqlock_t *sl)
+ {
+ 	int ret = spin_trylock(&sl->lock);
+@@ -182,60 +233,93 @@ static __always_inline int __read_seqret
+ 
+ extern int __bad_seqlock_type(void);
+ 
+-#define PICK_SEQOP(op, lock)					\
++/*
++ * PICK_SEQ_OP() is a small redirector to allow less typing of the lock
++ * types raw_seqlock_t, seqlock_t, at the front of the PICK_FUNCTION
++ * macro.
++ */
++#define PICK_SEQ_OP(...) 	\
++	PICK_FUNCTION(raw_seqlock_t *, seqlock_t *, ##__VA_ARGS__)
++#define PICK_SEQ_OP_RET(...) \
++	PICK_FUNCTION_RET(raw_seqlock_t *, seqlock_t *, ##__VA_ARGS__)
++
++#define write_seqlock(sl) PICK_SEQ_OP(__write_seqlock_raw, __write_seqlock, sl)
++
++#define write_sequnlock(sl)	\
++	PICK_SEQ_OP(__write_sequnlock_raw, __write_sequnlock, sl)
++
++#define write_tryseqlock(sl)	\
++	PICK_SEQ_OP_RET(__write_tryseqlock_raw, __write_tryseqlock, sl)
++
++#define read_seqbegin(sl) 	\
++	PICK_SEQ_OP_RET(__read_seqbegin_raw, __read_seqbegin, sl)
++
++#define read_seqretry(sl, iv)	\
++	PICK_SEQ_OP_RET(__read_seqretry_raw, __read_seqretry, sl, iv)
++
++#define write_seqlock_irqsave(lock, flags)			\
+ do {								\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
+-		op##_raw((raw_seqlock_t *)(lock));		\
+-	else if (TYPE_EQUAL((lock), seqlock_t))			\
+-		op((seqlock_t *)(lock));			\
+-	else __bad_seqlock_type();				\
++	flags = PICK_SEQ_OP_RET(__write_seqlock_irqsave_raw,	\
++		__write_seqlock_irqsave, lock);			\
+ } while (0)
+ 
+-#define PICK_SEQOP_RET(op, lock)				\
+-({								\
+-	unsigned long __ret;					\
+-								\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
+-		__ret = op##_raw((raw_seqlock_t *)(lock));	\
+-	else if (TYPE_EQUAL((lock), seqlock_t))			\
+-		__ret = op((seqlock_t *)(lock));		\
+-	else __ret = __bad_seqlock_type();			\
+-								\
+-	__ret;							\
+-})
+-
+-#define PICK_SEQOP_CONST_RET(op, lock)				\
+-({								\
+-	unsigned long __ret;					\
+-								\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
+-		__ret = op##_raw((const raw_seqlock_t *)(lock));\
+-	else if (TYPE_EQUAL((lock), seqlock_t))			\
+-		__ret = op((seqlock_t *)(lock));		\
+-	else __ret = __bad_seqlock_type();			\
+-								\
+-	__ret;							\
+-})
+-
+-#define PICK_SEQOP2_CONST_RET(op, lock, arg)				\
+- ({									\
+-	unsigned long __ret;						\
+-									\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))				\
+-		__ret = op##_raw((const raw_seqlock_t *)(lock), (arg));	\
+-	else if (TYPE_EQUAL((lock), seqlock_t))				\
+-		__ret = op((seqlock_t *)(lock), (arg));			\
+-	else __ret = __bad_seqlock_type();				\
+-									\
+-	__ret;								\
+-})
+-
+-
+-#define write_seqlock(sl)	PICK_SEQOP(__write_seqlock, sl)
+-#define write_sequnlock(sl)	PICK_SEQOP(__write_sequnlock, sl)
+-#define write_tryseqlock(sl)	PICK_SEQOP_RET(__write_tryseqlock, sl)
+-#define read_seqbegin(sl)	PICK_SEQOP_CONST_RET(__read_seqbegin, sl)
+-#define read_seqretry(sl, iv)	PICK_SEQOP2_CONST_RET(__read_seqretry, sl, iv)
++#define write_seqlock_irq(lock)	\
++	PICK_SEQ_OP(__write_seqlock_irq_raw, __write_seqlock, lock)
++
++#define write_seqlock_bh(lock)	\
++	PICK_SEQ_OP(__write_seqlock_bh_raw, __write_seqlock, lock)
++
++#define write_sequnlock_irqrestore(lock, flags)		\
++	PICK_SEQ_OP(__write_sequnlock_irqrestore_raw,	\
++		__write_sequnlock_irqrestore, lock, flags)
++
++#define write_sequnlock_bh(lock)	\
++	PICK_SEQ_OP(__write_sequnlock_bh_raw, __write_sequnlock, lock)
++
++#define write_sequnlock_irq(lock)	\
++	PICK_SEQ_OP(__write_sequnlock_irq_raw, __write_sequnlock, lock)
++
++static __always_inline
++unsigned long __read_seqbegin_irqsave_raw(raw_seqlock_t *sl)
++{
++	unsigned long flags;
++
++	local_irq_save(flags);
++	__read_seqbegin_raw(sl);
++	return flags;
++}
++
++static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
++{
++	__read_seqbegin(sl);
++	return 0;
++}
++
++#define read_seqbegin_irqsave(lock, flags)			\
++do {								\
++	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
++		__read_seqbegin_irqsave, lock);			\
++} while (0)
++
++static __always_inline int
++__read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
++{
++	return __read_seqretry(sl, iv);
++}
++
++static __always_inline int
++__read_seqretry_irqrestore_raw(raw_seqlock_t *sl, unsigned iv,
++			       unsigned long flags)
++{
++	int ret = read_seqretry(sl, iv);
++	local_irq_restore(flags);
++	preempt_check_resched();
++	return ret;
++}
++
++#define read_seqretry_irqrestore(lock, iv, flags)			\
++	PICK_SEQ_OP_RET(__read_seqretry_irqrestore_raw, 		\
++		__read_seqretry_irqrestore, lock, iv, flags)
+ 
+ /*
+  * Version using sequence counter only.
+@@ -286,53 +370,4 @@ static inline void write_seqcount_end(se
+ 	smp_wmb();
+ 	s->sequence++;
+ }
+-
+-#define PICK_IRQOP(op, lock)					\
+-do {								\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
+-		op();						\
+-	else if (TYPE_EQUAL((lock), seqlock_t))			\
+-		{ /* nothing */ }				\
+-	else __bad_seqlock_type();				\
+-} while (0)
+-
+-#define PICK_IRQOP2(op, arg, lock)				\
+-do {								\
+-	if (TYPE_EQUAL((lock), raw_seqlock_t))			\
+-		op(arg);					\
+-	else if (TYPE_EQUAL(lock, seqlock_t))			\
+-		{ /* nothing */ }				\
+-	else __bad_seqlock_type();				\
+-} while (0)
+-
+-
+-
+-/*
+- * Possible sw/hw IRQ protected versions of the interfaces.
+- */
+-#define write_seqlock_irqsave(lock, flags)				\
+-	do { PICK_IRQOP2(local_irq_save, flags, lock); write_seqlock(lock); } while (0)
+-#define write_seqlock_irq(lock)						\
+-	do { PICK_IRQOP(local_irq_disable, lock); write_seqlock(lock); } while (0)
+-#define write_seqlock_bh(lock)						\
+-        do { PICK_IRQOP(local_bh_disable, lock); write_seqlock(lock); } while (0)
+-
+-#define write_sequnlock_irqrestore(lock, flags)				\
+-	do { write_sequnlock(lock); PICK_IRQOP2(local_irq_restore, flags, lock); preempt_check_resched(); } while(0)
+-#define write_sequnlock_irq(lock)					\
+-	do { write_sequnlock(lock); PICK_IRQOP(local_irq_enable, lock); preempt_check_resched(); } while(0)
+-#define write_sequnlock_bh(lock)					\
+-	do { write_sequnlock(lock); PICK_IRQOP(local_bh_enable, lock); } while(0)
+-
+-#define read_seqbegin_irqsave(lock, flags)				\
+-	({ PICK_IRQOP2(local_irq_save, flags, lock); read_seqbegin(lock); })
+-
+-#define read_seqretry_irqrestore(lock, iv, flags)			\
+-	({								\
+-		int ret = read_seqretry(lock, iv);			\
+-		PICK_IRQOP2(local_irq_restore, flags, lock);		\
+-		preempt_check_resched(); 				\
+-		ret;							\
+-	})
+-
+ #endif /* __LINUX_SEQLOCK_H */
 
 -- 
