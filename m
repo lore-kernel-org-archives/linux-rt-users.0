@@ -1,59 +1,45 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: v2.6.23-rc4-rt1 / new project URL
-Date: Fri, 31 Aug 2007 22:59:04 +0200
-Message-ID: <1188593944.9647.15.camel@chaos>
+Return-Path: <linux-rt-users-owner@vger.kernel.org>
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:43499
+	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1752361AbXH2E4i (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 29 Aug 2007 00:56:38 -0400
+Date: Tue, 28 Aug 2007 21:56:36 -0700 (PDT)
+Message-Id: <20070828.215636.99202736.davem@davemloft.net>
+Subject: Re: [PATCH 2.6.21.5-rt17] IPV6: estalished connections are not
+ shown with "cat /proc/net/tcp6"
+From: David Miller <davem@davemloft.net>
+In-Reply-To: <46D4CED2.4060302@ncos.nec.co.jp>
+References: <46D4CED2.4060302@ncos.nec.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.osadl.org ([213.239.205.134]:46055 "EHLO mail.tglx.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1760438AbXHaU7J (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Aug 2007 16:59:09 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: nakagawa.msy@ncos.nec.co.jp
+Cc: rostedt@goodmis.org, dwalker@mvista.com, mingo@elte.hu, linux-rt-users@vger.kernel.org, tglx@linutronix.de, rlrevell@joe-job.com
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We're pleased to announce the release of the v2.6.23-rc4-rt1 kernel,
-which can be downloaded from a new place:
- 
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
- 
-The move to kernel.org is experimental for now, we'll keep it if it
-works out fine.
+From: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
+Date: Tue, 28 Aug 2007 18:41:38 -0700
 
-Changes since 2.6.23-rc2-rt2:
+> +static inline void __inet_hash_setbit(unsigned long *bitmask,
+> +	unsigned int index)
+> +{
+> +	if (bitmask)
+> +		set_bit(index, bitmask);
+> +}
+> +
+> +static inline void __inet_hash_clearbit(unsigned long *bitmask,
+> +	unsigned int index)
+> +{
+> +	if (bitmask)
+> +		clear_bit(index, bitmask);
+> +}
+> +
 
-- update to -rc4
-- update to 2.6.23-rc4-hrt1
+A new atomic operation every single socket hashing insert or delete
+operation is way too much amount of overhead for what should be a
+trivial problem.
 
-- UP compile fixes back merged (Kevin Hilman / Steven Rostedt)
-- various latency tracer fixes (Steven Rostedt)
-- softirq migration fixes (Steven Rostedt)
-- ARM futex cmpxchg in atomic support (Khem Raj)
-- ARM raw lock fix (Kevin Hilman)
-- loadavgrt fix (Luis Claudio R. Goncalves)
-- mellanox driver fix (Michael S. Tsirkin)
-
-A bunch of patches are postponed for -rt2 (they are neither ignored
-nor forgotten):
-
-- simple_irq change (Kevin Hilman): needs more thought
-- RCU updates (Paul McKenney): needs proper integration
-- latency tracer changes (Daniel Walker): needs review
-- PICK_OP changes (Daniel Walker): needs review
-
-
-More info about the -rt patch set can be found in the RT wiki:
-     
-  http://rt.wiki.kernel.org
-  
-To build a 2.6.23-rc4-rt1 tree, the following patches should be applied:
- 
-  http://kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.22.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.23-rc4.bz2
-  http://kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rc4-rt1.bz2
-
-        Thomas, Ingo
+Please fix this in another way that does not add new locks or atomics
+to the socket creation and destruction fast paths, thank you.
