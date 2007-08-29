@@ -1,62 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 2.6.21.5-rt17] IPV6: estalished connections are not shown
  with "cat /proc/net/tcp6"
-Date: Wed, 29 Aug 2007 08:31:29 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708290829500.22945@gandalf.stny.rr.com>
-References: <46D4CED2.4060302@ncos.nec.co.jp>
+Date: Wed, 29 Aug 2007 08:36:20 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0708290831380.22945@gandalf.stny.rr.com>
+References: <46D4CED2.4060302@ncos.nec.co.jp> <20070828.215636.99202736.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: dwalker@mvista.com, mingo@elte.hu, linux-rt-users@vger.kernel.org,
-	tglx@linutronix.de, rlrevell@joe-job.com
-To: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
+Cc: nakagawa.msy@ncos.nec.co.jp, dwalker@mvista.com, mingo@elte.hu,
+	linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+	rlrevell@joe-job.com
+To: David Miller <davem@davemloft.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:59400 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751609AbXH2McW (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:44882 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754762AbXH2MhN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Aug 2007 08:32:22 -0400
-In-Reply-To: <46D4CED2.4060302@ncos.nec.co.jp>
+	Wed, 29 Aug 2007 08:37:13 -0400
+In-Reply-To: <20070828.215636.99202736.davem@davemloft.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 --
-On Tue, 28 Aug 2007, Masayuki Nakagawa wrote:
+When I'm asked what language is my mother tongue,
+I simply answer "C".
 
-> > On Sat, 2007-06-23 at 08:25 -0400, Steven Rostedt wrote:
-> >
-> >> --- linux-2.6.21.orig/net/ipv4/tcp_ipv4.c       2007-06-17 17:19:02.000000000 +0200
-> >> +++ linux-2.6.21/net/ipv4/tcp_ipv4.c    2007-06-17 17:20:27.000000000 +0200
-> >> @@ -2033,7 +2033,12 @@ static void *established_get_first(struc
-> >>         struct tcp_iter_state* st = seq->private;
-> >>         void *rc = NULL;
-> >>
-> >> -       for (st->bucket = 0; st->bucket < tcp_hashinfo.ehash_size; ++st->bucket) {
-> >>
-> >> The above is a linear search through out a very large array, where most
-> >> of the items are NULL.  I believe it was Lee that noticed this creating
-> >> a large latency. This was back in 2.6.14. I'll check to see if this
-> >> still is a source of latency with the latest kernels.
-> >
-> > It looks fairly generic, is it a latency that could be fix the same way
-> > up stream?
-> >
-> > Daniel
-> >
-> Hi Steven,
+On Tue, 28 Aug 2007, David Miller wrote:
+
+> From: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
+> Date: Tue, 28 Aug 2007 18:41:38 -0700
 >
-> I believe that we should push the following patch to upstream(netdev).
-> (This is a patch which extracted a part of the hash code from real-time patch.)
-> How do you think?
+> > +static inline void __inet_hash_setbit(unsigned long *bitmask,
+> > +	unsigned int index)
+> > +{
+> > +	if (bitmask)
+> > +		set_bit(index, bitmask);
+> > +}
+> > +
+> > +static inline void __inet_hash_clearbit(unsigned long *bitmask,
+> > +	unsigned int index)
+> > +{
+> > +	if (bitmask)
+> > +		clear_bit(index, bitmask);
+> > +}
+> > +
+>
+> A new atomic operation every single socket hashing insert or delete
+> operation is way too much amount of overhead for what should be a
+> trivial problem.
+
+Indeed it is.
+
+>
+> Please fix this in another way that does not add new locks or atomics
+> to the socket creation and destruction fast paths, thank you.
 >
 
-Hi Masayuki,
+This was originally written back when there was a bh lock around the
+entire loop (IIRC).  It caused quite a bit of latency problems back then.
 
-I really need to investigate if this is even still needed. This code was
-originally added when a bh lock was held for the entire for loop. I see
-that it is done per entry now.  I'll take a look to see if there's a
-better way to do this.
+I'll have to take a look to see if it is even still a problem.
 
-Thanks for bringing this back to the fore front.
+If it is, then we'll need to find another fix for it. Unfortunately, it's
+not that trivial (if it is still a problem). Since we need a way to look a
+a large number of buckets without looping through checking each one.
+
+Lee, I think you were the one to notice this source of latency back when
+it was first discovered. If I write a patch to back this out of the -rt
+kernel, could you see if it is still an issue?
+
+Thanks,
 
 -- Steve
