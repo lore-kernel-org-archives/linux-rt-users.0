@@ -1,55 +1,70 @@
 From: Daniel Walker <dwalker@mvista.com>
-Subject: 2.6.23-rc4-dw1
-Date: Wed, 29 Aug 2007 17:17:29 -0700
-Message-ID: <1188433049.26038.15.camel@dhcp193.mvista.com>
+Subject: Re: [PATCH 1/2] Adds full stack to critical-section tracing
+Date: Wed, 29 Aug 2007 17:48:12 -0700
+Message-ID: <1188434892.26038.23.camel@dhcp193.mvista.com>
+References: <20070810140745.12966.8464.stgit@lsg>
+	 <20070810141413.12966.13475.stgit@lsg>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, mingo@redhat.com, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761534AbXH3A0q@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from h151.mvista.com ([63.81.120.158]:40137 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1751712AbXH3A5Q (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 29 Aug 2007 20:57:16 -0400
+In-Reply-To: <20070810141413.12966.13475.stgit@lsg>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 2007-08-10 at 08:14 -0600, Gregory Haskins wrote:
+> ---
+> 
+>  include/linux/sched.h  |    7 +++++--
+>  kernel/latency_trace.c |   18 +++++++++++-------
+>  2 files changed, 16 insertions(+), 9 deletions(-)
+> 
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index 8ebb43c..233d26c 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -1306,10 +1306,13 @@ struct task_struct {
+>  #endif
+>  
+>  #define MAX_PREEMPT_TRACE 25
+> +#define MAX_PREEMPT_TRACE_DEPTH 5
+>  
+>  #ifdef CONFIG_PREEMPT_TRACE
+> -	unsigned long preempt_trace_eip[MAX_PREEMPT_TRACE];
+> -	unsigned long preempt_trace_parent_eip[MAX_PREEMPT_TRACE];
+> +	struct {
+> +		struct stack_trace trace;
+> +		unsigned long      data[MAX_PREEMPT_TRACE_DEPTH];
+> +	} preempt_trace[MAX_PREEMPT_TRACE];
 
-I've updated to 2.6.23-rc4 .. This is an "Ingo appears to be busy.."
-release .. I've been waiting for a -rt update , but there hasn't been
-one for a while. So my tree is the best everyone will get for now.
+These changes need some fixing .. The "struct stack_trace"
+infrastructure is based on CONFIG_STACKTRACE , so at least you would
+want to ifdef your changes on that config options ..
 
-ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc4-dw1
-ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc4-dw1.tar.bz2
+I modified you patch to include the ifdefs,
 
-The patches follow the release style of Ingo's tree, and his release
-notes also apply to my patch as well.
+ftp://source.mvista.com/pub/dwalker/misc/debug-preempt-5-levels-of-stack-frames.patch
 
-I included a fresh git-acpi pull. I also included all the patches I've
-submitted to Ingo, and the following patches that got submitting to lkml
-and the linux-rt-users list,
+The other problem I noticed is that the save_stack_trace(trace); seems
+kind of heavy weight to be calling from inside add_preempt_count. If
+your only going to a depth of 5 you could potentially use there macros,
 
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] fix non SMP compile smp stubs
-
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: [PATCH RT] - Mellanox IB driver patch
-
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Add missing semicolon in percpu_list.h
-
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH RFC -rt] synchronize_sched() without migration
-
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH RFC -rt] Allow rcutorture to handle synchronize_sched()
-
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Only run softirqs from the irq thread if the irq
-
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3] initialize the clock source to jiffies clock.
-
-Enjoy,
+#ifdef CONFIG_FRAME_POINTER
+# ifndef CONFIG_ARM
+#  define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+#  define CALLER_ADDR1 ((unsigned long)__builtin_return_address(1))
+#  define CALLER_ADDR2 ((unsigned long)__builtin_return_address(2))
+#  define CALLER_ADDR3 ((unsigned long)__builtin_return_address(3))
+#  define CALLER_ADDR4 ((unsigned long)__builtin_return_address(4))
+#  define CALLER_ADDR5 ((unsigned long)__builtin_return_address(5))
+# else
 
 Daniel
