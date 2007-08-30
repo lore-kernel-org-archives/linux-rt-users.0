@@ -1,111 +1,215 @@
-From: John Blackwood <john.blackwood@ccur.com>
-Subject: force_sig() CONFIG_PREMPT_RT x86_64 issue in do_int3() and do_debug()
-Date: Thu, 30 Aug 2007 10:51:05 -0400
-Message-ID: <46D6D959.1080603@ccur.com>
-Reply-To: john.blackwood@ccur.com
+From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+Subject: Re: [PATCH] kexec: reenable HPET before kexec
+Date: Thu, 30 Aug 2007 20:07:49 +0400
+Message-ID: <20070830200749.2f1f0a18@windmill.dev.rtsoft.ru>
+References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
+	<20070823090845.GA13065@in.ibm.com>
+	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
+	<20070827053656.GC9809@in.ibm.com>
+	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
+	<20070828165832.5047d4de@windmill.dev.rtsoft.ru>
+	<m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>, Andi Kleen <ak@suse.de>
+Cc: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>,
+	<vgoyal@in.ibm.com>, "RT" <linux-rt-users@vger.kernel.org>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"Andi Kleen" <ak@suse.de>,
+	Kexec Mailing List <kexec@lists.infradead.org>
+To: ebiederm@xmission.com (Eric W. Biederman)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.ccur.com ([66.10.65.12]:27197 "EHLO mail.ccur.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932212AbXH3OvG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Aug 2007 10:51:06 -0400
+Received: from rtsoft2.corbina.net ([85.21.88.2]:41699 "HELO
+	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with SMTP id S1757810AbXH3QB1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Aug 2007 12:01:27 -0400
+In-Reply-To: <m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ingo and Andi,
+On Thu, 30 Aug 2007 01:32:30 -0600
+ebiederm@xmission.com (Eric W. Biederman) wrote:
+> 
+> Ok.  It looks like you understand this issue.
+> 
+> Can you please try calling hpet_disable_int from
+> hpet_set_mode under CLOCK_EVT_MODE_SHUTDOWN.  I haven't
+> traced the clock event methods all of the way through
+> but as a first approximation I think that will get
+> things called at the appropriate time with out needing
+> to patch machine_kexec.  Which is very much the wrong
+> place to add call any hpet code from.
+> 
+> We may also need to make the hpet initialization more
+> robust so we can do something sane in the kexec on panic
+> case, where we deliberately don't run any shutdown methods.
+> 
+> Eric
 
-I've run into an issue with x86_64 CONFIG_PREEMPT_RT kernels that I
-would like to mention.  I'm afraid that I have no ideas for a solution.
+  Eric, actually calling hpet_disable_int() under
+CLOCK_EVT_MODE_SHUTDOWN is not enough, because
+HPET might not be shutdown at all (we might want to use HPET and don't
+want to use LAPIC timer or in some cases HPET is used as broadcast
+device with LAPIC timers enabled). So, somehow, we should call
+hpet_set_mode with CLOCK_EVT_MODE_SHUTDOWN as an argument before
+machine_kexec. To solve this I've added timekeeping_shutdown() to
+timekeeping.c that calls clockevents_notify(CLOCK_EVT_NOTIFY_SUSPEND,
+NULL). Function timekeeping_shutdown() is called from sysdev_shutdown().
+  Also If we are adding hpet_disable_int() under
+CLOCK_EVT_MODE_SHUTDOWN we have to add hpet_enable_int under
+CLOCK_EVT_MODE_PERIODIC and CLOCK_EVT_MODE_ONESHOT.
+  Also I've added call of hpet_disable_int() to machine_crash_shutdown()
+because, as you said, sysdev_shutdown() won't be called on crash before
+machine_kexec().
+  Also, as we have to make hpet_disable_int() global and call it from
+machine_crash_shutdown(), I suggest not to add hpet_disable_int() under
+CLOCK_EVT_MODE_SHUTDOWN. If we don't add hpet_disable_int() under
+CLOCK_EVT_MODE_SHUTDOWN - patch will be more smaller because we don't
+have to call clockevents_notify() and we don't have to add
+hpet_enable_int. We just have to add hpet_disable_int() call to
+timekeeping_shutdown(). But it's just suggestion - attached patch adds
+hpet_disable_int() under CLOCK_EVT_MODE_SHUTDOWN.
 
-I created a kernel with the following items:
+Here is new version of fix. It still against kernel 2.6.23-rc3. Thanks.
 
-     linux-2.6.22.tar.bz2
-     patch-2.6.23-rc2.bz
-     patch-2.6.23-rc2-rt2
+Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
 
-And I enabled CONFIG_PREEMPT_RT along with the various DEBUG parameters,
-such as CONFIG_DEBUG_SPINLOCK, CONFIG_DEBUG_SPINLOCK_SLEEP, etc.
+ arch/i386/kernel/crash.c  |    4 ++++
+ arch/i386/kernel/hpet.c   |   33 +++++++++++++++++++++++++++++++++
+ include/asm-i386/hpet.h   |    3 +++
+ kernel/time/timekeeping.c |   13 +++++++++++++
+ 4 files changed, 53 insertions(+)
 
-When I run some ptrace-base tests that make use of int3 breakpoints,
-singlesteps or hardware debug registers on x86_64 systems, I see BUG
-messages that indicate an issue with calling force_sig()/force_sig_info()
-from do_debug()/do_int3()->do_trap() since we're running on the IST
-kernel stack with preemptions disabled.
-
-[ It's interesting that the i386 version of do_trap() has
-   some CONFIG_PREEMPT_RT code in it that does a
-   local_irq_enable() and preempt_check_resched() before
-   it gets to the force_sig() code,  but that won't work
-   for x86_64 due to the per-cpu IST stack. ]
-
-Below is an example of the output from a ptrace singlestep test where
-we actually end up switching away from the current task:
-
-
-    BUG: scheduling while atomic: ssdd/0x00000002/5333, CPU#1
-    Call Trace:
-    <#DB>  [<ffffffff8057f304>] __sched_text_start+0xcc/0x90a
-    [<ffffffff80236634>] release_console_sem+0x17f/0x1ae
-    [<ffffffff80236a06>] printk+0x8d/0x95
-    [<ffffffff80252887>] __rt_mutex_adjust_prio+0x9/0x1b
-    [<ffffffff80253134>] task_blocks_on_rt_mutex+0x17d/0x1d0
-    [<ffffffff8057fe0f>] schedule+0xdf/0xff
-    [<ffffffff80580fb9>] rt_spin_lock_slowlock+0xed/0x18a
-    [<ffffffff80282459>] kmem_cache_alloc+0x56/0x118
-    [<ffffffff8023f669>] __sigqueue_alloc+0x32/0x5d
-    [<ffffffff8023fd79>] send_signal+0x65/0x149
-    [<ffffffff8023febf>] specific_send_sig_info+0x62/0x96
-    [<ffffffff8023ff72>] force_sig_info+0x7f/0x9b
-    [<ffffffff8020e445>] do_debug+0xf2/0x141
-    [<ffffffff8023fb7a>] signal_wake_up+0x1e/0x2d
-    [<ffffffff8023fee8>] specific_send_sig_info+0x8b/0x96
-    [<ffffffff8023ff87>] force_sig_info+0x94/0x9b
-    [<ffffffff80581fb3>] debug+0x93/0x9f
-
-
-and here's one more example of an int3 breakpoint:
-
-
-    BUG: sleeping function called from invalid context de5(4222) at
-         kernel/rtmutex.c:636
-    in_atomic():1 [00000001], irqs_disabled():0
-    Call Trace:
-    <#DB>  [<ffffffff80225608>] __might_sleep+0xf8/0xfa
-    [<ffffffff8068bfae>] __rt_spin_lock+0x2c/0x4e
-    [<ffffffff8068bfd9>] rt_spin_lock+0x9/0xb
-    [<ffffffff8023ad82>] force_sig_info+0x25/0xa9
-    [<ffffffff8023b3a1>] force_sig+0x11/0x13
-    [<ffffffff8020bdd4>] do_trap+0x1dd/0x27b
-    [<ffffffff8023dfdf>] __raw_notifier_call_chain+0x9/0xb
-    [<ffffffff8023dff0>] raw_notifier_call_chain+0xf/0x11
-    [<ffffffff8020c911>] do_int3+0x6a/0x7e
-    [<ffffffff8068cfe3>] int3+0x93/0xb0
-    <<EOE>>
-    ---------------------------
-    | preempt count: 00000001 ]
-    | 1-level deep critical section nesting:
-    ----------------------------------------
-    .. [<ffffffff8020c8e8>] .... do_int3+0x41/0x7e
-    .....[<ffffffff8068cfe3>] ..   ( <= int3+0x93/0xb0)
-
-    BUG: de5:4222 task might have lost a preemption check!
-
-    Call Trace:
-    <#DB>  [<ffffffff8022d343>] preempt_enable_no_resched+0x5c/0x5e
-    [<ffffffff8020c920>] do_int3+0x79/0x7e
-    [<ffffffff8068cfe3>] int3+0x93/0xb0
-    <<EOE>>
-    ---------------------------
-    | preempt count: 00000000 ]
-    | 0-level deep critical section nesting:
-    ----------------------------------------
-
-
-Thanks in advance for any input or comments.
-
-
-John Blackwood		john.blackwood@ccur.com
+Index: linux-2.6.23-rc3/arch/i386/kernel/hpet.c
+===================================================================
+--- linux-2.6.23-rc3.orig/arch/i386/kernel/hpet.c
++++ linux-2.6.23-rc3/arch/i386/kernel/hpet.c
+@@ -144,11 +144,35 @@ static void hpet_enable_int(void)
+ {
+ 	unsigned long cfg = hpet_readl(HPET_CFG);
+ 
++#ifdef CONFIG_KEXEC
++	if (hpet_legacy_int_enabled)
++		return;
++#endif
++
+ 	cfg |= HPET_CFG_LEGACY;
+ 	hpet_writel(cfg, HPET_CFG);
+ 	hpet_legacy_int_enabled = 1;
+ }
+ 
++#ifdef CONFIG_KEXEC
++void hpet_disable_int(void)
++{
++	unsigned long cfg;
++
++	if (!hpet_legacy_int_enabled)
++		return;
++
++	if (!is_hpet_capable())
++		return;
++
++	cfg = hpet_readl(HPET_CFG);
++	cfg &= ~HPET_CFG_LEGACY;
++	hpet_writel(cfg, HPET_CFG);
++	hpet_legacy_int_enabled = 0;
++
++}
++#endif
++
+ static void hpet_set_mode(enum clock_event_mode mode,
+ 			  struct clock_event_device *evt)
+ {
+@@ -157,6 +181,9 @@ static void hpet_set_mode(enum clock_eve
+ 
+ 	switch(mode) {
+ 	case CLOCK_EVT_MODE_PERIODIC:
++#ifdef CONFIG_KEXEC
++		hpet_enable_int();
++#endif
+ 		delta = ((uint64_t)(NSEC_PER_SEC/HZ)) * hpet_clockevent.mult;
+ 		delta >>= hpet_clockevent.shift;
+ 		now = hpet_readl(HPET_COUNTER);
+@@ -176,6 +203,9 @@ static void hpet_set_mode(enum clock_eve
+ 		break;
+ 
+ 	case CLOCK_EVT_MODE_ONESHOT:
++#ifdef CONFIG_KEXEC
++		hpet_enable_int();
++#endif
+ 		cfg = hpet_readl(HPET_T0_CFG);
+ 		cfg &= ~HPET_TN_PERIODIC;
+ 		cfg |= HPET_TN_ENABLE | HPET_TN_32BIT;
+@@ -187,6 +217,9 @@ static void hpet_set_mode(enum clock_eve
+ 		cfg = hpet_readl(HPET_T0_CFG);
+ 		cfg &= ~HPET_TN_ENABLE;
+ 		hpet_writel(cfg, HPET_T0_CFG);
++#ifdef CONFIG_KEXEC
++		hpet_disable_int();
++#endif
+ 		break;
+ 
+ 	case CLOCK_EVT_MODE_RESUME:
+Index: linux-2.6.23-rc3/include/asm-i386/hpet.h
+===================================================================
+--- linux-2.6.23-rc3.orig/include/asm-i386/hpet.h
++++ linux-2.6.23-rc3/include/asm-i386/hpet.h
+@@ -66,6 +66,9 @@
+ extern unsigned long hpet_address;
+ extern int is_hpet_enabled(void);
+ extern int hpet_enable(void);
++#ifdef CONFIG_KEXEC
++extern void hpet_disable_int(void);
++#endif
+ 
+ #ifdef CONFIG_HPET_EMULATE_RTC
+ 
+Index: linux-2.6.23-rc3/arch/i386/kernel/crash.c
+===================================================================
+--- linux-2.6.23-rc3.orig/arch/i386/kernel/crash.c
++++ linux-2.6.23-rc3/arch/i386/kernel/crash.c
+@@ -24,6 +24,7 @@
+ #include <asm/apic.h>
+ #include <linux/kdebug.h>
+ #include <asm/smp.h>
++#include <asm/hpet.h>
+ 
+ #include <mach_ipi.h>
+ 
+@@ -128,6 +129,9 @@ void machine_crash_shutdown(struct pt_re
+ 
+ 	/* Make a note of crashing cpu. Will be used in NMI callback.*/
+ 	crashing_cpu = safe_smp_processor_id();
++#ifdef CONFIG_KEXEC
++	hpet_disable_int();
++#endif
+ 	nmi_shootdown_cpus();
+ 	lapic_shutdown();
+ #if defined(CONFIG_X86_IO_APIC)
+Index: linux-2.6.23-rc3/kernel/time/timekeeping.c
+===================================================================
+--- linux-2.6.23-rc3.orig/kernel/time/timekeeping.c
++++ linux-2.6.23-rc3/kernel/time/timekeeping.c
+@@ -335,8 +335,21 @@ static int timekeeping_suspend(struct sy
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_KEXEC
++static int timekeeping_shutdown(struct sys_device *dev)
++{
++	clockevents_notify(CLOCK_EVT_NOTIFY_SUSPEND, NULL);
++//	hpet_disable_int();
++
++	return 0;
++}
++#endif
++
+ /* sysfs resume/suspend bits for timekeeping */
+ static struct sysdev_class timekeeping_sysclass = {
++#ifdef CONFIG_KEXEC
++	.shutdown	= timekeeping_shutdown,
++#endif
+ 	.resume		= timekeeping_resume,
+ 	.suspend	= timekeeping_suspend,
+ 	set_kset_name("timekeeping"),
