@@ -1,70 +1,69 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH 1/2] Adds full stack to critical-section tracing
-Date: Wed, 29 Aug 2007 17:48:12 -0700
-Message-ID: <1188434892.26038.23.camel@dhcp193.mvista.com>
-References: <20070810140745.12966.8464.stgit@lsg>
-	 <20070810141413.12966.13475.stgit@lsg>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH] kexec: reenable HPET before kexec
+Date: Thu, 30 Aug 2007 01:32:30 -0600
+Message-ID: <m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
+References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
+	<20070823090845.GA13065@in.ibm.com>
+	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
+	<20070827053656.GC9809@in.ibm.com>
+	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
+	<20070828165832.5047d4de@windmill.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>,
+	<vgoyal@in.ibm.com>, "RT" <linux-rt-users@vger.kernel.org>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"Andi Kleen" <ak@suse.de>,
+	Kexec Mailing List <kexec@lists.infradead.org>
+To: Konstantin Baydarov <kbaidarov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from h151.mvista.com ([63.81.120.158]:40137 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S1751712AbXH3A5Q (ORCPT
+Received: from ebiederm.dsl.xmission.com ([166.70.28.69]:40104 "EHLO
+	ebiederm.dsl.xmission.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752198AbXH3HhB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Aug 2007 20:57:16 -0400
-In-Reply-To: <20070810141413.12966.13475.stgit@lsg>
+	Thu, 30 Aug 2007 03:37:01 -0400
+In-Reply-To: <20070828165832.5047d4de@windmill.dev.rtsoft.ru> (Konstantin
+	Baydarov's message of "Tue, 28 Aug 2007 16:58:32 +0400")
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2007-08-10 at 08:14 -0600, Gregory Haskins wrote:
-> ---
-> 
->  include/linux/sched.h  |    7 +++++--
->  kernel/latency_trace.c |   18 +++++++++++-------
->  2 files changed, 16 insertions(+), 9 deletions(-)
-> 
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 8ebb43c..233d26c 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -1306,10 +1306,13 @@ struct task_struct {
->  #endif
->  
->  #define MAX_PREEMPT_TRACE 25
-> +#define MAX_PREEMPT_TRACE_DEPTH 5
->  
->  #ifdef CONFIG_PREEMPT_TRACE
-> -	unsigned long preempt_trace_eip[MAX_PREEMPT_TRACE];
-> -	unsigned long preempt_trace_parent_eip[MAX_PREEMPT_TRACE];
-> +	struct {
-> +		struct stack_trace trace;
-> +		unsigned long      data[MAX_PREEMPT_TRACE_DEPTH];
-> +	} preempt_trace[MAX_PREEMPT_TRACE];
+Konstantin Baydarov <kbaidarov@ru.mvista.com> writes:
 
-These changes need some fixing .. The "struct stack_trace"
-infrastructure is based on CONFIG_STACKTRACE , so at least you would
-want to ifdef your changes on that config options ..
+> On Mon, 27 Aug 2007 11:26:29 -0700
+> "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com> wrote:
+>
+>> 
+>> 
+>> - Another thing to try is to disable HPET and boot with PIT in the
+>> first kernel. Just to check whether PIT never works on this platform
+>> or the first kernel is doing something to stop PIT. You can try
+>> "hpet=disable" boot option for that.
+>> 
+>> Thanks,
+>> Venki
+>
+> I've tried kernel 1 with HPET disabled - it boots fine, PIT works!
+> Then I made additional investigations and found out that PIT won't work
+> in kernel 2 if bit HPET_CFG_LEGACY is set.
+> Bit HPET_CFG_LEGACY is set by hpet_enable_int() during HPET
+> initialization, so if this bit is cleared in machine_kexec() kernel 2
+> boots fine.
+> I can't explain this magic, maybe someone can explain this. Thanks.
+>
+> Here is new version of workaround for 2.6.23-rc3
 
-I modified you patch to include the ifdefs,
+Ok.  It looks like you understand this issue.
 
-ftp://source.mvista.com/pub/dwalker/misc/debug-preempt-5-levels-of-stack-frames.patch
+Can you please try calling hpet_disable_int from
+hpet_set_mode under CLOCK_EVT_MODE_SHUTDOWN.  I haven't
+traced the clock event methods all of the way through
+but as a first approximation I think that will get
+things called at the appropriate time with out needing
+to patch machine_kexec.  Which is very much the wrong
+place to add call any hpet code from.
 
-The other problem I noticed is that the save_stack_trace(trace); seems
-kind of heavy weight to be calling from inside add_preempt_count. If
-your only going to a depth of 5 you could potentially use there macros,
+We may also need to make the hpet initialization more
+robust so we can do something sane in the kexec on panic
+case, where we deliberately don't run any shutdown methods.
 
-#ifdef CONFIG_FRAME_POINTER
-# ifndef CONFIG_ARM
-#  define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
-#  define CALLER_ADDR1 ((unsigned long)__builtin_return_address(1))
-#  define CALLER_ADDR2 ((unsigned long)__builtin_return_address(2))
-#  define CALLER_ADDR3 ((unsigned long)__builtin_return_address(3))
-#  define CALLER_ADDR4 ((unsigned long)__builtin_return_address(4))
-#  define CALLER_ADDR5 ((unsigned long)__builtin_return_address(5))
-# else
-
-Daniel
+Eric
