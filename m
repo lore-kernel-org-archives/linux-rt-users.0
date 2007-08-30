@@ -1,74 +1,55 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 2.6.21.5-rt17] IPV6: estalished connections are not shown
- with "cat /proc/net/tcp6"
-Date: Wed, 29 Aug 2007 08:36:20 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0708290831380.22945@gandalf.stny.rr.com>
-References: <46D4CED2.4060302@ncos.nec.co.jp> <20070828.215636.99202736.davem@davemloft.net>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: 2.6.23-rc4-dw1
+Date: Wed, 29 Aug 2007 17:17:29 -0700
+Message-ID: <1188433049.26038.15.camel@dhcp193.mvista.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: nakagawa.msy@ncos.nec.co.jp, dwalker@mvista.com, mingo@elte.hu,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de,
-	rlrevell@joe-job.com
-To: David Miller <davem@davemloft.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:44882 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754762AbXH2MhN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Aug 2007 08:37:13 -0400
-In-Reply-To: <20070828.215636.99202736.davem@davemloft.net>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, mingo@redhat.com, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761534AbXH3A0q@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
---
-When I'm asked what language is my mother tongue,
-I simply answer "C".
+I've updated to 2.6.23-rc4 .. This is an "Ingo appears to be busy.."
+release .. I've been waiting for a -rt update , but there hasn't been
+one for a while. So my tree is the best everyone will get for now.
 
-On Tue, 28 Aug 2007, David Miller wrote:
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc4-dw1
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.23-rc4-dw1.tar.bz2
 
-> From: Masayuki Nakagawa <nakagawa.msy@ncos.nec.co.jp>
-> Date: Tue, 28 Aug 2007 18:41:38 -0700
->
-> > +static inline void __inet_hash_setbit(unsigned long *bitmask,
-> > +	unsigned int index)
-> > +{
-> > +	if (bitmask)
-> > +		set_bit(index, bitmask);
-> > +}
-> > +
-> > +static inline void __inet_hash_clearbit(unsigned long *bitmask,
-> > +	unsigned int index)
-> > +{
-> > +	if (bitmask)
-> > +		clear_bit(index, bitmask);
-> > +}
-> > +
->
-> A new atomic operation every single socket hashing insert or delete
-> operation is way too much amount of overhead for what should be a
-> trivial problem.
+The patches follow the release style of Ingo's tree, and his release
+notes also apply to my patch as well.
 
-Indeed it is.
+I included a fresh git-acpi pull. I also included all the patches I've
+submitted to Ingo, and the following patches that got submitting to lkml
+and the linux-rt-users list,
 
->
-> Please fix this in another way that does not add new locks or atomics
-> to the socket creation and destruction fast paths, thank you.
->
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] fix non SMP compile smp stubs
 
-This was originally written back when there was a bh lock around the
-entire loop (IIRC).  It caused quite a bit of latency problems back then.
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Subject: [PATCH RT] - Mellanox IB driver patch
 
-I'll have to take a look to see if it is even still a problem.
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Add missing semicolon in percpu_list.h
 
-If it is, then we'll need to find another fix for it. Unfortunately, it's
-not that trivial (if it is still a problem). Since we need a way to look a
-a large number of buckets without looping through checking each one.
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH RFC -rt] synchronize_sched() without migration
 
-Lee, I think you were the one to notice this source of latency back when
-it was first discovered. If I write a patch to back this out of the -rt
-kernel, could you see if it is still an issue?
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH RFC -rt] Allow rcutorture to handle synchronize_sched()
 
-Thanks,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Only run softirqs from the irq thread if the irq
 
--- Steve
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/3] initialize the clock source to jiffies clock.
+
+Enjoy,
+
+Daniel
