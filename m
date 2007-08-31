@@ -1,71 +1,43 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: jitter bursts
-Date: Fri, 31 Aug 2007 17:17:27 +0200
-Message-ID: <20070831151727.GT23573@pengutronix.de>
+From: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>
+Subject: Re: jitter bursts
+Date: Fri, 31 Aug 2007 17:58:17 +0200
+Message-ID: <46D83A99.3080707@l1nuxh4ck3r.de>
+References: <20070831151727.GT23573@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Michael Olbrich <m.olbrich@pengutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	Michael Olbrich <m.olbrich@pengutronix.de>,
 	kiszka@rts.uni-hannover.de
-To: linux-rt-users@vger.kernel.org
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:44562 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S932325AbXHaPRi (ORCPT
+Received: from cg-p07-fb.rzone.de ([81.169.146.215]:43331 "EHLO
+	cg-p07-fb.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758148AbXHaPyf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Aug 2007 11:17:38 -0400
-Content-Disposition: inline
+	Fri, 31 Aug 2007 11:54:35 -0400
+Received: from mo-p00-ob.rzone.de (klopstock-mo-p00-ob.mail [192.168.63.66])
+	by charnel-fb-02.store (RZmta 12.3) with ESMTP id r06ec4j7VF3Evo
+	for <linux-rt-users@vger.kernel.org>;
+	Fri, 31 Aug 2007 17:54:34 +0200 (MEST)
+In-Reply-To: <20070831151727.GT23573@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-We are currently porting a userspace realtime network stack (Ethernet
-Powerlink -> EPL) to RT-Preempt, in order to play with the system and
-find out what is possible today with a standard linux-rt and userspace
-socket based stacks.
+Hi Robert!
 
-We currently see a strange latency effect. The scenario is like this:
+I guess these latencies didn't show up at the system
+you are porting from?
+Is the HW setup from the system you are porting from
+the same as you are using with -rt?
+Are both, sender and receiver are using -rt?
+What happens if you are using the old system
+as sender and -rt for the receiver?
+What happens if you are using -rt as sender and
+-rt as receiver?
+Are you using an onboard nvidia SATA controller?
 
- +--------+  +-----------+ +-----------+
- | PC EPL |  | Second PC | | EPL Clamp |
- +--------+  +-----------+ +-----------+
-      |            |            |
-       \     +----------+       /
-        \----|    Hub   |------/
-             +----------+
+regards
 
-EPL is a protocol where the Master (PC EPL) sends a cyclic Start-of-
-Cycle packet (SoC) to the network; our cycle time is 2 ms. To make sure
-we do not se effects from the stack itself, we have written a small
-program which sends a packet every 2 ms via raw socket.
-
-We have a second PC which listens to the same network; this box takes
-the packet time stamps (SO_TIMESTAMP), substracts the 2 ms cycle time
-since the last SoC and plots the resulting jitter:
-
-http://www.pengutronix.de/software/realtime-preempt/20070831-network-jitter/epl-jitter-log-20070831-1.png
-
-What we see is that most of the packet times stay within something
-around 10 us. However, there are periodic jitters which exceed that
-period by a huge factor; in that case the jitter is in the 200...400 us
-area, and notice the systematic patterns in the plots.
-
-The periodicity of the 200...400 us is fixed for an unchanged clock
-source (18 s in this example, we have seen values up to 200 s). The
-periodicy changes when the clock source is changed in
-
-/sys/devices/system/clocksource/clocksource0/current_clocksource
-
-Changing to another clock source and changing back changes the period,
-but it is not reproducable if you change back to the same source (hpet,
-acpi_pm, tsc). There is also no visible corellation between the concrete
-clocksource and the period.
-
-The periodicity is fairly precise, it varies with < 5 us.
-
-Has anyone seen a similar effect?
-
-Robert
--- 
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
+Bernhard
