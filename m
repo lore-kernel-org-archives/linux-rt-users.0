@@ -1,136 +1,71 @@
-From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Date: Fri, 31 Aug 2007 14:31:51 +0400
-Message-ID: <20070831143151.7dde7c86@windmill.dev.rtsoft.ru>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
-	<20070823090845.GA13065@in.ibm.com>
-	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
-	<20070827053656.GC9809@in.ibm.com>
-	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
-	<20070828165832.5047d4de@windmill.dev.rtsoft.ru>
-	<m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
-	<20070830200749.2f1f0a18@windmill.dev.rtsoft.ru>
-	<m1d4x4zyoe.fsf@ebiederm.dsl.xmission.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: jitter bursts
+Date: Fri, 31 Aug 2007 17:17:27 +0200
+Message-ID: <20070831151727.GT23573@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>,
-	<vgoyal@in.ibm.com>, "RT" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel" <linux-kernel@vger.kernel.org>,
-	"Andi Kleen" <ak@suse.de>,
-	Kexec Mailing List <kexec@lists.infradead.org>
-To: ebiederm@xmission.com (Eric W. Biederman)
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Michael Olbrich <m.olbrich@pengutronix.de>,
+	kiszka@rts.uni-hannover.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft2.corbina.net ([85.21.88.2]:52728 "HELO
-	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with SMTP id S1756320AbXHaKZZ (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:44562 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S932325AbXHaPRi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Aug 2007 06:25:25 -0400
-In-Reply-To: <m1d4x4zyoe.fsf@ebiederm.dsl.xmission.com>
+	Fri, 31 Aug 2007 11:17:38 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 30 Aug 2007 12:04:33 -0600
-ebiederm@xmission.com (Eric W. Biederman) wrote:
+Hi,
 
-> I was assuming that CLOCK_EVT_MODE_SHUTDOWN just mapped
-> to the shutdown method of the clock events or something else.
-> But it shutdown means something different in this context we
-> can certainly find a better place to hook into the device
-> tree and call shutdown methods.   Especially if that will
-> make the code simpler.
+We are currently porting a userspace realtime network stack (Ethernet
+Powerlink -> EPL) to RT-Preempt, in order to play with the system and
+find out what is possible today with a standard linux-rt and userspace
+socket based stacks.
 
-Agree. I've got rig from timekeeping. Now I'm using system device tree shutdown interface, as you suggested. I've added HPET system device class with shutdown method and HPET device to sysdev.
+We currently see a strange latency effect. The scenario is like this:
 
-> This is a design feature.  machine_crash_shutdown is not really 
-> supposed to disable any hardware.  There is a very minimal set that we
-> haven't been able to figure out how to get the kernels initialization
-> routines to deal with properly.  Which is a temporary justification
-> for not doing more now.  If we can't find anyway to make the
-> initialization code more robust for the hpet we can revisit this.
+ +--------+  +-----------+ +-----------+
+ | PC EPL |  | Second PC | | EPL Clamp |
+ +--------+  +-----------+ +-----------+
+      |            |            |
+       \     +----------+       /
+        \----|    Hub   |------/
+             +----------+
 
-So you suggest to check if HPET is present in HPET init code even if HPET disabled in boot kernel command line or APIC is disabled. And if HPET is present and kernel not going to use it - disable HPET interrupts?
+EPL is a protocol where the Master (PC EPL) sends a cyclic Start-of-
+Cycle packet (SoC) to the network; our cycle time is 2 ms. To make sure
+we do not se effects from the stack itself, we have written a small
+program which sends a packet every 2 ms via raw socket.
 
-> Please remove the CONFIG_KEXEC.  We need to do this on a reboot also
-> so we don't confuse the BIOS.  BIOS's frequently but not always
-> can just reset the board to avoid complications like this, but if
-> we need a shutdown method we need a shutdown method.  The kexec
-> case just exercises things more.
-Removed CONFIG_KEXEC.
+We have a second PC which listens to the same network; this box takes
+the packet time stamps (SO_TIMESTAMP), substracts the 2 ms cycle time
+since the last SoC and plots the resulting jitter:
 
-So here is new version of fix. Patch against 2.6.23-rc3.
-Eric, review please. Thanks.
+http://www.pengutronix.de/software/realtime-preempt/20070831-network-jitter/epl-jitter-log-20070831-1.png
 
-Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+What we see is that most of the packet times stay within something
+around 10 us. However, there are periodic jitters which exceed that
+period by a huge factor; in that case the jitter is in the 200...400 us
+area, and notice the systematic patterns in the plots.
 
- arch/i386/kernel/hpet.c |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 48 insertions(+)
+The periodicity of the 200...400 us is fixed for an unchanged clock
+source (18 s in this example, we have seen values up to 200 s). The
+periodicy changes when the clock source is changed in
 
-Index: linux-2.6.23-rc3/arch/i386/kernel/hpet.c
-===================================================================
---- linux-2.6.23-rc3.orig/arch/i386/kernel/hpet.c
-+++ linux-2.6.23-rc3/arch/i386/kernel/hpet.c
-@@ -144,11 +144,31 @@ static void hpet_enable_int(void)
- {
- 	unsigned long cfg = hpet_readl(HPET_CFG);
- 
-+	if (hpet_legacy_int_enabled)
-+		return;
-+
- 	cfg |= HPET_CFG_LEGACY;
- 	hpet_writel(cfg, HPET_CFG);
- 	hpet_legacy_int_enabled = 1;
- }
- 
-+static void hpet_disable_int(void)
-+{
-+	unsigned long cfg;
-+
-+	if (!hpet_legacy_int_enabled)
-+		return;
-+
-+	if (!is_hpet_capable())
-+		return;
-+
-+	cfg = hpet_readl(HPET_CFG);
-+	cfg &= ~HPET_CFG_LEGACY;
-+	hpet_writel(cfg, HPET_CFG);
-+	hpet_legacy_int_enabled = 0;
-+
-+}
-+
- static void hpet_set_mode(enum clock_event_mode mode,
- 			  struct clock_event_device *evt)
- {
-@@ -551,3 +571,31 @@ irqreturn_t hpet_rtc_interrupt(int irq, 
- 	return IRQ_HANDLED;
- }
- #endif
-+
-+static int hpet_shutdown(struct sys_device *dev)
-+{
-+	/* We need this to make PIT works in KEXECuted kernel */
-+	hpet_disable_int();
-+
-+	return 0;
-+}
-+
-+static struct sysdev_class hpet_sysdev_class = {
-+	set_kset_name("hpet"),
-+	.shutdown = hpet_shutdown,
-+};
-+
-+static struct sys_device device_hpet = {
-+	.id	= 0,
-+	.cls	= &hpet_sysdev_class,
-+};
-+
-+static int __init hpet_init_sysfs(void)
-+{
-+	int error = sysdev_class_register(&hpet_sysdev_class);
-+	if (!error)
-+		error = sysdev_register(&device_hpet);
-+	return error;
-+}
-+
-+device_initcall(hpet_init_sysfs);
+/sys/devices/system/clocksource/clocksource0/current_clocksource
+
+Changing to another clock source and changing back changes the period,
+but it is not reproducable if you change back to the same source (hpet,
+acpi_pm, tsc). There is also no visible corellation between the concrete
+clocksource and the period.
+
+The periodicity is fairly precise, it varies with < 5 us.
+
+Has anyone seen a similar effect?
+
+Robert
+-- 
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
