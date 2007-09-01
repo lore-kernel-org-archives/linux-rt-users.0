@@ -1,115 +1,65 @@
-Return-Path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft2.corbina.net ([85.21.88.2]:36866 "HELO
-	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with SMTP id S1751774AbXH1MwO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 28 Aug 2007 08:52:14 -0400
-Date: Tue, 28 Aug 2007 16:58:32 +0400
-From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Message-ID: <20070828165832.5047d4de@windmill.dev.rtsoft.ru>
-In-Reply-To: <653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
-	<20070823090845.GA13065@in.ibm.com>
-	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
-	<20070827053656.GC9809@in.ibm.com>
-	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: v2.6.23-rc4-rt1 / new project URL
+Date: Fri, 31 Aug 2007 17:01:26 -0700
+Message-ID: <1188604887.26038.110.camel@dhcp193.mvista.com>
+References: <1188593944.9647.15.camel@chaos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Sender: linux-rt-users-owner@vger.kernel.org
-To: "Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>
-Cc: vgoyal@in.ibm.com, RT <linux-rt-users@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Andi Kleen <ak@suse.de>
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT-Users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751898AbXIAALi@vger.kernel.org>
+In-Reply-To: <1188593944.9647.15.camel@chaos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 27 Aug 2007 11:26:29 -0700
-"Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com> wrote:
-
+On Fri, 2007-08-31 at 22:59 +0200, Thomas Gleixner wrote:
+> We're pleased to announce the release of the v2.6.23-rc4-rt1 kernel,
+> which can be downloaded from a new place:
+>  
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+>  
+> The move to kernel.org is experimental for now, we'll keep it if it
+> works out fine.
 > 
+> Changes since 2.6.23-rc2-rt2:
 > 
-> - Another thing to try is to disable HPET and boot with PIT in the
-> first kernel. Just to check whether PIT never works on this platform
-> or the first kernel is doing something to stop PIT. You can try
-> "hpet=disable" boot option for that.
+> - update to -rc4
+> - update to 2.6.23-rc4-hrt1
 > 
-> Thanks,
-> Venki
+> - UP compile fixes back merged (Kevin Hilman / Steven Rostedt)
+> - various latency tracer fixes (Steven Rostedt)
 
-I've tried kernel 1 with HPET disabled - it boots fine, PIT works!
-Then I made additional investigations and found out that PIT won't work
-in kernel 2 if bit HPET_CFG_LEGACY is set.
-Bit HPET_CFG_LEGACY is set by hpet_enable_int() during HPET
-initialization, so if this bit is cleared in machine_kexec() kernel 2
-boots fine.
-I can't explain this magic, maybe someone can explain this. Thanks.
+I'm not sure which latency tracing fixes these are, but Steven's
+get_monotonic_cycles() changes are racy .. It might be a little
+premature to include them .. It at least fouls latency tracing on my
+test machine.
 
-Here is new version of workaround for 2.6.23-rc3
+> - simple_irq change (Kevin Hilman): needs more thought
+> - RCU updates (Paul McKenney): needs proper integration
+> - latency tracer changes (Daniel Walker): needs review
+> - PICK_OP changes (Daniel Walker): needs review
 
-Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+The PICK_OP changes got reviewed by Ingo , as of,
 
- arch/i386/kernel/hpet.c          |   12 ++++++++++++
- arch/i386/kernel/machine_kexec.c |    6 ++++++
- include/asm-i386/hpet.h          |    3 +++
- 3 files changed, 21 insertions(+)
+http://marc.info/?l=linux-rt-users&m=118638506125380&w=2
 
-Index: linux-2.6.23-rc3/arch/i386/kernel/hpet.c
+They do need one small fix tho .. Below ..
+
+Signed-off-by: Daniel Walker <dwalker@mvista.com>
+
+Index: linux-2.6.22/include/linux/spinlock.h
 ===================================================================
---- linux-2.6.23-rc3.orig/arch/i386/kernel/hpet.c
-+++ linux-2.6.23-rc3/arch/i386/kernel/hpet.c
-@@ -149,6 +149,18 @@ static void hpet_enable_int(void)
- 	hpet_legacy_int_enabled = 1;
- }
+--- linux-2.6.22.orig/include/linux/spinlock.h	2007-09-01 00:08:04.000000000 +0000
++++ linux-2.6.22/include/linux/spinlock.h	2007-09-01 00:07:48.000000000 +0000
+@@ -501,7 +501,7 @@ do {									\
  
-+#ifdef CONFIG_KEXEC
-+void hpet_disable_int(void)
-+{
-+	unsigned long cfg = hpet_readl(HPET_CFG);
-+
-+	cfg &= ~HPET_CFG_LEGACY;
-+	hpet_writel(cfg, HPET_CFG);
-+	hpet_legacy_int_enabled = 0;
-+
-+}
-+#endif
-+
- static void hpet_set_mode(enum clock_event_mode mode,
- 			  struct clock_event_device *evt)
- {
-Index: linux-2.6.23-rc3/arch/i386/kernel/machine_kexec.c
-===================================================================
---- linux-2.6.23-rc3.orig/arch/i386/kernel/machine_kexec.c
-+++ linux-2.6.23-rc3/arch/i386/kernel/machine_kexec.c
-@@ -19,6 +19,7 @@
- #include <asm/cpufeature.h>
- #include <asm/desc.h>
- #include <asm/system.h>
-+#include <asm/hpet.h>
+ #define spin_trylock_irq(lock)	\
+ 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irq,		\
+-		__spin_trylock_irq, lock))
++		_spin_trylock_irq, lock))
  
- #define PAGE_ALIGNED __attribute__ ((__aligned__(PAGE_SIZE)))
- static u32 kexec_pgd[1024] PAGE_ALIGNED;
-@@ -109,6 +110,11 @@ NORET_TYPE void machine_kexec(struct kim
- 	/* Interrupts aren't acceptable while we reboot */
- 	local_irq_disable();
- 
-+#ifdef CONFIG_HPET_TIMER
-+	/* Without this PIT won't work in executed kernel */
-+	hpet_disable_int();
-+#endif
-+
- 	control_page = page_address(image->control_code_page);
- 	memcpy(control_page, relocate_kernel, PAGE_SIZE);
- 
-Index: linux-2.6.23-rc3/include/asm-i386/hpet.h
-===================================================================
---- linux-2.6.23-rc3.orig/include/asm-i386/hpet.h
-+++ linux-2.6.23-rc3/include/asm-i386/hpet.h
-@@ -66,6 +66,9 @@
- extern unsigned long hpet_address;
- extern int is_hpet_enabled(void);
- extern int hpet_enable(void);
-+#ifdef CONFIG_KEXEC
-+extern void hpet_disable_int(void);
-+#endif
- 
- #ifdef CONFIG_HPET_EMULATE_RTC
- 
+ #define spin_trylock_irqsave(lock, flags) \
+ 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irqsave, 	\
