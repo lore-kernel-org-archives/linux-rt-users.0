@@ -1,65 +1,51 @@
-From: Daniel Walker <dwalker@mvista.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: v2.6.23-rc4-rt1 / new project URL
-Date: Fri, 31 Aug 2007 17:01:26 -0700
-Message-ID: <1188604887.26038.110.camel@dhcp193.mvista.com>
+Date: Sat, 01 Sep 2007 09:27:18 +0200
+Message-ID: <1188631638.17941.11.camel@chaos>
 References: <1188593944.9647.15.camel@chaos>
+	 <1188604887.26038.110.camel@dhcp193.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT-Users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751898AbXIAALi@vger.kernel.org>
-In-Reply-To: <1188593944.9647.15.camel@chaos>
-Sender: linux-kernel-owner@vger.kernel.org
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Daniel Walker <dwalker@mvista.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.osadl.org ([213.239.205.134]:50349 "EHLO mail.tglx.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1750991AbXIAH1W (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 1 Sep 2007 03:27:22 -0400
+In-Reply-To: <1188604887.26038.110.camel@dhcp193.mvista.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2007-08-31 at 22:59 +0200, Thomas Gleixner wrote:
-> We're pleased to announce the release of the v2.6.23-rc4-rt1 kernel,
-> which can be downloaded from a new place:
->  
->    http://www.kernel.org/pub/linux/kernel/projects/rt/
->  
-> The move to kernel.org is experimental for now, we'll keep it if it
-> works out fine.
+On Fri, 2007-08-31 at 17:01 -0700, Daniel Walker wrote:
+> > - UP compile fixes back merged (Kevin Hilman / Steven Rostedt)
+> > - various latency tracer fixes (Steven Rostedt)
 > 
-> Changes since 2.6.23-rc2-rt2:
+> I'm not sure which latency tracing fixes these are, but Steven's
+> get_monotonic_cycles() changes are racy .. It might be a little
+> premature to include them .. It at least fouls latency tracing on my
+> test machine.
+
+Worked fine here, but I take it out again when it causes problems on
+your box. Steven ???
+
+> > - simple_irq change (Kevin Hilman): needs more thought
+> > - RCU updates (Paul McKenney): needs proper integration
+> > - latency tracer changes (Daniel Walker): needs review
+> > - PICK_OP changes (Daniel Walker): needs review
 > 
-> - update to -rc4
-> - update to 2.6.23-rc4-hrt1
+> The PICK_OP changes got reviewed by Ingo , as of,
 > 
-> - UP compile fixes back merged (Kevin Hilman / Steven Rostedt)
-> - various latency tracer fixes (Steven Rostedt)
+> http://marc.info/?l=linux-rt-users&m=118638506125380&w=2
 
-I'm not sure which latency tracing fixes these are, but Steven's
-get_monotonic_cycles() changes are racy .. It might be a little
-premature to include them .. It at least fouls latency tracing on my
-test machine.
+Yeah, I know. Still I wanted to go through it myself.
 
-> - simple_irq change (Kevin Hilman): needs more thought
-> - RCU updates (Paul McKenney): needs proper integration
-> - latency tracer changes (Daniel Walker): needs review
-> - PICK_OP changes (Daniel Walker): needs review
+> They do need one small fix tho .. Below ..
 
-The PICK_OP changes got reviewed by Ingo , as of,
+Sigh.
 
-http://marc.info/?l=linux-rt-users&m=118638506125380&w=2
-
-They do need one small fix tho .. Below ..
-
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
-
-Index: linux-2.6.22/include/linux/spinlock.h
-===================================================================
---- linux-2.6.22.orig/include/linux/spinlock.h	2007-09-01 00:08:04.000000000 +0000
-+++ linux-2.6.22/include/linux/spinlock.h	2007-09-01 00:07:48.000000000 +0000
-@@ -501,7 +501,7 @@ do {									\
- 
- #define spin_trylock_irq(lock)	\
- 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irq,		\
--		__spin_trylock_irq, lock))
-+		_spin_trylock_irq, lock))
- 
- #define spin_trylock_irqsave(lock, flags) \
- 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irqsave, 	\
+	tglx
