@@ -1,41 +1,66 @@
 From: John Sigler <linux.kernel@free.fr>
-Subject: System clock frequency offset changes drastically across reboots
-Date: Mon, 03 Sep 2007 12:21:37 +0200
-Message-ID: <46DBE031.1090808@free.fr>
+Subject: Re: v2.6.23-rc4-rt1 / new project URL
+Date: Mon, 03 Sep 2007 12:43:41 +0200
+Message-ID: <46DBE55D.3050905@free.fr>
+References: <1188593944.9647.15.camel@chaos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: johnstul@us.ibm.com, tglx@linutronix.de
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:44458 "EHLO smtp4-g19.free.fr"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:58689 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752330AbXICKWN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Sep 2007 06:22:13 -0400
+	id S1754495AbXICKoS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 3 Sep 2007 06:44:18 -0400
+In-Reply-To: <1188593944.9647.15.camel@chaos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-[ Re-sending... Please feel free to comment, even if you don't have
-"The Solution". I'd just like to get some feedback. ]
+Thomas Gleixner wrote:
 
-Hello everyone,
+> We're pleased to announce the release of the v2.6.23-rc4-rt1 kernel,
+> which can be downloaded from a new place:
+>  
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+>  
+> The move to kernel.org is experimental for now, we'll keep it if it
+> works out fine.
+> 
+> Changes since 2.6.23-rc2-rt2:
+> 
+> - update to -rc4
+> - update to 2.6.23-rc4-hrt1
+> 
+> - UP compile fixes back merged (Kevin Hilman / Steven Rostedt)
+> - various latency tracer fixes (Steven Rostedt)
+> - softirq migration fixes (Steven Rostedt)
+> - ARM futex cmpxchg in atomic support (Khem Raj)
+> - ARM raw lock fix (Kevin Hilman)
+> - loadavgrt fix (Luis Claudio R. Goncalves)
+> - mellanox driver fix (Michael S. Tsirkin)
+> 
+> A bunch of patches are postponed for -rt2 (they are neither ignored
+> nor forgotten):
+> 
+> - simple_irq change (Kevin Hilman): needs more thought
+> - RCU updates (Paul McKenney): needs proper integration
+> - latency tracer changes (Daniel Walker): needs review
+> - PICK_OP changes (Daniel Walker): needs review
+> 
+> 
+> More info about the -rt patch set can be found in the RT wiki:
+>      
+>   http://rt.wiki.kernel.org
+>   
+> To build a 2.6.23-rc4-rt1 tree, the following patches should be applied:
+>  
+>   http://kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.22.tar.bz2
+>   http://kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.23-rc4.bz2
+>   http://kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rc4-rt1.bz2
 
-I'm using 2.6.20.7-rt8 on a P3.
+Hello,
 
-I've noticed that the frequency offset of my system clock (computed
-either by ntpd, or by hand) changes drastically across reboots.
-
-By drastically, I mean +/- 60 ppm every time I reboot.
-
-Apparently this is caused by some imprecision in the frequency
-estimation done in calculate_cpu_khz() (arch/i386/kernel/tsc.c)
-
-My brutally crude work-around was to skip the computation altogether and
-hard-code the "correct" value for cpu_khz.
-
-http://linux.kernel.free.fr/cpu_khz.adlink
-
-Has this issue been investigated more thoroughly by other users?
+Is (part of) this update planned to be back-ported to 2.6.22.6?
 
 Regards.
