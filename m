@@ -1,83 +1,44 @@
-From: Manfred Gruber <m.gruber@tirol.com>
-Subject: Re: PI mutex support on ARM
-Date: Tue, 4 Sep 2007 13:48:41 +0200
-Message-ID: <200709041348.42229.m.gruber@tirol.com>
-References: <200708201453.14641.m.gruber@tirol.com> <3efb10970708201159q69a8757ay605e8567b4233922@mail.gmail.com> <200708211048.35443.m.gruber@tirol.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH 4/5] [POWERPC] flags as passed to spin_*_irqsave()
+	should be unsigned long.
+Date: Tue, 04 Sep 2007 07:37:31 -0700
+Message-ID: <1188916651.3224.2.camel@dhcp193.mvista.com>
+References: <20070904070902.847F832CA0D@thor>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mingo@elte.hu, williams@redhat.com,
-	linux@bohmer.net
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Tony Breeds <tony@bakeyournoodle.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from viefep18-int.chello.at ([213.46.255.22]:14796 "EHLO
-	viefep34-int.chello.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751954AbXIDLsp (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:32207 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754029AbXIDOtf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Sep 2007 07:48:45 -0400
-In-Reply-To: <200708211048.35443.m.gruber@tirol.com>
-Content-Disposition: inline
+	Tue, 4 Sep 2007 10:49:35 -0400
+In-Reply-To: <20070904070902.847F832CA0D@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-hi !
+On Tue, 2007-09-04 at 17:09 +1000, Tony Breeds wrote:
+> Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
+> 
+> ---
+> 
+>  drivers/net/pasemi_mac.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> Index: working/drivers/net/pasemi_mac.c
+> ===================================================================
+> --- working.orig/drivers/net/pasemi_mac.c	2007-09-04 16:46:40.000000000 +1000
+> +++ working/drivers/net/pasemi_mac.c	2007-09-04 16:47:01.000000000 +1000
+> @@ -524,7 +524,7 @@ static int pasemi_mac_clean_tx(struct pa
+>  	struct pasemi_mac_buffer *info;
+>  	struct pas_dma_xct_descr *dp;
+>  	int start, count;
+> -	int flags;
+> +	unsigned long flags;
 
-I have now run 2.6.23-rc4-rt1 on my arm920t with the pi_stress test programm 
-from http://people.redhat.com/williams/tests
+Upstream too (should always be unsigned long) ? Also you forgot to CC
+LKML ..
 
-My question if I run the pi_stress, my watchdog triggers, if watchdog is 
-disabled i get this:
-
-Admin threads running on processor: 0
-Test threads running on processor:  0
-Starting PI Stress Test
-Number of thread groups: 10
-Number of inversions per group: infinite
-Test threads using scheduler policy: SCHED_FIFO
-    Admin thread priority:  4
-10 groups of 3 threads will be created
-    High thread priority:   3
-    Med  thread priority:   2
-    Low thread priority:    1
-Press Control-C to stop test
-Current Inversions: 15551
-Keyboard Interrupt!
-
-Stopping test
-Total inversion performed: 15570
-Test Duration: 0 days, 0 hours, 0 minutes, 14 seconds
-
-Is this the correct behaviour ? Or does it show a problem ?
-
-thanks, regards 
-	fred
-
-Am Tuesday 21 August 2007 schrieben Sie:
-> Hi Remy !
->
-> thanks a lot, i will test it on a ARM-v4 with 2.6.23-rc2-rt2 and
-> 2.6.21.5-rt20.
->
-> I have a application which makes a lot of pthread_mutex_lock/unlock
-> between rt and non-rt tasks with PI. So i will look what happens.
->
-> thanks
-> 	fred
->
-> Am Monday 20 August 2007 schrieben Sie:
-> > Hello Manfred,
-> >
-> > At http://www.spinics.net/lists/arm-kernel/msg42349.html you can find
-> > a patch that will probably work. Due to the lack of proper atomic
-> > instructions on the ARM-v4 core this patch is likely to be the best
-> > possible solution.
-> >
-> > Kind Regards,
-> >
-> > Remy
->
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
-> in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Daniel
