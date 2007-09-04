@@ -1,44 +1,41 @@
 From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH 4/5] [POWERPC] flags as passed to spin_*_irqsave()
-	should be unsigned long.
-Date: Tue, 04 Sep 2007 07:37:31 -0700
-Message-ID: <1188916651.3224.2.camel@dhcp193.mvista.com>
-References: <20070904070902.847F832CA0D@thor>
+Subject: Re: PowerPC G4
+Date: Tue, 04 Sep 2007 07:39:20 -0700
+Message-ID: <1188916760.3224.4.camel@dhcp193.mvista.com>
+References: <1188891587.10407.6.camel@godzilla.tecnorama.it>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: Tony Breeds <tony@bakeyournoodle.com>
+To: Alessio Igor Bogani <abogani@texware.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:32207 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:32631 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754029AbXIDOtf (ORCPT
+	with ESMTP id S1754290AbXIDOvX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Sep 2007 10:49:35 -0400
-In-Reply-To: <20070904070902.847F832CA0D@thor>
+	Tue, 4 Sep 2007 10:51:23 -0400
+In-Reply-To: <1188891587.10407.6.camel@godzilla.tecnorama.it>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-09-04 at 17:09 +1000, Tony Breeds wrote:
-> Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
-> 
-> ---
-> 
->  drivers/net/pasemi_mac.c |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> Index: working/drivers/net/pasemi_mac.c
-> ===================================================================
-> --- working.orig/drivers/net/pasemi_mac.c	2007-09-04 16:46:40.000000000 +1000
-> +++ working/drivers/net/pasemi_mac.c	2007-09-04 16:47:01.000000000 +1000
-> @@ -524,7 +524,7 @@ static int pasemi_mac_clean_tx(struct pa
->  	struct pasemi_mac_buffer *info;
->  	struct pas_dma_xct_descr *dp;
->  	int start, count;
-> -	int flags;
-> +	unsigned long flags;
+On Tue, 2007-09-04 at 09:39 +0200, Alessio Igor Bogani wrote:
+> Hi,
 
-Upstream too (should always be unsigned long) ? Also you forgot to CC
-LKML ..
+> [   37.440390] Call Trace:
+> [   37.440393] [c1aafc70] [c000864c] show_stack+0x3c/0x194 (unreliable)
+> [   37.440408] [c1aafca0] [c002d2c8] __schedule_bug+0x38/0x48
+> [   37.440418] [c1aafcb0] [c0266690] __schedule+0x3d8/0x47c
+> [   37.440425] [c1aafce0] [c02669f8] schedule+0x54/0xf0
+> [   37.440430] [c1aafcf0] [c0267c74] rt_spin_lock_slowlock+0xfc/0x224
+> [   37.440437] [c1aafd50] [c007b130] lru_cache_add_active+0x20/0xa0
+> [   37.440444] [c1aafd60] [c0080edc] do_wp_page+0x34c/0xdfc
+> [   37.440451] [c1aafda0] [c00855b0] __handle_mm_fault+0x9e8/0xc9c
+> [   37.440458] [c1aafe10] [c02695f4] do_page_fault+0x1e0/0x56c
+> [   37.440465] [c1aaff40] [c00130f4] handle_page_fault+0xc/0x80
+> [   37.440476] --- Exception: 301 at 0x10004888
+> [   37.440483]     LR = 0x10005468
+
+This is from CONFIG_HIGHMEM .. It's not been ported for -rt properly
+yet .. I would recommend turning it off for now.
 
 Daniel
