@@ -1,68 +1,39 @@
-From: "Bruce Ashfield" <bruce.ashfield@windriver.com>
-Subject: Re: rc4-rt1: powerpc compile errors
-Date: Mon, 3 Sep 2007 11:10:23 -0300
-Message-ID: <3bd6b93c0709030710o21cab1b5y9c8438c40c53560e@mail.gmail.com>
-References: <f87351060709030423t1ac14f3cqd0cd224ba7dba9c5@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linuxppc-embedded@ozlabs.org
-To: "Pradyumna Sampath" <pradyumna.sampath@gmail.com>
+From: Tony Breeds <tony@bakeyournoodle.com>
+Subject: [PATCH 5/5] [POWERPC] flush_tlb_pending() is no more, use __flush_tlb_pending() instead.
+Date: Tue, 04 Sep 2007 17:09:02 +1000
+Message-ID: <20070904070902.92AD732CA0E@thor>
+References: <1188889742.376.642108109551.qpush@thor>
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.237]:24023 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751844AbXICOKZ (ORCPT
+Received: from pythia.bakeyournoodle.com ([203.82.209.197]:35382 "EHLO
+	pythia.bakeyournoodle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751945AbXIDHV3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Sep 2007 10:10:25 -0400
-Received: by wr-out-0506.google.com with SMTP id 36so683860wra
-        for <linux-rt-users@vger.kernel.org>; Mon, 03 Sep 2007 07:10:24 -0700 (PDT)
-In-Reply-To: <f87351060709030423t1ac14f3cqd0cd224ba7dba9c5@mail.gmail.com>
-Content-Disposition: inline
+	Tue, 4 Sep 2007 03:21:29 -0400
+Received: from thor (localhost [127.0.0.1])
+	by pythia.bakeyournoodle.com (Postfix) with ESMTP id D917513C33
+	for <linux-rt-users@vger.kernel.org>; Tue,  4 Sep 2007 15:09:02 +0800 (WST)
+In-Reply-To: <1188889742.376.642108109551.qpush@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 9/3/07, Pradyumna Sampath <pradyumna.sampath@gmail.com> wrote:
-> Hi everyone,
->
-> Here are some compile errors from the latest -rt patchset for powerpc
-> (mpc5200).
->
-> arch/powerpc/kernel/entry_32.S: Assembler messages:
-> arch/powerpc/kernel/entry_32.S:231: Error: operand out of range
-> (0x00023d87 is not between 0x00000000 and 0x0000ffff)
-> arch/powerpc/kernel/entry_32.S:644: Error: operand out of range
-> (0x00022006 is not between 0x00000000 and 0x0000ffff)
-> arch/powerpc/kernel/entry_32.S:866: Error: operand out of range
-> (0x00020004 is not between 0x00000000 and 0x0000ffff)
-> arch/powerpc/kernel/entry_32.S:880: Error: operand out of range
-> (0x00020004 is not between 0x00000000 and 0x0000ffff)
->
-> Im not sure whether this is the right thing to do but we got around
-> this by replacing the linux/include/asm-powerpc/thread_info.h with an
-> older version of the same file from 2.6.21-rt3.
+Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
 
-I don't have the code in front of me, but you can also shuffle
-the flags to make sure that macro being used in entry_32.S
-has all the flags within 16 bits (so the immediate operations
-will successfully assemble). That's the route I took. The flags
-have expanded past that threshold just recently.
+---
 
-Bruce
+ arch/powerpc/mm/tlb_64.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
->
-> regards
-> /prady
->
-> --
-> htp://prady.livejournal.com
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-
-
--- 
-"Thou shalt not follow the NULL pointer, for chaos and madness await
-thee at its end"
+Index: working/arch/powerpc/mm/tlb_64.c
+===================================================================
+--- working.orig/arch/powerpc/mm/tlb_64.c	2007-09-04 16:46:40.000000000 +1000
++++ working/arch/powerpc/mm/tlb_64.c	2007-09-04 16:47:08.000000000 +1000
+@@ -211,7 +211,7 @@ void hpte_need_flush(struct mm_struct *m
+ 	 * always flush it on RT to reduce scheduling latency.
+ 	 */
+ 	if (machine_is(celleb)) {
+-		flush_tlb_pending();
++		__flush_tlb_pending(batch);
+ 		return;
+ 	}
+ #endif /* CONFIG_PREEMPT_RT */
