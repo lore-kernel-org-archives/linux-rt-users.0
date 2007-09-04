@@ -1,56 +1,62 @@
 From: Tony Breeds <tony@bakeyournoodle.com>
-Subject: [PATCH 1/5] [POWERPC] Rearrange thread flags to work with the "andi" instruction.
+Subject: [PATCH 2/5] count_active_rt_tasks() is undefined when CONFIG_PREEMPT_RT is not set.
 Date: Tue, 04 Sep 2007 17:09:02 +1000
-Message-ID: <1188889742.376.642108109551.qpush@thor>
+Message-ID: <20070904070902.4429732CA0A@thor>
+References: <1188889742.376.642108109551.qpush@thor>
 To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pythia.bakeyournoodle.com ([203.82.209.197]:35378 "EHLO
+Received: from pythia.bakeyournoodle.com ([203.82.209.197]:35380 "EHLO
 	pythia.bakeyournoodle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751701AbXIDHV3 (ORCPT
+	with ESMTP id S1751890AbXIDHV3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Tue, 4 Sep 2007 03:21:29 -0400
 Received: from thor (localhost [127.0.0.1])
-	by pythia.bakeyournoodle.com (Postfix) with ESMTP id B0FC613C2F
+	by pythia.bakeyournoodle.com (Postfix) with ESMTP id C3AD913C30
 	for <linux-rt-users@vger.kernel.org>; Tue,  4 Sep 2007 15:09:02 +0800 (WST)
+In-Reply-To: <1188889742.376.642108109551.qpush@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
+
+Also, it looks to me that active_rt_tasks[] was never modified.
 
 Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
 
 ---
 
- include/asm-powerpc/thread_info.h |   10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/timer.c |   12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-Index: working/include/asm-powerpc/thread_info.h
+Index: working/kernel/timer.c
 ===================================================================
---- working.orig/include/asm-powerpc/thread_info.h	2007-09-04 11:31:49.000000000 +1000
-+++ working/include/asm-powerpc/thread_info.h	2007-09-04 13:22:31.000000000 +1000
-@@ -121,11 +121,11 @@ static inline struct thread_info *curren
- #define TIF_RESTOREALL		11	/* Restore all regs (implies NOERROR) */
- #define TIF_NOERROR		12	/* Force successful syscall return */
- #define TIF_RESTORE_SIGMASK	13	/* Restore signal mask in do_signal */
--#define TIF_FREEZE		14	/* Freezing for suspend */
--#define TIF_RUNLATCH		15	/* Is the runlatch enabled? */
--#define TIF_ABI_PENDING		16	/* 32/64 bit switch needed */
- #define TIF_NEED_RESCHED_DELAYED \
--				17	/* reschedule on return to userspace */
-+				14	/* reschedule on return to userspace */
-+#define TIF_FREEZE		15	/* Freezing for suspend */
-+#define TIF_RUNLATCH		16	/* Is the runlatch enabled? */
-+#define TIF_ABI_PENDING		17	/* 32/64 bit switch needed */
+--- working.orig/kernel/timer.c	2007-09-04 16:46:40.000000000 +1000
++++ working/kernel/timer.c	2007-09-04 16:46:54.000000000 +1000
+@@ -953,21 +953,25 @@ unsigned long avenrun_rt[3];
+ static inline void calc_load(unsigned long ticks)
+ {
+ 	unsigned long active_tasks; /* fixed-point */
+-	unsigned long active_rt_tasks; /* fixed-point */
+ 	static int count = LOAD_FREQ;
++#ifdef CONFIG_PREEMPT_RT
++	unsigned long active_rt_tasks; /* fixed-point */
++#endif
  
- 
- /* as above, but as bit values */
-@@ -142,10 +142,10 @@ static inline struct thread_info *curren
- #define _TIF_RESTOREALL		(1<<TIF_RESTOREALL)
- #define _TIF_NOERROR		(1<<TIF_NOERROR)
- #define _TIF_RESTORE_SIGMASK	(1<<TIF_RESTORE_SIGMASK)
-+#define _TIF_NEED_RESCHED_DELAYED (1<<TIF_NEED_RESCHED_DELAYED)
- #define _TIF_FREEZE		(1<<TIF_FREEZE)
- #define _TIF_RUNLATCH		(1<<TIF_RUNLATCH)
- #define _TIF_ABI_PENDING	(1<<TIF_ABI_PENDING)
--#define _TIF_NEED_RESCHED_DELAYED (1<<TIF_NEED_RESCHED_DELAYED)
- 
- #define _TIF_SYSCALL_T_OR_A	(_TIF_SYSCALL_TRACE|_TIF_SYSCALL_AUDIT|_TIF_SECCOMP)
+ 	count -= ticks;
+ 	if (unlikely(count < 0)) {
+ 		active_tasks = count_active_tasks();
++#ifdef CONFIG_PREEMPT_RT
+ 		active_rt_tasks = count_active_rt_tasks();
++#endif
+ 		do {
+ 			CALC_LOAD(avenrun[0], EXP_1, active_tasks);
+ 			CALC_LOAD(avenrun[1], EXP_5, active_tasks);
+ 			CALC_LOAD(avenrun[2], EXP_15, active_tasks);
+ #ifdef CONFIG_PREEMPT_RT
+-			CALC_LOAD(avenrun_rt[0], EXP_1, active_tasks);
+-			CALC_LOAD(avenrun_rt[1], EXP_5, active_tasks);
+-			CALC_LOAD(avenrun_rt[2], EXP_15, active_tasks);
++			CALC_LOAD(avenrun_rt[0], EXP_1, active_rt_tasks);
++			CALC_LOAD(avenrun_rt[1], EXP_5, active_rt_tasks);
++			CALC_LOAD(avenrun_rt[2], EXP_15, active_rt_tasks);
+ #endif
+ 			count += LOAD_FREQ;
  
