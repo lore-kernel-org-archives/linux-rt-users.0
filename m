@@ -1,49 +1,49 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: Re: PowerPC G4
-Date: Wed, 05 Sep 2007 09:02:01 +0200
-Message-ID: <1188975721.5094.1.camel@godzilla.tecnorama.it>
-References: <1188891587.10407.6.camel@godzilla.tecnorama.it>
-	 <1188916760.3224.4.camel@dhcp193.mvista.com>
+From: Michael Olbrich <m.olbrich@pengutronix.de>
+Subject: Re: jitter bursts
+Date: Wed, 5 Sep 2007 10:14:02 +0200
+Message-ID: <20070905081402.GA30955@pengutronix.de>
+References: <20070831151727.GT23573@pengutronix.de> <34ac6d890708310855v413383cm2bd725501a685842@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
+	kiszka@rts.uni-hannover.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hermes.xcon.it ([62.48.35.101]:58704 "EHLO hermes.xcon.it"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755269AbXIEHCG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Sep 2007 03:02:06 -0400
-In-Reply-To: <1188916760.3224.4.camel@dhcp193.mvista.com>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:50507 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1755668AbXIEIOF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 5 Sep 2007 04:14:05 -0400
+Content-Disposition: inline
+In-Reply-To: <34ac6d890708310855v413383cm2bd725501a685842@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Daniel,
-
-On Tue, 2007-09-04 at 07:39 -0700, Daniel Walker wrote:
-> On Tue, 2007-09-04 at 09:39 +0200, Alessio Igor Bogani wrote:
-> > Hi,
+On Fri, Aug 31, 2007 at 09:25:08PM +0530, Girish kathalagiri wrote:
+> We also had similar problems when where we face these kind of periodic
+> jitter. In our case we used Intel 82551ER Fast Ethernet Controller(
+> e100 driver ). The problem with ours was the  with the microcode (in
+> e100.c) of the adapter which had default algorithm where the hardware
+> was holding of the interrupts until X packets or Y usecs have expired.
 > 
-> > [   37.440390] Call Trace:
-> > [   37.440393] [c1aafc70] [c000864c] show_stack+0x3c/0x194 (unreliable)
-> > [   37.440408] [c1aafca0] [c002d2c8] __schedule_bug+0x38/0x48
-> > [   37.440418] [c1aafcb0] [c0266690] __schedule+0x3d8/0x47c
-> > [   37.440425] [c1aafce0] [c02669f8] schedule+0x54/0xf0
-> > [   37.440430] [c1aafcf0] [c0267c74] rt_spin_lock_slowlock+0xfc/0x224
-> > [   37.440437] [c1aafd50] [c007b130] lru_cache_add_active+0x20/0xa0
-> > [   37.440444] [c1aafd60] [c0080edc] do_wp_page+0x34c/0xdfc
-> > [   37.440451] [c1aafda0] [c00855b0] __handle_mm_fault+0x9e8/0xc9c
-> > [   37.440458] [c1aafe10] [c02695f4] do_page_fault+0x1e0/0x56c
-> > [   37.440465] [c1aaff40] [c00130f4] handle_page_fault+0xc/0x80
-> > [   37.440476] --- Exception: 301 at 0x10004888
-> > [   37.440483]     LR = 0x10005468
-> 
-> This is from CONFIG_HIGHMEM .. It's not been ported for -rt properly
-> yet .. I would recommend turning it off for now.
+> This generated a periodic jitter that was 400-500 us more than the usual one.
+> This was solved by making the hardware generate interrupt on every frame.
+> In e100.c this can be done by changing the values of INTDELAY,
+> BUNDDLEMAX and BUNDDLESMALL (CPU saver parameters)
 
-You are right.
+Unfortunately not but it did get me on the right track. The problem is
+caused by the e100_watchdog function. As far as I can tell e100_watchdog
+is called from a timer queue and therefore runs with the priority of
+that thread. And while I set higher priorities for softirq-net-rx and
+the application I missed the thread for the hardware interrupt of the
+network interface. So whenever a packet arived while e100_watchdog was
+running it got delayed. The periodic pattern is a result of this and
+speed difference of sender and receiver clocks.
+The jitter is now <50us but still with some periodic patterns. So I'll
+need to investigate further.
 
-Thank you very much.
+michael
 
-Ciao,
-Alessio
+-- 
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
