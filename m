@@ -1,45 +1,104 @@
-From: Michael Olbrich <m.olbrich@pengutronix.de>
-Subject: Re: jitter bursts
-Date: Wed, 5 Sep 2007 11:01:47 +0200
-Message-ID: <20070905090147.GA32165@pengutronix.de>
-References: <20070831151727.GT23573@pengutronix.de> <34ac6d890708310855v413383cm2bd725501a685842@mail.gmail.com> <20070905081402.GA30955@pengutronix.de> <34ac6d890709050136v2b061c76pfb149667faa82617@mail.gmail.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: PI mutex support on ARM
+Date: Wed, 5 Sep 2007 14:57:10 +0200
+Message-ID: <3efb10970709050557i24dbdc3bub65a5eea249ae8f1@mail.gmail.com>
+References: <200708201453.14641.m.gruber@tirol.com>
+	 <3efb10970708201159q69a8757ay605e8567b4233922@mail.gmail.com>
+	 <200708211048.35443.m.gruber@tirol.com>
+	 <200709041348.42229.m.gruber@tirol.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
-	kiszka@rts.uni-hannover.de
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
+	williams@redhat.com
+To: "Manfred Gruber" <m.gruber@tirol.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:33252 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756077AbXIEJBt (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.231]:24587 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755672AbXIEM5L (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Sep 2007 05:01:49 -0400
+	Wed, 5 Sep 2007 08:57:11 -0400
+Received: by wr-out-0506.google.com with SMTP id 36so1021230wra
+        for <linux-rt-users@vger.kernel.org>; Wed, 05 Sep 2007 05:57:11 -0700 (PDT)
+In-Reply-To: <200709041348.42229.m.gruber@tirol.com>
 Content-Disposition: inline
-In-Reply-To: <34ac6d890709050136v2b061c76pfb149667faa82617@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Sep 05, 2007 at 02:06:36PM +0530, Girish kathalagiri wrote:
-> > Unfortunately not but it did get me on the right track. The problem is
-> > caused by the e100_watchdog function. As far as I can tell e100_watchdog
-> > is called from a timer queue and therefore runs with the priority of
-> > that thread. And while I set higher priorities for softirq-net-rx and
-> > the application I missed the thread for the hardware interrupt of the
-> > network interface. So whenever a packet arived while e100_watchdog was
-> > running it got delayed. The periodic pattern is a result of this and
-> > speed difference of sender and receiver clocks.
-> > The jitter is now <50us but still with some periodic patterns. So I'll
-> > need to investigate further.
+Hello Manfred,
+
+> My question if I run the pi_stress, my watchdog triggers, if watchdog is
+> disabled i get this:
+> Is this the correct behaviour ? Or does it show a problem ?
+
+Depends on the priority of your watchdog-feeder thread. If it is not
+running in RT mode, with a priority higher than used in the pi-stress
+test, then yes it is normal that the watchdog kicks in. pi-stress
+takes 100% CPU-load, and leaves no room for non-RT processes.
+
+The output you get seems normal to me...
+
+Remy
+
+2007/9/4, Manfred Gruber <m.gruber@tirol.com>:
+> hi !
+>
+> I have now run 2.6.23-rc4-rt1 on my arm920t with the pi_stress test programm
+> from http://people.redhat.com/williams/tests
+>
+> My question if I run the pi_stress, my watchdog triggers, if watchdog is
+> disabled i get this:
+>
+> Admin threads running on processor: 0
+> Test threads running on processor:  0
+> Starting PI Stress Test
+> Number of thread groups: 10
+> Number of inversions per group: infinite
+> Test threads using scheduler policy: SCHED_FIFO
+>     Admin thread priority:  4
+> 10 groups of 3 threads will be created
+>     High thread priority:   3
+>     Med  thread priority:   2
+>     Low thread priority:    1
+> Press Control-C to stop test
+> Current Inversions: 15551
+> Keyboard Interrupt!
+>
+> Stopping test
+> Total inversion performed: 15570
+> Test Duration: 0 days, 0 hours, 0 minutes, 14 seconds
+>
+> Is this the correct behaviour ? Or does it show a problem ?
+>
+> thanks, regards
+>         fred
+>
+> Am Tuesday 21 August 2007 schrieben Sie:
+> > Hi Remy !
 > >
-> There was some discussion going on this issue on netdev ....
-> The below link might help you.
-> http://www.nabble.com/Re%3A-My-vote-against-eepro*-removal-t954330.html#a2532617
-
-Yes that's exactly the issue I've been experiencing. Thanks for the
-link.
-
-michael
-
--- 
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
+> > thanks a lot, i will test it on a ARM-v4 with 2.6.23-rc2-rt2 and
+> > 2.6.21.5-rt20.
+> >
+> > I have a application which makes a lot of pthread_mutex_lock/unlock
+> > between rt and non-rt tasks with PI. So i will look what happens.
+> >
+> > thanks
+> >       fred
+> >
+> > Am Monday 20 August 2007 schrieben Sie:
+> > > Hello Manfred,
+> > >
+> > > At http://www.spinics.net/lists/arm-kernel/msg42349.html you can find
+> > > a patch that will probably work. Due to the lack of proper atomic
+> > > instructions on the ARM-v4 core this patch is likely to be the best
+> > > possible solution.
+> > >
+> > > Kind Regards,
+> > >
+> > > Remy
+> >
+> > -
+> > To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
+> > in the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
