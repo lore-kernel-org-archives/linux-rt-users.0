@@ -1,267 +1,365 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH RFC 8/9] RCU: Make RCU priority boosting consume less power
-Date: Mon, 10 Sep 2007 11:41:49 -0700
-Message-ID: <20070910184148.GH3819@linux.vnet.ibm.com>
-References: <20070910183004.GA3299@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: "David Bahi" <dbahi@novell.com>
+Subject: nmi_watchdog in latest 22 and 23-rc -rt series
+Date: Mon, 10 Sep 2007 20:10:20 -0600
+Message-ID: <46E5A4AC0200006C0001822B@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu,
-	akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
-	ego@in.ibm.com, oleg@tv-sign.ru, srostedt@redhat.com
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965572AbXIJSmN@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070910183004.GA3299@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: multipart/mixed; boundary="=__Part2E09801C.0__="
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:35575 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965388AbXIKCaf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Sep 2007 22:30:35 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Work in progress, not for inclusion.
+--=__Part2E09801C.0__=
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-This patch modified the RCU priority booster to explicitly sleep when
-there are no RCU readers in need of priority boosting.  This should be
-a power-consumption improvement over the one-second polling cycle in
-the underlying RCU priority-boosting patch.
+trying to get a crashdump in a clean -rt series kernel which hardlocks
+on the ltp openposix conformance interfaces sched_yield 1-1.test ...
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
----
+i was trying with nmi_watchdog =3D 1 (x86_64 machine, dual cpu, quad core,
+HT enabled) and it would report NMI LOCKUP on presentation of the login
+prompt - no chance to run the test.
 
- include/linux/rcupreempt.h |   15 ++++++
- kernel/rcupreempt.c        |  102 ++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 115 insertions(+), 2 deletions(-)
+                           linux-2.6.22.1-rt9   linux-2.6.23-rc4-rt1
+lockup on openposix=20
+sched_yield test occurs            yes                  yes
 
-diff -urpNa -X dontdiff linux-2.6.22-G-boosttorture/include/linux/rcupreempt.h linux-2.6.22-H-boostsleep/include/linux/rcupreempt.h
---- linux-2.6.22-G-boosttorture/include/linux/rcupreempt.h	2007-08-24 11:24:59.000000000 -0700
-+++ linux-2.6.22-H-boostsleep/include/linux/rcupreempt.h	2007-08-24 18:12:41.000000000 -0700
-@@ -60,6 +60,21 @@ enum rcu_boost_state {
- 
- #define N_RCU_BOOST_STATE (RCU_BOOST_INVALID + 1)
- 
-+/*
-+ * RCU-booster state with respect to sleeping.  The RCU booster
-+ * sleeps when no task has recently been seen sleeping in an RCU
-+ * read-side critical section, and is awakened when a new sleeper
-+ * appears.
-+ */
-+enum rcu_booster_state {
-+	RCU_BOOSTER_ACTIVE = 0,   /* RCU booster actively scanning. */
-+	RCU_BOOSTER_DROWSY = 1,   /* RCU booster is considering sleeping. */
-+	RCU_BOOSTER_SLEEPING = 2, /* RCU booster is asleep. */
-+	RCU_BOOSTER_INVALID = 3,  /* For bogus state sightings. */
-+};
-+
-+#define N_RCU_BOOSTER_STATE (RCU_BOOSTER_INVALID + 1)
-+
- #endif /* #ifdef CONFIG_PREEMPT_RCU_BOOST */
- 
- #define call_rcu_bh(head, rcu) call_rcu(head, rcu)
-diff -urpNa -X dontdiff linux-2.6.22-G-boosttorture/kernel/rcupreempt.c linux-2.6.22-H-boostsleep/kernel/rcupreempt.c
---- linux-2.6.22-G-boosttorture/kernel/rcupreempt.c	2007-08-27 15:42:57.000000000 -0700
-+++ linux-2.6.22-H-boostsleep/kernel/rcupreempt.c	2007-08-27 15:42:37.000000000 -0700
-@@ -108,6 +108,7 @@ struct rcu_boost_dat {
- 	unsigned long rbs_unboosted;
- #ifdef CONFIG_PREEMPT_RCU_BOOST_STATS
- 	unsigned long rbs_stats[N_RCU_BOOST_DAT_EVENTS][N_RCU_BOOST_STATE];
-+	unsigned long rbs_qw_stats[N_RCU_BOOSTER_STATE];
- #endif /* #ifdef CONFIG_PREEMPT_RCU_BOOST_STATS */
- };
- #define RCU_BOOST_ELEMENTS 4
-@@ -115,6 +116,10 @@ struct rcu_boost_dat {
- static int rcu_boost_idx = -1; /* invalid value for early RCU use. */
- static DEFINE_PER_CPU(struct rcu_boost_dat, rcu_boost_dat[RCU_BOOST_ELEMENTS]);
- static struct task_struct *rcu_boost_task;
-+static DEFINE_SPINLOCK(rcu_boost_quiesce_lock);
-+static enum rcu_booster_state rcu_booster_quiesce_state = RCU_BOOSTER_ACTIVE;
-+static unsigned long rbs_qs_stats[2][N_RCU_BOOSTER_STATE];
-+wait_queue_head_t rcu_booster_quiesce_wq;
- 
- #ifdef CONFIG_PREEMPT_RCU_BOOST_STATS
- 
-@@ -171,6 +176,15 @@ static char *rcu_boost_state_error[] = {
- 	 "?  ?",  /* unlock */
- };
- 
-+/* Labels for RCU booster state printout. */
-+
-+static char *rcu_booster_state_label[] = {
-+	"Active",
-+	"Drowsy",
-+	"Sleeping",
-+	"???",
-+};
-+
- /*
-  * Print out RCU booster task statistics at the specified interval.
-  */
-@@ -221,6 +235,14 @@ static void rcu_boost_dat_stat_print(voi
- 						       cpu)[i].rbs_stats[event][state];
- 			}
- 		}
-+	for (state = 0; state < N_RCU_BOOSTER_STATE; state++) {
-+		sum.rbs_qw_stats[state] = 0;
-+		for_each_possible_cpu(cpu)
-+			for (i = 0; i < RCU_BOOST_ELEMENTS; i++)
-+				sum.rbs_qw_stats[state] +=
-+					per_cpu(rcu_boost_dat,
-+						cpu)[i].rbs_qw_stats[state];
-+	}
- 
- 	/* Print them out! */
- 
-@@ -240,6 +262,24 @@ static void rcu_boost_dat_stat_print(voi
- 		       rcu_boost_state_event[event], buf);
- 	}
- 
-+	printk(KERN_INFO "RCU booster state: %s\n",
-+	       rcu_booster_quiesce_state >= 0 &&
-+	       rcu_booster_quiesce_state < N_RCU_BOOSTER_STATE
-+		? rcu_booster_state_label[rcu_booster_quiesce_state]
-+		: "???");
-+	i = 0;
-+	for (state = 0; state < N_RCU_BOOSTER_STATE; state++)
-+		i += sprintf(&buf[i], " %ld", rbs_qs_stats[0][state]);
-+	printk(KERN_INFO "No tasks found: %s\n", buf);
-+	i = 0;
-+	for (state = 0; state < N_RCU_BOOSTER_STATE; state++)
-+		i += sprintf(&buf[i], " %ld", rbs_qs_stats[1][state]);
-+	printk(KERN_INFO "Tasks found: %s\n", buf);
-+	i = 0;
-+	for (state = 0; state < N_RCU_BOOSTER_STATE; state++)
-+		i += sprintf(&buf[i], " %ld", sum.rbs_qw_stats[state]);
-+	printk(KERN_INFO "Awaken opportunities: %s\n", buf);
-+
- 	/* Go away and don't come back for awhile. */
- 
- 	lastprint = xtime.tv_sec;
-@@ -293,6 +333,8 @@ static void init_rcu_boost_early(void)
- 				for (j = 0; j < N_RCU_BOOST_DAT_EVENTS; j++)
- 					for (k = 0; k < N_RCU_BOOST_STATE; k++)
- 						rbdp[i].rbs_stats[j][k] = 0;
-+				for (j = 0; j < N_RCU_BOOSTER_STATE; j++)
-+					rbdp[i].rbs_qw_stats[j] = 0;
- 			}
- #endif /* #ifdef CONFIG_PREEMPT_RCU_BOOST_STATS */
- 		}
-@@ -378,10 +420,11 @@ static void rcu_unboost_prio(struct task
- /*
-  * Boost all of the RCU-reader tasks on the specified list.
-  */
--static void rcu_boost_one_reader_list(struct rcu_boost_dat *rbdp)
-+static int rcu_boost_one_reader_list(struct rcu_boost_dat *rbdp)
- {
- 	LIST_HEAD(list);
- 	unsigned long flags;
-+	int retval = 0;
- 	struct task_struct *taskp;
- 
- 	/*
-@@ -397,6 +440,7 @@ static void rcu_boost_one_reader_list(st
- 	list_splice_init(&rbdp->rbs_toboost, &list);
- 	list_splice_init(&rbdp->rbs_boosted, &list);
- 	while (!list_empty(&list)) {
-+		retval = 1;
- 
- 		/*
- 		 * Pause for a bit before boosting each task.
-@@ -438,6 +482,36 @@ static void rcu_boost_one_reader_list(st
- 		list_add_tail(&taskp->rcub_entry, &rbdp->rbs_boosted);
- 	}
- 	spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
-+	return retval;
-+}
-+
-+/*
-+ * Examine state to see if it is time to sleep.
-+ */
-+static void rcu_booster_try_sleep(int yo)
-+{
-+	spin_lock(&rcu_boost_quiesce_lock);
-+	if (rcu_booster_quiesce_state < 0 ||
-+	    rcu_booster_quiesce_state >= N_RCU_BOOSTER_STATE)
-+		rcu_booster_quiesce_state = RCU_BOOST_INVALID;
-+	rbs_qs_stats[yo != 0][rcu_booster_quiesce_state]++;
-+	if (yo != 0) {
-+		rcu_booster_quiesce_state = RCU_BOOSTER_ACTIVE;
-+	} else {
-+		if (rcu_booster_quiesce_state == RCU_BOOSTER_ACTIVE) {
-+			rcu_booster_quiesce_state = RCU_BOOSTER_DROWSY;
-+		} else if (rcu_booster_quiesce_state == RCU_BOOSTER_DROWSY) {
-+			rcu_booster_quiesce_state = RCU_BOOSTER_SLEEPING;
-+			spin_unlock(&rcu_boost_quiesce_lock);
-+			__wait_event(rcu_booster_quiesce_wq,
-+				     rcu_booster_quiesce_state ==
-+				     RCU_BOOSTER_ACTIVE);
-+			spin_lock(&rcu_boost_quiesce_lock);
-+		} else {
-+			rcu_booster_quiesce_state = RCU_BOOSTER_ACTIVE;
-+		}
-+	}
-+	spin_unlock(&rcu_boost_quiesce_lock);
- }
- 
- /*
-@@ -448,15 +522,21 @@ static int rcu_booster(void *arg)
- {
- 	int cpu;
- 	struct sched_param sp = { .sched_priority = PREEMPT_RCU_BOOSTER_PRIO, };
-+	int yo = 0;
- 
- 	sched_setscheduler(current, SCHED_RR, &sp);
- 	current->flags |= PF_NOFREEZE;
-+	init_waitqueue_head(&rcu_booster_quiesce_wq);
- 
- 	do {
- 
- 		/* Advance the lists of tasks. */
- 
- 		rcu_boost_idx = (rcu_boost_idx + 1) % RCU_BOOST_ELEMENTS;
-+		if (rcu_boost_idx == 0) {
-+			rcu_booster_try_sleep(yo);
-+			yo = 0;
-+		}
- 		for_each_possible_cpu(cpu) {
- 
- 			/*
-@@ -469,7 +549,7 @@ static int rcu_booster(void *arg)
- 			 * nothing.
- 			 */
- 
--			rcu_boost_one_reader_list(rcu_rbd_boosting(cpu));
-+			yo += rcu_boost_one_reader_list(rcu_rbd_boosting(cpu));
- 
- 			/*
- 			 * Large SMP systems may need to sleep sometimes
-@@ -511,6 +591,23 @@ void init_rcu_boost_late(void)
- }
- 
- /*
-+ * Awaken the RCU priority booster if neecessary.
-+ */
-+static void rcu_preempt_wake(struct rcu_boost_dat *rbdp)
-+{
-+	spin_lock(&rcu_boost_quiesce_lock);
-+	if (rcu_booster_quiesce_state >= N_RCU_BOOSTER_STATE)
-+		rcu_booster_quiesce_state = RCU_BOOSTER_INVALID;
-+	rbdp->rbs_qw_stats[rcu_booster_quiesce_state]++;
-+	if (rcu_booster_quiesce_state == RCU_BOOSTER_SLEEPING) {
-+		rcu_booster_quiesce_state = RCU_BOOSTER_ACTIVE;
-+		wake_up(&rcu_booster_quiesce_wq);
-+	} else if (rcu_booster_quiesce_state != RCU_BOOSTER_ACTIVE)
-+		rcu_booster_quiesce_state = RCU_BOOSTER_ACTIVE;
-+	spin_unlock(&rcu_boost_quiesce_lock);
-+}
-+
-+/*
-  * Update task's RCU-boost state to reflect blocking in RCU read-side
-  * critical section, so that the RCU-boost task can find it in case it
-  * later needs its priority boosted.
-@@ -532,6 +629,7 @@ void __rcu_preempt_boost(void)
- 	}
- 	spin_lock(&rbdp->rbs_lock);
- 	rbdp->rbs_blocked++;
-+	rcu_preempt_wake(rbdp);
- 
- 	/*
- 	 * Update state.  We hold the lock and aren't yet on the list,
+crash on login prompt
+with nmi_watchdog=3D1                yes*                 yes*
+
+  (*) console logs attached
+
+
+
+
+--=__Part2E09801C.0__=
+Content-Type: text/plain; name="nmi_watchdog_linux-2.6.22.1-rt9.crash.log"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment; filename="nmi_watchdog_linux-2.6.22.1-rt9.crash.log"
+
+ Kernel 2.6.22.1-rt9-rt (ttyS0).
+
+
+luge login: NMI Watchdog detected LOCKUP on CPU 5
+ <<EOE>>
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+.. [<ffffffff8046416e>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+NMI show regs on CPU#2:
+apic_timer_irqs: 31713
+CPU 2:
+Modules linked in: ipv6 snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod shpchp e752x_edac =
+iTCO_wdt snd_intel8x0 snd_ac97_codec ac97_bus snd_pcm floppy ehci_hcd =
+uhci_hcd edac_mc i2c_i801 snd_timer iTCO_vendor_support rng_core pci_hotplu=
+g snd soundcore snd_page_alloc e1000 usbcore i2c_core rtc_cmos ide_cd =
+rtc_core cdrom rtc_lib parport_pc lp parport ext3 mbcache jbd edd fan =
+thermal processor ide_generic sg ata_piix libata piix sd_mod scsi_mod =
+ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.22.1-rt9-rt #1
+RIP: 0010:[<ffffffff80208dc6>]  [<ffffffff80208dc6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff810124401f30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff80208d70 RCX: 0000000000000000
+RDX: ffff810124401fd8 RSI: ffff810124400010 RDI: ffffffff8052c858
+RBP: ffffffff80722100 R08: 0000000000000000 R09: 0000000000000000
+R10: 000000000000003a R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff810124bbbd40(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 00002aaaacf17670 CR3: 000000011e4d7000 CR4: 00000000000006e0
+
+Call Trace:
+ <IRQ>  [<ffffffff8026bbb4>] add_preempt_count+0x14/0x110
+ [<ffffffff8026bbb4>] add_preempt_count+0x14/0x110
+ [<ffffffff8022eb87>] enqueue_task+0x47/0x80
+ [<ffffffff8046416e>] __spin_lock+0xe/0x20
+ [<ffffffff8023122c>] task_rq_lock+0x4c/0x90
+ [<ffffffff8023410c>] try_to_wake_up+0x8c/0x510
+ [<ffffffff8023410c>] try_to_wake_up+0x8c/0x510
+ [<ffffffff8026bbb4>] add_preempt_count+0x14/0x110
+ [<ffffffff8026bbb4>] add_preempt_count+0x14/0x110
+ [<ffffffff8022f170>] __rq_clock+0x20/0x90
+ [<ffffffff80240a6b>] trigger_softirqs+0x2b/0x40
+ [<ffffffff8020b1dc>] call_softirq+0x1c/0x30
+ [<ffffffff802414a5>] irq_exit+0x45/0x50
+ [<ffffffff8021cc97>] smp_apic_timer_interrupt+0x47/0x70
+ [<ffffffff80208d70>] mwait_idle+0x0/0x60
+ [<ffffffff8020ac86>] apic_timer_interrupt+0x66/0x70
+ <EOI>  [<ffffffff8046714f>] __atomic_notifier_call_chain+0x4f/0x70
+ [<ffffffff80208d70>] mwait_idle+0x0/0x60
+ [<ffffffff80208c9c>] cpu_idle+0x7c/0xf0
+
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+.. [<ffffffff8046416e>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+NMI show regs on CPU#7:
+apic_timer_irqs: 31352
+CPU 7:
+Modules linked in: ipv6 snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod shpchp e752x_edac =
+iTCO_wdt snd_intel8x0 snd_ac97_codec ac97_bus snd_pcm floppy ehci_hcd =
+uhci_hcd edac_mc i2c_i801 snd_timer iTCO_vendor_support rng_core pci_hotplu=
+g snd soundcore snd_page_alloc e1000 usbcore i2c_core rtc_cmos ide_cd =
+rtc_core cdrom rtc_lib parport_pc lp parport ext3 mbcache jbd edd fan =
+thermal processor ide_generic sg ata_piix libata piix sd_mod scsi_mod =
+ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.22.1-rt9-rt #1
+RIP: 0010:[<ffffffff80208dc6>]  [<ffffffff80208dc6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff810124603f30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff80208d70 RCX: 0000000000000000
+RDX: ffff810124603fd8 RSI: ffff810124602010 RDI: ffffffff8052c858
+RBP: ffffffff80722100 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000039 R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff8101245151c0(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 00002aaaac2c5520 CR3: 000000011c844000 CR4: 00000000000006e0
+r
+Call Trace:
+ <#MC>  <<EOE>>
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+.. [<ffffffff8046416e>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+NMI show regs on CPU#6:
+apic_timer_irqs: 31424
+CPU 6:
+Modules linked in: ipv6 snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod shpchp e752x_edac =
+iTCO_wdt snd_intel8x0 snd_ac97_codec ac97_bus snd_pcm floppy ehci_hcd =
+uhci_hcd edac_mc i2c_i801 snd_timer iTCO_vendor_support rng_core pci_hotplu=
+g snd soundcore snd_page_alloc e1000 usbcore i2c_core rtc_cmos ide_cd =
+rtc_core cdrom rtc_lib parport_pc lp parport ext3 mbcache jbd edd fan =
+thermal processor ide_generic sg ata_piix libata piix sd_mod scsi_mod =
+ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.22.1-rt9-rt #1
+RIP: 0010:[<ffffffff80208dc6>]  [<ffffffff80208dc6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff8101245adf30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff80208d70 RCX: 0000000000000000
+RDX: ffff8101245adfd8 RSI: ffff8101245ac010 RDI: ffffffff8052c858
+RBP: ffffffff80722100 R08: 0000000000000000 R09: 0000000000000000
+R10: 000000000000003a R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff8101245159c0(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 00002aaaac4f0000 CR3: 000000011e75c000 CR4: 00000000000006e0
+
+Call Trace:
+ <#MC>  <<EOE>>
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+.. [<ffffffff8046416e>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+NMI show regs on CPU#3:
+apic_timer_irqs: 31641
+CPU 3:
+Modules linked in: ipv6 snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod shpchp e752x_edac =
+iTCO_wdt snd_intel8x0 snd_ac97_codec ac97_bus snd_pcm floppy ehci_hcd =
+uhci_hcd edac_mc i2c_i801 snd_timer iTCO_vendor_support rng_core pci_hotplu=
+g snd soundcore snd_page_alloc e1000 usbcore i2c_core rtc_cmos ide_cd =
+rtc_core cdrom rtc_lib parport_pc lp parport ext3 mbcache jbd edd fan =
+thermal processor ide_generic sg ata_piix libata piix sd_mod scsi_mod =
+ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.22.1-rt9-rt #1
+RIP: 0010:[<ffffffff80208dc6>]  [<ffffffff80208dc6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff810124453f30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff80208d70 RCX: 0000000000000000
+RDX: ffff810124453fd8 RSI: ffff810124452010 RDI: ffffffff8052c858
+RBP: ffffffff80722100 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000038 R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff810124bbb540(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 0000000000a96448 CR3: 0000000000201000 CR4: 00000000000006e0
+
+Call Trace:
+ <#MC>  <<EOE>>
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+.. [<ffffffff8046416e>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+CPU 5
+Modules linked in: ipv6 snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod shpchp e752x_edac =
+iTCO_wdt snd_intel8x0 snd_ac97_codec ac97_bus snd_pcm floppy ehci_hcd =
+uhci_hcd edac_mc i2c_i801 snd_timer iTCO_vendor_support rng_core pci_hotplu=
+g snd soundcore snd_page_alloc e1000 usbcore i2c_core rtc_cmos ide_cd =
+rtc_core cdrom rtc_lib parport_pc lp parport ext3 mbcache jbd edd fan =
+thermal processor ide_generic sg ata_piix libata piix sd_mod scsi_mod =
+ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.22.1-rt9-rt #1
+RIP: 0010:[<ffffffff80208dc6>]  [<ffffffff80208dc6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff81012453bf30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff80208d70 RCX: 0000000000000000
+RDX: ffff81012453bfd8 RSI: ffff81012453a010 RDI: ffffffff8052c858
+RBP: ffffffff80722100 R08: 0000000000000000 R09: 0000000000000000
+R10: 000000000000003e R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff810124490340(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 0000000041cf2000 CR3: 000000011e75c000 CR4: 00000000000006e0
+Process swapper (pid: 0, threadinfo ffff81012453a000, task ffff810124539540=
+)
+Stack:  ffffffff80208c9c 0000000000000000 0000000000000000 0000000000000000=
+
+ 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+ 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+Call Trace:
+ [<ffffffff80208c9c>] cpu_idle+0x7c/0xf0
+
+---------------------------
+| preempt count: 00010001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80208cd7>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf9000/0x20)
+
+
+Code: c3 fb c3 66 66 66 90 66 66 90 65 48 8b 0c 25 00 00 00 00 48
+
+--=__Part2E09801C.0__=
+Content-Type: text/plain; name="nmi_watchdog_linux-2.6.23-rc4-rt1.crash.log"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment; filename="nmi_watchdog_linux-2.6.23-rc4-rt1.crash.log"
+
+Kernel 2.6.23-rc4-rt1-rt (ttyS0).
+
+
+luge login: stopped custom tracer.
+NMI Watchdog detected LOCKUP on CPU 5
+CPU 5
+Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device ipv6 =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod ehci_hcd uhci_hcd =
+usbcore iTCO_wdt floppy i2c_i801 snd_intel8x0 snd_ac97_codec ac97_bus =
+iTCO_vendor_support snd_pcm rng_core snd_timer shpchp snd soundcore ide_cd =
+pci_hotplug snd_page_alloc cdrom e1000 rtc_cmos i2c_core rtc_core rtc_lib =
+parport_pc lp parport ext3 mbcache jbd edd fan thermal processor sg =
+ide_generic ata_piix libata piix sd_mod scsi_mod ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.23-rc4-rt1-rt #1
+RIP: 0010:[<ffffffff8020adf6>]  [<ffffffff8020adf6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff81012453bf30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff8020ada0 RCX: 0000000000000000
+RDX: ffff81012453bfd8 RSI: ffff81012453a010 RDI: ffffffff805374d0
+RBP: ffffffff8072f080 R08: 0000000000000000 R09: ffff81000506a968
+R10: 00000000ffffffff R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff8101244422c0(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 00002aaaabcbe000 CR3: 000000011edfa000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process swapper (pid: 0, threadinfo ffff81012453a000, task ffff810124539540=
+)
+Stack:  ffffffff8020accc 0000000000000000 0000000000000000 0000000000000000=
+
+ 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+ 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+Call Trace:
+ [<ffffffff8020accc>] cpu_idle+0x7c/0xf0
+
+---------------------------
+| preempt count: 00010001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff8020ad07>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf7000/0x20)
+
+
+Code: c3 fb c3 66 66 66 90 66 66 90 65 48 8b 0c 25 00 00 00 00 48
+ [<ffffffff80232f49>] __update_rq_clock+0x49/0x120
+ [<ffffffff8024399b>] trigger_softirqs+0x2b/0x40
+ [<ffffffff8020d25c>] call_softirq+0x1c/0x30
+ [<ffffffff80243e12>] irq_exit+0x62/0x90
+ [<ffffffff8021edf7>] smp_apic_timer_interrupt+0x47/0x70
+ [<ffffffff8020ada0>] mwait_idle+0x0/0x60
+ [<ffffffff8020cd06>] apic_timer_interrupt+0x66/0x70
+ <EOI>  [<ffffffff8046e2d5>] notifier_call_chain+0x45/0x90
+ [<ffffffff8046e36f>] __atomic_notifier_call_chain+0x4f/0x70
+ [<ffffffff8020ada0>] mwait_idle+0x0/0x60
+ [<ffffffff8020accc>] cpu_idle+0x7c/0xf0
+
+---------------------------
+| preempt count: 00010002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff8020ad07>] .... cpu_idle+0xb7/0xf0
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf7000/0x20)
+.. [<ffffffff8046b2de>] .... __spin_lock+0xe/0x20
+.....[<00000000>] ..   ( <=3D run_init_process+0x7fdf7000/0x20)
+
+NMI show regs on CPU#3:
+apic_timer_irqs: 29907
+CPU 3:
+Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device ipv6 =
+af_packet button battery ac nls_utf8 ntfs loop dm_mod ehci_hcd uhci_hcd =
+usbcore iTCO_wdt floppy i2c_i801 snd_intel8x0 snd_ac97_codec ac97_bus =
+iTCO_vendor_support snd_pcm rng_core snd_timer shpchp snd soundcore ide_cd =
+pci_hotplug snd_page_alloc cdrom e1000 rtc_cmos i2c_core rtc_core rtc_lib =
+parport_pc lp parport ext3 mbcache jbd edd fan thermal processor sg =
+ide_generic ata_piix libata piix sd_mod scsi_mod ide_disk ide_core
+Pid: 0, comm: swapper Not tainted 2.6.23-rc4-rt1-rt #1
+RIP: 0010:[<ffffffff8020adf6>]  [<ffffffff8020adf6>] mwait_idle+0x56/0x60
+RSP: 0018:ffff810124473f30  EFLAGS: 00000246
+RAX: 0000000000000000 RBX: ffffffff8020ada0 RCX: 0000000000000000
+RDX: ffff810124473fd8 RSI: ffff810124472010 RDI: ffffffff805374d0
+RBP: ffffffff8072f080 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+FS:  0000000000000000(0000) GS:ffff810124bc44c0(0000) knlGS:000000000000000=
+0
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 00002aaaabca7018 CR3: 000000011f8b1000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+
+--=__Part2E09801C.0__=
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4yIChHTlUv
+TGludXgpCgppRDhEQlFCRzVmaDRIMjhKSFlhekxhUVJBcTgwQUtDK2RjeEMvYWI5MlE1eHFUMGU2
+RXhmb29MR3ZRQ2ZaZWJIClZYRm1TRElsNnpzOXFjbXEweUQ2UTgwPQo9T0JqaQotLS0tLUVORCBQ
+R1AgU0lHTkFUVVJFLS0tLS0KCg==
+
+--=__Part2E09801C.0__=--
