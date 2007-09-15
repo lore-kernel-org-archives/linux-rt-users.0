@@ -1,75 +1,78 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH - Ketchup] update for new RT patch location
-Date: Fri, 14 Sep 2007 20:49:53 -0400
-Message-ID: <1189817393.24770.6.camel@localhost.localdomain>
+Subject: Re: PI mutex support on ARM
+Date: Fri, 14 Sep 2007 22:23:47 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0709142213240.25727@gandalf.stny.rr.com>
+References: <200708201453.14641.m.gruber@tirol.com>  <200709041348.42229.m.gruber@tirol.com>
+  <3efb10970709050557i24dbdc3bub65a5eea249ae8f1@mail.gmail.com>
+ <200709051836.02683.m.gruber@tirol.com> <3efb10970709051146r49462626h28e0febbf44282dd@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Matt Mackall <mpm@selenic.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Manfred Gruber <m.gruber@tirol.com>, tglx@linutronix.de,
+	mingo@elte.hu, linux-rt-users@vger.kernel.org, williams@redhat.com
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:40219 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752647AbXIOAuz (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:49336 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751540AbXIOCYx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Sep 2007 20:50:55 -0400
+	Fri, 14 Sep 2007 22:24:53 -0400
+In-Reply-To: <3efb10970709051146r49462626h28e0febbf44282dd@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-With the move of the RT patch to kernel.org, here's a patch to ketchup
-to accommodate the change (/me puts on his snake suit).
 
-I also updated it to try a non zipped patch if the zipped versions are
-not there. This is because the main patches are zipped, but the archived
-"older" versions are not zipped, but will probably be in the future.
+--
+On Wed, 5 Sep 2007, Remy Bohmer wrote:
+> So, A normal (non-raw) spinlock should NOT be used here, because that
+> does would be converted to a rt-mutex, which is preemptible. If this
+> code is preemptible, it could be preempted by another user space
+> thread which could, in theory, modify the same piece of memory, and
+> thus causing a race condition.
 
-Signed-off-by: Steven Rostedt
+Are you talking about this code?
 
-Index: x/ketchup
-===================================================================
---- x.orig/ketchup	2007-09-14 20:01:06.000000000 -0400
-+++ x/ketchup	2007-09-14 20:37:18.000000000 -0400
-@@ -231,6 +231,12 @@ def latest_ck(url, pat):
-     l.sort(compare_ver)
-     return l[-1]
- 
-+def latest_rt(url, pat):
-+    url = kernel_url + '/projects/rt/'
-+    url += last(url)
-+    part = last(url)
-+    return part[:-1]
++	spin_lock(&futex_atomic_lock);
 +
- def latest_dir(url, pat):
-     """Find the latest link matching pat at url after sorting"""
-     p = []
-@@ -361,6 +367,11 @@ def trydownload(urls, f, sign):
-             if download(url2, f2):
-                 if not sign or verify(url2, f2, sign):
-                     return f2
-+	    f2 = f[:-4]
-+	    url2 = url[:-4]
-+	    if download(url2, f2):
-+                if not sign or verify(url2, f2, sign):
-+                    return f2
-     return None
- 
- def get_patch(ver):
-@@ -592,11 +603,11 @@ version_info = {
-                  kernel_url + "/people/mbligh/%(prebase)s/patch-%(full)s.bz2",
-                  r'patch-(2.6.*?).bz2',
-                  1, "Martin Bligh's random collection 'o crap"),
--    '2.6-rt': (latest_dir,
--               ["http://people.redhat.com/mingo/" +
--                "realtime-preempt/patch-%(full)s",
--                "http://people.redhat.com/mingo/" +
--                "realtime-preempt/older/patch-%(full)s"],
-+    '2.6-rt': (latest_rt,
-+               [kernel_url + "/projects/rt/" +
-+	        "patch-%(full)s.bz2",
-+	        kernel_url + "/projects/rt/older/" +
-+	        "patch-%(full)s.bz2"],
-                r'patch-(2.6.*?)',
-                0, "Ingo Molnar's realtime-preempt kernel"),
-     '2.6-ck': (latest_ck,
++	__asm__ __volatile__( "@futex_atomic_cmpxchg_inatomic	\n"
++	"1:     ldrt    %0, [%3]				\n"
++	"       teq     %0, %1					\n"
++	"2:     streqt  %2, [%3]				\n"
++	"3:							\n"
++	"       .section __ex_table, \"a\"			\n"
++	"       .align 3					\n"
++	"       .long   1b, 4f, 2b, 4f				\n"
++	"       .previous					\n"
++	"       .section .fixup,\"ax\"				\n"
++	"4:     mov     %0, %4					\n"
++	"       b       3b					\n"
++	"       .previous"
++	: "=&r" (val)
++	: "r" (oldval), "r" (newval), "r" (uaddr), "Ir" (-EFAULT)
++	: "cc");
++
++	spin_unlock(&futex_atomic_lock);
+
+I don't quite remember ARM (been a few years since working with it), but
+this looks like the standard "load store-conditional", or is it simply a
+read/test/write? (I don't have a ARM book handy at the moment).
+
+But I would ask, what would touch that memory without first taking the
+futex_atomic_lock? So I don't understand your issue of being preempted.
+
+ >
+> Notice that there have been raised questions about the interrupt lock
+> while accessing user space memory in this code, it is considered as
+> not-safe.
+> AFAIK the only situation where it is not-safe, is the case where the
+> memory is not available in RAM, but e.g. somewhere in a swap space. If
+> the memory has to be paged in, probably interrupts are needed. In my
+> system things like this will never happen...
+
+That's nice, but other systems might have that happen ;-)
+
+But mainly, yes, the area can be swapped out, _or_ it may not have been
+allocated yet. Areas like the BSS section where variables are initialized
+to zero may not have memory allocated to them until something actually
+writes to it.
+
+-- Steve
