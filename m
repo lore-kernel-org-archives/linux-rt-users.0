@@ -1,62 +1,50 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
-Subject: Re: [PATCH] Don't sleep in oops_begin()
-Date: Mon, 17 Sep 2007 13:30:53 -0700
-Message-ID: <1190061053.3615.53.camel@sven.thebigcorporation.com>
-References: <200709172012.21102.ak@suse.de>
-	 <1190056047.3253.104.camel@imap.mvista.com>
-	 <1190057923.3615.26.camel@sven.thebigcorporation.com>
-	 <200709172220.43871.ak@suse.de>
+From: Roland Dreier <rdreier@cisco.com>
+Subject: Re: [ofa-general] [PATCH] [WORKAROUND] CONFIG_PREEMPT_RT and
+	ib_umad_close() issue
+Date: Mon, 17 Sep 2007 14:40:08 -0700
+Message-ID: <adair69nf7r.fsf@cisco.com>
+References: <46EEB715.7060509@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Daniel Walker <dwalker@mvista.com>, mingo@elte.hu,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Andi Kleen <ak@suse.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mu-out-0910.google.com ([209.85.134.187]:53904 "EHLO
-	mu-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755768AbXIQUbD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Sep 2007 16:31:03 -0400
-Received: by mu-out-0910.google.com with SMTP id i10so2845347mue
-        for <linux-rt-users@vger.kernel.org>; Mon, 17 Sep 2007 13:31:01 -0700 (PDT)
-In-Reply-To: <200709172220.43871.ak@suse.de>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: general@lists.openfabrics.org, linux-rt-users@vger.kernel.org,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>, linux-kernel@vger.kernel.org
+To: john.blackwood@ccur.com
+Return-path: <general-bounces@lists.openfabrics.org>
+In-Reply-To: <46EEB715.7060509@ccur.com> (John Blackwood's message of "Mon,
+	17 Sep 2007 13:19:17 -0400")
+List-Unsubscribe: <http://lists.openfabrics.org/cgi-bin/mailman/listinfo/general>,
+	<mailto:general-request@lists.openfabrics.org?subject=unsubscribe>
+List-Archive: <http://lists.openfabrics.org/pipermail/general>
+List-Post: <mailto:general@lists.openfabrics.org>
+List-Help: <mailto:general-request@lists.openfabrics.org?subject=help>
+List-Subscribe: <http://lists.openfabrics.org/cgi-bin/mailman/listinfo/general>,
+	<mailto:general-request@lists.openfabrics.org?subject=subscribe>
+Sender: general-bounces@lists.openfabrics.org
+Errors-To: general-bounces@lists.openfabrics.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-09-17 at 22:20 +0200, Andi Kleen wrote:
-> On Monday 17 September 2007 21:38, Sven-Thorsten Dietrich wrote:
-> > On Mon, 2007-09-17 at 12:07 -0700, Daniel Walker wrote:
-> > > On Mon, 2007-09-17 at 21:00 +0200, Andi Kleen wrote:
-> > > > > Since it's all got "__" in the front, not good to use this method all
-> > > > > over .. If you just need a real spinlock best to use
-> > > > > DEFINE_RAW_SPINLOCK() unless your a special situation ..
-> >
-> > die_lock has been RAW for a while, see older patches...
-> 
-> It's definitely not in 2.6.23-rc4-rt1 and also wasn't in the oops
-> trace I looked at.
-> 
-> > but DEFINE_RAW or DECLARE_RAW should be used when possible.
-> 
-> I disagree for the oops case.  You want the simplest possible code
-> here.
+Thanks for the explanation...
 
-Looks like its raw for all but the x* archs.
+ > But basically, with CONFIG_PREEMPT_RT enabled, the lock points, such as
+ > aqcuiring a spinlock, potentially become places where the current task
+ > may be context switched out / preempted.
+ > 
+ > Therefore, when a call is made to lock a spinlock for example, the
+ > caller should not currently have irqs disabled, or preemption disabled,
+ > since a context switch may occur.
 
-# grep die_lock *
-preempt-realtime-arm.patch:-DEFINE_SPINLOCK(die_lock);
-preempt-realtime-arm.patch:+DEFINE_RAW_SPINLOCK(die_lock);
-preempt-realtime-mips.patch:-static DEFINE_SPINLOCK(die_lock);
-preempt-realtime-mips.patch:+static DEFINE_RAW_SPINLOCK(die_lock);
-preempt-realtime-powerpc.patch:-DEFINE_SPINLOCK(die_lock);
-preempt-realtime-powerpc.patch:+DEFINE_RAW_SPINLOCK(die_lock);
-preempt-realtime-sh.patch:-static DEFINE_SPINLOCK(die_lock);
-preempt-realtime-sh.patch:+static DEFINE_RAW_SPINLOCK(die_lock);
+this doesn't seem relevant here...
 
-Sven
+ > void fastcall rt_downgrade_write(struct rw_semaphore *rwsem)
+ > {
+ >         BUG();
+ > }
 
-> 
-> -Andi
-> 
+this seems to be the problem... the -rt patch turns downgrade_write()
+into a BUG().
+
+I need to look at the locking in user_mad.c again, but I think it may
+be possible to replace both places that do downgrade_write() with
+up_write() followed by down_read().
+
+ - R.
