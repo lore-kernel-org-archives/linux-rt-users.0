@@ -1,60 +1,61 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH] Don't sleep in oops_begin()
-Date: Mon, 17 Sep 2007 19:13:45 -0400
-Message-ID: <1190070825.4433.78.camel@ghaskins-t60p.haskins.net>
-References: <200709172012.21102.ak@suse.de>
-	 <1190056047.3253.104.camel@imap.mvista.com>
-	 <1190057923.3615.26.camel@sven.thebigcorporation.com>
-	 200709172220.43871.ak@suse.de
+From: John Blackwood <john.blackwood@ccur.com>
+Subject: Re: [ofa-general] [PATCH] [WORKAROUND] CONFIG_PREEMPT_RT and
+	ib_umad_close() issue
+Date: Mon, 17 Sep 2007 19:41:22 -0400
+Message-ID: <46EF10A2.40905@ccur.com>
+References: <46EEB715.7060509@ccur.com> <adair69nf7r.fsf@cisco.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-ABYhgAoyivjFpSX5FJEI"
-Cc: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
-	Daniel Walker <dwalker@mvista.com>, mingo@elte.hu,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Andi Kleen <ak@suse.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:49792 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754544AbXIQXPo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Sep 2007 19:15:44 -0400
-In-Reply-To: 200709172220.43871.ak@suse.de
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: general@lists.openfabrics.org, linux-rt-users@vger.kernel.org,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>, linux-kernel@vger.kernel.org
+To: Roland Dreier <rdreier@cisco.com>
+Return-path: <general-bounces@lists.openfabrics.org>
+In-Reply-To: <adair69nf7r.fsf@cisco.com>
+List-Unsubscribe: <http://lists.openfabrics.org/cgi-bin/mailman/listinfo/general>,
+	<mailto:general-request@lists.openfabrics.org?subject=unsubscribe>
+List-Archive: <http://lists.openfabrics.org/pipermail/general>
+List-Post: <mailto:general@lists.openfabrics.org>
+List-Help: <mailto:general-request@lists.openfabrics.org?subject=help>
+List-Subscribe: <http://lists.openfabrics.org/cgi-bin/mailman/listinfo/general>,
+	<mailto:general-request@lists.openfabrics.org?subject=subscribe>
+Sender: general-bounces@lists.openfabrics.org
+Errors-To: general-bounces@lists.openfabrics.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Roland Dreier wrote:
+> Thanks for the explanation...
+> 
+>  > But basically, with CONFIG_PREEMPT_RT enabled, the lock points, such as
+>  > aqcuiring a spinlock, potentially become places where the current task
+>  > may be context switched out / preempted.
+>  > 
+>  > Therefore, when a call is made to lock a spinlock for example, the
+>  > caller should not currently have irqs disabled, or preemption disabled,
+>  > since a context switch may occur.
+> 
+> this doesn't seem relevant here...
 
---=-ABYhgAoyivjFpSX5FJEI
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+Hi Roland,
 
-On Mon, 2007-09-17 at 22:20 +0200, Andi Kleen wrote:
+right.  just some background info.
 
-> I disagree for the oops case.  You want the simplest possible code
-> here.
-
-I would have to agree with Andi.  Being conservative here is probably a
-good thing to avoid nasties like oops recursion.  No sense in polishing
-the brass....;)  We already know the ship is sinking due to an earlier
-error (which is the more important error anyway).  I would go so far as
-to say the other arches should probably follow suit as well.
-
-Or am I missing something?
-
-Regards,
--Greg
+>  > void fastcall rt_downgrade_write(struct rw_semaphore *rwsem)
+>  > {
+>  >         BUG();
+>  > }
+> 
+> this seems to be the problem... the -rt patch turns downgrade_write()
+> into a BUG().
+> 
+> I need to look at the locking in user_mad.c again, but I think it may
+> be possible to replace both places that do downgrade_write() with
+> up_write() followed by down_read().
+> 
+>  - R.
 
 
---=-ABYhgAoyivjFpSX5FJEI
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
+that sounds like it would be a good solution for both preempt rt and 
+non-preempt rt kernels.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
-
-iD8DBQBG7wopSW61Ku6jJPkRAhmEAKCMw++LgakH/pCIkZYPst/thuwFIgCgrNBy
-Gf2XI8sSXy9Q8LtJqkOE9Oo=
-=ueXY
------END PGP SIGNATURE-----
-
---=-ABYhgAoyivjFpSX5FJEI--
+thanks again for looking at this for us.
