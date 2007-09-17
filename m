@@ -1,99 +1,155 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: PI mutex support on ARM
-Date: Sat, 15 Sep 2007 22:43:42 +0200
-Message-ID: <3efb10970709151343q7266e0ady2a721c72f36f2a24@mail.gmail.com>
-References: <200708201453.14641.m.gruber@tirol.com>
-	 <200709041348.42229.m.gruber@tirol.com>
-	 <3efb10970709050557i24dbdc3bub65a5eea249ae8f1@mail.gmail.com>
-	 <200709051836.02683.m.gruber@tirol.com>
-	 <3efb10970709051146r49462626h28e0febbf44282dd@mail.gmail.com>
-	 <Pine.LNX.4.58.0709142213240.25727@gandalf.stny.rr.com>
+From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+Subject: Re: [PATCH] kexec: reenable HPET before kexec
+Date: Mon, 17 Sep 2007 13:47:28 +0400
+Message-ID: <20070917134728.14a9326a@localhost.localdomain>
+References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
+	<20070823090845.GA13065@in.ibm.com>
+	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
+	<20070827053656.GC9809@in.ibm.com>
+	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
+	<20070828165832.5047d4de@windmill.dev.rtsoft.ru>
+	<m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
+	<20070830200749.2f1f0a18@windmill.dev.rtsoft.ru>
+	<m1d4x4zyoe.fsf@ebiederm.dsl.xmission.com>
+	<20070831143151.7dde7c86@windmill.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "Manfred Gruber" <m.gruber@tirol.com>, tglx@linutronix.de,
-	mingo@elte.hu, linux-rt-users@vger.kernel.org, williams@redhat.com
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Cc: ebiederm@xmission.com (Eric W. Biederman),
+	"Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>,
+	<vgoyal@in.ibm.com>, "RT" <linux-rt-users@vger.kernel.org>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"Andi Kleen" <ak@suse.de>,
+	Kexec Mailing List <kexec@lists.infradead.org>
+To: Konstantin Baydarov <kbaidarov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.183]:63923 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751171AbXIOUno (ORCPT
+Received: from rtsoft2.corbina.net ([85.21.88.2]:37586 "HELO
+	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with SMTP id S1753235AbXIQJkw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 15 Sep 2007 16:43:44 -0400
-Received: by py-out-1112.google.com with SMTP id u77so2396431pyb
-        for <linux-rt-users@vger.kernel.org>; Sat, 15 Sep 2007 13:43:43 -0700 (PDT)
-In-Reply-To: <Pine.LNX.4.58.0709142213240.25727@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Mon, 17 Sep 2007 05:40:52 -0400
+In-Reply-To: <20070831143151.7dde7c86@windmill.dev.rtsoft.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Steven,
+On Fri, 31 Aug 2007 14:31:51 +0400
+Konstantin Baydarov <kbaidarov@ru.mvista.com> wrote:
 
-Thanks for your explanation, here are my answers:
-
-> > So, A normal (non-raw) spinlock should NOT be used here, because that
-> > does would be converted to a rt-mutex, which is preemptible. If this
-> > code is preemptible, it could be preempted by another user space
-> > thread which could, in theory, modify the same piece of memory, and
-> > thus causing a race condition.
->
-> Are you talking about this code?
-
-Yes!
-
->
-> +       spin_lock(&futex_atomic_lock);
+> On Thu, 30 Aug 2007 12:04:33 -0600
+> ebiederm@xmission.com (Eric W. Biederman) wrote:
+> 
+> > I was assuming that CLOCK_EVT_MODE_SHUTDOWN just mapped
+> > to the shutdown method of the clock events or something else.
+> > But it shutdown means something different in this context we
+> > can certainly find a better place to hook into the device
+> > tree and call shutdown methods.   Especially if that will
+> > make the code simpler.
+> 
+> Agree. I've got rig from timekeeping. Now I'm using system device
+> tree shutdown interface, as you suggested. I've added HPET system
+> device class with shutdown method and HPET device to sysdev.
+> 
+> > This is a design feature.  machine_crash_shutdown is not really 
+> > supposed to disable any hardware.  There is a very minimal set that
+> > we haven't been able to figure out how to get the kernels
+> > initialization routines to deal with properly.  Which is a
+> > temporary justification for not doing more now.  If we can't find
+> > anyway to make the initialization code more robust for the hpet we
+> > can revisit this.
+> 
+> So you suggest to check if HPET is present in HPET init code even if
+> HPET disabled in boot kernel command line or APIC is disabled. And if
+> HPET is present and kernel not going to use it - disable HPET
+> interrupts?
+> 
+> > Please remove the CONFIG_KEXEC.  We need to do this on a reboot also
+> > so we don't confuse the BIOS.  BIOS's frequently but not always
+> > can just reset the board to avoid complications like this, but if
+> > we need a shutdown method we need a shutdown method.  The kexec
+> > case just exercises things more.
+> Removed CONFIG_KEXEC.
+> 
+> So here is new version of fix. Patch against 2.6.23-rc3.
+> Eric, review please. Thanks.
+> 
+> Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+> 
+>  arch/i386/kernel/hpet.c |   48
+> ++++++++++++++++++++++++++++++++++++++++++++++++ 1 file changed, 48
+> insertions(+)
+> 
+> Index: linux-2.6.23-rc3/arch/i386/kernel/hpet.c
+> ===================================================================
+> --- linux-2.6.23-rc3.orig/arch/i386/kernel/hpet.c
+> +++ linux-2.6.23-rc3/arch/i386/kernel/hpet.c
+> @@ -144,11 +144,31 @@ static void hpet_enable_int(void)
+>  {
+>  	unsigned long cfg = hpet_readl(HPET_CFG);
+>  
+> +	if (hpet_legacy_int_enabled)
+> +		return;
 > +
-> +       __asm__ __volatile__( "@futex_atomic_cmpxchg_inatomic   \n"
-> +       "1:     ldrt    %0, [%3]                                \n"
-> +       "       teq     %0, %1                                  \n"
-> +       "2:     streqt  %2, [%3]                                \n"
-> +       "3:                                                     \n"
-> +       "       .section __ex_table, \"a\"                      \n"
-> +       "       .align 3                                        \n"
-> +       "       .long   1b, 4f, 2b, 4f                          \n"
-> +       "       .previous                                       \n"
-> +       "       .section .fixup,\"ax\"                          \n"
-> +       "4:     mov     %0, %4                                  \n"
-> +       "       b       3b                                      \n"
-> +       "       .previous"
-> +       : "=&r" (val)
-> +       : "r" (oldval), "r" (newval), "r" (uaddr), "Ir" (-EFAULT)
-> +       : "cc");
+>  	cfg |= HPET_CFG_LEGACY;
+>  	hpet_writel(cfg, HPET_CFG);
+>  	hpet_legacy_int_enabled = 1;
+>  }
+>  
+> +static void hpet_disable_int(void)
+> +{
+> +	unsigned long cfg;
 > +
-> +       spin_unlock(&futex_atomic_lock);
->
-> I don't quite remember ARM (been a few years since working with it), but
-> this looks like the standard "load store-conditional", or is it simply a
-> read/test/write? (I don't have a ARM book handy at the moment).
+> +	if (!hpet_legacy_int_enabled)
+> +		return;
+> +
+> +	if (!is_hpet_capable())
+> +		return;
+> +
+> +	cfg = hpet_readl(HPET_CFG);
+> +	cfg &= ~HPET_CFG_LEGACY;
+> +	hpet_writel(cfg, HPET_CFG);
+> +	hpet_legacy_int_enabled = 0;
+> +
+> +}
+> +
+>  static void hpet_set_mode(enum clock_event_mode mode,
+>  			  struct clock_event_device *evt)
+>  {
+> @@ -551,3 +571,31 @@ irqreturn_t hpet_rtc_interrupt(int irq, 
+>  	return IRQ_HANDLED;
+>  }
+>  #endif
+> +
+> +static int hpet_shutdown(struct sys_device *dev)
+> +{
+> +	/* We need this to make PIT works in KEXECuted kernel */
+> +	hpet_disable_int();
+> +
+> +	return 0;
+> +}
+> +
+> +static struct sysdev_class hpet_sysdev_class = {
+> +	set_kset_name("hpet"),
+> +	.shutdown = hpet_shutdown,
+> +};
+> +
+> +static struct sys_device device_hpet = {
+> +	.id	= 0,
+> +	.cls	= &hpet_sysdev_class,
+> +};
+> +
+> +static int __init hpet_init_sysfs(void)
+> +{
+> +	int error = sysdev_class_register(&hpet_sysdev_class);
+> +	if (!error)
+> +		error = sysdev_register(&device_hpet);
+> +	return error;
+> +}
+> +
+> +device_initcall(hpet_init_sysfs);
+> -
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-it is a read/test/write, or in other words a cmpxchg().
-
->
-> But I would ask, what would touch that memory without first taking the
-> futex_atomic_lock? So I don't understand your issue of being preempted.
-
-AFAIK, it is user space memory, allocated in the context of a user
-space process.
-If this memory location is modified outside this 'protected' section,
-like for example in some codepath in glibc also (e.g. futex slowpath
-implementation), then this implementation could be dangerous with a
-normal spinlock/rt-mutex.
-
->  >
-> > Notice that there have been raised questions about the interrupt lock
-> > while accessing user space memory in this code, it is considered as
-> > not-safe.
-> > AFAIK the only situation where it is not-safe, is the case where the
-> > memory is not available in RAM, but e.g. somewhere in a swap space. If
-> > the memory has to be paged in, probably interrupts are needed. In my
-> > system things like this will never happen...
->
-> That's nice, but other systems might have that happen ;-)
-
-And that is exactly the reason, why I have questions with this implementation...
-
-
-Kind Regards,
-
-Remy
+  Eric, can you tell me, when are you going to review last version of fix?
+  Thanks.
