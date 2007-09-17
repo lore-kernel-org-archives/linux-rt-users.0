@@ -1,155 +1,79 @@
-From: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-Subject: Re: [PATCH] kexec: reenable HPET before kexec
-Date: Mon, 17 Sep 2007 13:47:28 +0400
-Message-ID: <20070917134728.14a9326a@localhost.localdomain>
-References: <20070820205530.1ffd5876@windmill.dev.rtsoft.ru>
-	<20070823090845.GA13065@in.ibm.com>
-	<20070823154936.3b7ae498@windmill.dev.rtsoft.ru>
-	<20070827053656.GC9809@in.ibm.com>
-	<653FFBB4508B9042B5D43DC9E18836F501522051@scsmsx415.amr.corp.intel.com>
-	<20070828165832.5047d4de@windmill.dev.rtsoft.ru>
-	<m1ps1532b5.fsf@ebiederm.dsl.xmission.com>
-	<20070830200749.2f1f0a18@windmill.dev.rtsoft.ru>
-	<m1d4x4zyoe.fsf@ebiederm.dsl.xmission.com>
-	<20070831143151.7dde7c86@windmill.dev.rtsoft.ru>
+From: Andi Kleen <ak@suse.de>
+Subject: [PATCH] Fix alternate_node_alloc() on RT kernel
+Date: Mon, 17 Sep 2007 15:36:59 +0200
+Message-ID: <200709171536.59367.ak@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: ebiederm@xmission.com (Eric W. Biederman),
-	"Pallipadi, Venkatesh" <venkatesh.pallipadi@intel.com>,
-	<vgoyal@in.ibm.com>, "RT" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel" <linux-kernel@vger.kernel.org>,
-	"Andi Kleen" <ak@suse.de>,
-	Kexec Mailing List <kexec@lists.infradead.org>
-To: Konstantin Baydarov <kbaidarov@ru.mvista.com>
+Cc: linux-rt-users@vger.kernel.org
+To: mingo@elte.hu, Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft2.corbina.net ([85.21.88.2]:37586 "HELO
-	mail.dev.rtsoft.ru" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with SMTP id S1753235AbXIQJkw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Sep 2007 05:40:52 -0400
-In-Reply-To: <20070831143151.7dde7c86@windmill.dev.rtsoft.ru>
+Received: from cantor2.suse.de ([195.135.220.15]:57461 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753504AbXIQNhD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Sep 2007 09:37:03 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 31 Aug 2007 14:31:51 +0400
-Konstantin Baydarov <kbaidarov@ru.mvista.com> wrote:
 
-> On Thu, 30 Aug 2007 12:04:33 -0600
-> ebiederm@xmission.com (Eric W. Biederman) wrote:
-> 
-> > I was assuming that CLOCK_EVT_MODE_SHUTDOWN just mapped
-> > to the shutdown method of the clock events or something else.
-> > But it shutdown means something different in this context we
-> > can certainly find a better place to hook into the device
-> > tree and call shutdown methods.   Especially if that will
-> > make the code simpler.
-> 
-> Agree. I've got rig from timekeeping. Now I'm using system device
-> tree shutdown interface, as you suggested. I've added HPET system
-> device class with shutdown method and HPET device to sysdev.
-> 
-> > This is a design feature.  machine_crash_shutdown is not really 
-> > supposed to disable any hardware.  There is a very minimal set that
-> > we haven't been able to figure out how to get the kernels
-> > initialization routines to deal with properly.  Which is a
-> > temporary justification for not doing more now.  If we can't find
-> > anyway to make the initialization code more robust for the hpet we
-> > can revisit this.
-> 
-> So you suggest to check if HPET is present in HPET init code even if
-> HPET disabled in boot kernel command line or APIC is disabled. And if
-> HPET is present and kernel not going to use it - disable HPET
-> interrupts?
-> 
-> > Please remove the CONFIG_KEXEC.  We need to do this on a reboot also
-> > so we don't confuse the BIOS.  BIOS's frequently but not always
-> > can just reset the board to avoid complications like this, but if
-> > we need a shutdown method we need a shutdown method.  The kexec
-> > case just exercises things more.
-> Removed CONFIG_KEXEC.
-> 
-> So here is new version of fix. Patch against 2.6.23-rc3.
-> Eric, review please. Thanks.
-> 
-> Signed-off-by: Konstantin Baydarov <kbaidarov@ru.mvista.com>
-> 
->  arch/i386/kernel/hpet.c |   48
-> ++++++++++++++++++++++++++++++++++++++++++++++++ 1 file changed, 48
-> insertions(+)
-> 
-> Index: linux-2.6.23-rc3/arch/i386/kernel/hpet.c
-> ===================================================================
-> --- linux-2.6.23-rc3.orig/arch/i386/kernel/hpet.c
-> +++ linux-2.6.23-rc3/arch/i386/kernel/hpet.c
-> @@ -144,11 +144,31 @@ static void hpet_enable_int(void)
->  {
->  	unsigned long cfg = hpet_readl(HPET_CFG);
->  
-> +	if (hpet_legacy_int_enabled)
-> +		return;
-> +
->  	cfg |= HPET_CFG_LEGACY;
->  	hpet_writel(cfg, HPET_CFG);
->  	hpet_legacy_int_enabled = 1;
->  }
->  
-> +static void hpet_disable_int(void)
-> +{
-> +	unsigned long cfg;
-> +
-> +	if (!hpet_legacy_int_enabled)
-> +		return;
-> +
-> +	if (!is_hpet_capable())
-> +		return;
-> +
-> +	cfg = hpet_readl(HPET_CFG);
-> +	cfg &= ~HPET_CFG_LEGACY;
-> +	hpet_writel(cfg, HPET_CFG);
-> +	hpet_legacy_int_enabled = 0;
-> +
-> +}
-> +
->  static void hpet_set_mode(enum clock_event_mode mode,
->  			  struct clock_event_device *evt)
->  {
-> @@ -551,3 +571,31 @@ irqreturn_t hpet_rtc_interrupt(int irq, 
->  	return IRQ_HANDLED;
->  }
->  #endif
-> +
-> +static int hpet_shutdown(struct sys_device *dev)
-> +{
-> +	/* We need this to make PIT works in KEXECuted kernel */
-> +	hpet_disable_int();
-> +
-> +	return 0;
-> +}
-> +
-> +static struct sysdev_class hpet_sysdev_class = {
-> +	set_kset_name("hpet"),
-> +	.shutdown = hpet_shutdown,
-> +};
-> +
-> +static struct sys_device device_hpet = {
-> +	.id	= 0,
-> +	.cls	= &hpet_sysdev_class,
-> +};
-> +
-> +static int __init hpet_init_sysfs(void)
-> +{
-> +	int error = sysdev_class_register(&hpet_sysdev_class);
-> +	if (!error)
-> +		error = sysdev_register(&device_hpet);
-> +	return error;
-> +}
-> +
-> +device_initcall(hpet_init_sysfs);
-> -
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+__do_cache_allow/alternate_node_alloc() need to pass the this_cpu variable from
+the caller to cache_grow(); otherwise the slab lock for the wrong CPU
+can be released when a task switches CPUs inside cache_grow().
 
-  Eric, can you tell me, when are you going to review last version of fix?
-  Thanks.
+Signed-off-by: Andi Kleen <ak@suse.de>
+
+Index: linux-2.6.23-rc4-rt1/mm/slab.c
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/mm/slab.c
++++ linux-2.6.23-rc4-rt1/mm/slab.c
+@@ -1070,7 +1070,7 @@ cache_free_alien(struct kmem_cache *cach
+ }
+ 
+ static inline void *alternate_node_alloc(struct kmem_cache *cachep,
+-		gfp_t flags)
++		gfp_t flags, int *this_cpu)
+ {
+ 	return NULL;
+ }
+@@ -1085,7 +1085,7 @@ static inline void *____cache_alloc_node
+ 
+ static void *____cache_alloc_node(struct kmem_cache *cachep, gfp_t flags,
+ 				int nodeid, int *this_cpu);
+-static void *alternate_node_alloc(struct kmem_cache *, gfp_t);
++static void *alternate_node_alloc(struct kmem_cache *, gfp_t, int *);
+ 
+ static struct array_cache **alloc_alien_cache(int node, int limit)
+ {
+@@ -3308,9 +3308,10 @@ ____cache_alloc(struct kmem_cache *cache
+  * If we are in_interrupt, then process context, including cpusets and
+  * mempolicy, may not apply and should not be used for allocation policy.
+  */
+-static void *alternate_node_alloc(struct kmem_cache *cachep, gfp_t flags)
++static void *alternate_node_alloc(struct kmem_cache *cachep, gfp_t flags,
++				int *this_cpu)
+ {
+-	int nid_alloc, nid_here, this_cpu = raw_smp_processor_id();
++	int nid_alloc, nid_here;
+ 
+ 	if (in_interrupt() || (flags & __GFP_THISNODE))
+ 		return NULL;
+@@ -3320,7 +3321,7 @@ static void *alternate_node_alloc(struct
+ 	else if (current->mempolicy)
+ 		nid_alloc = slab_node(current->mempolicy);
+ 	if (nid_alloc != nid_here)
+-		return ____cache_alloc_node(cachep, flags, nid_alloc, &this_cpu);
++		return ____cache_alloc_node(cachep, flags, nid_alloc, this_cpu);
+ 	return NULL;
+ }
+ 
+@@ -3533,7 +3534,7 @@ __do_cache_alloc(struct kmem_cache *cach
+ 	void *objp;
+ 
+ 	if (unlikely(current->flags & (PF_SPREAD_SLAB | PF_MEMPOLICY))) {
+-		objp = alternate_node_alloc(cache, flags);
++		objp = alternate_node_alloc(cache, flags, this_cpu);
+ 		if (objp)
+ 			goto out;
+ 	}
