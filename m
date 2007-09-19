@@ -1,44 +1,111 @@
 From: Tony Breeds <tony@bakeyournoodle.com>
-Subject: [PATCH 4/5] Include hrtimer.h in tick.h.
-Date: Wed, 19 Sep 2007 16:49:47 +1000
-Message-ID: <20070919064947.F2FDB399913@thor>
+Subject: [PATCH 5/5] Enable tickless idle and high res timers for powerpc
+Date: Wed, 19 Sep 2007 16:49:48 +1000
+Message-ID: <20070919064948.0C43E399915@thor>
 References: <1190184586.867449.381310088392.qpush@thor>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Realtime Kernel <linux-rt-users@vger.kernel.org>
 To: <linuxppc-dev@ozlabs.org>, Paul Mackerras <paulus@samba.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pythia.bakeyournoodle.com ([203.82.209.197]:51508 "EHLO
+Received: from pythia.bakeyournoodle.com ([203.82.209.197]:51512 "EHLO
 	pythia.bakeyournoodle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751836AbXISGvg (ORCPT
+	with ESMTP id S1752503AbXISGvg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 19 Sep 2007 02:51:36 -0400
 In-Reply-To: <1190184586.867449.381310088392.qpush@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-struct tick_shed uses struct hrtimer, explictly include the right header file.
-
-preemtivly fixes the following warning
-  CC      arch/powerpc/platforms/iseries/setup.o
-In file included from arch/powerpc/platforms/iseries/setup.c:30:
-include/linux/tick.h:45: error: field 'sched_timer' has incomplete type
-
 Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
 
 ---
 
- include/linux/tick.h |    1 +
- 1 file changed, 1 insertion(+)
+ arch/powerpc/Kconfig                   |    1 +
+ arch/powerpc/kernel/idle.c             |    3 +++
+ arch/powerpc/platforms/iseries/setup.c |    5 +++++
+ 3 files changed, 9 insertions(+)
 
-Index: working/include/linux/tick.h
+Index: working/arch/powerpc/Kconfig
 ===================================================================
---- working.orig/include/linux/tick.h
-+++ working/include/linux/tick.h
-@@ -7,6 +7,7 @@
- #define _LINUX_TICK_H
+--- working.orig/arch/powerpc/Kconfig
++++ working/arch/powerpc/Kconfig
+@@ -168,6 +168,7 @@ config HIGHMEM
+ 	bool "High memory support"
+ 	depends on PPC32
  
- #include <linux/clockchips.h>
-+#include <linux/hrtimer.h>
++source kernel/time/Kconfig
+ source kernel/Kconfig.hz
+ source kernel/Kconfig.preempt
+ source "fs/Kconfig.binfmt"
+Index: working/arch/powerpc/kernel/idle.c
+===================================================================
+--- working.orig/arch/powerpc/kernel/idle.c
++++ working/arch/powerpc/kernel/idle.c
+@@ -24,6 +24,7 @@
+ #include <linux/smp.h>
+ #include <linux/cpu.h>
+ #include <linux/sysctl.h>
++#include <linux/tick.h>
  
- #ifdef CONFIG_GENERIC_CLOCKEVENTS
+ #include <asm/system.h>
+ #include <asm/processor.h>
+@@ -59,6 +60,7 @@ void cpu_idle(void)
  
+ 	set_thread_flag(TIF_POLLING_NRFLAG);
+ 	while (1) {
++		tick_nohz_stop_sched_tick();
+ 		while (!need_resched() && !cpu_should_die()) {
+ 			ppc64_runlatch_off();
+ 
+@@ -90,6 +92,7 @@ void cpu_idle(void)
+ 
+ 		HMT_medium();
+ 		ppc64_runlatch_on();
++		tick_nohz_restart_sched_tick();
+ 		if (cpu_should_die())
+ 			cpu_die();
+ 		preempt_enable_no_resched();
+Index: working/arch/powerpc/platforms/iseries/setup.c
+===================================================================
+--- working.orig/arch/powerpc/platforms/iseries/setup.c
++++ working/arch/powerpc/platforms/iseries/setup.c
+@@ -26,6 +26,7 @@
+ #include <linux/major.h>
+ #include <linux/root_dev.h>
+ #include <linux/kernel.h>
++#include <linux/tick.h>
+ 
+ #include <asm/processor.h>
+ #include <asm/machdep.h>
+@@ -562,6 +563,7 @@ static void yield_shared_processor(void)
+ static void iseries_shared_idle(void)
+ {
+ 	while (1) {
++		tick_nohz_stop_sched_tick();
+ 		while (!need_resched() && !hvlpevent_is_pending()) {
+ 			local_irq_disable();
+ 			ppc64_runlatch_off();
+@@ -575,6 +577,7 @@ static void iseries_shared_idle(void)
+ 		}
+ 
+ 		ppc64_runlatch_on();
++		tick_nohz_restart_sched_tick();
+ 
+ 		if (hvlpevent_is_pending())
+ 			process_iSeries_events();
+@@ -590,6 +593,7 @@ static void iseries_dedicated_idle(void)
+ 	set_thread_flag(TIF_POLLING_NRFLAG);
+ 
+ 	while (1) {
++		tick_nohz_stop_sched_tick();
+ 		if (!need_resched()) {
+ 			while (!need_resched()) {
+ 				ppc64_runlatch_off();
+@@ -606,6 +610,7 @@ static void iseries_dedicated_idle(void)
+ 		}
+ 
+ 		ppc64_runlatch_on();
++		tick_nohz_restart_sched_tick();
+ 		preempt_enable_no_resched();
+ 		schedule();
+ 		preempt_disable();
