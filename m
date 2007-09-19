@@ -1,70 +1,44 @@
-From: Juergen Beisert <jbe@pengutronix.de>
-Subject: Re: rc4-rt1: powerpc compile errors
-Date: Tue, 18 Sep 2007 16:06:32 +0200
-Message-ID: <200709181606.33267.jbe@pengutronix.de>
-References: <f87351060709030423t1ac14f3cqd0cd224ba7dba9c5@mail.gmail.com> <3bd6b93c0709030710o21cab1b5y9c8438c40c53560e@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+From: Tony Breeds <tony@bakeyournoodle.com>
+Subject: [PATCH 4/5] Include hrtimer.h in tick.h.
+Date: Wed, 19 Sep 2007 16:49:47 +1000
+Message-ID: <20070919064947.F2FDB399913@thor>
+References: <1190184586.867449.381310088392.qpush@thor>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: <linuxppc-dev@ozlabs.org>, Paul Mackerras <paulus@samba.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:36054 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753248AbXIROGk (ORCPT
+Received: from pythia.bakeyournoodle.com ([203.82.209.197]:51508 "EHLO
+	pythia.bakeyournoodle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751836AbXISGvg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 18 Sep 2007 10:06:40 -0400
-Received: from themisto.extern.pengutronix.de ([83.236.181.29] helo=localhost)
-	by metis.extern.pengutronix.de with esmtp (Exim 4.63)
-	(envelope-from <jbe@pengutronix.de>)
-	id 1IXdik-00027k-5o
-	for linux-rt-users@vger.kernel.org; Tue, 18 Sep 2007 16:06:38 +0200
-In-Reply-To: <3bd6b93c0709030710o21cab1b5y9c8438c40c53560e@mail.gmail.com>
-Content-Disposition: inline
+	Wed, 19 Sep 2007 02:51:36 -0400
+In-Reply-To: <1190184586.867449.381310088392.qpush@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Bruce,
+struct tick_shed uses struct hrtimer, explictly include the right header file.
 
-On Monday 03 September 2007 16:10, Bruce Ashfield wrote:
-> On 9/3/07, Pradyumna Sampath <pradyumna.sampath@gmail.com> wrote:
-> > Hi everyone,
-> >
-> > Here are some compile errors from the latest -rt patchset for powerpc
-> > (mpc5200).
-> >
-> > arch/powerpc/kernel/entry_32.S: Assembler messages:
-> > arch/powerpc/kernel/entry_32.S:231: Error: operand out of range
-> > (0x00023d87 is not between 0x00000000 and 0x0000ffff)
-> > arch/powerpc/kernel/entry_32.S:644: Error: operand out of range
-> > (0x00022006 is not between 0x00000000 and 0x0000ffff)
-> > arch/powerpc/kernel/entry_32.S:866: Error: operand out of range
-> > (0x00020004 is not between 0x00000000 and 0x0000ffff)
-> > arch/powerpc/kernel/entry_32.S:880: Error: operand out of range
-> > (0x00020004 is not between 0x00000000 and 0x0000ffff)
-> >
-> > Im not sure whether this is the right thing to do but we got around
-> > this by replacing the linux/include/asm-powerpc/thread_info.h with an
-> > older version of the same file from 2.6.21-rt3.
->
-> I don't have the code in front of me, but you can also shuffle
-> the flags to make sure that macro being used in entry_32.S
-> has all the flags within 16 bits (so the immediate operations
-> will successfully assemble). That's the route I took. The flags
-> have expanded past that threshold just recently.
+preemtivly fixes the following warning
+  CC      arch/powerpc/platforms/iseries/setup.o
+In file included from arch/powerpc/platforms/iseries/setup.c:30:
+include/linux/tick.h:45: error: field 'sched_timer' has incomplete type
 
-Yes, there are 17 bits now. Can you provide a patch, how to handle 17 bits
-now in arch/powerpc/kernel/entry_32.S? I haven't the experience to modify
-the assembler code, so I have no idea how to change this line:
+Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
 
-andi. r0,r9,(_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
+---
 
-without using an additional register (I don't know, what register I can use).
-Can it look like this?
+ include/linux/tick.h |    1 +
+ 1 file changed, 1 insertion(+)
 
-  lis r?,(_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@h
-  ori r?, r?, (_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@l
-  and. r0, r9, r?
-
-Regards,
-Juergen
+Index: working/include/linux/tick.h
+===================================================================
+--- working.orig/include/linux/tick.h
++++ working/include/linux/tick.h
+@@ -7,6 +7,7 @@
+ #define _LINUX_TICK_H
+ 
+ #include <linux/clockchips.h>
++#include <linux/hrtimer.h>
+ 
+ #ifdef CONFIG_GENERIC_CLOCKEVENTS
+ 
