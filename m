@@ -1,56 +1,42 @@
-From: Daniel Walker <dwalker@mvista.com>
+From: Paul Mackerras <paulus@samba.org>
 Subject: Re: [PATCH 2/5] Implement generic time of day clocksource for
 	powerpc machines.
-Date: Wed, 19 Sep 2007 08:43:14 -0700
-Message-ID: <1190216594.11899.3.camel@imap.mvista.com>
+Date: Thu, 20 Sep 2007 10:52:16 +1000
+Message-ID: <18161.50240.599267.768383@cargo.ozlabs.ibm.com>
 References: <20070919064947.4B5A1399910@thor>
+	<1190216594.11899.3.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: linuxppc-dev@ozlabs.org, Paul Mackerras <paulus@samba.org>,
+Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Realtime Kernel <linux-rt-users@vger.kernel.org>,
 	johnstul@us.ibm.com
-To: Tony Breeds <tony@bakeyournoodle.com>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from homer.mvista.com ([63.81.120.158]:35984 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S1753012AbXISPqr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Sep 2007 11:46:47 -0400
-In-Reply-To: <20070919064947.4B5A1399910@thor>
+Received: from ozlabs.org ([203.10.76.45]:54091 "EHLO ozlabs.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750853AbXITBTD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Sep 2007 21:19:03 -0400
+In-Reply-To: <1190216594.11899.3.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-09-19 at 16:49 +1000, Tony Breeds wrote:
-> +/* clocksource code */
-> +/* FIXME: provide an RTC clocksource /or/ use a better name */
-> +static cycle_t timebase_read(void)
-> +{
-> +       if (__USE_RTC())
-> +               return (cycle_t)get_rtc();
-> +       return (cycle_t)get_tb();
-> +}
+Daniel Walker writes:
 
-If you switch to the rtc do the shift and mult need to change?
+> If you switch to the rtc do the shift and mult need to change?
 
-> +void update_vsyscall(struct timespec *wall_time, struct clocksource
-> *clock)
-> +{
-> +       u64 t2x, stamp_xsec;
-> +
-> +       if (__USE_RTC() || clock != &clocksource_timebase)
-> +               return;
-> +
-> +       /* Make userspace gettimeofday spin until we're done. */
-> +       ++vdso_data->tb_update_count;
-> +       smp_mb();
-> +
-> +       /* XXX this assumes clock->shift == 22 */
-> +       /* 4611686018 ~= 2^(20+64-22) / 1e9 */
-> +       t2x = (u64) clock->mult * 4611686018ULL;
+You can't switch; any given CPU chip will have either the RTC or the
+timebase but not both.
 
-It might make the code more readable if you put that constant into a
-macro that gives it a name.
+> > +       /* XXX this assumes clock->shift == 22 */
+> > +       /* 4611686018 ~= 2^(20+64-22) / 1e9 */
+> > +       t2x = (u64) clock->mult * 4611686018ULL;
+> 
+> It might make the code more readable if you put that constant into a
+> macro that gives it a name.
 
-Daniel
+The comment already gives more information than some arbitrary name
+would.
+
+Paul.
