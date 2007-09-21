@@ -1,158 +1,101 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
-Date: Fri, 21 Sep 2007 17:46:53 +0200
-Message-ID: <20070921174653.64c15a92@twins>
-References: <20070910183004.GA3299@linux.vnet.ibm.com>
-	<20070910183412.GC3819@linux.vnet.ibm.com>
-	<20070921144003.GC15697@goodmis.org>
+From: Juergen Beisert <jbe@pengutronix.de>
+Subject: [PATCH 1/1] ARCH PowerPC: Consider new flags in assembler instructions
+Date: Fri, 21 Sep 2007 20:51:37 +0200
+Message-ID: <200709212051.38192.jbe@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, bunk@kernel.org, ego@in.ibm.com,
-	oleg@tv-sign.ru
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from viefep18-int.chello.at ([213.46.255.22]:48906 "EHLO
-	viefep16-int.chello.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1757815AbXIUPrA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Sep 2007 11:47:00 -0400
-In-Reply-To: <20070921144003.GC15697@goodmis.org>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:44381 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1759865AbXIUSvu convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 21 Sep 2007 14:51:50 -0400
+Received: from themisto.extern.pengutronix.de ([83.236.181.29] helo=localhost)
+	by metis.extern.pengutronix.de with esmtp (Exim 4.63)
+	(envelope-from <jbe@pengutronix.de>)
+	id 1IYnbH-0001kU-9g
+	for linux-rt-users@vger.kernel.org; Fri, 21 Sep 2007 20:51:47 +0200
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 21 Sep 2007 10:40:03 -0400 Steven Rostedt <rostedt@goodmis.org>
-wrote:
+Subject: [PATCH 1/1] ARCH PowerPC: Consider new flags in assembler inst=
+ructions
 
-> On Mon, Sep 10, 2007 at 11:34:12AM -0700, Paul E. McKenney wrote:
+Additional flags in bit 16 and 17 require changes in the assembler code=
+ to
+handle these new flags. The old instructions only can handle 16 bits. N=
+ow
+there are 18.
+Note: I'm not an expert in PowerPC assembler, so there might be better
+solutions to handle more than 16 bits in this environment.
 
+Signed-off-by: Juergen Beisert <j.beisert@pengutronix.de>
 
-> Can you have a pointer somewhere that explains these states. And not a
-> "it's in this paper or directory". Either have a short discription here,
-> or specify where exactly to find the information (perhaps a
-> Documentation/RCU/preemptible_states.txt?).
-> 
-> Trying to understand these states has caused me the most agony in
-> reviewing these patches.
-> 
-> > + */
-> > +
-> > +enum rcu_try_flip_states {
-> > +	rcu_try_flip_idle_state,	/* "I" */
-> > +	rcu_try_flip_waitack_state, 	/* "A" */
-> > +	rcu_try_flip_waitzero_state,	/* "Z" */
-> > +	rcu_try_flip_waitmb_state	/* "M" */
-> > +};
+---
 
-I thought the 4 flip states corresponded to the 4 GP stages, but now
-you confused me. It seems to indeed progress one stage for every 4 flip
-states.
+Index: arch/powerpc/kernel/entry_32.S
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- arch/powerpc/kernel/entry_32.S.orig
++++ arch/powerpc/kernel/entry_32.S
+@@ -228,7 +228,9 @@ ret_from_syscall:
+ 	MTMSRD(r10)
+ 	lwz	r9,TI_FLAGS(r12)
+ 	li	r8,-_LAST_ERRNO
+-	andi.	r0,r9,(_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|=
+_TIF_PERSYSCALL_MASK)
++	lis	r0,(_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_=
+PERSYSCALL_MASK)@h
++	ori	r0,r0,(_TIF_SYSCALL_T_OR_A|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_T=
+IF_PERSYSCALL_MASK)@l
++	and.    r0,r0,r9
+ 	bne-	syscall_exit_work
+ 	cmplw	0,r3,r8
+ 	blt+	syscall_exit_cont
+@@ -641,7 +643,9 @@ user_exc_return:		/* r10 contains MSR_KE
+ 	/* Check current_thread_info()->flags */
+ 	rlwinm	r9,r1,0,0,(31-THREAD_SHIFT)
+ 	lwz	r9,TI_FLAGS(r9)
+-	andi.	r0,r9,(_TIF_SIGPENDING|_TIF_RESTORE_SIGMASK|_TIF_NEED_RESCHED|_=
+TIF_NEED_RESCHED_DELAYED)
++	lis	r0,(_TIF_SIGPENDING|_TIF_RESTORE_SIGMASK|_TIF_NEED_RESCHED|_TIF_N=
+EED_RESCHED_DELAYED)@h
++	ori	r0,r0,(_TIF_SIGPENDING|_TIF_RESTORE_SIGMASK|_TIF_NEED_RESCHED|_TI=
+=46_NEED_RESCHED_DELAYED)@l
++	and.	r0,r9,r0
+ 	bne	do_work
+=20
+ restore_user:
+@@ -863,7 +867,9 @@ global_dbcr0:
+ #endif /* !(CONFIG_4xx || CONFIG_BOOKE) */
+=20
+ do_work:			/* r10 contains MSR_KERNEL here */
+-	andi.	r0,r9,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)
++	lis	r0,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)@h
++	ori	r0,r0,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)@l
++	and.	r0,r9,r0
+ 	beq	do_user_signal
+=20
+ do_resched:			/* r10 contains MSR_KERNEL here */
+@@ -877,7 +883,9 @@ recheck:
+ 	MTMSRD(r10)		/* disable interrupts */
+ 	rlwinm	r9,r1,0,0,(31-THREAD_SHIFT)
+ 	lwz	r9,TI_FLAGS(r9)
+-	andi.	r0,r9,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)
++	lis	r0,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)@h
++	ori	r0,r0,(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)@l
++	and.	r0,r9,r0
+ 	bne-	do_resched
+ 	andi.	r0,r9,_TIF_SIGPENDING|_TIF_RESTORE_SIGMASK
+ 	beq	restore_user
 
-Hmm, now I have to puzzle how these 4 stages are required by the lock
-and unlock magic.
-
-> > +/*
-> > + * Return the number of RCU batches processed thus far.  Useful for debug
-> > + * and statistics.  The _bh variant is identical to straight RCU.
-> > + */
-> 
-> If they are identical, then why the separation?
-
-I guess a smaller RCU domain makes for quicker grace periods.
- 
-> > +void __rcu_read_lock(void)
-> > +{
-> > +	int idx;
-> > +	struct task_struct *me = current;
-> 
-> Nitpick, but other places in the kernel usually use "t" or "p" as a
-> variable to assign current to.  It's just that "me" thows me off a
-> little while reviewing this.  But this is just a nitpick, so do as you
-> will.
-
-struct task_struct *curr = current;
-
-is also not uncommon.
- 
-> > +	int nesting;
-> > +
-> > +	nesting = ORDERED_WRT_IRQ(me->rcu_read_lock_nesting);
-> > +	if (nesting != 0) {
-> > +
-> > +		/* An earlier rcu_read_lock() covers us, just count it. */
-> > +
-> > +		me->rcu_read_lock_nesting = nesting + 1;
-> > +
-> > +	} else {
-> > +		unsigned long oldirq;
-> 
-> > +
-> > +		/*
-> > +		 * Disable local interrupts to prevent the grace-period
-> > +		 * detection state machine from seeing us half-done.
-> > +		 * NMIs can still occur, of course, and might themselves
-> > +		 * contain rcu_read_lock().
-> > +		 */
-> > +
-> > +		local_irq_save(oldirq);
-> 
-> Isn't the GP detection done via a tasklet/softirq. So wouldn't a
-> local_bh_disable be sufficient here? You already cover NMIs, which would
-> also handle normal interrupts.
-
-This is also my understanding, but I think this disable is an
-'optimization' in that it avoids the regular IRQs from jumping through
-these hoops outlined below.
-
-> > +
-> > +		/*
-> > +		 * Outermost nesting of rcu_read_lock(), so increment
-> > +		 * the current counter for the current CPU.  Use volatile
-> > +		 * casts to prevent the compiler from reordering.
-> > +		 */
-> > +
-> > +		idx = ORDERED_WRT_IRQ(rcu_ctrlblk.completed) & 0x1;
-> > +		smp_read_barrier_depends();  /* @@@@ might be unneeded */
-> > +		ORDERED_WRT_IRQ(__get_cpu_var(rcu_flipctr)[idx])++;
-> > +
-> > +		/*
-> > +		 * Now that the per-CPU counter has been incremented, we
-> > +		 * are protected from races with rcu_read_lock() invoked
-> > +		 * from NMI handlers on this CPU.  We can therefore safely
-> > +		 * increment the nesting counter, relieving further NMIs
-> > +		 * of the need to increment the per-CPU counter.
-> > +		 */
-> > +
-> > +		ORDERED_WRT_IRQ(me->rcu_read_lock_nesting) = nesting + 1;
-> > +
-> > +		/*
-> > +		 * Now that we have preventing any NMIs from storing
-> > +		 * to the ->rcu_flipctr_idx, we can safely use it to
-> > +		 * remember which counter to decrement in the matching
-> > +		 * rcu_read_unlock().
-> > +		 */
-> > +
-> > +		ORDERED_WRT_IRQ(me->rcu_flipctr_idx) = idx;
-> > +		local_irq_restore(oldirq);
-> > +	}
-> > +}
-
-> > +/*
-> > + * Attempt a single flip of the counters.  Remember, a single flip does
-> > + * -not- constitute a grace period.  Instead, the interval between
-> > + * at least three consecutive flips is a grace period.
-> > + *
-> > + * If anyone is nuts enough to run this CONFIG_PREEMPT_RCU implementation
-> 
-> Oh, come now! It's not "nuts" to use this ;-)
-> 
-> > + * on a large SMP, they might want to use a hierarchical organization of
-> > + * the per-CPU-counter pairs.
-> > + */
-
-Its the large SMP case that's nuts, and on that I have to agree with
-Paul, its not really large SMP friendly.
+--=20
+Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
+=A0Pengutronix - Linux Solutions for Science and Industry
+=A0   Handelsregister: Amtsgericht Hildesheim, HRA 2686
+=A0 =A0 =A0    Vertretung Sued/Muenchen, Germany
+   Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
