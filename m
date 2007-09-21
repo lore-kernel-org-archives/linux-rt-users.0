@@ -1,222 +1,210 @@
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
-Date: Fri, 21 Sep 2007 15:44:59 -0700
-Message-ID: <20070921224459.GD9059@linux.vnet.ibm.com>
-References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070921144003.GC15697@goodmis.org> <20070921174653.64c15a92@twins> <20070921223112.GG15697@goodmis.org>
+Date: Fri, 21 Sep 2007 16:03:43 -0700
+Message-ID: <20070921230343.GE9059@linux.vnet.ibm.com>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070921152048.GF15697@goodmis.org>
 Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
 	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, bunk@kernel.org, ego@in.ibm.com,
-	oleg@tv-sign.ru
+	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
+	ego@in.ibm.com, oleg@tv-sign.ru, srostedt@redhat.com
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:50103 "EHLO e5.ny.us.ibm.com"
+Received: from e2.ny.us.ibm.com ([32.97.182.142]:50773 "EHLO e2.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932630AbXIUWpG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Sep 2007 18:45:06 -0400
+	id S932672AbXIUXDr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 21 Sep 2007 19:03:47 -0400
 Content-Disposition: inline
-In-Reply-To: <20070921223112.GG15697@goodmis.org>
+In-Reply-To: <20070921152048.GF15697@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Sep 21, 2007 at 06:31:12PM -0400, Steven Rostedt wrote:
-> On Fri, Sep 21, 2007 at 05:46:53PM +0200, Peter Zijlstra wrote:
-> > On Fri, 21 Sep 2007 10:40:03 -0400 Steven Rostedt <rostedt@goodmis.org>
-> > wrote:
-> > 
-> > > On Mon, Sep 10, 2007 at 11:34:12AM -0700, Paul E. McKenney wrote:
-> > 
-> > 
-> > > Can you have a pointer somewhere that explains these states. And not a
-> > > "it's in this paper or directory". Either have a short discription here,
-> > > or specify where exactly to find the information (perhaps a
-> > > Documentation/RCU/preemptible_states.txt?).
-> > > 
-> > > Trying to understand these states has caused me the most agony in
-> > > reviewing these patches.
-> > > 
-> > > > + */
-> > > > +
-> > > > +enum rcu_try_flip_states {
-> > > > +	rcu_try_flip_idle_state,	/* "I" */
-> > > > +	rcu_try_flip_waitack_state, 	/* "A" */
-> > > > +	rcu_try_flip_waitzero_state,	/* "Z" */
-> > > > +	rcu_try_flip_waitmb_state	/* "M" */
-> > > > +};
-> > 
-> > I thought the 4 flip states corresponded to the 4 GP stages, but now
-> > you confused me. It seems to indeed progress one stage for every 4 flip
-> > states.
+On Fri, Sep 21, 2007 at 11:20:48AM -0400, Steven Rostedt wrote:
+> On Mon, Sep 10, 2007 at 11:34:12AM -0700, Paul E. McKenney wrote:
+> > +
+> > +/*
+> > + * PREEMPT_RCU data structures.
+> > + */
+> > +
+> > +#define GP_STAGES 4
+> > +struct rcu_data {
+> > +	spinlock_t	lock;		/* Protect rcu_data fields. */
+> > +	long		completed;	/* Number of last completed batch. */
+> > +	int		waitlistcount;
+> > +	struct tasklet_struct rcu_tasklet;
+> > +	struct rcu_head *nextlist;
+> > +	struct rcu_head **nexttail;
+> > +	struct rcu_head *waitlist[GP_STAGES];
+> > +	struct rcu_head **waittail[GP_STAGES];
+> > +	struct rcu_head *donelist;
+> > +	struct rcu_head **donetail;
+> > +#ifdef CONFIG_RCU_TRACE
+> > +	struct rcupreempt_trace trace;
+> > +#endif /* #ifdef CONFIG_RCU_TRACE */
+> > +};
+> > +struct rcu_ctrlblk {
+> > +	spinlock_t	fliplock;	/* Protect state-machine transitions. */
+> > +	long		completed;	/* Number of last completed batch. */
+> > +};
+> > +static DEFINE_PER_CPU(struct rcu_data, rcu_data);
+> > +static struct rcu_ctrlblk rcu_ctrlblk = {
+> > +	.fliplock = SPIN_LOCK_UNLOCKED,
+> > +	.completed = 0,
+> > +};
+> > +static DEFINE_PER_CPU(int [2], rcu_flipctr) = { 0, 0 };
+> > +
+> > +/*
+> > + * States for rcu_try_flip() and friends.
+> > + */
+> > +
+> > +enum rcu_try_flip_states {
+> > +	rcu_try_flip_idle_state,	/* "I" */
+> > +	rcu_try_flip_waitack_state, 	/* "A" */
+> > +	rcu_try_flip_waitzero_state,	/* "Z" */
+> > +	rcu_try_flip_waitmb_state	/* "M" */
+> > +};
+> > +static enum rcu_try_flip_states rcu_try_flip_state = rcu_try_flip_idle_state;
+> > +#ifdef CONFIG_RCU_TRACE
+> > +static char *rcu_try_flip_state_names[] =
+> > +	{ "idle", "waitack", "waitzero", "waitmb" };
+> > +#endif /* #ifdef CONFIG_RCU_TRACE */
 > 
-> I'm still confused ;-)
-
-If you do a synchronize_rcu() it might well have to wait through the
-following sequence of states:
-
-Stage 0: (might have to wait through part of this to get out of "next" queue)
-	rcu_try_flip_idle_state,	/* "I" */
-	rcu_try_flip_waitack_state, 	/* "A" */
-	rcu_try_flip_waitzero_state,	/* "Z" */
-	rcu_try_flip_waitmb_state	/* "M" */
-Stage 1:
-	rcu_try_flip_idle_state,	/* "I" */
-	rcu_try_flip_waitack_state, 	/* "A" */
-	rcu_try_flip_waitzero_state,	/* "Z" */
-	rcu_try_flip_waitmb_state	/* "M" */
-Stage 2:
-	rcu_try_flip_idle_state,	/* "I" */
-	rcu_try_flip_waitack_state, 	/* "A" */
-	rcu_try_flip_waitzero_state,	/* "Z" */
-	rcu_try_flip_waitmb_state	/* "M" */
-Stage 3:
-	rcu_try_flip_idle_state,	/* "I" */
-	rcu_try_flip_waitack_state, 	/* "A" */
-	rcu_try_flip_waitzero_state,	/* "Z" */
-	rcu_try_flip_waitmb_state	/* "M" */
-Stage 4:
-	rcu_try_flip_idle_state,	/* "I" */
-	rcu_try_flip_waitack_state, 	/* "A" */
-	rcu_try_flip_waitzero_state,	/* "Z" */
-	rcu_try_flip_waitmb_state	/* "M" */
-
-So yes, grace periods do indeed have some latency.
-
-> > Hmm, now I have to puzzle how these 4 stages are required by the lock
-> > and unlock magic.
-> > 
-> > > > +/*
-> > > > + * Return the number of RCU batches processed thus far.  Useful for debug
-> > > > + * and statistics.  The _bh variant is identical to straight RCU.
-> > > > + */
-> > > 
-> > > If they are identical, then why the separation?
-> > 
-> > I guess a smaller RCU domain makes for quicker grace periods.
+> [snip]
 > 
-> No, I mean that both the rcu_batches_completed and
-> rcu_batches_completed_bh are identical. Perhaps we can just put in a
+> > +/*
+> > + * If a global counter flip has occurred since the last time that we
+> > + * advanced callbacks, advance them.  Hardware interrupts must be
+> > + * disabled when calling this function.
+> > + */
+> > +static void __rcu_advance_callbacks(struct rcu_data *rdp)
+> > +{
+> > +	int cpu;
+> > +	int i;
+> > +	int wlc = 0;
+> > +
+> > +	if (rdp->completed != rcu_ctrlblk.completed) {
+> > +		if (rdp->waitlist[GP_STAGES - 1] != NULL) {
+> > +			*rdp->donetail = rdp->waitlist[GP_STAGES - 1];
+> > +			rdp->donetail = rdp->waittail[GP_STAGES - 1];
+> > +			RCU_TRACE_RDP(rcupreempt_trace_move2done, rdp);
+> > +		}
+> > +		for (i = GP_STAGES - 2; i >= 0; i--) {
+> > +			if (rdp->waitlist[i] != NULL) {
+> > +				rdp->waitlist[i + 1] = rdp->waitlist[i];
+> > +				rdp->waittail[i + 1] = rdp->waittail[i];
+> > +				wlc++;
+> > +			} else {
+> > +				rdp->waitlist[i + 1] = NULL;
+> > +				rdp->waittail[i + 1] =
+> > +					&rdp->waitlist[i + 1];
+> > +			}
+> > +		}
+> > +		if (rdp->nextlist != NULL) {
+> > +			rdp->waitlist[0] = rdp->nextlist;
+> > +			rdp->waittail[0] = rdp->nexttail;
+> > +			wlc++;
+> > +			rdp->nextlist = NULL;
+> > +			rdp->nexttail = &rdp->nextlist;
+> > +			RCU_TRACE_RDP(rcupreempt_trace_move2wait, rdp);
+> > +		} else {
+> > +			rdp->waitlist[0] = NULL;
+> > +			rdp->waittail[0] = &rdp->waitlist[0];
+> > +		}
+> > +		rdp->waitlistcount = wlc;
+> > +		rdp->completed = rcu_ctrlblk.completed;
+> > +	}
+> > +
+> > +	/*
+> > +	 * Check to see if this CPU needs to report that it has seen
+> > +	 * the most recent counter flip, thereby declaring that all
+> > +	 * subsequent rcu_read_lock() invocations will respect this flip.
+> > +	 */
+> > +
+> > +	cpu = raw_smp_processor_id();
+> > +	if (per_cpu(rcu_flip_flag, cpu) == rcu_flipped) {
+> > +		smp_mb();  /* Subsequent counter accesses must see new value */
+> > +		per_cpu(rcu_flip_flag, cpu) = rcu_flip_seen;
+> > +		smp_mb();  /* Subsequent RCU read-side critical sections */
+> > +			   /*  seen -after- acknowledgement. */
+> > +	}
+> > +}
 > 
-> #define rcu_batches_completed_bh rcu_batches_completed
+> [snip]
 > 
-> in rcupreempt.h.  In rcuclassic, they are different. But no need to have
-> two identical functions in the preempt version. A macro should do.
-
-Ah!!!  Good point, #define does make sense here.
-
-> > > > +void __rcu_read_lock(void)
-> > > > +{
-> > > > +	int idx;
-> > > > +	struct task_struct *me = current;
-> > > 
-> > > Nitpick, but other places in the kernel usually use "t" or "p" as a
-> > > variable to assign current to.  It's just that "me" thows me off a
-> > > little while reviewing this.  But this is just a nitpick, so do as you
-> > > will.
-> > 
-> > struct task_struct *curr = current;
-> > 
-> > is also not uncommon.
+> > +/*
+> > + * Attempt a single flip of the counters.  Remember, a single flip does
+> > + * -not- constitute a grace period.  Instead, the interval between
+> > + * at least three consecutive flips is a grace period.
+> > + *
+> > + * If anyone is nuts enough to run this CONFIG_PREEMPT_RCU implementation
+> > + * on a large SMP, they might want to use a hierarchical organization of
+> > + * the per-CPU-counter pairs.
+> > + */
+> > +static void rcu_try_flip(void)
+> > +{
+> > +	unsigned long oldirq;
+> > +
+> > +	RCU_TRACE_ME(rcupreempt_trace_try_flip_1);
+> > +	if (unlikely(!spin_trylock_irqsave(&rcu_ctrlblk.fliplock, oldirq))) {
+> > +		RCU_TRACE_ME(rcupreempt_trace_try_flip_e1);
+> > +		return;
+> > +	}
+> > +
+> > +	/*
+> > +	 * Take the next transition(s) through the RCU grace-period
+> > +	 * flip-counter state machine.
+> > +	 */
+> > +
+> > +	switch (rcu_try_flip_state) {
+> > +	case rcu_try_flip_idle_state:
+> > +		if (rcu_try_flip_idle())
+> > +			rcu_try_flip_state = rcu_try_flip_waitack_state;
+> > +		break;
+> > +	case rcu_try_flip_waitack_state:
+> > +		if (rcu_try_flip_waitack())
+> > +			rcu_try_flip_state = rcu_try_flip_waitzero_state;
+> > +		break;
+> > +	case rcu_try_flip_waitzero_state:
+> > +		if (rcu_try_flip_waitzero())
+> > +			rcu_try_flip_state = rcu_try_flip_waitmb_state;
+> > +		break;
+> > +	case rcu_try_flip_waitmb_state:
+> > +		if (rcu_try_flip_waitmb())
+> > +			rcu_try_flip_state = rcu_try_flip_idle_state;
+> > +	}
+> > +	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, oldirq);
+> > +}
 > 
-> True, but the "me" confused me. Since that task struct is not me ;-)
-
-Well, who is it, then?  ;-)
-
-> > > > +	int nesting;
-> > > > +
-> > > > +	nesting = ORDERED_WRT_IRQ(me->rcu_read_lock_nesting);
-> > > > +	if (nesting != 0) {
-> > > > +
-> > > > +		/* An earlier rcu_read_lock() covers us, just count it. */
-> > > > +
-> > > > +		me->rcu_read_lock_nesting = nesting + 1;
-> > > > +
-> > > > +	} else {
-> > > > +		unsigned long oldirq;
-> > > 
-> > > > +
-> > > > +		/*
-> > > > +		 * Disable local interrupts to prevent the grace-period
-> > > > +		 * detection state machine from seeing us half-done.
-> > > > +		 * NMIs can still occur, of course, and might themselves
-> > > > +		 * contain rcu_read_lock().
-> > > > +		 */
-> > > > +
-> > > > +		local_irq_save(oldirq);
-> > > 
-> > > Isn't the GP detection done via a tasklet/softirq. So wouldn't a
-> > > local_bh_disable be sufficient here? You already cover NMIs, which would
-> > > also handle normal interrupts.
-> > 
-> > This is also my understanding, but I think this disable is an
-> > 'optimization' in that it avoids the regular IRQs from jumping through
-> > these hoops outlined below.
+> Paul,
 > 
-> But isn't disabling irqs slower than doing a local_bh_disable? So the
-> majority of times (where irqs will not happen) we have this overhead.
-
-The current code absolutely must exclude the scheduling-clock hardirq
-handler.
-
-> > > > +		/*
-> > > > +		 * Outermost nesting of rcu_read_lock(), so increment
-> > > > +		 * the current counter for the current CPU.  Use volatile
-> > > > +		 * casts to prevent the compiler from reordering.
-> > > > +		 */
-> > > > +
-> > > > +		idx = ORDERED_WRT_IRQ(rcu_ctrlblk.completed) & 0x1;
-> > > > +		smp_read_barrier_depends();  /* @@@@ might be unneeded */
-> > > > +		ORDERED_WRT_IRQ(__get_cpu_var(rcu_flipctr)[idx])++;
-> > > > +
-> > > > +		/*
-> > > > +		 * Now that the per-CPU counter has been incremented, we
-> > > > +		 * are protected from races with rcu_read_lock() invoked
-> > > > +		 * from NMI handlers on this CPU.  We can therefore safely
-> > > > +		 * increment the nesting counter, relieving further NMIs
-> > > > +		 * of the need to increment the per-CPU counter.
-> > > > +		 */
-> > > > +
-> > > > +		ORDERED_WRT_IRQ(me->rcu_read_lock_nesting) = nesting + 1;
-> > > > +
-> > > > +		/*
-> > > > +		 * Now that we have preventing any NMIs from storing
-> > > > +		 * to the ->rcu_flipctr_idx, we can safely use it to
-> > > > +		 * remember which counter to decrement in the matching
-> > > > +		 * rcu_read_unlock().
-> > > > +		 */
-> > > > +
-> > > > +		ORDERED_WRT_IRQ(me->rcu_flipctr_idx) = idx;
-> > > > +		local_irq_restore(oldirq);
-> > > > +	}
-> > > > +}
-> > 
-> > > > +/*
-> > > > + * Attempt a single flip of the counters.  Remember, a single flip does
-> > > > + * -not- constitute a grace period.  Instead, the interval between
-> > > > + * at least three consecutive flips is a grace period.
-> > > > + *
-> > > > + * If anyone is nuts enough to run this CONFIG_PREEMPT_RCU implementation
-> > > 
-> > > Oh, come now! It's not "nuts" to use this ;-)
-> > > 
-> > > > + * on a large SMP, they might want to use a hierarchical organization of
-> > > > + * the per-CPU-counter pairs.
-> > > > + */
-> > 
-> > Its the large SMP case that's nuts, and on that I have to agree with
-> > Paul, its not really large SMP friendly.
+> Looking further into this, I still think this is a bit of overkill. We
+> go through 20 states from call_rcu to list->func().
 > 
-> Hmm, that could be true. But on large SMP systems, you usually have a
-> large amounts of memory, so hopefully a really long synchronize_rcu
-> would not be a problem.
+> On call_rcu we put our stuff on the next list. Before we move stuff from
+> next to wait, we need to go through 4 states. So we have
+> 
+> next -> 4 states -> wait[0] -> 4 states -> wait[1] -> 4 states ->
+> wait[2] -> 4 states -> wait[3] -> 4 states -> done.
+> 
+> That's 20 states that we go through from the time we add our function to
+> the list to the time it actually gets called. Do we really need the 4
+> wait lists?
+> 
+> Seems a bit overkill to me.
+> 
+> What am I missing?
 
-Somewhere in the range from 64 to a few hundred CPUs, the global lock
-protecting the try_flip state machine would start sucking air pretty
-badly.  But the real problem is synchronize_sched(), which loops through
-all the CPUs --  this would likely cause problems at a few tens of
-CPUs, perhaps as early as 10-20.
+"Nothing kills like overkill!!!"  ;-)
+
+Seriously, I do expect to be able to squeeze this down over time, but
+feel the need to be a bit on the cowardly side at the moment.
+
+In any case, I will be looking at the scenarios more carefully.  If
+it turns out that GP_STAGES can indeed be cranked down a bit, well,
+that is an easy change!  I just fired off a POWER run with GP_STAGES
+set to 3, will let you know how it goes.
 
 						Thanx, Paul
