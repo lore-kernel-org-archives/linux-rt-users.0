@@ -1,40 +1,64 @@
-From: tony@bakeyournoodle.com (Tony Breeds)
-Subject: Re: [PATCH 2/5] Implement generic time of day clocksource for powerpc machines.
-Date: Fri, 21 Sep 2007 09:46:53 +1000
-Message-ID: <20070920234653.GW9814@bakeyournoodle.com>
-References: <20070919064947.4B5A1399910@thor> <1190216594.11899.3.camel@imap.mvista.com> <18161.50240.599267.768383@cargo.ozlabs.ibm.com> <1190306110.14264.7.camel@localhost>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Question on -rt synchronize_irq()
+Date: Thu, 20 Sep 2007 18:12:22 -0700
+Message-ID: <20070921011222.GA12394@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Paul Mackerras <paulus@samba.org>,
-	Daniel Walker <dwalker@mvista.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: john stultz <johnstul@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: mingo@elte.hu, tglx@linutronix.de, dvhltc@us.ibm.com,
+	tytso@us.ibm.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pythia.bakeyournoodle.com ([203.82.209.197]:57361 "EHLO
-	pythia.bakeyournoodle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751296AbXITXqz (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Sep 2007 19:46:55 -0400
+Received: from e6.ny.us.ibm.com ([32.97.182.146]:46653 "EHLO e6.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750699AbXIUBMZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 20 Sep 2007 21:12:25 -0400
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e6.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l8L1Dqff007818
+	for <linux-rt-users@vger.kernel.org>; Thu, 20 Sep 2007 21:13:52 -0400
+Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l8L1COJ6567000
+	for <linux-rt-users@vger.kernel.org>; Thu, 20 Sep 2007 21:12:24 -0400
+Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
+	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l8L1CNgY018631
+	for <linux-rt-users@vger.kernel.org>; Thu, 20 Sep 2007 21:12:24 -0400
 Content-Disposition: inline
-In-Reply-To: <1190306110.14264.7.camel@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Sep 20, 2007 at 09:35:10AM -0700, john stultz wrote:
- 
-> I think what Daniel is pointing out is that the clocksource read
-> function isn't the place for the __USE_RTC() conditional. 
-> 
-> It would likely be better instead of the timebase clocksource managing
-> multiple type of hardware (timebase and RTC), to have a separate simple
-> RTC clocksource, and then conditionally register one or the other at
-> init time.
+Hello!
 
-I'll create a seperate clocksource for the RTC case and use that as
-appropriate.  I'll resend the patch series after I've booted it :)
+Color me blind, but I don't see how the following race is avoided:
 
-Yours Tony
+CPU 0:	A hardware interrupt is received for a threaded irq, which
+	eventually results in do_hardirq() being invoked and the
+	descriptor lock being acquired.  Because the IRQ_INPROGRESS
+	status bit is set, execution continues.  Once the handler
+	returns, having already cleared the IRQ_INPROGRESS status bit,
+	the descriptor lock is released.
 
-  linux.conf.au        http://linux.conf.au/ || http://lca2008.linux.org.au/
-  Jan 28 - Feb 02 2008 The Australian Linux Technical Conference!
+CPU 1:	A second hardware interrupt is received for the same threaded
+	irq, which also wends its way to do_hardirq() with the
+	IRQ_INPROGRESS status bit set.  It enters the handler (having
+	released the descriptor lock) and accesses some data structure
+	that CPU 2 now wants to get rid of.
+
+CPU 2:	A synchronize_irq() is executed, again for this same irq.
+	Because the descriptor status does not have the IRQ_NODELAY
+	bit set, and because the IRQ_INPROGRESS status bit is set,
+	this task blocks.
+
+CPU 0:	Execution continues near the end of do_hardirq(), which notices
+	that the descriptor wait_for_handler queue is non-empty,
+	and therefore wakes up CPU 2's task.
+
+CPU 2:	The task starts running, and proceeds to clean up the data
+	structures that CPU 1 is still using.
+
+CPU 1:	This second handler is suddenly and fatally disappointed by
+	the disappearance of its data structures.
+
+
+So what am I missing here?
+
+							Thanx, Paul
