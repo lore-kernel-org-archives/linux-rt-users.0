@@ -1,128 +1,85 @@
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH RFC -rt] updated synchronize_all_irqs implementation
-Date: Sun, 23 Sep 2007 10:34:32 -0700
-Message-ID: <20070923173432.GA10542@linux.vnet.ibm.com>
-References: <20070921054656.GA11708@linux.vnet.ibm.com>
+Subject: Re: Question on -rt synchronize_irq()
+Date: Sun, 23 Sep 2007 10:46:30 -0700
+Message-ID: <20070923174630.GA6376@linux.vnet.ibm.com>
+References: <20070921011222.GA12394@linux.vnet.ibm.com>
 Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: mingo@elte.hu, tglx@linutronix.de, dvhltc@us.ibm.com,
-	tytso@us.ibm.com, a.p.zijlstra@chello.nl,
-	dmitry.torokhov@gmail.com, akpm@linux-foundation.org,
-	nickpiggin@yahoo.com.au
+	tytso@us.ibm.com
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:60002 "EHLO e3.ny.us.ibm.com"
+Received: from e6.ny.us.ibm.com ([32.97.182.146]:49796 "EHLO e6.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756157AbXIWRel (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 23 Sep 2007 13:34:41 -0400
+	id S1753619AbXIWRqi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 23 Sep 2007 13:46:38 -0400
 Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e3.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l8NHYaeY022686
-	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
+	by e6.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l8NHm27f005874
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:48:02 -0400
 Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l8NHYaRT430676
-	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l8NHkXDg545636
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:46:33 -0400
 Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
-	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l8NHYZHw022451
-	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
+	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l8NHkXNI031012
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:46:33 -0400
 Content-Disposition: inline
-In-Reply-To: <20070921054656.GA11708@linux.vnet.ibm.com>
+In-Reply-To: <20070921011222.GA12394@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello!
+On Thu, Sep 20, 2007 at 06:12:22PM -0700, Paul E. McKenney wrote:
+> Hello!
+> 
+> Color me blind, but I don't see how the following race is avoided:
+> 
+> CPU 0:	A hardware interrupt is received for a threaded irq, which
+> 	eventually results in do_hardirq() being invoked and the
+> 	descriptor lock being acquired.  Because the IRQ_INPROGRESS
+> 	status bit is set, execution continues.  Once the handler
+> 	returns, having already cleared the IRQ_INPROGRESS status bit,
+> 	the descriptor lock is released.
+> 
+> CPU 1:	A second hardware interrupt is received for the same threaded
+> 	irq, which also wends its way to do_hardirq() with the
+> 	IRQ_INPROGRESS status bit set.  It enters the handler (having
+> 	released the descriptor lock) and accesses some data structure
+> 	that CPU 2 now wants to get rid of.
+> 
+> CPU 2:	A synchronize_irq() is executed, again for this same irq.
+> 	Because the descriptor status does not have the IRQ_NODELAY
+> 	bit set, and because the IRQ_INPROGRESS status bit is set,
+> 	this task blocks.
+> 
+> CPU 0:	Execution continues near the end of do_hardirq(), which notices
+> 	that the descriptor wait_for_handler queue is non-empty,
+> 	and therefore wakes up CPU 2's task.
+> 
+> CPU 2:	The task starts running, and proceeds to clean up the data
+> 	structures that CPU 1 is still using.
 
-This updated patch adds a sychronize_all_irqs(), which waits for
-all outstanding interrupt handlers, both threaded and IRQF_NODELAY,
-to complete.  This functionality is provided in non-rt kernels by
-synchronize_sched(), but this approach fails in face of the threaded
-interrupt handlers present in -rt.  The trick sychronize_all_irqs() uses
-is to recognize that it has no way of waiting for pending interrupts that
-have not yet made it to the CPU, and that the existing synchronize_irq()
-will in fact fail to wait for delivered interrupts that have not yet
-managed to set the IRQ_INPROGRESS status flag.
+And the above was where I was in fact missing something.  When CPU 2
+awakens, it will see that desc->status has the IRQ_INPROGRESS bit set,
+and will therefore go back to sleep.  It will be awakened again when the
+second interrupt finishes.
 
-This patch takes this thought one step farther, and guarantees only to
-wait for interrupts that have already started executing in their handler.
+Please accept my apologies for the false alarm!!!
 
-This patch pushes the rcu_read_lock() and rcu_read_unlock() doen into
-handle_IRQ_event() to as to avoid problems with the do-while loop in
-thread_adge_irq().
+So the only shortcoming I am aware of for synchronize_irq() in -rt is
+that if there are two concurrent synchronize_irq() calls for the same
+IRQ that happen during the last interrupt ever for this IRQ, then the
+second of the two will sleep forever.  A similar effect could cause
+a precisely timed sequence of interrupts to indefinitely delay a given
+synchronize_irq().  I think, anyway.  (If this is the case, then adding
+a generation number to the irq_desc structure would be one possible
+way of fixing this.)
 
-Passes light testing (five rounds of kernbench) on an x86_64 box.
+							Thanx, Paul
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
----
-
- include/linux/hardirq.h |    4 +++-
- kernel/irq/handle.c     |    2 ++
- kernel/irq/manage.c     |   25 +++++++++++++++++++++++++
- 3 files changed, 30 insertions(+), 1 deletion(-)
-
-diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/include/linux/hardirq.h linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h
---- linux-2.6.23-rc4-rt1/include/linux/hardirq.h	2007-09-20 17:34:52.000000000 -0700
-+++ linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h	2007-09-20 18:35:53.000000000 -0700
-@@ -105,8 +105,10 @@
- 
- #ifdef CONFIG_SMP
- extern void synchronize_irq(unsigned int irq);
-+extern void synchronize_all_irqs(void);
- #else
--# define synchronize_irq(irq)	barrier()
-+# define synchronize_irq(irq)		barrier()
-+# define synchronize_all_irqs(irq)	barrier()
- #endif
- 
- struct task_struct;
-diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/handle.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c
---- linux-2.6.23-rc4-rt1/kernel/irq/handle.c	2007-09-20 17:34:51.000000000 -0700
-+++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c	2007-09-22 23:34:13.000000000 -0700
-@@ -150,7 +150,9 @@ irqreturn_t handle_IRQ_event(unsigned in
- 	do {
- 		unsigned int preempt_count = preempt_count();
- 
-+		rcu_read_lock();
- 		ret = action->handler(irq, action->dev_id);
-+		rcu_read_unlock();
- 		if (preempt_count() != preempt_count) {
- 			stop_trace();
- 			print_symbol("BUG: unbalanced irq-handler preempt count in %s!\n", (unsigned long) action->handler);
-diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/manage.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c
---- linux-2.6.23-rc4-rt1/kernel/irq/manage.c	2007-09-20 17:34:51.000000000 -0700
-+++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c	2007-09-22 23:34:15.000000000 -0700
-@@ -45,6 +45,30 @@ void synchronize_irq(unsigned int irq)
- EXPORT_SYMBOL(synchronize_irq);
- 
- /**
-+ *	synchronize_all_irqs - wait for all pending IRQ handlers (on other CPUs)
-+ *
-+ *	This function waits for any pending IRQ handlers for this interrupt
-+ *	to complete before returning. If you use this function while
-+ *	holding a resource the IRQ handler may need you will deadlock.
-+ *	If you use this function from an IRQ handler, you will immediately
-+ *	self-deadlock.
-+ *
-+ *	Note that this function waits for -handlers-, not for pending
-+ *	interrupts, and most especially not for pending interrupts that
-+ *	have not yet been delivered to the CPU.  So if an interrupt
-+ *	handler was just about to start executing when this function was
-+ *	called, and if there are no other interrupt handlers executing,
-+ *	this function is within its rights to return immediately.
-+ */
-+void synchronize_all_irqs(void)
-+{
-+	if (hardirq_preemption)
-+		synchronize_rcu();	/* wait for threaded irq handlers. */
-+	synchronize_sched();		/* wait for hardware irq handlers. */
-+}
-+EXPORT_SYMBOL_GPL(synchronize_all_irqs);
-+
-+/**
-  *	irq_can_set_affinity - Check if the affinity of a given irq can be set
-  *	@irq:		Interrupt to check
-  *
-@@ -886,3 +910,4 @@ void __init early_init_hardirqs(void)
- 	for (i = 0; i < NR_IRQS; i++)
- 		init_waitqueue_head(&irq_desc[i].wait_for_handler);
- }
-+
+> CPU 1:	This second handler is suddenly and fatally disappointed by
+> 	the disappearance of its data structures.
+> 
+> 
+> So what am I missing here?
+> 
+> 							Thanx, Paul
