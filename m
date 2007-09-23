@@ -1,76 +1,237 @@
-From: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
-Subject: Re: Priority of serial driver
-Date: Sat, 22 Sep 2007 16:15:23 -0300
-Message-ID: <20070922191522.GA4887@ghostprotocols.net>
-References: <f96d234e0709221122g36dab213y41645c159d620c8e@mail.gmail.com>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
+Date: Sun, 23 Sep 2007 21:38:07 +0400
+Message-ID: <20070923173807.GA292@tv-sign.ru>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: Cliff Brake <cliff.brake@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wx-out-0506.google.com ([66.249.82.232]:28456 "EHLO
-	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754913AbXIVTPd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 22 Sep 2007 15:15:33 -0400
-Received: by wx-out-0506.google.com with SMTP id h31so906742wxd
-        for <linux-rt-users@vger.kernel.org>; Sat, 22 Sep 2007 12:15:32 -0700 (PDT)
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
+	ego@in.ibm.com, srostedt@redhat.com
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758041AbXIWReY@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <f96d234e0709221122g36dab213y41645c159d620c8e@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+In-Reply-To: <20070910183412.GC3819@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Em Sat, Sep 22, 2007 at 02:22:00PM -0400, Cliff Brake escreveu:
-> I have a system where I am doing the following on a PXA270 ARM system:
-> 
-> An applications is sending and receiving a packet on a serial port
-> every 40ms.  With 2.6.20, I simply enabled kernel preemption and set
-> the priority of my application to real-time, and it worked great, no
-> matter what the system load.
+On 09/10, Paul E. McKenney wrote:
+>
+> Work in progress, not for inclusion.
 
-You didn't made it clear what exactly is the kernel version you are
-using. You mention 2.6.20, but is this with or without the PREEMPT_RT
-patch?
- 
-> With 2.6.23-rc6, I have enabled CONFIG_HIGH_RES_TIMERS &
-> CONFIG_PREEMPT.  Scheduling in the real-time application is rock solid
-> and looking at timing with a scope, and instrumenting the loop in the
-> application indicates the 40ms is very solid.  However, it seems the
-> receive data is getting stuck in the serial driver for relatively long
-> periods of time (>= 40ms), which is a problem in this system.
-> 
-> Is there anything that would have changed between 2.6.20 and
-> 2.6.23-rc6 that would explain this?  What priority do pieces of the
-> serial driver run at?  Is there any way to make the serial driver run
-> at high priority so that data is processed in a timely manner?
+Impressive work! a couple of random newbie's questions...
 
-Look at the IRQ-<N> kernel thread that services the serial port hardware
-interrupt, use chrt to bump its priority and see if it helps.
+> --- linux-2.6.22-b-fixbarriers/include/linux/rcupdate.h	2007-07-19 14:02:36.000000000 -0700
+> +++ linux-2.6.22-c-preemptrcu/include/linux/rcupdate.h	2007-08-22 15:21:06.000000000 -0700
+>
+>  extern void rcu_check_callbacks(int cpu, int user);
 
-To see which is the interrupt:
+Also superfluously declared in rcuclassic.h and in rcupreempt.h
 
-[root@tonchinha ~]# dmesg | grep ttyS0
-Kernel command line: root=/dev/hda1 console=ttyS0,115200 console=tty0
-ignore_loglevel
-serial8250: ttyS0 at I/O 0x3f8 (irq = 4) is a 16550A
-00:02: ttyS0 at I/O 0x3f8 (irq = 4) is a 16550A
+> --- linux-2.6.22-b-fixbarriers/include/linux/rcupreempt.h	1969-12-31 16:00:00.000000000 -0800
+> +++ linux-2.6.22-c-preemptrcu/include/linux/rcupreempt.h	2007-08-22 15:21:06.000000000 -0700
+> +
+> +#define __rcu_read_lock_nesting()	(current->rcu_read_lock_nesting)
 
-Now check what is the default rt priority for its hard interrupt kernel
-thread handler, "IRQ-4":
+unused?
 
-[root@tonchinha ~]# ps -C IRQ-4 -To pid,rtprio,cmd
-PID   RTPRIO CMD
-1721  50     [IRQ-4]
-[root@tonchinha ~]# 
+> diff -urpNa -X dontdiff linux-2.6.22-b-fixbarriers/kernel/rcupreempt.c linux-2.6.22-c-preemptrcu/kernel/rcupreempt.c
+> --- linux-2.6.22-b-fixbarriers/kernel/rcupreempt.c	1969-12-31 16:00:00.000000000 -0800
+> +++ linux-2.6.22-c-preemptrcu/kernel/rcupreempt.c	2007-08-22 15:35:19.000000000 -0700
+>
+> +static DEFINE_PER_CPU(struct rcu_data, rcu_data);
+> +static struct rcu_ctrlblk rcu_ctrlblk = {
+> +	.fliplock = SPIN_LOCK_UNLOCKED,
+> +	.completed = 0,
+> +};
+> static DEFINE_PER_CPU(int [2], rcu_flipctr) = { 0, 0 };
 
-Use the `chrt' utility to bump the priority to, say, 75:
+Just curious, any reason why rcu_flipctr can't live in rcu_data ? Similarly,
+rcu_try_flip_state can be a member of rcu_ctrlblk, it is even protected by
+rcu_ctrlblk.fliplock
 
-[root@tonchinha ~]# chrt -p 75 1721
+Isn't DEFINE_PER_CPU_SHARED_ALIGNED better for rcu_flip_flag and rcu_mb_flag?
 
-Check again:
+> +void __rcu_read_lock(void)
+> +{
+> +	int idx;
+> +	struct task_struct *me = current;
+> +	int nesting;
+> +
+> +	nesting = ORDERED_WRT_IRQ(me->rcu_read_lock_nesting);
+> +	if (nesting != 0) {
+> +
+> +		/* An earlier rcu_read_lock() covers us, just count it. */
+> +
+> +		me->rcu_read_lock_nesting = nesting + 1;
+> +
+> +	} else {
+> +		unsigned long oldirq;
+> +
+> +		/*
+> +		 * Disable local interrupts to prevent the grace-period
+> +		 * detection state machine from seeing us half-done.
+> +		 * NMIs can still occur, of course, and might themselves
+> +		 * contain rcu_read_lock().
+> +		 */
+> +
+> +		local_irq_save(oldirq);
 
-[root@tonchinha ~]# ps -C IRQ-4 -To pid,rtprio,cmd
-PID   RTPRIO CMD
-1721  75     [IRQ-4]
+Could you please tell more, why do we need this cli?
 
-- Arnaldo
+It can't "protect" rcu_ctrlblk.completed, and the only change which affects
+the state machine is rcu_flipctr[idx]++, so I can't understand the "half-done"
+above. (of course, we must disable preemption while changing rcu_flipctr).
+
+Hmm... this was already discussed... from another message:
+
+	> Critical portions of the GP protection happen in the scheduler-clock
+	> interrupt, which is a hardirq.  For example, the .completed counter
+	> is always incremented in hardirq context, and we cannot tolerate a
+	> .completed increment in this code.  Allowing such an increment would
+	> defeat the counter-acknowledge state in the state machine.
+
+Still can't understand, please help! .completed could be incremented by
+another CPU, why rcu_check_callbacks() running on _this_ CPU is so special?
+
+> +
+> +		/*
+> +		 * Outermost nesting of rcu_read_lock(), so increment
+> +		 * the current counter for the current CPU.  Use volatile
+> +		 * casts to prevent the compiler from reordering.
+> +		 */
+> +
+> +		idx = ORDERED_WRT_IRQ(rcu_ctrlblk.completed) & 0x1;
+> +		smp_read_barrier_depends();  /* @@@@ might be unneeded */
+> +		ORDERED_WRT_IRQ(__get_cpu_var(rcu_flipctr)[idx])++;
+
+Isn't it "obvious" that this barrier is not needed? rcu_flipctr could be
+change only by this CPU, regardless of the actual value of idx, we can't
+read the "wrong" value of rcu_flipctr[idx], no?
+
+OTOH, I can't understand how it works. With ot without local_irq_save(),
+another CPU can do rcu_try_flip_idle() and increment rcu_ctrlblk.completed
+at any time, we can see the old value... rcu_try_flip_waitzero() can miss us?
+
+OK, GP_STAGES > 1, so rcu_try_flip_waitzero() will actually check both
+0 and 1 lastidx's before synchronize_rcu() succeeds... I doubt very much
+my understanding is correct. Apart from this why GP_STAGES > 1 ???
+
+Well, I think this code is just too tricky for me! Will try to read again
+after sleep ;)
+
+> +static int
+> +rcu_try_flip_idle(void)
+> +{
+> +	int cpu;
+> +
+> +	RCU_TRACE_ME(rcupreempt_trace_try_flip_i1);
+> +	if (!rcu_pending(smp_processor_id())) {
+> +		RCU_TRACE_ME(rcupreempt_trace_try_flip_ie1);
+> +		return 0;
+> +	}
+> +
+> +	/*
+> +	 * Do the flip.
+> +	 */
+> +
+> +	RCU_TRACE_ME(rcupreempt_trace_try_flip_g1);
+> +	rcu_ctrlblk.completed++;  /* stands in for rcu_try_flip_g2 */
+> +
+> +	/*
+> +	 * Need a memory barrier so that other CPUs see the new
+> +	 * counter value before they see the subsequent change of all
+> +	 * the rcu_flip_flag instances to rcu_flipped.
+> +	 */
+
+Why? Any code sequence which relies on that?
+
+For example, rcu_check_callbacks does
+
+	if (rcu_ctrlblk.completed == rdp->completed)
+		rcu_try_flip();
+
+it is possible that the timer interrupt calls rcu_check_callbacks()
+exactly because rcu_pending() sees rcu_flipped, but without rmb() in
+between we can see the old value of rcu_ctrlblk.completed.
+
+This is not a problem because rcu_try_flip() needs rcu_ctrlblk.fliplock,
+so rcu_try_flip() will see the new state != rcu_try_flip_idle_state, but
+I can't understand any mb() in rcu_try_flip_xxx().
+
+> +static void rcu_process_callbacks(struct softirq_action *unused)
+> +{
+> +	unsigned long flags;
+> +	struct rcu_head *next, *list;
+> +	struct rcu_data *rdp = RCU_DATA_ME();
+> +
+> +	spin_lock_irqsave(&rdp->lock, flags);
+> +	list = rdp->donelist;
+> +	if (list == NULL) {
+> +		spin_unlock_irqrestore(&rdp->lock, flags);
+> +		return;
+> +	}
+
+Do we really need this fastpath? It is not needed for the correctness,
+and this case is very unlikely (in fact I think it is not possible:
+rcu_check_callbacks() (triggers RCU_SOFTIRQ) is called with irqs disabled).
+
+> +void fastcall call_rcu(struct rcu_head *head,
+> +				void (*func)(struct rcu_head *rcu))
+> +{
+> +	unsigned long oldirq;
+> +	struct rcu_data *rdp;
+> +
+> +	head->func = func;
+> +	head->next = NULL;
+> +	local_irq_save(oldirq);
+> +	rdp = RCU_DATA_ME();
+> +	spin_lock(&rdp->lock);
+
+This looks a bit strange. Is this optimization? Why not
+
+	spin_lock_irqsave(&rdp->lock, flags);
+	rdp = RCU_DATA_ME();
+	...
+
+? RCU_DATA_ME() is cheap, but spin_lock() under local_irq_save() spins
+without preemption.
+
+Actually, why do we need rcu_data->lock ? Looks like local_irq_save()
+should be enough, no? perhaps some -rt reasons ?
+
+> +	__rcu_advance_callbacks(rdp);
+
+Any reason this func can't do rcu_check_mb() as well?
+
+If this is possible, can't we move the code doing "s/rcu_flipped/rcu_flip_seen/"
+from __rcu_advance_callbacks() to rcu_check_mb() to unify the "acks" ?
+
+> +void __synchronize_sched(void)
+> +{
+> +	cpumask_t oldmask;
+> +	int cpu;
+> +
+> +	if (sched_getaffinity(0, &oldmask) < 0)
+> +		oldmask = cpu_possible_map;
+> +	for_each_online_cpu(cpu) {
+> +		sched_setaffinity(0, cpumask_of_cpu(cpu));
+> +		schedule();
+
+This "schedule()" is not needed, any time sched_setaffinity() returns on another
+CPU we already forced preemption of the previously active task on that CPU.
+
+> +	}
+> +	sched_setaffinity(0, oldmask);
+> +}
+
+Well, this is not correct... but doesn't matter because of the next patch.
+
+But could you explain how it can deadlock (according to the changelog of
+the next patch) ?
+
+Thanks!
+
+Oleg.
