@@ -1,237 +1,128 @@
-From: Oleg Nesterov <oleg@tv-sign.ru>
-Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
-Date: Sun, 23 Sep 2007 21:38:07 +0400
-Message-ID: <20070923173807.GA292@tv-sign.ru>
-References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH RFC -rt] updated synchronize_all_irqs implementation
+Date: Sun, 23 Sep 2007 10:34:32 -0700
+Message-ID: <20070923173432.GA10542@linux.vnet.ibm.com>
+References: <20070921054656.GA11708@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
-	ego@in.ibm.com, srostedt@redhat.com
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758041AbXIWReY@vger.kernel.org>
+Cc: mingo@elte.hu, tglx@linutronix.de, dvhltc@us.ibm.com,
+	tytso@us.ibm.com, a.p.zijlstra@chello.nl,
+	dmitry.torokhov@gmail.com, akpm@linux-foundation.org,
+	nickpiggin@yahoo.com.au
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:60002 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756157AbXIWRel (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 23 Sep 2007 13:34:41 -0400
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e3.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l8NHYaeY022686
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
+Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l8NHYaRT430676
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
+Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
+	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l8NHYZHw022451
+	for <linux-rt-users@vger.kernel.org>; Sun, 23 Sep 2007 13:34:36 -0400
 Content-Disposition: inline
-In-Reply-To: <20070910183412.GC3819@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20070921054656.GA11708@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 09/10, Paul E. McKenney wrote:
->
-> Work in progress, not for inclusion.
+Hello!
 
-Impressive work! a couple of random newbie's questions...
+This updated patch adds a sychronize_all_irqs(), which waits for
+all outstanding interrupt handlers, both threaded and IRQF_NODELAY,
+to complete.  This functionality is provided in non-rt kernels by
+synchronize_sched(), but this approach fails in face of the threaded
+interrupt handlers present in -rt.  The trick sychronize_all_irqs() uses
+is to recognize that it has no way of waiting for pending interrupts that
+have not yet made it to the CPU, and that the existing synchronize_irq()
+will in fact fail to wait for delivered interrupts that have not yet
+managed to set the IRQ_INPROGRESS status flag.
 
-> --- linux-2.6.22-b-fixbarriers/include/linux/rcupdate.h	2007-07-19 14:02:36.000000000 -0700
-> +++ linux-2.6.22-c-preemptrcu/include/linux/rcupdate.h	2007-08-22 15:21:06.000000000 -0700
->
->  extern void rcu_check_callbacks(int cpu, int user);
+This patch takes this thought one step farther, and guarantees only to
+wait for interrupts that have already started executing in their handler.
 
-Also superfluously declared in rcuclassic.h and in rcupreempt.h
+This patch pushes the rcu_read_lock() and rcu_read_unlock() doen into
+handle_IRQ_event() to as to avoid problems with the do-while loop in
+thread_adge_irq().
 
-> --- linux-2.6.22-b-fixbarriers/include/linux/rcupreempt.h	1969-12-31 16:00:00.000000000 -0800
-> +++ linux-2.6.22-c-preemptrcu/include/linux/rcupreempt.h	2007-08-22 15:21:06.000000000 -0700
-> +
-> +#define __rcu_read_lock_nesting()	(current->rcu_read_lock_nesting)
+Passes light testing (five rounds of kernbench) on an x86_64 box.
 
-unused?
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
 
-> diff -urpNa -X dontdiff linux-2.6.22-b-fixbarriers/kernel/rcupreempt.c linux-2.6.22-c-preemptrcu/kernel/rcupreempt.c
-> --- linux-2.6.22-b-fixbarriers/kernel/rcupreempt.c	1969-12-31 16:00:00.000000000 -0800
-> +++ linux-2.6.22-c-preemptrcu/kernel/rcupreempt.c	2007-08-22 15:35:19.000000000 -0700
->
-> +static DEFINE_PER_CPU(struct rcu_data, rcu_data);
-> +static struct rcu_ctrlblk rcu_ctrlblk = {
-> +	.fliplock = SPIN_LOCK_UNLOCKED,
-> +	.completed = 0,
-> +};
-> static DEFINE_PER_CPU(int [2], rcu_flipctr) = { 0, 0 };
+ include/linux/hardirq.h |    4 +++-
+ kernel/irq/handle.c     |    2 ++
+ kernel/irq/manage.c     |   25 +++++++++++++++++++++++++
+ 3 files changed, 30 insertions(+), 1 deletion(-)
 
-Just curious, any reason why rcu_flipctr can't live in rcu_data ? Similarly,
-rcu_try_flip_state can be a member of rcu_ctrlblk, it is even protected by
-rcu_ctrlblk.fliplock
-
-Isn't DEFINE_PER_CPU_SHARED_ALIGNED better for rcu_flip_flag and rcu_mb_flag?
-
-> +void __rcu_read_lock(void)
-> +{
-> +	int idx;
-> +	struct task_struct *me = current;
-> +	int nesting;
-> +
-> +	nesting = ORDERED_WRT_IRQ(me->rcu_read_lock_nesting);
-> +	if (nesting != 0) {
-> +
-> +		/* An earlier rcu_read_lock() covers us, just count it. */
-> +
-> +		me->rcu_read_lock_nesting = nesting + 1;
-> +
-> +	} else {
-> +		unsigned long oldirq;
-> +
-> +		/*
-> +		 * Disable local interrupts to prevent the grace-period
-> +		 * detection state machine from seeing us half-done.
-> +		 * NMIs can still occur, of course, and might themselves
-> +		 * contain rcu_read_lock().
-> +		 */
-> +
-> +		local_irq_save(oldirq);
-
-Could you please tell more, why do we need this cli?
-
-It can't "protect" rcu_ctrlblk.completed, and the only change which affects
-the state machine is rcu_flipctr[idx]++, so I can't understand the "half-done"
-above. (of course, we must disable preemption while changing rcu_flipctr).
-
-Hmm... this was already discussed... from another message:
-
-	> Critical portions of the GP protection happen in the scheduler-clock
-	> interrupt, which is a hardirq.  For example, the .completed counter
-	> is always incremented in hardirq context, and we cannot tolerate a
-	> .completed increment in this code.  Allowing such an increment would
-	> defeat the counter-acknowledge state in the state machine.
-
-Still can't understand, please help! .completed could be incremented by
-another CPU, why rcu_check_callbacks() running on _this_ CPU is so special?
-
-> +
-> +		/*
-> +		 * Outermost nesting of rcu_read_lock(), so increment
-> +		 * the current counter for the current CPU.  Use volatile
-> +		 * casts to prevent the compiler from reordering.
-> +		 */
-> +
-> +		idx = ORDERED_WRT_IRQ(rcu_ctrlblk.completed) & 0x1;
-> +		smp_read_barrier_depends();  /* @@@@ might be unneeded */
-> +		ORDERED_WRT_IRQ(__get_cpu_var(rcu_flipctr)[idx])++;
-
-Isn't it "obvious" that this barrier is not needed? rcu_flipctr could be
-change only by this CPU, regardless of the actual value of idx, we can't
-read the "wrong" value of rcu_flipctr[idx], no?
-
-OTOH, I can't understand how it works. With ot without local_irq_save(),
-another CPU can do rcu_try_flip_idle() and increment rcu_ctrlblk.completed
-at any time, we can see the old value... rcu_try_flip_waitzero() can miss us?
-
-OK, GP_STAGES > 1, so rcu_try_flip_waitzero() will actually check both
-0 and 1 lastidx's before synchronize_rcu() succeeds... I doubt very much
-my understanding is correct. Apart from this why GP_STAGES > 1 ???
-
-Well, I think this code is just too tricky for me! Will try to read again
-after sleep ;)
-
-> +static int
-> +rcu_try_flip_idle(void)
-> +{
-> +	int cpu;
-> +
-> +	RCU_TRACE_ME(rcupreempt_trace_try_flip_i1);
-> +	if (!rcu_pending(smp_processor_id())) {
-> +		RCU_TRACE_ME(rcupreempt_trace_try_flip_ie1);
-> +		return 0;
-> +	}
-> +
-> +	/*
-> +	 * Do the flip.
-> +	 */
-> +
-> +	RCU_TRACE_ME(rcupreempt_trace_try_flip_g1);
-> +	rcu_ctrlblk.completed++;  /* stands in for rcu_try_flip_g2 */
-> +
-> +	/*
-> +	 * Need a memory barrier so that other CPUs see the new
-> +	 * counter value before they see the subsequent change of all
-> +	 * the rcu_flip_flag instances to rcu_flipped.
-> +	 */
-
-Why? Any code sequence which relies on that?
-
-For example, rcu_check_callbacks does
-
-	if (rcu_ctrlblk.completed == rdp->completed)
-		rcu_try_flip();
-
-it is possible that the timer interrupt calls rcu_check_callbacks()
-exactly because rcu_pending() sees rcu_flipped, but without rmb() in
-between we can see the old value of rcu_ctrlblk.completed.
-
-This is not a problem because rcu_try_flip() needs rcu_ctrlblk.fliplock,
-so rcu_try_flip() will see the new state != rcu_try_flip_idle_state, but
-I can't understand any mb() in rcu_try_flip_xxx().
-
-> +static void rcu_process_callbacks(struct softirq_action *unused)
-> +{
-> +	unsigned long flags;
-> +	struct rcu_head *next, *list;
-> +	struct rcu_data *rdp = RCU_DATA_ME();
-> +
-> +	spin_lock_irqsave(&rdp->lock, flags);
-> +	list = rdp->donelist;
-> +	if (list == NULL) {
-> +		spin_unlock_irqrestore(&rdp->lock, flags);
-> +		return;
-> +	}
-
-Do we really need this fastpath? It is not needed for the correctness,
-and this case is very unlikely (in fact I think it is not possible:
-rcu_check_callbacks() (triggers RCU_SOFTIRQ) is called with irqs disabled).
-
-> +void fastcall call_rcu(struct rcu_head *head,
-> +				void (*func)(struct rcu_head *rcu))
-> +{
-> +	unsigned long oldirq;
-> +	struct rcu_data *rdp;
-> +
-> +	head->func = func;
-> +	head->next = NULL;
-> +	local_irq_save(oldirq);
-> +	rdp = RCU_DATA_ME();
-> +	spin_lock(&rdp->lock);
-
-This looks a bit strange. Is this optimization? Why not
-
-	spin_lock_irqsave(&rdp->lock, flags);
-	rdp = RCU_DATA_ME();
-	...
-
-? RCU_DATA_ME() is cheap, but spin_lock() under local_irq_save() spins
-without preemption.
-
-Actually, why do we need rcu_data->lock ? Looks like local_irq_save()
-should be enough, no? perhaps some -rt reasons ?
-
-> +	__rcu_advance_callbacks(rdp);
-
-Any reason this func can't do rcu_check_mb() as well?
-
-If this is possible, can't we move the code doing "s/rcu_flipped/rcu_flip_seen/"
-from __rcu_advance_callbacks() to rcu_check_mb() to unify the "acks" ?
-
-> +void __synchronize_sched(void)
-> +{
-> +	cpumask_t oldmask;
-> +	int cpu;
-> +
-> +	if (sched_getaffinity(0, &oldmask) < 0)
-> +		oldmask = cpu_possible_map;
-> +	for_each_online_cpu(cpu) {
-> +		sched_setaffinity(0, cpumask_of_cpu(cpu));
-> +		schedule();
-
-This "schedule()" is not needed, any time sched_setaffinity() returns on another
-CPU we already forced preemption of the previously active task on that CPU.
-
-> +	}
-> +	sched_setaffinity(0, oldmask);
-> +}
-
-Well, this is not correct... but doesn't matter because of the next patch.
-
-But could you explain how it can deadlock (according to the changelog of
-the next patch) ?
-
-Thanks!
-
-Oleg.
+diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/include/linux/hardirq.h linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h
+--- linux-2.6.23-rc4-rt1/include/linux/hardirq.h	2007-09-20 17:34:52.000000000 -0700
++++ linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h	2007-09-20 18:35:53.000000000 -0700
+@@ -105,8 +105,10 @@
+ 
+ #ifdef CONFIG_SMP
+ extern void synchronize_irq(unsigned int irq);
++extern void synchronize_all_irqs(void);
+ #else
+-# define synchronize_irq(irq)	barrier()
++# define synchronize_irq(irq)		barrier()
++# define synchronize_all_irqs(irq)	barrier()
+ #endif
+ 
+ struct task_struct;
+diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/handle.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c
+--- linux-2.6.23-rc4-rt1/kernel/irq/handle.c	2007-09-20 17:34:51.000000000 -0700
++++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c	2007-09-22 23:34:13.000000000 -0700
+@@ -150,7 +150,9 @@ irqreturn_t handle_IRQ_event(unsigned in
+ 	do {
+ 		unsigned int preempt_count = preempt_count();
+ 
++		rcu_read_lock();
+ 		ret = action->handler(irq, action->dev_id);
++		rcu_read_unlock();
+ 		if (preempt_count() != preempt_count) {
+ 			stop_trace();
+ 			print_symbol("BUG: unbalanced irq-handler preempt count in %s!\n", (unsigned long) action->handler);
+diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/manage.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c
+--- linux-2.6.23-rc4-rt1/kernel/irq/manage.c	2007-09-20 17:34:51.000000000 -0700
++++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c	2007-09-22 23:34:15.000000000 -0700
+@@ -45,6 +45,30 @@ void synchronize_irq(unsigned int irq)
+ EXPORT_SYMBOL(synchronize_irq);
+ 
+ /**
++ *	synchronize_all_irqs - wait for all pending IRQ handlers (on other CPUs)
++ *
++ *	This function waits for any pending IRQ handlers for this interrupt
++ *	to complete before returning. If you use this function while
++ *	holding a resource the IRQ handler may need you will deadlock.
++ *	If you use this function from an IRQ handler, you will immediately
++ *	self-deadlock.
++ *
++ *	Note that this function waits for -handlers-, not for pending
++ *	interrupts, and most especially not for pending interrupts that
++ *	have not yet been delivered to the CPU.  So if an interrupt
++ *	handler was just about to start executing when this function was
++ *	called, and if there are no other interrupt handlers executing,
++ *	this function is within its rights to return immediately.
++ */
++void synchronize_all_irqs(void)
++{
++	if (hardirq_preemption)
++		synchronize_rcu();	/* wait for threaded irq handlers. */
++	synchronize_sched();		/* wait for hardware irq handlers. */
++}
++EXPORT_SYMBOL_GPL(synchronize_all_irqs);
++
++/**
+  *	irq_can_set_affinity - Check if the affinity of a given irq can be set
+  *	@irq:		Interrupt to check
+  *
+@@ -886,3 +910,4 @@ void __init early_init_hardirqs(void)
+ 	for (i = 0; i < NR_IRQS; i++)
+ 		init_waitqueue_head(&irq_desc[i].wait_for_handler);
+ }
++
