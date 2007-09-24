@@ -1,36 +1,65 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: your mail
-Date: Mon, 24 Sep 2007 16:50:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0709241649220.11726@gandalf.stny.rr.com>
-References: <20070924204408.GA4748@goodmis.org>
+Subject: [HACK] convert i_alloc_sem for direct_io.c craziness!
+Date: Mon, 24 Sep 2007 17:14:26 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-kernel@vger.kernel.org, mingo@elte.hu,
-	linux-rt-users@vger.kernel.org
-To: Jaswinder Singh <jaswinderlinux@gmail.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>, mingo@goodmis.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:59603 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751805AbXIXUuM (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:58371 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754761AbXIXVPD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Sep 2007 16:50:12 -0400
-In-Reply-To: <20070924204408.GA4748@goodmis.org>
+	Mon, 24 Sep 2007 17:15:03 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
+Hopefully I will get some attention from those that are responsible for
+fs/direct_io.c
 
---
-On Mon, 24 Sep 2007, Steven Rostedt wrote:
+Ingo and Thomas,
 
-> linux-rt-users@vger.kernel.org
-> Bcc:
-> Subject: Re: realtime preemption performance difference
-> Reply-To:
-> In-Reply-To: <3f9a31f40709240448h4a9e8337t437328b5c675ecd5@mail.gmail.com>
+This patch converts the i_alloc_sem into a compat_rw_semaphore for the -rt
+patch.  Seems that the code in fs/direct_io.c does some nasty logic with
+the i_alloc_sem.  For DIO_LOCKING, I'm assuming that the i_alloc_sem is
+used as a reference counter for pending requests. When the request is
+made, the down_read is performed. When the request is handled by the block
+softirq, then that softirq does an up on the request. So the owner is not
+the same between down and up. When all requests are handled, the semaphore
+counter should be zero. This keeps away any write access while requests
+are pending.
 
-[ I'm actually just learning how to screw-up^Wuse mutt ]
+Now this may all be well and dandy for vanilla Linux, but it breaks
+miserbly when converted to -rt.
 
-bah!
+1) In RT rw_semaphores must be up'd by the same thread that down's it.
 
--- Steve
+2) We can't do PI on the correct processes.
+
+This patch converts (for now) the i_alloc_sem into a compat_rw_semaphore
+to give back the old features to the sem. This fixes deadlocks that we've
+been having WRT direct_io.  But unfortunately, it now opens up
+unbonded priority inversion with this semaphore.  But really, those that
+can be affected by this, shouldn't be doing disk IO anyway.
+
+The real fix would be to get rid of the read semaphore trickery in
+direct_io.c.
+
+Signed-off-by: Steve Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.23-rc4-rt1/include/linux/fs.h
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/include/linux/fs.h	2007-09-24 16:58:59.000000000 -0400
++++ linux-2.6.23-rc4-rt1/include/linux/fs.h	2007-09-24 16:59:11.000000000 -0400
+@@ -577,7 +577,7 @@ struct inode {
+ 	umode_t			i_mode;
+ 	spinlock_t		i_lock;	/* i_blocks, i_bytes, maybe i_size */
+ 	struct mutex		i_mutex;
+-	struct rw_semaphore	i_alloc_sem;
++	struct compat_rw_semaphore	i_alloc_sem;
+ 	const struct inode_operations	*i_op;
+ 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
+ 	struct super_block	*i_sb;
