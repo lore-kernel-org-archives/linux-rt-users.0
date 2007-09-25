@@ -1,65 +1,69 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [HACK] convert i_alloc_sem for direct_io.c craziness!
-Date: Mon, 24 Sep 2007 17:14:26 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
+From: Esben Nielsen <nielsen.esben@googlemail.com>
+Subject: Re: Priority of serial driver
+Date: Tue, 25 Sep 2007 11:24:13 +0200 (CEST)
+Message-ID: <Pine.LNX.4.64.0709251119480.11844@frodo.shire>
+References: <f96d234e0709221122g36dab213y41645c159d620c8e@mail.gmail.com>
+ <20070922191522.GA4887@ghostprotocols.net>
+ <f96d234e0709240750h6d96f80ev87da3bfde185b6ff@mail.gmail.com>
+ <f96d234e0709240845t2c00a728u84f2fd4b58690aaf@mail.gmail.com>
+ <f96d234e0709241051m3178ae07v89b394a28ae8ca3c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>, mingo@goodmis.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Cc: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
+	linux-rt-users@vger.kernel.org
+To: Cliff Brake <cliff.brake@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:58371 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754761AbXIXVPD (ORCPT
+Received: from ug-out-1314.google.com ([66.249.92.170]:3572 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751393AbXIYJYY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Sep 2007 17:15:03 -0400
+	Tue, 25 Sep 2007 05:24:24 -0400
+Received: by ug-out-1314.google.com with SMTP id z38so903358ugc
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Sep 2007 02:24:23 -0700 (PDT)
+In-Reply-To: <f96d234e0709241051m3178ae07v89b394a28ae8ca3c@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-Hopefully I will get some attention from those that are responsible for
-fs/direct_io.c
 
-Ingo and Thomas,
+On Mon, 24 Sep 2007, Cliff Brake wrote:
 
-This patch converts the i_alloc_sem into a compat_rw_semaphore for the -rt
-patch.  Seems that the code in fs/direct_io.c does some nasty logic with
-the i_alloc_sem.  For DIO_LOCKING, I'm assuming that the i_alloc_sem is
-used as a reference counter for pending requests. When the request is
-made, the down_read is performed. When the request is handled by the block
-softirq, then that softirq does an up on the request. So the owner is not
-the same between down and up. When all requests are handled, the semaphore
-counter should be zero. This keeps away any write access while requests
-are pending.
+> On 9/24/07, Cliff Brake <cliff.brake@gmail.com> wrote:
+>> On 9/24/07, Cliff Brake <cliff.brake@gmail.com> wrote:
+>>> On 9/22/07, Arnaldo Carvalho de Melo <acme@ghostprotocols.net> wrote:
+>>>> Look at the IRQ-<N> kernel thread that services the serial port hardware
+>>>> interrupt, use chrt to bump its priority and see if it helps.
+>>>
+>>> I don't see any IRQ-<N> processes on my system -- does this require
+>>> the RT patch?  Perhaps this is different on ARM/x86?
+>>
+>> I've applied the RT patch which gives me the IRQ-N processes -- trying now ...
+>
+> RT patch (2.6.23-rc4-rt1) fixed the problem without any additional
+> priority adjustments, so that is obviously the solution.  I guess I
+> should know by now that RT with Linux is still hit and miss without
+> the RT patch.
 
-Now this may all be well and dandy for vanilla Linux, but it breaks
-miserbly when converted to -rt.
+Yes, that is the point of the -RT patch. Without the patch there are 
+unbounded code paths running with preemption off. Your maximum jitter thus 
+highly depends on the complete workload of your system. With the -RT patch 
+applied there are (almost) no unbounded code paths running with preemption 
+off. The maximum jitter of a given task will thus only depend on the 
+workload of the tasks running at the same or higher priority. That is much more 
+controlable.
 
-1) In RT rw_semaphores must be up'd by the same thread that down's it.
+Esben
 
-2) We can't do PI on the correct processes.
-
-This patch converts (for now) the i_alloc_sem into a compat_rw_semaphore
-to give back the old features to the sem. This fixes deadlocks that we've
-been having WRT direct_io.  But unfortunately, it now opens up
-unbonded priority inversion with this semaphore.  But really, those that
-can be affected by this, shouldn't be doing disk IO anyway.
-
-The real fix would be to get rid of the read semaphore trickery in
-direct_io.c.
-
-Signed-off-by: Steve Rostedt <rostedt@goodmis.org>
-
-Index: linux-2.6.23-rc4-rt1/include/linux/fs.h
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/include/linux/fs.h	2007-09-24 16:58:59.000000000 -0400
-+++ linux-2.6.23-rc4-rt1/include/linux/fs.h	2007-09-24 16:59:11.000000000 -0400
-@@ -577,7 +577,7 @@ struct inode {
- 	umode_t			i_mode;
- 	spinlock_t		i_lock;	/* i_blocks, i_bytes, maybe i_size */
- 	struct mutex		i_mutex;
--	struct rw_semaphore	i_alloc_sem;
-+	struct compat_rw_semaphore	i_alloc_sem;
- 	const struct inode_operations	*i_op;
- 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
- 	struct super_block	*i_sb;
+>
+> Thanks,
+> Cliff
+>
+> -- 
+> =======================
+> Cliff Brake
+> http://bec-systems.com
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
