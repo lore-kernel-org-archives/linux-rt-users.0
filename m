@@ -1,80 +1,136 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [HACK] convert i_alloc_sem for direct_io.c craziness!
-Date: Tue, 25 Sep 2007 14:42:57 +0200
-Message-ID: <20070925144257.1acedd24@twins>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] Don't let -rt rw_semaphors do _non_owner locks
+Date: Tue, 25 Sep 2007 11:29:51 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0709251126190.3961@gandalf.stny.rr.com>
 References: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
+ <20070925144257.1acedd24@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	mingo@goodmis.org, Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from canuck.infradead.org ([209.217.80.40]:60101 "EHLO
-	canuck.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752364AbXIYMnI (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:62790 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752858AbXIYPaf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Sep 2007 08:43:08 -0400
-In-Reply-To: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
+	Tue, 25 Sep 2007 11:30:35 -0400
+In-Reply-To: <20070925144257.1acedd24@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 24 Sep 2007 17:14:26 -0400 (EDT) Steven Rostedt
-<rostedt@goodmis.org> wrote:
 
-> 
-> Hopefully I will get some attention from those that are responsible for
-> fs/direct_io.c
-> 
-> Ingo and Thomas,
-> 
-> This patch converts the i_alloc_sem into a compat_rw_semaphore for the -rt
-> patch.  Seems that the code in fs/direct_io.c does some nasty logic with
-> the i_alloc_sem.  For DIO_LOCKING, I'm assuming that the i_alloc_sem is
-> used as a reference counter for pending requests. When the request is
-> made, the down_read is performed. When the request is handled by the block
-> softirq, then that softirq does an up on the request. So the owner is not
-> the same between down and up. When all requests are handled, the semaphore
-> counter should be zero. This keeps away any write access while requests
-> are pending.
-> 
-> Now this may all be well and dandy for vanilla Linux, but it breaks
-> miserbly when converted to -rt.
-> 
-> 1) In RT rw_semaphores must be up'd by the same thread that down's it.
-> 
-> 2) We can't do PI on the correct processes.
-> 
-> This patch converts (for now) the i_alloc_sem into a compat_rw_semaphore
-> to give back the old features to the sem. This fixes deadlocks that we've
-> been having WRT direct_io.  But unfortunately, it now opens up
-> unbonded priority inversion with this semaphore.  But really, those that
-> can be affected by this, shouldn't be doing disk IO anyway.
-> 
-> The real fix would be to get rid of the read semaphore trickery in
-> direct_io.c.
+--
+On Tue, 25 Sep 2007, Peter Zijlstra wrote:
 
-How about teaching {up,down}_read_non_owner() to barf on rw_semaphore
-in -rt?
+> How about teaching {up,down}_read_non_owner() to barf on rw_semaphore
+> in -rt?
+>
 
-> Signed-off-by: Steve Rostedt <rostedt@goodmis.org>
-> 
-> Index: linux-2.6.23-rc4-rt1/include/linux/fs.h
-> ===================================================================
-> --- linux-2.6.23-rc4-rt1.orig/include/linux/fs.h	2007-09-24 16:58:59.000000000 -0400
-> +++ linux-2.6.23-rc4-rt1/include/linux/fs.h	2007-09-24 16:59:11.000000000 -0400
-> @@ -577,7 +577,7 @@ struct inode {
->  	umode_t			i_mode;
->  	spinlock_t		i_lock;	/* i_blocks, i_bytes, maybe i_size */
->  	struct mutex		i_mutex;
-> -	struct rw_semaphore	i_alloc_sem;
-> +	struct compat_rw_semaphore	i_alloc_sem;
->  	const struct inode_operations	*i_op;
->  	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
->  	struct super_block	*i_sb;
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Sure thing!
+
+This patch prevents rw_semaphore in PREEMPT_RT from performing
+down_read_non_owner and up_read_non_owner. If this must be used, then
+either convert to a completion or use compat_rw_semaphore.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-2.6.23-rc4-rt1/include/linux/rt_lock.h
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/include/linux/rt_lock.h	2007-09-25 09:38:56.000000000 -0400
++++ linux-2.6.23-rc4-rt1/include/linux/rt_lock.h	2007-09-25 09:42:19.000000000 -0400
+@@ -248,25 +248,20 @@ do {							\
+ 	__rt_rwsem_init((sem), #sem, &__key);		\
+ } while (0)
+
++extern void __dont_do_this_in_rt(struct rw_semaphore *rwsem);
++
++#define rt_down_read_non_owner(rwsem)	__dont_do_this_in_rt(rwsem)
++#define rt_up_read_non_owner(rwsem)	__dont_do_this_in_rt(rwsem)
++
+ extern void fastcall rt_down_write(struct rw_semaphore *rwsem);
+ extern void fastcall
+ rt_down_read_nested(struct rw_semaphore *rwsem, int subclass);
+ extern void fastcall
+ rt_down_write_nested(struct rw_semaphore *rwsem, int subclass);
+ extern void fastcall rt_down_read(struct rw_semaphore *rwsem);
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+-extern void fastcall rt_down_read_non_owner(struct rw_semaphore *rwsem);
+-#else
+-# define rt_down_read_non_owner(rwsem)		rt_down_read(rwsem)
+-#endif
+ extern int fastcall rt_down_write_trylock(struct rw_semaphore *rwsem);
+ extern int fastcall rt_down_read_trylock(struct rw_semaphore *rwsem);
+ extern void fastcall rt_up_read(struct rw_semaphore *rwsem);
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+-extern void fastcall rt_up_read_non_owner(struct rw_semaphore *rwsem);
+-#else
+-# define rt_up_read_non_owner(rwsem)	rt_up_read(rwsem)
+-#endif
+ extern void fastcall rt_up_write(struct rw_semaphore *rwsem);
+ extern void fastcall rt_downgrade_write(struct rw_semaphore *rwsem);
+
+Index: linux-2.6.23-rc4-rt1/kernel/rt.c
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/kernel/rt.c	2007-09-25 09:38:56.000000000 -0400
++++ linux-2.6.23-rc4-rt1/kernel/rt.c	2007-09-25 09:41:50.000000000 -0400
+@@ -324,25 +324,6 @@ void fastcall rt_up_read(struct rw_semap
+ }
+ EXPORT_SYMBOL(rt_up_read);
+
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+-void fastcall rt_up_read_non_owner(struct rw_semaphore *rwsem)
+-{
+-	unsigned long flags;
+-	/*
+-	 * Read locks within the self-held write lock succeed.
+-	 */
+-	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
+-	if (rt_mutex_real_owner(&rwsem->lock) == current && rwsem->read_depth) {
+-		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-		rwsem->read_depth--;
+-		return;
+-	}
+-	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-	rt_mutex_unlock(&rwsem->lock);
+-}
+-EXPORT_SYMBOL(rt_up_read_non_owner);
+-#endif
+-
+ /*
+  * downgrade a write lock into a read lock
+  * - just wake up any readers at the front of the queue
+@@ -433,32 +414,6 @@ void fastcall rt_down_read_nested(struct
+ }
+ EXPORT_SYMBOL(rt_down_read_nested);
+
+-
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+-
+-/*
+- * Same as rt_down_read() but no lockdep calls:
+- */
+-void fastcall rt_down_read_non_owner(struct rw_semaphore *rwsem)
+-{
+-	unsigned long flags;
+-	/*
+-	 * Read locks within the write lock succeed.
+-	 */
+-	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
+-
+-	if (rt_mutex_real_owner(&rwsem->lock) == current) {
+-		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-		rwsem->read_depth++;
+-		return;
+-	}
+-	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-	rt_mutex_lock(&rwsem->lock);
+-}
+-EXPORT_SYMBOL(rt_down_read_non_owner);
+-
+-#endif
+-
+ void fastcall __rt_rwsem_init(struct rw_semaphore *rwsem, char *name,
+ 			      struct lock_class_key *key)
+ {
