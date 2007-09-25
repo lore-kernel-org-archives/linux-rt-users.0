@@ -1,136 +1,115 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] Don't let -rt rw_semaphors do _non_owner locks
-Date: Tue, 25 Sep 2007 11:29:51 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0709251126190.3961@gandalf.stny.rr.com>
-References: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
- <20070925144257.1acedd24@twins>
+Subject: Re: [PATCH RFC -rt] updated synchronize_all_irqs implementation
+Date: Tue, 25 Sep 2007 13:22:03 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0709251317080.5676@gandalf.stny.rr.com>
+References: <20070921054656.GA11708@linux.vnet.ibm.com>
+ <20070923173432.GA10542@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	mingo@goodmis.org, Thomas Gleixner <tglx@linutronix.de>
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de,
+	dvhltc@us.ibm.com, tytso@us.ibm.com, a.p.zijlstra@chello.nl,
+	dmitry.torokhov@gmail.com, akpm@linux-foundation.org,
+	nickpiggin@yahoo.com.au
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:62790 "EHLO
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:63420 "EHLO
 	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752858AbXIYPaf (ORCPT
+	with ESMTP id S1752044AbXIYRXh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Sep 2007 11:30:35 -0400
-In-Reply-To: <20070925144257.1acedd24@twins>
+	Tue, 25 Sep 2007 13:23:37 -0400
+In-Reply-To: <20070923173432.GA10542@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 --
-On Tue, 25 Sep 2007, Peter Zijlstra wrote:
-
-> How about teaching {up,down}_read_non_owner() to barf on rw_semaphore
-> in -rt?
 >
+> Passes light testing (five rounds of kernbench) on an x86_64 box.
+>
+> Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> ---
+>
+>  include/linux/hardirq.h |    4 +++-
+>  kernel/irq/handle.c     |    2 ++
+>  kernel/irq/manage.c     |   25 +++++++++++++++++++++++++
+>  3 files changed, 30 insertions(+), 1 deletion(-)
+>
+> diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/include/linux/hardirq.h linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h
+> --- linux-2.6.23-rc4-rt1/include/linux/hardirq.h	2007-09-20 17:34:52.000000000 -0700
+> +++ linux-2.6.23-rc4-rt1-sairq/include/linux/hardirq.h	2007-09-20 18:35:53.000000000 -0700
+> @@ -105,8 +105,10 @@
+>
+>  #ifdef CONFIG_SMP
+>  extern void synchronize_irq(unsigned int irq);
+> +extern void synchronize_all_irqs(void);
+>  #else
+> -# define synchronize_irq(irq)	barrier()
+> +# define synchronize_irq(irq)		barrier()
+> +# define synchronize_all_irqs(irq)	barrier()
+>  #endif
+>
+>  struct task_struct;
+> diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/handle.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c
+> --- linux-2.6.23-rc4-rt1/kernel/irq/handle.c	2007-09-20 17:34:51.000000000 -0700
+> +++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/handle.c	2007-09-22 23:34:13.000000000 -0700
+> @@ -150,7 +150,9 @@ irqreturn_t handle_IRQ_event(unsigned in
+>  	do {
+>  		unsigned int preempt_count = preempt_count();
+>
+> +		rcu_read_lock();
+>  		ret = action->handler(irq, action->dev_id);
+> +		rcu_read_unlock();
+>  		if (preempt_count() != preempt_count) {
+>  			stop_trace();
+>  			print_symbol("BUG: unbalanced irq-handler preempt count in %s!\n", (unsigned long) action->handler);
+> diff -urpNa -X dontdiff linux-2.6.23-rc4-rt1/kernel/irq/manage.c linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c
+> --- linux-2.6.23-rc4-rt1/kernel/irq/manage.c	2007-09-20 17:34:51.000000000 -0700
+> +++ linux-2.6.23-rc4-rt1-sairq/kernel/irq/manage.c	2007-09-22 23:34:15.000000000 -0700
+> @@ -45,6 +45,30 @@ void synchronize_irq(unsigned int irq)
+>  EXPORT_SYMBOL(synchronize_irq);
+>
+>  /**
+> + *	synchronize_all_irqs - wait for all pending IRQ handlers (on other CPUs)
+> + *
+> + *	This function waits for any pending IRQ handlers for this interrupt
+> + *	to complete before returning. If you use this function while
+> + *	holding a resource the IRQ handler may need you will deadlock.
+> + *	If you use this function from an IRQ handler, you will immediately
+> + *	self-deadlock.
+> + *
+> + *	Note that this function waits for -handlers-, not for pending
+> + *	interrupts, and most especially not for pending interrupts that
+> + *	have not yet been delivered to the CPU.  So if an interrupt
+> + *	handler was just about to start executing when this function was
+> + *	called, and if there are no other interrupt handlers executing,
+> + *	this function is within its rights to return immediately.
+> + */
+> +void synchronize_all_irqs(void)
+> +{
+> +	if (hardirq_preemption)
+> +		synchronize_rcu();	/* wait for threaded irq handlers. */
+> +	synchronize_sched();		/* wait for hardware irq handlers. */
 
-Sure thing!
+I don't undrestand the synchronize_sched part above. How does that wait
+for all hardware irq handlers? Wouldn't the synchronize_rcu be sufficient?
 
-This patch prevents rw_semaphore in PREEMPT_RT from performing
-down_read_non_owner and up_read_non_owner. If this must be used, then
-either convert to a completion or use compat_rw_semaphore.
+-- Steve
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-2.6.23-rc4-rt1/include/linux/rt_lock.h
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/include/linux/rt_lock.h	2007-09-25 09:38:56.000000000 -0400
-+++ linux-2.6.23-rc4-rt1/include/linux/rt_lock.h	2007-09-25 09:42:19.000000000 -0400
-@@ -248,25 +248,20 @@ do {							\
- 	__rt_rwsem_init((sem), #sem, &__key);		\
- } while (0)
-
-+extern void __dont_do_this_in_rt(struct rw_semaphore *rwsem);
-+
-+#define rt_down_read_non_owner(rwsem)	__dont_do_this_in_rt(rwsem)
-+#define rt_up_read_non_owner(rwsem)	__dont_do_this_in_rt(rwsem)
-+
- extern void fastcall rt_down_write(struct rw_semaphore *rwsem);
- extern void fastcall
- rt_down_read_nested(struct rw_semaphore *rwsem, int subclass);
- extern void fastcall
- rt_down_write_nested(struct rw_semaphore *rwsem, int subclass);
- extern void fastcall rt_down_read(struct rw_semaphore *rwsem);
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
--extern void fastcall rt_down_read_non_owner(struct rw_semaphore *rwsem);
--#else
--# define rt_down_read_non_owner(rwsem)		rt_down_read(rwsem)
--#endif
- extern int fastcall rt_down_write_trylock(struct rw_semaphore *rwsem);
- extern int fastcall rt_down_read_trylock(struct rw_semaphore *rwsem);
- extern void fastcall rt_up_read(struct rw_semaphore *rwsem);
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
--extern void fastcall rt_up_read_non_owner(struct rw_semaphore *rwsem);
--#else
--# define rt_up_read_non_owner(rwsem)	rt_up_read(rwsem)
--#endif
- extern void fastcall rt_up_write(struct rw_semaphore *rwsem);
- extern void fastcall rt_downgrade_write(struct rw_semaphore *rwsem);
-
-Index: linux-2.6.23-rc4-rt1/kernel/rt.c
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/kernel/rt.c	2007-09-25 09:38:56.000000000 -0400
-+++ linux-2.6.23-rc4-rt1/kernel/rt.c	2007-09-25 09:41:50.000000000 -0400
-@@ -324,25 +324,6 @@ void fastcall rt_up_read(struct rw_semap
- }
- EXPORT_SYMBOL(rt_up_read);
-
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
--void fastcall rt_up_read_non_owner(struct rw_semaphore *rwsem)
--{
--	unsigned long flags;
--	/*
--	 * Read locks within the self-held write lock succeed.
--	 */
--	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
--	if (rt_mutex_real_owner(&rwsem->lock) == current && rwsem->read_depth) {
--		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
--		rwsem->read_depth--;
--		return;
--	}
--	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
--	rt_mutex_unlock(&rwsem->lock);
--}
--EXPORT_SYMBOL(rt_up_read_non_owner);
--#endif
--
- /*
-  * downgrade a write lock into a read lock
-  * - just wake up any readers at the front of the queue
-@@ -433,32 +414,6 @@ void fastcall rt_down_read_nested(struct
- }
- EXPORT_SYMBOL(rt_down_read_nested);
-
--
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
--
--/*
-- * Same as rt_down_read() but no lockdep calls:
-- */
--void fastcall rt_down_read_non_owner(struct rw_semaphore *rwsem)
--{
--	unsigned long flags;
--	/*
--	 * Read locks within the write lock succeed.
--	 */
--	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
--
--	if (rt_mutex_real_owner(&rwsem->lock) == current) {
--		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
--		rwsem->read_depth++;
--		return;
--	}
--	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
--	rt_mutex_lock(&rwsem->lock);
--}
--EXPORT_SYMBOL(rt_down_read_non_owner);
--
--#endif
--
- void fastcall __rt_rwsem_init(struct rw_semaphore *rwsem, char *name,
- 			      struct lock_class_key *key)
- {
+> +}
+> +EXPORT_SYMBOL_GPL(synchronize_all_irqs);
+> +
+> +/**
+>   *	irq_can_set_affinity - Check if the affinity of a given irq can be set
+>   *	@irq:		Interrupt to check
+>   *
+> @@ -886,3 +910,4 @@ void __init early_init_hardirqs(void)
+>  	for (i = 0; i < NR_IRQS; i++)
+>  		init_waitqueue_head(&irq_desc[i].wait_for_handler);
+>  }
+> +
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>
