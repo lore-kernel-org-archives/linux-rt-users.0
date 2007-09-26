@@ -1,129 +1,218 @@
-From: "Dmitry Torokhov" <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH RFC -rt] updated synchronize_all_irqs implementation
-Date: Wed, 26 Sep 2007 09:16:55 -0400
-Message-ID: <d120d5000709260616s5e3548d8j7b24f2123bf2d02f@mail.gmail.com>
-References: <20070921054656.GA11708@linux.vnet.ibm.com>
-	 <20070923173432.GA10542@linux.vnet.ibm.com>
-	 <Pine.LNX.4.58.0709251317080.5676@gandalf.stny.rr.com>
-	 <20070925193454.GH8432@linux.vnet.ibm.com>
-	 <Pine.LNX.4.58.0709251601240.14583@gandalf.stny.rr.com>
-	 <20070926012447.7ffdd45a@lappy>
-	 <20070926011139.GW8432@linux.vnet.ibm.com>
-	 <20070926102833.17f7c025@twins>
-	 <20070926130326.GC19496@linux.vnet.ibm.com>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
+Date: Wed, 26 Sep 2007 19:13:51 +0400
+Message-ID: <20070926151351.GA328@tv-sign.ru>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070923173807.GA292@tv-sign.ru> <20070924001509.GG11123@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Peter Zijlstra" <a.p.zijlstra@chello.nl>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de,
-	dvhltc@us.ibm.com, tytso@us.ibm.com, akpm@linux-foundation.org,
-	nickpiggin@yahoo.com.au
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
+	ego@in.ibm.com, srostedt@redhat.com
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hu-out-0506.google.com ([72.14.214.229]:46153 "EHLO
-	hu-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753024AbXIZNQ6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Sep 2007 09:16:58 -0400
-Received: by hu-out-0506.google.com with SMTP id 19so1098342hue
-        for <linux-rt-users@vger.kernel.org>; Wed, 26 Sep 2007 06:16:56 -0700 (PDT)
-In-Reply-To: <20070926130326.GC19496@linux.vnet.ibm.com>
+Received: from x346.tv-sign.ru ([89.108.83.215]:37705 "EHLO mail.screens.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754408AbXIZPJ5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Sep 2007 11:09:57 -0400
 Content-Disposition: inline
+In-Reply-To: <20070924001509.GG11123@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Paul,
-
-On 9/26/07, Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-> On Wed, Sep 26, 2007 at 10:28:33AM +0200, Peter Zijlstra wrote:
-> > On Tue, 25 Sep 2007 18:11:39 -0700 "Paul E. McKenney"
-> > <paulmck@linux.vnet.ibm.com> wrote:
-> >
-> > > On Wed, Sep 26, 2007 at 01:24:47AM +0200, Peter Zijlstra wrote:
-> > > > On Tue, 25 Sep 2007 16:02:45 -0400 (EDT) Steven Rostedt
-> > > > <rostedt@goodmis.org> wrote:
-> > > >
-> > > > > > This would of course require that synchronize_all_irqs() be in the
-> > > > > > RCU code rather than the irq code so that it could access the static
-> > > > > > wakeme_after_rcu() definition and the rcu_synchronize structure.
-> > > > > >
-> > > > > > Thoughts?
-> > > > >
-> > > > > I do like this better. Anyone else care to comment?
-> > > >
-> > > > I'm still wondering why the IRQ users cannot user proper RCU as it
-> > > > stands:
-> > >
-> > > Well, that was my initial proposal.  ;-)
-> >
-> > handler:
-> > > >   rcu_read_lock();
-> > > >   foo = rcu_dereference(bar);
-> > > >   if (foo)
-> > > >     foo();
-> > > >   rcu_read_unlock();
-> > >
-> >
-> > control routine (!handler)
-> > > > vs
-> > > >
-> > > >   rcu_assign(foo, NULL);
-> > > >   synchronize_rcu();
+On 09/23, Paul E. McKenney wrote:
 >
-> Ah, OK -- yes, that was what I originally proposed -- that individual
-> handlers using RCU place the rcu_read_lock() and rcu_read_unlock() as
-> needed.
->
-> > > > The implicit rcu_read_lock() as placed in handle_IRQ_event() seems
-> > > > misplaced.
-> > >
-> > > OK -- where would you put them instead?  I have them covering the
-> > > call to the handler, so what am I missing here?
-> >
-> > in do_hardirq() (-rt) that is specific to threaded interrupts.
->
-> My concern there is that some of the functions called from do_hardirq()
-> can loop processing multiple interrupts.  An interrupt storm, otherwise
-> harmless in -rt, could cause a very long RCU read-side critical section
-> if it happened within thread_edge_irq().
->
-> > That said, I'm wondering if we need this whole extra sync_all_irqs()
-> > thing. I'm just not getting why IRQ handlers should be an implicit RCU
-> > safe context.
->
-> Because they are in non-rt -- synchronize_sched() is guaranteed to
-> wait for all interrupt handlers.  In contrast, in -rt, synchronize_sched()
-> only waits for hardirq.  So Dmitry Torokhov asked for a primitive
-> that would wait for all irq handlers, whether threaded or not.
->
+> On Sun, Sep 23, 2007 at 09:38:07PM +0400, Oleg Nesterov wrote:
+> > Isn't DEFINE_PER_CPU_SHARED_ALIGNED better for rcu_flip_flag and rcu_mb_flag?
+> 
+> Looks like it to me, thank you for the tip!
+> 
+> Hmmm...  Why not the same for rcu_data?  I guess because there is
+> very little sharing?  The only example thus far of sharing would be
+> if rcu_flipctr were to be moved into rcu_data (if an RCU read-side
+> critical section were preempted and then started on some other CPU),
 
-That is correct. IIRC synchronize_sched() was introduced to show that
-it is not related (other than implementation-wise) to RCU mechanisms.
+even if rcu lock/unlock happen on different CPUs, rcu_flipctr is not "shared",
+we remember the index, but not the CPU, we always modify the "local" data.
 
-> But given that he has not responded to this thread, perhaps he
-> found that synchronize_irq() worked for him.
->
+> > OTOH, I can't understand how it works. With ot without local_irq_save(),
+> > another CPU can do rcu_try_flip_idle() and increment rcu_ctrlblk.completed
+> > at any time, we can see the old value... rcu_try_flip_waitzero() can miss us?
+> > 
+> > OK, GP_STAGES > 1, so rcu_try_flip_waitzero() will actually check both
+> > 0 and 1 lastidx's before synchronize_rcu() succeeds... I doubt very much
+> > my understanding is correct. Apart from this why GP_STAGES > 1 ???
+> 
+> This is indeed one reason.
 
-Sorry, I am just being slow.
+Thanks a lot! Actually, this explains most of my questions. I was greatly
+confused even before I started to read the code. Looking at rcu_flipctr[2]
+I wrongly assumed that these 2 counters "belong" to different GPs. When
+I started to understand the reality, I was confused by GP_STAGES == 4 ;)
 
-No, I don't think synchronize_irq() will work for me. While in i8042 I
-know there are 2 possible IRQs (so I'd need 2 calls to
-synchronize_irq()) other drivers may not know what IRQ triggered their
-handler (or whether it was an IRQ at all).
+> > > +		 * Disable local interrupts to prevent the grace-period
+> > > +		 * detection state machine from seeing us half-done.
+> > > +		 * NMIs can still occur, of course, and might themselves
+> > > +		 * contain rcu_read_lock().
+> > > +		 */
+> > > +
+> > > +		local_irq_save(oldirq);
+> > 
+> > Could you please tell more, why do we need this cli?
+> > 
+> > It can't "protect" rcu_ctrlblk.completed, and the only change which affects
+> > the state machine is rcu_flipctr[idx]++, so I can't understand the "half-done"
+> > above. (of course, we must disable preemption while changing rcu_flipctr).
+> > 
+> 
+> 	The problem is not with .completed being incremented, but only
+> 	by it (1) being incremented (presumably by some other CPU and
+> 	then (2) having this CPU get a scheduling-clock interrupt, which
+> 	then causes this CPU to prematurely update the rcu_flip_flag.
+> 	This is a problem, because updating rcu_flip_flag is making a
+> 	promise that you won't ever again increment the "old" counter set
+> 	(at least not until the next counter flip).  If the scheduling
+> 	clock interrupt were to happen between the time that we pick
+> 	up the .completed field and the time that we increment our
+> 	counter, we will have broken that promise, and that could cause
+> 	someone to prematurely declare the grace period to be finished
 
-Actually, I need clarifucation on what you mean by "interrupt
-handlers" in sync_all_irqs(). Right now (if I understand it correctly)
-synchronize_sched() in mainline will wait for completion of all
-IRQ-like contexts. By IRQ-like context I mean code guardede by
-spinlock + IRQ off. Serio (input) drivers have their "interrupt"
-routines run in that IRQ-like context. They may be invoked as a result
-of real IRQ being raised but they also be invoked as a result of
-userspace action of some sort. It all depends on implementation of
-underlying serio port. So if sync_all_irqs() only waits for real IRQ
-handlers to complete it is not sufficient in my case...
+Thanks!
 
-Thanks.
+> 	The second reason is that cli prohibits preemption.
 
--- 
-Dmitry
+yes, this is clear
+
+> > > +	rcu_ctrlblk.completed++;  /* stands in for rcu_try_flip_g2 */
+> > > +
+> > > +	/*
+> > > +	 * Need a memory barrier so that other CPUs see the new
+> > > +	 * counter value before they see the subsequent change of all
+> > > +	 * the rcu_flip_flag instances to rcu_flipped.
+> > > +	 */
+> > 
+> > Why? Any code sequence which relies on that?
+> 
+> Yep.  If a CPU saw the flip flag set to rcu_flipped before it saw
+> the new value of the counter, it might acknowledge the flip, but
+> then later use the old value of the counter.
+
+Yes, yes, I see now. We really need this barriers, except I think
+rcu_try_flip_idle() can use wmb. However, I have a bit offtopic question,
+
+	// rcu_try_flip_waitzero()
+	if (A == 0) {
+		mb();
+		B == 0;
+	}
+
+Do we really need the mb() in this case? How it is possible that STORE
+goes before LOAD? "Obviously", the LOAD should be completed first, no?
+
+> > This looks a bit strange. Is this optimization? Why not
+> > 
+> > 	spin_lock_irqsave(&rdp->lock, flags);
+> > 	rdp = RCU_DATA_ME();
+> 
+> Can't do the above, because I need the pointer before I can lock it.  ;-)
+
+Oooh... well... I need to think more about your explanation :)
+
+> > If this is possible, can't we move the code doing "s/rcu_flipped/rcu_flip_seen/"
+> > from __rcu_advance_callbacks() to rcu_check_mb() to unify the "acks" ?
+> 
+> I believe that we cannot safely do this.  The rcu_flipped-to-rcu_flip_seen
+> transition has to be synchronized to the moving of the callbacks --
+> either that or we need more GP_STAGES.
+
+Hmm. Still can't understand.
+
+Suppose that we are doing call_rcu(), and __rcu_advance_callbacks() sees
+rdp->completed == rcu_ctrlblk.completed but rcu_flip_flag = rcu_flipped
+(say, another CPU does rcu_try_flip_idle() in between).
+
+We ack the flip, call_rcu() enables irqs, the timer interrupt calls
+__rcu_advance_callbacks() again and moves the callbacks.
+
+So, it is still possible that "move callbacks" and "ack the flip" happen
+out of order. But why this is bad?
+
+This can't "speedup" the moving of our callbacks from next to done lists.
+Yes, RCU state machine can switch to the next state/stage, but this looks
+safe to me.
+
+Help!
+
+The last question, rcu_check_callbacks does
+
+	if (rcu_ctrlblk.completed == rdp->completed)
+		rcu_try_flip();
+
+Could you clarify the check above? Afaics this is just optimization,
+technically it is correct to rcu_try_flip() at any time, even if ->completed
+are not synchronized. Most probably in that case rcu_try_flip_waitack() will
+fail, but nothing bad can happen, yes?
+
+> > > +	}
+> > > +	sched_setaffinity(0, oldmask);
+> > > +}
+> > 
+> > Well, this is not correct... but doesn't matter because of the next patch.
+> 
+> Well, the next patch is made unnecessary because of upcoming changes
+> to hotplug.  So, what do I have messed up?
+
+oldmask could be obsolete now. Suppose that the admin moves that task to some
+cpuset or just changes its ->cpus_allowed while it does synchronize_sched().
+
+I think there is another problem. It would be nice to eliminate taking the global
+sched_hotcpu_mutex in sched_setaffinity() (I think without CONFIG_HOTPLUG_CPU
+it is not needed right now). In that case sched_setaffinity(0, cpumask_of_cpu(cpu))
+can in fact return on the "wrong" CPU != cpu if another thread changes our affinity
+in parallel, and this breaks synchronize_sched().
+
+
+Can't we do something different? Suppose that we changed migration_thread(),
+something like (roughly)
+
+	-	__migrate_task(req->task, cpu, req->dest_cpu);
+	+	if (req->task)
+	+		__migrate_task(req->task, cpu, req->dest_cpu);
+	+	else
+	+		schedule(); // unneeded, mb() is enough?
+	
+		complete(&req->done);
+
+Now,
+	void synchronize_sched(void)
+	{
+		struct migration_req req;
+
+		req->task = NULL;
+		init_completion(&req.done);
+
+		for_each_online_cpu(cpu) {
+			struct rq *rq = cpu_rq(cpu);
+			int online;
+
+			spin_lock_irq(&rq->lock);
+			online = cpu_online(cpu); // HOTPLUG_CPU
+			if (online) {
+				list_add(&req->list, &rq->migration_queue);
+				req.done.done = 0;
+			}
+			spin_unlock_irq(&rq->lock);
+
+			if (online) {
+				wake_up_process(rq->migration_thread);
+				wait_for_completion(&req.done);
+			}
+		}
+	}
+
+Alternatively, we can use schedule_on_each_cpu(), but it has other disadvantages.
+
+Thoughts?
+
+Oleg.
