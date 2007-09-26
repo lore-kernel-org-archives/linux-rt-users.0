@@ -1,81 +1,51 @@
-From: "David Bahi" <dbahi@novell.com>
-Subject: nmi_watchdog fix for x86_64 to be more like i386
-Date: Wed, 26 Sep 2007 12:03:12 -0600
-Message-ID: <46FA4A800200006C000192FE@sinclair.provo.novell.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH] just rename call_rcu_bh instead of making it a macro
+Date: Wed, 26 Sep 2007 14:17:47 -0400
+Message-ID: <1190830667.20235.5.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=__PartBA9D0BF0.1__="
-Cc: <tglx@linutronix.de>, "Gregory Haskins" <GHaskins@novell.com>
-To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@us.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:8930 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756666AbXIZSDW (ORCPT
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:58849 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754619AbXIZSUS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Sep 2007 14:03:22 -0400
+	Wed, 26 Sep 2007 14:20:18 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---=__PartBA9D0BF0.1__=
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+Seems that I found a box that has a config that passes call_rcu_bh as a
+function pointer (see net/sctp/sm_make_chunk.c), so declaring the
+call_rcu_bh has a macro function isn't good enough.
 
-Thanks to tglx and ghaskins for all the help in tracking down a very
-early nmi_watchdog crash on certain x86_64 machines.
+This patch makes it just another name of call_rcu for rcupreempt.
 
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
---=__PartBA9D0BF0.1__=
-Content-Type: text/plain; name="watchdog_use_timer_and_hpet_on_x86_64.patch"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: attachment; filename="watchdog_use_timer_and_hpet_on_x86_64.patch"
-
-This modifies nmi_watchdog_tick behavior for=20
-x86_64 arch to consider both timer and hpet IRQs
-just as the i386 arch does.
-
-Signed-off-by: David Bahi <dbahi@novell.com>
-
----
- arch/x86_64/kernel/nmi.c |    8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-Index: linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- linux-2.6.22.8-rt9_1267.orig/arch/x86_64/kernel/nmi.c
-+++ linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
-@@ -369,8 +369,6 @@ int notrace __kprobes nmi_watchdog_tick(
- 		touched =3D 1;
- 	}
-=20
--	sum =3D read_pda(apic_timer_irqs);
--
- 	if (__get_cpu_var(nmi_touch)) {
- 		__get_cpu_var(nmi_touch) =3D 0;
- 		touched =3D 1;
-@@ -386,6 +384,12 @@ int notrace __kprobes nmi_watchdog_tick(
- 		cpu_clear(cpu, backtrace_mask);
- 	}
-=20
-+	/*
-+	 * Take the local apic timer and PIT/HPET into account. We don't
-+	 * know which one is active, when we have highres/dyntick on
-+	 */
-+	sum =3D read_pda(apic_timer_irqs) + kstat_cpu(cpu).irqs[0];
-+
- #ifdef CONFIG_X86_MCE
- 	/* Could check oops_in_progress here too, but it's safer
- 	   not too */
-
---=__PartBA9D0BF0.1__=
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4yIChHTlUv
-TGludXgpCgppRDhEQlFCRytwMzFIMjhKSFlhekxhUVJBZ1FYQUo0eitpbXBpNDg2M25kaUh4RnhS
-UDVyeGVUN1FBQ2d3dmpICjdpck12eWZZcGc3ajh4a0M4WmNQdVd3PQo9YlpDeAotLS0tLUVORCBQ
-R1AgU0lHTkFUVVJFLS0tLS0KCg==
-
---=__PartBA9D0BF0.1__=--
+Index: linux-2.6.23-rc8-rt1/include/linux/rcupreempt.h
+===================================================================
+--- linux-2.6.23-rc8-rt1.orig/include/linux/rcupreempt.h
++++ linux-2.6.23-rc8-rt1/include/linux/rcupreempt.h
+@@ -42,9 +42,14 @@
+ #include <linux/cpumask.h>
+ #include <linux/seqlock.h>
+ 
+-#define rcu_qsctr_inc(cpu)
+-#define rcu_bh_qsctr_inc(cpu)
+-#define call_rcu_bh(head, rcu) call_rcu(head, rcu)
++#define rcu_qsctr_inc(cpu)	do { } while (0)
++#define rcu_bh_qsctr_inc(cpu)	do { } while (0)
++/*
++ * Someone might want to pass call_rcu_bh as a function pointer.
++ * So this needs to just be a rename and not a macro function.
++ *  (no parentheses)
++ */
++#define call_rcu_bh		 call_rcu
+ 
+ extern void __rcu_read_lock(void);
+ extern void __rcu_read_unlock(void);
