@@ -1,66 +1,58 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.23-rc8-rt1
-Date: Wed, 26 Sep 2007 16:56:12 -0400
-Message-ID: <1190840172.5871.11.camel@localhost.localdomain>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Subject: Re: [PATCH RFC -rt] updated synchronize_all_irqs implementation
+Date: Wed, 26 Sep 2007 22:54:46 +0200
+Message-ID: <1190840086.18147.38.camel@lappy>
+References: <20070925193454.GH8432@linux.vnet.ibm.com>
+	 <Pine.LNX.4.58.0709251601240.14583@gandalf.stny.rr.com>
+	 <20070926012447.7ffdd45a@lappy> <20070926011139.GW8432@linux.vnet.ibm.com>
+	 <20070926102833.17f7c025@twins> <20070926130326.GC19496@linux.vnet.ibm.com>
+	 <d120d5000709260616s5e3548d8j7b24f2123bf2d02f@mail.gmail.com>
+	 <20070926155656.GA9101@linux.vnet.ibm.com>
+	 <d120d5000709261019v3c514fc7y49f5f0fe2c43a8a6@mail.gmail.com>
+	 <Pine.LNX.4.58.0709261341170.18417@gandalf.stny.rr.com>
+	 <20070926195513.GA10544@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Dmitry Torokhov <dmitry.torokhov@gmail.com>,
+	linux-rt-users@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de,
+	dvhltc@us.ibm.com, tytso@us.ibm.com, akpm@linux-foundation.org,
+	nickpiggin@yahoo.com.au
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:45976 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753074AbXIZU5E (ORCPT
+Received: from pentafluge.infradead.org ([213.146.154.40]:60311 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760667AbXIZU6q (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Sep 2007 16:57:04 -0400
+	Wed, 26 Sep 2007 16:58:46 -0400
+In-Reply-To: <20070926195513.GA10544@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the 2.6.23-rc8-rt1 tree, which can be
-downloaded from the new location:
 
- http://www.kernel.org/pub/linux/kernel/projects/rt/
+On Wed, 2007-09-26 at 12:55 -0700, Paul E. McKenney wrote:
 
-Changes since 2.6.23-rc4-rt1
+> Well, we could make spin_lock_irqsave() invoke rcu_read_lock() and
+> spin_lock_irqrestore() invoke rcu_read_unlock(), with similar adjustments
+> to the other primitives in this group.  Then RCU priority boosting would
+> kick in if configured.
 
-  - update to -rc8
+Might be me, but 'hiding' the RCU scope like that makes my skin crawl.
+What is wrong with using rcu_read_lock() explicitly where you depend on
+it? It even makes the code cleaner in that it documents the usage.
 
-  - A bunch of PowerPC stuff                    (Tony Breeds)
-      - rearrange thread flags
-      - count_active_rt_tasks fix
-      - match __rw_yield declaration
-      - unsigned long flags
-      - removed flush_tlb_pending
+These blanket locks like lock_kernel(), preempt_disable(),
+local_irq_disable() etc. are very hard to get rid of because they don't
+document what is protected.
 
-  - alternate node alloc fix                    (Andi Kleen)
+Please lets not add to this mess and keep all this explicit.
 
-  - fix compiling of timer code in !PREEMPT_RT  (Andi Kleen)
+Yes, -rt changes the preemption model, and that has concequences. But
+IMHO the resulting code is cleaner in most cases.
 
-  - convert i_alloc_sem to compat_rw_semaphore  (Steven Rostedt)
+I'd go as far as to depricate synchronize_sched() and replace all its
+users with proper RCU.
 
-  - don't let RT rw_semaphores do non_owner     (Steven Rostedt)
-
-  - kill the union in s_files                   (Peter Zijlstra)
-
-  - Sched sum less than zero prevention         (Luis Claudio)
-
-  - nmi_watchdog hpet                           (David Bahi)
-
-  - call_rcu_bh rename                          (Steven Rostedt)
-
-Work in progress (to be included soon):
-
-  - CFS-scheduler updates
-  - high res timers updates
-  - PowerPC high res timers
-
-to build a 2.6.23-rc8-rt1 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.22.tar.bz2
-  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.23-rc8.bz2
-  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rc8-rt1.bz2
-
-The broken out patches are also available.
-
--- Steve
+The more I think of it, the more I dislike this synchronize_all_irqs()
+and the 'magic' property of irq handlers.
