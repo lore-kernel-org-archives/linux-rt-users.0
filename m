@@ -1,81 +1,31 @@
-From: "David Bahi" <dbahi@novell.com>
-Subject: [PATCH 1/1] nmi_watchdog: x86_64 count timer and hpet like
-	i386
-Date: Wed, 26 Sep 2007 12:45:17 -0600
-Message-ID: <46FA545D0200006C0001930D@sinclair.provo.novell.com>
-References: <46FA4AE7020000FC00012412@sinclair.provo.novell.com>
- <46FA545D0200006C0001930D@sinclair.provo.novell.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v2 1/4] Implement {read,update}_persistent_clock.
+Date: Wed, 26 Sep 2007 15:04:01 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0709261502590.4465@gandalf.stny.rr.com>
+References: <1190345162.620000.305760830507.qpush@thor>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=__PartD1F660AD.2__="
-Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>,
-	"Gregory Haskins" <GHaskins@novell.com>
-To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linuxppc-dev@ozlabs.org, Paul Mackerras <paulus@samba.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Tony Breeds <tony@bakeyournoodle.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:10178 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753359AbXIZSp0 (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:32845 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754720AbXIZTE5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Sep 2007 14:45:26 -0400
-In-Reply-To: <46FA545D0200006C0001930D@sinclair.provo.novell.com>
+	Wed, 26 Sep 2007 15:04:57 -0400
+In-Reply-To: <1190345162.620000.305760830507.qpush@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---=__PartD1F660AD.2__=
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
-This modifies nmi_watchdog_tick behavior for x86_64 arch to=20
-consider both timer and pit/hpet IRQs just as the i386 arch does.
+Tony,
 
-Without this fix a kernel crash occurs very early in the boot=20
-process if nmi_watchdog is on.
+I'm about to release a new -rt patch based on -rc8. This patch series
+blew up totally in trying to get it applied. I'm leaving it out, so after
+I release the next series, could you update these patches.
 
-Signed-off-by: David Bahi <dbahi@novell.com>
+Thanks,
 
----
- arch/x86_64/kernel/nmi.c |    8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-Index: linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- linux-2.6.22.8-rt9_1267.orig/arch/x86_64/kernel/nmi.c
-+++ linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
-@@ -369,8 +369,6 @@ int notrace __kprobes nmi_watchdog_tick(
-                touched =3D 1;
-        }
-=20
--       sum =3D read_pda(apic_timer_irqs);
--
-        if (__get_cpu_var(nmi_touch)) {
-                __get_cpu_var(nmi_touch) =3D 0;
-                touched =3D 1;
-@@ -386,6 +384,12 @@ int notrace __kprobes nmi_watchdog_tick(
-                cpu_clear(cpu, backtrace_mask);
-        }
-=20
-+       /*
-+        * Take the local apic timer and PIT/HPET into account. We don't
-+        * know which one is active, when we have highres/dyntick on
-+        */
-+       sum =3D read_pda(apic_timer_irqs) + kstat_cpu(cpu).irqs[0];
-+
- #ifdef CONFIG_X86_MCE
-        /* Could check oops_in_progress here too, but it's safer
-           not too */
-
-
-
---=__PartD1F660AD.2__=
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4yIChHTlUv
-TGludXgpCgppRDhEQlFCRytxaTJIMjhKSFlhekxhUVJBbEJyQUtDSWxLOTczRVNJNmdFbWk1enVl
-OUJoeXkzMlV3Q2ZTQzhBCldHbUNpTEVwMkRDa2Q3T242Umk1d0NNPQo9NUhTVgotLS0tLUVORCBQ
-R1AgU0lHTkFUVVJFLS0tLS0KCg==
-
---=__PartD1F660AD.2__=--
+-- Steve
