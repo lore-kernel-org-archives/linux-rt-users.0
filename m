@@ -1,51 +1,81 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] just rename call_rcu_bh instead of making it a macro
-Date: Wed, 26 Sep 2007 14:17:47 -0400
-Message-ID: <1190830667.20235.5.camel@localhost.localdomain>
+From: "David Bahi" <dbahi@novell.com>
+Subject: [PATCH 1/1] nmi_watchdog: x86_64 count timer and hpet like
+	i386
+Date: Wed, 26 Sep 2007 12:45:17 -0600
+Message-ID: <46FA545D0200006C0001930D@sinclair.provo.novell.com>
+References: <46FA4AE7020000FC00012412@sinclair.provo.novell.com>
+ <46FA545D0200006C0001930D@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="=__PartD1F660AD.2__="
+Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>,
+	"Gregory Haskins" <GHaskins@novell.com>
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:58849 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754619AbXIZSUS (ORCPT
+Received: from sinclair.provo.novell.com ([137.65.248.137]:10178 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753359AbXIZSp0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Sep 2007 14:20:18 -0400
+	Wed, 26 Sep 2007 14:45:26 -0400
+In-Reply-To: <46FA545D0200006C0001930D@sinclair.provo.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Seems that I found a box that has a config that passes call_rcu_bh as a
-function pointer (see net/sctp/sm_make_chunk.c), so declaring the
-call_rcu_bh has a macro function isn't good enough.
+--=__PartD1F660AD.2__=
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-This patch makes it just another name of call_rcu for rcupreempt.
+This modifies nmi_watchdog_tick behavior for x86_64 arch to=20
+consider both timer and pit/hpet IRQs just as the i386 arch does.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Without this fix a kernel crash occurs very early in the boot=20
+process if nmi_watchdog is on.
 
-Index: linux-2.6.23-rc8-rt1/include/linux/rcupreempt.h
-===================================================================
---- linux-2.6.23-rc8-rt1.orig/include/linux/rcupreempt.h
-+++ linux-2.6.23-rc8-rt1/include/linux/rcupreempt.h
-@@ -42,9 +42,14 @@
- #include <linux/cpumask.h>
- #include <linux/seqlock.h>
- 
--#define rcu_qsctr_inc(cpu)
--#define rcu_bh_qsctr_inc(cpu)
--#define call_rcu_bh(head, rcu) call_rcu(head, rcu)
-+#define rcu_qsctr_inc(cpu)	do { } while (0)
-+#define rcu_bh_qsctr_inc(cpu)	do { } while (0)
-+/*
-+ * Someone might want to pass call_rcu_bh as a function pointer.
-+ * So this needs to just be a rename and not a macro function.
-+ *  (no parentheses)
-+ */
-+#define call_rcu_bh		 call_rcu
- 
- extern void __rcu_read_lock(void);
- extern void __rcu_read_unlock(void);
+Signed-off-by: David Bahi <dbahi@novell.com>
+
+---
+ arch/x86_64/kernel/nmi.c |    8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+Index: linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.22.8-rt9_1267.orig/arch/x86_64/kernel/nmi.c
++++ linux-2.6.22.8-rt9_1267/arch/x86_64/kernel/nmi.c
+@@ -369,8 +369,6 @@ int notrace __kprobes nmi_watchdog_tick(
+                touched =3D 1;
+        }
+=20
+-       sum =3D read_pda(apic_timer_irqs);
+-
+        if (__get_cpu_var(nmi_touch)) {
+                __get_cpu_var(nmi_touch) =3D 0;
+                touched =3D 1;
+@@ -386,6 +384,12 @@ int notrace __kprobes nmi_watchdog_tick(
+                cpu_clear(cpu, backtrace_mask);
+        }
+=20
++       /*
++        * Take the local apic timer and PIT/HPET into account. We don't
++        * know which one is active, when we have highres/dyntick on
++        */
++       sum =3D read_pda(apic_timer_irqs) + kstat_cpu(cpu).irqs[0];
++
+ #ifdef CONFIG_X86_MCE
+        /* Could check oops_in_progress here too, but it's safer
+           not too */
+
+
+
+--=__PartD1F660AD.2__=
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
+
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4yIChHTlUv
+TGludXgpCgppRDhEQlFCRytxaTJIMjhKSFlhekxhUVJBbEJyQUtDSWxLOTczRVNJNmdFbWk1enVl
+OUJoeXkzMlV3Q2ZTQzhBCldHbUNpTEVwMkRDa2Q3T242Umk1d0NNPQo9NUhTVgotLS0tLUVORCBQ
+R1AgU0lHTkFUVVJFLS0tLS0KCg==
+
+--=__PartD1F660AD.2__=--
