@@ -1,141 +1,119 @@
 From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
 Subject: Re: FAQ for realtime support in Linux Kernel
-Date: Sat, 29 Sep 2007 10:59:37 +0530
-Message-ID: <1985e0f60709282229p4dbebd4cu9012eecae0f5878f@mail.gmail.com>
+Date: Sat, 29 Sep 2007 12:14:17 +0530
+Message-ID: <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
 References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
-	 <46FDDE67.1030507@googlemail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Dirk Behme" <dirk.behme@googlemail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.180]:10998 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752830AbXI2F3i (ORCPT
+Received: from mu-out-0910.google.com ([209.85.134.188]:24199 "EHLO
+	mu-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752729AbXI2GoV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 29 Sep 2007 01:29:38 -0400
-Received: by py-out-1112.google.com with SMTP id u77so5677619pyb
-        for <linux-rt-users@vger.kernel.org>; Fri, 28 Sep 2007 22:29:37 -0700 (PDT)
-In-Reply-To: <46FDDE67.1030507@googlemail.com>
+	Sat, 29 Sep 2007 02:44:21 -0400
+Received: by mu-out-0910.google.com with SMTP id i10so5235624mue
+        for <linux-rt-users@vger.kernel.org>; Fri, 28 Sep 2007 23:44:19 -0700 (PDT)
+In-Reply-To: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-hello Dirk,
+hello all,
 
-On 9/29/07, Dirk Behme <dirk.behme@googlemail.com> wrote:
-> Jaswinder Singh wrote:
-> > I need your help and guidance to make this FAQ.
-> >
-> > Please send some links, data and reviews which will be useful for this FAQ.
->
-> Did you read stuff and links on
->
-> http://rt.wiki.kernel.org/index.php/Main_Page
->
-> ?
-
-Yes.
-
->
-> I think at least some of your questions below should be answered there.
->
-
-Yes, some of the questions are already answered, but it will be great
-if all these questions are under one FAQ, and FAQ answers will be to
-the point and more details are available on Main page as you
-referenced.
-
-> If anything is missing, feel free to add it. And, if you like, I would
-> propose to create a new FAQ page in above wiki and collect your
-> answers there.
->
-
-Sure Dirk please go ahead and take all these questions and setup FAQ.
-
-If you have any doubts regarding any question, please let me know, I
-will elaborate it.
-
-And I will post few more questions later on.
+I made sections in FAQ to make it more readable.
 
 Thank you,
 
 Jaswinder Singh.
 
-> Best regards
+FAQ for realtime support in Linux Kernel
+---------------------------------------
+Question Index
+1. Realtime Support questions
+2. Architecture questions
+3. Mailing list questions
+4. Realtime Patches questions
+5. Configuring/compiling questions
+6. Realtime samples/Performance questions
+7. Realtime Applications questions
+8. Maintainers  questions
+
+Section 1 - Realtime Support questions
+
+1. What is realtime support
+2. How realtime works
+
+Section 2 - Architecture questions
+
+1. Which Architecture are supporting realtime and who is maintainer
+2. What is the procedure to support realtime in new architecture
+
+Section 3 - Mailing list questions
+
+1. realtime mailing list and archives
+2. If I have some doubts or problems regarding realtime, do I need to
+send mail in realtime mailing list or linux kernel mailing list or
+both
+
+Section 4 - Realtime Patches questions
+
+1. What is the procedure to add realtime support
+2. Why I need to download realtime patches, If realtime support is in
+Linux kernel
+3. Download latest realtime patches
+4. Where can I post my realtime patches
+
+Section 5 - Configuring/compiling questions
+
+1. How to enable/disable realtime support
+2. Change realtime support run time or statically
+3. Required parameters for configuring realtime kernel
+4. Optional parameters for configuring realtime kernel, but they
+effect realtime performance
+
+Section 6 - Realtime samples/Performance questions
+
+1. What effects by realtime support and how much and samples to test
+it and who maintains these samples
+a. scheduling, task switching time
+b. Interrupt latency
+c. Interprocess communication
+d. Filesystem
+e. Device drivers
+f. Network
+g. X-Windows
+
+Section 7 - Realtime Applications questions
+
+1. List of realtime APIs
+2. How to write realtime applications
+3. Which programming languages are suitable for writing realtime applications
+4. Keep following things in mind while writing realtime applications
+5. Do I need to recompile my applications to get realtime performance
+
+Section 8 - Maintainers questions
+
+1. Maintainers of realtime kernel patch
+
+
+On 9/29/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
+> Hello all,
 >
-> Dirk
+> I new in linux realtime mailing list. I have some doubts in my mind.
+> So I am looking for some FAQ for realtime support.
 >
+> If any FAQ is available, please let me know.
 >
-> > Thanks you,
-> >
-> > Jaswinder Singh.
-> >
-> > Question Index
-> > ----------------------
-> > 1. What is realtime support
-> >
-> > 2. How realtime works
-> >
-> > 3. What is the procedure to add realtime support
-> >
-> > 4. Download latest realtime patches
-> >
-> > 5. Realtime mailing list and archives
-> >
-> > 6. If I have some doubts or problems regarding realtime, do I need to
-> > send mail in realtime mailing list or linux kernel mailing list or
-> > both
-> >
-> > 7. Maintainers of realtime kernel patch
-> >
-> > 8. How to enable/disable realtime support
-> >
-> > 9. Change realtime support run time or statically
-> >
-> > 10. Required parameters for configuring realtime kernel
-> >
-> > 11. Optional parameters for configuring realtime kernel, but they
-> > effect realtime performance
-> >
-> > 12. Which Architecture are supporting realtime and who is maintainer
-> >
-> > 13. What effects by realtime support and how much and samples to test
-> > it and who maintains these samples
-> >
-> > a. scheduling, task switching time
-> >
-> > b. Interrupt latency
-> >
-> > c. Interprocess communication
-> >
-> > d. Filesystem
-> >
-> > e. Device drivers
-> >
-> > f. Network
-> >
-> > g. X-Windows
-> >
-> >
-> > 14. List of realtime APIs
-> >
-> > 15. How to write realtime applications
-> >
-> > 16. Which programming languages are suitable for writing realtime applications
-> >
-> > 17. Keep following things in mind while writing realtime applications
-> >
-> > 18. Do I need to recompile my applications to get realtime performance
-> >
-> > 19. What is the procedure to support realtime in new architecture
-> >
-> > 20. Where can I post my realtime patches
-> > -
-> > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >
+> I came up with list of questions and try to make FAQ for realtime
+> support. If some one interested to make FAQ please let me know.
 >
+> I need your help and guidance to make this FAQ.
+>
+> Please send some links, data and reviews which will be useful for this FAQ.
+>
+> Thanks you,
+>
+> Jaswinder Singh.
 >
