@@ -1,29 +1,173 @@
-From: Esben Nielsen <nielsen.esben@googlemail.com>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
 Subject: Re: FAQ for realtime support in Linux Kernel
-Date: Sat, 29 Sep 2007 11:39:03 +0200 (CEST)
-Message-ID: <Pine.LNX.4.64.0709291137390.8662@frodo.shire>
+Date: Sat, 29 Sep 2007 18:21:38 +0530
+Message-ID: <1985e0f60709290551j7b79421fs9c8dcca5806a518c@mail.gmail.com>
 References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
- <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
+	 <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Cc: linux-rt-users@vger.kernel.org
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ug-out-1314.google.com ([66.249.92.171]:11999 "EHLO
-	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755214AbXI2JkI (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.231]:57735 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755802AbXI2Mvk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 29 Sep 2007 05:40:08 -0400
-Received: by ug-out-1314.google.com with SMTP id z38so1605206ugc
-        for <linux-rt-users@vger.kernel.org>; Sat, 29 Sep 2007 02:40:06 -0700 (PDT)
+	Sat, 29 Sep 2007 08:51:40 -0400
+Received: by wr-out-0506.google.com with SMTP id 36so1519741wra
+        for <linux-rt-users@vger.kernel.org>; Sat, 29 Sep 2007 05:51:39 -0700 (PDT)
 In-Reply-To: <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello all,
+
+Please give contribution with open heart and give answers to max
+questions as possible and give your reviews :
 
 
-On Sat, 29 Sep 2007, Jaswinder Singh wrote:
+FAQ for realtime support in Linux Kernel
+---------------------------------------
+Question Index
+1. Realtime Support questions
+2. Architecture questions
+3. Mailing list questions
+4. Realtime Patches questions
+5. Configuring/compiling questions
+6. Realtime samples/Performance questions
+7. Realtime Applications questions
+8. Maintainers  questions
 
+Section 1 - Realtime Support questions
+
+Q1 What is realtime support
+A1
+
+Q2 How realtime works
+A2 The RT-Preempt patch converts Linux into a fully preemptible
+kernel. The magic is done with:
+
+* Making in-kernel locking-primitives (using spinlocks) preemptible
+though reimplementation with rtmutexes:
+* Critical sections protected by i.e. spinlock_t and rwlock_t are now
+preemptible. The creation of non-preemptible sections (in kernel) is
+still possible with raw_spinlock_t (same APIs like spinlock_t)
+* Implementing priority inheritance for in-kernel spinlocks and
+semaphores. For more information on priority inversion and priority
+inheritance please consult Introduction to Priority Inversion
+* Converting interrupt handlers into preemptible kernel threads: The
+RT-Preempt patch treats soft interrupt handlers in kernel thread
+context, which is represented by a task_struct like a common userspace
+process. However it is also possible to register an IRQ in kernel
+context.
+* Converting the old Linux timer API into separate infrastructures for
+high resolution kernel timers plus one for timeouts, leading to
+userspace POSIX timers with high resolution.
+
+Q3 What is the procedure to add realtime support
+A3 Download latest realtime preemption patch from
+http://www.kernel.org/pub/linux/kernel/projects/rt/ then related get
+vanilla kernel from http://kernel.org then patch , configure and
+compile
+
+Section 2 - Architecture questions
+
+Q1 Which Architecture are supporting realtime and who is maintainer
+A1
+
+Q2 What is the procedure to support realtime in new architecture
+A2
+
+Section 3 - Mailing list questions
+
+Q1 realtime mailing list and archives
+A1 http://www.mail-archive.com/linux-rt-users@vger.kernel.org/
+
+Q2 If I have some doubts or problems regarding realtime, do I need to
+send mail in realtime mailing list or linux kernel mailing list or
+both
+A2
+
+Section 4 - Realtime Patches questions
+
+Q1 Why I need to download realtime patches, If realtime support is in
+Linux kernel
+A1
+
+Q2 Download latest realtime patches
+A2 http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Q3 Where can I post my realtime patches
+A3 Please send patches for the CONFIG_PREEMPT_RT Patch Set to LKML and
+put Ingo Molnar and Thomas Gleixner on CC.
+
+Please do not send clocksource and clockevents related patches against
+the -rt patch. Make sure they apply against the latest -hrt-dyntick
+patch. -hrt-dyntick might be a bit ahead of -rt at times, but the -rt
+patch pulls -hrt-dyntick on a regular base.
+
+
+Section 5 - Configuring/compiling questions
+
+Q1 How to enable/disable realtime support
+A1
+
+Q2 Change realtime support run time or statically
+A2
+
+Q3 Required parameters for configuring realtime kernel
+A3
+
+Q4 Optional parameters for configuring realtime kernel, but they
+effect realtime performance
+A4
+
+Section 6 - Realtime samples/Performance questions
+
+Q1 What effects by realtime support and how much and samples to test
+it and who maintains these samples
+a. scheduling, task switching time
+b. Interrupt latency
+c. Interprocess communication
+d. Filesystem
+e. Device drivers
+f. Network
+g. X-Windows
+
+Section 7 - Realtime Applications questions
+
+Q1 List of realtime APIs
+A1
+
+Q2 How to write realtime applications
+A2
+
+Q3 Which programming languages are suitable for writing realtime applications
+A3
+
+Q4 Keep following things in mind while writing realtime applications
+A4 Taking care of the following during the initial startup phase:
+* Call directly from the main() entry the mlockall() call.
+* Create all threads at startup time of the application, and touch
+each page of the entire stack of each thread. Never start threads
+dynamically during RT show time, this will ruin RT behavior.
+* Never use system calls that are known to generate pagefaults, such
+as fopen(). (Opening of files does the mmap() system call, which
+generates a page-fault).
+* Do not use 'compile time static arrays' without initializing them
+directly after startup, before RT show time.
+
+
+Q5 Do I need to recompile my applications to get realtime performance
+A5
+
+Section 8 - Maintainers questions
+
+Q1 Maintainers of realtime kernel patch
+A1
+
+On 9/29/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
 > hello all,
 >
 > I made sections in FAQ to make it more readable.
@@ -31,104 +175,4 @@ On Sat, 29 Sep 2007, Jaswinder Singh wrote:
 > Thank you,
 >
 > Jaswinder Singh.
->
-
-I am not quite up to date with wiki-sites work. Can you send a direct 
-link, please?
-
-Esben
-
-> FAQ for realtime support in Linux Kernel
-> ---------------------------------------
-> Question Index
-> 1. Realtime Support questions
-> 2. Architecture questions
-> 3. Mailing list questions
-> 4. Realtime Patches questions
-> 5. Configuring/compiling questions
-> 6. Realtime samples/Performance questions
-> 7. Realtime Applications questions
-> 8. Maintainers  questions
->
-> Section 1 - Realtime Support questions
->
-> 1. What is realtime support
-> 2. How realtime works
->
-> Section 2 - Architecture questions
->
-> 1. Which Architecture are supporting realtime and who is maintainer
-> 2. What is the procedure to support realtime in new architecture
->
-> Section 3 - Mailing list questions
->
-> 1. realtime mailing list and archives
-> 2. If I have some doubts or problems regarding realtime, do I need to
-> send mail in realtime mailing list or linux kernel mailing list or
-> both
->
-> Section 4 - Realtime Patches questions
->
-> 1. What is the procedure to add realtime support
-> 2. Why I need to download realtime patches, If realtime support is in
-> Linux kernel
-> 3. Download latest realtime patches
-> 4. Where can I post my realtime patches
->
-> Section 5 - Configuring/compiling questions
->
-> 1. How to enable/disable realtime support
-> 2. Change realtime support run time or statically
-> 3. Required parameters for configuring realtime kernel
-> 4. Optional parameters for configuring realtime kernel, but they
-> effect realtime performance
->
-> Section 6 - Realtime samples/Performance questions
->
-> 1. What effects by realtime support and how much and samples to test
-> it and who maintains these samples
-> a. scheduling, task switching time
-> b. Interrupt latency
-> c. Interprocess communication
-> d. Filesystem
-> e. Device drivers
-> f. Network
-> g. X-Windows
->
-> Section 7 - Realtime Applications questions
->
-> 1. List of realtime APIs
-> 2. How to write realtime applications
-> 3. Which programming languages are suitable for writing realtime applications
-> 4. Keep following things in mind while writing realtime applications
-> 5. Do I need to recompile my applications to get realtime performance
->
-> Section 8 - Maintainers questions
->
-> 1. Maintainers of realtime kernel patch
->
->
-> On 9/29/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
->> Hello all,
->>
->> I new in linux realtime mailing list. I have some doubts in my mind.
->> So I am looking for some FAQ for realtime support.
->>
->> If any FAQ is available, please let me know.
->>
->> I came up with list of questions and try to make FAQ for realtime
->> support. If some one interested to make FAQ please let me know.
->>
->> I need your help and guidance to make this FAQ.
->>
->> Please send some links, data and reviews which will be useful for this FAQ.
->>
->> Thanks you,
->>
->> Jaswinder Singh.
->>
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >
