@@ -1,56 +1,98 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RFC 6/9] RCU priority boosting for preemptible RCU
-Date: Fri, 28 Sep 2007 19:05:14 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0709281901470.17405@gandalf.stny.rr.com>
-References: <20070910183004.GA3299@linux.vnet.ibm.com>
- <20070910183901.GF3819@linux.vnet.ibm.com> <20070928225649.GA9899@in.ibm.com>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: FAQ for realtime support in Linux Kernel
+Date: Sat, 29 Sep 2007 10:30:23 +0530
+Message-ID: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, akpm@linux-foundation.org,
-	dipankar@in.ibm.com, josht@linux.vnet.ibm.com, tytso@us.ibm.com,
-	dvhltc@us.ibm.com, Thomas Gleixner <tglx@linutronix.de>,
-	a.p.zijlstra@chello.nl, bunk@kernel.org, oleg@tv-sign.ru,
-	srostedt@redhat.com
-To: Gautham R Shenoy <ego@in.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:55775 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752255AbXI1XFh (ORCPT
+Received: from ug-out-1314.google.com ([66.249.92.171]:40167 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751779AbXI2FAa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Sep 2007 19:05:37 -0400
-In-Reply-To: <20070928225649.GA9899@in.ibm.com>
+	Sat, 29 Sep 2007 01:00:30 -0400
+Received: by ug-out-1314.google.com with SMTP id z38so1587220ugc
+        for <linux-rt-users@vger.kernel.org>; Fri, 28 Sep 2007 22:00:28 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello all,
+
+I new in linux realtime mailing list. I have some doubts in my mind.
+So I am looking for some FAQ for realtime support.
+
+If any FAQ is available, please let me know.
+
+I came up with list of questions and try to make FAQ for realtime
+support. If some one interested to make FAQ please let me know.
+
+I need your help and guidance to make this FAQ.
+
+Please send some links, data and reviews which will be useful for this FAQ.
+
+Thanks you,
+
+Jaswinder Singh.
+
+Question Index
+----------------------
+1. What is realtime support
+
+2. How realtime works
+
+3. What is the procedure to add realtime support
+
+4. Download latest realtime patches
+
+5. Realtime mailing list and archives
+
+6. If I have some doubts or problems regarding realtime, do I need to
+send mail in realtime mailing list or linux kernel mailing list or
+both
+
+7. Maintainers of realtime kernel patch
+
+8. How to enable/disable realtime support
+
+9. Change realtime support run time or statically
+
+10. Required parameters for configuring realtime kernel
+
+11. Optional parameters for configuring realtime kernel, but they
+effect realtime performance
+
+12. Which Architecture are supporting realtime and who is maintainer
+
+13. What effects by realtime support and how much and samples to test
+it and who maintains these samples
+
+a. scheduling, task switching time
+
+b. Interrupt latency
+
+c. Interprocess communication
+
+d. Filesystem
+
+e. Device drivers
+
+f. Network
+
+g. X-Windows
 
 
---
-On Fri, 28 Sep 2007, Gautham R Shenoy wrote:
+14. List of realtime APIs
 
-> >
-> > +#ifdef CONFIG_PREEMPT_RCU_BOOST
-> > +/*
-> > + * Task state with respect to being RCU-boosted.  This state is changed
-> > + * by the task itself in response to the following three events:
-> 							^^^
-> > + * 1. Preemption (or block on lock) while in RCU read-side critical section.
->
-> I am wondering, can a task block on a lock while in RCU read-side
-> critical section?
+15. How to write realtime applications
 
-I think this may be specific to the -rt patch. In the -rt patch,
-spin_locks turn into mutexes, and therefor can block a read-side critical
-section.
+16. Which programming languages are suitable for writing realtime applications
 
+17. Keep following things in mind while writing realtime applications
 
-> > + * 2. Outermost rcu_read_unlock() for blocked RCU read-side critical section.
-> > + *
->
-> Event #3. is missing?
+18. Do I need to recompile my applications to get realtime performance
 
-I guess Paul needs to answer that one ;-)
+19. What is the procedure to support realtime in new architecture
 
--- Steve
+20. Where can I post my realtime patches
