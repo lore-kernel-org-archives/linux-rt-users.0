@@ -1,84 +1,86 @@
 From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
-Subject: Re: FAQ for realtime support in Linux Kernel
-Date: Sun, 30 Sep 2007 11:26:45 +0530
-Message-ID: <1985e0f60709292256o1e91d39al147bcffbb9f27450@mail.gmail.com>
-References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
-	 <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
-	 <1985e0f60709290551j7b79421fs9c8dcca5806a518c@mail.gmail.com>
-	 <20070929131338.GF813@unix.sh>
-	 <1985e0f60709290816k7f8c9bc2m6fb6c1fc4859243c@mail.gmail.com>
-	 <20070929165630.GA30241@thunk.org>
-	 <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com>
+Subject: Cyclictest expected results
+Date: Sun, 30 Sep 2007 21:07:19 +0530
+Message-ID: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Theodore Tso" <tytso@mit.edu>, linux@bohmer.net
+Cc: tglx@linutronix.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qb-out-0506.google.com ([72.14.204.238]:48503 "EHLO
-	qb-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751444AbXI3F4r (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.224]:59705 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757423AbXI3PhW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 30 Sep 2007 01:56:47 -0400
-Received: by qb-out-0506.google.com with SMTP id e11so905441qbe
-        for <linux-rt-users@vger.kernel.org>; Sat, 29 Sep 2007 22:56:46 -0700 (PDT)
-In-Reply-To: <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com>
+	Sun, 30 Sep 2007 11:37:22 -0400
+Received: by wr-out-0506.google.com with SMTP id 36so1633559wra
+        for <linux-rt-users@vger.kernel.org>; Sun, 30 Sep 2007 08:37:21 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thank you Theodore Ts and Remy Bohmer for updating :
+Hello all,
 
-http://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions
+I am testing Cyclictest. And looking for results as in :
 
-And giving us such a valuable information.
+http://rt.wiki.kernel.org/index.php/Cyclictest
+
+Here are my results on Intel Pentium 4 :
+
+Command line :  ./cyclictest -t 1 -p 80 -i 10000 -l 10000 -q
+
+2.6.23-rc4 :
+WARNING: High resolution timers not available
+T: 0 ( 1999) P:80 I:10000 C:  10000 Min:    110 Act: 5556 Avg: 5952 Max:    8021
+
+2.6.23-rc4-rt1 :
+WARNING: High resolution timers not available
+T: 0 (13711) P:80 I:10000 C:  10000 Min:    999 Act: 5991 Avg: 3823 Max:    6493
+
+2.6.23-rc8 :
+WARNING: High resolution timers not available
+T: 0 ( 1966) P:80 I:10000 C:  10000 Min:     83 Act: 4823 Avg: 6011 Max:    8029
+
+2.6.23-rc8-rt1 :
+WARNING: High resolution timers not available
+T: 0 ( 2003) P:80 I:10000 C:  10000 Min:   1500 Act: 6129 Avg: 4502 Max:    7832
+
+
+Command line :  ./cyclictest -t 1 -p 80 -n -i 10000 -l 10000 -q
+
+2.6.23-rc4 :
+WARNING: High resolution timers not available
+T: 0 ( 2005) P:80 I:10000 C:  10000 Min:     56 Act: 4827 Avg: 5998 Max:    8016
+
+2.6.23-rc4-rt1 :
+WARNING: High resolution timers not available
+T: 0 (13668) P:80 I:10000 C:  10000 Min:    389 Act: 3793 Avg: 3819 Max:    7640
+
+2.6.23-rc8 :
+WARNING: High resolution timers not available
+T: 0 ( 1982) P:80 I:10000 C:  10000 Min:    519 Act: 6121 Avg: 6035 Max:    8017
+
+2.6.23-rc8-rt1 :
+WARNING: High resolution timers not available
+T: 0 ( 2007) P:80 I:10000 C:  10000 Min:    901 Act: 6334 Avg: 3956 Max:    6957
+
+
+>From where I can get Linux-2.6.16-hrt5 and Linux-2.6.16-rt12 patches.
+
+CONFIG_HIGH_RES_TIMERS=y are defined in .config then why I am getting
+"WARNING: High resolution timers not available".
+
+Why my results are not so impressive in realtime even though I defined:
+CONFIG_PREEMPT_RT=y
+CONFIG_PREEMPT=y
+CONFIG_PREEMPT_SOFTIRQS=y
+CONFIG_PREEMPT_HARDIRQS=y
+CONFIG_PREEMPT_BKL=y
+
+
+Min, Avg and Max are showing cyclic latencies. Ideally It should be
+ZERO. Am I right ?
 
 Thank you,
 
-Jaswinder.
-
-
-On 9/29/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
-> Hello Ted,
->
-> Thanks for your suggestions, I tried to fixed it.
->
-> Now waiting from other guys to complete this FAQ as soon as possible ;-)
->
-> http://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions
->
-> Thank you,
->
-> Jaswinder Singh.
->
->
-> On 9/29/07, Theodore Tso <tytso@mit.edu> wrote:
-> > On Sat, Sep 29, 2007 at 08:46:20PM +0530, Jaswinder Singh wrote:
-> > > http://rt.wiki.kernel.org/index.php/FAQ_for_realtime_support_in_Linux_Kernel
-> >
-> > Thank you for putting it together and contributing it to the wiki!
-> >
-> > I renamed the page to make the page title be a bit more succint and
-> > less redundant (everything in rt.wiki.kernel.org is relating to the
-> > Realtime Linux :-), and I've added a link to the FAQ to the front page
-> > of the wiki.
-> >
-> > As a suggestion, there's probably no need to have the revisions table,
-> > since anyone who cares about the revision can just click on the
-> > revisions tab on the wiki.  (BTW, I normally like to use the preview
-> > button during the edit cycle, instead of constantly using the save
-> > button and then looking at the new page; you might want to make sure
-> > that "Show preview before first edit" and "Show preview before edit
-> > box" are checked in your user preferences.)
-> >
-> > Note by the way that some of the answers to the questions are located
-> > elsewhere in the Wiki; which doesn't make them be bad questions, but
-> > for example, it would probably be a good idea for some of the
-> > questions to not try to give a partial answer, but to direct them to
-> > areas such as the RT PREEMPT HOWTO page (for example).
-> >
-> > Regards,
-> >
-> >                                                - Ted
-> >
->
+Jaswinder Singh.
