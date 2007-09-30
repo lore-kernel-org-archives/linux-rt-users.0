@@ -1,75 +1,59 @@
-From: Oleg Nesterov <oleg@tv-sign.ru>
-Subject: Re: [PATCH RFC 5/9] RCU: CPU hotplug support for preemptible RCU
-Date: Sun, 30 Sep 2007 20:38:49 +0400
-Message-ID: <20070930163849.GB374@tv-sign.ru>
-References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183622.GE3819@linux.vnet.ibm.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: Cyclictest expected results
+Date: Sun, 30 Sep 2007 20:32:53 +0200
+Message-ID: <20070930183253.GW23573@pengutronix.de>
+References: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
-	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
-	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
-	ego@in.ibm.com, srostedt@redhat.com
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=iso-8859-15
+Cc: linux-rt-users@vger.kernel.org
+To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from x346.tv-sign.ru ([89.108.83.215]:52960 "EHLO mail.screens.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754068AbXI3Qe1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 30 Sep 2007 12:34:27 -0400
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:33610 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750817AbXI3Sc7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 30 Sep 2007 14:32:59 -0400
 Content-Disposition: inline
-In-Reply-To: <20070910183622.GE3819@linux.vnet.ibm.com>
+In-Reply-To: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 09/10, Paul E. McKenney wrote:
+On Sun, Sep 30, 2007 at 09:07:19PM +0530, Jaswinder Singh wrote:
+> Here are my results on Intel Pentium 4 :
 >
-> --- linux-2.6.22-d-schedclassic/kernel/rcupreempt.c	2007-08-22 15:45:28.000000000 -0700
-> +++ linux-2.6.22-e-hotplugcpu/kernel/rcupreempt.c	2007-08-22 15:56:22.000000000 -0700
-> @@ -125,6 +125,8 @@ enum rcu_mb_flag_values {
->  };
->  static DEFINE_PER_CPU(enum rcu_mb_flag_values, rcu_mb_flag) = rcu_mb_done;
+> Command line :  ./cyclictest -t 1 -p 80 -i 10000 -l 10000 -q
+
+Can you post the output of /proc/timer_list?
+
+> 2.6.23-rc8-rt1 :
+> WARNING: High resolution timers not available
+> T: 0 ( 2003) P:80 I:10000 C:  10000 Min:   1500 Act: 6129 Avg: 4502 Max:    7832
+
+That one should give you sane results.
+
+> From where I can get Linux-2.6.16-hrt5 and Linux-2.6.16-rt12 patches.
+
+I don't think it makes much sense to play with such an old kernel any more.
+
+> CONFIG_HIGH_RES_TIMERS=y are defined in .config then why I am getting
+> "WARNING: High resolution timers not available".
 >
-> +static cpumask_t rcu_cpu_online_map = CPU_MASK_NONE;
+> Why my results are not so impressive in realtime even though I defined:
+> CONFIG_PREEMPT_RT=y
+> CONFIG_PREEMPT=y
+> CONFIG_PREEMPT_SOFTIRQS=y
+> CONFIG_PREEMPT_HARDIRQS=y
+> CONFIG_PREEMPT_BKL=y
 
-I'd suggest to append "__read_mostly"
+Doesn't look too bad. Are you sure you actually _bootet_ that kernel? :)
 
-> +void rcu_offline_cpu_rt(int cpu)
-> +{
-> [...snip...]
-> +	spin_lock_irqsave(&rcu_ctrlblk.fliplock, oldirq);
-> +	rcu_check_mb(cpu);
-> +	if (per_cpu(rcu_flip_flag, cpu) == rcu_flipped) {
-> +		smp_mb();  /* Subsequent counter accesses must see new value */
-> +		per_cpu(rcu_flip_flag, cpu) = rcu_flip_seen;
-> +		smp_mb();  /* Subsequent RCU read-side critical sections */
-> +			   /*  seen -after- acknowledgement. */
+> Min, Avg and Max are showing cyclic latencies. Ideally It should be
+> ZERO. Am I right ?
 
-Imho, all these barriers are unneeded and confusing, we can't do them on behalf
-of a dead CPU anyway. Can't we just do
+You won't get zero. On x86 these latencies should be well below 100 us
+maximum time, with an average in the lower 10 us range.
 
-	per_cpu(rcu_mb_flag, cpu) = rcu_mb_done;
-	per_cpu(rcu_flip_flag, cpu) = rcu_flip_seen;
-?
-
-Why can't we also do
-
-	__get_cpu_var(rcu_flipctr)[0] += per_cpu(rcu_flipctr, cpu)[0];
-	per_cpu(rcu_flipctr, cpu)[0] = 0;	
-	__get_cpu_var(rcu_flipctr)[1] += per_cpu(rcu_flipctr, cpu)[1];
-	per_cpu(rcu_flipctr, cpu)[1] = 0;	
-
-? This way rcu_try_flip_waitzero() can also use rcu_cpu_online_map. This cpu
-is dead, nobody can modify per_cpu(rcu_flipctr, cpu). And we can't confuse
-rcu_try_flip_waitzero(), we are holding rcu_ctrlblk.fliplock.
-
-> +void __devinit rcu_online_cpu_rt(int cpu)
-> +{
-> +	unsigned long oldirq;
-> +
-> +	spin_lock_irqsave(&rcu_ctrlblk.fliplock, oldirq);
-> +	cpu_set(cpu, rcu_cpu_online_map);
-
-What if _cpu_up() fails? I think rcu_cpu_notify(CPU_UP_CANCELED) should call
-rcu_offline_cpu_rt() too.
-
-Oleg.
+Robert
+-- 
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
