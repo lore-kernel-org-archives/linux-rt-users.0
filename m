@@ -1,86 +1,97 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
-Subject: Cyclictest expected results
-Date: Sun, 30 Sep 2007 21:07:19 +0530
-Message-ID: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com>
+From: Oleg Nesterov <oleg@tv-sign.ru>
+Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
+Date: Sun, 30 Sep 2007 20:31:02 +0400
+Message-ID: <20070930163102.GA374@tv-sign.ru>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070923173807.GA292@tv-sign.ru> <20070924001509.GG11123@linux.vnet.ibm.com> <20070926151351.GA328@tv-sign.ru> <20070927154652.GE16652@linux.vnet.ibm.com> <20070928144714.GA397@tv-sign.ru> <20070928185759.GC9153@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
+	ego@in.ibm.com, srostedt@redhat.com
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.224]:59705 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757423AbXI3PhW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 30 Sep 2007 11:37:22 -0400
-Received: by wr-out-0506.google.com with SMTP id 36so1633559wra
-        for <linux-rt-users@vger.kernel.org>; Sun, 30 Sep 2007 08:37:21 -0700 (PDT)
+Received: from x346.tv-sign.ru ([89.108.83.215]:34303 "EHLO mail.screens.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754407AbXI3Q04 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 30 Sep 2007 12:26:56 -0400
 Content-Disposition: inline
+In-Reply-To: <20070928185759.GC9153@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello all,
+On 09/28, Paul E. McKenney wrote:
+>
+> On Fri, Sep 28, 2007 at 06:47:14PM +0400, Oleg Nesterov wrote:
+> > Ah, I was confused by the comment,
+> > 
+> > 	smp_mb();  /* Don't call for memory barriers before we see zero. */
+> > 	                                             ^^^^^^^^^^^^^^^^^^
+> > So, in fact, we need this barrier to make sure that _other_ CPUs see these
+> > changes in order, thanks. Of course, _we_ already saw zero.
+> 
+> Fair point!
+> 
+> Perhaps: "Ensure that all CPUs see their rcu_mb_flag -after- the
+> rcu_flipctrs sum to zero" or some such?
+> 
+> > But in that particular case this doesn't matter, rcu_try_flip_waitzero()
+> > is the only function which reads the "non-local" per_cpu(rcu_flipctr), so
+> > it doesn't really need the barrier? (besides, it is always called under
+> > fliplock).
+> 
+> The final rcu_read_unlock() that zeroed the sum was -not- under fliplock,
+> so we cannot necessarily rely on locking to trivialize all of this.
 
-I am testing Cyclictest. And looking for results as in :
+Yes, but still I think this mb() is not necessary. Becasue we don't need
+the "if we saw rcu_mb_flag we must see sum(lastidx)==0" property. When another
+CPU calls rcu_try_flip_waitzero(), it will use another lastidx. OK, minor issue,
+please forget.
 
-http://rt.wiki.kernel.org/index.php/Cyclictest
+> > OK, the last (I promise :) off-topic question. When CPU 0 and 1 share a
+> > store buffer, the situation is simple, we can replace "CPU 0 stores" with
+> > "CPU 1 stores". But what if CPU 0 is equally "far" from CPUs 1 and 2?
+> > 
+> > Suppose that CPU 1 does
+> > 
+> > 	wmb();
+> > 	B = 0
+> > 
+> > Can we assume that CPU 2 doing
+> > 
+> > 	if (B == 0) {
+> > 		rmb();
+> > 
+> > must see all invalidations from CPU 0 which were seen by CPU 1 before wmb() ?
+> 
+> Yes.  CPU 2 saw something following CPU 1's wmb(), so any of CPU 2's
+> reads following its rmb() must therefore see all of CPU 1's stores
+> preceding the wmb().
 
-Here are my results on Intel Pentium 4 :
+Ah, but I asked the different question. We must see CPU 1's stores by
+definition, but what about CPU 0's stores (which could be seen by CPU 1)?
 
-Command line :  ./cyclictest -t 1 -p 80 -i 10000 -l 10000 -q
+Let's take a "real life" example,
 
-2.6.23-rc4 :
-WARNING: High resolution timers not available
-T: 0 ( 1999) P:80 I:10000 C:  10000 Min:    110 Act: 5556 Avg: 5952 Max:    8021
+                A = B = X = 0;
+                P = Q = &A;
 
-2.6.23-rc4-rt1 :
-WARNING: High resolution timers not available
-T: 0 (13711) P:80 I:10000 C:  10000 Min:    999 Act: 5991 Avg: 3823 Max:    6493
+CPU_0           CPU_1           CPU_2
 
-2.6.23-rc8 :
-WARNING: High resolution timers not available
-T: 0 ( 1966) P:80 I:10000 C:  10000 Min:     83 Act: 4823 Avg: 6011 Max:    8029
+P = &B;         *P = 1;         if (X) {
+                wmb();                  rmb();
+                X = 1;                  BUG_ON(*P != 1 && *Q != 1);
+                                }
 
-2.6.23-rc8-rt1 :
-WARNING: High resolution timers not available
-T: 0 ( 2003) P:80 I:10000 C:  10000 Min:   1500 Act: 6129 Avg: 4502 Max:    7832
+So, is it possible that CPU_1 sees P == &B, but CPU_2 sees P == &A ?
 
+> The other approach would be to simply have a separate thread for this
+> purpose.  Batching would amortize the overhead (a single trip around the
+> CPUs could satisfy an arbitrarily large number of synchronize_sched()
+> requests).
 
-Command line :  ./cyclictest -t 1 -p 80 -n -i 10000 -l 10000 -q
+Yes, this way we don't need to uglify migration_thread(). OTOH, we need
+another kthread ;)
 
-2.6.23-rc4 :
-WARNING: High resolution timers not available
-T: 0 ( 2005) P:80 I:10000 C:  10000 Min:     56 Act: 4827 Avg: 5998 Max:    8016
-
-2.6.23-rc4-rt1 :
-WARNING: High resolution timers not available
-T: 0 (13668) P:80 I:10000 C:  10000 Min:    389 Act: 3793 Avg: 3819 Max:    7640
-
-2.6.23-rc8 :
-WARNING: High resolution timers not available
-T: 0 ( 1982) P:80 I:10000 C:  10000 Min:    519 Act: 6121 Avg: 6035 Max:    8017
-
-2.6.23-rc8-rt1 :
-WARNING: High resolution timers not available
-T: 0 ( 2007) P:80 I:10000 C:  10000 Min:    901 Act: 6334 Avg: 3956 Max:    6957
-
-
->From where I can get Linux-2.6.16-hrt5 and Linux-2.6.16-rt12 patches.
-
-CONFIG_HIGH_RES_TIMERS=y are defined in .config then why I am getting
-"WARNING: High resolution timers not available".
-
-Why my results are not so impressive in realtime even though I defined:
-CONFIG_PREEMPT_RT=y
-CONFIG_PREEMPT=y
-CONFIG_PREEMPT_SOFTIRQS=y
-CONFIG_PREEMPT_HARDIRQS=y
-CONFIG_PREEMPT_BKL=y
-
-
-Min, Avg and Max are showing cyclic latencies. Ideally It should be
-ZERO. Am I right ?
-
-Thank you,
-
-Jaswinder Singh.
+Oleg.
