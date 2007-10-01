@@ -1,41 +1,119 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
-Date: Mon, 1 Oct 2007 13:11:47 -0700
-Message-ID: <20071001201147.GF29100@linux.vnet.ibm.com>
-References: <46FA4A800200006C000192FE@sinclair.provo.novell.com> <200710011936.01528.ak@suse.de> <alpine.LFD.0.9999.0710012052310.20478@localhost.localdomain> <200710012116.59356.ak@suse.de> <alpine.LFD.0.9999.0710012124420.20478@localhost.localdomain> <20071001125626.32eb6d0b@laptopd505.fenrus.org>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: FAQ for realtime support in Linux Kernel
+Date: Mon, 1 Oct 2007 22:18:15 +0200
+Message-ID: <3efb10970710011318v939601fvc7420e80b83b1d37@mail.gmail.com>
+References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
+	 <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com>
+	 <1985e0f60709290551j7b79421fs9c8dcca5806a518c@mail.gmail.com>
+	 <20070929131338.GF813@unix.sh>
+	 <1985e0f60709290816k7f8c9bc2m6fb6c1fc4859243c@mail.gmail.com>
+	 <20070929165630.GA30241@thunk.org>
+	 <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com>
+	 <1985e0f60709292256o1e91d39al147bcffbb9f27450@mail.gmail.com>
+	 <1985e0f60710010404j7e6c1aaybd1a7cf4b3efe4a7@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <ak@suse.de>,
-	David Bahi <dbahi@novell.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Gregory Haskins <GHaskins@novell.com>
-To: Arjan van de Ven <arjan@infradead.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Theodore Tso" <tytso@mit.edu>, linux-rt-users@vger.kernel.org
+To: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e36.co.us.ibm.com ([32.97.110.154]:58122 "EHLO
-	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751790AbXJAUMM (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.177]:47695 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751484AbXJAUSS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 16:12:12 -0400
+	Mon, 1 Oct 2007 16:18:18 -0400
+Received: by py-out-1112.google.com with SMTP id u77so7292415pyb
+        for <linux-rt-users@vger.kernel.org>; Mon, 01 Oct 2007 13:18:17 -0700 (PDT)
+In-Reply-To: <1985e0f60710010404j7e6c1aaybd1a7cf4b3efe4a7@mail.gmail.com>
 Content-Disposition: inline
-In-Reply-To: <20071001125626.32eb6d0b@laptopd505.fenrus.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Oct 01, 2007 at 12:56:26PM -0700, Arjan van de Ven wrote:
-> On Mon, 1 Oct 2007 21:27:39 +0200 (CEST)
-> 
-> > > I already did this here by checking for cpu != 0. But it also needs
-> > > either tracking or forbidding migrations of irq 0. I can take care
-> > > of the patch.
-> > 
-> > I was thinking about the same fix. On i386 we already have the irq 
-> > migration / balancing of irq 0 disabled. That's why we setup IRQ0 with
-> > IRQ_NOBALANCING.
-> 
-> btw doing this is a problem if the user decides to hot(un)plug cpu 0...
-> he then can't move the irqs away to do that
+Hello Jaswinder,
 
-Last I tried it, x86_64 and i386 in fact prohibit hotunplugging CPU 0.
+I have some troubles with the question:
+'What effects by realtime support and how much and samples to test it
+and who maintains these samples?'
 
-						Thanx, Paul
+I doubt anyone can fill in this paragraph properly. It is too vague,
+and the figures you ask are different for every architecture and
+processor type/speed that is supported.
+
+What do you think?
+
+
+Kind Regards,
+
+Remy Bohmer
+
+
+2007/10/1, Jaswinder Singh <jaswinderlinuxrt@gmail.com>:
+> Hello all,
+>
+> I tried to fill remaining entries in :
+> http://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions
+>
+> Please it out, is these OK.
+>
+> Thank you,
+>
+> Jaswinder Singh.
+>
+> On 9/30/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
+> > Thank you Theodore Ts and Remy Bohmer for updating :
+> >
+> > http://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions
+> >
+> > And giving us such a valuable information.
+> >
+> > Thank you,
+> >
+> > Jaswinder.
+> >
+> >
+> > On 9/29/07, Jaswinder Singh <jaswinderlinuxrt@gmail.com> wrote:
+> > > Hello Ted,
+> > >
+> > > Thanks for your suggestions, I tried to fixed it.
+> > >
+> > > Now waiting from other guys to complete this FAQ as soon as possible ;-)
+> > >
+> > > http://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions
+> > >
+> > > Thank you,
+> > >
+> > > Jaswinder Singh.
+> > >
+> > >
+> > > On 9/29/07, Theodore Tso <tytso@mit.edu> wrote:
+> > > > On Sat, Sep 29, 2007 at 08:46:20PM +0530, Jaswinder Singh wrote:
+> > > > > http://rt.wiki.kernel.org/index.php/FAQ_for_realtime_support_in_Linux_Kernel
+> > > >
+> > > > Thank you for putting it together and contributing it to the wiki!
+> > > >
+> > > > I renamed the page to make the page title be a bit more succint and
+> > > > less redundant (everything in rt.wiki.kernel.org is relating to the
+> > > > Realtime Linux :-), and I've added a link to the FAQ to the front page
+> > > > of the wiki.
+> > > >
+> > > > As a suggestion, there's probably no need to have the revisions table,
+> > > > since anyone who cares about the revision can just click on the
+> > > > revisions tab on the wiki.  (BTW, I normally like to use the preview
+> > > > button during the edit cycle, instead of constantly using the save
+> > > > button and then looking at the new page; you might want to make sure
+> > > > that "Show preview before first edit" and "Show preview before edit
+> > > > box" are checked in your user preferences.)
+> > > >
+> > > > Note by the way that some of the answers to the questions are located
+> > > > elsewhere in the Wiki; which doesn't make them be bad questions, but
+> > > > for example, it would probably be a good idea for some of the
+> > > > questions to not try to give a partial answer, but to direct them to
+> > > > areas such as the RT PREEMPT HOWTO page (for example).
+> > > >
+> > > > Regards,
+> > > >
+> > > >                                                - Ted
+> > > >
+> > >
+> >
+>
