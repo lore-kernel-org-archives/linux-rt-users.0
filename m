@@ -1,34 +1,58 @@
-From: Andi Kleen <ak@suse.de>
-Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
-Date: Mon, 1 Oct 2007 19:36:01 +0200
-Message-ID: <200710011936.01528.ak@suse.de>
-References: <46FA4A800200006C000192FE@sinclair.provo.novell.com>
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Subject: Re: periodic bursts
+Date: Mon, 01 Oct 2007 19:40:46 +0200
+Message-ID: <4701311E.3000204@siemens.com>
+References: <725A29F6B5035C45A40BDE230A5B92190F8DB322@TRISTK010MSX.tr001.siemens.net>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-15"
+Content-Type: text/plain; charset=ISO-8859-9; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	tglx@linutronix.de, "Gregory Haskins" <GHaskins@novell.com>
-To: "David Bahi" <dbahi@novell.com>
+Cc: linux-rt-users@vger.kernel.org
+To: "Kaya, Sinan" <sinan.kaya@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.suse.de ([195.135.220.2]:44840 "EHLO mx1.suse.de"
+Received: from lizzard.sbs.de ([194.138.37.39]:16491 "EHLO lizzard.sbs.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752181AbXJARgF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 13:36:05 -0400
-In-Reply-To: <46FA4A800200006C000192FE@sinclair.provo.novell.com>
-Content-Disposition: inline
+	id S1752159AbXJASMJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 1 Oct 2007 14:12:09 -0400
+Received: from mail1.sbs.de (localhost [127.0.0.1])
+	by lizzard.sbs.de (8.12.6/8.12.6) with ESMTP id l91HehmY024605
+	for <linux-rt-users@vger.kernel.org>; Mon, 1 Oct 2007 19:40:43 +0200
+In-Reply-To: <725A29F6B5035C45A40BDE230A5B92190F8DB322@TRISTK010MSX.tr001.siemens.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wednesday 26 September 2007 20:03:12 David Bahi wrote:
-> Thanks to tglx and ghaskins for all the help in tracking down a very
-> early nmi_watchdog crash on certain x86_64 machines.
+Kaya, Sinan wrote:
+> Hello all,
+> My realtime system experiences periodic bursts every 4 hours. How can
+> i find the reason for this  ? I know the traceit tool but it dumps
+> so much data and it is useless under this case. I need to find what 
+> happened at the exact time of burst.
 
-The patch is totally bogus. irq 0 doesn't say anything about whether
-the current CPU still works or not. You always need some local
-interrupt. This basically disables the NMI watchdog for the non boot CPUs.
+The trace-it tool is a demo, you need to adopt it to your scenario, 
+specifically make it trigger the stop once you detected some burst. 
+Means, you need to put its code into your application. Did you do this?
 
-It's even wrong on i386 -- i wonder how that broken patch
-made it in there. I'll remove it there.
+> 
+> I use rtai_smi module to disable SMI interrupts
 
--Andi
+Then you will probably like this tool even more:
+http://www.rts.uni-hannover.de/rtaddon/#smictrl
+
+> and set my network interface driver priorities to 99. So it should be
+> something non maskable but what ?
+
+Out-of-the-box NIC drivers are generally not suited for more than
+soft-RT. They allocate memory (skbs) from global pools which takes
+varying time (or may even fail if your are short on memory), sometimes
+they try to pile up packets first before they raise an IRQ, and they
+often contain hardware/link state watchdogs that can inject latencies 
+right at the wrong time. If you need low latency by design, more work is 
+required.
+
+In any case, understanding this particular problem comes first, and
+collecting the right traces will help.
+
+Jan
+
+-- 
+Siemens AG, Corporate Technology, CT SE 2
+Corporate Competence Center Embedded Linux
