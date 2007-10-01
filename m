@@ -1,8 +1,9 @@
-From: Dave Jones <davej@redhat.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
-Date: Mon, 1 Oct 2007 16:10:46 -0400
-Message-ID: <20071001201046.GA7089@redhat.com>
+Date: Mon, 1 Oct 2007 13:11:47 -0700
+Message-ID: <20071001201147.GF29100@linux.vnet.ibm.com>
 References: <46FA4A800200006C000192FE@sinclair.provo.novell.com> <200710011936.01528.ak@suse.de> <alpine.LFD.0.9999.0710012052310.20478@localhost.localdomain> <200710012116.59356.ak@suse.de> <alpine.LFD.0.9999.0710012124420.20478@localhost.localdomain> <20071001125626.32eb6d0b@laptopd505.fenrus.org>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <ak@suse.de>,
@@ -11,33 +12,30 @@ Cc: Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <ak@suse.de>,
 	Gregory Haskins <GHaskins@novell.com>
 To: Arjan van de Ven <arjan@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:48319 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752192AbXJAULG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 16:11:06 -0400
+Received: from e36.co.us.ibm.com ([32.97.110.154]:58122 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751790AbXJAUMM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 1 Oct 2007 16:12:12 -0400
 Content-Disposition: inline
 In-Reply-To: <20071001125626.32eb6d0b@laptopd505.fenrus.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Mon, Oct 01, 2007 at 12:56:26PM -0700, Arjan van de Ven wrote:
- > On Mon, 1 Oct 2007 21:27:39 +0200 (CEST)
- > 
- > > > I already did this here by checking for cpu != 0. But it also needs
- > > > either tracking or forbidding migrations of irq 0. I can take care
- > > > of the patch.
- > > 
- > > I was thinking about the same fix. On i386 we already have the irq 
- > > migration / balancing of irq 0 disabled. That's why we setup IRQ0 with
- > > IRQ_NOBALANCING.
- > 
- > btw doing this is a problem if the user decides to hot(un)plug cpu 0...
- > he then can't move the irqs away to do that
- 
-You can't hot unplug cpu0.
-Take a look in sysfs, no /sys/devices/system/cpu/cpu0/online file.
+> On Mon, 1 Oct 2007 21:27:39 +0200 (CEST)
+> 
+> > > I already did this here by checking for cpu != 0. But it also needs
+> > > either tracking or forbidding migrations of irq 0. I can take care
+> > > of the patch.
+> > 
+> > I was thinking about the same fix. On i386 we already have the irq 
+> > migration / balancing of irq 0 disabled. That's why we setup IRQ0 with
+> > IRQ_NOBALANCING.
+> 
+> btw doing this is a problem if the user decides to hot(un)plug cpu 0...
+> he then can't move the irqs away to do that
 
-	Dave
+Last I tried it, x86_64 and i386 in fact prohibit hotunplugging CPU 0.
 
--- 
-http://www.codemonkey.org.uk
+						Thanx, Paul
