@@ -1,65 +1,38 @@
-From: Zach Brown <zach.brown@oracle.com>
-Subject: Re: [HACK] convert i_alloc_sem for direct_io.c craziness!
-Date: Mon, 1 Oct 2007 12:52:56 -0700
-Message-ID: <20071001195256.GB7718@mami.zabbo.net>
-References: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
+From: Arjan van de Ven <arjan@infradead.org>
+Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
+Date: Mon, 1 Oct 2007 12:56:26 -0700
+Message-ID: <20071001125626.32eb6d0b@laptopd505.fenrus.org>
+References: <46FA4A800200006C000192FE@sinclair.provo.novell.com>
+	<200710011936.01528.ak@suse.de>
+	<alpine.LFD.0.9999.0710012052310.20478@localhost.localdomain>
+	<200710012116.59356.ak@suse.de>
+	<alpine.LFD.0.9999.0710012124420.20478@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	mingo@goodmis.org, Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754768AbXJATx2@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.58.0709241700290.13164@gandalf.stny.rr.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Andi Kleen <ak@suse.de>, David Bahi <dbahi@novell.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Gregory Haskins <GHaskins@novell.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from pentafluge.infradead.org ([213.146.154.40]:51879 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755688AbXJAT6S (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 1 Oct 2007 15:58:18 -0400
+In-Reply-To: <alpine.LFD.0.9999.0710012124420.20478@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> Hopefully I will get some attention from those that are responsible for
-> fs/direct_io.c
+On Mon, 1 Oct 2007 21:27:39 +0200 (CEST)
 
-[ many days later, I find this amongst the lkml noise. ]
+> > I already did this here by checking for cpu != 0. But it also needs
+> > either tracking or forbidding migrations of irq 0. I can take care
+> > of the patch.
+> 
+> I was thinking about the same fix. On i386 we already have the irq 
+> migration / balancing of irq 0 disabled. That's why we setup IRQ0 with
+> IRQ_NOBALANCING.
 
-> This patch converts the i_alloc_sem into a compat_rw_semaphore for the -rt
-> patch.  Seems that the code in fs/direct_io.c does some nasty logic with
-> the i_alloc_sem.  For DIO_LOCKING, I'm assuming that the i_alloc_sem is
-> used as a reference counter for pending requests. When the request is
-> made, the down_read is performed. When the request is handled by the block
-> softirq, then that softirq does an up on the request. So the owner is not
-> the same between down and up. When all requests are handled, the semaphore
-> counter should be zero. This keeps away any write access while requests
-> are pending.
-
-Yeah.  This is used for performing concurrent asynchronous O_DIRECT
-operations.
-
-> This patch converts (for now) the i_alloc_sem into a compat_rw_semaphore
-> to give back the old features to the sem. This fixes deadlocks that we've
-> been having WRT direct_io.
-
-*nod*
-
-> The real fix would be to get rid of the read semaphore trickery in
-> direct_io.c.
-
-Do you have any suggestions for locking constructs that RT would prefer?
-
-The core problem is that async IO is in flight while no process holds
-the usual locks in system calls.  We don't want the blocks referenced by
-IOs to be freed and realocated some where else while the IO is in
-flight.  Hence the i_alloc_sem acquiry in the file block modification
-paths: vmtruncate - free, notify_change - a proxy for allocating writes.
-
-The agents are:
-
-- many tasks issuing concurrent async IO and exiting from system calls
-while the IO is still in flight
-
-- operations completed in interrupt handlers from storage devices
-
-- tasks changing file block mapping via system calls
-
-There's some long-term work to integrate the locking between the
-buffered and O_DIRECT paths, but it's not close to ready.
-
-- z
+btw doing this is a problem if the user decides to hot(un)plug cpu 0...
+he then can't move the irqs away to do that
