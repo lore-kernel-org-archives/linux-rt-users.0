@@ -1,99 +1,134 @@
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [PATCH RFC 3/9] RCU: Preemptible RCU
-Date: Sun, 30 Sep 2007 18:37:39 -0700
-Message-ID: <20071001013739.GB12494@linux.vnet.ibm.com>
-References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070923173807.GA292@tv-sign.ru> <20070924001509.GG11123@linux.vnet.ibm.com> <20070926151351.GA328@tv-sign.ru> <20070927154652.GE16652@linux.vnet.ibm.com> <20070928144714.GA397@tv-sign.ru> <20070928185759.GC9153@linux.vnet.ibm.com> <20070930163102.GA374@tv-sign.ru> <Pine.LNX.4.64.0709301549160.19355@alien.or.mcafeemobile.com>
+Date: Sun, 30 Sep 2007 18:20:14 -0700
+Message-ID: <20071001012013.GA12494@linux.vnet.ibm.com>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183412.GC3819@linux.vnet.ibm.com> <20070923173807.GA292@tv-sign.ru> <20070924001509.GG11123@linux.vnet.ibm.com> <20070926151351.GA328@tv-sign.ru> <20070927154652.GE16652@linux.vnet.ibm.com> <20070928144714.GA397@tv-sign.ru> <20070928185759.GC9153@linux.vnet.ibm.com> <20070930163102.GA374@tv-sign.ru>
 Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Oleg Nesterov <oleg@tv-sign.ru>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>, dipankar@in.ibm.com,
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
 	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
 	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
 	ego@in.ibm.com, srostedt@redhat.com
-To: Davide Libenzi <davidel@xmailserver.org>
+To: Oleg Nesterov <oleg@tv-sign.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:54254 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751628AbXJARGb (ORCPT
+Received: from e35.co.us.ibm.com ([32.97.110.153]:58609 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753395AbXJARGh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 13:06:31 -0400
+	Mon, 1 Oct 2007 13:06:37 -0400
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0709301549160.19355@alien.or.mcafeemobile.com>
+In-Reply-To: <20070930163102.GA374@tv-sign.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, Sep 30, 2007 at 04:02:09PM -0700, Davide Libenzi wrote:
-> On Sun, 30 Sep 2007, Oleg Nesterov wrote:
+On Sun, Sep 30, 2007 at 08:31:02PM +0400, Oleg Nesterov wrote:
+> On 09/28, Paul E. McKenney wrote:
+> >
+> > On Fri, Sep 28, 2007 at 06:47:14PM +0400, Oleg Nesterov wrote:
+> > > Ah, I was confused by the comment,
+> > > 
+> > > 	smp_mb();  /* Don't call for memory barriers before we see zero. */
+> > > 	                                             ^^^^^^^^^^^^^^^^^^
+> > > So, in fact, we need this barrier to make sure that _other_ CPUs see these
+> > > changes in order, thanks. Of course, _we_ already saw zero.
+> > 
+> > Fair point!
+> > 
+> > Perhaps: "Ensure that all CPUs see their rcu_mb_flag -after- the
+> > rcu_flipctrs sum to zero" or some such?
+> > 
+> > > But in that particular case this doesn't matter, rcu_try_flip_waitzero()
+> > > is the only function which reads the "non-local" per_cpu(rcu_flipctr), so
+> > > it doesn't really need the barrier? (besides, it is always called under
+> > > fliplock).
+> > 
+> > The final rcu_read_unlock() that zeroed the sum was -not- under fliplock,
+> > so we cannot necessarily rely on locking to trivialize all of this.
 > 
-> > Ah, but I asked the different question. We must see CPU 1's stores by
-> > definition, but what about CPU 0's stores (which could be seen by CPU 1)?
+> Yes, but still I think this mb() is not necessary. Becasue we don't need
+> the "if we saw rcu_mb_flag we must see sum(lastidx)==0" property. When another
+> CPU calls rcu_try_flip_waitzero(), it will use another lastidx. OK, minor issue,
+> please forget.
+
+Will do!  ;-)
+
+> > > OK, the last (I promise :) off-topic question. When CPU 0 and 1 share a
+> > > store buffer, the situation is simple, we can replace "CPU 0 stores" with
+> > > "CPU 1 stores". But what if CPU 0 is equally "far" from CPUs 1 and 2?
+> > > 
+> > > Suppose that CPU 1 does
+> > > 
+> > > 	wmb();
+> > > 	B = 0
+> > > 
+> > > Can we assume that CPU 2 doing
+> > > 
+> > > 	if (B == 0) {
+> > > 		rmb();
+> > > 
+> > > must see all invalidations from CPU 0 which were seen by CPU 1 before wmb() ?
 > > 
-> > Let's take a "real life" example,
-> > 
-> >                 A = B = X = 0;
-> >                 P = Q = &A;
-> > 
-> > CPU_0           CPU_1           CPU_2
-> > 
-> > P = &B;         *P = 1;         if (X) {
-> >                 wmb();                  rmb();
-> >                 X = 1;                  BUG_ON(*P != 1 && *Q != 1);
-> >                                 }
-> > 
-> > So, is it possible that CPU_1 sees P == &B, but CPU_2 sees P == &A ?
+> > Yes.  CPU 2 saw something following CPU 1's wmb(), so any of CPU 2's
+> > reads following its rmb() must therefore see all of CPU 1's stores
+> > preceding the wmb().
 > 
-> That can't be. CPU_2 sees X=1, that happened after (or same time at most - 
-> from a cache inv. POV) to *P=1, that must have happened after P=&B (in 
-> order for *P to assign B). So P=&B happened, from a pure time POV, before 
-> the rmb(), and the rmb() should guarantee that CPU_2 sees P=&B too.
+> Ah, but I asked the different question. We must see CPU 1's stores by
+> definition, but what about CPU 0's stores (which could be seen by CPU 1)?
+> 
+> Let's take a "real life" example,
+> 
+>                 A = B = X = 0;
+>                 P = Q = &A;
+> 
+> CPU_0           CPU_1           CPU_2
+> 
+> P = &B;         *P = 1;         if (X) {
+>                 wmb();                  rmb();
+>                 X = 1;                  BUG_ON(*P != 1 && *Q != 1);
+>                                 }
+> 
+> So, is it possible that CPU_1 sees P == &B, but CPU_2 sees P == &A ?
 
-Actually, CPU designers have to go quite a ways out of their way to
-prevent this BUG_ON from happening.  One way that it would happen
-naturally would be if the cache line containing P were owned by CPU 2,
-and if CPUs 0 and 1 shared a store buffer that they both snooped.  So,
-here is what could happen given careless or sadistic CPU designers:
+It depends.  ;-)
 
-o	CPU 0 stores &B to P, but misses the cache, so puts the
-	result in the store buffer.  This means that only CPUs 0 and 1
-	can see it.
+o	Itanium: because both wmb() and rmb() map to the "mf"
+	instruction, and because "mf" instructions map to a
+	single global order, the BUG_ON cannot happen.  (But
+	I could easily be mistaken -- I cannot call myself an
+	Itanium memory-ordering expert.)  See:
 
-o	CPU 1 fetches P, and sees &B, so stores a 1 to B.  Again,
-	this value for P is visible only to CPUs 0 and 1.
+	ftp://download.intel.com/design/Itanium/Downloads/25142901.pdf
+	
+	for the official story.
 
-o	CPU 1 executes a wmb(), which forces CPU 1's stores to happen
-	in order.  But it does nothing about CPU 0's stores, nor about CPU
-	1's loads, for that matter (and the only reason that POWER ends
-	up working the way you would like is because wmb() turns into
-	"sync" rather than the "eieio" instruction that would have been
-	used for smp_wmb() -- which is maybe what Oleg was thinking of,
-	but happened to abbreviate.  If my analysis is buggy, Anton and
-	Paulus will no doubt correct me...)
+o	POWER: because wmb() maps to the "sync" instruction,
+	cumulativity applies, so that any instruction provably
+	following "X = 1" will see "P = &B" if the "*P = 1"
+	statement saw it.  So the BUG_ON cannot happen.
 
-o	CPU 1 stores to X.
+o	i386: memory ordering respects transitive visibility,
+	which seems to be similar to POWER's cumulativity
+	(http://developer.intel.com/products/processor/manuals/318147.pdf),
+	so the BUG_ON cannot happen.
 
-o	CPU 2 loads X, and sees that the value is 1.
+o	x86_64: same as i386.
 
-o	CPU 2 does an rmb(), which orders its loads, but does nothing
-	about anyone else's loads or stores.
+o	s390: the basic memory-ordering model is tight enough that the
+	BUG_ON cannot happen.  (If I am confused about this, the s390
+	guys will not be shy about correcting me!)
 
-o	CPU 2 fetches P from its cached copy, which still points to A,
-	which is still zero.  So the BUG_ON fires.
+o	ARM: beats the heck out of me.
 
-o	Some time later, CPU 0 gets the cache line containing P from
-	CPU 2, and updates it from the value in the store buffer, but
-	too late...
+> > The other approach would be to simply have a separate thread for this
+> > purpose.  Batching would amortize the overhead (a single trip around the
+> > CPUs could satisfy an arbitrarily large number of synchronize_sched()
+> > requests).
+> 
+> Yes, this way we don't need to uglify migration_thread(). OTOH, we need
+> another kthread ;)
 
-Unfortunately, cache-coherence protocols don't care much about pure
-time...  It is possible to make a 16-CPU machine believe that a single
-variable has more than ten different values -at- -the- -same- -time-.
-This is easy to do -- have all the CPUs store different values to the
-same variable at the same time, then reload, collecting timestamps
-between each pair of operations.  On a large SMP, the values will sit
-in the store buffers for many hundreds of nanoseconds, perhaps even
-several microseconds, while the cache line containing the variable
-being stored to shuttles around among the CPUs.  ;-)
+True enough!!!
 
-						Thanx, Paul
+							Thanx, Paul
