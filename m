@@ -1,57 +1,34 @@
-From: Arjan van de Ven <arjan@infradead.org>
-Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
-Date: Mon, 1 Oct 2007 15:52:02 -0700
-Message-ID: <20071001155202.56c348c8@laptopd505.fenrus.org>
-References: <46FA4A800200006C000192FE@sinclair.provo.novell.com>
-	<200710012341.53169.ak@suse.de>
-	<alpine.LFD.0.9999.0710012349160.20478@localhost.localdomain>
-	<200710020007.09864.ak@suse.de>
-	<alpine.LFD.0.9999.0710020043450.20478@localhost.localdomain>
+From: Theodore Tso <tytso@mit.edu>
+Subject: Re: FAQ for realtime support in Linux Kernel
+Date: Mon, 1 Oct 2007 20:02:37 -0400
+Message-ID: <20071002000237.GF28533@thunk.org>
+References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com> <1985e0f60709282344m45b31dd0i2f3016d81f42265a@mail.gmail.com> <1985e0f60709290551j7b79421fs9c8dcca5806a518c@mail.gmail.com> <20070929131338.GF813@unix.sh> <1985e0f60709290816k7f8c9bc2m6fb6c1fc4859243c@mail.gmail.com> <20070929165630.GA30241@thunk.org> <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com> <1985e0f60709292256o1e91d39al147bcffbb9f27450@mail.gmail.com> <1985e0f60710010404j7e6c1aaybd1a7cf4b3efe4a7@mail.gmail.com> <3efb10970710011318v939601fvc7420e80b83b1d37@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Andi Kleen <ak@suse.de>, David Bahi <dbahi@novell.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Gregory Haskins <GHaskins@novell.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Jaswinder Singh <jaswinderlinuxrt@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:59131 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751707AbXJAWyB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 18:54:01 -0400
-In-Reply-To: <alpine.LFD.0.9999.0710020043450.20478@localhost.localdomain>
+Received: from thunk.org ([69.25.196.29]:36995 "EHLO thunker.thunk.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751723AbXJBACn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 1 Oct 2007 20:02:43 -0400
+Content-Disposition: inline
+In-Reply-To: <3efb10970710011318v939601fvc7420e80b83b1d37@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2 Oct 2007 00:47:12 +0200 (CEST)
-Thomas Gleixner <tglx@linutronix.de> wrote:
+On Mon, Oct 01, 2007 at 10:18:15PM +0200, Remy Bohmer wrote:
+> I doubt anyone can fill in this paragraph properly. It is too vague,
+> and the figures you ask are different for every architecture and
+> processor type/speed that is supported.
 
-> On Tue, 2 Oct 2007, Andi Kleen wrote:
-> > 
-> > > OTOH, the accounting hook would allow us to remove the IRQ#0 ->
-> > > CPU#0 restriction. Not sure whether it's worth the trouble.
-> > 
-> > Some SIS chipsets hang the machine when you migrate irq 0 to another
-> > CPU. It's better to keep that Also I wouldn't be surprised if there
-> > are some other assumptions about this elsewhere.
-> > 
-> > Ok in theory it could be done only on SIS, but that probably would
-> > really not be worth the trouble
-> 
-> Agreed.
-> 
-> I just got a x8664-hrt report, where I found the following oddity:
-> 
->  0:       1197     172881   IO-APIC-edge      timer
-> 
-> That's one of those infamous AMD C1E boxen. Strange, all my systems
-> have IRQ#0 on CPU#0 and nowhere else. Any idea ?
+I've already replaced that question with one asking about what kind of
+performance one could expect, and answered it with the standard "it
+depends" answer.  I moved it to the general "Getting Started" section.
 
-2 things;
-the current irq balancers don't balance the timer interrupt, in fact
-they'll leave it alone (so the chipset might balance)
-older ones pin it to cpu 0 or rotate it....
+At some point it would be good to add some commentary about the
+resulting throughput degradation (which is why I kept the question
+open-ended about "performance", instead of "latency").
+
+						- Ted
