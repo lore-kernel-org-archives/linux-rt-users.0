@@ -1,31 +1,111 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: Cyclictest expected results
-Date: Tue, 2 Oct 2007 08:54:51 +0200
-Message-ID: <20071002065451.GM23573@pengutronix.de>
-References: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com> <20070930183253.GW23573@pengutronix.de> <alpine.LFD.0.9999.0709302353540.5677@localhost.localdomain> <1985e0f60709302030q62d19dd3q398a5d0685353786@mail.gmail.com>
+From: Andi Kleen <ak@suse.de>
+Subject: [PATCH] Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT
+Date: Tue, 2 Oct 2007 10:24:27 +0200
+Message-ID: <200710021024.27522.ak@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:41675 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750960AbXJBGy7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Oct 2007 02:54:59 -0400
+Received: from cantor2.suse.de ([195.135.220.15]:58072 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751781AbXJBIYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 2 Oct 2007 04:24:32 -0400
 Content-Disposition: inline
-In-Reply-To: <1985e0f60709302030q62d19dd3q398a5d0685353786@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Oct 01, 2007 at 09:00:42AM +0530, Jaswinder Singh wrote:
-> /sys/devices/system/clocksource/clocksource0/available_clocksource :
-> tsc pit jiffies
 
-Can you try to enable ACPI on the box and check if you get an acpi_pm?
+Normally the x86-64 trap handlers for debug/int 3/stack fault run
+on a special interrupt stack to make them more robust
+when dealing with kernel code.
 
-Robert
--- 
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
+The PREEMPT_RT kernel can sleep in locks even while allocating
+GFP_ATOMIC memory. When one of these trap handlers needs to send 
+real time signals for ptrace it allocates memory and could then
+try to to schedule.  But it is not allowed to schedule on a
+IST stack. This can cause warnings and hangs.
+
+This patch disables the IST stacks for these handlers for PREEMPT_RT
+kernel. Instead let them run on the normal process stack.
+
+The kernel only really needs the ISTs here to make kernel debuggers more 
+robust in case someone sets a break point somewhere where the stack is 
+invalid. But there are no kernel debuggers in the standard kernel
+that do this.
+
+It also means kprobes cannot be set in situations with invalid stack;
+but that sounds like a reasonable restriction.
+
+The stack fault change could minimally impact oops quality, but not very 
+much because stack faults are fairly rare.
+
+A better solution would be to use similar logic as the NMI "paranoid"
+path: check if signal is for user space, if yes go back to entry.S, switch stack, 
+call sync_regs, then do the signal sending etc.  
+
+But this patch is much simpler and should work too with minimal impact.
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+
+Index: linux-2.6.23-rc4-rt1/arch/x86_64/kernel/setup64.c
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/arch/x86_64/kernel/setup64.c
++++ linux-2.6.23-rc4-rt1/arch/x86_64/kernel/setup64.c
+@@ -242,7 +242,9 @@ void __cpuinit notrace cpu_init (void)
+ 	for (v = 0; v < N_EXCEPTION_STACKS; v++) {
+ 		static const unsigned int order[N_EXCEPTION_STACKS] = {
+ 			[0 ... N_EXCEPTION_STACKS - 1] = EXCEPTION_STACK_ORDER,
++#if DEBUG_STACK > 0
+ 			[DEBUG_STACK - 1] = DEBUG_STACK_ORDER
++#endif
+ 		};
+ 		if (cpu) {
+ 			estacks = (char *)__get_free_pages(GFP_ATOMIC, order[v]);
+Index: linux-2.6.23-rc4-rt1/include/asm-x86_64/page.h
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/include/asm-x86_64/page.h
++++ linux-2.6.23-rc4-rt1/include/asm-x86_64/page.h
+@@ -22,12 +22,21 @@
+ #define IRQSTACK_ORDER 2
+ #define IRQSTACKSIZE (PAGE_SIZE << IRQSTACK_ORDER)
+ 
++#ifdef CONFIG_PREEMPT_RT
++#define STACKFAULT_STACK 0
++#define DOUBLEFAULT_STACK 1
++#define NMI_STACK 2
++#define DEBUG_STACK 0
++#define MCE_STACK 3
++#define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
++#else
+ #define STACKFAULT_STACK 1
+ #define DOUBLEFAULT_STACK 2
+ #define NMI_STACK 3
+ #define DEBUG_STACK 4
+ #define MCE_STACK 5
+ #define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
++#endif
+ 
+ #define LARGE_PAGE_MASK (~(LARGE_PAGE_SIZE-1))
+ #define LARGE_PAGE_SIZE (_AC(1,UL) << PMD_SHIFT)
+Index: linux-2.6.23-rc4-rt1/arch/x86_64/kernel/traps.c
+===================================================================
+--- linux-2.6.23-rc4-rt1.orig/arch/x86_64/kernel/traps.c
++++ linux-2.6.23-rc4-rt1/arch/x86_64/kernel/traps.c
+@@ -130,10 +130,14 @@ static unsigned long *in_exception_stack
+ 					unsigned *usedp, char **idp)
+ {
+ 	static char ids[][8] = {
++#if DEBUG_STACK > 0
+ 		[DEBUG_STACK - 1] = "#DB",
++#endif
+ 		[NMI_STACK - 1] = "NMI",
+ 		[DOUBLEFAULT_STACK - 1] = "#DF",
++#if STACKFAULT_STACK > 0
+ 		[STACKFAULT_STACK - 1] = "#SS",
++#endif
+ 		[MCE_STACK - 1] = "#MC",
+ #if DEBUG_STKSZ > EXCEPTION_STKSZ
+ 		[N_EXCEPTION_STACKS ... N_EXCEPTION_STACKS + DEBUG_STKSZ / EXCEPTION_STKSZ - 2] = "#DB[?]"
