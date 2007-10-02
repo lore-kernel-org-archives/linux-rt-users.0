@@ -1,111 +1,66 @@
-From: Andi Kleen <ak@suse.de>
-Subject: [PATCH] Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT
-Date: Tue, 2 Oct 2007 10:24:27 +0200
-Message-ID: <200710021024.27522.ak@suse.de>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: FAQ for realtime support in Linux Kernel
+Date: Tue, 2 Oct 2007 17:35:41 +0200
+Message-ID: <3efb10970710020835j53a0a99eyb173f7f262ccb839@mail.gmail.com>
+References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
+	 <1985e0f60709290551j7b79421fs9c8dcca5806a518c@mail.gmail.com>
+	 <20070929131338.GF813@unix.sh>
+	 <1985e0f60709290816k7f8c9bc2m6fb6c1fc4859243c@mail.gmail.com>
+	 <20070929165630.GA30241@thunk.org>
+	 <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com>
+	 <1985e0f60709292256o1e91d39al147bcffbb9f27450@mail.gmail.com>
+	 <1985e0f60710010404j7e6c1aaybd1a7cf4b3efe4a7@mail.gmail.com>
+	 <3efb10970710011318v939601fvc7420e80b83b1d37@mail.gmail.com>
+	 <20071002000237.GF28533@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Cc: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: "Theodore Tso" <tytso@mit.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:58072 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751781AbXJBIYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Oct 2007 04:24:32 -0400
+Received: from py-out-1112.google.com ([64.233.166.182]:30776 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752253AbXJBPfn (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 2 Oct 2007 11:35:43 -0400
+Received: by py-out-1112.google.com with SMTP id u77so7840973pyb
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Oct 2007 08:35:41 -0700 (PDT)
+In-Reply-To: <20071002000237.GF28533@thunk.org>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello Theodore,
 
-Normally the x86-64 trap handlers for debug/int 3/stack fault run
-on a special interrupt stack to make them more robust
-when dealing with kernel code.
+> At some point it would be good to add some commentary about the
+> resulting throughput degradation (which is why I kept the question
+> open-ended about "performance", instead of "latency").
 
-The PREEMPT_RT kernel can sleep in locks even while allocating
-GFP_ATOMIC memory. When one of these trap handlers needs to send 
-real time signals for ptrace it allocates memory and could then
-try to to schedule.  But it is not allowed to schedule on a
-IST stack. This can cause warnings and hangs.
+Is there still a throughput degradation noticeable on some platforms?
+I know for sure it was there in the past, but I thought these were all
+fixed by now.
+AFAIK: The latest kernels have fixed the netwerk performance
+degradation bug, and on Dual-Core we even notice a performance
+improvement compared to non-RT.
 
-This patch disables the IST stacks for these handlers for PREEMPT_RT
-kernel. Instead let them run on the normal process stack.
+Kind Regards,
 
-The kernel only really needs the ISTs here to make kernel debuggers more 
-robust in case someone sets a break point somewhere where the stack is 
-invalid. But there are no kernel debuggers in the standard kernel
-that do this.
+Remy Bohmer
 
-It also means kprobes cannot be set in situations with invalid stack;
-but that sounds like a reasonable restriction.
-
-The stack fault change could minimally impact oops quality, but not very 
-much because stack faults are fairly rare.
-
-A better solution would be to use similar logic as the NMI "paranoid"
-path: check if signal is for user space, if yes go back to entry.S, switch stack, 
-call sync_regs, then do the signal sending etc.  
-
-But this patch is much simpler and should work too with minimal impact.
-
-Signed-off-by: Andi Kleen <ak@suse.de>
-
-Index: linux-2.6.23-rc4-rt1/arch/x86_64/kernel/setup64.c
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/arch/x86_64/kernel/setup64.c
-+++ linux-2.6.23-rc4-rt1/arch/x86_64/kernel/setup64.c
-@@ -242,7 +242,9 @@ void __cpuinit notrace cpu_init (void)
- 	for (v = 0; v < N_EXCEPTION_STACKS; v++) {
- 		static const unsigned int order[N_EXCEPTION_STACKS] = {
- 			[0 ... N_EXCEPTION_STACKS - 1] = EXCEPTION_STACK_ORDER,
-+#if DEBUG_STACK > 0
- 			[DEBUG_STACK - 1] = DEBUG_STACK_ORDER
-+#endif
- 		};
- 		if (cpu) {
- 			estacks = (char *)__get_free_pages(GFP_ATOMIC, order[v]);
-Index: linux-2.6.23-rc4-rt1/include/asm-x86_64/page.h
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/include/asm-x86_64/page.h
-+++ linux-2.6.23-rc4-rt1/include/asm-x86_64/page.h
-@@ -22,12 +22,21 @@
- #define IRQSTACK_ORDER 2
- #define IRQSTACKSIZE (PAGE_SIZE << IRQSTACK_ORDER)
- 
-+#ifdef CONFIG_PREEMPT_RT
-+#define STACKFAULT_STACK 0
-+#define DOUBLEFAULT_STACK 1
-+#define NMI_STACK 2
-+#define DEBUG_STACK 0
-+#define MCE_STACK 3
-+#define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
-+#else
- #define STACKFAULT_STACK 1
- #define DOUBLEFAULT_STACK 2
- #define NMI_STACK 3
- #define DEBUG_STACK 4
- #define MCE_STACK 5
- #define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
-+#endif
- 
- #define LARGE_PAGE_MASK (~(LARGE_PAGE_SIZE-1))
- #define LARGE_PAGE_SIZE (_AC(1,UL) << PMD_SHIFT)
-Index: linux-2.6.23-rc4-rt1/arch/x86_64/kernel/traps.c
-===================================================================
---- linux-2.6.23-rc4-rt1.orig/arch/x86_64/kernel/traps.c
-+++ linux-2.6.23-rc4-rt1/arch/x86_64/kernel/traps.c
-@@ -130,10 +130,14 @@ static unsigned long *in_exception_stack
- 					unsigned *usedp, char **idp)
- {
- 	static char ids[][8] = {
-+#if DEBUG_STACK > 0
- 		[DEBUG_STACK - 1] = "#DB",
-+#endif
- 		[NMI_STACK - 1] = "NMI",
- 		[DOUBLEFAULT_STACK - 1] = "#DF",
-+#if STACKFAULT_STACK > 0
- 		[STACKFAULT_STACK - 1] = "#SS",
-+#endif
- 		[MCE_STACK - 1] = "#MC",
- #if DEBUG_STKSZ > EXCEPTION_STKSZ
- 		[N_EXCEPTION_STACKS ... N_EXCEPTION_STACKS + DEBUG_STKSZ / EXCEPTION_STKSZ - 2] = "#DB[?]"
+2007/10/2, Theodore Tso <tytso@mit.edu>:
+> On Mon, Oct 01, 2007 at 10:18:15PM +0200, Remy Bohmer wrote:
+> > I doubt anyone can fill in this paragraph properly. It is too vague,
+> > and the figures you ask are different for every architecture and
+> > processor type/speed that is supported.
+>
+> I've already replaced that question with one asking about what kind of
+> performance one could expect, and answered it with the standard "it
+> depends" answer.  I moved it to the general "Getting Started" section.
+>
+> At some point it would be good to add some commentary about the
+> resulting throughput degradation (which is why I kept the question
+> open-ended about "performance", instead of "latency").
+>
+>                                                 - Ted
+>
