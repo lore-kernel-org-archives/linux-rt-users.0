@@ -1,48 +1,68 @@
-From: "Girish kathalagiri" <girish.sk@gmail.com>
-Subject: Re: FAQ for realtime support in Linux Kernel
-Date: Tue, 2 Oct 2007 09:09:37 +0530
-Message-ID: <34ac6d890710012039k37715998j3ce07ed5d109e120@mail.gmail.com>
-References: <1985e0f60709282200q46af6416v1df50da135d5d01c@mail.gmail.com>
-	 <20070929131338.GF813@unix.sh>
-	 <1985e0f60709290816k7f8c9bc2m6fb6c1fc4859243c@mail.gmail.com>
-	 <20070929165630.GA30241@thunk.org>
-	 <1985e0f60709291018ib01150evc80d89e362c6be7d@mail.gmail.com>
-	 <1985e0f60709292256o1e91d39al147bcffbb9f27450@mail.gmail.com>
-	 <1985e0f60710010404j7e6c1aaybd1a7cf4b3efe4a7@mail.gmail.com>
-	 <3efb10970710011318v939601fvc7420e80b83b1d37@mail.gmail.com>
-	 <20071002000237.GF28533@thunk.org>
-	 <1985e0f60710011841y6a9d55eeld25e40e32a83a3fc@mail.gmail.com>
+From: =?ISO-8859-1?Q?Mika_Penttil=E4?= <mika.penttila@kolumbus.fi>
+Subject: Re: nmi_watchdog fix for x86_64 to be more like i386
+Date: Tue, 02 Oct 2007 07:56:24 +0300
+Message-ID: <4701CF78.5020802@kolumbus.fi>
+References: <46FA4A800200006C000192FE@sinclair.provo.novell.com> <200710012341.53169.ak@suse.de> <alpine.LFD.0.9999.0710012349160.20478@localhost.localdomain> <200710020007.09864.ak@suse.de> <alpine.LFD.0.9999.0710020043450.20478@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: "Theodore Tso" <tytso@mit.edu>, "Remy Bohmer" <linux@bohmer.net>,
-	linux-rt-users@vger.kernel.org
-To: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Cc: Andi Kleen <ak@suse.de>, Arjan van de Ven <arjan@infradead.org>,
+	David Bahi <dbahi@novell.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Gregory Haskins <GHaskins@novell.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.186]:32580 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751808AbXJBDjj (ORCPT
+Received: from pne-smtpout4-sn1.fre.skanova.net ([81.228.11.168]:51752 "EHLO
+	pne-smtpout4-sn1.fre.skanova.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750798AbXJBE4u (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Oct 2007 23:39:39 -0400
-Received: by nf-out-0910.google.com with SMTP id g13so3139899nfb
-        for <linux-rt-users@vger.kernel.org>; Mon, 01 Oct 2007 20:39:38 -0700 (PDT)
-In-Reply-To: <1985e0f60710011841y6a9d55eeld25e40e32a83a3fc@mail.gmail.com>
-Content-Disposition: inline
+	Tue, 2 Oct 2007 00:56:50 -0400
+In-Reply-To: <alpine.LFD.0.9999.0710020043450.20478@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
-This is a FAQ section is really great.
+Thomas Gleixner wrote:
+> On Tue, 2 Oct 2007, Andi Kleen wrote:
+>   
+>>> OTOH, the accounting hook would allow us to remove the IRQ#0 -> CPU#0
+>>> restriction. Not sure whether it's worth the trouble.
+>>>       
+>> Some SIS chipsets hang the machine when you migrate irq 0 to another
+>> CPU. It's better to keep that Also I wouldn't be surprised if there are some
+>> other assumptions about this elsewhere.
+>>
+>> Ok in theory it could be done only on SIS, but that probably would really
+>> not be worth the trouble
+>>     
+>
+> Agreed.
+>
+> I just got a x8664-hrt report, where I found the following oddity:
+>
+>  0:       1197     172881   IO-APIC-edge      timer
+>
+> That's one of those infamous AMD C1E boxen. Strange, all my systems have 
+> IRQ#0 on CPU#0 and nowhere else. Any idea ?
+>
+> 	tglx
+>
+>   
+Here I have with stock FC7 (2.6.22.9-91) kernel :
+ 0:     107835  133459760   IO-APIC-edge      timer
 
-Also I had few more questions .. What are the best practices for
-testing? which tests correctness and deterministic behavior.
-something like ...
-http://tree.celinuxforum.org/CelfPubWiki/RealtimeTestingBestPractices
+Processor:
+vendor_id    : AuthenticAMD
+cpu family    : 15
+model        : 107
+model name    : AMD Athlon(tm) 64 X2 Dual Core Processor 4000+
+stepping    : 1
+cpu MHz        : 2109.721
+cache size    : 512 KB
 
-And also question regarding the Real-Time SMP based system, (ex.
-multi-core systems and RT_PREEMPT).This is a bit vague , but something
-which addresses the SMP based system.
+MB:
+Asus M2N-E (NF570)
 
--- 
-Thanks
-   Giri
+--Mika
