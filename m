@@ -1,48 +1,65 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v3 2/4] Implement generic time of day clocksource for
- powerpc machines.
-Date: Wed, 3 Oct 2007 06:00:56 +0200 (CEST)
-Message-ID: <alpine.LRH.0.999.0710030554550.15610@www.tglx.de>
-References: <1190345162.620000.305760830507.qpush@thor> <20070921032603.07AF232C889@thor>
- <20070921145212.7e8a7b89.sfr@canb.auug.org.au> <20070921213552.GD9814@bakeyournoodle.com>
- <18178.59123.511480.956928@cargo.ozlabs.ibm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: 2.6.23-rc9-rt1
+Date: Wed, 03 Oct 2007 08:46:54 -0500
+Message-ID: <47039D4E.7090206@redhat.com>
+References: <1191341473.5642.36.camel@localhost.localdomain> <4702EA31.4020102@redhat.com> <Pine.LNX.4.58.0710022134430.16284@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=us-ascii
-Cc: Tony Breeds <tony@bakeyournoodle.com>,
-	John Stultz <johnstul@us.ibm.com>,
-	Stephen Rothwell <sfr@canb.auug.org.au>,
-	linuxppc-dev@ozlabs.org,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Paul Mackerras <paulus@samba.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: "Paul E. McKenney" <paulmck@us.ibm.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:33425 "EHLO www.tglx.de"
+Received: from mx1.redhat.com ([66.187.233.31]:41440 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752596AbXJCEDW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Oct 2007 00:03:22 -0400
-In-Reply-To: <18178.59123.511480.956928@cargo.ozlabs.ibm.com>
+	id S1752909AbXJCNuC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Oct 2007 09:50:02 -0400
+In-Reply-To: <Pine.LNX.4.58.0710022134430.16284@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 3 Oct 2007, Paul Mackerras wrote:
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-> Tony Breeds writes:
+Steven Rostedt wrote:
 > 
-> > @@ -982,6 +906,10 @@ void __init time_init(void)
-> >  
-> >  	write_sequnlock_irqrestore(&xtime_lock, flags);
-> >  
-> > +	/* Register the clocksource, if we're not running on iSeries */
-> > +	if (!firmware_has_feature(FW_FEATURE_ISERIES))
-> > +		clocksource_init();
+> grmbl grmbl!!!
 > 
-> This breaks the 32-bit compile.
+> We are missing a match somewhere. Most likely in the suspend or resume
+> code.  It's expected that if a CPU is idle with no ticks then the
+> dynticks_progress_counter is even, otherwise it is odd. This check tells
+> us that, in your case, this isn't the case. Which _is_ bad, and I wouldn't
+> run it too long that way. It means that you can be getting false RCU grace
+> period ends, which is not a good thing.
 > 
-> Is it possible to adjust the frequency of a clocksource after it has
-> been registered?  Or could the timebase clocksource be unregistered
-> and reregistered in iSeries_tb_recal?
+> I could put a hack in that fixes the issue when detected, and still prints
+> out a warning. I'll do that for now, until we find the problem area. I
+> think the first warning probably had the want that corrupted us, and then
+> we got flooded with warnings because we never fixed the situation.
+> 
+> Patch coming soon.
+> 
+> -- Steve
+>> Ad infinitum. Not sure what you're looking for to be cleared in the enter and exit
+>> functions, but it doesn't look like it's happening after a resume. Didn't seem to
+>> affect the behavior of the kernel, since the network came up and I was able to
+>> function normally (or as normally as I can function).
+> 
+> I'd reboot if I were you ;-)
 
-There is no unregister interface right now. But we need some mechanism to 
-tell the core code that you changed it. I have a look if John does not 
-beat me.
+Oh, I did :)
 
-	tglx
+I've since suspended and resumed a couple of more times and have not seen your RCU
+warnings, so it's not completely reproduceable.
+
+Got any debugging code you want me to add, in case it pops up again?
+
+Clark
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+
+iD8DBQFHA51OHyuj/+TTEp0RAn6hAJwO3JHHk+2EVjpH7XcAYu+g5CC3DQCgj1lR
+4Umv2vf2iDjxHNprCXfxhvI=
+=SL/V
+-----END PGP SIGNATURE-----
