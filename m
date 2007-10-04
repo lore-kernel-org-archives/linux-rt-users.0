@@ -1,50 +1,45 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Porting intLock()
-Date: Thu, 4 Oct 2007 18:16:17 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710041813420.9615@gandalf.stny.rr.com>
-References: <loom.20071004T185733-342@post.gmane.org>
+Subject: 2.6.23-rc9-rt2
+Date: Thu, 04 Oct 2007 18:20:13 -0400
+Message-ID: <1191536413.5210.19.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Morten Mossige <morten.mossige@gmail.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:43342 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758190AbXJDWQU (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:64417 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757975AbXJDWU3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Oct 2007 18:16:20 -0400
-In-Reply-To: <loom.20071004T185733-342@post.gmane.org>
+	Thu, 4 Oct 2007 18:20:29 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+We are pleased to announce the 2.6.23-rc9-rt2 tree, which can be
+downloaded from the new location:
 
---
+ http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-On Thu, 4 Oct 2007, Morten Mossige wrote:
+Changes since 2.6.23-rc9-rt1
 
-> Hi
-> I'm porting an application from another realtime-os to Linux. This
-> application makes use of intLock() from time to time. I still need the the
-> application to be compilable on both Linux and my old os, so I  need a
-> portabel intLock()
-> I have tried the following approach:
-> When a thread needs to do intLock, I boost the thread-pri to max, and when
-> the thread does intUnLock() I set the thread-pri back. This woorks quite ok,
-> but by using this approach, I will also lock other threads in other
-> applications running on Linux.
-> What I really need is a way of blocking all other threads in my application,
-> without affecting other applications.
-> I know I can use mutex'es and semaphores, but that will require a major
-> rewriting of the application, and that is somthing I dont want to do.
-> Can someone come up with an idea how this is done best?
-> Morten
+  - x86_64 disable IST for debug (Andi Kleen)
 
-Upping the prio is basically what intLock does really. That is upping it
-over the priority of interrupts, which would also mean that you would not
-be preempted. So by increasing the prio to max, you have in essence locked
-out all interrupts from that CPU, as well as other tasks.  So just doing
-for you application doesn't make sense. Note, the timer interrupt will
-still go off.
+  - Better handling of dynticks going bad in RCU (Steven Rostedt)
 
-Without knowing more about you application, we really cant give much more
-advice.
+  - Preempt RCU boosting (Steven Rostedt based on Paul E. McKenney's 
+    stuff)
+
+Again, this still holds experimental code. But I've been running it on a
+few boxes already (and even the box I'm writing this on). 
+
+to build a 2.6.23-rc9-rt2 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.22.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.23-rc9.bz2
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rc9-rt2.bz2
+
+The broken out patches are also available.
+
+-- Steve
