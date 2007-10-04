@@ -1,52 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] RCU trace fix possible mem-leak
-Date: Thu, 04 Oct 2007 11:16:50 -0400
-Message-ID: <1191511010.15186.6.camel@localhost.localdomain>
+From: Morten Mossige <morten.mossige@gmail.com>
+Subject: Porting intLock()
+Date: Thu, 4 Oct 2007 18:58:56 +0000 (UTC)
+Message-ID: <loom.20071004T185733-342@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: "Paul E. McKenney" <paulmck@us.ibm.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:60739 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756768AbXJDPSF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Oct 2007 11:18:05 -0400
+Received: from main.gmane.org ([80.91.229.2]:53441 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1759116AbXJDVBM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Oct 2007 17:01:12 -0400
+Received: from root by ciao.gmane.org with local (Exim 4.43)
+	id 1IdXio-0006Ug-66
+	for linux-rt-users@vger.kernel.org; Thu, 04 Oct 2007 20:55:02 +0000
+Received: from 36.81-167-157.customer.lyse.net ([81.167.157.36])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Oct 2007 20:55:02 +0000
+Received: from morten.mossige by 36.81-167-157.customer.lyse.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Oct 2007 20:55:02 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-[ For RCU trace which is not yet in mainline ]
-
-In the initialization of the RCU trace module, if
-rcupreempt_debugfs_init() fails, we never free the the trace buffer.
-
-This patch frees the trace buffer in case the debugfs fails.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-2.6.23-rc9-rt1/kernel/rcupreempt_trace.c
-===================================================================
---- linux-2.6.23-rc9-rt1.orig/kernel/rcupreempt_trace.c
-+++ linux-2.6.23-rc9-rt1/kernel/rcupreempt_trace.c
-@@ -309,11 +309,16 @@ out:
- 
- static int __init rcupreempt_trace_init(void)
- {
-+	int ret;
-+
- 	mutex_init(&rcupreempt_trace_mutex);
- 	rcupreempt_trace_buf = kmalloc(RCUPREEMPT_TRACE_BUF_SIZE, GFP_KERNEL);
- 	if (!rcupreempt_trace_buf)
- 		return 1;
--	return rcupreempt_debugfs_init();
-+	ret = rcupreempt_debugfs_init();
-+	if (ret)
-+		kfree(rcupreempt_trace_buf);
-+	return ret;
- }
- 
- static void __exit rcupreempt_trace_cleanup(void)
+Hi
+I'm porting an application from another realtime-os to Linux. This
+application makes use of intLock() from time to time. I still need the the
+application to be compilable on both Linux and my old os, so I  need a
+portabel intLock()
+I have tried the following approach:
+When a thread needs to do intLock, I boost the thread-pri to max, and when
+the thread does intUnLock() I set the thread-pri back. This woorks quite ok,
+but by using this approach, I will also lock other threads in other
+applications running on Linux.
+What I really need is a way of blocking all other threads in my application,
+without affecting other applications.
+I know I can use mutex'es and semaphores, but that will require a major
+rewriting of the application, and that is somthing I dont want to do.
+Can someone come up with an idea how this is done best?
+Morten
