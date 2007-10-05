@@ -1,78 +1,72 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH RFC 6/9] RCU priority boosting for preemptible RCU
-Date: Fri, 5 Oct 2007 07:07:25 -0700
-Message-ID: <20071005140725.GD22034@linux.vnet.ibm.com>
-References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183901.GF3819@linux.vnet.ibm.com> <20071005114657.GA17788@in.ibm.com> <Pine.LNX.4.58.0710050822330.20859@gandalf.stny.rr.com> <20071005132114.GA28755@in.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH] RT: Add a per-cpu rt_overload indication
+Date: Fri, 05 Oct 2007 10:23:49 -0400
+Message-ID: <20071005142230.23643.28807.stgit@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, akpm@linux-foundation.org,
-	dipankar@in.ibm.com, josht@linux.vnet.ibm.com, tytso@us.ibm.com,
-	dvhltc@us.ibm.com, Thomas Gleixner <tglx@linutronix.de>,
-	a.p.zijlstra@chello.nl, bunk@kernel.org, oleg@tv-sign.ru
-To: Gautham R Shenoy <ego@in.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:34937 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754615AbXJEOHd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Oct 2007 10:07:33 -0400
-Content-Disposition: inline
-In-Reply-To: <20071005132114.GA28755@in.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	ghaskins@novell.com
+To: mingo@elte.hu, tglx@linutronix.de, rostedt@goodmis.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763164AbXJEO0X@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 05, 2007 at 06:51:14PM +0530, Gautham R Shenoy wrote:
-> On Fri, Oct 05, 2007 at 08:24:21AM -0400, Steven Rostedt wrote:
-> > On Fri, 5 Oct 2007, Gautham R Shenoy wrote:
-> > > On Mon, Sep 10, 2007 at 11:39:01AM -0700, Paul E. McKenney wrote:
-> > >
-> > > [snip]
-> > >
-> > > > +
-> > > > +/*
-> > > > + * Return the list from which to boost target tasks.
-> > > > + * May only be invoked by the booster task, so guaranteed to
-> > > > + * already be initialized.  Use rcu_boost_dat element least recently
-> > > > + * the destination for task blocking in RCU read-side critical sections.
-> > > > + */
-> > > > +static inline struct rcu_boost_dat *rcu_rbd_boosting(int cpu)
-> > > > +{
-> > > > +	int idx = (rcu_boost_idx + 1) & (RCU_BOOST_ELEMENTS - 1);
-> > >
-> > > Why is this masking required? When we increment
-> > > the rcu_boost_idx in rcu_booster, we do perform a modulo operation
-> > > to ensure that it wraps around RCU_BOOST_ELEMENTS.
-> > 
-> > Because we are not masking rcu_boost_idx, we are masking
-> >  (rcu_boost_idx + 1) which may extend the bounderies of
-> > RCU_BOOST_ELEMENTS.
-> 
-> Thanks! 
-> 
-> But I'm still trying to understand why the (increment + masking)
-> is required at all.
-> 
-> The thread(producer) that requires boosting is added to the element
-> with index rcu_boost_idx.
-> 
-> The booster thread(consumer) increments the rcu_boost_idx to 
-> (rcu_boost_idx + 1) % RCU_BOOST_ELEMENTS, before it fetches the least
-> recently used rcu_boot_dat elements and boost the eligible tasks queued
-> in that element.
-> 
-> So, can't we just return per_cpu(rcu_boost_dat, cpu)[rcu_boost_idx] from
-> rcu_rbd_boosting(cpu) ? Isn't that already the least recently used
-> element?
+The -rt scheduler currently evaluates all online CPUs whenever one or more
+enters an rt_overload condition.  This suffers from scalability limitations
+as the # of online CPUs increases since each rq->lock needs to be acquired by
+each cpu.  So we introduce a cpumask to track exactly which CPUs need RT
+balancing.
 
-Good catch -- we need to advance the index -after- boosting, so that
-new sleeping tasks are not immediately dropped on the to-be-boosted
-list.  Will fix!
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-(Non-fatal -- but means that the algorithm is effectively only using
-three elements of the four-element array, so does need to be fixed.)
+ kernel/sched.c |   12 +++++++++---
+ 1 files changed, 9 insertions(+), 3 deletions(-)
 
-						Thanx, Paul
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 93fd6de..aaacec2 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -631,6 +631,7 @@ static inline struct rq *this_rq_lock(void)
+ 
+ #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
+ static __cacheline_aligned_in_smp atomic_t rt_overload;
++static cpumask_t rto_cpus;
+ #endif
+ 
+ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+@@ -639,8 +640,11 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+ 	if (rt_task(p)) {
+ 		rq->rt_nr_running++;
+ # ifdef CONFIG_SMP
+-		if (rq->rt_nr_running == 2)
++		if (rq->rt_nr_running == 2) {
++			cpu_set(rq->cpu, rto_cpus);
++			smp_wmb();
+ 			atomic_inc(&rt_overload);
++		}
+ # endif
+ 	}
+ #endif
+@@ -653,8 +657,10 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+ 		WARN_ON(!rq->rt_nr_running);
+ 		rq->rt_nr_running--;
+ # ifdef CONFIG_SMP
+-		if (rq->rt_nr_running == 1)
++		if (rq->rt_nr_running == 1) {
+ 			atomic_dec(&rt_overload);
++			cpu_clear(rq->cpu, rto_cpus);
++		}
+ # endif
+ 	}
+ #endif
+@@ -1503,7 +1509,7 @@ static void balance_rt_tasks(struct rq *this_rq, int this_cpu)
+ 	 */
+ 	next = pick_next_task(this_rq, this_rq->curr);
+ 
+-	for_each_online_cpu(cpu) {
++	for_each_cpu_mask(cpu, rto_cpus) {
+ 		if (cpu == this_cpu)
+ 			continue;
+ 		src_rq = cpu_rq(cpu);
