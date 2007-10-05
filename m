@@ -1,936 +1,683 @@
-From: "Girish kathalagiri" <girish.sk@gmail.com>
-Subject: Re: Scheduling behaviour of 23-rc4-rt1 on my intel centrino Duo.
-Date: Fri, 5 Oct 2007 12:10:53 +0530
-Message-ID: <34ac6d890710042340j2a087190qa09ad8e9504e2bac@mail.gmail.com>
-References: <34ac6d890709251935x390bee54ma761ed05f73d95a1@mail.gmail.com>
-	 <200710041510.53372.dvhltc@us.ibm.com>
+From: Gautham R Shenoy <ego@in.ibm.com>
+Subject: Re: [PATCH RFC 6/9] RCU priority boosting for preemptible RCU
+Date: Fri, 5 Oct 2007 17:16:57 +0530
+Message-ID: <20071005114657.GA17788@in.ibm.com>
+References: <20070910183004.GA3299@linux.vnet.ibm.com> <20070910183901.GF3819@linux.vnet.ibm.com>
+Reply-To: ego@in.ibm.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_34533_2561795.1191566453990"
-Cc: linux-rt-users@vger.kernel.org
-To: "Darren Hart" <dvhltc@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, akpm@linux-foundation.org, dipankar@in.ibm.com,
+	josht@linux.vnet.ibm.com, tytso@us.ibm.com, dvhltc@us.ibm.com,
+	tglx@linutronix.de, a.p.zijlstra@chello.nl, bunk@kernel.org,
+	oleg@tv-sign.ru, srostedt@redhat.com
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.184]:12265 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751495AbXJEGk5 (ORCPT
+Received: from e36.co.us.ibm.com ([32.97.110.154]:39564 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752027AbXJELrH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Oct 2007 02:40:57 -0400
-Received: by nf-out-0910.google.com with SMTP id g13so545296nfb
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Oct 2007 23:40:54 -0700 (PDT)
-In-Reply-To: <200710041510.53372.dvhltc@us.ibm.com>
+	Fri, 5 Oct 2007 07:47:07 -0400
+Content-Disposition: inline
+In-Reply-To: <20070910183901.GF3819@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_34533_2561795.1191566453990
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On Mon, Sep 10, 2007 at 11:39:01AM -0700, Paul E. McKenney wrote:
 
-Hi Daren,
+[snip]
 
-> 1) How are you determining which CPUs these threads spend their time on?
+> +
+> +/*
+> + * Return the list from which to boost target tasks.
+> + * May only be invoked by the booster task, so guaranteed to
+> + * already be initialized.  Use rcu_boost_dat element least recently
+> + * the destination for task blocking in RCU read-side critical sections.
+> + */
+> +static inline struct rcu_boost_dat *rcu_rbd_boosting(int cpu)
+> +{
+> +	int idx = (rcu_boost_idx + 1) & (RCU_BOOST_ELEMENTS - 1);
 
-The hourglass test's  stores the execution trace . The trace is
-generated as the threads are run , each time the thread detects a gap
-in the execution, it records a trace , which includes start time and
-end time of the continuous block of  CPU time that a thread received.
-  output looks something like this
-tracerec: 3 4569.581302 4669.572704 99.991402 400.007546
-tracerec: 1 4669.581304 4769.572370 99.991066 400.007679
-tracerec: 2 4769.581030 4869.572168 99.991138 400.007727
-tracerec: 4 4869.580624 4969.571912 99.991288 400.007546
- (columns: thread id , strat time and end time of gap free time of
-CPU, duration of the interval, last column shows the time it has taken
-from the end of the previous schedule of the thread)
-The values are plotted and the graph is attached.
-It can be noted that the thread 0 runs all the time and the thread 1-5
-gets time equal slices. Hence it can be seen that thread 0 is hogging
-a cpu completely and thread 1-5 are hogging the other cpu.
+Why is this masking required? When we increment 
+the rcu_boost_idx in rcu_booster, we do perform a modulo operation 
+to ensure that it wraps around RCU_BOOST_ELEMENTS. 
 
-> 2) RTHIGH doesn't do anything for us.  What is the value of the SCHED_FIFO
-> priority those threads run at?  Is it the same for every one?
 
-All the threads are running at an RT priority of 97 (maxrt prio - 2).
-code:
-
- max_realtime_pri = sched_get_priority_max (SCHED_RR);
-
-and
-
-case RTHIGH:
-    param->sched_priority = max_realtime_pri - 2;
-
-> Note that depending on exactly what those threads do (I am unfamiliar with the
-> hourglass testcase) it isn't unreasonable for them to all run on the same CPU
-> if their runnable/sleeping states happen to line up just right.  It is also
-> very possible that they bounce around from CPU to CPU in rapid succession if
-> the runnable/sleeping windows overlap in exactly the wrong way :-)
->
-All the thread does is it hogs the CPU whenever it can.I have also
-attached the test result and the graph that has run for 10s. Graph
-basically shows the context switches that has happened between the
-thread 1-5 (round robin).Thread 0 does not record any context switch
-as it runs fully
-thread 0 recorded 10.039664 seconds (99.999746 %)
-
+> +
+> +	return &per_cpu(rcu_boost_dat, cpu)[idx];
+> +}
+> +
+> +#define PREEMPT_RCU_BOOSTER_PRIO 49  /* Match curr_irq_prio manually. */
+> +				     /*  Administrators can always adjust */
+> +				     /*  via the /proc interface. */
+> +
+> +/*
+> + * Boost the specified task from an RCU viewpoint.
+> + * Boost the target task to a priority just a bit less-favored than
+> + * that of the RCU-boost task, but boost to a realtime priority even
+> + * if the RCU-boost task is running at a non-realtime priority.
+> + * We check the priority of the RCU-boost task each time we boost
+> + * in case the sysadm manually changes the priority.
+> + */
+> +static void rcu_boost_prio(struct task_struct *taskp)
+> +{
+> +	unsigned long flags;
+> +	int rcuprio;
+> +
+> +	spin_lock_irqsave(&current->pi_lock, flags);
+> +	rcuprio = rt_mutex_getprio(current) + 1;
+> +	if (rcuprio >= MAX_USER_RT_PRIO)
+> +		rcuprio = MAX_USER_RT_PRIO - 1;
+> +	spin_unlock_irqrestore(&current->pi_lock, flags);
+> +	spin_lock_irqsave(&taskp->pi_lock, flags);
+> +	if (taskp->rcu_prio != rcuprio) {
+> +		taskp->rcu_prio = rcuprio;
+> +		if (taskp->rcu_prio < taskp->prio)
+> +			rt_mutex_setprio(taskp, taskp->rcu_prio);
+> +	}
+> +	spin_unlock_irqrestore(&taskp->pi_lock, flags);
+> +}
+> +
+> +/*
+> + * Unboost the specified task from an RCU viewpoint.
+> + */
+> +static void rcu_unboost_prio(struct task_struct *taskp)
+> +{
+> +	int nprio;
+> +	unsigned long flags;
+> +
+> +	spin_lock_irqsave(&taskp->pi_lock, flags);
+> +	taskp->rcu_prio = MAX_PRIO;
+> +	nprio = rt_mutex_getprio(taskp);
+> +	if (nprio > taskp->prio)
+> +		rt_mutex_setprio(taskp, nprio);
+> +	spin_unlock_irqrestore(&taskp->pi_lock, flags);
+> +}
+> +
+> +/*
+> + * Boost all of the RCU-reader tasks on the specified list.
+> + */
+> +static void rcu_boost_one_reader_list(struct rcu_boost_dat *rbdp)
+> +{
+> +	LIST_HEAD(list);
+> +	unsigned long flags;
+> +	struct task_struct *taskp;
+> +
+> +	/*
+> +	 * Splice both lists onto a local list.  We will still
+> +	 * need to hold the lock when manipulating the local list
+> +	 * because tasks can remove themselves at any time.
+> +	 * The reason for splicing the rbs_boosted list is that
+> +	 * our priority may have changed, so reboosting may be
+> +	 * required.
+> +	 */
+> +
+> +	spin_lock_irqsave(&rbdp->rbs_lock, flags);
+> +	list_splice_init(&rbdp->rbs_toboost, &list);
+> +	list_splice_init(&rbdp->rbs_boosted, &list);
+> +	while (!list_empty(&list)) {
+> +
+> +		/*
+> +		 * Pause for a bit before boosting each task.
+> +		 * @@@FIXME: reduce/eliminate pausing in case of OOM.
+> +		 */
+> +
+> +		spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
+> +		schedule_timeout_uninterruptible(1);
+> +		spin_lock_irqsave(&rbdp->rbs_lock, flags);
+> +
+> +		/*
+> +		 * All tasks might have removed themselves while
+> +		 * we were waiting.  Recheck list emptiness.
+> +		 */
+> +
+> +		if (list_empty(&list))
+> +			break;
+> +
+> +		/* Remove first task in local list, count the attempt. */
+> +
+> +		taskp = list_entry(list.next, typeof(*taskp), rcub_entry);
+> +		list_del_init(&taskp->rcub_entry);
+> +		rbdp->rbs_boost_attempt++;
+> +
+> +		/* Ignore tasks in unexpected states. */
+> +
+> +		if (taskp->rcub_state == RCU_BOOST_IDLE) {
+> +			list_add_tail(&taskp->rcub_entry, &rbdp->rbs_toboost);
+> +			rcu_boost_dat_stat_boost(rbdp, taskp->rcub_state);
+> +			continue;
+> +		}
+> +
+> +		/* Boost the task's priority. */
+> +
+> +		rcu_boost_prio(taskp);
+> +		rbdp->rbs_boost++;
+> +		rcu_boost_dat_stat_boost(rbdp, taskp->rcub_state);
+> +		taskp->rcub_state = RCU_BOOSTED;
+> +		list_add_tail(&taskp->rcub_entry, &rbdp->rbs_boosted);
+> +	}
+> +	spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
+> +}
+> +
+> +/*
+> + * Priority-boost tasks stuck in RCU read-side critical sections as
+> + * needed (presumably rarely).
+> + */
+> +static int rcu_booster(void *arg)
+> +{
+> +	int cpu;
+> +	struct sched_param sp = { .sched_priority = PREEMPT_RCU_BOOSTER_PRIO, };
+> +
+> +	sched_setscheduler(current, SCHED_RR, &sp);
+> +	current->flags |= PF_NOFREEZE;
+> +
+> +	do {
+> +
+> +		/* Advance the lists of tasks. */
+> +
+> +		rcu_boost_idx = (rcu_boost_idx + 1) % RCU_BOOST_ELEMENTS;
+> +		for_each_possible_cpu(cpu) {
+> +
+> +			/*
+> +			 * Boost all sufficiently aged readers.
+> +			 * Readers must first be preempted or block
+> +			 * on a mutex in an RCU read-side critical section,
+> +			 * then remain in that critical section for
+> +			 * RCU_BOOST_ELEMENTS-1 time intervals.
+> +			 * So most of the time we should end up doing
+> +			 * nothing.
+> +			 */
+> +
+> +			rcu_boost_one_reader_list(rcu_rbd_boosting(cpu));
+> +
+> +			/*
+> +			 * Large SMP systems may need to sleep sometimes
+> +			 * in this loop.  Or have multiple RCU-boost tasks.
+> +			 */
+> +		}
+> +
+> +		/*
+> +		 * Sleep to allow any unstalled RCU read-side critical
+> +		 * sections to age out of the list.  @@@ FIXME: reduce,
+> +		 * adjust, or eliminate in case of OOM.
+> +		 */
+> +
+> +		schedule_timeout_uninterruptible(HZ);
+> +
+> +		/* Print stats if enough time has passed. */
+> +
+> +		rcu_boost_dat_stat_print();
+> +
+> +	} while (!kthread_should_stop());
+> +
+> +	return 0;
+> +}
+> +
+> +/*
+> + * Perform the portions of RCU-boost initialization that require the
+> + * scheduler to be up and running.
+> + */
+> +void init_rcu_boost_late(void)
+> +{
+> +
+> +	/* Spawn RCU-boost task. */
+> +
+> +	printk(KERN_INFO "Starting RCU priority booster\n");
+> +	rcu_boost_task = kthread_run(rcu_booster, NULL, "RCU Prio Booster");
+> +	if (IS_ERR(rcu_boost_task))
+> +		panic("Unable to create RCU Priority Booster, errno %ld\n",
+> +		      -PTR_ERR(rcu_boost_task));
+> +}
+> +
+> +/*
+> + * Update task's RCU-boost state to reflect blocking in RCU read-side
+> + * critical section, so that the RCU-boost task can find it in case it
+> + * later needs its priority boosted.
+> + */
+> +void __rcu_preempt_boost(void)
+> +{
+> +	struct rcu_boost_dat *rbdp;
+> +	unsigned long flags;
+> +
+> +	/* Identify list to place task on for possible later boosting. */
+> +
+> +	local_irq_save(flags);
+> +	rbdp = rcu_rbd_new();
+> +	if (rbdp == NULL) {
+> +		local_irq_restore(flags);
+> +		printk(KERN_INFO
+> +		       "Preempted RCU read-side critical section too early.\n");
+> +		return;
+> +	}
+> +	spin_lock(&rbdp->rbs_lock);
+> +	rbdp->rbs_blocked++;
+> +
+> +	/*
+> +	 * Update state.  We hold the lock and aren't yet on the list,
+> +	 * so the booster cannot mess with us yet.
+> +	 */
+> +
+> +	rcu_boost_dat_stat_block(rbdp, current->rcub_state);
+> +	if (current->rcub_state != RCU_BOOST_IDLE) {
+> +
+> +		/*
+> +		 * We have been here before, so just update stats.
+> +		 * It may seem strange to do all this work just to
+> +		 * accumulate statistics, but this is such a
+> +		 * low-probability code path that we shouldn't care.
+> +		 * If it becomes a problem, it can be fixed.
+> +		 */
+> +
+> +		spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
+> +		return;
+> +	}
+> +	current->rcub_state = RCU_BOOST_BLOCKED;
+> +
+> +	/* Now add ourselves to the list so that the booster can find us. */
+> +
+> +	list_add_tail(&current->rcub_entry, &rbdp->rbs_toboost);
+> +	current->rcub_rbdp = rbdp;
+> +	spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
+> +}
+> +
+> +/*
+> + * Do the list-removal and priority-unboosting "heavy lifting" when
+> + * required.
+> + */
+> +static void __rcu_read_unlock_unboost(void)
+> +{
+> +	unsigned long flags;
+> +	struct rcu_boost_dat *rbdp;
+> +
+> +	/* Identify the list structure and acquire the corresponding lock. */
+> +
+> +	rbdp = current->rcub_rbdp;
+> +	spin_lock_irqsave(&rbdp->rbs_lock, flags);
+> +
+> +	/* Remove task from the list it was on. */
+> +
+> +	list_del_init(&current->rcub_entry);
+> +	rbdp->rbs_unlock++;
+> +	current->rcub_rbdp = NULL;
+> +
+> +	/* Record stats, unboost if needed, and update state. */
+> +
+> +	rcu_boost_dat_stat_unlock(rbdp, current->rcub_state);
+> +	if (current->rcub_state == RCU_BOOSTED) {
+> +		rcu_unboost_prio(current);
+> +		rbdp->rbs_unboosted++;
+> +	}
+> +	current->rcub_state = RCU_BOOST_IDLE;
+> +	spin_unlock_irqrestore(&rbdp->rbs_lock, flags);
+> +}
+> +
+> +/*
+> + * Do any state changes and unboosting needed for rcu_read_unlock().
+> + * Pass any complex work on to __rcu_read_unlock_unboost().
+> + * The vast majority of the time, no work will be needed, as preemption
+> + * and blocking within RCU read-side critical sections is comparatively
+> + * rare.
+> + */
+> +static inline void rcu_read_unlock_unboost(void)
+> +{
+> +
+> +	if (unlikely(current->rcub_state != RCU_BOOST_IDLE))
+> +		__rcu_read_unlock_unboost();
+> +}
+> +
+> +#endif /* #else #ifndef CONFIG_PREEMPT_RCU_BOOST */
+> +
+>  /*
+>   * States for rcu_try_flip() and friends.
+>   */
+> @@ -128,14 +662,6 @@ static DEFINE_PER_CPU(enum rcu_mb_flag_v
+>  static cpumask_t rcu_cpu_online_map = CPU_MASK_NONE;
+> 
+>  /*
+> - * Macro that prevents the compiler from reordering accesses, but does
+> - * absolutely -nothing- to prevent CPUs from reordering.  This is used
+> - * only to mediate communication between mainline code and hardware
+> - * interrupt and NMI handlers.
+> - */
+> -#define ORDERED_WRT_IRQ(x) (*(volatile typeof(x) *)&(x))
+> -
+> -/*
+>   * RCU_DATA_ME: find the current CPU's rcu_data structure.
+>   * RCU_DATA_CPU: find the specified CPU's rcu_data structure.
+>   */
+> @@ -194,7 +720,7 @@ void __rcu_read_lock(void)
+>  		me->rcu_read_lock_nesting = nesting + 1;
+> 
+>  	} else {
+> -		unsigned long oldirq;
+> +		unsigned long flags;
+> 
+>  		/*
+>  		 * Disable local interrupts to prevent the grace-period
+> @@ -203,7 +729,7 @@ void __rcu_read_lock(void)
+>  		 * contain rcu_read_lock().
+>  		 */
+> 
+> -		local_irq_save(oldirq);
+> +		local_irq_save(flags);
+> 
+>  		/*
+>  		 * Outermost nesting of rcu_read_lock(), so increment
+> @@ -233,7 +759,7 @@ void __rcu_read_lock(void)
+>  		 */
+> 
+>  		ORDERED_WRT_IRQ(me->rcu_flipctr_idx) = idx;
+> -		local_irq_restore(oldirq);
+> +		local_irq_restore(flags);
+>  	}
+>  }
+>  EXPORT_SYMBOL_GPL(__rcu_read_lock);
+> @@ -255,7 +781,7 @@ void __rcu_read_unlock(void)
+>  		me->rcu_read_lock_nesting = nesting - 1;
+> 
+>  	} else {
+> -		unsigned long oldirq;
+> +		unsigned long flags;
+> 
+>  		/*
+>  		 * Disable local interrupts to prevent the grace-period
+> @@ -264,7 +790,7 @@ void __rcu_read_unlock(void)
+>  		 * contain rcu_read_lock() and rcu_read_unlock().
+>  		 */
+> 
+> -		local_irq_save(oldirq);
+> +		local_irq_save(flags);
+> 
+>  		/*
+>  		 * Outermost nesting of rcu_read_unlock(), so we must
+> @@ -305,7 +831,10 @@ void __rcu_read_unlock(void)
+>  		 */
+> 
+>  		ORDERED_WRT_IRQ(__get_cpu_var(rcu_flipctr)[idx])--;
+> -		local_irq_restore(oldirq);
+> +
+> +		rcu_read_unlock_unboost();
+> +
+> +		local_irq_restore(flags);
+>  	}
+>  }
+>  EXPORT_SYMBOL_GPL(__rcu_read_unlock);
+> @@ -504,10 +1033,10 @@ rcu_try_flip_waitmb(void)
+>   */
+>  static void rcu_try_flip(void)
+>  {
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+> 
+>  	RCU_TRACE_ME(rcupreempt_trace_try_flip_1);
+> -	if (unlikely(!spin_trylock_irqsave(&rcu_ctrlblk.fliplock, oldirq))) {
+> +	if (unlikely(!spin_trylock_irqsave(&rcu_ctrlblk.fliplock, flags))) {
+>  		RCU_TRACE_ME(rcupreempt_trace_try_flip_e1);
+>  		return;
+>  	}
+> @@ -534,7 +1063,7 @@ static void rcu_try_flip(void)
+>  		if (rcu_try_flip_waitmb())
+>  			rcu_try_flip_state = rcu_try_flip_idle_state;
+>  	}
+> -	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, oldirq);
+> +	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, flags);
+>  }
+> 
+>  /*
+> @@ -553,16 +1082,16 @@ static void rcu_check_mb(int cpu)
+> 
+>  void rcu_check_callbacks_rt(int cpu, int user)
+>  {
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+>  	struct rcu_data *rdp = RCU_DATA_CPU(cpu);
+> 
+>  	rcu_check_mb(cpu);
+>  	if (rcu_ctrlblk.completed == rdp->completed)
+>  		rcu_try_flip();
+> -	spin_lock_irqsave(&rdp->lock, oldirq);
+> +	spin_lock_irqsave(&rdp->lock, flags);
+>  	RCU_TRACE_RDP(rcupreempt_trace_check_callbacks, rdp);
+>  	__rcu_advance_callbacks(rdp);
+> -	spin_unlock_irqrestore(&rdp->lock, oldirq);
+> +	spin_unlock_irqrestore(&rdp->lock, flags);
+>  }
+> 
+>  /*
+> @@ -571,18 +1100,19 @@ void rcu_check_callbacks_rt(int cpu, int
+>   */
+>  void rcu_advance_callbacks_rt(int cpu, int user)
+>  {
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+>  	struct rcu_data *rdp = RCU_DATA_CPU(cpu);
+> 
+>  	if (rcu_ctrlblk.completed == rdp->completed) {
+>  		rcu_try_flip();
+>  		if (rcu_ctrlblk.completed == rdp->completed)
+>  			return;
+> +		rcu_read_unlock_unboost();
+>  	}
+> -	spin_lock_irqsave(&rdp->lock, oldirq);
+> +	spin_lock_irqsave(&rdp->lock, flags);
+>  	RCU_TRACE_RDP(rcupreempt_trace_check_callbacks, rdp);
+>  	__rcu_advance_callbacks(rdp);
+> -	spin_unlock_irqrestore(&rdp->lock, oldirq);
+> +	spin_unlock_irqrestore(&rdp->lock, flags);
+>  }
+> 
+>  #ifdef CONFIG_HOTPLUG_CPU
+> @@ -601,24 +1131,24 @@ void rcu_offline_cpu_rt(int cpu)
+>  {
+>  	int i;
+>  	struct rcu_head *list = NULL;
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+>  	struct rcu_data *rdp = RCU_DATA_CPU(cpu);
+>  	struct rcu_head **tail = &list;
+> 
+>  	/* Remove all callbacks from the newly dead CPU, retaining order. */
+> 
+> -	spin_lock_irqsave(&rdp->lock, oldirq);
+> +	spin_lock_irqsave(&rdp->lock, flags);
+>  	rcu_offline_cpu_rt_enqueue(rdp->donelist, rdp->donetail, list, tail);
+>  	for (i = GP_STAGES - 1; i >= 0; i--)
+>  		rcu_offline_cpu_rt_enqueue(rdp->waitlist[i], rdp->waittail[i],
+>  					   list, tail);
+>  	rcu_offline_cpu_rt_enqueue(rdp->nextlist, rdp->nexttail, list, tail);
+> -	spin_unlock_irqrestore(&rdp->lock, oldirq);
+> +	spin_unlock_irqrestore(&rdp->lock, flags);
+>  	rdp->waitlistcount = 0;
+> 
+>  	/* Disengage the newly dead CPU from grace-period computation. */
+> 
+> -	spin_lock_irqsave(&rcu_ctrlblk.fliplock, oldirq);
+> +	spin_lock_irqsave(&rcu_ctrlblk.fliplock, flags);
+>  	rcu_check_mb(cpu);
+>  	if (per_cpu(rcu_flip_flag, cpu) == rcu_flipped) {
+>  		smp_mb();  /* Subsequent counter accesses must see new value */
+> @@ -627,7 +1157,7 @@ void rcu_offline_cpu_rt(int cpu)
+>  			   /*  seen -after- acknowledgement. */
+>  	}
+>  	cpu_clear(cpu, rcu_cpu_online_map);
+> -	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, oldirq);
+> +	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, flags);
+> 
+>  	/*
+>  	 * Place the removed callbacks on the current CPU's queue.
+> @@ -640,20 +1170,20 @@ void rcu_offline_cpu_rt(int cpu)
+>  	 */
+> 
+>  	rdp = RCU_DATA_ME();
+> -	spin_lock_irqsave(&rdp->lock, oldirq);
+> +	spin_lock_irqsave(&rdp->lock, flags);
+>  	*rdp->nexttail = list;
+>  	if (list)
+>  		rdp->nexttail = tail;
+> -	spin_unlock_irqrestore(&rdp->lock, oldirq);
+> +	spin_unlock_irqrestore(&rdp->lock, flags);
+>  }
+> 
+>  void __devinit rcu_online_cpu_rt(int cpu)
+>  {
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+> 
+> -	spin_lock_irqsave(&rcu_ctrlblk.fliplock, oldirq);
+> +	spin_lock_irqsave(&rcu_ctrlblk.fliplock, flags);
+>  	cpu_set(cpu, rcu_cpu_online_map);
+> -	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, oldirq);
+> +	spin_unlock_irqrestore(&rcu_ctrlblk.fliplock, flags);
+>  }
+> 
+>  #else /* #ifdef CONFIG_HOTPLUG_CPU */
+> @@ -695,12 +1225,12 @@ void rcu_process_callbacks_rt(struct sof
+>  void fastcall call_rcu_preempt(struct rcu_head *head,
+>  			       void (*func)(struct rcu_head *rcu))
+>  {
+> -	unsigned long oldirq;
+> +	unsigned long flags;
+>  	struct rcu_data *rdp;
+> 
+>  	head->func = func;
+>  	head->next = NULL;
+> -	local_irq_save(oldirq);
+> +	local_irq_save(flags);
+>  	rdp = RCU_DATA_ME();
+>  	spin_lock(&rdp->lock);
+>  	__rcu_advance_callbacks(rdp);
+> @@ -708,7 +1238,7 @@ void fastcall call_rcu_preempt(struct rc
+>  	rdp->nexttail = &head->next;
+>  	RCU_TRACE_RDP(rcupreempt_trace_next_add, rdp);
+>  	spin_unlock(&rdp->lock);
+> -	local_irq_restore(oldirq);
+> +	local_irq_restore(flags);
+>  }
+>  EXPORT_SYMBOL_GPL(call_rcu_preempt);
+> 
+> @@ -757,6 +1287,11 @@ int rcu_pending_rt(int cpu)
+>  	return 0;
+>  }
+> 
+> +/*
+> + * Initialize RCU.  This is called very early in boot, so is restricted
+> + * to very simple operations.  Don't even think about messing with anything
+> + * that involves the scheduler, as it doesn't exist yet.
+> + */
+>  void __init rcu_init_rt(void)
+>  {
+>  	int cpu;
+> @@ -778,6 +1313,7 @@ void __init rcu_init_rt(void)
+>  		rdp->donelist = NULL;
+>  		rdp->donetail = &rdp->donelist;
+>  	}
+> +	init_rcu_boost_early();
+>  }
+> 
+>  /*
+> diff -urpNa -X dontdiff linux-2.6.22-E-hotplug/kernel/rtmutex.c linux-2.6.22-F-boostrcu/kernel/rtmutex.c
+> --- linux-2.6.22-E-hotplug/kernel/rtmutex.c	2007-07-08 16:32:17.000000000 -0700
+> +++ linux-2.6.22-F-boostrcu/kernel/rtmutex.c	2007-08-24 11:24:59.000000000 -0700
+> @@ -111,11 +111,12 @@ static inline void mark_rt_mutex_waiters
+>   */
+>  int rt_mutex_getprio(struct task_struct *task)
+>  {
+> +	int prio = min(task->normal_prio, get_rcu_prio(task));
+> +
+>  	if (likely(!task_has_pi_waiters(task)))
+> -		return task->normal_prio;
+> +		return prio;
+> 
+> -	return min(task_top_pi_waiter(task)->pi_list_entry.prio,
+> -		   task->normal_prio);
+> +	return min(task_top_pi_waiter(task)->pi_list_entry.prio, prio);
+>  }
+> 
+>  /*
+> diff -urpNa -X dontdiff linux-2.6.22-E-hotplug/kernel/sched.c linux-2.6.22-F-boostrcu/kernel/sched.c
+> --- linux-2.6.22-E-hotplug/kernel/sched.c	2007-07-08 16:32:17.000000000 -0700
+> +++ linux-2.6.22-F-boostrcu/kernel/sched.c	2007-08-24 11:24:59.000000000 -0700
+> @@ -1702,6 +1702,7 @@ void fastcall sched_fork(struct task_str
+>  	 * Make sure we do not leak PI boosting priority to the child:
+>  	 */
+>  	p->prio = current->normal_prio;
+> +	set_rcu_prio(p, MAX_PRIO);
+> 
+>  	INIT_LIST_HEAD(&p->run_list);
+>  	p->array = NULL;
+> @@ -1784,6 +1785,7 @@ void fastcall wake_up_new_task(struct ta
+>  			else {
+>  				p->prio = current->prio;
+>  				p->normal_prio = current->normal_prio;
+> +				set_rcu_prio(p, MAX_PRIO);
+>  				list_add_tail(&p->run_list, &current->run_list);
+>  				p->array = current->array;
+>  				p->array->nr_active++;
+> @@ -3590,6 +3592,8 @@ asmlinkage void __sched schedule(void)
+>  	}
+>  	profile_hit(SCHED_PROFILING, __builtin_return_address(0));
+> 
+> +	rcu_preempt_boost();
+> +
+>  need_resched:
+>  	preempt_disable();
+>  	prev = current;
+> @@ -5060,6 +5064,7 @@ void __cpuinit init_idle(struct task_str
+>  	idle->sleep_avg = 0;
+>  	idle->array = NULL;
+>  	idle->prio = idle->normal_prio = MAX_PRIO;
+> +	set_rcu_prio(idle, MAX_PRIO);
+>  	idle->state = TASK_RUNNING;
+>  	idle->cpus_allowed = cpumask_of_cpu(cpu);
+>  	set_task_cpu(idle, cpu);
+> diff -urpNa -X dontdiff linux-2.6.22-E-hotplug/lib/Kconfig.debug linux-2.6.22-F-boostrcu/lib/Kconfig.debug
+> --- linux-2.6.22-E-hotplug/lib/Kconfig.debug	2007-07-08 16:32:17.000000000 -0700
+> +++ linux-2.6.22-F-boostrcu/lib/Kconfig.debug	2007-08-24 11:24:59.000000000 -0700
+> @@ -391,6 +391,40 @@ config RCU_TORTURE_TEST
+>  	  Say M if you want the RCU torture tests to build as a module.
+>  	  Say N if you are unsure.
+> 
+> +config RCU_TRACE
+> +	bool "Enable tracing for RCU - currently stats in debugfs"
+> +	select DEBUG_FS
+> +	depends on DEBUG_KERNEL
+> +	default y
+> +	help
+> +	  This option provides tracing in RCU which presents stats
+> +	  in debugfs for debugging RCU implementation.
+> +
+> +	  Say Y here if you want to enable RCU tracing
+> +	  Say N if you are unsure.
+> +
+> +config PREEMPT_RCU_BOOST_STATS
+> +	bool "Enable RCU priority-boosting statistic printing"
+> +	depends on PREEMPT_RCU_BOOST
+> +	depends on DEBUG_KERNEL
+> +	default n
+> +	help
+> +	  This option enables debug printk()s of RCU boost statistics,
+> +	  which are normally only used to debug RCU priority boost
+> +	  implementations.
+> +
+> +	  Say N if you are unsure.
+> +
+> +config PREEMPT_RCU_BOOST_STATS_INTERVAL
+> +	int "RCU priority-boosting statistic printing interval (seconds)"
+> +	depends on PREEMPT_RCU_BOOST_STATS
+> +	default 100
+> +	range 10 86400
+> +	help
+> +	  This option controls the timing of debug printk()s of RCU boost
+> +	  statistics, which are normally only used to debug RCU priority
+> +	  boost implementations.
+> +
+>  config LKDTM
+>  	tristate "Linux Kernel Dump Test Tool Module"
+>  	depends on DEBUG_KERNEL
 
 -- 
-Thanks
-   Giri
-
-------=_Part_34533_2561795.1191566453990
-Content-Type: application/octet-stream; name="hourglass.out"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="hourglass.out";
- filename="hourglass.out"
-X-Attachment-Id: f_f7ebpc9k
-
-dGhyZWFkIDAgd2lsbCBydW4gd29ya2xvYWQgQ1BVCnRocmVhZCAxIHdpbGwgcnVuIHdvcmtsb2Fk
-IENQVQp0aHJlYWQgMiB3aWxsIHJ1biB3b3JrbG9hZCBDUFUKdGhyZWFkIDMgd2lsbCBydW4gd29y
-a2xvYWQgQ1BVCnRocmVhZCA0IHdpbGwgcnVuIHdvcmtsb2FkIENQVQp0aHJlYWQgNSB3aWxsIHJ1
-biB3b3JrbG9hZCBDUFUKdGhyZWFkIDAgd2lsbCB1c2UgaGlnaC1yZXMgdGltZXJzCnRocmVhZCAx
-IHdpbGwgdXNlIGhpZ2gtcmVzIHRpbWVycwp0aHJlYWQgMiB3aWxsIHVzZSBoaWdoLXJlcyB0aW1l
-cnMKdGhyZWFkIDMgd2lsbCB1c2UgaGlnaC1yZXMgdGltZXJzCnRocmVhZCA0IHdpbGwgdXNlIGhp
-Z2gtcmVzIHRpbWVycwp0aHJlYWQgNSB3aWxsIHVzZSBoaWdoLXJlcyB0aW1lcnMKdGhyZWFkIDAg
-d2lsbCBoYXZlIHByaW9yaXR5IFJUSElHSAp0aHJlYWQgMSB3aWxsIGhhdmUgcHJpb3JpdHkgUlRI
-SUdICnRocmVhZCAyIHdpbGwgaGF2ZSBwcmlvcml0eSBSVEhJR0gKdGhyZWFkIDMgd2lsbCBoYXZl
-IHByaW9yaXR5IFJUSElHSAp0aHJlYWQgNCB3aWxsIGhhdmUgcHJpb3JpdHkgUlRISUdICnRocmVh
-ZCA1IHdpbGwgaGF2ZSBwcmlvcml0eSBSVEhJR0gKOC4wMTA4NjQgTUIgYWxsb2NhdGVkIGZvciB0
-cmFjZSByZWNvcmRzCkhvdXJnbGFzcyAxLjAuMWIgOiA2IHRocmVhZHM7IDEwLjAwMDAwMCBzZWNv
-bmRzOyAxODI5LjAzMjg3MiBNSHogdGltZXN0YW1wIGNvdW50ZXIKbWF4IGdhcCBpcyA2NDAxNSBj
-eWNsZXMKdGhpcyB0ZXN0IHdpbGwgbGFzdCBmb3IgMTAuMDAwMDAwIHNlY29uZHMKbnVtdGhyZWFk
-czogNgp3b3JrIGRvbmUgYnkgdGhyZCAwIDogNzIwMjkwNzMKd29yayBkb25lIGJ5IHRocmQgMSA6
-IDcxNjIwOTMKd29yayBkb25lIGJ5IHRocmQgMiA6IDE0NzEyNTI2CndvcmsgZG9uZSBieSB0aHJk
-IDMgOiAxMzkzMDc2OQp3b3JrIGRvbmUgYnkgdGhyZCA0IDogMTQ1OTY4NDEKd29yayBkb25lIGJ5
-IHRocmQgNSA6IDE0MzI3NDQxCnRoZXJlIHdlcmUgNjcgb3V0IG9mIDMwMDAwMCB0cmFjZSByZWNv
-cmRzOyAwLjAyMjMzMyAlIHVzZWQuCmluIGN5Y2xlcywgdHJhY2Ugc3RhcnQgNzQ2ODkxMTc4NTE1
-OSwgZW5kIDc0ODcyNzQ3MDc3MTUsIGR1cmF0aW9uIDE4MzYyOTIyNTU2CnRyYWNlIGR1cmF0aW9u
-IDEwLjAzOTY5MCBzZWNvbmRzCnRocmVhZCAwIHJlY29yZGVkIDEwLjAzOTY2NCBzZWNvbmRzICg5
-OS45OTk3NDYgJSkKdGhyZWFkIDEgcmVjb3JkZWQgMi4wNDEwMTkgc2Vjb25kcyAoMjAuMzI5NDk5
-ICUpCnRocmVhZCAyIHJlY29yZGVkIDIuMDMzODgxIHNlY29uZHMgKDIwLjI1ODQwMyAlKQp0aHJl
-YWQgMyByZWNvcmRlZCAxLjkyNTg5MSBzZWNvbmRzICgxOS4xODI3NzQgJSkKdGhyZWFkIDQgcmVj
-b3JkZWQgMi4wMTc4ODIgc2Vjb25kcyAoMjAuMDk5MDUwICUpCnRocmVhZCA1IHJlY29yZGVkIDEu
-OTgwNjk1IHNlY29uZHMgKDE5LjcyODY0NSAlKQp0b3RhbCB0aHJlYWQgdGltZSAyMC4wMzkwMzIg
-c2Vjb25kcwoKdGltZSBzbG90cyBpbiBtczogdGhyZWFkIHN0YXJ0IGVuZCBkdXJhdGlvbiBnYXA6
-CnRyYWNlcmVjOiAxIDM5LjQ1NjM5MyA4ODAuNTgxMjI5IDg0MS4xMjQ4MzYgMC4wMDAwMDAKdHJh
-Y2VyZWM6IDIgODgwLjU5MjYwOCAxNzE0LjU3OTI2MyA4MzMuOTg2NjU2IDAuMDAwMDAwCnRyYWNl
-cmVjOiA0IDE3MTQuNTg5ODYwIDI1MzIuNTc3NDY5IDgxNy45ODc2MDkgMC4wMDAwMDAKdHJhY2Vy
-ZWM6IDUgMjUzMi41ODc4OTEgMzM0My41NzU2NTAgODEwLjk4Nzc1OSAwLjAwMDAwMAp0cmFjZXJl
-YzogMyAzMzQzLjU4NjE3NSA0MTY5LjU3Mzc1NSA4MjUuOTg3NTgwIDAuMDAwMDAwCnRyYWNlcmVj
-OiAxIDQxNjkuNTgyMzU2IDQyNjkuNTczNjI2IDk5Ljk5MTI3MCAzMjg5LjAwMTEyNwp0cmFjZXJl
-YzogMiA0MjY5LjU4MjEzNiA0MzY5LjU3MzMwNCA5OS45OTExNjggMjU1NS4wMDI4NzIKdHJhY2Vy
-ZWM6IDQgNDM2OS41ODE1NDkgNDQ2OS41NzMwNzggOTkuOTkxNTI5IDE4MzcuMDA0MDgwCnRyYWNl
-cmVjOiA1IDQ0NjkuNTgxNTUyIDQ1NjkuNTcyNzQzIDk5Ljk5MTE5MiAxMTI2LjAwNTkwMQp0cmFj
-ZXJlYzogMyA0NTY5LjU4MTMwMiA0NjY5LjU3MjcwNCA5OS45OTE0MDIgNDAwLjAwNzU0Ngp0cmFj
-ZXJlYzogMSA0NjY5LjU4MTMwNCA0NzY5LjU3MjM3MCA5OS45OTEwNjYgNDAwLjAwNzY3OQp0cmFj
-ZXJlYzogMiA0NzY5LjU4MTAzMCA0ODY5LjU3MjE2OCA5OS45OTExMzggNDAwLjAwNzcyNwp0cmFj
-ZXJlYzogNCA0ODY5LjU4MDYyNCA0OTY5LjU3MTkxMiA5OS45OTEyODggNDAwLjAwNzU0Ngp0cmFj
-ZXJlYzogNSA0OTY5LjU4MDMwMiA1MDY5LjU3MTc1OCA5OS45OTE0NTcgNDAwLjAwNzU1OAp0cmFj
-ZXJlYzogMyA1MDY5LjU3OTk5MiA1MTY5LjU3MTUwOCA5OS45OTE1MTcgNDAwLjAwNzI4OAp0cmFj
-ZXJlYzogMSA1MTY5LjU3OTk3NiA1MjY5LjU3MTE4MCA5OS45OTEyMDQgNDAwLjAwNzYwNgp0cmFj
-ZXJlYzogMiA1MjY5LjU3OTg4OSA1MzY5LjU3MDk5MCA5OS45OTExMDIgNDAwLjAwNzcyMQp0cmFj
-ZXJlYzogNCA1MzY5LjU3OTM1MCA1NDY5LjU3MDkwMyA5OS45OTE1NTMgNDAwLjAwNzQzOAp0cmFj
-ZXJlYzogNSA1NDY5LjU3OTI2OCA1NTY5LjU3MDU4MSA5OS45OTEzMTIgNDAwLjAwNzUxMAp0cmFj
-ZXJlYzogMyA1NTY5LjU3OTA0MyA1NjY5LjU3MDM3MyA5OS45OTEzMzAgNDAwLjAwNzUzNAp0cmFj
-ZXJlYzogMSA1NjY5LjU3ODg3MSA1NzY5LjU3MDAzMyA5OS45OTExNjIgNDAwLjAwNzY5MQp0cmFj
-ZXJlYzogMiA1NzY5LjU3ODczNSA1ODY5LjU2OTk1NyA5OS45OTEyMjIgNDAwLjAwNzc0NQp0cmFj
-ZXJlYzogNCA1ODY5LjU3ODM5NSA1OTY5LjU2OTc5MSA5OS45OTEzOTYgNDAwLjAwNzQ5Mgp0cmFj
-ZXJlYzogNSA1OTY5LjU3ODI5NSA2MDY5LjU2OTQ5MyA5OS45OTExOTggNDAwLjAwNzcxNQp0cmFj
-ZXJlYzogMyA2MDY5LjU3Nzg3NyA2MTY5LjU2OTM4OCA5OS45OTE1MTEgNDAwLjAwNzUwNAp0cmFj
-ZXJlYzogMSA2MTY5LjU3Nzg0OSA2MjY5LjU2OTA4NCA5OS45OTEyMzQgNDAwLjAwNzgxNwp0cmFj
-ZXJlYzogMiA2MjY5LjU3NzgyOCA2MzY5LjU2ODk3MiA5OS45OTExNDQgNDAwLjAwNzg3MQp0cmFj
-ZXJlYzogNCA2MzY5LjU3NzgzMSA2NDY5LjU2ODU3MiA5OS45OTA3NDEgNDAwLjAwODAzOQp0cmFj
-ZXJlYzogNSA2NDY5LjU3NzIzOCA2NTY5LjU2ODM0NiA5OS45OTExMDggNDAwLjAwNzc0NQp0cmFj
-ZXJlYzogMyA2NTY5LjU3Njg5MiA2NjY5LjU2ODE2MiA5OS45OTEyNzAgNDAwLjAwNzUwNAp0cmFj
-ZXJlYzogMSA2NjY5LjU3NjY4NCA2NzY5LjU2Nzg0NiA5OS45OTExNjIgNDAwLjAwNzYwMAp0cmFj
-ZXJlYzogMiA2NzY5LjU3NjU3OCA2ODY5LjU2NzcyMiA5OS45OTExNDQgNDAwLjAwNzYwNgp0cmFj
-ZXJlYzogNCA2ODY5LjU3NjI4NiA2OTY5LjU2NzQ3MiA5OS45OTExODYgNDAwLjAwNzcxNQp0cmFj
-ZXJlYzogNSA2OTY5LjU3NTk2NCA3MDY5LjU2NzM2NyA5OS45OTE0MDIgNDAwLjAwNzYxOAp0cmFj
-ZXJlYzogMyA3MDY5LjU3NTk0OSA3MTY5LjU2Njk3OCA5OS45OTEwMzAgNDAwLjAwNzc4Nwp0cmFj
-ZXJlYzogMSA3MTY5LjU3NTUzNiA3MjY5LjU2Njc0NiA5OS45OTEyMTAgNDAwLjAwNzY5MQp0cmFj
-ZXJlYzogMiA3MjY5LjU3NTQ5MSA3MzY5LjU2NjUyNiA5OS45OTEwMzYgNDAwLjAwNzc2OQp0cmFj
-ZXJlYzogNCA3MzY5LjU3NTM2NyA3NDY5LjU2NjM5NyA5OS45OTEwMzAgNDAwLjAwNzg5NQp0cmFj
-ZXJlYzogNSA3NDY5LjU3NDk0MyA3NTY5LjU2NjIzNyA5OS45OTEyOTQgNDAwLjAwNzU3Ngp0cmFj
-ZXJlYzogMyA3NTY5LjU3NDgxOSA3NjY5LjU2NTk4MSA5OS45OTExNjIgNDAwLjAwNzg0MQp0cmFj
-ZXJlYzogMSA3NjY5LjU3NDUzMyA3NzY5LjU2NTY1MyA5OS45OTExMjAgNDAwLjAwNzc4Nwp0cmFj
-ZXJlYzogMiA3NzY5LjU3NDE5MyA3ODY5LjU2NTM5NyA5OS45OTEyMDQgNDAwLjAwNzY2Ngp0cmFj
-ZXJlYzogNCA3ODY5LjU3NDAzMyA3OTY5LjU2NTIzNyA5OS45OTEyMDQgNDAwLjAwNzYzNgp0cmFj
-ZXJlYzogNSA3OTY5LjU3Mzc3MSA4MDY5LjU2NDk2OSA5OS45OTExOTggNDAwLjAwNzUzNAp0cmFj
-ZXJlYzogMyA4MDY5LjU3MzY2MCA4MTY5LjU2NDgzNCA5OS45OTExNzQgNDAwLjAwNzY3OQp0cmFj
-ZXJlYzogMSA4MTY5LjU3MzUxMiA4MjY5LjU2NDYyNiA5OS45OTExMTQgNDAwLjAwNzg1OQp0cmFj
-ZXJlYzogMiA4MjY5LjU3MjkyNSA4MzY5LjU2NDM4MiA5OS45OTE0NTcgNDAwLjAwNzUyOAp0cmFj
-ZXJlYzogNCA4MzY5LjU3MzAxMiA4NDY5LjU2NDIwNCA5OS45OTExOTIgNDAwLjAwNzc3NQp0cmFj
-ZXJlYzogNSA4NDY5LjU3MjcwMiA4NTY5LjU2Mzk2MCA5OS45OTEyNTggNDAwLjAwNzczMwp0cmFj
-ZXJlYzogMyA4NTY5LjU3MjgwMSA4NjY5LjU2MzY2MiA5OS45OTA4NjEgNDAwLjAwNzk2Nwp0cmFj
-ZXJlYzogMSA4NjY5LjU3MjM3NiA4NzY5LjU2MzI3NCA5OS45OTA4OTcgNDAwLjAwNzc1MQp0cmFj
-ZXJlYzogMiA4NzY5LjU3MTk3MCA4ODY5LjU2MzI0MCA5OS45OTEyNzAgNDAwLjAwNzU4OAp0cmFj
-ZXJlYzogNCA4ODY5LjU3MTc1NiA4OTY5LjU2MzA0NCA5OS45OTEyODggNDAwLjAwNzU1Mgp0cmFj
-ZXJlYzogNSA4OTY5LjU3MTYwOCA5MDY5LjU2Mjc3NiA5OS45OTExNjggNDAwLjAwNzY0OAp0cmFj
-ZXJlYzogMyA5MDY5LjU3MTUxNSA5MTY5LjU2MjUzMiA5OS45OTEwMTggNDAwLjAwNzg1Mwp0cmFj
-ZXJlYzogMSA5MTY5LjU3MTA4NCA5MjY5LjU2MjI2NCA5OS45OTExODAgNDAwLjAwNzgxMQp0cmFj
-ZXJlYzogMiA5MjY5LjU3MTA4NyA5MzY5LjU2MjE2NSA5OS45OTEwNzggNDAwLjAwNzg0Nwp0cmFj
-ZXJlYzogNCA5MzY5LjU3MDczNSA5NDY5LjU2MTkyMSA5OS45OTExODYgNDAwLjAwNzY5MQp0cmFj
-ZXJlYzogNSA5NDY5LjU3MDQzMSA5NTY5LjU2MTYwNSA5OS45OTExNzQgNDAwLjAwNzY1NAp0cmFj
-ZXJlYzogMyA5NTY5LjU3MDE4MSA5NjY5LjU2MTM1NSA5OS45OTExNzQgNDAwLjAwNzY0OAp0cmFj
-ZXJlYzogMSA5NjY5LjU2OTkzMSA5NzY5LjU2MTExMSA5OS45OTExODAgNDAwLjAwNzY2Ngp0cmFj
-ZXJlYzogMiA5NzY5LjU2OTgzNyA5ODY5LjU2MTA1OSA5OS45OTEyMjIgMC4wMDAwMDAKdHJhY2Vy
-ZWM6IDQgOTg2OS41Njk2MTEgOTk2OS41NjA3MTkgOTkuOTkxMTA4IDAuMDAwMDAwCnRyYWNlcmVj
-OiA1IDk5NjkuNTY5MjY1IDEwMDM5LjM3MjUzNyA2OS44MDMyNzIgMC4wMDAwMDAKdHJhY2VyZWM6
-IDMgMTAwMzkuNjg5NzM5IDEwMDM5LjY4OTczOSAwLjAwMDAwMCAwLjAwMDAwMAo=
-------=_Part_34533_2561795.1191566453990
-Content-Type: image/png; name="hourglass.png"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="hourglass.png";
- filename="hourglass.png"
-X-Attachment-Id: f_f7ebv26f
-
-iVBORw0KGgoAAAANSUhEUgAADdwAAAnXCAIAAACg86DBAAAACXBIWXMAAABIAAAASABGyWs+AACA
-AElEQVR42uzagQkAIRDAsPf33/kcwoIgyQQdoGtmPgAAAAAAAAAAAADO/LcDAAAAAAAAAAAAAF5g
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAA
-AAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAA
-gIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAA
-AAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAA
-ACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQA
-AAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAA
-AAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIB
-AAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAA
-AAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZM
-AAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAA
-AAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIAp
-EwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAA
-AAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBg
-ygQAAAAAAAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAA
-AAAAAAAImDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAI
-mDIBAAAAAAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAA
-AAAAAAAAAqZMAAAAAAAAAAAAgIApEwAAAAAAAAAAACBgygQAAAAAAAAAAAAImDIBAAAAAAAAAAAA
-AqbMzd4dXqfqrYsexj1WA6wSsAQsAUswJUAJUIKWICVoCVKClCAlhBK8H7jbnZOVZCVZMyL6PB/O
-8K8YX5jJOuN6f2cCAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAA
-AAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAI
-QJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAA
-AAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAA
-AAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAAB
-iDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAA
-AAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAA
-AAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAA
-USYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAA
-AAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAA
-AABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQg
-ygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAA
-AAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAA
-AAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABE
-mQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAA
-AAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAA
-AAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAo
-EwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAA
-AAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAA
-ACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBl
-AgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAA
-AAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAA
-AAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJM
-AAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAA
-AAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAA
-gABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJ
-AAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAA
-AAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAA
-EIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIB
-AAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAA
-AAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAA
-AhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYA
-AAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAA
-AAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABA
-AKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQA
-AAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAA
-AAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAI
-QJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAA
-AAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAA
-AAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAAB
-iDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAA
-AAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAA
-AAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAA
-USYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAA
-AAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAA
-AABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQg
-ygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAA
-AAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAA
-AAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABE
-mQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAA
-AAAAAAAAEIAoEwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAA
-AAABiDIBAAAAAAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAo
-EwAAAAAAAAAAACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAA
-AAAAAAAAAhBlAgAAAAAAAAAAAAQgygQAAAAAAAAAAAAIQJQJAAAAAAAAAAAAEIAoEwAAAAAAAAAA
-ACAAUSYAAAAAAAAAAABAAKJMAAAAAAAAAAAAgABEmQAAAAAAAAAAAAABiDIBAAAAAAAAAAAAAvg1
-9gAAAAAAhDebzS6Pz+fz2OMAAAAAAMBDEGUCAAAAAP/Hy6h3Wh42QX5vyX7ognzwG3LlT3SCTtAJ
-3v0JPuw/7AAAAEyXKBMAAAAAeO14PI49wpctFouxRxjTn0v2oxfkzd+QK3+iE3SCTvDuT/DB/2EH
-AABgov4z9gAAAAAAAAAAAAAA90CUCQAAAAAAAAAAABCAKBMAAAAAAAAAAAAgAFEmAAAAAAAAAAAA
-QACiTAAAAAAAAAAAAIAARJkAAAAAAAAAAAAAAYgyAQAAAAAAAAAAAAIQZQIAAAAAAAAAAAAEIMoE
-AAAAAAAAAAAACECUCQAAAHA9TdO0bTv2FAAAAAAAwI8QZQIAAAAE9vT0NHvH09NTkiRjDwgAAAAA
-APwIUSYAAABASF3X7ff7917N8zyO47FnBAAAAAAAfoQoEwAAACCkzWbz3ktxHOd5PvaAAAAAAADA
-TxFlAgAAAATTdV1d12VZnt/y/Pzs3uUAAAAAAHDHRJkAAAAAwdR1HcdxWZZjDwIAAAAAAIxAlAkA
-AAAQRt/3dV3neR7H8dizAAAAAAAAIxBlAgAAAIRR13Xf903TVFW13+/7vh97IgAAAAAA4Kp+jT0A
-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
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAANB8
-S68AACYKSURBVAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACA
-gCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAA
-AAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAA
-ICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAA
-AAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAA
-AAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEA
-AAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAA
-AAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwA
-AAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAA
-AACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgT
-AAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAA
-AAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDK
-BAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAA
-AAAAAAiIMgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiI
-MgEAAAAAAAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAA
-AAAAAAACokwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAAC
-okwAAAAAAAAAAACAgCgTAAAAAAAAAAAAICDKBAAAAAAAAAAAAAiIMgEAAAAAAAAAAAACokwAAAAA
-AP63XTsWAAAAABjkbz2JncURAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAA
-AAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJ
-AAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAA
-AAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIB
-AAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAA
-AABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYA
-AAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAA
-AAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQA
-AAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAA
-AICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAA
-AAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAA
-ADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAA
-AAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAA
-AAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAA
-AAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAA
-wEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAA
-AAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAA
-GEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAA
-AAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAA
-AykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAA
-AAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABg
-IGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAA
-AAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAM
-pEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAA
-AAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICB
-lAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAA
-AAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQ
-MgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAA
-AAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZS
-JgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAA
-AAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDK
-BAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAA
-AAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZ
-AAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAA
-AAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykT
-AAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAA
-AAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUC
-AAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAA
-AADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwA
-AAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAA
-AAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkA
-AAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAA
-AAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEA
-AAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAA
-AGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAA
-AAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAA
-AAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAA
-AAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAA
-gIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAA
-AAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAA
-MJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAA
-AAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAA
-BlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAA
-AAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADA
-QMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAA
-AAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAY
-SJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAA
-AAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAAD
-KRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAA
-AAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAg
-ZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAA
-AAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAyk
-TAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAA
-AAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGU
-CQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAA
-AAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAy
-AQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAA
-AAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAAAAAwkDIBAAAAAAAAAAAABlIm
-AAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMAAAAAAAAAAABgIGUCAAAAAAAA
-AAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAAAAAGUiYAAAAAAAAAAADAQMoE
-AAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIAAAAAAAAAAAAMpEwAAAAAAAAA
-AACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAAAMBAygQAAAAAAAAAAAAYSJkA
-AAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAykTAAAAAAAAAAAAICBlAkAAAAAAAAA
-AAAwkDIBAAAAAAAAAAAABlImAAAAAAAAAAAAwEDKBAAAAAAAAAAAABhImQAAAAAAAAAAAAADKRMA
-AAAAAAAAAABgIGUCAAAAAAAAAAAADKRMAAAAAAAAAAAAgIGUCQAAAAAAAAAAADCQMgEAAAAAAAAA
-AAAGUiYAAAAAAAAAAADAQMoEAAAAAAAAAAAAGEiZAAAAAAAAAAAAAAMpEwAAAAAAAAAAAGAgZQIA
-AAAAAAAAAAAMpEwAAAAAAAAAAACAgZQJAAAAAAAAAAAAMJAyAQAAAAAAAAAAAAZSJgAAAAAAAAAA
-AMBAygQAAAAAAAAAAAAYSJkAAAAAAAAAAAAAAykTAAAAAAAAAAAAYCBlAgAAAAAAAAAAAAwCFR9H
-zbzzc1YAAAA5dEVYdENvbW1lbnQAIEltYWdlIGdlbmVyYXRlZCBieSBFU1AgR2hvc3RzY3JpcHQg
-KGRldmljZT1wcG0pCnpQzz0AAAAASUVORK5CYII=
-------=_Part_34533_2561795.1191566453990--
+Gautham R Shenoy
+Linux Technology Center
+IBM India.
+"Freedom comes with a price tag of responsibility, which is still a bargain,
+because Freedom is priceless!"
