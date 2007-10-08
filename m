@@ -1,51 +1,53 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 0/2] [RFC] RT: Optionally allow IRQF_NODELAY on serial
-	console
-Date: Mon, 08 Oct 2007 10:22:41 -0400
-Message-ID: <1191853361.4281.5.camel@ghaskins-t60p.haskins.net>
-References: <20071005153517.24349.62653.stgit@ghaskins-t60p.haskins.net>
-	 <alpine.LRH.0.999.0710051831000.10191@www.tglx.de>
-	 <Pine.LNX.4.58.0710081005320.4846@gandalf.stny.rr.com>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: Re: 2.6.23-rc9-rt2
+Date: Mon, 8 Oct 2007 20:04:24 +0530
+Message-ID: <1985e0f60710080734y4897a8e1ke253b6d4273146ec@mail.gmail.com>
+References: <1191536413.5210.19.camel@localhost.localdomain>
+	 <1985e0f60710070635l7016bad1t9c4d4cb1a966534f@mail.gmail.com>
+	 <Pine.LNX.4.58.0710080951270.4846@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, mingo@elte.hu,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:59174 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751591AbXJHOZD (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.249]:24016 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751894AbXJHOe0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Oct 2007 10:25:03 -0400
-In-Reply-To: <Pine.LNX.4.58.0710081005320.4846@gandalf.stny.rr.com>
+	Mon, 8 Oct 2007 10:34:26 -0400
+Received: by an-out-0708.google.com with SMTP id d31so136624and
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Oct 2007 07:34:25 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0710080951270.4846@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-10-08 at 10:10 -0400, Steven Rostedt wrote:
-
-> This issue has hit me enough times where I've played with a few other
-> ideas. I just haven't had the time to finish them. The main problem is if
-> the system locks up somewhere we have a lock held that keeps us from
-> scheduling. Once that happens in -rt, we are as good as dead. Since you
-> can't get much info out without a JTAG or some other mechanism.
-> 
-> One thought I had was to create a small handler that could read the serial
-> and place data into a buffer. This handler would be a IRQ_NODELAY, and it
-> would wake up a serial thread to handle the data just like it would for
-> normal serial output. But the serial thread would just read from the
-> buffer instead of the serial itself.  In the case of a sysrq key coming
-> in, the IRQ_NODELAY handler would handle it.
-> 
-
 Hi Steve,
-  What you describe is exactly what I did.  The IRQF_NODELAY handler
-just minimally checks to see if the character is a sysrq related one (or
-KDB, if you have the KDB patches applied).  If it is not, it puts the
-character into a ring-buffer and wakes a (kthread-based) tasklet to do
-the normal serial/tty rx path by processing the ring.
 
-Hope that helps to clarify.
+On 10/8/07, Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+> --
+> On Sun, 7 Oct 2007, Jaswinder Singh wrote:
+>
+> > Do you have any plans to support nested or reentrant Interrupt Handling schemes.
+> >
+>
+> Hi Jaswinder,
+>
+> Not sure what you mean by this, since interrupt handlers are run as
+> threads and are fully preemptible.
+>
 
-Regards,
--Greg
+I think by nested or reentrant interrupt handling technique you can
+further reduce latencies.
+what you think.
+
+Can we can get guaranteed realtime throughput by using these realtime patch.
+
+Thank you,
+
+Jaswinder SIngh.
