@@ -1,52 +1,70 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/2] [RFC] RT: Optionally allow IRQF_NODELAY on serial
- console
-Date: Mon, 8 Oct 2007 10:41:02 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710081037420.5290@gandalf.stny.rr.com>
-References: <20071005153517.24349.62653.stgit@ghaskins-t60p.haskins.net>
- <alpine.LRH.0.999.0710051831000.10191@www.tglx.de>
- <Pine.LNX.4.58.0710081005320.4846@gandalf.stny.rr.com>
- <1191853361.4281.5.camel@ghaskins-t60p.haskins.net>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: Re: Cyclictest expected results
+Date: Mon, 8 Oct 2007 20:16:44 +0530
+Message-ID: <1985e0f60710080746p30ecebcv6807b6f24d1b5050@mail.gmail.com>
+References: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com>
+	 <20070930183253.GW23573@pengutronix.de>
+	 <alpine.LFD.0.9999.0709302353540.5677@localhost.localdomain>
+	 <1985e0f60709302030q62d19dd3q398a5d0685353786@mail.gmail.com>
+	 <20071002065451.GM23573@pengutronix.de>
+	 <1985e0f60710070550w47b1ccd7na897920cbd0aeb40@mail.gmail.com>
+	 <20071008140650.GJ23573@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>, mingo@elte.hu,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Thomas Gleixner" <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: "Robert Schwebel" <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:55863 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751504AbXJHOle (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.247]:31612 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750959AbXJHOqq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Oct 2007 10:41:34 -0400
-In-Reply-To: <1191853361.4281.5.camel@ghaskins-t60p.haskins.net>
+	Mon, 8 Oct 2007 10:46:46 -0400
+Received: by an-out-0708.google.com with SMTP id d31so137533and
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Oct 2007 07:46:45 -0700 (PDT)
+In-Reply-To: <20071008140650.GJ23573@pengutronix.de>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello Robert,
 
---
-On Mon, 8 Oct 2007, Gregory Haskins wrote:
+On 10/8/07, Robert Schwebel <r.schwebel@pengutronix.de> wrote:
+> On Sun, Oct 07, 2007 at 06:20:29PM +0530, Jaswinder Singh wrote:
+> > I am also getting :
+> > root@rd cycletest]# ./cyclictest -t 1 -p80 -n -i 10000 -l 10000 -q
+> > T: 0 ( 2709) P:80 I:10000 C:  10000 Min:      8 Act:   16 Avg:   16 Max:      44
+> > [root@rd cycletest]# ./cyclictest -t 1 -p80 -i 10000 -l 10000 -q
+> > T: 0 ( 2723) P:80 I:10000 C:  10000 Min:     21 Act:   30 Avg:   29 Max:     139
+> > [root@rd cycletest]#
 >
-> Hi Steve,
->   What you describe is exactly what I did.  The IRQF_NODELAY handler
-> just minimally checks to see if the character is a sysrq related one (or
-> KDB, if you have the KDB patches applied).  If it is not, it puts the
-> character into a ring-buffer and wakes a (kthread-based) tasklet to do
-> the normal serial/tty rx path by processing the ring.
-
-Ah, that was in the second patch (I didn't look at that. My fault). I
-didn't see this description in the comments. But you are right, it is very
-close to what I did too. But before we add this to -rt, it will need to
-probably need to be tested quite a bit more. Especially since this is more
-to help us developers than to help end users.
-
-I would like to see something like this eventually make it into RT.  Just
-because there has been too many times that this would be useful. For now I
-just use the NMI watchdog and soft lockup detect. But those are very
-limiting.
-
+> Doesn't look too bad.
 >
-> Hope that helps to clarify.
+> > I am quite strange why I start getting RT performance with ACPI. why I
+> > need ACPI on my PC, I dont even use ACPI on my Laptop.
+>
+> acpi_pm provides a proper clocksource to your system which is a) sane
+> and b) has enough resolution.
+>
+> > But I am not able to see performance difference in my GNOME
+> > Environment. It is still very very slow, how can I boost X-Windows by
+> > -rt patch.
+>
+> I'm not sure what you are expecting here? Realtime is about guaranteed
+> latencies, not about speed.
+>
 
-Yes, thanks!
+Currently my GNOME environment takes 150 seconds to start.
 
--- Steve
+May be it because of some bug :
+mtrr: base(0xf0020000) is not aligned on a size(0x300000) boundary
+[drm:drm_unlock] *ERROR* Process 2382 using kernel context 0
+
+I am just curious can we improve its performance by Realtime.
+
+Yes, you are right we cannot do anything if CPU is already running 100%.
+
+Thank you,
+
+Jaswinder Singh.
