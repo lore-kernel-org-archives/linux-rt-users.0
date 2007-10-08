@@ -1,53 +1,52 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
-Subject: Re: 2.6.23-rc9-rt2
-Date: Mon, 8 Oct 2007 20:04:24 +0530
-Message-ID: <1985e0f60710080734y4897a8e1ke253b6d4273146ec@mail.gmail.com>
-References: <1191536413.5210.19.camel@localhost.localdomain>
-	 <1985e0f60710070635l7016bad1t9c4d4cb1a966534f@mail.gmail.com>
-	 <Pine.LNX.4.58.0710080951270.4846@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 0/2] [RFC] RT: Optionally allow IRQF_NODELAY on serial
+ console
+Date: Mon, 8 Oct 2007 10:41:02 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710081037420.5290@gandalf.stny.rr.com>
+References: <20071005153517.24349.62653.stgit@ghaskins-t60p.haskins.net>
+ <alpine.LRH.0.999.0710051831000.10191@www.tglx.de>
+ <Pine.LNX.4.58.0710081005320.4846@gandalf.stny.rr.com>
+ <1191853361.4281.5.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Thomas Gleixner <tglx@linutronix.de>, mingo@elte.hu,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.249]:24016 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751894AbXJHOe0 (ORCPT
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:55863 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751504AbXJHOle (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Oct 2007 10:34:26 -0400
-Received: by an-out-0708.google.com with SMTP id d31so136624and
-        for <linux-rt-users@vger.kernel.org>; Mon, 08 Oct 2007 07:34:25 -0700 (PDT)
-In-Reply-To: <Pine.LNX.4.58.0710080951270.4846@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Mon, 8 Oct 2007 10:41:34 -0400
+In-Reply-To: <1191853361.4281.5.camel@ghaskins-t60p.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steve,
 
-On 10/8/07, Steven Rostedt <rostedt@goodmis.org> wrote:
+--
+On Mon, 8 Oct 2007, Gregory Haskins wrote:
 >
-> --
-> On Sun, 7 Oct 2007, Jaswinder Singh wrote:
->
-> > Do you have any plans to support nested or reentrant Interrupt Handling schemes.
-> >
->
-> Hi Jaswinder,
->
-> Not sure what you mean by this, since interrupt handlers are run as
-> threads and are fully preemptible.
->
+> Hi Steve,
+>   What you describe is exactly what I did.  The IRQF_NODELAY handler
+> just minimally checks to see if the character is a sysrq related one (or
+> KDB, if you have the KDB patches applied).  If it is not, it puts the
+> character into a ring-buffer and wakes a (kthread-based) tasklet to do
+> the normal serial/tty rx path by processing the ring.
 
-I think by nested or reentrant interrupt handling technique you can
-further reduce latencies.
-what you think.
+Ah, that was in the second patch (I didn't look at that. My fault). I
+didn't see this description in the comments. But you are right, it is very
+close to what I did too. But before we add this to -rt, it will need to
+probably need to be tested quite a bit more. Especially since this is more
+to help us developers than to help end users.
 
-Can we can get guaranteed realtime throughput by using these realtime patch.
+I would like to see something like this eventually make it into RT.  Just
+because there has been too many times that this would be useful. For now I
+just use the NMI watchdog and soft lockup detect. But those are very
+limiting.
 
-Thank you,
+>
+> Hope that helps to clarify.
 
-Jaswinder SIngh.
+Yes, thanks!
+
+-- Steve
