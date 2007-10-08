@@ -1,48 +1,66 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: Cyclictest expected results
-Date: Mon, 8 Oct 2007 16:06:50 +0200
-Message-ID: <20071008140650.GJ23573@pengutronix.de>
-References: <1985e0f60709300837l1b16deedgb15575bc73a729ad@mail.gmail.com> <20070930183253.GW23573@pengutronix.de> <alpine.LFD.0.9999.0709302353540.5677@localhost.localdomain> <1985e0f60709302030q62d19dd3q398a5d0685353786@mail.gmail.com> <20071002065451.GM23573@pengutronix.de> <1985e0f60710070550w47b1ccd7na897920cbd0aeb40@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 0/2] [RFC] RT: Optionally allow IRQF_NODELAY on serial
+ console
+Date: Mon, 8 Oct 2007 10:10:47 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710081005320.4846@gandalf.stny.rr.com>
+References: <20071005153517.24349.62653.stgit@ghaskins-t60p.haskins.net>
+ <alpine.LRH.0.999.0710051831000.10191@www.tglx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:33665 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751056AbXJHOG6 (ORCPT
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:58621 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750952AbXJHOLV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Oct 2007 10:06:58 -0400
-Content-Disposition: inline
-In-Reply-To: <1985e0f60710070550w47b1ccd7na897920cbd0aeb40@mail.gmail.com>
+	Mon, 8 Oct 2007 10:11:21 -0400
+In-Reply-To: <alpine.LRH.0.999.0710051831000.10191@www.tglx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, Oct 07, 2007 at 06:20:29PM +0530, Jaswinder Singh wrote:
-> I am also getting :
-> root@rd cycletest]# ./cyclictest -t 1 -p80 -n -i 10000 -l 10000 -q
-> T: 0 ( 2709) P:80 I:10000 C:  10000 Min:      8 Act:   16 Avg:   16 Max:      44
-> [root@rd cycletest]# ./cyclictest -t 1 -p80 -i 10000 -l 10000 -q
-> T: 0 ( 2723) P:80 I:10000 C:  10000 Min:     21 Act:   30 Avg:   29 Max:     139
-> [root@rd cycletest]#
 
-Doesn't look too bad.
+--
+On Fri, 5 Oct 2007, Thomas Gleixner wrote:
 
-> I am quite strange why I start getting RT performance with ACPI. why I
-> need ACPI on my PC, I dont even use ACPI on my Laptop.
+> On Fri, 5 Oct 2007, Gregory Haskins wrote:
+> > This series may help debugging certain circumstances where the serial
+> > console is unreponsive (e.g. RT51+ spinner, or scheduler problem).  It changes
+> > the serial8250 driver to use IRQF_NODELAY so that interrupts execute in irq
+> > context instead of a kthread.
+> >
+> > It works pretty well on this end, though it is admitted not fully baked.  For
+> > instance, a few paths in sysrq can still call into non-raw spinlocks
+> > (sched_debug_show, for instance) which will cause subsequent errors.  Also,
+> > if you use KDB, be sure to convert the kdb_printf_lock to raw as well.  I may
+> > send a KDB related patch seperately.
+> >
+> > I am sending this out now in case it is helpful to someone.
+>
+> The simple non-patch solution is to up the priority of the serial
+> console irq to maximum. That's usually sufficient to catch runnaway tasks
+> etc. It does not interfere with the system in normal operation as long as
+> you do not hit keys in your minicom.
+>
+> I doubt that your patch has a chance to survive lockdep and anything which
+> is not a sysrq.
 
-acpi_pm provides a proper clocksource to your system which is a) sane
-and b) has enough resolution.
+This issue has hit me enough times where I've played with a few other
+ideas. I just haven't had the time to finish them. The main problem is if
+the system locks up somewhere we have a lock held that keeps us from
+scheduling. Once that happens in -rt, we are as good as dead. Since you
+can't get much info out without a JTAG or some other mechanism.
 
-> But I am not able to see performance difference in my GNOME
-> Environment. It is still very very slow, how can I boost X-Windows by
-> -rt patch.
+One thought I had was to create a small handler that could read the serial
+and place data into a buffer. This handler would be a IRQ_NODELAY, and it
+would wake up a serial thread to handle the data just like it would for
+normal serial output. But the serial thread would just read from the
+buffer instead of the serial itself.  In the case of a sysrq key coming
+in, the IRQ_NODELAY handler would handle it.
 
-I'm not sure what you are expecting here? Realtime is about guaranteed
-latencies, not about speed.
+Just a thought. Maybe someday I can get time to play more with this idea,
+or someone else can come up with one.  But to convert the entire handler
+into nodelay is a bit extreme.
 
-Robert
--- 
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
+-- Steve
