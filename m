@@ -1,61 +1,52 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: mike kravetz <kravetz@us.ibm.com>
 Subject: Re: [RFC PATCH RT] push waiting rt tasks to cpus with lower prios.
-Date: Tue, 9 Oct 2007 16:50:47 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710091645110.25406@gandalf.stny.rr.com>
-References: <20071009142044.4941.65189.stgit@novell1.haskins.net>
- <Pine.LNX.4.58.0710091054430.21404@gandalf.stny.rr.com>
- <1191944024.4281.72.camel@ghaskins-t60p.haskins.net>
- <1191952777.23198.8.camel@localhost.localdomain> <20071009203936.GB23388@monkey.ibm.com>
+Date: Tue, 9 Oct 2007 14:17:38 -0700
+Message-ID: <20071009211738.GC23388@monkey.ibm.com>
+References: <20071009142044.4941.65189.stgit@novell1.haskins.net> <Pine.LNX.4.58.0710091054430.21404@gandalf.stny.rr.com> <1191944024.4281.72.camel@ghaskins-t60p.haskins.net> <1191952777.23198.8.camel@localhost.localdomain> <20071009203936.GB23388@monkey.ibm.com> <Pine.LNX.4.58.0710091645110.25406@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Cc: Gregory Haskins <ghaskins@novell.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>, pmorreale@novell.com,
 	sdietrich@novell.com
-To: mike kravetz <kravetz@us.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:55093 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754134AbXJIUvq (ORCPT
+Received: from e35.co.us.ibm.com ([32.97.110.153]:57453 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751036AbXJIVbp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2007 16:51:46 -0400
-In-Reply-To: <20071009203936.GB23388@monkey.ibm.com>
+	Tue, 9 Oct 2007 17:31:45 -0400
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0710091645110.25406@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Tue, Oct 09, 2007 at 04:50:47PM -0400, Steven Rostedt wrote:
+> > I did something like this a while ago for another scheduling project.
+> > A couple 'possible' optimizations to think about are:
+> > 1) Only scan the remote runqueues once and keep a local copy of the
+> >    remote priorities for subsequent 'scans'.  Accessing the remote
+> >    runqueus (CPU specific cache lines) can be expensive.
+> 
+> You mean to keep the copy for the next two tries?
 
---
-On Tue, 9 Oct 2007, mike kravetz wrote:
+Yes.  But with #2 below, your next try is the runqueue/CPU that is the
+next best candidate (after the trylock fails).  The 'hope' is that there
+is more than one candidate CPU to push the task to.  Of course, you
+always want to try and find the 'best' candidate.  My thoughts were that
+if you could find ANY cpu to take the task that would be better than
+sending the IPI everywhere.  With multiple runqueues/locks there is no
+way you can be guaranteed of making the 'best' placement.  So, a good
+placement may be enough.
 
->
-> I did something like this a while ago for another scheduling project.
-> A couple 'possible' optimizations to think about are:
-> 1) Only scan the remote runqueues once and keep a local copy of the
->    remote priorities for subsequent 'scans'.  Accessing the remote
->    runqueus (CPU specific cache lines) can be expensive.
+> > 2) When verifying priorities, just perform spin_trylock() on the remote
+> >    runqueue.  If you can immediately get it great.  If not, it implies
+> >    someone else is messing with the runqueue and there is a good chance
+> >    the data you pre-fetched (curr->Priority) is invalid.  In this case
+> >    it might be faster to just 'move on' to the next candidate runqueue/CPU.
+> >    i.e. The next highest priority that the new task can preempt.
 
-You mean to keep the copy for the next two tries?
-
-> 2) When verifying priorities, just perform spin_trylock() on the remote
->    runqueue.  If you can immediately get it great.  If not, it implies
->    someone else is messing with the runqueue and there is a good chance
->    the data you pre-fetched (curr->Priority) is invalid.  In this case
->    it might be faster to just 'move on' to the next candidate runqueue/CPU.
->    i.e. The next highest priority that the new task can preempt.
-
-I was a bit scared of grabing the lock anyway, because that's another
-cache hit (write side). So only grabbing the lock when needed would save
-us from dirting the runqueue lock for each CPU.
-
->
-> Of course, these 'optimizations' would change the algorithm.  Trying to
-> make any decision based on data that is changing is always a crap shoot. :)
-
-Yes indeed. The aim for now is to solve the latencies that you've been
-seeing. But really, there is still holes (small ones) that can cause a
-latency if a schedule happened "just right". Hopefully the final result of
-this work will close them too.
-
--- Steve
+-- 
+Mike
