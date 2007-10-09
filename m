@@ -1,43 +1,57 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: John Sigler <linux.kernel@free.fr>
 Subject: Re: High resolution timers on ACPI-less kernel
-Date: Tue, 9 Oct 2007 11:34:48 +0200 (CEST)
-Message-ID: <alpine.LFD.0.9999.0710091131400.25146@localhost.localdomain>
-References: <470B44A1.7080007@free.fr> <1191921343.13628.0.camel@godzilla.tecnorama.it> <470B49BD.4070506@free.fr>
+Date: Tue, 09 Oct 2007 11:39:08 +0200
+Message-ID: <470B4C3C.3000406@free.fr>
+References: <470B44A1.7080007@free.fr> <alpine.LFD.0.9999.0710091117020.25146@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Alessio Igor Bogani <abogani@texware.it>,
-	linux-rt-users@vger.kernel.org, linux-acpi@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-acpi@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:47141 "EHLO www.tglx.de"
+Received: from smtp4-g19.free.fr ([212.27.42.30]:59324 "EHLO smtp4-g19.free.fr"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751422AbXJIJfD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2007 05:35:03 -0400
-In-Reply-To: <470B49BD.4070506@free.fr>
+	id S1752084AbXJIJjK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Oct 2007 05:39:10 -0400
+In-Reply-To: <alpine.LFD.0.9999.0710091117020.25146@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 9 Oct 2007, John Sigler wrote:
-> Alessio Igor Bogani wrote: 
-> > On Tue, 2007-10-09 at 11:06 +0200, John Sigler wrote:
-> > [...] 
-> > > I enabled high resolution timer support and disabled ACPI support.
-> > [...]
-> > 
-> > http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00375.html
+Thomas Gleixner wrote:
+
+> On Tue, 9 Oct 2007, John Sigler wrote:
 > 
-> There are other clock sources on my system.
-> The timestamp counter is reliable (as far as I can tell).
+>> I'm using a -rt kernel with high resolution timer support.
+>> http://rt.wiki.kernel.org/index.php/Main_Page
+>> Linux version 2.6.22.1-rt9 (root@venus) (gcc version 3.4.6) #1 PREEMPT RT Tue
+>> Oct 9 10:02:45 CEST 2007
+>>
+>> I enabled high resolution timer support and disabled ACPI support.
+>> ...
+>> High resolution timers do not work in this configuration.
+> 
+> Correct
+> 
+>> Any idea why?
+> 
+> Yes
+> 
+>> # cat /sys/devices/system/clocksource/clocksource0/available_clocksource
+>> tsc pit jiffies
+>>
+>> # cat /sys/devices/system/clocksource/clocksource0/current_clocksource
+>> tsc
+>>
+>> My timestamp counter is good. Why do I need ACPI for hrt?
+> 
+> We do not trust TSC at all. Never ever.
+> 
+> The kernel refuses to switch to high resolution mode, when there is no
+> reliable backup clock source available. ACPI enables the acpi_pm
+> timer, which is a trusted clock source and is used by the kernel to
+> verify the correctness of the TSC. You might try to enable HPET.
 
-See previous mail.
+OK. I seem to remember that you had a patch to enable HPET on ICH4?
+Is it still available somewhere?
 
-> The LAPIC timer is reliable.
-
-LAPIC timer is a clock event device, not a clock source. It can be
-used to program the next event, but not to read the time.
-
-> (I've just disabled the PM timer.)
-
-Yup, which in turn disables highres.
-
-     tglx
+Regards.
