@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 3/5] RT - fix mistargeted RESCHED_IPI
-Date: Tue, 09 Oct 2007 10:25:59 -0400
-Message-ID: <20071009142559.4941.60009.stgit@novell1.haskins.net>
+Subject: [PATCH 4/5] RT: Add a per-cpu rt_overload indication
+Date: Tue, 09 Oct 2007 10:26:05 -0400
+Message-ID: <20071009142605.4941.95952.stgit@novell1.haskins.net>
 References: <20071009142044.4941.65189.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,37 +10,70 @@ Cc: kravetz@us.ibm.com, linux-kernel@vger.kernel.org,
 	ghaskins@novell.com, pmorreale@novell.com, sdietrich@novell.com
 To: mingo@elte.hu, linux-rt-users@vger.kernel.org, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45538
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45543
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754795AbXJIOjB (ORCPT
+	by vger.kernel.org with ESMTP id S1754974AbXJIOjH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2007 10:39:01 -0400
+	Tue, 9 Oct 2007 10:39:07 -0400
 In-Reply-To: <20071009142044.4941.65189.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Any number of tasks could be queued behind the current task, so direct the
-balance IPI at all CPUs (other than current)
+The system currently evaluates all online CPUs whenever one or more enters
+an rt_overload condition.  This suffers from scalability limitations as
+the # of online CPUs increases.  So we introduce a cpumask to track
+exactly which CPUs need RT balancing.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Mike Kravetz <kravetz@us.ibm.com>
 CC: Peter W. Morreale <pmorreale@novell.com>
 ---
 
- kernel/sched.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ kernel/sched.c |   12 +++++++++---
+ 1 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 3e75c62..551629b 100644
+index 551629b..a28ca9d 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -2209,7 +2209,7 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
- 	 */
- 	if (unlikely(rt_task(current) && rq->rt_nr_running > 1)) {
- 		schedstat_inc(rq, rto_schedule);
--		smp_send_reschedule_allbutself_cpumask(current->cpus_allowed);
-+		smp_send_reschedule_allbutself();
+@@ -631,6 +631,7 @@ static inline struct rq *this_rq_lock(void)
+ 
+ #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
+ static __cacheline_aligned_in_smp atomic_t rt_overload;
++static cpumask_t rto_cpus;
+ #endif
+ 
+ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+@@ -639,8 +640,11 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+ 	if (rt_task(p)) {
+ 		rq->rt_nr_running++;
+ # ifdef CONFIG_SMP
+-		if (rq->rt_nr_running == 2)
++		if (rq->rt_nr_running == 2) {
++			cpu_set(rq->cpu, rto_cpus);
++			smp_wmb();
+ 			atomic_inc(&rt_overload);
++		}
+ # endif
  	}
  #endif
- 	prev_state = prev->state;
+@@ -653,8 +657,10 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+ 		WARN_ON(!rq->rt_nr_running);
+ 		rq->rt_nr_running--;
+ # ifdef CONFIG_SMP
+-		if (rq->rt_nr_running == 1)
++		if (rq->rt_nr_running == 1) {
+ 			atomic_dec(&rt_overload);
++			cpu_clear(rq->cpu, rto_cpus);
++		}
+ # endif
+ 	}
+ #endif
+@@ -1503,7 +1509,7 @@ static void balance_rt_tasks(struct rq *this_rq, int this_cpu)
+ 	 */
+ 	next = pick_next_task(this_rq, this_rq->curr);
+ 
+-	for_each_online_cpu(cpu) {
++	for_each_cpu_mask(cpu, rto_cpus) {
+ 		if (cpu == this_cpu)
+ 			continue;
+ 		src_rq = cpu_rq(cpu);
