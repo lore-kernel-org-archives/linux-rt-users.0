@@ -1,52 +1,36 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: High resolution timers on ACPI-less kernel
-Date: Tue, 09 Oct 2007 12:35:29 +0200
-Message-ID: <470B5971.40601@free.fr>
-References: <470B44A1.7080007@free.fr> <1191921343.13628.0.camel@godzilla.tecnorama.it> <470B49BD.4070506@free.fr> <alpine.LFD.0.9999.0710091131400.25146@localhost.localdomain>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/5] RT: scheduler fixes and rt_overload enhancements
+Date: Tue, 09 Oct 2007 10:25:44 -0400
+Message-ID: <20071009142044.4941.65189.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-acpi@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.0.9999.0710091131400.25146@localhost.localdomain>
-Sender: linux-acpi-owner@vger.kernel.org
+Cc: kravetz@us.ibm.com, linux-kernel@vger.kernel.org,
+	ghaskins@novell.com, pmorreale@novell.com, sdietrich@novell.com
+To: mingo@elte.hu, linux-rt-users@vger.kernel.org, rostedt@goodmis.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45522
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752122AbXJIOis (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Oct 2007 10:38:48 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
-> On Tue, 9 Oct 2007, John Sigler wrote:
->> Alessio Igor Bogani wrote: 
->>> On Tue, 2007-10-09 at 11:06 +0200, John Sigler wrote:
->>> 
->>>> I enabled high resolution timer support and disabled ACPI support.
->>> 
->>> http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg00375.html
->>
->> There are other clock sources on my system.
->> The timestamp counter is reliable (as far as I can tell).
-> 
-> See previous mail.
-> 
->> The LAPIC timer is reliable.
-> 
-> LAPIC timer is a clock event device, not a clock source. It can be
-> used to program the next event, but not to read the time.
-> 
->> (I've just disabled the PM timer.)
-> 
-> Yup, which in turn disables highres.
+Hi All,
 
-OK. I have two more questions.
+The first two patches are from Mike and Steven on LKML, which the rest of my
+series is dependent on.  Patch #4 is a resend from earlier.
 
-Can the kernel verify the correctness of the TSC with the PIT?
+Series Summary:
 
-When I enable the ACPI PM timer, the kernel tells me:
+1) Send IPI on overload regardless of whether prev is an RT task
+2) Set the NEEDS_RESCHED flag on reception of RESCHED_IPI
+3) Fix a mistargeted IPI on overload
+4) Track which CPUS are in overload for efficiency
+5) Track which CPUs are eligible for rebalancing for efficiency
 
-* The chipset may have PM-Timer Bug. Due to workarounds for a bug,
-* this clock source is slow. If you are sure your timer does not have
-* this bug, please use "acpi_pm_good" to disable the workaround
+These have been built and boot-tested on a 4-core Intel system.
 
-How can I tell whether my PM timer has this bug or not?
-(Specific revision? Test app?)
-
-Regards.
+Regards,
+-Greg
