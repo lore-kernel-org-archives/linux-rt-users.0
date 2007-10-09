@@ -1,75 +1,65 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 5/5] RT - Track which CPUs should get IPI'd on rt-overload
-Date: Tue, 09 Oct 2007 10:26:10 -0400
-Message-ID: <20071009142610.4941.90103.stgit@novell1.haskins.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 0/5] RT: scheduler fixes and rt_overload enhancements
+Date: Tue, 9 Oct 2007 11:00:46 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710091054430.21404@gandalf.stny.rr.com>
 References: <20071009142044.4941.65189.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: kravetz@us.ibm.com, linux-kernel@vger.kernel.org,
-	ghaskins@novell.com, pmorreale@novell.com, sdietrich@novell.com
-To: mingo@elte.hu, linux-rt-users@vger.kernel.org, rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45551
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755200AbXJIOjL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2007 10:39:11 -0400
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	kravetz@us.ibm.com, LKML <linux-kernel@vger.kernel.org>,
+	pmorreale@novell.com, sdietrich@novell.com,
+	Peter Zijlstra <peterz@infradead.org>
+To: Gregory Haskins <ghaskins@novell.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756313AbXJIPB2@vger.kernel.org>
 In-Reply-To: <20071009142044.4941.65189.stgit@novell1.haskins.net>
-Sender: linux-rt-users-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The code currently blindly fires IPIs out whenever an overload occurs.
-However, there are strict events that govern when a rt-overload exists
-(e.g. RT task added to a RQ, or an RT task preempted).  Therefore, we
-attempt to efficiently track which CPUs are eligible for rebalancing, and we
-only IPI those affected units.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Peter W. Morreale <pmorreale@novell.com>
----
 
- kernel/sched.c |   15 +++++++++++++--
- 1 files changed, 13 insertions(+), 2 deletions(-)
+--
+On Tue, 9 Oct 2007, Gregory Haskins wrote:
+> Hi All,
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index a28ca9d..6ca5f4f 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -359,6 +359,8 @@ struct rq {
- 	unsigned long rto_pulled;
- #endif
- 	struct lock_class_key rq_lock_key;
-+
-+	cpumask_t rto_resched; /* Which of our peers needs rescheduling */
- };
- 
- static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
-@@ -645,6 +647,9 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
- 			smp_wmb();
- 			atomic_inc(&rt_overload);
- 		}
-+
-+		cpus_or(rq->rto_resched, rq->rto_resched, p->cpus_allowed);
-+		cpu_clear(rq->cpu, rq->rto_resched);
- # endif
- 	}
- #endif
-@@ -2213,9 +2218,15 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
- 	 * If we pushed an RT task off the runqueue,
- 	 * then kick other CPUs, they might run it:
- 	 */
--	if (unlikely(rt_task(current) && rq->rt_nr_running > 1)) {
-+	if (unlikely(rt_task(current) && prev->se.on_rq && rt_task(prev))) {
-+		cpus_or(rq->rto_resched, rq->rto_resched, prev->cpus_allowed);
-+		cpu_clear(rq->cpu, rq->rto_resched);
-+	}
-+
-+	if (unlikely(rq->rt_nr_running > 1 && !cpus_empty(rq->rto_resched))) {
- 		schedstat_inc(rq, rto_schedule);
--		smp_send_reschedule_allbutself();
-+		smp_send_reschedule_allbutself_cpumask(rq->rto_resched);
-+		cpus_clear(rq->rto_resched);
- 	}
- #endif
- 	prev_state = prev->state;
+Hi Gregory,
+
+>
+> The first two patches are from Mike and Steven on LKML, which the rest of my
+> series is dependent on.  Patch #4 is a resend from earlier.
+>
+> Series Summary:
+>
+> 1) Send IPI on overload regardless of whether prev is an RT task
+
+OK.
+
+> 2) Set the NEEDS_RESCHED flag on reception of RESCHED_IPI
+
+Peter Zijlstra and I have been discussing this IPI Resched change a bit.
+It seems that it is too much overkill for what is needed. That is, the
+send_reschedule is used elsewhere where we do not want to actually do a
+schedule.
+
+I'm thinking about trying out a method that each rq has the priority of
+the current task that is running. On case where we get an rt overload
+(like in the finish_task_switch) we do a scan of all CPUS (not taking any
+locks) and find the CPU which the lowest priority. If that CPU has a lower
+prioirty than a waiting task to run on the current CPU then we grab the
+lock for that rq, check to see if the priority is still lower, and then
+push the rt task over to that CPU.
+
+If after taking the rq lock a schedule had taken place and a higher RT
+task is running, then we would try again, two more times. If this
+phenomenon happens two more times, we punt and wouldn't do anything else
+(paranoid attempt to fall into trying over and over on a high context
+switch RT system).
+
+
+> 3) Fix a mistargeted IPI on overload
+> 4) Track which CPUS are in overload for efficiency
+> 5) Track which CPUs are eligible for rebalancing for efficiency
+
+The above three may be obsoleted by this new algorithm.
+
+-- Steve
