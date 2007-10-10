@@ -1,51 +1,90 @@
-From: mike kravetz <kravetz@us.ibm.com>
-Subject: Re: [PATCH] RT: Fix special-case exception for preempting the local CPU
-Date: Wed, 10 Oct 2007 09:22:48 -0700
-Message-ID: <20071010162248.GB5049@monkey.ibm.com>
-References: <20071010144824.21333.52155.stgit@novell1.haskins.net>
+From: Morten Mossige <morten.mossige@gmail.com>
+Subject: Alarm / timer callback from the kernel
+Date: Wed, 10 Oct 2007 17:45:23 +0000 (UTC)
+Message-ID: <loom.20071010T171710-319@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mingo@elte.hu, peterz@infradead.org, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:32902 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754890AbXJJQWS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Oct 2007 12:22:18 -0400
-Content-Disposition: inline
-In-Reply-To: <20071010144824.21333.52155.stgit@novell1.haskins.net>
+Received: from main.gmane.org ([80.91.229.2]:50447 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751740AbXJJSQs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 10 Oct 2007 14:16:48 -0400
+Received: from list by ciao.gmane.org with local (Exim 4.43)
+	id 1IffsB-0007Wx-Ln
+	for linux-rt-users@vger.kernel.org; Wed, 10 Oct 2007 18:01:31 +0000
+Received: from 217.68.101.68 ([217.68.101.68])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2007 18:01:31 +0000
+Received: from morten.mossige by 217.68.101.68 with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2007 18:01:31 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Oct 10, 2007 at 10:49:35AM -0400, Gregory Haskins wrote:
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 3e75c62..b7f7a96 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -1869,7 +1869,8 @@ out_activate:
->  		 * extra locking in this particular case, because
->  		 * we are on the current CPU.)
->  		 */
-> -		if (TASK_PREEMPTS_CURR(p, this_rq))
-> +		if (TASK_PREEMPTS_CURR(p, this_rq)
-> +		    && cpu_isset(this_cpu, p->cpus_allowed))
->  			set_tsk_need_resched(this_rq->curr);
->  		else
->  			/*
+I=E2=80=99m porting several huge libraries from other real-time os'es (=
+VxWorks, WINCE,=20
+DSP/BIOS etc.) to Linux. The job includes porting of a glue-layer betwe=
+en=20
+Linux and the libraries. This glue-layer is the implementation of:
+* clock_ms ()
+* int_lock()
+* int_unlock()
+* mutex_create()
+* mutex_give()
+* task_create()
+etc.
+etc.
 
-I wonder if it might better to explicitly take the rq lock and try to
-put the task on this_rq in this situation?  Rather than waiting for
-schedule to pull it from a remote rq as part of balance_rt_tasks.
+Each function has a different implementation on each real-time os.
 
-A question that has passed through my head a few times is:  When waking
-a RT task is it better to:
-1) run on current CPU if possible
-2) run on CPU task previously ran on
+As an ex. the implementation of mutex_create() for vxworks is like this=
+:
+SEM_ID id =3D semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE | SEM_DELE=
+TE_SAFE);
+=09
+while on Linux it is like this:
 
-I think #1 may result in lower latency.  But, if the task has lots of
-cache warmth the lower wakeup latency may be negated by running on a
-'remote' cpu.
--- 
-Mike
+sem_t *semH =3D (sem_t*)malloc( sizeof(sem_t) );
+sem_init(semH, 0,init);=20
+return (void*)semH;
+
+By using this approach, the libraries can be written independent of OS.
+
+But the functions (which I need) that causes problem for me is the foll=
+owing=20
+functions:
+
+timer_init( callbackFunc )
+and
+timer_set( CLOCK_MS timeMs )
+
+The first function (timer_init) is called at startup of my application,=
+ and=20
+installs a callbackfuction for all timerevents. The second function is =
+to arm=20
+the timer. When the timer goes off, the callbackfuntion should be calle=
+d=20
+preferably on a high priority. Some of the other os'es implements this =
+as a=20
+one-shot-timerinterrupt, so the priority should be quite high.
+
+My first approach to port this to Linux was to use signals and setitime=
+r().=20
+This worked, but the problem with this solution was that the priority o=
+f the=20
+callback was the same as the priority of the thread that set up the tim=
+er.
+
+My next approach was to use a special high priority timer thread. Whene=
+ver a=20
+lo-pri thread needs to arm the timer, it signals the high-pri thread to=
+ set up=20
+the alarm. I have not tested this yet so I don't know how well it will =
+work.
+
+But does other have other solutions/suggestions how to solve this?
+
+br. Morten
