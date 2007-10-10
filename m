@@ -1,49 +1,51 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH] RT: Fix special-case exception for preempting the local CPU
-Date: Wed, 10 Oct 2007 10:49:35 -0400
-Message-ID: <20071010144824.21333.52155.stgit@novell1.haskins.net>
+From: mike kravetz <kravetz@us.ibm.com>
+Subject: Re: [PATCH] RT: Fix special-case exception for preempting the local CPU
+Date: Wed, 10 Oct 2007 09:22:48 -0700
+Message-ID: <20071010162248.GB5049@monkey.ibm.com>
+References: <20071010144824.21333.52155.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: ghaskins@novell.com, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: mingo@elte.hu, peterz@infradead.org, kravetz@us.ibm.com,
-	rostedt@goodmis.org
+Content-Type: text/plain; charset=us-ascii
+Cc: mingo@elte.hu, peterz@infradead.org, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:51197
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753877AbXJJPCz (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:32902 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754890AbXJJQWS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Oct 2007 11:02:55 -0400
+	Wed, 10 Oct 2007 12:22:18 -0400
+Content-Disposition: inline
+In-Reply-To: <20071010144824.21333.52155.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Applies to 2.6.23-rc9-rt2...  This is another RTO related fix from the thread
-two days ago.
+On Wed, Oct 10, 2007 at 10:49:35AM -0400, Gregory Haskins wrote:
+> diff --git a/kernel/sched.c b/kernel/sched.c
+> index 3e75c62..b7f7a96 100644
+> --- a/kernel/sched.c
+> +++ b/kernel/sched.c
+> @@ -1869,7 +1869,8 @@ out_activate:
+>  		 * extra locking in this particular case, because
+>  		 * we are on the current CPU.)
+>  		 */
+> -		if (TASK_PREEMPTS_CURR(p, this_rq))
+> +		if (TASK_PREEMPTS_CURR(p, this_rq)
+> +		    && cpu_isset(this_cpu, p->cpus_allowed))
+>  			set_tsk_need_resched(this_rq->curr);
+>  		else
+>  			/*
 
----
-RT: Fix special-case exception for preempting the local CPU
+I wonder if it might better to explicitly take the rq lock and try to
+put the task on this_rq in this situation?  Rather than waiting for
+schedule to pull it from a remote rq as part of balance_rt_tasks.
 
-Check whether the local CPU is eligible to take the task before trying to
-preempt it.
+A question that has passed through my head a few times is:  When waking
+a RT task is it better to:
+1) run on current CPU if possible
+2) run on CPU task previously ran on
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
-
- kernel/sched.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 3e75c62..b7f7a96 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -1869,7 +1869,8 @@ out_activate:
- 		 * extra locking in this particular case, because
- 		 * we are on the current CPU.)
- 		 */
--		if (TASK_PREEMPTS_CURR(p, this_rq))
-+		if (TASK_PREEMPTS_CURR(p, this_rq)
-+		    && cpu_isset(this_cpu, p->cpus_allowed))
- 			set_tsk_need_resched(this_rq->curr);
- 		else
- 			/*
+I think #1 may result in lower latency.  But, if the task has lots of
+cache warmth the lower wakeup latency may be negated by running on a
+'remote' cpu.
+-- 
+Mike
