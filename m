@@ -1,37 +1,64 @@
-From: Dragan Noveski <perodog@gmx.net>
-Subject: Re: High resolution timers on ACPI-less kernel
-Date: Thu, 11 Oct 2007 12:37:00 +0200
-Message-ID: <470DFCCC.2080606@gmx.net>
-References: <470B44A1.7080007@free.fr> <1191921343.13628.0.camel@godzilla.tecnorama.it> <470B49BD.4070506@free.fr> <alpine.LFD.0.9999.0710091131400.25146@localhost.localdomain> <470B5971.40601@free.fr> <470BA56F.9090509@gmx.net> <alpine.LFD.0.9999.0710091911550.7766@localhost.localdomain>
+From: ankita@in.ibm.com (Ankita Garg)
+Subject: Re: [PATCH] RT: Fix special-case exception for preempting the local CPU
+Date: Thu, 11 Oct 2007 16:21:23 +0530
+Message-ID: <20071011105123.GE6721@in.ibm.com>
+References: <20071010144824.21333.52155.stgit@novell1.haskins.net> <20071010162248.GB5049@monkey.ibm.com>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	peterz@infradead.org, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: mike kravetz <kravetz@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:40147 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1751456AbXJKKhx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2007 06:37:53 -0400
-In-Reply-To: <alpine.LFD.0.9999.0710091911550.7766@localhost.localdomain>
+Received: from E23SMTP03.au.ibm.com ([202.81.18.172]:33383 "EHLO
+	e23smtp03.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756168AbXJKKwS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Oct 2007 06:52:18 -0400
+Content-Disposition: inline
+In-Reply-To: <20071010162248.GB5049@monkey.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
-> On Tue, 9 Oct 2007, Dragan Noveski wrote:
->   
->> hallo, i am using the 2.6.22.1-rt9 kernel too, and it runs pretty good for me,
->> but following this thread i got very unsure, if the hrtimer is being used
->> here.
->>  .resolution: 1 nsecs
->>     
->
-> Yes, it switched to high resolution (1 nsec). Otherwise it would show 10, 4 or 1 ms
->
->      tglx
->
->   
-hallo thomas, very much thanks for the response - it clarifies some 
-things here for me!
+On Wed, Oct 10, 2007 at 09:22:48AM -0700, mike kravetz wrote:
+> On Wed, Oct 10, 2007 at 10:49:35AM -0400, Gregory Haskins wrote:
+> > diff --git a/kernel/sched.c b/kernel/sched.c
+> > index 3e75c62..b7f7a96 100644
+> > --- a/kernel/sched.c
+> > +++ b/kernel/sched.c
+> > @@ -1869,7 +1869,8 @@ out_activate:
+> >  		 * extra locking in this particular case, because
+> >  		 * we are on the current CPU.)
+> >  		 */
+> > -		if (TASK_PREEMPTS_CURR(p, this_rq))
+> > +		if (TASK_PREEMPTS_CURR(p, this_rq)
+> > +		    && cpu_isset(this_cpu, p->cpus_allowed))
+> >  			set_tsk_need_resched(this_rq->curr);
+> >  		else
+> >  			/*
+> 
+> I wonder if it might better to explicitly take the rq lock and try to
+> put the task on this_rq in this situation?  Rather than waiting for
+> schedule to pull it from a remote rq as part of balance_rt_tasks.
+> 
+> A question that has passed through my head a few times is:  When waking
+> a RT task is it better to:
+> 1) run on current CPU if possible
+> 2) run on CPU task previously ran on
+> 
+> I think #1 may result in lower latency.  But, if the task has lots of
+> cache warmth the lower wakeup latency may be negated by running on a
+> 'remote' cpu.
 
-cheers,
-doc
+Could we use task_hot() routine to find if the task is cache hot? If it
+isn't, if possible, we could run on current CPU, else, if possible, on
+the CPU it last ran on?
+
+
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
