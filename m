@@ -1,90 +1,37 @@
-From: Morten Mossige <morten.mossige@gmail.com>
-Subject: Alarm / timer callback from the kernel
-Date: Wed, 10 Oct 2007 17:45:23 +0000 (UTC)
-Message-ID: <loom.20071010T171710-319@post.gmane.org>
+From: Dragan Noveski <perodog@gmx.net>
+Subject: Re: High resolution timers on ACPI-less kernel
+Date: Thu, 11 Oct 2007 12:37:00 +0200
+Message-ID: <470DFCCC.2080606@gmx.net>
+References: <470B44A1.7080007@free.fr> <1191921343.13628.0.camel@godzilla.tecnorama.it> <470B49BD.4070506@free.fr> <alpine.LFD.0.9999.0710091131400.25146@localhost.localdomain> <470B5971.40601@free.fr> <470BA56F.9090509@gmx.net> <alpine.LFD.0.9999.0710091911550.7766@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:50447 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751740AbXJJSQs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Oct 2007 14:16:48 -0400
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1IffsB-0007Wx-Ln
-	for linux-rt-users@vger.kernel.org; Wed, 10 Oct 2007 18:01:31 +0000
-Received: from 217.68.101.68 ([217.68.101.68])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2007 18:01:31 +0000
-Received: from morten.mossige by 217.68.101.68 with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2007 18:01:31 +0000
+Received: from mail.gmx.net ([213.165.64.20]:40147 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1751456AbXJKKhx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Oct 2007 06:37:53 -0400
+In-Reply-To: <alpine.LFD.0.9999.0710091911550.7766@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I=E2=80=99m porting several huge libraries from other real-time os'es (=
-VxWorks, WINCE,=20
-DSP/BIOS etc.) to Linux. The job includes porting of a glue-layer betwe=
-en=20
-Linux and the libraries. This glue-layer is the implementation of:
-* clock_ms ()
-* int_lock()
-* int_unlock()
-* mutex_create()
-* mutex_give()
-* task_create()
-etc.
-etc.
+Thomas Gleixner wrote:
+> On Tue, 9 Oct 2007, Dragan Noveski wrote:
+>   
+>> hallo, i am using the 2.6.22.1-rt9 kernel too, and it runs pretty good for me,
+>> but following this thread i got very unsure, if the hrtimer is being used
+>> here.
+>>  .resolution: 1 nsecs
+>>     
+>
+> Yes, it switched to high resolution (1 nsec). Otherwise it would show 10, 4 or 1 ms
+>
+>      tglx
+>
+>   
+hallo thomas, very much thanks for the response - it clarifies some 
+things here for me!
 
-Each function has a different implementation on each real-time os.
-
-As an ex. the implementation of mutex_create() for vxworks is like this=
-:
-SEM_ID id =3D semMCreate(SEM_Q_PRIORITY | SEM_INVERSION_SAFE | SEM_DELE=
-TE_SAFE);
-=09
-while on Linux it is like this:
-
-sem_t *semH =3D (sem_t*)malloc( sizeof(sem_t) );
-sem_init(semH, 0,init);=20
-return (void*)semH;
-
-By using this approach, the libraries can be written independent of OS.
-
-But the functions (which I need) that causes problem for me is the foll=
-owing=20
-functions:
-
-timer_init( callbackFunc )
-and
-timer_set( CLOCK_MS timeMs )
-
-The first function (timer_init) is called at startup of my application,=
- and=20
-installs a callbackfuction for all timerevents. The second function is =
-to arm=20
-the timer. When the timer goes off, the callbackfuntion should be calle=
-d=20
-preferably on a high priority. Some of the other os'es implements this =
-as a=20
-one-shot-timerinterrupt, so the priority should be quite high.
-
-My first approach to port this to Linux was to use signals and setitime=
-r().=20
-This worked, but the problem with this solution was that the priority o=
-f the=20
-callback was the same as the priority of the thread that set up the tim=
-er.
-
-My next approach was to use a special high priority timer thread. Whene=
-ver a=20
-lo-pri thread needs to arm the timer, it signals the high-pri thread to=
- set up=20
-the alarm. I have not tested this yet so I don't know how well it will =
-work.
-
-But does other have other solutions/suggestions how to solve this?
-
-br. Morten
+cheers,
+doc
