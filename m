@@ -1,64 +1,55 @@
-From: ankita@in.ibm.com (Ankita Garg)
-Subject: Re: [PATCH] RT: Fix special-case exception for preempting the local CPU
-Date: Thu, 11 Oct 2007 16:21:23 +0530
-Message-ID: <20071011105123.GE6721@in.ibm.com>
-References: <20071010144824.21333.52155.stgit@novell1.haskins.net> <20071010162248.GB5049@monkey.ibm.com>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+From: =?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>
+Subject: [PATCH] RT: fix spin_trylock_irq
+Date: Thu, 11 Oct 2007 14:24:17 +0200
+Message-ID: <20071011142417.1d965820@bull.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	peterz@infradead.org, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: mike kravetz <kravetz@us.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP03.au.ibm.com ([202.81.18.172]:33383 "EHLO
-	e23smtp03.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756168AbXJKKwS (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:60828 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754155AbXJKMYb convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2007 06:52:18 -0400
-Content-Disposition: inline
-In-Reply-To: <20071010162248.GB5049@monkey.ibm.com>
+	Thu, 11 Oct 2007 08:24:31 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Oct 10, 2007 at 09:22:48AM -0700, mike kravetz wrote:
-> On Wed, Oct 10, 2007 at 10:49:35AM -0400, Gregory Haskins wrote:
-> > diff --git a/kernel/sched.c b/kernel/sched.c
-> > index 3e75c62..b7f7a96 100644
-> > --- a/kernel/sched.c
-> > +++ b/kernel/sched.c
-> > @@ -1869,7 +1869,8 @@ out_activate:
-> >  		 * extra locking in this particular case, because
-> >  		 * we are on the current CPU.)
-> >  		 */
-> > -		if (TASK_PREEMPTS_CURR(p, this_rq))
-> > +		if (TASK_PREEMPTS_CURR(p, this_rq)
-> > +		    && cpu_isset(this_cpu, p->cpus_allowed))
-> >  			set_tsk_need_resched(this_rq->curr);
-> >  		else
-> >  			/*
-> 
-> I wonder if it might better to explicitly take the rq lock and try to
-> put the task on this_rq in this situation?  Rather than waiting for
-> schedule to pull it from a remote rq as part of balance_rt_tasks.
-> 
-> A question that has passed through my head a few times is:  When waking
-> a RT task is it better to:
-> 1) run on current CPU if possible
-> 2) run on CPU task previously ran on
-> 
-> I think #1 may result in lower latency.  But, if the task has lots of
-> cache warmth the lower wakeup latency may be negated by running on a
-> 'remote' cpu.
 
-Could we use task_hot() routine to find if the task is cache hot? If it
-isn't, if possible, we could run on current CPU, else, if possible, on
-the CPU it last ran on?
+  This patch fixes a bug in spin_trylock_irq() where __spin_trylock_irq=
+() is
+picked for regular (non-raw) spinlocks instead of _spin_trylock_irq().
+
+  This results in systematic boot hangs and may have been going unnotic=
+ed
+for quite some time as it only manifests (aside from a compile warning)=
+ when
+booting with a NUMA config or when using the Chelsio T3 (cxgb3) driver =
+as
+these seems to be the sole users.
 
 
--- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+Signed-off-by: S=C3=A9bastien Dugu=C3=A9 <sebastien.dugue@bull.net>
+
+---
+ include/linux/spinlock.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.23-rc9-rt2/include/linux/spinlock.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.23-rc9-rt2.orig/include/linux/spinlock.h
++++ linux-2.6.23-rc9-rt2/include/linux/spinlock.h
+@@ -501,7 +501,7 @@ do {									\
+=20
+ #define spin_trylock_irq(lock)	\
+ 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irq,		\
+-		__spin_trylock_irq, lock))
++		_spin_trylock_irq, lock))
+=20
+ #define spin_trylock_irqsave(lock, flags) \
+ 	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irqsave, 	\
