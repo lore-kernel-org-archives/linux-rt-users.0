@@ -1,9 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/7] RT: Peter Zijlstra's suggested improvements to rt-push
-	patch
-Date: Thu, 11 Oct 2007 17:59:53 -0400
-Message-ID: <20071011215953.27097.46608.stgit@novell1.haskins.net>
-References: <20071011213916.27097.42597.stgit@novell1.haskins.net>
+Subject: [PATCH 0/7] RT: (RFC) RT-Overload/Sched enhancements
+Date: Thu, 11 Oct 2007 17:59:43 -0400
+Message-ID: <20071011213916.27097.42597.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -13,59 +11,35 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 To: Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45347
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:45337
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756232AbXJKWNP (ORCPT
+	by vger.kernel.org with ESMTP id S1754905AbXJKWNJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2007 18:13:15 -0400
-In-Reply-To: <20071011213916.27097.42597.stgit@novell1.haskins.net>
+	Thu, 11 Oct 2007 18:13:09 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is my own interpretation of Peter's recommended changes Steven's push-rt
-patch.  Just to be clear, Peter does not endorse this patch unless he himself
-specifically says so ;).
+The current series applies to 23-rt1-pre1.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+This is a snapshot of the current work-in-progress for the rt-overload
+enhancements.  The primary motivation for the series to to improve the
+algorithm for distributing RT tasks to keep the highest tasks active.  The
+current system tends to blast IPIs "shotgun" style, and we aim to reduce that
+overhead where possible.  We mitigate this behavior by trying to place tasks
+on the ideal runqueue before an overload even occurs.
 
- kernel/sched.c |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
+Note that this series is *not* currently stable.  There is at
+least one bug resulting in a hard-lock.  And the hard-lock could be masking
+other yet-to-be-discovered issues.
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 0f0af6d..24b38b4 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -1499,7 +1499,7 @@ static int push_rt_task(struct rq *this_rq)
- 	int dst_cpu = -1;
- 	int ret = 0;
- 
--	BUG_ON(!spin_is_locked(&this_rq->lock));
-+	assert_spin_locked(&this_rq->lock);
- 
- 	next_task = rt_next_highest_task(this_rq);
- 	if (!next_task)
-@@ -1553,7 +1553,8 @@ static int push_rt_task(struct rq *this_rq)
- 		set_task_cpu(next_task, dst_cpu);
- 		activate_task(lowest_rq, next_task, 0);
- 
--		set_tsk_need_resched(lowest_rq->curr);
-+		resched_task(lowest_rq->curr);
-+		schedstat_inc(this_rq, rto_schedule);
- 
- 		spin_unlock(&lowest_rq->lock);
- 		ret = 1;
-@@ -2290,10 +2291,9 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
- 	 * then kick other CPUs, they might run it:
- 	 */
- 	rq->curr_prio = current->prio;
--	if (unlikely(rt_task(current) && push_rt_task(rq))) {
--		schedstat_inc(rq, rto_schedule);
--		smp_send_reschedule_allbutself_cpumask(current->cpus_allowed);
--	}
-+	if (unlikely(rq->rt_nr_running > 1))
-+		push_rt_task(rq);
-+
- #endif
- 	prev_state = prev->state;
- 	_finish_arch_switch(prev);
+My primary motivation for sending it out right now is to share the latest
+series with Peter Zijlstra and Steven Rostedt.  However, in the interest of
+keeping the development open we are sending to a wider distribution.
+Comments/suggestions from anyone are, of course, welcome.  But please note
+this is not quite ready for prime-time in any capacity. 
+
+The series includes patches from both Steven and myself, with serious
+input/guidance/discussion from Peter.
+
+Regards,
+-Greg
