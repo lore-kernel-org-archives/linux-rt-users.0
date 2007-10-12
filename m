@@ -1,45 +1,74 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.23-rt1
-Date: Thu, 11 Oct 2007 22:04:00 -0400
-Message-ID: <1192154640.15992.10.camel@localhost.localdomain>
+From: John Sigler <linux.kernel@free.fr>
+Subject: NMI watchdog
+Date: Fri, 12 Oct 2007 11:18:24 +0200
+Message-ID: <470F3BE0.4050807@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>
-To: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:54197 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754238AbXJLCE1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2007 22:04:27 -0400
+Received: from smtp4-g19.free.fr ([212.27.42.30]:59625 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932600AbXJLJS1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Oct 2007 05:18:27 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the 2.6.23-rt1 tree, which can be
-downloaded from the location:
+Hello,
 
- http://www.kernel.org/pub/linux/kernel/projects/rt/
+I'm experiencing a full system lockup. I'm using an out-of-tree driver 
+which I suspect is responsible. I'm trying to enable the NMI watchdog.
 
-Changes since 2.6.23-rc9-rt2
+# cat /proc/version
+Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct 9 
+12:25:47 CEST 2007
 
-  - updated to 2.6.23
+# cat /proc/cmdline
+ro root=/dev/hdc1 console=ttyS0,57600n8 console=tty0 panic=3 apic=debug 
+nmi_watchdog=2
 
-  - spin_trylock_irqsave macro fix (S=E9bastien Dugu=E9)
+However, after boot, the NMI count does not change.
 
-  - move rcu_preempt_boost init earlier (Steven Rostedt)
+# cat /proc/interrupts ; sleep 10 ; cat /proc/interrupts
+            CPU0
+   0:         99   IO-APIC-edge      timer
+   4:       3822   IO-APIC-edge      serial
+   8:          1   IO-APIC-edge      rtc
+   9:          0   IO-APIC-fasteoi   acpi
+  15:      16443   IO-APIC-edge      ide1
+  16:       2166   IO-APIC-fasteoi   eth0
+  17:        840   IO-APIC-fasteoi   eth1
+  18:        840   IO-APIC-fasteoi   eth2
+  19:        840   IO-APIC-fasteoi   eth3
+  20:          0   IO-APIC-fasteoi   Dta1xx
+  21:          0   IO-APIC-fasteoi   Dta1xx
+NMI:       2895
+LOC:     168445
+ERR:          0
+MIS:          0
 
-  - rt task send IPI condition update (Mike Kravetz)
+            CPU0
+   0:         99   IO-APIC-edge      timer
+   4:       3822   IO-APIC-edge      serial
+   8:          1   IO-APIC-edge      rtc
+   9:          0   IO-APIC-fasteoi   acpi
+  15:      16467   IO-APIC-edge      ide1
+  16:       2173   IO-APIC-fasteoi   eth0
+  17:        845   IO-APIC-fasteoi   eth1
+  18:        845   IO-APIC-fasteoi   eth2
+  19:        845   IO-APIC-fasteoi   eth3
+  20:          0   IO-APIC-fasteoi   Dta1xx
+  21:          0   IO-APIC-fasteoi   Dta1xx
+NMI:       2895
+LOC:     169448
+ERR:          0
+MIS:          0
 
+Does this mean the NMI watchdog is not working correctly on my system?
 
-to build a 2.6.23-rt1 tree, the following patches should be applied:
+# dmesg | grep NMI
+ACPI: LAPIC_NMI (acpi_id[0x00] high edge lint[0x1])
+ACPI: LAPIC_NMI (acpi_id[0x01] high edge lint[0x1])
+Testing NMI watchdog ... OK.
 
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
-  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rt1.b=
-z2
-
-The broken out patches are also available.
-
--- Steve
+Regards.
