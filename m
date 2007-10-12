@@ -1,150 +1,66 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: NMI watchdog
-Date: Fri, 12 Oct 2007 15:26:56 +0200
-Message-ID: <470F7620.6040705@free.fr>
-References: <470F3BE0.4050807@free.fr> <Pine.LNX.4.58.0710120625380.8208@gandalf.stny.rr.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH 0/7] RT: (RFC) RT-Overload/Sched enhancements
+Date: Fri, 12 Oct 2007 10:05:56 -0400
+Message-ID: <1192197956.4067.33.camel@ghaskins-t60p.haskins.net>
+References: <20071011213916.27097.42597.stgit@novell1.haskins.net>
+	 <1192184985.27435.17.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760005AbXJLN1T@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.58.0710120625380.8208@gandalf.stny.rr.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757847AbXJLOIg@vger.kernel.org>
+In-Reply-To: <1192184985.27435.17.camel@twins>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
+On Fri, 2007-10-12 at 12:29 +0200, Peter Zijlstra wrote:
 
-> John Sigler wrote:
-> 
->> I'm experiencing a full system lockup. I'm using an out-of-tree driver
->> which I suspect is responsible. I'm trying to enable the NMI watchdog.
->>
->> # cat /proc/version
->> Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct 9
->> 12:25:47 CEST 2007
->>
->> # cat /proc/cmdline
->> ro root=/dev/hdc1 console=ttyS0,57600n8 console=tty0 panic=3 apic=debug
->> nmi_watchdog=2
-> 
-> I've noticed on some boxes that nmi_watchdog=2 does what you state. Try
-> out nmi_watchdog=1.
+> I'm wondering why we need the cpu prio management stuff.
 
-# diff boot_message013 boot_message014
-49c49
-< Kernel command line: ro root=/dev/hdc1 console=ttyS0,57600n8 
-console=tty0 panic=3 apic=debug nmi_watchdog=2
----
- > Kernel command line: ro root=/dev/hdc1 console=ttyS0,57600n8 
-console=tty0 panic=3 apic=debug nmi_watchdog=1
-69c69
-< Calibrating delay using timer specific routine.. 4802.79 BogoMIPS 
-(lpj=24013960)
----
- > Calibrating delay using timer specific routine.. 4802.80 BogoMIPS 
-(lpj=24014009)
-88a89
- > activating NMI Watchdog ... done.
-97c98
-< ..... CPU clock speed is 2400.1215 MHz.
----
- > ..... CPU clock speed is 2400.1221 MHz.
-98a100
- > APIC timer registered as dummy, due to nmi_watchdog=1!
-213a216,217
- > Clockevents: could not switch to one-shot mode: lapic is not functional.
- > Could not switch to high resolution mode on CPU 0
+I know we covered most of this on IRC, but let me recap so everyone can
+follow the thread:
 
-Do you know why nmi_watchdog=1 disables high-resolution timers?
+1) The cpupri alg is just one search alg vs the other.  I think we are
+all in agreement that it is not clear if one has an advantage over the
+other without some empirical data.  So that aspect still remains to be
+investigated.  For now, either can be interchanged as the main
+functionality is what uses the search, not the search alg itself.
 
-And why nmi_watchdog=1 implies APIC timer registered as dummy?
+2) The patch series makes some innovations above the current state of
+the push-rt patch, which I will try to summarize here for consideration:
 
-# cat /sys/devices/system/clocksource/clocksource0/available_clocksource
-tsc acpi_pm pit jiffies
+	A) CPU Priority should be updated due to PI changes as well as
+ctx-switch
 
-# cat /sys/devices/system/clocksource/clocksource0/current_clocksource
-tsc
+	B) The search algorithm in the cpupri alg employs a priority amongst
+eligible CPUs: last-run (for cache-affinity), this_cpu (for
+lower-overhead preemption), and finally any other cpu in the
+cpus_allowed.  It would be ideal to see the other alg provide similar
+priority.
 
-# cat /proc/timer_list
-Timer List Version: v0.3
-HRTIMER_MAX_CLOCK_BASES: 2
-now at 4613373211613 nsecs
+	C) The search and pusher functions are separated.  Search is useful in
+circumstances outside the push_rt_task functions (see (D))
 
-cpu: 0
-  clock 0:
-   .index:      0
-   .resolution: 10000000 nsecs
-   .get_time:   ktime_get_real
-   .offset:     0 nsecs
-active timers:
-  clock 1:
-   .index:      1
-   .resolution: 10000000 nsecs
-   .get_time:   ktime_get
-   .offset:     0 nsecs
-active timers:
-  #0: <cf2c1ec0>, it_real_fn, S:01
-  # expires at 4630663830511 nsecs [in 17290618898 nsecs]
-   .expires_next   : 9223372036854775807 nsecs
-   .hres_active    : 0
-   .nr_events      : 0
-   .nohz_mode      : 0
-   .idle_tick      : 0 nsecs
-   .tick_stopped   : 0
-   .idle_jiffies   : 0
-   .idle_calls     : 0
-   .idle_sleeps    : 0
-   .idle_entrytime : 0 nsecs
-   .idle_sleeptime : 0 nsecs
-   .last_jiffies   : 0
-   .next_jiffies   : 0
-   .idle_expires   : 0 nsecs
-jiffies: 431306
+	D) The primary patch addresses one case where we need to redistribute
+(high-pri preemption).  There are 3 in total.  The series adds support
+for a second case (low-pri RT wakeup).
+
+	E) We push until equilibrium instead of just a single task.
+
+3) Having a distinct cpu-priority layer (regardless of search-arg) will
+have (IMO) interesting potential going forward.  For instance, we could
+have an optional notifier that gets kicked whenever we change
+priority-class.  This would allow for some interesting RT related
+enhancements by allowing system-level components to register for
+priority changes.  For example: APIC TPR, or KVM hypercalls (for RT
+guests, on an RT host).  This is more theoretical and half-baked at this
+point, but it was something I have been kicking around.
 
 
-Tick Device: mode:     0
-Clock Event Device: pit
-  max_delta_ns:   27461866
-  min_delta_ns:   12571
-  mult:           5124677
-  shift:          32
-  mode:           2
-  next_event:     9223372036854775807 nsecs
-  set_next_event: pit_next_event
-  set_mode:       init_pit_timer
-  event_handler:  tick_handle_periodic_broadcast
-tick_broadcast_mask: 00000001
-tick_broadcast_oneshot_mask: 00000000
+That's all I can think of for now.
 
-
-Tick Device: mode:     0
-Clock Event Device: lapic
-  max_delta_ns:   1006581321
-  min_delta_ns:   1799
-  mult:           35793226
-  shift:          32
-  mode:           1
-  next_event:     0 nsecs
-  set_next_event: lapic_next_event
-  set_mode:       lapic_timer_setup
-  event_handler:  tick_handle_periodic
-
-# cat /proc/interrupts
-            CPU0
-   0:     468721   IO-APIC-edge      timer
-   4:        326   IO-APIC-edge      serial
-   8:          1   IO-APIC-edge      rtc
-   9:          0   IO-APIC-fasteoi   acpi
-  15:      15964   IO-APIC-edge      ide1
-  16:       4217   IO-APIC-fasteoi   eth0
-  17:       2340   IO-APIC-fasteoi   eth1
-  18:       2340   IO-APIC-fasteoi   eth2
-  19:       2340   IO-APIC-fasteoi   eth3
-NMI:     468690
-LOC:          0
-ERR:          0
-MIS:          0
-
-Regards.
+Regards,
+-Greg
