@@ -1,53 +1,65 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/7] RT: (RFC) RT-Overload/Sched enhancements
-Date: Fri, 12 Oct 2007 07:47:15 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710120745310.8793@gandalf.stny.rr.com>
+Subject: Re: [PATCH 3/7] RT: Only consider online CPUs when pushing rt tasks
+Date: Fri, 12 Oct 2007 08:10:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710120809490.8900@gandalf.stny.rr.com>
 References: <20071011213916.27097.42597.stgit@novell1.haskins.net>
- <1192184985.27435.17.camel@twins>
+ <20071011215959.27097.71140.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Gregory Haskins <ghaskins@novell.com>,
+Cc: Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:64143 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754487AbXJLLrr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Oct 2007 07:47:47 -0400
-In-Reply-To: <1192184985.27435.17.camel@twins>
-Sender: linux-rt-users-owner@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759974AbXJLMLW@vger.kernel.org>
+In-Reply-To: <20071011215959.27097.71140.stgit@novell1.haskins.net>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 --
 
-On Fri, 12 Oct 2007, Peter Zijlstra wrote:
+On Thu, 11 Oct 2007, Gregory Haskins wrote:
 
+> task->cpus_allowed can have bit positions that are set for CPUs that are
+> not currently online.  So we optimze our search by ANDing against the online
+> set.
 >
-> And for that, steve's rq->curr_prio field seems quite suitable.
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> ---
 >
-> so instead of the:
->   for (3 tries)
->     find lowest cpu
->     try push
+>  kernel/sched.c |    6 +++++-
+>  1 files changed, 5 insertions(+), 1 deletions(-)
 >
-> we do:
+> diff --git a/kernel/sched.c b/kernel/sched.c
+> index 24b38b4..0ca3905 100644
+> --- a/kernel/sched.c
+> +++ b/kernel/sched.c
+> @@ -1510,10 +1510,14 @@ static int push_rt_task(struct rq *this_rq)
 >
->   cpu_hotplug_lock();
->   cpus_and(mask, p->cpus_allowed, online_cpus);
->   for_each_cpu_mask(i, mask) {
->     if (cpu_rq(i)->curr_prio > p->prio && push_task(p, i))
->       break;
->   }
->   cpu_hotplug_unlock();
+>  	/* Only try this algorithm three times */
+>  	for (tries = 0; tries < 3; tries++) {
+> +		cpumask_t mask;
+> +
+> +		cpus_and(mask, cpu_online_map, next_task->cpus_allowed);
+> +
 
-The thing I'm worried about is that we pushed off a rt task that is higher
-in prio than another rt task on another cpu, and we'll cause a bunch of
-rt task bouncing.  That is what I'm trying to avoid.
-
-BTW, my logging has showed that I have yet to hit a 2cd try (but I admit,
-this is a very limited test set).
+Gag! I definitely sent you an old patch. I fixed this a while ago :-(
 
 -- Steve
+
+>  		/*
+>  		 * Scan each rq for the lowest prio.
+>  		 */
+> -		for_each_cpu_mask(cpu, next_task->cpus_allowed) {
+> +		for_each_cpu_mask(cpu, mask) {
+>  			struct rq *rq = &per_cpu(runqueues, cpu);
+>
+>  			if (cpu == smp_processor_id())
+>
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>
+>
