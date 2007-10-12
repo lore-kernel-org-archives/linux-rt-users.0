@@ -1,48 +1,42 @@
-From: =?iso-8859-1?Q?Bj=F6rn?= Steinbrink <B.Steinbrink@gmx.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: NMI watchdog
-Date: Fri, 12 Oct 2007 12:00:43 +0200
-Message-ID: <20071012100043.GA28777@atjola.homenet>
+Date: Fri, 12 Oct 2007 06:26:19 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710120625380.8208@gandalf.stny.rr.com>
 References: <470F3BE0.4050807@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:59248 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1758945AbXJLKAf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Oct 2007 06:00:35 -0400
-Content-Disposition: inline
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:64619 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750861AbXJLK0X (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Oct 2007 06:26:23 -0400
 In-Reply-To: <470F3BE0.4050807@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2007.10.12 11:18:24 +0200, John Sigler wrote:
+
+--
+
+On Fri, 12 Oct 2007, John Sigler wrote:
+
 > Hello,
 >
-> I'm experiencing a full system lockup. I'm using an out-of-tree drive=
-r=20
-> which I suspect is responsible. I'm trying to enable the NMI watchdog=
-=2E
+> I'm experiencing a full system lockup. I'm using an out-of-tree driver
+> which I suspect is responsible. I'm trying to enable the NMI watchdog.
 >
 > # cat /proc/version
-> Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct =
-9=20
+> Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct 9
 > 12:25:47 CEST 2007
 >
 > # cat /proc/cmdline
-> ro root=3D/dev/hdc1 console=3DttyS0,57600n8 console=3Dtty0 panic=3D3 =
-apic=3Ddebug=20
-> nmi_watchdog=3D2
+> ro root=/dev/hdc1 console=ttyS0,57600n8 console=tty0 panic=3 apic=debug
+> nmi_watchdog=2
 >
-> However, after boot, the NMI count does not change.
->
-> # cat /proc/interrupts ; sleep 10 ; cat /proc/interrupts
 
-Try running some cpu hog in the background. The performance counters ge=
-t
-increased only when the CPU is actually doing something. On a mostly
-idle system, it can take quite a while for the next NMI to show up.
+I've noticed on some boxes that nmi_watchdog=2 does what you state. Try
+out nmi_watchdog=1.
 
-Bj=F6rn
+-- Steve
