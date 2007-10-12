@@ -1,74 +1,48 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: NMI watchdog
-Date: Fri, 12 Oct 2007 11:18:24 +0200
-Message-ID: <470F3BE0.4050807@free.fr>
+From: =?iso-8859-1?Q?Bj=F6rn?= Steinbrink <B.Steinbrink@gmx.de>
+Subject: Re: NMI watchdog
+Date: Fri, 12 Oct 2007 12:00:43 +0200
+Message-ID: <20071012100043.GA28777@atjola.homenet>
+References: <470F3BE0.4050807@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:59625 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932600AbXJLJS1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Oct 2007 05:18:27 -0400
+Received: from mail.gmx.net ([213.165.64.20]:59248 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1758945AbXJLKAf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Oct 2007 06:00:35 -0400
+Content-Disposition: inline
+In-Reply-To: <470F3BE0.4050807@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On 2007.10.12 11:18:24 +0200, John Sigler wrote:
+> Hello,
+>
+> I'm experiencing a full system lockup. I'm using an out-of-tree drive=
+r=20
+> which I suspect is responsible. I'm trying to enable the NMI watchdog=
+=2E
+>
+> # cat /proc/version
+> Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct =
+9=20
+> 12:25:47 CEST 2007
+>
+> # cat /proc/cmdline
+> ro root=3D/dev/hdc1 console=3DttyS0,57600n8 console=3Dtty0 panic=3D3 =
+apic=3Ddebug=20
+> nmi_watchdog=3D2
+>
+> However, after boot, the NMI count does not change.
+>
+> # cat /proc/interrupts ; sleep 10 ; cat /proc/interrupts
 
-I'm experiencing a full system lockup. I'm using an out-of-tree driver 
-which I suspect is responsible. I'm trying to enable the NMI watchdog.
+Try running some cpu hog in the background. The performance counters ge=
+t
+increased only when the CPU is actually doing something. On a mostly
+idle system, it can take quite a while for the next NMI to show up.
 
-# cat /proc/version
-Linux version 2.6.22.1-rt9 (gcc version 3.4.6) #1 PREEMPT RT Tue Oct 9 
-12:25:47 CEST 2007
-
-# cat /proc/cmdline
-ro root=/dev/hdc1 console=ttyS0,57600n8 console=tty0 panic=3 apic=debug 
-nmi_watchdog=2
-
-However, after boot, the NMI count does not change.
-
-# cat /proc/interrupts ; sleep 10 ; cat /proc/interrupts
-            CPU0
-   0:         99   IO-APIC-edge      timer
-   4:       3822   IO-APIC-edge      serial
-   8:          1   IO-APIC-edge      rtc
-   9:          0   IO-APIC-fasteoi   acpi
-  15:      16443   IO-APIC-edge      ide1
-  16:       2166   IO-APIC-fasteoi   eth0
-  17:        840   IO-APIC-fasteoi   eth1
-  18:        840   IO-APIC-fasteoi   eth2
-  19:        840   IO-APIC-fasteoi   eth3
-  20:          0   IO-APIC-fasteoi   Dta1xx
-  21:          0   IO-APIC-fasteoi   Dta1xx
-NMI:       2895
-LOC:     168445
-ERR:          0
-MIS:          0
-
-            CPU0
-   0:         99   IO-APIC-edge      timer
-   4:       3822   IO-APIC-edge      serial
-   8:          1   IO-APIC-edge      rtc
-   9:          0   IO-APIC-fasteoi   acpi
-  15:      16467   IO-APIC-edge      ide1
-  16:       2173   IO-APIC-fasteoi   eth0
-  17:        845   IO-APIC-fasteoi   eth1
-  18:        845   IO-APIC-fasteoi   eth2
-  19:        845   IO-APIC-fasteoi   eth3
-  20:          0   IO-APIC-fasteoi   Dta1xx
-  21:          0   IO-APIC-fasteoi   Dta1xx
-NMI:       2895
-LOC:     169448
-ERR:          0
-MIS:          0
-
-Does this mean the NMI watchdog is not working correctly on my system?
-
-# dmesg | grep NMI
-ACPI: LAPIC_NMI (acpi_id[0x00] high edge lint[0x1])
-ACPI: LAPIC_NMI (acpi_id[0x01] high edge lint[0x1])
-Testing NMI watchdog ... OK.
-
-Regards.
+Bj=F6rn
