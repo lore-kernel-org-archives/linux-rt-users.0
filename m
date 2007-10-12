@@ -1,65 +1,61 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3/7] RT: Only consider online CPUs when pushing rt tasks
-Date: Fri, 12 Oct 2007 08:10:50 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710120809490.8900@gandalf.stny.rr.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH 0/7] RT: (RFC) RT-Overload/Sched enhancements
+Date: Fri, 12 Oct 2007 09:20:47 -0400
+Message-ID: <1192195247.4067.14.camel@ghaskins-t60p.haskins.net>
 References: <20071011213916.27097.42597.stgit@novell1.haskins.net>
- <20071011215959.27097.71140.stgit@novell1.haskins.net>
+	 <1192184985.27435.17.camel@twins>
+	 <Pine.LNX.4.58.0710120745310.8793@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Gregory Haskins <ghaskins@novell.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759974AbXJLMLW@vger.kernel.org>
-In-Reply-To: <20071011215959.27097.71140.stgit@novell1.haskins.net>
-Sender: linux-kernel-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from victor.provo.novell.com ([137.65.250.26]:39462 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756170AbXJLNXS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Oct 2007 09:23:18 -0400
+In-Reply-To: <Pine.LNX.4.58.0710120745310.8793@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 2007-10-12 at 07:47 -0400, Steven Rostedt wrote:
+> --
+> 
+> On Fri, 12 Oct 2007, Peter Zijlstra wrote:
+> 
+> >
+> > And for that, steve's rq->curr_prio field seems quite suitable.
+> >
+> > so instead of the:
+> >   for (3 tries)
+> >     find lowest cpu
+> >     try push
+> >
+> > we do:
+> >
+> >   cpu_hotplug_lock();
+> >   cpus_and(mask, p->cpus_allowed, online_cpus);
+> >   for_each_cpu_mask(i, mask) {
+> >     if (cpu_rq(i)->curr_prio > p->prio && push_task(p, i))
+> >       break;
+> >   }
+> >   cpu_hotplug_unlock();
+> 
 
---
+IMO we should try to logically separate the "search" and "push"
+functionality (for instance, see my series).  The search is useful
+outside the "push" operation for cases where we are waking a lower-task
+that doesn't preempt on the current RQ.  In that case, we can try to
+wake it directly on the optimal queue instead of waking locally and then
+pushing away.
 
-On Thu, 11 Oct 2007, Gregory Haskins wrote:
+> The thing I'm worried about is that we pushed off a rt task that is higher
+> in prio than another rt task on another cpu, and we'll cause a bunch of
+> rt task bouncing.  That is what I'm trying to avoid.
 
-> task->cpus_allowed can have bit positions that are set for CPUs that are
-> not currently online.  So we optimze our search by ANDing against the online
-> set.
->
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> ---
->
->  kernel/sched.c |    6 +++++-
->  1 files changed, 5 insertions(+), 1 deletions(-)
->
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 24b38b4..0ca3905 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -1510,10 +1510,14 @@ static int push_rt_task(struct rq *this_rq)
->
->  	/* Only try this algorithm three times */
->  	for (tries = 0; tries < 3; tries++) {
-> +		cpumask_t mask;
-> +
-> +		cpus_and(mask, cpu_online_map, next_task->cpus_allowed);
-> +
-
-Gag! I definitely sent you an old patch. I fixed this a while ago :-(
-
--- Steve
-
->  		/*
->  		 * Scan each rq for the lowest prio.
->  		 */
-> -		for_each_cpu_mask(cpu, next_task->cpus_allowed) {
-> +		for_each_cpu_mask(cpu, mask) {
->  			struct rq *rq = &per_cpu(runqueues, cpu);
->
->  			if (cpu == smp_processor_id())
->
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
->
->
+I agree, though I think we will achieve that once the final 3rd part of
+the algorithm is implemented.  Stay tuned for an update in that area.
