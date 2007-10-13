@@ -1,8 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 5/7] RT: Add support for low-priority wake-up to push_rt
-	feature
-Date: Fri, 12 Oct 2007 20:15:59 -0400
-Message-ID: <20071013001559.7444.4125.stgit@novell1.haskins.net>
+Subject: [PATCH 7/7] RT: (RFC) Only try to pull tasks in if we are downgrading
+	our priority
+Date: Fri, 12 Oct 2007 20:16:09 -0400
+Message-ID: <20071013001609.7444.60149.stgit@novell1.haskins.net>
 References: <20071013001052.7444.8363.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,148 +13,72 @@ Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 To: Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:33497
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:33511
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1760762AbXJMA3U (ORCPT
+	by vger.kernel.org with ESMTP id S1760924AbXJMA3a (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Oct 2007 20:29:20 -0400
+	Fri, 12 Oct 2007 20:29:30 -0400
 In-Reply-To: <20071013001052.7444.8363.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-There are three events that require consideration for redistributing RT
-tasks:
+The current code runs the balance_rt_tasks() on every _schedule()
+once the system enters an overload state.  Now that we have better
+distribution on the push side, we can reduce the conditions that
+require us to pull tasks.  They are as follows:
 
-1) When one or more higher-priority tasks preempts a lower-one from a
-   RQ
-2) When a lower-priority task is woken up on a RQ
-3) When a RQ downgrades its current priority
+At the time of a _schedule(), if our priority is staying the same or
+going logically higher between _prev_ and _next_ we can skip trying
+to balance tasks because any tasks that were runnable by our queue
+have already been pushed to us.  However, if our priority is
+transitioning lower AND some CPUs out there are in overload, we
+should check to see if we can pull some over.
 
-Steve Rostedt's push_rt patch addresses (1).  It hooks in right after
-a new task has been switched-in.  If this was the result of an RT
-preemption, or if more than one task was awoken at the same time, we
-can try to push some of those other tasks away.
+Note: DO NOT RUN TEST WITH THIS PATCH APPLIED !
 
-This patch addresses (2).  When we wake up a task, we check to see
-if it would preempt the current task on the queue.  If it will not, we
-attempt to find a better suited CPU (e.g. one running something lower
-priority than the task being woken) and try to activate the task there.
-
-Finally, we have (3).  In theory, we only need to balance_rt_tasks() if
-the following conditions are met:
-   1) One or more CPUs are in overload, AND
-   2) We are about to switch to a task that lowers our priority.
-
-(3) will be addressed in a later patch.
+This patch is a concept only (for now) and is here for
+demonstration/comment purposes only.  The current series is still
+racy with respect to acquiring the lowest RQ in the system.  The
+concept in this patch is predicated on raceless distribution to our
+current priority level.  So the current balancer is a nice big
+safety net to cleanup any issues related to that. This patch
+effectively takes that net away, so we need to be sure we have all
+our ducks lined up before turning this one on.  But once we do we can
+eliminate the (fairly expensive) checks (e.g. rq double-locks, etc)
+in a subset (hopefully significant #) of the calls to schedule(),
+which sounds like a good optimization to me ;)  We shall see if that
+pans out.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched.c |   68 ++++++++++++++++++++++++++++++++++----------------------
- 1 files changed, 41 insertions(+), 27 deletions(-)
+ kernel/sched.c |   16 ++++++++++++++--
+ 1 files changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 62f9f0b..3c71156 100644
+index b79b968..9e1f3ec 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -1628,6 +1628,12 @@ out:
- 	return ret;
- }
+@@ -4118,8 +4118,20 @@ asmlinkage void __sched __schedule(void)
+ 		sub_preempt_count(PREEMPT_ACTIVE);
  
-+/* Push all tasks that we can to other CPUs */
-+static void push_rt_tasks(struct rq *this_rq)
-+{
-+	while (push_rt_task(this_rq));
-+}
-+
- /*
-  * Pull RT tasks from other CPUs in the RT-overload
-  * case. Interrupts are disabled, local rq is locked.
-@@ -1988,7 +1994,33 @@ out_set_cpu:
- 		this_cpu = smp_processor_id();
- 		cpu = task_cpu(p);
- 	}
--
-+	
+ #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
+-	if (unlikely(atomic_read(&rt_overload)))
+-		balance_rt_tasks(rq, cpu);
 +	/*
-+	 * If a newly woken up RT task cannot preempt the
-+	 * current (RT) task (on a target runqueue) then try
-+	 * to find another CPU it can preempt:
++	 * If we are switching away from an RT task while the system is in
++	 * overload, we need to see if there is a way we can help a different
++	 * cpu.  If the next task to run is not RT, or if it *is* RT but
++	 * is a logically lower priority, try to balance the system.  Otherwise
++	 * we can skip it, because anyone that could have pushed their tasks
++	 * to us already did.
 +	 */
-+	if (rt_task(p) && !TASK_PREEMPTS_CURR(p, rq)) {
-+		cpumask_t cpu_mask;
-+		cpus_and(cpu_mask, cpu_online_map, p->cpus_allowed);
++	if (unlikely(rt_task(prev) && atomic_read(&rt_overload))) {
++		struct task_struct *preview = pick_rt_task(rq, cpu);
 +
-+		new_cpu = find_lowest_cpu(&cpu_mask, p, rq);
-+		if ((new_cpu != -1) && (new_cpu != cpu)) {
-+			set_task_cpu(p, new_cpu);
-+			spin_unlock(&rq->lock);
-+
-+			/* The new lock was already acquired in find_lowest */ 
-+			rq = cpu_rq(new_cpu);
-+			old_state = p->state;
-+			if (!(old_state & state))
-+				goto out;
-+			if (p->se.on_rq)
-+				goto out_running;
-+			
-+			this_cpu = smp_processor_id();
-+			cpu = task_cpu(p);
-+		}
++		if (!preview || (preview->prio > prev->prio))
++			balance_rt_tasks(rq, cpu);
 +	}
- out_activate:
- #endif /* CONFIG_SMP */
- 	update_rq_clock(rq);
-@@ -2002,30 +2034,13 @@ out_activate:
- 	 * to find another CPU it can preempt:
- 	 */
- 	if (rt_task(p) && !TASK_PREEMPTS_CURR(p, rq)) {
--		struct rq *this_rq = cpu_rq(this_cpu);
- 		/*
--		 * Special-case: the task on this CPU can be
--		 * preempted. In that case there's no need to
--		 * trigger reschedules on other CPUs, we can
--		 * mark the current task for reschedule.
--		 *
--		 * (Note that it's safe to access this_rq without
--		 * extra locking in this particular case, because
--		 * we are on the current CPU.)
-+		 * FIXME: Do we still need to do this here anymore, or
-+		 * does the preemption-check above suffice.  The path
-+		 * that makes my head hurt is when we have the
-+		 * task_running->out_activate path
- 		 */
--		if (TASK_PREEMPTS_CURR(p, this_rq))
--			set_tsk_need_resched(this_rq->curr);
--		else
--			/*
--			 * Neither the intended target runqueue
--			 * nor the current CPU can take this task.
--			 * Trigger a reschedule on all other CPUs
--			 * nevertheless, maybe one of them can take
--			 * this task:
--			 */
--			smp_send_reschedule_allbutself_cpumask(p->cpus_allowed);
--
--		schedstat_inc(this_rq, rto_wakeup);
-+		push_rt_tasks(rq);
- 	} else {
- 		/*
- 		 * Sync wakeups (i.e. those types of wakeups where the waker
-@@ -2360,13 +2375,12 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
- 	 * the lock was owned by prev, we need to release it
- 	 * first via finish_lock_switch and then reaquire it.
- 	 */
--	if (unlikely(rt_task(current))) {
-+	if (unlikely(rq->rt_nr_running > 1)) {
- 		spin_lock(&rq->lock);
--		/* push_rt_task will return true if it moved an RT */
--		while (push_rt_task(rq))
--			;
-+		push_rt_tasks(rq);
- 		spin_unlock(&rq->lock);
- 	}
-+
  #endif
- 	fire_sched_in_preempt_notifiers(current);
- 	trace_stop_sched_switched(current);
+ 
+ 	if (unlikely(!rq->nr_running))
