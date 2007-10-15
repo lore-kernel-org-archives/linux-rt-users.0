@@ -1,119 +1,76 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 2/7] RT: Wrap the RQ notion of priority to make it
-	conditional
-Date: Mon, 15 Oct 2007 15:57:36 -0400
-Message-ID: <1192478256.4067.85.camel@ghaskins-t60p.haskins.net>
-References: <20071013001052.7444.8363.stgit@novell1.haskins.net>
-	 <20071013001543.7444.6025.stgit@novell1.haskins.net>
-	 <Pine.LNX.4.58.0710151343300.26495@gandalf.stny.rr.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] RT: fix spin_trylock_irq
+Date: Mon, 15 Oct 2007 13:06:56 -0700
+Message-ID: <1192478816.17527.58.camel@imap.mvista.com>
+References: <20071011142417.1d965820@bull.net>
+	 <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
+	 <1192470246.17527.15.camel@imap.mvista.com>
+	 <Pine.LNX.4.58.0710151406230.26495@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Cc: =?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:53998 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763638AbXJOUAN (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:22217 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934438AbXJOUI1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 16:00:13 -0400
-In-Reply-To: <Pine.LNX.4.58.0710151343300.26495@gandalf.stny.rr.com>
+	Mon, 15 Oct 2007 16:08:27 -0400
+In-Reply-To: <Pine.LNX.4.58.0710151406230.26495@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-10-15 at 13:45 -0400, Steven Rostedt wrote:
-> 
-> --
-> 
-> On Fri, 12 Oct 2007, Gregory Haskins wrote:
-> 
-> > A little cleanup to avoid #ifdef proliferation later in the series
-> >
-> > Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> 
-> NACK
-> 
-> > ---
-> >
-> >  kernel/sched.c |   23 ++++++++++++++++++++---
-> >  1 files changed, 20 insertions(+), 3 deletions(-)
-> >
-> > diff --git a/kernel/sched.c b/kernel/sched.c
-> > index 0a1ad0e..c9afc8a 100644
-> > --- a/kernel/sched.c
-> > +++ b/kernel/sched.c
-> > @@ -255,6 +255,10 @@ struct cfs_rq {
-> >  #endif
-> >  };
-> >
-> > +#if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
-> > +#define  ENABLE_RQ_PRIORITY   /* Steve wants this conditional on PREEMPT_RT */
-> 
-> Yes, I do want it conditional. But only because we want to test it first,
-> so the condition is really temporary. I agree with Peter that this should
-> be for non PREEMPT_RT as well, and I'll work on a patch for upstream.
-> 
-> But these defines setting defines is just ugly.
+On Mon, 2007-10-15 at 14:14 -0400, Steven Rostedt wrote:
 
-Ok.  Keep in mind the spirit of the patch was to wrap the setting so we
-didn't need more #ifdefs later, not so much to make that define.  I can
-clean up the ifdef of ifdef part no problem.  I was just trying to keep
-it one place to make the inevitable future change to share with non
-PREEMPT_RT easier ;)
+> > This is the second fix for this .. The first was in this email (over a
+> > month ago)
+> >
+> > http://lkml.org/lkml/2007/8/31/318
+> 
+> You're right I missed that. (I even read it). But for fixes like this, (or
+> any patches that are not in the tree), you really need to resend the
+> series.
 
+In hindsight I should have resent, but I didn't .. Really it's a matter
+of frustration on my part. Where I submit patches that should be
+included , but they are ignored for no clear reason .. Then I submit
+again, and the patches are ignored again for no clear reason..
 
+Comparing mainline and -rt isn't very interesting since , -rt has few
+patches sent in against it .. Andrew is bound to loose a patch here and
+there on accident, but -rt has so few patches sent in that we shouldn't
+be loosing any.
+
+> When Ingo posts patches to LKML on CFS, if there's a little fix like this,
+> he'll add that to his next queue and repost.
+
+That's a git tree tho , so apples and oranges ..
+
+> >
+> > The above was emailed to Thomas, but I also sent you that link in IRC as
+> > a link of patches to include .. I'll be happy to audit my code better,
+> > but you should also audit your inclusion process better.. There have
+> > been too many missed patches, and too many double and triples fixes..
 > 
-> -- Steve
-> 
-> 
-> > +#endif /* CONFIG_PREEMPT_RT */
-> > +
-> >  /* Real-Time classes' related field in a runqueue: */
-> >  struct rt_rq {
-> >  	struct rt_prio_array active;
-> > @@ -304,6 +308,9 @@ struct rq {
-> >  #ifdef CONFIG_PREEMPT_RT
-> >  	unsigned long rt_nr_running;
-> >  	unsigned long rt_nr_uninterruptible;
-> > +#endif
-> > +
-> > +#ifdef ENABLE_RQ_PRIORITY
-> >  	int curr_prio;
-> >  #endif
-> >
-> > @@ -365,6 +372,16 @@ struct rq {
-> >  static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
-> >  static DEFINE_MUTEX(sched_hotcpu_mutex);
-> >
-> > +#ifdef ENABLE_RQ_PRIORITY
-> > +static inline void set_rq_prio(struct rq *rq, int prio)
-> > +{
-> > +	rq->curr_prio = prio;
-> > +}
-> > +
-> > +#else
-> > +#define set_rq_prio(rq, prio) do { } while(0)
-> > +#endif
-> > +
-> >  static inline void check_preempt_curr(struct rq *rq, struct task_struct *p)
-> >  {
-> >  	rq->curr->sched_class->check_preempt_curr(rq, p);
-> > @@ -2331,9 +2348,9 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
-> >  	 */
-> >  	prev_state = prev->state;
-> >  	_finish_arch_switch(prev);
-> > -#if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
-> > -	rq->curr_prio = current->prio;
-> > -#endif
-> > +
-> > +	set_rq_prio(rq, current->prio);
-> > +
-> >  	finish_lock_switch(rq, prev);
-> >  #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
-> >  	/*
-> >
-> >
-> >
+> There wouldn't be if we didn't have to go looking for patches on patches
+> that are out of the series. If you see that a series is broken, don't
+> patch against it. Resend the series!
+
+In all fairness you asked for links to patches, and that's is what I
+gave you ..
+
+> Patches must be against upstream, unless they are more RFC (like what
+> Gregory is doing). But when you want them to go upstream, they must be
+> against upstream.  I don't have the time to look for little fixes that
+> you've done to your own patches that have not been pulled in yet.
+
+Not sure what your getting at.. I specifically directed you to a patch.
+I don't think that means you had to look for it, all you have to do was
+include it ..
+
+Daniel
