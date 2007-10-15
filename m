@@ -1,53 +1,91 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: [PATCH 5/7] RT: Add support for low-priority wake-up to
-	push_rt feature
-Date: Sat, 13 Oct 2007 11:46:18 +0200
-Message-ID: <1192268778.27435.46.camel@twins>
-References: <20071013001052.7444.8363.stgit@novell1.haskins.net>
-	 <20071013001559.7444.4125.stgit@novell1.haskins.net>
+From: "Rui Nuno Capela" <rncbc@rncbc.org>
+Subject: 2.6.23-rt1 trouble
+Date: Mon, 15 Oct 2007 11:49:09 +0100 (WEST)
+Message-ID: <38542.213.58.131.130.1192445349.squirrel@www.rncbc.org>
+References: <1192154640.15992.10.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-4VwZ6l1GB6tyvBFlZrSq"
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Gregory Haskins" <ghaskins@novell.com>
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from viefep18-int.chello.at ([213.46.255.22]:20169 "EHLO
-	viefep33-int.chello.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751022AbXJMJqW (ORCPT
+Received: from smtp2.netcabo.pt ([212.113.174.29]:40348 "EHLO
+	exch01smtp09.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753761AbXJOLBt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 13 Oct 2007 05:46:22 -0400
-In-Reply-To: <20071013001559.7444.4125.stgit@novell1.haskins.net>
+	Mon, 15 Oct 2007 07:01:49 -0400
+In-Reply-To: <1192154640.15992.10.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, October 12, 2007 03:04, Steven Rostedt wrote:
+> We are pleased to announce the 2.6.23-rt1 tree, which can be
+> downloaded from the location:
+>
+> http://www.kernel.org/pub/linux/kernel/projects/rt/
+>
+> Changes since 2.6.23-rc9-rt2
+>
+> - updated to 2.6.23
+>
+> - spin_trylock_irqsave macro fix (S=E9bastien Dugu=E9)
+>
+> - move rcu_preempt_boost init earlier (Steven Rostedt)
+>
+> - rt task send IPI condition update (Mike Kravetz)
+>
 
---=-4VwZ6l1GB6tyvBFlZrSq
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+I am experiencing some highly annoying but intermitent freezing on a
+pentium4 2.80G HT/SMT box, when doing normal desktop work with 2.6.23-r=
+t1.
 
-On Fri, 2007-10-12 at 20:15 -0400, Gregory Haskins wrote:
+The same crippling behavior does not occur on a Core 2 Due T7200 2.0G S=
+MP,
+so I suspect it's something due specific to the SMT scheduling support
+(Hyper-Threading). But can't tell for sure, obviously :)
 
-> +/* Push all tasks that we can to other CPUs */
-> +static void push_rt_tasks(struct rq *this_rq)
-> +{
-> +	while (push_rt_task(this_rq));
-> +}
+The symptoms are noticeable primarily as some X/GUI intermitent freezin=
+g,
+sometimes only one application, then several and ultimately the whole X
+desktop becomes completely unresponsive. It looks like scheduling
+problems. There is this hint that switching to a spare console terminal
+(via Ctrl+Alt+Fn) might cause later recovery. But its just a question o=
+f
+some more time for it just happens again and again, one after another,
+several applications becoming temporarily frozen and just by luck the
+system gets back to normal, probably due to some incidental shake-up :)
+but there are other times that nothing seems to help with no alternativ=
+e
+to the power-reset switch.
 
-I'd like to see an additional termination condition to this loop (might
-just be paranoia though).
+I could not find any evidence on dmesg or in the system logs, of any
+apparent trouble. No BUGs, no oops, no panics, no nothing. It just
+freezes, this and that, now and then. It just makes it all unworkable a=
+nd
+obviously subject to ditching.
 
+Again, this only happens on this P4/HT box. On a Core2 Duo laptop, with
+same 2.6.23-rt1 with the very same kernel configuration, it does not sh=
+ow
+any illness and is running quite fine.
 
---=-4VwZ6l1GB6tyvBFlZrSq
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
+Remember one report I had about a similar freezing behavior? Now it's
+happening the other way around: the core2 is OK, the pentium4 is KO.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
+One naive suspicion goes like the new rcu-preempt code is to blame, sin=
+ce
+I don't remember having this or any other trouble with 2.6.23-rc8-rt1.
 
-iD8DBQBHEJPqXA2jU0ANEf4RAj2sAJ9AntN2u/dQBMve5zSxj1hwiFYSEwCggsQ3
-2Y8duIYjzPXL4VLgNZr+waU=
-=RJZF
------END PGP SIGNATURE-----
+Until now this post looks like more of a rant than a proper bug report,=
+ I
+know. Question is how I can help myself in figuring this all out? Advic=
+e
+on debugging, tracing or statistical collection would be really
+appreciated, as will for any hint in pin pointing the issue, of course.
 
---=-4VwZ6l1GB6tyvBFlZrSq--
+Help?
+--=20
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
