@@ -1,46 +1,37 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+From: Paul Mackerras <paulus@samba.org>
 Subject: Re: [PATCH v2 1/4] Implement {read,update}_persistent_clock.
-Date: Tue, 16 Oct 2007 09:02:47 +1000
-Message-ID: <1192489367.11795.48.camel@pasglop>
+Date: Tue, 16 Oct 2007 09:46:06 +1000
+Message-ID: <18195.64446.825842.427068@cargo.ozlabs.ibm.com>
 References: <1190345162.620000.305760830507.qpush@thor>
 	<Pine.LNX.4.58.0709261502590.4465@gandalf.stny.rr.com>
-	<46FAB56E.8080509@ru.mvista.com> <1190858397.11034.22.camel@pasglop>
-	<4713AC4E.4050002@ru.mvista.com>
-Reply-To: benh@kernel.crashing.org
+	<46FAB56E.8080509@ru.mvista.com>
+	<Pine.LNX.4.58.0709261543080.5123@gandalf.stny.rr.com>
+	<1190836713.23376.41.camel@chaos>
+	<4713ABDA.2000506@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: linuxppc-dev@ozlabs.org, Thomas Gleixner <tglx@linutronix.de>,
-	Paul Mackerras <paulus@samba.org>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
 To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
-In-Reply-To: <4713AC4E.4050002@ru.mvista.com>
-List-Unsubscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ozlabs.org ([203.10.76.45]:53922 "EHLO ozlabs.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755937AbXJOXr1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Oct 2007 19:47:27 -0400
+In-Reply-To: <4713ABDA.2000506@ru.mvista.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Sergei Shtylyov writes:
 
-On Mon, 2007-10-15 at 22:07 +0400, Sergei Shtylyov wrote:
-> > Proper approach is to rip off what is altready in -rt there and
-> replace
-> > it with Tony patch set.
-> 
->     Tony's patchset is broken at places compared to what is in -rt. So
-> that 
-> would be proper *double standard* approach. :-/
+>    Eh... poor you. Tony got clockevent driver reengineered for no apparent 
+> reason.  And he's introduced the jiffy drift by deleting the main loop from 
+> timer_interrupt().
 
-Rather than tony patchset, can you look at what paulus has been
-submitting, which should fix a few issues in tony initial patch and is
-working, and tell us if you think something is still broken ?
+The main loop in timer_interrupt() became unnecessary, because
+update_wall_time contains an equivalent loop.
 
-Cheers,
-Ben.
+Paul.
