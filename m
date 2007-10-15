@@ -1,65 +1,162 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH] RT: fix spin_trylock_irq
-Date: Mon, 15 Oct 2007 10:44:06 -0700
-Message-ID: <1192470246.17527.15.camel@imap.mvista.com>
-References: <20071011142417.1d965820@bull.net>
-	 <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
+Date: Mon, 15 Oct 2007 21:40:38 +0400
+Message-ID: <4713A616.3090103@ru.mvista.com>
+References: <20070921032603.0D3EA32C887@thor>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: =?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>,
-	Ingo Molnar <mingo@elte.hu>,
+Cc: linuxppc-dev@ozlabs.org, Paul Mackerras <paulus@samba.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Tony Breeds <tony@bakeyournoodle.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:53302 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932942AbXJORpl (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.155]:10659 "EHLO
+	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1757293AbXJORk0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 13:45:41 -0400
-In-Reply-To: <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
+	Mon, 15 Oct 2007 13:40:26 -0400
+In-Reply-To: <20070921032603.0D3EA32C887@thor>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-10-11 at 10:49 -0400, Steven Rostedt wrote:
+Hello.
 
-> > ---
-> >  include/linux/spinlock.h |    2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >
-> > Index: linux-2.6.23-rc9-rt2/include/linux/spinlock.h
-> > ===================================================================
-> > --- linux-2.6.23-rc9-rt2.orig/include/linux/spinlock.h
-> > +++ linux-2.6.23-rc9-rt2/include/linux/spinlock.h
-> > @@ -501,7 +501,7 @@ do {									\
-> >
-> >  #define spin_trylock_irq(lock)	\
-> >  	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irq,		\
-> > -		__spin_trylock_irq, lock))
-> > +		_spin_trylock_irq, lock))
-> >
-> >  #define spin_trylock_irqsave(lock, flags) \
-> >  	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irqsave, 	\
-> 
-> Thanks! Applied.
-> 
-> Daniel, this BUG was introduced by your conversion to PICK_FUNCTION patch.
-> Please be more careful, and do an audit of your patch. (I don't have time
-> ATM). This could also be the source of other bugs I've been chasing.
-> 
-> I might be pulling the PICK_FUNCTION patches if there's more bugs like
-> this.
+Tony Breeds wrote:
 
-This is the second fix for this .. The first was in this email (over a
-month ago)
+> Signed-off-by: Tony Breeds <tony@bakeyournoodle.com>
 
-http://lkml.org/lkml/2007/8/31/318
+    I don't see my own signoff or at least a reference to my prior work in
+this patch or even at -rt patch -- despite this code ha clearly borrowed from
+it.  And I'm not sure why this crippled version (lacking 40x/ Book E specific
+clockevents implementation) is preferred over mine, unless this implementation
+was only aimed at PPC64 machines...
 
-The above was emailed to Thomas, but I also sent you that link in IRC as
-a link of patches to include .. I'll be happy to audit my code better,
-but you should also audit your inclusion process better.. There have
-been too many missed patches, and too many double and triples fixes..
+> Index: working/arch/powerpc/Kconfig
+> ===================================================================
+> --- working.orig/arch/powerpc/Kconfig
+> +++ working/arch/powerpc/Kconfig
+> @@ -30,6 +30,9 @@ config GENERIC_TIME
+>  config GENERIC_TIME_VSYSCALL
+>  	def_bool y
+>
+> +config GENERIC_CLOCKEVENTS
+> +	def_bool y
+> +
+>  config GENERIC_HARDIRQS
+>  	bool
+>  	default y
 
-Daniel
+    Also, have the deterministic CPU accounting incompatibility with
+clockevents been dealt with?
+
+> Index: working/arch/powerpc/kernel/time.c
+> ===================================================================
+> --- working.orig/arch/powerpc/kernel/time.c
+> +++ working/arch/powerpc/kernel/time.c
+[...]
+> @@ -519,10 +541,12 @@ void __init iSeries_time_init_early(void
+>  void timer_interrupt(struct pt_regs * regs)
+>  {
+>  	struct pt_regs *old_regs;
+> -	int next_dec;
+>  	int cpu = smp_processor_id();
+> -	unsigned long ticks;
+> -	u64 tb_next_jiffy;
+> +	struct clock_event_device *evt = &per_cpu(decrementers, cpu);
+> +
+> +	/* Ensure a positive value is written to the decrementer, or else
+> +	 * some CPUs will continuue to take decrementer exceptions */
+> +	set_dec(DECREMENTER_MAX);
+
+    BookE and 40x CPUs don't need this.
+
+>  #ifdef CONFIG_PPC32
+>  	if (atomic_read(&ppc_n_lost_interrupts) != 0)
+> @@ -532,7 +556,6 @@ void timer_interrupt(struct pt_regs * re
+>  	old_regs = set_irq_regs(regs);
+>  	irq_enter();
+>  
+> -	profile_tick(CPU_PROFILING);
+>  	calculate_steal_time();
+>  
+>  #ifdef CONFIG_PPC_ISERIES
+> @@ -540,44 +563,20 @@ void timer_interrupt(struct pt_regs * re
+>  		get_lppaca()->int_dword.fields.decr_int = 0;
+>  #endif
+>  
+> -	while ((ticks = tb_ticks_since(per_cpu(last_jiffy, cpu)))
+> -	       >= tb_ticks_per_jiffy) {
+> -		/* Update last_jiffy */
+> -		per_cpu(last_jiffy, cpu) += tb_ticks_per_jiffy;
+> -		/* Handle RTCL overflow on 601 */
+> -		if (__USE_RTC() && per_cpu(last_jiffy, cpu) >= 1000000000)
+> -			per_cpu(last_jiffy, cpu) -= 1000000000;
+
+    I don't see where the patch removes those variables themselves...
+
+[...]
+
+> -		write_seqlock(&xtime_lock);
+> -		tb_next_jiffy = tb_last_jiffy + tb_ticks_per_jiffy;
+> -		if (__USE_RTC() && tb_next_jiffy >= 1000000000)
+> -			tb_next_jiffy -= 1000000000;
+> -		if (per_cpu(last_jiffy, cpu) >= tb_next_jiffy) {
+> -			tb_last_jiffy = tb_next_jiffy;
+> -			do_timer(1);
+> -		}
+> -		write_sequnlock(&xtime_lock);
+> -	}
+
+    Again, where those variables are removed?
+
+> -	
+> -	next_dec = tb_ticks_per_jiffy - ticks;
+> -	set_dec(next_dec);
+> +	if (evt->event_handler)
+> +		evt->event_handler(evt);
+> +	else
+> +		evt->set_next_event(DECREMENTER_MAX, evt);
+
+    We have already set it to DECREMENTER_MAX at the start of the function.
+Please remove the 'else' part...
+
+> @@ -797,6 +796,53 @@ void __init clocksource_init(void)
+>  	       clock->name, clock->mult, clock->shift);
+>  }
+>  
+> +static int decrementer_set_next_event(unsigned long evt,
+> +				      struct clock_event_device *dev)
+> +{
+> +	set_dec(evt);
+
+    I'd use (evt - 1) since the interrupt gets generated at 0xffffffff count, 
+not 0 (on classic CPUs).  With you removing of the code that compensated for 
+the errors, they will accumulate.  And no, this wouldn't be enough anyway, 
+since on 40x and Book E you'll need to set it for evt anyway, since the 
+interrupt happens at 0 count...
+    NAK the patch.  And I really don't understand why you're throwing alway 
+already tested/working code...
+
+> +	return 0;
+> +}
+> +
+> +static void decrementer_set_mode(enum clock_event_mode mode,
+> +				 struct clock_event_device *dev)
+> +{
+> +	if (mode != CLOCK_EVT_MODE_ONESHOT)
+> +		decrementer_set_next_event(DECREMENTER_MAX, dev);
+> +}
+> +
+> +static void register_decrementer_clockevent(int cpu)
+> +{
+> +	struct clock_event_device *dec = &per_cpu(decrementers, cpu);
+> +
+> +	*dec = decrementer_clockevent;
+> +	dec->cpumask = cpumask_of_cpu(cpu);
+> +
+> +	printk(KERN_ERR "clockevent: %s mult[%lx] shift[%d] cpu[%d]\n",
+
+    This is a mistake indeed. :-P
+
+WBR, Sergei
