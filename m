@@ -1,51 +1,67 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Mon, 15 Oct 2007 22:33:46 +0400
-Message-ID: <4713B28A.2060004@ru.mvista.com>
-References: <20070921032603.0D3EA32C887@thor> <4713A616.3090103@ru.mvista.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 5/7] RT: Add support for low-priority wake-up to push_rt
+ feature
+Date: Mon, 15 Oct 2007 14:57:43 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710151452330.27710@gandalf.stny.rr.com>
+References: <20071013001052.7444.8363.stgit@novell1.haskins.net>
+ <20071013001559.7444.4125.stgit@novell1.haskins.net> <1192268778.27435.46.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Paul Mackerras <paulus@samba.org>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Gregory Haskins <ghaskins@novell.com>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.155]:11050 "EHLO
-	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S933840AbXJOSde (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:35906 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754527AbXJOS5x (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 14:33:34 -0400
-In-Reply-To: <4713A616.3090103@ru.mvista.com>
+	Mon, 15 Oct 2007 14:57:53 -0400
+In-Reply-To: <1192268778.27435.46.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello, I wrote:
 
->>@@ -797,6 +796,53 @@ void __init clocksource_init(void)
->> 	       clock->name, clock->mult, clock->shift);
->> }
+--
+On Sat, 13 Oct 2007, Peter Zijlstra wrote:
 
->>+static int decrementer_set_next_event(unsigned long evt,
->>+				      struct clock_event_device *dev)
->>+{
->>+	set_dec(evt);
+> On Fri, 2007-10-12 at 20:15 -0400, Gregory Haskins wrote:
+>
+> > +/* Push all tasks that we can to other CPUs */
+> > +static void push_rt_tasks(struct rq *this_rq)
+> > +{
+> > +	while (push_rt_task(this_rq));
+> > +}
+>
+> I'd like to see an additional termination condition to this loop (might
+> just be paranoia though).
 
->     I'd use (evt - 1) since the interrupt gets generated at 0xffffffff count, 
-> not 0 (on classic CPUs).  With you removing of the code that compensated for 
-> the errors, they will accumulate.  And no, this wouldn't be enough anyway, 
-> since on 40x and Book E you'll need to set it for evt anyway, since the 
-> interrupt happens at 0 count...
 
-    What that means is that the off-by-one-clock drift is introduced for 
-classic CPUs (not 40x or Book E which interrupt at 0).  And this has dealt 
-with months ago in the clockevent driver in the -rt patch.  So much for my 
-efforts...
+Well if this fails to terminate, then we have a major bug.
 
->     NAK the patch.
+Perhaps we can add something like this:
 
-    It's too late for NAKs -- I should've given these patches more attention 
-(yet I was in hospital for 1.5 months).
+{
+	int count = NR_CPUS * 2;
 
-WBR, Sergei
+	while (push_rt_tasks(this_rq) && count--)
+		;
+
+	BUG_ON(!count);
+}
+
+Since we should do it really at most CPU times, and I added a CPU * 2 just
+to be safe that we don't have a unrealistic point of moving tasks onto
+other CPUS and have them finish before we finish this loop.
+
+But really, I don't think we need to worry too much about that while loop
+going too long.  It terminates when there's no more RT tasks to migrate
+off to other CPUs that have lower priority tasks.
+
+Hmm, the thing we need to be careful with here is that we need to change
+the prio of the CPU, otherwise we can a task to a CPU even though a higher
+one was already queued.
+
+/me plays to fix that!
+
+-- Steve
