@@ -1,66 +1,46 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH] RT: fix spin_trylock_irq
-Date: Mon, 15 Oct 2007 14:44:10 -0700
-Message-ID: <1192484650.17527.76.camel@imap.mvista.com>
-References: <20071011142417.1d965820@bull.net>
-	 <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
-	 <1192470246.17527.15.camel@imap.mvista.com>
-	 <Pine.LNX.4.58.0710151406230.26495@gandalf.stny.rr.com>
-	 <1192478816.17527.58.camel@imap.mvista.com>
-	 <alpine.LFD.0.9999.0710152308220.22612@localhost.localdomain>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Subject: Re: [PATCH v2 1/4] Implement {read,update}_persistent_clock.
+Date: Tue, 16 Oct 2007 09:02:47 +1000
+Message-ID: <1192489367.11795.48.camel@pasglop>
+References: <1190345162.620000.305760830507.qpush@thor>
+	<Pine.LNX.4.58.0709261502590.4465@gandalf.stny.rr.com>
+	<46FAB56E.8080509@ru.mvista.com> <1190858397.11034.22.camel@pasglop>
+	<4713AC4E.4050002@ru.mvista.com>
+Reply-To: benh@kernel.crashing.org
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	=?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>,
-	Ingo Molnar <mingo@elte.hu>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758690AbXJOVpy@vger.kernel.org>
-In-Reply-To: <alpine.LFD.0.9999.0710152308220.22612@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: linuxppc-dev@ozlabs.org, Thomas Gleixner <tglx@linutronix.de>,
+	Paul Mackerras <paulus@samba.org>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
+In-Reply-To: <4713AC4E.4050002@ru.mvista.com>
+List-Unsubscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2007-10-15 at 23:35 +0200, Thomas Gleixner wrote:
-> On Mon, 15 Oct 2007, Daniel Walker wrote:
-> > On Mon, 2007-10-15 at 14:14 -0400, Steven Rostedt wrote:
-> > 
-> > > > This is the second fix for this .. The first was in this email (over a
-> > > > month ago)
-> > > >
-> > > > http://lkml.org/lkml/2007/8/31/318
-> > > 
-> > > You're right I missed that. (I even read it). But for fixes like this, (or
-> > > any patches that are not in the tree), you really need to resend the
-> > > series.
-> > 
-> > In hindsight I should have resent, but I didn't .. Really it's a matter
-> > of frustration on my part. Where I submit patches that should be
-> > included , but they are ignored for no clear reason .. Then I submit
-> > again, and the patches are ignored again for no clear reason..
+
+On Mon, 2007-10-15 at 22:07 +0400, Sergei Shtylyov wrote:
+> > Proper approach is to rip off what is altready in -rt there and
+> replace
+> > it with Tony patch set.
 > 
-> You were asked to rebase your patches against the latest -rt
-> kernel. And you bluntly refused to.
+>     Tony's patchset is broken at places compared to what is in -rt. So
+> that 
+> would be proper *double standard* approach. :-/
 
-Nope , I did rebase my patches when Steven asked me to ..
+Rather than tony patchset, can you look at what paulus has been
+submitting, which should fix a few issues in tony initial patch and is
+working, and tell us if you think something is still broken ?
 
-> I knew exactly why I ignored the patches when I was moving -rt
-> forward. Simply because I had not enough time to review them in
-> detail. Ingo acked them in principle, but we had subtle wreckage from
-> such changes before and I had no intention to put more risk into a non
-> trivial merge.
-> 
-> Sorry, you have provided sloppy patches more than once and requested
-> us to pick random bugfixes from a broken ftp server or from the
-> mailing list. It's you who wrote the track record, not us.
-
-Oh boy here we go again .. Let just stop right here..
-
-> I'm finally fed up with your prima ballerina attitudes. Either you
-> want to be part of this project or not. If yes, then please accept
-> that you are not setting the rules how this works. If no, please stop
-> whining at us and look for a nice sandpit where you can play these
-> silly games.
->  
-> 	tglx
+Cheers,
+Ben.
