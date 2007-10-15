@@ -1,89 +1,99 @@
-From: "Pradyumna Sampath" <pradyumna.sampath@gmail.com>
-Subject: Hang with powerpc 2.6.21-rt3
-Date: Mon, 15 Oct 2007 18:47:32 +0530
-Message-ID: <f87351060710150617v28737b94g748f9c9260b84643@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: NMI watchdog
+Date: Mon, 15 Oct 2007 18:05:01 +0200
+Message-ID: <47138FAD.8050805@free.fr>
+References: <470F3BE0.4050807@free.fr> <20071012074836.79e6a064@laptopd505.fenrus.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_72817_1218881.1192454252293"
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.183]:17913 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759938AbXJONRe (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 09:17:34 -0400
-Received: by py-out-1112.google.com with SMTP id u77so2989705pyb
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Oct 2007 06:17:33 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Arjan van de Ven <arjan@infradead.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761773AbXJOQFY@vger.kernel.org>
+In-Reply-To: <20071012074836.79e6a064@laptopd505.fenrus.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_72817_1218881.1192454252293
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Arjan van de Ven wrote:
 
-Hi everyone,
+> John Sigler wrote:
+> 
+>> I'm experiencing a full system lockup. I'm using an out-of-tree
+>> driver which I suspect is responsible. I'm trying to enable the NMI
+>> watchdog.
+> 
+> one thing worth a shot is enabling lockdep.. that often finds deadlocks
+> for you ;)
 
-Attached is a small sample multithreaded test app.
+I enabled every option I thought might be useful.
 
-When I run this with a 2.6.21-rt3 on powerpc (MPC5200), the handler
-fires the first three times and then the shell hangs (no stack on the
-serial console as well). I cannot telnet into the device anymore, but
-however the kernel responds to ping requests.
+I booted the system, fired a serial console, bumped the priority of the 
+serial port IRQ handler to 80 and the priority of the shell in the 
+serial console to 70, set the console log level to 9 using SysRq.
 
-I ran the same test on a x86 non-rt kernel 2.6.20 and that seems to
-work ok. Is there something I am doing wrong in there ?
+I then connected via ssh, loaded the driver module (the output showed up 
+in the serial console), started 4 processes, and had a complete system 
+lock-up within 10 seconds.
 
-regards
-/prady
+Nothing on the serial console :-(
 
--- 
-htp://prady.livejournal.com
+The system didn't even respond to SysRq...
 
-------=_Part_72817_1218881.1192454252293
-Content-Type: text/x-csrc; name="stuff_1.c"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="stuff_1.c"; filename="stuff_1.c"
-X-Attachment-Id: f_f7t0gd7x
+How do kernel hackers debug these problems?
 
-I2luY2x1ZGUgPHN5cy90eXBlcy5oPg0KI2luY2x1ZGUgPHN5cy9zaWduYWwuaD4NCiNpbmNsdWRl
-IDxzeXMvZXJybm8uaD4NCiNpbmNsdWRlIDx1bmlzdGQuaD4NCiNpbmNsdWRlIDxzdGRpby5oPg0K
-I2luY2x1ZGUgPHN0cmluZy5oPg0KI2luY2x1ZGUgPHRpbWUuaD4NCiNpbmNsdWRlIDxwdGhyZWFk
-Lmg+DQoNCnZvaWQgc2lnX2hhbmRsZXIoc2lndmFsX3Qgc2lnICk7DQp2b2lkKiB0aHJlYWRGdW5j
-KHZvaWQqIHApOw0KDQppbnQgbWFpbigpDQp7DQoJc3RydWN0IGl0aW1lcnNwZWMgdHM7DQoJc3Ry
-dWN0IHNpZ2V2ZW50IGV2cDsgDQoJDQogCXRpbWVyX3QgdF9pZDsNCgkNCglwdGhyZWFkX2F0dHJf
-dCBwdF9hdHRyaWI7DQoJc3RydWN0IHNjaGVkX3BhcmFtIHNjX3BhcmFtOw0KCXNjX3BhcmFtLnNj
-aGVkX3ByaW9yaXR5ID0gMzA7IA0KCXB0aHJlYWRfYXR0cl9pbml0KCAmcHRfYXR0cmliICk7IA0K
-CXB0aHJlYWRfYXR0cl9zZXRzY2hlZHBvbGljeSggJnB0X2F0dHJpYiwgU0NIRURfRklGTyApOw0K
-CXB0aHJlYWRfYXR0cl9zZXRzY2hlZHBhcmFtKCAmcHRfYXR0cmliLCAmc2NfcGFyYW0gKTsNCgkv
-L3B0aHJlYWRfYXR0cl9zZXRkZXRhY2hzdGF0ZSgmcHRfYXR0cmliLFBUSFJFQURfQ1JFQVRFX0RF
-VEFDSEVEKTsNCglwdGhyZWFkX2F0dHJfc2V0aW5oZXJpdHNjaGVkKCZwdF9hdHRyaWIsIFBUSFJF
-QURfRVhQTElDSVRfU0NIRUQpOw0KDQoJbWVtc2V0KCZldnAsIDAsIHNpemVvZihzdHJ1Y3Qgc2ln
-ZXZlbnQpKTsNCglldnAuc2lnZXZfbm90aWZ5ID0gU0lHRVZfVEhSRUFEOw0KCWV2cC5zaWdldl9u
-b3RpZnlfZnVuY3Rpb24gPSBzaWdfaGFuZGxlcjsNCglldnAuc2lnZXZfbm90aWZ5X2F0dHJpYnV0
-ZXMgPSAmcHRfYXR0cmliOw0KDQoJDQoJDQoNCglzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW07DQoJ
-aW50IHBvbGljeTsNCi8qDQoJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSAzMDsNCglpZiggc2NoZWRf
-c2V0c2NoZWR1bGVyKDAsIFNDSEVEX0ZJRk8sICZwYXJhbSkgKQ0KCXsNCgkJcGVycm9yKCJzY2hl
-ZF9zZXRzY2hlZHVsZXIiKTsNCgl9DQoqLw0KDQoJcHRocmVhZF9nZXRzY2hlZHBhcmFtICggcHRo
-cmVhZF9zZWxmKCksICZwb2xpY3ksICZwYXJhbSk7DQoJcHJpbnRmKCJIaSwgSSdtIG1haW4uIE15
-IHNlbGYgaXMgJWQsIGFuZCBteSBwcmkgaXMgJWQsIHBvbGljeT0lZFxuIiwgKGludClwdGhyZWFk
-X3NlbGYoKSwgcGFyYW0uc2NoZWRfcHJpb3JpdHkgLCBwb2xpY3kpOw0KDQoJcHRocmVhZF90IHRJ
-RDsgICAgDQoJDQogIGlmKCB0aW1lcl9jcmVhdGUoIENMT0NLX1JFQUxUSU1FLCAmZXZwLCAmdF9p
-ZCApICkNCiAgew0KICAJcGVycm9yKCJ0aW1lcl9jcmVhdGUiKTsNCgl9DQoJDQoJdHMuaXRfaW50
-ZXJ2YWwudHZfc2VjID0gMTsNCgl0cy5pdF9pbnRlcnZhbC50dl9uc2VjID0gMDsNCg0KCXRzLml0
-X3ZhbHVlLnR2X3NlYyA9IDE7DQoJdHMuaXRfdmFsdWUudHZfbnNlYyA9IDA7DQoNCg0KCXRpbWVy
-X3NldHRpbWUoIHRfaWQsIDAsICZ0cywgTlVMTCk7DQoJDQogIHB0aHJlYWRfY3JlYXRlKCAmdElE
-LCBOVUxMLCB0aHJlYWRGdW5jLCBOVUxMKTsNCg0KCWZvcig7OykgDQoJCXBhdXNlKCk7DQp9DQoN
-Cg0Kdm9pZCBzaWdfaGFuZGxlcihzaWd2YWxfdCBzaWdubykNCnsNCglzdHJ1Y3Qgc2NoZWRfcGFy
-YW0gcGFyYW07DQoJaW50IHBvbGljeTsNCg0KCXB0aHJlYWRfZ2V0c2NoZWRwYXJhbSAoIHB0aHJl
-YWRfc2VsZigpLCAmcG9saWN5LCAmcGFyYW0pOw0KCXByaW50ZigiSGksIEknbSBzaWdfaGFuZGxl
-ci4gTXkgc2VsZiBpcyAlZCwgYW5kIG15IHByaSBpcyAlZCwgcG9saWN5PSVkXG4iLCAoaW50KXB0
-aHJlYWRfc2VsZigpLCBwYXJhbS5zY2hlZF9wcmlvcml0eSAsIHBvbGljeSk7DQp9DQoNCg0Kdm9p
-ZCogdGhyZWFkRnVuYyh2b2lkKiBwKQ0Kew0KCXN0cnVjdCBzY2hlZF9wYXJhbSBwYXJhbTsNCgkN
-CglwcmludGYoIkknbSAlZFxuIiwoaW50KXB0aHJlYWRfc2VsZigpICk7DQoJdXNsZWVwKDMqMTAw
-MCoxMDAwKTsNCgkNCgltZW1zZXQoJnBhcmFtLCAwLCBzaXplb2Yoc3RydWN0IHNjaGVkX3BhcmFt
-KSk7DQoJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSAxMDsNCglpZiggc2NoZWRfc2V0c2NoZWR1bGVy
-KDAsIFNDSEVEX0ZJRk8sICZwYXJhbSkgKQ0KCXsNCgkJcGVycm9yKCJzY2hlZF9zZXRzY2hlZHVs
-ZXIiKTsNCgl9DQoNCgkJDQoJZm9yKDs7KQ0KCXsNCgkJLy9XYXN0ZSBjcHUNCgl9DQoJcmV0dXJu
-IE5VTEw7DQp9DQo=
-------=_Part_72817_1218881.1192454252293--
+#
+# Kernel hacking
+#
+CONFIG_TRACE_IRQFLAGS_SUPPORT=y
+# CONFIG_PRINTK_TIME is not set
+# CONFIG_ENABLE_MUST_CHECK is not set
+CONFIG_MAGIC_SYSRQ=y
+# CONFIG_UNUSED_SYMBOLS is not set
+# CONFIG_DEBUG_FS is not set
+# CONFIG_HEADERS_CHECK is not set
+CONFIG_DEBUG_KERNEL=y
+CONFIG_DEBUG_SHIRQ=y
+CONFIG_DETECT_SOFTLOCKUP=y
+CONFIG_SCHED_DEBUG=y
+# CONFIG_SCHEDSTATS is not set
+CONFIG_TIMER_STATS=y
+CONFIG_DEBUG_SLAB=y
+CONFIG_DEBUG_SLAB_LEAK=y
+CONFIG_DEBUG_PREEMPT=y
+CONFIG_DEBUG_RT_MUTEXES=y
+CONFIG_DEBUG_PI_LIST=y
+# CONFIG_RT_MUTEX_TESTER is not set
+CONFIG_DEBUG_SPINLOCK=y
+CONFIG_DEBUG_MUTEXES=y
+CONFIG_DEBUG_LOCK_ALLOC=y
+CONFIG_PROVE_LOCKING=y
+CONFIG_LOCKDEP=y
+# CONFIG_LOCK_STAT is not set
+# CONFIG_DEBUG_LOCKDEP is not set
+CONFIG_TRACE_IRQFLAGS=y
+CONFIG_DEBUG_SPINLOCK_SLEEP=y
+CONFIG_DEBUG_LOCKING_API_SELFTESTS=y
+CONFIG_STACKTRACE=y
+CONFIG_PREEMPT_TRACE=y
+# CONFIG_EVENT_TRACE is not set
+# CONFIG_FUNCTION_TRACE is not set
+# CONFIG_WAKEUP_TIMING is not set
+# CONFIG_CRITICAL_PREEMPT_TIMING is not set
+# CONFIG_CRITICAL_IRQSOFF_TIMING is not set
+# CONFIG_DEBUG_KOBJECT is not set
+CONFIG_DEBUG_BUGVERBOSE=y
+# CONFIG_DEBUG_INFO is not set
+# CONFIG_DEBUG_VM is not set
+# CONFIG_DEBUG_LIST is not set
+# CONFIG_FRAME_POINTER is not set
+CONFIG_FORCED_INLINING=y
+# CONFIG_RCU_TORTURE_TEST is not set
+# CONFIG_FAULT_INJECTION is not set
+CONFIG_EARLY_PRINTK=y
+CONFIG_DEBUG_STACKOVERFLOW=y
+# CONFIG_DEBUG_STACK_USAGE is not set
+# CONFIG_DEBUG_PAGEALLOC is not set
+CONFIG_DEBUG_RODATA=y
+CONFIG_4KSTACKS=y
+CONFIG_X86_FIND_SMP_CONFIG=y
+CONFIG_X86_MPPARSE=y
+CONFIG_DOUBLEFAULT=y
