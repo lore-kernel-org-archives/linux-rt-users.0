@@ -1,91 +1,89 @@
-From: "Rui Nuno Capela" <rncbc@rncbc.org>
-Subject: 2.6.23-rt1 trouble
-Date: Mon, 15 Oct 2007 11:49:09 +0100 (WEST)
-Message-ID: <38542.213.58.131.130.1192445349.squirrel@www.rncbc.org>
-References: <1192154640.15992.10.camel@localhost.localdomain>
+From: "Pradyumna Sampath" <pradyumna.sampath@gmail.com>
+Subject: Hang with powerpc 2.6.21-rt3
+Date: Mon, 15 Oct 2007 18:47:32 +0530
+Message-ID: <f87351060710150617v28737b94g748f9c9260b84643@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Gregory Haskins" <ghaskins@novell.com>
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed;
+	boundary="----=_Part_72817_1218881.1192454252293"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.netcabo.pt ([212.113.174.29]:40348 "EHLO
-	exch01smtp09.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753761AbXJOLBt (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.183]:17913 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759938AbXJONRe (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 07:01:49 -0400
-In-Reply-To: <1192154640.15992.10.camel@localhost.localdomain>
+	Mon, 15 Oct 2007 09:17:34 -0400
+Received: by py-out-1112.google.com with SMTP id u77so2989705pyb
+        for <linux-rt-users@vger.kernel.org>; Mon, 15 Oct 2007 06:17:33 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, October 12, 2007 03:04, Steven Rostedt wrote:
-> We are pleased to announce the 2.6.23-rt1 tree, which can be
-> downloaded from the location:
->
-> http://www.kernel.org/pub/linux/kernel/projects/rt/
->
-> Changes since 2.6.23-rc9-rt2
->
-> - updated to 2.6.23
->
-> - spin_trylock_irqsave macro fix (S=E9bastien Dugu=E9)
->
-> - move rcu_preempt_boost init earlier (Steven Rostedt)
->
-> - rt task send IPI condition update (Mike Kravetz)
->
+------=_Part_72817_1218881.1192454252293
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I am experiencing some highly annoying but intermitent freezing on a
-pentium4 2.80G HT/SMT box, when doing normal desktop work with 2.6.23-r=
-t1.
+Hi everyone,
 
-The same crippling behavior does not occur on a Core 2 Due T7200 2.0G S=
-MP,
-so I suspect it's something due specific to the SMT scheduling support
-(Hyper-Threading). But can't tell for sure, obviously :)
+Attached is a small sample multithreaded test app.
 
-The symptoms are noticeable primarily as some X/GUI intermitent freezin=
-g,
-sometimes only one application, then several and ultimately the whole X
-desktop becomes completely unresponsive. It looks like scheduling
-problems. There is this hint that switching to a spare console terminal
-(via Ctrl+Alt+Fn) might cause later recovery. But its just a question o=
-f
-some more time for it just happens again and again, one after another,
-several applications becoming temporarily frozen and just by luck the
-system gets back to normal, probably due to some incidental shake-up :)
-but there are other times that nothing seems to help with no alternativ=
-e
-to the power-reset switch.
+When I run this with a 2.6.21-rt3 on powerpc (MPC5200), the handler
+fires the first three times and then the shell hangs (no stack on the
+serial console as well). I cannot telnet into the device anymore, but
+however the kernel responds to ping requests.
 
-I could not find any evidence on dmesg or in the system logs, of any
-apparent trouble. No BUGs, no oops, no panics, no nothing. It just
-freezes, this and that, now and then. It just makes it all unworkable a=
-nd
-obviously subject to ditching.
+I ran the same test on a x86 non-rt kernel 2.6.20 and that seems to
+work ok. Is there something I am doing wrong in there ?
 
-Again, this only happens on this P4/HT box. On a Core2 Duo laptop, with
-same 2.6.23-rt1 with the very same kernel configuration, it does not sh=
-ow
-any illness and is running quite fine.
+regards
+/prady
 
-Remember one report I had about a similar freezing behavior? Now it's
-happening the other way around: the core2 is OK, the pentium4 is KO.
+-- 
+htp://prady.livejournal.com
 
-One naive suspicion goes like the new rcu-preempt code is to blame, sin=
-ce
-I don't remember having this or any other trouble with 2.6.23-rc8-rt1.
+------=_Part_72817_1218881.1192454252293
+Content-Type: text/x-csrc; name="stuff_1.c"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="stuff_1.c"; filename="stuff_1.c"
+X-Attachment-Id: f_f7t0gd7x
 
-Until now this post looks like more of a rant than a proper bug report,=
- I
-know. Question is how I can help myself in figuring this all out? Advic=
-e
-on debugging, tracing or statistical collection would be really
-appreciated, as will for any hint in pin pointing the issue, of course.
-
-Help?
---=20
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
+I2luY2x1ZGUgPHN5cy90eXBlcy5oPg0KI2luY2x1ZGUgPHN5cy9zaWduYWwuaD4NCiNpbmNsdWRl
+IDxzeXMvZXJybm8uaD4NCiNpbmNsdWRlIDx1bmlzdGQuaD4NCiNpbmNsdWRlIDxzdGRpby5oPg0K
+I2luY2x1ZGUgPHN0cmluZy5oPg0KI2luY2x1ZGUgPHRpbWUuaD4NCiNpbmNsdWRlIDxwdGhyZWFk
+Lmg+DQoNCnZvaWQgc2lnX2hhbmRsZXIoc2lndmFsX3Qgc2lnICk7DQp2b2lkKiB0aHJlYWRGdW5j
+KHZvaWQqIHApOw0KDQppbnQgbWFpbigpDQp7DQoJc3RydWN0IGl0aW1lcnNwZWMgdHM7DQoJc3Ry
+dWN0IHNpZ2V2ZW50IGV2cDsgDQoJDQogCXRpbWVyX3QgdF9pZDsNCgkNCglwdGhyZWFkX2F0dHJf
+dCBwdF9hdHRyaWI7DQoJc3RydWN0IHNjaGVkX3BhcmFtIHNjX3BhcmFtOw0KCXNjX3BhcmFtLnNj
+aGVkX3ByaW9yaXR5ID0gMzA7IA0KCXB0aHJlYWRfYXR0cl9pbml0KCAmcHRfYXR0cmliICk7IA0K
+CXB0aHJlYWRfYXR0cl9zZXRzY2hlZHBvbGljeSggJnB0X2F0dHJpYiwgU0NIRURfRklGTyApOw0K
+CXB0aHJlYWRfYXR0cl9zZXRzY2hlZHBhcmFtKCAmcHRfYXR0cmliLCAmc2NfcGFyYW0gKTsNCgkv
+L3B0aHJlYWRfYXR0cl9zZXRkZXRhY2hzdGF0ZSgmcHRfYXR0cmliLFBUSFJFQURfQ1JFQVRFX0RF
+VEFDSEVEKTsNCglwdGhyZWFkX2F0dHJfc2V0aW5oZXJpdHNjaGVkKCZwdF9hdHRyaWIsIFBUSFJF
+QURfRVhQTElDSVRfU0NIRUQpOw0KDQoJbWVtc2V0KCZldnAsIDAsIHNpemVvZihzdHJ1Y3Qgc2ln
+ZXZlbnQpKTsNCglldnAuc2lnZXZfbm90aWZ5ID0gU0lHRVZfVEhSRUFEOw0KCWV2cC5zaWdldl9u
+b3RpZnlfZnVuY3Rpb24gPSBzaWdfaGFuZGxlcjsNCglldnAuc2lnZXZfbm90aWZ5X2F0dHJpYnV0
+ZXMgPSAmcHRfYXR0cmliOw0KDQoJDQoJDQoNCglzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW07DQoJ
+aW50IHBvbGljeTsNCi8qDQoJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSAzMDsNCglpZiggc2NoZWRf
+c2V0c2NoZWR1bGVyKDAsIFNDSEVEX0ZJRk8sICZwYXJhbSkgKQ0KCXsNCgkJcGVycm9yKCJzY2hl
+ZF9zZXRzY2hlZHVsZXIiKTsNCgl9DQoqLw0KDQoJcHRocmVhZF9nZXRzY2hlZHBhcmFtICggcHRo
+cmVhZF9zZWxmKCksICZwb2xpY3ksICZwYXJhbSk7DQoJcHJpbnRmKCJIaSwgSSdtIG1haW4uIE15
+IHNlbGYgaXMgJWQsIGFuZCBteSBwcmkgaXMgJWQsIHBvbGljeT0lZFxuIiwgKGludClwdGhyZWFk
+X3NlbGYoKSwgcGFyYW0uc2NoZWRfcHJpb3JpdHkgLCBwb2xpY3kpOw0KDQoJcHRocmVhZF90IHRJ
+RDsgICAgDQoJDQogIGlmKCB0aW1lcl9jcmVhdGUoIENMT0NLX1JFQUxUSU1FLCAmZXZwLCAmdF9p
+ZCApICkNCiAgew0KICAJcGVycm9yKCJ0aW1lcl9jcmVhdGUiKTsNCgl9DQoJDQoJdHMuaXRfaW50
+ZXJ2YWwudHZfc2VjID0gMTsNCgl0cy5pdF9pbnRlcnZhbC50dl9uc2VjID0gMDsNCg0KCXRzLml0
+X3ZhbHVlLnR2X3NlYyA9IDE7DQoJdHMuaXRfdmFsdWUudHZfbnNlYyA9IDA7DQoNCg0KCXRpbWVy
+X3NldHRpbWUoIHRfaWQsIDAsICZ0cywgTlVMTCk7DQoJDQogIHB0aHJlYWRfY3JlYXRlKCAmdElE
+LCBOVUxMLCB0aHJlYWRGdW5jLCBOVUxMKTsNCg0KCWZvcig7OykgDQoJCXBhdXNlKCk7DQp9DQoN
+Cg0Kdm9pZCBzaWdfaGFuZGxlcihzaWd2YWxfdCBzaWdubykNCnsNCglzdHJ1Y3Qgc2NoZWRfcGFy
+YW0gcGFyYW07DQoJaW50IHBvbGljeTsNCg0KCXB0aHJlYWRfZ2V0c2NoZWRwYXJhbSAoIHB0aHJl
+YWRfc2VsZigpLCAmcG9saWN5LCAmcGFyYW0pOw0KCXByaW50ZigiSGksIEknbSBzaWdfaGFuZGxl
+ci4gTXkgc2VsZiBpcyAlZCwgYW5kIG15IHByaSBpcyAlZCwgcG9saWN5PSVkXG4iLCAoaW50KXB0
+aHJlYWRfc2VsZigpLCBwYXJhbS5zY2hlZF9wcmlvcml0eSAsIHBvbGljeSk7DQp9DQoNCg0Kdm9p
+ZCogdGhyZWFkRnVuYyh2b2lkKiBwKQ0Kew0KCXN0cnVjdCBzY2hlZF9wYXJhbSBwYXJhbTsNCgkN
+CglwcmludGYoIkknbSAlZFxuIiwoaW50KXB0aHJlYWRfc2VsZigpICk7DQoJdXNsZWVwKDMqMTAw
+MCoxMDAwKTsNCgkNCgltZW1zZXQoJnBhcmFtLCAwLCBzaXplb2Yoc3RydWN0IHNjaGVkX3BhcmFt
+KSk7DQoJcGFyYW0uc2NoZWRfcHJpb3JpdHkgPSAxMDsNCglpZiggc2NoZWRfc2V0c2NoZWR1bGVy
+KDAsIFNDSEVEX0ZJRk8sICZwYXJhbSkgKQ0KCXsNCgkJcGVycm9yKCJzY2hlZF9zZXRzY2hlZHVs
+ZXIiKTsNCgl9DQoNCgkJDQoJZm9yKDs7KQ0KCXsNCgkJLy9XYXN0ZSBjcHUNCgl9DQoJcmV0dXJu
+IE5VTEw7DQp9DQo=
+------=_Part_72817_1218881.1192454252293--
