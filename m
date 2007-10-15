@@ -1,109 +1,65 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 2/7] RT: Wrap the RQ notion of priority to make it
- conditional
-Date: Mon, 15 Oct 2007 13:45:32 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710151343300.26495@gandalf.stny.rr.com>
-References: <20071013001052.7444.8363.stgit@novell1.haskins.net>
- <20071013001543.7444.6025.stgit@novell1.haskins.net>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] RT: fix spin_trylock_irq
+Date: Mon, 15 Oct 2007 10:44:06 -0700
+Message-ID: <1192470246.17527.15.camel@imap.mvista.com>
+References: <20071011142417.1d965820@bull.net>
+	 <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: =?ISO-8859-1?Q?S=E9bastien_Dugu=E9?= <sebastien.dugue@bull.net>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:49557 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933047AbXJORqA (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:53302 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932942AbXJORpl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2007 13:46:00 -0400
-In-Reply-To: <20071013001543.7444.6025.stgit@novell1.haskins.net>
+	Mon, 15 Oct 2007 13:45:41 -0400
+In-Reply-To: <Pine.LNX.4.58.0710111046170.20114@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Thu, 2007-10-11 at 10:49 -0400, Steven Rostedt wrote:
 
+> > ---
+> >  include/linux/spinlock.h |    2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > Index: linux-2.6.23-rc9-rt2/include/linux/spinlock.h
+> > ===================================================================
+> > --- linux-2.6.23-rc9-rt2.orig/include/linux/spinlock.h
+> > +++ linux-2.6.23-rc9-rt2/include/linux/spinlock.h
+> > @@ -501,7 +501,7 @@ do {									\
+> >
+> >  #define spin_trylock_irq(lock)	\
+> >  	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irq,		\
+> > -		__spin_trylock_irq, lock))
+> > +		_spin_trylock_irq, lock))
+> >
+> >  #define spin_trylock_irqsave(lock, flags) \
+> >  	__cond_lock(lock, PICK_SPIN_OP_RET(__spin_trylock_irqsave, 	\
+> 
+> Thanks! Applied.
+> 
+> Daniel, this BUG was introduced by your conversion to PICK_FUNCTION patch.
+> Please be more careful, and do an audit of your patch. (I don't have time
+> ATM). This could also be the source of other bugs I've been chasing.
+> 
+> I might be pulling the PICK_FUNCTION patches if there's more bugs like
+> this.
 
---
+This is the second fix for this .. The first was in this email (over a
+month ago)
 
-On Fri, 12 Oct 2007, Gregory Haskins wrote:
+http://lkml.org/lkml/2007/8/31/318
 
-> A little cleanup to avoid #ifdef proliferation later in the series
->
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+The above was emailed to Thomas, but I also sent you that link in IRC as
+a link of patches to include .. I'll be happy to audit my code better,
+but you should also audit your inclusion process better.. There have
+been too many missed patches, and too many double and triples fixes..
 
-NACK
-
-> ---
->
->  kernel/sched.c |   23 ++++++++++++++++++++---
->  1 files changed, 20 insertions(+), 3 deletions(-)
->
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 0a1ad0e..c9afc8a 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -255,6 +255,10 @@ struct cfs_rq {
->  #endif
->  };
->
-> +#if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
-> +#define  ENABLE_RQ_PRIORITY   /* Steve wants this conditional on PREEMPT_RT */
-
-Yes, I do want it conditional. But only because we want to test it first,
-so the condition is really temporary. I agree with Peter that this should
-be for non PREEMPT_RT as well, and I'll work on a patch for upstream.
-
-But these defines setting defines is just ugly.
-
--- Steve
-
-
-> +#endif /* CONFIG_PREEMPT_RT */
-> +
->  /* Real-Time classes' related field in a runqueue: */
->  struct rt_rq {
->  	struct rt_prio_array active;
-> @@ -304,6 +308,9 @@ struct rq {
->  #ifdef CONFIG_PREEMPT_RT
->  	unsigned long rt_nr_running;
->  	unsigned long rt_nr_uninterruptible;
-> +#endif
-> +
-> +#ifdef ENABLE_RQ_PRIORITY
->  	int curr_prio;
->  #endif
->
-> @@ -365,6 +372,16 @@ struct rq {
->  static DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
->  static DEFINE_MUTEX(sched_hotcpu_mutex);
->
-> +#ifdef ENABLE_RQ_PRIORITY
-> +static inline void set_rq_prio(struct rq *rq, int prio)
-> +{
-> +	rq->curr_prio = prio;
-> +}
-> +
-> +#else
-> +#define set_rq_prio(rq, prio) do { } while(0)
-> +#endif
-> +
->  static inline void check_preempt_curr(struct rq *rq, struct task_struct *p)
->  {
->  	rq->curr->sched_class->check_preempt_curr(rq, p);
-> @@ -2331,9 +2348,9 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
->  	 */
->  	prev_state = prev->state;
->  	_finish_arch_switch(prev);
-> -#if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
-> -	rq->curr_prio = current->prio;
-> -#endif
-> +
-> +	set_rq_prio(rq, current->prio);
-> +
->  	finish_lock_switch(rq, prev);
->  #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
->  	/*
->
->
->
+Daniel
