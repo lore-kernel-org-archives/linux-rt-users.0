@@ -1,99 +1,111 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: NMI watchdog
-Date: Mon, 15 Oct 2007 18:05:01 +0200
-Message-ID: <47138FAD.8050805@free.fr>
-References: <470F3BE0.4050807@free.fr> <20071012074836.79e6a064@laptopd505.fenrus.org>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Preemption-test (v1)
+Date: Mon, 15 Oct 2007 12:32:09 -0400
+Message-ID: <1192465929.4067.53.camel@ghaskins-t60p.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Arjan van de Ven <arjan@infradead.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761773AbXJOQFY@vger.kernel.org>
-In-Reply-To: <20071012074836.79e6a064@laptopd505.fenrus.org>
-Sender: linux-kernel-owner@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from victor.provo.novell.com ([137.65.250.26]:49843 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760785AbXJOQej (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Oct 2007 12:34:39 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Arjan van de Ven wrote:
+I cranked out a little test application this weekend to look at problems
+in the RT scheduler.  You can find the source here.
 
-> John Sigler wrote:
-> 
->> I'm experiencing a full system lockup. I'm using an out-of-tree
->> driver which I suspect is responsible. I'm trying to enable the NMI
->> watchdog.
-> 
-> one thing worth a shot is enabling lockdep.. that often finds deadlocks
-> for you ;)
+ftp://ftp.novell.com/dev/ghaskins/preempt.cc
 
-I enabled every option I thought might be useful.
+Here is some example output:
 
-I booted the system, fired a serial console, bumped the priority of the 
-serial port IRQ handler to 80 and the priority of the shell in the 
-serial console to 70, set the console log level to 9 using SysRq.
+# ./a.out -d 40 -a
+Starting test with 5 threads on 4 cpus
+Calibration: 40ms = 11306781 loops
+0 -> p:2 a: 1 l: 5/4 t: 32788/32847/59
+1 -> p:5 a: 0 l: 8/9 t: 34401/34532/131
+2 -> p:4 a: 3 l: 5/29 t: 34659/34745/86
+3 -> p:3 a: 2 l: 8/7 t: 34852/34925/73
+4 -> p:1 a: 0 l: 42/9 t: 74073/74116/43
 
-I then connected via ssh, loaded the driver module (the output showed up 
-in the serial console), started 4 processes, and had a complete system 
-lock-up within 10 seconds.
+---------------------------
+Stats: [min: 4us @ row 0] [max: 42us @ row 4] {ave: 12us]
+---------------------------
+Test PASSED
 
-Nothing on the serial console :-(
+------------------------------
 
-The system didn't even respond to SysRq...
+Here is the meaning for each row, by example of row 0:
 
-How do kernel hackers debug these problems?
+ 0 -> p:2 a: 1 l: 5/4 t: 32788/32847/59
 
-#
-# Kernel hacking
-#
-CONFIG_TRACE_IRQFLAGS_SUPPORT=y
-# CONFIG_PRINTK_TIME is not set
-# CONFIG_ENABLE_MUST_CHECK is not set
-CONFIG_MAGIC_SYSRQ=y
-# CONFIG_UNUSED_SYMBOLS is not set
-# CONFIG_DEBUG_FS is not set
-# CONFIG_HEADERS_CHECK is not set
-CONFIG_DEBUG_KERNEL=y
-CONFIG_DEBUG_SHIRQ=y
-CONFIG_DETECT_SOFTLOCKUP=y
-CONFIG_SCHED_DEBUG=y
-# CONFIG_SCHEDSTATS is not set
-CONFIG_TIMER_STATS=y
-CONFIG_DEBUG_SLAB=y
-CONFIG_DEBUG_SLAB_LEAK=y
-CONFIG_DEBUG_PREEMPT=y
-CONFIG_DEBUG_RT_MUTEXES=y
-CONFIG_DEBUG_PI_LIST=y
-# CONFIG_RT_MUTEX_TESTER is not set
-CONFIG_DEBUG_SPINLOCK=y
-CONFIG_DEBUG_MUTEXES=y
-CONFIG_DEBUG_LOCK_ALLOC=y
-CONFIG_PROVE_LOCKING=y
-CONFIG_LOCKDEP=y
-# CONFIG_LOCK_STAT is not set
-# CONFIG_DEBUG_LOCKDEP is not set
-CONFIG_TRACE_IRQFLAGS=y
-CONFIG_DEBUG_SPINLOCK_SLEEP=y
-CONFIG_DEBUG_LOCKING_API_SELFTESTS=y
-CONFIG_STACKTRACE=y
-CONFIG_PREEMPT_TRACE=y
-# CONFIG_EVENT_TRACE is not set
-# CONFIG_FUNCTION_TRACE is not set
-# CONFIG_WAKEUP_TIMING is not set
-# CONFIG_CRITICAL_PREEMPT_TIMING is not set
-# CONFIG_CRITICAL_IRQSOFF_TIMING is not set
-# CONFIG_DEBUG_KOBJECT is not set
-CONFIG_DEBUG_BUGVERBOSE=y
-# CONFIG_DEBUG_INFO is not set
-# CONFIG_DEBUG_VM is not set
-# CONFIG_DEBUG_LIST is not set
-# CONFIG_FRAME_POINTER is not set
-CONFIG_FORCED_INLINING=y
-# CONFIG_RCU_TORTURE_TEST is not set
-# CONFIG_FAULT_INJECTION is not set
-CONFIG_EARLY_PRINTK=y
-CONFIG_DEBUG_STACKOVERFLOW=y
-# CONFIG_DEBUG_STACK_USAGE is not set
-# CONFIG_DEBUG_PAGEALLOC is not set
-CONFIG_DEBUG_RODATA=y
-CONFIG_4KSTACKS=y
-CONFIG_X86_FIND_SMP_CONFIG=y
-CONFIG_X86_MPPARSE=y
-CONFIG_DOUBLEFAULT=y
+This says the first thread to exit was priority-2, affined to cpu 1,
+with a latency of 5us/4us (child-start, parent-return), for a
+local-relative run-time of 32.788ms, a global-relative runtime of
+32.847ms, with a delta between the two of 59us.
+
+The list is sorted by finish time.  So you can see that the priority 2
+thread finished first, priority 5 finished second, 4 third, etc.  The
+test considers a "PASS" to be that the top N threads (where N is
+nr_cpus) finish first, the second group finish second, etc.
+
+For instance, on a 4-core system with 10 threads, 10,9,8,7 should finish
+first (though their ordering within that group may vary).  6,5,4,3
+should finish second.  And finally 2,1 should finish last.  Any
+violation of this ordering will be flagged as follows:
+
+
+# ./a.out -t 95 -a
+Starting test with 95 threads on 4 cpus
+Calibration: 20ms = 5686503 loops
+0 -> p:94 a: 1 l: 6/93 t: 14809/20098/5289
+1 -> p:92 a: 3 l: 6/86 t: 15217/20367/5150
+2 -> p:95 a: 2 l: 7/83 t: 15064/20455/5391
+3 -> p:93 a: 0 l: 6/36 t: 19452/24696/5244
+
+..<snip>...
+
+79 -> p:15 a: 2 l: 5/57 t: 376806/378567/1761
+80 -> p:16 a: 3 l: 6/59 t: 376838/378665/1827
+81 -> p:13 a: 0 l: 6/17 t: 385565/387280/1715
+82 -> p:14 a: 1 l: 6/13 t: 389003/390743/1740
+83 -> p:11 a: 2 l: 9/14 t: 396074/397693/1619
+84 -> p:12 a: 3 l: 5/67 t: 397287/398927/1640
+85 -> p:9 a: 0 l: 6/6 t: 405105/406684/1579
+86 -> p:10 a: 1 l: 8/12 t: 405816/407411/1595
+87 -> p:7 a: 2 l: 8/14 t: 416301/417786/1485
+88 -> p:8 a: 3 l: 4/66 t: 417852/419357/1505
+89 -> p:6 a: 1 l: 6/10 t: 423228/424694/1466
+90 -> p:5 a: 0 l: 8/9 t: 424050/425500/1450
+91 -> p:3 a: 2 l: 4/8 t: 434555/435938/1383
+92 -> p:4 a: 3 l: 6/33 t: 435763/437163/1400
+93 -> p:2 a: 1 l: 8/8 t: 442051/443420/1369
+94 -> p:1 a: 0 l: 1349/8 t: 443747/445098/1351
+
+---------------------------
+Stats: [min: 4us @ row 88] [max: 1349us @ row 94] {ave: 27us]
+---------------------------
+Error: row 79: 15 != (19 >= x > 15)
+Error: row 80: 16 != (15 >= x > 11)
+Error: row 83: 11 != (15 >= x > 11)
+Error: row 84: 12 != (11 >= x > 7)
+Error: row 87: 7 != (11 >= x > 7)
+Error: row 88: 8 != (7 >= x > 3)
+Error: row 91: 3 != (7 >= x > 3)
+Error: row 92: 4 != (3 >= x > 0)
+---------------------------
+Test FAILED with 8 errors
+
+---------------------------
+
+This output shows, for instance, that row 79 has a priority 15 thread
+that finished when only 19,18,17, or 16 should have if the system was
+prioritizing properly.
+
+Comments/suggestions welcome!
+
+Regards,
+-Greg
