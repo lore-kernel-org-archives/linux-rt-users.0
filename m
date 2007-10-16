@@ -1,56 +1,83 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 3/4] RT: Add support for updating push-rt priority under PI
-	boost
-Date: Tue, 16 Oct 2007 12:09:08 -0400
-Message-ID: <20071016160908.5202.69086.stgit@novell1.haskins.net>
-References: <20071016160226.5202.53965.stgit@novell1.haskins.net>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [RT] seqlocks: use of PICK_FUNCTION breaks kernel compile when
+	CONFIG_GENERIC_TIME is NOT set
+Date: Tue, 16 Oct 2007 09:52:46 -0700
+Message-ID: <1192553566.17527.114.camel@imap.mvista.com>
+References: <3efb10970710160135q31fd3982h17fa23768960186d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Gregory Haskins <ghaskins@novell.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43775
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1761419AbXJPQW5 (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:61228 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760363AbXJPQyc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Oct 2007 12:22:57 -0400
-In-Reply-To: <20071016160226.5202.53965.stgit@novell1.haskins.net>
+	Tue, 16 Oct 2007 12:54:32 -0400
+In-Reply-To: <3efb10970710160135q31fd3982h17fa23768960186d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Priority of the running task can change at run-time due to
-PI boosting / nice, so be sure to update the RQ version of
-the priority as well.
+On Tue, 2007-10-16 at 10:35 +0200, Remy Bohmer wrote:
+> Hello Daniel and Ingo,
+> 
+> I use 2.6.23-rt1 and the patch of Daniel below which seems to be in
+> there breaks the compilation of the RT-kernel when CONFIG_GENERIC_TIME
+> is NOT set.
+> 
+> It breaks in the do_gettimeofday(struct timeval *tv) code in the
+> architecture specific code
+> where there is a call to: seq = read_seqbegin_irqsave(&xtime_lock, flags);
+> The PICK_FUNCTION implementation does not return anything, so the
+> compile breaks here.
+> 
+> I am figuring out how to solve this problem nicely, but I have not
+> found a nice solution yet. Attached I have put my hack to make it
+> compile on ARM again, but maybe one of you can do a better proposal to
+> fix this.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+Here's another fix for this. I compile tested for ARM (!GENERIC_TIME) ,
+but I didn't boot test .. Could you boot test this patch?
+
 ---
 
- kernel/sched.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Move the read_seqbegin() call up in the chain so the value 
+can be returned
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index b69e49b..bc9f4a6 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -4656,6 +4656,7 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
- 		 * this runqueue and our priority is higher than the current's
- 		 */
- 		if (task_running(rq, p)) {
-+			set_rq_prio(rq, p->prio);
- 			if (p->prio > oldprio)
- 				resched_task(rq->curr);
- 		} else {
-@@ -4715,6 +4716,9 @@ void set_user_nice(struct task_struct *p, long nice)
- 		 */
- 		if (delta < 0 || (delta > 0 && task_running(rq, p)))
- 			resched_task(rq->curr);
-+
-+		if (delta && task_running(rq, p))
-+			set_rq_prio(rq, p->prio);
- 	}
- out_unlock:
- 	task_rq_unlock(rq, &flags);
+Signed-off-by: Daniel Walker <dwalker@mvista.com>
+
+---
+ include/linux/seqlock.h |    7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+Index: linux-2.6.23/include/linux/seqlock.h
+===================================================================
+--- linux-2.6.23.orig/include/linux/seqlock.h
++++ linux-2.6.23/include/linux/seqlock.h
+@@ -285,21 +285,20 @@ unsigned long __read_seqbegin_irqsave_ra
+ 	unsigned long flags;
+ 
+ 	local_irq_save(flags);
+-	__read_seqbegin_raw(sl);
+ 	return flags;
+ }
+ 
+ static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
+ {
+-	__read_seqbegin(sl);
+ 	return 0;
+ }
+ 
+ #define read_seqbegin_irqsave(lock, flags)			\
+-do {								\
++({								\
+ 	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
+ 		__read_seqbegin_irqsave, lock);			\
+-} while (0)
++	read_seqbegin(lock);					\
++})
+ 
+ static __always_inline int
+ __read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
