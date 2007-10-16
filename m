@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/4] RT: Initialize the priority value
-Date: Tue, 16 Oct 2007 12:09:03 -0400
-Message-ID: <20071016160903.5202.41015.stgit@novell1.haskins.net>
-References: <20071016160226.5202.53965.stgit@novell1.haskins.net>
+Subject: [PATCH 0/4] RT: RT-Overload/Sched v3
+Date: Tue, 16 Oct 2007 12:08:52 -0400
+Message-ID: <20071016160226.5202.53965.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -12,33 +11,36 @@ Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 To: Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43767
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43754
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757740AbXJPQWv (ORCPT
+	by vger.kernel.org with ESMTP id S1750754AbXJPQWq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Oct 2007 12:22:51 -0400
-In-Reply-To: <20071016160226.5202.53965.stgit@novell1.haskins.net>
+	Tue, 16 Oct 2007 12:22:46 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We should init the base value of the current RQ priority to "IDLE"
+v3 contains the following changes since v2:
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+This is still based on 23-rt1 + Steve's last public patch (I think Steve has a
+newer version available, but we have not rebased yet).
 
- kernel/sched.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+1) No longer includes the per-cpu-rtoverload patch, since Steve has already
+   ACKed it
+2) Dropped the affinity patch because it was buggy.  Will revisit later
+3) Dropped the pull-patch, since it was RFC only anyway.  Will revisit later
+4) Addressed review comments/feedback (added patch descriptions across the
+   board, moved semi-colon in while loop, removed superfluous
+   smp_processor_id() etc.
+5) Got rid of the second TASK_PREEMPTS_CURR() check, since my anaylsys
+   determined it was not needed.
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 1866a6e..b69e49b 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -7388,6 +7388,8 @@ void __init sched_init(void)
- 		highest_cpu = i;
- 		/* delimiter for bitsearch: */
- 		__set_bit(MAX_RT_PRIO, array->bitmap);
-+
-+		set_rq_prio(rq, MAX_PRIO);
- 	}
- 
- 	set_load_weight(&init_task);
+With this patch series applied, my RT test now passes and we get an average of
+23us wake-up latency under load. You can find the test here: 
+
+ ftp://ftp.novell.com/dev/ghaskins/preempt.cc
+
+Note: Do not use the "affinity" option, as the validator has a bug related to
+it and may yield a false negative.
+
+Regards,
+-Greg
