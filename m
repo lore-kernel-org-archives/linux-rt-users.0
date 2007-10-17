@@ -1,55 +1,107 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 1/4] Implement {read,update}_persistent_clock.
-Date: Wed, 17 Oct 2007 16:45:26 +0400
-Message-ID: <471603E6.9040608@ru.mvista.com>
-References: <1190345162.620000.305760830507.qpush@thor>	 <Pine.LNX.4.58.0709261502590.4465@gandalf.stny.rr.com>	 <46FAB56E.8080509@ru.mvista.com>	 <Pine.LNX.4.58.0709261543080.5123@gandalf.stny.rr.com>	 <1190836713.23376.41.camel@chaos>  <4713ABDA.2000506@ru.mvista.com> <1192497543.19073.0.camel@pasglop>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: [RT] seqlocks: use of PICK_FUNCTION breaks kernel compile when CONFIG_GENERIC_TIME is NOT set
+Date: Wed, 17 Oct 2007 16:07:10 +0200
+Message-ID: <3efb10970710170707g669aaadej85a997e6a6efa560@mail.gmail.com>
+References: <3efb10970710160135q31fd3982h17fa23768960186d@mail.gmail.com>
+	 <1192553566.17527.114.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev@ozlabs.org,
-	Paul Mackerras <paulus@samba.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: benh@kernel.crashing.org
+Cc: "Ingo Molnar" <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: "Daniel Walker" <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.155]:31120 "EHLO
-	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753874AbXJQMpP (ORCPT
+Received: from rn-out-0910.google.com ([64.233.170.187]:22574 "EHLO
+	rn-out-0102.google.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1758869AbXJQOHN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Oct 2007 08:45:15 -0400
-In-Reply-To: <1192497543.19073.0.camel@pasglop>
+	Wed, 17 Oct 2007 10:07:13 -0400
+Received: by rn-out-0102.google.com with SMTP id i6so308675rng
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Oct 2007 07:07:12 -0700 (PDT)
+In-Reply-To: <1192553566.17527.114.camel@imap.mvista.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello.
+Hello Daniel,
 
-Benjamin Herrenschmidt wrote:
+> Here's another fix for this. I compile tested for ARM (!GENERIC_TIME) ,
+> but I didn't boot test .. Could you boot test this patch?
 
->>   Eh... poor you. Tony got clockevent driver reengineered for no apparent 
->>reason.  And he's introduced the jiffy drift by deleting the main loop from 
->>timer_interrupt(). Yet this borken version was preferred to what was known 
->>working since about 2.6.18 and included into 2.6.21-rt patchset.  I don't like 
->>that policy. Will you be pushing fixes from -rt to PowerPC, or will it fall on 
->>my shoulders now?
+This fix seems to work! The target still boots properly. So, it can be
+pushed upstream... :-)
 
-> Possibly because whatever implementation existed before was never
-> provided in a mergeable form
+Kind Regards,
 
-    The fact that vDSO calls were removed out of the necessity (because having 
-the broken TOD stuff removed was better than to leave it in place producing 
-inexact results) doesn't mean that everything in the patches provided was 
-broken and of no use.  Yet you want everything removed in favor of somewhat 
-dubious implementation.
+Remy Bohmer
 
-> and pushed to -rt bypassing the powerpc architecture maintainer ?
-
-    There was no bypassing, everything was submitted publicly via this list. 
-The -rt patch (via the hrtimers patchset) was the place to merge the hrtimers 
-code at thiat time, and nobody showed any interest in making the code better, 
-i.e. amending vDSO stuff, for months... (The question also is why Tony was 
-submitting his patches also to linux-rt-users while they were known not to 
-apply to the -rt patch.)
-
-> Ben.
-
-WBR, Sergei
+2007/10/16, Daniel Walker <dwalker@mvista.com>:
+> On Tue, 2007-10-16 at 10:35 +0200, Remy Bohmer wrote:
+> > Hello Daniel and Ingo,
+> >
+> > I use 2.6.23-rt1 and the patch of Daniel below which seems to be in
+> > there breaks the compilation of the RT-kernel when CONFIG_GENERIC_TIME
+> > is NOT set.
+> >
+> > It breaks in the do_gettimeofday(struct timeval *tv) code in the
+> > architecture specific code
+> > where there is a call to: seq = read_seqbegin_irqsave(&xtime_lock, flags);
+> > The PICK_FUNCTION implementation does not return anything, so the
+> > compile breaks here.
+> >
+> > I am figuring out how to solve this problem nicely, but I have not
+> > found a nice solution yet. Attached I have put my hack to make it
+> > compile on ARM again, but maybe one of you can do a better proposal to
+> > fix this.
+>
+> Here's another fix for this. I compile tested for ARM (!GENERIC_TIME) ,
+> but I didn't boot test .. Could you boot test this patch?
+>
+> ---
+>
+> Move the read_seqbegin() call up in the chain so the value
+> can be returned
+>
+> Signed-off-by: Daniel Walker <dwalker@mvista.com>
+>
+> ---
+>  include/linux/seqlock.h |    7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
+>
+> Index: linux-2.6.23/include/linux/seqlock.h
+> ===================================================================
+> --- linux-2.6.23.orig/include/linux/seqlock.h
+> +++ linux-2.6.23/include/linux/seqlock.h
+> @@ -285,21 +285,20 @@ unsigned long __read_seqbegin_irqsave_ra
+>         unsigned long flags;
+>
+>         local_irq_save(flags);
+> -       __read_seqbegin_raw(sl);
+>         return flags;
+>  }
+>
+>  static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
+>  {
+> -       __read_seqbegin(sl);
+>         return 0;
+>  }
+>
+>  #define read_seqbegin_irqsave(lock, flags)                     \
+> -do {                                                           \
+> +({                                                             \
+>         flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,    \
+>                 __read_seqbegin_irqsave, lock);                 \
+> -} while (0)
+> +       read_seqbegin(lock);                                    \
+> +})
+>
+>  static __always_inline int
+>  __read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
+>
+>
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
