@@ -1,36 +1,100 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Wed, 17 Oct 2007 18:34:33 +0400
-Message-ID: <47161D79.6000003@ru.mvista.com>
-References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com> <18195.64334.985238.848522@cargo.ozlabs.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RT] seqlocks: use of PICK_FUNCTION breaks kernel compile when
+	CONFIG_GENERIC_TIME is NOT set
+Date: Wed, 17 Oct 2007 11:10:35 -0400
+Message-ID: <1192633836.8265.6.camel@localhost.localdomain>
+References: <1192632502.17527.129.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Paul Mackerras <paulus@samba.org>
+Cc: Remy Bohmer <linux@bohmer.net>, Ingo Molnar <mingo@elte.hu>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.155]:32215 "EHLO
-	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1759698AbXJQOeV (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:53525 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756049AbXJQPMD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Oct 2007 10:34:21 -0400
-In-Reply-To: <18195.64334.985238.848522@cargo.ozlabs.ibm.com>
+	Wed, 17 Oct 2007 11:12:03 -0400
+In-Reply-To: <1192632502.17527.129.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello.
+On Wed, 2007-10-17 at 07:48 -0700, Daniel Walker wrote:
+> Steven, 
+> 
+> Could you include this patch, it was submitted on the list but you
+> didn't get CC'd ..
 
-Paul Mackerras wrote:
+Thanks, it may have been a while before I see this (/me has been nose
+deep in debugging).
 
->>    I'd use (evt - 1) since the interrupt gets generated at 0xffffffff count, 
->>not 0 (on classic CPUs).  With you removing of the code that compensated for 
+> > On Tue, 2007-10-16 at 10:35 +0200, Remy Bohmer wrote:
+> > > Hello Daniel and Ingo,
+> > > 
+> > > I use 2.6.23-rt1 and the patch of Daniel below which seems to be in
+> > > there breaks the compilation of the RT-kernel when CONFIG_GENERIC_TIME
+> > > is NOT set.
+> > > 
+> > > It breaks in the do_gettimeofday(struct timeval *tv) code in the
+> > > architecture specific code
+> > > where there is a call to: seq = read_seqbegin_irqsave(&xtime_lock, flags);
+> > > The PICK_FUNCTION implementation does not return anything, so the
+> > > compile breaks here.
+> > > 
+> > > I am figuring out how to solve this problem nicely, but I have not
+> > > found a nice solution yet. Attached I have put my hack to make it
+> > > compile on ARM again, but maybe one of you can do a better proposal to
+> > > fix this.
+> > 
+> > Here's another fix for this. I compile tested for ARM (!GENERIC_TIME) ,
+> > but I didn't boot test .. Could you boot test this patch?
+> > 
+> > ---
+> > 
+> > Move the read_seqbegin() call up in the chain so the value 
+> > can be returned
+> > 
+> > Signed-off-by: Daniel Walker <dwalker@mvista.com>
+> > 
+> > ---
+> >  include/linux/seqlock.h |    7 +++----
+> >  1 file changed, 3 insertions(+), 4 deletions(-)
+> > 
+> > Index: linux-2.6.23/include/linux/seqlock.h
+> > ===================================================================
+> > --- linux-2.6.23.orig/include/linux/seqlock.h
+> > +++ linux-2.6.23/include/linux/seqlock.h
+> > @@ -285,21 +285,20 @@ unsigned long __read_seqbegin_irqsave_ra
+> >  	unsigned long flags;
+> >  
+> >  	local_irq_save(flags);
+> > -	__read_seqbegin_raw(sl);
+> >  	return flags;
+> >  }
+> >  
+> >  static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
+> >  {
+> > -	__read_seqbegin(sl);
+> >  	return 0;
+> >  }
 
-> See commit d968014b7280e2c447b20363e576999040ac72ef; I already fixed
-> that.
+The above should be renamed. They have nothing to do with seqlocks now.
 
-    BTW, while fixing that for classic PPC, but you've broke it for 40x / book 
-E CPU which interrupt at 0.  Congratulations. :-)
+> >  
+> >  #define read_seqbegin_irqsave(lock, flags)			\
+> > -do {								\
+> > +({								\
+> >  	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
+> >  		__read_seqbegin_irqsave, lock);			\
+> > -} while (0)
+> > +	read_seqbegin(lock);					\
+> > +})
 
-WBR, Sergei
+Yes, definitely the raw and unraw functions should be called
+local_irqsave_raw or something else that makes this obvious to what it
+is doing.
+
+-- Steve
