@@ -1,83 +1,87 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [RT] seqlocks: use of PICK_FUNCTION breaks kernel compile when
-	CONFIG_GENERIC_TIME is NOT set
-Date: Tue, 16 Oct 2007 09:52:46 -0700
-Message-ID: <1192553566.17527.114.camel@imap.mvista.com>
-References: <3efb10970710160135q31fd3982h17fa23768960186d@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: NMI watchdog
+Date: Wed, 17 Oct 2007 14:20:55 +0200
+Message-ID: <4715FE27.2000802@free.fr>
+References: <470F3BE0.4050807@free.fr> <Pine.LNX.4.58.0710120625380.8208@gandalf.stny.rr.com> <470F7620.6040705@free.fr> <Pine.LNX.4.58.0710121210210.12663@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Remy Bohmer <linux@bohmer.net>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61228 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760363AbXJPQyc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Oct 2007 12:54:32 -0400
-In-Reply-To: <3efb10970710160135q31fd3982h17fa23768960186d@mail.gmail.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:41659 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752942AbXJQMU5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Oct 2007 08:20:57 -0400
+In-Reply-To: <Pine.LNX.4.58.0710121210210.12663@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-10-16 at 10:35 +0200, Remy Bohmer wrote:
-> Hello Daniel and Ingo,
+Steven Rostedt wrote:
+> --
+
+(Strange characters.)
+
+> John Sigler wrote:
 > 
-> I use 2.6.23-rt1 and the patch of Daniel below which seems to be in
-> there breaks the compilation of the RT-kernel when CONFIG_GENERIC_TIME
-> is NOT set.
+>> APIC timer registered as dummy, due to nmi_watchdog=1!
+>> Clockevents: could not switch to one-shot mode: lapic is not functional.
+>> Could not switch to high resolution mode on CPU 0
+>>
+>> Do you know why nmi_watchdog=1 disables high-resolution timers?
+>>
+>> And why nmi_watchdog=1 implies APIC timer registered as dummy?
 > 
-> It breaks in the do_gettimeofday(struct timeval *tv) code in the
-> architecture specific code
-> where there is a call to: seq = read_seqbegin_irqsave(&xtime_lock, flags);
-> The PICK_FUNCTION implementation does not return anything, so the
-> compile breaks here.
-> 
-> I am figuring out how to solve this problem nicely, but I have not
-> found a nice solution yet. Attached I have put my hack to make it
-> compile on ARM again, but maybe one of you can do a better proposal to
-> fix this.
+> Crap, I forgot about that. Thomas explained why to me once, and I forgot.
 
-Here's another fix for this. I compile tested for ARM (!GENERIC_TIME) ,
-but I didn't boot test .. Could you boot test this patch?
+Thomas,
 
----
+Could you explain again why using the IO-APIC watchdog disables hrt?
 
-Move the read_seqbegin() call up in the chain so the value 
-can be returned
+> Does it still crash? If not, does it crash if you turn off highres?
 
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
+It's not that simple. My app depends on hrt. I'd have to tweak it to 
+make it work when hrt are not available.
 
----
- include/linux/seqlock.h |    7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+BTW, it's not a crash, it's a complete system lock-up. Nothing works, 
+and I really do mean nothing: ping is ignored, I can't open an ssh 
+connection, the serial console won't budge, even if I send SysRq combos...
 
-Index: linux-2.6.23/include/linux/seqlock.h
-===================================================================
---- linux-2.6.23.orig/include/linux/seqlock.h
-+++ linux-2.6.23/include/linux/seqlock.h
-@@ -285,21 +285,20 @@ unsigned long __read_seqbegin_irqsave_ra
- 	unsigned long flags;
- 
- 	local_irq_save(flags);
--	__read_seqbegin_raw(sl);
- 	return flags;
- }
- 
- static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
- {
--	__read_seqbegin(sl);
- 	return 0;
- }
- 
- #define read_seqbegin_irqsave(lock, flags)			\
--do {								\
-+({								\
- 	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
- 		__read_seqbegin_irqsave, lock);			\
--} while (0)
-+	read_seqbegin(lock);					\
-+})
- 
- static __always_inline int
- __read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
+> Or better yet, try turning off dynamic-ticks. We had a bug once before
+> that had a problem with the new RCU code and dynamic ticks.
+
+I didn't enable dynamic-ticks kernel support.
+
+CONFIG_TICK_ONESHOT=y
+# CONFIG_NO_HZ is not set
+CONFIG_HIGH_RES_TIMERS=y
+CONFIG_GENERIC_CLOCKEVENTS_BUILD=y
+# CONFIG_SMP is not set
+CONFIG_X86_PC=y
+...
+# CONFIG_HPET_TIMER is not set
+# CONFIG_PREEMPT_NONE is not set
+# CONFIG_PREEMPT_VOLUNTARY is not set
+# CONFIG_PREEMPT_DESKTOP is not set
+CONFIG_PREEMPT_RT=y
+CONFIG_PREEMPT=y
+CONFIG_PREEMPT_SOFTIRQS=y
+CONFIG_PREEMPT_HARDIRQS=y
+CONFIG_PREEMPT_BKL=y
+# CONFIG_CLASSIC_RCU is not set
+CONFIG_PREEMPT_RCU=y
+# CONFIG_RCU_TRACE is not set
+CONFIG_X86_UP_APIC=y
+CONFIG_X86_UP_IOAPIC=y
+CONFIG_X86_LOCAL_APIC=y
+CONFIG_X86_IO_APIC=y
+# CONFIG_X86_MCE is not set
+# CONFIG_VM86 is not set
+# CONFIG_TOSHIBA is not set
+# CONFIG_I8K is not set
+# CONFIG_X86_REBOOTFIXUPS is not set
+# CONFIG_MICROCODE is not set
+# CONFIG_X86_MSR is not set
+
+Regards.
