@@ -1,98 +1,77 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Thu, 18 Oct 2007 19:11:57 +0400
-Message-ID: <471777BD.8090800@ru.mvista.com>
-References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161C38.2070305@ru.mvista.com> <18198.44590.721412.314409@cargo.ozlabs.ibm.com>
+From: Gernot Hillier <gernot.hillier@siemens.com>
+Subject: thread load balancing on dual CPU Multicore AMD64 system
+Date: Thu, 18 Oct 2007 19:01:36 +0200
+Message-ID: <47179170.7030802@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=ISO-8859-15
 Content-Transfer-Encoding: 7bit
-Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Paul Mackerras <paulus@samba.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from h155.mvista.com ([63.81.120.155]:43773 "EHLO imap.sh.mvista.com"
-	rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752438AbXJRPLq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Oct 2007 11:11:46 -0400
-In-Reply-To: <18198.44590.721412.314409@cargo.ozlabs.ibm.com>
+Received: from david.siemens.de ([192.35.17.14]:17499 "EHLO david.siemens.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758288AbXJRRSr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Oct 2007 13:18:47 -0400
+Received: from mail1.siemens.de (localhost [127.0.0.1])
+	by david.siemens.de (8.12.6/8.12.6) with ESMTP id l9IH1aQ4010301
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Oct 2007 19:01:36 +0200
+Received: from [192.168.2.1] ([139.22.111.67])
+	by mail1.siemens.de (8.12.6/8.12.6) with ESMTP id l9IH1ZTb007641
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Oct 2007 19:01:35 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello.
+Hi!
 
-Paul Mackerras wrote:
+We're currently evaluating whether PREEMPT_RT will work for a certain
+use case combining realtime and performance requirements running on a
+lot of CPUs and using a bunch of RAM.
 
->>>Tony started from an earlier patch by John Stultz, not from your
->>>patches.
+For first tests, we're running a "small" AMD64 test system with 2x2
+cores (2 CPUs with 2 cores each) with 8 GB of RAM.
 
->>    Well, that I can believe, yet the clockevents patch has traces of my
->>former work, and looking at read_persisitent_time() it looks suspiciously 
->>close to my version too...
+We wrote a small testcase which basically has one SCHED_FIFO "realtime"
+thread which does nothing but sleeping and checking if it wakes up at
+the right time. In addition, it spawns 20 low-prio "load threads"
+introducing a lot of malloc/memory access/free load on some GB of RAM.
 
-> There is basically only one reasonably way to do a lot of this stuff.
+We can see, that the realtime requirements are fulfilled quite well (if
+using the current glibc with private futexes, but that's another story).
+The "rt thread" reacts within the expected timeframe with 2.6.22.1-rt9
+as well as with 2.6.23-rt1.
 
->>>The main reason your patches were rejected were that you completely
->>>broke the VDSO and the deterministic time accounting, and made no
+However, what causes problems is the load balancing of the 20 threads
+over the available CPU cores:
 
->>    That's just not true!
->>    They didn't broke vDSO (to be precise it was John's patch that broke it), 
->>they just removed the vDSO code known to already be broken by -rt patch for 
->>several months by then.  And they didn't broke determinictic accounting -- 
->>they just made two things mutually exclusive.  I haven't yet seen how the 
->>patches that were preferred dealt with it at all.
+- With 2.6.22.1-vanilla, the threads are distributed over all four
+available cores
+- With 2.6.22.1-rt9 (patched, but PREEMPT_RT & friends *disabled*), the
+threads are distributed *only over two cores*, the others are idling
+- With 2.6.22.1-rt9 (PREEMPT_RT & friends enabled), the threads are
+distributed *only over two cores*, the others are idling
 
-> OK.  My requirement was that the clocksource/clockevent stuff and the
-> VDSO were both functional.  Your patch didn't meet that requirement.
+- With 2.6.23-rt1 (patched, but PREEMPT_RT & friends *disabled*), the
+threads are distributed over all four cores
+- With 2.6.23-rt1 (PREEMPT_RT & friends enabled), the threads are
+distributed *only over two cores*, the others are idling
 
-    Which of my patches? There were many, and only one of them dealing with 
-vDSO. That's reasonable to drop that patch but it's not reasonable to drop the 
-other ones, not directly connected to vDSO issue.  One flaw doesn't make the 
-whole patchset bad.
-    And now you have incomplete read_persistent_clock() implementation for 
-example, god knows why it was preferred to mine -- well, it also implemented 
-update_persistent_clock() bit those functions haven't appeared at the same 
-time, so read_persistent_clock() was written by me in the .
+We have not set any CPU affinities in any case.
 
->>    Really? IMO, the harware does keep a constant interrupt rate better than 
->>software.
+With the 2.6.22 series, I played a bit with
+patch-2.6.22.1-rt9-broken-out.tar.bz2 and am quite sure that the
+behaviour change is introduced by preempt-softirqs-core.patch. If I
+apply anything up to and including this patch (according to the series
+file), I see that only two cores are used. If I just remove this sole
+patch, all four cores are used again.
 
-> Well, if you have actual numbers to back that up, show them to us.
-> I don't believe you would be able to measure any difference, and so I
-> prefer the simplicity of only implementing the one-shot mode.
+Any ideas what causes these issues? Is this somehow connected to NUMA
+optimizations or just a bug? Known one?
 
-    Well, that's up to you.  I take it you wouldn't accept a patch 
-implementing auto-reload mode?
+Any idea or suggestions welcome...
 
->>>Because you broke important features
+TIA!
 
->>    That is *not true*.
->>    And nobody had interest to fix them for months (quite strange if they're 
->>so important) while I had neither time nor interest to deal with them anymore 
->>having written the code that *did work*, and not only for me.
-
-> Well, this is the difference between having a hack that works for you,
-
-    Agreed, -rt is a patchset full of hacks. :-)
-
-> and having something that can go upstream into mainline.
-
-    It *went* upstream. Mainline wasn't my aim at that time.
-
-> Anyway, this discussion doesn't seem to be going anywhere.  If there
-> are changes you want made, or any other specific concrete action you
-
-    There are. I'll have to send patches (it's not that I have time for this) 
-but this is surely the fastest way to get things fixed (if I don't get ignored 
-that is).
-
-> want anyone to do, say so.  Otherwise stop whinging.
-
-    I just wanted the reasons clarified and got what I wanted -- as I thought, 
-the decision behind preferring patches was somewhat biased, nobody really 
-cared about code quality or just wasn't familiar with hrtimers enough to judge 
-on the code quality...
-
-> Paul.
-
-WBR, Sergei
+----
+With kind regards,
+Gernot Hillier
+Siemens AG, CT SE 2
+Corporate Competence Center Embedded Linux
