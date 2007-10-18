@@ -1,51 +1,32 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH] RT: Only dirty a cacheline if the priority is actually
-	changing
-Date: Wed, 17 Oct 2007 14:54:25 -0400
-Message-ID: <20071017185356.11365.49920.stgit@novell1.haskins.net>
+From: Paul Mackerras <paulus@samba.org>
+Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
+Date: Thu, 18 Oct 2007 10:36:55 +1000
+Message-ID: <18198.43687.44059.477047@cargo.ozlabs.ibm.com>
+References: <20070921032603.0D3EA32C887@thor>
+	<4713A616.3090103@ru.mvista.com>
+	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>
+	<47161D79.6000003@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Gregory Haskins <ghaskins@novell.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:51832
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1762132AbXJQTIT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Oct 2007 15:08:19 -0400
+Received: from ozlabs.org ([203.10.76.45]:57070 "EHLO ozlabs.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757987AbXJRAw0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Oct 2007 20:52:26 -0400
+In-Reply-To: <47161D79.6000003@ru.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Oops...forgot to refresh this patch before mailing it.  Heres the actual
-patch.
+Sergei Shtylyov writes:
 
+>     BTW, while fixing that for classic PPC, but you've broke it for 40x / book 
+> E CPU which interrupt at 0.  Congratulations. :-)
 
-----
+What problem do you see arising from this?
 
-
-We can avoid dirtying a rq related cacheline with a simple check, so why not.
-
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
-
- kernel/sched.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 8c916de..d5dfe21 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -368,7 +368,8 @@ static DEFINE_MUTEX(sched_hotcpu_mutex);
- #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
- static inline void set_rq_prio(struct rq *rq, int prio)
- {
--	rq->highest_prio = prio;
-+	if (rq->highest_prio != prio)
-+		rq->highest_prio = prio;
- }
- 
- static inline void update_rq_prio(struct rq *rq)
+Paul.
