@@ -1,70 +1,49 @@
-From: Paul Mackerras <paulus@samba.org>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Thu, 18 Oct 2007 10:51:58 +1000
-Message-ID: <18198.44590.721412.314409@cargo.ozlabs.ibm.com>
-References: <20070921032603.0D3EA32C887@thor>
-	<4713A616.3090103@ru.mvista.com>
-	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>
-	<47161C38.2070305@ru.mvista.com>
+From: "Javier Sanz" <jsanza@gmail.com>
+Subject: Re: [PATCH 8/9] RT: Fixes for push-rt patch
+Date: Thu, 18 Oct 2007 13:00:03 +0200
+Message-ID: <a3d4028e0710180400q2d82d672xf9f4d738fe41d272@mail.gmail.com>
+References: <20071017184745.11272.10024.stgit@novell1.haskins.net>
+	 <20071017185108.11272.42107.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ozlabs.org ([203.10.76.45]:57065 "EHLO ozlabs.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758570AbXJRAw0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Oct 2007 20:52:26 -0400
-In-Reply-To: <47161C38.2070305@ru.mvista.com>
+Received: from wa-out-1112.google.com ([209.85.146.183]:47123 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756154AbXJRLAE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Oct 2007 07:00:04 -0400
+Received: by wa-out-1112.google.com with SMTP id v27so146279wah
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Oct 2007 04:00:03 -0700 (PDT)
+In-Reply-To: <20071017185108.11272.42107.stgit@novell1.haskins.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Sergei Shtylyov writes:
+Hello,
 
-> > Tony started from an earlier patch by John Stultz, not from your
-> > patches.
-> 
->     Well, that I can believe, yet the clockevents patch has traces of my
-> former work, and looking at read_persisitent_time() it looks suspiciously 
-> close to my version too...
+I am newbie in rt programming  and i wonder where can i get an example
+about file handling following the describe idea from rt wiki
+" File handling .-
+File handling is known to generate disastrous pagefaults. So, if there
+is a need for file access from the context of the RT-application, then
+this can be done best by splitting the application in an RT part and a
+file-handling part. Both parts are allowed to communicate through
+sockets. I have never seen a page fault caused by socket traffic.
+Note: While accessing files the low-level fopen() call will do a
+mmap() to allocate new memory to the process, resulting in a new
+pagefault."
 
-There is basically only one reasonably way to do a lot of this stuff.
+any sample with rt part and file handle part ?
 
-> > The main reason your patches were rejected were that you completely
-> > broke the VDSO and the deterministic time accounting, and made no
-> 
->     That's just not true!
->     They didn't broke vDSO (to be precise it was John's patch that broke it), 
-> they just removed the vDSO code known to already be broken by -rt patch for 
-> several months by then.  And they didn't broke determinictic accounting -- 
-> they just made two things mutually exclusive.  I haven't yet seen how the 
-> patches that were preferred dealt with it at all.
+Another question, about  java realtime specification , rtsj
 
-OK.  My requirement was that the clocksource/clockevent stuff and the
-VDSO were both functional.  Your patch didn't meet that requirement.
+i wonder, if rt programming (using c) needs to check a lot of elements
+, faultpages, sockets, etc ... how can it possible that a java
+programmer can run applications (with a gc collector) and these
+applications can get a "rt profile" ?
 
->     Really? IMO, the harware does keep a constant interrupt rate better than 
-> software.
+rtsj is a "valuable" real time specificacion?
 
-Well, if you have actual numbers to back that up, show them to us.
-I don't believe you would be able to measure any difference, and so I
-prefer the simplicity of only implementing the one-shot mode.
-
-> > Because you broke important features
-> 
->     That is *not true*.
->     And nobody had interest to fix them for months (quite strange if they're 
-> so important) while I had neither time nor interest to deal with them anymore 
-> having written the code that *did work*, and not only for me.
-
-Well, this is the difference between having a hack that works for you,
-and having something that can go upstream into mainline.
-
-Anyway, this discussion doesn't seem to be going anywhere.  If there
-are changes you want made, or any other specific concrete action you
-want anyone to do, say so.  Otherwise stop whinging.
-
-Paul.
+thank you
