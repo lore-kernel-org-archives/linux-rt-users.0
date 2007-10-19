@@ -1,53 +1,63 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: High 50us+ latencies in the process signal handling path
-Date: Fri, 19 Oct 2007 08:53:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710190852250.28232@gandalf.stny.rr.com>
-References: <20071018124827.GA22282@in.ibm.com> <4718A680.5000501@stud.feec.vutbr.cz>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
+Date: Fri, 19 Oct 2007 17:35:03 +0400
+Message-ID: <4718B287.20306@ru.mvista.com>
+References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161C38.2070305@ru.mvista.com>	<18198.44590.721412.314409@cargo.ozlabs.ibm.com>	<471777BD.8090800@ru.mvista.com>	<18200.3600.459275.823335@cargo.ozlabs.ibm.com>	<47189EF3.7010103@ru.mvista.com> <18200.42194.853246.935329@cargo.ozlabs.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ankita Garg <ankita@in.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Dinakar Guniguntala <dino@in.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>,
-	Mike Kravetz <kravetz@us.ibm.com>
-To: Michal Schmidt <xschmi00@stud.feec.vutbr.cz>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Paul Mackerras <paulus@samba.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:55554 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755886AbXJSMxi (ORCPT
+Received: from homer.mvista.com ([63.81.120.155]:53526 "EHLO
+	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753764AbXJSNew (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 08:53:38 -0400
-In-Reply-To: <4718A680.5000501@stud.feec.vutbr.cz>
+	Fri, 19 Oct 2007 09:34:52 -0400
+In-Reply-To: <18200.42194.853246.935329@cargo.ozlabs.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello.
 
+Paul Mackerras wrote:
 
---
-On Fri, 19 Oct 2007, Michal Schmidt wrote:
->
-> I'm looking at the source. The receiver thread runs with realtime
-> priority (it's created with create_fifo_thread), but the sender thread
-> (thread2) doesn't (create_other_thread). The sender does:
->
->         /* Record the time just before sending the signal */
->         begin = rt_gettime();
-> /**** The sender can get preempted by anything right here ! ****/
+>>    The xtime_lock is still grabbed by time_init()
 
-Not only that, if the sender is not RT it can easily be preempted in the
-system call that does the signal. Which is highly likely.
+    Oops, I got distracted and hadn't finish the passage.
+    My patch got rid of this xtime_lock stuff -- but this was in a different
+context, with all vDSO initialization code in between being killed by John's
+patch.  I'm not sure it still has sense to hold this lock in time_init()
+around that initialization...
 
--- Steve
+> That was left in there because we are setting sys_tz
 
->         if ((ret = pthread_kill(PTHREADOF(target_thread), SIGNALNUMBER))) {
->             printf("pthread_kill returned %d\n", ret);
->         }
->
-> Can this explain it?
->
-> Michal
->
->
->
+    My patch moved that to read_persistent_clock()...
+
+> and do_gtod, and do_gtod at least is only updated with the xtime_lock held.
+
+> Of course, at that early stage in the boot process, no lock is really needed, but
+> xtime_lock was taken for consistency with other code.
+
+    Thanks for claryfing this.
+
+>>    The only thing I'm still unusre about is that deterministic accounting. 
+>>Could you point me at the patch which deals with this (at least for System 390 
+
+> See efe567fc8281661524ffa75477a7c4ca9b466c63 in Linus' tree, and look
+
+    Wait, how this is related to the hrtimer's event handlers not being able 
+to call account_process_time() from arch/powerpc/kernel/time.c instead of 
+update_process_timess()?
+
+> for posts to lkml by Christian Borntraeger, who has been pursuing the
+> issue (subject "Re: [stable] 2.6.23 regression: top displaying 9999%
+> CPU usage").
+
+    Fun. :-)
+
+> Paul.
+
+WBR, Sergei
