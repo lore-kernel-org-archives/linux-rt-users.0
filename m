@@ -1,13 +1,13 @@
 From: Paul Mackerras <paulus@samba.org>
 Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Fri, 19 Oct 2007 10:14:54 +1000
-Message-ID: <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
+Date: Fri, 19 Oct 2007 11:53:20 +1000
+Message-ID: <18200.3600.459275.823335@cargo.ozlabs.ibm.com>
 References: <20070921032603.0D3EA32C887@thor>
 	<4713A616.3090103@ru.mvista.com>
 	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>
-	<47161D79.6000003@ru.mvista.com>
-	<18198.43687.44059.477047@cargo.ozlabs.ibm.com>
-	<47177229.2030200@ru.mvista.com>
+	<47161C38.2070305@ru.mvista.com>
+	<18198.44590.721412.314409@cargo.ozlabs.ibm.com>
+	<471777BD.8090800@ru.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
@@ -16,30 +16,50 @@ Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
 	Realtime Kernel <linux-rt-users@vger.kernel.org>
 To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ozlabs.org ([203.10.76.45]:58882 "EHLO ozlabs.org"
+Received: from ozlabs.org ([203.10.76.45]:40352 "EHLO ozlabs.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754432AbXJSAPB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Oct 2007 20:15:01 -0400
-In-Reply-To: <47177229.2030200@ru.mvista.com>
+	id S1754764AbXJSBx3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Oct 2007 21:53:29 -0400
+In-Reply-To: <471777BD.8090800@ru.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Sergei Shtylyov writes:
 
-> > What problem do you see arising from this?
-> 
->     Timers firing too early.
+>     And now you have incomplete read_persistent_clock() implementation for 
 
-Only if the minimum interrupt latency is less than 1 decrementer
-tick.  That seems pretty unlikely to me unless you have a very slow
-timebase frequency.
+I don't see anything incomplete about it.  If you do, feel free to
+post a patch.
 
-In fact what we should program the decrementer to is:
+> example, god knows why it was preferred to mine -- well, it also implemented 
 
-	timeout - (is_booke? 0: 1) - min_interrupt_latency
+Your most recent post of your patch to implement read_persistent_clock
+was in May -- five months ago -- and you said this about it: "This
+patch hasn't received a good testing though".
 
-I was assuming that min_interrupt_latency (measured in timebase ticks)
-would be at least 1, but apparently some systems can have a timebase
-frequency as low as 1kHz, so we'll have to have an ifdef or something.
+You don't have to be a god to figure out why I preferred a patch that
+had been tested, where the author was responding to comments and
+posting updated versions of his patch in the period leading up to the
+merge window, over that.
+
+>     Well, that's up to you.  I take it you wouldn't accept a patch 
+> implementing auto-reload mode?
+
+I already told you.  Show me numbers (real measurements showing that
+it's better) and I'll consider it.
+
+>     There are. I'll have to send patches (it's not that I have time for this) 
+> but this is surely the fastest way to get things fixed (if I don't get ignored 
+> that is).
+
+All of us only get stuff in by spending the time to develop patches
+and posting them for comment.  Stop whinging.
+
+>     I just wanted the reasons clarified and got what I wanted -- as I thought, 
+> the decision behind preferring patches was somewhat biased, nobody really 
+> cared about code quality or just wasn't familiar with hrtimers enough to judge 
+> on the code quality...
+
+You really know how to persuade people to cooperate, don't you...  :P
 
 Paul.
