@@ -1,65 +1,56 @@
-From: Paul Mackerras <paulus@samba.org>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Fri, 19 Oct 2007 21:22:30 +1000
-Message-ID: <18200.37750.627398.669482@cargo.ozlabs.ibm.com>
-References: <20070921032603.0D3EA32C887@thor> <4713A616.3090103@ru.mvista.com>
-	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>
-	<47161D79.6000003@ru.mvista.com>
-	<18198.43687.44059.477047@cargo.ozlabs.ibm.com>
-	<47177229.2030200@ru.mvista.com>
-	<18199.63230.583536.307945@cargo.ozlabs.ibm.com>
-	<20071019092205.GA9668@iram.es>
+Date: Fri, 19 Oct 2007 15:49:37 +0400
+Message-ID: <471899D1.2000903@ru.mvista.com>
+References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161D79.6000003@ru.mvista.com>	<18198.43687.44059.477047@cargo.ozlabs.ibm.com>	<47177229.2030200@ru.mvista.com> <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linuxppc-dev@ozlabs.org, Thomas Gleixner <tglx@linutronix.de>,
+Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Gabriel Paubert <paubert@iram.es>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
-In-Reply-To: <20071019092205.GA9668@iram.es>
-List-Unsubscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+To: Paul Mackerras <paulus@samba.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from homer.mvista.com ([63.81.120.155]:52944 "EHLO
+	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753161AbXJSLt0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Oct 2007 07:49:26 -0400
+In-Reply-To: <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Gabriel Paubert writes:
+Hello.
 
-> I'd really wish there were a guarantee of a minimum timebase 
-> frequency, for anything above ~10MHz, we are splitting hairs
-> about an off-by-one error that never accumulates, but if systems
-> with very low TB freq exist, you have to be very careful.
+Paul Mackerras wrote:
 
-Exactly.  In looking through the generic clockevents code, there are a
-few places where counts are rounded down.  For example,
-clockevents_program_event does this to convert from nanoseconds (in
-"delta") to the count value for the clock event device:
+>>>What problem do you see arising from this?
 
-	clc = delta * dev->mult;
-	clc >>= dev->shift;
+>>    Timers firing too early.
 
-Here the right shift can lose up to a whole count.  If the clock
-frequency of the device is very slow, say 1kHz, then this could lose
-up to 999999 nanoseconds.  Then, on Book E, putting 1 into the
-decrementer could result in an interrupt anywhere from straight away to
-1 millisecond later (assuming 1kHz timebase frequency, again).
+> Only if the minimum interrupt latency is less than 1 decrementer
+> tick.  That seems pretty unlikely to me unless you have a very slow
+> timebase frequency.
 
-The net result is that delta = 1999999 nanoseconds could result in the
-interrupt coming in immediately, i.e. almost 2ms early.
+    Well, MPC8540 has 825 MHz CPU clock yet decrementor/timebase are clocked 
+with 25 MHz clock if I don't mistake. That gives us 33 CPU clocks of available 
+interrupt latency...
 
-I believe the clockevents framework has not been designed for use with
-very slow one-shot clock event devices.  If it is to be used with very
-low clock rates, then there are several points where I think the
-rounding/truncation issues need to be carefully thought through.
+> In fact what we should program the decrementer to is:
 
-In any case, the code we have at the moment won't work with timebase
-clock rates below 15.258kHz, because decrementer_clockevent.mult will
-become zero.
+> 	timeout - (is_booke? 0: 1) - min_interrupt_latency
 
-Regards,
-Paul.
+    BTW, why not handle the decrementer difference right in set_dec() where we 
+already have #ifdef'ed code?
+
+> I was assuming that min_interrupt_latency (measured in timebase ticks)
+> would be at least 1, but apparently some systems can have a timebase
+> frequency as low as 1kHz, so we'll have to have an ifdef or something.
+
+    IMHO it's better to have #ifdef based on the decremeter model and forget 
+about the whole issue, rather than to #ifdef based on some bizarre system with 
+slowish decremeter, isn't it?
+
+> Paul.
+
+WBR, Sergei
