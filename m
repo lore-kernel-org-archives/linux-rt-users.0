@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [patch 7/8] wake up balance RT
-Date: Fri, 19 Oct 2007 14:43:01 -0400
-Message-ID: <20071019184337.146601417@goodmis.org>
+Subject: [patch 1/8] Add rt_nr_running accounting
+Date: Fri, 19 Oct 2007 14:42:55 -0400
+Message-ID: <20071019184336.195447315@goodmis.org>
 References: <20071019184254.456160632@goodmis.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -12,63 +12,79 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:57008 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758773AbXJSSoP (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:32796 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758913AbXJSSoP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 19 Oct 2007 14:44:15 -0400
-Content-Disposition: inline; filename=rt-balance-wakeup.patch
+Content-Disposition: inline; filename=count-rt-queued.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch adds pushing of overloaded RT tasks from a runqueue that is
-having tasks (most likely RT tasks) added to the run queue.
-
-TODO: We don't cover the case of waking of new RT tasks (yet).
+This patch adds accounting to keep track of the number of RT tasks running
+on a runqueue. This information will be used in later patches.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/sched.c    |    1 +
- kernel/sched_rt.c |   12 ++++++++++++
- 2 files changed, 13 insertions(+)
 
+---
+ kernel/sched.c    |    2 ++
+ kernel/sched_rt.c |   18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+)
+
+Index: linux-test.git/kernel/sched.c
+===================================================================
+--- linux-test.git.orig/kernel/sched.c	2007-10-19 12:32:39.000000000 -0400
++++ linux-test.git/kernel/sched.c	2007-10-19 12:33:09.000000000 -0400
+@@ -300,6 +300,8 @@ struct rq {
+ 	 */
+ 	unsigned long nr_uninterruptible;
+ 
++	unsigned long rt_nr_running;
++
+ 	struct task_struct *curr, *idle;
+ 	unsigned long next_balance;
+ 	struct mm_struct *prev_mm;
 Index: linux-test.git/kernel/sched_rt.c
 ===================================================================
---- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:36:05.000000000 -0400
-+++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:36:07.000000000 -0400
-@@ -512,9 +512,21 @@ static void schedule_tail_balance_rt(str
- 		spin_unlock_irq(&rq->lock);
- 	}
+--- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:31:08.000000000 -0400
++++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:33:09.000000000 -0400
+@@ -25,12 +25,28 @@ static void update_curr_rt(struct rq *rq
+ 	curr->se.exec_start = rq->clock;
  }
-+
-+static void wakeup_balance_rt(struct rq *rq, struct task_struct *p)
+ 
++static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
 +{
-+	if (unlikely(rt_task(p)) &&
-+	    (p->prio >= rq->curr->prio)) {
-+		/* pull_rt_task needs task to be running */
-+		p->state = TASK_RUNNING;
-+		push_rt_tasks(rq);
++	if (rt_task(p))
++		rq->rt_nr_running++;
++}
++
++static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
++{
++	if (rt_task(p)) {
++		WARN_ON(!rq->rt_nr_running);
++		rq->rt_nr_running--;
 +	}
 +}
 +
- #else /* CONFIG_SMP */
- # define schedule_balance_rt(rq)	do { } while (0)
- # define schedule_tail_balance_rt(rq)	do { } while (0)
-+# define wakeup_balance_rt(rq, p)	do { } while (0)
- #endif /* CONFIG_SMP */
+ static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+ {
+ 	struct rt_prio_array *array = &rq->rt.active;
  
- static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
-Index: linux-test.git/kernel/sched.c
-===================================================================
---- linux-test.git.orig/kernel/sched.c	2007-10-19 12:36:05.000000000 -0400
-+++ linux-test.git/kernel/sched.c	2007-10-19 12:36:07.000000000 -0400
-@@ -1609,6 +1609,7 @@ out_activate:
- 	update_rq_clock(rq);
- 	activate_task(rq, p, 1);
- 	check_preempt_curr(rq, p);
-+	wakeup_balance_rt(rq, p);
- 	success = 1;
+ 	list_add_tail(&p->run_list, array->queue + p->prio);
+ 	__set_bit(p->prio, array->bitmap);
++
++	inc_rt_tasks(p, rq);
+ }
  
- out_running:
+ /*
+@@ -42,6 +58,8 @@ static void dequeue_task_rt(struct rq *r
+ 
+ 	update_curr_rt(rq);
+ 
++	dec_rt_tasks(p, rq);
++
+ 	list_del(&p->run_list);
+ 	if (list_empty(array->queue + p->prio))
+ 		__clear_bit(p->prio, array->bitmap);
 
 -- 
