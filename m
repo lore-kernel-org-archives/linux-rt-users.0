@@ -1,63 +1,85 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Fri, 19 Oct 2007 17:35:03 +0400
-Message-ID: <4718B287.20306@ru.mvista.com>
-References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161C38.2070305@ru.mvista.com>	<18198.44590.721412.314409@cargo.ozlabs.ibm.com>	<471777BD.8090800@ru.mvista.com>	<18200.3600.459275.823335@cargo.ozlabs.ibm.com>	<47189EF3.7010103@ru.mvista.com> <18200.42194.853246.935329@cargo.ozlabs.ibm.com>
+From: Sripathi Kodi <sripathik@in.ibm.com>
+Subject: Re: High 50us+ latencies in the process signal handling path
+Date: Fri, 19 Oct 2007 19:50:09 +0530
+Message-ID: <200710191950.11664.sripathik@in.ibm.com>
+References: <20071018124827.GA22282@in.ibm.com> <4718A680.5000501@stud.feec.vutbr.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Paul Mackerras <paulus@samba.org>
+Cc: Ankita Garg <ankita@in.ibm.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Dinakar Guniguntala <dino@in.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>,
+	Mike Kravetz <kravetz@us.ibm.com>
+To: Michal Schmidt <xschmi00@stud.feec.vutbr.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from homer.mvista.com ([63.81.120.155]:53526 "EHLO
-	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753764AbXJSNew (ORCPT
+Received: from E23SMTP04.au.ibm.com ([202.81.18.173]:33509 "EHLO
+	e23smtp04.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756409AbXJSOUi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 09:34:52 -0400
-In-Reply-To: <18200.42194.853246.935329@cargo.ozlabs.ibm.com>
+	Fri, 19 Oct 2007 10:20:38 -0400
+Received: from sd0109e.au.ibm.com (d23rh905.au.ibm.com [202.81.18.225])
+	by e23smtp04.au.ibm.com (8.13.1/8.13.1) with ESMTP id l9JEKXd2019137
+	for <linux-rt-users@vger.kernel.org>; Sat, 20 Oct 2007 00:20:33 +1000
+Received: from d23av01.au.ibm.com (d23av01.au.ibm.com [9.190.234.96])
+	by sd0109e.au.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l9JEOAVm172068
+	for <linux-rt-users@vger.kernel.org>; Sat, 20 Oct 2007 00:24:10 +1000
+Received: from d23av01.au.ibm.com (loopback [127.0.0.1])
+	by d23av01.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l9JEHgxl025573
+	for <linux-rt-users@vger.kernel.org>; Sat, 20 Oct 2007 00:17:43 +1000
+In-Reply-To: <4718A680.5000501@stud.feec.vutbr.cz>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello.
+On Friday 19 October 2007 18:13, Michal Schmidt wrote:
+> Ankita Garg wrote:
+> > Hi,
+> >
+> > There is a testcase called 'pthread_kill_latency' under the rt-test suite
+> > on the the RT Wiki:
+> >
+> > http://www.kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/rt-te
+> >st-0.3.tar.bz2
+> >
+> > Description of the testcase:
+> >
+> > The test measures the latency involved in sending a signal to a thread
+> > using pthread_kill. Two threads are created, receiver thread (thread1)
+> > and sender thread (thread2). Before sending the signal, it waits for
+> > thread1 to initialize (thread1 waits by calling sigwait), notes the time
+> > and send pthread_kill signal to thread1. thread1 notes the time it
+> > receives the signal. The maximum and the minimum latency is reported.
+> > This is repeated about 10000 times.
+>
+> I'm looking at the source. The receiver thread runs with realtime
+> priority (it's created with create_fifo_thread), but the sender thread
+> (thread2) doesn't (create_other_thread). The sender does:
+>
+>         /* Record the time just before sending the signal */
+>         begin = rt_gettime();
+> /**** The sender can get preempted by anything right here ! ****/
+>         if ((ret = pthread_kill(PTHREADOF(target_thread), SIGNALNUMBER))) {
+>             printf("pthread_kill returned %d\n", ret);
+>         }
+>
+> Can this explain it?
 
-Paul Mackerras wrote:
+We have changed the sender to be of priority 1 less than the receiver. This 
+brings down the frequency of seeing high latencies, especially if there is a 
+background load, but does not eliminate them. In fact the logs Ankita posted 
+were with the sender at this RT priority.
 
->>    The xtime_lock is still grabbed by time_init()
+-Sripathi.
 
-    Oops, I got distracted and hadn't finish the passage.
-    My patch got rid of this xtime_lock stuff -- but this was in a different
-context, with all vDSO initialization code in between being killed by John's
-patch.  I'm not sure it still has sense to hold this lock in time_init()
-around that initialization...
-
-> That was left in there because we are setting sys_tz
-
-    My patch moved that to read_persistent_clock()...
-
-> and do_gtod, and do_gtod at least is only updated with the xtime_lock held.
-
-> Of course, at that early stage in the boot process, no lock is really needed, but
-> xtime_lock was taken for consistency with other code.
-
-    Thanks for claryfing this.
-
->>    The only thing I'm still unusre about is that deterministic accounting. 
->>Could you point me at the patch which deals with this (at least for System 390 
-
-> See efe567fc8281661524ffa75477a7c4ca9b466c63 in Linus' tree, and look
-
-    Wait, how this is related to the hrtimer's event handlers not being able 
-to call account_process_time() from arch/powerpc/kernel/time.c instead of 
-update_process_timess()?
-
-> for posts to lkml by Christian Borntraeger, who has been pursuing the
-> issue (subject "Re: [stable] 2.6.23 regression: top displaying 9999%
-> CPU usage").
-
-    Fun. :-)
-
-> Paul.
-
-WBR, Sergei
+>
+> Michal
+>
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
+> in the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
