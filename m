@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [patch 4/8] RT overloaded runqueues accounting
-Date: Fri, 19 Oct 2007 14:42:58 -0400
-Message-ID: <20071019184336.669654901@goodmis.org>
+Subject: [patch 5/8] Move prototypes together.
+Date: Fri, 19 Oct 2007 14:42:59 -0400
+Message-ID: <20071019184336.826217430@goodmis.org>
 References: <20071019184254.456160632@goodmis.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -12,67 +12,49 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:57094 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1765900AbXJSSoT (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:55368 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762699AbXJSSoQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 14:44:19 -0400
-Content-Disposition: inline; filename=rt-overload.patch
+	Fri, 19 Oct 2007 14:44:16 -0400
+Content-Disposition: inline; filename=mov-protos.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch adds an RT overload accounting system. When a runqueue has
-more than one RT task queued, it is marked as overloaded. That is that it
-is a candidate to have RT tasks pulled from it.
+A later patch uses some of the functions that were declared, and
+this patch is used to move those prototypes up with other prototypes
+that were declared.
 
-Along with the rt_overload counter (number of overloaded runqueues) a
-bit mask of overloaded runqueues with RT tasks is set.
+This patch is mainly for prettiness.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
 ---
- kernel/sched_rt.c |   19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ kernel/sched_rt.c |    5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
 Index: linux-test.git/kernel/sched_rt.c
 ===================================================================
---- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:34:46.000000000 -0400
-+++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:35:58.000000000 -0400
-@@ -25,10 +25,23 @@ static void update_curr_rt(struct rq *rq
- 	curr->se.exec_start = rq->clock;
- }
+--- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:35:58.000000000 -0400
++++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:36:02.000000000 -0400
+@@ -28,6 +28,8 @@ static void update_curr_rt(struct rq *rq
+ #ifdef CONFIG_SMP
+ static __cacheline_aligned_in_smp atomic_t rt_overload;
+ static cpumask_t rto_cpumask;
++static int double_lock_balance(struct rq *this_rq, struct rq *busiest);
++static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep);
+ #endif /* CONFIG_SMP*/
  
-+#ifdef CONFIG_SMP
-+static __cacheline_aligned_in_smp atomic_t rt_overload;
-+static cpumask_t rto_cpumask;
-+#endif /* CONFIG_SMP*/
-+
  static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+@@ -133,9 +135,6 @@ static struct task_struct *pick_next_tas
+ /* Only try algorithms three times */
+ #define RT_MAX_TRIES 3
+ 
+-static int double_lock_balance(struct rq *this_rq, struct rq *busiest);
+-static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep);
+-
+ static inline void rq_prio_add_task(struct rq *rq, struct task_struct *p)
  {
- 	if (rt_task(p))
- 		rq->rt_nr_running++;
-+#ifdef CONFIG_SMP
-+	if (rq->rt_nr_running == 2) {
-+		cpu_set(rq->cpu, rto_cpumask);
-+		/* Make sure this cpu is visible on rt_overloads */
-+		smp_wmb();
-+		atomic_inc(&rt_overload);
-+	}
-+#endif
- }
- 
- static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
-@@ -37,6 +50,12 @@ static inline void dec_rt_tasks(struct t
- 		WARN_ON(!rq->rt_nr_running);
- 		rq->rt_nr_running--;
- 	}
-+#ifdef CONFIG_SMP
-+	if (rq->rt_nr_running == 1) {
-+		atomic_dec(&rt_overload);
-+		cpu_clear(rq->cpu, rto_cpumask);
-+	}
-+#endif
- }
- 
- static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+ 	if (unlikely(rt_task(p)) && p->prio < rq->highest_prio)
 
 -- 
