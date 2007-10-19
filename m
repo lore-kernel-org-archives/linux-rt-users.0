@@ -1,8 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [patch 8/8] disable CFS RT load balancing.
-Date: Fri, 19 Oct 2007 14:43:02 -0400
-Message-ID: <20071019184337.305006472@goodmis.org>
-References: <20071019184254.456160632@goodmis.org>
+Subject: Re: [patch 2/8] track highest prio queued on runqueue
+Date: Fri, 19 Oct 2007 15:19:22 -0400
+Message-ID: <20071019191922.GA10404@goodmis.org>
+References: <20071019184254.456160632@goodmis.org> <20071019184336.349767581@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Ingo Molnar <mingo@elte.hu>,
@@ -12,131 +14,94 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:55505 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933590AbXJSSoZ (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:63519 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761013AbXJSTUW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 14:44:25 -0400
-Content-Disposition: inline; filename=disable-CFS-rt-balance.patch
+	Fri, 19 Oct 2007 15:20:22 -0400
+Content-Disposition: inline
+In-Reply-To: <20071019184336.349767581@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Since we now take an active approach to load balancing, we don't need to
-balance RT tasks via CFS. In fact, this code was found to pull RT tasks
-away from CPUS that the active movement performed, resulting in
-large latencies.
+On Fri, Oct 19, 2007 at 02:42:56PM -0400, Steven Rostedt wrote:
+> This patch adds accounting to each runqueue to keep track of the
+> highest prio task queued on the run queue. We only care about
+> RT tasks, so if the run queue does not contain any active RT tasks
+> its priority will be considered MAX_RT_PRIO.
+> 
+> This information will be used for later patches.
+> 
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/sched_rt.c |   90 +-----------------------------------------------------
- 1 file changed, 2 insertions(+), 88 deletions(-)
+[...]
 
-Index: linux-test.git/kernel/sched_rt.c
-===================================================================
---- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:36:07.000000000 -0400
-+++ linux-test.git/kernel/sched_rt.c	2007-10-19 13:01:31.000000000 -0400
-@@ -535,100 +535,14 @@ static void put_prev_task_rt(struct rq *
- 	p->se.exec_start = 0;
- }
- 
--/*
-- * Load-balancing iterator. Note: while the runqueue stays locked
-- * during the whole iteration, the current task might be
-- * dequeued so the iterator has to be dequeue-safe. Here we
-- * achieve that by always pre-iterating before returning
-- * the current task:
-- */
--static struct task_struct *load_balance_start_rt(void *arg)
--{
--	struct rq *rq = arg;
--	struct rt_prio_array *array = &rq->rt.active;
--	struct list_head *head, *curr;
--	struct task_struct *p;
--	int idx;
--
--	idx = sched_find_first_bit(array->bitmap);
--	if (idx >= MAX_RT_PRIO)
--		return NULL;
--
--	head = array->queue + idx;
--	curr = head->prev;
--
--	p = list_entry(curr, struct task_struct, run_list);
--
--	curr = curr->prev;
--
--	rq->rt.rt_load_balance_idx = idx;
--	rq->rt.rt_load_balance_head = head;
--	rq->rt.rt_load_balance_curr = curr;
--
--	return p;
--}
--
--static struct task_struct *load_balance_next_rt(void *arg)
--{
--	struct rq *rq = arg;
--	struct rt_prio_array *array = &rq->rt.active;
--	struct list_head *head, *curr;
--	struct task_struct *p;
--	int idx;
--
--	idx = rq->rt.rt_load_balance_idx;
--	head = rq->rt.rt_load_balance_head;
--	curr = rq->rt.rt_load_balance_curr;
--
--	/*
--	 * If we arrived back to the head again then
--	 * iterate to the next queue (if any):
--	 */
--	if (unlikely(head == curr)) {
--		int next_idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
--
--		if (next_idx >= MAX_RT_PRIO)
--			return NULL;
--
--		idx = next_idx;
--		head = array->queue + idx;
--		curr = head->prev;
--
--		rq->rt.rt_load_balance_idx = idx;
--		rq->rt.rt_load_balance_head = head;
--	}
--
--	p = list_entry(curr, struct task_struct, run_list);
--
--	curr = curr->prev;
--
--	rq->rt.rt_load_balance_curr = curr;
--
--	return p;
--}
--
- static unsigned long
- load_balance_rt(struct rq *this_rq, int this_cpu, struct rq *busiest,
- 			unsigned long max_nr_move, unsigned long max_load_move,
- 			struct sched_domain *sd, enum cpu_idle_type idle,
- 			int *all_pinned, int *this_best_prio)
- {
--	int nr_moved;
--	struct rq_iterator rt_rq_iterator;
--	unsigned long load_moved;
--
--	rt_rq_iterator.start = load_balance_start_rt;
--	rt_rq_iterator.next = load_balance_next_rt;
--	/* pass 'busiest' rq argument into
--	 * load_balance_[start|next]_rt iterators
--	 */
--	rt_rq_iterator.arg = busiest;
--
--	nr_moved = balance_tasks(this_rq, this_cpu, busiest, max_nr_move,
--			max_load_move, sd, idle, all_pinned, &load_moved,
--			this_best_prio, &rt_rq_iterator);
--
--	return load_moved;
-+	/* don't touch RT tasks */
-+	return 0;
- }
- 
- static void task_tick_rt(struct rq *rq, struct task_struct *p)
+> @@ -972,6 +974,8 @@ static void activate_task(struct rq *rq,
+>  
+>  	enqueue_task(rq, p, wakeup);
+>  	inc_nr_running(p, rq);
+> +
+> +	rq_prio_add_task(rq, p);
+>  }
+>  
+>  /*
+> @@ -984,6 +988,8 @@ static void deactivate_task(struct rq *r
+>  
+>  	dequeue_task(rq, p, sleep);
+>  	dec_nr_running(p, rq);
+> +
+> +	rq_prio_remove_task(rq, p);
+>  }
+>  
+>  /**
+> @@ -6619,6 +6625,7 @@ void __init sched_init(void)
+>  		rq->cpu = i;
+>  		rq->migration_thread = NULL;
+>  		INIT_LIST_HEAD(&rq->migration_queue);
+> +		rq->highest_prio = MAX_RT_PRIO;
+>  #endif
+>  		atomic_set(&rq->nr_iowait, 0);
+>  
+> Index: linux-test.git/kernel/sched_rt.c
+> ===================================================================
+> --- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:33:09.000000000 -0400
+> +++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:33:23.000000000 -0400
+> @@ -110,6 +110,31 @@ static struct task_struct *pick_next_tas
+>  	return next;
+>  }
+>  
+> +#ifdef CONFIG_SMP
+> +static inline void rq_prio_add_task(struct rq *rq, struct task_struct *p)
+> +{
+> +	if (unlikely(rt_task(p)) && p->prio < rq->highest_prio)
+> +		rq->highest_prio = p->prio;
+> +}
+> +
+> +static inline void rq_prio_remove_task(struct rq *rq, struct task_struct *p)
+> +{
+> +	struct rt_prio_array *array;
+> +
+> +	if (unlikely(rt_task(p))) {
+> +		if (rq->rt_nr_running) {
+> +			if (p->prio >= rq->highest_prio) {
+> +				/* recalculate */
+> +				array = &rq->rt.active;
+> +				rq->highest_prio =
+> +					sched_find_first_bit(array->bitmap);
+> +			} /* otherwise leave rq->highest prio alone */
+> +		} else
+> +			rq->highest_prio = MAX_RT_PRIO;
+> +	}
+> +}
+> +#endif /* CONFIG_SMP */
+> +
 
--- 
+Sorry, I forgot to test this on UP. Seems to be missing a 
+
+#define rq_prio_remove_task(rq, p) do { } while(0)
+#define rq_prio_add(rq, p) do { } while(0)
+
+for the !CONFIG_SMP case.
+
+Will fix.
+
+-- Steve
