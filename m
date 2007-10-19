@@ -1,107 +1,60 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch 2/8] track highest prio queued on runqueue
-Date: Fri, 19 Oct 2007 15:19:22 -0400
-Message-ID: <20071019191922.GA10404@goodmis.org>
-References: <20071019184254.456160632@goodmis.org> <20071019184336.349767581@goodmis.org>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Subject: Re: [patch 6/8] pull RT tasks
+Date: Fri, 19 Oct 2007 21:24:53 +0200
+Message-ID: <1192821893.9471.17.camel@lappy>
+References: <20071019184254.456160632@goodmis.org>
+	 <20071019184336.983272715@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Linus Torvalds <torvalds@linux-foundation.org>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+	Gregory Haskins <ghaskins@novell.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:63519 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1761013AbXJSTUW (ORCPT
+Received: from pentafluge.infradead.org ([213.146.154.40]:48790 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758798AbXJSTZ6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 15:20:22 -0400
-Content-Disposition: inline
-In-Reply-To: <20071019184336.349767581@goodmis.org>
+	Fri, 19 Oct 2007 15:25:58 -0400
+In-Reply-To: <20071019184336.983272715@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 19, 2007 at 02:42:56PM -0400, Steven Rostedt wrote:
-> This patch adds accounting to each runqueue to keep track of the
-> highest prio task queued on the run queue. We only care about
-> RT tasks, so if the run queue does not contain any active RT tasks
-> its priority will be considered MAX_RT_PRIO.
-> 
-> This information will be used for later patches.
-> 
 
-[...]
+On Fri, 2007-10-19 at 14:43 -0400, Steven Rostedt wrote:
+> plain text document attachment (rt-balance-pull-tasks.patch)
 
-> @@ -972,6 +974,8 @@ static void activate_task(struct rq *rq,
->  
->  	enqueue_task(rq, p, wakeup);
->  	inc_nr_running(p, rq);
-> +
-> +	rq_prio_add_task(rq, p);
->  }
->  
->  /*
-> @@ -984,6 +988,8 @@ static void deactivate_task(struct rq *r
->  
->  	dequeue_task(rq, p, sleep);
->  	dec_nr_running(p, rq);
-> +
-> +	rq_prio_remove_task(rq, p);
->  }
->  
->  /**
-> @@ -6619,6 +6625,7 @@ void __init sched_init(void)
->  		rq->cpu = i;
->  		rq->migration_thread = NULL;
->  		INIT_LIST_HEAD(&rq->migration_queue);
-> +		rq->highest_prio = MAX_RT_PRIO;
->  #endif
->  		atomic_set(&rq->nr_iowait, 0);
->  
-> Index: linux-test.git/kernel/sched_rt.c
-> ===================================================================
-> --- linux-test.git.orig/kernel/sched_rt.c	2007-10-19 12:33:09.000000000 -0400
-> +++ linux-test.git/kernel/sched_rt.c	2007-10-19 12:33:23.000000000 -0400
-> @@ -110,6 +110,31 @@ static struct task_struct *pick_next_tas
->  	return next;
->  }
->  
-> +#ifdef CONFIG_SMP
-> +static inline void rq_prio_add_task(struct rq *rq, struct task_struct *p)
+> +static int pull_rt_task(struct rq *this_rq)
 > +{
-> +	if (unlikely(rt_task(p)) && p->prio < rq->highest_prio)
-> +		rq->highest_prio = p->prio;
-> +}
+> +	struct task_struct *next;
+> +	struct task_struct *p;
+> +	struct rq *src_rq;
+> +	int this_cpu = this_rq->cpu;
+> +	int cpu;
+> +	int ret = 0;
 > +
-> +static inline void rq_prio_remove_task(struct rq *rq, struct task_struct *p)
-> +{
-> +	struct rt_prio_array *array;
+> +	assert_spin_locked(&this_rq->lock);
 > +
-> +	if (unlikely(rt_task(p))) {
-> +		if (rq->rt_nr_running) {
-> +			if (p->prio >= rq->highest_prio) {
-> +				/* recalculate */
-> +				array = &rq->rt.active;
-> +				rq->highest_prio =
-> +					sched_find_first_bit(array->bitmap);
-> +			} /* otherwise leave rq->highest prio alone */
-> +		} else
-> +			rq->highest_prio = MAX_RT_PRIO;
+> +	if (likely(!atomic_read(&rt_overload)))
+> +		return 0;
+
+This seems to be the only usage of rt_overload. I'm not sure its worth
+keeping it around for this.
+
+> +	next = pick_next_task_rt(this_rq);
+> +
+> +	for_each_cpu_mask(cpu, rto_cpumask) {
+> +		if (this_cpu == cpu)
+> +			continue;
+
+...
+
 > +	}
-> +}
-> +#endif /* CONFIG_SMP */
 > +
-
-Sorry, I forgot to test this on UP. Seems to be missing a 
-
-#define rq_prio_remove_task(rq, p) do { } while(0)
-#define rq_prio_add(rq, p) do { } while(0)
-
-for the !CONFIG_SMP case.
-
-Will fix.
-
--- Steve
+> +	return ret;
+> +}
