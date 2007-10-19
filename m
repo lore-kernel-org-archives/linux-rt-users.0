@@ -1,77 +1,45 @@
-From: Gernot Hillier <gernot.hillier@siemens.com>
-Subject: thread load balancing on dual CPU Multicore AMD64 system
-Date: Thu, 18 Oct 2007 19:01:36 +0200
-Message-ID: <47179170.7030802@siemens.com>
+From: Paul Mackerras <paulus@samba.org>
+Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
+Date: Fri, 19 Oct 2007 10:14:54 +1000
+Message-ID: <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
+References: <20070921032603.0D3EA32C887@thor>
+	<4713A616.3090103@ru.mvista.com>
+	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>
+	<47161D79.6000003@ru.mvista.com>
+	<18198.43687.44059.477047@cargo.ozlabs.ibm.com>
+	<47177229.2030200@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Tony Breeds <tony@bakeyournoodle.com>, linuxppc-dev@ozlabs.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from david.siemens.de ([192.35.17.14]:17499 "EHLO david.siemens.de"
+Received: from ozlabs.org ([203.10.76.45]:58882 "EHLO ozlabs.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758288AbXJRRSr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Oct 2007 13:18:47 -0400
-Received: from mail1.siemens.de (localhost [127.0.0.1])
-	by david.siemens.de (8.12.6/8.12.6) with ESMTP id l9IH1aQ4010301
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Oct 2007 19:01:36 +0200
-Received: from [192.168.2.1] ([139.22.111.67])
-	by mail1.siemens.de (8.12.6/8.12.6) with ESMTP id l9IH1ZTb007641
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Oct 2007 19:01:35 +0200
+	id S1754432AbXJSAPB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Oct 2007 20:15:01 -0400
+In-Reply-To: <47177229.2030200@ru.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi!
+Sergei Shtylyov writes:
 
-We're currently evaluating whether PREEMPT_RT will work for a certain
-use case combining realtime and performance requirements running on a
-lot of CPUs and using a bunch of RAM.
+> > What problem do you see arising from this?
+> 
+>     Timers firing too early.
 
-For first tests, we're running a "small" AMD64 test system with 2x2
-cores (2 CPUs with 2 cores each) with 8 GB of RAM.
+Only if the minimum interrupt latency is less than 1 decrementer
+tick.  That seems pretty unlikely to me unless you have a very slow
+timebase frequency.
 
-We wrote a small testcase which basically has one SCHED_FIFO "realtime"
-thread which does nothing but sleeping and checking if it wakes up at
-the right time. In addition, it spawns 20 low-prio "load threads"
-introducing a lot of malloc/memory access/free load on some GB of RAM.
+In fact what we should program the decrementer to is:
 
-We can see, that the realtime requirements are fulfilled quite well (if
-using the current glibc with private futexes, but that's another story).
-The "rt thread" reacts within the expected timeframe with 2.6.22.1-rt9
-as well as with 2.6.23-rt1.
+	timeout - (is_booke? 0: 1) - min_interrupt_latency
 
-However, what causes problems is the load balancing of the 20 threads
-over the available CPU cores:
+I was assuming that min_interrupt_latency (measured in timebase ticks)
+would be at least 1, but apparently some systems can have a timebase
+frequency as low as 1kHz, so we'll have to have an ifdef or something.
 
-- With 2.6.22.1-vanilla, the threads are distributed over all four
-available cores
-- With 2.6.22.1-rt9 (patched, but PREEMPT_RT & friends *disabled*), the
-threads are distributed *only over two cores*, the others are idling
-- With 2.6.22.1-rt9 (PREEMPT_RT & friends enabled), the threads are
-distributed *only over two cores*, the others are idling
-
-- With 2.6.23-rt1 (patched, but PREEMPT_RT & friends *disabled*), the
-threads are distributed over all four cores
-- With 2.6.23-rt1 (PREEMPT_RT & friends enabled), the threads are
-distributed *only over two cores*, the others are idling
-
-We have not set any CPU affinities in any case.
-
-With the 2.6.22 series, I played a bit with
-patch-2.6.22.1-rt9-broken-out.tar.bz2 and am quite sure that the
-behaviour change is introduced by preempt-softirqs-core.patch. If I
-apply anything up to and including this patch (according to the series
-file), I see that only two cores are used. If I just remove this sole
-patch, all four cores are used again.
-
-Any ideas what causes these issues? Is this somehow connected to NUMA
-optimizations or just a bug? Known one?
-
-Any idea or suggestions welcome...
-
-TIA!
-
-----
-With kind regards,
-Gernot Hillier
-Siemens AG, CT SE 2
-Corporate Competence Center Embedded Linux
+Paul.
