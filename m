@@ -1,55 +1,78 @@
-From: Gabriel Paubert <paubert@iram.es>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Fri, 19 Oct 2007 11:22:05 +0200
-Message-ID: <20071019092205.GA9668@iram.es>
-References: <20070921032603.0D3EA32C887@thor> <4713A616.3090103@ru.mvista.com> <18195.64334.985238.848522@cargo.ozlabs.ibm.com> <47161D79.6000003@ru.mvista.com> <18198.43687.44059.477047@cargo.ozlabs.ibm.com> <47177229.2030200@ru.mvista.com> <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
+From: ankita@in.ibm.com (Ankita Garg)
+Subject: Re: High 50us+ latencies in the process signal handling path
+Date: Fri, 19 Oct 2007 16:41:40 +0530
+Message-ID: <20071019111140.GA16728@in.ibm.com>
+References: <20071018124827.GA22282@in.ibm.com> <20071018.055242.115933276.davem@davemloft.net> <20071018132614.GB22282@in.ibm.com> <Pine.LNX.4.58.0710180934170.10242@gandalf.stny.rr.com>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Sergei Shtylyov <sshtylyov@ru.mvista.com>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Paul Mackerras <paulus@samba.org>
+Cc: David Miller <davem@davemloft.net>, linux-rt-users@vger.kernel.org,
+	ghaskins@novell.com, mingo@elte.hu, dino@in.ibm.com,
+	dvhltc@us.ibm.com, kravetz@us.ibm.com
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gra-lx1.iram.es ([150.214.224.41]:59734 "EHLO gra-lx1.iram.es"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752150AbXJSJo7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2007 05:44:59 -0400
+Received: from E23SMTP06.au.ibm.com ([202.81.18.175]:53342 "EHLO
+	e23smtp06.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752465AbXJSLLq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Oct 2007 07:11:46 -0400
+Received: from d23relay03.au.ibm.com (d23relay03.au.ibm.com [202.81.18.234])
+	by e23smtp06.au.ibm.com (8.13.1/8.13.1) with ESMTP id l9JBBgAk014851
+	for <linux-rt-users@vger.kernel.org>; Fri, 19 Oct 2007 21:11:42 +1000
+Received: from d23av02.au.ibm.com (d23av02.au.ibm.com [9.190.235.138])
+	by d23relay03.au.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l9JBBh7c2056292
+	for <linux-rt-users@vger.kernel.org>; Fri, 19 Oct 2007 21:11:43 +1000
+Received: from d23av02.au.ibm.com (loopback [127.0.0.1])
+	by d23av02.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l9JBBg3A028294
+	for <linux-rt-users@vger.kernel.org>; Fri, 19 Oct 2007 21:11:43 +1000
 Content-Disposition: inline
-In-Reply-To: <18199.63230.583536.307945@cargo.ozlabs.ibm.com>
+In-Reply-To: <Pine.LNX.4.58.0710180934170.10242@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 19, 2007 at 10:14:54AM +1000, Paul Mackerras wrote:
-> Sergei Shtylyov writes:
-> 
-> > > What problem do you see arising from this?
-> > 
-> >     Timers firing too early.
-> 
-> Only if the minimum interrupt latency is less than 1 decrementer
-> tick.  That seems pretty unlikely to me unless you have a very slow
-> timebase frequency.
-> 
-> In fact what we should program the decrementer to is:
-> 
-> 	timeout - (is_booke? 0: 1) - min_interrupt_latency
-> 
-> I was assuming that min_interrupt_latency (measured in timebase ticks)
-> would be at least 1, but apparently some systems can have a timebase
-> frequency as low as 1kHz, so we'll have to have an ifdef or something.
+Hi Steve,
 
-If it is the case (the slowest I've seen was in the 8 MHz range), then
-it is better not to subtract the one: think of what happens when you
-have say, a 10kHz timebase/decrementer frequency and you want to
-interrupt after 1 ms. You actually want to interrupt after 11
-transitions of the decrementer, not 10 since the result could be
-as low as 900us if you happen to read the timebase just before
-a transition.
+On Thu, Oct 18, 2007 at 09:38:44AM -0400, Steven Rostedt wrote:
+> 
+> --
+> When I'm asked what language is my mother tongue,
+> I simply answer "C".
+> 
+> On Thu, 18 Oct 2007, Ankita Garg wrote:
+> 
+> > > > Any thoughts on where in the code could these large latencies be
+> > > > attributed to?
+> > >
+> > > If the max latency is usually the first one, it's could be the page
+> > > fault the signal handler is taking the first time it is executed.
+> >
+> > Thanks for looking into this. Attaching the entire log from the testrun.
+> > It indicates that in each run of the 10000 iterations, there are about 100+
+> > failures, with large iterations. Also, on intrumenting the testcode to
+> > find out the iterations which see large latencies, I see that as the
+> > number of iterations increase, the latencies increase.
+> 
+> OK, this doesn't look like page faulting issues. But it is still a good
+> idea to add mlock to any RT tests.
+> 
+> Could this possible be simply cache misses that cause this?  There's a bit
+> of code to send a signal. What would the impact of cold cache be on this?
+> 
+> One way is to see the mininum run of running with cached disabled. Not
+> sure if there's any way to disable cache via a kernel command line. Of
+> course that would make the system very slow to boot ;-)
+>
 
-I'd really wish there were a guarantee of a minimum timebase 
-frequency, for anything above ~10MHz, we are splitting hairs
-about an off-by-one error that never accumulates, but if systems
-with very low TB freq exist, you have to be very careful. In any case
-timer interrupts should never came earlier than asked for.
+The machines I am working on does not support disabling caches via BIOS
+and as Documentation/memory.txt suggests, BIOS seems to be the only way.
 
-	Gabriel
+Also, mlocking did not make any difference in the latencies.
+
+> -- Steve
+
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
