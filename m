@@ -1,141 +1,43 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
-Subject: Interrupt Latency module for intel
-Date: Sat, 20 Oct 2007 12:06:30 +0530
-Message-ID: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 9/9] RT: Only dirty a cacheline if the priority is actually
+ changing
+Date: Sat, 20 Oct 2007 03:54:39 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710200353270.12737@gandalf.stny.rr.com>
+References: <20071017184745.11272.10024.stgit@novell1.haskins.net>
+ <20071017185113.11272.50568.stgit@novell1.haskins.net> <47196C9B.7090909@tiscali.nl>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_5765_17235942.1192862190177"
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Gregory Haskins <ghaskins@novell.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Roel Kluin <12o3l@tiscali.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0910.google.com ([209.85.198.186]:35166 "EHLO
-	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756892AbXJTGga (ORCPT
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:46016 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753217AbXJTHyy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 20 Oct 2007 02:36:30 -0400
-Received: by rv-out-0910.google.com with SMTP id k20so662859rvb
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Oct 2007 23:36:30 -0700 (PDT)
+	Sat, 20 Oct 2007 03:54:54 -0400
+In-Reply-To: <47196C9B.7090909@tiscali.nl>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_5765_17235942.1192862190177
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-hello all,
+--
+On Sat, 20 Oct 2007, Roel Kluin wrote:
 
-On my Intel Pentium 4 with linux-2.6.23-rc8-rt1, I am getting :
+> Gregory Haskins wrote:
+> > We can avoid dirtying a rq related cacheline with a simple check, so why not.
+> >
+> > Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> > ---
+> >
+> >  0 files changed, 0 insertions(+), 0 deletions(-)
+>
+> I think you wanted a patch here?
+>
 
-Interrupt Latency result
-------------------------
-MAX latency : 12.570 micro-seconds
-MIN latency : 3.352 micro-seconds
-AVG latency : 4.190 micro-seconds
-Total Samples : 32583
+But it is here.  Gregory is a Zen master, and this patch does exactly what
+he wanted it to do.
 
-Please review this interrupt latency module and give your feedback.
-
-Thank you,
-
-Jaswinder Singh.
-
-------=_Part_5765_17235942.1192862190177
-Content-Type: text/plain; name=irq_latency.c
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f7zrak9i
-Content-Disposition: attachment; filename=irq_latency.c
-
-LyoKICogSW50ZXJydXB0IGxhdGVuY3kgdGVzdCBtb2R1bGUKICoKICogKEMpIDIwMDcgSmFzd2lu
-ZGVyIFNpbmdoIDxqYXN3aW5kZXJsaW51eHJ0QGdtYWlsLmNvbT4KICoKICogVGhpcyBwcm9ncmFt
-IGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vcgogKiBtb2Rp
-ZnkgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5jZSBW
-ZXJzaW9uCiAqIDIgYXMgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24u
-CiAqCiAqLwoKI2luY2x1ZGUgPGxpbnV4L21vZHVsZS5oPgojaW5jbHVkZSA8bGludXgvaW5pdC5o
-PgojaW5jbHVkZSA8bGludXgvYmNkLmg+CiNpbmNsdWRlIDxhc20vdGltZS5oPgoKLy8jZGVmaW5l
-IERCR19JUlFfTEFUCQkvKiBkZWJ1ZyBpbnRlcnJ1cHQgbGF0ZW5jeSB0ZXN0ICovCiNkZWZpbmUg
-VEVTVF9DT1VOVAkyMDAwMAkvKiBsb29wIHRvIGdldCBtYXggdGltZXIgY291bnQgICovCgovKiBn
-ZXR0aW5nIGdsb2JhbCB0aW1lIGZyb20gODI1NCAqLwojZGVmaW5lIFJFQURfQ05UMCh2YXIpIGRv
-IHt2YXIgPSBpbmIoMHg0MCk7IHZhciB8PSAoaW5iKDB4NDApIDw8IDgpO30gd2hpbGUgKDApCgoj
-aWZkZWYgREJHX0lSUV9MQVQKI2RlZmluZSBURVNUX0NOVAk1MApzdGF0aWMgbG9uZyBsYXRfdmFs
-W1RFU1RfQ05UXTsKI2VuZGlmCgpzdGF0aWMgdm9sYXRpbGUgbG9uZyBjb3VudF9jMDsKc3RhdGlj
-IGxvbmcgbWF4X2MwID0gMDsKc3RhdGljIGxvbmcgY250X2MwID0gMDsKCnN0YXRpYyBsb25nIGxh
-dF9tYXggPSAwOwpzdGF0aWMgbG9uZyBsYXRfbWluID0gMTAwMDAwMDAwOwpzdGF0aWMgdW5zaWdu
-ZWQgbG9uZyBpcnFfY250ID0gMDsKc3RhdGljIHVuc2lnbmVkIGxvbmcgbGF0X2F2ZyA9IDA7Cgpz
-dGF0aWMgdm9pZCBpcnFfbGF0X2hkcih2b2lkKQp7CglSRUFEX0NOVDAoY291bnRfYzApOwoJY291
-bnRfYzAgPSAobWF4X2MwIC0gY291bnRfYzApOwoJaWYgKGNvdW50X2MwID4gbGF0X21heCkKCQls
-YXRfbWF4ID0gY291bnRfYzA7CglpZiAoY291bnRfYzAgPCBsYXRfbWluKQoJCWxhdF9taW4gPSBj
-b3VudF9jMDsKCWxhdF9hdmcgPSBsYXRfYXZnICsgY291bnRfYzA7CiNpZmRlZiBEQkdfSVJRX0xB
-VAoJaWYgKGlycV9jbnQgPCBURVNUX0NOVCkKCXsKCQlsYXRfdmFsW2lycV9jbnRdID0gY291bnRf
-YzA7Cgl9CiNlbmRpZgoJaXJxX2NudCsrOwp9CgovKiBnZXQgbWF4aW11bSB0aW1lciBjb3VudCAq
-LwpzdGF0aWMgbG9uZyBnZXRfbWF4X3RpY2tzKHZvaWQpCnsKCXVuc2lnbmVkIGxvbmcgbWF4X3Rp
-Y2tzID0gMDsKCgl3aGlsZShjbnRfYzAgPCBURVNUX0NPVU5UKQoJewkKCQlSRUFEX0NOVDAoY291
-bnRfYzApOwoJCWlmIChjb3VudF9jMCA+IG1heF90aWNrcykKCQkJbWF4X3RpY2tzID0gY291bnRf
-YzA7CgkJY250X2MwKys7Cgl9CiNpZmRlZiBEQkdfSVJRX0xBVAoJcHJpbnRrKCJtYXggJWx1IGNu
-dCAlbHVcbiIsIG1heF90aWNrcywgY250X2MwKTsKI2VuZGlmCglyZXR1cm4gbWF4X3RpY2tzOwp9
-CgpzdGF0aWMgaW50IF9faW5pdCBpcnFfbGF0X2luaXQodm9pZCkKewoJcHJpbnRrKCIqKioqKioq
-KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqXG4iKTsKCXByaW50aygiKiAgSW50ZXJydXB0
-IExhdGVuY3kgbW9kdWxlIGxvYWRlZCAgKlxuIik7CglwcmludGsoIiogV2hlbiB5b3UgcmVtb3Zl
-IHRoaXMgbW9kdWxlIHlvdSAgICpcbiIpOwoJcHJpbnRrKCIqIHdpbGwgZ2V0IGludGVycnVwdCBs
-YXRlbmN5IHJlc3VsdCAqXG4iKTsKCXByaW50aygiKioqKioqKioqKioqKioqKioqKioqKioqKioq
-KioqKioqKioqKlxuIik7CgoJbWF4X2MwID0gZ2V0X21heF90aWNrcygpOwoKCWlycV9sYXRfcHRy
-ID0gaXJxX2xhdF9oZHI7CS8qIEluc3RhbGwgaW50ZXJydXB0IGhhbmRsZXIgKi8KCglyZXR1cm4g
-MDsKfQoKc3RhdGljIHZvaWQgX19leGl0IGlycV9sYXRfZXhpdCh2b2lkKQp7Cgl1bnNpZ25lZCBs
-b25nIG5hbm9zZWNzID0gMTAwMDAwMDAwMDsKCglpcnFfbGF0X3B0ciA9IE5VTEw7CQkvKiBVbmlu
-c3RhbGwgaW50ZXJydXB0IGhhbmRsZXIgKi8KCgluYW5vc2VjcyA9IChuYW5vc2Vjcy9DTE9DS19U
-SUNLX1JBVEUpOwoJbGF0X2F2ZyA9IGxhdF9hdmcvaXJxX2NudDsKCglwcmludGsoIkludGVycnVw
-dCBMYXRlbmN5IHJlc3VsdFxuIik7CglwcmludGsoIi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLVxu
-Iik7CiNpZmRlZiBEQkdfSVJRX0xBVAoJZm9yIChjb3VudF9jMCA9IDA7IGNvdW50X2MwIDwgVEVT
-VF9DTlQ7IGNvdW50X2MwKyspCgkJcHJpbnRrKCIlbHU6ICVsdVxuIiwgY291bnRfYzAsIGxhdF92
-YWxbY291bnRfYzBdKTsKCglwcmludGsoIkNMT0NLX1RJQ0tfUkFURTogJWQgVElDSzogJWx1XG4i
-LCBDTE9DS19USUNLX1JBVEUsIG5hbm9zZWNzKTsKCXByaW50aygiTUFYIGxhdGVuY3kgOiAlbHUg
-dGlja3NcbiIsIGxhdF9tYXgpOwoJcHJpbnRrKCJNSU4gbGF0ZW5jeSA6ICVsdSB0aWNrc1xuIiwg
-bGF0X21pbik7CglwcmludGsoIkFWRyBsYXRlbmN5IDogJWx1IHRpY2tzXG4iLCBsYXRfYXZnKTsK
-I2VuZGlmCglwcmludGsoIk1BWCBsYXRlbmN5IDogJWx1LiUwM2x1IG1pY3JvLXNlY29uZHNcbiIs
-IChuYW5vc2VjcyAqIGxhdF9tYXgpLzEwMDAsIChuYW5vc2VjcyAqIGxhdF9tYXgpICUgMTAwMCk7
-CglwcmludGsoIk1JTiBsYXRlbmN5IDogJWx1LiUwM2x1IG1pY3JvLXNlY29uZHNcbiIsIChuYW5v
-c2VjcyAqIGxhdF9taW4pLzEwMDAsIChuYW5vc2VjcyAqIGxhdF9taW4pICUgMTAwMCk7Cglwcmlu
-dGsoIkFWRyBsYXRlbmN5IDogJWx1LiUwM2x1IG1pY3JvLXNlY29uZHNcbiIsIChuYW5vc2VjcyAq
-IGxhdF9hdmcpLzEwMDAsIChuYW5vc2VjcyAqIGxhdF9hdmcpICUgMTAwMCk7CglwcmludGsoIlRv
-dGFsIFNhbXBsZXMgOiAlbHVcbiIsIGlycV9jbnQpOwp9Cgptb2R1bGVfaW5pdChpcnFfbGF0X2lu
-aXQpOwptb2R1bGVfZXhpdChpcnFfbGF0X2V4aXQpOwoKTU9EVUxFX0xJQ0VOU0UoIkdQTCIpOwo=
-
-------=_Part_5765_17235942.1192862190177
-Content-Type: text/plain; name=Makefile
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f7zraxyk
-Content-Disposition: attachment; filename=Makefile
-
-b2JqLW5hbWUgOj0gaXJxX2xhdGVuY3kKb2JqLW0gOj0gJChvYmotbmFtZSkubwoKS0RJUiA6PSAk
-KEhPTUUpL2xpbnV4LSQoc2hlbGwgdW5hbWUgLXIpCgpQV0QgOj0gJChzaGVsbCBwd2QpCgpkZWZh
-dWx0OgoJJChNQUtFKSAtQyAkKEtESVIpIFNVQkRJUlM9JChQV0QpIG1vZHVsZXMKCmNsZWFuOgoJ
-cm0gLXJmICoua28gKi5vICoubW9kLmMgLiouY21kIE1vZCogLnRtcF92ZXJzaW9ucwo=
-------=_Part_5765_17235942.1192862190177
-Content-Type: text/plain; name=int_lat.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f7zrb1w2
-Content-Disposition: attachment; filename=int_lat.patch
-
-ZGlmZiAtdXJOIGxpbnV4LTIuNi4yMy1yYzgtcnQxX29yZy9hcmNoL2kzODYva2VybmVsL3RpbWUu
-YyBsaW51eC0yLjYuMjMtcmM4LXJ0MS9hcmNoL2kzODYva2VybmVsL3RpbWUuYwotLS0gbGludXgt
-Mi42LjIzLXJjOC1ydDFfb3JnL2FyY2gvaTM4Ni9rZXJuZWwvdGltZS5jCTIwMDctMTAtMjAgMTE6
-MjQ6MTcuMDAwMDAwMDAwICswNTMwCisrKyBsaW51eC0yLjYuMjMtcmM4LXJ0MS9hcmNoL2kzODYv
-a2VybmVsL3RpbWUuYwkyMDA3LTEwLTIwIDExOjMwOjMxLjAwMDAwMDAwMCArMDUzMApAQCAtMTUw
-LDYgKzE1MCwxMCBAQAogfQogRVhQT1JUX1NZTUJPTChwcm9maWxlX3BjKTsKIAorLyogSW50ZXJy
-dXB0IGxhdGVuY3kgcG9pbnRlciAqLworaXJxbGF0cHRyIGlycV9sYXRfcHRyID0gTlVMTDsKK0VY
-UE9SVF9TWU1CT0woaXJxX2xhdF9wdHIpOworCiAvKgogICogVGhpcyBpcyB0aGUgc2FtZSBhcyB0
-aGUgYWJvdmUsIGV4Y2VwdCB3ZSBfYWxzb18gc2F2ZSB0aGUgY3VycmVudAogICogVGltZSBTdGFt
-cCBDb3VudGVyIHZhbHVlIGF0IHRoZSB0aW1lIG9mIHRoZSB0aW1lciBpbnRlcnJ1cHQsIHNvIHRo
-YXQKQEAgLTE3Myw2ICsxNzcsMTAgQEAKIAl9CiAjZW5kaWYKIAorCS8qIEludGVycnVwdCBsYXRl
-bmN5IHBvaW50ZXIgKi8KKwlpZiAoaXJxX2xhdF9wdHIpCisJCWlycV9sYXRfcHRyKCk7CisKIAlk
-b190aW1lcl9pbnRlcnJ1cHRfaG9vaygpOwogCiAJaWYgKE1DQV9idXMpIHsKZGlmZiAtdXJOIGxp
-bnV4LTIuNi4yMy1yYzgtcnQxX29yZy9pbmNsdWRlL2FzbS1pMzg2L3RpbWUuaCBsaW51eC0yLjYu
-MjMtcmM4LXJ0MS9pbmNsdWRlL2FzbS1pMzg2L3RpbWUuaAotLS0gbGludXgtMi42LjIzLXJjOC1y
-dDFfb3JnL2luY2x1ZGUvYXNtLWkzODYvdGltZS5oCTIwMDctMTAtMjAgMTE6MjQ6NDYuMDAwMDAw
-MDAwICswNTMwCisrKyBsaW51eC0yLjYuMjMtcmM4LXJ0MS9pbmNsdWRlL2FzbS1pMzg2L3RpbWUu
-aAkyMDA3LTEwLTIwIDExOjI3OjM1LjAwMDAwMDAwMCArMDUzMApAQCAtNCw2ICs0LDEwIEBACiAj
-aW5jbHVkZSA8bGludXgvZWZpLmg+CiAjaW5jbHVkZSAibWFjaF90aW1lLmgiCiAKKy8qIGludGVy
-cnVwdCBsYXRlbmN5IHBvaW50ZXIgKi8KK3R5cGVkZWYgdm9pZCAoKmlycWxhdHB0cikodm9pZCk7
-CitleHRlcm4gaXJxbGF0cHRyIGlycV9sYXRfcHRyOworCiBzdGF0aWMgZmFzdGNhbGwgaW5saW5l
-IHVuc2lnbmVkIGxvbmcgbmF0aXZlX2dldF93YWxsY2xvY2sodm9pZCkKIHsKIAl1bnNpZ25lZCBs
-b25nIHJldHZhbDsK
-------=_Part_5765_17235942.1192862190177--
+-- Steve
