@@ -1,69 +1,80 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 9/9] RT: Only dirty a cacheline if the priority is
-	actually changing
-Date: Sat, 20 Oct 2007 06:44:47 -0400
-Message-ID: <1192877087.4088.3.camel@ghaskins-t60p.haskins.net>
-References: <20071017184745.11272.10024.stgit@novell1.haskins.net>
-	 <20071017185113.11272.50568.stgit@novell1.haskins.net>
-	 <47196C9B.7090909@tiscali.nl>
+From: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
+Subject: Re: [patch 1/8] Add rt_nr_running accounting
+Date: Sat, 20 Oct 2007 18:45:12 +0200
+Message-ID: <b647ffbd0710200945p2bb87d7fk1110bdcf56f6218d@mail.gmail.com>
+References: <20071019184254.456160632@goodmis.org>
+	 <20071019184336.195447315@goodmis.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-sNnO6BGh9ADf+J84CRuR"
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Roel Kluin <12o3l@tiscali.nl>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Linus Torvalds" <torvalds@linux-foundation.org>,
+	"Andrew Morton" <akpm@linux-foundation.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Gregory Haskins" <ghaskins@novell.com>,
+	"Peter Zijlstra" <a.p.zijlstra@chello.nl>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:38190 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755979AbXJTKra (ORCPT
+Received: from rv-out-0910.google.com ([209.85.198.185]:62389 "EHLO
+	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754928AbXJTQpN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 20 Oct 2007 06:47:30 -0400
-In-Reply-To: <47196C9B.7090909@tiscali.nl>
+	Sat, 20 Oct 2007 12:45:13 -0400
+Received: by rv-out-0910.google.com with SMTP id k20so757449rvb
+        for <linux-rt-users@vger.kernel.org>; Sat, 20 Oct 2007 09:45:12 -0700 (PDT)
+In-Reply-To: <20071019184336.195447315@goodmis.org>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On 19/10/2007, Steven Rostedt <rostedt@goodmis.org> wrote:
+> [ ... ]
+> Index: linux-test.git/kernel/sched.c
+> ===================================================================
+> --- linux-test.git.orig/kernel/sched.c  2007-10-19 12:32:39.000000000 -0400
+> +++ linux-test.git/kernel/sched.c       2007-10-19 12:33:09.000000000 -0400
+> @@ -300,6 +300,8 @@ struct rq {
+>          */
+>         unsigned long nr_uninterruptible;
+>
+> +       unsigned long rt_nr_running;
 
---=-sNnO6BGh9ADf+J84CRuR
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+could it be a part of the 'struct rt_rq' instead?
 
-On Sat, 2007-10-20 at 04:48 +0200, Roel Kluin wrote:
-> Gregory Haskins wrote:
-> > We can avoid dirtying a rq related cacheline with a simple check, so wh=
-y not.
-> >=20
-> > Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> > ---
-> >=20
-> >  0 files changed, 0 insertions(+), 0 deletions(-)
->=20
-> I think you wanted a patch here?
+>
+> +static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+> +{
+> +       if (rt_task(p))
+> +               rq->rt_nr_running++;
+> +}
+> +
+> +static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+> +{
+> +       if (rt_task(p)) {
+> +               WARN_ON(!rq->rt_nr_running);
+> +               rq->rt_nr_running--;
+> +       }
+> +}
+> +
+>  static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+>  {
+>         struct rt_prio_array *array = &rq->rt.active;
+>
+>         list_add_tail(&p->run_list, array->queue + p->prio);
+>         __set_bit(p->prio, array->bitmap);
+> +
+> +       inc_rt_tasks(p, rq);
 
-Hi Roel,
-  I had forgotten to refresh before mailing the patches, but I sent an
-immediate followup (which unfortunately was not linked to the original
-posting.  For your reference, here is the reposting:
+why do you need the rt_task(p) check in {inc,dec}_rt_tasks() ?
 
-http://article.gmane.org/gmane.linux.rt.user/1626
-
-Sorry for the confusion!
-
-Regards,
--Greg
+{enqueue,dequeue}_task_rt() seem to be the only callers and they will
+crash (or corrupt memory) anyway in the case of ! rt_task(p) (sure,
+this case would mean something is broken somewhere wrt sched_class
+handling).
 
 
-
---=-sNnO6BGh9ADf+J84CRuR
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
-
-iD8DBQBHGdwfSW61Ku6jJPkRAp4+AJ9iKIrZFzsHhUizYdgrjKnAFUBeDACcCPxN
-7kxlmMiqsRQvD/C+w7wgW5Y=
-=TkYf
------END PGP SIGNATURE-----
-
---=-sNnO6BGh9ADf+J84CRuR--
+-- 
+Best regards,
+Dmitry Adamushko
