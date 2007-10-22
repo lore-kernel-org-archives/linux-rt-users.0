@@ -1,98 +1,77 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [RT] seqlocks: use of PICK_FUNCTION breaks kernel compile when
-	CONFIG_GENERIC_TIME is NOT set
-Date: Mon, 22 Oct 2007 11:53:03 -0700
-Message-ID: <1193079183.5028.65.camel@imap.mvista.com>
-References: <1192632502.17527.129.camel@imap.mvista.com>
-	 <1192633836.8265.6.camel@localhost.localdomain>
-	 <1192634645.17527.134.camel@imap.mvista.com>
-	 <Pine.LNX.4.58.0710171133490.26554@gandalf.stny.rr.com>
+From: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
+Subject: Re: [patch 6/8] pull RT tasks
+Date: Tue, 23 Oct 2007 00:34:21 +0200
+Message-ID: <b647ffbd0710221534h7c3e7da8g3311c39c10cb341c@mail.gmail.com>
+References: <20071019184254.456160632@goodmis.org>
+	 <20071019184336.983272715@goodmis.org>
+	 <b647ffbd0710210459y6116e85ek3d6feba6ec98231@mail.gmail.com>
+	 <1193061928.1912.26.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Remy Bohmer <linux@bohmer.net>, Ingo Molnar <mingo@elte.hu>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+	"Linus Torvalds" <torvalds@linux-foundation.org>,
+	"Andrew Morton" <akpm@linux-foundation.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Gregory Haskins" <ghaskins@novell.com>,
+	"Peter Zijlstra" <a.p.zijlstra@chello.nl>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:8511 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752217AbXJVS4U (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.179]:29219 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750891AbXJVWeW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Oct 2007 14:56:20 -0400
-In-Reply-To: <Pine.LNX.4.58.0710171133490.26554@gandalf.stny.rr.com>
+	Mon, 22 Oct 2007 18:34:22 -0400
+Received: by wa-out-1112.google.com with SMTP id v27so1514229wah
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Oct 2007 15:34:22 -0700 (PDT)
+In-Reply-To: <1193061928.1912.26.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-10-17 at 11:34 -0400, Steven Rostedt wrote:
+Hi Steven,
 
-> 
-> Hmm, what about a __seq_irqsave_raw and __seq_nop?
-> 
-> That way it spells out that irqs are NOT touched if it is not a raw lock.
+agreed with your comments in the previous message. Indeed, I missed some points.
 
-I took out the nop , and just did a save flags which makes sense.. There
-is still more cleanup to do in that regard.
+> On wakeup, we can wake up several RT tasks (as my test case does) and if
+> we only push one task, then the other tasks may not migrate over to the
+> other run queues. I logged this happening in my tests.
 
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
+I guess, what may happen is that while we are running push_rt_tasks()
+on CPU-k (say, as a result on try_to_wake_up(task_1))
+and as this_rq->lock may get released (in double_lock_balance()) , we
+may get in a 'race'
+with try_to_wake_up(task_2) from (another) CPU-m.
+It places a woken up task on the same run-queue (for which
+push_rt_task() is already running on CPU-k) and, actually, run
+push_rt_task() for the same rq again!
 
----
- include/linux/seqlock.h |   26 +++++++++++++++-----------
- 1 file changed, 15 insertions(+), 11 deletions(-)
+So it may happen that both task_1 and task_2 will be pushed from the same CPU...
 
-Index: linux-2.6.23/include/linux/seqlock.h
-===================================================================
---- linux-2.6.23.orig/include/linux/seqlock.h
-+++ linux-2.6.23/include/linux/seqlock.h
-@@ -92,8 +92,11 @@ static inline void __write_seqlock(seqlo
- 
- static __always_inline unsigned long __write_seqlock_irqsave(seqlock_t *sl)
- {
-+	unsigned long flags;
-+
-+	local_save_flags(flags);
- 	__write_seqlock(sl);
--	return 0;
-+	return flags;
- }
- 
- static inline void __write_sequnlock(seqlock_t *sl)
-@@ -280,26 +283,27 @@ do {								\
- 	PICK_SEQ_OP(__write_sequnlock_irq_raw, __write_sequnlock, lock)
- 
- static __always_inline
--unsigned long __read_seqbegin_irqsave_raw(raw_seqlock_t *sl)
-+unsigned long __seq_irqsave_raw(raw_seqlock_t *sl)
- {
- 	unsigned long flags;
- 
- 	local_irq_save(flags);
--	__read_seqbegin_raw(sl);
- 	return flags;
- }
- 
--static __always_inline unsigned long __read_seqbegin_irqsave(seqlock_t *sl)
-+static __always_inline unsigned long __seq_irqsave(seqlock_t *sl)
- {
--	__read_seqbegin(sl);
--	return 0;
-+	unsigned long flags;
-+
-+	local_save_flags(flags);
-+	return flags;
- }
- 
--#define read_seqbegin_irqsave(lock, flags)			\
--do {								\
--	flags = PICK_SEQ_OP_RET(__read_seqbegin_irqsave_raw,	\
--		__read_seqbegin_irqsave, lock);			\
--} while (0)
-+#define read_seqbegin_irqsave(lock, flags)				\
-+({									\
-+	flags = PICK_SEQ_OP_RET(__seq_irqsave_raw, __seq_irqsave, lock);\
-+	read_seqbegin(lock);						\
-+})
- 
- static __always_inline int
- __read_seqretry_irqrestore(seqlock_t *sl, unsigned iv, unsigned long flags)
+Do you see an error in my description? (it's a late hour so I can miss
+something again ... sure, otherwise I'm almost perfect :-/ ) Can it
+correlate with what you have observed in your tests?
+
+Otherwise, there is 1:1 relation : push_rt_task() is called for every
+new (single) task activated by try_to_wake_up() and for a preempted
+task... so it's not like a few tasks are placed on the run-queue and
+then push_rt_tasks() is called once.
+
+btw., if this scenario may take place... maybe it would make sense to
+have something like RTLB_INPROGRESS/PENDING and to avoid competing
+push_rt_tasks() calls for the same 'rq' from different CPUs?
+(although, there can be some disadvantages here as well. e.g. we would
+likely need to remove 'max 3 tasks at once' limit and get,
+theoretically, unbounded time spent in push_rt_tasks() on a single
+CPU).
+
+
+>
+> -- Steve
+>
+
+-- 
+Best regards,
+Dmitry Adamushko
