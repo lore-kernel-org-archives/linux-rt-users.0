@@ -1,43 +1,38 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: Test posted to wiki
-Date: Tue, 23 Oct 2007 12:29:23 -0400
-Message-ID: <1193156963.8343.25.camel@ghaskins-t60p.haskins.net>
+Subject: [PATCH 00/13] Balance RT tasks v5
+Date: Tue, 23 Oct 2007 12:50:23 -0400
+Message-ID: <20071023164156.5536.95573.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-0iJtN0gVeYqUK1uGoOXL"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	Gregory Haskins <ghaskins@novell.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
 To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:54079 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752625AbXJWQcH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 12:32:07 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754657AbXJWRFZ@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This is version 5 of the patch series against 23-rt1.
 
---=-0iJtN0gVeYqUK1uGoOXL
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+There have been numerous fixes/tweaks since v4, though we still are based on
+the global rto_cpumask logic instead of Steve/Ingo's cpuset logic.  Otherwise,
+it's in pretty good shape.
 
-http://rt.wiki.kernel.org/index.php/Preemption_Test
+Without the series applied, the following test will fail:
 
-Thanks to Darren Hart for fixing the permissions on the site for me.
-And thanks to Steven Rostedt for inspiring this test.
+ftp://ftp.novell.com/dev/ghaskins/preempt-test-latest.tar.bz2
 
-(Steve, feel free to edit the page to include your test as well)
+After it is applied, it will pass.
 
--Greg
-
---=-0iJtN0gVeYqUK1uGoOXL
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
-
-iD8DBQBHHiFjSW61Ku6jJPkRAgMSAJoCrzif8Szm5jEQ2C8vhdkFApMr5gCfQwiM
-AjwmsSl/40z3/5/+53gaJU0=
-=KBeQ
------END PGP SIGNATURE-----
-
---=-0iJtN0gVeYqUK1uGoOXL--
+NOTE: it appears that the series also introduces wake-latency spikes that
+are not present in the baseline code, so this is still "RFC" quality.
+However, the baseline scheduler also violates priority order, so its hard to
+determine if the numbers translate apples to apples.  These issues are still
+under investigation, but I am sharing the series now so that Steven Rostedt
+and Darren Hart can have access to my current tree.  The issues appear to be
+caused by some other strange scheduling decisions (such as running the idle
+thread while we are busy).  TBD 
