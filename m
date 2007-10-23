@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH -v2 1/7] Add rt_nr_running accounting
-Date: Mon, 22 Oct 2007 22:59:01 -0400
-Message-ID: <20071023032916.168288851@goodmis.org>
+Subject: [PATCH -v2 7/7] disable CFS RT load balancing.
+Date: Mon, 22 Oct 2007 22:59:07 -0400
+Message-ID: <20071023032917.119896476@goodmis.org>
 References: <20071023025900.927578809@goodmis.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -13,77 +13,132 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:59060 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751917AbXJWD3h (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:64642 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752338AbXJWD3n (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Oct 2007 23:29:37 -0400
-Content-Disposition: inline; filename=count-rt-queued.patch
+	Mon, 22 Oct 2007 23:29:43 -0400
+Content-Disposition: inline; filename=disable-CFS-rt-balance.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This patch adds accounting to keep track of the number of RT tasks running
-on a runqueue. This information will be used in later patches.
+Since we now take an active approach to load balancing, we don't need to
+balance RT tasks via CFS. In fact, this code was found to pull RT tasks
+away from CPUS that the active movement performed, resulting in
+large latencies.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
 ---
- kernel/sched.c    |    1 +
- kernel/sched_rt.c |   17 +++++++++++++++++
- 2 files changed, 18 insertions(+)
+ kernel/sched_rt.c |   91 +-----------------------------------------------------
+ 1 file changed, 2 insertions(+), 89 deletions(-)
 
-Index: linux-test.git/kernel/sched.c
-===================================================================
---- linux-test.git.orig/kernel/sched.c	2007-10-22 22:18:53.000000000 -0400
-+++ linux-test.git/kernel/sched.c	2007-10-22 22:31:51.000000000 -0400
-@@ -266,6 +266,7 @@ struct rt_rq {
- 	struct rt_prio_array active;
- 	int rt_load_balance_idx;
- 	struct list_head *rt_load_balance_head, *rt_load_balance_curr;
-+	unsigned long rt_nr_running;
- };
- 
- /*
 Index: linux-test.git/kernel/sched_rt.c
 ===================================================================
---- linux-test.git.orig/kernel/sched_rt.c	2007-10-22 22:18:53.000000000 -0400
-+++ linux-test.git/kernel/sched_rt.c	2007-10-22 22:31:51.000000000 -0400
-@@ -25,12 +25,27 @@ static void update_curr_rt(struct rq *rq
- 	curr->se.exec_start = rq->clock;
- }
+--- linux-test.git.orig/kernel/sched_rt.c	2007-10-22 22:38:04.000000000 -0400
++++ linux-test.git/kernel/sched_rt.c	2007-10-22 22:38:33.000000000 -0400
+@@ -576,101 +576,14 @@ static void wakeup_balance_rt(struct rq 
+ # define wakeup_balance_rt(rq, p)	do { } while (0)
+ #endif /* CONFIG_SMP */
  
-+static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
-+{
-+	WARN_ON(!rt_task(p));
-+	rq->rt.rt_nr_running++;
-+}
-+
-+static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
-+{
-+	WARN_ON(!rt_task(p));
-+	WARN_ON(!rq->rt.rt_nr_running);
-+	rq->rt.rt_nr_running--;
-+}
-+
- static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+-
+-/*
+- * Load-balancing iterator. Note: while the runqueue stays locked
+- * during the whole iteration, the current task might be
+- * dequeued so the iterator has to be dequeue-safe. Here we
+- * achieve that by always pre-iterating before returning
+- * the current task:
+- */
+-static struct task_struct *load_balance_start_rt(void *arg)
+-{
+-	struct rq *rq = arg;
+-	struct rt_prio_array *array = &rq->rt.active;
+-	struct list_head *head, *curr;
+-	struct task_struct *p;
+-	int idx;
+-
+-	idx = sched_find_first_bit(array->bitmap);
+-	if (idx >= MAX_RT_PRIO)
+-		return NULL;
+-
+-	head = array->queue + idx;
+-	curr = head->prev;
+-
+-	p = list_entry(curr, struct task_struct, run_list);
+-
+-	curr = curr->prev;
+-
+-	rq->rt.rt_load_balance_idx = idx;
+-	rq->rt.rt_load_balance_head = head;
+-	rq->rt.rt_load_balance_curr = curr;
+-
+-	return p;
+-}
+-
+-static struct task_struct *load_balance_next_rt(void *arg)
+-{
+-	struct rq *rq = arg;
+-	struct rt_prio_array *array = &rq->rt.active;
+-	struct list_head *head, *curr;
+-	struct task_struct *p;
+-	int idx;
+-
+-	idx = rq->rt.rt_load_balance_idx;
+-	head = rq->rt.rt_load_balance_head;
+-	curr = rq->rt.rt_load_balance_curr;
+-
+-	/*
+-	 * If we arrived back to the head again then
+-	 * iterate to the next queue (if any):
+-	 */
+-	if (unlikely(head == curr)) {
+-		int next_idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
+-
+-		if (next_idx >= MAX_RT_PRIO)
+-			return NULL;
+-
+-		idx = next_idx;
+-		head = array->queue + idx;
+-		curr = head->prev;
+-
+-		rq->rt.rt_load_balance_idx = idx;
+-		rq->rt.rt_load_balance_head = head;
+-	}
+-
+-	p = list_entry(curr, struct task_struct, run_list);
+-
+-	curr = curr->prev;
+-
+-	rq->rt.rt_load_balance_curr = curr;
+-
+-	return p;
+-}
+-
+ static unsigned long
+ load_balance_rt(struct rq *this_rq, int this_cpu, struct rq *busiest,
+ 			unsigned long max_nr_move, unsigned long max_load_move,
+ 			struct sched_domain *sd, enum cpu_idle_type idle,
+ 			int *all_pinned, int *this_best_prio)
  {
- 	struct rt_prio_array *array = &rq->rt.active;
- 
- 	list_add_tail(&p->run_list, array->queue + p->prio);
- 	__set_bit(p->prio, array->bitmap);
-+
-+	inc_rt_tasks(p, rq);
+-	int nr_moved;
+-	struct rq_iterator rt_rq_iterator;
+-	unsigned long load_moved;
+-
+-	rt_rq_iterator.start = load_balance_start_rt;
+-	rt_rq_iterator.next = load_balance_next_rt;
+-	/* pass 'busiest' rq argument into
+-	 * load_balance_[start|next]_rt iterators
+-	 */
+-	rt_rq_iterator.arg = busiest;
+-
+-	nr_moved = balance_tasks(this_rq, this_cpu, busiest, max_nr_move,
+-			max_load_move, sd, idle, all_pinned, &load_moved,
+-			this_best_prio, &rt_rq_iterator);
+-
+-	return load_moved;
++	/* don't touch RT tasks */
++	return 0;
  }
  
- /*
-@@ -45,6 +60,8 @@ static void dequeue_task_rt(struct rq *r
- 	list_del(&p->run_list);
- 	if (list_empty(array->queue + p->prio))
- 		__clear_bit(p->prio, array->bitmap);
-+
-+	dec_rt_tasks(p, rq);
- }
- 
- /*
+ static void task_tick_rt(struct rq *rq, struct task_struct *p)
 
 -- 
