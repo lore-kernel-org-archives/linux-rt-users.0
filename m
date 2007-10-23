@@ -1,89 +1,315 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch 6/8] pull RT tasks
-Date: Mon, 22 Oct 2007 21:16:10 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710222107140.19457@gandalf.stny.rr.com>
-References: <20071019184254.456160632@goodmis.org>  <20071019184336.983272715@goodmis.org>
-  <b647ffbd0710210459y6116e85ek3d6feba6ec98231@mail.gmail.com>
- <1193061928.1912.26.camel@localhost.localdomain>
- <b647ffbd0710221534h7c3e7da8g3311c39c10cb341c@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
+Subject: [PATCH -v2 5/7] pull RT tasks
+Date: Mon, 22 Oct 2007 22:59:05 -0400
+Message-ID: <20071023032916.808883356@goodmis.org>
+References: <20071023025900.927578809@goodmis.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Paul Jackson <pj@sgi.com>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Dmitry Adamushko <dmitry.adamushko@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754060AbXJWBRX@vger.kernel.org>
-In-Reply-To: <b647ffbd0710221534h7c3e7da8g3311c39c10cb341c@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:33600 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751416AbXJWD3g (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Oct 2007 23:29:36 -0400
+Content-Disposition: inline; filename=rt-balance-pull-tasks.patch
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This patch adds the algorithm to pull tasks from RT overloaded runqueues.
 
---
-On Tue, 23 Oct 2007, Dmitry Adamushko wrote:
+When a pull RT is initiated, all overloaded runqueues are examined for
+a RT task that is higher in prio than the highest prio task queued on the
+target runqueue. If another runqueue holds a RT task that is of higher
+prio than the highest prio task on the target runqueue is found it is pulled
+to the target runqueue.
 
-> Hi Steven,
->
-> agreed with your comments in the previous message. Indeed, I missed some points.
->
-> > On wakeup, we can wake up several RT tasks (as my test case does) and if
-> > we only push one task, then the other tasks may not migrate over to the
-> > other run queues. I logged this happening in my tests.
->
-> I guess, what may happen is that while we are running push_rt_tasks()
-> on CPU-k (say, as a result on try_to_wake_up(task_1))
-> and as this_rq->lock may get released (in double_lock_balance()) , we
-> may get in a 'race'
-> with try_to_wake_up(task_2) from (another) CPU-m.
-> It places a woken up task on the same run-queue (for which
-> push_rt_task() is already running on CPU-k) and, actually, run
-> push_rt_task() for the same rq again!
->
-> So it may happen that both task_1 and task_2 will be pushed from the same CPU...
->
-> Do you see an error in my description? (it's a late hour so I can miss
-> something again ... sure, otherwise I'm almost perfect :-/ ) Can it
-> correlate with what you have observed in your tests?
->
-> Otherwise, there is 1:1 relation : push_rt_task() is called for every
-> new (single) task activated by try_to_wake_up() and for a preempted
-> task... so it's not like a few tasks are placed on the run-queue and
-> then push_rt_tasks() is called once.
->
-> btw., if this scenario may take place... maybe it would make sense to
-> have something like RTLB_INPROGRESS/PENDING and to avoid competing
-> push_rt_tasks() calls for the same 'rq' from different CPUs?
-> (although, there can be some disadvantages here as well. e.g. we would
-> likely need to remove 'max 3 tasks at once' limit and get,
-> theoretically, unbounded time spent in push_rt_tasks() on a single
-> CPU).
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-I think I see what you're saying now. That we really should do the push on
-wakeup, since only the one rt task that is woken up will be able to be
-pushed.
+---
+ kernel/sched.c    |    2 
+ kernel/sched_rt.c |  196 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 187 insertions(+), 11 deletions(-)
 
-My code may seem a bit aggressive, but from logging, I see that we seldom
-push more than one task. But if we don't go ahead and push more than one,
-the rt-migrate-test will sometimes fail.  There's funny cases when we need
-to push more than one. I can't remember exactly what they were, but
-sometimes because of races between the pushes and pulls where one will
-miss the fact that an RT process is being queued while its searching to
-pull a task, but the push will catch it. Or vice versa.
+Index: linux-test.git/kernel/sched.c
+===================================================================
+--- linux-test.git.orig/kernel/sched.c	2007-10-22 22:31:59.000000000 -0400
++++ linux-test.git/kernel/sched.c	2007-10-22 22:37:28.000000000 -0400
+@@ -3622,6 +3622,8 @@ need_resched_nonpreemptible:
+ 		switch_count = &prev->nvcsw;
+ 	}
+ 
++	schedule_balance_rt(rq, prev);
++
+ 	if (unlikely(!rq->nr_running))
+ 		idle_balance(cpu, rq);
+ 
+Index: linux-test.git/kernel/sched_rt.c
+===================================================================
+--- linux-test.git.orig/kernel/sched_rt.c	2007-10-22 22:32:18.000000000 -0400
++++ linux-test.git/kernel/sched_rt.c	2007-10-22 22:37:28.000000000 -0400
+@@ -168,8 +168,17 @@ static void put_prev_task_rt(struct rq *
+ static int double_lock_balance(struct rq *this_rq, struct rq *busiest);
+ static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep);
+ 
++static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
++{
++	if (!task_running(rq, p) &&
++	    (cpu < 0 || cpu_isset(cpu, p->cpus_allowed)))
++		return 1;
++	return 0;
++}
++
+ /* Return the second highest RT task, NULL otherwise */
+-static struct task_struct *pick_next_highest_task_rt(struct rq *rq)
++static struct task_struct *pick_next_highest_task_rt(struct rq *rq,
++						     int cpu)
+ {
+ 	struct rt_prio_array *array = &rq->rt.active;
+ 	struct task_struct *next;
+@@ -188,26 +197,36 @@ static struct task_struct *pick_next_hig
+ 	}
+ 
+ 	queue = array->queue + idx;
++	BUG_ON(list_empty(queue));
++
+ 	next = list_entry(queue->next, struct task_struct, run_list);
+-	if (unlikely(next != rq->curr))
+-		return next;
++	if (unlikely(pick_rt_task(rq, next, cpu)))
++		goto out;
+ 
+ 	if (queue->next->next != queue) {
+ 		/* same prio task */
+ 		next = list_entry(queue->next->next, struct task_struct, run_list);
+-		return next;
++		if (pick_rt_task(rq, next, cpu))
++			goto out;
+ 	}
+ 
++ retry:
+ 	/* slower, but more flexible */
+ 	idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
+-	if (unlikely(idx >= MAX_RT_PRIO)) {
+-		WARN_ON(1); /* rt_nr_running was 2 and above! */
++	if (unlikely(idx >= MAX_RT_PRIO))
+ 		return NULL;
+-	}
+ 
+ 	queue = array->queue + idx;
+-	next = list_entry(queue->next, struct task_struct, run_list);
++	BUG_ON(list_empty(queue));
+ 
++	list_for_each_entry(next, queue, run_list) {
++		if (pick_rt_task(rq, next, cpu))
++			goto out;
++	}
++
++	goto retry;
++
++ out:
+ 	return next;
+ }
+ 
+@@ -296,13 +315,15 @@ static int push_rt_task(struct rq *this_
+ 
+ 	assert_spin_locked(&this_rq->lock);
+ 
+-	next_task = pick_next_highest_task_rt(this_rq);
++	next_task = pick_next_highest_task_rt(this_rq, -1);
+ 	if (!next_task)
+ 		return 0;
+ 
+  retry:
+-	if (unlikely(next_task == this_rq->curr))
++	if (unlikely(next_task == this_rq->curr)) {
++		WARN_ON(1);
+ 		return 0;
++	}
+ 
+ 	/*
+ 	 * It's possible that the next_task slipped in of
+@@ -326,7 +347,7 @@ static int push_rt_task(struct rq *this_
+ 		 * so it is possible that next_task has changed.
+ 		 * If it has, then try again.
+ 		 */
+-		task = pick_next_highest_task_rt(this_rq);
++		task = pick_next_highest_task_rt(this_rq, -1);
+ 		if (unlikely(task != next_task) && task && paranoid--) {
+ 			put_task_struct(next_task);
+ 			next_task = task;
+@@ -371,6 +392,158 @@ static void push_rt_tasks(struct rq *rq)
+ 		;
+ }
+ 
++static int pull_rt_task(struct rq *this_rq)
++{
++	struct task_struct *next;
++	struct task_struct *p;
++	struct rq *src_rq;
++	cpumask_t rto_cpumask;
++	int this_cpu = this_rq->cpu;
++	int cpu;
++	int ret = 0;
++
++	assert_spin_locked(&this_rq->lock);
++
++	/*
++	 * If cpusets are used, and we have overlapping
++	 * run queue cpusets, then this algorithm may not catch all.
++	 * This is just the price you pay on trying to keep
++	 * dirtying caches down on large SMP machines.
++	 */
++	if (likely(!rt_overloaded(this_rq->curr)))
++		return 0;
++
++	next = pick_next_task_rt(this_rq);
++
++	rto_cpumask = rt_overload(this_rq->curr);
++
++	for_each_cpu_mask(cpu, rto_cpumask) {
++		if (this_cpu == cpu)
++			continue;
++
++		src_rq = cpu_rq(cpu);
++		if (unlikely(src_rq->rt.rt_nr_running <= 1)) {
++			/*
++			 * It is possible that overlapping cpusets
++			 * will miss clearing a non overloaded runqueue.
++			 * Clear it now.
++			 */
++			if (double_lock_balance(this_rq, src_rq)) {
++				/* unlocked our runqueue lock */
++				struct task_struct *old_next = next;
++				next = pick_next_task_rt(this_rq);
++				if (next != old_next)
++					ret = 1;
++			}
++			if (likely(src_rq->rt.rt_nr_running <= 1))
++				/*
++				 * Small chance that this_rq->curr changed
++				 * but it's really harmless here.
++				 */
++				rt_clear_overload(this_rq->curr, this_rq->cpu);
++			else
++				/*
++				 * Heh, the src_rq is now overloaded, since
++				 * we already have the src_rq lock, go straight
++				 * to pulling tasks from it.
++				 */
++				goto try_pulling;
++			spin_unlock(&src_rq->lock);
++			continue;
++		}
++
++		/*
++		 * We can potentially drop this_rq's lock in
++		 * double_lock_balance, and another CPU could
++		 * steal our next task - hence we must cause
++		 * the caller to recalculate the next task
++		 * in that case:
++		 */
++		if (double_lock_balance(this_rq, src_rq)) {
++			struct task_struct *old_next = next;
++			next = pick_next_task_rt(this_rq);
++			if (next != old_next)
++				ret = 1;
++		}
++
++		/*
++		 * Are there still pullable RT tasks?
++		 */
++		if (src_rq->rt.rt_nr_running <= 1) {
++			spin_unlock(&src_rq->lock);
++			continue;
++		}
++
++ try_pulling:
++		p = pick_next_highest_task_rt(src_rq, this_cpu);
++
++		/*
++		 * Do we have an RT task that preempts
++		 * the to-be-scheduled task?
++		 */
++		if (p && (!next || (p->prio < next->prio))) {
++			WARN_ON(p == src_rq->curr);
++			WARN_ON(!p->se.on_rq);
++
++			/*
++			 * There's a chance that p is higher in priority
++			 * than what's currently running on its cpu.
++			 * This is just that p is wakeing up and hasn't
++			 * had a chance to schedule. We only pull
++			 * p if it is lower in priority than the
++			 * current task on the run queue or
++			 * this_rq next task is lower in prio than
++			 * the current task on that rq.
++			 */
++			if (p->prio < src_rq->curr->prio ||
++			    (next && next->prio < src_rq->curr->prio))
++				goto bail;
++
++			ret = 1;
++
++			deactivate_task(src_rq, p, 0);
++			set_task_cpu(p, this_cpu);
++			activate_task(this_rq, p, 0);
++			/*
++			 * We continue with the search, just in
++			 * case there's an even higher prio task
++			 * in another runqueue. (low likelyhood
++			 * but possible)
++			 */
++
++			/*
++			 * Update next so that we won't pick a task
++			 * on another cpu with a priority lower (or equal)
++			 * than the one we just picked.
++			 */
++			next = p;
++
++		}
++ bail:
++		spin_unlock(&src_rq->lock);
++	}
++
++	return ret;
++}
++
++static void schedule_balance_rt(struct rq *rq,
++				struct task_struct *prev)
++{
++	struct rt_prio_array *array;
++	int next_prio;
++
++	/* Try to pull RT tasks here if we lower this rq's prio */
++	if (unlikely(rt_task(prev))) {
++		next_prio = MAX_RT_PRIO;
++		if (rq->rt.rt_nr_running) {
++			array = &rq->rt.active;
++			next_prio = sched_find_first_bit(array->bitmap);
++		}
++		if (next_prio > prev->prio)
++			pull_rt_task(rq);
++	}
++}
++
+ static void schedule_tail_balance_rt(struct rq *rq)
+ {
+ 	/*
+@@ -388,6 +561,7 @@ static void schedule_tail_balance_rt(str
+ }
+ #else /* CONFIG_SMP */
+ # define schedule_tail_balance_rt(rq)	do { } while (0)
++# define schedule_balance_rt(rq)	do { } while (0)
+ #endif /* CONFIG_SMP */
+ 
+ 
 
-The max tries is just a paranoid case where I don't want heavy scheduling
-to cause an unbounded trying to push or pull tasks. According to the
-logging while running the rt-migrate-tests, the loop there repeated
-approximately 1 in 20, and iterated twice 1 in 100 and hit the third loop
-twice in all my tests (over a 1000 iterations being logged). But logging
-slows it down and modifies the results itself, and perhaps I'll add
-statistics soon.
-
-I'm about to post a second batch of patches.
-
-Thanks,
-
--- Steve
+-- 
