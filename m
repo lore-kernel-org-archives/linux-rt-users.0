@@ -1,82 +1,39 @@
-From: Jan Kiszka <jan.kiszka@siemens.com>
-Subject: Re: KVM and Prempt?
-Date: Tue, 23 Oct 2007 10:35:28 +0200
-Message-ID: <471DB250.3030301@siemens.com>
-References: <003F437218F04842B2A6976FA19368B1886B99@ERLM863A.ww001.siemens.net> <1193076845.5738.23.camel@sven.thebigcorporation.com>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH -v2 0/7] New RT Task Balancing -v2
+Date: Tue, 23 Oct 2007 10:39:55 +0200
+Message-ID: <20071023083955.GA15887@elte.hu>
+References: <20071023025900.927578809@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-Cc: "Back, Michael (ext)" <michael.back.ext@siemens.com>,
-	linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Paul Jackson <pj@sgi.com>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lizzard.sbs.de ([194.138.37.39]:18836 "EHLO lizzard.sbs.de"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:46562 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751455AbXJWIfg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 04:35:36 -0400
-In-Reply-To: <1193076845.5738.23.camel@sven.thebigcorporation.com>
+	id S1751462AbXJWIkJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Oct 2007 04:40:09 -0400
+Content-Disposition: inline
+In-Reply-To: <20071023025900.927578809@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Sven-Thorsten Dietrich wrote:
-> On Mon, 2007-10-22 at 09:01 +0200, Back, Michael (ext) wrote:
->> Hallo,
->> I tried to run Windows XP with KVM on Linux 2.6.31.1 on a 
+
+* Steven Rostedt <rostedt@goodmis.org> wrote:
+
+>   Changes since V1:
+>     Updated to git tree 55b70a0300b873c0ec7ea6e33752af56f41250ce
 > 
-> You mean .21.1 ? 
+>     Various clean ups suggested by Gregory Haskins, Dmitry Adamushko,
+>     and Peter Zijlstra.
 
-Classic typo I interestingly also did several times the last week. :)
+ok, i like this new approach - nice work! I'd suggest we test it in -rt 
+for some time and then merge it into v2.6.25?
 
-> 
->> AMD Opteron and on a Intel Xeon, on both it works fine!
-> 
->> After this test I patch the kernel with the current prempt-patch and on
->> both it doesn't works! 
-> 
-> Did you try against 2.6.23-rt1.
-
-kvm in -rt1 is not usable. It's too old, lacking PREEMPT_NOTIFIER
-support, thus quickly triggering lockdep.
-
-> 
-> If you must stay on .21, you might have some other issues with the AMD
-> and NUMA.
-> 
-> At the very least, you will need to apply the attached patch from git
-> somehow, although this patch is against a new scheduler post 2.6.22, so
-> good luck :)
-
-<--snip-->
-
-Those patches are already mainline... :->
-
-What you rather need are latest kvm patches, or - if building the kvm
-distribution out of tree - a patch to enabled CONFIG_PREEMPT_NOTIFIERS
-unconditionally:
-
---- linux-2.6.23.1-rt/kernel/Kconfig.preempt.orig
-+++ linux-2.6.23.1-rt/kernel/Kconfig.preempt
-@@ -136,6 +136,7 @@
-
- config PREEMPT_NOTIFIERS
- 	bool
-+	default y
-
- config PREEMPT_BKL
- 	bool
-
-
-Still, I'm seeing oopses here (more precisely, lock validator
-complaints), but I need to re-test, better using kvm from git instead of
-kvm-48.
-
-Beyond this, I'm struggling to understand 300-400 us vm-exit latencies
-(over Intel VMX), which appear to be independent of the underlying
-system. See kvm-devel. Such latencies would limit the RT usability of
-kvm - unless you spent dedicated CPUs.
-
-Jan
-
--- 
-Siemens AG, Corporate Technology, CT SE 2
-Corporate Competence Center Embedded Linux
+	Ingo
