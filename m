@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 00/13] Balance RT tasks v5
-Date: Tue, 23 Oct 2007 12:50:23 -0400
-Message-ID: <20071023164156.5536.95573.stgit@novell1.haskins.net>
+Subject: [PATCH 05/13] RT: Initialize the priority value
+Date: Tue, 23 Oct 2007 12:50:49 -0400
+Message-ID: <20071023165049.5536.4280.stgit@novell1.haskins.net>
+References: <20071023164156.5536.95573.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -12,27 +13,34 @@ Cc: linux-kernel@vger.kernel.org,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
 To: linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754657AbXJWRFZ@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:35057
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754648AbXJWRFY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Oct 2007 13:05:24 -0400
+In-Reply-To: <20071023164156.5536.95573.stgit@novell1.haskins.net>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is version 5 of the patch series against 23-rt1.
+We should init the base value of the current RQ priority to "IDLE"
 
-There have been numerous fixes/tweaks since v4, though we still are based on
-the global rto_cpumask logic instead of Steve/Ingo's cpuset logic.  Otherwise,
-it's in pretty good shape.
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-Without the series applied, the following test will fail:
+ kernel/sched.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-ftp://ftp.novell.com/dev/ghaskins/preempt-test-latest.tar.bz2
-
-After it is applied, it will pass.
-
-NOTE: it appears that the series also introduces wake-latency spikes that
-are not present in the baseline code, so this is still "RFC" quality.
-However, the baseline scheduler also violates priority order, so its hard to
-determine if the numbers translate apples to apples.  These issues are still
-under investigation, but I am sharing the series now so that Steven Rostedt
-and Darren Hart can have access to my current tree.  The issues appear to be
-caused by some other strange scheduling decisions (such as running the idle
-thread while we are busy).  TBD 
+diff --git a/kernel/sched.c b/kernel/sched.c
+index dfd0b92..7c4fba8 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -7386,6 +7386,8 @@ void __init sched_init(void)
+ 		highest_cpu = i;
+ 		/* delimiter for bitsearch: */
+ 		__set_bit(MAX_RT_PRIO, array->bitmap);
++
++		set_rq_prio(rq, MAX_PRIO);
+ 	}
+ 
+ 	set_load_weight(&init_task);
