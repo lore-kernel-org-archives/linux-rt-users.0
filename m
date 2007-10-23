@@ -1,149 +1,86 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH -v2 4/7] RT overloaded runqueues accounting
-Date: Tue, 23 Oct 2007 09:43:54 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710230844040.29506@gandalf.stny.rr.com>
-References: <20071023025900.927578809@goodmis.org>  <20071023032916.651749224@goodmis.org>
-  <20071022211709.7be79fea.pj@sgi.com> <6599ad830710222311x402c3d1agcc458742fb5e219c@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: How to debug complete kernel lock-ups
+Date: Tue, 23 Oct 2007 18:11:38 +0200
+Message-ID: <471E1D3A.8000705@free.fr>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Paul Jackson <pj@sgi.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, torvalds@linux-foundation.org,
-	akpm@linux-foundation.org, mingo@elte.hu,
-	dmitry.adamushko@gmail.com, ghaskins@novell.com,
-	a.p.zijlstra@chello.nl
-To: Paul Menage <menage@google.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-pci@atrey.karlin.mff.cuni.cz
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:47914 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751939AbXJWNoR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 09:44:17 -0400
-In-Reply-To: <6599ad830710222311x402c3d1agcc458742fb5e219c@mail.gmail.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:52817 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752299AbXJWQLk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Oct 2007 12:11:40 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello everyone,
 
---
-On Mon, 22 Oct 2007, Paul Menage wrote:
+I have an x86 system with two PCI slots, in which I inserted two
+specialized output cards (Dektec DTA-105).
 
-> On 10/22/07, Paul Jackson <pj@sgi.com> wrote:
-> > Steven wrote:
-> > > +void cpuset_rt_set_overload(struct task_struct *tsk, int cpu)
-> > > +{
-> > > +     cpu_set(cpu, task_cs(tsk)->rt_overload);
-> > > +}
-> >
-> > Question for Steven:
-> >
-> >   What locks are held when cpuset_rt_set_overload() is called?
+http://www.dektec.com/Products/DTA-105/
+(They provide an open source driver.)
 
-Right now only the rq lock. I know it's not enough. This needs to be
-fixed. These are called in the heart of the scheduler so...
+My problem is: when I write to the 4 ports (each card has 2 ports) "at 
+the same time" (not really "at the same time" because I have a 
+uni-processor system, so "within a short time frame" is more accurate) 
+the system *completely* locks up.
 
-> >
-> > Questions for Paul Menage:
-> >
-> >   Does 'tsk' need to be locked for the above task_cs() call?
->
-> Cgroups doesn't change the locking rules for accessing a cpuset from a
-> task - you have to have one of:
->
-> - task_lock(task)
+The manufacturer told me they had seen the problem in their lab. I'm 
+just trying to provide some helpful debug output to speed up the process 
+of fixing the problem :-)
 
-I'm not sure of the lock nesting between task_lock(task) and rq->lock.
-If this nesting doesn't yet exist, then I can add code to do the
-task_lock.  But if the rq->lock is called within the task_lock somewhere,
-then this can't be used.
+I've built a debug 2.6.22.1-rt9 kernel, hoping to get the kernel to dump 
+something, anything.
 
->
-> - callback_mutex
++CONFIG_KALLSYMS_ALL=y
++CONFIG_PCI_DEBUG=y
++CONFIG_DEBUG_DRIVER=y
++CONFIG_PRINTK_TIME=y
++CONFIG_MAGIC_SYSRQ=y
++CONFIG_DEBUG_KERNEL=y
++CONFIG_DEBUG_SHIRQ=y
++CONFIG_DETECT_SOFTLOCKUP=y
++CONFIG_DEBUG_SLAB=y
++CONFIG_DEBUG_SLAB_LEAK=y
++CONFIG_DEBUG_PREEMPT=y
++CONFIG_DEBUG_RT_MUTEXES=y
++CONFIG_DEBUG_PI_LIST=y
++CONFIG_RT_MUTEX_TESTER=y
++CONFIG_DEBUG_SPINLOCK=y
++CONFIG_DEBUG_MUTEXES=y
++CONFIG_DEBUG_LOCK_ALLOC=y
++CONFIG_PROVE_LOCKING=y
++CONFIG_LOCKDEP=y
++CONFIG_TRACE_IRQFLAGS=y
++CONFIG_DEBUG_SPINLOCK_SLEEP=y
++CONFIG_DEBUG_LOCKING_API_SELFTESTS=y
++CONFIG_STACKTRACE=y
++CONFIG_PREEMPT_TRACE=y
++CONFIG_DEBUG_BUGVERBOSE=y
++CONFIG_DEBUG_INFO=y
++CONFIG_FRAME_POINTER=y
++CONFIG_FORCED_INLINING=y
++CONFIG_DEBUG_STACKOVERFLOW=y
++CONFIG_DEBUG_RODATA=y
++CONFIG_4KSTACKS=y
 
-Can schedule, so it's definitely out.
+I've enabled the serial console, and used SysRq to bump the console 
+level to 9 (I want everything, even KERN_DEBUG output).
 
->
-> - be in an RCU section from the point when you call task_cs to the
-> point when you stop using its result. (Additionally, in this case
-> there's no guarantee that the task stays in this cpuset for the
-> duration of the RCU section).
+I've enabled the IO-APIC watchdog (nmi_watchdog=1).
 
-This may also be an option. Although with interrupts disabled for the
-entire time the cpusets are used should keep RCU grace periods from moving
-forward.
+Once the system locks up, I get no output, no panic, no oops.
+The serial console is frozen, my ssh sessions are frozen.
 
-But let me give you two some background to what I'm trying to solve. And
-then I'll get to where cpusets come in.
+Suppose the PCI bus "crashes" (whatever that means) or locks up.
+Would that make the system completely unresponsive? The I/O does have to 
+get to/from the south bridge, through the PCI bus AFAIU. I can imagine 
+that a locked PCI bus would be slightly problematic.
 
-Currently the mainline vanilla kernel does not handle migrating RT tasks
-well. And this problem also exists (but not as badly) in the -rt patch.
-When a RT task is queued on a CPU that is running an even higher priority
-RT task, it should be pushed off to another CPU that is running a lower
-priority task. But this does not always happen and a RT task may take
-several milliseconds before it gets a chance to run.
+Does this mean I need some kind of PCI bus analyzer (i.e. hardware) at 
+this point? Is there anything more I can try?
 
-This latancy is not acceptible for RT tasks. So I added logic to push and
-pull RT tasks to and from CPUS.  The push happens when a RT task wakes up
-and can't preempt the RT task running on the same CPU, or when a lower RT
-task is preempted by a higher one. The lower may be pushed to another CPU.
-
-This alone is not enough to cover RT migration. We also need to pull RT
-tasks to a CPU if that CPU is lowering its priority (a high priority RT
-task has just went to sleep).
-
-Idealy, and when CONFIG_CPUSETS is not defined, I keep track of all CPUS
-that have more than one RT task queued to run on it.  This I call an RT
-overload.  There's an RT overload bitmask that keeps track of the CPUS
-that have more than one RT task queued.  When a CPU stops running a high
-priority RT task, a search is made of all the CPUS that are in the RT
-overload state to see if there exists a RT task that can migrate to the
-CPU that is lowering its priority.
-
-Ingo Molnar and Peter Zijlstra pointed out to me that this global cpumask
-would kill performance on >64 CPU boxes due to cacheline bouncing. To
-solve this issue, I placed the RT overload mask into the cpusets.
-
-Ideally, the RT overload mask would keep track of all CPUS that have tasks
-that can run on a given CPU. In-other-words, a cpuset from the point of
-view of the CPU (or runqueue).  But this is overkill for the RT migration
-code.  Large # CPU boxes probably don't have the RT balancing problems
-that small # CPU boxes have, since the CPU resource is greater to run RT
-tasks on.
-
-Using cpusets seemed to be a nice place to add functionality to keep the
-RT overload code from crippling large # CPU boxes.
-
-The RT overload mask is bound to the CPU (runqueue) and not to the task.
-But to get to the cpuset, I needed to go through the task. The task I used
-was whatever was currently running on the given CPU, or sometimes the task
-that was being pushed to a CPU.
-
-Due to overlapping cpusets, there can be inconsistencies between the RT
-overload mask and actual CPUS that are in the overload state. This is
-tolerated, as the more CPUS you have, the less of a problem it should be
-to have overloaded CPUS. Remember, the push task doesn't use the overload.
-Only the pull does, and that happens when a push didn't succeed. With more
-CPUS, pushes are more likely to succeed.
-
-So the switch to use cpusets was to keep the RT balancing code from
-hurting large SMP boxes than for actually being correct on those boxes.
-The RT balance is much more important when the CPU resource is limited.
-The cpusets were picked just because it seemed resonable that most of the
-time a cpuset of one task on a runqueue would equal that of another task
-on the same runqueue. But the code is "good enough" if that's not the
-case.
-
-My code can handle inconsistencies between the RT overload mask and actual
-overloaded CPUS. So what I need to really protect with regards to cpusets
-is from them disappearing and causing an oops.  Whether or not a task
-comes and goes from a cpuset is not the important part.  The RT balance
-code only uses the cpuset to determine what other RT tasks are out there
-that can be brought to a given CPU.
-
-Sorry for this long explanation, but I was hoping to get some advice from
-those that have access to large SMP boxes, and have a vested interest that
-enhancements to the scheduling does not hurt performance for those boxes.
-
-Thoughts?
-
-Thanks,
-
--- Steve
+Regards.
