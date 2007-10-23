@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 06/13] RT: Maintain the highest RQ priority
-Date: Tue, 23 Oct 2007 12:50:54 -0400
-Message-ID: <20071023165054.5536.13480.stgit@novell1.haskins.net>
+Subject: [PATCH 02/13] RT: Condense the next-task search into one function
+Date: Tue, 23 Oct 2007 12:50:34 -0400
+Message-ID: <20071023165034.5536.502.stgit@novell1.haskins.net>
 References: <20071023164156.5536.95573.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,134 +14,103 @@ Cc: linux-kernel@vger.kernel.org,
 	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:35066
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:35032
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754663AbXJWRFa (ORCPT
+	by vger.kernel.org with ESMTP id S1754447AbXJWRFJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 13:05:30 -0400
+	Tue, 23 Oct 2007 13:05:09 -0400
 In-Reply-To: <20071023164156.5536.95573.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is an implementation of Steve's idea where we should update the RQ
-concept of priority to show the highest-task, even if that task is not (yet)
-running.  This prevents us from pushing multiple tasks to the RQ before it
-gets a chance to reschedule.
+We inadvertently added a redundant function, so clean it up
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched.c |   34 +++++++++++++++++++++++++---------
- 1 files changed, 25 insertions(+), 9 deletions(-)
+ kernel/sched.c    |    9 +++++----
+ kernel/sched_rt.c |   44 --------------------------------------------
+ 2 files changed, 5 insertions(+), 48 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 7c4fba8..c17e2e4 100644
+index 0dabf89..daeb8ed 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -304,7 +304,7 @@ struct rq {
- #ifdef CONFIG_PREEMPT_RT
- 	unsigned long rt_nr_running;
- 	unsigned long rt_nr_uninterruptible;
--	int curr_prio;
-+	int highest_prio;
- #endif
- 
- 	unsigned long switch_timestamp;
-@@ -368,11 +368,20 @@ static DEFINE_MUTEX(sched_hotcpu_mutex);
- #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
- static inline void set_rq_prio(struct rq *rq, int prio)
- {
--	rq->curr_prio = prio;
-+	rq->highest_prio = prio;
-+}
-+
-+static inline void update_rq_prio(struct rq *rq)
-+{
-+	struct rt_prio_array *array = &rq->rt.active;
-+	int                   prio  = sched_find_first_bit(array->bitmap);
-+
-+	set_rq_prio(rq, prio);
- }
- 
- #else
- #define set_rq_prio(rq, prio) do { } while(0)
-+#define update_rq_prio(rq)    do { } while(0)
- #endif
- 
- static inline void check_preempt_curr(struct rq *rq, struct task_struct *p)
-@@ -1023,12 +1032,14 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
- 	sched_info_queued(p);
- 	p->sched_class->enqueue_task(rq, p, wakeup);
- 	p->se.on_rq = 1;
-+	update_rq_prio(rq);
- }
- 
- static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
- {
- 	p->sched_class->dequeue_task(rq, p, sleep);
- 	p->se.on_rq = 0;
-+	update_rq_prio(rq);
- }
- 
- /*
-@@ -1526,15 +1537,15 @@ static struct rq *find_lock_lowest_rq(cpumask_t *cpu_mask,
- 				continue;
- 
- 			/* We look for lowest RT prio or non-rt CPU */
--			if (rq->curr_prio >= MAX_RT_PRIO) {
-+			if (rq->highest_prio >= MAX_RT_PRIO) {
- 				lowest_rq = rq;
- 				dst_cpu = cpu;
- 				break;
- 			}
- 
- 			/* no locking for now */
--			if (rq->curr_prio > task->prio &&
--			    (!lowest_rq || rq->curr_prio < lowest_rq->curr_prio)) {
-+			if (rq->highest_prio > task->prio &&
-+			    (!lowest_rq || rq->highest_prio < lowest_rq->highest_prio)) {
- 				lowest_rq = rq;
- 				dst_cpu = cpu;
- 			}
-@@ -1560,7 +1571,7 @@ static struct rq *find_lock_lowest_rq(cpumask_t *cpu_mask,
- 		}
- 
- 		/* If this rq is still suitable use it. */
--		if (lowest_rq->curr_prio > task->prio)
-+		if (lowest_rq->highest_prio > task->prio)
- 			break;
- 
- 		/* try again */
-@@ -2339,10 +2350,8 @@ static inline void finish_task_switch(struct rq *rq, struct task_struct *prev)
+@@ -1471,9 +1471,10 @@ next_in_queue:
+ 	 * Return the highest-prio non-running RT task (if task
+ 	 * may run on this CPU):
  	 */
- 	prev_state = prev->state;
- 	_finish_arch_switch(prev);
--
--	set_rq_prio(rq, current->prio);
--
- 	finish_lock_switch(rq, prev);
-+
- #if defined(CONFIG_PREEMPT_RT) && defined(CONFIG_SMP)
- 	/*
- 	 * If we pushed an RT task off the runqueue,
-@@ -4647,6 +4656,9 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
- 	prev_resched = _need_resched();
+-	if (!task_running(src_rq, tmp) &&
+-				cpu_isset(this_cpu, tmp->cpus_allowed))
+-		return tmp;
++	if (!task_running(src_rq, tmp)) {
++		if ((this_cpu == -1) || cpu_isset(this_cpu, tmp->cpus_allowed))
++			return tmp;
++	}
  
- 	if (on_rq) {
-+		/*
-+		 * Note: RQ priority gets updated in the enqueue/dequeue logic
-+		 */
- 		enqueue_task(rq, p, 0);
- 		/*
- 		 * Reschedule if we are currently running on this runqueue and
-@@ -4713,6 +4725,10 @@ void set_user_nice(struct task_struct *p, long nice)
- 		 */
- 		if (delta < 0 || (delta > 0 && task_running(rq, p)))
- 			resched_task(rq->curr);
-+
-+		/*
-+		 * Note: RQ priority gets updated in the enqueue/dequeue logic
-+		 */
- 	}
- out_unlock:
- 	task_rq_unlock(rq, &flags);
+ 	curr = curr->next;
+ 	if (curr != head)
+@@ -1569,7 +1570,7 @@ static int push_rt_task(struct rq *this_rq)
+ 
+ 	assert_spin_locked(&this_rq->lock);
+ 
+-	next_task = rt_next_highest_task(this_rq);
++	next_task = pick_rt_task(this_rq, -1);
+ 	if (!next_task)
+ 		return 0;
+ 
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 8d59e62..369827b 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -96,50 +96,6 @@ static struct task_struct *pick_next_task_rt(struct rq *rq)
+ 	return next;
+ }
+ 
+-#ifdef CONFIG_PREEMPT_RT
+-static struct task_struct *rt_next_highest_task(struct rq *rq)
+-{
+-	struct rt_prio_array *array = &rq->rt.active;
+-	struct task_struct *next;
+-	struct list_head *queue;
+-	int idx;
+-
+-	if (likely (rq->rt_nr_running < 2))
+-		return NULL;
+-
+-	idx = sched_find_first_bit(array->bitmap);
+-	if (idx >= MAX_RT_PRIO) {
+-		WARN_ON(1); /* rt_nr_running is bad */
+-		return NULL;
+-	}
+-
+-	queue = array->queue + idx;
+-	next = list_entry(queue->next, struct task_struct, run_list);
+-	if (unlikely(next != current))
+-		return next;
+-
+-	if (queue->next->next != queue) {
+-		/* same prio task */
+-		next = list_entry(queue->next->next, struct task_struct, run_list);
+-		goto out;
+-	}
+-
+-	/* slower, but more flexible */
+-	idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
+-	if (idx >= MAX_RT_PRIO) {
+-		WARN_ON(1); /* rt_nr_running was 2 and above! */
+-		return NULL;
+-	}
+-
+-	queue = array->queue + idx;
+-	next = list_entry(queue->next, struct task_struct, run_list);
+-
+- out:
+-	return next;
+-
+-}
+-#endif /* CONFIG_PREEMPT_RT */
+-
+ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
+ {
+ 	update_curr_rt(rq);
