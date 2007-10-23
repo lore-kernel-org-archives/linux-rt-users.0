@@ -1,115 +1,149 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: KVM and Prempt?
-Date: Tue, 23 Oct 2007 08:31:47 -0400
-Message-ID: <1193142707.8343.2.camel@ghaskins-t60p.haskins.net>
-References: <003F437218F04842B2A6976FA19368B1886B99@ERLM863A.ww001.siemens.net>
-	 <1193076845.5738.23.camel@sven.thebigcorporation.com>
-	 <471DB250.3030301@siemens.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH -v2 4/7] RT overloaded runqueues accounting
+Date: Tue, 23 Oct 2007 09:43:54 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710230844040.29506@gandalf.stny.rr.com>
+References: <20071023025900.927578809@goodmis.org>  <20071023032916.651749224@goodmis.org>
+  <20071022211709.7be79fea.pj@sgi.com> <6599ad830710222311x402c3d1agcc458742fb5e219c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-ur4AHpc4Ub8GBXZ527RP"
-Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	"Back, Michael (ext)" <michael.back.ext@siemens.com>,
-	linux-rt-users@vger.kernel.org
-To: Jan Kiszka <jan.kiszka@siemens.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Paul Jackson <pj@sgi.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, torvalds@linux-foundation.org,
+	akpm@linux-foundation.org, mingo@elte.hu,
+	dmitry.adamushko@gmail.com, ghaskins@novell.com,
+	a.p.zijlstra@chello.nl
+To: Paul Menage <menage@google.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:46724 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751783AbXJWMee (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:47914 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751939AbXJWNoR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 08:34:34 -0400
-In-Reply-To: <471DB250.3030301@siemens.com>
+	Tue, 23 Oct 2007 09:44:17 -0400
+In-Reply-To: <6599ad830710222311x402c3d1agcc458742fb5e219c@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
---=-ur4AHpc4Ub8GBXZ527RP
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+--
+On Mon, 22 Oct 2007, Paul Menage wrote:
 
-On Tue, 2007-10-23 at 10:35 +0200, Jan Kiszka wrote:
-> Sven-Thorsten Dietrich wrote:
-> > On Mon, 2007-10-22 at 09:01 +0200, Back, Michael (ext) wrote:
-> >> Hallo,
-> >> I tried to run Windows XP with KVM on Linux 2.6.31.1 on a=20
-> >=20
-> > You mean .21.1 ?=20
->=20
-> Classic typo I interestingly also did several times the last week. :)
->=20
-> >=20
-> >> AMD Opteron and on a Intel Xeon, on both it works fine!
-> >=20
-> >> After this test I patch the kernel with the current prempt-patch and o=
-n
-> >> both it doesn't works!=20
-> >=20
-> > Did you try against 2.6.23-rt1.
->=20
-> kvm in -rt1 is not usable. It's too old, lacking PREEMPT_NOTIFIER
-> support, thus quickly triggering lockdep.
->=20
-> >=20
-> > If you must stay on .21, you might have some other issues with the AMD
-> > and NUMA.
-> >=20
-> > At the very least, you will need to apply the attached patch from git
-> > somehow, although this patch is against a new scheduler post 2.6.22, so
-> > good luck :)
->=20
-> <--snip-->
->=20
-> Those patches are already mainline... :->
->=20
-> What you rather need are latest kvm patches, or - if building the kvm
-> distribution out of tree - a patch to enabled CONFIG_PREEMPT_NOTIFIERS
-> unconditionally:
->=20
-> --- linux-2.6.23.1-rt/kernel/Kconfig.preempt.orig
-> +++ linux-2.6.23.1-rt/kernel/Kconfig.preempt
-> @@ -136,6 +136,7 @@
->=20
->  config PREEMPT_NOTIFIERS
->  	bool
-> +	default y
->=20
->  config PREEMPT_BKL
->  	bool
->=20
->=20
-> Still, I'm seeing oopses here (more precisely, lock validator
-> complaints), but I need to re-test, better using kvm from git instead of
-> kvm-48.
->=20
-> Beyond this, I'm struggling to understand 300-400 us vm-exit latencies
-> (over Intel VMX), which appear to be independent of the underlying
-> system. See kvm-devel. Such latencies would limit the RT usability of
-> kvm - unless you spent dedicated CPUs.
+> On 10/22/07, Paul Jackson <pj@sgi.com> wrote:
+> > Steven wrote:
+> > > +void cpuset_rt_set_overload(struct task_struct *tsk, int cpu)
+> > > +{
+> > > +     cpu_set(cpu, task_cs(tsk)->rt_overload);
+> > > +}
+> >
+> > Question for Steven:
+> >
+> >   What locks are held when cpuset_rt_set_overload() is called?
 
-Some work is still left to be done in this area.  Until then you will
-see problems like you are describing.
+Right now only the rq lock. I know it's not enough. This needs to be
+fixed. These are called in the heart of the scheduler so...
 
-At one point I had a patch series that allowed KVM to actually work in
--rt without crashes, and with decent latencies (both host, and guest).
-Some point soon I will revive the series and port it to the latest
-kvm.git.
+> >
+> > Questions for Paul Menage:
+> >
+> >   Does 'tsk' need to be locked for the above task_cs() call?
+>
+> Cgroups doesn't change the locking rules for accessing a cpuset from a
+> task - you have to have one of:
+>
+> - task_lock(task)
 
-HTH
+I'm not sure of the lock nesting between task_lock(task) and rq->lock.
+If this nesting doesn't yet exist, then I can add code to do the
+task_lock.  But if the rq->lock is called within the task_lock somewhere,
+then this can't be used.
 
-Regards,
--Greg
+>
+> - callback_mutex
 
+Can schedule, so it's definitely out.
 
+>
+> - be in an RCU section from the point when you call task_cs to the
+> point when you stop using its result. (Additionally, in this case
+> there's no guarantee that the task stays in this cpuset for the
+> duration of the RCU section).
 
---=-ur4AHpc4Ub8GBXZ527RP
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
+This may also be an option. Although with interrupts disabled for the
+entire time the cpusets are used should keep RCU grace periods from moving
+forward.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
+But let me give you two some background to what I'm trying to solve. And
+then I'll get to where cpusets come in.
 
-iD8DBQBHHemzSW61Ku6jJPkRAkjEAJ478RESwol9cM8Dncd0S3E4EzTvlACeL/iJ
-vxy4tHxr9ecvyonY81Ki5J4=
-=KaKc
------END PGP SIGNATURE-----
+Currently the mainline vanilla kernel does not handle migrating RT tasks
+well. And this problem also exists (but not as badly) in the -rt patch.
+When a RT task is queued on a CPU that is running an even higher priority
+RT task, it should be pushed off to another CPU that is running a lower
+priority task. But this does not always happen and a RT task may take
+several milliseconds before it gets a chance to run.
 
---=-ur4AHpc4Ub8GBXZ527RP--
+This latancy is not acceptible for RT tasks. So I added logic to push and
+pull RT tasks to and from CPUS.  The push happens when a RT task wakes up
+and can't preempt the RT task running on the same CPU, or when a lower RT
+task is preempted by a higher one. The lower may be pushed to another CPU.
+
+This alone is not enough to cover RT migration. We also need to pull RT
+tasks to a CPU if that CPU is lowering its priority (a high priority RT
+task has just went to sleep).
+
+Idealy, and when CONFIG_CPUSETS is not defined, I keep track of all CPUS
+that have more than one RT task queued to run on it.  This I call an RT
+overload.  There's an RT overload bitmask that keeps track of the CPUS
+that have more than one RT task queued.  When a CPU stops running a high
+priority RT task, a search is made of all the CPUS that are in the RT
+overload state to see if there exists a RT task that can migrate to the
+CPU that is lowering its priority.
+
+Ingo Molnar and Peter Zijlstra pointed out to me that this global cpumask
+would kill performance on >64 CPU boxes due to cacheline bouncing. To
+solve this issue, I placed the RT overload mask into the cpusets.
+
+Ideally, the RT overload mask would keep track of all CPUS that have tasks
+that can run on a given CPU. In-other-words, a cpuset from the point of
+view of the CPU (or runqueue).  But this is overkill for the RT migration
+code.  Large # CPU boxes probably don't have the RT balancing problems
+that small # CPU boxes have, since the CPU resource is greater to run RT
+tasks on.
+
+Using cpusets seemed to be a nice place to add functionality to keep the
+RT overload code from crippling large # CPU boxes.
+
+The RT overload mask is bound to the CPU (runqueue) and not to the task.
+But to get to the cpuset, I needed to go through the task. The task I used
+was whatever was currently running on the given CPU, or sometimes the task
+that was being pushed to a CPU.
+
+Due to overlapping cpusets, there can be inconsistencies between the RT
+overload mask and actual CPUS that are in the overload state. This is
+tolerated, as the more CPUS you have, the less of a problem it should be
+to have overloaded CPUS. Remember, the push task doesn't use the overload.
+Only the pull does, and that happens when a push didn't succeed. With more
+CPUS, pushes are more likely to succeed.
+
+So the switch to use cpusets was to keep the RT balancing code from
+hurting large SMP boxes than for actually being correct on those boxes.
+The RT balance is much more important when the CPU resource is limited.
+The cpusets were picked just because it seemed resonable that most of the
+time a cpuset of one task on a runqueue would equal that of another task
+on the same runqueue. But the code is "good enough" if that's not the
+case.
+
+My code can handle inconsistencies between the RT overload mask and actual
+overloaded CPUS. So what I need to really protect with regards to cpusets
+is from them disappearing and causing an oops.  Whether or not a task
+comes and goes from a cpuset is not the important part.  The RT balance
+code only uses the cpuset to determine what other RT tasks are out there
+that can be brought to a given CPU.
+
+Sorry for this long explanation, but I was hoping to get some advice from
+those that have access to large SMP boxes, and have a vested interest that
+enhancements to the scheduling does not hurt performance for those boxes.
+
+Thoughts?
+
+Thanks,
+
+-- Steve
