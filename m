@@ -1,67 +1,30 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 13/13] RT: Cache cpus_allowed weight for optimizing
-	migration
-Date: Tue, 23 Oct 2007 23:20:12 -0400
-Message-ID: <1193196012.8343.48.camel@ghaskins-t60p.haskins.net>
-References: <20071023164156.5536.95573.stgit@novell1.haskins.net>
-	 <20071023165130.5536.73345.stgit@novell1.haskins.net>
-	 <200710240219.25487.ioe-lkml@rameria.de>
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: Re: How to debug complete kernel lock-ups
+Date: Wed, 24 Oct 2007 09:03:41 +0200
+Message-ID: <1193209421.5132.2.camel@godzilla.tecnorama.it>
+References: <471E1D3A.8000705@free.fr>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-XQNHk6uqakokIvtkmvHc"
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
-To: Ingo Oeser <ioe-lkml@rameria.de>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:47544 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752922AbXJXDWy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 23:22:54 -0400
-In-Reply-To: <200710240219.25487.ioe-lkml@rameria.de>
+Received: from hermes.xcon.it ([62.48.35.101]:35240 "EHLO hermes.xcon.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752137AbXJXHDo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Oct 2007 03:03:44 -0400
+In-Reply-To: <471E1D3A.8000705@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi John,
 
---=-XQNHk6uqakokIvtkmvHc
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+On Tue, 2007-10-23 at 18:11 +0200, John Sigler wrote:
+[...]
+> I've built a debug 2.6.22.1-rt9 kernel, hoping to get the kernel to dump 
+> something, anything.
 
-On Wed, 2007-10-24 at 02:19 +0200, Ingo Oeser wrote:
+Just curious: Is it works with non -rt kernel?
 
-> Why not make it a task flag, since according to your code, you are only=20
-> interested whether this is <=3D 1 or > 1. Since !(x <=3D 1) <=3D> (x > 1)
-> for any given unsigned integer x, the required data structure is
-> a "boolean" or a flag.
-
-Hi Ingo,
-  You are correct that the data is in fact interpreted as a boolean.  I
-also had considered using a more boolean-like notation at one point.
-However, I then figured I went through the expense of computing it, I
-might as well store the actual value as an integer in case it can be
-used in another way.  But to be honest, I cannot really think of any
-other potential uses, so perhaps we would be best to follow your
-suggestion.  It could always be changed if such a need ever arises.
-
-Thank you for the feedback!
-
-Regards,
--Greg
-
-
-
---=-XQNHk6uqakokIvtkmvHc
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
-
-iD8DBQBHHrnsSW61Ku6jJPkRAl2nAJwK9xrnW12gyC2glRc0dYpikqBIFgCfWve+
-CbAT6MMlMsJlJcdhw71SNA4=
-=iLyX
------END PGP SIGNATURE-----
-
---=-XQNHk6uqakokIvtkmvHc--
+Ciao,
+Alessio
