@@ -1,40 +1,49 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
-Date: Wed, 24 Oct 2007 16:07:41 +0400
-Message-ID: <471F358D.7070300@ru.mvista.com>
-References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161C38.2070305@ru.mvista.com>	<18198.44590.721412.314409@cargo.ozlabs.ibm.com>	<471777BD.8090800@ru.mvista.com>	<18200.3600.459275.823335@cargo.ozlabs.ibm.com>	<47189EF3.7010103@ru.mvista.com>	<18200.42194.853246.935329@cargo.ozlabs.ibm.com> <4718B287.20306@ru.mvista.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/9] RT: balance rt tasks v6
+Date: Wed, 24 Oct 2007 09:52:31 -0400
+Message-ID: <20071024134431.7960.41984.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Realtime Kernel <linux-rt-users@vger.kernel.org>
-To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Cc: linux-kernel@vger.kernel.org,
+	Gregory Haskins <ghaskins@novell.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.155]:31649 "EHLO
-	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1757210AbXJXMHd (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:49056
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1753197AbXJXOHM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Oct 2007 08:07:33 -0400
-In-Reply-To: <4718B287.20306@ru.mvista.com>
+	Wed, 24 Oct 2007 10:07:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello, I wrote:
+Applies to 23-rt1
 
->>>   The only thing I'm still unusre about is that deterministic accounting. 
->>>Could you point me at the patch which deals with this (at least for System 390 
+Changes since v5:
 
->>See efe567fc8281661524ffa75477a7c4ca9b466c63 in Linus' tree, and look
+*) Folded some of the smaller patches together to address feedback
+*) Fixed several minor bugs related to PI re-factoring and wakeup paths
 
->     Wait, how this is related to the hrtimer's event handlers not being able 
-> to call account_process_time() from arch/powerpc/kernel/time.c instead of 
-> update_process_timess()?
+I still have yet to make Ingo Oeser's suggestion to the last patch.
 
-    I've just realized that I've missed the call to account_process_time() in 
-the new timer_interrupt(). :-<
-    Anyway, this leads to each tick being accounted twice if the deterministic 
-accounting is not enabled -- first by timer_interrupt() and then by the 
-hrtimers core, doesn't it?
+At this point, things are looking really really good.  So this is a request to
+provide a formal review (if one has not yet been done) and to consider for
+inclusion in -rt.
 
-WBR, Sergei
+In my testing, cyclictest look great (ran overnight on a 4-way with the max
+outlier at 32us), the preempt-test passes with flying colors, and we see a
+300% improvement in latency spikes on large SMP systems (16-way is the largest
+we have in our small lab).
+
+I will rebase to -rt2 when its available.
+
+You can find the preempt-test here:
+
+http://rt.wiki.kernel.org/index.php/Preemption_Test
+
+Regards,
+-Greg
