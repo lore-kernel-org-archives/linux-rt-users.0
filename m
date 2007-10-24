@@ -1,59 +1,43 @@
-From: Paul Jackson <pj@sgi.com>
-Subject: Re: [PATCH -v2 4/7] RT overloaded runqueues accounting
-Date: Tue, 23 Oct 2007 14:46:15 -0700
-Message-ID: <20071023144615.89ed9c86.pj@sgi.com>
-References: <20071023025900.927578809@goodmis.org>
-	<20071023032916.651749224@goodmis.org>
-	<20071022211709.7be79fea.pj@sgi.com>
-	<6599ad830710222311x402c3d1agcc458742fb5e219c@mail.gmail.com>
-	<Pine.LNX.4.58.0710230844040.29506@gandalf.stny.rr.com>
+From: Ingo Oeser <ioe-lkml@rameria.de>
+Subject: Re: [PATCH 13/13] RT: Cache cpus_allowed weight for optimizing migration
+Date: Wed, 24 Oct 2007 02:19:23 +0200
+Message-ID: <200710240219.25487.ioe-lkml@rameria.de>
+References: <20071023164156.5536.95573.stgit@novell1.haskins.net> <20071023165130.5536.73345.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain;
+  charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: menage@google.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, torvalds@linux-foundation.org,
-	akpm@linux-foundation.org, mingo@elte.hu,
-	dmitry.adamushko@gmail.com, ghaskins@novell.com,
-	a.p.zijlstra@chello.nl
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from netops-testserver-3-out.sgi.com ([192.48.171.28]:36072 "EHLO
-	relay.sgi.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752597AbXJWVqT (ORCPT
+Received: from smtprelay03.ispgateway.de ([80.67.18.15]:59278 "EHLO
+	smtprelay03.ispgateway.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753769AbXJXAX0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2007 17:46:19 -0400
-In-Reply-To: <Pine.LNX.4.58.0710230844040.29506@gandalf.stny.rr.com>
+	Tue, 23 Oct 2007 20:23:26 -0400
+In-Reply-To: <20071023165130.5536.73345.stgit@novell1.haskins.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven wrote:
-> Ingo Molnar and Peter Zijlstra pointed out to me that this global cpumask
-> would kill performance on >64 CPU boxes due to cacheline bouncing. To
-> solve this issue, I placed the RT overload mask into the cpusets.
+Hi Gregory,
 
-This feels rather like sched domains to me (which I can't claim
-to understand very well.)  That is, you need to subdivide the
-overload masks, so as to avoid contention on a single mask in a
-large system, making the tradeoff that you will sometimes resolve
-overloads less aggressively.
+On Tuesday 23 October 2007, Gregory Haskins wrote:
+> Calculating the weight is probably relatively expensive, so it is only
+> done when the cpus_allowed mask is updated (which should be relatively
+> infrequent, especially compared to scheduling frequency) and cached in
+> the task_struct.
 
-With sched domains, we added cpuset code, that is only called in the
-infrequent event that the cpusets are reconfigured, to update the
-kernel's sched domains.  It hasn't been easy code, but at least the
-main line scheduler code paths remain oblivious to cpusets.
+Why not make it a task flag, since according to your code, you are only 
+interested whether this is <= 1 or > 1. Since !(x <= 1) <=> (x > 1)
+for any given unsigned integer x, the required data structure is
+a "boolean" or a flag.
 
-Can you create "RT domains", each with their own overload mask?
-Perhaps even attach the overload masks to the existing sched domains?
 
-The essential approach here, as with all things involving cpusets and
-the scheduler, is to not have the scheduler code access cpusets, but
-rather to have the scheduler code have its own controlling data
-structures, which it can access with locking suitable to its fast path
-requirements, and then have the cpuset code ~~delicately~~ update those
-structures on the infrequent occassion that something changes in the
-cpuset configuration.
+Best Regards
 
--- 
-                  I won't rest till it's the best ...
-                  Programmer, Linux Scalability
-                  Paul Jackson <pj@sgi.com> 1.925.600.0401
+Ingo Oeser
