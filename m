@@ -1,94 +1,40 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: How to debug complete kernel lock-ups
-Date: Wed, 24 Oct 2007 11:17:40 +0200
-Message-ID: <471F0DB4.1080709@free.fr>
-References: <471E1D3A.8000705@free.fr>
+From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
+Subject: Re: [PATCH v2 3/4] Implement clockevents driver for powerpc
+Date: Wed, 24 Oct 2007 16:07:41 +0400
+Message-ID: <471F358D.7070300@ru.mvista.com>
+References: <20070921032603.0D3EA32C887@thor>	<4713A616.3090103@ru.mvista.com>	<18195.64334.985238.848522@cargo.ozlabs.ibm.com>	<47161C38.2070305@ru.mvista.com>	<18198.44590.721412.314409@cargo.ozlabs.ibm.com>	<471777BD.8090800@ru.mvista.com>	<18200.3600.459275.823335@cargo.ozlabs.ibm.com>	<47189EF3.7010103@ru.mvista.com>	<18200.42194.853246.935329@cargo.ozlabs.ibm.com> <4718B287.20306@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-pci@atrey.karlin.mff.cuni.cz
-To: linux-kernel@vger.kernel.org
+Cc: Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Realtime Kernel <linux-rt-users@vger.kernel.org>
+To: Sergei Shtylyov <sshtylyov@ru.mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:58751 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752017AbXJXJRl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Oct 2007 05:17:41 -0400
-In-Reply-To: <471E1D3A.8000705@free.fr>
+Received: from gateway-1237.mvista.com ([63.81.120.155]:31649 "EHLO
+	imap.sh.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1757210AbXJXMHd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Oct 2007 08:07:33 -0400
+In-Reply-To: <4718B287.20306@ru.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-John Sigler wrote:
+Hello, I wrote:
 
-> I have an x86 system with two PCI slots, in which I inserted two
-> specialized output cards (Dektec DTA-105).
-> 
-> http://www.dektec.com/Products/DTA-105/
-> (They provide an open source driver.)
-> 
-> My problem is: when I write to the 4 ports (each card has 2 ports) "at 
-> the same time" (not really "at the same time" because I have a 
-> uni-processor system, so "within a short time frame" is more accurate) 
-> the system *completely* locks up.
-> 
-> The manufacturer told me they had seen the problem in their lab. I'm 
-> just trying to provide some helpful debug output to speed up the process 
-> of fixing the problem :-)
-> 
-> I've built a debug 2.6.22.1-rt9 kernel, hoping to get the kernel to dump 
-> something, anything.
-> 
-> +CONFIG_KALLSYMS_ALL=y
-> +CONFIG_PCI_DEBUG=y
-> +CONFIG_DEBUG_DRIVER=y
-> +CONFIG_PRINTK_TIME=y
-> +CONFIG_MAGIC_SYSRQ=y
-> +CONFIG_DEBUG_KERNEL=y
-> +CONFIG_DEBUG_SHIRQ=y
-> +CONFIG_DETECT_SOFTLOCKUP=y
-> +CONFIG_DEBUG_SLAB=y
-> +CONFIG_DEBUG_SLAB_LEAK=y
-> +CONFIG_DEBUG_PREEMPT=y
-> +CONFIG_DEBUG_RT_MUTEXES=y
-> +CONFIG_DEBUG_PI_LIST=y
-> +CONFIG_RT_MUTEX_TESTER=y
-> +CONFIG_DEBUG_SPINLOCK=y
-> +CONFIG_DEBUG_MUTEXES=y
-> +CONFIG_DEBUG_LOCK_ALLOC=y
-> +CONFIG_PROVE_LOCKING=y
-> +CONFIG_LOCKDEP=y
-> +CONFIG_TRACE_IRQFLAGS=y
-> +CONFIG_DEBUG_SPINLOCK_SLEEP=y
-> +CONFIG_DEBUG_LOCKING_API_SELFTESTS=y
-> +CONFIG_STACKTRACE=y
-> +CONFIG_PREEMPT_TRACE=y
-> +CONFIG_DEBUG_BUGVERBOSE=y
-> +CONFIG_DEBUG_INFO=y
-> +CONFIG_FRAME_POINTER=y
-> +CONFIG_FORCED_INLINING=y
-> +CONFIG_DEBUG_STACKOVERFLOW=y
-> +CONFIG_DEBUG_RODATA=y
-> +CONFIG_4KSTACKS=y
-> 
-> I've enabled the serial console, and used SysRq to bump the console 
-> level to 9 (I want everything, even KERN_DEBUG output).
-> 
-> I've enabled the IO-APIC watchdog (nmi_watchdog=1).
-> 
-> Once the system locks up, I get no output, no panic, no oops.
-> The serial console is frozen, my ssh sessions are frozen.
-> 
-> Suppose the PCI bus "crashes" (whatever that means) or locks up.
-> Would that make the system completely unresponsive? The I/O does have to 
-> get to/from the south bridge, through the PCI bus AFAIU. I can imagine 
-> that a locked PCI bus would be slightly problematic.
-> 
-> Does this mean I need some kind of PCI bus analyzer (i.e. hardware) at 
-> this point? Is there anything more I can try?
+>>>   The only thing I'm still unusre about is that deterministic accounting. 
+>>>Could you point me at the patch which deals with this (at least for System 390 
 
-I've tested with a vanilla 2.6.22.10 kernel (no PREEMPT_RT patch).
-That system also locks up and remains completely unresponsive (I can't 
-open new ssh sessions, the system won't answer ICMP echo requests).
+>>See efe567fc8281661524ffa75477a7c4ca9b466c63 in Linus' tree, and look
 
-How do driver writers deal with complete kernel hangs?
+>     Wait, how this is related to the hrtimer's event handlers not being able 
+> to call account_process_time() from arch/powerpc/kernel/time.c instead of 
+> update_process_timess()?
 
-Regards.
+    I've just realized that I've missed the call to account_process_time() in 
+the new timer_interrupt(). :-<
+    Anyway, this leads to each tick being accounted twice if the deterministic 
+accounting is not enabled -- first by timer_interrupt() and then by the 
+hrtimers core, doesn't it?
+
+WBR, Sergei
