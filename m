@@ -1,44 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.23-rt2
-Date: Wed, 24 Oct 2007 13:07:14 -0400
-Message-ID: <1193245634.20679.8.camel@localhost.localdomain>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: Interrupt Latency module for intel
+Date: Wed, 24 Oct 2007 12:52:55 -0700
+Message-ID: <1193255575.3557.2.camel@imap.mvista.com>
+References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:51082 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754679AbXJXRHn (ORCPT
+Received: from homer.mvista.com ([63.81.120.158]:30520 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1753467AbXJXT4y (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Oct 2007 13:07:43 -0400
+	Wed, 24 Oct 2007 15:56:54 -0400
+In-Reply-To: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the 2.6.23-rt2 tree, which can be
-downloaded from the location:
+On Sat, 2007-10-20 at 12:06 +0530, Jaswinder Singh wrote:
+> hello all,
+> 
+> On my Intel Pentium 4 with linux-2.6.23-rc8-rt1, I am getting :
+> 
+> Interrupt Latency result
+> ------------------------
+> MAX latency : 12.570 micro-seconds
+> MIN latency : 3.352 micro-seconds
+> AVG latency : 4.190 micro-seconds
+> Total Samples : 32583
+> 
+> Please review this interrupt latency module and give your feedback.
 
- http://www.kernel.org/pub/linux/kernel/projects/rt/
+Have you noticed there is at least one other way to measure this with
+existing tools? With high resolution timers you could do this from
+userspace..
 
-Changes since 2.6.23-rt1
-
-  - Improved RT balancing (Steven Rostedt
-                 with thanks to Gregory Haskins for some ideas)
-
-  - plist debug fix (Arnaldo Carvalho de Melo)
-
-  - seqlock irq fix (Daniel Walker)
-
-  - slab NUMA freeing (Andi Kleen)
-
-
-to build a 2.6.23-rt2 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
-  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23-rt2.bz2
-
-The broken out patches are also available.
-
--- Steve
+Daniel
