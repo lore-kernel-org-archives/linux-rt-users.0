@@ -1,93 +1,74 @@
-From: Greg KH <greg@kroah.com>
+From: "Ray Lee" <ray-lk@madrabbit.org>
 Subject: Re: How to debug complete kernel lock-ups
-Date: Wed, 24 Oct 2007 08:56:37 -0700
-Message-ID: <20071024155637.GA19062@kroah.com>
+Date: Wed, 24 Oct 2007 09:19:13 -0700
+Message-ID: <2c0942db0710240919x26f0803arae3776cac7add8fa@mail.gmail.com>
 References: <471E1D3A.8000705@free.fr> <471F0DB4.1080709@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	linux-pci@atrey.karlin.mff.cuni.cz
-To: John Sigler <linux.kernel@free.fr>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758825AbXJXP45@vger.kernel.org>
-Content-Disposition: inline
+To: "John Sigler" <linux.kernel@free.fr>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ug-out-1314.google.com ([66.249.92.175]:12302 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754285AbXJXQTQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Oct 2007 12:19:16 -0400
+Received: by ug-out-1314.google.com with SMTP id z38so350903ugc
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Oct 2007 09:19:14 -0700 (PDT)
 In-Reply-To: <471F0DB4.1080709@free.fr>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Oct 24, 2007 at 11:17:40AM +0200, John Sigler wrote:
-> John Sigler wrote:
->
->> I have an x86 system with two PCI slots, in which I inserted two
->> specialized output cards (Dektec DTA-105).
->> http://www.dektec.com/Products/DTA-105/
->> (They provide an open source driver.)
->> My problem is: when I write to the 4 ports (each card has 2 ports) "at the 
->> same time" (not really "at the same time" because I have a uni-processor 
->> system, so "within a short time frame" is more accurate) the system 
->> *completely* locks up.
->> The manufacturer told me they had seen the problem in their lab. I'm just 
->> trying to provide some helpful debug output to speed up the process of 
->> fixing the problem :-)
->> I've built a debug 2.6.22.1-rt9 kernel, hoping to get the kernel to dump 
->> something, anything.
->> +CONFIG_KALLSYMS_ALL=y
->> +CONFIG_PCI_DEBUG=y
->> +CONFIG_DEBUG_DRIVER=y
->> +CONFIG_PRINTK_TIME=y
->> +CONFIG_MAGIC_SYSRQ=y
->> +CONFIG_DEBUG_KERNEL=y
->> +CONFIG_DEBUG_SHIRQ=y
->> +CONFIG_DETECT_SOFTLOCKUP=y
->> +CONFIG_DEBUG_SLAB=y
->> +CONFIG_DEBUG_SLAB_LEAK=y
->> +CONFIG_DEBUG_PREEMPT=y
->> +CONFIG_DEBUG_RT_MUTEXES=y
->> +CONFIG_DEBUG_PI_LIST=y
->> +CONFIG_RT_MUTEX_TESTER=y
->> +CONFIG_DEBUG_SPINLOCK=y
->> +CONFIG_DEBUG_MUTEXES=y
->> +CONFIG_DEBUG_LOCK_ALLOC=y
->> +CONFIG_PROVE_LOCKING=y
->> +CONFIG_LOCKDEP=y
->> +CONFIG_TRACE_IRQFLAGS=y
->> +CONFIG_DEBUG_SPINLOCK_SLEEP=y
->> +CONFIG_DEBUG_LOCKING_API_SELFTESTS=y
->> +CONFIG_STACKTRACE=y
->> +CONFIG_PREEMPT_TRACE=y
->> +CONFIG_DEBUG_BUGVERBOSE=y
->> +CONFIG_DEBUG_INFO=y
->> +CONFIG_FRAME_POINTER=y
->> +CONFIG_FORCED_INLINING=y
->> +CONFIG_DEBUG_STACKOVERFLOW=y
->> +CONFIG_DEBUG_RODATA=y
->> +CONFIG_4KSTACKS=y
->> I've enabled the serial console, and used SysRq to bump the console level 
->> to 9 (I want everything, even KERN_DEBUG output).
->> I've enabled the IO-APIC watchdog (nmi_watchdog=1).
->> Once the system locks up, I get no output, no panic, no oops.
->> The serial console is frozen, my ssh sessions are frozen.
->> Suppose the PCI bus "crashes" (whatever that means) or locks up.
->> Would that make the system completely unresponsive? The I/O does have to 
->> get to/from the south bridge, through the PCI bus AFAIU. I can imagine 
->> that a locked PCI bus would be slightly problematic.
->> Does this mean I need some kind of PCI bus analyzer (i.e. hardware) at 
->> this point? Is there anything more I can try?
->
-> I've tested with a vanilla 2.6.22.10 kernel (no PREEMPT_RT patch).
-> That system also locks up and remains completely unresponsive (I can't open 
-> new ssh sessions, the system won't answer ICMP echo requests).
->
+On 10/24/07, John Sigler <linux.kernel@free.fr> wrote:
+> > I have an x86 system with two PCI slots, in which I inserted two
+> > specialized output cards (Dektec DTA-105).
+> >
+> > http://www.dektec.com/Products/DTA-105/
+> > (They provide an open source driver.)
+> >
+> > My problem is: when I write to the 4 ports (each card has 2 ports) "at
+> > the same time" (not really "at the same time" because I have a
+> > uni-processor system, so "within a short time frame" is more accurate)
+> > the system *completely* locks up.
+> >
+> > The manufacturer told me they had seen the problem in their lab. I'm
+> > just trying to provide some helpful debug output to speed up the process
+> > of fixing the problem :-)
+[...]
+> > Suppose the PCI bus "crashes" (whatever that means) or locks up.
+> > Would that make the system completely unresponsive? The I/O does have to
+> > get to/from the south bridge, through the PCI bus AFAIU. I can imagine
+> > that a locked PCI bus would be slightly problematic.
+> >
+> > Does this mean I need some kind of PCI bus analyzer (i.e. hardware) at
+> > this point? Is there anything more I can try?
+
+You need visibility into the actual place where the issue is
+happening, and by your description it's the two cards fighting each
+other on the PCI bus. (I'm assuming that the problem doesn't occur
+when there's only one card.)
+
+I've worked on a platform where only a few things went through the PCI
+bus, and via the firmware's debugger (completely outside the kernel),
+I was able to do the setup of the PCI chip and mappings, and then
+pound on the hardware directly to exhibit a lockup of the bus. That
+provided pretty strong proof that it wasn't some other unrelated issue
+in the kernel causing us grief.
+
+At that point, it was pretty clear that was it, as there was no kernel
+running, and the CPU was still responsive. Renting a logic analyzer
+was the next step.
+
 > How do driver writers deal with complete kernel hangs?
 
-We slowly go crazy :)
+Lots of sleeps in between each and every write to the hardware, with
+regular output. Of course, if it's a timing issue (which is what it
+sounds like), you're screwed.
 
-Seriously, try to add debugging messages for where you think things
-might be dying and slowly start working from there.  It's not a quick
-thing to do at times...
+Other than that, I look at the hardware guys and say "Your turn," and
+walk out of the room to get a cup of coffee.
 
-Oh, try using kdb, that sometimes will work for people, depending on
-your hardware and problem.
-
-good luck,
-
-greg k-h
+Ray
