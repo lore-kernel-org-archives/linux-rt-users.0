@@ -1,49 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 2/3] RT: Cache cpus_allowed weight for optimizing migration
-Date: Thu, 25 Oct 2007 15:58:00 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710251556130.5152@gandalf.stny.rr.com>
-References: <20071025144456.19876.94333.stgit@novell1.haskins.net>
- <20071025144628.19876.35583.stgit@novell1.haskins.net>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: 2.6.23.rt3 fails to boot on 8 way opteron
+Date: Thu, 25 Oct 2007 13:23:48 -0700
+Message-ID: <200710251323.48751.dvhltc@us.ibm.com>
+References: <200710251215.18172.dvhltc@us.ibm.com> <1193340061.16906.9.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:44769 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755386AbXJYT6L (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2007 15:58:11 -0400
-In-Reply-To: <20071025144628.19876.35583.stgit@novell1.haskins.net>
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:40334 "EHLO e1.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752972AbXJYUYN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Oct 2007 16:24:13 -0400
+Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
+	by e1.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l9PKOCOK030305
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
+Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
+	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l9PKOC0G136532
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
+Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
+	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l9PKOCh8005609
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
+In-Reply-To: <1193340061.16906.9.camel@imap.mvista.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
---
-> @@ -5371,7 +5372,13 @@ int set_cpus_allowed(struct task_struct *p, cpumask_t new_mask)
->  		goto out;
->  	}
+On Thursday 25 October 2007 12:21:01 Daniel Walker wrote:
+> On Thu, 2007-10-25 at 12:15 -0700, Darren Hart wrote:
+> > Steven,
+> >
+> > Per our discussion on irc, here is more context surrounding the crash. 
+> > The system boots fine with rt1 and the same .config.
 >
-> -	p->cpus_allowed = new_mask;
-> +	if (p->sched_class->set_cpus_allowed)
-> +		p->sched_class->set_cpus_allowed(p, new_mask);
-> +	else {
-> +		p->cpus_allowed    = new_mask;
-> +		p->nr_cpus_allowed = cpus_weight(new_mask);
-> +	}
-> +
+> Not sure what the IRC context is, but if you use the broken out set you
+> can likely bisect through last 15-20 patches to see which one is the
+> culprit (if it was something added recently)..
 
-OK, forget everything I said on this topic. I must have replied while low
-on caffeine.
+Sorry, the irc reference wasn't particularly relevant since I just mentioned 
+it was broken and provided a subset of output I sent to this list.  And yes, 
+I am basically now doing what you suggest above with the broken out patch 
+set.
 
-I see here that you do the set_cpus_allowed code if defined _ELSE_ you
-just update the weight.
+Thanks,
 
-So you do do what I asked.
-
-/me slaps himself to wakeup.
-
--- Steve
+-- 
+Darren Hart
+IBM Linux Technology Center
+Realtime Linux Team
