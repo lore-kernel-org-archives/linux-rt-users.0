@@ -1,50 +1,85 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Interrupt Latency module for intel
-Date: Thu, 25 Oct 2007 13:23:31 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
-References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
- <1193255575.3557.2.camel@imap.mvista.com>  <1193260511.4040.42.camel@sven.thebigcorporation.com>
- <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH 3/3] RT: CPU priority management
+Date: Thu, 25 Oct 2007 13:26:38 -0400
+Message-ID: <1193333198.4021.24.camel@ghaskins-t60p.haskins.net>
+References: <20071025144456.19876.94333.stgit@novell1.haskins.net>
+	 <20071025144633.19876.10342.stgit@novell1.haskins.net>
+	 <Pine.LNX.4.58.0710251124370.5639@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	Daniel Walker <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-DYEhY3MU/7fHnQgwm97z"
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:41449 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751848AbXJYRXw (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:47110 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752638AbXJYR3Y (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2007 13:23:52 -0400
-In-Reply-To: <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
+	Thu, 25 Oct 2007 13:29:24 -0400
+In-Reply-To: <Pine.LNX.4.58.0710251124370.5639@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
+--=-DYEhY3MU/7fHnQgwm97z
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Please don't top post.
+Oh crap.  I just realized this is an older version of the patch..mustv'e
+forgot to refresh...grr.  Ill send out the refreshed one.
 
---
+But anyway, I digress. =20
 
-On Thu, 25 Oct 2007, Jaswinder Singh wrote:
+On Thu, 2007-10-25 at 11:27 -0400, Steven Rostedt wrote:
 
-> Hello Daniel and Sven-Thorsten Dietrich,
->
-> Can you please let me know the procedure of :
-> 1. high resolution timers from userspace
+>=20
+> The cpu_priority and the cp->lock will be aboslutely horrible for
+> cacheline bouncing.
 
-http://rt.wiki.kernel.org/index.php/Cyclictest
+In the form presented here in this email, perhaps.  I think you will see
+some significant improvements in the refreshed version.  The big change
+is that the global lock is gone.
 
-> 2. ingo's irq latency timing and tracing
+>   Ironically, this will kill performance for the very
+> machines this code is to help with.  The larger the number of CPUs you
+> have the more cacheline bouncing this code will create.
 
-I need to write up some howtos for that.
+Don't forget:  The same is precisely true for the current -rt2
+algorithm.  For instance, the -rt2 algorithm aside from being linear in
+general, scales cacheline bouncing linearly as well.  Each cpu is going
+to trash rq->rt.highest_prio and then we will walk them for each scan.
 
->
-> I will also try these methods and try to compare the performance numbers.
->
+The fact is, you can't maintain a global dynamic policy without bouncing
+cachelines, period.  But hopefully we can minimize it, and I just want
+to see the fastest code here.
 
-The cyclictest is fine for comparisons, but the latency trace is only
-available with the -rt patch.
+>=20
+> I still don't see the benefit from the cpupri code.
 
--- Steve
+I still owe you timing data, but at this juncture I think I can beat
+linear (especially as we start throwing in big-iron) ;)  I originally
+got involved in this scheduler rework from observations of poor scaling
+on our 8/16-ways, so I want it to scale as much as you ;)  If this alg
+doesn't pan out, that's cool.  But I think it will in the end.  Linear
+algs in the fast path just make my skin crawl.  Perhaps it will still be
+the best design in the end, but I am not giving up that easy until I
+prove it to myself.
+
+Regards,
+-Greg
+
+--=-DYEhY3MU/7fHnQgwm97z
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+
+iD8DBQBHINHOSW61Ku6jJPkRAsA6AJ4n4fO4o9IE5K8i8UU8J1ENoWUEPgCcDbnl
+PzXqHptHf1mXsDJAsARwBg8=
+=w/0J
+-----END PGP SIGNATURE-----
+
+--=-DYEhY3MU/7fHnQgwm97z--
