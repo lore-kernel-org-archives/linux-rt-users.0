@@ -1,41 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Interrupt Latency module for intel
-Date: Wed, 24 Oct 2007 21:35:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710242131550.13877@gandalf.stny.rr.com>
-References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
+From: Grant Grundler <grundler@parisc-linux.org>
+Subject: Re: How to debug complete kernel lock-ups
+Date: Wed, 24 Oct 2007 22:06:36 -0600
+Message-ID: <20071025040636.GA3608@colo.lackof.org>
+References: <471E1D3A.8000705@free.fr> <471F0DB4.1080709@free.fr>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:56279 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752192AbXJYBfL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Oct 2007 21:35:11 -0400
-In-Reply-To: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-pci@atrey.karlin.mff.cuni.cz
+To: John Sigler <linux.kernel@free.fr>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761656AbXJYEHJ@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <471F0DB4.1080709@free.fr>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
---
-On Sat, 20 Oct 2007, Jaswinder Singh wrote:
-
-> hello all,
+On Wed, Oct 24, 2007 at 11:17:40AM +0200, John Sigler wrote:
+...
+> I've tested with a vanilla 2.6.22.10 kernel (no PREEMPT_RT patch).
+> That system also locks up and remains completely unresponsive (I can't open 
+> new ssh sessions, the system won't answer ICMP echo requests).
 >
-> On my Intel Pentium 4 with linux-2.6.23-rc8-rt1, I am getting :
->
-> Interrupt Latency result
-> ------------------------
-> MAX latency : 12.570 micro-seconds
-> MIN latency : 3.352 micro-seconds
-> AVG latency : 4.190 micro-seconds
-> Total Samples : 32583
->
-> Please review this interrupt latency module and give your feedback.
+> How do driver writers deal with complete kernel hangs?
 
-Wow 12.570 ms latencies!
+Use different HW. Both IA64 and PARISC gives useful diagnostics
+when the machine has a hard crash (MCA or HPMC respectively). I'll bet
+PPC does too on the POWER machines.
 
-Heh, thanks for showing that dynamic ticks work.
+Maybe a newer x86 machine can provide some MCE data as well?
 
--- Steve
+Otherwise it's what gregkh said...not the "we slowly go crazy"
+part. :) Well, sometimes. :)
+
+BTW, getting PCI bus traces would be quite helpful in this case.
+It'll give you clear data as to whether the devices are being programmed
+as expected (also to rule out chipset/Host bus controller issues) and
+whether they are responding as expected (maybe something else dies
+when they do).
+
+hth,
+grant
+
+hth,
+grant
