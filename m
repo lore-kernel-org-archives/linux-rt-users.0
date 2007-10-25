@@ -1,74 +1,50 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: Interrupt Latency module for intel
-Date: Thu, 25 Oct 2007 22:11:17 +0530
-Message-ID: <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
+Date: Thu, 25 Oct 2007 13:23:31 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
 References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
-	 <1193255575.3557.2.camel@imap.mvista.com>
-	 <1193260511.4040.42.camel@sven.thebigcorporation.com>
+ <1193255575.3557.2.camel@imap.mvista.com>  <1193260511.4040.42.camel@sven.thebigcorporation.com>
+ <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Daniel Walker" <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>, rostedt@goodmis.org
-To: "Sven-Thorsten Dietrich" <sven@thebigcorporation.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
+	Daniel Walker <dwalker@mvista.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rn-out-0910.google.com ([64.233.170.189]:16928 "EHLO
-	rn-out-0102.google.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756632AbXJYQlU (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:41449 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751848AbXJYRXw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2007 12:41:20 -0400
-Received: by rn-out-0102.google.com with SMTP id s46so585231rnb
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 09:41:18 -0700 (PDT)
-In-Reply-To: <1193260511.4040.42.camel@sven.thebigcorporation.com>
-Content-Disposition: inline
+	Thu, 25 Oct 2007 13:23:52 -0400
+In-Reply-To: <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Daniel and Sven-Thorsten Dietrich,
 
-Can you please let me know the procedure of :
-1. high resolution timers from userspace
-2. ingo's irq latency timing and tracing
 
-I will also try these methods and try to compare the performance numbers.
+Please don't top post.
 
-Thanks you,
+--
 
-Jaswinder Singh.
+On Thu, 25 Oct 2007, Jaswinder Singh wrote:
 
-On 10/25/07, Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
-> On Wed, 2007-10-24 at 12:52 -0700, Daniel Walker wrote:
-> > On Sat, 2007-10-20 at 12:06 +0530, Jaswinder Singh wrote:
-> > > hello all,
-> > >
-> > > On my Intel Pentium 4 with linux-2.6.23-rc8-rt1, I am getting :
-> > >
-> > > Interrupt Latency result
-> > > ------------------------
-> > > MAX latency : 12.570 micro-seconds
-> > > MIN latency : 3.352 micro-seconds
-> > > AVG latency : 4.190 micro-seconds
-> > > Total Samples : 32583
-> > >
-> > > Please review this interrupt latency module and give your feedback.
-> >
-> > Have you noticed there is at least one other way to measure this with
-> > existing tools? With high resolution timers you could do this from
-> > userspace..
+> Hello Daniel and Sven-Thorsten Dietrich,
 >
-> Not to mention of course ingo's irq latency timing and tracing, which
-> works more comprehensively.
+> Can you please let me know the procedure of :
+> 1. high resolution timers from userspace
+
+http://rt.wiki.kernel.org/index.php/Cyclictest
+
+> 2. ingo's irq latency timing and tracing
+
+I need to write up some howtos for that.
+
 >
-> >
-> > Daniel
-> >
-> > -
-> > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> I will also try these methods and try to compare the performance numbers.
 >
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+
+The cyclictest is fine for comparisons, but the latency trace is only
+available with the -rt patch.
+
+-- Steve
