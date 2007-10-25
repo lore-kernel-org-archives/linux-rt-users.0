@@ -1,53 +1,67 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: 2.6.23.rt3 fails to boot on 8 way opteron
-Date: Thu, 25 Oct 2007 13:23:48 -0700
-Message-ID: <200710251323.48751.dvhltc@us.ibm.com>
-References: <200710251215.18172.dvhltc@us.ibm.com> <1193340061.16906.9.camel@imap.mvista.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Possible bug in 23rt3 preempt-irqs-core.patch
+Date: Thu, 25 Oct 2007 16:48:53 -0400
+Message-ID: <20071025204853.GB12268@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Daniel Walker <dwalker@mvista.com>
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e1.ny.us.ibm.com ([32.97.182.141]:40334 "EHLO e1.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752972AbXJYUYN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2007 16:24:13 -0400
-Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
-	by e1.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id l9PKOCOK030305
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
-Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
-	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id l9PKOC0G136532
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
-Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
-	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id l9PKOCh8005609
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 16:24:12 -0400
-In-Reply-To: <1193340061.16906.9.camel@imap.mvista.com>
+Received: from [209.5.119.169] ([209.5.119.169]:30719 "EHLO
+	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751221AbXJYU7P (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Oct 2007 16:59:15 -0400
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thursday 25 October 2007 12:21:01 Daniel Walker wrote:
-> On Thu, 2007-10-25 at 12:15 -0700, Darren Hart wrote:
-> > Steven,
-> >
-> > Per our discussion on irc, here is more context surrounding the crash. 
-> > The system boots fine with rt1 and the same .config.
->
-> Not sure what the IRC context is, but if you use the broken out set you
-> can likely bisect through last 15-20 patches to see which one is the
-> culprit (if it was something added recently)..
+I was looking over the patches in preempt-irqs-core.patch in the broken
+out 23rt3 series and came across this chunk:
 
-Sorry, the irc reference wasn't particularly relevant since I just mentioned 
-it was broken and provided a subset of output I sent to this list.  And yes, 
-I am basically now doing what you suggest above with the broken out patch 
-set.
+-----------
+@@ -325,6 +349,11 @@ int setup_irq(unsigned int irq, struct i
+        if (!shared) {
+                irq_chip_set_defaults(desc->chip);
+ 
++       /*
++        * Propagate any possible IRQF_NODELAY flag into IRQ_NODELAY:
++        */
++       recalculate_desc_flags(desc);
++
+ #if defined(CONFIG_IRQ_PER_CPU)
+                if (new->flags & IRQF_PERCPU)
+                        desc->status |= IRQ_PER_CPU;
+-----------
+
+Note the recalculate is actually contained within the "if (!shared)"
+even though at a casual glance the indentation suggests otherwise.
+
+Looking at older versions of the broken out patches leads me to believe
+the if clause should be after the recalculate.  I've attached a patch to
+do just that, but if you'd rather I just respin the preempt-irqs-core.patch
+then I could just as easily do that as well.
 
 Thanks,
+Paul.
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Realtime Linux Team
+
+--- linux-2.6.23-rt3/kernel/irq/manage.c~
++++ linux-2.6.23-rt3/kernel/irq/manage.c
+@@ -354,14 +354,14 @@
+ 	if (new->flags & IRQF_NOBALANCING)
+ 		desc->status |= IRQ_NO_BALANCING;
+ 
+-	if (!shared) {
+-		irq_chip_set_defaults(desc->chip);
+-
+ 	/*
+ 	 * Propagate any possible IRQF_NODELAY flag into IRQ_NODELAY:
+ 	 */
+ 	recalculate_desc_flags(desc);
+ 
++	if (!shared) {
++		irq_chip_set_defaults(desc->chip);
++
+ #if defined(CONFIG_IRQ_PER_CPU)
+ 		if (new->flags & IRQF_PERCPU)
+ 			desc->status |= IRQ_PER_CPU;
