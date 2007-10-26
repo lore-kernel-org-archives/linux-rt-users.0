@@ -1,91 +1,44 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 1/2] RT: cleanup some push-rt logic
-Date: Fri, 26 Oct 2007 11:46:20 -0400
-Message-ID: <20071026154620.6195.30586.stgit@novell1.haskins.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 2/2] RT: Cache cpus_allowed weight for optimizing migration
+Date: Fri, 26 Oct 2007 12:30:37 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710261228040.4130@gandalf.stny.rr.com>
 References: <Pine.LNX.4.58.0710261114270.3280@gandalf.stny.rr.com>
+ <20071026154625.6195.36378.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	Gregory Haskins <ghaskins@novell.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
-To: linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:33773
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752244AbXJZQBX (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:42454 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750779AbXJZQbu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Oct 2007 12:01:23 -0400
-In-Reply-To: <Pine.LNX.4.58.0710261114270.3280@gandalf.stny.rr.com>
+	Fri, 26 Oct 2007 12:31:50 -0400
+In-Reply-To: <20071026154625.6195.36378.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Please fold into original -rt2 patches as appropriate
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+I forgot to tell you this the last time. You need to add:
+
 ---
+ include/linux/init_task.h |    1 +
+ 1 file changed, 1 insertion(+)
 
- kernel/sched_rt.c |   10 ++--------
- 1 files changed, 2 insertions(+), 8 deletions(-)
+Index: linux-2.6.23-rt3/include/linux/init_task.h
+===================================================================
+--- linux-2.6.23-rt3.orig/include/linux/init_task.h
++++ linux-2.6.23-rt3/include/linux/init_task.h
+@@ -142,6 +142,7 @@ extern struct group_info init_groups;
+ 	.policy		= SCHED_NORMAL,					\
+ 	INIT_RCU_BOOST_PRIO						\
+ 	.cpus_allowed	= CPU_MASK_ALL,					\
++	.nr_cpus_allowed = NR_CPUS,					\
+ 	.mm		= NULL,						\
+ 	.active_mm	= &init_mm,					\
+ 	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 55da7d0..b59dc20 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -292,7 +292,6 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
- {
- 	struct rq *lowest_rq = NULL;
- 	cpumask_t cpu_mask;
--	int dst_cpu = -1;
- 	int cpu;
- 	int tries;
- 
-@@ -311,14 +310,12 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
- 			/* We look for lowest RT prio or non-rt CPU */
- 			if (rq->rt.highest_prio >= MAX_RT_PRIO) {
- 				lowest_rq = rq;
--				dst_cpu = cpu;
- 				break;
- 			}
- 
- 			/* no locking for now */
- 			if (rq->rt.highest_prio > task->prio &&
- 			    (!lowest_rq || rq->rt.highest_prio > lowest_rq->rt.highest_prio)) {
--				dst_cpu = cpu;
- 				lowest_rq = rq;
- 			}
- 		}
-@@ -335,7 +332,7 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
- 			 * Also make sure that it wasn't scheduled on its rq.
- 			 */
- 			if (unlikely(task_rq(task) != this_rq ||
--				     !cpu_isset(dst_cpu, task->cpus_allowed) ||
-+				     !cpu_isset(lowest_rq->cpu, task->cpus_allowed) ||
- 				     task_running(this_rq, task) ||
- 				     !task->se.on_rq)) {
- 				spin_unlock(&lowest_rq->lock);
-@@ -365,7 +362,6 @@ static int push_rt_task(struct rq *this_rq)
- {
- 	struct task_struct *next_task;
- 	struct rq *lowest_rq;
--	int dst_cpu;
- 	int ret = 0;
- 	int paranoid = RT_MAX_TRIES;
- 
-@@ -412,12 +408,10 @@ static int push_rt_task(struct rq *this_rq)
- 		goto out;
- 	}
- 
--	dst_cpu = lowest_rq->cpu;
--
- 	assert_spin_locked(&lowest_rq->lock);
- 
- 	deactivate_task(this_rq, next_task, 0);
--	set_task_cpu(next_task, dst_cpu);
-+	set_task_cpu(next_task, lowest_rq->cpu);
- 	activate_task(lowest_rq, next_task, 0);
- 
- 	resched_task(lowest_rq->curr);
+-- Steve
