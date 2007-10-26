@@ -1,79 +1,84 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Interrupt Latency module for intel
-Date: Fri, 26 Oct 2007 02:39:38 -0700
-Message-ID: <1193391578.6271.20.camel@sven.thebigcorporation.com>
-References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
-	 <1193255575.3557.2.camel@imap.mvista.com>
-	 <1193260511.4040.42.camel@sven.thebigcorporation.com>
-	 <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
-	 <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Possible bug in 23rt3 preempt-irqs-core.patch
+Date: Fri, 26 Oct 2007 09:22:07 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710260920300.18997@gandalf.stny.rr.com>
+References: <20071025204853.GB12268@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Jaswinder Singh <jaswinderlinuxrt@gmail.com>,
-	Daniel Walker <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from alnrmhc13.comcast.net ([204.127.225.93]:46158 "EHLO
-	alnrmhc13.comcast.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753618AbXJZJjx (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:45926 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753584AbXJZNWK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Oct 2007 05:39:53 -0400
-In-Reply-To: <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
+	Fri, 26 Oct 2007 09:22:10 -0400
+In-Reply-To: <20071025204853.GB12268@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2007-10-25 at 13:23 -0400, Steven Rostedt wrote:
-> 
-> Please don't top post.
-> 
-> --
-> 
-> On Thu, 25 Oct 2007, Jaswinder Singh wrote:
-> 
-> > Hello Daniel and Sven-Thorsten Dietrich,
-> >
-> > Can you please let me know the procedure of :
-> > 1. high resolution timers from userspace
-> 
-> http://rt.wiki.kernel.org/index.php/Cyclictest
-> 
-> > 2. ingo's irq latency timing and tracing
-> 
-> I need to write up some howtos for that.
-> 
-> >
-> > I will also try these methods and try to compare the performance numbers.
-> >
-> 
-> The cyclictest is fine for comparisons, but the latency trace is only
-> available with the -rt patch.
-> 
 
+--
+On Thu, 25 Oct 2007, Paul Gortmaker wrote:
 
-First, configure IRQ timing or wake-up timing in Kernel Hacking.
+> I was looking over the patches in preempt-irqs-core.patch in the broken
+> out 23rt3 series and came across this chunk:
+>
+> -----------
+> @@ -325,6 +349,11 @@ int setup_irq(unsigned int irq, struct i
+>         if (!shared) {
+>                 irq_chip_set_defaults(desc->chip);
+>
+> +       /*
+> +        * Propagate any possible IRQF_NODELAY flag into IRQ_NODELAY:
+> +        */
+> +       recalculate_desc_flags(desc);
+> +
+>  #if defined(CONFIG_IRQ_PER_CPU)
+>                 if (new->flags & IRQF_PERCPU)
+>                         desc->status |= IRQ_PER_CPU;
+> -----------
+>
+> Note the recalculate is actually contained within the "if (!shared)"
+> even though at a casual glance the indentation suggests otherwise.
+>
+> Looking at older versions of the broken out patches leads me to believe
+> the if clause should be after the recalculate.  I've attached a patch to
+> do just that, but if you'd rather I just respin the preempt-irqs-core.patch
+> then I could just as easily do that as well.
+>
 
-IRQ-disabled, and preempt-disabled Kernel code-paths are measured.
+Grumble,  That's what I get for keeping fuzzy patching turned on in quilt
+:-(
 
-If you enable latency tracing, code paths are reported
-to /proc/latency_trace if they exceed the cpu-cyles-count
-specified in proc/sys/kernel/preempt_thresh.
+>
+> --- linux-2.6.23-rt3/kernel/irq/manage.c~
+> +++ linux-2.6.23-rt3/kernel/irq/manage.c
+> @@ -354,14 +354,14 @@
+>  	if (new->flags & IRQF_NOBALANCING)
+>  		desc->status |= IRQ_NO_BALANCING;
+>
+> -	if (!shared) {
+> -		irq_chip_set_defaults(desc->chip);
+> -
+>  	/*
+>  	 * Propagate any possible IRQF_NODELAY flag into IRQ_NODELAY:
+>  	 */
+>  	recalculate_desc_flags(desc);
+>
+> +	if (!shared) {
+> +		irq_chip_set_defaults(desc->chip);
+> +
+>  #if defined(CONFIG_IRQ_PER_CPU)
+>  		if (new->flags & IRQF_PERCPU)
+>  			desc->status |= IRQ_PER_CPU;
+>
 
-If you enable histogram, you get the distribution.
+Thanks,
 
-To enable latency tracing, use the following commands:
+Applied!
 
-# cd /proc/sys/kernel
+-- Steve
 
-# echo 400000 > preempt_thresh 
-# echo 1 > trace_enabled 
-# echo 0 > preempt_max_latency
-
-You need to set preempt_thresh to a reasonably large cycles value, or
-you will get traces for every Kernel transition.
-
-Sven
-
-> -- Steve
-> 
+P.S. I have since turned off fuzzy logic for updating -rt (I may need to
+go back and reapply old patches to see what else broke :-()
