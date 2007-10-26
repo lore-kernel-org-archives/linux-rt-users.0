@@ -1,77 +1,65 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] RT: Cache cpus_allowed weight for optimizing migration
-Date: Fri, 26 Oct 2007 11:17:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710261114270.3280@gandalf.stny.rr.com>
-References: 1193346777.7561.47.camel@ghaskins-t60p.haskins.net
- <20071026132440.5370.78235.stgit@novell1.haskins.net>
- <Pine.LNX.4.58.0710261035310.18997@gandalf.stny.rr.com>
- <1193410770.3959.8.camel@ghaskins-t60p.haskins.net>
+Subject: Re: Possible bug in 23rt3 preempt-irqs-core.patch
+Date: Fri, 26 Oct 2007 11:38:19 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710261136550.3523@gandalf.stny.rr.com>
+References: <20071025204853.GB12268@windriver.com>
+ <Pine.LNX.4.58.0710260920300.18997@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Ingo Molnar <mingo@elte.hu>, Darren Hart <dvhltc@us.ibm.com>
-To: Gregory Haskins <ghaskins@novell.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:57209 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751485AbXJZPRw (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:45762 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753186AbXJZPiV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Oct 2007 11:17:52 -0400
-In-Reply-To: <1193410770.3959.8.camel@ghaskins-t60p.haskins.net>
+	Fri, 26 Oct 2007 11:38:21 -0400
+In-Reply-To: <Pine.LNX.4.58.0710260920300.18997@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+
 --
-On Fri, 26 Oct 2007, Gregory Haskins wrote:
+On Fri, 26 Oct 2007, Steven Rostedt wrote:
 
-> On Fri, 2007-10-26 at 10:47 -0400, Steven Rostedt wrote:
-> > --
-> > On Fri, 26 Oct 2007, Gregory Haskins wrote:
+>
+> --
+> On Thu, 25 Oct 2007, Paul Gortmaker wrote:
+>
+> > I was looking over the patches in preempt-irqs-core.patch in the broken
+> > out 23rt3 series and came across this chunk:
 > >
-> > > This version has the feedback from Steve's review incorporated
-> > >
-> > > -----------------------------------------
-> > >
-> > > RT: Cache cpus_allowed weight for optimizing migration
-> > >
-> > > Some RT tasks (particularly kthreads) are bound to one specific CPU.
-> > > It is fairly common for one or more bound tasks to get queued up at the
-> > > same time.  Consider, for instance, softirq_timer and softirq_sched.  A
-> > > timer goes off in an ISR which schedules softirq_thread to run at RT50.
-> > > Then during the handling of the timer, the system determines that it's
-> > > time to smp-rebalance the system so it schedules softirq_sched to run
-> > > from within the softirq_timer kthread context. So we are in a situation
-> > > where we have two RT50 tasks queued, and the system will go into
-> > > rt-overload condition to request other CPUs for help.
-> > >
-> > > The problem is that these tasks cannot ever be pulled away since they
-> > > are already running on their one and only valid RQ.  However, the other
-> > > CPUs cannot determine that the tasks are unpullable without going
-> > > through expensive checks/locking.  Therefore the helping CPUS
+> > -----------
+> > @@ -325,6 +349,11 @@ int setup_irq(unsigned int irq, struct i
+> >         if (!shared) {
+> >                 irq_chip_set_defaults(desc->chip);
 > >
-> > A little exageration there ;-)  We don't need to go through locking (at
-> > least my code doesn't), and the checks are not that expensive (could cause
-> > some unneeded cache bouncing though).
+> > +       /*
+> > +        * Propagate any possible IRQF_NODELAY flag into IRQ_NODELAY:
+> > +        */
+> > +       recalculate_desc_flags(desc);
+> > +
+> >  #if defined(CONFIG_IRQ_PER_CPU)
+> >                 if (new->flags & IRQF_PERCPU)
+> >                         desc->status |= IRQ_PER_CPU;
+> > -----------
+> >
+> > Note the recalculate is actually contained within the "if (!shared)"
+> > even though at a casual glance the indentation suggests otherwise.
+> >
+> > Looking at older versions of the broken out patches leads me to believe
+> > the if clause should be after the recalculate.  I've attached a patch to
+> > do just that, but if you'd rather I just respin the preempt-irqs-core.patch
+> > then I could just as easily do that as well.
+> >
 >
-> Well, its all relative.  Not going into overload to begin with, and
-> therefore not hitting the pull_rt_tasks() logic outright should be
-> faster than lockless scanning tricks ;)
->
-> But I digress.  I don't think the original code had your optimization,
-> so you are right:  It's perhaps a bit of an exaggeration in HEAD.  I'll
-> be less dramatic for the next drop ;)
+> Grumble,  That's what I get for keeping fuzzy patching turned on in quilt
+> :-(
 >
 
-I'll digress some more ;-)
-
-Actually, what I want to stress is that the greatest benefit of this patch
-is not removing the unneed checks to processes that can't migrate (it is a
-benefit though), but the real benefit that I'm looking forward to is the
-migrating of lower priority tasks that can migrate. And these tasks wont
-be affected by tasks that can't migrate.
-
-Looking forward to your next patch.
+Looking at the patch set I started with, the bug exists there too. I just
+did a full -F0 rework of what I started with and didn't find anything else
+that could have been caused by fuzzy logic. Seems this bug crept in before
+I took over as patch monkey.
 
 -- Steve
