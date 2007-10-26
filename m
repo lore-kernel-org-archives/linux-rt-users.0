@@ -1,69 +1,90 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 2/3] RT: Cache cpus_allowed weight for optimizing
-	migration
-Date: Thu, 25 Oct 2007 20:33:21 -0400
-Message-ID: <4720FD380200005A0002CCB1@mcclure.wal.novell.com>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: Re: Interrupt Latency module for intel
+Date: Fri, 26 Oct 2007 08:49:09 +0530
+Message-ID: <1985e0f60710252019x62ffb218l89ce476de642d73d@mail.gmail.com>
+References: <1985e0f60710192336l5469682ai9dc47d5bc1a87c55@mail.gmail.com>
+	 <1193255575.3557.2.camel@imap.mvista.com>
+	 <1193260511.4040.42.camel@sven.thebigcorporation.com>
+	 <1985e0f60710250941j44e40b5evb186e2cbebffdae8@mail.gmail.com>
+	 <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>,
-	<dmitry.adamushko@gmail.com>, <dvhltc@us.ibm.com>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Sven-Thorsten Dietrich" <sven@thebigcorporation.com>,
+	"Daniel Walker" <dwalker@mvista.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:25351 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752706AbXJZAxr convert rfc822-to-8bit (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.234]:3231 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751992AbXJZDTL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2007 20:53:47 -0400
+	Thu, 25 Oct 2007 23:19:11 -0400
+Received: by wr-out-0506.google.com with SMTP id 36so589991wra
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Oct 2007 20:19:10 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0710251321020.8703@gandalf.stny.rr.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
->>> Steven Rostedt <rostedt@goodmis.org> 10/25/07 8:03 PM >>>
+Hello Steve,
+
+On 10/25/07, Steven Rostedt <rostedt@goodmis.org> wrote:
 >
->> Why do you think moving the logic to pick_next_highest is a better
->> design?  To be honest, I haven't really studied your new logic in
->> push_rt_tasks to understand why you might feel this way.  If you can
->> make the case that it is better in the other location then I agree with
->> you that we should move it there in this patch, and potentially adjust
->> it later.  Until then, I see no problem with it being here.
 >
->Ah, after reading the comment in your code, I might know where our
->miscommunication is from.  When you hit a task that can't migrate, you
->simply stop and don't bother looking for a lowest rq to place it on.
+> Please don't top post.
 >
->I'm saying to do one better. Put the code in the pick_next_highest_task_rt
->and _skip_ rt tasks with nr_cpus_allowed == 1. So we can then look to
->migrate another RT task that is lower in priority than a bounded RT task.
+> --
 >
->Does this clear up what I'm trying to say?
-
-Ah, yes.  That is quite brilliant, actually.  
-
->BTW, stop looking for a lowest_rq isn't really an optimization here. Since
->we only look at cpus that are in the tasks cpu affinity mask and we skip
->the cpu that it currently is on. So we don't even take a lock in that
->case.
-
-You are, of course, completely correct.  This patch historically was after cpupri, and this change is relevant in that case only.   Since cpupri doesnt have the nice property as yours where its limited to cpus_allowed, it helps to stop the search on that special case.  In the current alg, its just redundant .text and it should be removed.
-
-
->and _skip_ rt tasks with nr_cpus_allowed == 1. So we can then look to
->migrate another RT task that is lower in priority than a bounded RT task.
+> On Thu, 25 Oct 2007, Jaswinder Singh wrote:
 >
->Does this clear up what I'm trying to say?
+> > Hello Daniel and Sven-Thorsten Dietrich,
+> >
+> > Can you please let me know the procedure of :
+> > 1. high resolution timers from userspace
+>
+> http://rt.wiki.kernel.org/index.php/Cyclictest
+>
 
-Ah, yes.  That is quite brilliant, actually.  
+As per http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg01487.html
+According to Thomas Gleixner :
 
->BTW, stop looking for a lowest_rq isn't really an optimization here. Since
->we only look at cpus that are in the tasks cpu affinity mask and we skip
->the cpu that it currently is on. So we don't even take a lock in that
->case.
+cyclictest is not about interrupt latency, it's about the full
+chain of:
 
-You are, of course, completely correct.  This patch historically was after cpupri.  This change is relevant in that case only since cpupri doesnt have the nice property as yours where its limited to cpus_allowed, it helps to stop the search on that special case.  In the current alg, its just redundant .text and it should be removed.
+        timer interrupt
+        scheduler
+        user space execution
 
-I will make those changes and submit a new patch.
+in the second test you did it's:
 
-Thanks for setting me straight!
--Greg
+        timer interrupt
+        softirq + signal delivery
+        scheduler
+        user space execution
+
+Please let me know from cyclictest How can I get separately :-
+
+1. Interrupt latency numbers
+2. Task switching numbers
+
+
+> > 2. ingo's irq latency timing and tracing
+>
+> I need to write up some howtos for that.
+>
+
+Thanks.
+
+Jaswinder Singh.
+
+> >
+> > I will also try these methods and try to compare the performance numbers.
+> >
+>
+> The cyclictest is fine for comparisons, but the latency trace is only
+> available with the -rt patch.
+>
+> -- Steve
+>
+>
