@@ -1,38 +1,34 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [2.6.23-rt3] NMI watchdog trace of deadlock
-Date: Sat, 27 Oct 2007 19:15:42 +1000
-Message-ID: <200710271915.42363.nickpiggin@yahoo.com.au>
-References: <1193245634.20679.8.camel@localhost.localdomain> <1193462494.25330.7.camel@Homer.simpson.net>
+Date: Sat, 27 Oct 2007 11:40:04 +0200
+Message-ID: <1193478004.7496.21.camel@Homer.simpson.net>
+References: <1193245634.20679.8.camel@localhost.localdomain>
+	 <1193462494.25330.7.camel@Homer.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <efault@gmx.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp102.mail.mud.yahoo.com ([209.191.85.212]:27048 "HELO
-	smtp102.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1751366AbXJ0JW0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Oct 2007 05:22:26 -0400
+Received: from mail.gmx.net ([213.165.64.20]:36217 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1751109AbXJ0JkK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Oct 2007 05:40:10 -0400
 In-Reply-To: <1193462494.25330.7.camel@Homer.simpson.net>
-Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Saturday 27 October 2007 15:21, Mike Galbraith wrote:
+On Sat, 2007-10-27 at 07:21 +0200, Mike Galbraith wrote:
 > Greetings,
->
+> 
 > For quite a while now, RT kernels have been locking up on me
 > occasionally while my back is turned.  Yesterday, the little bugger
 > finally pounced while my serial console box was up and waiting.
->
-> [10138.162953] WARNING: at arch/i386/kernel/smp.c:581
-> native_smp_call_function_mask() [10138.170583]  [<c01051da>]
-> show_trace_log_lvl+0x1a/0x30
+> 
+> [10138.162953] WARNING: at arch/i386/kernel/smp.c:581 native_smp_call_function_mask()
+> [10138.170583]  [<c01051da>] show_trace_log_lvl+0x1a/0x30
 > [10138.175796]  [<c0105de3>] show_trace+0x12/0x14
 > [10138.180291]  [<c0105dfb>] dump_stack+0x16/0x18
 > [10138.184769]  [<c011609f>] native_smp_call_function_mask+0x138/0x13d
@@ -50,8 +46,21 @@ On Saturday 27 October 2007 15:21, Mike Galbraith wrote:
 > [10138.246058]  [<c036dae3>] ide_dma_intr+0x6f/0xac
 > [10138.250727]  [<c0366d83>] ide_intr+0x93/0x1e0
 > [10138.255125]  [<c015afb4>] handle_IRQ_event+0x5c/0xc9
+> [10138.260113]  [<c015bcfd>] do_irqd+0x1fc/0x2ef
+> [10138.264514]  [<c013cdb2>] kthread+0x39/0x5b
+> [10138.268740]  [<c0104e33>] kernel_thread_helper+0x7/0x14
+> [10138.274006]  =======================
 
-Looks like ntfs is kmap()ing from interrupt context. Should
-be using kmap_atomic instead, I think.
+(box may recommend that i go figure out why interrupts are disabled
+instead;)
 
-But the ntfs code I have seems to do just that...
+--- ./fs/ntfs/aops.c.org	2007-10-27 10:16:40.000000000 +0200
++++ ./fs/ntfs/aops.c	2007-10-27 10:30:52.000000000 +0200
+@@ -140,6 +140,7 @@ static void ntfs_end_buffer_async_read(s
+ 		/* Should have been verified before we got here... */
+ 		BUG_ON(!recs);
+ 		local_irq_save(flags);
++		local_irq_enable();
+ 		kaddr = kmap_atomic(page, KM_BIO_SRC_IRQ);
+ 		for (i = 0; i < recs; i++)
+ 			post_read_mst_fixup((NTFS_RECORD*)(kaddr +
