@@ -1,37 +1,42 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
-Date: Mon, 29 Oct 2007 09:08:12 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710290856020.13188@gandalf.stny.rr.com>
-References: <8925926.1439951193576410781.JavaMail.www@wwinf6003>
+Subject: 2.6.23.1-rt5
+Date: Mon, 29 Oct 2007 14:46:09 -0400
+Message-ID: <1193683569.5623.38.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:37550 "EHLO
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:55233 "EHLO
 	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757831AbXJ2NIP (ORCPT
+	with ESMTP id S1752466AbXJ2Sqh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Oct 2007 09:08:15 -0400
-In-Reply-To: <8925926.1439951193576410781.JavaMail.www@wwinf6003>
+	Mon, 29 Oct 2007 14:46:37 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+We are pleased to announce the 2.6.23.1-rt5 tree, which can be
+downloaded from the location:
 
---
-On Sun, 28 Oct 2007, Gerrit Binnenmars wrote:
+ http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-> Hello,
->
-> Can someone send me a .config file that shows the options needed to get the interrupt off
-> timing values in preempt_max_latency, please. I only see a value of 0 in this file
-> I am using kernel 2.6.22.1 with the corresponding rt patch.
->
-> Thanks in advance,
+Changes since 2.6.23-rt4
 
-Make sure you have event trace and latency tracing as well as
-"Interrupts-off critical section latency timing".
+  - Compile for UP (Discovered by Dragan Noveski)
 
-Then you need to echo 0 > /proc/sys/kernel/preempt_max_latency.
+  - ntfs local_irq_save_nort (Mike Galbraith)
+
+  - Don't disable preemption on handlers without IST (Andi Kleen)
+
+  - Minor cleanups (Steven Rostedt)
+
+to build a 2.6.23.1-rt5 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.1.tar.bz2 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23.1-rt5.bz2
+
+The broken out patches are also available.
 
 -- Steve
