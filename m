@@ -1,32 +1,37 @@
-From: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
-Subject: CONFIG_CRITICAL_IRQSOFF_TIMING
-Date: Sun, 28 Oct 2007 14:00:10 +0100 (CET)
-Message-ID: <8925926.1439951193576410781.JavaMail.www@wwinf6003>
-Reply-To: gerritbinnenmars@wanadoo.nl
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+Date: Mon, 29 Oct 2007 09:08:12 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0710290856020.13188@gandalf.stny.rr.com>
+References: <8925926.1439951193576410781.JavaMail.www@wwinf6003>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-1.orange.nl ([193.252.22.241]:11660 "EHLO smtp-1.orange.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751443AbXJ1NAQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 28 Oct 2007 09:00:16 -0400
-Received: from me-wanadoo.net (localhost [127.0.0.1])
-	by mwinf6006.orange.nl (SMTP Server) with ESMTP id D28667000090
-	for <linux-rt-users@vger.kernel.org>; Sun, 28 Oct 2007 14:00:10 +0100 (CET)
-Received: from wwinf6003 (wwinf6003 [172.22.155.30])
-	by mwinf6006.orange.nl (SMTP Server) with ESMTP id C594F700008D
-	for <linux-rt-users@vger.kernel.org>; Sun, 28 Oct 2007 14:00:10 +0100 (CET)
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:37550 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757831AbXJ2NIP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Oct 2007 09:08:15 -0400
+In-Reply-To: <8925926.1439951193576410781.JavaMail.www@wwinf6003>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
 
-Can someone send me a .config file that shows the options needed to get the interrupt off 
-timing values in preempt_max_latency, please. I only see a value of 0 in this file
-I am using kernel 2.6.22.1 with the corresponding rt patch.
+--
+On Sun, 28 Oct 2007, Gerrit Binnenmars wrote:
 
-Thanks in advance,
+> Hello,
+>
+> Can someone send me a .config file that shows the options needed to get the interrupt off
+> timing values in preempt_max_latency, please. I only see a value of 0 in this file
+> I am using kernel 2.6.22.1 with the corresponding rt patch.
+>
+> Thanks in advance,
 
-Gerrit Binnenmars 
+Make sure you have event trace and latency tracing as well as
+"Interrupts-off critical section latency timing".
+
+Then you need to echo 0 > /proc/sys/kernel/preempt_max_latency.
+
+-- Steve
