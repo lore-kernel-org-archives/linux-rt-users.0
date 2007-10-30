@@ -1,46 +1,129 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.23.1-rt5 (was 2.6.23-rt1 trouble)
-Date: Tue, 30 Oct 2007 16:06:18 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0710301605100.31349@gandalf.stny.rr.com>
-References: <1192154640.15992.10.camel@localhost.localdomain>         
- <38542.213.58.131.130.1192445349.squirrel@www.rncbc.org> <471648B8.1030007@rncbc.org>
- <47234EA1.4050006@rncbc.org> <Pine.LNX.4.58.0710271203170.28617@gandalf.stny.rr.com>
- <47239A37.8000401@rncbc.org> <472781E3.7010103@rncbc.org>
- <Pine.LNX.4.58.0710301526480.30690@gandalf.stny.rr.com> <47278BE5.9070401@rncbc.org>
+From: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
+Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+Date: Tue, 30 Oct 2007 21:52:01 +0100 (CET)
+Message-ID: <11542808.1611171193777521160.JavaMail.www@wwinf6102>
+Reply-To: gerritbinnenmars@wanadoo.nl
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>
-To: Rui Nuno Capela <rncbc@rncbc.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:60492 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753634AbXJ3UHV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Oct 2007 16:07:21 -0400
-In-Reply-To: <47278BE5.9070401@rncbc.org>
+Received: from smtp-2.orange.nl ([193.252.22.242]:21219 "EHLO smtp-2.orange.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753070AbXJ3UwF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Oct 2007 16:52:05 -0400
+Received: from me-wanadoo.net (localhost [127.0.0.1])
+	by mwinf6102.orange.nl (SMTP Server) with ESMTP id 2DCE41C00091
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Oct 2007 21:52:01 +0100 (CET)
+Received: from wwinf6102 (wwinf6102 [172.22.153.29])
+	by mwinf6102.orange.nl (SMTP Server) with ESMTP id 2A9171C00083
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Oct 2007 21:52:01 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
---
+> Datum: 29/10/07 02:09 PM
+> Van: "Steven Rostedt" 
+> Aan: "Gerrit Binnenmars" 
+> CC: linux-rt-users@vger.kernel.org
+> Onderwerp : Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+> 
+> 
+> --
+> On Sun, 28 Oct 2007, Gerrit Binnenmars wrote:
+> 
+> > Hello,
 > >
->
-> yes, running without the *cough* nvidia module is under way. but do you
-> remember that on my other laptop the freezes also happen and on that one
-> there's no single proprietary modules in it? (same .config btw) problem
-> is, like most modern laptops, it doesn't come bundled with a serial port
-> so that can't give you a serial console evidence ...
->
-> thanks for the reminder, anyway ;)
->
+> > Can someone send me a .config file that shows the options needed to get the interrupt off
+> > timing values in preempt_max_latency, please. I only see a value of 0 in this file
+> > I am using kernel 2.6.22.1 with the corresponding rt patch.
+> >
+> > Thanks in advance,
+> 
+> Make sure you have event trace and latency tracing as well as
+> "Interrupts-off critical section latency timing".
+> 
+> Then you need to echo 0 > /proc/sys/kernel/preempt_max_latency.
+> 
+Hello Steve,
 
-hmm, it could also be a separate issue. This other laptop is the one that
-took a while to freeze. Correct?
+Thanks for your quick response, but the preempt_max_latency remains 0. Also the latency_hist shows no samples taken.
+Can you or someone else have a look at the corresponding CONFIG options?
 
-Was it only on X apps? Or could it possible be something we could do via a
-command line and then we could see vga output (if any).
+CONFIG_LTT_PROBE_LOCKING=m
+# CONFIG_LTT_PROBE_STACK is not set
 
--- Steve
+#
+# Kernel hacking
+#
+CONFIG_TRACE_IRQFLAGS_SUPPORT=y
+# CONFIG_PRINTK_TIME is not set
+CONFIG_ENABLE_MUST_CHECK=y
+CONFIG_MAGIC_SYSRQ=y
+CONFIG_UNUSED_SYMBOLS=y
+CONFIG_DEBUG_FS=y
+# CONFIG_HEADERS_CHECK is not set
+CONFIG_DEBUG_KERNEL=y
+# CONFIG_DEBUG_SHIRQ is not set
+CONFIG_DETECT_SOFTLOCKUP=y
+CONFIG_SCHED_DEBUG=y
+# CONFIG_SCHEDSTATS is not set
+# CONFIG_TIMER_STATS is not set
+# CONFIG_DEBUG_SLAB is not set
+CONFIG_DEBUG_PREEMPT=y
+# CONFIG_DEBUG_RT_MUTEXES is not set
+# CONFIG_RT_MUTEX_TESTER is not set
+CONFIG_DEBUG_SPINLOCK=y
+CONFIG_DEBUG_MUTEXES=y
+CONFIG_DEBUG_LOCK_ALLOC=y
+# CONFIG_PROVE_LOCKING is not set
+CONFIG_LOCKDEP=y
+# CONFIG_LOCK_STAT is not set
+# CONFIG_DEBUG_LOCKDEP is not set
+CONFIG_TRACE_IRQFLAGS=y
+# CONFIG_DEBUG_SPINLOCK_SLEEP is not set
+# CONFIG_DEBUG_LOCKING_API_SELFTESTS is not set
+CONFIG_STACKTRACE=y
+CONFIG_PREEMPT_TRACE=y
+CONFIG_EVENT_TRACE=y
+CONFIG_FUNCTION_TRACE=y
+# CONFIG_WAKEUP_TIMING is not set
+CONFIG_LATENCY_TRACE=y
+# CONFIG_CRITICAL_PREEMPT_TIMING is not set
+CONFIG_CRITICAL_IRQSOFF_TIMING=y
+CONFIG_INTERRUPT_OFF_HIST=y
+CONFIG_CRITICAL_TIMING=y
+CONFIG_DEBUG_TRACE_IRQFLAGS=y
+CONFIG_LATENCY_TIMING=y
+CONFIG_CRITICAL_LATENCY_HIST=y
+CONFIG_LATENCY_HIST=y
+CONFIG_MCOUNT=y
+# CONFIG_DEBUG_KOBJECT is not set
+# CONFIG_DEBUG_HIGHMEM is not set
+CONFIG_DEBUG_BUGVERBOSE=y
+# CONFIG_DEBUG_INFO is not set
+# CONFIG_DEBUG_VM is not set
+# CONFIG_DEBUG_LIST is not set
+CONFIG_FRAME_POINTER=y
+CONFIG_FORCED_INLINING=y
+# CONFIG_RCU_TORTURE_TEST is not set
+# CONFIG_LKDTM is not set
+# CONFIG_FAULT_INJECTION is not set
+CONFIG_EARLY_PRINTK=y
+# CONFIG_DEBUG_STACKOVERFLOW is not set
+# CONFIG_DEBUG_STACK_USAGE is not set
+CONFIG_DEBUG_RODATA=y
+CONFIG_4KSTACKS=y
+CONFIG_X86_FIND_SMP_CONFIG=y
+CONFIG_X86_MPPARSE=y
+CONFIG_DOUBLEFAULT=y
+
+Greetings Gerrit
+
+> -- Steve
+> 
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at http://vger.kernel.org/majordomo-info.html
+> 
+> 
