@@ -1,21 +1,16 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: [PATCH -rt] remove in_interrupt() BUG_ON in exit path
 Date: Tue, 30 Oct 2007 15:40:04 -0700
-Message-ID: <20071030224004.417523706@mvista.com>
+Message-ID: <20071030223635.719787685__14527.0125395202$1193784239$gmane$org@mvista.com>
 Cc: linux-kernel@vger.kernel.org
 To: mingo@elte.hu
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61457 "EHLO
-	dwalker1.mvista.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753686AbXJ3WnN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Oct 2007 18:43:13 -0400
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758004AbXJ3Wn1@vger.kernel.org>
 Message-Id: <20071030223635.719787685@mvista.com>
 Date: Tue, 30 Oct 2007 15:36:35 -0700
 CC: linux-rt-users@vger.kernel.org
 CC: rostedt@goodmis.org
 CC: kraj@mvista.com
-Sender: linux-rt-users-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 As you can see from the patch there is already a case to catch this type
