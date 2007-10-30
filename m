@@ -1,38 +1,38 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
-Date: Tue, 30 Oct 2007 13:56:47 -0700
-Message-ID: <1193777808.4673.24.camel@imap.mvista.com>
-References: <11542808.1611171193777521160.JavaMail.www@wwinf6102>
+From: Gerrit Binnenmars <gerritbinnenmars@orange.nl>
+Subject: SMP latency
+Date: Tue, 30 Oct 2007 22:02:57 +0100 (CET)
+Message-ID: <1886057.1612141193778177393.JavaMail.www@wwinf6102>
+Reply-To: gerritbinnenmars@orange.nl
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: gerritbinnenmars@wanadoo.nl
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61614 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753002AbXJ3VCg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Oct 2007 17:02:36 -0400
-In-Reply-To: <11542808.1611171193777521160.JavaMail.www@wwinf6102>
+Received: from smtp-2.orange.nl ([193.252.22.242]:41681 "EHLO smtp-2.orange.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752651AbXJ3VC6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Oct 2007 17:02:58 -0400
+Received: from me-wanadoo.net (localhost [127.0.0.1])
+	by mwinf6107.orange.nl (SMTP Server) with ESMTP id 6DE82700010E
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Oct 2007 22:02:57 +0100 (CET)
+Received: from wwinf6102 (wwinf6102 [172.22.153.29])
+	by mwinf6107.orange.nl (SMTP Server) with ESMTP id 62DD27000083
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Oct 2007 22:02:57 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-10-30 at 21:52 +0100, Gerrit Binnenmars wrote:
+Hello,
+I use cyclictest -t1 -p80 -n -i1000 and have 100% CPU load with a while(1) application. 
+Further I use the disknoise script from the rt-tests on an NFS mounted root filesystem.
+This gives approx 13000 ethernet interrupts per second.
 
-> CONFIG_LTT_PROBE_LOCKING=m
-> # CONFIG_LTT_PROBE_STACK is not set
+On a 1.8G Pentm cyclictest shows a max. of 74us
+On a 1.5G Core2 SMP kernel cyclictest shows a max. of 222us
 
-I wonder which kernel your using? I don't recall LTT being part of real
-time in the past .. What the architecture too ?
+Is this normal?
+Can it be related to the CONFIG_SCHED_MC that I selected?
 
-> CONFIG_CRITICAL_IRQSOFF_TIMING=y
-> CONFIG_INTERRUPT_OFF_HIST=y
-> CONFIG_CRITICAL_TIMING=y
-> CONFIG_DEBUG_TRACE_IRQFLAGS=y
-> CONFIG_LATENCY_TIMING=y
+Note: I still use 2.6.22.1 and I noticed SMP issues with later version, but upgrading to the
+latest kernel would require a lot of testing to be repeated. 
 
-You might try disabling the histogram option temporarily, it may have be
-effecting things (not sure how tho) ..
-
-Daniel
+Greetings Gerrit
