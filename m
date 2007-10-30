@@ -1,42 +1,82 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.23.1-rt5
-Date: Mon, 29 Oct 2007 14:46:09 -0400
-Message-ID: <1193683569.5623.38.camel@localhost.localdomain>
+From: Rui Nuno Capela <rncbc@rncbc.org>
+Subject: Re: 2.6.23.1-rt5 (was 2.6.23-rt1 trouble)
+Date: Tue, 30 Oct 2007 19:11:31 +0000
+Message-ID: <472781E3.7010103@rncbc.org>
+References: <1192154640.15992.10.camel@localhost.localdomain>          <38542.213.58.131.130.1192445349.squirrel@www.rncbc.org> <471648B8.1030007@rncbc.org> <47234EA1.4050006@rncbc.org> <Pine.LNX.4.58.0710271203170.28617@gandalf.stny.rr.com> <47239A37.8000401@rncbc.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Gregory Haskins <ghaskins@novell.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:55233 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752466AbXJ2Sqh (ORCPT
+Received: from smtp1.netcabo.pt ([212.113.174.28]:14374 "EHLO
+	exch01smtp10.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752771AbXJ3TN1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Oct 2007 14:46:37 -0400
+	Tue, 30 Oct 2007 15:13:27 -0400
+In-Reply-To: <47239A37.8000401@rncbc.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the 2.6.23.1-rt5 tree, which can be
-downloaded from the location:
+Rui Nuno Capela wrote:
+> Steven Rostedt wrote:
+>>
+>> When things start to freeze, could you capture the output of a sysrq-t.
+>>
+> 
+> yes, you can find a complete serial console capture here, where it holds
+> the final SysRq-T output:
+>   http://www.rncbc.org/datahub/console-2.6.23.1-rt4.1-1.log
+> 
+> the corresponding .config is also there:
+>   http://www.rncbc.org/datahub/config-2.6.23.1-rt4.1
+> 
+> the reason this is a new kernel build, following a shot in the dark from
+> nick mainsbridge, which let out the ntfs module build (CONFIG_NTFS_FS is
+> not set) suggesting that would mitigate similar freezes.
+> 
+> in deed the general feel is that it seems to run longer and less prone
+> to those incidents, but that is just a gut feeling, nothing more.
+> 
+> hope this be any useful.
+> 
+>> I have a P4HT laptop (unfortunately with no serial). I use it as one of my
+>> main machines, so it will suck for me when it freezes ;-). I'll take your
+>> config and try it out.
+>>
+>> I'll most likely do this on Monday since process Wife has the highest
+>> priority over the weekend ;-)
+>>
+> 
+> that is also true here :)
+> 
+> otoh, as reported before, the freezes are not exclusive to P4HT, which
+> is the main box I'm been reporting here (the one which has a good old
+> serial port anyway), but also applies to my other laptop, an core2 duo
+> t7200.
+> 
 
- http://www.kernel.org/pub/linux/kernel/projects/rt/
+still in trouble with 2.6.23.1-rt5 :(
 
-Changes since 2.6.23-rt4
+.config:
+  http://www.rncbc.org/datahub/config-2.6.23.1-rt5.0
 
-  - Compile for UP (Discovered by Dragan Noveski)
+serial console capture:
+  http://www.rncbc.org/datahub/console-2.6.23.1-rt5.0-1.log
 
-  - ntfs local_irq_save_nort (Mike Galbraith)
+one thing about SysRq-T: while in the middle of a freeze it just doesn't
+dump anything, just the 'SysRq : Show State' line. you can see that
+several times on the console output above.
 
-  - Don't disable preemption on handlers without IST (Andi Kleen)
+only when it is somewhat recovering, as said, by making some last resort
+measures like SysRq-E as in 'SysRq: terminate All Tasks' for instance,
+then SysRq-T will dump something. my guess is that this later dump will
+be moot :/
 
-  - Minor cleanups (Steven Rostedt)
-
-to build a 2.6.23.1-rt5 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.1.tar.bz2 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23.1-rt5.bz2
-
-The broken out patches are also available.
-
--- Steve
+back to production with 2.6.22.1-rt9 ;)
+-- 
+rncbc aka Rui Nuno Capela
+rncbc@rncbc.org
