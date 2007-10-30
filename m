@@ -1,59 +1,62 @@
-From: Rui Nuno Capela <rncbc@rncbc.org>
-Subject: Re: 2.6.23.1-rt5 (was 2.6.23-rt1 trouble)
-Date: Tue, 30 Oct 2007 21:02:44 +0000
-Message-ID: <47279BF4.4060207@rncbc.org>
-References: <1192154640.15992.10.camel@localhost.localdomain>          <38542.213.58.131.130.1192445349.squirrel@www.rncbc.org> <471648B8.1030007@rncbc.org> <47234EA1.4050006@rncbc.org> <Pine.LNX.4.58.0710271203170.28617@gandalf.stny.rr.com> <47239A37.8000401@rncbc.org> <472781E3.7010103@rncbc.org> <Pine.LNX.4.58.0710301526480.30690@gandalf.stny.rr.com> <47278BE5.9070401@rncbc.org> <Pine.LNX.4.58.0710301605100.31349@gandalf.stny.rr.com>
+From: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
+Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+Date: Tue, 30 Oct 2007 22:09:48 +0100 (CET)
+Message-ID: <6252335.1612671193778588591.JavaMail.www@wwinf6102>
+Reply-To: gerritbinnenmars@wanadoo.nl
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp3.netcabo.pt ([212.113.174.30]:3050 "EHLO
-	exch01smtp11.hdi.tvcabo" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753533AbXJ3VEl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Oct 2007 17:04:41 -0400
-In-Reply-To: <Pine.LNX.4.58.0710301605100.31349@gandalf.stny.rr.com>
+Received: from smtp-2.orange.nl ([193.252.22.242]:50494 "EHLO smtp-2.orange.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754219AbXJ3VJt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Oct 2007 17:09:49 -0400
+Received: from me-wanadoo.net (localhost [127.0.0.1])
+	by mwinf6106.orange.nl (SMTP Server) with ESMTP id 9F11F7000089
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Oct 2007 22:09:48 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
-> --
->> yes, running without the *cough* nvidia module is under way. but do you
->> remember that on my other laptop the freezes also happen and on that one
->> there's no single proprietary modules in it? (same .config btw) problem
->> is, like most modern laptops, it doesn't come bundled with a serial port
->> so that can't give you a serial console evidence ...
->>
->> thanks for the reminder, anyway ;)
->>
+> Datum: 30/10/07 10:02 PM
+> Van: "Daniel Walker" 
+> Aan: gerritbinnenmars@wanadoo.nl
+> CC: linux-rt-users@vger.kernel.org
+> Onderwerp : Re: CONFIG_CRITICAL_IRQSOFF_TIMING
 > 
-> hmm, it could also be a separate issue. This other laptop is the one that
-> took a while to freeze. Correct?
+> On Tue, 2007-10-30 at 21:52 +0100, Gerrit Binnenmars wrote:
 > 
-
-yes, it seems that was the case, but not sure if still applies. the
-moment of the freezes are rather random, sometimes in the (tainted)
-desktop one it takes a while too before it starts to hiccup.
-
-> Was it only on X apps? Or could it possible be something we could do via a
-> command line and then we could see vga output (if any).
+> > CONFIG_LTT_PROBE_LOCKING=m
+> > # CONFIG_LTT_PROBE_STACK is not set
 > 
+> I wonder which kernel your using? I don't recall LTT being part of real
+> time in the past .. What the architecture too ?
 
-most of the time, yes, it's on X applications. if I get into a tty (eg.
-via Alt-Ctrl-F1) it seems to eventually recover from the intermitent
-frozen state easier, but its just a matter of time to have it also dead
-on the console, sooner or later. once it starts freezing the first time
-  I know the whole system is, how should i say? doomed ...
+Hello Daniel,
+I use version 2.6.22.1-rt4, see the following link for LTT compatibility
+http://ltt.polymtl.ca/svn/ltt/branches/poly/doc/developer/lttng-lttv-compatibility.html
 
-never saw a bug, oops or panik message. it just drops dead, until
-SysRq-B gets hit in despair :)
+I have used LTT on both i386 an on a PowerPC (MPC8555) architecture.
+It is a great help in understanding real-time behaviour.
 
-cheers
--- 
-rncbc aka Rui Nuno Capela
-rncbc@rncbc.org
+Gerrit
+
+> 
+> > CONFIG_CRITICAL_IRQSOFF_TIMING=y
+> > CONFIG_INTERRUPT_OFF_HIST=y
+> > CONFIG_CRITICAL_TIMING=y
+> > CONFIG_DEBUG_TRACE_IRQFLAGS=y
+> > CONFIG_LATENCY_TIMING=y
+> 
+> You might try disabling the histogram option temporarily, it may have be
+> effecting things (not sure how tho) ..
+> 
+> Daniel
+> 
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at http://vger.kernel.org/majordomo-info.html
+> 
+> 
