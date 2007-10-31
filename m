@@ -1,102 +1,108 @@
-From: Dragan Noveski <perodog@gmx.net>
-Subject: Re: 2.6.23.1-rt5 rtc lost interrupt
-Date: Wed, 31 Oct 2007 18:55:08 +0000
-Message-ID: <4728CF8C.5070407@gmx.net>
-References: <47289310.4000506@gmx.net> <Pine.LNX.4.58.0710311229020.17607@gandalf.stny.rr.com>
+From: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
+Subject: Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+Date: Wed, 31 Oct 2007 20:53:25 +0100 (CET)
+Message-ID: <14294538.1772991193860405373.JavaMail.www@wwinf6002>
+Reply-To: gerritbinnenmars@wanadoo.nl
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Daniel Walker <dwalker@mvista.com>, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:54237 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1752223AbXJaR6U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 31 Oct 2007 13:58:20 -0400
-In-Reply-To: <Pine.LNX.4.58.0710311229020.17607@gandalf.stny.rr.com>
+Received: from smtp-1.orange.nl ([193.252.22.241]:13527 "EHLO smtp-1.orange.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753782AbXJaTx3 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 31 Oct 2007 15:53:29 -0400
+Received: from me-wanadoo.net (localhost [127.0.0.1])
+	by mwinf6007.orange.nl (SMTP Server) with ESMTP id 669AC7000094
+	for <linux-rt-users@vger.kernel.org>; Wed, 31 Oct 2007 20:53:25 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
+> Datum: 31/10/07 01:17 AM
+> Van: "Steven Rostedt"=20
+> Aan: "Gerrit Binnenmars"=20
+> CC: linux-rt-users@vger.kernel.org
+> Onderwerp : Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+>=20
+>=20
 > --
-> When I'm asked what language is my mother tongue,
-> I simply answer "C".
->
-> On Wed, 31 Oct 2007, Dragan Noveski wrote:
->
->   
->> hallo list, yesterday strange thing happened here.
->> i am running 2.6.23.1-rt5, and actually it is running good, but
->> yesterday partially my keyboard stopped working. usually if i press any
->> key (inside of xterm) and do not release, but keep pressed, the
->> letter/sign will be printed all the time again and again as long as i
->> release the key.
->> something like:
->>
->> aaaaaaaaaaaaaaaaaaaaa
->>     
->
-> What X drivers are you running (hopefully not nVidia or some other
-> proprietary module).
->   
-no it is perhaps one of these both:
+> On Tue, 30 Oct 2007, Gerrit Binnenmars wrote:
+>=20
+> > > Datum: 29/10/07 02:09 PM
+> > > Van: "Steven Rostedt"
+> > > Aan: "Gerrit Binnenmars"
+> > > CC: linux-rt-users@vger.kernel.org
+> > > Onderwerp : Re: CONFIG_CRITICAL_IRQSOFF_TIMING
+> > >
+> > >
+> > > --
+> > > On Sun, 28 Oct 2007, Gerrit Binnenmars wrote:
+> > >
+> > > > Hello,
+> > > >
+> > > > Can someone send me a .config file that shows the options neede=
+d to get the interrupt off
+> > > > timing values in preempt_max_latency, please. I only see a valu=
+e of 0 in this file
+> > > > I am using kernel 2.6.22.1 with the corresponding rt patch.
+> > > >
+> > > > Thanks in advance,
+> > >
+> > > Make sure you have event trace and latency tracing as well as
+> > > "Interrupts-off critical section latency timing".
+> > >
+> > > Then you need to echo 0 > /proc/sys/kernel/preempt_max_latency.
+> > >
+> > Hello Steve,
+> >
+> > Thanks for your quick response, but the preempt_max_latency remains=
+ 0. Also the latency_hist shows no samples taken.
+> > Can you or someone else have a look at the corresponding CONFIG opt=
+ions?
+> >
+> > CONFIG_LTT_PROBE_LOCKING=3Dm
+> > # CONFIG_LTT_PROBE_STACK is not set
+> >
+> > #
+> > # Kernel hacking
+> > #
+>=20
+> [...]
+>=20
+> > CONFIG_INTERRUPT_OFF_HIST=3Dy
+> > CONFIG_CRITICAL_LATENCY_HIST=3Dy
+> > CONFIG_LATENCY_HIST=3Dy
+>=20
+> Turn off all histograms. They will kill any measurements you are taki=
+ng.
+> And yes, you will not get the output from latency_trace that you are
+> after.
 
-00:02.0 VGA compatible controller: Intel Corporation 82852/855GM 
-Integrated Graphics Device (rev 02)
-00:02.1 Display controller: Intel Corporation 82852/855GM Integrated 
-Graphics Device (rev 02)
+Steven and Daniel, I tried your suggestion with the following resulsts:
+CRITICAL_IRQSOFF_TIMING: preempt_max_latency remains 0 even under load,=
+=20
+                         cyclictest -b is able to store a trace in /pro=
+c/latency_trace
+CRITICAL_PREEMPT_TIMING: kernel won=C2=B4t start at all (vmlinuz is rea=
+d from tftp server but nothing afterwards)
+WAKEUP_TIMING:           is working as expected.
 
-...but nothing proprietary here.
+So switching off the histograms is an improvement. For the moment, I ca=
+n live with this situation=20
+(especially the cyclictest -b option is very useful),
+but I wonder if anyone else has the same problems?
 
->   
->> but yesterday, if i was holding the key, the letter got displayed on the
->> screen just one time.
->> if i released and pressed again, one more time.....
->> so i was not able to press only one time a key and hold to get sth like
->> these:
->>
->> ........................
->>
->> than in /var/log/system i found this lines:
->>
->>
->> Oct 30 21:22:37 murija2 kernel: rtc: lost 8 interrupts
->> Oct 30 21:22:50 murija2 kernel: rtc: lost 4 interrupts
->> Oct 30 21:22:50 murija2 kernel: rtc: lost 20 interrupts
->>     
->
-> Unfortunately, this gives me no clue to what went wrong. Perhaps, you have
-> a high priority process running somewhere that is keeping things from
-> running.
->   
+Regards, Gerrit
 
-ok, but this gives me an idea, because i was just backtracing 'aqualung' 
-and 'bristol synth emulator' and letting them crash again and again.
-but i was not thinking that this could be causing the issue.
-> What type of system is this? SMP?
->   
-no, ibm-thinkpad-r50e with celeronM
->   
->> this also appeared in dmesg.
->>
->> is this explained so that someone is able to understand?
->> does any one has an idea what went wrong here?
->>
->> after a reboot the keyboard was working as usually again and the issue
->> did not happened again since them.
->>
->> hope to get some suggestions/answers?!
->>
->>     
->
-> I can't figure out much with the current info.
->
+>=20
 > -- Steve
+>=20
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at http://vger.kernel.org/majordomo-info.html
+>=20
 >
->   
-i was expecting that the info i had is not info enough!
-
-anyway, it did not appeared again, so i will not be scared too much now, 
-if it comes again, you ll hear from me.
-
-cheers,
-doc
