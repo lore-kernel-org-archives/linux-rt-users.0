@@ -1,69 +1,72 @@
-Return-Path: <rhel-rt-internal-bounces@redhat.com>
-Message-Id: <200711061442.lA6EgqTN005688@post-office.corp.redhat.com>
-Date: Tue, 23 Oct 2007 19:13:03 +0200
-From: Andi Kleen <ak@suse.de>
-Subject: [PATCH] Fix rt preempt slab NUMA freeing
-Reply-To: rhel-rt-internal@redhat.com
-List-Unsubscribe: <http://post-office.corp.redhat.com/mailman/listinfo/rhel-rt-internal>,
-	<mailto:rhel-rt-internal-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://post-office.corp.redhat.com/mailman/private/rhel-rt-internal>
-List-Post: <mailto:rhel-rt-internal@redhat.com>
-List-Help: <mailto:rhel-rt-internal-request@redhat.com?subject=help>
-List-Subscribe: <http://post-office.corp.redhat.com/mailman/listinfo/rhel-rt-internal>,
-	<mailto:rhel-rt-internal-request@redhat.com?subject=subscribe>
-Sender: rhel-rt-internal-bounces@redhat.com
-Errors-To: rhel-rt-internal-bounces@redhat.com
-To: linux-rt-users@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Marcos Guglielmetti <marcospcmusica@gmail.com>
+Subject: kernel linux 2.6.23.1-rt4  Musix (Debian/ETCH)
+Date: Thu, 1 Nov 2007 02:19:42 +0100
+Message-ID: <200711010219.44162.marcospcmusica@gmail.com>
+Reply-To: marcospcmusica@gmail.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: musix-users@lists.ourproject.org, linux-rt-users@vger.kernel.org
+To: musix-usuarios <musix-usuarios@lists.ourproject.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wx-out-0506.google.com ([66.249.82.237]:5166 "EHLO
+	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753260AbXKAFYV convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 1 Nov 2007 01:24:21 -0400
+Received: by wx-out-0506.google.com with SMTP id h31so416095wxd
+        for <linux-rt-users@vger.kernel.org>; Wed, 31 Oct 2007 22:24:19 -0700 (PDT)
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+Hola, Hello
+
+Just to say that Tapani R=C3=A4ikk=C3=B6nen builded a new version of th=
+e Linux kernel,=20
+realtime patched
+
+S=C3=B3lo para comentarles que Tapani R=C3=A4ikk=C3=B6nen compil=C3=B3 =
+una nueva versi=C3=B3n del=20
+kernel Linux, parcheado para operaciones en tiempo real.
+
+You can install it from a terminal (konsole, etc):
+Pueden instalarlo desde una terminal (konsole, etc):
+
+sudo apt-get update
+
+sudo apt-get install linux-image-2.6.23.1-rt4
 
 
-When this_cpu changes in the free path node needs to change too.
-Otherwise the slab can end up in the wrong node's list and this
-eventually leads to WARN_ONs and of course worse NUMA performace.
 
-This patch is likely not complete (the NUMA slab code is *very* hairy), 
-but seems to make the make -j128 test survive for at least two hours.
+More info:
+apt-cache search 2.6.23.1-rt4
 
-But at least it fixes one case that regularly triggered during 
-testing, resulting in slabs in the wrong node lists and triggering
-WARN_ONs in slab_put/get_obj
 
-I tried a complete audit of keeping this_cpu/node/slabp in sync when needed, but 
-it is very hairy code and I likely missed some cases. This so far
-fixes only the simple free path; but it seems to be good enough
-to not trigger easily anymore on a NUMA system with memory pressure.
+Musix's repository:
 
-Longer term the only good fix is probably to migrate to slub.
-Or disable NUMA slab for PREEMPT_RT (its value has been disputed
-in some benchmarks anyways)
+deb ftp://musix.ourproject.org/pub/musix/deb/ ./
 
-Signed-off-by: Andi Kleen <ak@suse.de>
 
----
- mm/slab.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+Regards
 
-Index: linux-2.6.21-rt-hack/mm/slab.c
-===================================================================
---- linux-2.6.21-rt-hack.orig/mm/slab.c
-+++ linux-2.6.21-rt-hack/mm/slab.c
-@@ -1205,7 +1205,7 @@ cache_free_alien(struct kmem_cache *cach
- 	struct array_cache *alien = NULL;
- 	int node;
- 
--	node = numa_node_id();
-+	node = cpu_to_node(*this_cpu);
- 
- 	/*
- 	 * Make sure we are not freeing a object from another node to the array
-@@ -4199,6 +4199,8 @@ static void cache_reap(struct work_struc
- 
- 		work_done += reap_alien(searchp, l3, &this_cpu);
- 
-+		node = cpu_to_node(this_cpu);
-+
- 		work_done += drain_array(searchp, l3,
- 			    cpu_cache_get(searchp, this_cpu), 0, node);
- 
 
---------------040207020607000702050607--
+--=20
+=C2=A0 =C2=A0 =C2=A0`&'=20
+=C2=A0 =C2=A0 =C2=A0 # =C2=A0 =C2=A0Marcos Guglielmetti, co-director de=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=20
+=C2=A0 =C2=A0 =C2=A0 # =C2=A0 Musix GNU+Linux, 100% Software Libre para=
+ artistas =C2=A0 =C2=A0 =C2=A0
+=C2=A0 =C2=A0 =C2=A0_#_ =C2=A0 =C2=A0 =C2=A0 http://www.musix.org.ar =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=20
+=C2=A0 =C2=A0 =C2=A0(#) =C2=A0 =C2=A0=20
+=C2=A0 =C2=A0 / O \ =C2=A0 =C2=A0+ archivos: ftp://musix.ourproject.org=
+/pub/musix
+=C2=A0 =C2=A0( =3D=3D=3D ) =C2=A0 Ecolog=C3=ADa: http://autosus.wordpre=
+ss.com =C2=A0 =C2=A0
+=C2=A0 =C2=A0 `---' =C2=A0 =C2=A0Personal: http://marcospcmusica.wordpr=
+ess.com
+
+"Y no te doy otra no m=C3=A1s porque..."
+
+http://es.wikiquote.org/wiki/El_Chavo_del_Ocho
