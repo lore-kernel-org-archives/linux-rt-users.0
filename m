@@ -1,42 +1,66 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
 Subject: Re: old rt patches
-Date: Thu, 1 Nov 2007 08:56:48 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
+Date: Thu, 1 Nov 2007 18:58:53 +0530
+Message-ID: <1985e0f60711010628r136bdb1ydf2545a447289a4e@mail.gmail.com>
 References: <1985e0f60711010249y197e3c12ua40c0d54655f3385@mail.gmail.com>
+	 <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: RT <linux-rt-users@vger.kernel.org>
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:57896 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753373AbXKAM4w (ORCPT
+Received: from nf-out-0910.google.com ([64.233.182.189]:56015 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751795AbXKAN26 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2007 08:56:52 -0400
-In-Reply-To: <1985e0f60711010249y197e3c12ua40c0d54655f3385@mail.gmail.com>
+	Thu, 1 Nov 2007 09:28:58 -0400
+Received: by nf-out-0910.google.com with SMTP id g13so495539nfb
+        for <linux-rt-users@vger.kernel.org>; Thu, 01 Nov 2007 06:28:57 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Steve,
 
+Thanks for your ketchup.
 
---
-On Thu, 1 Nov 2007, Jaswinder Singh wrote:
+Please let me know:
 
-> Hello all,
+1. Is 2.6.13-rt1 is first rt version
+
+2. how to read text with black background as in
+http://rostedt.homelinux.com/
+do I need to learn some martial arts.
+
+Thank you,
+
+Jaswinder Singh.
+
+On 11/1/07, Steven Rostedt <rostedt@goodmis.org> wrote:
 >
-> how can I get old rt patches :-
 >
-> 2.6.13-rt1
-> 2.6.14-rt1
-> 2.6.15-rt1
+> --
+> On Thu, 1 Nov 2007, Jaswinder Singh wrote:
 >
-> I am not able to find them in
-> http://www.kernel.org/pub/linux/kernel/projects/rt/older/
+> > Hello all,
+> >
+> > how can I get old rt patches :-
+> >
+> > 2.6.13-rt1
+> > 2.6.14-rt1
+> > 2.6.15-rt1
+> >
+> > I am not able to find them in
+> > http://www.kernel.org/pub/linux/kernel/projects/rt/older/
+> >
+> > Can someone please email these patches to me.
 >
-> Can someone please email these patches to me.
-
-You are soooo lucky that I don't purge my .ketchup directory!
-
-http://rostedt.homelinux.com/rt/older/
-
--- Steve
+> You are soooo lucky that I don't purge my .ketchup directory!
+>
+> http://rostedt.homelinux.com/rt/older/
+>
+> -- Steve
+>
+>
