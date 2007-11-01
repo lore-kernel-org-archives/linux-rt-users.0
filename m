@@ -1,72 +1,36 @@
-From: Marcos Guglielmetti <marcospcmusica@gmail.com>
-Subject: kernel linux 2.6.23.1-rt4  Musix (Debian/ETCH)
-Date: Thu, 1 Nov 2007 02:19:42 +0100
-Message-ID: <200711010219.44162.marcospcmusica@gmail.com>
-Reply-To: marcospcmusica@gmail.com
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: old rt patches
+Date: Thu, 1 Nov 2007 15:19:55 +0530
+Message-ID: <1985e0f60711010249y197e3c12ua40c0d54655f3385@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: musix-users@lists.ourproject.org, linux-rt-users@vger.kernel.org
-To: musix-usuarios <musix-usuarios@lists.ourproject.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wx-out-0506.google.com ([66.249.82.237]:5166 "EHLO
-	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753260AbXKAFYV convert rfc822-to-8bit (ORCPT
+Received: from nz-out-0506.google.com ([64.233.162.239]:14645 "EHLO
+	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756340AbXKAJt5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2007 01:24:21 -0400
-Received: by wx-out-0506.google.com with SMTP id h31so416095wxd
-        for <linux-rt-users@vger.kernel.org>; Wed, 31 Oct 2007 22:24:19 -0700 (PDT)
+	Thu, 1 Nov 2007 05:49:57 -0400
+Received: by nz-out-0506.google.com with SMTP id s18so351334nze
+        for <linux-rt-users@vger.kernel.org>; Thu, 01 Nov 2007 02:49:56 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hola, Hello
+Hello all,
 
-Just to say that Tapani R=C3=A4ikk=C3=B6nen builded a new version of th=
-e Linux kernel,=20
-realtime patched
+how can I get old rt patches :-
 
-S=C3=B3lo para comentarles que Tapani R=C3=A4ikk=C3=B6nen compil=C3=B3 =
-una nueva versi=C3=B3n del=20
-kernel Linux, parcheado para operaciones en tiempo real.
+2.6.13-rt1
+2.6.14-rt1
+2.6.15-rt1
 
-You can install it from a terminal (konsole, etc):
-Pueden instalarlo desde una terminal (konsole, etc):
+I am not able to find them in
+http://www.kernel.org/pub/linux/kernel/projects/rt/older/
 
-sudo apt-get update
+Can someone please email these patches to me.
 
-sudo apt-get install linux-image-2.6.23.1-rt4
+Thank you,
 
-
-
-More info:
-apt-cache search 2.6.23.1-rt4
-
-
-Musix's repository:
-
-deb ftp://musix.ourproject.org/pub/musix/deb/ ./
-
-
-Regards
-
-
---=20
-=C2=A0 =C2=A0 =C2=A0`&'=20
-=C2=A0 =C2=A0 =C2=A0 # =C2=A0 =C2=A0Marcos Guglielmetti, co-director de=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=20
-=C2=A0 =C2=A0 =C2=A0 # =C2=A0 Musix GNU+Linux, 100% Software Libre para=
- artistas =C2=A0 =C2=A0 =C2=A0
-=C2=A0 =C2=A0 =C2=A0_#_ =C2=A0 =C2=A0 =C2=A0 http://www.musix.org.ar =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=20
-=C2=A0 =C2=A0 =C2=A0(#) =C2=A0 =C2=A0=20
-=C2=A0 =C2=A0 / O \ =C2=A0 =C2=A0+ archivos: ftp://musix.ourproject.org=
-/pub/musix
-=C2=A0 =C2=A0( =3D=3D=3D ) =C2=A0 Ecolog=C3=ADa: http://autosus.wordpre=
-ss.com =C2=A0 =C2=A0
-=C2=A0 =C2=A0 `---' =C2=A0 =C2=A0Personal: http://marcospcmusica.wordpr=
-ess.com
-
-"Y no te doy otra no m=C3=A1s porque..."
-
-http://es.wikiquote.org/wiki/El_Chavo_del_Ocho
+Jaswinder Singh.
