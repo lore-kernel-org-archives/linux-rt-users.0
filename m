@@ -1,66 +1,50 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: old rt patches
-Date: Thu, 1 Nov 2007 18:58:53 +0530
-Message-ID: <1985e0f60711010628r136bdb1ydf2545a447289a4e@mail.gmail.com>
+Date: Thu, 1 Nov 2007 09:42:01 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0711010937320.30234@gandalf.stny.rr.com>
 References: <1985e0f60711010249y197e3c12ua40c0d54655f3385@mail.gmail.com>
-	 <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
+ <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
+ <1985e0f60711010628r136bdb1ydf2545a447289a4e@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: RT <linux-rt-users@vger.kernel.org>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.189]:56015 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751795AbXKAN26 (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:38442 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752486AbXKANmF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2007 09:28:58 -0400
-Received: by nf-out-0910.google.com with SMTP id g13so495539nfb
-        for <linux-rt-users@vger.kernel.org>; Thu, 01 Nov 2007 06:28:57 -0700 (PDT)
-In-Reply-To: <Pine.LNX.4.58.0711010855580.29152@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Thu, 1 Nov 2007 09:42:05 -0400
+In-Reply-To: <1985e0f60711010628r136bdb1ydf2545a447289a4e@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steve,
 
-Thanks for your ketchup.
+--
+On Thu, 1 Nov 2007, Jaswinder Singh wrote:
 
-Please let me know:
+> Steve,
+>
+> Thanks for your ketchup.
+>
+> Please let me know:
+>
+> 1. Is 2.6.13-rt1 is first rt version
 
-1. Is 2.6.13-rt1 is first rt version
+Not by a long shot.  The earliest hint of a RT patch I have is a left over
+vi swap file:
 
-2. how to read text with black background as in
-http://rostedt.homelinux.com/
-do I need to learn some martial arts.
+   .realtime-preempt-2.6.10-rc1-mm3-V0.7.25-1.swp
 
-Thank you,
+I think I started with Ingo's work in 2.6.9, so I don't even know what the
+first version I used was.
 
-Jaswinder Singh.
+>
+> 2. how to read text with black background as in
+> http://rostedt.homelinux.com/
+> do I need to learn some martial arts.
 
-On 11/1/07, Steven Rostedt <rostedt@goodmis.org> wrote:
->
->
-> --
-> On Thu, 1 Nov 2007, Jaswinder Singh wrote:
->
-> > Hello all,
-> >
-> > how can I get old rt patches :-
-> >
-> > 2.6.13-rt1
-> > 2.6.14-rt1
-> > 2.6.15-rt1
-> >
-> > I am not able to find them in
-> > http://www.kernel.org/pub/linux/kernel/projects/rt/older/
-> >
-> > Can someone please email these patches to me.
->
-> You are soooo lucky that I don't purge my .ketchup directory!
->
-> http://rostedt.homelinux.com/rt/older/
->
-> -- Steve
->
->
+No you need to see www.kihontech.com
+ (my own business - not active at the moment)
+
+-- Steve
