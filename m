@@ -1,77 +1,91 @@
-From: Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl>
-Subject: How to use latency trace
-Date: Thu,  1 Nov 2007 23:53:26 +0100 (CET)
-Message-ID: <30746519.1640811193957606209.JavaMail.www@wwinf6101>
-Reply-To: gerritbinnenmars@wanadoo.nl
+From: Gernot Hillier <gernot.hillier@siemens.com>
+Subject: Re: thread load balancing on dual CPU Multicore AMD64 system
+Date: Fri, 02 Nov 2007 11:52:44 +0100
+Message-ID: <472B017C.5020308@siemens.com>
+References: <47179170.7030802@siemens.com> <Pine.LNX.4.58.0710242126070.13877@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-2.orange.nl ([193.252.22.242]:43183 "EHLO smtp-2.orange.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753079AbXKAWx3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2007 18:53:29 -0400
-Received: from me-wanadoo.net (localhost [127.0.0.1])
-	by mwinf6108.orange.nl (SMTP Server) with ESMTP id 390037000084
-	for <linux-rt-users@vger.kernel.org>; Thu,  1 Nov 2007 23:53:26 +0100 (CET)
-Received: from wwinf6101 (wwinf6101 [172.22.153.28])
-	by mwinf6108.orange.nl (SMTP Server) with ESMTP id 363D47000082
-	for <linux-rt-users@vger.kernel.org>; Thu,  1 Nov 2007 23:53:26 +0100 (CET)
+Received: from goliath.siemens.de ([192.35.17.28]:22449 "EHLO
+	goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753011AbXKBKwr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Nov 2007 06:52:47 -0400
+In-Reply-To: <Pine.LNX.4.58.0710242126070.13877@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+Hi!
 
-Below is a latency trace from cyclictest at a pentm4 1.8G with cyclictest stopping the
-latency tracer at a latency of 25us.
-The disknoise script is running in the background together with a self made loadgen appl.
-The latency is in the 5th line from the bottom in clockevents_program_events, a function 
-which in most cases only takes one us.
-Why is it now taking 40us? Or is sys_getdents64() causing the problem?
-
-Another question: can you ever guarantee a max. latency if a user has access to the system?
-
-> preemption latency trace v1.1.5 on 2.6.22.1-rt4
-> --------------------------------------------------------------------
-> latency: 1832319 us, #65536/3501832508, CPU#0 | (M:rt VP:0, KP:0, SP:1
-> HP:1)
-> -----------------
-> | task: cyclictest-647 (uid:0 nice:0 policy:1 rt_prio:80)
-> -----------------
-> => started at: sys_prctl+0x21/0x1a4 
-> => ended at: 0
+On Thu, 25 Oct 2007, Steven Rostedt wrote:
+>> We're currently evaluating whether PREEMPT_RT will work for a certain
+>> use case combining realtime and performance requirements running on a
+>> lot of CPUs and using a bunch of RAM.
+>>
+>> For first tests, we're running a "small" AMD64 test system with 2x2
+>> cores (2 CPUs with 2 cores each) with 8 GB of RAM.
+>>
+>> We wrote a small testcase which basically has one SCHED_FIFO "realtime"
+>> thread which does nothing but sleeping and checking if it wakes up at
+>> the right time. In addition, it spawns 20 low-prio "load threads"
+>> introducing a lot of malloc/memory access/free load on some GB of RAM.
+>>
+>> We can see, that the realtime requirements are fulfilled quite well (if
+>> using the current glibc with private futexes, but that's another story).
+>> The "rt thread" reacts within the expected timeframe with 2.6.22.1-rt9
+>> as well as with 2.6.23-rt1.
+>>
+>> However, what causes problems is the load balancing of the 20 threads
+>> over the available CPU cores:
+>>
 > 
-> loadgen-738 0D..2 439508us!: __schedule+0x3c4/0x4f3 (150 0)
-> loadgen-738 0D.h. 439745us : do_IRQ+0x96/0xfb (8048563 17 0)
-> loadgen-738 0D.h1 439745us : try_to_wake_up+0x19/0x188 (c0115f37 0 0)
-> loadgen-738 0D.h2 439746us : activate_task+0x83/0xce (150 1)
-> loadgen-738 0DN.1 439747us : __schedule+0xb7/0x4f3 (c0102afa 0 0)
-> IRQ-17-294 0D..2 439748us : __schedule+0x3c4/0x4f3 (0 150)
-> IRQ-17-294 0D.h. 439748us+: do_IRQ+0x96/0xfb (c035c1aa 17 0)
-> IRQ-17-294 0D..1 439763us : __schedule+0xb7/0x4f3 (c035c18c 0 0)
-> IRQ-17-294 0D..2 439763us : deactivate_task+0x83/0xce (150 2)
-> loadgen-738 0D..2 439764us+: __schedule+0x3c4/0x4f3 (150 0)
-> loadgen-738 0D.h. 439795us : do_IRQ+0x96/0xfb (8048563 17 0)
-> loadgen-738 0D.h1 439795us : try_to_wake_up+0x19/0x188 (c0115f37 0 0)
-> loadgen-738 0D.h2 439796us : activate_task+0x83/0xce (150 1)
-> loadgen-738 0DN.1 439797us : __schedule+0xb7/0x4f3 (c0102afa 0 0)
-> IRQ-17-294 0D..2 439798us : __schedule+0x3c4/0x4f3 (0 150)
-> IRQ-17-294 0D.h. 439798us+: do_IRQ+0x96/0xfb (c01487e3 17 0)
-> IRQ-17-294 0.... 439819us : try_to_wake_up+0x19/0x188 (c0115e57 0 0)
-> IRQ-17-294 0D..1 439819us+: activate_task+0x83/0xce (0 2)
-> IRQ-17-294 0D..1 439825us : __schedule+0xb7/0x4f3 (c035c18c 0 0)
-> IRQ-17-294 0D..2 439825us : deactivate_task+0x83/0xce (150 3)
-> find-742 0D..2 439826us!: __schedule+0x3c4/0x4f3 (150 0)
-> find-742 0.... 440000us > sys_getdents64+0x0/0xb2 (00000004 080cc054 00000000)
-> find-742 0D..1 440000us : smp_apic_timer_interrupt+0x2d/0x97 (c02329c9 1 0)
-> find-742 0D.h1 440001us : hrtimer_interrupt+0x60/0x20a (54040878530431 0)
-> find-742 0D.h2 440001us : hrtimer_interrupt+0xef/0x20a (54040878529874 -134680768)
-> find-742 0D.h2 440002us : try_to_wake_up+0x19/0x188 (c0115f37 0 0)
-> find-742 0D.h3 440002us : activate_task+0x83/0xce (180 2)
-> find-742 0DNh3 440003us : try_to_wake_up+0x15a/0x188 (180 0)
-> find-742 0DNh1 440003us+: clockevents_program_event+0x33/0xb2 (54040879000000 467212)
-> find-742 0DN.1 440043us : __schedule+0xb7/0x4f3 (c035bffe 0 0)
-> cyclicte-647 0D..2 440045us : __schedule+0x3c4/0x4f3 (0 180)
-> cyclicte-647 0.... 440046us > sys_clock_gettime+0x0/0x9c (00000001 b7f2c448 00000000)
-> cyclicte-647 0.... 440047us > sys_prctl+0x0/0x1a4 (00000000 00000000 00000000)
+> The latest 2.6.23-rt3 (as well as -rt2) has new RT balancing code. Could
+> you try that to see if it solves you issues.
+
+Sorry - being a bit late here.
+
+I now tried my testcase with the current 2.6.23.1-rt5 patch (please tell
+if you're still interested in test results for the old 2.6.23-rt3!) and
+it didn't get better. I still see only 2 CPUs being occupied by our test
+program.
+
+Interestingly enough, it seems I now can't use CPU2 and CPU3 at all -
+even if I start several test processes in parallel. IIRC, this was
+better with 2.6.22.1-rt9 - there CPU2 and CPU3 got used if I started two
+test programs in parallel.
+
+I can now even reproduce the problem with a simple kernel make. Here's a
+snapshot of /proc/stat after compiling the kernel with "make -j 4":
+
+MRBOX:~/linux-2.6.23.1 # cat /proc/stat
+cpu  249482 0 46304 683034 9592 90 358 0 1 28
+cpu0 124240 0 20690 99283 2767 50 214 0 0 8
+cpu1 125242 0 25586 89781 6431 33 136 0 0 10
+cpu2 0 0 8 246867 333 0 0 0 0 0
+cpu3 0 0 18 247103 60 6 7 0 0 8
+intr 115025
+ctxt 8498063
+btime 1193997310
+processes 82614
+procs_running 1
+procs_blocked 0
+
+As with 2.6.23-rt1, behaviour only breaks for me as soon as I enable
+PREEMPT_RT.
+
+To narrow it down a bit, I now played a bit with the configure options
+of 2.6.23.1-rt5 (leaving PREEMPT_RT disabled and enabling the other RT
+features one after another). The culprit for me is
+CONFIG_PREEMPT_SOFTIRQS. As soon as I enable it, only CPU0 and 1 are
+used. Disabling it again makes the kernel use all CPUs.
+
+Any hint how to continue with this matter is greatly appreciated...
+
+-- 
+Gernot Hillier
+
+Siemens AG, CT SE 2
+Corporate Competence Center Embedded Linux
