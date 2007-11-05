@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 1/8] RT: Consistency cleanup for this_rq usage
-Date: Mon, 05 Nov 2007 16:45:22 -0700
-Message-ID: <20071105234522.25384.15371.stgit@lsg>
-References: <20071105234517.25384.5143.stgit@lsg>
+Subject: [PATCH 0/8] RT: scheduler migration/wakeup enhancements
+Date: Mon, 05 Nov 2007 16:45:17 -0700
+Message-ID: <20071105234517.25384.5143.stgit@lsg>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -11,157 +10,83 @@ Cc: mingo@elte.hu, dvhltc@us.ibm.com, zijlstra@redhat.com,
 	ghaskins@novell.com
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nds154-200.nds.lab.novell.com ([151.155.154.200]:9649 "EHLO
+Received: from nds154-200.nds.lab.novell.com ([151.155.154.200]:9644 "EHLO
 	lsg.lab.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755374AbXKFARR (ORCPT
+	with ESMTP id S1755321AbXKFARR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Mon, 5 Nov 2007 19:17:17 -0500
-In-Reply-To: <20071105234517.25384.5143.stgit@lsg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-"this_rq" is normally used to denote the RQ on the current cpu
-(i.e. "cpu_rq(this_cpu)").  So clean up the usage of this_rq to be
-more consistent with the rest of the code.
+Ingo, Steven, Thomas,
+
+Please consider this series for inclusion in 23-rt6, as it has shown
+to make a substantial improvement in our local testing.  Independent
+verification and/or comments/review are more than welcome.
+
+-Greg
+
+---------
+RT: scheduler migration/wakeup enhancements
+
+This series applies to 23.1-rt5 and includes numerous tweaks to the
+scheduler.  The primary goal of this set of patches is to further improve
+wake-up latencies (particularly on larger SMP systems) and decrease migration
+overhead.  This is accomplished by making improvements on several fronts:
+
+1) We factor in CPU topology in the routing decision to pick the best
+   migration target according to cache hierarchy.
+
+2) We moved some CFS load calculation code as a member function of the CFS
+   sched_class.  This removes this unecessary code from the RT fastpath for
+   tasks in the RT sched_class.
+
+3) We make further improvements against non-migratable tasks by factoring in
+   the RQ overload state, instead of just the RQ depth.
+
+4) We replace the linear priority search with a 2-d algorithm.
+
+In past -rt releases, latencies could become quickly absymal on larger SMP (8+
+cpus) to the order of 350us+.  The recent work in -rt2 and -rt4 dropped this
+figure by a large margin, bringing things in the order of approximately
+~120us.  This new series improves upon this work even further, bringing
+latencies down to the sub 80us mark on our reference 8-way Intel C2D 5335
+Xeon.
+
+These figures were obtained by simultaneous execution of:
+
+# ./cyclictest -n -p 90 -t 8 -d 100 -i 100
+# while true; do make mrproper; make alldefconfig; make -j 128; done
+
+for long durations.  The following are the results from one particular run,
+though the results are similar across various short and long term trials in
+our labs.
+
+23.1-rt5-baseline
+--------------------------
+138.60 110.62 70.96 23/808 10246
+
+T: 0 ( 5179) P:90 I:100 C:9011636 Min:      2 Act:    4 Avg:    4 Max:     117
+T: 1 ( 5180) P:89 I:200 C:4505819 Min:      2 Act:    5 Avg:    4 Max:      95
+T: 2 ( 5181) P:88 I:300 C:3003879 Min:      2 Act:    9 Avg:    5 Max:      85
+T: 3 ( 5182) P:87 I:400 C:2252910 Min:      2 Act:    3 Avg:    4 Max:      75
+T: 4 ( 5183) P:86 I:500 C:1802328 Min:      2 Act:    7 Avg:    5 Max:      71
+T: 5 ( 5184) P:85 I:600 C:1501940 Min:      2 Act:    4 Avg:    5 Max:      74
+T: 6 ( 5185) P:84 I:700 C:1287377 Min:      2 Act:    6 Avg:    6 Max:      85
+T: 7 ( 5186) P:83 I:800 C:1126455 Min:      2 Act:    4 Avg:    5 Max:      75
+
+23.1-rt5-gh
+--------------------------
+146.47 127.99 85.35 30/815 32289
+
+T: 0 ( 5027) P:90 I:100 C:10856538 Min:      2 Act:    4 Avg:    4 Max:
+60
+T: 1 ( 5028) P:89 I:200 C:5428270 Min:      2 Act:    7 Avg:    5 Max:      57
+T: 2 ( 5029) P:88 I:300 C:3618846 Min:      2 Act:    5 Avg:    5 Max:      48
+T: 3 ( 5030) P:87 I:400 C:2714135 Min:      2 Act:    7 Avg:    5 Max:      61
+T: 4 ( 5031) P:86 I:500 C:2171308 Min:      2 Act:    6 Avg:    6 Max:      51
+T: 5 ( 5032) P:85 I:600 C:1809424 Min:      2 Act:    5 Avg:    7 Max:      59
+T: 6 ( 5033) P:84 I:700 C:1550935 Min:      2 Act:    6 Avg:    6 Max:      54
+T: 7 ( 5034) P:83 I:800 C:1357068 Min:      2 Act:    7 Avg:    6 Max:      62
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
-
- kernel/sched_rt.c |   46 +++++++++++++++++++++++-----------------------
- 1 files changed, 23 insertions(+), 23 deletions(-)
-
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 9b06d7c..0348423 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -307,7 +307,7 @@ static struct task_struct *pick_next_highest_task_rt(struct rq *rq,
- 
- /* Will lock the rq it finds */
- static struct rq *find_lock_lowest_rq(struct task_struct *task,
--				      struct rq *this_rq)
-+				      struct rq *rq)
- {
- 	struct rq *lowest_rq = NULL;
- 	cpumask_t cpu_mask;
-@@ -321,21 +321,21 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
- 		 * Scan each rq for the lowest prio.
- 		 */
- 		for_each_cpu_mask(cpu, cpu_mask) {
--			struct rq *rq = &per_cpu(runqueues, cpu);
-+			struct rq *curr_rq = &per_cpu(runqueues, cpu);
- 
--			if (cpu == this_rq->cpu)
-+			if (cpu == rq->cpu)
- 				continue;
- 
- 			/* We look for lowest RT prio or non-rt CPU */
--			if (rq->rt.highest_prio >= MAX_RT_PRIO) {
--				lowest_rq = rq;
-+			if (curr_rq->rt.highest_prio >= MAX_RT_PRIO) {
-+				lowest_rq = curr_rq;
- 				break;
- 			}
- 
- 			/* no locking for now */
--			if (rq->rt.highest_prio > task->prio &&
--			    (!lowest_rq || rq->rt.highest_prio > lowest_rq->rt.highest_prio)) {
--				lowest_rq = rq;
-+			if (curr_rq->rt.highest_prio > task->prio &&
-+			    (!lowest_rq || curr_rq->rt.highest_prio > lowest_rq->rt.highest_prio)) {
-+				lowest_rq = curr_rq;
- 			}
- 		}
- 
-@@ -343,16 +343,16 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
- 			break;
- 
- 		/* if the prio of this runqueue changed, try again */
--		if (double_lock_balance(this_rq, lowest_rq)) {
-+		if (double_lock_balance(rq, lowest_rq)) {
- 			/*
- 			 * We had to unlock the run queue. In
- 			 * the mean time, task could have
- 			 * migrated already or had its affinity changed.
- 			 * Also make sure that it wasn't scheduled on its rq.
- 			 */
--			if (unlikely(task_rq(task) != this_rq ||
-+			if (unlikely(task_rq(task) != rq ||
- 				     !cpu_isset(lowest_rq->cpu, task->cpus_allowed) ||
--				     task_running(this_rq, task) ||
-+				     task_running(rq, task) ||
- 				     !task->se.on_rq)) {
- 				spin_unlock(&lowest_rq->lock);
- 				lowest_rq = NULL;
-@@ -377,21 +377,21 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task,
-  * running task can migrate over to a CPU that is running a task
-  * of lesser priority.
-  */
--static int push_rt_task(struct rq *this_rq)
-+static int push_rt_task(struct rq *rq)
- {
- 	struct task_struct *next_task;
- 	struct rq *lowest_rq;
- 	int ret = 0;
- 	int paranoid = RT_MAX_TRIES;
- 
--	assert_spin_locked(&this_rq->lock);
-+	assert_spin_locked(&rq->lock);
- 
--	next_task = pick_next_highest_task_rt(this_rq, -1);
-+	next_task = pick_next_highest_task_rt(rq, -1);
- 	if (!next_task)
- 		return 0;
- 
-  retry:
--	if (unlikely(next_task == this_rq->curr)) {
-+	if (unlikely(next_task == rq->curr)) {
- 		WARN_ON(1);
- 		return 0;
- 	}
-@@ -401,24 +401,24 @@ static int push_rt_task(struct rq *this_rq)
- 	 * higher priority than current. If that's the case
- 	 * just reschedule current.
- 	 */
--	if (unlikely(next_task->prio < this_rq->curr->prio)) {
--		resched_task(this_rq->curr);
-+	if (unlikely(next_task->prio < rq->curr->prio)) {
-+		resched_task(rq->curr);
- 		return 0;
- 	}
- 
--	/* We might release this_rq lock */
-+	/* We might release rq lock */
- 	get_task_struct(next_task);
- 
- 	/* find_lock_lowest_rq locks the rq if found */
--	lowest_rq = find_lock_lowest_rq(next_task, this_rq);
-+	lowest_rq = find_lock_lowest_rq(next_task, rq);
- 	if (!lowest_rq) {
- 		struct task_struct *task;
- 		/*
--		 * find lock_lowest_rq releases this_rq->lock
-+		 * find lock_lowest_rq releases rq->lock
- 		 * so it is possible that next_task has changed.
- 		 * If it has, then try again.
- 		 */
--		task = pick_next_highest_task_rt(this_rq, -1);
-+		task = pick_next_highest_task_rt(rq, -1);
- 		if (unlikely(task != next_task) && task && paranoid--) {
- 			put_task_struct(next_task);
- 			next_task = task;
-@@ -429,13 +429,13 @@ static int push_rt_task(struct rq *this_rq)
- 
- 	assert_spin_locked(&lowest_rq->lock);
- 
--	deactivate_task(this_rq, next_task, 0);
-+	deactivate_task(rq, next_task, 0);
- 	set_task_cpu(next_task, lowest_rq->cpu);
- 	activate_task(lowest_rq, next_task, 0);
- 
- 	resched_task(lowest_rq->curr);
- 
--	schedstat_inc(this_rq, rto_pushed);
-+	schedstat_inc(rq, rto_pushed);
- 
- 	spin_unlock(&lowest_rq->lock);
- 
