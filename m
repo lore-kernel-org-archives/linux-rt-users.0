@@ -1,53 +1,94 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: How to use latency trace
-Date: Tue, 06 Nov 2007 13:13:48 -0800
-Message-ID: <1194383628.19313.22.camel@sx.thebigcorporation.com>
-References: <30746519.1640811193957606209.JavaMail.www@wwinf6101>
-	 <1985e0f60711020453o1e8d11e9m4de693d466d5ea57@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.23.1-rt9 (and others)
+Date: Wed, 07 Nov 2007 00:39:19 -0500
+Message-ID: <1194413959.8827.66.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: gerritbinnenmars@wanadoo.nl, linux-rt-users@vger.kernel.org
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	Gregory Haskins <ghaskins@novell.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qmta05.emeryville.ca.mail.comcast.net ([76.96.30.48]:36235 "EHLO
-	QMTA05.emeryville.ca.mail.comcast.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754468AbXKFVUx (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:62463 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750821AbXKGFkM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Nov 2007 16:20:53 -0500
-In-Reply-To: <1985e0f60711020453o1e8d11e9m4de693d466d5ea57@mail.gmail.com>
+	Wed, 7 Nov 2007 00:40:12 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2007-11-02 at 17:23 +0530, Jaswinder Singh wrote:
-> hello Gerrit Binnenmars,
-> 
-> 
-> On 11/2/07, Gerrit Binnenmars <gerritbinnenmars@wanadoo.nl> wrote:
-> >
-> > Another question: can you ever guarantee a max. latency if a user has access
-> > to the system?
-> >
-> 
+This is a special announcement for the latest -rt patches. This is
+actually announcing more than one tree (pay close attention to the
+differences between -rt7, -rt8 and -rt9).
 
-The user could trip over the power chord!
+  2.6.23.1-rt6
 
-Seriously, users cannot use the high priorities, so apps running above
-the user's MAX_PRIO should be safe from whatever the user does.
+   - Removed BUG_ON in exit (Steven Rostedt and Daniel Walker)
 
-> I do not think so. this shows this is soft real time.
-> 
+   -  Turn RCU preempt boost on by default (Steven Rostedt)
+      (for when RCU PREEMPT is enabled)
 
-> It best example is :
-> 
-> http://rt.wiki.kernel.org/index.php/Cyclictest
-> 
-> you can request for interval for 1000 so it should come 1000 all the
-> time, but it is not.
+   - Fixes for PowerPC (Paul McKenney)
 
-Its should come CLOSE to 1000. What errors have you seen?
 
-Have you run latency trace on your workload to identify any long
-code-paths that need to be cleaned up?
+  2.6.23.1-rt7
 
-Sven
+   - Found that there's a flaw in the PowerPC patch so
+     it was pulled from the tree.
+
+  2.6.23.1-rt8
+
+   - More aggressive RT Balancing (Gregory Haskins)
+
+  2.6.23.1-rt9
+
+   - RT balancing by CPU priorities (Gregory Haskins)
+
+
+Now benchmarks against 2.6.23.1-rt7 -rt8 and -rt9 would be greatly
+appreciated.  These three are all present in
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Gregory and I have been having disagreements on how to solve RT task
+balancing among CPUS. Although we shared ideas back and forth, and both
+our methods have been greatly influenced by each other, the real answer
+comes from actual numbers. So these three versions are posted for your
+convenience to see which actually do the best. I would be happy to tell
+Gregory he's right, if the numbers prove it.
+
+Currently, what we do to test RT latencies is to run Thomas Gleixner's
+cyclictest
+(http://git.kernel.org/?p=linux/kernel/git/tglx/rt-tests.git;a=summary)
+as well as hackbench, to see what the maximum latencies we get are.
+
+Other tests are welcomed too.
+
+
+to build a 2.6.23.1-rt7 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.1.tar.bz2 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23.1-rt7.bz2
+
+to build a 2.6.23.1-rt8 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.1.tar.bz2 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23.1-rt8.bz2
+
+to build a 2.6.23.1-rt9 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.1.tar.bz2 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.23.1-rt9.bz2
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt1
+
+The broken out patches are also available.
+
+Thanks!
+
+-- Steve
