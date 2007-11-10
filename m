@@ -1,90 +1,67 @@
-From: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>
-Subject: Re: Priority Ceiling for SMP?
-Date: Fri, 09 Nov 2007 16:37:17 +0100
-Message-ID: <47347EAD.50904@l1nuxh4ck3r.de>
-References: <473346DF.3080108@l1nuxh4ck3r.de> <200711082329.17959.lhenriques@netvisao.pt> <47345F0F.3000709@l1nuxh4ck3r.de> <200711091432.21649.lhenriques@netvisao.pt>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: IBM rt-tests-0.6 snapshot
+Date: Fri, 9 Nov 2007 21:03:44 -0800
+Message-ID: <200711092103.44547.dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: =?ISO-8859-1?Q?Lu=EDs_Henriques?= <lhenriques@netvisao.pt>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p00-ob.rzone.de ([81.169.146.160]:44008 "EHLO
-	mo-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763682AbXKIPgW (ORCPT
+Received: from e34.co.us.ibm.com ([32.97.110.152]:59002 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751092AbXKJFDq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Nov 2007 10:36:22 -0500
-In-Reply-To: <200711091432.21649.lhenriques@netvisao.pt>
+	Sat, 10 Nov 2007 00:03:46 -0500
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id lAA53j7u007631
+	for <linux-rt-users@vger.kernel.org>; Sat, 10 Nov 2007 00:03:45 -0500
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.5) with ESMTP id lAA53ieF123288
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Nov 2007 22:03:44 -0700
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id lAA53iu5006711
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Nov 2007 22:03:44 -0700
+Received: from wecm-9-67-82-85.wecm.ibm.com (wecm-9-67-82-85.wecm.ibm.com [9.67.82.85])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.12.11) with ESMTP id lAA53iJf006675
+	for <linux-rt-users@vger.kernel.org>; Fri, 9 Nov 2007 22:03:44 -0700
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Lu=EDs Henriques wrote:
+IBM rt-tests-0.6 snapshot is now available here:
 
-> http://www-md.e-technik.uni-rostock.de/ma/gol/rtsys/articulos/YCS159.=
-pdf
+http://www.kernel.org/pub/linux/kernel/people/dvhart/realtime/tests/
 
-Thanks for this link. This paper teached me the right keywords
-to feed Google and i stumbled over this one:
+As more folks have started using the rt-test suite, I thought I should get 
+another snaphot out, even though there is still a fairly long list of things 
+we would like to improve.  Please give it a shot and let us know if you run 
+into any trouble with it.  A very high level summary of changes since the 0.3 
+snapshot follows.
 
-https://drum.umd.edu/dspace/bitstream/1903/630/1/CS-TR-3252.ps
+o Fixed run.sh scripts requiring top level dir name of "rt-test"
+  - you can now run things like "$ ./run.sh all" from the top level directory
+o Lots of coding style and cosmetic updates for:
+  - whitespace
+  - header text (descriptions, licenses, etc.)
+  - more consistently formatted test output (still work to do)
+  - more consistent return codes (still some work to do)
+  - various compiler warnings
+o Several bug fixes and added arguments to various tests:
+  - sched_latency
+  - sched_football
+  - pthread_kill_latency
+  - prio-preempt
+o New test cases:
+  - hrtimer-prio
+o Autotools updates from Robert Schwebel <r.schwebel@pengutronix.de>
+o PowerPC asm support for atomics and tsc workaround from 
+  Tsutomu Owa <tsutomu.owa@toshiba.co.jp>
 
-However, it seems like this "Multiprocessor Priority Ceiling Protocol"
-doesn't allow nested locking and thus is not applicable to -rt :-(
+Thanks to everyone who contributed and tested, your time is very much 
+appreciated.
 
-
-> I would like, however, to add that telling "our OS avoids dead-locks =
-by=20
-> design" is also not enough for SIL certification -- you need to prove=
- this,
-
-True, but you only need to do it once for the OS and not
-for all applications developed on top of it, afterwards
-
-
-> which might be as difficult as implementing your system without these=
-=20
-> mechanisms (they tend to add high complexity to the kernel).
-
-This depends into which level of detail the SIL certifier likes
-to dig :-)
-
-
-> BTW and just for curiosity: anyone's aware of any application running=
- on top=20
-> of a Linux kernel that has been SIL (or similar) certified?  I guess =
-that you=20
-> need a fully qualified kernel for SIL, right?
-
-IIRC, you can claim yourself that your system reaches SIL1 or SIL2.
-(it's a little bit like the "CE" sign). The fun starts at SIL3
-and SIL4, where you get your system certified by somebody else.
-
-
-> To sum up: most of the priority-inversion/dead-lock avoidance mechani=
-sms=20
-> (we've been discussing PI and PC but probably there are much more...)=
- have=20
-> advantages and disadventages which are widely known and documented.  =
-The=20
-> conclusion, I guess, is that no "magic" solution exists and the appli=
-cations=20
-> system architects will need to choose one or more (or none!) of the a=
-vailable=20
-> mechanisms.
-
-Agreed.
-
-
-> My personal opinion is that, no matter what mechanism you select, if =
-your=20
-> developing critical software you will _always_ need to perform static=
-=20
-> schedulability analysis of your system and never rely on PI or PC.
-
-Basically agreed, however, this can be a very challenging activity
-for a highly dynamic system like Linux :-)
-
-regards
-
-Bernhard
+-- 
+Darren Hart
+IBM Linux Technology Center
+Realtime Linux Team
