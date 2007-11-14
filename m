@@ -1,73 +1,69 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: syslog(3) blocks when local socket is full
-Date: Wed, 14 Nov 2007 10:04:45 +0100
-Message-ID: <473ABA2D.6060009@free.fr>
-References: <4739B6CB.4070903@free.fr> <20071113154659.GN6086@unix.sh> <4739CD85.1020808@free.fr> <20071113171458.GP6086@unix.sh>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Priority Ceiling for SMP?
+Date: Wed, 14 Nov 2007 17:38:55 +0100 (CET)
+Message-ID: <alpine.LFD.0.9999.0711141735450.3265@localhost.localdomain>
+References: <473346DF.3080108@l1nuxh4ck3r.de> <200711081800.35937.lhenriques@netvisao.pt> <47335D45.7040507@l1nuxh4ck3r.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1509614291-1195058337=:3265"
+Cc: =?ISO-8859-15?Q?Lu=EDs_Henriques?= <lhenriques@netvisao.pt>,
+	linux-rt-users@vger.kernel.org
+To: Bernhard Kuhn <kuhn@l1nuxh4ck3r.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:43378 "EHLO smtp4-g19.free.fr"
+Received: from www.tglx.de ([62.245.132.106]:53843 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752810AbXKNJEs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Nov 2007 04:04:48 -0500
-In-Reply-To: <20071113171458.GP6086@unix.sh>
+	id S1754283AbXKNQjL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Nov 2007 11:39:11 -0500
+In-Reply-To: <47335D45.7040507@l1nuxh4ck3r.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-(You're using a weird quote character.)
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Luis Claudio R. Goncalves wrote:
+--8323328-1509614291-1195058337=:3265
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
 
-> I did some more testing, now with syslog turned off. The return code is
-> always 0, the program runs to completion - without hanging or without
-> waiting for any event. Turning syslog on, no singe log message from the
-> test program appears.
+On Thu, 8 Nov 2007, Bernhard Kuhn wrote:
+> Luís Henriques wrote:
 > 
-> strace:
+> > Maybe I didn't completely understood your question, but... if there is a
+> > problem with SMP efficiency (I do not really know, but believe you :) ) with
+> > priority ceiling (PC) implementation, this problem should have been already
+> > identified (and possibly solved) in the current PI implementation, right?
 > 
-> 500 repetitions of:
+> To make it clear: I'm not aware of any efficiency issues with
+> the current PI implementation :-)
 > 
->  socket(PF_FILE, SOCK_DGRAM, 0)          = 3
->  fcntl(3, F_SETFD, FD_CLOEXEC)           = 0
->  connect(3, {sa_family=AF_FILE, path="/dev/log"}, 110) = -1 ENOENT
->    (No such file or directory)
->  close(3)                                = 0
+> 
+> The (potential) efficiency issue with PC on SMP derives from the
+> dead-lock avoidance mechanism that you mentioned: If a task
+> locks a resource, then it's priority is raised to the ceiling
+> (which is typically the highest priority of all task sharing
+> that resource). Once that happens, no other task (sharing the
+> same resource) could then lock another resource that potentially
+> leads to a dead-lock situation.
+> 
+> Example:
+> 
+> * A low priority Task A shall share resources X and Y
+>   with a high priority Task B.
+> 
+> * Task A shall execute the following fraction of code:
+> 
+>     1. lock(X)
+>     2. lock(Y)
+> 
+> * Task B shall execute the following fraction of code:
+> 
+>     1. lock(Y)
+>     2. lock(X)
 
-The /dev/log file does not exist because syslogd removed it.
-(A process must bind that "address" for the file to exist.)
-The program tries to connect, and fails, 500 times.
+Classic ABBA deadlock :) Priority ceiling is not designed to allow
+that. It's just a coincidence that it does not lead to a deadlock on
+UP, but thats not a semantical property.
 
-My description of the setup was incorrect.
+Thanks,
 
-#include <syslog.h>
-int main(void)
-{
-   int i;
-   for (i=1; i <= 1000; ++i)
-   {
-     printf("Sending I=%d\n", i);
-     syslog(LOG_INFO, "I=%d", i);
-   }
-   return 0;
-}
-
-1. start syslogd (the syslog daemon)
-2. send syslogd the STOP signal
-3. run the test program (it will block)
-4. kill the test program
-5. send syslogd the CONT signal
-
-syslogd binds "/dev/log" which "creates" the socket:
-$ ls -l /dev/log
-srw-rw-rw- 1 root root 0 2007-10-08 09:36 /dev/log=
-
-> Anyway, the default for syslog is to be LOG_ODELAY, so it waits until the
-> connection is made before going on. That can be changed using LOG_NDELAY in
-> openlog().
-
-LOG_NDELAY and LOG_ODELAY are a different matter.
-
-Regards.
+	tglx
+--8323328-1509614291-1195058337=:3265--
