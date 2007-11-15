@@ -1,67 +1,61 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH] RT: Fix a bug for properly setting the priority on rt-dequeue
-Date: Wed, 14 Nov 2007 14:31:55 -0700
-Message-ID: <20071114213046.32720.57104.stgit@lsg>
+Subject: [PATCH] RT: convert cpupri spinlock_t to raw_spinlock_t
+Date: Wed, 14 Nov 2007 23:43:23 -0500
+Message-ID: <20071115043830.8362.31302.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: ghaskins@novell.com, linux-rt-users@vger.kernel.org, mingo@elte.hu
+Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu, ghaskins@novell.com
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nds154-200.nds.lab.novell.com ([151.155.154.200]:2885 "EHLO
-	lsg.lab.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1764907AbXKNVb5 (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:34669
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750707AbXKOFBw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Nov 2007 16:31:57 -0500
+	Thu, 15 Nov 2007 00:01:52 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi Steven,
-  This patch applies to 23-rt11 to fix that bug you found in the git-HEAD
-  merge.  I will fold this patch into my 24 series so it is fixed there.  Feel
-  free to fold this into patch "#8" instead of maintaining it seperately, if
-  you prefer.
+   This patch should fix the hang you were seeing in 24-rc2-rt1-pre9 with "#8"
+applied.  I meant to bring this required -rt specific change up when we spoke
+on IRC earlier, but it slipped through the cracks. :(  Sorry 'bout that.
 
---------------------------
+Regards,
+-Greg
 
-RT: Fix a bug for properly setting the priority on rt-dequeue
 
-We need to update the priority on task-dequeue whenever it changes, not just
-if more RT tasks are pending.
+--------------------
+
+RT: convert cpupri spinlock_t to raw_spinlock_t
+
+We recently started preparing some of the scheduler changes for upstream
+merginging.  Part of this work involved changing the original raw_spinlock
+used in cpupri to a spinlock since this is proper use for a mainline change.
+However, in order to continue to use this patch back in -rt, we need to
+restore the lock back to raw or the kernel will hang during bootup.
+
+So this patch does the conversion, but should not go upstream with the rest
+of the scheduler enhancements until the -rt spinlock work is also merged.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |    6 +++++-
- 1 files changed, 5 insertions(+), 1 deletions(-)
+ kernel/sched_cpupri.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index f05912a..864d18a 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -85,6 +85,8 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+diff --git a/kernel/sched_cpupri.c b/kernel/sched_cpupri.c
+index 09e27eb..91cc9c8 100644
+--- a/kernel/sched_cpupri.c
++++ b/kernel/sched_cpupri.c
+@@ -39,8 +39,8 @@
  
- static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+ struct pri_vec
  {
-+	int highest_prio = rq->rt.highest_prio;
-+
- 	WARN_ON(!rt_task(p));
- 	WARN_ON(!rq->rt.rt_nr_running);
- 	rq->rt.rt_nr_running--;
-@@ -98,13 +100,15 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
- 			array = &rq->rt.active;
- 			rq->rt.highest_prio =
- 				sched_find_first_bit(array->bitmap);
--			cpupri_set(rq->cpu, rq->rt.highest_prio);
- 		} /* otherwise leave rq->highest prio alone */
- 	} else
- 		rq->rt.highest_prio = MAX_RT_PRIO;
- 	if (p->nr_cpus_allowed > 1)
- 		rq->rt.rt_nr_migratory--;
+-	spinlock_t lock;
+-	cpumask_t  mask;
++	raw_spinlock_t lock;
++	cpumask_t      mask;
+ };
  
-+	if (rq->rt.highest_prio != highest_prio)
-+		cpupri_set(rq->cpu, rq->rt.highest_prio);
-+
- 	update_rt_migration(p, rq);
- #endif /* CONFIG_SMP */
- }
+ struct cpu_priority {
