@@ -1,87 +1,88 @@
-From: "Mark Knecht" <markknecht@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: 2.6.24-rc2-rt1
-Date: Thu, 15 Nov 2007 13:09:28 -0800
-Message-ID: <5bdc1c8b0711151309q6a6b1de6q328710a3b009b3ec@mail.gmail.com>
+Date: Thu, 15 Nov 2007 22:39:37 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0711152232100.31778@gandalf.stny.rr.com>
 References: <1195152030.13982.48.camel@localhost.localdomain>
-	 <5bdc1c8b0711151241j5f1b8427w38d2a286eb6ebb7f@mail.gmail.com>
-	 <Pine.LNX.4.58.0711151551570.27347@gandalf.stny.rr.com>
+ <5bdc1c8b0711151241j5f1b8427w38d2a286eb6ebb7f@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Gregory Haskins" <ghaskins@novell.com>,
-	"Peter Zijlstra" <a.p.zijlstra@chello.nl>,
-	"Daniel Walker" <dwalker@mvista.com>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Daniel Walker <dwalker@mvista.com>,
 	"Paul E. McKenney" <paulmck@us.ibm.com>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+To: Mark Knecht <markknecht@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.239]:55759 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932200AbXKOVJa (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:44734 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756421AbXKPDkP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Nov 2007 16:09:30 -0500
-Received: by wr-out-0506.google.com with SMTP id 36so672269wra
-        for <linux-rt-users@vger.kernel.org>; Thu, 15 Nov 2007 13:09:29 -0800 (PST)
-In-Reply-To: <Pine.LNX.4.58.0711151551570.27347@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Thu, 15 Nov 2007 22:40:15 -0500
+In-Reply-To: <5bdc1c8b0711151241j5f1b8427w38d2a286eb6ebb7f@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Sent.
 
-On Nov 15, 2007 12:54 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
->
->
-> On Thu, 15 Nov 2007, Mark Knecht wrote:
->
-> > On Nov 15, 2007 10:40 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> > > Finally!
-> > >
-> > > We are pleased to announce 2.6.24-rc2-rt1.
-> > >
-> > <SNIP>
+On Thu, 15 Nov 2007, Mark Knecht wrote:
+
+> On Nov 15, 2007 10:40 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> > Finally!
 > >
-> > Hi Steve,
->
-> <snip!>
->
+> > We are pleased to announce 2.6.24-rc2-rt1.
 > >
-> >    As always thanks the the rt-kernel team for all you do.
+> <SNIP>
 >
-> On behalf of the rt-kernel team, you are welcome ;-)
+> Hi Steve,
+>    Not sure I've ever posted on this list. Always looking to help out
+> at my low level.
 >
-> >
-> > Cheers,
-> > Mark
-> >
-> >   CC      ipc/mqueue.o
-> >   CC      ipc/compat_mq.o
-> >   LD      ipc/built-in.o
-> >   CC      security/security.o
-> >   CC      security/dummy.o
-> >   CC      security/inode.o
-> >   LD      security/built-in.o
-> >   CC [M]  security/commoncap.o
-> >   CC [M]  security/realcap.o
-> > security/realcap.c: In function 'realtime_exit':
-> > security/realcap.c:129: error: implicit declaration of function
-> > 'mod_unreg_security'
-> > security/realcap.c:133: error: implicit declaration of function
-> > 'unregister_security'
-> > make[1]: *** [security/realcap.o] Error 1
-> > make: *** [security] Error 2
-> > lightning linux #
+>    Anyway, I tried building the kernel. My 1st two attempts, done
+> running make menuconfig from scratch, didn't boot. I gave up on that
+> for now and tried using make oldconfig from my 2.6.23-rt1 kernel (I'm
+> so far behind!!) and ended up with this error. Not sure it's enough
+> for you to find the bug. If you want/need more or want the config file
+> let me know.
 >
-> Definitely looks like a config bug. You can send me your config off
-> list.
+>    I'm sure this is just me setting inappropriate bits but I figured I
+> might as well send along the info. >/dev/null if it's inappropriate
+> but let me know how to move forward if possible.
 >
-> Hmm, I need to do a allyesconfig, but I'm not even sure 2.6.24-rc2 would
-> compile with that.
+>    As always thanks the the rt-kernel team for all you do.
 >
-> Thanks,
+> Cheers,
+> Mark
 >
-> -- Steve
->
+>   CC      ipc/mqueue.o
+>   CC      ipc/compat_mq.o
+>   LD      ipc/built-in.o
+>   CC      security/security.o
+>   CC      security/dummy.o
+>   CC      security/inode.o
+>   LD      security/built-in.o
+>   CC [M]  security/commoncap.o
+>   CC [M]  security/realcap.o
+> security/realcap.c: In function 'realtime_exit':
+> security/realcap.c:129: error: implicit declaration of function
+> 'mod_unreg_security'
+> security/realcap.c:133: error: implicit declaration of function
+> 'unregister_security'
+> make[1]: *** [security/realcap.o] Error 1
+> make: *** [security] Error 2
+> lightning linux #
+
+Hi Mark,
+
+I guess you enabled the realtime capabilities (Realtime-LSM - Obsolete -)
+
+You could disable that, and try again. I'm not sending a fix (yet)
+because ...
+
+
+Ingo,
+
+Do we still need to have the realtime-lsm.patch? It has been considered
+obsolete for over a year now. Can we finally remove it.
+
+-- Steve
