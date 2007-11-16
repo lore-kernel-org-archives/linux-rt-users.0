@@ -1,104 +1,48 @@
 From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: 2.6.24-rc2-rt1 - inet-hash-bits-ipv6-fix.patch
-Date: Fri, 16 Nov 2007 03:23:11 -0800
-Message-ID: <1195212191.3241.31.camel@sx.thebigcorporation.com>
+Subject: [PATCH][RT] 2.6.24-rc2-rt1 drivers/dma/ioat_dma.c compile fix
+Date: Fri, 16 Nov 2007 03:57:25 -0800
+Message-ID: <1195214245.3241.37.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: RT Users List <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>, nakagawa.msy@ncos.nec.co.jp
+Cc: LKML <Linux-kernel@vger.kernel.org>
+To: RT Users List <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:43207 "EHLO
+Received: from victor.provo.novell.com ([137.65.250.26]:44312 "EHLO
 	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752980AbXKPLXY (ORCPT
+	with ESMTP id S1752310AbXKPL5d (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Nov 2007 06:23:24 -0500
+	Fri, 16 Nov 2007 06:57:33 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Compile fix for new code in -rc2.
 
-Hello Nakagawa-san,
+I'm not positive about the insertion point...
 
-The above inet-hash-bits-ipv6-fix.patch in RT backs-out a hunk, that was
-just pushed into Kernel.org after -rc2.
+Subject: compile error fix (needs review)
 
-It will cause a compile error, because by the 2.6.24-rc2-git4 patch,
-the.lock which ipv6-fix restores and uses, disappears.
+RT changes __list_splice to require prev and next pointers. 
 
-I'm not sure about the locking, so I thought I'd mention it, since you
-have stepped through all this before.
+This changes the use in the new code to list_splice_tail, 
+but the optimal insertion point needs to be analyzed.
 
-Regards,
+Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
 
-Sven
+---
+ drivers/dma/ioat_dma.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Here are the 2 conflicting hunks...
-
->From patches.rt/inet-hash-bits-ipv6-fix.patch:
-@@ -35,14 +37,16 @@ void __inet6_hash(struct inet_hashinfo *
-                lock = &hashinfo->lhash_lock;
-                inet_listen_wlock(hashinfo);
-        } else {
--               unsigned int hash;
--               sk->sk_hash = hash = inet6_sk_ehashfn(sk);
--               list = &inet_ehash_bucket(hashinfo, hash)->chain;
--               lock = inet_ehash_lockp(hashinfo, hash);
-+               sk->sk_hash = inet6_sk_ehashfn(sk);
-+               index = inet_ehash_index(hashinfo, sk->sk_hash);
-+               list = &hashinfo->ehash[index].chain;
-+               lock = &hashinfo->ehash[index].lock;
-+               bitmask = hashinfo->ebitmask;
-                write_lock(lock);
-        }
-
-        __sk_add_node(sk, list);
-+       __inet_hash_setbit(bitmask, index);
-        sock_prot_inc_use(sk->sk_prot);
-        write_unlock(lock);
-
-Git 4:
-index 4427dcd..469216d 100644
---- a/include/net/inet_hashtables.h
-+++ b/include/net/inet_hashtables.h
-@@ -23,6 +23,7 @@
- #include <linux/spinlock.h>
- #include <linux/types.h>
- #include <linux/wait.h>
-+#include <linux/vmalloc.h>
-
- #include <net/inet_connection_sock.h>
- #include <net/inet_sock.h>
-@@ -37,7 +38,6 @@
-  * I'll experiment with dynamic table growth later.
-  */
- struct inet_ehash_bucket {
--       rwlock_t          lock;
-        struct hlist_head chain;
-        struct hlist_head twchain;
- };
-
-diff --git a/net/ipv6/inet6_hashtables.c b/net/ipv6/inet6_hashtables.c
-index d6f1026..adc73ad 100644
---- a/net/ipv6/inet6_hashtables.c
-+++ b/net/ipv6/inet6_hashtables.c
-@@ -37,9 +37,8 @@ void __inet6_hash(struct inet_hashinfo *hashinfo,
-        } else {
-                unsigned int hash; 
-                sk->sk_hash = hash = inet6_sk_ehashfn(sk);
--               hash &= (hashinfo->ehash_size - 1);
--               list = &hashinfo->ehash[hash].chain;
--               lock = &hashinfo->ehash[hash].lock;
-+               list = &inet_ehash_bucket(hashinfo, hash)->chain;
-+               lock = inet_ehash_lockp(hashinfo, hash);
-                write_lock(lock);
-        }
-
-
-
-
-
-
--- 
-Sven-Thorsten Dietrich
-+1 415 694-2930
-( www.novell.com/linux )
+Index: linux-2.6.23/drivers/dma/ioat_dma.c
+===================================================================
+--- linux-2.6.23.orig/drivers/dma/ioat_dma.c
++++ linux-2.6.23/drivers/dma/ioat_dma.c
+@@ -244,7 +244,7 @@ static dma_cookie_t ioat_tx_submit(struc
+ 	/* write address into NextDescriptor field of last desc in chain */
+ 	to_ioat_desc(ioat_chan->used_desc.prev)->hw->next =
+ 							first->async_tx.phys;
+-	__list_splice(&new_chain, ioat_chan->used_desc.prev);
++	list_splice_tail(&new_chain, ioat_chan->used_desc.prev);
+ 
+ 	ioat_chan->pending += desc_count;
+ 	if (ioat_chan->pending >= 4) {
