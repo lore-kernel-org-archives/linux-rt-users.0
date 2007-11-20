@@ -1,51 +1,67 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [BUG on PREEMPT_RT, 2.6.23.1-rt5] in rt-mutex code and signals
-Date: Tue, 20 Nov 2007 12:54:10 -0800
-Message-ID: <1195592050.16514.14.camel@imap.mvista.com>
-References: <3efb10970711160751l279fe99dl9f3a130a4373a449@mail.gmail.com>
-	 <Pine.LNX.4.58.0711161516580.25989@gandalf.stny.rr.com>
-	 <3efb10970711161502m6216bf5rc19a34184b4f3a2b@mail.gmail.com>
-	 <Pine.LNX.4.58.0711161830570.28002@gandalf.stny.rr.com>
-	 <3efb10970711170344n670d8b69w6679d494922c5bb@mail.gmail.com>
-	 <1195316550.25393.21.camel@imap.mvista.com>
-	 <3efb10970711170909n3acca605j70525e36faf8da7f@mail.gmail.com>
-	 <1195320569.25393.38.camel@imap.mvista.com>
-	 <20071117174608.GA30641@elte.hu> <1195576996.16514.4.camel@imap.mvista.com>
-	 <20071120203730.GA10008@elte.hu>
+From: trem <tremyfr@yahoo.fr>
+Subject: Re: [PATCH][RT] 2.6.24-rc2-rt1 drivers/dma/ioat_dma.c compile fix
+Date: Tue, 20 Nov 2007 23:09:53 +0100
+Message-ID: <47435B31.2070304@yahoo.fr>
+References: <BAE9DCEF64577A439B3A37F36F9B691C0371E3E3@orsmsx418.amr.corp.intel.com> <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Remy Bohmer <linux@bohmer.net>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:45150 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760974AbXKTU7V (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Nov 2007 15:59:21 -0500
-In-Reply-To: <20071120203730.GA10008@elte.hu>
-Sender: linux-rt-users-owner@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764832AbXKTWK3@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-11-20 at 21:37 +0100, Ingo Molnar wrote:
-> * Daniel Walker <dwalker@mvista.com> wrote:
+Steven Rostedt wrote:
+> On Fri, 16 Nov 2007, Nelson, Shannon wrote:
+>> first->async_tx.phys;
+>>> -       __list_splice(&new_chain, ioat_chan->used_desc.prev);
+>>> +       list_splice_tail(&new_chain, ioat_chan->used_desc.prev);
+>>>
+>> NAK.
+>>
+>> These functions do insertions differently.  The 'prev' is pointing to
+>> the last valid descriptor in the queue and you really want to get the
+>> new_chain stuck on after this.  Your list_splice_tail() will insert the
+>> new_chain just before it which will muck up the order of the DMA
+>> requests.
+>>
+>> You might have more success with
+>> 	list_splice_tail(&new_chain, ioat_chan->used_desc);
+>> where used_desc points to the whole list, rather than using the .prev
+>> pointer to a specific node.
+>>
+>> Please copy me on future ioatdma related comments.
+>>
 > 
-> > On Sat, 2007-11-17 at 18:46 +0100, Ingo Molnar wrote:
-> > 
-> > > fixing the top 20:
-> > 
-> > There are about 25 DECLARE_MUTEX() semaphores remaining .. One is the 
-> > BKL which I would guess can't be converted. The others I've looked at 
-> > appear to be trivial find/replace changes to get them to use the mutex 
-> > type.. Any reason those haven't been converted over?
+> And people wonder why we post RT related patches to LKML. This is exactly
+> why!
 > 
-> i guess talking about it instead of posting patches is a factor ;-)
+> Thanks for the response Shannon!
+> 
+> -- Steve
+> 
 
-There's several using init_MUTEX() (~70 or so), reviewing a few they
-look fairly trivial ..
+Hi
 
-Daniel
+I've tried this change, but it still don't compile. So I propose this patch.
+
+regards,
+trem
+
+------------------------
+
+Index: linux-2.6.23/drivers/dma/ioat_dma.c
+===================================================================
+--- linux-2.6.23.orig/drivers/dma/ioat_dma.c
++++ linux-2.6.23/drivers/dma/ioat_dma.c
+@@ -244,7 +244,7 @@ static dma_cookie_t ioat_tx_submit(struc
+        /* write address into NextDescriptor field of last desc in chain */
+        to_ioat_desc(ioat_chan->used_desc.prev)->hw->next =
+                                                        first->async_tx.phys;
+-       __list_splice(&new_chain, ioat_chan->used_desc.prev);
++       list_splice_tail(&new_chain, &ioat_chan->used_desc);
+ 
+        ioat_chan->pending += desc_count;
+        if (ioat_chan->pending >= 4) {
