@@ -1,67 +1,108 @@
-From: trem <tremyfr@yahoo.fr>
-Subject: Re: [PATCH][RT] 2.6.24-rc2-rt1 drivers/dma/ioat_dma.c compile fix
-Date: Tue, 20 Nov 2007 23:09:53 +0100
-Message-ID: <47435B31.2070304@yahoo.fr>
-References: <BAE9DCEF64577A439B3A37F36F9B691C0371E3E3@orsmsx418.amr.corp.intel.com> <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>
+From: Sripathi Kodi <sripathik@in.ibm.com>
+Subject: [PREEMPT_RT] LOCK_STAT and kexec: general protection fault
+Date: Wed, 21 Nov 2007 12:08:38 +0530
+Message-ID: <200711211208.38776.sripathik@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764832AbXKTWK3@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e28smtp04.in.ibm.com ([59.145.155.4]:43055 "EHLO
+	e28esmtp04.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751955AbXKUGix (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Nov 2007 01:38:53 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
-> On Fri, 16 Nov 2007, Nelson, Shannon wrote:
->> first->async_tx.phys;
->>> -       __list_splice(&new_chain, ioat_chan->used_desc.prev);
->>> +       list_splice_tail(&new_chain, ioat_chan->used_desc.prev);
->>>
->> NAK.
->>
->> These functions do insertions differently.  The 'prev' is pointing to
->> the last valid descriptor in the queue and you really want to get the
->> new_chain stuck on after this.  Your list_splice_tail() will insert the
->> new_chain just before it which will muck up the order of the DMA
->> requests.
->>
->> You might have more success with
->> 	list_splice_tail(&new_chain, ioat_chan->used_desc);
->> where used_desc points to the whole list, rather than using the .prev
->> pointer to a specific node.
->>
->> Please copy me on future ioatdma related comments.
->>
-> 
-> And people wonder why we post RT related patches to LKML. This is exactly
-> why!
-> 
-> Thanks for the response Shannon!
-> 
-> -- Steve
-> 
+Hi,
 
-Hi
+On RT kernel, When CONFIG_LOCK_STAT is enabled, trying to load the kdump 
+kernel (kexec -p) causes a kernel panic. I have seen slightly varying 
+backtraces, but I see general protection fault every time.
 
-I've tried this change, but it still don't compile. So I propose this patch.
+Hardware: x86_64, 4CPUs, LS20 blade.
+Kernel: 2.6.23.1-rt11.
 
-regards,
-trem
+I don't see this problem on non-rt kernels.
 
-------------------------
+Kernstopped custom tracer.
+general protection fault: 0000 [1] PREEMPT SMP
+CPU 3
+Modules linked in: ipmi_devintf ipmi_si ipmi_msghandler autofs4 hidp rfcomm 
+l2cap bluetooth sunrpc nf_conntrack_netbios_ns ipt_REJECT nf_conntrack_ipv4 
+xt_state iptable_filter ip_tables ip6t_REJECT xt_tcpudp ip6table_filter 
+ip6_tables x_tables ipv6 dm_mirror dm_multipath dm_mod video output sbs dock 
+battery ac parport_pc lp parport joydev sg amd_rng rtc_cmos i2c_amd756 k8temp 
+shpchp i2c_core rtc_core tg3 hwmon serio_raw rtc_lib button mptspi mptscsih 
+scsi_transport_spi mptbase sd_mod scsi_mod ext3 jbd ehci_hcd ohci_hcd 
+uhci_hcd
+Pid: 3540, comm: kexec Not tainted 2.6.23.1-rt11 #2
+RIP: 0010:[<ffffffff8025ae13>]  [<ffffffff8025ae13>] 
+__lock_acquire+0x6b2/0xca0
+RSP: 0018:ffff8102118d7eb8  EFLAGS: 00010092
+RAX: 0bbda08e8f9f3119 RBX: ffff8101fb4defd0 RCX: ffffffff80e31110
+RDX: 0bbda08e8f9f3119 RSI: 000000000000000a RDI: 0000000000000001
+RBP: ffff8102118d7f18 R08: 0000000000000002 R09: 0000000000000001
+R10: ffffffff80275659 R11: fffffffffffff000 R12: 00000000000000e6
+R13: ffff8101fb4de7c0 R14: 0000000000000000 R15: 00000000001225dc
+FS:  00002b55f6778b00(0000) GS:ffff810211fbb940(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 00000032fc494ff0 CR3: 00000001fbfa0000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process kexec (pid: 3540, threadinfo ffff8101fb518000, task ffff8101fb4de7c0)
+Stack:  00000001b434a540 0000000000000002 0000000000000000 ffffffff8068dc90
+ ffffffff80234dd8 ffff8102118d7f00 000000000000000a 0000000000000046
+ ffffffff8068dc78 0000000000000003 ffffffff8068dc78 00000000001225dc
+Call Trace:
+ <IRQ>  [<ffffffff80234dd8>] wake_up_process+0x12/0x14
+ [<ffffffff8025b45f>] lock_acquire+0x5e/0x77
+ [<ffffffff80275659>] handle_edge_irq+0x29/0x158
+ [<ffffffff804a1690>] __spin_lock+0x35/0x62
+ [<ffffffff80275659>] handle_edge_irq+0x29/0x158
+ [<ffffffff8020e5d2>] do_IRQ+0x80/0xea
+ [<ffffffff8020c4a6>] ret_from_intr+0x0/0xf
+ <EOI>  [<ffffffff8033b647>] copy_user_generic_string+0x17/0x40
+ [<ffffffff80267f74>] sys_kexec_load+0x501/0x5dd
+ [<ffffffff8020f17a>] syscall_trace_enter+0x95/0x99
+ [<ffffffff8020c0f7>] tracesys+0xdc/0xe1
 
-Index: linux-2.6.23/drivers/dma/ioat_dma.c
-===================================================================
---- linux-2.6.23.orig/drivers/dma/ioat_dma.c
-+++ linux-2.6.23/drivers/dma/ioat_dma.c
-@@ -244,7 +244,7 @@ static dma_cookie_t ioat_tx_submit(struc
-        /* write address into NextDescriptor field of last desc in chain */
-        to_ioat_desc(ioat_chan->used_desc.prev)->hw->next =
-                                                        first->async_tx.phys;
--       __list_splice(&new_chain, ioat_chan->used_desc.prev);
-+       list_splice_tail(&new_chain, &ioat_chan->used_desc);
- 
-        ioat_chan->pending += desc_count;
-        if (ioat_chan->pending >= 4) {
+INFO: lockdep is turned off.
+
+Code: 48 8b 10 0f 18 0a 48 39 c8 75 e4 f0 ff 0d 1b 5a 39 00 79 0d 
+RIP  [<ffffffff8025ae13>] __lock_acquire+0x6b2/0xca0
+ RSP <ffff8102118d7eb8>
+Kernel panic - not syncing: Fatal exception
+
+Call Trace:
+ <IRQ>  [<ffffffff8023af69>] panic+0xaf/0x16e
+ [<ffffffff802322d6>] task_rq_lock+0x42/0x74
+ [<ffffffff804a0e7c>] rt_spin_unlock+0x1e/0x50
+ [<ffffffff804a0e7c>] rt_spin_unlock+0x1e/0x50
+ [<ffffffff804a2de0>] oops_end+0x69/0x72
+ [<ffffffff8020d776>] die+0x4a/0x54
+ [<ffffffff804a3440>] do_general_protection+0x116/0x11f
+ [<ffffffff80258281>] put_lock_stats+0x2b/0x2d
+ [<ffffffff804a294d>] error_exit+0x0/0x96
+ [<ffffffff80275659>] handle_edge_irq+0x29/0x158
+ [<ffffffff8025ae13>] __lock_acquire+0x6b2/0xca0
+ [<ffffffff80234dd8>] wake_up_process+0x12/0x14
+ [<ffffffff8025b45f>] lock_acquire+0x5e/0x77
+ [<ffffffff80275659>] handle_edge_irq+0x29/0x158
+ [<ffffffff804a1690>] __spin_lock+0x35/0x62
+ [<ffffffff80275659>] handle_edge_irq+0x29/0x158
+ [<ffffffff8020e5d2>] do_IRQ+0x80/0xea
+ [<ffffffff8020c4a6>] ret_from_intr+0x0/0xf
+ <EOI>  [<ffffffff8033b647>] copy_user_generic_string+0x17/0x40
+ [<ffffffff80267f74>] sys_kexec_load+0x501/0x5dd
+ [<ffffffff8020f17a>] syscall_trace_enter+0x95/0x99
+ [<ffffffff8020c0f7>] tracesys+0xdc/0xe1
+
+INFO: lockdep is turned off.
+
+Thanks,
+Sripathi.
