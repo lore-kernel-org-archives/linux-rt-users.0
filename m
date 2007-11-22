@@ -1,59 +1,823 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.23.8-rt11, tasks freezing
-Date: Wed, 21 Nov 2007 09:11:48 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0711210905530.767@gandalf.stny.rr.com>
-References: <200711211250.39265.juuso.alasuutari@gmail.com>
+From: Michal Schmidt <mschmidt@redhat.com>
+Subject: updated ketchup script
+Date: Thu, 22 Nov 2007 15:41:27 +0100
+Message-ID: <20071122154127.0775192e@brian.englab.brq.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Juuso Alasuutari <juuso.alasuutari@gmail.com>
+Content-Type: multipart/mixed; boundary="MP_/XGgFDw.L/SM9zr1wj9rCuio"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:53419 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750728AbXKUOLw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Nov 2007 09:11:52 -0500
-In-Reply-To: <200711211250.39265.juuso.alasuutari@gmail.com>
+Received: from mx1.redhat.com ([66.187.233.31]:52688 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751676AbXKVOli (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 22 Nov 2007 09:41:38 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+--MP_/XGgFDw.L/SM9zr1wj9rCuio
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-On Wed, 21 Nov 2007, Juuso Alasuutari wrote:
+Steven,
 
-> Hi,
->
-> I use vanilla kernels with realtime-preempt patches on a Core 2 E6600 running
-> 32-bit Linux. Kernels up to 2.6.22.1-rt9 work fine, but I'm experiencing
-> strange freezing of some tasks with 2.6.23.8-rt11. (Actually all 2.6.23
-> rt-kernels I've so far tried hang the same way.)
+Your ketchup script does not download the -rt kernel for me. This patch
+fixes it. Could you update
+http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt1 ?
 
-Could you try 2.6.23-rc8-rt1 and see if it hangs?
-If not, then try 2.6.23-rc9-rt1, if that doesn't hang then try
-2.6.23-rc9-rt2.
+I'm also attaching the complete ketchup script for convenience.
 
-Reason being is that we've implemented a new RCU preempt logic. -rc8-rt1
-doesn't have it. -rc9-rt1 has it, and -rc9-rt2 has RCU preempt boosting.
-I'd like to see if this is what is causing your problems.
+Michal
 
->
-> The system boots up nicely and seems to be running properly, until something
-> tips it off and some commands begin to get "jammed". What seems to trigger it
-> is accessing the hard disk, for instance doing something like `grep -r
-> foo /var`. When it happens the desktop seems mostly responsive, but trying to
-> run commands like `ls` will freeze the terminal. Other commands will succeed,
-> for instance `ps aux` works as usual.
->
-> Alt-SysRq-w shows more than one blocked pdflush task, as well as metalog and
-> whatever commands have become "jammed" so far, like `ls`.
->
-> I'll be happy to post more information, I just need to know what. I'd attach
-> my .config here, but I can't access the computer from where I'm at the
-> moment.
+--- ketchup-0.9.8-rt1	2007-11-22 15:22:41.000000000 +0100
++++ ketchup	2007-11-22 15:29:47.000000000 +0100
+@@ -235,10 +235,7 @@ def latest_ck(url, pat):
+     return l[-1]
+ 
+ def latest_rt(url, pat):
+-    url = kernel_url + '/projects/rt/'
+-    url += last(url)
+-    part = last(url)
+-    return part[:-1]
++    return last(url, pat)
+ 
+ def latest_dir(url, pat):
+     """Find the latest link matching pat at url after sorting"""
+@@ -615,8 +612,8 @@ version_info = {
+ 	        "patch-%(full)s.bz2",
+ 	        kernel_url + "/projects/rt/older/" +
+ 	        "patch-%(full)s.bz2"],
+-               r'patch-(2.6.*?)',
+-               0, "Ingo Molnar's realtime-preempt kernel"),
++               r'patch-(2.6.*?).bz2',
++               1, "Ingo Molnar's realtime-preempt kernel"),
+     '2.6-ck': (latest_ck,
+                ["http://ck.kolivas.org/patches/2.6/" +
+                 "%(prebase)s/%(full)s/patch-%(full)s.bz2",
 
-You can send me the .config off list. Also, if possible, the output of
-dmesg, sysrq-t and your sysrq-w as well as (try this last because it
-sometimes hangs the box hard) sysrq-L
 
-Thanks,
 
--- Steve
+--MP_/XGgFDw.L/SM9zr1wj9rCuio
+Content-Type: text/x-python; name=ketchup
+Content-Transfer-Encoding: 8bit
+Content-Disposition: attachment; filename=ketchup
+
+#!/usr/bin/python
+#
+# ketchup 0.9.8-rt1
+# http://selenic.com/ketchup/wiki
+#
+# Copyright 2004 Matt Mackall <mpm@selenic.com>
+#
+# Added code for new RT location -
+#    Steven Rostedt <srostedt@redhat.com>
+#
+# This software may be used and distributed according to the terms
+# of the GNU General Public License, incorporated herein by reference.
+#
+# Usage:
+#
+# in an existing kernel directory, run:
+#
+#  ketchup <version>
+#
+# where version is a complete kernel version, or a branch name to grab
+# the latest version
+#
+# You can override some variables by creating a ~/.ketchuprc file.
+# The ~/.ketchuprc is just a Python script, eg. it might look like this:
+#
+# kernel_url = 'http://kernel.localdomain/pub/linux/kernel'
+# archive = os.environ["HOME"] + '/tmp/ketchup-archive'
+# gpg = '/weird/path/to/gpg'
+#
+
+import re, sys, urllib, os, getopt, glob, shutil
+
+def error(*args):
+    sys.stderr.write("ketchup: ")
+    for a in args:
+        sys.stderr.write(str(a))
+        sys.stderr.write("\n")
+
+def qprint(*args):
+    if not options["quiet"]:
+        sys.stdout.write(" ".join(map(str, args)))
+        sys.stdout.write("\n")
+
+def lprint(*args):
+    sys.stdout.write(" ".join(map(str, args)))
+    sys.stdout.write("\n")
+
+
+def fancyopts(args, options, state, syntax=''):
+    long = []
+    short = ''
+    map = {}
+    dt = {}
+
+    def help(state, opt, arg, options = options, syntax = syntax):
+        lprint("Usage: ", syntax)
+
+        for s, l, d, c in options:
+            opt = ' '
+            if s: opt = opt + '-' + s + ' '
+            if l: opt = opt + '--' + l + ' '
+            if d: opt = opt + '(' + str(d) + ')'
+            lprint(opt)
+            if c: lprint('   %s' % c)
+        sys.exit(0)
+
+    options = [('h', 'help', help, 'Show usage info')] + options
+
+    for s, l, d, c in options:
+        map['-'+s] = map['--'+l]=l
+        state[l] = d
+        dt[l] = type(d)
+        if not d is None and not type(d) is type(help): s, l = s + ':', l + '='
+        if s: short = short + s
+        if l: long.append(l)
+
+    if os.environ.has_key("KETCHUP_OPTS"):
+        args = os.environ["KETCHUP_OPTS"].split() + args
+
+    try:
+        opts, args = getopt.getopt(args, short, long)
+    except getopt.GetoptError:
+        help(state, None, args)
+        sys.exit(-1)
+
+    for opt, arg in opts:
+        if dt[map[opt]] is type(help): state[map[opt]](state,map[opt],arg)
+        elif dt[map[opt]] is type(1): state[map[opt]] = int(arg)
+        elif dt[map[opt]] is type(''): state[map[opt]] = arg
+        elif dt[map[opt]] is type([]): state[map[opt]].append(arg)
+        elif dt[map[opt]] is type(None): state[map[opt]] = 1
+
+    return args
+
+# Default values
+kernel_url = 'http://www.kernel.org/pub/linux/kernel'
+archive = os.environ["HOME"] + "/.ketchup"
+rename_prefix = 'linux-'
+rename_with_localversion = False
+wget = "/usr/bin/wget"
+gpg = "/usr/bin/gpg"
+precommand = postcommand = None
+default_tree = None
+local_trees = {}
+
+# Functions to parse version strings
+
+def tree(ver):
+    return float(re.match(r'(\d+\.\d+)', ver).group(1))
+
+def rev(ver):
+    p = pre(ver)
+    r = int(re.match(r'\d+\.\d+\.(\d+)', ver).group(1))
+    if p: r = r - 1
+    return r
+
+def pre(ver):
+    try: return re.match(r'\d+\.\d+\.\d+(\.\d+)?-((rc|pre)\d+)', ver).group(2)
+    except: return None
+
+def post(ver):
+    try: return re.match(r'\d+\.\d+\.\d+\.(\d+)', ver).group(1)
+    except: return None
+
+def pretype(ver):
+    try: return re.match(r'\d+\.\d+\.\d+(\.\d+)?-((rc|pre)\d+)', ver).group(3)
+    except: return None
+
+def prenum(ver):
+    try: return int(re.match(r'\d+\.\d+\.\d+-((rc|pre)(\d+))', ver).group(3))
+    except: return None
+
+def prebase(ver):
+    return re.match(r'(\d+\.\d+\.\d+((-(rc|pre)|\.)\d+)?)', ver).group(1)
+
+def revbase(ver):
+    return "%s.%s" % (tree(ver), rev(ver))
+
+def base(ver):
+    v = revbase(ver)
+    if post(ver): v += "." + post(ver)
+    return v
+
+def forkname(ver):
+    try: return re.match(r'\d+.\d+.\d+(\.\d+)?(-(rc|pre)\d+)?(-(\w+?)\d+)?',
+                         ver).group(5)
+    except: return None
+
+def forknum(ver):
+    try: return int(
+        re.match(r'\d+.\d+.\d+(\.\d+)?(-(rc|pre)\d+)?(-(\w+?)(\d+))?',
+                 ver).group(6))
+    except: return None
+
+def fork(ver):
+    try: return re.match(r'\d+.\d+.\d+(\.\d+)?(-(rc|pre)\d+)?(-(\w+))?', ver).group(4)
+    except: return None
+
+def get_ver(makefile):
+    """ Read the version information from the specified makefile """
+    part = {}
+    parts = "VERSION PATCHLEVEL SUBLEVEL EXTRAVERSION".split(' ')
+    m = open(makefile)
+    for l in m.readlines():
+        for p in parts:
+            try: part[p] = re.match(r'%s\s*=\s*(\S+)' % p, l).group(1)
+            except: pass
+
+    version = "%s.%s.%s" % tuple([part[p] for p in parts[:3]])
+    version += part.get("EXTRAVERSION","")
+    return version
+
+def get_localversion():
+    v = ''
+
+    for name in glob.glob('localversion*'):
+        try: v += open(name).readline().strip()
+        except: pass
+
+    try:
+        c = open('.config').read()
+        v += re.search(r'^CONFIG_LOCALVERSION="(.+)"', c, re.M).group(1)
+    except: pass
+
+    return v
+
+def compare_ver(a, b):
+    """
+    Compare kernel versions a and b
+
+    Note that -pre and -rc versions sort before the version they modify,
+    -pre sorts before -rc, -bk, -git, and -mm, etc. sort alphabetically.
+    """
+    if a == b: return 0
+
+    c = cmp(float(tree(a)), float(tree(b)))
+    if c: return c
+    c = cmp(rev(a), rev(b))
+    if c: return c
+    c = cmp(int(post(a) or 0), int(post(b) or 0))
+    if c: return c
+    c = cmp(pretype(a), pretype(b)) # pre sorts before rc
+    if c: return c
+    c = cmp(prenum(a), prenum(b))
+    if c: return c
+    c = cmp(forkname(a), forkname(b))
+    if c: return c
+    return cmp(forknum(a), forknum(b))
+
+def last(url, pat="(.*/)"):
+    for l in urllib.urlopen(url).readlines():
+        m = re.search('(?i)<a href="%s">' % pat, l)
+        if m: n = m.group(1)
+    return n
+
+def latest_mm(url, pat):
+    url = kernel_url + '/people/akpm/patches/2.6/'
+    url += last(url)
+    part = last(url)
+    return part[:-1]
+
+def latest_ck(url, pat):
+    url = "http://ck.kolivas.org/patches/2.6/pre-releases/"
+    url += last(url)
+    part = last(url)
+    pre = part[:-1]
+
+    url = "http://ck.kolivas.org/patches/2.6/"
+    url += last(url,"(2.6.*/)")
+    part = last(url)
+    rel = part[:-1]
+
+    l = [pre, rel]
+    l.sort(compare_ver)
+    return l[-1]
+
+def latest_rt(url, pat):
+    return last(url, pat)
+
+def latest_dir(url, pat):
+    """Find the latest link matching pat at url after sorting"""
+    p = []
+    for l in urllib.urlopen(url).readlines():
+        m = re.search('"%s"' % pat, l)
+        if m: p.append(m.group(1))
+
+    if not p: return None
+
+    p.sort(compare_ver)
+    return p[-1]
+
+# mbligh is lazy and has a bunch of empty directories
+def latest_mjb(url, pat):
+    url = kernel_url + '/people/mbligh/'
+
+    # find the last Linus release and search backwards
+    l = [find_ver('2.6'), find_ver("2.6-pre")]
+    l.sort(compare_ver)
+    linus = l[-1]
+
+    p = []
+    for l in urllib.urlopen(url).readlines():
+        m = re.search('"(2\.6\..*/)"', l)
+        if m:
+            v = m.group(1)
+            if compare_ver(v, linus) <= 0:
+                p.append(v)
+
+    p.sort(compare_ver)
+    p.reverse()
+
+    for ver in p:
+        mjb = latest_dir(url + ver, pat)
+        if mjb: return mjb
+
+    return None
+
+def latest_26_tip(url, pat):
+    l = [find_ver('2.6'), find_ver('2.6-git'), find_ver('2.6-pre')]
+    l.sort(compare_ver)
+    return l[-1]
+
+def find_info(ver):
+    b = "%.1f" % tree(ver)
+    f = forkname(ver)
+    p = pre(ver)
+
+    s = b
+    if f:
+        s = "%s-%s" % (b, f)
+    elif p:
+        s = "%s-pre" % b
+
+    return version_info[s]
+
+def version_urls(ver):
+    """ Return the URL for the patch associated with the specified version """
+    i = find_info(ver)[1]
+    if type(i) != type([]):
+        i = [i]
+
+    v = {
+        'full': ver,
+        'tree': tree(ver),
+        'base': base(ver),
+        'prebase': prebase(ver)
+        }
+
+    l = []
+    for e in i:
+        l.append(e % v)
+
+    return l
+
+def patch_path(ver):
+    return os.path.join(archive, os.path.basename(version_urls(ver)[0]))
+
+def download(url, f):
+    qprint("Downloading %s" % os.path.basename(url))
+    if options["dry-run"]:
+        return 1
+
+    if not options["wget"]:
+        p = urllib.urlopen(url).read()
+        if p.find("<title>404") != -1:
+            return None
+        open(f, 'w').write(p)
+    else:
+        e = os.system("%s -c -O %s %s" %
+                      (options["wget"], f + ".partial", url))
+        if e:
+            return None
+        os.rename(f + ".partial", f)
+
+    return 1
+
+def verify(url, f, sign):
+    if options["no-gpg"] or options["dry-run"] or not options["gpg-path"]:
+        return 1
+
+    sf = f + sign
+    if not download(url + sign, sf):
+        error("signature download failed")
+        error("removing files...")
+        os.unlink(f)
+        return 0
+
+    qprint("Verifying signature...")
+    r = os.system("%s --verify %s %s" % (options["gpg-path"], sf, f))
+    if r:
+        error("gpg returned %d" % r)
+        error("removing files...")
+        os.unlink(f)
+        os.unlink(sf)
+        return 0
+
+    return 1
+
+def trydownload(urls, f, sign):
+    for url in urls:
+        if download(url, f):
+            if not sign or verify(url, f, sign):
+                return f
+        if url[-4:] == ".bz2":
+            f2 = f[:-4] + ".gz"
+            url2 = url[:-4] + ".gz"
+            if download(url2, f2):
+                if not sign or verify(url2, f2, sign):
+                    return f2
+	    f2 = f[:-4]
+	    url2 = url[:-4]
+	    if download(url2, f2):
+                if not sign or verify(url2, f2, sign):
+                    return f2
+    return None
+
+def get_patch(ver):
+    """Return the path to patch for given ver, downloading if necessary"""
+    f = patch_path(ver)
+    if os.path.exists(f):
+        return f
+    if f[-4:] == ".bz2":
+        f2 = f[:-4] + ".gz"
+        if os.path.exists(f2):
+            return f2
+        f2 = f[:-4]
+        if os.path.exists(f2):
+            return f2
+
+
+    urls = version_urls(ver)
+    sign = find_info(ver)[3]
+    if sign == 1: sign = ".sign"
+    f = trydownload(urls, f, sign)
+    if not f:
+        error("patch download failed")
+        sys.exit(-1)
+
+    return f
+
+def apply_patch(ver, reverse = 0):
+    """Find the patch to upgrade from the predecessor of ver to ver and
+    apply or reverse it."""
+    p = get_patch(ver)
+    r = ""
+    if reverse:
+        r = " -R"
+
+    qprint("Applying %s%s" % (os.path.basename(p), r))
+    if options["dry-run"]:
+        return ver
+
+    def cmd(patch, reverse, dry):
+        base = "patch -l -p1%s" % reverse
+        if dry:
+            base += " --dry-run"
+
+        if p[-4:] == ".bz2":
+            pipe = "bzcat %s | %s" % (patch, base)
+        elif p[-3:] == ".gz":
+            pipe = "zcat %s | %s" % (patch, base)
+        else:
+            pipe = "%s < %s" % (base, patch)
+
+        err = os.system(pipe + " > .patchdiag")
+        if err:
+            sys.stderr.write(open(".patchdiag").read())
+        os.unlink(".patchdiag")
+        return err
+
+    err = cmd(p, r, 1)
+    if err:
+        error("patch %s failed: %d" % (p, err))
+        sys.exit(-1)
+
+    err = cmd(p, r, 0)
+    if err:
+        error("patch %s failed while it was supposed to apply: %d" % (p, err))
+        sys.exit(-1)
+
+def untar(tarfile):
+    old = os.getcwd()
+    os.mkdir("ketchup-tmp")
+    os.chdir("ketchup-tmp")
+
+    err = os.system("bzcat %s | tar -xf -" % tarfile)
+    if err:
+        error("Unpacking failed: ", err)
+        sys.exit(-1)
+
+    err = os.system("mv linux*/* linux*/.[^.]* ..; rmdir linux*")
+    if err:
+        error("Unpacking failed: ", err)
+        sys.exit(-1)
+
+    os.chdir(old)
+    shutil.rmtree("ketchup-tmp")
+
+def install_nearest(ver):
+    t = tree(ver)
+    tarballs = glob.glob(archive + "/linux-%s.*.tar.bz2" % t)
+    list = []
+
+    for f in tarballs:
+        m = re.match(r'.*/linux-(.*).tar.bz2$', f)
+        v = m.group(1)
+        d = abs(rev(v) - rev(ver))
+        list.append((d, f, v))
+    list.sort()
+
+    if not list or (options["full-tarball"] and list[0][0]):
+        f = "linux-%s.tar.bz2" % ver
+        url = "%s/v%s/%s" % (kernel_url, t, f)
+        f = archive + "/" + f
+
+        sign = find_info(ver)[3]
+        if sign == 1: sign = ".sign"
+
+        f = trydownload([url], f, sign)
+        if not f:
+            error("Tarball download failed")
+            sys.exit(-1)
+
+    else:
+        f = list[0][1]
+        ver = list[0][2]
+
+    qprint("Unpacking %s" % os.path.basename(f))
+    if options["dry-run"]: return ver
+    untar(f)
+
+    return ver
+
+def find_ver(ver):
+    if ver in version_info.keys():
+        v = version_info[ver]
+        d = v[1]
+        if type(d) is type([]):
+            d = d[0]
+        for n in range(5):
+            return v[0](os.path.dirname(d), v[2])
+            error('retrying version lookup for %s' % ver)
+    else:
+        return ver
+
+def transform(a, b):
+    if a == b:
+        qprint("Nothing to do!")
+        return
+    if not a:
+        a = install_nearest(base(b))
+    t = tree(a)
+    if t != tree(b):
+        error("Can't patch %s to %s" % (tree(a), tree(b)))
+        sys.exit(-1)
+    if fork(a):
+        apply_patch(a, 1)
+        a = prebase(a)
+    if prebase(a) != prebase(b):
+        if pre(a):
+            apply_patch(a, 1)
+            a = base(a)
+
+        if post(a) and post(a) != post(b):
+            apply_patch(prebase(a), 1)
+
+        ra, rb = rev(a), rev(b)
+        if ra > rb:
+            for r in range(ra, rb, -1):
+                apply_patch("%s.%s" % (t, r), -1)
+        if ra < rb:
+            for r in range(ra + 1, rb + 1):
+                apply_patch("%s.%s" % (t, r))
+        a = revbase(b)
+
+        if post(b) and post(a) != post(b):
+            apply_patch(prebase(b), 0)
+            a = base(b)
+
+        if pre(b):
+            apply_patch(prebase(b))
+            a = prebase(b)
+
+    if fork(b):
+        a = apply_patch(b)
+
+def rename_dir(v):
+    """Rename the current directory to linux-v, where v is the function arg"""
+    if rename_with_localversion:
+        v += get_localversion()
+    cwd = os.getcwd()
+    basedir = os.path.dirname(cwd)
+    newdir = os.path.join(basedir, rename_prefix + v)
+    if newdir == cwd:
+        return
+    if os.access(newdir, os.F_OK):
+        error("Cannot rename directory, destination exists: %s", newdir);
+        return
+    os.rename(cwd, newdir)
+    qprint('Current directory renamed to %s' % newdir)
+
+
+# latest lookup function, canonical urls, pattern for lookup function,
+#  signature flag, description
+version_info = {
+    '2.4': (latest_dir,
+            kernel_url + "/v2.4" + "/patch-%(base)s.bz2",
+            r'patch-(.*?).bz2',
+            1, "old stable kernel series"),
+    '2.4-pre': (latest_dir,
+                kernel_url + "/v2.4" + "/testing/patch-%(prebase)s.bz2",
+                r'patch-(.*?).bz2',
+                1, "old stable kernel series prereleases"),
+    '2.6': (latest_dir,
+            kernel_url + "/v2.6" + "/patch-%(prebase)s.bz2",
+            r'patch-(.*?).bz2',
+            1, "current stable kernel series"),
+    '2.6-rc': (latest_dir,
+                kernel_url + "/v2.6" + "/testing/patch-%(prebase)s.bz2",
+                r'patch-(.*?).bz2',
+                1, "current stable kernel series prereleases"),
+    '2.6-pre': (latest_dir,
+                kernel_url + "/v2.6" + "/testing/patch-%(prebase)s.bz2",
+                r'patch-(.*?).bz2',
+                1, "current stable kernel series prereleases"),
+    '2.6-git': (latest_dir,
+                [kernel_url + "/v2.6" + "/snapshots/patch-%(full)s.bz2",
+                 kernel_url + "/v2.6" + "/snapshots/old/patch-%(full)s.bz2"],
+                r'patch-(.*?).bz2',
+                1, "current stable kernel series snapshots"),
+    '2.6-bk': (latest_dir,
+               [kernel_url + "/v2.6" + "/snapshots/patch-%(full)s.bz2",
+                kernel_url + "/v2.6" + "/snapshots/old/patch-%(full)s.bz2"],
+               r'patch-(.*?).bz2',
+               1, "old stable kernel series snapshots"),
+    '2.6-tip': (latest_26_tip, "", "", 1,
+                "current stable kernel series tip"),
+    '2.6-mm': (latest_mm,
+               kernel_url + "/people/akpm/patches/" +
+               "%(tree)s/%(prebase)s/%(full)s/%(full)s.bz2", "",
+               1, "Andrew Morton's -mm development tree"),
+    '2.6-tiny': (latest_dir,
+                 "http://www.selenic.com/tiny/%(full)s.patch.bz2",
+                 r'(2.6.*?).patch.bz2',
+                 1, "Matt Mackall's -tiny tree for small systems"),
+    '2.6-mjb': (latest_mjb,
+                 kernel_url + "/people/mbligh/%(prebase)s/patch-%(full)s.bz2",
+                 r'patch-(2.6.*?).bz2',
+                 1, "Martin Bligh's random collection 'o crap"),
+    '2.6-rt': (latest_rt,
+               [kernel_url + "/projects/rt/" +
+	        "patch-%(full)s.bz2",
+	        kernel_url + "/projects/rt/older/" +
+	        "patch-%(full)s.bz2"],
+               r'patch-(2.6.*?).bz2',
+               1, "Ingo Molnar's realtime-preempt kernel"),
+    '2.6-ck': (latest_ck,
+               ["http://ck.kolivas.org/patches/2.6/" +
+                "%(prebase)s/%(full)s/patch-%(full)s.bz2",
+                "http://ck.kolivas.org/patches/2.6/pre-releases/" +
+                "%(prebase)s/%(full)s/patch-%(full)s.bz2"],
+               "", ".sig",
+               "Con Kolivas' patches for system responsiveness (desktop)"),
+    '2.6-cks': (latest_dir,
+                "http://ck.kolivas.org/patches/cks/patch-%(full)s.bz2",
+                r'patch-(2.6.*?).bz2', ".sig",
+                "Con Kolivas' patches for system responsiveness (server)")
+    }
+
+# Override defaults with ~/.ketchuprc which is just a Python script
+rcpath = os.path.expanduser('~/.ketchuprc')
+if os.path.isfile(rcpath):
+    try:
+        execfile(rcpath)
+    except Exception, e:
+        sys.exit('Failed parsing %s\nError was: %s' % (rcpath, e))
+
+# Add local trees
+for k,v in local_trees.items():
+    version_info[k] = v
+
+# Environment variables override defaults and ketchuprc
+kernel_url = os.environ.get("KETCHUP_URL", kernel_url)
+archive = os.environ.get("KETCHUP_ARCH", archive)
+
+# And finally command line overrides everything
+if not os.path.exists(wget): wget = ""
+if not os.path.exists(gpg): gpg = ""
+
+options = {}
+opts = [
+    ('a', 'archive', archive, 'cache directory'),
+    ('d', 'directory', '.', 'directory to update'),
+    ('f', 'full-tarball', None, 'if unpacking a tarball, download the latest'),
+    ('g', 'gpg-path', gpg, 'path for GnuPG'),
+    ('G', 'no-gpg', None, 'disable GPG signature verification'),
+    ('k', 'kernel-url', kernel_url, 'base url for kernel.org mirror'),
+    ('l', 'list-trees', None, 'list supported trees'),
+    ('m', 'show-makefile', None, 'output version in makefile <arg>'),
+    ('n', 'dry-run', None, 'don\'t download or apply patches'),
+    ('p', 'show-previous', None, 'output version previous to <arg>'),
+    ('q', 'quiet', None, 'reduce output'),
+    ('r', 'rename-directory', None, 'rename updated directory to %s<v>'
+     % rename_prefix),
+    ('s', 'show-latest', None, 'output the latest version of <arg>'),
+    ('u', 'show-url', None, 'output URL for <arg>'),
+    ('w', 'wget', wget, 'command to use for wget'),
+    ]
+
+args = fancyopts(sys.argv[1:], opts, options,
+                 'ketchup [options] [ver]')
+
+archive = options["archive"]
+kernel_url = options["kernel-url"]
+if options["no-gpg"]: options["gpg-path"] = ''
+
+# Process args
+
+if not os.path.exists(options["directory"]):
+    qprint("Creating target directory", options["directory"])
+    os.mkdir(options["directory"])
+os.chdir(options["directory"])
+
+if os.path.isfile(".ketchuprc"):
+    try:
+        execfile(".ketchuprc")
+    except Exception, e:
+        sys.exit('Failed parsing .ketchuprc\nError was: %s' % (e))
+
+if options["list-trees"]:
+    l = version_info.keys()
+    l.sort()
+    for tree in l:
+	if version_info[tree][3] == 0:
+	   lprint(tree, "(unsigned)")
+        else:
+	   lprint(tree, "(signed)")
+        lprint(" " + version_info[tree][4])
+    sys.exit(0)
+
+if options["show-makefile"] and len(args) < 2:
+    if not args:
+        lprint(get_ver("Makefile"))
+    else:
+        lprint(get_ver(args[0]))
+    sys.exit(0)
+
+if len(args) == 0 and default_tree:
+    qprint("Using default tree \"%s\"" % (default_tree))
+    args.append(default_tree)
+
+if len(args) != 1:
+    error("No version given on command line and no default in configuration")
+    sys.exit(-1)
+
+if options["show-latest"]:
+    lprint(find_ver(args[0]))
+    sys.exit(0)
+
+if options["show-url"]:
+    lprint(version_urls(find_ver(args[0]))[0])
+    sys.exit(0)
+
+if options["show-previous"]:
+    v = find_ver(args[0])
+    p = prebase(v)
+    if p == v: p = base(v)
+    if p == v:
+        if rev(v) > 0: p = "%.1f.%s" % (tree(v), rev(v) -1)
+        else: p = "unknown"
+    lprint(p)
+    sys.exit(0)
+
+if not os.path.exists(options["archive"]):
+    qprint("Creating cache directory", options["archive"])
+    os.mkdir(options["archive"])
+
+if precommand and os.system(precommand):
+    sys.exit('Precommand "%s" failed!' % precommand)
+
+try:
+    a = get_ver('Makefile')
+except:
+    a = None
+
+if not a and os.listdir("."):
+    error("Can't find kernel version for non-empty directory")
+    sys.exit(-1)
+
+b = find_ver(args[0])
+qprint("%s -> %s" % (a, b))
+transform(a, b)
+if options["rename-directory"] and not options["dry-run"]:
+    rename_dir(b)
+
+if postcommand and os.system(postcommand):
+    sys.exit('Postcommand "%s" failed!' % postcommand)
+
+--MP_/XGgFDw.L/SM9zr1wj9rCuio--
