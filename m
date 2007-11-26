@@ -1,53 +1,66 @@
 From: "Remy Bohmer" <linux@bohmer.net>
-Subject: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
-Date: Mon, 26 Nov 2007 14:31:46 +0100
-Message-ID: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
+Date: Mon, 26 Nov 2007 14:45:32 +0100
+Message-ID: <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
+References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
-	boundary="----=_Part_5352_29347093.1196083906826"
+	boundary="----=_Part_5441_21490065.1196084732436"
 Cc: "ARM Linux Mailing List" <linux-arm-kernel@lists.arm.linux.org.uk>,
 	RT <linux-rt-users@vger.kernel.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>
 To: "Ingo Molnar" <mingo@elte.hu>,
 	"Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nz-out-0506.google.com ([64.233.162.229]:48319 "EHLO
-	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752654AbXKZNbs (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.180]:32480 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752855AbXKZNpd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Nov 2007 08:31:48 -0500
-Received: by nz-out-0506.google.com with SMTP id s18so326907nze
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2007 05:31:47 -0800 (PST)
+	Mon, 26 Nov 2007 08:45:33 -0500
+Received: by py-out-1112.google.com with SMTP id u77so1323998pyb
+        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2007 05:45:32 -0800 (PST)
+In-Reply-To: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_5352_29347093.1196083906826
+------=_Part_5441_21490065.1196084732436
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
-Hello,
-
-I use 2.6.23.1-rt5 on the Atmel AT91 series.
-Interrupt threading on Preempt-RT and ARM works fine, except for
-(edge-triggered) GPIO interrupts. There is a problem when a new
-interrupt arives while the interrupt thread is handling the previous
-interrupt. If this occurs the interrupt handling stalls forever.
-
-This is caused by a unbalanced interrupt mask/unmask problem in the kernel.
-The attached patch fixes this. More information about this problem is
-documented inside the patch itself.
-
-This patch is meant for Preempt-RT only.
+Attached the same patch, but it also cleans the manage.c code a bit,
+because the IRQ types 'simple IRQ', 'level-IRQ' and 'FastEOI' were
+handled differently while they should be handled the same.
 
 Kind Regards,
 
-Remy Bohmer
+Remy
 
-------=_Part_5352_29347093.1196083906826
+2007/11/26, Remy Bohmer <linux@bohmer.net>:
+> Hello,
+>
+> I use 2.6.23.1-rt5 on the Atmel AT91 series.
+> Interrupt threading on Preempt-RT and ARM works fine, except for
+> (edge-triggered) GPIO interrupts. There is a problem when a new
+> interrupt arives while the interrupt thread is handling the previous
+> interrupt. If this occurs the interrupt handling stalls forever.
+>
+> This is caused by a unbalanced interrupt mask/unmask problem in the kernel.
+> The attached patch fixes this. More information about this problem is
+> documented inside the patch itself.
+>
+> This patch is meant for Preempt-RT only.
+>
+> Kind Regards,
+>
+> Remy Bohmer
+>
+>
+
+------=_Part_5441_21490065.1196084732436
 Content-Type: text/x-patch; name=fix-gpio-irq-stalling-bug.patch
 Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f9h1bchv
+X-Attachment-Id: f_f9h1zef7
 Content-Disposition: attachment; filename=fix-gpio-irq-stalling-bug.patch
 
 T24gQVJNIHRoZXJlIGlzIGEgcHJvYmxlbSB3aGVyZSB0aGUgaW50ZXJydXB0IGhhbmRsZXIgc3Rh
@@ -76,15 +89,33 @@ YWdlLmMsIApiZWNhdXNlIHRoaXMgc2l0dWF0aW9uIGlzIGFsc28gaGFuZGxlZCBmb3IgdGhlIHRo
 cmVhZF9sZXZlbF9pcnEoKSBhbmQgCnRocmVhZF9mYXN0ZW9pX2lycSgpLCBidXQgbm90IGZvciB0
 aHJlYWRfc2ltcGxlX2lycSgpLiBUaGlzIHBhdGNoIGFkZHMgdGhpcwpmb3IgdGhlc2Uga2luZCBv
 ZiBpbnRlcnJ1cHRzIGFsc28uCgpTaWduZWQtb2ZmLWJ5OiBSZW15IEJvaG1lciA8bGludXhAYm9o
-bWVyLm5ldD4KLS0tCiBrZXJuZWwvaXJxL21hbmFnZS5jIHwgICAgMyArKysKIDEgZmlsZSBjaGFu
-Z2VkLCAzIGluc2VydGlvbnMoKykKCkluZGV4OiBsaW51eC0yLjYuMjMva2VybmVsL2lycS9tYW5h
-Z2UuYwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09Ci0tLSBsaW51eC0yLjYuMjMub3JpZy9rZXJuZWwvaXJxL21hbmFnZS5j
-CTIwMDctMTEtMjYgMTM6NDY6NTguMDAwMDAwMDAwICswMTAwCisrKyBsaW51eC0yLjYuMjMva2Vy
-bmVsL2lycS9tYW5hZ2UuYwkyMDA3LTExLTI2IDEzOjQ4OjMwLjAwMDAwMDAwMCArMDEwMApAQCAt
-NjQ2LDYgKzY0Niw5IEBAIHN0YXRpYyB2b2lkIHRocmVhZF9zaW1wbGVfaXJxKGlycV9kZXNjX3QK
-IAkJCW5vdGVfaW50ZXJydXB0KGlycSwgZGVzYywgYWN0aW9uX3JldCk7CiAJfQogCWRlc2MtPnN0
-YXR1cyAmPSB+SVJRX0lOUFJPR1JFU1M7CisKKwlpZiAoIShkZXNjLT5zdGF0dXMgJiBJUlFfRElT
-QUJMRUQpICYmIGRlc2MtPmNoaXAtPnVubWFzaykKKwkJZGVzYy0+Y2hpcC0+dW5tYXNrKGlycSk7
-CiB9CiAKIC8qCg==
-------=_Part_5352_29347093.1196083906826--
+bWVyLm5ldD4KLS0tCiBrZXJuZWwvaXJxL21hbmFnZS5jIHwgICAyOSArKystLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwgMjYgZGVsZXRp
+b25zKC0pCgpJbmRleDogbGludXgtMi42LjIzL2tlcm5lbC9pcnEvbWFuYWdlLmMKPT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PQotLS0gbGludXgtMi42LjIzLm9yaWcva2VybmVsL2lycS9tYW5hZ2UuYwkyMDA3LTExLTI2IDEz
+OjQ2OjU4LjAwMDAwMDAwMCArMDEwMAorKysgbGludXgtMi42LjIzL2tlcm5lbC9pcnEvbWFuYWdl
+LmMJMjAwNy0xMS0yNiAxNDo0MzozMi4wMDAwMDAwMDAgKzAxMDAKQEAgLTY0NiwyOCArNjQ2LDcg
+QEAgc3RhdGljIHZvaWQgdGhyZWFkX3NpbXBsZV9pcnEoaXJxX2Rlc2NfdAogCQkJbm90ZV9pbnRl
+cnJ1cHQoaXJxLCBkZXNjLCBhY3Rpb25fcmV0KTsKIAl9CiAJZGVzYy0+c3RhdHVzICY9IH5JUlFf
+SU5QUk9HUkVTUzsKLX0KLQotLyoKLSAqIHRocmVhZGVkIGxldmVsIHR5cGUgaXJxIGhhbmRsZXIK
+LSAqLwotc3RhdGljIHZvaWQgdGhyZWFkX2xldmVsX2lycShpcnFfZGVzY190ICpkZXNjKQotewot
+CXVuc2lnbmVkIGludCBpcnEgPSBkZXNjIC0gaXJxX2Rlc2M7Ci0KLQl0aHJlYWRfc2ltcGxlX2ly
+cShkZXNjKTsKLQlpZiAoIShkZXNjLT5zdGF0dXMgJiBJUlFfRElTQUJMRUQpICYmIGRlc2MtPmNo
+aXAtPnVubWFzaykKLQkJZGVzYy0+Y2hpcC0+dW5tYXNrKGlycSk7Ci19Ci0KLS8qCi0gKiB0aHJl
+YWRlZCBmYXN0ZW9pIHR5cGUgaXJxIGhhbmRsZXIKLSAqLwotc3RhdGljIHZvaWQgdGhyZWFkX2Zh
+c3Rlb2lfaXJxKGlycV9kZXNjX3QgKmRlc2MpCi17Ci0JdW5zaWduZWQgaW50IGlycSA9IGRlc2Mg
+LSBpcnFfZGVzYzsKIAotCXRocmVhZF9zaW1wbGVfaXJxKGRlc2MpOwogCWlmICghKGRlc2MtPnN0
+YXR1cyAmIElSUV9ESVNBQkxFRCkgJiYgZGVzYy0+Y2hpcC0+dW5tYXNrKQogCQlkZXNjLT5jaGlw
+LT51bm1hc2soaXJxKTsKIH0KQEAgLTc0NywxMiArNzI2LDEwIEBAIHN0YXRpYyB2b2lkIGRvX2hh
+cmRpcnEoc3RydWN0IGlycV9kZXNjICoKIAlpZiAoIShkZXNjLT5zdGF0dXMgJiBJUlFfSU5QUk9H
+UkVTUykpCiAJCWdvdG8gb3V0OwogCi0JaWYgKGRlc2MtPmhhbmRsZV9pcnEgPT0gaGFuZGxlX3Np
+bXBsZV9pcnEpCisJaWYgKChkZXNjLT5oYW5kbGVfaXJxID09IGhhbmRsZV9zaW1wbGVfaXJxKSB8
+fAorCSAgICAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfbGV2ZWxfaXJxKSAgfHwKKwkgICAg
+KGRlc2MtPmhhbmRsZV9pcnEgPT0gaGFuZGxlX2Zhc3Rlb2lfaXJxKSkKIAkJdGhyZWFkX3NpbXBs
+ZV9pcnEoZGVzYyk7Ci0JZWxzZSBpZiAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfbGV2ZWxf
+aXJxKQotCQl0aHJlYWRfbGV2ZWxfaXJxKGRlc2MpOwotCWVsc2UgaWYgKGRlc2MtPmhhbmRsZV9p
+cnEgPT0gaGFuZGxlX2Zhc3Rlb2lfaXJxKQotCQl0aHJlYWRfZmFzdGVvaV9pcnEoZGVzYyk7CiAJ
+ZWxzZSBpZiAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfZWRnZV9pcnEpCiAJCXRocmVhZF9l
+ZGdlX2lycShkZXNjKTsKIAllbHNlCg==
+------=_Part_5441_21490065.1196084732436--
