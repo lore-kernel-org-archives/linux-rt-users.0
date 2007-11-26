@@ -1,121 +1,56 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
-Date: Mon, 26 Nov 2007 14:45:32 +0100
-Message-ID: <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
-References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Priorities of IRQ handlers
+Date: Mon, 26 Nov 2007 16:31:19 +0100
+Message-ID: <474AE6C7.4090204@free.fr>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_5441_21490065.1196084732436"
-Cc: "ARM Linux Mailing List" <linux-arm-kernel@lists.arm.linux.org.uk>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: "Ingo Molnar" <mingo@elte.hu>,
-	"Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.180]:32480 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752855AbXKZNpd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Nov 2007 08:45:33 -0500
-Received: by py-out-1112.google.com with SMTP id u77so1323998pyb
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2007 05:45:32 -0800 (PST)
-In-Reply-To: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
+Received: from smtp4-g19.free.fr ([212.27.42.30]:41564 "EHLO smtp4-g19.free.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751505AbXKZPbV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 26 Nov 2007 10:31:21 -0500
+Received: from smtp4-g19.free.fr (localhost.localdomain [127.0.0.1])
+	by smtp4-g19.free.fr (Postfix) with ESMTP id 4E12B3EA0B2
+	for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2007 16:31:20 +0100 (CET)
+Received: from [10.10.10.208] (ims92-1-88-163-235-69.fbx.proxad.net [88.163.235.69])
+	by smtp4-g19.free.fr (Postfix) with ESMTP id 30DBD3EA105
+	for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2007 16:31:20 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-------=_Part_5441_21490065.1196084732436
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hello everyone,
 
-Attached the same patch, but it also cleans the manage.c code a bit,
-because the IRQ types 'simple IRQ', 'level-IRQ' and 'FastEOI' were
-handled differently while they should be handled the same.
+I'm running 2.6.22.1-rt9 on x86.
 
-Kind Regards,
+CONFIG_PREEMPT_RT=y
+CONFIG_PREEMPT=y
+CONFIG_PREEMPT_SOFTIRQS=y
+CONFIG_PREEMPT_HARDIRQS=y
+CONFIG_PREEMPT_BKL=y
+# CONFIG_CLASSIC_RCU is not set
+CONFIG_PREEMPT_RCU=y
 
-Remy
+I need to change the priorities of several soft and hard IRQ handlers.
 
-2007/11/26, Remy Bohmer <linux@bohmer.net>:
-> Hello,
->
-> I use 2.6.23.1-rt5 on the Atmel AT91 series.
-> Interrupt threading on Preempt-RT and ARM works fine, except for
-> (edge-triggered) GPIO interrupts. There is a problem when a new
-> interrupt arives while the interrupt thread is handling the previous
-> interrupt. If this occurs the interrupt handling stalls forever.
->
-> This is caused by a unbalanced interrupt mask/unmask problem in the kernel.
-> The attached patch fixes this. More information about this problem is
-> documented inside the patch itself.
->
-> This patch is meant for Preempt-RT only.
->
-> Kind Regards,
->
-> Remy Bohmer
->
->
+Namely,
 
-------=_Part_5441_21490065.1196084732436
-Content-Type: text/x-patch; name=fix-gpio-irq-stalling-bug.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_f9h1zef7
-Content-Disposition: attachment; filename=fix-gpio-irq-stalling-bug.patch
+o reduce the prio of "softirq-timer" handler to 10
 
-T24gQVJNIHRoZXJlIGlzIGEgcHJvYmxlbSB3aGVyZSB0aGUgaW50ZXJydXB0IGhhbmRsZXIgc3Rh
-bGxzIHdoZW4gdGhleSBhcmUgCmNvbWluZyBmYXN0ZXIgdGhhbiB0aGUga2VybmVsIGNhbiBoYW5k
-bGUuCgpUaGUgcHJvYmxlbSBvY2N1cnMgd2hlbiB0aGUgcm91dGluZSBoYW5kbGVfc2ltcGxlX2ly
-cSgpIG1hc2tzIHRoZSBpbnRlcnJ1cHQgCndoZW4gYW4gSVJRLXRocmVhZCBpcyBoYW5kbGluZyB0
-aGUgaW50ZXJydXB0IGF0IHRoZSBzYW1lIHRpbWUuIChJUlFfSU5QUk9HUkVTUwppcyBzZXQpLiBU
-aGUgaW50ZXJydXB0IHRocmVhZCwgaG93ZXZlciBkb2VzICoqbmV2ZXIqKiBhIApkZXNjLT5jaGlw
-LT51bm1hc2soKSwgc28gdGhlIGludGVycnVwdCBiZWNvbWVzIGRpc2FibGVkIGZvcmV2ZXIuCgpJ
-UlFfRElTQUJMRUQgaXMgdXN1YWxseSBub3Qgc2V0IGZvciB0aGlzIGludGVycnVwdAoKVGhpcyBp
-cyBpbiBrZXJuZWwvaXJxL2NoaXAuYywgd2hlcmUgdGhlIGlycSBpcyBtYXNrZWQgd2hlbiBhIElS
-US10aHJlYWQgaXMKcnVubmluZzogCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCnZvaWQgZmFzdGNhbGwKaGFu
-ZGxlX3NpbXBsZV9pcnEodW5zaWduZWQgaW50IGlycSwgc3RydWN0IGlycV9kZXNjICpkZXNjKQp7
-CgouLi4uCi4uLi4KCglpZiAodW5saWtlbHkoIWFjdGlvbiB8fCAoZGVzYy0+c3RhdHVzICYgKElS
-UV9JTlBST0dSRVNTIHwKCQkJCQkJIElSUV9ESVNBQkxFRCkpKSkgewooISEpLT4JCWlmIChkZXNj
-LT5jaGlwLT5tYXNrKQooISEpLT4JCQlkZXNjLT5jaGlwLT5tYXNrKGlycSk7CgkJZGVzYy0+c3Rh
-dHVzICY9IH4oSVJRX1JFUExBWSB8IElSUV9XQUlUSU5HKTsKCQlkZXNjLT5zdGF0dXMgfD0gSVJR
-X1BFTkRJTkc7CgkJZ290byBvdXRfdW5sb2NrOwoJfQoKLi4uLgouLi4uCn0KLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0KCk1hc2tpbmcgdGhlIGludGVycnVwdCBzZWVtcyB2YWxpZCwgYmVjYXVzZSB0aGUgaW50
-ZXJydXB0IGhhbmRsZXIgdGhyZWFkIGlzIApzdGlsbCBydW5uaW5nLCBzbyBpdCBjYW4gaGFuZGxl
-IHRoZSBuZXcgcGVuZGluZyBpbnRlcnJ1cHQuIEJ1dCwgaXQgaGFzIHRvIGJlCnVtYXNrZWQgc29t
-ZXdoZXJlLiBUaGUgbG9naWNhbCBwbGFjZSBpcyB0byBkbyB0aGlzIGluIGtlcm5lbC9pcnEvbWFu
-YWdlLmMsIApiZWNhdXNlIHRoaXMgc2l0dWF0aW9uIGlzIGFsc28gaGFuZGxlZCBmb3IgdGhlIHRo
-cmVhZF9sZXZlbF9pcnEoKSBhbmQgCnRocmVhZF9mYXN0ZW9pX2lycSgpLCBidXQgbm90IGZvciB0
-aHJlYWRfc2ltcGxlX2lycSgpLiBUaGlzIHBhdGNoIGFkZHMgdGhpcwpmb3IgdGhlc2Uga2luZCBv
-ZiBpbnRlcnJ1cHRzIGFsc28uCgpTaWduZWQtb2ZmLWJ5OiBSZW15IEJvaG1lciA8bGludXhAYm9o
-bWVyLm5ldD4KLS0tCiBrZXJuZWwvaXJxL21hbmFnZS5jIHwgICAyOSArKystLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwgMjYgZGVsZXRp
-b25zKC0pCgpJbmRleDogbGludXgtMi42LjIzL2tlcm5lbC9pcnEvbWFuYWdlLmMKPT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PQotLS0gbGludXgtMi42LjIzLm9yaWcva2VybmVsL2lycS9tYW5hZ2UuYwkyMDA3LTExLTI2IDEz
-OjQ2OjU4LjAwMDAwMDAwMCArMDEwMAorKysgbGludXgtMi42LjIzL2tlcm5lbC9pcnEvbWFuYWdl
-LmMJMjAwNy0xMS0yNiAxNDo0MzozMi4wMDAwMDAwMDAgKzAxMDAKQEAgLTY0NiwyOCArNjQ2LDcg
-QEAgc3RhdGljIHZvaWQgdGhyZWFkX3NpbXBsZV9pcnEoaXJxX2Rlc2NfdAogCQkJbm90ZV9pbnRl
-cnJ1cHQoaXJxLCBkZXNjLCBhY3Rpb25fcmV0KTsKIAl9CiAJZGVzYy0+c3RhdHVzICY9IH5JUlFf
-SU5QUk9HUkVTUzsKLX0KLQotLyoKLSAqIHRocmVhZGVkIGxldmVsIHR5cGUgaXJxIGhhbmRsZXIK
-LSAqLwotc3RhdGljIHZvaWQgdGhyZWFkX2xldmVsX2lycShpcnFfZGVzY190ICpkZXNjKQotewot
-CXVuc2lnbmVkIGludCBpcnEgPSBkZXNjIC0gaXJxX2Rlc2M7Ci0KLQl0aHJlYWRfc2ltcGxlX2ly
-cShkZXNjKTsKLQlpZiAoIShkZXNjLT5zdGF0dXMgJiBJUlFfRElTQUJMRUQpICYmIGRlc2MtPmNo
-aXAtPnVubWFzaykKLQkJZGVzYy0+Y2hpcC0+dW5tYXNrKGlycSk7Ci19Ci0KLS8qCi0gKiB0aHJl
-YWRlZCBmYXN0ZW9pIHR5cGUgaXJxIGhhbmRsZXIKLSAqLwotc3RhdGljIHZvaWQgdGhyZWFkX2Zh
-c3Rlb2lfaXJxKGlycV9kZXNjX3QgKmRlc2MpCi17Ci0JdW5zaWduZWQgaW50IGlycSA9IGRlc2Mg
-LSBpcnFfZGVzYzsKIAotCXRocmVhZF9zaW1wbGVfaXJxKGRlc2MpOwogCWlmICghKGRlc2MtPnN0
-YXR1cyAmIElSUV9ESVNBQkxFRCkgJiYgZGVzYy0+Y2hpcC0+dW5tYXNrKQogCQlkZXNjLT5jaGlw
-LT51bm1hc2soaXJxKTsKIH0KQEAgLTc0NywxMiArNzI2LDEwIEBAIHN0YXRpYyB2b2lkIGRvX2hh
-cmRpcnEoc3RydWN0IGlycV9kZXNjICoKIAlpZiAoIShkZXNjLT5zdGF0dXMgJiBJUlFfSU5QUk9H
-UkVTUykpCiAJCWdvdG8gb3V0OwogCi0JaWYgKGRlc2MtPmhhbmRsZV9pcnEgPT0gaGFuZGxlX3Np
-bXBsZV9pcnEpCisJaWYgKChkZXNjLT5oYW5kbGVfaXJxID09IGhhbmRsZV9zaW1wbGVfaXJxKSB8
-fAorCSAgICAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfbGV2ZWxfaXJxKSAgfHwKKwkgICAg
-KGRlc2MtPmhhbmRsZV9pcnEgPT0gaGFuZGxlX2Zhc3Rlb2lfaXJxKSkKIAkJdGhyZWFkX3NpbXBs
-ZV9pcnEoZGVzYyk7Ci0JZWxzZSBpZiAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfbGV2ZWxf
-aXJxKQotCQl0aHJlYWRfbGV2ZWxfaXJxKGRlc2MpOwotCWVsc2UgaWYgKGRlc2MtPmhhbmRsZV9p
-cnEgPT0gaGFuZGxlX2Zhc3Rlb2lfaXJxKQotCQl0aHJlYWRfZmFzdGVvaV9pcnEoZGVzYyk7CiAJ
-ZWxzZSBpZiAoZGVzYy0+aGFuZGxlX2lycSA9PSBoYW5kbGVfZWRnZV9pcnEpCiAJCXRocmVhZF9l
-ZGdlX2lycShkZXNjKTsKIAllbHNlCg==
-------=_Part_5441_21490065.1196084732436--
+o reduce the prio of IRQ14 and IRQ15 handlers to 20
+   (my flash drives do not support DMA BTW...)
+
+o boost the prio of my I/O boards' IRQ handlers to 60
+   (there can be 1 or 2 boards, the driver is a kernel module
+    which is loaded after the system has booted.)
+
+I've written a short program that calls
+   sched_setscheduler(pid, SCHED_FIFO, &param);
+with the appropriate pid, which I look up using ps -ef
+
+I need to automate the process of tweaking priorities.
+
+Can someone offer advice and / or pointers?
+
+Regards.
