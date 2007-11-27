@@ -1,11 +1,12 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling
 	can/will stall forever
-Date: Tue, 27 Nov 2007 07:25:21 -0800
-Message-ID: <1196177122.23808.7.camel@imap.mvista.com>
+Date: Tue, 27 Nov 2007 07:53:54 -0800
+Message-ID: <1196178834.23808.11.camel@imap.mvista.com>
 References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
 	 <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
 	 <1196176294.13982.58.camel@localhost.localdomain>
+	 <1196177122.23808.7.camel@imap.mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -17,25 +18,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
 	Remy Bohmer <linux@bohmer.net>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:35717 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:44120 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758498AbXK0PdH (ORCPT
+	with ESMTP id S1752372AbXK0QBk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2007 10:33:07 -0500
-In-Reply-To: <1196176294.13982.58.camel@localhost.localdomain>
+	Tue, 27 Nov 2007 11:01:40 -0500
+In-Reply-To: <1196177122.23808.7.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-11-27 at 10:11 -0500, Steven Rostedt wrote:
-> Thomas,
+On Tue, 2007-11-27 at 07:25 -0800, Daniel Walker wrote:
+> On Tue, 2007-11-27 at 10:11 -0500, Steven Rostedt wrote:
+> > Thomas,
+> > 
+> > Can you ACK or NACK this patch.  I know you play with a bunch of
+> > hardware that this patch may affect.
+> > 
 > 
-> Can you ACK or NACK this patch.  I know you play with a bunch of
-> hardware that this patch may affect.
-> 
+> My two cents, I think it's needed (or something like it).. It looks like
+> handle_simple_irq normally expects a custom cascade type handler to
+> unmask on return. When you switch to a threaded handler the cascade
+> handler is gone and can't unmask..
 
-My two cents, I think it's needed (or something like it).. It looks like
-handle_simple_irq normally expects a custom cascade type handler to
-unmask on return. When you switch to a threaded handler the cascade
-handler is gone and can't unmask..
+I take this back .. The comment at the top of handle_simple_irq() is,
+
+ *      Note: The caller is expected to handle the ack, clear, mask and
+ *      unmask issues if necessary.
+
+
+So we shouldn't need any flow control unless there is some other
+factors.. 
+
+Additionally, we have a patch in the real time tree called
+"irq-mask-fix.patch" which adds an "unmask" to handle_simple_irq, but as
+the note says we don't need flow control..
 
 Daniel
