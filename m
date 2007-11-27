@@ -1,67 +1,162 @@
-From: Michal Schmidt <mschmidt@redhat.com>
-Subject: Re: updated ketchup script
-Date: Tue, 27 Nov 2007 12:16:56 +0100
-Message-ID: <20071127121656.1058043c@brian.englab.brq.redhat.com>
-References: <20071122154127.0775192e@brian.englab.brq.redhat.com>
-	<Pine.LNX.4.58.0711261656560.7707@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling
+	can/will stall forever
+Date: Tue, 27 Nov 2007 10:11:34 -0500
+Message-ID: <1196176294.13982.58.camel@localhost.localdomain>
+References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
+	 <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@elte.hu>,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	RT <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Remy Bohmer <linux@bohmer.net>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:54569 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751204AbXK0LRI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2007 06:17:08 -0500
-In-Reply-To: <Pine.LNX.4.58.0711261656560.7707@gandalf.stny.rr.com>
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:48431 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755486AbXK0PMc (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Nov 2007 10:12:32 -0500
+In-Reply-To: <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 26 Nov 2007 16:57:32 -0500 (EST)
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Thomas,
 
+Can you ACK or NACK this patch.  I know you play with a bunch of
+hardware that this patch may affect.
+
+Thanks,
+
+-- Steve
+
+
+On Mon, 2007-11-26 at 14:45 +0100, Remy Bohmer wrote:
+> Attached the same patch, but it also cleans the manage.c code a bit,
+> because the IRQ types 'simple IRQ', 'level-IRQ' and 'FastEOI' were
+> handled differently while they should be handled the same.
 > 
-> On Thu, 22 Nov 2007, Michal Schmidt wrote:
+> Kind Regards,
 > 
-> > Steven,
+> Remy
+> 
+> 2007/11/26, Remy Bohmer <linux@bohmer.net>:
+> > Hello,
 > >
-> > Your ketchup script does not download the -rt kernel for me. This
-> > patch fixes it. Could you update
-> > http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt1 ?
+> > I use 2.6.23.1-rt5 on the Atmel AT91 series.
+> > Interrupt threading on Preempt-RT and ARM works fine, except for
+> > (edge-triggered) GPIO interrupts. There is a problem when a new
+> > interrupt arives while the interrupt thread is handling the previous
+> > interrupt. If this occurs the interrupt handling stalls forever.
 > >
-> > I'm also attaching the complete ketchup script for convenience.
+> > This is caused by a unbalanced interrupt mask/unmask problem in the kernel.
+> > The attached patch fixes this. More information about this problem is
+> > documented inside the patch itself.
 > >
-> 
-> Michal,
-> 
-> Could you explain what exactly went wrong.  Your ketchup script
-> doesn't work for me. It fails downloads for me.
+> > This patch is meant for Preempt-RT only.
+> >
+> > Kind Regards,
+> >
+> > Remy Bohmer
+> >
+> >
 
-Trying to find the latest version with your ketchup version:
+On ARM there is a problem where the interrupt handler stalls when they are 
+coming faster than the kernel can handle.
 
-$ ketchup-0.9.8-rt1 -s 2.6-rt
-?C=N;O=D">Name</a>                                         <a
-href="?C=M;O=A">Last modified</a>      <a href="?C=S;O=A">Size</a>
-<hr><a href="/pub/linux/kernel/projects/rt
+The problem occurs when the routine handle_simple_irq() masks the interrupt 
+when an IRQ-thread is handling the interrupt at the same time. (IRQ_INPROGRESS
+is set). The interrupt thread, however does **never** a 
+desc->chip->unmask(), so the interrupt becomes disabled forever.
 
-Not surprisingly, trying to update also fails:
+IRQ_DISABLED is usually not set for this interrupt
 
-$ ketchup-0.9.8-rt1 2.6-rt
-2.6.24-rc2-rt1
--> ?C=N;O=D">Name</a>                                         <a
-href="?C=M;O=A">Last modified</a>      <a href="?C=S;O=A">Size</a>
-<hr><a href="/pub/linux/kernel/projects/rt
-Traceback (most recent call last):
-  File "/home/mschmidt/bin/ketchup-0.9.8-rt1", line 755, in ?
-    transform(a, b)
-  File "/home/mschmidt/bin/ketchup-0.9.8-rt1", line 516, in transform
-    if t != tree(b):
-  File "/home/mschmidt/bin/ketchup-0.9.8-rt1", line 109, in tree
-    return float(re.match(r'(\d+\.\d+)', ver).group(1))
-AttributeError: 'NoneType' object has no attribute 'group'
+This is in kernel/irq/chip.c, where the irq is masked when a IRQ-thread is
+running: 
+--------------------------------------------------------------------------
+void fastcall
+handle_simple_irq(unsigned int irq, struct irq_desc *desc)
+{
 
+....
+....
 
-Do you use a non-default kernel_url in your ketchup configuration?
+	if (unlikely(!action || (desc->status & (IRQ_INPROGRESS |
+						 IRQ_DISABLED)))) {
+(!!)->		if (desc->chip->mask)
+(!!)->			desc->chip->mask(irq);
+		desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
+		desc->status |= IRQ_PENDING;
+		goto out_unlock;
+	}
 
-Michal
+....
+....
+}
+--------------------------------------------------------------------------
+
+Masking the interrupt seems valid, because the interrupt handler thread is 
+still running, so it can handle the new pending interrupt. But, it has to be
+umasked somewhere. The logical place is to do this in kernel/irq/manage.c, 
+because this situation is also handled for the thread_level_irq() and 
+thread_fasteoi_irq(), but not for thread_simple_irq(). This patch adds this
+for these kind of interrupts also.
+
+Signed-off-by: Remy Bohmer <linux@bohmer.net>
+---
+ kernel/irq/manage.c |   29 +++--------------------------
+ 1 file changed, 3 insertions(+), 26 deletions(-)
+
+Index: linux-2.6.23/kernel/irq/manage.c
+===================================================================
+--- linux-2.6.23.orig/kernel/irq/manage.c	2007-11-26 13:46:58.000000000 +0100
++++ linux-2.6.23/kernel/irq/manage.c	2007-11-26 14:43:32.000000000 +0100
+@@ -646,28 +646,7 @@ static void thread_simple_irq(irq_desc_t
+ 			note_interrupt(irq, desc, action_ret);
+ 	}
+ 	desc->status &= ~IRQ_INPROGRESS;
+-}
+-
+-/*
+- * threaded level type irq handler
+- */
+-static void thread_level_irq(irq_desc_t *desc)
+-{
+-	unsigned int irq = desc - irq_desc;
+-
+-	thread_simple_irq(desc);
+-	if (!(desc->status & IRQ_DISABLED) && desc->chip->unmask)
+-		desc->chip->unmask(irq);
+-}
+-
+-/*
+- * threaded fasteoi type irq handler
+- */
+-static void thread_fasteoi_irq(irq_desc_t *desc)
+-{
+-	unsigned int irq = desc - irq_desc;
+ 
+-	thread_simple_irq(desc);
+ 	if (!(desc->status & IRQ_DISABLED) && desc->chip->unmask)
+ 		desc->chip->unmask(irq);
+ }
+@@ -747,12 +726,10 @@ static void do_hardirq(struct irq_desc *
+ 	if (!(desc->status & IRQ_INPROGRESS))
+ 		goto out;
+ 
+-	if (desc->handle_irq == handle_simple_irq)
++	if ((desc->handle_irq == handle_simple_irq) ||
++	    (desc->handle_irq == handle_level_irq)  ||
++	    (desc->handle_irq == handle_fasteoi_irq))
+ 		thread_simple_irq(desc);
+-	else if (desc->handle_irq == handle_level_irq)
+-		thread_level_irq(desc);
+-	else if (desc->handle_irq == handle_fasteoi_irq)
+-		thread_fasteoi_irq(desc);
+ 	else if (desc->handle_irq == handle_edge_irq)
+ 		thread_edge_irq(desc);
+ 	else
