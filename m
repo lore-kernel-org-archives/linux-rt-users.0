@@ -1,56 +1,51 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling
-	can/will stall forever
-Date: Tue, 27 Nov 2007 07:53:54 -0800
-Message-ID: <1196178834.23808.11.camel@imap.mvista.com>
-References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
-	 <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
-	 <1196176294.13982.58.camel@localhost.localdomain>
-	 <1196177122.23808.7.camel@imap.mvista.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Priorities of IRQ handlers
+Date: Tue, 27 Nov 2007 11:26:26 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com>
+References: <474AE6C7.4090204@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
-	ARM Linux Mailing List
-	<linux-arm-kernel@lists.arm.linux.org.uk>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Remy Bohmer <linux@bohmer.net>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:44120 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752372AbXK0QBk (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:35067 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756808AbXK0Q0u (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2007 11:01:40 -0500
-In-Reply-To: <1196177122.23808.7.camel@imap.mvista.com>
+	Tue, 27 Nov 2007 11:26:50 -0500
+In-Reply-To: <474AE6C7.4090204@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2007-11-27 at 07:25 -0800, Daniel Walker wrote:
-> On Tue, 2007-11-27 at 10:11 -0500, Steven Rostedt wrote:
-> > Thomas,
-> > 
-> > Can you ACK or NACK this patch.  I know you play with a bunch of
-> > hardware that this patch may affect.
-> > 
-> 
-> My two cents, I think it's needed (or something like it).. It looks like
-> handle_simple_irq normally expects a custom cascade type handler to
-> unmask on return. When you switch to a threaded handler the cascade
-> handler is gone and can't unmask..
 
-I take this back .. The comment at the top of handle_simple_irq() is,
+On Mon, 26 Nov 2007, John Sigler wrote:
 
- *      Note: The caller is expected to handle the ack, clear, mask and
- *      unmask issues if necessary.
+> I need to change the priorities of several soft and hard IRQ handlers.
+>
+> Namely,
+>
+> o reduce the prio of "softirq-timer" handler to 10
+>
+> o reduce the prio of IRQ14 and IRQ15 handlers to 20
+>    (my flash drives do not support DMA BTW...)
+>
+> o boost the prio of my I/O boards' IRQ handlers to 60
+>    (there can be 1 or 2 boards, the driver is a kernel module
+>     which is loaded after the system has booted.)
+>
+> I've written a short program that calls
+>    sched_setscheduler(pid, SCHED_FIFO, &param);
+> with the appropriate pid, which I look up using ps -ef
 
+Look for the program "chrt". It does this for you. This program is
+avaliable in all major distrobutions of Linux.
 
-So we shouldn't need any flow control unless there is some other
-factors.. 
+>
+> I need to automate the process of tweaking priorities.
+>
+> Can someone offer advice and / or pointers?
 
-Additionally, we have a patch in the real time tree called
-"irq-mask-fix.patch" which adds an "unmask" to handle_simple_irq, but as
-the note says we don't need flow control..
+Perhaps look at one of the Start up scripts, and add the chrt command
+there.
 
-Daniel
+-- Steve
