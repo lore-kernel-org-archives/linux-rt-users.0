@@ -1,49 +1,52 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: rt mutex priority boost
-Date: Wed, 28 Nov 2007 13:34:29 -0800
-Message-ID: <1196285669.12577.4.camel@sx.thebigcorporation.com>
-References: <1196257876.4078.195.camel@hermosa.morrealenet>
-	 <200711281413.31140.lhenriques@netvisao.pt>
-	 <1196260471.4078.200.camel@hermosa.morrealenet>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
+Date: Wed, 28 Nov 2007 23:03:32 +0000
+Message-ID: <20071128230331.GA31730@flint.arm.linux.org.uk>
+References: <1196176294.13982.58.camel@localhost.localdomain> <1196177122.23808.7.camel@imap.mvista.com> <1196178834.23808.11.camel@imap.mvista.com> <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com> <20071128172509.GA30173@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com> <20071128200550.GA3494@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com> <1196282672.27964.32.camel@imap.mvista.com> <Pine.LNX.4.58.0711281608490.26365@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: =?ISO-8859-1?Q?Lu=EDs?= Henriques <lhenriques@netvisao.pt>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Peter W. Morreale" <pmorreale@novell.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Walker <dwalker@mvista.com>, Remy Bohmer <linux@bohmer.net>,
+	RT <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qmta05.westchester.pa.mail.comcast.net ([76.96.62.48]:40851
-	"EHLO QMTA05.westchester.pa.mail.comcast.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1757866AbXK1WIH convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 17:08:07 -0500
-In-Reply-To: <1196260471.4078.200.camel@hermosa.morrealenet>
+Received: from caramon.arm.linux.org.uk ([78.32.30.218]:48124 "EHLO
+	caramon.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755055AbXK1XEY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 Nov 2007 18:04:24 -0500
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0711281608490.26365@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-11-28 at 07:34 -0700, Peter W. Morreale wrote:
-> On Wed, 2007-11-28 at 14:13 +0000, Lu=C3=ADs Henriques wrote:
-> > Hi!  Just my 5 cents (or even less!)...
->=20
-> >=20
-> > I am not very familiar with PI-related code but I believe that at l=
-east your=20
-> > 1st assumption is not correct, i.e., the number of boost and unboos=
-t is not=20
-> > necessarily equal.  If you have, for example, a task which priority=
- is boost=20
-> > several times in a row (without releasing the resource), it will on=
-ly unboost=20
-> > once -- when the resource is released.  Thus, the boost/unboost rel=
-ation is=20
-> > not one-to-one but many-to-one ;)
-> >=20
->=20
-> Well of course!  That makes perfect sense.  =20
->=20
->=20
+On Wed, Nov 28, 2007 at 04:13:07PM -0500, Steven Rostedt wrote:
+> 
+> 
+> On Wed, 28 Nov 2007, Daniel Walker wrote:
+> 
+> >
+> > Ignoring the ARM side of things for a sec, handle_simple_irq() will
+> > mask() the interrupt in the special case that an interrupt is already in
+> > the processes of being handled.. handle_simple_irq() also unmasks when
+> > it finishes handling an interrupt (something real time adds for some
+> > reason) ..
+> >
+> > In terms of threading the irq everything is the same except there is no
+> > unmask() call when the thread finishes ..
+> >
+> 
+> OK, to be honest, I never fully understood the concept of this
+> "simple_irq". I figured it was because of the ARM architecture.
 
-If you only count the first boost for each task, then you should see a
-1-1.
+If you read what I said compared with what Daniel said, you'll see that
+adding the mask/unmask is _pointless_ because for the case where the
+simple handler should be used, there is _no_ hardware masking available
+except via the parent interrupt signal.
 
-Sven
+So actually Daniel's argument misses the basic point - that using
+handle_simple_irq for non-simple IRQs is just WRONG.
