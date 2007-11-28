@@ -1,80 +1,81 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Re: Priorities of IRQ handlers
-Date: Wed, 28 Nov 2007 12:05:26 +0100
-Message-ID: <474D4B76.8080001@free.fr>
-References: <474AE6C7.4090204@free.fr> <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com>
+From: "Peter W. Morreale" <pmorreale@novell.com>
+Subject: rt mutex priority boost
+Date: Wed, 28 Nov 2007 06:51:16 -0700
+Message-ID: <1196257876.4078.195.camel@hermosa.morrealenet>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:42304 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756584AbXK1LF3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 06:05:29 -0500
-In-Reply-To: <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com>
+Received: from victor.provo.novell.com ([137.65.250.26]:37433 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751175AbXK1N4e (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 Nov 2007 08:56:34 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Steven,
+Steve, 
 
-Steven Rostedt wrote:
+I'm directing this question to you, however it may be of interest to the
+community as well...
 
-> John Sigler wrote:
-> 
->> I need to change the priorities of several soft and hard IRQ handlers.
->>
->> Namely,
->>
->> o reduce the prio of "softirq-timer" handler to 10
->>
->> o reduce the prio of IRQ14 and IRQ15 handlers to 20
->>    (my flash drives do not support DMA BTW...)
->>
->> o boost the prio of my I/O boards' IRQ handlers to 60
->>    (there can be 1 or 2 boards, the driver is a kernel module
->>     which is loaded after the system has booted.)
->>
->> I've written a short program that calls
->>    sched_setscheduler(pid, SCHED_FIFO, &param);
->> with the appropriate pid, which I look up using ps -ef
-> 
-> Look for the program "chrt". It does this for you. This program is
-> available in all major distributions of Linux.
+I've been looking closely at the rtmutex code, spin locks in particular,
+and noticed something that has me confused.  I instrumented the code to
+add some simple counters and have found that for non-rt loads, we seem
+to perform priority boosts more frequently than expected.  Here are some
+numbers...
 
-Thanks for the tip.
+rs_pi_boost            = 2060
+rs_pi_unboost          = 1451
+rs_rt_contention       = 708
 
-For the record, I found schedutils on Robert Love's page:
+'rs_pi_boost' and 'rs_pi_unboost' are are counts of the number of times
+a task priority is about to be changed in __rt_mutext_adjust_prio().
+'rs_rt_contention' is a count of the number of times an RT-priority task
+entered task_blocks_on_rt_mutex() (which means the lock was outstanding
+at that time the counter was incremented)
 
-http://rlove.org/
-http://rlove.org/misc/schedutils-1.5.0.tar.gz
+I'm confused on two counts, 1) the disparity between the boost and
+unboost, and 2) the factor of 2x difference between the (potentially)
+about to block RT task and the boost counts. 
 
-However, I had already solved that part of the problem with a
-program of my own.
+My expectation would be that all three counters would be more or less
+the same.  Further, that we would only boost non-RT tasks in contention
+with an RT task.  Is that a wrong assumption?  The code seems to imply
+that we boost anyone.
 
-My real problem is: the IRQ handlers for the I/O boards are
-only instantiated when the kernel module is inserted. How do
-I /reliably/ determine their pid?
+The samples were taken after a reboot followed by a 'make' in an already
+built kernel tree.  The counts (gradually) grow in this proportion as
+time/load passes.  They are currently low due to the reboot. 
 
-e.g. on one system, the IRQ handler for my I/O board is IRQ5
-with pid 745. On another system, it's IRQ20 with pid 808.
-On a third system they're IRQ20 and IRQ21 with pid 239 and 240.
+What got me started on this path was noticing the context switch counts
+go extremely high with the addition of a single process.  Here is the
+output of a silly little program I wrote that reads /proc/stat and calcs
+context-switches/second: 
 
-The only solution I see is to examine /proc/interrupts to find the
-IRQ handler(s) then ps to lookup their pid, but that feels like a
-dirty hack.
+prev:    1990167, current:    1992750, diff:        516/s
+prev:    1992755, current:    1994567, diff:        362/s
+prev:    1994569, current:    1997847, diff:        655/s
+prev:    1997849, current:    2011904, diff:       2811/s # make start
+prev:    2011913, current:    2041192, diff:       5855/s
+prev:    2041194, current:    2074749, diff:       6711/s
+prev:    2074752, current:    2107060, diff:       6461/s
+prev:    2107065, current:    2139376, diff:       6462/s
+prev:    2139378, current:    2164268, diff:       4978/s # make killed
+prev:    2164274, current:    2166674, diff:        480/s
+prev:    2166676, current:    2168187, diff:        302/s
+prev:    2168189, current:    2169576, diff:        277/s
 
-These interrupt handlers are all spawned by kthreadd. I thought
-there would be some way to ask kthreadd to tweak the priorities.
+Factor of 10x for a single make (no -j) on an otherwise idle system.
+Again, this was on an already built kernel tree and taken shortly after
+the a previous make invocation (implying the caches should be warm).
+Since I'm hitting on the dcache and inode spin locks (that are now
+rt_spin_locks) and only contending with other system processes (syslog,
+etc) I'm at a loss attempting to understand why the dramatic increase in
+the context switch rate. 
 
->> I need to automate the process of tweaking priorities.
->>
->> Can someone offer advice and / or pointers?
-> 
-> Perhaps look at one of the startup scripts, and add the chrt
-> command there.
+Any insights appreciated....
 
-Which startup scripts?
-
-Regards.
+Thx,
+-PWM
