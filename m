@@ -1,133 +1,101 @@
-From: =?iso-8859-1?q?Lu=EDs_Henriques?= <lhenriques@netvisao.pt>
-Subject: Re: rt mutex priority boost
-Date: Wed, 28 Nov 2007 14:13:30 +0000
-Message-ID: <200711281413.31140.lhenriques@netvisao.pt>
-References: <1196257876.4078.195.camel@hermosa.morrealenet>
+From: "K.R. Foley" <kr@cybsft.com>
+Subject: Re: Priorities of IRQ handlers
+Date: Wed, 28 Nov 2007 08:12:24 -0600
+Message-ID: <474D7748.8@cybsft.com>
+References: <474AE6C7.4090204@free.fr> <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com> <474D4B76.8080001@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Peter W. Morreale" <pmorreale@novell.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from front1.netvisao.pt ([213.228.128.56]:52907 "HELO
-	front1.netvisao.pt" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752930AbXK1ONg convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 09:13:36 -0500
-In-Reply-To: <1196257876.4078.195.camel@hermosa.morrealenet>
-Content-Disposition: inline
+Received: from xmnp015.utc.com ([159.82.164.203]:49512 "EHLO xmnp015.utc.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754929AbXK1OOo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 Nov 2007 09:14:44 -0500
+In-Reply-To: <474D4B76.8080001@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi!  Just my 5 cents (or even less!)...
+John Sigler wrote:
+> Hello Steven,
+> 
+> Steven Rostedt wrote:
+> 
+>> John Sigler wrote:
+>>
+>>> I need to change the priorities of several soft and hard IRQ handlers.
+>>>
+>>> Namely,
+>>>
+>>> o reduce the prio of "softirq-timer" handler to 10
+>>>
+>>> o reduce the prio of IRQ14 and IRQ15 handlers to 20
+>>>    (my flash drives do not support DMA BTW...)
+>>>
+>>> o boost the prio of my I/O boards' IRQ handlers to 60
+>>>    (there can be 1 or 2 boards, the driver is a kernel module
+>>>     which is loaded after the system has booted.)
+>>>
+>>> I've written a short program that calls
+>>>    sched_setscheduler(pid, SCHED_FIFO, &param);
+>>> with the appropriate pid, which I look up using ps -ef
+>>
+>> Look for the program "chrt". It does this for you. This program is
+>> available in all major distributions of Linux.
+> 
+> Thanks for the tip.
+> 
+> For the record, I found schedutils on Robert Love's page:
+> 
+> http://rlove.org/
+> http://rlove.org/misc/schedutils-1.5.0.tar.gz
+> 
+> However, I had already solved that part of the problem with a
+> program of my own.
+> 
+> My real problem is: the IRQ handlers for the I/O boards are
+> only instantiated when the kernel module is inserted. How do
+> I /reliably/ determine their pid?
 
-On Wednesday 28 November 2007, Peter W. Morreale wrote:
-> Steve,
->
-> I'm directing this question to you, however it may be of interest to =
-the
-> community as well...
->
-> I've been looking closely at the rtmutex code, spin locks in particul=
-ar,
-> and noticed something that has me confused.  I instrumented the code =
-to
-> add some simple counters and have found that for non-rt loads, we see=
-m
-> to perform priority boosts more frequently than expected.  Here are s=
-ome
-> numbers...
->
-> rs_pi_boost            =3D 2060
-> rs_pi_unboost          =3D 1451
-> rs_rt_contention       =3D 708
->
-> 'rs_pi_boost' and 'rs_pi_unboost' are are counts of the number of tim=
-es
-> a task priority is about to be changed in __rt_mutext_adjust_prio().
-> 'rs_rt_contention' is a count of the number of times an RT-priority t=
-ask
-> entered task_blocks_on_rt_mutex() (which means the lock was outstandi=
-ng
-> at that time the counter was incremented)
->
-> I'm confused on two counts, 1) the disparity between the boost and
-> unboost, and 2) the factor of 2x difference between the (potentially)
-> about to block RT task and the boost counts.
+What about something like:
+chrt -f -p 99 `/sbin/pidof 'IRQ 8'`
 
-I am not very familiar with PI-related code but I believe that at least=
- your=20
-1st assumption is not correct, i.e., the number of boost and unboost is=
- not=20
-necessarily equal.  If you have, for example, a task which priority is =
-boost=20
-several times in a row (without releasing the resource), it will only u=
-nboost=20
-once -- when the resource is released.  Thus, the boost/unboost relatio=
-n is=20
-not one-to-one but many-to-one ;)
+> 
+> e.g. on one system, the IRQ handler for my I/O board is IRQ5
+> with pid 745. On another system, it's IRQ20 with pid 808.
+> On a third system they're IRQ20 and IRQ21 with pid 239 and 240.
+> 
+> The only solution I see is to examine /proc/interrupts to find the
+> IRQ handler(s) then ps to lookup their pid, but that feels like a
+> dirty hack.
+> 
+> These interrupt handlers are all spawned by kthreadd. I thought
+> there would be some way to ask kthreadd to tweak the priorities.
 
-Note again that I am not very familiar with this code but I believe thi=
-s is=20
-the default behaviour of the kernel.
+I have created patches to do this in the past. However, because you are
+setting different threads to different priorities it probably makes more
+sense to do this from user space. Much more flexible.
 
-Hope this helps you understand the problem...
---=20
-Lu=EDs Henriques
-
-> My expectation would be that all three counters would be more or less
-> the same.  Further, that we would only boost non-RT tasks in contenti=
-on
-> with an RT task.  Is that a wrong assumption?  The code seems to impl=
-y
-> that we boost anyone.
->
-> The samples were taken after a reboot followed by a 'make' in an alre=
-ady
-> built kernel tree.  The counts (gradually) grow in this proportion as
-> time/load passes.  They are currently low due to the reboot.
->
-> What got me started on this path was noticing the context switch coun=
-ts
-> go extremely high with the addition of a single process.  Here is the
-> output of a silly little program I wrote that reads /proc/stat and ca=
-lcs
-> context-switches/second:
->
-> prev:    1990167, current:    1992750, diff:        516/s
-> prev:    1992755, current:    1994567, diff:        362/s
-> prev:    1994569, current:    1997847, diff:        655/s
-> prev:    1997849, current:    2011904, diff:       2811/s # make star=
-t
-> prev:    2011913, current:    2041192, diff:       5855/s
-> prev:    2041194, current:    2074749, diff:       6711/s
-> prev:    2074752, current:    2107060, diff:       6461/s
-> prev:    2107065, current:    2139376, diff:       6462/s
-> prev:    2139378, current:    2164268, diff:       4978/s # make kill=
-ed
-> prev:    2164274, current:    2166674, diff:        480/s
-> prev:    2166676, current:    2168187, diff:        302/s
-> prev:    2168189, current:    2169576, diff:        277/s
->
-> Factor of 10x for a single make (no -j) on an otherwise idle system.
-> Again, this was on an already built kernel tree and taken shortly aft=
-er
-> the a previous make invocation (implying the caches should be warm).
-> Since I'm hitting on the dcache and inode spin locks (that are now
-> rt_spin_locks) and only contending with other system processes (syslo=
-g,
-> etc) I'm at a loss attempting to understand why the dramatic increase=
- in
-> the context switch rate.
->
-> Any insights appreciated....
->
-> Thx,
-> -PWM
->
->
+> 
+>>> I need to automate the process of tweaking priorities.
+>>>
+>>> Can someone offer advice and / or pointers?
+>>
+>> Perhaps look at one of the startup scripts, and add the chrt
+>> command there.
+> 
+> Which startup scripts?
+> 
+> Regards.
 > -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers"
-> in the body of a message to majordomo@vger.kernel.org
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+
+
+-- 
+   kr
