@@ -1,86 +1,147 @@
-From: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
-Subject: Re: Priorities of IRQ handlers
-Date: Wed, 28 Nov 2007 13:02:01 -0200
-Message-ID: <20071128150201.GE25255@ghostprotocols.net>
-References: <474AE6C7.4090204@free.fr> <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com> <474D4B76.8080001@free.fr> <474D7748.8@cybsft.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling
+	can/will stall forever
+Date: Wed, 28 Nov 2007 07:36:38 -0800
+Message-ID: <1196264198.27964.12.camel@imap.mvista.com>
+References: <3efb10970711260531x5e9f05acgfabdfa885a220192@mail.gmail.com>
+	 <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com>
+	 <1196176294.13982.58.camel@localhost.localdomain>
+	 <1196177122.23808.7.camel@imap.mvista.com>
+	 <1196178834.23808.11.camel@imap.mvista.com>
+	 <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: John Sigler <linux.kernel@free.fr>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: "K.R. Foley" <kr@cybsft.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	RT <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.236]:25704 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752080AbXK1PFc (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:7944 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754167AbXK1Po7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 10:05:32 -0500
-Received: by wr-out-0506.google.com with SMTP id c49so1252913wra
-        for <linux-rt-users@vger.kernel.org>; Wed, 28 Nov 2007 07:05:31 -0800 (PST)
-Content-Disposition: inline
-In-Reply-To: <474D7748.8@cybsft.com>
+	Wed, 28 Nov 2007 10:44:59 -0500
+In-Reply-To: <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Em Wed, Nov 28, 2007 at 08:12:24AM -0600, K.R. Foley escreveu:
-> John Sigler wrote:
-> > Hello Steven,
-> > 
-> > Steven Rostedt wrote:
-> > 
-> >> John Sigler wrote:
-> >>
-> >>> I need to change the priorities of several soft and hard IRQ handlers.
-> >>>
-> >>> Namely,
-> >>>
-> >>> o reduce the prio of "softirq-timer" handler to 10
-> >>>
-> >>> o reduce the prio of IRQ14 and IRQ15 handlers to 20
-> >>>    (my flash drives do not support DMA BTW...)
-> >>>
-> >>> o boost the prio of my I/O boards' IRQ handlers to 60
-> >>>    (there can be 1 or 2 boards, the driver is a kernel module
-> >>>     which is loaded after the system has booted.)
-> >>>
-> >>> I've written a short program that calls
-> >>>    sched_setscheduler(pid, SCHED_FIFO, &param);
-> >>> with the appropriate pid, which I look up using ps -ef
-> >>
-> >> Look for the program "chrt". It does this for you. This program is
-> >> available in all major distributions of Linux.
-> > 
-> > Thanks for the tip.
-> > 
-> > For the record, I found schedutils on Robert Love's page:
-> > 
-> > http://rlove.org/
-> > http://rlove.org/misc/schedutils-1.5.0.tar.gz
-> > 
-> > However, I had already solved that part of the problem with a
-> > program of my own.
-> > 
-> > My real problem is: the IRQ handlers for the I/O boards are
-> > only instantiated when the kernel module is inserted. How do
-> > I /reliably/ determine their pid?
+On Wed, 2007-11-28 at 15:38 +0100, Remy Bohmer wrote:
+> Hello Daniel,
 > 
-> What about something like:
-> chrt -f -p 99 `/sbin/pidof 'IRQ 8'`
+> >  *      Note: The caller is expected to handle the ack, clear, mask and
+> >  *      unmask issues if necessary.
+> > So we shouldn't need any flow control unless there is some other
+> > factors..
+> 
+> This comment can be misinterpreted, I think. Who is assumed to be the
+> caller in this context? The 2 other routines in the driver that
+> actually do the unmasking stuff besides only calling this routine? Is
+> it allowed to call it directly or should it always be done through a
+> wrapper that does all these special things?
 
-If he knows that IRQ 8 is associated with his device, that is ok,
-but how to map device -> IRQ in the first place?
+The later I think .. 
+
+> Either way, only masking interrupts, and never unmasking it, is a bug.
+> If interrupts come and go slow enough you never run into this problem,
+> and if this type is not used often, nobody will notice it.
+> Usually interrupts needs clearence of the source before the hardware
+> can generate a new one. GPIO interrupts are different, they are
+> generated whenever a IO-level changes, there is no acknowledge or
+> clearing of the interupt needed. These types of interrupts are never
+> 'pending' from hardware point of view. So, with these type of
+> interrupts, a new one can occur while the interrupt handler has not
+> handled the previous one yet, and therefor these interrupt-types will
+> show this bug.
+
+Yeah, it's clear there needs to be an unmask for this special case..
+I've attached a patch which only handles the special case.. Could you
+test/review it..
+
+> >
+> > Additionally, we have a patch in the real time tree called
+> > "irq-mask-fix.patch" which adds an "unmask" to handle_simple_irq, but as
+> > the note says we don't need flow control..
+> 
+> You mean the Montavista real time tree?
+
+No .. I wouldn't comment about an company specific tree. I was talking
+about the broken out real time patches.
+
+Daniel
+
+--------
+
+
+Remove the IRQ_PENDING flag if it's asserted, and unmask the irq. Also loop
+around to account for the pending interrupt.
+
+Signed-Off-By: Daniel Walker <dwalker@mvista.com>
+
+---
+ kernel/irq/manage.c |   28 +++++++++++++++++++++++++---
+ 1 file changed, 25 insertions(+), 3 deletions(-)
+
+Index: linux-2.6.23/kernel/irq/manage.c
+===================================================================
+--- linux-2.6.23.orig/kernel/irq/manage.c
++++ linux-2.6.23/kernel/irq/manage.c
+@@ -646,7 +646,7 @@ __setup("hardirq-preempt=", hardirq_pree
+ /*
+  * threaded simple handler
+  */
+-static void thread_simple_irq(irq_desc_t *desc)
++static void thread_core_irq(irq_desc_t *desc)
+ {
+ 	struct irqaction *action = desc->action;
+ 	unsigned int irq = desc - irq_desc;
+@@ -664,13 +664,35 @@ static void thread_simple_irq(irq_desc_t
+ }
  
-> > 
-> > e.g. on one system, the IRQ handler for my I/O board is IRQ5
-> > with pid 745. On another system, it's IRQ20 with pid 808.
-> > On a third system they're IRQ20 and IRQ21 with pid 239 and 240.
-
-See?
-
-Perhaps he could use a kernel command line where he would tell that
-for the string used in request_irq the kthread priority should be N.
-
-IIRC there was somebody trying to write a patch to support this at some
-point in this list...
-
-- Arnaldo
+ /*
++ * threaded fasteoi type irq handler
++ */
++static void thread_simple_irq(irq_desc_t *desc)
++{
++	unsigned int irq = desc - irq_desc;
++
++	do {
++		/*
++		 * When another irq arrived while we were handling
++		 * one, we could have masked the irq.
++		 * Renable it, if it was not disabled in meantime.
++		 */
++		if (unlikely(desc->status & IRQ_PENDING)) {
++			desc->status &= ~IRQ_PENDING;
++			desc->chip->unmask(irq);
++		}
++		thread_core_irq(desc);
++	} while ((desc->status & (IRQ_PENDING | IRQ_INPROGRESS)));
++
++}
++
++/*
+  * threaded level type irq handler
+  */
+ static void thread_level_irq(irq_desc_t *desc)
+ {
+ 	unsigned int irq = desc - irq_desc;
+ 
+-	thread_simple_irq(desc);
++	thread_core_irq(desc);
+ 	if (!(desc->status & IRQ_DISABLED) && desc->chip->unmask)
+ 		desc->chip->unmask(irq);
+ }
+@@ -682,7 +704,7 @@ static void thread_fasteoi_irq(irq_desc_
+ {
+ 	unsigned int irq = desc - irq_desc;
+ 
+-	thread_simple_irq(desc);
++	thread_core_irq(desc);
+ 	if (!(desc->status & IRQ_DISABLED) && desc->chip->unmask)
+ 		desc->chip->unmask(irq);
+ }
