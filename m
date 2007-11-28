@@ -1,75 +1,107 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Priorities of IRQ handlers
-Date: Wed, 28 Nov 2007 13:38:19 -0800
-Message-ID: <1196285899.12577.6.camel@sx.thebigcorporation.com>
-References: <474AE6C7.4090204@free.fr>
-	 <Pine.LNX.4.58.0711271125130.16899@gandalf.stny.rr.com>
-	 <474D4B76.8080001@free.fr>  <474D7748.8@cybsft.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: rt mutex priority boost
+Date: Wed, 28 Nov 2007 16:49:37 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0711281642170.2846@gandalf.stny.rr.com>
+References: <1196257876.4078.195.camel@hermosa.morrealenet>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: John Sigler <linux.kernel@free.fr>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: "K.R. Foley" <kr@cybsft.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Peter W. Morreale" <pmorreale@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qmta10.westchester.pa.mail.comcast.net ([76.96.62.17]:59248
-	"EHLO QMTA10.westchester.pa.mail.comcast.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756851AbXK1VpY (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:52746 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757269AbXK1Vtw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 16:45:24 -0500
-In-Reply-To: <474D7748.8@cybsft.com>
+	Wed, 28 Nov 2007 16:49:52 -0500
+In-Reply-To: <1196257876.4078.195.camel@hermosa.morrealenet>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-11-28 at 08:12 -0600, K.R. Foley wrote:
-> John Sigler wrote:
-> > Hello Steven,
-> > 
-> > Steven Rostedt wrote:
-> > 
-> >> John Sigler wrote:
-> >>
-> >>> I need to change the priorities of several soft and hard IRQ handlers.
-> >>>
-> >>> Namely,
-> >>>
-> >>> o reduce the prio of "softirq-timer" handler to 10
-> >>>
-> >>> o reduce the prio of IRQ14 and IRQ15 handlers to 20
-> >>>    (my flash drives do not support DMA BTW...)
-> >>>
-> >>> o boost the prio of my I/O boards' IRQ handlers to 60
-> >>>    (there can be 1 or 2 boards, the driver is a kernel module
-> >>>     which is loaded after the system has booted.)
-> >>>
-> >>> I've written a short program that calls
-> >>>    sched_setscheduler(pid, SCHED_FIFO, &param);
-> >>> with the appropriate pid, which I look up using ps -ef
-> >>
-> >> Look for the program "chrt". It does this for you. This program is
-> >> available in all major distributions of Linux.
-> > 
-> > Thanks for the tip.
-> > 
-> > For the record, I found schedutils on Robert Love's page:
-> > 
-> > http://rlove.org/
-> > http://rlove.org/misc/schedutils-1.5.0.tar.gz
-> > 
-> > However, I had already solved that part of the problem with a
-> > program of my own.
-> > 
-> > My real problem is: the IRQ handlers for the I/O boards are
-> > only instantiated when the kernel module is inserted. How do
-> > I /reliably/ determine their pid?
-> 
-> What about something like:
-> chrt -f -p 99 `/sbin/pidof 'IRQ 8'`
-> 
-> > 
 
-Keep in mind that if you are on a shared IRQ line, you will be boosting
-the priority of other interrupts as well.
+On Wed, 28 Nov 2007, Peter W. Morreale wrote:
 
-Sven
+> Steve,
+
+Hi Peter,
+
+I don't always read mailing lists every day, so if you want a quicker
+response from me, it's best to CC me.
+
+>
+> I'm directing this question to you, however it may be of interest to the
+> community as well...
+>
+> I've been looking closely at the rtmutex code, spin locks in particular,
+> and noticed something that has me confused.  I instrumented the code to
+> add some simple counters and have found that for non-rt loads, we seem
+> to perform priority boosts more frequently than expected.  Here are some
+> numbers...
+>
+> rs_pi_boost            = 2060
+> rs_pi_unboost          = 1451
+> rs_rt_contention       = 708
+>
+> 'rs_pi_boost' and 'rs_pi_unboost' are are counts of the number of times
+> a task priority is about to be changed in __rt_mutext_adjust_prio().
+> 'rs_rt_contention' is a count of the number of times an RT-priority task
+> entered task_blocks_on_rt_mutex() (which means the lock was outstanding
+> at that time the counter was incremented)
+>
+> I'm confused on two counts, 1) the disparity between the boost and
+> unboost, and 2) the factor of 2x difference between the (potentially)
+> about to block RT task and the boost counts.
+
+As was explained by Luis(sp? my fonts dont display that "i" part) you can
+be boosted multiple times and unboosted once.
+
+>
+> My expectation would be that all three counters would be more or less
+> the same.  Further, that we would only boost non-RT tasks in contention
+> with an RT task.  Is that a wrong assumption?  The code seems to imply
+> that we boost anyone.
+
+Yes, we boost everyone!
+
+IIRC, Ingo, Thomas, myself et al had a discussion about this. I think it
+came down to boosting non-rt tasks would help normal scheduling as well.
+That is, boosting lower tasks to help higher non-rt tasks can increase
+reaction times for nice desktop user experiences.
+
+
+>
+> The samples were taken after a reboot followed by a 'make' in an already
+> built kernel tree.  The counts (gradually) grow in this proportion as
+> time/load passes.  They are currently low due to the reboot.
+>
+> What got me started on this path was noticing the context switch counts
+> go extremely high with the addition of a single process.  Here is the
+> output of a silly little program I wrote that reads /proc/stat and calcs
+> context-switches/second:
+>
+> prev:    1990167, current:    1992750, diff:        516/s
+> prev:    1992755, current:    1994567, diff:        362/s
+> prev:    1994569, current:    1997847, diff:        655/s
+> prev:    1997849, current:    2011904, diff:       2811/s # make start
+> prev:    2011913, current:    2041192, diff:       5855/s
+> prev:    2041194, current:    2074749, diff:       6711/s
+> prev:    2074752, current:    2107060, diff:       6461/s
+> prev:    2107065, current:    2139376, diff:       6462/s
+> prev:    2139378, current:    2164268, diff:       4978/s # make killed
+> prev:    2164274, current:    2166674, diff:        480/s
+> prev:    2166676, current:    2168187, diff:        302/s
+> prev:    2168189, current:    2169576, diff:        277/s
+>
+> Factor of 10x for a single make (no -j) on an otherwise idle system.
+> Again, this was on an already built kernel tree and taken shortly after
+> the a previous make invocation (implying the caches should be warm).
+> Since I'm hitting on the dcache and inode spin locks (that are now
+> rt_spin_locks) and only contending with other system processes (syslog,
+> etc) I'm at a loss attempting to understand why the dramatic increase in
+> the context switch rate.
+
+Well, make does do a lot af IO and syscalls. Accessing the hard drive.
+This in turn will kick off interrupts and softirqs. Which will all contend
+for spinlocks, and since they are all working together, expect a lot of
+contention.
+
+-- Steve
