@@ -1,46 +1,51 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
-Date: Thu, 29 Nov 2007 10:25:06 +0000
-Message-ID: <20071129102506.GB22793@flint.arm.linux.org.uk>
-References: <3efb10970711260545i419a8352o4ca5248b10d81db5@mail.gmail.com> <1196176294.13982.58.camel@localhost.localdomain> <1196177122.23808.7.camel@imap.mvista.com> <1196178834.23808.11.camel@imap.mvista.com> <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com> <20071128172509.GA30173@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com> <20071128200550.GA3494@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com> <3efb10970711290214v37d85a27k9a84876d9099d7c5@mail.gmail.com>
+From: Juuso Alasuutari <juuso.alasuutari@gmail.com>
+Subject: Re: 2.6.23.8-rt11, tasks freezing
+Date: Thu, 29 Nov 2007 13:25:25 +0200
+Message-ID: <200711291325.26009.juuso.alasuutari@gmail.com>
+References: <200711211250.39265.juuso.alasuutari@gmail.com> <Pine.LNX.4.58.0711210905530.767@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Daniel Walker <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	ARM Linux Mailing List
-	<linux-arm-kernel@lists.arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
-To: Remy Bohmer <linux@bohmer.net>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from caramon.arm.linux.org.uk ([78.32.30.218]:55620 "EHLO
-	caramon.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754684AbXK2KZm (ORCPT
+Received: from nf-out-0910.google.com ([64.233.182.190]:15437 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754561AbXK2LZd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Nov 2007 05:25:42 -0500
+	Thu, 29 Nov 2007 06:25:33 -0500
+Received: by nf-out-0910.google.com with SMTP id g13so1783196nfb
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Nov 2007 03:25:32 -0800 (PST)
+In-Reply-To: <Pine.LNX.4.58.0711210905530.767@gandalf.stny.rr.com>
 Content-Disposition: inline
-In-Reply-To: <3efb10970711290214v37d85a27k9a84876d9099d7c5@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 29, 2007 at 11:14:30AM +0100, Remy Bohmer wrote:
-> I do not think Russell is right here with assuming that the wrong
-> interrupt handler type is used. Looking at the behaviour of the
-> mainline kernel (non-RT), the implementation is quite different: On
-> mainline the handle_simple_irq() in chip.c is not re-entrant, the
-> masking is **only** done in case of errors, and therefor never
-> unmasked again, of course.
+On Wednesday 21 November 2007 16:11:48 Steven Rostedt wrote:
+> On Wed, 21 Nov 2007, Juuso Alasuutari wrote:
+<snip>
+> > The system boots up nicely and seems to be running properly, until
+> > something tips it off and some commands begin to get "jammed". What seems
+> > to trigger it is accessing the hard disk, for instance doing something
+> > like `grep -r foo /var`. When it happens the desktop seems mostly
+> > responsive, but trying to run commands like `ls` will freeze the
+> > terminal. Other commands will succeed, for instance `ps aux` works as
+> > usual.
+> >
+> > Alt-SysRq-w shows more than one blocked pdflush task, as well as metalog
+> > and whatever commands have become "jammed" so far, like `ls`.
+> >
+> > I'll be happy to post more information, I just need to know what. I'd
+> > attach my .config here, but I can't access the computer from where I'm at
+> > the moment.
+>
+> You can send me the .config off list. Also, if possible, the output of
+> dmesg, sysrq-t and your sysrq-w as well as (try this last because it
+> sometimes hangs the box hard) sysrq-L
 
-The issue comes down to a very simple question:
+Hi,
 
-  Are you using handle_simple_irq() with an interrupt which can be masked?
+I sent you the output some time ago, have you had time to look at it?
 
-If the answer to that question is 'yes' then you're using the wrong handler.
-If 'no' then it's the right handler and the mask/unmask methods associated
-with the interrupt will be no-ops.
-
-Therefore, if you have mask/unmask methods for a simple IRQ which actually
-do something, clearly the first answer is the one which applies.  You're
-using the wrong handler.  Use the level or edge handlers instead.
+Thanks,
+Juuso
