@@ -1,68 +1,59 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will
- stall forever
-Date: Thu, 29 Nov 2007 11:30:34 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0711291128540.23075@gandalf.stny.rr.com>
-References: <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com>
- <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com>
- <20071128200550.GA3494@flint.arm.linux.org.uk>
- <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com>
- <3efb10970711290214v37d85a27k9a84876d9099d7c5@mail.gmail.com>
- <20071129102506.GB22793@flint.arm.linux.org.uk>
- <3efb10970711290327s3c60da1ey3b6fae738090ca5@mail.gmail.com>
- <20071129133604.GA23845@flint.arm.linux.org.uk>
- <3efb10970711290618v2bd93edfrbc53d9df4b73b33b@mail.gmail.com>
- <20071129142920.GB23845@flint.arm.linux.org.uk>
- <3efb10970711290733m59e30b5eyf96b914d63a72058@mail.gmail.com>
+Subject: Re: 2.6.23.8-rt11, tasks freezing
+Date: Thu, 29 Nov 2007 16:18:03 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0711291617010.26382@gandalf.stny.rr.com>
+References: <200711211250.39265.juuso.alasuutari@gmail.com>
+ <Pine.LNX.4.58.0711210905530.767@gandalf.stny.rr.com>
+ <200711291325.26009.juuso.alasuutari@gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Russell King - ARM Linux <linux@arm.linux.org.uk>,
-	Daniel Walker <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	ARM Linux Mailing List
-	<linux-arm-kernel@lists.arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
-To: Remy Bohmer <linux@bohmer.net>
+Cc: linux-rt-users@vger.kernel.org
+To: Juuso Alasuutari <juuso.alasuutari@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:42919 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758259AbXK2QgQ (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:57622 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759082AbXK2VSM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Nov 2007 11:36:16 -0500
-In-Reply-To: <3efb10970711290733m59e30b5eyf96b914d63a72058@mail.gmail.com>
+	Thu, 29 Nov 2007 16:18:12 -0500
+In-Reply-To: <200711291325.26009.juuso.alasuutari@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-On Thu, 29 Nov 2007, Remy Bohmer wrote:
+On Thu, 29 Nov 2007, Juuso Alasuutari wrote:
 
-> I changed the interrupt handler from the simple_irq to the edge_irq,
-> and it works...!!
-> (I added a noop routine for that .ack part, because there is no ack)
+> On Wednesday 21 November 2007 16:11:48 Steven Rostedt wrote:
+> > On Wed, 21 Nov 2007, Juuso Alasuutari wrote:
+> <snip>
+> > > The system boots up nicely and seems to be running properly, until
+> > > something tips it off and some commands begin to get "jammed". What seems
+> > > to trigger it is accessing the hard disk, for instance doing something
+> > > like `grep -r foo /var`. When it happens the desktop seems mostly
+> > > responsive, but trying to run commands like `ls` will freeze the
+> > > terminal. Other commands will succeed, for instance `ps aux` works as
+> > > usual.
+> > >
+> > > Alt-SysRq-w shows more than one blocked pdflush task, as well as metalog
+> > > and whatever commands have become "jammed" so far, like `ls`.
+> > >
+> > > I'll be happy to post more information, I just need to know what. I'd
+> > > attach my .config here, but I can't access the computer from where I'm at
+> > > the moment.
+> >
+> > You can send me the .config off list. Also, if possible, the output of
+> > dmesg, sysrq-t and your sysrq-w as well as (try this last because it
+> > sometimes hangs the box hard) sysrq-L
 >
-> I believe I was too focussed on the masking bug in the RT kernel on
-> the simple_irq() that I did not see that for the AT91 series the edge
-> type interrupt handler also works... (even better...) What I thought
-> was 1 single bug in the RT-kernel turned out to be a number of things
-> together that aren't correct, even for mainline.
+> Hi,
 >
-> So, to come to a conclusion: The masking bug in RT is still there in
-> the simple_irq path, and masking has to be removed from the simple_irq
-> code. Also for mainline. AT91 can live without simple_irq.
-> I think we are in sync again...
+> I sent you the output some time ago, have you had time to look at it?
 >
-> I will post a patch for the AT91 later on, after some more testing.
 
 
-Remy,
+Hi Juuso,
 
-Thanks a lot for figuring this out!! Makes me feel better for the NACK ;-)
+Sorry, several things came up as high priority, and this got pushed back.
 
-If you also want to send me a patch to remove the masking in the
-simple_irq code, please do.
-
-Thanks,
+I'll try to take a look at it this week.
 
 -- Steve
