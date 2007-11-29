@@ -1,91 +1,72 @@
-From: "Peter W. Morreale" <pmorreale@novell.com>
-Subject: Re: rt mutex priority boost
-Date: Wed, 28 Nov 2007 20:45:40 -0700
-Message-ID: <1196307940.4078.282.camel@hermosa.morrealenet>
-References: <1196257876.4078.195.camel@hermosa.morrealenet>
-	 <Pine.LNX.4.58.0711281642170.2846@gandalf.stny.rr.com>
-	 <1196292411.4078.253.camel@hermosa.morrealenet>
-	 <Pine.LNX.4.58.0711282027380.12951@gandalf.stny.rr.com>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
+Date: Thu, 29 Nov 2007 09:04:00 +0000
+Message-ID: <20071129090359.GA14728@flint.arm.linux.org.uk>
+References: <1196178834.23808.11.camel@imap.mvista.com> <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com> <20071128172509.GA30173@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com> <20071128200550.GA3494@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com> <1196282672.27964.32.camel@imap.mvista.com> <Pine.LNX.4.58.0711281608490.26365@gandalf.stny.rr.com> <20071128230331.GA31730@flint.arm.linux.org.uk> <1196291955.27964.47.camel@imap.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Remy Bohmer <linux@bohmer.net>,
+	RT <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:38719 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754218AbXK2Du6 (ORCPT
+Received: from caramon.arm.linux.org.uk ([78.32.30.218]:33585 "EHLO
+	caramon.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755654AbXK2JFB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2007 22:50:58 -0500
-In-Reply-To: <Pine.LNX.4.58.0711282027380.12951@gandalf.stny.rr.com>
+	Thu, 29 Nov 2007 04:05:01 -0500
+Content-Disposition: inline
+In-Reply-To: <1196291955.27964.47.camel@imap.mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2007-11-28 at 20:33 -0500, Steven Rostedt wrote:
-
-
-> >
-> > As an early experiment, I converted the dcache, inode, and vfsmount
-> > spins to raw, and performance jumped by 4x.  (I realized later that
-> > dbench does alot of record locking and was still hammered by the BKL,
-> > otherwise I suspect it would have been significantly greater...)  This
-> > also reduced the cs/s rate to below 100k/s (from the high of ~380k/s)
+On Wed, Nov 28, 2007 at 03:19:14PM -0800, Daniel Walker wrote:
+> On Wed, 2007-11-28 at 23:03 +0000, Russell King - ARM Linux wrote:
+> > On Wed, Nov 28, 2007 at 04:13:07PM -0500, Steven Rostedt wrote:
+> > > 
+> > > 
+> > > On Wed, 28 Nov 2007, Daniel Walker wrote:
+> > > 
+> > > >
+> > > > Ignoring the ARM side of things for a sec, handle_simple_irq() will
+> > > > mask() the interrupt in the special case that an interrupt is already in
+> > > > the processes of being handled.. handle_simple_irq() also unmasks when
+> > > > it finishes handling an interrupt (something real time adds for some
+> > > > reason) ..
+> > > >
+> > > > In terms of threading the irq everything is the same except there is no
+> > > > unmask() call when the thread finishes ..
+> > > >
+> > > 
+> > > OK, to be honest, I never fully understood the concept of this
+> > > "simple_irq". I figured it was because of the ARM architecture.
+> > 
+> > If you read what I said compared with what Daniel said, you'll see that
+> > adding the mask/unmask is _pointless_ because for the case where the
+> > simple handler should be used, there is _no_ hardware masking available
+> > except via the parent interrupt signal.
+> > 
+> > So actually Daniel's argument misses the basic point - that using
+> > handle_simple_irq for non-simple IRQs is just WRONG.
 > 
-> After converting those locks to spinlocks, have you tried running
-> cyclictest and hackbench (or dbench) and see how cyclictest works?
-> 
-> I bet you'll see extremely large latencies.
-> 
-> Those locks are some of the biggest offenders of adding latencies.
-> 
+> Well we've got at least two ARM boards which need the additional unmask
+> to work correctly with interrupt threading .. So there must be at least
+> two ARM boards using handle_simple_irq incorrectly .. It sounds like you
+> would prefer we send patches to move those handle_simple_irq users into
+> another method ?
 
-Nod.  To be expected.  A single lock desired by everybody touching any
-filesystem.  Bummer.
+If you read my explaination of the purpose of handle_simple_irq() you'll
+see that for the _correct_ case where this handler should be used, the
+mask and unmask can only be empty.  To repeat for the third time - it's
+for the case where the hardware supplies NO way to mask the interrupt.
 
-Unfortunately I managed to hammer my mod'ed tree, Its easy enough to
-recreate and will do so tomorrow.  
+So adding calls to the mask/unmask methods would be pointless for the
+correct use case.
 
-And yes, I've run all 3 above tests.  Concurrently. 
-
-As I recall, the cyclictest spike for the average was 1-2us, and around
-20us for the max.  But I really need to rerun the suite.  This is old,
-non-ECC memory I work with.  Sometimes bits are twiddled.
-
-I will rerun and post tomorrow. 
-
-> >
-> > It seems clear that a single point of contention (e.g: the dcache lock
-> > in the above workload) greatly impacts the throughput of the hardware
-> > platform.  There are similar points of contention with dev->_xmit_lock,
-> > and queue_lock in the networking stack.
-> >
-> > Obviously, this is an issue for real-world apps.  Those pesky thingies
-> > think they need data from various sources to do stuff.  That was humor.
-> >
-> > At the risk of being chastised, is (or has) this any discussion on this
-> > been taking place?
-> 
-> Discussion of what?  Changing them to raw spinlocks?
-> 
-
-No.  But what about a preempable read/write spin lock?  Is such a thing
-possible?   I suspect not since it was not implemented.  
-
-
-Thx,
--PWM
-
-
-> The real solution is to find better ways to handle the filesystem with
-> less contention. This will take great knowledge of the VFS. But this is no
-> trivial task.
-> 
-> Ideas are welcome.
-> 
-> -- Steve
-> 
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+If you do have the ability to mask, then you should be using the level or
+edge handlers.
