@@ -1,78 +1,39 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will stall forever
-Date: Thu, 29 Nov 2007 14:29:20 +0000
-Message-ID: <20071129142920.GB23845@flint.arm.linux.org.uk>
-References: <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com> <20071128172509.GA30173@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com> <20071128200550.GA3494@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com> <3efb10970711290214v37d85a27k9a84876d9099d7c5@mail.gmail.com> <20071129102506.GB22793@flint.arm.linux.org.uk> <3efb10970711290327s3c60da1ey3b6fae738090ca5@mail.gmail.com> <20071129133604.GA23845@flint.arm.linux.org.uk> <3efb10970711290618v2bd93edfrbc53d9df4b73b33b@mail.gmail.com>
+From: DM <dm.n9107@gmail.com>
+Subject: AVR32
+Date: Thu, 29 Nov 2007 14:59:30 +0000 (UTC)
+Message-ID: <loom.20071129T144956-84@post.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Daniel Walker <dwalker@mvista.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	ARM Linux Mailing List
-	<linux-arm-kernel@lists.arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
-To: Remy Bohmer <linux@bohmer.net>
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from caramon.arm.linux.org.uk ([78.32.30.218]:57568 "EHLO
-	caramon.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756567AbXK2OaB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Nov 2007 09:30:01 -0500
-Content-Disposition: inline
-In-Reply-To: <3efb10970711290618v2bd93edfrbc53d9df4b73b33b@mail.gmail.com>
+Received: from main.gmane.org ([80.91.229.2]:45523 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755230AbXK2PFV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Nov 2007 10:05:21 -0500
+Received: from root by ciao.gmane.org with local (Exim 4.43)
+	id 1Ixkwp-0002KF-6G
+	for linux-rt-users@vger.kernel.org; Thu, 29 Nov 2007 15:05:05 +0000
+Received: from StaticHost.Syntronic.se ([62.168.138.60])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Nov 2007 15:05:03 +0000
+Received: from dm.n9107 by StaticHost.Syntronic.se with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Nov 2007 15:05:03 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 29, 2007 at 03:18:04PM +0100, Remy Bohmer wrote:
-> Hello Russell,
-> 
-> > If people insist on adding the mask/unmask crap to it, the function
-> > might as well be deleted and be an alias for handle_level_IRQ.  Because
-> > that's _precisely_ what you lot are turning it into.
-> 
-> First, I want to make clear that I am just debugging a problem on RT
-> that does not exist on mainline, and I am trying to find a way to get
-> it solved nicely _on RT_, and preferable in a way that it works for
-> everybody with the least chance for regression.
+Hi,
 
-While I realise that, I'm telling you that the _problem_ is being
-caused by the wrong handler being used.
+Are there any plans to include the AVR32 architecture in the RT patch-set?
 
-> I already mentioned that RT is doing masking in this code during
-> normal use, where the mainline kernel does not do this, **except** in
-> an error situation.
+The AVR32 chips seem to have better performance than ARMv5 and does not impose 
+the huge context-switch penalty that ARMv5 has under Linux (due to the need to 
+flush all caches when switching mm). And the power requirements are not higher 
+than ARM. To me the AVR32 chips look really attractive for low-power embedded 
+realtime applications.
 
-AT91 has edge based GPIO interrupts which need special handling so
-edges aren't missed.  That's what the edge handler is there for - to
-ensure that edges aren't missed while the interrupt is soft-disabled.
+Any opinions on this?
 
-SA1100 and PXA have exactly the same setup.  They use the correct
-handler.  Why is AT91 special?
-
-> So, as far as I can tell , the type really used on at91 for the GPIO
-> stuff _is_ a simple_irq as you describe, but one that can be
-> masked/unmasked **in case of errors**. It should never be masked
-> during normal use.
-> 
-> So, I propose option 1 to solve it on RT, and thus to trigger Steven
-> to NACK my first patch. I will try and see if I can make it work
-> _without_ masking on RT (except in case of errors, just as in
-> mainline).
-> ...and probably add some clear description about the purpose of
-> simple_irq, especially related to masking...
-> 
-> Do you agree on this Russell?
-
-Clearly no, I disagree.
-
-> > Ah, and looking at the changes to the file, the addition of the mask
-> > and unmask was done by someone who didn't understand what this was
-> > trying to do.  So that change should be backed out.
-> 
-> Maybe he was trying to mask the irq during an error situation?
-
-Who knows.  The patch says nothing about that change.  The change was
-never copied to me, so I've never reviewed it (and had it been, I
-would've indicated that the change was wrong.)
+/DM
