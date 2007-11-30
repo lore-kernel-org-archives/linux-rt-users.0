@@ -1,181 +1,45 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 3/4] Subject: SCHED - Only balance our RT tasks within our
-	root-domain
-Date: Fri, 30 Nov 2007 11:46:59 -0500
-Message-ID: <20071130164659.30588.70134.stgit@novell1.haskins.net>
-References: <20071130163638.30588.47845.stgit@novell1.haskins.net>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH PREEMPT_RT]: On AT91 ARM: GPIO Interrupt handling can/will
+ stall forever
+Date: Fri, 30 Nov 2007 22:44:04 +0100 (CET)
+Message-ID: <alpine.LFD.0.9999.0711302239100.13961@localhost.localdomain>
+References: <1196177122.23808.7.camel@imap.mvista.com> <1196178834.23808.11.camel@imap.mvista.com> <3efb10970711280638l3f57104y8cf9f2e58235c3@mail.gmail.com> <20071128172509.GA30173@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281402210.3341@gandalf.stny.rr.com>
+ <20071128200550.GA3494@flint.arm.linux.org.uk> <Pine.LNX.4.58.0711281510580.4247@gandalf.stny.rr.com> <3efb10970711290214v37d85a27k9a84876d9099d7c5@mail.gmail.com> <20071129102506.GB22793@flint.arm.linux.org.uk> <3efb10970711290327s3c60da1ey3b6fae738090ca5@mail.gmail.com>
+ <20071129133604.GA23845@flint.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML
-	<"linux-kernel@vger.kernel.org>, linux-rt-users"@vger.kernel.org>,
-	mingo@elte.hu
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Remy Bohmer <linux@bohmer.net>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Daniel Walker <dwalker@mvista.com>,
+	RT <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	Ingo Molnar <mingo@elte.hu>
+To: Russell King - ARM Linux <linux@arm.linux.org.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43073
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S935454AbXK3RIT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Nov 2007 12:08:19 -0500
-In-Reply-To: <20071130163638.30588.47845.stgit@novell1.haskins.net>
+Received: from www.tglx.de ([62.245.132.106]:43645 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752338AbXK3Vrd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 30 Nov 2007 16:47:33 -0500
+In-Reply-To: <20071129133604.GA23845@flint.arm.linux.org.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We move the rt-overload data as the first global to per-domain
-reclassification.  This limits the scope of overload related cache-line
-bouncing to stay with a specified partition instead of affecting all
-cpus in the system.
+On Thu, 29 Nov 2007, Russell King - ARM Linux wrote:
+> If people insist on adding the mask/unmask crap to it, the function
+> might as well be deleted and be an alias for handle_level_IRQ.  Because
+> that's _precisely_ what you lot are turning it into.
+> 
+> Ah, and looking at the changes to the file, the addition of the mask
+> and unmask was done by someone who didn't understand what this was
+> trying to do.  So that change should be backed out.
 
-Finally, we limit the scope of find_lowest_cpu searches to the domain
-instead of the entire system.  Note that we would always respect domain
-boundaries even without this patch, but we first would scan potentially
-all cpus before whittling the list down.  Now we can avoid looking at
-RQs that are out of scope, again reducing cache-line hits.
+It looks like a mechanical "fix them all" thingy. I never intended to
+use the simple handler for anything else than a fast demux handler.
 
-Note: In some cases, task->cpus_allowed will effectively reduce our search
-to within our domain.  However, I believe there are cases where the
-cpus_allowed mask may be all ones and therefore we err on the side of
-caution.  If it can be optimized later, so be it.
+You are right, it needs to be backed out.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Christoph Lameter <clameter@sgi.com>
----
+Thanks,
 
- kernel/sched.c    |    2 ++
- kernel/sched_rt.c |   57 ++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 36 insertions(+), 23 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 9fcf36a..e9d932d 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -292,6 +292,8 @@ struct root_domain {
- 	atomic_t refcount;
- 	cpumask_t span;
- 	cpumask_t online;
-+	cpumask_t rto_mask;
-+	atomic_t  rto_count;
- };
- 
- static struct root_domain def_root_domain;
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index a9675dc..78a188f 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -4,20 +4,18 @@
-  */
- 
- #ifdef CONFIG_SMP
--static cpumask_t rt_overload_mask;
--static atomic_t rto_count;
--static inline int rt_overloaded(void)
-+
-+static inline int rt_overloaded(struct rq *rq)
- {
--	return atomic_read(&rto_count);
-+	return atomic_read(&rq->rd->rto_count);
- }
--static inline cpumask_t *rt_overload(void)
-+static inline cpumask_t *rt_overload(struct rq *rq)
- {
--	return &rt_overload_mask;
-+	return &rq->rd->rto_mask;
- }
- static inline void rt_set_overload(struct rq *rq)
- {
--	rq->rt.overloaded = 1;
--	cpu_set(rq->cpu, rt_overload_mask);
-+	cpu_set(rq->cpu, rq->rd->rto_mask);
- 	/*
- 	 * Make sure the mask is visible before we set
- 	 * the overload count. That is checked to determine
-@@ -26,22 +24,24 @@ static inline void rt_set_overload(struct rq *rq)
- 	 * updated yet.
- 	 */
- 	wmb();
--	atomic_inc(&rto_count);
-+	atomic_inc(&rq->rd->rto_count);
- }
- static inline void rt_clear_overload(struct rq *rq)
- {
- 	/* the order here really doesn't matter */
--	atomic_dec(&rto_count);
--	cpu_clear(rq->cpu, rt_overload_mask);
--	rq->rt.overloaded = 0;
-+	atomic_dec(&rq->rd->rto_count);
-+	cpu_clear(rq->cpu, rq->rd->rto_mask);
- }
- 
- static void update_rt_migration(struct rq *rq)
- {
--	if (rq->rt.rt_nr_migratory && (rq->rt.rt_nr_running > 1))
-+	if (rq->rt.rt_nr_migratory && (rq->rt.rt_nr_running > 1)) {
- 		rt_set_overload(rq);
--	else
-+		rq->rt.overloaded = 1;
-+	} else {
- 		rt_clear_overload(rq);
-+		rq->rt.overloaded = 0;
-+	}
- }
- #endif /* CONFIG_SMP */
- 
-@@ -325,7 +325,7 @@ static int find_lowest_cpus(struct task_struct *task, cpumask_t *lowest_mask)
- 	int       count       = 0;
- 	int       cpu;
- 
--	cpus_and(*lowest_mask, cpu_online_map, task->cpus_allowed);
-+	cpus_and(*lowest_mask, task_rq(task)->rd->online, task->cpus_allowed);
- 
- 	/*
- 	 * Scan each rq for the lowest prio.
-@@ -608,18 +608,12 @@ static int pull_rt_task(struct rq *this_rq)
- 
- 	assert_spin_locked(&this_rq->lock);
- 
--	/*
--	 * If cpusets are used, and we have overlapping
--	 * run queue cpusets, then this algorithm may not catch all.
--	 * This is just the price you pay on trying to keep
--	 * dirtying caches down on large SMP machines.
--	 */
--	if (likely(!rt_overloaded()))
-+	if (likely(!rt_overloaded(this_rq)))
- 		return 0;
- 
- 	next = pick_next_task_rt(this_rq);
- 
--	rto_cpumask = rt_overload();
-+	rto_cpumask = rt_overload(this_rq);
- 
- 	for_each_cpu_mask(cpu, *rto_cpumask) {
- 		if (this_cpu == cpu)
-@@ -838,6 +832,20 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p)
- 	}
- }
- 
-+/* Assumes rq->lock is held */
-+static void join_domain_rt(struct rq *rq)
-+{
-+	if (rq->rt.overloaded)
-+		rt_set_overload(rq);
-+}
-+
-+/* Assumes rq->lock is held */
-+static void leave_domain_rt(struct rq *rq)
-+{
-+	if (rq->rt.overloaded)
-+		rt_clear_overload(rq);
-+}
-+
- static void set_curr_task_rt(struct rq *rq)
- {
- 	struct task_struct *p = rq->curr;
-@@ -867,4 +875,7 @@ const struct sched_class rt_sched_class = {
- 
- 	.set_curr_task          = set_curr_task_rt,
- 	.task_tick		= task_tick_rt,
-+
-+	.join_domain            = join_domain_rt,
-+	.leave_domain           = leave_domain_rt,
- };
+	tglx
