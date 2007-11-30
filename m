@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/4] Subject: SCHED - Add sched-domain roots
-Date: Fri, 30 Nov 2007 11:46:54 -0500
-Message-ID: <20071130164654.30588.29181.stgit@novell1.haskins.net>
+Subject: [PATCH 4/4] Subject: SCHED - Use a 2-d bitmap for searching
+	lowest-pri CPU
+Date: Fri, 30 Nov 2007 11:47:04 -0500
+Message-ID: <20071130164704.30588.49350.stgit@novell1.haskins.net>
 References: <20071130163638.30588.47845.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,267 +12,418 @@ Cc: LKML
 	mingo@elte.hu
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43070
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:43078
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S935437AbXK3RIO (ORCPT
+	by vger.kernel.org with ESMTP id S933788AbXK3RIY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Nov 2007 12:08:14 -0500
+	Fri, 30 Nov 2007 12:08:24 -0500
 In-Reply-To: <20071130163638.30588.47845.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We add the notion of a root-domain which will be used later to rescope
-global variables to per-domain variables.  Each exclusive cpuset
-essentially defines an island domain by fully partitioning the member cpus
-from any other cpuset.  However, we currently still maintain some
-policy/state as global variables which transcend all cpusets.  Consider,
-for instance, rt-overload state.
-
-Whenever a new exclusive cpuset is created, we also create a new
-root-domain object and move each cpu member to the root-domain's span.
-By default the system creates a single root-domain with all cpus as
-members (mimicking the global state we have today).
-
-We add some plumbing for storing class specific data in our root-domain.
-Whenever a RQ is switching root-domains (because of repartitioning) we
-give each sched_class the opportunity to remove any state from its old
-domain and add state to the new one.  This logic doesn't have any clients
-yet but it will later in the series.
+The current code use a linear algorithm which causes scaling issues
+on larger SMP machines.  This patch replaces that algorithm with a
+2-dimensional bitmap to reduce latencies in the wake-up path.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 CC: Christoph Lameter <clameter@sgi.com>
-CC: Paul Jackson <pj@sgi.com>
-CC: Simon Derr <simon.derr@bull.net>
 ---
 
- include/linux/sched.h |    3 +
- kernel/sched.c        |  121 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 121 insertions(+), 3 deletions(-)
+ kernel/Kconfig.preempt |   11 +++
+ kernel/Makefile        |    1 
+ kernel/sched.c         |    8 ++
+ kernel/sched_cpupri.c  |  174 ++++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched_cpupri.h  |   37 ++++++++++
+ kernel/sched_rt.c      |   38 ++++++++++
+ 6 files changed, 266 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 809658c..b891d81 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -849,6 +849,9 @@ struct sched_class {
- 	void (*task_tick) (struct rq *rq, struct task_struct *p);
- 	void (*task_new) (struct rq *rq, struct task_struct *p);
- 	void (*set_cpus_allowed)(struct task_struct *p, cpumask_t *newmask);
-+
-+	void (*join_domain)(struct rq *rq);
-+	void (*leave_domain)(struct rq *rq);
- };
+diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+index c35b1d3..578adba 100644
+--- a/kernel/Kconfig.preempt
++++ b/kernel/Kconfig.preempt
+@@ -94,3 +94,14 @@ config PREEMPT_BKL
+ 	  Say Y here if you are building a kernel for a desktop system.
+ 	  Say N if you are unsure.
  
- struct load_weight {
++config CPUPRI
++	bool "Optimize lowest-priority search"
++	depends on SMP && EXPERIMENTAL
++	default n
++	help
++	  This option attempts to reduce latency in the kernel by replacing
++          the linear lowest-priority search algorithm with a 2-d bitmap.
++
++	  Say Y here if you want to try this experimental algorithm.
++	  Say N if you are unsure.
++
+diff --git a/kernel/Makefile b/kernel/Makefile
+index dfa9695..78a385e 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -57,6 +57,7 @@ obj-$(CONFIG_SYSCTL) += utsname_sysctl.o
+ obj-$(CONFIG_TASK_DELAY_ACCT) += delayacct.o
+ obj-$(CONFIG_TASKSTATS) += taskstats.o tsacct.o
+ obj-$(CONFIG_MARKERS) += marker.o
++obj-$(CONFIG_CPUPRI) += sched_cpupri.o
+ 
+ ifneq ($(CONFIG_SCHED_NO_NO_OMIT_FRAME_POINTER),y)
+ # According to Alan Modra <alan@linuxcare.com.au>, the -fno-omit-frame-pointer is
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 19973a0..9fcf36a 100644
+index e9d932d..892f036 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -276,6 +276,28 @@ struct rt_rq {
- 	int overloaded;
+@@ -70,6 +70,8 @@
+ #include <asm/tlb.h>
+ #include <asm/irq_regs.h>
+ 
++#include "sched_cpupri.h"
++
+ /*
+  * Scheduler clock - returns current time in nanosec units.
+  * This is default implementation.
+@@ -294,6 +296,9 @@ struct root_domain {
+ 	cpumask_t online;
+ 	cpumask_t rto_mask;
+ 	atomic_t  rto_count;
++#ifdef CONFIG_CPUPRI
++	struct cpupri cpupri;
++#endif
  };
  
-+#ifdef CONFIG_SMP
-+
+ static struct root_domain def_root_domain;
+@@ -5797,6 +5802,9 @@ static void init_rootdomain(struct root_domain *rd, const cpumask_t *map)
+ 
+ 	rd->span = *map;
+ 	cpus_and(rd->online, rd->span, cpu_online_map);
++#ifdef CONFIG_CPUPRI
++	cpupri_init(&rd->cpupri);
++#endif
+ }
+ 
+ static void init_defrootdomain(void)
+diff --git a/kernel/sched_cpupri.c b/kernel/sched_cpupri.c
+new file mode 100644
+index 0000000..78e069e
+--- /dev/null
++++ b/kernel/sched_cpupri.c
+@@ -0,0 +1,174 @@
 +/*
-+ * We add the notion of a root-domain which will be used to define per-domain
-+ * variables.  Each exclusive cpuset essentially defines an island domain by
-+ * fully partitioning the member cpus from any other cpuset.  Whenever a new
-+ * exclusive cpuset is created, we also create and attach a new root-domain
-+ * object.
++ *  kernel/sched_cpupri.c
 + *
-+ * By default the system creates a single root-domain with all cpus as
-+ * members (mimicking the global state we have today).
++ *  CPU priority management
++ *
++ *  Copyright (C) 2007 Novell
++ *
++ *  Author: Gregory Haskins <ghaskins@novell.com>
++ *
++ *  This code tracks the priority of each CPU so that global migration
++ *  decisions are easy to calculate.  Each CPU can be in a state as follows:
++ *
++ *                 (INVALID), IDLE, NORMAL, RT1, ... RT99
++ *
++ *  going from the lowest priority to the highest.  CPUs in the INVALID state
++ *  are not eligible for routing.  The system maintains this state with
++ *  a 2 dimensional bitmap (the first for priority class, the second for cpus
++ *  in that class).  Therefore a typical application without affinity
++ *  restrictions can find a suitable CPU with O(1) complexity (e.g. two bit
++ *  searches).  For tasks with affinity restrictions, the algorithm has a
++ *  worst case complexity of O(min(102, nr_domcpus)), though the scenario that
++ *  yields the worst case search is fairly contrived.
++ *
++ *  This program is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License
++ *  as published by the Free Software Foundation; version 2
++ *  of the License.
 + */
-+struct root_domain {
-+	atomic_t refcount;
-+	cpumask_t span;
-+	cpumask_t online;
++
++#include "sched_cpupri.h"
++
++/* Convert between a 140 based task->prio, and our 102 based cpupri */
++static int convert_prio(int prio)
++{
++	int cpupri;
++
++	if (prio == CPUPRI_INVALID)
++		cpupri = CPUPRI_INVALID;
++	else if (prio == MAX_PRIO)
++		cpupri = CPUPRI_IDLE;
++	else if (prio >= MAX_RT_PRIO)
++		cpupri = CPUPRI_NORMAL;
++	else
++		cpupri = MAX_RT_PRIO - prio + 1;
++
++	return cpupri;
++}
++
++#define for_each_cpupri_active(array, idx)                    \
++  for (idx = find_first_bit(array, CPUPRI_NR_PRIORITIES);     \
++       idx < CPUPRI_NR_PRIORITIES;                            \
++       idx = find_next_bit(array, CPUPRI_NR_PRIORITIES, idx+1))
++
++/**
++ * cpupri_find - find the best (lowest-pri) CPU in the system
++ * @cp: The cpupri context
++ * @p: The task
++ * @lowest_mask: A mask to fill in with selected CPUs
++ *
++ * Note: This function returns the recommended CPUs as calculated during the
++ * current invokation.  By the time the call returns, the CPUs may have in
++ * fact changed priorities any number of times.  While not ideal, it is not
++ * an issue of correctness since the normal rebalancer logic will correct
++ * any discrepancies created by racing against the uncertainty of the current
++ * priority configuration.
++ *
++ * Returns: (int)bool - CPUs were found
++ */
++int cpupri_find(struct cpupri *cp, struct task_struct *p,
++		cpumask_t *lowest_mask)
++{
++	int                  idx      = 0;
++	int                  task_pri = convert_prio(p->prio);
++
++	for_each_cpupri_active(cp->pri_active, idx) {
++		struct cpupri_vec *vec  = &cp->pri_to_cpu[idx];
++		cpumask_t mask;
++
++		if (idx >= task_pri)
++			break;
++
++		cpus_and(mask, p->cpus_allowed, vec->mask);
++
++		if (cpus_empty(mask))
++			continue;
++
++		*lowest_mask = mask;
++		return 1;
++	}
++
++	return 0;
++}
++
++/**
++ * cpupri_set - update the cpu priority setting
++ * @cp: The cpupri context
++ * @cpu: The target cpu
++ * @pri: The priority (INVALID-RT99) to assign to this CPU
++ *
++ * Note: Assumes cpu_rq(cpu)->lock is locked
++ *
++ * Returns: (void)
++ */
++void cpupri_set(struct cpupri *cp, int cpu, int newpri)
++{
++	int                 *currpri = &cp->cpu_to_pri[cpu];
++	int                  oldpri  = *currpri;
++	unsigned long        flags;
++
++	newpri = convert_prio(newpri);
++
++	BUG_ON(newpri >= CPUPRI_NR_PRIORITIES);
++
++	if (newpri == oldpri)
++		return;
++
++	/*
++	 * If the cpu was currently mapped to a different value, we
++	 * first need to unmap the old value
++	 */
++	if (likely(oldpri != CPUPRI_INVALID)) {
++		struct cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
++
++		spin_lock_irqsave(&vec->lock, flags);
++
++		cpu_clear(cpu, vec->mask);
++		vec->count--;
++		if (!vec->count)
++			clear_bit(oldpri, cp->pri_active);
++
++		spin_unlock_irqrestore(&vec->lock, flags);
++	}
++
++	if (likely(newpri != CPUPRI_INVALID)) {
++		struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
++
++		spin_lock_irqsave(&vec->lock, flags);
++
++		cpu_set(cpu, vec->mask);
++		vec->count++;
++		if (vec->count == 1)
++			set_bit(newpri, cp->pri_active);
++
++		spin_unlock_irqrestore(&vec->lock, flags);
++	}
++
++	*currpri = newpri;
++}
++
++/**
++ * cpupri_init - initialize the cpupri structure
++ * @cp: The cpupri context
++ *
++ * Returns: (void)
++ */
++void cpupri_init(struct cpupri *cp)
++{
++	int i;
++
++	memset(cp, 0, sizeof(*cp));
++
++	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
++		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
++
++		spin_lock_init(&vec->lock);
++		vec->count = 0;
++		cpus_clear(vec->mask);
++	}
++
++	for_each_possible_cpu(i)
++		cp->cpu_to_pri[i] = CPUPRI_INVALID;
++}
++
++
+diff --git a/kernel/sched_cpupri.h b/kernel/sched_cpupri.h
+new file mode 100644
+index 0000000..7e62008
+--- /dev/null
++++ b/kernel/sched_cpupri.h
+@@ -0,0 +1,37 @@
++#ifndef _LINUX_CPUPRI_H
++#define _LINUX_CPUPRI_H
++
++#include <linux/sched.h>
++
++#define CPUPRI_NR_PRIORITIES 2+MAX_RT_PRIO
++#define CPUPRI_NR_PRI_WORDS CPUPRI_NR_PRIORITIES/BITS_PER_LONG
++
++#define CPUPRI_INVALID -1
++#define CPUPRI_IDLE     0
++#define CPUPRI_NORMAL   1
++/* values 2-101 are RT priorities 0-99 */
++
++struct cpupri_vec
++{
++	spinlock_t lock;
++	int        count;
++	cpumask_t  mask;
 +};
 +
-+static struct root_domain def_root_domain;
++struct cpupri {
++	struct cpupri_vec pri_to_cpu[CPUPRI_NR_PRIORITIES];
++	long              pri_active[CPUPRI_NR_PRI_WORDS];
++	int               cpu_to_pri[NR_CPUS];
++};
 +
++#ifdef CONFIG_CPUPRI
++int  cpupri_find(struct cpupri *cp,
++		 struct task_struct *p, cpumask_t *lowest_mask);
++void cpupri_set(struct cpupri *cp, int cpu, int pri);
++void cpupri_init(struct cpupri *cp);
++#else
++#define cpupri_set(cp, cpu, pri) do { } while (0)
++#define cpupri_init() do { } while (0)
 +#endif
 +
- /*
-  * This is the main, per-CPU runqueue data structure.
-  *
-@@ -333,6 +355,7 @@ struct rq {
- 	atomic_t nr_iowait;
- 
++#endif /* _LINUX_CPUPRI_H */
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 78a188f..c139a23 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -72,8 +72,10 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+ 	WARN_ON(!rt_task(p));
+ 	rq->rt.rt_nr_running++;
  #ifdef CONFIG_SMP
-+	struct root_domain  *rd;
- 	struct sched_domain *sd;
- 
- 	/* For active balancing */
-@@ -5479,6 +5502,15 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
- 	case CPU_ONLINE_FROZEN:
- 		/* Strictly unnecessary, as first user will wake it. */
- 		wake_up_process(cpu_rq(cpu)->migration_thread);
-+
-+		/* Update our root-domain */
-+		rq = cpu_rq(cpu);
-+		spin_lock_irqsave(&rq->lock, flags);
-+		if (rq->rd) {
-+			BUG_ON(!cpu_isset(cpu, rq->rd->span));
-+			cpu_set(cpu, rq->rd->online);
-+		}
-+		spin_unlock_irqrestore(&rq->lock, flags);
- 		break;
- 
- #ifdef CONFIG_HOTPLUG_CPU
-@@ -5527,6 +5559,17 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
- 		}
- 		spin_unlock_irq(&rq->lock);
- 		break;
-+
-+	case CPU_DOWN_PREPARE:
-+		/* Update our root-domain */
-+		rq = cpu_rq(cpu);
-+		spin_lock_irqsave(&rq->lock, flags);
-+		if (rq->rd) {
-+			BUG_ON(!cpu_isset(cpu, rq->rd->span));
-+			cpu_clear(cpu, rq->rd->online);
-+		}
-+		spin_unlock_irqrestore(&rq->lock, flags);
-+		break;
- #endif
- 	case CPU_LOCK_RELEASE:
- 		mutex_unlock(&sched_hotcpu_mutex);
-@@ -5718,11 +5761,69 @@ sd_parent_degenerate(struct sched_domain *sd, struct sched_domain *parent)
- 	return 1;
- }
- 
-+static void rq_attach_root(struct rq *rq, struct root_domain *rd)
-+{
-+	unsigned long flags;
-+	const struct sched_class *class;
-+
-+	spin_lock_irqsave(&rq->lock, flags);
-+
-+	if (rq->rd) {
-+		struct root_domain *old_rd = rq->rd;
-+
-+		for (class = sched_class_highest; class; class = class->next)
-+			if (class->leave_domain)
-+				class->leave_domain(rq);
-+
-+		if (atomic_dec_and_test(&old_rd->refcount))
-+			kfree(old_rd);
+-	if (p->prio < rq->rt.highest_prio)
++	if (p->prio < rq->rt.highest_prio) {
+ 		rq->rt.highest_prio = p->prio;
++		cpupri_set(&rq->rd->cpupri, rq->cpu, p->prio);
 +	}
-+
-+	atomic_inc(&rd->refcount);
-+	rq->rd = rd;
-+
-+	for (class = sched_class_highest; class; class = class->next)
-+		if (class->join_domain)
-+			class->join_domain(rq);
-+
-+	spin_unlock_irqrestore(&rq->lock, flags);
-+}
-+
-+static void init_rootdomain(struct root_domain *rd, const cpumask_t *map)
-+{
-+	memset(rd, 0, sizeof(*rd));
-+
-+	rd->span = *map;
-+	cpus_and(rd->online, rd->span, cpu_online_map);
-+}
-+
-+static void init_defrootdomain(void)
-+{
-+	cpumask_t cpus = CPU_MASK_ALL;
-+
-+	init_rootdomain(&def_root_domain, &cpus);
-+	atomic_set(&def_root_domain.refcount, 1);
-+}
-+
-+static struct root_domain *alloc_rootdomain(const cpumask_t *map)
-+{
-+	struct root_domain *rd;
-+
-+	rd = kmalloc(sizeof(*rd), GFP_KERNEL);
-+	if (!rd)
-+		return NULL;
-+
-+	init_rootdomain(rd, map);
-+
-+	return rd;
-+}
-+
- /*
-  * Attach the domain 'sd' to 'cpu' as its base domain.  Callers must
-  * hold the hotplug lock.
-  */
--static void cpu_attach_domain(struct sched_domain *sd, int cpu)
-+static void cpu_attach_domain(struct sched_domain *sd,
-+			      struct root_domain *rd, int cpu)
+ 	if (p->nr_cpus_allowed > 1)
+ 		rq->rt.rt_nr_migratory++;
+ 
+@@ -83,6 +85,8 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+ 
+ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
  {
- 	struct rq *rq = cpu_rq(cpu);
- 	struct sched_domain *tmp;
-@@ -5747,6 +5848,7 @@ static void cpu_attach_domain(struct sched_domain *sd, int cpu)
++	int highest_prio = rq->rt.highest_prio;
++
+ 	WARN_ON(!rt_task(p));
+ 	WARN_ON(!rq->rt.rt_nr_running);
+ 	rq->rt.rt_nr_running--;
+@@ -102,6 +106,9 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+ 	if (p->nr_cpus_allowed > 1)
+ 		rq->rt.rt_nr_migratory--;
  
- 	sched_domain_debug(sd, cpu);
- 
-+	rq_attach_root(rq, rd);
- 	rcu_assign_pointer(rq->sd, sd);
++	if (rq->rt.highest_prio != highest_prio)
++		cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio);
++
+ 	update_rt_migration(rq);
+ #endif /* CONFIG_SMP */
  }
+@@ -318,6 +325,7 @@ static struct task_struct *pick_next_highest_task_rt(struct rq *rq,
  
-@@ -6115,6 +6217,7 @@ static void init_sched_groups_power(int cpu, struct sched_domain *sd)
- static int build_sched_domains(const cpumask_t *cpu_map)
+ static DEFINE_PER_CPU(cpumask_t, local_cpu_mask);
+ 
++#ifndef CONFIG_CPUPRI
+ static int find_lowest_cpus(struct task_struct *task, cpumask_t *lowest_mask)
  {
- 	int i;
-+	struct root_domain *rd;
- #ifdef CONFIG_NUMA
- 	struct sched_group **sched_group_nodes = NULL;
- 	int sd_allnodes = 0;
-@@ -6131,6 +6234,12 @@ static int build_sched_domains(const cpumask_t *cpu_map)
- 	sched_group_nodes_bycpu[first_cpu(*cpu_map)] = sched_group_nodes;
- #endif
+ 	int       lowest_prio = -1;
+@@ -384,6 +392,22 @@ static int find_lowest_cpus(struct task_struct *task, cpumask_t *lowest_mask)
  
-+	rd = alloc_rootdomain(cpu_map);
-+	if (!rd) {
-+		printk(KERN_WARNING "Cannot alloc root domain\n");
-+		return -ENOMEM;
-+	}
+ 	return count;
+ }
++#else
++static int find_lowest_cpus(struct task_struct *task, cpumask_t *lowest_mask)
++{
++	int count;
 +
- 	/*
- 	 * Set up domains for cpus specified by the cpu_map.
++	count = cpupri_find(&task_rq(task)->rd->cpupri, task, lowest_mask);
++
++	/*
++	 * cpupri cannot efficiently tell us how many bits are set, so it only
++	 * returns a boolean.  However, the caller of this function will
++	 * special case the value "1", so we want to return a positive integer
++	 * other than one if there are bits to look at
++	 */
++	return count ? 2 : 0;
++}
++#endif
+ 
+ static inline int pick_optimal_cpu(int this_cpu, cpumask_t *mask)
+ {
+@@ -406,12 +430,16 @@ static int find_lowest_rq(struct task_struct *task)
+ 	cpumask_t *lowest_mask = &__get_cpu_var(local_cpu_mask);
+ 	int this_cpu = smp_processor_id();
+ 	int cpu      = task_cpu(task);
+-	int count    = find_lowest_cpus(task, lowest_mask);
++	int count;
+ 
++	if (task->nr_cpus_allowed == 1)
++		return -1; /* No other targets possible */
++
++	count = find_lowest_cpus(task, lowest_mask);
+ 	if (!count)
+ 		return -1; /* No targets found */
+ 
+-	/*
++        /*
+ 	 * There is no sense in performing an optimal search if only one
+ 	 * target is found.
  	 */
-@@ -6347,7 +6456,7 @@ static int build_sched_domains(const cpumask_t *cpu_map)
- #else
- 		sd = &per_cpu(phys_domains, i);
- #endif
--		cpu_attach_domain(sd, i);
-+		cpu_attach_domain(sd, rd, i);
- 	}
- 
- 	return 0;
-@@ -6405,7 +6514,7 @@ static void detach_destroy_domains(const cpumask_t *cpu_map)
- 	unregister_sched_domain_sysctl();
- 
- 	for_each_cpu_mask(i, *cpu_map)
--		cpu_attach_domain(NULL, i);
-+		cpu_attach_domain(NULL, &def_root_domain, i);
- 	synchronize_sched();
- 	arch_destroy_sched_domains(cpu_map);
- }
-@@ -6638,6 +6747,10 @@ void __init sched_init(void)
- 	int highest_cpu = 0;
- 	int i, j;
- 
-+#ifdef CONFIG_SMP
-+	init_defrootdomain();
-+#endif
+@@ -837,6 +865,8 @@ static void join_domain_rt(struct rq *rq)
+ {
+ 	if (rq->rt.overloaded)
+ 		rt_set_overload(rq);
 +
- 	for_each_possible_cpu(i) {
- 		struct rt_prio_array *array;
- 		struct rq *rq;
-@@ -6677,6 +6790,8 @@ void __init sched_init(void)
- 			rq->cpu_load[j] = 0;
- #ifdef CONFIG_SMP
- 		rq->sd = NULL;
-+		rq->rd = NULL;
-+		rq_attach_root(rq, &def_root_domain);
- 		rq->active_balance = 0;
- 		rq->next_balance = jiffies;
- 		rq->push_cpu = 0;
++	cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio);
+ }
+ 
+ /* Assumes rq->lock is held */
+@@ -844,6 +874,8 @@ static void leave_domain_rt(struct rq *rq)
+ {
+ 	if (rq->rt.overloaded)
+ 		rt_clear_overload(rq);
++
++	cpupri_set(&rq->rd->cpupri, rq->cpu, CPUPRI_INVALID);
+ }
+ 
+ static void set_curr_task_rt(struct rq *rq)
