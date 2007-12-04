@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 07/23] Subject: SCHED - disable CFS RT load balancing.
-Date: Tue, 04 Dec 2007 15:45:01 -0500
-Message-ID: <20071204204501.3567.25517.stgit@novell1.haskins.net>
+Subject: [PATCH 04/23] Subject: SCHED - RT overloaded runqueues accounting
+Date: Tue, 04 Dec 2007 15:44:46 -0500
+Message-ID: <20071204204446.3567.35438.stgit@novell1.haskins.net>
 References: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,144 +10,86 @@ Cc: rostedt@goodmis.org, ghaskins@novell.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53441
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53426
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755165AbXLDVHA (ORCPT
+	by vger.kernel.org with ESMTP id S1754693AbXLDVGp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 16:07:00 -0500
+	Tue, 4 Dec 2007 16:06:45 -0500
 In-Reply-To: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Steven Rostedt <srostedt@redhat.com>
 
-Since we now take an active approach to load balancing, we don't need to
-balance RT tasks via CFS. In fact, this code was found to pull RT tasks
-away from CPUS that the active movement performed, resulting in
-large latencies.
+This patch adds an RT overload accounting system. When a runqueue has
+more than one RT task queued, it is marked as overloaded. That is that it
+is a candidate to have RT tasks pulled from it.
 
 Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |   95 ++---------------------------------------------------
- 1 files changed, 4 insertions(+), 91 deletions(-)
+ kernel/sched_rt.c |   36 ++++++++++++++++++++++++++++++++++++
+ 1 files changed, 36 insertions(+), 0 deletions(-)
 
 diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index a0b05ff..ea07ffa 100644
+index b5ef4b8..b8c758a 100644
 --- a/kernel/sched_rt.c
 +++ b/kernel/sched_rt.c
-@@ -565,109 +565,22 @@ static void wakeup_balance_rt(struct rq *rq, struct task_struct *p)
- 		push_rt_tasks(rq);
+@@ -3,6 +3,38 @@
+  * policies)
+  */
+ 
++#ifdef CONFIG_SMP
++static cpumask_t rt_overload_mask;
++static atomic_t rto_count;
++static inline int rt_overloaded(void)
++{
++	return atomic_read(&rto_count);
++}
++static inline cpumask_t *rt_overload(void)
++{
++	return &rt_overload_mask;
++}
++static inline void rt_set_overload(struct rq *rq)
++{
++	cpu_set(rq->cpu, rt_overload_mask);
++	/*
++	 * Make sure the mask is visible before we set
++	 * the overload count. That is checked to determine
++	 * if we should look at the mask. It would be a shame
++	 * if we looked at the mask, but the mask was not
++	 * updated yet.
++	 */
++	wmb();
++	atomic_inc(&rto_count);
++}
++static inline void rt_clear_overload(struct rq *rq)
++{
++	/* the order here really doesn't matter */
++	atomic_dec(&rto_count);
++	cpu_clear(rq->cpu, rt_overload_mask);
++}
++#endif /* CONFIG_SMP */
++
+ /*
+  * Update the current task's runtime statistics. Skip current tasks that
+  * are not in our scheduling class.
+@@ -33,6 +65,8 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
+ #ifdef CONFIG_SMP
+ 	if (p->prio < rq->rt.highest_prio)
+ 		rq->rt.highest_prio = p->prio;
++	if (rq->rt.rt_nr_running > 1)
++		rt_set_overload(rq);
+ #endif /* CONFIG_SMP */
  }
  
--/*
-- * Load-balancing iterator. Note: while the runqueue stays locked
-- * during the whole iteration, the current task might be
-- * dequeued so the iterator has to be dequeue-safe. Here we
-- * achieve that by always pre-iterating before returning
-- * the current task:
-- */
--static struct task_struct *load_balance_start_rt(void *arg)
--{
--	struct rq *rq = arg;
--	struct rt_prio_array *array = &rq->rt.active;
--	struct list_head *head, *curr;
--	struct task_struct *p;
--	int idx;
--
--	idx = sched_find_first_bit(array->bitmap);
--	if (idx >= MAX_RT_PRIO)
--		return NULL;
--
--	head = array->queue + idx;
--	curr = head->prev;
--
--	p = list_entry(curr, struct task_struct, run_list);
--
--	curr = curr->prev;
--
--	rq->rt.rt_load_balance_idx = idx;
--	rq->rt.rt_load_balance_head = head;
--	rq->rt.rt_load_balance_curr = curr;
--
--	return p;
--}
--
--static struct task_struct *load_balance_next_rt(void *arg)
--{
--	struct rq *rq = arg;
--	struct rt_prio_array *array = &rq->rt.active;
--	struct list_head *head, *curr;
--	struct task_struct *p;
--	int idx;
--
--	idx = rq->rt.rt_load_balance_idx;
--	head = rq->rt.rt_load_balance_head;
--	curr = rq->rt.rt_load_balance_curr;
--
--	/*
--	 * If we arrived back to the head again then
--	 * iterate to the next queue (if any):
--	 */
--	if (unlikely(head == curr)) {
--		int next_idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
--
--		if (next_idx >= MAX_RT_PRIO)
--			return NULL;
--
--		idx = next_idx;
--		head = array->queue + idx;
--		curr = head->prev;
--
--		rq->rt.rt_load_balance_idx = idx;
--		rq->rt.rt_load_balance_head = head;
--	}
--
--	p = list_entry(curr, struct task_struct, run_list);
--
--	curr = curr->prev;
--
--	rq->rt.rt_load_balance_curr = curr;
--
--	return p;
--}
--
- static unsigned long
- load_balance_rt(struct rq *this_rq, int this_cpu, struct rq *busiest,
- 		unsigned long max_load_move,
- 		struct sched_domain *sd, enum cpu_idle_type idle,
- 		int *all_pinned, int *this_best_prio)
- {
--	struct rq_iterator rt_rq_iterator;
--
--	rt_rq_iterator.start = load_balance_start_rt;
--	rt_rq_iterator.next = load_balance_next_rt;
--	/* pass 'busiest' rq argument into
--	 * load_balance_[start|next]_rt iterators
--	 */
--	rt_rq_iterator.arg = busiest;
--
--	return balance_tasks(this_rq, this_cpu, busiest, max_load_move, sd,
--			     idle, all_pinned, this_best_prio, &rt_rq_iterator);
-+	/* don't touch RT tasks */
-+	return 0;
+@@ -54,6 +88,8 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
+ 		} /* otherwise leave rq->highest prio alone */
+ 	} else
+ 		rq->rt.highest_prio = MAX_RT_PRIO;
++	if (rq->rt.rt_nr_running < 2)
++		rt_clear_overload(rq);
+ #endif /* CONFIG_SMP */
  }
  
- static int
- move_one_task_rt(struct rq *this_rq, int this_cpu, struct rq *busiest,
- 		 struct sched_domain *sd, enum cpu_idle_type idle)
- {
--	struct rq_iterator rt_rq_iterator;
--
--	rt_rq_iterator.start = load_balance_start_rt;
--	rt_rq_iterator.next = load_balance_next_rt;
--	rt_rq_iterator.arg = busiest;
--
--	return iter_move_one_task(this_rq, this_cpu, busiest, sd, idle,
--				  &rt_rq_iterator);
-+	/* don't touch RT tasks */
-+	return 0;
- }
- #else /* CONFIG_SMP */
- # define schedule_tail_balance_rt(rq)	do { } while (0)
