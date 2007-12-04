@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 04/23] Subject: SCHED - RT overloaded runqueues accounting
-Date: Tue, 04 Dec 2007 15:44:46 -0500
-Message-ID: <20071204204446.3567.35438.stgit@novell1.haskins.net>
+Subject: [PATCH 06/23] Subject: SCHED - wake up balance RT
+Date: Tue, 04 Dec 2007 15:44:56 -0500
+Message-ID: <20071204204456.3567.63926.stgit@novell1.haskins.net>
 References: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,86 +10,76 @@ Cc: rostedt@goodmis.org, ghaskins@novell.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53426
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53437
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754693AbXLDVGp (ORCPT
+	by vger.kernel.org with ESMTP id S1755057AbXLDVGz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 16:06:45 -0500
+	Tue, 4 Dec 2007 16:06:55 -0500
 In-Reply-To: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Steven Rostedt <srostedt@redhat.com>
 
-This patch adds an RT overload accounting system. When a runqueue has
-more than one RT task queued, it is marked as overloaded. That is that it
-is a candidate to have RT tasks pulled from it.
+This patch adds pushing of overloaded RT tasks from a runqueue that is
+having tasks (most likely RT tasks) added to the run queue.
+
+TODO: We don't cover the case of waking of new RT tasks (yet).
 
 Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |   36 ++++++++++++++++++++++++++++++++++++
- 1 files changed, 36 insertions(+), 0 deletions(-)
+ kernel/sched.c    |    3 +++
+ kernel/sched_rt.c |   10 ++++++++++
+ 2 files changed, 13 insertions(+), 0 deletions(-)
 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index b5ef4b8..b8c758a 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -3,6 +3,38 @@
-  * policies)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index a30147e..ebd114b 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -22,6 +22,8 @@
+  *              by Peter Williams
+  *  2007-05-06  Interactivity improvements to CFS by Mike Galbraith
+  *  2007-07-01  Group scheduling enhancements by Srivatsa Vaddagiri
++ *  2007-10-22  RT overload balancing by Steven Rostedt
++ *                 (with thanks to Gregory Haskins)
   */
  
-+#ifdef CONFIG_SMP
-+static cpumask_t rt_overload_mask;
-+static atomic_t rto_count;
-+static inline int rt_overloaded(void)
+ #include <linux/mm.h>
+@@ -1641,6 +1643,7 @@ out_activate:
+ 
+ out_running:
+ 	p->state = TASK_RUNNING;
++	wakeup_balance_rt(rq, p);
+ out:
+ 	task_rq_unlock(rq, &flags);
+ 
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index a2f1057..a0b05ff 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -556,6 +556,15 @@ static void schedule_tail_balance_rt(struct rq *rq)
+ 	}
+ }
+ 
++
++static void wakeup_balance_rt(struct rq *rq, struct task_struct *p)
 +{
-+	return atomic_read(&rto_count);
++	if (unlikely(rt_task(p)) &&
++	    !task_running(rq, p) &&
++	    (p->prio >= rq->curr->prio))
++		push_rt_tasks(rq);
 +}
-+static inline cpumask_t *rt_overload(void)
-+{
-+	return &rt_overload_mask;
-+}
-+static inline void rt_set_overload(struct rq *rq)
-+{
-+	cpu_set(rq->cpu, rt_overload_mask);
-+	/*
-+	 * Make sure the mask is visible before we set
-+	 * the overload count. That is checked to determine
-+	 * if we should look at the mask. It would be a shame
-+	 * if we looked at the mask, but the mask was not
-+	 * updated yet.
-+	 */
-+	wmb();
-+	atomic_inc(&rto_count);
-+}
-+static inline void rt_clear_overload(struct rq *rq)
-+{
-+	/* the order here really doesn't matter */
-+	atomic_dec(&rto_count);
-+	cpu_clear(rq->cpu, rt_overload_mask);
-+}
-+#endif /* CONFIG_SMP */
 +
  /*
-  * Update the current task's runtime statistics. Skip current tasks that
-  * are not in our scheduling class.
-@@ -33,6 +65,8 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
- #ifdef CONFIG_SMP
- 	if (p->prio < rq->rt.highest_prio)
- 		rq->rt.highest_prio = p->prio;
-+	if (rq->rt.rt_nr_running > 1)
-+		rt_set_overload(rq);
+  * Load-balancing iterator. Note: while the runqueue stays locked
+  * during the whole iteration, the current task might be
+@@ -663,6 +672,7 @@ move_one_task_rt(struct rq *this_rq, int this_cpu, struct rq *busiest,
+ #else /* CONFIG_SMP */
+ # define schedule_tail_balance_rt(rq)	do { } while (0)
+ # define schedule_balance_rt(rq, prev)	do { } while (0)
++# define wakeup_balance_rt(rq, p)	do { } while (0)
  #endif /* CONFIG_SMP */
- }
  
-@@ -54,6 +88,8 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
- 		} /* otherwise leave rq->highest prio alone */
- 	} else
- 		rq->rt.highest_prio = MAX_RT_PRIO;
-+	if (rq->rt.rt_nr_running < 2)
-+		rt_clear_overload(rq);
- #endif /* CONFIG_SMP */
- }
- 
+ static void task_tick_rt(struct rq *rq, struct task_struct *p)
