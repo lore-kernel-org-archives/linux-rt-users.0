@@ -1,34 +1,41 @@
-From: Kevin Hilman <khilman@mvista.com>
-Subject: [PATCH -rt] ARM: compile fix for event tracing
-Date: Mon, 03 Dec 2007 19:37:51 -0800
-Message-ID: <87fxyjruy8.fsf@vence.hilman.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH -rt] ARM: compile fix for event tracing
+Date: Tue, 4 Dec 2007 10:04:23 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712041003230.9066@gandalf.stny.rr.com>
+References: <87fxyjruy8.fsf@vence.hilman.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-arm-kernel@lists.arm.linux.org.uk,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org,
+	linux-arm-kernel@lists.arm.linux.org.uk,
 	linux-kernel <linux-kernel@vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: Kevin Hilman <khilman@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:37348 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751267AbXLDDh1 (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:54579 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750831AbXLDPHS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Dec 2007 22:37:27 -0500
+	Tue, 4 Dec 2007 10:07:18 -0500
+In-Reply-To: <87fxyjruy8.fsf@vence.hilman.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The cycles/usecs conversion macros should be dependent on
-CONFIG_EVENT_TRACE instead of CONFIG_LATENCY_TIMING.
 
-Signed-off-by: Kevin Hilman <khilman@mvista.com>
 
---- a/include/asm-arm/timex.h
-+++ b/include/asm-arm/timex.h
-@@ -18,7 +18,7 @@ typedef unsigned long cycles_t;
- 
- #ifndef mach_read_cycles
-  #define mach_read_cycles() (0)
--#ifdef CONFIG_LATENCY_TIMING
-+#ifdef CONFIG_EVENT_TRACE
-  #define mach_cycles_to_usecs(d) (d)
-  #define mach_usecs_to_cycles(d) (d)
- #endif
+On Mon, 3 Dec 2007, Kevin Hilman wrote:
+
+> The cycles/usecs conversion macros should be dependent on
+> CONFIG_EVENT_TRACE instead of CONFIG_LATENCY_TIMING.
+>
+> Signed-off-by: Kevin Hilman <khilman@mvista.com>
+>
+> --- a/include/asm-arm/timex.h
+> +++ b/include/asm-arm/timex.h
+
+Hi, thanks I'll apply this.
+
+But please, in the future, state which version of the -rt patch you
+applied this to.
+
+Thanks,
+
+-- Steve
