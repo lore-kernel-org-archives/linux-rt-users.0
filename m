@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 22/23] Subject: SCHED - Only balance our RT tasks within our
-	root-domain
-Date: Tue, 04 Dec 2007 15:46:17 -0500
-Message-ID: <20071204204617.3567.90401.stgit@novell1.haskins.net>
+Subject: [PATCH 16/23] Subject: SCHED - Avoid overload
+Date: Tue, 04 Dec 2007 15:45:46 -0500
+Message-ID: <20071204204546.3567.66464.stgit@novell1.haskins.net>
 References: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,170 +10,80 @@ Cc: rostedt@goodmis.org, ghaskins@novell.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53515
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53486
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754954AbXLDVIQ (ORCPT
+	by vger.kernel.org with ESMTP id S1755015AbXLDVHq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 16:08:16 -0500
+	Tue, 4 Dec 2007 16:07:46 -0500
 In-Reply-To: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We move the rt-overload data as the first global to per-domain
-reclassification.  This limits the scope of overload related cache-line
-bouncing to stay with a specified partition instead of affecting all
-cpus in the system.
+From: Steven Rostedt <srostedt@redhat.com>
 
-Finally, we limit the scope of find_lowest_cpu searches to the domain
-instead of the entire system.  Note that we would always respect domain
-boundaries even without this patch, but we first would scan potentially
-all cpus before whittling the list down.  Now we can avoid looking at
-RQs that are out of scope, again reducing cache-line hits.
+This patch changes the searching for a run queue by a waking RT task
+to try to pick another runqueue if the currently running task
+is an RT task.
 
-Note: In some cases, task->cpus_allowed will effectively reduce our search
-to within our domain.  However, I believe there are cases where the
-cpus_allowed mask may be all ones and therefore we err on the side of
-caution.  If it can be optimized later, so be it.
+The reason is that RT tasks behave different than normal
+tasks. Preempting a normal task to run a RT task to keep
+its cache hot is fine, because the preempted non-RT task
+may wait on that same runqueue to run again unless the
+migration thread comes along and pulls it off.
 
+RT tasks behave differently. If one is preempted, it makes
+an active effort to continue to run. So by having a high
+priority task preempt a lower priority RT task, that lower
+RT task will then quickly try to run on another runqueue.
+This will cause that lower RT task to replace its nice
+hot cache (and TLB) with a completely cold one. This is
+for the hope that the new high priority RT task will keep
+ its cache hot.
+
+Remeber that this high priority RT task was just woken up.
+So it may likely have been sleeping for several milliseconds,
+and will end up with a cold cache anyway. RT tasks run till
+they voluntarily stop, or are preempted by a higher priority
+task. This means that it is unlikely that the woken RT task
+will have a hot cache to wake up to. So pushing off a lower
+RT task is just killing its cache for no good reason.
+
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Christoph Lameter <clameter@sgi.com>
 ---
 
- kernel/sched.c    |    2 ++
- kernel/sched_rt.c |   57 ++++++++++++++++++++++++++++++++---------------------
- 2 files changed, 36 insertions(+), 23 deletions(-)
+ kernel/sched_rt.c |   20 ++++++++++++++++----
+ 1 files changed, 16 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 79f3eba..0c7e5e4 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -292,6 +292,8 @@ struct root_domain {
- 	atomic_t refcount;
- 	cpumask_t span;
- 	cpumask_t online;
-+	cpumask_t rto_mask;
-+	atomic_t  rto_count;
- };
- 
- static struct root_domain def_root_domain;
 diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 039be04..9e8a59d 100644
+index 19db3a9..e007d2b 100644
 --- a/kernel/sched_rt.c
 +++ b/kernel/sched_rt.c
-@@ -4,20 +4,18 @@
-  */
+@@ -158,11 +158,23 @@ static int select_task_rq_rt(struct task_struct *p, int sync)
+ 	struct rq *rq = task_rq(p);
  
- #ifdef CONFIG_SMP
--static cpumask_t rt_overload_mask;
--static atomic_t rto_count;
--static inline int rt_overloaded(void)
-+
-+static inline int rt_overloaded(struct rq *rq)
- {
--	return atomic_read(&rto_count);
-+	return atomic_read(&rq->rd->rto_count);
- }
--static inline cpumask_t *rt_overload(void)
-+static inline cpumask_t *rt_overload(struct rq *rq)
- {
--	return &rt_overload_mask;
-+	return &rq->rd->rto_mask;
- }
- static inline void rt_set_overload(struct rq *rq)
- {
--	rq->rt.overloaded = 1;
--	cpu_set(rq->cpu, rt_overload_mask);
-+	cpu_set(rq->cpu, rq->rd->rto_mask);
  	/*
- 	 * Make sure the mask is visible before we set
- 	 * the overload count. That is checked to determine
-@@ -26,22 +24,24 @@ static inline void rt_set_overload(struct rq *rq)
- 	 * updated yet.
+-	 * If the task will not preempt the RQ, try to find a better RQ
+-	 * before we even activate the task
++	 * If the current task is an RT task, then
++	 * try to see if we can wake this RT task up on another
++	 * runqueue. Otherwise simply start this RT task
++	 * on its current runqueue.
++	 *
++	 * We want to avoid overloading runqueues. Even if
++	 * the RT task is of higher priority than the current RT task.
++	 * RT tasks behave differently than other tasks. If
++	 * one gets preempted, we try to push it off to another queue.
++	 * So trying to keep a preempting RT task on the same
++	 * cache hot CPU will force the running RT task to
++	 * a cold CPU. So we waste all the cache for the lower
++	 * RT task in hopes of saving some of a RT task
++	 * that is just being woken and probably will have
++	 * cold cache anyway.
  	 */
- 	wmb();
--	atomic_inc(&rto_count);
-+	atomic_inc(&rq->rd->rto_count);
- }
- static inline void rt_clear_overload(struct rq *rq)
- {
- 	/* the order here really doesn't matter */
--	atomic_dec(&rto_count);
--	cpu_clear(rq->cpu, rt_overload_mask);
--	rq->rt.overloaded = 0;
-+	atomic_dec(&rq->rd->rto_count);
-+	cpu_clear(rq->cpu, rq->rd->rto_mask);
- }
+-	if ((p->prio >= rq->rt.highest_prio)
+-	    && (p->nr_cpus_allowed > 1)) {
++	if (unlikely(rt_task(rq->curr))) {
+ 		int cpu = find_lowest_rq(p);
  
- static void update_rt_migration(struct rq *rq)
- {
--	if (rq->rt.rt_nr_migratory && (rq->rt.rt_nr_running > 1))
-+	if (rq->rt.rt_nr_migratory && (rq->rt.rt_nr_running > 1)) {
- 		rt_set_overload(rq);
--	else
-+		rq->rt.overloaded = 1;
-+	} else {
- 		rt_clear_overload(rq);
-+		rq->rt.overloaded = 0;
-+	}
- }
- #endif /* CONFIG_SMP */
- 
-@@ -302,7 +302,7 @@ static int find_lowest_cpus(struct task_struct *task, cpumask_t *lowest_mask)
- 	int       count       = 0;
- 	int       cpu;
- 
--	cpus_and(*lowest_mask, cpu_online_map, task->cpus_allowed);
-+	cpus_and(*lowest_mask, task_rq(task)->rd->online, task->cpus_allowed);
- 
- 	/*
- 	 * Scan each rq for the lowest prio.
-@@ -585,18 +585,12 @@ static int pull_rt_task(struct rq *this_rq)
- 
- 	assert_spin_locked(&this_rq->lock);
- 
--	/*
--	 * If cpusets are used, and we have overlapping
--	 * run queue cpusets, then this algorithm may not catch all.
--	 * This is just the price you pay on trying to keep
--	 * dirtying caches down on large SMP machines.
--	 */
--	if (likely(!rt_overloaded()))
-+	if (likely(!rt_overloaded(this_rq)))
- 		return 0;
- 
- 	next = pick_next_task_rt(this_rq);
- 
--	rto_cpumask = rt_overload();
-+	rto_cpumask = rt_overload(this_rq);
- 
- 	for_each_cpu_mask(cpu, *rto_cpumask) {
- 		if (this_cpu == cpu)
-@@ -815,6 +809,20 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p)
- 	}
- }
- 
-+/* Assumes rq->lock is held */
-+static void join_domain_rt(struct rq *rq)
-+{
-+	if (rq->rt.overloaded)
-+		rt_set_overload(rq);
-+}
-+
-+/* Assumes rq->lock is held */
-+static void leave_domain_rt(struct rq *rq)
-+{
-+	if (rq->rt.overloaded)
-+		rt_clear_overload(rq);
-+}
-+
- static void set_curr_task_rt(struct rq *rq)
- {
- 	struct task_struct *p = rq->curr;
-@@ -844,4 +852,7 @@ const struct sched_class rt_sched_class = {
- 
- 	.set_curr_task          = set_curr_task_rt,
- 	.task_tick		= task_tick_rt,
-+
-+	.join_domain            = join_domain_rt,
-+	.leave_domain           = leave_domain_rt,
- };
+ 		return (cpu == -1) ? task_cpu(p) : cpu;
