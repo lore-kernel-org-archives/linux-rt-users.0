@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 02/23] Subject: SCHED - track highest prio queued on runqueue
-Date: Tue, 04 Dec 2007 15:44:36 -0500
-Message-ID: <20071204204436.3567.59146.stgit@novell1.haskins.net>
-References: <20071204204236.3567.65491.stgit@novell1.haskins.net>
+Subject: [PATCH 00/23] RT balance v7
+Date: Tue, 04 Dec 2007 15:44:25 -0500
+Message-ID: <20071204204236.3567.65491.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,86 +9,62 @@ Cc: rostedt@goodmis.org, ghaskins@novell.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53417
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53406
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751081AbXLDVGf (ORCPT
+	by vger.kernel.org with ESMTP id S1750898AbXLDVGb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 16:06:35 -0500
-In-Reply-To: <20071204204236.3567.65491.stgit@novell1.haskins.net>
+	Tue, 4 Dec 2007 16:06:31 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Steven Rostedt <srostedt@redhat.com>
+Ingo,
 
-This patch adds accounting to each runqueue to keep track of the
-highest prio task queued on the run queue. We only care about
-RT tasks, so if the run queue does not contain any active RT tasks
-its priority will be considered MAX_RT_PRIO.
+This series applies on GIT commit 2254c2e0184c603f92fc9b81016ff4bb53da622d
+(2.6.24-rc4 (ish) git HEAD)
 
-This information will be used for later patches.
+These patches replace v6 + v6b announced here:
 
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+http://lkml.org/lkml/2007/11/20/613
 
- kernel/sched.c    |    3 +++
- kernel/sched_rt.c |   18 ++++++++++++++++++
- 2 files changed, 21 insertions(+), 0 deletions(-)
+ and
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 4751c2f..90c04fd 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -267,6 +267,8 @@ struct rt_rq {
- 	int rt_load_balance_idx;
- 	struct list_head *rt_load_balance_head, *rt_load_balance_curr;
- 	unsigned long rt_nr_running;
-+	/* highest queued rt task prio */
-+	int highest_prio;
- };
- 
- /*
-@@ -6783,6 +6785,7 @@ void __init sched_init(void)
- 		rq->cpu = i;
- 		rq->migration_thread = NULL;
- 		INIT_LIST_HEAD(&rq->migration_queue);
-+		rq->rt.highest_prio = MAX_RT_PRIO;
- #endif
- 		atomic_set(&rq->nr_iowait, 0);
- 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index a6271f4..4d5b9b2 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -30,6 +30,10 @@ static inline void inc_rt_tasks(struct task_struct *p, struct rq *rq)
- {
- 	WARN_ON(!rt_task(p));
- 	rq->rt.rt_nr_running++;
-+#ifdef CONFIG_SMP
-+	if (p->prio < rq->rt.highest_prio)
-+		rq->rt.highest_prio = p->prio;
-+#endif /* CONFIG_SMP */
- }
- 
- static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
-@@ -37,6 +41,20 @@ static inline void dec_rt_tasks(struct task_struct *p, struct rq *rq)
- 	WARN_ON(!rt_task(p));
- 	WARN_ON(!rq->rt.rt_nr_running);
- 	rq->rt.rt_nr_running--;
-+#ifdef CONFIG_SMP
-+	if (rq->rt.rt_nr_running) {
-+		struct rt_prio_array *array;
-+
-+		WARN_ON(p->prio < rq->rt.highest_prio);
-+		if (p->prio == rq->rt.highest_prio) {
-+			/* recalculate */
-+			array = &rq->rt.active;
-+			rq->rt.highest_prio =
-+				sched_find_first_bit(array->bitmap);
-+		} /* otherwise leave rq->highest prio alone */
-+	} else
-+		rq->rt.highest_prio = MAX_RT_PRIO;
-+#endif /* CONFIG_SMP */
- }
- 
- static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+http://lkml.org/lkml/2007/11/21/226
+
+The series is a collaborative effort between myself and Steven Rostedt.
+
+Changes since v6:
+
+*) cleaned up patch headers
+*) fixed some checkpatch errors
+*) incorporated v6<x> add-ons to one unified series
+
+Synopsis:
+---------------------
+
+Most people don't care about RT tasks, but some of us do, and this series
+helps us fix a problem with the current design.  We designed carefully to have
+negligible impact on non RT code paths, and we believe we have achieved this
+goal.
+
+These tests against a 64-way SMP architecture show that the series doesn't
+hurt those that don't care about RT tasks, but it helps out those that do.
+
+http://people.redhat.com/srostedt/rt-benchmarks/
+
+you can find a tarball of the entire series for your convenience here:
+
+ftp://ftp.novell.com/dev/ghaskins/rt-balance-v7.tar.bz2
+
+also, most of these patches have been incorporated into the later versions of
+-rt which you can find in patch form here:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+or in prebuilt form here from opensuse-factory:
+
+http://download.opensuse.org/distribution/SL-OSS-factory/inst-source/suse/x86_64/kernel-rt-2.6.24_rc3_git1-3.x86_64.rpm
+
+Please consider for inclusion in the next convenient merge window.
+
+Regards,
+-Steven Rostedt, and Gregory Haskins
