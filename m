@@ -1,59 +1,44 @@
-From: David Brownell <david-b@pacbell.net>
-Subject: Re: Generic IRQs: proper edge/level via irq_chip->set_type hook
-Date: Tue, 4 Dec 2007 16:46:35 -0800
-Message-ID: <200712041646.36402.david-b@pacbell.net>
-References: <87eje259r0.fsf@vence.hilman.org>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/3] RT balance v7a
+Date: Tue, 04 Dec 2007 21:55:23 -0500
+Message-ID: <20071205025137.4494.18683.stgit@novell1.haskins.net>
+References: <20071204212705.GA10360@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-omap@vger.kernel.org,
-	Russell King <linux@arm.linux.org.uk>,
-	"Remy Bohmer" <linux@bohmer.net>
-To: Kevin Hilman <khilman@mvista.com>
+Cc: rostedt@goodmis.org, ghaskins@novell.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp119.sbc.mail.sp1.yahoo.com ([69.147.64.92]:25708 "HELO
-	smtp119.sbc.mail.sp1.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1751539AbXLEAxS (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:46976
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750954AbXLEDRZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 19:53:18 -0500
-In-Reply-To: <87eje259r0.fsf@vence.hilman.org>
-Content-Disposition: inline
+	Tue, 4 Dec 2007 22:17:25 -0500
+In-Reply-To: <20071204212705.GA10360@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 04 December 2007, Kevin Hilman wrote:
-> The hack below allows me to get the above idea working, but I'm
-> looking for better suggestions on how to rework the locking here so
-> that the handler might be changed from within the irq_chip's set_type
-> handler.
+>>> On Tue, Dec 4, 2007 at  4:27 PM, in message <20071204212705.GA10360@elte.hu>,
+Ingo Molnar <mingo@elte.hu> wrote: 
+
+> * Gregory Haskins <ghaskins@novell.com> wrote:
 > 
-> Any ideas?
+>> Ingo,
+>> 
+>> This series applies on GIT commit 
+>> 2254c2e0184c603f92fc9b81016ff4bb53da622d (2.6.24-rc4 (ish) git HEAD)
+> 
+> please post patches against sched-devel.git - it has part of your 
+> previous patches included already, plus some cleanups i did to them, so 
+> this series of yours wont apply. sched-devel.git is at:
+> 
+>  git://git.kernel.org/pub/scm/linux/kernel/git/mingo/linux-2.6-sched-devel.git
+Hi Ingo,
+  I have rebased to your sched-devel.git.  You were right, most of the patches
+  were already there (1-20, in fact), so there remain only the last three.
+  These constitute the "cpupri" moniker in Steven's testing.  Let me know if
+  you have any questions.  Comments/review by anyone are of course welcome.
 
-As I'm sure you know, this problem can show up on most platforms.
-It's not limited to OMAP; more generic solutions are needed.
-
-One solution would have the irq_chip.set_type() method just call
-
-/* caller has locked the irq_desc and both params are valid */
-static inline void __set_irq_handler_unlocked(int irq, irq_flow_handler_t handler)
-{
-	irq_desc[irq].handler = handler;
-}
-
-Another solution, limited to chained handlers, is to have the
-chaining handler call the right handler (edge or level) directly
-instead of calling generic_handle_irq():
-
-	if (desc->status & IRQ_LEVEL)
-		handle_level_irq(irq, desc);
-	else
-		handle_edge_irq(irq, desc);
-
-Of course that requires set_type() to maintain that status flag,
-which currently isn't handled by the genirq core.  Equivalently
-it might mask against (IRQ_TYPE_LEVEL_HIGH|IRQ_TYPE_LEVEL_LOW),
-which again isn't handled by the genirq core but is handled by
-the GPIO logic in the OMAP tree.
-
-- Dave
+Regards,
+-Greg
