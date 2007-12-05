@@ -1,68 +1,59 @@
-From: Kevin Hilman <khilman@mvista.com>
-Subject: Generic IRQs: proper edge/level via irq_chip->set_type hook
-Date: Tue, 04 Dec 2007 15:18:59 -0800
-Message-ID: <87eje259r0.fsf@vence.hilman.org>
+From: David Brownell <david-b@pacbell.net>
+Subject: Re: Generic IRQs: proper edge/level via irq_chip->set_type hook
+Date: Tue, 4 Dec 2007 16:46:35 -0800
+Message-ID: <200712041646.36402.david-b@pacbell.net>
+References: <87eje259r0.fsf@vence.hilman.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-omap@vger.kernel.org, Russell King <linux@arm.linux.org.uk>,
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-omap@vger.kernel.org,
+	Russell King <linux@arm.linux.org.uk>,
 	"Remy Bohmer" <linux@bohmer.net>
-To: linux-rt-users@vger.kernel.org
+To: Kevin Hilman <khilman@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61781 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751108AbXLDXSb (ORCPT
+Received: from smtp119.sbc.mail.sp1.yahoo.com ([69.147.64.92]:25708 "HELO
+	smtp119.sbc.mail.sp1.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1751539AbXLEAxS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Dec 2007 18:18:31 -0500
+	Tue, 4 Dec 2007 19:53:18 -0500
+In-Reply-To: <87eje259r0.fsf@vence.hilman.org>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm trying to cleanup/remove the use of handle_simple_irq in the OMAP
-GPIO IRQ handling.
+On Tuesday 04 December 2007, Kevin Hilman wrote:
+> The hack below allows me to get the above idea working, but I'm
+> looking for better suggestions on how to rework the locking here so
+> that the handler might be changed from within the irq_chip's set_type
+> handler.
+> 
+> Any ideas?
 
-Currently, the OMAP GPIO demux handler uses handle_simple_irq for all
-the GPIOs whether they are edge or level.  The result is duplicated
-logic with handle_[edge|level]_irq as well as things not working
-correctly for threaded interrupts with the -rt patch.
+As I'm sure you know, this problem can show up on most platforms.
+It's not limited to OMAP; more generic solutions are needed.
 
-Currently, upon init, the handlers for all GPIO IRQs are initialized
-to handle_simple_irq.  This is fine, since before the interrupts are
-registered via request_irq or setup_irq, we don't know if they are
-edge or level.
+One solution would have the irq_chip.set_type() method just call
 
-When request_irq or setup_irq are called, the type of interrupt (edge
-or level) is known and the 'set_type' hook of the irq_chip is called
-to set the triggering accordingly.  It seems to me this is also the
-appropriate place to change the handler from handle_simple_irq to
-handle_[edge|level]_irq via a call to set_irq_handler().
+/* caller has locked the irq_desc and both params are valid */
+static inline void __set_irq_handler_unlocked(int irq, irq_flow_handler_t handler)
+{
+	irq_desc[irq].handler = handler;
+}
 
-The problem is that when the 'set_type' hook is called the
-irq_desc->lock is held by setup_irq(), so a call to set_irq_handler()
-dies with a recursive lock.
+Another solution, limited to chained handlers, is to have the
+chaining handler call the right handler (edge or level) directly
+instead of calling generic_handle_irq():
 
-The hack below allows me to get the above idea working, but I'm
-looking for better suggestions on how to rework the locking here so
-that the handler might be changed from within the irq_chip's set_type
-handler.
+	if (desc->status & IRQ_LEVEL)
+		handle_level_irq(irq, desc);
+	else
+		handle_edge_irq(irq, desc);
 
-Any ideas?
+Of course that requires set_type() to maintain that status flag,
+which currently isn't handled by the genirq core.  Equivalently
+it might mask against (IRQ_TYPE_LEVEL_HIGH|IRQ_TYPE_LEVEL_LOW),
+which again isn't handled by the genirq core but is handled by
+the GPIO logic in the OMAP tree.
 
-Kevin
-
-
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -369,10 +369,12 @@ int setup_irq(unsigned int irq, struct irqaction *new)
- 
- 		/* Setup the type (level, edge polarity) if configured: */
- 		if (new->flags & IRQF_TRIGGER_MASK) {
--			if (desc->chip && desc->chip->set_type)
-+			if (desc->chip && desc->chip->set_type) {
-+				spin_unlock(&desc->lock);
- 				desc->chip->set_type(irq,
- 						new->flags & IRQF_TRIGGER_MASK);
--			else
-+				spin_lock(&desc->lock);
-+			} else
- 				/*
- 				 * IRQF_TRIGGER_* but the PIC does not support
- 				 * multiple flow-types?
+- Dave
