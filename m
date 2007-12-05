@@ -1,61 +1,39 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 3/3] Subject: SCHED - Use a 2-d bitmap for
-	searching lowest-pri CPU
-Date: Wed, 05 Dec 2007 08:41:19 -0500
-Message-ID: <4756642F.BA47.005A.0@novell.com>
-References: <20071205025137.4494.18683.stgit@novell1.haskins.net>
- <20071205025538.4494.52380.stgit@novell1.haskins.net>
- <20071205093412.GA17911@elte.hu> <475634F8.BA47.005A.0@novell.com>
- <20071205114438.GC6143@elte.hu>
+From: "Phil K." <binutz@gmail.com>
+Subject: Problems with cyclictest and ps
+Date: Wed, 05 Dec 2007 21:34:24 +0100
+Message-ID: <47570B50.9060502@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <rostedt@goodmis.org>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Ingo Molnar" <mingo@elte.hu>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:42836 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751968AbXLENq2 convert rfc822-to-8bit (ORCPT
+Received: from mu-out-0910.google.com ([209.85.134.185]:27684 "EHLO
+	mu-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751125AbXLEUgv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Dec 2007 08:46:28 -0500
-In-Reply-To: <20071205114438.GC6143@elte.hu>
-Content-Disposition: inline
+	Wed, 5 Dec 2007 15:36:51 -0500
+Received: by mu-out-0910.google.com with SMTP id i10so1222053mue
+        for <linux-rt-users@vger.kernel.org>; Wed, 05 Dec 2007 12:36:45 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Wed, Dec 5, 2007 at  6:44 AM, in message <20071205114438.GC6143@elte.hu>,
-Ingo Molnar <mingo@elte.hu> wrote: 
+Hi,
 
-> * Gregory Haskins <ghaskins@novell.com> wrote:
-> 
->> However, that said, Steven's testing work on the mainline port of our 
->> series sums it up very nicely, so I will present that in lieu of 
->> digging up my -rt numbers unless you specifically want them too.  Here 
->> they are:
-> 
-> i'm well aware of Steve's benchmarking efforts, but i dont think he's 
-> finished with it and i'll let him present the results once he wants to 
-> announce them. I asked about the effects of the "2-d" patch in isolation 
-> and i'm not sure the numbers show that individual patch in action.
+I tried cyclictest under Debian Lenny with Kernel-2.6.23.8-hrt3 and
+Kernel-2.6.22 as user root. As decribed on the cyclictest-wikipage all
+cyclictest-tasks run with the scheduler class SCHED_FIFO. I controlled
+the scheduler class with "ps -ce" and ps showed me SCHED_OTHER for the
+cyclictest-task.
 
-Ah, sorry if I was not clear.  What I was trying to show was that you can compare "gh" to "cpupri" to see the effects of the 2-d patch in isolation (*) in Steven's tests.  I believe it shows a positive impact on some tests, and a negligible impact on some tests.  As long as we dont have a regression somewhere, I am happy :)
+#> ./cyclictest -t 1 -p 80 -n -i 10000
 
-(*) Yes, "cpupri" in this test also has patches 21-22 (root-domain).  However, note that Steven is not configuring cpusets, and therefore the root-domain code is effectively marginalized in this data.  Its not a pure isolation, no.  But the results of my tests with *true* isolation present similar characteristics, so I felt they were representative.
+#> ps -ce | grep cyclic
+   PID CLS PRI TTY          TIME CMD
+  9693 TS   19 pts/5    00:00:00 cyclictest
 
-> 
-> in any case, you are preaching to the choir, i wrote the first 
-> rt-overload code and it's been in -rt forever so it's not like you need 
-> to sell me the concept ;-) But upstream quality requirements are 
-> different from -rt and we need to examine all aspects of scheduling, not 
-> just latency. 
+I am wondering why cyclictest runs as SCHED_OTHER I expected SCHED_FIFO
+instead. Any explanations of this behavior are welcome.
 
-Understood and agree.  I designed the subsystem with the overall system in mind, so hopefully that is reflected in the numbers and the review comments that come out of this. :)
+Regards,
 
->In any case, i'll wait for the rest of Steve's numbers.
-
-Sounds good.  Ill try to dig up my 4/8-way numbers as well for another data point.
-
-Thanks for taking the time to review all this stuff.  I know you are swamped these days.
-
--Greg
+Phil
