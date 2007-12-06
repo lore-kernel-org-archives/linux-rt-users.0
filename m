@@ -1,44 +1,60 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH Latency Tracer] don't panic on failed bootmem alloc
-Date: Wed, 05 Dec 2007 23:41:33 -0500
-Message-ID: <1196916093.1645.41.camel@localhost.localdomain>
+From: "Phil K." <binutz@gmail.com>
+Subject: Re: Problems with cyclictest and ps
+Date: Thu, 06 Dec 2007 11:19:36 +0100
+Message-ID: <4757CCB8.6090107@gmail.com>
+References: <47570B50.9060502@gmail.com> <47571828.6000406@cybsft.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
+To: "K.R. Foley" <kr@cybsft.com>, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:35303 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751761AbXLFEls (ORCPT
+Received: from nf-out-0910.google.com ([64.233.182.190]:57846 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751903AbXLFKVy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Dec 2007 23:41:48 -0500
+	Thu, 6 Dec 2007 05:21:54 -0500
+Received: by nf-out-0910.google.com with SMTP id g13so58776nfb
+        for <linux-rt-users@vger.kernel.org>; Thu, 06 Dec 2007 02:21:52 -0800 (PST)
+In-Reply-To: <47571828.6000406@cybsft.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Ingo,
+K.R. Foley wrote:
+> Phil K. wrote:
+>> Hi,
+>>
+>> I tried cyclictest under Debian Lenny with Kernel-2.6.23.8-hrt3 and
+>> Kernel-2.6.22 as user root. As decribed on the cyclictest-wikipage all
+>> cyclictest-tasks run with the scheduler class SCHED_FIFO. I controlled
+>> the scheduler class with "ps -ce" and ps showed me SCHED_OTHER for the
+>> cyclictest-task.
+>>
+>> #> ./cyclictest -t 1 -p 80 -n -i 10000
+>>
+>> #> ps -ce | grep cyclic
+>>    PID CLS PRI TTY          TIME CMD
+>>   9693 TS   19 pts/5    00:00:00 cyclictest
+>>
+>> I am wondering why cyclictest runs as SCHED_OTHER I expected SCHED_FIFO
+>> instead. Any explanations of this behavior are welcome.
+>>
+>> Regards,
+>>
+>> Phil
+>> -
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>
+> 
+> try "ps -eLc | grep cyclic"
+> 
+> Without the "L" you don't see threads/lightweight processes.
+> 
 
-This patch prevents a panic on a failed bootmem alloc in the
-initialization of the tracer buffers.
+Thanks for the solution, I have postet this on the RTWiki
+(http://rt.wiki.kernel.org/index.php/Cyclictest#FAQ).
 
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+Greetings,
 
-Index: linux-2.6-latency/kernel/latency_trace.c
-===================================================================
---- linux-2.6-latency.orig/kernel/latency_trace.c
-+++ linux-2.6-latency/kernel/latency_trace.c
-@@ -2720,10 +2720,11 @@ void * __init tracer_alloc_bootmem(unsig
- {
- 	void * ret;
- 
--	ret =__alloc_bootmem(size, SMP_CACHE_BYTES, ARCH_LOW_ADDRESS_LIMIT);
-+	ret =__alloc_bootmem_nopanic(size, SMP_CACHE_BYTES,
-+				     ARCH_LOW_ADDRESS_LIMIT);
- 	if (ret != NULL && ((unsigned long)ret) < ARCH_LOW_ADDRESS_LIMIT) {
- 		free_bootmem(__pa(ret), size);
--		ret = __alloc_bootmem(size,
-+		ret = __alloc_bootmem_nopanic(size,
- 				SMP_CACHE_BYTES,
- 				__pa(MAX_DMA_ADDRESS));
- 	}
+Phil
