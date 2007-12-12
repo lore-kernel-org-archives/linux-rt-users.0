@@ -1,20 +1,15 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: [PATCH -rt] preempt_max_latency to microseconds
 Date: Wed, 12 Dec 2007 09:18:49 -0800
-Message-ID: <20071212171849.415158057@mvista.com>
+Message-ID: <20071212171811.134848654__48160.7875707143$1197480745$gmane$org@mvista.com>
 Cc: rostedt@goodmis.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
 To: mingo@elte.hu
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from homer.mvista.com ([63.81.120.158]:23450 "EHLO
-	dwalker1.mvista.com" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752728AbXLLRaz (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 12 Dec 2007 12:30:55 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757223AbXLLRbZ@vger.kernel.org>
 Message-Id: <20071212171811.134848654@mvista.com>
 Date: Wed, 12 Dec 2007 09:18:11 -0800
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 Not to long ago preempt_max_latency was microseconds, and someplace
 along the way it turned into cycles. That's a bit unintuitive, so I 
