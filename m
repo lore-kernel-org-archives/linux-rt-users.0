@@ -1,41 +1,45 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: [PATCH -rt] cycles_to_usecs rounding fix
-Date: Wed, 12 Dec 2007 12:15:22 -0800
-Message-ID: <20071212201258.890003246__171.086160890077$1197491411$gmane$org@mvista.com>
-Cc: mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, johnstul@us.ibm.com
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758370AbXLLU2D@vger.kernel.org>
-Message-Id: <20071212201258.890003246@mvista.com>
-Date: Wed, 12 Dec 2007 12:12:58 -0800
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] add pending in fasteoi for IOAPIC hack
+Date: Wed, 12 Dec 2007 15:41:00 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712121539400.22581@gandalf.stny.rr.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:64676 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751597AbXLLUl0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 12 Dec 2007 15:41:26 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-do_div() rounds down, so we add have the divisor to round up. This effected my
-change to preempt_max_latency. Each time you read preempt_max_latency it gets 
-rounded lower.
 
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
+The IOAPIC hack that does a level=>edge to mask does not disable
+interrupts. So we can receive interrupts when masked, and this means
+that we can miss interrupts that arrive when the thread is handling
+them.
 
+This patch adds the "IRQ_PENDING" logic of the edge irqs to be
+able to catch interrupts coming in when supposably "masked".
 
----
- kernel/time/timekeeping.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 
-Index: linux-2.6.23/kernel/time/timekeeping.c
+Index: linux-2.6.21-rt-hack/kernel/irq/chip.c
 ===================================================================
---- linux-2.6.23.orig/kernel/time/timekeeping.c
-+++ linux-2.6.23/kernel/time/timekeeping.c
-@@ -144,7 +144,8 @@ unsigned long notrace cycles_to_usecs(cy
- {
- 	u64 ret = cyc2ns(clock, cycles);
- 
--	do_div(ret, 1000);
-+	ret += NSEC_PER_USEC/2; /* For rounding in do_div() */
-+	do_div(ret, NSEC_PER_USEC);
- 
- 	return ret;
- }
--- 
+--- linux-2.6.21-rt-hack.orig/kernel/irq/chip.c
++++ linux-2.6.21-rt-hack/kernel/irq/chip.c
+@@ -398,8 +398,10 @@ handle_fasteoi_irq(unsigned int irq, str
 
--- 
+ 	spin_lock(&desc->lock);
+
+-	if (unlikely(desc->status & IRQ_INPROGRESS))
++	if (unlikely(desc->status & IRQ_INPROGRESS)) {
++		desc->status |= IRQ_PENDING;
+ 		goto out;
++	}
+
+ 	desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
+ 	kstat_cpu(cpu).irqs[irq]++;
