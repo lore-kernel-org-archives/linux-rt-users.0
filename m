@@ -1,187 +1,81 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: [PATCH]: Atmel Serial Console interrupt handler splitup
-Date: Thu, 13 Dec 2007 21:35:32 +0100
-Message-ID: <3efb10970712131235t47a9ceb5y7d9a7d5023d07bf6@mail.gmail.com>
-References: <3efb10970712070724i6fa66666t2b8422329759ce24@mail.gmail.com>
-	 <Pine.LNX.4.58.0712121606241.23712@gandalf.stny.rr.com>
-	 <3efb10970712121429l7b41d57md4f826f6aaf4b71@mail.gmail.com>
-	 <3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
-	 <cd73a99e0712130933s6f601ef7sed90f48c08d9adaa@mail.gmail.com>
-	 <3efb10970712131232j5f747420g4aa8b5bd956e3dd3@mail.gmail.com>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [RFC PATCH 0/6] RCU: Preemptible-RCU
+Date: Thu, 13 Dec 2007 21:38:04 +0100
+Message-ID: <20071213203804.GE25130@elte.hu>
+References: <20071213170348.GA25981@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_12554_24975049.1197578133516"
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	"Andrew Victor" <linux@maxim.org.za>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Andrew Victor" <avictor.za@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Paul E McKenney <paulmck@us.ibm.com>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Gautham R Shenoy <ego@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.176]:15184 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751795AbXLMUff (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2007 15:35:35 -0500
-Received: by py-out-1112.google.com with SMTP id u77so422618pyb.16
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Dec 2007 12:35:34 -0800 (PST)
-In-Reply-To: <3efb10970712131232j5f747420g4aa8b5bd956e3dd3@mail.gmail.com>
+Received: from mx2.mail.elte.hu ([157.181.151.9]:39353 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1762380AbXLMUjE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Dec 2007 15:39:04 -0500
+Content-Disposition: inline
+In-Reply-To: <20071213170348.GA25981@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-------=_Part_12554_24975049.1197578133516
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-> Because I know it is common practice in the kernel, I attached 3 new
-> patches to inline these :-))
+* Gautham R Shenoy <ego@in.ibm.com> wrote:
 
-Grmbl, 1 wrong file attached. Here is the correct one.
+> Hello everyone,
+> 
+> This patchset is an updated version of the preemptible RCU patchset 
+> that Paul McKenney had posted it in September earlier this year that 
+> can be found here --> http://lkml.org/lkml/2007/9/10/213
+> 
+> This patchset incorporates the review comments from Oleg Nesterov and 
+> Steven Rostedt.
+> 
+> The testing report of the patchset is as follows:
+> ====================================================================
+> Patch-stack:  	2.6.23-rc3 + cpu-hotplug patches from 
+> 		http://lkml.org/lkml/2007/11/15/239 + Preempt-RCU
+> 		patches.
+> Test:		RCU-Torture running parallelly with CPU-Hotplug
+> 		operations.
+> Duration:	24 hours.
+> Architectures:	x86,x86_64, ppc64.
+> ====================================================================
+> 
+> 
+> Currently it is based against the latest linux-2.6-sched-devel.git
+> 
+> Awaiting your feedback!
 
-Regards,
+thanks Gautham, the patchset from you and Paul looks good to me and i've 
+applied it to sched-devel.git to get it tested and reviewed some more.
 
-Remy
+from the Nitpicking Police, there are a couple of minor style 
+problems/warnings with the code, you can see it via:
 
-------=_Part_12554_24975049.1197578133516
-Content-Type: text/x-patch; name=atmel_serial_irq_splitup_no_at91.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fa5r2ncc
-Content-Disposition: attachment;
- filename=atmel_serial_irq_splitup_no_at91.patch
+  scripts/checkpatch.pl --file kernel/rcu*.c
 
-VGhpcyBwYXRjaCBzcGxpdHMgdXAgdGhlIGludGVycnVwdCBoYW5kbGVyIG9mIHRoZSBzZXJpYWwg
-cG9ydAppbnRvIGEgaW50ZXJydXB0IHRvcC1oYWxmIGFuZCBzb21lIHRhc2tsZXRzLgoKVGhlIGdv
-YWwgaXMgdG8gZ2V0IHRoZSBpbnRlcnJ1cHQgdG9wLWhhbGYgYXMgc2hvcnQgYXMgcG9zc2libGUg
-dG8KbWluaW1pemUgbGF0ZW5jaWVzIG9uIGludGVycnVwdHMuIEJ1dCB0aGUgb2xkIGNvZGUgYWxz
-byBkb2VzIHNvbWUKY2FsbHMgaW4gdGhlIGludGVycnVwdCBoYW5kbGVyIHRoYXQgYXJlIG5vdCBh
-bGxvd2VkIG9uIHByZWVtcHQtUlQKaW4gSVJRRl9OT0RFTEFZIGNvbnRleHQuIFRoaXMgaGFuZGxl
-ciBpcyBleGVjdXRlZCBpbiB0aGlzIGNvbnRleHQKYmVjYXVzZSBvZiB0aGUgaW50ZXJydXB0IHNo
-YXJpbmcgd2l0aCB0aGUgdGltZXIgaW50ZXJydXB0LgpUaGUgdGltZXIgaW50ZXJydXB0IG9uIFBy
-ZWVtcHQtUlQgcnVucyBpbiBJUlFGX05PREVMQVkgY29udGV4dC4KCjIgdGFza2xldHMgYXJlIHVz
-ZWQ6Ciogb25lIGZvciBoYW5kbGluZyB0aGUgZXJyb3Igc3RhdHVzZXMKKiBvbmUgZm9yIHB1c2hp
-bmcgdGhlIGluY29taW5nIGNoYXJhY3RlcnMgaW50byB0aGUgdHR5LWxheWVyLgoKVGhlIFRyYW5z
-bWl0IHBhdGggd2FzIElSUUZfTk9ERUxBWSBzYWZlIGJ5IGl0c2VsZiwgYW5kIGlzIG5vdCBhZGFw
-dGVkLgpUaGUgcmVhZCBwYXRoIGZvciBETUEoUERDKSBpcyBhbHNvIG5vdCBhZGFwdGVkLCBiZWNh
-dXNlIHRoYXQgY29kZQpkb2VzIG5vdCBydW4gaW4gSVJRRl9OT0RFTEFZIGNvbnRleHQgZHVlIHRv
-IGlycS1zaGFyaW5nLiBUaGUgREJHVSAKd2hpY2ggaXMgc2hhcmVkIHdpdGggdGhlIHRpbWVyLWly
-cSBkb2VzIG5vdCB3b3JrIHdpdGggRE1BLCBzbyAKdGhlcmVmb3IgdGhpcyBpcyBubyBwcm9ibGVt
-LgoKUmVhZGluZyB0aGUgY29tcGxldGUgcmVjZWl2ZSBxdWV1ZSBpcyBzdGlsbCBkb25lIGluIHRo
-ZSB0b3AtaGFsZgpiZWNhdXNlIHdlIG5ldmVyIHdhbnQgdG8gbWlzcyBhbnkgaW5jb21pbmcgY2hh
-cmFjdGVyLgoKVGhpcyBwYXRjaCBkZW1hbmRzIHRoZSBmb2xsb3dpbmcgcGF0Y2hlcyB0byBiZSBp
-bnN0YWxsZWQgZmlyc3Q6CiogYXRtZWxfc2VyaWFsX2NsZWFudXAucGF0Y2gKClNpZ25lZC1vZmYt
-Ynk6IFJlbXkgQm9obWVyIDxsaW51eEBib2htZXIubmV0PgotLS0KIGRyaXZlcnMvc2VyaWFsL2F0
-bWVsX3NlcmlhbC5jIHwgIDE1MCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-LS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAxMzMgaW5zZXJ0aW9ucygrKSwgMTcgZGVsZXRpb25zKC0p
-CgpJbmRleDogbGludXgtMi42LjIzLjEtcnQ1L2RyaXZlcnMvc2VyaWFsL2F0bWVsX3NlcmlhbC5j
-Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT0KLS0tIGxpbnV4LTIuNi4yMy4xLXJ0NS5vcmlnL2RyaXZlcnMvc2VyaWFsL2F0
-bWVsX3NlcmlhbC5jCTIwMDctMTItMTMgMjE6MzM6MDguMDAwMDAwMDAwICswMTAwCisrKyBsaW51
-eC0yLjYuMjMuMS1ydDUvZHJpdmVycy9zZXJpYWwvYXRtZWxfc2VyaWFsLmMJMjAwNy0xMi0xMyAy
-MTozMzoxMC4wMDAwMDAwMDAgKzAxMDAKQEAgLTExMSw2ICsxMTEsMjIgQEAKIHN0YXRpYyBpbnQg
-KCphdG1lbF9vcGVuX2hvb2spIChzdHJ1Y3QgdWFydF9wb3J0ICopOwogc3RhdGljIHZvaWQgKCph
-dG1lbF9jbG9zZV9ob29rKSAoc3RydWN0IHVhcnRfcG9ydCAqKTsKIAorc3RydWN0IGF0bWVsX3Vh
-cnRfY2hhciB7CisJdW5zaWduZWQgaW50IHN0YXR1czsKKwl1bnNpZ25lZCBpbnQgb3ZlcnJ1bjsK
-Kwl1bnNpZ25lZCBpbnQgY2g7CisJdW5zaWduZWQgaW50IGZsZzsKK307CisKKyNkZWZpbmUgQVRN
-RUxfU0VSSUFMX1JJTkdTSVpFIDEwMjQKKworc3RydWN0IGF0bWVsX3VhcnRfcmluZyB7CisJdW5z
-aWduZWQgaW50ICAgICAgICAgIGhlYWQ7CisJdW5zaWduZWQgaW50ICAgICAgICAgIHRhaWw7CisJ
-dW5zaWduZWQgaW50ICAgICAgICAgIGNvdW50OworCXN0cnVjdCBhdG1lbF91YXJ0X2NoYXIgZGF0
-YVtBVE1FTF9TRVJJQUxfUklOR1NJWkVdOworfTsKKwogLyoKICAqIFdlIHdyYXAgb3VyIHBvcnQg
-c3RydWN0dXJlIGFyb3VuZCB0aGUgZ2VuZXJpYyB1YXJ0X3BvcnQuCiAgKi8KQEAgLTExOSw2ICsx
-MzUsMTMgQEAgc3RydWN0IGF0bWVsX3VhcnRfcG9ydCB7CiAJc3RydWN0IGNsayAJIAkqY2xrOwkJ
-LyogdWFydCBjbG9jayAqLwogCXVuc2lnbmVkIHNob3J0IAkJc3VzcGVuZGVkOwkvKiBpcyBwb3J0
-IHN1c3BlbmRlZD8gKi8KIAlpbnQgCQkJYnJlYWtfYWN0aXZlOwkvKiBicmVhayBiZWluZyByZWNl
-aXZlZCAqLworCisJc3RydWN0IHRhc2tsZXRfc3RydWN0ICAgcnhfdGFzazsKKwlzdHJ1Y3QgdGFz
-a2xldF9zdHJ1Y3QgICBzdGF0dXNfdGFzazsKKwl1bnNpZ25lZCBpbnQgCQlpcnFfcGVuZGluZzsK
-Kwl1bnNpZ25lZCBpbnQgCQlpcnFfc3RhdHVzOworCisJc3RydWN0IGF0bWVsX3VhcnRfcmluZyAg
-cnhfcmluZzsKIH07CiAKIHN0YXRpYyBzdHJ1Y3QgYXRtZWxfdWFydF9wb3J0IGF0bWVsX3BvcnRz
-W0FUTUVMX01BWF9VQVJUXTsKQEAgLTI0OSwxMiArMjcyLDQxIEBAIHN0YXRpYyB2b2lkIGF0bWVs
-X2JyZWFrX2N0bChzdHJ1Y3QgdWFydF8KIH0KIAogLyoKKyAqIFN0b3JlcyB0aGUgaW5jb21pbmcg
-Y2hhcmFjdGVyIGluIHRoZSByaW5nIGJ1ZmZlcgorICovCitzdGF0aWMgdm9pZAorYXRtZWxfYnVm
-ZmVyX3J4X2NoYXIoc3RydWN0IHVhcnRfcG9ydCAqcG9ydCwgdW5zaWduZWQgaW50IHN0YXR1cywK
-KwkJICAgICB1bnNpZ25lZCBpbnQgb3ZlcnJ1biwgICB1bnNpZ25lZCBpbnQgY2gsCisJCSAgICAg
-dW5zaWduZWQgaW50IGZsZykKK3sKKwlzdHJ1Y3QgYXRtZWxfdWFydF9wb3J0ICphdG1lbF9wb3J0
-ID0gKHN0cnVjdCBhdG1lbF91YXJ0X3BvcnQgKilwb3J0OworCXN0cnVjdCBhdG1lbF91YXJ0X3Jp
-bmcgKnJpbmcgPSAmYXRtZWxfcG9ydC0+cnhfcmluZzsKKwlzdHJ1Y3QgYXRtZWxfdWFydF9jaGFy
-ICpjOworCisJc3Bpbl9sb2NrKCZwb3J0LT5sb2NrKTsKKworCWlmIChyaW5nLT5jb3VudCA9PSBB
-VE1FTF9TRVJJQUxfUklOR1NJWkUpCisJCWdvdG8gb3V0OyAvKiBCdWZmZXIgb3ZlcmZsb3csIGln
-bm9yZSBjaGFyICovCisKKwljID0gJnJpbmctPmRhdGFbcmluZy0+aGVhZF07CisJYy0+c3RhdHVz
-ICA9IHN0YXR1czsKKwljLT5vdmVycnVuID0gb3ZlcnJ1bjsKKwljLT5jaCAgICAgID0gY2g7CisJ
-Yy0+ZmxnICAgICA9IGZsZzsKKworCXJpbmctPmhlYWQrKzsKKwlyaW5nLT5oZWFkICU9IEFUTUVM
-X1NFUklBTF9SSU5HU0laRTsKKwlyaW5nLT5jb3VudCsrOworb3V0OgorCXNwaW5fdW5sb2NrKCZw
-b3J0LT5sb2NrKTsKK30KKworLyoKICAqIENoYXJhY3RlcnMgcmVjZWl2ZWQgKGNhbGxlZCBmcm9t
-IGludGVycnVwdCBoYW5kbGVyKQogICovCiBzdGF0aWMgdm9pZCBhdG1lbF9yeF9jaGFycyhzdHJ1
-Y3QgdWFydF9wb3J0ICpwb3J0KQogewogCXN0cnVjdCBhdG1lbF91YXJ0X3BvcnQgKmF0bWVsX3Bv
-cnQgPSAoc3RydWN0IGF0bWVsX3VhcnRfcG9ydCAqKXBvcnQ7Ci0Jc3RydWN0IHR0eV9zdHJ1Y3Qg
-KnR0eSA9IHBvcnQtPmluZm8tPnR0eTsKIAl1bnNpZ25lZCBpbnQgc3RhdHVzLCBjaCwgZmxnOwog
-CiAJc3RhdHVzID0gVUFSVF9HRVRfQ1NSKHBvcnQpOwpAQCAtMzE1LDEzICszNjcsMTMgQEAgc3Rh
-dGljIHZvaWQgYXRtZWxfcnhfY2hhcnMoc3RydWN0IHVhcnRfcAogCQlpZiAodWFydF9oYW5kbGVf
-c3lzcnFfY2hhcihwb3J0LCBjaCkpCiAJCQlnb3RvIGlnbm9yZV9jaGFyOwogCi0JCXVhcnRfaW5z
-ZXJ0X2NoYXIocG9ydCwgc3RhdHVzLCBBVE1FTF9VU19PVlJFLCBjaCwgZmxnKTsKKwkJYXRtZWxf
-YnVmZmVyX3J4X2NoYXIocG9ydCwgc3RhdHVzLCBBVE1FTF9VU19PVlJFLCBjaCwgZmxnKTsKIAog
-aWdub3JlX2NoYXI6CiAJCXN0YXR1cyA9IFVBUlRfR0VUX0NTUihwb3J0KTsKIAl9CiAKLQl0dHlf
-ZmxpcF9idWZmZXJfcHVzaCh0dHkpOworCXRhc2tsZXRfc2NoZWR1bGUoJmF0bWVsX3BvcnQtPnJ4
-X3Rhc2spOwogfQogCiAvKgpAQCAtMzgxLDcgKzQzMyw3IEBAIGF0bWVsX2hhbmRsZV9yZWNlaXZl
-KHN0cnVjdCB1YXJ0X3BvcnQgKnAKIH0KIAogLyoKLSAqIHRyYW5zbWl0IGludGVycnVwdCBoYW5k
-bGVyLgorICogdHJhbnNtaXQgaW50ZXJydXB0IGhhbmRsZXIuIChUcmFuc21pdCBpcyBJUlFGX05P
-REVMQVkgc2FmZSkKICAqLwogc3RhdGljIGlubGluZSB2b2lkCiBhdG1lbF9oYW5kbGVfdHJhbnNt
-aXQoc3RydWN0IHVhcnRfcG9ydCAqcG9ydCwgdW5zaWduZWQgaW50IHBlbmRpbmcpCkBAIC0zOTgs
-MTkgKzQ1MCwxNiBAQCBzdGF0aWMgaW5saW5lIHZvaWQKIGF0bWVsX2hhbmRsZV9zdGF0dXMoc3Ry
-dWN0IHVhcnRfcG9ydCAqcG9ydCwgdW5zaWduZWQgaW50IHBlbmRpbmcsCiAJCSAgICB1bnNpZ25l
-ZCBpbnQgc3RhdHVzKQogewotCS8qIFRPRE86IEFsbCByZWFkcyB0byBDU1Igd2lsbCBjbGVhciB0
-aGVzZSBpbnRlcnJ1cHRzISAqLwotCWlmIChwZW5kaW5nICYgQVRNRUxfVVNfUklJQykKLQkJcG9y
-dC0+aWNvdW50LnJuZysrOwotCWlmIChwZW5kaW5nICYgQVRNRUxfVVNfRFNSSUMpCi0JCXBvcnQt
-Pmljb3VudC5kc3IrKzsKLQlpZiAocGVuZGluZyAmIEFUTUVMX1VTX0RDRElDKQotCQl1YXJ0X2hh
-bmRsZV9kY2RfY2hhbmdlKHBvcnQsICEoc3RhdHVzICYgQVRNRUxfVVNfRENEKSk7Ci0JaWYgKHBl
-bmRpbmcgJiBBVE1FTF9VU19DVFNJQykKLQkJdWFydF9oYW5kbGVfY3RzX2NoYW5nZShwb3J0LCAh
-KHN0YXR1cyAmIEFUTUVMX1VTX0NUUykpOwotCWlmIChwZW5kaW5nICYKLQkJKEFUTUVMX1VTX1JJ
-SUMgfCBBVE1FTF9VU19EU1JJQyB8IEFUTUVMX1VTX0RDRElDIHwKLQkJQVRNRUxfVVNfQ1RTSUMp
-KQotCQl3YWtlX3VwX2ludGVycnVwdGlibGUoJnBvcnQtPmluZm8tPmRlbHRhX21zcl93YWl0KTsK
-KwlzdHJ1Y3QgYXRtZWxfdWFydF9wb3J0ICphdG1lbF9wb3J0ID0gKHN0cnVjdCBhdG1lbF91YXJ0
-X3BvcnQgKilwb3J0OworCisJc3Bpbl9sb2NrKCZwb3J0LT5sb2NrKTsKKworCWF0bWVsX3BvcnQt
-PmlycV9wZW5kaW5nID0gcGVuZGluZzsKKwlhdG1lbF9wb3J0LT5pcnFfc3RhdHVzICA9IHN0YXR1
-czsKKworCXNwaW5fdW5sb2NrKCZwb3J0LT5sb2NrKTsKKworCXRhc2tsZXRfc2NoZWR1bGUoJmF0
-bWVsX3BvcnQtPnN0YXR1c190YXNrKTsKIH0KIAogLyoKQEAgLTQzOCw2ICs0ODcsNjYgQEAgc3Rh
-dGljIGlycXJldHVybl90IGF0bWVsX2ludGVycnVwdChpbnQgaQogfQogCiAvKgorICogdGFza2xl
-dCBoYW5kbGluZyB0dHkgc3R1ZmYgb3V0c2lkZSB0aGUgaW50ZXJydXB0IGhhbmRsZXIuCisgKi8K
-K3N0YXRpYyB2b2lkIGF0bWVsX3J4X2hhbmRsZXJfdGFzayh1bnNpZ25lZCBsb25nIGRhdGEpCit7
-CisJc3RydWN0IHVhcnRfcG9ydCAqcG9ydCA9IChzdHJ1Y3QgdWFydF9wb3J0ICopZGF0YTsKKwlz
-dHJ1Y3QgYXRtZWxfdWFydF9wb3J0ICphdG1lbF9wb3J0ID0gKHN0cnVjdCBhdG1lbF91YXJ0X3Bv
-cnQgKilwb3J0OworCXN0cnVjdCBhdG1lbF91YXJ0X3JpbmcgKnJpbmcgPSAmYXRtZWxfcG9ydC0+
-cnhfcmluZzsKKwl1bnNpZ25lZCBsb25nIGZsYWdzOworCisJc3Bpbl9sb2NrX2lycXNhdmUoJnBv
-cnQtPmxvY2ssIGZsYWdzKTsKKworCXdoaWxlIChyaW5nLT5jb3VudCkgeworCQlzdHJ1Y3QgYXRt
-ZWxfdWFydF9jaGFyIGMgPSByaW5nLT5kYXRhW3JpbmctPnRhaWxdOworCisJCXJpbmctPnRhaWwr
-KzsKKwkJcmluZy0+dGFpbCAlPSBBVE1FTF9TRVJJQUxfUklOR1NJWkU7CisJCXJpbmctPmNvdW50
-LS07CisKKwkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmcG9ydC0+bG9jaywgZmxhZ3MpOworCisJ
-CXVhcnRfaW5zZXJ0X2NoYXIocG9ydCwgYy5zdGF0dXMsIGMub3ZlcnJ1biwgYy5jaCwgYy5mbGcp
-OworCisJCXNwaW5fbG9ja19pcnFzYXZlKCZwb3J0LT5sb2NrLCBmbGFncyk7CisJfQorCisJc3Bp
-bl91bmxvY2tfaXJxcmVzdG9yZSgmcG9ydC0+bG9jaywgZmxhZ3MpOworCisJdHR5X2ZsaXBfYnVm
-ZmVyX3B1c2gocG9ydC0+aW5mby0+dHR5KTsKK30KKworc3RhdGljIHZvaWQgYXRtZWxfc3RhdHVz
-X2hhbmRsZXJfdGFzayh1bnNpZ25lZCBsb25nIGRhdGEpCit7CisJc3RydWN0IHVhcnRfcG9ydCAq
-cG9ydCA9IChzdHJ1Y3QgdWFydF9wb3J0ICopZGF0YTsKKwlzdHJ1Y3QgYXRtZWxfdWFydF9wb3J0
-ICphdG1lbF9wb3J0ID0gKHN0cnVjdCBhdG1lbF91YXJ0X3BvcnQgKilwb3J0OworCXVuc2lnbmVk
-IGxvbmcgZmxhZ3M7CisJdW5zaWduZWQgaW50IHBlbmRpbmcsIHN0YXR1czsKKworCXNwaW5fbG9j
-a19pcnFzYXZlKCZwb3J0LT5sb2NrLCBmbGFncyk7CisKKwlwZW5kaW5nID0gYXRtZWxfcG9ydC0+
-aXJxX3BlbmRpbmc7CisJc3RhdHVzID0gYXRtZWxfcG9ydC0+aXJxX3N0YXR1czsKKworCXNwaW5f
-dW5sb2NrX2lycXJlc3RvcmUoJnBvcnQtPmxvY2ssIGZsYWdzKTsKKworCS8qIFRPRE86IEFsbCBy
-ZWFkcyB0byBDU1Igd2lsbCBjbGVhciB0aGVzZSBpbnRlcnJ1cHRzISAqLworCWlmIChwZW5kaW5n
-ICYgQVRNRUxfVVNfUklJQykKKwkJcG9ydC0+aWNvdW50LnJuZysrOworCWlmIChwZW5kaW5nICYg
-QVRNRUxfVVNfRFNSSUMpCisJCXBvcnQtPmljb3VudC5kc3IrKzsKKwlpZiAocGVuZGluZyAmIEFU
-TUVMX1VTX0RDRElDKQorCQl1YXJ0X2hhbmRsZV9kY2RfY2hhbmdlKHBvcnQsICEoc3RhdHVzICYg
-QVRNRUxfVVNfRENEKSk7CisJaWYgKHBlbmRpbmcgJiBBVE1FTF9VU19DVFNJQykKKwkJdWFydF9o
-YW5kbGVfY3RzX2NoYW5nZShwb3J0LCAhKHN0YXR1cyAmIEFUTUVMX1VTX0NUUykpOworCWlmIChw
-ZW5kaW5nICYKKwkJKEFUTUVMX1VTX1JJSUMgfCBBVE1FTF9VU19EU1JJQyB8IEFUTUVMX1VTX0RD
-RElDIHwKKwkJQVRNRUxfVVNfQ1RTSUMpKQorCQl3YWtlX3VwX2ludGVycnVwdGlibGUoJnBvcnQt
-PmluZm8tPmRlbHRhX21zcl93YWl0KTsKK30KKworLyoKICAqIFBlcmZvcm0gaW5pdGlhbGl6YXRp
-b24gYW5kIGVuYWJsZSBwb3J0IGZvciByZWNlcHRpb24KICAqLwogc3RhdGljIGludCBhdG1lbF9z
-dGFydHVwKHN0cnVjdCB1YXJ0X3BvcnQgKnBvcnQpCkBAIC03NzAsNiArODc5LDEzIEBAIHN0YXRp
-YyB2b2lkIF9fZGV2aW5pdCBhdG1lbF9pbml0X3BvcnQoc3QKIAlwb3J0LT5tYXBiYXNlCT0gcGRl
-di0+cmVzb3VyY2VbMF0uc3RhcnQ7CiAJcG9ydC0+aXJxCT0gcGRldi0+cmVzb3VyY2VbMV0uc3Rh
-cnQ7CiAKKwl0YXNrbGV0X2luaXQoJmF0bWVsX3BvcnQtPnJ4X3Rhc2ssIGF0bWVsX3J4X2hhbmRs
-ZXJfdGFzaywKKwkJCSh1bnNpZ25lZCBsb25nKXBvcnQpOworCXRhc2tsZXRfaW5pdCgmYXRtZWxf
-cG9ydC0+c3RhdHVzX3Rhc2ssIGF0bWVsX3N0YXR1c19oYW5kbGVyX3Rhc2ssCisJCQkodW5zaWdu
-ZWQgbG9uZylwb3J0KTsKKworCW1lbXNldCgmYXRtZWxfcG9ydC0+cnhfcmluZywgMCwgc2l6ZW9m
-KGF0bWVsX3BvcnQtPnJ4X3JpbmcpKTsKKwogCWlmIChkYXRhLT5yZWdzKQogCQkvKiBBbHJlYWR5
-IG1hcHBlZCBieSBzZXR1cCBjb2RlICovCiAJCXBvcnQtPm1lbWJhc2UgPSBkYXRhLT5yZWdzOwo=
+nothing serious - RCU is still one of the cleanest subsystems in the 
+kernel:
 
-------=_Part_12554_24975049.1197578133516--
+                                      errors   lines of code   errors/KLOC
+kernel/rcuclassic.c                        0             575             0
+kernel/rcupdate.c                          1             138           7.2
+kernel/rcupreempt.c                        0             953             0
+kernel/rcupreempt_trace.c                  0             330             0
+kernel/rcutorture.c                        8             995           8.0
+
+the eventual goal would be to match:
+
+   scripts/checkpatch.pl --file kernel/sched*.[ch]
+
+output ;-)
+
+	Ingo
