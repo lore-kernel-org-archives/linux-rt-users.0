@@ -1,7 +1,9 @@
 From: Gautham R Shenoy <ego@in.ibm.com>
-Subject: [RFC PATCH 0/6] RCU: Preemptible-RCU
-Date: Thu, 13 Dec 2007 22:33:49 +0530
-Message-ID: <20071213170348.GA25981@in.ibm.com>
+Subject: [RFC PATCH 1/6] Preempt-RCU: Use softirq instead of tasklets for
+	RCU
+Date: Thu, 13 Dec 2007 22:44:04 +0530
+Message-ID: <20071213171404.GB25981@in.ibm.com>
+References: <20071213170348.GA25981@in.ibm.com>
 Reply-To: ego@in.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,42 +19,134 @@ To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp06.in.ibm.com ([59.145.155.6]:57871 "EHLO
-	e28esmtp06.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751660AbXLMREM (ORCPT
+Received: from e28smtp01.in.ibm.com ([59.145.155.1]:36069 "EHLO
+	e28smtp01.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761483AbXLMRO3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2007 12:04:12 -0500
+	Thu, 13 Dec 2007 12:14:29 -0500
 Content-Disposition: inline
+In-Reply-To: <20071213170348.GA25981@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello everyone, 
+Preempt-RCU: Use softirq instead of tasklets for RCU
 
-This patchset is an updated version of the preemptible RCU patchset that
-Paul McKenney had posted it in September earlier this year that can be
-found here --> http://lkml.org/lkml/2007/9/10/213
+From: Dipankar Sarma <dipankar@in.ibm.com>
 
-This patchset incorporates the review comments from Oleg Nesterov
-and Steven Rostedt.
+This patch makes RCU use softirq instead of tasklets.
 
-The testing report of the patchset is as follows:
-====================================================================
-Patch-stack:  	2.6.23-rc3 + cpu-hotplug patches from 
-		http://lkml.org/lkml/2007/11/15/239 + Preempt-RCU
-		patches.
-Test:		RCU-Torture running parallelly with CPU-Hotplug
-		operations.
-Duration:	24 hours.
-Architectures:	x86,x86_64, ppc64.
-====================================================================
+It also adds a memory barrier after raising the softirq
+inorder to ensure that the cpu sees the most recently updated
+value of rcu->cur while processing callbacks.
+The discussion of the related theoretical race pointed out
+by James Huang can be found here --> http://lkml.org/lkml/2007/11/20/603
 
+Signed-off-by: Gautham R Shenoy <ego@in.ibm.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Dipankar Sarma <dipankar@in.ibm.com>
+---
 
-Currently it is based against the latest linux-2.6-sched-devel.git
+ include/linux/interrupt.h |    1 +
+ kernel/rcupdate.c         |   25 +++++++++++++++++--------
+ 2 files changed, 18 insertions(+), 8 deletions(-)
 
-Awaiting your feedback!
-
-Thanks and Regards
-gautham.
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 2306920..c3db4a0 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -256,6 +256,7 @@ enum
+ #ifdef CONFIG_HIGH_RES_TIMERS
+ 	HRTIMER_SOFTIRQ,
+ #endif
++	RCU_SOFTIRQ, 	/* Preferable RCU should always be the last softirq */
+ };
+ 
+ /* softirq mask and active fields moved to irq_cpustat_t in
+diff --git a/kernel/rcupdate.c b/kernel/rcupdate.c
+index a66d4d1..8658948 100644
+--- a/kernel/rcupdate.c
++++ b/kernel/rcupdate.c
+@@ -73,8 +73,6 @@ static struct rcu_ctrlblk rcu_bh_ctrlblk = {
+ DEFINE_PER_CPU(struct rcu_data, rcu_data) = { 0L };
+ DEFINE_PER_CPU(struct rcu_data, rcu_bh_data) = { 0L };
+ 
+-/* Fake initialization required by compiler */
+-static DEFINE_PER_CPU(struct tasklet_struct, rcu_tasklet) = {NULL};
+ static int blimit = 10;
+ static int qhimark = 10000;
+ static int qlowmark = 100;
+@@ -231,6 +229,18 @@ void rcu_barrier(void)
+ }
+ EXPORT_SYMBOL_GPL(rcu_barrier);
+ 
++/* Raises the softirq for processing rcu_callbacks. */
++static inline void raise_rcu_softirq(void)
++{
++	raise_softirq(RCU_SOFTIRQ);
++	/*
++	 * The smp_mb() here is required to ensure that this cpu's
++	 * __rcu_process_callbacks() reads the most recently updated
++	 * value of rcu->cur.
++	 */
++	smp_mb();
++}
++
+ /*
+  * Invoke the completed RCU callbacks. They are expected to be in
+  * a per-cpu list.
+@@ -260,7 +270,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
+ 	if (!rdp->donelist)
+ 		rdp->donetail = &rdp->donelist;
+ 	else
+-		tasklet_schedule(&per_cpu(rcu_tasklet, rdp->cpu));
++		raise_rcu_softirq();
+ }
+ 
+ /*
+@@ -412,7 +422,6 @@ static void rcu_offline_cpu(int cpu)
+ 					&per_cpu(rcu_bh_data, cpu));
+ 	put_cpu_var(rcu_data);
+ 	put_cpu_var(rcu_bh_data);
+-	tasklet_kill_immediate(&per_cpu(rcu_tasklet, cpu), cpu);
+ }
+ 
+ #else
+@@ -424,7 +433,7 @@ static void rcu_offline_cpu(int cpu)
+ #endif
+ 
+ /*
+- * This does the RCU processing work from tasklet context. 
++ * This does the RCU processing work from softirq context.
+  */
+ static void __rcu_process_callbacks(struct rcu_ctrlblk *rcp,
+ 					struct rcu_data *rdp)
+@@ -469,7 +478,7 @@ static void __rcu_process_callbacks(struct rcu_ctrlblk *rcp,
+ 		rcu_do_batch(rdp);
+ }
+ 
+-static void rcu_process_callbacks(unsigned long unused)
++static void rcu_process_callbacks(struct softirq_action *unused)
+ {
+ 	__rcu_process_callbacks(&rcu_ctrlblk, &__get_cpu_var(rcu_data));
+ 	__rcu_process_callbacks(&rcu_bh_ctrlblk, &__get_cpu_var(rcu_bh_data));
+@@ -533,7 +542,7 @@ void rcu_check_callbacks(int cpu, int user)
+ 		rcu_bh_qsctr_inc(cpu);
+ 	} else if (!in_softirq())
+ 		rcu_bh_qsctr_inc(cpu);
+-	tasklet_schedule(&per_cpu(rcu_tasklet, cpu));
++	raise_rcu_softirq();
+ }
+ 
+ static void rcu_init_percpu_data(int cpu, struct rcu_ctrlblk *rcp,
+@@ -556,7 +565,7 @@ static void __devinit rcu_online_cpu(int cpu)
+ 
+ 	rcu_init_percpu_data(cpu, &rcu_ctrlblk, rdp);
+ 	rcu_init_percpu_data(cpu, &rcu_bh_ctrlblk, bh_rdp);
+-	tasklet_init(&per_cpu(rcu_tasklet, cpu), rcu_process_callbacks, 0UL);
++	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks, NULL);
+ }
+ 
+ static int __cpuinit rcu_cpu_notify(struct notifier_block *self,
 -- 
 Gautham R Shenoy
 Linux Technology Center
