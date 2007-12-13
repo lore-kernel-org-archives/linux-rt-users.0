@@ -1,42 +1,51 @@
-From: "Andrew Victor" <avictor.za@gmail.com>
-Subject: Re: [PATCH]: Atmel Serial Console interrupt handler splitup
-Date: Thu, 13 Dec 2007 19:33:46 +0200
-Message-ID: <cd73a99e0712130933s6f601ef7sed90f48c08d9adaa@mail.gmail.com>
-References: <3efb10970712070724i6fa66666t2b8422329759ce24@mail.gmail.com>
-	 <Pine.LNX.4.58.0712121606241.23712@gandalf.stny.rr.com>
-	 <3efb10970712121429l7b41d57md4f826f6aaf4b71@mail.gmail.com>
-	 <3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH 0/6] RCU: Preemptible-RCU
+Date: Thu, 13 Dec 2007 12:36:47 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712131230220.3369@gandalf.stny.rr.com>
+References: <20071213170348.GA25981@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	"Andrew Victor" <linux@maxim.org.za>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Remy Bohmer" <linux@bohmer.net>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Paul E McKenney <paulmck@us.ibm.com>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Gautham R Shenoy <ego@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nz-out-0506.google.com ([64.233.162.227]:42630 "EHLO
-	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760409AbXLMRdy (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:52289 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760431AbXLMRg7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2007 12:33:54 -0500
-Received: by nz-out-0506.google.com with SMTP id s18so424301nze.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Dec 2007 09:33:47 -0800 (PST)
-In-Reply-To: <3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
-Content-Disposition: inline
+	Thu, 13 Dec 2007 12:36:59 -0500
+In-Reply-To: <20071213170348.GA25981@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-hi Remy,
+On Thu, 13 Dec 2007, Gautham R Shenoy wrote:
 
-> These patches should go to mainline:
-> * atmel_serial_cleanup_no_at91.patch
+>
+> Currently it is based against the latest linux-2.6-sched-devel.git
+>
+> Awaiting your feedback!
 
-I don't know what coding rules you're following...   :)
+Hi Gautham,
 
-The code you've moved out of the interrupt handler should probably now
-be marked as inline.
+Thanks for posting this. I believe this is the same version of preempt RCU
+as we have in the RT patch. It seems to be very stable. I ran the RT patch
+version of the RCU Preempt (just the Preempt RCU patches without RT on
+latest git) on a 64way box and the results seems just as good (if not
+slightly better) than classic RCU!  I'll rerun this patch series on that
+box and post the results.
 
-Regards,
-  Andrew Victor
+>From what I'm seening with this, is that it is ready for mainline. These
+patches should probably go into -mm and be ready for 2.6.25.  If Andrew
+wants to wait for my results, I'll run them tonight.
+
+Thanks Gautham, Paul and Dipankar for all this great work!
+
+-- Steve
