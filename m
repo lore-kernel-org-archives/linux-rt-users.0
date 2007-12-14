@@ -1,121 +1,68 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 2/6] Preempt-RCU: Reorganize RCU code into rcuclassic.c and rcupdate.c
-Date: Fri, 14 Dec 2007 08:12:14 -0800
-Message-ID: <20071214161214.GB14177@linux.vnet.ibm.com>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171508.GC25981@in.ibm.com> <x7fxy572jh.fsf@saeurebad.de>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24-rc5-rt1
+Date: Fri, 14 Dec 2007 17:13:38 -0500
+Message-ID: <1197670418.15001.22.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
-	Josh Triplett <josh@freedesktop.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Johannes Weiner <hannes-kernel@saeurebad.de>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:57154 "EHLO e5.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933187AbXLNQNB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Dec 2007 11:13:01 -0500
-Content-Disposition: inline
-In-Reply-To: <x7fxy572jh.fsf@saeurebad.de>
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:39610 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933536AbXLNWOL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 14 Dec 2007 17:14:11 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Dec 14, 2007 at 03:51:14PM +0100, Johannes Weiner wrote:
-> Hi,
-> 
-> Gautham R Shenoy <ego@in.ibm.com> writes:
-> 
-> > diff --git a/kernel/rcuclassic.c b/kernel/rcuclassic.c
-> > new file mode 100644
-> > index 0000000..11c16aa
-> > --- /dev/null
-> > +++ b/kernel/rcuclassic.c
-> > +/**
-> > + * call_rcu - Queue an RCU callback for invocation after a grace period.
-> > + * @head: structure to be used for queueing the RCU updates.
-> > + * @func: actual update function to be invoked after the grace period
-> > + *
-> > + * The update function will be invoked some time after a full grace
-> > + * period elapses, in other words after all currently executing RCU
-> > + * read-side critical sections have completed.  RCU read-side critical
-> > + * sections are delimited by rcu_read_lock() and rcu_read_unlock(),
-> > + * and may be nested.
-> > + */
-> > +void call_rcu(struct rcu_head *head,
-> > +				void (*func)(struct rcu_head *rcu))
-> > +{
-> > +	unsigned long flags;
-> > +	struct rcu_data *rdp;
-> > +
-> > +	head->func = func;
-> > +	head->next = NULL;
-> > +	local_irq_save(flags);
-> > +	rdp = &__get_cpu_var(rcu_data);
-> > +	*rdp->nxttail = head;
-> > +	rdp->nxttail = &head->next;
-> > +	if (unlikely(++rdp->qlen > qhimark)) {
-> > +		rdp->blimit = INT_MAX;
-> > +		force_quiescent_state(rdp, &rcu_ctrlblk);
-> > +	}
-> > +	local_irq_restore(flags);
-> > +}
-> > +EXPORT_SYMBOL_GPL(call_rcu);
-> > +
-> > +/**
-> > + * call_rcu_bh - Queue an RCU for invocation after a quicker grace period.
-> > + * @head: structure to be used for queueing the RCU updates.
-> > + * @func: actual update function to be invoked after the grace period
-> > + *
-> > + * The update function will be invoked some time after a full grace
-> > + * period elapses, in other words after all currently executing RCU
-> > + * read-side critical sections have completed. call_rcu_bh() assumes
-> > + * that the read-side critical sections end on completion of a softirq
-> > + * handler. This means that read-side critical sections in process
-> > + * context must not be interrupted by softirqs. This interface is to be
-> > + * used when most of the read-side critical sections are in softirq context.
-> > + * RCU read-side critical sections are delimited by rcu_read_lock() and
-> > + * rcu_read_unlock(), * if in interrupt context or rcu_read_lock_bh()
-> > + * and rcu_read_unlock_bh(), if in process context. These may be nested.
-> > + */
-> > +void call_rcu_bh(struct rcu_head *head,
-> > +				void (*func)(struct rcu_head *rcu))
-> > +{
-> > +	unsigned long flags;
-> > +	struct rcu_data *rdp;
-> > +
-> > +	head->func = func;
-> > +	head->next = NULL;
-> > +	local_irq_save(flags);
-> > +	rdp = &__get_cpu_var(rcu_bh_data);
-> > +	*rdp->nxttail = head;
-> > +	rdp->nxttail = &head->next;
-> > +
-> > +	if (unlikely(++rdp->qlen > qhimark)) {
-> > +		rdp->blimit = INT_MAX;
-> > +		force_quiescent_state(rdp, &rcu_bh_ctrlblk);
-> > +	}
-> > +
-> > +	local_irq_restore(flags);
-> > +}
-> > +EXPORT_SYMBOL_GPL(call_rcu_bh);
-> 
-> Those two functions are identical beside the difference of `rcu_data'
-> <-> `rcu_bh_data' and `rcu_ctrlblk' <-> `rcu_bh_ctrlblk'.
-> 
-> Is there a way to collapse the code into one helper function or would
-> that effect performance too much?
+We are pleased to announce the 2.6.24-rc5-rt1 tree, which can be
+downloaded from the usual location:
 
-This code is performance critical, but on the other hand, perhaps gcc
-has gotten smarter in the years since this was written.  (This patch is
-just moving this code from one file to another, rather than writing it
-from scratch.)  Would current gcc implementations be able to do the
-inlining required?
+ http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-							Thanx, Paul
+Changes since 2.6.24-rc2-rt1
+
+  - Ported to 2.6.24-rc5
+
+  - Backported the new RT Balancing code from sched-devel
+       New changes by Steven Rostedt, Gregory Haskins,
+        Ingo Molnar, and Dmitry Adamushko
+
+  - 2 dimension CPU Prio RT balancing search (Gregory Haskins)
+
+  - ARM compile fix (Kevin Hilman)
+
+  - Handle IRQ_PENDING for simple irq thread (Steven Rostedt)
+
+  - latency tracer updates (Daniel Walker)
+
+  - Remove warning in local_bh_enable (Kevin Hilman)
+
+  - use real time pcp locking for page draining during cpu (Andi Kleen)
+
+  - Revert lazy disable irq from simple irq handler (Steven Rostedt)
+
+  - AT91 switch to edge from simple irq (Remy Bohmer)
+
+  - POWER hacks to let kernbench run (Paul McKenney)
+
+  - RCU Preempt extra variable fix (Remy Bohmer)
+
+to build a 2.6.24-rc5-rt1 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.24-rc5.bz2
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.24-rc5-rt1.gz
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt2
+
+
+The broken out patches are also available.
+
+-- Steve
