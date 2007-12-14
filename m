@@ -1,96 +1,62 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 0/6] RCU: Preemptible-RCU
-Date: Thu, 13 Dec 2007 15:41:34 -0800
-Message-ID: <20071213234134.GH10307@linux.vnet.ibm.com>
-References: <20071213170348.GA25981@in.ibm.com> <20071213203804.GE25130@elte.hu>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 2.6.23.9-rt13
+Date: Thu, 13 Dec 2007 19:06:35 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712131903020.13748@gandalf.stny.rr.com>
+References: <1197524036.15001.15.camel@localhost.localdomain>
+ <3efb10970712130243t2172907cm31c5d3af29383c8b@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Gautham R Shenoy <ego@in.ibm.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
-	Josh Triplett <josh@freedesktop.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Ingo Molnar <mingo@elte.hu>
+	Gregory Haskins <ghaskins@novell.com>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:42800 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759694AbXLMXmA (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:36858 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934974AbXLNAHQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2007 18:42:00 -0500
-Content-Disposition: inline
-In-Reply-To: <20071213203804.GE25130@elte.hu>
+	Thu, 13 Dec 2007 19:07:16 -0500
+In-Reply-To: <3efb10970712130243t2172907cm31c5d3af29383c8b@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Dec 13, 2007 at 09:38:04PM +0100, Ingo Molnar wrote:
-> 
-> * Gautham R Shenoy <ego@in.ibm.com> wrote:
-> 
-> > Hello everyone,
-> > 
-> > This patchset is an updated version of the preemptible RCU patchset 
-> > that Paul McKenney had posted it in September earlier this year that 
-> > can be found here --> http://lkml.org/lkml/2007/9/10/213
-> > 
-> > This patchset incorporates the review comments from Oleg Nesterov and 
-> > Steven Rostedt.
-> > 
-> > The testing report of the patchset is as follows:
-> > ====================================================================
-> > Patch-stack:  	2.6.23-rc3 + cpu-hotplug patches from 
-> > 		http://lkml.org/lkml/2007/11/15/239 + Preempt-RCU
-> > 		patches.
-> > Test:		RCU-Torture running parallelly with CPU-Hotplug
-> > 		operations.
-> > Duration:	24 hours.
-> > Architectures:	x86,x86_64, ppc64.
-> > ====================================================================
-> > 
-> > 
-> > Currently it is based against the latest linux-2.6-sched-devel.git
-> > 
-> > Awaiting your feedback!
-> 
-> thanks Gautham, the patchset from you and Paul looks good to me and i've 
-> applied it to sched-devel.git to get it tested and reviewed some more.
-> 
-> from the Nitpicking Police, there are a couple of minor style 
-> problems/warnings with the code, you can see it via:
-> 
->   scripts/checkpatch.pl --file kernel/rcu*.c
-> 
-> nothing serious - RCU is still one of the cleanest subsystems in the 
-> kernel:
-> 
->                                       errors   lines of code   errors/KLOC
-> kernel/rcuclassic.c                        0             575             0
-> kernel/rcupdate.c                          1             138           7.2
 
-This one is the exception to checkpatch.pl's rule against "volatile".  ;-)
+Hi Remy,
 
-The volatile declaration is within the ACCESS_ONCE() macro that is used
-within rcu_read_lock() and rcu_read_unlock() to force the compiler to
-maintain ordering with respect to interrupt handler running only on that
-same CPU.
+This would have been better to send this as two separate
+patches. They are two different issues.
 
-> kernel/rcupreempt.c                        0             953             0
-> kernel/rcupreempt_trace.c                  0             330             0
-> kernel/rcutorture.c                        8             995           8.0
+On Thu, 13 Dec 2007, Remy Bohmer wrote:
+> If I compile -rt13 I get some compile warnings on ARM (AT91):
+> 1) This one did not exist in rt1:
+> In file included from kernel/sched.c:911:
+> kernel/sched_rt.c: In function 'dec_rt_tasks':
+> kernel/sched_rt.c:88: warning: unused variable 'highest_prio'
 
-Hmmm...  Definitely some old whitespace issues here...
+This is from Gregory Haskins' patch. He forgot to compile check for
+warnings on UP again ;-)
 
-> the eventual goal would be to match:
-> 
->    scripts/checkpatch.pl --file kernel/sched*.[ch]
-> 
-> output ;-)
+> 2)  This one is there already for a much longer time:
+> CC      kernel/rcupreempt.o
+> kernel/rcupreempt.c:1001: warning: 'per_cpu__rcu_dyntick_snapshot'
+> defined but not used
 
-We should be able to make some progress in that direction.  ;-)
+This was a merge conflict being solved incorrectly.
 
-							Thanx, Paul
+>
+> Both warnings are fixed by the attached patch, but warning 2 needs some review.
+> This var is defined twice in this file, 1 in the NO_HZ ifdef, and 1
+> which seems to be not used.
+
+Yeah, I'll look into it since I wrote that usage ;-)
+
+Greg,
+
+Can you merge the first part into your patch and resend it to me.
+
+I'll look at the second one.
+
+Thanks,
+
+-- Steve
