@@ -1,62 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Gregory Haskins" <ghaskins@novell.com>
 Subject: Re: 2.6.23.9-rt13
-Date: Thu, 13 Dec 2007 19:06:35 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0712131903020.13748@gandalf.stny.rr.com>
+Date: Thu, 13 Dec 2007 19:48:36 -0500
+Message-ID: <47618C94.BA47.005A.0@novell.com>
 References: <1197524036.15001.15.camel@localhost.localdomain>
  <3efb10970712130243t2172907cm31c5d3af29383c8b@mail.gmail.com>
+ <Pine.LNX.4.58.0712131903020.13748@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>
-To: Remy Bohmer <linux@bohmer.net>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: "Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"LKML" <linux-kernel@vger.kernel.org>,
+	"RT" <linux-rt-users@vger.kernel.org>
+To: "Remy Bohmer" <linux@bohmer.net>,
+	"Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:36858 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934974AbXLNAHQ (ORCPT
+Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:20711 "EHLO
+	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751503AbXLNAx4 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2007 19:07:16 -0500
-In-Reply-To: <3efb10970712130243t2172907cm31c5d3af29383c8b@mail.gmail.com>
+	Thu, 13 Dec 2007 19:53:56 -0500
+In-Reply-To: <Pine.LNX.4.58.0712131903020.13748@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+>>> On Thu, Dec 13, 2007 at  7:06 PM, in message
+<Pine.LNX.4.58.0712131903020.13748@gandalf.stny.rr.com>, Steven Rostedt
+<rostedt@goodmis.org> wrote: 
 
-Hi Remy,
+> 
+> This is from Gregory Haskins' patch. He forgot to compile check for
+> warnings on UP again ;-)
 
-This would have been better to send this as two separate
-patches. They are two different issues.
+Doh!
 
-On Thu, 13 Dec 2007, Remy Bohmer wrote:
-> If I compile -rt13 I get some compile warnings on ARM (AT91):
-> 1) This one did not exist in rt1:
-> In file included from kernel/sched.c:911:
-> kernel/sched_rt.c: In function 'dec_rt_tasks':
-> kernel/sched_rt.c:88: warning: unused variable 'highest_prio'
 
-This is from Gregory Haskins' patch. He forgot to compile check for
-warnings on UP again ;-)
+> 
+> Greg,
+> 
+> Can you merge the first part into your patch and resend it to me.
+> 
 
-> 2)  This one is there already for a much longer time:
-> CC      kernel/rcupreempt.o
-> kernel/rcupreempt.c:1001: warning: 'per_cpu__rcu_dyntick_snapshot'
-> defined but not used
+Sure thing.  Would you like me to update only the sched-devel patch, only the 23-rt13 patch, or both?
 
-This was a merge conflict being solved incorrectly.
-
->
-> Both warnings are fixed by the attached patch, but warning 2 needs some review.
-> This var is defined twice in this file, 1 in the NO_HZ ifdef, and 1
-> which seems to be not used.
-
-Yeah, I'll look into it since I wrote that usage ;-)
-
-Greg,
-
-Can you merge the first part into your patch and resend it to me.
-
-I'll look at the second one.
-
-Thanks,
-
--- Steve
+-Greg
