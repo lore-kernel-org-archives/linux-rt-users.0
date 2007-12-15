@@ -1,135 +1,40 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: [PATCH][RT] 2.6.24-rc5-rt1 drivers/dma/ioat_dma.c compile fix
-Date: Fri, 14 Dec 2007 19:56:13 -0800
-Message-ID: <1197690973.12832.12.camel@sx.thebigcorporation.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH][RT] 2.6.24-rc5-rt1 drivers/dma/ioat_dma.c compile fix
+Date: Sat, 15 Dec 2007 09:05:32 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712150904400.10448@gandalf.stny.rr.com>
 References: <BAE9DCEF64577A439B3A37F36F9B691C0371E3E3@orsmsx418.amr.corp.intel.com>
-	 <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>
-	 <47435B31.2070304@yahoo.fr>
+  <Pine.LNX.4.58.0711161214480.24276@gandalf.stny.rr.com>  <47435B31.2070304@yahoo.fr>
+ <1197690973.12832.12.camel@sx.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	trem <tremyfr@yahoo.fr>
-To: Steven Rostedt <rostedt@goodmis.org>, shannon.nelson@intel.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: shannon.nelson@intel.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, trem <tremyfr@yahoo.fr>
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0910.google.com ([209.85.198.190]:13572 "EHLO
-	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751724AbXLOD4Y (ORCPT
+Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:44015 "EHLO
+	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752249AbXLOOFh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Dec 2007 22:56:24 -0500
-Received: by rv-out-0910.google.com with SMTP id k20so1160825rvb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Dec 2007 19:56:23 -0800 (PST)
-In-Reply-To: <47435B31.2070304@yahoo.fr>
+	Sat, 15 Dec 2007 09:05:37 -0500
+In-Reply-To: <1197690973.12832.12.camel@sx.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve, 
-
-looks like this patch didn't make it into 2.6.23-rc5-rt1.
-
-I refreshed Trem's final version - please review and include in the next
-RT release.
-
-Thanks 
-
-Sven 
 
 
+On Fri, 14 Dec 2007, Sven-Thorsten Dietrich wrote:
 
-On Tue, 2007-11-20 at 23:09 +0100, trem wrote:
-> Steven Rostedt wrote:
-> > On Fri, 16 Nov 2007, Nelson, Shannon wrote:
-> >> first->async_tx.phys;
-> >>> -       __list_splice(&new_chain, ioat_chan->used_desc.prev);
-> >>> +       list_splice_tail(&new_chain, ioat_chan->used_desc.prev);
-> >>>
-> >> NAK.
-> >>
-> >> These functions do insertions differently.  The 'prev' is pointing
-> to
-> >> the last valid descriptor in the queue and you really want to get
-> the
-> >> new_chain stuck on after this.  Your list_splice_tail() will insert
-> the
-> >> new_chain just before it which will muck up the order of the DMA
-> >> requests.
-> >>
-> >> You might have more success with
-> >> 	list_splice_tail(&new_chain, ioat_chan->used_desc);
-> >> where used_desc points to the whole list, rather than using
-> the .prev
-> >> pointer to a specific node.
-> >>
-> >> Please copy me on future ioatdma related comments.
-> >>
-> > 
+> Hi Steve,
+>
+> looks like this patch didn't make it into 2.6.23-rc5-rt1.
+>
+> I refreshed Trem's final version - please review and include in the next
+> RT release.
+>
 
-> Hi
-> 
-> I've tried this change, but it still don't compile. So I propose this patch.
-> 
-> regards,
-> trem
+Sven,
 
+Thanks,  I'll take a look at it and if I don't find any issues I'll add it
+to -rt2 (or rc6-rt1 which ever comes first).
 
-From: trem <tremyfr@yahoo.fr>
-Subject:  Re: [PATCH][RT] 2.6.24-rc2-rt1 drivers/dma/ioat_dma.c compile fix
-
-Steven Rostedt wrote:
-> On Fri, 16 Nov 2007, Nelson, Shannon wrote:
->> first->async_tx.phys;
->>> -       __list_splice(&new_chain, ioat_chan->used_desc.prev);
->>> +       list_splice_tail(&new_chain, ioat_chan->used_desc.prev);
->>>
->> NAK.
->>
->> These functions do insertions differently.  The 'prev' is pointing to
->> the last valid descriptor in the queue and you really want to get the
->> new_chain stuck on after this.  Your list_splice_tail() will insert the
->> new_chain just before it which will muck up the order of the DMA
->> requests.
->>
->> You might have more success with
->> 	list_splice_tail(&new_chain, ioat_chan->used_desc);
->> where used_desc points to the whole list, rather than using the .prev
->> pointer to a specific node.
->>
->> Please copy me on future ioatdma related comments.
->>
-> 
-> And people wonder why we post RT related patches to LKML. This is exactly
-> why!
-> 
-> Thanks for the response Shannon!
-> 
-> -- Steve
-> 
-
-Hi
-
-I've tried this change, but it still don't compile. So I propose this patch.
-
-regards,
-trem
-
-Acked-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
-
-------------------------
-
----
- drivers/dma/ioat_dma.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-2.6.23/drivers/dma/ioat_dma.c
-===================================================================
---- linux-2.6.23.orig/drivers/dma/ioat_dma.c
-+++ linux-2.6.23/drivers/dma/ioat_dma.c
-@@ -260,7 +260,7 @@ static dma_cookie_t ioat1_tx_submit(stru
- 	/* write address into NextDescriptor field of last desc in chain */
- 	to_ioat_desc(ioat_chan->used_desc.prev)->hw->next =
- 							first->async_tx.phys;
--	__list_splice(&new_chain, ioat_chan->used_desc.prev);
-+	list_splice(&new_chain, &ioat_chan->used_desc);
- 
- 	ioat_chan->dmacount += desc_count;
- 	ioat_chan->pending += desc_count;
+-- Steve
