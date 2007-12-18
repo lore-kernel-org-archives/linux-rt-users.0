@@ -1,8 +1,9 @@
 From: Remy Bohmer <remy@bohmer.net>
-Subject: [patch 0/3] add kernel-cmdline support for interrupt threads
-	priorities
-Date: Tue, 18 Dec 2007 23:05:05 +0100
-Message-ID: <4768450c.2134440a.279e.5fbe@mx.google.com>
+Subject: [patch 2/3] Enable setting of IRQ-thread priorities from kernel
+	cmdline
+Date: Tue, 18 Dec 2007 23:05:07 +0100
+Message-ID: <47684515.2435440a.4f41.4148@mx.google.com>
+References: <20071218220505.828395321@bohmer.net>>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Cc: Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
@@ -14,36 +15,251 @@ To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
 Received: from fk-out-0910.google.com ([209.85.128.191]:3058 "EHLO
 	fk-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751758AbXLRWJT (ORCPT
+	with ESMTP id S1753485AbXLRWJ1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 18 Dec 2007 17:09:19 -0500
+	Tue, 18 Dec 2007 17:09:27 -0500
 Received: by fk-out-0910.google.com with SMTP id z23so2266787fkz.5
-        for <linux-rt-users@vger.kernel.org>; Tue, 18 Dec 2007 14:09:17 -0800 (PST)
+        for <linux-rt-users@vger.kernel.org>; Tue, 18 Dec 2007 14:09:26 -0800 (PST)
+Content-Disposition: inline; filename=changing_interrupt_prios_from_kernel_cmdline.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Steven,
+The RT-patch originally creates all its IRQ-threads at priority 50.
+Of course, this is not a usable default for many realtime systems
+and therefor these priorities has to be tuneable for each RT-system.
+But, currently there is no way within the kernel to adjust this to
+the needs of the user. Some scripts are floating around to do this
+from userspace, but for several applications the priorities should
+already be set properly by the kernel itself before userland is
+started.
 
-Back in August we all had a discussion about the default priorities of
-IRQ-threads and softirqs, and the lack of a mechanism to configure them from
-within the kernel.
-(see http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg01022.html)
-
-Here is a patchset that implements such a nice feature from the kernel cmdline,
-similar to what we all agreed on, back then.
-
-The set exist of 3 parts:
-1) add a generic routine to the kernel commandline-parse-library to parse the
-format of the map as we agreed on.
-2) Add a __setup(irq_pmap=) routine to kernel/irq/manage.c
-3) Add a __setup(sirq_pmap=) routine to kernel/softirq.c
-
-I hope you can find the time to review this set.
+This patch changes this by adding a kernel cmd-line option that can
+handle a map of priorities.
+It is based on the name of the driver that requests an interrupt, it
+does NOT use the IRQ-ID to prioritize a certain IRQ thread.
+This is designed this way because across several hardware-boards the
+IRQ-IDs can change, but not necessarily the drivers 
+(interrupt handlers) name.
 
 
-Kind Regards,
+Remarks:
+* There is a check for conflicts added, for situations where 
+  IRQ-sharing is detected with different priorities requested
+  on the kernel cmd-line.
+* Priorities are only set at creation time of the IRQ-thread.
+* If userland overrules, it is NOT restored by this code.
+* if no new kernel cmdline options are given, the kernel works
+  as before, and all IRQ-threads start at 50.
+* No wildcards are supported on the cmdline.
 
-Remy Bohmer
+See kernel/Documentation/kernel-parameters.txt for usage info.
 
+Signed-off-by: Remy Bohmer <linux@bohmer.net>
+
+---
+ Documentation/kernel-parameters.txt |    7 ++
+ include/linux/irq.h                 |    1 
+ kernel/irq/manage.c                 |  101 ++++++++++++++++++++++++++++++++----
+ 3 files changed, 98 insertions(+), 11 deletions(-)
+
+Index: linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt
+===================================================================
+--- linux-2.6.24-rc5-rt1.orig/Documentation/kernel-parameters.txt	2007-12-18 22:09:13.000000000 +0100
++++ linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt	2007-12-18 22:09:16.000000000 +0100
+@@ -799,6 +799,13 @@ and is between 256 and 4096 characters. 
+ 	ips=		[HW,SCSI] Adaptec / IBM ServeRAID controller
+ 			See header of drivers/scsi/ips.c.
+ 
++	irq_pmap=	[IRQ-threading] List of priorities each interrupt
++			thread must have.
++			Format: irq_pmap=megasas:90,eth0:40,50
++			The first field without ':', is the default prio.
++			If this cmdline argument is ommitted, every thread
++			runs at prio 50.
++
+ 	ports=		[IP_VS_FTP] IPVS ftp helper module
+ 			Default is 21.
+ 			Up to 8 (IP_VS_APP_MAX_PORTS) ports
+Index: linux-2.6.24-rc5-rt1/include/linux/irq.h
+===================================================================
+--- linux-2.6.24-rc5-rt1.orig/include/linux/irq.h	2007-12-18 22:09:13.000000000 +0100
++++ linux-2.6.24-rc5-rt1/include/linux/irq.h	2007-12-18 22:09:16.000000000 +0100
+@@ -169,6 +169,7 @@ struct irq_desc {
+ 	unsigned int		irqs_unhandled;
+ 	unsigned long		last_unhandled;	/* Aging timer for unhandled count */
+ 	struct task_struct	*thread;
++	int                     rt_prio;
+ 	wait_queue_head_t	wait_for_handler;
+ 	cycles_t		timestamp;
+ 	raw_spinlock_t		lock;
+Index: linux-2.6.24-rc5-rt1/kernel/irq/manage.c
+===================================================================
+--- linux-2.6.24-rc5-rt1.orig/kernel/irq/manage.c	2007-12-18 22:09:13.000000000 +0100
++++ linux-2.6.24-rc5-rt1/kernel/irq/manage.c	2007-12-18 22:15:43.000000000 +0100
+@@ -13,9 +13,19 @@
+ #include <linux/kthread.h>
+ #include <linux/syscalls.h>
+ #include <linux/interrupt.h>
++#include <linux/list.h>
+ 
+ #include "internals.h"
+ 
++
++#ifdef CONFIG_PREEMPT_HARDIRQS
++
++static char *cmdline;
++static int  default_prio = MAX_USER_RT_PRIO/2;
++
++#endif
++
++
+ #ifdef CONFIG_SMP
+ 
+ /**
+@@ -260,7 +270,7 @@ void recalculate_desc_flags(struct irq_d
+ 			desc->status |= IRQ_NODELAY;
+ }
+ 
+-static int start_irq_thread(int irq, struct irq_desc *desc);
++static int start_irq_thread(int irq, struct irq_desc *desc, int prio);
+ 
+ /*
+  * Internal function that tells the architecture code whether a
+@@ -293,6 +303,8 @@ void compat_irq_chip_set_default_handler
+ 		desc->handle_irq = NULL;
+ }
+ 
++static int get_irq_prio(const char *name);
++
+ /*
+  * Internal function to register an irqaction - typically used to
+  * allocate special interrupts that are part of the architecture.
+@@ -328,7 +340,7 @@ int setup_irq(unsigned int irq, struct i
+ 	}
+ 
+ 	if (!(new->flags & IRQF_NODELAY))
+-		if (start_irq_thread(irq, desc))
++		if (start_irq_thread(irq, desc, get_irq_prio(new->name)))
+ 			return -ENOMEM;
+ 	/*
+ 	 * The following block of code has to be executed atomically
+@@ -811,11 +823,7 @@ static int do_irqd(void * __desc)
+ #endif
+ 	current->flags |= PF_NOFREEZE | PF_HARDIRQ;
+ 
+-	/*
+-	 * Set irq thread priority to SCHED_FIFO/50:
+-	 */
+-	param.sched_priority = MAX_USER_RT_PRIO/2;
+-
++	param.sched_priority = desc->rt_prio;
+ 	sys_sched_setscheduler(current->pid, SCHED_FIFO, &param);
+ 
+ 	while (!kthread_should_stop()) {
+@@ -850,11 +858,20 @@ static int do_irqd(void * __desc)
+ 
+ static int ok_to_create_irq_threads;
+ 
+-static int start_irq_thread(int irq, struct irq_desc *desc)
++static int start_irq_thread(int irq, struct irq_desc *desc, int prio)
+ {
+-	if (desc->thread || !ok_to_create_irq_threads)
++	if (!ok_to_create_irq_threads)
+ 		return 0;
+ 
++	if (desc->thread) {
++		if (desc->rt_prio != prio)
++			printk(KERN_NOTICE
++			       "irqd: Interrupt sharing detected with "
++			       "conflicting thread priorities, irq:%d!\n", irq);
++		return 0;
++	}
++
++	desc->rt_prio = prio;
+ 	desc->thread = kthread_create(do_irqd, desc, "IRQ-%d", irq);
+ 	if (!desc->thread) {
+ 		printk(KERN_ERR "irqd: could not create IRQ thread %d!\n", irq);
+@@ -881,13 +898,13 @@ void __init init_hardirqs(void)
+ 		irq_desc_t *desc = irq_desc + i;
+ 
+ 		if (desc->action && !(desc->status & IRQ_NODELAY))
+-			start_irq_thread(i, desc);
++			start_irq_thread(i, desc, get_irq_prio(NULL));
+ 	}
+ }
+ 
+ #else
+ 
+-static int start_irq_thread(int irq, struct irq_desc *desc)
++static int start_irq_thread(int irq, struct irq_desc *desc, int prio)
+ {
+ 	return 0;
+ }
+@@ -901,3 +918,65 @@ void __init early_init_hardirqs(void)
+ 	for (i = 0; i < NR_IRQS; i++)
+ 		init_waitqueue_head(&irq_desc[i].wait_for_handler);
+ }
++
++#ifdef CONFIG_PREEMPT_HARDIRQS
++
++/*
++ * Lookup the interrupt thread priority
++ * A map for the priorities can be given on the kernel commandline.
++ * if name is NULL, or no kernel commandline options is given, the default
++ * prio is used, which is either MAX_PRIO/2, or the default given on the
++ * kernel commandline.
++ */
++static int get_irq_prio(const char *name)
++{
++	int prio = default_prio; /* Set the default for all threads */
++
++	/* If no commandline options, use thread prio defaults the old style.*/
++	if (!cmdline)
++		return prio;
++
++	if (!get_map_option(cmdline, name, &prio)) {
++		prio = default_prio;
++		if (name != NULL)
++			printk(KERN_INFO
++				"No IRQ-priority specified for '%s', " \
++				"using default(=%d)\n", name, prio);
++	} else {
++		if ((prio <= 0) || (prio >= MAX_USER_RT_PRIO))
++			prio = default_prio;
++
++		if (name != NULL)
++			printk(KERN_INFO "Using IRQ-priority %d for '%s'\n",
++				prio, name);
++	}
++	return prio;
++}
++
++/*
++ * Store the pointer to the arguments in a global var, and store the
++ * default prio globally
++ */
++static int __init irq_prio_map_setup(char *str)
++{
++	if (!str) /* sanity check */
++		return 1;
++
++	cmdline		= str; /* store it for later use */
++	default_prio	= get_irq_prio(NULL);
++
++	printk(KERN_INFO "Default IRQ-priority: %d\n", default_prio);
++	return 1;
++}
++
++/*
++ * The commandline looks like this: irq_pmap=megasas:90,eth0:40,50
++ * The first field without the ':' is used as the default for all irq-threads.
++ * There is a check for conflicts on irq-sharing.
++ * The priorities are only set on creation of the interrupt threads, thus at
++ * the time a driver uses a certain interrupt thread for the first time.
++ * Unknown or redundant fields are ignored.
++ */
++__setup("irq_pmap=", irq_prio_map_setup);
++
++#endif
 
 -- 
