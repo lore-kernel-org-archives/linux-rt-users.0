@@ -1,40 +1,104 @@
-From: Steven Rostedt <srostedt@redhat.com>
-Subject: Re: [PATCH] sched: dynamically update the root-domain span/online
- maps
-Date: Mon, 17 Dec 2007 22:35:45 -0500
-Message-ID: <47674011.2050905@redhat.com>
-References: <20071218023805.4390.19471.stgit@novell1.haskins.net>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: [PATCH]: Atmel Serial Console interrupt handler splitup
+Date: Tue, 18 Dec 2007 08:32:57 +0100
+Message-ID: <3efb10970712172332o32b6dab5l33ecac57d18f49d4@mail.gmail.com>
+References: <3efb10970712070724i6fa66666t2b8422329759ce24@mail.gmail.com>
+	 <3efb10970712121429l7b41d57md4f826f6aaf4b71@mail.gmail.com>
+	 <3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
+	 <cd73a99e0712130933s6f601ef7sed90f48c08d9adaa@mail.gmail.com>
+	 <3efb10970712131232j5f747420g4aa8b5bd956e3dd3@mail.gmail.com>
+	 <3efb10970712131235t47a9ceb5y7d9a7d5023d07bf6@mail.gmail.com>
+	 <3efb10970712140346l1845d563k900d72d8788ac6f5@mail.gmail.com>
+	 <20071217131701.6b2cdf2c@dhcp-252-066.norway.atmel.com>
+	 <3efb10970712171256v4230eb38q84d01f2d0d554935@mail.gmail.com>
+	 <20071218001240.5cb42aae@siona>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, Clark Williams <williams@redhat.com>
-To: Gregory Haskins <ghaskins@novell.com>
+Cc: "Andrew Victor" <linux@maxim.org.za>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"ARM Linux Mailing List" <linux-arm-kernel@lists.arm.linux.org.uk>,
+	linux-kernel@vger.kernel.org
+To: "Haavard Skinnemoen" <hskinnemoen@atmel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:46678 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751862AbXLRDgK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Dec 2007 22:36:10 -0500
-In-Reply-To: <20071218023805.4390.19471.stgit@novell1.haskins.net>
+Received: from an-out-0708.google.com ([209.85.132.245]:59954 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753429AbXLRHc6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 18 Dec 2007 02:32:58 -0500
+Received: by an-out-0708.google.com with SMTP id d31so612831and.103
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Dec 2007 23:32:57 -0800 (PST)
+In-Reply-To: <20071218001240.5cb42aae@siona>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Gregory Haskins wrote:
-> Hi Steven,
->   I posted a suspend-to-ram fix to sched-devel earlier today:
-> 
-> http://lkml.org/lkml/2007/12/17/445
-> 
-> This fix should also be applied to -rt as I introduced the same regression
-> there.  Here is a version of the fix for 23-rt13.  I can submit a version for
-> 24-rc5-rt1 at your request.
-> 
+Hello Haavard,
 
-Thanks Gregory,
+> > Yep. All calls that block on a Mutex somehow on Preempt-RT. (such as
+> > spinlocks, wakeup_interruptible() and many of its friends.)
+> Right. Looks like the DMA patch call these functions from irq context
+> too...I guess it'll need the same treatment?
 
-I'll put this into the 2.6.23.11-rt14 queue. I have someone that tells 
-me that suspend to RAM breaks. I'll have him try the new update and let 
-me know if it fixes his issue before releasing it. I'll also let 
-everyone know the results as well.
+That is correct. DMA code does do that, but the DMA code is not used
+for DBGU, and _only_ the interrupt handler of DBGU runs in
+IRQF_NODELAY context (because it is part of the System-IRQ and thus
+shared with the timer-irq). The DMA code always runs in IRQ-thread
+context, where it is safe to block on a mutex.
+So, it is not mandatory to change that also. (It may be nice to do it anyway)
 
--- Steve
+> > > > +struct atmel_uart_char {
+> > > > +     unsigned int status;
+> > > > +     unsigned int overrun;
+> > > > +     unsigned int ch;
+> > > > +     unsigned int flg;
+> > > > +};
+> > >
+> > > Hmm. 16 bytes per char is a bit excessive, isn't it? How about
+> > >
+> > > struct atmel_uart_char {
+> > >         u16     ch;
+> > >         u16     status;
+> > > };
+> > >
+> > > where ch is the received character (up to 9 bits) and status is the
+> > > lowest 16 bits of the status register?
+> > I used the NODELAY patch for the 8250 serial port as reference, it
+> > contains similar code, and I tried to make both look the same.
+> Ok, I see. But...
+> > > > +#define ATMEL_SERIAL_RINGSIZE 1024
+> This means that the buffer ends up at 16K. Since the buffer itself is
+> kept in a struct along with a few other pieces of data, we end up
+> kmalloc()ing 32KB of memory...
+
+Oops... 32kB on X86 is not much, relatively, on ARM it is somewhat different.
+We can also decrease the total RingSize, 128 would be good enough also.
+I can look at it later this week.
+
+> I'm a bit tempted to just go ahead and do the changes we agree on and
+> post the result. Then I'll see if I can make the DMA stuff behave. I've
+> got a different driver lying around which is DMA-only and has a few
+> problems on its own.
+
+Beware that, according to several older discussions, DBGU cannot make
+use of DMA... (If I understood it correctly, it was because the buffer
+first have to be full, before an interupt is generated. That would be
+very annoying while typing 1 character at the time ;-)
+
+> Also, I think the DMA patch needs to be more integrated with your
+> "interrupt handler splitup" patch. No point in keeping two RX buffers
+> around, and the DMA code needs to obey the same rules as the rest of
+> the driver if it's going to work in -rt.
+
+As mentioned, not necessarily...
+
+> And I'd really like to have working DMA support on avr32 before
+> christmas ;-)
+
+Me too ;-)
+
+
+Kind Regards,
+
+Remy
