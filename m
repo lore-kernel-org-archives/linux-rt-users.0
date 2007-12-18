@@ -1,38 +1,69 @@
-From: Steven Rostedt <srostedt@redhat.com>
-Subject: Re: [PATCH] sched: dynamically update the root-domain span/online
- maps
-Date: Tue, 18 Dec 2007 06:39:00 -0500
-Message-ID: <4767B154.7010507@redhat.com>
-References: <20071218023805.4390.19471.stgit@novell1.haskins.net> <20071218105513.GA9002@elte.hu>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: [Question]: Regarding time stability, NTP, clock adjustments
+Date: Tue, 18 Dec 2007 13:03:52 +0100
+Message-ID: <3efb10970712180403hded3efdu188a2ed83ecc88ed@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	"Alex van der Wak" <alexvanderwal@gmail.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:51275 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752661AbXLRLja (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 18 Dec 2007 06:39:30 -0500
-In-Reply-To: <20071218105513.GA9002@elte.hu>
+Received: from rv-out-0910.google.com ([209.85.198.188]:61098 "EHLO
+	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752630AbXLRMDx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 18 Dec 2007 07:03:53 -0500
+Received: by rv-out-0910.google.com with SMTP id k20so2249797rvb.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 18 Dec 2007 04:03:52 -0800 (PST)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Ingo Molnar wrote:
+Hi Steven and/or Thomas,
 
-> well since i reverted the original patch, there's no regression. The 
-> question is, do we know whether this new patch works fine wrt. s2ram?
-> 
+I have a question regarding the stability of the time-of-day on
+PREEMPT_RT and NTP and such. I hope one of you can answer them.
 
-Hi Ingo,
+In a hard real time user space application, running on a PREEMPT_RT
+kernel (currently 2.6.20-rt8), we are using the clock_gettime() API
+from <time.h> to get the time for the CLOCK_REALTIME clock. We use
+this to perform all time based operations including timer timeouts and
+timed waits on semaphores and mutexes. We use CLOCK_REALTIME and not
+CLOCK_MONOTONIC since semaphores only support timed waits for
+CLOCK_REALTIME. Other time related APIs have similar constraints.
 
-I included the same patches into 2.6.23.9-rt13 and someone reported s2r 
-failed for them. I've included Greg's updates into a pre release of 
--rt14 and sent that to the reporter. I'm waiting on a response before 
-releasing -rt14.
+Our requirement is that 'the' time returned by clock_gettime() is
+stable (e.g does not slow down or accelerate) and never changes
+disjunctly (e.g never jumps to the future or past). If this cannot be
+guaranteed, the real time behaviour of our application cannot be
+guaranteed.
 
-Although I did just get a response from Andrew Morton saying that the 
-updated patch fixed his box.
+We achieve time stability by not enabling NTP on the system. Looking
+at kernel source code we found that NTP time manipulation is deeply
+embedded so we disable this. However, things are less clear when we
+add time zones and daylight savings time to the equation.
 
--- Steve
+We have observed that dynamic changes in the time zone (e.g changing
+/etc/localtime) result is a different time returned by the `date`
+command, but not by clock_gettime(). This is excellent, but is this a
+fluke or design?
+
+What factors influence the (kernel) time as returned by
+clock_gettime() for CLOCK_REALTIME in terms of rate of passage of time
+(NTP), and disjunct (time zone and DST) time changes? Next, what is
+allowed and disallowed related to time in order to meet the stable
+clock requirment for a real time application?
+
+We want to make this clear and then publish something on the rt kernel
+wiki since the existing man pages do not mention potential
+interactions and design decisions related to this. This information is
+very relevant to running real time applications on a real time kernel.
+
+If you have any other comments related to this then these are more than welcome.
+Thanks in advance for your time,
+
+Kind Regards,
+
+Remy
