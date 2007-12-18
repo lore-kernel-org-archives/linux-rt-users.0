@@ -1,104 +1,114 @@
-From: "Remy Bohmer" <linux@bohmer.net>
+From: Haavard Skinnemoen <hskinnemoen@atmel.com>
 Subject: Re: [PATCH]: Atmel Serial Console interrupt handler splitup
-Date: Tue, 18 Dec 2007 08:32:57 +0100
-Message-ID: <3efb10970712172332o32b6dab5l33ecac57d18f49d4@mail.gmail.com>
+Date: Tue, 18 Dec 2007 10:07:24 +0100
+Message-ID: <20071218100724.3e79629e@dhcp-252-066.norway.atmel.com>
 References: <3efb10970712070724i6fa66666t2b8422329759ce24@mail.gmail.com>
-	 <3efb10970712121429l7b41d57md4f826f6aaf4b71@mail.gmail.com>
-	 <3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
-	 <cd73a99e0712130933s6f601ef7sed90f48c08d9adaa@mail.gmail.com>
-	 <3efb10970712131232j5f747420g4aa8b5bd956e3dd3@mail.gmail.com>
-	 <3efb10970712131235t47a9ceb5y7d9a7d5023d07bf6@mail.gmail.com>
-	 <3efb10970712140346l1845d563k900d72d8788ac6f5@mail.gmail.com>
-	 <20071217131701.6b2cdf2c@dhcp-252-066.norway.atmel.com>
-	 <3efb10970712171256v4230eb38q84d01f2d0d554935@mail.gmail.com>
-	 <20071218001240.5cb42aae@siona>
+	<Pine.LNX.4.58.0712121606241.23712@gandalf.stny.rr.com>
+	<3efb10970712121429l7b41d57md4f826f6aaf4b71@mail.gmail.com>
+	<3efb10970712130840r7a2c5f72jca641d1cac545464@mail.gmail.com>
+	<cd73a99e0712130933s6f601ef7sed90f48c08d9adaa@mail.gmail.com>
+	<3efb10970712131232j5f747420g4aa8b5bd956e3dd3@mail.gmail.com>
+	<3efb10970712131235t47a9ceb5y7d9a7d5023d07bf6@mail.gmail.com>
+	<3efb10970712140346l1845d563k900d72d8788ac6f5@mail.gmail.com>
+	<20071217131701.6b2cdf2c@dhcp-252-066.norway.atmel.com>
+	<3efb10970712171256v4230eb38q84d01f2d0d554935@mail.gmail.com>
+	<20071217234932.GH23657@flint.arm.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "Andrew Victor" <linux@maxim.org.za>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"ARM Linux Mailing List" <linux-arm-kernel@lists.arm.linux.org.uk>,
-	linux-kernel@vger.kernel.org
-To: "Haavard Skinnemoen" <hskinnemoen@atmel.com>
+Cc: Remy Bohmer <linux@bohmer.net>, linux-kernel@vger.kernel.org,
+	ARM Linux Mailing List
+	<linux-arm-kernel@lists.arm.linux.org.uk>,
+	Andrew Victor <linux@maxim.org.za>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Russell King - ARM Linux <linux@arm.linux.org.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.245]:59954 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753429AbXLRHc6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 18 Dec 2007 02:32:58 -0500
-Received: by an-out-0708.google.com with SMTP id d31so612831and.103
-        for <linux-rt-users@vger.kernel.org>; Mon, 17 Dec 2007 23:32:57 -0800 (PST)
-In-Reply-To: <20071218001240.5cb42aae@siona>
-Content-Disposition: inline
+Received: from nat-132.atmel.no ([80.232.32.132]:64907 "EHLO relay.atmel.no"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751938AbXLRJIN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 18 Dec 2007 04:08:13 -0500
+In-Reply-To: <20071217234932.GH23657@flint.arm.linux.org.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Haavard,
+On Mon, 17 Dec 2007 23:49:32 +0000
+Russell King - ARM Linux <linux@arm.linux.org.uk> wrote:
 
-> > Yep. All calls that block on a Mutex somehow on Preempt-RT. (such as
-> > spinlocks, wakeup_interruptible() and many of its friends.)
-> Right. Looks like the DMA patch call these functions from irq context
-> too...I guess it'll need the same treatment?
-
-That is correct. DMA code does do that, but the DMA code is not used
-for DBGU, and _only_ the interrupt handler of DBGU runs in
-IRQF_NODELAY context (because it is part of the System-IRQ and thus
-shared with the timer-irq). The DMA code always runs in IRQ-thread
-context, where it is safe to block on a mutex.
-So, it is not mandatory to change that also. (It may be nice to do it anyway)
-
-> > > > +struct atmel_uart_char {
-> > > > +     unsigned int status;
-> > > > +     unsigned int overrun;
-> > > > +     unsigned int ch;
-> > > > +     unsigned int flg;
-> > > > +};
+> On Mon, Dec 17, 2007 at 09:56:30PM +0100, Remy Bohmer wrote:
+> > > > +#define lread(port)          __raw_readl(port)
+> > > > +#define lwrite(v, port)              __raw_writel(v, port)
 > > >
-> > > Hmm. 16 bytes per char is a bit excessive, isn't it? How about
+> > > Why is this necessary, and what does 'l' stand for?
+> > 
+> > There is a huge list of macros below these definitions. By doing it
+> > this way, the macros still fit on 80 characters wide, while without
+> > them, I had split up the macros over several lines, which does not
+> > make it more readable. That's all.
+> > 'l' refers at the last letter of __raw_readl, and writel. Nothing special.
+> 
+> So why not keep to the Linux convention?  How about at_readl() and
+> at_writel() ?
+
+Something like this perhaps?
+
+#define at_readl(port, off)	__raw_readl((port)->membase + (off))
+#define at_writel(v, port, off)	__raw_writel(v, (port)->membase + (off))
+
+#define UART_PUT_CR(port, v)	at_writel(v, port, ATMEL_US_CR)
+#define UART_PUT_MR(port, v)	at_writel(v, port, ATMEL_US_MR)
+#define UART_PUT_IER(port, v)	at_writel(v, port, ATMEL_US_IER)
+#define UART_PUT_IDR(port, v)	at_writel(v, port, ATMEL_US_IDR)
+#define UART_PUT_CHAR(port, v)	at_writel(v, port, ATMEL_US_THR)
+#define UART_PUT_BRGR(port, v)	at_writel(v, port, ATMEL_US_BRGR)
+#define UART_PUT_RTOR(port, v)	at_writel(v, port, ATMEL_US_RTOR)
+
+That said, I wonder if it may actually be nicer to just use
+at_writel()/at_readl() throughout the driver...but that's for a later
+cleanup.
+
 > > >
-> > > struct atmel_uart_char {
-> > >         u16     ch;
-> > >         u16     status;
-> > > };
+> > > > +     while (!(UART_GET_CSR(port) & ATMEL_US_TXEMPTY))
+> > > > +             barrier();
 > > >
-> > > where ch is the received character (up to 9 bits) and status is the
-> > > lowest 16 bits of the status register?
-> > I used the NODELAY patch for the 8250 serial port as reference, it
-> > contains similar code, and I tried to make both look the same.
-> Ok, I see. But...
-> > > > +#define ATMEL_SERIAL_RINGSIZE 1024
-> This means that the buffer ends up at 16K. Since the buffer itself is
-> kept in a struct along with a few other pieces of data, we end up
-> kmalloc()ing 32KB of memory...
+> > > Should probably use cpu_relax(), but it's probably out of scope for a
+> > > codingstyle cleanup patch (and I don't think it matters on AVR32 or
+> > > ARM.)
+> > 
+> > Agree.
+> 
+> Even though it doesn't matter at the moment, I rather like to think a
+> bit about the future.  If the kernel has a simple and cheap mechanism
+> there's no reason to avoid using it.
 
-Oops... 32kB on X86 is not much, relatively, on ARM it is somewhat different.
-We can also decrease the total RingSize, 128 would be good enough also.
-I can look at it later this week.
+I can do it in a separate patch.
 
-> I'm a bit tempted to just go ahead and do the changes we agree on and
-> post the result. Then I'll see if I can make the DMA stuff behave. I've
-> got a different driver lying around which is DMA-only and has a few
-> problems on its own.
+> > 
+> > > >       /*
+> > > > -      *      First, save IMR and then disable interrupts
+> > > > +      *      First, save IMR and then disable interrupts
+> > > >        */
+> > > >       imr = UART_GET_IMR(port);       /* get interrupt mask */
+> > > >       UART_PUT_IDR(port, ATMEL_US_RXRDY | ATMEL_US_TXRDY);
+> > > > @@ -790,30 +828,32 @@ static void atmel_console_write(struct c
+> > > >       uart_console_write(port, s, count, atmel_console_putchar);
+> > > >
+> > > >       /*
+> > > > -      *      Finally, wait for transmitter to become empty
+> > > > -      *      and restore IMR
+> > > > +      *      Finally, wait for transmitter to become empty
+> > > > +      *      and restore IMR
+> > > >        */
+> > >
+> > > Looks like you're replacing TABs with spaces. Why?
+> > 
+> > ????
+> 
+> I think someone's mailer might be messing with the patches.  The above
+> removed and added lines appear to be identical.
 
-Beware that, according to several older discussions, DBGU cannot make
-use of DMA... (If I understood it correctly, it was because the buffer
-first have to be full, before an interupt is generated. That would be
-very annoying while typing 1 character at the time ;-)
+Yes, the difference was wiped out after a few times back and forth. It
+was visible (or...not actually visible, but you know how to detect
+these things) in the first couple of e-mails.
 
-> Also, I think the DMA patch needs to be more integrated with your
-> "interrupt handler splitup" patch. No point in keeping two RX buffers
-> around, and the DMA code needs to obey the same rules as the rest of
-> the driver if it's going to work in -rt.
-
-As mentioned, not necessarily...
-
-> And I'd really like to have working DMA support on avr32 before
-> christmas ;-)
-
-Me too ;-)
-
-
-Kind Regards,
-
-Remy
+Haavard
