@@ -1,10 +1,10 @@
 From: Randy Dunlap <randy.dunlap@oracle.com>
-Subject: Re: [patch 3/3] Enable setting of IRQ-thread priorities from kernel
- cmdline. (repost:CC to LKML)
-Date: Wed, 19 Dec 2007 12:55:43 -0800
-Message-ID: <20071219125543.16a9fb70.randy.dunlap@oracle.com>
+Subject: Re: [patch 1/3] Add generic routine for parsing map-like options on
+ kernel cmd-line (repost:CC to LKML)
+Date: Wed, 19 Dec 2007 13:00:59 -0800
+Message-ID: <20071219130059.d99489d1.randy.dunlap@oracle.com>
 References: <20071219194551.315868746@bohmer.net>
-	<47697888.143f420a.5466.ffff89ba@mx.google.com>
+	<4769787e.01b4420a.2b28.ffff88cf@mx.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,71 +18,102 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	LKML <linux-kernel@vger.kernel.org>
 To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from agminet01.oracle.com ([141.146.126.228]:56898 "EHLO
-	agminet01.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752723AbXLSVET (ORCPT
+Received: from rgminet01.oracle.com ([148.87.113.118]:11689 "EHLO
+	rgminet01.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753587AbXLSVJk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2007 16:04:19 -0500
-In-Reply-To: <47697888.143f420a.5466.ffff89ba@mx.google.com>
+	Wed, 19 Dec 2007 16:09:40 -0500
+In-Reply-To: <4769787e.01b4420a.2b28.ffff88cf@mx.google.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 19 Dec 2007 20:45:54 +0100 Remy Bohmer wrote:
+On Wed, 19 Dec 2007 20:45:52 +0100 Remy Bohmer wrote:
 
->  Documentation/kernel-parameters.txt |   11 +++
->  kernel/softirq.c                    |  105 ++++++++++++++++++++++++++++++------
->  2 files changed, 99 insertions(+), 17 deletions(-)
+> This patch adds a generic routine to the kernel, so that a map of
+> settings can be entered on the kernel commandline.
 > 
-> Index: linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt
+> Signed-off-by: Remy Bohmer <linux@bohmer.net>
+> 
+> ---
+> ---
+>  include/linux/kernel.h |    1 
+>  lib/cmdline.c          |   58 +++++++++++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 59 insertions(+)
+> 
+> Index: linux-2.6.24-rc5-rt1/lib/cmdline.c
 > ===================================================================
-> --- linux-2.6.24-rc5-rt1.orig/Documentation/kernel-parameters.txt	2007-12-18 22:06:11.000000000 +0100
-> +++ linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt	2007-12-18 22:07:19.000000000 +0100
-> @@ -806,6 +806,17 @@ and is between 256 and 4096 characters. 
->  			If this cmdline argument is ommitted, every thread
->  			runs at prio 50.
->  
-> +	sirq_pmap=	[IRQ-threading] List of priorities each softirq
-> +			thread must have.
-> +			Format: sirq_pmap=block/0:90,sched/0:75,50
-> +			The priorities have to be specified per-cpu.
-> +			The first field without ':', is the default prio.
-
-	Drop comma.
-
-> +			The names have to match the softirq_names[] table in
-> +			kernel/softirq.c, (thus without 'softirq-' prefix) to
-> +			keep the cmd-line short.
-> +			If this cmdline argument is ommitted, every softirq
-
-                                                    omitted,
-
-> +			runs at prio 50.
-> +
->  	ports=		[IP_VS_FTP] IPVS ftp helper module
->  			Default is 21.
->  			Up to 8 (IP_VS_APP_MAX_PORTS) ports
-> Index: linux-2.6.24-rc5-rt1/kernel/softirq.c
-> ===================================================================
-> --- linux-2.6.24-rc5-rt1.orig/kernel/softirq.c	2007-12-18 22:06:11.000000000 +0100
-> +++ linux-2.6.24-rc5-rt1/kernel/softirq.c	2007-12-18 22:08:54.000000000 +0100
-> @@ -1051,3 +1062,63 @@ int on_each_cpu(void (*func) (void *info
+> --- linux-2.6.24-rc5-rt1.orig/lib/cmdline.c	2007-10-09 22:31:38.000000000 +0200
+> +++ linux-2.6.24-rc5-rt1/lib/cmdline.c	2007-12-18 21:33:58.000000000 +0100
+> @@ -114,6 +115,63 @@ char *get_options(const char *str, int n
 >  }
->  EXPORT_SYMBOL(on_each_cpu);
->  #endif
-> +
-> +/*
-> + * Lookup the softirq thread priority.
-> + * A map for the priorities can be given on the kernel commandline.
-> + * if name is NULL, or no kernel commandline options is given, the default
+>  
+>  /**
+> + *	get_map_option - Parse integer from an option map
 
-      If ...................................... option is given,
+The @param lines (below) need to go here, immediately following the
+function short description (the line above).  No intervening blank
+lines.
 
-> + * prio is returned, which is either MAX_PRIO/2, or the default given on the
-> + * kernel commandline.
+> + *
+> + *	This function parses an integer from an option map like
+> + *           some_map=key1:99,key2:98,...,keyN:NN,NN
+> + *	Only the value of the first match is returned, or if no
+> + *	key option is given (key = NULL) the value of the first
+> + *	field without a ':' is returned.
+> + *
+> + *	@str: option string
+> + *	@key: The key inside the map, can be NULL
+> + *	@pint: (output) integer value parsed from the map @str
+> + *
+> + *	Return values:
+> + *	0 - no int in string
+> + *	1 - int found
 > + */
-> +static int get_softirq_prio(const char *name)
+> +int get_map_option(const char *str, const char *key, int *pint)
 > +{
-...
+> +	char  buf[COMMAND_LINE_SIZE];
+
+COMMAND_LINE_SIZE varies from 256 to 2048, depending on $ARCH.
+That's a bit too much to declare on a function's local stack --
+unless you are very certain of the call tree to this point and
+that the total stack size is safe.  Can you just kmalloc() this
+buf?
+
+> +	char  *p, *substr;
+> +	int   found = 0;
+> +
+> +	/* We must copy the string to the stack, because strsep()
+> +	   changes it.*/
+> +	strncpy(buf, str, COMMAND_LINE_SIZE);
+> +	buf[COMMAND_LINE_SIZE-1] = '\0';
+> +
+> +	p = buf;
+> +	substr = strsep(&p, ",");
+> +	while ((!found) && (substr != NULL)) {
+> +		if (strlen(substr) != 0) {
+> +			if (key == NULL) {
+> +				/* Check for the absence of any ':' */
+> +				if (strchr(substr, ':') == NULL) {
+> +					sscanf(substr, "%d", pint);
+> +					found = 1;
+> +				}
+> +			} else {
+> +				/* check if the first part of the key matches */
+> +				if (!strncmp(substr, key, strlen(key))) {
+> +					substr += strlen(key);
+> +					/* Now the next char must be a ':',
+> +					   if not, search for the next match */
+> +					if (*substr == ':') {
+> +						substr++;
+> +						sscanf(substr, "%d", pint);
+> +						found = 1;
+> +					}
+> +				}
+> +			}
+> +		}
+> +		substr = strsep(&p, ",");
+> +	}
+> +	return found;
 > +}
 
 ---
