@@ -1,10 +1,10 @@
 From: Randy Dunlap <randy.dunlap@oracle.com>
-Subject: Re: [patch 2/3] Enable setting of IRQ-thread priorities from kernel
- cmdline (repost:CC to LKML)
-Date: Wed, 19 Dec 2007 12:51:45 -0800
-Message-ID: <20071219125145.f4061fcb.randy.dunlap@oracle.com>
+Subject: Re: [patch 3/3] Enable setting of IRQ-thread priorities from kernel
+ cmdline. (repost:CC to LKML)
+Date: Wed, 19 Dec 2007 12:55:43 -0800
+Message-ID: <20071219125543.16a9fb70.randy.dunlap@oracle.com>
 References: <20071219194551.315868746@bohmer.net>
-	<47697882.2275420a.3951.ffff92ed@mx.google.com>
+	<47697888.143f420a.5466.ffff89ba@mx.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,38 +18,41 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	LKML <linux-kernel@vger.kernel.org>
 To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rgminet01.oracle.com ([148.87.113.118]:57689 "EHLO
-	rgminet01.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752765AbXLSUxk (ORCPT
+Received: from agminet01.oracle.com ([141.146.126.228]:56898 "EHLO
+	agminet01.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752723AbXLSVET (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2007 15:53:40 -0500
-In-Reply-To: <47697882.2275420a.3951.ffff92ed@mx.google.com>
+	Wed, 19 Dec 2007 16:04:19 -0500
+In-Reply-To: <47697888.143f420a.5466.ffff89ba@mx.google.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 19 Dec 2007 20:45:53 +0100 Remy Bohmer wrote:
+On Wed, 19 Dec 2007 20:45:54 +0100 Remy Bohmer wrote:
 
->  Documentation/kernel-parameters.txt |    7 ++
->  include/linux/irq.h                 |    1 
->  kernel/irq/manage.c                 |  101 ++++++++++++++++++++++++++++++++----
->  3 files changed, 98 insertions(+), 11 deletions(-)
+>  Documentation/kernel-parameters.txt |   11 +++
+>  kernel/softirq.c                    |  105 ++++++++++++++++++++++++++++++------
+>  2 files changed, 99 insertions(+), 17 deletions(-)
 > 
 > Index: linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt
 > ===================================================================
-> --- linux-2.6.24-rc5-rt1.orig/Documentation/kernel-parameters.txt	2007-12-18 22:09:13.000000000 +0100
-> +++ linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt	2007-12-18 22:09:16.000000000 +0100
-> @@ -799,6 +799,13 @@ and is between 256 and 4096 characters. 
->  	ips=		[HW,SCSI] Adaptec / IBM ServeRAID controller
->  			See header of drivers/scsi/ips.c.
+> --- linux-2.6.24-rc5-rt1.orig/Documentation/kernel-parameters.txt	2007-12-18 22:06:11.000000000 +0100
+> +++ linux-2.6.24-rc5-rt1/Documentation/kernel-parameters.txt	2007-12-18 22:07:19.000000000 +0100
+> @@ -806,6 +806,17 @@ and is between 256 and 4096 characters. 
+>  			If this cmdline argument is ommitted, every thread
+>  			runs at prio 50.
 >  
-> +	irq_pmap=	[IRQ-threading] List of priorities each interrupt
+> +	sirq_pmap=	[IRQ-threading] List of priorities each softirq
 > +			thread must have.
-> +			Format: irq_pmap=megasas:90,eth0:40,50
+> +			Format: sirq_pmap=block/0:90,sched/0:75,50
+> +			The priorities have to be specified per-cpu.
 > +			The first field without ':', is the default prio.
 
 	Drop comma.
 
-> +			If this cmdline argument is ommitted, every thread
+> +			The names have to match the softirq_names[] table in
+> +			kernel/softirq.c, (thus without 'softirq-' prefix) to
+> +			keep the cmd-line short.
+> +			If this cmdline argument is ommitted, every softirq
 
                                                     omitted,
 
@@ -58,32 +61,29 @@ On Wed, 19 Dec 2007 20:45:53 +0100 Remy Bohmer wrote:
 >  	ports=		[IP_VS_FTP] IPVS ftp helper module
 >  			Default is 21.
 >  			Up to 8 (IP_VS_APP_MAX_PORTS) ports
-
-> Index: linux-2.6.24-rc5-rt1/kernel/irq/manage.c
+> Index: linux-2.6.24-rc5-rt1/kernel/softirq.c
 > ===================================================================
-> --- linux-2.6.24-rc5-rt1.orig/kernel/irq/manage.c	2007-12-18 22:09:13.000000000 +0100
-> +++ linux-2.6.24-rc5-rt1/kernel/irq/manage.c	2007-12-18 22:15:43.000000000 +0100
-
-> @@ -901,3 +918,65 @@ void __init early_init_hardirqs(void)
->  	for (i = 0; i < NR_IRQS; i++)
->  		init_waitqueue_head(&irq_desc[i].wait_for_handler);
+> --- linux-2.6.24-rc5-rt1.orig/kernel/softirq.c	2007-12-18 22:06:11.000000000 +0100
+> +++ linux-2.6.24-rc5-rt1/kernel/softirq.c	2007-12-18 22:08:54.000000000 +0100
+> @@ -1051,3 +1062,63 @@ int on_each_cpu(void (*func) (void *info
 >  }
-> +
-> +#ifdef CONFIG_PREEMPT_HARDIRQS
+>  EXPORT_SYMBOL(on_each_cpu);
+>  #endif
 > +
 > +/*
-> + * Lookup the interrupt thread priority
+> + * Lookup the softirq thread priority.
 > + * A map for the priorities can be given on the kernel commandline.
 > + * if name is NULL, or no kernel commandline options is given, the default
 
       If ...................................... option is given,
 
-> + * prio is used, which is either MAX_PRIO/2, or the default given on the
+> + * prio is returned, which is either MAX_PRIO/2, or the default given on the
 > + * kernel commandline.
 > + */
-> +static int get_irq_prio(const char *name)
+> +static int get_softirq_prio(const char *name)
 > +{
-
+...
+> +}
 
 ---
 ~Randy
