@@ -1,70 +1,61 @@
-From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
-Subject: Re: [patch 3/3] Enable setting of IRQ-thread priorities from kernel cmdline. (repost:CC to LKML)
-Date: Thu, 20 Dec 2007 19:10:08 +0530
-Message-ID: <1985e0f60712200540m1e499a77qaaff18d832c4b8f0@mail.gmail.com>
-References: <20071219194551.315868746@bohmer.net>
-	 <3efb10970712200425x4b0ffadcpd2ffa3223eda7b3d@mail.gmail.com>
-	 <1985e0f60712200445o4f854cdep6eebf1726737229b@mail.gmail.com>
-	 <200712201418.17378.jbe@pengutronix.de>
+From: Egor Starkov <estarkov@ru.mvista.com>
+Subject: PPC64 doesn't compile with CONFIG_SMP=n
+Date: Thu, 20 Dec 2007 17:15:38 +0300
+Message-ID: <476A790A.2060203@ru.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, "Remy Bohmer" <linux@bohmer.net>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Arnaldo Carvalho de Melo" <acme@ghostprotocols.net>,
-	"Ingo Molnar" <mingo@elte.hu>, "Darren Hart" <dvhltc@us.ibm.com>,
-	"Sven-Thorsten Dietrich" <sdietrich@novell.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: "Juergen Beisert" <jbe@pengutronix.de>
+Content-Type: multipart/mixed;
+ boundary="------------090808080300070509010501"
+Cc: rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nz-out-0506.google.com ([64.233.162.226]:40732 "EHLO
-	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763437AbXLTNkJ (ORCPT
+Received: from rtsoft3.corbina.net ([85.21.88.6]:8993 "EHLO
+	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S934033AbXLTOXE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2007 08:40:09 -0500
-Received: by nz-out-0506.google.com with SMTP id s18so1782576nze.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2007 05:40:08 -0800 (PST)
-In-Reply-To: <200712201418.17378.jbe@pengutronix.de>
-Content-Disposition: inline
+	Thu, 20 Dec 2007 09:23:04 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-hello Juergen,
+This is a multi-part message in MIME format.
+--------------090808080300070509010501
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On 12/20/07, Juergen Beisert <jbe@pengutronix.de> wrote:
-> On Thursday 20 December 2007 13:45, Jaswinder Singh wrote:
-> > So I am curious, if possible, user can switch softirq-threads or IRQs
-> > RT tasks to non-RT tasks for slow hardware or least important hardware
-> > for NON-RT tasks. So this will improve RT behaviour.
->                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-> Why?
->
-> IMHO: Simply decrease the RT priority of less important IRQs or increase all
-> other more important IRQs. IRQs are always more important than other
-> processes in a system, also in non RT systems.
->
+Hello Ingo
 
-In RT Kernel we have :-
-RT Tasks and Non-RT tasks.
+I've found out that real-time tree doesn't compile for PPC64 with 
+CONFIG_SMP=n.
 
-So we can also support :-
-RT softirq-threads/IRQs and non-RT softirq-threads/IRQs
+Think this is due to patch-2.6.21.4-rt10 patch. It has
+definitions of following symbols missing: __get_cpu_lock,
+__get_cpu_var_locked.
 
-So RT softirq-threads/IRQs for RT Tasks
-and non-RT softirq-threads/IRQs for non-RT Tasks.
+I've attached the patch to fix the problem.
 
-OR also remove Non-RT tasks from RT Kernel and simply decrease the RT
-priority of less important task as per your suggestions.
+Egor Starkov
 
-Thank you,
+--------------090808080300070509010501
+Content-Type: text/plain;
+ name="powerpc_smp_bugfix"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="powerpc_smp_bugfix"
 
-Jaswinder Singh.
+Signed-off-by: Egor Starkov <estarkov@ru.mvista.com>
 
-> Juergen
-> --
-> Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
->  Pengutronix - Linux Solutions for Science and Industry
->     Handelsregister: Amtsgericht Hildesheim, HRA 2686
->          Vertretung Sued/Muenchen, Germany
->    Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
->
+Index: linux-2.6.21/include/asm-powerpc/percpu.h
+===================================================================
+--- linux-2.6.21.orig/include/asm-powerpc/percpu.h
++++ linux-2.6.21/include/asm-powerpc/percpu.h
+@@ -61,6 +61,8 @@ extern void setup_per_cpu_areas(void);
+ 
+ #define __get_cpu_var(var)			per_cpu__##var
+ #define __raw_get_cpu_var(var)			per_cpu__##var
++#define __get_cpu_lock(var, cpu)		per_cpu_lock__##var##_locked
++#define __get_cpu_var_locked(var, cpu)		per_cpu__##var##_locked
+ 
+ #endif	/* SMP */
+ 
+
+--------------090808080300070509010501--
