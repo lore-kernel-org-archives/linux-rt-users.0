@@ -1,41 +1,70 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: neigh: timer & !nud_in_timer
-Date: Thu, 20 Dec 2007 14:35:01 +0100
-Message-ID: <476A6F85.7070905@free.fr>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
+Subject: Re: [patch 3/3] Enable setting of IRQ-thread priorities from kernel cmdline. (repost:CC to LKML)
+Date: Thu, 20 Dec 2007 19:10:08 +0530
+Message-ID: <1985e0f60712200540m1e499a77qaaff18d832c4b8f0@mail.gmail.com>
+References: <20071219194551.315868746@bohmer.net>
+	 <3efb10970712200425x4b0ffadcpd2ffa3223eda7b3d@mail.gmail.com>
+	 <1985e0f60712200445o4f854cdep6eebf1726737229b@mail.gmail.com>
+	 <200712201418.17378.jbe@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org, "Remy Bohmer" <linux@bohmer.net>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Arnaldo Carvalho de Melo" <acme@ghostprotocols.net>,
+	"Ingo Molnar" <mingo@elte.hu>, "Darren Hart" <dvhltc@us.ibm.com>,
+	"Sven-Thorsten Dietrich" <sdietrich@novell.com>,
+	LKML <linux-kernel@vger.kernel.org>
+To: "Juergen Beisert" <jbe@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:59981 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761805AbXLTNfE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2007 08:35:04 -0500
+Received: from nz-out-0506.google.com ([64.233.162.226]:40732 "EHLO
+	nz-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1763437AbXLTNkJ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 20 Dec 2007 08:40:09 -0500
+Received: by nz-out-0506.google.com with SMTP id s18so1782576nze.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2007 05:40:08 -0800 (PST)
+In-Reply-To: <200712201418.17378.jbe@pengutronix.de>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+hello Juergen,
 
-I noticed the following message in my kernel log.
-kernel: neigh: timer & !nud_in_timer
-(Might be due to a race condition.)
+On 12/20/07, Juergen Beisert <jbe@pengutronix.de> wrote:
+> On Thursday 20 December 2007 13:45, Jaswinder Singh wrote:
+> > So I am curious, if possible, user can switch softirq-threads or IRQs
+> > RT tasks to non-RT tasks for slow hardware or least important hardware
+> > for NON-RT tasks. So this will improve RT behaviour.
+>                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> Why?
+>
+> IMHO: Simply decrease the RT priority of less important IRQs or increase all
+> other more important IRQs. IRQs are always more important than other
+> processes in a system, also in non RT systems.
+>
 
-I'm running a UP Linux version 2.6.22.1-rt9
-( http://rt.wiki.kernel.org/index.php )
+In RT Kernel we have :-
+RT Tasks and Non-RT tasks.
 
-The following /proc entries might be relevant.
+So we can also support :-
+RT softirq-threads/IRQs and non-RT softirq-threads/IRQs
 
-/proc/sys/net/ipv4/conf/all/arp_accept
-0
-/proc/sys/net/ipv4/conf/all/arp_announce
-2
-/proc/sys/net/ipv4/conf/all/arp_filter
-0
-/proc/sys/net/ipv4/conf/all/arp_ignore
-1
+So RT softirq-threads/IRQs for RT Tasks
+and non-RT softirq-threads/IRQs for non-RT Tasks.
 
-I also lowered the priority of softirq-timer/0 to 10 which means
-it can be interrupted by other IRQ handlers.
+OR also remove Non-RT tasks from RT Kernel and simply decrease the RT
+priority of less important task as per your suggestions.
 
-Regards.
+Thank you,
+
+Jaswinder Singh.
+
+> Juergen
+> --
+> Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
+>  Pengutronix - Linux Solutions for Science and Industry
+>     Handelsregister: Amtsgericht Hildesheim, HRA 2686
+>          Vertretung Sued/Muenchen, Germany
+>    Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
+>
