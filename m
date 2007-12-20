@@ -1,61 +1,54 @@
-From: Egor Starkov <estarkov@ru.mvista.com>
-Subject: PPC64 doesn't compile with CONFIG_SMP=n
-Date: Thu, 20 Dec 2007 17:15:38 +0300
-Message-ID: <476A790A.2060203@ru.mvista.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: loadavg vs loadavgrt
+Date: Thu, 20 Dec 2007 11:49:55 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0712201147390.17621@gandalf.stny.rr.com>
+References: <1985e0f60712200235v61e78b99s646149e0d27f125b@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------090808080300070509010501"
-Cc: rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org
-To: mingo@elte.hu
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>
+To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft3.corbina.net ([85.21.88.6]:8993 "EHLO
-	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S934033AbXLTOXE (ORCPT
+Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:57484 "EHLO
+	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759906AbXLTQur (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2007 09:23:04 -0500
+	Thu, 20 Dec 2007 11:50:47 -0500
+In-Reply-To: <1985e0f60712200235v61e78b99s646149e0d27f125b@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------090808080300070509010501
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 
-Hello Ingo
+On Thu, 20 Dec 2007, Jaswinder Singh wrote:
 
-I've found out that real-time tree doesn't compile for PPC64 with 
-CONFIG_SMP=n.
+> Hello,
+>
+> By linux-2.6.23-rt3 on ideal condition, I am getting :-
+>
+> root@192.168.1.253:~# cat /proc/loadavgrt
+> 1.00 1.00 1.00 0/52 1158
 
-Think this is due to patch-2.6.21.4-rt10 patch. It has
-definitions of following symbols missing: __get_cpu_lock,
-__get_cpu_var_locked.
+This is bogus. It's a known issue, and there's a patch in the works.
+The problem is that the calculation of load average is done via a softirq,
+which in vanilla Linux is not a thread (nor an RT task). But in RT, all
+softirqs are RT tasks, and when this calculation is performed, it sees
+that there is always an RT task runnning. That RT task that it sees
+running happens to be the softirq RT task that is calculating the load!
 
-I've attached the patch to fix the problem.
+So the numbers are bogus!
 
-Egor Starkov
+-- Steve
 
---------------090808080300070509010501
-Content-Type: text/plain;
- name="powerpc_smp_bugfix"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="powerpc_smp_bugfix"
 
-Signed-off-by: Egor Starkov <estarkov@ru.mvista.com>
-
-Index: linux-2.6.21/include/asm-powerpc/percpu.h
-===================================================================
---- linux-2.6.21.orig/include/asm-powerpc/percpu.h
-+++ linux-2.6.21/include/asm-powerpc/percpu.h
-@@ -61,6 +61,8 @@ extern void setup_per_cpu_areas(void);
- 
- #define __get_cpu_var(var)			per_cpu__##var
- #define __raw_get_cpu_var(var)			per_cpu__##var
-+#define __get_cpu_lock(var, cpu)		per_cpu_lock__##var##_locked
-+#define __get_cpu_var_locked(var, cpu)		per_cpu__##var##_locked
- 
- #endif	/* SMP */
- 
-
---------------090808080300070509010501--
+> root@192.168.1.253:~# cat /proc/loadavg
+> 0.00 0.00 0.02 1/52 1159
+> root@192.168.1.253:~#
+>
+> I am curious:
+> 1. Why loadavgrt is not reflecting load on loadavg
+>
+> 2. loadavgrt is giving correct information or it is bogus
+>
+> Thank you,
+>
+> Jaswinder Singh.
+>
