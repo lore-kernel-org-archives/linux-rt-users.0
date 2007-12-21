@@ -1,54 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Jaswinder Singh" <jaswinderlinuxrt@gmail.com>
 Subject: Re: loadavg vs loadavgrt
-Date: Thu, 20 Dec 2007 11:49:55 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0712201147390.17621@gandalf.stny.rr.com>
+Date: Fri, 21 Dec 2007 10:28:39 +0530
+Message-ID: <1985e0f60712202058h50e6cd74ne047ff85221a3e3b@mail.gmail.com>
 References: <1985e0f60712200235v61e78b99s646149e0d27f125b@mail.gmail.com>
+	 <Pine.LNX.4.58.0712201147390.17621@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>
-To: Jaswinder Singh <jaswinderlinuxrt@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>, "Ingo Molnar" <mingo@elte.hu>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-01.nyroc.rr.com ([24.24.2.55]:57484 "EHLO
-	ms-smtp-01.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759906AbXLTQur (ORCPT
+Received: from rv-out-0910.google.com ([209.85.198.186]:51316 "EHLO
+	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752720AbXLUE6k (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2007 11:50:47 -0500
-In-Reply-To: <1985e0f60712200235v61e78b99s646149e0d27f125b@mail.gmail.com>
+	Thu, 20 Dec 2007 23:58:40 -0500
+Received: by rv-out-0910.google.com with SMTP id k20so165873rvb.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2007 20:58:39 -0800 (PST)
+In-Reply-To: <Pine.LNX.4.58.0712201147390.17621@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Thu, 20 Dec 2007, Jaswinder Singh wrote:
-
-> Hello,
+On Dec 20, 2007 10:19 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
 >
-> By linux-2.6.23-rt3 on ideal condition, I am getting :-
+> So the numbers are bogus!
 >
-> root@192.168.1.253:~# cat /proc/loadavgrt
-> 1.00 1.00 1.00 0/52 1158
 
-This is bogus. It's a known issue, and there's a patch in the works.
-The problem is that the calculation of load average is done via a softirq,
-which in vanilla Linux is not a thread (nor an RT task). But in RT, all
-softirqs are RT tasks, and when this calculation is performed, it sees
-that there is always an RT task runnning. That RT task that it sees
-running happens to be the softirq RT task that is calculating the load!
+Thanks, understood :)
 
-So the numbers are bogus!
+root@192.168.1.253:~# cat /proc/loadavg
+0.00 0.00 0.02 1/52 1159
 
--- Steve
+This seems loadavg is calculating average for non-RT tasks.
 
+I think loadavg should be loadavg(all RT Tasks) + loadavg(all non-RT
+tasks) , it means loadavg should be all Tasks(RT + non-RT)  running on
+the machine.
 
-> root@192.168.1.253:~# cat /proc/loadavg
-> 0.00 0.00 0.02 1/52 1159
-> root@192.168.1.253:~#
->
-> I am curious:
-> 1. Why loadavgrt is not reflecting load on loadavg
->
-> 2. loadavgrt is giving correct information or it is bogus
->
-> Thank you,
->
-> Jaswinder Singh.
->
+In RT we introduced loadavgrt, but we changed the meaning of loadavg.
+
+Currently loadavgrt is correct it is trying to calculate average of RT tasks.
+But currently loadavg is loadavgnonrt, it should be loadavg (for all Tasks)
+
+Please correct me, If I am wrong.
+
+Thank you,
+
+Jaswinder Singh.
