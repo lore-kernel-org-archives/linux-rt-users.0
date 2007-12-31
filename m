@@ -1,612 +1,88 @@
-From: "K. Prasad" <prasad@linux.vnet.ibm.com>
-Subject: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing
-Date: Mon, 31 Dec 2007 11:39:11 +0530
-Message-ID: <20071231060911.GB6461@in.ibm.com>
-Reply-To: prasad@linux.vnet.ibm.com
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
+	Tracing
+Date: Mon, 31 Dec 2007 11:20:46 +0100
+Message-ID: <20071231102045.GB30380@elte.hu>
+References: <20071231060911.GB6461@in.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: dipankar@in.ibm.com, ego@in.ibm.com, mathieu.desnoyers@polymtl.ca,
-	paulmck@linux.vnet.ibm.com
-To: mingo@elte.hu, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com, ego@in.ibm.com, mathieu.desnoyers@polymtl.ca,
+	paulmck@linux.vnet.ibm.com,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: "K. Prasad" <prasad@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp06.in.ibm.com ([59.145.155.6]:40435 "EHLO
-	e28esmtp06.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751647AbXLaGJl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Dec 2007 01:09:41 -0500
+Received: from mx2.mail.elte.hu ([157.181.151.9]:51241 "EHLO mx2.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753631AbXLaKVa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 31 Dec 2007 05:21:30 -0500
 Content-Disposition: inline
+In-Reply-To: <20071231060911.GB6461@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This patch converts the tracing mechanism of Preempt RCU boosting into
-markers. The handler functions for these markers are included inside
-rcupreempt_trace.c and will be included only when PREEMPT_RCU_BOOST is
-chosen.
- 
-Signed-off-by: K.Prasad <prasad@linux.vnet.ibm.com>
----
- include/linux/rcupreempt_trace.h |   46 ++++++++
- kernel/rcupreempt-boost.c        |  211 ++++-----------------------------------
- kernel/rcupreempt_trace.c        |  183 +++++++++++++++++++++++++++++++++
- 3 files changed, 251 insertions(+), 189 deletions(-)
- 
-Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
-===================================================================
---- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/include/linux/rcupreempt_trace.h
-+++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
-@@ -102,5 +102,51 @@ extern int rcupreempt_flip_flag(int cpu)
- extern int rcupreempt_mb_flag(int cpu);
- extern char *rcupreempt_try_flip_state_name(void);
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+struct preempt_rcu_boost_trace {
-+	unsigned long rbs_stat_task_boost_called;
-+	unsigned long rbs_stat_task_boosted;
-+	unsigned long rbs_stat_boost_called;
-+	unsigned long rbs_stat_try_boost;
-+	unsigned long rbs_stat_boosted;
-+	unsigned long rbs_stat_unboost_called;
-+	unsigned long rbs_stat_unboosted;
-+	unsigned long rbs_stat_try_boost_readers;
-+	unsigned long rbs_stat_boost_readers;
-+	unsigned long rbs_stat_try_unboost_readers;
-+	unsigned long rbs_stat_unboost_readers;
-+	unsigned long rbs_stat_over_taken;
-+};
-+
-+#define DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(preempt_rcu_boost_var) \
-+void preempt_rcu_boost_var##_callback(const struct marker *mdata, \
-+				void *private_data, const char *format, ...) \
-+{ \
-+	va_list ap; \
-+	int cpu; \
-+	struct preempt_rcu_boost_trace *boost_trace; \
-+	va_start(ap, format); \
-+	cpu = va_arg(ap, typeof(unsigned int)); \
-+	boost_trace = (&per_cpu(boost_trace_data, cpu)); \
-+	boost_trace->rbs_stat_##preempt_rcu_boost_var++; \
-+	va_end(ap); \
-+}
-+
-+struct preempt_rcu_boost_probe {
-+	const char *name;
-+	const char *format;
-+	marker_probe_func *probe_func;
-+};
-+
-+#define INIT_PREEMPT_RCU_BOOST_PROBE(preempt_rcu_boost_probe_worker) \
-+{ \
-+	.name = __stringify(preempt_rcu_boost_probe_worker), \
-+	.format = "%u", \
-+	.probe_func = preempt_rcu_boost_probe_worker##_callback \
-+}
-+
-+extern int read_rcu_boost_prio(void);
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- #endif /* __KERNEL__ */
- #endif /* __LINUX_RCUPREEMPT_TRACE_H */
-Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/kernel/rcupreempt_trace.c
-===================================================================
---- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/kernel/rcupreempt_trace.c
-+++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/kernel/rcupreempt_trace.c
-@@ -51,6 +51,163 @@ static char *rcupreempt_trace_buf;
- 
- static DEFINE_PER_CPU(struct rcupreempt_trace, trace_data);
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+#define RCUPREEMPT_BOOST_TRACE_BUF_SIZE 4096
-+static char rcupreempt_boost_trace_buf[RCUPREEMPT_BOOST_TRACE_BUF_SIZE];
-+static DEFINE_PER_CPU(struct preempt_rcu_boost_trace, boost_trace_data);
-+
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(task_boost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(task_boosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_boost);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_boost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_unboost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(over_taken);
-+
-+static struct preempt_rcu_boost_probe preempt_rcu_boost_probe_array[] =
-+{
-+	INIT_PREEMPT_RCU_BOOST_PROBE(task_boost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(task_boosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_boost),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_boost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_unboost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(over_taken)
-+};
-+
-+static ssize_t rcuboost_read(struct file *filp, char __user *buffer,
-+				size_t count, loff_t *ppos)
-+{
-+	static DEFINE_MUTEX(mutex);
-+	int cnt = 0;
-+	int cpu;
-+	struct preempt_rcu_boost_trace *prbt;
-+	ssize_t bcount;
-+	unsigned long task_boost_called = 0;
-+	unsigned long task_boosted = 0;
-+	unsigned long boost_called = 0;
-+	unsigned long try_boost = 0;
-+	unsigned long boosted = 0;
-+	unsigned long unboost_called = 0;
-+	unsigned long unboosted = 0;
-+	unsigned long try_boost_readers = 0;
-+	unsigned long boost_readers = 0;
-+	unsigned long try_unboost_readers = 0;
-+	unsigned long unboost_readers = 0;
-+	unsigned long over_taken = 0;
-+
-+	mutex_lock(&mutex);
-+
-+	for_each_online_cpu(cpu) {
-+		prbt = &per_cpu(boost_trace_data, cpu);
-+
-+		task_boost_called += prbt->rbs_stat_task_boost_called;
-+		task_boosted += prbt->rbs_stat_task_boosted;
-+		boost_called += prbt->rbs_stat_boost_called;
-+		try_boost += prbt->rbs_stat_try_boost;
-+		boosted += prbt->rbs_stat_boosted;
-+		unboost_called += prbt->rbs_stat_unboost_called;
-+		unboosted += prbt->rbs_stat_unboosted;
-+		try_boost_readers += prbt->rbs_stat_try_boost_readers;
-+		boost_readers += prbt->rbs_stat_boost_readers;
-+		try_unboost_readers += prbt->rbs_stat_try_boost_readers;
-+		unboost_readers += prbt->rbs_stat_boost_readers;
-+		over_taken += prbt->rbs_stat_over_taken;
-+	}
-+
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"task_boost_called = %ld\n",
-+			task_boost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"task_boosted = %ld\n",
-+			task_boosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boost_called = %ld\n",
-+			boost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_boost = %ld\n",
-+			try_boost);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boosted = %ld\n",
-+			boosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboost_called = %ld\n",
-+			unboost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboosted = %ld\n",
-+			unboosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_boost_readers = %ld\n",
-+			try_boost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boost_readers = %ld\n",
-+			boost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_unboost_readers = %ld\n",
-+			try_unboost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboost_readers = %ld\n",
-+			unboost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"over_taken = %ld\n",
-+			over_taken);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"rcu_boost_prio = %d\n",
-+			read_rcu_boost_prio());
-+	bcount = simple_read_from_buffer(buffer, count, ppos,
-+		rcupreempt_boost_trace_buf, strlen(rcupreempt_boost_trace_buf));
-+	mutex_unlock(&mutex);
-+
-+	return bcount;
-+}
-+
-+static struct file_operations rcuboost_fops = {
-+	.read = rcuboost_read,
-+};
-+
-+static struct dentry  *rcuboostdir;
-+int rcu_trace_boost_create(struct dentry *rcudir)
-+{
-+	rcuboostdir = debugfs_create_file("rcuboost", 0444, rcudir,
-+					  NULL, &rcuboost_fops);
-+	if (!rcuboostdir)
-+		return 0;
-+
-+	return 1;
-+}
-+
-+void rcu_trace_boost_destroy(void)
-+{
-+	if (rcuboostdir)
-+		debugfs_remove(rcuboostdir);
-+	rcuboostdir = NULL;
-+}
-+
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- struct rcupreempt_trace *rcupreempt_trace_cpu(int cpu)
- {
- 	return &per_cpu(trace_data, cpu);
-@@ -350,6 +507,10 @@ static int rcupreempt_debugfs_init(void)
- 	if (!ctrsdir)
- 		goto free_out;
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	if (!rcu_trace_boost_create(rcudir))
-+		goto free_out;
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
- 	return 0;
- free_out:
- 	if (ctrsdir)
-@@ -382,6 +543,22 @@ static int __init rcupreempt_trace_init(
- 	}
- 	printk(KERN_INFO "RCU Preempt markers registered\n");
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	for (i = 0; i < ARRAY_SIZE(preempt_rcu_boost_probe_array); i++) {
-+		struct preempt_rcu_boost_probe *p = \
-+					&preempt_rcu_boost_probe_array[i];
-+		ret = marker_probe_register(p->name, p->format,
-+					    p->probe_func, p);
-+		if (ret)
-+			printk(KERN_INFO "Unable to register Preempt RCU Boost \
-+			probe %s\n", preempt_rcu_boost_probe_array[i].name);
-+		ret = marker_arm(p->name);
-+		if (ret)
-+			printk(KERN_INFO "Unable to arm Preempt RCU Boost \
-+				markers %s\n", p->name);
-+}
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- 	mutex_init(&rcupreempt_trace_mutex);
- 	rcupreempt_trace_buf = kmalloc(RCUPREEMPT_TRACE_BUF_SIZE, GFP_KERNEL);
- 	if (!rcupreempt_trace_buf)
-@@ -400,6 +577,12 @@ static void __exit rcupreempt_trace_clea
- 		marker_probe_unregister(rcupreempt_probe_array[i].name);
- 	printk(KERN_INFO "RCU Preempt markers unregistered\n");
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	rcu_trace_boost_destroy();
-+	for (i = 0; i < ARRAY_SIZE(preempt_rcu_boost_probe_array); i++)
-+		marker_probe_unregister(preempt_rcu_boost_probe_array[i].name);
-+	printk(KERN_INFO "Preempt RCU Boost markers unregistered\n");
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
- 	debugfs_remove(statdir);
- 	debugfs_remove(gpdir);
- 	debugfs_remove(ctrsdir);
-Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/kernel/rcupreempt-boost.c
-===================================================================
---- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/kernel/rcupreempt-boost.c
-+++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/kernel/rcupreempt-boost.c
-@@ -40,186 +40,9 @@ struct rcu_boost_dat {
- 	int rbs_prio;			/* CPU copy of rcu_boost_prio  */
- 	struct list_head rbs_toboost;	/* Preempted RCU readers       */
- 	struct list_head rbs_boosted;	/* RCU readers that have been boosted */
--#ifdef CONFIG_RCU_TRACE
--	/* The rest are for statistics */
--	unsigned long rbs_stat_task_boost_called;
--	unsigned long rbs_stat_task_boosted;
--	unsigned long rbs_stat_boost_called;
--	unsigned long rbs_stat_try_boost;
--	unsigned long rbs_stat_boosted;
--	unsigned long rbs_stat_unboost_called;
--	unsigned long rbs_stat_unboosted;
--	unsigned long rbs_stat_try_boost_readers;
--	unsigned long rbs_stat_boost_readers;
--	unsigned long rbs_stat_try_unboost_readers;
--	unsigned long rbs_stat_unboost_readers;
--	unsigned long rbs_stat_over_taken;
--#endif /* CONFIG_RCU_TRACE */
- };
- 
- static DEFINE_PER_CPU(struct rcu_boost_dat, rcu_boost_data);
--#define RCU_BOOST_ME &__get_cpu_var(rcu_boost_data)
--
--#ifdef CONFIG_RCU_TRACE
--
--#define RCUPREEMPT_BOOST_TRACE_BUF_SIZE 4096
--static char rcupreempt_boost_trace_buf[RCUPREEMPT_BOOST_TRACE_BUF_SIZE];
--
--static ssize_t rcuboost_read(struct file *filp, char __user *buffer,
--				size_t count, loff_t *ppos)
--{
--	static DEFINE_MUTEX(mutex);
--	int cnt = 0;
--	int cpu;
--	struct rcu_boost_dat *rbd;
--	ssize_t bcount;
--	unsigned long task_boost_called = 0;
--	unsigned long task_boosted = 0;
--	unsigned long boost_called = 0;
--	unsigned long try_boost = 0;
--	unsigned long boosted = 0;
--	unsigned long unboost_called = 0;
--	unsigned long unboosted = 0;
--	unsigned long try_boost_readers = 0;
--	unsigned long boost_readers = 0;
--	unsigned long try_unboost_readers = 0;
--	unsigned long unboost_readers = 0;
--	unsigned long over_taken = 0;
--
--	mutex_lock(&mutex);
--
--	for_each_online_cpu(cpu) {
--		rbd = &per_cpu(rcu_boost_data, cpu);
--
--		task_boost_called += rbd->rbs_stat_task_boost_called;
--		task_boosted += rbd->rbs_stat_task_boosted;
--		boost_called += rbd->rbs_stat_boost_called;
--		try_boost += rbd->rbs_stat_try_boost;
--		boosted += rbd->rbs_stat_boosted;
--		unboost_called += rbd->rbs_stat_unboost_called;
--		unboosted += rbd->rbs_stat_unboosted;
--		try_boost_readers += rbd->rbs_stat_try_boost_readers;
--		boost_readers += rbd->rbs_stat_boost_readers;
--		try_unboost_readers += rbd->rbs_stat_try_boost_readers;
--		unboost_readers += rbd->rbs_stat_boost_readers;
--		over_taken += rbd->rbs_stat_over_taken;
--	}
--
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"task_boost_called = %ld\n",
--			task_boost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"task_boosted = %ld\n",
--			task_boosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boost_called = %ld\n",
--			boost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_boost = %ld\n",
--			try_boost);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boosted = %ld\n",
--			boosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboost_called = %ld\n",
--			unboost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboosted = %ld\n",
--			unboosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_boost_readers = %ld\n",
--			try_boost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boost_readers = %ld\n",
--			boost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_unboost_readers = %ld\n",
--			try_unboost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboost_readers = %ld\n",
--			unboost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"over_taken = %ld\n",
--			over_taken);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"rcu_boost_prio = %d\n",
--			rcu_boost_prio);
--	bcount = simple_read_from_buffer(buffer, count, ppos,
--			rcupreempt_boost_trace_buf, strlen(rcupreempt_boost_trace_buf));
--	mutex_unlock(&mutex);
--
--	return bcount;
--}
--
--static struct file_operations rcuboost_fops = {
--	.read = rcuboost_read,
--};
--
--static struct dentry  *rcuboostdir;
--int rcu_trace_boost_create(struct dentry *rcudir)
--{
--	rcuboostdir = debugfs_create_file("rcuboost", 0444, rcudir,
--					  NULL, &rcuboost_fops);
--	if (!rcuboostdir)
--		return 0;
--
--	return 1;
--}
--EXPORT_SYMBOL_GPL(rcu_trace_boost_create);
--
--void rcu_trace_boost_destroy(void)
--{
--	if (rcuboostdir)
--		debugfs_remove(rcuboostdir);
--	rcuboostdir = NULL;
--}
--EXPORT_SYMBOL_GPL(rcu_trace_boost_destroy);
--
--#define RCU_BOOST_TRACE_FUNC_DECL(type)			      \
--	static void rcu_trace_boost_##type(struct rcu_boost_dat *rbd)	\
--	{								\
--		rbd->rbs_stat_##type++;					\
--	}
--RCU_BOOST_TRACE_FUNC_DECL(task_boost_called)
--RCU_BOOST_TRACE_FUNC_DECL(task_boosted)
--RCU_BOOST_TRACE_FUNC_DECL(boost_called)
--RCU_BOOST_TRACE_FUNC_DECL(try_boost)
--RCU_BOOST_TRACE_FUNC_DECL(boosted)
--RCU_BOOST_TRACE_FUNC_DECL(unboost_called)
--RCU_BOOST_TRACE_FUNC_DECL(unboosted)
--RCU_BOOST_TRACE_FUNC_DECL(try_boost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(boost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(try_unboost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(unboost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(over_taken)
--#else /* CONFIG_RCU_TRACE */
--/* These were created by the above macro "RCU_BOOST_TRACE_FUNC_DECL" */
--# define rcu_trace_boost_task_boost_called(rbd) do { } while (0)
--# define rcu_trace_boost_task_boosted(rbd) do { } while (0)
--# define rcu_trace_boost_boost_called(rbd) do { } while (0)
--# define rcu_trace_boost_try_boost(rbd) do { } while (0)
--# define rcu_trace_boost_boosted(rbd) do { } while (0)
--# define rcu_trace_boost_unboost_called(rbd) do { } while (0)
--# define rcu_trace_boost_unboosted(rbd) do { } while (0)
--# define rcu_trace_boost_try_boost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_boost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_try_unboost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_unboost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_over_taken(rbd) do { } while (0)
--#endif /* CONFIG_RCU_TRACE */
- 
- static inline int rcu_is_boosted(struct task_struct *task)
- {
-@@ -234,10 +57,10 @@ static void rcu_boost_task(struct task_s
- 	WARN_ON(!irqs_disabled());
- 	WARN_ON_SMP(!spin_is_locked(&task->pi_lock));
- 
--	rcu_trace_boost_task_boost_called(RCU_BOOST_ME);
-+	trace_mark(task_boost_called, "%u", smp_processor_id());
- 
- 	if (task->rcu_prio < task->prio) {
--		rcu_trace_boost_task_boosted(RCU_BOOST_ME);
-+		trace_mark(task_boosted, "%u", smp_processor_id());
- 		task_setprio(task, task->rcu_prio);
- 	}
- }
-@@ -261,7 +84,7 @@ void __rcu_preempt_boost(void)
- 
- 	WARN_ON(!current->rcu_read_lock_nesting);
- 
--	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-+	trace_mark(boost_called, "%u", smp_processor_id());
- 
- 	/* check to see if we are already boosted */
- 	if (unlikely(rcu_is_boosted(curr)))
-@@ -279,7 +102,7 @@ void __rcu_preempt_boost(void)
- 
- 	curr->rcub_rbdp = rbd;
- 
--	rcu_trace_boost_try_boost(rbd);
-+	trace_mark(try_boost, "%u", smp_processor_id());
- 
- 	prio = rt_mutex_getprio(curr);
- 
-@@ -288,7 +111,7 @@ void __rcu_preempt_boost(void)
- 	if (prio <= rbd->rbs_prio)
- 		goto out;
- 
--	rcu_trace_boost_boosted(curr->rcub_rbdp);
-+	trace_mark(boosted, "%u", smp_processor_id());
- 
- 	curr->rcu_prio = rbd->rbs_prio;
- 	rcu_boost_task(curr);
-@@ -313,7 +136,7 @@ void __rcu_preempt_unboost(void)
- 	int prio;
- 	unsigned long flags;
- 
--	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-+	trace_mark(unboost_called, "%u", smp_processor_id());
- 
- 	/* if not boosted, then ignore */
- 	if (likely(!rcu_is_boosted(curr)))
-@@ -351,7 +174,7 @@ void __rcu_preempt_unboost(void)
- 
- 	list_del_init(&curr->rcub_entry);
- 
--	rcu_trace_boost_unboosted(rbd);
-+	trace_mark(unboosted, "%u", smp_processor_id());
- 
- 	curr->rcu_prio = MAX_PRIO;
- 
-@@ -412,7 +235,7 @@ static int __rcu_boost_readers(struct rc
- 		 * Another task may have taken over.
- 		 */
- 		if (curr->rcu_preempt_counter != rcu_boost_counter) {
--			rcu_trace_boost_over_taken(rbd);
-+			trace_mark(over_taken, "%u", smp_processor_id());
- 			return 1;
- 		}
- 
-@@ -443,7 +266,7 @@ void rcu_boost_readers(void)
- 
- 	prio = rt_mutex_getprio(curr);
- 
--	rcu_trace_boost_try_boost_readers(RCU_BOOST_ME);
-+	trace_mark(try_boost_readers, "%u", smp_processor_id());
- 
- 	if (prio >= rcu_boost_prio) {
- 		/* already boosted */
-@@ -453,7 +276,7 @@ void rcu_boost_readers(void)
- 
- 	rcu_boost_prio = prio;
- 
--	rcu_trace_boost_boost_readers(RCU_BOOST_ME);
-+	trace_mark(boost_readers, "%u", smp_processor_id());
- 
- 	/* Flag that we are the one to unboost */
- 	curr->rcu_preempt_counter = ++rcu_boost_counter;
-@@ -486,12 +309,12 @@ void rcu_unboost_readers(void)
- 
- 	spin_lock_irqsave(&rcu_boost_wake_lock, flags);
- 
--	rcu_trace_boost_try_unboost_readers(RCU_BOOST_ME);
-+	trace_mark(try_unboost_readers, "%u", smp_processor_id());
- 
- 	if (current->rcu_preempt_counter != rcu_boost_counter)
- 		goto out;
- 
--	rcu_trace_boost_unboost_readers(RCU_BOOST_ME);
-+	trace_mark(unboost_readers, "%u", smp_processor_id());
- 
- 	/*
- 	 * We could also put in something that
-@@ -514,6 +337,16 @@ void rcu_unboost_readers(void)
- }
- 
- /*
-+ * This function exports the rcu_boost_prio variable for use by
-+ * modules that need it e.g. RCU_TRACE module
-+ */
-+int read_rcu_boost_prio(void)
-+{
-+	return rcu_boost_prio;
-+}
-+EXPORT_SYMBOL_GPL(read_rcu_boost_prio);
-+
-+/*
-  * The krcupreemptd wakes up every "rcu_preempt_thread_secs"
-  * seconds at the minimum priority of 1 to do a
-  * synchronize_rcu. This ensures that grace periods finish
+
+* K. Prasad <prasad@linux.vnet.ibm.com> wrote:
+
+> @@ -486,12 +309,12 @@ void rcu_unboost_readers(void)
+>  
+>  	spin_lock_irqsave(&rcu_boost_wake_lock, flags);
+>  
+> -	rcu_trace_boost_try_unboost_readers(RCU_BOOST_ME);
+> +	trace_mark(try_unboost_readers, "%u", smp_processor_id());
+
+this isnt directed at you or your patch, it's more directed at Mathieu, 
+but looking at this actual markers patch submitted to me, i'm still 
+fundamentally worried about the whole marker approach.
+
+Firstly, why on earth does a full format string have to be passed in for 
+something as simple as a CPU id? This way we basically codify it forever 
+that tracing _has_ to be expensive when enabled. The latency-tracer 
+(which i'd love to convert to markers, if only markers were capable 
+enough) has shown it that tracing _can_ be used to capture performance 
+data without disturbing the measured system, even at hundreds of 
+thousands context switches a second per CPU.
+
+Secondly, the inlined overhead of trace_mark() is still WAY too large:
+
+                if (unlikely(__mark_##name.state)) {                    \
+                        preempt_disable();                              \
+                        (*__mark_##name.call)                           \
+                                (&__mark_##name, call_data,             \
+                                format, ## args);                       \
+                        preempt_enable();                               \
+                }                                                       \
+
+Whatever became of the obvious suggestion that i outlined years ago, to 
+have a _single_ trace call instruction and to _patch out_ the damn 
+marker calls by default? No .state flag checking inlined. No 
+preempt_disable()/enable() pair. Patching static tracepoints OUT of the 
+kernel, only leaving a ~5-byte NOP sequence behind them (and some 
+minimal disturbance to the variables the tracepoint accesses). We've got 
+all the alternatives.h code patching infrastructure available for such 
+purposes. Why are we 2 years down the line and _STILL_ arguing about 
+this?
+
+Thirdly, the patch selects CONFIG_MARKERS:
+
+>  config RCU_TRACE
+> -       bool "Enable tracing for RCU - currently stats in debugfs"
+> +       tristate "Enable tracing for RCU - currently stats in debugfs"
+>         select DEBUG_FS
+> -       default y
+> +       select MARKERS
+
+Which adds overhead (inlined checks for markers) all around the kernel, 
+even if all markers are deactivated! Imagine a thousand of them and the 
+kernel blows up measurably.
+
+Sadly, this whole trace_mark() API seems to have gotten much worse since 
+i last saw it. It's sub-par when it's turned on and it's sub-par when 
+it's turned off. It gets us the worst of both worlds.
+
+If it continues like this then i'd much rather see people add printks as 
+tracing, because there you _know_ that it's high-overhead and people 
+wont start arguing about trace compatibility either, etc.
+
+	Ingo
