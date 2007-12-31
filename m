@@ -1,46 +1,82 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: Fwd: -rt and PowerPC
-Date: Fri, 28 Dec 2007 08:23:32 -0800
-Message-ID: <1198859012.12074.0.camel@sven.thebigcorporation.com>
-References: <200712241140.00738.sripathik@in.ibm.com>
-	 <562556514-1198501255-cardhu_decombobulator_blackberry.rim.net-1487612076-@bxe137.bisx.prod.on.blackberry>
-	 <20071226042325.GA23220@hells-kitchen.in.ibm.com>
+Date: Sun, 30 Dec 2007 18:57:44 -0800
+Message-ID: <20071231025744.GT31153@linux.vnet.ibm.com>
+References: <200712241140.00738.sripathik@in.ibm.com> <562556514-1198501255-cardhu_decombobulator_blackberry.rim.net-1487612076-@bxe137.bisx.prod.on.blackberry> <20071226042325.GA23220@hells-kitchen.in.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Sripathi Kodi <sripathik@in.ibm.com>,
+Cc: sven@thebigcorporation.com, Sripathi Kodi <sripathik@in.ibm.com>,
 	linux-rt-users@vger.kernel.org
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0910.google.com ([209.85.198.190]:60812 "EHLO
-	rv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754035AbXL1QXg (ORCPT
+Received: from e36.co.us.ibm.com ([32.97.110.154]:56487 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752046AbXLaC6m convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Dec 2007 11:23:36 -0500
-Received: by rv-out-0910.google.com with SMTP id k20so3436447rvb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 28 Dec 2007 08:23:34 -0800 (PST)
+	Sun, 30 Dec 2007 21:58:42 -0500
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e36.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id lBV2wVeN014299
+	for <linux-rt-users@vger.kernel.org>; Sun, 30 Dec 2007 21:58:31 -0500
+Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id lBV2wL0x046774
+	for <linux-rt-users@vger.kernel.org>; Sun, 30 Dec 2007 19:58:31 -0700
+Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id lBV2wKaT031079
+	for <linux-rt-users@vger.kernel.org>; Sun, 30 Dec 2007 19:58:21 -0700
+Content-Disposition: inline
 In-Reply-To: <20071226042325.GA23220@hells-kitchen.in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2007-12-26 at 09:53 +0530, Chirag Jog wrote:
+On Wed, Dec 26, 2007 at 09:53:25AM +0530, Chirag Jog wrote:
 > * sven@thebigcorporation.com <sven@thebigcorporation.com> [2007-12-24=
  13:00:30]:
 >=20
 > Hi,
-
-Sorry for top-posting the last email. Have not learned how to inline on
-the Blackberry.
-
-Comments below.
-
 > > Do you have DEBUG and LOCKDEP configured?
 > CONFIG_PREEMPT_DEBUG is enabled
 > but LOCKDEP is not.
+
+Strange...  Neither PREEMPT_DEBUG nor LOCKDEP appear in my runs of
+-rt on POWER.  What happens if you disable them both?
+
+Also, I have been running on 2.6.23.1-rt4.  Ancient, I know!  :-/
+
+						Thanx, Paul
+
+> > Sven
+> > Sent via BlackBerry by AT&T
 > >=20
 > > -----Original Message-----
 > > From:	Sripathi Kodi <sripathik@in.ibm.com>
 > >=20
+> > Date:	Mon, 24 Dec 2007 11:40:00=20
+> > To:linux-rt-users@vger.kernel.org
+> > Cc:Chirag Jog <chirag@linux.vnet.ibm.com>
+> > Subject: Fwd: -rt and PowerPC
+> >=20
+> >=20
+> > Hi,
+> >=20
+> > Chirag sent the following mail 3 times to linux-rt-users, but it do=
+esn't seem=20
+> > to be working. Hence trying from my id.
+> >=20
+> > Thanks,
+> > Sripathi.
+> >=20
+> > ----------  Forwarded Message  ----------
+> >=20
+> > Subject: -rt and PowerPC
+> > Date: Monday 24 December 2007 10:30
+> > From: Chirag Jog <chirag@linux.vnet.ibm.com>
+> > To: linux-rt-users <linux-rt-users@vger.kernel.org>
+> > Cc: Sripathi Kodi <sripathik@in.ibm.com>, Dinakar Guniguntala=20
+> > <dino@in.ibm.com>
+> >=20
+> > Hi,
 > >     We are trying to get a ppc64 box booted with the -rt kernel.
 > >=20
 > >     Tried the latest 2.6.24-rc5-rt1 kernel.
@@ -50,34 +86,14 @@ Comments below.
 > >     It takes a lot of time at Starting udev.
 > >     After which either services take too long to start or we get
 > >     SEGFAULT.
-
-I have seen this exact behavior with lockdep enabled on earlier x86-SMP
-Kernels. I saw the issue predominantly on larger SMP machines, but it
-behaved much like a race. This was observed on 2.6.21 Kernels, I will
-try and verify whether .23 has the same behavior.
-
-We eventually bisected it down to CONFIG_PROVE_LOCKING, but I wasn't
-totally convinced whethere the root cause was in lockdep, or
-elsewhere. =20
-
 > >=20
 > >     This is easily reproducible. Also if we get a chance to login;
 > >     simple commands like ls, vi etc take either too long or get
 > >     SEGFAULT.
-
 > >=20
 > >     Booting the kernel with maxcpus=3D1 or turning off SMP, doesn't
 > >     solve the problem.
-> >
-
-Hmmm, so have you COMPILED-out SMP, or just booted with nosmp?
-
-It might help narrowing this down to compile a UP Kernel.
-
-Thanks
-
-Sven
-> =20
+> >=20
 > >     Here is logs from one of the booting sequences:
 > >=20
 > > Linux version 2.6.24-rc5-rt1 (root@llm29) (gcc version 4.1.0 (SUSE =
@@ -126,11 +142,7 @@ xit
 > > udevd-event[2477]: run_program: '/sbin/vol_id' abnormal exit
 > > udevd-event[2455]: run_program: '/sbin/ifup' abnormal exit
 > > udevd-event[2477]: run_program: '/lib/udev/mount.sh' abnormal exit
-> >
-
-
-
-> =20
+> >=20
 > >=20
 > >=20
 > >=20
@@ -255,9 +267,8 @@ l: 3
 > > /etc/init.d/rc: line 383:  2669 Illegal instruction     killproc -Q=
 UIT
 > >  /sbin/blogd Segmentation fault
-> > /bin/bash: error while loading shared libraries: =C3=AF=C2=BF=C2=BD=
-=1A=14=7FC=C3=AF=C2=BF=C2=BDx=7F=C3=AF=C2=BF=C2=BD=C3=AF=C2=BF=C2=BD=14=
-H: cannot
+> > /bin/bash: error while loading shared libraries: =EF=BF=BD=1A=14=7F=
+C=EF=BF=BDx=7F=EF=BF=BD=EF=BF=BD=14H: cannot
 > >  open shared object file: No such file or directory INIT: Id "cons"
 > >  respawning too fast: disabled for 5 minutes
 > >=20
@@ -291,3 +302,12 @@ H: cannot
 > > -------------------------------------------------------
 > >=20
 >=20
+> --=20
+> Cheers,
+> Chirag Jog
+>=20
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
