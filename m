@@ -1,364 +1,371 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: Fwd: -rt and PowerPC
-Date: Mon, 31 Dec 2007 08:43:16 -0800
-Message-ID: <20071231164316.GX31153@linux.vnet.ibm.com>
-References: <200712241140.00738.sripathik@in.ibm.com> <20071226042325.GA23220@hells-kitchen.in.ibm.com> <20071231025744.GT31153@linux.vnet.ibm.com> <200712312114.30640.sripathik@in.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Subrata Modak <subrata@linux.vnet.ibm.com>
+Subject: [ANNOUNCE] [LTP] The Linux Test Project has been Released for
+	DECEMBER 2007
+Date: Tue, 01 Jan 2008 21:10:52 +0530
+Message-ID: <1199202052.4417.32.camel@subratamodak.linux.ibm.com>
+Reply-To: subrata@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Chirag Jog <chirag@linux.vnet.ibm.com>, sven@thebigcorporation.com,
-	linux-rt-users@vger.kernel.org
-To: Sripathi Kodi <sripathik@in.ibm.com>
+Content-Type: multipart/mixed; boundary="=-TY9vN1PYCntUq0wpxm64"
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	linux-rt-users@vger.kernel.org, linux-s390@vger.kernel.org,
+	lxc-dev@googlegroups.com, selinux@tycho.nsa.gov,
+	fedora-selinux-list@redhat.com, James Morris <jmorris@namei.org>,
+	rusty@rustcorp.com.au
+To: ltp-list <ltp-list@lists.sourceforge.net>,
+	linux-kernel <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:39673 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751503AbXLaQnt convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Dec 2007 11:43:49 -0500
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id lBVGhmC1024535
-	for <linux-rt-users@vger.kernel.org>; Mon, 31 Dec 2007 11:43:48 -0500
-Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id lBVGhX2e128280
-	for <linux-rt-users@vger.kernel.org>; Mon, 31 Dec 2007 09:43:48 -0700
-Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id lBVGhWSf000363
-	for <linux-rt-users@vger.kernel.org>; Mon, 31 Dec 2007 09:43:32 -0700
-Content-Disposition: inline
-In-Reply-To: <200712312114.30640.sripathik@in.ibm.com>
+Received: from e5.ny.us.ibm.com ([32.97.182.145]:39057 "EHLO e5.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756424AbYAAPlB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 1 Jan 2008 10:41:01 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Dec 31, 2007 at 09:14:30PM +0530, Sripathi Kodi wrote:
-> Hi Paul,
->=20
-> On Monday 31 December 2007 08:27, Paul E. McKenney wrote:
-> > On Wed, Dec 26, 2007 at 09:53:25AM +0530, Chirag Jog wrote:
-> > > * sven@thebigcorporation.com <sven@thebigcorporation.com> [2007-1=
-2-24
-> > > 13:00:30]:
-> > >
-> > > Hi,
-> > >
-> > > > Do you have DEBUG and LOCKDEP configured?
-> > >
-> > > CONFIG_PREEMPT_DEBUG is enabled
-> > > but LOCKDEP is not.
-> >
-> > Strange...  Neither PREEMPT_DEBUG nor LOCKDEP appear in my runs of
-> > -rt on POWER.  What happens if you disable them both?
->=20
-> We tried disabling a few configuration options, like PREEMPT_DEBUG, L=
-OCKDEP,=20
-> SMP, NUMA, HRT. However, these did not make any impact on the outcome=
-=2E We=20
-> have seen similar behavior on a few machines with different hardware =
-types=20
-> (blades/non-blades, power5/power5+/PPC970) However, there is one powe=
-r5=20
-> machine where the kernel comes up and works fine. We are trying to fi=
-nd out=20
-> the difference between this machine and the rest.
 
-I will check mine as soon as ABAT returns.
+--=-TY9vN1PYCntUq0wpxm64
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-Do the complaints about being unable to find programs, libraries,
-etc. happen on the machine that works for you?  (I don't remember
-seeing them myself.)  Perhaps a problem with software RAID?
+Dear All,
 
-						Thanx, Paul
+Happy New Year 2008. The Linux Test Project test suite has been released
+for the month of DECEMBER 2007. The latest version of the test-suite
+contains 3000+ tests for the Linux OS and can be found at
+http://ltp.sourceforge.net/.
+Latest happenings in LTP can also be found at:
+http://ltp.sourceforge.net/wiki/,
+http://ltp.sourceforge.net/wikiArchives.php, and,
+IRC: irc.freenode.org #ltp.
 
-> > Also, I have been running on 2.6.23.1-rt4.  Ancient, I know!  :-/
->=20
-> We have tried older kernels, upto 2.6.23-rt1. No change in behavior.
->=20
-> Thanks,
-> Sripathi.
->=20
-> >
-> > 						Thanx, Paul
-> >
-> > > > Sven
-> > > > Sent via BlackBerry by AT&T
-> > > >
-> > > > -----Original Message-----
-> > > > From:	Sripathi Kodi <sripathik@in.ibm.com>
-> > > >
-> > > > Date:	Mon, 24 Dec 2007 11:40:00
-> > > > To:linux-rt-users@vger.kernel.org
-> > > > Cc:Chirag Jog <chirag@linux.vnet.ibm.com>
-> > > > Subject: Fwd: -rt and PowerPC
-> > > >
-> > > >
-> > > > Hi,
-> > > >
-> > > > Chirag sent the following mail 3 times to linux-rt-users, but i=
-t
-> > > > doesn't seem to be working. Hence trying from my id.
-> > > >
-> > > > Thanks,
-> > > > Sripathi.
-> > > >
-> > > > ----------  Forwarded Message  ----------
-> > > >
-> > > > Subject: -rt and PowerPC
-> > > > Date: Monday 24 December 2007 10:30
-> > > > From: Chirag Jog <chirag@linux.vnet.ibm.com>
-> > > > To: linux-rt-users <linux-rt-users@vger.kernel.org>
-> > > > Cc: Sripathi Kodi <sripathik@in.ibm.com>, Dinakar Guniguntala
-> > > > <dino@in.ibm.com>
-> > > >
-> > > > Hi,
-> > > >     We are trying to get a ppc64 box booted with the -rt kernel=
-=2E
-> > > >
-> > > >     Tried the latest 2.6.24-rc5-rt1 kernel.
-> > > >
-> > > >     Everything goes well [ kernel boots up etc] until the servi=
-ces
-> > > >     start coming up.
-> > > >     It takes a lot of time at Starting udev.
-> > > >     After which either services take too long to start or we ge=
-t
-> > > >     SEGFAULT.
-> > > >
-> > > >     This is easily reproducible. Also if we get a chance to log=
-in;
-> > > >     simple commands like ls, vi etc take either too long or get
-> > > >     SEGFAULT.
-> > > >
-> > > >     Booting the kernel with maxcpus=3D1 or turning off SMP, doe=
-sn't
-> > > >     solve the problem.
-> > > >
-> > > >     Here is logs from one of the booting sequences:
-> > > >
-> > > > Linux version 2.6.24-rc5-rt1 (root@llm29) (gcc version 4.1.0 (S=
-USE
-> > > > Linux)) #1 SMP PREEMPT RT Thu Dec 20 13:41:45 IST 2007 [boot]00=
-12 Setup
-> > > > Arch PPC64 nvram contains 16384 bytes
-> > > > Zone PFN ranges:
-> > > >   DMA             0 ->  1024000
-> > > >   Normal    1024000 ->  1024000
-> > > > Movable zone start PFN for each node
-> > > > early_node_map[1] active PFN ranges
-> > > >     0:        0 ->  1024000
-> > > > [boot]0015 Setup Done
-> > > > Real-Time Preemption Support (C) 2004-2007 Ingo Molnar
-> > > > Built 1 zonelists in Node order, mobility grouping on.  Total p=
-ages:
-> > > > 1000000 Policy zone: DMA
-> > > > Kernel command line: root=3D/dev/hda2  quiet sysrq=3D1 askmetho=
-d
-> > > > Starting udevd
-> > > > Creating devices
-> > > > Waiting for device /dev/hda2 to appear:  ok
-> > > > rootfs: major=3D3 minor=3D2 devn=3D770
-> > > > fsck 1.38 (30-Jun-2005)
-> > > > [/bin/fsck.ext3 (1) -- /] fsck.ext3 -a /dev/hda2
-> > > > /dev/hda2: clean, 249426/1311552 files, 1860112/2622611 blocks
-> > > > fsck succeeded. Mounting root device read-write.
-> > > > Mounting root /dev/hda2
-> > > > INIT: version 2.86 booting
-> > > > System Boot Control: Running /etc/init.d/boot
-> > > > Mounting procfs at /proc                                       =
-     =20
-> > > > done Mounting sysfs at /sys                                    =
-       =20
-> > > >    done Mounting debugfs at /sys/kernel/debug                  =
-       =20
-> > > >       done Initializing /dev                                   =
-       =20
-> > > >          done Mounting devpts at /dev/pts                      =
-       =20
-> > > >             done Activating swap-devices in /etc/fstab...      =
-       =20
-> > > >                done showconsole: Warning: the ioctl TIOCGDEV is=
- not
-> > > > known by the kernel Starting udevd udevd-event[2463]: run_progr=
-am:
-> > > > '/bin/sh' abnormal exit udevd-event[2474]: run_program: '/sbin/=
-vol_id'
-> > > > abnormal exit
-> > > > udevd-event[2477]: run_program: '/sbin/vol_id' abnormal exit
-> > > > udevd-event[2455]: run_program: '/sbin/ifup' abnormal exit
-> > > > udevd-event[2477]: run_program: '/lib/udev/mount.sh' abnormal e=
-xit
-> > > >
-> > > >
-> > > >
-> > > >
-> > > >                                                                =
-     =20
-> > > > failed Loading required kernel modules                         =
-       =20
-> > > >      done Activating device mapper...
-> > > > FATAL: Module dm_mod not found.
-> > > >                                                                =
-     =20
-> > > > failed Starting MD Raid                                        =
-       =20
-> > > >      done Waiting for udev to settle...
-> > > > Scanning for LVM volume groups...
-> > > >   Reading all physical volumes.  This may take a while...
-> > > >   No volume groups found
-> > > >   No volume groups found
-> > > > Activating LVM volume groups...
-> > > >   No volume groups found
-> > > >                                                                =
-     =20
-> > > > done showconsole: Warning: the ioctl TIOCGDEV is not known by t=
-he
-> > > > kernel Checking file systems...
-> > > > fsck 1.38 (30-Jun-2005)
-> > > > Checking all file systems.
-> > > > [/sbin/fsck.ext3 (1) -- /home] fsck.ext3 -a /dev/hda5
-> > > > /dev/hda5: clean, 460612/1836928 files, 2774880/3670844 blocks
-> > > > [/sbin/fsck.ext3 (1) -- /home/mohan/mnt] fsck.ext3 -a /dev/hda3
-> > > > /dev/hda3: clean, 362719/1311552 files, 1651440/2622611 blocks
-> > > > *** glibc detected *** /bin/sh: free(): invalid pointer: 0x100a=
-5170 ***
-> > > > =3D=3D=3D=3D=3D=3D=3D Backtrace: =3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > > > /lib/power4/libc.so.6[0xfde4be4]
-> > > > /lib/p/lib/apparmor/rc.apparmor.functions: line 87:  2603 Segme=
-ntation
-> > > > fault grep -q securityfs /proc/filesystems
-> > > >  /lib/apparmor/rc.apparmor.functions: line 355:  2606 Aborted
-> > > >  grep -qE "^(subdomain|apparmor)[[:space:]]" /proc/modules
-> > > >  /lib/apparmor/rc.apparmor.functions: line 318:  2610 Segmentat=
-ion
-> > > > fault modinfo -F filename subdomain >/dev/null 2>&1
-> > > >  /lib/apparmor/rc.apparmor.functions: line 318:  2613 Segmentat=
-ion
-> > > > fault grep -qE "^(subdomain|apparmor)[[:space:]]" /proc/modules=
- FATAL:
-> > > > Module apparmor not found.
-> > > > Loading AppArmor module failed
-> > > > - could not start AppArmorfailed
-> > > > /etc/init.d/boot.cleanup: line 23:  2601 Segmentation fault    =
-  rm -f
-> > > >  /var/lib/rpm/__db* /etc/init.d/boot.cleanup: line 23:  2602
-> > > > Segmentation fault      rm -rf /tmp/screens /tmp/uscreens
-> > > > /var/run/screens /var/run/uscreens 2>/dev/null
-> > > > /etc/init.d/boot.cleanup: line 23:  2605 Segmentation fault    =
-  rm -f
-> > > > /tmp/.X*lock /var/spool/uucp/LCK* /var/log/sa/sadc.LOCK
-> > > > /fsck_corrected_errors 2>/dev/null
-> > > >  /etc/init.d/boot.cleanup: line 23:  2608 Segmentation fault   =
-   find
-> > > >  /tmp/ssh-* -type s -name "*agent*" -maxdepth 1 -print0 2>/dev/=
-null
-> > > > 2609
-> > > >
-> > > >                   | xargs -0 -r rm -f
-> > > >
-> > > > /etc/init.d/boot.cleanup: line 23:  2611 Segmentation fault    =
-  find
-> > > >  /var/run /var/lock -type f -print0 2612                       =
-| xargs
-> > > > -0 -r rm -f 2>/dev/null
-> > > > /etc/init.d/boot.cleanup: line 23:  2615 Segmentation fault    =
-  chmod
-> > > > 664 /var/run/utmp /etc/init.d/boot.cleanup: line 23:  2616 Segm=
-entation
-> > > > fault chown root:tty /var/run/utmp /etc/init.d/boot.cleanup: li=
-ne 23:=20
-> > > > 2617 Segmentation fault      ls /etc/resolv.conf.saved.by.* >&/=
-dev/null
-> > > > /etc/init.d/boot.cleanup: line 75:  2618 Segmentation fault    =
-  chown
-> > > > root:root $CURDIR /etc/init.d/boot^[[6~.cleanup: line 75:  2619
-> > > > Segmentation fault      chown root:root $CURDIR
-> > > > /etc/init.d/boot.cleanup: line 75:  2620 Segmentation fault    =
-  chown
-> > > > root:root $CURDIR /etc/init.d/boot.cleanup: line 75:  2621 Segm=
-entation
-> > > > fault      chown root:root $CURDIR /etc/init.d/boot.cleanup: li=
-ne 75:=20
-> > > > 2622 Segmentation fault      chown root:root $CURDIR
-> > > > /etc/init.d/boot.cleanup: line 75:  2623 Segmentation fault    =
-=20
-> > > > c^[[6~hown root:root $CURDIR /etc/init.d/boot.cleanup: line 82:=
- 2624
-> > > > Segmentation fault      chown root:root $CURDIR
-> > > >  /etc/init.d/boot.cleanup: line 23:  2625 Segmentation fault   =
-   rm -f
-> > > >  /etc/psdevtab /etc/init.d/boot.cleanup: line 23:  2626 Segment=
-ation
-> > > > fault /bin/ps >/dev/null 2>/dev/null No such file or directory
-> > > > No such file or directory
-> > > > No such file or directory
-> > > > No such file or directory
-> > > > No such file or directory
-> > > > No such file or directory
-> > > > System Boot Control: The system has been                       =
-     =20
-> > > > set up Failed features: boot.udev boot.localfs boot.clock boot.=
-klog
-> > > > boot.scpm boot.crypto boot.localnet boot.swap boot.udev_retry
-> > > > boot.ldconfig boot.sysctl boot.ipconfig System Boot Control: Ru=
-nning
-> > > >  /etc/init.d/boot.local                   done INIT: Entering r=
-unlevel:
-> > > > 3 EXT3-fs error (device hda2): ext3_add_entry: bad entry in dir=
-ectory
-> > > > #971592: rec_len % 4 !=3D 0 - offset=3D0, inode=3D9349464, rec_=
-len=3D54811,
-> > > > name_len=3D129 blogd: can not open /var/run/blogd.pid: Input/ou=
-tput error
-> > > > Boot logging started on /dev/hvc0(/dev/console) at Thu Dec 20 1=
-4:19:34
-> > > > 2007 Master Resource Control: previous runlevel: N, switching t=
-o
-> > > > runlevel: 3 Master Resource Control: runlevel 3 has been       =
-       =20
-> > > >           reached /etc/init.d/rc: line 383:  2669 Illegal instr=
-uction =20
-> > > >   killproc -QUIT /sbin/blogd Segmentation fault
-> > > > /bin/bash: error while loading shared libraries: =EF=BF=BD=1A=14=
-=7FC=EF=BF=BDx=7F=EF=BF=BD=EF=BF=BD=14H:
-> > > > cannot open shared object file: No such file or directory INIT:=
- Id
-> > > > "cons" respawning too fast: disabled for 5 minutes
-> > > >
-> > > > CPU Info:
-> > > >  # cat /proc/cpuinfo
-> > > > processor       : 0
-> > > > cpu             : PPC970, altivec supported
-> > > > clock           : 1600.000000MHz
-> > > > revision        : 2.2 (pvr 0039 0202)
-> > > >
-> > > >         processor       : 1
-> > > >         cpu             : PPC970, altivec supported
-> > > >         clock           : 1600.000000MHz
-> > > >         revision        : 2.2 (pvr 0039 0202)
-> > > >
-> > > >         timebase        : 199836440
-> > > >         platform        : pSeries
-> > > >         machine         : CHRP IBM,8842-21X
-> > > >
-> > > > Also Attached is the config file:
-> > > >
-> > > > --
-> > > > Cheers,
-> > > > Chirag Jog
-> > > >
-> > > >
-> > > > --
-> > > > Cheers,
-> > > > Chirag Jog
-> > > >
-> > > > -------------------------------------------------------
-> > >
-> > > --
-> > > Cheers,
-> > > Chirag Jog
-> > >
-> > > -
-> > > To unsubscribe from this list: send the line "unsubscribe linux-r=
-t-users"
-> > > in the body of a message to majordomo@vger.kernel.org
-> > > More majordomo info at  http://vger.kernel.org/majordomo-info.htm=
-l
+Our web site also contains other information such as:
+- A Linux test tools matrix
+- Technical papers
+- How To's on Linux testing
+- Code coverage analysis tool.
+
+
+Release Highlights:
+
+* Real Time Linux Test Cases added,
+* PIDNAMESPACE Test Cases added,
+* New NUMA Testcases added,
+* sendfile05, sendfile06 and sendfile07 for sendfile and sendfile64
+syscall new test cases added,
+* Se-linux Reference Policy Test Cases Updates, and other fixes.
+
+
+Note(s) from the Maintainer:
+Last month saw huge set of new test cases being added to LTP. Thanks
+everybody for your contributions. The trend will continue to be the same
+in Jan 2008 with fallocate, CPU controller and probably dlopen() test
+cases pouring in. We are also trying to close down the observable Broken
+test cases behavior in some test cases by Jan 2008 end, and, some
+infrastructural improvements also. LTP will also see getting more
+generalized/effective for s390x architecture. Discussion is on with
+Rusty Russel for increasing LTP code coverage apart from adding new test
+cases.
+>From this release onwards we will provide a complete patch which can be
+applied to the earlier release to arrive at the latest release. Eg: You
+can apply ltp-full-20071231.patch on ltp-full-20071130 to create
+ltp-full-20071231.
+As we move into a new year, we promise to make LTP more effective for
+testing our dear Linux.
+
+We would encourage the community to post results to
+ltp-results@lists.sf.net,
+patches, new tests, bugs or comments/questions to ltp-list@lists.sf.net,
+http://sourceforge.net/tracker/?func=add&group_id=3382&atid=103382
+(for New Bug(s)),
+http://sourceforge.net/tracker/?func=add&group_id=3382&atid=303382
+(for New Patch(s)),
+http://sourceforge.net/tracker/?func=add&group_id=3382&atid=353382
+(for New Feature Request(s))
+
+Please also see the Change Log Attached (DECEMBER 2007):
+
+Happy testing, 
+Regards-- 
+Subrata,
+
+
+--=-TY9vN1PYCntUq0wpxm64
+Content-Disposition: attachment; filename=Dec-2007_Changelog.txt
+Content-Type: text/plain; name=Dec-2007_Changelog.txt; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+1)  Log Message: Update CLONE_NEWPID as value changed in 2.6.23-rc3-mm2, submitted by Sukadev Bhattiprolu <sukadev@us.ibm.com>
+File(s) Affected:
+ltp/testcases/kernel/containers/libclone/libclone.h
+
+2) Log Message: New Test Cases sendfile05 sendfile06 and sendfile07 for sendfile and sendfile64 syscall, by Masatake YAMATO <yamato@redhat.com>
+File(s) Affected:
+ltp/runtest/syscalls
+ltp/testcases/kernel/syscalls/sendfile/sendfile02.c
+ltp/testcases/kernel/syscalls/sendfile/sendfile03.c
+ltp/testcases/kernel/syscalls/sendfile/sendfile04.c
+File(s) Added:
+ltp/testcases/kernel/syscalls/sendfile/sendfile05.c
+ltp/testcases/kernel/syscalls/sendfile/sendfile06.c
+ltp/testcases/kernel/syscalls/sendfile/sendfile07.c
+
+3) Log Message: Fixing the problem of the resolution for ADDRESS_OF_MAIN, by Mark Ver <markver@us.ibm.com>
+File(s) Affected:
+ltp/testcases/kernel/io/direct_io/diotest4.c
+
+4) Log Message: use caps in "generated warning" since people dont read comments, by Mike Frysinger <vapier@users.sourceforge.net>
+File(s) Affected:
+ltp/testcases/kernel/include/linux_syscall_numbers.h
+ltp/testcases/kernel/include/regen.sh
+
+5) Log Message: Se-linux Reference Policy Updates by Stephen Smalley <sds@tycho.nsa.gov>
+File(s) Affected:
+ltp/testcases/kernel/security/selinux-testsuite/README
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_capable_file.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_capable_net.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_file.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_global.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_ioctl.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_readlink.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_rxdir.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_setnice.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_stat.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_sysctl.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_task_create.te
+ltp/testcases/kernel/security/selinux-testsuite/refpolicy/test_task_setpgid.te
+
+6) Log Message: New NUMA Testcases by psuriset@linux.vnet.ibm.com
+File(s) Affected:
+ltp/testcases/kernel/numa/Makefile
+ltp/testcases/kernel/numa/README
+ltp/testcases/kernel/numa/numa01.sh
+File(s) Added:
+ltp/testcases/kernel/numa/numa_node_size.c
+ltp/testcases/kernel/numa/test.sh
+
+7) Log Message: Fixing mincore the way it generates -EFAULT on s390 by setting a stack limit by "ulimit -s <value>" before its execution, by Anoop <anoop.vijayan@in.ibm.com>
+File(s) Affected:
+ltp/testcases/kernel/syscalls/mincore/mincore01.c
+
+8) Log Message: add syscall list for arm from Riaz Ur Rahaman
+File(s) Affected:
+ltp/testcases/kernel/include/linux_syscall_numbers.h
+ltp/testcases/kernel/include/order
+
+File(s) Added:
+ltp/testcases/kernel/include/arm.in
+
+9) Log Message: Test isn't supported in kernel versions before 2.6.16, by Marco Antonio Fernandes Junior <marcoafj@linux.vnet.ibm.com>
+File(s) Affected:
+ltp/testcases/kernel/syscalls/fadvise/posix_fadvise04.c
+
+10)Log Message: Reverting Back Stephenś Patch and Applying Jeffś Patch for controlling the tty issue. Also a minor change for the ia64 compile failure.
+File(s) Affected:
+testcases/kernel/security/selinux-testsuite/README
+testcases/kernel/security/selinux-testsuite/refpolicy/test_capable_file.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_capable_net.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_file.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_global.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_ioctl.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_setnice.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_sysctl.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_task_create.te
+testcases/kernel/security/selinux-testsuite/refpolicy/test_task_setpgid.te
+testcases/kernel/security/selinux-testsuite/tests/execshare/selinux_execshare_parent.c
+testcases/kernel/security/selinux-testsuite/tests/file/selinux_file.sh
+
+11) Log Message: A Trivial Fix from Roger Mach <bigmach@us.ibm.com>
+File(s) Affected:
+ltp/testcases/pounder21/test_scripts/xterm_stress
+
+12) Log Message: tweak config.mk comment to reflect reality, by Mike Frysinger
+File(s) Affected:
+ltp/Makefile
+
+13) Log Message: Initial Set of Real Time Linux Test Cases, by Nivedita Singhvi <niv@us.ibm.com> & sudhanshu Singh <sudhanshusingh@in.ibm.com>
+File(s) Added:
+ltp/testcases/realtime/COPYING 
+ltp/testcases/realtime/GNUmakefile.am 
+ltp/testcases/realtime/GNUmakefile.in 
+ltp/testcases/realtime/OO_DESCRIPTION.txt 
+ltp/testcases/realtime/README 
+ltp/testcases/realtime/aclocal.m4 
+ltp/testcases/realtime/autogen.sh 
+ltp/testcases/realtime/configure 
+ltp/testcases/realtime/configure.ac 
+ltp/testcases/realtime/run.sh 
+ltp/testcases/realtime/autom4te.cache/output.0 
+ltp/testcases/realtime/autom4te.cache/output.1 
+ltp/testcases/realtime/autom4te.cache/requests 
+ltp/testcases/realtime/autom4te.cache/traces.0 
+ltp/testcases/realtime/autom4te.cache/traces.1 
+ltp/testcases/realtime/config/GNUmakefile.am 
+ltp/testcases/realtime/config/GNUmakefile.in 
+ltp/testcases/realtime/config/autoconf/compile 
+ltp/testcases/realtime/config/autoconf/config.guess
+ltp/testcases/realtime/config/autoconf/config.sub
+ltp/testcases/realtime/config/autoconf/depcomp 
+ltp/testcases/realtime/config/autoconf/install-sh
+ltp/testcases/realtime/config/autoconf/missing 
+ltp/testcases/realtime/doc/HOWTO_ADD_TESTS 
+ltp/testcases/realtime/doc/TODO 
+ltp/testcases/realtime/func/GNUmakefile.am 
+ltp/testcases/realtime/func/GNUmakefile.in 
+ltp/testcases/realtime/func/async_handler/GNUmakefile.am
+ltp/testcases/realtime/func/async_handler/GNUmakefile.in
+ltp/testcases/realtime/func/async_handler/async_handler.c
+ltp/testcases/realtime/func/async_handler/async_handler_jk.c
+ltp/testcases/realtime/func/async_handler/async_handler_tsc.c
+ltp/testcases/realtime/func/async_handler/run_auto.sh
+ltp/testcases/realtime/func/gtod_latency/GNUmakefile.am
+ltp/testcases/realtime/func/gtod_latency/GNUmakefile.in
+ltp/testcases/realtime/func/gtod_latency/gtod_infinite.c 
+ltp/testcases/realtime/func/gtod_latency/gtod_latency.c 
+ltp/testcases/realtime/func/gtod_latency/run_auto.sh 
+ltp/testcases/realtime/func/hrtimer-prio/GNUmakefile.am 
+ltp/testcases/realtime/func/hrtimer-prio/GNUmakefile.in 
+ltp/testcases/realtime/func/hrtimer-prio/hrtimer-prio.c 
+ltp/testcases/realtime/func/hrtimer-prio/run.sh 
+ltp/testcases/realtime/func/matrix_mult/GNUmakefile.am 
+ltp/testcases/realtime/func/matrix_mult/GNUmakefile.in 
+ltp/testcases/realtime/func/matrix_mult/matrix_mult.c
+ltp/testcases/realtime/func/matrix_mult/run_auto.sh
+ltp/testcases/realtime/func/measurement/GNUmakefile.am
+ltp/testcases/realtime/func/measurement/GNUmakefile.in
+ltp/testcases/realtime/func/measurement/README
+ltp/testcases/realtime/func/measurement/preempt_timing.c
+ltp/testcases/realtime/func/measurement/rdtsc-latency.c
+ltp/testcases/realtime/func/measurement/run.sh
+ltp/testcases/realtime/func/periodic_cpu_load/GNUmakefile.am
+ltp/testcases/realtime/func/periodic_cpu_load/GNUmakefile.in
+ltp/testcases/realtime/func/periodic_cpu_load/mixed_load.sh
+ltp/testcases/realtime/func/periodic_cpu_load/periodic_cpu_load.c
+ltp/testcases/realtime/func/periodic_cpu_load/periodic_cpu_load_single.c
+ltp/testcases/realtime/func/periodic_cpu_load/run_auto.sh
+ltp/testcases/realtime/func/pi-tests/GNUmakefile.am
+ltp/testcases/realtime/func/pi-tests/GNUmakefile.in
+ltp/testcases/realtime/func/pi-tests/parse-testpi1.py
+ltp/testcases/realtime/func/pi-tests/parse-testpi2.py
+ltp/testcases/realtime/func/pi-tests/run_auto.sh
+ltp/testcases/realtime/func/pi-tests/sbrk_mutex.c
+ltp/testcases/realtime/func/pi-tests/test-skeleton.c
+ltp/testcases/realtime/func/pi-tests/testpi-0.c
+ltp/testcases/realtime/func/pi-tests/testpi-1.c
+ltp/testcases/realtime/func/pi-tests/testpi-2.c
+ltp/testcases/realtime/func/pi-tests/testpi-4.c
+ltp/testcases/realtime/func/pi-tests/testpi-5.c
+ltp/testcases/realtime/func/pi-tests/testpi-6.c
+ltp/testcases/realtime/func/pi-tests/testpi-7.c
+ltp/testcases/realtime/func/pi_perf/GNUmakefile.am
+ltp/testcases/realtime/func/pi_perf/GNUmakefile.in
+ltp/testcases/realtime/func/pi_perf/pi_perf.c
+ltp/testcases/realtime/func/pi_perf/run_auto.sh
+ltp/testcases/realtime/func/prio-preempt/GNUmakefile.am
+ltp/testcases/realtime/func/prio-preempt/GNUmakefile.in
+ltp/testcases/realtime/func/prio-preempt/prio-preempt.c
+ltp/testcases/realtime/func/prio-preempt/run_auto.sh
+ltp/testcases/realtime/func/prio-wake/GNUmakefile.am
+ltp/testcases/realtime/func/prio-wake/GNUmakefile.in
+ltp/testcases/realtime/func/prio-wake/prio-wake.c
+ltp/testcases/realtime/func/prio-wake/run_auto.sh
+ltp/testcases/realtime/func/pthread_kill_latency/GNUmakefile.am
+ltp/testcases/realtime/func/pthread_kill_latency/GNUmakefile.in
+ltp/testcases/realtime/func/pthread_kill_latency/pthread_kill_latency.c
+ltp/testcases/realtime/func/sched_football/GNUmakefile.am
+ltp/testcases/realtime/func/sched_football/GNUmakefile.in
+ltp/testcases/realtime/func/sched_football/parse-football.py
+ltp/testcases/realtime/func/sched_football/run_auto.sh
+ltp/testcases/realtime/func/sched_football/sched_football.c
+ltp/testcases/realtime/func/sched_jitter/GNUmakefile.am
+ltp/testcases/realtime/func/sched_jitter/GNUmakefile.in
+ltp/testcases/realtime/func/sched_jitter/README
+ltp/testcases/realtime/func/sched_jitter/run_auto.sh
+ltp/testcases/realtime/func/sched_jitter/sched_jitter.c
+ltp/testcases/realtime/func/sched_latency/GNUmakefile.am
+ltp/testcases/realtime/func/sched_latency/GNUmakefile.in
+ltp/testcases/realtime/func/sched_latency/run_auto.sh
+ltp/testcases/realtime/func/sched_latency/sched_latency.c
+ltp/testcases/realtime/func/thread_clock/GNUmakefile.am
+ltp/testcases/realtime/func/thread_clock/GNUmakefile.in
+ltp/testcases/realtime/func/thread_clock/run_auto.sh
+ltp/testcases/realtime/func/thread_clock/tc-2.c
+ltp/testcases/realtime/include/GNUmakefile.am
+ltp/testcases/realtime/include/GNUmakefile.in
+ltp/testcases/realtime/include/libjvmsim.h
+ltp/testcases/realtime/include/librttest.h
+ltp/testcases/realtime/include/libstats.h
+ltp/testcases/realtime/include/list.h
+ltp/testcases/realtime/include/rttests_config.h.in
+ltp/testcases/realtime/lib/GNUmakefile.am
+ltp/testcases/realtime/lib/GNUmakefile.in
+ltp/testcases/realtime/lib/libjvmsim.c
+ltp/testcases/realtime/lib/librttest.c
+ltp/testcases/realtime/lib/libstats.c
+ltp/testcases/realtime/perf/GNUmakefile.am
+ltp/testcases/realtime/perf/GNUmakefile.in
+ltp/testcases/realtime/perf/latency/GNUmakefile.am
+ltp/testcases/realtime/perf/latency/GNUmakefile.in
+ltp/testcases/realtime/perf/latency/cpunoise.sh
+ltp/testcases/realtime/perf/latency/cpunoise2000.sh
+ltp/testcases/realtime/perf/latency/disknoise.sh
+ltp/testcases/realtime/perf/latency/pthread_cond_latency.c
+ltp/testcases/realtime/perf/latency/pthread_cond_many.c
+ltp/testcases/realtime/perf/latency/pthread_cond_many_histogram.sh
+ltp/testcases/realtime/perf/latency/run.sh
+ltp/testcases/realtime/scripts/__init__.py
+ltp/testcases/realtime/scripts/parser.py
+ltp/testcases/realtime/scripts/run_c_files.sh
+ltp/testcases/realtime/scripts/setenv.sh
+ltp/testcases/realtime/stress/GNUmakefile.am
+ltp/testcases/realtime/stress/GNUmakefile.in
+ltp/testcases/realtime/stress/pi-tests/GNUmakefile.am
+ltp/testcases/realtime/stress/pi-tests/GNUmakefile.in
+ltp/testcases/realtime/stress/pi-tests/lookup_pi_state.c
+ltp/testcases/realtime/stress/pi-tests/testpi-3.c
+ltp/testcases/realtime/tools/ftqviz.py
+ltp/testscripts/realtime.sh
+
+14) Log Message: Updates for Some Copyright and License Declarations
+File(s) Affected:
+ltp/testcases/realtime/GNUmakefile.am
+ltp/testcases/realtime/OO_DESCRIPTION.txt
+ltp/testcases/realtime/README
+ltp/testcases/realtime/autogen.sh
+ltp/testcases/realtime/configure.ac
+ltp/testcases/realtime/run.sh
+
+15) Log Message: Initial set of PID Namespace testcase contributed by "Rishikesh K. Rajak" <risrajak@linux.vnet.ibm.com>
+File(s) Added:
+ltp/testcases/kernel/containers/pidns/Makefile
+ltp/testcases/kernel/containers/pidns/README
+ltp/testcases/kernel/containers/pidns/check_pidns_enabled.c
+ltp/testcases/kernel/containers/pidns/pidns01.c
+ltp/testcases/kernel/containers/pidns/pidns02.c
+ltp/testcases/kernel/containers/pidns/pidns03.c
+ltp/testcases/kernel/containers/pidns/runpidnstest.sh
+ltp/testcases/kernel/containers/pidns/runtests_noltp.sh
+
+File(s) Affected:
+ltp/testcases/kernel/containers/Makefile
+ltp/testcases/kernel/containers/container_test.sh
+
+16) Log Message: Changed the way Copyrights and License agreements are declared
+File(s) Affected:
+ltp/testcases/kernel/containers/README
+ltp/testcases/kernel/containers/TEST_PLAN.txt
+ltp/testcases/kernel/containers/check_for_unshare.c
+ltp/testcases/kernel/containers/libclone/Makefile
+ltp/testcases/kernel/containers/libclone/libclone.c
+ltp/testcases/kernel/containers/libclone/libclone.h
+ltp/testcases/kernel/containers/sysvipc/Makefile
+ltp/testcases/kernel/containers/sysvipc/check_ipcns_enabled.c
+ltp/testcases/kernel/containers/sysvipc/runipcnstest.sh
+ltp/testcases/kernel/containers/sysvipc/runtests_noltp.sh
+ltp/testcases/kernel/containers/sysvipc/shmnstest.c
+ltp/testcases/kernel/containers/utsname/Makefile
+ltp/testcases/kernel/containers/utsname/README
+ltp/testcases/kernel/containers/utsname/check_utsns_enabled.c
+ltp/testcases/kernel/containers/utsname/runtests_noltp.sh
+ltp/testcases/kernel/containers/utsname/runutstest.sh
+ltp/testcases/kernel/containers/utsname/utstest.c
+
+--=-TY9vN1PYCntUq0wpxm64--
