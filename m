@@ -1,8 +1,9 @@
-From: "Frank Ch. Eigler" <fche@redhat.com>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing
-Date: Wed, 2 Jan 2008 11:33:09 -0500
-Message-ID: <20080102163309.GC11496@redhat.com>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
+	Tracing
+Date: Wed, 2 Jan 2008 18:01:57 +0100
+Message-ID: <20080102170157.GA11161@elte.hu>
+References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>,
@@ -11,91 +12,50 @@ Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>,
 	paulmck@linux.vnet.ibm.com,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Linus Torvalds <torvalds@linux-foundation.org>
-To: Ingo Molnar <mingo@elte.hu>
+To: "Frank Ch. Eigler" <fche@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:42509 "EHLO mx1.redhat.com"
+Received: from mx2.mail.elte.hu ([157.181.151.9]:60052 "EHLO mx2.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754140AbYABQf2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Jan 2008 11:35:28 -0500
+	id S1754596AbYABRC3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Jan 2008 12:02:29 -0500
 Content-Disposition: inline
-In-Reply-To: <20080102124734.GC11208@elte.hu>
+In-Reply-To: <20080102163309.GC11496@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi -
 
-On Wed, Jan 02, 2008 at 01:47:34PM +0100, Ingo Molnar wrote:
-> [...]
-> > FWIW, I'm not keen about the format strings either, but they don't 
-> > constitute a performance hit beyond an additional parameter.  It does 
-> > not need to actually get parsed at run time.
+* Frank Ch. Eigler <fche@redhat.com> wrote:
+
+> > [...] this is a general policy matter. It is _so much easier_ to add 
+> > markers if they _can_ have near-zero overhead (as in 1-2 
+> > instructions). Otherwise we'll keep arguing about it, especially if 
+> > any is added to performance-critical codepath. (where we are 
+> > counting instructions)
 > 
-> "only" an additional parameter. The whole _point_ behind these markers 
-> is for them to have minimal effect!
+> The effect of the immediate-values patch, combined with gcc 
+> CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2 
+> dcache-impact-free instructions.  The register saves, parameter 
+> evaluation, the function call, can all be moved out of line.
 
-Agreed.  The only alternative I recall seeing proposed was my own
-cartesian-product macro suite that encodes parameter types into the
-marker function/macro name itself.  (Maybe some of that could be
-hidden with gcc typeof() magic.)  There appeared to be a consensus
-that this was more undesirable.  Do you agree?
+well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
+we should already be getting that, right?
 
+There's one thing that would make out-of-line tracepoints have a lot 
+less objectionable to me: right now the 'out of line' area is put to the 
+end of functions. That splinters the kernel image with inactive, rarely 
+taken areas of code - blowing up its icache footprint considerably. For 
+example sched.o has ~100 functions, with the average function size being 
+200 bytes. At 64 bytes L1 cacheline size that's a 10-20% icache waste 
+already.
 
-> [...]
-> this is a general policy matter. It is _so much easier_ to add markers 
-> if they _can_ have near-zero overhead (as in 1-2 instructions). 
-> Otherwise we'll keep arguing about it, especially if any is added to 
-> performance-critical codepath. (where we are counting instructions)
+It's true that keeping the off-site code within the function keeps total 
+codesize slightly smaller, because the offsets (and hence the 
+conditional jumps) are thus 8 bit - but that's below 1% and the 
+cache-blow-up aspect is more severe in practice at 10-20%.
 
-The effect of the immediate-values patch, combined with gcc
-CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2
-dcache-impact-free instructions.  The register saves, parameter
-evaluation, the function call, can all be moved out of line.
+So it would be nice if we could collect all this offline code and stuff 
+it away into another portion of the kernel image. (or, into another 
+portion of the object file - which would still be good enough in 
+practice)
 
-
-> > > Whatever became of the obvious suggestion that i outlined years ago, 
-> > > to have a _single_ trace call instruction and to _patch out_ the 
-> > > damn marker calls by default?  [...]  only leaving a ~5-byte NOP 
-> > > sequence behind them (and some minimal disturbance to the variables 
-> > > the tracepoint accesses). [...]
-> > 
-> > This has been answered several times before.  It's because the marker 
-> > parameters have to be (conditionally) evaluated and pushed onto a call 
-> > frame.  It's not just a call that would need being nop'd, but a whole 
-> > function call setup/teardown sequence, which itself can be interleaved 
-> > with adjacent code.
-> 
-> you are still missing my point. Firstly, the kernel is regparm built so 
-> there's no call frame to be pushed to in most cases - we pass most 
-> parameters in registers. [...]
-
-Yes, but those registers will already be used, so their former values
-need to be saved or later recomputed as a part of the call sequence.
-Even wrapping it all with an asm barrier may not be enough to
-completely bound the code with an address range that can be naively
-NOP'd out.
-
-
-> Secondly, the side-effects of a function call is what i referred to via:
-> 
-> > [...]  (and some minimal disturbance to the variables the tracepoint 
-> > accesses). [...]
-> 
-> really, a tracepoint obviously accesses data that is readily accessible 
-> in that spot. Worst-case we'll have some additional register constraints 
-> that make the code a bit less optimal. [...]
-
-It's more than that - people will want to pass some dereferenced
-fields from a struct*; some old function parameters that were by the
-time of the marker call shoved out of registers again.  Register
-constraints that prohibit general expressions would impede the
-utility of the tool.
-
-
-> what cannot be optimized away at all are the conditional
-> instructions introduced by the probe points, extra parameters and
-> the space overhead of the function call itself.
-
-Almost all of that can & should be moved out of line.
-
-
-- FChE
+	Ingo
