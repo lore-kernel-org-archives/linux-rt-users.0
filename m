@@ -1,61 +1,47 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
-	Tracing
-Date: Wed, 2 Jan 2008 18:01:57 +0100
-Message-ID: <20080102170157.GA11161@elte.hu>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com>
+From: "Frank Ch. Eigler" <fche@redhat.com>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing
+Date: Wed, 2 Jan 2008 12:56:06 -0500
+Message-ID: <20080102175606.GD11496@redhat.com>
+References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>,
+Cc: "Frank Ch. Eigler" <fche@redhat.com>,
+	"K. Prasad" <prasad@linux.vnet.ibm.com>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	dipankar@in.ibm.com, ego@in.ibm.com, mathieu.desnoyers@polymtl.ca,
 	paulmck@linux.vnet.ibm.com,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Linus Torvalds <torvalds@linux-foundation.org>
-To: "Frank Ch. Eigler" <fche@redhat.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:60052 "EHLO mx2.mail.elte.hu"
+Received: from mx1.redhat.com ([66.187.233.31]:48610 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754596AbYABRC3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Jan 2008 12:02:29 -0500
+	id S1751911AbYABR6b (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Jan 2008 12:58:31 -0500
 Content-Disposition: inline
-In-Reply-To: <20080102163309.GC11496@redhat.com>
+In-Reply-To: <20080102170157.GA11161@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi -
 
-* Frank Ch. Eigler <fche@redhat.com> wrote:
+On Wed, Jan 02, 2008 at 06:01:57PM +0100, Ingo Molnar wrote:
+> [...]
+> well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
+> we should already be getting that, right?
 
-> > [...] this is a general policy matter. It is _so much easier_ to add 
-> > markers if they _can_ have near-zero overhead (as in 1-2 
-> > instructions). Otherwise we'll keep arguing about it, especially if 
-> > any is added to performance-critical codepath. (where we are 
-> > counting instructions)
-> 
-> The effect of the immediate-values patch, combined with gcc 
-> CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2 
-> dcache-impact-free instructions.  The register saves, parameter 
-> evaluation, the function call, can all be moved out of line.
+Right.
 
-well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
-we should already be getting that, right?
+> [...]  So it would be nice if we could collect all this offline code
+> and stuff it away into another portion of the kernel image. (or,
+> into another portion of the object file - which would still be good
+> enough in practice)
 
-There's one thing that would make out-of-line tracepoints have a lot 
-less objectionable to me: right now the 'out of line' area is put to the 
-end of functions. That splinters the kernel image with inactive, rarely 
-taken areas of code - blowing up its icache footprint considerably. For 
-example sched.o has ~100 functions, with the average function size being 
-200 bytes. At 64 bytes L1 cacheline size that's a 10-20% icache waste 
-already.
+That would be the -freorder-blocks-and-partition flag, as proposed by
+Arjan two Februarys ago.  I don't see any traces of Andi's overriding
+"-fno-reorder-blocks" in the current linus tree, so maybe it's time to
+resurrect this one:
 
-It's true that keeping the off-site code within the function keeps total 
-codesize slightly smaller, because the offsets (and hence the 
-conditional jumps) are thus 8 bit - but that's below 1% and the 
-cache-blow-up aspect is more severe in practice at 10-20%.
+http://readlist.com/lists/vger.kernel.org/linux-kernel/39/196123.html
 
-So it would be nice if we could collect all this offline code and stuff 
-it away into another portion of the kernel image. (or, into another 
-portion of the object file - which would still be good enough in 
-practice)
-
-	Ingo
+- FChE
