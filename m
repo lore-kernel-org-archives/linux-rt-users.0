@@ -1,53 +1,39 @@
-From: Nicholas Miell <nmiell@comcast.net>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
-	Tracing
-Date: Wed, 02 Jan 2008 15:49:03 -0800
-Message-ID: <1199317743.2438.8.camel@entropy>
-References: <20071231060911.GB6461@in.ibm.com>
-	 <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com>
-	 <20080102124734.GC11208@elte.hu>  <20080102163309.GC11496@redhat.com>
+From: John Sigler <linux.kernel@free.fr>
+Subject: Re: neigh: timer & !nud_in_timer
+Date: Thu, 03 Jan 2008 10:23:03 +0100
+Message-ID: <477CA977.2090804@free.fr>
+References: <476A6F85.7070905@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	"K. Prasad" <prasad@linux.vnet.ibm.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	dipankar@in.ibm.com, ego@in.ibm.com, mathieu.desnoyers@polymtl.ca,
-	paulmck@linux.vnet.ibm.com,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-To: "Frank Ch. Eigler" <fche@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758260AbYABXtV@vger.kernel.org>
-In-Reply-To: <20080102163309.GC11496@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+To: netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <476A6F85.7070905@free.fr>
+Sender: netdev-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+John Sigler wrote:
 
-On Wed, 2008-01-02 at 11:33 -0500, Frank Ch. Eigler wrote:
-> Hi -
+> I noticed the following message in my kernel log.
+> kernel: neigh: timer & !nud_in_timer
+> (Might be due to a race condition.)
 > 
-> On Wed, Jan 02, 2008 at 01:47:34PM +0100, Ingo Molnar wrote:
-> > [...]
-> > > FWIW, I'm not keen about the format strings either, but they don't 
-> > > constitute a performance hit beyond an additional parameter.  It does 
-> > > not need to actually get parsed at run time.
-> > 
-> > "only" an additional parameter. The whole _point_ behind these markers 
-> > is for them to have minimal effect!
+> I'm running a UP Linux version 2.6.22.1-rt9
+> ( http://rt.wiki.kernel.org/index.php )
 > 
-> Agreed.  The only alternative I recall seeing proposed was my own
-> cartesian-product macro suite that encodes parameter types into the
-> marker function/macro name itself.  (Maybe some of that could be
-> hidden with gcc typeof() magic.)  There appeared to be a consensus
-> that this was more undesirable.  Do you agree?
+> The following /proc entries might be relevant.
 > 
+> /proc/sys/net/ipv4/conf/all/arp_accept
+> 0
+> /proc/sys/net/ipv4/conf/all/arp_announce
+> 2
+> /proc/sys/net/ipv4/conf/all/arp_filter
+> 0
+> /proc/sys/net/ipv4/conf/all/arp_ignore
+> 1
 > 
+> I also lowered the priority of softirq-timer/0 to 10 which means
+> it can be interrupted by other IRQ handlers.
 
-C++ name mangling would be extremely useful here.
-
-
-Actually, why isn't the DWARF information for the functions sufficient?
-
--- 
-Nicholas Miell <nmiell@comcast.net>
-
+Comments or musings?
