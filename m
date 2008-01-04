@@ -1,125 +1,101 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+From: Gautham R Shenoy <ego@in.ibm.com>
 Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
 	Tracing
-Date: Thu, 3 Jan 2008 14:24:23 -0500
-Message-ID: <20080103192423.GA4321@Krystal>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu>
+Date: Fri, 4 Jan 2008 16:28:58 +0530
+Message-ID: <20080104105858.GA13865@in.ibm.com>
+References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal>
+Reply-To: ego@in.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>,
+Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>, mingo@elte.hu,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	"Frank Ch. Eigler" <fche@redhat.com>
-To: Ingo Molnar <mingo@elte.hu>
+	dipankar@in.ibm.com, paulmck@linux.vnet.ibm.com
+To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bc.sympatico.ca ([209.226.175.184]:47255 "EHLO
-	tomts22-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751600AbYACTY1 (ORCPT
+Received: from E23SMTP02.au.ibm.com ([202.81.18.163]:45268 "EHLO
+	e23smtp02.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751146AbYADL3z (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Jan 2008 14:24:27 -0500
+	Fri, 4 Jan 2008 06:29:55 -0500
 Content-Disposition: inline
-In-Reply-To: <20071231102045.GB30380@elte.hu>
+In-Reply-To: <20080103163055.GB27651@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Ingo Molnar (mingo@elte.hu) wrote:
-> 
-> * K. Prasad <prasad@linux.vnet.ibm.com> wrote:
-> 
-> > @@ -486,12 +309,12 @@ void rcu_unboost_readers(void)
+On Thu, Jan 03, 2008 at 11:30:55AM -0500, Mathieu Desnoyers wrote:
+> * K. Prasad (prasad@linux.vnet.ibm.com) wrote:
+> > This patch converts the tracing mechanism of Preempt RCU boosting into
+> > markers. The handler functions for these markers are included inside
+> > rcupreempt_trace.c and will be included only when PREEMPT_RCU_BOOST is
+> > chosen.
 > >  
-> >  	spin_lock_irqsave(&rcu_boost_wake_lock, flags);
+> > Signed-off-by: K.Prasad <prasad@linux.vnet.ibm.com>
+> > ---
+> >  include/linux/rcupreempt_trace.h |   46 ++++++++
+> >  kernel/rcupreempt-boost.c        |  211 ++++-----------------------------------
+> >  kernel/rcupreempt_trace.c        |  183 +++++++++++++++++++++++++++++++++
+> >  3 files changed, 251 insertions(+), 189 deletions(-)
 > >  
-> > -	rcu_trace_boost_try_unboost_readers(RCU_BOOST_ME);
-> > +	trace_mark(try_unboost_readers, "%u", smp_processor_id());
+> > Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
+> > ===================================================================
+> > --- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/include/linux/rcupreempt_trace.h
+> > +++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
+> > @@ -102,5 +102,51 @@ extern int rcupreempt_flip_flag(int cpu)
+> >  extern int rcupreempt_mb_flag(int cpu);
+> >  extern char *rcupreempt_try_flip_state_name(void);
+> >  
+> > +#ifdef CONFIG_PREEMPT_RCU_BOOST
+> > +struct preempt_rcu_boost_trace {
+> > +	unsigned long rbs_stat_task_boost_called;
+> > +	unsigned long rbs_stat_task_boosted;
+> > +	unsigned long rbs_stat_boost_called;
+> > +	unsigned long rbs_stat_try_boost;
+> > +	unsigned long rbs_stat_boosted;
+> > +	unsigned long rbs_stat_unboost_called;
+> > +	unsigned long rbs_stat_unboosted;
+> > +	unsigned long rbs_stat_try_boost_readers;
+> > +	unsigned long rbs_stat_boost_readers;
+> > +	unsigned long rbs_stat_try_unboost_readers;
+> > +	unsigned long rbs_stat_unboost_readers;
+> > +	unsigned long rbs_stat_over_taken;
+> > +};
+> > +
+> > +#define DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(preempt_rcu_boost_var) \
+> > +void preempt_rcu_boost_var##_callback(const struct marker *mdata, \
+> > +				void *private_data, const char *format, ...) \
+> > +{ \
+> > +	va_list ap; \
+> > +	int cpu; \
+> > +	struct preempt_rcu_boost_trace *boost_trace; \
+> > +	va_start(ap, format); \
+> > +	cpu = va_arg(ap, typeof(unsigned int)); \
 > 
-> this isnt directed at you or your patch, it's more directed at Mathieu, 
-> but looking at this actual markers patch submitted to me, i'm still 
-> fundamentally worried about the whole marker approach.
+> (sorry for late response, I just came back from vacation)
 > 
-
-Hi Ingo,
-
-Just to note that some of your concerns have been answered by Frank and
-that I fully agree with what he said. Sorry for the late reply
-(vacation..)
-
-> Firstly, why on earth does a full format string have to be passed in for 
-> something as simple as a CPU id? This way we basically codify it forever 
-> that tracing _has_ to be expensive when enabled. The latency-tracer 
-> (which i'd love to convert to markers, if only markers were capable 
-> enough) has shown it that tracing _can_ be used to capture performance 
-> data without disturbing the measured system, even at hundreds of 
-> thousands context switches a second per CPU.
-> 
-
-As I replyed in my other email, the cpu id does not have to be passed as
-an argument. Also, when no argument is passed, the format string does
-not have to be parsed at all in the callback.
-
-> Secondly, the inlined overhead of trace_mark() is still WAY too large:
-> 
->                 if (unlikely(__mark_##name.state)) {                    \
->                         preempt_disable();                              \
->                         (*__mark_##name.call)                           \
->                                 (&__mark_##name, call_data,             \
->                                 format, ## args);                       \
->                         preempt_enable();                               \
->                 }                                                       \
-> 
-
-To get the full version of my trace_mark, you would have to take a few
-bits from the -mm tree, which includes the "multiple probes support"
-(this one moves the preempt disable/enable completely out of line) and
-you should also get the "markers use immediate values" patch which I
-submitted a few weeks ago : it uses code patching to modify a byte in a
-mov instruction that is used to jump over the entire function call
-(memory references, stack setup and the call itself)
-
-> Whatever became of the obvious suggestion that i outlined years ago, to 
-> have a _single_ trace call instruction and to _patch out_ the damn 
-> marker calls by default? No .state flag checking inlined. No 
-> preempt_disable()/enable() pair. Patching static tracepoints OUT of the 
-> kernel, only leaving a ~5-byte NOP sequence behind them (and some 
-> minimal disturbance to the variables the tracepoint accesses). We've got 
-> all the alternatives.h code patching infrastructure available for such 
-> purposes. Why are we 2 years down the line and _STILL_ arguing about 
-> this?
+> Instead of passing the cpu id as a marker parameter, why don't you
+> simply use smp_processor_id() right here ?
 > 
 
-Frank replied appropriately to this. It's mostly because of stack setup
-and/or move to registers to prepare the call.
+Agreed. 
 
-> Thirdly, the patch selects CONFIG_MARKERS:
-> 
-> >  config RCU_TRACE
-> > -       bool "Enable tracing for RCU - currently stats in debugfs"
-> > +       tristate "Enable tracing for RCU - currently stats in debugfs"
-> >         select DEBUG_FS
-> > -       default y
-> > +       select MARKERS
-> 
-> Which adds overhead (inlined checks for markers) all around the kernel, 
-> even if all markers are deactivated! Imagine a thousand of them and the 
-> kernel blows up measurably.
-> 
-> Sadly, this whole trace_mark() API seems to have gotten much worse since 
-> i last saw it. It's sub-par when it's turned on and it's sub-par when 
-> it's turned off. It gets us the worst of both worlds.
-> 
-> If it continues like this then i'd much rather see people add printks as 
-> tracing, because there you _know_ that it's high-overhead and people 
-> wont start arguing about trace compatibility either, etc.
-> 
+Also in patch 1, in cases where we're using markers in place of RCU_TRACE_ME(), 
+we need not pass the parameter and simply use smp_processor_id().
 
-I think Frank's response explains things in enough depth.
+It's only the RCU_TRACE_RDP() that requires cpuid to be passed.
 
-> 	Ingo
+
+Thanks and Regards
+gautham.
+
+
+> -- 
+> Mathieu Desnoyers
+> Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+> OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
 
 -- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+Gautham R Shenoy
+Linux Technology Center
+IBM India.
+"Freedom comes with a price tag of responsibility, which is still a bargain,
+because Freedom is priceless!"
