@@ -1,41 +1,121 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Question: RT patch and CFS patch ?
-Date: Fri, 4 Jan 2008 21:24:52 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801042123410.23332@gandalf.stny.rr.com>
-References: <1199271164.7684.0.camel@aquarius.pit.edu.pl>
+From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
+	Tracing
+Date: Sat, 5 Jan 2008 07:46:32 -0500
+Message-ID: <20080105124632.GA16576@Krystal>
+References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Andrzej Walczak <awalczak@pit.edu.pl>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>, mingo@elte.hu,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com, paulmck@linux.vnet.ibm.com
+To: Gautham R Shenoy <ego@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:48041 "EHLO
-	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754660AbYAECZF (ORCPT
+Received: from tomts16-srv.bellnexxia.net ([209.226.175.4]:63410 "EHLO
+	tomts16-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753969AbYAEMqh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Jan 2008 21:25:05 -0500
-In-Reply-To: <1199271164.7684.0.camel@aquarius.pit.edu.pl>
+	Sat, 5 Jan 2008 07:46:37 -0500
+Content-Disposition: inline
+In-Reply-To: <20080104105858.GA13865@in.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+* Gautham R Shenoy (ego@in.ibm.com) wrote:
+> On Thu, Jan 03, 2008 at 11:30:55AM -0500, Mathieu Desnoyers wrote:
+> > * K. Prasad (prasad@linux.vnet.ibm.com) wrote:
+> > > This patch converts the tracing mechanism of Preempt RCU boosting into
+> > > markers. The handler functions for these markers are included inside
+> > > rcupreempt_trace.c and will be included only when PREEMPT_RCU_BOOST is
+> > > chosen.
+> > >  
+> > > Signed-off-by: K.Prasad <prasad@linux.vnet.ibm.com>
+> > > ---
+> > >  include/linux/rcupreempt_trace.h |   46 ++++++++
+> > >  kernel/rcupreempt-boost.c        |  211 ++++-----------------------------------
+> > >  kernel/rcupreempt_trace.c        |  183 +++++++++++++++++++++++++++++++++
+> > >  3 files changed, 251 insertions(+), 189 deletions(-)
+> > >  
+> > > Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
+> > > ===================================================================
+> > > --- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/include/linux/rcupreempt_trace.h
+> > > +++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
+> > > @@ -102,5 +102,51 @@ extern int rcupreempt_flip_flag(int cpu)
+> > >  extern int rcupreempt_mb_flag(int cpu);
+> > >  extern char *rcupreempt_try_flip_state_name(void);
+> > >  
+> > > +#ifdef CONFIG_PREEMPT_RCU_BOOST
+> > > +struct preempt_rcu_boost_trace {
+> > > +	unsigned long rbs_stat_task_boost_called;
+> > > +	unsigned long rbs_stat_task_boosted;
+> > > +	unsigned long rbs_stat_boost_called;
+> > > +	unsigned long rbs_stat_try_boost;
+> > > +	unsigned long rbs_stat_boosted;
+> > > +	unsigned long rbs_stat_unboost_called;
+> > > +	unsigned long rbs_stat_unboosted;
+> > > +	unsigned long rbs_stat_try_boost_readers;
+> > > +	unsigned long rbs_stat_boost_readers;
+> > > +	unsigned long rbs_stat_try_unboost_readers;
+> > > +	unsigned long rbs_stat_unboost_readers;
+> > > +	unsigned long rbs_stat_over_taken;
+> > > +};
+> > > +
+> > > +#define DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(preempt_rcu_boost_var) \
+> > > +void preempt_rcu_boost_var##_callback(const struct marker *mdata, \
+> > > +				void *private_data, const char *format, ...) \
+> > > +{ \
+> > > +	va_list ap; \
+> > > +	int cpu; \
+> > > +	struct preempt_rcu_boost_trace *boost_trace; \
+> > > +	va_start(ap, format); \
+> > > +	cpu = va_arg(ap, typeof(unsigned int)); \
+> > 
+> > (sorry for late response, I just came back from vacation)
+> > 
+> > Instead of passing the cpu id as a marker parameter, why don't you
+> > simply use smp_processor_id() right here ?
+> > 
+> 
+> Agreed. 
+> 
+> Also in patch 1, in cases where we're using markers in place of RCU_TRACE_ME(), 
+> we need not pass the parameter and simply use smp_processor_id().
+> 
+> It's only the RCU_TRACE_RDP() that requires cpuid to be passed.
+> 
 
-On Wed, 2 Jan 2008, Andrzej Walczak wrote:
 
-> Dear All,
->
-> I have question:
->
-> Will RT kernel have any benefits from improved CFS scheduler ?
->
-> or maybe this question in other words
->
-> Does it make sense to patch kernel with CFS patch
-> (http://people.redhat.com/mingo/cfs-scheduler/sched-cfs-v2.6.23.12-v24.1.patch)
-> or other relevant  before/after patching with RT patch ?
->
+And it would help if you declare the format string with something like :
 
-2.6.24-rc-rt should have the latest upstream CFS stuff plus some other
-goodies.  2.6.23-rt is still the older CFS scheduler.  I'm currently
-trying to get Ingo's backport to run on .23-rt. But I wont release that
-with CFS until I get it stable.
+"cpuid %u" instead of "%u"
 
--- Steve
+This way, if a generic tracer like LTTng dumps the traces and later a
+plugin in an analysis tool like LTTV have to hook on a specific field of
+your event, it can access it by specifying the marker name and field
+name. And even if fields are added to this event, it won't break
+compatibility as long as this field is there and have the same name.
+
+Mathieu
+
+> 
+> Thanks and Regards
+> gautham.
+> 
+> 
+> > -- 
+> > Mathieu Desnoyers
+> > Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+> > OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+> 
+> -- 
+> Gautham R Shenoy
+> Linux Technology Center
+> IBM India.
+> "Freedom comes with a price tag of responsibility, which is still a bargain,
+> because Freedom is priceless!"
+
+-- 
+Mathieu Desnoyers
+Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
