@@ -1,146 +1,44 @@
 From: "K. Prasad" <prasad@linux.vnet.ibm.com>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing
-Date: Tue, 8 Jan 2008 01:13:36 +0530
-Message-ID: <20080107194336.GA4556@in.ibm.com>
+Subject: [PATCH 0/2] Markers Implementation for RCU Tracing - Ver II
+Date: Tue, 8 Jan 2008 01:20:38 +0530
+Message-ID: <20080107195038.GA5119@in.ibm.com>
 References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal>
 Reply-To: prasad@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: "K. Prasad" <prasad@linux.vnet.ibm.com>, mingo@elte.hu,
-	linux-rt-users@vger.kernel.org, dipankar@in.ibm.com,
-	paulmck@linux.vnet.ibm.com, rostedt@goodmis.org
-To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>,
-	linux-kernel@vger.kernel.org
+Cc: Gautham R Shenoy <ego@in.ibm.com>,
+	"K. Prasad" <prasad@linux.vnet.ibm.com>,
+	mathieu.desnoyers@polymtl.ca, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com, paulmck@linux.vnet.ibm.com
+To: linux-kernel@vger.kernel.org, mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP04.au.ibm.com ([202.81.18.173]:42305 "EHLO
-	e23smtp04.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753067AbYAGToJ (ORCPT
+Received: from E23SMTP03.au.ibm.com ([202.81.18.172]:55395 "EHLO
+	e23smtp03.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753962AbYAGTvM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Jan 2008 14:44:09 -0500
+	Mon, 7 Jan 2008 14:51:12 -0500
 Content-Disposition: inline
 In-Reply-To: <20080105124632.GA16576@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Jan 05, 2008 at 07:46:32AM -0500, Mathieu Desnoyers wrote:
-> * Gautham R Shenoy (ego@in.ibm.com) wrote:
-> > On Thu, Jan 03, 2008 at 11:30:55AM -0500, Mathieu Desnoyers wrote:
-> > > * K. Prasad (prasad@linux.vnet.ibm.com) wrote:
-> > > > This patch converts the tracing mechanism of Preempt RCU boosting into
-> > > > markers. The handler functions for these markers are included inside
-> > > > rcupreempt_trace.c and will be included only when PREEMPT_RCU_BOOST is
-> > > > chosen.
-> > > >  
-> > > > Signed-off-by: K.Prasad <prasad@linux.vnet.ibm.com>
-> > > > ---
-> > > >  include/linux/rcupreempt_trace.h |   46 ++++++++
-> > > >  kernel/rcupreempt-boost.c        |  211 ++++-----------------------------------
-> > > >  kernel/rcupreempt_trace.c        |  183 +++++++++++++++++++++++++++++++++
-> > > >  3 files changed, 251 insertions(+), 189 deletions(-)
-> > > >  
-> > > > Index: linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
-> > > > ===================================================================
-> > > > --- linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW.orig/include/linux/rcupreempt_trace.h
-> > > > +++ linux-2.6.24-rc2-rt1.MARKER_PATCHES_NEW/include/linux/rcupreempt_trace.h
-> > > > @@ -102,5 +102,51 @@ extern int rcupreempt_flip_flag(int cpu)
-> > > >  extern int rcupreempt_mb_flag(int cpu);
-> > > >  extern char *rcupreempt_try_flip_state_name(void);
-> > > >  
-> > > > +#ifdef CONFIG_PREEMPT_RCU_BOOST
-> > > > +struct preempt_rcu_boost_trace {
-> > > > +	unsigned long rbs_stat_task_boost_called;
-> > > > +	unsigned long rbs_stat_task_boosted;
-> > > > +	unsigned long rbs_stat_boost_called;
-> > > > +	unsigned long rbs_stat_try_boost;
-> > > > +	unsigned long rbs_stat_boosted;
-> > > > +	unsigned long rbs_stat_unboost_called;
-> > > > +	unsigned long rbs_stat_unboosted;
-> > > > +	unsigned long rbs_stat_try_boost_readers;
-> > > > +	unsigned long rbs_stat_boost_readers;
-> > > > +	unsigned long rbs_stat_try_unboost_readers;
-> > > > +	unsigned long rbs_stat_unboost_readers;
-> > > > +	unsigned long rbs_stat_over_taken;
-> > > > +};
-> > > > +
-> > > > +#define DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(preempt_rcu_boost_var) \
-> > > > +void preempt_rcu_boost_var##_callback(const struct marker *mdata, \
-> > > > +				void *private_data, const char *format, ...) \
-> > > > +{ \
-> > > > +	va_list ap; \
-> > > > +	int cpu; \
-> > > > +	struct preempt_rcu_boost_trace *boost_trace; \
-> > > > +	va_start(ap, format); \
-> > > > +	cpu = va_arg(ap, typeof(unsigned int)); \
-> > > 
-> > > (sorry for late response, I just came back from vacation)
-> > > 
-> > > Instead of passing the cpu id as a marker parameter, why don't you
-> > > simply use smp_processor_id() right here ?
-> > > 
-> > 
-> > Agreed. 
-> > 
-> > Also in patch 1, in cases where we're using markers in place of RCU_TRACE_ME(), 
-> > we need not pass the parameter and simply use smp_processor_id().
-> > 
-> > It's only the RCU_TRACE_RDP() that requires cpuid to be passed.
-> > 
-> 
-> 
-> And it would help if you declare the format string with something like :
-> 
-> "cpuid %u" instead of "%u"
-> 
-> This way, if a generic tracer like LTTng dumps the traces and later a
-> plugin in an analysis tool like LTTV have to hook on a specific field of
-> your event, it can access it by specifying the marker name and field
-> name. And even if fields are added to this event, it won't break
-> compatibility as long as this field is there and have the same name.
-> 
-> Mathieu
-
-Hi Mathieu,
-	Thanks for your suggestions.
-
-Even in functions such as rcu_check_callbacks_rt, rcu_advance_callbacks_rt and
-__rcu_advance_callbacks, where a call to RCU_TRACE_RDP() is made, the
-'cpu' variable is populated at an early stage with the
-return value of smp_processor_id().
-
-__rcu_advance_callbacks() <-- rcu_check_callbacks_rt() <--
-rcu_check_callbacks() <-- update_process_times().
-
-update_process_times() [if understood correctly, is called at timer
-interrupt level] populates the 'cpu' with smp_processor_id().
-
-There doesn't seem to be a need to pass down the 'cpu' parameter for
-the above RCU functions including respective trace_mark() calls.
-
-I am re-sending the patches with your suggested changes in subsequent
-mails.
-
+Hi Ingo,
+	Please accept these patches into the rt tree which convert the
+existing RCU tracing mechanism for Preempt RCU and RCU Boost into
+markers.
+ 
+These patches are based upon the 2.6.24-rc5-rt1 kernel tree.
+ 
+Along with marker transition, the RCU Tracing infrastructure has also
+been modularised to be built as a kernel module, thereby enabling
+runtime changes to the RCU Tracing infrastructure.
+ 
+Patch [1/2] - Patch that converts the Preempt RCU tracing in
+rcupreempt.c into markers.
+ 
+Patch [1/2] - Patch that converts the Preempt RCU Boost tracing in
+rcupreempt-boost.c into markers.
+ 
 Thanks,
 K.Prasad
-
-> 
-> > 
-> > Thanks and Regards
-> > gautham.
-> > 
-> > 
-> > > -- 
-> > > Mathieu Desnoyers
-> > > Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-> > > OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
-> > 
-> > -- 
-> > Gautham R Shenoy
-> > Linux Technology Center
-> > IBM India.
-> > "Freedom comes with a price tag of responsibility, which is still a bargain,
-> > because Freedom is priceless!"
-> 
-> -- 
-> Mathieu Desnoyers
-> Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-> OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+(prasad@linux.vnet.ibm.com)
