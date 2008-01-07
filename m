@@ -1,69 +1,81 @@
-From: Tim Blechmann <tim@klingt.org>
-Subject: rt-related bug?
-Date: Sun, 6 Jan 2008 13:40:48 +0000 (UTC)
-Message-ID: <flqlp0$p1l$1@ger.gmane.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
+	Tracing
+Date: Mon, 7 Jan 2008 13:59:54 -0500
+Message-ID: <20080107185954.GA16041@Krystal>
+References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: "Frank Ch. Eigler" <fche@redhat.com>,
+	"K. Prasad" <prasad@linux.vnet.ibm.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:40636 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752215AbYAFNuG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 6 Jan 2008 08:50:06 -0500
-Received: from root by ciao.gmane.org with local (Exim 4.43)
-	id 1JBVt4-0006f7-5H
-	for linux-rt-users@vger.kernel.org; Sun, 06 Jan 2008 13:50:02 +0000
-Received: from 85.127.250.217 ([85.127.250.217])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 06 Jan 2008 13:50:02 +0000
-Received: from tim by 85.127.250.217 with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 06 Jan 2008 13:50:02 +0000
+Received: from tomts13.bellnexxia.net ([209.226.175.34]:47159 "EHLO
+	tomts13-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752339AbYAGS75 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 Jan 2008 13:59:57 -0500
+Content-Disposition: inline
+In-Reply-To: <20080102170157.GA11161@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-not sure, whether this is an rt-related problem but on 2.6.23.12-rt14, i had
-the following message ... not sure, whether this is any help ...
-i have been running this kernel for quite some time without any problem, so i guess
-it is not easy to reproduce:
+* Ingo Molnar (mingo@elte.hu) wrote:
+> 
+> * Frank Ch. Eigler <fche@redhat.com> wrote:
+> 
+> > > [...] this is a general policy matter. It is _so much easier_ to add 
+> > > markers if they _can_ have near-zero overhead (as in 1-2 
+> > > instructions). Otherwise we'll keep arguing about it, especially if 
+> > > any is added to performance-critical codepath. (where we are 
+> > > counting instructions)
+> > 
+> > The effect of the immediate-values patch, combined with gcc 
+> > CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2 
+> > dcache-impact-free instructions.  The register saves, parameter 
+> > evaluation, the function call, can all be moved out of line.
+> 
+> well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
+> we should already be getting that, right?
+> 
+> There's one thing that would make out-of-line tracepoints have a lot 
+> less objectionable to me: right now the 'out of line' area is put to the 
+> end of functions. That splinters the kernel image with inactive, rarely 
+> taken areas of code - blowing up its icache footprint considerably. For 
+> example sched.o has ~100 functions, with the average function size being 
+> 200 bytes. At 64 bytes L1 cacheline size that's a 10-20% icache waste 
+> already.
 
-kernel BUG at mm/slab.c:649!
-invalid opcode: 0000 [#1]
-PREEMPT SMP 
-Modules linked in: nfs lockd nfs_acl sunrpc snd_hdsp binfmt_misc ppdev parport_pc lp parport ipv6 cpufreq_powersave cpufreq_stats cpufreq_userspace cpufreq_conservative cpufreq_ondemand ext2 fuse dm_snapshot dm_mirror dm_mod acpi_cpufreq freq_table snd_hwdep joydev irtty_sir sir_dev snd_hda_intel pcmcia snd_pcm_oss snd_pcm arc4 snd_mixer_oss ecb blkcipher snd_seq_dummy snd_seq_oss snd_seq_midi snd_rawmidi snd_seq_midi_event snd_seq tsdev snd_timer yenta_socket rsrc_nonstatic iwl3945 snd_seq_device pcmcia_core battery ac psmouse firmware_class usbhid irda snd video i2c_i801 crc_ccitt serio_raw hid output mac80211 button iTCO_wdt i2c_core soundcore cfg80211 snd_page_alloc rtc intel_agp thinkpad_acpi pcspkr nvram evdev ext3 jbd mbcache sg sr_mod cdrom piix generic ide_core sd_mod ata_piix ehc
- i_hcd uhci_hcd usbcore ata_generic ahci libata scsi_mod e1000 thermal processor fan
-CPU:    0
-EIP:    0060:[<c0174d1c>]    Not tainted VLI
-EFLAGS: 00010246   (2.6.23.12-rt14-686 #1)
-EIP is at kmem_cache_free+0x92/0x9b
-eax: 40000000   ebx: dfffc540   ecx: 00000000   edx: c130b040
-esi: d8582c48   edi: d8582bfc   ebp: 00000246   esp: df90df80
-ds: 007b   es: 007b   fs: 00d8  gs: 0000  ss: 0068  preempt:00000001
-Process softirq-rcu/0 (pid: 13, ti=df90d000 task=df926650 task.ti=df90d000)
-Stack: 00000000 d8582ce8 d8582c48 c03b1260 c0157119 c03b4200 fffffeff 00000000 
-       00000100 c012b93e 00000000 00000001 df90dfc4 c03b4200 c03b1018 c2022fec 
-       c2022fe0 00000032 c2022fe0 c012b816 00000000 00000000 c01387c3 c013877b 
-Call Trace:
- [<c0157119>] rcu_process_callbacks_rt+0x47/0x6e
- [<c012b93e>] ksoftirqd+0x128/0x251
- [<c012b816>] ksoftirqd+0x0/0x251
- [<c01387c3>] kthread+0x48/0x58
- [<c013877b>] kthread+0x0/0x58
- [<c0104e07>] kernel_thread_helper+0x7/0x10
- =======================
-Code: fa 89 f0 e8 0c fe ff ff 8b 04 24 03 1c 85 80 94 37 c0 89 d8 e8 06 bc 15 00 83 c4 04 5b 5e 5f c3 8b 52 0c 8b 0a eb 9e 0f 0b eb fe <0f> 0b eb fe 8b 52 0c eb 9f 56 53 89 c6 8b 58 08 8b 50 0c 89 d8 
-EIP: [<c0174d1c>] kmem_cache_free+0x92/0x9b SS:ESP 0068:df90df80
+Hrm, I agree this can be a problem on architectures with more standard
+associative icaches, but aren't most x86_64 machines (and modern x86_32)
+using an instruction trace cache instead ? This makes the problem
+irrelevant.
 
+But I agree that, as Frank proposed, -freorder-blocks-and-partition
+could help us in that matter for the architectures using an associative
+L1 icache.
 
-cheers, tim
+Mathieu
+
+> 
+> It's true that keeping the off-site code within the function keeps total 
+> codesize slightly smaller, because the offsets (and hence the 
+> conditional jumps) are thus 8 bit - but that's below 1% and the 
+> cache-blow-up aspect is more severe in practice at 10-20%.
+> 
+> So it would be nice if we could collect all this offline code and stuff 
+> it away into another portion of the kernel image. (or, into another 
+> portion of the object file - which would still be good enough in 
+> practice)
+> 
+> 	Ingo
 
 -- 
-tim@klingt.org
-http://tim.klingt.org
-
-There's no such entity as "most people". These are generalities. All
-generalities are meaningless. You've got to pin it down to a specific
-person doing a specific thing at a specific time and space.
-  William S. Burroughs
+Mathieu Desnoyers
+Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
