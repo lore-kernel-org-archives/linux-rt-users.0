@@ -1,609 +1,974 @@
-From: "K. Prasad" <prasad@linux.vnet.ibm.com>
-Subject: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing - Ver II
-Date: Tue, 8 Jan 2008 01:26:57 +0530
-Message-ID: <20080107195657.GB5168@in.ibm.com>
-References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal>
-Reply-To: prasad@linux.vnet.ibm.com
+From: Wolfgang Grandegger <wg@grandegger.com>
+Subject: High latencies on MPC5200 with patch-2.6.24-rc5-rt1
+Date: Tue, 08 Jan 2008 11:13:11 +0100
+Message-ID: <47834CB7.1030102@grandegger.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Gautham R Shenoy <ego@in.ibm.com>,
-	"K. Prasad" <prasad@linux.vnet.ibm.com>,
-	mathieu.desnoyers@polymtl.ca, linux-rt-users@vger.kernel.org,
-	dipankar@in.ibm.com, paulmck@linux.vnet.ibm.com
-To: linux-kernel@vger.kernel.org, mingo@elte.hu
+Content-Type: multipart/mixed;
+ boundary="------------060402060309080907030908"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp07.in.ibm.com ([59.145.155.7]:55281 "EHLO
-	e28esmtp07.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751517AbYAGT5L (ORCPT
+Received: from mail-out.m-online.net ([212.18.0.9]:55244 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753331AbYAHKf2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Jan 2008 14:57:11 -0500
-Content-Disposition: inline
-In-Reply-To: <20080105124632.GA16576@Krystal>
+	Tue, 8 Jan 2008 05:35:28 -0500
+Received: from mail01.m-online.net (mail.m-online.net [192.168.3.149])
+	by mail-out.m-online.net (Postfix) with ESMTP id 4110220D518
+	for <linux-rt-users@vger.kernel.org>; Tue,  8 Jan 2008 11:15:12 +0100 (CET)
+Received: from [10.0.30.2] (p5497FF8C.dip.t-dialin.net [84.151.255.140])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by smtp-auth.mnet-online.de (Postfix) with ESMTP id 6DD5D9027E
+	for <linux-rt-users@vger.kernel.org>; Tue,  8 Jan 2008 11:13:14 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This patch converts the tracing mechanism of Preempt RCU boosting into
-markers. The handler functions for these markers are included inside
-rcupreempt_trace.c and will be included only when PREEMPT_RCU_BOOST is
-chosen.
- 
-Signed-off-by: K.Prasad <prasad@linux.vnet.ibm.com>
----
- include/linux/rcupreempt_trace.h |   40 +++++++
- kernel/rcupreempt-boost.c        |  211 ++++-----------------------------------
- kernel/rcupreempt_trace.c        |  183 +++++++++++++++++++++++++++++++++
- 3 files changed, 245 insertions(+), 189 deletions(-)
- 
-Index: linux-2.6.24-rc5-rt1.RCU_MARKERS/include/linux/rcupreempt_trace.h
-===================================================================
---- linux-2.6.24-rc5-rt1.RCU_MARKERS.orig/include/linux/rcupreempt_trace.h
-+++ linux-2.6.24-rc5-rt1.RCU_MARKERS/include/linux/rcupreempt_trace.h
-@@ -95,5 +95,45 @@ extern int rcupreempt_flip_flag(int cpu)
- extern int rcupreempt_mb_flag(int cpu);
- extern char *rcupreempt_try_flip_state_name(void);
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+struct preempt_rcu_boost_trace {
-+	unsigned long rbs_stat_task_boost_called;
-+	unsigned long rbs_stat_task_boosted;
-+	unsigned long rbs_stat_boost_called;
-+	unsigned long rbs_stat_try_boost;
-+	unsigned long rbs_stat_boosted;
-+	unsigned long rbs_stat_unboost_called;
-+	unsigned long rbs_stat_unboosted;
-+	unsigned long rbs_stat_try_boost_readers;
-+	unsigned long rbs_stat_boost_readers;
-+	unsigned long rbs_stat_try_unboost_readers;
-+	unsigned long rbs_stat_unboost_readers;
-+	unsigned long rbs_stat_over_taken;
-+};
-+
-+#define DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(preempt_rcu_boost_var) \
-+void preempt_rcu_boost_var##_callback(const struct marker *mdata, \
-+				void *private_data, const char *format, ...) \
-+{ \
-+	struct preempt_rcu_boost_trace *boost_trace; \
-+	boost_trace = (&per_cpu(boost_trace_data, smp_processor_id())); \
-+	boost_trace->rbs_stat_##preempt_rcu_boost_var++; \
-+}
-+
-+struct preempt_rcu_boost_probe {
-+	const char *name;
-+	const char *format;
-+	marker_probe_func *probe_func;
-+};
-+
-+#define INIT_PREEMPT_RCU_BOOST_PROBE(preempt_rcu_boost_probe_worker) \
-+{ \
-+	.name = __stringify(preempt_rcu_boost_probe_worker), \
-+	.probe_func = preempt_rcu_boost_probe_worker##_callback \
-+}
-+
-+extern int read_rcu_boost_prio(void);
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- #endif /* __KERNEL__ */
- #endif /* __LINUX_RCUPREEMPT_TRACE_H */
-Index: linux-2.6.24-rc5-rt1.RCU_MARKERS/kernel/rcupreempt_trace.c
-===================================================================
---- linux-2.6.24-rc5-rt1.RCU_MARKERS.orig/kernel/rcupreempt_trace.c
-+++ linux-2.6.24-rc5-rt1.RCU_MARKERS/kernel/rcupreempt_trace.c
-@@ -51,6 +51,163 @@ static char *rcupreempt_trace_buf;
- 
- static DEFINE_PER_CPU(struct rcupreempt_trace, trace_data);
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+#define RCUPREEMPT_BOOST_TRACE_BUF_SIZE 4096
-+static char rcupreempt_boost_trace_buf[RCUPREEMPT_BOOST_TRACE_BUF_SIZE];
-+static DEFINE_PER_CPU(struct preempt_rcu_boost_trace, boost_trace_data);
-+
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(task_boost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(task_boosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_boost);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboost_called);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboosted);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_boost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(boost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(try_unboost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(unboost_readers);
-+DEFINE_PREEMPT_RCU_BOOST_MARKER_HANDLER(over_taken);
-+
-+static struct preempt_rcu_boost_probe preempt_rcu_boost_probe_array[] =
-+{
-+	INIT_PREEMPT_RCU_BOOST_PROBE(task_boost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(task_boosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_boost),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboost_called),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboosted),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_boost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(boost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(try_unboost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(unboost_readers),
-+	INIT_PREEMPT_RCU_BOOST_PROBE(over_taken)
-+};
-+
-+static ssize_t rcuboost_read(struct file *filp, char __user *buffer,
-+				size_t count, loff_t *ppos)
-+{
-+	static DEFINE_MUTEX(mutex);
-+	int cnt = 0;
-+	int cpu;
-+	struct preempt_rcu_boost_trace *prbt;
-+	ssize_t bcount;
-+	unsigned long task_boost_called = 0;
-+	unsigned long task_boosted = 0;
-+	unsigned long boost_called = 0;
-+	unsigned long try_boost = 0;
-+	unsigned long boosted = 0;
-+	unsigned long unboost_called = 0;
-+	unsigned long unboosted = 0;
-+	unsigned long try_boost_readers = 0;
-+	unsigned long boost_readers = 0;
-+	unsigned long try_unboost_readers = 0;
-+	unsigned long unboost_readers = 0;
-+	unsigned long over_taken = 0;
-+
-+	mutex_lock(&mutex);
-+
-+	for_each_online_cpu(cpu) {
-+		prbt = &per_cpu(boost_trace_data, cpu);
-+
-+		task_boost_called += prbt->rbs_stat_task_boost_called;
-+		task_boosted += prbt->rbs_stat_task_boosted;
-+		boost_called += prbt->rbs_stat_boost_called;
-+		try_boost += prbt->rbs_stat_try_boost;
-+		boosted += prbt->rbs_stat_boosted;
-+		unboost_called += prbt->rbs_stat_unboost_called;
-+		unboosted += prbt->rbs_stat_unboosted;
-+		try_boost_readers += prbt->rbs_stat_try_boost_readers;
-+		boost_readers += prbt->rbs_stat_boost_readers;
-+		try_unboost_readers += prbt->rbs_stat_try_boost_readers;
-+		unboost_readers += prbt->rbs_stat_boost_readers;
-+		over_taken += prbt->rbs_stat_over_taken;
-+	}
-+
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"task_boost_called = %ld\n",
-+			task_boost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"task_boosted = %ld\n",
-+			task_boosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boost_called = %ld\n",
-+			boost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_boost = %ld\n",
-+			try_boost);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boosted = %ld\n",
-+			boosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboost_called = %ld\n",
-+			unboost_called);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboosted = %ld\n",
-+			unboosted);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_boost_readers = %ld\n",
-+			try_boost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"boost_readers = %ld\n",
-+			boost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"try_unboost_readers = %ld\n",
-+			try_unboost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"unboost_readers = %ld\n",
-+			unboost_readers);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"over_taken = %ld\n",
-+			over_taken);
-+	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
-+			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
-+			"rcu_boost_prio = %d\n",
-+			read_rcu_boost_prio());
-+	bcount = simple_read_from_buffer(buffer, count, ppos,
-+		rcupreempt_boost_trace_buf, strlen(rcupreempt_boost_trace_buf));
-+	mutex_unlock(&mutex);
-+
-+	return bcount;
-+}
-+
-+static struct file_operations rcuboost_fops = {
-+	.read = rcuboost_read,
-+};
-+
-+static struct dentry  *rcuboostdir;
-+int rcu_trace_boost_create(struct dentry *rcudir)
-+{
-+	rcuboostdir = debugfs_create_file("rcuboost", 0444, rcudir,
-+					  NULL, &rcuboost_fops);
-+	if (!rcuboostdir)
-+		return 0;
-+
-+	return 1;
-+}
-+
-+void rcu_trace_boost_destroy(void)
-+{
-+	if (rcuboostdir)
-+		debugfs_remove(rcuboostdir);
-+	rcuboostdir = NULL;
-+}
-+
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- struct rcupreempt_trace *rcupreempt_trace_cpu(int cpu)
- {
- 	return &per_cpu(trace_data, cpu);
-@@ -350,6 +507,10 @@ static int rcupreempt_debugfs_init(void)
- 	if (!ctrsdir)
- 		goto free_out;
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	if (!rcu_trace_boost_create(rcudir))
-+		goto free_out;
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
- 	return 0;
- free_out:
- 	if (ctrsdir)
-@@ -382,6 +543,22 @@ static int __init rcupreempt_trace_init(
- 	}
- 	printk(KERN_INFO "RCU Preempt markers registered\n");
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	for (i = 0; i < ARRAY_SIZE(preempt_rcu_boost_probe_array); i++) {
-+		struct preempt_rcu_boost_probe *p = \
-+					&preempt_rcu_boost_probe_array[i];
-+		ret = marker_probe_register(p->name, p->format,
-+					    p->probe_func, p);
-+		if (ret)
-+			printk(KERN_INFO "Unable to register Preempt RCU Boost \
-+			probe %s\n", preempt_rcu_boost_probe_array[i].name);
-+		ret = marker_arm(p->name);
-+		if (ret)
-+			printk(KERN_INFO "Unable to arm Preempt RCU Boost \
-+				markers %s\n", p->name);
-+}
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
-+
- 	mutex_init(&rcupreempt_trace_mutex);
- 	rcupreempt_trace_buf = kmalloc(RCUPREEMPT_TRACE_BUF_SIZE, GFP_KERNEL);
- 	if (!rcupreempt_trace_buf)
-@@ -400,6 +577,12 @@ static void __exit rcupreempt_trace_clea
- 		marker_probe_unregister(rcupreempt_probe_array[i].name);
- 	printk(KERN_INFO "RCU Preempt markers unregistered\n");
- 
-+#ifdef CONFIG_PREEMPT_RCU_BOOST
-+	rcu_trace_boost_destroy();
-+	for (i = 0; i < ARRAY_SIZE(preempt_rcu_boost_probe_array); i++)
-+		marker_probe_unregister(preempt_rcu_boost_probe_array[i].name);
-+	printk(KERN_INFO "Preempt RCU Boost markers unregistered\n");
-+#endif /* CONFIG_PREEMPT_RCU_BOOST */
- 	debugfs_remove(statdir);
- 	debugfs_remove(gpdir);
- 	debugfs_remove(ctrsdir);
-Index: linux-2.6.24-rc5-rt1.RCU_MARKERS/kernel/rcupreempt-boost.c
-===================================================================
---- linux-2.6.24-rc5-rt1.RCU_MARKERS.orig/kernel/rcupreempt-boost.c
-+++ linux-2.6.24-rc5-rt1.RCU_MARKERS/kernel/rcupreempt-boost.c
-@@ -40,186 +40,9 @@ struct rcu_boost_dat {
- 	int rbs_prio;			/* CPU copy of rcu_boost_prio  */
- 	struct list_head rbs_toboost;	/* Preempted RCU readers       */
- 	struct list_head rbs_boosted;	/* RCU readers that have been boosted */
--#ifdef CONFIG_RCU_TRACE
--	/* The rest are for statistics */
--	unsigned long rbs_stat_task_boost_called;
--	unsigned long rbs_stat_task_boosted;
--	unsigned long rbs_stat_boost_called;
--	unsigned long rbs_stat_try_boost;
--	unsigned long rbs_stat_boosted;
--	unsigned long rbs_stat_unboost_called;
--	unsigned long rbs_stat_unboosted;
--	unsigned long rbs_stat_try_boost_readers;
--	unsigned long rbs_stat_boost_readers;
--	unsigned long rbs_stat_try_unboost_readers;
--	unsigned long rbs_stat_unboost_readers;
--	unsigned long rbs_stat_over_taken;
--#endif /* CONFIG_RCU_TRACE */
- };
- 
- static DEFINE_PER_CPU(struct rcu_boost_dat, rcu_boost_data);
--#define RCU_BOOST_ME &__get_cpu_var(rcu_boost_data)
--
--#ifdef CONFIG_RCU_TRACE
--
--#define RCUPREEMPT_BOOST_TRACE_BUF_SIZE 4096
--static char rcupreempt_boost_trace_buf[RCUPREEMPT_BOOST_TRACE_BUF_SIZE];
--
--static ssize_t rcuboost_read(struct file *filp, char __user *buffer,
--				size_t count, loff_t *ppos)
--{
--	static DEFINE_MUTEX(mutex);
--	int cnt = 0;
--	int cpu;
--	struct rcu_boost_dat *rbd;
--	ssize_t bcount;
--	unsigned long task_boost_called = 0;
--	unsigned long task_boosted = 0;
--	unsigned long boost_called = 0;
--	unsigned long try_boost = 0;
--	unsigned long boosted = 0;
--	unsigned long unboost_called = 0;
--	unsigned long unboosted = 0;
--	unsigned long try_boost_readers = 0;
--	unsigned long boost_readers = 0;
--	unsigned long try_unboost_readers = 0;
--	unsigned long unboost_readers = 0;
--	unsigned long over_taken = 0;
--
--	mutex_lock(&mutex);
--
--	for_each_online_cpu(cpu) {
--		rbd = &per_cpu(rcu_boost_data, cpu);
--
--		task_boost_called += rbd->rbs_stat_task_boost_called;
--		task_boosted += rbd->rbs_stat_task_boosted;
--		boost_called += rbd->rbs_stat_boost_called;
--		try_boost += rbd->rbs_stat_try_boost;
--		boosted += rbd->rbs_stat_boosted;
--		unboost_called += rbd->rbs_stat_unboost_called;
--		unboosted += rbd->rbs_stat_unboosted;
--		try_boost_readers += rbd->rbs_stat_try_boost_readers;
--		boost_readers += rbd->rbs_stat_boost_readers;
--		try_unboost_readers += rbd->rbs_stat_try_boost_readers;
--		unboost_readers += rbd->rbs_stat_boost_readers;
--		over_taken += rbd->rbs_stat_over_taken;
--	}
--
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"task_boost_called = %ld\n",
--			task_boost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"task_boosted = %ld\n",
--			task_boosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boost_called = %ld\n",
--			boost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_boost = %ld\n",
--			try_boost);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boosted = %ld\n",
--			boosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboost_called = %ld\n",
--			unboost_called);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboosted = %ld\n",
--			unboosted);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_boost_readers = %ld\n",
--			try_boost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"boost_readers = %ld\n",
--			boost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"try_unboost_readers = %ld\n",
--			try_unboost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"unboost_readers = %ld\n",
--			unboost_readers);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"over_taken = %ld\n",
--			over_taken);
--	cnt += snprintf(&rcupreempt_boost_trace_buf[cnt],
--			RCUPREEMPT_BOOST_TRACE_BUF_SIZE - cnt,
--			"rcu_boost_prio = %d\n",
--			rcu_boost_prio);
--	bcount = simple_read_from_buffer(buffer, count, ppos,
--			rcupreempt_boost_trace_buf, strlen(rcupreempt_boost_trace_buf));
--	mutex_unlock(&mutex);
--
--	return bcount;
--}
--
--static struct file_operations rcuboost_fops = {
--	.read = rcuboost_read,
--};
--
--static struct dentry  *rcuboostdir;
--int rcu_trace_boost_create(struct dentry *rcudir)
--{
--	rcuboostdir = debugfs_create_file("rcuboost", 0444, rcudir,
--					  NULL, &rcuboost_fops);
--	if (!rcuboostdir)
--		return 0;
--
--	return 1;
--}
--EXPORT_SYMBOL_GPL(rcu_trace_boost_create);
--
--void rcu_trace_boost_destroy(void)
--{
--	if (rcuboostdir)
--		debugfs_remove(rcuboostdir);
--	rcuboostdir = NULL;
--}
--EXPORT_SYMBOL_GPL(rcu_trace_boost_destroy);
--
--#define RCU_BOOST_TRACE_FUNC_DECL(type)			      \
--	static void rcu_trace_boost_##type(struct rcu_boost_dat *rbd)	\
--	{								\
--		rbd->rbs_stat_##type++;					\
--	}
--RCU_BOOST_TRACE_FUNC_DECL(task_boost_called)
--RCU_BOOST_TRACE_FUNC_DECL(task_boosted)
--RCU_BOOST_TRACE_FUNC_DECL(boost_called)
--RCU_BOOST_TRACE_FUNC_DECL(try_boost)
--RCU_BOOST_TRACE_FUNC_DECL(boosted)
--RCU_BOOST_TRACE_FUNC_DECL(unboost_called)
--RCU_BOOST_TRACE_FUNC_DECL(unboosted)
--RCU_BOOST_TRACE_FUNC_DECL(try_boost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(boost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(try_unboost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(unboost_readers)
--RCU_BOOST_TRACE_FUNC_DECL(over_taken)
--#else /* CONFIG_RCU_TRACE */
--/* These were created by the above macro "RCU_BOOST_TRACE_FUNC_DECL" */
--# define rcu_trace_boost_task_boost_called(rbd) do { } while (0)
--# define rcu_trace_boost_task_boosted(rbd) do { } while (0)
--# define rcu_trace_boost_boost_called(rbd) do { } while (0)
--# define rcu_trace_boost_try_boost(rbd) do { } while (0)
--# define rcu_trace_boost_boosted(rbd) do { } while (0)
--# define rcu_trace_boost_unboost_called(rbd) do { } while (0)
--# define rcu_trace_boost_unboosted(rbd) do { } while (0)
--# define rcu_trace_boost_try_boost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_boost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_try_unboost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_unboost_readers(rbd) do { } while (0)
--# define rcu_trace_boost_over_taken(rbd) do { } while (0)
--#endif /* CONFIG_RCU_TRACE */
- 
- static inline int rcu_is_boosted(struct task_struct *task)
- {
-@@ -234,10 +57,10 @@ static void rcu_boost_task(struct task_s
- 	WARN_ON(!irqs_disabled());
- 	WARN_ON_SMP(!spin_is_locked(&task->pi_lock));
- 
--	rcu_trace_boost_task_boost_called(RCU_BOOST_ME);
-+	trace_mark(task_boost_called, "NULL");
- 
- 	if (task->rcu_prio < task->prio) {
--		rcu_trace_boost_task_boosted(RCU_BOOST_ME);
-+		trace_mark(task_boosted, "NULL");
- 		task_setprio(task, task->rcu_prio);
- 	}
- }
-@@ -261,7 +84,7 @@ void __rcu_preempt_boost(void)
- 
- 	WARN_ON(!current->rcu_read_lock_nesting);
- 
--	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-+	trace_mark(boost_called, "NULL");
- 
- 	/* check to see if we are already boosted */
- 	if (unlikely(rcu_is_boosted(curr)))
-@@ -279,7 +102,7 @@ void __rcu_preempt_boost(void)
- 
- 	curr->rcub_rbdp = rbd;
- 
--	rcu_trace_boost_try_boost(rbd);
-+	trace_mark(try_boost, "NULL");
- 
- 	prio = rt_mutex_getprio(curr);
- 
-@@ -288,7 +111,7 @@ void __rcu_preempt_boost(void)
- 	if (prio <= rbd->rbs_prio)
- 		goto out;
- 
--	rcu_trace_boost_boosted(curr->rcub_rbdp);
-+	trace_mark(boosted, "NULL");
- 
- 	curr->rcu_prio = rbd->rbs_prio;
- 	rcu_boost_task(curr);
-@@ -313,7 +136,7 @@ void __rcu_preempt_unboost(void)
- 	int prio;
- 	unsigned long flags;
- 
--	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-+	trace_mark(unboost_called, "NULL");
- 
- 	/* if not boosted, then ignore */
- 	if (likely(!rcu_is_boosted(curr)))
-@@ -351,7 +174,7 @@ void __rcu_preempt_unboost(void)
- 
- 	list_del_init(&curr->rcub_entry);
- 
--	rcu_trace_boost_unboosted(rbd);
-+	trace_mark(unboosted, "NULL");
- 
- 	curr->rcu_prio = MAX_PRIO;
- 
-@@ -412,7 +235,7 @@ static int __rcu_boost_readers(struct rc
- 		 * Another task may have taken over.
- 		 */
- 		if (curr->rcu_preempt_counter != rcu_boost_counter) {
--			rcu_trace_boost_over_taken(rbd);
-+			trace_mark(over_taken, "NULL");
- 			return 1;
+This is a multi-part message in MIME format.
+--------------060402060309080907030908
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+I gave -rt another try on my Icecube-MPC5200 board with
+patch-2.6.24-rc5-rt1 and this time I got it working with the attached
+little patch fixing an oops in the serial driver. Unfortunately,
+cyclictest reports rather high latencies up to 500 us under load:
+
+# ./cyclictest -n -p80 -t1 -i10000
+3.55 2.82 1.55 2/45 9971
+
+T: 0 (  922) P:80 I:10000 C: 64228 Min: 28 Act: 71 Avg: 78 Max: 502
+
+Any ideas why the latencies are that high or how to hunt the latency
+evils. The nice latency tracer is not available for PowerPC. I have
+attached my .config as well.
+
+TIA.
+
+Wolfgang.
+
+
+--------------060402060309080907030908
+Content-Type: text/x-patch;
+ name="linux-2.6-rt-mpc5200-serial.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="linux-2.6-rt-mpc5200-serial.patch"
+
+diff --git a/drivers/serial/mpc52xx_uart.c b/drivers/serial/mpc52xx_uart.c
+index ec36ad7..8939405 100644
+--- a/drivers/serial/mpc52xx_uart.c
++++ b/drivers/serial/mpc52xx_uart.c
+@@ -501,7 +501,9 @@ mpc52xx_uart_int_rx_chars(struct uart_port *port)
  		}
+ 	}
  
-@@ -443,7 +266,7 @@ void rcu_boost_readers(void)
++	spin_unlock(&port->lock);
+ 	tty_flip_buffer_push(tty);
++	spin_lock(&port->lock);
  
- 	prio = rt_mutex_getprio(curr);
- 
--	rcu_trace_boost_try_boost_readers(RCU_BOOST_ME);
-+	trace_mark(try_boost_readers, "NULL");
- 
- 	if (prio >= rcu_boost_prio) {
- 		/* already boosted */
-@@ -453,7 +276,7 @@ void rcu_boost_readers(void)
- 
- 	rcu_boost_prio = prio;
- 
--	rcu_trace_boost_boost_readers(RCU_BOOST_ME);
-+	trace_mark(boost_readers, "NULL");
- 
- 	/* Flag that we are the one to unboost */
- 	curr->rcu_preempt_counter = ++rcu_boost_counter;
-@@ -486,12 +309,12 @@ void rcu_unboost_readers(void)
- 
- 	spin_lock_irqsave(&rcu_boost_wake_lock, flags);
- 
--	rcu_trace_boost_try_unboost_readers(RCU_BOOST_ME);
-+	trace_mark(try_unboost_readers, "NULL");
- 
- 	if (current->rcu_preempt_counter != rcu_boost_counter)
- 		goto out;
- 
--	rcu_trace_boost_unboost_readers(RCU_BOOST_ME);
-+	trace_mark(unboost_readers, "NULL");
- 
- 	/*
- 	 * We could also put in something that
-@@ -514,6 +337,16 @@ void rcu_unboost_readers(void)
+ 	return in_be16(&PSC(port)->mpc52xx_psc_status) & MPC52xx_PSC_SR_RXRDY;
  }
- 
- /*
-+ * This function exports the rcu_boost_prio variable for use by
-+ * modules that need it e.g. RCU_TRACE module
-+ */
-+int read_rcu_boost_prio(void)
-+{
-+	return rcu_boost_prio;
-+}
-+EXPORT_SYMBOL_GPL(read_rcu_boost_prio);
-+
-+/*
-  * The krcupreemptd wakes up every "rcu_preempt_thread_secs"
-  * seconds at the minimum priority of 1 to do a
-  * synchronize_rcu. This ensures that grace periods finish
+
+--------------060402060309080907030908
+Content-Type: text/plain;
+ name=".config"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename=".config"
+
+#
+# Automatically generated make config: don't edit
+# Linux kernel version: 2.6.24-rc5-rt1
+# Sun Dec 30 21:39:43 2007
+#
+# CONFIG_PPC64 is not set
+
+#
+# Processor support
+#
+CONFIG_6xx=y
+# CONFIG_PPC_85xx is not set
+# CONFIG_PPC_8xx is not set
+# CONFIG_40x is not set
+# CONFIG_44x is not set
+# CONFIG_E200 is not set
+CONFIG_PPC_FPU=y
+# CONFIG_ALTIVEC is not set
+CONFIG_PPC_STD_MMU=y
+CONFIG_PPC_STD_MMU_32=y
+# CONFIG_PPC_MM_SLICES is not set
+# CONFIG_SMP is not set
+CONFIG_PPC32=y
+CONFIG_WORD_SIZE=32
+CONFIG_PPC_MERGE=y
+CONFIG_MMU=y
+CONFIG_GENERIC_CMOS_UPDATE=y
+CONFIG_GENERIC_TIME=y
+CONFIG_GENERIC_TIME_VSYSCALL=y
+CONFIG_GENERIC_CLOCKEVENTS=y
+CONFIG_GENERIC_HARDIRQS=y
+CONFIG_IRQ_PER_CPU=y
+CONFIG_ARCH_HAS_ILOG2_U32=y
+CONFIG_GENERIC_HWEIGHT=y
+CONFIG_GENERIC_CALIBRATE_DELAY=y
+CONFIG_GENERIC_FIND_NEXT_BIT=y
+# CONFIG_ARCH_NO_VIRT_TO_BUS is not set
+CONFIG_PPC=y
+CONFIG_EARLY_PRINTK=y
+CONFIG_GENERIC_NVRAM=y
+CONFIG_SCHED_NO_NO_OMIT_FRAME_POINTER=y
+CONFIG_ARCH_MAY_HAVE_PC_FDC=y
+CONFIG_PPC_OF=y
+CONFIG_OF=y
+# CONFIG_PPC_UDBG_16550 is not set
+# CONFIG_GENERIC_TBSYNC is not set
+CONFIG_AUDIT_ARCH=y
+CONFIG_GENERIC_BUG=y
+# CONFIG_DEFAULT_UIMAGE is not set
+# CONFIG_PPC_DCR_NATIVE is not set
+# CONFIG_PPC_DCR_MMIO is not set
+CONFIG_DEFCONFIG_LIST="/lib/modules/$UNAME_RELEASE/.config"
+
+#
+# General setup
+#
+CONFIG_EXPERIMENTAL=y
+CONFIG_BROKEN_ON_SMP=y
+CONFIG_LOCK_KERNEL=y
+CONFIG_INIT_ENV_ARG_LIMIT=32
+CONFIG_LOCALVERSION=""
+CONFIG_LOCALVERSION_AUTO=y
+CONFIG_SWAP=y
+CONFIG_SYSVIPC=y
+CONFIG_SYSVIPC_SYSCTL=y
+# CONFIG_POSIX_MQUEUE is not set
+# CONFIG_BSD_PROCESS_ACCT is not set
+# CONFIG_TASKSTATS is not set
+# CONFIG_USER_NS is not set
+# CONFIG_PID_NS is not set
+# CONFIG_AUDIT is not set
+# CONFIG_IKCONFIG is not set
+CONFIG_LOG_BUF_SHIFT=14
+# CONFIG_CGROUPS is not set
+# CONFIG_FAIR_GROUP_SCHED is not set
+CONFIG_SYSFS_DEPRECATED=y
+# CONFIG_RELAY is not set
+CONFIG_BLK_DEV_INITRD=y
+CONFIG_INITRAMFS_SOURCE=""
+# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set
+CONFIG_SYSCTL=y
+# CONFIG_RADIX_TREE_CONCURRENT is not set
+CONFIG_EMBEDDED=y
+# CONFIG_SYSCTL_SYSCALL is not set
+CONFIG_KALLSYMS=y
+# CONFIG_KALLSYMS_ALL is not set
+# CONFIG_KALLSYMS_EXTRA_PASS is not set
+CONFIG_HOTPLUG=y
+CONFIG_PRINTK=y
+CONFIG_BUG=y
+CONFIG_ELF_CORE=y
+CONFIG_BASE_FULL=y
+CONFIG_FUTEX=y
+CONFIG_ANON_INODES=y
+# CONFIG_EPOLL is not set
+CONFIG_SIGNALFD=y
+CONFIG_EVENTFD=y
+CONFIG_SHMEM=y
+CONFIG_VM_EVENT_COUNTERS=y
+CONFIG_SLAB=y
+# CONFIG_SLUB is not set
+# CONFIG_SLOB is not set
+CONFIG_RT_MUTEXES=y
+# CONFIG_TINY_SHMEM is not set
+CONFIG_BASE_SMALL=0
+CONFIG_MODULES=y
+CONFIG_MODULE_UNLOAD=y
+# CONFIG_MODULE_FORCE_UNLOAD is not set
+# CONFIG_MODVERSIONS is not set
+# CONFIG_MODULE_SRCVERSION_ALL is not set
+# CONFIG_KMOD is not set
+CONFIG_BLOCK=y
+# CONFIG_LBD is not set
+# CONFIG_BLK_DEV_IO_TRACE is not set
+# CONFIG_LSF is not set
+# CONFIG_BLK_DEV_BSG is not set
+
+#
+# IO Schedulers
+#
+CONFIG_IOSCHED_NOOP=y
+CONFIG_IOSCHED_AS=y
+CONFIG_IOSCHED_DEADLINE=y
+CONFIG_IOSCHED_CFQ=y
+CONFIG_DEFAULT_AS=y
+# CONFIG_DEFAULT_DEADLINE is not set
+# CONFIG_DEFAULT_CFQ is not set
+# CONFIG_DEFAULT_NOOP is not set
+CONFIG_DEFAULT_IOSCHED="anticipatory"
+
+#
+# Platform support
+#
+CONFIG_PPC_MULTIPLATFORM=y
+# CONFIG_PPC_82xx is not set
+# CONFIG_PPC_83xx is not set
+# CONFIG_PPC_86xx is not set
+CONFIG_CLASSIC32=y
+# CONFIG_PPC_CHRP is not set
+CONFIG_PPC_MPC52xx=y
+CONFIG_PPC_MPC5200=y
+CONFIG_PPC_MPC5200_BUGFIX=y
+# CONFIG_PPC_EFIKA is not set
+CONFIG_PPC_LITE5200=y
+# CONFIG_PPC_PMAC is not set
+# CONFIG_PPC_CELL is not set
+# CONFIG_PPC_CELL_NATIVE is not set
+# CONFIG_PQ2ADS is not set
+# CONFIG_EMBEDDED6xx is not set
+# CONFIG_MPIC is not set
+# CONFIG_MPIC_WEIRD is not set
+# CONFIG_PPC_I8259 is not set
+# CONFIG_PPC_RTAS is not set
+# CONFIG_MMIO_NVRAM is not set
+# CONFIG_PPC_MPC106 is not set
+# CONFIG_PPC_970_NAP is not set
+# CONFIG_PPC_INDIRECT_IO is not set
+# CONFIG_GENERIC_IOMAP is not set
+# CONFIG_CPU_FREQ is not set
+# CONFIG_TAU is not set
+# CONFIG_CPM2 is not set
+# CONFIG_FSL_ULI1575 is not set
+CONFIG_PPC_BESTCOMM=y
+CONFIG_PPC_BESTCOMM_ATA=y
+CONFIG_PPC_BESTCOMM_FEC=y
+CONFIG_PPC_BESTCOMM_GEN_BD=y
+
+#
+# Kernel options
+#
+# CONFIG_HIGHMEM is not set
+CONFIG_TICK_ONESHOT=y
+CONFIG_NO_HZ=y
+CONFIG_HIGH_RES_TIMERS=y
+CONFIG_GENERIC_CLOCKEVENTS_BUILD=y
+# CONFIG_HZ_100 is not set
+CONFIG_HZ_250=y
+# CONFIG_HZ_300 is not set
+# CONFIG_HZ_1000 is not set
+CONFIG_HZ=250
+# CONFIG_PREEMPT_NONE is not set
+# CONFIG_PREEMPT_VOLUNTARY is not set
+# CONFIG_PREEMPT_DESKTOP is not set
+CONFIG_PREEMPT_RT=y
+CONFIG_PREEMPT=y
+CONFIG_PREEMPT_SOFTIRQS=y
+CONFIG_PREEMPT_HARDIRQS=y
+CONFIG_PREEMPT_BKL=y
+# CONFIG_CLASSIC_RCU is not set
+CONFIG_PREEMPT_RCU=y
+CONFIG_PREEMPT_RCU_BOOST=y
+CONFIG_RCU_TRACE=y
+CONFIG_RWSEM_GENERIC_SPINLOCK=y
+CONFIG_ASM_SEMAPHORES=y
+CONFIG_BINFMT_ELF=y
+# CONFIG_BINFMT_MISC is not set
+CONFIG_ARCH_ENABLE_MEMORY_HOTPLUG=y
+# CONFIG_KEXEC is not set
+CONFIG_ARCH_FLATMEM_ENABLE=y
+CONFIG_ARCH_POPULATES_NODE_MAP=y
+CONFIG_SELECT_MEMORY_MODEL=y
+CONFIG_FLATMEM_MANUAL=y
+# CONFIG_DISCONTIGMEM_MANUAL is not set
+# CONFIG_SPARSEMEM_MANUAL is not set
+CONFIG_FLATMEM=y
+CONFIG_FLAT_NODE_MEM_MAP=y
+# CONFIG_SPARSEMEM_STATIC is not set
+# CONFIG_SPARSEMEM_VMEMMAP_ENABLE is not set
+CONFIG_SPLIT_PTLOCK_CPUS=4
+# CONFIG_RESOURCES_64BIT is not set
+CONFIG_ZONE_DMA_FLAG=1
+CONFIG_BOUNCE=y
+CONFIG_VIRT_TO_BUS=y
+CONFIG_PROC_DEVICETREE=y
+# CONFIG_CMDLINE_BOOL is not set
+CONFIG_PM=y
+# CONFIG_PM_LEGACY is not set
+# CONFIG_PM_DEBUG is not set
+CONFIG_PM_SLEEP=y
+CONFIG_SUSPEND_UP_POSSIBLE=y
+CONFIG_SUSPEND=y
+CONFIG_HIBERNATION_UP_POSSIBLE=y
+# CONFIG_HIBERNATION is not set
+CONFIG_SECCOMP=y
+CONFIG_WANT_DEVICE_TREE=y
+CONFIG_DEVICE_TREE=""
+CONFIG_ISA_DMA_API=y
+
+#
+# Bus options
+#
+CONFIG_ZONE_DMA=y
+CONFIG_GENERIC_ISA_DMA=y
+# CONFIG_PPC_INDIRECT_PCI is not set
+CONFIG_FSL_SOC=y
+CONFIG_PCI=y
+CONFIG_PCI_DOMAINS=y
+CONFIG_PCI_SYSCALL=y
+# CONFIG_PCIEPORTBUS is not set
+CONFIG_ARCH_SUPPORTS_MSI=y
+# CONFIG_PCI_MSI is not set
+CONFIG_PCI_LEGACY=y
+# CONFIG_PCI_DEBUG is not set
+# CONFIG_PCCARD is not set
+# CONFIG_HOTPLUG_PCI is not set
+
+#
+# Advanced setup
+#
+# CONFIG_ADVANCED_OPTIONS is not set
+
+#
+# Default settings for advanced configuration options are used
+#
+CONFIG_HIGHMEM_START=0xfe000000
+CONFIG_LOWMEM_SIZE=0x30000000
+CONFIG_KERNEL_START=0xc0000000
+CONFIG_TASK_SIZE=0xc0000000
+CONFIG_BOOT_LOAD=0x00800000
+
+#
+# Networking
+#
+CONFIG_NET=y
+
+#
+# Networking options
+#
+CONFIG_PACKET=y
+# CONFIG_PACKET_MMAP is not set
+CONFIG_UNIX=y
+CONFIG_XFRM=y
+CONFIG_XFRM_USER=m
+# CONFIG_XFRM_SUB_POLICY is not set
+# CONFIG_XFRM_MIGRATE is not set
+# CONFIG_NET_KEY is not set
+CONFIG_INET=y
+CONFIG_IP_MULTICAST=y
+# CONFIG_IP_ADVANCED_ROUTER is not set
+CONFIG_IP_FIB_HASH=y
+CONFIG_IP_PNP=y
+CONFIG_IP_PNP_DHCP=y
+CONFIG_IP_PNP_BOOTP=y
+# CONFIG_IP_PNP_RARP is not set
+# CONFIG_NET_IPIP is not set
+# CONFIG_NET_IPGRE is not set
+# CONFIG_IP_MROUTE is not set
+# CONFIG_ARPD is not set
+CONFIG_SYN_COOKIES=y
+# CONFIG_INET_AH is not set
+# CONFIG_INET_ESP is not set
+# CONFIG_INET_IPCOMP is not set
+# CONFIG_INET_XFRM_TUNNEL is not set
+# CONFIG_INET_TUNNEL is not set
+CONFIG_INET_XFRM_MODE_TRANSPORT=y
+CONFIG_INET_XFRM_MODE_TUNNEL=y
+CONFIG_INET_XFRM_MODE_BEET=y
+# CONFIG_INET_LRO is not set
+CONFIG_INET_DIAG=y
+CONFIG_INET_TCP_DIAG=y
+# CONFIG_TCP_CONG_ADVANCED is not set
+CONFIG_TCP_CONG_CUBIC=y
+CONFIG_DEFAULT_TCP_CONG="cubic"
+# CONFIG_TCP_MD5SIG is not set
+# CONFIG_IPV6 is not set
+# CONFIG_INET6_XFRM_TUNNEL is not set
+# CONFIG_INET6_TUNNEL is not set
+# CONFIG_NETWORK_SECMARK is not set
+# CONFIG_NETFILTER is not set
+# CONFIG_IP_DCCP is not set
+# CONFIG_IP_SCTP is not set
+# CONFIG_TIPC is not set
+# CONFIG_ATM is not set
+# CONFIG_BRIDGE is not set
+# CONFIG_VLAN_8021Q is not set
+# CONFIG_DECNET is not set
+# CONFIG_LLC2 is not set
+# CONFIG_IPX is not set
+# CONFIG_ATALK is not set
+# CONFIG_X25 is not set
+# CONFIG_LAPB is not set
+# CONFIG_ECONET is not set
+# CONFIG_WAN_ROUTER is not set
+# CONFIG_NET_SCHED is not set
+
+#
+# Network testing
+#
+# CONFIG_NET_PKTGEN is not set
+# CONFIG_HAMRADIO is not set
+# CONFIG_IRDA is not set
+# CONFIG_BT is not set
+# CONFIG_AF_RXRPC is not set
+
+#
+# Wireless
+#
+# CONFIG_CFG80211 is not set
+# CONFIG_WIRELESS_EXT is not set
+# CONFIG_MAC80211 is not set
+# CONFIG_IEEE80211 is not set
+# CONFIG_RFKILL is not set
+# CONFIG_NET_9P is not set
+
+#
+# Device Drivers
+#
+
+#
+# Generic Driver Options
+#
+CONFIG_UEVENT_HELPER_PATH="/sbin/hotplug"
+CONFIG_STANDALONE=y
+CONFIG_PREVENT_FIRMWARE_BUILD=y
+# CONFIG_FW_LOADER is not set
+# CONFIG_DEBUG_DRIVER is not set
+# CONFIG_DEBUG_DEVRES is not set
+# CONFIG_SYS_HYPERVISOR is not set
+# CONFIG_CONNECTOR is not set
+# CONFIG_MTD is not set
+CONFIG_OF_DEVICE=y
+# CONFIG_PARPORT is not set
+CONFIG_BLK_DEV=y
+# CONFIG_BLK_DEV_FD is not set
+# CONFIG_BLK_CPQ_DA is not set
+# CONFIG_BLK_CPQ_CISS_DA is not set
+# CONFIG_BLK_DEV_DAC960 is not set
+# CONFIG_BLK_DEV_UMEM is not set
+# CONFIG_BLK_DEV_COW_COMMON is not set
+CONFIG_BLK_DEV_LOOP=y
+# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+# CONFIG_BLK_DEV_NBD is not set
+# CONFIG_BLK_DEV_SX8 is not set
+CONFIG_BLK_DEV_RAM=y
+CONFIG_BLK_DEV_RAM_COUNT=16
+CONFIG_BLK_DEV_RAM_SIZE=32768
+CONFIG_BLK_DEV_RAM_BLOCKSIZE=1024
+# CONFIG_CDROM_PKTCDVD is not set
+# CONFIG_ATA_OVER_ETH is not set
+CONFIG_MISC_DEVICES=y
+# CONFIG_PHANTOM is not set
+# CONFIG_EEPROM_93CX6 is not set
+# CONFIG_SGI_IOC4 is not set
+# CONFIG_TIFM_CORE is not set
+# CONFIG_IDE is not set
+
+#
+# SCSI device support
+#
+# CONFIG_RAID_ATTRS is not set
+CONFIG_SCSI=y
+CONFIG_SCSI_DMA=y
+# CONFIG_SCSI_TGT is not set
+# CONFIG_SCSI_NETLINK is not set
+# CONFIG_SCSI_PROC_FS is not set
+
+#
+# SCSI support type (disk, tape, CD-ROM)
+#
+# CONFIG_BLK_DEV_SD is not set
+# CONFIG_CHR_DEV_ST is not set
+# CONFIG_CHR_DEV_OSST is not set
+# CONFIG_BLK_DEV_SR is not set
+# CONFIG_CHR_DEV_SG is not set
+# CONFIG_CHR_DEV_SCH is not set
+
+#
+# Some SCSI devices (e.g. CD jukebox) support multiple LUNs
+#
+# CONFIG_SCSI_MULTI_LUN is not set
+# CONFIG_SCSI_CONSTANTS is not set
+# CONFIG_SCSI_LOGGING is not set
+# CONFIG_SCSI_SCAN_ASYNC is not set
+CONFIG_SCSI_WAIT_SCAN=m
+
+#
+# SCSI Transports
+#
+# CONFIG_SCSI_SPI_ATTRS is not set
+# CONFIG_SCSI_FC_ATTRS is not set
+# CONFIG_SCSI_ISCSI_ATTRS is not set
+# CONFIG_SCSI_SAS_LIBSAS is not set
+# CONFIG_SCSI_SRP_ATTRS is not set
+CONFIG_SCSI_LOWLEVEL=y
+# CONFIG_ISCSI_TCP is not set
+# CONFIG_BLK_DEV_3W_XXXX_RAID is not set
+# CONFIG_SCSI_3W_9XXX is not set
+# CONFIG_SCSI_ACARD is not set
+# CONFIG_SCSI_AACRAID is not set
+# CONFIG_SCSI_AIC7XXX is not set
+# CONFIG_SCSI_AIC7XXX_OLD is not set
+# CONFIG_SCSI_AIC79XX is not set
+# CONFIG_SCSI_AIC94XX is not set
+# CONFIG_SCSI_DPT_I2O is not set
+# CONFIG_SCSI_ADVANSYS is not set
+# CONFIG_SCSI_ARCMSR is not set
+# CONFIG_MEGARAID_NEWGEN is not set
+# CONFIG_MEGARAID_LEGACY is not set
+# CONFIG_MEGARAID_SAS is not set
+# CONFIG_SCSI_HPTIOP is not set
+# CONFIG_SCSI_BUSLOGIC is not set
+# CONFIG_SCSI_DMX3191D is not set
+# CONFIG_SCSI_EATA is not set
+# CONFIG_SCSI_FUTURE_DOMAIN is not set
+# CONFIG_SCSI_GDTH is not set
+# CONFIG_SCSI_IPS is not set
+# CONFIG_SCSI_INITIO is not set
+# CONFIG_SCSI_INIA100 is not set
+# CONFIG_SCSI_STEX is not set
+# CONFIG_SCSI_SYM53C8XX_2 is not set
+# CONFIG_SCSI_IPR is not set
+# CONFIG_SCSI_QLOGIC_1280 is not set
+# CONFIG_SCSI_QLA_FC is not set
+# CONFIG_SCSI_QLA_ISCSI is not set
+# CONFIG_SCSI_LPFC is not set
+# CONFIG_SCSI_DC395x is not set
+# CONFIG_SCSI_DC390T is not set
+# CONFIG_SCSI_NSP32 is not set
+# CONFIG_SCSI_DEBUG is not set
+# CONFIG_SCSI_SRP is not set
+CONFIG_ATA=y
+# CONFIG_ATA_NONSTANDARD is not set
+# CONFIG_SATA_AHCI is not set
+# CONFIG_SATA_SVW is not set
+# CONFIG_ATA_PIIX is not set
+# CONFIG_SATA_MV is not set
+# CONFIG_SATA_NV is not set
+# CONFIG_PDC_ADMA is not set
+# CONFIG_SATA_QSTOR is not set
+# CONFIG_SATA_PROMISE is not set
+# CONFIG_SATA_SX4 is not set
+# CONFIG_SATA_SIL is not set
+# CONFIG_SATA_SIL24 is not set
+# CONFIG_SATA_SIS is not set
+# CONFIG_SATA_ULI is not set
+# CONFIG_SATA_VIA is not set
+# CONFIG_SATA_VITESSE is not set
+# CONFIG_SATA_INIC162X is not set
+# CONFIG_PATA_ALI is not set
+# CONFIG_PATA_AMD is not set
+# CONFIG_PATA_ARTOP is not set
+# CONFIG_PATA_ATIIXP is not set
+# CONFIG_PATA_CMD640_PCI is not set
+# CONFIG_PATA_CMD64X is not set
+# CONFIG_PATA_CS5520 is not set
+# CONFIG_PATA_CS5530 is not set
+# CONFIG_PATA_CYPRESS is not set
+# CONFIG_PATA_EFAR is not set
+# CONFIG_ATA_GENERIC is not set
+# CONFIG_PATA_HPT366 is not set
+# CONFIG_PATA_HPT37X is not set
+# CONFIG_PATA_HPT3X2N is not set
+# CONFIG_PATA_HPT3X3 is not set
+# CONFIG_PATA_IT821X is not set
+# CONFIG_PATA_IT8213 is not set
+# CONFIG_PATA_JMICRON is not set
+# CONFIG_PATA_TRIFLEX is not set
+# CONFIG_PATA_MARVELL is not set
+CONFIG_PATA_MPC52xx=y
+# CONFIG_PATA_MPIIX is not set
+# CONFIG_PATA_OLDPIIX is not set
+# CONFIG_PATA_NETCELL is not set
+# CONFIG_PATA_NS87410 is not set
+# CONFIG_PATA_NS87415 is not set
+# CONFIG_PATA_OPTI is not set
+# CONFIG_PATA_OPTIDMA is not set
+# CONFIG_PATA_PDC_OLD is not set
+# CONFIG_PATA_RADISYS is not set
+# CONFIG_PATA_RZ1000 is not set
+# CONFIG_PATA_SC1200 is not set
+# CONFIG_PATA_SERVERWORKS is not set
+# CONFIG_PATA_PDC2027X is not set
+# CONFIG_PATA_SIL680 is not set
+# CONFIG_PATA_SIS is not set
+# CONFIG_PATA_VIA is not set
+# CONFIG_PATA_WINBOND is not set
+# CONFIG_PATA_PLATFORM is not set
+# CONFIG_MD is not set
+# CONFIG_FUSION is not set
+
+#
+# IEEE 1394 (FireWire) support
+#
+# CONFIG_FIREWIRE is not set
+# CONFIG_IEEE1394 is not set
+# CONFIG_I2O is not set
+# CONFIG_MACINTOSH_DRIVERS is not set
+CONFIG_NETDEVICES=y
+# CONFIG_NETDEVICES_MULTIQUEUE is not set
+# CONFIG_DUMMY is not set
+# CONFIG_BONDING is not set
+# CONFIG_MACVLAN is not set
+# CONFIG_EQUALIZER is not set
+# CONFIG_TUN is not set
+# CONFIG_VETH is not set
+# CONFIG_IP1000 is not set
+# CONFIG_ARCNET is not set
+CONFIG_PHYLIB=y
+
+#
+# MII PHY device drivers
+#
+# CONFIG_MARVELL_PHY is not set
+# CONFIG_DAVICOM_PHY is not set
+# CONFIG_QSEMI_PHY is not set
+# CONFIG_LXT_PHY is not set
+# CONFIG_CICADA_PHY is not set
+# CONFIG_VITESSE_PHY is not set
+# CONFIG_SMSC_PHY is not set
+# CONFIG_BROADCOM_PHY is not set
+# CONFIG_ICPLUS_PHY is not set
+# CONFIG_FIXED_PHY is not set
+# CONFIG_MDIO_BITBANG is not set
+CONFIG_NET_ETHERNET=y
+# CONFIG_MII is not set
+# CONFIG_HAPPYMEAL is not set
+# CONFIG_SUNGEM is not set
+# CONFIG_CASSINI is not set
+# CONFIG_NET_VENDOR_3COM is not set
+# CONFIG_NET_TULIP is not set
+# CONFIG_HP100 is not set
+# CONFIG_IBM_NEW_EMAC_ZMII is not set
+# CONFIG_IBM_NEW_EMAC_RGMII is not set
+# CONFIG_IBM_NEW_EMAC_TAH is not set
+# CONFIG_IBM_NEW_EMAC_EMAC4 is not set
+# CONFIG_NET_PCI is not set
+# CONFIG_B44 is not set
+CONFIG_FEC_MPC52xx=y
+CONFIG_FEC_MPC52xx_MDIO=y
+# CONFIG_NETDEV_1000 is not set
+# CONFIG_NETDEV_10000 is not set
+# CONFIG_TR is not set
+
+#
+# Wireless LAN
+#
+# CONFIG_WLAN_PRE80211 is not set
+# CONFIG_WLAN_80211 is not set
+# CONFIG_WAN is not set
+# CONFIG_FDDI is not set
+# CONFIG_HIPPI is not set
+# CONFIG_PPP is not set
+# CONFIG_SLIP is not set
+# CONFIG_NET_FC is not set
+# CONFIG_SHAPER is not set
+# CONFIG_NETCONSOLE is not set
+# CONFIG_NETPOLL is not set
+# CONFIG_NET_POLL_CONTROLLER is not set
+# CONFIG_ISDN is not set
+# CONFIG_PHONE is not set
+
+#
+# Input device support
+#
+# CONFIG_INPUT is not set
+
+#
+# Hardware I/O ports
+#
+# CONFIG_SERIO is not set
+# CONFIG_GAMEPORT is not set
+
+#
+# Character devices
+#
+# CONFIG_VT is not set
+# CONFIG_SERIAL_NONSTANDARD is not set
+
+#
+# Serial drivers
+#
+# CONFIG_SERIAL_8250 is not set
+
+#
+# Non-8250 serial port support
+#
+# CONFIG_SERIAL_UARTLITE is not set
+CONFIG_SERIAL_CORE=y
+CONFIG_SERIAL_CORE_CONSOLE=y
+CONFIG_SERIAL_MPC52xx=y
+CONFIG_SERIAL_MPC52xx_CONSOLE=y
+CONFIG_SERIAL_MPC52xx_CONSOLE_BAUD=9600
+# CONFIG_SERIAL_JSM is not set
+CONFIG_UNIX98_PTYS=y
+CONFIG_LEGACY_PTYS=y
+CONFIG_LEGACY_PTY_COUNT=256
+# CONFIG_IPMI_HANDLER is not set
+# CONFIG_HW_RANDOM is not set
+# CONFIG_NVRAM is not set
+# CONFIG_GEN_RTC is not set
+# CONFIG_R3964 is not set
+# CONFIG_APPLICOM is not set
+# CONFIG_RAW_DRIVER is not set
+# CONFIG_TCG_TPM is not set
+CONFIG_RMEM=m
+CONFIG_ALLOC_RTSJ_MEM=m
+CONFIG_DEVPORT=y
+# CONFIG_I2C is not set
+
+#
+# SPI support
+#
+# CONFIG_SPI is not set
+# CONFIG_SPI_MASTER is not set
+# CONFIG_W1 is not set
+# CONFIG_POWER_SUPPLY is not set
+# CONFIG_HWMON is not set
+# CONFIG_WATCHDOG is not set
+
+#
+# Sonics Silicon Backplane
+#
+CONFIG_SSB_POSSIBLE=y
+# CONFIG_SSB is not set
+
+#
+# Multifunction device drivers
+#
+# CONFIG_MFD_SM501 is not set
+
+#
+# Multimedia devices
+#
+# CONFIG_VIDEO_DEV is not set
+# CONFIG_DVB_CORE is not set
+# CONFIG_DAB is not set
+
+#
+# Graphics support
+#
+# CONFIG_AGP is not set
+# CONFIG_DRM is not set
+# CONFIG_VGASTATE is not set
+CONFIG_VIDEO_OUTPUT_CONTROL=m
+# CONFIG_FB is not set
+# CONFIG_BACKLIGHT_LCD_SUPPORT is not set
+
+#
+# Display device support
+#
+# CONFIG_DISPLAY_SUPPORT is not set
+
+#
+# Sound
+#
+# CONFIG_SOUND is not set
+CONFIG_USB_SUPPORT=y
+CONFIG_USB_ARCH_HAS_HCD=y
+CONFIG_USB_ARCH_HAS_OHCI=y
+CONFIG_USB_ARCH_HAS_EHCI=y
+# CONFIG_USB is not set
+
+#
+# NOTE: USB_STORAGE enables SCSI, and 'SCSI disk support'
+#
+
+#
+# USB Gadget Support
+#
+# CONFIG_USB_GADGET is not set
+# CONFIG_MMC is not set
+# CONFIG_NEW_LEDS is not set
+# CONFIG_INFINIBAND is not set
+# CONFIG_EDAC is not set
+# CONFIG_RTC_CLASS is not set
+
+#
+# Userspace I/O
+#
+# CONFIG_UIO is not set
+
+#
+# File systems
+#
+CONFIG_EXT2_FS=y
+# CONFIG_EXT2_FS_XATTR is not set
+# CONFIG_EXT2_FS_XIP is not set
+CONFIG_EXT3_FS=y
+CONFIG_EXT3_FS_XATTR=y
+# CONFIG_EXT3_FS_POSIX_ACL is not set
+# CONFIG_EXT3_FS_SECURITY is not set
+# CONFIG_EXT4DEV_FS is not set
+CONFIG_JBD=y
+# CONFIG_JBD_DEBUG is not set
+CONFIG_FS_MBCACHE=y
+# CONFIG_REISERFS_FS is not set
+# CONFIG_JFS_FS is not set
+# CONFIG_FS_POSIX_ACL is not set
+# CONFIG_XFS_FS is not set
+# CONFIG_GFS2_FS is not set
+# CONFIG_OCFS2_FS is not set
+# CONFIG_MINIX_FS is not set
+# CONFIG_ROMFS_FS is not set
+CONFIG_INOTIFY=y
+CONFIG_INOTIFY_USER=y
+# CONFIG_QUOTA is not set
+CONFIG_DNOTIFY=y
+# CONFIG_AUTOFS_FS is not set
+# CONFIG_AUTOFS4_FS is not set
+# CONFIG_FUSE_FS is not set
+
+#
+# CD-ROM/DVD Filesystems
+#
+# CONFIG_ISO9660_FS is not set
+# CONFIG_UDF_FS is not set
+
+#
+# DOS/FAT/NT Filesystems
+#
+# CONFIG_MSDOS_FS is not set
+# CONFIG_VFAT_FS is not set
+# CONFIG_NTFS_FS is not set
+
+#
+# Pseudo filesystems
+#
+CONFIG_PROC_FS=y
+CONFIG_PROC_KCORE=y
+CONFIG_PROC_SYSCTL=y
+CONFIG_SYSFS=y
+CONFIG_TMPFS=y
+# CONFIG_TMPFS_POSIX_ACL is not set
+# CONFIG_HUGETLB_PAGE is not set
+# CONFIG_CONFIGFS_FS is not set
+
+#
+# Miscellaneous filesystems
+#
+# CONFIG_ADFS_FS is not set
+# CONFIG_AFFS_FS is not set
+# CONFIG_HFS_FS is not set
+# CONFIG_HFSPLUS_FS is not set
+# CONFIG_BEFS_FS is not set
+# CONFIG_BFS_FS is not set
+# CONFIG_EFS_FS is not set
+# CONFIG_CRAMFS is not set
+# CONFIG_VXFS_FS is not set
+# CONFIG_HPFS_FS is not set
+# CONFIG_QNX4FS_FS is not set
+# CONFIG_SYSV_FS is not set
+# CONFIG_UFS_FS is not set
+CONFIG_NETWORK_FILESYSTEMS=y
+CONFIG_NFS_FS=y
+# CONFIG_NFS_V3 is not set
+# CONFIG_NFS_V4 is not set
+# CONFIG_NFS_DIRECTIO is not set
+# CONFIG_NFSD is not set
+CONFIG_ROOT_NFS=y
+CONFIG_LOCKD=y
+CONFIG_NFS_COMMON=y
+CONFIG_SUNRPC=y
+# CONFIG_SUNRPC_BIND34 is not set
+# CONFIG_RPCSEC_GSS_KRB5 is not set
+# CONFIG_RPCSEC_GSS_SPKM3 is not set
+# CONFIG_SMB_FS is not set
+# CONFIG_CIFS is not set
+# CONFIG_NCP_FS is not set
+# CONFIG_CODA_FS is not set
+# CONFIG_AFS_FS is not set
+
+#
+# Partition Types
+#
+# CONFIG_PARTITION_ADVANCED is not set
+CONFIG_MSDOS_PARTITION=y
+# CONFIG_NLS is not set
+# CONFIG_DLM is not set
+# CONFIG_UCC_SLOW is not set
+
+#
+# Library routines
+#
+CONFIG_BITREVERSE=y
+# CONFIG_CRC_CCITT is not set
+# CONFIG_CRC16 is not set
+# CONFIG_CRC_ITU_T is not set
+CONFIG_CRC32=y
+# CONFIG_CRC7 is not set
+# CONFIG_LIBCRC32C is not set
+CONFIG_PLIST=y
+CONFIG_HAS_IOMEM=y
+CONFIG_HAS_IOPORT=y
+CONFIG_HAS_DMA=y
+# CONFIG_INSTRUMENTATION is not set
+
+#
+# Kernel hacking
+#
+CONFIG_PRINTK_TIME=y
+CONFIG_ENABLE_WARN_DEPRECATED=y
+CONFIG_ENABLE_MUST_CHECK=y
+# CONFIG_MAGIC_SYSRQ is not set
+# CONFIG_UNUSED_SYMBOLS is not set
+CONFIG_DEBUG_FS=y
+# CONFIG_HEADERS_CHECK is not set
+CONFIG_DEBUG_KERNEL=y
+# CONFIG_DEBUG_SHIRQ is not set
+CONFIG_DETECT_SOFTLOCKUP=y
+CONFIG_SCHED_DEBUG=y
+# CONFIG_SCHEDSTATS is not set
+# CONFIG_TIMER_STATS is not set
+# CONFIG_DEBUG_SLAB is not set
+CONFIG_DEBUG_PREEMPT=y
+# CONFIG_DEBUG_RT_MUTEXES is not set
+# CONFIG_RT_MUTEX_TESTER is not set
+# CONFIG_DEBUG_SPINLOCK is not set
+# CONFIG_DEBUG_SPINLOCK_SLEEP is not set
+# CONFIG_DEBUG_LOCKING_API_SELFTESTS is not set
+CONFIG_STACKTRACE=y
+CONFIG_PREEMPT_TRACE=y
+CONFIG_EVENT_TRACE=y
+CONFIG_FUNCTION_TRACE=y
+CONFIG_WAKEUP_TIMING=y
+# CONFIG_LATENCY_TRACE is not set
+# CONFIG_CRITICAL_PREEMPT_TIMING is not set
+# CONFIG_CRITICAL_IRQSOFF_TIMING is not set
+# CONFIG_WAKEUP_LATENCY_HIST is not set
+CONFIG_CRITICAL_TIMING=y
+CONFIG_LATENCY_TIMING=y
+CONFIG_MCOUNT=y
+# CONFIG_DEBUG_KOBJECT is not set
+# CONFIG_DEBUG_BUGVERBOSE is not set
+CONFIG_DEBUG_INFO=y
+# CONFIG_DEBUG_VM is not set
+# CONFIG_DEBUG_LIST is not set
+# CONFIG_DEBUG_SG is not set
+CONFIG_FRAME_POINTER=y
+CONFIG_FORCED_INLINING=y
+# CONFIG_BOOT_PRINTK_DELAY is not set
+# CONFIG_RCU_TORTURE_TEST is not set
+# CONFIG_FAULT_INJECTION is not set
+# CONFIG_SAMPLES is not set
+CONFIG_TRACE_IRQFLAGS_SUPPORT=y
+# CONFIG_DEBUG_STACKOVERFLOW is not set
+# CONFIG_DEBUG_STACK_USAGE is not set
+# CONFIG_DEBUG_PAGEALLOC is not set
+# CONFIG_DEBUGGER is not set
+# CONFIG_VIRQ_DEBUG is not set
+# CONFIG_BDI_SWITCH is not set
+# CONFIG_BOOTX_TEXT is not set
+# CONFIG_PPC_EARLY_DEBUG is not set
+
+#
+# Security options
+#
+# CONFIG_KEYS is not set
+# CONFIG_SECURITY is not set
+# CONFIG_SECURITY_FILE_CAPABILITIES is not set
+# CONFIG_CRYPTO is not set
+CONFIG_PPC_CLOCK=y
+CONFIG_PPC_LIB_RHEAP=y
+
+--------------060402060309080907030908--
