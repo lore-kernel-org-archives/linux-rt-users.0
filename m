@@ -1,56 +1,81 @@
-From: Darren Hart <dvhltc@linux.vnet.ibm.com>
-Subject: Re: cyclictest?
-Date: Fri, 11 Jan 2008 10:07:20 -0800
-Message-ID: <200801111007.20351.dvhltc@linux.vnet.ibm.com>
-References: <5bdc1c8b0801101634j583da294k319dbaa55405f26e@mail.gmail.com>
-Reply-To: Darren Hart <dvhltc@us.ibm.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: lost patch for mpc52xx spinlock
+Date: Fri, 11 Jan 2008 23:35:49 +0100
+Message-ID: <20080111223549.GN3177@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: "Mark Knecht" <markknecht@gmail.com>
+Content-Type: text/plain; charset=iso-8859-15
+Cc: linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:34736 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759555AbYAKSHf (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:58692 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1755585AbYAKWfv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Jan 2008 13:07:35 -0500
-Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
-	by e34.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m0BI7XIK032654
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jan 2008 13:07:33 -0500
-Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
-	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m0BI7QTZ055674
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jan 2008 11:07:28 -0700
-Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av04.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m0BI7M25009287
-	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jan 2008 11:07:22 -0700
-In-Reply-To: <5bdc1c8b0801101634j583da294k319dbaa55405f26e@mail.gmail.com>
+	Fri, 11 Jan 2008 17:35:51 -0500
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thursday 10 January 2008 16:34:51 Mark Knecht wrote:
-> Hi,
->    I hadn't heard of cyclictest before an email today. I guess as a
-> user instead of a developer I don't pay much attention.
->
->    Can someone point me toward directions for building this on a
-> Gentoo machine?
+Hi Steven,
 
-Hi Mark,
+this patch from tglx seems to got lost, can you add it to the next
+release?
 
-As Robert pointed out you can find info on cyclictest on the community 
-rt wiki.  There is also a whole host of other information there, 
-including additional tests and documentation (howtos, tips, best 
-practices, troubleshooting, etc.).  If you haven't already, I suggest 
-you browse the site:
-
-http://rt.wiki.kernel.org
-
-Thanks,
-
+Robert
 -- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+ Robert Schwebel              |  http://www.pengutronix.de
+ OSADL Testlab @ Pengutronix  |  http://www.osadl.org
+
+----------8<----------
+
+Subject: Re: Kernel Bug when entering something after login
+From: Thomas Gleixner <tglx@linutronix.de>
+To: Juergen Beisert <juergen127@kreuzholzen.de>
+Cc: linux-rt-users@vger.kernel.org
+In-Reply-To: <200707251900.47704.juergen127@kreuzholzen.de>
+References: <200707251900.47704.juergen127@kreuzholzen.de>
+Date: Wed, 25 Jul 2007 21:06:38 +0200
+Message-Id: <1185390398.3227.8.camel@chaos>
+
+On Wed, 2007-07-25 at 19:00 +0200, Juergen Beisert wrote:
+> [c0245db0] [c01bdb98] rt_spin_lock_slowlock+0x4c/0x224 (unreliable)
+> [c0245e10] [c011823c] uart_start+0x24/0x48
+> [c0245e30] [c0113ff4] n_tty_receive_buf+0x170/0xfd4
+> [c0245ef0] [c010f0dc] flush_to_ldisc+0xe0/0x130
+> [c0245f20] [c011b51c] mpc52xx_uart_int+0x194/0x350
+> [c0245f50] [c0046dfc] handle_IRQ_event+0x6c/0x110
+> [c0245f80] [c00475ec] thread_simple_irq+0x90/0xf8
+> [c0245fa0] [c00479a0] do_irqd+0x34c/0x3cc
+> [c0245fd0] [c0033380] kthread+0x48/0x84
+> [c0245ff0] [c00104ac] kernel_thread+0x44/0x60
+> Instruction dump:
+> 70090008 40820144 80010064 bb410048 38210060 7c0803a6 4e800020 801c0010
+> 5400003a 7c001278 7c000034 5400d97e <0f000000> 39600004 91610008 80010008
+> note: IRQ-131[93] exited with preempt_count 1
+
+Yup. That's a deadlock. In mainline this does not happen, as the
+spinlock is a NOP. Turn on CONFIG_PROVE_LOCKING in mainline and you see
+the problem as well.
+
+Solution below
+
+	tglx
+
+---
+ drivers/serial/mpc52xx_uart.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+Index: linux-2.6.24-rc5/drivers/serial/mpc52xx_uart.c
+===================================================================
+--- linux-2.6.24-rc5.orig/drivers/serial/mpc52xx_uart.c
++++ linux-2.6.24-rc5/drivers/serial/mpc52xx_uart.c
+@@ -501,7 +501,9 @@ mpc52xx_uart_int_rx_chars(struct uart_po
+ 		}
+ 	}
+ 
++	spin_unlock(&port->lock);
+ 	tty_flip_buffer_push(tty);
++	spin_lock(&port->lock);
+ 
+ 	return in_be16(&PSC(port)->mpc52xx_psc_status) & MPC52xx_PSC_SR_RXRDY;
+ }
