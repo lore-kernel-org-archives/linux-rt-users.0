@@ -1,37 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Mark Knecht" <markknecht@gmail.com>
 Subject: Re: 2.6.24-rc7-rt1
-Date: Sun, 13 Jan 2008 15:54:20 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801131552350.10093@gandalf.stny.rr.com>
+Date: Sun, 13 Jan 2008 14:56:22 -0800
+Message-ID: <5bdc1c8b0801131456h10bb6ab6h7445424c59aeaa26@mail.gmail.com>
 References: <1200250801.9190.7.camel@localhost.localdomain>
- <200801132143.34889.m.kozlowski@tuxland.pl>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+	RT <linux-rt-users@vger.kernel.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:53820 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753364AbYAMUyj (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.181]:16932 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753584AbYAMW4X (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Jan 2008 15:54:39 -0500
-In-Reply-To: <200801132143.34889.m.kozlowski@tuxland.pl>
+	Sun, 13 Jan 2008 17:56:23 -0500
+Received: by wa-out-1112.google.com with SMTP id v27so3279660wah.23
+        for <linux-rt-users@vger.kernel.org>; Sun, 13 Jan 2008 14:56:22 -0800 (PST)
+In-Reply-To: <1200250801.9190.7.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Sun, 13 Jan 2008, Mariusz Kozlowski wrote:
+On Jan 13, 2008 11:00 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> We are pleased to announce the 2.6.24-rc7-rt1 tree, which can be
+> downloaded from the location:
 >
-> But then there is also trace_hardirqs_on_caller() in kernel/latency_trace.c
-> and both are not static.
+>   http://rt.et.redhat.com/download/
 >
 
-Servers me right for releasing without testing more than one config. I
-compiled for x86_64, i386 and PPC 32 and 64, but all without any tracing
-on. And I should have since I modified that a bit.
+Up and running here. No significant testing but no problems building
+it and no obvious regressions from 2.6.24-rc2-rt1.
 
-OK, -rt2 will take a bit more beating from me before I release it, so it
-might take some time to get it out (expect it out on Monday).
+mark@lightning ~ $ uname -a
+Linux lightning 2.6.24-rc7-rt1 #1 PREEMPT RT Sun Jan 13 14:41:21 PST
+2008 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+mark@lightning ~ $
 
--- Steve
+- Mark
