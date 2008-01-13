@@ -1,79 +1,68 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.24-rc7-rt1: macro "put_cpu_var" passed 2 arguments, but
- takes just 1
-Date: Sun, 13 Jan 2008 15:37:33 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801131519410.9934@gandalf.stny.rr.com>
+From: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+Subject: Re: 2.6.24-rc7-rt1
+Date: Sun, 13 Jan 2008 21:43:32 +0100
+Message-ID: <200801132143.34889.m.kozlowski@tuxland.pl>
 References: <1200250801.9190.7.camel@localhost.localdomain>
- <200801132053.22830.m.kozlowski@tuxland.pl>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain;
+  charset="iso-8859-2"
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:40001 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753456AbYAMUh6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Jan 2008 15:37:58 -0500
-In-Reply-To: <200801132053.22830.m.kozlowski@tuxland.pl>
+Received: from xdsl-664.zgora.dialog.net.pl ([81.168.226.152]:3365 "EHLO
+	tuxland.pl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753364AbYAMUnh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 13 Jan 2008 15:43:37 -0500
+In-Reply-To: <1200250801.9190.7.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello,
 
+> We are pleased to announce the 2.6.24-rc7-rt1 tree, which can be
+> downloaded from the location:
+> 
+>   http://rt.et.redhat.com/download/
 
-On Sun, 13 Jan 2008, Mariusz Kozlowski wrote:
+  CC      kernel/lockdep.o
+kernel/lockdep.c: In function 'trace_hardirqs_on':
+kernel/lockdep.c:2068: error: too many arguments to function 'trace_hardirqs_on_caller'
+make[1]: *** [kernel/lockdep.o] Error 1
+make: *** [kernel] Error 2
 
-> [... snip ...]
->
-> @@ -56,12 +64,13 @@ static inline void __quicklist_free(int
->         struct page *page)
->  {
->         struct quicklist *q;
-> +       int cpu;
->
-> -       q = &get_cpu_var(quicklist)[nr];
-> +       q = &get_cpu_var_locked(quicklist, &cpu)[nr];
->         *(void **)p = q->page;
->         q->page = p;
->         q->nr_pages++;
-> -       put_cpu_var(quicklist);
-> +       put_cpu_var(quicklist, cpu); <------------- should that be put_cpu_var_locked()?
->  }
->
+--- linux-2.6.24-rc7-rt1.orig/kernel/lockdep.c  2008-01-11 21:16:46.000000000 -0500
++++ linux-2.6.24-rc7-rt1/kernel/lockdep.c       2008-01-11 21:18:10.000000000 -0500
 
-Ouch! <looks at rejs>
+[... snip ...]
 
-*************** static inline void __quicklist_free(int
-*** 76,86 ****
-  		return;
-  	}
+ /*
+  * Hardirqs will be enabled:
+  */
+-void trace_hardirqs_on(void)
++notrace void trace_hardirqs_on_caller(void) <--- this should have 'unsigned long a0'
+ {
+        struct task_struct *curr = current;
+        unsigned long ip;
+@@ -2050,6 +2059,13 @@ void trace_hardirqs_on(void)
+        curr->hardirq_enable_ip = ip;
+        curr->hardirq_enable_event = ++curr->irq_events;
+        debug_atomic_inc(&hardirqs_on_events);
++#ifdef CONFIG_CRITICAL_IRQSOFF_TIMING
++       time_hardirqs_on(a0, 0 /* CALLER_ADDR1 */); <--- a0 is used here
++#endif
++}
++
++void notrace trace_hardirqs_on(void) {
++       trace_hardirqs_on_caller(CALLER_ADDR0);
+ }
 
-- 	q = &get_cpu_var(quicklist)[nr];
-  	*(void **)p = q->page;
-  	q->page = p;
-  	q->nr_pages++;
-- 	put_cpu_var(quicklist);
-  }
+But then there is also trace_hardirqs_on_caller() in kernel/latency_trace.c 
+and both are not static.
 
-  static inline void quicklist_free(int nr, void (*dtor)(void *), void *pp)
---- 73,83 ----
-  		return;
-  	}
+Regards,
 
-+ 	q = &get_cpu_var_locked(quicklist, &cpu)[nr];
-  	*(void **)p = q->page;
-  	q->page = p;
-  	q->nr_pages++;
-+ 	put_cpu_var_locked(quicklist, cpu);
-  }
-
-  static inline void quicklist_free(int nr, void (*dtor)(void *), void *pp)
-************
-
-Darn, that was my fault. OK, will release a -rt2 soon.
-
-Thanks,
-
--- Steve
+	Mariusz
