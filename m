@@ -1,37 +1,64 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 2.6.24-rc7-rt1
-Date: Mon, 14 Jan 2008 15:29:58 +0100
-Message-ID: <1200320998.4249.3.camel@homer.simson.net>
-References: <1200250801.9190.7.camel@localhost.localdomain>
-	 <200801132143.34889.m.kozlowski@tuxland.pl>
-	 <Pine.LNX.4.58.0801131552350.10093@gandalf.stny.rr.com>
-	 <1200299260.4665.17.camel@homer.simson.net>
-	 <478B0B7C.BA47.005A.0@novell.com>
-	 <1200317101.3733.14.camel@homer.simson.net>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost Tracing
+Date: Sun, 13 Jan 2008 18:07:41 +0000
+Message-ID: <20080113180740.GA4435@ucw.cz>
+References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu> <20080107185954.GA16041@Krystal>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Mariusz Kozlowski <m.kozlowski@tuxland.pl>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, "Frank Ch. Eigler" <fche@redhat.com>,
+	"K. Prasad" <prasad@linux.vnet.ibm.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:38346 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1750973AbYANOaF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jan 2008 09:30:05 -0500
-In-Reply-To: <1200317101.3733.14.camel@homer.simson.net>
+Received: from gprs189-60.eurotel.cz ([160.218.189.60]:1174 "EHLO spitz.ucw.cz"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751061AbYANOhM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jan 2008 09:37:12 -0500
+Content-Disposition: inline
+In-Reply-To: <20080107185954.GA16041@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon 2008-01-07 13:59:54, Mathieu Desnoyers wrote:
+> * Ingo Molnar (mingo@elte.hu) wrote:
+> > 
+> > * Frank Ch. Eigler <fche@redhat.com> wrote:
+> > 
+> > > > [...] this is a general policy matter. It is _so much easier_ to add 
+> > > > markers if they _can_ have near-zero overhead (as in 1-2 
+> > > > instructions). Otherwise we'll keep arguing about it, especially if 
+> > > > any is added to performance-critical codepath. (where we are 
+> > > > counting instructions)
+> > > 
+> > > The effect of the immediate-values patch, combined with gcc 
+> > > CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2 
+> > > dcache-impact-free instructions.  The register saves, parameter 
+> > > evaluation, the function call, can all be moved out of line.
+> > 
+> > well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
+> > we should already be getting that, right?
+> > 
+> > There's one thing that would make out-of-line tracepoints have a lot 
+> > less objectionable to me: right now the 'out of line' area is put to the 
+> > end of functions. That splinters the kernel image with inactive, rarely 
+> > taken areas of code - blowing up its icache footprint considerably. For 
+> > example sched.o has ~100 functions, with the average function size being 
+> > 200 bytes. At 64 bytes L1 cacheline size that's a 10-20% icache waste 
+> > already.
+> 
+> Hrm, I agree this can be a problem on architectures with more standard
+> associative icaches, but aren't most x86_64 machines (and modern x86_32)
+> using an instruction trace cache instead ? This makes the problem
+> irrelevant.
+> 
+> But I agree that, as Frank proposed, -freorder-blocks-and-partition
+> could help us in that matter for the architectures using an associative
+> L1 icache.
 
-On Mon, 2008-01-14 at 14:25 +0100, Mike Galbraith wrote:
-
-> No, I just copied the matching paranoia while leering at it.
-
-Actually, I can't say definitively no, only that a panic() there didn't
-make keyboard blink.  Suspend may be disabling blinkies, dunno.
-
-	-Mike
+I thought trace cache died with P4?
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
