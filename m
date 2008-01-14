@@ -1,52 +1,64 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
- Tracing
-Date: Mon, 14 Jan 2008 08:30:07 -0800 (PST)
-Message-ID: <alpine.LFD.1.00.0801140824430.2806@woody.linux-foundation.org>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu> <20080107185954.GA16041@Krystal>
- <20080113180740.GA4435@ucw.cz> <20080114153505.GA11522@Krystal>
+From: "=?utf-8?q?S=2E=C3=87a=C4=9Flar?= Onur" <caglar@pardus.org.tr>
+Subject: Re: 2.6.24-rc7-rt1
+Date: Mon, 14 Jan 2008 20:39:39 +0200
+Message-ID: <200801142039.42463.caglar@pardus.org.tr>
+References: <1200250801.9190.7.camel@localhost.localdomain> <Pine.LNX.4.58.0801131552350.10093@gandalf.stny.rr.com> <1200299260.4665.17.camel@homer.simson.net>
+Reply-To: caglar@pardus.org.tr
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Pavel Machek <pavel@ucw.cz>, Ingo Molnar <mingo@elte.hu>,
-	"Frank Ch. Eigler" <fche@redhat.com>,
-	"K. Prasad" <prasad@linux.vnet.ibm.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
-	Andrew Morton <akpm@linux-foundation.org>
-To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Mariusz Kozlowski <m.kozlowski@tuxland.pl>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.linux-foundation.org ([207.189.120.14]:55581 "EHLO
-	smtp2.linux-foundation.org" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750744AbYANQc3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jan 2008 11:32:29 -0500
-In-Reply-To: <20080114153505.GA11522@Krystal>
+Received: from ns2.uludag.org.tr ([193.140.100.220]:41145 "EHLO uludag.org.tr"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751469AbYANQke (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jan 2008 11:40:34 -0500
+In-Reply-To: <1200299260.4665.17.camel@homer.simson.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi;
+
+14 Oca 2008 Pts tarihinde, Mike Galbraith =C5=9Funlar=C4=B1 yazm=C4=B1=C5=
+=9Ft=C4=B1:=20
+> btw, CONFIG_INTEL_IOATDMA compile booboo
+>=20
+>   CC      drivers/dma/ioat_dma.o
+> drivers/dma/ioat_dma.c: In function =E2=80=98ioat1_tx_submit=E2=80=99=
+:
+> drivers/dma/ioat_dma.c:300: error: too few arguments to function =E2=80=
+=98__list_splice=E2=80=99
+> make[2]: *** [drivers/dma/ioat_dma.o] Error 1
+
+=46ollowing seems solves this issue;
+
+Index: linux-2.6.23/drivers/dma/ioat_dma.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.23.orig/drivers/dma/ioat_dma.c
++++ linux-2.6.23/drivers/dma/ioat_dma.c
+@@ -260,7 +260,7 @@ static dma_cookie_t ioat1_tx_submit(stru
+ 	/* write address into NextDescriptor field of last desc in chain */
+ 	to_ioat_desc(ioat_chan->used_desc.prev)->hw->next =3D
+ 							first->async_tx.phys;
+-	__list_splice(&new_chain, ioat_chan->used_desc.prev);
++	list_splice(&new_chain, &ioat_chan->used_desc);
+=20
+ 	ioat_chan->dmacount +=3D desc_count;
+ 	ioat_chan->pending +=3D desc_count;
 
 
-On Mon, 14 Jan 2008, Mathieu Desnoyers wrote:
-> 
-> We would have to figure out if enabling -freorder-blocks-and-partition
-> makes sense kernel-wide.
+Cheers
+--=20
+S.=C3=87a=C4=9Flar Onur <caglar@pardus.org.tr>
+http://cekirdek.pardus.org.tr/~caglar/
 
-Last I saw, it generates crappy code, with lots more jumps back and forth, 
-and the image just blows up.
-
-There's a reason we use -Os, and that's that small footprint I$ is 
-generally more important than fake compiler optimizations that don't 
-actually help except on microbenchmarks where everything fits in the 
-cache.
-
-Taking a branch instruction from two bytes to five is almost always a 
-mistake, unless you *know* that the code it jumps to will effectively 
-never be done at all (which is not necessarily the case at all). It also 
-makes debugging much nastier, because if now things like backtraces 
-probably look like crap too!
-
-Don't go there. The *best* we can do is to just use the optimizations that 
-generate good-looking code that humans can read. The rest is just compiler 
-masturbation.
-
-			Linus
+Linux is like living in a teepee. No Windows, no Gates and an Apache in=
+ house!
