@@ -1,49 +1,61 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: [PATCH] fix up leak_check calls
-Date: Mon, 14 Jan 2008 09:46:39 -0800
-Message-ID: <20080114174639.214586398@mvista.com>
-Cc: rostedt@goodmis.org, mingo@elte.hu, peterz@infradead.org
-To: linux-rt-users@vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24-rc7-rt2
+Date: Mon, 14 Jan 2008 13:41:20 -0500
+Message-ID: <1200336080.318.8.camel@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:10663 "EHLO
-	dwalker1.mvista.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750839AbYANRrq (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:55487 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751008AbYANSlf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jan 2008 12:47:46 -0500
+	Mon, 14 Jan 2008 13:41:35 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-If lockdep is enabled the lock_aquire() calls with trigger the leak_check().
+We are pleased to announce the 2.6.24-rc7-rt2 tree, which can be
+downloaded from the location:
 
-We need to check prior to calling lock_aquire/lock_release, so we're only
-checking locks taken in the workqueue function.
+  http://rt.et.redhat.com/download/
 
-Signed-off-by: Daniel Walker <dwalker@mvista.com>
+Information on the RT patch can be found at:
 
----
- kernel/workqueue.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-Index: linux-2.6.23/kernel/workqueue.c
-===================================================================
---- linux-2.6.23.orig/kernel/workqueue.c
-+++ linux-2.6.23/kernel/workqueue.c
-@@ -326,13 +326,13 @@ again:
- 
- 		BUG_ON(get_wq_data(work) != cwq);
- 		work_clear_pending(work);
-+		leak_check(NULL);
- 		lock_acquire(&cwq->wq->lockdep_map, 0, 0, 0, 2, _THIS_IP_);
- 		lock_acquire(&lockdep_map, 0, 0, 0, 2, _THIS_IP_);
--		leak_check(NULL);
- 		f(work);
--		leak_check(f);
- 		lock_release(&lockdep_map, 1, _THIS_IP_);
- 		lock_release(&cwq->wq->lockdep_map, 1, _THIS_IP_);
-+		leak_check(f);
- 
- 		spin_lock_irq(&cwq->lock);
- 		cwq->current_work = NULL;
--- 
+Changes since 2.6.24-rc7-rt1
 
--- 
+  - Several merge fixes reported by:
+	Mariusz Kozloski
+
+  - Removal of kvm-rt.patch (it's so old it is now bogus)
+
+  - PPC compile fix (reported by: Robert Schwebel)
+
+  - Remove of running softirq by hardirq (too dangerous)
+
+  - Changed BUG_ON in filemap from atomic to pagefault disabled
+       (Steven Rostedt)
+
+Note: There are still some fixes that are not incorporated here yet.
+
+
+to build a 2.6.24-rc7-rt2 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.24-rc7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24-rc7-rt2.bz2
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+-- Steve
