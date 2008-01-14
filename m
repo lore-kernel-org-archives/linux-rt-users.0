@@ -1,79 +1,52 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
-	Tracing
-Date: Mon, 14 Jan 2008 10:35:05 -0500
-Message-ID: <20080114153505.GA11522@Krystal>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu> <20080107185954.GA16041@Krystal> <20080113180740.GA4435@ucw.cz>
+ Tracing
+Date: Mon, 14 Jan 2008 08:30:07 -0800 (PST)
+Message-ID: <alpine.LFD.1.00.0801140824430.2806@woody.linux-foundation.org>
+References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu> <20080107185954.GA16041@Krystal>
+ <20080113180740.GA4435@ucw.cz> <20080114153505.GA11522@Krystal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, "Frank Ch. Eigler" <fche@redhat.com>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Pavel Machek <pavel@ucw.cz>, Ingo Molnar <mingo@elte.hu>,
+	"Frank Ch. Eigler" <fche@redhat.com>,
 	"K. Prasad" <prasad@linux.vnet.ibm.com>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-To: Pavel Machek <pavel@ucw.cz>
+	Andrew Morton <akpm@linux-foundation.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts36-srv.bellnexxia.net ([209.226.175.93]:32984 "EHLO
-	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751064AbYANPfI (ORCPT
+Received: from smtp2.linux-foundation.org ([207.189.120.14]:55581 "EHLO
+	smtp2.linux-foundation.org" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750744AbYANQc3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jan 2008 10:35:08 -0500
-Content-Disposition: inline
-In-Reply-To: <20080113180740.GA4435@ucw.cz>
+	Mon, 14 Jan 2008 11:32:29 -0500
+In-Reply-To: <20080114153505.GA11522@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Pavel Machek (pavel@ucw.cz) wrote:
-> On Mon 2008-01-07 13:59:54, Mathieu Desnoyers wrote:
-> > * Ingo Molnar (mingo@elte.hu) wrote:
-> > > 
-> > > * Frank Ch. Eigler <fche@redhat.com> wrote:
-> > > 
-> > > > > [...] this is a general policy matter. It is _so much easier_ to add 
-> > > > > markers if they _can_ have near-zero overhead (as in 1-2 
-> > > > > instructions). Otherwise we'll keep arguing about it, especially if 
-> > > > > any is added to performance-critical codepath. (where we are 
-> > > > > counting instructions)
-> > > > 
-> > > > The effect of the immediate-values patch, combined with gcc 
-> > > > CFLAGS+=-freorder-blocks, *is* to keep the overhead at 1-2 
-> > > > dcache-impact-free instructions.  The register saves, parameter 
-> > > > evaluation, the function call, can all be moved out of line.
-> > > 
-> > > well, -freorder-blocks seems to be default-enabled at -O2 on gcc 4.2, so 
-> > > we should already be getting that, right?
-> > > 
-> > > There's one thing that would make out-of-line tracepoints have a lot 
-> > > less objectionable to me: right now the 'out of line' area is put to the 
-> > > end of functions. That splinters the kernel image with inactive, rarely 
-> > > taken areas of code - blowing up its icache footprint considerably. For 
-> > > example sched.o has ~100 functions, with the average function size being 
-> > > 200 bytes. At 64 bytes L1 cacheline size that's a 10-20% icache waste 
-> > > already.
-> > 
-> > Hrm, I agree this can be a problem on architectures with more standard
-> > associative icaches, but aren't most x86_64 machines (and modern x86_32)
-> > using an instruction trace cache instead ? This makes the problem
-> > irrelevant.
-> > 
-> > But I agree that, as Frank proposed, -freorder-blocks-and-partition
-> > could help us in that matter for the architectures using an associative
-> > L1 icache.
+
+
+On Mon, 14 Jan 2008, Mathieu Desnoyers wrote:
 > 
-> I thought trace cache died with P4?
-> -- 
+> We would have to figure out if enabling -freorder-blocks-and-partition
+> makes sense kernel-wide.
 
-And you are absolutely right.
+Last I saw, it generates crappy code, with lots more jumps back and forth, 
+and the image just blows up.
 
-We would have to figure out if enabling -freorder-blocks-and-partition
-makes sense kernel-wide.
+There's a reason we use -Os, and that's that small footprint I$ is 
+generally more important than fake compiler optimizations that don't 
+actually help except on microbenchmarks where everything fits in the 
+cache.
 
-Mathieu
+Taking a branch instruction from two bytes to five is almost always a 
+mistake, unless you *know* that the code it jumps to will effectively 
+never be done at all (which is not necessarily the case at all). It also 
+makes debugging much nastier, because if now things like backtraces 
+probably look like crap too!
 
+Don't go there. The *best* we can do is to just use the optimizations that 
+generate good-looking code that humans can read. The rest is just compiler 
+masturbation.
 
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+			Linus
