@@ -1,68 +1,53 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: [PATCH 2/2] Markers Implementation for Preempt RCU Boost
-	Tracing
-Date: Mon, 14 Jan 2008 14:36:53 -0500
-Message-ID: <20080114193653.GA20774@Krystal>
-References: <20071231060911.GB6461@in.ibm.com> <20071231102045.GB30380@elte.hu> <y0modc4vr7a.fsf@ton.toronto.redhat.com> <20080102124734.GC11208@elte.hu> <20080102163309.GC11496@redhat.com> <20080102170157.GA11161@elte.hu> <20080107185954.GA16041@Krystal> <20080113180740.GA4435@ucw.cz> <20080114153505.GA11522@Krystal> <alpine.LFD.1.00.0801140824430.2806@woody.linux-foundation.org>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: 2.6.24-rc7-rt1
+Date: Mon, 14 Jan 2008 20:49:57 +0100
+Message-ID: <20080114194957.GQ27137@pengutronix.de>
+References: <1200250801.9190.7.camel@localhost.localdomain> <20080113202522.GD27137@pengutronix.de> <Pine.LNX.4.58.0801131544430.10093@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: Pavel Machek <pavel@ucw.cz>, Ingo Molnar <mingo@elte.hu>,
-	"Frank Ch. Eigler" <fche@redhat.com>,
-	"K. Prasad" <prasad@linux.vnet.ibm.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	dipankar@in.ibm.com, ego@in.ibm.com, paulmck@linux.vnet.ibm.com,
-	Andrew Morton <akpm@linux-foundation.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754762AbYANTmX@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-15
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:42961 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750759AbYANTt7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jan 2008 14:49:59 -0500
 Content-Disposition: inline
-In-Reply-To: <alpine.LFD.1.00.0801140824430.2806@woody.linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <Pine.LNX.4.58.0801131544430.10093@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Linus Torvalds (torvalds@linux-foundation.org) wrote:
-> 
-> 
-> On Mon, 14 Jan 2008, Mathieu Desnoyers wrote:
-> > 
-> > We would have to figure out if enabling -freorder-blocks-and-partition
-> > makes sense kernel-wide.
-> 
-> Last I saw, it generates crappy code, with lots more jumps back and forth, 
-> and the image just blows up.
-> 
-> There's a reason we use -Os, and that's that small footprint I$ is 
-> generally more important than fake compiler optimizations that don't 
-> actually help except on microbenchmarks where everything fits in the 
-> cache.
-> 
-> Taking a branch instruction from two bytes to five is almost always a 
-> mistake, unless you *know* that the code it jumps to will effectively 
-> never be done at all (which is not necessarily the case at all). It also 
-> makes debugging much nastier, because if now things like backtraces 
-> probably look like crap too!
-> 
-> Don't go there. The *best* we can do is to just use the optimizations that 
-> generate good-looking code that humans can read. The rest is just compiler 
-> masturbation.
-> 
+On Sun, Jan 13, 2008 at 03:48:33PM -0500, Steven Rostedt wrote:
+> > Works fine on phyCORE-MPC5200B-tiny, here are the latest results:
+> > http://www.pengutronix.de/oselas/realtime/results/20080113-1/
+>
+> That doesn't look too bad. Or is over a 100us not good for that box?
 
-I agree that turning this flag on does not seem like an interesting
-solution.
+I think it's ok. However, Wolfgang still sees strange long delays on his
+Icecube, so it was mainly for comparism.
 
-Well, I wonder how important this issue of not sharing L1 instruction
-cachelines with scheduler code is. If we care as much about it as Ingo
-states, I wonder why we leave about 22 BUG() macros in sched.c
-(calculated from the number of ud2 instructions generated on x86), which
-adds up to 7 bytes at the end of many scheduler functions (7 bytes
-coming from ud2, jmp and .p2align on x86).
+> Also is it SMP?
 
-And 22 markers in sched.c is already much more than needed. I actually
-propose only 5 in my patchset.
+Nope, UP. This one:
 
-Mathieu
+http://www.phytec.de/phytec/32-bit_module/phycore-mpc5200b-tiny.html
 
+The CPU is basically a 603e core plus peripherals.
+
+> Yeah, I didn't make any attempt to fix latency_tracing for PPC on this
+> release. I expected as much. I do have a couple of PPC boxes that I can
+> play with, and I'll see if I can get that working too before -rt2. But I
+> want to get a stable x86 release out fast.
+
+Yup, great, thanks!
+
+Robert
 -- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
