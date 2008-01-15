@@ -1,70 +1,81 @@
-From: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: 2.6.24-rc7-rt2
-Date: Tue, 15 Jan 2008 18:10:27 +0100
-Message-ID: <200801151810.28279.m.kozlowski@tuxland.pl>
-References: <1200336080.318.8.camel@localhost.localdomain> <200801142316.39330.m.kozlowski@tuxland.pl> <Pine.LNX.4.58.0801141730150.3109@gandalf.stny.rr.com>
+Date: Tue, 15 Jan 2008 13:06:25 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0801151301550.26624@gandalf.stny.rr.com>
+References: <1200336080.318.8.camel@localhost.localdomain>
+ <20080115162729.GF5859@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Luotao Fu <l.fu@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from xdsl-664.zgora.dialog.net.pl ([81.168.226.152]:3742 "EHLO
-	tuxland.pl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750890AbYAORKc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jan 2008 12:10:32 -0500
-In-Reply-To: <Pine.LNX.4.58.0801141730150.3109@gandalf.stny.rr.com>
-Content-Disposition: inline
+Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:60659 "EHLO
+	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750896AbYAOSGx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Jan 2008 13:06:53 -0500
+In-Reply-To: <20080115162729.GF5859@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> > > We are pleased to announce the 2.6.24-rc7-rt2 tree, which can be
-> > > downloaded from the location:
-> > >
-> > >   http://rt.et.redhat.com/download/
-> >
-> > Compiles fine but I run into another problem. On startup kernel oopses
-> > early and this 'oops' loops over and over again on the screen until you
-> > shut down the box. So I can't (easily) capture the output. I tried different
-> > boot_delay values but it seems that it doesn't work as intended. Seems that
-> > it delays only the first printk from oops, then the rest loops over the screen
-> > without delay - again it becomes unreadable. I used my usual config with a bunch
-> > of debug options enabled so that maybe is not real rt system case. Also tried to
-> > bisect it with quilt but that is hard. Lots of patches depends on another patches
-> > so bisection brakes things. I'll look into this tommorow and reply if I get
-> > anything substantial.
-> >
-> > I attached my config in case anybody wants to try to reproduce that.
-> >
-> 
-> Turn off LOCKDEP and see if you still have the same problems. This might
-> be fixed with Daniel's patch.
 
-Ok. It works.
 
-I found this in dmesg:
+On Tue, 15 Jan 2008, Luotao Fu wrote:
+>
+> Compiling with tracing function turned seemed still to be broken to me:
 
-BUG: swapper:0 task might have lost a preemption check!
-Pid: 0, comm: swapper Not tainted 2.6.24-rc7-rt2 #3
- [<c010386b>] show_trace_log_lvl+0x1d/0x3b
- [<c01042f3>] show_trace+0x12/0x14
- [<c0104a2f>] dump_stack+0x6a/0x70
- [<c0115419>] preempt_enable_no_resched+0x5c/0x5e
- [<c0100e35>] cpu_idle+0x6d/0x82
- [<c0323b6e>] rest_init+0x66/0x68
- [<c043aba6>] start_kernel+0x20c/0x276
- [<00000000>] 0x0
- =======================
----------------------------
-| preempt count: 00000000 ]
-| 0-level deep critical section nesting:
-----------------------------------------
+Could you email me your config (privately)
 
-Box runs fine though.
+> kernel/built-in.o: In function `early_printk_name':
+> latency_trace.c:(.text+0x3cd18): undefined reference to `early_printk'
+> latency_trace.c:(.text+0x3cd40): undefined reference to `early_printk'
+> kernel/built-in.o: In function `early_print_entry':
+> latency_trace.c:(.text+0x3cd80): undefined reference to `early_printk'
+> latency_trace.c:(.text+0x3cdd8): undefined reference to `early_printk'
+> latency_trace.c:(.text+0x3cdfc): undefined reference to `early_printk'
+>
+> We made a early_printk patch based on the 8250_early for powerpc 32bit here.
+> (still absolutely untested and incomplete, we will post it asap). I added
+> early_printk() and exported _mcount() and could compile succesfully. However the
+> kernel will not boot. I attached a bdi to it and found out that it stucks at
+> _mcount in arch/powerpc/kernel/entry_32.S at about line 1080, where the variable
+> mcount_enabled is loaded and checked. Obviously the variable is still not valid
+> at the time of check. To check this I took out the lines like above
+>
+> --- arch/powerpc/kernel/entry_32.S.orig 2008-01-15 17:01:25.000000000 +0100
+> +++ arch/powerpc/kernel/entry_32.S      2008-01-15 17:17:18.000000000 +0100
+> @@ -1075,9 +1075,6 @@
+>         stw     r6, 24(r1)
+>         mflr    r3      /* will use as first arg to __trace() */
+>         mfcr    r4
+> -       lis     r5,mcount_enabled@ha
+> -       lwz     r5,mcount_enabled@l(r5)
+> -       cmpwi   r5,0
+>         stw     r3, 44(r1)      /* lr */
+>         stw     r4,  8(r1)      /* cr */
+>         stw     r7, 28(r1)
+>
+> After recompiling the kernel started normally and it seems to work. I was even
+> able to make a trace with cyclictest. However there were several crashes (which
+> might be caused by other problems). I still have to take a closer look.
+>
+> I am just wondering why the check for mcount_enabled is there at all and I think
+> that there due to be some better fixes than just throw it out ;-). On the other
+> side, I just can't find in which way mcount_enabled is used in the tracer at
+> all. Could you give me some hints on this one?
+>
 
-Regards,
+The way we turn on and off mcount function calls at run time is through
+mcount_enable.  I'll look into why this is broken for you. I'm able to run
+with this. My box is a ppc64, and my ppc32 (powerbook) wont come close to
+booting RT (never did).  On boot up it locks up right away and the screen
+looks like it starts to melt. No serial, so I don't have much to debug
+that with.
 
-	Mariusz
+Anyway, I'll take a deeper look into this.
+
+Thanks,
+
+-- Steve
