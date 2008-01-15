@@ -1,97 +1,84 @@
-From: "=?utf-8?q?S=2E=C3=87a=C4=9Flar?= Onur" <caglar@pardus.org.tr>
-Subject: Re: 2.6.24-rc7-rt2
-Date: Tue, 15 Jan 2008 02:37:37 +0200
-Message-ID: <200801150237.44029.caglar@pardus.org.tr>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: 2.6.24-rc7-rt2: WARNING: at include/linux/rcupreempt.h:110
+	rcu_enter_nohz()
+Date: Tue, 15 Jan 2008 04:44:56 +0100
+Message-ID: <1200368696.4061.5.camel@homer.simson.net>
 References: <1200336080.318.8.camel@localhost.localdomain>
-Reply-To: caglar@pardus.org.tr
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart26097333.iopcmaTSH5";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ns2.uludag.org.tr ([193.140.100.220]:41927 "EHLO uludag.org.tr"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751119AbYAOAhv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jan 2008 19:37:51 -0500
+Received: from mail.gmx.net ([213.165.64.20]:58520 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1753394AbYAODpA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jan 2008 22:45:00 -0500
 In-Reply-To: <1200336080.318.8.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---nextPart26097333.iopcmaTSH5
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+Greetings,
 
-Hi;
+I receive $subject upon every resume.
 
-14 Oca 2008 Pts tarihinde, Steven Rostedt =C5=9Funlar=C4=B1 yazm=C4=B1=C5=
-=9Ft=C4=B1:=20
-> We are pleased to announce the 2.6.24-rc7-rt2 tree, which can be
-> downloaded from the location:
-[...]
-> The broken out patches are also available.
-
-2.6.24-rc7-rt2 (-rt2 patchset on top of Linus's current git commit=20
-031f2dcd7075e218e74dd7f942ad015cf82dffab) starts to complain like following=
-=20
-(full dmesg can be found @ [1]) when try to login from console (the other=20
-acpi related errors also existed in 2.6.24-rc5-rt1) and FYI, plain 2.6.24-r=
-c7=20
-(again commit 031f2dcd7075e218e74dd7f942ad015cf82dffab) has no issues.
-
-[...]
-sysfs: duplicate filename 'vcs1' can not be created
-WARNING: at fs/sysfs/dir.c:424 sysfs_add_one()
-Pid: 1298, comm: mingetty Not tainted 2.6.24-rc7-rt2-99 #1
-[...]
-
-And because of mcount-add-basic-support-for-gcc-profiler-instrum.patch, clo=
-sed=20
-source nvidia-new module cannot be used with this release (mcount is export=
-ed=20
-GPL only), i know this is not supported but i used it with that [2] patch u=
-p=20
-until now without a single problem.=20
-
-Please don't misunderstand this, i really do not want to start a discussion=
-=20
-for this, i just want to ask the possibility of converting this into=20
-EXPORT_SYMBOL cause i thought some of the possible -rt users may need this=
-=20
-closed source module explicitly because of its 3D performance.=20
-
-If anything else needed for sysfs warnings please just say it...
-
-[1] http://cekirdek.pardus.org.tr/~caglar/dmesg.rt
-[2]=20
-http://svn.pardus.org.tr/pardus/devel/kernel/drivers/nvidia-new/files/rt.pa=
-tch
-
-Cheers
-=2D-=20
-S.=C3=87a=C4=9Flar Onur <caglar@pardus.org.tr>
-http://cekirdek.pardus.org.tr/~caglar/
-
-Linux is like living in a teepee. No Windows, no Gates and an Apache in hou=
-se!
-
---nextPart26097333.iopcmaTSH5
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.4 (GNU/Linux)
-
-iD8DBQBHjABYy7E6i0LKo6YRArhhAJ0Yr+puJJU+kLPq4BNTLgAwJ9K5MQCgjiha
-u9emouMsbDnS/hPLx8sGfiQ=
-=9g3Y
------END PGP SIGNATURE-----
-
---nextPart26097333.iopcmaTSH5--
+[  115.223202] CPU1 is down
+[    3.725918] Intel machine check architecture supported.
+[    3.725925] Intel machine check reporting enabled on CPU#0.
+[    3.725927] CPU0: Intel P4/Xeon Extended MCE MSRs (12) available
+[    3.725930] CPU0: Thermal monitoring enabled
+[    3.725936] Back to C!
+[    3.726468] Force enabled HPET at resume
+[    3.726532] Enabling non-boot CPUs ...
+[    3.726796] CPU0 attaching NULL sched-domain.
+[    3.726912] SMP alternatives: switching to SMP code
+[    3.727602] Booting processor 1/1 eip 3000
+[    3.727605] CPU 1 irqstacks, hard=b042d000 soft=b042b000
+[    3.737950] Initializing CPU#1
+[    3.798694] Calibrating delay using timer specific routine.. 5986.21 BogoMIPS (lpj=2993108)
+[    3.798703] CPU: After generic identify, caps: bfebfbff 00000000 00000000 00000000 00004400 00000000 00000000 00000000
+[    3.798714] CPU: Trace cache: 12K uops, L1 D cache: 8K
+[    3.798717] CPU: L2 cache: 512K
+[    3.798719] CPU: Physical Processor ID: 0
+[    3.798721] CPU: After all inits, caps: bfebfbff 00000000 00000000 0000b080 00004400 00000000 00000000 00000000
+[    3.798729] Intel machine check architecture supported.
+[    3.798734] Intel machine check reporting enabled on CPU#1.
+[    3.798738] CPU1: Intel P4/Xeon Extended MCE MSRs (12) available
+[    3.798741] CPU1: Thermal monitoring enabled
+[    3.798893] CPU1: Intel(R) Pentium(R) 4 CPU 3.00GHz stepping 09
+[    3.798916] checking TSC synchronization [CPU#0 -> CPU#1]: passed.
+[    3.818995] CPU0 attaching sched-domain:
+[    3.819000]  domain 0: span 3
+[    3.819002]   groups: 1 2
+[    3.819006]   domain 1: span 3
+[    3.819009]    groups: 3
+[    3.819013] CPU1 attaching sched-domain:
+[    3.819016]  domain 0: span 3
+[    3.819018]   groups: 2 1
+[    3.819020]   domain 1: span 3
+[    3.819021]    groups: 3
+[    3.819615] CPU1 is up
+[    3.820379] ACPI: Unable to turn cooling device [ef83ab80] 'off'
+[    3.820424] PM: Writing back config space on device 0000:00:01.0 at offset 7 (was 22a0a0a0, writing 2a0a0a0)
+[    3.820444] ACPI: PCI Interrupt 0000:00:1d.0[A] -> GSI 16 (level, low) -> IRQ 17
+[    3.820450] PCI: Setting latency timer of device 0000:00:1d.0 to 64
+[    3.820481] ACPI: PCI Interrupt 0000:00:1d.1[B] -> GSI 19 (level, low) -> IRQ 18
+[    3.820487] PCI: Setting latency timer of device 0000:00:1d.1 to 64
+[    3.820517] ACPI: PCI Interrupt 0000:00:1d.2[C] -> GSI 18 (level, low) -> IRQ 16
+[    3.820523] PCI: Setting latency timer of device 0000:00:1d.2 to 64
+[    3.820553] ACPI: PCI Interrupt 0000:00:1d.3[A] -> GSI 16 (level, low) -> IRQ 17
+[    3.820558] PCI: Setting latency timer of device 0000:00:1d.3 to 64
+[    3.820614] BUG: bad accounting of dynamic ticks
+[    3.820616]    will try to fix, but it is best to reboot
+[    3.820618] WARNING: at include/linux/rcupreempt.h:110 rcu_enter_nohz()
+[    3.820621] Pid: 0, comm: swapper Not tainted 2.6.24-rt2-smp #64
+[    3.820624]  [<b010522a>] show_trace_log_lvl+0x1a/0x30
+[    3.820631]  [<b0105ccd>] show_trace+0x12/0x14
+[    3.820634]  [<b010641f>] dump_stack+0x6c/0x72
+[    3.820637]  [<b0148f10>] tick_nohz_stop_sched_tick+0x2fa/0x30c
+[    3.820641]  [<b010256d>] cpu_idle+0x27/0xd2
+[    3.820644]  [<b0116f01>] start_secondary+0x19f/0x1a5
+[    3.820648]  [<00000000>] 0x0
+[    3.820661]  =======================
