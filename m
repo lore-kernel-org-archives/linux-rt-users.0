@@ -1,93 +1,70 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: 2.6.24-rc7-rt1
-Date: Tue, 15 Jan 2008 11:50:48 -0500
-Message-ID: <478C9E18.BA47.005A.0@novell.com>
-References: <1200250801.9190.7.camel@localhost.localdomain>
- <200801132143.34889.m.kozlowski@tuxland.pl>
- <Pine.LNX.4.58.0801131552350.10093@gandalf.stny.rr.com>
- <1200299260.4665.17.camel@homer.simson.net>
- <478B0B7C.BA47.005A.0@novell.com>
- <1200317101.3733.14.camel@homer.simson.net>
- <1200384437.4113.16.camel@homer.simson.net>
- <1200389315.4130.3.camel@homer.simson.net>
+From: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+Subject: Re: 2.6.24-rc7-rt2
+Date: Tue, 15 Jan 2008 18:10:27 +0100
+Message-ID: <200801151810.28279.m.kozlowski@tuxland.pl>
+References: <1200336080.318.8.camel@localhost.localdomain> <200801142316.39330.m.kozlowski@tuxland.pl> <Pine.LNX.4.58.0801141730150.3109@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: "Ingo Molnar" <mingo@elte.hu>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Mariusz Kozlowski" <m.kozlowski@tuxland.pl>,
-	"LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>
-To: "Mike Galbraith" <efault@gmx.de>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcclure-nat.wal.novell.com ([130.57.22.22]:6411 "EHLO
-	mcclure.wal.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750840AbYAOQ45 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jan 2008 11:56:57 -0500
-In-Reply-To: <1200389315.4130.3.camel@homer.simson.net>
+Received: from xdsl-664.zgora.dialog.net.pl ([81.168.226.152]:3742 "EHLO
+	tuxland.pl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750890AbYAORKc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Jan 2008 12:10:32 -0500
+In-Reply-To: <Pine.LNX.4.58.0801141730150.3109@gandalf.stny.rr.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Tue, Jan 15, 2008 at  4:28 AM, in message
-<1200389315.4130.3.camel@homer.simson.net>, Mike Galbraith <efault@gmx.de>
-wrote: 
+> > > We are pleased to announce the 2.6.24-rc7-rt2 tree, which can be
+> > > downloaded from the location:
+> > >
+> > >   http://rt.et.redhat.com/download/
+> >
+> > Compiles fine but I run into another problem. On startup kernel oopses
+> > early and this 'oops' loops over and over again on the screen until you
+> > shut down the box. So I can't (easily) capture the output. I tried different
+> > boot_delay values but it seems that it doesn't work as intended. Seems that
+> > it delays only the first printk from oops, then the rest loops over the screen
+> > without delay - again it becomes unreadable. I used my usual config with a bunch
+> > of debug options enabled so that maybe is not real rt system case. Also tried to
+> > bisect it with quilt but that is hard. Lots of patches depends on another patches
+> > so bisection brakes things. I'll look into this tommorow and reply if I get
+> > anything substantial.
+> >
+> > I attached my config in case anybody wants to try to reproduce that.
+> >
+> 
+> Turn off LOCKDEP and see if you still have the same problems. This might
+> be fixed with Daniel's patch.
 
-> debug resume trace
-> 
-> static inline int pick_optimal_cpu(int this_cpu, cpumask_t *mask)
-> {
-> 	int first;
-> 
-> 	/* "this_cpu" is cheaper to preempt than a remote processor */
-> 	if ((this_cpu != -1) && cpu_isset(this_cpu, *mask))
-> 		return this_cpu;
-> 
-> 	first = first_cpu(*mask);
-> 	if (first != NR_CPUS) {
-> 		if (!cpu_online(first)) {
-> 			WARN_ON_ONCE(1);
-> 			return -1;
-> 		}
-> 		return first;
-> 	}
-> 
-> 	return -1;
-> }
-> 
-> [  156.344352] CPU1 is down
-> [    3.726557] Intel machine check architecture supported.
-> [    3.726565] Intel machine check reporting enabled on CPU#0.
-> [    3.726567] CPU0: Intel P4/Xeon Extended MCE MSRs (12) available
-> [    3.726570] CPU0: Thermal monitoring enabled
-> [    3.726576] Back to C!
-> [    3.727107] Force enabled HPET at resume
-> [    3.727193] Enabling non-boot CPUs ...
-> [    3.727446] CPU0 attaching NULL sched-domain.
-> [    3.727550] WARNING: at kernel/sched_rt.c:385 pick_optimal_cpu()
-> [    3.727553] Pid: 27, comm: events/0 Not tainted 2.6.24-rt2-smp #73
-> [    3.727556]  [<b010522a>] show_trace_log_lvl+0x1a/0x30
-> [    3.727564]  [<b0105ccd>] show_trace+0x12/0x14
-> [    3.727567]  [<b010641f>] dump_stack+0x6c/0x72
-> [    3.727569]  [<b0120b0f>] find_lowest_rq+0x199/0x1af
-> [    3.727573]  [<b0120beb>] push_rt_task+0x6e/0x1ed
-> [    3.727575]  [<b01276a3>] switched_to_rt+0x39/0x55
-> [    3.727579]  [<b0128cd1>] task_setprio+0xbf/0x18f
-> [    3.727581]  [<b014c21e>] __rt_mutex_adjust_prio+0x19/0x1c
-> [    3.727585]  [<b014c943>] task_blocks_on_rt_mutex+0x14e/0x17e
-> [    3.727588]  [<b02f2e18>] rt_spin_lock_slowlock+0xed/0x16a
-> [    3.727593]  [<b02f351a>] __rt_spin_lock+0x41/0x48
-> [    3.727596]  [<b02f3529>] rt_spin_lock+0x8/0xa
-> [    3.727598]  [<b013f2c2>] finish_wait+0x25/0x49
-> [    3.727602]  [<b013c746>] worker_thread+0x64/0xe1
-> [    3.727605]  [<b013efb2>] kthread+0x39/0x5b
-> [    3.727607]  [<b0104e83>] kernel_thread_helper+0x7/0x14
-> [    3.727610]  =======================
-> [    3.727624] SMP alternatives: switching to SMP code
-> [    3.728314] Booting processor 1/1 eip 3000
+Ok. It works.
 
-This gives me a much better hint, Mike.  Thanks!
+I found this in dmesg:
 
--Greg
+BUG: swapper:0 task might have lost a preemption check!
+Pid: 0, comm: swapper Not tainted 2.6.24-rc7-rt2 #3
+ [<c010386b>] show_trace_log_lvl+0x1d/0x3b
+ [<c01042f3>] show_trace+0x12/0x14
+ [<c0104a2f>] dump_stack+0x6a/0x70
+ [<c0115419>] preempt_enable_no_resched+0x5c/0x5e
+ [<c0100e35>] cpu_idle+0x6d/0x82
+ [<c0323b6e>] rest_init+0x66/0x68
+ [<c043aba6>] start_kernel+0x20c/0x276
+ [<00000000>] 0x0
+ =======================
+---------------------------
+| preempt count: 00000000 ]
+| 0-level deep critical section nesting:
+----------------------------------------
+
+Box runs fine though.
+
+Regards,
+
+	Mariusz
