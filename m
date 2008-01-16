@@ -1,78 +1,159 @@
-From: "=?utf-8?q?S=2E=C3=87a=C4=9Flar?= Onur" <caglar@pardus.org.tr>
-Subject: Re: 2.6.24-rc7-rt2
-Date: Wed, 16 Jan 2008 12:11:22 +0200
-Message-ID: <200801161211.25948.caglar@pardus.org.tr>
-References: <1200336080.318.8.camel@localhost.localdomain> <Pine.LNX.4.58.0801152259200.19680@gandalf.stny.rr.com> <200801160912.37814.caglar@pardus.org.tr>
-Reply-To: caglar@pardus.org.tr
+From: Luotao Fu <l.fu@pengutronix.de>
+Subject: Re: 2.6.24-rc7-rt2 [PATCH] latency tracer fix for ppc32
+Date: Wed, 16 Jan 2008 13:03:07 +0100
+Message-ID: <20080116120307.GI5859@pengutronix.de>
+References: <1200336080.318.8.camel@localhost.localdomain> <20080115162729.GF5859@pengutronix.de> <Pine.LNX.4.58.0801151301550.26624@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart1250007.Tpx8Tf5gVB";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="3MMMIZFJzhAsRj/+"
+Cc: Luotao Fu <l.fu@pengutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ns2.uludag.org.tr ([193.140.100.220]:55499 "EHLO uludag.org.tr"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751655AbYAPKLh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Jan 2008 05:11:37 -0500
-In-Reply-To: <200801160912.37814.caglar@pardus.org.tr>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:41438 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751453AbYAPMDJ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 Jan 2008 07:03:09 -0500
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0801151301550.26624@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---nextPart1250007.Tpx8Tf5gVB
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+
+--3MMMIZFJzhAsRj/+
+Content-Type: multipart/mixed; boundary="81JctsDUVPekGcy+"
 Content-Disposition: inline
 
-Hi Again;
 
-16 Oca 2008 =C3=87ar tarihinde, S.=C3=87a=C4=9Flar Onur =C5=9Funlar=C4=B1 y=
-azm=C4=B1=C5=9Ft=C4=B1:=20
-> 16 Oca 2008 =C3=87ar tarihinde, Steven Rostedt =C5=9Funlar=C4=B1 yazm=C4=
-=B1=C5=9Ft=C4=B1:
-> > On Tue, 15 Jan 2008, [utf-8] S.=C3=83^Ga=C3=84^_lar Onur wrote:
-> > > 2.6.24-rc7-rt2 (-rt2 patchset on top of Linus's current git commit
-> > > 031f2dcd7075e218e74dd7f942ad015cf82dffab) starts to complain like
-> > > following (full dmesg can be found @ [1]) when try to login from
-> > > console (the other acpi related errors also existed in 2.6.24-rc5-rt1)
-> > > and FYI, plain 2.6.24-rc7 (again commit
-> > > 031f2dcd7075e218e74dd7f942ad015cf82dffab) has no issues.
-> >
-> > Do you get the same issues if you add to -rc7 and not git.
->
-> I'll try after trying -rt3.
+--81JctsDUVPekGcy+
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-=2Drt3 on top of 2.6.24-rc8 works fine without that sysfs problem (acpi war=
-nings=20
-still there and full dmesg can be found from [1]), whatever causes this see=
-ms=20
-solved :)
+Hi Steve,
 
-[1] http://cekirdek.pardus.org.tr/~caglar/dmesg.rt3
+I found out that the tracer got stuck on ppc32 platforms because some early
+functions call _mcount before mcount_enabled is initialized at all. I made a
+patch, which marks these functions as notrace to solve this problem. With t=
+his
+patch I can successfully boot up our mpc5200b platform and make latency tra=
+ce.
+(tested with -b switch in cyclictest). Please comment.
 
-Cheers
-=2D-=20
-S.=C3=87a=C4=9Flar Onur <caglar@pardus.org.tr>
-http://cekirdek.pardus.org.tr/~caglar/
+I made my patch against the -rt2 tree since the dummy call early_printk() in
+-rt3 conflicts with our implementation of a functional early_printk(). It
+should also work with -rt3 though.
 
-Linux is like living in a teepee. No Windows, no Gates and an Apache in hou=
-se!
+cheers
+Luotao Fu
+--=20
+   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
 
---nextPart1250007.Tpx8Tf5gVB
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
+
+--81JctsDUVPekGcy+
+Content-Type: text/x-diff; charset=us-ascii
+Content-Disposition: attachment; filename="ppc32_notrace_init_functions.diff"
+Content-Transfer-Encoding: quoted-printable
+
+Subject: don't trace early init functions for ppc32
+By: Luotao Fu <l.fu@pengutronix.de>
+  If the latency tracer is turned on in the kernel config, _mcount calls are
+  added automatically to every function call during compiling since -pg
+  compiling flag is set. _mcount() checks first the variable mcount_enabled.
+  (see implementation of _mcount() in arch/powerpc/kernel/entry_32.S) This =
+will
+  stuck forever if _mcount is called before mcount_enabled is initialized. =
+Hence
+  we mark some init functions as notrace, so that _mcount calls are not add=
+ed to
+  these functions.
+
+Signed-off-by: Luotao Fu <l.fu@pengutronix.de>
+
+---
+ arch/powerpc/kernel/cputable.c |    4 ++--
+ arch/powerpc/kernel/io.c       |    2 +-
+ arch/powerpc/kernel/setup_32.c |    2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+Index: arch/powerpc/kernel/cputable.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- arch/powerpc/kernel/cputable.c.orig
++++ arch/powerpc/kernel/cputable.c
+@@ -1333,7 +1333,7 @@ static struct cpu_spec __initdata cpu_sp
+=20
+ static struct cpu_spec the_cpu_spec;
+=20
+-struct cpu_spec * __init identify_cpu(unsigned long offset, unsigned int p=
+vr)
++notrace struct cpu_spec * __init identify_cpu(unsigned long offset, unsign=
+ed int pvr)
+ {
+ 	struct cpu_spec *s =3D cpu_specs;
+ 	struct cpu_spec *t =3D &the_cpu_spec;
+@@ -1380,7 +1380,7 @@ struct cpu_spec * __init identify_cpu(un
+ 	return NULL;
+ }
+=20
+-void do_feature_fixups(unsigned long value, void *fixup_start, void *fixup=
+_end)
++notrace void do_feature_fixups(unsigned long value, void *fixup_start, voi=
+d *fixup_end)
+ {
+ 	struct fixup_entry {
+ 		unsigned long	mask;
+Index: arch/powerpc/kernel/io.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- arch/powerpc/kernel/io.c.orig
++++ arch/powerpc/kernel/io.c
+@@ -120,7 +120,7 @@ EXPORT_SYMBOL(_outsl_ns);
+=20
+ #define IO_CHECK_ALIGN(v,a) ((((unsigned long)(v)) & ((a) - 1)) =3D=3D 0)
+=20
+-void _memset_io(volatile void __iomem *addr, int c, unsigned long n)
++notrace void _memset_io(volatile void __iomem *addr, int c, unsigned long =
+n)
+ {
+ 	void *p =3D (void __force *)addr;
+ 	u32 lc =3D c;
+Index: arch/powerpc/kernel/setup_32.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- arch/powerpc/kernel/setup_32.c.orig
++++ arch/powerpc/kernel/setup_32.c
+@@ -88,7 +88,7 @@ int ucache_bsize;
+  * from the address that it was linked at, so we must use RELOC/PTRRELOC
+  * to access static data (including strings).  -- paulus
+  */
+-unsigned long __init early_init(unsigned long dt_ptr)
++notrace unsigned long __init early_init(unsigned long dt_ptr)
+ {
+ 	unsigned long offset =3D reloc_offset();
+ 	struct cpu_spec *spec;
+
+--81JctsDUVPekGcy+--
+
+--3MMMIZFJzhAsRj/+
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.4 (GNU/Linux)
+Version: GnuPG v1.4.6 (GNU/Linux)
 
-iD8DBQBHjdhNy7E6i0LKo6YRAv/qAJsHGsreK/PdGvlfUQt1jMLDzfmCqwCeLeXZ
-g1cFCJRYp5jqgkVR4ovAtU0=
-=9jNO
+iD8DBQFHjfJ7iruQY+UyUmERArI6AKCwOkX7ozN8OmMFdxq5mVpgivdobQCgygNj
+6pNMWfo5Mb05ldXwScFaPHE=
+=Lv+y
 -----END PGP SIGNATURE-----
 
---nextPart1250007.Tpx8Tf5gVB--
+--3MMMIZFJzhAsRj/+--
