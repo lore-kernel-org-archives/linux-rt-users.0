@@ -1,57 +1,64 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24-rc7-rt3
-Date: Tue, 15 Jan 2008 23:12:53 -0500
-Message-ID: <1200456773.318.14.camel@localhost.localdomain>
+From: Valdis.Kletnieks@vt.edu
+Subject: Re: 2.6.24-rc7-rt2
+Date: Wed, 16 Jan 2008 01:23:09 -0500
+Message-ID: <31516.1200464589@turing-police.cc.vt.edu>
+References: <1200336080.318.8.camel@localhost.localdomain> <200801150237.44029.caglar@pardus.org.tr> <24149.1200455417@turing-police.cc.vt.edu>
+            <Pine.LNX.4.58.0801152302580.10869@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/signed; boundary="==_Exmh_1200464589_2966P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: caglar@pardus.org.tr, LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:33049 "EHLO
-	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755641AbYAPENJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jan 2008 23:13:09 -0500
+Received: from turing-police.cc.vt.edu ([128.173.14.107]:39418 "EHLO
+	turing-police.cc.vt.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752125AbYAPGXj (ORCPT
+	<RFC822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 Jan 2008 01:23:39 -0500
+In-Reply-To: Your message of "Tue, 15 Jan 2008 23:04:39 EST."
+             <Pine.LNX.4.58.0801152302580.10869@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24-rc7-rt3 tree, which can be
-downloaded from the location:
+--==_Exmh_1200464589_2966P
+Content-Type: text/plain; charset=us-ascii
 
-  http://rt.et.redhat.com/download/
+On Tue, 15 Jan 2008 23:04:39 EST, Steven Rostedt said:
+> 
+> On Tue, 15 Jan 2008 Valdis.Kletnieks@vt.edu wrote:
+> 
+> > On Tue, 15 Jan 2008 02:37:37 +0200, =?utf-8?q?S=2E=C3=87a=C4=9Flar?= Onur said:
+> > > And because of mcount-add-basic-support-for-gcc-profiler-instrum.patch, closed
+> > > source nvidia-new module cannot be used with this release (mcount is exported
+> > > GPL only), i know this is not supported but i used it with that [2] patch up
+> > > until now without a single problem.
+> >
+> > Playing devil's advocate here - the claim is that EXPORT_SYMBOL_GPL is to
+> > indicate that code is getting too chummy with Linux internals.
+> >
+> > However, in *this* case, isn't it "code that is too chummy with *GCC* internals",
+> > and thus it isn't our place to say what can and can't be done with code that
+> > is derivative of the GCC compiler? ;)
+> 
+> Actually, it got put in there by accident. I usually default all my
+> exports as GPL.  But this breaks pretty much everything, so I'll leave it
+> as EXPORT_SYMBOL.
 
-Information on the RT patch can be found at:
+OK, I can live with that. ;)
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
+--==_Exmh_1200464589_2966P
+Content-Type: application/pgp-signature
 
-Changes since 2.6.24-rc7-rt2
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.8 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
 
-  - KVM updates (Thomas Gleixner)
+iD8DBQFHjaLNcC3lWbTT17ARAhyuAKC3o+wF4KyP912ZxaTP51ruZ6mQUgCfR4cL
+VaJPUclrvxksF0H92ijLKCU=
+=z2JA
+-----END PGP SIGNATURE-----
 
-  - more PPC32 compile fixes
-
-  - Mips clean ups (Frank Rowand)
-
-  - workqueue lock leak cleanup (Daniel Walker)
-
-  - hacked fix for rt-migration (Mike Galbraith)
-
-
-to build a 2.6.24-rc7-rt3 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
-  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.24-rc7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24-rc7-rt3.bz2
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
--- Steve
+--==_Exmh_1200464589_2966P--
