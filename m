@@ -1,56 +1,49 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.24-rc7-rt2
-Date: Wed, 16 Jan 2008 11:22:37 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801161112140.15998@gandalf.stny.rr.com>
-References: <1200336080.318.8.camel@localhost.localdomain>
- <200801150237.44029.caglar@pardus.org.tr> <24149.1200455417@turing-police.cc.vt.edu>
-            <Pine.LNX.4.58.0801152302580.10869@gandalf.stny.rr.com>
- <31516.1200464589@turing-police.cc.vt.edu> <Pine.LNX.4.58.0801160904200.9544@gandalf.stny.rr.com>
+From: "Mark Knecht" <markknecht@gmail.com>
+Subject: Re: 2.6.24-rc7-rt3
+Date: Wed, 16 Jan 2008 11:44:01 -0800
+Message-ID: <5bdc1c8b0801161144x62aa3f9bj868602db94b42570@mail.gmail.com>
+References: <1200456773.318.14.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: caglar@pardus.org.tr, LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Alan Cox <alan@lxorguk.ukuu.org.uk>
-To: Valdis.Kletnieks@vt.edu
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:50526 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751823AbYAPQXQ (ORCPT
+Received: from wr-out-0506.google.com ([64.233.184.231]:7510 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752170AbYAPToG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Jan 2008 11:23:16 -0500
-In-Reply-To: <Pine.LNX.4.58.0801160904200.9544@gandalf.stny.rr.com>
+	Wed, 16 Jan 2008 14:44:06 -0500
+Received: by wr-out-0506.google.com with SMTP id c49so139350wra.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Jan 2008 11:44:03 -0800 (PST)
+In-Reply-To: <1200456773.318.14.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Jan 15, 2008 8:12 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> We are pleased to announce the 2.6.24-rc7-rt3 tree
 
-On Wed, 16 Jan 2008, Steven Rostedt wrote:
->
-> We modified mcount now, and it is derived from an objdump of glibc. So
-> this is most definitely a "derived" work from glibc. But glibc is licensed
-> as LGPL, which IIRC allows for non GPL to link to it.
->
-> I personally could care less if we use EXPORT_SYMBOL or EXPORT_SYMBOL_GPL.
-> But I really want to do The Right Thing(tm). I'm not a lawyer and don't
-> claim that I know anything about the law, but I'm leaning towards the non
-> _GPL version because the code was from LGPL and not from strict GPL.
+Up and running here:
 
-Sorry folks, I'm going to stick with the _GPL version. It doesn't mean
-that you can't still load your nVidia module into -rt. I just means you
-can't turn on function trace and then load it. Well, you might if you
-don't compile the nVidia wrapper against it with function trace on.
+mark@lightning ~ $ uname -a
+Linux lightning 2.6.24-rc7-rt3 #1 PREEMPT RT Wed Jan 16 11:06:11 PST
+2008 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+mark@lightning ~ $
 
-The reason simply is to cover my butt.  By limiting it to GPL, I'm fine.
-Even if the original author didn't care. But by opening it up to external
-prorietary modules, I may be considered infringing on the license.
+Nothing of interest in dmesg. The issue I reported earlier about
+/var/log/messages has been there for a long time without me noticing
+it. I'm in 2.6.23-rt1 and I still see it so it has nothing to do with
+the kernel as I'm sure you decided already.
 
-So, unless I hear from a lawyer that is willing to back me up on a non
-_GPL export publically, the mcount function will stay as an
-EXPORT_SYMBOL_GPL.
+Jan 16 11:12:55 lightning sshd[5915]: Server listening on :: port 22.
+Jan 16 11:12:55 lightning sshd[5915]: error: Bind to port 22 on
+0.0.0.0 failed: Address already in use.
 
-Note: There is a definite reason for this change. The previous version
-of mcount was written by Ingo Molnar, and he added the export. I've
-changed mcount to be closer to the glibc code (which I derived it from),
-so the change in EXPORT type is legitimate.
+Will continue testing as I get time.
 
--- Steve
+Cheers,
+Mark
