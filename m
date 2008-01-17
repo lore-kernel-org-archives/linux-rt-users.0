@@ -1,82 +1,40 @@
-From: Luotao Fu <l.fu@pengutronix.de>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: 2.6.24-rc8-rt1
-Date: Thu, 17 Jan 2008 13:46:47 +0100
-Message-ID: <20080117124647.GK5859@pengutronix.de>
-References: <1200544050.318.18.camel@localhost.localdomain> <478F2A46.5070506@grandegger.com>
+Date: Thu, 17 Jan 2008 08:17:12 -0800
+Message-ID: <1200586632.18731.141.camel@imap.mvista.com>
+References: <1200544050.318.18.camel@localhost.localdomain>
+	 <478F2A46.5070506@grandegger.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="zH41lVBEV8cLJnCl"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Steven Rostedt <rostedt@goodmis.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:48098 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756777AbYAQMqx (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:49780 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752590AbYAQQUT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Jan 2008 07:46:53 -0500
-Content-Disposition: inline
+	Thu, 17 Jan 2008 11:20:19 -0500
 In-Reply-To: <478F2A46.5070506@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---zH41lVBEV8cLJnCl
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi Wolfgang,
-
-On Thu, Jan 17, 2008 at 11:13:26AM +0100, Wolfgang Grandegger wrote:
+On Thu, 2008-01-17 at 11:13 +0100, Wolfgang Grandegger wrote:
 > Steven Rostedt wrote:
+> > We are pleased to announce the 2.6.24-rc8-rt1 tree, which can be
+> > downloaded from the location:
+> > 
+> >   http://rt.et.redhat.com/download/
+> 
 > It builds and runs fine on my Icecube-MPC5200 board, now also with the
 > latency tracer enabled. That's great. Still, "cyclictest -n -p80 -i1000"
 > reports latencies up to 400 us and therefore I tried to trigger and save
 > a high latency trace using:
->=20
->   # ./cyclictest -n -p80 -i1000 -b400
->   1.21 0.33 0.11 4/42 1048
->=20
->   T: 0 (  914) P:80 I:1000 C:  38726 Min:     61 Act:  107 Avg:  106
-> Max:     377
->   [   91.042169] (      cyclictest-914  |#0): new 39733427 us user-latenc=
-y.
->   bash-3.00# cat /proc/latency_trace > trace.log
->=20
 
-I tested 2.6.24-rc8-rt1 on our phytec phyCORE-MPC5200B-tiny. I runned cycli=
-ctest
-with exactly the same parameter as you used and made some non-rt Workload w=
-ith
-"hackbench 5" in a while 1 loop and a "ping -f" from a host machine. I run =
-the
-test for about 3 hours and could not push the latency to higher than 220 us.
-(The latency tracer is also turned on in kernel). Could you please send me =
-your
-kernelconfig privately?
+Do you happen to have a boot log (dmesg) for this system?
 
-cheers
-Luotao Fu
---=20
-   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
-
-
---zH41lVBEV8cLJnCl
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-
-iD8DBQFHj040iruQY+UyUmERAoIUAJ4kJ6+H8iWtWoqg9X0RDq8uFXqDPQCeJT18
-7ykRHYirV77EzkuphzvN7ro=
-=JFyf
------END PGP SIGNATURE-----
-
---zH41lVBEV8cLJnCl--
+Daniel
