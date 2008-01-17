@@ -1,52 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24-rc8-rt1
-Date: Wed, 16 Jan 2008 23:27:30 -0500
-Message-ID: <1200544050.318.18.camel@localhost.localdomain>
+From: "Mark Knecht" <markknecht@gmail.com>
+Subject: Re: 2.6.24-rc8-rt1
+Date: Wed, 16 Jan 2008 21:26:39 -0800
+Message-ID: <5bdc1c8b0801162126i115ba2d0rc47f6651fda1c10a@mail.gmail.com>
+References: <1200544050.318.18.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-05.nyroc.rr.com ([24.24.2.59]:46295 "EHLO
-	ms-smtp-05.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751326AbYAQE1q (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.179]:3532 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751073AbYAQF0l (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Jan 2008 23:27:46 -0500
+	Thu, 17 Jan 2008 00:26:41 -0500
+Received: by py-out-1112.google.com with SMTP id u52so762364pyb.10
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Jan 2008 21:26:40 -0800 (PST)
+In-Reply-To: <1200544050.318.18.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24-rc8-rt1 tree, which can be
-downloaded from the location:
+On Jan 16, 2008 8:27 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> We are pleased to announce the 2.6.24-rc8-rt1 tree, which can be
+> downloaded from the location:
+>
+>   http://rt.et.redhat.com/download/
+>
 
-  http://rt.et.redhat.com/download/
+Up and running fine here:
 
-Information on the RT patch can be found at:
+mark@lightning ~ $ uname -a
+Linux lightning 2.6.24-rc8-rt1 #1 PREEMPT RT Wed Jan 16 21:11:05 PST
+2008 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+mark@lightning ~ $
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24-rc7-rt3
-
-  - ported to 2.6.24-rc8
-
-  - PPC bootup notrace added for function trace (Luotao Fu)
-
-  - MIPS remove duplicate Kconfig (Frank Rowand)
-
-to build a 2.6.24-rc8-rt1 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.23.tar.bz2
-  http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.24-rc8.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24-rc8-rt1.bz2
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
--- Steve
+Cheers,
+Mark
