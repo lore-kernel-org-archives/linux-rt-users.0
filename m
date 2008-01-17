@@ -1,37 +1,53 @@
-From: Mariusz Kozlowski <m.kozlowski@tuxland.pl>
+From: Wolfgang Grandegger <wg@grandegger.com>
 Subject: Re: 2.6.24-rc8-rt1
-Date: Thu, 17 Jan 2008 20:57:17 +0100
-Message-ID: <200801172057.18375.m.kozlowski@tuxland.pl>
-References: <1200544050.318.18.camel@localhost.localdomain>
+Date: Thu, 17 Jan 2008 21:01:41 +0100
+Message-ID: <478FB425.6050406@grandegger.com>
+References: <1200544050.318.18.camel@localhost.localdomain>  <478F2A46.5070506@grandegger.com>  <1200586632.18731.141.camel@imap.mvista.com>  <478F9BCE.4030301@grandegger.com> <1200594655.18731.148.camel@imap.mvista.com> <Pine.LNX.4.58.0801171344290.28350@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-2"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Daniel Walker <dwalker@mvista.com>,
+	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from xdsl-664.zgora.dialog.net.pl ([81.168.226.152]:4391 "EHLO
-	tuxland.pl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751259AbYAQT5W (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Jan 2008 14:57:22 -0500
-In-Reply-To: <1200544050.318.18.camel@localhost.localdomain>
-Content-Disposition: inline
+Received: from mail-out.m-online.net ([212.18.0.9]:34761 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751645AbYAQUBo (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Jan 2008 15:01:44 -0500
+In-Reply-To: <Pine.LNX.4.58.0801171344290.28350@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
-
-> We are pleased to announce the 2.6.24-rc8-rt1 tree, which can be
-> downloaded from the location:
+Steven Rostedt wrote:
+> On Thu, 17 Jan 2008, Daniel Walker wrote:
 > 
->   http://rt.et.redhat.com/download/
+>> On Thu, 2008-01-17 at 19:17 +0100, Wolfgang Grandegger wrote:
+>>> [    0.733248] TCP bind hash table entries: 2048 (order: 3, 57344
+>>> bytes)
+>>> [    0.741132] TCP: Hash tables configured (established 2048 bind
+>>> 2048)
+>>> [    0.747981] TCP reno registered
+>>> [    0.805896] krcupreemptd setsched 0
+>>> [    0.809657]   prio = 98
+>> That's interesting .. You chould try running cyclictest at priority 99
+>> to eliminate other threads that might get involved (using -p99 instead
+>> of -p80 , I think) ..
+>>
+> 
+> But, anotherthing to try is disabling CONFIG_PREEMPT_RCU_BOOST, and see if
+> that fixes anything.
 
-Compiled fine, runs fine on x86. No problems so far.
+It did not really help:
 
-Later on I'll give it a try on ppc and sparc64.
+   /cyclictest -n -p99 -i1000
+  3.89 3.46 1.77 1/43 3830
 
-Thanks,
+  T: 0 (  916) P:99 I:1000 C: 520752 Min:     52 Act:  112 Avg:  105
+Max:     960
 
-	Mariusz
+Any other idea?
+
+Wolfgang.
