@@ -1,33 +1,83 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Why not creating a GIT RT tree ?
-Date: Fri, 18 Jan 2008 17:17:28 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801181714340.13971@gandalf.stny.rr.com>
-References: <38b2ab8a0801180544j2022af8bl252a118a295b1f34@mail.gmail.com>
- <m3zlv2kd6t.fsf@lugabout.jhcloos.org>
+From: Esben Nielsen <nielsen.esben@googlemail.com>
+Subject: Re: 2.6.24-rc7-rt2
+Date: Mon, 21 Jan 2008 12:31:20 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.0801211223210.11032@frodo.shire>
+References: <1200336080.318.8.camel@localhost.localdomain>
+ <200801150237.44029.caglar@pardus.org.tr> <24149.1200455417@turing-police.cc.vt.edu>
+            <Pine.LNX.4.58.0801152302580.10869@gandalf.stny.rr.com>
+ <31516.1200464589@turing-police.cc.vt.edu> <Pine.LNX.4.58.0801160904200.9544@gandalf.stny.rr.com>
+ <Pine.LNX.4.58.0801161112140.15998@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Francis Moreau <francis.moro@gmail.com>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Cc: Valdis.Kletnieks@vt.edu, caglar@pardus.org.tr,
 	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: James Cloos <cloos@jhcloos.com>
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Alan Cox <alan@lxorguk.ukuu.org.uk>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:58674 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1761683AbYARWRk (ORCPT
+Received: from fk-out-0910.google.com ([209.85.128.184]:65231 "EHLO
+	fk-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758214AbYAULbc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Jan 2008 17:17:40 -0500
-In-Reply-To: <m3zlv2kd6t.fsf@lugabout.jhcloos.org>
+	Mon, 21 Jan 2008 06:31:32 -0500
+Received: by fk-out-0910.google.com with SMTP id z23so1325811fkz.5
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Jan 2008 03:31:30 -0800 (PST)
+In-Reply-To: <Pine.LNX.4.58.0801161112140.15998@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Fri, 18 Jan 2008, James Cloos wrote:
+
+On Wed, 16 Jan 2008, Steven Rostedt wrote:
+
 >
->  git://git.kernel.org/pub/scm/linux/kernel/git/cloos/rt-2.6.git
-> http://www.kernel.org/pub/scm/linux/kernel/git/cloos/rt-2.6.git
+> On Wed, 16 Jan 2008, Steven Rostedt wrote:
+>>
+>> We modified mcount now, and it is derived from an objdump of glibc. So
+>> this is most definitely a "derived" work from glibc. But glibc is licensed
+>> as LGPL, which IIRC allows for non GPL to link to it.
+>>
+>> I personally could care less if we use EXPORT_SYMBOL or EXPORT_SYMBOL_GPL.
+>> But I really want to do The Right Thing(tm). I'm not a lawyer and don't
+>> claim that I know anything about the law, but I'm leaning towards the non
+>> _GPL version because the code was from LGPL and not from strict GPL.
+>
+> Sorry folks, I'm going to stick with the _GPL version. It doesn't mean
+> that you can't still load your nVidia module into -rt. I just means you
+> can't turn on function trace and then load it. Well, you might if you
+> don't compile the nVidia wrapper against it with function trace on.
+>
+> The reason simply is to cover my butt.  By limiting it to GPL, I'm fine.
+> Even if the original author didn't care. But by opening it up to external
+> prorietary modules, I may be considered infringing on the license.
+>
+> So, unless I hear from a lawyer that is willing to back me up on a non
+> _GPL export publically, the mcount function will stay as an
+> EXPORT_SYMBOL_GPL.
+>
+> Note: There is a definite reason for this change. The previous version
+> of mcount was written by Ingo Molnar, and he added the export. I've
+> changed mcount to be closer to the glibc code (which I derived it from),
+> so the change in EXPORT type is legitimate.
+>
+> -- Steve
 
-Thanks for doing this. We might want to add this to the wiki.
 
-   http://rt.wiki.kernel.org/index.php/Main_Page
+Please, tell what in the license forbids me to make a global replacement
+EXPORT_SYMBOL_GPL -> EXPORT_SYMBOL and distribute the result?
 
--- Steve
+For me, on the other hand, it is against the spirit of free software to 
+actively make a block for people to do what ever they want with the code 
+when they are only doing it to themselves. That includes loading non-GPL 
+software into the kernel. The only thing they  are not allowed to do is to
+distribute it and in that way "hurt" other people.
+
+Esben
+
+
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
