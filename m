@@ -1,83 +1,124 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc
-Date: Thu, 24 Jan 2008 11:49:51 -0200
-Message-ID: <20080124134951.GG4776@unix.sh>
-References: <1200544050.318.18.camel@localhost.localdomain> <478F2A46.5070506@grandegger.com> <20080123145340.GE6200@pengutronix.de> <47976D06.1010900@grandegger.com> <47986E44.3010101@grandegger.com> <20080124112847.GE4776@unix.sh> <47987D73.8090904@grandegger.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Use the RT Latency Trace? - LET ME KNOW!
+Date: Thu, 24 Jan 2008 15:36:44 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0801241049280.31533@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: Wolfgang Grandegger <wg@grandegger.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from marova.hst.terra.com.br ([200.176.10.215]:51753 "EHLO
-	marova.hst.terra.com.br" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751675AbYAXNv7 (ORCPT
+Received: from ms-smtp-03.nyroc.rr.com ([24.24.2.57]:43560 "EHLO
+	ms-smtp-03.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757236AbYAXUhE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jan 2008 08:51:59 -0500
-Received: from sr06-04.mta.terra.com.br (sr06-04.mta.terra.com.br [200.154.152.73])
-	by marova.hst.terra.com.br (Postfix) with ESMTP id 502A83B6A36
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Jan 2008 11:51:57 -0200 (BRST)
-Content-Disposition: inline
-In-Reply-To: <47987D73.8090904@grandegger.com>
+	Thu, 24 Jan 2008 15:37:04 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jan 24, 2008 at 12:58:43PM +0100, Wolfgang Grandegger wrote:
-| Hi Luis,
-| 
-| I re-added CC to the mailing list.
-| 
-| Luis Claudio R. Goncalves wrote:
-| > On Thu, Jan 24, 2008 at 11:53:56AM +0100, Wolfgang Grandegger wrote:
-| > | Wolfgang Grandegger wrote:
-| > ... 
-| > I deleted lots of lines just to make it easy to see my question:
-| > ...
-| > | OK, here is the full report.
-| > ...
-| > |   bash-3.00# ./cyclictest -n -p80 -t1 -i1000
-| > |   2.91 4.81 13.72 1/50 23887
-| > | 
-| > |   T: 0 (  976) P:80 I:1000 C:1634520 Min: 15 Act:  45 Avg:  68 Max:  138
-| > 
-| > ...
-| >  
-| > |   bash-3.00# ./cyclictest -n -p80 -i1000
-| > |   52.31 96.08 61.61 2/51 9129
-| > | 
-| > |   T: 0 (  976) P:80 I:1000 C: 795180 Min:  14 Act: 75 Avg:  69 Max:  134
-| >  
-| > Are the loadavg values right? If so, the results were obtained in very
-| > different circunstances. In the first case, load was around 2.91... in the
-| > second one, 52.31. This is also true for the other tests below.
-| > 
-| > Please compare /proc/loadavg and /proc/loadavgrt (a simple cat do the
-| > trick). If loadavgrt is reporting bogus values, let us know. It was fixed a
-| > looong time ago, but I never tested that in a ppc.
-| 
-| Here is the output:
-| 
-|   bash-3.00# cat /proc/loadavg; cat /proc/loadavgrt
-|   3.12 3.13 4.57 3/46 5541
-|   75.35 73.84 72.94 0/46 5543
-| 
-| There is no constant load as I run:
-| 
-|   "while ./hackbench 10; do ./calibrator 400 32M cali; sleep 30; done"
-| 
-| in the second terminal window. What you see is the load when I
-| interrupted the test manually.
-| 
-| Wolfgang.
 
-The bogus readings in /proc/loadvgrt were fixed a while ago and the fix is
-in the 2.6.24-rcX-rtX series. Not that this could be leading you to wrong
-results, but that's really strange seeing it.
+Hi all,
 
-OTOH, cyclictest reads the load from /proc/loadavg and system pressure (at
-least for the last 15 minutes) was really different on the tests, even though
-results were close.
+I'm about to gut the RT latency tracer with the version I'm pushing
+upstream. This will be some of the changes:
 
-Luis
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+Move from /proc to /debugfs
+
+instead of all the files in proc (for which I don't even know what half of
+them do) will be condensed into a few files in /debugfs/tracing
+
+  available_tracers
+   This file holds the available traces that you can use. Note, unlike
+   -rt, you can choose between tracing preemptoff, irqsoff or preempt
+   and irqs off latency at runtime. Here's the available tracers:
+
+	events - traces kernel events (like EVENT_TRACE)
+
+	wakeup - trace wakeup timings
+
+	preemptirqsoff - trace preempt and irqs off latencies
+
+	preemptoff - trace only preempt off latencies
+
+	irqsoff - trace irqs off latencies
+
+	function - trace functions (mcount)
+
+	sched_switch - a context switch tracer (watch processes get
+		scheduled in and out)
+
+   Only one trace may be enabled at a time. Most of these traces also have
+   a function equivalent, which will be activate if function trace is
+   compiled in and sysctl kernel.mcount_enabled=1.
+
+  current_tracer
+   This holds the current active trace (from above). To change or activate
+   a trace, simple echo in one of the above traces into this file.
+
+    e.g.  echo irqsoff > /debugfs/tracing/current_tracer
+
+  iter_ctrl
+   This file controls the output of traces. So far there's only two
+   different commands:
+
+	verbose (noverbose) - change to latency_tracer verbose output.
+
+	symonly (nosymonly) - only print kallsyms addr, and leave out the
+				hex IP addr.
+
+  latency_trace
+   This is where one can read the latency trace from.
+	(the old /proc/latency_trace)
+
+  trace
+   This is another format for output. A little easier to read but not as
+   much information.
+
+  trace_ctrl
+   echo 1 > starts the tracer, echo 0 > stops (for all traces)
+
+  tracing_max_latency
+   This is just like the old preempt_max_latency for those that use it
+   (preempt and irqs off as well as wakeup)
+
+  tracing_thresh
+   This is just like the old preempt_thresh.
+
+Now the users has full access to start and stop the trace from these
+files.
+
+Note: I've been pushing a lot of this mainline. Some of this will not be
+pushed mainline. Specifically, the event trace. Since the event trace does
+a lot that LTTng does. I will probably wait till the markers of LTTng go
+in. Or perhaps I'll simply push event trace, but that's still TBA.
+
+I'll also hack up the prctl(0,0) - trace off - and prctl(0,1) trace on for
+-rt only. This will not be something that will be pushed upstream.
+
+If there's people on this list that use tools for latency tracing, let me
+know and I can help you in the conversion. Also note some other
+differences.
+
+ - There will be some slightly different output formats. One is that the
+trace_special which seems to always pass in an eip will now convert that
+eip into a comm (kallsyms).
+
+- The hrtimer_trace will use a hex value for the timer pointer instead of
+a decimal.
+
+- context switching is done a bit different:
+
+e.g.
+  bash-3138  1d..3 342us+: 3138:120:S --> 3131:120
+
+This is a sched switch from bash 3138 of prio 120 in sleep state to task
+sshd 3131 (I know this because of the next line down that I didn't show
+;-) of prio 120.
+
+But here's just a heads up on the new tracer. If there's issues, I'll try
+to work them out.
+
+Expect this new tracing format to be in either 2.6.24-rc8-rt2 or
+2.6.24-rt2. (if 2.6.24 comes out, I may just port to it without adding the
+tracer).
+
+-- Steve
