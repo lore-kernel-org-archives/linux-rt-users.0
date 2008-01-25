@@ -1,32 +1,36 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: Use the RT Latency Trace? - LET ME KNOW!
-Date: Thu, 24 Jan 2008 19:31:01 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0801241929430.8911@gandalf.stny.rr.com>
+Date: Thu, 24 Jan 2008 18:51:23 -0800
+Message-ID: <1201229483.18044.1.camel@imap.mvista.com>
 References: <Pine.LNX.4.58.0801241049280.31533@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms-smtp-04.nyroc.rr.com ([24.24.2.58]:65015 "EHLO
-	ms-smtp-04.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752217AbYAYAb3 (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:62964 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752017AbYAYCwV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jan 2008 19:31:29 -0500
+	Thu, 24 Jan 2008 21:52:21 -0500
 In-Reply-To: <Pine.LNX.4.58.0801241049280.31533@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-5B
 
-On Thu, 24 Jan 2008, Steven Rostedt wrote:
+On Thu, 2008-01-24 at 15:36 -0500, Steven Rostedt wrote:
+> Hi all,
+> 
+> I'm about to gut the RT latency tracer with the version I'm pushing
+> upstream. This will be some of the changes:
+> 
 
->
-> But here's just a heads up on the new tracer. If there's issues, I'll try
-> to work them out.
+Do you have all the functionality of the prior tracer ? Specifically the
+histogram support .. I can vouch for the fact that it's getting used.. I
+would prefer you don't gut the current tracer unless you have the same
+level of functionality ..
 
-Note: I've removed the latency trace histograms. I don't even know if they
-were working. If someone was using them, please holler and I'll see if I
-can get something working.
-
--- Steve
+Daniel
