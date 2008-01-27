@@ -1,61 +1,82 @@
-From: Dragan Noveski <perodog@gmx.net>
-Subject: Re: 2.6.24-rt1
-Date: Sun, 27 Jan 2008 19:47:49 +0100
-Message-ID: <479CD1D5.9080104@gmx.net>
-References: <1201299433.318.21.camel@localhost.localdomain> <479A77E4.2070800@gmx.net> <Pine.LNX.4.58.0801260008090.22141@gandalf.stny.rr.com>
+From: Esben Nielsen <nielsen.esben@googlemail.com>
+Subject: Re: 2.6.24-rc7-rt2
+Date: Sun, 27 Jan 2008 22:51:55 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.0801272230270.8920@frodo.shire>
+References: <1200336080.318.8.camel@localhost.localdomain>
+ <200801150237.44029.caglar@pardus.org.tr> <24149.1200455417@turing-police.cc.vt.edu>
+            <Pine.LNX.4.58.0801152302580.10869@gandalf.stny.rr.com>
+ <31516.1200464589@turing-police.cc.vt.edu> <Pine.LNX.4.58.0801160904200.9544@gandalf.stny.rr.com>
+ <Pine.LNX.4.58.0801161112140.15998@gandalf.stny.rr.com>
+ <Pine.LNX.4.64.0801211223210.11032@frodo.shire>
+ <Pine.LNX.4.58.0801210738140.13659@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Cc: Valdis.Kletnieks@vt.edu, caglar@pardus.org.tr,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Alan Cox <alan@lxorguk.ukuu.org.uk>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:36933 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1754037AbYA0SyE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Jan 2008 13:54:04 -0500
-In-Reply-To: <Pine.LNX.4.58.0801260008090.22141@gandalf.stny.rr.com>
+Received: from fg-out-1718.google.com ([72.14.220.155]:64483 "EHLO
+	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751777AbYA0VwH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Jan 2008 16:52:07 -0500
+Received: by fg-out-1718.google.com with SMTP id e21so1469380fga.17
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Jan 2008 13:52:05 -0800 (PST)
+In-Reply-To: <Pine.LNX.4.58.0801210738140.13659@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven Rostedt wrote:
-> On Sat, 26 Jan 2008, Dragan Noveski wrote:
->   
->> hallo list, i just compiled the new release on my laptop (ibm thinkpad
->> r50e, debian testing) and im finiding this lines in dmesg:
->>
->> ....
->> PCI: Using ACPI for IRQ routing
->> PCI: If a device doesn't work, try "pci=routeirq".  If it helps, post a
->> report
->> system 00:00: iomem range 0x0-0x9ffff could not be reserved
->> system 00:00: iomem range 0xc0000-0xc3fff could not be reserved
->> system 00:00: iomem range 0xc4000-0xc7fff could not be reserved
->> system 00:00: iomem range 0xc8000-0xcbfff has been reserved
->> system 00:00: iomem range 0xcc000-0xcffff could not be reserved
->> system 00:00: iomem range 0x0-0x0 could not be reserved
->> system 00:00: iomem range 0x0-0x0 could not be reserved
->> system 00:00: iomem range 0x0-0x0 could not be reserved
->> system 00:00: iomem range 0xdc000-0xdffff has been reserved
->> system 00:00: iomem range 0xe0000-0xe3fff could not be reserved
->> system 00:00: iomem range 0xe4000-0xe7fff could not be reserved
->> system 00:00: iomem range 0xe8000-0xebfff could not be reserved
->> system 00:02: ioport range 0x1000-0x107f has been reserved
->> system 00:02: ioport range 0x1180-0x11bf has been reserved
->> system 00:02: ioport range 0x15e0-0x15ef has been reserved
->> system 00:02: ioport range 0x1600-0x167f has been reserved
->> ....
->>
->> i never saw this before, so could someone guess if i should be scared of it?
->>
->>     
+
+On Mon, 21 Jan 2008, Steven Rostedt wrote:
+
 >
-> Do you see the same with vanilla 2.6.24?
+> On Mon, 21 Jan 2008, Esben Nielsen wrote:
+>>
+>> Please, tell what in the license forbids me to make a global replacement
+>> EXPORT_SYMBOL_GPL -> EXPORT_SYMBOL and distribute the result?
 >
+> If you want to distribute that code, the authors of that said code
+> may be able to challenge you in saying that you are enabling a means to
+> circumvent a way around the license, and hold you liable. Remember, all it
+> takes is one country with the laws that will grant this complaint.
+>
+>>
+>> For me, on the other hand, it is against the spirit of free software to
+>> actively make a block for people to do what ever they want with the code
+>> when they are only doing it to themselves. That includes loading non-GPL
+>> software into the kernel. The only thing they  are not allowed to do is to
+>> distribute it and in that way "hurt" other people.
+>
+> Honestly, I don't care which export it is. The thing is that I derived
+> that code from someone else. I did not look up the original author of the
+> code to find out which export they would like it to be. I may be able to
+> argue that since it was under a LGPL and not a GPL license, I may very
+> well be able to export it that way.
+>
+> I'm taking the safe way out. By exporting it as EXPORT_SYMBOL_GPL, I am
+> safe either way. By exporting it as EXPORT_SYMBOL without first hearing
+> from the original author (and getting that in writing), or hearing it from
+> a lawyer, I may be putting myself at risk.
+>
+> Feel free to creating a version of this code and
+> s/EXPORT_SYMBOL_GPL/EXPORT_SYMBOL/ and distribute it. I wont come after
+> you for that, but at least I know those that would, will go after you and
+> not me.
+>
+> Call me a chicken, I don't care, but I'm just not going to put myself nor
+> my company I work for, at risk over this issue.
+>
+
+First off, sorry for sounding so harsh and sorry for taking this 
+discussion onto you. It is quite off-topic in this context. It was just 
+a rant about the misconception that adding/removing _GPL to 
+EXPORT_SYMBOL can make non-GPL modules more or less legal. Is is a 
+_political_ issue, not a legal one.
+
+Esben
+
 > -- Steve
 >
->   
-hallo steve, thanks for the response.
-i just recompiled without the rt-patch and yes, i see exactly the same 
-in dmesg.
-
-cheers,
-doc
