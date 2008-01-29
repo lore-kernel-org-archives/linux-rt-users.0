@@ -1,23 +1,18 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: [PATCH] fix workqueue plist init to include a spinlock
 Date: Tue, 29 Jan 2008 09:04:18 -0800
-Message-ID: <20080129170418.441437926@mvista.com>
+Message-ID: <20080129170230.209662753__28317.7829500803$1201626468$gmane$org@mvista.com>
 Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: mingo@elte.hu
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:8059 "EHLO
-	dwalker1.mvista.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751719AbYA2RGM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Jan 2008 12:06:12 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933382AbYA2RGb@vger.kernel.org>
 Message-Id: <20080129170230.209662753@mvista.com>
 Date: Tue, 29 Jan 2008 09:02:30 -0800
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Kevin Hilman <khilman@mvista.com>
 Cc: linux-rt-users@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 The lock field in plist_head_init() is used for debugging the plist,
 and if a NULL is sent in it spews constant errors with debugging enabled ..
