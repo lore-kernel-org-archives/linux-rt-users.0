@@ -1,55 +1,37 @@
-From: Thomas <gimpel@sonnenkinder.org>
-Subject: Re: uvesafb + 2.6.24-rt
-Date: Thu, 31 Jan 2008 01:07:26 +0000 (UTC)
-Message-ID: <loom.20080131T010542-222@post.gmane.org>
-References: <loom.20080130T221839-89@post.gmane.org>
+From: "Uli Brueggemann" <uli.brueggemann@gmail.com>
+Subject: 2.6.24-rt1 SSttrraannggee keyboard behaviour
+Date: Fri, 1 Feb 2008 16:06:23 +0100
+Message-ID: <10a58eee0802010706s65929d0dte10a4cde35df317f@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:39717 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753735AbYAaBHi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Jan 2008 20:07:38 -0500
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1JKNtv-00033e-Re
-	for linux-rt-users@vger.kernel.org; Thu, 31 Jan 2008 01:07:35 +0000
-Received: from ppp-82-135-15-177.dynamic.mnet-online.de ([82.135.15.177])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 31 Jan 2008 01:07:35 +0000
-Received: from gimpel by ppp-82-135-15-177.dynamic.mnet-online.de with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 31 Jan 2008 01:07:35 +0000
+Received: from wa-out-1112.google.com ([209.85.146.181]:57337 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753226AbYBAPGY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 1 Feb 2008 10:06:24 -0500
+Received: by wa-out-1112.google.com with SMTP id v27so736570wah.23
+        for <linux-rt-users@vger.kernel.org>; Fri, 01 Feb 2008 07:06:23 -0800 (PST)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas <gimpel <at> sonnenkinder.org> writes:
+Hi,
 
-> 
-> Hi,
-> 
-> I have been using the new uvesafb on non-rt kernels successfully for a while
-> already, but I cannot get it to work on -rt.
-> 
-> The kernel stops right after GRUB with the message:
-> "Console: switching to color framebuffer device 128x48"
-> And there it keeps hanging.
-> 
-> I wonder where the problem could be, and if anyone has already managed to use
-> uvesafb on -rt. There must be something going wrong on the way from uvesafb <->
-> unified kernel userspace linker <-> v86d
-> 
-> Regards,
-> Thomas
-> 
-> 
+I'm trying to use 2.6.24-rt1 in combination with BruteFIR (audio). So
+far everything looks fine except:
 
-PS: I tried with uvesafb as module using
----
-options uvesafb mode=1024x768-32 mtrr=3 scroll=ywrap
----
+After starting BruteFIR (which is doing its job) after a while the
+keyboard responds like with double clicks. TTeerrrriibbllee. I cannot
+enter a command anymore. The running BruteFIR itself still is running
+stable.
+ The system without starting BruteFIR keeps stable. BruteFIR itself is
+working fine with older kernels. Also with e.g. 2.6.24-rc3-zen3. So I
+guess the realtime patch is causing this.
+BTW Brutefir is using realtime priorities 1 to 4 and it also uses SCHED_FIFO.
 
-Same effect, it just locks up as soon the module gets loaded.
-The system is 64bit, card is anvidia pci-e - not sure if any of it matters.
+Any idea?
+
+Uli
