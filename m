@@ -1,77 +1,86 @@
-From: "Uli Brueggemann" <uli.brueggemann@gmail.com>
-Subject: Re: 2.6.24-rt1 SSttrraannggee keyboard behaviour
-Date: Sun, 3 Feb 2008 17:45:18 +0100
-Message-ID: <10a58eee0802030845m48a9d04cr3bde73966014cb56@mail.gmail.com>
-References: <10a58eee0802010706s65929d0dte10a4cde35df317f@mail.gmail.com>
-	 <47A346C3.8070308@redhat.com>
+From: Daniel Walker <dwalker@dwalker1.mvista.com>
+Subject: Re: CPU hotplug and IRQ affinity with 2.6.24-rt1
+Date: Mon, 4 Feb 2008 18:51:44 -0800
+Message-ID: <20080205025144.GA31774@dwalker1.mvista.com>
+References: <47A7A131.8040800@qualcomm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Max Krasnyanskiy <maxk@qualcomm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.183]:7478 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752109AbYBCQpT (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:4652 "EHLO
+	dwalker1.mvista.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753261AbYBECyt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 3 Feb 2008 11:45:19 -0500
-Received: by wa-out-1112.google.com with SMTP id v27so2375006wah.23
-        for <linux-rt-users@vger.kernel.org>; Sun, 03 Feb 2008 08:45:18 -0800 (PST)
-In-Reply-To: <47A346C3.8070308@redhat.com>
+	Mon, 4 Feb 2008 21:54:49 -0500
 Content-Disposition: inline
+In-Reply-To: <47A7A131.8040800@qualcomm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon, Feb 04, 2008 at 03:35:13PM -0800, Max Krasnyanskiy wrote:
+> This is just an FYI. As part of the "Isolated CPU extensions" thread Daniel suggest for me
+> to check out latest RT kernels. So I did or at least tried to and immediately spotted a couple
+> of issues.
 >
-> I've seen this behavior before; on my system in addition to the doubled keystrokes,
-> cursor animations were jerky.
+> The machine I'm running it on is:
+> 	HP xw9300, Dual Opteron, NUMA
 >
-> Are you running on a 64-bit kernel, is your clocksource hpet and is vsyscall64 on?
->
-> $ uname -m
-> x86_64
-> $ cat /sys/devices/system/clocksource/clocksource0/current_clocksource
-> hpet
-> $ cat /proc/sys/kernel/vsyscall64
-> 1
->
-> If so, try putting this into your /etc/sysctl.conf and rebooting:
->
-> # vsyscall64 off
-> kernel.vsyscall64 = 0
->
+> It looks like with -rt kernel IRQ affinity masks are ignored on that 
+> system. ie I write 1 to lets say /proc/irq/23/smp_affinity but the 
+> interrupts keep coming to CPU1. Vanilla 2.6.24 does not have that issue.
 
+I tried this, and it works according to /proc/interrupts .. Are you
+looking at the interrupt threads affinity?
 
-Kernel is i686 (32bit), clocksource is tsc and vsyscall64 does not exist.
-Only console, no X.
+> Also the first thing I tried was to bring CPU1 off-line. Thats the fastest 
+> way to get irqs, soft-irqs, timers, etc of a CPU. But the box hung 
+> completely. It also managed to mess up my ext3 filesystem to the point 
+> where it required manual fsck (have not see that for a couple of
+> years now). I tried the same thing (ie echo 0 > 
+> /sys/devices/cpu/cpu1/online) from the console. It hang again with the 
+> message that looked something like:
+> 	CPU1 is now off-line
+> 	Thread IRQ-23 is on CPU1 ...
 
-In the meantime I have further tried to detect a possible reason and I
-guess I kow it now. But I do not know how to overcome:
+I get the following when I tried it,
 
-The system is booted from USB memorystick. The keyboard is a USB
-keyboard. And there is an IMON VFD display connected by USB. To use it
-I run the lcdproc package.
-It seems that the LCDd daemon (with imon_pad driver) is the reason. It
-causes problems with the keyboard (as described in the topic) and also
-with access to the memorystick.
-If I use a PS/2 keyboard the keyboard problem does not occur. But
-after a while the system still gives messages like
+BUG: sleeping function called from invalid context bash(5126) at
+kernel/rtmutex.c:638
+in_atomic():1 [00000001], irqs_disabled():1
+Pid: 5126, comm: bash Not tainted 2.6.24-rt1 #1
+ [<c010506b>] show_trace_log_lvl+0x1d/0x3a
+ [<c01059cd>] show_trace+0x12/0x14
+ [<c0106151>] dump_stack+0x6c/0x72
+ [<c011d153>] __might_sleep+0xe8/0xef
+ [<c03b2326>] __rt_spin_lock+0x24/0x59
+ [<c03b2363>] rt_spin_lock+0x8/0xa
+ [<c0165b2f>] kfree+0x2c/0x8d
+ [<c011eacb>] rq_attach_root+0x67/0xba
+ [<c01209ae>] cpu_attach_domain+0x2b6/0x2f7
+ [<c0120a12>] detach_destroy_domains+0x23/0x37
+ [<c0121368>] update_sched_domains+0x2d/0x40
+ [<c013b482>] notifier_call_chain+0x2b/0x55
+ [<c013b4d9>] __raw_notifier_call_chain+0x19/0x1e
+ [<c01420d3>] _cpu_down+0x84/0x24c
+ [<c01422c3>] cpu_down+0x28/0x3a
+ [<c029f59e>] store_online+0x27/0x5a
+ [<c029c9dc>] sysdev_store+0x20/0x25
+ [<c019a695>] sysfs_write_file+0xad/0xde
+ [<c0169929>] vfs_write+0x82/0xb8
+ [<c0169e2a>] sys_write+0x3d/0x61
+ [<c0104072>] sysenter_past_esp+0x5f/0x85
+ =======================
+---------------------------
+| preempt count: 00000001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<c03b25e2>] .... __spin_lock_irqsave+0x14/0x3b
+.....[<c011ea76>] ..   ( <= rq_attach_root+0x12/0xba)
 
-usb 5-3: reset high speed USB device using ehci_hcd and adress 3
-usb 5-3: device not accepting adress 3, error -10
+Which is clearly a problem .. 
 
-If I do not start LCDd then both keyboard and memorystick access keep stable.
+(I added linux-rt-users to the CC)
 
-So I suppose that updating the VFD display by LCDd via the USB
-interface is the problem. But this is happening now the first time
-with use of 2.6.24-rt1.
-So avoiding LCDd helps but I like to use the VFD display. How to solve?
-
-BTW I have noticed another effect: with a PS/2 keyboard the screen
-switches off after some time of non-use (screensaver?). With an USB
-keyboard the screen never switches off.
-
-If someone can comment helpfully I would be happy.
-
-Best
-
-Uli
+Daniel
