@@ -1,49 +1,77 @@
-From: Max Krasnyansky <maxk@qualcomm.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
 Subject: Re: CPU hotplug and IRQ affinity with 2.6.24-rt1
-Date: Mon, 04 Feb 2008 20:21:36 -0800
-Message-ID: <47A7E450.50509@qualcomm.com>
-References: <47A7A131.8040800@qualcomm.com> <20080205025144.GA31774@dwalker1.mvista.com>
+Date: Mon, 04 Feb 2008 22:02:12 -0700
+Message-ID: <47A7A784.BA47.005A.0@novell.com>
+References: <47A7A131.8040800@qualcomm.com>
+ <20080205025144.GA31774@dwalker1.mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: Daniel Walker <dwalker@dwalker1.mvista.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755228AbYBEEV7@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: "Ingo Molnar" <mingo@elte.hu>,
+	"LKML" <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "Daniel Walker" <dwalker@dwalker1.mvista.com>,
+	"Max Krasnyanskiy" <maxk@qualcomm.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:21447 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751449AbYBEFIg convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 5 Feb 2008 00:08:36 -0500
 In-Reply-To: <20080205025144.GA31774@dwalker1.mvista.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-Daniel Walker wrote:
-> On Mon, Feb 04, 2008 at 03:35:13PM -0800, Max Krasnyanskiy wrote:
->> This is just an FYI. As part of the "Isolated CPU extensions" thread Daniel suggest for me
->> to check out latest RT kernels. So I did or at least tried to and immediately spotted a couple
->> of issues.
->>
->> The machine I'm running it on is:
->> 	HP xw9300, Dual Opteron, NUMA
->>
->> It looks like with -rt kernel IRQ affinity masks are ignored on that 
->> system. ie I write 1 to lets say /proc/irq/23/smp_affinity but the 
->> interrupts keep coming to CPU1. Vanilla 2.6.24 does not have that issue.
+>>> On Mon, Feb 4, 2008 at  9:51 PM, in message
+<20080205025144.GA31774@dwalker1.mvista.com>, Daniel Walker
+<dwalker@dwalker1.mvista.com> wrote: 
+> I get the following when I tried it,
 > 
-> I tried this, and it works according to /proc/interrupts .. Are you
-> looking at the interrupt threads affinity ?
-Nope. I'm looking at the /proc/interrupts. ie The interrupt count keeps incrementing for cpu1 even
-though affinity mask is set to 1.
+> BUG: sleeping function called from invalid context bash(5126) at
+> kernel/rtmutex.c:638
+> in_atomic():1 [00000001], irqs_disabled():1
 
-IRQ thread affinity was btw set to 3 which is probably wrong.
-To clarify, by default after reboot:
-	- IRQ affinity set 3, IRQ thread affinity set to 3
-	- User writes 1 into /proc/irq/N/smp_affinity
-	- IRQ affinity is now set to 1, IRQ thread affinity is still set to 3
+Hi Daniel,
+  Can you try this patch and let me know if it fixes your problem?
 
-It'd still work I guess but does not seem right. Ideally IRQ thread affinity should have change as well.
-We could of course just have some user-space tool that adjusts both.
+-----------------------
 
-Looks like Greg already replied to the cpu hotplug issue. For me it did not oops. Just got stuck probably
-because it could not move an IRQ due to broken IRQ affinity logic.
+use rcu for root-domain kfree
 
-Max
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index e6ad493..77e86c1 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -339,6 +339,7 @@ struct root_domain {
+        atomic_t refcount;
+        cpumask_t span;
+        cpumask_t online;
++       struct rcu_head rcu;
+
+        /*
+         * The "RT overload" flag: it gets set if a CPU has more than
+@@ -6222,6 +6223,12 @@ sd_parent_degenerate(struct sched_domain *sd, struct sched_domain *parent)
+        return 1;
+ }
+
++/* rcu callback to free a root-domain */
++static void rq_free_root(struct rcu_head *rcu)
++{
++       kfree(container_of(rcu, struct root_domain, rcu));
++}
++
+ static void rq_attach_root(struct rq *rq, struct root_domain *rd)
+ {
+        unsigned long flags;
+@@ -6241,7 +6248,7 @@ static void rq_attach_root(struct rq *rq, struct root_domain *rd)
+                cpu_clear(rq->cpu, old_rd->online);
+
+                if (atomic_dec_and_test(&old_rd->refcount))
+-                       kfree(old_rd);
++                       call_rcu(&old_rd->rcu, rq_free_root);
+        }
+
+        atomic_inc(&rd->refcount);
