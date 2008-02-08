@@ -1,138 +1,104 @@
-From: Ankita Garg <ankita@in.ibm.com>
-Subject: Soft lockup when running large iterations of gtod
-Date: Thu, 7 Feb 2008 16:14:09 +0530
-Message-ID: <20080207104409.GA15048@in.ibm.com>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+From: =?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>
+Subject: Re: IBM test question
+Date: Fri, 8 Feb 2008 10:06:03 +0100
+Message-ID: <20080208100603.0d825e1d@frecb000686.frec.bull.fr>
+References: <47AB0C53.3050703@parrot.com>
+	<20080207163440.174181f2@frecb000686.frec.bull.fr>
+	<47AB3189.7080505@parrot.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: John Stultz <johnstul@us.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Matthieu CASTET <matthieu.castet@parrot.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP03.au.ibm.com ([202.81.18.172]:39708 "EHLO
-	e23smtp03.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750702AbYBHFCC (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:35542 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759694AbYBHJGC convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Feb 2008 00:02:02 -0500
-Received: from d23relay03.au.ibm.com (d23relay03.au.ibm.com [202.81.18.234])
-	by e23smtp03.au.ibm.com (8.13.1/8.13.1) with ESMTP id m1851Sms000603
-	for <linux-rt-users@vger.kernel.org>; Fri, 8 Feb 2008 16:01:28 +1100
-Received: from d23av02.au.ibm.com (d23av02.au.ibm.com [9.190.235.138])
-	by d23relay03.au.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m1851xX53805324
-	for <linux-rt-users@vger.kernel.org>; Fri, 8 Feb 2008 16:01:59 +1100
-Received: from d23av02.au.ibm.com (loopback [127.0.0.1])
-	by d23av02.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m1851xs7031482
-	for <linux-rt-users@vger.kernel.org>; Fri, 8 Feb 2008 16:01:59 +1100
-Received: from rollercoaster (rollercoaster.in.ibm.com [9.124.31.32])
-	by d23av02.au.ibm.com (8.12.11.20060308/8.12.11) with ESMTP id m1851tvP031408
-	for <linux-rt-users@vger.kernel.org>; Fri, 8 Feb 2008 16:01:56 +1100
-Content-Disposition: inline
+	Fri, 8 Feb 2008 04:06:02 -0500
+In-Reply-To: <47AB3189.7080505@parrot.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Thu, 07 Feb 2008 17:27:53 +0100 Matthieu CASTET <matthieu.castet@par=
+rot.com> wrote:
 
-I observed a softlockup when running large number of iterations of the
-gtod_latency testcase. This testcase measure the time between several
-pairs of calls to gettimeofday(). 
+> Hi S=C3=A9bastien,
+>=20
+> S=C3=A9bastien Dugu=C3=A9 wrote:
+> >   Hello Matthieu,
+> >=20
+> > On Thu, 07 Feb 2008 14:49:07 +0100 Matthieu CASTET <matthieu.castet=
+@parrot.com> wrote:
+> >=20
+> >> hi,
+> >>
+> >> I am trying to use some IBM rt test on arm.
+> >>
+> >>
+> >> I define atomic_add to
+> >> assert(i=3D=3D1);
+> >> return ++(v->counter);
+> >>
+> >> That's a bit ugly, but that should work for my need.
+> >=20
+> >   That would be the poor man's atomic_inc() and not sure it really =
+does
+> > what you think it does ;). Just for the record, pre-armv6 cores hav=
+e no support
+> > for userland atomic operations (aside from swapping).
+> I can, if I use a kernel helper :) [1]
 
-Kernel: 2.6.24-rt1
-This was on AMD Opteron dual dual-core box.
+  Yep, but much slower.
 
-The test output is :
+>=20
+> BTW what should do the atomic_add.
+> On i386 it does the atomic add and return the value in memory before =
+the=20
+> add (Exchange and Add).
 
-----------------------
-Gettimeofday() Latency
-----------------------
-Iterations: 100000000
+  Looking at the kernel and glibc, i386's atomic_add seems to be a void
+function (unless I missed something).
 
-Min: 1 us
-Max: 670971 us
-Avg: 0.4021 us
-StdDev: 164.3269 us
+> On powerpc, it seems to do the atomic add and return the new value.
 
-Soft lockup
+  Yes, both for kernel and glibc implementations.
 
-BUG: soft lockup - CPU#2 stuck for 11s! [gtod_latency:18573]
-CPU 2:
-Modules linked in: dock rtc_cmos rtc_core rtc_lib bnx2 shpchp serio_raw
-lp
-parport_pc parport ac battery button i2c_core sbs sbshc dm_multipath
-dm_mirror
-dm_mod sunrpc rfcomm hidp l2cap bluetooth autofs4 ipv6 sg pcspkr k8temp
-hwmon
-mptsas mptscsih mptbase scsi_transport_sas sd_mod scsi_mod ext3 jbd
-ehci_hcd
-ohci_hcd uhci_hcd
-Pid: 18573, comm: gtod_latency Not tainted 2.6.24-rt1-autotest #1
-RIP: 0033:[<ffffffffff600188>]  [<ffffffffff600188>] vread_hpet+0x8/0xf
-RSP: 002b:00007fffce199860  EFLAGS: 00000282
-RAX: 00000000eaef6171 RBX: 00007fffce199890 RCX: 0000000000000002
-RDX: 00000000041291f4 RSI: 0000000000000000 RDI: 00007fffce199910
-RBP: 0000000000000000 R08: 000000001175d794 R09: 0000000000000016
-R10: 0000000000001181 R11: 0000003b0b487160 R12: 0000000000000000
-R13: 0000000000000000 R14: 00007fffce199900 R15: 00007fffce199910
-FS:  00002b7ddc9266b0(0000) GS:ffff81022fc057c0(0000)
-knlGS:00000000f7f9e6c0
-CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-CR2: 0000003b0b487160 CR3: 000000022c4b7000 CR4: 00000000000006e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+>=20
+>=20
+> >=20
+> >> But I have a problem with the sched_latency test.
+> >> On my platform the thread creation is quite slow (25ms), so with t=
+he=20
+> >> default value, I got a PERIOD MISSED.
+> >=20
+> >   The IBM RT tests have been integrated into the LTP and I recently
+> > sent some updates to those testcases. Notably one the patches did i=
+mprove
+> > the thread starting time. Other patches did touch this particular t=
+est too.
+> >=20
+> >   Could you try the latest release (from LTP) and tell me if things
+> > have improved for you.
+> Ok I will try them.
+> >=20
+> >   Also, the PASS/FAIL criteria are quite arbitrary. They happen to =
+be fine
+> > for most recent PC-class hardware but surely not for embedded syste=
+ms and
+> > should be tuned according to your RT requirements.
+> Yes I saw that.
+>=20
+>=20
+> >=20
+> >> Also my cpu is quite slow (compared to last intel core or powerpc)=
+=2E For=20
+> >> example a sched_jitter run take 6s.
+> >=20
+> >   Ouch! What's your CPU (core type, clock speed)?
+> Arm926 ~104.65 Mhz
 
+  ARMv5 core then. You'll need the kernel helper then to be trully atom=
+ic.
 
-BUG: soft lockup - CPU#2 stuck for 11s! [gtod_latency:18573]
-CPU 2:
-Modules linked in: dock rtc_cmos rtc_core rtc_lib bnx2 shpchp serio_raw
-lp
-parport_pc parport ac battery button i2c_core sbs sbshc dm_multipath
-dm_mirror
-dm_mod sunrpc rfcomm hidp l2cap bluetooth autofs4 ipv6 sg pcspkr k8temp
-hwmon
-mptsas mptscsih mptbase scsi_transport_sas sd_mod scsi_mod ext3 jbd
-ehci_hcd
-ohci_hcd uhci_hcd
-Pid: 18573, comm: gtod_latency Not tainted 2.6.24-rt1-autotest #1
-RIP: 0010:[<ffffffff8803014f>]  [<ffffffff8803014f>]
-:ext3:ext3_writepage_trans_blocks+0x4b/0x9b
-RSP: 0018:ffff810103a8bae8  EFLAGS: 00000246
-RAX: 0000000000010820 RBX: ffff810103a8baf8 RCX: 0000000000000001
-RDX: 0000000000000003 RSI: ffff810105240358 RDI: ffff8101052401c0
-RBP: ffffffff80636140 R08: 0000000000000000 R09: ffff810103a8bc60
-R10: ffff810103a8bed8 R11: 0000000000000001 R12: ffffffff8067ffe0
-R13: ffff81022df05000 R14: ffff810182dc62b8 R15: ffff81022df05000
-FS:  00002b7ddc9266b0(0000) GS:ffff81022fc057c0(0000)
-knlGS:00000000f7f9e6c0
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00002b7e3bf0a000 CR3: 000000022c4b7000 CR4: 00000000000006e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-
-Call Trace:
- [<ffffffff88030115>] :ext3:ext3_writepage_trans_blocks+0x11/0x9b
- [<ffffffff88032178>] :ext3:ext3_write_begin+0x32/0x19e
- [<ffffffff8027370e>] generic_file_buffered_write+0x151/0x611
- [<ffffffff8023d245>] current_fs_time+0x22/0x29
- [<ffffffff802ab1c2>] file_update_time+0x30/0xad
- [<ffffffff80273f27>] __generic_file_aio_write_nolock+0x359/0x3c3
- [<ffffffff802922ae>] kmem_cache_free+0x63/0x70
- [<ffffffff80273ff5>] generic_file_aio_write+0x64/0xc0
- [<ffffffff8802e2ae>] :ext3:ext3_file_write+0x1e/0x9e
- [<ffffffff80296b1f>] do_sync_write+0xe2/0x126
- [<ffffffff80288736>] page_add_new_anon_rmap+0x20/0x22
- [<ffffffff8024c860>] autoremove_wake_function+0x0/0x38
- [<ffffffff80267bf1>] audit_syscall_entry+0x148/0x17e
- [<ffffffff8029731b>] vfs_write+0xc7/0x150
- [<ffffffff802978c6>] sys_write+0x4a/0x76
- [<ffffffff8020c30e>] tracesys+0xdc/0xe1
-
-The last working kernel I had tried this on was 2.6.21.4-rt10. I notice that 
-the vsyscall support for hpet went in sometime around 2.6.22. Any
-thoughts on what could be going wrong here?
-
--- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+  Sebastien.
