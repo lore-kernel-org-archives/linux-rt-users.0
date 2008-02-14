@@ -1,39 +1,54 @@
-From: Kevin Hilman <khilman@mvista.com>
-Subject: [PATCH 2.6.24-rt1] SMC91x: Use special_lock when CONFIG_PREEMPT_[HARD|SOFT]IRQS
-Date: Wed, 13 Feb 2008 17:35:46 -0800
-Message-ID: <1202952946-10511-1-git-send-email-khilman@mvista.com>
-Cc: linux-kernel@vger.kernel.org, Kevin Hilman <khilman@mvista.com>
+From: Shi Weihua <shiwh@cn.fujitsu.com>
+Subject: [PATCH 2.6.24-rt1] timer:fix build warning in timer.c
+Date: Thu, 14 Feb 2008 18:02:14 +0800
+Message-ID: <47B411A6.9030007@cn.fujitsu.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org, khilman@mvista.com,
+	rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from deeprooted.net ([216.254.16.51]:60968 "EHLO paris.hilman.org"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1750927AbYBNBrK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Feb 2008 20:47:10 -0500
+Received: from cn.fujitsu.com ([222.73.24.84]:61098 "EHLO song.cn.fujitsu.com"
+	rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org with ESMTP
+	id S1758082AbYBNKED (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 Feb 2008 05:04:03 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The smc_special_locks should also be used when either softIRQs or hard
-IRQs are preempted which may lead to the same problems as under SMP.
+=46ix the following compile warning without CONFIG_PREEMPT_RT:
+kernel/timer.c:937: warning: =E2=80=98count_active_rt_tasks=E2=80=99 de=
+fined but not used
 
-Signed-off-by: Kevin Hilman <khilman@mvista.com>
+Signed-off-by: Shi Weihua <shiwh@cn.fujitsu.com>=20
 
 ---
- drivers/net/smc91x.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/drivers/net/smc91x.c b/drivers/net/smc91x.c
-index f198c49..be62616 100644
---- a/drivers/net/smc91x.c
-+++ b/drivers/net/smc91x.c
-@@ -530,7 +530,8 @@ static inline void  smc_rcv(struct net_device *dev)
- 	}
+diff -urpN linux-2.6.24-rt1.orig/kernel/timer.c linux-2.6.24-rt1/kernel=
+/timer.c
+--- linux-2.6.24-rt1.orig/kernel/timer.c	2008-02-14 17:01:49.000000000 =
++0800
++++ linux-2.6.24-rt1/kernel/timer.c	2008-02-14 17:31:10.000000000 +0800
+@@ -930,20 +930,18 @@ static unsigned long count_active_tasks(
+ #endif
  }
- 
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) ||						\
-+    defined(CONFIG_PREEMPT_SOFTIRQS) || defined(CONFIG_PREEMPT_HARDIRQS)
+=20
++#ifdef CONFIG_PREEMPT_RT
  /*
-  * On SMP we have the following problem:
-  *
--- 
-1.5.4
+  * Nr of active tasks - counted in fixed-point numbers
+  */
+ static unsigned long count_active_rt_tasks(void)
+ {
+-#ifdef CONFIG_PREEMPT_RT
+ 	extern unsigned long rt_nr_running(void);
+ 	extern unsigned long rt_nr_uninterruptible(void);
+=20
+ 	return (rt_nr_running() + rt_nr_uninterruptible()) * FIXED_1;
+-#else
+-	return 0;
+-#endif
+ }
++#endif
+=20
+ /*
+  * Hmm.. Changed this, as the GNU make sources (load.c) seems to
