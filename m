@@ -1,33 +1,61 @@
-From: "Daniel Schnell" <daniel.schnell@marel.com>
-Subject: Lttng for 2.6.24-rt1 ?
-Date: Thu, 14 Feb 2008 12:35:12 -0000
-Message-ID: <DD39B5C3F4963040ADC9768BE7E430CB02B4492D@is-hdq-exchange.marel.net>
-References: <47B411A6.9030007@cn.fujitsu.com>
+From: Nicolas Pitre <nico@cam.org>
+Subject: Re: [PATCH 2.6.24-rt1] SMC91x: Use special_lock when
+ CONFIG_PREEMPT_[HARD|SOFT]IRQS
+Date: Thu, 14 Feb 2008 09:03:09 -0500 (EST)
+Message-ID: <alpine.LFD.1.00.0802140902460.2732@xanadu.home>
+References: <1202952946-10511-1-git-send-email-khilman@mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Kevin Hilman <khilman@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.marel.is ([213.167.134.96]:29374 "EHLO mail.marel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757283AbYBNMtQ convert rfc822-to-8bit (ORCPT
+Received: from relais.videotron.ca ([24.201.245.36]:15475 "EHLO
+	relais.videotron.ca" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750756AbYBNODL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Feb 2008 07:49:16 -0500
-Content-class: urn:content-classes:message
-In-Reply-To: <47B411A6.9030007@cn.fujitsu.com>
+	Thu, 14 Feb 2008 09:03:11 -0500
+In-reply-to: <1202952946-10511-1-git-send-email-khilman@mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, 13 Feb 2008, Kevin Hilman wrote:
 
-Just wanted to know if anybody uses LTTNG on the 2.6.24 rt kernel ? I am
-trying to trace down some performance problems on my mpc5200b based
-embedded box and LttNG would probably help quite a bit in analyzing
-which tasks besides our own burn how much CPU and how the exact
-scheduling order between ISR and application is.
+> The smc_special_locks should also be used when either softIRQs or hard
+> IRQs are preempted which may lead to the same problems as under SMP.
+> 
+> Signed-off-by: Kevin Hilman <khilman@mvista.com>
+
+Acked-by: Nicolas Pitre <nico@cam.org>
+
+> 
+> ---
+>  drivers/net/smc91x.c |    3 ++-
+>  1 files changed, 2 insertions(+), 1 deletions(-)
+> 
+> diff --git a/drivers/net/smc91x.c b/drivers/net/smc91x.c
+> index f198c49..be62616 100644
+> --- a/drivers/net/smc91x.c
+> +++ b/drivers/net/smc91x.c
+> @@ -530,7 +530,8 @@ static inline void  smc_rcv(struct net_device *dev)
+>  	}
+>  }
+>  
+> -#ifdef CONFIG_SMP
+> +#if defined(CONFIG_SMP) ||						\
+> +    defined(CONFIG_PREEMPT_SOFTIRQS) || defined(CONFIG_PREEMPT_HARDIRQS)
+>  /*
+>   * On SMP we have the following problem:
+>   *
+> -- 
+> 1.5.4
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
 
 
-Best regards,
-
-Daniel Schnell.
+Nicolas
