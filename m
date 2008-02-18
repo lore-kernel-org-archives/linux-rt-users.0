@@ -1,121 +1,130 @@
-From: Dominique Michel <dominique.michel@citycable.ch>
-Subject: Re: cyclictest?
-Date: Mon, 18 Feb 2008 19:23:04 +0100
-Message-ID: <20080218192304.175b9186@citycable.ch>
-References: <5bdc1c8b0801101634j583da294k319dbaa55405f26e@mail.gmail.com>
-	<5bdc1c8b0801101650x3984d726j7fb69c7405dd121f@mail.gmail.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: Re: sched_yield() needed for pthread_cond_signal(..) to work?
+Date: Mon, 18 Feb 2008 15:25:04 -0300
+Message-ID: <20080218182504.GC31432@unix.sh>
+References: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	=?iso-8859-1?Q?Andr=E9s_Calder=F3n?= <andres.calderon@emqbit.com>
+To: Nelson Castillo <nelsoneci@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.alinto.citycable.ch ([85.218.0.110]:58100 "HELO
-	citycable.ch" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-	id S1751141AbYBRSWi convert rfc822-to-8bit (ORCPT
+Received: from sr03-03.mta.terra.com.br ([200.154.152.42]:52652 "EHLO
+	sr03-03.mta.terra.com.br" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751613AbYBRSZK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Feb 2008 13:22:38 -0500
-In-Reply-To: <5bdc1c8b0801101650x3984d726j7fb69c7405dd121f@mail.gmail.com>
+	Mon, 18 Feb 2008 13:25:10 -0500
+Content-Disposition: inline
+In-Reply-To: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Le Thu, 10 Jan 2008 16:50:06 -0800,
-"Mark Knecht" <markknecht@gmail.com> a =C3=A9crit :
+Hi!
 
-> On Jan 10, 2008 4:34 PM, Mark Knecht <markknecht@gmail.com> wrote:
-> > Hi,
-> >    I hadn't heard of cyclictest before an email today. I guess as a
-> > user instead of a developer I don't pay much attention.
-> >
-> >    Can someone point me toward directions for building this on a Ge=
-ntoo
-> > machine?
-> >
-> > Thanks,
-> > Mark
-> >
+RT + sched_yield() are not really good friends... sched_yield() messes the
+work of the scheduler. Along with it, sched_tield() behaves in a different
+way under CFS. To get the old behavior you have to:
 
-On gentoo, you have 2 choices: To follow the install procedure in the t=
-arball
-and install the software in /usr/local or in ~/somewhere, or to do your=
- own
-ebuild and install it in /usr.
+	echo 1 > /proc/sys/kernel/sched_compat_yield
 
-The advantages of making an ebuild are that portage will take care of t=
-his
-package like any other program and that in case of upgrade, it will be =
-very
-little work to do in order to upgrade (in many cases, it is just to bum=
-p the
-ebuild, that is to rename it with the new version number and redigest i=
-t).
+Luis
 
-To make the ebuild:=20
-ebuild howto:
-http://www.gentoo.org/proj/en/devrel/handbook/handbook.xml?part=3D2&cha=
-p=3D1
-gentoo devmanual: http://devmanual.gentoo.org/ The devman is a very goo=
-d
-reading. Even if you don't want to do an ebuild, the chapter on the ext=
-ernal
-tools that portage can use (tools like sed) contain the best short intr=
-oduction
-I know for those tools.
+On Mon, Feb 18, 2008 at 01:16:16PM -0500, Nelson Castillo wrote:
+| Hi.
+| 
+| I'm using 2.6.23.14-rt14 on a i586  and I'm quite happy with the
+| current results [1].
+| I'm writing because I have a problem with a source code that I thought
+| should work.
+| 
+|   http://svn.arhuaco.org/svn/src/junk/trunk/threads/cond-signal-test.c
+| 
+| In a PC (Debian 2.6.24 686 with no RT patches) it prints 1000. In the
+| realtime system it prints 1 or 0.
+| 
+| # ./a.out
+| 1
+| # ./a.out
+| 0
+| # ./a.out
+| 1
+| 
+| If I do a sched_yield() right after releasing the mutex associated with
+| the condition, the program prints 1000 as expected.
+| 
+| void
+| dosignal (void)
+| {
+|   pthread_mutex_lock (&cond_mutex);
+|   pthread_cond_signal(&cond);
+|   pthread_mutex_unlock (&cond_mutex);
+|    sched_yield(); //  without this I get 0! with Linux and RT patches
+| }
+| 
+| 
+| So my questions are:
+| 
+| * I am missing something?
+| * If sched_yield() is the way to go, is it SMP safe?
+| 
+| I did pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT)
+| and the syscall succedded but I still got 0 or 1. I think it doesn't
+| matter in this case.
+| 
+| Best regards,
+| Nelson.-
+| 
+| [1] http://wiki.freaks-unidos.net/weblogs/arhuaco/preempt_rt-test
+| 
+| PS:
+| 
+| I've tried this with Debian's GLIBC and with Openembedded.
+| 
+| Debian:
+| 
+| /lib/libc.so.6
+| GNU C Library stable release version 2.7, by Roland McGrath et al.
+| Copyright (C) 2007 Free Software Foundation, Inc.
+| This is free software; see the source for copying conditions.
+| There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+| PARTICULAR PURPOSE.
+| Compiled by GNU CC version 4.2.3 20080102 (prerelease) (Debian 4.2.2-5).
+| Compiled on a Linux >>2.6.22.12<< system on 2008-01-12.
+| Available extensions:
+|         crypt add-on version 2.1 by Michael Glad and others
+|         GNU Libidn by Simon Josefsson
+|         Native POSIX Threads Library by Ulrich Drepper et al
+|         BIND-8.2.3-T5B
+| For bug reporting instructions, please see:
+| <http://www.gnu.org/software/libc/bugs.html>.
+| 
+| OpenEmbedded:
+| 
+| GNU C Library stable release version 2.5, by Roland McGrath et al.
+| Copyright (C) 2006 Free Software Foundation, Inc.
+| This is free software; see the source for copying conditions.
+| There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+| PARTICULAR PURPOSE.
+| Compiled by GNU CC version 4.1.2.
+| Compiled on a Linux >>2.6.22-3-686<< system on 2008-01-09.
+| Available extensions:
+| 	crypt add-on version 2.1 by Michael Glad and others
+| 	GNU libio by Per Bothner
+| 	NIS(YP)/NIS+ NSS modules 0.19 by Thorsten Kukuk
+| 	Native POSIX Threads Library by Ulrich Drepper et al
+| 	BIND-8.2.3-T5B
+| Thread-local storage support included.
+| For bug reporting instructions, please see:
+| <http://www.gnu.org/software/libc/bugs.html>
+| 
+| -- 
+| http://arhuaco.org
+| -
+| To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+| the body of a message to majordomo@vger.kernel.org
+| More majordomo info at  http://vger.kernel.org/majordomo-info.html
+---end quoted text---
 
-To place your ebuild in portage:
-http://gentoo-wiki.com/HOWTO_Installing_3rd_Party_Ebuilds
-This howto use /usr/local/portage. I prefer /usr/portage/local. But it =
-is just
-a detail.=20
-
-To publish your ebuild, 2 solutions: -make a bug report asking for a ne=
-w soft
-in portage and join the ebuild. Peoples doing a search on bugzilla will=
- find it
-even if it never reach portage.
-- put it into the sunrise
-overlay: http://gentoo-wiki.com/Portage_Overlay_Listing#Sunrise_-_Gento=
-o_User_Overlay
-
-Dominique
-
->=20
-> Browsing around I found this link:
->=20
-> http://rt.wiki.kernel.org/index.php/Cyclictest
->=20
-> But the link to get the tarball is stale. When I trace it through and
-> get to the page it shows a
->=20
-> git://git.kernel.org/pub/scm/linux/kernel/git/tglx/rt-tests.git
->=20
-> I found another email in Google that suggested running this command:
->=20
-> git clone git://git.kernel.org/pub/scm/linux/kernel/git/tglx/rt-tests=
-=2Egit
->=20
-> which does download some source code. make built it but I'm not sure
-> how to get any data.
->=20
-> I found a Live CD at OSADL. Would that be a recommended way for me to
-> look at my machine? I'm downloading it now.
->=20
-> Thanks,
-> Mark
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
---=20
-Dominique Michel
-
-Mes 3 projets pr=C3=A9f=C3=A9r=C3=A9s auxquels je contribue:
- * FVWM-Crystal, le bureau bas=C3=A9 sur FVWM:
-      http://fvwm-crystal.org
- * AlsaPlayer, le lecteur audio avec contr=C3=B4le de vitesse en contin=
-u:
-      www.alsaplayer.org
- * L'overlay pour la MAO sous gentoo:
-      http://proaudio.tuxfamily.org/wiki/index.php?title=3DMain_Page
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
