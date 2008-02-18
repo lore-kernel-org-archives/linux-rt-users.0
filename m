@@ -1,54 +1,97 @@
-From: "Nelson Castillo" <nelsoneci@gmail.com>
-Subject: Re: sched_yield() needed for pthread_cond_signal(..) to work?
-Date: Mon, 18 Feb 2008 15:24:14 -0500
-Message-ID: <2accc2ff0802181224r41c79cecpdbe0c939df23ef13@mail.gmail.com>
-References: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
-	 <20080218182504.GC31432@unix.sh>
+From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
+Subject: Re: [PATCH 0/2] Markers Implementation for RCU Tracing - Ver II
+Date: Mon, 18 Feb 2008 15:41:13 -0500
+Message-ID: <20080218204112.GA22031@Krystal>
+References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal> <20080107195038.GA5119@in.ibm.com> <47B97E63.3070205@siemens.com> <20080218194825.GF10471@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	"=?ISO-8859-1?Q?Andr=E9s_Calder=F3n?=" <andres.calderon@emqbit.com>
-To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Cc: Jan Kiszka <jan.kiszka@siemens.com>, prasad@linux.vnet.ibm.com,
+	linux-kernel@vger.kernel.org, mingo@elte.hu,
+	Gautham R Shenoy <ego@in.ibm.com>,
+	linux-rt-users@vger.kernel.org, dipankar@in.ibm.com
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.231]:62599 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752270AbYBRUYQ (ORCPT
+Received: from tomts43.bellnexxia.net ([209.226.175.110]:53438 "EHLO
+	tomts43-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752333AbYBRUlQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Feb 2008 15:24:16 -0500
-Received: by wr-out-0506.google.com with SMTP id c48so1702254wra.23
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Feb 2008 12:24:15 -0800 (PST)
-In-Reply-To: <20080218182504.GC31432@unix.sh>
+	Mon, 18 Feb 2008 15:41:16 -0500
 Content-Disposition: inline
+In-Reply-To: <20080218194825.GF10471@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Feb 18, 2008 1:25 PM, Luis Claudio R. Goncalves <lclaudio@uudg.org> wrote:
-> Hi!
+* Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
+> On Mon, Feb 18, 2008 at 01:47:31PM +0100, Jan Kiszka wrote:
+> > K. Prasad wrote:
+> > > Hi Ingo,
+> > > 	Please accept these patches into the rt tree which convert the
+> > > existing RCU tracing mechanism for Preempt RCU and RCU Boost into
+> > > markers.
+> > >  
+> > > These patches are based upon the 2.6.24-rc5-rt1 kernel tree.
+> > >  
+> > > Along with marker transition, the RCU Tracing infrastructure has also
+> > > been modularised to be built as a kernel module, thereby enabling
+> > > runtime changes to the RCU Tracing infrastructure.
+> > >  
+> > > Patch [1/2] - Patch that converts the Preempt RCU tracing in
+> > > rcupreempt.c into markers.
+> > >  
+> > > Patch [1/2] - Patch that converts the Preempt RCU Boost tracing in
+> > > rcupreempt-boost.c into markers.
+> > >  
+> > 
+> > I have a technical problem with marker-based RCU tracing: It causes
+> > nasty recursions with latest multi-probe marker patches (sorry, no link
+> > at hand, can be found in latest LTTng, maybe also already in -mm). Those
+> > patches introduce a marker probe trampoline like this:
+> > 
+> > void marker_probe_cb(const struct marker *mdata, void *call_private,
+> > 	const char *fmt, ...)
+> > {
+> > 	va_list args;
+> > 	char ptype;
+> > 
+> > 	/*
+> > 	 * rcu_read_lock does two things : disabling preemption to make sure the
+> > 	 * teardown of the callbacks can be done correctly when they are in
+> > 	 * modules and they insure RCU read coherency.
+> > 	 */
+> > 	rcu_read_lock();
+> > 	preempt_disable();
+> > 	...
+> > 
+> > Can we do multi-probe with pure preempt_disable/enable protection? I
+> > guess it's fine with classic RCU, but what about preemptible RCU? Any
+> > suggestion appreciated!
+> 
+> If you substitute synchronize_sched() for synchronize_rcu(), this should
+> work fine.  Of course, this approach would cause RCU tracing to degrade
+> latencies somewhat in -rt.
+> 
+> If tracing is using call_rcu(), we will need to add a call_sched()
+> or some such.
+> 
 
-Hi Luis, thanks for the reply.
+Yes, I use call_rcu, so I guess a call_sched would be useful here.
 
-> RT + sched_yield() are not really good friends... sched_yield() messes the
-> work of the scheduler. Along with it, sched_tield() behaves in a different
-> way under CFS. To get the old behavior you have to:
->
->         echo 1 > /proc/sys/kernel/sched_compat_yield
+Mathieu
 
-I see. I guess this is the case with NPTL also.
-
-I will temporally use yield and "echo 1 > /proc/sys/kernel/sched_compat_yield",
-but I really want to get this right.
-
-I wonder if what I did with threads is correct but since it will be a little
-offtopic in this list I asked in the proper group:
-
-http://groups.google.com/group/comp.programming.threads/browse_thread/thread/110e57bb3290832c
-
-I'll let you know if I find out I'm doing something wrong. Anyway, any help
-will be appreciated.
-
-Regards,
-Nelson.-
+> 						Thanx, Paul
+> 
+> > Jan
+> > 
+> > PS: You will run into this issue if you try to marry latest -rt with
+> > latest LTTng. Straightforward workaround is to comment-out any RCU
+> > trace_mark occurrences.
+> > 
+> > -- 
+> > Siemens AG, Corporate Technology, CT SE 2
+> > Corporate Competence Center Embedded Linux
 
 -- 
-http://arhuaco.org
+Mathieu Desnoyers
+Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
+OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
