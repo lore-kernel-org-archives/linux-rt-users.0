@@ -1,30 +1,29 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: Markers: multi-probe locking fun (was: Re: [PATCH 0/2] Markers
-	Implementation for RCU Tracing - Ver II)
-Date: Tue, 19 Feb 2008 17:03:18 -0500
-Message-ID: <20080219220317.GA20682@Krystal>
-References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal> <20080107195038.GA5119@in.ibm.com> <47B97E63.3070205@siemens.com> <20080218194825.GF10471@linux.vnet.ibm.com> <47BB037C.6060306@siemens.com> <20080219215428.GI10774@linux.vnet.ibm.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Markers: multi-probe locking fun (was: Re: [PATCH 0/2] Markers Implementation for RCU Tracing - Ver II)
+Date: Tue, 19 Feb 2008 14:18:11 -0800
+Message-ID: <20080219221811.GJ10774@linux.vnet.ibm.com>
+References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal> <20080107195038.GA5119@in.ibm.com> <47B97E63.3070205@siemens.com> <20080218194825.GF10471@linux.vnet.ibm.com> <47BB037C.6060306@siemens.com> <20080219203326.GA16701@Krystal>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Cc: Jan Kiszka <jan.kiszka@siemens.com>, prasad@linux.vnet.ibm.com,
 	linux-kernel@vger.kernel.org, mingo@elte.hu,
 	Gautham R Shenoy <ego@in.ibm.com>,
 	linux-rt-users@vger.kernel.org, dipankar@in.ibm.com
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts13.bellnexxia.net ([209.226.175.34]:32852 "EHLO
-	tomts13-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753860AbYBSWDY (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:45696 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755412AbYBSWSU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Feb 2008 17:03:24 -0500
+	Tue, 19 Feb 2008 17:18:20 -0500
 Content-Disposition: inline
-In-Reply-To: <20080219215428.GI10774@linux.vnet.ibm.com>
+In-Reply-To: <20080219203326.GA16701@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
-> On Tue, Feb 19, 2008 at 05:27:40PM +0100, Jan Kiszka wrote:
+On Tue, Feb 19, 2008 at 03:33:26PM -0500, Mathieu Desnoyers wrote:
+> * Jan Kiszka (jan.kiszka@siemens.com) wrote:
 > > Paul E. McKenney wrote:
 > > > On Mon, Feb 18, 2008 at 01:47:31PM +0100, Jan Kiszka wrote:
 > > >> K. Prasad wrote:
@@ -77,28 +76,30 @@ List-ID: <linux-rt-users.vger.kernel.org>
 > > > or some such.
 > > 
 > > You mean something like "#define call_sched call_rcu_classic"?
-> 
-> This would work for Classic RCU.  For preemptible RCU, a bit more
-> work is needed.
-> 
+> > 
 > > I just learned that there is another reason for killing
 > > rcu_read_lock&friends from the marker probes: It can deadlock on -rt
 > > with PREEMPT_RCU_BOOST (hit probe inside rq-lock protected region =>
 > > rcu_read_unlock triggers unboost => stuck on rq_lock :( ).
+> > 
 > 
-> OK, good to know.  Guess we need a call_sched() for -rt and for
-> preemptible RCU sooner rather than later...
+> Yep, ok, let's do this :
 > 
+> in include/linux/rcupdate.h
+> 
+> #ifndef PREEMPT_RT
+> #define call_sched call_rcu
+> #else
+> #define call_sched call_rcu_classic
+> #endif
+> 
+> And I'll adapt the markers accordingly.
 
-Yup, I would need call_sched() and sched_barrier().
+Good point, this will indeed work for 2.6.24-rt1!
 
-Thanks,
+Will need to do a bit more for 2.6.25-rc1.  My current thought is to
+provide a kernel thread that loops over the CPUs, advancing/invoking
+per-CPU lists of callbacks as it does so.  Then call_sched() would simply
+enqueue its callback on the current CPU's next list.
 
-Mathieu
-
-> 						Thanx, Paul
-
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+							Thanx, Paul
