@@ -1,97 +1,68 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@polymtl.ca>
-Subject: Re: [PATCH 0/2] Markers Implementation for RCU Tracing - Ver II
-Date: Mon, 18 Feb 2008 15:41:13 -0500
-Message-ID: <20080218204112.GA22031@Krystal>
-References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal> <20080107195038.GA5119@in.ibm.com> <47B97E63.3070205@siemens.com> <20080218194825.GF10471@linux.vnet.ibm.com>
+From: Michal Schmidt <mschmidt@redhat.com>
+Subject: Re: sched_yield() needed for pthread_cond_signal(..) to work?
+Date: Tue, 19 Feb 2008 01:35:13 +0100
+Message-ID: <20080219013513.5eb25b97@hammerfall>
+References: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Jan Kiszka <jan.kiszka@siemens.com>, prasad@linux.vnet.ibm.com,
-	linux-kernel@vger.kernel.org, mingo@elte.hu,
-	Gautham R Shenoy <ego@in.ibm.com>,
-	linux-rt-users@vger.kernel.org, dipankar@in.ibm.com
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: linux-rt-users@vger.kernel.org,
+	"=?UTF-8?B?QW5kcsOpcyBDYWxkZXLDs24=?=" <andres.calderon@emqbit.com>
+To: "Nelson Castillo" <nelsoneci@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tomts43.bellnexxia.net ([209.226.175.110]:53438 "EHLO
-	tomts43-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752333AbYBRUlQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Feb 2008 15:41:16 -0500
-Content-Disposition: inline
-In-Reply-To: <20080218194825.GF10471@linux.vnet.ibm.com>
+Received: from mx1.redhat.com ([66.187.233.31]:51420 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751272AbYBSAfT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Feb 2008 19:35:19 -0500
+In-Reply-To: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
-> On Mon, Feb 18, 2008 at 01:47:31PM +0100, Jan Kiszka wrote:
-> > K. Prasad wrote:
-> > > Hi Ingo,
-> > > 	Please accept these patches into the rt tree which convert the
-> > > existing RCU tracing mechanism for Preempt RCU and RCU Boost into
-> > > markers.
-> > >  
-> > > These patches are based upon the 2.6.24-rc5-rt1 kernel tree.
-> > >  
-> > > Along with marker transition, the RCU Tracing infrastructure has also
-> > > been modularised to be built as a kernel module, thereby enabling
-> > > runtime changes to the RCU Tracing infrastructure.
-> > >  
-> > > Patch [1/2] - Patch that converts the Preempt RCU tracing in
-> > > rcupreempt.c into markers.
-> > >  
-> > > Patch [1/2] - Patch that converts the Preempt RCU Boost tracing in
-> > > rcupreempt-boost.c into markers.
-> > >  
-> > 
-> > I have a technical problem with marker-based RCU tracing: It causes
-> > nasty recursions with latest multi-probe marker patches (sorry, no link
-> > at hand, can be found in latest LTTng, maybe also already in -mm). Those
-> > patches introduce a marker probe trampoline like this:
-> > 
-> > void marker_probe_cb(const struct marker *mdata, void *call_private,
-> > 	const char *fmt, ...)
-> > {
-> > 	va_list args;
-> > 	char ptype;
-> > 
-> > 	/*
-> > 	 * rcu_read_lock does two things : disabling preemption to make sure the
-> > 	 * teardown of the callbacks can be done correctly when they are in
-> > 	 * modules and they insure RCU read coherency.
-> > 	 */
-> > 	rcu_read_lock();
-> > 	preempt_disable();
-> > 	...
-> > 
-> > Can we do multi-probe with pure preempt_disable/enable protection? I
-> > guess it's fine with classic RCU, but what about preemptible RCU? Any
-> > suggestion appreciated!
-> 
-> If you substitute synchronize_sched() for synchronize_rcu(), this should
-> work fine.  Of course, this approach would cause RCU tracing to degrade
-> latencies somewhat in -rt.
-> 
-> If tracing is using call_rcu(), we will need to add a call_sched()
-> or some such.
-> 
+Dne Mon, 18 Feb 2008 13:16:16 -0500
+"Nelson Castillo" <nelsoneci@gmail.com> napsal(a):
 
-Yes, I use call_rcu, so I guess a call_sched would be useful here.
-
-Mathieu
-
-> 						Thanx, Paul
+>   http://svn.arhuaco.org/svn/src/junk/trunk/threads/cond-signal-test.c
 > 
-> > Jan
-> > 
-> > PS: You will run into this issue if you try to marry latest -rt with
-> > latest LTTng. Straightforward workaround is to comment-out any RCU
-> > trace_mark occurrences.
-> > 
-> > -- 
-> > Siemens AG, Corporate Technology, CT SE 2
-> > Corporate Competence Center Embedded Linux
+> In a PC (Debian 2.6.24 686 with no RT patches) it prints 1000. In the
+> realtime system it prints 1 or 0.
+> 
+> # ./a.out
+> 1
+> # ./a.out
+> 0
+> # ./a.out
+> 1
 
--- 
-Mathieu Desnoyers
-Computer Engineering Ph.D. Student, Ecole Polytechnique de Montreal
-OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F  BA06 3F25 A8FE 3BAE 9A68
+Your test program is flawed. The result can be anything between 0 and
+1000. (Theoretically even more, because spurious wakeups are
+possible from pthread_cond_wait).
+
+I ran the program without sched_yield() on my Fedora 8 system
+(2.6.23.15-137.fc8 kernel, non-RT, only voluntary preemption). I got
+1000 most of the time, but quite often the result was less than that.
+
+> If I do a sched_yield() right after releasing the mutex associated
+> with the condition, the program prints 1000 as expected.
+
+You should not rely on that. There's no guarantee it will work. You've
+just been lucky so far.
+
+> void
+> dosignal (void)
+> {
+>   pthread_mutex_lock (&cond_mutex);
+>   pthread_cond_signal(&cond);
+>   pthread_mutex_unlock (&cond_mutex);
+>    sched_yield(); //  without this I get 0! with Linux and RT patches
+> }
+
+And you're doing:
+  for (i = 0; i < 1000; ++i)
+    dosignal ();
+
+pthread_cond_signal() will wake the other thread up, but you don't know
+if it will be scheduled to run immediately. It is perfectly valid for
+the scheduler to keep the main thread on the CPU and let it finish all
+the 1000 iterations first.
+
+Michal
