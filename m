@@ -1,64 +1,86 @@
-From: "Nelson Castillo" <nelsoneci@gmail.com>
-Subject: Re: sched_yield() needed for pthread_cond_signal(..) to work?
-Date: Mon, 18 Feb 2008 20:51:38 -0500
-Message-ID: <2accc2ff0802181751q13d943e0l8d4484c18f0c275@mail.gmail.com>
-References: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
-	 <20080219013513.5eb25b97@hammerfall>
-	 <371630906-1203382013-cardhu_decombobulator_blackberry.rim.net-2030994132-@bxe129.bisx.prod.on.blackberry>
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Subject: Markers: multi-probe locking fun (was: Re: [PATCH 0/2] Markers Implementation
+ for RCU Tracing - Ver II)
+Date: Tue, 19 Feb 2008 17:27:40 +0100
+Message-ID: <47BB037C.6060306@siemens.com>
+References: <20071231060911.GB6461@in.ibm.com> <20080103163055.GB27651@Krystal> <20080104105858.GA13865@in.ibm.com> <20080105124632.GA16576@Krystal> <20080107195038.GA5119@in.ibm.com> <47B97E63.3070205@siemens.com> <20080218194825.GF10471@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: "Michal Schmidt" <mschmidt@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	"=?ISO-8859-1?Q?Andr=E9s_Calder=F3n?=" <andres.calderon@emqbit.com>
-To: sven@thebigcorporation.com
+Cc: prasad@linux.vnet.ibm.com, linux-kernel@vger.kernel.org,
+	mingo@elte.hu, Gautham R Shenoy <ego@in.ibm.com>,
+	mathieu.desnoyers@polymtl.ca, linux-rt-users@vger.kernel.org,
+	dipankar@in.ibm.com
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wr-out-0506.google.com ([64.233.184.228]:64812 "EHLO
-	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753439AbYBSBvl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Feb 2008 20:51:41 -0500
-Received: by wr-out-0506.google.com with SMTP id c48so1855327wra.23
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Feb 2008 17:51:39 -0800 (PST)
-In-Reply-To: <371630906-1203382013-cardhu_decombobulator_blackberry.rim.net-2030994132-@bxe129.bisx.prod.on.blackberry>
-Content-Disposition: inline
+Received: from lizzard.sbs.de ([194.138.37.39]:15406 "EHLO lizzard.sbs.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751103AbYBSQ2g (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Feb 2008 11:28:36 -0500
+In-Reply-To: <20080218194825.GF10471@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Feb 18, 2008 7:51 PM,  <sven@thebigcorporation.com> wrote:
->
-> Sorry for top-posting.
->
-> This looks a lot like LTP code, which is full of similar assumptions
->
-> Note also that in RT above RT prio 50 signals don't get delivered, and a program waiting for a signal can lock the machine.
-> Sent via BlackBerry by AT&T
+Paul E. McKenney wrote:
+> On Mon, Feb 18, 2008 at 01:47:31PM +0100, Jan Kiszka wrote:
+>> K. Prasad wrote:
+>>> Hi Ingo,
+>>> 	Please accept these patches into the rt tree which convert the
+>>> existing RCU tracing mechanism for Preempt RCU and RCU Boost into
+>>> markers.
+>>>  
+>>> These patches are based upon the 2.6.24-rc5-rt1 kernel tree.
+>>>  
+>>> Along with marker transition, the RCU Tracing infrastructure has also
+>>> been modularised to be built as a kernel module, thereby enabling
+>>> runtime changes to the RCU Tracing infrastructure.
+>>>  
+>>> Patch [1/2] - Patch that converts the Preempt RCU tracing in
+>>> rcupreempt.c into markers.
+>>>  
+>>> Patch [1/2] - Patch that converts the Preempt RCU Boost tracing in
+>>> rcupreempt-boost.c into markers.
+>>>  
+>> I have a technical problem with marker-based RCU tracing: It causes
+>> nasty recursions with latest multi-probe marker patches (sorry, no link
+>> at hand, can be found in latest LTTng, maybe also already in -mm). Those
+>> patches introduce a marker probe trampoline like this:
+>>
+>> void marker_probe_cb(const struct marker *mdata, void *call_private,
+>> 	const char *fmt, ...)
+>> {
+>> 	va_list args;
+>> 	char ptype;
+>>
+>> 	/*
+>> 	 * rcu_read_lock does two things : disabling preemption to make sure the
+>> 	 * teardown of the callbacks can be done correctly when they are in
+>> 	 * modules and they insure RCU read coherency.
+>> 	 */
+>> 	rcu_read_lock();
+>> 	preempt_disable();
+>> 	...
+>>
+>> Can we do multi-probe with pure preempt_disable/enable protection? I
+>> guess it's fine with classic RCU, but what about preemptible RCU? Any
+>> suggestion appreciated!
+> 
+> If you substitute synchronize_sched() for synchronize_rcu(), this should
+> work fine.  Of course, this approach would cause RCU tracing to degrade
+> latencies somewhat in -rt.
+> 
+> If tracing is using call_rcu(), we will need to add a call_sched()
+> or some such.
 
-Thanks a lot for all your feedback.
+You mean something like "#define call_sched call_rcu_classic"?
 
-The implementation I did was flawed. This new example should run and print 1000.
-I think there are  no more  bugs :) but I'll check again.
+I just learned that there is another reason for killing
+rcu_read_lock&friends from the marker probes: It can deadlock on -rt
+with PREEMPT_RCU_BOOST (hit probe inside rq-lock protected region =>
+rcu_read_unlock triggers unboost => stuck on rq_lock :( ).
 
-http://svn.arhuaco.org/svn/src/junk/trunk/threads/cond-signal-test-ok.c
-
-I was confused with of pthread_signal and pthread_wait. I hadn't implemented
-producer-consumer before. As the FAQ says, depending on sched_yield is bad
-design and RT-Linux allows you to find bugs.
-
-The snippet of code was an example to debug an implementation that we
-are using now. We needed to port an application that uses RTEMS
-(rtems_timer_create, rtems_timer_fire_after, rtems_timer_reset,
-rtems_timer_cancel and
-rtems_timer_delete). Now I will be able to complete the code. Once I
-fix bugs, it should
-be available here.
-
-http://svn.arhuaco.org/svn/src/junk/trunk/threads/test_timer.c
-
-I guess it could be useful to someone else porting from RTEMS to Linux-RT.
-
-Regards,
-Nelson.-
+Jan
 
 -- 
-http://arhuaco.org
+Siemens AG, Corporate Technology, CT SE 2
+Corporate Competence Center Embedded Linux
