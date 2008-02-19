@@ -1,68 +1,64 @@
-From: Michal Schmidt <mschmidt@redhat.com>
+From: "Nelson Castillo" <nelsoneci@gmail.com>
 Subject: Re: sched_yield() needed for pthread_cond_signal(..) to work?
-Date: Tue, 19 Feb 2008 01:35:13 +0100
-Message-ID: <20080219013513.5eb25b97@hammerfall>
+Date: Mon, 18 Feb 2008 20:51:38 -0500
+Message-ID: <2accc2ff0802181751q13d943e0l8d4484c18f0c275@mail.gmail.com>
 References: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
+	 <20080219013513.5eb25b97@hammerfall>
+	 <371630906-1203382013-cardhu_decombobulator_blackberry.rim.net-2030994132-@bxe129.bisx.prod.on.blackberry>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	"=?UTF-8?B?QW5kcsOpcyBDYWxkZXLDs24=?=" <andres.calderon@emqbit.com>
-To: "Nelson Castillo" <nelsoneci@gmail.com>
+Cc: "Michal Schmidt" <mschmidt@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	"=?ISO-8859-1?Q?Andr=E9s_Calder=F3n?=" <andres.calderon@emqbit.com>
+To: sven@thebigcorporation.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:51420 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751272AbYBSAfT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Feb 2008 19:35:19 -0500
-In-Reply-To: <2accc2ff0802181016q26eb8b8cm88f45a0162ae21a0@mail.gmail.com>
+Received: from wr-out-0506.google.com ([64.233.184.228]:64812 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753439AbYBSBvl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Feb 2008 20:51:41 -0500
+Received: by wr-out-0506.google.com with SMTP id c48so1855327wra.23
+        for <linux-rt-users@vger.kernel.org>; Mon, 18 Feb 2008 17:51:39 -0800 (PST)
+In-Reply-To: <371630906-1203382013-cardhu_decombobulator_blackberry.rim.net-2030994132-@bxe129.bisx.prod.on.blackberry>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dne Mon, 18 Feb 2008 13:16:16 -0500
-"Nelson Castillo" <nelsoneci@gmail.com> napsal(a):
+On Feb 18, 2008 7:51 PM,  <sven@thebigcorporation.com> wrote:
+>
+> Sorry for top-posting.
+>
+> This looks a lot like LTP code, which is full of similar assumptions
+>
+> Note also that in RT above RT prio 50 signals don't get delivered, and a program waiting for a signal can lock the machine.
+> Sent via BlackBerry by AT&T
 
->   http://svn.arhuaco.org/svn/src/junk/trunk/threads/cond-signal-test.c
-> 
-> In a PC (Debian 2.6.24 686 with no RT patches) it prints 1000. In the
-> realtime system it prints 1 or 0.
-> 
-> # ./a.out
-> 1
-> # ./a.out
-> 0
-> # ./a.out
-> 1
+Thanks a lot for all your feedback.
 
-Your test program is flawed. The result can be anything between 0 and
-1000. (Theoretically even more, because spurious wakeups are
-possible from pthread_cond_wait).
+The implementation I did was flawed. This new example should run and print 1000.
+I think there are  no more  bugs :) but I'll check again.
 
-I ran the program without sched_yield() on my Fedora 8 system
-(2.6.23.15-137.fc8 kernel, non-RT, only voluntary preemption). I got
-1000 most of the time, but quite often the result was less than that.
+http://svn.arhuaco.org/svn/src/junk/trunk/threads/cond-signal-test-ok.c
 
-> If I do a sched_yield() right after releasing the mutex associated
-> with the condition, the program prints 1000 as expected.
+I was confused with of pthread_signal and pthread_wait. I hadn't implemented
+producer-consumer before. As the FAQ says, depending on sched_yield is bad
+design and RT-Linux allows you to find bugs.
 
-You should not rely on that. There's no guarantee it will work. You've
-just been lucky so far.
+The snippet of code was an example to debug an implementation that we
+are using now. We needed to port an application that uses RTEMS
+(rtems_timer_create, rtems_timer_fire_after, rtems_timer_reset,
+rtems_timer_cancel and
+rtems_timer_delete). Now I will be able to complete the code. Once I
+fix bugs, it should
+be available here.
 
-> void
-> dosignal (void)
-> {
->   pthread_mutex_lock (&cond_mutex);
->   pthread_cond_signal(&cond);
->   pthread_mutex_unlock (&cond_mutex);
->    sched_yield(); //  without this I get 0! with Linux and RT patches
-> }
+http://svn.arhuaco.org/svn/src/junk/trunk/threads/test_timer.c
 
-And you're doing:
-  for (i = 0; i < 1000; ++i)
-    dosignal ();
+I guess it could be useful to someone else porting from RTEMS to Linux-RT.
 
-pthread_cond_signal() will wake the other thread up, but you don't know
-if it will be scheduled to run immediately. It is perfectly valid for
-the scheduler to keep the main thread on the CPU and let it finish all
-the 1000 iterations first.
+Regards,
+Nelson.-
 
-Michal
+-- 
+http://arhuaco.org
