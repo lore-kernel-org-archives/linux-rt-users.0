@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
-Date: Thu, 21 Feb 2008 10:27:07 -0500
-Message-ID: <20080221152707.4804.59177.stgit@novell1.haskins.net>
+Subject: [PATCH [RT] 11/14] optimize the !printk fastpath through the lock
+	acquisition
+Date: Thu, 21 Feb 2008 10:27:22 -0500
+Message-ID: <20080221152722.4804.77478.stgit@novell1.haskins.net>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,134 +15,49 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41354
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41385
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932090AbYBUPyi (ORCPT
+	by vger.kernel.org with ESMTP id S932522AbYBUPyy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 10:54:38 -0500
+	Thu, 21 Feb 2008 10:54:54 -0500
 In-Reply-To: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Sven Dietrich <sdietrich@novell.com>
+Decorate the printk path with an "unlikely()"
 
-Signed-off-by: Sven Dietrich <sdietrich@novell.com>
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/Kconfig.preempt    |   11 +++++++++++
- kernel/rtmutex.c          |    4 ++++
- kernel/rtmutex_adaptive.h |   11 +++++++++--
- kernel/sysctl.c           |   12 ++++++++++++
- 4 files changed, 36 insertions(+), 2 deletions(-)
+ kernel/rtmutex.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-index 6568519..eebec19 100644
---- a/kernel/Kconfig.preempt
-+++ b/kernel/Kconfig.preempt
-@@ -212,6 +212,17 @@ config ADAPTIVE_RTLOCK
- 
- 	 If unsure, say Y
- 
-+config RTLOCK_DELAY
-+	int "Default delay (in loops) for adaptive rtlocks"
-+	range 0 1000000000
-+	depends on ADAPTIVE_RTLOCK
-+	default "10000"
-+        help
-+         This allows you to specify the maximum attempts a task will spin
-+	 attempting to acquire an rtlock before sleeping.  The value is
-+	 tunable at runtime via a sysctl.  A setting of 0 (zero) disables
-+	 the adaptive algorithm entirely.
-+
- config SPINLOCK_BKL
- 	bool "Old-Style Big Kernel Lock"
- 	depends on (PREEMPT || SMP) && !PREEMPT_RT
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index feb938f..4a7423f 100644
+index 122f143..ebdaa17 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -20,6 +20,10 @@
- #include "rtmutex_common.h"
- #include "rtmutex_adaptive.h"
- 
-+#ifdef CONFIG_ADAPTIVE_RTLOCK
-+int rtlock_timeout __read_mostly = CONFIG_RTLOCK_DELAY;
-+#endif
-+
- /*
-  * lock->owner state tracking:
-  *
-diff --git a/kernel/rtmutex_adaptive.h b/kernel/rtmutex_adaptive.h
-index 505fed5..b7e282b 100644
---- a/kernel/rtmutex_adaptive.h
-+++ b/kernel/rtmutex_adaptive.h
-@@ -39,6 +39,7 @@
- #ifdef CONFIG_ADAPTIVE_RTLOCK
- struct adaptive_waiter {
- 	struct task_struct *owner;
-+	int timeout;
- };
- 
- /*
-@@ -60,7 +61,7 @@ adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
+@@ -660,12 +660,12 @@ rt_spin_lock_fastlock(struct rt_mutex *lock,
+ 		void fastcall (*slowfn)(struct rt_mutex *lock))
  {
- 	int sleep = 0;
+ 	/* Temporary HACK! */
+-	if (!current->in_printk)
+-		might_sleep();
+-	else if (in_atomic() || irqs_disabled())
++	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
+ 		/* don't grab locks for printk in atomic */
+ 		return;
  
--	for (;;) {
-+	for (; adaptive->timeout > 0; adaptive->timeout--) {
- 		/*
- 		 * If the task was re-awoken, break out completely so we can
- 		 * reloop through the lock-acquisition code.
-@@ -101,6 +102,9 @@ adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
- 		cpu_relax();
- 	}
- 
-+	if (adaptive->timeout <= 0)
-+		sleep = 1;
++	might_sleep();
 +
- 	put_task_struct(adaptive->owner);
+ 	if (likely(rt_mutex_cmpxchg(lock, NULL, current)))
+ 		rt_mutex_deadlock_account_lock(lock, current);
+ 	else
+@@ -677,7 +677,7 @@ rt_spin_lock_fastunlock(struct rt_mutex *lock,
+ 			void fastcall (*slowfn)(struct rt_mutex *lock))
+ {
+ 	/* Temporary HACK! */
+-	if (current->in_printk && (in_atomic() || irqs_disabled()))
++	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
+ 		/* don't grab locks for printk in atomic */
+ 		return;
  
- 	return sleep;
-@@ -118,8 +122,11 @@ prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter *adaptive)
- 	get_task_struct(adaptive->owner);
- }
- 
-+extern int rtlock_timeout;
-+
- #define DECLARE_ADAPTIVE_WAITER(name) \
--     struct adaptive_waiter name = { .owner = NULL, }
-+     struct adaptive_waiter name = { .owner = NULL,               \
-+                                     .timeout = rtlock_timeout, }
- 
- #else
- 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 541aa9f..36259e4 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -58,6 +58,8 @@
- #include <asm/stacktrace.h>
- #endif
- 
-+#include "rtmutex_adaptive.h"
-+
- static int deprecated_sysctl_warning(struct __sysctl_args *args);
- 
- #if defined(CONFIG_SYSCTL)
-@@ -964,6 +966,16 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= &proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_ADAPTIVE_RTLOCK
-+	{
-+		.ctl_name	= CTL_UNNUMBERED,
-+		.procname	= "rtlock_timeout",
-+		.data		= &rtlock_timeout,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= &proc_dointvec,
-+	},
-+#endif
- #ifdef CONFIG_PROC_FS
- 	{
- 		.ctl_name       = CTL_UNNUMBERED,
