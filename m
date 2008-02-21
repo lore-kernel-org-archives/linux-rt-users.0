@@ -1,65 +1,67 @@
 From: "Gregory Haskins" <ghaskins@novell.com>
 Subject: Re: [PATCH [RT] 00/14] RFC - adaptive real-time locks
-Date: Thu, 21 Feb 2008 14:40:35 -0700
-Message-ID: <47BDA983.BA47.005A.0@novell.com>
+Date: Thu, 21 Feb 2008 14:56:28 -0700
+Message-ID: <47BDAD3C.BA47.005A.0@novell.com>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
  <20080221212420.GA20953@elte.hu>
+ <9810cff90802211333k3d19ca2exf28c18ae5a2b86a@mail.gmail.com>
+ <20080221214219.GA27209@elte.hu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <bill.huey@gmail.com>,
-	<rostedt@goodmis.org>, <kevin@hilman.org>, <tglx@linutronix.de>,
-	<cminyard@mvista.com>, <dsingleton@mvista.com>,
-	<dwalker@mvista.com>, "Moiz Kohari" <MKohari@novell.com>,
+Cc: <a.p.zijlstra@chello.nl>, <rostedt@goodmis.org>,
+	<kevin@hilman.org>, <tglx@linutronix.de>, <cminyard@mvista.com>,
+	<dsingleton@mvista.com>, <dwalker@mvista.com>,
+	"Moiz Kohari" <MKohari@novell.com>,
 	"Peter Morreale" <PMorreale@novell.com>,
 	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
 	<ak@suse.de>, <gregkh@suse.de>, <npiggin@suse.de>,
 	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Ingo Molnar" <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:16359 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757761AbYBUVrf convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 16:47:35 -0500
-In-Reply-To: <20080221212420.GA20953@elte.hu>
+To: "Ingo Molnar" <mingo@elte.hu>,
+	"Bill Huey (hui)" <bill.huey@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932299AbYBUWDY@vger.kernel.org>
+In-Reply-To: <20080221214219.GA27209@elte.hu>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
->>> On Thu, Feb 21, 2008 at  4:24 PM, in message <20080221212420.GA20953@elte.hu>,
+>>> On Thu, Feb 21, 2008 at  4:42 PM, in message <20080221214219.GA27209@elte.hu>,
 Ingo Molnar <mingo@elte.hu> wrote: 
 
-> hm. Why is the ticket spinlock patch included in this patchset? It just 
-> skews your performance results unnecessarily. Ticket spinlocks are 
-> independent conceptually, they are already upstream in 2.6.25-rc2 and 
-> -rt will have them automatically once we rebase to .25.
+> * Bill Huey (hui) <bill.huey@gmail.com> wrote:
+> 
+>> I came to the original conclusion that it wasn't originally worth it, 
+>> but the dbench number published say otherwise. [...]
+> 
+> dbench is a notoriously unreliable and meaningless workload. It's being 
+> frowned upon by the VM and the IO folks.
 
-Sorry if it was ambiguous.  I included them because we found the patch series without them can cause spikes due to the newly introduced pressure on the (raw_spinlock_t)lock->wait_lock.  You can run the adaptive-spin patches without them just fine (in fact, in many cases things run faster without them....dbench *thrives* on chaos).  But you may also measure a cyclic-test spike if you do so.  So I included them to present a "complete package without spikes".  I tried to explain that detail in the prologue, but most people probably fell asleep before they got to the end ;)
+I agree...its a pretty weak benchmark.  BUT, it does pound on dcache_lock and therefore was a good demonstration of the benefits of lower-contention overhead.  Also note we also threw other tests in that PDF if you scroll to the subsequent pages.
+
+> If that's the only workload 
+> where spin-mutexes help, and if it's only a 3% improvement [of which it 
+> is unclear how much of that improvement was due to ticket spinlocks], 
+> then adaptive mutexes are probably not worth it.
+
+Note that the "3%" figure being thrown around was from a single patch within the series.  We are actually getting a net average gain of 443% in dbench.  And note that the number goes *up* when you remove the ticketlocks.  The ticketlocks are there to prevent latency spikes, not improve throughput.
+
+Also take a look at the hackbench numbers which are particularly promising.   We get a net average gain of 493% faster for RT10 based hackbench runs.  The kernel build was only a small gain, but it was all gain nonetheless.  We see similar results for any other workloads we throw at this thing.  I will gladly run any test requested to which I have the ability to run, and I would encourage third party results as well.
+
 
 > 
-> and if we take the ticket spinlock patch out of your series, the the 
-> size of the patchset shrinks in half and touches only 200-300 lines of 
-> code ;-) Considering the total size of the -rt patchset:
-> 
->    652 files changed, 23830 insertions(+), 4636 deletions(-)
-> 
-> we can regard it a routine optimization ;-)
+> I'd not exclude them fundamentally though, it's really the numbers that 
+> matter. The code is certainly simple enough (albeit the .config and 
+> sysctl controls are quite ugly and unacceptable - adaptive mutexes 
+> should really be ... adaptive, with no magic constants in .configs or 
+> else).
 
-Its not the size of your LOC, but what you do with it :)
+We can clean this up, per your suggestions.
 
 > 
-> regarding the concept: adaptive mutexes have been talked about in the 
-> past, but their advantage is not at all clear, that's why we havent done 
-> them. It's definitely not an unambigiously win-win concept.
-> 
-> So lets get some real marketing-free benchmarking done, and we are not 
-> just interested in the workloads where a bit of polling on contended 
-> locks helps, but we are also interested in workloads where the polling 
-> hurts ... And lets please do the comparisons without the ticket spinlock 
-> patch ...
+> But ... i'm somewhat sceptic, after having played with spin-a-bit 
+> mutexes before.
 
-I'm open to suggestion, and this was just a sample of the testing we have done.  We have thrown plenty of workloads at this patch series far beyond the slides I prepared in that URL, and they all seem to indicate a net positive improvement so far.  Some of those results I cannot share due to NDA, and some I didnt share simply because I never formally collected the data like I did for these tests.  If there is something you would like to see, please let me know and I will arrange for it to be executed if at all possible.
+Its very subtle to get this concept to work.  The first few weeks, we were getting 90% regressions ;)  Then we had a breakthrough and started to get this thing humming along quite nicely.
 
 Regards,
 -Greg
