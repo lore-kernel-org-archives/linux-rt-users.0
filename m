@@ -1,67 +1,92 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
+From: "Peter W. Morreale" <pmorreale@novell.com>
 Subject: Re: [PATCH [RT] 00/14] RFC - adaptive real-time locks
-Date: Thu, 21 Feb 2008 14:56:28 -0700
-Message-ID: <47BDAD3C.BA47.005A.0@novell.com>
+Date: Thu, 21 Feb 2008 15:12:46 -0700
+Message-ID: <1203631966.4232.62.camel@hermosa.morrealenet>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
- <20080221212420.GA20953@elte.hu>
- <9810cff90802211333k3d19ca2exf28c18ae5a2b86a@mail.gmail.com>
- <20080221214219.GA27209@elte.hu>
+	 <20080221212420.GA20953@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <rostedt@goodmis.org>,
-	<kevin@hilman.org>, <tglx@linutronix.de>, <cminyard@mvista.com>,
-	<dsingleton@mvista.com>, <dwalker@mvista.com>,
-	"Moiz Kohari" <MKohari@novell.com>,
-	"Peter Morreale" <PMorreale@novell.com>,
-	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
-	<ak@suse.de>, <gregkh@suse.de>, <npiggin@suse.de>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Ingo Molnar" <mingo@elte.hu>,
-	"Bill Huey (hui)" <bill.huey@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932299AbYBUWDY@vger.kernel.org>
-In-Reply-To: <20080221214219.GA27209@elte.hu>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Gregory Haskins <ghaskins@novell.com>, a.p.zijlstra@chello.nl,
+	tglx@linutronix.de, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	bill.huey@gmail.com, kevin@hilman.org, cminyard@mvista.com,
+	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
+	dsaxena@plexity.net, ak@suse.de, gregkh@suse.de,
+	sdietrich@novell.com, mkohari@novell.com
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from victor.provo.novell.com ([137.65.250.26]:49429 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758552AbYBUWMw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Feb 2008 17:12:52 -0500
+In-Reply-To: <20080221212420.GA20953@elte.hu>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Thu, Feb 21, 2008 at  4:42 PM, in message <20080221214219.GA27209@elte.hu>,
-Ingo Molnar <mingo@elte.hu> wrote: 
-
-> * Bill Huey (hui) <bill.huey@gmail.com> wrote:
+On Thu, 2008-02-21 at 22:24 +0100, Ingo Molnar wrote:
+> hm. Why is the ticket spinlock patch included in this patchset? It just 
+> skews your performance results unnecessarily. Ticket spinlocks are 
+> independent conceptually, they are already upstream in 2.6.25-rc2 and 
+> -rt will have them automatically once we rebase to .25.
 > 
->> I came to the original conclusion that it wasn't originally worth it, 
->> but the dbench number published say otherwise. [...]
+
+True, the ticket spinlock certainly adds to the throughput results we
+have seen.  However, the results without the ticket patch are still very
+significant.   (IIRC, 500-600MB/s instead of the ~730MB/s advertised) We
+can easily re-gen the previous results for an apples-to-apples
+comparison.
+
+Without the ticket locks we see spikes in cyclictest that have been
+mapped (via latency trace) to the non-deterministic behavior of the raw
+rt lock "wait_lock" (which is used in the rt lock code).   These spikes
+disappear with the ticket lock patch installed. 
+
+Note that we see these spikes while running cyclictest concurrently with
+dbench/hackbench/kernel builds.  
+
+> and if we take the ticket spinlock patch out of your series, the the 
+> size of the patchset shrinks in half and touches only 200-300 lines of 
+> code ;-) Considering the total size of the -rt patchset:
 > 
-> dbench is a notoriously unreliable and meaningless workload. It's being 
-> frowned upon by the VM and the IO folks.
-
-I agree...its a pretty weak benchmark.  BUT, it does pound on dcache_lock and therefore was a good demonstration of the benefits of lower-contention overhead.  Also note we also threw other tests in that PDF if you scroll to the subsequent pages.
-
-> If that's the only workload 
-> where spin-mutexes help, and if it's only a 3% improvement [of which it 
-> is unclear how much of that improvement was due to ticket spinlocks], 
-> then adaptive mutexes are probably not worth it.
-
-Note that the "3%" figure being thrown around was from a single patch within the series.  We are actually getting a net average gain of 443% in dbench.  And note that the number goes *up* when you remove the ticketlocks.  The ticketlocks are there to prevent latency spikes, not improve throughput.
-
-Also take a look at the hackbench numbers which are particularly promising.   We get a net average gain of 493% faster for RT10 based hackbench runs.  The kernel build was only a small gain, but it was all gain nonetheless.  We see similar results for any other workloads we throw at this thing.  I will gladly run any test requested to which I have the ability to run, and I would encourage third party results as well.
-
-
+>    652 files changed, 23830 insertions(+), 4636 deletions(-)
 > 
-> I'd not exclude them fundamentally though, it's really the numbers that 
-> matter. The code is certainly simple enough (albeit the .config and 
-> sysctl controls are quite ugly and unacceptable - adaptive mutexes 
-> should really be ... adaptive, with no magic constants in .configs or 
-> else).
-
-We can clean this up, per your suggestions.
-
+> we can regard it a routine optimization ;-)
 > 
-> But ... i'm somewhat sceptic, after having played with spin-a-bit 
-> mutexes before.
+> regarding the concept: adaptive mutexes have been talked about in the 
+> past, but their advantage is not at all clear, that's why we havent done 
+> them. It's definitely not an unambigiously win-win concept.
+> 
 
-Its very subtle to get this concept to work.  The first few weeks, we were getting 90% regressions ;)  Then we had a breakthrough and started to get this thing humming along quite nicely.
+Can you elaborate?  Where did you previously see that this would be
+problematic?
 
-Regards,
--Greg
+> So lets get some real marketing-free benchmarking done, and we are not 
+> just interested in the workloads where a bit of polling on contended 
+> locks helps, but we are also interested in workloads where the polling 
+> hurts ... And lets please do the comparisons without the ticket spinlock 
+> patch ...
+> 
+> 	Ingo
+
+Certainly.  One of the things we have struggled with are real-world
+loads that prove/disprove the implementation.  Thus far, everything we
+have come up with has only seen improvement.  
+
+The worst case we have come up with so far is running dbench/hackbench
+in FIFO.  Here we have multiple tasks at the same priority contending on
+the same locks.  This should give a worst case performance since the
+tasks cannot preempt each other, and the nesting of locks should produce
+significant latencies.  However, with the addition of the lateral-steal
+patch, we do not witness that at all, rather the throughput is on par
+with CFS results.
+
+Higher priority FIFO tasks will preempt the polling tasks, and the lower
+priority tasks will wait, as they should.
+
+Are there some suggestions on workloads that would show how the polling
+hurts?  
+
+Thanks,
+-PWM
