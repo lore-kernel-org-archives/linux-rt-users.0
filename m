@@ -1,60 +1,91 @@
 From: "Peter W. Morreale" <pmorreale@novell.com>
-Subject: Re: [PATCH [RT] 10/14] adjust pi_lock usage in wakeup
-Date: Thu, 21 Feb 2008 10:09:04 -0700
-Message-ID: <1203613744.4232.32.camel@hermosa.morrealenet>
+Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
+Date: Thu, 21 Feb 2008 10:04:04 -0700
+Message-ID: <1203613444.4232.27.camel@hermosa.morrealenet>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
-	 <20080221152717.4804.56212.stgit@novell1.haskins.net>
-	 <Pine.LNX.4.58.0802211147270.11610@gandalf.stny.rr.com>
+	 <20080221152707.4804.59177.stgit@novell1.haskins.net>
+	 <200802211741.10299.ak@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	a.p.zijlstra@chello.nl, tglx@linutronix.de,
+	a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	bill.huey@gmail.com, kevin@hilman.org, cminyard@mvista.com,
 	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
-	dsaxena@plexity.net, ak@suse.de, gregkh@suse.de,
-	sdietrich@novell.com, mkohari@novell.com
-To: Steven Rostedt <rostedt@goodmis.org>
+	dsaxena@plexity.net, gregkh@suse.de, sdietrich@novell.com,
+	mkohari@novell.com
+To: Andi Kleen <ak@suse.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:37761 "EHLO
+Received: from victor.provo.novell.com ([137.65.250.26]:38349 "EHLO
 	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932392AbYBURJS (ORCPT
+	with ESMTP id S1753938AbYBURYx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 12:09:18 -0500
-In-Reply-To: <Pine.LNX.4.58.0802211147270.11610@gandalf.stny.rr.com>
+	Thu, 21 Feb 2008 12:24:53 -0500
+In-Reply-To: <200802211741.10299.ak@suse.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2008-02-21 at 11:48 -0500, Steven Rostedt wrote:
-> On Thu, 21 Feb 2008, Gregory Haskins wrote:
+On Thu, 2008-02-21 at 17:41 +0100, Andi Kleen wrote:
+> > +config RTLOCK_DELAY
+> > +	int "Default delay (in loops) for adaptive rtlocks"
+> > +	range 0 1000000000
+> > +	depends on ADAPTIVE_RTLOCK
 > 
-> > From: Peter W.Morreale <pmorreale@novell.com>
-> >
-> > In wakeup_next_waiter(), we take the pi_lock, and then find out whether
-> > we have another waiter to add to the pending owner.  We can reduce
-> > contention on the pi_lock for the pending owner if we first obtain the
-> > pointer to the next waiter outside of the pi_lock.
-> >
-> > This patch adds a measureable increase in throughput.
+> I must say I'm not a big fan of putting such subtle configurable numbers
+> into Kconfig. Compilation is usually the wrong place to configure
+> such a thing. Just having it as a sysctl only should be good enough.
 > 
-> I see how this may decrease contention (slightly less time in holding the
-> pi_lock). But, please, when stating something like: "adds a measurable
-> increase in throughput", show the benchmark numbers.
+> > +	default "10000"
 > 
-> -- Steve
+> Perhaps you can expand how you came up with that default number? 
+> It looks suspiciously round and worse the actual spin time depends a lot on the 
+> CPU frequency (so e.g. a 3Ghz CPU will likely behave quite 
+> differently from a 2Ghz CPU) Did you experiment with other spin times? 
+> Should it be scaled with number of CPUs? And at what point is real
+> time behaviour visibly impacted? 
 > 
 
-Approximately 3% to the dbench benchmark we used.
+We did play with a number of different values at first, however this
+needs more inspection.   With the loads we have played with, this
+parameter is not that sensitive.
 
-My "standard" sanity check was to mount a ramfs filesystem and execute:
+At first we only had the adaptive wait added to the rt spin lock code,
+and the values chosen did not seem to have much of an impact until we
+dropped below 1000.  Higher values had little impact.  Adding the
+adaptive code to rt mutexes seems to make this (and the similar mutex
+parameter) more sensitive, however this is likely due to the particular
+benchmarks we were using.
 
-dbench -t 10 30
+Note that the adaptive wait loop breaks on every owner change, so the
+actual time spent spinning on a CPU (in that loop) is, in general,
+limited to the time the lock is held.  (Note the other cases in that
+adaptive wait loop as well) 
 
-five times and generate an average from the reported "Throughput"
-numbers displayed by the runs. 
+It seems to be that the higher values help in the cases where the lock
+is stolen from the pending owner, in which case the pending owner can
+and will iterate and again start spinning. 
 
-dbench was chosen merely because of the contention on dcache_lock.
+We are certainly hoping that the community will test and also provide
+feedback. 
+
+ 
+> Most likely it would be better to switch to something that is more
+> absolute time, like checking RDTSC every few iteration similar to what
+> udelay does. That would be at least constant time.
+> 
+> -Andi
+
+We (at least I  :-) did try that, to the detriment of throughput.   It
+is seemingly overkill to more precisely account for the "max" time spent
+spinning.  
+
+At one point, I did have a patch that specified the sysctl as
+"nanoseconds" and converted that to a approximate loop count (via the
+math in udelay()).  The idea was that nanoseconds are more human
+friendly, as well as hardware independent, however on further review,
+the idea was dropped.
+
 
 Best,
 -PWM
