@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH [RT] 09/14] adaptive mutexes
-Date: Thu, 21 Feb 2008 10:27:12 -0500
-Message-ID: <20080221152712.4804.64576.stgit@novell1.haskins.net>
+Subject: [PATCH [RT] 13/14] allow rt-mutex lock-stealing to include lateral
+	priority
+Date: Thu, 21 Feb 2008 10:27:32 -0500
+Message-ID: <20080221152732.4804.44134.stgit@novell1.haskins.net>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,260 +15,152 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41365
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41403
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932270AbYBUPyn (ORCPT
+	by vger.kernel.org with ESMTP id S932563AbYBUPzE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 10:54:43 -0500
+	Thu, 21 Feb 2008 10:55:04 -0500
 In-Reply-To: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Peter W.Morreale <pmorreale@novell.com>
+The current logic only allows lock stealing to occur if the current task
+is of higher priority than the pending owner. We can gain signficant
+throughput improvements (200%+) by allowing the lock-stealing code to
+include tasks of equal priority.  The theory is that the system will make
+faster progress by allowing the task already on the CPU to take the lock
+rather than waiting for the system to wake-up a different task.
 
-This patch adds the adaptive spin lock busywait to rtmutexes.  It adds
-a new tunable: rtmutex_timeout, which is the companion to the
-rtlock_timeout tunable.
+This does add a degree of unfairness, yes.  But also note that the users
+of these locks under non -rt environments have already been using unfair
+raw spinlocks anyway so the tradeoff is probably worth it.
 
-Signed-off-by: Peter W. Morreale <pmorreale@novell.com>
+The way I like to think of this is that higher priority tasks should
+clearly preempt, and lower priority tasks should clearly block.  However,
+if tasks have an identical priority value, then we can think of the
+scheduler decisions as the tie-breaking parameter. (e.g. tasks that the
+scheduler picked to run first have a logically higher priority amoung tasks
+of the same prio).  This helps to keep the system "primed" with tasks doing
+useful work, and the end result is higher throughput.
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/Kconfig.preempt    |   37 +++++++++++++++++++++++++++++++++++++
- kernel/rtmutex.c          |   44 ++++++++++++++++++++++++++------------------
- kernel/rtmutex_adaptive.h |   32 ++++++++++++++++++++++++++++++--
- kernel/sysctl.c           |   10 ++++++++++
- 4 files changed, 103 insertions(+), 20 deletions(-)
+ kernel/Kconfig.preempt |   10 ++++++++++
+ kernel/rtmutex.c       |   31 +++++++++++++++++++++++--------
+ 2 files changed, 33 insertions(+), 8 deletions(-)
 
 diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-index eebec19..d2b0daa 100644
+index d2b0daa..343b93c 100644
 --- a/kernel/Kconfig.preempt
 +++ b/kernel/Kconfig.preempt
-@@ -223,6 +223,43 @@ config RTLOCK_DELAY
- 	 tunable at runtime via a sysctl.  A setting of 0 (zero) disables
- 	 the adaptive algorithm entirely.
+@@ -273,3 +273,13 @@ config SPINLOCK_BKL
+ 	  Say Y here if you are building a kernel for a desktop system.
+ 	  Say N if you are unsure.
  
-+config ADAPTIVE_RTMUTEX
-+        bool "Adaptive real-time mutexes"
-+        default y
-+        depends on ADAPTIVE_RTLOCK
-+        help
-+         This option adds the adaptive rtlock spin/sleep algorithm to
-+         rtmutexes.  In rtlocks, a significant gain in throughput
-+         can be seen by allowing rtlocks to spin for a distinct
-+         amount of time prior to going to sleep for deadlock avoidence.
-+ 
-+         Typically, mutexes are used when a critical section may need to
-+         sleep due to a blocking operation.  In the event the critical 
-+	 section does not need to sleep, an additional gain in throughput 
-+	 can be seen by avoiding the extra overhead of sleeping.
-+ 
-+         This option alters the rtmutex code to use an adaptive
-+         spin/sleep algorithm.  It will spin unless it determines it must
-+         sleep to avoid deadlock.  This offers a best of both worlds
-+         solution since we achieve both high-throughput and low-latency.
-+ 
-+         If unsure, say Y
-+ 
-+config RTMUTEX_DELAY
-+        int "Default delay (in loops) for adaptive mutexes"
-+        range 0 10000000
-+        depends on ADAPTIVE_RTMUTEX
-+        default "3000"
-+        help
-+         This allows you to specify the maximum delay a task will use
-+	 to wait for a rt mutex before going to sleep.  Note that that
-+	 although the delay is implemented as a preemptable loop, tasks
-+	 of like priority cannot preempt each other and this setting can
-+	 result in increased latencies.
-+	 
-+         The value is tunable at runtime via a sysctl.  A setting of 0
-+	 (zero) disables the adaptive algorithm entirely.
-+
- config SPINLOCK_BKL
- 	bool "Old-Style Big Kernel Lock"
- 	depends on (PREEMPT || SMP) && !PREEMPT_RT
++config RTLOCK_LATERAL_STEAL
++        bool "Allow equal-priority rtlock stealing"
++	default y
++	depends on PREEMPT_RT
++	help
++	 This option alters the rtlock lock-stealing logic to allow
++	 equal priority tasks to preempt a pending owner in addition
++	 to higher priority tasks.  This allows for a significant
++	 boost in throughput under certain circumstances at the expense
++	 of strict FIFO lock access.
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 4a7423f..a7ed7b2 100644
+index 95c3644..da077e5 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -24,6 +24,10 @@
- int rtlock_timeout __read_mostly = CONFIG_RTLOCK_DELAY;
- #endif
+@@ -323,12 +323,27 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	return ret;
+ }
  
-+#ifdef CONFIG_ADAPTIVE_RTMUTEX
-+int rtmutex_timeout __read_mostly = CONFIG_RTMUTEX_DELAY;
++static inline int lock_is_stealable(struct task_struct *pendowner, int unfair)
++{
++#ifndef CONFIG_RTLOCK_LATERAL_STEAL
++	if (current->prio >= pendowner->prio)
++#else
++	if (current->prio > pendowner->prio)
++		return 0;
++
++	if (!unfair && (current->prio == pendowner->prio))
 +#endif
++		return 0;
++
++	return 1;
++}
 +
  /*
-  * lock->owner state tracking:
-  *
-@@ -521,17 +525,16 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
- 	 * Do the wakeup before the ownership change to give any spinning
- 	 * waiter grantees a headstart over the other threads that will
- 	 * trigger once owner changes.
-+	 *
-+	 * This may appear to be a race, but the barriers close the
-+	 * window.
- 	 */
--	if (!savestate)
--		wake_up_process(pendowner);
--	else {
--		smp_mb();
--		/*
--		 * This may appear to be a race, but the barriers close the
--		 * window.
--		 */
--		if ((pendowner->state != TASK_RUNNING)
--		    && (pendowner->state != TASK_RUNNING_MUTEX))
-+	smp_mb();
-+	if ((pendowner->state != TASK_RUNNING)
-+	    && (pendowner->state != TASK_RUNNING_MUTEX)) {
-+		if (!savestate)
-+			wake_up_process(pendowner);
-+		else
- 			wake_up_process_mutex(pendowner);
- 	}
- 
-@@ -764,7 +767,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 		debug_rt_mutex_print_deadlock(&waiter);
- 
- 		/* adaptive_wait() returns 1 if we need to sleep */
--		if (adaptive_wait(lock, &waiter, &adaptive)) {
-+		if (adaptive_wait(lock, 0, &waiter, &adaptive)) {
- 			update_current(TASK_UNINTERRUPTIBLE, &saved_state);
- 			if (waiter.task)
- 				schedule_rt_mutex(lock);
-@@ -975,6 +978,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 	int ret = 0, saved_lock_depth = -1;
- 	struct rt_mutex_waiter waiter;
- 	unsigned long flags;
-+	DECLARE_ADAPTIVE_MUTEX_WAITER(adaptive);
- 
- 	debug_rt_mutex_init_waiter(&waiter);
- 	waiter.task = NULL;
-@@ -995,8 +999,6 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 	if (unlikely(current->lock_depth >= 0))
- 		saved_lock_depth = rt_release_bkl(lock, flags);
- 
--	set_current_state(state);
--
- 	/* Setup the timer, when timeout != NULL */
- 	if (unlikely(timeout))
- 		hrtimer_start(&timeout->timer, timeout->timer.expires,
-@@ -1049,6 +1051,9 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 			if (unlikely(ret))
- 				break;
- 		}
-+
-+		mutex_prepare_adaptive_wait(lock, &adaptive);
-+
- 		saved_flags = current->flags & PF_NOSCHED;
- 		current->flags &= ~PF_NOSCHED;
- 
-@@ -1056,17 +1061,20 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 
- 		debug_rt_mutex_print_deadlock(&waiter);
- 
--		if (waiter.task)
--			schedule_rt_mutex(lock);
-+		if (mutex_adaptive_wait(lock,
-+					(state == TASK_INTERRUPTIBLE),
-+					&waiter, &adaptive)) {
-+			set_current_state(state);
-+			if (waiter.task)
-+				schedule_rt_mutex(lock);
-+			set_current_state(TASK_RUNNING);
-+		}
- 
- 		spin_lock_irq(&lock->wait_lock);
- 
- 		current->flags |= saved_flags;
--		set_current_state(state);
- 	}
- 
--	set_current_state(TASK_RUNNING);
--
- 	if (unlikely(waiter.task))
- 		remove_waiter(lock, &waiter, flags);
- 
-diff --git a/kernel/rtmutex_adaptive.h b/kernel/rtmutex_adaptive.h
-index b7e282b..72f8def 100644
---- a/kernel/rtmutex_adaptive.h
-+++ b/kernel/rtmutex_adaptive.h
-@@ -56,7 +56,8 @@ struct adaptive_waiter {
-  *
+  * Optimization: check if we can steal the lock from the
+  * assigned pending owner [which might not have taken the
+  * lock yet]:
   */
- static inline int
--adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
-+adaptive_wait(struct rt_mutex *lock, int interruptible,
-+	      struct rt_mutex_waiter *waiter,
- 	      struct adaptive_waiter *adaptive)
+-static inline int try_to_steal_lock(struct rt_mutex *lock)
++static inline int try_to_steal_lock(struct rt_mutex *lock, int unfair)
  {
- 	int sleep = 0;
-@@ -77,6 +78,14 @@ adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
- 		if (adaptive->owner != rt_mutex_owner(lock))
+ 	struct task_struct *pendowner = rt_mutex_owner(lock);
+ 	struct rt_mutex_waiter *next;
+@@ -340,7 +355,7 @@ static inline int try_to_steal_lock(struct rt_mutex *lock)
+ 		return 1;
+ 
+ 	spin_lock(&pendowner->pi_lock);
+-	if (current->prio >= pendowner->prio) {
++	if (!lock_is_stealable(pendowner, unfair)) {
+ 		spin_unlock(&pendowner->pi_lock);
+ 		return 0;
+ 	}
+@@ -393,7 +408,7 @@ static inline int try_to_steal_lock(struct rt_mutex *lock)
+  *
+  * Must be called with lock->wait_lock held.
+  */
+-static int try_to_take_rt_mutex(struct rt_mutex *lock)
++static int try_to_take_rt_mutex(struct rt_mutex *lock, int unfair)
+ {
+ 	/*
+ 	 * We have to be careful here if the atomic speedups are
+@@ -416,7 +431,7 @@ static int try_to_take_rt_mutex(struct rt_mutex *lock)
+ 	 */
+ 	mark_rt_mutex_waiters(lock);
+ 
+-	if (rt_mutex_owner(lock) && !try_to_steal_lock(lock))
++	if (rt_mutex_owner(lock) && !try_to_steal_lock(lock, unfair))
+ 		return 0;
+ 
+ 	/* We got the lock. */
+@@ -737,7 +752,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 		int saved_lock_depth = current->lock_depth;
+ 
+ 		/* Try to acquire the lock */
+-		if (try_to_take_rt_mutex(lock))
++		if (try_to_take_rt_mutex(lock, 1))
+ 			break;
+ 		/*
+ 		 * waiter.task is NULL the first time we come here and
+@@ -985,7 +1000,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	init_lists(lock);
+ 
+ 	/* Try to acquire the lock again: */
+-	if (try_to_take_rt_mutex(lock)) {
++	if (try_to_take_rt_mutex(lock, 0)) {
+ 		spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 		return 0;
+ 	}
+@@ -1006,7 +1021,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 		unsigned long saved_flags;
+ 
+ 		/* Try to acquire the lock: */
+-		if (try_to_take_rt_mutex(lock))
++		if (try_to_take_rt_mutex(lock, 0))
  			break;
  
-+#ifdef CONFIG_ADAPTIVE_RTMUTEX
-+		/*
-+		 * Mutexes may need to check for signals...
-+		 */
-+		if (interruptible && signal_pending(current))
-+			break;
-+#endif
-+
  		/*
- 		 * If we got here, presumably the lock ownership is still
- 		 * current.  We will use it to our advantage to be able to
-@@ -132,10 +141,29 @@ extern int rtlock_timeout;
+@@ -1120,7 +1135,7 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
  
- #define DECLARE_ADAPTIVE_WAITER(name)
+ 		init_lists(lock);
  
--#define adaptive_wait(lock, waiter, busy) 1
-+#define adaptive_wait(lock, intr, waiter, busy) 1
- #define prepare_adaptive_wait(lock, busy) {}
- 
- #endif /* CONFIG_ADAPTIVE_RTLOCK */
- 
-+#ifdef CONFIG_ADAPTIVE_RTMUTEX
-+
-+#define mutex_adaptive_wait         adaptive_wait
-+#define mutex_prepare_adaptive_wait prepare_adaptive_wait
-+
-+extern int rtmutex_timeout;
-+
-+#define DECLARE_ADAPTIVE_MUTEX_WAITER(name) \
-+     struct adaptive_waiter name = { .owner = NULL,               \
-+                                     .timeout = rtmutex_timeout, }
-+
-+#else
-+
-+#define DECLARE_ADAPTIVE_MUTEX_WAITER(name)
-+
-+#define mutex_adaptive_wait(lock, intr, waiter, busy) 1
-+#define mutex_prepare_adaptive_wait(lock, busy) {}
-+
-+#endif /* CONFIG_ADAPTIVE_RTMUTEX */
- 
- #endif /* __KERNEL_RTMUTEX_ADAPTIVE_H */
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 36259e4..3465af2 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -976,6 +976,16 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= &proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_ADAPTIVE_RTMUTEX
-+	{
-+		.ctl_name       = CTL_UNNUMBERED,
-+		.procname       = "rtmutex_timeout",
-+		.data           = &rtmutex_timeout,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0644,
-+		.proc_handler   = &proc_dointvec,
-+       },
-+#endif
- #ifdef CONFIG_PROC_FS
- 	{
- 		.ctl_name       = CTL_UNNUMBERED,
+-		ret = try_to_take_rt_mutex(lock);
++		ret = try_to_take_rt_mutex(lock, 0);
+ 		/*
+ 		 * try_to_take_rt_mutex() sets the lock waiters
+ 		 * bit unconditionally. Clean this up.
