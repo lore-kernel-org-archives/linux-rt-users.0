@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH [RT] 05/14] rearrange rt_spin_lock sleep
-Date: Thu, 21 Feb 2008 10:26:51 -0500
-Message-ID: <20080221152651.4804.4702.stgit@novell1.haskins.net>
+Subject: [PATCH [RT] 04/14] disable PREEMPT_SPINLOCK_WAITERS when x86
+	ticket/fifo spins are in use
+Date: Thu, 21 Feb 2008 10:26:46 -0500
+Message-ID: <20080221152646.4804.1627.stgit@novell1.haskins.net>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,75 +15,35 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41322
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41311
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1763728AbYBUPyX (ORCPT
+	by vger.kernel.org with ESMTP id S1758294AbYBUPyR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 10:54:23 -0500
+	Thu, 21 Feb 2008 10:54:17 -0500
 In-Reply-To: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The current logic makes rather coarse adjustments to current->state since
-it is planning on sleeping anyway.  We want to eventually move to an
-adaptive (e.g. optional sleep) algorithm, so we tighten the scope of the
-adjustments to bracket the schedule().  This should yield correct behavior
-with or without the adaptive features that are added later in the series.
-We add it here as a separate patch for greater review clarity on smaller
-changes.
+Preemptible spinlock waiters effectively bypasses the benefits of a fifo
+spinlock.  Since we now have fifo spinlocks for x86 enabled, disable the
+preemption feature on x86.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+CC: Nick Piggin <npiggin@suse.de>
 ---
 
- kernel/rtmutex.c |   20 +++++++++++++++-----
- 1 files changed, 15 insertions(+), 5 deletions(-)
+ arch/x86/Kconfig |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index a2b00cc..15fc6e6 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -661,6 +661,14 @@ rt_spin_lock_fastunlock(struct rt_mutex *lock,
- 		slowfn(lock);
- }
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 8d15667..d5b9a67 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -20,6 +20,7 @@ config X86
+ 	bool
+ 	default y
+ 	select HAVE_MCOUNT
++	select DISABLE_PREEMPT_SPINLOCK_WAITERS
  
-+static inline void
-+update_current(unsigned long new_state, unsigned long *saved_state)
-+{
-+	unsigned long state = xchg(&current->state, new_state);
-+	if (unlikely(state == TASK_RUNNING))
-+		*saved_state = TASK_RUNNING;
-+}
-+
- /*
-  * Slow path lock function spin_lock style: this variant is very
-  * careful not to miss any non-lock wakeups.
-@@ -700,7 +708,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	 * saved_state accordingly. If we did not get a real wakeup
- 	 * then we return with the saved state.
- 	 */
--	saved_state = xchg(&current->state, TASK_UNINTERRUPTIBLE);
-+	saved_state = current->state;
-+	smp_mb();
- 
- 	for (;;) {
- 		unsigned long saved_flags;
-@@ -732,14 +741,15 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 
- 		debug_rt_mutex_print_deadlock(&waiter);
- 
--		schedule_rt_mutex(lock);
-+		update_current(TASK_UNINTERRUPTIBLE, &saved_state);
-+		if (waiter.task)
-+			schedule_rt_mutex(lock);
-+		else
-+			update_current(TASK_RUNNING_MUTEX, &saved_state);
- 
- 		spin_lock_irqsave(&lock->wait_lock, flags);
- 		current->flags |= saved_flags;
- 		current->lock_depth = saved_lock_depth;
--		state = xchg(&current->state, TASK_UNINTERRUPTIBLE);
--		if (unlikely(state == TASK_RUNNING))
--			saved_state = TASK_RUNNING;
- 	}
- 
- 	state = xchg(&current->state, saved_state);
+ config GENERIC_TIME
+ 	bool
