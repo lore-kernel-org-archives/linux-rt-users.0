@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH [RT] 00/14] RFC - adaptive real-time locks
-Date: Thu, 21 Feb 2008 10:26:25 -0500
-Message-ID: <20080221152504.4804.8724.stgit@novell1.haskins.net>
+Subject: [PATCH [RT] 05/14] rearrange rt_spin_lock sleep
+Date: Thu, 21 Feb 2008 10:26:51 -0500
+Message-ID: <20080221152651.4804.4702.stgit@novell1.haskins.net>
+References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -13,84 +14,75 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41262
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41322
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755622AbYBUPyG (ORCPT
+	by vger.kernel.org with ESMTP id S1763728AbYBUPyX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 10:54:06 -0500
+	Thu, 21 Feb 2008 10:54:23 -0500
+In-Reply-To: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The Real Time patches to the Linux kernel converts the architecture
-specific SMP-synchronization primitives commonly referred to as
-"spinlocks" to an "RT mutex" implementation that support a priority
-inheritance protocol, and priority-ordered wait queues.  The RT mutex
-implementation allows tasks that would otherwise busy-wait for a
-contended lock to be preempted by higher priority tasks without
-compromising the integrity of critical sections protected by the lock.
-The unintended side-effect is that the -rt kernel suffers from
-significant degradation of IO throughput (disk and net) due to the
-extra overhead associated with managing pi-lists and context switching.
-This has been generally accepted as a price to pay for low-latency
-preemption.
+The current logic makes rather coarse adjustments to current->state since
+it is planning on sleeping anyway.  We want to eventually move to an
+adaptive (e.g. optional sleep) algorithm, so we tighten the scope of the
+adjustments to bracket the schedule().  This should yield correct behavior
+with or without the adaptive features that are added later in the series.
+We add it here as a separate patch for greater review clarity on smaller
+changes.
 
-Our research indicates that it doesn't necessarily have to be this
-way.  This patch set introduces an adaptive technology that retains both
-the priority inheritance protocol as well as the preemptive nature of
-spinlocks and mutexes and adds a 300+% throughput increase to the Linux
-Real time kernel.  It applies to 2.6.24-rt1.  
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-These performance increases apply to disk IO as well as netperf UDP
-benchmarks, without compromising RT preemption latency.  For more
-complex applications, overall the I/O throughput seems to approach the
-throughput on a PREEMPT_VOLUNTARY or PREEMPT_DESKTOP Kernel, as is
-shipped by most distros.
+ kernel/rtmutex.c |   20 +++++++++++++++-----
+ 1 files changed, 15 insertions(+), 5 deletions(-)
 
-Essentially, the RT Mutex has been modified to busy-wait under
-contention for a limited (and configurable) time.  This works because
-most locks are typically held for very short time spans.  Too often,
-by the time a task goes to sleep on a mutex, the mutex is already being
-released on another CPU.
-
-The effect (on SMP) is that by polling a mutex for a limited time we
-reduce context switch overhead by up to 90%, and therefore eliminate CPU
-cycles as well as massive hot-spots in the scheduler / other bottlenecks
-in the Kernel - even though we busy-wait (using CPU cycles) to poll the
-lock.
-
-We have put together some data from different types of benchmarks for
-this patch series, which you can find here:
-
-ftp://ftp.novell.com/dev/ghaskins/adaptive-locks.pdf
-
-It compares a stock kernel.org 2.6.24 (PREEMPT_DESKTOP), a stock
-2.6.24-rt1 (PREEMPT_RT), and a 2.6.24-rt1 + adaptive-lock
-(2.6.24-rt1-al) (PREEMPT_RT) kernel.  The machine is a 4-way (dual-core,
-dual-socket) 2Ghz 5130 Xeon (core2duo-woodcrest) Dell Precision 490. 
-
-Some tests show a marked improvement (for instance, dbench and hackbench),
-whereas some others (make -j 128) the results were not as profound but
-they were still net-positive. In all cases we have also verified that
-deterministic latency is not impacted by using cyclic-test. 
-
-This patch series also includes some re-work on the raw_spinlock
-infrastructure, including Nick Piggin's x86-ticket-locks.  We found that
-the increased pressure on the lock->wait_locks could cause rare but
-serious latency spikes that are fixed by a fifo raw_spinlock_t
-implementation.  Nick was gracious enough to allow us to re-use his
-work (which is already accepted in 2.6.25).  Note that we also have a
-C version of his protocol available if other architectures need
-fifo-lock support as well, which we will gladly post upon request.
-
-Special thanks go to many people who were instrumental to this project,
-including:
-  *) the -rt team here at Novell for research, development, and testing.
-  *) Nick Piggin for his invaluable consultation/feedback and use of his
-     x86-ticket-locks.
-  *) The reviewers/testers at Suse, Montavista, and Bill Huey for their
-     time and feedback on the early versions of these patches.
-
-As always, comments/feedback/bug-fixes are welcome.
-
-Regards,
--Greg
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index a2b00cc..15fc6e6 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -661,6 +661,14 @@ rt_spin_lock_fastunlock(struct rt_mutex *lock,
+ 		slowfn(lock);
+ }
+ 
++static inline void
++update_current(unsigned long new_state, unsigned long *saved_state)
++{
++	unsigned long state = xchg(&current->state, new_state);
++	if (unlikely(state == TASK_RUNNING))
++		*saved_state = TASK_RUNNING;
++}
++
+ /*
+  * Slow path lock function spin_lock style: this variant is very
+  * careful not to miss any non-lock wakeups.
+@@ -700,7 +708,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	 * saved_state accordingly. If we did not get a real wakeup
+ 	 * then we return with the saved state.
+ 	 */
+-	saved_state = xchg(&current->state, TASK_UNINTERRUPTIBLE);
++	saved_state = current->state;
++	smp_mb();
+ 
+ 	for (;;) {
+ 		unsigned long saved_flags;
+@@ -732,14 +741,15 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 
+ 		debug_rt_mutex_print_deadlock(&waiter);
+ 
+-		schedule_rt_mutex(lock);
++		update_current(TASK_UNINTERRUPTIBLE, &saved_state);
++		if (waiter.task)
++			schedule_rt_mutex(lock);
++		else
++			update_current(TASK_RUNNING_MUTEX, &saved_state);
+ 
+ 		spin_lock_irqsave(&lock->wait_lock, flags);
+ 		current->flags |= saved_flags;
+ 		current->lock_depth = saved_lock_depth;
+-		state = xchg(&current->state, TASK_UNINTERRUPTIBLE);
+-		if (unlikely(state == TASK_RUNNING))
+-			saved_state = TASK_RUNNING;
+ 	}
+ 
+ 	state = xchg(&current->state, saved_state);
