@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH [RT] 11/14] optimize the !printk fastpath through the lock
-	acquisition
-Date: Thu, 21 Feb 2008 10:27:22 -0500
-Message-ID: <20080221152722.4804.77478.stgit@novell1.haskins.net>
+Subject: [PATCH [RT] 10/14] adjust pi_lock usage in wakeup
+Date: Thu, 21 Feb 2008 10:27:17 -0500
+Message-ID: <20080221152717.4804.56212.stgit@novell1.haskins.net>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -15,49 +14,67 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41385
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41375
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932522AbYBUPyy (ORCPT
+	by vger.kernel.org with ESMTP id S932450AbYBUPys (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 10:54:54 -0500
+	Thu, 21 Feb 2008 10:54:48 -0500
 In-Reply-To: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Decorate the printk path with an "unlikely()"
+From: Peter W.Morreale <pmorreale@novell.com>
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+In wakeup_next_waiter(), we take the pi_lock, and then find out whether
+we have another waiter to add to the pending owner.  We can reduce
+contention on the pi_lock for the pending owner if we first obtain the
+pointer to the next waiter outside of the pi_lock.
+
+This patch adds a measureable increase in throughput.
+
+Signed-off-by: Peter W. Morreale <pmorreale@novell.com>
 ---
 
- kernel/rtmutex.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+ kernel/rtmutex.c |   14 +++++++++-----
+ 1 files changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 122f143..ebdaa17 100644
+index a7ed7b2..122f143 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -660,12 +660,12 @@ rt_spin_lock_fastlock(struct rt_mutex *lock,
- 		void fastcall (*slowfn)(struct rt_mutex *lock))
+@@ -505,6 +505,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
  {
- 	/* Temporary HACK! */
--	if (!current->in_printk)
--		might_sleep();
--	else if (in_atomic() || irqs_disabled())
-+	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
- 		/* don't grab locks for printk in atomic */
- 		return;
+ 	struct rt_mutex_waiter *waiter;
+ 	struct task_struct *pendowner;
++	struct rt_mutex_waiter *next;
  
-+	might_sleep();
+ 	spin_lock(&current->pi_lock);
+ 
+@@ -549,6 +550,12 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 	 * waiter with higher priority than pending-owner->normal_prio
+ 	 * is blocked on the unboosted (pending) owner.
+ 	 */
 +
- 	if (likely(rt_mutex_cmpxchg(lock, NULL, current)))
- 		rt_mutex_deadlock_account_lock(lock, current);
- 	else
-@@ -677,7 +677,7 @@ rt_spin_lock_fastunlock(struct rt_mutex *lock,
- 			void fastcall (*slowfn)(struct rt_mutex *lock))
- {
- 	/* Temporary HACK! */
--	if (current->in_printk && (in_atomic() || irqs_disabled()))
-+	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
- 		/* don't grab locks for printk in atomic */
- 		return;
++	if (rt_mutex_has_waiters(lock))
++		next = rt_mutex_top_waiter(lock);
++	else
++		next = NULL;
++
+ 	spin_lock(&pendowner->pi_lock);
+ 
+ 	WARN_ON(!pendowner->pi_blocked_on);
+@@ -557,12 +564,9 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 
+ 	pendowner->pi_blocked_on = NULL;
+ 
+-	if (rt_mutex_has_waiters(lock)) {
+-		struct rt_mutex_waiter *next;
+-
+-		next = rt_mutex_top_waiter(lock);
++	if (next)
+ 		plist_add(&next->pi_list_entry, &pendowner->pi_waiters);
+-	}
++
+ 	spin_unlock(&pendowner->pi_lock);
+ }
  
