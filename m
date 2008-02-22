@@ -1,7 +1,7 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+From: "Peter W. Morreale" <pmorreale@novell.com>
 Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
-Date: Fri, 22 Feb 2008 11:55:45 -0800
-Message-ID: <1203710145.4772.107.camel@sven.thebigcorporation.com>
+Date: Fri, 22 Feb 2008 13:15:29 -0700
+Message-ID: <1203711329.4147.46.camel@hermosa.morrealenet>
 References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
 	 <20080221152707.4804.59177.stgit@novell1.haskins.net>
 	 <200802211741.10299.ak@suse.de> <20080222190814.GD11213@linux.vnet.ibm.com>
@@ -17,65 +17,40 @@ Cc: "Bill Huey (hui)" <bill.huey@gmail.com>, Andi Kleen <ak@suse.de>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
 	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
-	gregkh@suse.de, pmorreale@novell.com, mkohari@novell.com
+	gregkh@suse.de, sdietrich@novell.com, mkohari@novell.com
 To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from charybdis-ext.suse.de ([195.135.221.2]:58517 "EHLO
-	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1757303AbYBVTz6 (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:36935 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755530AbYBVUPi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Feb 2008 14:55:58 -0500
+	Fri, 22 Feb 2008 15:15:38 -0500
 In-Reply-To: <20080222194341.GE11213@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
 On Fri, 2008-02-22 at 11:43 -0800, Paul E. McKenney wrote:
-> On Fri, Feb 22, 2008 at 11:21:14AM -0800, Bill Huey (hui) wrote:
-> > On Fri, Feb 22, 2008 at 11:19 AM, Bill Huey (hui) <bill.huey@gmail.com> wrote:
-> > >  Yeah, I'm not very keen on having a constant there without some
-> > >  contention instrumentation to see how long the spins are. It would be
-> > >  better to just let it run until either task->on_cpu is off or checking
-> > >  if the "current" in no longer matches the mutex owner for the runqueue
-> > >  in question. At that point, you know the thread isn't running.
-> > >  Spinning on something like that is just a waste of time. It's for that
-> > >  reason that doing in the spin outside of a preempt critical section
-> > >  isn't really needed
-> > 
-> > Excuse me, I meant to say "...isn't a problem".
 > 
 > The fixed-time spins are very useful in cases where the critical section
 > is almost always very short but can sometimes be very long.  In such
 > cases, you would want to spin until either ownership changes or it is
 > apparent that the current critical-section instance will be long.
 > 
-> I believe that there are locks in the Linux kernel that have this
-> "mostly short but sometimes long" hold-time property.
 
-In regards to this "mostly short but sometimes long" question, 
-for very large SMP systems, running with some profiling enabled, might
-allow the system to adapt to varying workloads and therefore shifting
-lock contention / hold-times. 
+This is what the adaptive patch set does.  All current spinners exit the
+loop on an owner change.  
 
-Overall utilization despite the overhead might be lower, but this is
-tbd.
+In this case each "spinner" will traverse the outer rt lock loop and
+re-attempt to acquire the lock.  If unsuccessful, the task will re-enter
+the adaptive wait loop again, providing that there are still "timeout"
+iterations left for that particular task. 
 
-In high-contention, short-hold time situations, it may even make sense
-to have multiple CPUs with multiple waiters spinning, depending on
-hold-time vs. time to put a waiter to sleep and wake them up.
+I do have some stats on the rt lock/adaptive algorithm from a crude
+patch used during development.  As Bill has noted, the correct way to
+obtain these would be to extend lockstats.  It was just more expedient
+to create this crude patch at the time.  If it is helpful to look at
+these results in the meantime, I can easily make them, as well as the
+patch, available.  
 
-The wake-up side could also walk ahead on the queue, and bring up
-spinners from sleeping, so that they are all ready to go when the lock
-flips green for them.
 
-But in more simple cases, there should be a simple, default timeout
-governed by context switch overhead or as defined by a derived number of
-cache misses, as you suggested.
-
-Sven
-
-> 							Thanx, Paul
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-PWM
