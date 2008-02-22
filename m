@@ -1,78 +1,70 @@
 From: Gregory Haskins <gregory.haskins.ml@gmail.com>
-Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
-Date: Fri, 22 Feb 2008 17:03:27 -0500
-Message-ID: <47BF46AF.7010200@gmail.com>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152707.4804.59177.stgit@novell1.haskins.net> <200802211741.10299.ak@suse.de> <20080222190814.GD11213@linux.vnet.ibm.com> <9810cff90802221119j23818e74g2721512a693a0a01@mail.gmail.com> <9810cff90802221121s216f69f4k4a5f39eaaf11dd7f@mail.gmail.com> <20080222194341.GE11213@linux.vnet.ibm.com> <1203710145.4772.107.camel@sven.thebigcorporation.com> <20080222202316.GF11213@linux.vnet.ibm.com>
+Subject: Re: [PATCH [RT] 11/14] optimize the !printk fastpath through the
+ lock acquisition
+Date: Fri, 22 Feb 2008 17:20:53 -0500
+Message-ID: <47BF4AC5.7070507@gmail.com>
+References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152722.4804.77478.stgit@novell1.haskins.net> <20080222191837.GE6060@ucw.cz>
 Reply-To: gregory.haskins@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	"Bill Huey (hui)" <bill.huey@gmail.com>, Andi Kleen <ak@suse.de>,
-	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
 	a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
-	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
-	gregkh@suse.de, pmorreale@novell.com, mkohari@novell.com
-To: paulmck@linux.vnet.ibm.com
+	bill.huey@gmail.com, kevin@hilman.org, cminyard@mvista.com,
+	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
+	dsaxena@plexity.net, ak@suse.de, gregkh@suse.de,
+	sdietrich@novell.com, pmorreale@novell.com, mkohari@novell.com
+To: Pavel Machek <pavel@ucw.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.183]:62811 "EHLO
+Received: from py-out-1112.google.com ([64.233.166.179]:25349 "EHLO
 	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1762808AbYBVWDr (ORCPT
+	with ESMTP id S936611AbYBVWVM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Feb 2008 17:03:47 -0500
-Received: by py-out-1112.google.com with SMTP id u52so980867pyb.10
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Feb 2008 14:03:46 -0800 (PST)
-In-Reply-To: <20080222202316.GF11213@linux.vnet.ibm.com>
+	Fri, 22 Feb 2008 17:21:12 -0500
+Received: by py-out-1112.google.com with SMTP id u52so989095pyb.10
+        for <linux-rt-users@vger.kernel.org>; Fri, 22 Feb 2008 14:21:11 -0800 (PST)
+In-Reply-To: <20080222191837.GE6060@ucw.cz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Paul E. McKenney wrote:
-> Governing the timeout by context-switch overhead sounds even better to me.
-> Really easy to calibrate, and short critical sections are of much shorter
-> duration than are a context-switch pair.
-
-Yeah, fully agree.  This is on my research "todo" list.  My theory is 
-that the ultimate adaptive-timeout algorithm here would essentially be 
-the following:
-
-*) compute the context-switch pair time average for the system.  This is 
-your time threshold (CSt).
-
-*) For each lock, maintain an average hold-time (AHt) statistic (I am 
-assuming this can be done cheaply...perhaps not).
-
-The adaptive code would work as follows:
-
-if (AHt > CSt) /* dont even bother if the average is greater than CSt */
-    timeout = 0;
-else
-    timeout = AHt;
-
-if (adaptive_wait(timeout))
-    sleep();
-
-Anyone have some good ideas on how to compute CSt?  I was thinking you 
-could create two kthreads that message one another (measuring round-trip 
-time) for some number (say 100) to get an average.  You could probably 
-just approximate it with flushing workqueue jobs.
-
--Greg
-
+Pavel Machek wrote:
+> Hi!
 > 
-> 							Thanx, Paul
-> 
->> Sven
+>> Decorate the printk path with an "unlikely()"
 >>
->>> 							Thanx, Paul
->>> -
->>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+>> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+>> ---
+>>
+>>  kernel/rtmutex.c |    8 ++++----
+>>  1 files changed, 4 insertions(+), 4 deletions(-)
+>>
+>> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+>> index 122f143..ebdaa17 100644
+>> --- a/kernel/rtmutex.c
+>> +++ b/kernel/rtmutex.c
+>> @@ -660,12 +660,12 @@ rt_spin_lock_fastlock(struct rt_mutex *lock,
+>>  		void fastcall (*slowfn)(struct rt_mutex *lock))
+>>  {
+>>  	/* Temporary HACK! */
+>> -	if (!current->in_printk)
+>> -		might_sleep();
+>> -	else if (in_atomic() || irqs_disabled())
+>> +	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
+>>  		/* don't grab locks for printk in atomic */
+>>  		return;
+>>  
+>> +	might_sleep();
 > 
+> I think you changed the code here... you call might_sleep() in
+> different cases afaict.
+
+Agreed, but it's still correct afaict.  I added an extra might_sleep() 
+to a path that really might sleep.  I should have mentioned that in the 
+header.
+
+In any case, its moot.  Andi indicated this patch is probably a no-op so 
+I was considering dropping it on the v2 pass.
+
+Regards,
+-Greg
