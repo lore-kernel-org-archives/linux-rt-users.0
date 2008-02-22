@@ -1,8 +1,8 @@
 From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH [RT] 07/14] adaptive real-time lock support
-Date: Fri, 22 Feb 2008 20:14:20 +0100
-Message-ID: <20080222191419.GD6060@ucw.cz>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152701.4804.80776.stgit@novell1.haskins.net>
+Subject: Re: [PATCH [RT] 02/14] spinlock: make preemptible-waiter feature a specific config option
+Date: Fri, 22 Feb 2008 20:09:50 +0100
+Message-ID: <20080222190950.GC6060@ucw.cz>
+References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152635.4804.52393.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
@@ -14,91 +14,48 @@ Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	pmorreale@novell.com, mkohari@novell.com
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gprs189-60.eurotel.cz ([160.218.189.60]:2993 "EHLO spitz.ucw.cz"
+Received: from gprs189-60.eurotel.cz ([160.218.189.60]:3019 "EHLO spitz.ucw.cz"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1765733AbYBVTV0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Feb 2008 14:21:26 -0500
+	id S1760267AbYBVTVb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Feb 2008 14:21:31 -0500
 Content-Disposition: inline
-In-Reply-To: <20080221152701.4804.80776.stgit@novell1.haskins.net>
+In-Reply-To: <20080221152635.4804.52393.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi!
 
-> @@ -192,6 +192,26 @@ config RCU_TRACE
->  	  Say Y/M here if you want to enable RCU tracing in-kernel/module.
->  	  Say N if you are unsure.
+> We introduce a configuration variable for the feature to make it easier for
+> various architectures and/or configs to enable or disable it based on their
+> requirements.  
+> 
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> ---
+> 
+>  kernel/Kconfig.preempt |    9 +++++++++
+>  kernel/spinlock.c      |    7 +++----
+>  lib/Kconfig.debug      |    1 +
+>  3 files changed, 13 insertions(+), 4 deletions(-)
+> 
+> diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+> index 41a0d88..5b45213 100644
+> --- a/kernel/Kconfig.preempt
+> +++ b/kernel/Kconfig.preempt
+> @@ -86,6 +86,15 @@ config PREEMPT
+>  	default y
+>  	depends on PREEMPT_DESKTOP || PREEMPT_RT
 >  
-> +config ADAPTIVE_RTLOCK
-> +        bool "Adaptive real-time locks"
+> +config DISABLE_PREEMPT_SPINLOCK_WAITERS
+> +        bool
+> +	default n
+> +
+> +config PREEMPT_SPINLOCK_WAITERS
+> +        bool
 > +	default y
+> +	depends on PREEMPT && SMP && !DISABLE_PREEMPT_SPINLOCK_WAITERS
 
-tabs vs. spaces.
+tabs vs. spaces problems?
 
-> +	 If unsure, say Y
-
-Missing dot?
-
-> @@ -7,6 +7,7 @@
->   *  Copyright (C) 2005-2006 Timesys Corp., Thomas Gleixner <tglx@timesys.com>
->   *  Copyright (C) 2005 Kihon Technologies Inc., Steven Rostedt
->   *  Copyright (C) 2006 Esben Nielsen
-> + *  Copyright (C) 2008 Novell, Inc.
-
-It would be nice to list some names, too.
-
-> --- /dev/null
-> +++ b/kernel/rtmutex_adaptive.h
-> @@ -0,0 +1,134 @@
-> +/*
-> + * Adaptive RT lock support
-> + *
-> + * There are pros and cons when deciding between the two basic forms of
-> + * locking primitives (spinning vs sleeping).  Without going into great
-> + * detail on either one, we note that spinlocks have the advantage of
-> + * lower overhead for short hold locks.  However, they also have a
-> + * con in that they create indeterminate latencies since preemption
-> + * must traditionally be disabled while the lock is held (to prevent deadlock).
-> + *
-> + * We want to avoid non-deterministic critical sections in -rt. Therefore,
-> + * when realtime is enabled, most contexts are converted to threads, and
-> + * likewise most spinlock_ts are converted to sleepable rt-mutex derived
-> + * locks.  This allows the holder of the lock to remain fully preemptible,
-> + * thus reducing a major source of latencies in the kernel.
-> + *
-> + * However, converting what was once a true spinlock into a sleeping lock
-> + * may also decrease performance since the locks will now sleep under
-> + * contention.  Since the fundamental lock used to be a spinlock, it is
-> + * highly likely that it was used in a short-hold path and that release
-> + * is imminent.  Therefore sleeping only serves to cause context-thrashing.
-> + *
-> + * Adaptive RT locks use a hybrid approach to solve the problem.  They
-> + * spin when possible, and sleep when necessary (to avoid deadlock, etc).
-> + * This significantly improves many areas of the performance of the -rt
-> + * kernel.
-> + *
-> + * Copyright (C) 2008 Novell, Inc.,
-> + *          Sven Dietrich, Peter Morreale, and Gregory Haskins
-
-GPL?
-
-> +/*
-> + * Adaptive-rtlocks will busywait when possible, and sleep only if
-> + * necessary. Note that the busyloop looks racy, and it is....but we do
-> + * not care. If we lose any races it simply means that we spin one more
-> + * time before seeing that we need to break-out on the next iteration.
-> + *
-> + * We realize this is a relatively large function to inline, but note that
-> + * it is only instantiated 1 or 2 times max, and it makes a measurable
-> + * performance different to avoid the call.
-> + *
-> + * Returns 1 if we should sleep
-> + *
-> + */
-
-Kerneldoc?
-
-							Pavel
 -- 
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
