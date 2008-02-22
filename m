@@ -1,50 +1,57 @@
-From: "Bill Huey (hui)" <bill.huey@gmail.com>
-Subject: Re: [PATCH [RT] 00/14] RFC - adaptive real-time locks
-Date: Thu, 21 Feb 2008 14:53:56 -0800
-Message-ID: <9810cff90802211453l3f62200ey52edfeb9d84d7@mail.gmail.com>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
-	 <20080221212420.GA20953@elte.hu>
-	 <9810cff90802211333k3d19ca2exf28c18ae5a2b86a@mail.gmail.com>
-	 <20080221214219.GA27209@elte.hu>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24.2-rt2
+Date: Thu, 21 Feb 2008 19:24:09 -0500
+Message-ID: <1203639849.7551.4.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: "Gregory Haskins" <ghaskins@novell.com>, a.p.zijlstra@chello.nl,
-	tglx@linutronix.de, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
-	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
-	ak@suse.de, gregkh@suse.de, sdietrich@novell.com,
-	pmorreale@novell.com, mkohari@novell.com
-To: "Ingo Molnar" <mingo@elte.hu>
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from el-out-1112.google.com ([209.85.162.182]:2246 "EHLO
-	el-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935476AbYBUWx6 (ORCPT
+Received: from ms-smtp-02.nyroc.rr.com ([24.24.2.56]:59627 "EHLO
+	ms-smtp-02.nyroc.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935490AbYBVA2w (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Feb 2008 17:53:58 -0500
-Received: by el-out-1112.google.com with SMTP id v27so200882ele.23
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Feb 2008 14:53:57 -0800 (PST)
-In-Reply-To: <20080221214219.GA27209@elte.hu>
-Content-Disposition: inline
+	Thu, 21 Feb 2008 19:28:52 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Feb 21, 2008 at 1:42 PM, Ingo Molnar <mingo@elte.hu> wrote:
->  I'd not exclude them fundamentally though, it's really the numbers that
->  matter. The code is certainly simple enough (albeit the .config and
->  sysctl controls are quite ugly and unacceptable - adaptive mutexes
->  should really be ... adaptive, with no magic constants in .configs or
->  else).
->
->  But ... i'm somewhat sceptic, after having played with spin-a-bit
->  mutexes before.
+We are pleased to announce the 2.6.24.2-rt2 tree, which can be
+downloaded from the location:
 
-Yeah, it's yet another reason to get better instrumentation in -rt for
-this purpose and why it's important to only log things in the slow
-path so that the front end of the rtmutex doesn't see instrumentation
-artifacts in the measurement. If I get a chance tonight, I'll extend
-lockdep/lockstat for this purpose if peterz doesn't beat me to it. I
-won't have access to the test harness to replicate this though.
+  http://rt.et.redhat.com/download/
 
-bill
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24-rt1
+
+  - ported to 2.6.24.2
+
+  - *** New ftrace utility ***
+      The old latency_tracer has now been replaced with the cleaned up
+      version that is being prepared for mainline.
+
+  - compiler warning fix (Shi Weihua)
+
+
+to build a 2.6.24.2-rt2 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.2.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.2-rt2.bz2
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
+
+-- Steve
