@@ -1,59 +1,46 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH [RT] 11/14] optimize the !printk fastpath through the lock acquisition
-Date: Fri, 22 Feb 2008 20:18:37 +0100
-Message-ID: <20080222191837.GE6060@ucw.cz>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152722.4804.77478.stgit@novell1.haskins.net>
+From: "Bill Huey (hui)" <bill.huey@gmail.com>
+Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
+Date: Fri, 22 Feb 2008 11:21:14 -0800
+Message-ID: <9810cff90802221121s216f69f4k4a5f39eaaf11dd7f@mail.gmail.com>
+References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
+	 <20080221152707.4804.59177.stgit@novell1.haskins.net>
+	 <200802211741.10299.ak@suse.de>
+	 <20080222190814.GD11213@linux.vnet.ibm.com>
+	 <9810cff90802221119j23818e74g2721512a693a0a01@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Andi Kleen" <ak@suse.de>, "Gregory Haskins" <ghaskins@novell.com>,
+	mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, bill.huey@gmail.com,
-	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
-	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
-	ak@suse.de, gregkh@suse.de, sdietrich@novell.com,
-	pmorreale@novell.com, mkohari@novell.com
-To: Gregory Haskins <ghaskins@novell.com>
+	linux-kernel@vger.kernel.org, kevin@hilman.org,
+	cminyard@mvista.com, dsingleton@mvista.com, dwalker@mvista.com,
+	npiggin@suse.de, dsaxena@plexity.net, gregkh@suse.de,
+	sdietrich@novell.com, pmorreale@novell.com, mkohari@novell.com
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gprs189-60.eurotel.cz ([160.218.189.60]:2983 "EHLO spitz.ucw.cz"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1761984AbYBVTVW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Feb 2008 14:21:22 -0500
+Received: from el-out-1112.google.com ([209.85.162.178]:63386 "EHLO
+	el-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762929AbYBVTVS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Feb 2008 14:21:18 -0500
+Received: by el-out-1112.google.com with SMTP id v27so480738ele.23
+        for <linux-rt-users@vger.kernel.org>; Fri, 22 Feb 2008 11:21:15 -0800 (PST)
+In-Reply-To: <9810cff90802221119j23818e74g2721512a693a0a01@mail.gmail.com>
 Content-Disposition: inline
-In-Reply-To: <20080221152722.4804.77478.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
+On Fri, Feb 22, 2008 at 11:19 AM, Bill Huey (hui) <bill.huey@gmail.com> wrote:
+>  Yeah, I'm not very keen on having a constant there without some
+>  contention instrumentation to see how long the spins are. It would be
+>  better to just let it run until either task->on_cpu is off or checking
+>  if the "current" in no longer matches the mutex owner for the runqueue
+>  in question. At that point, you know the thread isn't running.
+>  Spinning on something like that is just a waste of time. It's for that
+>  reason that doing in the spin outside of a preempt critical section
+>  isn't really needed
 
-> Decorate the printk path with an "unlikely()"
-> 
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> ---
-> 
->  kernel/rtmutex.c |    8 ++++----
->  1 files changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-> index 122f143..ebdaa17 100644
-> --- a/kernel/rtmutex.c
-> +++ b/kernel/rtmutex.c
-> @@ -660,12 +660,12 @@ rt_spin_lock_fastlock(struct rt_mutex *lock,
->  		void fastcall (*slowfn)(struct rt_mutex *lock))
->  {
->  	/* Temporary HACK! */
-> -	if (!current->in_printk)
-> -		might_sleep();
-> -	else if (in_atomic() || irqs_disabled())
-> +	if (unlikely(current->in_printk) && (in_atomic() || irqs_disabled()))
->  		/* don't grab locks for printk in atomic */
->  		return;
->  
-> +	might_sleep();
+Excuse me, I meant to say "...isn't a problem".
 
-I think you changed the code here... you call might_sleep() in
-different cases afaict.
-
-							Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+bill
