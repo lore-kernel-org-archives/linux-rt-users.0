@@ -1,43 +1,47 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH [RT] 00/14] RFC - adaptive real-time locks
-Date: Sat, 23 Feb 2008 00:03:45 -0800
-Message-ID: <20080223000345.e6be3280.akpm@linux-foundation.org>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
-	<20080221212420.GA20953@elte.hu>
+From: Andi Kleen <ak@suse.de>
+Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
+Date: Sat, 23 Feb 2008 13:31:00 +0100
+Message-ID: <20080223123100.GB9021@bingen.suse.de>
+References: <20080221152504.4804.8724.stgit@novell1.haskins.net> <20080221152707.4804.59177.stgit@novell1.haskins.net> <200802211741.10299.ak@suse.de> <20080222190814.GD11213@linux.vnet.ibm.com> <9810cff90802221119j23818e74g2721512a693a0a01@mail.gmail.com> <9810cff90802221121s216f69f4k4a5f39eaaf11dd7f@mail.gmail.com> <20080222194341.GE11213@linux.vnet.ibm.com> <1203710145.4772.107.camel@sven.thebigcorporation.com> <20080222202316.GF11213@linux.vnet.ibm.com> <47BF46AF.7010200@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>, a.p.zijlstra@chello.nl,
-	tglx@linutronix.de, rostedt@goodmis.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: paulmck@linux.vnet.ibm.com,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	"Bill Huey (hui)" <bill.huey@gmail.com>, Andi Kleen <ak@suse.de>,
+	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	bill.huey@gmail.com, kevin@hilman.org, cminyard@mvista.com,
-	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
-	dsaxena@plexity.net, ak@suse.de, gregkh@suse.de,
-	sdietrich@novell.com, pmorreale@novell.com, mkohari@novell.com
-To: Ingo Molnar <mingo@elte.hu>
+	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
+	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
+	gregkh@suse.de, pmorreale@novell.com, mkohari@novell.com
+To: gregory.haskins@gmail.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.linux-foundation.org ([207.189.120.13]:33141 "EHLO
-	smtp1.linux-foundation.org" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1763241AbYBWIFW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Feb 2008 03:05:22 -0500
-In-Reply-To: <20080221212420.GA20953@elte.hu>
+Received: from mx2.suse.de ([195.135.220.15]:40992 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751849AbYBWMbH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 23 Feb 2008 07:31:07 -0500
+Content-Disposition: inline
+In-Reply-To: <47BF46AF.7010200@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 21 Feb 2008 22:24:20 +0100 Ingo Molnar <mingo@elte.hu> wrote:
+> *) compute the context-switch pair time average for the system.  This is 
+> your time threshold (CSt).
 
-> regarding the concept: adaptive mutexes have been talked about in the 
-> past, but their advantage is not at all clear, that's why we havent done 
-> them. It's definitely not an unambigiously win-win concept.
+This is not a uniform time. Consider the difference between
+context switch on the same hyperthread, context switch between cores
+on a die, context switch between sockets, context switch between
+distant numa nodes. You could have several orders of magnitude
+between all those.
 
-When ext3 was converted from sleeping locks to spinlocks, dbench-on-numaq
-throughput went up by a factor of ten.  I'd expect that what RT has done
-was a truly awful change for lots of workloads on lots of machines.
+>
+> *) For each lock, maintain an average hold-time (AHt) statistic (I am 
+> assuming this can be done cheaply...perhaps not).
 
-Yeah, there's the dont-enable-it-if-you're-doing-that option, but that adds
-the we-just-doubled-the-number-of-kernels-distros-need-to-ship problem.
+That would assume that the hold times are very uniform. But what happens
+when you e.g. have a workload where 50% of the lock aquisitions are short 
+and 30% are long? 
 
-Does -rt also make bit_spin_lock preemptible?  If not, I'd have thought the
-change was of little benefit to ext3/jbd and it might as well go back to
-spinning locks.
+I'm a little sceptical of such "too clever" algorithms.
+
+-Andi
