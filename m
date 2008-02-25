@@ -1,11 +1,16 @@
-From: Pavel Machek <pavel@ucw.cz>
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
 Subject: Re: [(RT RFC) PATCH v2 2/9] sysctl for runtime-control of lateral
 	mutex stealing
-Date: Tue, 26 Feb 2008 00:00:11 +0100
-Message-ID: <20080225230011.GQ2659@elf.ucw.cz>
-References: <20080225155959.11268.35541.stgit@novell1.haskins.net> <20080225160048.11268.55059.stgit@novell1.haskins.net> <20080225215335.GE2659@elf.ucw.cz> <1203980231.16711.115.camel@sven.thebigcorporation.com>
+Date: Mon, 25 Feb 2008 15:40:26 -0800
+Message-ID: <1203982826.16711.161.camel@sven.thebigcorporation.com>
+References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
+	 <20080225160048.11268.55059.stgit@novell1.haskins.net>
+	 <20080225215335.GE2659@elf.ucw.cz>
+	 <1203980231.16711.115.camel@sven.thebigcorporation.com>
+	 <20080225230011.GQ2659@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
 	a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
@@ -13,40 +18,56 @@ Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
 	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
 	dsaxena@plexity.net, ak@suse.de, acme@redhat.com, gregkh@suse.de,
 	pmorreale@novell.com, mkohari@novell.com
-To: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762327AbYBYXAF@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1203980231.16711.115.camel@sven.thebigcorporation.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from charybdis-ext.suse.de ([195.135.221.2]:39434 "EHLO
+	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1755807AbYBYXkk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Feb 2008 18:40:40 -0500
+In-Reply-To: <20080225230011.GQ2659@elf.ucw.cz>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
 
-> > > index c913d48..c24c53d 100644
-> > > --- a/kernel/sysctl.c
-> > > +++ b/kernel/sysctl.c
-> > > @@ -175,6 +175,10 @@ extern struct ctl_table inotify_table[];
-> > >  int sysctl_legacy_va_layout;
-> > >  #endif
-> > >  
-> > > +#ifdef CONFIG_RTLOCK_LATERAL_STEAL
-> > > +extern int rtmutex_lateral_steal;
-> > > +#endif
-> > > +
+On Tue, 2008-02-26 at 00:00 +0100, Pavel Machek wrote:
+> Hi!
+> 
+> > > > index c913d48..c24c53d 100644
+> > > > --- a/kernel/sysctl.c
+> > > > +++ b/kernel/sysctl.c
+> > > > @@ -175,6 +175,10 @@ extern struct ctl_table inotify_table[];
+> > > >  int sysctl_legacy_va_layout;
+> > > >  #endif
+> > > >  
+> > > > +#ifdef CONFIG_RTLOCK_LATERAL_STEAL
+> > > > +extern int rtmutex_lateral_steal;
+> > > > +#endif
+> > > > +
+> > > 
+> > > Try checkpatch.
 > > 
-> > Try checkpatch.
+> > I have that as part of quilt refresh, and it returns:
+> > 
+> > Your patch has no obvious style problems and is ready for
+> > submission.
 > 
-> I have that as part of quilt refresh, and it returns:
+> Sorry. Anyway, there should not be externs in .c files, so 
 > 
-> Your patch has no obvious style problems and is ready for
-> submission.
+> extern int rtmutex_lateral_steal;
+> 
+> should go to header file.
 
-Sorry. Anyway, there should not be externs in .c files, so 
+Just for the record:
 
-extern int rtmutex_lateral_steal;
+grep extern kernel/sysctl.c | wc -l
+40
 
-should go to header file.
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+There is a whole slew here, that I agree could move elsewhere - maybe
+into sysctl.h?
+
+If no one objects, I'll make a patch to move them all?
+
+Sven
+
+> 									Pavel
