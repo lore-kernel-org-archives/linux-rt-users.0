@@ -1,8 +1,9 @@
 From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [(RT RFC) PATCH v2 5/9] adaptive real-time lock support
-Date: Mon, 25 Feb 2008 23:03:13 +0100
-Message-ID: <20080225220313.GG2659@elf.ucw.cz>
-References: <20080225155959.11268.35541.stgit@novell1.haskins.net> <20080225160103.11268.25579.stgit@novell1.haskins.net>
+Subject: Re: [(RT RFC) PATCH v2 6/9] add a loop counter based timeout
+	mechanism
+Date: Mon, 25 Feb 2008 23:06:01 +0100
+Message-ID: <20080225220601.GH2659@elf.ucw.cz>
+References: <20080225155959.11268.35541.stgit@novell1.haskins.net> <20080225160108.11268.1451.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
@@ -14,92 +15,39 @@ Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	pmorreale@novell.com, mkohari@novell.com
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gprs189-60.eurotel.cz ([160.218.189.60]:39635 "EHLO amd.ucw.cz"
+Received: from gprs189-60.eurotel.cz ([160.218.189.60]:39645 "EHLO amd.ucw.cz"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753587AbYBYWCt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Feb 2008 17:02:49 -0500
+	id S1752772AbYBYWFg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Feb 2008 17:05:36 -0500
 Content-Disposition: inline
-In-Reply-To: <20080225160103.11268.25579.stgit@novell1.haskins.net>
+In-Reply-To: <20080225160108.11268.1451.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
+On Mon 2008-02-25 11:01:08, Gregory Haskins wrote:
+> From: Sven Dietrich <sdietrich@novell.com>
 
-> +/*
-> + * Adaptive-rtlocks will busywait when possible, and sleep only if
-> + * necessary. Note that the busyloop looks racy, and it is....but we do
-> + * not care. If we lose any races it simply means that we spin one more
-> + * time before seeing that we need to break-out on the next iteration.
-> + *
-> + * We realize this is a relatively large function to inline, but note that
-> + * it is only instantiated 1 or 2 times max, and it makes a measurable
-> + * performance different to avoid the call.
-> + *
-> + * Returns 1 if we should sleep
-> + *
-> + */
-> +static inline int
-> +adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
-> +	      struct adaptive_waiter *adaptive)
-> +{
-> +	int sleep = 0;
-> +
-> +	for (;;) {
-> +		/*
-> +		 * If the task was re-awoken, break out completely so we can
-> +		 * reloop through the lock-acquisition code.
-> +		 */
-> +		if (!waiter->task)
-> +			break;
-> +
-> +		/*
-> +		 * We need to break if the owner changed so we can reloop
-> +		 * and safely acquire the owner-pointer again with the
-> +		 * wait_lock held.
-> +		 */
-> +		if (adaptive->owner != rt_mutex_owner(lock))
-> +			break;
-> +
-> +		/*
-> +		 * If we got here, presumably the lock ownership is still
-> +		 * current.  We will use it to our advantage to be able to
-> +		 * spin without disabling preemption...
-> +		 */
-> +
-> +		/*
-> +		 * .. sleep if the owner is not running..
-> +		 */
-> +		if (!adaptive->owner->se.on_rq) {
-> +			sleep = 1;
-> +			break;
-> +		}
-> +
-> +		/*
-> +		 * .. or is running on our own cpu (to prevent deadlock)
-> +		 */
-> +		if (task_cpu(adaptive->owner) == task_cpu(current)) {
-> +			sleep = 1;
-> +			break;
-> +		}
-> +
-> +		cpu_relax();
-> +	}
-> +
-> +	put_task_struct(adaptive->owner);
-> +
-> +	return sleep;
-> +}
+Why is this good idea?
+
+> Signed-off-by: Sven Dietrich <sdietrich@novell.com>
+> ---
+
+>  
+> +config RTLOCK_DELAY
+> +	int "Default delay (in loops) for adaptive rtlocks"
+> +	range 0 1000000000
+> +	depends on ADAPTIVE_RTLOCK
+> +	default "10000"
+> +        help
+> +         This allows you to specify the maximum attempts a task will spin
+> +	 attempting to acquire an rtlock before sleeping.  The value is
+> +	 tunable at runtime via a sysctl.  A setting of 0 (zero) disables
+> +	 the adaptive algorithm entirely.
 > +
 
-You want to inline this?
+I believe you have _way_ too many config variables. If this can be set
+at runtime, does it need a config option, too?
 
-> +static inline void
-> +prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter *adaptive)
-...
-> +#define prepare_adaptive_wait(lock, busy) {}
-
-This is evil. Use empty inline function instead (same for the other
-function, there you can maybe get away with it).
 									Pavel
 -- 
 (english) http://www.livejournal.com/~pavelmachek
