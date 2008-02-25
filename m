@@ -1,11 +1,11 @@
 From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: Re: [(RT RFC) PATCH v2 6/9] add a loop counter based timeout
-	mechanism
-Date: Mon, 25 Feb 2008 14:39:29 -0800
-Message-ID: <1203979169.16711.101.camel@sven.thebigcorporation.com>
+Subject: Re: [(RT RFC) PATCH v2 2/9] sysctl for runtime-control of lateral
+	mutex stealing
+Date: Mon, 25 Feb 2008 14:57:11 -0800
+Message-ID: <1203980231.16711.115.camel@sven.thebigcorporation.com>
 References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
-	 <20080225160108.11268.1451.stgit@novell1.haskins.net>
-	 <20080225220601.GH2659@elf.ucw.cz>
+	 <20080225160048.11268.55059.stgit@novell1.haskins.net>
+	 <20080225215335.GE2659@elf.ucw.cz>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -18,52 +18,83 @@ Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
 	pmorreale@novell.com, mkohari@novell.com
 To: Pavel Machek <pavel@ucw.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from charybdis-ext.suse.de ([195.135.221.2]:55724 "EHLO
+Received: from charybdis-ext.suse.de ([195.135.221.2]:58502 "EHLO
 	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754452AbYBYWnY (ORCPT
+	with ESMTP id S1761003AbYBYW5V (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Feb 2008 17:43:24 -0500
-In-Reply-To: <20080225220601.GH2659@elf.ucw.cz>
+	Mon, 25 Feb 2008 17:57:21 -0500
+In-Reply-To: <20080225215335.GE2659@elf.ucw.cz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Mon, 2008-02-25 at 23:06 +0100, Pavel Machek wrote:
-> On Mon 2008-02-25 11:01:08, Gregory Haskins wrote:
-> > From: Sven Dietrich <sdietrich@novell.com>
+On Mon, 2008-02-25 at 22:53 +0100, Pavel Machek wrote:
+> Hi!
 > 
-> Why is this good idea?
-> 
-
-The timeout is useful to eliminate excessive CPU utilization when
-waiting for long-held critical sections. 
-
-The patch header should state this :) Will fix.
-
-> > Signed-off-by: Sven Dietrich <sdietrich@novell.com>
+> > From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+> > 
+> > Add /proc/sys/kernel/lateral_steal, to allow switching on and off
+> > equal-priority mutex stealing between threads.
+> > 
+> > Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
 > > ---
-> 
+> > 
 > >  
-> > +config RTLOCK_DELAY
-> > +	int "Default delay (in loops) for adaptive rtlocks"
-> > +	range 0 1000000000
-> > +	depends on ADAPTIVE_RTLOCK
-> > +	default "10000"
-> > +        help
-> > +         This allows you to specify the maximum attempts a task will spin
-> > +	 attempting to acquire an rtlock before sleeping.  The value is
-> > +	 tunable at runtime via a sysctl.  A setting of 0 (zero) disables
-> > +	 the adaptive algorithm entirely.
+> >  #include "rtmutex_common.h"
+> >
+
+I'll move it to the header file.
+
+>   
+> > +#ifdef CONFIG_RTLOCK_LATERAL_STEAL
+> > +int rtmutex_lateral_steal __read_mostly = 1;
+> > +#endif
 > > +
 > 
-> I believe you have _way_ too many config variables. If this can be set
-> at runtime, does it need a config option, too?
+> Ugly..
 > 
 
-Absolutely. The sysctl was added after-the-fact, so this is a relic, we
-will remove the config option, and define the default timeout in the
-appropriate header.
+> 
+> >  /*
+> >   * lock->owner state tracking:
+> >   *
+> > @@ -321,7 +325,8 @@ static inline int lock_is_stealable(struct task_struct *pendowner, int unfair)
+> >  	if (current->prio > pendowner->prio)
+> >  		return 0;
+> >  
+> > -	if (!unfair && (current->prio == pendowner->prio))
+> > +	if (unlikely(current->prio == pendowner->prio) &&
+> > +	   !(unfair && rtmutex_lateral_steal))
+> >  #endif
+> 
+> But this is even worse, you are creating #ifdef maze here. Can you
+> simply #define rtmutex_lateral_steal 0 in !CONFIG_RTLOCK_LATERAL_STEAL
+> and let the optimizer fix this?
+> 
+
+Ok - much of this will also disappear into the header then.
+
+> 
+> > index c913d48..c24c53d 100644
+> > --- a/kernel/sysctl.c
+> > +++ b/kernel/sysctl.c
+> > @@ -175,6 +175,10 @@ extern struct ctl_table inotify_table[];
+> >  int sysctl_legacy_va_layout;
+> >  #endif
+> >  
+> > +#ifdef CONFIG_RTLOCK_LATERAL_STEAL
+> > +extern int rtmutex_lateral_steal;
+> > +#endif
+> > +
+> 
+> Try checkpatch.
+> 									Pavel
+
+I have that as part of quilt refresh, and it returns:
+
+Your patch has no obvious style problems and is ready for submission.
+
+But Greg may need to enforce it on his git tree that he mails these from
+- are you referring to anything specific in this patch?
 
 Sven
-
-> 									Pavel
