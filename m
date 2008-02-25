@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [(RT RFC) PATCH v2 6/9] add a loop counter based timeout mechanism
-Date: Mon, 25 Feb 2008 11:01:08 -0500
-Message-ID: <20080225160108.11268.1451.stgit@novell1.haskins.net>
+Subject: [(RT RFC) PATCH v2 4/9] optimize rt lock wakeup
+Date: Mon, 25 Feb 2008 11:00:58 -0500
+Message-ID: <20080225160058.11268.96036.stgit@novell1.haskins.net>
 References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -15,134 +15,93 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53947
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:53920
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754672AbYBYQ3d (ORCPT
+	by vger.kernel.org with ESMTP id S1756564AbYBYQ3X (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Feb 2008 11:29:33 -0500
+	Mon, 25 Feb 2008 11:29:23 -0500
 In-Reply-To: <20080225155959.11268.35541.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Sven Dietrich <sdietrich@novell.com>
+It is redundant to wake the grantee task if it is already running
 
-Signed-off-by: Sven Dietrich <sdietrich@novell.com>
+Credit goes to Peter for the general idea.
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+Signed-off-by: Peter Morreale <pmorreale@novell.com>
 ---
 
- kernel/Kconfig.preempt    |   11 +++++++++++
- kernel/rtmutex.c          |    4 ++++
- kernel/rtmutex_adaptive.h |   11 +++++++++--
- kernel/sysctl.c           |   12 ++++++++++++
- 4 files changed, 36 insertions(+), 2 deletions(-)
+ kernel/rtmutex.c |   45 ++++++++++++++++++++++++++++++++++++++++-----
+ 1 files changed, 40 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-index d2432fa..ac1cbad 100644
---- a/kernel/Kconfig.preempt
-+++ b/kernel/Kconfig.preempt
-@@ -203,6 +203,17 @@ config ADAPTIVE_RTLOCK
- 
-           If unsure, say Y.
- 
-+config RTLOCK_DELAY
-+	int "Default delay (in loops) for adaptive rtlocks"
-+	range 0 1000000000
-+	depends on ADAPTIVE_RTLOCK
-+	default "10000"
-+        help
-+         This allows you to specify the maximum attempts a task will spin
-+	 attempting to acquire an rtlock before sleeping.  The value is
-+	 tunable at runtime via a sysctl.  A setting of 0 (zero) disables
-+	 the adaptive algorithm entirely.
-+
- config SPINLOCK_BKL
- 	bool "Old-Style Big Kernel Lock"
- 	depends on (PREEMPT || SMP) && !PREEMPT_RT
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 3802ef8..4a16b13 100644
+index ef52db6..bf9e230 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -25,6 +25,10 @@
- int rtmutex_lateral_steal __read_mostly = 1;
- #endif
+@@ -531,6 +531,41 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 	pendowner = waiter->task;
+ 	waiter->task = NULL;
  
-+#ifdef CONFIG_ADAPTIVE_RTLOCK
-+int rtlock_timeout __read_mostly = CONFIG_RTLOCK_DELAY;
-+#endif
++	/*
++	 * Do the wakeup before the ownership change to give any spinning
++	 * waiter grantees a headstart over the other threads that will
++	 * trigger once owner changes.
++	 */
++	if (!savestate)
++		wake_up_process(pendowner);
++	else {
++		/*
++		 * We can skip the actual (expensive) wakeup if the
++		 * waiter is already running, but we have to be careful
++		 * of race conditions because they may be about to sleep.
++		 *
++		 * The waiter-side protocol has the following pattern:
++		 * 1: Set state != RUNNING
++		 * 2: Conditionally sleep if waiter->task != NULL;
++		 *
++		 * And the owner-side has the following:
++		 * A: Set waiter->task = NULL
++		 * B: Conditionally wake if the state != RUNNING
++		 *
++		 * As long as we ensure 1->2 order, and A->B order, we
++		 * will never miss a wakeup.
++		 *
++		 * Therefore, this barrier ensures that waiter->task = NULL
++		 * is visible before we test the pendowner->state.  The
++		 * corresponding barrier is in the sleep logic.
++		 */
++		smp_mb();
 +
- /*
-  * lock->owner state tracking:
-  *
-diff --git a/kernel/rtmutex_adaptive.h b/kernel/rtmutex_adaptive.h
-index 862c088..60c6328 100644
---- a/kernel/rtmutex_adaptive.h
-+++ b/kernel/rtmutex_adaptive.h
-@@ -43,6 +43,7 @@
- #ifdef CONFIG_ADAPTIVE_RTLOCK
- struct adaptive_waiter {
- 	struct task_struct *owner;
-+	int timeout;
- };
++		if ((pendowner->state != TASK_RUNNING)
++		    && (pendowner->state != TASK_RUNNING_MUTEX))
++			wake_up_process_mutex(pendowner);
++	}
++
+ 	rt_mutex_set_owner(lock, pendowner, RT_MUTEX_OWNER_PENDING);
  
- /*
-@@ -64,7 +65,7 @@ adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
- {
- 	int sleep = 0;
- 
--	for (;;) {
-+	for (; adaptive->timeout > 0; adaptive->timeout--) {
- 		/*
- 		 * If the task was re-awoken, break out completely so we can
- 		 * reloop through the lock-acquisition code.
-@@ -105,6 +106,9 @@ adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
- 		cpu_relax();
+ 	spin_unlock(&current->pi_lock);
+@@ -557,11 +592,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 		plist_add(&next->pi_list_entry, &pendowner->pi_waiters);
  	}
- 
-+	if (adaptive->timeout <= 0)
-+		sleep = 1;
-+
- 	put_task_struct(adaptive->owner);
- 
- 	return sleep;
-@@ -122,8 +126,11 @@ prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter *adaptive)
- 	get_task_struct(adaptive->owner);
+ 	spin_unlock(&pendowner->pi_lock);
+-
+-	if (savestate)
+-		wake_up_process_mutex(pendowner);
+-	else
+-		wake_up_process(pendowner);
  }
  
-+extern int rtlock_timeout;
-+
- #define DECLARE_ADAPTIVE_WAITER(name) \
--     struct adaptive_waiter name = { .owner = NULL, }
-+     struct adaptive_waiter name = { .owner = NULL,               \
-+                                     .timeout = rtlock_timeout, }
+ /*
+@@ -762,6 +792,11 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 		debug_rt_mutex_print_deadlock(&waiter);
  
- #else
- 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index c24c53d..55189ea 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -56,6 +56,8 @@
- #include <asm/stacktrace.h>
- #endif
- 
-+#include "rtmutex_adaptive.h"
-+
- static int deprecated_sysctl_warning(struct __sysctl_args *args);
- 
- #if defined(CONFIG_SYSCTL)
-@@ -850,6 +852,16 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler   = &proc_dointvec,
-        },
- #endif
-+#ifdef CONFIG_ADAPTIVE_RTLOCK
-+	{
-+		.ctl_name	= CTL_UNNUMBERED,
-+		.procname	= "rtlock_timeout",
-+		.data		= &rtlock_timeout,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= &proc_dointvec,
-+	},
-+#endif
- #ifdef CONFIG_PROC_FS
- 	{
- 		.ctl_name       = CTL_UNNUMBERED,
+ 		update_current(TASK_UNINTERRUPTIBLE, &saved_state);
++		/*
++		 * The xchg() in update_current() is an implicit barrier
++		 * which we rely upon to ensure current->state is visible
++		 * before we test waiter.task.
++		 */
+ 		if (waiter.task)
+ 			schedule_rt_mutex(lock);
+ 		else
