@@ -1,67 +1,131 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [(RT RFC) PATCH v2 5/9] adaptive real-time lock support
-Date: Tue, 26 Feb 2008 11:01:49 -0700
-Message-ID: <47C40DBD.BA47.005A.0@novell.com>
-References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
- <20080225160103.11268.25579.stgit@novell1.haskins.net>
- <20080225220313.GG2659@elf.ucw.cz> <47C3E3FF.BA47.005A.0@novell.com>
- <20080226180643.GA6030@elf.ucw.cz>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: 2.6.24.2(-rt2?) sched_fair issue
+Date: Tue, 26 Feb 2008 14:48:10 -0800
+Message-ID: <47C4972A.9040704@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
-	<rostedt@goodmis.org>, <kevin@hilman.org>, <tglx@linutronix.de>,
-	<cminyard@mvista.com>, <dsingleton@mvista.com>,
-	<dwalker@mvista.com>, "Moiz Kohari" <MKohari@novell.com>,
-	"Peter Morreale" <PMorreale@novell.com>,
-	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
-	<acme@redhat.com>, <ak@suse.de>, <gregkh@suse.de>,
-	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Pavel Machek" <pavel@ucw.cz>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:34288 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752317AbYBZSIt convert rfc822-to-8bit (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:51840 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1764737AbYBZWsN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Feb 2008 13:08:49 -0500
-In-Reply-To: <20080226180643.GA6030@elf.ucw.cz>
-Content-Disposition: inline
+	Tue, 26 Feb 2008 17:48:13 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Tue, Feb 26, 2008 at  1:06 PM, in message
-<20080226180643.GA6030@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
-> On Tue 2008-02-26 08:03:43, Gregory Haskins wrote:
->> >>> On Mon, Feb 25, 2008 at  5:03 PM, in message
->> <20080225220313.GG2659@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
->> 
->> >> +static inline void
->> >> +prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter 
->> > *adaptive)
->> > ...
->> >> +#define prepare_adaptive_wait(lock, busy) {}
->> > 
->> > This is evil. Use empty inline function instead (same for the other
->> > function, there you can maybe get away with it).
->> > 
->> 
->> I went to implement your suggested change and I remembered why I did it this 
-> way:  I wanted a macro so that the "struct adaptive_waiter" local variable 
-> will fall away without an #ifdef in the main body of code.  So I have left 
-> this logic alone for now.
-> 
-> Hmm, but inline function will allow dead code elimination,  too, no?
+Hi Ingo,
 
-I was getting compile errors.  Might be operator-error ;)
+I got the following message and the kernel crashed when testing 2.6.24.2-rt2.
 
-> 
-> Anyway non-evil way to do it with macro is 
-> 
-> #define prepare_adaptive_wait(lock, busy) do {} while (0)
-> 
-> ...that behaves properly in complex statements.
+Unable to handle kernel NULL pointer dereference at 0000000000000128 RIP:
+ [<ffffffff80229805>] pick_next_task_fair+0x2d/0x42
+PGD 211db1067 PUD 211c1d067 PMD 0
+Oops: 0000 [1] PREEMPT SMP
+CPU 2
+Modules linked in:
+Pid: 898, comm: stress Not tainted 2.6.24.2-rt2 #1
+RIP: 0010:[<ffffffff80229805>]  [<ffffffff80229805>] pick_next_task_fair+0x2d/0x42
+RSP: 0018:ffff8101ac423948  EFLAGS: 00010046
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: ffff81022e562300
+RDX: ffff8101ac4239b0 RSI: ffff81022e562300 RDI: ffff8100050196e0
+RBP: ffff8101ac423958 R08: ffff810005015680 R09: ffff810005015800
+R10: 0000000000000000 R11: 0000000000000001 R12: ffff810005011680
+R13: 0000000000000001 R14: ffff810005019680 R15: 00000001002f7a43
+FS:  00002ada5c132b00(0000) GS:ffff81022fc057c0(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 0000000000000128 CR3: 0000000211dfc000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process stress (pid: 898, threadinfo ffff8101ac422000, task ffff81022e562300)
+Stack:  ffffffff802292e4 ffff810005015ac0 ffff8101ac4239e8 ffffffff804d9685
+ ffff8101ac4239b0 ffffffff8022f2bd 00000002ac423998 ffff81022e562300
+ ffff8101ac4239a8 ffff81022e562640 00000000000000ff ffffffff804db527
+Call Trace:
+ [<ffffffff802292e4>] put_prev_task_rt+0xd/0x18
+ [<ffffffff804d9685>] __schedule+0x414/0x771
+ [<ffffffff8022f2bd>] add_preempt_count+0x18/0xb2
+ [<ffffffff804db527>] __spin_unlock+0x14/0x2e
+ [<ffffffff804d9cdc>] schedule+0xdf/0xff
+ [<ffffffff804da557>] rt_spin_lock_slowlock+0xf9/0x19e
+ [<ffffffff804daed8>] __rt_spin_lock+0x6b/0x70
+ [<ffffffff804daee6>] rt_spin_lock+0x9/0xb
+ [<ffffffff8027b57f>] page_lock_anon_vma+0x2b/0x3b
+ [<ffffffff8027c38c>] page_referenced+0x49/0xf5
+ [<ffffffff8026f40b>] shrink_active_list+0x222/0x563
+ [<ffffffff8022f2bd>] add_preempt_count+0x18/0xb2
+ [<ffffffff802705d5>] shrink_zone+0xcc/0x10f
+ [<ffffffff80271139>] try_to_free_pages+0x183/0x27a
+ [<ffffffff8026b0da>] __alloc_pages+0x1fb/0x344
+ [<ffffffff8027c5ca>] anon_vma_prepare+0x29/0xf9
+ [<ffffffff80274fc8>] handle_mm_fault+0x251/0x700
+ [<ffffffff8020c7e6>] retint_kernel+0x26/0x30
+ [<ffffffff8021f522>] do_page_fault+0x315/0x6bf
+ [<ffffffff804db527>] __spin_unlock+0x14/0x2e
+ [<ffffffff8022f1af>] finish_task_switch+0x2b/0x90
+ [<ffffffff804db7c9>] error_exit+0x0/0x51
+Code: 48 8b bb 28 01 00 00 48 85 ff 75 dd 48 8d 43 b8 41 58 5b 5d
 
-Ah, I was wondering why people use that.  Will do.  Thanks!
+I've gotten a kernel dump at this time.
+The backtrace says;
+(gdb) bt
+#0  pick_next_task_fair (rq=<value optimized out>) at kernel/sched_fair.c:680
+#1  0xffffffff804d9685 in __schedule () at kernel/sched.c:3783
+#2  0xffffffff804d9cdc in schedule () at kernel/sched.c:3914
+#3  0xffffffff804da557 in rt_spin_lock_slowlock (lock=0xffff81022e8ca618) at kernel/rtmutex.c:735
+#4  0xffffffff804daed8 in __rt_spin_lock (lock=0xffff81022e8ca618) at kernel/rtmutex.c:646
+#5  0xffffffff804daee6 in rt_spin_lock (lock=0xffff8100050196e0) at kernel/rtmutex.c:799
+#6  0xffffffff8027b57f in page_lock_anon_vma (page=<value optimized out>) at mm/rmap.c:172
+#7  0xffffffff8027c38c in page_referenced (page=0xffff8100050196e0, is_locked=777396992) at mm/rmap.c:309
+(snip)
 
--Greg
+and here is the kernel/sched_fair.c:680
+static inline struct cfs_rq *group_cfs_rq(struct sched_entity *grp)
+{
+        return grp->my_q;
+}
+
+It seems that grp is NULL, so I think pick_next_entity() returns NULL.
+I think pick_next_entity() could return NULL when first_fair(cfs_rq) is false.
+
+static struct sched_entity *pick_next_entity(struct cfs_rq *cfs_rq)
+{
+        struct sched_entity *se = NULL;
+
+        if (first_fair(cfs_rq)) {
+                se = __pick_next_entity(cfs_rq);
+                set_next_entity(cfs_rq, se);
+        }
+
+        return se;
+}
+
+static struct task_struct *pick_next_task_fair(struct rq *rq)
+{
+        struct cfs_rq *cfs_rq = &rq->cfs;
+        struct sched_entity *se;
+
+        if (unlikely(!cfs_rq->nr_running))
+                return NULL;
+
+        do {
+                se = pick_next_entity(cfs_rq);
+                cfs_rq = group_cfs_rq(se);
+        } while (cfs_rq);
+
+        return task_of(se);
+}
+
+I'm not sure the actual scenario to cause this panic.
+I also don't know how to reproduce it, I was running some benchmarks at
+the week end and found it the Monday morning.
+I've encountered it on 2.6.24.2-rt2, but 2.6.24.2 and 2.6.25-rc3 also have
+the same code pick_next_task_fair().
+However latest sched-devel git tree has a modified code.
+
+I'm not so familiar the CFS, is this investigation correct?
+
+Thanks,
+Hiroshi Shimamoto
