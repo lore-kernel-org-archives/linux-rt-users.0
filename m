@@ -1,10 +1,11 @@
 From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [(RT RFC) PATCH v2 5/9] adaptive real-time lock support
-Date: Tue, 26 Feb 2008 08:03:43 -0700
-Message-ID: <47C3E3FF.BA47.005A.0@novell.com>
+Subject: Re: [(RT RFC) PATCH v2 6/9] add a loop counter based timeout
+	mechanism
+Date: Tue, 26 Feb 2008 08:09:28 -0700
+Message-ID: <47C3E558.BA47.005A.0@novell.com>
 References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
- <20080225160103.11268.25579.stgit@novell1.haskins.net>
- <20080225220313.GG2659@elf.ucw.cz>
+ <20080225160108.11268.1451.stgit@novell1.haskins.net>
+ <20080225220601.GH2659@elf.ucw.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
@@ -19,27 +20,23 @@ Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
 	<linux-rt-users@vger.kernel.org>
 To: "Pavel Machek" <pavel@ucw.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:25623 "EHLO
+Received: from sinclair.provo.novell.com ([137.65.248.137]:25892 "EHLO
 	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752366AbYBZPLG convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1756200AbYBZPQP convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Feb 2008 10:11:06 -0500
-In-Reply-To: <20080225220313.GG2659@elf.ucw.cz>
+	Tue, 26 Feb 2008 10:16:15 -0500
+In-Reply-To: <20080225220601.GH2659@elf.ucw.cz>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Mon, Feb 25, 2008 at  5:03 PM, in message
-<20080225220313.GG2659@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
-
->> +static inline void
->> +prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter 
-> *adaptive)
-> ...
->> +#define prepare_adaptive_wait(lock, busy) {}
+>>> On Mon, Feb 25, 2008 at  5:06 PM, in message
+<20080225220601.GH2659@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
 > 
-> This is evil. Use empty inline function instead (same for the other
-> function, there you can maybe get away with it).
-> 
+> I believe you have _way_ too many config variables. If this can be set
+> at runtime, does it need a config option, too?
 
-I went to implement your suggested change and I remembered why I did it this way:  I wanted a macro so that the "struct adaptive_waiter" local variable will fall away without an #ifdef in the main body of code.  So I have left this logic alone for now.
+Generally speaking, I think until this algorithm has an adaptive-timeout in addition to an adaptive-spin/sleep, these .config based defaults are a good idea.  Sometimes setting these things at runtime are a PITA when you are talking about embedded systems that might not have/want a nice userspace sysctl-config infrastructure.  And changing the defaults in the code is unattractive for some users.  I don't think its a big deal either way, so if people hate the config options, they should go.  But I thought I would throw this use-case out there to ponder.
+
+Regards,
+-Greg
