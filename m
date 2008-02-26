@@ -1,81 +1,56 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: Re: [PATCH [RT] 08/14] add a loop counter based timeout mechanism
-Date: Mon, 25 Feb 2008 15:52:06 -0800
-Message-ID: <1203983526.16711.171.camel@sven.thebigcorporation.com>
-References: <20080221152504.4804.8724.stgit@novell1.haskins.net>
-	 <20080221152707.4804.59177.stgit@novell1.haskins.net>
-	 <200802211741.10299.ak@suse.de> <20080222190814.GD11213@linux.vnet.ibm.com>
-	 <9810cff90802221119j23818e74g2721512a693a0a01@mail.gmail.com>
-	 <9810cff90802221121s216f69f4k4a5f39eaaf11dd7f@mail.gmail.com>
-	 <20080222194341.GE11213@linux.vnet.ibm.com>
-	 <1203710145.4772.107.camel@sven.thebigcorporation.com>
-	 <20080222202316.GF11213@linux.vnet.ibm.com> <47BF46AF.7010200@gmail.com>
-	 20080223123100.GB9021@bingen.suse.de
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [(RT RFC) PATCH v2 3/9] rearrange rt_spin_lock sleep
+Date: Mon, 25 Feb 2008 17:45:07 -0700
+Message-ID: <47C31AC3.BA47.005A.0@novell.com>
+References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
+ <20080225160053.11268.60719.stgit@novell1.haskins.net>
+ <20080225215454.GF2659@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: gregory.haskins@gmail.com, paulmck@linux.vnet.ibm.com,
-	"Bill Huey (hui)" <bill.huey@gmail.com>,
-	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	kevin@hilman.org, cminyard@mvista.com, dsingleton@mvista.com,
-	dwalker@mvista.com, npiggin@suse.de, dsaxena@plexity.net,
-	gregkh@suse.de, pmorreale@novell.com, mkohari@novell.com
-To: Andi Kleen <ak@suse.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758195AbYBYX6T@vger.kernel.org>
-In-Reply-To: 20080223123100.GB9021@bingen.suse.de
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
+	<rostedt@goodmis.org>, <kevin@hilman.org>, <tglx@linutronix.de>,
+	<cminyard@mvista.com>, <dsingleton@mvista.com>,
+	<dwalker@mvista.com>, "Moiz Kohari" <MKohari@novell.com>,
+	"Peter Morreale" <PMorreale@novell.com>,
+	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
+	<acme@redhat.com>, <ak@suse.de>, <gregkh@suse.de>,
+	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "Pavel Machek" <pavel@ucw.cz>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:17497 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750770AbYBZAwh convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Feb 2008 19:52:37 -0500
+In-Reply-To: <20080225215454.GF2659@elf.ucw.cz>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Sat, 2008-02-23 at 13:31 +0100, Andi Kleen wrote:
-> > *) compute the context-switch pair time average for the system.  This is 
-> > your time threshold (CSt).
+>>> On Mon, Feb 25, 2008 at  4:54 PM, in message
+<20080225215454.GF2659@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
+> Hi!
 > 
-
-Hi Andi,
-
-> This is not a uniform time. Consider the difference between
-> context switch on the same hyperthread, context switch between cores
-> on a die, context switch between sockets, context switch between
-> distant numa nodes. You could have several orders of magnitude
-> between all those.
+>> @@ -720,7 +728,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+>>  	 * saved_state accordingly. If we did not get a real wakeup
+>>  	 * then we return with the saved state.
+>>  	 */
+>> -	saved_state = xchg(&current->state, TASK_UNINTERRUPTIBLE);
+>> +	saved_state = current->state;
+>> +	smp_mb();
+>>  
+>>  	for (;;) {
+>>  		unsigned long saved_flags;
 > 
-> >
-> > *) For each lock, maintain an average hold-time (AHt) statistic (I am 
-> > assuming this can be done cheaply...perhaps not).
+> Please document what the barrier is good for.
+
+Yeah, I think you are right that this isn't needed.  I think that is a relic from back when I was debugging some other problems.  Let me wrap my head around the implications of removing it, and either remove it or document appropriately.
+
 > 
-> That would assume that the hold times are very uniform. But what happens
-> when you e.g. have a workload where 50% of the lock aquisitions are short 
-> and 30% are long? 
-> 
-> I'm a little sceptical of such "too clever" algorithms.
-> 
+> Plus, you are replacing atomic operation with nonatomic; is that ok?
 
-I agree, this does not make any sense until you get to very large SMP
-systems - and only iff it can be demonstrated, that the overhead
-associated with lock statistics and including some notion of the context
-switch overhead still comes out with a net gain.
+Yeah, I think so.  We are substituting a write with a read, and word reads are always atomic anyway IIUC (or is that only true on certain architectures)?  Note that we are moving the atomic-write to be done later in the update_current() calls.
 
-There is some notion of task-routing in the RT scheduler already, and
-this is quite a clever little algorithm. 
-
-I see no reason, why the scheduler should not eventually take directly
-into account (when balancing), the quantifiable context-switch and CPU
-overhead of moving a task to a distant processor.
-
-In fact, for a deadline-based scheduler working on high-frequency tasks,
-given that the times can switch so radically, this is would be
-requiredOnve context-switch-overhead data is available to the scheduler,
-there is no particular reason why adaptive locking could not also
-utilize that data.
-
-Sven
-
-> -Andi
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+-Greg
