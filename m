@@ -1,72 +1,45 @@
-From: Jan Kiszka <jan.kiszka@siemens.com>
-Subject: Re: 2.6.24.2-rt2
-Date: Tue, 26 Feb 2008 13:01:06 +0100
-Message-ID: <47C3FF82.6060900@siemens.com>
-References: <1203639849.7551.4.camel@localhost.localdomain> <47C3EA1F.3030203@siemens.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [(RT RFC) PATCH v2 5/9] adaptive real-time lock support
+Date: Tue, 26 Feb 2008 08:03:43 -0700
+Message-ID: <47C3E3FF.BA47.005A.0@novell.com>
+References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
+ <20080225160103.11268.25579.stgit@novell1.haskins.net>
+ <20080225220313.GG2659@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761492AbYBZMB4@vger.kernel.org>
-In-Reply-To: <47C3EA1F.3030203@siemens.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
+	<rostedt@goodmis.org>, <kevin@hilman.org>, <tglx@linutronix.de>,
+	<cminyard@mvista.com>, <dsingleton@mvista.com>,
+	<dwalker@mvista.com>, "Moiz Kohari" <MKohari@novell.com>,
+	"Peter Morreale" <PMorreale@novell.com>,
+	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
+	<acme@redhat.com>, <ak@suse.de>, <gregkh@suse.de>,
+	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "Pavel Machek" <pavel@ucw.cz>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:25623 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752366AbYBZPLG convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Feb 2008 10:11:06 -0500
+In-Reply-To: <20080225220313.GG2659@elf.ucw.cz>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Jan Kiszka wrote:
-> At this chance: We still see the same unbalanced sched-other load on our
-> NUMA box as Gernot once reported [1]:
+>>> On Mon, Feb 25, 2008 at  5:03 PM, in message
+<20080225220313.GG2659@elf.ucw.cz>, Pavel Machek <pavel@ucw.cz> wrote: 
+
+>> +static inline void
+>> +prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter 
+> *adaptive)
+> ...
+>> +#define prepare_adaptive_wait(lock, busy) {}
 > 
-> top - 11:19:20 up 4 min,  1 user,  load average: 29.52, 9.54, 3.37
-> Tasks: 502 total,  41 running, 461 sleeping,   0 stopped,   0 zombie
-> Cpu0  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu1  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu2  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu3  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu4  :  0.0%us,  0.3%sy,  0.0%ni, 99.7%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu5  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu6  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu7  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu8  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu9  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu10 :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu11 :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu12 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu13 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu14 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Cpu15 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-> Mem:  65513284k total,  1032032k used, 64481252k free,     6444k buffers
-> Swap:  3204896k total,        0k used,  3204896k free,    37312k cached
+> This is evil. Use empty inline function instead (same for the other
+> function, there you can maybe get away with it).
 > 
 
-ETOOMANYKERNELS, this was from 2.6.23.12-rt14. 2.6.24.2-rt2 shows a
-different patter under identical load:
-
-top - 12:55:27 up 2 min,  1 user,  load average: 9.97, 2.42, 0.81
-Tasks: 491 total,  42 running, 449 sleeping,   0 stopped,   0 zombie
-Cpu0  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu1  : 99.7%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.3%si,  0.0%st
-Cpu2  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu3  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu4  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu5  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu6  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu7  :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu8  :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu9  :  0.3%us,  0.3%sy,  0.0%ni, 99.3%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu10 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu11 :  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu12 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu13 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu14 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Cpu15 :100.0%us,  0.0%sy,  0.0%ni,  0.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Mem:  65512480k total,   580704k used, 64931776k free,     8964k buffers
-Swap:  3204896k total,        0k used,  3204896k free,   129720k cached
-
-Jan
-
--- 
-Siemens AG, Corporate Technology, CT SE 2
-Corporate Competence Center Embedded Linux
+I went to implement your suggested change and I remembered why I did it this way:  I wanted a macro so that the "struct adaptive_waiter" local variable will fall away without an #ifdef in the main body of code.  So I have left this logic alone for now.
