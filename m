@@ -1,46 +1,31 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [(RT RFC) PATCH v2 2/9] sysctl for runtime-control of
-	lateral mutex stealing
-Date: Mon, 25 Feb 2008 18:15:37 -0700
-Message-ID: <47C321E9.BA47.005A.0@novell.com>
-References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
- <20080225160048.11268.55059.stgit@novell1.haskins.net>
- <20080225215335.GE2659@elf.ucw.cz>
- <1203980231.16711.115.camel@sven.thebigcorporation.com>
+From: "CHAVENT Paul" <Paul.CHAVENT@criltechnology.com>
+Subject: Can you explain PCI DMA latency please ?
+Date: Tue, 26 Feb 2008 10:51:05 +0100
+Message-ID: <631F24C6E5322142A5BDEFA2E85180802978A4@tls01.criltechnology.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
-	<rostedt@goodmis.org>, <kevin@hilman.org>, <tglx@linutronix.de>,
-	<cminyard@mvista.com>, <dsingleton@mvista.com>,
-	<dwalker@mvista.com>, "Moiz Kohari" <MKohari@novell.com>,
-	"Peter Morreale" <PMorreale@novell.com>, <dsaxena@plexity.net>,
-	<acme@redhat.com>, <ak@suse.de>, <gregkh@suse.de>,
-	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Sven Dietrich" <SDietrich@novell.com>,
-	"Pavel Machek" <pavel@ucw.cz>
+Content-Transfer-Encoding: 7BIT
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:18676 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751193AbYBZBW0 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Feb 2008 20:22:26 -0500
-In-Reply-To: <1203980231.16711.115.camel@sven.thebigcorporation.com>
-Content-Disposition: inline
+Received: from 171.192.65-86.rev.gaoland.net.192.65.86.in-addr.arpa ([86.65.192.171]:3520
+	"EHLO criltechnology.com" rhost-flags-OK-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752945AbYBZKCi convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Feb 2008 05:02:38 -0500
+Received: from cril01.criltechnology.net by criltechnology.com
+	(MDaemon PRO v9.6.0)
+	with ESMTP id md50000228153.msg
+	for <linux-rt-users@vger.kernel.org>; Tue, 26 Feb 2008 10:51:08 +0100
+content-class: urn:content-classes:message
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Mon, Feb 25, 2008 at  5:57 PM, in message
-<1203980231.16711.115.camel@sven.thebigcorporation.com>, Sven-Thorsten Dietrich
-<sdietrich@novell.com> wrote: 
->
-> But Greg may need to enforce it on his git tree that he mails these from
-> - are you referring to anything specific in this patch?
-> 
+Hi everyone.
 
-Thats what I don't get.  I *did* checkpatch all of these before sending them out (and I have for every release).
+You write (and we can read on some docs) that DMA an PCI acess can cause long-latency. I don't understand why.
 
-I am aware of two "tabs vs spaces" warnings, but the rest checked clean.  Why do some people still see errors when I don't?  Is there a set of switches I should supply to checkpatch to make it more aggressive or something?
+I'am not a guru and knwo perfectly how the dma work but i thought that the cpu ask for a dma to a device. The device is then autonomous for acessing the memory. I wonder why the cpu is "locked" ? What the dma brings if the cpu can't continue his work ?
 
--Greg
+Thanks for your help.
+
+Paul.
