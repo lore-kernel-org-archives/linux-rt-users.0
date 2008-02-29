@@ -1,11 +1,11 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Roman Zippel <zippel@linux-m68k.org>
 Subject: Re: [RFC PATCH 4/6] Preempt-RCU: Implementation
-Date: Thu, 28 Feb 2008 20:53:28 -0800
-Message-ID: <20080229045328.GA18687@linux.vnet.ibm.com>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com> <200802290534.57040.zippel@linux-m68k.org>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Fri, 29 Feb 2008 13:38:15 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.0802291330590.2723@scrub.home>
+References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com>
+ <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
@@ -16,75 +16,53 @@ Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
 	Josh Triplett <josh@freedesktop.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Roman Zippel <zippel@linux-m68k.org>
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e35.co.us.ibm.com ([32.97.110.153]:58105 "EHLO
-	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754438AbYB2Exu (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Feb 2008 23:53:50 -0500
-Content-Disposition: inline
-In-Reply-To: <200802290534.57040.zippel@linux-m68k.org>
+Received: from scrub.xs4all.nl ([194.109.195.176]:33865 "EHLO scrub.xs4all.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758649AbYB2MtZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Feb 2008 07:49:25 -0500
+In-Reply-To: <20080229045328.GA18687@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 29, 2008 at 05:34:54AM +0100, Roman Zippel wrote:
-> Hi,
+Hi
+
+On Thu, 28 Feb 2008, Paul E. McKenney wrote:
+
+> > Why got this moved into init/Kconfig?
 > 
-> On Thursday 13. December 2007, Gautham R Shenoy wrote:
+> Because there are some arches that don't have kernel/Kconfig.preempt,
+> its earlier home.  Therefore, putting it into kernel/Kconfig.preempt
+> broke those arches' builds by supplying neither PREEMPT_RCU nor
+> CLASSIC_RCU.
 > 
-> > diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-> > index c64ce9c..06cafcc 100644
-> > --- a/kernel/Kconfig.preempt
-> > +++ b/kernel/Kconfig.preempt
-> > @@ -63,3 +63,41 @@ config PREEMPT_BKL
-> >  	  Say Y here if you are building a kernel for a desktop system.
-> >  	  Say N if you are unsure.
-> >
-> > +choice
-> > +	prompt "RCU implementation type:"
-> > +	default CLASSIC_RCU
-> > +
-> > +config CLASSIC_RCU
-> > +	bool "Classic RCU"
-> > +	help
-> > +	  This option selects the classic RCU implementation that is
-> > +	  designed for best read-side performance on non-realtime
-> > +	  systems.
-> > +
-> > +	  Say Y if you are unsure.
-> > +
-> > +config PREEMPT_RCU
-> > +	bool "Preemptible RCU"
-> > +	depends on PREEMPT
-> > +	help
-> > +	  This option reduces the latency of the kernel by making certain
-> > +	  RCU sections preemptible. Normally RCU code is non-preemptible, if
-> > +	  this option is selected then read-only RCU sections become
-> > +	  preemptible. This helps latency, but may expose bugs due to
-> > +	  now-naive assumptions about each RCU read-side critical section
-> > +	  remaining on a given CPU through its execution.
-> > +
-> > +	  Say N if you are unsure.
-> > +
-> > +endchoice
+> > Now it's somewhere in the root menu, not really belonging to anything.
 > 
-> Why got this moved into init/Kconfig?
+> Do you have a suggested location?
+> 
+> > Also why is this a choice? Are more RCU types planned?
+> 
+> I don't expect additional drop-in replacements for RCU, though people
+> are certainly free to experiment if they wish.  It is a choice because
+> this gives people a very clear idea of the two options and because
+> it makes the implementation a bit cleaner.
 
-Because there are some arches that don't have kernel/Kconfig.preempt,
-its earlier home.  Therefore, putting it into kernel/Kconfig.preempt
-broke those arches' builds by supplying neither PREEMPT_RCU nor
-CLASSIC_RCU.
+I'd suggest to move PREEMPT_RCU back to Kconfig.preempt and if you really 
+need the second symbol leave this behind (maybe with a comment):
 
-> Now it's somewhere in the root menu, not really belonging to anything.
+config CLASSIC_RCU
+	def_bool !PREEMPT_RCU
 
-Do you have a suggested location?
+Once there are more options, we can still look for a better place...
 
-> Also why is this a choice? Are more RCU types planned?
+Also could you please add a proper dependency to RCU_TRACE on PREEMPT_RCU, 
+so that this condition isn't needed anymore:
 
-I don't expect additional drop-in replacements for RCU, though people
-are certainly free to experiment if they wish.  It is a choice because
-this gives people a very clear idea of the two options and because
-it makes the implementation a bit cleaner.
+ifeq ($(CONFIG_PREEMPT_RCU),y)
+obj-$(CONFIG_RCU_TRACE) += rcupreempt_trace.o
+endif
 
-							Thanx, Paul
+Thanks.
+
+bye, Roman
