@@ -1,41 +1,44 @@
-From: Roman Zippel <zippel@linux-m68k.org>
-Subject: Re: [RFC PATCH 4/6] Preempt-RCU: Implementation
-Date: Fri, 29 Feb 2008 15:31:52 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0802291528071.2723@scrub.home>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com>
- <200802290534.57040.zippel@linux-m68k.org> <Pine.LNX.4.58.0802290852060.8804@gandalf.stny.rr.com>
+From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
+Subject: [PATCH] Fix build, missing profile.h include in kernel/sysctl.c (against 2.6.24.3-rt3)
+Date: Fri, 29 Feb 2008 23:11:40 +0100
+Message-ID: <c384c5ea0802291411s44cfb349r811da1e7daaefa19@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Paul E McKenney <paulmck@us.ibm.com>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
-	Josh Triplett <josh@freedesktop.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Steven Rostedt" <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from scrub.xs4all.nl ([194.109.195.176]:53219 "EHLO scrub.xs4all.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757912AbYB2Ob6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Feb 2008 09:31:58 -0500
-In-Reply-To: <Pine.LNX.4.58.0802290852060.8804@gandalf.stny.rr.com>
+Received: from an-out-0708.google.com ([209.85.132.247]:63740 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759706AbYB2WLl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Feb 2008 17:11:41 -0500
+Received: by an-out-0708.google.com with SMTP id d31so945264and.103
+        for <linux-rt-users@vger.kernel.org>; Fri, 29 Feb 2008 14:11:40 -0800 (PST)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Build fix for kernel/sysctl.c:356: error: 'prof_pid' undeclared here
+(not in a function).
+The fix is to include <linux/profile.h> which defines prof_pid as external.
+Patch is against 2.6.24.3-rt3.
 
-On Fri, 29 Feb 2008, Steven Rostedt wrote:
+Signed-off-by: Leon Woestenberg <leon@sidebranch.com>
 
-> > Also why is this a choice? Are more RCU types planned?
-> 
-> Why shouldn't it be a choice? You can have CLASSIC_RCU or PREEMPT_RCU, one
-> or the other and not both. Sounds perfect for being a choice.
+Index: linux-2.6.24.3/kernel/sysctl.c
+===================================================================
+--- linux-2.6.24.3.orig/kernel/sysctl.c 2008-02-29 00:52:45.000000000 +0100
++++ linux-2.6.24.3/kernel/sysctl.c      2008-02-29 00:52:59.000000000 +0100
+@@ -47,6 +47,7 @@
+ #include <linux/acpi.h>
+ #include <linux/reboot.h>
+ #include <linux/ftrace.h>
++#include <linux/profile.h>
 
-With this logic almost every bool could be implemented via choice.
-A simple bool perfectly gives you two choices too.
+ #include <asm/uaccess.h>
+ #include <asm/processor.h>
 
-bye, Roman
+
+-- 
+Leon
