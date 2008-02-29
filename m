@@ -1,16 +1,14 @@
-From: Roman Zippel <zippel@linux-m68k.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [RFC PATCH 4/6] Preempt-RCU: Implementation
-Date: Fri, 29 Feb 2008 05:34:54 +0100
-Message-ID: <200802290534.57040.zippel@linux-m68k.org>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com>
+Date: Thu, 28 Feb 2008 20:53:28 -0800
+Message-ID: <20080229045328.GA18687@linux.vnet.ibm.com>
+References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com> <200802290534.57040.zippel@linux-m68k.org>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@elte.hu>,
+Content-Type: text/plain; charset=us-ascii
+Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Paul E McKenney <paulmck@us.ibm.com>,
 	Dipankar Sarma <dipankar@in.ibm.com>,
 	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
 	Oleg Nesterov <oleg@tv-sign.ru>,
@@ -18,59 +16,75 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Josh Triplett <josh@freedesktop.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: ego@in.ibm.com
+To: Roman Zippel <zippel@linux-m68k.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from scrub.xs4all.nl ([194.109.195.176]:35289 "EHLO scrub.xs4all.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753999AbYB2EfU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Feb 2008 23:35:20 -0500
-In-Reply-To: <20071213171658.GE25981@in.ibm.com>
+Received: from e35.co.us.ibm.com ([32.97.110.153]:58105 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754438AbYB2Exu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Feb 2008 23:53:50 -0500
 Content-Disposition: inline
+In-Reply-To: <200802290534.57040.zippel@linux-m68k.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Fri, Feb 29, 2008 at 05:34:54AM +0100, Roman Zippel wrote:
+> Hi,
+> 
+> On Thursday 13. December 2007, Gautham R Shenoy wrote:
+> 
+> > diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+> > index c64ce9c..06cafcc 100644
+> > --- a/kernel/Kconfig.preempt
+> > +++ b/kernel/Kconfig.preempt
+> > @@ -63,3 +63,41 @@ config PREEMPT_BKL
+> >  	  Say Y here if you are building a kernel for a desktop system.
+> >  	  Say N if you are unsure.
+> >
+> > +choice
+> > +	prompt "RCU implementation type:"
+> > +	default CLASSIC_RCU
+> > +
+> > +config CLASSIC_RCU
+> > +	bool "Classic RCU"
+> > +	help
+> > +	  This option selects the classic RCU implementation that is
+> > +	  designed for best read-side performance on non-realtime
+> > +	  systems.
+> > +
+> > +	  Say Y if you are unsure.
+> > +
+> > +config PREEMPT_RCU
+> > +	bool "Preemptible RCU"
+> > +	depends on PREEMPT
+> > +	help
+> > +	  This option reduces the latency of the kernel by making certain
+> > +	  RCU sections preemptible. Normally RCU code is non-preemptible, if
+> > +	  this option is selected then read-only RCU sections become
+> > +	  preemptible. This helps latency, but may expose bugs due to
+> > +	  now-naive assumptions about each RCU read-side critical section
+> > +	  remaining on a given CPU through its execution.
+> > +
+> > +	  Say N if you are unsure.
+> > +
+> > +endchoice
+> 
+> Why got this moved into init/Kconfig?
 
-On Thursday 13. December 2007, Gautham R Shenoy wrote:
+Because there are some arches that don't have kernel/Kconfig.preempt,
+its earlier home.  Therefore, putting it into kernel/Kconfig.preempt
+broke those arches' builds by supplying neither PREEMPT_RCU nor
+CLASSIC_RCU.
 
-> diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
-> index c64ce9c..06cafcc 100644
-> --- a/kernel/Kconfig.preempt
-> +++ b/kernel/Kconfig.preempt
-> @@ -63,3 +63,41 @@ config PREEMPT_BKL
->  	  Say Y here if you are building a kernel for a desktop system.
->  	  Say N if you are unsure.
->
-> +choice
-> +	prompt "RCU implementation type:"
-> +	default CLASSIC_RCU
-> +
-> +config CLASSIC_RCU
-> +	bool "Classic RCU"
-> +	help
-> +	  This option selects the classic RCU implementation that is
-> +	  designed for best read-side performance on non-realtime
-> +	  systems.
-> +
-> +	  Say Y if you are unsure.
-> +
-> +config PREEMPT_RCU
-> +	bool "Preemptible RCU"
-> +	depends on PREEMPT
-> +	help
-> +	  This option reduces the latency of the kernel by making certain
-> +	  RCU sections preemptible. Normally RCU code is non-preemptible, if
-> +	  this option is selected then read-only RCU sections become
-> +	  preemptible. This helps latency, but may expose bugs due to
-> +	  now-naive assumptions about each RCU read-side critical section
-> +	  remaining on a given CPU through its execution.
-> +
-> +	  Say N if you are unsure.
-> +
-> +endchoice
+> Now it's somewhere in the root menu, not really belonging to anything.
 
-Why got this moved into init/Kconfig?
-Now it's somewhere in the root menu, not really belonging to anything.
-Also why is this a choice? Are more RCU types planned?
+Do you have a suggested location?
 
-bye, Roman
+> Also why is this a choice? Are more RCU types planned?
+
+I don't expect additional drop-in replacements for RCU, though people
+are certainly free to experiment if they wish.  It is a choice because
+this gives people a very clear idea of the two options and because
+it makes the implementation a bit cleaner.
+
+							Thanx, Paul
