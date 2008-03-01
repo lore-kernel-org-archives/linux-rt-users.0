@@ -1,104 +1,150 @@
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: ltp-20080229 crashes the kernel during the "shmctl04" test
-Date: Sat, 1 Mar 2008 18:43:49 +0100
-Message-ID: <c384c5ea0803010943ya8a6717wdf09b13e2071694e@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH 4/6] Preempt-RCU: Implementation
+Date: Sat, 1 Mar 2008 11:39:03 -0800
+Message-ID: <20080301193903.GC15887@linux.vnet.ibm.com>
+References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com> <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com> <Pine.LNX.4.64.0802291330590.2723@scrub.home>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Roman Zippel <zippel@linux-m68k.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.243]:30164 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755236AbYCARnv (ORCPT
+Received: from e36.co.us.ibm.com ([32.97.110.154]:42053 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751298AbYCATjL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 1 Mar 2008 12:43:51 -0500
-Received: by an-out-0708.google.com with SMTP id d31so1036103and.103
-        for <linux-rt-users@vger.kernel.org>; Sat, 01 Mar 2008 09:43:50 -0800 (PST)
+	Sat, 1 Mar 2008 14:39:11 -0500
 Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0802291330590.2723@scrub.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Fri, Feb 29, 2008 at 01:38:15PM +0100, Roman Zippel wrote:
+> Hi
+> 
+> On Thu, 28 Feb 2008, Paul E. McKenney wrote:
+> 
+> > > Why got this moved into init/Kconfig?
+> > 
+> > Because there are some arches that don't have kernel/Kconfig.preempt,
+> > its earlier home.  Therefore, putting it into kernel/Kconfig.preempt
+> > broke those arches' builds by supplying neither PREEMPT_RCU nor
+> > CLASSIC_RCU.
+> > 
+> > > Now it's somewhere in the root menu, not really belonging to anything.
+> > 
+> > Do you have a suggested location?
+> > 
+> > > Also why is this a choice? Are more RCU types planned?
+> > 
+> > I don't expect additional drop-in replacements for RCU, though people
+> > are certainly free to experiment if they wish.  It is a choice because
+> > this gives people a very clear idea of the two options and because
+> > it makes the implementation a bit cleaner.
+> 
+> I'd suggest to move PREEMPT_RCU back to Kconfig.preempt and if you really 
+> need the second symbol leave this behind (maybe with a comment):
+> 
+> config CLASSIC_RCU
+> 	def_bool !PREEMPT_RCU
+> 
+> Once there are more options, we can still look for a better place...
+> 
+> Also could you please add a proper dependency to RCU_TRACE on PREEMPT_RCU, 
+> so that this condition isn't needed anymore:
+> 
+> ifeq ($(CONFIG_PREEMPT_RCU),y)
+> obj-$(CONFIG_RCU_TRACE) += rcupreempt_trace.o
+> endif
 
-with LTP 20080229 released, I ran it against my target MPC8313E-RDB
-(powerpc) board, running a 2.6.24.3-rt3 kernel with nohz, preempt rt,
-hrtimers enabled.
-(http://ltp.sourceforge.net/)
+Is this what you had in mind?  I don't have any way to test on a
+system not supporting CONFIG_PREEMPT, but seems to work on x86.
 
-It reliably crashes during the "shmctl04" test, see the oops with a
-manual function backtrace here:
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
 
-$/usr/libexec/ltp/runltp
+ init/Kconfig           |   34 +++-------------------------------
+ kernel/Kconfig.preempt |   15 +++++++++++++++
+ 2 files changed, 18 insertions(+), 31 deletions(-)
 
-...
-<<<test_start>>>
-tag=shmctl02 stime=8030
-cmdline="shmctl02"
-contacts=""
-analysis=exit
-initiation_status="ok"
-<<<test_output>>>
-shmctl02    1  PASS  :  expected failure - errno = 13 : Permission denied
-shmctl02    2  PASS  :  expected failure - errno = 14 : Bad address
-shmctl02    3  PASS  :  expected failure - errno = 14 : Bad address
-shmctl02    4  PASS  :  expected failure - errno = 22 : Invalid argument
-shmctl02    5  PASS  :  expected failure - errno = 22 : Invalid argument
-shmctl02    6  CONF  :  shmctl() did not fail for non-root user.This
-may be okay for your distribution.
-shmctl02    7  CONF  :  shmctl() did not fail for non-root user.This
-may be okay for your distribution.
-<<<execution_status>>>
-duration=0 termination_type=exited termination_id=0 corefile=no
-cutime=0 cstime=2
-<<<test_end>>>
-<<<test_start>>>
-tag=shmctl03 stime=8030
-cmdline="shmct[ 8030.335495] Oops: Exception in kernel mode, sig: 5 [#1]
-[ 8030.340842] PREEMPT MPC8313 RDB
-[ 8030.343977] Modules linked in: ledtrig_heartbeat ledtrig_timer
-ledtrig_cpu leds_mpc8313e_rdb led_class
-[ 8030.353299] NIP: c00461f0 LR: c0046184 CTR: 00000000
-[ 8030.358248] REGS: c5a31cf0 TRAP: 0700   Not tainted  (2.6.24.3-rt3)
-[ 8030.364491] MSR: 00021032 <ME,IR,DR>  CR: 22000464  XER: 20000000
-[ 8030.370607] TASK = c7012ab0[7657] 'shmctl04' THREAD: c5a30000
-[ 8030.376157] GPR00: c75dcab4 c5a31da0 c7012ab0 c7012ab0 00000078
-00000000 00009032 100184c8
-[ 8030.384540] GPR08: c75dcac0 00000001 c75dcab3 c5a31dfc 00000000
-1001d564 00000000 10017e08
-[ 8030.392921] GPR16: 00000000 10019e40 0000000b 00000111 00000000
-00000000 0000005c 100184e0
-[ 8030.401301] GPR24: 00000000 00009032 c75dcaac c75dcab4 c5a30000
-c75dcac2 c5a30000 c5a31ddc
-[ 8030.409859] Call Trace:
-[ 8030.412296] [c5a31da0] [c0046184]  (unreliable)
-[ 8030.416821] [c5a31dd0] [c02a2984]
-[ 8030.420215] [c5a31e30] [c01345b4]
-[ 8030.423610] [c5a31f10] [c0004ed8]
-[ 8030.427003] [c5a31f40] [c00105b8]
-[ 8030.430396] --- Exception: c01Instruction dump:
-[ 8030.434922] 381b0008 917f0020 91290004 916b0004 813b0008 7f804800
-419e001c 3b49fff4
-[ 8030.442694] 801a002c 7f600278 3140ffff 7d2a0110 <0f090000> 7fe3fb78
-7f64db78 4810d65d
-
-
-$ powerpc-axon-linux-addr2line -i -e ./vmlinux c0045f8c
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/kernel/rtmutex.c:440
-$ powerpc-axon-linux-addr2line -i -e ./vmlinux c029e1a8
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/kernel/rtmutex.c:720
-$ powerpc-axon-linux-addr2line -i -e ./vmlinux c012fdf8
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/include/asm/atomic.h:22
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/include/asm-generic/atomic.h:148
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/include/linux/fs.h:530
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/ipc/shm.c:635
-$ powerpc-axon-linux-addr2line -i -e ./vmlinux c0004ed8
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/arch/powerpc/kernel/syscalls.c:132
-$ powerpc-axon-linux-addr2line -i -e ./vmlinux c00103d8
-/home/leon/sandbox/mpc8313rdk/openembedded/build/tmp/work/linux-rt-2.6.24-r3/linux-2.6.24.3/arch/powerpc/kernel/entry_32.S:223
-
-If any further info is required to track this one down.
-
-
-Regards,
--- 
-Leon
+diff -urpNa -X dontdiff linux-2.6.25-rc3/init/Kconfig linux-2.6.25-rc3-preempt_rcu/init/Kconfig
+--- linux-2.6.25-rc3/init/Kconfig	2008-02-26 16:58:42.000000000 -0800
++++ linux-2.6.25-rc3-preempt_rcu/init/Kconfig	2008-03-01 11:30:59.000000000 -0800
+@@ -860,38 +860,10 @@ source "block/Kconfig"
+ config PREEMPT_NOTIFIERS
+ 	bool
+ 
+-choice
+-	prompt "RCU implementation type:"
+-	default CLASSIC_RCU
+-	help
+-	  This allows you to choose either the classic RCU implementation
+-	  that is designed for best read-side performance on non-realtime
+-	  systems, or the preemptible RCU implementation for best latency
+-	  on realtime systems.  Note that some kernel preemption modes
+-	  will restrict your choice.
+-
+-	  Select the default if you are unsure.
+-
+ config CLASSIC_RCU
+-	bool "Classic RCU"
++	def_bool !PREEMPT_RCU
+ 	help
+ 	  This option selects the classic RCU implementation that is
+ 	  designed for best read-side performance on non-realtime
+-	  systems.
+-
+-	  Say Y if you are unsure.
+-
+-config PREEMPT_RCU
+-	bool "Preemptible RCU"
+-	depends on PREEMPT
+-	help
+-	  This option reduces the latency of the kernel by making certain
+-	  RCU sections preemptible. Normally RCU code is non-preemptible, if
+-	  this option is selected then read-only RCU sections become
+-	  preemptible. This helps latency, but may expose bugs due to
+-	  now-naive assumptions about each RCU read-side critical section
+-	  remaining on a given CPU through its execution.
+-
+-	  Say N if you are unsure.
+-
+-endchoice
++	  systems.  Classic RCU is the default.  Note that the
++	  PREEMPT_RCU symbol is used to select/deselect this option.
+diff -urpNa -X dontdiff linux-2.6.25-rc3/kernel/Kconfig.preempt linux-2.6.25-rc3-preempt_rcu/kernel/Kconfig.preempt
+--- linux-2.6.25-rc3/kernel/Kconfig.preempt	2008-02-26 16:58:42.000000000 -0800
++++ linux-2.6.25-rc3-preempt_rcu/kernel/Kconfig.preempt	2008-03-01 11:35:39.000000000 -0800
+@@ -52,8 +52,23 @@ config PREEMPT
+ 
+ endchoice
+ 
++config PREEMPT_RCU
++	bool "Preemptible RCU"
++	depends on PREEMPT
++	default n
++	help
++	  This option reduces the latency of the kernel by making certain
++	  RCU sections preemptible. Normally RCU code is non-preemptible, if
++	  this option is selected then read-only RCU sections become
++	  preemptible. This helps latency, but may expose bugs due to
++	  now-naive assumptions about each RCU read-side critical section
++	  remaining on a given CPU through its execution.
++
++	  Say N if you are unsure.
++
+ config RCU_TRACE
+ 	bool "Enable tracing for RCU - currently stats in debugfs"
++	depends on PREEMPT_RCU
+ 	select DEBUG_FS
+ 	default y
+ 	help
