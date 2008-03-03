@@ -1,59 +1,28 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [(RT RFC) PATCH v2 1/9] allow rt-mutex lock-stealing
-	toincludelateral priority
-Date: Mon, 03 Mar 2008 08:55:30 -0700
-Message-ID: <47CBD922.BA47.005A.0@novell.com>
-References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
- <20080225160043.11268.83915.stgit@novell1.haskins.net>
- <Pine.LNX.4.58.0803030944530.18766@gandalf.stny.rr.com>
- <47CBD5CD.BA47.005A.0@novell.com>
- <Pine.LNX.4.58.0803031051410.19405@gandalf.stny.rr.com>
+From: David Brownell <david-b@pacbell.net>
+Subject: Re: High resolution timers on AT91SAM926x
+Date: Mon, 3 Mar 2008 10:39:57 -0800
+Message-ID: <200803031039.57909.david-b@pacbell.net>
+References: <200803011457.40857.david-b@pacbell.net> <d6c8ef150803030226m75f68bffvfa20feba9133b247@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <a.p.zijlstra@chello.nl>, <mingo@elte.hu>, <bill.huey@gmail.com>,
-	<kevin@hilman.org>, <tglx@linutronix.de>, <cminyard@mvista.com>,
-	<dsingleton@mvista.com>, <dwalker@mvista.com>,
-	"Moiz Kohari" <MKohari@novell.com>,
-	"Peter Morreale" <PMorreale@novell.com>,
-	"Sven Dietrich" <SDietrich@novell.com>, <dsaxena@plexity.net>,
-	<acme@redhat.com>, <ak@suse.de>, <gregkh@suse.de>,
-	<npiggin@suse.de>, <pavel@ucw.cz>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Steven Rostedt" <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:31892 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751158AbYCCQCN convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Mar 2008 11:02:13 -0500
-In-Reply-To: <Pine.LNX.4.58.0803031051410.19405@gandalf.stny.rr.com>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org, tglx@linutronix.de
+To: "Bosko Radivojevic" <bosko.radivojevic@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758166AbYCCSkP@vger.kernel.org>
+In-Reply-To: <d6c8ef150803030226m75f68bffvfa20feba9133b247@mail.gmail.com>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
->>> On Mon, Mar 3, 2008 at 10:55 AM, in message
-<Pine.LNX.4.58.0803031051410.19405@gandalf.stny.rr.com>, Steven Rostedt
-<rostedt@goodmis.org> wrote: 
+On Monday 03 March 2008, Bosko Radivojevic wrote:
+> thank you for the reply. But, I'm getting pretty strange behavior.
 
-> On Mon, 3 Mar 2008, Gregory Haskins wrote:
-> 
->> >>> On Mon, Mar 3, 2008 at 10:13 AM, in message
->> >
->> > See the issue. The RT task on CPU0 may experience huge latencies.
->>
->> Agreed, but equal priority threads can always cause unbounded latencies by 
-> definition.  I.e. we only guarantee to the highest thread.
-> 
-> It should not when they are bounded to two separate CPUs, and are the
-> highest priority tasks on those CPUS.  That will be hard to explain, how a
-> the highest prio tasks bounded to a single CPU had an unbounded latency.
-> With the patches presented, this can happen.
+Presumably you got different results when your Kconfig
+enabled a HRT/NO_HZ capable clockevent source, instead
+of just the PIT?
 
-Indeed.  I see your point.  I will make this change in the next revision.
-
-Thanks for the review!
--Greg
-
-
-
+CONFIG_ATMEL_TCLIB=y
+CONFIG_ATMEL_TCB_CLKSRC=y
+CONFIG_ATMEL_TCB_CLKSRC_BLOCK=0
