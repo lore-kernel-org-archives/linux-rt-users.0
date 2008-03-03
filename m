@@ -1,169 +1,235 @@
-From: "Bosko Radivojevic" <bosko.radivojevic@gmail.com>
-Subject: Re: High resolution timers on AT91SAM926x
-Date: Mon, 3 Mar 2008 11:26:58 +0100
-Message-ID: <d6c8ef150803030226m75f68bffvfa20feba9133b247@mail.gmail.com>
-References: <200803011457.40857.david-b@pacbell.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [(RT RFC) PATCH v2 1/9] allow rt-mutex lock-stealing to include
+ lateral priority
+Date: Mon, 3 Mar 2008 10:13:19 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0803030944530.18766@gandalf.stny.rr.com>
+References: <20080225155959.11268.35541.stgit@novell1.haskins.net>
+ <20080225160043.11268.83915.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: "David Brownell" <david-b@pacbell.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wx-out-0506.google.com ([66.249.82.237]:33540 "EHLO
-	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755584AbYCCK1B (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Mar 2008 05:27:01 -0500
-Received: by wx-out-0506.google.com with SMTP id h31so6261265wxd.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 03 Mar 2008 02:26:59 -0800 (PST)
-In-Reply-To: <200803011457.40857.david-b@pacbell.net>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-David,
-
-thank you for the reply. But, I'm getting pretty strange behavior.
-I've applied all your patches to 2.6.23.11-rt14 (with official at91
-patch for 2.6.23) kernel without any major rejects. Here is a snippet
-from the .config:
-
-CONFIG_GENERIC_GPIO=y
-CONFIG_GENERIC_TIME=y
-CONFIG_GENERIC_CLOCKEVENTS=y
-CONFIG_GENERIC_HARDIRQS=y
-CONFIG_GENERIC_IRQ_PROBE=y
-CONFIG_RWSEM_GENERIC_SPINLOCK=y
-CONFIG_GENERIC_HWEIGHT=y
-CONFIG_GENERIC_CALIBRATE_DELAY=y
-CONFIG_GENERIC_CLOCKEVENTS_BUILD=y
-CONFIG_HIGH_RES_TIMERS=y
-CONFIG_AT91_TIMER_HZ=1000
-# CONFIG_NO_HZ is not set
-CONFIG_HZ=1000
-
-===========================================
-
-$ cat /proc/timer_list
-Timer List Version: v0.3
-HRTIMER_MAX_CLOCK_BASES: 2
-now at 3782337012585 nsecs
-
-cpu: 0
- clock 0:
-  .index:      0
-  .resolution: 999961 nsecs
-  .get_time:   ktime_get_real
-  .offset:     0 nsecs
-active timers:
- clock 1:
-  .index:      1
-  .resolution: 999961 nsecs
-  .get_time:   ktime_get
-  .offset:     0 nsecs
-active timers:
- #0: <c3b2de90>, it_real_fn, S:01
- # expires at 4807555046495 nsecs [in 1025218033910 nsecs]
-  .expires_next   : 2147483646999999999 nsecs
-  .hres_active    : 0
-  .nr_events      : 0
-  .nohz_mode      : 0
-  .idle_tick      : 0 nsecs
-  .tick_stopped   : 0
-  .idle_jiffies   : 0
-  .idle_calls     : 0
-  .idle_sleeps    : 0
-  .idle_entrytime : 0 nsecs
-  .idle_sleeptime : 0 nsecs
-  .last_jiffies   : 0
-  .next_jiffies   : 0
-  .idle_expires   : 0 nsecs
-jiffies: 3482489
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: mingo@elte.hu, a.p.zijlstra@chello.nl, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	bill.huey@gmail.com, kevin@hilman.org, cminyard@mvista.com,
+	dsingleton@mvista.com, dwalker@mvista.com, npiggin@suse.de,
+	dsaxena@plexity.net, ak@suse.de, pavel@ucw.cz, acme@redhat.com,
+	gregkh@suse.de, sdietrich@novell.com, pmorreale@novell.com,
+	mkohari@novell.com
+To: Gregory Haskins <ghaskins@novell.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758082AbYCCPNe@vger.kernel.org>
+In-Reply-To: <20080225160043.11268.83915.stgit@novell1.haskins.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-Tick Device: mode:     0
-Clock Event Device: pit
- max_delta_ns:   0
- min_delta_ns:   0
- mult:           26663156
- shift:          32
- mode:           2
- next_event:     0 nsecs
- set_next_event: __init_begin
- set_mode:       pit_clkevt_mode
- event_handler:  tick_handle_periodic
 
-Also, I wrote a small example to test the behaviour (sleeping 1ms):
+/me finally has time to catch up on some email.
 
-#define period 500000
-#define onesecond 1000000000
+On Mon, 25 Feb 2008, Gregory Haskins wrote:
 
- mlockall();
- sp.sched_priority = 90;
- printf ("setscheduler = %d\n", sched_setscheduler (0, SCHED_FIFO, &sp));
- printf ("setparam = %d\n", sched_setparam (0, &sp));
-
- while (++loop < 30000) {
-   clock_gettime (CLOCK_MONOTONIC, &ts);
-   if (ts.tv_nsec + period > onesecond) {
-     ts2.tv_sec = ts.tv_sec + 1;
-     ts2.tv_nsec = (ts.tv_nsec + period) - onesecond;
-   } else {
-     ts2.tv_sec = ts.tv_sec;
-     ts2.tv_nsec = ts.tv_nsec + period;
-   }
-   clock_nanosleep (CLOCK_MONOTONIC, TIMER_ABSTIME, &ts2, 0);
-   clock_gettime (CLOCK_MONOTONIC, &ts3);
-   diff = ((ts3.tv_sec - ts.tv_sec)*onesecond+ts3.tv_nsec) - ts.tv_nsec;
-   if (!min && !max)
-     min = max = diff;
-   if (diff > max)
-     max = diff;
-   if (diff < min)
-     min = diff;
-   printf ("%ld %ld\n", min, max);
- }
-
-I'm getting this as a result:
-1890872 2924656
-
-So, the minimal difference is almost a 2ms, maximum 3ms. I ran this
-test for a long period, without any load on the system (except
-printing out results through network). Alsto, I'm wondering why
-minimal latency is 1890872, it is less then twice 999961 (timer
-resolution).
-
-What I am doing wrong? Is there a way to sleep 1ms? I tried to adjust
-(/3, /5, etc) pit_cycle in pit_init but all I got was to lock the
-system ;)
-
-Thanks!
-
-On Sat, Mar 1, 2008 at 11:57 PM, David Brownell <david-b@pacbell.net> wrote:
-> > Is there a way to enable high resolution timers on AT91SAM926x?
+> The current logic only allows lock stealing to occur if the current task
+> is of higher priority than the pending owner. We can gain signficant
+> throughput improvements (200%+) by allowing the lock-stealing code to
+> include tasks of equal priority.  The theory is that the system will make
+> faster progress by allowing the task already on the CPU to take the lock
+> rather than waiting for the system to wake-up a different task.
 >
->  Update PIT to support the clocksource/clockevent framework:
->   http://marc.info/?l=linux-arm-kernel&m=119940724711435&w=2
+> This does add a degree of unfairness, yes.  But also note that the users
+> of these locks under non -rt environments have already been using unfair
+> raw spinlocks anyway so the tradeoff is probably worth it.
 >
->  Declare timer/counter block platform devices:
->   http://marc.info/?l=linux-arm-kernel&m=120302318811110&w=2
+> The way I like to think of this is that higher priority tasks should
+> clearly preempt, and lower priority tasks should clearly block.  However,
+> if tasks have an identical priority value, then we can think of the
+> scheduler decisions as the tie-breaking parameter. (e.g. tasks that the
+> scheduler picked to run first have a logically higher priority amoung tasks
+> of the same prio).  This helps to keep the system "primed" with tasks doing
+> useful work, and the end result is higher throughput.
+
+Interesting. I thought about this when I first implemented it. My thought
+was on fairness, and having some worry about starvation. But if you have
+two processes of the same RT priority, then you must account for it.
+
+But..., this can cause confusion with having two tasks of the same RT
+priority bound to two different CPUS.
+
+  CPU0                            CPU1
+ -----                         ---------
+RT task blocks on L1
+Owner releases L1
+RT task pending owner of L1
+                               Same prio RT task grabs L1
+                               (steals from other RT task)
+RT task wakes up to find
+  L1 stolen and goes
+  back to sleep.
+                               Releases L1 giving
+RT task becomes pending owner
+                               Grabs L1 again and steals it again.
+RT wakes up to find
+  L1 stolen and goes back
+  to sleep.
+
+
+See the issue. The RT task on CPU0 may experience huge latencies.
+Remember, RT is worried about latencies over performance.
+If we can not ***guarantee*** a bounded latency, then, I don't care
+how good the perfomance is, it is not good enough for RT.
+
+
+That said, here's the compromise.
+
+Non-RT tasks care more about overall perfomance than worst case latencies.
+So.... See imbedded:
+
+
 >
->  Use timer/counter blocks for better clocksource and clockevents:
->   http://marc.info/?l=linux-kernel&m=120373043520279&w=2
->   http://marc.info/?l=linux-kernel&m=120373063320487&w=2
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> ---
 >
->  The focus in that last patch is on NO_HZ support -- so the
->  clockevents run at 32 KiHz (about 31 usec precision for HRT)
->  to allow overall HZ to run below 1 where practical.   If you
->  need even higher precision, you could update that clockevent
->  code to use a different base clock.
+>  kernel/Kconfig.preempt |   10 ++++++++++
+>  kernel/rtmutex.c       |   31 +++++++++++++++++++++++--------
+>  2 files changed, 33 insertions(+), 8 deletions(-)
 >
->  Those last two patches are in some MM tree, and Haavard has
->  some updates to then (which don't much affect functionality).
+> diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+> index 41a0d88..e493257 100644
+> --- a/kernel/Kconfig.preempt
+> +++ b/kernel/Kconfig.preempt
+> @@ -196,3 +196,13 @@ config SPINLOCK_BKL
+>  	  Say Y here if you are building a kernel for a desktop system.
+>  	  Say N if you are unsure.
 >
->  I understand the upcoming 2.6.24-at91 patch will include the
->  first two patches.
+> +config RTLOCK_LATERAL_STEAL
+> +        bool "Allow equal-priority rtlock stealing"
+> +        default y
+> +        depends on PREEMPT_RT
+> +        help
+> +          This option alters the rtlock lock-stealing logic to allow
+> +          equal priority tasks to preempt a pending owner in addition
+> +          to higher priority tasks.  This allows for a significant
+> +          boost in throughput under certain circumstances at the expense
+> +          of strict FIFO lock access.
+
+We either do this or we don't. No config option.
+
+> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+> index a2b00cc..6624c66 100644
+> --- a/kernel/rtmutex.c
+> +++ b/kernel/rtmutex.c
+> @@ -313,12 +313,27 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+>  	return ret;
+>  }
 >
->  - Dave
+> +static inline int lock_is_stealable(struct task_struct *pendowner, int unfair)
+> +{
+> +#ifndef CONFIG_RTLOCK_LATERAL_STEAL
+> +	if (current->prio >= pendowner->prio)
+> +#else
+> +	if (current->prio > pendowner->prio)
+> +		return 0;
+> +
+> +	if (!unfair && (current->prio == pendowner->prio))
+> +#endif
+> +		return 0;
+> +
+> +	return 1;
+> +}
+> +
+
+This instead:
+
+
+	if (rt_task(current) ?
+		(current->prio >= pendingowner->prio) :
+		(current->prio > pendingowner->prio))
+
+
+For RT tasks we keep the FIFO order. This keeps it deterministic.
+But for non RT tasks, that still can steal locks, we just simply let them
+steal if at a higher priority.
+
+And just use that as the condition. No need to add another inline
+function (doesn't make it any more readable).
+
+Actually, this is the only change I see in this patch that is needed.
+The rest is simply passing parameters and adding extra unneeded options.
+
+-- Steve
+
+
+
+
+>  /*
+>   * Optimization: check if we can steal the lock from the
+>   * assigned pending owner [which might not have taken the
+>   * lock yet]:
+>   */
+> -static inline int try_to_steal_lock(struct rt_mutex *lock)
+> +static inline int try_to_steal_lock(struct rt_mutex *lock, int unfair)
+>  {
+>  	struct task_struct *pendowner = rt_mutex_owner(lock);
+>  	struct rt_mutex_waiter *next;
+> @@ -330,7 +345,7 @@ static inline int try_to_steal_lock(struct rt_mutex *lock)
+>  		return 1;
+>
+>  	spin_lock(&pendowner->pi_lock);
+> -	if (current->prio >= pendowner->prio) {
+> +	if (!lock_is_stealable(pendowner, unfair)) {
+>  		spin_unlock(&pendowner->pi_lock);
+>  		return 0;
+>  	}
+> @@ -383,7 +398,7 @@ static inline int try_to_steal_lock(struct rt_mutex *lock)
+>   *
+>   * Must be called with lock->wait_lock held.
+>   */
+> -static int try_to_take_rt_mutex(struct rt_mutex *lock)
+> +static int try_to_take_rt_mutex(struct rt_mutex *lock, int unfair)
+>  {
+>  	/*
+>  	 * We have to be careful here if the atomic speedups are
+> @@ -406,7 +421,7 @@ static int try_to_take_rt_mutex(struct rt_mutex *lock)
+>  	 */
+>  	mark_rt_mutex_waiters(lock);
+>
+> -	if (rt_mutex_owner(lock) && !try_to_steal_lock(lock))
+> +	if (rt_mutex_owner(lock) && !try_to_steal_lock(lock, unfair))
+>  		return 0;
+>
+>  	/* We got the lock. */
+> @@ -707,7 +722,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+>  		int saved_lock_depth = current->lock_depth;
+>
+>  		/* Try to acquire the lock */
+> -		if (try_to_take_rt_mutex(lock))
+> +		if (try_to_take_rt_mutex(lock, 1))
+>  			break;
+>  		/*
+>  		 * waiter.task is NULL the first time we come here and
+> @@ -947,7 +962,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+>  	init_lists(lock);
+>
+>  	/* Try to acquire the lock again: */
+> -	if (try_to_take_rt_mutex(lock)) {
+> +	if (try_to_take_rt_mutex(lock, 0)) {
+>  		spin_unlock_irqrestore(&lock->wait_lock, flags);
+>  		return 0;
+>  	}
+> @@ -970,7 +985,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+>  		unsigned long saved_flags;
+>
+>  		/* Try to acquire the lock: */
+> -		if (try_to_take_rt_mutex(lock))
+> +		if (try_to_take_rt_mutex(lock, 0))
+>  			break;
+>
+>  		/*
+> @@ -1078,7 +1093,7 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
+>
+>  		init_lists(lock);
+>
+> -		ret = try_to_take_rt_mutex(lock);
+> +		ret = try_to_take_rt_mutex(lock, 0);
+>  		/*
+>  		 * try_to_take_rt_mutex() sets the lock waiters
+>  		 * bit unconditionally. Clean this up.
+>
 >
