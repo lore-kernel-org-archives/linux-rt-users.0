@@ -1,46 +1,38 @@
-From: David Brownell <david-b@pacbell.net>
-Subject: Re: High resolution timers on AT91SAM926x
-Date: Mon, 3 Mar 2008 17:29:18 -0800
-Message-ID: <200803031729.19264.david-b@pacbell.net>
-References: <200803011457.40857.david-b@pacbell.net> <200803031039.57909.david-b@pacbell.net> <d6c8ef150803031342r567aab86x776dc2a8b73714b6@mail.gmail.com>
+From: Jon Masters <jonathan@jonmasters.org>
+Subject: try_module_get and friends
+Date: Tue, 04 Mar 2008 00:20:58 -0500
+Message-ID: <1204608058.11912.3.camel@perihelion>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: "Bosko Radivojevic" <bosko.radivojevic@gmail.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp117.sbc.mail.sp1.yahoo.com ([69.147.64.90]:47970 "HELO
-	smtp117.sbc.mail.sp1.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1754780AbYCDB3V (ORCPT
+Received: from dallas.jonmasters.org ([72.29.103.172]:60559 "EHLO
+	dallas.jonmasters.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752208AbYCDFVu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Mar 2008 20:29:21 -0500
-In-Reply-To: <d6c8ef150803031342r567aab86x776dc2a8b73714b6@mail.gmail.com>
-Content-Disposition: inline
+	Tue, 4 Mar 2008 00:21:50 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Monday 03 March 2008, Bosko Radivojevic wrote:
-> I had CONFIG_ATMEL_TCLIB enabled, but not TCB_CLKSRC and
-> TCB_CLKSRC_BLOCK=0. With all those options, I finally have HRT
-> functionality. But, strange thing is that jitter of my little example
-> (get time, sleep 1ms, get time, show the difference) is around 250us.
-> Maybe this is normal for this architecture?
+Yo,
 
-I have no idea why that would be.  Maybe you can find out.  :)
+Ok...so I might just be missing something and you guys will set me right
+if that is indeed the case, but...
+
+What's protecting the -RT kernel from assumptions about atomicity of
+module symbol references? Specifically, the kernel doesn't normally need
+to protect against inter-module symbol references to EXPORT_SYMBOL(s),
+however, it requires special protection when a function pointer is being
+passed around - that's why we use things like try_module_get. But it is
+assumed that it is ok not to do this in atomic contexts.
+
+So, what's protecting the RT kernel from falling over if a CPU frequency
+governor module is removed at the wrong moment?
+
+Jon.
 
 
-> System is (as noted on rt.wik site) very slow with NO_HZ option enabled.
-
-It doesn't exactly say *why* or compare to other arm926ejs
-chips ... 
-
-Could the 64-bit math (ktime stuff) be a factor there?  Your
-board probably only runs at 95 (or-so) bogomips after all.
-
-And is that just a NO_HZ issue, or generically an issue when
-oneshot timer modes are in heavy use?
-
-- Dave
- 
