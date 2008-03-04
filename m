@@ -1,103 +1,126 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: High resolution timers on AT91SAM926x
-Date: Tue, 4 Mar 2008 21:22:24 +0100
-Message-ID: <3efb10970803041222j61fd8d28k5cef0994b9bd6f12@mail.gmail.com>
-References: <200803011457.40857.david-b@pacbell.net>
-	 <200803031039.57909.david-b@pacbell.net>
-	 <d6c8ef150803031342r567aab86x776dc2a8b73714b6@mail.gmail.com>
-	 <200803031729.19264.david-b@pacbell.net>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH] move PREEMPT_RCU config option back under PREEMPT
+Date: Tue, 4 Mar 2008 12:22:07 -0800
+Message-ID: <20080304202207.GA10926@linux.vnet.ibm.com>
+References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com> <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com> <Pine.LNX.4.64.0802291330590.2723@scrub.home> <20080301193903.GC15887@linux.vnet.ibm.com> <Pine.LNX.4.64.0803020404040.2723@scrub.home> <20080303185511.GE12453@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: "David Brownell" <david-b@pacbell.net>,
-	"Bosko Radivojevic" <bosko.radivojevic@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: ego@in.ibm.com, Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>, zippel@linux-m68k.org
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.177]:11275 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750810AbYCDUW0 (ORCPT
+Received: from e31.co.us.ibm.com ([32.97.110.149]:34070 "EHLO
+	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756322AbYCDUb4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2008 15:22:26 -0500
-Received: by py-out-1112.google.com with SMTP id u52so1650863pyb.10
-        for <linux-rt-users@vger.kernel.org>; Tue, 04 Mar 2008 12:22:25 -0800 (PST)
-In-Reply-To: <200803031729.19264.david-b@pacbell.net>
+	Tue, 4 Mar 2008 15:31:56 -0500
 Content-Disposition: inline
+In-Reply-To: <20080303185511.GE12453@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Bosko/Dave,
+Hello!
 
-> On Monday 03 March 2008, Bosko Radivojevic wrote:
->
-> > I had CONFIG_ATMEL_TCLIB enabled, but not TCB_CLKSRC and
->  > TCB_CLKSRC_BLOCK=0. With all those options, I finally have HRT
->  > functionality. But, strange thing is that jitter of my little example
->  > (get time, sleep 1ms, get time, show the difference) is around 250us.
->  > Maybe this is normal for this architecture?
-> I have no idea why that would be.  Maybe you can find out.  :)
+The original preemptible-RCU patch put the choice between classic and
+preemptible RCU into kernel/Kconfig.preempt, which resulted in build
+failures on machines not supporting CONFIG_PREEMPT.  This choice was
+therefore moved to init/Kconfig, which worked, but placed the choice
+between classic and preemptible RCU at the top level, a very obtuse choice
+indeed.  This patch changes from the Kconfig "choice" mechanism to a pair
+of booleans, only one of which (CONFIG_PREEMPT_RCU) is user-visible,
+and is located in kernel/Kconfig.preempt, where one would expect it
+to be.  The other (CONFIG_CLASSIC_RCU) is in init/Kconfig so that it
+is available to all architectures, hopefully avoiding build breakage.
+Thanks to Roman Zippel for suggesting this approach.
 
-These are normal figures for this core, on preempt-rt.
-You are talking about jitter on timers. While on preempt-rt the worst
-case latency of scheduling a RT-thread is about 300us, 250us is thus
-quite normal, and actually quite good... (the kernel-mainline average
-latency is better, but worst-case is unbound)
-(Note: The 300 us seem to be caused by something in the networking
-layer, without network I noticed worst case latencies about 150us, but
-NO guarantee here)
+I have tested this, but sadly do not have access to a machine that does
+not support CONFIG_PREEMPT.  However, I did edit my config in an attempt
+to simulate this situation.
 
-But, besides the worst-case schedule latency; the interrupt handler is
-shared with the handler of the DBGU. There are patches available to
-split the interrupt handler, this will make this behavior somewhat
-better, but do not expect miracles here.
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
 
-I stopped using HRT on these cores and preempt-RT for quite some time
-now (several months), because the smaller timer granularity will allow
-applications to make timers elapse on sub-millisec intervals, where
-each interval generates a interrupt handling cycle of about 50 -
->100us, especially if different applications use periodic timers which
-are out of sync.
-This will become visible as extreme CPU-load figures on applications
-with 1 ms timers.
-13-15% CPU load on a application with just 1 single 1 ms timer is
-quite normal...
+ init/Kconfig           |   34 +++-------------------------------
+ kernel/Kconfig.preempt |   15 +++++++++++++++
+ 2 files changed, 18 insertions(+), 31 deletions(-)
 
-FWIW: For getting the most accurate realtime response for periodic
-timers, I used a TC block to generate a periodic interrupt, that only
-needs to wake up a RT-thread. This way the OS-timer framework can be
-used for non-RT stuff, and/or slow timers. This is much less heavy on
-this core, and gives much better/deterministic RT results.
-(This is not what I prefer to do, but these cores are just not that
-fast as multi-gigahertz X86 PCs ;-)) )
-
-
-Kind Regards,
-
-Remy
-
->
->
->
->  > System is (as noted on rt.wik site) very slow with NO_HZ option enabled.
->
->
-> It doesn't exactly say *why* or compare to other arm926ejs
->  chips ...
->
->  Could the 64-bit math (ktime stuff) be a factor there?  Your
->  board probably only runs at 95 (or-so) bogomips after all.
->
->  And is that just a NO_HZ issue, or generically an issue when
->  oneshot timer modes are in heavy use?
->
->  - Dave
->
->
->  --
->  To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
->
-> the body of a message to majordomo@vger.kernel.org
->  More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> Please read the FAQ at  http://www.tux.org/lkml/
->
+diff -urpNa -X dontdiff linux-2.6.25-rc3/init/Kconfig linux-2.6.25-rc3-preempt_rcu/init/Kconfig
+--- linux-2.6.25-rc3/init/Kconfig	2008-02-26 16:58:42.000000000 -0800
++++ linux-2.6.25-rc3-preempt_rcu/init/Kconfig	2008-03-01 11:30:59.000000000 -0800
+@@ -860,38 +860,10 @@ source "block/Kconfig"
+ config PREEMPT_NOTIFIERS
+ 	bool
+ 
+-choice
+-	prompt "RCU implementation type:"
+-	default CLASSIC_RCU
+-	help
+-	  This allows you to choose either the classic RCU implementation
+-	  that is designed for best read-side performance on non-realtime
+-	  systems, or the preemptible RCU implementation for best latency
+-	  on realtime systems.  Note that some kernel preemption modes
+-	  will restrict your choice.
+-
+-	  Select the default if you are unsure.
+-
+ config CLASSIC_RCU
+-	bool "Classic RCU"
++	def_bool !PREEMPT_RCU
+ 	help
+ 	  This option selects the classic RCU implementation that is
+ 	  designed for best read-side performance on non-realtime
+-	  systems.
+-
+-	  Say Y if you are unsure.
+-
+-config PREEMPT_RCU
+-	bool "Preemptible RCU"
+-	depends on PREEMPT
+-	help
+-	  This option reduces the latency of the kernel by making certain
+-	  RCU sections preemptible. Normally RCU code is non-preemptible, if
+-	  this option is selected then read-only RCU sections become
+-	  preemptible. This helps latency, but may expose bugs due to
+-	  now-naive assumptions about each RCU read-side critical section
+-	  remaining on a given CPU through its execution.
+-
+-	  Say N if you are unsure.
+-
+-endchoice
++	  systems.  Classic RCU is the default.  Note that the
++	  PREEMPT_RCU symbol is used to select/deselect this option.
+diff -urpNa -X dontdiff linux-2.6.25-rc3/kernel/Kconfig.preempt linux-2.6.25-rc3-preempt_rcu/kernel/Kconfig.preempt
+--- linux-2.6.25-rc3/kernel/Kconfig.preempt	2008-02-26 16:58:42.000000000 -0800
++++ linux-2.6.25-rc3-preempt_rcu/kernel/Kconfig.preempt	2008-03-01 11:35:39.000000000 -0800
+@@ -52,8 +52,23 @@ config PREEMPT
+ 
+ endchoice
+ 
++config PREEMPT_RCU
++	bool "Preemptible RCU"
++	depends on PREEMPT
++	default n
++	help
++	  This option reduces the latency of the kernel by making certain
++	  RCU sections preemptible. Normally RCU code is non-preemptible, if
++	  this option is selected then read-only RCU sections become
++	  preemptible. This helps latency, but may expose bugs due to
++	  now-naive assumptions about each RCU read-side critical section
++	  remaining on a given CPU through its execution.
++
++	  Say N if you are unsure.
++
+ config RCU_TRACE
+ 	bool "Enable tracing for RCU - currently stats in debugfs"
++	depends on PREEMPT_RCU
+ 	select DEBUG_FS
+ 	default y
+ 	help
