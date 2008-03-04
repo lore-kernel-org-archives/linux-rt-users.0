@@ -1,47 +1,47 @@
-From: Roman Zippel <zippel@linux-m68k.org>
-Subject: Re: [RFC PATCH 4/6] Preempt-RCU: Implementation
-Date: Tue, 4 Mar 2008 21:49:47 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0803042147520.2723@scrub.home>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com>
- <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com>
- <Pine.LNX.4.64.0802291330590.2723@scrub.home> <20080301193903.GC15887@linux.vnet.ibm.com>
- <Pine.LNX.4.64.0803020404040.2723@scrub.home> <20080303185511.GE12453@linux.vnet.ibm.com>
+From: "Bosko Radivojevic" <bosko.radivojevic@gmail.com>
+Subject: Re: High resolution timers on AT91SAM926x
+Date: Tue, 4 Mar 2008 23:38:36 +0100
+Message-ID: <d6c8ef150803041438h5912cedev6322f9b295e789d8@mail.gmail.com>
+References: <200803011457.40857.david-b@pacbell.net>
+	 <200803031039.57909.david-b@pacbell.net>
+	 <d6c8ef150803031342r567aab86x776dc2a8b73714b6@mail.gmail.com>
+	 <200803031729.19264.david-b@pacbell.net>
+	 <3efb10970803041222j61fd8d28k5cef0994b9bd6f12@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: ego@in.ibm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
-	Josh Triplett <josh@freedesktop.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "David Brownell" <david-b@pacbell.net>,
+	linux-rt-users@vger.kernel.org
+To: "Remy Bohmer" <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from scrub.xs4all.nl ([194.109.195.176]:50736 "EHLO scrub.xs4all.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759311AbYCDU4g (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2008 15:56:36 -0500
-In-Reply-To: <20080303185511.GE12453@linux.vnet.ibm.com>
+Received: from wx-out-0506.google.com ([66.249.82.225]:47473 "EHLO
+	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758677AbYCDWij (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Mar 2008 17:38:39 -0500
+Received: by wx-out-0506.google.com with SMTP id h31so1371020wxd.4
+        for <linux-rt-users@vger.kernel.org>; Tue, 04 Mar 2008 14:38:36 -0800 (PST)
+In-Reply-To: <3efb10970803041222j61fd8d28k5cef0994b9bd6f12@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello Remy,
 
-On Mon, 3 Mar 2008, Paul E. McKenney wrote:
+I tried today Xenomai (2.6.20.21 kernel, that is the last supported by
+I-Pipe patch), the same example program (recompiled with Xenomai
+libpthread_rt). Results are a little bit better (worst-case latency is
+around 150us). Using Xenomai in native skin (as kernel module)
+produces much better results (worst-case latency is around 50us).
+Currently, I am looking for the best way to "transfer" application to
+user land/posix.
 
-> > "default n" isn't really necessary, it's already the default.
-> 
-> Fair enough.  But something like 125 Kconfig files in 2.6.25-rc3 have
-> at least one "default n" in them, so is it worth getting rid of it?
-> Seems to me that the explicit "default n" has some substantial readability
-> advantages.
+>  FWIW: For getting the most accurate realtime response for periodic
+>  timers, I used a TC block to generate a periodic interrupt, that only
+>  needs to wake up a RT-thread. This way the OS-timer framework can be
+>  used for non-RT stuff, and/or slow timers. This is much less heavy on
+>  this core, and gives much better/deterministic RT results.
 
-The inverse would mean all the other configs have a readability 
-disadvantage.
-In most cases they can be simply removed, only in form of 'def_bool n' it
-makes somewhat sense.
+May you give me a bit more details on this? Thanks :)
 
-bye, Roman
+Cheers!
