@@ -1,7 +1,8 @@
 From: Jon Masters <jonathan@jonmasters.org>
-Subject: try_module_get and friends
-Date: Tue, 04 Mar 2008 00:20:58 -0500
-Message-ID: <1204608058.11912.3.camel@perihelion>
+Subject: Re: try_module_get and friends
+Date: Tue, 04 Mar 2008 00:28:26 -0500
+Message-ID: <1204608506.11912.9.camel@perihelion>
+References: <1204608058.11912.3.camel@perihelion>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -10,28 +11,23 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from dallas.jonmasters.org ([72.29.103.172]:60559 "EHLO
+Received: from dallas.jonmasters.org ([72.29.103.172]:54174 "EHLO
 	dallas.jonmasters.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752208AbYCDFVu (ORCPT
+	with ESMTP id S1752324AbYCDF3J (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2008 00:21:50 -0500
+	Tue, 4 Mar 2008 00:29:09 -0500
+In-Reply-To: <1204608058.11912.3.camel@perihelion>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Yo,
+On Tue, 2008-03-04 at 00:20 -0500, Jon Masters wrote:
 
-Ok...so I might just be missing something and you guys will set me right
-if that is indeed the case, but...
+> So, what's protecting the RT kernel from falling over if a CPU frequency
+> governor module is removed at the wrong moment?
 
-What's protecting the -RT kernel from assumptions about atomicity of
-module symbol references? Specifically, the kernel doesn't normally need
-to protect against inter-module symbol references to EXPORT_SYMBOL(s),
-however, it requires special protection when a function pointer is being
-passed around - that's why we use things like try_module_get. But it is
-assumed that it is ok not to do this in atomic contexts.
-
-So, what's protecting the RT kernel from falling over if a CPU frequency
-governor module is removed at the wrong moment?
+That's a contrived example, it does the right thing in the ones I've
+looked it, but it just occurred to me that this might not be general for
+kernel code where random pointers to modules are getting thrown around.
 
 Jon.
 
