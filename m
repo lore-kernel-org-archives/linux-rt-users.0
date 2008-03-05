@@ -1,47 +1,74 @@
-From: "Bosko Radivojevic" <bosko.radivojevic@gmail.com>
-Subject: Re: High resolution timers on AT91SAM926x
-Date: Tue, 4 Mar 2008 23:38:36 +0100
-Message-ID: <d6c8ef150803041438h5912cedev6322f9b295e789d8@mail.gmail.com>
-References: <200803011457.40857.david-b@pacbell.net>
-	 <200803031039.57909.david-b@pacbell.net>
-	 <d6c8ef150803031342r567aab86x776dc2a8b73714b6@mail.gmail.com>
-	 <200803031729.19264.david-b@pacbell.net>
-	 <3efb10970803041222j61fd8d28k5cef0994b9bd6f12@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH] move PREEMPT_RCU config option back under PREEMPT
+Date: Tue, 4 Mar 2008 16:58:16 -0800
+Message-ID: <20080305005816.GG9517@linux.vnet.ibm.com>
+References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com> <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com> <Pine.LNX.4.64.0802291330590.2723@scrub.home> <20080301193903.GC15887@linux.vnet.ibm.com> <Pine.LNX.4.64.0803020404040.2723@scrub.home> <20080303185511.GE12453@linux.vnet.ibm.com> <20080304202207.GA10926@linux.vnet.ibm.com> <Pine.LNX.4.58.0803041553240.11062@gandalf.stny.rr.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "David Brownell" <david-b@pacbell.net>,
-	linux-rt-users@vger.kernel.org
-To: "Remy Bohmer" <linux@bohmer.net>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	ego@in.ibm.com, Ingo Molnar <mingo@elte.hu>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>, zippel@linux-m68k.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wx-out-0506.google.com ([66.249.82.225]:47473 "EHLO
-	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758677AbYCDWij (ORCPT
+Received: from e34.co.us.ibm.com ([32.97.110.152]:58342 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751642AbYCEA6V (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2008 17:38:39 -0500
-Received: by wx-out-0506.google.com with SMTP id h31so1371020wxd.4
-        for <linux-rt-users@vger.kernel.org>; Tue, 04 Mar 2008 14:38:36 -0800 (PST)
-In-Reply-To: <3efb10970803041222j61fd8d28k5cef0994b9bd6f12@mail.gmail.com>
+	Tue, 4 Mar 2008 19:58:21 -0500
 Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0803041553240.11062@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Remy,
+On Tue, Mar 04, 2008 at 03:55:42PM -0500, Steven Rostedt wrote:
+> 
+> On Tue, 4 Mar 2008, Paul E. McKenney wrote:
+> >
+> > The original preemptible-RCU patch put the choice between classic and
+> > preemptible RCU into kernel/Kconfig.preempt, which resulted in build
+> > failures on machines not supporting CONFIG_PREEMPT.  This choice was
+> > therefore moved to init/Kconfig, which worked, but placed the choice
+> > between classic and preemptible RCU at the top level, a very obtuse choice
+> > indeed.  This patch changes from the Kconfig "choice" mechanism to a pair
+> > of booleans, only one of which (CONFIG_PREEMPT_RCU) is user-visible,
+> > and is located in kernel/Kconfig.preempt, where one would expect it
+> > to be.  The other (CONFIG_CLASSIC_RCU) is in init/Kconfig so that it
+> > is available to all architectures, hopefully avoiding build breakage.
+> > Thanks to Roman Zippel for suggesting this approach.
+> >
+> > I have tested this, but sadly do not have access to a machine that does
+> > not support CONFIG_PREEMPT.  However, I did edit my config in an attempt
+> > to simulate this situation.
+> 
+> One minor comment, but otherwise:
+> 
+> Acked-by: Steven Rostedt <srostedt@redhat.com>
+> 
+> >
+> > Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> 
+> 
+> >  config CLASSIC_RCU
+> > -	bool "Classic RCU"
+> > +	def_bool !PREEMPT_RCU
+> >  	help
+> >  	  This option selects the classic RCU implementation that is
+> >  	  designed for best read-side performance on non-realtime
+> > -	  systems.
+> > -
+> > -	  Say Y if you are unsure.
+> > -
+> 
+> You can get rid of the "help" part since it isn't visible to users.
 
-I tried today Xenomai (2.6.20.21 kernel, that is the last supported by
-I-Pipe patch), the same example program (recompiled with Xenomai
-libpthread_rt). Results are a little bit better (worst-case latency is
-around 150us). Using Xenomai in native skin (as kernel module)
-produces much better results (worst-case latency is around 50us).
-Currently, I am looking for the best way to "transfer" application to
-user land/posix.
+So how about if I replace it with comment lines (starting with "#",
+not with "comment")?
 
->  FWIW: For getting the most accurate realtime response for periodic
->  timers, I used a TC block to generate a periodic interrupt, that only
->  needs to wake up a RT-thread. This way the OS-timer framework can be
->  used for non-RT stuff, and/or slow timers. This is much less heavy on
->  this core, and gives much better/deterministic RT results.
-
-May you give me a bit more details on this? Thanks :)
-
-Cheers!
+						Thanx, Paul
