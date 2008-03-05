@@ -1,55 +1,93 @@
-From: Roman Zippel <zippel@linux-m68k.org>
-Subject: Re: [PATCH] move PREEMPT_RCU config option back under PREEMPT
-Date: Wed, 5 Mar 2008 03:06:32 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0803050305210.2723@scrub.home>
-References: <20071213170348.GA25981@in.ibm.com> <20071213171658.GE25981@in.ibm.com>
- <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com>
- <Pine.LNX.4.64.0802291330590.2723@scrub.home> <20080301193903.GC15887@linux.vnet.ibm.com>
- <Pine.LNX.4.64.0803020404040.2723@scrub.home> <20080303185511.GE12453@linux.vnet.ibm.com>
- <20080304202207.GA10926@linux.vnet.ibm.com> <Pine.LNX.4.58.0803041553240.11062@gandalf.stny.rr.com>
- <20080305005816.GG9517@linux.vnet.ibm.com>
+From: Gilles Carry <Gilles.Carry@bull.net>
+Subject: Re: BUG on 2.6.24.3-rt3.
+Date: Wed, 05 Mar 2008 09:05:50 +0100
+Message-ID: <47CE545E.9060406@bull.net>
+References: <200803042249.15945.sripathik@in.ibm.com> <Pine.LNX.4.58.0803041335560.9858@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, ego@in.ibm.com,
-	Ingo Molnar <mingo@elte.hu>,
-	Dipankar Sarma <dipankar@in.ibm.com>,
-	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
-	Oleg Nesterov <oleg@tv-sign.ru>,
-	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
-	Josh Triplett <josh@freedesktop.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Sripathi Kodi <sripathik@in.ibm.com>,
+	linux-rt-users@vger.kernel.org, mingo@elte.hu
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from scrub.xs4all.nl ([194.109.195.176]:50249 "EHLO scrub.xs4all.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753361AbYCECIS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2008 21:08:18 -0500
-In-Reply-To: <20080305005816.GG9517@linux.vnet.ibm.com>
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:51274 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758177AbYCEIFj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 5 Mar 2008 03:05:39 -0500
+In-Reply-To: <Pine.LNX.4.58.0803041335560.9858@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
 
-On Tue, 4 Mar 2008, Paul E. McKenney wrote:
+I had this bug also when testing ltp's hrtimer-prio.c.
+So far I could not reproduce it but still I applied your patch.
+I'll let you know if I find something useful.
 
-> > > -	bool "Classic RCU"
-> > > +	def_bool !PREEMPT_RCU
-> > >  	help
-> > >  	  This option selects the classic RCU implementation that is
-> > >  	  designed for best read-side performance on non-realtime
-> > > -	  systems.
-> > > -
-> > > -	  Say Y if you are unsure.
-> > > -
-> > 
-> > You can get rid of the "help" part since it isn't visible to users.
-> 
-> So how about if I replace it with comment lines (starting with "#",
-> not with "comment")?
+Gilles.
 
-Actually xconfig can display this text, so using the help like this is 
-fine.
 
-bye, Roman
+
+Steven Rostedt wrote:
+
+>Sripathi,
+>
+>Thanks for reporting this.
+>
+>On Tue, 4 Mar 2008, Sripathi Kodi wrote:
+>  
+>
+>>I can recreate the problem easily and can also get a kdump. Please let
+>>me know if any other information will help in analyzing this.
+>>    
+>>
+>
+>Could you try this patch and let me know if it fixes your problem.
+>
+>-- Steve
+>
+>Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+>
+>---
+> kernel/sched_rt.c |    6 ++++--
+> 1 file changed, 4 insertions(+), 2 deletions(-)
+>
+>Index: linux-2.6.24.3-rt3/kernel/sched_rt.c
+>===================================================================
+>--- linux-2.6.24.3-rt3.orig/kernel/sched_rt.c	2008-03-04 13:49:53.000000000 -0500
+>+++ linux-2.6.24.3-rt3/kernel/sched_rt.c	2008-03-04 13:51:27.000000000 -0500
+>@@ -840,9 +840,11 @@ static void prio_changed_rt(struct rq *r
+> 			pull_rt_task(rq);
+> 		/*
+> 		 * If there's a higher priority task waiting to run
+>-		 * then reschedule.
+>+		 * then reschedule. Note, the above pull_rt_task
+>+		 * can release the rq lock and p could migrate.
+>+		 * Only reschedule if p is still on the same runqueue.
+> 		 */
+>-		if (p->prio > rq->rt.highest_prio)
+>+		if (p->prio > rq->rt.highest_prio && task_rq(p) == rq)
+> 			resched_task(p);
+> #else
+> 		/* For UP simply resched on drop of prio */
+>--
+>To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>the body of a message to majordomo@vger.kernel.org
+>More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>
+>  
+>
+
+-- 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Gilles.Carry
+Linux Project team
+mailto: gilles.carry@bull.net
+Phone: +33 (0)4 76 29 74 27
+Addr.: BULL S.A.  1 rue de Provence, B.P. 208 38432 Echirolles Cedex
+http://www.bull.com
+http://www.bullopensource.org/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
