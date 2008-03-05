@@ -1,79 +1,56 @@
-From: Sripathi Kodi <sripathik@in.ibm.com>
-Subject: Re: BUG on 2.6.24.3-rt3.
-Date: Wed, 5 Mar 2008 14:14:34 +0530
-Message-ID: <200803051414.34607.sripathik@in.ibm.com>
-References: <200803042249.15945.sripathik@in.ibm.com> <Pine.LNX.4.58.0803041335560.9858@gandalf.stny.rr.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH] move PREEMPT_RCU config option back under PREEMPT
+Date: Wed, 5 Mar 2008 11:00:27 -0800
+Message-ID: <20080305190027.GE8728@linux.vnet.ibm.com>
+References: <200802290534.57040.zippel@linux-m68k.org> <20080229045328.GA18687@linux.vnet.ibm.com> <Pine.LNX.4.64.0802291330590.2723@scrub.home> <20080301193903.GC15887@linux.vnet.ibm.com> <Pine.LNX.4.64.0803020404040.2723@scrub.home> <20080303185511.GE12453@linux.vnet.ibm.com> <20080304202207.GA10926@linux.vnet.ibm.com> <Pine.LNX.4.58.0803041553240.11062@gandalf.stny.rr.com> <20080305005816.GG9517@linux.vnet.ibm.com> <Pine.LNX.4.64.0803050305210.2723@scrub.home>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, mingo@elte.hu
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, ego@in.ibm.com,
+	Ingo Molnar <mingo@elte.hu>,
+	Dipankar Sarma <dipankar@in.ibm.com>,
+	Ted Tso <tytso@us.ibm.com>, dvhltc@us.ibm.com,
+	Oleg Nesterov <oleg@tv-sign.ru>,
+	Andrew Morton <akpm@linux-foundation.org>, bunk@kernel.org,
+	Josh Triplett <josh@freedesktop.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Roman Zippel <zippel@linux-m68k.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP01.au.ibm.com ([202.81.18.162]:51352 "EHLO
-	e23smtp01.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756680AbYCEIn6 (ORCPT
+Received: from e34.co.us.ibm.com ([32.97.110.152]:42460 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753692AbYCETAp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Mar 2008 03:43:58 -0500
-Received: from sd0109e.au.ibm.com (d23rh905.au.ibm.com [202.81.18.225])
-	by e23smtp01.au.ibm.com (8.13.1/8.13.1) with ESMTP id m258igL5001980
-	for <linux-rt-users@vger.kernel.org>; Wed, 5 Mar 2008 19:44:42 +1100
-Received: from d23av04.au.ibm.com (d23av04.au.ibm.com [9.190.235.139])
-	by sd0109e.au.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m258lZ3U235062
-	for <linux-rt-users@vger.kernel.org>; Wed, 5 Mar 2008 19:47:35 +1100
-Received: from d23av04.au.ibm.com (loopback [127.0.0.1])
-	by d23av04.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m258htWM001422
-	for <linux-rt-users@vger.kernel.org>; Wed, 5 Mar 2008 19:43:55 +1100
-In-Reply-To: <Pine.LNX.4.58.0803041335560.9858@gandalf.stny.rr.com>
+	Wed, 5 Mar 2008 14:00:45 -0500
 Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0803050305210.2723@scrub.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wednesday 05 March 2008 00:24, Steven Rostedt wrote:
-> Sripathi,
->
-> Thanks for reporting this.
->
-> On Tue, 4 Mar 2008, Sripathi Kodi wrote:
-> > I can recreate the problem easily and can also get a kdump. Please
-> > let me know if any other information will help in analyzing this.
->
-> Could you try this patch and let me know if it fixes your problem.
+On Wed, Mar 05, 2008 at 03:06:32AM +0100, Roman Zippel wrote:
+> Hi,
+> 
+> On Tue, 4 Mar 2008, Paul E. McKenney wrote:
+> 
+> > > > -	bool "Classic RCU"
+> > > > +	def_bool !PREEMPT_RCU
+> > > >  	help
+> > > >  	  This option selects the classic RCU implementation that is
+> > > >  	  designed for best read-side performance on non-realtime
+> > > > -	  systems.
+> > > > -
+> > > > -	  Say Y if you are unsure.
+> > > > -
+> > > 
+> > > You can get rid of the "help" part since it isn't visible to users.
+> > 
+> > So how about if I replace it with comment lines (starting with "#",
+> > not with "comment")?
+> 
+> Actually xconfig can display this text, so using the help like this is 
+> fine.
 
-Steve, this patch seems to solve the problem. Thanks a lot!
+Cool, I will stick with the "help" clause, then.
 
-There seems to be another problem that leads to a system hang. I will 
-report it as soon as I can gather more information about it.
-
-Thanks,
-Sripathi.
-
-
->
-> -- Steve
->
-> Signed-off-by: Steven Rostedt <srostedt@redhat.com>
->
-> ---
->  kernel/sched_rt.c |    6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
->
-> Index: linux-2.6.24.3-rt3/kernel/sched_rt.c
-> ===================================================================
-> --- linux-2.6.24.3-rt3.orig/kernel/sched_rt.c	2008-03-04
-> 13:49:53.000000000 -0500 +++
-> linux-2.6.24.3-rt3/kernel/sched_rt.c	2008-03-04 13:51:27.000000000
-> -0500 @@ -840,9 +840,11 @@ static void prio_changed_rt(struct rq *r
-> pull_rt_task(rq);
->  		/*
->  		 * If there's a higher priority task waiting to run
-> -		 * then reschedule.
-> +		 * then reschedule. Note, the above pull_rt_task
-> +		 * can release the rq lock and p could migrate.
-> +		 * Only reschedule if p is still on the same runqueue.
->  		 */
-> -		if (p->prio > rq->rt.highest_prio)
-> +		if (p->prio > rq->rt.highest_prio && task_rq(p) == rq)
->  			resched_task(p);
->  #else
->  		/* For UP simply resched on drop of prio */
+							Thanx, Paul
