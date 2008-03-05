@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: try_module_get and friends
-Date: Wed, 5 Mar 2008 15:54:32 -0500 (EST)
-Message-ID: <Pine.LNX.4.58.0803051551370.15882@gandalf.stny.rr.com>
+Date: Wed, 5 Mar 2008 16:14:36 -0500 (EST)
+Message-ID: <Pine.LNX.4.58.0803051611390.15882@gandalf.stny.rr.com>
 References: <1204608058.11912.3.camel@perihelion> <1204608506.11912.9.camel@perihelion>
  <1204661228.8244.15.camel@jcmlaptop> <1204745455.17630.8.camel@localhost.localdomain>
  <Pine.LNX.4.58.0803051442330.15217@gandalf.stny.rr.com>
@@ -15,15 +15,14 @@ Cc: Daniel Walker <dwalker@mvista.com>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: "Frank Ch. Eigler" <fche@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:61824 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:57083 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754508AbYCEUyf (ORCPT
+	with ESMTP id S1756017AbYCEVOi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Mar 2008 15:54:35 -0500
+	Wed, 5 Mar 2008 16:14:38 -0500
 In-Reply-To: <y0mr6eo99vg.fsf@ton.toronto.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-
 
 On Wed, 5 Mar 2008, Frank Ch. Eigler wrote:
 > > There's a theoretical potential for the system to crash in -rt when
@@ -38,10 +37,13 @@ On Wed, 5 Mar 2008, Frank Ch. Eigler wrote:
 > expensive to increment the module refcount while one of its interrupt
 > handlers is running?
 
-Actually, we were simply thinking of calling an rcu_lock before checking
-the handlers, and releasing the lock when all are done. Then before doing
-the module unload, we do a rcu_sync. Note, no interrupt handler should
-ever do a rcu_sync.
+Actually this whole thing is theoretical. Since the device would have to
+free the irq before unloading and interrupt desc->lock protects races like
+this. Then there is the question of softirqs and tasklets. And random
+passing of pointers. But this can also happen in mainline since tasklets
+and softirqs can run in a thread.
+
+We need to look deeper. I'm not sure there is an issue here.
 
 -- Steve
 
