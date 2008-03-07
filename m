@@ -1,31 +1,57 @@
-From: <H.Jesuiter@heyfra.de>
-Subject: WG: missing prof_pid in sysctl.c
-Date: Thu, 6 Mar 2008 10:42:22 +0100
-Message-ID: <3F089A1DC8B9D848A53332D54893DEE00181F8A5@srvde090.weidmueller.com>
-References: <3F089A1DC8B9D848A53332D54893DEE00181F89D@srvde090.weidmueller.com> <3F089A1DC8B9D848A53332D54893DEE00181F89E@srvde090.weidmueller.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH] RESEND: fix cpus_allowed settings
+Date: Fri, 07 Mar 2008 07:11:43 -0500
+Message-ID: <20080307120644.7031.14474.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	ghaskins@novell.com
+To: rostedt@goodmis.org, mingo@elte.he
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail2.weidmueller.de ([217.244.7.241]:57108 "HELO
-	mail2.weidmueller.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1756195AbYCFMvg convert rfc822-to-8bit (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:58713
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751063AbYCGMmU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Mar 2008 07:51:36 -0500
-Content-class: urn:content-classes:message
+	Fri, 7 Mar 2008 07:42:20 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi Ingo, Steve,
+  I sent this patch a few weeks ago along with the migration_disable
+series.  I think the controversy with the migration_disable feature
+may have resulted in this fix being overlooked.  This patch is against
+-rt, but the bug theoretically affects both -rt and sched-devel/mainline.
+I can also whip up a sched-devel based patch if you like, but I think it
+will apply trivially to both places.
 
-while trying to compile your current rt-Patch (rt3) for the current 
-Linux Kernel version (2.6.24.3), i found a compile error on a missing
-'prof_pid' in kernel/sysctl.c. After investigating in this little 
-problem, i found, that the current rt-patch either misses
-a) an '#include "profile.h"', or
-b) an 'extern int prof_pid'
-in 'kernel/sysctl.c'
+Please consider it for inclusion.
 
-Regards
-Henry Jesuiter
+Regards,
+-Greg
+
+-------------------------------
+Subject: fix cpus_allowed settings
+
+We miss setting nr_cpus_allowed for the kthread case since the normal
+set_cpus_allowed() function is not used.
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
+
+ kernel/kthread.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index dcfe724..b193b47 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -170,6 +170,7 @@ void kthread_bind(struct task_struct *k, unsigned int cpu)
+ 	wait_task_inactive(k);
+ 	set_task_cpu(k, cpu);
+ 	k->cpus_allowed = cpumask_of_cpu(cpu);
++	k->nr_cpus_allowed = 1;
+ }
+ EXPORT_SYMBOL(kthread_bind);
+ 
+
