@@ -1,70 +1,166 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH] keep rd->online and cpu_online_map in sync
-Date: Mon, 10 Mar 2008 12:20:57 -0400
-Message-ID: <20080310161540.14035.37831.stgit@novell1.haskins.net>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH] sched: fix race in schedule
+Date: Mon, 10 Mar 2008 11:01:20 -0700
+Message-ID: <47D57770.50909@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, ghaskins@novell.com
-To: rostedt@goodmis.org, mingo@elte.hu, tglx@linutronix.de
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	hpj@urpla.net
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:49892
-	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750982AbYCJQvX (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:34669 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754920AbYCJSBW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Mar 2008 12:51:23 -0400
+	Mon, 10 Mar 2008 14:01:22 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Ingo, Steve, Thomas,
-  Ingo pointed me at an issue on LKML/mainline regarding cpu-hotplug.
-It turns out that the issue (I believe) was related to the root-domain
-code that I added a few months ago.  This code is also in -rt, so the
-bug should exist there as well.  This may fix the root-cause of that
-s2ram bug that Mike Galbraith found and patched a while back as well.
-If that is the case, we can probably get rid of the "num_online_cpus()"
-in the update_migration code.  That will require confirmation from
-Mike, however, as I do not have a P4 machine like his that exhibits
-the bug.  For now, both patches should probably co-exist together.
+Hi Ingo,
 
-This applies to 24.3-rt3
+I found a race condition in scheduler.
+The first report is the below;
+http://lkml.org/lkml/2008/2/26/459
 
-Regards,
--Greg 
+It took a bit long time to investigate and I couldn't have much time last week.
+It is hard to reproduce but -rt is little easier because it has preemptible
+spin lock and rcu.
 
-------------------------------
-keep rd->online and cpu_online_map in sync
+Could you please check the scenario and the patch.
+It will be needed for the stable, too.
 
-It is possible to allow the root-domain cache of online cpus to
-become out of sync with the global cpu_online_map.  This is because we
-currently trigger removal of cpus too early in the notifier chain.
-Other DOWN_PREPARE handlers may in fact run and reconfigure the
-root-domain topology, thereby stomping on our own offline handling.
-
-The end result is that rd->online may become out of sync with
-cpu_online_map, which results in potential task misrouting.
-
-So change the offline handling to be more tightly coupled with the
-global offline process by triggering on CPU_DYING intead of
-CPU_DOWN_PREPARE.
-
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
- kernel/sched.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+There is a race condition between schedule() and some dequeue/enqueue
+functions; rt_mutex_setprio(), __setscheduler() and sched_move_task().
+
+When scheduling to idle, idle_balance() is called to pull tasks from
+other busy processor. It might drop the rq lock.
+It means that those 3 functions encounter on_rq=0 and running=1.
+The current task should be put when running.
+
+Here is a possible scenario;
+   CPU0                               CPU1
+    |                              schedule()
+    |                              ->deactivate_task()
+    |                              ->idle_balance()
+    |                              -->load_balance_newidle()
+rt_mutex_setprio()                     |
+    |                              --->double_lock_balance()
+    *get lock                          *rel lock
+    * on_rq=0, ruuning=1               |
+    * sched_class is changed           |
+    *rel lock                          *get lock
+    :                                  |
+                                       :
+                                   ->put_prev_task_rt()
+                                   ->pick_next_task_fair()
+                                       => panic
+
+The current process of CPU1(P1) is scheduling. Deactivated P1,
+and the scheduler looks for another process on other CPU's runqueue
+because CPU1 will be idle. idle_balance(), load_balance_newidle()
+and double_lock_balance() are called and double_lock_balance() could
+drop the rq lock. On the other hand, CPU0 is trying to boost the
+priority of P1. The result of boosting only P1's prio and sched_class
+are changed to RT. The sched entities of P1 and P1's group are never
+put. It makes cfs_rq invalid, because the cfs_rq has curr and no leaf,
+but pick_next_task_fair() is called, then the kernel panics.
+
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+ kernel/sched.c |   38 ++++++++++++++++----------------------
+ 1 files changed, 16 insertions(+), 22 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 7547c70..24edc53 100644
+index 52b9867..eedf748 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -6082,7 +6082,7 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
- 		spin_unlock_irq(&rq->lock);
- 		break;
+@@ -4268,11 +4268,10 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
+ 	oldprio = p->prio;
+ 	on_rq = p->se.on_rq;
+ 	running = task_current(rq, p);
+-	if (on_rq) {
++	if (on_rq)
+ 		dequeue_task(rq, p, 0);
+-		if (running)
+-			p->sched_class->put_prev_task(rq, p);
+-	}
++	if (running)
++		p->sched_class->put_prev_task(rq, p);
  
--	case CPU_DOWN_PREPARE:
-+	case CPU_DYING:
- 		/* Update our root-domain */
- 		rq = cpu_rq(cpu);
- 		spin_lock_irqsave(&rq->lock, flags);
+ 	if (rt_prio(prio))
+ 		p->sched_class = &rt_sched_class;
+@@ -4281,10 +4280,9 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
+ 
+ 	p->prio = prio;
+ 
++	if (running)
++		p->sched_class->set_curr_task(rq);
+ 	if (on_rq) {
+-		if (running)
+-			p->sched_class->set_curr_task(rq);
+-
+ 		enqueue_task(rq, p, 0);
+ 
+ 		check_class_changed(rq, p, prev_class, oldprio, running);
+@@ -4581,19 +4579,17 @@ recheck:
+ 	update_rq_clock(rq);
+ 	on_rq = p->se.on_rq;
+ 	running = task_current(rq, p);
+-	if (on_rq) {
++	if (on_rq)
+ 		deactivate_task(rq, p, 0);
+-		if (running)
+-			p->sched_class->put_prev_task(rq, p);
+-	}
++	if (running)
++		p->sched_class->put_prev_task(rq, p);
+ 
+ 	oldprio = p->prio;
+ 	__setscheduler(rq, p, policy, param->sched_priority);
+ 
++	if (running)
++		p->sched_class->set_curr_task(rq);
+ 	if (on_rq) {
+-		if (running)
+-			p->sched_class->set_curr_task(rq);
+-
+ 		activate_task(rq, p, 0);
+ 
+ 		check_class_changed(rq, p, prev_class, oldprio, running);
+@@ -7617,11 +7613,10 @@ void sched_move_task(struct task_struct *tsk)
+ 	running = task_current(rq, tsk);
+ 	on_rq = tsk->se.on_rq;
+ 
+-	if (on_rq) {
++	if (on_rq)
+ 		dequeue_task(rq, tsk, 0);
+-		if (unlikely(running))
+-			tsk->sched_class->put_prev_task(rq, tsk);
+-	}
++	if (unlikely(running))
++		tsk->sched_class->put_prev_task(rq, tsk);
+ 
+ 	set_task_rq(tsk, task_cpu(tsk));
+ 
+@@ -7630,11 +7625,10 @@ void sched_move_task(struct task_struct *tsk)
+ 		tsk->sched_class->moved_group(tsk);
+ #endif
+ 
+-	if (on_rq) {
+-		if (unlikely(running))
+-			tsk->sched_class->set_curr_task(rq);
++	if (unlikely(running))
++		tsk->sched_class->set_curr_task(rq);
++	if (on_rq)
+ 		enqueue_task(rq, tsk, 0);
+-	}
+ 
+ 	task_rq_unlock(rq, &flags);
+ }
+-- 
+1.5.4.1
 
