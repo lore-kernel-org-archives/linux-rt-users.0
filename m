@@ -1,53 +1,64 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Jon Masters <jonathan@jonmasters.org>
 Subject: Re: try_module_get and friends
-Date: Fri, 7 Mar 2008 08:16:55 -0800
-Message-ID: <20080307161655.GB9033@linux.vnet.ibm.com>
-References: <1204608058.11912.3.camel@perihelion> <1204608506.11912.9.camel@perihelion> <1204661228.8244.15.camel@jcmlaptop> <1204745455.17630.8.camel@localhost.localdomain> <Pine.LNX.4.58.0803051442330.15217@gandalf.stny.rr.com> <y0mr6eo99vg.fsf@ton.toronto.redhat.com> <Pine.LNX.4.58.0803051551370.15882@gandalf.stny.rr.com> <1204751702.17630.27.camel@localhost.localdomain>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Mon, 10 Mar 2008 01:53:48 -0400
+Message-ID: <1205128428.5484.222.camel@perihelion>
+References: <1204608058.11912.3.camel@perihelion>
+	 <1204608506.11912.9.camel@perihelion> <1204661228.8244.15.camel@jcmlaptop>
+	 <1204745455.17630.8.camel@localhost.localdomain>
+	 <Pine.LNX.4.58.0803051442330.15217@gandalf.stny.rr.com>
+	 <y0mr6eo99vg.fsf@ton.toronto.redhat.com>
+	 <Pine.LNX.4.58.0803051611390.15882@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	"Frank Ch. Eigler" <fche@redhat.com>,
-	Jon Masters <jonathan@jonmasters.org>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: "Frank Ch. Eigler" <fche@redhat.com>,
+	Daniel Walker <dwalker@mvista.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Daniel Walker <dwalker@mvista.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:57269 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751846AbYCGQRF (ORCPT
+Received: from dallas.jonmasters.org ([72.29.103.172]:58595 "EHLO
+	dallas.jonmasters.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751475AbYCJFz0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Mar 2008 11:17:05 -0500
-Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
-	by e31.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m27GH3Do031343
-	for <linux-rt-users@vger.kernel.org>; Fri, 7 Mar 2008 11:17:03 -0500
-Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
-	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m27GH0Si190028
-	for <linux-rt-users@vger.kernel.org>; Fri, 7 Mar 2008 09:17:01 -0700
-Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m27GGuZk009321
-	for <linux-rt-users@vger.kernel.org>; Fri, 7 Mar 2008 09:16:57 -0700
-Content-Disposition: inline
-In-Reply-To: <1204751702.17630.27.camel@localhost.localdomain>
+	Mon, 10 Mar 2008 01:55:26 -0400
+In-Reply-To: <Pine.LNX.4.58.0803051611390.15882@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 05, 2008 at 01:15:02PM -0800, Daniel Walker wrote:
-> 
-> On Wed, 2008-03-05 at 15:54 -0500, Steven Rostedt wrote:
-> 
-> > Actually, we were simply thinking of calling an rcu_lock before checking
-> > the handlers, and releasing the lock when all are done. Then before doing
-> > the module unload, we do a rcu_sync. Note, no interrupt handler should
-> > ever do a rcu_sync.
-> 
-> There's already some smp synchronize inside free_irq, are you sure
-> that's not already handling this for smp? For -rt we could just enable
-> it for UP ..
 
-If (desc->status & IRQ_INPROGRESS) remains true throughout the
-execution of the threaded (and thus preemptible) interrupt handler,
-then the synchronize_irq() should do the trick.
+On Wed, 2008-03-05 at 16:14 -0500, Steven Rostedt wrote:
+> On Wed, 5 Mar 2008, Frank Ch. Eigler wrote:
+> > > There's a theoretical potential for the system to crash in -rt when
+> > > unloading a module. Simply because interrupts are threads.
+> > >
+> > > Some device has an interrupt handler that is called and preempted.
+> > > At that moment the module for that device is unloaded. [...]
+> > > Since the code for the interrupt handler no longer exists... KABOOM!
+> >
+> > Perhaps you can identify those modules that have asked for interrupts,
+> > and block only them from unloading.  Or, would it be outrageously
+> > expensive to increment the module refcount while one of its interrupt
+> > handlers is running?
+> 
+> Actually this whole thing is theoretical. Since the device would have to
+> free the irq before unloading and interrupt desc->lock protects races like
+> this. Then there is the question of softirqs and tasklets. And random
+> passing of pointers. But this can also happen in mainline since tasklets
+> and softirqs can run in a thread.
+> 
+> We need to look deeper. I'm not sure there is an issue here.
 
-							Thanx, Paul
+I can poke some more and look at what actually happens on module unload
+(for now I think a quick test script loading/unloading modules in a loop
+should show us whether this is enough of a problem in reality), but I do
+want to point out that I was never concerned with interrupt handlers
+themselves - only the assumptions mainline makes about "interrupt
+context" use of pointers without an explicit try_module_get.
+
+Rusty didn't have a simple answer either, so I'll poke.
+
+Jon.
+
+
