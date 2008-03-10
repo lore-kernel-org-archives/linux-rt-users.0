@@ -1,64 +1,70 @@
-From: Jon Masters <jonathan@jonmasters.org>
-Subject: Re: try_module_get and friends
-Date: Mon, 10 Mar 2008 01:53:48 -0400
-Message-ID: <1205128428.5484.222.camel@perihelion>
-References: <1204608058.11912.3.camel@perihelion>
-	 <1204608506.11912.9.camel@perihelion> <1204661228.8244.15.camel@jcmlaptop>
-	 <1204745455.17630.8.camel@localhost.localdomain>
-	 <Pine.LNX.4.58.0803051442330.15217@gandalf.stny.rr.com>
-	 <y0mr6eo99vg.fsf@ton.toronto.redhat.com>
-	 <Pine.LNX.4.58.0803051611390.15882@gandalf.stny.rr.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH] keep rd->online and cpu_online_map in sync
+Date: Mon, 10 Mar 2008 12:20:57 -0400
+Message-ID: <20080310161540.14035.37831.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: "Frank Ch. Eigler" <fche@redhat.com>,
-	Daniel Walker <dwalker@mvista.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org, ghaskins@novell.com
+To: rostedt@goodmis.org, mingo@elte.hu, tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from dallas.jonmasters.org ([72.29.103.172]:58595 "EHLO
-	dallas.jonmasters.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751475AbYCJFz0 (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:49892
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750982AbYCJQvX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Mar 2008 01:55:26 -0400
-In-Reply-To: <Pine.LNX.4.58.0803051611390.15882@gandalf.stny.rr.com>
+	Mon, 10 Mar 2008 12:51:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Ingo, Steve, Thomas,
+  Ingo pointed me at an issue on LKML/mainline regarding cpu-hotplug.
+It turns out that the issue (I believe) was related to the root-domain
+code that I added a few months ago.  This code is also in -rt, so the
+bug should exist there as well.  This may fix the root-cause of that
+s2ram bug that Mike Galbraith found and patched a while back as well.
+If that is the case, we can probably get rid of the "num_online_cpus()"
+in the update_migration code.  That will require confirmation from
+Mike, however, as I do not have a P4 machine like his that exhibits
+the bug.  For now, both patches should probably co-exist together.
 
-On Wed, 2008-03-05 at 16:14 -0500, Steven Rostedt wrote:
-> On Wed, 5 Mar 2008, Frank Ch. Eigler wrote:
-> > > There's a theoretical potential for the system to crash in -rt when
-> > > unloading a module. Simply because interrupts are threads.
-> > >
-> > > Some device has an interrupt handler that is called and preempted.
-> > > At that moment the module for that device is unloaded. [...]
-> > > Since the code for the interrupt handler no longer exists... KABOOM!
-> >
-> > Perhaps you can identify those modules that have asked for interrupts,
-> > and block only them from unloading.  Or, would it be outrageously
-> > expensive to increment the module refcount while one of its interrupt
-> > handlers is running?
-> 
-> Actually this whole thing is theoretical. Since the device would have to
-> free the irq before unloading and interrupt desc->lock protects races like
-> this. Then there is the question of softirqs and tasklets. And random
-> passing of pointers. But this can also happen in mainline since tasklets
-> and softirqs can run in a thread.
-> 
-> We need to look deeper. I'm not sure there is an issue here.
+This applies to 24.3-rt3
 
-I can poke some more and look at what actually happens on module unload
-(for now I think a quick test script loading/unloading modules in a loop
-should show us whether this is enough of a problem in reality), but I do
-want to point out that I was never concerned with interrupt handlers
-themselves - only the assumptions mainline makes about "interrupt
-context" use of pointers without an explicit try_module_get.
+Regards,
+-Greg 
 
-Rusty didn't have a simple answer either, so I'll poke.
+------------------------------
+keep rd->online and cpu_online_map in sync
 
-Jon.
+It is possible to allow the root-domain cache of online cpus to
+become out of sync with the global cpu_online_map.  This is because we
+currently trigger removal of cpus too early in the notifier chain.
+Other DOWN_PREPARE handlers may in fact run and reconfigure the
+root-domain topology, thereby stomping on our own offline handling.
 
+The end result is that rd->online may become out of sync with
+cpu_online_map, which results in potential task misrouting.
+
+So change the offline handling to be more tightly coupled with the
+global offline process by triggering on CPU_DYING intead of
+CPU_DOWN_PREPARE.
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
+
+ kernel/sched.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 7547c70..24edc53 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -6082,7 +6082,7 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
+ 		spin_unlock_irq(&rq->lock);
+ 		break;
+ 
+-	case CPU_DOWN_PREPARE:
++	case CPU_DYING:
+ 		/* Update our root-domain */
+ 		rq = cpu_rq(cpu);
+ 		spin_lock_irqsave(&rq->lock, flags);
 
