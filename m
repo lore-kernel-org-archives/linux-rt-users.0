@@ -1,8 +1,9 @@
 From: "Bill Huey (hui)" <bill.huey@gmail.com>
 Subject: Re: [PATCH RT 0/6] lockstat measurement extensions
-Date: Thu, 13 Mar 2008 17:26:26 -0700
-Message-ID: <9810cff90803131726m55e11b62o5cdebd078626283f@mail.gmail.com>
+Date: Thu, 13 Mar 2008 17:40:08 -0700
+Message-ID: <9810cff90803131740w6a71b61dy1183956132fa89a3@mail.gmail.com>
 References: <9810cff90803131703t3626d83fq727b04242f407c13@mail.gmail.com>
+	 <9810cff90803131726m55e11b62o5cdebd078626283f@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
@@ -14,26 +15,53 @@ Cc: a.p.zijlstra@chello.nl, tglx@linutronix.de, rostedt@goodmis.org,
 	sdietrich@novell.com, pmorreale@novell.com, mkohari@novell.com
 To: "Gregory Haskins" <ghaskins@novell.com>, mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qb-out-0506.google.com ([72.14.204.239]:35365 "EHLO
+Received: from qb-out-0506.google.com ([72.14.204.235]:57607 "EHLO
 	qb-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751695AbYCNA03 (ORCPT
+	with ESMTP id S1751687AbYCNAkL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Mar 2008 20:26:29 -0400
-Received: by qb-out-0506.google.com with SMTP id o24so1518596qba.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Mar 2008 17:26:27 -0700 (PDT)
-In-Reply-To: <9810cff90803131703t3626d83fq727b04242f407c13@mail.gmail.com>
+	Thu, 13 Mar 2008 20:40:11 -0400
+Received: by qb-out-0506.google.com with SMTP id e11so3663156qbe.15
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Mar 2008 17:40:09 -0700 (PDT)
+In-Reply-To: <9810cff90803131726m55e11b62o5cdebd078626283f@mail.gmail.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Also, this is not meant for inclusion in it's current revision. It'll
-need to have various compilation modes
-(CONFIG_PREEMPT_RT/CONFIG_LOCK_STAT) combination enabled and such. I'm
-handing this over to Peter Morreale and it'll be up to him to decided
-what to do next.
+Sorry missing the patch. At Thomas's urging, this is inlined:
 
-However, it does work and should get interesting numbers for the
-discussion of whether or not adaptive spins and friends are useful or
-not.
+--- linux-2.6.24/kernel/sched.c	2008-02-25 15:32:05.000000000 -0800
++++ linux-2.6.24.working/kernel/sched.c	2008-03-13 13:53:24.000000000 -0700
+@@ -1175,6 +1175,20 @@
+ 	return cpu_curr(task_cpu(p)) == p;
+ }
 
-bill
++int task_spinnable(struct task_struct *p)
++{
++/*
++ * The use of task_curr can crash the system since the struct
+thread_info seems
++ * to disappear when dereferenced arbitrarily, so becareful.
++ */
++#ifdef CONFIG_SMP
++	if (p && p->se.on_rq && task_curr(p))
++		return 1;
++#else
++	return 0;
++#endif
++}
++
+ /* Used instead of source_load when we know the type == 0 */
+ unsigned long weighted_cpuload(const int cpu)
+ {
+@@ -1239,6 +1253,11 @@
+ 		      *new_cfsrq = cpu_cfs_rq(old_cfsrq, new_cpu);
+ 	u64 clock_offset;
+
++//--billh
++//	if (old_cpu >= NR_CPUS)
++//		panic("bogus cpu id %u\n", old_cpu);
++//
++//
+ 	clock_offset = old_rq->clock - new_rq->clock;
+
+ #ifdef CONFIG_SCHEDSTATS
