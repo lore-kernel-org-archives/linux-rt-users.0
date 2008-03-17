@@ -1,62 +1,63 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] sched: fix race in schedule
-Date: Fri, 14 Mar 2008 23:57:14 +0100
-Message-ID: <1205535434.6423.2.camel@lappy>
-References: <47D57770.50909@ct.jp.nec.com> <1205181256.6241.320.camel@lappy>
-	 <47D5EA9C.1040404@ct.jp.nec.com> <1205224835.8514.183.camel@twins>
-	 <47D6BD0C.6070401@ct.jp.nec.com>
-	 <b647ffbd0803111638sdc92903r7faad3d4b2b6b842@mail.gmail.com>
-	 <1205328457.8514.244.camel@twins>
-	 <b647ffbd0803120748x2bfc8fbctda15ce3df08fcf5b@mail.gmail.com>
-	 <1205333829.8514.249.camel@twins> <47DABCE0.2070505@ct.jp.nec.com>
-	 <b647ffbd0803141547s55fa37a1j5af4e50388d3117f@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH] fix misplaced mb() in rcu_enter/exit_nohz()
+Date: Sun, 16 Mar 2008 18:08:22 -0700
+Message-ID: <20080317010821.GA29875@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>,
-	Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, hpj@urpla.net,
-	stable <stable@kernel.org>
-To: Dmitry Adamushko <dmitry.adamushko@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: rostedt@goodmis.org, linux-rt-users@vger.kernel.org, mingo@elte.hu,
+	ego@in.ibm.com, dipankar@in.ibm.com, tytso@us.ibm.com,
+	dvhltc@us.ibm.com, oleg@tv-sign.ru, akpm@linux-foundation.org,
+	josh@freedesktop.org, tglx@linutronix.de, niv@us.ibm.com
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:39351 "EHLO
-	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751527AbYCNW5j (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:42810 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751476AbYCQBI0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Mar 2008 18:57:39 -0400
-In-Reply-To: <b647ffbd0803141547s55fa37a1j5af4e50388d3117f@mail.gmail.com>
+	Sun, 16 Mar 2008 21:08:26 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2008-03-14 at 23:47 +0100, Dmitry Adamushko wrote:
-> On 14/03/2008, Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com> wrote:
-> >
-> > [ ... ]
-> >
-> >  >> But maybe there is something esle that would be exposed by the
-> >  >> 'rq->curr = rq->idle' manipulation... I can't provide examples right
-> >  >> now though (I need to think on it).
-> >  >
-> >  > I share your concerns, I don't really like it either. Just spewing out
-> >  > ideas here - bad ideas it seems :-/
-> >  >
-> >  > Ingo also suggested moving the balance calls right before
-> >  > deactivate_task(), but that gives a whole other set of head-aches.
-> >  >
-> >
-> >
-> > Well, what will we do about this issue?
-> >  I see you're thinking to fix inconsistency in scheduler, right?
-> >  I agree about it.
-> >
-> >  However, I don't think it's good to remain this issue long time in
-> >  the -stable kernel.
-> >
-> >  Could you please let me know what I can do?
-> 
-> IMHO, the safest solution for the time being (and esp. for -stable)
-> would be to proceed with Hiroshi's patch. It looks safe and it does
-> fix a real problem.
+Hello!
 
-Agreed
+In the process of writing up the mechanical proof of correctness for the
+dynticks/preemptable-RCU interface, I noticed misplaced memory barriers
+in rcu_enter_nohz() and rcu_exit_nohz().  This patch puts them in the
+right place and adds a comment.  The key thing to keep in mind is that
+rcu_enter_nohz() is -exiting- the mode that can legally execute RCU
+read-side critical sections.  The memory barrier must be between any
+potential RCU read-side critical sections and the increment of the per-CPU
+dynticks_progress_counter, and thus must come -before- this increment.
+And vice versa for rcu_exit_nohz().
 
+The locking in the scheduler is probably saving us for the moment.
+
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
+
+ rcupreempt.h |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff -urpNa -X dontdiff linux-2.6.25-rc6/include/linux/rcupreempt.h linux-2.6.25-rc6-rcu_nohz-fix/include/linux/rcupreempt.h
+--- linux-2.6.25-rc6/include/linux/rcupreempt.h	2008-03-16 17:45:16.000000000 -0700
++++ linux-2.6.25-rc6-rcu_nohz-fix/include/linux/rcupreempt.h	2008-03-16 17:59:24.000000000 -0700
+@@ -87,15 +87,15 @@ DECLARE_PER_CPU(long, dynticks_progress_
+ 
+ static inline void rcu_enter_nohz(void)
+ {
++	mb(); /* CPUs seeing ++ must see prior RCU read-side crit sects */
+ 	__get_cpu_var(dynticks_progress_counter)++;
+ 	WARN_ON(__get_cpu_var(dynticks_progress_counter) & 0x1);
+-	mb();
+ }
+ 
+ static inline void rcu_exit_nohz(void)
+ {
+-	mb();
+ 	__get_cpu_var(dynticks_progress_counter)++;
++	mb(); /* CPUs seeing ++ must see subsequent RCU read-side crit sects */
+ 	WARN_ON(!(__get_cpu_var(dynticks_progress_counter) & 0x1));
+ }
+ 
