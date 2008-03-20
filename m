@@ -1,74 +1,99 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 Subject: Re: [PATCH -rt] rt-slab: fix cpu inconsistency case
-Date: Thu, 20 Mar 2008 15:32:35 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0803201519160.21990@gandalf.stny.rr.com>
-References: <47E2A63B.4020003@ct.jp.nec.com>
+Date: Thu, 20 Mar 2008 13:10:52 -0700
+Message-ID: <47E2C4CC.5050401@ct.jp.nec.com>
+References: <47E2A63B.4020003@ct.jp.nec.com> <Pine.LNX.4.58.0803201519160.21990@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:36504 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754616AbYCTTci (ORCPT
+Received: from homer.mvista.com ([63.81.120.158]:20886 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1752270AbYCTUKy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Mar 2008 15:32:38 -0400
-In-Reply-To: <47E2A63B.4020003@ct.jp.nec.com>
+	Thu, 20 Mar 2008 16:10:54 -0400
+In-Reply-To: <Pine.LNX.4.58.0803201519160.21990@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Steven Rostedt wrote:
+> Hi Hiroshi,
 
-Hi Hiroshi,
+Hi Steven,
 
-Thanks for looking into it. I'll take a deeper look at it later, but
-first I have a few nitpicks with the patch.
+> 
+> Thanks for looking into it. I'll take a deeper look at it later, but
+> first I have a few nitpicks with the patch.
 
-On Thu, 20 Mar 2008, Hiroshi Shimamoto wrote:
->
-> Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-> ---
->  mm/slab.c |   18 +++++++++---------
->  1 files changed, 9 insertions(+), 9 deletions(-)
->
-> diff --git a/mm/slab.c b/mm/slab.c
-> index 4bf6ca8..7beb378 100644
-> --- a/mm/slab.c
-> +++ b/mm/slab.c
-> @@ -138,8 +138,8 @@
->   *
->   * (On PREEMPT_RT, these are NOPs, but we have to drop/get the irq locks.)
->   */
-> -# define slab_irq_disable_nort()	local_irq_disable()
-> -# define slab_irq_enable_nort()		local_irq_enable()
-> +# define slab_irq_disable_nort(cpu)	slab_irq_disable(cpu)
-> +# define slab_irq_enable_nort(cpu)	slab_irq_enable(cpu)
+thanks for comments.
 
-This is the !PREEMPT_RT version. It should stay as is (with the
-exception of ignoring the "cpu" variable. [ (void)cpu; ? ]
+> 
+> On Thu, 20 Mar 2008, Hiroshi Shimamoto wrote:
+>> Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+>> ---
+>>  mm/slab.c |   18 +++++++++---------
+>>  1 files changed, 9 insertions(+), 9 deletions(-)
+>>
+>> diff --git a/mm/slab.c b/mm/slab.c
+>> index 4bf6ca8..7beb378 100644
+>> --- a/mm/slab.c
+>> +++ b/mm/slab.c
+>> @@ -138,8 +138,8 @@
+>>   *
+>>   * (On PREEMPT_RT, these are NOPs, but we have to drop/get the irq locks.)
+>>   */
+>> -# define slab_irq_disable_nort()	local_irq_disable()
+>> -# define slab_irq_enable_nort()		local_irq_enable()
+>> +# define slab_irq_disable_nort(cpu)	slab_irq_disable(cpu)
+>> +# define slab_irq_enable_nort(cpu)	slab_irq_enable(cpu)
+> 
+> This is the !PREEMPT_RT version. It should stay as is (with the
+> exception of ignoring the "cpu" variable. [ (void)cpu; ? ]
+> 
+> #define slab_irq_disable_nort(cpu) \
+> 	do { \
+> 		(void)cpu;  \
+> 		local_irq_disable(); \
+> 	} while(0)
 
-#define slab_irq_disable_nort(cpu) \
-	do { \
-		(void)cpu;  \
-		local_irq_disable(); \
-	} while(0)
+I think "cpu" variable should be changed if current cpu is changed.
 
+mm/slab.c:cache_alloc_refill()
+	if (unlikely(!ac->avail)) {
+		int x;
+		x = cache_grow(cachep, flags | GFP_THISNODE, cpu_to_node(*this_cpu), NULL, this_cpu);
 
->  # define slab_irq_disable_rt(flags)	do { (void)(flags); } while (0)
->  # define slab_irq_enable_rt(flags)	do { (void)(flags); } while (0)
->  # define slab_spin_lock_irq(lock, cpu) \
-> @@ -160,8 +160,8 @@ DEFINE_PER_CPU_LOCKED(int, slab_irq_locks) = { 0, };
->  	do { slab_irq_enable(cpu); (void) (flags); } while (0)
->  # define slab_irq_disable_rt(cpu)	slab_irq_disable(cpu)
->  # define slab_irq_enable_rt(cpu)	slab_irq_enable(cpu)
-> -# define slab_irq_disable_nort()	do { } while (0)
-> -# define slab_irq_enable_nort()		do { } while (0)
-> +# define slab_irq_disable_nort(cpu)	do { } while (0)
-> +# define slab_irq_enable_nort(cpu)	do { } while (0)
+		/* cache_grow can reenable interrupts, then ac could change. */
+		ac = cpu_cache_get(cachep, *this_cpu);
 
-And these are the PREEMPT_RT version. So basically, this patch is a nop
-for PREEMPT_RT. I doubt it will solve your bug ;-)
+The comment says, "ac could change", but it never if *this_cpu is same.
 
+In cache_alloc_refill(), cpu_cache_get() should called with the valid cpu id
+after cache_grow(). Because on !PREEMPT_RT, the array_cache is protected by
+disabling irqs, so array_cache of other cpu shouldn't be accessed.
 
--- Steve
+> 
+>>  # define slab_irq_disable_rt(flags)	do { (void)(flags); } while (0)
+>>  # define slab_irq_enable_rt(flags)	do { (void)(flags); } while (0)
+>>  # define slab_spin_lock_irq(lock, cpu) \
+>> @@ -160,8 +160,8 @@ DEFINE_PER_CPU_LOCKED(int, slab_irq_locks) = { 0, };
+>>  	do { slab_irq_enable(cpu); (void) (flags); } while (0)
+>>  # define slab_irq_disable_rt(cpu)	slab_irq_disable(cpu)
+>>  # define slab_irq_enable_rt(cpu)	slab_irq_enable(cpu)
+>> -# define slab_irq_disable_nort()	do { } while (0)
+>> -# define slab_irq_enable_nort()		do { } while (0)
+>> +# define slab_irq_disable_nort(cpu)	do { } while (0)
+>> +# define slab_irq_enable_nort(cpu)	do { } while (0)
+> 
+> And these are the PREEMPT_RT version. So basically, this patch is a nop
+> for PREEMPT_RT. I doubt it will solve your bug ;-)
 
+yes, it's nop. I'm sorry, I didn't show .config.
+My kernel config is !PREEMPT_RT, it's same as the deadlock report.
+I guess it's a problem only !PREEMPT_RT.
+
+thanks,
+Hiroshi Shimamoto
