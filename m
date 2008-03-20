@@ -1,183 +1,214 @@
-From: Sripathi Kodi <sripathik@in.ibm.com>
-Subject: Re: [PATCH] sched: fix race in schedule
-Date: Thu, 20 Mar 2008 11:14:57 +0530
-Message-ID: <200803201114.57956.sripathik@in.ibm.com>
-References: <47D57770.50909@ct.jp.nec.com>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH -rt] rt-slab: fix cpu inconsistency case
+Date: Thu, 20 Mar 2008 11:00:27 -0700
+Message-ID: <47E2A63B.4020003@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, hpj@urpla.net
-To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754602AbYCTFpZ@vger.kernel.org>
-In-Reply-To: <47D57770.50909@ct.jp.nec.com>
-Content-Disposition: inline
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758674AbYCTSAw@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Monday 10 March 2008 23:31, Hiroshi Shimamoto wrote:
-> Hi Ingo,
->
-> I found a race condition in scheduler.
-> The first report is the below;
-> http://lkml.org/lkml/2008/2/26/459
->
-> It took a bit long time to investigate and I couldn't have much time
-> last week. It is hard to reproduce but -rt is little easier because
-> it has preemptible spin lock and rcu.
->
-> Could you please check the scenario and the patch.
-> It will be needed for the stable, too.
+Hi Ingo,
 
-Hi,
+I encountered BUG at mm/slab.c.
+It tells me there is an inconsistency case.
 
-I can recreate a problem that looks very similar to this on a kernel 
-based on 2.6.24.3-rt3. Hiroshi-san's patch seems to fix the problem for 
-me.
+One of the panics, it shows obviously exclusive control in slab is not right.
 
-Ingo, is this patch going to be included in the next -rt patch? I see 
-that it is already part of mainline.
+The console log;
+Unable to handle kernel paging request at ffff8108cf81d3c8 RIP:
+ [<ffffffff8029e92f>] kmem_cache_alloc+0x5e/0xdb
+PGD 8063 PUD 0
+Oops: 0000 [1] PREEMPT SMP
+CPU 1
+Modules linked in:
+Pid: 32268, comm: dcachebench Not tainted 2.6.24.3-rt3 #3
+RIP: 0010:[<ffffffff8029e92f>]  [<ffffffff8029e92f>] kmem_cache_alloc+0x5e/0xdb
+RSP: 0018:ffff810048895e58  EFLAGS: 00010097
+RAX: 00000000ffffffff RBX: 0000000000000246 RCX: 0000000000000000
+RDX: ffff8100cf81d3b8 RSI: 0000000000000000 RDI: ffff8100cf80ee40
+RBP: ffff8100cf80ee40 R08: 0000000000000c62 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 00000000000000d0
+R13: ffffffff802aa83d R14: 0000000000000006 R15: 0000000000000000
+FS:  00002adc7b6686f0(0000) GS:ffff8100cf81f340(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: ffff8108cf81d3c8 CR3: 00000000b36e0000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process dcachebench (pid: 32268, threadinfo ffff810048894000, task ffff8100cd248080)
+Stack:  0000000000000000 ffff810097d1c000 0000000100000282 0000000000000006
+ 00000000ffffff9c 0000000000000000 00000000005038b0 ffffffff802aa83d
+ ffff8100cf811080 0000000000000006 00000000ffffff9c 0000000000000000
+Call Trace:
+ [<ffffffff802aa83d>] getname+0x1e/0x1f0
+ [<ffffffff802ac38c>] do_rmdir+0x17/0xfd
+ [<ffffffff8026fb5f>] audit_syscall_entry+0x163/0x189
+ [<ffffffff8020c2f3>] tracesys+0x71/0xe1
+ [<ffffffff8020c35e>] tracesys+0xdc/0xe1
+---------------------------
+| preempt count: 00000001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80640737>] .... __spin_trylock+0xe/0x49
+.....[<00000000>] ..   ( <= 0x0)
+Code: 48 8b 54 c2 18 53 9d 4c 89 e9 44 89 e6 48 89 ef e8 f1 e1 ff
+RIP  [<ffffffff8029e92f>] kmem_cache_alloc+0x5e/0xdb
+ RSP <ffff810048895e58>
 
-Thanks,
-Sripathi.
 
+The kernel dump;
+(gdb) info thr
+  4 process 32262  flush_tlb_others (cpumask={bits = {4}}, mm=0xffff8100cd16d450,
+    va=46966178668544) at arch/x86/kernel/smp_64.c:195
+  3 process 32325  0xffffffff8020cad0 in invalidate_interrupt3 ()
+  2 process 32268  0xffffffff8029e92f in kmem_cache_alloc (cachep=0xffff8100cf80ee40,
+    flags=208) at mm/slab.c:3320
+* 1 process 32326  0xffffffff806408c4 in __spin_lock (lock=0xffff8100cdc9a4d0)
+    at kernel/spinlock.c:333
+(gdb) thr 2
+[Switching to thread 2 (process 32268)]#0  0xffffffff8029e92f in kmem_cache_alloc (
+    cachep=0xffff8100cf80ee40, flags=208) at mm/slab.c:3320
+3320    mm/slab.c: No such file or directory.
+        in mm/slab.c
 
->
-> ---
-> From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
->
-> There is a race condition between schedule() and some dequeue/enqueue
-> functions; rt_mutex_setprio(), __setscheduler() and
-> sched_move_task().
->
-> When scheduling to idle, idle_balance() is called to pull tasks from
-> other busy processor. It might drop the rq lock.
-> It means that those 3 functions encounter on_rq=0 and running=1.
-> The current task should be put when running.
->
-> Here is a possible scenario;
->    CPU0                               CPU1
->
->     |                              schedule()
->     |                              ->deactivate_task()
->     |                              ->idle_balance()
->     |                              -->load_balance_newidle()
->
-> rt_mutex_setprio()                     |
->
->     |                              --->double_lock_balance()
->
->     *get lock                          *rel lock
->     * on_rq=0, ruuning=1               |
->     * sched_class is changed           |
->     *rel lock                          *get lock
->
->
->                                    ->put_prev_task_rt()
->                                    ->pick_next_task_fair()
->                                        => panic
->
-> The current process of CPU1(P1) is scheduling. Deactivated P1,
-> and the scheduler looks for another process on other CPU's runqueue
-> because CPU1 will be idle. idle_balance(), load_balance_newidle()
-> and double_lock_balance() are called and double_lock_balance() could
-> drop the rq lock. On the other hand, CPU0 is trying to boost the
-> priority of P1. The result of boosting only P1's prio and sched_class
-> are changed to RT. The sched entities of P1 and P1's group are never
-> put. It makes cfs_rq invalid, because the cfs_rq has curr and no
-> leaf, but pick_next_task_fair() is called, then the kernel panics.
->
-> Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-> ---
->  kernel/sched.c |   38 ++++++++++++++++----------------------
->  1 files changed, 16 insertions(+), 22 deletions(-)
->
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 52b9867..eedf748 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -4268,11 +4268,10 @@ void rt_mutex_setprio(struct task_struct *p,
-> int prio) oldprio = p->prio;
->  	on_rq = p->se.on_rq;
->  	running = task_current(rq, p);
-> -	if (on_rq) {
-> +	if (on_rq)
->  		dequeue_task(rq, p, 0);
-> -		if (running)
-> -			p->sched_class->put_prev_task(rq, p);
-> -	}
-> +	if (running)
-> +		p->sched_class->put_prev_task(rq, p);
->
->  	if (rt_prio(prio))
->  		p->sched_class = &rt_sched_class;
-> @@ -4281,10 +4280,9 @@ void rt_mutex_setprio(struct task_struct *p,
-> int prio)
->
->  	p->prio = prio;
->
-> +	if (running)
-> +		p->sched_class->set_curr_task(rq);
->  	if (on_rq) {
-> -		if (running)
-> -			p->sched_class->set_curr_task(rq);
-> -
->  		enqueue_task(rq, p, 0);
->
->  		check_class_changed(rq, p, prev_class, oldprio, running);
-> @@ -4581,19 +4579,17 @@ recheck:
->  	update_rq_clock(rq);
->  	on_rq = p->se.on_rq;
->  	running = task_current(rq, p);
-> -	if (on_rq) {
-> +	if (on_rq)
->  		deactivate_task(rq, p, 0);
-> -		if (running)
-> -			p->sched_class->put_prev_task(rq, p);
-> -	}
-> +	if (running)
-> +		p->sched_class->put_prev_task(rq, p);
->
->  	oldprio = p->prio;
->  	__setscheduler(rq, p, policy, param->sched_priority);
->
-> +	if (running)
-> +		p->sched_class->set_curr_task(rq);
->  	if (on_rq) {
-> -		if (running)
-> -			p->sched_class->set_curr_task(rq);
-> -
->  		activate_task(rq, p, 0);
->
->  		check_class_changed(rq, p, prev_class, oldprio, running);
-> @@ -7617,11 +7613,10 @@ void sched_move_task(struct task_struct *tsk)
->  	running = task_current(rq, tsk);
->  	on_rq = tsk->se.on_rq;
->
-> -	if (on_rq) {
-> +	if (on_rq)
->  		dequeue_task(rq, tsk, 0);
-> -		if (unlikely(running))
-> -			tsk->sched_class->put_prev_task(rq, tsk);
-> -	}
-> +	if (unlikely(running))
-> +		tsk->sched_class->put_prev_task(rq, tsk);
->
->  	set_task_rq(tsk, task_cpu(tsk));
->
-> @@ -7630,11 +7625,10 @@ void sched_move_task(struct task_struct *tsk)
->  		tsk->sched_class->moved_group(tsk);
->  #endif
->
-> -	if (on_rq) {
-> -		if (unlikely(running))
-> -			tsk->sched_class->set_curr_task(rq);
-> +	if (unlikely(running))
-> +		tsk->sched_class->set_curr_task(rq);
-> +	if (on_rq)
->  		enqueue_task(rq, tsk, 0);
-> -	}
->
->  	task_rq_unlock(rq, &flags);
->  }
+0xffffffff8029e903 <kmem_cache_alloc+50>:       callq  0xffffffff8029c292 <check_irq_off>
+0xffffffff8029e908 <kmem_cache_alloc+55>:       movslq 0x14(%rsp),%rax
+0xffffffff8029e90d <kmem_cache_alloc+60>:       mov    0x0(%rbp,%rax,8),%rdx
+0xffffffff8029e912 <kmem_cache_alloc+65>:       mov    (%rdx),%eax
+0xffffffff8029e914 <kmem_cache_alloc+67>:       test   %eax,%eax
+0xffffffff8029e916 <kmem_cache_alloc+69>:       je     0xffffffff8029e990 <kmem_cache_alloc+191>
+
+1st. %eax, ac->avail is not 0.
+
+0xffffffff8029e918 <kmem_cache_alloc+71>:       lock incl 0xf8(%rbp)
+0xffffffff8029e91f <kmem_cache_alloc+78>:       movl   $0x1,0xc(%rdx)
+0xffffffff8029e926 <kmem_cache_alloc+85>:       mov    (%rdx),%eax
+0xffffffff8029e928 <kmem_cache_alloc+87>:       sub    $0x1,%eax
+0xffffffff8029e92b <kmem_cache_alloc+90>:       mov    %eax,(%rdx)
+0xffffffff8029e92d <kmem_cache_alloc+92>:       mov    %eax,%eax
+0xffffffff8029e92f <kmem_cache_alloc+94>:       mov    0x18(%rdx,%rax,8),%rdx
+
+2nd. %eax, ac->avail = 0xffffffff, it causes this panic.
+
+0xffffffff8029e934 <kmem_cache_alloc+99>:       push   %rbx
+0xffffffff8029e935 <kmem_cache_alloc+100>:      popfq
+
+static inline void *
+____cache_alloc(struct kmem_cache *cachep, gfp_t flags, int *this_cpu)
+{
+	void *objp;
+	struct array_cache *ac;
+
+	check_irq_off();
+
+	ac = cpu_cache_get(cachep, *this_cpu);
+	if (likely(ac->avail)) { ---------------------------> 1st. check
+		STATS_INC_ALLOCHIT(cachep);
+		ac->touched = 1;
+		objp = ac->entry[--ac->avail]; -------------> PANIC HERE
+	} else {
+		STATS_INC_ALLOCMISS(cachep);
+		objp = cache_alloc_refill(cachep, flags, this_cpu);
+	}
+	return objp;
+}
+
+It means that ac->avail is changed by the other cpu.
+So I looked for who touch another cpu's data and found the root cause.
+
+I think, calling cache_grow() in cache_alloc_refill() can change cpu,
+but cache_grow() doesn't update this_cpu variable in spite of changing cpu.
+It makes the kernel access other cpu's data in cache_alloc_refill().
+
+I'm testing this patch now.
+---
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+
+On !PREEMPT_RT, an inconsistency case may be occurred.
+After releasing cpu by slab_irq_enable_nort() the cpu can be changed.
+In slab_irq_disable_nort() new cpu id should be gotten.
+If not, it makes data of other cpu corrupted.
+
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+ mm/slab.c |   18 +++++++++---------
+ 1 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/mm/slab.c b/mm/slab.c
+index 4bf6ca8..7beb378 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -138,8 +138,8 @@
+  *
+  * (On PREEMPT_RT, these are NOPs, but we have to drop/get the irq locks.)
+  */
+-# define slab_irq_disable_nort()	local_irq_disable()
+-# define slab_irq_enable_nort()		local_irq_enable()
++# define slab_irq_disable_nort(cpu)	slab_irq_disable(cpu)
++# define slab_irq_enable_nort(cpu)	slab_irq_enable(cpu)
+ # define slab_irq_disable_rt(flags)	do { (void)(flags); } while (0)
+ # define slab_irq_enable_rt(flags)	do { (void)(flags); } while (0)
+ # define slab_spin_lock_irq(lock, cpu) \
+@@ -160,8 +160,8 @@ DEFINE_PER_CPU_LOCKED(int, slab_irq_locks) = { 0, };
+ 	do { slab_irq_enable(cpu); (void) (flags); } while (0)
+ # define slab_irq_disable_rt(cpu)	slab_irq_disable(cpu)
+ # define slab_irq_enable_rt(cpu)	slab_irq_enable(cpu)
+-# define slab_irq_disable_nort()	do { } while (0)
+-# define slab_irq_enable_nort()		do { } while (0)
++# define slab_irq_disable_nort(cpu)	do { } while (0)
++# define slab_irq_enable_nort(cpu)	do { } while (0)
+ # define slab_spin_lock_irq(lock, cpu) \
+ 		do { slab_irq_disable(cpu); spin_lock(lock); } while (0)
+ # define slab_spin_unlock_irq(lock, cpu) \
+@@ -2899,7 +2899,7 @@ static int cache_grow(struct kmem_cache *cachep, gfp_t flags, int nodeid,
+ 	offset *= cachep->colour_off;
+ 
+ 	if (local_flags & __GFP_WAIT)
+-		slab_irq_enable_nort();
++		slab_irq_enable_nort(*this_cpu);
+ 	slab_irq_enable_rt(*this_cpu);
+ 
+ 	/*
+@@ -2932,7 +2932,7 @@ static int cache_grow(struct kmem_cache *cachep, gfp_t flags, int nodeid,
+ 
+ 	slab_irq_disable_rt(*this_cpu);
+ 	if (local_flags & __GFP_WAIT)
+-		slab_irq_disable_nort();
++		slab_irq_disable_nort(*this_cpu);
+ 
+ 	check_irq_off();
+ 	spin_lock(&l3->list_lock);
+@@ -2948,7 +2948,7 @@ opps1:
+ failed:
+ 	slab_irq_disable_rt(*this_cpu);
+ 	if (local_flags & __GFP_WAIT)
+-		slab_irq_disable_nort();
++		slab_irq_disable_nort(*this_cpu);
+ 	return 0;
+ }
+ 
+@@ -3397,7 +3397,7 @@ retry:
+ 		 * set and go into memory reserves if necessary.
+ 		 */
+ 		if (local_flags & __GFP_WAIT)
+-			slab_irq_enable_nort();
++			slab_irq_enable_nort(*this_cpu);
+ 		slab_irq_enable_rt(*this_cpu);
+ 
+ 		kmem_flagcheck(cache, flags);
+@@ -3405,7 +3405,7 @@ retry:
+ 
+ 		slab_irq_disable_rt(*this_cpu);
+ 		if (local_flags & __GFP_WAIT)
+-			slab_irq_disable_nort();
++			slab_irq_disable_nort(*this_cpu);
+ 
+ 		if (obj) {
+ 			/*
+-- 
+1.5.4.1
