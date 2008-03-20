@@ -1,82 +1,183 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] fix misplaced mb() in rcu_enter/exit_nohz()
-Date: Tue, 18 Mar 2008 07:10:40 -0700
-Message-ID: <20080318141040.GB8222@linux.vnet.ibm.com>
-References: <20080317010821.GA29875@linux.vnet.ibm.com> <20080317183047.GA188@tv-sign.ru> <20080317190605.GG10955@linux.vnet.ibm.com> <20080317201741.GA92@tv-sign.ru> <20080317204357.GI10955@linux.vnet.ibm.com> <20080318124248.GB8669@osiris.boeblingen.de.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Sripathi Kodi <sripathik@in.ibm.com>
+Subject: Re: [PATCH] sched: fix race in schedule
+Date: Thu, 20 Mar 2008 11:14:57 +0530
+Message-ID: <200803201114.57956.sripathik@in.ibm.com>
+References: <47D57770.50909@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Oleg Nesterov <oleg@tv-sign.ru>, linux-kernel@vger.kernel.org,
-	rostedt@goodmis.org, linux-rt-users@vger.kernel.org, mingo@elte.hu,
-	ego@in.ibm.com, dipankar@in.ibm.com, tytso@us.ibm.com,
-	dvhltc@us.ibm.com, akpm@linux-foundation.org, josh@freedesktop.org,
-	tglx@linutronix.de, niv@us.ibm.com,
-	Martin Schwidefsky <schwidefsky@de.ibm.com>
-To: Heiko Carstens <heiko.carstens@de.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from over.ny.us.ibm.com ([32.97.182.150]:42040 "EHLO
-	over.ny.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758589AbYCSTpr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Mar 2008 15:45:47 -0400
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, hpj@urpla.net
+To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754602AbYCTFpZ@vger.kernel.org>
+In-Reply-To: <47D57770.50909@ct.jp.nec.com>
 Content-Disposition: inline
-In-Reply-To: <20080318124248.GB8669@osiris.boeblingen.de.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Mar 18, 2008 at 01:42:48PM +0100, Heiko Carstens wrote:
-> On Mon, Mar 17, 2008 at 01:43:57PM -0700, Paul E. McKenney wrote:
-> > On Mon, Mar 17, 2008 at 11:17:41PM +0300, Oleg Nesterov wrote:
-> > > (to clarify: my question is completely offtopic to this patch)
-> > > On 03/17, Paul E. McKenney wrote:
-> > > > On Mon, Mar 17, 2008 at 09:30:47PM +0300, Oleg Nesterov wrote:
-> > > > > I'm not sure the code below is up to date, but what I have in
-> > > > > arch/s390/kernel/time.c is:
-> > > > > 
-> > > > > 	stop_hz_timer:
-> > > > > 
-> > > > > 		cpu_set(cpu, nohz_cpu_mask);
-> > > > > 		
-> > > > > 		if (rcu_needs_cpu(cpu) || local_softirq_pending()) {
-> > > > > 			cpu_clear(cpu, nohz_cpu_mask);
-> > > > > 			return;
-> > > > > 		}
-> > > > > 
-> > > > > Don't we need smp_mb() after cpu_set() ?
-> > > > 
-> > > > S390's memory model is quite strong, so it might not be needed.
-> > > 
-> > > OK, in that case we shouldn't worry.
-> > 
-> > I don't know if I would go -that- far.  ;-)
-> 
-> Not sure if I can follow you here, but for the smp case cpu_set() is
-> nothing but a set_bit() which implies both: a memory barrier and a compiler
-> barrier on s390. The compare and swap instruction used here ensures that
-> all previous memory accesses will be seen by other cpus.
+On Monday 10 March 2008 23:31, Hiroshi Shimamoto wrote:
+> Hi Ingo,
+>
+> I found a race condition in scheduler.
+> The first report is the below;
+> http://lkml.org/lkml/2008/2/26/459
+>
+> It took a bit long time to investigate and I couldn't have much time
+> last week. It is hard to reproduce but -rt is little easier because
+> it has preemptible spin lock and rcu.
+>
+> Could you please check the scenario and the patch.
+> It will be needed for the stable, too.
 
-That should make this work as far as I can see!
+Hi,
 
-							Thanx, Paul
+I can recreate a problem that looks very similar to this on a kernel 
+based on 2.6.24.3-rt3. Hiroshi-san's patch seems to fix the problem for 
+me.
 
-> Btw. the code sequence above will go away soon anyway, since I'm converting
-> our code to the generic NO_HZ infrastructure.
-> 
-> > > > In any
-> > > > case, if needed, it goes -before- the cpu_set(), because the problems
-> > > > would arise if prior RCU read-side critical sections were to be reordered
-> > > > to follow this cpu_set(), right?
-> > > 
-> > > No, but it is very possible I missed something.
-> > > 
-> > > What if rcu_needs_cpu(cpu) is executed before cpu_set(cpu, nohz_cpu_mask)?
-> > > It can miss rcu_start_batch() -> rcp->cur++ and return false, but at the
-> > > same time rcu_start_batch() may see nohz_cpu_mask without this CPU.
-> > 
-> > If you mean that the rcu_needs_cpu() executes before the cpu_set() in
-> > the code fragment above, while the rcu_start_batch() executes on some
-> > other CPU?
-> 
-> That should never happen because of the compiler and memory barrier semantics
-> of cpu_set(). Or... I'm completely misunderstanding you, which wouldn't me
-> surprise me too much :)
+Ingo, is this patch going to be included in the next -rt patch? I see 
+that it is already part of mainline.
+
+Thanks,
+Sripathi.
+
+
+>
+> ---
+> From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+>
+> There is a race condition between schedule() and some dequeue/enqueue
+> functions; rt_mutex_setprio(), __setscheduler() and
+> sched_move_task().
+>
+> When scheduling to idle, idle_balance() is called to pull tasks from
+> other busy processor. It might drop the rq lock.
+> It means that those 3 functions encounter on_rq=0 and running=1.
+> The current task should be put when running.
+>
+> Here is a possible scenario;
+>    CPU0                               CPU1
+>
+>     |                              schedule()
+>     |                              ->deactivate_task()
+>     |                              ->idle_balance()
+>     |                              -->load_balance_newidle()
+>
+> rt_mutex_setprio()                     |
+>
+>     |                              --->double_lock_balance()
+>
+>     *get lock                          *rel lock
+>     * on_rq=0, ruuning=1               |
+>     * sched_class is changed           |
+>     *rel lock                          *get lock
+>
+>
+>                                    ->put_prev_task_rt()
+>                                    ->pick_next_task_fair()
+>                                        => panic
+>
+> The current process of CPU1(P1) is scheduling. Deactivated P1,
+> and the scheduler looks for another process on other CPU's runqueue
+> because CPU1 will be idle. idle_balance(), load_balance_newidle()
+> and double_lock_balance() are called and double_lock_balance() could
+> drop the rq lock. On the other hand, CPU0 is trying to boost the
+> priority of P1. The result of boosting only P1's prio and sched_class
+> are changed to RT. The sched entities of P1 and P1's group are never
+> put. It makes cfs_rq invalid, because the cfs_rq has curr and no
+> leaf, but pick_next_task_fair() is called, then the kernel panics.
+>
+> Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+> ---
+>  kernel/sched.c |   38 ++++++++++++++++----------------------
+>  1 files changed, 16 insertions(+), 22 deletions(-)
+>
+> diff --git a/kernel/sched.c b/kernel/sched.c
+> index 52b9867..eedf748 100644
+> --- a/kernel/sched.c
+> +++ b/kernel/sched.c
+> @@ -4268,11 +4268,10 @@ void rt_mutex_setprio(struct task_struct *p,
+> int prio) oldprio = p->prio;
+>  	on_rq = p->se.on_rq;
+>  	running = task_current(rq, p);
+> -	if (on_rq) {
+> +	if (on_rq)
+>  		dequeue_task(rq, p, 0);
+> -		if (running)
+> -			p->sched_class->put_prev_task(rq, p);
+> -	}
+> +	if (running)
+> +		p->sched_class->put_prev_task(rq, p);
+>
+>  	if (rt_prio(prio))
+>  		p->sched_class = &rt_sched_class;
+> @@ -4281,10 +4280,9 @@ void rt_mutex_setprio(struct task_struct *p,
+> int prio)
+>
+>  	p->prio = prio;
+>
+> +	if (running)
+> +		p->sched_class->set_curr_task(rq);
+>  	if (on_rq) {
+> -		if (running)
+> -			p->sched_class->set_curr_task(rq);
+> -
+>  		enqueue_task(rq, p, 0);
+>
+>  		check_class_changed(rq, p, prev_class, oldprio, running);
+> @@ -4581,19 +4579,17 @@ recheck:
+>  	update_rq_clock(rq);
+>  	on_rq = p->se.on_rq;
+>  	running = task_current(rq, p);
+> -	if (on_rq) {
+> +	if (on_rq)
+>  		deactivate_task(rq, p, 0);
+> -		if (running)
+> -			p->sched_class->put_prev_task(rq, p);
+> -	}
+> +	if (running)
+> +		p->sched_class->put_prev_task(rq, p);
+>
+>  	oldprio = p->prio;
+>  	__setscheduler(rq, p, policy, param->sched_priority);
+>
+> +	if (running)
+> +		p->sched_class->set_curr_task(rq);
+>  	if (on_rq) {
+> -		if (running)
+> -			p->sched_class->set_curr_task(rq);
+> -
+>  		activate_task(rq, p, 0);
+>
+>  		check_class_changed(rq, p, prev_class, oldprio, running);
+> @@ -7617,11 +7613,10 @@ void sched_move_task(struct task_struct *tsk)
+>  	running = task_current(rq, tsk);
+>  	on_rq = tsk->se.on_rq;
+>
+> -	if (on_rq) {
+> +	if (on_rq)
+>  		dequeue_task(rq, tsk, 0);
+> -		if (unlikely(running))
+> -			tsk->sched_class->put_prev_task(rq, tsk);
+> -	}
+> +	if (unlikely(running))
+> +		tsk->sched_class->put_prev_task(rq, tsk);
+>
+>  	set_task_rq(tsk, task_cpu(tsk));
+>
+> @@ -7630,11 +7625,10 @@ void sched_move_task(struct task_struct *tsk)
+>  		tsk->sched_class->moved_group(tsk);
+>  #endif
+>
+> -	if (on_rq) {
+> -		if (unlikely(running))
+> -			tsk->sched_class->set_curr_task(rq);
+> +	if (unlikely(running))
+> +		tsk->sched_class->set_curr_task(rq);
+> +	if (on_rq)
+>  		enqueue_task(rq, tsk, 0);
+> -	}
+>
+>  	task_rq_unlock(rq, &flags);
+>  }
