@@ -1,75 +1,174 @@
-From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-Subject: Re: [PATCH -rt] rt-slab: fix cpu inconsistency case
-Date: Fri, 21 Mar 2008 13:47:23 -0700
-Message-ID: <47E41EDB.7030908@ct.jp.nec.com>
-References: <47E2A63B.4020003@ct.jp.nec.com> <Pine.LNX.4.58.0803201519160.21990@gandalf.stny.rr.com> <47E2C4CC.5050401@ct.jp.nec.com> <Pine.LNX.4.58.0803211635160.3220@gandalf.stny.rr.com>
+From: Ankita Garg <ankita@in.ibm.com>
+Subject: [RT] [PATCH] Make scheduler root_domain modular (sched_class
+	specific)
+Date: Sat, 22 Mar 2008 19:59:15 +0530
+Message-ID: <20080322142915.GA9478@in.ibm.com>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	LKML <linux-kernel@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from TYO202.gate.nec.co.jp ([202.32.8.206]:53101 "EHLO
-	tyo202.gate.nec.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757053AbYCUUry (ORCPT
+Received: from e28smtp05.in.ibm.com ([59.145.155.5]:38163 "EHLO
+	e28smtp05.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752971AbYCVO3T (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Mar 2008 16:47:54 -0400
-In-Reply-To: <Pine.LNX.4.58.0803211635160.3220@gandalf.stny.rr.com>
+	Sat, 22 Mar 2008 10:29:19 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven Rostedt wrote:
-> 
-> On Thu, 20 Mar 2008, Hiroshi Shimamoto wrote:
-> 
->> mm/slab.c:cache_alloc_refill()
->> 	if (unlikely(!ac->avail)) {
->> 		int x;
->> 		x = cache_grow(cachep, flags | GFP_THISNODE, cpu_to_node(*this_cpu), NULL, this_cpu);
->>
->> 		/* cache_grow can reenable interrupts, then ac could change. */
->> 		ac = cpu_cache_get(cachep, *this_cpu);
->>
->> The comment says, "ac could change", but it never if *this_cpu is same.
->>
->> In cache_alloc_refill(), cpu_cache_get() should called with the valid cpu id
->> after cache_grow(). Because on !PREEMPT_RT, the array_cache is protected by
->> disabling irqs, so array_cache of other cpu shouldn't be accessed.
-> 
-> Ah, sorry I missed the !PREEMPT_RT part.
+Hello,
 
-no problem. I also missed to say clearly this issue is on !PREEMPT_RT :-)
+Thanks Gregory for clarifying my question on root_domains infrastructure. What
+I was effectively mentioning on irc the other day was to make the root_domain
+infrastructure modular, ie sched_class specific. Currently, only rt is making
+use of this infrasture. Making it modular would enable ease of extension to
+other sched_classes if required. Trivial patch to that effect.
 
-> 
->>>>  # define slab_irq_disable_rt(flags)	do { (void)(flags); } while (0)
->>>>  # define slab_irq_enable_rt(flags)	do { (void)(flags); } while (0)
->>>>  # define slab_spin_lock_irq(lock, cpu) \
->>>> @@ -160,8 +160,8 @@ DEFINE_PER_CPU_LOCKED(int, slab_irq_locks) = { 0, };
->>>>  	do { slab_irq_enable(cpu); (void) (flags); } while (0)
->>>>  # define slab_irq_disable_rt(cpu)	slab_irq_disable(cpu)
->>>>  # define slab_irq_enable_rt(cpu)	slab_irq_enable(cpu)
->>>> -# define slab_irq_disable_nort()	do { } while (0)
->>>> -# define slab_irq_enable_nort()		do { } while (0)
->>>> +# define slab_irq_disable_nort(cpu)	do { } while (0)
->>>> +# define slab_irq_enable_nort(cpu)	do { } while (0)
->>> And these are the PREEMPT_RT version. So basically, this patch is a nop
->>> for PREEMPT_RT. I doubt it will solve your bug ;-)
->> yes, it's nop. I'm sorry, I didn't show .config.
->> My kernel config is !PREEMPT_RT, it's same as the deadlock report.
->> I guess it's a problem only !PREEMPT_RT.
-> 
-> Hmm, I'll have to look deeper into this on Monday (I'm off today -
-> Friday).
+Patch compile and boot tested.
 
-thanks for taking time.
 
-> 
-> Is this a bug in mainline? The !PREEMPT_RT case should be as close to
-> mainline as possible, with no actual changes in object code. If this is
-> not the case, then we need to fix that.
+Signed-off-by: Ankita Garg <ankita@in.ibm.com> 
 
-No, this issue is in -rt only.
+Index: linux-2.6.24.3-rt3/kernel/sched.c
+===================================================================
+--- linux-2.6.24.3-rt3.orig/kernel/sched.c	2008-03-21 22:57:04.000000000 +0530
++++ linux-2.6.24.3-rt3/kernel/sched.c	2008-03-21 23:04:56.000000000 +0530
+@@ -337,11 +337,8 @@
+  * object.
+  *
+  */
+-struct root_domain {
+-	atomic_t refcount;
+-	cpumask_t span;
+-	cpumask_t online;
+ 
++struct rt_root_domain {
+ 	/*
+ 	 * The "RT overload" flag: it gets set if a CPU has more than
+ 	 * one runnable RT task.
+@@ -353,6 +350,14 @@
+ #endif
+ };
+ 
++struct root_domain {
++	atomic_t refcount;
++	cpumask_t span;
++	cpumask_t online;
++
++	struct rt_root_domain rt_dom;
++};
++
+ /*
+  * By default the system creates a single root-domain with all cpus as
+  * members (mimicking the global state we have today).
+@@ -6332,7 +6337,7 @@
+ 	cpus_clear(rd->span);
+ 	cpus_clear(rd->online);
+ 
+-	cpupri_init(&rd->cpupri);
++	cpupri_init(&rd->rt_dom.cpupri);
+ 
+ }
+ 
+Index: linux-2.6.24.3-rt3/kernel/sched_rt.c
+===================================================================
+--- linux-2.6.24.3-rt3.orig/kernel/sched_rt.c	2008-03-21 22:57:04.000000000 +0530
++++ linux-2.6.24.3-rt3/kernel/sched_rt.c	2008-03-21 23:04:39.000000000 +0530
+@@ -7,12 +7,12 @@
+ 
+ static inline int rt_overloaded(struct rq *rq)
+ {
+-	return atomic_read(&rq->rd->rto_count);
++	return atomic_read(&rq->rd->rt_dom.rto_count);
+ }
+ 
+ static inline void rt_set_overload(struct rq *rq)
+ {
+-	cpu_set(rq->cpu, rq->rd->rto_mask);
++	cpu_set(rq->cpu, rq->rd->rt_dom.rto_mask);
+ 	/*
+ 	 * Make sure the mask is visible before we set
+ 	 * the overload count. That is checked to determine
+@@ -21,14 +21,14 @@
+ 	 * updated yet.
+ 	 */
+ 	wmb();
+-	atomic_inc(&rq->rd->rto_count);
++	atomic_inc(&rq->rd->rt_dom.rto_count);
+ }
+ 
+ static inline void rt_clear_overload(struct rq *rq)
+ {
+ 	/* the order here really doesn't matter */
+-	atomic_dec(&rq->rd->rto_count);
+-	cpu_clear(rq->cpu, rq->rd->rto_mask);
++	atomic_dec(&rq->rd->rt_dom.rto_count);
++	cpu_clear(rq->cpu, rq->rd->rt_dom.rto_mask);
+ }
+ 
+ static void update_rt_migration(struct rq *rq)
+@@ -78,7 +78,7 @@
+ #ifdef CONFIG_SMP
+ 	if (p->prio < rq->rt.highest_prio) {
+ 		rq->rt.highest_prio = p->prio;
+-		cpupri_set(&rq->rd->cpupri, rq->cpu, p->prio);
++		cpupri_set(&rq->rd->rt_dom.cpupri, rq->cpu, p->prio);
+ 	}
+ 	if (p->nr_cpus_allowed > 1)
+ 		rq->rt.rt_nr_migratory++;
+@@ -114,7 +114,7 @@
+ 	}
+ 
+ 	if (rq->rt.highest_prio != highest_prio)
+-		cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio);
++		cpupri_set(&rq->rd->rt_dom.cpupri, rq->cpu, rq->rt.highest_prio);
+ 
+ 	update_rt_migration(rq);
+ #endif /* CONFIG_SMP */
+@@ -363,7 +363,7 @@
+ {
+ 	int count;
+ 
+-	count = cpupri_find(&task_rq(task)->rd->cpupri, task, lowest_mask);
++	count = cpupri_find(&task_rq(task)->rd->rt_dom.cpupri, task, lowest_mask);
+ 
+ 	/*
+ 	 * cpupri cannot efficiently tell us how many bits are set, so it only
+@@ -599,7 +599,7 @@
+ 
+ 	next = pick_next_task_rt(this_rq);
+ 
+-	for_each_cpu_mask(cpu, this_rq->rd->rto_mask) {
++	for_each_cpu_mask(cpu, this_rq->rd->rt_dom.rto_mask) {
+ 		if (this_cpu == cpu)
+ 			continue;
+ 
+@@ -763,7 +763,7 @@
+ 	if (rq->rt.overloaded)
+ 		rt_set_overload(rq);
+ 
+-	cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio);
++	cpupri_set(&rq->rd->rt_dom.cpupri, rq->cpu, rq->rt.highest_prio);
+ }
+ 
+ /* Assumes rq->lock is held */
+@@ -772,7 +772,7 @@
+ 	if (rq->rt.overloaded)
+ 		rt_clear_overload(rq);
+ 
+-	cpupri_set(&rq->rd->cpupri, rq->cpu, CPUPRI_INVALID);
++	cpupri_set(&rq->rd->rt_dom.cpupri, rq->cpu, CPUPRI_INVALID);
+ }
+ 
+ /*
 
-thanks,
-Hiroshi Shimamoto
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
