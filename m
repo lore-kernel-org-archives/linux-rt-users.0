@@ -1,55 +1,87 @@
-From: Ankita Garg <ankita@in.ibm.com>
-Subject: [RT] [PATCH 3/3] Update sched_debug with new RT related stats
-Date: Sun, 23 Mar 2008 20:39:39 +0530
-Message-ID: <20080323150939.GE15554@in.ibm.com>
-References: <20080323145029.GB15554@in.ibm.com>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH -rt] avoid deadlock related with PG_nonewrefs and swap_lock
+Date: Mon, 24 Mar 2008 11:24:17 -0700
+Message-ID: <47E7F1D1.6010407@ct.jp.nec.com>
+References: <47DEB7F0.8040207@ct.jp.nec.com>	 <47DF097B.4090200@ct.jp.nec.com>	 <Pine.LNX.4.58.0803172150360.8231@gandalf.stny.rr.com> <1205833218.8514.338.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Steven Rostedt <rostedt@goodm
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP06.au.ibm.com ([202.81.18.175]:56185 "EHLO
-	e23smtp06.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750707AbYCWPJl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 23 Mar 2008 11:09:41 -0400
-Content-Disposition: inline
-In-Reply-To: <20080323145029.GB15554@in.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763545AbYCXSYf@vger.kernel.org>
+In-Reply-To: <1205833218.8514.338.camel@twins>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+Hi Peter,
 
-o Update sched_debug to print values of the recently added fields to
-rt_rq.
+I've updated the patch. Could you please review it?
 
+I'm also thinking that it can be in the mainline because it makes
+the lock period shorter, correct?
 
-Signed-off-by: Ankita Garg <ankita@in.ibm.com> 
+---
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
-Index: linux-2.6.24.3/kernel/sched_debug.c
-===================================================================
---- linux-2.6.24.3.orig/kernel/sched_debug.c	2008-03-23 19:09:35.000000000 +0530
-+++ linux-2.6.24.3/kernel/sched_debug.c	2008-03-23 19:47:52.000000000 +0530
-@@ -188,8 +188,12 @@
- 	P(cpu_load[4]);
- #ifdef CONFIG_PREEMPT_RT
- 	/* Print rt related rq stats */
-+	SEQ_printf(m, "\nrt_rq\n");
- 	P(rt.nr_running);
- 	P(rt.nr_uninterruptible);
-+	P(rt.nr_migratory);
-+	P(rt.highest_prio);
-+	P(rt.overloaded);
- # ifdef CONFIG_SCHEDSTATS
- 	P(rto_schedule);
- 	P(rto_schedule_tail);
+There is a deadlock scenario; remove_mapping() vs free_swap_and_cache().
+remove_mapping() turns PG_nonewrefs bit on, then locks swap_lock.
+free_swap_and_cache() locks swap_lock, then wait to turn PG_nonewrefs bit
+off in find_get_page().
 
+swap_lock can be unlocked before calling find_get_page().
+
+In remove_exclusive_swap_page(), there is similar lock sequence;
+swap_lock, then PG_nonewrefs bit. swap_lock can be unlocked before
+turning PG_nonewrefs bit on.
+
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+ mm/swapfile.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/mm/swapfile.c b/mm/swapfile.c
+index 5036b70..6fbc77e 100644
+--- a/mm/swapfile.c
++++ b/mm/swapfile.c
+@@ -366,6 +366,7 @@ int remove_exclusive_swap_page(struct page *page)
+ 	/* Is the only swap cache user the cache itself? */
+ 	retval = 0;
+ 	if (p->swap_map[swp_offset(entry)] == 1) {
++		spin_unlock(&swap_lock);
+ 		/* Recheck the page count with the swapcache lock held.. */
+ 		lock_page_ref_irq(page);
+ 		if ((page_count(page) == 2) && !PageWriteback(page)) {
+@@ -374,8 +375,8 @@ int remove_exclusive_swap_page(struct page *page)
+ 			retval = 1;
+ 		}
+ 		unlock_page_ref_irq(page);
+-	}
+-	spin_unlock(&swap_lock);
++	} else
++		spin_unlock(&swap_lock);
+ 
+ 	if (retval) {
+ 		swap_free(entry);
+@@ -400,13 +401,14 @@ void free_swap_and_cache(swp_entry_t entry)
+ 	p = swap_info_get(entry);
+ 	if (p) {
+ 		if (swap_entry_free(p, swp_offset(entry)) == 1) {
++			spin_unlock(&swap_lock);
+ 			page = find_get_page(&swapper_space, entry.val);
+ 			if (page && unlikely(TestSetPageLocked(page))) {
+ 				page_cache_release(page);
+ 				page = NULL;
+ 			}
+-		}
+-		spin_unlock(&swap_lock);
++		} else
++			spin_unlock(&swap_lock);
+ 	}
+ 	if (page) {
+ 		int one_user;
 -- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+1.5.4.1
