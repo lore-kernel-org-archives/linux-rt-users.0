@@ -1,87 +1,48 @@
-From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-Subject: [PATCH -rt] avoid deadlock related with PG_nonewrefs and swap_lock
-Date: Mon, 24 Mar 2008 11:24:17 -0700
-Message-ID: <47E7F1D1.6010407@ct.jp.nec.com>
-References: <47DEB7F0.8040207@ct.jp.nec.com>	 <47DF097B.4090200@ct.jp.nec.com>	 <Pine.LNX.4.58.0803172150360.8231@gandalf.stny.rr.com> <1205833218.8514.338.camel@twins>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH -rt] rt-slab: fix cpu inconsistency case
+Date: Mon, 24 Mar 2008 16:35:23 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0803241630290.9884@gandalf.stny.rr.com>
+References: <47E2A63B.4020003@ct.jp.nec.com> <Pine.LNX.4.58.0803201519160.21990@gandalf.stny.rr.com>
+ <47E2C4CC.5050401@ct.jp.nec.com> <Pine.LNX.4.58.0803211635160.3220@gandalf.stny.rr.com>
+ <47E41EDB.7030908@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763545AbYCXSYf@vger.kernel.org>
-In-Reply-To: <1205833218.8514.338.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:40639 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752234AbYCXUf0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 24 Mar 2008 16:35:26 -0400
+In-Reply-To: <47E41EDB.7030908@ct.jp.nec.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Peter,
 
-I've updated the patch. Could you please review it?
+On Fri, 21 Mar 2008, Hiroshi Shimamoto wrote:
+>
+> >
+> > Is this a bug in mainline? The !PREEMPT_RT case should be as close to
+> > mainline as possible, with no actual changes in object code. If this is
+> > not the case, then we need to fix that.
+>
+> No, this issue is in -rt only.
+>
 
-I'm also thinking that it can be in the mainline because it makes
-the lock period shorter, correct?
+Hi Hiroshi,
 
----
-From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Thanks again for reporting this. I took a deeper look into this today and
+came to the conclusion that we need to get rid of both
+slab_irq_disable_nort and slab_irq_disable_rt, and simply use
+slab_irq_disable ;-)
 
-There is a deadlock scenario; remove_mapping() vs free_swap_and_cache().
-remove_mapping() turns PG_nonewrefs bit on, then locks swap_lock.
-free_swap_and_cache() locks swap_lock, then wait to turn PG_nonewrefs bit
-off in find_get_page().
+This is what you patch indirectly does. I'll write up another patch to fix
+this.
 
-swap_lock can be unlocked before calling find_get_page().
+Thanks,
 
-In remove_exclusive_swap_page(), there is similar lock sequence;
-swap_lock, then PG_nonewrefs bit. swap_lock can be unlocked before
-turning PG_nonewrefs bit on.
+-- Steve
 
-Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
----
- mm/swapfile.c |   10 ++++++----
- 1 files changed, 6 insertions(+), 4 deletions(-)
-
-diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 5036b70..6fbc77e 100644
---- a/mm/swapfile.c
-+++ b/mm/swapfile.c
-@@ -366,6 +366,7 @@ int remove_exclusive_swap_page(struct page *page)
- 	/* Is the only swap cache user the cache itself? */
- 	retval = 0;
- 	if (p->swap_map[swp_offset(entry)] == 1) {
-+		spin_unlock(&swap_lock);
- 		/* Recheck the page count with the swapcache lock held.. */
- 		lock_page_ref_irq(page);
- 		if ((page_count(page) == 2) && !PageWriteback(page)) {
-@@ -374,8 +375,8 @@ int remove_exclusive_swap_page(struct page *page)
- 			retval = 1;
- 		}
- 		unlock_page_ref_irq(page);
--	}
--	spin_unlock(&swap_lock);
-+	} else
-+		spin_unlock(&swap_lock);
- 
- 	if (retval) {
- 		swap_free(entry);
-@@ -400,13 +401,14 @@ void free_swap_and_cache(swp_entry_t entry)
- 	p = swap_info_get(entry);
- 	if (p) {
- 		if (swap_entry_free(p, swp_offset(entry)) == 1) {
-+			spin_unlock(&swap_lock);
- 			page = find_get_page(&swapper_space, entry.val);
- 			if (page && unlikely(TestSetPageLocked(page))) {
- 				page_cache_release(page);
- 				page = NULL;
- 			}
--		}
--		spin_unlock(&swap_lock);
-+		} else
-+			spin_unlock(&swap_lock);
- 	}
- 	if (page) {
- 		int one_user;
--- 
-1.5.4.1
+P.S. I'm hoping to get -rt4 out today.
