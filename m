@@ -1,70 +1,117 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.4-rt4
-Date: Mon, 24 Mar 2008 22:11:39 -0400
-Message-ID: <1206411099.8617.4.camel@localhost.localdomain>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH -rt] avoid deadlock related with PG_nonewrefs and
+	swap_lock
+Date: Wed, 26 Mar 2008 10:50:12 +0100
+Message-ID: <1206525012.8514.488.camel@twins>
+References: <47DEB7F0.8040207@ct.jp.nec.com>
+	 <47DF097B.4090200@ct.jp.nec.com>
+	 <Pine.LNX.4.58.0803172150360.8231@gandalf.stny.rr.com>
+	 <1205833218.8514.338.camel@twins>  <47E7F1D1.6010407@ct.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>,
+	Nick Piggin <nickpiggin@yahoo.com.au>, hugh <hugh@veritas.com>
+To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:42087 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750858AbYCYCLm (ORCPT
+Received: from pentafluge.infradead.org ([213.146.154.40]:47453 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753706AbYCZJu2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Mar 2008 22:11:42 -0400
+	Wed, 26 Mar 2008 05:50:28 -0400
+In-Reply-To: <47E7F1D1.6010407@ct.jp.nec.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.3-rt3 tree, which can be
-downloaded from the location:
+On Mon, 2008-03-24 at 11:24 -0700, Hiroshi Shimamoto wrote:
+> Hi Peter,
+> 
+> I've updated the patch. Could you please review it?
+> 
+> I'm also thinking that it can be in the mainline because it makes
+> the lock period shorter, correct?
 
-  http://rt.et.redhat.com/download/
+Possibly yeah, Nick, Hugh?
 
-Information on the RT patch can be found at:
+> ---
+> From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+> 
+> There is a deadlock scenario; remove_mapping() vs free_swap_and_cache().
+> remove_mapping() turns PG_nonewrefs bit on, then locks swap_lock.
+> free_swap_and_cache() locks swap_lock, then wait to turn PG_nonewrefs bit
+> off in find_get_page().
+> 
+> swap_lock can be unlocked before calling find_get_page().
+> 
+> In remove_exclusive_swap_page(), there is similar lock sequence;
+> swap_lock, then PG_nonewrefs bit. swap_lock can be unlocked before
+> turning PG_nonewrefs bit on.
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
+I worry about this, Once we free the swap entry with swap_entry_free(),
+and drop the swap_lock, another task is basically free to re-use that
+swap location and try to insert another page in that same spot in
+add_to_swap() - read_swap_cache_async() can't race because it would mean
+it still has a swap entry pinned.
 
-Changes since 2.6.24.3-rt3
+However, add_to_swap() can already handle the race, because it used to
+race against read_swap_cache_async(). It also swap_free()s the entry so
+as to not leak entries. So I think this is indeed correct.
 
-  - ported to 2.6.24.4
+[ I ought to find some time to port the concurrent page-cache patches on
+  top of Nick's latest lockless series, Hugh's suggestion makes the
+  speculative get much nicer. ]
 
-  - kthread cpus_allowed init (Gregory Haskins)
+> Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
-  - migration CPU_DYING case  (Gregory Haskins)
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
 
-  - PPC preempt disable tlbflush (Egor Starkov)
-
-  - printk hack fix  (Steven Rostedt)
-
-  - preemption during spinlock (Gregory Haskins)
-
-  - slab cpu fix (Hiroshi Shimamoto)
-
-  - swap deadlock fix (Hiroshi Shimamoto)
-
-  - sysctl compile fix (Leon Woestenberg)
-
-
-to build a 2.6.24.4-rt4 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.4.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.4-rt4.bz2
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
-
--- Steve
-
-	
+> ---
+>  mm/swapfile.c |   10 ++++++----
+>  1 files changed, 6 insertions(+), 4 deletions(-)
+> 
+> diff --git a/mm/swapfile.c b/mm/swapfile.c
+> index 5036b70..6fbc77e 100644
+> --- a/mm/swapfile.c
+> +++ b/mm/swapfile.c
+> @@ -366,6 +366,7 @@ int remove_exclusive_swap_page(struct page *page)
+>  	/* Is the only swap cache user the cache itself? */
+>  	retval = 0;
+>  	if (p->swap_map[swp_offset(entry)] == 1) {
+> +		spin_unlock(&swap_lock);
+>  		/* Recheck the page count with the swapcache lock held.. */
+>  		lock_page_ref_irq(page);
+>  		if ((page_count(page) == 2) && !PageWriteback(page)) {
+> @@ -374,8 +375,8 @@ int remove_exclusive_swap_page(struct page *page)
+>  			retval = 1;
+>  		}
+>  		unlock_page_ref_irq(page);
+> -	}
+> -	spin_unlock(&swap_lock);
+> +	} else
+> +		spin_unlock(&swap_lock);
+>  
+>  	if (retval) {
+>  		swap_free(entry);
+> @@ -400,13 +401,14 @@ void free_swap_and_cache(swp_entry_t entry)
+>  	p = swap_info_get(entry);
+>  	if (p) {
+>  		if (swap_entry_free(p, swp_offset(entry)) == 1) {
+> +			spin_unlock(&swap_lock);
+>  			page = find_get_page(&swapper_space, entry.val);
+>  			if (page && unlikely(TestSetPageLocked(page))) {
+>  				page_cache_release(page);
+>  				page = NULL;
+>  			}
+> -		}
+> -		spin_unlock(&swap_lock);
+> +		} else
+> +			spin_unlock(&swap_lock);
+>  	}
+>  	if (page) {
+>  		int one_user;
 
