@@ -1,125 +1,50 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH -rt] avoid deadlock related with PG_nonewrefs and
-	swap_lock
-Date: Wed, 26 Mar 2008 11:09:40 +0100
-Message-ID: <1206526180.8514.491.camel@twins>
-References: <47DEB7F0.8040207@ct.jp.nec.com>
-	 <47DF097B.4090200@ct.jp.nec.com>
-	 <Pine.LNX.4.58.0803172150360.8231@gandalf.stny.rr.com>
-	 <1205833218.8514.338.camel@twins>  <47E7F1D1.6010407@ct.jp.nec.com>
-	 <1206525012.8514.488.camel@twins>
+From: mark gross <mgross@linux.intel.com>
+Subject: Real time USB2Serial devices and behaivor
+Date: Wed, 26 Mar 2008 08:25:59 -0700
+Message-ID: <20080326152559.GA17164@linux.intel.com>
+Reply-To: mgross@linux.intel.com
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>,
-	Nick Piggin <nickpiggin@yahoo.com.au>, hugh <hugh@veritas.com>
-To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Content-Type: text/plain; charset=us-ascii
+To: lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org, linux-usb@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:51810 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751375AbYCZKJv (ORCPT
+Received: from mga06.intel.com ([134.134.136.21]:57303 "EHLO
+	orsmga101.jf.intel.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753017AbYCZPWh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Mar 2008 06:09:51 -0400
-In-Reply-To: <1206525012.8514.488.camel@twins>
+	Wed, 26 Mar 2008 11:22:37 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2008-03-26 at 10:50 +0100, Peter Zijlstra wrote:
-> On Mon, 2008-03-24 at 11:24 -0700, Hiroshi Shimamoto wrote:
-> > Hi Peter,
-> > 
-> > I've updated the patch. Could you please review it?
-> > 
-> > I'm also thinking that it can be in the mainline because it makes
-> > the lock period shorter, correct?
-> 
-> Possibly yeah, Nick, Hugh?
-> 
-> > ---
-> > From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-> > 
-> > There is a deadlock scenario; remove_mapping() vs free_swap_and_cache().
-> > remove_mapping() turns PG_nonewrefs bit on, then locks swap_lock.
-> > free_swap_and_cache() locks swap_lock, then wait to turn PG_nonewrefs bit
-> > off in find_get_page().
-> > 
-> > swap_lock can be unlocked before calling find_get_page().
-> > 
-> > In remove_exclusive_swap_page(), there is similar lock sequence;
-> > swap_lock, then PG_nonewrefs bit. swap_lock can be unlocked before
-> > turning PG_nonewrefs bit on.
-> 
-> I worry about this, Once we free the swap entry with swap_entry_free(),
-> and drop the swap_lock, another task is basically free to re-use that
-> swap location and try to insert another page in that same spot in
-> add_to_swap() - read_swap_cache_async() can't race because it would mean
-> it still has a swap entry pinned.
+At home I'm playing with a real time amateur robotics application with a
+micro controller talking over its serial port to a Linux box running an RT
+kernel and some RT user mode software to suck in the serial port data
+and do some processing in real time.  One example of what I want to do
+with this type of configuration is to create a type of IMU thing and run
+the data through a kalman filter to see how good I can do with my
+hardware.
 
-D'oh of course it can race, otherwise the add_to_swap() vs
-read_swap_cache_async() race wouldn't exist.
+I'll be sending data regularly at data rates between 50 and 500 HZ from
+the MCU (depending on mode)
 
-Still, given that add_to_swap() handles the race I suspect the other end
-does the right thing as well.
+Anyway, I have the RT code and the system prototyped using the hardware
+serial port on my desktop and I'm getting rock solid RT delivery times
+of the data +/- 30usec.  While stressing the system in CPU and disk. (I
+still need to do the test while flood pinging the box)  However; when I
+use my USB dongle instead of the hardware serial port the system falls
+over WRT real time behavior.
 
-> However, add_to_swap() can already handle the race, because it used to
-> race against read_swap_cache_async(). It also swap_free()s the entry so
-> as to not leak entries. So I think this is indeed correct.
-> 
-> [ I ought to find some time to port the concurrent page-cache patches on
->   top of Nick's latest lockless series, Hugh's suggestion makes the
->   speculative get much nicer. ]
-> 
-> > Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-> 
-> Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
-> 
-> > ---
-> >  mm/swapfile.c |   10 ++++++----
-> >  1 files changed, 6 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/mm/swapfile.c b/mm/swapfile.c
-> > index 5036b70..6fbc77e 100644
-> > --- a/mm/swapfile.c
-> > +++ b/mm/swapfile.c
-> > @@ -366,6 +366,7 @@ int remove_exclusive_swap_page(struct page *page)
-> >  	/* Is the only swap cache user the cache itself? */
-> >  	retval = 0;
-> >  	if (p->swap_map[swp_offset(entry)] == 1) {
-> > +		spin_unlock(&swap_lock);
-> >  		/* Recheck the page count with the swapcache lock held.. */
-> >  		lock_page_ref_irq(page);
-> >  		if ((page_count(page) == 2) && !PageWriteback(page)) {
-> > @@ -374,8 +375,8 @@ int remove_exclusive_swap_page(struct page *page)
-> >  			retval = 1;
-> >  		}
-> >  		unlock_page_ref_irq(page);
-> > -	}
-> > -	spin_unlock(&swap_lock);
-> > +	} else
-> > +		spin_unlock(&swap_lock);
-> >  
-> >  	if (retval) {
-> >  		swap_free(entry);
-> > @@ -400,13 +401,14 @@ void free_swap_and_cache(swp_entry_t entry)
-> >  	p = swap_info_get(entry);
-> >  	if (p) {
-> >  		if (swap_entry_free(p, swp_offset(entry)) == 1) {
-> > +			spin_unlock(&swap_lock);
-> >  			page = find_get_page(&swapper_space, entry.val);
-> >  			if (page && unlikely(TestSetPageLocked(page))) {
-> >  				page_cache_release(page);
-> >  				page = NULL;
-> >  			}
-> > -		}
-> > -		spin_unlock(&swap_lock);
-> > +		} else
-> > +			spin_unlock(&swap_lock);
-> >  	}
-> >  	if (page) {
-> >  		int one_user;
+I'm just starting to look into the behavior now but has anyone looked at
+the RT'ness of USB2Serial + USB stack yet?  I would like to see what
+other folks have done.  My googleing last night didn't get any useful
+hits.
 
+BTW Why does the PL2303 have a 1KB buffer for incoming data?
+
+I'm a bit green at RT work at this level.  What are the best ways for
+drilling down to figure out what the problems are so I can make a patch?
+
+Thanks for any advice or pointers.  
+
+--mgross
