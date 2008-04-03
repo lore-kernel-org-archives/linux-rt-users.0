@@ -1,29 +1,22 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Subject: Re: Real time USB2Serial devices and behaivor
-Date: Thu, 03 Apr 2008 16:45:05 +0200
-Message-ID: <1207233905.8514.834.camel@twins>
-References: <20080326152559.GA17164@linux.intel.com>
-	 <20080326162728.GC6020@kroah.com>
-	 <d82e647a0804030726r6432aafdvfa6395f0256dc97b@mail.gmail.com>
+Date: Thu, 3 Apr 2008 08:52:17 -0700
+Message-ID: <20080403155217.GB10425@kroah.com>
+References: <20080326152559.GA17164@linux.intel.com> <20080326162728.GC6020@kroah.com> <d82e647a0804030726r6432aafdvfa6395f0256dc97b@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Greg KH <greg@kroah.com>, mark gross <mgross@linux.intel.com>,
-	lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, linux-usb@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pentafluge.infradead.org ([213.146.154.40]:47609 "EHLO
-	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757021AbYDCOpT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Apr 2008 10:45:19 -0400
-In-Reply-To: <d82e647a0804030726r6432aafdvfa6395f0256dc97b@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: mark gross <mgross-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>,
+	lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ming Lei <tom.leiming-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <d82e647a0804030726r6432aafdvfa6395f0256dc97b-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2008-04-03 at 22:26 +0800, Ming Lei wrote:
-> 2008/3/27, Greg KH <greg@kroah.com>:
+On Thu, Apr 03, 2008 at 10:26:57PM +0800, Ming Lei wrote:
+> 2008/3/27, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>:
 > > On Wed, Mar 26, 2008 at 08:25:59AM -0700, mark gross wrote:
 > >  > At home I'm playing with a real time amateur robotics application with a
 > >  > micro controller talking over its serial port to a Linux box running an RT
@@ -57,21 +50,34 @@ On Thu, 2008-04-03 at 22:26 +0800, Ming Lei wrote:
 > I had done some usb serial test about 2 weeks ago and found :
 > 1),the max read thoughtput is 480bps,using the generic usb
 >  serial driver and a wireless cdma usb card.
+
+The generic usb serial driver is KNOWN TO BE A VERY SLOW DRIVER!
+
+I'm getting very tired of repeating myself about this one, don't do any
+speed tests, or run any real hardware modems with this driver at all,
+it's just not worth it.
+
+The code was not designed to be fast, only get the job done.
+
 > 2),if I increase the read urb transfer size from one wMaxPacketSize
 > to four wMaxPacketSize, the max read throughtput can be beyond 1440bps.
 > But maybe there is some timeout risk, isn't there?
+
+That's one way to increase speed, but not the only way, it can be done a
+whole lot better if you are worried about throughput.  See the sierra
+driver for an implementation that does this correctly for maximum
+througput.
+
 > 3),The throughput still can be increased by submitting more urbs
 >  parallelly , and the latency can be decreased a bit by the way.
 
-Non of which is relevant to realtime.
+But again, that has nothing to do with determinism, or latency, or real
+time issues.
 
-Realtime is about meeting deadlines, sod throughput (although if you can
-get decent throughput while meeting the deadlines that's even better).
+thanks,
 
-Realtime is about getting a signal on your serial port and reacting to
-it before the $doom_scenario happens.
-
-( I prefer the one where you break the laser guard and have to stop the
-  saw blade before it cuts your fingers off - others prefer nuclear
-  chain reactions )
-
+greg k-h
+--
+To unsubscribe from this list: send the line "unsubscribe linux-usb" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
