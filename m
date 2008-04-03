@@ -1,43 +1,40 @@
-From: lsorense@csclub.uwaterloo.ca (Lennart Sorensen)
+From: Jon Masters <jonathan@jonmasters.org>
 Subject: Re: Real time USB2Serial devices and behaivor
-Date: Fri, 28 Mar 2008 09:38:20 -0400
-Message-ID: <20080328133820.GH20025@csclub.uwaterloo.ca>
-References: <20080326152559.GA17164@linux.intel.com> <200803271248.40519.david-b@pacbell.net> <20080327210036.GA20027@csclub.uwaterloo.ca> <200803271408.55930.david-b@pacbell.net>
+Date: Thu, 03 Apr 2008 02:24:30 -0400
+Message-ID: <1207203870.12035.1.camel__44553.8826905706$1207205307$gmane$org@perihelion>
+References: <20080326152559.GA17164@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mgross@linux.intel.com, Greg KH <greg@kroah.com>,
-	lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, linux-usb@vger.kernel.org
-To: David Brownell <david-b@pacbell.net>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from caffeine.csclub.uwaterloo.ca ([129.97.134.17]:49036 "EHLO
-	caffeine.csclub.uwaterloo.ca" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752063AbYC1NiV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Mar 2008 09:38:21 -0400
-Content-Disposition: inline
-In-Reply-To: <200803271408.55930.david-b@pacbell.net>
+Received: from main.gmane.org ([80.91.229.2]:42211 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756260AbYDCGk0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 Apr 2008 02:40:26 -0400
+Received: from root by ciao.gmane.org with local (Exim 4.43)
+	id 1JhJ7M-0000or-Cl
+	for linux-rt-users@vger.kernel.org; Thu, 03 Apr 2008 06:40:12 +0000
+Received: from boston.jonmasters.org ([74.92.29.237])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Apr 2008 06:40:02 +0000
+Received: from jonathan by boston.jonmasters.org with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Apr 2008 06:40:02 +0000
+In-Reply-To: <20080326152559.GA17164@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Mar 27, 2008 at 02:08:55PM -0700, David Brownell wrote:
-> List price $117 ... 4-port for $202 ... you can buy entire
-> computers for less!!  ;)
-> 
-> I really should have stocked up on the $5 cards...
 
-Well the digi cards can run 460Kbps, which the $5 cards could not, and
-they have 64byte FIFOs, not 16, and are more efficient to manage from
-software.
+On Wed, 2008-03-26 at 08:25 -0700, mark gross wrote:
 
-Basically plain serial is dying out for the majority of users
-(unfortunate for those of us that use plain serial a lot).
+> BTW Why does the PL2303 have a 1KB buffer for incoming data?
 
-I didn't realize the digi cards cost that much.  We get our own serial
-PCI cards made at work for less than that and they are industrial
-temperature and we don't exactly do large volumes.  Of course by the
-time the sales people add markup and all that they would cost at least
-what the digi cards do.  :)
+Personally, RT or not, I really like to avoid using those PL230X parts.
+They're everywhere, this is true, but also quite horrible sometimes.
 
--- 
-Len Sorensen
+Jon.
+
+
+
