@@ -1,93 +1,46 @@
-From: John Sigler <linux.kernel@free.fr>
-Subject: Linux 11-minute mode (RTC update)
-Date: Fri, 04 Apr 2008 10:06:44 +0200
-Message-ID: <47F5E194.5040409@free.fr>
+From: Mauricio =?utf-8?Q?A=2E_Araya_L=F3pez?= <maray@inf.utfsm.cl>
+Subject: RT_PREEMPT and Serial Port
+Date: Fri, 4 Apr 2008 03:57:53 -0400
+Message-ID: <20080404075753.GB28260@alumnos.inf.utfsm.cl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g19.free.fr ([212.27.42.30]:35241 "EHLO smtp4-g19.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756912AbYDDIGq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Apr 2008 04:06:46 -0400
-Received: from smtp4-g19.free.fr (localhost.localdomain [127.0.0.1])
-	by smtp4-g19.free.fr (Postfix) with ESMTP id 9CD233EA121
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Apr 2008 10:06:45 +0200 (CEST)
-Received: from [10.10.10.208] (ims92-1-88-163-235-69.fbx.proxad.net [88.163.235.69])
-	by smtp4-g19.free.fr (Postfix) with ESMTP id 3C0263EA122
-	for <linux-rt-users@vger.kernel.org>; Fri,  4 Apr 2008 10:06:45 +0200 (CEST)
+Received: from alegre.inf.utfsm.cl ([204.87.169.3]:59865 "EHLO
+	alegre.inf.utfsm.cl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755471AbYDDJBB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Apr 2008 05:01:01 -0400
+Received: from ritoque.inf.utfsm.cl (ssh2.inf.utfsm.cl [204.87.169.5])
+	by alegre.inf.utfsm.cl (8.13.8/8.13.8) with ESMTP id m347vrJD003103
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Fri, 4 Apr 2008 03:57:53 -0400
+Received: from rodriguez.inf.utfsm.cl (localhost.localdomain [127.0.0.1])
+	by ritoque.inf.utfsm.cl (8.14.2/8.13.8) with ESMTP id m347vrcv028681
+	for <linux-rt-users@vger.kernel.org>; Fri, 4 Apr 2008 03:57:53 -0400
+Received: (from maray@localhost)
+	by rodriguez.inf.utfsm.cl (8.14.2/8.14.2/Submit) id m347vreo028680
+	for linux-rt-users@vger.kernel.org; Fri, 4 Apr 2008 03:57:53 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-(Message also posted to comp.protocols.time.ntp and linux-kernel but 
-since timers are involved, I figured I might have more luck here.)
+Hi all,
 
-Hello,
+I've been searching on the web (and in the rt-wiki) for the current
+status of the real-time support for devices. For instance
+the serial port, CAN Bus, etc.
 
-I run Linux kernel 2.6.22.1-rt9 and ntpd 4.2.4p0
+I am doing some experiments to check if RT_PREEMPT could be an option to
+a control system that is using RTAI nowadays.
 
-# adjtimex --print
-          mode: 0
-        offset: 77
-     frequency: -1309904
-      maxerror: 493576
-      esterror: 50
-        status: 1
-time_constant: 6
-     precision: 1
-     tolerance: 33554432
-          tick: 10000
-      raw time:  1207230744s 183249us = 1207230744.183249
+If not, maybe it is a good thing to develop myself, so if anyone can
+comment anything about this, it will be very helpfull to start.
 
-In my setup, STA_UNSYNC (0x0040, clock unsynchronized) is 0.
+Thanks!
 
-Thus, ntp_synced() returns 1.
-
-Thus the kernel should write the system time to the RTC every
-11 minutes; but it does not.
-
-The relevant code is in sync_cmos_clock()
-
-http://lxr.linux.no/linux/kernel/time/ntp.c#L188
-
-I've added several printk() to this function, and it appears
-that it is never called.
-
-The relevant timer is defined with the following macro.
-
-static DEFINE_TIMER(sync_cmos_timer, sync_cmos_clock, 0, 0);
-
-which expands to
-
-static struct timer_list sync_cmos_timer =
-{
-   .function = sync_cmos_clock,
-   .expires  = 0,
-   .data     = 0,
-   .base     = &boot_tvec_bases
-};
-
-The problem seems to be that this timer is never armed, to bootstrap
-the process. It seems there should be a call to mod_timer() somewhere.
-
-do_adjtimex() calls notify_cmos_timer() unconditionally.
-
-static void notify_cmos_timer(void)
-{
-   if (no_sync_cmos_clock)
-     mod_timer(&sync_cmos_timer, jiffies + 1);
-}
-
-What are the semantics of notify_cmos_timer?
-What is it supposed to do?
-
-And what is 'no_sync_cmos_clock' supposed to mean?
-/* Disable the cmos update - used by virtualization and embedded */
-int no_sync_cmos_clock  __read_mostly;
-Why would we (re)arm the timer when 'no_sync_cmos_clock' is true?
-
-I'd be grateful for anyone sharing their knowledge.
-
-Regards.
-
+-- 
+Mauricio Araya L. 
+ACS-UTFSM Team Leader, cel: 0-81564903
+Est. Magister en Ciencias de la Informatica UTFSM, Valparaiso, Chile
+counter.li.org: #249395, http://www.inf.utfsm.cl/~maray 
