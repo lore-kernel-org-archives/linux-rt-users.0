@@ -1,54 +1,42 @@
-From: "Nelson Castillo" <nelsoneci@gmail.com>
-Subject: Re: RT_PREEMPT and Serial Port
-Date: Fri, 4 Apr 2008 10:42:05 -0500
-Message-ID: <2accc2ff0804040842v1435fb5cq36df8c38d98bac3c@mail.gmail.com>
-References: <20080404075753.GB28260@alumnos.inf.utfsm.cl>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: [PATCH -rt] shorten softirq kernel thread names
+Date: Fri, 04 Apr 2008 17:42:53 +0200
+Message-ID: <1207323773.15579.4.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: "=?ISO-8859-1?Q?Mauricio_A._Araya_L=F3pez?=" <maray@inf.utfsm.cl>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ik-out-1112.google.com ([66.249.90.180]:33459 "EHLO
-	ik-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757250AbYDDPmJ convert rfc822-to-8bit (ORCPT
+Received: from pentafluge.infradead.org ([213.146.154.40]:41871 "EHLO
+	pentafluge.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757467AbYDDPnH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Apr 2008 11:42:09 -0400
-Received: by ik-out-1112.google.com with SMTP id c28so87789ika.5
-        for <linux-rt-users@vger.kernel.org>; Fri, 04 Apr 2008 08:42:07 -0700 (PDT)
-In-Reply-To: <20080404075753.GB28260@alumnos.inf.utfsm.cl>
-Content-Disposition: inline
+	Fri, 4 Apr 2008 11:43:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Apr 4, 2008 at 2:57 AM, Mauricio A. Araya L=F3pez
-<maray@inf.utfsm.cl> wrote:
-> Hi all,
->
->  I've been searching on the web (and in the rt-wiki) for the current
->  status of the real-time support for devices. For instance
->  the serial port, CAN Bus, etc.
+Subject: -rt: shorten softirq kernel thread names
 
-Hi Mauricio.
+Shorten the softirq kernel thread names because they often overflow
+the limited comm length.
 
-I had a nice experience with a RS485 bus (half-duplex). The ideal setup
-is to use automatic RTS control. I tried using manual control of this
-signal with and without PREEMPT_RT. With PREEMPT_RT I
-managed to receive the response of the device in the bus.
-Without the patch I would miss the response
-(even if it took as much as a few milliseconds).
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+---
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index a9e1b08..385ed5b 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -923,7 +923,7 @@ static int __cpuinit cpu_callback(struct notifier_block *nfb,
+ 		for (i = 0; i < MAX_SOFTIRQ; i++) {
+ 			p = kthread_create(ksoftirqd,
+ 					   &per_cpu(ksoftirqd, hotcpu)[i],
+-					   "softirq-%s/%d", softirq_names[i],
++					   "sirq-%s/%d", softirq_names[i],
+ 					   hotcpu);
+ 			if (IS_ERR(p)) {
+ 				printk("ksoftirqd %d for %i failed\n", i,
 
-I don't know about specific support in drivers, but I had a good experi=
-ence
-with this patch and a serial device.
 
-Regards,
-Nelson.-
-
---=20
-http://arhuaco.org
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
