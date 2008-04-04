@@ -1,27 +1,42 @@
-From: fche@redhat.com (Frank Ch. Eigler)
-Subject: Re: Linux 11-minute mode (RTC update)
-Date: Fri, 04 Apr 2008 16:20:17 -0400
-Message-ID: <y0mlk3tnzi6.fsf@ton.toronto.redhat.com>
-References: <47F5E194.5040409@free.fr>
+From: "K.R. Foley" <kr@cybsft.com>
+Subject: Re: The best queue for RT_PREEMPT
+Date: Fri, 04 Apr 2008 15:40:11 -0500
+Message-ID: <47F6922B.5080504@cybsft.com>
+References: <20080404184941.GA21013@alumnos.inf.utfsm.cl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
+To: =?UTF-8?B?TWF1cmljaW8g77+9?= <maray@inf.utfsm.cl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:60461 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1760900AbYDDUVS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Apr 2008 16:21:18 -0400
-In-Reply-To: <47F5E194.5040409@free.fr> (John Sigler's message of "Fri, 04 Apr 2008 10:06:44 +0200")
+Received: from relay00.pair.com ([209.68.5.9]:3066 "HELO relay00.pair.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1751167AbYDDUqw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Apr 2008 16:46:52 -0400
+In-Reply-To: <20080404184941.GA21013@alumnos.inf.utfsm.cl>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-John Sigler <linux.kernel@free.fr> writes:
+Mauricio =EF=BF=BD wrote:
+> Hi again,
+>=20
+> I have some experience working on RTAI, and I am trying to do
+> something similar to a RT_FIFO. Which is the best method to have=20
+> a FIFO queue between a real-time process and a non real-time process.
+> Maybe a pipe is enough, or msgget, or directly have a shared memory s=
+pace,
+> etc... Any comment will be very welcome!
+>=20
+> Thanks!
+>=20
 
->[...]
-> I run Linux kernel 2.6.22.1-rt9 and ntpd 4.2.4p0
+Why not use a FIFO implemented as a circular buffer in shared memory?
 
-The bug you're describing appear to have been created & fixed
-last year by commits 82644459 and 298a5df4.
-
-- FChE
+--=20
+    kr
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
