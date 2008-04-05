@@ -1,42 +1,125 @@
-From: "K.R. Foley" <kr@cybsft.com>
-Subject: Re: The best queue for RT_PREEMPT
-Date: Fri, 04 Apr 2008 15:40:11 -0500
-Message-ID: <47F6922B.5080504@cybsft.com>
-References: <20080404184941.GA21013@alumnos.inf.utfsm.cl>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: Linux 11-minute mode (RTC update)
+Date: Sat, 5 Apr 2008 19:54:37 +0200
+Message-ID: <20080405175437.GA17016@elf.ucw.cz>
+References: <47F5E194.5040409@free.fr> <47F5F35F.2020508@free.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: =?UTF-8?B?TWF1cmljaW8g77+9?= <maray@inf.utfsm.cl>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: John Sigler <linux.kernel@free.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay00.pair.com ([209.68.5.9]:3066 "HELO relay00.pair.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1751167AbYDDUqw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Apr 2008 16:46:52 -0400
-In-Reply-To: <20080404184941.GA21013@alumnos.inf.utfsm.cl>
+Received: from atrey.karlin.mff.cuni.cz ([195.113.31.123]:53553 "EHLO
+	atrey.karlin.mff.cuni.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752864AbYDERxx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 5 Apr 2008 13:53:53 -0400
+Content-Disposition: inline
+In-Reply-To: <47F5F35F.2020508@free.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Mauricio =EF=BF=BD wrote:
-> Hi again,
->=20
-> I have some experience working on RTAI, and I am trying to do
-> something similar to a RT_FIFO. Which is the best method to have=20
-> a FIFO queue between a real-time process and a non real-time process.
-> Maybe a pipe is enough, or msgget, or directly have a shared memory s=
-pace,
-> etc... Any comment will be very welcome!
->=20
-> Thanks!
->=20
+Hi!
 
-Why not use a FIFO implemented as a circular buffer in shared memory?
+>> I run Linux kernel 2.6.22.1-rt9 and ntpd 4.2.4p0
+>>
+>> # adjtimex --print
+>>          mode: 0
+>>        offset: 77
+>>     frequency: -1309904
+>>      maxerror: 493576
+>>      esterror: 50
+>>        status: 1
+>> time_constant: 6
+>>     precision: 1
+>>     tolerance: 33554432
+>>          tick: 10000
+>>      raw time:  1207230744s 183249us = 1207230744.183249
+>>
+>> In my setup, STA_UNSYNC (0x0040, clock unsynchronized) is 0.
+>>
+>> Thus, ntp_synced() returns 1.
+>>
+>> Thus the kernel should write the system time to the RTC every
+>> 11 minutes; but it does not.
+>>
+>> The relevant code is in sync_cmos_clock()
+>>
+>> http://lxr.linux.no/linux/kernel/time/ntp.c#L188
+>>
+>> I've added several printk() to this function, and it appears
+>> that it is never called.
+>>
+>> The relevant timer is defined with the following macro.
+>>
+>> static DEFINE_TIMER(sync_cmos_timer, sync_cmos_clock, 0, 0);
+>>
+>> which expands to
+>>
+>> static struct timer_list sync_cmos_timer =
+>> {
+>>   .function = sync_cmos_clock,
+>>   .expires  = 0,
+>>   .data     = 0,
+>>   .base     = &boot_tvec_bases
+>> };
+>>
+>> The problem seems to be that this timer is never armed, to bootstrap
+>> the process. It seems there should be a call to mod_timer() somewhere.
+>>
+>> do_adjtimex() calls notify_cmos_timer() unconditionally.
+>>
+>> static void notify_cmos_timer(void)
+>> {
+>>   if (no_sync_cmos_clock)
+>>     mod_timer(&sync_cmos_timer, jiffies + 1);
+>> }
+>>
+>> What are the semantics of notify_cmos_timer?
+>> What is it supposed to do?
+>>
+>> And what is 'no_sync_cmos_clock' supposed to mean?
+>> /* Disable the cmos update - used by virtualization and embedded */
+>> int no_sync_cmos_clock  __read_mostly;
+>> Why would we (re)arm the timer when 'no_sync_cmos_clock' is true?
+>
+> For those wondering what this "11-minute mode" is, I'll quote the
+> man page for hwclock. ( http://linux.die.net/man/8/hwclock )
+>
+> <quote>
+>
+> Automatic Hardware Clock Synchronization By the Kernel
+>
+> You should be aware of another way that the Hardware Clock is kept 
+> synchronized in some systems. The Linux kernel has a mode wherein it copies 
+> the System Time to the Hardware Clock every 11 minutes. This is a good mode 
+> to use when you are using something sophisticated like ntp to keep your 
+> System Time synchronized. (ntp is a way to keep your System Time 
+> synchronized either to a time server somewhere on the network or to a radio 
+> clock hooked up to your system. See RFC 1305).
+>
+> This mode (we'll call it "11 minute mode") is off until something turns it 
+> on. The ntp daemon xntpd is one thing that turns it on. You can turn it off 
+> by running anything, including hwclock --hctosys, that sets the System Time 
+> the old fashioned way.
+>
+> To see if it is on or off, use the command adjtimex --print and look at the 
+> value of "status". If the "64" bit of this number (expressed in binary) 
+> equal to 0, 11 minute mode is on. Otherwise, it is off.
+>
+> If your system runs with 11 minute mode on, don't use hwclock --adjust or 
+> hwclock --hctosys. You'll just make a mess. It is acceptable to use a 
+> hwclock --hctosys at startup time to get a reasonable System Time until 
+> your system is able to set the System Time from the external source and 
+> start 11 minute mode.
 
---=20
-    kr
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Does that even belong to kernel?
+
+If it is only useful with ntpd already running, ntpd should be able to
+do the RTC sync, too...
+
+Plus, that automatically means that 11-minutes updates stop when ntpd
+dies for some reason...
+
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
