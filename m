@@ -1,125 +1,56 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: Linux 11-minute mode (RTC update)
-Date: Sat, 5 Apr 2008 19:54:37 +0200
-Message-ID: <20080405175437.GA17016@elf.ucw.cz>
-References: <47F5E194.5040409@free.fr> <47F5F35F.2020508@free.fr>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: fully bisectable real time series
+Date: Mon, 07 Apr 2008 16:34:02 -0700
+Message-ID: <1207611243.21308.167.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: John Sigler <linux.kernel@free.fr>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+	mingo@elte.hu
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from atrey.karlin.mff.cuni.cz ([195.113.31.123]:53553 "EHLO
-	atrey.karlin.mff.cuni.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752864AbYDERxx (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:52094 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753053AbYDGXeG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 5 Apr 2008 13:53:53 -0400
-Content-Disposition: inline
-In-Reply-To: <47F5F35F.2020508@free.fr>
+	Mon, 7 Apr 2008 19:34:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
 
->> I run Linux kernel 2.6.22.1-rt9 and ntpd 4.2.4p0
->>
->> # adjtimex --print
->>          mode: 0
->>        offset: 77
->>     frequency: -1309904
->>      maxerror: 493576
->>      esterror: 50
->>        status: 1
->> time_constant: 6
->>     precision: 1
->>     tolerance: 33554432
->>          tick: 10000
->>      raw time:  1207230744s 183249us = 1207230744.183249
->>
->> In my setup, STA_UNSYNC (0x0040, clock unsynchronized) is 0.
->>
->> Thus, ntp_synced() returns 1.
->>
->> Thus the kernel should write the system time to the RTC every
->> 11 minutes; but it does not.
->>
->> The relevant code is in sync_cmos_clock()
->>
->> http://lxr.linux.no/linux/kernel/time/ntp.c#L188
->>
->> I've added several printk() to this function, and it appears
->> that it is never called.
->>
->> The relevant timer is defined with the following macro.
->>
->> static DEFINE_TIMER(sync_cmos_timer, sync_cmos_clock, 0, 0);
->>
->> which expands to
->>
->> static struct timer_list sync_cmos_timer =
->> {
->>   .function = sync_cmos_clock,
->>   .expires  = 0,
->>   .data     = 0,
->>   .base     = &boot_tvec_bases
->> };
->>
->> The problem seems to be that this timer is never armed, to bootstrap
->> the process. It seems there should be a call to mod_timer() somewhere.
->>
->> do_adjtimex() calls notify_cmos_timer() unconditionally.
->>
->> static void notify_cmos_timer(void)
->> {
->>   if (no_sync_cmos_clock)
->>     mod_timer(&sync_cmos_timer, jiffies + 1);
->> }
->>
->> What are the semantics of notify_cmos_timer?
->> What is it supposed to do?
->>
->> And what is 'no_sync_cmos_clock' supposed to mean?
->> /* Disable the cmos update - used by virtualization and embedded */
->> int no_sync_cmos_clock  __read_mostly;
->> Why would we (re)arm the timer when 'no_sync_cmos_clock' is true?
->
-> For those wondering what this "11-minute mode" is, I'll quote the
-> man page for hwclock. ( http://linux.die.net/man/8/hwclock )
->
-> <quote>
->
-> Automatic Hardware Clock Synchronization By the Kernel
->
-> You should be aware of another way that the Hardware Clock is kept 
-> synchronized in some systems. The Linux kernel has a mode wherein it copies 
-> the System Time to the Hardware Clock every 11 minutes. This is a good mode 
-> to use when you are using something sophisticated like ntp to keep your 
-> System Time synchronized. (ntp is a way to keep your System Time 
-> synchronized either to a time server somewhere on the network or to a radio 
-> clock hooked up to your system. See RFC 1305).
->
-> This mode (we'll call it "11 minute mode") is off until something turns it 
-> on. The ntp daemon xntpd is one thing that turns it on. You can turn it off 
-> by running anything, including hwclock --hctosys, that sets the System Time 
-> the old fashioned way.
->
-> To see if it is on or off, use the command adjtimex --print and look at the 
-> value of "status". If the "64" bit of this number (expressed in binary) 
-> equal to 0, 11 minute mode is on. Otherwise, it is off.
->
-> If your system runs with 11 minute mode on, don't use hwclock --adjust or 
-> hwclock --hctosys. You'll just make a mess. It is acceptable to use a 
-> hwclock --hctosys at startup time to get a reasonable System Time until 
-> your system is able to set the System Time from the external source and 
-> start 11 minute mode.
+I've re-worked the -rt series, and some of the core patches to make it
+all bisectable. I've done bisect updates in the past which really only
+scratched the surface.
 
-Does that even belong to kernel?
+The main problems where around the spinlock, semaphore, and rw-semaphore
+changes. I made a number of updates to how the bottom level spinlocks
+get defined to ease the transition per-patch and architecture. For
+semaphores I removed some constraints on how many changes need to be
+made per architecture.
 
-If it is only useful with ntpd already running, ntpd should be able to
-do the RTC sync, too...
+So what's missing? Well I dropped every architecture port except x86,
+since I broke them all. I also dropped a number of non-essential patches
+(mostly from Peter) not for any technical reason but just to reduce the
+amount of code. 
 
-Plus, that automatically means that 11-minutes updates stop when ntpd
-dies for some reason...
+I didn't fix all the architectures since I want to make sure x86 is
+solid before I start moving the other architectures to the new format.
+All the dropped patches are still part of the archive, just not in the
+series.
 
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+x86 32-bit is compile and boot bisectable, and 64-bit is compile
+bisectable (should boot too, but I haven't tested it.)
+
+There's tons of back merging to do, but I keep it to a minimum for the
+time being. I'm sure there are some un-bisectable areas that I just
+haven't found yet, however if you report it to me I'll be happy to fix
+them.
+
+I'm only providing a broken out series and you can download in from,
+
+ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.24.4-rt4-dw1-broken-out.tar.bz2
+
+Enjoy!
+
+Daniel
+
