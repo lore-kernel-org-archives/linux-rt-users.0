@@ -1,56 +1,37 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: fully bisectable real time series
-Date: Mon, 07 Apr 2008 16:34:02 -0700
-Message-ID: <1207611243.21308.167.camel@localhost.localdomain>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: fully bisectable real time series
+Date: Mon, 7 Apr 2008 20:33:07 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0804072027080.7121@gandalf.stny.rr.com>
+References: <1207611243.21308.167.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	mingo@elte.hu
-To: linux-rt-users@vger.kernel.org
+To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:52094 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753053AbYDGXeG (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:50059 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754493AbYDHAdK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Apr 2008 19:34:06 -0400
+	Mon, 7 Apr 2008 20:33:10 -0400
+In-Reply-To: <1207611243.21308.167.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-I've re-worked the -rt series, and some of the core patches to make it
-all bisectable. I've done bisect updates in the past which really only
-scratched the surface.
+On Mon, 7 Apr 2008, Daniel Walker wrote:
 
-The main problems where around the spinlock, semaphore, and rw-semaphore
-changes. I made a number of updates to how the bottom level spinlocks
-get defined to ease the transition per-patch and architecture. For
-semaphores I removed some constraints on how many changes need to be
-made per architecture.
+>
+> I've re-worked the -rt series, and some of the core patches to make it
+> all bisectable. I've done bisect updates in the past which really only
+> scratched the surface.
+>
 
-So what's missing? Well I dropped every architecture port except x86,
-since I broke them all. I also dropped a number of non-essential patches
-(mostly from Peter) not for any technical reason but just to reduce the
-amount of code. 
+Daniel,
 
-I didn't fix all the architectures since I want to make sure x86 is
-solid before I start moving the other architectures to the new format.
-All the dropped patches are still part of the archive, just not in the
-series.
+Thanks, for doing this. I'll try to look at it when I get a chance. If you
+can make a bisectable series that still gives a byte for byte identical
+kernel with a make allyesconfig, I'll incorporate it.
 
-x86 32-bit is compile and boot bisectable, and 64-bit is compile
-bisectable (should boot too, but I haven't tested it.)
-
-There's tons of back merging to do, but I keep it to a minimum for the
-time being. I'm sure there are some un-bisectable areas that I just
-haven't found yet, however if you report it to me I'll be happy to fix
-them.
-
-I'm only providing a broken out series and you can download in from,
-
-ftp://source.mvista.com/pub/dwalker/rt/patch-2.6.24.4-rt4-dw1-broken-out.tar.bz2
-
-Enjoy!
-
-Daniel
+-- Steve
 
