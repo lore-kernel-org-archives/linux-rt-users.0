@@ -1,260 +1,29 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: -O option causing test jitter?
-Date: Thu, 17 Apr 2008 22:17:21 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0804172120001.25316@gandalf.stny.rr.com>
-References: <1208476794.6307.15.camel@localhost.localdomain>
+From: "Mark Knecht" <markknecht@gmail.com>
+Subject: rt-sources on PPC Mac Mini
+Date: Thu, 17 Apr 2008 20:00:07 -0700
+Message-ID: <5bdc1c8b0804172000x41397df4r6a765b50fb0bd6eb@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-913857391-1208484905=:25316"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: john stultz <johnstul@us.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:37782 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752363AbYDRCRX (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.243]:47288 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751302AbYDRDAJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Apr 2008 22:17:23 -0400
-In-Reply-To: <1208476794.6307.15.camel@localhost.localdomain>
-Content-ID: <Pine.LNX.4.58.0804172216460.25316@gandalf.stny.rr.com>
+	Thu, 17 Apr 2008 23:00:09 -0400
+Received: by an-out-0708.google.com with SMTP id d31so90642and.103
+        for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2008 20:00:08 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-  Send mail to mime@docserver.cac.washington.edu for more info.
-
---8323328-913857391-1208484905=:25316
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
-Content-ID: <Pine.LNX.4.58.0804172216461.25316@gandalf.stny.rr.com>
-
-
-
-On Thu, 17 Apr 2008, john stultz wrote:
->
-> Anyway, I wanted to hit the list with this so folks could look at it and
-> let me know if such severe jitter was expected from just compile
-> options?
->
-
-I think this may simply be a simple case of cache misses.
-
-Attached is two files: sched_jitter-test.c and do_work.S. I found that by
-switching the positions of do_work1 and do_work2, which ever one is first
-performs better. do_work1 is me copying the output of objdump of -O1 of
-do_work, and do_work2 is copying the output from objdump of -O2.
-
-For true realtime predictability, x86 architecture truly sucks :-p
-
--- Steve
---8323328-913857391-1208484905=:25316
-Content-Type: TEXT/X-CSRC; CHARSET=US-ASCII; NAME="sched_jitter-test.c"
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.58.0804172215050.25316@gandalf.stny.rr.com>
-Content-Description: 
-Content-Disposition: ATTACHMENT; FILENAME="sched_jitter-test.c"
-
-LyogICAgRmlsZW5hbWU6IHNjaGVkX2ppdHRlci5jDQogKiAgICAgIEF1dGhv
-
-cjogSm9obiBTdHVsdHogPGpvaG5zdHVsQHVzLmlibS5jb20+DQogKiBEZXNj
-
-cmlwdGlvbjogVGhpcyB0ZXN0IG1lYXN1cmVzIHNjaGVkdWxpbmcgaml0dGVy
-
-IHcvIHJlYWx0aW1lDQogKiBwcm9jZXNzZXMuICBJdCBzcGF3bnMgYSByZWFs
-
-dGltZSB0aHJlYWQgdGhhdCByZXBlYXRlZGx5IHRpbWVzIGhvdyBsb25nDQog
-
-KiBpdCB0YWtlcyB0byBkbyBhIGZpeGVkIGFtb3VudCBvZiB3b3JrLiBJdCB0
-
-aGVuIHByaW50cyBvdXQgdGhlIG1heGltdW0NCiAqIGppdHRlciBzZWVuIChs
-
-b25nZXN0IGV4ZWN1dGlvbiB0aW1lIC0gdGhlIHNob3J0ZXN0IGV4ZWN1dGlv
-
-biB0aW1lKS4NCiAqIEl0IGFsc28gc3Bhd25zIG9mZiBhIHJlYWx0aW1lIHRo
-
-cmVhZCBvZiBoaWdoZXIgcHJpb3JpdHkgdGhhdCBzaW1wbHkNCiAqIHdha2Vz
-
-IHVwIGFuZCBnb2VzIGJhY2sgdG8gc2xlZXAuIFRoaXMgdHJpZXMgdG8gbWVh
-
-c3VyZSBob3cgbXVjaA0KICogb3ZlcmhlYWQgdGhlIHNjaGVkdWxlciBhZGRz
-
-IGluIHN3aXRjaGluZyBxdWlja2x5IHRvIGFub3RoZXIgdGFzayBhbmQNCiAq
-
-IGJhY2suDQogKg0KICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7
-
-IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnkNCiAqIGl0
-
-IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExp
-
-Y2Vuc2UgYXMgcHVibGlzaGVkIGJ5DQogKiB0aGUgRnJlZSBTb2Z0d2FyZSBG
-
-b3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAyIG9mIHRoZSBMaWNlbnNlLCBv
-
-cg0KICogKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi4NCiAq
-
-DQogKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUg
-
-dGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwNCiAqIGJ1dCBXSVRIT1VUIEFOWSBX
-
-QVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9m
-
-DQogKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNV
-
-TEFSIFBVUlBPU0UuICBTZWUgdGhlDQogKiBHTlUgR2VuZXJhbCBQdWJsaWMg
-
-TGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLg0KICoNCiAqIFlvdSBzaG91bGQg
-
-aGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1Ymxp
-
-YyBMaWNlbnNlDQogKiBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbTsgaWYgbm90
-
-LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZQ0KICogRm91bmRhdGlvbiwg
-
-SW5jLiwgNTkgVGVtcGxlIFBsYWNlIC0gU3VpdGUgMzMwLCBCb3N0b24sIE1B
-
-IDAyMTExLTEzMDcsIFVTQS4NCiAqDQogKiBDb3B5cmlnaHQgKEMpIElCTSBD
-
-b3Jwb3JhdGlvbiwgMjAwNiwgMjAwNw0KICoNCiAqIDIwMDYtTWF5LTA1OglJ
-
-bml0aWFsIHZlcnNpb24gYnkgSm9obiBTdHVsdHogPGpvaG5zdHVsQHVzLmli
-
-bS5jb20+DQogKiAyMDA3LUp1bHktMTg6IFN1cHBvcnQgdG8gZ2F0aGVyIHN0
-
-YXRzIGJ5IEFua2l0YSBHYXJnIDxhbmtpdGFAaW4uaWJtLmNvbT4NCiAqLw0K
-
-DQojaW5jbHVkZSA8c3RkaW8uaD4NCiNpbmNsdWRlIDx0aW1lLmg+DQojaW5j
-
-bHVkZSA8cHRocmVhZC5oPg0KI2luY2x1ZGUgPHNjaGVkLmg+DQojaW5jbHVk
-
-ZSA8dW5pc3RkLmg+DQojaW5jbHVkZSA8c3lzL21tYW4uaD4NCiNpbmNsdWRl
-
-IDxzeXMvcHJjdGwuaD4NCg0KI2RlZmluZSBQUl9QUkVFTVBUX1RSQUNJTkcJ
-
-MjMNCg0KI2RlZmluZSBOVU1SVU5TIDEwDQojZGVmaW5lIE5VTUxPT1BTIDEw
-
-MDAwMDAwDQovLyNkZWZpbmUgTlVNTE9PUFMgMTAwDQojZGVmaW5lIE5TRUNf
-
-UEVSX1NFQyAxMDAwMDAwMDAwDQojZGVmaW5lIFdPUktMRU4gNjQNCg0KY2hh
-
-ciAgYXJyYXlbV09SS0xFTl07DQoNCg0KdW5zaWduZWQgbG9uZyBsb25nIHRz
-
-X3N1YihzdHJ1Y3QgdGltZXNwZWMgYSAsIHN0cnVjdCB0aW1lc3BlYyBiKQ0K
-
-ew0KCXVuc2lnbmVkIGxvbmcgbG9uZyBmaXJzdCwgc2Vjb25kOw0KCQ0KCWZp
-
-cnN0ID0gKHVuc2lnbmVkIGxvbmcgbG9uZylhLnR2X3NlYyAqIE5TRUNfUEVS
-
-X1NFQyArIGEudHZfbnNlYzsNCglzZWNvbmQgPSAodW5zaWduZWQgbG9uZyBs
-
-b25nKWIudHZfc2VjICogTlNFQ19QRVJfU0VDICsgYi50dl9uc2VjOw0KCXJl
-
-dHVybiBmaXJzdCAtIHNlY29uZDsJDQp9DQoNCnZvaWQgcHJpbnRfdW5pdCh1
-
-bnNpZ25lZCBsb25nIGxvbmcgdmFsKQ0Kew0KCWlmICh2YWwgPiAxMDAwMDAw
-
-KQ0KCQlwcmludGYoIiVmIG1zXG4iLCAoZmxvYXQpKHZhbCkvMTAwMDAwMCk7
-
-DQoJZWxzZSBpZiAodmFsID4gMTAwMCkNCgkJcHJpbnRmKCIlZiB1c1xuIiwg
-
-KGZsb2F0KSh2YWwpLzEwMDApOw0KCWVsc2UNCgkJcHJpbnRmKCIlZiBuc1xu
-
-IiwgKGZsb2F0KXZhbCk7IA0KDQp9DQoNCnZvaWQgcnVubWUodm9pZCAoKndv
-
-cmspKGludCkpDQp7DQoJc3RydWN0IHRpbWVzcGVjIHN0YXJ0LCBzdG9wOw0K
-
-CWludCBpOw0KCXVuc2lnbmVkIGxvbmcgbG9uZyBkZWx0YTsNCgl1bnNpZ25l
-
-ZCBsb25nIGxvbmcgbWluPS0xLCBtYXg9MDsNCgl1bnNpZ25lZCBsb25nIGxv
-
-bmcgYXZnPTA7DQoNCiAgICAgICAgZm9yIChpPTA7IGkgPCBOVU1SVU5TOyBp
-
-KyspIHsNCg0KCQl3b3JrKDEpOyAvKiB3YXJtIGNhY2hlICovDQoNCgkJLyog
-
-ZG8gdGVzdCAqLw0KLy8JCXByY3RsKFBSX1BSRUVNUFRfVFJBQ0lORywgMSk7
-
-DQoJCWNsb2NrX2dldHRpbWUoQ0xPQ0tfTU9OT1RPTklDLCAmc3RhcnQpOw0K
-
-CQl3b3JrKE5VTUxPT1BTKTsNCgkJY2xvY2tfZ2V0dGltZShDTE9DS19NT05P
-
-VE9OSUMsICZzdG9wKTsNCi8vCQlwcmN0bChQUl9QUkVFTVBUX1RSQUNJTkcs
-
-IDApOw0KDQoJCS8qIGNhbGMgZGVsdGEsIG1pbiBhbmQgbWF4ICovDQoJCWRl
-
-bHRhID0gdHNfc3ViKHN0b3AsIHN0YXJ0KTsNCgkJaWYgKGRlbHRhIDwgbWlu
-
-KQ0KCQkJbWluID0gZGVsdGE7DQoJCWlmIChkZWx0YT4gbWF4KQ0KCQkJbWF4
-
-ID0gZGVsdGE7DQoJCWF2ZyArPSBkZWx0YTsNCgkJcHJpbnRmKCJkZWx0YTog
-
-Iik7DQoJCXByaW50X3VuaXQoZGVsdGEpOw0KCQl1c2xlZXAoMSk7IC8qIGxl
-
-dCBvdGhlciB0aGluZ3MgaGFwcGVuICovDQoJfQ0KDQoJcHJpbnRmKCJtYXgg
-
-aml0dGVyOiAiKTsNCglwcmludF91bml0KG1heCAtIG1pbik7DQoJcHJpbnRm
-
-KCJhdmVyYWdlIHJ1bnRpbWU6ICIpOw0KCXByaW50X3VuaXQoYXZnL05VTVJV
-
-TlMpOw0KfQ0KDQpleHRlcm4gdm9pZCBkb193b3JrMShpbnQpOw0KZXh0ZXJu
-
-IHZvaWQgZG9fd29yazIoaW50KTsNCg0KaW50IG1haW4oaW50IGFyZ2MsIGNo
-
-YXIgKmFyZ3ZbXSkNCnsNCglzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW07DQoN
-
-CglwYXJhbS5zY2hlZF9wcmlvcml0eSA9IHNjaGVkX2dldF9wcmlvcml0eV9t
-
-YXgoU0NIRURfRklGTyk7DQoJc2NoZWRfc2V0c2NoZWR1bGVyKDAsIFNDSEVE
-
-X0ZJRk8sICZwYXJhbSk7DQoJbWxvY2thbGwoTUNMX0NVUlJFTlR8TUNMX0ZV
-
-VFVSRSk7DQoNCglydW5tZShkb193b3JrMSk7DQoJcnVubWUoZG9fd29yazIp
-
-Ow0KCXJldHVybiAwOw0KfQ0K
-
-
---8323328-913857391-1208484905=:25316
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; NAME="do_work.S"
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.58.0804172215051.25316@gandalf.stny.rr.com>
-Content-Description: 
-Content-Disposition: ATTACHMENT; FILENAME="do_work.S"
-
-DQouYWxpZ24gMTI4DQouZ2xvYmwgZG9fd29yazENCmRvX3dvcmsxOg0KCW1v
-
-diAgICAkMHgwLCVlY3gNCgl0ZXN0ICAgJWVkaSwlZWRpDQoJamcgICAgIDFm
-
-DQoJcmV0cSANCjI6CW1vdnpibCBhcnJheSsxKCVyZHgpLCVlYXgNCglhZGQg
-
-ICAgJWFsLGFycmF5KCVyZHgpDQoJYWRkICAgICQweDEsJXJkeA0KCWNtcCAg
-
-ICAkMHgzZiwlcmR4DQoJam5lICAgIDJiDQoJbW92ICAgICQweDAsJWRsDQoz
-
-Ogltb3Z6YmwgYXJyYXkoJXJkeCksJWVheA0KCXN1YiAgICBhcnJheSsxKCVy
-
-ZHgpLCVhbA0KCW1vdiAgICAlYWwsYXJyYXkoJXJkeCkNCglhZGQgICAgJDB4
-
-MSwlcmR4DQoJY21wICAgICQweDNmLCVyZHgNCglqbmUgICAgM2INCglhZGQg
-
-ICAgJDB4MSwlZWN4DQoJY21wICAgICVlZGksJWVjeA0KCWplICAgICA0Zg0K
-
-MToJbW92ICAgICQweDAsJWVkeA0KCWptcCAgICAyYg0KNDoJcmV0cSANCg0K
-
-DQoNCi5hbGlnbiAxMjgNCi5nbG9ibCBkb193b3JrMg0KZG9fd29yazI6DQoJ
-
-eG9yICAgICVlY3gsJWVjeA0KCXRlc3QgICAlZWRpLCVlZGkNCglqbGUgICAg
-
-MWYNCjQ6CXhvciAgICAlZWR4LCVlZHgNCjI6CW1vdnpibCBhcnJheSsxKCVy
-
-ZHgpLCVlYXgNCglhZGQgICAgJWFsLGFycmF5KCVyZHgpDQoJYWRkICAgICQw
-
-eDEsJXJkeA0KCWNtcCAgICAkMHgzZiwlcmR4DQoJam5lICAgIDJiDQoJeG9y
-
-ICAgICVkbCwlZGwNCjM6CW1vdnpibCBhcnJheSglcmR4KSwlZWF4DQoJc3Vi
-
-ICAgIGFycmF5KzEoJXJkeCksJWFsDQoJbW92ICAgICVhbCxhcnJheSglcmR4
-
-KQ0KCWFkZCAgICAkMHgxLCVyZHgNCgljbXAgICAgJDB4M2YsJXJkeA0KCWpu
-
-ZSAgICAzYg0KCWFkZCAgICAkMHgxLCVlY3gNCgljbXAgICAgJWVkaSwlZWN4
-
-DQoJam5lICAgIDRiDQoxOglyZXRxIA0K
-
-
---8323328-913857391-1208484905=:25316--
+Any reason I should not try using rt-sources on my Power PC Mac Mini?
+Any known problems? Does it work?
+
+We bought this thing and it never got used. No one could even find OS
+X apps they wanted to buy so yesterday I blew away OS X completely and
+have Gentoo running today.
+
+Cheers,
+Mark
