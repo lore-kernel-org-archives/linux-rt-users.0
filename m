@@ -1,235 +1,260 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: -O option causing test jitter?
-Date: Thu, 17 Apr 2008 16:59:54 -0700
-Message-ID: <1208476794.6307.15.camel@localhost.localdomain>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: -O option causing test jitter?
+Date: Thu, 17 Apr 2008 22:17:21 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0804172120001.25316@gandalf.stny.rr.com>
+References: <1208476794.6307.15.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-l0bP1ul4r/Aeimbq1jQa"
-To: linux-rt-users@vger.kernel.org
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-913857391-1208484905=:25316"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: john stultz <johnstul@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e2.ny.us.ibm.com ([32.97.182.142]:59445 "EHLO e2.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755456AbYDQX76 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Apr 2008 19:59:58 -0400
-Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
-	by e2.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id m3HNxvJd005381
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2008 19:59:57 -0400
-Received: from d01av01.pok.ibm.com (d01av01.pok.ibm.com [9.56.224.215])
-	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m3HNxviE1089924
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2008 19:59:57 -0400
-Received: from d01av01.pok.ibm.com (loopback [127.0.0.1])
-	by d01av01.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m3HNxv3h022994
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Apr 2008 19:59:57 -0400
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:37782 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752363AbYDRCRX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Apr 2008 22:17:23 -0400
+In-Reply-To: <1208476794.6307.15.camel@localhost.localdomain>
+Content-ID: <Pine.LNX.4.58.0804172216460.25316@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+  Send mail to mime@docserver.cac.washington.edu for more info.
 
---=-l0bP1ul4r/Aeimbq1jQa
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-So I've been using the attached test case (a hacked up version of
-sched_jitter, which can now be found in ltp) to measure jitter in a
-cpu-bound workload. The idea being if nothing preempts us, we might get
-some irq caused jitter, but it should be pretty minimal.
-
-Only recently I had noticed it wasn't that minimal. For 2.5 seconds of
-work, I was seeing up to 5-10ms of jitter, which seemed a bit high.
-
-So I dug in and instrumented the kernel and logged any time we got
-preempted by a process, or an irq blocked us, or even time spent waiting
-on raw locks and seqlocks.
-
-With all the instrumenting I could, I could only account for maybe 2% of
-the jitter (in one case the jitter was 1.5ms, and I could only account
-for 30us from interrupt overhead).
-
-Finally I rebuilt the test using -O2, and suddenly the jitter dropped
-way down, and was then 90% or so accounted for by the instrumentation.
-
-The issue seems to be that building w/ -O1, the compiler is doing
-something pretty badly that causes the execution time for a fixed amount
-of work to be much more variable.
-
-Anyway, I wanted to hit the list with this so folks could look at it and
-let me know if such severe jitter was expected from just compile
-options?
-
-thanks
--john
+--8323328-913857391-1208484905=:25316
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
+Content-ID: <Pine.LNX.4.58.0804172216461.25316@gandalf.stny.rr.com>
 
 
 
+On Thu, 17 Apr 2008, john stultz wrote:
+>
+> Anyway, I wanted to hit the list with this so folks could look at it and
+> let me know if such severe jitter was expected from just compile
+> options?
+>
 
-To build:
-gcc -lrt -O1 sched_jitter.c -o sched_jitter-O1
-gcc -lrt -O2 sched_jitter.c -o sched_jitter-O2
+I think this may simply be a simple case of cache misses.
+
+Attached is two files: sched_jitter-test.c and do_work.S. I found that by
+switching the positions of do_work1 and do_work2, which ever one is first
+performs better. do_work1 is me copying the output of objdump of -O1 of
+do_work, and do_work2 is copying the output from objdump of -O2.
+
+For true realtime predictability, x86 architecture truly sucks :-p
+
+-- Steve
+--8323328-913857391-1208484905=:25316
+Content-Type: TEXT/X-CSRC; CHARSET=US-ASCII; NAME="sched_jitter-test.c"
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.58.0804172215050.25316@gandalf.stny.rr.com>
+Content-Description: 
+Content-Disposition: ATTACHMENT; FILENAME="sched_jitter-test.c"
+
+LyogICAgRmlsZW5hbWU6IHNjaGVkX2ppdHRlci5jDQogKiAgICAgIEF1dGhv
+
+cjogSm9obiBTdHVsdHogPGpvaG5zdHVsQHVzLmlibS5jb20+DQogKiBEZXNj
+
+cmlwdGlvbjogVGhpcyB0ZXN0IG1lYXN1cmVzIHNjaGVkdWxpbmcgaml0dGVy
+
+IHcvIHJlYWx0aW1lDQogKiBwcm9jZXNzZXMuICBJdCBzcGF3bnMgYSByZWFs
+
+dGltZSB0aHJlYWQgdGhhdCByZXBlYXRlZGx5IHRpbWVzIGhvdyBsb25nDQog
+
+KiBpdCB0YWtlcyB0byBkbyBhIGZpeGVkIGFtb3VudCBvZiB3b3JrLiBJdCB0
+
+aGVuIHByaW50cyBvdXQgdGhlIG1heGltdW0NCiAqIGppdHRlciBzZWVuIChs
+
+b25nZXN0IGV4ZWN1dGlvbiB0aW1lIC0gdGhlIHNob3J0ZXN0IGV4ZWN1dGlv
+
+biB0aW1lKS4NCiAqIEl0IGFsc28gc3Bhd25zIG9mZiBhIHJlYWx0aW1lIHRo
+
+cmVhZCBvZiBoaWdoZXIgcHJpb3JpdHkgdGhhdCBzaW1wbHkNCiAqIHdha2Vz
+
+IHVwIGFuZCBnb2VzIGJhY2sgdG8gc2xlZXAuIFRoaXMgdHJpZXMgdG8gbWVh
+
+c3VyZSBob3cgbXVjaA0KICogb3ZlcmhlYWQgdGhlIHNjaGVkdWxlciBhZGRz
+
+IGluIHN3aXRjaGluZyBxdWlja2x5IHRvIGFub3RoZXIgdGFzayBhbmQNCiAq
+
+IGJhY2suDQogKg0KICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7
+
+IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnkNCiAqIGl0
+
+IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExp
+
+Y2Vuc2UgYXMgcHVibGlzaGVkIGJ5DQogKiB0aGUgRnJlZSBTb2Z0d2FyZSBG
+
+b3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAyIG9mIHRoZSBMaWNlbnNlLCBv
+
+cg0KICogKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi4NCiAq
+
+DQogKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUg
+
+dGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwNCiAqIGJ1dCBXSVRIT1VUIEFOWSBX
+
+QVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9m
+
+DQogKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNV
+
+TEFSIFBVUlBPU0UuICBTZWUgdGhlDQogKiBHTlUgR2VuZXJhbCBQdWJsaWMg
+
+TGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLg0KICoNCiAqIFlvdSBzaG91bGQg
+
+aGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1Ymxp
+
+YyBMaWNlbnNlDQogKiBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbTsgaWYgbm90
+
+LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZQ0KICogRm91bmRhdGlvbiwg
+
+SW5jLiwgNTkgVGVtcGxlIFBsYWNlIC0gU3VpdGUgMzMwLCBCb3N0b24sIE1B
+
+IDAyMTExLTEzMDcsIFVTQS4NCiAqDQogKiBDb3B5cmlnaHQgKEMpIElCTSBD
+
+b3Jwb3JhdGlvbiwgMjAwNiwgMjAwNw0KICoNCiAqIDIwMDYtTWF5LTA1OglJ
+
+bml0aWFsIHZlcnNpb24gYnkgSm9obiBTdHVsdHogPGpvaG5zdHVsQHVzLmli
+
+bS5jb20+DQogKiAyMDA3LUp1bHktMTg6IFN1cHBvcnQgdG8gZ2F0aGVyIHN0
+
+YXRzIGJ5IEFua2l0YSBHYXJnIDxhbmtpdGFAaW4uaWJtLmNvbT4NCiAqLw0K
+
+DQojaW5jbHVkZSA8c3RkaW8uaD4NCiNpbmNsdWRlIDx0aW1lLmg+DQojaW5j
+
+bHVkZSA8cHRocmVhZC5oPg0KI2luY2x1ZGUgPHNjaGVkLmg+DQojaW5jbHVk
+
+ZSA8dW5pc3RkLmg+DQojaW5jbHVkZSA8c3lzL21tYW4uaD4NCiNpbmNsdWRl
+
+IDxzeXMvcHJjdGwuaD4NCg0KI2RlZmluZSBQUl9QUkVFTVBUX1RSQUNJTkcJ
+
+MjMNCg0KI2RlZmluZSBOVU1SVU5TIDEwDQojZGVmaW5lIE5VTUxPT1BTIDEw
+
+MDAwMDAwDQovLyNkZWZpbmUgTlVNTE9PUFMgMTAwDQojZGVmaW5lIE5TRUNf
+
+UEVSX1NFQyAxMDAwMDAwMDAwDQojZGVmaW5lIFdPUktMRU4gNjQNCg0KY2hh
+
+ciAgYXJyYXlbV09SS0xFTl07DQoNCg0KdW5zaWduZWQgbG9uZyBsb25nIHRz
+
+X3N1YihzdHJ1Y3QgdGltZXNwZWMgYSAsIHN0cnVjdCB0aW1lc3BlYyBiKQ0K
+
+ew0KCXVuc2lnbmVkIGxvbmcgbG9uZyBmaXJzdCwgc2Vjb25kOw0KCQ0KCWZp
+
+cnN0ID0gKHVuc2lnbmVkIGxvbmcgbG9uZylhLnR2X3NlYyAqIE5TRUNfUEVS
+
+X1NFQyArIGEudHZfbnNlYzsNCglzZWNvbmQgPSAodW5zaWduZWQgbG9uZyBs
+
+b25nKWIudHZfc2VjICogTlNFQ19QRVJfU0VDICsgYi50dl9uc2VjOw0KCXJl
+
+dHVybiBmaXJzdCAtIHNlY29uZDsJDQp9DQoNCnZvaWQgcHJpbnRfdW5pdCh1
+
+bnNpZ25lZCBsb25nIGxvbmcgdmFsKQ0Kew0KCWlmICh2YWwgPiAxMDAwMDAw
+
+KQ0KCQlwcmludGYoIiVmIG1zXG4iLCAoZmxvYXQpKHZhbCkvMTAwMDAwMCk7
+
+DQoJZWxzZSBpZiAodmFsID4gMTAwMCkNCgkJcHJpbnRmKCIlZiB1c1xuIiwg
+
+KGZsb2F0KSh2YWwpLzEwMDApOw0KCWVsc2UNCgkJcHJpbnRmKCIlZiBuc1xu
+
+IiwgKGZsb2F0KXZhbCk7IA0KDQp9DQoNCnZvaWQgcnVubWUodm9pZCAoKndv
+
+cmspKGludCkpDQp7DQoJc3RydWN0IHRpbWVzcGVjIHN0YXJ0LCBzdG9wOw0K
+
+CWludCBpOw0KCXVuc2lnbmVkIGxvbmcgbG9uZyBkZWx0YTsNCgl1bnNpZ25l
+
+ZCBsb25nIGxvbmcgbWluPS0xLCBtYXg9MDsNCgl1bnNpZ25lZCBsb25nIGxv
+
+bmcgYXZnPTA7DQoNCiAgICAgICAgZm9yIChpPTA7IGkgPCBOVU1SVU5TOyBp
+
+KyspIHsNCg0KCQl3b3JrKDEpOyAvKiB3YXJtIGNhY2hlICovDQoNCgkJLyog
+
+ZG8gdGVzdCAqLw0KLy8JCXByY3RsKFBSX1BSRUVNUFRfVFJBQ0lORywgMSk7
+
+DQoJCWNsb2NrX2dldHRpbWUoQ0xPQ0tfTU9OT1RPTklDLCAmc3RhcnQpOw0K
+
+CQl3b3JrKE5VTUxPT1BTKTsNCgkJY2xvY2tfZ2V0dGltZShDTE9DS19NT05P
+
+VE9OSUMsICZzdG9wKTsNCi8vCQlwcmN0bChQUl9QUkVFTVBUX1RSQUNJTkcs
+
+IDApOw0KDQoJCS8qIGNhbGMgZGVsdGEsIG1pbiBhbmQgbWF4ICovDQoJCWRl
+
+bHRhID0gdHNfc3ViKHN0b3AsIHN0YXJ0KTsNCgkJaWYgKGRlbHRhIDwgbWlu
+
+KQ0KCQkJbWluID0gZGVsdGE7DQoJCWlmIChkZWx0YT4gbWF4KQ0KCQkJbWF4
+
+ID0gZGVsdGE7DQoJCWF2ZyArPSBkZWx0YTsNCgkJcHJpbnRmKCJkZWx0YTog
+
+Iik7DQoJCXByaW50X3VuaXQoZGVsdGEpOw0KCQl1c2xlZXAoMSk7IC8qIGxl
+
+dCBvdGhlciB0aGluZ3MgaGFwcGVuICovDQoJfQ0KDQoJcHJpbnRmKCJtYXgg
+
+aml0dGVyOiAiKTsNCglwcmludF91bml0KG1heCAtIG1pbik7DQoJcHJpbnRm
+
+KCJhdmVyYWdlIHJ1bnRpbWU6ICIpOw0KCXByaW50X3VuaXQoYXZnL05VTVJV
+
+TlMpOw0KfQ0KDQpleHRlcm4gdm9pZCBkb193b3JrMShpbnQpOw0KZXh0ZXJu
+
+IHZvaWQgZG9fd29yazIoaW50KTsNCg0KaW50IG1haW4oaW50IGFyZ2MsIGNo
+
+YXIgKmFyZ3ZbXSkNCnsNCglzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW07DQoN
+
+CglwYXJhbS5zY2hlZF9wcmlvcml0eSA9IHNjaGVkX2dldF9wcmlvcml0eV9t
+
+YXgoU0NIRURfRklGTyk7DQoJc2NoZWRfc2V0c2NoZWR1bGVyKDAsIFNDSEVE
+
+X0ZJRk8sICZwYXJhbSk7DQoJbWxvY2thbGwoTUNMX0NVUlJFTlR8TUNMX0ZV
+
+VFVSRSk7DQoNCglydW5tZShkb193b3JrMSk7DQoJcnVubWUoZG9fd29yazIp
+
+Ow0KCXJldHVybiAwOw0KfQ0K
 
 
-Here's example output:
+--8323328-913857391-1208484905=:25316
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; NAME="do_work.S"
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.58.0804172215051.25316@gandalf.stny.rr.com>
+Content-Description: 
+Content-Disposition: ATTACHMENT; FILENAME="do_work.S"
 
-./sched_jitter-O1
-delta: 2479.231934 ms
-delta: 2476.494629 ms
-delta: 2473.964355 ms
-delta: 2474.239746 ms
-delta: 2472.457275 ms
-delta: 2476.843262 ms
-delta: 2475.494141 ms
-delta: 2478.266113 ms
-delta: 2476.601074 ms
-delta: 2475.466553 ms
-max jitter: 6.774889 ms
-average runtime: 2475.905762 ms
+DQouYWxpZ24gMTI4DQouZ2xvYmwgZG9fd29yazENCmRvX3dvcmsxOg0KCW1v
 
+diAgICAkMHgwLCVlY3gNCgl0ZXN0ICAgJWVkaSwlZWRpDQoJamcgICAgIDFm
 
+DQoJcmV0cSANCjI6CW1vdnpibCBhcnJheSsxKCVyZHgpLCVlYXgNCglhZGQg
 
-./sched_jitter-O2
-delta: 2069.088867 ms
-delta: 2069.086914 ms
-delta: 2068.875977 ms
-delta: 2068.900146 ms
-delta: 2068.948242 ms
-delta: 2068.889893 ms
-delta: 2068.878906 ms
-delta: 2068.915283 ms
-delta: 2068.913086 ms
-delta: 2068.939453 ms
-max jitter: 212.876007 us
-average runtime: 2068.943848 ms
+ICAgJWFsLGFycmF5KCVyZHgpDQoJYWRkICAgICQweDEsJXJkeA0KCWNtcCAg
 
+ICAkMHgzZiwlcmR4DQoJam5lICAgIDJiDQoJbW92ICAgICQweDAsJWRsDQoz
 
+Ogltb3Z6YmwgYXJyYXkoJXJkeCksJWVheA0KCXN1YiAgICBhcnJheSsxKCVy
 
---=-l0bP1ul4r/Aeimbq1jQa
-Content-Disposition: attachment; filename=sched_jitter.c
-Content-Type: text/x-csrc; name=sched_jitter.c; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+ZHgpLCVhbA0KCW1vdiAgICAlYWwsYXJyYXkoJXJkeCkNCglhZGQgICAgJDB4
 
-/*    Filename: sched_jitter.c
- *      Author: John Stultz <johnstul@us.ibm.com>
- * Description: This test measures scheduling jitter w/ realtime
- * processes.  It spawns a realtime thread that repeatedly times how long
- * it takes to do a fixed amount of work. It then prints out the maximum
- * jitter seen (longest execution time - the shortest execution time).
- * It also spawns off a realtime thread of higher priority that simply
- * wakes up and goes back to sleep. This tries to measure how much
- * overhead the scheduler adds in switching quickly to another task and
- * back.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * Copyright (C) IBM Corporation, 2006, 2007
- *
- * 2006-May-05:	Initial version by John Stultz <johnstul@us.ibm.com>
- * 2007-July-18: Support to gather stats by Ankita Garg <ankita@in.ibm.com>
- */
+MSwlcmR4DQoJY21wICAgICQweDNmLCVyZHgNCglqbmUgICAgM2INCglhZGQg
 
-#include <stdio.h>
-#include <time.h>
-#include <pthread.h>
-#include <sched.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/prctl.h>
+ICAgJDB4MSwlZWN4DQoJY21wICAgICVlZGksJWVjeA0KCWplICAgICA0Zg0K
 
-#define PR_PREEMPT_TRACING	23
+MToJbW92ICAgICQweDAsJWVkeA0KCWptcCAgICAyYg0KNDoJcmV0cSANCg0K
 
-#define NUMRUNS 10
-#define NUMLOOPS 10000000
-#define NSEC_PER_SEC 1000000000
-#define WORKLEN 64
+DQoNCi5hbGlnbiAxMjgNCi5nbG9ibCBkb193b3JrMg0KZG9fd29yazI6DQoJ
 
-char  array[WORKLEN];
+eG9yICAgICVlY3gsJWVjeA0KCXRlc3QgICAlZWRpLCVlZGkNCglqbGUgICAg
+
+MWYNCjQ6CXhvciAgICAlZWR4LCVlZHgNCjI6CW1vdnpibCBhcnJheSsxKCVy
+
+ZHgpLCVlYXgNCglhZGQgICAgJWFsLGFycmF5KCVyZHgpDQoJYWRkICAgICQw
+
+eDEsJXJkeA0KCWNtcCAgICAkMHgzZiwlcmR4DQoJam5lICAgIDJiDQoJeG9y
+
+ICAgICVkbCwlZGwNCjM6CW1vdnpibCBhcnJheSglcmR4KSwlZWF4DQoJc3Vi
+
+ICAgIGFycmF5KzEoJXJkeCksJWFsDQoJbW92ICAgICVhbCxhcnJheSglcmR4
+
+KQ0KCWFkZCAgICAkMHgxLCVyZHgNCgljbXAgICAgJDB4M2YsJXJkeA0KCWpu
+
+ZSAgICAzYg0KCWFkZCAgICAkMHgxLCVlY3gNCgljbXAgICAgJWVkaSwlZWN4
+
+DQoJam5lICAgIDRiDQoxOglyZXRxIA0K
 
 
-unsigned long long ts_sub(struct timespec a , struct timespec b)
-{
-	unsigned long long first, second;
-	
-	first = (unsigned long long)a.tv_sec * NSEC_PER_SEC + a.tv_nsec;
-	second = (unsigned long long)b.tv_sec * NSEC_PER_SEC + b.tv_nsec;
-	return first - second;	
-}
-
-void print_unit(unsigned long long val)
-{
-	if (val > 1000000)
-		printf("%f ms\n", (float)(val)/1000000);
-	else if (val > 1000)
-		printf("%f us\n", (float)(val)/1000);
-	else
-		printf("%f ns\n", (float)val); 
-
-}
-
-void do_work(int runs)
-{
-	int i, j;
-	for (i=0; i < runs; i++) {
-		for (j=0; j < WORKLEN-1; j++)
-			array[j] = array[j]+array[j+1];
-		for (j=0; j < WORKLEN-1; j++)
-			array[j] = array[j]-array[j+1];
-	}
-}
-
-
-
-int main(int argc, char *argv[])
-{
-	struct sched_param param;
-
-	struct timespec start, stop;
-	int i;
-	unsigned long long delta;
-	unsigned long long min=-1, max=0;
-	unsigned long long avg=0;
-
-	param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-	sched_setscheduler(0, SCHED_FIFO, &param);
-	mlockall(MCL_CURRENT|MCL_FUTURE);
-
-        for (i=0; i < NUMRUNS; i++) {
-
-		do_work(1); /* warm cache */
-
-		/* do test */
-//		prctl(PR_PREEMPT_TRACING, 1);
-		clock_gettime(CLOCK_MONOTONIC, &start);
-		do_work(NUMLOOPS);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-//		prctl(PR_PREEMPT_TRACING, 0);
-
-		/* calc delta, min and max */
-		delta = ts_sub(stop, start);
-		if (delta < min)
-			min = delta;
-		if (delta> max)
-			max = delta;
-		avg += delta;
-		printf("delta: ");
-		print_unit(delta);
-		usleep(1); /* let other things happen */
-	}
-
-	printf("max jitter: ");
-	print_unit(max - min);
-	printf("average runtime: ");
-	print_unit(avg/NUMRUNS);
-
-	return 0;
-}
-
---=-l0bP1ul4r/Aeimbq1jQa--
-
+--8323328-913857391-1208484905=:25316--
