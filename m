@@ -1,7 +1,9 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 0/2] sched: refreshes
-Date: Mon, 21 Apr 2008 14:10:10 -0400
-Message-ID: <20080421180747.4560.67794.stgit@novell1.haskins.net>
+Subject: [PATCH 1/2] sched: push rt tasks only if newly activated tasks have
+	been added
+Date: Mon, 21 Apr 2008 14:10:16 -0400
+Message-ID: <20080421181015.4560.7658.stgit@novell1.haskins.net>
+References: <20080421180747.4560.67794.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -11,22 +13,121 @@ Cc: suresh.b.siddha@intel.com, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41566
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:41571
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752225AbYDUSnN (ORCPT
+	by vger.kernel.org with ESMTP id S1755760AbYDUSnR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Apr 2008 14:43:13 -0400
+	Mon, 21 Apr 2008 14:43:17 -0400
+In-Reply-To: <20080421180747.4560.67794.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Ingo,
-  Here is a refresh of the two patches you asked for:
+SCHED_RR can context-switch many times without having changed the run-queue.
+Therefore trying to push on each context switch can just be wasted effort
+since if it failed the first time, it will likely fail any subsequent times
+as well.  Instead, set a flag when we have successfully pushed as many tasks
+away as possible, and only clear it when the runqueue adds new tasks
+(effectively becoming a run-queue "dirty bit").  If new tasks are added we
+should try again.  If any remote run-queues downgrade their priority in the
+meantime, they will try to pull from us (as they always do).
 
-#1 is "v3" of the "pushed" patch which fixes the compilation issue on
- !CONFIG_SMP
+This attempts to address a performance regression reported by Suresh Siddha,
+et. al. in the 2.6.25 series.  It applies to 2.6.25.
 
-#2 is a resend of the 2-d bitmap, which includes a fix for that typo I
- mentioned.
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+CC: suresh.b.siddha@intel.com
+CC: mingo@elte.hu
+CC: rostedt@goodmis.org
+CC: chinang.ma@intel.com
+CC: arjan@linux.intel.com
+CC: willy@linux.intel.com
+---
 
-Regards,
--Greg
+ kernel/sched.c    |    2 ++
+ kernel/sched_rt.c |   24 ++++++++++++++++++++++--
+ 2 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 0067fc8..d859649 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -462,6 +462,7 @@ struct rt_rq {
+ #ifdef CONFIG_SMP
+ 	unsigned long rt_nr_migratory;
+ 	int overloaded;
++	int pushed;
+ #endif
+ 	int rt_throttled;
+ 	u64 rt_time;
+@@ -8073,6 +8074,7 @@ static void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
+ #ifdef CONFIG_SMP
+ 	rt_rq->rt_nr_migratory = 0;
+ 	rt_rq->overloaded = 0;
++	rt_rq->pushed = 0;
+ #endif
+ 
+ 	rt_rq->rt_time = 0;
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index c2730a5..3cc98be 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -515,6 +515,15 @@ static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
+ 		enqueue_rt_entity(rt_se);
+ 
+ 	inc_cpu_load(rq, p->se.load.weight);
++
++#ifdef CONFIG_SMP
++	/*
++	 * Clear the "pushed" state since we have changed the run-queue and
++	 * may need to migrate some of these tasks (see push_rt_tasks() for
++	 * details)
++	 */
++	rq->rt.pushed = 0;
++#endif
+ }
+ 
+ static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int sleep)
+@@ -913,7 +922,7 @@ static int push_rt_task(struct rq *rq)
+ 	int ret = 0;
+ 	int paranoid = RT_MAX_TRIES;
+ 
+-	if (!rq->rt.overloaded)
++	if (!rq->rt.overloaded || rq->rt.pushed)
+ 		return 0;
+ 
+ 	next_task = pick_next_highest_task_rt(rq, -1);
+@@ -973,6 +982,15 @@ out:
+ }
+ 
+ /*
++ * push_rt_tasks()
++ *
++ * Push as many tasks away as possible.  We only need to try once whenever
++ * one or more new tasks are added to our runqueue.  After an inital attempt,
++ * further changes in remote runqueue state will be accounted for with pull
++ * operations.  Therefore, we mark the run-queue as "pushed" here, and clear it
++ * during enqueue.  This primarily helps SCHED_RR tasks which will tend to
++ * have a higher context-switch to enqueue ratio.
++ *
+  * TODO: Currently we just use the second highest prio task on
+  *       the queue, and stop when it can't migrate (or there's
+  *       no more RT tasks).  There may be a case where a lower
+@@ -987,6 +1005,8 @@ static void push_rt_tasks(struct rq *rq)
+ 	/* push_rt_task will return true if it moved an RT */
+ 	while (push_rt_task(rq))
+ 		;
++
++	rq->rt.pushed = 1;
+ }
+ 
+ static int pull_rt_task(struct rq *this_rq)
+@@ -1091,7 +1111,7 @@ static void post_schedule_rt(struct rq *rq)
+ 	 * the lock was owned by prev, we need to release it
+ 	 * first via finish_lock_switch and then reaquire it here.
+ 	 */
+-	if (unlikely(rq->rt.overloaded)) {
++	if (unlikely(rq->rt.overloaded && !rq->rt.pushed)) {
+ 		spin_lock_irq(&rq->lock);
+ 		push_rt_tasks(rq);
+ 		spin_unlock_irq(&rq->lock);
+
