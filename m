@@ -1,52 +1,99 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
-Subject: Re: -O option causing test jitter?
-Date: Tue, 22 Apr 2008 09:05:44 -0700
-Message-ID: <480E0CD8.2070400@us.ibm.com>
-References: <1208476794.6307.15.camel@localhost.localdomain> <Pine.LNX.4.58.0804172120001.25316@gandalf.stny.rr.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [PATCH 1/2] sched: push rt tasks only if newly activated
+	tasks have been added
+Date: Tue, 22 Apr 2008 10:38:32 -0600
+Message-ID: <480DDC48.BA47.005A.0@novell.com>
+References: <20080421180747.4560.67794.stgit@novell1.haskins.net>
+ <20080421181015.4560.7658.stgit@novell1.haskins.net>
+ <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: john stultz <johnstul@us.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:39009 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751007AbYDVQF6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Apr 2008 12:05:58 -0400
-Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
-	by e4.ny.us.ibm.com (8.13.8/8.13.8) with ESMTP id m3MG5wSj002240
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Apr 2008 12:05:58 -0400
-Received: from d01av02.pok.ibm.com (d01av02.pok.ibm.com [9.56.224.216])
-	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m3MG5v7c217162
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Apr 2008 12:05:57 -0400
-Received: from d01av02.pok.ibm.com (loopback [127.0.0.1])
-	by d01av02.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m3MG5rGh015875
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Apr 2008 12:05:57 -0400
-In-Reply-To: <Pine.LNX.4.58.0804172120001.25316@gandalf.stny.rr.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <chinang.ma@intel.com>,
+	<suresh.b.siddha@intel.com>, <arjan@linux.intel.com>,
+	<willy@linux.intel.com>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757164AbYDVQiS@vger.kernel.org>
+In-Reply-To: <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Steven Rostedt wrote:
+Hi Dmitry,
+
+(Disclaimer: I am sick with a fever today, so hopefully I'm groking your email properly and not about to say something stupid ;)
+
+>>> On Tue, Apr 22, 2008 at 11:30 AM, in message
+<b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>, "Dmitry
+Adamushko" <dmitry.adamushko@gmail.com> wrote: 
+> Hi Gregory,
 > 
-> On Thu, 17 Apr 2008, john stultz wrote:
->> Anyway, I wanted to hit the list with this so folks could look at it and
->> let me know if such severe jitter was expected from just compile
->> options?
->>
 > 
-> I think this may simply be a simple case of cache misses.
+> consider the following 2-cpu system: cpu0 and cpu1.
 > 
-> Attached is two files: sched_jitter-test.c and do_work.S. I found that by
-> switching the positions of do_work1 and do_work2, which ever one is first
-> performs better. do_work1 is me copying the output of objdump of -O1 of
-> do_work, and do_work2 is copying the output from objdump of -O2.
+> cpu0: is idle --> in such a state, it never pulls RT tasks on its own.
+> 
+> T0 and T1 are RT tasks
+> 
+> 
+> square#0:
+> 
+> cpu1:  T0 is running
+> 
+> T1 is of the same prio as T0 (shouldn't really matter but to get the
+> same result it would require altering the flow of events slightly)
+> 
+> T1's affinity allows it to be run only on cpu1.
+> T0 can run on both.
+> 
+> try_to_wake_up() is called for T1.
+> |
+> --> select_task_rq_rt() => gives cpu1
+> |
+> --> task_wake_up_rt()
+>    |
+>    ---> push_rt_tasks() -> rq->rt.pushed = 1
+> 
+> now, neither T1 (due to its affinity), nor T0 (it's running) can be
+> pushed away to cpu0.
+> 
+> [ btw., (1) I'd expect that this task_wake_up_rt() thing should be
+> redundant, logically-wise... I'll check once more and comment later
+> on.
 
-So jitter going down might simply be a case of the
-faster cases actually slowing down, right - and
-making things uniformly slow?
+They are both necessary, but the key is that the select_task_rq() is a best-effort route attempt, whereas the task_wake_up() routine is the authoritative router.  By doing the push after activation, it allowed us to utilize a very clever and significant optimization on the pull side that Steven came up with.  The details of the optimization escape me now, but I do remember it was substantial to the design.  Then later we put the select_task_rq() logic in (see git-id 318e0893) to further optimize the routing by finding a likely good home before the activation takes place (saving an activation/deactivation cycle), but it still needs the post-router to protect against race conditions since its just best-effort.
 
-Do we know if the whole kaboodle is getting faster?
+> (2) any example when (p->prio >= rq->rt.highest_prio) is not true in
+> task_wake_up_rt() ?
 
-thanks,
-Nivedita
+Hmm...good catch.   Looks like it should be "p->prio >= rq->curr->prio" since we only need be concerned with pushing here if the task is not going to preempt current.  Do you agree Steven, or am I missing something? 
+
+
+> ]
+> 
+> as a result, rq->rt.pushed == 1.
+> 
+> Now, post_schedule_rt() won't call push_rt_tasks().
+> 
+> T0 and T1 are both running for some time on cpu1 (possibly
+> context-switching if they are both of SCHED_RR type).
+> 
+> Then they both block, _first_ T1 and then T0.
+> 
+> After some interval of time, they wake up (let's say they are
+> periodic) in the following order: _first_ T0 and then T1.
+> 
+> rq->rt.pushed becomes 0 and here we are back to square#0. The whole
+> story repeats again.
+> 
+> cpu0 is idle so it won't pull T0. Both T0 and T1 are competing for the
+> same cpu. Not good.
+> 
+> am I missing smth?
+
+No, I think you are indeed correct.  However, I would consider the root cause of the problem to have existed prior to the "pushed" flag, so perhaps we need to address this at a different level.  The case you present would have always been problematic for FIFO, and would have "worked" for RR eventually prior to the "pushed" patch.  But I dont know if I like relying on how it worked before to fix up the system.  At the very best, T1 would have experienced a latency equal to the remainder of T0's timeslice.
+
+Rather, I think we need to address the preemptive behavior for the case where a migratory task is on the cpu and a non-migratory task tries to wake up.  If they are equal in numerical priority, perhaps we need to treat "non-migratory" as the tie breaker.  In this case, T1 would preempt T0 from cpu1, and then we would push T0 to cpu0.  I don't quite have all the details about how this would work thought through yet.  Perhaps I should wait until my fever lifts. ;)  Thoughts?
+
+-Greg
