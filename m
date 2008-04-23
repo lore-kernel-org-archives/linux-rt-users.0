@@ -1,119 +1,251 @@
-From: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
-Subject: Re: [PATCH 1/2] sched: push rt tasks only if newly activated tasks have been added
-Date: Wed, 23 Apr 2008 13:20:54 +0200
-Message-ID: <b647ffbd0804230420l7f74713ax16aa4801491ef6c1@mail.gmail.com>
-References: <20080421180747.4560.67794.stgit@novell1.haskins.net>
-	 <20080421181015.4560.7658.stgit@novell1.haskins.net>
-	 <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
-	 <Pine.LNX.4.58.0804221144410.21511@gandalf.stny.rr.com>
-	 <b647ffbd0804230105u7966ed06wd4ed248f59132849@mail.gmail.com>
-	 <b647ffbd0804230253i32f48fcgb5dc7cf5b55607ac@mail.gmail.com>
-	 <480ED122.BA47.005A.0@novell.com>
-	 <b647ffbd0804230323s20d25697qcf80ca9996e143a7@mail.gmail.com>
-	 <480EDD2F.BA47.005A.0@novell.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 2/2] sched: prioritize non-migratable tasks over migratable
+	ones
+Date: Wed, 23 Apr 2008 07:13:35 -0400
+Message-ID: <20080423111334.4981.19638.stgit@novell1.haskins.net>
+References: <20080423111313.4981.37345.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, "Steven Rostedt" <rostedt@goodmis.org>,
-	chinang.ma@intel.com, suresh.b.siddha@intel.com,
-	arjan@linux.intel.com, willy@linux.intel.com,
+Cc: Gregory Haskins <ghaskins@novell.com>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: "Gregory Haskins" <ghaskins@novell.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wx-out-0506.google.com ([66.249.82.234]:39287 "EHLO
-	wx-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752424AbYDWLVC (ORCPT
+Received: from 75-130-111-13.dhcp.oxfr.ma.charter.com ([75.130.111.13]:44317
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752823AbYDWLqf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Apr 2008 07:21:02 -0400
-Received: by wx-out-0506.google.com with SMTP id h31so2157937wxd.4
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Apr 2008 04:20:58 -0700 (PDT)
-In-Reply-To: <480EDD2F.BA47.005A.0@novell.com>
-Content-Disposition: inline
+	Wed, 23 Apr 2008 07:46:35 -0400
+In-Reply-To: <20080423111313.4981.37345.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2008/4/23 Gregory Haskins <ghaskins@novell.com>:
-> >>> On Wed, Apr 23, 2008 at  6:23 AM, in message
->  <b647ffbd0804230323s20d25697qcf80ca9996e143a7@mail.gmail.com>, "Dmitry
->
-> Adamushko" <dmitry.adamushko@gmail.com> wrote:
->
-> > 2008/4/23 Gregory Haskins <ghaskins@novell.com>:
->  >> [ ... ]
->  >>
->  >>  I think we can simplify this further.  We really only need to push here if
->  > we are not going to reschedule anytime soon (probably white-space damaged):
->  >>
->  >>
->  >>  --- a/kernel/sched_rt.c
->  >>
->  >> +++ b/kernel/sched_rt.c
->  >>  @@ -1058,11 +1058,14 @@ static void post_schedule_rt(struct rq *rq)
->  >>         }
->  >>   }
->  >>
->  >>  -
->  >>  +/*
->  >>  + * If we are not running and we are not going to reschedule soon, we
->  > should
->  >>  + * try to push tasks away now
->  >>  + */
->  >>
->  >>  static void task_wake_up_rt(struct rq *rq, struct task_struct *p)
->  >>   {
->  >>         if (!task_running(rq, p) &&
->  >>  -           (p->prio >= rq->rt.highest_prio) &&
->  >>  +           !test_tsk_thread_flag(rq->curr, TIF_NEED_RESCHED) &&
->  >>             rq->rt.overloaded)
->  >>                 push_rt_tasks(rq);
->  >>   }
->  >
->  >
->  > It's somewhat suboptimal as it doesn't guarantee that 'p' gets control next.
->
->  No it doesn't, but I don't see that as a requirement to work properly.  All we really need is to make sure push_rt_tasks() will be executed in the near future, and a reschedule will do that.  Perhaps I am missing something?
+Dmitry Adamushko pointed out a known flaw in the rt-balancing algorithm
+that could allow suboptimal balancing if a non-migratable task gets
+queued behind a running migratable one.  It is discussed in this thread:
 
-No, it's better indeed to delay push_rt_tasks() until
-post_rt_schedule() when 'current' (that's a task to be preempted) is
-also available for potential migration.
+http://lkml.org/lkml/2008/4/22/296
 
-Not considering "current" (as it's running) in task_wake_up_rt()   is
-a key of the problem which I illustrated in my first message.
+This issue has been further exacerbated by a recent checkin to
+sched-devel (git-id 5eee63a5ebc19a870ac40055c0be49457f3a89a3).
 
-I mean, we set rq->rt.pushed = 1 and that kind of means "nothing to be
-push off here any more" but "current" was out of our consideration.
+>From a pure priority standpoint, the run-queue is doing the "right"
+thing. Using Dmitry's nomenclature, if T0 is on cpu1 first, and T1
+wakes up at equal or lower priority (affined only to cpu1) later, it
+*should* wait for T0 to finish.  However, in reality that is likely
+suboptimal from a system perspective if there are other cores that
+could allow T0 and T1 to run concurrently.  Since T1 can not migrate,
+the only choice for higher concurrency is to try to move T0.  This is
+not something we addessed in the recent rt-balancing re-work.
 
-humm... a quick idea (should think more on it):
+This patch tries to enhance the balancing algorithm by accomodating this
+scenario.  It accomplishes this by incorporating the migratability of a
+task into its priority calculation.  Within a numerical tsk->prio, a
+non-migratable task is logically higher than a migratable one.  We
+maintain this by introducing a new per-priority queue (xqueue, or
+exclusive-queue) for holding non-migratable tasks.  The scheduler will
+draw from the xqueue over the standard shared-queue (squeue) when
+available.
 
-(1) select_task_rq_rt() + task_wake_up_rt() should consider only 'p'
-(a newly woken up task) for pushing off a cpu;
+There are several details for utilizing this properly.
 
-i.e. task_wake_up_rt() calls push_rt_task(..., p) and _never_ sets up
-rq->rt.pushed;
+1) During task-wake-up, we not only need to check if the priority
+   preempts the current task, but we also need to check for this
+   non-migratable condition.  Therefore, if a non-migratable task wakes
+   up and sees an equal priority migratable task already running, it
+   will attempt to preempt it *if* there is a likelyhood that the
+   current task will find an immediate home.
 
-the main point where 'pushed' is done :
-(2) post_schedule_rt()
+2) Tasks only get this non-migratable "priority boost" on wake-up.  Any
+   requeuing will result in the non-migratable task being queued to the
+   end of the shared queue.  This is an attempt to prevent the system
+   from being completely unfair to migratable tasks during things like
+   SCHED_RR timeslicing.
 
-here we call push_rt_tasks() and set up rq->rt.pushed to 1.
+I am sure this patch introduces potentially "odd" behavior if you
+concoct a scenario where a bunch of non-migratable threads could starve
+migratable ones given the right pattern.  I am not yet convinced that
+this is a problem since we are talking about tasks of equal RT priority
+anyway, and there never is much in the way of guarantees against
+starvation under that scenario anyway. (e.g. you could come up with a
+similar scenario with a specific timing environment verses an affinity
+environment).  I can be convinced otherwise, but for now I think this is
+"ok". 
 
-heh, I can be missing something important... need to verify different
-scenarios wrt this algo.
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+CC: Dmitry Adamushko <dmitry.adamushko@gmail.com>
+CC: Ingo Molnar <mingo@elte.hu>
+CC: Steven Rostedt <rostedt@goodmis.org>
+---
 
+ kernel/sched.c    |    6 +++-
+ kernel/sched_rt.c |   75 ++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 72 insertions(+), 9 deletions(-)
 
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 5899c29..6971ee9 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -164,7 +164,8 @@ static inline int task_has_rt_policy(struct task_struct *p)
+  */
+ struct rt_prio_array {
+ 	DECLARE_BITMAP(bitmap, MAX_RT_PRIO+1); /* include 1 bit for delimiter */
+-	struct list_head queue[MAX_RT_PRIO];
++	struct list_head xqueue[MAX_RT_PRIO]; /* exclusive queue */
++	struct list_head squeue[MAX_RT_PRIO];  /* shared queue */
+ };
+ 
+ struct rt_bandwidth {
+@@ -8069,7 +8070,8 @@ static void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
+ 
+ 	array = &rt_rq->active;
+ 	for (i = 0; i < MAX_RT_PRIO; i++) {
+-		INIT_LIST_HEAD(array->queue + i);
++		INIT_LIST_HEAD(array->xqueue + i);
++		INIT_LIST_HEAD(array->squeue + i);
+ 		__clear_bit(i, array->bitmap);
+ 	}
+ 	/* delimiter for bitsearch: */
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index ae6b0e6..75cd8e4 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -470,7 +470,13 @@ static void enqueue_rt_entity(struct sched_rt_entity *rt_se)
+ 	if (group_rq && rt_rq_throttled(group_rq))
+ 		return;
+ 
+-	list_add_tail(&rt_se->run_list, array->queue + rt_se_prio(rt_se));
++	if (rt_se->nr_cpus_allowed == 1)
++		list_add_tail(&rt_se->run_list,
++			      array->xqueue + rt_se_prio(rt_se));
++	else
++		list_add_tail(&rt_se->run_list,
++			      array->squeue + rt_se_prio(rt_se));
++
+ 	__set_bit(rt_se_prio(rt_se), array->bitmap);
+ 
+ 	inc_rt_tasks(rt_se, rt_rq);
+@@ -482,7 +488,8 @@ static void dequeue_rt_entity(struct sched_rt_entity *rt_se)
+ 	struct rt_prio_array *array = &rt_rq->active;
+ 
+ 	list_del_init(&rt_se->run_list);
+-	if (list_empty(array->queue + rt_se_prio(rt_se)))
++	if (list_empty(array->squeue + rt_se_prio(rt_se))
++	    && list_empty(array->xqueue + rt_se_prio(rt_se)))
+ 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
+ 
+ 	dec_rt_tasks(rt_se, rt_rq);
+@@ -562,13 +569,19 @@ static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int sleep)
+ /*
+  * Put task to the end of the run list without the overhead of dequeue
+  * followed by enqueue.
++ *
++ * Note: We always enqueue the task to the shared-queue, regardless of its
++ * previous position w.r.t. exclusive vs shared.  This is so that exclusive RR
++ * tasks fairly round-robin with all tasks on the runqueue, not just other
++ * exclusive tasks.
+  */
+ static
+ void requeue_rt_entity(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se)
+ {
+ 	struct rt_prio_array *array = &rt_rq->active;
+ 
+-	list_move_tail(&rt_se->run_list, array->queue + rt_se_prio(rt_se));
++	list_del_init(&rt_se->run_list);
++	list_add_tail(&rt_se->run_list, array->squeue + rt_se_prio(rt_se));
+ }
+ 
+ static void requeue_task_rt(struct rq *rq, struct task_struct *p)
+@@ -626,13 +639,46 @@ static int select_task_rq_rt(struct task_struct *p, int sync)
+ }
+ #endif /* CONFIG_SMP */
+ 
++static struct sched_rt_entity *pick_next_rt_entity(struct rq *rq,
++						   struct rt_rq *rt_rq);
++
+ /*
+  * Preempt the current task with a newly woken task if needed:
+  */
+ static void check_preempt_curr_rt(struct rq *rq, struct task_struct *p)
+ {
+-	if (p->prio < rq->curr->prio)
++	if (p->prio < rq->curr->prio) {
+ 		resched_task(rq->curr);
++		return;
++	}
++
++#ifdef CONFIG_SMP
++	/*
++	 * If:
++	 *
++	 * - the newly woken task is of equal priority to the current task
++	 * - the newly woken task is non-migratable while current is migratable
++	 * - current will be preempted on the next reschedule
++	 *
++	 * we should check to see if current can readily move to a different
++	 * cpu.  If so, we will reschedule to allow the push logic to try
++	 * to move current somewhere else, making room for our non-migratable
++	 * task.
++	 */
++	if((p->prio == rq->curr->prio)
++	   && p->rt.nr_cpus_allowed == 1
++	   && rq->curr->rt.nr_cpus_allowed != 1
++	   && pick_next_rt_entity(rq, &rq->rt) != &rq->curr->rt) {
++		cpumask_t mask;
++
++		if (cpupri_find(&rq->rd->cpupri, rq->curr, &mask))
++			/*
++			 * There appears to be other cpus that can accept
++			 * current, so lets reschedule to try and push it away
++			 */
++			resched_task(rq->curr);
++	}
++#endif
+ }
+ 
+ static struct sched_rt_entity *pick_next_rt_entity(struct rq *rq,
+@@ -646,8 +692,15 @@ static struct sched_rt_entity *pick_next_rt_entity(struct rq *rq,
+ 	idx = sched_find_first_bit(array->bitmap);
+ 	BUG_ON(idx >= MAX_RT_PRIO);
+ 
+-	queue = array->queue + idx;
+-	next = list_entry(queue->next, struct sched_rt_entity, run_list);
++	queue = array->xqueue + idx;
++	if (!list_empty(queue))
++		next = list_entry(queue->next, struct sched_rt_entity,
++				  run_list);
++	else {
++		queue = array->squeue + idx;
++		next = list_entry(queue->next, struct sched_rt_entity,
++				  run_list);
++	}
+ 
+ 	return next;
+ }
+@@ -717,7 +770,7 @@ static struct task_struct *pick_next_highest_task_rt(struct rq *rq, int cpu)
+ 			continue;
+ 		if (next && next->prio < idx)
+ 			continue;
+-		list_for_each_entry(rt_se, array->queue + idx, run_list) {
++		list_for_each_entry(rt_se, array->squeue + idx, run_list) {
+ 			struct task_struct *p = rt_task_of(rt_se);
+ 			if (pick_rt_task(rq, p, cpu)) {
+ 				next = p;
+@@ -1110,6 +1163,14 @@ static void set_cpus_allowed_rt(struct task_struct *p,
+ 		}
+ 
+ 		update_rt_migration(rq);
++
++		if (unlikely(weight == 1 || p->rt.nr_cpus_allowed == 1))
++			/*
++			 * If either the new or old weight is a "1", we need
++			 * to requeue to properly move between shared and
++			 * exclusive queues.
++			 */
++			requeue_task_rt(rq, p);
+ 	}
+ 
+ 	p->cpus_allowed    = *new_mask;
 
->  > e.g. 2 tasks (T0 and T1) have been woken up before an actual
->  > re-schedule takes place. Even if T1 is of lower prio than T0,
->  > task_wake_up_rt() will see the NEED_RESCHED flag and bail out while it
->  > would make sense at this moment to push T1 off this cpu.
->
->  I think this is "ok".  IMO, we really want to prioritize the push operation from post_schedule() over task_wake_up() because it is the most accurate (since the scheduling decision would be atomic to the rq->lock).
-
-Agreed. And as I noticed above, ex-current is also available for
-migration policies at this point + the most eligible task has just got
-control (and it's the only task that shouldn't be considered for
-migration).
-
-
--- 
-Best regards,
-Dmitry Adamushko
