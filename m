@@ -1,99 +1,84 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 1/2] sched: push rt tasks only if newly activated
-	tasks have been added
-Date: Tue, 22 Apr 2008 10:38:32 -0600
-Message-ID: <480DDC48.BA47.005A.0@novell.com>
+From: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
+Subject: Re: [PATCH 1/2] sched: push rt tasks only if newly activated tasks have been added
+Date: Wed, 23 Apr 2008 10:05:03 +0200
+Message-ID: <b647ffbd0804230105u7966ed06wd4ed248f59132849@mail.gmail.com>
 References: <20080421180747.4560.67794.stgit@novell1.haskins.net>
- <20080421181015.4560.7658.stgit@novell1.haskins.net>
- <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
+	 <20080421181015.4560.7658.stgit@novell1.haskins.net>
+	 <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
+	 <Pine.LNX.4.58.0804221144410.21511@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <chinang.ma@intel.com>,
-	<suresh.b.siddha@intel.com>, <arjan@linux.intel.com>,
-	<willy@linux.intel.com>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757164AbYDVQiS@vger.kernel.org>
-In-Reply-To: <b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Gregory Haskins" <ghaskins@novell.com>, mingo@elte.hu,
+	suresh.b.siddha@intel.com, chinang.ma@intel.com,
+	arjan@linux.intel.com, willy@linux.intel.com,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: "Steven Rostedt" <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wa-out-1112.google.com ([209.85.146.180]:5182 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751383AbYDWIFG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Apr 2008 04:05:06 -0400
+Received: by wa-out-1112.google.com with SMTP id m16so4455715waf.23
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Apr 2008 01:05:03 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0804221144410.21511@gandalf.stny.rr.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Dmitry,
+Hi Steven,
 
-(Disclaimer: I am sick with a fever today, so hopefully I'm groking your email properly and not about to say something stupid ;)
+> [ ... ]
+>  > square#0:
+>  >
+>  > cpu1:  T0 is running
+>  >
+>  > T1 is of the same prio as T0 (shouldn't really matter but to get the
+>  > same result it would require altering the flow of events slightly)
+>  >
+>  > T1's affinity allows it to be run only on cpu1.
+>  > T0 can run on both.
+>  >
+>  > try_to_wake_up() is called for T1.
+>  > |
+>  > --> select_task_rq_rt() => gives cpu1
+>  > |
+>  > --> task_wake_up_rt()
+>  >    |
+>  >    ---> push_rt_tasks() -> rq->rt.pushed = 1
+>  >
+>  > now, neither T1 (due to its affinity), nor T0 (it's running) can be
+>  > pushed away to cpu0.
+>
+>  Ah, this may be what you are talking about. T0 was running, but because
+>  T1 has its affinity set to cpu1 it wont cause a push. When T0 schedules
+>  away to give T1 its cpu time, T0 wont push away because of the pushed
+>  flag.
+>
+>  Hmm, interesting. Of course my response is "Don't use SCHED_RR! It's
+>  evil!" ;-)
 
->>> On Tue, Apr 22, 2008 at 11:30 AM, in message
-<b647ffbd0804220830h6524e788n1467b027bc5bc4d2@mail.gmail.com>, "Dmitry
-Adamushko" <dmitry.adamushko@gmail.com> wrote: 
-> Hi Gregory,
-> 
-> 
-> consider the following 2-cpu system: cpu0 and cpu1.
-> 
-> cpu0: is idle --> in such a state, it never pulls RT tasks on its own.
-> 
-> T0 and T1 are RT tasks
-> 
-> 
-> square#0:
-> 
-> cpu1:  T0 is running
-> 
-> T1 is of the same prio as T0 (shouldn't really matter but to get the
-> same result it would require altering the flow of events slightly)
-> 
-> T1's affinity allows it to be run only on cpu1.
-> T0 can run on both.
-> 
-> try_to_wake_up() is called for T1.
-> |
-> --> select_task_rq_rt() => gives cpu1
-> |
-> --> task_wake_up_rt()
->    |
->    ---> push_rt_tasks() -> rq->rt.pushed = 1
-> 
-> now, neither T1 (due to its affinity), nor T0 (it's running) can be
-> pushed away to cpu0.
-> 
-> [ btw., (1) I'd expect that this task_wake_up_rt() thing should be
-> redundant, logically-wise... I'll check once more and comment later
-> on.
+It's not just SCHED_RR ;-) They both can be of SCHED_FIFO.
 
-They are both necessary, but the key is that the select_task_rq() is a best-effort route attempt, whereas the task_wake_up() routine is the authoritative router.  By doing the push after activation, it allowed us to utilize a very clever and significant optimization on the pull side that Steven came up with.  The details of the optimization escape me now, but I do remember it was substantial to the design.  Then later we put the select_task_rq() logic in (see git-id 318e0893) to further optimize the routing by finding a likely good home before the activation takes place (saving an activation/deactivation cycle), but it still needs the post-router to protect against race conditions since its just best-effort.
+T1 _preempts_ T0 and again
 
-> (2) any example when (p->prio >= rq->rt.highest_prio) is not true in
-> task_wake_up_rt() ?
+ --> task_wake_up_rt()
+ |
+ ---> push_rt_tasks() -> rq->rt.pushed = 1
 
-Hmm...good catch.   Looks like it should be "p->prio >= rq->curr->prio" since we only need be concerned with pushing here if the task is not going to preempt current.  Do you agree Steven, or am I missing something? 
+and T0 won't be pushed away to cpu0 by post_schedule_rt().
+
+As Gregory has pointed out, at the very least it's a test in
+task_wake_up_rt() which is wrong.
+
+push_rt_tasks() should not be called when 'p' (a newly woken up task)
+is the next one to run.
+
+IOW, it should be (p->prio < rq->curr->prio) instead of (p->prio >=
+rq->rt.highest_prio).
 
 
-> ]
-> 
-> as a result, rq->rt.pushed == 1.
-> 
-> Now, post_schedule_rt() won't call push_rt_tasks().
-> 
-> T0 and T1 are both running for some time on cpu1 (possibly
-> context-switching if they are both of SCHED_RR type).
-> 
-> Then they both block, _first_ T1 and then T0.
-> 
-> After some interval of time, they wake up (let's say they are
-> periodic) in the following order: _first_ T0 and then T1.
-> 
-> rq->rt.pushed becomes 0 and here we are back to square#0. The whole
-> story repeats again.
-> 
-> cpu0 is idle so it won't pull T0. Both T0 and T1 are competing for the
-> same cpu. Not good.
-> 
-> am I missing smth?
-
-No, I think you are indeed correct.  However, I would consider the root cause of the problem to have existed prior to the "pushed" flag, so perhaps we need to address this at a different level.  The case you present would have always been problematic for FIFO, and would have "worked" for RR eventually prior to the "pushed" patch.  But I dont know if I like relying on how it worked before to fix up the system.  At the very best, T1 would have experienced a latency equal to the remainder of T0's timeslice.
-
-Rather, I think we need to address the preemptive behavior for the case where a migratory task is on the cpu and a non-migratory task tries to wake up.  If they are equal in numerical priority, perhaps we need to treat "non-migratory" as the tie breaker.  In this case, T1 would preempt T0 from cpu1, and then we would push T0 to cpu0.  I don't quite have all the details about how this would work thought through yet.  Perhaps I should wait until my fever lifts. ;)  Thoughts?
-
--Greg
+-- 
+Best regards,
+Dmitry Adamushko
