@@ -1,67 +1,114 @@
-From: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
 Subject: Re: [PATCH 1/2] sched: fix RT task-wakeup logic
-Date: Wed, 23 Apr 2008 16:29:23 +0200
-Message-ID: <b647ffbd0804230729x70966c0ak91b8f6638282a443@mail.gmail.com>
+Date: Thu, 24 Apr 2008 05:56:08 -0600
+Message-ID: <48103D18.BA47.005A.0@novell.com>
 References: <20080423111313.4981.37345.stgit@novell1.haskins.net>
-	 <20080423111329.4981.88455.stgit@novell1.haskins.net>
+ <20080423111329.4981.88455.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Ingo Molnar" <mingo@elte.hu>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: "Dmitry Adamushko" <dmitry.adamushko@gmail.com>,
 	"Steven Rostedt" <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: "Gregory Haskins" <ghaskins@novell.com>
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: "Ingo Molnar" <mingo@elte.hu>,
+	"Gregory Haskins" <GHaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.177]:59388 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753787AbYDWO3X (ORCPT
+Received: from sinclair.provo.novell.com ([137.65.248.137]:16152 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751797AbYDXLzn convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Apr 2008 10:29:23 -0400
-Received: by wa-out-1112.google.com with SMTP id m16so4657578waf.23
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Apr 2008 07:29:23 -0700 (PDT)
+	Thu, 24 Apr 2008 07:55:43 -0400
 In-Reply-To: <20080423111329.4981.88455.stgit@novell1.haskins.net>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2008/4/23 Gregory Haskins <ghaskins@novell.com>:
+>>> On Wed, Apr 23, 2008 at  7:13 AM, in message
+<20080423111329.4981.88455.stgit@novell1.haskins.net>, Gregory Haskins
+<ghaskins@novell.com> wrote: 
 > Dmitry Adamushko pointed out a logic error in task_wake_up_rt() where we
->  will always evaluate to "true".  You can find the thread here:
->
->  http://lkml.org/lkml/2008/4/22/296
->
->  In reality, we only want to try to push tasks away when a wake up request is
->  not going to preempt the current task.  So lets fix it.
->
->  Note: We introduce test_tsk_need_resched() instead of open-coding the flag
->  check so that the merge-conflict with -rt should help remind us that we
->  may need to support NEEDS_RESCHED_DELAYED in the future, too.
->
->  Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->  CC: Dmitry Adamushko <dmitry.adamushko@gmail.com>
-
-Acked-by: Dmitry Adamushko <dmitry.adamushko@gmail.com>
-
-
-I have to look at the second patch more thoroughly... but I guess,
-we'd be better off opting for something more simple/less complex (it
-looks a bit heavy at the first glance).
-
-This patch already fixes an 'obvious' problem in task_wake_up_rt() and
-narrows down the scope of the original problem.
-
-For the original scenario (as well as for its variants with SCHED_FIFO
-and != priorities) push_rt_tasks() is 'delayed' untill a reschedule
-(which is already pending and should take place shortly... provided
-'bounded/short' latencies :-)
-
-For T0,T1 having equal prios + SCHED_RR, T1 (which can't be migrated
-due to its affinity) will wait till T0's timeslice expires
-and for SCHED_FIFO -- till T0 releases a CPU.
-
-The 'optimal' way would be moving T0 immediatelly off this cpu.
+> will always evaluate to "true".  You can find the thread here:
+> 
+> http://lkml.org/lkml/2008/4/22/296
+> 
+> In reality, we only want to try to push tasks away when a wake up request is
+> not going to preempt the current task.  So lets fix it.
+> 
+> Note: We introduce test_tsk_need_resched() instead of open-coding the flag
+> check so that the merge-conflict with -rt should help remind us that we
+> may need to support NEEDS_RESCHED_DELAYED in the future, too.
+> 
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> CC: Dmitry Adamushko <dmitry.adamushko@gmail.com>
+> CC: Ingo Molnar <mingo@elte.hu>
+> CC: Steven Rostedt <rostedt@goodmis.org>
 
 
--- 
-Best regards,
-Dmitry Adamushko
+Hi Ingo,
+  So based on the discussion and the sign-off on this patch from Dmitry and Steven, I would propose to move patch #1 from "RFC" to "Consider for inclusion" status.  Patch #2 should remain RFC pending further discussion.  I would recommend #1 to be considered for both 25.y stable as well as going into the 26 merge window  (pending positive testing results, and your discretion).
+
+Regards,
+-Greg
+
+
+> ---
+> 
+>  include/linux/sched.h |    7 ++++++-
+>  kernel/sched_rt.c     |    7 +++++--
+>  2 files changed, 11 insertions(+), 3 deletions(-)
+> 
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index 949bd54..55d4bd4 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -1966,6 +1966,11 @@ static inline void clear_tsk_need_resched(struct 
+> task_struct *tsk)
+>  	clear_tsk_thread_flag(tsk,TIF_NEED_RESCHED);
+>  }
+>  
+> +static inline int test_tsk_need_resched(struct task_struct *tsk)
+> +{
+> +	return unlikely(test_tsk_thread_flag(tsk,TIF_NEED_RESCHED));
+> +}
+> +
+>  static inline int signal_pending(struct task_struct *p)
+>  {
+>  	return unlikely(test_tsk_thread_flag(p,TIF_SIGPENDING));
+> @@ -1980,7 +1985,7 @@ static inline int fatal_signal_pending(struct 
+> task_struct *p)
+>  
+>  static inline int need_resched(void)
+>  {
+> -	return unlikely(test_thread_flag(TIF_NEED_RESCHED));
+> +	return unlikely(test_tsk_need_resched(current));
+>  }
+>  
+>  /*
+> diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+> index 79e5ad5..ae6b0e6 100644
+> --- a/kernel/sched_rt.c
+> +++ b/kernel/sched_rt.c
+> @@ -1058,11 +1058,14 @@ static void post_schedule_rt(struct rq *rq)
+>  	}
+>  }
+>  
+> -
+> +/*
+> + * If we are not running and we are not going to reschedule soon, we should
+> + * try to push tasks away now
+> + */
+>  static void task_wake_up_rt(struct rq *rq, struct task_struct *p)
+>  {
+>  	if (!task_running(rq, p) &&
+> -	    (p->prio >= rq->rt.highest_prio) &&
+> +	    !test_tsk_need_resched(rq->curr) &&
+>  	    rq->rt.overloaded)
+>  		push_rt_tasks(rq);
+>  }
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
