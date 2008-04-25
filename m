@@ -1,77 +1,99 @@
-From: Mauricio =?utf-8?Q?A=2E_Araya_L=F3pez?= <maray@inf.utfsm.cl>
-Subject: Parport and Linux-RT
-Date: Thu, 24 Apr 2008 12:17:09 -0400
-Message-ID: <20080424161709.GA20212@alumnos.inf.utfsm.cl>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users@vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 0/6] New read/write locks for PI and multiple readers
+Date: Fri, 25 Apr 2008 09:09:08 -0400
+Message-ID: <20080425130908.140707404@goodmis.org>
+Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark.williams@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
+	Jon Masters <jonathan@jonmasters.org>,
+	Gregory Haskins <ghaskins@novell.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from alegre.inf.utfsm.cl ([204.87.169.3]:39712 "EHLO
-	alegre.inf.utfsm.cl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756606AbYDXQWg (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:55108 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756649AbYDYOVM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Apr 2008 12:22:36 -0400
-Received: from ritoque.inf.utfsm.cl (ssh2.inf.utfsm.cl [204.87.169.5])
-	by alegre.inf.utfsm.cl (8.13.8/8.13.8) with ESMTP id m3OGHAT5010088
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2008 12:17:10 -0400
-Received: from ritoque.inf.utfsm.cl (localhost.localdomain [127.0.0.1])
-	by ritoque.inf.utfsm.cl (8.14.2/8.13.8) with ESMTP id m3OGH9Tb022065
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Apr 2008 12:17:09 -0400
-Received: (from maray@localhost)
-	by ritoque.inf.utfsm.cl (8.14.2/8.14.2/Submit) id m3OGH9rf022064
-	for linux-rt-users@vger.kernel.org; Thu, 24 Apr 2008 12:17:09 -0400
-Content-Disposition: inline
+	Fri, 25 Apr 2008 10:21:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Currently in the -rt patch the rwlocks (and rwsems) are converted into a
+simple mutex. That is, when PREEMP_RT is configured, the rwsems and rwlocks
+can only have one reader at a time. Those locks may only be held by a single
+owner (reader or writer). The reason for this is to allow priority
+inheritance for these locks. PI can be quite complex, but it is easier
+to handle PI when dealing with only a single owner. When multiple owners
+are involved it gets even more complex. But this patch series aims to
+accomplish PI over multiple owners.
 
-I am recieving a 'tick' from an electronic device, through the parallel
-port pin-10. This pin generates an interrupt, so I am handling this
-using the parport(_pc) generic module. This works flawlessly on a normal
-linux, but using the -rt patches, the IRQ is not taken by the module.
+Having multiple owners may also have other drawbacks in RT. One is that
+it adds a bit more non-determinism. Because a writer may have to wait
+the critical path time * each reader that currently holds the lock.
+Since the number of readers is not set, this creates a non-deterministic
+time frame.  To deal with this, this patch series adds the ability to
+limit the number of readers that may own the lock. Setting that number
+to the number of CPUS may be a good idea.
 
-Normal linux:
----
-# modprobe parport 
-# modprobe parport_pc
-# cat /proc/interrupts 
-        CPU0       
-0:    5430087    XT-PIC-XT        timer
-1:      13743    XT-PIC-XT        i8042
-2:          0    XT-PIC-XT        cascade
-7:      48100    XT-PIC-XT        parport0
-...
----
+Having no limit to the number of readers may also be preferable. Although
+it adds some non-determinism, the PI on the readers prevents unbounded priority
+inversion, where a task can block a lower priority task that holds a lock
+that is keeping higher priority tasks from running.
 
-Linux-rt:
----
-# modprobe parport
-# modprobe parport_pc
-# cat /proc/interrupts 
-        CPU0       
-0:     382921    XT-PIC-XT        timer
-1:          8    XT-PIC-XT        i8042
-2:          0    XT-PIC-XT        cascade
-7:          6    XT-PIC-XT      
-...
----
+The way this algorithm works is by adding a new descriptor called
+rw_mutex. This descriptor also contains a RT mutex (one with PI).
+It also adds a new owner field in the rw_mutex. When taking the lock for
+read, it does a cmpxchg (if the arch supports it) on the owner field placing
+in its own current pointer if the owner field is currently NULL. If this
+succeeds, then it grabs the lock and increments the owner counts.
+If it fails it enters the slow path (if the arch doesn't have cmpxchg then
+it always enters the slow path).
 
-In my own module I have tried to enable, request and wake the IRQ but 
-with no success.
+The slow path for read checks to see if the owner field is set for readers,
+and if it is, it ups the owner counts of the locks and sets up the pointers
+from the lock to the readers and grabs the lock.
 
-I've check the linux/drivers/parport/parport_pc.c in both kernels, and
-they are identical. Also i've look at linux/kernel/irq/manage.c diffs and maybe
-the parport module should ask for a IRQF_NODELAY interrupt?. 
+If it fails, the reader blocking is much like the same as a simple mutex
+since it may boost the writer (which there would be only one). But first
+if the owner of the rw_lock is not set in the rt_mutex, then the owner
+is updated, to allow the old PI algorithm to work (see patches for details).
 
-I am not very sure how the interrupts are managed in RT_PREEMPT, so any
-comment will be very helpfull.
+For a writer to take the lock, in the fastpath it does a cmpxchg to the
+rw_mutex field by trying to copy in the current pointer plus the second
+least significant bit (the first least significant bit is set for serializing
+fast paths with slowpaths).  The second least significant bit in the
+owner field denotes that the owner is a writer.
 
-Bye
+If it fails the fast path, it enters the slow path. There if it still can't
+get the lock, it updates the rt_mutex owner field (don't confuse the rt_mutex
+with the rw_mutex descriptors). If the owner of the lock is a reader the
+rt_mutex owner is given a factitious owner (RT_RW_READER).
 
--- 
-Mauricio Araya L. 
-ACS-UTFSM Team Leader, cel: 0-81564903
-Est. Magister en Ciencias de la Informatica UTFSM, Valparaiso, Chile
-counter.li.org: #249395, http://www.inf.utfsm.cl/~maray 
+The current PI algorithm takes at most two of the internal spin_locks
+at a time and checks for deadlocks. One reason to do this is that this
+algorithm is also used with futexes, and we can't allow user space code
+be able deadlocking the kernel. But because rwlocks and rwsems are never
+held while taking a futex (that would just be bad) we can trust the
+rwlocks and rwsems will not deadlock (or the kernel itself is bad).
+
+Because of this, when the PI algorithm walks the chain and comes across
+a owner of RT_RW_READER, it breaks out of the loop, and will contiune
+to hold that rt_mutex's internal spin lock. Then it will go through
+each of the readers and continue the algorithm on each.
+
+Yes this contains a recursive function, but it also keeps track
+at the number of times it recurs. Which brings us to the limits that the
+algorithm imposes. A task can only hold at most 5 different reader
+locks at the same time. This should not be an issue, since it would be
+bad programming practice to hold more that 5 different reader locks.
+This is because each task has an array of 5 reader lock structures that
+it uses to keep track of the reader locks it owns. This is for use
+of the PI algorithm.
+
+For more on this code, see the patches.
+
+-- Steve
+
+
