@@ -1,99 +1,1130 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/6] New read/write locks for PI and multiple readers
-Date: Fri, 25 Apr 2008 09:09:08 -0400
-Message-ID: <20080425130908.140707404@goodmis.org>
+Subject: [PATCH RT 1/6] add framework for multi readers on rwsems
+Date: Fri, 25 Apr 2008 09:09:09 -0400
+Message-ID: <20080425142109.480660578@goodmis.org>
+References: <20080425130908.140707404@goodmis.org>
 Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Clark Williams <clark.williams@gmail.com>,
 	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
 	Jon Masters <jonathan@jonmasters.org>,
-	Gregory Haskins <ghaskins@novell.com>
+	Gregory Haskins <ghaskins@novell.com>,
+	Steven Rostedt <srostedt@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:55108 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:49665 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756649AbYDYOVM (ORCPT
+	with ESMTP id S1756817AbYDYOVM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 25 Apr 2008 10:21:12 -0400
+Content-Disposition: inline; filename=rwsems-mulitple-readers.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Currently in the -rt patch the rwlocks (and rwsems) are converted into a
-simple mutex. That is, when PREEMP_RT is configured, the rwsems and rwlocks
-can only have one reader at a time. Those locks may only be held by a single
-owner (reader or writer). The reason for this is to allow priority
-inheritance for these locks. PI can be quite complex, but it is easier
-to handle PI when dealing with only a single owner. When multiple owners
-are involved it gets even more complex. But this patch series aims to
-accomplish PI over multiple owners.
+Add the frame work for multiple readers and implemnt the code for
+rwsem first. 
 
-Having multiple owners may also have other drawbacks in RT. One is that
-it adds a bit more non-determinism. Because a writer may have to wait
-the critical path time * each reader that currently holds the lock.
-Since the number of readers is not set, this creates a non-deterministic
-time frame.  To deal with this, this patch series adds the ability to
-limit the number of readers that may own the lock. Setting that number
-to the number of CPUS may be a good idea.
+A new structure is created called rw_mutex. This is used by PREEMPT_RT
+rwsems and will later be incorporated with rwlocks.
 
-Having no limit to the number of readers may also be preferable. Although
-it adds some non-determinism, the PI on the readers prevents unbounded priority
-inversion, where a task can block a lower priority task that holds a lock
-that is keeping higher priority tasks from running.
+The rw_mutex lock encapsulates the rt_mutex for use with rwsems (and later
+rwlocks). This patch is just the ground work. It simply allows for mulitple
+readers to grab the lock. This disables PI for readers. That is, when
+a writer is blocked on a rwsem with readers, it will not boost the readers.
+That work will be done later in the patch series.
 
-The way this algorithm works is by adding a new descriptor called
-rw_mutex. This descriptor also contains a RT mutex (one with PI).
-It also adds a new owner field in the rw_mutex. When taking the lock for
-read, it does a cmpxchg (if the arch supports it) on the owner field placing
-in its own current pointer if the owner field is currently NULL. If this
-succeeds, then it grabs the lock and increments the owner counts.
-If it fails it enters the slow path (if the arch doesn't have cmpxchg then
-it always enters the slow path).
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+---
+ include/linux/lockdep.h |   13 
+ include/linux/rt_lock.h |   13 
+ kernel/rt.c             |   64 ----
+ kernel/rtmutex.c        |  706 +++++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/rtmutex_common.h |   57 +++
+ 5 files changed, 795 insertions(+), 58 deletions(-)
 
-The slow path for read checks to see if the owner field is set for readers,
-and if it is, it ups the owner counts of the locks and sets up the pointers
-from the lock to the readers and grabs the lock.
+Index: linux-2.6.24.4-rt4/include/linux/rt_lock.h
+===================================================================
+--- linux-2.6.24.4-rt4.orig/include/linux/rt_lock.h	2008-03-25 16:41:48.000000000 -0400
++++ linux-2.6.24.4-rt4/include/linux/rt_lock.h	2008-03-25 21:39:23.000000000 -0400
+@@ -60,6 +60,12 @@ typedef raw_spinlock_t spinlock_t;
+ 
+ #ifdef CONFIG_PREEMPT_RT
+ 
++struct rw_mutex {
++	struct task_struct	*owner;
++	struct rt_mutex		mutex;
++	atomic_t		count;	/* number of times held for read */
++};
++
+ /*
+  * RW-semaphores are a spinlock plus a reader-depth count.
+  *
+@@ -71,8 +77,7 @@ typedef raw_spinlock_t spinlock_t;
+  * fair and makes it simpler as well:
+  */
+ struct rw_semaphore {
+-	struct rt_mutex		lock;
+-	int			read_depth;
++	struct rw_mutex	owners;
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ 	struct lockdep_map	dep_map;
+ #endif
+@@ -189,7 +194,7 @@ extern int __bad_func_type(void);
+  */
+ 
+ #define __RWSEM_INITIALIZER(name) \
+-	{ .lock = __RT_MUTEX_INITIALIZER(name.lock), \
++	{ .owners.mutex = __RT_MUTEX_INITIALIZER(name.owners.mutex), \
+ 	  RW_DEP_MAP_INIT(name) }
+ 
+ #define DECLARE_RWSEM(lockname) \
+@@ -222,7 +227,7 @@ extern void fastcall rt_up_read(struct r
+ extern void fastcall rt_up_write(struct rw_semaphore *rwsem);
+ extern void fastcall rt_downgrade_write(struct rw_semaphore *rwsem);
+ 
+-# define rt_rwsem_is_locked(rws)	(rt_mutex_is_locked(&(rws)->lock))
++# define rt_rwsem_is_locked(rws)	((rws)->owners.owner != NULL)
+ 
+ #define PICK_RWSEM_OP(...) PICK_FUNCTION(struct compat_rw_semaphore *,	\
+ 	struct rw_semaphore *, ##__VA_ARGS__)
+Index: linux-2.6.24.4-rt4/kernel/rtmutex.c
+===================================================================
+--- linux-2.6.24.4-rt4.orig/kernel/rtmutex.c	2008-03-25 16:41:48.000000000 -0400
++++ linux-2.6.24.4-rt4/kernel/rtmutex.c	2008-03-25 22:39:14.000000000 -0400
+@@ -81,6 +81,7 @@ static void fixup_rt_mutex_waiters(struc
+  */
+ #if defined(__HAVE_ARCH_CMPXCHG) && !defined(CONFIG_DEBUG_RT_MUTEXES)
+ # define rt_mutex_cmpxchg(l,c,n)	(cmpxchg(&l->owner, c, n) == c)
++# define rt_rwlock_cmpxchg(rwm,c,n)	(cmpxchg(&(rwm)->owner, c, n) == c)
+ static inline void mark_rt_mutex_waiters(struct rt_mutex *lock)
+ {
+ 	unsigned long owner, *p = (unsigned long *) &lock->owner;
+@@ -89,13 +90,31 @@ static inline void mark_rt_mutex_waiters
+ 		owner = *p;
+ 	} while (cmpxchg(p, owner, owner | RT_MUTEX_HAS_WAITERS) != owner);
+ }
++#ifdef CONFIG_PREEMPT_RT
++static inline void mark_rt_rwlock_check(struct rw_mutex *rwm)
++{
++	unsigned long owner, *p = (unsigned long *) &rwm->owner;
++
++	do {
++		owner = *p;
++	} while (cmpxchg(p, owner, owner | RT_RWLOCK_CHECK) != owner);
++}
++#endif /* CONFIG_PREEMPT_RT */
+ #else
+ # define rt_mutex_cmpxchg(l,c,n)	(0)
++# define rt_rwlock_cmpxchg(l,c,n)	({ (void)c; (void)n; 0; })
+ static inline void mark_rt_mutex_waiters(struct rt_mutex *lock)
+ {
+ 	lock->owner = (struct task_struct *)
+ 			((unsigned long)lock->owner | RT_MUTEX_HAS_WAITERS);
+ }
++#ifdef CONFIG_PREEMPT_RT
++static inline void mark_rt_rwlock_check(struct rw_mutex *rwm)
++{
++	rwm->owner = (struct task_struct *)
++			((unsigned long)rwm->owner | RT_RWLOCK_CHECK);
++}
++#endif /* CONFIG_PREEMPT_RT */
+ #endif
+ 
+ int pi_initialized;
+@@ -276,6 +295,13 @@ static int rt_mutex_adjust_prio_chain(st
+ 
+ 	/* Grab the next task */
+ 	task = rt_mutex_owner(lock);
++
++	/* Writers do not boost their readers. */
++	if (task == RT_RW_READER) {
++		spin_unlock_irqrestore(&lock->wait_lock, flags);
++		goto out;
++	}
++
+ 	get_task_struct(task);
+ 	spin_lock(&task->pi_lock);
+ 
+@@ -309,7 +335,7 @@ static int rt_mutex_adjust_prio_chain(st
+ 	spin_unlock_irqrestore(&task->pi_lock, flags);
+  out_put_task:
+ 	put_task_struct(task);
+-
++ out:
+ 	return ret;
+ }
+ 
+@@ -329,6 +355,8 @@ static inline int try_to_steal_lock(stru
+ 	if (pendowner == current)
+ 		return 1;
+ 
++	WARN_ON(rt_mutex_owner(lock) == RT_RW_READER);
++
+ 	spin_lock(&pendowner->pi_lock);
+ 	if (current->prio >= pendowner->prio) {
+ 		spin_unlock(&pendowner->pi_lock);
+@@ -451,6 +479,10 @@ static int task_blocks_on_rt_mutex(struc
+ 	spin_unlock(&current->pi_lock);
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
++		/* readers are not handled */
++		if (owner == RT_RW_READER)
++			return 0;
++
+ 		spin_lock(&owner->pi_lock);
+ 		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
+ 		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
+@@ -463,7 +495,7 @@ static int task_blocks_on_rt_mutex(struc
+ 	else if (debug_rt_mutex_detect_deadlock(waiter, detect_deadlock))
+ 		chain_walk = 1;
+ 
+-	if (!chain_walk)
++	if (!chain_walk || owner == RT_RW_READER)
+ 		return 0;
+ 
+ 	/*
+@@ -563,7 +595,7 @@ static void remove_waiter(struct rt_mute
+ 	current->pi_blocked_on = NULL;
+ 	spin_unlock(&current->pi_lock);
+ 
+-	if (first && owner != current) {
++	if (first && owner != current && owner != RT_RW_READER) {
+ 
+ 		spin_lock(&owner->pi_lock);
+ 
+@@ -679,6 +711,7 @@ rt_spin_lock_slowlock(struct rt_mutex *l
+ 
+ 	debug_rt_mutex_init_waiter(&waiter);
+ 	waiter.task = NULL;
++	waiter.write_lock = 0;
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	init_lists(lock);
+@@ -894,7 +927,671 @@ __rt_spin_lock_init(spinlock_t *lock, ch
+ }
+ EXPORT_SYMBOL(__rt_spin_lock_init);
+ 
+-#endif
++static inline int rt_release_bkl(struct rt_mutex *lock, unsigned long flags);
++static inline void rt_reacquire_bkl(int saved_lock_depth);
++
++static inline void
++rt_rwlock_set_owner(struct rw_mutex *rwm, struct task_struct *owner,
++		    unsigned long mask)
++{
++	unsigned long val = (unsigned long)owner | mask;
++
++	rwm->owner = (struct task_struct *)val;
++}
++
++/*
++ * The fast paths of the rw locks do not set up owners to
++ * the mutex. When blocking on an rwlock we must make sure
++ * there exists an owner.
++ */
++static void
++update_rw_mutex_owner(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	struct task_struct *mtxowner;
++
++	mtxowner = rt_mutex_owner(mutex);
++	if (mtxowner)
++		return;
++
++	mtxowner = rt_rwlock_owner(rwm);
++	WARN_ON(!mtxowner);
++	if (rt_rwlock_writer(rwm))
++		WARN_ON(mtxowner == RT_RW_READER);
++	else
++		mtxowner = RT_RW_READER;
++	rt_mutex_set_owner(mutex, mtxowner, 0);
++}
++
++static int try_to_take_rw_read(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	struct rt_mutex_waiter *waiter;
++	struct task_struct *mtxowner;
++
++	assert_spin_locked(&mutex->wait_lock);
++
++	/* mark the lock to force the owner to check on release */
++	mark_rt_rwlock_check(rwm);
++
++	/* is the owner a writer? */
++	if (unlikely(rt_rwlock_writer(rwm)))
++		return 0;
++
++	/* A writer is not the owner, but is a writer waiting */
++	mtxowner = rt_mutex_owner(mutex);
++
++	/* if the owner released it before we marked it then take it */
++	if (!mtxowner && !rt_rwlock_owner(rwm)) {
++		WARN_ON(atomic_read(&rwm->count));
++		rt_rwlock_set_owner(rwm, current, 0);
++		goto taken;
++	}
++
++	if (mtxowner && mtxowner != RT_RW_READER) {
++		if (!try_to_steal_lock(mutex)) {
++			/*
++			 * readers don't own the mutex, and rwm shows that a
++			 * writer doesn't have it either. If we enter this
++			 * condition, then we must be pending.
++			 */
++			WARN_ON(!rt_mutex_owner_pending(mutex));
++			/*
++			 * Even though we didn't steal the lock, if the owner
++			 * is a reader, and we are of higher priority than
++			 * any waiting writer, we might still be able to continue.
++			 */
++			if (rt_rwlock_pending_writer(rwm))
++				return 0;
++			if (rt_mutex_has_waiters(mutex)) {
++				/* readers don't do PI */
++				waiter = rt_mutex_top_waiter(mutex);
++				if (current->prio >= waiter->task->prio)
++					return 0;
++				/*
++				 * The pending reader has PI waiters,
++				 * but we are taking the lock.
++				 * Remove the waiters from the pending owner.
++				 */
++				spin_lock(&mtxowner->pi_lock);
++				plist_del(&waiter->pi_list_entry, &mtxowner->pi_waiters);
++				spin_unlock(&mtxowner->pi_lock);
++			}
++		} else if (rt_mutex_has_waiters(mutex)) {
++			/* Readers don't do PI */
++			waiter = rt_mutex_top_waiter(mutex);
++			spin_lock(&current->pi_lock);
++			plist_del(&waiter->pi_list_entry, &current->pi_waiters);
++			spin_unlock(&current->pi_lock);
++		}
++		/* Readers never own the mutex */
++		rt_mutex_set_owner(mutex, RT_RW_READER, 0);
++	}
++
++	/* RT_RW_READER forces slow paths */
++	rt_rwlock_set_owner(rwm, RT_RW_READER, 0);
++ taken:
++	rt_mutex_deadlock_account_lock(mutex, current);
++	atomic_inc(&rwm->count);
++	return 1;
++}
++
++static int
++try_to_take_rw_write(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	struct task_struct *own;
++
++	/* mark the lock to force the owner to check on release */
++	mark_rt_rwlock_check(rwm);
++
++	own = rt_rwlock_owner(rwm);
++
++	/* readers or writers? */
++	if ((own && !rt_rwlock_pending(rwm)))
++		return 0;
++
++	WARN_ON(atomic_read(&rwm->count));
++
++	/*
++	 * RT_RW_PENDING means that the lock is free, but there are
++	 * pending owners on the mutex
++	 */
++	WARN_ON(own && !rt_mutex_owner_pending(mutex));
++
++	if (!try_to_take_rt_mutex(mutex))
++		return 0;
++
++	/*
++	 * We stole the lock. Add both WRITER and CHECK flags
++	 * since we must release the mutex.
++	 */
++	rt_rwlock_set_owner(rwm, current, RT_RWLOCK_WRITER | RT_RWLOCK_CHECK);
++
++	return 1;
++}
++
++static void
++rt_read_slowlock(struct rw_mutex *rwm)
++{
++	struct rt_mutex_waiter waiter;
++	struct rt_mutex *mutex = &rwm->mutex;
++	int saved_lock_depth = -1;
++	unsigned long flags;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++	init_lists(mutex);
++
++	if (try_to_take_rw_read(rwm)) {
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++		return;
++	}
++	update_rw_mutex_owner(rwm);
++
++	/* Owner is a writer (or a blocked writer). Block on the lock */
++
++	debug_rt_mutex_init_waiter(&waiter);
++	waiter.task = NULL;
++	waiter.write_lock = 0;
++
++	init_lists(mutex);
++
++	/*
++	 * We drop the BKL here before we go into the wait loop to avoid a
++	 * possible deadlock in the scheduler.
++	 */
++	if (unlikely(current->lock_depth >= 0))
++		saved_lock_depth = rt_release_bkl(mutex, flags);
++	set_current_state(TASK_UNINTERRUPTIBLE);
++
++	for (;;) {
++		unsigned long saved_flags;
++
++		/* Try to acquire the lock: */
++		if (try_to_take_rw_read(rwm))
++			break;
++		update_rw_mutex_owner(rwm);
++
++		/*
++		 * waiter.task is NULL the first time we come here and
++		 * when we have been woken up by the previous owner
++		 * but the lock got stolen by a higher prio task.
++		 */
++		if (!waiter.task) {
++			task_blocks_on_rt_mutex(mutex, &waiter, 0, flags);
++			/* Wakeup during boost ? */
++			if (unlikely(!waiter.task))
++				continue;
++		}
++		saved_flags = current->flags & PF_NOSCHED;
++		current->flags &= ~PF_NOSCHED;
++
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++		debug_rt_mutex_print_deadlock(&waiter);
++
++		if (waiter.task)
++			schedule_rt_mutex(mutex);
++
++		spin_lock_irqsave(&mutex->wait_lock, flags);
++
++		current->flags |= saved_flags;
++		set_current_state(TASK_UNINTERRUPTIBLE);
++	}
++
++	set_current_state(TASK_RUNNING);
++
++	if (unlikely(waiter.task))
++		remove_waiter(mutex, &waiter, flags);
++
++	WARN_ON(rt_mutex_owner(mutex) &&
++		rt_mutex_owner(mutex) != current &&
++		rt_mutex_owner(mutex) != RT_RW_READER &&
++		!rt_mutex_owner_pending(mutex));
++
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	/* Must we reaquire the BKL? */
++	if (unlikely(saved_lock_depth >= 0))
++		rt_reacquire_bkl(saved_lock_depth);
++
++	debug_rt_mutex_free_waiter(&waiter);
++}
++
++static inline void
++rt_read_fastlock(struct rw_mutex *rwm,
++		 void fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++retry:
++	if (likely(rt_rwlock_cmpxchg(rwm, NULL, current))) {
++		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
++		atomic_inc(&rwm->count);
++		/*
++		 * It is possible that the owner was zeroed
++		 * before we incremented count. If owner is not
++		 * current, then retry again
++		 */
++		if (unlikely(rwm->owner != current)) {
++			atomic_dec(&rwm->count);
++			goto retry;
++		}
++	} else
++		slowfn(rwm);
++}
++
++void fastcall rt_mutex_down_read(struct rw_mutex *rwm)
++{
++	rt_read_fastlock(rwm, rt_read_slowlock);
++}
++
++
++static inline int
++rt_read_slowtrylock(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	unsigned long flags;
++	int ret = 0;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++	init_lists(mutex);
++
++	if (try_to_take_rw_read(rwm))
++		ret = 1;
++
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	return ret;
++}
++
++static inline int
++rt_read_fasttrylock(struct rw_mutex *rwm,
++		    int fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++retry:
++	if (likely(rt_rwlock_cmpxchg(rwm, NULL, current))) {
++		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
++		atomic_inc(&rwm->count);
++		/*
++		 * It is possible that the owner was zeroed
++		 * before we incremented count. If owner is not
++		 * current, then retry again
++		 */
++		if (unlikely(rwm->owner != current)) {
++			atomic_dec(&rwm->count);
++			goto retry;
++		}
++		return 1;
++	} else
++		return slowfn(rwm);
++}
++
++int __sched rt_mutex_down_read_trylock(struct rw_mutex *rwm)
++{
++	return rt_read_fasttrylock(rwm, rt_read_slowtrylock);
++}
++
++static void
++rt_write_slowlock(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	struct rt_mutex_waiter waiter;
++	int saved_lock_depth = -1;
++	unsigned long flags;
++
++	debug_rt_mutex_init_waiter(&waiter);
++	waiter.task = NULL;
++
++	/* we do PI different for writers that are blocked */
++	waiter.write_lock = 1;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++	init_lists(mutex);
++
++	if (try_to_take_rw_write(rwm)) {
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++		return;
++	}
++	update_rw_mutex_owner(rwm);
++
++	/*
++	 * We drop the BKL here before we go into the wait loop to avoid a
++	 * possible deadlock in the scheduler.
++	 */
++	if (unlikely(current->lock_depth >= 0))
++		saved_lock_depth = rt_release_bkl(mutex, flags);
++	set_current_state(TASK_UNINTERRUPTIBLE);
++
++	for (;;) {
++		unsigned long saved_flags;
++
++		/* Try to acquire the lock: */
++		if (try_to_take_rw_write(rwm))
++			break;
++		update_rw_mutex_owner(rwm);
++
++		/*
++		 * waiter.task is NULL the first time we come here and
++		 * when we have been woken up by the previous owner
++		 * but the lock got stolen by a higher prio task.
++		 */
++		if (!waiter.task) {
++			task_blocks_on_rt_mutex(mutex, &waiter, 0, flags);
++			/* Wakeup during boost ? */
++			if (unlikely(!waiter.task))
++				continue;
++		}
++		saved_flags = current->flags & PF_NOSCHED;
++		current->flags &= ~PF_NOSCHED;
++
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++		debug_rt_mutex_print_deadlock(&waiter);
++
++		if (waiter.task)
++			schedule_rt_mutex(mutex);
++
++		spin_lock_irqsave(&mutex->wait_lock, flags);
++
++		current->flags |= saved_flags;
++		set_current_state(TASK_UNINTERRUPTIBLE);
++	}
++
++	set_current_state(TASK_RUNNING);
++
++	if (unlikely(waiter.task))
++		remove_waiter(mutex, &waiter, flags);
++
++	/* check on unlock if we have any waiters. */
++	if (rt_mutex_has_waiters(mutex))
++		mark_rt_rwlock_check(rwm);
++
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	/* Must we reaquire the BKL? */
++	if (unlikely(saved_lock_depth >= 0))
++		rt_reacquire_bkl(saved_lock_depth);
++
++	WARN_ON(atomic_read(&rwm->count));
++
++	debug_rt_mutex_free_waiter(&waiter);
++
++}
++
++static inline void
++rt_write_fastlock(struct rw_mutex *rwm,
++		  void fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
++
++	if (likely(rt_rwlock_cmpxchg(rwm, NULL, val))) {
++		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
++		WARN_ON(atomic_read(&rwm->count));
++	} else
++		slowfn(rwm);
++}
++
++void fastcall rt_mutex_down_write(struct rw_mutex *rwm)
++{
++	rt_write_fastlock(rwm, rt_write_slowlock);
++}
++
++static int
++rt_write_slowtrylock(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	unsigned long flags;
++	int ret = 0;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++	init_lists(mutex);
++
++	if (try_to_take_rw_write(rwm))
++		ret = 1;
++
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	return ret;
++}
++
++static inline int
++rt_write_fasttrylock(struct rw_mutex *rwm,
++		    int fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
++
++	if (likely(rt_rwlock_cmpxchg(rwm, NULL, val))) {
++		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
++		WARN_ON(atomic_read(&rwm->count));
++		return 1;
++	} else
++		return slowfn(rwm);
++}
++
++int fastcall rt_mutex_down_write_trylock(struct rw_mutex *rwm)
++{
++	return rt_write_fasttrylock(rwm, rt_write_slowtrylock);
++}
++
++static void fastcall noinline __sched
++rt_read_slowunlock(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	unsigned long flags;
++	struct rt_mutex_waiter *waiter;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++
++	rt_mutex_deadlock_account_unlock(current);
++
++	/*
++	 * To prevent multiple readers from zeroing out the owner
++	 * when the count goes to zero and then have another task
++	 * grab the task. We mark the lock. This makes all tasks
++	 * go to the slow path. Then we can check the owner without
++	 * worry that it changed.
++	 */
++	mark_rt_rwlock_check(rwm);
++
++	/*
++	 * If there are more readers, let the last one do any wakeups.
++	 * Also check to make sure the owner wasn't cleared when two
++	 * readers released the lock at the same time, and the count
++	 * went to zero before grabbing the wait_lock.
++	 */
++	if (atomic_read(&rwm->count) ||
++	    (rt_rwlock_owner(rwm) != current &&
++	     rt_rwlock_owner(rwm) != RT_RW_READER)) {
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++		return;
++	}
++
++	/* If no one is blocked, then clear all ownership */
++	if (!rt_mutex_has_waiters(mutex)) {
++		/* We could still have a pending reader waiting */
++		if (rt_mutex_owner_pending(mutex)) {
++			/* set the rwm back to pending */
++			rwm->owner = RT_RW_PENDING_READ;
++		} else {
++			rwm->owner = NULL;
++			mutex->owner = NULL;
++		}
++		goto out;
++	}
++
++	/* We are the last reader with pending waiters. */
++	waiter = rt_mutex_top_waiter(mutex);
++	if (waiter->write_lock)
++		rwm->owner = RT_RW_PENDING_WRITE;
++	else
++		rwm->owner = RT_RW_PENDING_READ;
++
++	/*
++	 * It is possible to have a reader waiting. We still only
++	 * wake one up in that case. A way we can have a reader waiting
++	 * is because a writer woke up, a higher prio reader came
++	 * and stole the lock from the writer. But the writer now
++	 * is no longer waiting on the lock and needs to retake
++	 * the lock. We simply wake up the reader and let the
++	 * reader have the lock. If the writer comes by, it
++	 * will steal the lock from the reader. This is the
++	 * only time we can have a reader pending on a lock.
++	 */
++	wakeup_next_waiter(mutex, 0);
++
++ out:
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	/* Undo pi boosting.when necessary */
++	rt_mutex_adjust_prio(current);
++}
++
++static inline void
++rt_read_fastunlock(struct rw_mutex *rwm,
++		   void fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++	WARN_ON(!atomic_read(&rwm->count));
++	WARN_ON(!rwm->owner);
++	atomic_dec(&rwm->count);
++	if (likely(rt_rwlock_cmpxchg(rwm, current, NULL)))
++		rt_mutex_deadlock_account_unlock(current);
++	else
++		slowfn(rwm);
++}
++
++void fastcall rt_mutex_up_read(struct rw_mutex *rwm)
++{
++	rt_read_fastunlock(rwm, rt_read_slowunlock);
++}
++
++static void fastcall noinline __sched
++rt_write_slowunlock(struct rw_mutex *rwm)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++	struct rt_mutex_waiter *waiter;
++	struct task_struct *pendowner;
++	unsigned long flags;
++
++	spin_lock_irqsave(&mutex->wait_lock, flags);
++
++	rt_mutex_deadlock_account_unlock(current);
++
++	if (!rt_mutex_has_waiters(mutex)) {
++		rwm->owner = NULL;
++		mutex->owner = NULL;
++		spin_unlock_irqrestore(&mutex->wait_lock, flags);
++		return;
++	}
++
++	debug_rt_mutex_unlock(mutex);
++
++	/*
++	 * This is where it gets a bit tricky.
++	 * We can have both readers and writers waiting below us.
++	 * They are ordered by priority. For each reader we wake
++	 * up, we check to see if there's another reader waiting.
++	 * If that is the case, we continue to wake up the readers
++	 * until we hit a writer. Once we hit a writer, then we
++	 * stop (and don't wake it up).
++	 *
++	 * If the next waiter is a writer, than we just wake up
++	 * the writer and we are done.
++	 */
++
++	waiter = rt_mutex_top_waiter(mutex);
++	pendowner = waiter->task;
++	wakeup_next_waiter(mutex, 0);
++
++	/* another writer is next? */
++	if (waiter->write_lock) {
++		rwm->owner = RT_RW_PENDING_WRITE;
++		goto out;
++	}
++
++	rwm->owner = RT_RW_PENDING_READ;
++
++	if (!rt_mutex_has_waiters(mutex))
++		goto out;
++
++	spin_lock(&pendowner->pi_lock);
++	/*
++	 * Wake up all readers.
++	 * This gets a bit more complex. More than one reader can't
++	 * own the mutex. We give it to the first (highest prio)
++	 * reader, and then wake up the rest of the readers until
++	 * we wake up all readers or come to a writer. The woken
++	 * up readers that don't own the lock will try to take it
++	 * when they schedule. Doing this lets a high prio writer
++	 * come along and steal the lock.
++	 */
++	waiter = rt_mutex_top_waiter(mutex);
++	while (waiter && !waiter->write_lock) {
++		struct task_struct *reader = waiter->task;
++
++		plist_del(&waiter->list_entry, &mutex->wait_list);
++
++		/* nop if not on a list */
++		plist_del(&waiter->pi_list_entry, &pendowner->pi_waiters);
++
++		waiter->task = NULL;
++		reader->pi_blocked_on = NULL;
++
++		wake_up_process(reader);
++
++		if (rt_mutex_has_waiters(mutex))
++			waiter = rt_mutex_top_waiter(mutex);
++		else
++			waiter = NULL;
++	}
++
++	/* If a writer is still pending, then update its plist. */
++	if (rt_mutex_has_waiters(mutex)) {
++		struct rt_mutex_waiter *next;
++
++		next = rt_mutex_top_waiter(mutex);
++		/* delete incase we didn't go through the loop */
++		plist_del(&next->pi_list_entry, &pendowner->pi_waiters);
++		/* add back in as top waiter */
++		plist_add(&next->pi_list_entry, &pendowner->pi_waiters);
++	}
++	spin_unlock(&pendowner->pi_lock);
++
++ out:
++
++	spin_unlock_irqrestore(&mutex->wait_lock, flags);
++
++	/* Undo pi boosting.when necessary */
++	rt_mutex_adjust_prio(current);
++}
++
++static inline void
++rt_write_fastunlock(struct rw_mutex *rwm,
++		   void fastcall (*slowfn)(struct rw_mutex *rwm))
++{
++	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
++
++	WARN_ON(rt_rwlock_owner(rwm) != current);
++	if (likely(rt_rwlock_cmpxchg(rwm, (struct task_struct *)val, NULL)))
++		rt_mutex_deadlock_account_unlock(current);
++	else
++		slowfn(rwm);
++}
++
++void fastcall rt_mutex_up_write(struct rw_mutex *rwm)
++{
++	rt_write_fastunlock(rwm, rt_write_slowunlock);
++}
++
++void rt_mutex_rwsem_init(struct rw_mutex *rwm, const char *name)
++{
++	struct rt_mutex *mutex = &rwm->mutex;
++
++	rwm->owner = NULL;
++	atomic_set(&rwm->count, 0);
++
++	__rt_mutex_init(mutex, name);
++}
++
++#endif /* CONFIG_PREEMPT_RT */
+ 
+ #ifdef CONFIG_PREEMPT_BKL
+ 
+@@ -942,6 +1639,7 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 
+ 	debug_rt_mutex_init_waiter(&waiter);
+ 	waiter.task = NULL;
++	waiter.write_lock = 0;
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	init_lists(lock);
+Index: linux-2.6.24.4-rt4/kernel/rtmutex_common.h
+===================================================================
+--- linux-2.6.24.4-rt4.orig/kernel/rtmutex_common.h	2008-03-25 16:41:48.000000000 -0400
++++ linux-2.6.24.4-rt4/kernel/rtmutex_common.h	2008-03-25 21:45:43.000000000 -0400
+@@ -13,6 +13,7 @@
+ #define __KERNEL_RTMUTEX_COMMON_H
+ 
+ #include <linux/rtmutex.h>
++#include <linux/rt_lock.h>
+ 
+ /*
+  * The rtmutex in kernel tester is independent of rtmutex debugging. We
+@@ -43,12 +44,14 @@ extern void schedule_rt_mutex_test(struc
+  * @list_entry:		pi node to enqueue into the mutex waiters list
+  * @pi_list_entry:	pi node to enqueue into the mutex owner waiters list
+  * @task:		task reference to the blocked task
++ * @write_lock:		true if blocked as writer
+  */
+ struct rt_mutex_waiter {
+ 	struct plist_node	list_entry;
+ 	struct plist_node	pi_list_entry;
+ 	struct task_struct	*task;
+ 	struct rt_mutex		*lock;
++	int			write_lock;
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	unsigned long		ip;
+ 	pid_t			deadlock_task_pid;
+@@ -112,6 +115,60 @@ static inline unsigned long rt_mutex_own
+ 	return (unsigned long)lock->owner & RT_MUTEX_OWNER_PENDING;
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT
++/*
++ * rw_mutex->owner state tracking
++ */
++#define RT_RWLOCK_CHECK		1UL
++#define RT_RWLOCK_WRITER	2UL
++#define RT_RWLOCK_MASKALL	3UL
++
++/* used as reader owner of the mutex */
++#define RT_RW_READER		(struct task_struct *)0x100
++
++/* used when a writer releases the lock with waiters */
++/*   pending owner is a reader */
++#define RT_RW_PENDING_READ	(struct task_struct *)0x200
++/*   pending owner is a writer */
++#define RT_RW_PENDING_WRITE	(struct task_struct *)0x400
++/* Either of the above is true */
++#define RT_RW_PENDING_MASK	(0x600 | RT_RWLOCK_MASKALL)
++
++/* Return true if lock is not owned but has pending owners */
++static inline int rt_rwlock_pending(struct rw_mutex *rwm)
++{
++	unsigned long owner = (unsigned long)rwm->owner;
++	return (owner & RT_RW_PENDING_MASK) == owner;
++}
++
++static inline int rt_rwlock_pending_writer(struct rw_mutex *rwm)
++{
++	unsigned long owner = (unsigned long)rwm->owner;
++	return rt_rwlock_pending(rwm) &&
++		(owner & (unsigned long)RT_RW_PENDING_WRITE);
++}
++
++static inline struct task_struct *rt_rwlock_owner(struct rw_mutex *rwm)
++{
++	return (struct task_struct *)
++		((unsigned long)rwm->owner & ~RT_RWLOCK_MASKALL);
++}
++
++static inline unsigned long rt_rwlock_writer(struct rw_mutex *rwm)
++{
++	return (unsigned long)rwm->owner & RT_RWLOCK_WRITER;
++}
++
++extern void rt_mutex_up_write(struct rw_mutex *rwm);
++extern void rt_mutex_up_read(struct rw_mutex *rwm);
++extern int rt_mutex_down_write_trylock(struct rw_mutex *rwm);
++extern void rt_mutex_down_write(struct rw_mutex *rwm);
++extern int rt_mutex_down_read_trylock(struct rw_mutex *rwm);
++extern void rt_mutex_down_read(struct rw_mutex *rwm);
++extern void rt_mutex_rwsem_init(struct rw_mutex *rwm, const char *name);
++
++#endif /* CONFIG_PREEMPT_RT */
++
+ /*
+  * PI-futex support (proxy locking functions, etc.):
+  */
+Index: linux-2.6.24.4-rt4/kernel/rt.c
+===================================================================
+--- linux-2.6.24.4-rt4.orig/kernel/rt.c	2008-03-25 16:41:48.000000000 -0400
++++ linux-2.6.24.4-rt4/kernel/rt.c	2008-03-25 21:38:23.000000000 -0400
+@@ -301,26 +301,14 @@ EXPORT_SYMBOL(__rt_rwlock_init);
+ void fastcall rt_up_write(struct rw_semaphore *rwsem)
+ {
+ 	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	rt_mutex_unlock(&rwsem->lock);
++	rt_mutex_up_write(&rwsem->owners);
+ }
+ EXPORT_SYMBOL(rt_up_write);
+ 
+ void fastcall rt_up_read(struct rw_semaphore *rwsem)
+ {
+-	unsigned long flags;
+-
+ 	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	/*
+-	 * Read locks within the self-held write lock succeed.
+-	 */
+-	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
+-	if (rt_mutex_real_owner(&rwsem->lock) == current && rwsem->read_depth) {
+-		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-		rwsem->read_depth--;
+-		return;
+-	}
+-	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-	rt_mutex_unlock(&rwsem->lock);
++	rt_mutex_up_read(&rwsem->owners);
+ }
+ EXPORT_SYMBOL(rt_up_read);
+ 
+@@ -336,7 +324,7 @@ EXPORT_SYMBOL(rt_downgrade_write);
+ 
+ int fastcall rt_down_write_trylock(struct rw_semaphore *rwsem)
+ {
+-	int ret = rt_mutex_trylock(&rwsem->lock);
++	int ret = rt_mutex_down_write_trylock(&rwsem->owners);
+ 
+ 	if (ret)
+ 		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+@@ -344,38 +332,29 @@ int fastcall rt_down_write_trylock(struc
+ }
+ EXPORT_SYMBOL(rt_down_write_trylock);
+ 
++static void __rt_down_write(struct rw_semaphore *rwsem, int subclass)
++{
++	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
++	LOCK_CONTENDED_RT_RW(rwsem, rt_mutex_down_write_trylock, rt_mutex_down_write);
++}
++
+ void fastcall rt_down_write(struct rw_semaphore *rwsem)
+ {
+-	rwsem_acquire(&rwsem->dep_map, 0, 0, _RET_IP_);
+-	LOCK_CONTENDED_RT(rwsem, rt_mutex_trylock, rt_mutex_lock);
++	__rt_down_write(rwsem, 0);
+ }
+ EXPORT_SYMBOL(rt_down_write);
+ 
+ void fastcall rt_down_write_nested(struct rw_semaphore *rwsem, int subclass)
+ {
+-	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
+-	LOCK_CONTENDED_RT(rwsem, rt_mutex_trylock, rt_mutex_lock);
++	__rt_down_write(rwsem, subclass);
+ }
+ EXPORT_SYMBOL(rt_down_write_nested);
+ 
+ int fastcall rt_down_read_trylock(struct rw_semaphore *rwsem)
+ {
+-	unsigned long flags;
+ 	int ret;
+ 
+-	/*
+-	 * Read locks within the self-held write lock succeed.
+-	 */
+-	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
+-	if (rt_mutex_real_owner(&rwsem->lock) == current) {
+-		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-		rwsem_acquire_read(&rwsem->dep_map, 0, 1, _RET_IP_);
+-		rwsem->read_depth++;
+-		return 1;
+-	}
+-	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-
+-	ret = rt_mutex_trylock(&rwsem->lock);
++	ret = rt_mutex_down_read_trylock(&rwsem->owners);
+ 	if (ret)
+ 		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+ 	return ret;
+@@ -384,22 +363,8 @@ EXPORT_SYMBOL(rt_down_read_trylock);
+ 
+ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
+ {
+-	unsigned long flags;
+-
+ 	rwsem_acquire_read(&rwsem->dep_map, subclass, 0, _RET_IP_);
+-
+-	/*
+-	 * Read locks within the write lock succeed.
+-	 */
+-	spin_lock_irqsave(&rwsem->lock.wait_lock, flags);
+-
+-	if (rt_mutex_real_owner(&rwsem->lock) == current) {
+-		spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-		rwsem->read_depth++;
+-		return;
+-	}
+-	spin_unlock_irqrestore(&rwsem->lock.wait_lock, flags);
+-	LOCK_CONTENDED_RT(rwsem, rt_mutex_trylock, rt_mutex_lock);
++	LOCK_CONTENDED_RT_RW(rwsem, rt_mutex_down_read_trylock, rt_mutex_down_read);
+ }
+ 
+ void fastcall rt_down_read(struct rw_semaphore *rwsem)
+@@ -424,8 +389,7 @@ void fastcall __rt_rwsem_init(struct rw_
+ 	debug_check_no_locks_freed((void *)rwsem, sizeof(*rwsem));
+ 	lockdep_init_map(&rwsem->dep_map, name, key, 0);
+ #endif
+-	__rt_mutex_init(&rwsem->lock, name);
+-	rwsem->read_depth = 0;
++	rt_mutex_rwsem_init(&rwsem->owners, name);
+ }
+ EXPORT_SYMBOL(__rt_rwsem_init);
+ 
+Index: linux-2.6.24.4-rt4/include/linux/lockdep.h
+===================================================================
+--- linux-2.6.24.4-rt4.orig/include/linux/lockdep.h	2008-03-25 16:41:48.000000000 -0400
++++ linux-2.6.24.4-rt4/include/linux/lockdep.h	2008-03-25 21:38:23.000000000 -0400
+@@ -383,6 +383,16 @@ do {								\
+  	ret;							\
+ })
+ 
++#define LOCK_CONTENDED_RT_RW(_lock, f_try, f_lock)		\
++do {								\
++	if (!f_try(&(_lock)->owners)) {				\
++		lock_contended(&(_lock)->dep_map, _RET_IP_);	\
++		f_lock(&(_lock)->owners);			\
++	}							\
++	lock_acquired(&(_lock)->dep_map);			\
++} while (0)
++
++
+ #else /* CONFIG_LOCK_STAT */
+ 
+ #define lock_contended(lockdep_map, ip) do {} while (0)
+@@ -397,6 +407,9 @@ do {								\
+ #define LOCK_CONTENDED_RT_RET(_lock, f_try, f_lock) \
+ 	f_lock(&(_lock)->lock)
+ 
++#define LOCK_CONTENDED_RT_RW(_lock, f_try, f_lock) \
++	f_lock(&(_lock)->owners)
++
+ #endif /* CONFIG_LOCK_STAT */
+ 
+ #if defined(CONFIG_TRACE_IRQFLAGS) && defined(CONFIG_GENERIC_HARDIRQS)
 
-If it fails, the reader blocking is much like the same as a simple mutex
-since it may boost the writer (which there would be only one). But first
-if the owner of the rw_lock is not set in the rt_mutex, then the owner
-is updated, to allow the old PI algorithm to work (see patches for details).
-
-For a writer to take the lock, in the fastpath it does a cmpxchg to the
-rw_mutex field by trying to copy in the current pointer plus the second
-least significant bit (the first least significant bit is set for serializing
-fast paths with slowpaths).  The second least significant bit in the
-owner field denotes that the owner is a writer.
-
-If it fails the fast path, it enters the slow path. There if it still can't
-get the lock, it updates the rt_mutex owner field (don't confuse the rt_mutex
-with the rw_mutex descriptors). If the owner of the lock is a reader the
-rt_mutex owner is given a factitious owner (RT_RW_READER).
-
-The current PI algorithm takes at most two of the internal spin_locks
-at a time and checks for deadlocks. One reason to do this is that this
-algorithm is also used with futexes, and we can't allow user space code
-be able deadlocking the kernel. But because rwlocks and rwsems are never
-held while taking a futex (that would just be bad) we can trust the
-rwlocks and rwsems will not deadlock (or the kernel itself is bad).
-
-Because of this, when the PI algorithm walks the chain and comes across
-a owner of RT_RW_READER, it breaks out of the loop, and will contiune
-to hold that rt_mutex's internal spin lock. Then it will go through
-each of the readers and continue the algorithm on each.
-
-Yes this contains a recursive function, but it also keeps track
-at the number of times it recurs. Which brings us to the limits that the
-algorithm imposes. A task can only hold at most 5 different reader
-locks at the same time. This should not be an issue, since it would be
-bad programming practice to hold more that 5 different reader locks.
-This is because each task has an array of 5 reader lock structures that
-it uses to keep track of the reader locks it owns. This is for use
-of the PI algorithm.
-
-For more on this code, see the patches.
-
--- Steve
-
-
+-- 
