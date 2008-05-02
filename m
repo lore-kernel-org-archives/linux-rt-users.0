@@ -1,74 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Subject: Re: Preempt-RT patch for 2.6.25
-Date: Fri, 2 May 2008 14:45:25 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
+Date: Fri, 02 May 2008 11:54:27 -0700
+Message-ID: <1209754467.25628.42.camel@dd.thebigcorporation.com>
 References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
- <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	 <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Remy Bohmer <linux@bohmer.net>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Jon Masters <jonathan@jonmasters.org>,
 	Ingo Molnar <mingo@elte.hu>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:62824 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763059AbYEBSp2 (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.178]:14774 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756804AbYEBSy3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2008 14:45:28 -0400
-In-Reply-To: <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	Fri, 2 May 2008 14:54:29 -0400
+Received: by wa-out-1112.google.com with SMTP id j37so441485waf.23
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2008 11:54:29 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
->
->
-> His bi-sectability changes are pretty key, and I would like to see those
-> reviewed and incorporated, even if they apply only to x86.
+On Fri, 2008-05-02 at 14:45 -0400, Steven Rostedt wrote:
+> On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
 
-They would be nice, but I'm also in the process of moving patches around
-to have the next mainline enhancement up front.
+> 
+> As for 2.6.25-rt1, I'm currently working on it. I have the patch queue
+> ready, but it has some major bugs that I'm stil working out. I did a bit
+> of clean up in the per-cpu portion as well as some of the mutex code. Now
+> I need to debug all those changes.
 
->
-> The RT patch queue generally is a mess today.
-> Lots of stuff needs to be folded down into the core patches.
+Pls post what you have asap, we will all help you debug it.
 
-I'm starting to fold patches together too.
+Thanks
 
->
-> The ins and outs of the softirq code need major clean-up.
+Sven
 
-That's my next project after ftrace.
-
->
-> There are big issues around apic / hardirq threads that we need to
-> tackle at multiple levels.
-
-This is also being worked on by tglx and Jon Masters.
-
->
-> (we are seeing the semis acknowledge the IRQ thread model, where IRQs
-> may stay masked longer than usual)
->
-> per-device irq threads, as Jon Masters has mentioned in his blog, may be
-> one work-around to get past the legacy stuff in x86.
->
-> and with the x86 merge, all this should become easier, so that hopefully
-> we can extricate the IRQ threads changes in a bisectable way, so we can
-> address the technical issues that stand in the way of upstream, apart
-> from PREEMPT_RT.
-
-Yeah, I'll be starting to take a hard crack at getting the irqs as threads
-work ready for mainline soon.
-
-As for 2.6.25-rt1, I'm currently working on it. I have the patch queue
-ready, but it has some major bugs that I'm stil working out. I did a bit
-of clean up in the per-cpu portion as well as some of the mutex code. Now
-I need to debug all those changes.
-
--- Steve
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
