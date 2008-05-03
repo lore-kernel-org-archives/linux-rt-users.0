@@ -1,54 +1,27 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Preempt-RT patch for 2.6.25
-Date: Fri, 2 May 2008 22:44:57 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805022244220.24994@gandalf.stny.rr.com>
-References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
- <1209753250.25628.34.camel@dd.thebigcorporation.com>
- <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
- <1209754467.25628.42.camel@dd.thebigcorporation.com>
- <Pine.LNX.4.58.0805021502040.10615@gandalf.stny.rr.com>
- <1209755665.25628.50.camel@dd.thebigcorporation.com>
+From: "Frank Ch. Eigler" <fche@redhat.com>
+Subject: preempt-rt, need old style rwlocks for systemtap
+Date: Sat, 3 May 2008 09:23:27 -0400
+Message-ID: <20080503132327.GA28881@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Remy Bohmer <linux@bohmer.net>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Jon Masters <jonathan@jonmasters.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Content-Type: text/plain; charset=us-ascii
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:53440 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755568AbYECCpA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2008 22:45:00 -0400
-In-Reply-To: <1209755665.25628.50.camel@dd.thebigcorporation.com>
+Received: from mx1.redhat.com ([66.187.233.31]:47183 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752582AbYECNYU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 3 May 2008 09:24:20 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi -
 
-On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
-> On Fri, 2008-05-02 at 15:02 -0400, Steven Rostedt wrote:
-> > On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
-> > >
-> > > On Fri, 2008-05-02 at 14:45 -0400, Steven Rostedt wrote:
-> > > > On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
-> > >
-> > > >
-> > > > As for 2.6.25-rt1, I'm currently working on it. I have the patch queue
-> > > > ready, but it has some major bugs that I'm stil working out. I did a bit
-> > > > of clean up in the per-cpu portion as well as some of the mutex code. Now
-> > > > I need to debug all those changes.
-> > >
-> > > Pls post what you have asap, we will all help you debug it.
-> >
-> > You'll have something today. I like to have a kernel that at least boots
-> > ;-)
->
-> Hey that's true for Linux always. Its more fun that way :)
+It has come to my attention that the preempt-rt patch suite
+deliberately defeats the potential concurrency intended by systemtap's
+use of rwlocks to permit concurrent readers of various data
+structures.  Since systemtap's probe handlers are all atomic,
+nonblocking, nonpreemptable, it does not seem like there is any
+real-time-oriented benefit in this.  What can we do to work around
+this and permit reader concurrency again in preempt-rt?
 
-I'm fixing quite a bit of paper bag bugs. I'm going to call it a night and
-work more on it tomorrow night.
-
--- Steve
+- FChE
