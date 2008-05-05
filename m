@@ -1,15 +1,13 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: Preempt-RT patch for 2.6.25
-Date: Mon, 5 May 2008 12:11:50 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com>
+Date: Mon, 05 May 2008 09:17:30 -0700
+Message-ID: <1210004250.17132.12.camel@localhost.localdomain>
 References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
- <1209753250.25628.34.camel@dd.thebigcorporation.com>
- <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
- <1209754467.25628.42.camel@dd.thebigcorporation.com>
- <Pine.LNX.4.58.0805021502040.10615@gandalf.stny.rr.com>
- <1210003265.17132.6.camel@localhost.localdomain>
+	 <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
 	Remy Bohmer <linux@bohmer.net>,
 	LKML <linux-kernel@vger.kernel.org>,
@@ -17,31 +15,42 @@ Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Jon Masters <jonathan@jonmasters.org>,
 	Ingo Molnar <mingo@elte.hu>
-To: Daniel Walker <dwalker@mvista.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:51029 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750729AbYEEQLx (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:33443 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752246AbYEEQRc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 May 2008 12:11:53 -0400
-In-Reply-To: <1210003265.17132.6.camel@localhost.localdomain>
+	Mon, 5 May 2008 12:17:32 -0400
+In-Reply-To: <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Mon, 5 May 2008, Daniel Walker wrote:
->
-> Download my tree .. It boots in my testing, and it's on 2.6.25 .. If it
-> doesn't boot for you, just bisect down to the offending patch.. While I
-> forward ported 2.6.24.4-rt4 to 2.6.25 I bisected several times finding
-> errors (which reduced debugging time considerably.).
->
+On Fri, 2008-05-02 at 14:45 -0400, Steven Rostedt wrote:
+> On Fri, 2 May 2008, Sven-Thorsten Dietrich wrote:
+> >
+> >
+> > His bi-sectability changes are pretty key, and I would like to see those
+> > reviewed and incorporated, even if they apply only to x86.
+> 
+> They would be nice, but I'm also in the process of moving patches around
+> to have the next mainline enhancement up front.
 
-Daniel,
+Not sure what that has to do with bisect changes?
 
-Thanks, but the bugs were caused by some of my backporting of other
-updates (percpu and ftrace). I have them fixed, but I'm also looking at
-rearranging the patch queue as well to get things ready for mainline.
+> >
+> > The RT patch queue generally is a mess today.
+> > Lots of stuff needs to be folded down into the core patches.
+> 
+> I'm starting to fold patches together too.
 
--- Steve
+You really want bisection first. The reason is that you don't want ever
+growing patches, you want smaller and smaller patches. For instance the
+rt-mutex-core.patch is way too large, you wouldn't want to fold my
+PICK_FUNCTION changes into that patch since that would just make
+rt-mutex-core larger ..
+
+
+Daniel
 
