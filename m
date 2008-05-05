@@ -1,58 +1,46 @@
-From: "Peter W. Morreale" <pmorreale@novell.com>
-Subject: Re: preempt-rt, need old style rwlocks for systemtap
-Date: Sat, 03 May 2008 16:05:07 -0600
-Message-ID: <1209852307.5433.5.camel@hermosa.morrealenet>
-References: <20080503132327.GA28881@redhat.com>
-	 <481C77E8.8050002@redhat.com>  <20080503171627.GC23961@redhat.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: Preempt-RT patch for 2.6.25
+Date: Mon, 05 May 2008 07:21:21 -0700
+Message-ID: <1209997281.17132.1.camel@localhost.localdomain>
+References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
+	 <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
+	 <1209754467.25628.42.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021502040.10615@gandalf.stny.rr.com>
+	 <1209755665.25628.50.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805022244220.24994@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: "Frank Ch. Eigler" <fche@redhat.com>
+Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
+	Remy Bohmer <linux@bohmer.net>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Jon Masters <jonathan@jonmasters.org>,
+	Ingo Molnar <mingo@elte.hu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:51309 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754315AbYECWFX (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:59364 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756523AbYEEOV0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 May 2008 18:05:23 -0400
-In-Reply-To: <20080503171627.GC23961@redhat.com>
+	Mon, 5 May 2008 10:21:26 -0400
+In-Reply-To: <Pine.LNX.4.58.0805022244220.24994@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2008-05-03 at 13:16 -0400, Frank Ch. Eigler wrote:
-> Hi -
+
+On Fri, 2008-05-02 at 22:44 -0400, Steven Rostedt wrote:
+> > > You'll have something today. I like to have a kernel that at least boots
+> > > ;-)
+> >
+> > Hey that's true for Linux always. Its more fun that way :)
 > 
-> On Sat, May 03, 2008 at 09:34:16AM -0500, Clark Williams wrote:
-> > [...]
-> > > It has come to my attention that the preempt-rt patch suite
-> > > deliberately defeats the potential concurrency intended by systemtap's
-> > > use of rwlocks to permit concurrent readers [...]
-> 
-> > The reason it "defeats" the concurrent behavior is that it's really
-> > complicated to have concurrent readers with Priority Inheritance, so
-> > the initial cut of rtmutexes serialized all lock accesses. [...]
-> 
-> Do you believe priority inheritance to be an essential property of
-> every use of these primitives, regardless of the nature of the
-> specifical critical sections being protected?  Is there no way & need
-> to opt out of the extra machinery?
-> 
-> - FChE
+> I'm fixing quite a bit of paper bag bugs. I'm going to call it a night and
+> work more on it tomorrow night.
 
-Yes, for (at least) two reasons. And No.
+What kind of bug are you finding?
 
-Without PI the best case is indeterminate latencies.  The worst case is
-deadlock.  Please read Steven's excellent description of the issues in
-the Documentation directory of a kernel tree.   
-
-
-Best,
--PWM
-
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Daniel
 
