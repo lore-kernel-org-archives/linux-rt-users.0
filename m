@@ -1,8 +1,14 @@
 From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: Preempt-RT patch for 2.6.25
-Date: Tue, 06 May 2008 09:01:03 -0700
-Message-ID: <1210089663.17132.128.camel@localhost.localdomain>
-References: <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com>
+Date: Tue, 06 May 2008 09:05:22 -0700
+Message-ID: <1210089922.17132.132.camel@localhost.localdomain>
+References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
+	 <1209753250.25628.34.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
+	 <1209754467.25628.42.camel@dd.thebigcorporation.com>
+	 <Pine.LNX.4.58.0805021502040.10615@gandalf.stny.rr.com>
+	 <1210003265.17132.6.camel@localhost.localdomain>
+	 <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com>
 	 <1210004376.17132.14.camel@localhost.localdomain>
 	 <Pine.LNX.4.58.0805051240520.25250@gandalf.stny.rr.com>
 	 <1210007084.17132.32.camel@localhost.localdomain>
@@ -10,68 +16,47 @@ References: <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com>
 	 <1210013938.17132.55.camel@localhost.localdomain>
 	 <alpine.LFD.1.10.0805052107270.3318@apollo.tec.linutronix.de>
 	 <1210025532.17132.82.camel@localhost.localdomain>
-	 <20080505234743.GA11433@elte.hu>
-	 <1210032701.17132.98.camel@localhost.localdomain>
-	 <20080506084338.GA19151@elte.hu>
+	 <Pine.LNX.4.58.0805060634330.12081@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
 	Remy Bohmer <linux@bohmer.net>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Jon Masters <jonathan@jonmasters.org>
-To: Ingo Molnar <mingo@elte.hu>
+	Jon Masters <jonathan@jonmasters.org>,
+	Ingo Molnar <mingo@elte.hu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:59410 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:61637 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756384AbYEFQBG (ORCPT
+	with ESMTP id S1765235AbYEFQF1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 May 2008 12:01:06 -0400
-In-Reply-To: <20080506084338.GA19151@elte.hu>
+	Tue, 6 May 2008 12:05:27 -0400
+In-Reply-To: <Pine.LNX.4.58.0805060634330.12081@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Tue, 2008-05-06 at 10:43 +0200, Ingo Molnar wrote:
-> * Daniel Walker <dwalker@mvista.com> wrote:
+On Tue, 2008-05-06 at 06:40 -0400, Steven Rostedt wrote:
+> Dropping someones work from the official tree is an insult to the
+> developer that did that work. The *only* reason to drop code is if it
+> happens to break something else that already existed or it has been warned
+> for at least one year that if no one maintains this code it will be
+> dropped. Dropping it for the sake of making "my work easier" is not an
+> excuse.
 > 
-> > > Since it's code that you regard stale it shouldnt be all that hard 
-> > > to fix it up - in general it's much easier to fix a bug than to talk 
-> > > it out of existence, even if you disagree with a maintainer about 
-> > > how significant a bug is.
-> > 
-> > It shouldn't be hard, but it's too much to do all in one go. [...]
-> 
-> this sort of "it was too hard for me but I expect the maintainers to 
-> clean up the mess" stance, combined with an aggressive, uncompromising, 
-> demanding tone towards the maintainers of a project wont get you very 
-> far in contributing to any open-source project. You are not their boss, 
-> you have to learn to work with them instead of trying to force your 
-> opinion on them. They clearly try to work with you and gave a 
-> straightforward technical description of how your contribution would be 
-> acceptable to the project. All the rest is just a waste of everyone's 
-> time that could be better spent on improving the project. JFYI.
+> Don't say "well it's only temporary" because it's not. You even expected
+> the ones that did the work to "re-port" it to your new tree. Sorry Daniel,
+> that's not the way things happen in Open Source.
 
-It's not "too hard for me" it's a matter of correctness. As if I would
-ever say that Ingo ..
+Steven, this is all out of mainline. It works however we want it to
+work.
 
-I'm not forcing my opinion on anyone. I'm assuming cleanup are
-acceptable, especially bisect cleanup (when your code isn't bisectable).
-My position is based on that.
-
-You release a dirty -rt tree and expect no one will clean it up, and
-further more if they do clean up your code you just toss the work aside
-like it's pointless. I take it you don't want clean ups. From my
-perspective you should be thanking me.
-
-Had Steven simple said "Please include all the architecture" a month ago
-when I released my code, I may have actually done that.
-
-This thread is in no way a plea to get my code included. My code never
-had a chance to be included anyway ..
+As I've been saying, had you wanted the architectures included, you
+should have said that a month ago. You had a month you review everything
+and work with me ..
 
 Daniel
 
