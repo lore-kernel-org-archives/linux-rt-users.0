@@ -1,46 +1,72 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: Preempt-RT patch for 2.6.25
-Date: Tue, 6 May 2008 10:43:38 +0200
-Message-ID: <20080506084338.GA19151@elte.hu>
-References: <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com> <1210004376.17132.14.camel@localhost.localdomain> <Pine.LNX.4.58.0805051240520.25250@gandalf.stny.rr.com> <1210007084.17132.32.camel@localhost.localdomain> <Pine.LNX.4.58.0805051426010.25250@gandalf.stny.rr.com> <1210013938.17132.55.camel@localhost.localdomain> <alpine.LFD.1.10.0805052107270.3318@apollo.tec.linutronix.de> <1210025532.17132.82.camel@localhost.localdomain> <20080505234743.GA11433@elte.hu> <1210032701.17132.98.camel@localhost.localdomain>
+Date: Tue, 6 May 2008 06:40:13 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805060634330.12081@gandalf.stny.rr.com>
+References: <3efb10970805021102n4d87f55eue723786281b06fcb@mail.gmail.com>
+ <1209753250.25628.34.camel@dd.thebigcorporation.com>
+ <Pine.LNX.4.58.0805021441340.10615@gandalf.stny.rr.com>
+ <1209754467.25628.42.camel@dd.thebigcorporation.com>
+ <Pine.LNX.4.58.0805021502040.10615@gandalf.stny.rr.com>
+ <1210003265.17132.6.camel@localhost.localdomain>
+ <Pine.LNX.4.58.0805051210410.23084@gandalf.stny.rr.com>
+ <1210004376.17132.14.camel@localhost.localdomain>
+ <Pine.LNX.4.58.0805051240520.25250@gandalf.stny.rr.com>
+ <1210007084.17132.32.camel@localhost.localdomain>
+ <Pine.LNX.4.58.0805051426010.25250@gandalf.stny.rr.com>
+ <1210013938.17132.55.camel@localhost.localdomain>
+ <alpine.LFD.1.10.0805052107270.3318@apollo.tec.linutronix.de>
+ <1210025532.17132.82.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
 	Remy Bohmer <linux@bohmer.net>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Jon Masters <jonathan@jonmasters.org>
+	Jon Masters <jonathan@jonmasters.org>,
+	Ingo Molnar <mingo@elte.hu>
 To: Daniel Walker <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:33717 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755464AbYEFIn7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 May 2008 04:43:59 -0400
-Content-Disposition: inline
-In-Reply-To: <1210032701.17132.98.camel@localhost.localdomain>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:58840 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750906AbYEFKkQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 6 May 2008 06:40:16 -0400
+In-Reply-To: <1210025532.17132.82.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-* Daniel Walker <dwalker@mvista.com> wrote:
+On Mon, 5 May 2008, Daniel Walker wrote:
+> On Mon, 2008-05-05 at 23:01 +0200, Thomas Gleixner wrote:
+> >
+> > Keeping the architecture ports even in a maybe disfunctional state in
+> > the queue is important as we move them along and make the obvious
+> > changes to them so anyone interested to bring them up to date has not
+> > to start from scratch again, which is a major PITA (we just did one
+> > from scratch)
+>
+> In open source code never dies. So I'm not sure where this "From
+> scratch" stuff is coming from ..
 
-> > Since it's code that you regard stale it shouldnt be all that hard 
-> > to fix it up - in general it's much easier to fix a bug than to talk 
-> > it out of existence, even if you disagree with a maintainer about 
-> > how significant a bug is.
-> 
-> It shouldn't be hard, but it's too much to do all in one go. [...]
+Dropping someones work from the official tree is an insult to the
+developer that did that work. The *only* reason to drop code is if it
+happens to break something else that already existed or it has been warned
+for at least one year that if no one maintains this code it will be
+dropped. Dropping it for the sake of making "my work easier" is not an
+excuse.
 
-this sort of "it was too hard for me but I expect the maintainers to 
-clean up the mess" stance, combined with an aggressive, uncompromising, 
-demanding tone towards the maintainers of a project wont get you very 
-far in contributing to any open-source project. You are not their boss, 
-you have to learn to work with them instead of trying to force your 
-opinion on them. They clearly try to work with you and gave a 
-straightforward technical description of how your contribution would be 
-acceptable to the project. All the rest is just a waste of everyone's 
-time that could be better spent on improving the project. JFYI.
+Don't say "well it's only temporary" because it's not. You even expected
+the ones that did the work to "re-port" it to your new tree. Sorry Daniel,
+that's not the way things happen in Open Source.
 
-	Ingo
+>
+> I've done ports from scratch and it's not that bad.. Not sure what your
+> porting too.. It would also be a lot easier to do an arch port piece by
+> piece under a bisectable tree.
+
+Refresh my memory, which ports have you submitted?  I don't recall seeing
+a port from scratch that was from you.
+
+-- Steve
+
