@@ -1,63 +1,42 @@
-From: Clark Williams <clark.williams@gmail.com>
-Subject: Re: add mlockall option to cyclictest, et al
-Date: Sat, 10 May 2008 14:30:35 -0500
-Message-ID: <4825F7DB.6000808@gmail.com>
-References: <48249E2C.3010601@gmail.com> <4825F5AF.7010700@gmail.com>
+From: Alex Tsariounov <alext@novell.com>
+Subject: Cpuset management utility 0.9.1 release announcement
+Date: Mon, 12 May 2008 13:01:39 -0600
+Message-ID: <1210618899.7113.10.camel@zuul>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
-	Luis Claudio Goncalves <lclaudio@uudg.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Robert de Vries <robert.h.de.vries@gmail.com>
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.181]:49249 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752717AbYEJTaj (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:59021 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756527AbYELTBo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 10 May 2008 15:30:39 -0400
-Received: by py-out-1112.google.com with SMTP id u52so1962973pyb.10
-        for <linux-rt-users@vger.kernel.org>; Sat, 10 May 2008 12:30:38 -0700 (PDT)
-In-Reply-To: <4825F5AF.7010700@gmail.com>
+	Mon, 12 May 2008 15:01:44 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+We are please to announce the release of cpuset v0.9.1 available here:
 
-Robert de Vries wrote:
-> Clark Williams wrote:
->> -----BEGIN PGP SIGNED MESSAGE-----
->> Hash: SHA1
->>
->> Thomas,
->>
->> Got a couple of requests for mlockall() in cyclictest, so I added an
->> --mlockall
->> option to cyclictest, signaltest and pi_stress.
->>   
-> One small remark: it would be better to do the mlockall() by default. As
-> far as I know this should be done always for real-time applications.
-> I am actually surprised that it is not done already. It is also
-> mentioned in the Howto build an RT-application on the RT linux wiki.
-> 
->    Robert
-> 
-> 
+ Source:   http://developer.novell.com/wiki/index.php/Cpuset
+ Packages: http://download.opensuse.org/repositories/home:/tsariounov:/cpuset/
 
-I thought about that, but figured it would be better just to have the option rather
-than change long-standing behavior.
+Cpuset is a GPL v2 Python application to make using the cpusets
+facilities in the Linux kernel easier. It allows manipulation of cpusets
+on the system and provides higher level functions such as implementation
+and control of a basic CPU shielding setup.  The actual command is
+called cset.
 
-It's Thomas's call though :)
+If you're tired of manipulating cpusets by hand, or writing and
+rewriting cpuset startup scripts to help manage shielding, then this
+tool could be for you.
 
-Clark
+The source link above contains access to a subversion repository,
+bugzilla instance and mailing lists for cpuset.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+For an more in-depth writeup on cpuset, see the RT wiki at:
+http://rt.wiki.kernel.org/index.php/Cpuset_management_utility
 
-iEYEARECAAYFAkgl99sACgkQqA4JVb61b9eV4gCgiIs5QHocKBRHyOsGlMw+F5BA
-PuUAnRo5+9oeO5oMFjq55JUxaR7dBI2b
-=pefi
------END PGP SIGNATURE-----
+Thanks,
+Alex Tsariounov
+
