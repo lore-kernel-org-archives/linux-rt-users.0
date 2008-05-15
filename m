@@ -1,54 +1,102 @@
-From: "Carlos E. Nino-Baron" <ninocarl@egr.msu.edu>
-Subject: RTlinux setup
-Date: Wed, 14 May 2008 14:40:56 -0400
-Message-ID: <000d01c8b5f2$0be88500$23b98f00$@msu.edu>
+From: Sripathi Kodi <sripathik@in.ibm.com>
+Subject: Re: [LTP] realtime run shellscripts suite - anyone using it?
+Date: Thu, 15 May 2008 11:31:28 +0530
+Message-ID: <200805151131.29082.sripathik@in.ibm.com>
+References: <4829A2B7.2010200@bull.net> <1210750236.4747.6.camel@subratamodak.linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: dvhltc <dvhltc@linux.vnet.ibm.com>, tinytim <tinytim@us.ibm.com>,
+	Nivedita Singhvi <niv@us.ibm.com>,
+	Chirag Jog <chirag@linux.vnet.ibm.com>,
+	Ankita Garg <ankita@in.ibm.com>,
+	dino <dino@linux.vnet.ibm.com>,
+	Sebastien Dugue <sebastien.dugue@bull.net>,
+	Jean-Pierre Dion <jean-pierre.dion@bull.net>,
+	Michael Olbrich <m.olbrich@pengutronix.de>,
+	Robert Schwebel <r.schwebel@pengutronix.de>,
+	ltp-list <ltp-list@lists.sourceforge.net>,
+	Gilles Carry <Gilles.Carry@bull.net>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: subrata@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from surfnturf.egr.msu.edu ([35.9.37.164]:56471 "EHLO mx.egr.msu.edu"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1754435AbYENStp convert rfc822-to-8bit (ORCPT
+Received: from e28smtp04.in.ibm.com ([59.145.155.4]:40031 "EHLO
+	e28smtp04.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751962AbYEOGBq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 May 2008 14:49:45 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by mx.egr.msu.edu (Postfix) with ESMTP id A8A4F71EEEB
-	for <linux-rt-users@vger.kernel.org>; Wed, 14 May 2008 14:43:09 -0400 (EDT)
-Received: from mx.egr.msu.edu ([127.0.0.1])
-	by localhost (surfnturf.egr.msu.edu [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id sLGE2fhp8IoS for <linux-rt-users@vger.kernel.org>;
-	Wed, 14 May 2008 14:43:09 -0400 (EDT)
-Received: from coloso2008 (host-9562.dhcp.egr.msu.edu [35.9.140.67])
-	(using TLSv1 with cipher RC4-MD5 (128/128 bits))
-	(No client certificate requested)
-	(Authenticated sender: ninocarl)
-	by mx.egr.msu.edu (Postfix) with ESMTPSA id 859AA71EEE3
-	for <linux-rt-users@vger.kernel.org>; Wed, 14 May 2008 14:43:09 -0400 (EDT)
-Content-Language: en-us
+	Thu, 15 May 2008 02:01:46 -0400
+Received: from d28relay04.in.ibm.com (d28relay04.in.ibm.com [9.184.220.61])
+	by e28smtp04.in.ibm.com (8.13.1/8.13.1) with ESMTP id m4F61Uo7008856
+	for <linux-rt-users@vger.kernel.org>; Thu, 15 May 2008 11:31:30 +0530
+Received: from d28av04.in.ibm.com (d28av04.in.ibm.com [9.184.220.66])
+	by d28relay04.in.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m4F61K6Z688168
+	for <linux-rt-users@vger.kernel.org>; Thu, 15 May 2008 11:31:20 +0530
+Received: from d28av04.in.ibm.com (loopback [127.0.0.1])
+	by d28av04.in.ibm.com (8.13.1/8.13.3) with ESMTP id m4F61Tx1026927
+	for <linux-rt-users@vger.kernel.org>; Thu, 15 May 2008 11:31:30 +0530
+In-Reply-To: <1210750236.4747.6.camel@subratamodak.linux.ibm.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Wednesday 14 May 2008 13:00, Subrata Modak wrote:
+> Forwarding Gilles query to other RT developers.
+>
+> Regards--
+> Subrata
+>
+> On Tue, 2008-05-13 at 16:16 +0200, Gilles Carry wrote:
+> > Hello,
+> >
+> > I am investigating on how to run profiled tests for realtime
+> > systems. I would like to do something integrated in the existing
+> > system.
+> >
+> > After having roughly analyzed the existing scripts:
+> > - run.sh looks for run_auto.sh files in tests dirs and run them
+> > - run_auto.sh runs scripts/run_c_files.sh
+> >
+> > It turns out that the value added of these scripts is merely to set
+> > some env vars and log stdout/err of tests. (am I missing
+> > something?)
+> >
+> > Also, this cascade of scripts must deal with args which are
+> > defined, analyzed and passed again to subsequent scripts. Tere are
+> > also other tricks that make the whole thing heavy and uneasy.
+> >
+> > I want to write a simple script that runs command lines read from a
+> > test profile choosed by the user (having each different arguments -
+> > ie. pass criteria)
+> >
+> > Does anyone minds my simplifying the existing script suite?
 
-Hello all:
- I want to install RTlinux in a new computer, I want to know what
-distribution should I use and where I can found that. thanks
-**********************************************************************
-|M.S.E.E Carlos Eduardo Ni=F1o B.                                      =
-|
-|PhD candidate Electrical Engineering |E-mail: ninocarl@egr.msu.edu  |
-|Michigan State University            |      carlos.nino00@gmail.com |
-|Address: Electrical Machines  and Drives Laboratory                 |
-|         Michigan State University , Engineering Building   2230    |
-|         East Lansing, MI 48824-1226        Tel:    +1.787.550.9395 |=09
-|Personal Web Page: http://www.egr.msu.edu/~ninocarl                 |
-********************************************************************** =
- =20
+Hi Gilles, Subrata,
+
+In our project, we use the these scripts to run all or a selected bunch 
+of tests under realtime directory. Please have a look at the output 
+of "run.sh -h" under testcases/realtime. We also use the log files 
+extensively. As far as existing  functionality is provided, we have no 
+problems with doing improvements to the scripts.
+
+Thanks,
+Sripathi.
 
 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >
+> >
+> > Gilles.
+> >
+> > -------------------------------------------------------------------
+> >------ This SF.net email is sponsored by: Microsoft
+> > Defy all challenges. Microsoft(R) Visual Studio 2008.
+> > http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+> > _______________________________________________
+> > Ltp-list mailing list
+> > Ltp-list@lists.sourceforge.net
+> > https://lists.sourceforge.net/lists/listinfo/ltp-list
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
