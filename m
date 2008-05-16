@@ -1,52 +1,44 @@
-From: Gilles Carry <Gilles.Carry@bull.net>
-Subject: Re: [LTP] realtime run shellscripts suite - question 1
-Date: Fri, 16 May 2008 08:18:04 +0200
-Message-ID: <482D271C.2040108@bull.net>
-References: <4829A2B7.2010200@bull.net>	 <1210750236.4747.6.camel@subratamodak.linux.ibm.com>	 <200805151131.29082.sripathik@in.ibm.com>	 <1210834102.4738.1.camel@subratamodak.linux.ibm.com>	 <482BDED7.1050405@bull.net>	 <1210834847.4738.5.camel@subratamodak.linux.ibm.com>	 <482C1FC8.3010409@bull.net> <1210890820.26549.17.camel@Aeon>
+From: Jesse Barnes <jbarnes@virtuousgeek.org>
+Subject: Re: [PATCH][PCI]: Introduce pci_find_capability_cached and make MSI use it
+Date: Fri, 16 May 2008 10:44:34 -0700
+Message-ID: <200805161044.34938.jbarnes@virtuousgeek.org>
+References: <20080515160426.GD14846@ghostprotocols.net> <20080515170407.GM9921@parisc-linux.org> <20080515171003.GF14846@ghostprotocols.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: subrata@linux.vnet.ibm.com, Sripathi Kodi <sripathik@in.ibm.com>,
-	dvhltc <dvhltc@linux.vnet.ibm.com>, tinytim <tinytim@us.ibm.com>,
-	Nivedita Singhvi <niv@us.ibm.com>,
-	Chirag Jog <chirag@linux.vnet.ibm.com>,
-	Ankita Garg <ankita@in.ibm.com>,
-	dino <dino@linux.vnet.ibm.com>,
-	Sebastien Dugue <sebastien.dugue@bull.net>,
-	Jean-Pierre Dion <jean-pierre.dion@bull.net>,
-	Michael Olbrich <m.olbrich@pengutronix.de>,
-	Robert Schwebel <r.schwebel@pengutronix.de>,
-	ltp-list <ltp-list@lists.sourceforge.net>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Darren Hart <dvhltc@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:42222 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751017AbYEPGUw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 May 2008 02:20:52 -0400
-In-Reply-To: <1210890820.26549.17.camel@Aeon>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Matthew Wilcox <matthew@wil.cx>, linux-kernel@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Arnaldo Carvalho de Melo <acme@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760156AbYEPRpX@vger.kernel.org>
+In-Reply-To: <20080515171003.GF14846@ghostprotocols.net>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Darren Hart wrote:
-> On Thu, 2008-05-15 at 13:34 +0200, Gilles Carry wrote:
-> 
->>Here it is:
->>
->>perf/latency
->>func/hrtimer-prio
->>func/measurement
->>have a run.sh instead of a run_auto.sh and therefore cannot be reached 
->>by ./run.sh -t all
->>Is this intentional or shall I rename them as run_auto.sh?
->>
-> 
-> 
-> The reason being (iirc) that we didn't want to include those in the
-> automatic run from the top level.  the individual run.sh must be run
-> automatically.
+On Thursday, May 15, 2008 10:10 am Arnaldo Carvalho de Melo wrote:
+> Em Thu, May 15, 2008 at 11:04:07AM -0600, Matthew Wilcox escreveu:
+> > On Thu, May 15, 2008 at 01:04:26PM -0300, Arnaldo Carvalho de Melo wrote:
+> > > 	So I implemented pci_find_capability_cached and made MSI use it
+> > > for good measure, please consider applying.
+> >
+> > As I told you on IRC, this is just the MSI code being complete crap.
+> > It should be caching the offset itself.  We shouldn't have this extra
+> > array in the struct pci_dev just because MSI is broken.
+>
+> Well, we can certainly do that, its just that I did this first and
+> thought that perhaps there could be some other users, but I see that 44
+> extra bytes per pci_dev can be a pain if the only one to reap benefits
+> is MSI, can't you think of any other users? I couldn't detect any so far
+> in my admitedly limited testing.
 
-OK. I'll make a separate patch for moving these to run_auto.sh.
+There are a few other common cap checks, but I don't think they compare to MSI 
+in terms of latency sensitivity (though I didn't audit all the CAP_ID_EXP 
+checks, there are quite a few of those).
 
-Gilles.
+Since we know MSI is a problem, let's just go with fixing that for now.  If we 
+find that other caps are also causing problems we can revisit caching all of 
+them; the patch is simple enough.
+
+Thanks,
+Jesse
