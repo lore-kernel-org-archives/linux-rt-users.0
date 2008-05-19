@@ -1,176 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt7
-Date: Mon, 19 May 2008 15:07:03 -0400
-Message-ID: <1211224023.14697.71.camel@localhost.localdomain>
+From: Gregory Haskins <gregory.haskins.ml@gmail.com>
+Subject: Re: Oops with PREEMPT-RT on 2.6.25.4
+Date: Mon, 19 May 2008 15:58:20 -0400
+Message-ID: <4831DBDC.8000008@gmail.com>
+References: <DCEAAC0833DD314AB0B58112AD99B93B0469010C@ismail.innsys.innovsys.com> <4831D527.2020907@freescale.com> <DCEAAC0833DD314AB0B58112AD99B93B04690162@ismail.innsys.innovsys.com>
+Reply-To: gregory.haskins@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:34089 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751430AbYESTHG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2008 15:07:06 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Scott Wood <scottwood@freescale.com>, linux-kernel@vger.kernel.org,
+	linuxppc-dev@ozlabs.org, linux-ide@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Rune Torgersen <runet@innovsys.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762017AbYEST7j@vger.kernel.org>
+In-Reply-To: <DCEAAC0833DD314AB0B58112AD99B93B04690162@ismail.innsys.innovsys.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the 2.6.24.7-rt7 tree, which can be
-downloaded from the location:
+Rune Torgersen wrote:
+> Scott Wood wrote:
+>
+>> You're recursively entering lock_timer_base, which does a
+>> spin_lock_irqsave().  Either interrupts are enabled when they should
+>> not be, or an interrupt was supposed to be threaded that isn't.
+> 
+> Sort of figured. How do I figure out which one, and how to fix it?
+> I've never gotten any -rt patchsets to work on this CPU, and it always
+> seems to be related to the disk driver.
+> I've tried since 2.6.16 ppc.... (2.6.16, 2.6.18 on ppc, 2.6.24 and 25 on
+> powerpc)
+> 
+> Even though this is a custom board, I'm pretty sure I can get it to fail
+> on a pq2fads board with the same disk controller.
 
-  http://rt.et.redhat.com/download/
+Im not sure if LOCKDEP is available for that architecture.  Have you 
+tried it?  Its pretty good at flushing these kinds of issues out 
+(assuming its available).
 
-Information on the RT patch can be found at:
-
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24.7-rt6
-
-  **** HUGE PERFORMANCE IMPROVEMENT!!! ****
-
-  This is the largest performance improvement to hit the RT patch
-  since the removal of the global PI lock. On my 4way box
-  running "hackbench 50" went from 18 seconds down to just under
-  5 seconds (4.8). Vanilla 2.6.24.7 on this same box runs at 3.9 secs.
-  This is the first time that the RT patched kernel is less than
-  a magnitude away from mainline running this hackbench test.
-
-  Here's a run of 10 "hackbench 50" on 2.6.24.7-rt6:
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7-rt6-00-vanilla 
-Time: 16.651
-Time: 16.773
-Time: 16.500
-Time: 17.437
-Time: 16.267
-Time: 18.296
-Time: 16.524
-Time: 17.452
-Time: 18.595
-Time: 18.357
-
-
-  The following patches are the reason for this great improvement!
-
-   - lateral lock stealing (Gregory Haskins)
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7-rt6-01-lateral-steal 
-Time: 7.853
-Time: 8.219
-Time: 7.967
-Time: 8.118
-Time: 8.195
-Time: 8.349
-Time: 8.122
-Time: 8.146
-Time: 8.197
-Time: 8.026
-
-  This alone brought the times down by almost 60% All this patch was to
-  do is allow an equal prio task (non-rt) to steal a lock from a pending
-  owner.  This is very much similar to the problem that was recently
-  discovered with generic semaphores. They forced strict fairness, but
-  that hurts performance. We only do this with non-rt tasks, because RT
-  tasks need to be fair otherwise we risk a task being starved, and
-  even though its being starved by an equal prio RT task, I would not
-  want to explain that to my customers when they have two high prio
-  tasks bound to separate CPUS and one is starving the other.
-
-  When I first wrote the code to steal lock ownership, I originally had
-  lateral stealing, but notice that RT tasks were being starved by it.
-  Since I cared about determinism more than performance, I killed it.
-  But Gregory brought it back for SCHED_OTHER tasks.
-
-
-  - rtmutex rearrange logic (Gregory Haskins)
-
-  This patch isn't that great of performance, but sets up for adaptive
-  spinlocks, as well as removes an extra xchg (but adds one, see next patch)
-
-  - rtmutex remove double xchg (Steven Rostedt)
-
-  This patch removes a double xchg that happens on getting the rt_mutex.
-  as well as getting rid of the unneeded update_current.
-
-  No real performance benefits here.
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7-rt6-02-rearrange-xchg 
-Time: 7.741
-Time: 8.007
-Time: 8.061
-Time: 8.080
-Time: 8.105
-Time: 8.223
-Time: 8.207
-Time: 8.220
-Time: 8.230
-Time: 8.214
-
-
-  - adaptive spinlocks (Gregory Haskins, Sven Deitrich,
-                        Peter Morreale, and Steven Rostedt)
-
-
-  I played a bit with different ways to do the adaptive spinlocks, but 
-  found that guaranteeing that the highest prio task is a pain, and that
-  I needed to go into the slow path to handle this. Well, the guys at
-  Novell pretty much did that. But unfortunately, they did all sorts
-  of funny things (adding unneeded structures, adding stuff to
-  task_struct, and grabbing tasks in inappropriate places). Since I
-  spent quite a bit of time trying to do this, I had a good idea of
-  what was needed, so I rewrote their patch to what it should have
-  been to begin with.
-
-  Don't get me wrong, getting this to work was solely at the hands of
-  the Novell guys. I just had to clean it up a bit.
-
-  Here's the result:
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7-rt6-03-adaptive-locks
-Time: 4.752
-Time: 4.830
-Time: 4.896
-Time: 4.858
-Time: 4.801
-Time: 4.885
-Time: 4.794
-Time: 4.883
-Time: 4.852
-Time: 4.911
- 
-
-
-
-to build a 2.6.24.7-rt7 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt7.bz2
-
-
-***** NOTE ******
-
-These patches have already been ported to 2.6.25-rt. But that kernel is
-still going through some needed testing.
-
-***** NOTE *****
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
-
--- Steve
-
-
-
+-Greg
