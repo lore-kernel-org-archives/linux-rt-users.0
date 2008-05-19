@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 7/8] adjust pi_lock usage in wakeup
-Date: Mon, 19 May 2008 13:07:49 -0400
-Message-ID: <20080519170749.6820.53684.stgit@novell1.haskins.net>
+Subject: [PATCH 8/8] remove the extra call to try_to_take_lock
+Date: Mon, 19 May 2008 13:07:54 -0400
+Message-ID: <20080519170754.6820.31938.stgit@novell1.haskins.net>
 References: <20080519170356.6820.5274.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,57 +13,39 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 To: mingo@elte.hu, peterz@infradead.org, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 66-189-124-104.dhcp.oxfr.ma.charter.com ([66.189.124.104]:48390
+Received: from 66-189-124-104.dhcp.oxfr.ma.charter.com ([66.189.124.104]:48410
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753624AbYESSEr (ORCPT
+	by vger.kernel.org with ESMTP id S1761014AbYESSEu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2008 14:04:47 -0400
+	Mon, 19 May 2008 14:04:50 -0400
 In-Reply-To: <20080519170356.6820.5274.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Peter W.Morreale <pmorreale@novell.com>
+From: Peter W. Morreale <pmorreale@novell.com>
 
-In wakeup_next_waiter(), we take the pi_lock, and then find out whether
-we have another waiter to add to the pending owner.  We can reduce
-contention on the pi_lock for the pending owner if we first obtain the
-pointer to the next waiter outside of the pi_lock.
+Remove the redundant attempt to get the lock.  While it is true that the
+exit path with this patch adds an un-necessary xchg (in the event the
+lock is granted without further traversal in the loop) experimentation
+shows that we almost never encounter this situation.
 
 Signed-off-by: Peter W. Morreale <pmorreale@novell.com>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/rtmutex.c |   14 +++++++++-----
- 1 files changed, 9 insertions(+), 5 deletions(-)
+ kernel/rtmutex.c |    6 ------
+ 1 files changed, 0 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index f60d03f..bf81966 100644
+index bf81966..1e694a8 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -503,6 +503,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
- {
- 	struct rt_mutex_waiter *waiter;
- 	struct task_struct *pendowner;
-+	struct rt_mutex_waiter *next;
+@@ -733,12 +733,6 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	init_lists(lock);
  
- 	spin_lock(&current->pi_lock);
- 
-@@ -564,6 +565,12 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
- 	 * waiter with higher priority than pending-owner->normal_prio
- 	 * is blocked on the unboosted (pending) owner.
- 	 */
-+
-+	if (rt_mutex_has_waiters(lock))
-+		next = rt_mutex_top_waiter(lock);
-+	else
-+		next = NULL;
-+
- 	spin_lock(&pendowner->pi_lock);
- 
- 	WARN_ON(!pendowner->pi_blocked_on);
-@@ -572,12 +579,9 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
- 
- 	pendowner->pi_blocked_on = NULL;
- 
--	if (rt_mutex_has_waiters(lock)) {
--		struct rt_mutex_waiter *next;
+-	/* Try to acquire the lock again: */
+-	if (do_try_to_take_rt_mutex(lock, STEAL_LATERAL)) {
+-		spin_unlock_irqrestore(&lock->wait_lock, flags);
+-		return;
+-	}
