@@ -1,73 +1,48 @@
-From: "=?UTF-8?Q?Lu=C3=ADs_Vit=C3=B3rio_Cargnini?=" <lvcargnini@gmail.com>
-Subject: problem with patch patch-2.6.25.4-rt1 for OMAP
-Date: Mon, 19 May 2008 17:18:30 -0300
-Message-ID: <ae36f8040805191318x6cf39e7au73ed6d286eaa429@mail.gmail.com>
-Reply-To: lvcargnini@gmail.com
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: Re: [PATCH] msi: skip calling pci_find_capability from
+	msi_set_mask_bits
+Date: Mon, 19 May 2008 17:26:54 -0300
+Message-ID: <20080519202654.GE17967@ghostprotocols.net>
+References: <20080515160426.GD14846@ghostprotocols.net> <200805161044.34938.jbarnes@virtuousgeek.org> <48310691.9050706@jp.fujitsu.com> <200805191311.46162.jbarnes@virtuousgeek.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: base64
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Hidetoshi Seto <seto.hidetoshi@jp.fujitsu.com>,
+	Matthew Wilcox <matthew@wil.cx>, linux-kernel@vger.kernel.org,
+	linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Jesse Barnes <jbarnes@virtuousgeek.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.31]:54334 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751431AbYESUSc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2008 16:18:32 -0400
-Received: by yw-out-2324.google.com with SMTP id 9so1201147ywe.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 19 May 2008 13:18:31 -0700 (PDT)
+Received: from mx1.redhat.com ([66.187.233.31]:48056 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1763284AbYESU1A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 19 May 2008 16:27:00 -0400
 Content-Disposition: inline
+In-Reply-To: <200805191311.46162.jbarnes@virtuousgeek.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-RGVhciBmZWxsb3dzOgoKSSBhcHBsaWVkIHRoZSBwYXRjaCBpbiBteSBPTUFQIGtlcm5lbCB0cmVl
-IGFuZCB0aGUgZm9sbG93aW5nIGVycm9yIGFyZQpiZWVuIHByb2R1Y2VkOgooZW50ZXJwcmlzZTp+
-L3B1Yy9pbnN0cmFtZWQvbGludXgtb21hcC0yLjYuZGVhLnJ0KSBsdmNhcmduaW5pJSBtYWtlIGNs
-ZWFuO21ha2UKICBDTEVBTiAgIC50bXBfdmVyc2lvbnMKICBDTEVBTiAgIGluY2x1ZGUvYXNtLWFy
-bS9tYWNoLXR5cGVzLmggaW5jbHVkZS9hc20tYXJtL2FyY2gKaW5jbHVkZS9hc20tYXJtLy5hcmNo
-CiAgQ0hLICAgICBpbmNsdWRlL2xpbnV4L3ZlcnNpb24uaAogIFNZTUxJTksgaW5jbHVkZS9hc20t
-YXJtL2FyY2ggLT4gaW5jbHVkZS9hc20tYXJtL2FyY2gtb21hcAogIEdlbmVyYXRpbmcgaW5jbHVk
-ZS9hc20tYXJtL21hY2gtdHlwZXMuaAogIENISyAgICAgaW5jbHVkZS9saW51eC91dHNyZWxlYXNl
-LmgKICBIT1NUQ0MgIHNjcmlwdHMvYmFzaWMvZml4ZGVwCiAgSE9TVENDICBzY3JpcHRzL2Jhc2lj
-L2RvY3Byb2MKICBDQyAgICAgIGFyY2gvYXJtL2tlcm5lbC9hc20tb2Zmc2V0cy5zCkluIGZpbGUg
-aW5jbHVkZWQgZnJvbSBpbmNsdWRlL2FzbS9zeXN0ZW0uaDozNjYsCiAgICAgICAgICAgICAgICAg
-ZnJvbSBpbmNsdWRlL2FzbS9iaXRvcHMuaDoyNywKICAgICAgICAgICAgICAgICBmcm9tIGluY2x1
-ZGUvbGludXgvYml0b3BzLmg6MTcsCiAgICAgICAgICAgICAgICAgZnJvbSBpbmNsdWRlL2xpbnV4
-L2tlcm5lbC5oOjE1LAogICAgICAgICAgICAgICAgIGZyb20gaW5jbHVkZS9saW51eC9zY2hlZC5o
-OjUyLAogICAgICAgICAgICAgICAgIGZyb20gYXJjaC9hcm0va2VybmVsL2FzbS1vZmZzZXRzLmM6
-MTM6CmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy1sb2NhbC5oOiBJbiBmdW5jdGlvbiAnX19j
-bXB4Y2hnX2xvY2FsX2dlbmVyaWMnOgppbmNsdWRlL2FzbS1nZW5lcmljL2NtcHhjaGctbG9jYWwu
-aDoyMzogZXJyZXVyOiBpbXBsaWNpdCBkZWNsYXJhdGlvbgpvZiBmdW5jdGlvbiAnQlVJTERfQlVH
-X09OJwppbmNsdWRlL2FzbS1nZW5lcmljL2NtcHhjaGctbG9jYWwuaDoyMzogZXJyZXVyOiBpbXBs
-aWNpdCBkZWNsYXJhdGlvbgpvZiBmdW5jdGlvbiAndHlwZWNoZWNrJwppbmNsdWRlL2FzbS1nZW5l
-cmljL2NtcHhjaGctbG9jYWwuaDoyMzogZXJyZXVyOiBleHBlY3RlZCBleHByZXNzaW9uCmJlZm9y
-ZSAndW5zaWduZWQnCmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy1sb2NhbC5oOjQ0OiBlcnJl
-dXI6IGV4cGVjdGVkIGV4cHJlc3Npb24KYmVmb3JlICd1bnNpZ25lZCcKaW5jbHVkZS9hc20tZ2Vu
-ZXJpYy9jbXB4Y2hnLWxvY2FsLmg6IEluIGZ1bmN0aW9uICdfX2NtcHhjaGc2NF9sb2NhbF9nZW5l
-cmljJzoKaW5jbHVkZS9hc20tZ2VuZXJpYy9jbXB4Y2hnLWxvY2FsLmg6NTc6IGVycmV1cjogZXhw
-ZWN0ZWQgZXhwcmVzc2lvbgpiZWZvcmUgJ3Vuc2lnbmVkJwppbmNsdWRlL2FzbS1nZW5lcmljL2Nt
-cHhjaGctbG9jYWwuaDo2MTogZXJyZXVyOiBleHBlY3RlZCBleHByZXNzaW9uCmJlZm9yZSAndW5z
-aWduZWQnCkRhbnMgbGUgZmljaGllciBpbmNsdXMgw6AgcGFydGlyIGRlIGluY2x1ZGUvbGludXgv
-cnRfbG9jay5oOjE1LAogICAgICAgICAgw6AgcGFydGlyIGRlIGluY2x1ZGUvbGludXgvc3Bpbmxv
-Y2suaDoxMTcsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9saW51eC9zZXFsb2NrLmg6
-MjksCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9saW51eC90aW1lLmg6OCwKICAgICAg
-ICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2xpbnV4L3RpbWV4Lmg6NTcsCiAgICAgICAgICDDoCBw
-YXJ0aXIgZGUgaW5jbHVkZS9saW51eC9zY2hlZC5oOjU0LAogICAgICAgICAgw6AgcGFydGlyIGRl
-IGFyY2gvYXJtL2tlcm5lbC9hc20tb2Zmc2V0cy5jOjEzOgppbmNsdWRlL2FzbS9hdG9taWMuaDoy
-NDE6MTogYXR0ZW50aW9uIDogwqsgY21weGNoZyDCuyByZWTDqWZpbmkKRGFucyBsZSBmaWNoaWVy
-IGluY2x1cyDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9hc20vc3lzdGVtLmg6Mzc4LAogICAgICAgICAg
-w6AgcGFydGlyIGRlIGluY2x1ZGUvYXNtL2JpdG9wcy5oOjI3LAogICAgICAgICAgw6AgcGFydGly
-IGRlIGluY2x1ZGUvbGludXgvYml0b3BzLmg6MTcsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5j
-bHVkZS9saW51eC9rZXJuZWwuaDoxNSwKICAgICAgICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2xp
-bnV4L3NjaGVkLmg6NTIsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgYXJjaC9hcm0va2VybmVsL2Fz
-bS1vZmZzZXRzLmM6MTM6CmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy5oOjE5OjE6IGF0dGVu
-dGlvbiA6IGNlY2kgZXN0IGxhCmxvY2FsaXNhdGlvbiBkJ3VuZSBwcsOpY8OpZGVudGUgZMOpZmlu
-aXRpb24KbWFrZVsxXTogKioqIFthcmNoL2FybS9rZXJuZWwvYXNtLW9mZnNldHMuc10gRXJyb3Ig
-MQptYWtlOiAqKiogW3ByZXBhcmUwXSBFcnJvciAyCgoKc29tZW9uZSBoYXZlIGFueSBkb3VidCBh
-Ym91dCBob3cgdG8gZml4IHRoaXMgPwp0aGFua3MuCgotLQotLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0K
-VGhhbmtzICYmIFJlZ2FyZHMKTS5TYy4gQi5TYy4gTHXDrXMgVml0w7NyaW8gQ2FyZ25pbmkKSUVF
-RSBNZW1iZXIKRWxlY3RyaWNhbCBFbmdpbmVlciBGYWN1bHR5IEAgUFVDUlMKSXBpcmFuZ2EgQXZl
-bnVlLCA2NjgxIOKAkyBCdWlsZGluZyAzMApQLk8uIEJveDogOTA2MTktOTAwIOKAkyBQb3J0byBB
-bGVncmUvUlMKUGhvbmU6ICs1NSA1MSAzMzIwIDM1MDAgZXh0ZW5zaW9uOiA3Njk2Ci0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLQo=
+Em Mon, May 19, 2008 at 01:11:45PM -0700, Jesse Barnes escreveu:
+> On Sunday, May 18, 2008 9:48 pm Hidetoshi Seto wrote:
+> > Jesse Barnes wrote:
+> > > Since we know MSI is a problem, let's just go with fixing that for now. 
+> > > If we find that other caps are also causing problems we can revisit
+> > > caching all of them; the patch is simple enough.
+> >
+> > Humm...
+> > I suppose it can be more simple. How about this patch?
+> >
+> > > everytime handle_edge_irq is called it needs to mask and unmask MSI, and
+> > > that leads to a series of very expensive calls to pci_find_capability
+> >
+> > The position of MSI capability is already cached in the msi_desc when
+> > we enter the msi_set_mask_bits().  Use it instead.
+> >
+> > Signed-off-by: Hidetoshi Seto <seto.hidetoshi@jp.fujitsu.com>
+> 
+> Yeah, this looks really nice.  It should also fix Arnaldo's latency problem, 
+> and really looks like a bug fix for the MSI code more than anything.
+> 
+> Arnaldo, can you take a look & test and ack/nack?
+
+I'll do that now
+
+- Arnaldo
