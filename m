@@ -1,37 +1,43 @@
-From: Kasper Sandberg <lkml@metanurb.dk>
+From: Dragan Noveski <perodog@gmx.net>
 Subject: Re: 2.6.25.4-rt2
-Date: Tue, 20 May 2008 01:19:07 +0200
-Message-ID: <1211239147.19845.42.camel@localhost>
+Date: Tue, 20 May 2008 01:42:20 +0200
+Message-ID: <4832105C.4030101@gmx.net>
 References: <1211237032.14697.76.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
+Cc: RT <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pasmtpb.tele.dk ([80.160.77.98]:39894 "EHLO pasmtpB.tele.dk"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1765474AbYESXXj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2008 19:23:39 -0400
+Received: from mail.gmx.net ([213.165.64.20]:58903 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1756030AbYESXnE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 19 May 2008 19:43:04 -0400
 In-Reply-To: <1211237032.14697.76.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2008-05-19 at 18:43 -0400, Steven Rostedt wrote:
+Steven Rostedt wrote:
 > We are pleased to announce the 2.6.25.4-rt2 tree, which can be
-Forgive me if i ask an obvious stupid question. But what is the status
-of this -rt tree for .25 in relation with the BKL stuff?
-<snip>
-> 
-> -- Steve
-> 
-> 	
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+> downloaded from the location:
+>
+>   http://rt.et.redhat.com/download/
+>   
+hallo, when compiling of the source is finished i get this warning:
 
+....
+  Building modules, stage 2.
+  MODPOST 268 modules
+WARNING: modpost: Found 5 section mismatch(es).
+To see full details build your kernel with:
+'make CONFIG_DEBUG_SECTION_MISMATCH=y'
+
+
+
+i would be very thankful if someone could explain what this warning is 
+about.
+should i expect any special troubles with this kernel?
+
+
+cheers,
+doc
