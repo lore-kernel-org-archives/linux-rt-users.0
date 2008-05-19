@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 0/8] adaptive-locks v3
-Date: Mon, 19 May 2008 13:07:10 -0400
-Message-ID: <20080519170356.6820.5274.stgit@novell1.haskins.net>
+Subject: [PATCH 4/8] adaptive real-time lock support
+Date: Mon, 19 May 2008 13:07:33 -0400
+Message-ID: <20080519170733.6820.24364.stgit@novell1.haskins.net>
+References: <20080519170356.6820.5274.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -11,46 +12,11 @@ Cc: linux-kernel@vger.kernel.org, bill.huey@gmail.com,
 	pmorreale@novell.com, mkohari@novell.com, ghaskins@novell.com
 To: mingo@elte.hu, peterz@infradead.org, tglx@linutronix.de,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761665AbYESRj6@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762267AbYESRlU@vger.kernel.org>
+In-Reply-To: <20080519170356.6820.5274.stgit@novell1.haskins.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi All,
-  Here is the latest queue that we have for your review, ported to 25.4=
--rt1.
-  Steven Rostedt has a really nice optimization for owner-pointer manag=
-ement
-  that he will hopefully post as a follow up to this series.
-
-Regards,
--Greg
-
--------------------------------
-
-=EF=BB=BFAdaptive real-time locks
-------------------------
-
-Synopsis:
----
-This patch series offers a significant (up to 500% faster)
-performance improvement to many areas of the Real-Time kernel by
-introducing an adaptive sleep/spin algorithm to the core locking
-primitives.
-
-This is the third release of these patches.  Changes since v2:
-
-*) Rebased from 24.2-rt2 to 25.4-rt1
-*) Cleaned up lateral-steal patches (G. Haskins, S. Dietrich)
-*) Removed lateral-steal config/sysctl option (S. Rostedt)
-*) Exclude RT tasks from lateral steal (S. Rostedt)
-*) Move "optimize wakeup" after the adaptive code (S. Rostedt)
-*) Remove extra update_current(RUNNING_MUTEX) (S. Rostedt)
-*) Converted loop-based timeouts to use nanoseconds (P. Morreale)
-*) Fixed a bug that caused hyper-thread machines to hang (G. Haskins)
-*) Incorporated misc. review feedback
-
-Description:
-=EF=BB=BF---
 The Real Time patches to the Linux kernel converts the architecture
 specific SMP-synchronization primitives commonly referred to as
 "spinlocks" to an "RT mutex" implementation that support a priority
@@ -64,79 +30,290 @@ extra overhead associated with managing pi-lists and context switching.
 This has been generally accepted as a price to pay for low-latency
 preemption.
 
-Our research indicates that it doesn't necessarily have to be this
-way.  This patch set introduces an adaptive technology that retains bot=
-h
-the priority inheritance protocol as well as the preemptive nature of
-spinlocks and mutexes and adds a 300+% throughput increase to the Linux
-Real time kernel.
+Adaptive real-time lock technology restores some of the benefits lost
+in the conversion to RT mutexes by adaptively spinning or sleeping
+while retaining both the priority inheritance protocol as well as the
+preemptive nature of RT mutexes.  Essentially, the RT Mutex has been
+modified to busy-wait under contention for a limited (and configurable)
+time.  This works because most locks are typically held for very short
+time spans.  Too often, by the time a task goes to sleep on a mutex,
+the mutex is already being released on another CPU.  The effect (on SMP=
+)
+is that by polling a mutex for a limited time we reduce context switch
+overhead by up to 90%, and therefore eliminate CPU cycles as well as
+massive hot-spots in the scheduler / other bottlenecks in the
+Kernel - even though we busy-wait (using CPU cycles) to poll the lock.
 
-These performance increases apply to disk IO as well as netperf UDP
-benchmarks, without compromising RT preemption latency.  For more
-complex applications, overall the I/O throughput seems to approach the
-throughput on a PREEMPT_VOLUNTARY or PREEMPT_DESKTOP Kernel, as is
-shipped by most distros.
+The net result is a significant performance boost (300%+) in many aspec=
+ts
+of the -rt kernel.  These performance increases apply to disk IO as wel=
+l
+as netperf UDP benchmarks, without compromising RT preemption latency.
+=46or more complex applications, overall the I/O throughput seems to
+approach the throughput on a PREEMPT_VOLUNTARY or PREEMPT_DESKTOP Kerne=
+l,
+as is shipped by most distros.
 
-Essentially, the RT Mutex has been modified to busy-wait under
-contention for a limited (and configurable) time.  This works because
-most locks are typically held for very short time spans.  Too often,
-by the time a task goes to sleep on a mutex, the mutex is already being
-released on another CPU.
-
-The effect (on SMP) is that by polling a mutex for a limited time we
-reduce context switch overhead by up to 90%, and therefore eliminate CP=
-U
-cycles as well as massive hot-spots in the scheduler / other bottleneck=
-s
-in the Kernel - even though we busy-wait (using CPU cycles) to poll the
-lock.
-
-Benchmark Data:
----
-We have put together some data from different types of benchmarks for
-this patch series, which you can find here:
-
-ftp://ftp.novell.com/dev/ghaskins/adaptive-locks.pdf
-
-It compares a stock kernel.org 2.6.24 (PREEMPT_DESKTOP), a stock
-2.6.24-rt1 (PREEMPT_RT), and a 2.6.24-rt1 + adaptive-lock
-(2.6.24-rt1-al) (PREEMPT_RT) kernel.  The machine is a 4-way (dual-core=
-,
-dual-socket) 2Ghz 5130 Xeon (core2duo-woodcrest) Dell Precision 490.=20
-
-Some tests show a marked improvement (for instance, ~450% more throughp=
-ut
-for dbench, and ~500% faster for hackbench), whereas some others
-(make -j 128) the results were not as profound but they were still
-net-positive. In all cases we have also verified that deterministic
-latency is not impacted by using cyclic-test.=20
-
-Todo:
----
-*) Tie into lockstat infrastructure
-*) Research algorithms to skip long-hold locks entirely.
-
-Download:
----
-You can download this series in its entirety here:
-
-ftp://ftp.novell.com/dev/ghaskins/adaptive-locks-v3.tar.bz2
-
-Acknowledgements
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+Signed-off-by: Peter Morreale <pmorreale@novell.com>
+Signed-off-by: Sven Dietrich <sdietrich@novell.com>
 ---
 
-Special thanks go to many people who were instrumental to this project,
-including:
-  *) the -rt team here at Novell for research, development, and testing=
+ Documentation/adaptive-locks.txt |   38 ++++++++++++++
+ kernel/Kconfig.preempt           |   21 ++++++++
+ kernel/rtmutex.c                 |   15 ++++-
+ kernel/rtmutex_adaptive.h        |  106 ++++++++++++++++++++++++++++++=
+++++++++
+ 4 files changed, 177 insertions(+), 3 deletions(-)
+
+diff --git a/Documentation/adaptive-locks.txt b/Documentation/adaptive-=
+locks.txt
+new file mode 100644
+index 0000000..bc9abf0
+--- /dev/null
++++ b/Documentation/adaptive-locks.txt
+@@ -0,0 +1,38 @@
++=EF=BB=BFAdaptive real-time locks
++------------------------
++
++The Real Time patches to the Linux kernel converts the architecture
++specific SMP-synchronization primitives commonly referred to as
++"spinlocks" to an "RT mutex" implementation that support a priority
++inheritance protocol, and priority-ordered wait queues.  The RT mutex
++implementation allows tasks that would otherwise busy-wait for a
++contended lock to be preempted by higher priority tasks without
++compromising the integrity of critical sections protected by the lock.
++The unintended side-effect is that the -rt kernel suffers from
++significant degradation of IO throughput (disk and net) due to the
++extra overhead associated with managing pi-lists and context switching=
 =2E
-  *) Nick Piggin for his invaluable consultation/feedback and use of hi=
-s
-     x86-ticket-locks.
-  *) The reviewers/testers at Suse, Montavista, RedHat, linux-rt-users,
-     Bill Huey, Peter Zijlstra, and Steven Rostedt for their time and
-     feedback on these patches.
-
-As always, comments/feedback/bug-fixes are welcome.
-
-Regards,
--Greg
++This has been generally accepted as a price to pay for low-latency
++preemption.
++
++Adaptive real-time lock technology restores some of the benefits lost
++in the conversion to RT mutexes by adaptively spinning or sleeping
++while retaining both the priority inheritance protocol as well as the
++preemptive nature of RT mutexes.  Essentially, the RT Mutex has been
++modified to busy-wait under contention for a limited (and configurable=
+)
++time.  This works because most locks are typically held for very short
++time spans.  Too often, by the time a task goes to sleep on a mutex,
++the mutex is already being released on another CPU.  The effect (on SM=
+P)
++is that by polling a mutex for a limited time we reduce context switch
++overhead by up to 90%, and therefore eliminate CPU cycles as well as
++massive hot-spots in the scheduler / other bottlenecks in the
++Kernel - even though we busy-wait (using CPU cycles) to poll the lock.
++
++The net result is a significant performance boost (300%+) in many aspe=
+cts
++of the -rt kernel.  These performance increases apply to disk IO as we=
+ll
++as netperf UDP benchmarks, without compromising RT preemption latency.
++For more complex applications, overall the I/O throughput seems to
++approach the throughput on a PREEMPT_VOLUNTARY or PREEMPT_DESKTOP Kern=
+el,
++as is shipped by most distros.
++
++
++
+diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
+index aea638b..45d00dc 100644
+--- a/kernel/Kconfig.preempt
++++ b/kernel/Kconfig.preempt
+@@ -160,3 +160,24 @@ config RCU_TRACE
+=20
+ 	  Say Y here if you want to enable RCU tracing
+ 	  Say N if you are unsure.
++
++config ADAPTIVE_RTLOCK
++	bool "Adaptive real-time locks"
++	default y
++	depends on PREEMPT_RT && SMP
++	help
++	  PREEMPT_RT allows for greater determinism by transparently
++	  converting normal spinlock_ts into preemptible rtmutexes which
++	  sleep any waiters under contention.  However, in many cases the
++	  lock will be released in less time than it takes to context
++	  switch.  Therefore, the "sleep under contention" policy may also
++	  degrade throughput performance due to the extra context switches.
++
++	  This option alters the rtmutex derived spinlock_t replacement
++	  code to use an adaptive spin/sleep algorithm.  It will spin
++	  unless it determines it must sleep to avoid deadlock.  This
++	  offers a best of both worlds solution since we achieve both
++	  high-throughput and low-latency.
++
++	  If unsure, say Y.
++
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 223557f..f50ec55 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -7,6 +7,8 @@
+  *  Copyright (C) 2005-2006 Timesys Corp., Thomas Gleixner <tglx@times=
+ys.com>
+  *  Copyright (C) 2005 Kihon Technologies Inc., Steven Rostedt
+  *  Copyright (C) 2006 Esben Nielsen
++ *  Copyright (C) 2008 Novell, Inc., Sven Dietrich, Peter Morreale,
++ *                                   and Gregory Haskins
+  *
+  *  See Documentation/rt-mutex-design.txt for details.
+  */
+@@ -17,6 +19,7 @@
+ #include <linux/hardirq.h>
+=20
+ #include "rtmutex_common.h"
++#include "rtmutex_adaptive.h"
+=20
+ /*
+  * lock->owner state tracking:
+@@ -689,6 +692,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ {
+ 	struct rt_mutex_waiter waiter;
+ 	unsigned long saved_state, state, flags;
++	DECLARE_ADAPTIVE_WAITER(adaptive);
+=20
+ 	debug_rt_mutex_init_waiter(&waiter);
+ 	waiter.task =3D NULL;
+@@ -734,6 +738,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 				continue;
+ 		}
+=20
++		prepare_adaptive_wait(lock, &adaptive);
++
+ 		/*
+ 		 * Prevent schedule() to drop BKL, while waiting for
+ 		 * the lock ! We restore lock_depth when we come back.
+@@ -745,9 +751,12 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+=20
+ 		debug_rt_mutex_print_deadlock(&waiter);
+=20
+-		update_current(TASK_UNINTERRUPTIBLE, &saved_state);
+-		if (waiter.task)
+-			schedule_rt_mutex(lock);
++		/* adaptive_wait() returns 1 if we need to sleep */
++		if (adaptive_wait(lock, &waiter, &adaptive)) {
++			update_current(TASK_UNINTERRUPTIBLE, &saved_state);
++			if (waiter.task)
++				schedule_rt_mutex(lock);
++		}
+=20
+ 		spin_lock_irqsave(&lock->wait_lock, flags);
+ 		current->flags |=3D saved_flags;
+diff --git a/kernel/rtmutex_adaptive.h b/kernel/rtmutex_adaptive.h
+new file mode 100644
+index 0000000..8329e3c
+--- /dev/null
++++ b/kernel/rtmutex_adaptive.h
+@@ -0,0 +1,106 @@
++/*
++ * Adaptive RT lock support
++ *
++ * See Documentation/adaptive-locks.txt
++ *
++ * Copyright (C) 2008 Novell, Inc.,
++ *          Sven Dietrich, Peter Morreale, and Gregory Haskins
++ *
++ *  This program is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License
++ *  as published by the Free Software Foundation; version 2
++ *  of the License.
++ */
++
++#ifndef __KERNEL_RTMUTEX_ADAPTIVE_H
++#define __KERNEL_RTMUTEX_ADAPTIVE_H
++
++#include "rtmutex_common.h"
++
++
++#ifdef CONFIG_ADAPTIVE_RTLOCK
++struct adaptive_waiter {
++	struct task_struct *owner;
++};
++
++/*
++ * Adaptive-rtlocks will busywait when possible, and sleep only if
++ * necessary. Note that the busyloop looks racy, and it is....but we d=
+o
++ * not care. If we lose any races it simply means that we spin one mor=
+e
++ * time before seeing that we need to break-out on the next iteration.
++ *
++ * We realize this is a relatively large function to inline, but note =
+that
++ * it is only instantiated 1 or 2 times max, and it makes a measurable
++ * performance different to avoid the call.
++ *
++ * Returns 1 if we should sleep
++ *
++ */
++static inline int
++adaptive_wait(struct rt_mutex *lock, struct rt_mutex_waiter *waiter,
++	      struct adaptive_waiter *adaptive)
++{
++	int sleep =3D 0;
++
++	for (;;) {
++		/*
++		 * If the task was re-awoken, break out completely so we can
++		 * reloop through the lock-acquisition code.
++		 */
++		if (!waiter->task)
++			break;
++
++		/*
++		 * We need to break if the owner changed so we can reloop
++		 * and safely acquire the owner-pointer again with the
++		 * wait_lock held.
++		 */
++		if (adaptive->owner !=3D rt_mutex_owner(lock))
++			break;
++
++		/*
++		 * Sleep if the owner is not running....we could deadlock
++		 * if they are waiting for our cpu, and it just doesn't
++		 * make sense to anyway.
++		 */
++		if (!adaptive->owner->oncpu) {
++			sleep =3D 1;
++			break;
++		}
++
++		cpu_relax();
++	}
++
++	put_task_struct(adaptive->owner);
++
++	return sleep;
++}
++
++static inline void
++prepare_adaptive_wait(struct rt_mutex *lock, struct adaptive_waiter *a=
+daptive)
++{
++	/*
++	 * We must acquire/lock the owner pointer while holding
++	 * the wait_lock, or we risk racing against the owner
++	 * exiting.
++	 */
++	adaptive->owner =3D rt_mutex_owner(lock);
++	get_task_struct(adaptive->owner);
++}
++
++#define DECLARE_ADAPTIVE_WAITER(name)                       \
++     struct adaptive_waiter name =3D {                        \
++	.owner =3D NULL,                                      \
++}
++
++#else
++
++#define DECLARE_ADAPTIVE_WAITER(name)
++
++#define adaptive_wait(lock, waiter, busy) (1)
++#define prepare_adaptive_wait(lock, busy) do {} while (0)
++
++#endif /* CONFIG_ADAPTIVE_RTLOCK */
++
++
++#endif /* __KERNEL_RTMUTEX_ADAPTIVE_H */
