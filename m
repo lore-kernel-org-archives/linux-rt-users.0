@@ -1,80 +1,37 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Compile warning rtmutex code on 2.6.24.7-rt8 (CC:LKML added)
-Date: Tue, 20 May 2008 17:20:18 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805201718530.21440@gandalf.stny.rr.com>
-References: <3efb10970805201356x4552859bof5f3f4f56f2ba676@mail.gmail.com>
+From: Kevin Hilman <khilman@mvista.com>
+Subject: Re: Problems with RT pathc s in OMAP kernel
+Date: Tue, 20 May 2008 15:03:37 -0700
+Message-ID: <48334AB9.3020808@mvista.com>
+References: <ae36f8040805200742x6de272c5mc9c12ccc798649ee@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:39041 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759997AbYETVUV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 17:20:21 -0400
-In-Reply-To: <3efb10970805201356x4552859bof5f3f4f56f2ba676@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-omap@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
+To: lvcargnini@gmail.com
+Return-path: <linux-omap-owner@vger.kernel.org>
+In-Reply-To: <ae36f8040805200742x6de272c5mc9c12ccc798649ee@mail.gmail.com>
+Sender: linux-omap-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+Lu=C3=ADs Vit=C3=B3rio Cargnini wrote:
+> Dear fellows:
+> After applied the RT patch set in my kernel tree I get the following
+> error (RT patch origin: http://rt.wiki.kernel.org/index.php/Main_Page=
+)
 
+[...]
 
-On Tue, 20 May 2008, Remy Bohmer wrote:
+> Someone knows how can I fix this ?
+> Someone has a patch ?
 
-> Hello Steven,
->
->  Do you recognise these warnings? I do not know (yet) if these are ARM
->  specific...
->
->   CC      kernel/rtmutex.o
->  kernel/rtmutex.c: In function 'rt_write_fastlock':
->  kernel/rtmutex.c:1582: warning: initialization makes pointer from
->  integer without a cast
->  kernel/rtmutex.c: In function 'rt_write_fasttrylock':
->  kernel/rtmutex.c:1622: warning: initialization makes pointer from
->  integer without a cast
->
->  If so, do you have a fix for it?
+I've got a series of patches against 2.6.25.4-rt3 that fix compilation=20
+on ARM.  Will post shortly.
 
-Remy,
+Kevin
 
-Can you see if this helps,
-
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
-
----
- kernel/rtmutex.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-Index: linux-2.6.24.7-rt9/kernel/rtmutex.c
-===================================================================
---- linux-2.6.24.7-rt9.orig/kernel/rtmutex.c	2008-05-20 17:11:29.000000000 -0400
-+++ linux-2.6.24.7-rt9/kernel/rtmutex.c	2008-05-20 17:13:18.000000000 -0400
-@@ -1577,7 +1577,7 @@ rt_write_fastlock(struct rw_mutex *rwm,
- 		  void fastcall (*slowfn)(struct rw_mutex *rwm, int mtx),
- 		  int mtx)
- {
--	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
-+	struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
-
- 	if (likely(rt_rwlock_cmpxchg(rwm, NULL, val)))
- 		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
-@@ -1617,7 +1617,7 @@ static inline int
- rt_write_fasttrylock(struct rw_mutex *rwm,
- 		     int fastcall (*slowfn)(struct rw_mutex *rwm, int mtx), int mtx)
- {
--	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
-+	struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
-
- 	if (likely(rt_rwlock_cmpxchg(rwm, NULL, val))) {
- 		rt_mutex_deadlock_account_lock(&rwm->mutex, current);
-@@ -1902,7 +1902,7 @@ rt_write_fastunlock(struct rw_mutex *rwm
- 					    int mtx),
- 		    int mtx)
- {
--	unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
-+	struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
-
- 	WARN_ON(rt_rwlock_owner(rwm) != current);
- 	if (likely(rt_rwlock_cmpxchg(rwm, (struct task_struct *)val, NULL)))
+--
+To unsubscribe from this list: send the line "unsubscribe linux-omap" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
