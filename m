@@ -1,26 +1,53 @@
 From: Kevin Hilman <khilman@mvista.com>
-Subject: [PATCH 0/5] RT: Misc. fixups for ARM/OMAP against 2.6.25.4-rt3
-Date: Tue, 20 May 2008 15:42:56 -0700
-Message-ID: <483353F0.6090902@mvista.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-omap@vger.kernel.org
-To: RT <linux-rt-users@vger.kernel.org>
+Subject: [PATCH 5/5] ARM: OMAP: remove unnecessary locking in clk_get_rate()
+Date: Tue, 20 May 2008 15:45:50 -0700
+Message-ID: <1211323550-5318-6-git-send-email-khilman@mvista.com>
+References: <1211323550-5318-1-git-send-email-khilman@mvista.com>
+ <1211323550-5318-2-git-send-email-khilman@mvista.com>
+ <1211323550-5318-3-git-send-email-khilman@mvista.com>
+ <1211323550-5318-4-git-send-email-khilman@mvista.com>
+ <1211323550-5318-5-git-send-email-khilman@mvista.com>
+Cc: linux-omap@vger.kernel.org, Kevin Hilman <khilman@mvista.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61644 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935337AbYETWm6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 18:42:58 -0400
+Received: from deeprooted.net ([216.254.16.51]:36943 "EHLO paris.hilman.org"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1762099AbYETW4z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 May 2008 18:56:55 -0400
+In-Reply-To: <1211323550-5318-5-git-send-email-khilman@mvista.com>
+In-Reply-To: <483353F0.6090902@mvista.com>
+References: <483353F0.6090902@mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-What follows are a series of minor fixes to get -rt3 building/booting on 
-  ARM.  The first 3 are ready do be included into the -rt patch, while 
-the last 4th one (cmpxchg duplication) needs a little investigating. 
-The 5th one needs to go upstream via the OMAP tree.
+The locking in the get_rate() hook is unnecessary, and causes problems
+when used with the -rt patch, since it may be called recursively.
 
-This was build/boot tested on the TI OMAP3430 SDP platform
+Signed-off-by: Kevin Hilman <khilman@mvista.com>
+---
+ arch/arm/plat-omap/clock.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
 
-Kevin
+diff --git a/arch/arm/plat-omap/clock.c b/arch/arm/plat-omap/clock.c
+index 714dbbf..3842540 100644
+--- a/arch/arm/plat-omap/clock.c
++++ b/arch/arm/plat-omap/clock.c
+@@ -134,15 +134,12 @@ EXPORT_SYMBOL(clk_get_usecount);
+ 
+ unsigned long clk_get_rate(struct clk *clk)
+ {
+-	unsigned long flags;
+ 	unsigned long ret = 0;
+ 
+ 	if (clk == NULL || IS_ERR(clk))
+ 		return 0;
+ 
+-	spin_lock_irqsave(&clockfw_lock, flags);
+ 	ret = clk->rate;
+-	spin_unlock_irqrestore(&clockfw_lock, flags);
+ 
+ 	return ret;
+ }
+-- 
+1.5.4.1.166.g6706d
+
