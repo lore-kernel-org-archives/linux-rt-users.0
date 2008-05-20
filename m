@@ -1,63 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Compile bug in 2.6.24.8-rt7 on ARM
-Date: Tue, 20 May 2008 16:55:01 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805201650290.20236@gandalf.stny.rr.com>
-References: <3efb10970805201337g2212835bl9ca26a3031141ce2@mail.gmail.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Compile warning rtmutex code on 2.6.24.7-rt8 (CC:LKML added)
+Date: Tue, 20 May 2008 22:56:12 +0200
+Message-ID: <3efb10970805201356x4552859bof5f3f4f56f2ba676@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:44197 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758437AbYETUzD (ORCPT
+Received: from yw-out-2324.google.com ([74.125.46.30]:29880 "EHLO
+	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758754AbYETU41 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 16:55:03 -0400
-In-Reply-To: <3efb10970805201337g2212835bl9ca26a3031141ce2@mail.gmail.com>
+	Tue, 20 May 2008 16:56:27 -0400
+Received: by yw-out-2324.google.com with SMTP id 9so1485956ywe.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 13:56:12 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Steven,
 
-On Tue, 20 May 2008, Remy Bohmer wrote:
+ Do you recognise these warnings? I do not know (yet) if these are ARM
+ specific...
 
-> Hello Steven,
->
-> Now I started looking at compiling 2.6.24.7-rt8 for ARM, and I found
-> another compile problem... ;-))
->
-> This one:
->  CC      arch/arm/kernel/process.o
-> arch/arm/kernel/process.c: In function 'cpu_idle':
-> arch/arm/kernel/process.c:175: error: implicit declaration of function
-> 'trace_preempt_exit_idle'
-> arch/arm/kernel/process.c:180: error: implicit declaration of function
-> 'trace_preempt_enter_idle'
->
-> These function do not appear to exist _anywhere_ in the kernel.
-> So these calls can safely be removed, I guess.
->
-> The offending patch can be found in the broken-out set under the name
-> arm-trace-preempt-idle.patch.
-> Attached you can find a fix for it (I expect that you will not need it)
+  CC      kernel/rtmutex.o
+ kernel/rtmutex.c: In function 'rt_write_fastlock':
+ kernel/rtmutex.c:1582: warning: initialization makes pointer from
+ integer without a cast
+ kernel/rtmutex.c: In function 'rt_write_fasttrylock':
+ kernel/rtmutex.c:1622: warning: initialization makes pointer from
+ integer without a cast
 
-Thanks Remy,
+ If so, do you have a fix for it?
 
-Yes that was left over from the latency_trace conversion to ftrace. Note,
-I have yet (nor anyone else) ported the new ftrace to arm. That is going
-to be needed soon.
+ Regards,
 
-If you want to do it (hint hint) don't waste your time on the -rt ftrace.
-That will soon be revamped to get back in line with upstream ftrace, which
-can be found here:
 
-git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git
-
-Look for the ftrace branch. Any work on ftrace should be done against
-that. I will be working on getting -rt up to that version, but first I'll
-need to send over a few fixes to ftrace there too.
-
-Thanks,
-
--- Steve
-
+ Remy
