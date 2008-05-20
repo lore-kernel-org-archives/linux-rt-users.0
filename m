@@ -1,64 +1,84 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: RE: 2.6.25.4-rt2
-Date: Tue, 20 May 2008 09:54:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805200945120.12041@gandalf.stny.rr.com>
-References: <1211237032.14697.76.camel@localhost.localdomain><1211239147.198
- 45.42.camel@localhost>   <Pine.LNX.4.58.0805191936120.4125@gandalf.stny.rr.com><630E9048ECEBBB4798CE
- 33255209FE730648317D@CNSHGSMBS02.ad4.ad.alcatel.com>
- <Pine.LNX.4.58.0805200030120.9319@gandalf.stny.rr.com>
- <630E9048ECEBBB4798CE33255209FE7306483561@CNSHGSMBS02.ad4.ad.alcatel.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: 2.6.25.4-rt2 compile errors on ARM due to cmpxchg() problems.
+Date: Tue, 20 May 2008 16:21:53 +0200
+Message-ID: <3efb10970805200721u6a837a2ap94ead54f7eb7bf89@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Kasper Sandberg <lkml@metanurb.dk>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: MA QING A <Qing.a.Ma@alcatel-sbell.com.cn>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, lvcargnini@gmail.com,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:57416 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754159AbYETNyI (ORCPT
+Received: from ti-out-0910.google.com ([209.85.142.186]:3224 "EHLO
+	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753417AbYETOV5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 09:54:08 -0400
-In-Reply-To: <630E9048ECEBBB4798CE33255209FE7306483561@CNSHGSMBS02.ad4.ad.alcatel.com>
+	Tue, 20 May 2008 10:21:57 -0400
+Received: by ti-out-0910.google.com with SMTP id b6so1141020tic.23
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 07:21:54 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Steven,
 
-Hi,
+I want to test 2.6.25.4-rt2 on ARM, but unfortunately I run into
+several compile errors.
+All errors seem to be related to cmpxchg routines -> duplicate
+definitions or missing BUILD_BUG_ON() or typecheck() macros.
+I already figured out the missing BUILD_BUG_ON() + typecheck() problem
+which is caused by including a header
+'include/asm-generic/cmpxchg-local.h' in linux/kernel.h before these
+macros are defined in linux/kernel.h. See below for a piece/snippet of
+the compiler output.
 
-[
-  It seems that you may be new to the lists, so I will let you know,
-  please do not top post. It is appropriate to either bottom post or
-  better yet, inline reply. See http://en.wikipedia.org/wiki/Posting_style
-]
+Looking deeper into this, things look quite messy around cmpxchg() on ARM...
+
+Any ideas what has been changed here, and why these things can go
+wrong so badly?
 
 
-On Tue, 20 May 2008, MA QING A wrote:
+Kind Regards,
 
-> Thanks very much for your explanation
-> At the very beginning I thought the Hackbench was a latency tools, so
-> I was very surprised to see such result.
->
-> But there's another question. When I choose the Complete Preemption
-> -Real Time  configuration, it's recommended to choose Timer Frequency
-> ---> 1000Mhz to improve the cpu performance, does it mean cpu will cost
-> much more during the thread context switch? Or I should choose 100Mhz in
-> order to decrease the thread context switch and get a better
-> performance?
->
-> Which one should I choose? Or any useful tools can tell me the differences.
->
+Remy
 
-I'm not sure where you read that. With the introduction of high-resolution
-timers, the HZ value isn't that important anymore. Things that might use
-select or poll as timeouts will still be at the HZ frequency, but other
-code that uses proper timer API will still react well.
-
-Matters what you are doing. Try out different values yourself and see what
-you find is the best. You can also report your findings if you want.
-
-Cheers,
-
--- Steve
-
+---- 8-< ----
+In file included from include/linux/rt_lock.h:14,
+                 from include/linux/spinlock.h:117,
+                 from include/linux/mmzone.h:7,
+                 from include/linux/gfp.h:4,
+                 from include/linux/slab.h:14,
+                 from include/linux/percpu.h:5,
+                 from include/linux/kernel_stat.h:7,
+                 from arch/arm/kernel/irq.c:24:
+include/asm/atomic.h:241:1: warning: "cmpxchg" redefined
+In file included from include/asm/system.h:378,
+                 from include/asm/bitops.h:27,
+                 from include/linux/bitops.h:17,
+                 from include/linux/kernel.h:32,
+                 from include/linux/cpumask.h:84,
+                 from include/linux/smp.h:10,
+                 from include/linux/kernel_stat.h:5,
+                 from arch/arm/kernel/irq.c:24:
+include/asm-generic/cmpxchg.h:19:1: warning: this is the location of
+the previous definition
+In file included from include/asm/system.h:366,
+                 from include/linux/list.h:9,
+                 from include/linux/module.h:9,
+                 from arch/arm/kernel/process.c:13:
+include/asm-generic/cmpxchg-local.h: In function '__cmpxchg_local_generic':
+include/asm-generic/cmpxchg-local.h:23: error: implicit declaration of
+function 'BUILD_BUG_ON'
+include/asm-generic/cmpxchg-local.h:23: error: implicit declaration of
+function 'typecheck'
+include/asm-generic/cmpxchg-local.h:23: error: expected expression
+before 'unsigned'
+include/asm-generic/cmpxchg-local.h:44: error: expected expression
+before 'unsigned'
+include/asm-generic/cmpxchg-local.h: In function '__cmpxchg64_local_generic':
+include/asm-generic/cmpxchg-local.h:57: error: expected expression
+before 'unsigned'
+include/asm-generic/cmpxchg-local.h:61: error: expected expression
+before 'unsigned'
+---- 8-< ----
