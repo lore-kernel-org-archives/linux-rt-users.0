@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 0/5] RT: adaptive-lock enhancements
-Date: Tue, 20 May 2008 10:49:10 -0400
-Message-ID: <20080520143954.15992.85900.stgit@novell1.haskins.net>
+Subject: [PATCH 2/5] sched: make task->oncpu available in all configurations
+Date: Tue, 20 May 2008 10:49:20 -0400
+Message-ID: <20080520144920.15992.40920.stgit@novell1.haskins.net>
+References: <20080520143954.15992.85900.stgit@novell1.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,43 +11,116 @@ Cc: linux-kernel@vger.kernel.org, sdietrich@novell.com,
 To: mingo@elte.hu, tglx@linutronix.de, rostedt@goodmis.org,
 	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 66-189-124-104.dhcp.oxfr.ma.charter.com ([66.189.124.104]:57718
+Received: from 66-189-124-104.dhcp.oxfr.ma.charter.com ([66.189.124.104]:57736
 	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757154AbYETPVk (ORCPT
+	by vger.kernel.org with ESMTP id S933404AbYETPVu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 11:21:40 -0400
+	Tue, 20 May 2008 11:21:50 -0400
+In-Reply-To: <20080520143954.15992.85900.stgit@novell1.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Ingo, Steven, Thomas,
-  The following series are the scraps from adaptive-locks-v3 that have not yet
-  been pulled into RT.  This series applies to 25.4-rt2.
+We will use this later in the series to eliminate the need for a function
+call.
 
-  For the most part, this is the difference between adaptive-v3 and whats in
-  the upstream tree, with the following exceptions:
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-  1) I have fixed an issue in the "optimize-wakeup" patch that went out in v3.
-     There was a hunk left-over from when we applied adaptive to both spinlocks
-     and mutexes.  We have since dropped mutexes, so that patch needed to be
-     refactored to be correct.
+ include/linux/sched.h |    2 --
+ kernel/sched.c        |   35 ++++++++++++++++++++++++-----------
+ 2 files changed, 24 insertions(+), 13 deletions(-)
 
-  2) I have (for now) dropped the timeout feature.  It needs to be re-worked to
-     apply to the current version of adaptive-locks that are in the tree.
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index ec94970..70175e0 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1080,10 +1080,8 @@ struct task_struct {
+ 	int lock_depth;		/* BKL lock depth */
+ 
+ #ifdef CONFIG_SMP
+-#ifdef __ARCH_WANT_UNLOCKED_CTXSW
+ 	int oncpu;
+ #endif
+-#endif
+ 
+ 	int prio, static_prio, normal_prio;
+ #ifdef CONFIG_PREEMPT_RCU_BOOST
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 4428916..03cb222 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -699,18 +699,39 @@ static inline int task_current(struct rq *rq, struct task_struct *p)
+ 	return rq->curr == p;
+ }
+ 
+-#ifndef __ARCH_WANT_UNLOCKED_CTXSW
+ static inline int task_running(struct rq *rq, struct task_struct *p)
+ {
++#ifdef CONFIG_SMP
++	return p->oncpu;
++#else
+ 	return task_current(rq, p);
++#endif
+ }
+ 
++#ifndef __ARCH_WANT_UNLOCKED_CTXSW
+ static inline void prepare_lock_switch(struct rq *rq, struct task_struct *next)
+ {
++#ifdef CONFIG_SMP
++	/*
++	 * We can optimise this out completely for !SMP, because the
++	 * SMP rebalancing from interrupt is the only thing that cares
++	 * here.
++	 */
++	next->oncpu = 1;
++#endif
+ }
+ 
+ static inline void finish_lock_switch(struct rq *rq, struct task_struct *prev)
+ {
++#ifdef CONFIG_SMP
++	/*
++	 * After ->oncpu is cleared, the task can be moved to a different CPU.
++	 * We must ensure this doesn't happen until the switch is completely
++	 * finished.
++	 */
++	smp_wmb();
++	prev->oncpu = 0;
++#endif
+ #ifdef CONFIG_DEBUG_SPINLOCK
+ 	/* this is a valid case when another task releases the spinlock */
+ 	rq->lock.owner = current;
+@@ -726,14 +747,6 @@ static inline void finish_lock_switch(struct rq *rq, struct task_struct *prev)
+ }
+ 
+ #else /* __ARCH_WANT_UNLOCKED_CTXSW */
+-static inline int task_running(struct rq *rq, struct task_struct *p)
+-{
+-#ifdef CONFIG_SMP
+-	return p->oncpu;
+-#else
+-	return task_current(rq, p);
+-#endif
+-}
+ 
+ static inline void prepare_lock_switch(struct rq *rq, struct task_struct *next)
+ {
+@@ -2082,7 +2095,7 @@ void sched_fork(struct task_struct *p, int clone_flags)
+ 	if (likely(sched_info_on()))
+ 		memset(&p->sched_info, 0, sizeof(p->sched_info));
+ #endif
+-#if defined(CONFIG_SMP) && defined(__ARCH_WANT_UNLOCKED_CTXSW)
++#if defined(CONFIG_SMP)
+ 	p->oncpu = 0;
+ #endif
+ #ifdef CONFIG_PREEMPT
+@@ -5684,7 +5697,7 @@ void __cpuinit init_idle(struct task_struct *idle, int cpu)
+ 
+ 	spin_lock_irqsave(&rq->lock, flags);
+ 	rq->curr = rq->idle = idle;
+-#if defined(CONFIG_SMP) && defined(__ARCH_WANT_UNLOCKED_CTXSW)
++#if defined(CONFIG_SMP)
+ 	idle->oncpu = 1;
+ #endif
+ 	spin_unlock_irqrestore(&rq->lock, flags);
 
-  I also moved what was patch 6/8 in v3 to be first, because I believe it has
-  the most potential of all the other patches to improve performance.
-
-  I have performed some baseline analysis of these patches compared to
-  25.4-rt2, which you can find here:
-
-    ftp://ftp.novell.com/dev/ghaskins/25.4-rt2-adaptive-enhancements.pdf
-
-  I only did hackbench runs for this round of testing, but you can see there is
-  a small, but net-positive gain in the results.  I think the results are more
-  profound for other benchmarks, but I didnt have the time to re-run them all
-  yet.
-
-  As always, comments/questions welcome.
-
-  Regards,
-   -Greg
