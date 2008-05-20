@@ -1,84 +1,49 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: 2.6.25.4-rt2 compile errors on ARM due to cmpxchg() problems.
-Date: Tue, 20 May 2008 16:21:53 +0200
-Message-ID: <3efb10970805200721u6a837a2ap94ead54f7eb7bf89@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 2.6.25.4-rt2 compile errors on ARM due to cmpxchg() problems.
+Date: Tue, 20 May 2008 10:34:54 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805201034130.1838@gandalf.stny.rr.com>
+References: <3efb10970805200721u6a837a2ap94ead54f7eb7bf89@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>, lvcargnini@gmail.com,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+	Thomas Gleixner <tglx@linutronix.de>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ti-out-0910.google.com ([209.85.142.186]:3224 "EHLO
-	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753417AbYETOV5 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:59303 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756149AbYETOez (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 10:21:57 -0400
-Received: by ti-out-0910.google.com with SMTP id b6so1141020tic.23
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 07:21:54 -0700 (PDT)
-Content-Disposition: inline
+	Tue, 20 May 2008 10:34:55 -0400
+In-Reply-To: <3efb10970805200721u6a837a2ap94ead54f7eb7bf89@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Steven,
 
-I want to test 2.6.25.4-rt2 on ARM, but unfortunately I run into
-several compile errors.
-All errors seem to be related to cmpxchg routines -> duplicate
-definitions or missing BUILD_BUG_ON() or typecheck() macros.
-I already figured out the missing BUILD_BUG_ON() + typecheck() problem
-which is caused by including a header
-'include/asm-generic/cmpxchg-local.h' in linux/kernel.h before these
-macros are defined in linux/kernel.h. See below for a piece/snippet of
-the compiler output.
+On Tue, 20 May 2008, Remy Bohmer wrote:
 
-Looking deeper into this, things look quite messy around cmpxchg() on ARM...
+> Hello Steven,
+>
+> I want to test 2.6.25.4-rt2 on ARM, but unfortunately I run into
+> several compile errors.
+> All errors seem to be related to cmpxchg routines -> duplicate
+> definitions or missing BUILD_BUG_ON() or typecheck() macros.
+> I already figured out the missing BUILD_BUG_ON() + typecheck() problem
+> which is caused by including a header
+> 'include/asm-generic/cmpxchg-local.h' in linux/kernel.h before these
+> macros are defined in linux/kernel.h. See below for a piece/snippet of
+> the compiler output.
+>
+> Looking deeper into this, things look quite messy around cmpxchg() on ARM...
+>
+> Any ideas what has been changed here, and why these things can go
+> wrong so badly?
+>
 
-Any ideas what has been changed here, and why these things can go
-wrong so badly?
+No idea right off the bat. But I may be needing to set up a ARM
+crosscompiler. Unless Thomas would like to take a look into this.
 
+Thomas?
 
-Kind Regards,
+-- Steve
 
-Remy
-
----- 8-< ----
-In file included from include/linux/rt_lock.h:14,
-                 from include/linux/spinlock.h:117,
-                 from include/linux/mmzone.h:7,
-                 from include/linux/gfp.h:4,
-                 from include/linux/slab.h:14,
-                 from include/linux/percpu.h:5,
-                 from include/linux/kernel_stat.h:7,
-                 from arch/arm/kernel/irq.c:24:
-include/asm/atomic.h:241:1: warning: "cmpxchg" redefined
-In file included from include/asm/system.h:378,
-                 from include/asm/bitops.h:27,
-                 from include/linux/bitops.h:17,
-                 from include/linux/kernel.h:32,
-                 from include/linux/cpumask.h:84,
-                 from include/linux/smp.h:10,
-                 from include/linux/kernel_stat.h:5,
-                 from arch/arm/kernel/irq.c:24:
-include/asm-generic/cmpxchg.h:19:1: warning: this is the location of
-the previous definition
-In file included from include/asm/system.h:366,
-                 from include/linux/list.h:9,
-                 from include/linux/module.h:9,
-                 from arch/arm/kernel/process.c:13:
-include/asm-generic/cmpxchg-local.h: In function '__cmpxchg_local_generic':
-include/asm-generic/cmpxchg-local.h:23: error: implicit declaration of
-function 'BUILD_BUG_ON'
-include/asm-generic/cmpxchg-local.h:23: error: implicit declaration of
-function 'typecheck'
-include/asm-generic/cmpxchg-local.h:23: error: expected expression
-before 'unsigned'
-include/asm-generic/cmpxchg-local.h:44: error: expected expression
-before 'unsigned'
-include/asm-generic/cmpxchg-local.h: In function '__cmpxchg64_local_generic':
-include/asm-generic/cmpxchg-local.h:57: error: expected expression
-before 'unsigned'
-include/asm-generic/cmpxchg-local.h:61: error: expected expression
-before 'unsigned'
----- 8-< ----
