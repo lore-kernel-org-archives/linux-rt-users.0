@@ -1,70 +1,52 @@
-From: "=?UTF-8?Q?Lu=C3=ADs_Vit=C3=B3rio_Cargnini?=" <lvcargnini@gmail.com>
-Subject: Problems with RT pathc s in OMAP kernel
-Date: Tue, 20 May 2008 11:42:54 -0300
-Message-ID: <ae36f8040805200742x6de272c5mc9c12ccc798649ee@mail.gmail.com>
-Reply-To: lvcargnini@gmail.com
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/5] RT: adaptive-lock enhancements
+Date: Tue, 20 May 2008 10:49:10 -0400
+Message-ID: <20080520143954.15992.85900.stgit@novell1.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: base64
-To: linux-omap@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, sdietrich@novell.com,
+	pmorreale@novell.com, mkohari@novell.com, ghaskins@novell.com
+To: mingo@elte.hu, tglx@linutronix.de, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.30]:17178 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757063AbYETOnF (ORCPT
+Received: from 66-189-124-104.dhcp.oxfr.ma.charter.com ([66.189.124.104]:57718
+	"EHLO novell1.haskins.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1757154AbYETPVk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 10:43:05 -0400
-Received: by yw-out-2324.google.com with SMTP id 9so1389885ywe.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 07:42:56 -0700 (PDT)
-Content-Disposition: inline
+	Tue, 20 May 2008 11:21:40 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-RGVhciBmZWxsb3dzOgpBZnRlciBhcHBsaWVkIHRoZSBSVCBwYXRjaCBzZXQgaW4gbXkga2VybmVs
-IHRyZWUgSSBnZXQgdGhlIGZvbGxvd2luZwplcnJvciAoUlQgcGF0Y2ggb3JpZ2luOiBodHRwOi8v
-cnQud2lraS5rZXJuZWwub3JnL2luZGV4LnBocC9NYWluX1BhZ2UpCjoKCihlbnRlcnByaXNlOn4v
-cHVjL2luc3RyYW1lZC9saW51eC1vbWFwLTIuNi5kZWEucnQpIGx2Y2FyZ25pbmklIG1ha2UKICBD
-SEsgICAgIGluY2x1ZGUvbGludXgvdmVyc2lvbi5oCm1ha2VbMV06IGBpbmNsdWRlL2FzbS1hcm0v
-bWFjaC10eXBlcy5oJyBpcyB1cCB0byBkYXRlLgogIENISyAgICAgaW5jbHVkZS9saW51eC91dHNy
-ZWxlYXNlLmgKICBDQyAgICAgIGFyY2gvYXJtL2tlcm5lbC9hc20tb2Zmc2V0cy5zCkluIGZpbGUg
-aW5jbHVkZWQgZnJvbSBpbmNsdWRlL2FzbS9zeXN0ZW0uaDozNjYsCiAgICAgICAgICAgICAgICAg
-ZnJvbSBpbmNsdWRlL2FzbS9iaXRvcHMuaDoyNywKICAgICAgICAgICAgICAgICBmcm9tIGluY2x1
-ZGUvbGludXgvYml0b3BzLmg6MTcsCiAgICAgICAgICAgICAgICAgZnJvbSBpbmNsdWRlL2xpbnV4
-L2tlcm5lbC5oOjE1LAogICAgICAgICAgICAgICAgIGZyb20gaW5jbHVkZS9saW51eC9zY2hlZC5o
-OjUyLAogICAgICAgICAgICAgICAgIGZyb20gYXJjaC9hcm0va2VybmVsL2FzbS1vZmZzZXRzLmM6
-MTM6CmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy1sb2NhbC5oOiBJbiBmdW5jdGlvbiAnX19j
-bXB4Y2hnX2xvY2FsX2dlbmVyaWMnOgppbmNsdWRlL2FzbS1nZW5lcmljL2NtcHhjaGctbG9jYWwu
-aDoyMzogZXJyZXVyOiBpbXBsaWNpdCBkZWNsYXJhdGlvbgpvZiBmdW5jdGlvbiAnQlVJTERfQlVH
-X09OJwppbmNsdWRlL2FzbS1nZW5lcmljL2NtcHhjaGctbG9jYWwuaDoyMzogZXJyZXVyOiBpbXBs
-aWNpdCBkZWNsYXJhdGlvbgpvZiBmdW5jdGlvbiAndHlwZWNoZWNrJwppbmNsdWRlL2FzbS1nZW5l
-cmljL2NtcHhjaGctbG9jYWwuaDoyMzogZXJyZXVyOiBleHBlY3RlZCBleHByZXNzaW9uCmJlZm9y
-ZSAndW5zaWduZWQnCmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy1sb2NhbC5oOjQ0OiBlcnJl
-dXI6IGV4cGVjdGVkIGV4cHJlc3Npb24KYmVmb3JlICd1bnNpZ25lZCcKaW5jbHVkZS9hc20tZ2Vu
-ZXJpYy9jbXB4Y2hnLWxvY2FsLmg6IEluIGZ1bmN0aW9uICdfX2NtcHhjaGc2NF9sb2NhbF9nZW5l
-cmljJzoKaW5jbHVkZS9hc20tZ2VuZXJpYy9jbXB4Y2hnLWxvY2FsLmg6NTc6IGVycmV1cjogZXhw
-ZWN0ZWQgZXhwcmVzc2lvbgpiZWZvcmUgJ3Vuc2lnbmVkJwppbmNsdWRlL2FzbS1nZW5lcmljL2Nt
-cHhjaGctbG9jYWwuaDo2MTogZXJyZXVyOiBleHBlY3RlZCBleHByZXNzaW9uCmJlZm9yZSAndW5z
-aWduZWQnCkRhbnMgbGUgZmljaGllciBpbmNsdXMgw6AgcGFydGlyIGRlIGluY2x1ZGUvbGludXgv
-cnRfbG9jay5oOjE1LAogICAgICAgICAgw6AgcGFydGlyIGRlIGluY2x1ZGUvbGludXgvc3Bpbmxv
-Y2suaDoxMTcsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9saW51eC9zZXFsb2NrLmg6
-MjksCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9saW51eC90aW1lLmg6OCwKICAgICAg
-ICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2xpbnV4L3RpbWV4Lmg6NTcsCiAgICAgICAgICDDoCBw
-YXJ0aXIgZGUgaW5jbHVkZS9saW51eC9zY2hlZC5oOjU0LAogICAgICAgICAgw6AgcGFydGlyIGRl
-IGFyY2gvYXJtL2tlcm5lbC9hc20tb2Zmc2V0cy5jOjEzOgppbmNsdWRlL2FzbS9hdG9taWMuaDoy
-NDE6MTogYXR0ZW50aW9uIDogwqsgY21weGNoZyDCuyByZWTDqWZpbmkKRGFucyBsZSBmaWNoaWVy
-IGluY2x1cyDDoCBwYXJ0aXIgZGUgaW5jbHVkZS9hc20vc3lzdGVtLmg6Mzc4LAogICAgICAgICAg
-w6AgcGFydGlyIGRlIGluY2x1ZGUvYXNtL2JpdG9wcy5oOjI3LAogICAgICAgICAgw6AgcGFydGly
-IGRlIGluY2x1ZGUvbGludXgvYml0b3BzLmg6MTcsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgaW5j
-bHVkZS9saW51eC9rZXJuZWwuaDoxNSwKICAgICAgICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2xp
-bnV4L3NjaGVkLmg6NTIsCiAgICAgICAgICDDoCBwYXJ0aXIgZGUgYXJjaC9hcm0va2VybmVsL2Fz
-bS1vZmZzZXRzLmM6MTM6CmluY2x1ZGUvYXNtLWdlbmVyaWMvY21weGNoZy5oOjE5OjE6IGF0dGVu
-dGlvbiA6IGNlY2kgZXN0IGxhCmxvY2FsaXNhdGlvbiBkJ3VuZSBwcsOpY8OpZGVudGUgZMOpZmlu
-aXRpb24KbWFrZVsxXTogKioqIFthcmNoL2FybS9rZXJuZWwvYXNtLW9mZnNldHMuc10gRXJyb3Ig
-MQptYWtlOiAqKiogW3ByZXBhcmUwXSBFcnJvciAyCgpTb21lb25lIGtub3dzIGhvdyBjYW4gSSBm
-aXggdGhpcyA/ClNvbWVvbmUgaGFzIGEgcGF0Y2ggPwpUaGFua3MuCgotLSAKLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tClRoYW5rcyAmJiBSZWdhcmRzCk0uU2MuIEIuU2MuIEx1w61zIFZpdMOzcmlvIENh
-cmduaW5pCklFRUUgTWVtYmVyCkVsZWN0cmljYWwgRW5naW5lZXIgRmFjdWx0eSBAIFBVQ1JTCklw
-aXJhbmdhIEF2ZW51ZSwgNjY4MSDigJMgQnVpbGRpbmcgMzAKUC5PLiBCb3g6IDkwNjE5LTkwMCDi
-gJMgUG9ydG8gQWxlZ3JlL1JTClBob25lOiArNTUgNTEgMzMyMCAzNTAwICBleHRlbnNpb246IDc2
-OTYKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCg==
+Hi Ingo, Steven, Thomas,
+  The following series are the scraps from adaptive-locks-v3 that have not yet
+  been pulled into RT.  This series applies to 25.4-rt2.
+
+  For the most part, this is the difference between adaptive-v3 and whats in
+  the upstream tree, with the following exceptions:
+
+  1) I have fixed an issue in the "optimize-wakeup" patch that went out in v3.
+     There was a hunk left-over from when we applied adaptive to both spinlocks
+     and mutexes.  We have since dropped mutexes, so that patch needed to be
+     refactored to be correct.
+
+  2) I have (for now) dropped the timeout feature.  It needs to be re-worked to
+     apply to the current version of adaptive-locks that are in the tree.
+
+  I also moved what was patch 6/8 in v3 to be first, because I believe it has
+  the most potential of all the other patches to improve performance.
+
+  I have performed some baseline analysis of these patches compared to
+  25.4-rt2, which you can find here:
+
+    ftp://ftp.novell.com/dev/ghaskins/25.4-rt2-adaptive-enhancements.pdf
+
+  I only did hackbench runs for this round of testing, but you can see there is
+  a small, but net-positive gain in the results.  I think the results are more
+  profound for other benchmarks, but I didnt have the time to re-run them all
+  yet.
+
+  As always, comments/questions welcome.
+
+  Regards,
+   -Greg
