@@ -1,69 +1,58 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt8
-Date: Tue, 20 May 2008 00:46:03 -0400
-Message-ID: <1211258763.14697.82.camel@localhost.localdomain>
+Subject: RE: 2.6.25.4-rt2
+Date: Tue, 20 May 2008 00:37:02 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805200030120.9319@gandalf.stny.rr.com>
+References: <1211237032.14697.76.camel@localhost.localdomain><1211239147.198
+ 45.42.camel@localhost>  <Pine.LNX.4.58.0805191936120.4125@gandalf.stny.rr.com>
+ <630E9048ECEBBB4798CE33255209FE730648317D@CNSHGSMBS02.ad4.ad.alcatel.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Kasper Sandberg <lkml@metanurb.dk>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: MA QING A <Qing.a.Ma@alcatel-sbell.com.cn>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:53835 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:51606 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751569AbYETEqE (ORCPT
+	with ESMTP id S1751423AbYETEwc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 00:46:04 -0400
+	Tue, 20 May 2008 00:52:32 -0400
+In-Reply-To: <630E9048ECEBBB4798CE33255209FE730648317D@CNSHGSMBS02.ad4.ad.alcatel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt8 tree, which can be
-downloaded from the location:
-
-  http://rt.et.redhat.com/download/
-
-Information on the RT patch can be found at:
-
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24.7-rt7
-
- - Read Write locks with multiple readers (Steven Rostedt)
-
- The previous versions of the RT tree would serialize the RW locks
- for all readers to allow for priority inheritance to take place.
- This change allows for multiple readers but still maintain priority
- inheritance. The number of readers that can hold a lock at any time
- may be limited by
-
-   sysctl kernel.rwlocks_reader_limit
-
- Setting this to <= 0 will give allow for any number of readers. The
- default is set to NR_CPUS.
-
-
- ** Note: I made this change separate to allow for easy testing in case 
-          bugs have been introduced by this change.
-
-to build a 2.6.24.7-rt8 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt8.bz2
 
 
 
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
+On Tue, 20 May 2008, MA QING A wrote:
 
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+> Forgive me to ask a stupid question.
+> Why using the 24 mainline kernel, the time is less than using the
+> rt-patched kernel?
+>
 
+The test I used is a performance test, not a latency test. An RTOS
+(Real-time Operating System) will sacrifice performance to achieve
+determinism (low latencies). Several key features to an RT system usually
+come with a performance cost.
 
-The broken out patches are also available.
+A non RT system will perform 99% of the time faster than an RTOS. But all
+it takes is that one time to miss a deadline to make an RT system crash.
+An RTOS may be slightly slower, but it will not have those outliers that a
+normal desktop system would have.
 
+So getting back to your question.  Hackbench runs a bunch of stuff and
+times how long it took to do so. It stresses the system quite a bit. The
+lower the number the better. Given that hackbench is not checking for
+latency, but only shear perforance, it is expected that hackbench will run
+better on a non RT system.
 
+Now, a test like cyclictest that measures latencies will show the benefits
+of realtime.  The kernel with the RT patch can measure 65 microsecond
+latencies for response times even while running hackbench. The vanilla
+kernel would measure a few milliseconds response times running the same
+test.
 
 -- Steve
-
-
 
