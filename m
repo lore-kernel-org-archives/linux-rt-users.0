@@ -1,38 +1,45 @@
-From: Tim Blechmann <tim@klingt.org>
-Subject: Re: 2.6.25.4-rt1 problem
-Date: Tue, 20 May 2008 15:48:18 +0000 (UTC)
-Message-ID: <g0urs0$inu$1@ger.gmane.org>
-References: <g0ri41$b23$1@ger.gmane.org>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: Re: 2.6.25.4-rt2 compile errors on ARM due to cmpxchg() problems.
+Date: Tue, 20 May 2008 21:11:59 +0200
+Message-ID: <20080520191159.GL13814@pengutronix.de>
+References: <3efb10970805200721u6a837a2ap94ead54f7eb7bf89@mail.gmail.com> <Pine.LNX.4.58.0805201034130.1838@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Remy Bohmer <linux@bohmer.net>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, lvcargnini@gmail.com,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:59042 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933762AbYETPsf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 11:48:35 -0400
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1JyU4l-0007U8-KJ
-	for linux-rt-users@vger.kernel.org; Tue, 20 May 2008 15:48:31 +0000
-Received: from 254.a2c-net247.astra2connect.com ([212.56.247.254])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 15:48:31 +0000
-Received: from tim by 254.a2c-net247.astra2connect.com with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 15:48:31 +0000
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:40515 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754594AbYETTMW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 May 2008 15:12:22 -0400
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0805201034130.1838@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> the release of the realtime kernel for 2.6.25.4 does not boot for me.
+Hi Steven,
 
-never mind, rt-2 works fine ...
+On Tue, May 20, 2008 at 10:34:54AM -0400, Steven Rostedt wrote:
+> No idea right off the bat. But I may be needing to set up a ARM
+> crosscompiler. Unless Thomas would like to take a look into this.
 
+If you need an ARM cross compiler, you can for example use ptxdist to
+setup an OSELAS.Toolchain:
+
+http://www.pengutronix.de/oselas/toolchain/index_en.html
+
+The current well tested revisions are based on 4.1.2, but -trunk does
+also contain (work-in-progress) top-of-tree versions.
+
+rsc
 -- 
-tim@klingt.org
-http://tim.klingt.org
-
-Art is either a complaint or do something else
-  John Cage quoting Jasper Johns
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
 
