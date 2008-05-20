@@ -1,143 +1,39 @@
-From: "MA QING A" <Qing.a.Ma@alcatel-sbell.com.cn>
-Subject: RE: 2.6.25.4-rt2
-Date: Tue, 20 May 2008 08:44:42 +0800
-Message-ID: <630E9048ECEBBB4798CE33255209FE730648317D@CNSHGSMBS02.ad4.ad.alcatel.com>
-References: <1211237032.14697.76.camel@localhost.localdomain><1211239147.198
-	45.42.camel@localhost>
-	<Pine.LNX.4.58.0805191936120.4125@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 2.6.25.4-rt2
+Date: Mon, 19 May 2008 21:21:26 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805192116390.4125@gandalf.stny.rr.com>
+References: <1211237032.14697.76.camel@localhost.localdomain>
+ <1211242757.19845.48.camel@localhost>  <Pine.LNX.4.58.0805192047060.4125@gandalf.stny.rr.com>
+ <1211244545.19845.51.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=gb2312
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Steven Rostedt" <rostedt@goodmis.org>,
-	"Kasper Sandberg" <lkml@metanurb.dk>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Kasper Sandberg <lkml@metanurb.dk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cnrelay03.alcatel-sbell.com.cn ([211.144.215.19]:37541 "EHLO
-	mail.alcatel-sbell.com.cn" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751085AbYETBBu convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2008 21:01:50 -0400
-Content-class: urn:content-classes:message
-In-Reply-To: <Pine.LNX.4.58.0805191936120.4125@gandalf.stny.rr.com>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:33477 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752507AbYETBV2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 19 May 2008 21:21:28 -0400
+In-Reply-To: <1211244545.19845.51.camel@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-=46orgive me to ask a stupid question.
-Why using the 24 mainline kernel, the time is less than using the rt-pa=
-tched kernel?
-
-
------Original Message-----
-=46rom: linux-kernel-owner@vger.kernel.org [mailto:linux-kernel-owner@v=
-ger.kernel.org] On Behalf Of Steven Rostedt
-Sent: 2008=C4=EA5=D4=C220=C8=D5 7:44
-To: Kasper Sandberg
-Cc: LKML; RT; Ingo Molnar; Thomas Gleixner
-Subject: Re: 2.6.25.4-rt2
-
 
 On Tue, 20 May 2008, Kasper Sandberg wrote:
+> >
+> > Also could you try this:
+> >
+> >  # sysctl kernel.sched_nr_migrate = 4
+> >
+> > or try 2.
+> I am afraid i do not have this proc entry.
+>
+> my .config is as follows:
 
-> On Mon, 2008-05-19 at 18:43 -0400, Steven Rostedt wrote:
-> > We are pleased to announce the 2.6.25.4-rt2 tree, which can be
-
-> Forgive me if i ask an obvious stupid question. But what is the statu=
-s
-> of this -rt tree for .25 in relation with the BKL stuff?
-
-Well, the BKL is still a semaphore in 25.
-
-=46or my hackbench runs, I have:
-
-[root@bxrhel51 c]# cat hack-test-2.6.25.4-rt2
-Time: 4.937
-Time: 4.842
-Time: 4.877
-Time: 4.905
-Time: 4.924
-Time: 4.781
-Time: 4.927
-Time: 4.871
-Time: 5.181
-Time: 4.866
-
-Which is a bit slower than 2.6.24.7-rt7:
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7-rt7
-Time: 4.789
-Time: 4.824
-Time: 4.807
-Time: 4.867
-Time: 4.802
-Time: 4.799
-Time: 4.823
-Time: 4.855
-Time: 4.873
-Time: 4.833
-
-But then I checked the base kernels themselves:
-
-[root@bxrhel51 c]# cat hack-test-2.6.24.7
-Time: 3.817
-Time: 3.921
-Time: 3.887
-Time: 3.920
-Time: 3.874
-Time: 3.858
-Time: 3.912
-Time: 3.926
-Time: 3.888
-Time: 3.901
-
-[root@bxrhel51 c]# cat hack-test-2.6.25.4
-Time: 6.225
-Time: 6.319
-Time: 6.257
-Time: 6.534
-Time: 6.077
-Time: 6.787
-Time: 6.927
-Time: 6.218
-Time: 5.929
-Time: 6.554
-
-
-Where there's a regression somewhere. For 25, the RT patch is actually
-*better* than mainline!
-
-So I was thinking it had to do with the BKL regression, and then I ran:
-
-[root@bxrhel51 c]# cat hack-test-2.6.26-rc3
-Time: 6.789
-Time: 7.123
-Time: 6.197
-Time: 5.496
-Time: 6.708
-Time: 5.609
-Time: 6.679
-Time: 6.206
-Time: 6.351
-Time: 5.969
-
-
-Here it is no better, and the BKL has been converted into a spin lock.
-
-But I'm very much busy working on -rt right now to dig deeper into this
-regression.
+You need to set SCHED_DEBUG which is dependent on DEBUG_KERNEL.
 
 -- Steve
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
