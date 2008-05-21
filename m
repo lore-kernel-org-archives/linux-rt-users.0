@@ -1,67 +1,79 @@
-From: Kevin Hilman <khilman@mvista.com>
-Subject: [PATCH 3/5] RT: ARM: remove __attribute_used__ from semaphore code
-Date: Tue, 20 May 2008 15:45:47 -0700
-Message-ID: <1211323550-5318-3-git-send-email-khilman@mvista.com>
-References: <1211323550-5318-1-git-send-email-khilman@mvista.com>
- <1211323550-5318-2-git-send-email-khilman@mvista.com>
-Cc: linux-omap@vger.kernel.org, Kevin Hilman <khilman@mvista.com>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from deeprooted.net ([216.254.16.51]:59697 "EHLO paris.hilman.org"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S935348AbYETXB4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 May 2008 19:01:56 -0400
-In-Reply-To: <1211323550-5318-2-git-send-email-khilman@mvista.com>
-In-Reply-To: <483353F0.6090902@mvista.com>
+From: "=?UTF-8?Q?Lu=C3=ADs_Vit=C3=B3rio_Cargnini?=" <lvcargnini@gmail.com>
+Subject: Re: [PATCH 0/5] RT: Misc. fixups for ARM/OMAP against 2.6.25.4-rt3
+Date: Tue, 20 May 2008 22:33:23 -0300
+Message-ID: <ae36f8040805201833o262782a4o327e000325724551@mail.gmail.com>
 References: <483353F0.6090902@mvista.com>
+Reply-To: lvcargnini@gmail.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+Cc: RT <linux-rt-users@vger.kernel.org>, linux-omap@vger.kernel.org
+To: "Kevin Hilman" <khilman@mvista.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wf-out-1314.google.com ([209.85.200.174]:59213 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755616AbYEUBdY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 May 2008 21:33:24 -0400
+Received: by wf-out-1314.google.com with SMTP id 27so1994099wfd.4
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 May 2008 18:33:23 -0700 (PDT)
+In-Reply-To: <483353F0.6090902@mvista.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Signed-off-by: Kevin Hilman <khilman@mvista.com>
----
- arch/arm/kernel/semaphore.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/arch/arm/kernel/semaphore.c b/arch/arm/kernel/semaphore.c
-index 6036f57..11f7d04 100644
---- a/arch/arm/kernel/semaphore.c
-+++ b/arch/arm/kernel/semaphore.c
-@@ -49,7 +49,7 @@
-  *    we cannot lose wakeup events.
-  */
- 
-- void __attribute_used__ __compat_up(struct compat_semaphore *sem)
-+ void __used __compat_up(struct compat_semaphore *sem)
- {
- 	wake_up(&sem->wait);
- }
-@@ -58,7 +58,7 @@ EXPORT_SYMBOL(__compat_up);
- 
- static DEFINE_SPINLOCK(semaphore_lock);
- 
-- void __attribute_used__ __sched __compat_down(struct compat_semaphore * sem)
-+ void __used __sched __compat_down(struct compat_semaphore * sem)
- {
- 	struct task_struct *tsk = current;
- 	DECLARE_WAITQUEUE(wait, tsk);
-@@ -93,7 +93,7 @@ static DEFINE_SPINLOCK(semaphore_lock);
- 
- EXPORT_SYMBOL(__compat_down);
- 
-- int __attribute_used__ __sched __compat_down_interruptible(struct compat_semaphore * sem)
-+ int __used __sched __compat_down_interruptible(struct compat_semaphore * sem)
- {
- 	int retval = 0;
- 	struct task_struct *tsk = current;
-@@ -154,7 +154,7 @@ EXPORT_SYMBOL(__compat_down_interruptible);
-  * single "cmpxchg" without failure cases,
-  * but then it wouldn't work on a 386.
-  */
-- int __attribute_used__ __sched __compat_down_trylock(struct compat_semaphore * sem)
-+ int __used __sched __compat_down_trylock(struct compat_semaphore * sem)
- {
- 	int sleepers;
- 	unsigned long flags;
--- 
-1.5.4.1.166.g6706d
-
+d2VsbCBJIGdldCB0aGUgZm9sbG93aW5nIGVycm9yIGluIG15IHNvdXJjZSBjb2RlIGNvbXBpbGF0
+aW9uIHRpbWU6CiAgICAgICDDoCBwYXJ0aXIgZGUga2VybmVsL3J0bXV0ZXguYzoxMzoKaW5jbHVk
+ZS9hc20vYXRvbWljLmg6MjQxOjE6IGF0dGVudGlvbiA6IMKrIGNtcHhjaGcgwrsgcmVkw6lmaW5p
+CkRhbnMgbGUgZmljaGllciBpbmNsdXMgw6AgcGFydGlyIGRlIGluY2x1ZGUvYXNtL3N5c3RlbS5o
+OjM3OCwKICAgICAgICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2FzbS9iaXRvcHMuaDoyNywKICAg
+ICAgICAgIMOgIHBhcnRpciBkZSBpbmNsdWRlL2xpbnV4L2JpdG9wcy5oOjE3LAogICAgICAgICAg
+w6AgcGFydGlyIGRlIGluY2x1ZGUvbGludXgvdGhyZWFkX2luZm8uaDozNCwKICAgICAgICAgIMOg
+IHBhcnRpciBkZSBpbmNsdWRlL2xpbnV4L3ByZWVtcHQuaDo5LAogICAgICAgICAgw6AgcGFydGly
+IGRlIGluY2x1ZGUvbGludXgvc3BpbmxvY2suaDo4NSwKICAgICAgICAgIMOgIHBhcnRpciBkZSBr
+ZXJuZWwvcnRtdXRleC5jOjEzOgppbmNsdWRlL2FzbS1nZW5lcmljL2NtcHhjaGcuaDoxOToxOiBh
+dHRlbnRpb24gOiBjZWNpIGVzdCBsYQpsb2NhbGlzYXRpb24gZCd1bmUgcHLDqWPDqWRlbnRlIGTD
+qWZpbml0aW9uCmtlcm5lbC9ydG11dGV4LmM6MTI0OiBlcnJldXI6IHJlZGVmaW5pdGlvbiBvZiAn
+aW5pdF9saXN0cycKa2VybmVsL3J0bXV0ZXguYzoxMTA6IGVycmV1cjogcHJldmlvdXMgZGVmaW5p
+dGlvbiBvZiAnaW5pdF9saXN0cycgd2FzIGhlcmUKa2VybmVsL3J0bXV0ZXguYzogSW4gZnVuY3Rp
+b24gJ2RvX3RyeV90b190YWtlX3J0X211dGV4JzoKa2VybmVsL3J0bXV0ZXguYzo0MjU6IGVycmV1
+cjogdG9vIG1hbnkgYXJndW1lbnRzIHRvIGZ1bmN0aW9uICd0cnlfdG9fc3RlYWxfbG9jaycKa2Vy
+bmVsL3J0bXV0ZXguYzogSW4gZnVuY3Rpb24gJ3J0X3NwaW5fbG9ja19zbG93bG9jayc6Cmtlcm5l
+bC9ydG11dGV4LmM6Nzg3OiBlcnJldXI6ICdzYXZlZF9sb2NrX2RlcHRoJyB1bmRlY2xhcmVkIChm
+aXJzdCB1c2UKaW4gdGhpcyBmdW5jdGlvbikKa2VybmVsL3J0bXV0ZXguYzo3ODc6IGVycmV1cjog
+KEVhY2ggdW5kZWNsYXJlZCBpZGVudGlmaWVyIGlzIHJlcG9ydGVkIG9ubHkgb25jZQprZXJuZWwv
+cnRtdXRleC5jOjc4NzogZXJyZXVyOiBmb3IgZWFjaCBmdW5jdGlvbiBpdCBhcHBlYXJzIGluLikK
+a2VybmVsL3J0bXV0ZXguYzo3ODg6IGVycmV1cjogaW1wbGljaXQgZGVjbGFyYXRpb24gb2YgZnVu
+Y3Rpb24KJ3J0X3JlYWNxdWlyZV9ia2wnCmtlcm5lbC9ydG11dGV4LmM6IEhvcnMgZGUgdG91dGUg
+Zm9uY3Rpb24gOgprZXJuZWwvcnRtdXRleC5jOjEyMzk6IGVycmV1cjogcmVkZWZpbml0aW9uIG9m
+ICdydF9tdXRleF9sb2NrX2tpbGxhYmxlJwprZXJuZWwvcnRtdXRleC5jOjEyMTg6IGVycmV1cjog
+cHJldmlvdXMgZGVmaW5pdGlvbiBvZgoncnRfbXV0ZXhfbG9ja19raWxsYWJsZScgd2FzIGhlcmUK
+a2VybmVsL3J0bXV0ZXguYzoxMjQ1OiBlcnJldXI6IHJlZGVmaW5pdGlvbiBvZgonX19rc3RydGFi
+X3J0X211dGV4X2xvY2tfa2lsbGFibGUnCmtlcm5lbC9ydG11dGV4LmM6MTIyNDogZXJyZXVyOiBw
+cmV2aW91cyBkZWZpbml0aW9uIG9mCidfX2tzdHJ0YWJfcnRfbXV0ZXhfbG9ja19raWxsYWJsZScg
+d2FzIGhlcmUKa2VybmVsL3J0bXV0ZXguYzoxMjQ1OiBlcnJldXI6IHJlZGVmaW5pdGlvbiBvZgon
+X19rc3ltdGFiX3J0X211dGV4X2xvY2tfa2lsbGFibGUnCmtlcm5lbC9ydG11dGV4LmM6MTIyNDog
+ZXJyZXVyOiBwcmV2aW91cyBkZWZpbml0aW9uIG9mCidfX2tzeW10YWJfcnRfbXV0ZXhfbG9ja19r
+aWxsYWJsZScgd2FzIGhlcmUKbWFrZVsxXTogKioqIFtrZXJuZWwvcnRtdXRleC5vXSBFcnJvciAx
+Cm1ha2U6ICoqKiBba2VybmVsXSBFcnJvciAyCgoKYW5kIHRoZSBmb2xsb3dpbmcgd2FybmluZyBp
+cyBub2lzeSBiZWVuIHNob3duOgppbmNsdWRlL2FzbS9hdG9taWMuaDoyNDE6MTogYXR0ZW50aW9u
+IDogwqsgY21weGNoZyDCuyByZWTDqWZpbmkKRGFucyBsZSBmaWNoaWVyIGluY2x1cyDDoCBwYXJ0
+aXIgZGUgaW5jbHVkZS9hc20vc3lzdGVtLmg6Mzc4LAoKCk9uIFR1ZSwgTWF5IDIwLCAyMDA4IGF0
+IDc6NDIgUE0sIEtldmluIEhpbG1hbiA8a2hpbG1hbkBtdmlzdGEuY29tPiB3cm90ZToKPiBXaGF0
+IGZvbGxvd3MgYXJlIGEgc2VyaWVzIG9mIG1pbm9yIGZpeGVzIHRvIGdldCAtcnQzIGJ1aWxkaW5n
+L2Jvb3Rpbmcgb24KPiAgQVJNLiAgVGhlIGZpcnN0IDMgYXJlIHJlYWR5IGRvIGJlIGluY2x1ZGVk
+IGludG8gdGhlIC1ydCBwYXRjaCwgd2hpbGUgdGhlCj4gbGFzdCA0dGggb25lIChjbXB4Y2hnIGR1
+cGxpY2F0aW9uKSBuZWVkcyBhIGxpdHRsZSBpbnZlc3RpZ2F0aW5nLiBUaGUgNXRoIG9uZQo+IG5l
+ZWRzIHRvIGdvIHVwc3RyZWFtIHZpYSB0aGUgT01BUCB0cmVlLgo+Cj4gVGhpcyB3YXMgYnVpbGQv
+Ym9vdCB0ZXN0ZWQgb24gdGhlIFRJIE9NQVAzNDMwIFNEUCBwbGF0Zm9ybQo+Cj4gS2V2aW4KPiAt
+LQo+IFRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNj
+cmliZSBsaW51eC1ydC11c2VycyIgaW4KPiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jk
+b21vQHZnZXIua2VybmVsLm9yZwo+IE1vcmUgbWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2Vy
+Lmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbAo+CgoKCi0tIAotLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0KVGhhbmtzICYmIFJlZ2FyZHMKTS5TYy4gQi5TYy4gTHXDrXMgVml0w7NyaW8gQ2FyZ25p
+bmkKSUVFRSBNZW1iZXIKRWxlY3RyaWNhbCBFbmdpbmVlciBGYWN1bHR5IEAgUFVDUlMKSXBpcmFu
+Z2EgQXZlbnVlLCA2NjgxIOKAkyBCdWlsZGluZyAzMApQLk8uIEJveDogOTA2MTktOTAwIOKAkyBQ
+b3J0byBBbGVncmUvUlMKUGhvbmU6ICs1NSA1MSAzMzIwIDM1MDAgZXh0ZW5zaW9uOiA3Njk2Ci0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLQo=
