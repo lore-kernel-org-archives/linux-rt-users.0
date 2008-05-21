@@ -1,55 +1,90 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Compile warning rtmutex code on 2.6.24.7-rt8 (CC:LKML added)
-Date: Wed, 21 May 2008 15:14:12 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805211504430.19141@gandalf.stny.rr.com>
-References: <3efb10970805201356x4552859bof5f3f4f56f2ba676@mail.gmail.com>
- <Pine.LNX.4.58.0805201718530.21440@gandalf.stny.rr.com>
- <3efb10970805211135k422a0153i28613e74d42d1ed2@mail.gmail.com>
+Subject: [PATCH RT] rwlocks fix for non PREEMPT_RT
+Date: Wed, 21 May 2008 15:35:25 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805211534170.19141@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S936915AbYEUTO1@vger.kernel.org>
-In-Reply-To: <3efb10970805211135k422a0153i28613e74d42d1ed2@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:53691 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S936948AbYEUTf1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 May 2008 15:35:27 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Wed, 21 May 2008, Remy Bohmer wrote:
+Seems that the addition of RT_RW_READER broke the non PREEMPT_RT case.
+This patch fixes it.
 
-> Now I understood your hint in some other mail, and I am going to take
-> a look at ftrace for ARM. Just for the fun of it...
-> I hope it is not too intrusive for these ARM cores (old implementation
-> was...), these Atmel cores are just not that fast as the common X86's.
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+---
+ kernel/rtmutex.c |   16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
-If you feel brave, take a crack at the DYNAMIC_FTRACE. It's been done for
-x86 (both 32 and 64 bit), PPC (also both 32 and 64 bit) as well as
-Sparc64.
+Index: linux-2.6.24.7-rt9/kernel/rtmutex.c
+===================================================================
+--- linux-2.6.24.7-rt9.orig/kernel/rtmutex.c	2008-05-20 23:38:08.000000000 -0400
++++ linux-2.6.24.7-rt9/kernel/rtmutex.c	2008-05-21 15:16:18.000000000 -0400
+@@ -123,6 +123,12 @@ static inline void mark_rt_rwlock_check(
+ #endif /* CONFIG_PREEMPT_RT */
+ #endif
 
-The dynamic ftrace is self modifying code, that will start off having
-mcount simply call a nop. Then later it will change that to call a
-"record_ip" function. A daemon is kicked off to change all the IPs that
-are called into NOPs. When tracing is enabled, all the NOPs are converted
-into calls to the trace function.
++#ifdef CONFIG_PREEMPT_RT
++#define task_is_reader(task) ((task) == RT_RW_READER)
++#else
++#define task_is_reader(task) (0)
++#endif
++
+ int pi_initialized;
 
-Dynamic ftrace also adds a "set_filter_function" in the /debugfs/tracing
-directory that lets you echo in function names, and only those functions
-will enable have tracing enabled.
+ /*
+@@ -315,7 +321,7 @@ static int rt_mutex_adjust_prio_chain(st
+ 	/*
+ 	 * Readers are special. We may need to boost more than one owner.
+ 	 */
+-	if (task == RT_RW_READER) {
++	if (task_is_reader(task)) {
+ 		ret = rt_mutex_adjust_readers(orig_lock, orig_waiter,
+ 					      top_task, lock,
+ 					      recursion_depth);
+@@ -376,7 +382,7 @@ static inline int try_to_steal_lock(stru
+ 	if (pendowner == current)
+ 		return 1;
 
-All this helps tremendously in tracing performance and normal bootup. One
-thing that you need to understand though. That daemon needs to call
-kstop_machine to do the modifications. The daemon wakes up once a second,
-checks to see if there is any new functions that have been recorded. If
-not, then it simply goes back to sleep. But if there are new functions,
-then it calls kstopmachine. This daemon stops when tracing is enabled, but
-can cause unsuspecting latencies when tracing is disabled.
+-	WARN_ON(rt_mutex_owner(lock) == RT_RW_READER);
++	WARN_ON(task_is_reader(rt_mutex_owner(lock)));
 
-I'll probably add a something to disable the daemon just before firing off
-init if PREEMPT_RT is enabled.
+ 	spin_lock(&pendowner->pi_lock);
+ 	if (!lock_is_stealable(pendowner, mode)) {
+@@ -506,7 +512,7 @@ static int task_blocks_on_rt_mutex(struc
 
-Any questions on porting ftrace, feel free to ask.
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+ 		/* readers are handled differently */
+-		if (owner == RT_RW_READER) {
++		if (task_is_reader(owner)) {
+ 			res = rt_mutex_adjust_readers(lock, waiter,
+ 						      current, lock, 0);
+ 			return res;
+@@ -524,7 +530,7 @@ static int task_blocks_on_rt_mutex(struc
+ 	else if (debug_rt_mutex_detect_deadlock(waiter, detect_deadlock))
+ 		chain_walk = 1;
 
-Cheers,
+-	if (!chain_walk || owner == RT_RW_READER)
++	if (!chain_walk || task_is_reader(owner))
+ 		return 0;
 
--- Steve
+ 	/*
+@@ -624,7 +630,7 @@ static void remove_waiter(struct rt_mute
+ 	current->pi_blocked_on = NULL;
+ 	spin_unlock(&current->pi_lock);
+
+-	if (first && owner != current && owner != RT_RW_READER) {
++	if (first && owner != current && !task_is_reader(owner)) {
+
+ 		spin_lock(&owner->pi_lock);
+
+
