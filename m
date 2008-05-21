@@ -1,62 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt9
-Date: Wed, 21 May 2008 00:32:37 -0400
-Message-ID: <1211344357.14697.91.camel@localhost.localdomain>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: 2.6.24.7-rt8
+Date: Wed, 21 May 2008 08:25:04 +0200
+Message-ID: <1211351104.5484.13.camel@marge.simson.net>
+References: <1211258763.14697.82.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:55515 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751384AbYEUEcj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 May 2008 00:32:39 -0400
+Received: from mail.gmx.net ([213.165.64.20]:43638 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1751037AbYEUGZI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 May 2008 02:25:08 -0400
+In-Reply-To: <1211258763.14697.82.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt9 tree, which can be
-downloaded from the location:
 
-  http://rt.et.redhat.com/download/
+Hi Steven,
 
-Information on the RT patch can be found at:
+On Tue, 2008-05-20 at 00:46 -0400, Steven Rostedt wrote:
+> We are pleased to announce the 2.6.24.7-rt8 tree, which can be
+> downloaded from the location:
+> 
+>   http://rt.et.redhat.com/download/
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
+I ran mysql+oltp (ro) on 2.6.24.7-rt7 and 2.6.25-rt2 to compare
+throughput to their parent trees, and ended up with strange (and
+verified) looking performance curves for both trees.  The changes in
+2.6.24.7-rt8 and 2.6.25.4-rt3 cured the primary oddities.
 
-Changes since 2.6.24.7-rt8
+(it looks to me like there may be a little load-balancing issue, peak
+throughput isn't where it should be for my Q6600 box)
 
-  - RT downgrade_write (Steven Rostedt)
-
-  - fix RT rwlocks typecasts (Steven Rostedt)
-
-  - default sched_nr_migrate to 8 (Steven Rostedt)
-
-  - ftrace task comm fix (Steven Rostedt)
-
-  - ARM compile fix (Remy Bohmer)
-
-to build a 2.6.24.7-rt9 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt9.bz2
-
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
-
--- Steve
-
-
+	-Mike
 
