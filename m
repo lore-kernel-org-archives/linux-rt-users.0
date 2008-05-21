@@ -1,33 +1,115 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: How to enable CONFIG_PREEMPT_RT on Blackfin (nommu embedded
-	world)?
-Date: Wed, 21 May 2008 09:41:19 -0700
-Message-ID: <1211388079.18130.48.camel@localhost.localdomain>
-References: <386072610805190035v17a0476ds964fc70241477595@mail.gmail.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: Compile warning rtmutex code on 2.6.24.7-rt8 (CC:LKML added)
+Date: Wed, 21 May 2008 20:35:45 +0200
+Message-ID: <3efb10970805211135k422a0153i28613e74d42d1ed2@mail.gmail.com>
+References: <3efb10970805201356x4552859bof5f3f4f56f2ba676@mail.gmail.com>
+	 <Pine.LNX.4.58.0805201718530.21440@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Bryan Wu <cooloney@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:2343 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754793AbYEUQlV (ORCPT
+Received: from ti-out-0910.google.com ([209.85.142.186]:19051 "EHLO
+	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752027AbYEUSfs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 May 2008 12:41:21 -0400
-In-Reply-To: <386072610805190035v17a0476ds964fc70241477595@mail.gmail.com>
+	Wed, 21 May 2008 14:35:48 -0400
+Received: by ti-out-0910.google.com with SMTP id b6so1575693tic.23
+        for <linux-rt-users@vger.kernel.org>; Wed, 21 May 2008 11:35:47 -0700 (PDT)
+In-Reply-To: <Pine.LNX.4.58.0805201718530.21440@gandalf.stny.rr.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Steven,
 
-On Mon, 2008-05-19 at 15:35 +0800, Bryan Wu wrote:
-> Hi forks,
-> 
-> I'm a Blackfin guy. We'd like to enable -rt tree in Blackfin architecture.
-> Could you please provide some hints about that? Any document or URL?
-> I am studing at rt.wiki.kernel.org currently.
+> Remy,
+> Can you see if this helps,
 
-Does the non-mmu-ness depend on disabling interrupt or preemption?
+Yes, this helps. Looks a little weird to add bitmasks to pointers, but
+I understand why it has been done here.
+BTW: I notice that you already has put it in -rt9.
 
-Daniel
+And some other positive news: 2.6.24.7-rt9 compiles and boots
+perfectly on ARM at91sam9261. (There are still a few other warnings,
+but these are not RT related)
 
+Now I understood your hint in some other mail, and I am going to take
+a look at ftrace for ARM. Just for the fun of it...
+I hope it is not too intrusive for these ARM cores (old implementation
+was...), these Atmel cores are just not that fast as the common X86's.
+
+
+Kind Regards,
+
+Remy
+
+
+2008/5/20 Steven Rostedt <rostedt@goodmis.org>:
+>
+>
+> On Tue, 20 May 2008, Remy Bohmer wrote:
+>
+>> Hello Steven,
+>>
+>>  Do you recognise these warnings? I do not know (yet) if these are ARM
+>>  specific...
+>>
+>>   CC      kernel/rtmutex.o
+>>  kernel/rtmutex.c: In function 'rt_write_fastlock':
+>>  kernel/rtmutex.c:1582: warning: initialization makes pointer from
+>>  integer without a cast
+>>  kernel/rtmutex.c: In function 'rt_write_fasttrylock':
+>>  kernel/rtmutex.c:1622: warning: initialization makes pointer from
+>>  integer without a cast
+>>
+>>  If so, do you have a fix for it?
+>
+> Remy,
+>
+> Can you see if this helps,
+>
+> Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+>
+> ---
+>  kernel/rtmutex.c |    6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
+>
+> Index: linux-2.6.24.7-rt9/kernel/rtmutex.c
+> ===================================================================
+> --- linux-2.6.24.7-rt9.orig/kernel/rtmutex.c    2008-05-20 17:11:29.000000000 -0400
+> +++ linux-2.6.24.7-rt9/kernel/rtmutex.c 2008-05-20 17:13:18.000000000 -0400
+> @@ -1577,7 +1577,7 @@ rt_write_fastlock(struct rw_mutex *rwm,
+>                  void fastcall (*slowfn)(struct rw_mutex *rwm, int mtx),
+>                  int mtx)
+>  {
+> -       unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
+> +       struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
+>
+>        if (likely(rt_rwlock_cmpxchg(rwm, NULL, val)))
+>                rt_mutex_deadlock_account_lock(&rwm->mutex, current);
+> @@ -1617,7 +1617,7 @@ static inline int
+>  rt_write_fasttrylock(struct rw_mutex *rwm,
+>                     int fastcall (*slowfn)(struct rw_mutex *rwm, int mtx), int mtx)
+>  {
+> -       unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
+> +       struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
+>
+>        if (likely(rt_rwlock_cmpxchg(rwm, NULL, val))) {
+>                rt_mutex_deadlock_account_lock(&rwm->mutex, current);
+> @@ -1902,7 +1902,7 @@ rt_write_fastunlock(struct rw_mutex *rwm
+>                                            int mtx),
+>                    int mtx)
+>  {
+> -       unsigned long val = (unsigned long)current | RT_RWLOCK_WRITER;
+> +       struct task_struct *val = (void *)((unsigned long)current | RT_RWLOCK_WRITER);
+>
+>        WARN_ON(rt_rwlock_owner(rwm) != current);
+>        if (likely(rt_rwlock_cmpxchg(rwm, (struct task_struct *)val, NULL)))
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
