@@ -1,90 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] rwlocks fix for non PREEMPT_RT
-Date: Wed, 21 May 2008 15:35:25 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805211534170.19141@gandalf.stny.rr.com>
+From: "Bryan Wu" <cooloney@kernel.org>
+Subject: Re: How to enable CONFIG_PREEMPT_RT on Blackfin (nommu embedded world)?
+Date: Thu, 22 May 2008 10:23:59 +0800
+Message-ID: <386072610805211923va731394y968efb8f2e483625@mail.gmail.com>
+References: <386072610805190035v17a0476ds964fc70241477595@mail.gmail.com>
+	 <1211388079.18130.48.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: "Daniel Walker" <dwalker@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:53691 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S936948AbYEUTf1 (ORCPT
+Received: from yw-out-2324.google.com ([74.125.46.31]:9798 "EHLO
+	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750983AbYEVCYV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 May 2008 15:35:27 -0400
+	Wed, 21 May 2008 22:24:21 -0400
+Received: by yw-out-2324.google.com with SMTP id 9so1841718ywe.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 21 May 2008 19:23:59 -0700 (PDT)
+In-Reply-To: <1211388079.18130.48.camel@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Thu, May 22, 2008 at 12:41 AM, Daniel Walker <dwalker@mvista.com> wrote:
+>
+> On Mon, 2008-05-19 at 15:35 +0800, Bryan Wu wrote:
+>> Hi forks,
+>>
+>> I'm a Blackfin guy. We'd like to enable -rt tree in Blackfin architecture.
+>> Could you please provide some hints about that? Any document or URL?
+>> I am studing at rt.wiki.kernel.org currently.
+>
+> Does the non-mmu-ness depend on disabling interrupt or preemption?
+>
 
-Seems that the addition of RT_RW_READER broke the non PREEMPT_RT case.
-This patch fixes it.
+I am not sure I fully understand your question.
+Do you mean NOMMU arch can not enable preemption and -rt tree?
 
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
----
- kernel/rtmutex.c |   16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
-
-Index: linux-2.6.24.7-rt9/kernel/rtmutex.c
-===================================================================
---- linux-2.6.24.7-rt9.orig/kernel/rtmutex.c	2008-05-20 23:38:08.000000000 -0400
-+++ linux-2.6.24.7-rt9/kernel/rtmutex.c	2008-05-21 15:16:18.000000000 -0400
-@@ -123,6 +123,12 @@ static inline void mark_rt_rwlock_check(
- #endif /* CONFIG_PREEMPT_RT */
- #endif
-
-+#ifdef CONFIG_PREEMPT_RT
-+#define task_is_reader(task) ((task) == RT_RW_READER)
-+#else
-+#define task_is_reader(task) (0)
-+#endif
-+
- int pi_initialized;
-
- /*
-@@ -315,7 +321,7 @@ static int rt_mutex_adjust_prio_chain(st
- 	/*
- 	 * Readers are special. We may need to boost more than one owner.
- 	 */
--	if (task == RT_RW_READER) {
-+	if (task_is_reader(task)) {
- 		ret = rt_mutex_adjust_readers(orig_lock, orig_waiter,
- 					      top_task, lock,
- 					      recursion_depth);
-@@ -376,7 +382,7 @@ static inline int try_to_steal_lock(stru
- 	if (pendowner == current)
- 		return 1;
-
--	WARN_ON(rt_mutex_owner(lock) == RT_RW_READER);
-+	WARN_ON(task_is_reader(rt_mutex_owner(lock)));
-
- 	spin_lock(&pendowner->pi_lock);
- 	if (!lock_is_stealable(pendowner, mode)) {
-@@ -506,7 +512,7 @@ static int task_blocks_on_rt_mutex(struc
-
- 	if (waiter == rt_mutex_top_waiter(lock)) {
- 		/* readers are handled differently */
--		if (owner == RT_RW_READER) {
-+		if (task_is_reader(owner)) {
- 			res = rt_mutex_adjust_readers(lock, waiter,
- 						      current, lock, 0);
- 			return res;
-@@ -524,7 +530,7 @@ static int task_blocks_on_rt_mutex(struc
- 	else if (debug_rt_mutex_detect_deadlock(waiter, detect_deadlock))
- 		chain_walk = 1;
-
--	if (!chain_walk || owner == RT_RW_READER)
-+	if (!chain_walk || task_is_reader(owner))
- 		return 0;
-
- 	/*
-@@ -624,7 +630,7 @@ static void remove_waiter(struct rt_mute
- 	current->pi_blocked_on = NULL;
- 	spin_unlock(&current->pi_lock);
-
--	if (first && owner != current && owner != RT_RW_READER) {
-+	if (first && owner != current && !task_is_reader(owner)) {
-
- 		spin_lock(&owner->pi_lock);
-
-
+-Bryan
