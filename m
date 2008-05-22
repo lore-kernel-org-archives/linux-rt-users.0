@@ -1,58 +1,82 @@
-From: "Bryan Wu" <cooloney@kernel.org>
-Subject: Re: How to enable CONFIG_PREEMPT_RT on Blackfin (nommu embedded world)?
-Date: Thu, 22 May 2008 16:15:39 +0800
-Message-ID: <386072610805220115l8a03d86yac1b47ed3a9c45e4@mail.gmail.com>
-References: <386072610805190035v17a0476ds964fc70241477595@mail.gmail.com>
-	 <1211388079.18130.48.camel@localhost.localdomain>
-	 <386072610805211923va731394y968efb8f2e483625@mail.gmail.com>
-	 <1211423981.18130.59.camel@localhost.localdomain>
+From: Subrata Modak <subrata@linux.vnet.ibm.com>
+Subject: Re: [LTP] [Fwd: [PATCH 1/1] [REALTIME] Profiled tests.]
+Date: Thu, 22 May 2008 17:41:16 +0530
+Message-ID: <1211458276.5064.15.camel@subratamodak.linux.ibm.com>
+References: <1211213941.4871.2.camel@subratamodak.linux.ibm.com>
+	 <20080521124450.GA11320@in.ibm.com>  <483420BD.3010406@bull.net>
+Reply-To: subrata@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Daniel Walker" <dwalker@mvista.com>
+Cc: ltp-list <ltp-list@lists.sourceforge.net>,
+	dino <dino@linux.vnet.ibm.com>,
+	Sripathi Kodi <sripathik@in.ibm.com>,
+	Chirag Jog <chirag@linux.vnet.ibm.com>,
+	sudhanshu Singh <sudh@linux.vnet.ibm.com>,
+	dvhltc <dvhltc@linux.vnet.ibm.com>, tinytim <tinytim@us.ibm.com>,
+	John Stultz <johnstul@us.ibm.com>,
+	Sebastien Dugue <sebastien.dugue@bull.net>,
+	Jean-Pierre Dion <jean-pierre.dion@bull.net>,
+	Michael Olbrich <m.olbrich@pengutronix.de>,
+	Robert Schwebel <r.schwebel@pengutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Gilles Carry <Gilles.Carry@bull.net>,
+	Ankita Garg <ankita@in.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.31]:61505 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759487AbYEVIPs (ORCPT
+Received: from e32.co.us.ibm.com ([32.97.110.150]:35849 "EHLO
+	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758961AbYEVMLn (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 May 2008 04:15:48 -0400
-Received: by yw-out-2324.google.com with SMTP id 9so1909585ywe.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 May 2008 01:15:40 -0700 (PDT)
-In-Reply-To: <1211423981.18130.59.camel@localhost.localdomain>
-Content-Disposition: inline
+	Thu, 22 May 2008 08:11:43 -0400
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e32.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m4MC8Aql005959
+	for <linux-rt-users@vger.kernel.org>; Thu, 22 May 2008 08:08:10 -0400
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m4MCBcwK096834
+	for <linux-rt-users@vger.kernel.org>; Thu, 22 May 2008 06:11:39 -0600
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m4MCBVkg027461
+	for <linux-rt-users@vger.kernel.org>; Thu, 22 May 2008 06:11:38 -0600
+In-Reply-To: <483420BD.3010406@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 22, 2008 at 10:39 AM, Daniel Walker <dwalker@mvista.com> wrote:
->
-> On Thu, 2008-05-22 at 10:23 +0800, Bryan Wu wrote:
->> On Thu, May 22, 2008 at 12:41 AM, Daniel Walker <dwalker@mvista.com> wrote:
->> >
->> > On Mon, 2008-05-19 at 15:35 +0800, Bryan Wu wrote:
->> >> Hi forks,
->> >>
->> >> I'm a Blackfin guy. We'd like to enable -rt tree in Blackfin architecture.
->> >> Could you please provide some hints about that? Any document or URL?
->> >> I am studing at rt.wiki.kernel.org currently.
->> >
->> > Does the non-mmu-ness depend on disabling interrupt or preemption?
->> >
->>
->> I am not sure I fully understand your question.
->> Do you mean NOMMU arch can not enable preemption and -rt tree?
->
-> I'm wondering if nommu machines require interrupts or preemption to be
-> off for different reason, or to handle the fact that there is no mmu.
->
+Thanks Gilles for the Patch and thanks Ankita or reviewing the same. The
+same has been merged to LTP.
 
+Regards--
+Subrata
 
-AFAIK, there is no such requirement in NOMMU. But for Blackfin, there
-are some silicon anomaly which
-requires to turn off the interrupt.
+On Wed, 2008-05-21 at 15:16 +0200, Gilles Carry wrote:
+> Hello Ankita,
+> 
+> Ankita Garg wrote:
+> > I like the idea. It helps making testing infrastructure to be generic
+> > and easy to extend.
+> > 
+> > I might be missing something, or it could be that it is a TO-DO item,
+> > but the patch looks incomplete...the testcases dont yet support the '-c'
+> > option. Also, the parsers do not take the profiles into account. As I
+> > said before, this could just be your first step towards completing the
+> > entire infrastructure and you might have the rest in your To-Do..
+> 
+> Actually, the '-c' option is not mandatory for this patch to work since
+> the profiles can take any command line.
+> Arguments are not interpreted by the scripts which run the command lines
+> as found in the profile.
+> 
+> In a previous patch, I added that '-c' argument only to tests that feature
+> pass/fail criteria. Some tests don't feature it. This is why you don't
+> find this option everywhere.
+> 
+> Does this answer your question?
+> 
+> Which parser are you refering to?
+> 
+> > Otherwise, the patch looks fine to me. Applied it and seems to be
+> > working fine.
+> 
+> Thanks for your feedback.
+> 
+> Gilles.
 
-Is there any other nommu folks who enabled the -rt tree on their NOMMU machine?
-Maybe ARM-NOMMU or SH-NOMMU.
-
-Thanks
--Bryan
