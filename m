@@ -1,42 +1,41 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: How to enable CONFIG_PREEMPT_RT on Blackfin (nommu embedded
-	world)?
-Date: Thu, 22 May 2008 08:17:14 -0700
-Message-ID: <1211469434.18130.62.camel@localhost.localdomain>
-References: <386072610805190035v17a0476ds964fc70241477595@mail.gmail.com>
-	 <1211388079.18130.48.camel@localhost.localdomain>
-	 <386072610805211923va731394y968efb8f2e483625@mail.gmail.com>
-	 <1211423981.18130.59.camel@localhost.localdomain>
-	 <386072610805220115l8a03d86yac1b47ed3a9c45e4@mail.gmail.com>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH -rt] gitignore Module.markers
+Date: Fri, 23 May 2008 12:37:40 -0700
+Message-ID: <48371D04.9050906@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Bryan Wu <cooloney@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:12745 "EHLO
+Received: from gateway-1237.mvista.com ([63.81.120.158]:36347 "EHLO
 	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752596AbYEVPRQ (ORCPT
+	with ESMTP id S1751478AbYEWThn (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 May 2008 11:17:16 -0400
-In-Reply-To: <386072610805220115l8a03d86yac1b47ed3a9c45e4@mail.gmail.com>
+	Fri, 23 May 2008 15:37:43 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
-On Thu, 2008-05-22 at 16:15 +0800, Bryan Wu wrote:
-> 
-> AFAIK, there is no such requirement in NOMMU. But for Blackfin, there
-> are some silicon anomaly which
-> requires to turn off the interrupt.
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+ .gitignore |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Then I would think porting to blackfin would be the same as porting to
-the other architectures.
-
-> Is there any other nommu folks who enabled the -rt tree on their NOMMU machine?
-> Maybe ARM-NOMMU or SH-NOMMU.
-
-None, that I know of.
-
-Daniel
+diff --git a/.gitignore b/.gitignore
+index fdcce40..3d04ea7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -28,6 +28,7 @@ vmlinux*
+ !vmlinux.lds.S
+ System.map
+ Module.symvers
++Module.markers
+ !.gitignore
+ 
+ #
+-- 
+1.5.4.1
 
