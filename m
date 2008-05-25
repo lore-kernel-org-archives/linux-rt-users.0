@@ -1,147 +1,45 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] x86: enable preemption in delay
-Date: Sat, 24 May 2008 23:11:20 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com>
+Subject: Re: 2.6.24.7-rt10
+Date: Sun, 25 May 2008 07:36:39 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805250735410.3977@gandalf.stny.rr.com>
+References: <1211608265.14697.105.camel@localhost.localdomain>
+ <g1adb2$217$1@ger.gmane.org>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: akpm@osdl.org, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark.williams@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: trem <tremyfr@yahoo.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:38623 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:63485 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752106AbYEYDLW (ORCPT
+	with ESMTP id S1754863AbYEYLgm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 May 2008 23:11:22 -0400
+	Sun, 25 May 2008 07:36:42 -0400
+In-Reply-To: <g1adb2$217$1@ger.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-The RT team has been searching for a nasty latency. This latency shows
-up out of the blue and has been seen to be as big as 5ms!
 
-Using ftrace I found the cause of the latency.
+On Sun, 25 May 2008, trem wrote:
+>
+> I've got a problem with the compilation when compiling kernel/rcupreempt_trace.o :
+>
+> kernel/rcupreempt_trace.c: In function ?rcupreempt_trace_init?:
+> kernel/rcupreempt_trace.c:539: erreur: implicit declaration of function ?marker_arm?
+> kernel/rcupreempt_trace.c: In function ?rcupreempt_trace_cleanup?:
+> kernel/rcupreempt_trace.c:577: erreur: too few arguments to function ?marker_probe_unregister?
+> kernel/rcupreempt_trace.c:583: erreur: too few arguments to function ?marker_probe_unregister?
+> make[1]: *** [kernel/rcupreempt_trace.o] Erreur 1
+>
+>
+> I think that markers-upstream.patch can't be used with rcu-preempt-trace-markers-1.patch and
+> rcu-preempt-trace-markers-2.patch.
+>
 
-   pcscd-2995  3dNh1 52360300us : irq_exit (smp_apic_timer_interrupt)
-   pcscd-2995  3dN.2 52360301us : idle_cpu (irq_exit)
-   pcscd-2995  3dN.2 52360301us : rcu_irq_exit (irq_exit)
-   pcscd-2995  3dN.1 52360771us : smp_apic_timer_interrupt (apic_timer_interrupt
-)
-   pcscd-2995  3dN.1 52360771us : exit_idle (smp_apic_timer_interrupt)
+Or more correctly, the rcu-preempt-markers patches can't be used with
+markers-upstream.patch ;-)
 
-Here's an example of a 400 us latency. pcscd took a timer interrupt and
-returned with "need resched" enabled, but did not reschedule until after
-the next interrupt came in at 52360771us 400us later!
+I'll port that over, since it will need to be ported anyway.
 
-At first I thought we somehow missed a preemption check in entry.S. But
-I also noticed that this always seemed to happen during a __delay call.
-
-   pcscd-2995  3dN.2 52360836us : rcu_irq_exit (irq_exit)
-   pcscd-2995  3.N.. 52361265us : preempt_schedule (__delay)
-
-Looking at the x86 delay, I found my problem.
-
-In git commit 35d5d08a085c56f153458c3f5d8ce24123617faf, Andrew Morton
-placed preempt_disable around the entire delay due to TSC's not working
-nicely on SMP.  Unfortunately for those that care about latencies this
-is devastating! Especially when we have callers to mdelay(8).
-
-Here I enable preemption during the loop and account for anytime the task
-migrates to a new CPU. The delay asked for may be extended a bit by
-the migration, but delay only guarantees that it will delay for that minimum
-time. Delaying longer should not be an issue.
-
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
----
- arch/x86/lib/delay_32.c |   23 ++++++++++++++++++++++-
- arch/x86/lib/delay_64.c |   26 +++++++++++++++++++++++---
- 2 files changed, 45 insertions(+), 4 deletions(-)
-
-Index: linux-compile.git/arch/x86/lib/delay_32.c
-===================================================================
---- linux-compile.git.orig/arch/x86/lib/delay_32.c	2008-05-24 22:30:49.000000000 -0400
-+++ linux-compile.git/arch/x86/lib/delay_32.c	2008-05-24 22:31:43.000000000 -0400
-@@ -44,12 +44,33 @@ static void delay_loop(unsigned long loo
- static void delay_tsc(unsigned long loops)
- {
- 	unsigned long bclock, now;
-+	int cpu;
-
--	preempt_disable();		/* TSC's are per-cpu */
-+	preempt_disable();
-+	cpu = smp_processor_id();
- 	rdtscl(bclock);
- 	do {
- 		rep_nop();
- 		rdtscl(now);
-+		/* Allow RT tasks to run */
-+		preempt_enable();
-+		preempt_disable();
-+		/*
-+		 * It is possible that we moved to another CPU,
-+		 * and since TSC's are per-cpu we need to
-+		 * calculate that. The delay must guarantee that
-+		 * we wait "at least" the amount of time. Being
-+		 * moved to another CPU could make the wait longer
-+		 * but we just need to make sure we waited long
-+		 * enough. Rebalance the counter for this CPU.
-+		 */
-+		if (unlikely(cpu != smp_processor_id())) {
-+			if ((now-bclock) >= loops)
-+				break;
-+			loops -= (now - bclock);
-+			rdtscl(bclock);
-+			rdtscl(now);
-+		}
- 	} while ((now-bclock) < loops);
- 	preempt_enable();
- }
-Index: linux-compile.git/arch/x86/lib/delay_64.c
-===================================================================
---- linux-compile.git.orig/arch/x86/lib/delay_64.c	2008-05-24 22:30:49.000000000 -0400
-+++ linux-compile.git/arch/x86/lib/delay_64.c	2008-05-24 22:31:43.000000000 -0400
-@@ -31,14 +31,34 @@ int __devinit read_current_timer(unsigne
- void __delay(unsigned long loops)
- {
- 	unsigned bclock, now;
-+	int cpu;
-
--	preempt_disable();		/* TSC's are pre-cpu */
-+	preempt_disable();
-+	cpu = smp_processor_id();
- 	rdtscl(bclock);
- 	do {
- 		rep_nop();
- 		rdtscl(now);
--	}
--	while ((now-bclock) < loops);
-+		/* Allow RT tasks to run */
-+		preempt_enable();
-+		preempt_disable();
-+		/*
-+		 * It is possible that we moved to another CPU,
-+		 * and since TSC's are per-cpu we need to
-+		 * calculate that. The delay must guarantee that
-+		 * we wait "at least" the amount of time. Being
-+		 * moved to another CPU could make the wait longer
-+		 * but we just need to make sure we waited long
-+		 * enough. Rebalance the counter for this CPU.
-+		 */
-+		if (unlikely(cpu != smp_processor_id())) {
-+			if ((now-bclock) >= loops)
-+				break;
-+			loops -= (now - bclock);
-+			rdtscl(bclock);
-+			rdtscl(now);
-+		}
-+	} while ((now-bclock) < loops);
- 	preempt_enable();
- }
- EXPORT_SYMBOL(__delay);
+-- Steve
 
