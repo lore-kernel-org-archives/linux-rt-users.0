@@ -1,12 +1,15 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Alan Cox <alan@lxorguk.ukuu.org.uk>
 Subject: Re: [PATCH] x86: enable preemption in delay
-Date: Sun, 25 May 2008 09:17:05 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
+Date: Sun, 25 May 2008 14:19:21 +0100
+Message-ID: <20080525141921.79c1bdc2@core>
 References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com>
- <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
+	<alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
+	<Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
 	Ingo Molnar <mingo@elte.hu>,
 	Clark Williams <clark.williams@gmail.com>,
@@ -14,77 +17,25 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
 	Linus Torvalds <torvalds@linux-foundation.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:49033 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751074AbYEYNRH (ORCPT
+Received: from earthlight.etchedpixels.co.uk ([81.2.110.250]:54755 "EHLO
+	lxorguk.ukuu.org.uk" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752475AbYEYNdg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 May 2008 09:17:07 -0400
-In-Reply-To: <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
+	Sun, 25 May 2008 09:33:36 -0400
+In-Reply-To: <Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+> And what happens when we have 10GHz boxes that can do migration in 1us,
+> and the delay that is asked for is 2us. We can return early.  I don't like
+> to place assumptions of this kind that can hurt with future hardware
+> enhancements.
 
-On Sun, 25 May 2008, Thomas Gleixner wrote:
->
-> +/*
-> + * 5 usec on a 1GHZ machine. Not necessarily correct, but not too long
-> + * either.
+Then in the hypothetical future you fix it, and for now its clearly
+documented. Th preempt botch in the current tree breaks all sorts of
+existing real world setups so needs to go. (and we have people who do
+stuff like mdelay(150);
 
-And what happens when we have 10GHz boxes that can do migration in 1us,
-and the delay that is asked for is 2us. We can return early.  I don't like
-to place assumptions of this kind that can hurt with future hardware
-enhancements.
-
--- Steve
-
-
-> + */
-> +#define TSC_MIGRATE_COUNT 5000
-> +
->  /* TSC based delay: */
->  static void delay_tsc(unsigned long loops)
->  {
->  	unsigned long bclock, now;
-> +	int cpu;
->
-> -	preempt_disable();		/* TSC's are per-cpu */
-> +	preempt_disable();
-> +	cpu = smp_processor_id();
->  	rdtscl(bclock);
->  	do {
->  		rep_nop();
-> -		rdtscl(now);
-> -	} while ((now-bclock) < loops);
-> +
-> +		/* Allow RT tasks to run */
-> +		preempt_enable();
-> +		preempt_disable();
-> +
-> +		/*
-> +		 * It is possible that we moved to another CPU, and
-> +		 * since TSC's are per-cpu we need to calculate
-> +		 * that. The delay must guarantee that we wait "at
-> +		 * least" the amount of time. Being moved to another
-> +		 * CPU could make the wait longer but we just need to
-> +		 * make sure we waited long enough. Rebalance the
-> +		 * counter for this CPU.
-> +		 */
-> +		if (unlikely(cpu != smp_processor_id())) {
-> +			if (loops <= TSC_MIGRATE_COUNT)
-> +				break;
-> +			cpu = smp_processor_id();
-> +			rdtscl(bclock);
-> +			loops -= TSC_MIGRATE_COUNT;
-> +		} else {
-> +			rdtscl(now);
-> +			if ((now - bclock) >= loops)
-> +				break;
-> +			loops -= (now - bclock);
-> +			bclock = now;
-> +		}
-> +	} while (loops > 0);
->  	preempt_enable();
->  }
->
+Alan
