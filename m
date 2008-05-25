@@ -1,127 +1,147 @@
-From: trem <tremyfr@yahoo.fr>
-Subject: Re: 2.6.24.7-rt10
-Date: Sun, 25 May 2008 02:51:17 +0200
-Message-ID: <g1adb2$217$1@ger.gmane.org>
-References: <1211608265.14697.105.camel@localhost.localdomain>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH] x86: enable preemption in delay
+Date: Sat, 24 May 2008 23:11:20 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: akpm@osdl.org, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark.williams@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:40099 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754449AbYEYAyI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 May 2008 20:54:08 -0400
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1K04Ur-0002PD-Ai
-	for linux-rt-users@vger.kernel.org; Sun, 25 May 2008 00:54:01 +0000
-Received: from atoulouse-256-1-172-228.w90-50.abo.wanadoo.fr ([90.50.219.228])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 25 May 2008 00:54:01 +0000
-Received: from tremyfr by atoulouse-256-1-172-228.w90-50.abo.wanadoo.fr with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 25 May 2008 00:54:01 +0000
-In-Reply-To: <1211608265.14697.105.camel@localhost.localdomain>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:38623 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752106AbYEYDLW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 24 May 2008 23:11:22 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven Rostedt a =E9crit :
-> We are pleased to announce the 2.6.24.7-rt10 tree, which can be
-> downloaded from the location:
->=20
->   http://rt.et.redhat.com/download/
->=20
-> Information on the RT patch can be found at:
->=20
->   http://rt.wiki.kernel.org/index.php/Main_Page
->=20
-> Changes since 2.6.24.7-rt9
->=20
->   - ported latest ftracers (Steven Rostedt)
->=20
->   - vdso vsyscall generic (Luis Goncalves)
->=20
->   - git-ignore update (Hiroshi Shimamoto)
->=20
->   - lockstat updates (Peter Zijlstra)
->=20
->   - Adjust pi_lock in wakeup waiters (Peter Morreale)
->=20
->   - optimize rt_spin wakeup (Peter Morreale)
->=20
->   - all archs use task->oncpu (Gregory Haskins)
->      [modified use in header by Steven Rostedt]
->=20
->   - remove redundant try_to_take_lock (Peter Morreale)
->=20
->   - fastpath try_to_take_lock on steal (Steven Rostedt)
->=20
->   - ticket FIFO spinlocks (Nick Piggin)
->=20
-> to build a 2.6.24.7-rt10 tree, the following patches should be applie=
-d:
->=20
->   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
->   http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
->   http://rt.et.redhat.com/download/patch-2.6.24.7-rt10.bz2
->=20
->=20
-> *** Note ***
->=20
->   2.6.25.x-rt4 with updates will be coming out shortly
->=20
-> *** Note ***
->=20
->=20
->=20
-> And like always, my RT version of Matt Mackall's ketchup will get thi=
-s
-> for you nicely:
->=20
->   http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
->=20
->=20
-> The broken out patches are also available.
->=20
->=20
->=20
-> -- Steve
->=20
->=20
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->=20
 
-I've got a problem with the compilation when compiling kernel/rcupreemp=
-t_trace.o :
+The RT team has been searching for a nasty latency. This latency shows
+up out of the blue and has been seen to be as big as 5ms!
 
-kernel/rcupreempt_trace.c: In function =91rcupreempt_trace_init=92:
-kernel/rcupreempt_trace.c:539: erreur: implicit declaration of function=
- =91marker_arm=92
-kernel/rcupreempt_trace.c: In function =91rcupreempt_trace_cleanup=92:
-kernel/rcupreempt_trace.c:577: erreur: too few arguments to function =91=
-marker_probe_unregister=92
-kernel/rcupreempt_trace.c:583: erreur: too few arguments to function =91=
-marker_probe_unregister=92
-make[1]: *** [kernel/rcupreempt_trace.o] Erreur 1
+Using ftrace I found the cause of the latency.
 
+   pcscd-2995  3dNh1 52360300us : irq_exit (smp_apic_timer_interrupt)
+   pcscd-2995  3dN.2 52360301us : idle_cpu (irq_exit)
+   pcscd-2995  3dN.2 52360301us : rcu_irq_exit (irq_exit)
+   pcscd-2995  3dN.1 52360771us : smp_apic_timer_interrupt (apic_timer_interrupt
+)
+   pcscd-2995  3dN.1 52360771us : exit_idle (smp_apic_timer_interrupt)
 
-I think that markers-upstream.patch can't be used with rcu-preempt-trac=
-e-markers-1.patch and
-rcu-preempt-trace-markers-2.patch.
+Here's an example of a 400 us latency. pcscd took a timer interrupt and
+returned with "need resched" enabled, but did not reschedule until after
+the next interrupt came in at 52360771us 400us later!
 
+At first I thought we somehow missed a preemption check in entry.S. But
+I also noticed that this always seemed to happen during a __delay call.
 
-trem
+   pcscd-2995  3dN.2 52360836us : rcu_irq_exit (irq_exit)
+   pcscd-2995  3.N.. 52361265us : preempt_schedule (__delay)
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Looking at the x86 delay, I found my problem.
+
+In git commit 35d5d08a085c56f153458c3f5d8ce24123617faf, Andrew Morton
+placed preempt_disable around the entire delay due to TSC's not working
+nicely on SMP.  Unfortunately for those that care about latencies this
+is devastating! Especially when we have callers to mdelay(8).
+
+Here I enable preemption during the loop and account for anytime the task
+migrates to a new CPU. The delay asked for may be extended a bit by
+the migration, but delay only guarantees that it will delay for that minimum
+time. Delaying longer should not be an issue.
+
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+---
+ arch/x86/lib/delay_32.c |   23 ++++++++++++++++++++++-
+ arch/x86/lib/delay_64.c |   26 +++++++++++++++++++++++---
+ 2 files changed, 45 insertions(+), 4 deletions(-)
+
+Index: linux-compile.git/arch/x86/lib/delay_32.c
+===================================================================
+--- linux-compile.git.orig/arch/x86/lib/delay_32.c	2008-05-24 22:30:49.000000000 -0400
++++ linux-compile.git/arch/x86/lib/delay_32.c	2008-05-24 22:31:43.000000000 -0400
+@@ -44,12 +44,33 @@ static void delay_loop(unsigned long loo
+ static void delay_tsc(unsigned long loops)
+ {
+ 	unsigned long bclock, now;
++	int cpu;
+
+-	preempt_disable();		/* TSC's are per-cpu */
++	preempt_disable();
++	cpu = smp_processor_id();
+ 	rdtscl(bclock);
+ 	do {
+ 		rep_nop();
+ 		rdtscl(now);
++		/* Allow RT tasks to run */
++		preempt_enable();
++		preempt_disable();
++		/*
++		 * It is possible that we moved to another CPU,
++		 * and since TSC's are per-cpu we need to
++		 * calculate that. The delay must guarantee that
++		 * we wait "at least" the amount of time. Being
++		 * moved to another CPU could make the wait longer
++		 * but we just need to make sure we waited long
++		 * enough. Rebalance the counter for this CPU.
++		 */
++		if (unlikely(cpu != smp_processor_id())) {
++			if ((now-bclock) >= loops)
++				break;
++			loops -= (now - bclock);
++			rdtscl(bclock);
++			rdtscl(now);
++		}
+ 	} while ((now-bclock) < loops);
+ 	preempt_enable();
+ }
+Index: linux-compile.git/arch/x86/lib/delay_64.c
+===================================================================
+--- linux-compile.git.orig/arch/x86/lib/delay_64.c	2008-05-24 22:30:49.000000000 -0400
++++ linux-compile.git/arch/x86/lib/delay_64.c	2008-05-24 22:31:43.000000000 -0400
+@@ -31,14 +31,34 @@ int __devinit read_current_timer(unsigne
+ void __delay(unsigned long loops)
+ {
+ 	unsigned bclock, now;
++	int cpu;
+
+-	preempt_disable();		/* TSC's are pre-cpu */
++	preempt_disable();
++	cpu = smp_processor_id();
+ 	rdtscl(bclock);
+ 	do {
+ 		rep_nop();
+ 		rdtscl(now);
+-	}
+-	while ((now-bclock) < loops);
++		/* Allow RT tasks to run */
++		preempt_enable();
++		preempt_disable();
++		/*
++		 * It is possible that we moved to another CPU,
++		 * and since TSC's are per-cpu we need to
++		 * calculate that. The delay must guarantee that
++		 * we wait "at least" the amount of time. Being
++		 * moved to another CPU could make the wait longer
++		 * but we just need to make sure we waited long
++		 * enough. Rebalance the counter for this CPU.
++		 */
++		if (unlikely(cpu != smp_processor_id())) {
++			if ((now-bclock) >= loops)
++				break;
++			loops -= (now - bclock);
++			rdtscl(bclock);
++			rdtscl(now);
++		}
++	} while ((now-bclock) < loops);
+ 	preempt_enable();
+ }
+ EXPORT_SYMBOL(__delay);
+
