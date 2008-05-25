@@ -1,55 +1,51 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: add mlockall option to cyclictest, et al
-Date: Sun, 25 May 2008 23:22:22 +0200 (CEST)
-Message-ID: <alpine.LFD.1.10.0805252321140.3295@apollo.tec.linutronix.de>
-References: <48249E2C.3010601@gmail.com> <4825F5AF.7010700@gmail.com> <4825F7DB.6000808@gmail.com>
+Subject: Re:[PATCH -v4] x86: enable preemption in delay
+Date: Mon, 26 May 2008 00:21:04 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0805260006110.3295@apollo.tec.linutronix.de>
+References: <200805252108.25011.mitov@issp.bas.bg>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Robert de Vries <robert.h.de.vries@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
-	Luis Claudio Goncalves <lclaudio@uudg.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Clark Williams <clark.williams@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:51496 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750881AbYEYVWi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 May 2008 17:22:38 -0400
-In-Reply-To: <4825F7DB.6000808@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <clark.williams@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Andi Kleen <andi-suse@firstfloor.org>
+To: Marin Mitov <mitov@issp.bas.bg>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753724AbYEYWXI@vger.kernel.org>
+In-Reply-To: <200805252108.25011.mitov@issp.bas.bg>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 10 May 2008, Clark Williams wrote:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
-> 
-> Robert de Vries wrote:
-> > Clark Williams wrote:
-> >> -----BEGIN PGP SIGNED MESSAGE-----
-> >> Hash: SHA1
-> >>
-> >> Thomas,
-> >>
-> >> Got a couple of requests for mlockall() in cyclictest, so I added an
-> >> --mlockall
-> >> option to cyclictest, signaltest and pi_stress.
-> >>   
-> > One small remark: it would be better to do the mlockall() by default. As
-> > far as I know this should be done always for real-time applications.
-> > I am actually surprised that it is not done already. It is also
-> > mentioned in the Howto build an RT-application on the RT linux wiki.
-> > 
-> >    Robert
-> > 
-> > 
-> 
-> I thought about that, but figured it would be better just to have the option rather
-> than change long-standing behavior.
-> 
-> It's Thomas's call though :)
+On Sun, 25 May 2008, Marin Mitov wrote:
+> Hi Steven,
 
-I prefer an option. That gives the mm folks less of an excuse why they
-swap out hot memory :)
+Please do not trim CC lists without a good reason. [Restored it]
+
+> look at this patch, proposed by me and Ingo few month ago.
+> I think it solves the problem you had fond, but unfortunately
+> it had been lost (not included in the mainline).
+
+Yep, and it might be simply because the mail thread ended with:
+
+http://lkml.org/lkml/2007/11/20/426
+
+> hi Marin,
+>
+> here's the patch we are carrying in x86.git at the moment - could you 
+> please update it with v3 of your code, and send us the patch (with the 
+> patch metadata kept intact, like you see it below)? Thanks,
+>
+>      Ingo
+
+And there was no response. I just checked my x86 quilt archives and it
+simply went into the "wait for update" category and got dropped
+unfortunately.
 
 Thanks,
+
 	tglx
