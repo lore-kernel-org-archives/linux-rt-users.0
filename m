@@ -1,53 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [PATCH] x86: enable preemption in delay
-Date: Sun, 25 May 2008 15:32:58 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805251530520.25580@gandalf.stny.rr.com>
-References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com>
- <20080525115305.79c12c8c@infradead.org>
+Date: Sun, 25 May 2008 22:21:51 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0805252217580.3295@apollo.tec.linutronix.de>
+References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com> <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de> <Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
 	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Clark Williams <clark.williams@gmail.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
 	Linus Torvalds <torvalds@linux-foundation.org>
-To: Arjan van de Ven <arjan@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:59012 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756722AbYEYTc7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 May 2008 15:32:59 -0400
-In-Reply-To: <20080525115305.79c12c8c@infradead.org>
+Received: from www.tglx.de ([62.245.132.106]:41681 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754141AbYEYUX1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 25 May 2008 16:23:27 -0400
+In-Reply-To: <Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Sun, 25 May 2008, Arjan van de Ven wrote:
-
-> On Sat, 24 May 2008 23:11:20 -0400 (EDT)
-> Steven Rostedt <rostedt@goodmis.org> wrote:
+On Sun, 25 May 2008, Steven Rostedt wrote:
+> 
+> On Sun, 25 May 2008, Thomas Gleixner wrote:
 > >
-> > In git commit 35d5d08a085c56f153458c3f5d8ce24123617faf, Andrew Morton
-> > placed preempt_disable around the entire delay due to TSC's not
-> > working nicely on SMP.  Unfortunately for those that care about
-> > latencies this is devastating! Especially when we have callers to
-> > mdelay(8).
->
-> we used to have a WARN_ON if mdelay was called while preemptable..
-> maybe we should put that back in?
->
+> > +/*
+> > + * 5 usec on a 1GHZ machine. Not necessarily correct, but not too long
+> > + * either.
+> 
+> And what happens when we have 10GHz boxes that can do migration in 1us,
+> and the delay that is asked for is 2us. We can return early.  I don't like
+> to place assumptions of this kind that can hurt with future hardware
+> enhancements.
 
-That would be a good idea, but that wouldn't solve this issue. The issue
-here is that the mdelay itself disables preemption. The caller had
-preemption enabled.
+Do the math. It's 500ns on a 10GHz machine then. So nothing to worry
+about and future proof. 
 
-The problem was caused by a quick fix by Andrew to handle out of sync
-TSC's for a delay that used TSC's as a counter.
+Also when those 10GHZ machines arrive the synchronized TSC should have
+finally become reality.
 
--- Steve
+Thanks,
 
+	tglx
