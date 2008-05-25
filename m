@@ -1,43 +1,102 @@
-From: Subrata Modak <subrata@linux.vnet.ibm.com>
-Subject: Real Time Group scheduling
-Date: Tue, 27 May 2008 18:09:58 +0530
-Message-ID: <1211892011.4885.13.camel@subratamodak.linux.ibm.com>
-Reply-To: subrata@linux.vnet.ibm.com
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH] x86: enable preemption in delay
+Date: Sun, 25 May 2008 20:01:23 +0200
+Message-ID: <20080525180122.GA4247@ucw.cz>
+References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com> <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: ltp-list <ltp-list@lists.sourceforge.net>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Chirag Jog <chirag@linux.vnet.ibm.com>,
-	Ankita Garg <ankita@in.ibm.com>,
-	dino <dino@linux.vnet.ibm.com>,
-	Sripathi Kodi <sripathik@in.ibm.com>,
-	sudhanshu Singh <sudh@linux.vnet.ibm.co
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <clark.williams@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e35.co.us.ibm.com ([32.97.110.153]:48770 "EHLO
-	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751368AbYE1Io1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 May 2008 04:44:27 -0400
-Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
-	by e35.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m4S8iRY5029983
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 04:44:27 -0400
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m4S8iRJC033250
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 02:44:27 -0600
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m4S8iPce024415
-	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 02:44:27 -0600
+Received: from gprs189-60.eurotel.cz ([160.218.189.60]:3107 "EHLO spitz.ucw.cz"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752564AbYE1LRs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 May 2008 07:17:48 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi!
 
-Browsing through http://kernelnewbies.org/LinuxChanges, i found that
-there has been some changes to the Real Time Group scheduling in 2.6.25
-kernel. Are we going to update our RT test cases to reflect these
-changes. Or, it has nothing to do with our RT tests ?
+> > +		if (unlikely(cpu != smp_processor_id())) {
+> 
+> Eeek, once you migrated you do this all the time. you need to update
+> cpu here.
+> 
+> > +			if ((now-bclock) >= loops)
+> > +				break;
+> 
+> Also this is really dangerous with unsynchronized TSCs. You might get
+> migrated and return immediately because the TSC on the other CPU is
+> far ahead.
+> 
+> What you really want is something like the patch below, but we should
+> reuse the sched_clock_cpu() thingy to make that simpler. Looking into
+> that right now.
 
-Regards--
-Subrata
+> @@ -40,17 +40,51 @@ static void delay_loop(unsigned long loops)
+>  		:"0" (loops));
+>  }
+>  
+> +/*
+> + * 5 usec on a 1GHZ machine. Not necessarily correct, but not too long
+> + * either.
+> + */
+> +#define TSC_MIGRATE_COUNT 5000
+> +
+>  /* TSC based delay: */
+>  static void delay_tsc(unsigned long loops)
+>  {
+>  	unsigned long bclock, now;
+> +	int cpu;
+>  
+> -	preempt_disable();		/* TSC's are per-cpu */
+> +	preempt_disable();
+> +	cpu = smp_processor_id();
+>  	rdtscl(bclock);
+>  	do {
+>  		rep_nop();
+> -		rdtscl(now);
+> -	} while ((now-bclock) < loops);
+> +
+> +		/* Allow RT tasks to run */
+> +		preempt_enable();
+> +		preempt_disable();
+> +
+> +		/*
+> +		 * It is possible that we moved to another CPU, and
+> +		 * since TSC's are per-cpu we need to calculate
+> +		 * that. The delay must guarantee that we wait "at
+> +		 * least" the amount of time. Being moved to another
+> +		 * CPU could make the wait longer but we just need to
+> +		 * make sure we waited long enough. Rebalance the
+> +		 * counter for this CPU.
+> +		 */
+> +		if (unlikely(cpu != smp_processor_id())) {
+> +			if (loops <= TSC_MIGRATE_COUNT)
+> +				break;
+> +			cpu = smp_processor_id();
+> +			rdtscl(bclock);
+> +			loops -= TSC_MIGRATE_COUNT;
+> +		} else {
+> +			rdtscl(now);
+> +			if ((now - bclock) >= loops)
+> +				break;
+> +			loops -= (now - bclock);
+> +			bclock = now;
 
+What happens with different cpus running on different frequencies...?
+Cpufreq?
+							Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
