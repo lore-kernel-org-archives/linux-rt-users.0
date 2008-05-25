@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH] x86: enable preemption in delay
-Date: Sun, 25 May 2008 09:07:15 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0805250905080.20291@gandalf.stny.rr.com>
+Date: Sun, 25 May 2008 09:17:05 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0805250915410.20625@gandalf.stny.rr.com>
 References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com>
  <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
 Mime-Version: 1.0
@@ -16,66 +16,75 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Linus Torvalds <torvalds@linux-foundation.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:58311 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:49033 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751248AbYEYNHT (ORCPT
+	with ESMTP id S1751074AbYEYNRH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 May 2008 09:07:19 -0400
+	Sun, 25 May 2008 09:17:07 -0400
 In-Reply-To: <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 On Sun, 25 May 2008, Thomas Gleixner wrote:
-> > -	preempt_disable();		/* TSC's are per-cpu */
-> > +	preempt_disable();
-> > +	cpu = smp_processor_id();
-> >  	rdtscl(bclock);
-> >  	do {
-> >  		rep_nop();
-> >  		rdtscl(now);
-> > +		/* Allow RT tasks to run */
-> > +		preempt_enable();
-> > +		preempt_disable();
-> > +		/*
-> > +		 * It is possible that we moved to another CPU,
-> > +		 * and since TSC's are per-cpu we need to
-> > +		 * calculate that. The delay must guarantee that
-> > +		 * we wait "at least" the amount of time. Being
-> > +		 * moved to another CPU could make the wait longer
-> > +		 * but we just need to make sure we waited long
-> > +		 * enough. Rebalance the counter for this CPU.
-> > +		 */
-> > +		if (unlikely(cpu != smp_processor_id())) {
 >
-> Eeek, once you migrated you do this all the time. you need to update
-> cpu here.
+> +/*
+> + * 5 usec on a 1GHZ machine. Not necessarily correct, but not too long
+> + * either.
 
-Good catch! I'll update that.
-
->
-> > +			if ((now-bclock) >= loops)
-> > +				break;
->
-> Also this is really dangerous with unsynchronized TSCs. You might get
-> migrated and return immediately because the TSC on the other CPU is
-> far ahead.
-
-No it isn't ;-)
-
-The now and bclock are both from before the migration. The cpus were the
-same becaues we were under preempt disbled at the time. I recalculate
-after the change has been noticed.
-
-But you are right, I forgot to update cpu. :-/
-
->
-> What you really want is something like the patch below, but we should
-> reuse the sched_clock_cpu() thingy to make that simpler. Looking into
-> that right now.
->
-
-Sure, but this should be simple enough.
+And what happens when we have 10GHz boxes that can do migration in 1us,
+and the delay that is asked for is 2us. We can return early.  I don't like
+to place assumptions of this kind that can hurt with future hardware
+enhancements.
 
 -- Steve
 
+
+> + */
+> +#define TSC_MIGRATE_COUNT 5000
+> +
+>  /* TSC based delay: */
+>  static void delay_tsc(unsigned long loops)
+>  {
+>  	unsigned long bclock, now;
+> +	int cpu;
+>
+> -	preempt_disable();		/* TSC's are per-cpu */
+> +	preempt_disable();
+> +	cpu = smp_processor_id();
+>  	rdtscl(bclock);
+>  	do {
+>  		rep_nop();
+> -		rdtscl(now);
+> -	} while ((now-bclock) < loops);
+> +
+> +		/* Allow RT tasks to run */
+> +		preempt_enable();
+> +		preempt_disable();
+> +
+> +		/*
+> +		 * It is possible that we moved to another CPU, and
+> +		 * since TSC's are per-cpu we need to calculate
+> +		 * that. The delay must guarantee that we wait "at
+> +		 * least" the amount of time. Being moved to another
+> +		 * CPU could make the wait longer but we just need to
+> +		 * make sure we waited long enough. Rebalance the
+> +		 * counter for this CPU.
+> +		 */
+> +		if (unlikely(cpu != smp_processor_id())) {
+> +			if (loops <= TSC_MIGRATE_COUNT)
+> +				break;
+> +			cpu = smp_processor_id();
+> +			rdtscl(bclock);
+> +			loops -= TSC_MIGRATE_COUNT;
+> +		} else {
+> +			rdtscl(now);
+> +			if ((now - bclock) >= loops)
+> +				break;
+> +			loops -= (now - bclock);
+> +			bclock = now;
+> +		}
+> +	} while (loops > 0);
+>  	preempt_enable();
+>  }
+>
