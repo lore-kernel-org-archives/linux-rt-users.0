@@ -1,34 +1,190 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH RT] remove user_trace_stop
-Date: Mon, 26 May 2008 11:01:22 +0200
-Message-ID: <20080526090122.GD13529@elte.hu>
-References: <Pine.LNX.4.58.0805240217130.1841@gandalf.stny.rr.com>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH -rt] fix sysrq+l when nmi_watchdog disabled
+Date: Tue, 27 May 2008 15:45:00 -0700
+Message-ID: <483C8EEC.2030306@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <clark.williams@gmail.com>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:38808 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751112AbYEZJBg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 May 2008 05:01:36 -0400
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.58.0805240217130.1841@gandalf.stny.rr.com>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:46457 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757208AbYE0WpE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 May 2008 18:45:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
-* Steven Rostedt <rostedt@goodmis.org> wrote:
+In nmi_show_all_regs(), set nmi_show_regs for all cpus but NMI never come
+to itself when nmi_watchdog is disabled. It means the kernel hangs up when
+sysrq+l is issued.
 
-> [ Doing a full config compile I came up with this ]
-> 
-> Remove user_trace_stop that was more of a hack to debug xrun 
-> latencies.
+Call irq_show_regs_callback() itself before calling smp_send_nmi_allbutself().
 
-btw., would be nice to have an ftrace/xrun or ftrace/audio plugin which 
-would be for the targeted tracing of sound latencies.
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+Steven, this is a fix for what you pointed.
+http://lkml.org/lkml/2008/4/28/455
 
-	Ingo
+ arch/x86/kernel/nmi_32.c |   51 ++++++++++++++++++++++++++++------------------
+ arch/x86/kernel/nmi_64.c |   49 ++++++++++++++++++++++++++++---------------
+ 2 files changed, 63 insertions(+), 37 deletions(-)
+
+diff --git a/arch/x86/kernel/nmi_32.c b/arch/x86/kernel/nmi_32.c
+index d9266ea..82abc2a 100644
+--- a/arch/x86/kernel/nmi_32.c
++++ b/arch/x86/kernel/nmi_32.c
+@@ -325,21 +325,49 @@ extern void die_nmi(struct pt_regs *, const char *msg);
+ 
+ int nmi_show_regs[NR_CPUS];
+ 
++static DEFINE_RAW_SPINLOCK(nmi_print_lock);
++
++notrace int irq_show_regs_callback(int cpu, struct pt_regs *regs)
++{
++	if (!nmi_show_regs[cpu])
++		return 0;
++
++	spin_lock(&nmi_print_lock);
++	printk(KERN_WARNING "NMI show regs on CPU#%d:\n", cpu);
++	printk(KERN_WARNING "apic_timer_irqs: %d\n",
++		per_cpu(irq_stat, cpu).apic_timer_irqs);
++	show_regs(regs);
++	spin_unlock(&nmi_print_lock);
++	nmi_show_regs[cpu] = 0;
++	return 1;
++}
++
+ void nmi_show_all_regs(void)
+ {
+-	int i;
++	struct pt_regs *regs;
++	int i, cpu;
+ 
+ 	if (system_state == SYSTEM_BOOTING)
+ 		return;
+ 
+-	printk(KERN_WARNING "nmi_show_all_regs(): start on CPU#%d.\n",
+-		raw_smp_processor_id());
++	preempt_disable();
++
++	regs = get_irq_regs();
++	cpu = smp_processor_id();
++
++	printk(KERN_WARNING "nmi_show_all_regs(): start on CPU#%d.\n", cpu);
+ 	dump_stack();
+ 
+ 	for_each_online_cpu(i)
+ 		nmi_show_regs[i] = 1;
+ 
++	if (regs)
++		irq_show_regs_callback(cpu, regs);
++	else
++		nmi_show_regs[cpu] = 0;
++
+ 	smp_send_nmi_allbutself();
++	preempt_enable();
+ 
+ 	for_each_online_cpu(i) {
+ 		while (nmi_show_regs[i] == 1)
+@@ -347,23 +375,6 @@ void nmi_show_all_regs(void)
+ 	}
+ }
+ 
+-static DEFINE_RAW_SPINLOCK(nmi_print_lock);
+-
+-notrace int irq_show_regs_callback(int cpu, struct pt_regs *regs)
+-{
+-	if (!nmi_show_regs[cpu])
+-		return 0;
+-
+-	spin_lock(&nmi_print_lock);
+-	printk(KERN_WARNING "NMI show regs on CPU#%d:\n", cpu);
+-	printk(KERN_WARNING "apic_timer_irqs: %d\n",
+-		per_cpu(irq_stat, cpu).apic_timer_irqs);
+-	show_regs(regs);
+-	spin_unlock(&nmi_print_lock);
+-	nmi_show_regs[cpu] = 0;
+-	return 1;
+-}
+-
+ __kprobes int nmi_watchdog_tick(struct pt_regs * regs, unsigned reason)
+ {
+ 
+diff --git a/arch/x86/kernel/nmi_64.c b/arch/x86/kernel/nmi_64.c
+index c802380..5e7e2b0 100644
+--- a/arch/x86/kernel/nmi_64.c
++++ b/arch/x86/kernel/nmi_64.c
+@@ -317,17 +317,48 @@ EXPORT_SYMBOL(touch_nmi_watchdog);
+ 
+ int nmi_show_regs[NR_CPUS];
+ 
++static DEFINE_RAW_SPINLOCK(nmi_print_lock);
++
++notrace int irq_show_regs_callback(int cpu, struct pt_regs *regs)
++{
++	if (!nmi_show_regs[cpu])
++		return 0;
++
++	spin_lock(&nmi_print_lock);
++	printk(KERN_WARNING "NMI show regs on CPU#%d:\n", cpu);
++	printk(KERN_WARNING "apic_timer_irqs: %d\n", read_pda(apic_timer_irqs));
++	show_regs(regs);
++	spin_unlock(&nmi_print_lock);
++	nmi_show_regs[cpu] = 0;
++	return 1;
++}
++
+ void nmi_show_all_regs(void)
+ {
+-	int i;
++	struct pt_regs *regs;
++	int i, cpu;
+ 
+ 	if (system_state == SYSTEM_BOOTING)
+ 		return;
+ 
++	preempt_disable();
++
++	regs = get_irq_regs();
++	cpu = smp_processor_id();
++
++	printk(KERN_WARNING "nmi_show_all_regs(): start on CPU#%d.\n", cpu);
++	dump_stack();
++
+ 	for_each_online_cpu(i)
+ 		nmi_show_regs[i] = 1;
+ 
++	if (regs)
++		irq_show_regs_callback(cpu, regs);
++	else
++		nmi_show_regs[cpu] = 0;
++
+ 	smp_send_nmi_allbutself();
++	preempt_enable();
+ 
+ 	for_each_online_cpu(i) {
+ 		while (nmi_show_regs[i] == 1)
+@@ -335,22 +366,6 @@ void nmi_show_all_regs(void)
+ 	}
+ }
+ 
+-static DEFINE_RAW_SPINLOCK(nmi_print_lock);
+-
+-notrace int irq_show_regs_callback(int cpu, struct pt_regs *regs)
+-{
+-	if (!nmi_show_regs[cpu])
+-		return 0;
+-
+-	spin_lock(&nmi_print_lock);
+-	printk(KERN_WARNING "NMI show regs on CPU#%d:\n", cpu);
+-	printk(KERN_WARNING "apic_timer_irqs: %d\n", read_pda(apic_timer_irqs));
+-	show_regs(regs);
+-	spin_unlock(&nmi_print_lock);
+-	nmi_show_regs[cpu] = 0;
+-	return 1;
+-}
