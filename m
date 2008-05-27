@@ -1,75 +1,43 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt11
-Date: Tue, 27 May 2008 22:45:45 -0400
-Message-ID: <1211942745.24785.6.camel@localhost.localdomain>
+From: Subrata Modak <subrata@linux.vnet.ibm.com>
+Subject: Real Time Group scheduling
+Date: Tue, 27 May 2008 18:09:58 +0530
+Message-ID: <1211892011.4885.13.camel@subratamodak.linux.ibm.com>
+Reply-To: subrata@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: ltp-list <ltp-list@lists.sourceforge.net>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Chirag Jog <chirag@linux.vnet.ibm.com>,
+	Ankita Garg <ankita@in.ibm.com>,
+	dino <dino@linux.vnet.ibm.com>,
+	Sripathi Kodi <sripathik@in.ibm.com>,
+	sudhanshu Singh <sudh@linux.vnet.ibm.co
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:36423 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752561AbYE1Cps (ORCPT
+Received: from e35.co.us.ibm.com ([32.97.110.153]:48770 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751368AbYE1Io1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 May 2008 22:45:48 -0400
+	Wed, 28 May 2008 04:44:27 -0400
+Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
+	by e35.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m4S8iRY5029983
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 04:44:27 -0400
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m4S8iRJC033250
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 02:44:27 -0600
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m4S8iPce024415
+	for <linux-rt-users@vger.kernel.org>; Wed, 28 May 2008 02:44:27 -0600
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt11 tree, which can be
-downloaded from the location:
+Hi,
 
-  http://rt.et.redhat.com/download/
+Browsing through http://kernelnewbies.org/LinuxChanges, i found that
+there has been some changes to the Real Time Group scheduling in 2.6.25
+kernel. Are we going to update our RT test cases to reflect these
+changes. Or, it has nothing to do with our RT tests ?
 
-Information on the RT patch can be found at:
-
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24.7-rt10
-
-  - preempt __delay fix (Steven Rostedt)
-
-  - load_balance breaks (Peter Zijlstra)
-
-  - ftrace minor fixes (Steven Rostedt, Clark Williams,
-                     and Abhishek Sagar)
-
-  - disable ftrace daemon (Steven Rostedt)
-
-  - sched_rt migration updates (Gregory Haskins)
-
-  - nmi show regs fix (Hiroshi Shimamoto)
-
-  - Trace histogram divide by zero fix (Carsten Emde)
-
-
-to build a 2.6.24.7-rt11 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt11.bz2
-
-
-*** Note ***
-
-  2.6.25.x-rt4 with updates will be coming out most likely tomorrow.
-
-*** Note ***
-
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
-
--- Steve
-
-
+Regards--
+Subrata
 
