@@ -1,42 +1,92 @@
-From: "Uli Brueggemann" <uli.brueggemann@gmail.com>
-Subject: Different kernel and RT versions
-Date: Thu, 29 May 2008 14:33:41 +0200
-Message-ID: <10a58eee0805290533v32e95d76x25e8fd9954700ee9@mail.gmail.com>
-References: <10a58eee0805290530r3618ae6ap6cf69aab91c61e28@mail.gmail.com>
-	 <10a58eee0805290531lc6ac67cm6d808197b0d41d35@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.25.4-rt4
+Date: Thu, 29 May 2008 11:59:14 -0400
+Message-ID: <1212076754.24785.18.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.31]:34873 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751139AbYE2MeV (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:65035 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753250AbYE2P7a (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 May 2008 08:34:21 -0400
-Received: by yw-out-2324.google.com with SMTP id 9so2251217ywe.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 05:34:20 -0700 (PDT)
-In-Reply-To: <10a58eee0805290531lc6ac67cm6d808197b0d41d35@mail.gmail.com>
-Content-Disposition: inline
+	Thu, 29 May 2008 11:59:30 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+We are pleased to announce the 2.6.25.4-rt4 tree, which can be
+downloaded from the location:
 
-I like to use Linux for audio purposes.
-So of course I'm interested in getting a best performance.
+  http://rt.et.redhat.com/download/
 
-Now I can see that there are constant updates of rt-versions:
-- 2.6.24.7 now there is rt11
-- 2.6.25.4 we have rt3
-- 2.6.26-rc4 no rt work yet published
+Information on the RT patch can be found at:
 
-It seems that the rt-versions for the different kernels are maintained
-in parallel but e.g. last updates have been for 2.6.24.7
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-Can someone explain me how to select a kernel and the rt-version? What
-are advantages/disadvantages under realtime aspects?
+Changes since 2.6.25.4-rt3
 
-Thanks
+(Mostly stuff that has been pushed to 24-rt)
 
-Uli
+ - Upgraded new ftrace (Steven Rostedt)
+
+  - RT downgrade_write (Steven Rostedt)
+
+  - fix RT rwlocks typecasts (Steven Rostedt)
+
+  - default sched_nr_migrate to 8 (Steven Rostedt)
+
+  - ARM compile fix (Remy Bohmer)
+
+  - vdso vsyscall generic (Luis Goncalves)
+
+  - git-ignore update (Hiroshi Shimamoto)
+
+  - lockstat updates (Peter Zijlstra)
+
+  - Adjust pi_lock in wakeup waiters (Peter Morreale)
+
+  - optimize rt_spin wakeup (Peter Morreale)
+
+  - all archs use task->oncpu (Gregory Haskins)
+     [modified use in header by Steven Rostedt]
+
+  - remove redundant try_to_take_lock (Peter Morreale)
+
+  - fastpath try_to_take_lock on steal (Steven Rostedt)
+
+  - preempt __delay fix (Steven Rostedt)
+
+  - ftrace minor fixes (Steven Rostedt, Clark Williams,
+                     and Abhishek Sagar)
+
+  - disable ftrace daemon (Steven Rostedt)
+
+  - sched_rt migration updates (Gregory Haskins)
+
+  - nmi show regs fix (Hiroshi Shimamoto)
+
+  - Trace histogram divide by zero fix (Carsten Emde)
+
+to build a 2.6.25.4-rt4 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.25.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.25.4.bz2
+  http://rt.et.redhat.com/download/patch-2.6.25.4-rt4.bz2
+
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
+-- Steve
+
+
