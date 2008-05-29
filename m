@@ -1,44 +1,69 @@
-From: "Javier Sanz" <jsanza@gmail.com>
-Subject: problem compiling 2.6.25.4-rt4 x86
-Date: Thu, 29 May 2008 20:44:52 +0200
-Message-ID: <a3d4028e0805291144y2331bdbbtab783ba785800b27@mail.gmail.com>
+From: "Remy Bohmer" <linux@bohmer.net>
+Subject: Re: Different kernel and RT versions
+Date: Thu, 29 May 2008 20:48:30 +0200
+Message-ID: <3efb10970805291148u54bff041v5c4ea104d9b9f325@mail.gmail.com>
+References: <10a58eee0805290530r3618ae6ap6cf69aab91c61e28@mail.gmail.com>
+	 <10a58eee0805290531lc6ac67cm6d808197b0d41d35@mail.gmail.com>
+	 <10a58eee0805290533v32e95d76x25e8fd9954700ee9@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: "Uli Brueggemann" <uli.brueggemann@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from py-out-1112.google.com ([64.233.166.178]:42809 "EHLO
-	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752861AbYE2Soz (ORCPT
+Received: from yx-out-2324.google.com ([74.125.44.30]:65394 "EHLO
+	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754146AbYE2Ssc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 May 2008 14:44:55 -0400
-Received: by py-out-1112.google.com with SMTP id p76so2821450pyb.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 11:44:54 -0700 (PDT)
+	Thu, 29 May 2008 14:48:32 -0400
+Received: by yx-out-2324.google.com with SMTP id 31so376649yxl.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 11:48:31 -0700 (PDT)
+In-Reply-To: <10a58eee0805290533v32e95d76x25e8fd9954700ee9@mail.gmail.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I got the following problem trying to compile 2.6.25.4-rt4:
+Hello Uli,
 
-darkstar linux-2.6.25.4-rt4]# make
-  CHK     include/linux/version.h
-  CHK     include/linux/utsrelease.h
-  CALL    scripts/checksyscalls.sh
-  CHK     include/linux/compile.h
-  CC      kernel/sched.o
-kernel/sched.c: In function 'add_preempt_count':
-kernel/sched.c:3950: warning: unused variable 'parent_eip'
-kernel/sched.c:3949: warning: unused variable 'eip'
-kernel/sched.c: In function 'sched_init':
-kernel/sched.c:7677: error: implicit declaration of function 'global_rt_runtime'
-make[1]: *** [kernel/sched.o] Error 1
-make: *** [kernel] Error 2
-[root@darkstar linux-2.6.25.4-rt4]#
+> I like to use Linux for audio purposes.
+> So of course I'm interested in getting a best performance.
+
+What do you mean exactly with 'performance' ? (speed versus 'a nice
+play/showtime')
+
+Realtime is not about performance (in the sense of speed), it is about
+determinism.
+
+So, if you want a fast system, you probably do not want realtime.
+If you want a predictable (low latency) system, you could think about realtime.
+
+> Can someone explain me how to select a kernel and the rt-version? What
+> are advantages/disadvantages under realtime aspects?
+
+Already looked on http://rt.wiki.kernel.org ??
 
 
-am i doing something wrong?
+Kind Regards,
 
-thank you
+Remy
 
-Linux darkstar 2.6.25.3-18.fc9.i686 #1 SMP Tue May 13 05:38:53 EDT
-2008 i686 athlon i386 GNU/Linux
+>
+> Now I can see that there are constant updates of rt-versions:
+> - 2.6.24.7 now there is rt11
+> - 2.6.25.4 we have rt3
+> - 2.6.26-rc4 no rt work yet published
+>
+> It seems that the rt-versions for the different kernels are maintained
+> in parallel but e.g. last updates have been for 2.6.24.7
+>
+> Can someone explain me how to select a kernel and the rt-version? What
+> are advantages/disadvantages under realtime aspects?
+>
+> Thanks
+>
+> Uli
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
