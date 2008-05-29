@@ -1,69 +1,51 @@
-From: "Remy Bohmer" <linux@bohmer.net>
-Subject: Re: Different kernel and RT versions
-Date: Thu, 29 May 2008 20:48:30 +0200
-Message-ID: <3efb10970805291148u54bff041v5c4ea104d9b9f325@mail.gmail.com>
-References: <10a58eee0805290530r3618ae6ap6cf69aab91c61e28@mail.gmail.com>
-	 <10a58eee0805290531lc6ac67cm6d808197b0d41d35@mail.gmail.com>
-	 <10a58eee0805290533v32e95d76x25e8fd9954700ee9@mail.gmail.com>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Breaking out of pthread_mutex_lock
+Date: Thu, 29 May 2008 23:41:55 +0000
+Message-ID: <1212104515.14713.96.camel@Aeon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Uli Brueggemann" <uli.brueggemann@gmail.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.30]:65394 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754146AbYE2Ssc (ORCPT
+Received: from e31.co.us.ibm.com ([32.97.110.149]:56749 "EHLO
+	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751749AbYE2Xl4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 May 2008 14:48:32 -0400
-Received: by yx-out-2324.google.com with SMTP id 31so376649yxl.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 11:48:31 -0700 (PDT)
-In-Reply-To: <10a58eee0805290533v32e95d76x25e8fd9954700ee9@mail.gmail.com>
-Content-Disposition: inline
+	Thu, 29 May 2008 19:41:56 -0400
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e31.co.us.ibm.com (8.13.8/8.13.8) with ESMTP id m4TNftF9015021
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 19:41:55 -0400
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v8.7) with ESMTP id m4TNftWn107280
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 17:41:55 -0600
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m4TNft3p021666
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 17:41:55 -0600
+Received: from [9.67.193.238] (wecm-9-67-193-238.wecm.ibm.com [9.67.193.238])
+	by d03av04.boulder.ibm.com (8.12.11.20060308/8.12.11) with ESMTP id m4TNfsQ3021637
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2008 17:41:54 -0600
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Uli,
+I find I need to be able to break out of the blocked state while waiting
+to acquire a pthread_mutex.  I'm using PI mutexes and want to continue
+to do so.  As I understand it, I can't use a signal to break out of the
+lock as the man pages states:
 
-> I like to use Linux for audio purposes.
-> So of course I'm interested in getting a best performance.
+"If a signal is delivered to a thread waiting for a mutex,  upon  return
+from  the  signal handler the thread shall resume waiting for the mutex
+as if it was not interrupted."
 
-What do you mean exactly with 'performance' ? (speed versus 'a nice
-play/showtime')
+and that pthread_mutex_lock will not return EINTR.  I had considered
+using cond variables, but I don't think they will provide the same PI
+behavior (since the threads are not blocked on the mutex while awaiting
+the pthread_cond_signal - right?).
 
-Realtime is not about performance (in the sense of speed), it is about
-determinism.
+I'm sure I'm not the first to want to do this, does anyone know of a
+common best practice for accomplishing such a thing?
 
-So, if you want a fast system, you probably do not want realtime.
-If you want a predictable (low latency) system, you could think about realtime.
+-- 
+Darren Hart
+Real-Time Linux Team
+IBM Linux Technology Center
 
-> Can someone explain me how to select a kernel and the rt-version? What
-> are advantages/disadvantages under realtime aspects?
-
-Already looked on http://rt.wiki.kernel.org ??
-
-
-Kind Regards,
-
-Remy
-
->
-> Now I can see that there are constant updates of rt-versions:
-> - 2.6.24.7 now there is rt11
-> - 2.6.25.4 we have rt3
-> - 2.6.26-rc4 no rt work yet published
->
-> It seems that the rt-versions for the different kernels are maintained
-> in parallel but e.g. last updates have been for 2.6.24.7
->
-> Can someone explain me how to select a kernel and the rt-version? What
-> are advantages/disadvantages under realtime aspects?
->
-> Thanks
->
-> Uli
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
