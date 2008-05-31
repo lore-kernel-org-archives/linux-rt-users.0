@@ -1,45 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.25.4-rt4
-Date: Sun, 1 Jun 2008 08:06:14 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0806010805410.21278@gandalf.stny.rr.com>
-References: <1212076754.24785.18.camel@localhost.localdomain>
- <alpine.LNX.1.10.0806010940040.4055@fbirervta.pbzchgretzou.qr>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH] x86: enable preemption in delay
+Date: Sat, 31 May 2008 09:18:18 +0200
+Message-ID: <20080531071817.GB5405@ucw.cz>
+References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com> <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de> <20080525180122.GA4247@ucw.cz> <Pine.LNX.4.58.0805280855250.25179@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Jan Engelhardt <jengelh@medozas.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <clark.williams@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:41538 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751725AbYFAMGR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 1 Jun 2008 08:06:17 -0400
-In-Reply-To: <alpine.LNX.1.10.0806010940040.4055@fbirervta.pbzchgretzou.qr>
+Received: from gprs189-60.eurotel.cz ([160.218.189.60]:4374 "EHLO spitz.ucw.cz"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752035AbYFAORF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 1 Jun 2008 10:17:05 -0400
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.58.0805280855250.25179@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Wed 2008-05-28 09:01:06, Steven Rostedt wrote:
+> 
+> 
+> On Sun, 25 May 2008, Pavel Machek wrote:
+> > > +		if (unlikely(cpu != smp_processor_id())) {
+> > > +			if (loops <= TSC_MIGRATE_COUNT)
+> > > +				break;
+> > > +			cpu = smp_processor_id();
+> > > +			rdtscl(bclock);
+> > > +			loops -= TSC_MIGRATE_COUNT;
+> > > +		} else {
+> > > +			rdtscl(now);
+> > > +			if ((now - bclock) >= loops)
+> > > +				break;
+> > > +			loops -= (now - bclock);
+> > > +			bclock = now;
+> >
+> > What happens with different cpus running on different frequencies...?
+> > Cpufreq?
+> 
+> It's not even protected with the old code.
 
+Maybe, but it is simple to fix as long as preemption is disabled. When
+you enable it, it becomes much harder.
 
-On Sun, 1 Jun 2008, Jan Engelhardt wrote:
-
->
->
-> On Thursday 2008-05-29 17:59, Steven Rostedt wrote:
->
-> >We are pleased to announce the 2.6.25.4-rt4 tree,[...]
->
-> I am getting tons of the following two stack traces (see below)
-> during normal operation. 2.6.25.4-rt4, compiled for i586+SMP,
-> running on i686+UP. syslogd even gets so far as to say "suppressed 134
-> messages", so it's really a lot. I am tempted to just disable
-> CONFIG_DEBUG_PREEMPT because otherwise it seems to work.
-
-Yeah, this has been reported. I'll work on getting a -rt5 out on Monday
-with more fixes.
-
-Thanks,
-
--- Steve
-
+Lets get that fixed.
+							Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
