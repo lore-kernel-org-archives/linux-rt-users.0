@@ -1,57 +1,158 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH] x86: enable preemption in delay
-Date: Sat, 31 May 2008 09:18:18 +0200
-Message-ID: <20080531071817.GB5405@ucw.cz>
-References: <Pine.LNX.4.58.0805242306280.3977@gandalf.stny.rr.com> <alpine.LFD.1.10.0805251406260.3295@apollo.tec.linutronix.de> <20080525180122.GA4247@ucw.cz> <Pine.LNX.4.58.0805280855250.25179@gandalf.stny.rr.com>
+From: Marin Mitov <mitov@issp.bas.bg>
+Subject: [PATCH][resubmit] x86: enable preemption in delay
+Date: Sun, 1 Jun 2008 19:01:23 +0300
+Message-ID: <200806011901.23619.mitov@issp.bas.bg>
+References: <200805252108.25011.mitov@issp.bas.bg> <alpine.LFD.1.10.0805260006110.3295@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
 	Ingo Molnar <mingo@elte.hu>,
 	Clark Williams <clark.williams@gmail.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	Gregory Haskins <ghaskins@novell.com>, Andi Kleen <ak@suse.de>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+	Gregory Haskins <ghaskins@novell.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Andi Kleen <andi-suse@firstfloor.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gprs189-60.eurotel.cz ([160.218.189.60]:4374 "EHLO spitz.ucw.cz"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752035AbYFAORF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 1 Jun 2008 10:17:05 -0400
+Received: from mail.issp.bas.bg ([195.96.236.10]:43825 "EHLO mail.issp.bas.bg"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752889AbYFAQEQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 1 Jun 2008 12:04:16 -0400
+In-Reply-To: <alpine.LFD.1.10.0805260006110.3295@apollo.tec.linutronix.de>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.58.0805280855250.25179@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed 2008-05-28 09:01:06, Steven Rostedt wrote:
-> 
-> 
-> On Sun, 25 May 2008, Pavel Machek wrote:
-> > > +		if (unlikely(cpu != smp_processor_id())) {
-> > > +			if (loops <= TSC_MIGRATE_COUNT)
-> > > +				break;
-> > > +			cpu = smp_processor_id();
-> > > +			rdtscl(bclock);
-> > > +			loops -= TSC_MIGRATE_COUNT;
-> > > +		} else {
-> > > +			rdtscl(now);
-> > > +			if ((now - bclock) >= loops)
-> > > +				break;
-> > > +			loops -= (now - bclock);
-> > > +			bclock = now;
-> >
-> > What happens with different cpus running on different frequencies...?
-> > Cpufreq?
-> 
-> It's not even protected with the old code.
+Hi all,
 
-Maybe, but it is simple to fix as long as preemption is disabled. When
-you enable it, it becomes much harder.
+This is a resubmit of the patch proposed by Ingo and me
+few month ago:
 
-Lets get that fixed.
-							Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+http://lkml.org/lkml/2007/11/20/343
+
+It was in -mm for a while and then removed due to a move into
+the mainline, but it never appeared in it.
+
+As recently a new discussion started on the subject I decided
+to resubmit it again.
+
+Now it is against 2.6.25.4, but as far as there are no changes 
+in the modified files it should apply to 2.6.26-rc4 too.
+
+Comments/critics are wellcome.
+
+Marin Mitov
+
+
+Signed-off-by: Marin Mitov <mitov@issp.bas.bg>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+
+=========================================
+--- a/arch/x86/lib/delay_32.c	2007-11-18 08:14:05.000000000 +0200
++++ b/arch/x86/lib/delay_32.c	2007-11-20 19:03:52.000000000 +0200
+@@ -40,18 +40,42 @@
+ 		:"0" (loops));
+ }
+ 
+-/* TSC based delay: */
++/* TSC based delay:
++ *
++ * We are careful about preemption as TSC's are per-CPU.
++ */
+ static void delay_tsc(unsigned long loops)
+ {
+-	unsigned long bclock, now;
++	unsigned prev, prev_1, now;
++	unsigned left = loops;
++	unsigned prev_cpu, cpu;
++
++	preempt_disable();
++	rdtscl(prev);
++	prev_cpu = smp_processor_id();
++	preempt_enable();
++	now = prev;
+ 
+-	preempt_disable();		/* TSC's are per-cpu */
+-	rdtscl(bclock);
+ 	do {
+ 		rep_nop();
++
++		left -= now - prev;
++		prev = now;
++
++		preempt_disable();
++		rdtscl(prev_1);
++		cpu = smp_processor_id();
+ 		rdtscl(now);
+-	} while ((now-bclock) < loops);
+-	preempt_enable();
++		preempt_enable();
++
++		if (prev_cpu != cpu) {
++			/*
++			 * We have migrated, forget prev_cpu's tsc reading
++			 */
++			prev = prev_1;
++			prev_cpu = cpu;
++		}
++	} while ((now-prev) < left);
+ }
+ 
+ /*
+--- a/arch/x86/lib/delay_64.c	2007-11-18 08:14:40.000000000 +0200
++++ b/arch/x86/lib/delay_64.c	2007-11-20 19:47:29.000000000 +0200
+@@ -28,18 +28,42 @@
+ 	return 0;
+ }
+ 
++/* TSC based delay:
++ *
++ * We are careful about preemption as TSC's are per-CPU.
++ */
+ void __delay(unsigned long loops)
+ {
+-	unsigned bclock, now;
++	unsigned prev, prev_1, now;
++	unsigned left = loops;
++	unsigned prev_cpu, cpu;
++
++	preempt_disable();
++	rdtscl(prev);
++	prev_cpu = smp_processor_id();
++	preempt_enable();
++	now = prev;
+ 
+-	preempt_disable();		/* TSC's are pre-cpu */
+-	rdtscl(bclock);
+ 	do {
+-		rep_nop(); 
++		rep_nop();
++
++		left -= now - prev;
++		prev = now;
++
++		preempt_disable();
++		rdtscl(prev_1);
++		cpu = smp_processor_id();
+ 		rdtscl(now);
+-	}
+-	while ((now-bclock) < loops);
+-	preempt_enable();
++		preempt_enable();
++
++		if (prev_cpu != cpu) {
++			/*
++			 * We have migrated, forget prev_cpu's tsc reading
++			 */
++			 prev = prev_1;
++			 prev_cpu = cpu;
++		}
++	} while ((now-prev) < left);
+ }
+ EXPORT_SYMBOL(__delay);
+ 
