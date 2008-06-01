@@ -1,73 +1,86 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Breaking out of pthread_mutex_lock
-Date: Fri, 30 May 2008 10:24:04 -0500
-Message-ID: <48401C14.703@redhat.com>
-References: <1212104515.14713.96.camel@Aeon>	 <20080529164650.4d1be605@extreme> <1212159433.14713.104.camel@Aeon>
+From: Jan Engelhardt <jengelh@medozas.de>
+Subject: Re: 2.6.25.4-rt4
+Date: Sun, 1 Jun 2008 10:00:52 +0200 (CEST)
+Message-ID: <alpine.LNX.1.10.0806010940040.4055@fbirervta.pbzchgretzou.qr>
+References: <1212076754.24785.18.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Stephen Hemminger <shemminger@vyatta.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Darren Hart <dvhltc@us.ibm.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:48896 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752336AbYE3Pa3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 May 2008 11:30:29 -0400
-In-Reply-To: <1212159433.14713.104.camel@Aeon>
+Received: from sovereign.computergmbh.de ([85.214.69.204]:52493 "EHLO
+	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750988AbYFAIAy (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 1 Jun 2008 04:00:54 -0400
+In-Reply-To: <1212076754.24785.18.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
 
-Darren Hart wrote:
-> On Thu, 2008-05-29 at 16:46 -0700, Stephen Hemminger wrote:
->> On Thu, 29 May 2008 23:41:55 +0000
->> Darren Hart <dvhltc@us.ibm.com> wrote:
->>
->>> I find I need to be able to break out of the blocked state while waiting
->>> to acquire a pthread_mutex.  I'm using PI mutexes and want to continue
->>> to do so.  As I understand it, I can't use a signal to break out of the
->>> lock as the man pages states:
->>>
->>> "If a signal is delivered to a thread waiting for a mutex,  upon  return
->>> from  the  signal handler the thread shall resume waiting for the mutex
->>> as if it was not interrupted."
->>>
->>> and that pthread_mutex_lock will not return EINTR.  I had considered
->>> using cond variables, but I don't think they will provide the same PI
->>> behavior (since the threads are not blocked on the mutex while awaiting
->>> the pthread_cond_signal - right?).
->>>
->>> I'm sure I'm not the first to want to do this, does anyone know of a
->>> common best practice for accomplishing such a thing?
->>>
->> setjmp/longjmp?
-> 
-> Stephen,
-> 
-> Hrmm... I confess to not having made use of them before.  I read up a
-> bit, and don't see right off how they would help in this situation.  I
-> assume you're suggesting the longjmp be used in a signal handler while
-> the thread is blocked on the mutex - where would it jump to, and how
-> would I ensure the integrity of the pthread_mutex structure (which
-> thinks my thread is waiting for it) ?
-> 
+On Thursday 2008-05-29 17:59, Steven Rostedt wrote:
 
-I don't see any way to recover from longjmp'ing out of a pthread_mutex_lock(). Maybe
-using robust futexes and killing the thread that was blocked?
+>We are pleased to announce the 2.6.25.4-rt4 tree,[...]
 
-I think it would be better to re-designed the code to use pthread_mutex_trylock()
-instead, so it doesn't block. That way you don't have a mutex in some wacky state.
+I am getting tons of the following two stack traces (see below)
+during normal operation. 2.6.25.4-rt4, compiled for i586+SMP,
+running on i686+UP. syslogd even gets so far as to say "suppressed 134
+messages", so it's really a lot. I am tempted to just disable
+CONFIG_DEBUG_PREEMPT because otherwise it seems to work.
 
-Clark
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+kernel: BUG: using smp_processor_id() in preemptible [00000000] code: xfssyncd/491
+l: caller is __rcu_preempt_unboost+0x20/0xd0
+l: Pid: 491, comm: xfssyncd Tainted: G        N 2.6.25.4-jen67-rt #1
+l:  [<c0214b4a>] debug_smp_processor_id+0xba/0xc0
+l:  [<c016a7b0>] __rcu_preempt_unboost+0x20/0xd0
+l:  [<c020dd3c>] ? radix_tree_lookup_slot+0x3c/0xf0
+l:  [<c0169e42>] __rcu_read_unlock+0x92/0xa0
+l:  [<c016e8d7>] find_get_page+0x87/0x120
+l:  [<c016ecae>] find_lock_page+0x1e/0x70
+l:  [<c01710d4>] find_or_create_page+0x34/0xc0
+l:  [<f0970352>] _xfs_buf_lookup_pages+0x142/0x290 [xfs]
+l:  [<c01411e5>] ? init_waitqueue_head+0x15/0x30
+l:  [<f097172a>] xfs_buf_get_flags+0x6a/0x140 [xfs]
+l:  [<f097181d>] xfs_buf_read_flags+0x1d/0x90 [xfs]
+l:  [<f0963f1b>] xfs_trans_read_buf+0x4b/0x340 [xfs]
+l:  [<f094b680>] xfs_itobp+0x70/0x1e0 [xfs]
+l:  [<f094e2d1>] xfs_iflush+0xe1/0x480 [xfs]
+l:  [<f0967801>] xfs_finish_reclaim+0x101/0x190 [xfs]
+l:  [<f0967949>] xfs_finish_reclaim_all+0xb9/0xd0 [xfs]
+l:  [<f0965aaf>] xfs_syncsub+0x5f/0x2f0 [xfs]
+l:  [<f0965d88>] xfs_sync+0x48/0x70 [xfs]
+l:  [<f0976ef7>] xfs_sync_worker+0x27/0x50 [xfs]
+l:  [<f0977bc9>] xfssyncd+0x129/0x1a0 [xfs]
+l:  [<f0977aa0>] ? xfssyncd+0x0/0x1a0 [xfs]
+l:  [<c0140ce2>] kthread+0x42/0x70
+l:  [<c0140ca0>] ? kthread+0x0/0x70
+l:  [<c0107257>] kernel_thread_helper+0x7/0x10
 
-iEYEARECAAYFAkhAHBQACgkQHyuj/+TTEp3dVgCeI8tNnbSDOLThVrUqjWcM9xPA
-mVgAnjR2D4RxIBXAjC+S2jtCdTaB+1AD
-=rmf4
------END PGP SIGNATURE-----
+
+kernel: BUG: using smp_processor_id() in preemptible [00000000] code: IRQ-1/30
+l: caller is __rcu_preempt_unboost+0x20/0xd0
+l: Pid: 30, comm: IRQ-1 Tainted: G        N 2.6.25.4-jen67-rt #1
+l:  [<c0214b4a>] debug_smp_processor_id+0xba/0xc0
+l:  [<c016a7b0>] __rcu_preempt_unboost+0x20/0xd0
+l:  [<c0169e42>] __rcu_read_unlock+0x92/0xa0
+l:  [<c0294960>] ? evdev_event+0x0/0xc0
+l:  [<c029022e>] input_pass_event+0x3e/0xb0
+l:  [<c0295940>] ? atkbd_event+0x0/0x50
+l:  [<c0290a45>] input_handle_event+0x135/0x3f0
+l:  [<c0291fcc>] input_event+0x5c/0x70
+l:  [<c0296441>] atkbd_interrupt+0x151/0x5c0
+l:  [<c0330881>] ? add_preempt_count+0x11/0xa0
+l:  [<c032d9e5>] ? __rt_spin_lock+0x25/0x70
+l:  [<c028ddb8>] serio_interrupt+0x38/0x80
+l:  [<c028ea5a>] i8042_interrupt+0x10a/0x240
+l:  [<c0166b00>] handle_IRQ_event+0x60/0xf0
+l:  [<c0330881>] ? add_preempt_count+0x11/0xa0
+l:  [<c01678fb>] do_irqd+0x1cb/0x290
+l:  [<c0167730>] ? do_irqd+0x0/0x290
+l:  [<c0140ce2>] kthread+0x42/0x70
+l:  [<c0140ca0>] ? kthread+0x0/0x70
+
+
