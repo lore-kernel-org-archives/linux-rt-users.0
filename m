@@ -1,109 +1,69 @@
-From: Guillaume FORTAINE <gui.fortaine-1tsiiZ//OF9QFI55V6+gNQ@public.gmane.org>
-Subject: Re: [ANNOUNCE] The Linux Test Project has been Released for
- MAY	2008
-Date: Mon,  2 Jun 2008 16:16:45 +0200 (CEST)
-Message-ID: <21212281.2485021212416205853.JavaMail.www@wwinf2625>
-Reply-To: Guillaume FORTAINE <gui.fortaine-1tsiiZ//OF9QFI55V6+gNQ@public.gmane.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24.7-rt12
+Date: Mon, 02 Jun 2008 22:12:26 -0400
+Message-ID: <1212459146.24785.24.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	Badari Pulavarty <pbadari-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>,
-	Matt Helsley <matthltc-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Mingming Cao <cmm-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>,
-	Avantika Mathur <mathur-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>,
-	Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>,
-	Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-To: subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org,
-	ltp-list <ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>,
-	linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Return-path: <ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
-	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=ltp-list>
-List-Post: <mailto:ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
-	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Sender: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Errors-To: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:50562 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753188AbYFCCM2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Jun 2008 22:12:28 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-CkRlYXIgQWxsLAoKVGhlcmUgaXMgYWxzbyB0aGlzIHByb2plY3QgOgoKaHR0cDovL2xpbnV4dGVz
-dGluZy5vcmcvCgpNaXNzaW9uIGFuZCBBY3Rpdml0aWVzIG9mIHRoZSBMaW51eCBWZXJpZmljYXRp
-b24gQ2VudGVyCgpUaGUgbWlzc2lvbiBvZiB0aGUgQ2VudGVyIGlzIHRvIHByb3BhZ2F0ZSB0aGUg
-TGludXggcGxhdGZvcm0gYnkgZW5zdXJpbmcgaXRzIGhpZ2ggcmVsaWFiaWxpdHkgYW5kIGNvbXBh
-dGliaWxpdHkgdGhyb3VnaCB0aGUgdXNlIG9mIG9wZW4gc3RhbmRhcmRzIGFuZCBhZHZhbmNlZCB0
-ZXN0aW5nIGFuZCB2ZXJpZmljYXRpb24gdGVjaG5vbG9naWVzLgoKICAgICogRGV2ZWxvcG1lbnQg
-b2Ygb3BlbiBzb3VyY2UgdGVzdCBzdWl0ZXMgZm9yIGF1dG9tYXRlZCBjb25mb3JtYW5jZSBhbmQg
-ZnVuY3Rpb25hbCBMaW51eCB0ZXN0aW5nLgogICAgKiBTdHJlbmd0aGVuaW5nIG9wZW4gc3RhbmRh
-cmRzIC0gaGVscGluZyBzdGFuZGFyZCBib2RpZXMgdG8gaW1wcm92ZSwgZGV2ZWxvcCBhbmQgZW5m
-b3JjZSBMaW51eCBzdGFuZGFyZHMuCiAgICAqIERpc3NlbWluYXRpb24gb2YgYWNhZGVtaWMgYW5k
-IGluZHVzdHJpYWwgZXhwZXJ0aXNlIGluIHRoZSBhcmVhIG9mIHJlcXVpcmVtZW50cyBhbmFseXNp
-cyBhbmQgYWR2YW5jZWQgdGVzdGluZyBhbmQgdmVyaWZpY2F0aW9uLgoKVGhlIENlbnRlciBpcyBz
-dXBwb3J0ZWQgYnkgdGhlIFJ1c3NpYW4gRmVkZXJhbCBBZ2VuY3kgZm9yIFNjaWVuY2UgYW5kIElu
-bm92YXRpb25zLCBieSB0aGUgaW50ZXJuYXRpb25hbCBjb25zb3J0aXVtIFRoZSBMaW51eCBGb3Vu
-ZGF0aW9uIGFuZCBpcyBiYXNlZCBhdCB0aGUgSW5zdGl0dXRlIGZvciBTeXN0ZW0gUHJvZ3JhbW1p
-bmcgb2YgdGhlIFJ1c3NpYW4gQWNhZGVteSBvZiBTY2llbmNlcyAoSVNQIFJBUykuCgoKQmVzdCBS
-ZWdhcmRzLAoKR3VpbGxhdW1lIEZPUlRBSU5FCiJJIGhhdmUgcm9vdCBAIEdvb2dsZSIKCgoKPiBN
-ZXNzYWdlIGR1IDAyLzA2LzA4IDE1OjQ3Cj4gRGUgOiAiU3VicmF0YSBNb2RhayIKPiBBIDogImx0
-cC1saXN0IiAsICJsaW51eC1rZXJuZWwiCj4gQ29waWUgw6AgOiAiQW5kcmV3IE1vcnRvbiIgLCAi
-TGludXMgVG9ydmFsZHMiICwgIk1hdHQgSGVsc2xleSIgLCAiQXZhbnRpa2EgTWF0aHVyIiAsICJC
-YWRhcmkgUHVsYXZhcnR5IiAsICJNaW5nbWluZyBDYW8iICwgImxpbnV4LXJ0LXVzZXJzIgo+IE9i
-amV0IDogW0xUUF0gW0FOTk9VTkNFXSBUaGUgTGludXggVGVzdCBQcm9qZWN0IGhhcyBiZWVuIFJl
-bGVhc2VkIGZvciBNQVkyMDA4Cj4KPiBEZWFyIEFsbCwKPgo+IFRoZSBMaW51eCBUZXN0IFByb2pl
-Y3QgdGVzdCBzdWl0ZSBoYXMgYmVlbiByZWxlYXNlZCBmb3IgdGhlIG1vbnRoIG9mCj4gTUFZIDIw
-MDguIFRoZSBsYXRlc3QgdmVyc2lvbiBvZiB0aGUgdGVzdC1zdWl0ZSBjb250YWlucyAzMDAwKyB0
-ZXN0cwo+IGZvciB0aGUgTGludXggT1MgYW5kIGNhbiBiZSBmb3VuZCBhdAo+IGh0dHA6Ly9sdHAu
-c291cmNlZm9yZ2UubmV0Ly4KPiBMYXRlc3QgaGFwcGVuaW5ncyBpbiBMVFAgY2FuIGFsc28gYmUg
-Zm91bmQgYXQ6Cj4gaHR0cDovL2x0cC5zb3VyY2Vmb3JnZS5uZXQvd2lraS8sCj4gaHR0cDovL2x0
-cC5zb3VyY2Vmb3JnZS5uZXQvd2lraUFyY2hpdmVzLnBocCwgYW5kLAo+IElSQzogaXJjLmZyZWVu
-b2RlLm9yZyAjbHRwLgo+Cj4KPiBNQVkgMjAwOCBIaWdobGlnaHRzOgo+Cj4gKiBBZGRpdGlvbiBv
-ZiBGSUxFU1lTVEVNIEJJTkQgTU9VTlQgdGVzdHMsCj4gKiBBZGRpdGlvbiBvZiAybmQgU2V0IG9m
-IE1lbW9yeSBDb250cm9sbGVyIFRlc3QgQ2FzZXMsCj4gKiBBZGRlZCBEZWZhdWx0IExvZyBGaWxl
-IGdlbmVyYXRpb24gY2FwYWJpbGl0eSwKPiAqIFN0YWJsZSBSZWxlYXNlIG9mIExUUC1ERVZFTC0y
-LjAuMC4wIFJQTSBQYWNrYWdlcyBmb3IKPiBpMzg2LGlhNjQscHBjNjQseDg2XzY0ICYgczM5MHgs
-Cj4gKiBGQ05UTCBMT0NLVEVTVFMgdXBkYXRlcywKPiAqIFVwZGF0ZSB0byBPcGVuSFBJIDIuMTAu
-MiwKPiAqIENvbnRpbnVpbmcgd29yayBmb3IgQ29uY3VycmVuY3kgZml4ZXMsCj4gKiBDbGVhbnVw
-L1VwZGF0ZXMgdG8gTFRQIFJlYWwgVGltZSB0ZXN0IGNhc2VzLAo+Cj4KPiBOb3RlKHMpIGZyb20g
-dGhlIE1haW50YWluZXI6Cj4KPiBDb250aW51aW5nIHdpdGggb3VyIGVuZGVhdm9yIHRvIGltcHJv
-dmUga2VybmVsIGNvZGUgY292ZXJhZ2UsIHdlIHdpbGwKPiBzZWUgc29tZSBuZXcgdGVzdCBjYXNl
-cyBnZXR0aW5nIGFkZGVkIHRvIExUUCBpbiBKdW5lIDIwMDguIEJ1dCB3ZSB3b3VsZAo+IHByb2Jh
-Ymx5IG5lZWQgbXVjaCBtdWNoIG1vcmUgdGVzdCBjYXNlcyBpbiBMVFAgdG8gY29tcGV0ZSB0aGUg
-cGFjZSBvZgo+IGdyb3dpbmcga2VybmVsLiBBbmQgdGhpcyBpcyBiZWNvbWluZyBkaWZmaWN1bHQg
-d2l0aCBlYWNoIHBhc3NpbmcgZGF5LiBXZQo+IG5lZWQgdG8gYWRkcmVzcyB0aGlzIHRocm91Z2gg
-bXVsdGlwbGUgZWZmb3J0cywgbmFtZWx5Ogo+Cj4gMSkgSW52ZXN0IG1vcmUgdGltZSBpbiB3cml0
-aW5nIG5ldyB0ZXN0IGNhc2VzLAo+IDIpIFNlYXJjaGluZyBleGlzdGluZyB0ZXN0Y2FzZXMgYXZh
-aWxhYmxlIGZyb20gdmFyaW91cyBsb2NhdGlvbnMsIHRoYXQKPiBjYW4gYmUgYSBwb3RlbnRpYWwg
-Y2FuZGlkYXRlIHRvIGFkZCB0byBMVFAgdW5kZXIgR1BMdjIsCj4gMykgRGlnIG91dCB1bml0IHRl
-c3QgY2FzZXMgZnJvbSBkZXZlbG9wZXLFmyBkZXNrdG9wIGFuZCBwdXQgaXQgaW4gTFRQLgo+Cj4g
-TXVjaCBvZiB0aGVzZSBlZmZvcnRzIHdpbGwgYWxzbyBkZXBlbmQgb24gcHJldmVudGluZyB0aGUg
-TGludXggVGVzdGluZwo+IGNvbW11bml0eSB0byBmcmFnbWVudCBmdXJ0aGVyLCBpZGVudGlmeSBh
-cmVhcyB3aGVyZSBhbGwgTGludXggdGVzdGluZwo+IHByb2plY3RzIGNhbiBjb2xsYWJvcmF0ZSBh
-bmQgY29tcGxlbWVudCBlYWNoIG90aGVyxZsgaW1wb3J0YW5jZSwgYW5kIHdvcmsKPiB0b2dldGhl
-ciBmb3IgYWNoaWV2aW5nIHRoZSB1bHRpbWF0ZSBnb2FsIHRvIG1ha2UgTGludXggYmV0dGVyLgo+
-Cj4gPkZyb20gdGhpcyByZWxlYXNlIG9ud2FyZHMsIHdlIHdpbGwgYWxzbyBhbm5vdW5jZSB0aGUg
-c2lnbmlmaWNhbnQKPiBjb250cmlidXRpb24gb2YgdGhpcyBtb250aCwgd2hpY2ggaGFwcGVucyB0
-byBiZSB0aGUgRmlsZSBTeXN0ZW0gQmluZAo+IE1vdW50IHRlc3RzIGZyb20gTWF0dCBIZWxzbGV5
-ICYgQXZhbnRpa2EgTWF0aHVyLiBUaGFuayB5b3UuIEVxdWFsbHkKPiBpbXBvcnRhbnQgaGFzIGJl
-ZW4gaHVnZSBjb250cmlidXRpb25zIGZyb20gb3RoZXJzIGluIHRlcm1zIG9mIG5ldyB0ZXN0Cj4g
-Y2FzZXMgYW5kIFBhdGNoZXMgdG8gZml4IGV4aXN0aW5nIHRlc3QgY2FzZXMuCj4KPiBPdXIgd2Vi
-IHNpdGUgYWxzbyBjb250YWlucyBvdGhlciBpbmZvcm1hdGlvbiBzdWNoIGFzOgo+IC0gQSBMaW51
-eCB0ZXN0IHRvb2xzIG1hdHJpeAo+IC0gVGVjaG5pY2FsIHBhcGVycwo+IC0gSG93IFRvJ3Mgb24g
-TGludXggdGVzdGluZwo+IC0gQ29kZSBjb3ZlcmFnZSBhbmFseXNpcyB0b29sLgo+Cj4KPiBXZSB3
-b3VsZCBlbmNvdXJhZ2UgdGhlIGNvbW11bml0eSB0byBwb3N0IHJlc3VsdHMgdG8KPiBsdHAtcmVz
-dWx0c0BsaXN0cy5zZi5uZXQsCj4gcGF0Y2hlcywgbmV3IHRlc3RzLCBidWdzIG9yIGNvbW1lbnRz
-L3F1ZXN0aW9ucyB0byBsdHAtbGlzdEBsaXN0cy5zZi5uZXQsCj4gaHR0cDovL3NvdXJjZWZvcmdl
-Lm5ldC90cmFja2VyLz9mdW5jPWFkZCZncm91cF9pZD0zMzgyJmF0aWQ9MTAzMzgyCj4gKGZvciBO
-ZXcgQnVnKHMpKSwKPiBodHRwOi8vc291cmNlZm9yZ2UubmV0L3RyYWNrZXIvP2Z1bmM9YWRkJmdy
-b3VwX2lkPTMzODImYXRpZD0zMDMzODIKPiAoZm9yIE5ldyBQYXRjaChzKSksCj4gaHR0cDovL3Nv
-dXJjZWZvcmdlLm5ldC90cmFja2VyLz9mdW5jPWFkZCZncm91cF9pZD0zMzgyJmF0aWQ9MzUzMzgy
-Cj4gKGZvciBOZXcgRmVhdHVyZSBSZXF1ZXN0KHMpKQo+Cj4gUGxlYXNlIGFsc28gc2VlIHRoZSBD
-aGFuZ2UgTG9nIEF0dGFjaGVkIChNQVkgMjAwOCk6Cj4KPiBIYXBweSB0ZXN0aW5nLAo+IFJlZ2Fy
-ZHMtLQo+IFN1YnJhdGEsCj4KPgo+IFsgTWF5LTIwMDhfQ2hhbmdlbG9nLnR4dCAoNTEuNiBLbykg
-XQoKCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0KVGhpcyBTRi5uZXQgZW1haWwgaXMgc3BvbnNvcmVkIGJ5OiBN
-aWNyb3NvZnQKRGVmeSBhbGwgY2hhbGxlbmdlcy4gTWljcm9zb2Z0KFIpIFZpc3VhbCBTdHVkaW8g
-MjAwOC4KaHR0cDovL2Nsay5hdGRtdC5jb20vTVJUL2dvL3ZzZTAxMjAwMDAwNzBtcnQvZGlyZWN0
-LzAxLwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMdHAt
-bGlzdCBtYWlsaW5nIGxpc3QKTHRwLWxpc3RAbGlzdHMuc291cmNlZm9yZ2UubmV0Cmh0dHBzOi8v
-bGlzdHMuc291cmNlZm9yZ2UubmV0L2xpc3RzL2xpc3RpbmZvL2x0cC1saXN0Cg==
+We are pleased to announce the 2.6.24.7-rt12 tree, which can be
+downloaded from the location:
+
+  http://rt.et.redhat.com/download/
+
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24.7-rt11
+
+  - Trace histogram late divide (Carsten Emde)
+
+  - rwlock priority leak fix (Steven Rostedt)
+
+  - rwlock pi_list fixes (Steven Rostedt)
+
+  - rwlock torture test module (Steven Rostedt)
+
+  - events tracer clocksource program event hook (Steven Rostedt)
+
+to build a 2.6.24.7-rt12 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt12.bz2
+
+
+
+*** Note ***
+
+  2.6.25.4-rt5 with updates will be hopefully out tomorrow
+
+*** Note ***
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
+
+-- Steve
+
+
+
