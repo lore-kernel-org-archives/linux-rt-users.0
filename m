@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt13
-Date: Thu, 05 Jun 2008 23:33:15 -0400
-Message-ID: <1212723195.24785.40.camel@localhost.localdomain>
+Subject: 2.6.25.4-rt6
+Date: Fri, 06 Jun 2008 18:59:31 -0400
+Message-ID: <1212793171.7695.2.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -9,15 +9,15 @@ Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:50082 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:47546 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753822AbYFFDdS (ORCPT
+	with ESMTP id S1756829AbYFFW7d (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Jun 2008 23:33:18 -0400
+	Fri, 6 Jun 2008 18:59:33 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt13 tree, which can be
+We are pleased to announce the 2.6.25.4-rt6 tree, which can be
 downloaded from the location:
 
   http://rt.et.redhat.com/download/
@@ -26,11 +26,7 @@ Information on the RT patch can be found at:
 
   http://rt.wiki.kernel.org/index.php/Main_Page
 
-Changes since 2.6.24.7-rt12
-
-  - ftrace wakeup schedule raw spinlock (Steven Rostedt)
-
-  - radix tree lockdep annotation fix (Steven Rostedt)
+Changes since 2.6.25.4-rt5
 
   - sched_cpupri hotplug support (Gregory Haskins)
 
@@ -38,11 +34,11 @@ Changes since 2.6.24.7-rt12
 
   - ftrace hotplug fix (Steven Rostedt)
 
-to build a 2.6.24.7-rt13 tree, the following patches should be applied:
+to build a 2.6.25.4-rt6 tree, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt13.bz2
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.25.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.25.4.bz2
+  http://rt.et.redhat.com/download/patch-2.6.25.4-rt6.bz2
 
 
 
@@ -55,8 +51,6 @@ for you nicely:
 The broken out patches are also available.
 
 
-
 -- Steve
-
 
 
