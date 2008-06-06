@@ -1,82 +1,62 @@
-From: ciaby <ciaby@autistici.org>
-Subject: Fwd: about 2.6.25.4-rt5 (missing =?UTF-8?Q?global=5Frt=5Fruntime=29?=
-Date: Thu, 05 Jun 2008 12:45:08 +0000
-Message-ID: <65fe1b04a31fa0c81601099af40b0787@localhost>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24.7-rt13
+Date: Thu, 05 Jun 2008 23:33:15 -0400
+Message-ID: <1212723195.24785.40.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from vilipendio.investici.org ([216.17.130.5]:65511 "EHLO
-	vilipendio.investici.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753758AbYFENGA (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:50082 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753822AbYFFDdS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Jun 2008 09:06:00 -0400
+	Thu, 5 Jun 2008 23:33:18 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are pleased to announce the 2.6.24.7-rt13 tree, which can be
+downloaded from the location:
 
-Forgot this list... sorry :)
+  http://rt.et.redhat.com/download/
 
+Information on the RT patch can be found at:
 
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-Ciaby
+Changes since 2.6.24.7-rt12
 
+  - ftrace wakeup schedule raw spinlock (Steven Rostedt)
 
+  - radix tree lockdep annotation fix (Steven Rostedt)
 
--------- Original Message --------
+  - sched_cpupri hotplug support (Gregory Haskins)
 
-Subject: about 2.6.25.4-rt5 (missing global_rt_runtime)
+  - sched_cpupri prio count (Gregory Haskins)
 
-Date: Thu, 05 Jun 2008 12:18:49 +0000
+  - ftrace hotplug fix (Steven Rostedt)
 
-From: ciaby <ciaby@autistici.org>
+to build a 2.6.24.7-rt13 tree, the following patches should be applied:
 
-To: rostedt@goodmis.org
-
-
-
-Small patch to make it compile (missing global_rt_runtime function):
-
-
-
-diff -uNr linux-2.6.25.4.orig/kernel/sched.c linux-2.6.25.4/kernel/sched.c
-
---- linux-2.6.25.4.orig/kernel/sched.c  2008-06-05 14:12:30.000000000 +0200
-
-+++ linux-2.6.25.4/kernel/sched.c       2008-06-05 13:58:48.000000000 +0200
-
-@@ -671,6 +671,15 @@
-
-  */
-
- #define RUNTIME_INF    ((u64)~0ULL)
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt13.bz2
 
 
 
-+static u64 global_rt_runtime(void)
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
 
-+{
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
 
-+       if (sysctl_sched_rt_period < 0)
 
-+               return RUNTIME_INF;
+The broken out patches are also available.
 
-+       return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
 
-+}
 
-+
-
-+
-
-+
-
- /*
-
-  * We really dont want to do anything complex within switch_to()
-
-  * on PREEMPT_RT - this check enforces this.
+-- Steve
 
 
 
