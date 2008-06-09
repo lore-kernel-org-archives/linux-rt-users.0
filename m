@@ -1,59 +1,50 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH][resubmit] x86: enable preemption in delay
-Date: Mon, 9 Jun 2008 18:16:06 +0200
-Message-ID: <20080609161606.GA24841@elte.hu>
-References: <200805252108.25011.mitov@issp.bas.bg> <200806011901.23619.mitov@issp.bas.bg> <20080609121309.GA13610@elte.hu> <200806091911.21850.mitov@issp.bas.bg>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH] 2.6.25.4-rt6: missing global_rt_runtime() in sched.c
+Date: Mon, 09 Jun 2008 11:02:20 -0700
+Message-ID: <1213034540.16459.4.camel@localhost.localdomain>
+References: <7688fdc041a8f848b0627dccccddcf12@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
-	Clark Williams <clark.williams@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Andi Kleen <andi-suse@firstfloor.org>
-To: Marin Mitov <mitov@issp.bas.bg>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: ciaby <ciaby@autistici.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:60147 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750728AbYFIQQk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jun 2008 12:16:40 -0400
-Content-Disposition: inline
-In-Reply-To: <200806091911.21850.mitov@issp.bas.bg>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:57235 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753240AbYFISCY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Jun 2008 14:02:24 -0400
+In-Reply-To: <7688fdc041a8f848b0627dccccddcf12@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-* Marin Mitov <mitov@issp.bas.bg> wrote:
+On Mon, 2008-06-09 at 09:51 +0000, ciaby wrote:
+> I already sent this patch, but seems that nobody cared... the last 2
+> revisions of the -rt kernel don't compile properly.
+> Second patch to fix this.
+> Regards
+> 
+> Giovanni "ciaby" Civardi
+> 
+> diff -uNr linux-2.6.25.4-rt6.orig/kernel/sched.c
+> linux-2.6.25.4-rt6/kernel/sched.c
+> --- linux-2.6.25.4-rt6.orig/kernel/sched.c      2008-06-09
+> 11:35:57.000000000 +0200
+> +++ linux-2.6.25.4-rt6/kernel/sched.c   2008-06-09 11:40:45.000000000 +0200
+> @@ -672,6 +672,13 @@
+>   */
+>  #define RUNTIME_INF    ((u64)~0ULL)
+>  
+> +static u64 global_rt_runtime(void)
+> +{
+> +       if (sysctl_sched_rt_period < 0)
+> +               return RUNTIME_INF;
+> +       return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
 
-> > i think Thomas had a concern with the original fix - forgot the 
-> > details.
-> 
-> Here they are:
-> 
-> http://lkml.org/lkml/2008/5/25/251
-> 
-> but see my comment to it.
-> 
-> There is no principal difference between both patches. I have seen 
-> Steven's one as merged in linux-2.6.26-rc5. The only difference (if it 
-> matters of all) is that in mine patch 
-> preempt_disable()/preempt_enable() sections are shorter and protect 
-> only the code that must be protected:
-> 
-> preempt_disable()
-> rdtscl()
-> smp_processor_id()
-> preempt_enable()
-> 
-> As far as Steven's patch is already merged - let it be :-)
+Your patch has a couple of problems .. It's line wrapped, it's missing
+proper tabbing (got stripped maybe), and no Signed-off-by: .. 
 
-we could still merge your enhancements as well ontop of Steven's, if you 
-would like to pursue it. If so then please send a patch against -rc5 or 
-against -tip. Reducing the length of preempt-off sections is a fair 
-goal.
+Daniel
 
-	Ingo
