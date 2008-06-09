@@ -1,81 +1,86 @@
-From: "Uli Brueggemann" <uli.brueggemann@gmail.com>
-Subject: Re: 2.6.25.4-rt6
-Date: Mon, 9 Jun 2008 10:13:43 +0200
-Message-ID: <10a58eee0806090113j643e058bm1da6c8a5bfbc1701@mail.gmail.com>
-References: <1212793171.7695.2.camel@localhost.localdomain>
-	 <484CDDEC.7050405@netone.net.tr>
+From: Ankita Garg <ankita@in.ibm.com>
+Subject: [PATCH] Disable tracing when current_tracer is set to "none"
+Date: Mon, 9 Jun 2008 14:10:25 +0530
+Message-ID: <20080609084025.GC7796@in.ibm.com>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Tarkan Erimer" <tarkan@netone.net.tr>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.181]:11597 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755430AbYFIINo (ORCPT
+Received: from e28smtp03.in.ibm.com ([59.145.155.3]:50142 "EHLO
+	e28smtp03.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752999AbYFIIlE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jun 2008 04:13:44 -0400
-Received: by wa-out-1112.google.com with SMTP id j37so1728284waf.23
-        for <linux-rt-users@vger.kernel.org>; Mon, 09 Jun 2008 01:13:43 -0700 (PDT)
-In-Reply-To: <484CDDEC.7050405@netone.net.tr>
+	Mon, 9 Jun 2008 04:41:04 -0400
+Received: from d28relay02.in.ibm.com (d28relay02.in.ibm.com [9.184.220.59])
+	by e28smtp03.in.ibm.com (8.13.1/8.13.1) with ESMTP id m598exWU006999
+	for <linux-rt-users@vger.kernel.org>; Mon, 9 Jun 2008 14:10:59 +0530
+Received: from d28av01.in.ibm.com (d28av01.in.ibm.com [9.184.220.63])
+	by d28relay02.in.ibm.com (8.13.8/8.13.8/NCO v9.0) with ESMTP id m598eLBo815130
+	for <linux-rt-users@vger.kernel.org>; Mon, 9 Jun 2008 14:10:21 +0530
+Received: from d28av01.in.ibm.com (loopback [127.0.0.1])
+	by d28av01.in.ibm.com (8.13.1/8.13.3) with ESMTP id m598ewMK003226
+	for <linux-rt-users@vger.kernel.org>; Mon, 9 Jun 2008 14:10:58 +0530
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Jun 9, 2008 at 9:38 AM, Tarkan Erimer <tarkan@netone.net.tr> wrote:
->
-> I got this error message at compile stage. Also it is the same error that was on -rt4. -rt3 compiles and runs fine.
->
->
-> VDSOSYM arch/x86/vdso/vdso32-syms.lds
-> LD arch/x86/vdso/built-in.o
-> CC kernel/sched.o
-> kernel/sched.c: In function 'sched_init':
-> kernel/sched.c:7702: error: implicit declaration of function 'global_rt_runtime'
-> make[2]: *** [kernel/sched.o] Error 1
-> make[1]: *** [kernel] Error 2
-> make[1]: Leaving directory `/usr/src/linux-2.6.25.4'
-> make: *** [debian/stamp-build-kernel] Error 2
-> root@tarkane:/usr/src/linux-2.6.25.4#
->
+Hi,
 
+Found that inspite of setting the current_tracer to "none", trace from
+the previous trace type continued to be collected. The patch below fixes
+this and causes the trace to be disabled when the "none" type is
+selected.
 
+Compile and boot tested the patch for functionality.
 
-I got the same message but following previously sent patch works for me:
+Signed-off-by: Ankita Garg <ankita@in.ibm.com> 
 
--------- Original Message --------
-
-Subject: about 2.6.25.4-rt5 (missing global_rt_runtime)
-Date: Thu, 05 Jun 2008 12:18:49 +0000
-From: ciaby <ciaby@autistici.org>
-To: rostedt@goodmis.org
-
-Small patch to make it compile (missing global_rt_runtime function):
-
-diff -uNr linux-2.6.25.4.orig/kernel
-/sched.c linux-2.6.25.4/kernel/sched.c
-
---- linux-2.6.25.4.orig/kernel/sched.c  2008-06-05 14:12:30.000000000 +0200
-+++ linux-2.6.25.4/kernel/sched.c       2008-06-05 13:58:48.000000000 +0200
-
-@@ -671,6 +671,15 @@
-
- */
-  #define RUNTIME_INF    ((u64)~0ULL)
-
-+static u64 global_rt_runtime(void)
+Index: linux-2.6.25.4-rt6/kernel/trace/trace.c
+===================================================================
+--- linux-2.6.25.4-rt6.orig/kernel/trace/trace.c	2008-06-08 11:14:51.000000000 -0700
++++ linux-2.6.25.4-rt6/kernel/trace/trace.c	2008-06-09 01:10:57.000000000 -0700
+@@ -46,11 +46,6 @@
+ #define for_each_tracing_cpu(cpu)	\
+ 	for_each_cpu_mask_nr(cpu, tracing_buffer_mask)
+ 
+-/* dummy trace to disable tracing */
+-static struct tracer no_tracer __read_mostly = {
+-	.name		= "none",
+-};
+-
+ static int trace_alloc_page(void);
+ static int trace_free_page(void);
+ 
+@@ -139,6 +134,23 @@
+ /* trace_flags holds iter_ctrl options */
+ unsigned long trace_flags = TRACE_ITER_PRINT_PARENT;
+ 
++static notrace void no_trace_init(struct trace_array *tr)
 +{
-+       if (sysctl_sched_rt_period < 0)
-+               return RUNTIME_INF;
-+       return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
++	int cpu;
++
++	if(tr->ctrl)
++		for_each_online_cpu(cpu)
++			tracing_reset(tr->data[cpu]);
++	tracer_enabled = 0;
 +}
 +
++/* dummy trace to disable tracing */
++static struct tracer no_tracer __read_mostly = {
++	.name		= "none",
++	.init		= no_trace_init
++};
 +
 +
-/*
- * We really dont want to do anything complex within switch_to()
- * on PREEMPT_RT - this check enforces this.
+ /**
+  * trace_wake_up - wake up tasks waiting for trace input
+  *
+
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
