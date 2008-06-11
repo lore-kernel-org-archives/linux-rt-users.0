@@ -1,35 +1,93 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH] Disable tracing when current_tracer is set to "none"
-Date: Tue, 10 Jun 2008 21:10:04 +0200
-Message-ID: <20080610191004.GA5287@elte.hu>
-References: <20080609084025.GC7796@in.ibm.com>
+From: Max Krasnyansky <maxk@qualcomm.com>
+Subject: linux v2.6.25.6.cpuisol1
+Date: Tue, 10 Jun 2008 17:31:29 -0700
+Message-ID: <484F1CE1.3010701@qualcomm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: Ankita Garg <ankita@in.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:55149 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753792AbYFJTKS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 10 Jun 2008 15:10:18 -0400
-Content-Disposition: inline
-In-Reply-To: <20080609084025.GC7796@in.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758794AbYFKAbK@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+This is the latest version of my CPU isolation tree.
+Git tree is available at:
+   git://git.kernel.org/pub/scm/linux/kernel/git/maxk/cpuisol-2.6.25.y.git
+   http://www.kernel.org/pub/scm/linux/kernel/git/maxk/cpuisol-2.6.25.y.git
 
-* Ankita Garg <ankita@in.ibm.com> wrote:
+Full patch is at:
+http://kernel.org/pub/linux/kernel/people/maxk/cpuisol/patches/v2.6.25.6.cpuisol1.patch
 
-> Hi,
-> 
-> Found that inspite of setting the current_tracer to "none", trace from 
-> the previous trace type continued to be collected. The patch below 
-> fixes this and causes the trace to be disabled when the "none" type is 
-> selected.
-> 
-> Compile and boot tested the patch for functionality.
+In order to simplify overall system setup I wrote a simple tool for system
+partitioning - "syspart". You can get the latest version from here
+   http://kernel.org/pub/linux/kernel/people/maxk/cpuisol/syspart/
+   git://git.kernel.org/pub/scm/linux/kernel/git/maxk/syspart.git
 
-applied to tip/tracing/ftrace - thanks Ankita.
+This tool takes care of setting up IRQ affinities and cpusets, moving kernel
+and user space tasks, bring CPUs off/online, etc. Please note that you want to
+disable daemons like "irqbalance" to avoid resource partitioning conflicts.
+For more info see syspart/README.
 
-	Ingo
+--
+I also have some sample kernel configs that have been tested and are know to
+work. You can pick one of them as base for your kernel:
+   http://kernel.org/pub/linux/kernel/people/maxk/cpuisol/configs/
+
+Required kernel features:
+   CONFIG_CGROUP
+   CONFIG_CPUSETS
+   CONFIG_CPU_HOTPLUG
+
+Following features are required if you intend on chewing ~100% in the user
+space SCHED_FIFO threads running on the isolated CPUs (note that OPROFILE is
+known to not work for this use case):
+   CONFIG_SLUB or CONFIG_SLOB
+
+You may also want to disable the following features in order to achieve the
+lowest possible latency:
+   !CONFIG_HIGH_RES_TIMERS
+   !CONFIG_NO_HZ
+   !CONFIG_CPU_FREQ
+And of course you want to refer to
+   http://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
+for general guidelines on how to build RT applications.
+
+---
+This version is based on a completely different approach (compared to previous
+cpuisol tree releases). Instead of the centralized cpu_isolation_map it's now
+based on the existing kernel features like cpusets. The number of changes is
+therefor very small.
+
+Shortlog:
+Max Krasnyansky (6):
+      sched: Fix memory leak in the cpu hotplug handing logic
+      sched: CPU hotplug events must not destroy scheduler domains created by
+	     the cpusets
+      genirq: Expose default irq affinity mask (take 3)
+      sysctl: Add generic cpumask parser for sysctls
+      stopmachine: Introduce stopmachine_cpus sysctl
+      Linux 2.6.25.6.cpuisol1
+
+sched: changes are simple bug fixes and are on their way into the mainline.
+genirq: stuff has been ACKed in general is pending final ACK from genirq
+maintainer.
+stopmachine change is a temporary hack to allow for module insertion and removal.
+
+Diffstat:
+ Documentation/IRQ-affinity.txt     |   37 ++++++++++++++----
+ Documentation/filesystems/proc.txt |   29 +++++++++-----
+ Makefile                           |    2 -
+ arch/alpha/kernel/irq.c            |    5 +-
+ include/linux/irq.h                |   14 ++-----
+ include/linux/sysctl.h             |    2 +
+ kernel/cpuset.c                    |    6 +++
+ kernel/irq/manage.c                |   28 +++++++++++++-
+ kernel/irq/proc.c                  |   59 +++++++++++++++++++++++++++--
+ kernel/sched.c                     |   23 +++++++++++
+ kernel/stop_machine.c              |    5 ++
+ kernel/sysctl.c                    |   73 +++++++++++++++++++++++++++++++++++
+ 12 files changed, 244 insertions(+), 39 deletions(-)
+
+Comments, questions, suggestions and bug reports are welcome.
+Max
