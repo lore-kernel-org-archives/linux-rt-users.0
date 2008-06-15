@@ -1,78 +1,97 @@
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: cyclictest -t NUM argument not honoured
-Date: Sat, 14 Jun 2008 01:40:33 +0200
-Message-ID: <c384c5ea0806131640m391e650bn6f042f2f08b038eb@mail.gmail.com>
+From: "John Kacur" <jkacur@gmail.com>
+Subject: Re: cyclictest -t NUM argument not honoured [PATCH]
+Date: Sun, 15 Jun 2008 10:33:13 +0200
+Message-ID: <520f0cf10806150133h6ec838do1017f1800839fdd4@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: "Leon Woestenberg" <leon.woestenberg@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.247]:17899 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756458AbYFMXke (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.237]:13244 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756151AbYFOIdO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jun 2008 19:40:34 -0400
-Received: by an-out-0708.google.com with SMTP id d40so1032126and.103
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Jun 2008 16:40:33 -0700 (PDT)
+	Sun, 15 Jun 2008 04:33:14 -0400
+Received: by rv-out-0506.google.com with SMTP id k40so3134504rvb.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 15 Jun 2008 01:33:13 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Sat, Jun 14, 2008 at 1:40 AM, Leon Woestenberg
+<leon.woestenberg@gmail.com> wrote:
+>
+> Hello,
+>
+> I noticed many of my tests were bogus, as somehow my "-t NUM" argument
+> is not parsed properly on my target:
+>
+> Linux efika 2.6.25.4-rt6 #10 PREEMPT RT Thu Jun 12 00:34:11 CEST 2008
+> ppc unknown
+>
+> cyclictest 0.21 (with some extra argument printing added)
+>
+> root@efika:~# /cyclictest -t 2 -n -p 50
 
-I noticed many of my tests were bogus, as somehow my "-t NUM" argument
-is not parsed properly on my target:
+-t takes an optional argument, that means it will only be parsed
+correctly if you write it together without a space with the t, that
+is, -t2
 
-Linux efika 2.6.25.4-rt6 #10 PREEMPT RT Thu Jun 12 00:34:11 CEST 2008
-ppc unknown
+> threads = 1
+> started with interval 1000
+>
+> T: 0 ( 1178) P:50 I:1000 C:    333 Min:     45 Act:   46 Avg:   49 Max:     100
+>
+> root@efika:~# /cyclictest -t2 -n -p 50
 
-cyclictest 0.21 (with some extra argument printing added)
+Here you wrote it together and it was parsed properly.
 
-root@efika:~# /cyclictest -t 2 -n -p 50
-threads = 1
-started with interval 1000
+> threads = 2
+> started with interval 1000
+> started with interval 1500
+>
+> on my x86/32 system the same happens (with -t 4 it defaults to 2
+> because it's a dual-core, with -t4 it works).
+>
+> leon@witty:/tmp$ sudo ./cyclictest -t 4 -p 50
 
-T: 0 ( 1178) P:50 I:1000 C:    333 Min:     45 Act:   46 Avg:   49 Max:     100
+Once again, here you wrote it with a space in-between so it is not
+honoured. -p 50 on the other hand is parsed correctly because it takes
+a non-optional argument.
+> threads = 2
 
-root@efika:~# /cyclictest -t2 -n -p 50
-threads = 2
-started with interval 1000
-started with interval 1500
+---SNIP---
+>
+> At this moment I am puzzled, but I suspect the optional_argument handling.
+>
+I think you are right, it is just a puzzling thing about getopt since
+it parses non-optional arguments with or without a space, but optional
+arguments must be written without a space. Quoting from the manpage.
 
-on my x86/32 system the same happens (with -t 4 it defaults to 2
-because it's a dual-core, with -t4 it works).
+Two colons mean an option takes an optional arg; if there  is  text  in
+the  current  argv-element  (i.e.,  in the same word as the option name
+itself, for example, "-oarg"), then it is returned in optarg, otherwise
+optarg is set to zero.
 
-leon@witty:/tmp$ sudo ./cyclictest -t 4 -p 50
-threads = 2
-started with interval 1000
-started with interval 1500
-0.02 0.07 0.14 1/231 11760
+However, if optarg is set to zero, we could still try to parse the
+next argument using the optind, so here is my attempt to do so, can
+you test it?
 
-T: 0 (11759) P:50 I:1000 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-T: 1 (11760) P:49 I:1500 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-
-leon@witty:/tmp$ sudo ./cyclictest -t4 -p 50
-threads = 4
-started with interval 1000
-started with interval 1500
-started with interval 2000
-started with interval 2500
-0.01 0.06 0.14 1/233 11765
-
-T: 0 (11762) P:50 I:1000 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-T: 1 (11763) P:49 I:1500 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-T: 2 (11764) P:48 I:2000 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-T: 3 (11765) P:47 I:2500 C:      0 Min:1000000 Act:    0 Avg:    0 Max:-1000000
-
-At this moment I am puzzled, but I suspect the optional_argument handling.
-
-NAME
-       getopt - Parse command line options
-...
-BUGS
-       This manpage is confusing.
-
-
-Regards,
--- 
-Leon
+Index: rt/rt-tests/src/cyclictest/cyclictest.c
+===================================================================
+--- rt.orig/rt-tests/src/cyclictest/cyclictest.c        2008-06-04
+17:30:07.000000000 +0200
++++ rt/rt-tests/src/cyclictest/cyclictest.c     2008-06-15
+10:28:39.000000000 +0200
+@@ -680,7 +680,8 @@
+                        if (optarg != NULL)
+                                num_threads = atoi(optarg);
+                        else
+-                               num_threads = max_cpus;
++                               if (!(num_threads = atoi(argv[optind])))
++                                       num_threads = max_cpus;
+                        break;
+                case 'v': verbose = 1; break;
+                case '?': error = 1; break;
