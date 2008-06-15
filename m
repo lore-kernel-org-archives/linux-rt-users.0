@@ -1,134 +1,241 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: Re: cyclictest -t NUM argument not honoured [PATCH]
-Date: Sun, 15 Jun 2008 11:09:26 +0200
-Message-ID: <520f0cf10806150209m79c0cf75g400fd55de5b8c333@mail.gmail.com>
-References: <520f0cf10806150133h6ec838do1017f1800839fdd4@mail.gmail.com>
+From: Marin Mitov <mitov@issp.bas.bg>
+Subject: Re: [PATCH][resubmit] x86: enable preemption in delay
+Date: Sun, 15 Jun 2008 20:58:16 +0300
+Message-ID: <200806152058.17142.mitov@issp.bas.bg>
+References: <200805252108.25011.mitov@issp.bas.bg> <200806091911.21850.mitov@issp.bas.bg> <20080609161606.GA24841@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Leon Woestenberg" <leon.woestenberg@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>, akpm@osdl.org,
+	Clark Williams <clark.williams@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Andi Kleen <andi-suse@firstfloor.org>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.238]:27459 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756438AbYFOJJ1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Jun 2008 05:09:27 -0400
-Received: by rv-out-0506.google.com with SMTP id k40so3140259rvb.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 15 Jun 2008 02:09:26 -0700 (PDT)
-In-Reply-To: <520f0cf10806150133h6ec838do1017f1800839fdd4@mail.gmail.com>
+Received: from mail.issp.bas.bg ([195.96.236.10]:55493 "EHLO mail.issp.bas.bg"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758794AbYFOR7O (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 15 Jun 2008 13:59:14 -0400
+In-Reply-To: <20080609161606.GA24841@elte.hu>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Jun 15, 2008 at 10:33 AM, John Kacur <jkacur@gmail.com> wrote:
-> On Sat, Jun 14, 2008 at 1:40 AM, Leon Woestenberg
-> <leon.woestenberg@gmail.com> wrote:
->>
->> Hello,
->>
->> I noticed many of my tests were bogus, as somehow my "-t NUM" argument
->> is not parsed properly on my target:
->>
->> Linux efika 2.6.25.4-rt6 #10 PREEMPT RT Thu Jun 12 00:34:11 CEST 2008
->> ppc unknown
->>
->> cyclictest 0.21 (with some extra argument printing added)
->>
->> root@efika:~# /cyclictest -t 2 -n -p 50
->
-> -t takes an optional argument, that means it will only be parsed
-> correctly if you write it together without a space with the t, that
-> is, -t2
->
->> threads = 1
->> started with interval 1000
->>
->> T: 0 ( 1178) P:50 I:1000 C:    333 Min:     45 Act:   46 Avg:   49 Max:     100
->>
->> root@efika:~# /cyclictest -t2 -n -p 50
->
-> Here you wrote it together and it was parsed properly.
->
->> threads = 2
->> started with interval 1000
->> started with interval 1500
->>
->> on my x86/32 system the same happens (with -t 4 it defaults to 2
->> because it's a dual-core, with -t4 it works).
->>
->> leon@witty:/tmp$ sudo ./cyclictest -t 4 -p 50
->
-> Once again, here you wrote it with a space in-between so it is not
-> honoured. -p 50 on the other hand is parsed correctly because it takes
-> a non-optional argument.
->> threads = 2
->
-> ---SNIP---
->>
->> At this moment I am puzzled, but I suspect the optional_argument handling.
->>
-> I think you are right, it is just a puzzling thing about getopt since
-> it parses non-optional arguments with or without a space, but optional
-> arguments must be written without a space. Quoting from the manpage.
->
-> Two colons mean an option takes an optional arg; if there  is  text  in
-> the  current  argv-element  (i.e.,  in the same word as the option name
-> itself, for example, "-oarg"), then it is returned in optarg, otherwise
-> optarg is set to zero.
->
-> However, if optarg is set to zero, we could still try to parse the
-> next argument using the optind, so here is my attempt to do so, can
-> you test it?
->
-> Index: rt/rt-tests/src/cyclictest/cyclictest.c
-> ===================================================================
-> --- rt.orig/rt-tests/src/cyclictest/cyclictest.c        2008-06-04
-> 17:30:07.000000000 +0200
-> +++ rt/rt-tests/src/cyclictest/cyclictest.c     2008-06-15
-> 10:28:39.000000000 +0200
-> @@ -680,7 +680,8 @@
->                        if (optarg != NULL)
->                                num_threads = atoi(optarg);
->                        else
-> -                               num_threads = max_cpus;
-> +                               if (!(num_threads = atoi(argv[optind])))
-> +                                       num_threads = max_cpus;
->                        break;
->                case 'v': verbose = 1; break;
->                case '?': error = 1; break;
->
+On Monday 09 June 2008 07:16:06 pm Ingo Molnar wrote:
+> > There is no principal difference between both patches. I have seen 
+> > Steven's one as merged in linux-2.6.26-rc5. The only difference (if it 
+> > matters of all) is that in mine patch 
+> > preempt_disable()/preempt_enable() sections are shorter and protect 
+> > only the code that must be protected:
+> > 
+> > preempt_disable()
+> > rdtscl()
+> > smp_processor_id()
+> > preempt_enable()
+> > 
+> > As far as Steven's patch is already merged - let it be :-)
+> 
+> we could still merge your enhancements as well ontop of Steven's, if you 
+> would like to pursue it. If so then please send a patch against -rc5 or 
+> against -tip. Reducing the length of preempt-off sections is a fair 
+> goal.
+> 
+> 	Ingo
+> 
+Well, the patch is bellow (against 2.6.26-rc6), but I would really 
+appreciate your comments. 
 
-Thinking just a bit more about this - I don't want to introduce a new
-bug, if you put the -t option at the end without an argument, the
-above patch could sigsegv, so the following patch is more robust,
-hopefully production ready with the sign-off included
+The difference is that in Steven's version the loop is running 
+mainly with preemption disabled, except for: 
 
-Index: rt/rt-tests/src/cyclictest/cyclictest.c
-===================================================================
---- rt.orig/rt-tests/src/cyclictest/cyclictest.c        2008-06-04
-17:30:07.000000000 +0200
-+++ rt/rt-tests/src/cyclictest/cyclictest.c     2008-06-15
-11:06:34.000000000 +0200
-@@ -677,11 +677,13 @@
-                case 'r': timermode = TIMER_RELTIME; break;
-                case 's': use_system = MODE_SYS_OFFSET; break;
-                case 't':
--                       if (optarg != NULL)
--                               num_threads = atoi(optarg);
--                       else
--                               num_threads = max_cpus;
--                       break;
-+                         if (optarg != NULL)
-+                                 num_threads = atoi(optarg);
-+                         else if (argv[optind] && atoi(argv[optind]))
-+                                 num_threads = atoi(argv[optind]);
-+                         else
-+                                 num_threads = max_cpus;
-+                         break;
-                case 'v': verbose = 1; break;
-                case '?': error = 1; break;
-                }
+		preempt_enable();
+		rep_nop();
+		preempt_disable();
 
-Signed-off-by: John Kacur <jkacur@gmail.com>
+while in the proposed version the loop is running with
+preemption enabled, except for the part:
+
+		preempt_disable();
+		rdtscl(prev_1);
+		cpu = smp_processor_id();
+		rdtscl(now);
+		preempt_enable();
+
+I do realize that this is not a big difference as far as 
+the time of loop execution is quite short.
+
+In fact in the case of TSCs the problem is not the preemption 
+itself, but the migration to another cpu after the preemption.
+
+Why not something like that (do keep in mind I am not
+an expert :-):
+
+static void delay_tsc(unsigned long loops)
+{
+	get and store the mask of allowed cpus;
+	/*     prevent the migration   */
+	set the mask of allowed cpus to the current cpu only;
+	/*     is it possible? could it be guaranteed?    */
+	loop for the delay;
+	restore the old mask of allowed cpus;
+}
+
+You have got the idea. Could it be realized? Is it more expensive
+than the current realization? So, comments, please.
+
+Regards,
+
+Marin Mitov
+
+
+Signed-off-by: Marin Mitov <mitov@issp.bas.bg>
+
+=========================================
+--- a/arch/x86/lib/delay_32.c	2008-06-15 11:04:05.000000000 +0300
++++ b/arch/x86/lib/delay_32.c	2008-06-15 11:09:45.000000000 +0300
+@@ -40,41 +40,42 @@ static void delay_loop(unsigned long loo
+ 		:"0" (loops));
+ }
+ 
+-/* TSC based delay: */
++/* TSC based delay:
++ *
++ * We are careful about preemption as TSC's are per-CPU.
++ */
+ static void delay_tsc(unsigned long loops)
+ {
+-	unsigned long bclock, now;
+-	int cpu;
++	unsigned prev, prev_1, now;
++	unsigned left = loops;
++	unsigned prev_cpu, cpu;
+ 
+ 	preempt_disable();
+-	cpu = smp_processor_id();
+-	rdtscl(bclock);
+-	for (;;) {
+-		rdtscl(now);
+-		if ((now - bclock) >= loops)
+-			break;
++	rdtscl(prev);
++	prev_cpu = smp_processor_id();
++	preempt_enable();
++	now = prev;
+ 
+-		/* Allow RT tasks to run */
+-		preempt_enable();
++	do {
+ 		rep_nop();
++
++		left -= now - prev;
++		prev = now;
++
+ 		preempt_disable();
++		rdtscl(prev_1);
++		cpu = smp_processor_id();
++		rdtscl(now);
++		preempt_enable();
+ 
+-		/*
+-		 * It is possible that we moved to another CPU, and
+-		 * since TSC's are per-cpu we need to calculate
+-		 * that. The delay must guarantee that we wait "at
+-		 * least" the amount of time. Being moved to another
+-		 * CPU could make the wait longer but we just need to
+-		 * make sure we waited long enough. Rebalance the
+-		 * counter for this CPU.
+-		 */
+-		if (unlikely(cpu != smp_processor_id())) {
+-			loops -= (now - bclock);
+-			cpu = smp_processor_id();
+-			rdtscl(bclock);
++		if (prev_cpu != cpu) {
++			/*
++			 * We have migrated, forget prev_cpu's tsc reading
++			 */
++			prev = prev_1;
++			prev_cpu = cpu;
+ 		}
+-	}
+-	preempt_enable();
++	} while ((now-prev) < left);
+ }
+ 
+ /*
+--- a/arch/x86/lib/delay_64.c	2008-06-15 11:04:17.000000000 +0300
++++ b/arch/x86/lib/delay_64.c	2008-06-15 11:09:52.000000000 +0300
+@@ -28,40 +28,42 @@ int __devinit read_current_timer(unsigne
+ 	return 0;
+ }
+ 
++/* TSC based delay:
++ *
++ * We are careful about preemption as TSC's are per-CPU.
++ */
+ void __delay(unsigned long loops)
+ {
+-	unsigned bclock, now;
+-	int cpu;
++	unsigned prev, prev_1, now;
++	unsigned left = loops;
++	unsigned prev_cpu, cpu;
+ 
+ 	preempt_disable();
+-	cpu = smp_processor_id();
+-	rdtscl(bclock);
+-	for (;;) {
+-		rdtscl(now);
+-		if ((now - bclock) >= loops)
+-			break;
++	rdtscl(prev);
++	prev_cpu = smp_processor_id();
++	preempt_enable();
++	now = prev;
+ 
+-		/* Allow RT tasks to run */
+-		preempt_enable();
++	do {
+ 		rep_nop();
++
++		left -= now - prev;
++		prev = now;
++
+ 		preempt_disable();
++		rdtscl(prev_1);
++		cpu = smp_processor_id();
++		rdtscl(now);
++		preempt_enable();
+ 
+-		/*
+-		 * It is possible that we moved to another CPU, and
+-		 * since TSC's are per-cpu we need to calculate
+-		 * that. The delay must guarantee that we wait "at
+-		 * least" the amount of time. Being moved to another
+-		 * CPU could make the wait longer but we just need to
+-		 * make sure we waited long enough. Rebalance the
+-		 * counter for this CPU.
+-		 */
+-		if (unlikely(cpu != smp_processor_id())) {
+-			loops -= (now - bclock);
+-			cpu = smp_processor_id();
+-			rdtscl(bclock);
++		if (prev_cpu != cpu) {
++			/*
++			 * We have migrated, forget prev_cpu's tsc reading
++			 */
++			 prev = prev_1;
++			 prev_cpu = cpu;
+ 		}
+-	}
+-	preempt_enable();
++	} while ((now-prev) < left);
+ }
+ EXPORT_SYMBOL(__delay);
+ 
