@@ -1,57 +1,72 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: locking_selftest triggers WARN_ON by exceeding MAX_RWLOCK_DEPTH
-Date: Fri, 20 Jun 2008 21:28:06 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0806202126020.28978@gandalf.stny.rr.com>
-References: <1214005359.10102.26.camel@josh-work.beaverton.ibm.com>
+Subject: 2.6.24.7-rt14
+Date: Mon, 23 Jun 2008 17:21:57 -0400
+Message-ID: <1214256117.8701.13.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>
-To: Josh Triplett <josht@linux.vnet.ibm.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:47141 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:62756 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751083AbYFUB2J convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1753043AbYFWVWA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Jun 2008 21:28:09 -0400
-In-Reply-To: <1214005359.10102.26.camel@josh-work.beaverton.ibm.com>
+	Mon, 23 Jun 2008 17:22:00 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are pleased to announce the 2.6.24.7-rt14 tree, which can be
+downloaded from the location:
+
+  http://rt.et.redhat.com/download/
+
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24.7-rt13
+
+  - rwlock pi_lock fixes on waking up multiple readers (Steven Rostedt)
+
+  - revert adaptive locks from RCU (Thomas Gleixner)
+     [ for some reason, using RCU causes some latency spikes, this
+       may be a sign of something going wrong in RCU itself ]
+
+  - rwlock mutex owner fix for waking up reader with readers held (Steven Rostedt)
+
+  - rwlock remove waiter from pi_list on above fix (Steven Rostedt and
+                                                    Thomas Gleixner)
+
+  - rwlock replace macro with inline (Thomas Gleixner)
+
+  - rwlock pending namespace updates (Thomas Gleixner)
+
+  - rwlock debug check (Thomas Gleixner)
+
+  - futex fix fault (Thomas Gleixner)
+
+  - x86_64 fix copy user (Linus Torvalds)
+
+to build a 2.6.24.7-rt14 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt14.bz2
 
 
-On Fri, 20 Jun 2008, Josh Triplett wrote:
->
-> However, CONFIG_DEBUG_LOCKING_API_SELFTESTS includes tests which
-> intentionally use locks incorrectly, and in particular it locks witho=
-ut
-> unlocking.  This quickly reaches the 5 lock limit.  AA_rlock locks tw=
-ice
-> without unlocking, AA_rsem locks twice more without unlocking, and
-> ABBA_rlock locks twice more before it unlocks; this nests read locks =
-six
-> deep, triggering the WARN_ON.
->
-> Given that =EF=BB=BF=EF=BB=BFCONFIG_DEBUG_LOCKING_API_SELFTESTS exist=
-s to use locks
-> incorrectly, I don't think this necessarily needs fixing.  However,
-> perhaps locking_selftest should print a big warning in advance if run
-> without lockdep turned on, saying to expect locking-related
-> warnings/bugs/panics?
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
 
-Hmm, perhaps we should shoot up the limit if
-CONFIG_DEBUG_LOCKING_API_SELFTESTS is turned on, otherwise it can do ba=
-d
-things. I hit the warn on, but I don't know how robust it is once a rea=
-der
-locking is above that limit. OTW, it may make the system unstable and i=
-t
-is not recommend to keep the box running.
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
 
 -- Steve
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
