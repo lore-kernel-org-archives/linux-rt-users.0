@@ -1,64 +1,49 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] 2.6.25.4-rt6: missing =?UTF-8?Q?global=5Frt=5Fruntime=28=29=20in?=
- =?UTF-8?Q?=20sched=2Ec?=
-Date: Mon, 23 Jun 2008 18:43:45 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0806231843120.27994@gandalf.stny.rr.com>
-References: <7688fdc041a8f848b0627dccccddcf12@localhost>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/3] RT: scheduler newidle enhancements
+Date: Mon, 23 Jun 2008 17:04:35 -0600
+Message-ID: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: ciaby <ciaby@autistici.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, peterz@infradead.org,
+	linux-rt-users@vger.kernel.org, ghaskins@novell.com,
+	dbahi@novell.com
+To: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:37445 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750751AbYFWWns (ORCPT
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8666 "EHLO
+	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750958AbYFWXEg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 18:43:48 -0400
-In-Reply-To: <7688fdc041a8f848b0627dccccddcf12@localhost>
+	Mon, 23 Jun 2008 19:04:36 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Ingo, Steven, Thomas,
+  The following series applies to 25.4-rt6 and is "ready for inclusion" from
+  my perspective.  However, due to their nature I am sure we will want to get
+  some review feedback before being considered for acceptance.
 
-On Mon, 9 Jun 2008, ciaby wrote:
+  These patches are probably suitable for consideration for
+  mainline/sched-devel as well, but PREEMPT_RT gains the biggest boost from
+  them since it tends to context switch much more frequently than mainline.
 
->
->
-> I already sent this patch, but seems that nobody cared... the last 2
-> revisions of the -rt kernel don't compile properly.
-> Second patch to fix this.
-> Regards
+  This series makes some adjustments to the way we do newidle balancing.
+  These tweaks were discovered while doing some related scheduler R&D that is
+  not quite ready for the light of day.  But these patches do offer a
+  substantial boost (6-12%) in network performance.  They may help in other
+  areas as well, but networking is where our focus remains currently.
 
-I still don't have a "Signed-off-by:" for this patch. Please send it to me
-ASAP, otherwise it will miss the next release.
+  I think the patch 1/3 is a good one, but it requires careful review. Patch
+  2/3 is based upon some work I had seen PeterZ submit, so its possible to
+  just pull his work (if it hasnt been already) as opposed to this patch, if
+  desired.  Lastly, Patch 3/3 is a bit controversial so I put it last for
+  easier cherry picking of the first two.  It does help in our testing, but it
+  will have to be reviewed carefully.
 
--- Steve
+Comments/feedback/bugfixes more than welcome.
 
->
-> Giovanni "ciaby" Civardi
->
-> diff -uNr linux-2.6.25.4-rt6.orig/kernel/sched.c
-> linux-2.6.25.4-rt6/kernel/sched.c
-> --- linux-2.6.25.4-rt6.orig/kernel/sched.c      2008-06-09
-> 11:35:57.000000000 +0200
-> +++ linux-2.6.25.4-rt6/kernel/sched.c   2008-06-09 11:40:45.000000000 +0200
-> @@ -672,6 +672,13 @@
->   */
->  #define RUNTIME_INF    ((u64)~0ULL)
->
-> +static u64 global_rt_runtime(void)
-> +{
-> +       if (sysctl_sched_rt_period < 0)
-> +               return RUNTIME_INF;
-> +       return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
-> +}
-> +
->  /*
->   * We really dont want to do anything complex within switch_to()
->   * on PREEMPT_RT - this check enforces this.
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+Thanks!
+-Greg
+
+  
+
