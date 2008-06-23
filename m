@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 1/3] sched: enable interrupts and drop rq-lock during newidle
-	balancing
-Date: Mon, 23 Jun 2008 17:04:40 -0600
-Message-ID: <20080623230440.31515.97377.stgit@lsg.lsg.lab.novell.com>
+Subject: [PATCH 2/3] sched: only run newidle if previous task was CFS
+Date: Mon, 23 Jun 2008 17:04:45 -0600
+Message-ID: <20080623230445.31515.41728.stgit@lsg.lsg.lab.novell.com>
 References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,110 +11,88 @@ Cc: linux-kernel@vger.kernel.org, peterz@infradead.org,
 	dbahi@novell.com
 To: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8674 "EHLO
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8681 "EHLO
 	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751629AbYFWXEk (ORCPT
+	with ESMTP id S1752073AbYFWXEp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 19:04:40 -0400
+	Mon, 23 Jun 2008 19:04:45 -0400
 In-Reply-To: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We do find_busiest_groups() et. al. without locks held for normal balancing,
-so lets do it for newidle as well.  It will allow other cpus to make
-forward progress (against our RQ) while we try to balance and allow 
-some interrupts to occur.
+A system that tends to overschedule (such as PREEMPT_RT) will naturally
+tend to newidle balance often as well.  This may have quite a negative
+impact on performance.  This patch attempts to address the overzealous
+newidle balancing by only allowing it to occur if the previous task
+was SCHED_OTHER.
+
+Some may argue that if the system is going idle, it should try to
+newidle balance to keep it doing useful work.  But the fact is that
+spending too much time in the load-balancing code demonstrably hurts
+performance as well.  Running oprofile on the system with various
+workloads has shown that we can sometimes spend a majority of our
+cpu-time running load_balance_newidle.  Additionally, disabling
+newidle balancing can make said workloads increase in performance by
+up to 200%.  Obviously disabling the feature outright is not sustainable,
+but hopefully we can make it smarter. 
+
+This code assumes that if there arent any CFS tasks present on the queue,
+it was probably already balanced.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched.c |   44 ++++++++++++++++++++++++++++++++++++++------
- 1 files changed, 38 insertions(+), 6 deletions(-)
+ kernel/sched.c      |    4 +---
+ kernel/sched_fair.c |    9 +++++++++
+ 2 files changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 31f91d9..490e6bc 100644
+index 490e6bc..3efbbc5 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -3333,6 +3333,16 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd)
- 	int sd_idle = 0;
- 	int all_pinned = 0;
- 	cpumask_t cpus = CPU_MASK_ALL;
-+	int nr_running;
-+
-+	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
-+
-+	/*
-+	 * We are in a preempt-disabled section, so dropping the lock/irq
-+	 * here simply means that other cores may acquire the lock,
-+	 * and interrupts may occur.
-+	 */
-+	spin_unlock_irq(&this_rq->lock);
+@@ -1310,6 +1310,7 @@ static unsigned long source_load(int cpu, int type);
+ static unsigned long target_load(int cpu, int type);
+ static unsigned long cpu_avg_load_per_task(int cpu);
+ static int task_hot(struct task_struct *p, u64 now, struct sched_domain *sd);
++static void idle_balance(int this_cpu, struct rq *this_rq);
+ #endif /* CONFIG_SMP */
  
- 	/*
- 	 * When power savings policy is enabled for the parent domain, idle
-@@ -3344,7 +3354,6 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd)
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
- 		sd_idle = 1;
+ #include "sched_stats.h"
+@@ -4170,9 +4171,6 @@ asmlinkage void __sched __schedule(void)
+ 		prev->sched_class->pre_schedule(rq, prev);
+ #endif
  
--	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
- redo:
- 	group = find_busiest_group(sd, this_cpu, &imbalance, CPU_NEWLY_IDLE,
- 				   &sd_idle, &cpus, NULL);
-@@ -3366,14 +3375,33 @@ redo:
+-	if (unlikely(!rq->nr_running))
+-		idle_balance(cpu, rq);
+-
+ 	prev->sched_class->put_prev_task(rq, prev);
+ 	next = pick_next_task(rq, prev);
  
- 	ld_moved = 0;
- 	if (busiest->nr_running > 1) {
--		/* Attempt to move tasks */
--		double_lock_balance(this_rq, busiest);
--		/* this_rq->clock is already updated */
--		update_rq_clock(busiest);
-+		local_irq_disable();
-+		double_rq_lock(this_rq, busiest);
-+
-+		BUG_ON(this_cpu != smp_processor_id());
-+
-+		/*
-+		 * Checking rq->nr_running covers both the case where
-+		 * newidle-balancing pulls a task, as well as if something
-+		 * else issued a NEEDS_RESCHED (since we would only need
-+		 * a reschedule if something was moved to us)
-+		 */
-+		if (this_rq->nr_running) {
-+			double_rq_unlock(this_rq, busiest);
-+			local_irq_enable();
-+			goto out_balanced;
-+		}
-+
- 		ld_moved = move_tasks(this_rq, this_cpu, busiest,
- 					imbalance, sd, CPU_NEWLY_IDLE,
- 					&all_pinned);
--		spin_unlock(&busiest->lock);
-+
-+		nr_running = this_rq->nr_running;
-+		double_rq_unlock(this_rq, busiest);
-+		local_irq_enable();
-+
-+		if (nr_running)
-+			goto out_balanced;
+diff --git a/kernel/sched_fair.c b/kernel/sched_fair.c
+index 0ade6f8..2e22529 100644
+--- a/kernel/sched_fair.c
++++ b/kernel/sched_fair.c
+@@ -1426,6 +1426,14 @@ static void moved_group_fair(struct task_struct *p)
+ }
+ #endif
  
- 		if (unlikely(all_pinned)) {
- 			cpu_clear(cpu_of(busiest), cpus);
-@@ -3382,6 +3410,8 @@ redo:
- 		}
- 	}
- 
-+	spin_lock_irq(&this_rq->lock);
++#ifdef CONFIG_SMP
++static void pre_schedule_fair(struct rq *rq, struct task_struct *prev)
++{
++	if (unlikely(!rq->nr_running))
++		idle_balance(rq->cpu, rq);
++}
++#endif
 +
- 	if (!ld_moved) {
- 		schedstat_inc(sd, lb_failed[CPU_NEWLY_IDLE]);
- 		if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
-@@ -3393,6 +3423,8 @@ redo:
- 	return ld_moved;
+ /*
+  * All the scheduling class methods:
+  */
+@@ -1446,6 +1454,7 @@ static const struct sched_class fair_sched_class = {
+ #ifdef CONFIG_SMP
+ 	.load_balance		= load_balance_fair,
+ 	.move_one_task		= move_one_task_fair,
++	.pre_schedule		= pre_schedule_fair,
+ #endif
  
- out_balanced:
-+	spin_lock_irq(&this_rq->lock);
-+
- 	schedstat_inc(sd, lb_balanced[CPU_NEWLY_IDLE]);
- 	if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
+ 	.set_curr_task          = set_curr_task_fair,
 
