@@ -1,72 +1,64 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt14
-Date: Mon, 23 Jun 2008 17:21:57 -0400
-Message-ID: <1214256117.8701.13.camel@localhost.localdomain>
+Subject: Re: [PATCH] 2.6.25.4-rt6: missing =?UTF-8?Q?global=5Frt=5Fruntime=28=29=20in?=
+ =?UTF-8?Q?=20sched=2Ec?=
+Date: Mon, 23 Jun 2008 18:43:45 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0806231843120.27994@gandalf.stny.rr.com>
+References: <7688fdc041a8f848b0627dccccddcf12@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: ciaby <ciaby@autistici.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:62756 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:37445 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753043AbYFWVWA (ORCPT
+	with ESMTP id S1750751AbYFWWns (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 17:22:00 -0400
+	Mon, 23 Jun 2008 18:43:48 -0400
+In-Reply-To: <7688fdc041a8f848b0627dccccddcf12@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt14 tree, which can be
-downloaded from the location:
 
-  http://rt.et.redhat.com/download/
+On Mon, 9 Jun 2008, ciaby wrote:
 
-Information on the RT patch can be found at:
+>
+>
+> I already sent this patch, but seems that nobody cared... the last 2
+> revisions of the -rt kernel don't compile properly.
+> Second patch to fix this.
+> Regards
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24.7-rt13
-
-  - rwlock pi_lock fixes on waking up multiple readers (Steven Rostedt)
-
-  - revert adaptive locks from RCU (Thomas Gleixner)
-     [ for some reason, using RCU causes some latency spikes, this
-       may be a sign of something going wrong in RCU itself ]
-
-  - rwlock mutex owner fix for waking up reader with readers held (Steven Rostedt)
-
-  - rwlock remove waiter from pi_list on above fix (Steven Rostedt and
-                                                    Thomas Gleixner)
-
-  - rwlock replace macro with inline (Thomas Gleixner)
-
-  - rwlock pending namespace updates (Thomas Gleixner)
-
-  - rwlock debug check (Thomas Gleixner)
-
-  - futex fix fault (Thomas Gleixner)
-
-  - x86_64 fix copy user (Linus Torvalds)
-
-to build a 2.6.24.7-rt14 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt14.bz2
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
+I still don't have a "Signed-off-by:" for this patch. Please send it to me
+ASAP, otherwise it will miss the next release.
 
 -- Steve
 
-
-
+>
+> Giovanni "ciaby" Civardi
+>
+> diff -uNr linux-2.6.25.4-rt6.orig/kernel/sched.c
+> linux-2.6.25.4-rt6/kernel/sched.c
+> --- linux-2.6.25.4-rt6.orig/kernel/sched.c      2008-06-09
+> 11:35:57.000000000 +0200
+> +++ linux-2.6.25.4-rt6/kernel/sched.c   2008-06-09 11:40:45.000000000 +0200
+> @@ -672,6 +672,13 @@
+>   */
+>  #define RUNTIME_INF    ((u64)~0ULL)
+>
+> +static u64 global_rt_runtime(void)
+> +{
+> +       if (sysctl_sched_rt_period < 0)
+> +               return RUNTIME_INF;
+> +       return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
+> +}
+> +
+>  /*
+>   * We really dont want to do anything complex within switch_to()
+>   * on PREEMPT_RT - this check enforces this.
+>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
