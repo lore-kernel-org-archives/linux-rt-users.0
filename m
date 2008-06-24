@@ -1,37 +1,42 @@
 From: Juergen Beisert <jbe@pengutronix.de>
 Subject: Re: 2.6.25.8-rt7
-Date: Tue, 24 Jun 2008 16:46:07 +0200
-Message-ID: <200806241646.08335.jbe@pengutronix.de>
-References: <4860CD0B0200005A0003944C@sinclair.provo.novell.com> <4860CD140200005A0003944F@sinclair.provo.novell.com> <4860CD140200005A0003944F@sinclair.provo.novell.com>
+Date: Tue, 24 Jun 2008 16:54:58 +0200
+Message-ID: <200806241654.58857.jbe@pengutronix.de>
+References: <1214271257.8701.17.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Gregory Haskins" <GHaskins@novell.com>, mingo@elte.hu,
-	rostedt@goodmis.org, tglx@linutronix.de,
-	linux-kernel@vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:44973 "EHLO
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:45225 "EHLO
 	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1757833AbYFXOqW convert rfc822-to-8bit
+	by vger.kernel.org with ESMTP id S1756607AbYFXOzE convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jun 2008 10:46:22 -0400
-In-Reply-To: <4860CD140200005A0003944F@sinclair.provo.novell.com>
+	Tue, 24 Jun 2008 10:55:04 -0400
+In-Reply-To: <1214271257.8701.17.camel@localhost.localdomain>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 24 June 2008 16:31, Gregory Haskins wrote:
-> I believe this is my fault.  You must be building for uniprocessor?  =
-Ingo
-> has a fix for this issue in sched-devel that should be pulled into -r=
-t.
+On Tuesday 24 June 2008 03:34, Steven Rostedt wrote:
+>   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.25.tar.bz2
+>   http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.25.8.bz2
+>   http://rt.et.redhat.com/download/patch-2.6.25.8-rt7.bz2
 
-I can avoid this failure, when I disable the "Group scheduling for=20
-SCHED_RR/FIFO" menu entry. Don't know the impact.
+And for ARM I get a bunch of these warnings:
+
+[...]
+include/asm/atomic.h:241:1: warning: "cmpxchg" redefined
+[...]
+include/asm-generic/cmpxchg.h:19:1: warning: this is the location of th=
+e previous definition
+[...]
+
+
+Can I ignore them?
 
 Juergen
-
 --=20
 Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
 =A0Pengutronix - Linux Solutions for Science and Industry
