@@ -1,57 +1,40 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
-Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at least one task has moved over
-Date: Tue, 24 Jun 2008 10:50:11 +1000
-Message-ID: <200806241050.12028.nickpiggin@yahoo.com.au>
-References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com> <20080623230450.31515.75112.stgit@lsg.lsg.lab.novell.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [PATCH 0/3] RT: scheduler newidle enhancements
+Date: Mon, 23 Jun 2008 19:51:58 -0600
+Message-ID: <48601AFE.BA47.005A.0@novell.com>
+References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de,
-	linux-kernel@vger.kernel.org, peterz@infradead.org,
-	linux-rt-users@vger.kernel.org, dbahi@novell.com
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <peterz@infradead.org>, "David Bahi" <DBahi@novell.com>,
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: <mingo@elte.hu>, <rostedt@goodmis.org>, <tglx@linutronix.de>,
+	"Gregory Haskins" <GHaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp120.mail.mud.yahoo.com ([209.191.84.77]:35414 "HELO
-	smtp120.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1751241AbYFXAuX (ORCPT
+Received: from sinclair.provo.novell.com ([137.65.248.137]:18506 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751015AbYFXAvy convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 20:50:23 -0400
-In-Reply-To: <20080623230450.31515.75112.stgit@lsg.lsg.lab.novell.com>
+	Mon, 23 Jun 2008 20:51:54 -0400
+In-Reply-To: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 24 June 2008 09:04, Gregory Haskins wrote:
-> Inspired by Peter Zijlstra.
+>>> On Mon, Jun 23, 2008 at  7:04 PM, in message
+<20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>, Gregory Haskins
+<ghaskins@novell.com> wrote: 
+>
+> 
+>   I think the patch 1/3 is a good one, but it requires careful review. Patch
+>   2/3 is based upon some work I had seen PeterZ submit, so its possible to
+>   just pull his work (if it hasnt been already) as opposed to this patch, if
+>   desired.  Lastly, Patch 3/3 is a bit controversial so I put it last for
+>   easier cherry picking of the first two.  It does help in our testing, but 
+> it
+>   will have to be reviewed carefully.
 
-Is this really getting tested well? Because at least for SCHED_OTHER
-tasks, the newidle balancer is still supposed to be relatively
-conservative and not over balance too much. By the time you have
-done all this calculation and reached here, it will be a loss to only
-move one task if you could have moved two and halved your newidle
-balance rate...
+Err...in case it wasnt obvious, I had 2/3 and 3/3 inverted in my description.  2/3 is the controversial one, 3/3 is based on Peter's work.  Sorry for the(my) confusion. :)
 
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> ---
->
->  kernel/sched.c |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
->
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 3efbbc5..c8e8520 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -2775,6 +2775,10 @@ static int move_tasks(struct rq *this_rq, int
-> this_cpu, struct rq *busiest, max_load_move - total_load_moved,
->  				sd, idle, all_pinned, &this_best_prio);
->  		class = class->next;
-> +
-> +		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
-> +			break;
-> +
->  	} while (class && max_load_move > total_load_moved);
->
->  	return total_load_moved > 0;
->
-> --
+-Greg
+
