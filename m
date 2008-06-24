@@ -1,12 +1,11 @@
 From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 1/3] sched: enable interrupts and drop
-	rq-lockduringnewidle balancing
-Date: Tue, 24 Jun 2008 06:39:49 -0600
-Message-ID: <4860B2D5.BA47.005A.0@novell.com>
+Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at
+	leastone task has moved over
+Date: Tue, 24 Jun 2008 07:18:42 -0600
+Message-ID: <4860BBF2.BA47.005A.0@novell.com>
 References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
- <20080623230440.31515.97377.stgit@lsg.lsg.lab.novell.com>
- <1214302405.4351.21.camel@twins> <4860BB14.BA47.005A.0@novell.com>
- <1214310299.4351.27.camel@twins>
+ <20080623230450.31515.75112.stgit@lsg.lsg.lab.novell.com>
+ <1214302406.4351.23.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
@@ -15,66 +14,76 @@ Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <tglx@linutronix.de>,
 	<linux-rt-users@vger.kernel.org>
 To: "Peter Zijlstra" <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:35568 "EHLO
+Received: from sinclair.provo.novell.com ([137.65.248.137]:37485 "EHLO
 	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751022AbYFXMj4 convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752566AbYFXNSo convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jun 2008 08:39:56 -0400
-In-Reply-To: <1214310299.4351.27.camel@twins>
+	Tue, 24 Jun 2008 09:18:44 -0400
+In-Reply-To: <1214302406.4351.23.camel@twins>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Tue, Jun 24, 2008 at  8:24 AM, in message <1214310299.4351.27.camel@twins>,
+>>> On Tue, Jun 24, 2008 at  6:13 AM, in message <1214302406.4351.23.camel@twins>,
 Peter Zijlstra <peterz@infradead.org> wrote: 
-> On Tue, 2008-06-24 at 07:15 -0600, Gregory Haskins wrote:
->> >>> On Tue, Jun 24, 2008 at  6:13 AM, in message 
-> <1214302405.4351.21.camel@twins>,
->> Peter Zijlstra <peterz@infradead.org> wrote: 
->> > On Mon, 2008-06-23 at 17:04 -0600, Gregory Haskins wrote:
->> >> We do find_busiest_groups() et. al. without locks held for normal 
-> balancing,
->> >> so lets do it for newidle as well.  It will allow other cpus to make
->> >> forward progress (against our RQ) while we try to balance and allow 
->> >> some interrupts to occur.
->> > 
->> > Is running f_b_g really that expensive? 
+> On Mon, 2008-06-23 at 17:04 -0600, Gregory Haskins wrote:
+>> Inspired by Peter Zijlstra.
 >> 
->> According to our oprofile data, yes.  I speculate that it works out that way 
-> because most newidle
->> attempts result in "no imbalance".  But we were spending ~60%+ time in 
-> find_busiest_groups()
->> because of all the heavy-context switching that goes on in PREEMPT_RT.  So 
-> while f_b_g() is
->> probably cheaper than double-lock/move_tasks(), the ratio of occurrence is 
-> off the charts in
->> comparison. Prior to this patch, those occurrences were 
-> preempt-disabled/irq-disabled/rq->lock critical
->> sections.
+>> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+>> ---
 >> 
->> So while it is not clear if f_b_g() is the actual cost, it is a convenient 
-> (and legal, afaict) place to
->> deterministically reduce the rq->lock scope.  Additionally, doing so 
-> measurably helps
->> performance, so I think its a win.  Without this patch you have to hope the 
-> double_lock releases
->> this_rq, and even so were not checking for the NEEDS_RESCHED. 
+>>  kernel/sched.c |    4 ++++
+>>  1 files changed, 4 insertions(+), 0 deletions(-)
+>> 
+>> diff --git a/kernel/sched.c b/kernel/sched.c
+>> index 3efbbc5..c8e8520 100644
+>> --- a/kernel/sched.c
+>> +++ b/kernel/sched.c
+>> @@ -2775,6 +2775,10 @@ static int move_tasks(struct rq *this_rq, int 
+> this_cpu, struct rq *busiest,
+>>  				max_load_move - total_load_moved,
+>>  				sd, idle, all_pinned, &this_best_prio);
+>>  		class = class->next;
+>> +
+>> +		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
+>> +			break;
+>> +
+>>  	} while (class && max_load_move > total_load_moved);
+>>  
+>>  	return total_load_moved > 0;
 > 
-> See, having had this information in the changelog to begin with would
-> have helped ;-)
+> 
+> right,.. uhm, except that you forgot all the other fixes and
+> generalizations I had,..
 
-What?  You can't read my mind?  :)
+Heh...well I intentionally simplified it, but perhaps that is out of ignorance.  I did say "inspired by" ;)
 
-Good point, Peter.  Will fix on next drop.
+> 
+> The LB_START/LB_COMPLETE stuff is needed to fix CFS load balancing. It
+> now always iterates the first sysctl_sched_nr_migrate tasks, and if it
+> doesn't find any there, just gives up - which isn't too big of a problem
+> with it set to 32, but if you drop it to 2/4 stuff starts valing apart.
+> 
+> And the break I had here, only checks classes above and equal to the
+> current class.
+> 
+> This again is needed when you have more classes.
 
+Im not sure I understand/agree here (unless you plan on having a class below sched_idle()??)
+
+The fact that we are going NEWLYIDLE to me implies that all the other classes are
+"above or equal".  And rq->nr_running approximates all the per-class vtable work
+that you had done to probe the higher classes.  We currently only hit this code when
+rq->nr_running == 0, so rq->nr_running !=0 seems like a logical termination
+condition.
+
+I guess what I am not clear on is: "when would we be NEWLYIDLE in a higher class,
+yet have tasks populated in lower classes such at nr_running is non-zero".
+Additionally, even if we have that condition (e.g. with something like the EDF work you
+are doing, perhaps?), shouldn't we patch the advanced form of this logic when the rest
+of the code goes in?  For now, this seems like the most straight forward way to
+accomplish the goal.  But I could be missing something ;)
+
+Regards,
 -Greg
-
-> 
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
 
