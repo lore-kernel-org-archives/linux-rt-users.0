@@ -1,80 +1,110 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 1/3] sched: limit "all_pinned" balance attempts to sd->span
-Date: Tue, 24 Jun 2008 08:16:02 -0600
-Message-ID: <20080624141602.28487.81775.stgit@lsg.lsg.lab.novell.com>
-References: <20080624141527.28487.77778.stgit@lsg.lsg.lab.novell.com>
+From: "Gregory Haskins" <GHaskins@novell.com>
+Subject: Re: 2.6.25.8-rt7
+Date: Tue, 24 Jun 2008 08:31:48 -0600
+Message-ID: <4860CD140200005A0003944F@sinclair.provo.novell.com>
+References: <4860CD0B0200005A0003944C@sinclair.provo.novell.com>
+ <4860CD140200005A0003944F@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, peterz@infradead.org,
-	linux-rt-users@vger.kernel.org, ghaskins@novell.com,
-	dbahi@novell.com, npiggin@suse.de
-To: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760661AbYFXOQ7@vger.kernel.org>
-In-Reply-To: <20080624141527.28487.77778.stgit@lsg.lsg.lab.novell.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <tglx@linutronix.de>,
+	<linux-kernel@vger.kernel.org>
+To: <jbe@pengutronix.de>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from sinclair.provo.novell.com ([137.65.248.137]:42048 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753730AbYFXObw convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Jun 2008 10:31:52 -0400
+In-Reply-To: <4860CD140200005A0003944F@sinclair.provo.novell.com>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Load-balancing will never terminate if all cpus are "all_pinned" with
-the current algorithm.  This would be pretty unlikely to occur, but we
-should protect against it nonetheless.
+(Sorry for toppost)
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+I believe this is my fault.  You must be building for uniprocessor?  Ingo has a fix for this issue in sched-devel that should be pulled into -rt.
 
- kernel/sched.c |   19 ++++++++++---------
- 1 files changed, 10 insertions(+), 9 deletions(-)
+Sorry for the inconvenience.  I will pull the patch myself and submit it when I get home (if someone doesn't beat me to it)
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 31f91d9..54b27b4 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -3178,7 +3178,8 @@ static int load_balance(int this_cpu, struct rq *this_rq,
- 	struct sched_group *group;
- 	unsigned long imbalance;
- 	struct rq *busiest;
--	cpumask_t cpus = CPU_MASK_ALL;
-+	cpumask_t cpus = sd->span;
-+	int remain = cpus_weight(sd->span) - 1;
- 	unsigned long flags;
- 
- 	/*
-@@ -3237,11 +3238,10 @@ redo:
- 			resched_cpu(this_cpu);
- 
- 		/* All tasks on this runqueue were pinned by CPU affinity */
--		if (unlikely(all_pinned)) {
-+		if (unlikely(all_pinned && remain)) {
- 			cpu_clear(cpu_of(busiest), cpus);
--			if (!cpus_empty(cpus))
--				goto redo;
--			goto out_balanced;
-+			remain--;
-+			goto redo;
- 		}
- 	}
- 
-@@ -3332,7 +3332,8 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd)
- 	int ld_moved = 0;
- 	int sd_idle = 0;
- 	int all_pinned = 0;
--	cpumask_t cpus = CPU_MASK_ALL;
-+	cpumask_t cpus = sd->span;
-+	int remain = cpus_weight(sd->span) - 1;
- 
- 	/*
- 	 * When power savings policy is enabled for the parent domain, idle
-@@ -3375,10 +3376,10 @@ redo:
- 					&all_pinned);
- 		spin_unlock(&busiest->lock);
- 
--		if (unlikely(all_pinned)) {
-+		if (unlikely(all_pinned && remain)) {
- 			cpu_clear(cpu_of(busiest), cpus);
--			if (!cpus_empty(cpus))
--				goto redo;
-+			remain--;
-+			goto redo;
- 		}
- 	}
- 
+-greg 
+-----Original Message-----
+From: Juergen Beisert <jbe@pengutronix.de>
+Cc: Ingo Molnar <mingo@elte.hu>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>
+To:  <linux-rt-users@vger.kernel.org>
+
+Sent: 6/24/2008 8:15:49 AM
+Subject: Re: 2.6.25.8-rt7
+
+On Tuesday 24 June 2008 03:34, Steven Rostedt wrote:
+> We are pleased to announce the 2.6.25.8-rt7 tree, which can be
+> downloaded from the location:
+>
+>   http://rt.et.redhat.com/download/
+>
+> Information on the RT patch can be found at:
+>
+>   http://rt.wiki.kernel.org/index.php/Main_Page
+>
+> Changes since 2.6.25.4-rt6
+>
+>   - ported to 2.6.25.8
+>
+>   - rwlock pi_lock fixes on waking up multiple readers (Steven Rostedt)
+>
+>   - revert adaptive locks from RCU (Thomas Gleixner)
+>      [ for some reason, using RCU causes some latency spikes, this
+>        may be a sign of something going wrong in RCU itself ]
+>
+>   - rwlock mutex owner fix for waking up reader with readers held
+>                                                   (Steven Rostedt)
+>
+>   - rwlock remove waiter from pi_list on above fix (Steven Rostedt and
+>                                                     Thomas Gleixner)
+>
+>   - rwlock replace macro with inline (Thomas Gleixner)
+>
+>   - rwlock pending namespace updates (Thomas Gleixner)
+>
+>   - futex fix fault (Thomas Gleixner)
+>
+> to build a 2.6.25.8-rt7 tree, the following patches should be applied:
+>
+>   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.25.tar.bz2
+>   http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.25.8.bz2
+>   http://rt.et.redhat.com/download/patch-2.6.25.8-rt7.bz2
+
+This occurs when I try to build a PowerPC (MPC5200) kernel:
+
+[...]
+In file included from kernel/sched.c:1318:
+kernel/sched.c: In function 'sched_init':
+kernel/sched.c:7702: error: implicit declaration of function 'global_rt_runtime'
+[...]
+
+And when I'm using the patch from Uli Brueggemann to fix it, I get:
+
+[...]
+In file included from kernel/sched.c:1325:
+kernel/sched_rt.c: In function 'inc_rt_tasks':
+kernel/sched_rt.c:290: error: 'struct rq' has no member named 'online'
+[...]
+
+Any hints?
+
+Juergen Beisert
+
+-- 
+Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+    Handelsregister: Amtsgericht Hildesheim, HRA 2686
+         Vertretung Sued/Muenchen, Germany
+   Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
