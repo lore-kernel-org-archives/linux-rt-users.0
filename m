@@ -1,118 +1,82 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at
-	least one task has moved over
-Date: Mon, 23 Jun 2008 20:59:25 -0600
-Message-ID: <48602ACD.BA47.005A.0@novell.com>
-References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
- <200806241050.12028.nickpiggin@yahoo.com.au>
- <4860261A.BA47.005A.0@novell.com>
- <200806241146.35112.nickpiggin@yahoo.com.au>
+From: hyl <heyongli@gmail.com>
+Subject: [RT] remove_waiter does not need to do chain walk?(2.6.25.4-rt)
+Date: Tue, 24 Jun 2008 16:07:58 +0800
+Message-ID: <505766fa0806240107hacebf36q6c5b4d97278272b4@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <peterz@infradead.org>,
-	<tglx@linutronix.de>, "David Bahi" <DBahi@novell.com>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Nick Piggin" <nickpiggin@yahoo.com.au>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:19825 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756681AbYFXB7S convert rfc822-to-8bit (ORCPT
+Received: from wf-out-1314.google.com ([209.85.200.168]:28046 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752861AbYFXIIL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 21:59:18 -0400
-In-Reply-To: <200806241146.35112.nickpiggin@yahoo.com.au>
+	Tue, 24 Jun 2008 04:08:11 -0400
+Received: by wf-out-1314.google.com with SMTP id 27so2372108wfd.4
+        for <linux-rt-users@vger.kernel.org>; Tue, 24 Jun 2008 01:08:10 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Mon, Jun 23, 2008 at  9:46 PM, in message
-<200806241146.35112.nickpiggin@yahoo.com.au>, Nick Piggin
-<nickpiggin@yahoo.com.au> wrote: 
-> On Tuesday 24 June 2008 12:39, Gregory Haskins wrote:
->> Hi Nick,
->>
->> >>> On Mon, Jun 23, 2008 at  8:50 PM, in message
->>
->> <200806241050.12028.nickpiggin@yahoo.com.au>, Nick Piggin
->>
->> <nickpiggin@yahoo.com.au> wrote:
->> > On Tuesday 24 June 2008 09:04, Gregory Haskins wrote:
->> >> Inspired by Peter Zijlstra.
->> >
->> > Is this really getting tested well?   Because at least for SCHED_OTHER
->> > tasks,
->>
->> Note that this only affects SCHED_OTHER.  RT tasks are handled with a
->> different algorithm.
->>
->> > the newidle balancer is still supposed to be relatively
->> > conservative and not over balance too much.
->>
->> In our testing, newidle is degrading the system (at least for certain
->> workloads).  Oprofile was showing that newidle can account for 60-80% of
->> the CPU during our benchmark runs. Turning off newidle *completely* by
->> commenting out idle_balance() boosts netperf performance by 200% for our
->> 8-core to 8-core UDP transaction test. Obviously neutering it is not
->> sustainable as a general solution, so we are trying to reduce its negative
->> impact.
-> 
-> Hmm. I'd like to see an attempt to be made to tuning the algorithm
-> so that newidle actually won't cause any tasks to be balanced in
-> this case. That seems like the right thing to do, doesn't it?
+Hi, everyone
 
-Agreed.  I'm working on it, but its not quite ready yet :)
+lets us just focus on remove_waiter in rt_spin_lock_slowlock
+(2.6.25.4-rt).  refer to bellowing brief code .
 
-> 
-> Of course... tuning the whole balancer on the basis of a crazy
-> netperf benchmark is... dangerous :)
+i notice the comments above calling the  remove_waiter , but i can't
+figure out the  sequence which meet
+the comment.
 
-Agreed.  I am working on a general algorithm to make the
-RT and CFS tasks "play nice" with each other.  This netperf test
-was chosen because it is particularly hard-hit by the current
-problems in this space.  But I agree we cant tune it just for
-that one benchmark.  I am hoping when completed this work will
-help the entire system :)
+I  do figure out a event sequence to proof  we must call
+remove_waiter , but chain walk seems is not needed.
 
-I will add you to the CC list when I send these patches out.
+ 0).  current process block on this lock (note:block on lock not the process)
+ 1).  adaptive_wait  continue  the loop without sleeping due to event
+2): owner change( held no lock while adaptive wait)
+ 2.)  owner free the lock, another process be selected as pending
+owner, then release lock
+ 2.x) then  current be boosted , and become pending owner's top
+waiter, so pending owner be boosted too
+ 3.  in the new round loop: do_try_to_take_rt_mutex->try_to_steal_lock
+lucky own the lock,
+     and at this time, waiter.task is not NULL
 
-> 
-> 
->> It is not clear whether the problem is that newidle is over-balancing the
->> system, or that newidle is simply running too frequently as a symptom of a
->> system that has a high frequency of context switching (such as -rt).  I 
->> suspected the latter, so I was attracted to Peter's idea based on the
->> concept of shortening the time we execute this function.  But I have to
->> admit, unlike 1/3 and 2/3 which I have carefully benchmarked individually
->> and know make a positive performance impact, I pulled this in more on
->> theory.  I will try to benchmark this individually as well.
->>
->> > By the time you have
->> > done all this calculation and reached here, it will be a loss to only
->> > move one task if you could have moved two and halved your newidle
->> > balance rate...
->>
->> Thats an interesting point that I did not consider, but note that a very
->> significant chunk of the overhead I believe comes from the
->> double_lock/move_tasks code after the algorithmic complexity is completed.
-> 
-> And that double lock will be amortized if you can move 2 tasks at once,
-> rather than 1 task each 2 times.
+ Question is: seems pending owner's block_on is null,   remove_waiter
+seems need no chain walk?
 
-Thats a good point.
-
-> 
-> 
->> I believe the primary motivation of this patch is related to reducing the
->> overall latency in the schedule() critical section.  Currently this
->> operation can perform an unbounded move_task operation in a
->> preempt-disabled region (which, as an aside, is always SCHED_OTHER
->> related).
-> 
-> Maybe putting some upper cap on it, I could live with. Cutting off at
-> one task I think needs a lot more thought and testing.
-
-Perhaps we could reuse the sched_nr_migrations as the threshold?
-
--Greg
+ My scenario may not be the one of author,  please don't hesitate to
+offer a example to clarity this question,
+i think discuss about this make it clear and easy to maintain.
 
 
+rt_spin_lock_slowlock(struct rt_mutex *lock)
+{
+      .........
+	for (;;) {
+		if (do_try_to_take_rt_mutex(lock, STEAL_LATERAL)) {
+		...
+		if (!waiter.task) {
+		  . ..
+		}
+         	....
+		if (adaptive_wait(&waiter, orig_owner)) {
+		......
+		}
+
+	.....
+	}
+	....
+	/*
+	 * Extremely rare case, if we got woken up by a non-mutex wakeup,
+	 * and we managed to steal the lock despite us not being the
+	 * highest-prio waiter (due to SCHED_OTHER changing prio), then we
+	 * can end up with a non-NULL waiter.task:
+	 */
+	if (unlikely(waiter.task))
+		remove_waiter(lock, &waiter, flags);
+.....
+}
+
+Regards
+hyl
