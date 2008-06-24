@@ -1,126 +1,86 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/3] sched: enable interrupts and drop rq-lock during newidle
-	balancing
-Date: Tue, 24 Jun 2008 08:16:07 -0600
-Message-ID: <20080624141607.28487.75030.stgit@lsg.lsg.lab.novell.com>
-References: <20080624141527.28487.77778.stgit@lsg.lsg.lab.novell.com>
+From: Juergen Beisert <jbe@pengutronix.de>
+Subject: Re: 2.6.25.8-rt7
+Date: Tue, 24 Jun 2008 16:15:49 +0200
+Message-ID: <200806241615.49876.jbe@pengutronix.de>
+References: <1214271257.8701.17.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, peterz@infradead.org,
-	linux-rt-users@vger.kernel.org, ghaskins@novell.com,
-	dbahi@novell.com, npiggin@suse.de
-To: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:5019 "EHLO
-	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759268AbYFXOQI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jun 2008 10:16:08 -0400
-In-Reply-To: <20080624141527.28487.77778.stgit@lsg.lsg.lab.novell.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759787AbYFXORY@vger.kernel.org>
+In-Reply-To: <1214271257.8701.17.camel@localhost.localdomain>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Oprofile data shows that the system may spend a significant amount of
-time (60%+) in find_busiest_groups as a result of newidle balancing.  This
-entire operation is a critical section since it occurs inline with
-a schedule().  Since we do find_busiest_groups() et. al. without locks
-held for normal balancing, lets do it for newidle as well.  It will
-at least allow other cpus and interrupts to make forward progress
-(against our RQ) while we try to balance.
+On Tuesday 24 June 2008 03:34, Steven Rostedt wrote:
+> We are pleased to announce the 2.6.25.8-rt7 tree, which can be
+> downloaded from the location:
+>
+>   http://rt.et.redhat.com/download/
+>
+> Information on the RT patch can be found at:
+>
+>   http://rt.wiki.kernel.org/index.php/Main_Page
+>
+> Changes since 2.6.25.4-rt6
+>
+>   - ported to 2.6.25.8
+>
+>   - rwlock pi_lock fixes on waking up multiple readers (Steven Rosted=
+t)
+>
+>   - revert adaptive locks from RCU (Thomas Gleixner)
+>      [ for some reason, using RCU causes some latency spikes, this
+>        may be a sign of something going wrong in RCU itself ]
+>
+>   - rwlock mutex owner fix for waking up reader with readers held
+>                                                   (Steven Rostedt)
+>
+>   - rwlock remove waiter from pi_list on above fix (Steven Rostedt an=
+d
+>                                                     Thomas Gleixner)
+>
+>   - rwlock replace macro with inline (Thomas Gleixner)
+>
+>   - rwlock pending namespace updates (Thomas Gleixner)
+>
+>   - futex fix fault (Thomas Gleixner)
+>
+> to build a 2.6.25.8-rt7 tree, the following patches should be applied=
+:
+>
+>   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.25.tar.bz2
+>   http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.25.8.bz2
+>   http://rt.et.redhat.com/download/patch-2.6.25.8-rt7.bz2
 
-Additionally, we abort the newidle processing if we are preempted.
+This occurs when I try to build a PowerPC (MPC5200) kernel:
 
-This patch should both improve latency response, as well as increase
-throughput.  It has shown to significantly contribute to a 6-12%
-increase in network peformance.
+[...]
+In file included from kernel/sched.c:1318:
+kernel/sched.c: In function 'sched_init':
+kernel/sched.c:7702: error: implicit declaration of function 'global_rt=
+_runtime'
+[...]
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+And when I'm using the patch from Uli Brueggemann to fix it, I get:
 
- kernel/sched.c |   40 +++++++++++++++++++++++++++++++++-------
- 1 files changed, 33 insertions(+), 7 deletions(-)
+[...]
+In file included from kernel/sched.c:1325:
+kernel/sched_rt.c: In function 'inc_rt_tasks':
+kernel/sched_rt.c:290: error: 'struct rq' has no member named 'online'
+[...]
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 54b27b4..e40c575 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -3335,6 +3335,15 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd)
- 	cpumask_t cpus = sd->span;
- 	int remain = cpus_weight(sd->span) - 1;
- 
-+	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
-+
-+	/*
-+	 * We are in a preempt-disabled section, so dropping the lock/irq
-+	 * here simply means that other cores may acquire the lock,
-+	 * and interrupts may occur.
-+	 */
-+	spin_unlock_irq(&this_rq->lock);
-+
- 	/*
- 	 * When power savings policy is enabled for the parent domain, idle
- 	 * sibling can pick up load irrespective of busy siblings. In this case,
-@@ -3345,7 +3354,6 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd)
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
- 		sd_idle = 1;
- 
--	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
- redo:
- 	group = find_busiest_group(sd, this_cpu, &imbalance, CPU_NEWLY_IDLE,
- 				   &sd_idle, &cpus, NULL);
-@@ -3366,22 +3374,37 @@ redo:
- 	schedstat_add(sd, lb_imbalance[CPU_NEWLY_IDLE], imbalance);
- 
- 	ld_moved = 0;
--	if (busiest->nr_running > 1) {
-+	if (!need_resched() && busiest->nr_running > 1) {
- 		/* Attempt to move tasks */
--		double_lock_balance(this_rq, busiest);
--		/* this_rq->clock is already updated */
--		update_rq_clock(busiest);
-+		local_irq_disable();
-+		double_rq_lock(this_rq, busiest);
-+
-+		BUG_ON(this_cpu != smp_processor_id());
-+
-+		/*
-+		 * Checking rq->nr_running covers both the case where
-+		 * newidle-balancing pulls a task, as well as if something
-+		 * else issued a NEEDS_RESCHED (since we would only need
-+		 * a reschedule if something was moved to us)
-+		 */
-+		if (this_rq->nr_running) {
-+			spin_unlock(&busiest->lock);
-+			goto out_balanced_locked;
-+		}
-+
- 		ld_moved = move_tasks(this_rq, this_cpu, busiest,
- 					imbalance, sd, CPU_NEWLY_IDLE,
- 					&all_pinned);
- 		spin_unlock(&busiest->lock);
- 
--		if (unlikely(all_pinned && remain)) {
-+		if (unlikely(all_pinned && remain && !this_rq->nr_running)) {
-+			spin_unlock_irq(&this_rq->lock);
- 			cpu_clear(cpu_of(busiest), cpus);
- 			remain--;
- 			goto redo;
- 		}
--	}
-+	} else
-+		spin_lock_irq(&this_rq->lock);
- 
- 	if (!ld_moved) {
- 		schedstat_inc(sd, lb_failed[CPU_NEWLY_IDLE]);
-@@ -3394,6 +3417,9 @@ redo:
- 	return ld_moved;
- 
- out_balanced:
-+	spin_lock_irq(&this_rq->lock);
-+
-+out_balanced_locked:
- 	schedstat_inc(sd, lb_balanced[CPU_NEWLY_IDLE]);
- 	if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
+Any hints?
 
+Juergen Beisert
+
+--=20
+Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
+=A0Pengutronix - Linux Solutions for Science and Industry
+=A0   Handelsregister: Amtsgericht Hildesheim, HRA 2686
+=A0 =A0 =A0    Vertretung Sued/Muenchen, Germany
+   Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
