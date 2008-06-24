@@ -1,62 +1,45 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
-Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at least one task has moved over
-Date: Tue, 24 Jun 2008 11:26:28 +1000
-Message-ID: <200806241126.28296.nickpiggin@yahoo.com.au>
-References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com> <200806241050.12028.nickpiggin@yahoo.com.au> <Pine.LNX.4.58.0806232104460.8540@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] 2.6.25.4-rt6: missing =?UTF-8?Q?global=5Frt=5Fruntime=28=29=20in?=
+ =?UTF-8?Q?=20sched=2Ec?=
+Date: Mon, 23 Jun 2008 21:30:48 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0806232129400.8540@gandalf.stny.rr.com>
+References: <7688fdc041a8f848b0627dccccddcf12@localhost>
+ <Pine.LNX.4.58.0806231843120.27994@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	peterz@infradead.org, linux-rt-users@vger.kernel.org,
-	dbahi@novell.com
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: ciaby <ciaby@autistici.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp113.mail.mud.yahoo.com ([209.191.84.66]:45072 "HELO
-	smtp113.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1752081AbYFXB0o (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:60331 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752091AbYFXBav (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 21:26:44 -0400
-In-Reply-To: <Pine.LNX.4.58.0806232104460.8540@gandalf.stny.rr.com>
-Content-Disposition: inline
+	Mon, 23 Jun 2008 21:30:51 -0400
+In-Reply-To: <Pine.LNX.4.58.0806231843120.27994@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 24 June 2008 11:07, Steven Rostedt wrote:
-> On Tue, 24 Jun 2008, Nick Piggin wrote:
-> > On Tuesday 24 June 2008 09:04, Gregory Haskins wrote:
-> > > Inspired by Peter Zijlstra.
-> >
-> > Is this really getting tested well? Because at least for SCHED_OTHER
-> > tasks, the newidle balancer is still supposed to be relatively
-> > conservative and not over balance too much. By the time you have
-> > done all this calculation and reached here, it will be a loss to only
-> > move one task if you could have moved two and halved your newidle
-> > balance rate...
+
+
+On Mon, 23 Jun 2008, Steven Rostedt wrote:
+
 >
-> We've been finding a lot of our high latencies have been coming from the
-> balancing code. And the newidle balance is a large offender. I don't think
+> On Mon, 9 Jun 2008, ciaby wrote:
+>
+> >
+> >
+> > I already sent this patch, but seems that nobody cared... the last 2
+> > revisions of the -rt kernel don't compile properly.
+> > Second patch to fix this.
+> > Regards
+>
+> I still don't have a "Signed-off-by:" for this patch. Please send it to me
+> ASAP, otherwise it will miss the next release.
+>
 
-Measurements and results weren't in the changelog.
+I'm posting out -rt7 now without this patch. I'm hoping to get your
+Signed-off-by for -rt8 which will come out soon (I want to get Gregory's
+patches testest ASAP too).
 
-> it's much wasted work for what you want. Even if we wasted the work done,
-> it was during "idle" time.
+-- Steve
 
-It is idle because it has gone idle. If we pulled more tasks in the last
-newidle balance, it wouldn't have gone idle so early.
-
-> But now we have a task to run, why not run it 
-> now. Especially if that task is an RT task and doesn't like to wait.
-
-Maybe I would agree if you check for an -rt task rather than generally.
-At this level, throughput is the major concern for many more Linux users
-than latency.
-
-
-> The newidle balance should really just get a task to run, the balancing
-> code should be done at a later time. Ideally when no RT tasks need to run.
-
-I disagree. All balancing should be minimised, but if it has to run
-then it should do as much balancing as it can. We already have checked
-several other runqueues and calculated the busiest one  etc etc.
