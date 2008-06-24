@@ -1,153 +1,53 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH 1/3] sched: enable interrupts and drop rq-lock
 	duringnewidle balancing
-Date: Tue, 24 Jun 2008 07:15:00 -0600
-Message-ID: <4860BB14.BA47.005A.0@novell.com>
+Date: Tue, 24 Jun 2008 14:24:59 +0200
+Message-ID: <1214310299.4351.27.camel@twins>
 References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
- <20080623230440.31515.97377.stgit@lsg.lsg.lab.novell.com>
- <1214302405.4351.21.camel@twins>
+	 <20080623230440.31515.97377.stgit@lsg.lsg.lab.novell.com>
+	 <1214302405.4351.21.camel@twins>  <4860BB14.BA47.005A.0@novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <tglx@linutronix.de>,
-	"David Bahi" <DBahi@novell.com>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Peter Zijlstra" <peterz@infradead.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de,
+	David Bahi <DBahi@novell.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:34747 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754658AbYFXMOz convert rfc822-to-8bit (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:46844 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750766AbYFXMZR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Jun 2008 08:14:55 -0400
-In-Reply-To: <1214302405.4351.21.camel@twins>
-Content-Disposition: inline
+	Tue, 24 Jun 2008 08:25:17 -0400
+In-Reply-To: <4860BB14.BA47.005A.0@novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Tue, Jun 24, 2008 at  6:13 AM, in message <1214302405.4351.21.camel@twins>,
-Peter Zijlstra <peterz@infradead.org> wrote: 
-> On Mon, 2008-06-23 at 17:04 -0600, Gregory Haskins wrote:
->> We do find_busiest_groups() et. al. without locks held for normal balancing,
->> so lets do it for newidle as well.  It will allow other cpus to make
->> forward progress (against our RQ) while we try to balance and allow 
->> some interrupts to occur.
+On Tue, 2008-06-24 at 07:15 -0600, Gregory Haskins wrote:
+> >>> On Tue, Jun 24, 2008 at  6:13 AM, in message <1214302405.4351.21.camel@twins>,
+> Peter Zijlstra <peterz@infradead.org> wrote: 
+> > On Mon, 2008-06-23 at 17:04 -0600, Gregory Haskins wrote:
+> >> We do find_busiest_groups() et. al. without locks held for normal balancing,
+> >> so lets do it for newidle as well.  It will allow other cpus to make
+> >> forward progress (against our RQ) while we try to balance and allow 
+> >> some interrupts to occur.
+> > 
+> > Is running f_b_g really that expensive? 
 > 
-> Is running f_b_g really that expensive? 
-
-According to our oprofile data, yes.  I speculate that it works out that way because most newidle
-attempts result in "no imbalance".  But we were spending ~60%+ time in find_busiest_groups()
-because of all the heavy-context switching that goes on in PREEMPT_RT.  So while f_b_g() is
-probably cheaper than double-lock/move_tasks(), the ratio of occurrence is off the charts in
-comparison. Prior to this patch, those occurrences were preempt-disabled/irq-disabled/rq->lock critical
-sections.
-
-So while it is not clear if f_b_g() is the actual cost, it is a convenient (and legal, afaict) place to
-deterministically reduce the rq->lock scope.  Additionally, doing so measurably helps
-performance, so I think its a win.  Without this patch you have to hope the double_lock releases
-this_rq, and even so were not checking for the NEEDS_RESCHED. 
-
-Note: I have a refresh of this patch coming shortly, and I will drop the one you NAKed
-
-Thanks Peter!
-
-Regards,
--Greg
-
+> According to our oprofile data, yes.  I speculate that it works out that way because most newidle
+> attempts result in "no imbalance".  But we were spending ~60%+ time in find_busiest_groups()
+> because of all the heavy-context switching that goes on in PREEMPT_RT.  So while f_b_g() is
+> probably cheaper than double-lock/move_tasks(), the ratio of occurrence is off the charts in
+> comparison. Prior to this patch, those occurrences were preempt-disabled/irq-disabled/rq->lock critical
+> sections.
 > 
->> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> ---
->> 
->>  kernel/sched.c |   44 ++++++++++++++++++++++++++++++++++++++------
->>  1 files changed, 38 insertions(+), 6 deletions(-)
->> 
->> diff --git a/kernel/sched.c b/kernel/sched.c
->> index 31f91d9..490e6bc 100644
->> --- a/kernel/sched.c
->> +++ b/kernel/sched.c
->> @@ -3333,6 +3333,16 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, 
-> struct sched_domain *sd)
->>  	int sd_idle = 0;
->>  	int all_pinned = 0;
->>  	cpumask_t cpus = CPU_MASK_ALL;
->> +	int nr_running;
->> +
->> +	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
->> +
->> +	/*
->> +	 * We are in a preempt-disabled section, so dropping the lock/irq
->> +	 * here simply means that other cores may acquire the lock,
->> +	 * and interrupts may occur.
->> +	 */
->> +	spin_unlock_irq(&this_rq->lock);
->>  
->>  	/*
->>  	 * When power savings policy is enabled for the parent domain, idle
->> @@ -3344,7 +3354,6 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, 
-> struct sched_domain *sd)
->>  	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
->>  		sd_idle = 1;
->>  
->> -	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
->>  redo:
->>  	group = find_busiest_group(sd, this_cpu, &imbalance, CPU_NEWLY_IDLE,
->>  				   &sd_idle, &cpus, NULL);
->> @@ -3366,14 +3375,33 @@ redo:
->>  
->>  	ld_moved = 0;
->>  	if (busiest->nr_running > 1) {
->> -		/* Attempt to move tasks */
->> -		double_lock_balance(this_rq, busiest);
->> -		/* this_rq->clock is already updated */
->> -		update_rq_clock(busiest);
->> +		local_irq_disable();
->> +		double_rq_lock(this_rq, busiest);
->> +
->> +		BUG_ON(this_cpu != smp_processor_id());
->> +
->> +		/*
->> +		 * Checking rq->nr_running covers both the case where
->> +		 * newidle-balancing pulls a task, as well as if something
->> +		 * else issued a NEEDS_RESCHED (since we would only need
->> +		 * a reschedule if something was moved to us)
->> +		 */
->> +		if (this_rq->nr_running) {
->> +			double_rq_unlock(this_rq, busiest);
->> +			local_irq_enable();
->> +			goto out_balanced;
->> +		}
->> +
->>  		ld_moved = move_tasks(this_rq, this_cpu, busiest,
->>  					imbalance, sd, CPU_NEWLY_IDLE,
->>  					&all_pinned);
->> -		spin_unlock(&busiest->lock);
->> +
->> +		nr_running = this_rq->nr_running;
->> +		double_rq_unlock(this_rq, busiest);
->> +		local_irq_enable();
->> +
->> +		if (nr_running)
->> +			goto out_balanced;
->>  
->>  		if (unlikely(all_pinned)) {
->>  			cpu_clear(cpu_of(busiest), cpus);
->> @@ -3382,6 +3410,8 @@ redo:
->>  		}
->>  	}
->>  
->> +	spin_lock_irq(&this_rq->lock);
->> +
->>  	if (!ld_moved) {
->>  		schedstat_inc(sd, lb_failed[CPU_NEWLY_IDLE]);
->>  		if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
->> @@ -3393,6 +3423,8 @@ redo:
->>  	return ld_moved;
->>  
->>  out_balanced:
->> +	spin_lock_irq(&this_rq->lock);
->> +
->>  	schedstat_inc(sd, lb_balanced[CPU_NEWLY_IDLE]);
->>  	if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
->>  	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
->> 
+> So while it is not clear if f_b_g() is the actual cost, it is a convenient (and legal, afaict) place to
+> deterministically reduce the rq->lock scope.  Additionally, doing so measurably helps
+> performance, so I think its a win.  Without this patch you have to hope the double_lock releases
+> this_rq, and even so were not checking for the NEEDS_RESCHED. 
+
+See, having had this information in the changelog to begin with would
+have helped ;-)
+
 
 
