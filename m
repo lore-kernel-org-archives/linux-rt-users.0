@@ -1,102 +1,90 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at
-	least one task has moved over
-Date: Mon, 23 Jun 2008 20:39:22 -0600
-Message-ID: <4860261A.BA47.005A.0@novell.com>
-References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com>
- <20080623230450.31515.75112.stgit@lsg.lsg.lab.novell.com>
- <200806241050.12028.nickpiggin@yahoo.com.au>
+From: Nick Piggin <nickpiggin@yahoo.com.au>
+Subject: Re: [PATCH 3/3] sched: terminate newidle balancing once at least one task has moved over
+Date: Tue, 24 Jun 2008 11:46:34 +1000
+Message-ID: <200806241146.35112.nickpiggin@yahoo.com.au>
+References: <20080623225645.31515.36393.stgit@lsg.lsg.lab.novell.com> <200806241050.12028.nickpiggin@yahoo.com.au> <4860261A.BA47.005A.0@novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <peterz@infradead.org>,
-	<tglx@linutronix.de>, "David Bahi" <DBahi@novell.com>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Nick Piggin" <nickpiggin@yahoo.com.au>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, rostedt@goodmis.org, peterz@infradead.org,
+	tglx@linutronix.de, "David Bahi" <DBahi@novell.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: "Gregory Haskins" <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:19428 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752210AbYFXBjR convert rfc822-to-8bit (ORCPT
+Received: from smtp115.mail.mud.yahoo.com ([209.191.84.164]:30358 "HELO
+	smtp115.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1757770AbYFXBqr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Jun 2008 21:39:17 -0400
-In-Reply-To: <200806241050.12028.nickpiggin@yahoo.com.au>
+	Mon, 23 Jun 2008 21:46:47 -0400
+In-Reply-To: <4860261A.BA47.005A.0@novell.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Nick,
+On Tuesday 24 June 2008 12:39, Gregory Haskins wrote:
+> Hi Nick,
+>
+> >>> On Mon, Jun 23, 2008 at  8:50 PM, in message
+>
+> <200806241050.12028.nickpiggin@yahoo.com.au>, Nick Piggin
+>
+> <nickpiggin@yahoo.com.au> wrote:
+> > On Tuesday 24 June 2008 09:04, Gregory Haskins wrote:
+> >> Inspired by Peter Zijlstra.
+> >
+> > Is this really getting tested well?   Because at least for SCHED_OTHER
+> > tasks,
+>
+> Note that this only affects SCHED_OTHER.  RT tasks are handled with a
+> different algorithm.
+>
+> > the newidle balancer is still supposed to be relatively
+> > conservative and not over balance too much.
+>
+> In our testing, newidle is degrading the system (at least for certain
+> workloads).  Oprofile was showing that newidle can account for 60-80% of
+> the CPU during our benchmark runs. Turning off newidle *completely* by
+> commenting out idle_balance() boosts netperf performance by 200% for our
+> 8-core to 8-core UDP transaction test. Obviously neutering it is not
+> sustainable as a general solution, so we are trying to reduce its negative
+> impact.
 
->>> On Mon, Jun 23, 2008 at  8:50 PM, in message
-<200806241050.12028.nickpiggin@yahoo.com.au>, Nick Piggin
-<nickpiggin@yahoo.com.au> wrote: 
-> On Tuesday 24 June 2008 09:04, Gregory Haskins wrote:
->> Inspired by Peter Zijlstra.
-> 
-> Is this really getting tested well?   Because at least for SCHED_OTHER
-> tasks,
+Hmm. I'd like to see an attempt to be made to tuning the algorithm
+so that newidle actually won't cause any tasks to be balanced in
+this case. That seems like the right thing to do, doesn't it?
 
-Note that this only affects SCHED_OTHER.  RT tasks are handled with a different algorithm.
-
-> the newidle balancer is still supposed to be relatively
-> conservative and not over balance too much.
-
-In our testing, newidle is degrading the system (at least for certain workloads).  Oprofile was
-showing that newidle can account for 60-80% of the CPU during our benchmark runs. Turning
-off newidle *completely* by commenting out idle_balance() boosts netperf performance by
-200% for our 8-core to 8-core UDP transaction test. Obviously neutering it is not sustainable
-as a general solution, so we are trying to reduce its negative impact.
-
-It is not clear whether the problem is that newidle is over-balancing the system, or that newidle
-is simply running too frequently as a symptom of a system that has a high frequency of context
-switching (such as -rt).  I  suspected the latter, so I was attracted to Peter's idea based
-on the concept of shortening the time we execute this function.  But I have to admit, unlike 1/3
-and 2/3 which I have carefully benchmarked individually and know make a positive performance
-impact, I pulled this in more on theory.  I will try to benchmark this individually as well.
-
-> By the time you have
-> done all this calculation and reached here, it will be a loss to only
-> move one task if you could have moved two and halved your newidle
-> balance rate...
-
-Thats an interesting point that I did not consider, but note that a very significant chunk of the overhead
-I believe comes from the double_lock/move_tasks code after the algorithmic complexity is completed.
-
-I believe the primary motivation of this patch is related to reducing the overall latency in the schedule()
-critical section.  Currently this operation can perform an unbounded move_task operation in a
-preempt-disabled region (which, as an aside, is always SCHED_OTHER related).
-
-Since the bare minimum requirement is to move at least one task, I think this is a tradeoff: newidle
-balance-rate vs critical-section depth.  For RT obviously we put more weight on the latter, but perhaps
-this is not a mainline worthy concept afterall.  I will defer to Peter to comment further.
-
-Thanks for the review, Nick.
-
-Regards,
--Greg
-
-> 
->> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> ---
->>
->>  kernel/sched.c |    4 ++++
->>  1 files changed, 4 insertions(+), 0 deletions(-)
->>
->> diff --git a/kernel/sched.c b/kernel/sched.c
->> index 3efbbc5..c8e8520 100644
->> --- a/kernel/sched.c
->> +++ b/kernel/sched.c
->> @@ -2775,6 +2775,10 @@ static int move_tasks(struct rq *this_rq, int
->> this_cpu, struct rq *busiest, max_load_move - total_load_moved,
->>  				sd, idle, all_pinned, &this_best_prio);
->>  		class = class->next;
->> +
->> +		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
->> +			break;
->> +
->>  	} while (class && max_load_move > total_load_moved);
->>
->>  	return total_load_moved > 0;
->>
->> --
+Of course... tuning the whole balancer on the basis of a crazy
+netperf benchmark is... dangerous :)
 
 
+> It is not clear whether the problem is that newidle is over-balancing the
+> system, or that newidle is simply running too frequently as a symptom of a
+> system that has a high frequency of context switching (such as -rt).  I 
+> suspected the latter, so I was attracted to Peter's idea based on the
+> concept of shortening the time we execute this function.  But I have to
+> admit, unlike 1/3 and 2/3 which I have carefully benchmarked individually
+> and know make a positive performance impact, I pulled this in more on
+> theory.  I will try to benchmark this individually as well.
+>
+> > By the time you have
+> > done all this calculation and reached here, it will be a loss to only
+> > move one task if you could have moved two and halved your newidle
+> > balance rate...
+>
+> Thats an interesting point that I did not consider, but note that a very
+> significant chunk of the overhead I believe comes from the
+> double_lock/move_tasks code after the algorithmic complexity is completed.
+
+And that double lock will be amortized if you can move 2 tasks at once,
+rather than 1 task each 2 times.
+
+
+> I believe the primary motivation of this patch is related to reducing the
+> overall latency in the schedule() critical section.  Currently this
+> operation can perform an unbounded move_task operation in a
+> preempt-disabled region (which, as an aside, is always SCHED_OTHER
+> related).
+
+Maybe putting some upper cap on it, I could live with. Cutting off at
+one task I think needs a lot more thought and testing.
