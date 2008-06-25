@@ -1,104 +1,91 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 1/3] sched: limit "all_pinned" balance attempts to
-	sd->span
-Date: Wed, 25 Jun 2008 07:19:10 -0600
-Message-ID: <48620D8E.BA47.005A.0@novell.com>
-References: <20080624141527.28487.77778.stgit@lsg.lsg.lab.novell.com>
- <20080624141602.28487.81775.stgit@lsg.lsg.lab.novell.com>
+From: Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: 2.6.25.4-rt4
+Date: Wed, 25 Jun 2008 18:59:35 +0530
+Message-ID: <1214400575.10818.34.camel@subratamodak.linux.ibm.com>
+References: <1212076754.24785.18.camel@localhost.localdomain>
+	<1212324634.4678.5.camel@subratamodak.linux.ibm.com>
+	<Pine.LNX.4.58.0806021332150.10366@gandalf.stny.rr.com>
+	<1212504482.4715.29.camel@subratamodak.linux.ibm.com>
+Reply-To: subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <peterz@infradead.org>, "David Bahi" <DBahi@novell.com>,
-	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: <mingo@elte.hu>, <rostedt@goodmis.org>, <tglx@linutronix.de>,
-	"Gregory Haskins" <GHaskins@novell.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757839AbYFYNTY@vger.kernel.org>
-In-Reply-To: <20080624141602.28487.81775.stgit@lsg.lsg.lab.novell.com>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: ltp-list <ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>,
+	Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>,
+	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Return-path: <ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <1212504482.4715.29.camel-NRFfyExJdYpgXGGE5LP+UZlqa2bBAFbm0E9HWUfgJXw@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=ltp-list>
+List-Post: <mailto:ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Sender: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Errors-To: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
->>> On Tue, Jun 24, 2008 at 10:16 AM, in message
-<20080624141602.28487.81775.stgit@lsg.lsg.lab.novell.com>, Gregory Haskins
-<ghaskins@novell.com> wrote: 
-> Load-balancing will never terminate if all cpus are "all_pinned" with
-> the current algorithm.  This would be pretty unlikely to occur, but we
-> should protect against it nonetheless.
+On Tue, 2008-06-03 at 20:18 +0530, Subrata Modak wrote:
+> On Mon, 2008-06-02 at 13:42 -0400, Steven Rostedt wrote:
+> > On Sun, 1 Jun 2008, Subrata Modak wrote:
+> > 
+> > >
+> > > Dear Steve,
+> > >
+> > > I am hopeful that you might know that we have started to maintain RT
+> > > linux test cases inside Linux Test Project (http://ltp.sourceforge.net/)
+> > > from Dec 2007 onwards. With initial integration from IBM, these set of
+> > > test cases has been enriched so far from IBM, BULL and PENGUTRONICS.
+> > > Would you like to review them at:
+> > > http://ltp.cvs.sourceforge.net/ltp/ltp/testcases/realtime/.
+> > >
+> > > I am hopeful that you can give me an idea of how these test cases are in
+> > > sync with your RT tree releases, and also find out the gaps where more
+> > > testing and hence test cases needs to be done/added.
+> > >
+> > 
+> > Hi,
+> > 
+> > Thanks, they should all stay in sync since they are userland tools and we
+> > try to keep the user API the same. But, with that said, the ftrace code is
+> > still under development, and some of the tests do interact with it. I'll
+> > try to remember to send patches to keep them updated.
 
-Hmm...after thinking about this some more, I think I was wrong and this is unfounded.
+Hi Steven,
 
-The code would eventually terminate when the f_b_g()/f_b_q() cant find a good target.
+Would you like to send some patches now ?
 
-Pls ignore this patch.
-
-Regards,
--Greg
+Regards--
+Subrata
 
 > 
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> ---
+> Thanks Steve for your forthcoming help and contribution. I will also
+> meanwhile keep you in loop for all the RT tests updates if any in LTP.
 > 
->  kernel/sched.c |   19 ++++++++++---------
->  1 files changed, 10 insertions(+), 9 deletions(-)
+> Regards--
+> Subrata
 > 
-> diff --git a/kernel/sched.c b/kernel/sched.c
-> index 31f91d9..54b27b4 100644
-> --- a/kernel/sched.c
-> +++ b/kernel/sched.c
-> @@ -3178,7 +3178,8 @@ static int load_balance(int this_cpu, struct rq 
-> *this_rq,
->  	struct sched_group *group;
->  	unsigned long imbalance;
->  	struct rq *busiest;
-> -	cpumask_t cpus = CPU_MASK_ALL;
-> +	cpumask_t cpus = sd->span;
-> +	int remain = cpus_weight(sd->span) - 1;
->  	unsigned long flags;
->  
->  	/*
-> @@ -3237,11 +3238,10 @@ redo:
->  			resched_cpu(this_cpu);
->  
->  		/* All tasks on this runqueue were pinned by CPU affinity */
-> -		if (unlikely(all_pinned)) {
-> +		if (unlikely(all_pinned && remain)) {
->  			cpu_clear(cpu_of(busiest), cpus);
-> -			if (!cpus_empty(cpus))
-> -				goto redo;
-> -			goto out_balanced;
-> +			remain--;
-> +			goto redo;
->  		}
->  	}
->  
-> @@ -3332,7 +3332,8 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, 
-> struct sched_domain *sd)
->  	int ld_moved = 0;
->  	int sd_idle = 0;
->  	int all_pinned = 0;
-> -	cpumask_t cpus = CPU_MASK_ALL;
-> +	cpumask_t cpus = sd->span;
-> +	int remain = cpus_weight(sd->span) - 1;
->  
->  	/*
->  	 * When power savings policy is enabled for the parent domain, idle
-> @@ -3375,10 +3376,10 @@ redo:
->  					&all_pinned);
->  		spin_unlock(&busiest->lock);
->  
-> -		if (unlikely(all_pinned)) {
-> +		if (unlikely(all_pinned && remain)) {
->  			cpu_clear(cpu_of(busiest), cpus);
-> -			if (!cpus_empty(cpus))
-> -				goto redo;
-> +			remain--;
-> +			goto redo;
->  		}
->  	}
->  
+> > 
+> > Thanks,
+> > 
+> > -- Steve
+> > 
 > 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> -------------------------------------------------------------------------
+> This SF.net email is sponsored by: Microsoft
+> Defy all challenges. Microsoft(R) Visual Studio 2008.
+> http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+> _______________________________________________
+> Ltp-list mailing list
+> Ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+> https://lists.sourceforge.net/lists/listinfo/ltp-list
+
+
+-------------------------------------------------------------------------
+Check out the new SourceForge.net Marketplace.
+It's the best place to buy or sell services for
+just about anything Open Source.
+http://sourceforge.net/services/buy/index.php
