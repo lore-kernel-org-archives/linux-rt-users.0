@@ -1,91 +1,110 @@
-From: Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: 2.6.25.4-rt4
-Date: Wed, 25 Jun 2008 18:59:35 +0530
-Message-ID: <1214400575.10818.34.camel@subratamodak.linux.ibm.com>
-References: <1212076754.24785.18.camel@localhost.localdomain>
-	<1212324634.4678.5.camel@subratamodak.linux.ibm.com>
-	<Pine.LNX.4.58.0806021332150.10366@gandalf.stny.rr.com>
-	<1212504482.4715.29.camel@subratamodak.linux.ibm.com>
-Reply-To: subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+From: hyl <heyongli@gmail.com>
+Subject: Re: [RT] remove_waiter does not need to do chain walk?(2.6.25.4-rt)
+Date: Thu, 26 Jun 2008 21:13:04 +0800
+Message-ID: <505766fa0806260613o759a0636m21070a46aafdf3fd@mail.gmail.com>
+References: <505766fa0806240107hacebf36q6c5b4d97278272b4@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: ltp-list <ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>,
-	Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>,
-	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Return-path: <ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <1212504482.4715.29.camel-NRFfyExJdYpgXGGE5LP+UZlqa2bBAFbm0E9HWUfgJXw@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
-	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=ltp-list>
-List-Post: <mailto:ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
-	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Sender: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Errors-To: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: mingo@elte.hu
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wf-out-1314.google.com ([209.85.200.175]:38447 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762757AbYFZNNE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jun 2008 09:13:04 -0400
+Received: by wf-out-1314.google.com with SMTP id 27so21685wfd.4
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 06:13:04 -0700 (PDT)
+In-Reply-To: <505766fa0806240107hacebf36q6c5b4d97278272b4@mail.gmail.com>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2008-06-03 at 20:18 +0530, Subrata Modak wrote:
-> On Mon, 2008-06-02 at 13:42 -0400, Steven Rostedt wrote:
-> > On Sun, 1 Jun 2008, Subrata Modak wrote:
-> > 
-> > >
-> > > Dear Steve,
-> > >
-> > > I am hopeful that you might know that we have started to maintain RT
-> > > linux test cases inside Linux Test Project (http://ltp.sourceforge.net/)
-> > > from Dec 2007 onwards. With initial integration from IBM, these set of
-> > > test cases has been enriched so far from IBM, BULL and PENGUTRONICS.
-> > > Would you like to review them at:
-> > > http://ltp.cvs.sourceforge.net/ltp/ltp/testcases/realtime/.
-> > >
-> > > I am hopeful that you can give me an idea of how these test cases are in
-> > > sync with your RT tree releases, and also find out the gaps where more
-> > > testing and hence test cases needs to be done/added.
-> > >
-> > 
-> > Hi,
-> > 
-> > Thanks, they should all stay in sync since they are userland tools and we
-> > try to keep the user API the same. But, with that said, the ftrace code is
-> > still under development, and some of the tests do interact with it. I'll
-> > try to remember to send patches to keep them updated.
+2008/6/24 hyl <heyongli@gmail.com>:
+> Hi, everyone
+>
+> lets us just focus on remove_waiter in rt_spin_lock_slowlock
+> (2.6.25.4-rt).  refer to bellowing brief code .
+>
+> i notice the comments above calling the  remove_waiter , but i can't
+> figure out the  sequence which meet
+> the comment.
+>
+> I  do figure out a event sequence to proof  we must call
+> remove_waiter , but chain walk seems is not needed.
+>
+>  0).  current process block on this lock (note:block on lock not the process)
+>  1).  adaptive_wait  continue  the loop without sleeping due to event
+> 2): owner change( held no lock while adaptive wait)
+>  2.)  owner free the lock, another process be selected as pending
+> owner, then release lock
+>  2.x) then  current be boosted , and become pending owner's top
+> waiter, so pending owner be boosted too
+>  3.  in the new round loop: do_try_to_take_rt_mutex->try_to_steal_lock
+> lucky own the lock,
+>     and at this time, waiter.task is not NULL
+>
+>  Question is: seems pending owner's block_on is null,   remove_waiter
+> seems need no chain walk?
+   look into the for(;;){}  loop there are only  one break, it is that
+we got the lock.
+so we must be the owner,  in remove_waiter,
+{
+	int first = (waiter == rt_mutex_top_waiter(lock));
+	struct task_struct *owner = rt_mutex_owner(lock);
+	int chain_walk = 0;
 
-Hi Steven,
+	spin_lock(&current->pi_lock);
+	plist_del(&waiter->list_entry, &lock->wait_list);
+	waiter->task = NULL;
+	current->pi_blocked_on = NULL;
+	spin_unlock(&current->pi_lock);
 
-Would you like to send some patches now ?
+	if (first && owner != current && !task_is_reader(owner)) {
+        ==>/*we are the owner, so never a chain walk for
+rt_spin_lock_slowlock->remove_waiter,*/
 
-Regards--
-Subrata
+but for mutex/reader/writer senerio, the chain walk is possible.
 
-> 
-> Thanks Steve for your forthcoming help and contribution. I will also
-> meanwhile keep you in loop for all the RT tests updates if any in LTP.
-> 
-> Regards--
-> Subrata
-> 
-> > 
-> > Thanks,
-> > 
-> > -- Steve
-> > 
-> 
-> 
-> -------------------------------------------------------------------------
-> This SF.net email is sponsored by: Microsoft
-> Defy all challenges. Microsoft(R) Visual Studio 2008.
-> http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
-> _______________________________________________
-> Ltp-list mailing list
-> Ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-> https://lists.sourceforge.net/lists/listinfo/ltp-list
+for rt_spin_lock,  it seems that we are never  going to have a non-mutex wakeup.
+FIX ME.
 
 
--------------------------------------------------------------------------
-Check out the new SourceForge.net Marketplace.
-It's the best place to buy or sell services for
-just about anything Open Source.
-http://sourceforge.net/services/buy/index.php
+>
+>  My scenario may not be the one of author,  please don't hesitate to
+> offer a example to clarity this question,
+> i think discuss about this make it clear and easy to maintain.
+>
+>
+> rt_spin_lock_slowlock(struct rt_mutex *lock)
+> {
+>      .........
+>        for (;;) {
+>                if (do_try_to_take_rt_mutex(lock, STEAL_LATERAL)) {
+>                ...
+>                if (!waiter.task) {
+>                  . ..
+>                }
+>                ....
+>                if (adaptive_wait(&waiter, orig_owner)) {
+>                ......
+>                }
+>
+>        .....
+>        }
+>        ....
+>        /*
+>         * Extremely rare case, if we got woken up by a non-mutex wakeup,
+>         * and we managed to steal the lock despite us not being the
+>         * highest-prio waiter (due to SCHED_OTHER changing prio), then we
+>         * can end up with a non-NULL waiter.task:
+>         */
+>        if (unlikely(waiter.task))
+>                remove_waiter(lock, &waiter, flags);
+> .....
+> }
+>
+> Regards
+> hyl
+>
