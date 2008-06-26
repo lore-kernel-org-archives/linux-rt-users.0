@@ -1,110 +1,70 @@
-From: hyl <heyongli@gmail.com>
-Subject: Re: [RT] remove_waiter does not need to do chain walk?(2.6.25.4-rt)
-Date: Thu, 26 Jun 2008 21:13:04 +0800
-Message-ID: <505766fa0806260613o759a0636m21070a46aafdf3fd@mail.gmail.com>
-References: <505766fa0806240107hacebf36q6c5b4d97278272b4@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: ftrace help for NYSE
+Date: Thu, 26 Jun 2008 14:31:01 -0500
+Message-ID: <4863EE75.9000400@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.175]:38447 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1762757AbYFZNNE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jun 2008 09:13:04 -0400
-Received: by wf-out-1314.google.com with SMTP id 27so21685wfd.4
-        for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 06:13:04 -0700 (PDT)
-In-Reply-To: <505766fa0806240107hacebf36q6c5b4d97278272b4@mail.gmail.com>
-Content-Disposition: inline
+Received: from mx1.redhat.com ([66.187.233.31]:38150 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1761850AbYFZTbM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jun 2008 15:31:12 -0400
+Received: from int-mx1.corp.redhat.com (int-mx1.corp.redhat.com [172.16.52.254])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id m5QJVBeB023335
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:11 -0400
+Received: from file.rdu.redhat.com (file.rdu.redhat.com [10.11.255.147])
+	by int-mx1.corp.redhat.com (8.13.1/8.13.1) with ESMTP id m5QJVAtw024624
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:10 -0400
+Received: from [172.16.17.168] (dhcp-168.hsv.redhat.com [172.16.17.168])
+	by file.rdu.redhat.com (8.13.1/8.13.1) with ESMTP id m5QJVA3e013870
+	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:10 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2008/6/24 hyl <heyongli@gmail.com>:
-> Hi, everyone
->
-> lets us just focus on remove_waiter in rt_spin_lock_slowlock
-> (2.6.25.4-rt).  refer to bellowing brief code .
->
-> i notice the comments above calling the  remove_waiter , but i can't
-> figure out the  sequence which meet
-> the comment.
->
-> I  do figure out a event sequence to proof  we must call
-> remove_waiter , but chain walk seems is not needed.
->
->  0).  current process block on this lock (note:block on lock not the process)
->  1).  adaptive_wait  continue  the loop without sleeping due to event
-> 2): owner change( held no lock while adaptive wait)
->  2.)  owner free the lock, another process be selected as pending
-> owner, then release lock
->  2.x) then  current be boosted , and become pending owner's top
-> waiter, so pending owner be boosted too
->  3.  in the new round loop: do_try_to_take_rt_mutex->try_to_steal_lock
-> lucky own the lock,
->     and at this time, waiter.task is not NULL
->
->  Question is: seems pending owner's block_on is null,   remove_waiter
-> seems need no chain walk?
-   look into the for(;;){}  loop there are only  one break, it is that
-we got the lock.
-so we must be the owner,  in remove_waiter,
-{
-	int first = (waiter == rt_mutex_top_waiter(lock));
-	struct task_struct *owner = rt_mutex_owner(lock);
-	int chain_walk = 0;
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-	spin_lock(&current->pi_lock);
-	plist_del(&waiter->list_entry, &lock->wait_list);
-	waiter->task = NULL;
-	current->pi_blocked_on = NULL;
-	spin_unlock(&current->pi_lock);
+Arnaldo, Luis and Steven (and everyone else :)),
 
-	if (first && owner != current && !task_is_reader(owner)) {
-        ==>/*we are the owner, so never a chain walk for
-rt_spin_lock_slowlock->remove_waiter,*/
+Had a good conversation with NYSE this morning, including Shak, Larry Woodman and Ade
+Lee, concerning tuning efforts for their CCG application (Java message routing
+application). They're running the first iteration of this on the stock RHEL5.2 kernel
+and have managed to tune most of the latency spikes out, but they're seeing some
+serious spikes following Java GC. The GC takes 5ms (yeah, five milliseconds) and then
+they see another 5ms before the app actually cranks back up. The question is whether
+the GC triggers some sort of VM transactions such as page reclamation, or something
+else that would basically hold off the JVM from running for 5ms.
 
-but for mutex/reader/writer senerio, the chain walk is possible.
+Shak and Larry are getting them to send us SAR reports and vmstat info, but one thing
+they were interested in was looking at using ftrace with a MRG trace kernel to see if
+they can get a clue as to what's going on during that 10ms period.
 
-for rt_spin_lock,  it seems that we are never  going to have a non-mutex wakeup.
-FIX ME.
+What I'd like to do is send them a trace kernel rpm and an example script that:
 
+	1. Mounts the debugfs (if required)
+	2. turns on appropriate switches in the tracing dir
+		- turn on ftrace
+		- set the current tracer
+		- other stuff?
+	3. starts tracing
+	4. runs something (cyclictest? ping?)
+	5. turns off tracing
+	6. dumps the trace info
 
->
->  My scenario may not be the one of author,  please don't hesitate to
-> offer a example to clarity this question,
-> i think discuss about this make it clear and easy to maintain.
->
->
-> rt_spin_lock_slowlock(struct rt_mutex *lock)
-> {
->      .........
->        for (;;) {
->                if (do_try_to_take_rt_mutex(lock, STEAL_LATERAL)) {
->                ...
->                if (!waiter.task) {
->                  . ..
->                }
->                ....
->                if (adaptive_wait(&waiter, orig_owner)) {
->                ......
->                }
->
->        .....
->        }
->        ....
->        /*
->         * Extremely rare case, if we got woken up by a non-mutex wakeup,
->         * and we managed to steal the lock despite us not being the
->         * highest-prio waiter (due to SCHED_OTHER changing prio), then we
->         * can end up with a non-NULL waiter.task:
->         */
->        if (unlikely(waiter.task))
->                remove_waiter(lock, &waiter, flags);
-> .....
-> }
->
-> Regards
-> hyl
->
+- From that script, the NYSE programmers can instrument their Java app to do the same
+stuff.  I'd really like it if they could just boot the trace kernel, instrument their
+app, get a trace and send us the info for analysis.
+
+Is there anything else we can do to make using ftrace easier for these guys?
+
+Clark
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+
+iEYEARECAAYFAkhj7nUACgkQHyuj/+TTEp04fgCgvp7mjP1XQcR3XtXq43UDnPps
+6scAn2ZbU7jdwZoip3TtAh1PajFAZlax
+=HJYk
+-----END PGP SIGNATURE-----
