@@ -1,70 +1,133 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: Re: [PATCH] Fix the processing of optional options for cyclictest
-Date: Fri, 27 Jun 2008 21:22:07 +0200
-Message-ID: <520f0cf10806271222g37dd75c0gafe578c6d4ef5339@mail.gmail.com>
-References: <520f0cf10806270110l5b3199ablc936c38f4bcf24eb@mail.gmail.com>
-	 <c384c5ea0806270734p73c68871k5dec8d1ad25afaff@mail.gmail.com>
-	 <Pine.LNX.4.58.0806271157001.20917@gandalf.stny.rr.com>
-	 <48651013.2070704@gmail.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 3/3] sched: add avg-overlap support to RT tasks
+Date: Fri, 27 Jun 2008 14:30:00 -0600
+Message-ID: <20080627203000.3829.47406.stgit@lsg.lsg.lab.novell.com>
+References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	"Leon Woestenberg" <leon.woestenberg@gmail.com>,
-	linux-rt-users@vger.kernel.org,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Clark Williams" <clark.williams@gmail.com>
+Cc: npiggin@suse.de, ghaskins@novell.com, rostedt@goodmis.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: mingo@elte.hu, peterz@infradead.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.230]:29883 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756339AbYF0TWI (ORCPT
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8166 "EHLO
+	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753609AbYF0UaB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jun 2008 15:22:08 -0400
-Received: by rv-out-0506.google.com with SMTP id k40so700716rvb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jun 2008 12:22:07 -0700 (PDT)
-In-Reply-To: <48651013.2070704@gmail.com>
-Content-Disposition: inline
+	Fri, 27 Jun 2008 16:30:01 -0400
+In-Reply-To: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jun 27, 2008 at 6:06 PM, Clark Williams
-<clark.williams@gmail.com> wrote:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
->
-> Steven Rostedt wrote:
->> 5B
->>
->> On Fri, 27 Jun 2008, Leon Woestenberg wrote:
->>
->>> Hello,
->>>
->>> I still found it strange that the RTWiki mentions "-t NUM" as if it
->>> works, so the manual page of cyclictest and the wiki needs a review
->>> too.
->>
->> It doesn't?
->>
->> Then again I must have an old version of cyclictest, because both -t5 and
->> -t 5 work for me.
->>
->> -- Steve
->>
->
-> You do. The current source in Thomas's git tree exhibits this
-> behavior, because of the way getopt() handles optional arguments.
->
-> Clark
+We have the notion of tracking process-coupling (a.k.a. buddy-wake) via
+the p->se.last_wake / p->se.avg_overlap facilities, but it is only used
+for cfs to cfs interactions.  There is no reason why an rt to cfs
+interaction cannot share in establishing a relationhip in a similar
+manner.
 
-Right the extra-code is only necessary for the processing of optional
-arguments, so without checking the history of the program, I would
-assume that the NUM argument to -t was not optional in the past. Now
-it is optional because -t without arguments implies threads =
-max_cpus. I made some very minor edits to the wiki a little while ago
-to reflect this but the Wiki page does need to updated more, I think
-the usage file corresponds a lot more closely to the actual behaviour.
+Because PREEMPT_RT runs many kernel threads as FIFO priority, we often
+times have heavy interaction between RT threads waking CFS applications.
+This patch offers a substantial boost (50-60%+) in perfomance under those
+circumstances.
 
-crap, I see I left of the signed-off-by: John Kacur <jkacur@gmail.com>
-line on the patch, do I need to resubmit it?
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-John
+ kernel/sched.c      |   14 ++++++++++++++
+ kernel/sched_fair.c |   21 ++-------------------
+ 2 files changed, 16 insertions(+), 19 deletions(-)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 0b9f90e..af9a68b 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -1544,6 +1544,12 @@ static void set_load_weight(struct task_struct *p)
+ 	p->se.load.inv_weight = prio_to_wmult[p->static_prio - MAX_RT_PRIO];
+ }
+ 
++static void update_avg(u64 *avg, u64 sample)
++{
++	s64 diff = sample - *avg;
++	*avg += diff >> 3;
++}
++
+ static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
+ {
+ 	sched_info_queued(p);
+@@ -1553,6 +1559,12 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
+ 
+ static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
+ {
++	if (sleep && p->se.last_wakeup) {
++		update_avg(&p->se.avg_overlap,
++			   p->se.sum_exec_runtime - p->se.last_wakeup);
++		p->se.last_wakeup = 0;
++	}
++
+ 	p->sched_class->dequeue_task(rq, p, sleep);
+ 	p->se.on_rq = 0;
+ }
+@@ -2157,6 +2169,8 @@ out_running:
+ 		p->sched_class->task_wake_up(rq, p);
+ #endif
+ out:
++	current->se.last_wakeup = current->se.sum_exec_runtime;
++
+ 	task_rq_unlock(rq, &flags);
+ 
+ 	return success;
+diff --git a/kernel/sched_fair.c b/kernel/sched_fair.c
+index 8e77d67..3c06027 100644
+--- a/kernel/sched_fair.c
++++ b/kernel/sched_fair.c
+@@ -639,21 +639,6 @@ enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int wakeup)
+ 		__enqueue_entity(cfs_rq, se);
+ }
+ 
+-static void update_avg(u64 *avg, u64 sample)
+-{
+-	s64 diff = sample - *avg;
+-	*avg += diff >> 3;
+-}
+-
+-static void update_avg_stats(struct cfs_rq *cfs_rq, struct sched_entity *se)
+-{
+-	if (!se->last_wakeup)
+-		return;
+-
+-	update_avg(&se->avg_overlap, se->sum_exec_runtime - se->last_wakeup);
+-	se->last_wakeup = 0;
+-}
+-
+ static void
+ dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int sleep)
+ {
+@@ -664,7 +649,6 @@ dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int sleep)
+ 
+ 	update_stats_dequeue(cfs_rq, se);
+ 	if (sleep) {
+-		update_avg_stats(cfs_rq, se);
+ #ifdef CONFIG_SCHEDSTATS
+ 		if (entity_is_task(se)) {
+ 			struct task_struct *tsk = task_of(se);
+@@ -1016,9 +1000,9 @@ wake_affine(struct rq *rq, struct sched_domain *this_sd, struct rq *this_rq,
+ 	 * a reasonable amount of time then attract this newly
+ 	 * woken task:
+ 	 */
+-	if (sync && balanced && curr->sched_class == &fair_sched_class) {
++	if (sync && balanced) {
+ 		if (curr->se.avg_overlap < sysctl_sched_migration_cost &&
+-				p->se.avg_overlap < sysctl_sched_migration_cost)
++		    p->se.avg_overlap < sysctl_sched_migration_cost)
+ 			return 1;
+ 	}
+ 
+@@ -1177,7 +1161,6 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p)
+ 		return;
+ 	}
+ 
+-	se->last_wakeup = se->sum_exec_runtime;
+ 	if (unlikely(se == pse))
+ 		return;
+ 
+
