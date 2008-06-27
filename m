@@ -1,103 +1,72 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: [PATCH] Fix the processing of optional options for cyclictest
-Date: Fri, 27 Jun 2008 10:10:09 +0200
-Message-ID: <520f0cf10806270110l5b3199ablc936c38f4bcf24eb@mail.gmail.com>
+From: Luotao Fu <l.fu@pengutronix.de>
+Subject: Re: High latencies with linux-2.6.25.4-rt6 on MPC5200
+Date: Fri, 27 Jun 2008 16:32:13 +0200
+Message-ID: <20080627143213.GG5666@pengutronix.de>
+References: <4858C229.2060509@grandegger.com> <20080619131406.GK5724@pengutronix.de> <485A675A.9070509@grandegger.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Leon Woestenberg" <leon.woestenberg@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="Z0mFw3+mXTC5ycVe"
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.235]:40916 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754860AbYF0IKK (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:59057 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752412AbYF0OcU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jun 2008 04:10:10 -0400
-Received: by rv-out-0506.google.com with SMTP id k40so445438rvb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jun 2008 01:10:09 -0700 (PDT)
+	Fri, 27 Jun 2008 10:32:20 -0400
 Content-Disposition: inline
+In-Reply-To: <485A675A.9070509@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Problem: when running cyclic test, short options are not parsing
-optional arguments correctly when followed by a space.
-"-t3" works, but "-t 3" does not.
 
-The following patch fixes the parsing for -a (affinity) and -t
-(threads) whether there is a space or no space after the optional
-argument, and of course it does the right thing if there is no
-argument.
+--Z0mFw3+mXTC5ycVe
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Please apply, because there is the possibility that people are not
-testing what they think, especially if tests are automated.
+Hi Wolfgang,
+I finally found some time and did some tests with your config file and the =
+shiny
+new 2.6.25.8-rt7
 
-Thanks
+On Thu, Jun 19, 2008 at 04:04:10PM +0200, Wolfgang Grandegger wrote:
+> Hi Fu,
+>
+> Luotao Fu wrote:
+> Keep in mind that I'm running Linux on a rootfs mounted via NFS.
 
-Author: John Kacur <jkacur@gmail.com>  2008-06-27 09:47:56
-Committer: John Kacur <jkacur@gmail.com>  2008-06-27 09:47:56
-Parent: 7a052daef09a5af77815e21fbff84ef580110dee (rt-tests/Makefile:
-Import an updated version number into RPM spec file)
-Branch: master
-Follows: v0.22
-Precedes:
+I have exactly the same test configuration here.
 
-    -Fix the processing of options with optional parameters, so that the user
-    can write -tNUM or -t NUM and it will work as expected. This was done
-    for the -t and -a options
-    - Modify the usage messages to correspond with the way the program makes use
-    of the options.
+Again everything looks just fine to me. Depending on which debugging Option=
+ are
+turned on my max. results pended between 70 and 350 us. However I could not
+produce any peak worst case values, which are so far away from the average =
+like
+in your case.
 
-------------------------- src/cyclictest/cyclictest.c -------------------------
-index d3f545f..bf60f09 100644
-@@ -571,7 +571,8 @@ static void display_help(void)
- 	printf("cyclictest V %1.2f\n", VERSION_STRING);
- 	printf("Usage:\n"
- 	       "cyclictest <options>\n\n"
--	       "-a       --affinity        run thread #N on processor #N, if
-possible\n"
-+	       "-a [NUM] --affinity        run thread #N on processor #N, if
-possible\n"
-+	       "                           with NUM restricts it to the
-first NUM processors\n"
- 	       "-a PROC  --affinity=PROC   run all threads on processor #PROC\n"
- 	       "-b USEC  --breaktrace=USEC send break trace command when
-latency > USEC\n"
- 	       "-B       --preemptirqs     both preempt and irqsoff tracing
-(used with -b)\n"
-@@ -591,7 +592,9 @@ static void display_help(void)
- 	       "-r       --relative        use relative timer instead of absolute\n"
- 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
- 	       "-t       --threads         one thread per available processor\n"
--	       "-t NUM   --threads=NUM     number of threads: without -t default=1\n"
-+	       "-t [NUM] --threads=NUM     number of threads:\n"
-+	       "                           without NUM, threads = max_cpus\n"
-+	       "                           without -t default = 1\n"
- 	       "-v       --verbose         output values on stdout for statistics\n"
- 	       "                           format: n:c:v n=tasknum c=count
-v=value in us\n");
- 	exit(0);
-@@ -661,8 +664,12 @@ static void process_options (int argc, char *argv[])
- 			if (optarg != NULL) {
- 				affinity = atoi(optarg);
- 				setaffinity = AFFINITY_SPECIFIED;
--			} else
-+			} else if (optind<argc && atoi(argv[optind])) {
-+				affinity = atoi(argv[optind]);
-+				setaffinity = AFFINITY_SPECIFIED;
-+			} else {
- 				setaffinity = AFFINITY_USEALL;
-+			}
- 			break;
- 		case 'b': tracelimit = atoi(optarg); break;
- 		case 'B': tracetype = IRQPREEMPTOFF; break;
-@@ -682,6 +689,8 @@ static void process_options (int argc, char *argv[])
- 		case 't':
- 			if (optarg != NULL)
- 				num_threads = atoi(optarg);
-+			else if (optind<argc && atoi(argv[optind]))
-+				num_threads = atoi(argv[optind]);
- 			else
- 				num_threads = max_cpus;
- 			break;
+Have you tried the new -rt patch on your board? Still any strange results?
+
+cheers
+Luotao Fu
+
+--=20
+   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
+
+
+--Z0mFw3+mXTC5ycVe
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFIZPntiruQY+UyUmERAu+fAKCA6fkDpnRg1DvEcvBKJlk+rZn8KQCfad++
+ADhLU59ZTjMsjMn6BZ/BSNk=
+=dH+d
+-----END PGP SIGNATURE-----
+
+--Z0mFw3+mXTC5ycVe--
