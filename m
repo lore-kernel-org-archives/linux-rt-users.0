@@ -1,70 +1,103 @@
-From: Clark Williams <williams@redhat.com>
-Subject: ftrace help for NYSE
-Date: Thu, 26 Jun 2008 14:31:01 -0500
-Message-ID: <4863EE75.9000400@redhat.com>
+From: "John Kacur" <jkacur@gmail.com>
+Subject: [PATCH] Fix the processing of optional options for cyclictest
+Date: Fri, 27 Jun 2008 10:10:09 +0200
+Message-ID: <520f0cf10806270110l5b3199ablc936c38f4bcf24eb@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Leon Woestenberg" <leon.woestenberg@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:38150 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761850AbYFZTbM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jun 2008 15:31:12 -0400
-Received: from int-mx1.corp.redhat.com (int-mx1.corp.redhat.com [172.16.52.254])
-	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id m5QJVBeB023335
-	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:11 -0400
-Received: from file.rdu.redhat.com (file.rdu.redhat.com [10.11.255.147])
-	by int-mx1.corp.redhat.com (8.13.1/8.13.1) with ESMTP id m5QJVAtw024624
-	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:10 -0400
-Received: from [172.16.17.168] (dhcp-168.hsv.redhat.com [172.16.17.168])
-	by file.rdu.redhat.com (8.13.1/8.13.1) with ESMTP id m5QJVA3e013870
-	for <linux-rt-users@vger.kernel.org>; Thu, 26 Jun 2008 15:31:10 -0400
+Received: from rv-out-0506.google.com ([209.85.198.235]:40916 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754860AbYF0IKK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 27 Jun 2008 04:10:10 -0400
+Received: by rv-out-0506.google.com with SMTP id k40so445438rvb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jun 2008 01:10:09 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Problem: when running cyclic test, short options are not parsing
+optional arguments correctly when followed by a space.
+"-t3" works, but "-t 3" does not.
 
-Arnaldo, Luis and Steven (and everyone else :)),
+The following patch fixes the parsing for -a (affinity) and -t
+(threads) whether there is a space or no space after the optional
+argument, and of course it does the right thing if there is no
+argument.
 
-Had a good conversation with NYSE this morning, including Shak, Larry Woodman and Ade
-Lee, concerning tuning efforts for their CCG application (Java message routing
-application). They're running the first iteration of this on the stock RHEL5.2 kernel
-and have managed to tune most of the latency spikes out, but they're seeing some
-serious spikes following Java GC. The GC takes 5ms (yeah, five milliseconds) and then
-they see another 5ms before the app actually cranks back up. The question is whether
-the GC triggers some sort of VM transactions such as page reclamation, or something
-else that would basically hold off the JVM from running for 5ms.
+Please apply, because there is the possibility that people are not
+testing what they think, especially if tests are automated.
 
-Shak and Larry are getting them to send us SAR reports and vmstat info, but one thing
-they were interested in was looking at using ftrace with a MRG trace kernel to see if
-they can get a clue as to what's going on during that 10ms period.
+Thanks
 
-What I'd like to do is send them a trace kernel rpm and an example script that:
+Author: John Kacur <jkacur@gmail.com>  2008-06-27 09:47:56
+Committer: John Kacur <jkacur@gmail.com>  2008-06-27 09:47:56
+Parent: 7a052daef09a5af77815e21fbff84ef580110dee (rt-tests/Makefile:
+Import an updated version number into RPM spec file)
+Branch: master
+Follows: v0.22
+Precedes:
 
-	1. Mounts the debugfs (if required)
-	2. turns on appropriate switches in the tracing dir
-		- turn on ftrace
-		- set the current tracer
-		- other stuff?
-	3. starts tracing
-	4. runs something (cyclictest? ping?)
-	5. turns off tracing
-	6. dumps the trace info
+    -Fix the processing of options with optional parameters, so that the user
+    can write -tNUM or -t NUM and it will work as expected. This was done
+    for the -t and -a options
+    - Modify the usage messages to correspond with the way the program makes use
+    of the options.
 
-- From that script, the NYSE programmers can instrument their Java app to do the same
-stuff.  I'd really like it if they could just boot the trace kernel, instrument their
-app, get a trace and send us the info for analysis.
-
-Is there anything else we can do to make using ftrace easier for these guys?
-
-Clark
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iEYEARECAAYFAkhj7nUACgkQHyuj/+TTEp04fgCgvp7mjP1XQcR3XtXq43UDnPps
-6scAn2ZbU7jdwZoip3TtAh1PajFAZlax
-=HJYk
------END PGP SIGNATURE-----
+------------------------- src/cyclictest/cyclictest.c -------------------------
+index d3f545f..bf60f09 100644
+@@ -571,7 +571,8 @@ static void display_help(void)
+ 	printf("cyclictest V %1.2f\n", VERSION_STRING);
+ 	printf("Usage:\n"
+ 	       "cyclictest <options>\n\n"
+-	       "-a       --affinity        run thread #N on processor #N, if
+possible\n"
++	       "-a [NUM] --affinity        run thread #N on processor #N, if
+possible\n"
++	       "                           with NUM restricts it to the
+first NUM processors\n"
+ 	       "-a PROC  --affinity=PROC   run all threads on processor #PROC\n"
+ 	       "-b USEC  --breaktrace=USEC send break trace command when
+latency > USEC\n"
+ 	       "-B       --preemptirqs     both preempt and irqsoff tracing
+(used with -b)\n"
+@@ -591,7 +592,9 @@ static void display_help(void)
+ 	       "-r       --relative        use relative timer instead of absolute\n"
+ 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
+ 	       "-t       --threads         one thread per available processor\n"
+-	       "-t NUM   --threads=NUM     number of threads: without -t default=1\n"
++	       "-t [NUM] --threads=NUM     number of threads:\n"
++	       "                           without NUM, threads = max_cpus\n"
++	       "                           without -t default = 1\n"
+ 	       "-v       --verbose         output values on stdout for statistics\n"
+ 	       "                           format: n:c:v n=tasknum c=count
+v=value in us\n");
+ 	exit(0);
+@@ -661,8 +664,12 @@ static void process_options (int argc, char *argv[])
+ 			if (optarg != NULL) {
+ 				affinity = atoi(optarg);
+ 				setaffinity = AFFINITY_SPECIFIED;
+-			} else
++			} else if (optind<argc && atoi(argv[optind])) {
++				affinity = atoi(argv[optind]);
++				setaffinity = AFFINITY_SPECIFIED;
++			} else {
+ 				setaffinity = AFFINITY_USEALL;
++			}
+ 			break;
+ 		case 'b': tracelimit = atoi(optarg); break;
+ 		case 'B': tracetype = IRQPREEMPTOFF; break;
+@@ -682,6 +689,8 @@ static void process_options (int argc, char *argv[])
+ 		case 't':
+ 			if (optarg != NULL)
+ 				num_threads = atoi(optarg);
++			else if (optind<argc && atoi(argv[optind]))
++				num_threads = atoi(argv[optind]);
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
