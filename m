@@ -1,125 +1,40 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 1/3] sched: enable interrupts and drop rq-lock during newidle
-	balancing
-Date: Fri, 27 Jun 2008 14:29:50 -0600
-Message-ID: <20080627202949.3829.82838.stgit@lsg.lsg.lab.novell.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
+Date: Fri, 27 Jun 2008 22:51:36 +0200
+Message-ID: <1214599896.12348.9.camel@twins>
 References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: npiggin@suse.de, ghaskins@novell.com, rostedt@goodmis.org,
+Cc: mingo@elte.hu, npiggin@suse.de, rostedt@goodmis.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: mingo@elte.hu, peterz@infradead.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8153 "EHLO
-	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758085AbYF0U3u (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:50181 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759152AbYF0Uvw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jun 2008 16:29:50 -0400
+	Fri, 27 Jun 2008 16:51:52 -0400
 In-Reply-To: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Oprofile data shows that the system may spend a significant amount of
-time (60%+) in find_busiest_groups as a result of newidle balancing.  This
-entire operation is a critical section since it occurs inline with
-a schedule().  Since we do find_busiest_groups() et. al. without locks
-held for normal balancing, lets do it for newidle as well.  It will
-at least allow other cpus and interrupts to make forward progress
-(against our RQ) while we try to balance.
+On Fri, 2008-06-27 at 14:29 -0600, Gregory Haskins wrote:
+> Hi Ingo,
+>   The following patches apply to linux-tip/sched/devel and enhance the
+> performance of the kernel (specifically in PREEMPT_RT, though they do
+> not regress mainline performance as far as I can tell).  They offer
+> somewhere between 50-100% speedups in netperf performance, depending
+> on the test.
+> 
+> Should you be interested in these patches, you can optionally pull them
+> from git at the following URL:
+> 
+> git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git sched-devel
+> 
+> Comments/feedback/bugfixes welcome
 
-Additionally, we abort the newidle processing if we are preempted.
+Seem reasonable to me,
 
-This patch should both improve latency response, as well as increase
-throughput.  It has shown to significantly contribute to a 6-12%
-increase in network peformance.
-
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
-
- kernel/sched.c |   40 +++++++++++++++++++++++++++++++++-------
- 1 files changed, 33 insertions(+), 7 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index c51d9fa..56722b1 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -3426,6 +3426,15 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd,
- 
- 	cpus_setall(*cpus);
- 
-+	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
-+
-+	/*
-+	 * We are in a preempt-disabled section, so dropping the lock/irq
-+	 * here simply means that other cores may acquire the lock,
-+	 * and interrupts may occur.
-+	 */
-+	spin_unlock_irq(&this_rq->lock);
-+
- 	/*
- 	 * When power savings policy is enabled for the parent domain, idle
- 	 * sibling can pick up load irrespective of busy siblings. In this case,
-@@ -3436,7 +3445,6 @@ load_balance_newidle(int this_cpu, struct rq *this_rq, struct sched_domain *sd,
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
- 		sd_idle = 1;
- 
--	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
- redo:
- 	group = find_busiest_group(sd, this_cpu, &imbalance, CPU_NEWLY_IDLE,
- 				   &sd_idle, cpus, NULL);
-@@ -3456,22 +3464,37 @@ redo:
- 	schedstat_add(sd, lb_imbalance[CPU_NEWLY_IDLE], imbalance);
- 
- 	ld_moved = 0;
--	if (busiest->nr_running > 1) {
-+	if (!need_resched() && busiest->nr_running > 1) {
- 		/* Attempt to move tasks */
--		double_lock_balance(this_rq, busiest);
--		/* this_rq->clock is already updated */
--		update_rq_clock(busiest);
-+		local_irq_disable();
-+		double_rq_lock(this_rq, busiest);
-+
-+		BUG_ON(this_cpu != smp_processor_id());
-+
-+		/*
-+		 * Checking rq->nr_running covers both the case where
-+		 * newidle-balancing pulls a task, as well as if something
-+		 * else issued a NEEDS_RESCHED (since we would only need
-+		 * a reschedule if something was moved to us)
-+		 */
-+		if (this_rq->nr_running) {
-+			spin_unlock(&busiest->lock);
-+			goto out_balanced_locked;
-+		}
-+
- 		ld_moved = move_tasks(this_rq, this_cpu, busiest,
- 					imbalance, sd, CPU_NEWLY_IDLE,
- 					&all_pinned);
- 		spin_unlock(&busiest->lock);
- 
--		if (unlikely(all_pinned)) {
-+		if (unlikely(all_pinned && !this_rq->nr_running)) {
-+			spin_unlock_irq(&this_rq->lock);
- 			cpu_clear(cpu_of(busiest), *cpus);
- 			if (!cpus_empty(*cpus))
- 				goto redo;
- 		}
--	}
-+	} else
-+		spin_lock_irq(&this_rq->lock);
- 
- 	if (!ld_moved) {
- 		schedstat_inc(sd, lb_failed[CPU_NEWLY_IDLE]);
-@@ -3484,6 +3507,9 @@ redo:
- 	return ld_moved;
- 
- out_balanced:
-+	spin_lock_irq(&this_rq->lock);
-+
-+out_balanced_locked:
- 	schedstat_inc(sd, lb_balanced[CPU_NEWLY_IDLE]);
- 	if (!sd_idle && sd->flags & SD_SHARE_CPUPOWER &&
- 	    !test_sd_parent(sd, SD_POWERSAVINGS_BALANCE))
+Acked-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
 
