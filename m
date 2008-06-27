@@ -1,7 +1,9 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
-Date: Fri, 27 Jun 2008 14:29:44 -0600
-Message-ID: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
+Subject: [PATCH 2/3] sched: terminate newidle balancing once at least one task
+	has moved over
+Date: Fri, 27 Jun 2008 14:29:55 -0600
+Message-ID: <20080627202955.3829.78937.stgit@lsg.lsg.lab.novell.com>
+References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -9,27 +11,36 @@ Cc: npiggin@suse.de, ghaskins@novell.com, rostedt@goodmis.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: mingo@elte.hu, peterz@infradead.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8144 "EHLO
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8160 "EHLO
 	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757494AbYF0U3q (ORCPT
+	with ESMTP id S1759982AbYF0U3z (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jun 2008 16:29:46 -0400
+	Fri, 27 Jun 2008 16:29:55 -0400
+In-Reply-To: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Ingo,
-  The following patches apply to linux-tip/sched/devel and enhance the
-performance of the kernel (specifically in PREEMPT_RT, though they do
-not regress mainline performance as far as I can tell).  They offer
-somewhere between 50-100% speedups in netperf performance, depending
-on the test.
+Inspired by Peter Zijlstra.
 
-Should you be interested in these patches, you can optionally pull them
-from git at the following URL:
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git sched-devel
+ kernel/sched.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-Comments/feedback/bugfixes welcome
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 56722b1..0b9f90e 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -2863,6 +2863,10 @@ static int move_tasks(struct rq *this_rq, int this_cpu, struct rq *busiest,
+ 				max_load_move - total_load_moved,
+ 				sd, idle, all_pinned, &this_best_prio);
+ 		class = class->next;
++
++		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
++			break;
++
+ 	} while (class && max_load_move > total_load_moved);
+ 
+ 	return total_load_moved > 0;
 
-Regards,
--Greg
