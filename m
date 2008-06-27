@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 3/3] sched: add avg-overlap support to RT tasks
-Date: Fri, 27 Jun 2008 14:30:00 -0600
-Message-ID: <20080627203000.3829.47406.stgit@lsg.lsg.lab.novell.com>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
+Subject: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
+Date: Fri, 27 Jun 2008 14:29:44 -0600
+Message-ID: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,124 +9,27 @@ Cc: npiggin@suse.de, ghaskins@novell.com, rostedt@goodmis.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: mingo@elte.hu, peterz@infradead.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8166 "EHLO
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:8144 "EHLO
 	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753609AbYF0UaB (ORCPT
+	with ESMTP id S1757494AbYF0U3q (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Jun 2008 16:30:01 -0400
-In-Reply-To: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
+	Fri, 27 Jun 2008 16:29:46 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We have the notion of tracking process-coupling (a.k.a. buddy-wake) via
-the p->se.last_wake / p->se.avg_overlap facilities, but it is only used
-for cfs to cfs interactions.  There is no reason why an rt to cfs
-interaction cannot share in establishing a relationhip in a similar
-manner.
+Hi Ingo,
+  The following patches apply to linux-tip/sched/devel and enhance the
+performance of the kernel (specifically in PREEMPT_RT, though they do
+not regress mainline performance as far as I can tell).  They offer
+somewhere between 50-100% speedups in netperf performance, depending
+on the test.
 
-Because PREEMPT_RT runs many kernel threads as FIFO priority, we often
-times have heavy interaction between RT threads waking CFS applications.
-This patch offers a substantial boost (50-60%+) in perfomance under those
-circumstances.
+Should you be interested in these patches, you can optionally pull them
+from git at the following URL:
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
+git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git sched-devel
 
- kernel/sched.c      |   14 ++++++++++++++
- kernel/sched_fair.c |   21 ++-------------------
- 2 files changed, 16 insertions(+), 19 deletions(-)
+Comments/feedback/bugfixes welcome
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 0b9f90e..af9a68b 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -1544,6 +1544,12 @@ static void set_load_weight(struct task_struct *p)
- 	p->se.load.inv_weight = prio_to_wmult[p->static_prio - MAX_RT_PRIO];
- }
- 
-+static void update_avg(u64 *avg, u64 sample)
-+{
-+	s64 diff = sample - *avg;
-+	*avg += diff >> 3;
-+}
-+
- static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
- {
- 	sched_info_queued(p);
-@@ -1553,6 +1559,12 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
- 
- static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
- {
-+	if (sleep && p->se.last_wakeup) {
-+		update_avg(&p->se.avg_overlap,
-+			   p->se.sum_exec_runtime - p->se.last_wakeup);
-+		p->se.last_wakeup = 0;
-+	}
-+
- 	p->sched_class->dequeue_task(rq, p, sleep);
- 	p->se.on_rq = 0;
- }
-@@ -2157,6 +2169,8 @@ out_running:
- 		p->sched_class->task_wake_up(rq, p);
- #endif
- out:
-+	current->se.last_wakeup = current->se.sum_exec_runtime;
-+
- 	task_rq_unlock(rq, &flags);
- 
- 	return success;
-diff --git a/kernel/sched_fair.c b/kernel/sched_fair.c
-index 8e77d67..3c06027 100644
---- a/kernel/sched_fair.c
-+++ b/kernel/sched_fair.c
-@@ -639,21 +639,6 @@ enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int wakeup)
- 		__enqueue_entity(cfs_rq, se);
- }
- 
--static void update_avg(u64 *avg, u64 sample)
--{
--	s64 diff = sample - *avg;
--	*avg += diff >> 3;
--}
--
--static void update_avg_stats(struct cfs_rq *cfs_rq, struct sched_entity *se)
--{
--	if (!se->last_wakeup)
--		return;
--
--	update_avg(&se->avg_overlap, se->sum_exec_runtime - se->last_wakeup);
--	se->last_wakeup = 0;
--}
--
- static void
- dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int sleep)
- {
-@@ -664,7 +649,6 @@ dequeue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int sleep)
- 
- 	update_stats_dequeue(cfs_rq, se);
- 	if (sleep) {
--		update_avg_stats(cfs_rq, se);
- #ifdef CONFIG_SCHEDSTATS
- 		if (entity_is_task(se)) {
- 			struct task_struct *tsk = task_of(se);
-@@ -1016,9 +1000,9 @@ wake_affine(struct rq *rq, struct sched_domain *this_sd, struct rq *this_rq,
- 	 * a reasonable amount of time then attract this newly
- 	 * woken task:
- 	 */
--	if (sync && balanced && curr->sched_class == &fair_sched_class) {
-+	if (sync && balanced) {
- 		if (curr->se.avg_overlap < sysctl_sched_migration_cost &&
--				p->se.avg_overlap < sysctl_sched_migration_cost)
-+		    p->se.avg_overlap < sysctl_sched_migration_cost)
- 			return 1;
- 	}
- 
-@@ -1177,7 +1161,6 @@ static void check_preempt_wakeup(struct rq *rq, struct task_struct *p)
- 		return;
- 	}
- 
--	se->last_wakeup = se->sum_exec_runtime;
- 	if (unlikely(se == pse))
- 		return;
- 
-
+Regards,
+-Greg
