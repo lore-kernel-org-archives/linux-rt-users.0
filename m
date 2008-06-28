@@ -1,40 +1,119 @@
 From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: Re: 2.6.24.7-rt14
-Date: Sat, 28 Jun 2008 19:13:55 +0200
-Message-ID: <c384c5ea0806281013t50e56efes46ff7c53e58097ba@mail.gmail.com>
-References: <1214256117.8701.13.camel@localhost.localdomain>
-	 <g45dvm$pvt$1@ger.gmane.org>
+Subject: [PATCH -rt] Add schedule_work_prio() and queue_work_prio().
+Date: Sat, 28 Jun 2008 19:23:06 +0200
+Message-ID: <c384c5ea0806281023y6fcfb0f4o1a41aef3856bda9e@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: trem <tremyfr@yahoo.fr>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.250]:53559 "EHLO
+Received: from an-out-0708.google.com ([209.85.132.242]:62063 "EHLO
 	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752781AbYF1RN4 (ORCPT
+	with ESMTP id S1752916AbYF1RXH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Jun 2008 13:13:56 -0400
-Received: by an-out-0708.google.com with SMTP id d40so191005and.103
-        for <linux-rt-users@vger.kernel.org>; Sat, 28 Jun 2008 10:13:55 -0700 (PDT)
-In-Reply-To: <g45dvm$pvt$1@ger.gmane.org>
+	Sat, 28 Jun 2008 13:23:07 -0400
+Received: by an-out-0708.google.com with SMTP id d40so191396and.103
+        for <linux-rt-users@vger.kernel.org>; Sat, 28 Jun 2008 10:23:06 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Against 2.6.25.8-rt7, only compile tested.
 
-On Sat, Jun 28, 2008 at 3:19 PM, trem <tremyfr@yahoo.fr> wrote:
-> [trem@localhost rt-tests]$ sudo ./cyclictest -t 1 -p 80 -n -i 10000 -l
+Adds schedule_work_prio() and queue_work_prio() so that work can be
+scheduled with a different priority than the caller.
 
-Just a warning to everyone, not that it affects the test or results in
-case of 1 thread, but that should be -t1 instead of -t 1.
+Under PREEMPT RT, schedule_work() and therefore queue_work() makes
+the work inherit the caller's priority.
 
-This little difference would matter if you decided to use more than 1 thread.
+If a real-time thread, such as an interrupt handler, defers work it
+may want the deferred work to be of lower priority so it does not
+race with succeeding interrupt handling.
 
-"-t NUM" will not pick up the NUM value, as optional arguments must
-not have a space between the option and (optional) argument.
+Signed-off-by: Leon Woestenberg <leon@sidebranch.com>
 
-Regards,
+Index: linux-2.6.25.8/kernel/workqueue.c
+===================================================================
+--- linux-2.6.25.8.orig/kernel/workqueue.c	2008-06-28 16:52:40.000000000 +0200
++++ linux-2.6.25.8/kernel/workqueue.c	2008-06-28 18:29:19.000000000 +0200
+@@ -162,9 +162,10 @@
+ }
+
+ /**
+- * queue_work - queue work on a workqueue
++ * queue_work_prio - queue work on a workqueue and set work priority
+  * @wq: workqueue to use
+  * @work: work to queue
++ * @prio: priority of work
+  *
+  * Returns 0 if @work was already on a queue, non-zero otherwise.
+  *
+@@ -173,7 +174,7 @@
+  *
+  * Especially no such guarantee on PREEMPT_RT.
+  */
+-int queue_work(struct workqueue_struct *wq, struct work_struct *work)
++int queue_work_prio(struct workqueue_struct *wq, struct work_struct
+*work, int prio)
+ {
+ 	int ret = 0, cpu = raw_smp_processor_id();
+
+@@ -184,6 +185,25 @@
+ 	}
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(queue_work_prio);
++
++/**
++ * queue_work - queue work on a workqueue. work inherits caller's prio.
++ * @wq: workqueue to use
++ * @work: work to queue
++ *
++ * Returns 0 if @work was already on a queue, non-zero otherwise.
++ *
++ * We queue the work to the CPU it was submitted, but there is no
++ * guarantee that it will be processed by that CPU.
++ *
++ * Especially no such guarantee on PREEMPT_RT.
++ */
++int queue_work(struct workqueue_struct *wq, struct work_struct *work)
++{
++  return queue_work(struct workqueue_struct *wq, struct work_struct *work,
++    current->normal_prio);
++}
+ EXPORT_SYMBOL_GPL(queue_work);
+
+ static void delayed_work_timer_fn(unsigned long __data)
+@@ -626,7 +646,8 @@
+  * schedule_work - put work task in global workqueue
+  * @work: job to be done
+  *
+- * This puts a job in the kernel-global workqueue.
++ * This puts a job in the kernel-global workqueue. The job inherits the
++ * caller's priority.
+  */
+ int schedule_work(struct work_struct *work)
+ {
+@@ -635,6 +656,19 @@
+ EXPORT_SYMBOL(schedule_work);
+
+ /**
++ * schedule_work_prio - put work task in global workqueue, set work prio
++ * @work: job to be done
++ *
++ * This puts a job in the kernel-global workqueue. The job gets the specified
++ * priority.
++ */
++int schedule_work_prio(struct work_struct *work, int prio)
++{
++	return queue_work_prio(keventd_wq, work, prio);
++}
++EXPORT_SYMBOL(schedule_work_prio);
++
++/**
+  * schedule_delayed_work - put work task in global workqueue after delay
+  * @dwork: job to be done
+  * @delay: number of jiffies to wait or 0 for immediate execution
+
 -- 
 Leon
