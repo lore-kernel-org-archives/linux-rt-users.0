@@ -1,119 +1,55 @@
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: [PATCH -rt] Add schedule_work_prio() and queue_work_prio().
-Date: Sat, 28 Jun 2008 19:23:06 +0200
-Message-ID: <c384c5ea0806281023y6fcfb0f4o1a41aef3856bda9e@mail.gmail.com>
+From: Wolfgang Grandegger <wg@grandegger.com>
+Subject: Re: High latencies with linux-2.6.25.4-rt6 on MPC5200
+Date: Sun, 29 Jun 2008 22:31:57 +0200
+Message-ID: <4867F13D.9050405@grandegger.com>
+References: <4858C229.2060509@grandegger.com> <20080619131406.GK5724@pengutronix.de> <485A675A.9070509@grandegger.com> <20080627143213.GG5666@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+To: Wolfgang Grandegger <wg@grandegger.com>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.242]:62063 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752916AbYF1RXH (ORCPT
+Received: from mail-out.m-online.net ([212.18.0.9]:52278 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754551AbYF2Ubb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Jun 2008 13:23:07 -0400
-Received: by an-out-0708.google.com with SMTP id d40so191396and.103
-        for <linux-rt-users@vger.kernel.org>; Sat, 28 Jun 2008 10:23:06 -0700 (PDT)
-Content-Disposition: inline
+	Sun, 29 Jun 2008 16:31:31 -0400
+In-Reply-To: <20080627143213.GG5666@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Against 2.6.25.8-rt7, only compile tested.
+Hi Fu,
 
-Adds schedule_work_prio() and queue_work_prio() so that work can be
-scheduled with a different priority than the caller.
+Luotao Fu wrote:
+> Hi Wolfgang,
+> I finally found some time and did some tests with your config file and the shiny
+> new 2.6.25.8-rt7
+> 
+> On Thu, Jun 19, 2008 at 04:04:10PM +0200, Wolfgang Grandegger wrote:
+>> Hi Fu,
+>>
+>> Luotao Fu wrote:
+>> Keep in mind that I'm running Linux on a rootfs mounted via NFS.
+> 
+> I have exactly the same test configuration here.
 
-Under PREEMPT RT, schedule_work() and therefore queue_work() makes
-the work inherit the caller's priority.
+Interesting, I'm able to trigger latencies up to 600 us with the command
 
-If a real-time thread, such as an interrupt handler, defers work it
-may want the deferred work to be of lower priority so it does not
-race with succeeding interrupt handling.
+   "# while ls; do ls /bin; done"
 
-Signed-off-by: Leon Woestenberg <leon@sidebranch.com>
+in a telnet session, but it takes a while.
 
-Index: linux-2.6.25.8/kernel/workqueue.c
-===================================================================
---- linux-2.6.25.8.orig/kernel/workqueue.c	2008-06-28 16:52:40.000000000 +0200
-+++ linux-2.6.25.8/kernel/workqueue.c	2008-06-28 18:29:19.000000000 +0200
-@@ -162,9 +162,10 @@
- }
+> Again everything looks just fine to me. Depending on which debugging Option are
+> turned on my max. results pended between 70 and 350 us. However I could not
+> produce any peak worst case values, which are so far away from the average like
+> in your case.
 
- /**
-- * queue_work - queue work on a workqueue
-+ * queue_work_prio - queue work on a workqueue and set work priority
-  * @wq: workqueue to use
-  * @work: work to queue
-+ * @prio: priority of work
-  *
-  * Returns 0 if @work was already on a queue, non-zero otherwise.
-  *
-@@ -173,7 +174,7 @@
-  *
-  * Especially no such guarantee on PREEMPT_RT.
-  */
--int queue_work(struct workqueue_struct *wq, struct work_struct *work)
-+int queue_work_prio(struct workqueue_struct *wq, struct work_struct
-*work, int prio)
- {
- 	int ret = 0, cpu = raw_smp_processor_id();
+Could you send me your .config file? And what version of cyclictest are 
+you using?
 
-@@ -184,6 +185,25 @@
- 	}
- 	return ret;
- }
-+EXPORT_SYMBOL_GPL(queue_work_prio);
-+
-+/**
-+ * queue_work - queue work on a workqueue. work inherits caller's prio.
-+ * @wq: workqueue to use
-+ * @work: work to queue
-+ *
-+ * Returns 0 if @work was already on a queue, non-zero otherwise.
-+ *
-+ * We queue the work to the CPU it was submitted, but there is no
-+ * guarantee that it will be processed by that CPU.
-+ *
-+ * Especially no such guarantee on PREEMPT_RT.
-+ */
-+int queue_work(struct workqueue_struct *wq, struct work_struct *work)
-+{
-+  return queue_work(struct workqueue_struct *wq, struct work_struct *work,
-+    current->normal_prio);
-+}
- EXPORT_SYMBOL_GPL(queue_work);
+> Have you tried the new -rt patch on your board? Still any strange results?
 
- static void delayed_work_timer_fn(unsigned long __data)
-@@ -626,7 +646,8 @@
-  * schedule_work - put work task in global workqueue
-  * @work: job to be done
-  *
-- * This puts a job in the kernel-global workqueue.
-+ * This puts a job in the kernel-global workqueue. The job inherits the
-+ * caller's priority.
-  */
- int schedule_work(struct work_struct *work)
- {
-@@ -635,6 +656,19 @@
- EXPORT_SYMBOL(schedule_work);
+I will give it a try next week.
 
- /**
-+ * schedule_work_prio - put work task in global workqueue, set work prio
-+ * @work: job to be done
-+ *
-+ * This puts a job in the kernel-global workqueue. The job gets the specified
-+ * priority.
-+ */
-+int schedule_work_prio(struct work_struct *work, int prio)
-+{
-+	return queue_work_prio(keventd_wq, work, prio);
-+}
-+EXPORT_SYMBOL(schedule_work_prio);
-+
-+/**
-  * schedule_delayed_work - put work task in global workqueue after delay
-  * @dwork: job to be done
-  * @delay: number of jiffies to wait or 0 for immediate execution
+Wolfgang.
 
--- 
-Leon
