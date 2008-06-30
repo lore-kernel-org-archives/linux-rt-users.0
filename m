@@ -1,55 +1,127 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
-Date: Mon, 30 Jun 2008 11:01:44 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0806301100130.15090@gandalf.stny.rr.com>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
- <20080630131511.GA7506@elte.hu> <4868B841.BA47.005A.0@novell.com>
+From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
+Subject: [PATCH -rt] {queue,schedule}_work_prio() allowing work priorities other than caller's priority
+Date: Mon, 30 Jun 2008 17:52:06 +0200
+Message-ID: <c384c5ea0806300852p517c769ga17f1583fc55ad2d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, peterz@infradead.org, npiggin@suse.de,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: multipart/mixed;
+	boundary="----=_Part_32183_24848114.1214841126769"
+To: "Ingo Molnar" <mingo@elte.hu>,
+	"Linux Kernel list" <linux-kernel@vger.kernel.org>,
+	"Peter Zijlstra" <a.p.zijlstra@chello.nl>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Steven Rostedt" <r
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:55456 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752160AbYF3PBr (ORCPT
+Received: from hs-out-0708.google.com ([64.233.178.245]:8618 "EHLO
+	hs-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752095AbYF3PwI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jun 2008 11:01:47 -0400
-In-Reply-To: <4868B841.BA47.005A.0@novell.com>
+	Mon, 30 Jun 2008 11:52:08 -0400
+Received: by hs-out-0708.google.com with SMTP id 4so269546hsl.5
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jun 2008 08:52:07 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+------=_Part_32183_24848114.1214841126769
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-On Mon, 30 Jun 2008, Gregory Haskins wrote:
+Hello,
 
->
-> >>> On Mon, Jun 30, 2008 at  9:15 AM, in message <20080630131511.GA7506@elte.hu>,
-> Ingo Molnar <mingo@elte.hu> wrote:
->
-> > * Gregory Haskins <ghaskins@novell.com> wrote:
-> >
-> >> Hi Ingo,
-> >>   The following patches apply to linux-tip/sched/devel and enhance the
-> >> performance of the kernel (specifically in PREEMPT_RT, though they do
-> >> not regress mainline performance as far as I can tell).  They offer
-> >> somewhere between 50-100% speedups in netperf performance, depending
-> >> on the test.
-> >
-> > -tip testing found this boot hang:
->
-> Ok, I dug in a little bit here.  I haven't verified this out yet, but I think the problem is that
-> your config is PREEMPT_VOLUNTARY which NOPs the preempt_disable() in schedule() that
-> I rely on to allow the lock to be dropped.  (Doh!)
+proposed patch for the -rt tree. queue_work() might be made a static
+inline instead.
 
-This means that there's a location somewhere that does a cond_resched?
-Perhaps we should look to see what does that. And perhaps the
-preempt_disable should not be allowing PREEMPT_VOLUNTARY to do scheduling
-with cond_resched.
+Regards,
+-- 
+Leon
 
--- Steve
+------=_Part_32183_24848114.1214841126769
+Content-Type: text/x-diff; name=schedule_work_prio.patch
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fi390p6m0
+Content-Disposition: attachment; filename=schedule_work_prio.patch
 
->
-> One way I can fix this is to fixup the newidle() code to only play the irq dropping tricks
-> ifdef CONFIG_PREEMPT == TRUE.  Does this sound reasonable, or is there a better way
-> to address this?
-
+QWdhaW5zdCAyLjYuMjQuNy1ydDE0LiBUZXN0ZWQgb24gSVhQNHh4IHBsYXRmb3JtLgoKQWRkcyBz
+Y2hlZHVsZV93b3JrX3ByaW8oKSBhbmQgcXVldWVfd29ya19wcmlvKCkgc28gdGhhdCB3b3JrIGNh
+biBiZQpzY2hlZHVsZWQgd2l0aCBhIGRpZmZlcmVudCBwcmlvcml0eSB0aGFuIHRoZSBjYWxsZXIu
+CgpVbmRlciBQUkVFTVBUIFJULCBzY2hlZHVsZV93b3JrKCkgYW5kIHRoZXJlZm9yZSBxdWV1ZV93
+b3JrKCkgbWFrZXMKdGhlIHdvcmsgaW5oZXJpdCB0aGUgY2FsbGVyJ3MgcHJpb3JpdHkuCgpIb3dl
+dmVyLCBpZiBhIHJlYWwtdGltZSBrZXJuZWwgaW50ZXJydXB0IGhhbmRsZXIgdGhyZWFkIGRlZmVy
+cyB3b3JrIGl0IG1heSB3YW50CnRoZSBkZWZlcnJlZCB3b3JrIGhhdmUgbG93ZXIgcHJpb3JpdHkg
+c28gaXQgZG9lcyBub3QgY29udGVuZCBmb3IgdGhlIGNwdSB3aXRoCnN1Y2NlZWRpbmcgaW50ZXJy
+dXB0IGhhbmRsaW5nLgoKVGhlIGZhdWx0eSBjYXNlIHdhcyBhIG5vbi1GSUZPIHNlcmlhbCBkcml2
+ZXIgdGhhdCBkZWZlcnJlZCBMRUQgYmxpbmtpbmcgdG8KYSB3b3JrcXVldWUgdXNpbmcgc2NoZWR1
+bGVfd29yaygpLiBIb3dldmVyLCB0aGF0IHdvcmsgdXNlZCBHUElPIGJpdGJhbmdlZCBJMkMsCndo
+aWNoIHVzZXMgNTAgdXNlY3MgdWRlbGF5KClzLiBXaXRoIHRoZSB3b3JrIGluaGVyaXRpbmcgdGhl
+IHNlcmlhbCBJUlEgcHJpb3JpdHksCml0IGVhc2lseSBtaXNzZWQgdGhlIH42MCB1c2VjIGRlYWRs
+aW5lIG9mIDExNTIwMCBicHMgY29tbXVuaWNhdGlvbnMuCgpUaGlzIHBhdGNoIHNvbHZlcyB0aGUg
+aXNzdWUgd2l0aCB0aGUgSVJRIHVzaW5nIHNjaGVkdWxlX3dvcmtfcHJpbygpLgoKU2lnbmVkLW9m
+Zi1ieTogTGVvbiBXb2VzdGVuYmVyZyA8bGVvbkBzaWRlYnJhbmNoLmNvbT4KCkluZGV4OiBsaW51
+eC0yLjYuMjQva2VybmVsL3dvcmtxdWV1ZS5jCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0tIGxpbnV4LTIuNi4yNC5v
+cmlnL2tlcm5lbC93b3JrcXVldWUuYwkyMDA4LTA2LTMwIDE3OjEyOjA1LjAwMDAwMDAwMCArMDIw
+MAorKysgbGludXgtMi42LjI0L2tlcm5lbC93b3JrcXVldWUuYwkyMDA4LTA2LTMwIDE3OjI1OjAz
+LjAwMDAwMDAwMCArMDIwMApAQCAtMTYzLDkgKzE2MywxMCBAQAogfQogCiAvKioKLSAqIHF1ZXVl
+X3dvcmsgLSBxdWV1ZSB3b3JrIG9uIGEgd29ya3F1ZXVlCisgKiBxdWV1ZV93b3JrX3ByaW8gLSBx
+dWV1ZSB3b3JrIG9uIGEgd29ya3F1ZXVlIGFuZCBzZXQgd29yayBwcmlvcml0eQogICogQHdxOiB3
+b3JrcXVldWUgdG8gdXNlCiAgKiBAd29yazogd29yayB0byBxdWV1ZQorICogQHByaW86IHByaW9y
+aXR5IG9mIHdvcmsKICAqCiAgKiBSZXR1cm5zIDAgaWYgQHdvcmsgd2FzIGFscmVhZHkgb24gYSBx
+dWV1ZSwgbm9uLXplcm8gb3RoZXJ3aXNlLgogICoKQEAgLTE3NCwxNyArMTc1LDM2IEBACiAgKgog
+ICogRXNwZWNpYWxseSBubyBzdWNoIGd1YXJhbnRlZSBvbiBQUkVFTVBUX1JULgogICovCi1pbnQg
+ZmFzdGNhbGwgcXVldWVfd29yayhzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqd3EsIHN0cnVjdCB3
+b3JrX3N0cnVjdCAqd29yaykKK2ludCBmYXN0Y2FsbCBxdWV1ZV93b3JrX3ByaW8oc3RydWN0IHdv
+cmtxdWV1ZV9zdHJ1Y3QgKndxLAorICBzdHJ1Y3Qgd29ya19zdHJ1Y3QgKndvcmssIGludCBwcmlv
+KQogewogCWludCByZXQgPSAwLCBjcHUgPSByYXdfc21wX3Byb2Nlc3Nvcl9pZCgpOwogCiAJaWYg
+KCF0ZXN0X2FuZF9zZXRfYml0KFdPUktfU1RSVUNUX1BFTkRJTkcsIHdvcmtfZGF0YV9iaXRzKHdv
+cmspKSkgewogCQlCVUdfT04oIXBsaXN0X25vZGVfZW1wdHkoJndvcmstPmVudHJ5KSk7Ci0JCV9f
+cXVldWVfd29yayh3cV9wZXJfY3B1KHdxLCBjcHUpLCB3b3JrLCBjdXJyZW50LT5ub3JtYWxfcHJp
+byk7CisJCV9fcXVldWVfd29yayh3cV9wZXJfY3B1KHdxLCBjcHUpLCB3b3JrLCBwcmlvKTsKIAkJ
+cmV0ID0gMTsKIAl9CiAJcmV0dXJuIHJldDsKIH0KK0VYUE9SVF9TWU1CT0xfR1BMKHF1ZXVlX3dv
+cmtfcHJpbyk7CisKKy8qKgorICogcXVldWVfd29yayAtIHF1ZXVlIHdvcmsgb24gYSB3b3JrcXVl
+dWUuIHdvcmsgaW5oZXJpdHMgY2FsbGVyJ3MgcHJpby4KKyAqIEB3cTogd29ya3F1ZXVlIHRvIHVz
+ZQorICogQHdvcms6IHdvcmsgdG8gcXVldWUKKyAqCisgKiBSZXR1cm5zIDAgaWYgQHdvcmsgd2Fz
+IGFscmVhZHkgb24gYSBxdWV1ZSwgbm9uLXplcm8gb3RoZXJ3aXNlLgorICoKKyAqIFdlIHF1ZXVl
+IHRoZSB3b3JrIHRvIHRoZSBDUFUgaXQgd2FzIHN1Ym1pdHRlZCwgYnV0IHRoZXJlIGlzIG5vCisg
+KiBndWFyYW50ZWUgdGhhdCBpdCB3aWxsIGJlIHByb2Nlc3NlZCBieSB0aGF0IENQVS4KKyAqCisg
+KiBFc3BlY2lhbGx5IG5vIHN1Y2ggZ3VhcmFudGVlIG9uIFBSRUVNUFRfUlQuCisgKi8KK2ludCBm
+YXN0Y2FsbCBxdWV1ZV93b3JrKHN0cnVjdCB3b3JrcXVldWVfc3RydWN0ICp3cSwgc3RydWN0IHdv
+cmtfc3RydWN0ICp3b3JrKQoreworICByZXR1cm4gcXVldWVfd29ya19wcmlvKHdxLCB3b3JrLCBj
+dXJyZW50LT5ub3JtYWxfcHJpbyk7Cit9CiBFWFBPUlRfU1lNQk9MX0dQTChxdWV1ZV93b3JrKTsK
+IAogdm9pZCBkZWxheWVkX3dvcmtfdGltZXJfZm4odW5zaWduZWQgbG9uZyBfX2RhdGEpCkBAIC02
+MjcsNyArNjQ3LDggQEAKICAqIHNjaGVkdWxlX3dvcmsgLSBwdXQgd29yayB0YXNrIGluIGdsb2Jh
+bCB3b3JrcXVldWUKICAqIEB3b3JrOiBqb2IgdG8gYmUgZG9uZQogICoKLSAqIFRoaXMgcHV0cyBh
+IGpvYiBpbiB0aGUga2VybmVsLWdsb2JhbCB3b3JrcXVldWUuCisgKiBUaGlzIHB1dHMgYSBqb2Ig
+aW4gdGhlIGtlcm5lbC1nbG9iYWwgd29ya3F1ZXVlLiBUaGUgam9iIGluaGVyaXRzIHRoZQorICog
+Y2FsbGVyJ3MgcHJpb3JpdHkuCiAgKi8KIGludCBmYXN0Y2FsbCBzY2hlZHVsZV93b3JrKHN0cnVj
+dCB3b3JrX3N0cnVjdCAqd29yaykKIHsKQEAgLTYzNiw2ICs2NTcsMTkgQEAKIEVYUE9SVF9TWU1C
+T0woc2NoZWR1bGVfd29yayk7CiAKIC8qKgorICogc2NoZWR1bGVfd29ya19wcmlvIC0gcHV0IHdv
+cmsgdGFzayBpbiBnbG9iYWwgd29ya3F1ZXVlLCBzZXQgd29yayBwcmlvCisgKiBAd29yazogam9i
+IHRvIGJlIGRvbmUKKyAqCisgKiBUaGlzIHB1dHMgYSBqb2IgaW4gdGhlIGtlcm5lbC1nbG9iYWwg
+d29ya3F1ZXVlLiBUaGUgam9iIGdldHMgdGhlIHNwZWNpZmllZAorICogcHJpb3JpdHkuCisgKi8K
+K2ludCBmYXN0Y2FsbCBzY2hlZHVsZV93b3JrX3ByaW8oc3RydWN0IHdvcmtfc3RydWN0ICp3b3Jr
+LCBpbnQgcHJpbykKK3sKKwlyZXR1cm4gcXVldWVfd29ya19wcmlvKGtldmVudGRfd3EsIHdvcmss
+IHByaW8pOworfQorRVhQT1JUX1NZTUJPTChzY2hlZHVsZV93b3JrX3ByaW8pOworCisvKioKICAq
+IHNjaGVkdWxlX2RlbGF5ZWRfd29yayAtIHB1dCB3b3JrIHRhc2sgaW4gZ2xvYmFsIHdvcmtxdWV1
+ZSBhZnRlciBkZWxheQogICogQGR3b3JrOiBqb2IgdG8gYmUgZG9uZQogICogQGRlbGF5OiBudW1i
+ZXIgb2YgamlmZmllcyB0byB3YWl0IG9yIDAgZm9yIGltbWVkaWF0ZSBleGVjdXRpb24KSW5kZXg6
+IGxpbnV4LTIuNi4yNC9pbmNsdWRlL2xpbnV4L3dvcmtxdWV1ZS5oCj09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0tIGxp
+bnV4LTIuNi4yNC5vcmlnL2luY2x1ZGUvbGludXgvd29ya3F1ZXVlLmgJMjAwOC0wNi0zMCAxNzox
+Mjo1Ny4wMDAwMDAwMDAgKzAyMDAKKysrIGxpbnV4LTIuNi4yNC9pbmNsdWRlL2xpbnV4L3dvcmtx
+dWV1ZS5oCTIwMDgtMDYtMzAgMTc6MzA6MzQuMDAwMDAwMDAwICswMjAwCkBAIC0xODUsNiArMTg1
+LDcgQEAKIGV4dGVybiB2b2lkIGRlc3Ryb3lfd29ya3F1ZXVlKHN0cnVjdCB3b3JrcXVldWVfc3Ry
+dWN0ICp3cSk7CiAKIGV4dGVybiBpbnQgRkFTVENBTEwocXVldWVfd29yayhzdHJ1Y3Qgd29ya3F1
+ZXVlX3N0cnVjdCAqd3EsIHN0cnVjdCB3b3JrX3N0cnVjdCAqd29yaykpOworZXh0ZXJuIGludCBG
+QVNUQ0FMTChxdWV1ZV93b3JrX3ByaW8oc3RydWN0IHdvcmtxdWV1ZV9zdHJ1Y3QgKndxLCBzdHJ1
+Y3Qgd29ya19zdHJ1Y3QgKndvcmssIGludCBwcmlvKSk7CiBleHRlcm4gaW50IEZBU1RDQUxMKHF1
+ZXVlX2RlbGF5ZWRfd29yayhzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqd3EsCiAJCQlzdHJ1Y3Qg
+ZGVsYXllZF93b3JrICp3b3JrLCB1bnNpZ25lZCBsb25nIGRlbGF5KSk7CiBleHRlcm4gaW50IHF1
+ZXVlX2RlbGF5ZWRfd29ya19vbihpbnQgY3B1LCBzdHJ1Y3Qgd29ya3F1ZXVlX3N0cnVjdCAqd3Es
+CkBAIC0xOTQsNiArMTk1LDcgQEAKIGV4dGVybiB2b2lkIGZsdXNoX3NjaGVkdWxlZF93b3JrKHZv
+aWQpOwogCiBleHRlcm4gaW50IEZBU1RDQUxMKHNjaGVkdWxlX3dvcmsoc3RydWN0IHdvcmtfc3Ry
+dWN0ICp3b3JrKSk7CitleHRlcm4gaW50IEZBU1RDQUxMKHNjaGVkdWxlX3dvcmtfcHJpbyhzdHJ1
+Y3Qgd29ya19zdHJ1Y3QgKndvcmssIGludCBwcmlvKSk7CiBleHRlcm4gaW50IEZBU1RDQUxMKHNj
+aGVkdWxlX2RlbGF5ZWRfd29yayhzdHJ1Y3QgZGVsYXllZF93b3JrICp3b3JrLAogCQkJCQl1bnNp
+Z25lZCBsb25nIGRlbGF5KSk7CiBleHRlcm4gaW50IHNjaGVkdWxlX2RlbGF5ZWRfd29ya19vbihp
+bnQgY3B1LCBzdHJ1Y3QgZGVsYXllZF93b3JrICp3b3JrLAo=
+------=_Part_32183_24848114.1214841126769--
