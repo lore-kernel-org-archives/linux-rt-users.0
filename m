@@ -1,73 +1,58 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
-Date: Mon, 30 Jun 2008 11:16:55 -0600
-Message-ID: <4868DCC7.BA47.005A.0@novell.com>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
- <20080630131511.GA7506@elte.hu>
+From: Wolfgang Grandegger <wg@grandegger.com>
+Subject: Re: High latencies with linux-2.6.25.4-rt6 on MPC5200
+Date: Mon, 30 Jun 2008 19:34:57 +0200
+Message-ID: <48691941.5040100@grandegger.com>
+References: <4858C229.2060509@grandegger.com> <20080619131406.GK5724@pengutronix.de> <485A675A.9070509@grandegger.com> <20080627143213.GG5666@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <rostedt@goodmis.org>, <peterz@infradead.org>, <npiggin@suse.de>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Ingo Molnar" <mingo@elte.hu>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: Wolfgang Grandegger <wg@grandegger.com>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:52122 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751771AbYF3RXz convert rfc822-to-8bit (ORCPT
+Received: from mail-out.m-online.net ([212.18.0.9]:52865 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751786AbYF3Rea (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jun 2008 13:23:55 -0400
-In-Reply-To: <20080630131511.GA7506@elte.hu>
-Content-Disposition: inline
+	Mon, 30 Jun 2008 13:34:30 -0400
+In-Reply-To: <20080627143213.GG5666@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Mon, Jun 30, 2008 at  9:15 AM, in message <20080630131511.GA7506@elte.hu>,
-Ingo Molnar <mingo@elte.hu> wrote: 
+Hi Fu,
 
-> * Gregory Haskins <ghaskins@novell.com> wrote:
+Luotao Fu wrote:
+> Hi Wolfgang,
+> I finally found some time and did some tests with your config file and the shiny
+> new 2.6.25.8-rt7
 > 
->> Hi Ingo,
->>   The following patches apply to linux-tip/sched/devel and enhance the
->> performance of the kernel (specifically in PREEMPT_RT, though they do
->> not regress mainline performance as far as I can tell).  They offer
->> somewhere between 50-100% speedups in netperf performance, depending
->> on the test.
+> On Thu, Jun 19, 2008 at 04:04:10PM +0200, Wolfgang Grandegger wrote:
+>> Hi Fu,
+>>
+>> Luotao Fu wrote:
+>> Keep in mind that I'm running Linux on a rootfs mounted via NFS.
 > 
-> -tip testing found this boot hang:
+> I have exactly the same test configuration here.
+> 
+> Again everything looks just fine to me. Depending on which debugging Option are
+> turned on my max. results pended between 70 and 350 us. However I could not
+> produce any peak worst case values, which are so far away from the average like
+> in your case.
 
-I may have found the issue:  It looks like the hunk that initially disables interrupts in load_balance_newidle() was inadvertently applied to load_balance() instead during the
-merge to linux-tip.  If you fold the following patch into my original patch, it should set
-things right again.
+The .config you send me correspond to what latency (debugging options 
+turned on).
 
------
+> Have you tried the new -rt patch on your board? Still any strange results?
 
-sched: fix merge problem with newidle enhancement patch
+I just re-tested 2.6.25.8-rt7 with a .config as close as possible to 
+yours. Still, the latency measured with "cyclictest -p 98 -n -t1 -i1000" 
+  goes up to 600us within a few minutes. I also re-measured latencies 
+with older kernel version:
 
-From: Gregory Haskins <ghaskins@novell.com>
+   RT kernel      Max. latency
+   2.6.25.8-rt7     605 us
+   2.6.24.7-rt13    230 us
+   2.6.24.4-rt4     130 us
 
-commit cc8160c56843201891766660e3816d2e546c1b17 introduces a locking
-enhancement for newidle.  However, one hunk misapplied to load_balance
-instead of load_balance_newidle.  This fixes the issue.
+I will now try to narrow down the latency evils.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
-
- kernel/sched.c |   18 +++++++++---------
- 1 files changed, 9 insertions(+), 9 deletions(-)
-
-diff --git a/kernel/sched.c b/kernel/sched.c
-index f35d73c..f36406f 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -3459,15 +3459,6 @@ static int load_balance(int this_cpu, struct rq *this_rq,
- 
- 	cpus_setall(*cpus);
- 
--	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
--
--	/*
--	 * We are in a preempt-disabled section, so dropping the lock/irq
--	 * here simply means that other cores may acquire the lock,
--	 * and interrupts may occur.
--	 */
--	spin_unlock_irq(&this_rq->lock);
+Wolfgang.
