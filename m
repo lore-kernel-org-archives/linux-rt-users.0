@@ -1,7 +1,7 @@
 From: "Gregory Haskins" <ghaskins@novell.com>
 Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
-Date: Mon, 30 Jun 2008 05:20:16 -0600
-Message-ID: <48688930.BA47.005A.0@novell.com>
+Date: Mon, 30 Jun 2008 08:41:05 -0600
+Message-ID: <4868B841.BA47.005A.0@novell.com>
 References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
  <20080630131511.GA7506@elte.hu>
 Mime-Version: 1.0
@@ -11,11 +11,11 @@ Cc: <rostedt@goodmis.org>, <peterz@infradead.org>, <npiggin@suse.de>,
 	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:41505 "EHLO
+Received: from sinclair.provo.novell.com ([137.65.248.137]:45152 "EHLO
 	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755852AbYF3N1F convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1751331AbYF3OsI convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jun 2008 09:27:05 -0400
+	Mon, 30 Jun 2008 10:48:08 -0400
 In-Reply-To: <20080630131511.GA7506@elte.hu>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -35,7 +35,13 @@ Ingo Molnar <mingo@elte.hu> wrote:
 > 
 > -tip testing found this boot hang:
 
-Ill take a look, Ingo.  Sorry for the inconvenience and thanks for the bisect.
+Ok, I dug in a little bit here.  I haven't verified this out yet, but I think the problem is that
+your config is PREEMPT_VOLUNTARY which NOPs the preempt_disable() in schedule() that
+I rely on to allow the lock to be dropped.  (Doh!)
+
+One way I can fix this is to fixup the newidle() code to only play the irq dropping tricks
+ifdef CONFIG_PREEMPT == TRUE.  Does this sound reasonable, or is there a better way
+to address this?
 
 -Greg
 
