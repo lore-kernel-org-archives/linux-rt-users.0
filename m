@@ -1,102 +1,91 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [BUG RT] 2.6.25.8-rt7 on 8-way
-Date: Sun, 29 Jun 2008 16:28:44 -0700
-Message-ID: <20080629232844.GB8494@linux.vnet.ibm.com>
-References: <7618ba960806291432l20b7b6b5lea4b60bafa68c3bf@mail.gmail.com> <1214778205.13292.6.camel@dd.thebigcorporation.com> <7618ba960806291618r7a95908aq459d1bbb63a175cc@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Luotao Fu <l.fu@pengutronix.de>
+Subject: Re: High latencies with linux-2.6.25.4-rt6 on MPC5200
+Date: Mon, 30 Jun 2008 10:38:56 +0200
+Message-ID: <20080630083856.GA6454@pengutronix.de>
+References: <4858C229.2060509@grandegger.com> <20080619131406.GK5724@pengutronix.de> <485A675A.9070509@grandegger.com> <20080627143213.GG5666@pengutronix.de> <4867F13D.9050405@grandegger.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Noah Watkins <noahwatkins@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="a8Wt8u1KmwUX3Y2C"
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from E23SMTP04.au.ibm.com ([202.81.18.173]:34747 "EHLO
-	e23smtp04.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753241AbYF2X2w (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:53914 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753617AbYF3Ii6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 29 Jun 2008 19:28:52 -0400
+	Mon, 30 Jun 2008 04:38:58 -0400
 Content-Disposition: inline
-In-Reply-To: <7618ba960806291618r7a95908aq459d1bbb63a175cc@mail.gmail.com>
+In-Reply-To: <4867F13D.9050405@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Jun 29, 2008 at 06:18:46PM -0500, Noah Watkins wrote:
-> That eliminated the messages.
 
-Does the patch below allow you to re-enable CONFIG_PREEMPT_RCU_BOOST
-without getting these messages?  (I sent this out previously, but
-am to lazy to search for the original posting.)
+--a8Wt8u1KmwUX3Y2C
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-						Thanx, Paul
+Hi Wolfgang,
 
-> - Noah
-> 
-> On Sun, Jun 29, 2008 at 5:23 PM, Sven-Thorsten Dietrich
-> <sven@thebigcorporation.com> wrote:
-> > On Sun, 2008-06-29 at 16:32 -0500, Noah Watkins wrote:
-> >> My kernel is very, very noisy with the following bug:
-> >>
-> >> - Full dmesg below
-> >> - Please CC me
-> >>
-> >
-> > I found this as well (adding Paul).
-> >
-> > If you disable CONFIG_PREEMPT_RCU_BOOST, does it go away?
-> >
-> > Regards,
-> > Sven
+On Sun, Jun 29, 2008 at 10:31:57PM +0200, Wolfgang Grandegger wrote:
+> Hi Fu,
+>
+> Luotao Fu wrote:
+>> Hi Wolfgang,
+>> I finally found some time and did some tests with your config file and t=
+he shiny
+>> new 2.6.25.8-rt7
+>>
+>> On Thu, Jun 19, 2008 at 04:04:10PM +0200, Wolfgang Grandegger wrote:
+>>> Hi Fu,
+>>>
+>>> Luotao Fu wrote:
+>>> Keep in mind that I'm running Linux on a rootfs mounted via NFS.
+>>
+>> I have exactly the same test configuration here.
+>
+> Interesting, I'm able to trigger latencies up to 600 us with the command
+>
+>   "# while ls; do ls /bin; done"
+>
 
-Signed-off-by: Paul E. McKenney <paulmck@us.ibm.com>
----
+the same here, only I loop with "ls /", which is literally the same.
 
-diff -urpNa -X dontdiff linux-2.6.25.8-rt7/kernel/rcupreempt-boost.c linux-2.6.25.8-rt7-preemptfix/kernel/rcupreempt-boost.c
---- linux-2.6.25.8-rt7/kernel/rcupreempt-boost.c	2008-06-24 14:14:52.000000000 -0700
-+++ linux-2.6.25.8-rt7-preemptfix/kernel/rcupreempt-boost.c	2008-06-24 14:38:59.000000000 -0700
-@@ -205,11 +205,23 @@ RCU_BOOST_TRACE_FUNC_DECL(boost_readers)
- RCU_BOOST_TRACE_FUNC_DECL(try_unboost_readers)
- RCU_BOOST_TRACE_FUNC_DECL(unboost_readers)
- RCU_BOOST_TRACE_FUNC_DECL(over_taken)
-+static void rcu_trace_boost_boost_called_preempt(void)
-+{
-+	preempt_disable();
-+	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-+	preempt_enable();
-+}
-+static void rcu_trace_boost_unboost_called_preempt(void)
-+{
-+	preempt_disable();
-+	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-+	preempt_enable();
-+}
- #else /* CONFIG_RCU_TRACE */
- /* These were created by the above macro "RCU_BOOST_TRACE_FUNC_DECL" */
--# define rcu_trace_boost_task_boost_called(rbd) do { } while (0)
-+# define rcu_trace_boost_task_boost_called_preempt(rbd) do { } while (0)
- # define rcu_trace_boost_task_boosted(rbd) do { } while (0)
--# define rcu_trace_boost_boost_called(rbd) do { } while (0)
-+# define rcu_trace_boost_boost_called_preempt(rbd) do { } while (0)
- # define rcu_trace_boost_try_boost(rbd) do { } while (0)
- # define rcu_trace_boost_boosted(rbd) do { } while (0)
- # define rcu_trace_boost_unboost_called(rbd) do { } while (0)
-@@ -261,7 +273,7 @@ void __rcu_preempt_boost(void)
- 
- 	WARN_ON(!current->rcu_read_lock_nesting);
- 
--	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-+	rcu_trace_boost_boost_called_preempt();
- 
- 	/* check to see if we are already boosted */
- 	if (unlikely(rcu_is_boosted(curr)))
-@@ -313,7 +325,7 @@ void __rcu_preempt_unboost(void)
- 	int prio;
- 	unsigned long flags;
- 
--	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-+	rcu_trace_boost_unboost_called_preempt();
- 
- 	/* if not boosted, then ignore */
- 	if (likely(!rcu_is_boosted(curr)))
+> in a telnet session, but it takes a while.
+>
+>> Again everything looks just fine to me. Depending on which debugging Opt=
+ion are
+>> turned on my max. results pended between 70 and 350 us. However I could =
+not
+>> produce any peak worst case values, which are so far away from the avera=
+ge like
+>> in your case.
+>
+> Could you send me your .config file? And what version of cyclictest are =
+=20
+> you using?
+
+Will send it off-list to reduce the list traffic.
+
+cheers
+Luotao Fu
+--=20
+   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
+
+
+--a8Wt8u1KmwUX3Y2C
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFIaJugiruQY+UyUmERAsKNAJ9cbig8kj9Zd1G/pNKMlNunLO28jQCeKTHc
+aC5eV0FABMBUFAabvFVlsrw=
+=Ba8s
+-----END PGP SIGNATURE-----
+
+--a8Wt8u1KmwUX3Y2C--
