@@ -1,49 +1,73 @@
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: Re: [PATCH -rt] Add schedule_work_prio() and queue_work_prio().
-Date: Mon, 30 Jun 2008 18:38:21 +0200
-Message-ID: <c384c5ea0806300938ucf1cbc2j39380ee33eb8bf12@mail.gmail.com>
-References: <c384c5ea0806281023y6fcfb0f4o1a41aef3856bda9e@mail.gmail.com>
-	 <Pine.LNX.4.58.0806300846590.13037@gandalf.stny.rr.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
+Date: Mon, 30 Jun 2008 11:16:55 -0600
+Message-ID: <4868DCC7.BA47.005A.0@novell.com>
+References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
+ <20080630131511.GA7506@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <rostedt@goodmis.org>, <peterz@infradead.org>, <npiggin@suse.de>,
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: "Ingo Molnar" <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.245]:17548 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752954AbYF3QiW (ORCPT
+Received: from sinclair.provo.novell.com ([137.65.248.137]:52122 "EHLO
+	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751771AbYF3RXz convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jun 2008 12:38:22 -0400
-Received: by an-out-0708.google.com with SMTP id d40so313816and.103
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jun 2008 09:38:21 -0700 (PDT)
-In-Reply-To: <Pine.LNX.4.58.0806300846590.13037@gandalf.stny.rr.com>
+	Mon, 30 Jun 2008 13:23:55 -0400
+In-Reply-To: <20080630131511.GA7506@elte.hu>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven,
+>>> On Mon, Jun 30, 2008 at  9:15 AM, in message <20080630131511.GA7506@elte.hu>,
+Ingo Molnar <mingo@elte.hu> wrote: 
 
-On Mon, Jun 30, 2008 at 2:47 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> On Sat, 28 Jun 2008, Leon Woestenberg wrote:
->> Against 2.6.25.8-rt7, only compile tested.
->>
->> +int queue_work_prio(struct workqueue_struct *wq, struct work_struct
->> *work, int prio)
->>  {
->>       int ret = 0, cpu = raw_smp_processor_id();
->>
->> @@ -184,6 +185,25 @@
->>       }
->>       return ret;
->>  }
->> +EXPORT_SYMBOL_GPL(queue_work_prio);
->
-> This function doesn't look like it does anything with the new "prio"
-> field.
->
-I have submitted a newer patch in a seperate email that fixes this.
+> * Gregory Haskins <ghaskins@novell.com> wrote:
+> 
+>> Hi Ingo,
+>>   The following patches apply to linux-tip/sched/devel and enhance the
+>> performance of the kernel (specifically in PREEMPT_RT, though they do
+>> not regress mainline performance as far as I can tell).  They offer
+>> somewhere between 50-100% speedups in netperf performance, depending
+>> on the test.
+> 
+> -tip testing found this boot hang:
 
-Regards,
--- 
-Leon
+I may have found the issue:  It looks like the hunk that initially disables interrupts in load_balance_newidle() was inadvertently applied to load_balance() instead during the
+merge to linux-tip.  If you fold the following patch into my original patch, it should set
+things right again.
+
+-----
+
+sched: fix merge problem with newidle enhancement patch
+
+From: Gregory Haskins <ghaskins@novell.com>
+
+commit cc8160c56843201891766660e3816d2e546c1b17 introduces a locking
+enhancement for newidle.  However, one hunk misapplied to load_balance
+instead of load_balance_newidle.  This fixes the issue.
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
+
+ kernel/sched.c |   18 +++++++++---------
+ 1 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index f35d73c..f36406f 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -3459,15 +3459,6 @@ static int load_balance(int this_cpu, struct rq *this_rq,
+ 
+ 	cpus_setall(*cpus);
+ 
+-	schedstat_inc(sd, lb_count[CPU_NEWLY_IDLE]);
+-
+-	/*
+-	 * We are in a preempt-disabled section, so dropping the lock/irq
+-	 * here simply means that other cores may acquire the lock,
+-	 * and interrupts may occur.
+-	 */
+-	spin_unlock_irq(&this_rq->lock);
