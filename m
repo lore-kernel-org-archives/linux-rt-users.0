@@ -1,34 +1,136 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH 0/3] sched: newidle and RT wake-buddy fixes
-Date: Mon, 30 Jun 2008 20:10:01 +0200
-Message-ID: <20080630181001.GE23739@elte.hu>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com> <20080630131511.GA7506@elte.hu> <4868DCC7.BA47.005A.0@novell.com>
+From: Wolfgang Grandegger <wg@grandegger.com>
+Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU	issue?
+Date: Tue, 01 Jul 2008 16:27:07 +0200
+Message-ID: <486A3EBB.6030905@grandegger.com>
+References: <47976D06.1010900@grandegger.com> <479DF0A1.3000906@pengutronix.de> <479DF711.5090406@grandegger.com> <479F186A.4020004@pengutronix.de> <479F2C3C.1020203@grandegger.com> <20080130010716.GB16069@linux.vnet.ibm.com> <47A032E9.4080105@grandegger.com> <20080130102255.GA24890@linux.vnet.ibm.com> <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com> <20080130111559.GC20089@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rostedt@goodmis.org, peterz@infradead.org, npiggin@suse.de,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Wolfgang Grandegger <wg@grandegger.com>,
+	Luotao Fu <l.fu@pengutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vg
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:54690 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753300AbYF3SKP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jun 2008 14:10:15 -0400
-Content-Disposition: inline
-In-Reply-To: <4868DCC7.BA47.005A.0@novell.com>
+Received: from mail-out.m-online.net ([212.18.0.9]:55333 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755161AbYGAO0g (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 1 Jul 2008 10:26:36 -0400
+In-Reply-To: <20080130111559.GC20089@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
-* Gregory Haskins <ghaskins@novell.com> wrote:
+I continue this thread because it's still not understood why enabling
+CONFIG_RCU_TRACE is necessary to get reasonable latencies on the
+MPC5200. It might also explain, why I get much worse latencies with
+2.6.25.8-rt7.
 
-> > -tip testing found this boot hang:
+Luotao Fu wrote:
+> Hi,
 > 
-> I may have found the issue: It looks like the hunk that initially 
-> disables interrupts in load_balance_newidle() was inadvertently 
-> applied to load_balance() instead during the merge to linux-tip.  If 
-> you fold the following patch into my original patch, it should set 
-> things right again.
+> On Wed, Jan 30, 2008 at 02:57:16AM -0800, Paul E. McKenney wrote:
+> ......
+>>> Yes, I used "$ cyclictest -n -t1 -p80 -i1000" to measure the latency. So
+>>> far, I have not done other tests. Any recommendation?
+>>> As no-rt load I used "while ls; do ls /bin; done" in one telnet window
+>>> and "while ./hackbench 10; do ./calibrator 400 32M cali; sleep 30; done"
+>>> in another. But already "while ls; do ls /bin; done" is enough to
+>>> trigger the high latencies quickly. Note also, that I work on a root
+>>> files-ystem mounted via NFS resulting in a lot of network traffic and
+>>> utilization.
+>> I have to ask...
+>>
+>> Did you see large latencies when -not- running on NFS?
+>>
+> 
+> I cannot speak for Wolfgang but I myself did not get extraordinary high
+> latencies running tests on system booted from flash. Neither I could produce
+> high latencies on nfs booted system. If my non-rt workload doesn't do heavy
+> filesystem/network accesses. i.E. running only hackbench. Hence we were
+> wondering if the problem is caused by rcu's in network layer or nfs
+> implementation.
 
-ah, that might have indeed happened. Good catch, i'll test it tomorrow.
+To recapitulate, with CONFIG_RCU_TRACE enabled, cyclictest reports max.
+latencies of approx. 130 us with 2.6.24.4-rt4 on my MPC5200 PowerPC
+board. If I disable it, the latency goes up to 600 us. Obviously, the
+trace_mark() calls in rcupreempt*.c have some positive impact on the
+latency. I narrowed down, that the 2 calls in __rcu_preempt_boost() in
+rcupreempt-boost.c are the important one:
 
-	Ingo
+void __rcu_preempt_unboost(void)
+{
+	struct task_struct *curr = current;
+	struct rcu_boost_dat *rbd;
+	int prio;
+	unsigned long flags;
+
+	trace_mark(unboost_called, "NULL");
+
+	/* if not boosted, then ignore */
+	if (likely(!rcu_is_boosted(curr)))
+		return;
+
+	/*
+	 * Need to be very careful with NMIs.
+	 * If we take the lock and an NMI comes in
+	 * and it may try to unboost us if curr->rcub_rbdp
+	 * is still set. So we zero it before grabbing the lock.
+	 * But this also means that we might be boosted again
+	 * so the boosting code needs to be aware of this.
+	 */
+	rbd = curr->rcub_rbdp;
+	curr->rcub_rbdp = NULL;
+
+	/*
+	 * Now an NMI might have came in after we grab
+	 * the below lock. This check makes sure that
+	 * the NMI doesn't try grabbing the lock
+	 * while we already have it.
+	 */
+	if (unlikely(!rbd))
+		return;
+
+	spin_lock_irqsave(&rbd->rbs_lock, flags);
+	/*
+	 * It is still possible that an NMI came in
+	 * between the "is_boosted" check and setting
+	 * the rcu_rbdp to NULL. This would mean that
+	 * the NMI already dequeued us.
+	 */
+	if (unlikely(!rcu_is_boosted(curr)))
+		goto out;
+
+	list_del_init(&curr->rcub_entry);
+
+	trace_mark(unboosted, "NULL");
+
+	curr->rcu_prio = MAX_PRIO;
+
+	spin_lock(&curr->pi_lock);
+	prio = rt_mutex_getprio(curr);
+	task_setprio(curr, prio);
+
+	curr->rcub_rbdp = NULL;
+
+	spin_unlock(&curr->pi_lock);
+  out:
+	spin_unlock_irqrestore(&rbd->rbs_lock, flags);
+}
+
+With them and all other trace_mark() calls commented out, the latency is
+still OK. The first one has a bigger impact.
+
+In 2.6.25.8-rt7, trace_mark() is not used any more but a function
+incrementing the corresponding counter directly and I suspect that's the
+reason why I'm seeing high latencies with both, CONFIG_RCU_TRACE enabled
+and disabled.
+
+I hope this observation sheds some light on the issue.
+
+Wolfgang.
+
+
+
