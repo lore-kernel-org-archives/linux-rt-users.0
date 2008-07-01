@@ -1,52 +1,69 @@
-From: Jean Collas <jean.collas@enseirb.fr>
-Subject: Get RT-linux working on a Routerboard 532
-Date: Tue, 01 Jul 2008 21:28:32 +0200
-Message-ID: <20080701212832.fjqvznpqm80c88cc@www.enseirb.fr>
+From: Luotao Fu <l.fu@pengutronix.de>
+Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU
+	issue?
+Date: Tue, 1 Jul 2008 23:11:58 +0200
+Message-ID: <20080701211158.GA8928@pengutronix.de>
+References: <479F2C3C.1020203@grandegger.com> <20080130010716.GB16069@linux.vnet.ibm.com> <47A032E9.4080105@grandegger.com> <20080130102255.GA24890@linux.vnet.ibm.com> <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com> <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com> <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset=ISO-8859-1;
-	DelSp="Yes";
-	format="flowed"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="ibTvN161/egqYuK8"
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Luotao Fu <l.fu@pengutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plan.enseirb.fr ([147.210.18.60]:42436 "EHLO plan.enseirb.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753395AbYGAUDu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Jul 2008 16:03:50 -0400
-Received: from localhost (mx [147.210.18.15])
-	by plan.enseirb.fr (8.13.8/8.13.4) with ESMTP id m61JSYrD004336
-	for <linux-rt-users@vger.kernel.org>; Tue, 1 Jul 2008 21:28:34 +0200 (MEST)
-Received: from plan.enseirb.fr ([147.210.18.60])
-	by localhost (tan.enseirb.fr [147.210.18.15]) (amavisd-new, port 10041)
-	with LMTP id Yin8fkOuQ-Hn for <linux-rt-users@vger.kernel.org>;
-	Tue,  1 Jul 2008 21:28:25 +0200 (MEST)
-Received: from enseirb.fr (www [147.210.19.96])
-	by plan.enseirb.fr (8.13.8/8.13.4) with ESMTP id m61JSUQN004331
-	for <linux-rt-users@vger.kernel.org>; Tue, 1 Jul 2008 21:28:30 +0200 (MEST)
-Received: from enseirb.fr (localhost.enseirb.fr [127.0.0.1])
-	by enseirb.fr (8.13.8/8.13.4) with ESMTP id m61JSWQe002870
-	for <linux-rt-users@vger.kernel.org>; Tue, 1 Jul 2008 21:28:32 +0200 (MEST)
-Received: (from www@localhost)
-	by enseirb.fr (8.13.8/8.12.10/Submit) id m61JSWgn002869
-	for linux-rt-users@vger.kernel.org; Tue, 1 Jul 2008 21:28:32 +0200 (MEST)
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:59632 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753960AbYGAVMP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 1 Jul 2008 17:12:15 -0400
 Content-Disposition: inline
+In-Reply-To: <486A573E.60107@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everybody,
 
-Everything is in the subject, does anybody have ever tried to get  
-real-time linux on a routerboard?
+--ibTvN161/egqYuK8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I am trying to do it, but I have an issue with a non-existing function  
-__bad_rwlock_type introduced by the rt-patch.
+Hi Wolfgang,
 
-Thanks for any help,
+On Tue, Jul 01, 2008 at 06:11:42PM +0200, Wolfgang Grandegger wrote:
+[...]
 
-Jean
+I'm out of office till next week. I will try to narrow down the issue you
+reported on my board asap. Unfortunately I was not able to produce such wor=
+st
+case results in my test runs till now. Anyhow I'll also have a look at the =
+code
+segment you found and play a little around there. Hopefully I'll find somet=
+hing
+useful. ;-)
+
+Cheers
+Luotao Fu
+--=20
+   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
 
 
-----------------------------------------------------------------
-This message was sent using IMP, the Internet Messaging Program.
+--ibTvN161/egqYuK8
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFIap2biruQY+UyUmERApIxAJ4gmry6saieIGVb0cfZjCTuY/E8bwCgj7V+
+8KRyCCI/5zFxSMpDF/Iq3AI=
+=4tfg
+-----END PGP SIGNATURE-----
+
+--ibTvN161/egqYuK8--
