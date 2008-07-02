@@ -1,55 +1,40 @@
-From: Jean Collas <jean.collas@enseirb.fr>
-Subject: Get RT-linux working on a Routerboard 532
-Date: Wed, 02 Jul 2008 16:52:45 +0200
-Message-ID: <20080702165245.ezannbafk884owos@www.enseirb.fr>
+From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
+Subject: Re: Not so RT Linux
+Date: Wed, 2 Jul 2008 17:49:25 +0200
+Message-ID: <c384c5ea0807020849k2f1e9904jb127bcfcb4aa69b4@mail.gmail.com>
+References: <ccb913ac0807020112w6d135110sdf7a7df76738e0b1@mail.gmail.com>
+	 <c384c5ea0807020410j7e03020am1defe62d75d7880a@mail.gmail.com>
+	 <ccb913ac0807020523u7ca6e940x70139ee3be9d90e1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset=ISO-8859-1;
-	DelSp="Yes";
-	format="flowed"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+To: "Tobias Knutsson" <tobias.knutsson@gmail.com>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plan.enseirb.fr ([147.210.18.60]:59906 "EHLO plan.enseirb.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754086AbYGBOww (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Jul 2008 10:52:52 -0400
-Received: from localhost (mx [147.210.18.15])
-	by plan.enseirb.fr (8.13.8/8.13.4) with ESMTP id m62EqlGx024333
-	for <linux-rt-users@vger.kernel.org>; Wed, 2 Jul 2008 16:52:47 +0200 (MEST)
-Received: from plan.enseirb.fr ([147.210.18.60])
-	by localhost (tan.enseirb.fr [147.210.18.15]) (amavisd-new, port 10041)
-	with LMTP id c3pnz4-NESJ4 for <linux-rt-users@vger.kernel.org>;
-	Wed,  2 Jul 2008 16:52:37 +0200 (MEST)
-Received: from enseirb.fr (www [147.210.19.96])
-	by plan.enseirb.fr (8.13.8/8.13.4) with ESMTP id m62EqiVW024324
-	for <linux-rt-users@vger.kernel.org>; Wed, 2 Jul 2008 16:52:44 +0200 (MEST)
-Received: from enseirb.fr (localhost.enseirb.fr [127.0.0.1])
-	by enseirb.fr (8.13.8/8.13.4) with ESMTP id m62EqkYT018114
-	for <linux-rt-users@vger.kernel.org>; Wed, 2 Jul 2008 16:52:46 +0200 (MEST)
-Received: (from www@localhost)
-	by enseirb.fr (8.13.8/8.12.10/Submit) id m62Eqk7X018113
-	for linux-rt-users@vger.kernel.org; Wed, 2 Jul 2008 16:52:46 +0200 (MEST)
+Received: from an-out-0708.google.com ([209.85.132.247]:20718 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751029AbYGBPt0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Jul 2008 11:49:26 -0400
+Received: by an-out-0708.google.com with SMTP id d40so82135and.103
+        for <linux-rt-users@vger.kernel.org>; Wed, 02 Jul 2008 08:49:25 -0700 (PDT)
+In-Reply-To: <ccb913ac0807020523u7ca6e940x70139ee3be9d90e1@mail.gmail.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everybody,
-As I had troubles with majordomo, I am not sure my previous mail had  
-been sent, otherwise sorry for the inconvenience.
+Hello Tobias,
 
-I was wondering if someone has already tried to apply the rt-linux  
-patch on a RB532.
+On Wed, Jul 2, 2008 at 2:23 PM, Tobias Knutsson
+<tobias.knutsson@gmail.com> wrote:
+> On Wed, Jul 2, 2008 at 1:10 PM, Leon Woestenberg
+> <leon.woestenberg@gmail.com> wrote:
+> I just pulled the latest kernel GIT tree, but I can not seem to find
+> diffconfig in there. How do I find it?
+>>
 
-I work with OpenWRT to add the RB532 on MIPS machines. I am trying add  
-this rt-patch, but I have an issue with a non-existing extern function  
-introduced by the rt-patch (__bad_rwlock_type).
-Can anybody help ?
+http://www.mail-archive.com/linux-embedded@vger.kernel.org/msg00410.html
 
 Regards,
-
-Jean
-
-----------------------------------------------------------------
-This message was sent using IMP, the Internet Messaging Program.
-
+-- 
+Leon
