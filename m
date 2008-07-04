@@ -1,165 +1,63 @@
-From: Leon Woestenberg <leon.woestenberg@gmail.com>
-Subject: [PATCH -rt] [resend as inlined patch] {queue,schedule}_work_prio()
- allowing work priorities other than caller's priority
-Date: Fri, 04 Jul 2008 15:35:26 +0200
-Message-ID: <486E271E.705@sidebranch.com>
+From: Daniel Walker <dwalker@mvista.com>
+Subject: Re: [PATCH -rt] [resend as inlined patch]
+	{queue,schedule}_work_prio() allowing work priorities other than caller's
+	priority
+Date: Fri, 04 Jul 2008 10:41:20 -0700
+Message-ID: <1215193280.9513.3.camel@localhost.localdomain>
+References: <486E271E.705@sidebranch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: leon@sidebranch.com
-To: Ingo Molnar <mingo@elte.hu>,
+Cc: Ingo Molnar <mingo@elte.hu>,
 	Linux Kernel list <linux-kernel@vger.kernel.org>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@g
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>, leon@sidebranch.com
+To: Leon Woestenberg <leon.woestenberg@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.29]:63539 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752697AbYGDNfb (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:61768 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751272AbYGDRlX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Jul 2008 09:35:31 -0400
-Received: by yx-out-2324.google.com with SMTP id 8so354136yxm.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 04 Jul 2008 06:35:30 -0700 (PDT)
+	Fri, 4 Jul 2008 13:41:23 -0400
+In-Reply-To: <486E271E.705@sidebranch.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Against 2.6.24.7-rt14. Tested on IXP4xx platform.
 
-Adds schedule_work_prio() and queue_work_prio() so that work can be
-scheduled with a different priority than the caller.
+On Fri, 2008-07-04 at 15:35 +0200, Leon Woestenberg wrote:
 
-Under PREEMPT RT, schedule_work() and therefore queue_work() makes
-the work inherit the caller's priority.
+> Index: linux-2.6.24/kernel/workqueue.c
+> ===================================================================
+> --- linux-2.6.24.orig/kernel/workqueue.c    2008-06-30 
+> 17:12:05.000000000 +0200
+> +++ linux-2.6.24/kernel/workqueue.c    2008-06-30 17:25:03.000000000 +0200
+> @@ -163,9 +163,10 @@
+>  }
+>  
+>  /**
+> - * queue_work - queue work on a workqueue
+> + * queue_work_prio - queue work on a workqueue and set work priority
+>   * @wq: workqueue to use
+>   * @work: work to queue
+> + * @prio: priority of work
+>   *
+>   * Returns 0 if @work was already on a queue, non-zero otherwise.
+>   *
+> @@ -174,17 +175,36 @@
+>   *
+>   * Especially no such guarantee on PREEMPT_RT.
+>   */
+> -int fastcall queue_work(struct workqueue_struct *wq, struct work_struct 
+> *work)
+> +int fastcall queue_work_prio(struct workqueue_struct *wq,
+> +  struct work_struct *work, int prio)
 
-However, if a real-time kernel interrupt handler thread defers work it 
-may want
-the deferred work have lower priority so it does not contend for the cpu 
-with
-succeeding interrupt handling.
+Looks like you patch has line wrapped damage, and white space damage..
+If your cutting an pasting the patches that will usually remove the
+white space (which we don't want), and often mailers will line wrap if
+you don't specify that it's formatted already.
 
-The faulty case was a non-FIFO serial driver that deferred LED blinking to
-a workqueue using schedule_work(). However, that work used GPIO 
-bitbanged I2C,
-which uses 50 usecs udelay()s. With the work inheriting the serial IRQ 
-priority,
-it easily missed the ~60 usec deadline of 115200 bps communications.
-
-This patch solves the issue with the IRQ using schedule_work_prio().
-
-Signed-off-by: Leon Woestenberg <leon@sidebranch.com>
-
-Index: linux-2.6.24/kernel/workqueue.c
-===================================================================
---- linux-2.6.24.orig/kernel/workqueue.c    2008-06-30 
-17:12:05.000000000 +0200
-+++ linux-2.6.24/kernel/workqueue.c    2008-06-30 17:25:03.000000000 +0200
-@@ -163,9 +163,10 @@
- }
- 
- /**
-- * queue_work - queue work on a workqueue
-+ * queue_work_prio - queue work on a workqueue and set work priority
-  * @wq: workqueue to use
-  * @work: work to queue
-+ * @prio: priority of work
-  *
-  * Returns 0 if @work was already on a queue, non-zero otherwise.
-  *
-@@ -174,17 +175,36 @@
-  *
-  * Especially no such guarantee on PREEMPT_RT.
-  */
--int fastcall queue_work(struct workqueue_struct *wq, struct work_struct 
-*work)
-+int fastcall queue_work_prio(struct workqueue_struct *wq,
-+  struct work_struct *work, int prio)
- {
-     int ret = 0, cpu = raw_smp_processor_id();
- 
-     if (!test_and_set_bit(WORK_STRUCT_PENDING, work_data_bits(work))) {
-         BUG_ON(!plist_node_empty(&work->entry));
--        __queue_work(wq_per_cpu(wq, cpu), work, current->normal_prio);
-+        __queue_work(wq_per_cpu(wq, cpu), work, prio);
-         ret = 1;
-     }
-     return ret;
- }
-+EXPORT_SYMBOL_GPL(queue_work_prio);
-+
-+/**
-+ * queue_work - queue work on a workqueue. work inherits caller's prio.
-+ * @wq: workqueue to use
-+ * @work: work to queue
-+ *
-+ * Returns 0 if @work was already on a queue, non-zero otherwise.
-+ *
-+ * We queue the work to the CPU it was submitted, but there is no
-+ * guarantee that it will be processed by that CPU.
-+ *
-+ * Especially no such guarantee on PREEMPT_RT.
-+ */
-+int fastcall queue_work(struct workqueue_struct *wq, struct work_struct 
-*work)
-+{
-+  return queue_work_prio(wq, work, current->normal_prio);
-+}
- EXPORT_SYMBOL_GPL(queue_work);
- 
- void delayed_work_timer_fn(unsigned long __data)
-@@ -627,7 +647,8 @@
-  * schedule_work - put work task in global workqueue
-  * @work: job to be done
-  *
-- * This puts a job in the kernel-global workqueue.
-+ * This puts a job in the kernel-global workqueue. The job inherits the
-+ * caller's priority.
-  */
- int fastcall schedule_work(struct work_struct *work)
- {
-@@ -636,6 +657,19 @@
- EXPORT_SYMBOL(schedule_work);
- 
- /**
-+ * schedule_work_prio - put work task in global workqueue, set work prio
-+ * @work: job to be done
-+ *
-+ * This puts a job in the kernel-global workqueue. The job gets the 
-specified
-+ * priority.
-+ */
-+int fastcall schedule_work_prio(struct work_struct *work, int prio)
-+{
-+    return queue_work_prio(keventd_wq, work, prio);
-+}
-+EXPORT_SYMBOL(schedule_work_prio);
-+
-+/**
-  * schedule_delayed_work - put work task in global workqueue after delay
-  * @dwork: job to be done
-  * @delay: number of jiffies to wait or 0 for immediate execution
-Index: linux-2.6.24/include/linux/workqueue.h
-===================================================================
---- linux-2.6.24.orig/include/linux/workqueue.h    2008-06-30 
-17:12:57.000000000 +0200
-+++ linux-2.6.24/include/linux/workqueue.h    2008-06-30 
-17:30:34.000000000 +0200
-@@ -185,6 +185,7 @@
- extern void destroy_workqueue(struct workqueue_struct *wq);
- 
- extern int FASTCALL(queue_work(struct workqueue_struct *wq, struct 
-work_struct *work));
-+extern int FASTCALL(queue_work_prio(struct workqueue_struct *wq, struct 
-work_struct *work, int prio));
- extern int FASTCALL(queue_delayed_work(struct workqueue_struct *wq,
-             struct delayed_work *work, unsigned long delay));
- extern int queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
-@@ -194,6 +195,7 @@
- extern void flush_scheduled_work(void);
- 
- extern int FASTCALL(schedule_work(struct work_struct *work));
-+extern int FASTCALL(schedule_work_prio(struct work_struct *work, int 
-prio));
- extern int FASTCALL(schedule_delayed_work(struct delayed_work *work,
-                     unsigned long delay));
- extern int schedule_delayed_work_on(int cpu, struct delayed_work *work,
+Daniel
 
