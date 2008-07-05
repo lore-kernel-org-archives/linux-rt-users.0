@@ -1,63 +1,42 @@
-From: Daniel Walker <dwalker@mvista.com>
-Subject: Re: [PATCH -rt] [resend as inlined patch]
-	{queue,schedule}_work_prio() allowing work priorities other than caller's
-	priority
-Date: Fri, 04 Jul 2008 10:41:20 -0700
-Message-ID: <1215193280.9513.3.camel@localhost.localdomain>
-References: <486E271E.705@sidebranch.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	Linux Kernel list <linux-kernel@vger.kernel.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>, leon@sidebranch.com
-To: Leon Woestenberg <leon.woestenberg@gmail.com>
+From: leon.woestenberg@gmail.com
+Subject: [test - ignore] kernel patch submission script using msmtp/gmail
+Date: Sat, 05 Jul 2008 05:15:25 -0700 (PDT)
+Message-ID: <486f65dd.2381420a.4c1d.660a@mx.google.com>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:61768 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751272AbYGDRlX (ORCPT
+Received: from ug-out-1314.google.com ([66.249.92.175]:13517 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750722AbYGEMPa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Jul 2008 13:41:23 -0400
-In-Reply-To: <486E271E.705@sidebranch.com>
+	Sat, 5 Jul 2008 08:15:30 -0400
+Received: by ug-out-1314.google.com with SMTP id h2so892003ugf.16
+        for <linux-rt-users@vger.kernel.org>; Sat, 05 Jul 2008 05:15:26 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+#!/bin/sh
 
-On Fri, 2008-07-04 at 15:35 +0200, Leon Woestenberg wrote:
+# Submits a single kernel patch using GMail SMTP
+# During tests, this script emails itself (nothing secret in here)
 
-> Index: linux-2.6.24/kernel/workqueue.c
-> ===================================================================
-> --- linux-2.6.24.orig/kernel/workqueue.c    2008-06-30 
-> 17:12:05.000000000 +0200
-> +++ linux-2.6.24/kernel/workqueue.c    2008-06-30 17:25:03.000000000 +0200
-> @@ -163,9 +163,10 @@
->  }
->  
->  /**
-> - * queue_work - queue work on a workqueue
-> + * queue_work_prio - queue work on a workqueue and set work priority
->   * @wq: workqueue to use
->   * @work: work to queue
-> + * @prio: priority of work
->   *
->   * Returns 0 if @work was already on a queue, non-zero otherwise.
->   *
-> @@ -174,17 +175,36 @@
->   *
->   * Especially no such guarantee on PREEMPT_RT.
->   */
-> -int fastcall queue_work(struct workqueue_struct *wq, struct work_struct 
-> *work)
-> +int fastcall queue_work_prio(struct workqueue_struct *wq,
-> +  struct work_struct *work, int prio)
+smtpemailfrom="leon.woestenberg@gmail.com"
+smtpdomain=sidebranch.com
+smtpserver=smtp.gmail.com
+smtplogin=leon.woestenberg@gmail.com
 
-Looks like you patch has line wrapped damage, and white space damage..
-If your cutting an pasting the patches that will usually remove the
-white space (which we don't want), and often mailers will line wrap if
-you don't specify that it's formatted already.
+recipients="linux-rt-users@vger.kernel.org"
 
-Daniel
+patchemail=/tmp/patch.eml
+
+echo -n "Subject: " > $patchemail
+echo "[test - ignore] kernel patch submission script using msmtp/gmail" >> $patchemail
+echo "" >> $patchemail
+
+cat $0 >> $patchemail
+
+msmtp --host=$smtpserver --auth=on --tls=on --port=587 \
+--tls-certcheck=off -f $smtpemailfrom --user $smtplogin \
+--maildomain $smtpdomain \
+$recipients < $patchemail
+
 
