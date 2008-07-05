@@ -1,55 +1,141 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] Fix Bug messages
-Date: Thu, 31 Jul 2008 10:01:06 -0500
-Message-ID: <4891D3B2.2000108@redhat.com>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>	<alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>	<alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>	<200807301101.32417.j.mell@t-online.de>	<20080730171842.GB3420@linux.vnet.ibm.com>	<20080731100023.0221ec2b@bull.net>	<520f0cf10807310313q45599221q3db1b6fd7e7c722f@mail.gmail.com>	<20080731132336.362bd487@bull.net>	<520f0cf10807310649l1083e29bmf0f704e13dee96c@mail.gmail.com>	<1217512907.8157.91.camel@twins> <20080731163515.4a992060@bull.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	John Kacur <jkacur@gmail.com>,
-	Chirag Jog <chirag@linux.vnet.ibm.com>,
-	J?rgen Mell <j.mell@t-online.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Josh Triplett <josht@linux.vnet.ibm.com>,
-	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
-To: Sebastien Dugue <sebastien.dugue@bull.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([66.187.233.31]:34714 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751852AbYGaPS7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 11:18:59 -0400
-In-Reply-To: <20080731163515.4a992060@bull.net>
+Return-Path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ug-out-1314.google.com ([66.249.92.175]:18409 "EHLO
+	ug-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753001AbYGEM7e (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 5 Jul 2008 08:59:34 -0400
+Received: by ug-out-1314.google.com with SMTP id h2so895005ugf.16
+        for <linux-rt-users@vger.kernel.org>; Sat, 05 Jul 2008 05:59:32 -0700 (PDT)
+Subject: [PATCH 2.6.24.7-rt14 v2] rt: {queue,schedule}_work_prio() allowing work priorities other than caller's priority
+From: leon.woestenberg@gmail.com
+Date: Sat, 05 Jul 2008 05:59:30 -0700 (PDT)
+Message-ID: <486f7032.01b6420a.65e1.6a88@mx.google.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>, Linux Kernel List <linux-kernel@vger.kernel.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Linux-RT Kernel List <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Leon Woestenberg <leon@sidebranch.com>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Adds schedule_work_prio() and queue_work_prio() so that work can be
+scheduled with a different priority than the caller.
 
-Sebastien Dugue wrote:
->   This does indeed seem to fix the problem, no more BUGs appearing
-> on the console with 2.6.26-rt1 now.
-> 
->   Thanks,
-> 
->   Sebastien.
+Currently under PREEMPT RT, queue_work() and therefore schedule_work() makes
+the work inherit the caller's priority.
 
-Sebastien,
+However, if a real-time kernel interrupt handler thread defers work it may want
+the deferred work have lower priority so it does not contend for the CPU with
+succeeding interrupt handling. In the non real-time kernel, this was guaranteed
+because interrupts preempt workqueues.
 
-Would you send me your config? I'm running -rt1 on my laptop and am not seeing any of
-the messages you listed earlier. It's bound to be that I turned off something that
-you're using, so I'd like to see what that is.
+The faulty case was a non-FIFO serial driver that deferred LED blinking to
+a workqueue using schedule_work(). However, that work used GPIO bitbanged I2C,
+which uses 50 usecs udelay()s. With the work inheriting the serial IRQ priority,
+it easily missed the ~60 usec deadline of 115200 bps communications.
 
-Thank,
-Clark
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+This patch solves the issue by introducing and using schedule_work_prio().
 
-iEYEARECAAYFAkiR07IACgkQHyuj/+TTEp2LgACfTK3sNyABEtR+BDc29L3DdP/c
-KKsAoM0RvuG4EHLyfHJUnfERhXbWuZY4
-=1eZ6
------END PGP SIGNATURE-----
+Signed-off-by: Leon Woestenberg <leon@sidebranch.com>
+
+Index: linux-2.6.24/kernel/workqueue.c
+===================================================================
+--- linux-2.6.24.orig/kernel/workqueue.c	2008-06-30 17:12:05.000000000 +0200
++++ linux-2.6.24/kernel/workqueue.c	2008-06-30 17:25:03.000000000 +0200
+@@ -163,9 +163,10 @@
+ }
+ 
+ /**
+- * queue_work - queue work on a workqueue
++ * queue_work_prio - queue work on a workqueue and set work priority
+  * @wq: workqueue to use
+  * @work: work to queue
++ * @prio: priority of work
+  *
+  * Returns 0 if @work was already on a queue, non-zero otherwise.
+  *
+@@ -174,17 +175,36 @@
+  *
+  * Especially no such guarantee on PREEMPT_RT.
+  */
+-int fastcall queue_work(struct workqueue_struct *wq, struct work_struct *work)
++int fastcall queue_work_prio(struct workqueue_struct *wq,
++  struct work_struct *work, int prio)
+ {
+ 	int ret = 0, cpu = raw_smp_processor_id();
+ 
+ 	if (!test_and_set_bit(WORK_STRUCT_PENDING, work_data_bits(work))) {
+ 		BUG_ON(!plist_node_empty(&work->entry));
+-		__queue_work(wq_per_cpu(wq, cpu), work, current->normal_prio);
++		__queue_work(wq_per_cpu(wq, cpu), work, prio);
+ 		ret = 1;
+ 	}
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(queue_work_prio);
++
++/**
++ * queue_work - queue work on a workqueue. work inherits caller's prio.
++ * @wq: workqueue to use
++ * @work: work to queue
++ *
++ * Returns 0 if @work was already on a queue, non-zero otherwise.
++ *
++ * We queue the work to the CPU it was submitted, but there is no
++ * guarantee that it will be processed by that CPU.
++ *
++ * Especially no such guarantee on PREEMPT_RT.
++ */
++int fastcall queue_work(struct workqueue_struct *wq, struct work_struct *work)
++{
++  return queue_work_prio(wq, work, current->normal_prio);
++}
+ EXPORT_SYMBOL_GPL(queue_work);
+ 
+ void delayed_work_timer_fn(unsigned long __data)
+@@ -627,7 +647,8 @@
+  * schedule_work - put work task in global workqueue
+  * @work: job to be done
+  *
+- * This puts a job in the kernel-global workqueue.
++ * This puts a job in the kernel-global workqueue. The job inherits the
++ * caller's priority.
+  */
+ int fastcall schedule_work(struct work_struct *work)
+ {
+@@ -636,6 +657,19 @@
+ EXPORT_SYMBOL(schedule_work);
+ 
+ /**
++ * schedule_work_prio - put work task in global workqueue, set work prio
++ * @work: job to be done
++ *
++ * This puts a job in the kernel-global workqueue. The job gets the specified
++ * priority.
++ */
++int fastcall schedule_work_prio(struct work_struct *work, int prio)
++{
++	return queue_work_prio(keventd_wq, work, prio);
++}
++EXPORT_SYMBOL(schedule_work_prio);
++
++/**
+  * schedule_delayed_work - put work task in global workqueue after delay
+  * @dwork: job to be done
+  * @delay: number of jiffies to wait or 0 for immediate execution
+Index: linux-2.6.24/include/linux/workqueue.h
+===================================================================
+--- linux-2.6.24.orig/include/linux/workqueue.h	2008-06-30 17:12:57.000000000 +0200
++++ linux-2.6.24/include/linux/workqueue.h	2008-06-30 17:30:34.000000000 +0200
+@@ -185,6 +185,7 @@
+ extern void destroy_workqueue(struct workqueue_struct *wq);
+ 
+ extern int FASTCALL(queue_work(struct workqueue_struct *wq, struct work_struct *work));
++extern int FASTCALL(queue_work_prio(struct workqueue_struct *wq, struct work_struct *work, int prio));
+ extern int FASTCALL(queue_delayed_work(struct workqueue_struct *wq,
+ 			struct delayed_work *work, unsigned long delay));
+ extern int queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
+@@ -194,6 +195,7 @@
+ extern void flush_scheduled_work(void);
+ 
+ extern int FASTCALL(schedule_work(struct work_struct *work));
++extern int FASTCALL(schedule_work_prio(struct work_struct *work, int prio));
+ extern int FASTCALL(schedule_delayed_work(struct delayed_work *work,
+ 					unsigned long delay));
+ extern int schedule_delayed_work_on(int cpu, struct delayed_work *work,
