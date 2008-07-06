@@ -1,14 +1,15 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU issue?
-Date: Sat, 5 Jul 2008 20:39:46 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0807052038540.8466@gandalf.stny.rr.com>
+Date: Sat, 5 Jul 2008 20:42:44 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com>
 References: <47976D06.1010900@grandegger.com> <479DF0A1.3000906@pengutronix.de>
  <479DF711.5090406@grandegger.com> <479F186A.4020004@pengutronix.de>
  <479F2C3C.1020203@grandegger.com> <20080130010716.GB16069@linux.vnet.ibm.com>
  <47A032E9.4080105@grandegger.com> <20080130102255.GA24890@linux.vnet.ibm.com>
  <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com>
  <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com>
- <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486B37BF.6030107@grandegger.com>
+ <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com>
+ <486B607F.9040903@grandegger.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
@@ -18,33 +19,32 @@ Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:46534 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:41703 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753057AbYGFAjt (ORCPT
+	with ESMTP id S1753174AbYGFAmp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 5 Jul 2008 20:39:49 -0400
-In-Reply-To: <486B37BF.6030107@grandegger.com>
+	Sat, 5 Jul 2008 20:42:45 -0400
+In-Reply-To: <486B607F.9040903@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 On Wed, 2 Jul 2008, Wolfgang Grandegger wrote:
-
 >
-> Steven Rostedt wrote:
-> > On Tue, 1 Jul 2008, Wolfgang Grandegger wrote:
-> >> I continue this thread because it's still not understood why enabling
-> >> CONFIG_RCU_TRACE is necessary to get reasonable latencies on the
-> >> MPC5200. It might also explain, why I get much worse latencies with
-> >> 2.6.25.8-rt7.
-> >
-> > Have you tried turning on ftrace?
+> I removed all "likely" and "unlikely" macros, but the latencies did not
+> improve. Then I added
 >
-> Hm, is it available for PowerPC? I have not found yet how to enable it.
+> 	preempt_disable();
+> 	preempt_enable();
+>
+> at the two locations mentioned above, like trace_mark() does,  and
+> disabled CONFIG_RCU_TRACE. That helped to keep the latencies low, and it
+> did for 2.6.25.8-rt7 as well. As I see it, adding preemption points seem
+> to prevent high latencies.
 
-Hmm, should be. But I need to test it on my PPC box first before I can
-tell you for sure. If you don't see a way to enable it, perhaps I haven't
-updated the config options for PPC yet.
+This to me sounds like we have preempt_enable_noresched someplace that
+shouldn't. In otherwords, we enabled preemption without checking if
+preemption is needed, which is a serious bug in -rt.
 
 -- Steve
 
