@@ -1,50 +1,38 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU issue?
-Date: Sat, 5 Jul 2008 20:42:44 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com>
-References: <47976D06.1010900@grandegger.com> <479DF0A1.3000906@pengutronix.de>
- <479DF711.5090406@grandegger.com> <479F186A.4020004@pengutronix.de>
- <479F2C3C.1020203@grandegger.com> <20080130010716.GB16069@linux.vnet.ibm.com>
- <47A032E9.4080105@grandegger.com> <20080130102255.GA24890@linux.vnet.ibm.com>
- <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com>
- <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com>
- <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com>
- <486B607F.9040903@grandegger.com>
+From: GSE <guillaume.sempe@gmail.com>
+Subject: ARM PXA255 build error and hundreds warnings
+Date: Sun, 6 Jul 2008 11:01:04 +0200
+Message-ID: <88fcacda0807060201q6b86992cgea5624c8b53859f7@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Luotao Fu <l.fu@pengutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Wolfgang Grandegger <wg@grandegger.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:41703 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753174AbYGFAmp (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.245]:50248 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750883AbYGFJBF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 5 Jul 2008 20:42:45 -0400
-In-Reply-To: <486B607F.9040903@grandegger.com>
+	Sun, 6 Jul 2008 05:01:05 -0400
+Received: by an-out-0708.google.com with SMTP id d40so344342and.103
+        for <linux-rt-users@vger.kernel.org>; Sun, 06 Jul 2008 02:01:04 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello,
 
-On Wed, 2 Jul 2008, Wolfgang Grandegger wrote:
->
-> I removed all "likely" and "unlikely" macros, but the latencies did not
-> improve. Then I added
->
-> 	preempt_disable();
-> 	preempt_enable();
->
-> at the two locations mentioned above, like trace_mark() does,  and
-> disabled CONFIG_RCU_TRACE. That helped to keep the latencies low, and it
-> did for 2.6.25.8-rt7 as well. As I see it, adding preemption points seem
-> to prevent high latencies.
+I tried to build RT patch over kernel 2.6.25.
+The patch step goes all right (patch patch-2.6.25.8-rt7.bz2)
+When I make the kernel there is an error in asm-arm/arch-pxa/timex.h :
+OSCR is undefined because the include of pxa registers definition is
+conditioned by "defined CONFIG_PXA27X"
+and I build for PXA255.
+So I add inclusion to the PXA255 compilation in this file.
+After this modification the kernel make generate hundreds of warning
+like this paste below :
 
-This to me sounds like we have preempt_enable_noresched someplace that
-shouldn't. In otherwords, we enabled preemption without checking if
-preemption is needed, which is a serious bug in -rt.
+"include/asm-generic/cmpxchg.h:19:1: warning: this is the location of
+the previous definition"
 
--- Steve
+Are those warnings normals ?
 
+gsempe.
