@@ -1,76 +1,95 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 2/3] sched: terminate newidle balancing once at
-	least one task has moved over
-Date: Wed, 09 Jul 2008 04:53:56 -0600
-Message-ID: <48746084.BA47.005A.0@novell.com>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
- <200807081500.18245.nickpiggin@yahoo.com.au>
- <48732751.BA47.005A.0@novell.com>
- <200807091809.52293.nickpiggin@yahoo.com.au>
+From: Nick Piggin <nickpiggin@yahoo.com.au>
+Subject: Re: [PATCH 2/3] sched: terminate newidle balancing once at least one task has moved over
+Date: Wed, 9 Jul 2008 21:17:01 +1000
+Message-ID: <200807092117.01669.nickpiggin@yahoo.com.au>
+References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com> <200807091809.52293.nickpiggin@yahoo.com.au> <48746084.BA47.005A.0@novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <peterz@infradead.org>,
-	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Nick Piggin" <nickpiggin@yahoo.com.au>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, rostedt@goodmis.org, peterz@infradead.org,
+	npiggin@suse.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: "Gregory Haskins" <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:19294 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752116AbYGILBF convert rfc822-to-8bit (ORCPT
+Received: from smtp116.mail.mud.yahoo.com ([209.191.84.165]:35091 "HELO
+	smtp116.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1757218AbYGILR2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2008 07:01:05 -0400
-In-Reply-To: <200807091809.52293.nickpiggin@yahoo.com.au>
+	Wed, 9 Jul 2008 07:17:28 -0400
+In-Reply-To: <48746084.BA47.005A.0@novell.com>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Wed, Jul 9, 2008 at  4:09 AM, in message
-<200807091809.52293.nickpiggin@yahoo.com.au>, Nick Piggin
-<nickpiggin@yahoo.com.au> wrote: 
-> On Tuesday 08 July 2008 22:37, Gregory Haskins wrote:
->> >>> On Tue, Jul 8, 2008 at  1:00 AM, in message
->>
->> <200807081500.18245.nickpiggin@yahoo.com.au>, Nick Piggin
->>
->> <nickpiggin@yahoo.com.au> wrote:
->> > On Saturday 28 June 2008 06:29, Gregory Haskins wrote:
->> >> Inspired by Peter Zijlstra.
->> >>
->> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> >
->> > What happened to the feedback I sent about this?
->> >
->> > It is still nack from me.
->>
->> Ah yes.  Slipped through the cracks...sorry about that.
->>
->> What if we did "if (idle == CPU_NEWLY_IDLE && need_resched())" instead?
-> 
-> Isn't that exactly the same thing
+On Wednesday 09 July 2008 20:53, Gregory Haskins wrote:
+> >>> On Wed, Jul 9, 2008 at  4:09 AM, in message
+>
+> <200807091809.52293.nickpiggin@yahoo.com.au>, Nick Piggin
+>
+> <nickpiggin@yahoo.com.au> wrote:
+> > On Tuesday 08 July 2008 22:37, Gregory Haskins wrote:
+> >> >>> On Tue, Jul 8, 2008 at  1:00 AM, in message
+> >>
+> >> <200807081500.18245.nickpiggin@yahoo.com.au>, Nick Piggin
+> >>
+> >> <nickpiggin@yahoo.com.au> wrote:
+> >> > On Saturday 28 June 2008 06:29, Gregory Haskins wrote:
+> >> >> Inspired by Peter Zijlstra.
+> >> >>
+> >> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> >> >
+> >> > What happened to the feedback I sent about this?
+> >> >
+> >> > It is still nack from me.
+> >>
+> >> Ah yes.  Slipped through the cracks...sorry about that.
+> >>
+> >> What if we did "if (idle == CPU_NEWLY_IDLE && need_resched())" instead?
+> >
+> > Isn't that exactly the same thing
+>
+> Not quite.  The former version would break on *any* succesful enqueue (as a
+> result of a local move_task as well as a remote wake-up/migration).  The
+> latter version will only break on the the remote variety.  You were
+> concerned about stopping a move_task operation early because it would
+> reduce efficiency, and I do not entirely disagree. However, this really
+> only concerns the local type (which have now been removed).
+>
+> Remote preemptions should (IMO) always break immediately because it would
+> have been likely to invalidate the f_b_g() calculation anyway, and
+> low-latency requirements dictate its the right thing to do.
 
-Not quite.  The former version would break on *any* succesful enqueue (as a result of a
-local move_task as well as a remote wake-up/migration).  The latter version will only
-break on the the remote variety.  You were concerned about stopping a move_task
-operation early because it would reduce efficiency, and I do not entirely disagree.
-However, this really only concerns the local type (which have now been removed).
+I thought this was about newidle balancing? Tasks are always going to
+be coming from remote runqueues, aren't they?
 
-Remote preemptions should (IMO) always break immediately because it would have been likely
-to invalidate the f_b_g() calculation anyway, and low-latency requirements dictate
-its the right thing to do.
 
-> because any task will preempt the idle thread?
+> > because any task will preempt the idle thread?
+>
+> During NEWIDLE this is a preempt-disabled section because we are still in
+> the middle of a schedule(). Therefore there will be no involuntary
+> preemption and that is why we are concerned with making sure we check for
+> voluntary preemption.  The move_tasks() will run to completion without this
+> patch.  With this patch it will break the operation if someone tries to
+> preempt us.
 
-During NEWIDLE this is a preempt-disabled section because we are still in the middle
-of a schedule(). Therefore there will be no involuntary preemption and that is why we
-are concerned with making sure we check for voluntary preemption.  The move_tasks()
-will run to completion without this patch.  With this patch it will break the operation if
-someone tries to preempt us.
+Firstly, won't the act of pulling tasks set the need_resched condition?
 
-I'll keep an open mind but I am pretty sure this is something we should be doing. As far
-as I can tell, there should be no downside with this second version.  As a compromise
-we could put an #ifdef CONFIG_PREEMPT around this new logic, but I don't think it
-is strictly necessary.
+Secondly, even if it does what you say, what exactly would be the difference
+between blocking a newly moved task from running and blocking a newly woken
+task from running? Either way you introduce the same worst case latency
+condition.
 
-Regards,
--Greg
+
+> I'll keep an open mind but I am pretty sure this is something we should be
+> doing. As far as I can tell, there should be no downside with this second
+> version. 
+
+I don't think it has really been thought through that well. So I'm still
+against it.
+
+> As a compromise we could put an #ifdef CONFIG_PREEMPT around this 
+> new logic, but I don't think it is strictly necessary.
+
+That's not very nice. It's reasonable to run with CONFIG_PREEMPT but not
+blindly want to trade latency for throughput.
