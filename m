@@ -1,144 +1,57 @@
-From: "Gregory Haskins" <ghaskins@novell.com>
-Subject: Re: [PATCH 2/3] sched: terminate newidle balancing once at
-	least one task has moved over
-Date: Wed, 09 Jul 2008 05:53:50 -0600
-Message-ID: <48746E8E.BA47.005A.0@novell.com>
-References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com>
- <200807091809.52293.nickpiggin@yahoo.com.au>
- <48746084.BA47.005A.0@novell.com>
- <200807092117.01669.nickpiggin@yahoo.com.au>
+From: Luotao Fu <l.fu@pengutronix.de>
+Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU	issue?
+Date: Wed, 09 Jul 2008 14:53:20 +0200
+Message-ID: <4874B4C0.5090500@pengutronix.de>
+References: <20080130102255.GA24890@linux.vnet.ibm.com> <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com> <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com> <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com> <486B607F.9040903@grandegger.com> <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com> <48709348.6000101@grandegger.com> <20080708150826.GA30586@pengutronix.de> <4873C363.3070306@grandegger.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <rostedt@goodmis.org>, <peterz@infradead.org>,
-	<npiggin@suse.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: "Nick Piggin" <nickpiggin@yahoo.com.au>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Luotao Fu <l.fu@pengutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Wolfgang Grandegger <wg@grandegger.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sinclair.provo.novell.com ([137.65.248.137]:20264 "EHLO
-	sinclair.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750965AbYGIMA6 convert rfc822-to-8bit (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:39141 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1755435AbYGIMxk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2008 08:00:58 -0400
-In-Reply-To: <200807092117.01669.nickpiggin@yahoo.com.au>
-Content-Disposition: inline
+	Wed, 9 Jul 2008 08:53:40 -0400
+In-Reply-To: <4873C363.3070306@grandegger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->>> On Wed, Jul 9, 2008 at  7:17 AM, in message
-<200807092117.01669.nickpiggin@yahoo.com.au>, Nick Piggin
-<nickpiggin@yahoo.com.au> wrote: 
-> On Wednesday 09 July 2008 20:53, Gregory Haskins wrote:
->> >>> On Wed, Jul 9, 2008 at  4:09 AM, in message
->>
->> <200807091809.52293.nickpiggin@yahoo.com.au>, Nick Piggin
->>
->> <nickpiggin@yahoo.com.au> wrote:
->> > On Tuesday 08 July 2008 22:37, Gregory Haskins wrote:
->> >> >>> On Tue, Jul 8, 2008 at  1:00 AM, in message
->> >>
->> >> <200807081500.18245.nickpiggin@yahoo.com.au>, Nick Piggin
->> >>
->> >> <nickpiggin@yahoo.com.au> wrote:
->> >> > On Saturday 28 June 2008 06:29, Gregory Haskins wrote:
->> >> >> Inspired by Peter Zijlstra.
->> >> >>
->> >> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> >> >
->> >> > What happened to the feedback I sent about this?
->> >> >
->> >> > It is still nack from me.
->> >>
->> >> Ah yes.  Slipped through the cracks...sorry about that.
->> >>
->> >> What if we did "if (idle == CPU_NEWLY_IDLE && need_resched())" instead?
->> >
->> > Isn't that exactly the same thing
->>
->> Not quite.  The former version would break on *any* succesful enqueue (as a
->> result of a local move_task as well as a remote wake-up/migration).  The
->> latter version will only break on the the remote variety.  You were
->> concerned about stopping a move_task operation early because it would
->> reduce efficiency, and I do not entirely disagree. However, this really
->> only concerns the local type (which have now been removed).
->>
->> Remote preemptions should (IMO) always break immediately because it would
->> have been likely to invalidate the f_b_g() calculation anyway, and
->> low-latency requirements dictate its the right thing to do.
-> 
-> I thought this was about newidle balancing? Tasks are always going to
-> be coming from remote runqueues, aren't they?
+Hi Wolfgang,
 
-Yes, but you misunderstand me.  I am referring to "push" (remote moves to us) verses
-"pull" (we move from remote).  During a move_task() we sometimes have to drop the
-RQ lock in the double_lock balance.  This gives a remote CPU a chance to grab the lock
-and potentially move tasks to us as part of either a migration operation, or a wake-up.
+Wolfgang Grandegger wrote:
+> Hi Fun,
 
-When this happens, several things should be noted:  1) it will change the load "landscape"
-such that any previous computation in f_b_g() is potentially invalid.  2) The task that was
-moved may be higher priority and therefore should not have to wait for move_tasks() to
-finish moving some arbitrary number of lower-priority tasks (and note that "lower prio"
-is a high-probability since NEWIDLE only does CFS tasks, and only RT tasks typically
-migrate like this).
+What's so funny? ;-)
 
-Therefore, IMO it doesnt make sense to continue moving more load.  Just stop and let the
-scheduler sort it out.  At the very least it needs to recompute how much load to move.
+[...]
 
-> 
-> 
->> > because any task will preempt the idle thread?
->>
->> During NEWIDLE this is a preempt-disabled section because we are still in
->> the middle of a schedule(). Therefore there will be no involuntary
->> preemption and that is why we are concerned with making sure we check for
->> voluntary preemption.  The move_tasks() will run to completion without this
->> patch.  With this patch it will break the operation if someone tries to
->> preempt us.
-> 
-> Firstly, won't the act of pulling tasks set the need_resched condition?
+> But as Steven pointed out, the preempt_enable_noresched at that place
+>  might be illegal, anyway. In 2.6.25-rt, trace_mark() is no longer
+> used and I do not see an improvement with CONFIG_RCU_TRAC any more.
+> Latencies go up to 600us. I also tried with CONFIG_RCU_BOOST
+> disabled, but it did not improve the latencies. Actually, I still
+> measure significantly different latencies with 2.6.24.4-rt4,
+> 2.6.24.7-rt14 and 2.6.25.8-rt7, which is quite frustrating. As you
+> seem not be able to reproduce my high latencies, I wonder if there
+> are some toolchain or glibc related issues.
 
-Hmm.. Indeed.   You are probably right about that and I need some other way to indicate
-that a task was pushed to us over anything we might have pulled.
+I took a quick look into the rcppreempt boost stuff in 2.6.24-rt and
+2.6.25-rt. As you have mentioned, trace_mark is no more used in
+2.6.24-rt. Instead of that flags are used to detect if the task is
+preempted. It might indeed probably be some toolchain issue.
+My powerpc toolchain I'm using here contains gcc 4.1.2 and glibc 2.5
 
-> 
-> Secondly, even if it does what you say, what exactly would be the difference
-> between blocking a newly moved task from running and blocking a newly woken
-> task from running? Either way you introduce the same worst case latency
-> condition.
-
-Tasks that are pushed to us have a good chance to be RT (since RT is a heavy user of 
-"push" methods, while CFS is mostly pull).  Conversely, tasks that are pulled to us by
-newidle are guaranteed *not* to be RT (since newidle balancing will only pull CFS tasks).
-
-Perhaps that is the answer: terminate on s/need_resched()/rq->rt.nr_running.  Its not
-exactly scalable to an arbitrary arrangement of future sched_classes, but that could be
-addresses when those sched_classes become available.
-
-To be fair, I think this is what Peter was trying to do with his more elaborate version of
-patches that I based this one on.
-
-> 
-> 
->> I'll keep an open mind but I am pretty sure this is something we should be
->> doing. As far as I can tell, there should be no downside with this second
->> version. 
-> 
-> I don't think it has really been thought through that well. So I'm still
-> against it.
-> 
->> As a compromise we could put an #ifdef CONFIG_PREEMPT around this 
->> new logic, but I don't think it is strictly necessary.
-> 
-> That's not very nice. It's reasonable to run with CONFIG_PREEMPT but not
-> blindly want to trade latency for throughput.
-
-How do you come to this conclusion?  Continuing to perform a move under these
-circumstances (or at least, my intended circumstances) is against stale data and
-could just as well hurt throughput as much as help it.  Since the move is
-essentially arbitrary once this threshold is crossed, even the throughput will
-become non-deterministic ;)
-
-Regards,
--Greg
-
+Cheers
+Fu (without n)
+-- 
+   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
+Pengutronix - Linux Solutions for Science and Industry
+Entwicklungszentrum Nord     http://www.pengutronix.de
 
