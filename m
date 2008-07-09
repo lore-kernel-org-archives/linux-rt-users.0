@@ -1,57 +1,62 @@
-From: Luotao Fu <l.fu@pengutronix.de>
-Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU	issue?
-Date: Wed, 09 Jul 2008 14:53:20 +0200
-Message-ID: <4874B4C0.5090500@pengutronix.de>
-References: <20080130102255.GA24890@linux.vnet.ibm.com> <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com> <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com> <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com> <486B607F.9040903@grandegger.com> <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com> <48709348.6000101@grandegger.com> <20080708150826.GA30586@pengutronix.de> <4873C363.3070306@grandegger.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: add mlockall option to cyclictest, et al
+Date: Wed, 9 Jul 2008 15:10:11 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0807091504470.3228@apollo.tec.linutronix.de>
+References: <48249E2C.3010601@gmail.com> <4825F7DB.6000808@gmail.com> <alpine.LFD.1.10.0805252321140.3295@apollo.tec.linutronix.de> <200807081049.10704.dgollub@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Luotao Fu <l.fu@pengutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Wolfgang Grandegger <wg@grandegger.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Clark Williams <clark.williams@gmail.com>,
+	Robert de Vries <robert.h.de.vries@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
+	Luis Claudio Goncalves <lclaudio@uudg.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Daniel Gollub <dgollub@suse.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:39141 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755435AbYGIMxk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2008 08:53:40 -0400
-In-Reply-To: <4873C363.3070306@grandegger.com>
+Received: from www.tglx.de ([62.245.132.106]:33129 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751889AbYGINKf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Jul 2008 09:10:35 -0400
+In-Reply-To: <200807081049.10704.dgollub@suse.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Wolfgang,
+On Tue, 8 Jul 2008, Daniel Gollub wrote:
+> > > >> Got a couple of requests for mlockall() in cyclictest, so I added an
+> > > >> --mlockall
+> > > >> option to cyclictest, signaltest and pi_stress.
+> > > >
+> > > > One small remark: it would be better to do the mlockall() by default.
+> > > > As far as I know this should be done always for real-time applications.
+> > > > I am actually surprised that it is not done already. It is also
+> > > > mentioned in the Howto build an RT-application on the RT linux wiki.
+> > > >
+> > > >    Robert
+> > >
+> > > I thought about that, but figured it would be better just to have the
+> > > option rather than change long-standing behavior.
 
-Wolfgang Grandegger wrote:
-> Hi Fun,
+Right.
 
-What's so funny? ;-)
+Nope. We dont want to change the applications default behaviour.
 
-[...]
+Also mlockall is only relevant if your system supports swap.
 
-> But as Steven pointed out, the preempt_enable_noresched at that place
->  might be illegal, anyway. In 2.6.25-rt, trace_mark() is no longer
-> used and I do not see an improvement with CONFIG_RCU_TRAC any more.
-> Latencies go up to 600us. I also tried with CONFIG_RCU_BOOST
-> disabled, but it did not improve the latencies. Actually, I still
-> measure significantly different latencies with 2.6.24.4-rt4,
-> 2.6.24.7-rt14 and 2.6.25.8-rt7, which is quite frustrating. As you
-> seem not be able to reproduce my high latencies, I wonder if there
-> are some toolchain or glibc related issues.
+> > >
+> > > It's Thomas's call though :)
+> >
+> > I prefer an option. That gives the mm folks less of an excuse why they
+> > swap out hot memory :)
 
-I took a quick look into the rcppreempt boost stuff in 2.6.24-rt and
-2.6.25-rt. As you have mentioned, trace_mark is no more used in
-2.6.24-rt. Instead of that flags are used to detect if the task is
-preempted. It might indeed probably be some toolchain issue.
-My powerpc toolchain I'm using here contains gcc 4.1.2 and glibc 2.5
+Hehe
+ 
+> Hi Thomas,
+> 
+> unfortunately this nice feature didn't made it into rt-tests 0.23 release. Is 
+> there any plan to include this for upcoming rt-tests releases?
 
-Cheers
-Fu (without n)
--- 
-   Dipl.-Ing. Luotao Fu | Phone: +49-5121-206917-3
-Pengutronix - Linux Solutions for Science and Industry
-Entwicklungszentrum Nord     http://www.pengutronix.de
+Yup. Thanks for the reminder. It just got lost in my ever growing
+inbox :(
 
+Thanks,
+
+	tglx
