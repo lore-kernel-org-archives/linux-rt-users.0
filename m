@@ -1,74 +1,45 @@
-From: Wolfgang Grandegger <wg@grandegger.com>
-Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU	issue?
-Date: Tue, 08 Jul 2008 21:43:31 +0200
-Message-ID: <4873C363.3070306@grandegger.com>
-References: <20080130102255.GA24890@linux.vnet.ibm.com> <47A0552D.20605@grandegger.com> <20080130105715.GE24890@linux.vnet.ibm.com> <20080130111559.GC20089@pengutronix.de> <486A3EBB.6030905@grandegger.com> <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com> <486B607F.9040903@grandegger.com> <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com> <48709348.6000101@grandegger.com> <20080708150826.GA30586@pengutronix.de>
+From: Nick Piggin <nickpiggin@yahoo.com.au>
+Subject: Re: [PATCH 2/3] sched: terminate newidle balancing once at least one task has moved over
+Date: Wed, 9 Jul 2008 18:09:51 +1000
+Message-ID: <200807091809.52293.nickpiggin@yahoo.com.au>
+References: <20080627202444.3829.21595.stgit@lsg.lsg.lab.novell.com> <200807081500.18245.nickpiggin@yahoo.com.au> <48732751.BA47.005A.0@novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-To: Wolfgang Grandegger <wg@grandegger.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Luotao Fu <l.fu@pengutronix.de>,
-	LKML <linux-kernel@vg
+Cc: mingo@elte.hu, rostedt@goodmis.org, peterz@infradead.org,
+	npiggin@suse.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: "Gregory Haskins" <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-out.m-online.net ([212.18.0.9]:51262 "EHLO
-	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754098AbYGHTmo (ORCPT
+Received: from smtp113.mail.mud.yahoo.com ([209.191.84.66]:38216 "HELO
+	smtp113.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1752941AbYGIIKT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jul 2008 15:42:44 -0400
-In-Reply-To: <20080708150826.GA30586@pengutronix.de>
+	Wed, 9 Jul 2008 04:10:19 -0400
+In-Reply-To: <48732751.BA47.005A.0@novell.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Fun,
+On Tuesday 08 July 2008 22:37, Gregory Haskins wrote:
+> >>> On Tue, Jul 8, 2008 at  1:00 AM, in message
+>
+> <200807081500.18245.nickpiggin@yahoo.com.au>, Nick Piggin
+>
+> <nickpiggin@yahoo.com.au> wrote:
+> > On Saturday 28 June 2008 06:29, Gregory Haskins wrote:
+> >> Inspired by Peter Zijlstra.
+> >>
+> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> >
+> > What happened to the feedback I sent about this?
+> >
+> > It is still nack from me.
+>
+> Ah yes.  Slipped through the cracks...sorry about that.
+>
+> What if we did "if (idle == CPU_NEWLY_IDLE && need_resched())" instead?
 
-Luotao Fu wrote:
-> Hi,
-> 
-> I found some time and played with my mpc5200B Board again on this issue
-> (2.6.25.8-rt7, same test environment)
-> 
-> On Sun, Jul 06, 2008 at 11:41:28AM +0200, Wolfgang Grandegger wrote:
-> ....
->> Yep, in 2.6.25.8-rt7 trace_mark() is not used any more, maybe for that  
->> reason. Nevertheless, this "bug" kept the latency on my MPC5200 box low.
->> I will try with the old tracer to understand what the real cause of the  
->> high latencies is (with CONFIG_RCU_TRACE disabled).
->>
-> As you said, in 2.6.25.8-rt7 there're rcu_trace_boost_unboost_called() and
-> rcu_trace_boost_unboosted() are used instead of trace_mark. I still haven't had
-> time to take a closer look waht these routines exactly do. Seemed however to me,
-> that they possibly do the same thing. I played a little bit around with
-> the RCU_TRACE and RCU_BOOST Option. Also I tried to comment out the
-> rcu_trace_boost_unboost_called() and rcu_trace_boost_unboosted() calls. My Tests
-> last appr. 30 Minutes with non-rt Payload "while [ 1 ]; do ls /;done". None of
-> my test showed extraordinary results. My worstcase values stay at about 220 us
-> with all my test combinations. I will attache a config with RCU_BOOST and
-> RCU_TRACE turned off to this mail, which provide a worst case value at 223 us
-> after about 40 Minutes test run on my board.
-
-I think I understood why CONFIG_RCU_TRACEin 2.6.24-rt helped to keep 
-latencies low. See:
-
-   ttp://marc.info/?l=linux-rt-users&m=121499677026236&w=4
-
-But as Steven pointed out, the preempt_enable_noresched at that place 
-might be illegal, anyway. In 2.6.25-rt, trace_mark() is no longer used 
-and I do not see an improvement with CONFIG_RCU_TRAC any more. Latencies 
-go up to 600us. I also tried with CONFIG_RCU_BOOST disabled, but it did 
-not improve the latencies. Actually, I still measure significantly 
-different latencies with 2.6.24.4-rt4, 2.6.24.7-rt14 and 2.6.25.8-rt7, 
-which is quite frustrating. As you seem not be able to reproduce my high 
-latencies, I wonder if there are some toolchain or glibc related issues.
-
-Using ftrace to localized the latency spot would be the next step. But 
-it's not yet available for PowerPC. Looking into that now.
-
-> Are you using the FEC all a pci network card?
-
-I use only the FEC. There is no PCI device.
-
-Wolfgang.
-
-
+Isn't that exactly the same thing because any task will preempt the idle
+thread?
