@@ -1,204 +1,67 @@
-From: Chirag Jog <chirag@linux.vnet.ibm.com>
-Subject: [PATCH][RT][PPC64] Fix preempt unsafe paths accessing per_cpu
-	variables
-Date: Wed, 9 Jul 2008 21:35:43 +0530
-Message-ID: <20080709160543.GG7101@linux.vnet.ibm.com>
-Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
+From: Wolfgang Grandegger <wg@grandegger.com>
+Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU	issue?
+Date: Thu, 10 Jul 2008 09:50:47 +0200
+Message-ID: <4875BF57.8030405@grandegger.com>
+References: <486A3EBB.6030905@grandegger.com> <Pine.LNX.4.58.0807011036510.26650@gandalf.stny.rr.com> <486A573E.60107@grandegger.com> <486B607F.9040903@grandegger.com> <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com> <48709348.6000101@grandegger.com> <20080708150826.GA30586@pengutronix.de> <4873C363.3070306@grandegger.com> <4874B4C0.5090500@pengutronix.de> <4874B9D5.1020309@grandegger.com> <20080709145217.GB30586@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Cc: Dinakar Guniguntala <dino@in.ibm.com>,
-	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
-	paulmck@linux.vnet.ibm.com, Nivedita Singhvi <niv@us.ibm.com>,
-	Josh Triplett <josht@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: linux.kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linuxppc-dev@ozlabs.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: Wolfgang Grandegger <wg@grandegger.com>,
+	Luotao Fu <l.fu@pengutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	LKML <linux-kernel@vg
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp07.in.ibm.com ([59.145.155.7]:39903 "EHLO
-	e28esmtp07.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753454AbYGIQGX (ORCPT
+Received: from mail-out.m-online.net ([212.18.0.9]:52767 "EHLO
+	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751017AbYGJHt6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2008 12:06:23 -0400
-Content-Disposition: inline
+	Thu, 10 Jul 2008 03:49:58 -0400
+In-Reply-To: <20080709145217.GB30586@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Luotao Fu wrote:
+> Hi Wolfgang,
+> On Wed, Jul 09, 2008 at 03:15:01PM +0200, Wolfgang Grandegger wrote:
+>> Hi Fu (without n)
+>>
+> ....
+>> OK, in the past you have been able to reproduce the high latencies with  
+>> 2.6.24-rt1 and CONFIG_RCU_TRACE disabled, IIRC. Did you use a different  
+>> toolchain at that time?
+>>
+> 
+> Nope. As mentioned above, trace_mark() does some "real" works (what ever it is.),
+> while the new mechahnismen use flags to remember the state of preemption. Maybe
 
-Hi,
-This patch fixes various paths in the -rt kernel on powerpc64 where per_cpu
-variables are accessed in a preempt unsafe way.
-When a power box with -rt kernel is booted, multiple BUG messages are
-generated "BUG: init:1 task might have lost a preemption check!".
-After booting a kernel with these patches applied, these messages
-don't appear.
+I don't known what you refer to, but in __rcu_preempt_unboost() of 2.6.25.8-rt7, 
+the trace code simply increments a counter:
 
-Also I ran the realtime tests from ltp to ensure the stability.
+        static void rcu_trace_boost_##type(struct rcu_boost_dat *rbd)   \
+        {                                                               \
+                rbd->rbs_stat_##type++;                                 \
+        }
 
+and that's the reason why latency is not affected by switching CONFIG_RCU_TRACE
+on (while trace_mark uses preempt_disable/preempt_enable around).
 
-Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
-arch/powerpc/mm/tlb_64.c               |   31 ++++++++++++++++---------------
-arch/powerpc/platforms/pseries/iommu.c |   14 ++++++++++----
-include/asm-powerpc/tlb.h              |    5 ++---
-3 files changed, 28 insertions(+), 22 deletions(-)
+> something here got optimized away? I take for grant, that you use gcc in your
+> toolchain. Which version do you have?
 
- 
-Index: linux-2.6.25.8-rt7/arch/powerpc/mm/tlb_64.c
-===================================================================
---- linux-2.6.25.8-rt7.orig/arch/powerpc/mm/tlb_64.c	2008-07-09 21:29:21.000000000 +0530
-+++ linux-2.6.25.8-rt7/arch/powerpc/mm/tlb_64.c	2008-07-09 21:30:37.000000000 +0530
-@@ -38,7 +38,6 @@
-  * include/asm-powerpc/tlb.h file -- tgall
-  */
- DEFINE_PER_CPU_LOCKED(struct mmu_gather, mmu_gathers);
--DEFINE_PER_CPU(struct pte_freelist_batch *, pte_freelist_cur);
- unsigned long pte_freelist_forced_free;
- 
- struct pte_freelist_batch
-@@ -48,7 +47,7 @@
- 	pgtable_free_t	tables[0];
- };
- 
--DEFINE_PER_CPU(struct pte_freelist_batch *, pte_freelist_cur);
-+DEFINE_PER_CPU_LOCKED(struct pte_freelist_batch *, pte_freelist_cur);
- unsigned long pte_freelist_forced_free;
- 
- #define PTE_FREELIST_SIZE \
-@@ -92,24 +91,21 @@
- 
- void pgtable_free_tlb(struct mmu_gather *tlb, pgtable_free_t pgf)
- {
--	/*
--	 * This is safe since tlb_gather_mmu has disabled preemption.
--	 * tlb->cpu is set by tlb_gather_mmu as well.
--	 */
-+	int cpu;
-         cpumask_t local_cpumask = cpumask_of_cpu(tlb->cpu);
--	struct pte_freelist_batch **batchp = &__get_cpu_var(pte_freelist_cur);
-+	struct pte_freelist_batch **batchp = &get_cpu_var_locked(pte_freelist_cur, &cpu);
- 
- 	if (atomic_read(&tlb->mm->mm_users) < 2 ||
- 	    cpus_equal(tlb->mm->cpu_vm_mask, local_cpumask)) {
- 		pgtable_free(pgf);
--		return;
-+		goto cleanup;
- 	}
- 
- 	if (*batchp == NULL) {
- 		*batchp = (struct pte_freelist_batch *)__get_free_page(GFP_ATOMIC);
- 		if (*batchp == NULL) {
- 			pgtable_free_now(pgf);
--			return;
-+			goto cleanup;
- 		}
- 		(*batchp)->index = 0;
- 	}
-@@ -118,6 +114,9 @@
- 		pte_free_submit(*batchp);
- 		*batchp = NULL;
- 	}
-+
-+ cleanup:
-+	put_cpu_var_locked(pte_freelist_cur, cpu);
- }
- 
- /*
-@@ -253,13 +252,15 @@
- 
- void pte_free_finish(void)
- {
--	/* This is safe since tlb_gather_mmu has disabled preemption */
--	struct pte_freelist_batch **batchp = &__get_cpu_var(pte_freelist_cur);
-+	int cpu;
-+	struct pte_freelist_batch **batchp = &get_cpu_var_locked(pte_freelist_cur, &cpu);
- 
--	if (*batchp == NULL)
--		return;
--	pte_free_submit(*batchp);
--	*batchp = NULL;
-+	if (*batchp) {
-+		pte_free_submit(*batchp);
-+		*batchp = NULL;
-+	}
-+
-+	put_cpu_var_locked(pte_freelist_cur, cpu);
- }
- 
- /**
-Index: linux-2.6.25.8-rt7/include/asm-powerpc/tlb.h
-===================================================================
---- linux-2.6.25.8-rt7.orig/include/asm-powerpc/tlb.h	2008-07-09 21:29:21.000000000 +0530
-+++ linux-2.6.25.8-rt7/include/asm-powerpc/tlb.h	2008-07-09 21:29:41.000000000 +0530
-@@ -40,18 +40,17 @@
- 
- static inline void tlb_flush(struct mmu_gather *tlb)
- {
--	struct ppc64_tlb_batch *tlbbatch = &__get_cpu_var(ppc64_tlb_batch);
-+	struct ppc64_tlb_batch *tlbbatch = &get_cpu_var(ppc64_tlb_batch);
- 
- 	/* If there's a TLB batch pending, then we must flush it because the
- 	 * pages are going to be freed and we really don't want to have a CPU
- 	 * access a freed page because it has a stale TLB
- 	 */
- 	if (tlbbatch->index) {
--		preempt_disable();
- 		__flush_tlb_pending(tlbbatch);
--		preempt_enable();
- 	}
- 
-+	put_cpu_var(ppc64_tlb_batch);
- 	pte_free_finish();
- }
- 
-Index: linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/iommu.c
-===================================================================
---- linux-2.6.25.8-rt7.orig/arch/powerpc/platforms/pseries/iommu.c	2008-07-09 21:29:21.000000000 +0530
-+++ linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/iommu.c	2008-07-09 21:29:41.000000000 +0530
-@@ -124,7 +124,7 @@
- 	}
- }
- 
--static DEFINE_PER_CPU(u64 *, tce_page) = NULL;
-+static DEFINE_PER_CPU_LOCKED(u64 *, tce_page) = NULL;
- 
- static void tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 				     long npages, unsigned long uaddr,
-@@ -135,12 +135,13 @@
- 	u64 *tcep;
- 	u64 rpn;
- 	long l, limit;
-+	int cpu;
- 
- 	if (npages == 1)
- 		return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
- 					   direction);
- 
--	tcep = __get_cpu_var(tce_page);
-+	tcep = get_cpu_var_locked(tce_page, &cpu);
- 
- 	/* This is safe to do since interrupts are off when we're called
- 	 * from iommu_alloc{,_sg}()
-@@ -148,10 +149,13 @@
- 	if (!tcep) {
- 		tcep = (u64 *)__get_free_page(GFP_ATOMIC);
- 		/* If allocation fails, fall back to the loop implementation */
--		if (!tcep)
-+		if (!tcep) {
-+			put_cpu_var_locked(tce_page, cpu);
- 			return tce_build_pSeriesLP(tbl, tcenum, npages,
- 						   uaddr, direction);
--		__get_cpu_var(tce_page) = tcep;
-+		}
-+
-+		per_cpu_var_locked(tce_page, cpu) = tcep;
- 	}
- 
- 	rpn = (virt_to_abs(uaddr)) >> TCE_SHIFT;
-@@ -188,6 +192,8 @@
- 		printk("\ttce[0] val = 0x%lx\n", tcep[0]);
- 		show_stack(current, (unsigned long *)__get_SP());
- 	}
-+
-+	put_cpu_var_locked(tce_page, cpu);
- }
- 
- static void tce_free_pSeriesLP(struct iommu_table *tbl, long tcenum, long npages)
+The ELDK v4.2 uses:
+
+  ppc_6xx-gcc (GCC) 4.2.2
+
+and 
+
+  GLIBC v2.6
+
+But I measured the same latencies with ELDK v4.1:
+
+  ppc_6xx-gcc (GCC) 4.0.0 (DENX ELDK 4.1 4.0.0)
+
+  GLIBC v2.3.5
+
+Wolfgang.
+
