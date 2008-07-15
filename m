@@ -1,271 +1,407 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: [RFC][PATCH] fix SCHED_FIFO spec violation (backport)
-Date: Tue, 15 Jul 2008 12:01:49 +0200
-Message-ID: <1216116109.12595.161.camel@twins>
-References: <1215124898.11333.20.camel@Aeon>
+From: "Christian Di Biagio" <cdibiagio-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: New LTP test feature [Hard Real Time Linux Testing]
+Date: Tue, 15 Jul 2008 11:31:28 +0200
+Message-ID: <985fbaec0807150231i3e2ed0fcjd3dfd6e44c6ab5ba@mail.gmail.com>
+References: <985fbaec0806160129t3673009dxb818b00fbf86080c@mail.gmail.com>
+	<1213647618.4710.26.camel@subratamodak.linux.ibm.com>
+	<985fbaec0806190242scfe86c7j5188725970c464e3@mail.gmail.com>
+	<1214400299.10818.29.camel@subratamodak.linux.ibm.com>
+	<3811280f0807011114v206c0fbbp2c3194d82c74e525@mail.gmail.com>
+	<1215087479.4885.57.camel@subratamodak.linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/mixed; boundary="===============2043332827=="
+Cc: Luca Recchia <lucarex-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
+	ltp-list <ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>,
+	tinytim <tinytim-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, bastoni-+n69K+pIvRMT3tEHH5o3mg@public.gmane.org,
+	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	dvhltc <dvhltc-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, dino <dino-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>,
+	Sebastien Dugue <sebastien.dugue-6ktuUTfB/bM@public.gmane.org>,
+	mreed10-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org,
+	Jean-Pierre Dion <jean-pierre.dion-6ktuUTfB/bM@public.gmane.org>,
+	John Stultz <jstultz-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>, Jeff Burke <jburke-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+Return-path: <ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <1215087479.4885.57.camel-NRFfyExJdYpgXGGE5LP+UZlqa2bBAFbm0E9HWUfgJXw@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=ltp-list>
+List-Post: <mailto:ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/ltp-list>,
+	<mailto:ltp-list-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Sender: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Errors-To: ltp-list-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
+
+--===============2043332827==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_2196_22815232.1216114288303"
+
+------=_Part_2196_22815232.1216114288303
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
-	Gregory Haskins <ghaskins@novell.com>,
-	John Kacur <jkacur@gmail.com>
-To: Darren Hart <dvhltc@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from viefep18-int.chello.at ([213.46.255.22]:4800 "EHLO
-	viefep14-int.chello.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754711AbYGOKBZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jul 2008 06:01:25 -0400
-In-Reply-To: <1215124898.11333.20.camel@Aeon>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Disposition: inline
 
-On Thu, 2008-07-03 at 15:41 -0700, Darren Hart wrote:
-> Enqueue deprioritized RT tasks to head of prio array
-> 
-> This patch backports Peter Z's enqueue to head of prio array on 
-> de-prioritization to 2.6.24.7-rt14 which doesn't have the 
-> enqueue_rt_entity and associated changes.
-> 
-> I've run several long running real-time java benchmarks and it's
-> holding so far.  Steven, please consider this patch for inclusion
-> in the next 2.6.24.7-rtX release.
-> 
-> Peter, I didn't include your Signed-off-by as only about half your
-> original patch applied to 2.6.24.7-r14.  If you're happy with this
-> version, would you also sign off?
+Darren/others, any comments?
+We wish you send us a feedback in order to automate HRT test suitable for
+LTP and start the integration.
 
-Sure thing,
+Best regards.
 
-Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Christian
 
-(Thanks for pointing me at this John, I completely missed it)..
+2008/7/3 Subrata Modak <subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>:
 
-> Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-> 
-> 
-> ---
-> Index: linux-2.6.24.7-ibmrt2.6-view/include/linux/sched.h
-> ===================================================================
-> --- linux-2.6.24.7-ibmrt2.6-view.orig/include/linux/sched.h
-> +++ linux-2.6.24.7-ibmrt2.6-view/include/linux/sched.h
-> @@ -897,11 +897,16 @@ struct uts_namespace;
->  struct rq;
->  struct sched_domain;
->  
-> +#define ENQUEUE_WAKEUP	0x01
-> +#define ENQUEUE_HEAD	0x02
-> +
-> +#define DEQUEUE_SLEEP	0x01
-> +
->  struct sched_class {
->  	const struct sched_class *next;
->  
-> -	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int wakeup);
-> -	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int sleep);
-> +	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
-> +	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
->  	void (*yield_task) (struct rq *rq);
->  	int  (*select_task_rq)(struct task_struct *p, int sync);
->  
-> Index: linux-2.6.24.7-ibmrt2.6-view/kernel/sched.c
-> ===================================================================
-> --- linux-2.6.24.7-ibmrt2.6-view.orig/kernel/sched.c
-> +++ linux-2.6.24.7-ibmrt2.6-view/kernel/sched.c
-> @@ -1046,7 +1046,7 @@ static const u32 prio_to_wmult[40] = {
->   /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
->  };
->  
-> -static void activate_task(struct rq *rq, struct task_struct *p, int wakeup);
-> +static void activate_task(struct rq *rq, struct task_struct *p, int flags);
->  
->  /*
->   * runqueue iterator, to support SMP load-balancing between different
-> @@ -1155,16 +1155,16 @@ static void set_load_weight(struct task_
->  	p->se.load.inv_weight = prio_to_wmult[p->static_prio - MAX_RT_PRIO];
->  }
->  
-> -static void enqueue_task(struct rq *rq, struct task_struct *p, int wakeup)
-> +static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	sched_info_queued(p);
-> -	p->sched_class->enqueue_task(rq, p, wakeup);
-> +	p->sched_class->enqueue_task(rq, p, flags);
->  	p->se.on_rq = 1;
->  }
->  
-> -static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
-> +static void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
->  {
-> -	p->sched_class->dequeue_task(rq, p, sleep);
-> +	p->sched_class->dequeue_task(rq, p, flags);
->  	p->se.on_rq = 0;
->  }
->  
-> @@ -1219,26 +1219,26 @@ static int effective_prio(struct task_st
->  /*
->   * activate_task - move a task to the runqueue.
->   */
-> -static void activate_task(struct rq *rq, struct task_struct *p, int wakeup)
-> +static void activate_task(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	if (p->state == TASK_UNINTERRUPTIBLE)
->  		rq->nr_uninterruptible--;
->  
->  	ftrace_event_task_activate(p, cpu_of(rq));
-> -	enqueue_task(rq, p, wakeup);
-> +	enqueue_task(rq, p, flags);
->  	inc_nr_running(p, rq);
->  }
->  
->  /*
->   * deactivate_task - remove a task from the runqueue.
->   */
-> -static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep)
-> +static void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	if (p->state == TASK_UNINTERRUPTIBLE)
->  		rq->nr_uninterruptible++;
->  
->  	ftrace_event_task_deactivate(p, cpu_of(rq));
-> -	dequeue_task(rq, p, sleep);
-> +	dequeue_task(rq, p, flags);
->  	dec_nr_running(p, rq);
->  }
->  
-> @@ -1759,7 +1759,7 @@ out_activate:
->  	else
->  		schedstat_inc(p, se.nr_wakeups_remote);
->  	update_rq_clock(rq);
-> -	activate_task(rq, p, 1);
-> +	activate_task(rq, p, ENQUEUE_WAKEUP);
->  	check_preempt_curr(rq, p);
->  	success = 1;
->  
-> @@ -3968,7 +3968,7 @@ asmlinkage void __sched __schedule(void)
->  			prev->state = TASK_RUNNING;
->  		} else {
->  			touch_softlockup_watchdog();
-> -			deactivate_task(rq, prev, 1);
-> +			deactivate_task(rq, prev, DEQUEUE_SLEEP);
->  		}
->  		switch_count = &prev->nvcsw;
->  	}
-> @@ -4431,7 +4431,7 @@ EXPORT_SYMBOL(sleep_on_timeout);
->  void task_setprio(struct task_struct *p, int prio)
->  {
->  	unsigned long flags;
-> -	int oldprio, prev_resched, on_rq, running;
-> +	int oldprio, prev_resched, on_rq, running, down;
->  	struct rq *rq;
->  	const struct sched_class *prev_class = p->sched_class;
->  
-> @@ -4472,6 +4472,7 @@ void task_setprio(struct task_struct *p,
->  	else
->  		p->sched_class = &fair_sched_class;
->  
-> + 	down = (prio > p->prio) ? ENQUEUE_HEAD : 0;
->  	p->prio = prio;
->  
->  //	trace_special_pid(p->pid, __PRIO(oldprio), PRIO(p));
-> @@ -4480,7 +4481,7 @@ void task_setprio(struct task_struct *p,
->  	if (running)
->  		p->sched_class->set_curr_task(rq);
->  	if (on_rq) {
-> -		enqueue_task(rq, p, 0);
-> + 		enqueue_task(rq, p, down);
->  		check_class_changed(rq, p, prev_class, oldprio, running);
->  	}
->  //	trace_special(prev_resched, _need_resched(), 0);
-> Index: linux-2.6.24.7-ibmrt2.6-view/kernel/sched_fair.c
-> ===================================================================
-> --- linux-2.6.24.7-ibmrt2.6-view.orig/kernel/sched_fair.c
-> +++ linux-2.6.24.7-ibmrt2.6-view/kernel/sched_fair.c
-> @@ -756,10 +756,11 @@ static inline struct sched_entity *paren
->   * increased. Here we update the fair scheduling stats and
->   * then put the task into the rbtree:
->   */
-> -static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int wakeup)
-> +static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	struct cfs_rq *cfs_rq;
->  	struct sched_entity *se = &p->se;
-> +	int wakeup = flags & ENQUEUE_WAKEUP;
->  
->  	for_each_sched_entity(se) {
->  		if (se->on_rq)
-> @@ -775,10 +776,11 @@ static void enqueue_task_fair(struct rq 
->   * decreased. We remove the task from the rbtree and
->   * update the fair scheduling stats:
->   */
-> -static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int sleep)
-> +static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	struct cfs_rq *cfs_rq;
->  	struct sched_entity *se = &p->se;
-> +	int sleep = flags & DEQUEUE_SLEEP;
->  
->  	for_each_sched_entity(se) {
->  		cfs_rq = cfs_rq_of(se);
-> Index: linux-2.6.24.7-ibmrt2.6-view/kernel/sched_idletask.c
-> ===================================================================
-> --- linux-2.6.24.7-ibmrt2.6-view.orig/kernel/sched_idletask.c
-> +++ linux-2.6.24.7-ibmrt2.6-view/kernel/sched_idletask.c
-> @@ -31,7 +31,7 @@ static struct task_struct *pick_next_tas
->   * message if some code attempts to do it:
->   */
->  static void
-> -dequeue_task_idle(struct rq *rq, struct task_struct *p, int sleep)
-> +dequeue_task_idle(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	spin_unlock_irq(&rq->lock);
->  	printk(KERN_ERR "bad: scheduling from the idle thread!\n");
-> Index: linux-2.6.24.7-ibmrt2.6-view/kernel/sched_rt.c
-> ===================================================================
-> --- linux-2.6.24.7-ibmrt2.6-view.orig/kernel/sched_rt.c
-> +++ linux-2.6.24.7-ibmrt2.6-view/kernel/sched_rt.c
-> @@ -181,11 +181,16 @@ unsigned long rt_nr_uninterruptible_cpu(
->  	return cpu_rq(cpu)->rt.rt_nr_uninterruptible;
->  }
->  
-> -static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
-> +static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	struct rt_prio_array *array = &rq->rt.active;
->  
-> -	list_add_tail(&p->run_list, array->queue + p->prio);
-> +
-> + 	if (unlikely(flags & ENQUEUE_HEAD))
-> +		list_add(&p->run_list, array->queue + p->prio);
-> + 	else
-> +		list_add_tail(&p->run_list, array->queue + p->prio);
-> +
->  	__set_bit(p->prio, array->bitmap);
->  	inc_rt_tasks(p, rq);
->  
-> @@ -196,7 +201,7 @@ static void enqueue_task_rt(struct rq *r
->  /*
->   * Adding/removing a task to/from a priority array:
->   */
-> -static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int sleep)
-> +static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int flags)
->  {
->  	struct rt_prio_array *array = &rq->rt.active;
->  
-> @@ -306,7 +311,7 @@ static void put_prev_task_rt(struct rq *
->  #define RT_MAX_TRIES 3
->  
->  static int double_lock_balance(struct rq *this_rq, struct rq *busiest);
-> -static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep);
-> +static void deactivate_task(struct rq *rq, struct task_struct *p, int flags);
->  
->  static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
->  {
-> 
-> 
+> Thank you Luca for that wonderful explanation of the work that you are
+> doing. Meanwhile, i am not an expert in RT linux Kernel hard/soft. So, i
+> would prefer experts to comment on your proposal (Darren/others, will
+> you !!). I will be more interested in the test cases, automating them,
+> and make sure that affected parties can make the best use of it through
+> LTP. And the test cases helps in improving the kernel features that you
+> are developing. Slowly i would be working with you to integrate the test
+> suites to LTP, as we move ahead with comments/reviews from the experts.
+>
+> On Tue, 2008-07-01 at 20:14 +0200, Luca Recchia wrote:
+> > Dear All,
+> >
+> > just some details about our test.
+> >
+> >     We're actually dealing with Hard Real-Time problems (on x86) and
+> > we need a way
+> > to measure latencies in the IRQ handling kernel flow-paths.
+> > We do not only need to measure the global (from the rise of an
+> > interrupt to its
+> > complete management) IRQ handling latency, but also the intermediate
+> > (inter-function) latency values.
+> >
+> > Our main objective is to evaluate Hard Real-Time feautures like
+> > predictability
+> > and time latency of IRQ response and IRQ management flow.
+> >
+> >
+> >     The kernel patch and the modules we have developed are in this
+> > direction. The
+> > patch allows us to measure (with little overhead) the execution times
+> > between the main functions of the IRQ management flow. The modules
+> > read the
+> > values we measure and place them into proc fs (in a more readable
+> > manner).
+> >
+> >     All time-values that are taken in the test are measured by reading
+> > the TSC
+> > register. Both the user space task and the kernel IRQ management
+> > flow-path should
+> > be bound on one processor, so to avoid discrepancies between different
+> > TSC reads
+> > on different CPUs.
+> >
+> >
+> >     The test is composed by a user space application which is waiting
+> > (with a
+> > blocking read on /dev/rtc) for RTC interrupts. We re-program the RTC
+> > device to
+> > launch interrupts at fixed frequency.
+> >
+> >     First fo all the user space test application set the real time
+> > priority and
+> > the real time policy SCHED_FIFO of the user task, then re-program the
+> > RTC device
+> > to launch interrupts at fixed frequency, and go to sleep waiting for
+> > RTC interrupt.
+> >
+> > Immediately after being woke up, the user space test application
+> > performs a TSC read,
+> > which constitutes the final measure of the IRQ management flow.
+> > Furthermore this read
+> > helps in telling kernel test latencies from spurious kernel
+> > inter-function latencies
+> > that may occur before the beginning of the test.
+> > When the test is over the user apllication print the TSC values on the
+> > console.
+> >
+> >     The patch we introduce in the kernel is able to record up to
+> > SAMPLES samples
+> > of inter-function latencies throughout the kernel path activated by
+> > RTC
+> > interrupt management flow-path.
+> >
+> > When the test is over, it is possible to read the inter-function
+> > latencies
+> > (sampled in the kernel) through the proc fs, using "delta_read_irq"
+> > and "irq_latencies_tsc" modules.
+> >
+> >     The "delta_read_irq" module is used to read the inter-function
+> > latencies values
+> > as the max, min, and total TSC cycles elapsed during the measured
+> > intervals.
+> >
+> >     With the "irq_latencies_tsc" module it is possible to read the TSC
+> > values taken
+> > inside IRQ flow-path functions.
+> > By comparing these values with those obtained in the user space
+> > application, one
+> > can evaluate the whole latencies in the IRQ management flow (from the
+> > arrival
+> > of an hardware interrupt to the system, to the beginning of the test
+> > application).
+> >
+> >     From the analisys of these results we can estimate the worst-case
+> > latency and
+> > the periodic jitter of an interrupt management flow-path.
+> > We are also able to evaluate the required (re)scheduling effort and
+> > inter-function
+> > latencies.
+> >
+> > The execution-jitter of the kernel paths we analyze is our measure to
+> > evaluate the
+> > predictability of "end-to-end" IRQ management (from the arrival of an
+> > hardware interrupt
+> > to the system, to the beginning of the test application).
+> >
+> > The measured jitter is the standard deviation of the sampled
+> > latencies,
+> > relatively to their mean.
+> >
+> >     At the moment, we make use of a spreadsheet to evaluate
+> > std.deviation, worst,
+> > best and average inter-function and end-to-end latencies. We build
+> > these results
+> > using 1000 sampled latency values (these values are obtained through
+> > the module
+> > "irq_latencies_tsc" and through the user space application).
+> >
+> > It is important to note that the samples we measure in the kernel are
+> > in clock cycle
+> > unit and we have to transform them into time unit. The resolution of
+> > the measure
+> > heavily depends on the CPU frequency and on the time spent in reading
+> > the TSC.
+> > We have estimate for our measure a base definition of 10 ns.
+> >
+> >     The test is not yet automated, and doesn't respect LTP's
+> > requirement. At the moment it is just a quite usable tool that is
+>
+> Even if it does not use LTP specific libraries, it would be OK for it to
+> be initially integrated to LTP. But the major(and Primary) requirement
+> is to automate them. And we should be able to get the output/results
+> automatically and should be able to analyze them in human-readable
+> format.
+>
+> As one of my goals is to bring all Linux testing efforts under unified
+> umbrella, i would rather like this test suite to me maintained from LTP.
+> I would like to have an option where it would run this test suite along
+> with the default LTP together, or, each one separately depending on user
+> choice.
+> Seems that our engagement will be long.
+>
+> Regards--
+> Subrata
+>
+> >  being mainly use
+> > as a base comparison between Vanilla kernel and RT kernel project
+> > (http://www.eu.kernel.org/pub/linux/kernel/projects/rt/).
+> >
+> >
+> >
+> > Regards,
+> >
+> > Luca Recchia
+> >
+>
+> >
+>
+>
 
+------=_Part_2196_22815232.1216114288303
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+<div dir="ltr">Darren/others, any comments? <br>We wish you send us a feedback in order to automate HRT test suitable for LTP and start the integration.<br><br>Best regards.<br><br>Christian<br><br><div class="gmail_quote">
+2008/7/3 Subrata Modak &lt;<a href="mailto:subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org">subrata-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org</a>&gt;:<br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
+Thank you Luca for that wonderful explanation of the work that you are<br>
+doing. Meanwhile, i am not an expert in RT linux Kernel hard/soft. So, i<br>
+would prefer experts to comment on your proposal (Darren/others, will<br>
+you !!). I will be more interested in the test cases, automating them,<br>
+and make sure that affected parties can make the best use of it through<br>
+LTP. And the test cases helps in improving the kernel features that you<br>
+are developing. Slowly i would be working with you to integrate the test<br>
+suites to LTP, as we move ahead with comments/reviews from the experts.<br>
+<div><div></div><div class="Wj3C7c"><br>
+On Tue, 2008-07-01 at 20:14 +0200, Luca Recchia wrote:<br>
+&gt; Dear All,<br>
+&gt;<br>
+&gt; just some details about our test.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; We&#39;re actually dealing with Hard Real-Time problems (on x86) and<br>
+&gt; we need a way<br>
+&gt; to measure latencies in the IRQ handling kernel flow-paths.<br>
+&gt; We do not only need to measure the global (from the rise of an<br>
+&gt; interrupt to its<br>
+&gt; complete management) IRQ handling latency, but also the intermediate<br>
+&gt; (inter-function) latency values.<br>
+&gt;<br>
+&gt; Our main objective is to evaluate Hard Real-Time feautures like<br>
+&gt; predictability<br>
+&gt; and time latency of IRQ response and IRQ management flow.<br>
+&gt;<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; The kernel patch and the modules we have developed are in this<br>
+&gt; direction. The<br>
+&gt; patch allows us to measure (with little overhead) the execution times<br>
+&gt; between the main functions of the IRQ management flow. The modules<br>
+&gt; read the<br>
+&gt; values we measure and place them into proc fs (in a more readable<br>
+&gt; manner).<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; All time-values that are taken in the test are measured by reading<br>
+&gt; the TSC<br>
+&gt; register. Both the user space task and the kernel IRQ management<br>
+&gt; flow-path should<br>
+&gt; be bound on one processor, so to avoid discrepancies between different<br>
+&gt; TSC reads<br>
+&gt; on different CPUs.<br>
+&gt;<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; The test is composed by a user space application which is waiting<br>
+&gt; (with a<br>
+&gt; blocking read on /dev/rtc) for RTC interrupts. We re-program the RTC<br>
+&gt; device to<br>
+&gt; launch interrupts at fixed frequency.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; First fo all the user space test application set the real time<br>
+&gt; priority and<br>
+&gt; the real time policy SCHED_FIFO of the user task, then re-program the<br>
+&gt; RTC device<br>
+&gt; to launch interrupts at fixed frequency, and go to sleep waiting for<br>
+&gt; RTC interrupt.<br>
+&gt;<br>
+&gt; Immediately after being woke up, the user space test application<br>
+&gt; performs a TSC read,<br>
+&gt; which constitutes the final measure of the IRQ management flow.<br>
+&gt; Furthermore this read<br>
+&gt; helps in telling kernel test latencies from spurious kernel<br>
+&gt; inter-function latencies<br>
+&gt; that may occur before the beginning of the test.<br>
+&gt; When the test is over the user apllication print the TSC values on the<br>
+&gt; console.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; The patch we introduce in the kernel is able to record up to<br>
+&gt; SAMPLES samples<br>
+&gt; of inter-function latencies throughout the kernel path activated by<br>
+&gt; RTC<br>
+&gt; interrupt management flow-path.<br>
+&gt;<br>
+&gt; When the test is over, it is possible to read the inter-function<br>
+&gt; latencies<br>
+&gt; (sampled in the kernel) through the proc fs, using &quot;delta_read_irq&quot;<br>
+&gt; and &quot;irq_latencies_tsc&quot; modules.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; The &quot;delta_read_irq&quot; module is used to read the inter-function<br>
+&gt; latencies values<br>
+&gt; as the max, min, and total TSC cycles elapsed during the measured<br>
+&gt; intervals.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; With the &quot;irq_latencies_tsc&quot; module it is possible to read the TSC<br>
+&gt; values taken<br>
+&gt; inside IRQ flow-path functions.<br>
+&gt; By comparing these values with those obtained in the user space<br>
+&gt; application, one<br>
+&gt; can evaluate the whole latencies in the IRQ management flow (from the<br>
+&gt; arrival<br>
+&gt; of an hardware interrupt to the system, to the beginning of the test<br>
+&gt; application).<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; From the analisys of these results we can estimate the worst-case<br>
+&gt; latency and<br>
+&gt; the periodic jitter of an interrupt management flow-path.<br>
+&gt; We are also able to evaluate the required (re)scheduling effort and<br>
+&gt; inter-function<br>
+&gt; latencies.<br>
+&gt;<br>
+&gt; The execution-jitter of the kernel paths we analyze is our measure to<br>
+&gt; evaluate the<br>
+&gt; predictability of &quot;end-to-end&quot; IRQ management (from the arrival of an<br>
+&gt; hardware interrupt<br>
+&gt; to the system, to the beginning of the test application).<br>
+&gt;<br>
+&gt; The measured jitter is the standard deviation of the sampled<br>
+&gt; latencies,<br>
+&gt; relatively to their mean.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; At the moment, we make use of a spreadsheet to evaluate<br>
+&gt; std.deviation, worst,<br>
+&gt; best and average inter-function and end-to-end latencies. We build<br>
+&gt; these results<br>
+&gt; using 1000 sampled latency values (these values are obtained through<br>
+&gt; the module<br>
+&gt; &quot;irq_latencies_tsc&quot; and through the user space application).<br>
+&gt;<br>
+&gt; It is important to note that the samples we measure in the kernel are<br>
+&gt; in clock cycle<br>
+&gt; unit and we have to transform them into time unit. The resolution of<br>
+&gt; the measure<br>
+&gt; heavily depends on the CPU frequency and on the time spent in reading<br>
+&gt; the TSC.<br>
+&gt; We have estimate for our measure a base definition of 10 ns.<br>
+&gt;<br>
+&gt; &nbsp; &nbsp; The test is not yet automated, and doesn&#39;t respect LTP&#39;s<br>
+&gt; requirement. At the moment it is just a quite usable tool that is<br>
+<br>
+</div></div>Even if it does not use LTP specific libraries, it would be OK for it to<br>
+be initially integrated to LTP. But the major(and Primary) requirement<br>
+is to automate them. And we should be able to get the output/results<br>
+automatically and should be able to analyze them in human-readable<br>
+format.<br>
+<br>
+As one of my goals is to bring all Linux testing efforts under unified<br>
+umbrella, i would rather like this test suite to me maintained from LTP.<br>
+I would like to have an option where it would run this test suite along<br>
+with the default LTP together, or, each one separately depending on user<br>
+choice.<br>
+Seems that our engagement will be long.<br>
+<br>
+Regards--<br>
+<font color="#888888">Subrata<br>
+</font><div><div></div><div class="Wj3C7c"><br>
+&gt; &nbsp;being mainly use<br>
+&gt; as a base comparison between Vanilla kernel and RT kernel project<br>
+&gt; (<a href="http://www.eu.kernel.org/pub/linux/kernel/projects/rt/" target="_blank">http://www.eu.kernel.org/pub/linux/kernel/projects/rt/</a>).<br>
+&gt;<br>
+&gt;<br>
+&gt;<br>
+&gt; Regards,<br>
+&gt;<br>
+&gt; Luca Recchia<br>
+&gt;<br>
+<br>
+&gt;<br>
+<br>
+</div></div></blockquote></div><br></div>
+
+------=_Part_2196_22815232.1216114288303--
+
+
+--===============2043332827==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+-------------------------------------------------------------------------
+This SF.Net email is sponsored by the Moblin Your Move Developer's challenge
+Build the coolest Linux based applications with Moblin SDK & win great prizes
+Grand prize is a trip for two to an Open Source event anywhere in the world
+http://moblin-contest.org/redirect.php?banner_id=100&url=/
+--===============2043332827==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+Ltp-list mailing list
+Ltp-list-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+https://lists.sourceforge.net/lists/listinfo/ltp-list
+
+--===============2043332827==--
