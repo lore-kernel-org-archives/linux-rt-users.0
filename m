@@ -1,224 +1,168 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH][RT][PPC64] Fix preempt unsafe paths accessing per_cpu
-	variables
-Date: Tue, 15 Jul 2008 11:32:01 +1000
-Message-ID: <1216085521.7740.37.camel@pasglop>
-References: <20080709160543.GG7101@linux.vnet.ibm.com>
-Reply-To: benh@kernel.crashing.org
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Subject: Re: [RFC][PATCH] fix SCHED_FIFO spec violation (backport)
+Date: Tue, 15 Jul 2008 10:03:16 +0200
+Message-ID: <1216108996.12595.133.camel@twins>
+References: <1215124898.11333.20.camel@Aeon>
+	 <520f0cf10807040608w7e8cea01r39e2489269bc9f73@mail.gmail.com>
+	 <1215271090.18491.20.camel@Aeon>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux.kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, Josh Triplett <josht@linux.vnet.ibm.com>,
+Cc: John Kacur <jkacur@gmail.com>, linux-rt-users@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Nivedita Singhvi <niv@us.ibm.com>,
-	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
-	paulmck@linux.vnet.ibm.com
-To: Chirag Jog <chirag@linux.vnet.ibm.com>
+	Clark Williams <williams@redhat.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Dmitry Adamushko <dmitry.adamushko@gmail.com>,
+	Gregory Haskins <ghaskins@novell.com>
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:56180 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752536AbYGOBeV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jul 2008 21:34:21 -0400
-In-Reply-To: <20080709160543.GG7101@linux.vnet.ibm.com>
+Received: from viefep18-int.chello.at ([213.46.255.22]:13715 "EHLO
+	viefep14-int.chello.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751446AbYGOICw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Jul 2008 04:02:52 -0400
+In-Reply-To: <1215271090.18491.20.camel@Aeon>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2008-07-09 at 21:35 +0530, Chirag Jog wrote:
-> Hi,
-> This patch fixes various paths in the -rt kernel on powerpc64 where per_cpu
-> variables are accessed in a preempt unsafe way.
-> When a power box with -rt kernel is booted, multiple BUG messages are
-> generated "BUG: init:1 task might have lost a preemption check!".
-> After booting a kernel with these patches applied, these messages
-> don't appear.
+On Sat, 2008-07-05 at 08:18 -0700, Darren Hart wrote:
+> On Fri, 2008-07-04 at 15:08 +0200, John Kacur wrote:
+
+> > On Fri, Jul 4, 2008 at 12:41 AM, Darren Hart <dvhltc@us.ibm.com> wrote:
+> > > Enqueue deprioritized RT tasks to head of prio array
+> > >
+> > > This patch backports Peter Z's enqueue to head of prio array on
+> > > de-prioritization to 2.6.24.7-rt14 which doesn't have the
+> > > enqueue_rt_entity and associated changes.
+> > >
+> > > I've run several long running real-time java benchmarks and it's
+> > > holding so far.  Steven, please consider this patch for inclusion
+> > > in the next 2.6.24.7-rtX release.
+> > >
+> > > Peter, I didn't include your Signed-off-by as only about half your
+> > > original patch applied to 2.6.24.7-r14.  If you're happy with this
+> > > version, would you also sign off?
+> > >
+> > > Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+> > >
+> > >
+> > > ---
+> > > Index: linux-2.6.24.7-ibmrt2.6-view/include/linux/sched.h
+> > > ===================================================================
+> > > --- linux-2.6.24.7-ibmrt2.6-view.orig/include/linux/sched.h
+> > > +++ linux-2.6.24.7-ibmrt2.6-view/include/linux/sched.h
+> > > @@ -897,11 +897,16 @@ struct uts_namespace;
+> > >  struct rq;
+> > >  struct sched_domain;
+> > >
+> > > +#define ENQUEUE_WAKEUP 0x01
+> > > +#define ENQUEUE_HEAD   0x02
+> > > +
+> > > +#define DEQUEUE_SLEEP  0x01
+> > > +
+> > 
+> > Question: is ENQUEUE_WAKEUP equal to DEQUEUE_SLEEP by design or
+> > coincidence? 
 > 
-> Also I ran the realtime tests from ltp to ensure the stability.
+> Coincidence.  The ENQUEUE_* flags are only to be used with the
+> enqueue_task* methods, while the DEQUEUE_* flags are for deqeue_task*.
+> Note that the conversion of sleep to the DEQUEUE_SLEEP flag isn't really
+> necessary as there is only the one flag, but it makes the calls
+> parallel, which I suspect was Peter's intention (but I speculate here).
 
-That sounds bad tho...
+Indeed.
 
-IE. You are changing the code to lock/unlock on all those TLB batching
-operations, but seem to miss the core reason why it was done that way:
-ie, the code assumes that it will not change CPU -between- those calls,
-since the whole stuff should be already have been within a per-cpu
-locked section at the caller level.
-
-As for the TCE code, well, it lived on the assumption that the upper
-level spinlock did the job of preventing preempt, I suppose that's not
-the case anymore. So that part of the patch sounds ok.
-
-Ben.
-
+> > The renaming of wakeup and sleep to flags makes it at
+> > least superficially seem like they overlap. Since a large part of the
+> > patch is renaming, it might be easier to understand if the renaming
+> > was done as a separate patch, but on the other hand, that is probably
+> > just a PITA. :)
 > 
-> Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
-> arch/powerpc/mm/tlb_64.c               |   31 ++++++++++++++++---------------
-> arch/powerpc/platforms/pseries/iommu.c |   14 ++++++++++----
-> include/asm-powerpc/tlb.h              |    5 ++---
-> 3 files changed, 28 insertions(+), 22 deletions(-)
+> Seems a small enough patch to be all in one to me.  If others object
+> I'll split it out, but again, I tried to keep the backport as close to
+> Peter's original patch as possible.
+
+I just hacked together what was needed to post out an RFC, never made it
+a 'pretty' series ;-)
+
+One could go the extra length and make it multiple patches, but its not
+too big, so I'm not sure we should worry about that.
+
+> > 
+> > >  struct sched_class {
+> > >        const struct sched_class *next;
+> > >
+> > > -       void (*enqueue_task) (struct rq *rq, struct task_struct *p, int wakeup);
+> > > -       void (*dequeue_task) (struct rq *rq, struct task_struct *p, int sleep);
+> > > +       void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
+> > > +       void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
+> > >        void (*yield_task) (struct rq *rq);
+> > >        int  (*select_task_rq)(struct task_struct *p, int sync);
+> > >
+
+> > > Index: linux-2.6.24.7-ibmrt2.6-view/kernel/sched_fair.c
+> > > ===================================================================
+> > > --- linux-2.6.24.7-ibmrt2.6-view.orig/kernel/sched_fair.c
+> > > +++ linux-2.6.24.7-ibmrt2.6-view/kernel/sched_fair.c
+> > > @@ -756,10 +756,11 @@ static inline struct sched_entity *paren
+> > >  * increased. Here we update the fair scheduling stats and
+> > >  * then put the task into the rbtree:
+> > >  */
+> > > -static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int wakeup)
+> > > +static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+> > >  {
+> > >        struct cfs_rq *cfs_rq;
+> > >        struct sched_entity *se = &p->se;
+> > > +       int wakeup = flags & ENQUEUE_WAKEUP;
+> > 
+> > Minor nit: was it necessary to create a new int, why not just flags &=
+> > ENQUEUE_WAKEUP, plus subsequent renaming where necessary.
+
+As Darren already said, the rename of wakeup/sleep to flags is needed
+because of the multiple value thing and consistency. 
+
+> Well... I've copied the entire function here for context:
 > 
->  
-> Index: linux-2.6.25.8-rt7/arch/powerpc/mm/tlb_64.c
-> ===================================================================
-> --- linux-2.6.25.8-rt7.orig/arch/powerpc/mm/tlb_64.c	2008-07-09 21:29:21.000000000 +0530
-> +++ linux-2.6.25.8-rt7/arch/powerpc/mm/tlb_64.c	2008-07-09 21:30:37.000000000 +0530
-> @@ -38,7 +38,6 @@
->   * include/asm-powerpc/tlb.h file -- tgall
->   */
->  DEFINE_PER_CPU_LOCKED(struct mmu_gather, mmu_gathers);
-> -DEFINE_PER_CPU(struct pte_freelist_batch *, pte_freelist_cur);
->  unsigned long pte_freelist_forced_free;
->  
->  struct pte_freelist_batch
-> @@ -48,7 +47,7 @@
->  	pgtable_free_t	tables[0];
->  };
->  
-> -DEFINE_PER_CPU(struct pte_freelist_batch *, pte_freelist_cur);
-> +DEFINE_PER_CPU_LOCKED(struct pte_freelist_batch *, pte_freelist_cur);
->  unsigned long pte_freelist_forced_free;
->  
->  #define PTE_FREELIST_SIZE \
-> @@ -92,24 +91,21 @@
->  
->  void pgtable_free_tlb(struct mmu_gather *tlb, pgtable_free_t pgf)
->  {
-> -	/*
-> -	 * This is safe since tlb_gather_mmu has disabled preemption.
-> -	 * tlb->cpu is set by tlb_gather_mmu as well.
-> -	 */
-> +	int cpu;
->          cpumask_t local_cpumask = cpumask_of_cpu(tlb->cpu);
-> -	struct pte_freelist_batch **batchp = &__get_cpu_var(pte_freelist_cur);
-> +	struct pte_freelist_batch **batchp = &get_cpu_var_locked(pte_freelist_cur, &cpu);
->  
->  	if (atomic_read(&tlb->mm->mm_users) < 2 ||
->  	    cpus_equal(tlb->mm->cpu_vm_mask, local_cpumask)) {
->  		pgtable_free(pgf);
-> -		return;
-> +		goto cleanup;
->  	}
->  
->  	if (*batchp == NULL) {
->  		*batchp = (struct pte_freelist_batch *)__get_free_page(GFP_ATOMIC);
->  		if (*batchp == NULL) {
->  			pgtable_free_now(pgf);
-> -			return;
-> +			goto cleanup;
->  		}
->  		(*batchp)->index = 0;
->  	}
-> @@ -118,6 +114,9 @@
->  		pte_free_submit(*batchp);
->  		*batchp = NULL;
->  	}
-> +
-> + cleanup:
-> +	put_cpu_var_locked(pte_freelist_cur, cpu);
->  }
->  
->  /*
-> @@ -253,13 +252,15 @@
->  
->  void pte_free_finish(void)
->  {
-> -	/* This is safe since tlb_gather_mmu has disabled preemption */
-> -	struct pte_freelist_batch **batchp = &__get_cpu_var(pte_freelist_cur);
-> +	int cpu;
-> +	struct pte_freelist_batch **batchp = &get_cpu_var_locked(pte_freelist_cur, &cpu);
->  
-> -	if (*batchp == NULL)
-> -		return;
-> -	pte_free_submit(*batchp);
-> -	*batchp = NULL;
-> +	if (*batchp) {
-> +		pte_free_submit(*batchp);
-> +		*batchp = NULL;
-> +	}
-> +
-> +	put_cpu_var_locked(pte_freelist_cur, cpu);
->  }
->  
->  /**
-> Index: linux-2.6.25.8-rt7/include/asm-powerpc/tlb.h
-> ===================================================================
-> --- linux-2.6.25.8-rt7.orig/include/asm-powerpc/tlb.h	2008-07-09 21:29:21.000000000 +0530
-> +++ linux-2.6.25.8-rt7/include/asm-powerpc/tlb.h	2008-07-09 21:29:41.000000000 +0530
-> @@ -40,18 +40,17 @@
->  
->  static inline void tlb_flush(struct mmu_gather *tlb)
->  {
-> -	struct ppc64_tlb_batch *tlbbatch = &__get_cpu_var(ppc64_tlb_batch);
-> +	struct ppc64_tlb_batch *tlbbatch = &get_cpu_var(ppc64_tlb_batch);
->  
->  	/* If there's a TLB batch pending, then we must flush it because the
->  	 * pages are going to be freed and we really don't want to have a CPU
->  	 * access a freed page because it has a stale TLB
->  	 */
->  	if (tlbbatch->index) {
-> -		preempt_disable();
->  		__flush_tlb_pending(tlbbatch);
-> -		preempt_enable();
->  	}
->  
-> +	put_cpu_var(ppc64_tlb_batch);
->  	pte_free_finish();
->  }
->  
-> Index: linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/iommu.c
-> ===================================================================
-> --- linux-2.6.25.8-rt7.orig/arch/powerpc/platforms/pseries/iommu.c	2008-07-09 21:29:21.000000000 +0530
-> +++ linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/iommu.c	2008-07-09 21:29:41.000000000 +0530
-> @@ -124,7 +124,7 @@
->  	}
->  }
->  
-> -static DEFINE_PER_CPU(u64 *, tce_page) = NULL;
-> +static DEFINE_PER_CPU_LOCKED(u64 *, tce_page) = NULL;
->  
->  static void tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
->  				     long npages, unsigned long uaddr,
-> @@ -135,12 +135,13 @@
->  	u64 *tcep;
->  	u64 rpn;
->  	long l, limit;
-> +	int cpu;
->  
->  	if (npages == 1)
->  		return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
->  					   direction);
->  
-> -	tcep = __get_cpu_var(tce_page);
-> +	tcep = get_cpu_var_locked(tce_page, &cpu);
->  
->  	/* This is safe to do since interrupts are off when we're called
->  	 * from iommu_alloc{,_sg}()
-> @@ -148,10 +149,13 @@
->  	if (!tcep) {
->  		tcep = (u64 *)__get_free_page(GFP_ATOMIC);
->  		/* If allocation fails, fall back to the loop implementation */
-> -		if (!tcep)
-> +		if (!tcep) {
-> +			put_cpu_var_locked(tce_page, cpu);
->  			return tce_build_pSeriesLP(tbl, tcenum, npages,
->  						   uaddr, direction);
-> -		__get_cpu_var(tce_page) = tcep;
-> +		}
-> +
-> +		per_cpu_var_locked(tce_page, cpu) = tcep;
->  	}
->  
->  	rpn = (virt_to_abs(uaddr)) >> TCE_SHIFT;
-> @@ -188,6 +192,8 @@
->  		printk("\ttce[0] val = 0x%lx\n", tcep[0]);
->  		show_stack(current, (unsigned long *)__get_SP());
->  	}
-> +
-> +	put_cpu_var_locked(tce_page, cpu);
->  }
->  
->  static void tce_free_pSeriesLP(struct iommu_table *tbl, long tcenum, long npages)
-> _______________________________________________
-> Linuxppc-dev mailing list
-> Linuxppc-dev@ozlabs.org
-> https://ozlabs.org/mailman/listinfo/linuxppc-dev
+> static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int
+> flags)
+> {
+> 	struct cfs_rq *cfs_rq;
+> 	struct sched_entity *se = &p->se;
+> 	int wakeup = flags & ENQUEUE_WAKEUP;
+> 
+> 	for_each_sched_entity(se) {
+> 		if (se->on_rq)
+> 			break;
+> 		cfs_rq = cfs_rq_of(se);
+> 		enqueue_entity(cfs_rq, se, wakeup);
+> 		wakeup = 1;
+> 	}
+> }
+> 
+> Note that "wakeup = 1;" for all but the initial entity which uses the
+> flag that was passed in.  So if this is correct behavior, then the new
+> integer seems like a reasonable approach to me.  Note that the
+> dequeue_task_fair has a parallel implementation.
+> 
+> Peter, can you explain why only the first entity is subject to the value
+> of the passed-in flags in these two functions.  I understand this was
+> the orginal behavior as well.
+
+group scheduling :-)
+
+So, if you haven't ran away by now I'll continue explaining.
+
+The current group scheduler is a hierarchy of schedulers, what
+enqueue_task_fair() does is enqueue the task 'somewhere' in that
+hierarchy. And then walk up the hierarchy checking to see if each parent
+is already enqueued (the if (se->on_rq) bit). If so, it can stop since
+all further parents will then too be already enqueued. However, if the
+parent is not already enqueued if must enqueue him too.
+
+So what we do is dequeue sleep a scheduler from its parent scheduler
+when there are no more tasks to run, and enqueue wakeup when a new
+'task' arrives. Note that a 'task' can be a so called super-task which
+is essentially another scheduler.
+
 
