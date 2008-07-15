@@ -1,35 +1,30 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH][RT][PPC64] Fix preempt unsafe paths accessing per_cpu
- variables
-Date: Fri, 11 Jul 2008 10:19:02 +0200
-Message-ID: <20080711101902.74b0abf6@bull.net>
+	variables
+Date: Tue, 15 Jul 2008 11:32:01 +1000
+Message-ID: <1216085521.7740.37.camel@pasglop>
 References: <20080709160543.GG7101@linux.vnet.ibm.com>
+Reply-To: benh@kernel.crashing.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: linux.kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, Dinakar Guniguntala <dino@in.ibm.com>,
+	linuxppc-dev@ozlabs.org, Josh Triplett <josht@linux.vnet.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Nivedita Singhvi <niv@us.ibm.com>,
 	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
-	paulmck@linux.vnet.ibm.com, Nivedita Singhvi <niv@us.ibm.com>,
-	Josh Triplett <josht@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>
+	paulmck@linux.vnet.ibm.com
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:43851 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751783AbYGKISd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Jul 2008 04:18:33 -0400
+Received: from gate.crashing.org ([63.228.1.57]:56180 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752536AbYGOBeV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jul 2008 21:34:21 -0400
 In-Reply-To: <20080709160543.GG7101@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-  Hi Chirag,
-
-On Wed, 9 Jul 2008 21:35:43 +0530 Chirag Jog <chirag@linux.vnet.ibm.com> wrote:
-
-> 
+On Wed, 2008-07-09 at 21:35 +0530, Chirag Jog wrote:
 > Hi,
 > This patch fixes various paths in the -rt kernel on powerpc64 where per_cpu
 > variables are accessed in a preempt unsafe way.
@@ -37,16 +32,23 @@ On Wed, 9 Jul 2008 21:35:43 +0530 Chirag Jog <chirag@linux.vnet.ibm.com> wrote:
 > generated "BUG: init:1 task might have lost a preemption check!".
 > After booting a kernel with these patches applied, these messages
 > don't appear.
-
-  That does indeed greatly reduce BUGs display. Good. Thanks.
-
-  Tested-by: Sebastien Dugue <sebastien.dugue@bull.net>
-
-  Sebastien.
-
 > 
 > Also I ran the realtime tests from ltp to ensure the stability.
-> 
+
+That sounds bad tho...
+
+IE. You are changing the code to lock/unlock on all those TLB batching
+operations, but seem to miss the core reason why it was done that way:
+ie, the code assumes that it will not change CPU -between- those calls,
+since the whole stuff should be already have been within a per-cpu
+locked section at the caller level.
+
+As for the TCE code, well, it lived on the assumption that the upper
+level spinlock did the job of preventing preempt, I suppose that's not
+the case anymore. So that part of the patch sounds ok.
+
+Ben.
+
 > 
 > Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
 > arch/powerpc/mm/tlb_64.c               |   31 ++++++++++++++++---------------
@@ -215,8 +217,8 @@ On Wed, 9 Jul 2008 21:35:43 +0530 Chirag Jog <chirag@linux.vnet.ibm.com> wrote:
 >  }
 >  
 >  static void tce_free_pSeriesLP(struct iommu_table *tbl, long tcenum, long npages)
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+> _______________________________________________
+> Linuxppc-dev mailing list
+> Linuxppc-dev@ozlabs.org
+> https://ozlabs.org/mailman/listinfo/linuxppc-dev
+
