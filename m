@@ -1,83 +1,31 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] rwlock: be more conservative in locking reader_lock_count
-Date: Tue, 15 Jul 2008 20:26:50 -0400 (EDT)
-Message-ID: <Pine.LNX.4.58.0807152023520.20814@gandalf.stny.rr.com>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: rt for 2.6.26?
+Date: Wed, 16 Jul 2008 08:53:43 +0200
+Message-ID: <20080716065343.GW4319@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=iso-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:64311 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760739AbYGPA0x (ORCPT
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:60533 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751637AbYGPGxq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jul 2008 20:26:53 -0400
+	Wed, 16 Jul 2008 02:53:46 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Steven & tglx,
 
-John Stultz was hitting one of the rwlock warnings. This was indeed a bug.
-The assumption of trying not to take locks was incorrect and prone to
-bugs.  This patch adds a few locks around the needed areas to correct the
-issue and make the code a bit more robust.
+how do your plans for 2.6.26-rt look like?
 
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
----
- kernel/rtmutex.c |   16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
-
-Index: linux-2.6.24.7-rt-73/kernel/rtmutex.c
-===================================================================
---- linux-2.6.24.7-rt-73.orig/kernel/rtmutex.c	2008-07-14 22:27:13.000000000 -0400
-+++ linux-2.6.24.7-rt-73/kernel/rtmutex.c	2008-07-14 22:30:54.000000000 -0400
-@@ -1137,16 +1137,13 @@ rt_rwlock_update_owner(struct rw_mutex *
- 	if (own == RT_RW_READER)
- 		return;
-
--	/*
--	 * We don't need to grab the pi_lock to look at the reader list
--	 * since we hold the rwm wait_lock. We only care about the pointer
--	 * to this lock, and we own the wait_lock, so that pointer
--	 * can't be changed.
--	 */
-+	spin_lock(&own->pi_lock);
- 	for (i = own->reader_lock_count - 1; i >= 0; i--) {
- 		if (own->owned_read_locks[i].lock == rwm)
- 			break;
- 	}
-+	spin_unlock(&own->pi_lock);
-+
- 	/* It is possible the owner didn't add it yet */
- 	if (i < 0)
- 		return;
-@@ -1453,7 +1450,6 @@ __rt_read_fasttrylock(struct rw_mutex *r
- 			current->owned_read_locks[reader_count].count = 1;
- 		} else
- 			WARN_ON_ONCE(1);
--		spin_unlock(&current->pi_lock);
- 		/*
- 		 * If this task is no longer the sole owner of the lock
- 		 * or someone is blocking, then we need to add the task
-@@ -1463,12 +1459,16 @@ __rt_read_fasttrylock(struct rw_mutex *r
- 			struct rt_mutex *mutex = &rwm->mutex;
- 			struct reader_lock_struct *rls;
-
-+			/* preserve lock order, we only need wait_lock now */
-+			spin_unlock(&current->pi_lock);
-+
- 			spin_lock(&mutex->wait_lock);
- 			rls = &current->owned_read_locks[reader_count];
- 			if (!rls->list.prev || list_empty(&rls->list))
- 				list_add(&rls->list, &rwm->readers);
- 			spin_unlock(&mutex->wait_lock);
--		}
-+		} else
-+			spin_unlock(&current->pi_lock);
- 		local_irq_restore(flags);
- 		return 1;
- 	}
+rsc
+-- 
+ Dipl.-Ing. Robert Schwebel | http://www.pengutronix.de
+ Pengutronix - Linux Solutions for Science and Industry
+   Handelsregister:  Amtsgericht Hildesheim, HRA 2686
+     Hannoversche Str. 2, 31134 Hildesheim, Germany
+   Phone: +49-5121-206917-0 |  Fax: +49-5121-206917-9
 
