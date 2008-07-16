@@ -1,76 +1,83 @@
-From: Henrik Austad <henrikau@orakel.ntnu.no>
-Subject: Re: Real time linux on my project
-Date: Tue, 15 Jul 2008 20:15:15 +0200
-Message-ID: <200807152015.20262.henrikau@orakel.ntnu.no>
-References: <1216144243.8742.19.camel@luis-desktop>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] rwlock: be more conservative in locking reader_lock_count
+Date: Tue, 15 Jul 2008 20:26:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.58.0807152023520.20814@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed;
-  boundary="nextPart243257777.ix0rthS9yK";
-  protocol="application/pgp-signature";
-  micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Luis <lquirosr@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	john stultz <johnstul@us.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail43.e.nsc.no ([193.213.115.43]:48993 "EHLO mail43.e.nsc.no"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753674AbYGOXOc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jul 2008 19:14:32 -0400
-In-Reply-To: <1216144243.8742.19.camel@luis-desktop>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:64311 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760739AbYGPA0x (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Jul 2008 20:26:53 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---nextPart243257777.ix0rthS9yK
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
-On Tuesday 15 July 2008 19:50:43 Luis wrote:
-> Hi everyone,
->
-> I am working on a project (for a NGO on Costa Rica) on which I will be
-> developing a fully autonomous flying aerial photography platform. I will
-> be using a powerful stealth computer on board which will be running
-> (hopefully) a CONFIG_PREEMPT_RT modified Ubuntu for all the actions
-> taking place (Control, sampling, communications, etc). I'm really new to
-> real time. I will be sharing all the code and all the development will
-> be open source so if anyone has recommendations, questions, things I
-> should read, I'm open to hear from you. I will be controlling a small
-> buy yet powerful gas helicopter and using a USB-DUX for the DAQ needs.
+John Stultz was hitting one of the rwlock warnings. This was indeed a bug.
+The assumption of trying not to take locks was incorrect and prone to
+bugs.  This patch adds a few locks around the needed areas to correct the
+issue and make the code a bit more robust.
 
-What is a stealth computer?
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+---
+ kernel/rtmutex.c |   16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
-I'll give a few hints to the *coding*, not the rt-patch series itself:
+Index: linux-2.6.24.7-rt-73/kernel/rtmutex.c
+===================================================================
+--- linux-2.6.24.7-rt-73.orig/kernel/rtmutex.c	2008-07-14 22:27:13.000000000 -0400
++++ linux-2.6.24.7-rt-73/kernel/rtmutex.c	2008-07-14 22:30:54.000000000 -0400
+@@ -1137,16 +1137,13 @@ rt_rwlock_update_owner(struct rw_mutex *
+ 	if (own == RT_RW_READER)
+ 		return;
 
-=46or a general guide to the coding, I'd say have a look at=20
-http://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
+-	/*
+-	 * We don't need to grab the pi_lock to look at the reader list
+-	 * since we hold the rwm wait_lock. We only care about the pointer
+-	 * to this lock, and we own the wait_lock, so that pointer
+-	 * can't be changed.
+-	 */
++	spin_lock(&own->pi_lock);
+ 	for (i = own->reader_lock_count - 1; i >= 0; i--) {
+ 		if (own->owned_read_locks[i].lock == rwm)
+ 			break;
+ 	}
++	spin_unlock(&own->pi_lock);
++
+ 	/* It is possible the owner didn't add it yet */
+ 	if (i < 0)
+ 		return;
+@@ -1453,7 +1450,6 @@ __rt_read_fasttrylock(struct rw_mutex *r
+ 			current->owned_read_locks[reader_count].count = 1;
+ 		} else
+ 			WARN_ON_ONCE(1);
+-		spin_unlock(&current->pi_lock);
+ 		/*
+ 		 * If this task is no longer the sole owner of the lock
+ 		 * or someone is blocking, then we need to add the task
+@@ -1463,12 +1459,16 @@ __rt_read_fasttrylock(struct rw_mutex *r
+ 			struct rt_mutex *mutex = &rwm->mutex;
+ 			struct reader_lock_struct *rls;
 
-Also, look into=20
-=2D mutex/semaphores
-=2D threads
-=2D message queues
-have a look at https://computing.llnl.gov/tutorials/pthreads/=20
++			/* preserve lock order, we only need wait_lock now */
++			spin_unlock(&current->pi_lock);
++
+ 			spin_lock(&mutex->wait_lock);
+ 			rls = &current->owned_read_locks[reader_count];
+ 			if (!rls->list.prev || list_empty(&rls->list))
+ 				list_add(&rls->list, &rwm->readers);
+ 			spin_unlock(&mutex->wait_lock);
+-		}
++		} else
++			spin_unlock(&current->pi_lock);
+ 		local_irq_restore(flags);
+ 		return 1;
+ 	}
 
-If your system becomes very large (and you have very formal requirements)=20
-perhaps you should look into using Ada?
-
-Good luck with the project - share some photos/videos of the aircraft in=20
-action! :-)
-
-=2D-=20
-mvh Henrik Austad
-
---nextPart243257777.ix0rthS9yK
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-
-iD8DBQBIfOk46k5VT6v45lkRAt+FAJ9+HZuhYtvGuoa3tRWzEQa3eLPCFQCfSqd0
-gdBsWyc5XUTZIVB/iBfsosc=
-=iTGE
------END PGP SIGNATURE-----
-
---nextPart243257777.ix0rthS9yK--
