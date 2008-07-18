@@ -1,9 +1,10 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 1/2] sched: remove extraneous load manipulations
-Date: Fri, 18 Jul 2008 14:39:14 +0200
-Message-ID: <1216384754.28405.31.camel@twins>
+Subject: Re: [PATCH 2/2] sched: readjust the load whenever task_setprio()
+	is invoked
+Date: Fri, 18 Jul 2008 14:43:03 +0200
+Message-ID: <1216384984.28405.36.camel@twins>
 References: <20080703212939.1275.27072.stgit@lsg.lsg.lab.novell.com>
-	 <20080703213711.1275.56107.stgit@lsg.lsg.lab.novell.com>
+	 <20080703213716.1275.33324.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -11,88 +12,50 @@ Cc: stable@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	rostedt@goodmis.org, mingo@elte.hu, linux-kernel@vger.kernel.org
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:37676 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753653AbYGRMio (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:39744 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756284AbYGRMmg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Jul 2008 08:38:44 -0400
-In-Reply-To: <20080703213711.1275.56107.stgit@lsg.lsg.lab.novell.com>
+	Fri, 18 Jul 2008 08:42:36 -0400
+In-Reply-To: <20080703213716.1275.33324.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Thu, 2008-07-03 at 15:37 -0600, Gregory Haskins wrote:
-> commit 62fb185130e4d420f71a30ff59d8b16b74ef5d2b reverted some patches
-> in the scheduler, but it looks like it may have left a few redundant
-> calls to inc_load/dec_load remain in set_user_nice (since the
->  dequeue_task/enqueue_task take care of the load.  This could result
-> in the load values being off since the load may change while dequeued.
-
-I just checked out v2.6.25.10 but cannot see dequeue_task() do it.
-
-deactivate_task() otoh does do it.
-
-static void dequeue_task(struct rq *rq, struct task_struct *p, int sleep)
-{
-	p->sched_class->dequeue_task(rq, p, sleep);
-	p->se.on_rq = 0;
-}
-
-vs
-
-static void deactivate_task(struct rq *rq, struct task_struct *p, int sleep)
-{
-	if (task_contributes_to_load(p))
-		rq->nr_uninterruptible++;
-
-	dequeue_task(rq, p, sleep);
-	dec_nr_running(p, rq);
-}
-
-where
-
-static void dec_nr_running(struct task_struct *p, struct rq *rq)
-{
-	rq->nr_running--;
-	dec_load(rq, p);
-}
-
-And since set_user_nice() actually changes the load we'd better not
-forget to do this dec/inc load stuff.
-
-So I'm thinking this patch would actually break stuff.
-
+> The load may change with the priority, so be sure to recompute its value.
+> 
 > Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 > CC: Peter Zijlstra <peterz@infradead.org>
 > CC: Ingo Molnar <mingo@elte.hu>
+
+Right, but in this case we'd need to do the dec/inc load game again
+because otherwise we'll skew stuff - see the previuos mail on how
+dequeue_task() doesn't actually do that.
+
+Also, it looks like current mainline still has this issue.
+
+OTOH - since prio boosting is a temporal feature, not changing the load
+isn't too bad, we ought to get back to where we came from pretty
+quickly.
+
+
+
 > ---
 > 
->  kernel/sched.c |    6 ++----
->  1 files changed, 2 insertions(+), 4 deletions(-)
+>  kernel/sched.c |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 > 
 > diff --git a/kernel/sched.c b/kernel/sched.c
-> index 31f91d9..b046754 100644
+> index b046754..c3f41b9 100644
 > --- a/kernel/sched.c
 > +++ b/kernel/sched.c
-> @@ -4679,10 +4679,8 @@ void set_user_nice(struct task_struct *p, long nice)
->  		goto out_unlock;
->  	}
->  	on_rq = p->se.on_rq;
-> -	if (on_rq) {
-> +	if (on_rq)
->  		dequeue_task(rq, p, 0);
-> -		dec_load(rq, p);
-> -	}
+> @@ -4637,6 +4637,7 @@ void task_setprio(struct task_struct *p, int prio)
+>  		p->sched_class = &fair_sched_class;
 >  
->  	p->static_prio = NICE_TO_PRIO(nice);
->  	set_load_weight(p);
-> @@ -4692,7 +4690,7 @@ void set_user_nice(struct task_struct *p, long nice)
+>  	p->prio = prio;
+> +	set_load_weight(p);
 >  
->  	if (on_rq) {
->  		enqueue_task(rq, p, 0);
-> -		inc_load(rq, p);
-> +
->  		/*
->  		 * If the task increased its priority or is running and
->  		 * lowered its priority, then reschedule its CPU:
+>  //	trace_special_pid(p->pid, __PRIO(oldprio), PRIO(p));
+>  	prev_resched = _need_resched();
 > 
 
