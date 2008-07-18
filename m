@@ -1,40 +1,54 @@
-From: "Christian Volk" <linux.kernel@cvolk.de>
-Subject: Questions About preempt-rt and arch:ppc
-Date: Fri, 18 Jul 2008 21:20:56 +0200 (MEST)
-Message-ID: <200807181920.m6IJKucY010585@post.webmailer.de>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Subject: Re: [PATCH][RT][PPC64] Fix preempt unsafe paths accessing per_cpu
+	variables
+Date: Sat, 19 Jul 2008 08:05:30 +1000
+Message-ID: <1216418730.7740.451.camel@pasglop>
+References: <20080709160543.GG7101@linux.vnet.ibm.com>
+	 <1216085521.7740.37.camel@pasglop>
+	 <20080717125645.GN20277@linux.vnet.ibm.com>
+	 <1216325671.7740.359.camel@pasglop>
+	 <20080718101133.GO20277@linux.vnet.ibm.com>
+Reply-To: benh@kernel.crashing.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux.kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linuxppc-dev@ozlabs.org, Josh Triplett <josht@linux.vnet.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Nivedita Singhvi <niv@us.ibm.com>,
+	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
+	paulmck@linux.vnet.ibm.com, Thomas Gleixner <tglx@linutronix.de>
+To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cg-p00-ob.rzone.de ([81.169.146.192]:16915 "EHLO
-	cg-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753795AbYGRT1y convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Jul 2008 15:27:54 -0400
-Received: from post.webmailer.de (hat.store [192.168.40.68])
-	by bjorn-cg-03.store (RZmta 16.42) with ESMTP id v04ee3k6IIPrUU
-	for <linux-rt-users@vger.kernel.org>;
-	Fri, 18 Jul 2008 21:20:56 +0200 (MEST)
-	(envelope-from: <linux.kernel@cvolk.de>)
-Received: (from httpd@localhost)
-	by post.webmailer.de (8.13.7/8.13.6) id m6IJKucY010585
-	for linux-rt-users@vger.kernel.org; Fri, 18 Jul 2008 21:20:56 +0200 (MEST)
+Received: from gate.crashing.org ([63.228.1.57]:41418 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754124AbYGRWGS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Jul 2008 18:06:18 -0400
+In-Reply-To: <20080718101133.GO20277@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
 
-is it possible to get preempt-rt working with kernel 2.6.20 / 2.6.21 with arch ppc 
-(processor is a Freescale MPC8343)?
-Unfortunately it is not possible for me to change the arch to powerpc.
+> With the original patch, the pending batch does get flushed=20
+> in a non-preemptable region.=20
+> I am resending the original with just adding the necesary comments.
 
-Kernel 2.6.20/21 compiles fine runs and boots without the patch.
-After applying the patch and fixing some small issues i can configure it, but while building
-it, i get a lot of warnings concerning about redefinition of functions.
+Your comment isn't what I meant. What I meant is that if the process
+is context switched while walking the page tables, the low level powerp=
+c
+context switch code should also perform a =EF=BB=BF__flush_tlb_pending.
 
-My question is, is it possible to get the above combination working or not?
+BTW. Is the pte_lock also not a real spinlock anymore ? That may break
+other assumptions the powerpc mm code is doing.
 
-thanx in advance,
+This -rt stuff is just too scary, it changes some fundamental semantics
+of the spinlocks. yuck.
 
-christian
+Ben.
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
