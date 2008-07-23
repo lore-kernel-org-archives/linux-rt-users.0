@@ -1,147 +1,79 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 1/2] sched: remove extraneous load manipulations
-Date: Mon, 21 Jul 2008 18:06:24 -0400
-Message-ID: <48850860.3030402@novell.com>
-References: <20080703212939.1275.27072.stgit@lsg.lsg.lab.novell.com>	 <20080703213711.1275.56107.stgit@lsg.lsg.lab.novell.com> <1216384754.28405.31.camel@twins>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
+Subject: [PATCH 0/2][RT] powerpc - fix bug in irq reverse mapping radix tree
+Date: Wed, 23 Jul 2008 16:59:32 +0200
+Message-ID: <20080723165932.57e3ada2@bull.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig970FE799E19270BD83C409C9"
-Cc: linux-rt-users@vger.kernel.org, rostedt@goodmis.org, mingo@elte.hu,
-	linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:52209 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751214AbYGUWIZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Jul 2008 18:08:25 -0400
-In-Reply-To: <1216384754.28405.31.camel@twins>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Tim Chavez <tinytim@us.ibm.com>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Jean Pierre Dion <jean-pierre.dion@bull.net>,
+	linuxppc-dev@ozlabs.org, paulus@samba.org,
+	Gilles Carry <Gilles.Carry@ext.bull.net>
+To: Linux RT Users <linux-rt-users@vger.kernel.org>
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+List-Id: linux-rt-users.vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig970FE799E19270BD83C409C9
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+  Hi,
 
-Peter Zijlstra wrote:
-> On Thu, 2008-07-03 at 15:37 -0600, Gregory Haskins wrote:
->  =20
->> commit 62fb185130e4d420f71a30ff59d8b16b74ef5d2b reverted some patches
->> in the scheduler, but it looks like it may have left a few redundant
->> calls to inc_load/dec_load remain in set_user_nice (since the
->>  dequeue_task/enqueue_task take care of the load.  This could result
->> in the load values being off since the load may change while dequeued.=
+  here are 2 patches for fixing the following bug occuring on IBM pSeries under
+an RT kernel:
 
->>    =20
->
-> I just checked out v2.6.25.10 but cannot see dequeue_task() do it.
->  =20
-
-Indeed.  I think my eyes glazed over the dequeue vs deactivate, and=20
-enqueue vs activate.   Good catch, and sorry for the noise.  I was wrong.=
-=2E
-
-Please ignore this patch.
-
--Greg
-
-
-> deactivate_task() otoh does do it.
->
-> static void dequeue_task(struct rq *rq, struct task_struct *p, int slee=
-p)
-> {
-> 	p->sched_class->dequeue_task(rq, p, sleep);
-> 	p->se.on_rq =3D 0;
-> }
->
-> vs
->
-> static void deactivate_task(struct rq *rq, struct task_struct *p, int s=
-leep)
-> {
-> 	if (task_contributes_to_load(p))
-> 		rq->nr_uninterruptible++;
->
-> 	dequeue_task(rq, p, sleep);
-> 	dec_nr_running(p, rq);
-> }
->
-> where
->
-> static void dec_nr_running(struct task_struct *p, struct rq *rq)
-> {
-> 	rq->nr_running--;
-> 	dec_load(rq, p);
-> }
->
-> And since set_user_nice() actually changes the load we'd better not
-> forget to do this dec/inc load stuff.
->
-> So I'm thinking this patch would actually break stuff.
->
->  =20
->> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> CC: Peter Zijlstra <peterz@infradead.org>
->> CC: Ingo Molnar <mingo@elte.hu>
->> ---
->>
->>  kernel/sched.c |    6 ++----
->>  1 files changed, 2 insertions(+), 4 deletions(-)
->>
->> diff --git a/kernel/sched.c b/kernel/sched.c
->> index 31f91d9..b046754 100644
->> --- a/kernel/sched.c
->> +++ b/kernel/sched.c
->> @@ -4679,10 +4679,8 @@ void set_user_nice(struct task_struct *p, long =
-nice)
->>  		goto out_unlock;
->>  	}
->>  	on_rq =3D p->se.on_rq;
->> -	if (on_rq) {
->> +	if (on_rq)
->>  		dequeue_task(rq, p, 0);
->> -		dec_load(rq, p);
->> -	}
->> =20
->>  	p->static_prio =3D NICE_TO_PRIO(nice);
->>  	set_load_weight(p);
->> @@ -4692,7 +4690,7 @@ void set_user_nice(struct task_struct *p, long n=
-ice)
->> =20
->>  	if (on_rq) {
->>  		enqueue_task(rq, p, 0);
->> -		inc_load(rq, p);
->> +
->>  		/*
->>  		 * If the task increased its priority or is running and
->>  		 * lowered its priority, then reschedule its CPU:
->>
->>    =20
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->  =20
+BUG: sleeping function called from invalid context swapper(1) at kernel/rtmutex.c:739
+in_atomic():1 [00000002], irqs_disabled():1
+Call Trace:
+[c0000001e20f3340] [c000000000010370] .show_stack+0x70/0x1bc (unreliable)
+[c0000001e20f33f0] [c000000000049380] .__might_sleep+0x11c/0x138
+[c0000001e20f3470] [c0000000002a2f64] .__rt_spin_lock+0x3c/0x98
+[c0000001e20f34f0] [c0000000000c3f20] .kmem_cache_alloc+0x68/0x184
+[c0000001e20f3590] [c000000000193f3c] .radix_tree_node_alloc+0xf0/0x144
+[c0000001e20f3630] [c000000000195190] .radix_tree_insert+0x18c/0x2fc
+[c0000001e20f36f0] [c00000000000c710] .irq_radix_revmap+0x1a4/0x1e4
+[c0000001e20f37b0] [c00000000003b3f0] .xics_startup+0x30/0x54
+[c0000001e20f3840] [c00000000008b864] .setup_irq+0x26c/0x370
+[c0000001e20f38f0] [c00000000008ba68] .request_irq+0x100/0x158
+[c0000001e20f39a0] [c0000000001ee9c0] .hvc_open+0xb4/0x148
+[c0000001e20f3a40] [c0000000001d72ec] .tty_open+0x200/0x368
+[c0000001e20f3af0] [c0000000000ce928] .chrdev_open+0x1f4/0x25c
+[c0000001e20f3ba0] [c0000000000c8bf0] .__dentry_open+0x188/0x2c8
+[c0000001e20f3c50] [c0000000000c8dec] .do_filp_open+0x50/0x70
+[c0000001e20f3d70] [c0000000000c8e8c] .do_sys_open+0x80/0x148
+[c0000001e20f3e20] [c00000000000928c] .init_post+0x4c/0x100
+[c0000001e20f3ea0] [c0000000003c0e0c] .kernel_init+0x428/0x478
+[c0000001e20f3f90] [c000000000027448] .kernel_thread+0x4c/0x68
 
 
+  The root cause of this bug lies in the fact that the XICS interrupt controller
+uses a radix tree for its reverse irq mapping and that we cannot allocate the tree
+nodes (even GFP_ATOMIC) with preemption disabled.
 
---------------enig970FE799E19270BD83C409C9
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+  In fact, we have 2 nested preemption disabling when we want to allocate
+a new node:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+  - setup_irq() does a spin_lock_irqsave() before calling xics_startup() which
+    then calls irq_radix_revmap() to insert a new node in the tree
 
-iEYEARECAAYFAkiFCGAACgkQlOSOBdgZUxmGGACfTSs8tE2wCfg+tXO/LfnQp7FJ
-3+gAn39DUzcZ6Pm1BoRqoQVbalKY6vd8
-=Ivmp
------END PGP SIGNATURE-----
+  - irq_radix_revmap() also does a spin_lock_irqsave() (in irq_radix_wrlock())
+    before the radix_tree_insert()
 
---------------enig970FE799E19270BD83C409C9--
+  The first patch moves the call to irq_radix_revmap() from xics_startup() out to
+xics_host_map_direct() and xics_host_map_lpar() which are called with preemption
+enabled.
+
+  The second patch is a little more involved in that it takes advantage of
+the concurrent radix tree to simplify the locking requirements and allows
+to allocate a new node outside a preemption disabled section.
+
+  I just hope I've correctly understood the concurrent radix trees semantic
+and got the (absence of) locking right.
+
+  Sebastien.
