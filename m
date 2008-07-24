@@ -1,97 +1,78 @@
 From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: [PATCH 1/2][RT] powerpc - XICS: move the call to irq_radix_revmap
- from xics_startup to xics_host_map
-Date: Thu, 24 Jul 2008 12:48:53 +0200
-Message-ID: <20080724124853.43a1157c@bull.net>
-References: <20080724122352.3bc76bda@bull.net>
+Subject: Re: [PATCH 0/2][RT] powerpc - fix bug in irq reverse mapping radix
+ tree
+Date: Thu, 24 Jul 2008 13:08:07 +0200
+Message-ID: <20080724130807.23d5252b@bull.net>
+References: <20080723165932.57e3ada2@bull.net>
+	<1216851458.11027.346.camel@pasglop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-ppc <linuxppc-dev@ozlabs.org>,
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Michael Ellerman <michael@ellerman.id.au>,
+	linux-ppc <linuxppc-dev@ozlabs.org>,
 	Tim Chavez <tinytim@us.ibm.com>,
 	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Gilles Carry <Gilles.Carry@ext.bull.net>
-To: Linux-rt <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:60195 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752055AbYGXKvg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jul 2008 06:51:36 -0400
-In-Reply-To: <20080724122352.3bc76bda@bull.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Gilles Carry <Gilles.Carry@ext.bull.net>,
+	Paul Mackerras <paulus@samba.org>,
+	Michael Ellerman <michael@ellerman.id.au>
+To: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754925AbYGXLHw@vger.kernel.org>
+In-Reply-To: <1216851458.11027.346.camel@pasglop>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastien Dugue <sebastien.dugue@bull.net>
-Date: Tue, 22 Jul 2008 13:05:24 +0200
-Subject: [PATCH][RT] powerpc - XICS: move the call to irq_radix_revmap from xics_startup to xics_host_map
+On Thu, 24 Jul 2008 08:17:38 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
 
-  This patch moves the insertion of an irq into the reverse mapping radix tree
-from xics_startup() into xics_host_map().
+> 
+> >   The root cause of this bug lies in the fact that the XICS interrupt controller
+> > uses a radix tree for its reverse irq mapping and that we cannot allocate the tree
+> > nodes (even GFP_ATOMIC) with preemption disabled.
+> 
+> Is that yet another caes of -rt changing some basic kernel semantics ?
 
-  The reason for this change is that xics_startup() is called with preemption
-disabled (which is not the case for xics_host_map()) which is a problem under a
-preempt-rt kernel as we cannot even allocate GFP_ATOMIC memory for the radix tree
-nodes.
+  Ahem, not really new: http://lkml.org/lkml/2007/11/12/211
 
+> 
+> >   In fact, we have 2 nested preemption disabling when we want to allocate
+> > a new node:
+> > 
+> >   - setup_irq() does a spin_lock_irqsave() before calling xics_startup() which
+> >     then calls irq_radix_revmap() to insert a new node in the tree
+> > 
+> >   - irq_radix_revmap() also does a spin_lock_irqsave() (in irq_radix_wrlock())
+> >     before the radix_tree_insert()
+> > 
+> >   The first patch moves the call to irq_radix_revmap() from xics_startup() out to
+> > xics_host_map_direct() and xics_host_map_lpar() which are called with preemption
+> > enabled.
+> 
+> I suppose that would work.
 
-Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Michael Ellerman <michael@ellerman.id.au>
+  It should indeed. Instead of inserting the new mapping at request_irq() time,
+we do it a bit before at create_irq_mapping time.
 
----
- arch/powerpc/platforms/pseries/xics.c |   18 ++++++++++++------
- 1 file changed, 12 insertions(+), 6 deletions(-)
+> 
+> >   The second patch is a little more involved in that it takes advantage of
+> > the concurrent radix tree to simplify the locking requirements and allows
+> > to allocate a new node outside a preemption disabled section.
+> > 
+> >   I just hope I've correctly understood the concurrent radix trees semantic
+> > and got the (absence of) locking right.
+> 
+> Hrm, that will need some scrutinity.
 
-Index: linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/xics.c
-===================================================================
---- linux-2.6.25.8-rt7.orig/arch/powerpc/platforms/pseries/xics.c
-+++ linux-2.6.25.8-rt7/arch/powerpc/platforms/pseries/xics.c
-@@ -311,12 +311,6 @@ static void xics_mask_irq(unsigned int v
- 
- static unsigned int xics_startup(unsigned int virq)
- {
--	unsigned int irq;
--
--	/* force a reverse mapping of the interrupt so it gets in the cache */
--	irq = (unsigned int)irq_map[virq].hwirq;
--	irq_radix_revmap(xics_host, irq);
--
- 	/* unmask it */
- 	xics_unmask_irq(virq);
- 	return 0;
-@@ -529,8 +523,14 @@ static int xics_host_match(struct irq_ho
- static int xics_host_map_direct(struct irq_host *h, unsigned int virq,
- 				irq_hw_number_t hw)
- {
-+	unsigned int irq;
-+
- 	pr_debug("xics: map_direct virq %d, hwirq 0x%lx\n", virq, hw);
- 
-+	/* force a reverse mapping of the interrupt so it gets in the cache */
-+	irq = (unsigned int)irq_map[virq].hwirq;
-+	irq_radix_revmap(xics_host, irq);
-+
- 	get_irq_desc(virq)->status |= IRQ_LEVEL;
- 	set_irq_chip_and_handler(virq, &xics_pic_direct, handle_fasteoi_irq);
- 	return 0;
-@@ -539,8 +539,14 @@ static int xics_host_map_direct(struct i
- static int xics_host_map_lpar(struct irq_host *h, unsigned int virq,
- 			      irq_hw_number_t hw)
- {
-+	unsigned int irq;
-+
- 	pr_debug("xics: map_direct virq %d, hwirq 0x%lx\n", virq, hw);
- 
-+	/* force a reverse mapping of the interrupt so it gets in the cache */
-+	irq = (unsigned int)irq_map[virq].hwirq;
-+	irq_radix_revmap(xics_host, irq);
-+
- 	get_irq_desc(virq)->status |= IRQ_LEVEL;
- 	set_irq_chip_and_handler(virq, &xics_pic_lpar, handle_fasteoi_irq);
- 	return 0;
+  Yep, that will need a few more pair of eyes along with brains behind those ;-)
+
+  Thanks,
+
+  Sebastien.
+
+> 
+> Thanks for looking at this.
+> 
+> Cheers,
+> Ben.
+> 
+> 
+> 
