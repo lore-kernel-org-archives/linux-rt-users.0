@@ -1,18 +1,19 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 2/2][RT] powerpc - Make the irq reverse mapping radix
- tree lockless
-Date: Thu, 24 Jul 2008 14:18:39 +0200
-Message-ID: <20080724141839.477de30b@bull.net>
+	tree lockless
+Date: Fri, 25 Jul 2008 15:13:39 +1000
+Message-ID: <1216962819.11188.82.camel@pasglop>
 References: <20080724122352.3bc76bda@bull.net>
-	<20080724125044.53b604cb@bull.net>
-	<200807242111.35338.nickpiggin@yahoo.com.au>
+	 <20080724125044.53b604cb@bull.net>
+	 <200807242111.35338.nickpiggin@yahoo.com.au>
+Reply-To: benh@kernel.crashing.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Linux-rt <linux-rt-users@vger.kernel.org>,
+Cc: Sebastien Dugue <sebastien.dugue@bull.net>,
+	Linux-rt <linux-rt-users@vger.kernel.org>,
 	linux-ppc <linuxppc-dev@ozlabs.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
 	Paul Mackerras <paulus@samba.org>,
 	Michael Ellerman <michael@ellerman.id.au>,
 	Tim Chavez <tinytim@us.ibm.com>,
@@ -20,32 +21,15 @@ Cc: Linux-rt <linux-rt-users@vger.kernel.org>,
 	Gilles Carry <Gilles.Carry@ext.bull.net>
 To: Nick Piggin <nickpiggin@yahoo.com.au>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:35283 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753128AbYGXMSN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jul 2008 08:18:13 -0400
+Received: from gate.crashing.org ([63.228.1.57]:60679 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750753AbYGYFOo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 25 Jul 2008 01:14:44 -0400
 In-Reply-To: <200807242111.35338.nickpiggin@yahoo.com.au>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 24 Jul 2008 21:11:34 +1000 Nick Piggin <nickpiggin@yahoo.com.au> wrote:
 
-> On Thursday 24 July 2008 20:50, Sebastien Dugue wrote:
-> > From: Sebastien Dugue <sebastien.dugue@bull.net>
-> > Date: Tue, 22 Jul 2008 11:56:41 +0200
-> > Subject: [PATCH][RT] powerpc - Make the irq reverse mapping radix tree
-> > lockless
-> >
-> >   The radix tree used by interrupt controllers for their irq reverse
-> > mapping (currently only the XICS found on pSeries) have a complex locking
-> > scheme dating back to before the advent of the concurrent radix tree on
-> > preempt-rt.
-> >
-> >   Take advantage of this and of the fact that the items of the tree are
-> > pointers to a static array (irq_map) elements which can never go under us
-> > to simplify the locking.
-> >
 > >   Concurrency between readers and writers are handled by the intrinsic
 > > properties of the concurrent radix tree. Concurrency between the tree
 > > initialization which is done asynchronously with readers and writers access
@@ -55,17 +39,13 @@ On Thu, 24 Jul 2008 21:11:34 +1000 Nick Piggin <nickpiggin@yahoo.com.au> wrote:
 > 
 > Hmm, RCU radix tree is in mainline too for quite a while. I thought
 > Ben had already converted this code over ages ago...
-
-  Mainline does not have the concurrent radix tree which this patch
-is based on, but maybe it's overkill and the RCU radix tree is enough.
-Not sure, will have to think about it a bit more.
-
 > 
 > Nothing against the -rt patch, but mainline should probably be updated
 > to use RCU as well?
-> 
 
-  If rcu radix tree is enough, then definitely yes.
+No, I haven't updated that code yet, and yes, we should do it :-)
 
-  Sebastien.
+Cheers,
+Ben.
+
 
