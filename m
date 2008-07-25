@@ -1,62 +1,100 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: Re: [PATCH 2/2][RT] powerpc - Make the irq reverse mapping radix
- tree lockless
-Date: Fri, 25 Jul 2008 10:47:30 +0200
-Message-ID: <20080725104730.2211e057@bull.net>
-References: <20080724122352.3bc76bda@bull.net>
-	<20080724125044.53b604cb@bull.net>
-	<200807242111.35338.nickpiggin@yahoo.com.au>
-	<20080724141839.477de30b@bull.net>
-	<1216972177.7257.351.camel@twins>
-	<1216974440.11188.100.camel@pasglop>
-	<20080725103601.2dbcd7e8@bull.net>
-	<1216975221.11188.102.camel@pasglop>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: 2.6.24.7-rt15
+Date: Fri, 25 Jul 2008 22:09:06 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Nick Piggin <nickpiggin@yahoo.com.au>,
-	Linux-rt <linux-rt-users@vger.kernel.org>,
-	linux-ppc <linuxppc-dev@ozlabs.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Michael Ellerman <michael@ellerman.id.au>,
-	Tim Chavez <tinytim@us.ibm.com>,
-	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Gilles Carry <Gilles.Carry@ext.bull.net>
-To: benh@kernel.crashing.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Sebastian Sewior <bigeasy@linutronix.de>,
+	Greg Ungerer <gerg@snapgear.com>, Carsten Emde <ce@ceag.ch>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:48425 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752687AbYGYIrF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 25 Jul 2008 04:47:05 -0400
-In-Reply-To: <1216975221.11188.102.camel@pasglop>
+Received: from www.tglx.de ([62.245.132.106]:51218 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751357AbYGYUK2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 25 Jul 2008 16:10:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 25 Jul 2008 18:40:21 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
+We are pleased to announce the 2.6.24.7-rt15 tree, which can be
+downloaded from the location:
 
-> On Fri, 2008-07-25 at 10:36 +0200, Sebastien Dugue wrote:
-> > On Fri, 25 Jul 2008 18:27:20 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
-> > 
-> > > On Fri, 2008-07-25 at 09:49 +0200, Peter Zijlstra wrote:
-> > > > 
-> > > > 
-> > > > The only advantage of the concurrent radix tree over this model is that
-> > > > it can potentially do multiple modification operations at the same time.
-> > > 
-> > > Yup, we do not need that for the irq revmap... concurrent lookup is all we need.
-> > > 
-> > 
-> >   Shouldn't we care about concurrent insertion and deletion in the tree? I agree
-> > that concern might be a bit artificial but in theory that can happen.
-> 
-> Yes, we just need to protect it with a big hammer, like a spinlock, it's
-> not a performance critical code path.
+  http://rt.et.redhat.com/download/
 
-  Agreed. Will look into this in the next few days.
+Information on the RT patch can be found at:
 
-  Thanks,
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-  Sebastien.
+This is a rather large update on top of 2.6.24.7-rt14:
+
+     - add support for m68knommu (Sebastian Siewior)
+
+       Don't be scared about the size of the patch. It contains a lot
+       of changes in the m68knommu code which are on the way to
+       upstream already, but we want to make the new -rt arch
+       available for testing right away.
+
+     - Various general mainline bugfixes collected by Clark Williams
+
+     - mm fix race in COW logic (Nick Piggin)
+
+     - Various hrtimer/nohz bugfix backports (tglx)
+
+     - command line option to supply the acpi pmtimer port (tglx)
+
+     - rtmutex debug fix (John Stultz)
+
+     - CPU hotplug fixes (Peter Zijlstra)
+
+     - rt rwlock locking fixes (Steven Rostedt)
+
+     - ftrace function pointer fix (Josh Triplett)
+
+     - RCU memory barrier fix (Paul McKenney)
+
+     - scheduler: round robin time slice fix (Miao Xie)
+
+     - frace: preempt trace fix (Steven Rostedt)
+
+     - scheduler: SCHED_FIFO spec violation fix (Peter Zijlstra, Darren Hart)
+
+     - PPC64 fixes (Chirag Jog, Sebastian Dugue)
+
+     - load average calculation fix (Michal Schmidt)
+
+     - ftrace: do not wakeup the waitqueue when interrupts disabled (tglx)
+
+     - ACPI: fix reschedule checks (tglx)
+
+     - smp boot hotplug fix (Peter Zijlstra)
+
+     - scheduler: Fix race of dequeued SCHED_RR task against timer interrupt (tglx)
+
+to build a 2.6.24.7-rt14 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt15.bz2
+
+
+And like always, Steven's RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+As usual the broken out patches are also available.
+
+I have a backport of the powerpc ftrace code in the pipeline, which I
+plan to release in the next days. That should allow us to sort out the
+MPC5200 issue which was reported by Wolfgang et al. We tested on a
+MPC8544 with no sign of strange latencies, so this seems to be a
+MPC5200 specific problem. Stay tuned, I'll have a 5200 board in my
+hands hopefully tomorrow morning.
+
+Thanks,
+
+	tglx
