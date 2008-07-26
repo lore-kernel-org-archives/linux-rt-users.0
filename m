@@ -1,52 +1,61 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
+From: Daniel Walker <dwalker@mvista.com>
 Subject: Re: 2.6.24.7-rt15
-Date: Sat, 26 Jul 2008 13:03:16 +0200
-Message-ID: <488B0474.1050205@osadl.org>
+Date: Sat, 26 Jul 2008 09:22:02 -0400
+Message-ID: <1217078522.3970.17.camel@localhost.localdomain>
 References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+	 <1985e0f60807252248n581bdfa0s363f6ce0d283ec2c@mail.gmail.com>
+	 <1217070800.22147.8.camel@jaswinder.satnam>
+	 <Pine.LNX.4.58.0807260827240.12591@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Jaswinder Singh <jaswinder@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Clark Williams <williams@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Sebastian Sewior <bigeasy@linutronix.de>,
-	Greg Ungerer <gerg@snapgear.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Greg Ungerer <gerg@snapgear.com>, Carsten Emde <ce@ceag.ch>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:46160 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751815AbYGZMi0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 26 Jul 2008 08:38:26 -0400
-In-Reply-To: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+Received: from gateway-1237.mvista.com ([63.81.120.158]:44826 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751938AbYGZNWw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 26 Jul 2008 09:22:52 -0400
+In-Reply-To: <Pine.LNX.4.58.0807260827240.12591@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas,
+On Sat, 2008-07-26 at 08:28 -0400, Steven Rostedt wrote:
+> 
+> On Sat, 26 Jul 2008, Jaswinder Singh wrote:
+> 
+> > Hello all,
+> >
+> > > We are pleased to announce the 2.6.24.7-rt15 tree, which can be
+> > > downloaded from the location:
+> > >
+> > >  http://rt.et.redhat.com/download/
+> > >
+> >
+> > linux-2.6/scripts/checkpatch.pl patch-2.6.24.7-rt15 is saying :
+> >
+> > total: 479 errors, 813 warnings, 65464 lines checked
+> >
+> > patch-2.6.24.7-rt15 has style problems, please review.  If any of these errors
+> > are false positives report them to the maintainer, see
+> > CHECKPATCH in MAINTAINERS.
+> >
+> > It seems many of errors and warnings are quite simple and easily removable.
+> 
+> Yes, and they will be before going into mainilne.
+> 
+> Where's Daniel when you need him?
 
-> We are pleased to announce the 2.6.24.7-rt15 tree [..]
-Looks like this newest is also our greatest:
+Jobs a little large ..
 
-Board: Core 2 Duo, 2.4 GHz, Intel G965, 64 bit
-Kernel: 2.6.24.7-rt15 prerelease
-Config: CONFIG_IRQSOFF_TRACER, CONFIG_PREEMPT_TRACER, CONFIG_FTRACE
-Stress: hackbench 25 loop, ls -Ral / loop, flood ping from outside
-On-demand cpufreq disabled:
-# cd /sys/devices/system/cpu
-# echo performance >cpu0/cpufreq/scaling_governor
-# echo performance >cpu1/cpufreq/scaling_governor
-Test: cyclictest -a -t -n -p99 -i100 -d50
-Result:
-560.44 586.11 606.12 211/1160 3727
-T: 0 (18617) P:99 I:100 C:1011846111 Min:  2 Act:  4 Avg:  5 Max: 39
-T: 1 (18618) P:98 I:150 C: 708641019 Min:  2 Act:  5 Avg: 11 Max: 57
+Daniel
 
-While running more than one billion cyclictest loops, the internal
-worst-case latency did not exceed 39 microseconds.
-
-
-Great work, thanks a lot!
-
-	--cbe
