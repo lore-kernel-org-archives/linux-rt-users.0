@@ -1,82 +1,63 @@
-From: Jaswinder Singh <jaswinder@infradead.org>
-Subject: Re: 2.6.24.7-rt15
-Date: Sat, 26 Jul 2008 23:58:54 +0530
-Message-ID: <1217096934.8053.5.camel@jaswinder.satnam>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: 2.6.24.7-rt16
+Date: Sun, 27 Jul 2008 18:16:40 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
 References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
-	 <1985e0f60807252248n581bdfa0s363f6ce0d283ec2c@mail.gmail.com>
-	 <1217070800.22147.8.camel@jaswinder.satnam>
-	 <Pine.LNX.4.58.0807260827240.12591@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Clark Williams <williams@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>,
-	Sebastian Sewior <bigeasy@linutronix.de>,
-	Greg Ungerer <gerg@snapgear.com>, Carsten Emde <ce@ceag.ch>
-To: Steven Rostedt <rostedt@goodmis.org>
+	Wolfgang Grandegger <wg@grandegger.com>,
+	Carsten Emde <ce@ceag.ch>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:55182 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754257AbYGZSaK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 26 Jul 2008 14:30:10 -0400
-In-Reply-To: <Pine.LNX.4.58.0807260827240.12591@gandalf.stny.rr.com>
+Received: from www.tglx.de ([62.245.132.106]:42884 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753225AbYG0QSg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Jul 2008 12:18:36 -0400
+In-Reply-To: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello all,
+We are pleased to announce the 2.6.24.7-rt16 tree, which can be
+downloaded from the location:
+ 
+  http://rt.et.redhat.com/download/
 
-On Sat, 2008-07-26 at 08:28 -0400, Steven Rostedt wrote:
->=20
-> On Sat, 26 Jul 2008, Jaswinder Singh wrote:
->=20
-> > Hello all,
-> >
-> > > We are pleased to announce the 2.6.24.7-rt15 tree, which can be
-> > > downloaded from the location:
-> > >
-> > >  http://rt.et.redhat.com/download/
-> > >
-> >
-> > linux-2.6/scripts/checkpatch.pl patch-2.6.24.7-rt15 is saying :
-> >
-> > total: 479 errors, 813 warnings, 65464 lines checked
-> >
-> > patch-2.6.24.7-rt15 has style problems, please review.  If any of t=
-hese errors
-> > are false positives report them to the maintainer, see
-> > CHECKPATCH in MAINTAINERS.
-> >
-> > It seems many of errors and warnings are quite simple and easily re=
-movable.
->=20
-> Yes, and they will be before going into mainilne.
->=20
+Information on the RT patch can be found at:
 
-I convert =EF=BB=BFpatch-2.6.24.7-rt15 to git patch and located here :-
-http://git.infradead.org/users/jaswinder/linux-2.6-rt.git?a=3Dshortlog;=
-h=3Drefs/heads/2.6.24.7-rt15
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-I also try to fix style problems and also did some cleanup.
+This is a bugfix update:
 
-=EF=BB=BFscripts/checkpatch.pl is now saying :
-total: 108 errors, 347 warnings, 65486 lines checked
+     - remove m68knommu merge artifacts (tglx)
 
-I left these style problems for developers.
-You can get updated version from :-
-http://git.infradead.org/users/jaswinder/linux-2.6-rt.git?a=3Dshortlog;=
-h=3Drefs/heads/2.6.24.7-rt15-jsr
+     - fix x86_64 UP build (Peter Zijlstra)
 
-Thank you,
+     - powerpc ftrace backport (tglx)
 
-Jaswinder Singh.
+     - fix long standing NFS missing preemption check (tglx)
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+       This is not a MPC5200 specific problem, it affects all
+       architectures, but was not noticed for a long time as the race
+       window is extremly tight.
+
+to build a 2.6.24.7-rt16 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt16.bz2
+
+And like always, Steven's RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+As usual the broken out patches are also available.
+
+Thanks,
+
+	tglx
