@@ -1,63 +1,39 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: 2.6.24.7-rt16
-Date: Sun, 27 Jul 2008 18:16:40 +0200 (CEST)
-Message-ID: <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+Subject: Re: Questions About preempt-rt and arch:ppc
+Date: Sun, 27 Jul 2008 22:13:34 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0807241814310.574@apollo.tec.linutronix.de>
+References: <200807181920.m6IJKucY010585@post.webmailer.de>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Wolfgang Grandegger <wg@grandegger.com>,
-	Carsten Emde <ce@ceag.ch>
-To: LKML <linux-kernel@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Christian Volk <linux.kernel@cvolk.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:42884 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:46783 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753225AbYG0QSg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Jul 2008 12:18:36 -0400
-In-Reply-To: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+	id S1757615AbYG0UO0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Jul 2008 16:14:26 -0400
+In-Reply-To: <200807181920.m6IJKucY010585@post.webmailer.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt16 tree, which can be
-downloaded from the location:
- 
-  http://rt.et.redhat.com/download/
+On Fri, 18 Jul 2008, Christian Volk wrote:
 
-Information on the RT patch can be found at:
+> Hi all,
+> 
+> is it possible to get preempt-rt working with kernel 2.6.20 / 2.6.21 with arch ppc 
+> (processor is a Freescale MPC8343)?
+> Unfortunately it is not possible for me to change the arch to powerpc.
+> 
+> Kernel 2.6.20/21 compiles fine runs and boots without the patch.
+> After applying the patch and fixing some small issues i can configure it, but while building
+> it, i get a lot of warnings concerning about redefinition of functions.
+> 
+> My question is, is it possible to get the above combination working or not?
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
+The answer is simple. Yes, it's possible to get it working, but you're
+on your own. IMNSHO is easier to move the board to a current
+arch/powerpc kernel than fixing the -rt issues of arch/ppc on 2.6.21.
 
-This is a bugfix update:
+Good luck.
 
-     - remove m68knommu merge artifacts (tglx)
-
-     - fix x86_64 UP build (Peter Zijlstra)
-
-     - powerpc ftrace backport (tglx)
-
-     - fix long standing NFS missing preemption check (tglx)
-
-       This is not a MPC5200 specific problem, it affects all
-       architectures, but was not noticed for a long time as the race
-       window is extremly tight.
-
-to build a 2.6.24.7-rt16 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt16.bz2
-
-And like always, Steven's RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-As usual the broken out patches are also available.
-
-Thanks,
-
-	tglx
+     tglx
