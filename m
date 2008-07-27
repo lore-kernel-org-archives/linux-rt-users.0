@@ -1,39 +1,41 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Questions About preempt-rt and arch:ppc
-Date: Sun, 27 Jul 2008 22:13:34 +0200 (CEST)
-Message-ID: <alpine.LFD.1.10.0807241814310.574@apollo.tec.linutronix.de>
-References: <200807181920.m6IJKucY010585@post.webmailer.de>
+From: "Avuton Olrich" <avuton@gmail.com>
+Subject: Re: 2.6.24.7-rt16
+Date: Sun, 27 Jul 2008 13:28:17 -0700
+Message-ID: <3aa654a40807271328m7d8e341dm45f41300eeea5484@mail.gmail.com>
+References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+	 <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Christian Volk <linux.kernel@cvolk.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Clark Williams" <williams@redhat.com>,
+	"Peter Zijlstra" <peterz@infradead.org>,
+	"Wolfgang Grandegger" <wg@grandegger.com>,
+	"Carsten Emde" <ce@ceag.ch>
+To: "Thomas Gleixner" <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:46783 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757615AbYG0UO0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Jul 2008 16:14:26 -0400
-In-Reply-To: <200807181920.m6IJKucY010585@post.webmailer.de>
+Received: from wr-out-0506.google.com ([64.233.184.239]:35867 "EHLO
+	wr-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757784AbYG0U2S (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Jul 2008 16:28:18 -0400
+Received: by wr-out-0506.google.com with SMTP id 69so3426669wri.5
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Jul 2008 13:28:17 -0700 (PDT)
+In-Reply-To: <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 18 Jul 2008, Christian Volk wrote:
+On Sun, Jul 27, 2008 at 9:16 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
 
-> Hi all,
-> 
-> is it possible to get preempt-rt working with kernel 2.6.20 / 2.6.21 with arch ppc 
-> (processor is a Freescale MPC8343)?
-> Unfortunately it is not possible for me to change the arch to powerpc.
-> 
-> Kernel 2.6.20/21 compiles fine runs and boots without the patch.
-> After applying the patch and fixing some small issues i can configure it, but while building
-> it, i get a lot of warnings concerning about redefinition of functions.
-> 
-> My question is, is it possible to get the above combination working or not?
+>  http://rt.et.redhat.com/download/patch-2.6.24.7-rt16.bz2
 
-The answer is simple. Yes, it's possible to get it working, but you're
-on your own. IMNSHO is easier to move the board to a current
-arch/powerpc kernel than fixing the -rt issues of arch/ppc on 2.6.21.
-
-Good luck.
-
-     tglx
+Getting a forbidden on this link.
+-- 
+avuton
+--
+ "I've got a fever. And the only prescription is more cowbell." --
+Christopher Walken
