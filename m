@@ -1,29 +1,112 @@
-From: Jesse Barnes <jbarnes@virtuousgeek.org>
-Subject: Re: PCI: MSI interrupts masked using prohibited method
-Date: Mon, 28 Jul 2008 15:04:08 -0700
-Message-ID: <200807281504.08235.jbarnes@virtuousgeek.org>
-References: <4860D09D.4060801@csr.com> <20080725165655.GC17093@parisc-linux.org> <20080728115910.46f0669e@brian.englab.brq.redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 2.6.24.7-rt16
+Date: Tue, 29 Jul 2008 14:57:29 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
+References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Matthew Wilcox <matthew@wil.cx>,
-	David Vrabel <david.vrabel@csr.com>, linux-pci@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Michal Schmidt <mschmidt@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757960AbYG1WEa@vger.kernel.org>
-In-Reply-To: <20080728115910.46f0669e@brian.englab.brq.redhat.com>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Wolfgang Grandegger <wg@grandegger.com>,
+	Carsten Emde <ce@ceag.ch>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:40873 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752250AbYG2M7T (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Jul 2008 08:59:19 -0400
+In-Reply-To: <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-> > I agree.  I think it's fine to have this limitation.
->
-> I can imagine this being a problem e.g. for people wanting to isolate
-> selected CPUs from interrupts for realtime tasks.
+We are pleased to announce the 2.6.24.7-rt17 tree, which can be
+downloaded from the location:
+  
+   http://rt.et.redhat.com/download/
+ 
+Information on the RT patch can be found at:
 
-And they'll still be able to do this; they'll just need to use hardware that 
-supports proper masking or make sure their interrupts are targetted at the 
-right CPU from the start.
+   http://rt.wiki.kernel.org/index.php/Main_Page
+ 
+This is a bugfix update:
+ 
+	- use the correct version of the ppc64 percpu patch
+	  pointed out by Chirag Jog
 
-Jesse
+to build a 2.6.24.7-rt17 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt17.bz2
+ 
+And like always, Steven's RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+As usual the broken out patches are also available.
+
+Thanks,
+
+	tglx
+
+---
+
+--- patches/series	2008-07-27 11:20:44.000000000 +0200
++++ patches/series	2008-07-29 14:28:39.000000000 +0200
+@@ -1105,7 +1105,7 @@
+ ftrace-preempt-trace-check.patch
+ fix_SCHED_FIFO_spec_violation.patch
+ 
+-ppc64-fix_preempt_unsafe_access_to_per_cpu_variables.patch
++ppc64-fix-preempt-unsafe-paths-accessing-per_cpu-variables.patch
+ bz235099-idle-load-fix.patch
+ 
+ raw-spinlocks-for-nmi-print.patch
+
+
+Index: linux-2.6.24.7/arch/powerpc/mm/tlb_64.c
+===================================================================
+--- linux-2.6.24.7.orig/arch/powerpc/mm/tlb_64.c
++++ linux-2.6.24.7/arch/powerpc/mm/tlb_64.c
+@@ -99,7 +99,6 @@ void pgtable_free_tlb(struct mmu_gather 
+ 	    cpus_equal(tlb->mm->cpu_vm_mask, local_cpumask)) {
+ 		pgtable_free(pgf);
+ 		goto cleanup;
+-		return;
+ 	}
+ 
+ 	if (*batchp == NULL) {
+@@ -107,7 +106,6 @@ void pgtable_free_tlb(struct mmu_gather 
+ 		if (*batchp == NULL) {
+ 			pgtable_free_now(pgf);
+ 			goto cleanup;
+-			return;
+ 		}
+ 		(*batchp)->index = 0;
+ 	}
+@@ -261,6 +259,7 @@ void pte_free_finish(void)
+ 		pte_free_submit(*batchp);
+ 		*batchp = NULL;
+ 	}
++
+ 	put_cpu_var_locked(pte_freelist_cur, cpu);
+ }
+ 
+Index: linux-2.6.24.7/arch/powerpc/platforms/pseries/iommu.c
+===================================================================
+--- linux-2.6.24.7.orig/arch/powerpc/platforms/pseries/iommu.c
++++ linux-2.6.24.7/arch/powerpc/platforms/pseries/iommu.c
+@@ -155,7 +155,7 @@ static void tce_buildmulti_pSeriesLP(str
+ 						   uaddr, direction);
+ 		}
+ 
+-		per_cpu_var_locked(tce_page, &cpu) = tcep;
++		per_cpu_var_locked(tce_page, cpu) = tcep;
+ 	}
+ 
+ 	rpn = (virt_to_abs(uaddr)) >> TCE_SHIFT;
+
