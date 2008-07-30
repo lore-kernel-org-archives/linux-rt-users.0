@@ -1,13 +1,13 @@
-From: "John Kacur" <jkacur@gmail.com>
+From: "Ryan Hope" <rmh3093@gmail.com>
 Subject: Re: 2.6.26-rt1
-Date: Wed, 30 Jul 2008 16:31:47 +0200
-Message-ID: <520f0cf10807300731y7d243ac0s62eb8549325b43ee@mail.gmail.com>
+Date: Wed, 30 Jul 2008 10:41:09 -0400
+Message-ID: <48f7fe350807300741t4f8dff41ide2318c8464d31c8@mail.gmail.com>
 References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
 	 <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
 	 <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
 	 <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
@@ -19,20 +19,26 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	"Carsten Emde" <ce@ceag.ch>
 To: "Thomas Gleixner" <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.186]:1304 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750887AbYG3Obv (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.180]:16620 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757472AbYG3OlK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Jul 2008 10:31:51 -0400
-Received: by nf-out-0910.google.com with SMTP id d3so22374nfc.21
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Jul 2008 07:31:47 -0700 (PDT)
+	Wed, 30 Jul 2008 10:41:10 -0400
+Received: by wa-out-1112.google.com with SMTP id j37so25663waf.23
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Jul 2008 07:41:10 -0700 (PDT)
 In-Reply-To: <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jul 30, 2008 at 12:21 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
->
+I've been running this for a few days now. If I remove all debug
+options from kconfig my dmesg is clean. Every thing seems pretty
+stable but I have had a few random hardlocks that I can really narrow
+down to anything.
+
+-Ryan
+
+On Tue, Jul 29, 2008 at 6:21 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
 > We are pleased to announce the 2.6.26-rt1 tree, which can be
 > downloaded from the location:
 >
@@ -72,45 +78,9 @@ On Wed, Jul 30, 2008 at 12:21 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
 > Thanks,
 >
 >        tglx
-
-Hmnn, I'm getting a build error with this.
-
-drivers/infiniband/hw/ipath/ipath_verbs.c: In function 'sdma_complete':
-drivers/infiniband/hw/ipath/ipath_verbs.c:1028: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1028: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c:1035: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1035: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c:1038: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1038: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c:1040: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1040: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c: In function 'decrement_dma_busy':
-drivers/infiniband/hw/ipath/ipath_verbs.c:1056: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1056: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c:1061: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1061: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c: In function 'ipath_verbs_send_pio':
-drivers/infiniband/hw/ipath/ipath_verbs.c:1295: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1295: warning: comparison of
-distinct pointer types lacks a cast
-drivers/infiniband/hw/ipath/ipath_verbs.c:1297: error: size of array
-'type name' is negative
-drivers/infiniband/hw/ipath/ipath_verbs.c:1297: warning: comparison of
-distinct pointer types lacks a cast
-make[3]: *** [drivers/infiniband/hw/ipath/ipath_verbs.o] Error 1
-make[2]: *** [drivers/infiniband/hw/ipath] Error 2
-make[1]: *** [drivers/infiniband] Error 2
-make: *** [drivers] Error 2
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
