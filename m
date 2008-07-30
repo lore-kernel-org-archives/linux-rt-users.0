@@ -1,86 +1,198 @@
-From: "Ryan Hope" <rmh3093@gmail.com>
-Subject: Re: 2.6.26-rt1
-Date: Wed, 30 Jul 2008 10:41:09 -0400
-Message-ID: <48f7fe350807300741t4f8dff41ide2318c8464d31c8@mail.gmail.com>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+From: Chirag Jog <chirag@linux.vnet.ibm.com>
+Subject: [PATCH] Fix Bug messages
+Date: Wed, 30 Jul 2008 22:48:42 +0530
+Message-ID: <20080730171842.GB3420@linux.vnet.ibm.com>
+References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de> <200807301101.32417.j.mell@t-online.de>
+Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Clark Williams" <williams@redhat.com>,
-	"Peter Zijlstra" <peterz@infradead.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	"Carsten Emde" <ce@ceag.ch>
-To: "Thomas Gleixner" <tglx@linutronix.de>
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Josh Triplett <josht@linux.vnet.ibm.com>,
+	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
+To: J?rgen Mell <j.mell@t-online.de>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.180]:16620 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757472AbYG3OlK (ORCPT
+Received: from e28smtp07.in.ibm.com ([59.145.155.7]:36067 "EHLO
+	e28esmtp07.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752322AbYG3RSs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Jul 2008 10:41:10 -0400
-Received: by wa-out-1112.google.com with SMTP id j37so25663waf.23
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Jul 2008 07:41:10 -0700 (PDT)
-In-Reply-To: <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+	Wed, 30 Jul 2008 13:18:48 -0400
 Content-Disposition: inline
+In-Reply-To: <200807301101.32417.j.mell@t-online.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I've been running this for a few days now. If I remove all debug
-options from kconfig my dmesg is clean. Every thing seems pretty
-stable but I have had a few random hardlocks that I can really narrow
-down to anything.
+* J?rgen Mell <j.mell@t-online.de> [2008-07-30 11:01:32]:
 
--Ryan
+> Hello Thomas,
+>=20
+> On Wednesday, 30. July 2008, Thomas Gleixner wrote:
+> > We are pleased to announce the 2.6.26-rt1 tree, which can be
+> > downloaded from the location:
+>=20
+> I have tried the new kernel and have some good news and some bad news=
+:
+>=20
+> The good news: The machine boots and seems to run without major probl=
+ems.
+>=20
+> The bad news: It produces continuously lots of bug messages in the er=
+ror=20
+> logs (cf. attached dmesg.tgz). The error at rtmutex.c:743 was already=
+=20
+> present in 2.6.25-rt* when ACPI was enabled. The 'using smp_processor=
+_id=20
+> ()  in preemptible code' is new here with 2.6.26.
+>=20
+> Machine is an old Athlon XP (single core) on an EPOX mainboard with V=
+IA=20
+> chipset.
+>=20
+> If I can help with testing, please let me know.
+>=20
+> Bye,
+>          J=FCrgen
+>=20
+>=20
+This patch should solve some of the bug messages.
+It does two things:
+1. Change rt_runtime_lock to be a raw spinlock as the comment above it
+says: it is nested inside the rq lock.
 
-On Tue, Jul 29, 2008 at 6:21 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> We are pleased to announce the 2.6.26-rt1 tree, which can be
-> downloaded from the location:
->
->   http://rt.et.redhat.com/download/
->
-> Information on the RT patch can be found at:
->
->   http://rt.wiki.kernel.org/index.php/Main_Page
->
-> The merge was mostly done by Steven Rostedt, I just fixed it up, added
-> the fixes from .24-rt17 and tested it on x86 32/64bit.
->
-> This is the first cut of .26-rt, so don't expect it to be perfect.
->
-> I run out of time, so I dropped Peter's cpu-hotplug patches
-> completely. The hotplug and rcupreempt code has changed radically, so
-> we need to redo that lot. Peter, Paul can you please look into that ?
->
-> I tried to address the non-x86 issues as far as I could, but I had no
-> chance to compile test them. So please check the wreckage.
->
-> to build a 2.6.26-rt1 tree, the following patches should be applied:
->
->   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
->   http://rt.et.redhat.com/download/patch-2.6.26-rt1.bz2
->
-> And like always, Steven's RT version of Matt Mackall's ketchup will get this
-> for you nicely:
->
->  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
->
-> As usual the broken out patches are also available.
->
-> I'm going on vacation tomorrow so feel free to blame/curse/flame me,
-> but please work with Steven to get it into shape.
->
-> Thanks,
->
->        tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->
+2. Change mnt_writers to be a per_cpu locked variable.
+This eliminates the need for the codepath to disable preemption and
+then potentially sleep, leading to the BUG messages
+
+Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
+
+
+
+Index: linux-2.6.26-rt1/kernel/sched.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.26-rt1.orig/kernel/sched.c	2008-07-30 22:37:19.000000000 =
++0530
++++ linux-2.6.26-rt1/kernel/sched.c	2008-07-30 22:37:24.000000000 +0530
+@@ -208,7 +208,7 @@
+=20
+ struct rt_bandwidth {
+ 	/* nests inside the rq lock: */
+-	spinlock_t		rt_runtime_lock;
++	raw_spinlock_t		rt_runtime_lock;
+ 	ktime_t			rt_period;
+ 	u64			rt_runtime;
+ 	struct hrtimer		rt_period_timer;
+@@ -472,7 +472,7 @@
+ 	u64 rt_time;
+ 	u64 rt_runtime;
+ 	/* Nests inside the rq lock: */
+-	spinlock_t rt_runtime_lock;
++	raw_spinlock_t rt_runtime_lock;
+=20
+ #ifdef CONFIG_RT_GROUP_SCHED
+ 	unsigned long rt_nr_boosted;
+Index: linux-2.6.26-rt1/fs/namespace.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.26-rt1.orig/fs/namespace.c	2008-07-30 22:39:30.000000000 =
++0530
++++ linux-2.6.26-rt1/fs/namespace.c	2008-07-30 22:39:36.000000000 +0530
+@@ -178,13 +178,13 @@
+ 	unsigned long count;
+ 	struct vfsmount *mnt;
+ } ____cacheline_aligned_in_smp;
+-static DEFINE_PER_CPU(struct mnt_writer, mnt_writers);
++static DEFINE_PER_CPU_LOCKED(struct mnt_writer, mnt_writers);
+=20
+ static int __init init_mnt_writers(void)
+ {
+ 	int cpu;
+ 	for_each_possible_cpu(cpu) {
+-		struct mnt_writer *writer =3D &per_cpu(mnt_writers, cpu);
++		struct mnt_writer *writer =3D &per_cpu_var_locked(mnt_writers, cpu);
+ 		spin_lock_init(&writer->lock);
+ 		lockdep_set_class(&writer->lock, &writer->lock_class);
+ 		writer->count =3D 0;
+@@ -199,7 +199,7 @@
+ 	struct mnt_writer *cpu_writer;
+=20
+ 	for_each_possible_cpu(cpu) {
+-		cpu_writer =3D &per_cpu(mnt_writers, cpu);
++		cpu_writer =3D &per_cpu_var_locked(mnt_writers, cpu);
+ 		spin_unlock(&cpu_writer->lock);
+ 	}
+ }
+@@ -251,8 +251,8 @@
+ {
+ 	int ret =3D 0;
+ 	struct mnt_writer *cpu_writer;
+-
+-	cpu_writer =3D &get_cpu_var(mnt_writers);
++	int cpu =3D 0;
++	cpu_writer =3D &get_cpu_var_locked(mnt_writers, &cpu);
+ 	spin_lock(&cpu_writer->lock);
+ 	if (__mnt_is_readonly(mnt)) {
+ 		ret =3D -EROFS;
+@@ -262,7 +262,7 @@
+ 	cpu_writer->count++;
+ out:
+ 	spin_unlock(&cpu_writer->lock);
+-	put_cpu_var(mnt_writers);
++	put_cpu_var_locked(mnt_writers, cpu);
+ 	return ret;
+ }
+ EXPORT_SYMBOL_GPL(mnt_want_write);
+@@ -273,7 +273,7 @@
+ 	struct mnt_writer *cpu_writer;
+=20
+ 	for_each_possible_cpu(cpu) {
+-		cpu_writer =3D &per_cpu(mnt_writers, cpu);
++		cpu_writer =3D &per_cpu_var_locked(mnt_writers, cpu);
+ 		spin_lock(&cpu_writer->lock);
+ 		__clear_mnt_count(cpu_writer);
+ 		cpu_writer->mnt =3D NULL;
+@@ -332,8 +332,8 @@
+ {
+ 	int must_check_underflow =3D 0;
+ 	struct mnt_writer *cpu_writer;
+-
+-	cpu_writer =3D &get_cpu_var(mnt_writers);
++	int cpu =3D 0;
++	cpu_writer =3D &get_cpu_var_locked(mnt_writers, &cpu);
+ 	spin_lock(&cpu_writer->lock);
+=20
+ 	use_cpu_writer_for_mount(cpu_writer, mnt);
+@@ -360,7 +360,7 @@
+ 	 * __mnt_writers can underflow.  Without it,
+ 	 * we could theoretically wrap __mnt_writers.
+ 	 */
+-	put_cpu_var(mnt_writers);
++	put_cpu_var_locked(mnt_writers, cpu);
+ }
+ EXPORT_SYMBOL_GPL(mnt_drop_write);
+=20
+@@ -612,7 +612,7 @@
+ 	 * can come in.
+ 	 */
+ 	for_each_possible_cpu(cpu) {
+-		struct mnt_writer *cpu_writer =3D &per_cpu(mnt_writers, cpu);
++		struct mnt_writer *cpu_writer =3D &per_cpu_var_locked(mnt_writers, c=
+pu);
+ 		if (cpu_writer->mnt !=3D mnt)
+ 			continue;
+ 		spin_lock(&cpu_writer->lock);
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
