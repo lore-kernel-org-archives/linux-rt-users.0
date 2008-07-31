@@ -1,22 +1,21 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
 Subject: Re: [PATCH] Fix Bug messages
-Date: Thu, 31 Jul 2008 16:18:00 +0200
-Message-ID: <1217513880.8157.96.camel@twins>
+Date: Thu, 31 Jul 2008 16:35:15 +0200
+Message-ID: <20080731163515.4a992060@bull.net>
 References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
-	 <200807301101.32417.j.mell@t-online.de>
-	 <20080730171842.GB3420@linux.vnet.ibm.com>
-	 <20080731100023.0221ec2b@bull.net>
-	 <520f0cf10807310313q45599221q3db1b6fd7e7c722f@mail.gmail.com>
-	 <20080731132336.362bd487@bull.net>
-	 <520f0cf10807310649l1083e29bmf0f704e13dee96c@mail.gmail.com>
-	 <1217512907.8157.91.camel@twins>
-	 <520f0cf10807310710i85e5a2u8e5f227bc2b82051@mail.gmail.com>
+	<alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
+	<alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+	<200807301101.32417.j.mell@t-online.de>
+	<20080730171842.GB3420@linux.vnet.ibm.com>
+	<20080731100023.0221ec2b@bull.net>
+	<520f0cf10807310313q45599221q3db1b6fd7e7c722f@mail.gmail.com>
+	<20080731132336.362bd487@bull.net>
+	<520f0cf10807310649l1083e29bmf0f704e13dee96c@mail.gmail.com>
+	<1217512907.8157.91.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Sebastien Dugue <sebastien.dugue@bull.net>,
+Cc: John Kacur <jkacur@gmail.com>,
 	Chirag Jog <chirag@linux.vnet.ibm.com>,
 	J?rgen Mell <j.mell@t-online.de>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -26,97 +25,96 @@ Cc: Sebastien Dugue <sebastien.dugue@bull.net>,
 	Clark Williams <williams@redhat.com>,
 	Josh Triplett <josht@linux.vnet.ibm.com>,
 	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
-To: John Kacur <jkacur@gmail.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:41021 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753002AbYGaOSk (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:40226 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752332AbYGaOep (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 10:18:40 -0400
-In-Reply-To: <520f0cf10807310710i85e5a2u8e5f227bc2b82051@mail.gmail.com>
+	Thu, 31 Jul 2008 10:34:45 -0400
+In-Reply-To: <1217512907.8157.91.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2008-07-31 at 16:10 +0200, John Kacur wrote:
-> On Thu, Jul 31, 2008 at 4:01 PM, Peter Zijlstra <peterz@infradead.org> wrote:
-> > On Thu, 2008-07-31 at 15:49 +0200, John Kacur wrote:
-> >> Signed-off-by: John Kacur <jkacur@gmail.com>
-> >> Index: linux-2.6.26-rt1/net/core/sock.c
-> >> ===================================================================
-> >> --- linux-2.6.26-rt1.orig/net/core/sock.c
-> >> +++ linux-2.6.26-rt1/net/core/sock.c
-> >> @@ -1986,11 +1986,12 @@ static __init int net_inuse_init(void)
-> >>
-> >>  core_initcall(net_inuse_init);
-> >>  #else
-> >> -static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
-> >> +static DEFINE_PER_CPU_LOCKED(struct prot_inuse, prot_inuse);
-> >>
-> >>  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
-> >>  {
-> >> -       __get_cpu_var(prot_inuse).val[prot->inuse_idx] += val;
-> >> +       int cpu = 0;
-> >> +       __get_cpu_var_locked(prot_inuse, cpu).val[prot->inuse_idx] += val;
-> >>  }
-> >>  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
-> >>
-> >> @@ -2000,7 +2001,7 @@ int sock_prot_inuse_get(struct net *net,
-> >>         int res = 0;
-> >>
-> >>         for_each_possible_cpu(cpu)
-> >> -               res += per_cpu(prot_inuse, cpu).val[idx];
-> >> +               res += per_cpu_var_locked(prot_inuse, cpu).val[idx];
-> >>
-> >>         return res >= 0 ? res : 0;
-> >>  }
-> >
-> > This doesn't look good. You declare it as a PER_CPU_LOCKED, but then
-> > never use the extra lock to synchronize data.
-> >
-> > Given that sock_proc_inuse_get() is a racy read anyway, the 'right' fix
-> > would be to do something like:
-> >
-> > diff --git a/net/core/sock.c b/net/core/sock.c
-> > index 91f8bbc..5a8ace4 100644
-> > --- a/net/core/sock.c
-> > +++ b/net/core/sock.c
-> > @@ -1941,8 +1941,9 @@ static DECLARE_BITMAP(proto_inuse_idx, PROTO_INUSE_NR);
-> >  #ifdef CONFIG_NET_NS
-> >  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
-> >  {
-> > -       int cpu = smp_processor_id();
-> > +       int cpu = get_cpu();
-> >        per_cpu_ptr(net->core.inuse, cpu)->val[prot->inuse_idx] += val;
-> > +       put_cpu();
-> >  }
-> >  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
-> >
-> > @@ -1988,7 +1989,9 @@ static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
-> >
+
+  Hi Peter,
+
+On Thu, 31 Jul 2008 16:01:47 +0200 Peter Zijlstra <peterz@infradead.org> wrote:
+
+> On Thu, 2008-07-31 at 15:49 +0200, John Kacur wrote:
+> > Signed-off-by: John Kacur <jkacur@gmail.com>
+> > Index: linux-2.6.26-rt1/net/core/sock.c
+> > ===================================================================
+> > --- linux-2.6.26-rt1.orig/net/core/sock.c
+> > +++ linux-2.6.26-rt1/net/core/sock.c
+> > @@ -1986,11 +1986,12 @@ static __init int net_inuse_init(void)
+> >  
+> >  core_initcall(net_inuse_init);
+> >  #else
+> > -static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
+> > +static DEFINE_PER_CPU_LOCKED(struct prot_inuse, prot_inuse);
+> >  
 > >  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
 > >  {
 > > -       __get_cpu_var(prot_inuse).val[prot->inuse_idx] += val;
-> > +       int cpu = get_cpu();
-> > +       per_cpu(prot_inuse, cpu).val[prot->inuse_idx] += val;
-> > +       put_cpu();
+> > +       int cpu = 0;
+> > +       __get_cpu_var_locked(prot_inuse, cpu).val[prot->inuse_idx] += val;
 > >  }
 > >  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
-> >
-> > This disables preemption, but only for a very short time - so it doesn't
-> > hurt the preempt-latency.
-> >
-> > The alternative is to take a lock, do the inc, and drop the lock again,
-> > which is much more expensive.
-> >
-> >
+> >  
+> > @@ -2000,7 +2001,7 @@ int sock_prot_inuse_get(struct net *net,
+> >         int res = 0;
+> >  
+> >         for_each_possible_cpu(cpu)
+> > -               res += per_cpu(prot_inuse, cpu).val[idx];
+> > +               res += per_cpu_var_locked(prot_inuse, cpu).val[idx];
+> >  
+> >         return res >= 0 ? res : 0;
+> >  }
 > 
-> Cool, thanks for the quick feedback. What kind of criteria are used to
-> decide between disabling preemption for a short time, or using the
-> more expensive lock?
+> This doesn't look good. You declare it as a PER_CPU_LOCKED, but then
+> never use the extra lock to synchronize data.
+> 
+> Given that sock_proc_inuse_get() is a racy read anyway, the 'right' fix
+> would be to do something like:
+> 
+> diff --git a/net/core/sock.c b/net/core/sock.c
+> index 91f8bbc..5a8ace4 100644
+> --- a/net/core/sock.c
+> +++ b/net/core/sock.c
+> @@ -1941,8 +1941,9 @@ static DECLARE_BITMAP(proto_inuse_idx, PROTO_INUSE_NR);
+>  #ifdef CONFIG_NET_NS
+>  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
+>  {
+> -	int cpu = smp_processor_id();
+> +	int cpu = get_cpu();
+>  	per_cpu_ptr(net->core.inuse, cpu)->val[prot->inuse_idx] += val;
+> +	put_cpu();
+>  }
+>  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
+>  
+> @@ -1988,7 +1989,9 @@ static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
+>  
+>  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
+>  {
+> -	__get_cpu_var(prot_inuse).val[prot->inuse_idx] += val;
+> +	int cpu = get_cpu();
+> +	per_cpu(prot_inuse, cpu).val[prot->inuse_idx] += val;
+> +	put_cpu();
+>  }
+>  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
+>  
+> This disables preemption, but only for a very short time - so it doesn't
+> hurt the preempt-latency.
+> 
+> The alternative is to take a lock, do the inc, and drop the lock again,
+> which is much more expensive.
 
-Basically total cost of the operation.. in this case the cost of taking
-the lock utterly dwarfs the cost of the operation.
+  This does indeed seem to fix the problem, no more BUGs appearing
+on the console with 2.6.26-rt1 now.
 
-And since its Real-Time we're talking about, its the WCET of the
-operation that counts.
+  Thanks,
+
+  Sebastien.
+
 
