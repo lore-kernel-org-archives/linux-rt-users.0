@@ -1,122 +1,164 @@
 From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: Re: [PATCH] Fix Bug messages
-Date: Thu, 31 Jul 2008 10:00:23 +0200
-Message-ID: <20080731100023.0221ec2b@bull.net>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
-	<alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
-	<alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
-	<200807301101.32417.j.mell@t-online.de>
-	<20080730171842.GB3420@linux.vnet.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: J?rgen Mell <j.mell@t-online.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Josh Triplett <josht@linux.vnet.ibm.com>,
-	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
-To: Chirag Jog <chirag@linux.vnet.ibm.com>
+Subject: [PATCH] powerpc - Separate the irq radix tree insertion and lookup
+Date: Thu, 31 Jul 2008 11:40:40 +0200
+Message-ID: <1217497241-10685-3-git-send-email-sebastien.dugue@bull.net>
+References: <1217497241-10685-1-git-send-email-sebastien.dugue@bull.net>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	benh@kernel.crashing.org, paulus@samba.org, michael@ellerman.id.au,
+	jean-pierre.dion@bull.net, gilles.carry@ext.bull.net,
+	tinytim@us.ibm.com, tglx@linutronix.de, rostedt@goodmis.org,
+	Sebastien Dugue <sebastien.dugue@bull.net>
+To: linuxppc-dev@ozlabs.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:46339 "EHLO
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:40293 "EHLO
 	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750751AbYGaH7y convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752955AbYGaJkK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 03:59:54 -0400
-In-Reply-To: <20080730171842.GB3420@linux.vnet.ibm.com>
+	Thu, 31 Jul 2008 05:40:10 -0400
+In-Reply-To: <1217497241-10685-1-git-send-email-sebastien.dugue@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 30 Jul 2008 22:48:42 +0530 Chirag Jog <chirag@linux.vnet.ibm.co=
-m> wrote:
+  irq_radix_revmap() currently serves 2 purposes, irq mapping lookup
+and insertion which happen in interrupt and process context respectively.
 
-> * J?rgen Mell <j.mell@t-online.de> [2008-07-30 11:01:32]:
->=20
-> > Hello Thomas,
-> >=20
-> > On Wednesday, 30. July 2008, Thomas Gleixner wrote:
-> > > We are pleased to announce the 2.6.26-rt1 tree, which can be
-> > > downloaded from the location:
-> >=20
-> > I have tried the new kernel and have some good news and some bad ne=
-ws:
-> >=20
-> > The good news: The machine boots and seems to run without major pro=
-blems.
-> >=20
-> > The bad news: It produces continuously lots of bug messages in the =
-error=20
-> > logs (cf. attached dmesg.tgz). The error at rtmutex.c:743 was alrea=
-dy=20
-> > present in 2.6.25-rt* when ACPI was enabled. The 'using smp_process=
-or_id=20
-> > ()  in preemptible code' is new here with 2.6.26.
-> >=20
-> > Machine is an old Athlon XP (single core) on an EPOX mainboard with=
- VIA=20
-> > chipset.
-> >=20
-> > If I can help with testing, please let me know.
-> >=20
-> > Bye,
-> >          J=C3=BCrgen
-> >=20
-> >=20
-> This patch should solve some of the bug messages.
-> It does two things:
-> 1. Change rt_runtime_lock to be a raw spinlock as the comment above i=
-t
-> says: it is nested inside the rq lock.
->=20
-> 2. Change mnt_writers to be a per_cpu locked variable.
-> This eliminates the need for the codepath to disable preemption and
-> then potentially sleep, leading to the BUG messages
->=20
-> Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
-
-  Neat, the only remaining BUGs I see are from sock_prot_inuse_add()
-
-BUG: using smp_processor_id() in preemptible [00000000] code: arping/19=
-16
-caller is .sock_prot_inuse_add+0x30/0x80
-Call Trace:
-[c0000000eed2f910] [c000000000010304] .show_stack+0x70/0x1bc (unreliabl=
-e)
-[c0000000eed2f9c0] [c0000000001a2340] .debug_smp_processor_id+0x138/0x1=
-68
-[c0000000eed2fa70] [c0000000002181f4] .sock_prot_inuse_add+0x30/0x80
-[c0000000eed2fb10] [c00000000026d96c] .udp_lib_get_port+0x2a8/0x320
-[c0000000eed2fbc0] [c000000000275b30] .inet_bind+0x168/0x248
-[c0000000eed2fc60] [c000000000215024] .sys_bind+0x98/0xdc
-[c0000000eed2fd90] [c0000000002370bc] .compat_sys_socketcall+0xcc/0x214
-[c0000000eed2fe30] [c0000000000086ac] syscall_exit+0x0/0x40
-BUG: arping:1916 task might have lost a preemption check!
-Call Trace:
-[c0000000eed2f890] [c000000000010304] .show_stack+0x70/0x1bc (unreliabl=
-e)
-[c0000000eed2f940] [c00000000004e298] .preempt_enable_no_resched+0x60/0=
-x78
-[c0000000eed2f9c0] [c0000000001a2348] .debug_smp_processor_id+0x140/0x1=
-68
-[c0000000eed2fa70] [c0000000002181f4] .sock_prot_inuse_add+0x30/0x80
-[c0000000eed2fb10] [c00000000026d96c] .udp_lib_get_port+0x2a8/0x320
-[c0000000eed2fbc0] [c000000000275b30] .inet_bind+0x168/0x248
-[c0000000eed2fc60] [c000000000215024] .sys_bind+0x98/0xdc
-[c0000000eed2fd90] [c0000000002370bc] .compat_sys_socketcall+0xcc/0x214
-[c0000000eed2fe30] [c0000000000086ac] syscall_exit+0x0/0x40
-
-=2E..
-
-  Thanks,
-
-  Sebastien.
+  Separate the function into its 2 components, one for lookup only and one
+for insertion only.
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
+Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Cc: Paul Mackerras <paulus@samba.org>
+---
+ arch/powerpc/kernel/irq.c             |   25 ++++++++++++++-----------
+ arch/powerpc/platforms/pseries/xics.c |   11 ++++-------
+ include/asm-powerpc/irq.h             |   18 +++++++++++++++---
+ 3 files changed, 33 insertions(+), 21 deletions(-)
+
+diff --git a/arch/powerpc/kernel/irq.c b/arch/powerpc/kernel/irq.c
+index 0a1445c..083b181 100644
+--- a/arch/powerpc/kernel/irq.c
++++ b/arch/powerpc/kernel/irq.c
+@@ -900,34 +900,37 @@ void __init irq_radix_revmap_init(void)
+ 	}
+ }
+ 
+-unsigned int irq_radix_revmap(struct irq_host *host,
+-			      irq_hw_number_t hwirq)
++unsigned int irq_radix_revmap_lookup(struct irq_host *host,
++				     irq_hw_number_t hwirq)
+ {
+ 	struct irq_map_entry *ptr;
+-	unsigned int virq;
++	unsigned int virq = NO_IRQ;
+ 	unsigned long flags;
+ 
+ 	WARN_ON(host->revmap_type != IRQ_HOST_MAP_TREE);
+ 
+-	/* Try to resolve */
+ 	irq_radix_rdlock(&flags);
+ 	ptr = radix_tree_lookup(&host->revmap_data.tree, hwirq);
+ 	irq_radix_rdunlock(flags);
+ 
+-	/* Found it, return */
+-	if (ptr) {
++	if (ptr)
+ 		virq = ptr - irq_map;
+-		return virq;
+-	}
+ 
+-	/* If not there, try to insert it */
+-	virq = irq_find_mapping(host, hwirq);
++	return virq;
++}
++
++void irq_radix_revmap_insert(struct irq_host *host, unsigned int virq,
++			     irq_hw_number_t hwirq)
++{
++	unsigned long flags;
++
++	WARN_ON(host->revmap_type != IRQ_HOST_MAP_TREE);
++
+ 	if (virq != NO_IRQ) {
+ 		irq_radix_wrlock(&flags);
+ 		radix_tree_insert(&host->revmap_data.tree, hwirq, &irq_map[virq]);
+ 		irq_radix_wrunlock(flags);
+ 	}
+-	return virq;
+ }
+ 
+ unsigned int irq_linear_revmap(struct irq_host *host,
+diff --git a/arch/powerpc/platforms/pseries/xics.c b/arch/powerpc/platforms/pseries/xics.c
+index 0fc830f..6b1a005 100644
+--- a/arch/powerpc/platforms/pseries/xics.c
++++ b/arch/powerpc/platforms/pseries/xics.c
+@@ -310,12 +310,6 @@ static void xics_mask_irq(unsigned int virq)
+ 
+ static unsigned int xics_startup(unsigned int virq)
+ {
+-	unsigned int irq;
+-
+-	/* force a reverse mapping of the interrupt so it gets in the cache */
+-	irq = (unsigned int)irq_map[virq].hwirq;
+-	irq_radix_revmap(xics_host, irq);
+-
+ 	/* unmask it */
+ 	xics_unmask_irq(virq);
+ 	return 0;
+@@ -346,7 +340,7 @@ static inline unsigned int xics_remap_irq(unsigned int vec)
+ 
+ 	if (vec == XICS_IRQ_SPURIOUS)
+ 		return NO_IRQ;
+-	irq = irq_radix_revmap(xics_host, vec);
++	irq = irq_radix_revmap_lookup(xics_host, vec);
+ 	if (likely(irq != NO_IRQ))
+ 		return irq;
+ 
+@@ -530,6 +524,9 @@ static int xics_host_map(struct irq_host *h, unsigned int virq,
+ {
+ 	pr_debug("xics: map virq %d, hwirq 0x%lx\n", virq, hw);
+ 
++	/* Insert the interrupt mapping into the radix tree for fast lookup */
++	irq_radix_revmap_insert(xics_host, virq, hw);
++
+ 	get_irq_desc(virq)->status |= IRQ_LEVEL;
+ 	set_irq_chip_and_handler(virq, xics_irq_chip, handle_fasteoi_irq);
+ 	return 0;
+diff --git a/include/asm-powerpc/irq.h b/include/asm-powerpc/irq.h
+index 47b8119..5c88acf 100644
+--- a/include/asm-powerpc/irq.h
++++ b/include/asm-powerpc/irq.h
+@@ -243,15 +243,27 @@ extern unsigned int irq_create_direct_mapping(struct irq_host *host);
+ extern void __init irq_radix_revmap_init(void);
+ 
+ /**
+- * irq_radix_revmap - Find a linux virq from a hw irq number.
++ * irq_radix_revmap_insert - Insert a hw irq to linux virq number mapping.
++ * @host: host owning this hardware interrupt
++ * @virq: linux irq number
++ * @hwirq: hardware irq number in that host space
++ *
++ * This is for use by irq controllers that use a radix tree reverse
++ * mapping for fast lookup.
++ */
++extern void irq_radix_revmap_insert(struct irq_host *host, unsigned int virq,
++				    irq_hw_number_t hwirq);
++
++/**
++ * irq_radix_revmap_lookup - Find a linux virq from a hw irq number.
+  * @host: host owning this hardware interrupt
+  * @hwirq: hardware irq number in that host space
+  *
+  * This is a fast path, for use by irq controller code that uses radix tree
+  * revmaps
+  */
+-extern unsigned int irq_radix_revmap(struct irq_host *host,
+-				     irq_hw_number_t hwirq);
++extern unsigned int irq_radix_revmap_lookup(struct irq_host *host,
++					    irq_hw_number_t hwirq);
+ 
+ /**
+  * irq_linear_revmap - Find a linux virq from a hw irq number.
+-- 
+1.5.5.1
+
