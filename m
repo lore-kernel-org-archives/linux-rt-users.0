@@ -1,138 +1,145 @@
-From: Michael Ellerman <michael@ellerman.id.au>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
 Subject: Re: [PATCH] powerpc - Initialize the irq radix tree earlier
-Date: Thu, 31 Jul 2008 21:40:56 +1000
-Message-ID: <1217504456.9817.22.camel@localhost>
+Date: Thu, 31 Jul 2008 14:00:02 +0200
+Message-ID: <20080731140002.31bbe4a0@bull.net>
 References: <1217497241-10685-1-git-send-email-sebastien.dugue@bull.net>
-	 <1217497241-10685-2-git-send-email-sebastien.dugue@bull.net>
-Reply-To: michael@ellerman.id.au
+	<1217497241-10685-2-git-send-email-sebastien.dugue@bull.net>
+	<1217504456.9817.22.camel@localhost>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-cyJ9/EU+3uZuS2poDX3Y"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org, benh@kernel.crashing.org,
 	paulus@samba.org, jean-pierre.dion@bull.net,
 	gilles.carry@ext.bull.net, tinytim@us.ibm.com, tglx@linutronix.de,
 	rostedt@goodmis.org
-To: Sebastien Dugue <sebastien.dugue@bull.net>
+To: michael@ellerman.id.au
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ozlabs.org ([203.10.76.45]:59226 "EHLO ozlabs.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751287AbYGaLk6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 07:40:58 -0400
-In-Reply-To: <1217497241-10685-2-git-send-email-sebastien.dugue@bull.net>
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:56056 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751610AbYGaMA5 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 31 Jul 2008 08:00:57 -0400
+In-Reply-To: <1217504456.9817.22.camel@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---=-cyJ9/EU+3uZuS2poDX3Y
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+  Hi Michael,
 
-On Thu, 2008-07-31 at 11:40 +0200, Sebastien Dugue wrote:
-> The radix tree used for fast irq reverse mapping by the XICS is initializ=
-ed
-> late in the boot process, after the first interrupt (IPI) gets registered
-> and after the first IPI is received.
+On Thu, 31 Jul 2008 21:40:56 +1000 Michael Ellerman <michael@ellerman.i=
+d.au> wrote:
+
+> On Thu, 2008-07-31 at 11:40 +0200, Sebastien Dugue wrote:
+> > The radix tree used for fast irq reverse mapping by the XICS is ini=
+tialized
+> > late in the boot process, after the first interrupt (IPI) gets regi=
+stered
+> > and after the first IPI is received.
+> >=20
+> >   This patch moves the initialization of the XICS radix tree earlie=
+r into
+> > the boot process in smp_xics_probe() (the mm is already up but no i=
+nterrupts
+> > have been registered at that point) to avoid having to insert a map=
+ping into
+> > the tree in interrupt context. This will help in simplifying the lo=
+cking
+> > constraints and move to a lockless radix tree in subsequent patches=
+=2E
+> >=20
+> >   As a nice side effect, there is no need any longer to check for
+> > (host->revmap_data.tree.gfp_mask !=3D 0) to know if the tree have b=
+een
+> > initialized.
 >=20
->   This patch moves the initialization of the XICS radix tree earlier into
-> the boot process in smp_xics_probe() (the mm is already up but no interru=
-pts
-> have been registered at that point) to avoid having to insert a mapping i=
-nto
-> the tree in interrupt context. This will help in simplifying the locking
-> constraints and move to a lockless radix tree in subsequent patches.
+> Hi Sebastien,
 >=20
->   As a nice side effect, there is no need any longer to check for
-> (host->revmap_data.tree.gfp_mask !=3D 0) to know if the tree have been
-> initialized.
+> This is a nice cleanup, I think :)
 
-Hi Sebastien,
+  Thanks.
 
-This is a nice cleanup, I think :)
+>=20
+> > diff --git a/arch/powerpc/kernel/irq.c b/arch/powerpc/kernel/irq.c
+> > index 6ac8612..0a1445c 100644
+> > --- a/arch/powerpc/kernel/irq.c
+> > +++ b/arch/powerpc/kernel/irq.c
+> > @@ -893,28 +890,28 @@ unsigned int irq_find_mapping(struct irq_host=
+ *host,
+> >  }
+> >  EXPORT_SYMBOL_GPL(irq_find_mapping);
+> > =20
+> > +void __init irq_radix_revmap_init(void)
+> > +{
+> > + 	struct irq_host *h;
+> > +
+> > +	list_for_each_entry(h, &irq_hosts, link) {
+> > +		if (h->revmap_type =3D=3D IRQ_HOST_MAP_TREE)
+> > +			INIT_RADIX_TREE(&h->revmap_data.tree, GFP_ATOMIC);
+> > +	}
+> > +}
+>=20
+> Note irq_radix_revmap_init() loops over all irq_hosts ...
 
-> diff --git a/arch/powerpc/kernel/irq.c b/arch/powerpc/kernel/irq.c
-> index 6ac8612..0a1445c 100644
-> --- a/arch/powerpc/kernel/irq.c
-> +++ b/arch/powerpc/kernel/irq.c
-> @@ -893,28 +890,28 @@ unsigned int irq_find_mapping(struct irq_host *host=
-,
->  }
->  EXPORT_SYMBOL_GPL(irq_find_mapping);
-> =20
-> +void __init irq_radix_revmap_init(void)
-> +{
-> + 	struct irq_host *h;
-> +
-> +	list_for_each_entry(h, &irq_hosts, link) {
-> +		if (h->revmap_type =3D=3D IRQ_HOST_MAP_TREE)
-> +			INIT_RADIX_TREE(&h->revmap_data.tree, GFP_ATOMIC);
-> +	}
-> +}
+  Yep, but there's only one host (xics)
 
-Note irq_radix_revmap_init() loops over all irq_hosts ...
+>=20
+> > diff --git a/arch/powerpc/platforms/pseries/smp.c b/arch/powerpc/pl=
+atforms/pseries/smp.c
+> > index 9d8f8c8..b143fe7 100644
+> > --- a/arch/powerpc/platforms/pseries/smp.c
+> > +++ b/arch/powerpc/platforms/pseries/smp.c
+> > @@ -130,6 +130,7 @@ static void smp_xics_message_pass(int target, i=
+nt msg)
+> > =20
+> >  static int __init smp_xics_probe(void)
+> >  {
+> > +	irq_radix_revmap_init();
+> >  	xics_request_IPIs();
+>=20
+> But now it's only called from the xics setup code.
+>=20
+> Which seems a bit ugly. In practice it doesn't matter because at the
+> moment xics is the only user of the radix revmap. But if we're going =
+to
+> switch to this sort of initialisation I think xics should only be
+> init'ing the revmap for itself.
 
-> diff --git a/arch/powerpc/platforms/pseries/smp.c b/arch/powerpc/platform=
-s/pseries/smp.c
-> index 9d8f8c8..b143fe7 100644
-> --- a/arch/powerpc/platforms/pseries/smp.c
-> +++ b/arch/powerpc/platforms/pseries/smp.c
-> @@ -130,6 +130,7 @@ static void smp_xics_message_pass(int target, int msg=
-)
-> =20
->  static int __init smp_xics_probe(void)
->  {
-> +	irq_radix_revmap_init();
->  	xics_request_IPIs();
+  You're right, that's what I intended to do from the beginning but
+stumbled upon ... hmm, can't remember what, that made me change
+my mind. But I agree, I'm not particularly proud of that. Will look
+again into that.
 
-But now it's only called from the xics setup code.
+>=20
+>=20
+> This boot ordering stuff is pretty hairy, so I might have missed
+> something, but this is how the code is ordered AFAICT:
+> =EF=BB=BF
+> start_kernel()
+> 	init_IRQ()
+> 	...
+> 	local_irq_enable()
+> 	...
+> 	rest_init()
+> 		kernel_thread()
+> 			kernel_init()
+> 				smp_prepare_cpus()
+> 					smp_xics_probe()	(via smp_ops->probe())
+>=20
+>=20
+> What's stopping us from taking an irq between local_irq_enable() and
+> smp_xics_probe() ?  Is it just that no one's request_irq()'ed them ye=
+t?
 
-Which seems a bit ugly. In practice it doesn't matter because at the
-moment xics is the only user of the radix revmap. But if we're going to
-switch to this sort of initialisation I think xics should only be
-init'ing the revmap for itself.
+  It's hairy, I agree, but as you've mentioned no one has done a reques=
+t_irq()
+at that point. The first one to do it is smp_xics_probe() for the IPI.
 
+  Thanks for your comments.
 
-This boot ordering stuff is pretty hairy, so I might have missed
-something, but this is how the code is ordered AFAICT:
-=EF=BB=BF
-start_kernel()
-	init_IRQ()
-	...
-	local_irq_enable()
-	...
-	rest_init()
-		kernel_thread()
-			kernel_init()
-				smp_prepare_cpus()
-					smp_xics_probe()	(via smp_ops->probe())
-
-
-What's stopping us from taking an irq between local_irq_enable() and
-smp_xics_probe() ?  Is it just that no one's request_irq()'ed them yet?
-
-
-cheers
-
---=20
-Michael Ellerman
-OzLabs, IBM Australia Development Lab
-
-wwweb: http://michael.ellerman.id.au
-phone: +61 2 6212 1183 (tie line 70 21183)
-
-We do not inherit the earth from our ancestors,
-we borrow it from our children. - S.M.A.R.T Person
-
---=-cyJ9/EU+3uZuS2poDX3Y
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-
-iD8DBQBIkaTIdSjSd0sB4dIRAlLzAJ9UCXxhuVH9Lau6Ps3Yr8aelr4a+gCfd2el
-T0F4Q23W4JmI2+5fFQ89OvI=
-=NyUP
------END PGP SIGNATURE-----
-
---=-cyJ9/EU+3uZuS2poDX3Y--
-
+  Sebastien.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
