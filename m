@@ -1,116 +1,162 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: Re: [PATCH] Fix Bug messages
-Date: Thu, 31 Jul 2008 16:10:21 +0200
-Message-ID: <520f0cf10807310710i85e5a2u8e5f227bc2b82051@mail.gmail.com>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
-	 <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
-	 <200807301101.32417.j.mell@t-online.de>
-	 <20080730171842.GB3420@linux.vnet.ibm.com>
-	 <20080731100023.0221ec2b@bull.net>
-	 <520f0cf10807310313q45599221q3db1b6fd7e7c722f@mail.gmail.com>
-	 <20080731132336.362bd487@bull.net>
-	 <520f0cf10807310649l1083e29bmf0f704e13dee96c@mail.gmail.com>
-	 <1217512907.8157.91.camel@twins>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
+Subject: Re: [PATCH] powerpc - Initialize the irq radix tree earlier
+Date: Thu, 31 Jul 2008 16:14:30 +0200
+Message-ID: <20080731161430.5de73ef8@bull.net>
+References: <1217497241-10685-1-git-send-email-sebastien.dugue@bull.net>
+	<1217497241-10685-2-git-send-email-sebastien.dugue@bull.net>
+	<1217504456.9817.22.camel@localhost>
+	<20080731140002.31bbe4a0@bull.net>
+	<1217509104.19050.11.camel@localhost>
+	<1217509299.19050.15.camel@localhost>
+	<20080731152606.5ae7c379@bull.net>
+	<1217511566.19050.26.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "Sebastien Dugue" <sebastien.dugue@bull.net>,
-	"Chirag Jog" <chirag@linux.vnet.ibm.com>,
-	"J?rgen Mell" <j.mell@t-online.de>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Clark Williams" <williams@redhat.com>,
-	"Josh Triplett" <josht@linux.vnet.ibm.com>,
-	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
-To: "Peter Zijlstra" <peterz@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, benh@kernel.crashing.org,
+	paulus@samba.org, jean-pierre.dion@bull.net,
+	gilles.carry@ext.bull.net, tinytim@us.ibm.com, tglx@linutronix.de,
+	rostedt@goodmis.org
+To: michael@ellerman.id.au
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.187]:20818 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752808AbYGaOKW (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:54593 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753818AbYGaOOG convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 10:10:22 -0400
-Received: by nf-out-0910.google.com with SMTP id d3so235412nfc.21
-        for <linux-rt-users@vger.kernel.org>; Thu, 31 Jul 2008 07:10:21 -0700 (PDT)
-In-Reply-To: <1217512907.8157.91.camel@twins>
-Content-Disposition: inline
+	Thu, 31 Jul 2008 10:14:06 -0400
+In-Reply-To: <1217511566.19050.26.camel@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 31, 2008 at 4:01 PM, Peter Zijlstra <peterz@infradead.org> wrote:
-> On Thu, 2008-07-31 at 15:49 +0200, John Kacur wrote:
->> Signed-off-by: John Kacur <jkacur@gmail.com>
->> Index: linux-2.6.26-rt1/net/core/sock.c
->> ===================================================================
->> --- linux-2.6.26-rt1.orig/net/core/sock.c
->> +++ linux-2.6.26-rt1/net/core/sock.c
->> @@ -1986,11 +1986,12 @@ static __init int net_inuse_init(void)
->>
->>  core_initcall(net_inuse_init);
->>  #else
->> -static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
->> +static DEFINE_PER_CPU_LOCKED(struct prot_inuse, prot_inuse);
->>
->>  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
->>  {
->> -       __get_cpu_var(prot_inuse).val[prot->inuse_idx] += val;
->> +       int cpu = 0;
->> +       __get_cpu_var_locked(prot_inuse, cpu).val[prot->inuse_idx] += val;
->>  }
->>  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
->>
->> @@ -2000,7 +2001,7 @@ int sock_prot_inuse_get(struct net *net,
->>         int res = 0;
->>
->>         for_each_possible_cpu(cpu)
->> -               res += per_cpu(prot_inuse, cpu).val[idx];
->> +               res += per_cpu_var_locked(prot_inuse, cpu).val[idx];
->>
->>         return res >= 0 ? res : 0;
->>  }
->
-> This doesn't look good. You declare it as a PER_CPU_LOCKED, but then
-> never use the extra lock to synchronize data.
->
-> Given that sock_proc_inuse_get() is a racy read anyway, the 'right' fix
-> would be to do something like:
->
-> diff --git a/net/core/sock.c b/net/core/sock.c
-> index 91f8bbc..5a8ace4 100644
-> --- a/net/core/sock.c
-> +++ b/net/core/sock.c
-> @@ -1941,8 +1941,9 @@ static DECLARE_BITMAP(proto_inuse_idx, PROTO_INUSE_NR);
->  #ifdef CONFIG_NET_NS
->  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
->  {
-> -       int cpu = smp_processor_id();
-> +       int cpu = get_cpu();
->        per_cpu_ptr(net->core.inuse, cpu)->val[prot->inuse_idx] += val;
-> +       put_cpu();
->  }
->  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
->
-> @@ -1988,7 +1989,9 @@ static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
->
->  void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
->  {
-> -       __get_cpu_var(prot_inuse).val[prot->inuse_idx] += val;
-> +       int cpu = get_cpu();
-> +       per_cpu(prot_inuse, cpu).val[prot->inuse_idx] += val;
-> +       put_cpu();
->  }
->  EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
->
-> This disables preemption, but only for a very short time - so it doesn't
-> hurt the preempt-latency.
->
-> The alternative is to take a lock, do the inc, and drop the lock again,
-> which is much more expensive.
->
->
+On Thu, 31 Jul 2008 23:39:26 +1000 Michael Ellerman <michael@ellerman.i=
+d.au> wrote:
 
-Cool, thanks for the quick feedback. What kind of criteria are used to
-decide between disabling preemption for a short time, or using the
-more expensive lock?
+> On Thu, 2008-07-31 at 15:26 +0200, Sebastien Dugue wrote:
+> > On Thu, 31 Jul 2008 23:01:39 +1000 Michael Ellerman <michael@ellerm=
+an.id.au> wrote:
+> >=20
+> > > On Thu, 2008-07-31 at 22:58 +1000, Michael Ellerman wrote:
+> > > > On Thu, 2008-07-31 at 14:00 +0200, Sebastien Dugue wrote:
+> > > > > On Thu, 31 Jul 2008 21:40:56 +1000 Michael Ellerman <michael@=
+ellerman.id.au> wrote:
+> > > > > >=20
+> > > > > > This boot ordering stuff is pretty hairy, so I might have m=
+issed
+> > > > > > something, but this is how the code is ordered AFAICT:
+> > > > > > =EF=BB=BF
+> > > > > > start_kernel()
+> > > > > > 	init_IRQ()
+> > > > > > 	...
+> > > > > > 	local_irq_enable()
+> > > > > > 	...
+> > > > > > 	rest_init()
+> > > > > > 		kernel_thread()
+> > > > > > 			kernel_init()
+> > > > > > 				smp_prepare_cpus()
+> > > > > > 					smp_xics_probe()	(via smp_ops->probe())
+> > > > > >=20
+> > > > > >=20
+> > > > > > What's stopping us from taking an irq between local_irq_ena=
+ble() and
+> > > > > > smp_xics_probe() ?  Is it just that no one's request_irq()'=
+ed them yet?
+> > > > >=20
+> > > > >   It's hairy, I agree, but as you've mentioned no one has don=
+e a request_irq()
+> > > > > at that point. The first one to do it is smp_xics_probe() for=
+ the IPI.
+> > > >=20
+> > > > Hmm, I don't think that's strong enough. I can trivially cause =
+irqs to
+> > > > fire during a kexec reboot just by mashing the keyboard.
+> > > >=20
+> > > > And during a kdump boot all sorts of stuff could be firing. Eve=
+n during
+> > > > a clean boot, from firmware, I don't think we can guarantee tha=
+t
+> > > > nothing's going to fire.
+> > > >=20
+> > > > .. after a bit of testing ..
+> > > >=20
+> > > > It seems it actually works (sort of).=20
+> > > >=20
+> > > > xics_remap_irq() calls irq_radix_revmap_lookup(), which calls:
+> > > >=20
+> > > > ptr =3D radix_tree_lookup(&host->revmap_data.tree, hwirq);
+> > > >=20
+> > > > And because =EF=BB=BFhost->revmap_data.tree was zalloc'ed we tr=
+ip on the first
+> > > > check here:
+> > >=20
+> > > @#$% ctrl-enter =3D=3D send!
+> > >=20
+> > > Continuing ...
+> > >=20
+> > > void *radix_tree_lookup(struct radix_tree_root *root, unsigned lo=
+ng index)
+> > > {
+> > >         unsigned int height, shift;
+> > >         struct radix_tree_node *node, **slot;
+> > >=20
+> > >         node =3D rcu_dereference(root->rnode);
+> > >         if (node =3D=3D NULL)
+> > >                 return NULL;
+> > >=20
+> > > Which means =EF=BB=BFirq_radix_revmap_lookup() will return NO_IRQ=
+, which is cool.
+> >=20
+> >   Which is what I intended so that as long as no IRQ is registered =
+we
+> > return NO_IRQ.
+> >=20
+> > >=20
+> > >=20
+> > > So I think it can fly, as long as we're happy that we can't rever=
+se map
+> > > anything until smp_xics_probe() - and I think that's true, as any=
+ irq we
+> > > take will be invalid.
+> >=20
+> >   That's true as no IRQs are registered before smp_xics_probe() and=
+ for any
+> > interrupt we might get before that, irq_radix_revmap_lookup() will =
+return
+> > NO_IRQ.
+>=20
+> Cool, we agree :)=20
+>=20
+> My only worry is that we might be relying on on the particular radix
+> tree implementation a bit too much.
+
+  Well maybe we could revert back to testing a flag just like we
+do for host->revmap_data.tree.gfp_mask !=3D 0. Dunno.
+
+> Is it documented somewhere that
+> the /very/ first check is for =EF=BB=BFroot->rnode !=3D NULL, and the=
+ rest of the
+> root may be unintialised?
+
+  Not in anything I could read except in looking at the code.
+
+>=20
+> And I think it needs a big fat comment in the irq code saying that it=
+'s
+> safe because revmap_data is zalloc'ed, and that means the radix looku=
+p
+> will fail (safely).
+
+  Yep, right. Will advertise this properly for the next round if this
+remains the prefered solution.
+
+  Thanks,
+
+  Sebastien.
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
