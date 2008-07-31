@@ -1,157 +1,199 @@
-From: Michael Ellerman <michael@ellerman.id.au>
-Subject: Re: [PATCH] powerpc - Initialize the irq radix tree earlier
-Date: Thu, 31 Jul 2008 23:39:26 +1000
-Message-ID: <1217511566.19050.26.camel@localhost>
-References: <1217497241-10685-1-git-send-email-sebastien.dugue@bull.net>
-	 <1217497241-10685-2-git-send-email-sebastien.dugue@bull.net>
-	 <1217504456.9817.22.camel@localhost> <20080731140002.31bbe4a0@bull.net>
-	 <1217509104.19050.11.camel@localhost> <1217509299.19050.15.camel@localhost>
-	 <20080731152606.5ae7c379@bull.net>
-Reply-To: michael@ellerman.id.au
+From: "John Kacur" <jkacur@gmail.com>
+Subject: Re: [PATCH] Fix Bug messages
+Date: Thu, 31 Jul 2008 15:49:07 +0200
+Message-ID: <520f0cf10807310649l1083e29bmf0f704e13dee96c@mail.gmail.com>
+References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de>
+	 <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de>
+	 <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+	 <200807301101.32417.j.mell@t-online.de>
+	 <20080730171842.GB3420@linux.vnet.ibm.com>
+	 <20080731100023.0221ec2b@bull.net>
+	 <520f0cf10807310313q45599221q3db1b6fd7e7c722f@mail.gmail.com>
+	 <20080731132336.362bd487@bull.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-vW9406vhric++rHHzA/k"
-Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, benh@kernel.crashing.org,
-	paulus@samba.org, jean-pierre.dion@bull.net,
-	gilles.carry@ext.bull.net, tinytim@us.ibm.com, tglx@linutronix.de,
-	rostedt@goodmis.org
-To: Sebastien Dugue <sebastien.dugue@bull.net>
+Content-Type: multipart/mixed;
+	boundary="----=_Part_5274_29801815.1217512147331"
+Cc: "Chirag Jog" <chirag@linux.vnet.ibm.com>,
+	"J?rgen Mell" <j.mell@t-online.de>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Clark Williams" <williams@redhat.com>,
+	"Peter Zijlstra" <peterz@infradead.org>,
+	"Josh Triplett" <josht@linux.vnet.ibm.com>,
+	"Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>
+To: "Sebastien Dugue" <sebastien.dugue@bull.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ozlabs.org ([203.10.76.45]:34421 "EHLO ozlabs.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751278AbYGaNjc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Jul 2008 09:39:32 -0400
-In-Reply-To: <20080731152606.5ae7c379@bull.net>
+Received: from nf-out-0910.google.com ([64.233.182.186]:21132 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752345AbYGaNtJ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 31 Jul 2008 09:49:09 -0400
+Received: by nf-out-0910.google.com with SMTP id d3so230406nfc.21
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 Jul 2008 06:49:07 -0700 (PDT)
+In-Reply-To: <20080731132336.362bd487@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
---=-vW9406vhric++rHHzA/k
-Content-Type: text/plain; charset=utf-8
+------=_Part_5274_29801815.1217512147331
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-On Thu, 2008-07-31 at 15:26 +0200, Sebastien Dugue wrote:
-> On Thu, 31 Jul 2008 23:01:39 +1000 Michael Ellerman <michael@ellerman.id.=
-au> wrote:
->=20
-> > On Thu, 2008-07-31 at 22:58 +1000, Michael Ellerman wrote:
-> > > On Thu, 2008-07-31 at 14:00 +0200, Sebastien Dugue wrote:
-> > > > On Thu, 31 Jul 2008 21:40:56 +1000 Michael Ellerman <michael@ellerm=
-an.id.au> wrote:
-> > > > >=20
-> > > > > This boot ordering stuff is pretty hairy, so I might have missed
-> > > > > something, but this is how the code is ordered AFAICT:
-> > > > > =EF=BB=BF
-> > > > > start_kernel()
-> > > > > 	init_IRQ()
-> > > > > 	...
-> > > > > 	local_irq_enable()
-> > > > > 	...
-> > > > > 	rest_init()
-> > > > > 		kernel_thread()
-> > > > > 			kernel_init()
-> > > > > 				smp_prepare_cpus()
-> > > > > 					smp_xics_probe()	(via smp_ops->probe())
-> > > > >=20
-> > > > >=20
-> > > > > What's stopping us from taking an irq between local_irq_enable() =
-and
-> > > > > smp_xics_probe() ?  Is it just that no one's request_irq()'ed the=
-m yet?
-> > > >=20
-> > > >   It's hairy, I agree, but as you've mentioned no one has done a re=
-quest_irq()
-> > > > at that point. The first one to do it is smp_xics_probe() for the I=
-PI.
-> > >=20
-> > > Hmm, I don't think that's strong enough. I can trivially cause irqs t=
-o
-> > > fire during a kexec reboot just by mashing the keyboard.
-> > >=20
-> > > And during a kdump boot all sorts of stuff could be firing. Even duri=
-ng
-> > > a clean boot, from firmware, I don't think we can guarantee that
-> > > nothing's going to fire.
-> > >=20
-> > > .. after a bit of testing ..
-> > >=20
-> > > It seems it actually works (sort of).=20
-> > >=20
-> > > xics_remap_irq() calls irq_radix_revmap_lookup(), which calls:
-> > >=20
-> > > ptr =3D radix_tree_lookup(&host->revmap_data.tree, hwirq);
-> > >=20
-> > > And because =EF=BB=BFhost->revmap_data.tree was zalloc'ed we trip on =
-the first
-> > > check here:
-> >=20
-> > @#$% ctrl-enter =3D=3D send!
-> >=20
-> > Continuing ...
-> >=20
-> > void *radix_tree_lookup(struct radix_tree_root *root, unsigned long ind=
-ex)
-> > {
-> >         unsigned int height, shift;
-> >         struct radix_tree_node *node, **slot;
-> >=20
-> >         node =3D rcu_dereference(root->rnode);
-> >         if (node =3D=3D NULL)
-> >                 return NULL;
-> >=20
-> > Which means =EF=BB=BFirq_radix_revmap_lookup() will return NO_IRQ, whic=
-h is cool.
->=20
->   Which is what I intended so that as long as no IRQ is registered we
-> return NO_IRQ.
->=20
-> >=20
-> >=20
-> > So I think it can fly, as long as we're happy that we can't reverse map
-> > anything until smp_xics_probe() - and I think that's true, as any irq w=
-e
-> > take will be invalid.
->=20
->   That's true as no IRQs are registered before smp_xics_probe() and for a=
-ny
-> interrupt we might get before that, irq_radix_revmap_lookup() will return
-> NO_IRQ.
+On Thu, Jul 31, 2008 at 1:23 PM, Sebastien Dugue
+<sebastien.dugue@bull.net> wrote:
+>  Hi John,
+>
+> On Thu, 31 Jul 2008 12:13:24 +0200 "John Kacur" <jkacur@gmail.com> wrote:
+>
+>> On Thu, Jul 31, 2008 at 10:00 AM, Sebastien Dugue
+>> <sebastien.dugue@bull.net> wrote:
+>> > On Wed, 30 Jul 2008 22:48:42 +0530 Chirag Jog <chirag@linux.vnet.ibm.c=
+om> wrote:
+>> >
+>> >> * J?rgen Mell <j.mell@t-online.de> [2008-07-30 11:01:32]:
+>> >>
+>> >> > Hello Thomas,
+>> >> >
+>> >> > On Wednesday, 30. July 2008, Thomas Gleixner wrote:
+>> >> > > We are pleased to announce the 2.6.26-rt1 tree, which can be
+>> >> > > downloaded from the location:
+>> >> >
+>> >> > I have tried the new kernel and have some good news and some bad ne=
+ws:
+>> >> >
+>> >> > The good news: The machine boots and seems to run without major pro=
+blems.
+>> >> >
+>> >> > The bad news: It produces continuously lots of bug messages in the =
+error
+>> >> > logs (cf. attached dmesg.tgz). The error at rtmutex.c:743 was alrea=
+dy
+>> >> > present in 2.6.25-rt* when ACPI was enabled. The 'using smp_process=
+or_id
+>> >> > ()  in preemptible code' is new here with 2.6.26.
+>> >> >
+>> >> > Machine is an old Athlon XP (single core) on an EPOX mainboard with=
+ VIA
+>> >> > chipset.
+>> >> >
+>> >> > If I can help with testing, please let me know.
+>> >> >
+>> >> > Bye,
+>> >> >          J=FCrgen
+>> >> >
+>> >> >
+>> >> This patch should solve some of the bug messages.
+>> >> It does two things:
+>> >> 1. Change rt_runtime_lock to be a raw spinlock as the comment above i=
+t
+>> >> says: it is nested inside the rq lock.
+>> >>
+>> >> 2. Change mnt_writers to be a per_cpu locked variable.
+>> >> This eliminates the need for the codepath to disable preemption and
+>> >> then potentially sleep, leading to the BUG messages
+>> >>
+>> >> Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
+>> >
+>> >  Neat, the only remaining BUGs I see are from sock_prot_inuse_add()
+>> >
+>> > BUG: using smp_processor_id() in preemptible [00000000] code: arping/1=
+916
+>> > caller is .sock_prot_inuse_add+0x30/0x80
+>> > Call Trace:
+>> > [c0000000eed2f910] [c000000000010304] .show_stack+0x70/0x1bc (unreliab=
+le)
+>> > [c0000000eed2f9c0] [c0000000001a2340] .debug_smp_processor_id+0x138/0x=
+168
+>> > [c0000000eed2fa70] [c0000000002181f4] .sock_prot_inuse_add+0x30/0x80
+>> > [c0000000eed2fb10] [c00000000026d96c] .udp_lib_get_port+0x2a8/0x320
+>> > [c0000000eed2fbc0] [c000000000275b30] .inet_bind+0x168/0x248
+>> > [c0000000eed2fc60] [c000000000215024] .sys_bind+0x98/0xdc
+>> > [c0000000eed2fd90] [c0000000002370bc] .compat_sys_socketcall+0xcc/0x21=
+4
+>> > [c0000000eed2fe30] [c0000000000086ac] syscall_exit+0x0/0x40
+>> > BUG: arping:1916 task might have lost a preemption check!
+>> > Call Trace:
+>> > [c0000000eed2f890] [c000000000010304] .show_stack+0x70/0x1bc (unreliab=
+le)
+>> > [c0000000eed2f940] [c00000000004e298] .preempt_enable_no_resched+0x60/=
+0x78
+>> > [c0000000eed2f9c0] [c0000000001a2348] .debug_smp_processor_id+0x140/0x=
+168
+>> > [c0000000eed2fa70] [c0000000002181f4] .sock_prot_inuse_add+0x30/0x80
+>> > [c0000000eed2fb10] [c00000000026d96c] .udp_lib_get_port+0x2a8/0x320
+>> > [c0000000eed2fbc0] [c000000000275b30] .inet_bind+0x168/0x248
+>> > [c0000000eed2fc60] [c000000000215024] .sys_bind+0x98/0xdc
+>> > [c0000000eed2fd90] [c0000000002370bc] .compat_sys_socketcall+0xcc/0x21=
+4
+>> > [c0000000eed2fe30] [c0000000000086ac] syscall_exit+0x0/0x40
+>> >
+>>
+>> Does this simple fix do the trick for you?
+>>
+>>Signed-off-by: John Kacur <jkacur@gmail.com>
+>>
+>>Index: linux-2.6.26-rt1/net/core/sock.c
+>>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>>--- linux-2.6.26-rt1.orig/net/core/sock.c
+>>+++ linux-2.6.26-rt1/net/core/sock.c
+>>@@ -1943,7 +1943,7 @@ static DECLARE_BITMAP(proto_inuse_idx, P
+>> #ifdef CONFIG_NET_NS
+>> void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
+>> {
+>>-      int cpu =3D smp_processor_id();
+>>+      int cpu =3D raw_smp_processor_id();
+>>       per_cpu_ptr(net->core.inuse, cpu)->val[prot->inuse_idx] +=3D val;
+>> }
+>> EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
+>
+>  Nope, still the same BUGs, I do not have the net namespaces configured, =
+so the
+> version of sock_prot_inuse_add() which is used is defined a few lines bel=
+ow:
+>
+> static DEFINE_PER_CPU(struct prot_inuse, prot_inuse);
+>
+> void sock_prot_inuse_add(struct net *net, struct proto *prot, int val)
+> {
+>        __get_cpu_var(prot_inuse).val[prot->inuse_idx] +=3D val;
+> }
+> EXPORT_SYMBOL_GPL(sock_prot_inuse_add);
+>
+>  Looks like another case of percpu variables Chirag has benn fixing.
+>
+>  Sebastien.
+>
 
-Cool, we agree :)=20
+Pls withdraw my last patch. Ok, please use with caution, I'm still
+testing, but trying to follow Chirag's example, does this patch help
+you?
+(Let's consider this patch as for review)
 
-My only worry is that we might be relying on on the particular radix
-tree implementation a bit too much. Is it documented somewhere that
-the /very/ first check is for =EF=BB=BFroot->rnode !=3D NULL, and the rest =
-of the
-root may be unintialised?
+------=_Part_5274_29801815.1217512147331
+Content-Type: text/x-patch; name=sock_prot_inuse_add-fix.patch
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fjbef83b0
+Content-Disposition: attachment; filename=sock_prot_inuse_add-fix.patch
 
-And I think it needs a big fat comment in the irq code saying that it's
-safe because revmap_data is zalloc'ed, and that means the radix lookup
-will fail (safely).
-
-cheers
-
---=20
-Michael Ellerman
-OzLabs, IBM Australia Development Lab
-
-wwweb: http://michael.ellerman.id.au
-phone: +61 2 6212 1183 (tie line 70 21183)
-
-We do not inherit the earth from our ancestors,
-we borrow it from our children. - S.M.A.R.T Person
-
---=-vW9406vhric++rHHzA/k
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-
-iD8DBQBIkcCOdSjSd0sB4dIRAuxGAJ0TguBTpS0p4xdDf+dAZKTcHyTkvQCeNc7S
-6UpVTe06vYU5VRVjCJNvKYU=
-=IyZ5
------END PGP SIGNATURE-----
-
---=-vW9406vhric++rHHzA/k--
-
+U2lnbmVkLW9mZi1ieTogSm9obiBLYWN1ciA8amthY3VyQGdtYWlsLmNvbT4KSW5kZXg6IGxpbnV4
+LTIuNi4yNi1ydDEvbmV0L2NvcmUvc29jay5jCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLS0tIGxpbnV4LTIuNi4yNi1y
+dDEub3JpZy9uZXQvY29yZS9zb2NrLmMKKysrIGxpbnV4LTIuNi4yNi1ydDEvbmV0L2NvcmUvc29j
+ay5jCkBAIC0xOTg2LDExICsxOTg2LDEyIEBAIHN0YXRpYyBfX2luaXQgaW50IG5ldF9pbnVzZV9p
+bml0KHZvaWQpCiAKIGNvcmVfaW5pdGNhbGwobmV0X2ludXNlX2luaXQpOwogI2Vsc2UKLXN0YXRp
+YyBERUZJTkVfUEVSX0NQVShzdHJ1Y3QgcHJvdF9pbnVzZSwgcHJvdF9pbnVzZSk7CitzdGF0aWMg
+REVGSU5FX1BFUl9DUFVfTE9DS0VEKHN0cnVjdCBwcm90X2ludXNlLCBwcm90X2ludXNlKTsKIAog
+dm9pZCBzb2NrX3Byb3RfaW51c2VfYWRkKHN0cnVjdCBuZXQgKm5ldCwgc3RydWN0IHByb3RvICpw
+cm90LCBpbnQgdmFsKQogewotCV9fZ2V0X2NwdV92YXIocHJvdF9pbnVzZSkudmFsW3Byb3QtPmlu
+dXNlX2lkeF0gKz0gdmFsOworCWludCBjcHUgPSAwOworCV9fZ2V0X2NwdV92YXJfbG9ja2VkKHBy
+b3RfaW51c2UsIGNwdSkudmFsW3Byb3QtPmludXNlX2lkeF0gKz0gdmFsOwogfQogRVhQT1JUX1NZ
+TUJPTF9HUEwoc29ja19wcm90X2ludXNlX2FkZCk7CiAKQEAgLTIwMDAsNyArMjAwMSw3IEBAIGlu
+dCBzb2NrX3Byb3RfaW51c2VfZ2V0KHN0cnVjdCBuZXQgKm5ldCwKIAlpbnQgcmVzID0gMDsKIAog
+CWZvcl9lYWNoX3Bvc3NpYmxlX2NwdShjcHUpCi0JCXJlcyArPSBwZXJfY3B1KHByb3RfaW51c2Us
+IGNwdSkudmFsW2lkeF07CisJCXJlcyArPSBwZXJfY3B1X3Zhcl9sb2NrZWQocHJvdF9pbnVzZSwg
+Y3B1KS52YWxbaWR4XTsKIAogCXJldHVybiByZXMgPj0gMCA/IHJlcyA6IDA7CiB9Cg==
+------=_Part_5274_29801815.1217512147331--
