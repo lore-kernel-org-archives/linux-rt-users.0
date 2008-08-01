@@ -1,84 +1,104 @@
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: 2.6.24-rc8-rt1: Strange latencies on mpc5200 powerpc - RCU
-	issue?
-Date: Fri, 1 Aug 2008 14:09:45 -0700
-Message-ID: <20080801210945.GI14851@linux.vnet.ibm.com>
-References: <486A573E.60107@grandegger.com> <486B607F.9040903@grandegger.com> <Pine.LNX.4.58.0807052041350.8466@gandalf.stny.rr.com> <48709348.6000101@grandegger.com> <20080708150826.GA30586@pengutronix.de> <4873C363.3070306@grandegger.com> <4874B4C0.5090500@pengutronix.de> <4874B9D5.1020309@grandegger.com> <20080709145217.GB30586@pengutronix.de> <4875BF57.8030405@grandegger.com>
+Subject: Re: 2.6.26-rt1
+Date: Fri, 1 Aug 2008 14:11:14 -0700
+Message-ID: <20080801211114.GC14851@linux.vnet.ibm.com>
+References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807271719130.574@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
 Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Luotao Fu <l.fu@pengutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Wolfgang Grandegger <wg@grandegger.com>
+	Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:57856 "EHLO e5.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1760867AbYHAVJ5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Aug 2008 17:09:57 -0400
+Received: from e31.co.us.ibm.com ([32.97.110.149]:49959 "EHLO
+	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761071AbYHAVLS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 1 Aug 2008 17:11:18 -0400
 Content-Disposition: inline
-In-Reply-To: <4875BF57.8030405@grandegger.com>
+In-Reply-To: <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 10, 2008 at 09:50:47AM +0200, Wolfgang Grandegger wrote:
-> Luotao Fu wrote:
->> Hi Wolfgang,
->> On Wed, Jul 09, 2008 at 03:15:01PM +0200, Wolfgang Grandegger wrote:
->>> Hi Fu (without n)
->>>
->> ....
->>> OK, in the past you have been able to reproduce the high latencies with  
->>> 2.6.24-rt1 and CONFIG_RCU_TRACE disabled, IIRC. Did you use a different  
->>> toolchain at that time?
->>>
->> Nope. As mentioned above, trace_mark() does some "real" works (what ever 
->> it is.),
->> while the new mechahnismen use flags to remember the state of preemption. 
->> Maybe
->
-> I don't known what you refer to, but in __rcu_preempt_unboost() of 
-> 2.6.25.8-rt7, the trace code simply increments a counter:
->
->        static void rcu_trace_boost_##type(struct rcu_boost_dat *rbd)   \
->        {                                                               \
->                rbd->rbs_stat_##type++;                                 \
->        }
->
-> and that's the reason why latency is not affected by switching 
-> CONFIG_RCU_TRACE
-> on (while trace_mark uses preempt_disable/preempt_enable around).
+On Wed, Jul 30, 2008 at 12:21:10AM +0200, Thomas Gleixner wrote:
+> We are pleased to announce the 2.6.26-rt1 tree, which can be
+> downloaded from the location:
+>   
+>    http://rt.et.redhat.com/download/
+> 
+> Information on the RT patch can be found at:
+> 
+>    http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> The merge was mostly done by Steven Rostedt, I just fixed it up, added
+> the fixes from .24-rt17 and tested it on x86 32/64bit.
+> 
+> This is the first cut of .26-rt, so don't expect it to be perfect.
+> 
+> I run out of time, so I dropped Peter's cpu-hotplug patches
+> completely. The hotplug and rcupreempt code has changed radically, so
+> we need to redo that lot. Peter, Paul can you please look into that ?
+> 
+> I tried to address the non-x86 issues as far as I could, but I had no
+> chance to compile test them. So please check the wreckage.
+> 
+> to build a 2.6.26-rt1 tree, the following patches should be applied:
+> 
+>    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+>    http://rt.et.redhat.com/download/patch-2.6.26-rt1.bz2
+>   
+> And like always, Steven's RT version of Matt Mackall's ketchup will get this
+> for you nicely:
+> 
+>   http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+> 
+> As usual the broken out patches are also available.
+> 
+> I'm going on vacation tomorrow so feel free to blame/curse/flame me,
+> but please work with Steven to get it into shape.
 
-This changed -- preempt_disable()/preempt_enable() pair
-was added for rcu_trace_boost_boost_called_preempt() and
-rcu_trace_boost_unboost_called_preempt() later to suppress a warning
-(and also make that statistic accurate in face of preemption).
+Hmmm...  Still quite a few RCU-related patches in there.  Here is my
+kneejerk reaction on what to do about them:
 
-						Thanx, Paul
+o	call_rcu_bh-rename-of-call_rcu.patch should go to mainline.
 
->> something here got optimized away? I take for grant, that you use gcc in 
->> your
->> toolchain. Which version do you have?
->
-> The ELDK v4.2 uses:
->
->  ppc_6xx-gcc (GCC) 4.2.2
->
-> and 
->  GLIBC v2.6
->
-> But I measured the same latencies with ELDK v4.1:
->
->  ppc_6xx-gcc (GCC) 4.0.0 (DENX ELDK 4.1 4.0.0)
->
->  GLIBC v2.3.5
->
-> Wolfgang.
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" 
-> in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+o	rcu-trace-fix-free.patch should go to mainline.
+
+o	rcu-preempt-fix-bad-dyntick-accounting.patch can be dropped
+	from -rt without going to mainline.
+
+o	Some of rcu-hrt-fixups.patch needs to go over, some need to
+	come back:
+
+	o	__rcu_process_callbacks() change of local_irq_disable()
+		to local_irq_save() should go to mainline.
+
+	o	-rt needs to take the change that dropped the parameter
+		for softirq functions.
+
+	o	-rt needs to take the change of rcu_process_callbacks()
+		to static (both declaration and definition).
+
+	o	-rt needs to take the deletion of rcu_advance_callbacks()
+
+o	rcu-new-7.patch needs to move over (torture preemptable RCU)
+	Ditto for rcu-torture-preempt-update.patch.  But not blazingly
+	urgent.
+
+o	RCU boosting needs re-implementation, in the works.
+
+o	preempt_realtime_rcu.patch is mostly about raw_spinlock_t.
+	Is mainline's raw_spinlock_t compatible with that of -rt?
+	If so, this should go to mainline.
+
+o	rcu-preempt-hotplug-hackaround.patch should be able to be
+	dropped at some point (maybe even as of 2.6.26?).
+
+Thoughts?
+
+							Thanx, Paul
