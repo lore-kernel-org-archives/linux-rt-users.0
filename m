@@ -1,62 +1,58 @@
-Return-Path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.232]:62550 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750792AbYGIQMA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2008 12:12:00 -0400
-Received: by rv-out-0506.google.com with SMTP id k40so3612939rvb.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jul 2008 09:11:59 -0700 (PDT)
-Message-ID: <c384c5ea0807090911i790ac4een40633a3721810071@mail.gmail.com>
-Date: Wed, 9 Jul 2008 18:11:59 +0200
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: Re: [PATCH 2.6.24.7-rt14 v2] rt: {queue,schedule}_work_prio() allowing work priorities other than caller's priority
-In-Reply-To: <486f7032.01b6420a.65e1.6a88@mx.google.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+From: Matthew Smith <matt@smiffytech.com>
+Subject: 2.6.25.8-rt7 Bugs
+Date: Fri, 01 Aug 2008 13:37:00 +0930
+Message-ID: <48928BE4.6030509@smiffytech.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-References: <486f7032.01b6420a.65e1.6a88@mx.google.com>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from prospero.kbc.net.au ([150.101.97.167]:59690 "EHLO
+	prospero.kbc.net.au" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750823AbYHAEOQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 1 Aug 2008 00:14:16 -0400
+Received: from [10.10.10.212] (brutus_ii [10.10.10.212])
+	by prospero.kbc.net.au (Postfix) with ESMTP id 0EF939C038
+	for <linux-rt-users@vger.kernel.org>; Fri,  1 Aug 2008 13:37:01 +0930 (CST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>, Linux Kernel List <linux-kernel@vger.kernel.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Linux-RT Kernel List <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Leon Woestenberg <leon@sidebranch.com>, John Kacur <jkacur@gmail.com>
 
-Hello,
+Hi Folks
 
-On Sat, Jul 5, 2008 at 2:59 PM,  <leon.woestenberg@gmail.com> wrote:
-> The faulty case was a non-FIFO serial driver that deferred LED blinking to
-> a workqueue using schedule_work(). However, that work used GPIO bitbanged I2C,
-> which uses 50 usecs udelay()s. With the work inheriting the serial IRQ priority,
-> it easily missed the ~60 usec deadline of 115200 bps communications.
->
-John Kacur asked forthe (custom) code showing this case on IRC.
+I am trying to run 2.6.25.8-rt7, patched via the RT version of ketchup
+on my ThinkPad (Core2Duo CPU) to provide a low-latency base for audio
+applications (Jack, Rosegarden, Hydrogen, Zynaddsubfx).
 
-I suspect the current kernel also has drivers that *also* depend on
-workqueue's not pre-empting or delaying their calling interrupt
-handler.
+Jack is throwing xruns and, on boot, I am seeing a load of bugs (the
+actually say BUG) so I have been advised to post my bugs here.  Here's
+my dmesg:
 
+<http://www.smiffysplace.com/files/dmesg_rt_20080801>
 
-See http://www.sidebranch.com/leon/ for the code. A short file roadmap
-and explanation of the analysis:
+And my kernel configuration:
 
-lowlevel_16550.c: non-FIFO UART driver
-axonbus.c: protocol handler
-max7311.c: I2C -> GPIO extender, driving a few LEDs.
+<http://www.smiffysplace.com/files/kconfig_rt_20080801>
 
-Queueing the "blink a LED" work happens in this code path:
+Have I configured something wrong, or is this a real bug?  I'm quite
+happy to try other kernel versions but don't want to move to a 2.6.26 as
+there are other driver issues that affect me and don't really want to go
+any older than the Gentoo-patched 2.6.23 that I am running for general
+use (I'm dual-booting to the RT kernel).
 
-lowlevel_16550.c:axonbus_isr() -> axonbus.c:ab_cmd_receive() ->
-boardsupport.c:ll_blink()
+Just in case it's relevant, I can't disable ACPI; this machine has
+either a design or a manufacturing fault - if I don't manually set the
+fan to run at full speed all the time, the GPU (I think) overheats and
+the whole thing locks up.
 
-The queued work then performs this code path, running at the same
-real-time priority as the originating IRQ:
-ll_blink_work() -> do_max7311_read() -> i2c-algo-bit.c:* -> udelay(50)
+Cheers
 
-The udelay(50) thus keeps the 16550 interrupt from being serviced.
+M
 
-Scheduling the work at lower priority solved this.
+-- 
+Matthew Smith
+Smiffytech - Technology Consulting & Web Application Development
+Business: http://www.smiffytech.com/
+Personal: http://www.smiffysplace.com/
+LinkedIn: http://www.linkedin.com/in/smiffy
 
-Regards,
-
-Leon.
-
-p.s. we will submit the max7311 driver for upstream.
