@@ -1,80 +1,410 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: [PATCH -rt] apply rcu_process_callbacks() changes from mainline
-Date: Fri, 1 Aug 2008 14:11:46 -0700
-Message-ID: <20080801211146.GG14851@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH RT RFC 7/7] rtmutex: pi-boost locks as late as possible
+Date: Fri, 01 Aug 2008 15:17:23 -0600
+Message-ID: <20080801211722.3469.55953.stgit@lsg.lsg.lab.novell.com>
+References: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rostedt@goodmis.org, tglx@linutronix.de,
-	linux-kernel@vger.kernel.org, mingo@elte.hu
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	gregory.haskins@gmail.com
+To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
+	tglx@linutronix.de, rosted@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e34.co.us.ibm.com ([32.97.110.152]:53016 "EHLO
-	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1761248AbYHAVLs (ORCPT
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:46142 "EHLO
+	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761028AbYHAVRY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Aug 2008 17:11:48 -0400
-Content-Disposition: inline
+	Fri, 1 Aug 2008 17:17:24 -0400
+In-Reply-To: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On its way to mainline, rcu_process_callbacks() became a static
-function and the unused function rcu_advance_callbacks() was
-removed.  The attached patch adjusts -rt to better match mainline.
+Adaptive-locking technology often times acquires the lock by
+spinning on a running-owner instead of sleeping.  It is unecessary
+to go through pi-boosting if the owner is of equal or (logically)
+lower priority. Therefore, we can save some significant overhead
+by deferring the boost until absolutely necessary.  This has shown
+to improve overall performance in PREEMPT_RT
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Special thanks to Peter Morreale for suggesting the optimization to
+only consider skipping the boost if the owner is >= to current
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+CC: Peter Morreale <pmorreale@novell.com>
 ---
 
- include/linux/rcuclassic.h |    3 ---
- include/linux/rcupreempt.h |    2 --
- kernel/rcuclassic.c        |   13 +------------
- kernel/rcupreempt.c        |    2 +-
- 4 files changed, 2 insertions(+), 18 deletions(-)
+ include/linux/rtmutex.h |    1 
+ kernel/rtmutex.c        |  195 ++++++++++++++++++++++++++++++++++++-----------
+ kernel/rtmutex_common.h |    1 
+ 3 files changed, 153 insertions(+), 44 deletions(-)
 
-diff -urpNa -X dontdiff linux-2.6.26-rt1/include/linux/rcuclassic.h linux-2.6.26-rt1-rhf/include/linux/rcuclassic.h
---- linux-2.6.26-rt1/include/linux/rcuclassic.h	2008-07-30 05:42:42.000000000 -0700
-+++ linux-2.6.26-rt1-rhf/include/linux/rcuclassic.h	2008-07-30 10:30:31.000000000 -0700
-@@ -162,7 +162,4 @@ extern long rcu_batches_completed_bh(voi
- #define rcu_exit_nohz()		do { } while (0)
- #define rcu_preempt_boost_init() do { } while (0)
- 
--struct softirq_action;
--extern void rcu_process_callbacks(struct softirq_action *unused);
--
- #endif /* __LINUX_RCUCLASSIC_H */
-diff -urpNa -X dontdiff linux-2.6.26-rt1/include/linux/rcupreempt.h linux-2.6.26-rt1-rhf/include/linux/rcupreempt.h
---- linux-2.6.26-rt1/include/linux/rcupreempt.h	2008-07-30 05:42:41.000000000 -0700
-+++ linux-2.6.26-rt1-rhf/include/linux/rcupreempt.h	2008-07-30 10:31:44.000000000 -0700
-@@ -146,6 +146,4 @@ static inline void rcu_exit_nohz(void)
- #define rcu_exit_nohz()		do { } while (0)
- #endif /* CONFIG_NO_HZ */
- 
--extern void rcu_process_callbacks(struct softirq_action *unused);
--
- #endif /* __LINUX_RCUPREEMPT_H */
-diff -urpNa -X dontdiff linux-2.6.26-rt1/kernel/rcuclassic.c linux-2.6.26-rt1-rhf/kernel/rcuclassic.c
---- linux-2.6.26-rt1/kernel/rcuclassic.c	2008-07-30 05:42:42.000000000 -0700
-+++ linux-2.6.26-rt1-rhf/kernel/rcuclassic.c	2008-07-30 10:54:35.000000000 -0700
-@@ -458,7 +458,7 @@ static void __rcu_process_callbacks(stru
- 		rcu_do_batch(rdp);
- }
- 
--void rcu_process_callbacks(struct softirq_action *unused)
-+static void rcu_process_callbacks(struct softirq_action *unused)
+diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
+index d984244..1d98107 100644
+--- a/include/linux/rtmutex.h
++++ b/include/linux/rtmutex.h
+@@ -33,6 +33,7 @@ struct rt_mutex {
+ 		struct pi_node   node;
+ 		struct pi_sink   snk;
+ 		int              prio;
++		int              boosters;
+ 	} pi;
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	int			save_state;
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 0f64298..de213ac 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -76,14 +76,15 @@ rt_mutex_set_owner(struct rt_mutex *lock, struct task_struct *owner,
  {
- 	__rcu_process_callbacks(&rcu_ctrlblk, &__get_cpu_var(rcu_data));
- 	__rcu_process_callbacks(&rcu_bh_ctrlblk, &__get_cpu_var(rcu_bh_data));
-@@ -513,17 +513,6 @@ int rcu_needs_cpu(int cpu)
- 	return (!!rdp->curlist || !!rdp_bh->curlist || rcu_pending(cpu));
+ 	unsigned long val = (unsigned long)owner | mask;
+ 
+-	if (rt_mutex_has_waiters(lock)) {
++	if (lock->pi.boosters) {
+ 		struct task_struct *prev_owner = rt_mutex_owner(lock);
+ 
+ 		rtmutex_pi_owner(lock, prev_owner, 0);
+ 		rtmutex_pi_owner(lock, owner, 1);
++	}
+ 
++	if (rt_mutex_has_waiters(lock))
+ 		val |= RT_MUTEX_HAS_WAITERS;
+-	}
+ 
+ 	lock->owner = (struct task_struct *)val;
+ }
+@@ -177,7 +178,7 @@ static inline int rtmutex_pi_update(struct pi_sink *snk,
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, iflags);
+ 
+-	if (rt_mutex_has_waiters(lock)) {
++	if (lock->pi.boosters) {
+ 		owner = rt_mutex_owner(lock);
+ 
+ 		if (owner && owner != RT_RW_READER) {
+@@ -206,6 +207,7 @@ static void init_pi(struct rt_mutex *lock)
+ 	pi_node_init(&lock->pi.node);
+ 
+ 	lock->pi.prio = MAX_PRIO;
++	lock->pi.boosters = 0;
+ 	pi_source_init(&lock->pi.src, &lock->pi.prio);
+ 	lock->pi.snk = rtmutex_pi_snk;
+ 
+@@ -303,6 +305,16 @@ static inline int try_to_take_rt_mutex(struct rt_mutex *lock)
+ 	return do_try_to_take_rt_mutex(lock, STEAL_NORMAL);
  }
  
--void rcu_advance_callbacks(int cpu, int user)
--{
--	if (user ||
--	    (idle_cpu(cpu) && !in_softirq() &&
--				hardirq_count() <= (1 << HARDIRQ_SHIFT))) {
--		rcu_qsctr_inc(cpu);
--		rcu_bh_qsctr_inc(cpu);
--	} else if (!in_softirq())
--		rcu_bh_qsctr_inc(cpu);
--}
++static inline void requeue_waiter(struct rt_mutex *lock,
++				  struct rt_mutex_waiter *waiter)
++{
++	BUG_ON(!waiter->task);
++
++	plist_del(&waiter->list_entry, &lock->wait_list);
++	plist_node_init(&waiter->list_entry, waiter->pi.prio);
++	plist_add(&waiter->list_entry, &lock->wait_list);
++}
++
+ /*
+  * These callbacks are invoked whenever a waiter has changed priority.
+  * So we should requeue it within the lock->wait_list
+@@ -343,11 +355,8 @@ static inline int rtmutex_waiter_pi_update(struct pi_sink *snk,
+ 	 * pi list.  Therefore, if waiter->pi.prio has changed since we
+ 	 * queued ourselves, requeue it.
+ 	 */
+-	if (waiter->task && waiter->list_entry.prio != waiter->pi.prio) {
+-		plist_del(&waiter->list_entry, &lock->wait_list);
+-		plist_node_init(&waiter->list_entry, waiter->pi.prio);
+-		plist_add(&waiter->list_entry, &lock->wait_list);
+-	}
++	if (waiter->task && waiter->list_entry.prio != waiter->pi.prio)
++		requeue_waiter(lock, waiter);
+ 
+ 	spin_unlock_irqrestore(&lock->wait_lock, iflags);
+ 
+@@ -359,20 +368,9 @@ static struct pi_sink rtmutex_waiter_pi_snk = {
+     .update = rtmutex_waiter_pi_update,
+ };
+ 
+-/*
+- * This must be called with lock->wait_lock held.
+- */
+-static int add_waiter(struct rt_mutex *lock,
+-		      struct rt_mutex_waiter *waiter,
+-		      unsigned long *flags)
++static void boost_lock(struct rt_mutex *lock,
++		       struct rt_mutex_waiter *waiter)
+ {
+-	int has_waiters = rt_mutex_has_waiters(lock);
+-
+-	waiter->task = current;
+-	waiter->lock = lock;
+-	waiter->pi.prio = current->prio;
+-	plist_node_init(&waiter->list_entry, waiter->pi.prio);
+-	plist_add(&waiter->list_entry, &lock->wait_list);
+ 	waiter->pi.snk = rtmutex_waiter_pi_snk;
+ 
+ 	/*
+@@ -397,35 +395,28 @@ static int add_waiter(struct rt_mutex *lock,
+ 	 * If we previously had no waiters, we are transitioning to
+ 	 * a mode where we need to boost the owner
+ 	 */
+-	if (!has_waiters) {
++	if (!lock->pi.boosters) {
+ 		struct task_struct *owner = rt_mutex_owner(lock);
+ 		rtmutex_pi_owner(lock, owner, 1);
+ 	}
+ 
+-	spin_unlock_irqrestore(&lock->wait_lock, *flags);
+-	task_pi_update(current, 0);
+-	spin_lock_irqsave(&lock->wait_lock, *flags);
+-
+-	return 0;
++	lock->pi.boosters++;
++	waiter->pi.boosted = 1;
+ }
+ 
+-/*
+- * Remove a waiter from a lock
+- *
+- * Must be called with lock->wait_lock held
+- */
+-static void remove_waiter(struct rt_mutex *lock,
+-			  struct rt_mutex_waiter *waiter)
++static void deboost_lock(struct rt_mutex *lock,
++			 struct rt_mutex_waiter *waiter,
++			 struct task_struct *p)
+ {
+-	struct task_struct *p = waiter->task;
++	BUG_ON(!waiter->pi.boosted);
+ 
+-	plist_del(&waiter->list_entry, &lock->wait_list);
+-	waiter->task = NULL;
++	waiter->pi.boosted = 0;
++	lock->pi.boosters--;
+ 
+ 	/*
+ 	 * We can stop boosting the owner if there are no more waiters
+ 	 */
+-	if (!rt_mutex_has_waiters(lock)) {
++	if (!lock->pi.boosters) {
+ 		struct task_struct *owner = rt_mutex_owner(lock);
+ 		rtmutex_pi_owner(lock, owner, 0);
+ 	}
+@@ -446,6 +437,51 @@ static void remove_waiter(struct rt_mutex *lock,
+ }
+ 
+ /*
++ * This must be called with lock->wait_lock held.
++ */
++static void _add_waiter(struct rt_mutex *lock,
++			struct rt_mutex_waiter *waiter)
++{
++	waiter->task = current;
++	waiter->lock = lock;
++	waiter->pi.prio = current->prio;
++	plist_node_init(&waiter->list_entry, waiter->pi.prio);
++	plist_add(&waiter->list_entry, &lock->wait_list);
++}
++
++static int add_waiter(struct rt_mutex *lock,
++		      struct rt_mutex_waiter *waiter,
++		      unsigned long *flags)
++{
++	_add_waiter(lock, waiter);
++
++	boost_lock(lock, waiter);
++
++	spin_unlock_irqrestore(&lock->wait_lock, *flags);
++	task_pi_update(current, 0);
++	spin_lock_irqsave(&lock->wait_lock, *flags);
++
++	return 0;
++}
++
++/*
++ * Remove a waiter from a lock
++ *
++ * Must be called with lock->wait_lock held
++ */
++static void remove_waiter(struct rt_mutex *lock,
++			   struct rt_mutex_waiter *waiter)
++{
++	struct task_struct *p = waiter->task;
++
++	plist_del(&waiter->list_entry, &lock->wait_list);
++	waiter->task = NULL;
++
++	if (waiter->pi.boosted)
++		deboost_lock(lock, waiter, p);
++}
++
++/*
+  * Wake up the next waiter on the lock.
+  *
+  * Remove the top waiter from the current tasks waiter list and from
+@@ -558,6 +594,24 @@ static int adaptive_wait(struct rt_mutex_waiter *waiter,
+ 		if (orig_owner != rt_mutex_owner(waiter->lock))
+ 			return 0;
+ 
++		/* Special handling for when we are not in pi-boost mode */
++		if (!waiter->pi.boosted) {
++			/*
++			 * Are we higher priority than the owner?  If so
++			 * we should bail out immediately so that we can
++			 * pi boost them.
++			 */
++			if (current->prio < orig_owner->prio)
++				return 0;
++
++			/*
++			 * Did our priority change? If so, we need to
++			 * requeue our position in the list
++			 */
++			if (waiter->pi.prio != current->prio)
++				return 0;
++		}
++
+ 		/* Owner went to bed, so should we */
+ 		if (!task_is_current(orig_owner))
+ 			return 1;
+@@ -599,6 +653,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	unsigned long saved_state, state, flags;
+ 	struct task_struct *orig_owner;
+ 	int missed = 0;
++	int boosted = 0;
+ 
+ 	init_waiter(&waiter);
+ 
+@@ -631,26 +686,54 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 		}
+ 		missed = 1;
+ 
++		orig_owner = rt_mutex_owner(lock);
++
+ 		/*
+ 		 * waiter.task is NULL the first time we come here and
+ 		 * when we have been woken up by the previous owner
+ 		 * but the lock got stolen by an higher prio task.
+ 		 */
+-		if (!waiter.task) {
+-			add_waiter(lock, &waiter, &flags);
++		if (!waiter.task)
++			_add_waiter(lock, &waiter);
++
++		/*
++		 * We only need to pi-boost the owner if they are lower
++		 * priority than us.  We dont care if this is racy
++		 * against priority changes as we will break out of
++		 * the adaptive spin anytime any priority changes occur
++		 * without boosting enabled.
++		 */
++		if (!waiter.pi.boosted && current->prio < orig_owner->prio) {
++			boost_lock(lock, &waiter);
++			boosted = 1;
++
++			spin_unlock_irqrestore(&lock->wait_lock, flags);
++			task_pi_update(current, 0);
++			spin_lock_irqsave(&lock->wait_lock, flags);
++
+ 			/* Wakeup during boost ? */
+ 			if (unlikely(!waiter.task))
+ 				continue;
+ 		}
+ 
+ 		/*
++		 * If we are not currently pi-boosting the lock, we have to
++		 * monitor whether our priority changed since the last
++		 * time it was recorded and requeue ourselves if it moves.
++		 */
++		if (!waiter.pi.boosted && waiter.pi.prio != current->prio) {
++			waiter.pi.prio = current->prio;
++
++			requeue_waiter(lock, &waiter);
++		}
++
++		/*
+ 		 * Prevent schedule() to drop BKL, while waiting for
+ 		 * the lock ! We restore lock_depth when we come back.
+ 		 */
+ 		saved_flags = current->flags & PF_NOSCHED;
+ 		current->lock_depth = -1;
+ 		current->flags &= ~PF_NOSCHED;
+-		orig_owner = rt_mutex_owner(lock);
+ 		get_task_struct(orig_owner);
+ 		spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+@@ -664,6 +747,24 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 			 * barrier which we rely upon to ensure current->state
+ 			 * is visible before we test waiter.task.
+ 			 */
++			if (waiter.task && !waiter.pi.boosted) {
++				spin_lock_irqsave(&lock->wait_lock, flags);
++
++				/*
++				 * We get here if we have not yet boosted
++				 * the lock, yet we are going to sleep. If
++				 * we are still pending (waiter.task != 0),
++				 * then go ahead and boost them now
++				 */
++				if (waiter.task) {
++					boost_lock(lock, &waiter);
++					boosted = 1;
++				}
++
++				spin_unlock_irqrestore(&lock->wait_lock, flags);
++				task_pi_update(current, 0);
++			}
++
+ 			if (waiter.task)
+ 				schedule_rt_mutex(lock);
+ 		} else
+@@ -696,7 +797,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+ 	/* Undo any pi boosting, if necessary */
+-	task_pi_update(current, 0);
++	if (boosted)
++		task_pi_update(current, 0);
+ 
+ 	debug_rt_mutex_free_waiter(&waiter);
+ }
+@@ -708,6 +810,7 @@ static void  noinline __sched
+ rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ {
+ 	unsigned long flags;
++	int deboost = 0;
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 
+@@ -721,12 +824,16 @@ rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ 		return;
+ 	}
+ 
++	if (lock->pi.boosters)
++		deboost = 1;
++
+ 	wakeup_next_waiter(lock, 1);
+ 
+ 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+-	/* Undo pi boosting when necessary */
+-	task_pi_update(current, 0);
++	if (deboost)
++		/* Undo pi boosting when necessary */
++		task_pi_update(current, 0);
+ }
+ 
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
+index 7bf32d0..34e2381 100644
+--- a/kernel/rtmutex_common.h
++++ b/kernel/rtmutex_common.h
+@@ -55,6 +55,7 @@ struct rt_mutex_waiter {
+ 	struct {
+ 		struct pi_sink   snk;
+ 		int              prio;
++		int              boosted;
+ 	} pi;
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	unsigned long		ip;
+
