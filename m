@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH RT RFC 0/7] Priority Inheritance enhancements
-Date: Fri, 01 Aug 2008 15:16:47 -0600
-Message-ID: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
+Subject: [PATCH RT RFC 3/7] rtmutex: formally initialize the rt_mutex_waiters
+Date: Fri, 01 Aug 2008 15:17:02 -0600
+Message-ID: <20080801211702.3469.18381.stgit@lsg.lsg.lab.novell.com>
+References: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,64 +11,94 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
 	tglx@linutronix.de, rosted@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:46083 "EHLO
+Received: from lsg.lsg.lab.novell.com ([151.155.230.1]:46110 "EHLO
 	lsg.lsg.lab.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760296AbYHAVQs (ORCPT
+	with ESMTP id S1762396AbYHAVRE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Aug 2008 17:16:48 -0400
+	Fri, 1 Aug 2008 17:17:04 -0400
+In-Reply-To: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-** RFC for PREEMPT_RT branch, 26-rt1 **
+We will be adding more logic to rt_mutex_waiters and therefore lets
+centralize the initialization to make this easier going forward.
 
-Hi All,
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-The following series applies to 26-rt1 as a request-for-comment on a 
-new approach to priority-inheritance (PI), as well as some performance
-enhancements to take advantage of those new approaches.  This yields at
-least a 10-15% improvement for diskio on my 4-way x86_64 system.  An
-8-way system saw as much as 700% improvement during early testing, but
-I have not recently reconfirmed this number.
+ kernel/rtmutex.c |   26 ++++++++++++++------------
+ 1 files changed, 14 insertions(+), 12 deletions(-)
 
-Motivation for series:
-
-I have several ideas on things we can do to enhance and improve kernel
-performance with respect to PREEMPT_RT
-
-1) For instance, it would be nice to support priority queuing and
-   (at least positional) inheritance in the wait-queue infrastructure.
-
-2) Reducing overhead in the real-time locks (sleepable replacements for
-   spinlock_t in PREEMPT_RT) to try to approach the minimal overhead
-   if their non-rt equivalent.  We have determined via instrumentation
-   that one area of major overhead is the pi-boost logic.
-
-However, today the PI code is entwined in the rtmutex infrastructure,
-yet we require more flexibility if we want to address (1) and (2)
-above.  Therefore the first step is to separate the PI code away from
-rtmutex into its own library (libpi). This is covered in patches 1-6.
-
-(I realize patch #6 is a little hard to review since I removed and added
-a lot of code that the unified diff is all mashing together...I will try
-to find a way to make this more readable).
-
-Patch 7 is the first real consumer of the libpi logic to try to enhance
-performance.  It accomplishes this by deferring pi-boosting a lock
-owner unless it is absolutely necessary.  Since instrumentation
-shows that the majority of locks are acquired either via the fast-path,
-or via the adaptive-spin path, we can eliminate most of the pi-overhead
-with this technique.  This yields a measurable performance gain (at least
-10% for workloads with heavy lock contention was observed in our lab).
-
-For your convenience, you can also find these patches in a git tree here:
-
-git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git pi-rework
-
-We have not yet completed the work on the pi-waitqueues or any of the other
-related pi enhancements.  Those will be coming in a follow-on announcement.
-
-Feedback/comments welcome!
-
-Regards,
--Greg
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 7d11380..12de859 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -805,6 +805,15 @@ static int adaptive_wait(struct rt_mutex_waiter *waiter,
+ }
+ #endif
+ 
++static void init_waiter(struct rt_mutex_waiter *waiter)
++{
++	memset(waiter, 0, sizeof(*waiter));
++
++	debug_rt_mutex_init_waiter(waiter);
++	waiter->task = NULL;
++	waiter->write_lock = 0;
++}
++
+ /*
+  * Slow path lock function spin_lock style: this variant is very
+  * careful not to miss any non-lock wakeups.
+@@ -823,9 +832,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	struct task_struct *orig_owner;
+ 	int missed = 0;
+ 
+-	debug_rt_mutex_init_waiter(&waiter);
+-	waiter.task = NULL;
+-	waiter.write_lock = 0;
++	init_waiter(&waiter);
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	init_lists(lock);
+@@ -1324,6 +1331,8 @@ rt_read_slowlock(struct rw_mutex *rwm, int mtx)
+ 	int saved_lock_depth = -1;
+ 	unsigned long saved_state = -1, state, flags;
+ 
++	init_waiter(&waiter);
++
+ 	spin_lock_irqsave(&mutex->wait_lock, flags);
+ 	init_rw_lists(rwm);
+ 
+@@ -1335,10 +1344,6 @@ rt_read_slowlock(struct rw_mutex *rwm, int mtx)
+ 
+ 	/* Owner is a writer (or a blocked writer). Block on the lock */
+ 
+-	debug_rt_mutex_init_waiter(&waiter);
+-	waiter.task = NULL;
+-	waiter.write_lock = 0;
+-
+ 	if (mtx) {
+ 		/*
+ 		 * We drop the BKL here before we go into the wait loop to avoid a
+@@ -1538,8 +1543,7 @@ rt_write_slowlock(struct rw_mutex *rwm, int mtx)
+ 	int saved_lock_depth = -1;
+ 	unsigned long flags, saved_state = -1, state;
+ 
+-	debug_rt_mutex_init_waiter(&waiter);
+-	waiter.task = NULL;
++	init_waiter(&waiter);
+ 
+ 	/* we do PI different for writers that are blocked */
+ 	waiter.write_lock = 1;
+@@ -2270,9 +2274,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	struct rt_mutex_waiter waiter;
+ 	unsigned long flags;
+ 
+-	debug_rt_mutex_init_waiter(&waiter);
+-	waiter.task = NULL;
+-	waiter.write_lock = 0;
++	init_waiter(&waiter);
+ 
+ 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	init_lists(lock);
 
