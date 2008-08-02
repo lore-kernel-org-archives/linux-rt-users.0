@@ -1,34 +1,143 @@
-From: "Javier Sanz" <jsanza@gmail.com>
-Subject: newbie, rt programming and concepts books, training
-Date: Sat, 2 Aug 2008 11:27:36 +0200
-Message-ID: <a3d4028e0808020227m67c58260w110b49d3044145b1@mail.gmail.com>
+From: Alejandro Mery <amery@opensde.org>
+Subject: Re: newbie, rt programming and concepts books, training
+Date: Sat, 02 Aug 2008 16:07:45 +0200
+Message-ID: <48946A31.2050800@opensde.org>
+References: <a3d4028e0808020227m67c58260w110b49d3044145b1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg=sha1; boundary="------------ms080905090002020008070005"
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.176]:44956 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751844AbYHBJ1h (ORCPT
+Received: from yoda.expert-erp.net ([88.198.9.201]:50665 "EHLO
+	mail.expert-erp.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751057AbYHBOOf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 2 Aug 2008 05:27:37 -0400
-Received: by wa-out-1112.google.com with SMTP id j37so901490waf.23
-        for <linux-rt-users@vger.kernel.org>; Sat, 02 Aug 2008 02:27:36 -0700 (PDT)
-Content-Disposition: inline
+	Sat, 2 Aug 2008 10:14:35 -0400
+Received: from 116.pool85-57-67.dynamic.orange.es (HELO [192.168.6.57]) (amery@opensde.net@[85.57.67.116])
+          (envelope-sender <amery@opensde.org>)
+          by mail.expert-erp.net (qmail-ldap-1.03) with AES256-SHA encrypted SMTP
+          for <linux-rt-users@vger.kernel.org>; 2 Aug 2008 14:12:09 -0000
+In-Reply-To: <a3d4028e0808020227m67c58260w110b49d3044145b1@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+This is a cryptographically signed message in MIME format.
 
-What books can i read to learn about realtime programming and
-fundamental concepts, for example like how multiples cpus works (SMP)
-and similars?
+--------------ms080905090002020008070005
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-I've only have found this book :
-UNIX(R) Systems for Modern Architectures: Symmetric Multiprocessing
-and Caching for Kernel Programmers (Addison-Wesley Professional
-Computing Series)
-and i think is a beginning to understanding a basic about operating
-system concepts ...
+Javier Sanz wrote:
+> Hello,
+>
+> What books can i read to learn about realtime programming and
+> fundamental concepts, for example like how multiples cpus works (SMP)
+> and similars?
+>
+>   
+from another newbie:
 
-Thank you
+* http://www.linuxjournal.com/article/9361"SMP and Embedded Real Time"
+* Understanding the Linux Kernel, Third Edition by Daniel Bovet
+* POSIX.4 Programmers Guide: Programming for the Real World by Bill
+Gallmeister
+
+--------------ms080905090002020008070005
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIQPDCC
+BRQwggL8oAMCAQICAlcFMA0GCSqGSIb3DQEBBQUAMFQxFDASBgNVBAoTC0NBY2VydCBJbmMu
+MR4wHAYDVQQLExVodHRwOi8vd3d3LkNBY2VydC5vcmcxHDAaBgNVBAMTE0NBY2VydCBDbGFz
+cyAzIFJvb3QwHhcNMDgwNjEyMTU1MzU4WhcNMTAwNjEyMTU1MzU4WjBGMSIwIAYDVQQDExlB
+bGVqYW5kcm8gTWVyeSBQZWxsZWdyaW5pMSAwHgYJKoZIhvcNAQkBFhFhbWVyeUBvcGVuc2Rl
+Lm9yZzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN/9qsONmtqxRdR/Lj7BbEcz
+tlsNIJyOR1a9lgGy+dMDmMP5vwmnGLpDGIUw3gUd2a8oeJwWGx7pH/ALe49z0CB2/R9Ivfl0
++e/51BgaXBzbfP0yKC9BB7++OZPF2KHbNn4Y3h6rScj1hodvavwkCZmg8PARE2yPe5vobUJ6
+8P/VA14IxJrSsAp7gE9MQzrmmiFa/aSDtb80XqJCn7tC84jtjvS6rf9of3XmIatAUt0qZ67m
+EdViW13uS2nEBWn7Aub6FRJs7EicNYyhOUy2MmrrQ749xCf01wQsNhHC9tVByDdhjTDRe+WX
+n0B4OePJ6u7gq/CKGqQGBt/MegEhq80CAwEAAaOB/TCB+jAMBgNVHRMBAf8EAjAAMFYGCWCG
+SAGG+EIBDQRJFkdUbyBnZXQgeW91ciBvd24gY2VydGlmaWNhdGUgZm9yIEZSRUUgaGVhZCBv
+dmVyIHRvIGh0dHA6Ly93d3cuQ0FjZXJ0Lm9yZzBABgNVHSUEOTA3BggrBgEFBQcDBAYIKwYB
+BQUHAwIGCisGAQQBgjcKAwQGCisGAQQBgjcKAwMGCWCGSAGG+EIEATAyBggrBgEFBQcBAQQm
+MCQwIgYIKwYBBQUHMAGGFmh0dHA6Ly9vY3NwLmNhY2VydC5vcmcwHAYDVR0RBBUwE4ERYW1l
+cnlAb3BlbnNkZS5vcmcwDQYJKoZIhvcNAQEFBQADggIBAJIneO6q7FI+JtqFQn9ut97rgjOH
+OCrElGthSBabgVmh7JHM4cmiK0EkLvuOPlho2DnbDvqPdjtt4j7FJSrvqwdj+WM2zlSm4NWZ
+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
+Q0EgQ2VydCBTaWduaW5nIEF1dGhvcml0eTEhMB8GCSqGSIb3DQEJARYSc3VwcG9ydEBjYWNl
+cnQub3JnMB4XDTA1MTAxNDA3MzY1NVoXDTMzMDMyODA3MzY1NVowVDEUMBIGA1UEChMLQ0Fj
+ZXJ0IEluYy4xHjAcBgNVBAsTFWh0dHA6Ly93d3cuQ0FjZXJ0Lm9yZzEcMBoGA1UEAxMTQ0Fj
+ZXJ0IENsYXNzIDMgUm9vdDCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAKtJNRFI
+fNImflOUz0Op3SjXQiqL84d4GVh8D57aiX3h++tykA10oZZkq5+gJJlz2uJVdscXe/UErEa4
+w75/ZI0QbCTzYZzA8pD6Ueb1aQFjww9W4kpCz+JEjCUoqMV5CX1GuYrz6fM0KQhF5Byfy5QE
+HIGoFLOYZcRD7E6CjQnRvapbjZLQ7N6QxX8KwuPr5jFaXnQ+lzNZ6MMDPWAzv/fRb0fEze5i
+g1JuLgiapNkVGJGmhZJHsK5I6223IeyFGmhyNav/8BBdwPSUp2rVO5J+TJAFfpPBLIukjmJ0
+FXFuC3ED6q8VOJrU0gVyb4z5K+taciX5OUbjchs+BMNkJyIQKopPWKcDrb60LhPtXapI19V9
+1Cp7XPpGBFDkzA5CW4zt2/LP/JaT4NsRNlRiNDiPDGCbO5dWOK3z0luLoFvqTpa4fNfVoIZw
+QNORKbeiPK31jLvPGpKK5DR7wNhsX+kKwsOnIJpa3yxdUly6R9Wb7yQocDggL9V/KcCyQQNo
+kszgnMyXS0XvOhAKq3A6mJVwrTWx6oUrpByAITGprmB6gCZIALgBwJNjVSKRPFbnr9s6JfOP
+MVTqJouBWfmh0VMRxXudA/Z0EeBtsSw/LIaRmXGapneLNGDRFLQsrJ2vjBDTn8Rq+G8T/HNZ
+92ZCdB6K4/jc0m+YnMtHmJVABfvpAgMBAAGjgb8wgbwwDwYDVR0TAQH/BAUwAwEB/zBdBggr
+BgEFBQcBAQRRME8wIwYIKwYBBQUHMAGGF2h0dHA6Ly9vY3NwLkNBY2VydC5vcmcvMCgGCCsG
+AQUFBzAChhxodHRwOi8vd3d3LkNBY2VydC5vcmcvY2EuY3J0MEoGA1UdIARDMEEwPwYIKwYB
+BAGBkEowMzAxBggrBgEFBQcCARYlaHR0cDovL3d3dy5DQWNlcnQub3JnL2luZGV4LnBocD9p
+ZD0xMDANBgkqhkiG9w0BAQQFAAOCAgEAfwiIodoaUEnaifuhCHLzivcexDq0eVsgMLFF3sJd
+02Vp8cJdVFQ8hV+5e0KRwpn9G1Gbq0aloRBTnm2IrHNuLDOm8PSe4HXBPohFqeFmQ/5WWtF6
+QXj3QNpKOvELW6W7FgbmwueTuYVNl0+xHjhDgO+bDYzvuKdgAIdXfR5EHMsj75s8mZ2vtSkc
+RXkWlk0nbfEcbMPCVWSzvBTi86QfHjL8JxUFz90urj6CYXvwIRAY9kTqUzn53NCaIODGu+C7
+Wk/EmcgHvbW9otsuYg1CNEG8/4uK9VEiqogwAOKw1Ly+ZbrVA1d5m+jcyE34UO2RpVIooqz7
+Nlg+6ZQrkVCHG9Ze1ozM9w8QDFJO0BZh5eUKbL8Xx3JGV5yY9WxgY3pvXrlOL8i5ubtqhbyY
+De35PpeENJSuAK+h5eeSbk698+LZFItc0usBbKAXpS0Q65x6Sr297s797SJAq3A4iPUKh2rC
+qwVgyUgF2lPB3kR3arPzPDztgLymOEopJF/+WTubJXpWYwBkuV2kYn1XNk+tg+8fklOgjndX
+3eVhET0jAJBMPPqjYJMEo6819g5qj09KYKeFBWxGoY/0x3bjoVlX93GyxG4UXG1tQWbfG5Ox
+1ADD7svPPD0hgKlfY2X83eBfpPQr8IVxQdRnJfsasZeu1pmCE0HSbqUbmSeA5wupqAAxggMb
+MIIDFwIBATBaMFQxFDASBgNVBAoTC0NBY2VydCBJbmMuMR4wHAYDVQQLExVodHRwOi8vd3d3
+LkNBY2VydC5vcmcxHDAaBgNVBAMTE0NBY2VydCBDbGFzcyAzIFJvb3QCAlcFMAkGBSsOAwIa
+BQCgggGWMBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTA4MDgw
+MjE0MDc0NVowIwYJKoZIhvcNAQkEMRYEFBmb/SEZh/SOMwwlXtcXzKZ5GDbgMF8GCSqGSIb3
+DQEJDzFSMFAwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggq
+hkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDBpBgkrBgEEAYI3EAQxXDBaMFQx
+FDASBgNVBAoTC0NBY2VydCBJbmMuMR4wHAYDVQQLExVodHRwOi8vd3d3LkNBY2VydC5vcmcx
+HDAaBgNVBAMTE0NBY2VydCBDbGFzcyAzIFJvb3QCAlcFMGsGCyqGSIb3DQEJEAILMVygWjBU
+MRQwEgYDVQQKEwtDQWNlcnQgSW5jLjEeMBwGA1UECxMVaHR0cDovL3d3dy5DQWNlcnQub3Jn
+MRwwGgYDVQQDExNDQWNlcnQgQ2xhc3MgMyBSb290AgJXBTANBgkqhkiG9w0BAQEFAASCAQA5
+EhFi/wtenk3CHTCWFHAPzZkOCD9sdQi1hIu/V6BrUNCdyMi19DW7lJyt6dEgruq2Ql6auv6t
+NxtTSCw/oJgWipvv55fkBKZ3EPhNX2ukKooD+26zJj7jKZ3xbTDYEtCmA60MCg0tBtgT/HTs
+eX+nbjKOBjpOOCq8m+VkR0o2sEmvfYl85oEa7UpTZbLRlTJNj+IKboEtbKqWWQSgsI9tSaHF
+GRV35pfwBRNwqE+seRaVkaQPH3r3fV6cqubGnrOZvgfBcRqCGNNY/e1d+d8PnjyOwuPhMhUH
+Tzi2izb2Dm91KmOBOZAXENK33/9lH16MOUHFHxx8Cfkywit1zh+HAAAAAAAA
+--------------ms080905090002020008070005--
