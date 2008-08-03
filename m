@@ -1,79 +1,42 @@
-From: "Justin Mattock" <justinmattock@gmail.com>
-Subject: Re: Can't boot 2.6.26-rt1
-Date: Sat, 2 Aug 2008 16:29:37 -0700
-Message-ID: <dd18b0c30808021629y374d0e96t1f8f8d063b1872d1@mail.gmail.com>
-References: <520f0cf10808021416n286855f9s126d416230aee249@mail.gmail.com>
-	 <alpine.DEB.1.10.0808021731010.15392@gandalf.stny.rr.com>
-	 <520f0cf10808021524j37497b0bpaf8188f77154f6d3@mail.gmail.com>
+From: Matthew Smith <matt@smiffytech.com>
+Subject: Re: 2.6.25.8-rt7 Bugs
+Date: Mon, 04 Aug 2008 08:59:21 +0930
+Message-ID: <48963F51.6050605@smiffytech.com>
+References: <48928BE4.6030509@smiffytech.com> <4892AB69.1030603@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org,
-	LKML <linux-kernel@vger.kernel.org>,
-	"Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "John Kacur" <jkacur@gmail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from an-out-0708.google.com ([209.85.132.243]:18691 "EHLO
-	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751246AbYHBX3i (ORCPT
+Received: from prospero.kbc.net.au ([150.101.97.167]:44659 "EHLO
+	prospero.kbc.net.au" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758104AbYHCX3X (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 2 Aug 2008 19:29:38 -0400
-Received: by an-out-0708.google.com with SMTP id d40so243839and.103
-        for <linux-rt-users@vger.kernel.org>; Sat, 02 Aug 2008 16:29:37 -0700 (PDT)
-In-Reply-To: <520f0cf10808021524j37497b0bpaf8188f77154f6d3@mail.gmail.com>
-Content-Disposition: inline
+	Sun, 3 Aug 2008 19:29:23 -0400
+Received: from [10.10.10.212] (brutus_ii [10.10.10.212])
+	by prospero.kbc.net.au (Postfix) with ESMTP id 1D7EBBF400B
+	for <linux-rt-users@vger.kernel.org>; Mon,  4 Aug 2008 08:59:21 +0930 (CST)
+In-Reply-To: <4892AB69.1030603@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Aug 2, 2008 at 3:24 PM, John Kacur <jkacur@gmail.com> wrote:
-> On Sat, Aug 2, 2008 at 11:31 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
->>
->> On Sat, 2 Aug 2008, John Kacur wrote:
->>
->>> VFS: Cannot open root device
->>
->> Do you use an initrd boot disk? If so make sure the initrd is correct.
->> Sometimes it is best to first get a 2.6.26 kernel booting without initrd
->> and then use that same config on the -rt kernel.
->>
->> -- Steve
->
-> Thanks Justin and Steve for the hints - it turned out to be simple,
-> somehow the make install scripts were mangling the location of the
-> initrd, a quick edit to grub and everything is working again.
-> John
->
->>
->>> "disk/by-id/scsi-SATA_WDC_WD1600BEVS-WD-WXEZ07100576-part 7" or
->>> unknown block(0,0)
->>> Please append a correct "root = " boot option; here are the available
->>> partitions.
->>> Pid:1,comm:swapper Not tainted
->>> 2.6.26-rt1-default#1linux-rt-users@vger.kernel.org
->>> [< ffff ffff 8046 c149 >] rt_mutex_lock+0x22/0x50
->>> [< ffff ffff 8046 cae6 >] _mutex_unlock+0xe/0x10
->>> [< ffff ffff 8020 cb00 >] exit_intr+0x10/0x1e
->>> [< ffff ffff 8028 633d >] trace_hardirqs_on_caller+0x1e/0x133
->>> [< ffff ffff 8020 d608 >] child_rip+0xa/0x12
->>> [< ffff ffff 8020 cb69 >] restore_args+0x0/0x30
->>> [< ffff ffff 8020 d5fe >] child_rip+0x0/0x12
->>>
->>> preempt count 00000001
->>> 1-level deep critical section nesting
->>> [< ffff ffff 8047 43e2 >] .... panic +0x43/0x167
->>> [< ffff ffff 8073 6338 >] (<= mount_block_root+0x258/0x26f
->>>
->>
->>
->
+Quoth Carsten Emde at 2008-08-01 15:51...
+> <snip/> Can't you use 2.6.24.7-rt17? <snip/>
 
-Cool;
-yeah last week this happened as well
-to me, something so simple. causing me
-to run around freaking out.
-regards;
+Thanks to those who responded on this.  2.6.24.7-rt17 boots without all 
+the nasty messages, so I will proceed with this.
+
+It hasn't got rid of the Jack xruns (I'm actually getting more now), but 
+I think that this is probably one to bounce back to the Linux Audio 
+Users list.
+
+Cheers
+
+M
 
 -- 
-Justin P. Mattock
+Matthew Smith
+Smiffytech - Technology Consulting & Web Application Development
+Business: http://www.smiffytech.com/
+Personal: http://www.smiffysplace.com/
+LinkedIn: http://www.linkedin.com/in/smiffy
