@@ -1,542 +1,108 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH RT RFC 7/7] rtmutex: pi-boost locks as late as possible
-Date: Mon, 04 Aug 2008 09:21:17 -0400
-Message-ID: <4897024D.9010400@novell.com>
-References: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com> <20080801211722.3469.55953.stgit@lsg.lsg.lab.novell.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig0A03A61D18158213FB968CFE"
-Cc: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
-	tglx@linutronix.de, rosted@goodmis.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	gregory.haskins@gmail.com
-To: Gregory Haskins <ghaskins@novell.com>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
+Subject: [PATCH 0/3 V2] powerpc - Make the irq reverse mapping tree lockless
+Date: Mon,  4 Aug 2008 13:08:41 +0200
+Message-ID: <1217848124-3719-1-git-send-email-sebastien.dugue@bull.net>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	benh@kernel.crashing.org, paulus@samba.org, michael@ellerman.id.au,
+	jean-pierre.dion@bull.net, gilles.carry@ext.bull.net,
+	tinytim@us.ibm.com, tglx@linutronix.de, rostedt@goodmis.org
+To: linuxppc-dev@ozlabs.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:53388 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752529AbYHDNXY (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:42191 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753869AbYHDN6E (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Aug 2008 09:23:24 -0400
-In-Reply-To: <20080801211722.3469.55953.stgit@lsg.lsg.lab.novell.com>
+	Mon, 4 Aug 2008 09:58:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig0A03A61D18158213FB968CFE
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
-
-Gregory Haskins wrote:
-> Adaptive-locking technology often times acquires the lock by
-> spinning on a running-owner instead of sleeping.  It is unecessary
-> to go through pi-boosting if the owner is of equal or (logically)
-> lower priority. Therefore, we can save some significant overhead
-> by deferring the boost until absolutely necessary.  This has shown
-> to improve overall performance in PREEMPT_RT
->
-> Special thanks to Peter Morreale for suggesting the optimization to
-> only consider skipping the boost if the owner is >=3D to current
->
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> CC: Peter Morreale <pmorreale@novell.com>
->  =20
-
-I received feedback that this prologue was too vague to accurately=20
-describe what this patch does and why it is not broken to use this=20
-optimization.  Therefore, here is the new prologue:
-
------------------------
-From: Gregory Haskins <ghaskins@novell.com>
-
-rtmutex: pi-boost locks as late as possible
-
-PREEMPT_RT replaces most spinlock_t instances with a preemptible
-real-time lock that supports priority inheritance.  An uncontended
-(fastpath) acquisition of this lock has no more overhead than
-its non-rt spinlock_t counterpart.  However, the contended case
-has considerably more overhead so that the lock can maintain
-proper priority queue order and support pi-boosting of the lock
-owner, yet remaining fully preemptible.
-
-Instrumentation shows that the majority of acquisitions under most
-workloads falls either into the fastpath category, or the adaptive
-spin category within the slowpath.  The necessity to pi-boost a
-lock-owner should be sufficiently rare, yet the slow-path path
-blindly incurs this overhead in 100% of contentions.
-
-Therefore, this patch intends to capitalize on this observation
-in order to reduce overhead and improve acquisition throughput.
-It is important to note that real-time latency is still treated
-as a higher order constraint than throughput, so the full
-pi-protocol is observed using new carefully constructed rules
-around the old concepts.
-
-1) We check the priority of the owner relative to the waiter on
-   each spin of the lock (if we are not boosted already).  If the
-   owner's effective priority is logically less than the waiters
-   priority, we must boost them.
-
-2) We check the priority of ourselves against our current queue
-   position on the waiters-list (if we are not boosted already).
-   If our priority was changed, we need to re-queue ourselves to
-   update our position.
-
-3) We break out of the adaptive-spin if either of the above
-   conditions (1), (2) change so that we can re-evaluate the
-   lock conditions.
-
-4) We must enter pi-boost mode if, at any time, we decide to
-   voluntarily preempt since we are losing our ability to
-   dynamically process the conditions above.
-
-Note: We still fully support priority inheritance with this
-protocol, even if we defer the low-level calls to adjust priority.
-The difference is really in terms of being a pro-active protocol
-(boost on entry), verses a reactive protocol (boost when
-necessary).  The upside to the latter is that we don't take a
-penalty for pi when it is not necessary.  The downside is that we
-technically leave the owner exposed to getting preempted, even if
-our waiter is the highest priority task in the system.  When this
-happens, the owner would be immediately boosted (because we would
-hit the "oncpu" condition, and subsequently follow the voluntary
-preempt path which boosts the owner).  Therefore, inversion is
-fully prevented, but we have the extra latency of the
-preempt/boost/wakeup that could have been avoided in the proactive
-model.
-
-However, the design of the algorithm described above constrains the
-probability of this phenomenon occurring to setscheduler()
-operations. Since rt-locks do not support being interrupted by
-signals or timeouts, waiters only depart via the acquisition path.
-And while acquisitions do deboost the owner, the owner also
-changes simultaneously, rending the deboost moot relative to the
-other waiters.
-
-What this all means is that the downside to this implementation is
-that a high-priority waiter *may* see an extra latency (equivalent
-to roughly two wake-ups) if the owner has its priority reduced via
-setscheduler() while it holds the lock.  The penalty is
-deterministic, arguably small enough, and sufficiently rare that I
-do not believe it should be an issue.
-
-Note: If the concept of other exit paths are ever introduced in the
-future, simply adapting the condition to look at owner->normal_prio
-instead of owner->prio should once again constrain the limitation
-to setscheduler().
-
-Special thanks to Peter Morreale for suggesting the optimization to
-only consider skipping the boost if the owner is >=3D to current.
-
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Peter Morreale <pmorreale@novell.com>
 
 
-> ---
->
->  include/linux/rtmutex.h |    1=20
->  kernel/rtmutex.c        |  195 ++++++++++++++++++++++++++++++++++++---=
---------
->  kernel/rtmutex_common.h |    1=20
->  3 files changed, 153 insertions(+), 44 deletions(-)
->
-> diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
-> index d984244..1d98107 100644
-> --- a/include/linux/rtmutex.h
-> +++ b/include/linux/rtmutex.h
-> @@ -33,6 +33,7 @@ struct rt_mutex {
->  		struct pi_node   node;
->  		struct pi_sink   snk;
->  		int              prio;
-> +		int              boosters;
->  	} pi;
->  #ifdef CONFIG_DEBUG_RT_MUTEXES
->  	int			save_state;
-> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-> index 0f64298..de213ac 100644
-> --- a/kernel/rtmutex.c
-> +++ b/kernel/rtmutex.c
-> @@ -76,14 +76,15 @@ rt_mutex_set_owner(struct rt_mutex *lock, struct ta=
-sk_struct *owner,
->  {
->  	unsigned long val =3D (unsigned long)owner | mask;
-> =20
-> -	if (rt_mutex_has_waiters(lock)) {
-> +	if (lock->pi.boosters) {
->  		struct task_struct *prev_owner =3D rt_mutex_owner(lock);
-> =20
->  		rtmutex_pi_owner(lock, prev_owner, 0);
->  		rtmutex_pi_owner(lock, owner, 1);
-> +	}
-> =20
-> +	if (rt_mutex_has_waiters(lock))
->  		val |=3D RT_MUTEX_HAS_WAITERS;
-> -	}
-> =20
->  	lock->owner =3D (struct task_struct *)val;
->  }
-> @@ -177,7 +178,7 @@ static inline int rtmutex_pi_update(struct pi_sink =
-*snk,
-> =20
->  	spin_lock_irqsave(&lock->wait_lock, iflags);
-> =20
-> -	if (rt_mutex_has_waiters(lock)) {
-> +	if (lock->pi.boosters) {
->  		owner =3D rt_mutex_owner(lock);
-> =20
->  		if (owner && owner !=3D RT_RW_READER) {
-> @@ -206,6 +207,7 @@ static void init_pi(struct rt_mutex *lock)
->  	pi_node_init(&lock->pi.node);
-> =20
->  	lock->pi.prio =3D MAX_PRIO;
-> +	lock->pi.boosters =3D 0;
->  	pi_source_init(&lock->pi.src, &lock->pi.prio);
->  	lock->pi.snk =3D rtmutex_pi_snk;
-> =20
-> @@ -303,6 +305,16 @@ static inline int try_to_take_rt_mutex(struct rt_m=
-utex *lock)
->  	return do_try_to_take_rt_mutex(lock, STEAL_NORMAL);
->  }
-> =20
-> +static inline void requeue_waiter(struct rt_mutex *lock,
-> +				  struct rt_mutex_waiter *waiter)
-> +{
-> +	BUG_ON(!waiter->task);
-> +
-> +	plist_del(&waiter->list_entry, &lock->wait_list);
-> +	plist_node_init(&waiter->list_entry, waiter->pi.prio);
-> +	plist_add(&waiter->list_entry, &lock->wait_list);
-> +}
-> +
->  /*
->   * These callbacks are invoked whenever a waiter has changed priority.=
+  Hi ,
 
->   * So we should requeue it within the lock->wait_list
-> @@ -343,11 +355,8 @@ static inline int rtmutex_waiter_pi_update(struct =
-pi_sink *snk,
->  	 * pi list.  Therefore, if waiter->pi.prio has changed since we
->  	 * queued ourselves, requeue it.
->  	 */
-> -	if (waiter->task && waiter->list_entry.prio !=3D waiter->pi.prio) {
-> -		plist_del(&waiter->list_entry, &lock->wait_list);
-> -		plist_node_init(&waiter->list_entry, waiter->pi.prio);
-> -		plist_add(&waiter->list_entry, &lock->wait_list);
-> -	}
-> +	if (waiter->task && waiter->list_entry.prio !=3D waiter->pi.prio)
-> +		requeue_waiter(lock, waiter);
-> =20
->  	spin_unlock_irqrestore(&lock->wait_lock, iflags);
-> =20
-> @@ -359,20 +368,9 @@ static struct pi_sink rtmutex_waiter_pi_snk =3D {
->      .update =3D rtmutex_waiter_pi_update,
->  };
-> =20
-> -/*
-> - * This must be called with lock->wait_lock held.
-> - */
-> -static int add_waiter(struct rt_mutex *lock,
-> -		      struct rt_mutex_waiter *waiter,
-> -		      unsigned long *flags)
-> +static void boost_lock(struct rt_mutex *lock,
-> +		       struct rt_mutex_waiter *waiter)
->  {
-> -	int has_waiters =3D rt_mutex_has_waiters(lock);
-> -
-> -	waiter->task =3D current;
-> -	waiter->lock =3D lock;
-> -	waiter->pi.prio =3D current->prio;
-> -	plist_node_init(&waiter->list_entry, waiter->pi.prio);
-> -	plist_add(&waiter->list_entry, &lock->wait_list);
->  	waiter->pi.snk =3D rtmutex_waiter_pi_snk;
-> =20
->  	/*
-> @@ -397,35 +395,28 @@ static int add_waiter(struct rt_mutex *lock,
->  	 * If we previously had no waiters, we are transitioning to
->  	 * a mode where we need to boost the owner
->  	 */
-> -	if (!has_waiters) {
-> +	if (!lock->pi.boosters) {
->  		struct task_struct *owner =3D rt_mutex_owner(lock);
->  		rtmutex_pi_owner(lock, owner, 1);
->  	}
-> =20
-> -	spin_unlock_irqrestore(&lock->wait_lock, *flags);
-> -	task_pi_update(current, 0);
-> -	spin_lock_irqsave(&lock->wait_lock, *flags);
-> -
-> -	return 0;
-> +	lock->pi.boosters++;
-> +	waiter->pi.boosted =3D 1;
->  }
-> =20
-> -/*
-> - * Remove a waiter from a lock
-> - *
-> - * Must be called with lock->wait_lock held
-> - */
-> -static void remove_waiter(struct rt_mutex *lock,
-> -			  struct rt_mutex_waiter *waiter)
-> +static void deboost_lock(struct rt_mutex *lock,
-> +			 struct rt_mutex_waiter *waiter,
-> +			 struct task_struct *p)
->  {
-> -	struct task_struct *p =3D waiter->task;
-> +	BUG_ON(!waiter->pi.boosted);
-> =20
-> -	plist_del(&waiter->list_entry, &lock->wait_list);
-> -	waiter->task =3D NULL;
-> +	waiter->pi.boosted =3D 0;
-> +	lock->pi.boosters--;
-> =20
->  	/*
->  	 * We can stop boosting the owner if there are no more waiters
->  	 */
-> -	if (!rt_mutex_has_waiters(lock)) {
-> +	if (!lock->pi.boosters) {
->  		struct task_struct *owner =3D rt_mutex_owner(lock);
->  		rtmutex_pi_owner(lock, owner, 0);
->  	}
-> @@ -446,6 +437,51 @@ static void remove_waiter(struct rt_mutex *lock,
->  }
-> =20
->  /*
-> + * This must be called with lock->wait_lock held.
-> + */
-> +static void _add_waiter(struct rt_mutex *lock,
-> +			struct rt_mutex_waiter *waiter)
-> +{
-> +	waiter->task =3D current;
-> +	waiter->lock =3D lock;
-> +	waiter->pi.prio =3D current->prio;
-> +	plist_node_init(&waiter->list_entry, waiter->pi.prio);
-> +	plist_add(&waiter->list_entry, &lock->wait_list);
-> +}
-> +
-> +static int add_waiter(struct rt_mutex *lock,
-> +		      struct rt_mutex_waiter *waiter,
-> +		      unsigned long *flags)
-> +{
-> +	_add_waiter(lock, waiter);
-> +
-> +	boost_lock(lock, waiter);
-> +
-> +	spin_unlock_irqrestore(&lock->wait_lock, *flags);
-> +	task_pi_update(current, 0);
-> +	spin_lock_irqsave(&lock->wait_lock, *flags);
-> +
-> +	return 0;
-> +}
-> +
-> +/*
-> + * Remove a waiter from a lock
-> + *
-> + * Must be called with lock->wait_lock held
-> + */
-> +static void remove_waiter(struct rt_mutex *lock,
-> +			   struct rt_mutex_waiter *waiter)
-> +{
-> +	struct task_struct *p =3D waiter->task;
-> +
-> +	plist_del(&waiter->list_entry, &lock->wait_list);
-> +	waiter->task =3D NULL;
-> +
-> +	if (waiter->pi.boosted)
-> +		deboost_lock(lock, waiter, p);
-> +}
-> +
-> +/*
->   * Wake up the next waiter on the lock.
->   *
->   * Remove the top waiter from the current tasks waiter list and from
-> @@ -558,6 +594,24 @@ static int adaptive_wait(struct rt_mutex_waiter *w=
-aiter,
->  		if (orig_owner !=3D rt_mutex_owner(waiter->lock))
->  			return 0;
-> =20
-> +		/* Special handling for when we are not in pi-boost mode */
-> +		if (!waiter->pi.boosted) {
-> +			/*
-> +			 * Are we higher priority than the owner?  If so
-> +			 * we should bail out immediately so that we can
-> +			 * pi boost them.
-> +			 */
-> +			if (current->prio < orig_owner->prio)
-> +				return 0;
-> +
-> +			/*
-> +			 * Did our priority change? If so, we need to
-> +			 * requeue our position in the list
-> +			 */
-> +			if (waiter->pi.prio !=3D current->prio)
-> +				return 0;
-> +		}
-> +
->  		/* Owner went to bed, so should we */
->  		if (!task_is_current(orig_owner))
->  			return 1;
-> @@ -599,6 +653,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
->  	unsigned long saved_state, state, flags;
->  	struct task_struct *orig_owner;
->  	int missed =3D 0;
-> +	int boosted =3D 0;
-> =20
->  	init_waiter(&waiter);
-> =20
-> @@ -631,26 +686,54 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
->  		}
->  		missed =3D 1;
-> =20
-> +		orig_owner =3D rt_mutex_owner(lock);
-> +
->  		/*
->  		 * waiter.task is NULL the first time we come here and
->  		 * when we have been woken up by the previous owner
->  		 * but the lock got stolen by an higher prio task.
->  		 */
-> -		if (!waiter.task) {
-> -			add_waiter(lock, &waiter, &flags);
-> +		if (!waiter.task)
-> +			_add_waiter(lock, &waiter);
-> +
-> +		/*
-> +		 * We only need to pi-boost the owner if they are lower
-> +		 * priority than us.  We dont care if this is racy
-> +		 * against priority changes as we will break out of
-> +		 * the adaptive spin anytime any priority changes occur
-> +		 * without boosting enabled.
-> +		 */
-> +		if (!waiter.pi.boosted && current->prio < orig_owner->prio) {
-> +			boost_lock(lock, &waiter);
-> +			boosted =3D 1;
-> +
-> +			spin_unlock_irqrestore(&lock->wait_lock, flags);
-> +			task_pi_update(current, 0);
-> +			spin_lock_irqsave(&lock->wait_lock, flags);
-> +
->  			/* Wakeup during boost ? */
->  			if (unlikely(!waiter.task))
->  				continue;
->  		}
-> =20
->  		/*
-> +		 * If we are not currently pi-boosting the lock, we have to
-> +		 * monitor whether our priority changed since the last
-> +		 * time it was recorded and requeue ourselves if it moves.
-> +		 */
-> +		if (!waiter.pi.boosted && waiter.pi.prio !=3D current->prio) {
-> +			waiter.pi.prio =3D current->prio;
-> +
-> +			requeue_waiter(lock, &waiter);
-> +		}
-> +
-> +		/*
->  		 * Prevent schedule() to drop BKL, while waiting for
->  		 * the lock ! We restore lock_depth when we come back.
->  		 */
->  		saved_flags =3D current->flags & PF_NOSCHED;
->  		current->lock_depth =3D -1;
->  		current->flags &=3D ~PF_NOSCHED;
-> -		orig_owner =3D rt_mutex_owner(lock);
->  		get_task_struct(orig_owner);
->  		spin_unlock_irqrestore(&lock->wait_lock, flags);
-> =20
-> @@ -664,6 +747,24 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
->  			 * barrier which we rely upon to ensure current->state
->  			 * is visible before we test waiter.task.
->  			 */
-> +			if (waiter.task && !waiter.pi.boosted) {
-> +				spin_lock_irqsave(&lock->wait_lock, flags);
-> +
-> +				/*
-> +				 * We get here if we have not yet boosted
-> +				 * the lock, yet we are going to sleep. If
-> +				 * we are still pending (waiter.task !=3D 0),
-> +				 * then go ahead and boost them now
-> +				 */
-> +				if (waiter.task) {
-> +					boost_lock(lock, &waiter);
-> +					boosted =3D 1;
-> +				}
-> +
-> +				spin_unlock_irqrestore(&lock->wait_lock, flags);
-> +				task_pi_update(current, 0);
-> +			}
-> +
->  			if (waiter.task)
->  				schedule_rt_mutex(lock);
->  		} else
-> @@ -696,7 +797,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
->  	spin_unlock_irqrestore(&lock->wait_lock, flags);
-> =20
->  	/* Undo any pi boosting, if necessary */
-> -	task_pi_update(current, 0);
-> +	if (boosted)
-> +		task_pi_update(current, 0);
-> =20
->  	debug_rt_mutex_free_waiter(&waiter);
->  }
-> @@ -708,6 +810,7 @@ static void  noinline __sched
->  rt_spin_lock_slowunlock(struct rt_mutex *lock)
->  {
->  	unsigned long flags;
-> +	int deboost =3D 0;
-> =20
->  	spin_lock_irqsave(&lock->wait_lock, flags);
-> =20
-> @@ -721,12 +824,16 @@ rt_spin_lock_slowunlock(struct rt_mutex *lock)
->  		return;
->  	}
-> =20
-> +	if (lock->pi.boosters)
-> +		deboost =3D 1;
-> +
->  	wakeup_next_waiter(lock, 1);
-> =20
->  	spin_unlock_irqrestore(&lock->wait_lock, flags);
-> =20
-> -	/* Undo pi boosting when necessary */
-> -	task_pi_update(current, 0);
-> +	if (deboost)
-> +		/* Undo pi boosting when necessary */
-> +		task_pi_update(current, 0);
->  }
-> =20
->  void __lockfunc rt_spin_lock(spinlock_t *lock)
-> diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
-> index 7bf32d0..34e2381 100644
-> --- a/kernel/rtmutex_common.h
-> +++ b/kernel/rtmutex_common.h
-> @@ -55,6 +55,7 @@ struct rt_mutex_waiter {
->  	struct {
->  		struct pi_sink   snk;
->  		int              prio;
-> +		int              boosted;
->  	} pi;
->  #ifdef CONFIG_DEBUG_RT_MUTEXES
->  	unsigned long		ip;
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->  =20
+  here is V2 of the patchset posted on July 31st updated from the comments
+made by Michael Ellerman.
+
+  V1 -> V2:
+
+  - Initialize the XICS radix tree in xics code and only for that irq_host
+    rather than doing it for all the hosts in the powerpc irq generic code
+    (although the hosts list only contain one entry at the moment).
+
+  - Add a comment in irq_radix_revmap_lookup() stating why it is safe to
+    perform a lookup even if the radix tree has not been initialized yet.
 
 
+  The goal of this patchset is to simplify the locking constraints on the radix
+tree used for IRQ reverse mapping on the pSeries machines and provide lockless
+access to this tree.
 
---------------enig0A03A61D18158213FB968CFE
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+  This also solves the following BUG under preempt-rt:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+BUG: sleeping function called from invalid context swapper(1) at kernel/rtmutex.c:739
+in_atomic():1 [00000002], irqs_disabled():1
+Call Trace:
+[c0000001e20f3340] [c000000000010370] .show_stack+0x70/0x1bc (unreliable)
+[c0000001e20f33f0] [c000000000049380] .__might_sleep+0x11c/0x138
+[c0000001e20f3470] [c0000000002a2f64] .__rt_spin_lock+0x3c/0x98
+[c0000001e20f34f0] [c0000000000c3f20] .kmem_cache_alloc+0x68/0x184
+[c0000001e20f3590] [c000000000193f3c] .radix_tree_node_alloc+0xf0/0x144
+[c0000001e20f3630] [c000000000195190] .radix_tree_insert+0x18c/0x2fc
+[c0000001e20f36f0] [c00000000000c710] .irq_radix_revmap+0x1a4/0x1e4
+[c0000001e20f37b0] [c00000000003b3f0] .xics_startup+0x30/0x54
+[c0000001e20f3840] [c00000000008b864] .setup_irq+0x26c/0x370
+[c0000001e20f38f0] [c00000000008ba68] .request_irq+0x100/0x158
+[c0000001e20f39a0] [c0000000001ee9c0] .hvc_open+0xb4/0x148
+[c0000001e20f3a40] [c0000000001d72ec] .tty_open+0x200/0x368
+[c0000001e20f3af0] [c0000000000ce928] .chrdev_open+0x1f4/0x25c
+[c0000001e20f3ba0] [c0000000000c8bf0] .__dentry_open+0x188/0x2c8
+[c0000001e20f3c50] [c0000000000c8dec] .do_filp_open+0x50/0x70
+[c0000001e20f3d70] [c0000000000c8e8c] .do_sys_open+0x80/0x148
+[c0000001e20f3e20] [c00000000000928c] .init_post+0x4c/0x100
+[c0000001e20f3ea0] [c0000000003c0e0c] .kernel_init+0x428/0x478
+[c0000001e20f3f90] [c000000000027448] .kernel_thread+0x4c/0x68
 
-iEYEARECAAYFAkiXAk0ACgkQlOSOBdgZUxlLQQCeO3RMV0CBKePAOXegFSKJHJMX
-+IsAnjQ9iWpdYWmtzgVeiIMi57uU73LS
-=Hxzh
------END PGP SIGNATURE-----
+  The root cause of this bug lies in the fact that the XICS interrupt
+controller uses a radix tree for its reverse irq mapping and that we cannot
+allocate the tree nodes (even GFP_ATOMIC) with preemption disabled.
 
---------------enig0A03A61D18158213FB968CFE--
+  In fact, we have 2 nested preemption disabling when we want to allocate
+a new node:
+
+  - setup_irq() does a spin_lock_irqsave() before calling xics_startup() which
+    then calls irq_radix_revmap() to insert a new node in the tree
+
+  - irq_radix_revmap() also does a spin_lock_irqsave() (in irq_radix_wrlock())
+    before the radix_tree_insert()
+
+  Also, if an IRQ gets registered before the tree is initialized (namely the
+IPI), it will be inserted into the tree in interrupt context once the tree
+have been initialized, hence the need for a spin_lock_irqsave() in the
+insertion path.
+
+  This serie is split into 3 patches:
+
+  - The first patch moves the initialization of the radix tree earlier in the
+    boot process before any IRQ gets registered, but after the mm is up.
+
+  - The second patch splits irq_radix_revmap() into its 2 components: one
+    for lookup and one for insertion into the radix tree.
+
+  - And finally, the third patch makes the radix tree fully lockless on the 
+    lookup side.
+
+
+  Here is the diffstat for the whole patchset:
+
+ arch/powerpc/include/asm/irq.h        |   19 ++++-
+ arch/powerpc/kernel/irq.c             |  130 +++++++--------------------------
+ arch/powerpc/platforms/pseries/smp.c  |    1 +
+ arch/powerpc/platforms/pseries/xics.c |   17 +++--
+ arch/powerpc/platforms/pseries/xics.h |    1 +
+ 5 files changed, 56 insertions(+), 112 deletions(-)
+
+  Thanks,
+
+  Sebastien.
+
+
