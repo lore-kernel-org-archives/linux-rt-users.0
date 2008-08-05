@@ -1,43 +1,48 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH 1/3] powerpc - Initialize the irq radix tree earlier
-Date: Tue, 05 Aug 2008 11:05:03 +1000
-Message-ID: <1217898303.24157.122.camel@pasglop>
-References: <1217848124-3719-1-git-send-email-sebastien.dugue@bull.net>
-	<1217848124-3719-2-git-send-email-sebastien.dugue@bull.net>
-	<1217898226.24157.120.camel@pasglop>
-Reply-To: benh@kernel.crashing.org
+From: "Mark Knecht" <markknecht@gmail.com>
+Subject: Re: 2.6.25.8-rt7 Bugs
+Date: Mon, 4 Aug 2008 19:37:06 -0700
+Message-ID: <5bdc1c8b0808041937w30789c73ga05acc450b8e87dd@mail.gmail.com>
+References: <48928BE4.6030509@smiffytech.com> <4892AB69.1030603@osadl.org>
+	 <48963F51.6050605@smiffytech.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: tinytim@us.ibm.com, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, rostedt@goodmis.org,
-	jean-pierre.dion@bull.net, linuxppc-dev@ozlabs.org,
-	paulus@samba.org, gilles.carry@ext.bull.net, tglx@linutronix.de
-To: Sebastien Dugue <sebastien.dugue@bull.net>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
-In-Reply-To: <1217898226.24157.120.camel@pasglop>
-List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: "Matthew Smith" <matt@smiffytech.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from an-out-0708.google.com ([209.85.132.247]:43667 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751996AbYHEChH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 4 Aug 2008 22:37:07 -0400
+Received: by an-out-0708.google.com with SMTP id d40so377889and.103
+        for <linux-rt-users@vger.kernel.org>; Mon, 04 Aug 2008 19:37:06 -0700 (PDT)
+In-Reply-To: <48963F51.6050605@smiffytech.com>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Sun, Aug 3, 2008 at 4:29 PM, Matthew Smith <matt@smiffytech.com> wrote:
+> Quoth Carsten Emde at 2008-08-01 15:51...
+>>
+>> <snip/> Can't you use 2.6.24.7-rt17? <snip/>
+>
+> Thanks to those who responded on this.  2.6.24.7-rt17 boots without all the
+> nasty messages, so I will proceed with this.
+>
+> It hasn't got rid of the Jack xruns (I'm actually getting more now), but I
+> think that this is probably one to bounce back to the Linux Audio Users
+> list.
+>
+> Cheers
+>
+> M
+>
 
->  - Remove the populating of the tree from the revmap function as
->    you already do
->  - Move it to irq_create_mapping() for the normal case
->  - For pre-existing interrupt, have the generic code that initializes
->    the radix tree walk through all interrupts and setup the revmap for
->    them. If that needs locking vs. concurrent irq_create_mapping, it's
->    easy to use one of the available spinlocks for that.
+Yeah, I thought my machine was farther along but I see I'm still using
+2.6.24-rt1so I'm getting a bit old at this point. I should update
+also. I see there's an rt-sources-2.6.25.8-r7 in the Gentoo pro-audio
+overlay. I'll see if I can try that out.
 
-And in fact, you may even be able to avoid GFP_ATOMIC completely here
-and switch it to GFP_KERNEL since irq_create_mapping() can sleep afaik,
-provided that you avoid the spinlocking.
-
-Ben.
+Cheers,
+Mark
