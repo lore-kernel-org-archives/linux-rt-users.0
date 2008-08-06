@@ -1,89 +1,110 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: tracing WARN_ON in rt kernel
-Date: Wed, 6 Aug 2008 11:38:26 +0200
-Message-ID: <520f0cf10808060238r513c2f35l16c0da5511cea0f1@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
+Subject: [PATCH 0/2 V3] powerpc - Make the irq reverse mapping tree lockless
+Date: Wed,  6 Aug 2008 15:30:27 +0200
+Message-ID: <1218029429-21114-1-git-send-email-sebastien.dugue@bull.net>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	benh@kernel.crashing.org, paulus@samba.org, michael@ellerman.id.au,
+	jean-pierre.dion@bull.net, gilles.carry@ext.bull.net,
+	tinytim@us.ibm.com, tglx@linutronix.de, rostedt@goodmis.org,
+	dwalker@mvista.com, sebastien.dugue@bull.net
+To: linuxppc-dev@ozlabs.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ik-out-1112.google.com ([66.249.90.182]:48752 "EHLO
-	ik-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759304AbYHFJi3 (ORCPT
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:47073 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753207AbYHFNaG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Aug 2008 05:38:29 -0400
-Received: by ik-out-1112.google.com with SMTP id c28so3466099ika.5
-        for <linux-rt-users@vger.kernel.org>; Wed, 06 Aug 2008 02:38:27 -0700 (PDT)
-Content-Disposition: inline
+	Wed, 6 Aug 2008 09:30:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve, the following is one for you.
 
-The kernel is 2.6.26.1 plus the 2.6.26-rt1 patch (yes it applies
-against 2.6.26.1) and some of the patches that were discussed in the
-lists. I don't think it is relevant which patches, but if you need an
-exact list I will provide it.
+  Hi ,
 
-WARNING: at kernel/trace/trace_hist.c:396
-tracing_hist_preempt_stop+0x23d/0x301()
-Modules linked in:
-Pid: 1, comm: init Not tainted 2.6.26.1-rt1.jk #4
+  here is V3 for the powerpc IRQ radix tree reverse mapping rework.
 
+  V2 -> V3: from comments by Benjamin Herrenschmidt and Daniel Walker
+
+  - Move the initialization of the radix tree back into irq_late_init() and
+    insert pre-existing irqs into the tree at that time.
+
+  - One whitespace cleanup.
+
+  V1 -> V2: from comments by Michael Ellerman
+
+  - Initialize the XICS radix tree in xics code and only for that irq_host
+    rather than doing it for all the hosts in the powerpc irq generic code
+    (although the hosts list only contain one entry at the moment).
+
+  - Add a comment in irq_radix_revmap_lookup() stating why it is safe to
+    perform a lookup even if the radix tree has not been initialized yet.
+
+
+  The goal of this patchset is to simplify the locking constraints on the radix
+tree used for IRQ reverse mapping on the pSeries machines and provide lockless
+access to this tree.
+
+  This also solves the following BUG under preempt-rt:
+
+BUG: sleeping function called from invalid context swapper(1) at kernel/rtmutex.c:739
+in_atomic():1 [00000002], irqs_disabled():1
 Call Trace:
- [<ffffffff802397f4>] warn_on_slowpath+0x5d/0x99
- [<ffffffff80212a0d>] ? native_sched_clock+0x2b/0x76
- [<ffffffff802127d5>] ? sched_clock+0x9/0xc
- [<ffffffff80283231>] ? ftrace_now+0x9/0xb
- [<ffffffff80288439>] ? tracing_hist_preempt_stop+0xd9/0x301
- [<ffffffff8020b48c>] ? do_notify_resume+0x14/0x8ef
- [<ffffffff80286499>] ? trace_hardirqs_on+0x1b/0x138
- [<ffffffff8020b48c>] ? do_notify_resume+0x14/0x8ef
- [<ffffffff8028859d>] tracing_hist_preempt_stop+0x23d/0x301
- [<ffffffff8020c4db>] ? sysret_signal+0x30/0x4f
- [<ffffffff80286499>] trace_hardirqs_on+0x1b/0x138
- [<ffffffff8020b478>] ? do_notify_resume+0x0/0x8ef
- [<ffffffff8020c4db>] ? sysret_signal+0x30/0x4f
- [<ffffffff8020b4e6>] do_notify_resume+0x6e/0x8ef
- [<ffffffff8046ce35>] ? rt_spin_lock+0xe/0x10
- [<ffffffff8024ea2a>] ? remove_wait_queue+0x3e/0x43
- [<ffffffff8023d214>] ? do_wait+0xb6b/0xbf7
- [<ffffffff80212a0d>] ? native_sched_clock+0x2b/0x76
- [<ffffffff802127d5>] ? sched_clock+0x9/0xc
- [<ffffffff80283231>] ? ftrace_now+0x9/0xb
- [<ffffffff80288637>] ? tracing_hist_preempt_stop+0x2d7/0x301
- [<ffffffff8020c4b0>] ? sysret_signal+0x5/0x4f
- [<ffffffff8046ca94>] ? trace_hardirqs_on_thunk+0x3a/0x3c
- [<ffffffff8020c4db>] ? sysret_signal+0x30/0x4f
- [<ffffffff8020c8b7>] ptregscall_common+0x67/0xb0
+[c0000001e20f3340] [c000000000010370] .show_stack+0x70/0x1bc (unreliable)
+[c0000001e20f33f0] [c000000000049380] .__might_sleep+0x11c/0x138
+[c0000001e20f3470] [c0000000002a2f64] .__rt_spin_lock+0x3c/0x98
+[c0000001e20f34f0] [c0000000000c3f20] .kmem_cache_alloc+0x68/0x184
+[c0000001e20f3590] [c000000000193f3c] .radix_tree_node_alloc+0xf0/0x144
+[c0000001e20f3630] [c000000000195190] .radix_tree_insert+0x18c/0x2fc
+[c0000001e20f36f0] [c00000000000c710] .irq_radix_revmap+0x1a4/0x1e4
+[c0000001e20f37b0] [c00000000003b3f0] .xics_startup+0x30/0x54
+[c0000001e20f3840] [c00000000008b864] .setup_irq+0x26c/0x370
+[c0000001e20f38f0] [c00000000008ba68] .request_irq+0x100/0x158
+[c0000001e20f39a0] [c0000000001ee9c0] .hvc_open+0xb4/0x148
+[c0000001e20f3a40] [c0000000001d72ec] .tty_open+0x200/0x368
+[c0000001e20f3af0] [c0000000000ce928] .chrdev_open+0x1f4/0x25c
+[c0000001e20f3ba0] [c0000000000c8bf0] .__dentry_open+0x188/0x2c8
+[c0000001e20f3c50] [c0000000000c8dec] .do_filp_open+0x50/0x70
+[c0000001e20f3d70] [c0000000000c8e8c] .do_sys_open+0x80/0x148
+[c0000001e20f3e20] [c00000000000928c] .init_post+0x4c/0x100
+[c0000001e20f3ea0] [c0000000003c0e0c] .kernel_init+0x428/0x478
+[c0000001e20f3f90] [c000000000027448] .kernel_thread+0x4c/0x68
 
----------------------------
-| preempt count: 00000000 ]
-| 0-level deep critical section nesting:
-----------------------------------------
+  The root cause of this bug lies in the fact that the XICS interrupt
+controller uses a radix tree for its reverse irq mapping and that we cannot
+allocate the tree nodes (even GFP_ATOMIC) with preemption disabled.
+
+  In fact, we have 2 nested preemption disabling when we want to allocate
+a new node:
+
+  - setup_irq() does a spin_lock_irqsave() before calling xics_startup() which
+    then calls irq_radix_revmap() to insert a new node in the tree
+
+  - irq_radix_revmap() also does a spin_lock_irqsave() (in irq_radix_wrlock())
+    before the radix_tree_insert()
+
+  Also, if an IRQ gets registered before the tree is initialized (namely the
+IPI), it will be inserted into the tree in interrupt context once the tree
+have been initialized, hence the need for a spin_lock_irqsave() in the
+insertion path.
+
+  This serie is split into 2 patches:
+
+  - The first patch splits irq_radix_revmap() into its 2 components: one
+    for lookup and one for insertion into the radix tree and moves the
+    insertion of pre-existing irq into the tree at irq_late_init() time.
+
+  - The second patch makes the radix tree fully lockless on the 
+    lookup side.
 
 
-This above is triggered by the WARN_ON in the following code in
-function tracing_hist_preempt_stop()
+  Here is the diffstat for the whole patchset:
 
-#if defined(CONFIG_INTERRUPT_OFF_HIST) && defined(CONFIG_PREEMPT_OFF_HIST)
-	if (((!irqs_on && !irqs_disabled()) ||
-	     (irqs_on && !preempt_count()) ||
-	     (irqs_on == TRACE_STOP)) &&
-	    per_cpu(hist_preemptirqsoff_tracing, cpu)) {
-		WARN_ON(!preempt_count() && !irqs_disabled());
-		if (1 || !stop_set)
-			stop = ftrace_now(cpu);
-		start = per_cpu(hist_preemptirqsoff_start, cpu);
-		latency = (long)nsecs_to_usecs(stop - start);
-		if (latency > 1000000) {
-			printk("%d: latency = %ld (%lu)\n", __LINE__, latency, latency);
-			printk("%d: start=%Ld  stop=%Ld\n", __LINE__, start, stop);
-		}
-		barrier();
-		per_cpu(hist_preemptirqsoff_tracing, cpu) = 0;
-		latency_hist(PREEMPT_INTERRUPT_LATENCY, cpu, latency);
-	}
-#endif
+ arch/powerpc/include/asm/irq.h        |   19 ++++-
+ arch/powerpc/kernel/irq.c             |  148 ++++++++++++++------------------
+ arch/powerpc/platforms/pseries/xics.c |   11 +--
+ 3 files changed, 85 insertions(+), 93 deletions(-)
+
+  Thanks,
+
+  Sebastien.
+
+
