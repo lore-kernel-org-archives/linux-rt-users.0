@@ -1,126 +1,92 @@
-From: "Christian Volk" <linux.kernel@cvolk.de>
-Subject: Preempt-RT with Linux 2.6.20 for Arch ppc
-Date: Thu, 7 Aug 2008 09:12:34 +0200 (MEST)
-Message-ID: <200808070712.m777CYTK008184@post.webmailer.de>
+From: Chirag Jog <chirag@linux.vnet.ibm.com>
+Subject: [PATCH][PPC64][RT] Fix a previously reverted fix again
+Date: Thu, 7 Aug 2008 18:05:58 +0530
+Message-ID: <20080807123558.GA10684@linux.vnet.ibm.com>
+Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from em-p00-ob.rzone.de ([81.169.146.224]:46918 "EHLO
-	em-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753334AbYHGH2e convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Aug 2008 03:28:34 -0400
-Received: from post.webmailer.de (hat.store [192.168.40.68])
-	by bjorn-em-01.store (RZmta 16.42) with ESMTP id a04f4dk76FIxVi
-	for <linux-rt-users@vger.kernel.org>;
-	Thu, 7 Aug 2008 09:28:32 +0200 (MEST)
-	(envelope-from: <linux.kernel@cvolk.de>)
-Received: (from httpd@localhost)
-	by post.webmailer.de (8.13.7/8.13.6) id m777CYTK008184
-	for linux-rt-users@vger.kernel.org; Thu, 7 Aug 2008 09:12:34 +0200 (MEST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Cc: "Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
+	Josh Triplett <josht@linux.vnet.ibm.com>,
+	Sebastien Dugue <sebastien.dugue@bull.net>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757979AbYHGMg5@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
 
-actually I try to get the preempt patch running with kernel 2.6.20 for arch ppc.
-I got the Kernel running right now, but I don't know if I did the right changes.
-Maybe someone can take a look and give me some hints, if I'm wrong.
-The Changes I Made(diff against the preempt_rt patched kernel):
-in irqflags.h:
-----------------------------------------------
+Hi Steven,
+   Ironically in the 2.6.26-rt1,the patch fix-a-previously-reverted-fix.patch
+   again got reverted ;).
+   
+   Here the patch that should replace the above patch.
 
---- /home/develop/Download/linux-2.6.20/include/linux/irqflags.h        2008-08-06 08:55:07.000000000 +0200
-+++ /mnt/cc_views/linux-basis/build/linux-base-system/smb_preempt/linux-2.6.20/include/linux/irqflags.h 2008-08-06 15:56:22.000000000 +0200
-@@ -62,37 +62,7 @@
-                trace_hardirqs_off();           \
-        } while (0)
+This patch reintroduces a "fix" that got reverted.
+Here was the original patch http://lkml.org/lkml/2007/5/22/133
 
--#define local_irq_restore(flags)                               \
--       do {                                                    \
--               BUILD_CHECK_IRQ_FLAGS(flags);                   \
--               if (raw_irqs_disabled_flags(flags)) {           \
--                       raw_local_irq_restore(flags);           \
--                       trace_hardirqs_off();                   \
--               } else {                                        \
--                       trace_hardirqs_on();                    \
--                       raw_local_irq_restore(flags);           \
--               }                                               \
--       } while (0)
--#else /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
--/*
-- * The local_irq_*() APIs are equal to the raw_local_irq*()
-- * if !TRACE_IRQFLAGS.
-- */
--# define raw_local_irq_disable()       local_irq_disable()
--# define raw_local_irq_enable()                local_irq_enable()
--# define raw_local_irq_save(flags)             \
--       do {                                    \
--               BUILD_CHECK_IRQ_FLAGS(flags);   \
--               local_irq_save(flags);          \
--       } while (0)
--# define raw_local_irq_restore(flags)          \
--       do {                                    \
--               BUILD_CHECK_IRQ_FLAGS(flags);   \
--               local_irq_restore(flags);       \
--       } while (0)
--#endif /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
+Here is the new patch
+This patch also fixes OOPS reported here: http://lkml.org/lkml/2008/6/19/146
 
--#ifdef CONFIG_TRACE_IRQFLAGS_SUPPORT
- #define safe_halt()                                            \
-        do {                                                    \
-                trace_hardirqs_on();                            \
-@@ -118,6 +88,41 @@
-        BUILD_CHECK_IRQ_FLAGS(flags);   \
-        raw_irqs_disabled_flags(flags); \
- })
--#endif         /* CONFIG_X86 */
+>From tsutomu.owa@toshiba.co.jp
+Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
+
+
+
+---
+ arch/powerpc/kernel/entry_64.S |   19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
+
+Index: linux-2.6.26-rt1/arch/powerpc/kernel/entry_64.S
+===================================================================
+--- linux-2.6.26-rt1.orig/arch/powerpc/kernel/entry_64.S	2008-08-07 10:35:18.000000000 +0000
++++ linux-2.6.26-rt1/arch/powerpc/kernel/entry_64.S	2008-08-07 11:33:55.000000000 +0000
+@@ -595,30 +595,31 @@
+ 	bne	restore
+ 	/* here we are preempting the current task */
+ 1:
++	/*
++	 * preempt_schedule_irq() expects interrupts disabled and returns
++	 * with interrupts disabled. No need to check preemption again,
++	 * preempt_schedule_irq just did that for us.
++	 */
++	bl	.preempt_schedule_irq
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ 	bl	.trace_hardirqs_on
++#endif /* CONFIG_TRACE_IRQFLAGS */
 +
-+#else /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
-+/*
-+ * The local_irq_*() APIs are equal to the raw_local_irq*()
-+ * if !TRACE_IRQFLAGS.
-+ */
-+#define local_irq_disable()            raw_local_irq_disable()
-+#define local_irq_enable()             raw_local_irq_enable()
-+
-+#define local_irq_save(flags)          \
-+       do {                                    \
-+               BUILD_CHECK_IRQ_FLAGS(flags);   \
-+               raw_local_irq_save(flags);              \
-+       } while (0)
-+
-+#define local_save_flags(flags)                        \
-+       do {                                    \
-+               BUILD_CHECK_IRQ_FLAGS(flags);   \
-+               raw_local_save_flags(flags);    \
-+       } while (0)
-+
-+#define local_irq_restore(flags)               \
-+       do {                                    \
-+               BUILD_CHECK_IRQ_FLAGS(flags);   \
-+               raw_local_irq_restore(flags);   \
-+       } while (0)
-+
-+#define irqs_disabled()                                                \
-+({                                                             \
-+       unsigned long flags;                                    \
-+                                                               \
-+       raw_local_save_flags(flags);                            \
-+       raw_irqs_disabled_flags(flags);                         \
-+})
-+
-+#endif /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
-
- #endif
-
-
-What Im wondering about is that only the names Changed form "local_....." to "raw_local..." and then some new defines are created where the "local_..." stuff calls the "raw_local_..." stuff. Is this the correct behaviour??
-  
-Thanks in advance,
-
-Christian
-
-
+ 	/* Note: we just clobbered r10 which used to contain the previous
+ 	 * MSR before the hard-disabling done by the caller of do_work.
+ 	 * We don't have that value anymore, but it doesn't matter as
+ 	 * we will hard-enable unconditionally, we can just reload the
+ 	 * current MSR into r10
+ 	 */
+-	mfmsr	r10
+-#endif /* CONFIG_TRACE_IRQFLAGS */
+-	li	r0,1
+-	stb	r0,PACASOFTIRQEN(r13)
+-	stb	r0,PACAHARDIRQEN(r13)
+-	ori	r10,r10,MSR_EE
+-	mtmsrd	r10,1		/* reenable interrupts */
+-	bl	.preempt_schedule
+-	mfmsr	r10
+-	clrrdi	r9,r1,THREAD_SHIFT
+-	rldicl	r10,r10,48,1	/* disable interrupts again */
+-	rotldi	r10,r10,16
+-	mtmsrd	r10,1
+-	ld	r4,TI_FLAGS(r9)
+-	andi.	r0,r4,_TIF_NEED_RESCHED
+-	bne	1b
++	bl	.preempt_schedule_irq
++	mfmsr   r10
++	clrrdi  r9,r1,THREAD_SHIFT
++	rldicl  r10,r10,48,1    /* disable interrupts again */
++	rotldi  r10,r10,16
++	mtmsrd  r10,1
++	ld      r4,TI_FLAGS(r9)
++	andi.   r0,r4,(_TIF_NEED_RESCHED)
++	bne     1b
+ 	b	restore
+ 
+ user_work:
