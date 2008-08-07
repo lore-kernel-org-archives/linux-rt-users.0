@@ -1,255 +1,126 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: [PATCH 1/2] powerpc - Separate the irq radix tree insertion and lookup
-Date: Wed,  6 Aug 2008 15:30:28 +0200
-Message-ID: <1218029429-21114-2-git-send-email-sebastien.dugue@bull.net>
-References: <1218029429-21114-1-git-send-email-sebastien.dugue@bull.net>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	benh@kernel.crashing.org, paulus@samba.org, michael@ellerman.id.au,
-	jean-pierre.dion@bull.net, gilles.carry@ext.bull.net,
-	tinytim@us.ibm.com, tglx@linutronix.de, rostedt@goodmis.org,
-	dwalker@mvista.com, sebastien.dugue@bull.net
-To: linuxppc-dev@ozlabs.org
+From: "Christian Volk" <linux.kernel@cvolk.de>
+Subject: Preempt-RT with Linux 2.6.20 for Arch ppc
+Date: Thu, 7 Aug 2008 09:12:34 +0200 (MEST)
+Message-ID: <200808070712.m777CYTK008184@post.webmailer.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:47138 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753450AbYHFNaI (ORCPT
+Received: from em-p00-ob.rzone.de ([81.169.146.224]:46918 "EHLO
+	em-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753334AbYHGH2e convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Aug 2008 09:30:08 -0400
-In-Reply-To: <1218029429-21114-1-git-send-email-sebastien.dugue@bull.net>
+	Thu, 7 Aug 2008 03:28:34 -0400
+Received: from post.webmailer.de (hat.store [192.168.40.68])
+	by bjorn-em-01.store (RZmta 16.42) with ESMTP id a04f4dk76FIxVi
+	for <linux-rt-users@vger.kernel.org>;
+	Thu, 7 Aug 2008 09:28:32 +0200 (MEST)
+	(envelope-from: <linux.kernel@cvolk.de>)
+Received: (from httpd@localhost)
+	by post.webmailer.de (8.13.7/8.13.6) id m777CYTK008184
+	for linux-rt-users@vger.kernel.org; Thu, 7 Aug 2008 09:12:34 +0200 (MEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  irq_radix_revmap() currently serves 2 purposes, irq mapping lookup
-and insertion which happen in interrupt and process context respectively.
+Hi all,
 
-  Separate the function into its 2 components, one for lookup only and one
-for insertion only.
+actually I try to get the preempt patch running with kernel 2.6.20 for arch ppc.
+I got the Kernel running right now, but I don't know if I did the right changes.
+Maybe someone can take a look and give me some hints, if I'm wrong.
+The Changes I Made(diff against the preempt_rt patched kernel):
+in irqflags.h:
+----------------------------------------------
 
-  Fix the only user of the revmap tree (XICS) to use the new functions.
+--- /home/develop/Download/linux-2.6.20/include/linux/irqflags.h        2008-08-06 08:55:07.000000000 +0200
++++ /mnt/cc_views/linux-basis/build/linux-base-system/smb_preempt/linux-2.6.20/include/linux/irqflags.h 2008-08-06 15:56:22.000000000 +0200
+@@ -62,37 +62,7 @@
+                trace_hardirqs_off();           \
+        } while (0)
 
-  Also, move the insertion into the radix tree of those irqs that were
-requested before it was initialized at said tree initialization.
+-#define local_irq_restore(flags)                               \
+-       do {                                                    \
+-               BUILD_CHECK_IRQ_FLAGS(flags);                   \
+-               if (raw_irqs_disabled_flags(flags)) {           \
+-                       raw_local_irq_restore(flags);           \
+-                       trace_hardirqs_off();                   \
+-               } else {                                        \
+-                       trace_hardirqs_on();                    \
+-                       raw_local_irq_restore(flags);           \
+-               }                                               \
+-       } while (0)
+-#else /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
+-/*
+- * The local_irq_*() APIs are equal to the raw_local_irq*()
+- * if !TRACE_IRQFLAGS.
+- */
+-# define raw_local_irq_disable()       local_irq_disable()
+-# define raw_local_irq_enable()                local_irq_enable()
+-# define raw_local_irq_save(flags)             \
+-       do {                                    \
+-               BUILD_CHECK_IRQ_FLAGS(flags);   \
+-               local_irq_save(flags);          \
+-       } while (0)
+-# define raw_local_irq_restore(flags)          \
+-       do {                                    \
+-               BUILD_CHECK_IRQ_FLAGS(flags);   \
+-               local_irq_restore(flags);       \
+-       } while (0)
+-#endif /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
 
-  Mutual exclusion between the tree initialization and readers/writers is
-handled via an atomic variable (revmap_trees_allocated) set when the tree
-has been initialized and checked before any reader or writer access just
-like we used to check for tree.gfp_mask != 0 before.
-
-
-Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: Michael Ellerman <michael@ellerman.id.au>
----
- arch/powerpc/include/asm/irq.h        |   18 ++++++-
- arch/powerpc/kernel/irq.c             |   76 ++++++++++++++++++++++++---------
- arch/powerpc/platforms/pseries/xics.c |   11 ++---
- 3 files changed, 74 insertions(+), 31 deletions(-)
-
-diff --git a/arch/powerpc/include/asm/irq.h b/arch/powerpc/include/asm/irq.h
-index a372f76..0a51376 100644
---- a/arch/powerpc/include/asm/irq.h
-+++ b/arch/powerpc/include/asm/irq.h
-@@ -236,15 +236,27 @@ extern unsigned int irq_find_mapping(struct irq_host *host,
- extern unsigned int irq_create_direct_mapping(struct irq_host *host);
- 
- /**
-- * irq_radix_revmap - Find a linux virq from a hw irq number.
-+ * irq_radix_revmap_insert - Insert a hw irq to linux virq number mapping.
-+ * @host: host owning this hardware interrupt
-+ * @virq: linux irq number
-+ * @hwirq: hardware irq number in that host space
-+ *
-+ * This is for use by irq controllers that use a radix tree reverse
-+ * mapping for fast lookup.
+-#ifdef CONFIG_TRACE_IRQFLAGS_SUPPORT
+ #define safe_halt()                                            \
+        do {                                                    \
+                trace_hardirqs_on();                            \
+@@ -118,6 +88,41 @@
+        BUILD_CHECK_IRQ_FLAGS(flags);   \
+        raw_irqs_disabled_flags(flags); \
+ })
+-#endif         /* CONFIG_X86 */
++
++#else /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
++/*
++ * The local_irq_*() APIs are equal to the raw_local_irq*()
++ * if !TRACE_IRQFLAGS.
 + */
-+extern void irq_radix_revmap_insert(struct irq_host *host, unsigned int virq,
-+				    irq_hw_number_t hwirq);
++#define local_irq_disable()            raw_local_irq_disable()
++#define local_irq_enable()             raw_local_irq_enable()
 +
-+/**
-+ * irq_radix_revmap_lookup - Find a linux virq from a hw irq number.
-  * @host: host owning this hardware interrupt
-  * @hwirq: hardware irq number in that host space
-  *
-  * This is a fast path, for use by irq controller code that uses radix tree
-  * revmaps
-  */
--extern unsigned int irq_radix_revmap(struct irq_host *host,
--				     irq_hw_number_t hwirq);
-+extern unsigned int irq_radix_revmap_lookup(struct irq_host *host,
-+					    irq_hw_number_t hwirq);
- 
- /**
-  * irq_linear_revmap - Find a linux virq from a hw irq number.
-diff --git a/arch/powerpc/kernel/irq.c b/arch/powerpc/kernel/irq.c
-index d972dec..dc8663a 100644
---- a/arch/powerpc/kernel/irq.c
-+++ b/arch/powerpc/kernel/irq.c
-@@ -441,6 +441,7 @@ static LIST_HEAD(irq_hosts);
- static DEFINE_SPINLOCK(irq_big_lock);
- static DEFINE_PER_CPU(unsigned int, irq_radix_reader);
- static unsigned int irq_radix_writer;
-+static atomic_t revmap_trees_allocated = ATOMIC_INIT(0);
- struct irq_map_entry irq_map[NR_IRQS];
- static unsigned int irq_virq_count = NR_IRQS;
- static struct irq_host *irq_default_host;
-@@ -822,7 +823,7 @@ void irq_dispose_mapping(unsigned int virq)
- 		break;
- 	case IRQ_HOST_MAP_TREE:
- 		/* Check if radix tree allocated yet */
--		if (host->revmap_data.tree.gfp_mask == 0)
-+		if (atomic_read(&revmap_trees_allocated) == 0)
- 			break;
- 		irq_radix_wrlock(&flags);
- 		radix_tree_delete(&host->revmap_data.tree, hwirq);
-@@ -875,43 +876,55 @@ unsigned int irq_find_mapping(struct irq_host *host,
- EXPORT_SYMBOL_GPL(irq_find_mapping);
- 
- 
--unsigned int irq_radix_revmap(struct irq_host *host,
--			      irq_hw_number_t hwirq)
-+unsigned int irq_radix_revmap_lookup(struct irq_host *host,
-+				     irq_hw_number_t hwirq)
- {
--	struct radix_tree_root *tree;
- 	struct irq_map_entry *ptr;
--	unsigned int virq;
-+	unsigned int virq = NO_IRQ;
- 	unsigned long flags;
- 
- 	WARN_ON(host->revmap_type != IRQ_HOST_MAP_TREE);
- 
--	/* Check if the radix tree exist yet. We test the value of
--	 * the gfp_mask for that. Sneaky but saves another int in the
--	 * structure. If not, we fallback to slow mode
-+	/*
-+	 * Check if the radix tree exist yet.
-+	 * If not, we fallback to slow mode
- 	 */
--	tree = &host->revmap_data.tree;
--	if (tree->gfp_mask == 0)
-+	if (atomic_read(&revmap_trees_allocated) == 0)
- 		return irq_find_mapping(host, hwirq);
- 
- 	/* Now try to resolve */
- 	irq_radix_rdlock(&flags);
--	ptr = radix_tree_lookup(tree, hwirq);
-+	ptr = radix_tree_lookup(&host->revmap_data.tree, hwirq);
- 	irq_radix_rdunlock(flags);
- 
- 	/* Found it, return */
--	if (ptr) {
-+	if (ptr)
- 		virq = ptr - irq_map;
--		return virq;
--	}
- 
--	/* If not there, try to insert it */
--	virq = irq_find_mapping(host, hwirq);
-+	return virq;
-+}
++#define local_irq_save(flags)          \
++       do {                                    \
++               BUILD_CHECK_IRQ_FLAGS(flags);   \
++               raw_local_irq_save(flags);              \
++       } while (0)
 +
-+void irq_radix_revmap_insert(struct irq_host *host, unsigned int virq,
-+			     irq_hw_number_t hwirq)
-+{
-+	unsigned long flags;
++#define local_save_flags(flags)                        \
++       do {                                    \
++               BUILD_CHECK_IRQ_FLAGS(flags);   \
++               raw_local_save_flags(flags);    \
++       } while (0)
 +
-+	WARN_ON(host->revmap_type != IRQ_HOST_MAP_TREE);
++#define local_irq_restore(flags)               \
++       do {                                    \
++               BUILD_CHECK_IRQ_FLAGS(flags);   \
++               raw_local_irq_restore(flags);   \
++       } while (0)
 +
-+	/*
-+	 * Check if the radix tree exist yet.
-+	 * If not, then the irq will be inserted into the tree when it gets
-+	 * initialized.
-+	 */
-+	if (atomic_read(&revmap_trees_allocated) == 0)
-+		return;
++#define irqs_disabled()                                                \
++({                                                             \
++       unsigned long flags;                                    \
++                                                               \
++       raw_local_save_flags(flags);                            \
++       raw_irqs_disabled_flags(flags);                         \
++})
 +
- 	if (virq != NO_IRQ) {
- 		irq_radix_wrlock(&flags);
--		radix_tree_insert(tree, hwirq, &irq_map[virq]);
-+		radix_tree_insert(&host->revmap_data.tree, hwirq,
-+				  &irq_map[virq]);
- 		irq_radix_wrunlock(flags);
- 	}
--	return virq;
- }
- 
- unsigned int irq_linear_revmap(struct irq_host *host,
-@@ -1020,14 +1033,35 @@ void irq_early_init(void)
- static int irq_late_init(void)
- {
- 	struct irq_host *h;
--	unsigned long flags;
-+	unsigned int i;
- 
--	irq_radix_wrlock(&flags);
-+	/*
-+	 * No mutual exclusion with respect to accessors of the tree is needed
-+	 * here as the synchronization is done via the atomic variable
-+	 * revmap_trees_allocated.
-+	 */
- 	list_for_each_entry(h, &irq_hosts, link) {
- 		if (h->revmap_type == IRQ_HOST_MAP_TREE)
- 			INIT_RADIX_TREE(&h->revmap_data.tree, GFP_ATOMIC);
- 	}
--	irq_radix_wrunlock(flags);
-+
-+	/*
-+	 * Insert the reverse mapping for those interrupts already present
-+	 * in irq_map[].
-+	 */
-+	for (i = 0; i < irq_virq_count; i++) {
-+		if (irq_map[i].host &&
-+		    (irq_map[i].host->revmap_type == IRQ_HOST_MAP_TREE))
-+			radix_tree_insert(&irq_map[i].host->revmap_data.tree,
-+					  irq_map[i].hwirq, &irq_map[i]);
-+	}
-+
-+	/*
-+	 * Make sure the radix trees inits are visible before setting
-+	 * the flag
-+	 */
-+	smp_mb();
-+	atomic_set(&revmap_trees_allocated, 1);
- 
- 	return 0;
- }
-diff --git a/arch/powerpc/platforms/pseries/xics.c b/arch/powerpc/platforms/pseries/xics.c
-index 0fc830f..6b1a005 100644
---- a/arch/powerpc/platforms/pseries/xics.c
-+++ b/arch/powerpc/platforms/pseries/xics.c
-@@ -310,12 +310,6 @@ static void xics_mask_irq(unsigned int virq)
- 
- static unsigned int xics_startup(unsigned int virq)
- {
--	unsigned int irq;
--
--	/* force a reverse mapping of the interrupt so it gets in the cache */
--	irq = (unsigned int)irq_map[virq].hwirq;
--	irq_radix_revmap(xics_host, irq);
--
- 	/* unmask it */
- 	xics_unmask_irq(virq);
- 	return 0;
-@@ -346,7 +340,7 @@ static inline unsigned int xics_remap_irq(unsigned int vec)
- 
- 	if (vec == XICS_IRQ_SPURIOUS)
- 		return NO_IRQ;
--	irq = irq_radix_revmap(xics_host, vec);
-+	irq = irq_radix_revmap_lookup(xics_host, vec);
- 	if (likely(irq != NO_IRQ))
- 		return irq;
- 
-@@ -530,6 +524,9 @@ static int xics_host_map(struct irq_host *h, unsigned int virq,
- {
- 	pr_debug("xics: map virq %d, hwirq 0x%lx\n", virq, hw);
- 
-+	/* Insert the interrupt mapping into the radix tree for fast lookup */
-+	irq_radix_revmap_insert(xics_host, virq, hw);
-+
- 	get_irq_desc(virq)->status |= IRQ_LEVEL;
- 	set_irq_chip_and_handler(virq, xics_irq_chip, handle_fasteoi_irq);
- 	return 0;
--- 
-1.5.5.1
++#endif /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
+
+ #endif
+
+
+What Im wondering about is that only the names Changed form "local_....." to "raw_local..." and then some new defines are created where the "local_..." stuff calls the "raw_local_..." stuff. Is this the correct behaviour??
+  
+Thanks in advance,
+
+Christian
+
 
