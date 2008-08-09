@@ -1,92 +1,40 @@
-From: Chirag Jog <chirag@linux.vnet.ibm.com>
-Subject: [PATCH][PPC64][RT] Fix a previously reverted fix again
-Date: Thu, 7 Aug 2008 18:05:58 +0530
-Message-ID: <20080807123558.GA10684@linux.vnet.ibm.com>
-Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Cc: "Timothy R. Chavez" <tim.chavez@linux.vnet.ibm.com>,
-	Josh Triplett <josht@linux.vnet.ibm.com>,
-	Sebastien Dugue <sebastien.dugue@bull.net>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757979AbYHGMg5@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Alessio Igor Bogani <abogani@texware.it>
+Subject: [PATCH] Avoid to remove too much files
+Date: Sat,  9 Aug 2008 19:19:47 +0200
+Message-ID: <1218302388-29918-1-git-send-email-abogani@texware.it>
+Cc: Alessio Igor Bogani <abogani@texware.it>
+To: linux-rt-users@vger.kernel.org, tglx@linutronix.de
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ik-out-1112.google.com ([66.249.90.178]:36082 "EHLO
+	ik-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750763AbYHIRUE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 9 Aug 2008 13:20:04 -0400
+Received: by ik-out-1112.google.com with SMTP id c28so1517103ika.5
+        for <linux-rt-users@vger.kernel.org>; Sat, 09 Aug 2008 10:20:03 -0700 (PDT)
+In-Reply-To: <>
+References: <>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-Hi Steven,
-   Ironically in the 2.6.26-rt1,the patch fix-a-previously-reverted-fix.patch
-   again got reverted ;).
-   
-   Here the patch that should replace the above patch.
-
-This patch reintroduces a "fix" that got reverted.
-Here was the original patch http://lkml.org/lkml/2007/5/22/133
-
-Here is the new patch
-This patch also fixes OOPS reported here: http://lkml.org/lkml/2008/6/19/146
-
->From tsutomu.owa@toshiba.co.jp
-Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
-
-
-
+Signed-off-by: Alessio Igor Bogani <abogani@texware.it>
 ---
- arch/powerpc/kernel/entry_64.S |   19 +++++++++----------
- 1 file changed, 9 insertions(+), 10 deletions(-)
+ Makefile |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Index: linux-2.6.26-rt1/arch/powerpc/kernel/entry_64.S
-===================================================================
---- linux-2.6.26-rt1.orig/arch/powerpc/kernel/entry_64.S	2008-08-07 10:35:18.000000000 +0000
-+++ linux-2.6.26-rt1/arch/powerpc/kernel/entry_64.S	2008-08-07 11:33:55.000000000 +0000
-@@ -595,30 +595,31 @@
- 	bne	restore
- 	/* here we are preempting the current task */
- 1:
-+	/*
-+	 * preempt_schedule_irq() expects interrupts disabled and returns
-+	 * with interrupts disabled. No need to check preemption again,
-+	 * preempt_schedule_irq just did that for us.
-+	 */
-+	bl	.preempt_schedule_irq
- #ifdef CONFIG_TRACE_IRQFLAGS
- 	bl	.trace_hardirqs_on
-+#endif /* CONFIG_TRACE_IRQFLAGS */
-+
- 	/* Note: we just clobbered r10 which used to contain the previous
- 	 * MSR before the hard-disabling done by the caller of do_work.
- 	 * We don't have that value anymore, but it doesn't matter as
- 	 * we will hard-enable unconditionally, we can just reload the
- 	 * current MSR into r10
- 	 */
--	mfmsr	r10
--#endif /* CONFIG_TRACE_IRQFLAGS */
--	li	r0,1
--	stb	r0,PACASOFTIRQEN(r13)
--	stb	r0,PACAHARDIRQEN(r13)
--	ori	r10,r10,MSR_EE
--	mtmsrd	r10,1		/* reenable interrupts */
--	bl	.preempt_schedule
--	mfmsr	r10
--	clrrdi	r9,r1,THREAD_SHIFT
--	rldicl	r10,r10,48,1	/* disable interrupts again */
--	rotldi	r10,r10,16
--	mtmsrd	r10,1
--	ld	r4,TI_FLAGS(r9)
--	andi.	r0,r4,_TIF_NEED_RESCHED
--	bne	1b
-+	bl	.preempt_schedule_irq
-+	mfmsr   r10
-+	clrrdi  r9,r1,THREAD_SHIFT
-+	rldicl  r10,r10,48,1    /* disable interrupts again */
-+	rotldi  r10,r10,16
-+	mtmsrd  r10,1
-+	ld      r4,TI_FLAGS(r9)
-+	andi.   r0,r4,(_TIF_NEED_RESCHED)
-+	bne     1b
- 	b	restore
+diff --git a/Makefile b/Makefile
+index b7ac587..1b1b02c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -24,7 +24,7 @@ pi_stress:  src/pi_tests/pi_stress.c
+ CLEANUP = $(TARGETS) *.o .depend *.*~ ChangeLog *.orig *.rej rt-tests.spec
  
- user_work:
+ clean:
+-	for F in $(CLEANUP); do find -type f -iname $$F | xargs rm -f; done
++	for F in $(CLEANUP); do find -type f -name $$F | xargs rm -f; done
+ 
+ distclean: clean
+ 	rm -rf BUILD RPMS SRPMS releases
+-- 
+1.5.4.3
+
