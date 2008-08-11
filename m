@@ -1,109 +1,45 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: Cyclictest usage
-Date: Mon, 11 Aug 2008 09:55:55 -0400
-Message-ID: <48A044EB.7010508@novell.com>
-References: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>	 <48A03517.40708@novell.com> <ccb913ac0808110638v79283450j8d4953bc0820e747@mail.gmail.com>
+From: Kushal Koolwal <kushalkoolwal@hotmail.com>
+Subject: LPPTEST-worst-case latency
+Date: Mon, 11 Aug 2008 11:18:19 -0700
+Message-ID: <BAY107-W4327615787F6FE602CBAD9BA710@phx.gbl>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigF6D8F8688281640CBA55E576"
-Cc: linux-rt-users@vger.kernel.org
-To: Tobias Knutsson <tobias.knutsson@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:51842 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751704AbYHKN6H (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 09:58:07 -0400
-In-Reply-To: <ccb913ac0808110638v79283450j8d4953bc0820e747@mail.gmail.com>
+Received: from bay0-omc1-s25.bay0.hotmail.com ([65.54.246.97]:31210 "EHLO
+	bay0-omc1-s25.bay0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754260AbYHKSSU convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Aug 2008 14:18:20 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigF6D8F8688281640CBA55E576
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
 
-Hi Tobias,
+Hi,
 
-  Some more questions (inline)
+I am trying to do some preliminary benchmarking on a rt-kernel (2.6.26) versus a vanilla-kernel (2.6.26).
 
-Tobias Knutsson wrote:
-> 2.6.25.8-rt7 and 2.6.25.8
->
-> On Mon, Aug 11, 2008 at 14:48, Gregory Haskins <ghaskins@novell.com> wr=
-ote:
->  =20
->> Tobias Knutsson wrote:
->>    =20
->>> Hello,
->>>
->>> I'm trying to do some initial benchmarking on a rt-kernel versus a
->>> vanilla kernel. On the rt the results are stable in between test runs=
+Under CONFIG_LPPTEST in 2.6.26-rt1 patch it says:
 
->>> using the following command:
->>>
->>> cyclictest -t 1 -p 80 -c 1 -n -i 10000 -l 10000
->>>      =20
+"Latency of response: 12.2 usecs (121265 cycles)
 
-What architecture is this?  And what do you see for ave/max in the=20
-cyclictest output on -rt (so we have a reference)
+then generate various workloads on the target system to see how
+(worst-case-) latencies are impacted."
 
+I am wondering if there is a more formal definition of "worst-case"? Does a 'make -j8' and a constant "ping" like the following:
 
->>> However, using the same command while running the vanilla kernel, I
->>> get very varying results. And I would completely understand if it was=
+#make -j8 &
+#ping -l 100000 -q -s 10 -f localhost &
 
->>> due to increased jitter. The thing is, the jitter is very low (0%
->>> load) but the average times varies from 600 us to 6500 us depending o=
-n
->>> when the test is initiated.
->>>      =20
+would fall under the definition of "worst-case"? 
 
-What are you considering "jitter" when you say it is very low?  Are the=20
-600-6500us values truly from the "ave" output of cyclictest, or are=20
-these an average of the "max" output?
+Or perhaps "hackbench 100" is a more likely candidate to generate worst-case latency?
 
+Thanks.
 
->>> I imagine this might have something to do with not having high res
->>> timers in the vanilla kernel.
+Kushal Koolwal
 
-I will defer to Thomas, but my understanding is that 2.6.25 vanilla=20
-should have HRT as an option (though I am not sure if you enabled it or=20
-not).
-
->>>  If that is what's causing my problems.
->>>      =20
-
-Cyclictest will report that it cannot access the HRT when it cannot find =
-
-it (at least it does on my system, but I might have an older version=20
-running).  Do you see any such warnings?
-
->>> What is the best way of comparing the two kernels?
->>>      =20
-
-This is a pretty good way, as long as you have HRT in the vanilla=20
-kernel.  Assuming for a second that you do, your results are showing you =
-
-what I would expect to see for vanilla (600-6500us spikes).
-
-HTH
-
--Greg
-
-
---------------enigF6D8F8688281640CBA55E576
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAkigROsACgkQlOSOBdgZUxn5OwCeOxfQcrhBnxwAojB3PMIpdweF
-/OYAn2ZYD4pG/C4ksGLElQmO2lFs0IxV
-=0ZsN
------END PGP SIGNATURE-----
-
---------------enigF6D8F8688281640CBA55E576--
+_________________________________________________________________
+Reveal your inner athlete and share it with friends on Windows Live.
+http://revealyourinnerathlete.windowslive.com?locale=en-us&ocid=TXT_TAGLM_WLYIA_whichathlete_us
