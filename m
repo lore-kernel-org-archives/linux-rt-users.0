@@ -1,45 +1,40 @@
-From: Kushal Koolwal <kushalkoolwal@hotmail.com>
-Subject: LPPTEST-worst-case latency
-Date: Mon, 11 Aug 2008 11:18:19 -0700
-Message-ID: <BAY107-W4327615787F6FE602CBAD9BA710@phx.gbl>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH] BUG: using smp_processor_id() in preemptible
+ [00000000] code: caller is __qdisc_run
+Date: Mon, 11 Aug 2008 14:00:14 -0700 (PDT)
+Message-ID: <20080811.140014.94581847.davem@davemloft.net>
+References: <520f0cf10808110611y62f6a4e2v94a0d0cde1d5d79d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	mingo@elte.hu, tglx@linutronix.de, rostedt@goodmis.org,
+	a.p.zijlstra@chello.nl
+To: jkacur@gmail.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bay0-omc1-s25.bay0.hotmail.com ([65.54.246.97]:31210 "EHLO
-	bay0-omc1-s25.bay0.hotmail.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754260AbYHKSSU convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 14:18:20 -0400
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:39272
+	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1751966AbYHKVAN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Aug 2008 17:00:13 -0400
+In-Reply-To: <520f0cf10808110611y62f6a4e2v94a0d0cde1d5d79d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: "John Kacur" <jkacur@gmail.com>
+Date: Mon, 11 Aug 2008 15:11:46 +0200
 
-Hi,
+> __qdisc_run() calls qdisc_restart() which calls
+> handle_dev_cpu_collision(skb, dev, q); and then the problem shows up
+> here:
+> __get_cpu_var(netdev_rx_stat).cpu_collision++;
+> 
+> The solution is to disable interrupts around the above increment. Here
+> is an attached patch to do so. (Thank's to Peter Zijlstra for help in
+> the analysis and dropping the answer in my lap, so if I got it right
+> it is due to his help, but if I messed it up, then I did that part all
+> by myself.)
 
-I am trying to do some preliminary benchmarking on a rt-kernel (2.6.26) versus a vanilla-kernel (2.6.26).
-
-Under CONFIG_LPPTEST in 2.6.26-rt1 patch it says:
-
-"Latency of response: 12.2 usecs (121265 cycles)
-
-then generate various workloads on the target system to see how
-(worst-case-) latencies are impacted."
-
-I am wondering if there is a more formal definition of "worst-case"? Does a 'make -j8' and a constant "ping" like the following:
-
-#make -j8 &
-#ping -l 100000 -q -s 10 -f localhost &
-
-would fall under the definition of "worst-case"? 
-
-Or perhaps "hackbench 100" is a more likely candidate to generate worst-case latency?
-
-Thanks.
-
-Kushal Koolwal
-
-_________________________________________________________________
-Reveal your inner athlete and share it with friends on Windows Live.
-http://revealyourinnerathlete.windowslive.com?locale=en-us&ocid=TXT_TAGLM_WLYIA_whichathlete_us
+__qdisc_run() always runs in software interrupt context,
+so I guess this is some problem with the -rt stuff running
+software interrupts in threads?
