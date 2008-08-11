@@ -1,49 +1,68 @@
-From: "Tobias Knutsson" <tobias.knutsson@gmail.com>
-Subject: Cyclictest usage
-Date: Mon, 11 Aug 2008 11:00:19 +0200
-Message-ID: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: Cyclictest usage
+Date: Mon, 11 Aug 2008 08:48:23 -0400
+Message-ID: <48A03517.40708@novell.com>
+References: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig85FAC988E806F78324399EFB"
+Cc: linux-rt-users@vger.kernel.org
+To: Tobias Knutsson <tobias.knutsson@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.172]:4608 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751211AbYHKJAU convert rfc822-to-8bit (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:35507 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751221AbYHKMuk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 05:00:20 -0400
-Received: by wf-out-1314.google.com with SMTP id 27so3787948wfd.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2008 02:00:20 -0700 (PDT)
-Content-Disposition: inline
+	Mon, 11 Aug 2008 08:50:40 -0400
+In-Reply-To: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig85FAC988E806F78324399EFB
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-I'm trying to do some initial benchmarking on a rt-kernel versus a
-vanilla kernel. On the rt the results are stable in between test runs
-using the following command:
+Tobias Knutsson wrote:
+> Hello,
+>
+> I'm trying to do some initial benchmarking on a rt-kernel versus a
+> vanilla kernel. On the rt the results are stable in between test runs
+> using the following command:
+>
+> cyclictest -t 1 -p 80 -c 1 -n -i 10000 -l 10000
+>
+> However, using the same command while running the vanilla kernel, I
+> get very varying results. And I would completely understand if it was
+> due to increased jitter. The thing is, the jitter is very low (0%
+> load) but the average times varies from 600 us to 6500 us depending on
+> when the test is initiated.
+>
+> I imagine this might have something to do with not having high res
+> timers in the vanilla kernel. If that is what's causing my problems.
+> What is the best way of comparing the two kernels?
+>
+> I would be much greatful for a few pointers!
+>
+>  =20
 
-cyclictest -t 1 -p 80 -c 1 -n -i 10000 -l 10000
+Hi Tobias,
+  What kernel versions are you testing out?
 
-However, using the same command while running the vanilla kernel, I
-get very varying results. And I would completely understand if it was
-due to increased jitter. The thing is, the jitter is very low (0%
-load) but the average times varies from 600 us to 6500 us depending on
-when the test is initiated.
 
-I imagine this might have something to do with not having high res
-timers in the vanilla kernel. If that is what's causing my problems.
-What is the best way of comparing the two kernels?
+--------------enig85FAC988E806F78324399EFB
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-I would be much greatful for a few pointers!
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
 
---=20
+iEYEARECAAYFAkigNRcACgkQlOSOBdgZUxkEYgCfY1cHbS4qKXixEecKzFAx7N2u
+uJUAn0Mbh1a0eF90DGROHjYjnPBWyEOI
+=d6VV
+-----END PGP SIGNATURE-----
 
-H=E4lsningar/Regards
-Tobias Knutsson
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--------------enig85FAC988E806F78324399EFB--
