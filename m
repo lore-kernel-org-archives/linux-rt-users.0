@@ -1,68 +1,152 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: Cyclictest usage
-Date: Mon, 11 Aug 2008 08:48:23 -0400
-Message-ID: <48A03517.40708@novell.com>
-References: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
+From: "John Kacur" <jkacur@gmail.com>
+Subject: [PATCH] BUG: using smp_processor_id() in preemptible [00000000] code: caller is __qdisc_run
+Date: Mon, 11 Aug 2008 15:11:46 +0200
+Message-ID: <520f0cf10808110611y62f6a4e2v94a0d0cde1d5d79d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig85FAC988E806F78324399EFB"
-Cc: linux-rt-users@vger.kernel.org
-To: Tobias Knutsson <tobias.knutsson@gmail.com>
+Content-Type: multipart/mixed;
+	boundary="----=_Part_36925_17376024.1218460306058"
+Cc: LKML <linux-kernel@vger.kernel.org>, "Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Peter Zijlstra" <a.p.zijlstra@chello.nl>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:35507 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751221AbYHKMuk (ORCPT
+Received: from nf-out-0910.google.com ([64.233.182.191]:49240 "EHLO
+	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751657AbYHKNLr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 08:50:40 -0400
-In-Reply-To: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
+	Mon, 11 Aug 2008 09:11:47 -0400
+Received: by nf-out-0910.google.com with SMTP id d3so646906nfc.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2008 06:11:46 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig85FAC988E806F78324399EFB
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+------=_Part_36925_17376024.1218460306058
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Tobias Knutsson wrote:
-> Hello,
->
-> I'm trying to do some initial benchmarking on a rt-kernel versus a
-> vanilla kernel. On the rt the results are stable in between test runs
-> using the following command:
->
-> cyclictest -t 1 -p 80 -c 1 -n -i 10000 -l 10000
->
-> However, using the same command while running the vanilla kernel, I
-> get very varying results. And I would completely understand if it was
-> due to increased jitter. The thing is, the jitter is very low (0%
-> load) but the average times varies from 600 us to 6500 us depending on
-> when the test is initiated.
->
-> I imagine this might have something to do with not having high res
-> timers in the vanilla kernel. If that is what's causing my problems.
-> What is the best way of comparing the two kernels?
->
-> I would be much greatful for a few pointers!
->
->  =20
+I'm running a linux-2.6.26.1 kernel with the real-time
+patch-2.6.26-rt1 plus most of the patches discussed on the
+linux-rt-users list since rt1. (except ppc patches, and not Gregory
+Haskins experimental stuff)
+The above info is mostly just full exclosure, I'm sure that this bug
+exists in plain linux-2.6.26 + real-time patch-2.6.26-rt1 too.
 
-Hi Tobias,
-  What kernel versions are you testing out?
+BUG: using smp_processor_id() in preemptible [00000000] code: firefox-bin/4091
+caller is __qdisc_run+0x160/0x1e9
+Pid: 4091, comm: firefox-bin Tainted: G        W 2.6.26.1-rt1.jk #4
 
+Call Trace:
+ [<ffffffff803468ac>] debug_smp_processor_id+0xe4/0xf4
+ [<ffffffff8040673f>] __qdisc_run+0x160/0x1e9
+ [<ffffffff803f406c>] dev_queue_xmit+0x1b3/0x2ee
+ [<ffffffff8041abec>] ip_finish_output+0x2a6/0x2ef
+ [<ffffffff8041ad18>] ip_output+0xe3/0xec
+ [<ffffffff80419c54>] ip_local_out+0x25/0x29
+ [<ffffffff8041a4c6>] ip_queue_xmit+0x2ce/0x35e
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff80286265>] ? trace_preempt_on+0x1f/0x105
+ [<ffffffff8042b6b2>] ? tcp_transmit_skb+0x72a/0x78f
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff8042b6d8>] tcp_transmit_skb+0x750/0x78f
+ [<ffffffff8042e274>] __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff802b53b3>] ? __kmalloc_node+0x48/0x4a
+ [<ffffffff803ee44d>] ? __alloc_skb+0x70/0x136
+ [<ffffffff8042e518>] tcp_send_fin+0x18e/0x19a
+ [<ffffffff80420358>] tcp_close+0x1cc/0x413
+ [<ffffffff8043d1a6>] inet_release+0x55/0x5c
+ [<ffffffff803e78af>] sock_release+0x1f/0xb2
+ [<ffffffff803e797b>] sock_close+0x39/0x3f
+ [<ffffffff802bb11b>] __fput+0xca/0x18d
+ [<ffffffff802bb1f7>] fput+0x19/0x1b
+ [<ffffffff802b8120>] filp_close+0x6b/0x76
+ [<ffffffff802b81d5>] sys_close+0xaa/0xe9
+ [<ffffffff80226c07>] sysenter_do_call+0x8c/0x149
+ [<ffffffff8046ca94>] ? trace_hardirqs_on_thunk+0x3a/0x3c
 
---------------enig85FAC988E806F78324399EFB
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+---------------------------
+| preempt count: 00000001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff80346859>] .... debug_smp_processor_id+0x91/0xf4
+.....[<ffffffff8040673f>] ..   ( <= __qdisc_run+0x160/0x1e9)
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+BUG: firefox-bin:4091 task might have lost a preemption check!
+Pid: 4091, comm: firefox-bin Tainted: G        W 2.6.26.1-rt1.jk #4
 
-iEYEARECAAYFAkigNRcACgkQlOSOBdgZUxkEYgCfY1cHbS4qKXixEecKzFAx7N2u
-uJUAn0Mbh1a0eF90DGROHjYjnPBWyEOI
-=d6VV
------END PGP SIGNATURE-----
+Call Trace:
+ [<ffffffff804708c8>] ? sub_preempt_count+0xd1/0xe6
+ [<ffffffff80235c41>] preempt_enable_no_resched+0x5c/0x5e
+ [<ffffffff803468b1>] debug_smp_processor_id+0xe9/0xf4
+ [<ffffffff8040673f>] __qdisc_run+0x160/0x1e9
+ [<ffffffff803f406c>] dev_queue_xmit+0x1b3/0x2ee
+ [<ffffffff8041abec>] ip_finish_output+0x2a6/0x2ef
+ [<ffffffff8041ad18>] ip_output+0xe3/0xec
+ [<ffffffff80419c54>] ip_local_out+0x25/0x29
+ [<ffffffff8041a4c6>] ip_queue_xmit+0x2ce/0x35e
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff80286265>] ? trace_preempt_on+0x1f/0x105
+ [<ffffffff8042b6b2>] ? tcp_transmit_skb+0x72a/0x78f
+ [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff8042b6d8>] tcp_transmit_skb+0x750/0x78f
+ [<ffffffff8042e274>] __tcp_push_pending_frames+0x74a/0x860
+ [<ffffffff802b53b3>] ? __kmalloc_node+0x48/0x4a
+ [<ffffffff803ee44d>] ? __alloc_skb+0x70/0x136
+ [<ffffffff8042e518>] tcp_send_fin+0x18e/0x19a
+ [<ffffffff80420358>] tcp_close+0x1cc/0x413
+ [<ffffffff8043d1a6>] inet_release+0x55/0x5c
+ [<ffffffff803e78af>] sock_release+0x1f/0xb2
+ [<ffffffff803e797b>] sock_close+0x39/0x3f
+ [<ffffffff802bb11b>] __fput+0xca/0x18d
+ [<ffffffff802bb1f7>] fput+0x19/0x1b
+ [<ffffffff802b8120>] filp_close+0x6b/0x76
+ [<ffffffff802b81d5>] sys_close+0xaa/0xe9
+ [<ffffffff80226c07>] sysenter_do_call+0x8c/0x149
+ [<ffffffff8046ca94>] ? trace_hardirqs_on_thunk+0x3a/0x3c
 
---------------enig85FAC988E806F78324399EFB--
+---------------------------
+| preempt count: 00000000 ]
+| 0-level deep critical section nesting:
+
+__qdisc_run() calls qdisc_restart() which calls
+handle_dev_cpu_collision(skb, dev, q); and then the problem shows up
+here:
+__get_cpu_var(netdev_rx_stat).cpu_collision++;
+
+The solution is to disable interrupts around the above increment. Here
+is an attached patch to do so. (Thank's to Peter Zijlstra for help in
+the analysis and dropping the answer in my lap, so if I got it right
+it is due to his help, but if I messed it up, then I did that part all
+by myself.)
+
+Unless there are objections, please apply.
+
+------=_Part_36925_17376024.1218460306058
+Content-Type: text/x-patch; name=qdisc_run.patch
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fjr3o7lg0
+Content-Disposition: attachment; filename=qdisc_run.patch
+
+U3ViamVjdDogZml4IGZvciBCVUc6IHVzaW5nIHNtcF9wcm9jZXNzb3JfaWQoKSBpbiBwcmVlbXB0
+aWJsZSBjb2RlCgpGaXhlcyB1c2luZyBzbXBfcHJvY2Vzc29yX2lkKCkgaW4gcHJlZW1wdGlibGUg
+Y29kZSBhcyBzZWVuIHdoZW4gX19xZGlzY19ydW4KY2FsbHMgcWRpc2NfcmVzdGFydCB3aGljaCBj
+YWxscyBoYW5kbGVfZGV2X2NwdV9jb2xsaXNpb24KClRoaXMgaXMgZml4ZWQgYnkgZGlzYWJsaW5n
+IGlycXMgKGFuZCBwcmVlbXB0aW9uKSBhcm91bmQgY3B1X2NvbGxpc2lvbisrCmluIGhhbmRsZV9k
+ZXZfY3B1X2NvbGxpc2lvbgoKU2lnbmVkLW9mZi1ieTogSm9obiBLYWN1ciA8amthY3VyIGF0IGdt
+YWlsIGRvdCBjb20+CgpJbmRleDogbGludXgtMi42LjI2LjEtcnQxLmprL25ldC9zY2hlZC9zY2hf
+Z2VuZXJpYy5jCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT0KLS0tIGxpbnV4LTIuNi4yNi4xLXJ0MS5qay5vcmlnL25ldC9z
+Y2hlZC9zY2hfZ2VuZXJpYy5jCisrKyBsaW51eC0yLjYuMjYuMS1ydDEuamsvbmV0L3NjaGVkL3Nj
+aF9nZW5lcmljLmMKQEAgLTk0LDYgKzk0LDcgQEAgc3RhdGljIGlubGluZSBpbnQgaGFuZGxlX2Rl
+dl9jcHVfY29sbGlzaQogCQkJCQkgICBzdHJ1Y3QgUWRpc2MgKnEpCiB7CiAJaW50IHJldDsKKwl1
+bnNpZ25lZCBsb25nIGZsYWdzOwogCiAJaWYgKHVubGlrZWx5KGRldi0+eG1pdF9sb2NrX293bmVy
+ID09ICh2b2lkICopY3VycmVudCkpIHsKIAkJLyoKQEAgLTExMiw3ICsxMTMsOSBAQCBzdGF0aWMg
+aW5saW5lIGludCBoYW5kbGVfZGV2X2NwdV9jb2xsaXNpCiAJCSAqIEFub3RoZXIgY3B1IGlzIGhv
+bGRpbmcgbG9jaywgcmVxdWV1ZSAmIGRlbGF5IHhtaXRzIGZvcgogCQkgKiBzb21lIHRpbWUuCiAJ
+CSAqLworCQlsb2NhbF9pcnFfc2F2ZShmbGFncyk7CiAJCV9fZ2V0X2NwdV92YXIobmV0ZGV2X3J4
+X3N0YXQpLmNwdV9jb2xsaXNpb24rKzsKKwkJbG9jYWxfaXJxX3Jlc3RvcmUoZmxhZ3MpOwogCQly
+ZXQgPSBkZXZfcmVxdWV1ZV9za2Ioc2tiLCBkZXYsIHEpOwogCX0KIAo=
+------=_Part_36925_17376024.1218460306058--
