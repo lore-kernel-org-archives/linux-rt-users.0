@@ -1,46 +1,47 @@
-From: Juergen Beisert <jbe@pengutronix.de>
-Subject: Re: 2.6.26-rt1
-Date: Mon, 11 Aug 2008 10:36:36 +0200
-Message-ID: <200808111036.37998.jbe@pengutronix.de>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807291440240.14925@apollo.tec.linutronix.de> <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+From: "Tobias Knutsson" <tobias.knutsson@gmail.com>
+Subject: Cyclictest usage
+Date: Mon, 11 Aug 2008 11:00:19 +0200
+Message-ID: <ccb913ac0808110200m7a34b361j5a60e9ef31ebb0f4@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Carsten Emde <ce@ceag.ch>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.extern.pengutronix.de ([83.236.181.26]:56002 "EHLO
-	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751189AbYHKIgt convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 04:36:49 -0400
-In-Reply-To: <alpine.LFD.1.10.0807300006180.14925@apollo.tec.linutronix.de>
+Received: from wf-out-1314.google.com ([209.85.200.172]:4608 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751211AbYHKJAU convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Aug 2008 05:00:20 -0400
+Received: by wf-out-1314.google.com with SMTP id 27so3787948wfd.4
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2008 02:00:20 -0700 (PDT)
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-When CONFIG_GROUP_SCHED is enabled this compile error is back.
+Hello,
 
-[...]
-  CC      mm/bootmem.o
-In file included from kernel/sched.c:1618:
-kernel/sched_rt.c: In function 'inc_rt_tasks':
-kernel/sched_rt.c:408: error: 'struct rq' has no member named 'online'
+I'm trying to do some initial benchmarking on a rt-kernel versus a
+vanilla kernel. On the rt the results are stable in between test runs
+using the following command:
 
-jbe
+cyclictest -t 1 -p 80 -c 1 -n -i 10000 -l 10000
+
+However, using the same command while running the vanilla kernel, I
+get very varying results. And I would completely understand if it was
+due to increased jitter. The thing is, the jitter is very low (0%
+load) but the average times varies from 600 us to 6500 us depending on
+when the test is initiated.
+
+I imagine this might have something to do with not having high res
+timers in the vanilla kernel. If that is what's causing my problems.
+What is the best way of comparing the two kernels?
+
+I would be much greatful for a few pointers!
+
 --=20
-Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
-=A0Pengutronix - Linux Solutions for Science and Industry
-=A0   Handelsregister: Amtsgericht Hildesheim, HRA 2686
-=A0 =A0 =A0    Vertretung Sued/Muenchen, Germany
-   Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
+
+H=E4lsningar/Regards
+Tobias Knutsson
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
