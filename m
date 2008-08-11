@@ -1,152 +1,131 @@
 From: "John Kacur" <jkacur@gmail.com>
-Subject: [PATCH] BUG: using smp_processor_id() in preemptible [00000000] code: caller is __qdisc_run
-Date: Mon, 11 Aug 2008 15:11:46 +0200
-Message-ID: <520f0cf10808110611y62f6a4e2v94a0d0cde1d5d79d@mail.gmail.com>
+Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
+Date: Mon, 11 Aug 2008 15:25:49 +0200
+Message-ID: <520f0cf10808110625h4d130d04ke8e4f6c998b0cd81@mail.gmail.com>
+References: <520f0cf10808041352h78bd4319x1802f018aeffe6dc@mail.gmail.com>
+	 <1217921101.3589.98.camel@twins>
+	 <20080805204901.GA31132@linux.intel.com>
+	 <1217970588.29415.36.camel@lappy.programming.kicks-ass.net>
+	 <520f0cf10808051518h1459d353r8de78e98f79ec57c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_36925_17376024.1218460306058"
-Cc: LKML <linux-kernel@vger.kernel.org>, "Ingo Molnar" <mingo@elte.hu>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: mgross@linux.intel.com, LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
 	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Peter Zijlstra" <a.p.zijlstra@chello.nl>
-To: rt-users <linux-rt-users@vger.kernel.org>
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>, arjan <arjan@infradead.org>
+To: "Peter Zijlstra" <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.191]:49240 "EHLO
+Received: from nf-out-0910.google.com ([64.233.182.186]:53276 "EHLO
 	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751657AbYHKNLr (ORCPT
+	with ESMTP id S1751655AbYHKNZu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 09:11:47 -0400
-Received: by nf-out-0910.google.com with SMTP id d3so646906nfc.21
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2008 06:11:46 -0700 (PDT)
+	Mon, 11 Aug 2008 09:25:50 -0400
+Received: by nf-out-0910.google.com with SMTP id d3so649989nfc.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2008 06:25:49 -0700 (PDT)
+In-Reply-To: <520f0cf10808051518h1459d353r8de78e98f79ec57c@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-------=_Part_36925_17376024.1218460306058
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On Wed, Aug 6, 2008 at 12:18 AM, John Kacur <jkacur@gmail.com> wrote:
+> On Tue, Aug 5, 2008 at 11:09 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> On Tue, 2008-08-05 at 13:49 -0700, mark gross wrote:
+>>> On Tue, Aug 05, 2008 at 09:25:01AM +0200, Peter Zijlstra wrote:
+>>> > On Mon, 2008-08-04 at 22:52 +0200, John Kacur wrote:
+>>> > > Even after applying some fixes posted by Chirag and Peter Z, I'm still
+>>> > > getting some messages in my log like this
+>>> >
+>>> > > BUG: sleeping function called from invalid context swapper(0) at
+>>> > > kernel/rtmutex.c:743
+>>> > > in_atomic():1 [00000001], irqs_disabled():1
+>>> > > Pid: 0, comm: swapper Tainted: G        W 2.6.26.1-rt1.jk #2
+>>> > >
+>>> > > Call Trace:
+>>> > >  [<ffffffff802305d3>] __might_sleep+0x12d/0x132
+>>> > >  [<ffffffff8046cdbe>] __rt_spin_lock+0x34/0x7d
+>>> > >  [<ffffffff8046ce15>] rt_spin_lock+0xe/0x10
+>>> > >  [<ffffffff802532e5>] pm_qos_requirement+0x1f/0x3c
+>>> > >  [<ffffffff803e1b7f>] menu_select+0x7b/0x9c
+>>> > >  [<ffffffff8020b1be>] ? default_idle+0x0/0x5a
+>>> > >  [<ffffffff8020b1be>] ? default_idle+0x0/0x5a
+>>> > >  [<ffffffff803e0b4b>] cpuidle_idle_call+0x68/0xd8
+>>> > >  [<ffffffff803e0ae3>] ? cpuidle_idle_call+0x0/0xd8
+>>> > >  [<ffffffff8020b1be>] ? default_idle+0x0/0x5a
+>>> > >  [<ffffffff8020b333>] cpu_idle+0xb2/0x12d
+>>> > >  [<ffffffff80466af0>] start_secondary+0x186/0x18b
+>>> > >
+>>> > > ---------------------------
+>>> > > | preempt count: 00000001 ]
+>>> > > | 1-level deep critical section nesting:
+>>> > > ----------------------------------------
+>>> > > ... [<ffffffff8020b39c>] .... cpu_idle+0x11b/0x12d
+>>> > > ......[<ffffffff80466af0>] ..   ( <= start_secondary+0x186/0x18b)
+>>> > >
+>>> > > The following simple patch makes the messages disappear - however,
+>>> > > there may be a better more fine grained solution, but the problem is
+>>> > > also that all the functions are designed to use the same lock.
+>>> >
+>>> > Hmm, I think you're right - its called from the idle routine so we can't
+>>> > go about sleeping there.
+>>> >
+>>> > The only trouble I have is with kernel/pm_qos_params.c:update_target()'s
+>>> > use of this lock - that is decidedly not O(1).
+>>> >
+>>> > Mark, would it be possible to split that lock in two, one lock
+>>> > protecting pm_qos_array[], and one lock protecting the
+>>> > requirements.list ?
+>>>
+>>> very likely, but I'm not sure how it will help.
+>>>
+>>> the fine grain locking I had initially worked out on pm_qos was to have
+>>> a lock per pm_qos_object, that would be used for accessing the
+>>> requirement_list and the target_value.  But that isn't what you are
+>>> asking about is it?
+>>>
+>>> Is what you want is a pm_qos_requirements_list_lock and a
+>>> pm_qos_target_value_lock, for each pm_qos_object instance?
+>>>
+>>> I guess it wold work but besides giving the code spinlock diarrhea would
+>>> it really help solve the issue you are seeing?
+>>
+>> The problem is that on -rt spinlocks turn into mutexes. And the above
+>> BUG tells us that the idle loop might end up scheduling due to trying to
+>> take this lock.
+>>
+>> Now, the way I read the code, pm_qos_lock protects multiple things:
+>>
+>>  - pm_qos_array[target]->target_value
+>>
+>>  - &pm_qos_array[pm_qos_class]->requirements.list
+>>
+>> Now, the thing is, we could turn the lock back into a real spinlock
+>> (raw_spinlock_t), but the loops in eg update_target() are not O(1) and
+>> could thus cause serious preempt-off latencies.
+>>
+>> My question was, and now having had a second look at the code I think it
+>> is, would it be possible to guard the list using a sleeping lock,
+>> protect the target_value using a (raw) spinlock.
+>>
+>> OTOH, just reading a (word aligned, word sized) value doesn't normally
+>> require serialization, esp if the update site is already serialized by
+>> other means.
+>>
+>> So could we perhaps remove the lock usage from pm_qos_requirement()? -
+>> that too would solve the issue.
+>>
+>>
+>>  - Peter
+>>
+>
+> How about this patch? Like Peter suggests, It adds a raw spinlock only
+> for the target value. I'm currently running with it, but still
+> testing, comments are appreciated.
+>
+> Thanks
+>
 
-I'm running a linux-2.6.26.1 kernel with the real-time
-patch-2.6.26-rt1 plus most of the patches discussed on the
-linux-rt-users list since rt1. (except ppc patches, and not Gregory
-Haskins experimental stuff)
-The above info is mostly just full exclosure, I'm sure that this bug
-exists in plain linux-2.6.26 + real-time patch-2.6.26-rt1 too.
-
-BUG: using smp_processor_id() in preemptible [00000000] code: firefox-bin/4091
-caller is __qdisc_run+0x160/0x1e9
-Pid: 4091, comm: firefox-bin Tainted: G        W 2.6.26.1-rt1.jk #4
-
-Call Trace:
- [<ffffffff803468ac>] debug_smp_processor_id+0xe4/0xf4
- [<ffffffff8040673f>] __qdisc_run+0x160/0x1e9
- [<ffffffff803f406c>] dev_queue_xmit+0x1b3/0x2ee
- [<ffffffff8041abec>] ip_finish_output+0x2a6/0x2ef
- [<ffffffff8041ad18>] ip_output+0xe3/0xec
- [<ffffffff80419c54>] ip_local_out+0x25/0x29
- [<ffffffff8041a4c6>] ip_queue_xmit+0x2ce/0x35e
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff80286265>] ? trace_preempt_on+0x1f/0x105
- [<ffffffff8042b6b2>] ? tcp_transmit_skb+0x72a/0x78f
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff8042b6d8>] tcp_transmit_skb+0x750/0x78f
- [<ffffffff8042e274>] __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff802b53b3>] ? __kmalloc_node+0x48/0x4a
- [<ffffffff803ee44d>] ? __alloc_skb+0x70/0x136
- [<ffffffff8042e518>] tcp_send_fin+0x18e/0x19a
- [<ffffffff80420358>] tcp_close+0x1cc/0x413
- [<ffffffff8043d1a6>] inet_release+0x55/0x5c
- [<ffffffff803e78af>] sock_release+0x1f/0xb2
- [<ffffffff803e797b>] sock_close+0x39/0x3f
- [<ffffffff802bb11b>] __fput+0xca/0x18d
- [<ffffffff802bb1f7>] fput+0x19/0x1b
- [<ffffffff802b8120>] filp_close+0x6b/0x76
- [<ffffffff802b81d5>] sys_close+0xaa/0xe9
- [<ffffffff80226c07>] sysenter_do_call+0x8c/0x149
- [<ffffffff8046ca94>] ? trace_hardirqs_on_thunk+0x3a/0x3c
-
----------------------------
-| preempt count: 00000001 ]
-| 1-level deep critical section nesting:
-----------------------------------------
-.. [<ffffffff80346859>] .... debug_smp_processor_id+0x91/0xf4
-.....[<ffffffff8040673f>] ..   ( <= __qdisc_run+0x160/0x1e9)
-
-BUG: firefox-bin:4091 task might have lost a preemption check!
-Pid: 4091, comm: firefox-bin Tainted: G        W 2.6.26.1-rt1.jk #4
-
-Call Trace:
- [<ffffffff804708c8>] ? sub_preempt_count+0xd1/0xe6
- [<ffffffff80235c41>] preempt_enable_no_resched+0x5c/0x5e
- [<ffffffff803468b1>] debug_smp_processor_id+0xe9/0xf4
- [<ffffffff8040673f>] __qdisc_run+0x160/0x1e9
- [<ffffffff803f406c>] dev_queue_xmit+0x1b3/0x2ee
- [<ffffffff8041abec>] ip_finish_output+0x2a6/0x2ef
- [<ffffffff8041ad18>] ip_output+0xe3/0xec
- [<ffffffff80419c54>] ip_local_out+0x25/0x29
- [<ffffffff8041a4c6>] ip_queue_xmit+0x2ce/0x35e
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff80286265>] ? trace_preempt_on+0x1f/0x105
- [<ffffffff8042b6b2>] ? tcp_transmit_skb+0x72a/0x78f
- [<ffffffff8042e274>] ? __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff8042b6d8>] tcp_transmit_skb+0x750/0x78f
- [<ffffffff8042e274>] __tcp_push_pending_frames+0x74a/0x860
- [<ffffffff802b53b3>] ? __kmalloc_node+0x48/0x4a
- [<ffffffff803ee44d>] ? __alloc_skb+0x70/0x136
- [<ffffffff8042e518>] tcp_send_fin+0x18e/0x19a
- [<ffffffff80420358>] tcp_close+0x1cc/0x413
- [<ffffffff8043d1a6>] inet_release+0x55/0x5c
- [<ffffffff803e78af>] sock_release+0x1f/0xb2
- [<ffffffff803e797b>] sock_close+0x39/0x3f
- [<ffffffff802bb11b>] __fput+0xca/0x18d
- [<ffffffff802bb1f7>] fput+0x19/0x1b
- [<ffffffff802b8120>] filp_close+0x6b/0x76
- [<ffffffff802b81d5>] sys_close+0xaa/0xe9
- [<ffffffff80226c07>] sysenter_do_call+0x8c/0x149
- [<ffffffff8046ca94>] ? trace_hardirqs_on_thunk+0x3a/0x3c
-
----------------------------
-| preempt count: 00000000 ]
-| 0-level deep critical section nesting:
-
-__qdisc_run() calls qdisc_restart() which calls
-handle_dev_cpu_collision(skb, dev, q); and then the problem shows up
-here:
-__get_cpu_var(netdev_rx_stat).cpu_collision++;
-
-The solution is to disable interrupts around the above increment. Here
-is an attached patch to do so. (Thank's to Peter Zijlstra for help in
-the analysis and dropping the answer in my lap, so if I got it right
-it is due to his help, but if I messed it up, then I did that part all
-by myself.)
-
-Unless there are objections, please apply.
-
-------=_Part_36925_17376024.1218460306058
-Content-Type: text/x-patch; name=qdisc_run.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fjr3o7lg0
-Content-Disposition: attachment; filename=qdisc_run.patch
-
-U3ViamVjdDogZml4IGZvciBCVUc6IHVzaW5nIHNtcF9wcm9jZXNzb3JfaWQoKSBpbiBwcmVlbXB0
-aWJsZSBjb2RlCgpGaXhlcyB1c2luZyBzbXBfcHJvY2Vzc29yX2lkKCkgaW4gcHJlZW1wdGlibGUg
-Y29kZSBhcyBzZWVuIHdoZW4gX19xZGlzY19ydW4KY2FsbHMgcWRpc2NfcmVzdGFydCB3aGljaCBj
-YWxscyBoYW5kbGVfZGV2X2NwdV9jb2xsaXNpb24KClRoaXMgaXMgZml4ZWQgYnkgZGlzYWJsaW5n
-IGlycXMgKGFuZCBwcmVlbXB0aW9uKSBhcm91bmQgY3B1X2NvbGxpc2lvbisrCmluIGhhbmRsZV9k
-ZXZfY3B1X2NvbGxpc2lvbgoKU2lnbmVkLW9mZi1ieTogSm9obiBLYWN1ciA8amthY3VyIGF0IGdt
-YWlsIGRvdCBjb20+CgpJbmRleDogbGludXgtMi42LjI2LjEtcnQxLmprL25ldC9zY2hlZC9zY2hf
-Z2VuZXJpYy5jCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT0KLS0tIGxpbnV4LTIuNi4yNi4xLXJ0MS5qay5vcmlnL25ldC9z
-Y2hlZC9zY2hfZ2VuZXJpYy5jCisrKyBsaW51eC0yLjYuMjYuMS1ydDEuamsvbmV0L3NjaGVkL3Nj
-aF9nZW5lcmljLmMKQEAgLTk0LDYgKzk0LDcgQEAgc3RhdGljIGlubGluZSBpbnQgaGFuZGxlX2Rl
-dl9jcHVfY29sbGlzaQogCQkJCQkgICBzdHJ1Y3QgUWRpc2MgKnEpCiB7CiAJaW50IHJldDsKKwl1
-bnNpZ25lZCBsb25nIGZsYWdzOwogCiAJaWYgKHVubGlrZWx5KGRldi0+eG1pdF9sb2NrX293bmVy
-ID09ICh2b2lkICopY3VycmVudCkpIHsKIAkJLyoKQEAgLTExMiw3ICsxMTMsOSBAQCBzdGF0aWMg
-aW5saW5lIGludCBoYW5kbGVfZGV2X2NwdV9jb2xsaXNpCiAJCSAqIEFub3RoZXIgY3B1IGlzIGhv
-bGRpbmcgbG9jaywgcmVxdWV1ZSAmIGRlbGF5IHhtaXRzIGZvcgogCQkgKiBzb21lIHRpbWUuCiAJ
-CSAqLworCQlsb2NhbF9pcnFfc2F2ZShmbGFncyk7CiAJCV9fZ2V0X2NwdV92YXIobmV0ZGV2X3J4
-X3N0YXQpLmNwdV9jb2xsaXNpb24rKzsKKwkJbG9jYWxfaXJxX3Jlc3RvcmUoZmxhZ3MpOwogCQly
-ZXQgPSBkZXZfcmVxdWV1ZV9za2Ioc2tiLCBkZXYsIHEpOwogCX0KIAo=
-------=_Part_36925_17376024.1218460306058--
+I have been running with this patch for quite a while now without any
+problems, so please apply. If Mark is able to remove the lock
+altogether at some point in the future then we can remove this patch.
