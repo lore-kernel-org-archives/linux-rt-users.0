@@ -1,116 +1,44 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH] BUG: using smp_processor_id() in preemptible [00000000]
- code: caller is __qdisc_run
-Date: Mon, 11 Aug 2008 22:06:28 -0400
-Message-ID: <48A0F024.30609@novell.com>
-References: <520f0cf10808110611y62f6a4e2v94a0d0cde1d5d79d@mail.gmail.com> <20080811.140014.94581847.davem@davemloft.net> <1218488979.15798.39.camel@lappy.programming.kicks-ass.net> <20080811.142359.145735170.davem@davemloft.net> <alpine.DEB.1.10.0808112121370.32393@gandalf.stny.rr.com>
+From: Kushal Koolwal <kushalkoolwal@hotmail.com>
+Subject: LPPTEST-worst-case latency
+Date: Tue, 12 Aug 2008 12:03:47 -0700
+Message-ID: <BAY107-W19C0C68D44AC0224120E89BA700@phx.gbl>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig004DA4DEBFB276E5BC2CD29B"
-Cc: David Miller <davem@davemloft.net>, a.p.zijlstra@chello.nl,
-	jkacur@gmail.com, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:44435 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751492AbYHLCIo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2008 22:08:44 -0400
-In-Reply-To: <alpine.DEB.1.10.0808112121370.32393@gandalf.stny.rr.com>
+Received: from bay0-omc1-s26.bay0.hotmail.com ([65.54.246.98]:36630 "EHLO
+	bay0-omc1-s26.bay0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751791AbYHLTDs convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Aug 2008 15:03:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig004DA4DEBFB276E5BC2CD29B
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
 
-Steven Rostedt wrote:
-> On Mon, 11 Aug 2008, David Miller wrote:
->
->  =20
->> From: Peter Zijlstra <a.p.zijlstra@chello.nl>
->> Date: Mon, 11 Aug 2008 23:09:38 +0200
->>
->>    =20
->>> On Mon, 2008-08-11 at 14:00 -0700, David Miller wrote:
->>>      =20
->>>> From: "John Kacur" <jkacur@gmail.com>
->>>> Date: Mon, 11 Aug 2008 15:11:46 +0200
->>>>
->>>>        =20
->>>>> __qdisc_run() calls qdisc_restart() which calls
->>>>> handle_dev_cpu_collision(skb, dev, q); and then the problem shows u=
-p
->>>>> here:
->>>>> __get_cpu_var(netdev_rx_stat).cpu_collision++;
->>>>>
->>>>> The solution is to disable interrupts around the above increment. H=
-ere
->>>>> is an attached patch to do so. (Thank's to Peter Zijlstra for help =
-in
->>>>> the analysis and dropping the answer in my lap, so if I got it righ=
-t
->>>>> it is due to his help, but if I messed it up, then I did that part =
-all
->>>>> by myself.)
->>>>>          =20
->>>> __qdisc_run() always runs in software interrupt context,
->>>> so I guess this is some problem with the -rt stuff running
->>>> software interrupts in threads?
->>>>        =20
->>> Hmm, good point - and those threads should be cpu affine on -rt if I'=
-m
->>> not mistaken. Steven, do you happen to remember details?
->>>      =20
->> The key issue is whether those threads run software interrupts
->> in a compatible environment.  And such a proper environment allows
->> plain smp_processor_id() without any special preparations.
->>
->>    =20
->
-> Yes, we have a softirq thread per CPU. We should have a test in the=20
-> smp_processor_id for rt to not bug if it is called by known "per_cpu"=20
-> threads.
->  =20
-something like
-
-#ifdef CONFIG_PREEMPT_RT
-    WARN_ON(!in_atomic() && current->rt.nr_cpus_allowed > 1);
-#else
-    WARN_ON(!in_atomic());
-#endif
-
-would probably work and be fairly efficient.  Of course nr_cpus_allowed=20
-technically could be adjusted at any time, so perhaps not.  Its probably =
-
-good enough for a warning check, however.
-
-> -- Steve
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->  =20
-
-
-
---------------enig004DA4DEBFB276E5BC2CD29B
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAkig8CQACgkQlOSOBdgZUxmw6ACeJ6jWS0JXIjER77d+Hy8W/sYh
-lfkAnAzlmoUUvjyXKSyE1wNQS0UYaF/1
-=Fibs
------END PGP SIGNATURE-----
-
---------------enig004DA4DEBFB276E5BC2CD29B--
+Hi,
+ 
+I am trying to do some preliminary benchmarking on a rt-kernel (2.6.26) versus a vanilla-kernel (2.6.26).
+ 
+Under CONFIG_LPPTEST in 2.6.26-rt1 patch it says:
+ 
+"Latency of response: 12.2 usecs (121265 cycles)
+ 
+then generate various workloads on the target system to see how
+(worst-case-) latencies are impacted."
+ 
+I am wondering if there is a more formal definition of "worst-case"? Does a 'make -j8' and a constant "ping" like the following:
+ 
+#make -j8 &
+#ping -l 100000 -q -s 10 -f localhost &
+ 
+would fall under the definition of "worst-case"? 
+ 
+Or perhaps "hackbench 100" is a more likely candidate to generate worst-case latency?
+ 
+Thanks.
+ 
+Kushal Koolwal
+_________________________________________________________________
+Get Windows Live and get whatever you need, wherever you are.  Start here.
+http://www.windowslive.com/default.html?ocid=TXT_TAGLM_WL_Home_082008
