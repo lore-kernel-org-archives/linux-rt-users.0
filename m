@@ -1,155 +1,37 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: 2.6.26-rt1
-Date: Wed, 13 Aug 2008 09:37:28 -0700
-Message-ID: <20080813163728.GC6593@linux.vnet.ibm.com>
-References: <alpine.LFD.1.10.0807252141420.574@apollo.tec.linutronix.de> <200807301101.32417.j.mell@t-online.de> <20080801211117.GD14851@linux.vnet.ibm.com> <200808131530.33130.jbe@pengutronix.de>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: [PATCH] rt: shorten posix_cpu_timers/<CPU> kernel thread names
+Date: Wed, 13 Aug 2008 15:42:11 -0300
+Message-ID: <20080813184211.GD2240@ghostprotocols.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org,
-	=?iso-8859-1?Q?J=FCrgen?= Mell <j.mell@t-online.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>
-To: Juergen Beisert <jbe@pengutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Clark Williams <williams@redhat.com>,
+	Luiz =?iso-8859-1?Q?Cl=E1udio_Gon=E7alves?= <lgoncalv@redhat.com>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:41353 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751116AbYHMQhi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Aug 2008 12:37:38 -0400
+Received: from mx1.redhat.com ([66.187.233.31]:58361 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751164AbYHMSoZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Aug 2008 14:44:25 -0400
 Content-Disposition: inline
-In-Reply-To: <200808131530.33130.jbe@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Aug 13, 2008 at 03:30:32PM +0200, Juergen Beisert wrote:
-> On Freitag, 1. August 2008, Paul E. McKenney wrote:
-> > On Wed, Jul 30, 2008 at 11:01:32AM +0200, J=FCrgen Mell wrote:
-> > > On Wednesday, 30. July 2008, Thomas Gleixner wrote:
-> > > > We are pleased to announce the 2.6.26-rt1 tree, which can be
-> > > > downloaded from the location:
-> > >
-> > > I have tried the new kernel and have some good news and some bad =
-news:
-> > >
-> > > The good news: The machine boots and seems to run without major p=
-roblems.
-> > >
-> > > The bad news: It produces continuously lots of bug messages in th=
-e error
-> > > logs (cf. attached dmesg.tgz). The error at rtmutex.c:743 was alr=
-eady
-> > > present in 2.6.25-rt* when ACPI was enabled. The 'using smp_proce=
-ssor_id
-> > > ()  in preemptible code' is new here with 2.6.26.
-> > >
-> > > Machine is an old Athlon XP (single core) on an EPOX mainboard wi=
-th VIA
-> > > chipset.
-> > >
-> > > If I can help with testing, please let me know.
-> >
-> > The following patch should clear things up.  It is against 2.6.25.8=
--rt7,
-> > but should still apply.
-> >
-> > -------------------------------------------------------------------=
------
-> >
-> > Disable preemption around statistics for RCU boost and unboost call=
-s.
-> >
-> > Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> > ---
-> >
-> >  rcupreempt-boost.c |   20 ++++++++++++++++----
-> >  1 file changed, 16 insertions(+), 4 deletions(-)
-> >
-> > diff -urpNa -X dontdiff linux-2.6.25.8-rt7/kernel/rcupreempt-boost.=
-c
-> > linux-2.6.25.8-rt7-preemptfix/kernel/rcupreempt-boost.c ---
-> > linux-2.6.25.8-rt7/kernel/rcupreempt-boost.c	2008-06-24 14:14:52.00=
-0000000
-> > -0700 +++
-> > linux-2.6.25.8-rt7-preemptfix/kernel/rcupreempt-boost.c	2008-06-24
-> > 14:38:59.000000000 -0700 @@ -205,11 +205,23 @@
-> > RCU_BOOST_TRACE_FUNC_DECL(boost_readers)
-> >  RCU_BOOST_TRACE_FUNC_DECL(try_unboost_readers)
-> >  RCU_BOOST_TRACE_FUNC_DECL(unboost_readers)
-> >  RCU_BOOST_TRACE_FUNC_DECL(over_taken)
-> > +static void rcu_trace_boost_boost_called_preempt(void)
-> > +{
-> > +	preempt_disable();
-> > +	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-> > +	preempt_enable();
-> > +}
-> > +static void rcu_trace_boost_unboost_called_preempt(void)
-> > +{
-> > +	preempt_disable();
-> > +	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-> > +	preempt_enable();
-> > +}
-> >  #else /* CONFIG_RCU_TRACE */
-> >  /* These were created by the above macro "RCU_BOOST_TRACE_FUNC_DEC=
-L" */
-> > -# define rcu_trace_boost_task_boost_called(rbd) do { } while (0)
-> > +# define rcu_trace_boost_task_boost_called_preempt(rbd) do { } whi=
-le (0)
-> >  # define rcu_trace_boost_task_boosted(rbd) do { } while (0)
-> > -# define rcu_trace_boost_boost_called(rbd) do { } while (0)
-> > +# define rcu_trace_boost_boost_called_preempt(rbd) do { } while (0=
-)
-> >  # define rcu_trace_boost_try_boost(rbd) do { } while (0)
-> >  # define rcu_trace_boost_boosted(rbd) do { } while (0)
-> >  # define rcu_trace_boost_unboost_called(rbd) do { } while (0)
-> > @@ -261,7 +273,7 @@ void __rcu_preempt_boost(void)
-> >
-> >  	WARN_ON(!current->rcu_read_lock_nesting);
-> >
-> > -	rcu_trace_boost_boost_called(RCU_BOOST_ME);
-> > +	rcu_trace_boost_boost_called_preempt();
-> >
-> >  	/* check to see if we are already boosted */
-> >  	if (unlikely(rcu_is_boosted(curr)))
-> > @@ -313,7 +325,7 @@ void __rcu_preempt_unboost(void)
-> >  	int prio;
-> >  	unsigned long flags;
-> >
-> > -	rcu_trace_boost_unboost_called(RCU_BOOST_ME);
-> > +	rcu_trace_boost_unboost_called_preempt();
-> >
-> >  	/* if not boosted, then ignore */
-> >  	if (likely(!rcu_is_boosted(curr)))
-> >
-> Using this patch on top of 2.6.26-rt1 results into:
->=20
-> [...]
->  CC      kernel/rcupreempt-boost.o
-> kernel/rcupreempt-boost.c: In function 'rcu_boost_task':
-> kernel/rcupreempt-boost.c:249: error: implicit declaration of functio=
-n 'rcu_trace_boost_task_boost_called'
-> kernel/rcupreempt-boost.c: In function '__rcu_preempt_unboost':
-> kernel/rcupreempt-boost.c:328: error: implicit declaration of functio=
-n 'rcu_trace_boost_unboost_called_preempt'
->=20
-> when CONFIG_PREEMPT_RCU_BOOST is enabled and target is a PowerPC of
-> type MPC5200B.
+Shorten the softirq kernel thread names because they always overflow the
+limited comm length, appearing as "posix_cpu_timer" CPU# times.
 
-Ah, 2.6.26-rt1 took a different approach to fix the issue my patch
-was targeted at.  Please accept my apologies for the noise!
+Done on 2.6.24.7, but probably applicable to later kernels.
 
-The other thing to try would be Chirag Jog's patch sent out to
-linux-rt-users on July 30.
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 
-						Thanx, Paul
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--- linux-2.6.24.7.orig/kernel/posix-cpu-timers.c	2008-08-12 20:40:58.000000000 -0300
++++ linux-2.6.24.7/kernel/posix-cpu-timers.c	2008-08-12 20:52:27.000000000 -0300
+@@ -1473,7 +1473,7 @@ static int posix_cpu_thread_call(struct 
+ 	switch (action) {
+ 	case CPU_UP_PREPARE:
+ 		p = kthread_create(posix_cpu_timers_thread, hcpu,
+-					"posix_cpu_timers/%d",cpu);
++					"posixcputmr/%d",cpu);
+ 		if (IS_ERR(p))
+ 			return NOTIFY_BAD;
+ 		p->flags |= PF_NOFREEZE;
