@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH RT RFC v2 3/8] sched: rework task reference counting to work
-	with the pi infrastructure
-Date: Fri, 15 Aug 2008 08:08:26 -0400
-Message-ID: <20080815120825.24722.53600.stgit@dev.haskins.net>
+Subject: [PATCH RT RFC v2 5/8] RT: wrap the rt_rwlock "add reader" logic
+Date: Fri, 15 Aug 2008 08:08:36 -0400
+Message-ID: <20080815120836.24722.42976.stgit@dev.haskins.net>
 References: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,146 +11,83 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
 	tglx@linutronix.de, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53213
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53220
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753382AbYHOMSz (ORCPT
+	with ESMTP id S1753422AbYHOMS4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Aug 2008 08:18:55 -0400
+	Fri, 15 Aug 2008 08:18:56 -0400
 In-Reply-To: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We will use this later in the series to add PI functions on "add".
+
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- include/linux/sched.h |    5 +++--
- kernel/fork.c         |   32 +++++++++++++++-----------------
- kernel/sched.c        |   23 +++++++++++++++++++++++
- 3 files changed, 41 insertions(+), 19 deletions(-)
+ kernel/rtmutex.c |   16 +++++++++++-----
+ 1 files changed, 11 insertions(+), 5 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 63ddd1f..9132b42 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1305,6 +1305,8 @@ struct task_struct {
- 		struct pi_node node;
- 		struct pi_sink snk;  /* registered to 'this' to get updates */
- 		int prio;
-+		struct rcu_head rcu; /* for destruction cleanup */
-+
- 	} pi;
- 
- #ifdef CONFIG_RT_MUTEXES
-@@ -1633,12 +1635,11 @@ static inline void put_task_struct(struct task_struct *t)
- 		call_rcu(&t->rcu, __put_task_struct_cb);
- }
- #else
--extern void __put_task_struct(struct task_struct *t);
- 
- static inline void put_task_struct(struct task_struct *t)
- {
- 	if (atomic_dec_and_test(&t->usage))
--		__put_task_struct(t);
-+		pi_dropref(&t->pi.node, 0);
- }
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 12de859..62fdc3d 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1122,6 +1122,12 @@ static void rw_check_held(struct rw_mutex *rwm)
+ # define rw_check_held(rwm)	do { } while (0)
  #endif
  
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 399a0d0..399a0a9 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -130,39 +130,37 @@ void free_task(struct task_struct *tsk)
- }
- EXPORT_SYMBOL(free_task);
- 
--#ifdef CONFIG_PREEMPT_RT
--void __put_task_struct_cb(struct rcu_head *rhp)
-+void prepare_free_task(struct task_struct *tsk)
- {
--	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
--
- 	BUG_ON(atomic_read(&tsk->usage));
--	WARN_ON(!tsk->exit_state);
- 	WARN_ON(tsk == current);
- 
-+#ifdef CONFIG_PREEMPT_RT
-+	WARN_ON(!tsk->exit_state);
-+#else
-+	WARN_ON(!(tsk->exit_state & (EXIT_DEAD | EXIT_ZOMBIE)));
-+#endif
++static inline void
++rt_rwlock_add_reader(struct reader_lock_struct *rls, struct rw_mutex *rwm)
++{
++	list_add(&rls->list, &rwm->readers);
++}
 +
- 	security_task_free(tsk);
- 	free_uid(tsk->user);
- 	put_group_info(tsk->group_info);
-+
-+#ifdef CONFIG_PREEMPT_RT
- 	delayacct_tsk_free(tsk);
-+#endif
- 
- 	if (!profile_handoff_task(tsk))
- 		free_task(tsk);
- }
- 
--#else
--
--void __put_task_struct(struct task_struct *tsk)
-+#ifdef CONFIG_PREEMPT_RT
-+void __put_task_struct_cb(struct rcu_head *rhp)
- {
--	WARN_ON(!(tsk->exit_state & (EXIT_DEAD | EXIT_ZOMBIE)));
--	BUG_ON(atomic_read(&tsk->usage));
--	WARN_ON(tsk == current);
--
--	security_task_free(tsk);
--	free_uid(tsk->user);
--	put_group_info(tsk->group_info);
-+	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
- 
--	if (!profile_handoff_task(tsk))
--		free_task(tsk);
-+	pi_dropref(&tsk->pi.node, 0);
- }
-+
- #endif
- 
  /*
-diff --git a/kernel/sched.c b/kernel/sched.c
-index c129b10..729139d 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -2370,11 +2370,34 @@ task_pi_boost_cb(struct pi_sink *snk, struct pi_source *src,
- 	return 0;
- }
+  * The fast path does not add itself to the reader list to keep
+  * from needing to grab the spinlock. We need to add the owner
+@@ -1163,7 +1169,7 @@ rt_rwlock_update_owner(struct rw_mutex *rwm, struct task_struct *own)
+ 	if (rls->list.prev && !list_empty(&rls->list))
+ 		return;
  
-+extern void prepare_free_task(struct task_struct *tsk);
-+
-+static void task_pi_free_rcu(struct rcu_head *rhp)
-+{
-+	struct task_struct *tsk = container_of(rhp, struct task_struct, pi.rcu);
-+
-+	prepare_free_task(tsk);
-+}
-+
-+/*
-+ * This function is invoked whenever the last references to a task have
-+ * been dropped, and we should free the memory on the next rcu grace period
-+ */
-+static int task_pi_free_cb(struct pi_sink *snk, unsigned int flags)
-+{
-+	struct task_struct *p = container_of(snk, struct task_struct, pi.snk);
-+
-+	call_rcu(&p->pi.rcu, task_pi_free_rcu);
-+
-+	return 0;
-+}
-+
- static int task_pi_update_cb(struct pi_sink *snk, unsigned int flags);
+-	list_add(&rls->list, &rwm->readers);
++	rt_rwlock_add_reader(rls, rwm);
  
- static struct pi_sink task_pi_sink = {
-     .boost = task_pi_boost_cb,
-     .update = task_pi_update_cb,
-+    .free = task_pi_free_cb,
- };
+ 	/* change to reader, so no one else updates too */
+ 	rt_rwlock_set_owner(rwm, RT_RW_READER, RT_RWLOCK_CHECK);
+@@ -1197,7 +1203,7 @@ static int try_to_take_rw_read(struct rw_mutex *rwm, int mtx)
+ 			 * it hasn't been added to the link list yet.
+ 			 */
+ 			if (!rls->list.prev || list_empty(&rls->list))
+-				list_add(&rls->list, &rwm->readers);
++				rt_rwlock_add_reader(rls, rwm);
+ 			rt_rwlock_set_owner(rwm, RT_RW_READER, 0);
+ 			rls->count++;
+ 			incr = 0;
+@@ -1276,7 +1282,7 @@ static int try_to_take_rw_read(struct rw_mutex *rwm, int mtx)
+ 			rls->lock = rwm;
+ 			rls->count = 1;
+ 			WARN_ON(rls->list.prev && !list_empty(&rls->list));
+-			list_add(&rls->list, &rwm->readers);
++			rt_rwlock_add_reader(rls, rwm);
+ 		} else
+ 			WARN_ON_ONCE(1);
+ 		spin_unlock(&current->pi_lock);
+@@ -1473,7 +1479,7 @@ __rt_read_fasttrylock(struct rw_mutex *rwm)
+ 			spin_lock(&mutex->wait_lock);
+ 			rls = &current->owned_read_locks[reader_count];
+ 			if (!rls->list.prev || list_empty(&rls->list))
+-				list_add(&rls->list, &rwm->readers);
++				rt_rwlock_add_reader(rlw, rwm);
+ 			spin_unlock(&mutex->wait_lock);
+ 		} else
+ 			spin_unlock(&current->pi_lock);
+@@ -2083,7 +2089,7 @@ rt_mutex_downgrade_write(struct rw_mutex *rwm)
  
- static inline void
+ 	/* Set us up for multiple readers or conflicts */
+ 
+-	list_add(&rls->list, &rwm->readers);
++	rt_rwlock_add_reader(rls, rwm);
+ 	rwm->owner = RT_RW_READER;
+ 
+ 	/*
 
