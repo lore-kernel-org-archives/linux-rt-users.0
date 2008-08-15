@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH RT RFC v2 8/8] rtmutex: pi-boost locks as late as possible
-Date: Fri, 15 Aug 2008 08:08:52 -0400
-Message-ID: <20080815120852.24722.98421.stgit@dev.haskins.net>
+Subject: [PATCH RT RFC v2 2/8] sched: add the basic PI infrastructure to the
+	task_struct
+Date: Fri, 15 Aug 2008 08:08:20 -0400
+Message-ID: <20080815120820.24722.7430.stgit@dev.haskins.net>
 References: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,468 +12,657 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
 	tglx@linutronix.de, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53185
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53189
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753183AbYHOMSy (ORCPT
+	with ESMTP id S1753313AbYHOMSy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 15 Aug 2008 08:18:54 -0400
 In-Reply-To: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-PREEMPT_RT replaces most spinlock_t instances with a preemptible
-real-time lock that supports priority inheritance.  An uncontended
-(fastpath) acquisition of this lock has no more overhead than
-its non-rt spinlock_t counterpart.  However, the contended case
-has considerably more overhead so that the lock can maintain
-proper priority queue order and support pi-boosting of the lock
-owner, yet remaining fully preemptible.
-
-Instrumentation shows that the majority of acquisitions under most
-workloads falls either into the fastpath category, or the adaptive
-spin category within the slowpath.  The necessity to pi-boost a
-lock-owner should be sufficiently rare, yet the slow-path path
-blindly incurs this overhead in 100% of contentions.
-
-Therefore, this patch intends to capitalize on this observation
-in order to reduce overhead and improve acquisition throughput.
-It is important to note that real-time latency is still treated
-as a higher order constraint than throughput, so the full
-pi-protocol is observed using new carefully constructed rules
-around the old concepts.
-
-1) We check the priority of the owner relative to the waiter on
-   each spin of the lock (if we are not boosted already).  If the
-   owner's effective priority is logically less than the waiters
-   priority, we must boost them.
-
-2) We check the priority of ourselves against our current queue
-   position on the waiters-list (if we are not boosted already).
-   If our priority was changed, we need to re-queue ourselves to
-   update our position.
-
-3) We break out of the adaptive-spin if either of the above
-   conditions (1), (2) change so that we can re-evaluate the
-   lock conditions.
-
-4) We must enter pi-boost mode if, at any time, we decide to
-   voluntarily preempt since we are losing our ability to
-   dynamically process the conditions above.
-
-Note: We still fully support priority inheritance with this
-protocol, even if we defer the low-level calls to adjust priority.
-The difference is really in terms of being a pro-active protocol
-(boost on entry), verses a reactive protocol (boost when
-necessary).  The upside to the latter is that we don't take a
-penalty for pi when it is not necessary (which is most of the time)
-The downside is that we technically leave the owner exposed to
-getting preempted (should it get asynchronously deprioritized), even
-if our waiter is the highest priority task in the system.  When this
-happens, the owner would be immediately boosted (because we would
-hit the "oncpu" condition, and subsequently follow the voluntary
-preempt path which boosts the owner).  Therefore, inversion is
-correctly prevented, but we have the extra latency of the
-preempt/boost/wakeup that could have been avoided in the proactive
-model.
-
-However, the design of the algorithm described above constrains the
-probability of this phenomenon occurring to setscheduler()
-operations. Since rt-locks do not support being interrupted by
-signals or timeouts, waiters only depart via the acquisition path.
-And while acquisitions do deboost the owner, the owner also
-changes simultaneously, rending the deboost moot relative to the
-other waiters.
-
-What this all means is that the downside to this implementation is
-that a high-priority waiter *may* see an extra latency (equivalent
-to roughly two wake-ups) if the owner has its priority reduced via
-setscheduler() while it holds the lock.  The penalty is
-deterministic, arguably small enough, and sufficiently rare that I
-do not believe it should be an issue.
-
-Note: If the concept of other exit paths are ever introduced in the
-future, simply adapting the condition to look at owner->normal_prio
-instead of owner->prio should once again constrain the limitation
-to setscheduler().
-
-Special thanks to Peter Morreale for suggesting the optimization to
-only consider skipping the boost if the owner is >= to current.
+This is a first pass at converting the system to use the new PI library.
+We dont go for a wholesale replacement quite yet so that we can focus
+on getting the basic plumbing in place.  Later in the series we will
+begin replacing some of the proprietary logic with the generic
+framework.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Peter Morreale <pmorreale@novell.com>
 ---
 
- include/linux/rtmutex.h |    1 
- kernel/rtmutex.c        |  195 ++++++++++++++++++++++++++++++++++++-----------
- kernel/rtmutex_common.h |    1 
- 3 files changed, 153 insertions(+), 44 deletions(-)
+ include/linux/sched.h     |   37 +++++++--
+ include/linux/workqueue.h |    2 
+ kernel/fork.c             |    1 
+ kernel/rcupreempt-boost.c |   23 +-----
+ kernel/rtmutex.c          |    6 +
+ kernel/sched.c            |  188 ++++++++++++++++++++++++++++++++-------------
+ kernel/workqueue.c        |   39 ++++++++-
+ 7 files changed, 206 insertions(+), 90 deletions(-)
 
-diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
-index d984244..1d98107 100644
---- a/include/linux/rtmutex.h
-+++ b/include/linux/rtmutex.h
-@@ -33,6 +33,7 @@ struct rt_mutex {
- 		struct pi_node   node;
- 		struct pi_sink   snk;
- 		int              prio;
-+		int              boosters;
- 	} pi;
- #ifdef CONFIG_DEBUG_RT_MUTEXES
- 	int			save_state;
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 0f64298..de213ac 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -76,14 +76,15 @@ rt_mutex_set_owner(struct rt_mutex *lock, struct task_struct *owner,
- {
- 	unsigned long val = (unsigned long)owner | mask;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index c885f78..63ddd1f 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -87,6 +87,7 @@ struct sched_param {
+ #include <linux/task_io_accounting.h>
+ #include <linux/kobject.h>
+ #include <linux/latencytop.h>
++#include <linux/pi.h>
  
--	if (rt_mutex_has_waiters(lock)) {
-+	if (lock->pi.boosters) {
- 		struct task_struct *prev_owner = rt_mutex_owner(lock);
+ #include <asm/processor.h>
  
- 		rtmutex_pi_owner(lock, prev_owner, 0);
- 		rtmutex_pi_owner(lock, owner, 1);
-+	}
+@@ -1125,6 +1126,7 @@ struct task_struct {
+ 	int prio, static_prio, normal_prio;
+ #ifdef CONFIG_PREEMPT_RCU_BOOST
+ 	int rcu_prio;
++	struct pi_source rcu_prio_src;
+ #endif
+ 	const struct sched_class *sched_class;
+ 	struct sched_entity se;
+@@ -1298,11 +1300,20 @@ struct task_struct {
+ 	/* Protection of the PI data structures: */
+ 	raw_spinlock_t pi_lock;
  
-+	if (rt_mutex_has_waiters(lock))
- 		val |= RT_MUTEX_HAS_WAITERS;
--	}
- 
- 	lock->owner = (struct task_struct *)val;
- }
-@@ -177,7 +178,7 @@ static inline int rtmutex_pi_update(struct pi_sink *snk,
- 
- 	spin_lock_irqsave(&lock->wait_lock, iflags);
- 
--	if (rt_mutex_has_waiters(lock)) {
-+	if (lock->pi.boosters) {
- 		owner = rt_mutex_owner(lock);
- 
- 		if (owner && owner != RT_RW_READER) {
-@@ -206,6 +207,7 @@ static void init_pi(struct rt_mutex *lock)
- 	pi_node_init(&lock->pi.node);
- 
- 	lock->pi.prio = MAX_PRIO;
-+	lock->pi.boosters = 0;
- 	pi_source_init(&lock->pi.src, &lock->pi.prio);
- 	lock->pi.snk = rtmutex_pi_snk;
- 
-@@ -303,6 +305,16 @@ static inline int try_to_take_rt_mutex(struct rt_mutex *lock)
- 	return do_try_to_take_rt_mutex(lock, STEAL_NORMAL);
- }
- 
-+static inline void requeue_waiter(struct rt_mutex *lock,
-+				  struct rt_mutex_waiter *waiter)
-+{
-+	BUG_ON(!waiter->task);
++	struct {
++		struct pi_source src;  /* represents normal_prio to 'this' */
++		struct pi_node node;
++		struct pi_sink snk;  /* registered to 'this' to get updates */
++		int prio;
++	} pi;
 +
-+	plist_del(&waiter->list_entry, &lock->wait_list);
-+	plist_node_init(&waiter->list_entry, waiter->pi.prio);
-+	plist_add(&waiter->list_entry, &lock->wait_list);
-+}
-+
- /*
-  * These callbacks are invoked whenever a waiter has changed priority.
-  * So we should requeue it within the lock->wait_list
-@@ -343,11 +355,8 @@ static inline int rtmutex_waiter_pi_update(struct pi_sink *snk,
- 	 * pi list.  Therefore, if waiter->pi.prio has changed since we
- 	 * queued ourselves, requeue it.
- 	 */
--	if (waiter->task && waiter->list_entry.prio != waiter->pi.prio) {
--		plist_del(&waiter->list_entry, &lock->wait_list);
--		plist_node_init(&waiter->list_entry, waiter->pi.prio);
--		plist_add(&waiter->list_entry, &lock->wait_list);
--	}
-+	if (waiter->task && waiter->list_entry.prio != waiter->pi.prio)
-+		requeue_waiter(lock, waiter);
+ #ifdef CONFIG_RT_MUTEXES
+ 	/* PI waiters blocked on a rt_mutex held by this task */
+ 	struct plist_head pi_waiters;
+ 	/* Deadlock detection and priority inheritance handling */
+ 	struct rt_mutex_waiter *pi_blocked_on;
++	int rtmutex_prio;
++	struct pi_source rtmutex_prio_src;
+ #endif
  
- 	spin_unlock_irqrestore(&lock->wait_lock, iflags);
- 
-@@ -359,20 +368,9 @@ static struct pi_sink rtmutex_waiter_pi_snk = {
-     .update = rtmutex_waiter_pi_update,
+ #ifdef CONFIG_DEBUG_MUTEXES
+@@ -1440,6 +1451,26 @@ struct task_struct {
+ #endif
  };
  
--/*
-- * This must be called with lock->wait_lock held.
-- */
--static int add_waiter(struct rt_mutex *lock,
--		      struct rt_mutex_waiter *waiter,
--		      unsigned long *flags)
-+static void boost_lock(struct rt_mutex *lock,
-+		       struct rt_mutex_waiter *waiter)
++static inline int
++task_pi_boost(struct task_struct *p, struct pi_source *src,
++	      unsigned int flags)
++{
++	return pi_boost(&p->pi.node, src, flags);
++}
++
++static inline int
++task_pi_deboost(struct task_struct *p, struct pi_source *src,
++		unsigned int flags)
++{
++	return pi_deboost(&p->pi.node, src, flags);
++}
++
++static inline int
++task_pi_update(struct task_struct *p, unsigned int flags)
++{
++	return pi_update(&p->pi.node, flags);
++}
++
+ #ifdef CONFIG_PREEMPT_RT
+ # define set_printk_might_sleep(x) do { current->in_printk = x; } while(0)
+ #else
+@@ -1774,14 +1805,8 @@ int sched_rt_handler(struct ctl_table *table, int write,
+ 
+ extern unsigned int sysctl_sched_compat_yield;
+ 
+-extern void task_setprio(struct task_struct *p, int prio);
+-
+ #ifdef CONFIG_RT_MUTEXES
+ extern int rt_mutex_getprio(struct task_struct *p);
+-static inline void rt_mutex_setprio(struct task_struct *p, int prio)
+-{
+-	task_setprio(p, prio);
+-}
+ extern void rt_mutex_adjust_pi(struct task_struct *p);
+ #else
+ static inline int rt_mutex_getprio(struct task_struct *p)
+diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
+index 229179e..3dc4ed9 100644
+--- a/include/linux/workqueue.h
++++ b/include/linux/workqueue.h
+@@ -11,6 +11,7 @@
+ #include <linux/lockdep.h>
+ #include <linux/plist.h>
+ #include <linux/sched_prio.h>
++#include <linux/pi.h>
+ #include <asm/atomic.h>
+ 
+ struct workqueue_struct;
+@@ -31,6 +32,7 @@ struct work_struct {
+ #define WORK_STRUCT_WQ_DATA_MASK (~WORK_STRUCT_FLAG_MASK)
+ 	struct plist_node entry;
+ 	work_func_t func;
++	struct pi_source pi_src;
+ #ifdef CONFIG_LOCKDEP
+ 	struct lockdep_map lockdep_map;
+ #endif
+diff --git a/kernel/fork.c b/kernel/fork.c
+index b49488d..399a0d0 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -990,6 +990,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	p->rcu_flipctr_idx = 0;
+ #ifdef CONFIG_PREEMPT_RCU_BOOST
+ 	p->rcu_prio = MAX_PRIO;
++	pi_source_init(&p->rcu_prio_src, &p->rcu_prio);
+ 	p->rcub_rbdp = NULL;
+ 	p->rcub_state = RCU_BOOST_IDLE;
+ 	INIT_LIST_HEAD(&p->rcub_entry);
+diff --git a/kernel/rcupreempt-boost.c b/kernel/rcupreempt-boost.c
+index 5282b19..e8d9d76 100644
+--- a/kernel/rcupreempt-boost.c
++++ b/kernel/rcupreempt-boost.c
+@@ -232,14 +232,11 @@ static inline int rcu_is_boosted(struct task_struct *task)
+ static void rcu_boost_task(struct task_struct *task)
  {
--	int has_waiters = rt_mutex_has_waiters(lock);
--
--	waiter->task = current;
--	waiter->lock = lock;
--	waiter->pi.prio = current->prio;
--	plist_node_init(&waiter->list_entry, waiter->pi.prio);
--	plist_add(&waiter->list_entry, &lock->wait_list);
- 	waiter->pi.snk = rtmutex_waiter_pi_snk;
+ 	WARN_ON(!irqs_disabled());
+-	WARN_ON_SMP(!spin_is_locked(&task->pi_lock));
  
- 	/*
-@@ -397,35 +395,28 @@ static int add_waiter(struct rt_mutex *lock,
- 	 * If we previously had no waiters, we are transitioning to
- 	 * a mode where we need to boost the owner
- 	 */
--	if (!has_waiters) {
-+	if (!lock->pi.boosters) {
- 		struct task_struct *owner = rt_mutex_owner(lock);
- 		rtmutex_pi_owner(lock, owner, 1);
- 	}
+ 	rcu_trace_boost_task_boost_called(RCU_BOOST_ME);
  
--	spin_unlock_irqrestore(&lock->wait_lock, *flags);
--	task_pi_update(current, 0);
--	spin_lock_irqsave(&lock->wait_lock, *flags);
--
--	return 0;
-+	lock->pi.boosters++;
-+	waiter->pi.boosted = 1;
+-	if (task->rcu_prio < task->prio) {
++	if (task_pi_boost(task, &task->rcu_prio_src, 0))
+ 		rcu_trace_boost_task_boosted(RCU_BOOST_ME);
+-		task_setprio(task, task->rcu_prio);
+-	}
  }
  
--/*
-- * Remove a waiter from a lock
-- *
-- * Must be called with lock->wait_lock held
-- */
--static void remove_waiter(struct rt_mutex *lock,
--			  struct rt_mutex_waiter *waiter)
-+static void deboost_lock(struct rt_mutex *lock,
-+			 struct rt_mutex_waiter *waiter,
-+			 struct task_struct *p)
+ /**
+@@ -275,26 +272,17 @@ void __rcu_preempt_boost(void)
+ 	rbd = &__get_cpu_var(rcu_boost_data);
+ 	spin_lock(&rbd->rbs_lock);
+ 
+-	spin_lock(&curr->pi_lock);
+-
+ 	curr->rcub_rbdp = rbd;
+ 
+ 	rcu_trace_boost_try_boost(rbd);
+ 
+-	prio = rt_mutex_getprio(curr);
+-
+ 	if (list_empty(&curr->rcub_entry))
+ 		list_add_tail(&curr->rcub_entry, &rbd->rbs_toboost);
+-	if (prio <= rbd->rbs_prio)
+-		goto out;
+-
+-	rcu_trace_boost_boosted(curr->rcub_rbdp);
+ 
+ 	set_rcu_prio(curr, rbd->rbs_prio);
+ 	rcu_boost_task(curr);
+ 
+  out:
+-	spin_unlock(&curr->pi_lock);
+ 	spin_unlock_irqrestore(&rbd->rbs_lock, flags);
+ }
+ 
+@@ -353,15 +341,12 @@ void __rcu_preempt_unboost(void)
+ 
+ 	rcu_trace_boost_unboosted(rbd);
+ 
+-	set_rcu_prio(curr, MAX_PRIO);
++	task_pi_deboost(curr, &curr->rcu_prio_src, 0);
+ 
+-	spin_lock(&curr->pi_lock);
+-	prio = rt_mutex_getprio(curr);
+-	task_setprio(curr, prio);
++	set_rcu_prio(curr, MAX_PRIO);
+ 
+ 	curr->rcub_rbdp = NULL;
+ 
+-	spin_unlock(&curr->pi_lock);
+  out:
+ 	spin_unlock_irqrestore(&rbd->rbs_lock, flags);
+ }
+@@ -393,9 +378,7 @@ static int __rcu_boost_readers(struct rcu_boost_dat *rbd, int prio, unsigned lon
+ 		list_move_tail(&p->rcub_entry,
+ 			       &rbd->rbs_boosted);
+ 		set_rcu_prio(p, prio);
+-		spin_lock(&p->pi_lock);
+ 		rcu_boost_task(p);
+-		spin_unlock(&p->pi_lock);
+ 
+ 		/*
+ 		 * Now we release the lock to allow for a higher
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 377949a..7d11380 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -178,8 +178,10 @@ static void __rt_mutex_adjust_prio(struct task_struct *task)
  {
--	struct task_struct *p = waiter->task;
-+	BUG_ON(!waiter->pi.boosted);
+ 	int prio = rt_mutex_getprio(task);
  
--	plist_del(&waiter->list_entry, &lock->wait_list);
--	waiter->task = NULL;
-+	waiter->pi.boosted = 0;
-+	lock->pi.boosters--;
- 
- 	/*
- 	 * We can stop boosting the owner if there are no more waiters
- 	 */
--	if (!rt_mutex_has_waiters(lock)) {
-+	if (!lock->pi.boosters) {
- 		struct task_struct *owner = rt_mutex_owner(lock);
- 		rtmutex_pi_owner(lock, owner, 0);
- 	}
-@@ -446,6 +437,51 @@ static void remove_waiter(struct rt_mutex *lock,
+-	if (task->prio != prio)
+-		rt_mutex_setprio(task, prio);
++	if (task->rtmutex_prio != prio) {
++		task->rtmutex_prio = prio;
++		task_pi_boost(task, &task->rtmutex_prio_src, 0);
++	}
  }
  
  /*
-+ * This must be called with lock->wait_lock held.
-+ */
-+static void _add_waiter(struct rt_mutex *lock,
-+			struct rt_mutex_waiter *waiter)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 54ea580..c129b10 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -1709,26 +1709,6 @@ static inline int normal_prio(struct task_struct *p)
+ }
+ 
+ /*
+- * Calculate the current priority, i.e. the priority
+- * taken into account by the scheduler. This value might
+- * be boosted by RT tasks, or might be boosted by
+- * interactivity modifiers. Will be RT if the task got
+- * RT-boosted. If not then it returns p->normal_prio.
+- */
+-static int effective_prio(struct task_struct *p)
+-{
+-	p->normal_prio = normal_prio(p);
+-	/*
+-	 * If we are RT tasks or we were boosted to RT priority,
+-	 * keep the priority unchanged. Otherwise, update priority
+-	 * to the normal priority:
+-	 */
+-	if (!rt_prio(p->prio))
+-		return p->normal_prio;
+-	return p->prio;
+-}
+-
+-/*
+  * activate_task - move a task to the runqueue.
+  */
+ static void activate_task(struct rq *rq, struct task_struct *p, int wakeup)
+@@ -2375,6 +2355,58 @@ static void __sched_fork(struct task_struct *p)
+ 	p->state = TASK_RUNNING;
+ }
+ 
++static int
++task_pi_boost_cb(struct pi_sink *snk, struct pi_source *src,
++		 unsigned int flags)
 +{
-+	waiter->task = current;
-+	waiter->lock = lock;
-+	waiter->pi.prio = current->prio;
-+	plist_node_init(&waiter->list_entry, waiter->pi.prio);
-+	plist_add(&waiter->list_entry, &lock->wait_list);
-+}
++	struct task_struct *p = container_of(snk, struct task_struct, pi.snk);
 +
-+static int add_waiter(struct rt_mutex *lock,
-+		      struct rt_mutex_waiter *waiter,
-+		      unsigned long *flags)
-+{
-+	_add_waiter(lock, waiter);
-+
-+	boost_lock(lock, waiter);
-+
-+	spin_unlock_irqrestore(&lock->wait_lock, *flags);
-+	task_pi_update(current, 0);
-+	spin_lock_irqsave(&lock->wait_lock, *flags);
++	/*
++	 * We dont need any locking here, since the .boost operation
++	 * is already guaranteed to be mutually exclusive
++	 */
++	p->pi.prio = *src->prio;
 +
 +	return 0;
 +}
 +
-+/*
-+ * Remove a waiter from a lock
-+ *
-+ * Must be called with lock->wait_lock held
-+ */
-+static void remove_waiter(struct rt_mutex *lock,
-+			   struct rt_mutex_waiter *waiter)
++static int task_pi_update_cb(struct pi_sink *snk, unsigned int flags);
++
++static struct pi_sink task_pi_sink = {
++    .boost = task_pi_boost_cb,
++    .update = task_pi_update_cb,
++};
++
++static inline void
++task_pi_init(struct task_struct *p)
 +{
-+	struct task_struct *p = waiter->task;
++	pi_node_init(&p->pi.node);
 +
-+	plist_del(&waiter->list_entry, &lock->wait_list);
-+	waiter->task = NULL;
++	/*
++	 * Feed our initial state of normal_prio into the PI infrastructure.
++	 * We will update this whenever it changes
++	 */
++	p->pi.prio = p->normal_prio;
++	pi_source_init(&p->pi.src, &p->normal_prio);
++	task_pi_boost(p, &p->pi.src, PI_FLAG_DEFER_UPDATE);
 +
-+	if (waiter->pi.boosted)
-+		deboost_lock(lock, waiter, p);
++#ifdef CONFIG_RT_MUTEXES
++	p->rtmutex_prio = MAX_PRIO;
++	pi_source_init(&p->rtmutex_prio_src, &p->rtmutex_prio);
++	task_pi_boost(p, &p->rtmutex_prio_src, PI_FLAG_DEFER_UPDATE);
++#endif
++
++	/*
++	 * We add our own task as a dependency of ourselves so that
++	 * we get boost-notifications (via task_pi_boost_cb) whenever
++	 * our priority is changed (locally e.g. setscheduler() or
++	 * remotely via a pi-boost).
++	 */
++	p->pi.snk = task_pi_sink;
++	pi_add_sink(&p->pi.node, &p->pi.snk,
++		    PI_FLAG_DEFER_UPDATE | PI_FLAG_ALREADY_BOOSTED);
++}
++
+ /*
+  * fork()/clone()-time setup:
+  */
+@@ -2396,6 +2428,8 @@ void sched_fork(struct task_struct *p, int clone_flags)
+ 	if (!rt_prio(p->prio))
+ 		p->sched_class = &fair_sched_class;
+ 
++	task_pi_init(p);
++
+ #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
+ 	if (likely(sched_info_on()))
+ 		memset(&p->sched_info, 0, sizeof(p->sched_info));
+@@ -2411,6 +2445,55 @@ void sched_fork(struct task_struct *p, int clone_flags)
+ }
+ 
+ /*
++ * In the past, task_setprio was exposed as an API.  This variant is only
++ * meant to be called from pi_update functions (namely, task_updateprio() and
++ * task_pi_update_cb()).  If you need to adjust the priority of a task,
++ * you should be using something like setscheduler() (permanent adjustments)
++ * or task_pi_boost() (temporary adjustments).
++ */
++static void
++task_setprio(struct task_struct *p, int prio)
++{
++	if (prio == p->prio)
++		return;
++
++	if (rt_prio(prio))
++		p->sched_class = &rt_sched_class;
++	else
++		p->sched_class = &fair_sched_class;
++
++	p->prio = prio;
++}
++
++static inline void
++task_updateprio(struct task_struct *p)
++{
++	int prio = normal_prio(p);
++
++	if (p->normal_prio != prio) {
++		p->normal_prio = prio;
++		set_load_weight(p);
++
++		/*
++		 * Reboost our normal_prio entry, which will
++		 * also chain-update any of our PI dependencies (of course)
++		 * on our next update
++		 */
++		task_pi_boost(p, &p->pi.src, PI_FLAG_DEFER_UPDATE);
++	}
++
++	/*
++	 * If normal_prio is logically higher than our current setting,
++	 * just assign the priority/class immediately so that any callers
++	 * will see the update as synchronous without dropping the rq-lock
++	 * to do a pi_update.  Any descrepancy with pending pi-updates will
++	 * automatically be corrected after we drop the rq-lock.
++	 */
++	if (p->normal_prio < p->prio)
++		task_setprio(p, p->normal_prio);
 +}
 +
 +/*
-  * Wake up the next waiter on the lock.
+  * wake_up_new_task - wake up a newly created task for the first time.
   *
-  * Remove the top waiter from the current tasks waiter list and from
-@@ -558,6 +594,24 @@ static int adaptive_wait(struct rt_mutex_waiter *waiter,
- 		if (orig_owner != rt_mutex_owner(waiter->lock))
- 			return 0;
+  * This function will do some initial scheduler statistics housekeeping
+@@ -2426,7 +2509,7 @@ void wake_up_new_task(struct task_struct *p, unsigned long clone_flags)
+ 	BUG_ON(p->state != TASK_RUNNING);
+ 	update_rq_clock(rq);
  
-+		/* Special handling for when we are not in pi-boost mode */
-+		if (!waiter->pi.boosted) {
-+			/*
-+			 * Are we higher priority than the owner?  If so
-+			 * we should bail out immediately so that we can
-+			 * pi boost them.
-+			 */
-+			if (current->prio < orig_owner->prio)
-+				return 0;
-+
-+			/*
-+			 * Did our priority change? If so, we need to
-+			 * requeue our position in the list
-+			 */
-+			if (waiter->pi.prio != current->prio)
-+				return 0;
-+		}
-+
- 		/* Owner went to bed, so should we */
- 		if (!task_is_current(orig_owner))
- 			return 1;
-@@ -599,6 +653,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	unsigned long saved_state, state, flags;
- 	struct task_struct *orig_owner;
- 	int missed = 0;
-+	int boosted = 0;
+-	p->prio = effective_prio(p);
++	task_updateprio(p);
  
- 	init_waiter(&waiter);
- 
-@@ -631,26 +686,54 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 		}
- 		missed = 1;
- 
-+		orig_owner = rt_mutex_owner(lock);
+ 	if (!p->sched_class->task_new || !current->se.on_rq) {
+ 		activate_task(rq, p, 0);
+@@ -2447,6 +2530,8 @@ void wake_up_new_task(struct task_struct *p, unsigned long clone_flags)
+ 		p->sched_class->task_wake_up(rq, p);
+ #endif
+ 	task_rq_unlock(rq, &flags);
 +
- 		/*
- 		 * waiter.task is NULL the first time we come here and
- 		 * when we have been woken up by the previous owner
- 		 * but the lock got stolen by an higher prio task.
- 		 */
--		if (!waiter.task) {
--			add_waiter(lock, &waiter, &flags);
-+		if (!waiter.task)
-+			_add_waiter(lock, &waiter);
-+
-+		/*
-+		 * We only need to pi-boost the owner if they are lower
-+		 * priority than us.  We dont care if this is racy
-+		 * against priority changes as we will break out of
-+		 * the adaptive spin anytime any priority changes occur
-+		 * without boosting enabled.
-+		 */
-+		if (!waiter.pi.boosted && current->prio < orig_owner->prio) {
-+			boost_lock(lock, &waiter);
-+			boosted = 1;
-+
-+			spin_unlock_irqrestore(&lock->wait_lock, flags);
-+			task_pi_update(current, 0);
-+			spin_lock_irqsave(&lock->wait_lock, flags);
-+
- 			/* Wakeup during boost ? */
- 			if (unlikely(!waiter.task))
- 				continue;
- 		}
- 
- 		/*
-+		 * If we are not currently pi-boosting the lock, we have to
-+		 * monitor whether our priority changed since the last
-+		 * time it was recorded and requeue ourselves if it moves.
-+		 */
-+		if (!waiter.pi.boosted && waiter.pi.prio != current->prio) {
-+			waiter.pi.prio = current->prio;
-+
-+			requeue_waiter(lock, &waiter);
-+		}
-+
-+		/*
- 		 * Prevent schedule() to drop BKL, while waiting for
- 		 * the lock ! We restore lock_depth when we come back.
- 		 */
- 		saved_flags = current->flags & PF_NOSCHED;
- 		current->lock_depth = -1;
- 		current->flags &= ~PF_NOSCHED;
--		orig_owner = rt_mutex_owner(lock);
- 		get_task_struct(orig_owner);
- 		spin_unlock_irqrestore(&lock->wait_lock, flags);
- 
-@@ -664,6 +747,24 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 			 * barrier which we rely upon to ensure current->state
- 			 * is visible before we test waiter.task.
- 			 */
-+			if (waiter.task && !waiter.pi.boosted) {
-+				spin_lock_irqsave(&lock->wait_lock, flags);
-+
-+				/*
-+				 * We get here if we have not yet boosted
-+				 * the lock, yet we are going to sleep. If
-+				 * we are still pending (waiter.task != 0),
-+				 * then go ahead and boost them now
-+				 */
-+				if (waiter.task) {
-+					boost_lock(lock, &waiter);
-+					boosted = 1;
-+				}
-+
-+				spin_unlock_irqrestore(&lock->wait_lock, flags);
-+				task_pi_update(current, 0);
-+			}
-+
- 			if (waiter.task)
- 				schedule_rt_mutex(lock);
- 		} else
-@@ -696,7 +797,8 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	spin_unlock_irqrestore(&lock->wait_lock, flags);
- 
- 	/* Undo any pi boosting, if necessary */
--	task_pi_update(current, 0);
-+	if (boosted)
-+		task_pi_update(current, 0);
- 
- 	debug_rt_mutex_free_waiter(&waiter);
++	task_pi_update(p, 0);
  }
-@@ -708,6 +810,7 @@ static void  noinline __sched
- rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ 
+ #ifdef CONFIG_PREEMPT_NOTIFIERS
+@@ -4887,27 +4972,25 @@ long __sched sleep_on_timeout(wait_queue_head_t *q, long timeout)
+ EXPORT_SYMBOL(sleep_on_timeout);
+ 
+ /*
+- * task_setprio - set the current priority of a task
+- * @p: task
+- * @prio: prio value (kernel-internal form)
++ * Invoked whenever our priority changes by the PI library
+  *
+  * This function changes the 'effective' priority of a task. It does
+  * not touch ->normal_prio like __setscheduler().
+  *
+- * Used by the rt_mutex code to implement priority inheritance logic
+- * and by rcupreempt-boost to boost priorities of tasks sleeping
+- * with rcu locks.
+  */
+-void task_setprio(struct task_struct *p, int prio)
++static int
++task_pi_update_cb(struct pi_sink *snk, unsigned int flags)
  {
- 	unsigned long flags;
-+	int deboost = 0;
+-	unsigned long flags;
++	struct task_struct *p = container_of(snk, struct task_struct, pi.snk);
++	unsigned long iflags;
+ 	int oldprio, on_rq, running;
++	int prio = p->pi.prio;
+ 	struct rq *rq;
+ 	const struct sched_class *prev_class = p->sched_class;
  
- 	spin_lock_irqsave(&lock->wait_lock, flags);
+ 	BUG_ON(prio < 0 || prio > MAX_PRIO);
  
-@@ -721,12 +824,16 @@ rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 		return;
+-	rq = task_rq_lock(p, &flags);
++	rq = task_rq_lock(p, &iflags);
+ 
+ 	/*
+ 	 * Idle task boosting is a nono in general. There is one
+@@ -4929,6 +5012,10 @@ void task_setprio(struct task_struct *p, int prio)
+ 
+ 	update_rq_clock(rq);
+ 
++	/* If prio is not changing, bail */
++	if (prio == p->prio)
++		goto out_unlock;
++
+ 	oldprio = p->prio;
+ 	on_rq = p->se.on_rq;
+ 	running = task_current(rq, p);
+@@ -4937,12 +5024,7 @@ void task_setprio(struct task_struct *p, int prio)
+ 	if (running)
+ 		p->sched_class->put_prev_task(rq, p);
+ 
+-	if (rt_prio(prio))
+-		p->sched_class = &rt_sched_class;
+-	else
+-		p->sched_class = &fair_sched_class;
+-
+-	p->prio = prio;
++	task_setprio(p, prio);
+ 
+ //	trace_special_pid(p->pid, __PRIO(oldprio), PRIO(p));
+ 
+@@ -4956,7 +5038,9 @@ void task_setprio(struct task_struct *p, int prio)
+ //	trace_special(prev_resched, _need_resched(), 0);
+ 
+ out_unlock:
+-	task_rq_unlock(rq, &flags);
++	task_rq_unlock(rq, &iflags);
++
++	return 0;
+ }
+ 
+ void set_user_nice(struct task_struct *p, long nice)
+@@ -4990,9 +5074,9 @@ void set_user_nice(struct task_struct *p, long nice)
  	}
  
-+	if (lock->pi.boosters)
-+		deboost = 1;
+ 	p->static_prio = NICE_TO_PRIO(nice);
+-	set_load_weight(p);
+ 	old_prio = p->prio;
+-	p->prio = effective_prio(p);
++	task_updateprio(p);
 +
- 	wakeup_next_waiter(lock, 1);
+ 	delta = p->prio - old_prio;
  
- 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 	if (on_rq) {
+@@ -5007,6 +5091,8 @@ void set_user_nice(struct task_struct *p, long nice)
+ 	}
+ out_unlock:
+ 	task_rq_unlock(rq, &flags);
++
++	task_pi_update(p, 0);
+ }
+ EXPORT_SYMBOL(set_user_nice);
  
--	/* Undo pi boosting when necessary */
--	task_pi_update(current, 0);
-+	if (deboost)
-+		/* Undo pi boosting when necessary */
-+		task_pi_update(current, 0);
+@@ -5123,23 +5209,9 @@ __setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
+ 	BUG_ON(p->se.on_rq);
+ 
+ 	p->policy = policy;
+-	switch (p->policy) {
+-	case SCHED_NORMAL:
+-	case SCHED_BATCH:
+-	case SCHED_IDLE:
+-		p->sched_class = &fair_sched_class;
+-		break;
+-	case SCHED_FIFO:
+-	case SCHED_RR:
+-		p->sched_class = &rt_sched_class;
+-		break;
+-	}
+-
+ 	p->rt_priority = prio;
+-	p->normal_prio = normal_prio(p);
+-	/* we are holding p->pi_lock already */
+-	p->prio = rt_mutex_getprio(p);
+-	set_load_weight(p);
++
++	task_updateprio(p);
  }
  
- void __lockfunc rt_spin_lock(spinlock_t *lock)
-diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
-index 7bf32d0..34e2381 100644
---- a/kernel/rtmutex_common.h
-+++ b/kernel/rtmutex_common.h
-@@ -55,6 +55,7 @@ struct rt_mutex_waiter {
- 	struct {
- 		struct pi_sink   snk;
- 		int              prio;
-+		int              boosted;
- 	} pi;
- #ifdef CONFIG_DEBUG_RT_MUTEXES
- 	unsigned long		ip;
+ /**
+@@ -5264,6 +5336,7 @@ recheck:
+ 	__task_rq_unlock(rq);
+ 	spin_unlock_irqrestore(&p->pi_lock, flags);
+ 
++	task_pi_update(p, 0);
+ 	rt_mutex_adjust_pi(p);
+ 
+ 	return 0;
+@@ -6686,6 +6759,7 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
+ 		deactivate_task(rq, rq->idle, 0);
+ 		rq->idle->static_prio = MAX_PRIO;
+ 		__setscheduler(rq, rq->idle, SCHED_NORMAL, 0);
++		rq->idle->prio = rq->idle->normal_prio;
+ 		rq->idle->sched_class = &idle_sched_class;
+ 		migrate_dead_tasks(cpu);
+ 		spin_unlock_irq(&rq->lock);
+@@ -8395,6 +8469,8 @@ void __init sched_init(void)
+ 	open_softirq(SCHED_SOFTIRQ, run_rebalance_domains, NULL);
+ #endif
+ 
++	task_pi_init(&init_task);
++
+ #ifdef CONFIG_RT_MUTEXES
+ 	plist_head_init(&init_task.pi_waiters, &init_task.pi_lock);
+ #endif
+@@ -8460,7 +8536,9 @@ static void normalize_task(struct rq *rq, struct task_struct *p)
+ 	on_rq = p->se.on_rq;
+ 	if (on_rq)
+ 		deactivate_task(rq, p, 0);
++
+ 	__setscheduler(rq, p, SCHED_NORMAL, 0);
++
+ 	if (on_rq) {
+ 		activate_task(rq, p, 0);
+ 		resched_task(rq->curr);
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 9f37979..5cd4b0e 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -145,8 +145,13 @@ static void insert_work(struct cpu_workqueue_struct *cwq,
+ 	plist_node_init(&work->entry, prio);
+ 	plist_add(&work->entry, &cwq->worklist);
+ 
+-	if (boost_prio < cwq->thread->prio)
+-		task_setprio(cwq->thread, boost_prio);
++	/*
++	 * FIXME: We want to boost to boost_prio, but we dont record that
++	 * value in the work_struct for later deboosting
++	 */
++	pi_source_init(&work->pi_src, &work->entry.prio);
++	task_pi_boost(cwq->thread, &work->pi_src, 0);
++
+ 	wake_up(&cwq->more_work);
+ }
+ 
+@@ -280,6 +285,10 @@ struct wq_barrier {
+ static void run_workqueue(struct cpu_workqueue_struct *cwq)
+ {
+ 	struct plist_head *worklist = &cwq->worklist;
++	struct pi_source pi_src;
++	int prio;
++
++	pi_source_init(&pi_src, &prio);
+ 
+ 	spin_lock_irq(&cwq->lock);
+ 	cwq->run_depth++;
+@@ -292,10 +301,10 @@ static void run_workqueue(struct cpu_workqueue_struct *cwq)
+ 
+ again:
+ 	while (!plist_head_empty(worklist)) {
+-		int prio;
+ 		struct work_struct *work = plist_first_entry(worklist,
+ 						struct work_struct, entry);
+ 		work_func_t f = work->func;
++
+ #ifdef CONFIG_LOCKDEP
+ 		/*
+ 		 * It is permissible to free the struct work_struct
+@@ -316,14 +325,28 @@ again:
+ 		}
+ 		prio = max(prio, 0);
+ 
+-		if (likely(cwq->thread->prio != prio))
+-			task_setprio(cwq->thread, prio);
+-
+ 		cwq->current_work = work;
+ 		plist_del(&work->entry, worklist);
+ 		plist_node_init(&work->entry, MAX_PRIO);
+ 		spin_unlock_irq(&cwq->lock);
+ 
++		/*
++		 * The owner is free to reuse the work object once we execute
++		 * the work->func() below.  Therefore we cannot leave the
++		 * work->pi_src boosting our thread or it may get stomped
++		 * on when the work item is requeued.
++		 *
++		 * So what we do is we boost ourselves with an on-the
++		 * stack copy of the priority of the work item, and then
++		 * deboost the workitem.  Once the work is complete, we
++		 * can then simply deboost the stack version.
++		 *
++		 * Note that this will not typically cause a pi-chain
++		 * update since we are boosting the node laterally
++		 */
++		task_pi_boost(current, &pi_src, PI_FLAG_DEFER_UPDATE);
++		task_pi_deboost(current, &work->pi_src, PI_FLAG_DEFER_UPDATE);
++
+ 		BUG_ON(get_wq_data(work) != cwq);
+ 		work_clear_pending(work);
+ 		leak_check(NULL);
+@@ -334,6 +357,9 @@ again:
+ 		lock_release(&cwq->wq->lockdep_map, 1, _THIS_IP_);
+ 		leak_check(f);
+ 
++		/* Deboost the stack copy of the work->prio (see above) */
++		task_pi_deboost(current, &pi_src, 0);
++
+ 		spin_lock_irq(&cwq->lock);
+ 		cwq->current_work = NULL;
+ 		wake_up_all(&cwq->work_done);
+@@ -357,7 +383,6 @@ again:
+ 			goto again;
+ 	}
+ 
+-	task_setprio(cwq->thread, current->normal_prio);
+ 	cwq->run_depth--;
+ 	spin_unlock_irq(&cwq->lock);
+ }
 
