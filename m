@@ -1,1034 +1,1673 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH RT RFC v2 1/8] add generalized priority-inheritance interface
-Date: Fri, 15 Aug 2008 08:08:15 -0400
-Message-ID: <20080815120815.24722.80889.stgit@dev.haskins.net>
+Subject: [PATCH RT RFC v2 7/8] rtmutex: convert rtmutexes to fully use the PI
+	library
+Date: Fri, 15 Aug 2008 08:08:47 -0400
+Message-ID: <20080815120846.24722.46227.stgit@dev.haskins.net>
 References: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	gregory.haskins@gmail.com, David.Holmes@sun.com
 To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
 	tglx@linutronix.de, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53184
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:53177
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751483AbYHOMSy (ORCPT
+	with ESMTP id S1750891AbYHOMSy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 15 Aug 2008 08:18:54 -0400
 In-Reply-To: <20080815120722.24722.66516.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The kernel currently addresses priority-inversion through priority-
-inheritence.  However, all of the priority-inheritence logic is
-integrated into the Real-Time Mutex infrastructure.  This causes a few
-problems:
-
- 1) This tightly coupled relationship makes it difficult to extend to
-    other areas of the kernel (for instance, pi-aware wait-queues may
-    be desirable).
- 2) Enhancing the rtmutex infrastructure becomes challenging because
-    there is no seperation between the locking code, and the pi-code.
-
-This patch aims to rectify these shortcomings by designing a stand-alon=
-e
-pi framework which can then be used to replace the rtmutex-specific
-version.  The goal of this framework is to provide similar functionalit=
-y
-to the existing subsystem, but with sole focus on PI and the
-relationships between objects that can boost priority, and the objects
-that get boosted.
-
-We introduce the concept of a "pi_source" and a "pi_sink", where, as th=
-e
-name suggests provides the basic relationship of a priority source, and
-its boosted target.  A pi_source acts as a reference to some arbitrary
-source of priority, and a pi_sink can be boosted (or deboosted) by
-a pi_source.  For more details, please read the library documentation.
-
-There are currently no users of this inteface.
+We have previously only laid some of the groundwork to use the PI
+library, but left the existing infrastructure in place in the
+rtmutex code.  This patch converts the rtmutex PI code to officially
+use the PI library.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- Documentation/libpi.txt |   59 +++++
- include/linux/pi.h      |  278 +++++++++++++++++++++++++
- lib/Makefile            |    3=20
- lib/pi.c                |  516 +++++++++++++++++++++++++++++++++++++++=
-++++++++
- 4 files changed, 855 insertions(+), 1 deletions(-)
- create mode 100644 Documentation/libpi.txt
- create mode 100644 include/linux/pi.h
- create mode 100644 lib/pi.c
+ include/linux/rt_lock.h   |    2 
+ include/linux/rtmutex.h   |   15 -
+ include/linux/sched.h     |   21 -
+ kernel/fork.c             |    2 
+ kernel/rcupreempt-boost.c |    2 
+ kernel/rtmutex-debug.c    |    4 
+ kernel/rtmutex-tester.c   |    4 
+ kernel/rtmutex.c          |  944 ++++++++++++++-------------------------------
+ kernel/rtmutex_common.h   |   18 -
+ kernel/rwlock_torture.c   |   32 --
+ kernel/sched.c            |   12 -
+ 11 files changed, 321 insertions(+), 735 deletions(-)
 
-diff --git a/Documentation/libpi.txt b/Documentation/libpi.txt
-new file mode 100644
-index 0000000..197b21a
---- /dev/null
-+++ b/Documentation/libpi.txt
-@@ -0,0 +1,59 @@
-+=EF=BB=BFlib/pi.c - Priority Inheritance library
-+
-+Sources and sinks:
-+------------
-+
-+This library introduces the basic concept of a "pi_source" and a "pi_s=
-ink", where, as the name suggests provides the basic relationship of a =
-priority source, and its boosted target.
-+
-+A pi_source is simply a reference to some arbitrary priority value tha=
-t may range from 0 (highest prio), to MAX_PRIO (currently 140, lowest p=
-rio).  A pi_source calls pi_sink.boost() whenever it wishes to boost th=
-e sink to (at least minimally) the priority value that the source repre=
-sents.  It uses pi_sink.boost() for both the initial boosting, or for a=
-ny subsequent refreshes to the value (even if the value is decreasing i=
-n logical priority).  The policy of the sink will dictate what happens =
-as a result of that boost.  Likewise, a pi_source calls pi_sink.deboost=
-() to stop contributing to the sink's minimum priority.
-+
-+It is important to note that a source is a reference to a priority val=
-ue, not a value itself.  This is one of the concepts that allows the in=
-terface to be idempotent, which is important for properly updating a ch=
-ain of sources and sinks in the proper order.  If we passed the priorit=
-y on the stack, the order in which the system executes could allow the =
-actual value that is set to race.
-+
-+Nodes:
-+
-+A pi_node is a convenience object which is simultaneously a source and=
- a sink.  As its name suggests, it would typically be deployed as a nod=
-e in a pi-chain.  Other pi_sources can boost a node via its pi_sink.boo=
-st() interface.  Likewise, a node can boost a fixed number of sinks via=
- the node.add_sink() interface.
-+
-+Generally speaking, a node takes care of many common operations associ=
-ated with being a =E2=80=9Clink in the chain=E2=80=9D, such as:
-+
-+	1) determining the current priority of the node based on the (logical=
-ly) highest priority source that is boosting the node.
-+	2) boosting/deboosting upstream sinks whenever the node locally chang=
-es priority.
-+	3) taking care to avoid deadlock during a chain update.
-+
-+Design details:
-+
-+Destruction:
-+
-+The pi-library objects are designed to be implicitly-destructable (mea=
-ning they do not require an explicit =E2=80=9Cfree()=E2=80=9D operation=
- when they are not used anymore).  This is important considering their =
-intended use (spinlock_t's which are also implicitly-destructable).  As=
- such, any allocations needed for operation must come from internal str=
-ucture storage as there will be no opportunity to free it later.
-+
-+Multiple sinks per Node:
-+
-+We allow multiple sinks to be associated with a node.  This is a sligh=
-t departure from the previous implementation which had the notion of on=
-ly a single sink (i.e. =E2=80=9Ctask->pi_blocked_on=E2=80=9D).  The rea=
-son why we added the ability to add more than one sink was not to chang=
-e the default chaining model (I.e. multiple boost targets), but rather =
-to add a flexible notification mechanism that is peripheral to the chai=
-n, which are informally called =E2=80=9Cleaf sinks=E2=80=9D.
-+
-+Leaf-sinks are boostable objects that do not perpetuate a chain per se=
-=2E  Rather, they act as endpoints to a priority boosting.  Ultimately,=
- every chain ends with a leaf-sink, which presumably will act on the ne=
-w priority information.  However, there may be any number of leaf-sinks=
- along a chain as well.  Each one will act on its localized priority in=
- its own implementation specific way.  For instance, a task_struct pi-l=
-eaf may change the priority of the task and reschedule it if necessary.=
-  Whereas an rwlock leaf-sink may boost a list of reader-owners.
-+
-+The following diagram depicts an example relationship (warning: cheesy=
- ascii art)
-+
-+                   ---------       ---------
-+                   | leaf  |       | leaf  |
-+                   ---------       ---------
-+                  /	          /	   =20
-+     ---------   / ----------    / ---------     ---------
-+  ->-| node  |->---| node   |-->---| node  |->---| leaf  |
-+     ---------     ----------      ---------     ---------
-+
-+The reason why this was done was to unify the notion of a =E2=80=9Csin=
-k=E2=80=9D to a single interface, rather than having something like tas=
-k->pi_blocks_on and a separate callback for the leaf action.  Instead, =
-any downstream object can be represented by a sink, and the implementat=
-ion details are hidden (e.g. im a task, im a lock, im a node, im a work=
--item, im a wait-queue, etc).
-+
-+Sinkrefs:
-+
-+Each pi_sink.boost() operation is represented by a unique pi_source to=
- properly facilitate a one node to many source relationship.  Therefore=
-, if a pi_node is to act as aggregator to multiple sinks, it implicitly=
- must have one internal pi_source object for every sink that is added (=
-via node.add_sink().  This pi_source object has to be internally manage=
-d for the lifetime of the sink reference.
-+
-+Recall that due to the implicit-destruction requirement above, and the=
- fact that we will typically be executing in a preempt-disabled region,=
- we have to be very careful about how we allocate references to those s=
-inks.  More on that next.  But long story short we limit the number of =
-sinks to MAX_PI_DEPENDENDICES (currently 5).
-+
-+Locking:
-+
-+(work in progress....)
-+
-+
-+
-+
-+
-diff --git a/include/linux/pi.h b/include/linux/pi.h
-new file mode 100644
-index 0000000..d839d4f
---- /dev/null
-+++ b/include/linux/pi.h
-@@ -0,0 +1,278 @@
-+/*
-+ * see Documentation/libpi.txt for details
-+ */
-+
-+#ifndef _LINUX_PI_H
-+#define _LINUX_PI_H
-+
-+#include <linux/list.h>
-+#include <linux/plist.h>
-+#include <asm/atomic.h>
-+
-+#define MAX_PI_DEPENDENCIES 5
-+
-+struct pi_source {
-+	struct plist_node  list;
-+	int               *prio;
-+	int                boosted;
-+};
-+
-+
-+#define PI_FLAG_DEFER_UPDATE     (1 << 0)
-+#define PI_FLAG_ALREADY_BOOSTED  (1 << 1)
-+#define PI_FLAG_NO_DROPREF       (1 << 2)
-+
-+struct pi_sink {
-+	atomic_t refs;
-+	int (*boost)(struct pi_sink *snk, struct pi_source *src,
-+		     unsigned int flags);
-+	int (*deboost)(struct pi_sink *snk, struct pi_source *src,
-+		       unsigned int flags);
-+	int (*update)(struct pi_sink *snk,
-+		      unsigned int flags);
-+	int (*free)(struct pi_sink *snk,
-+		      unsigned int flags);
-+};
-+
-+enum pi_state {
-+	pi_state_boost,
-+	pi_state_boosted,
-+	pi_state_deboost,
-+	pi_state_free,
-+};
-+
-+/*
-+ * NOTE: PI must always use a true (e.g. raw) spinlock, since it is us=
-ed by
-+ * rtmutex infrastructure.
-+ */
-+
-+struct pi_sinkref {
-+	raw_spinlock_t         lock;
-+	struct list_head       list;
-+	enum pi_state          state;
-+	struct pi_sink        *snk;
-+	struct pi_source       src;
-+	atomic_t               refs;
-+	int                    prio;
-+};
-+
-+struct pi_sinkref_pool {
-+	struct list_head       free;
-+	struct pi_sinkref      data[MAX_PI_DEPENDENCIES];
-+	int                    count;
-+};
-+
-+struct pi_node {
-+	raw_spinlock_t         lock;
-+	int                    prio;
-+	struct pi_sink         snk;
-+	struct pi_sinkref_pool sinkref_pool;
-+	struct list_head       snks;
-+	struct plist_head      srcs;
-+};
-+
-+/**
-+ * pi_node_init - initialize a pi_node before use
-+ * @node: a node context
-+ */
-+extern void pi_node_init(struct pi_node *node);
-+
-+/**
-+ * pi_add_sink - add a sink as an downstream object
-+ * @node: the node context
-+ * @snk: the sink context to add to the node
-+ * @flags: optional flags to modify behavior
-+ *   PI_FLAG_DEFER_UPDATE    - Do not perform sync update
-+ *   PI_FLAG_ALREADY_BOOSTED - Do not perform initial boosting
-+ *
-+ * This function registers a sink to get notified whenever the
-+ * node changes priority.
-+ *
-+ * Note: By default, this function will schedule the newly added sink
-+ * to get an inital boost notification on the next update (even
-+ * without the presence of a priority transition).  However, if the
-+ * ALREADY_BOOSTED flag is specified, the sink is initially marked as
-+ * BOOSTED and will only get notified if the node changes priority
-+ * in the future.
-+ *
-+ * Note: By default, this function will synchronously update the
-+ * chain unless the DEFER_UPDATE flag is specified.
-+ *
-+ * Returns: (int)
-+ *   0 =3D success
-+ *   any other value =3D failure
-+ */
-+extern int pi_add_sink(struct pi_node *node, struct pi_sink *snk,
-+		       unsigned int flags);
-+
-+/**
-+ * pi_del_sink - del a sink from the current downstream objects
-+ * @node: the node context
-+ * @snk: the sink context to delete from the node
-+ * @flags: optional flags to modify behavior
-+ *   PI_FLAG_DEFER_UPDATE    - Do not perform sync update
-+ *
-+ * This function unregisters a sink from the node.
-+ *
-+ * Note: The sink will not actually become fully deboosted until
-+ * a call to node.update() successfully returns.
-+ *
-+ * Note: By default, this function will synchronously update the
-+ * chain unless the DEFER_UPDATE flag is specified.
-+ *
-+ * Returns: (int)
-+ *   0 =3D success
-+ *   any other value =3D failure
-+ */
-+extern int pi_del_sink(struct pi_node *node, struct pi_sink *snk,
-+		       unsigned int flags);
-+
-+/**
-+ * pi_source_init - initialize a pi_source before use
-+ * @src: a src context
-+ * @prio: pointer to a priority value
-+ *
-+ * A pointer to a priority value is used so that boost and update
-+ * are fully idempotent.
-+ */
-+static inline void
-+pi_source_init(struct pi_source *src, int *prio)
-+{
-+	plist_node_init(&src->list, *prio);
-+	src->prio =3D prio;
-+	src->boosted =3D 0;
-+}
-+
-+/**
-+ * pi_boost - boost a node with a pi_source
-+ * @node: the node context
-+ * @src: the src context to boost the node with
-+ * @flags: optional flags to modify behavior
-+ *   PI_FLAG_DEFER_UPDATE    - Do not perform sync update
-+ *
-+ * This function registers a priority source with the node, possibly
-+ * boosting its value if the new source is the highest registered sour=
-ce.
-+ *
-+ * This function is used to both initially register a source, as well =
-as
-+ * to notify the node if the value changes in the future (even if the
-+ * priority is decreasing).
-+ *
-+ * Note: By default, this function will synchronously update the
-+ * chain unless the DEFER_UPDATE flag is specified.
-+ *
-+ * Returns: (int)
-+ *   0 =3D success
-+ *   any other value =3D failure
-+ */
-+static inline int
-+pi_boost(struct pi_node *node, struct pi_source *src, unsigned int fla=
-gs)
-+{
-+	struct pi_sink *snk =3D &node->snk;
-+
-+	if (snk->boost)
-+		return snk->boost(snk, src, flags);
-+
-+	return 0;
-+}
-+
-+/**
-+ * pi_deboost - deboost a pi_source from a node
-+ * @node: the node context
-+ * @src: the src context to boost the node with
-+ * @flags: optional flags to modify behavior
-+ *   PI_FLAG_DEFER_UPDATE    - Do not perform sync update
-+ *
-+ * This function unregisters a priority source from the node, possibly
-+ * deboosting its value if the departing source was the highest
-+ * registered source.
-+ *
-+ * Note: By default, this function will synchronously update the
-+ * chain unless the DEFER_UPDATE flag is specified.
-+ *
-+ * Returns: (int)
-+ *   0 =3D success
-+ *   any other value =3D failure
-+ */
-+static inline int
-+pi_deboost(struct pi_node *node, struct pi_source *src, unsigned int f=
-lags)
-+{
-+	struct pi_sink *snk =3D &node->snk;
-+
-+	if (snk->deboost)
-+		return snk->deboost(snk, src, flags);
-+
-+	return 0;
-+}
-+
-+/**
-+ * pi_update - force a manual chain update
-+ * @node: the node context
-+ * @flags: optional flags to modify behavior.  Reserved, must be 0.
-+ *
-+ * This function will push any priority changes (as a result of
-+ * boost/deboost or add_sink/del_sink) down through the chain.
-+ * If no changes are necessary, this function is a no-op.
-+ *
-+ * Returns: (int)
-+ *   0 =3D success
-+ *   any other value =3D failure
-+ */
-+static inline int
-+pi_update(struct pi_node *node, unsigned int flags)
-+{
-+	struct pi_sink *snk =3D &node->snk;
-+
-+	if (snk->update)
-+		return snk->update(snk, flags);
-+
-+	return 0;
-+}
-+
-+/**
-+ * pi_sink_dropref - down the reference count, freeing the sink if 0
-+ * @node: the node context
-+ * @flags: optional flags to modify behavior.  Reserved, must be 0.
-+ *
-+ * Returns: none
-+ */
-+static inline void
-+pi_sink_dropref(struct pi_sink *snk, unsigned int flags)
-+{
-+	if (atomic_dec_and_test(&snk->refs)) {
-+		if (snk->free)
-+			snk->free(snk, flags);
-+	}
-+}
-+
-+
-+/**
-+ * pi_addref - up the reference count
-+ * @node: the node context
-+ * @flags: optional flags to modify behavior.  Reserved, must be 0.
-+ *
-+ * Returns: none
-+ */
-+static inline void
-+pi_addref(struct pi_node *node, unsigned int flags)
-+{
-+	struct pi_sink *snk =3D &node->snk;
-+
-+	atomic_inc(&snk->refs);
-+}
-+
-+/**
-+ * pi_dropref - down the reference count, freeing the node if 0
-+ * @node: the node context
-+ * @flags: optional flags to modify behavior.  Reserved, must be 0.
-+ *
-+ * Returns: none
-+ */
-+static inline void
-+pi_dropref(struct pi_node *node, unsigned int flags)
-+{
-+	struct pi_sink *snk =3D &node->snk;
-+
-+	pi_sink_dropref(snk, flags);
-+}
-+
-+#endif /* _LINUX_PI_H */
-diff --git a/lib/Makefile b/lib/Makefile
-index 5187924..df81ad7 100644
---- a/lib/Makefile
-+++ b/lib/Makefile
-@@ -23,7 +23,8 @@ lib-$(CONFIG_SMP) +=3D cpumask.o
- lib-y	+=3D kobject.o kref.o klist.o
-=20
- obj-y +=3D div64.o sort.o parser.o halfmd4.o debug_locks.o random32.o =
-\
--	 bust_spinlocks.o hexdump.o kasprintf.o bitmap.o scatterlist.o
-+	 bust_spinlocks.o hexdump.o kasprintf.o bitmap.o scatterlist.o \
-+	 pi.o
-=20
- ifeq ($(CONFIG_DEBUG_KOBJECT),y)
- CFLAGS_kobject.o +=3D -DDEBUG
-diff --git a/lib/pi.c b/lib/pi.c
-new file mode 100644
-index 0000000..46736e4
---- /dev/null
-+++ b/lib/pi.c
-@@ -0,0 +1,516 @@
-+/*
-+ *  lib/pi.c
-+ *
-+ *  Priority-Inheritance library
-+ *
-+ *  Copyright (C) 2008 Novell
-+ *
-+ *  Author: Gregory Haskins <ghaskins@novell.com>
-+ *
-+ *  This code provides a generic framework for preventing priority
-+ *  inversion by means of priority-inheritance. (see Documentation/lib=
-pi.txt
-+ *  for details)
-+ *
-+ *  This library is free software; you can redistribute it and/or
-+ *  modify it under the terms of the GNU General Public License
-+ *  as published by the Free Software Foundation; version 2
-+ *  of the License.
-+ */
-+
-+#include <linux/sched.h>
-+#include <linux/module.h>
+diff --git a/include/linux/rt_lock.h b/include/linux/rt_lock.h
+index c00cfb3..d0ef0f1 100644
+--- a/include/linux/rt_lock.h
++++ b/include/linux/rt_lock.h
+@@ -14,6 +14,7 @@
+ #include <asm/atomic.h>
+ #include <linux/spinlock_types.h>
+ #include <linux/sched_prio.h>
 +#include <linux/pi.h>
-+
-+/*
-+ *-----------------------------------------------------------
-+ * pi_sinkref_pool
-+ *-----------------------------------------------------------
-+ */
-+
-+static void
-+pi_sinkref_pool_init(struct pi_sinkref_pool *pool)
-+{
-+	int i;
-+
-+	INIT_LIST_HEAD(&pool->free);
-+	pool->count =3D 0;
-+
-+	for (i =3D 0; i < MAX_PI_DEPENDENCIES; ++i) {
-+		struct pi_sinkref *sinkref =3D &pool->data[i];
-+
-+		memset(sinkref, 0, sizeof(*sinkref));
-+		INIT_LIST_HEAD(&sinkref->list);
-+		list_add_tail(&sinkref->list, &pool->free);
-+		pool->count++;
-+	}
-+}
-+
-+static struct pi_sinkref *
-+pi_sinkref_alloc(struct pi_sinkref_pool *pool)
-+{
-+	struct pi_sinkref *sinkref;
-+
-+	BUG_ON(!pool->count);
-+
-+	if (list_empty(&pool->free))
-+		return NULL;
-+
-+	sinkref =3D list_first_entry(&pool->free, struct pi_sinkref, list);
-+	list_del(&sinkref->list);
-+	memset(sinkref, 0, sizeof(*sinkref));
-+	pool->count--;
-+
-+	return sinkref;
-+}
-+
-+static void
-+pi_sinkref_free(struct pi_sinkref_pool *pool,
-+		  struct pi_sinkref *sinkref)
-+{
-+	list_add_tail(&sinkref->list, &pool->free);
-+	pool->count++;
-+}
-+
-+/*
-+ *-----------------------------------------------------------
-+ * pi_sinkref
-+ *-----------------------------------------------------------
-+ */
-+
+ 
+ #ifdef CONFIG_PREEMPT_RT
+ /*
+@@ -67,6 +68,7 @@ struct rw_mutex {
+ 	atomic_t		count;	/* number of times held for read */
+ 	atomic_t		owners; /* number of owners as readers */
+ 	struct list_head	readers;
++	struct pi_sink          pi_snk;
+ 	int prio;
+ };
+ 
+diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
+index 14774ce..d984244 100644
+--- a/include/linux/rtmutex.h
++++ b/include/linux/rtmutex.h
+@@ -15,6 +15,7 @@
+ #include <linux/linkage.h>
+ #include <linux/plist.h>
+ #include <linux/spinlock_types.h>
++#include <linux/pi.h>
+ 
+ /**
+  * The rt_mutex structure
+@@ -27,6 +28,12 @@ struct rt_mutex {
+ 	raw_spinlock_t		wait_lock;
+ 	struct plist_head	wait_list;
+ 	struct task_struct	*owner;
++	struct {
++		struct pi_source src;
++		struct pi_node   node;
++		struct pi_sink   snk;
++		int              prio;
++	} pi;
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	int			save_state;
+ 	const char 		*name, *file;
+@@ -96,12 +103,4 @@ extern int rt_mutex_trylock(struct rt_mutex *lock);
+ 
+ extern void rt_mutex_unlock(struct rt_mutex *lock);
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-# define INIT_RT_MUTEXES(tsk)						\
+-	.pi_waiters = PLIST_HEAD_INIT(tsk.pi_waiters, &tsk.pi_lock),	\
+-	INIT_RT_MUTEX_DEBUG(tsk)
+-#else
+-# define INIT_RT_MUTEXES(tsk)
+-#endif
+-
+ #endif
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 9132b42..d59c804 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1106,6 +1106,7 @@ struct reader_lock_struct {
+ 	struct rw_mutex *lock;
+ 	struct list_head list;
+ 	struct task_struct *task;
++	struct pi_source pi_src;
+ 	int count;
+ };
+ 
+@@ -1309,15 +1310,6 @@ struct task_struct {
+ 
+ 	} pi;
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-	/* PI waiters blocked on a rt_mutex held by this task */
+-	struct plist_head pi_waiters;
+-	/* Deadlock detection and priority inheritance handling */
+-	struct rt_mutex_waiter *pi_blocked_on;
+-	int rtmutex_prio;
+-	struct pi_source rtmutex_prio_src;
+-#endif
+-
+ #ifdef CONFIG_DEBUG_MUTEXES
+ 	/* mutex deadlock detection */
+ 	struct mutex_waiter *blocked_on;
+@@ -1806,17 +1798,6 @@ int sched_rt_handler(struct ctl_table *table, int write,
+ 
+ extern unsigned int sysctl_sched_compat_yield;
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-extern int rt_mutex_getprio(struct task_struct *p);
+-extern void rt_mutex_adjust_pi(struct task_struct *p);
+-#else
+-static inline int rt_mutex_getprio(struct task_struct *p)
+-{
+-	return p->normal_prio;
+-}
+-# define rt_mutex_adjust_pi(p)		do { } while (0)
+-#endif
+-
+ extern void set_user_nice(struct task_struct *p, long nice);
+ extern int task_prio(const struct task_struct *p);
+ extern int task_nice(const struct task_struct *p);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 399a0a9..759c6de 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -885,8 +885,6 @@ static void rt_mutex_init_task(struct task_struct *p)
+ {
+ 	spin_lock_init(&p->pi_lock);
+ #ifdef CONFIG_RT_MUTEXES
+-	plist_head_init(&p->pi_waiters, &p->pi_lock);
+-	p->pi_blocked_on = NULL;
+ # ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	p->last_kernel_lock = NULL;
+ # endif
+diff --git a/kernel/rcupreempt-boost.c b/kernel/rcupreempt-boost.c
+index e8d9d76..85b3c2b 100644
+--- a/kernel/rcupreempt-boost.c
++++ b/kernel/rcupreempt-boost.c
+@@ -424,7 +424,7 @@ void rcu_boost_readers(void)
+ 
+ 	spin_lock_irqsave(&rcu_boost_wake_lock, flags);
+ 
+-	prio = rt_mutex_getprio(curr);
++	prio = get_rcu_prio(curr);
+ 
+ 	rcu_trace_boost_try_boost_readers(RCU_BOOST_ME);
+ 
+diff --git a/kernel/rtmutex-debug.c b/kernel/rtmutex-debug.c
+index 0d9cb54..2034ce1 100644
+--- a/kernel/rtmutex-debug.c
++++ b/kernel/rtmutex-debug.c
+@@ -57,8 +57,6 @@ static void printk_lock(struct rt_mutex *lock, int print_owner)
+ 
+ void rt_mutex_debug_task_free(struct task_struct *task)
+ {
+-	DEBUG_LOCKS_WARN_ON(!plist_head_empty(&task->pi_waiters));
+-	DEBUG_LOCKS_WARN_ON(task->pi_blocked_on);
+ #ifdef CONFIG_PREEMPT_RT
+ 	WARN_ON(task->reader_lock_count);
+ #endif
+@@ -156,7 +154,6 @@ void debug_rt_mutex_init_waiter(struct rt_mutex_waiter *waiter)
+ {
+ 	memset(waiter, 0x11, sizeof(*waiter));
+ 	plist_node_init(&waiter->list_entry, MAX_PRIO);
+-	plist_node_init(&waiter->pi_list_entry, MAX_PRIO);
+ 	waiter->deadlock_task_pid = NULL;
+ }
+ 
+@@ -164,7 +161,6 @@ void debug_rt_mutex_free_waiter(struct rt_mutex_waiter *waiter)
+ {
+ 	put_pid(waiter->deadlock_task_pid);
+ 	DEBUG_LOCKS_WARN_ON(!plist_node_empty(&waiter->list_entry));
+-	DEBUG_LOCKS_WARN_ON(!plist_node_empty(&waiter->pi_list_entry));
+ 	DEBUG_LOCKS_WARN_ON(waiter->task);
+ 	memset(waiter, 0x22, sizeof(*waiter));
+ }
+diff --git a/kernel/rtmutex-tester.c b/kernel/rtmutex-tester.c
+index 092e4c6..dff8781 100644
+--- a/kernel/rtmutex-tester.c
++++ b/kernel/rtmutex-tester.c
+@@ -373,11 +373,11 @@ static ssize_t sysfs_test_status(struct sys_device *dev, char *buf)
+ 	spin_lock(&rttest_lock);
+ 
+ 	curr += sprintf(curr,
+-		"O: %4d, E:%8d, S: 0x%08lx, P: %4d, N: %4d, B: %p, K: %d, M:",
++		"O: %4d, E:%8d, S: 0x%08lx, P: %4d, N: %4d, K: %d M:",
+ 		td->opcode, td->event, tsk->state,
+ 			(MAX_RT_PRIO - 1) - tsk->prio,
+ 			(MAX_RT_PRIO - 1) - tsk->normal_prio,
+-		tsk->pi_blocked_on, td->bkl);
++			td->bkl);
+ 
+ 	for (i = MAX_RT_TEST_MUTEXES - 1; i >=0 ; i--)
+ 		curr += sprintf(curr, "%d", td->mutexes[i]);
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 62fdc3d..0f64298 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -58,14 +58,32 @@
+  * state.
+  */
+ 
 +static inline void
-+_pi_sink_addref(struct pi_sinkref *sinkref)
++rtmutex_pi_owner(struct rt_mutex *lock, struct task_struct *p, int add)
 +{
-+	atomic_inc(&sinkref->snk->refs);
-+	atomic_inc(&sinkref->refs);
-+}
++	if (!p || p == RT_RW_READER)
++		return;
 +
-+static inline void
-+_pi_sink_dropref_local(struct pi_node *node, struct pi_sinkref *sinkre=
-f)
-+{
-+	if (atomic_dec_and_lock(&sinkref->refs, &node->lock)) {
-+		list_del(&sinkref->list);
-+		pi_sinkref_free(&node->sinkref_pool, sinkref);
-+		spin_unlock(&node->lock);
-+	}
-+}
-+
-+static inline void
-+_pi_sink_dropref_all(struct pi_node *node, struct pi_sinkref *sinkref)
-+{
-+	struct pi_sink *snk =3D sinkref->snk;
-+
-+	_pi_sink_dropref_local(node, sinkref);
-+	pi_sink_dropref(snk, 0);
-+}
-+
-+/*
-+ *-----------------------------------------------------------
-+ * pi_node
-+ *-----------------------------------------------------------
-+ */
-+
-+static struct pi_node *node_of(struct pi_sink *snk)
-+{
-+	return container_of(snk, struct pi_node, snk);
-+}
-+
-+static inline void
-+__pi_update_prio(struct pi_node *node)
-+{
-+	if (!plist_head_empty(&node->srcs))
-+		node->prio =3D plist_first(&node->srcs)->prio;
++	if (add)
++		task_pi_boost(p, &lock->pi.src, PI_FLAG_DEFER_UPDATE);
 +	else
-+		node->prio =3D MAX_PRIO;
++		task_pi_deboost(p, &lock->pi.src, PI_FLAG_DEFER_UPDATE);
 +}
 +
-+static inline void
-+__pi_boost(struct pi_node *node, struct pi_source *src)
+ static void
+ rt_mutex_set_owner(struct rt_mutex *lock, struct task_struct *owner,
+ 		   unsigned long mask)
+ {
+ 	unsigned long val = (unsigned long)owner | mask;
+ 
+-	if (rt_mutex_has_waiters(lock))
++	if (rt_mutex_has_waiters(lock)) {
++		struct task_struct *prev_owner = rt_mutex_owner(lock);
++
++		rtmutex_pi_owner(lock, prev_owner, 0);
++		rtmutex_pi_owner(lock, owner, 1);
++
+ 		val |= RT_MUTEX_HAS_WAITERS;
++	}
+ 
+ 	lock->owner = (struct task_struct *)val;
+ }
+@@ -134,245 +152,88 @@ static inline int task_is_reader(struct task_struct *task) { return 0; }
+ #endif
+ 
+ int pi_initialized;
+-
+-/*
+- * we initialize the wait_list runtime. (Could be done build-time and/or
+- * boot-time.)
+- */
+-static inline void init_lists(struct rt_mutex *lock)
++static inline int rtmutex_pi_boost(struct pi_sink *snk,
++				  struct pi_source *src,
++				  unsigned int flags)
+ {
+-	if (unlikely(!lock->wait_list.prio_list.prev)) {
+-		plist_head_init(&lock->wait_list, &lock->wait_lock);
+-#ifdef CONFIG_DEBUG_RT_MUTEXES
+-		pi_initialized++;
+-#endif
+-	}
+-}
+-
+-static int rt_mutex_get_readers_prio(struct task_struct *task, int prio);
+-
+-/*
+- * Calculate task priority from the waiter list priority
+- *
+- * Return task->normal_prio when the waiter list is empty or when
+- * the waiter is not allowed to do priority boosting
+- */
+-int rt_mutex_getprio(struct task_struct *task)
+-{
+-	int prio = min(task->normal_prio, get_rcu_prio(task));
+-
+-	prio = rt_mutex_get_readers_prio(task, prio);
+-
+-	if (likely(!task_has_pi_waiters(task)))
+-		return prio;
+-
+-	return min(task_top_pi_waiter(task)->pi_list_entry.prio, prio);
+-}
++	struct rt_mutex *lock = container_of(snk, struct rt_mutex, pi.snk);
+ 
+-/*
+- * Adjust the priority of a task, after its pi_waiters got modified.
+- *
+- * This can be both boosting and unboosting. task->pi_lock must be held.
+- */
+-static void __rt_mutex_adjust_prio(struct task_struct *task)
+-{
+-	int prio = rt_mutex_getprio(task);
+-
+-	if (task->rtmutex_prio != prio) {
+-		task->rtmutex_prio = prio;
+-		task_pi_boost(task, &task->rtmutex_prio_src, 0);
+-	}
+-}
+-
+-/*
+- * Adjust task priority (undo boosting). Called from the exit path of
+- * rt_mutex_slowunlock() and rt_mutex_slowlock().
+- *
+- * (Note: We do this outside of the protection of lock->wait_lock to
+- * allow the lock to be taken while or before we readjust the priority
+- * of task. We do not use the spin_xx_mutex() variants here as we are
+- * outside of the debug path.)
+- */
+-static void rt_mutex_adjust_prio(struct task_struct *task)
+-{
+-	unsigned long flags;
++	/*
++	 * We dont need to take any locks here because the
++	 * lock->pi.node interlock is already guaranteeing mutual
++	 * exclusion.
++	 */
++	lock->pi.prio = *src->prio;
+ 
+-	spin_lock_irqsave(&task->pi_lock, flags);
+-	__rt_mutex_adjust_prio(task);
+-	spin_unlock_irqrestore(&task->pi_lock, flags);
++	return 0;
+ }
+ 
+-/*
+- * Max number of times we'll walk the boosting chain:
+- */
+-int max_lock_depth = 1024;
+-
+-static int rt_mutex_adjust_readers(struct rt_mutex *orig_lock,
+-				   struct rt_mutex_waiter *orig_waiter,
+-				   struct task_struct *top_task,
+-				   struct rt_mutex *lock,
+-				   int recursion_depth);
+-/*
+- * Adjust the priority chain. Also used for deadlock detection.
+- * Decreases task's usage by one - may thus free the task.
+- * Returns 0 or -EDEADLK.
+- */
+-static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+-				      int deadlock_detect,
+-				      struct rt_mutex *orig_lock,
+-				      struct rt_mutex_waiter *orig_waiter,
+-				      struct task_struct *top_task,
+-				      int recursion_depth)
++static inline int rtmutex_pi_update(struct pi_sink *snk,
++				    unsigned int flags)
+ {
+-	struct rt_mutex *lock;
+-	struct rt_mutex_waiter *waiter, *top_waiter = orig_waiter;
+-	int detect_deadlock, ret = 0, depth = 0;
+-	unsigned long flags;
++	struct rt_mutex *lock = container_of(snk, struct rt_mutex, pi.snk);
++	struct task_struct *owner = NULL;
++	unsigned long iflags;
+ 
+-	detect_deadlock = debug_rt_mutex_detect_deadlock(orig_waiter,
+-							 deadlock_detect);
++	spin_lock_irqsave(&lock->wait_lock, iflags);
+ 
+-	/*
+-	 * The (de)boosting is a step by step approach with a lot of
+-	 * pitfalls. We want this to be preemptible and we want hold a
+-	 * maximum of two locks per step. So we have to check
+-	 * carefully whether things change under us.
+-	 */
+- again:
+-	if (++depth > max_lock_depth) {
+-		static int prev_max;
++	if (rt_mutex_has_waiters(lock)) {
++		owner = rt_mutex_owner(lock);
+ 
+-		/*
+-		 * Print this only once. If the admin changes the limit,
+-		 * print a new message when reaching the limit again.
+-		 */
+-		if (prev_max != max_lock_depth) {
+-			prev_max = max_lock_depth;
+-			printk(KERN_WARNING "Maximum lock depth %d reached "
+-			       "task: %s (%d)\n", max_lock_depth,
+-			       top_task->comm, task_pid_nr(top_task));
++		if (owner && owner != RT_RW_READER) {
++			rtmutex_pi_owner(lock, owner, 1);
++			get_task_struct(owner);
+ 		}
+-		put_task_struct(task);
+-
+-		return deadlock_detect ? -EDEADLK : 0;
+ 	}
+-  retry:
+-	/*
+-	 * Task can not go away as we did a get_task() before !
+-	 */
+-	spin_lock_irqsave(&task->pi_lock, flags);
+ 
+-	waiter = task->pi_blocked_on;
+-	/*
+-	 * Check whether the end of the boosting chain has been
+-	 * reached or the state of the chain has changed while we
+-	 * dropped the locks.
+-	 */
+-	if (!waiter || !waiter->task)
+-		goto out_unlock_pi;
+-
+-	/*
+-	 * Check the orig_waiter state. After we dropped the locks,
+-	 * the previous owner of the lock might have released the lock
+-	 * and made us the pending owner:
+-	 */
+-	if (orig_waiter && !orig_waiter->task)
+-		goto out_unlock_pi;
+-
+-	/*
+-	 * Drop out, when the task has no waiters. Note,
+-	 * top_waiter can be NULL, when we are in the deboosting
+-	 * mode!
+-	 */
+-	if (top_waiter && (!task_has_pi_waiters(task) ||
+-			   top_waiter != task_top_pi_waiter(task)))
+-		goto out_unlock_pi;
+-
+-	/*
+-	 * When deadlock detection is off then we check, if further
+-	 * priority adjustment is necessary.
+-	 */
+-	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
+-		goto out_unlock_pi;
++	spin_unlock_irqrestore(&lock->wait_lock, iflags);
+ 
+-	lock = waiter->lock;
+-	if (!spin_trylock(&lock->wait_lock)) {
+-		spin_unlock_irqrestore(&task->pi_lock, flags);
+-		cpu_relax();
+-		goto retry;
++	if (owner && owner != RT_RW_READER) {
++		task_pi_update(owner, 0);
++		put_task_struct(owner);
+ 	}
+ 
+-	/* Deadlock detection */
+-	if (lock == orig_lock || rt_mutex_owner(lock) == top_task) {
+-		debug_rt_mutex_deadlock(deadlock_detect, orig_waiter, lock);
+-		spin_unlock(&lock->wait_lock);
+-		ret = deadlock_detect ? -EDEADLK : 0;
+-		goto out_unlock_pi;
+-	}
++	return 0;
++}
+ 
+-	top_waiter = rt_mutex_top_waiter(lock);
++static struct pi_sink rtmutex_pi_snk = {
++    .boost = rtmutex_pi_boost,
++    .update = rtmutex_pi_update,
++};
+ 
+-	/* Requeue the waiter */
+-	plist_del(&waiter->list_entry, &lock->wait_list);
+-	waiter->list_entry.prio = task->prio;
+-	plist_add(&waiter->list_entry, &lock->wait_list);
+-
+-	/* Release the task */
+-	spin_unlock(&task->pi_lock);
+-	put_task_struct(task);
++static void init_pi(struct rt_mutex *lock)
 +{
-+	BUG_ON(src->boosted);
-+
-+	plist_node_init(&src->list, *src->prio);
-+	plist_add(&src->list, &node->srcs);
-+	src->boosted =3D 1;
-+
-+	__pi_update_prio(node);
++	pi_node_init(&lock->pi.node);
+ 
+-	/* Grab the next task */
+-	task = rt_mutex_owner(lock);
++	lock->pi.prio = MAX_PRIO;
++	pi_source_init(&lock->pi.src, &lock->pi.prio);
++	lock->pi.snk = rtmutex_pi_snk;
+ 
+-	/*
+-	 * Readers are special. We may need to boost more than one owner.
+-	 */
+-	if (task_is_reader(task)) {
+-		ret = rt_mutex_adjust_readers(orig_lock, orig_waiter,
+-					      top_task, lock,
+-					      recursion_depth);
+-		spin_unlock_irqrestore(&lock->wait_lock, flags);
+-		goto out;
+-	}
++	pi_add_sink(&lock->pi.node, &lock->pi.snk,
++		    PI_FLAG_DEFER_UPDATE | PI_FLAG_ALREADY_BOOSTED);
 +}
-+
-+static inline void
-+__pi_deboost(struct pi_node *node, struct pi_source *src)
+ 
+-	get_task_struct(task);
+-	spin_lock(&task->pi_lock);
+-
+-	if (waiter == rt_mutex_top_waiter(lock)) {
+-		/* Boost the owner */
+-		plist_del(&top_waiter->pi_list_entry, &task->pi_waiters);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
+-		__rt_mutex_adjust_prio(task);
+-
+-	} else if (top_waiter == waiter) {
+-		/* Deboost the owner */
+-		plist_del(&waiter->pi_list_entry, &task->pi_waiters);
+-		waiter = rt_mutex_top_waiter(lock);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
+-		__rt_mutex_adjust_prio(task);
++/*
++ * we initialize the wait_list runtime. (Could be done build-time and/or
++ * boot-time.)
++ */
++static inline void init_lists(struct rt_mutex *lock)
 +{
-+	BUG_ON(!src->boosted);
-+
-+	plist_del(&src->list, &node->srcs);
-+	src->boosted =3D 0;
-+
-+	__pi_update_prio(node);
-+}
++	if (unlikely(!lock->wait_list.prio_list.prev)) {
++		plist_head_init(&lock->wait_list, &lock->wait_lock);
++		init_pi(lock);
++#ifdef CONFIG_DEBUG_RT_MUTEXES
++		pi_initialized++;
++#endif
+ 	}
+-
+-	spin_unlock(&task->pi_lock);
+-
+-	top_waiter = rt_mutex_top_waiter(lock);
+-	spin_unlock_irqrestore(&lock->wait_lock, flags);
+-
+-	if (!detect_deadlock && waiter != top_waiter)
+-		goto out_put_task;
+-
+-	goto again;
+-
+- out_unlock_pi:
+-	spin_unlock_irqrestore(&task->pi_lock, flags);
+- out_put_task:
+-	put_task_struct(task);
+- out:
+-	return ret;
+ }
+ 
+ /*
++ * Max number of times we'll walk the boosting chain:
++ */
++int max_lock_depth = 1024;
 +
 +/*
-+ * _pi_node_update - update the chain
-+ *
-+ * We loop through up to MAX_PI_DEPENDENCIES times looking for stale e=
-ntries
-+ * that need to propagate up the chain.  This is a step-wise process w=
-here we
-+ * have to be careful about locking and preemption.  By trying MAX_PI_=
-DEPs
-+ * times, we guarantee that this update routine is an effective barrie=
-r...
-+ * all modifications made prior to the call to this barrier will have =
-completed.
-+ *
-+ * Deadlock avoidance: This node may participate in a chain of nodes w=
-hich
-+ * form a graph of arbitrary structure.  While the graph should techni=
-cally
-+ * never close on itself barring any bugs, we still want to protect ag=
-ainst
-+ * a theoretical ABBA deadlock (if for nothing else, to prevent lockde=
-p
-+ * from detecting this potential).  To do this, we employ a dual-locki=
-ng
-+ * scheme where we can carefully control the order.  That is: node->lo=
-ck
-+ * protects most of the node's internal state, but it will never be he=
-ld
-+ * across a chain update.  sinkref->lock, on the other hand, can be he=
-ld
-+ * across a boost/deboost, and also guarantees proper execution order.=
- Also
-+ * note that no locks are held across an snk->update.
-+ */
-+static int
-+_pi_node_update(struct pi_sink *snk, unsigned int flags)
-+{
-+	struct pi_node    *node =3D node_of(snk);
-+	struct pi_sinkref *sinkref;
-+	unsigned long      iflags;
-+	int                count =3D 0;
-+	int                i;
+  * Optimization: check if we can steal the lock from the
+  * assigned pending owner [which might not have taken the
+  * lock yet]:
+@@ -380,7 +241,6 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ static inline int try_to_steal_lock(struct rt_mutex *lock, int mode)
+ {
+ 	struct task_struct *pendowner = rt_mutex_owner(lock);
+-	struct rt_mutex_waiter *next;
+ 
+ 	if (!rt_mutex_owner_pending(lock))
+ 		return 0;
+@@ -390,49 +250,7 @@ static inline int try_to_steal_lock(struct rt_mutex *lock, int mode)
+ 
+ 	WARN_ON(task_is_reader(rt_mutex_owner(lock)));
+ 
+-	spin_lock(&pendowner->pi_lock);
+-	if (!lock_is_stealable(pendowner, mode)) {
+-		spin_unlock(&pendowner->pi_lock);
+-		return 0;
+-	}
+-
+-	/*
+-	 * Check if a waiter is enqueued on the pending owners
+-	 * pi_waiters list. Remove it and readjust pending owners
+-	 * priority.
+-	 */
+-	if (likely(!rt_mutex_has_waiters(lock))) {
+-		spin_unlock(&pendowner->pi_lock);
+-		return 1;
+-	}
+-
+-	/* No chain handling, pending owner is not blocked on anything: */
+-	next = rt_mutex_top_waiter(lock);
+-	plist_del(&next->pi_list_entry, &pendowner->pi_waiters);
+-	__rt_mutex_adjust_prio(pendowner);
+-	spin_unlock(&pendowner->pi_lock);
+-
+-	/*
+-	 * We are going to steal the lock and a waiter was
+-	 * enqueued on the pending owners pi_waiters queue. So
+-	 * we have to enqueue this waiter into
+-	 * current->pi_waiters list. This covers the case,
+-	 * where current is boosted because it holds another
+-	 * lock and gets unboosted because the booster is
+-	 * interrupted, so we would delay a waiter with higher
+-	 * priority as current->normal_prio.
+-	 *
+-	 * Note: in the rare case of a SCHED_OTHER task changing
+-	 * its priority and thus stealing the lock, next->task
+-	 * might be current:
+-	 */
+-	if (likely(next->task != current)) {
+-		spin_lock(&current->pi_lock);
+-		plist_add(&next->pi_list_entry, &current->pi_waiters);
+-		__rt_mutex_adjust_prio(current);
+-		spin_unlock(&current->pi_lock);
+-	}
+-	return 1;
++	return lock_is_stealable(pendowner, mode);
+ }
+ 
+ /*
+@@ -486,74 +304,145 @@ static inline int try_to_take_rt_mutex(struct rt_mutex *lock)
+ }
+ 
+ /*
+- * Task blocks on lock.
+- *
+- * Prepare waiter and propagate pi chain
+- *
+- * This must be called with lock->wait_lock held.
++ * These callbacks are invoked whenever a waiter has changed priority.
++ * So we should requeue it within the lock->wait_list
+  */
+-static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+-				   struct rt_mutex_waiter *waiter,
+-				   int detect_deadlock, unsigned long flags)
 +
-+	struct updater {
-+		int update;
-+		struct pi_sinkref *sinkref;
-+		struct pi_sink *snk;
-+	} updaters[MAX_PI_DEPENDENCIES];
-+
-+	spin_lock_irqsave(&node->lock, iflags);
-+
-+	list_for_each_entry(sinkref, &node->snks, list) {
-+		/*
-+		 * If the priority is changing, or if this is a
-+		 * BOOST/DEBOOST, we consider this sink "stale"
-+		 */
-+		if (sinkref->prio !=3D node->prio
-+		    || sinkref->state !=3D pi_state_boosted) {
-+			struct updater *iter =3D &updaters[count++];
-+
-+			BUG_ON(!atomic_read(&sinkref->snk->refs));
-+			_pi_sink_addref(sinkref);
-+			sinkref->prio =3D node->prio;
-+
-+			iter->update  =3D 1;
-+			iter->sinkref =3D sinkref;
-+			iter->snk     =3D sinkref->snk;
-+		}
-+	}
-+
-+	spin_unlock(&node->lock);
-+
-+	for (i =3D 0; i < count; ++i) {
-+		struct updater    *iter =3D &updaters[i];
-+		unsigned int       lflags =3D PI_FLAG_DEFER_UPDATE;
-+		struct pi_sink    *snk;
-+
-+		sinkref =3D iter->sinkref;
-+		snk =3D iter->snk;
-+
-+		spin_lock(&sinkref->lock);
-+
-+		switch (sinkref->state) {
-+		case pi_state_boost:
-+			sinkref->state =3D pi_state_boosted;
-+			/* Fall through */
-+		case pi_state_boosted:
-+			snk->boost(snk, &sinkref->src, lflags);
-+			break;
-+		case pi_state_deboost:
-+			snk->deboost(snk, &sinkref->src, lflags);
-+			sinkref->state =3D pi_state_free;
-+
-+			/*
-+			 * drop the ref that we took when the sinkref
-+			 * was allocated.  We still hold a ref from
-+			 * the above.
-+			 */
-+			_pi_sink_dropref_all(node, sinkref);
-+			break;
-+		case pi_state_free:
-+			iter->update =3D 0;
-+			break;
-+		default:
-+			panic("illegal sinkref type: %d", sinkref->state);
-+		}
-+
-+		spin_unlock(&sinkref->lock);
-+
-+		/*
-+		 * We will drop the sinkref reference while still holding the
-+		 * preempt/irqs off so that the memory is returned synchronously
-+		 * to the system.
-+		 */
-+		_pi_sink_dropref_local(node, sinkref);
-+
-+		/*
-+		 * The sinkref is no longer valid since we dropped the reference
-+		 * above, so symbolically drop it here too to make it more
-+		 * obvious if we try to use it later
-+		 */
-+		iter->sinkref =3D NULL;
-+	}
-+
-+	local_irq_restore(iflags);
-+
++static inline int rtmutex_waiter_pi_boost(struct pi_sink *snk,
++					  struct pi_source *src,
++					  unsigned int flags)
+ {
+-	struct task_struct *owner = rt_mutex_owner(lock);
+-	struct rt_mutex_waiter *top_waiter = waiter;
+-	int chain_walk = 0, res;
++	struct rt_mutex_waiter *waiter;
+ 
+-	spin_lock(&current->pi_lock);
+-	__rt_mutex_adjust_prio(current);
+-	waiter->task = current;
+-	waiter->lock = lock;
+-	plist_node_init(&waiter->list_entry, current->prio);
+-	plist_node_init(&waiter->pi_list_entry, current->prio);
++	waiter = container_of(snk, struct rt_mutex_waiter, pi.snk);
+ 
+-	/* Get the top priority waiter on the lock */
+-	if (rt_mutex_has_waiters(lock))
+-		top_waiter = rt_mutex_top_waiter(lock);
+-	plist_add(&waiter->list_entry, &lock->wait_list);
 +	/*
-+	 * Note: At this point, sinkref is invalid since we dropref'd
-+	 * it above, but snk is valid since we still hold the remote
-+	 * reference.  This is key to the design because it allows us
-+	 * to synchronously free the sinkref object, yet maintain a
-+	 * reference to the sink across the update
++	 * We dont need to take any locks here because the
++	 * waiter->pi.node interlock is already guaranteeing mutual
++	 * exclusion.
 +	 */
-+	for (i =3D 0; i < count; ++i) {
-+		struct updater *iter =3D &updaters[i];
-+
-+		if (iter->update)
-+			iter->snk->update(iter->snk, 0);
-+	}
-+
++	waiter->pi.prio = *src->prio;
+ 
+-	current->pi_blocked_on = waiter;
++	return 0;
++}
+ 
+-	spin_unlock(&current->pi_lock);
++static inline int rtmutex_waiter_pi_update(struct pi_sink *snk,
++					   unsigned int flags)
++{
++	struct rt_mutex *lock;
++	struct rt_mutex_waiter *waiter;
++	unsigned long iflags;
+ 
+-	if (waiter == rt_mutex_top_waiter(lock)) {
+-		/* readers are handled differently */
+-		if (task_is_reader(owner)) {
+-			res = rt_mutex_adjust_readers(lock, waiter,
+-						      current, lock, 0);
+-			return res;
+-		}
++	waiter = container_of(snk, struct rt_mutex_waiter, pi.snk);
++	lock = waiter->lock;
+ 
+-		spin_lock(&owner->pi_lock);
+-		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
+-		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
++	spin_lock_irqsave(&lock->wait_lock, iflags);
+ 
+-		__rt_mutex_adjust_prio(owner);
+-		if (owner->pi_blocked_on)
+-			chain_walk = 1;
+-		spin_unlock(&owner->pi_lock);
 +	/*
-+	 * We perform all the free opertations together at the end, using
-+	 * only automatic/stack variables since any one of these operations
-+	 * could result in our node object being deallocated
++	 * If waiter->task is non-NULL, it means we are still valid in the
++	 * pi list.  Therefore, if waiter->pi.prio has changed since we
++	 * queued ourselves, requeue it.
 +	 */
-+	for (i =3D 0; i < count; ++i) {
-+		struct updater *iter =3D &updaters[i];
-+
-+		pi_sink_dropref(iter->snk, 0);
-+	}
-+
-+	return 0;
-+}
-+
-+static void
-+_pi_del_sinkref(struct pi_node *node, struct pi_sinkref *sinkref)
-+{
-+	struct pi_sink *snk =3D sinkref->snk;
-+	int             remove =3D 0;
-+	unsigned long   iflags;
-+
-+	local_irq_save(iflags);
-+	spin_lock(&sinkref->lock);
-+
-+	switch (sinkref->state) {
-+	case pi_state_boost:
-+		/*
-+		 * This state indicates the sink was never formally
-+		 * boosted so we can just delete it immediately
-+		 */
-+		remove =3D 1;
-+		break;
-+	case pi_state_boosted:
-+		if (snk->deboost)
-+			/*
-+			 * If the sink supports deboost notification,
-+			 * schedule it for deboost at the next update
-+			 */
-+			sinkref->state =3D pi_state_deboost;
-+		else
-+			/*
-+			 * ..otherwise schedule it for immediate
-+			 * removal
-+			 */
-+			remove =3D 1;
-+		break;
-+	default:
-+		break;
-+	}
-+
-+	if (remove) {
-+		/*
-+		 * drop the ref that we took when the sinkref
-+		 * was allocated.  We still hold a ref from
-+		 * when the caller performed the lookup
-+		 */
-+		_pi_sink_dropref_all(node, sinkref);
-+		sinkref->state =3D pi_state_free;
-+	}
-+
-+	spin_unlock(&sinkref->lock);
-+
-+	_pi_sink_dropref_local(node, sinkref);
-+	local_irq_restore(iflags);
-+
-+	pi_sink_dropref(snk, 0);
-+}
-+
-+static int
-+_pi_node_boost(struct pi_sink *snk, struct pi_source *src,
-+	       unsigned int flags)
-+{
-+	struct pi_node *node =3D node_of(snk);
-+	unsigned long   iflags;
-+
-+	spin_lock_irqsave(&node->lock, iflags);
-+	if (src->boosted)
-+		__pi_deboost(node, src);
-+	__pi_boost(node, src);
-+	spin_unlock_irqrestore(&node->lock, iflags);
-+
-+	if (!(flags & PI_FLAG_DEFER_UPDATE))
-+		_pi_node_update(snk, 0);
++	if (waiter->task && waiter->list_entry.prio != waiter->pi.prio) {
++		plist_del(&waiter->list_entry, &lock->wait_list);
++		plist_node_init(&waiter->list_entry, waiter->pi.prio);
++		plist_add(&waiter->list_entry, &lock->wait_list);
+ 	}
+-	else if (debug_rt_mutex_detect_deadlock(waiter, detect_deadlock))
+-		chain_walk = 1;
+ 
+-	if (!chain_walk || task_is_reader(owner))
+-		return 0;
++	spin_unlock_irqrestore(&lock->wait_lock, iflags);
 +
 +	return 0;
 +}
 +
-+static int
-+_pi_node_deboost(struct pi_sink *snk, struct pi_source *src,
-+		 unsigned int flags)
-+{
-+	struct pi_node *node =3D node_of(snk);
-+	unsigned long   iflags;
-+
-+	spin_lock_irqsave(&node->lock, iflags);
-+	__pi_deboost(node, src);
-+	spin_unlock_irqrestore(&node->lock, iflags);
-+
-+	if (!(flags & PI_FLAG_DEFER_UPDATE))
-+		_pi_node_update(snk, 0);
-+
-+	return 0;
-+}
-+
-+static int
-+_pi_node_free(struct pi_sink *snk, unsigned int flags)
-+{
-+	struct pi_node    *node =3D node_of(snk);
-+	struct pi_sinkref *sinkref;
-+	struct pi_sinkref *sinkrefs[MAX_PI_DEPENDENCIES];
-+	unsigned long      iflags;
-+	int                count =3D 0;
-+	int                i;
-+
-+	spin_lock_irqsave(&node->lock, iflags);
-+
-+	/*
-+	 * When the node is freed, we should perform an implicit
-+	 * del_sink on any remaining sinks we may have
-+	 */
-+	list_for_each_entry(sinkref, &node->snks, list) {
-+		_pi_sink_addref(sinkref);
-+		sinkrefs[count++] =3D sinkref;
-+	}
-+
-+	spin_unlock_irqrestore(&node->lock, iflags);
-+
-+	for (i =3D 0; i < count; ++i)
-+		_pi_del_sinkref(node, sinkrefs[i]);
-+
-+	if (!(flags & PI_FLAG_DEFER_UPDATE))
-+		_pi_node_update(&node->snk, 0);
-+
-+	return 0;
-+}
-+
-+static struct pi_sink pi_node_snk =3D {
-+    .boost   =3D _pi_node_boost,
-+    .deboost =3D _pi_node_deboost,
-+    .update  =3D _pi_node_update,
-+    .free    =3D _pi_node_free,
++static struct pi_sink rtmutex_waiter_pi_snk = {
++    .boost = rtmutex_waiter_pi_boost,
++    .update = rtmutex_waiter_pi_update,
 +};
 +
-+void pi_node_init(struct pi_node *node)
++/*
++ * This must be called with lock->wait_lock held.
++ */
++static int add_waiter(struct rt_mutex *lock,
++		      struct rt_mutex_waiter *waiter,
++		      unsigned long *flags)
 +{
-+	spin_lock_init(&node->lock);
-+	node->prio =3D MAX_PRIO;
-+	node->snk =3D pi_node_snk;
-+	pi_sinkref_pool_init(&node->sinkref_pool);
-+	INIT_LIST_HEAD(&node->snks);
-+	plist_head_init(&node->srcs, &node->lock);
-+	atomic_set(&node->snk.refs, 1);
-+}
++	int has_waiters = rt_mutex_has_waiters(lock);
 +
-+int pi_add_sink(struct pi_node *node, struct pi_sink *snk, unsigned in=
-t flags)
-+{
-+	struct pi_sinkref *sinkref;
-+	int                ret =3D 0;
-+	unsigned long      iflags;
-+
-+	spin_lock_irqsave(&node->lock, iflags);
-+
-+	if (!atomic_read(&node->snk.refs)) {
-+		ret =3D -EINVAL;
-+		goto out;
++	waiter->task = current;
++	waiter->lock = lock;
++	waiter->pi.prio = current->prio;
++	plist_node_init(&waiter->list_entry, waiter->pi.prio);
++	plist_add(&waiter->list_entry, &lock->wait_list);
++	waiter->pi.snk = rtmutex_waiter_pi_snk;
+ 
+ 	/*
+-	 * The owner can't disappear while holding a lock,
+-	 * so the owner struct is protected by wait_lock.
+-	 * Gets dropped in rt_mutex_adjust_prio_chain()!
++	 * Link the waiter object to the task so that we can adjust our
++	 * position on the prio list if the priority is changed. Note
++	 * that if the priority races between the time we recorded it
++	 * above and the time it is set here, we will correct the race
++	 * when we task_pi_update(current) below.  Otherwise the the
++	 * update is a no-op
+ 	 */
+-	get_task_struct(owner);
++	pi_add_sink(&current->pi.node, &waiter->pi.snk,
++		    PI_FLAG_DEFER_UPDATE);
+ 
+-	spin_unlock_irqrestore(&lock->wait_lock, flags);
++	/*
++	 * Link the lock object to the waiter so that we can form a chain
++	 * to the owner
++	 */
++	pi_add_sink(&current->pi.node, &lock->pi.node.snk,
++		    PI_FLAG_DEFER_UPDATE);
+ 
+-	res = rt_mutex_adjust_prio_chain(owner, detect_deadlock, lock, waiter,
+-					 current, 0);
++	/*
++	 * If we previously had no waiters, we are transitioning to
++	 * a mode where we need to boost the owner
++	 */
++	if (!has_waiters) {
++		struct task_struct *owner = rt_mutex_owner(lock);
++		rtmutex_pi_owner(lock, owner, 1);
 +	}
-+
-+	sinkref =3D pi_sinkref_alloc(&node->sinkref_pool);
-+	if (!sinkref) {
-+		ret =3D -ENOMEM;
-+		goto out;
-+	}
-+
-+	spin_lock_init(&sinkref->lock);
-+	INIT_LIST_HEAD(&sinkref->list);
-+
-+	if (flags & PI_FLAG_ALREADY_BOOSTED)
-+		sinkref->state =3D pi_state_boosted;
-+	else
-+		/*
-+		 * Schedule it for addition at the next update
-+		 */
-+		sinkref->state =3D pi_state_boost;
-+
-+	sinkref->prio =3D node->prio;
-+	pi_source_init(&sinkref->src, &sinkref->prio);
-+	sinkref->snk =3D snk;
-+
-+	/* set one ref from ourselves.  It will be dropped on del_sink */
-+	atomic_inc(&sinkref->snk->refs);
-+	atomic_set(&sinkref->refs, 1);
-+
-+	list_add_tail(&sinkref->list, &node->snks);
-+
-+	spin_unlock_irqrestore(&node->lock, iflags);
-+
-+	if (!(flags & PI_FLAG_DEFER_UPDATE))
-+		_pi_node_update(&node->snk, 0);
+ 
+-	spin_lock_irq(&lock->wait_lock);
++	spin_unlock_irqrestore(&lock->wait_lock, *flags);
++	task_pi_update(current, 0);
++	spin_lock_irqsave(&lock->wait_lock, *flags);
 +
 +	return 0;
-+
-+ out:
-+	spin_unlock_irqrestore(&node->lock, iflags);
-+
-+	return ret;
 +}
 +
-+int pi_del_sink(struct pi_node *node, struct pi_sink *snk, unsigned in=
-t flags)
++/*
++ * Remove a waiter from a lock
++ *
++ * Must be called with lock->wait_lock held
++ */
++static void remove_waiter(struct rt_mutex *lock,
++			  struct rt_mutex_waiter *waiter)
 +{
-+	struct pi_sinkref *sinkref;
-+	struct pi_sinkref *sinkrefs[MAX_PI_DEPENDENCIES];
-+	unsigned long      iflags;
-+	int                count =3D 0;
-+	int                i;
++	struct task_struct *p = waiter->task;
 +
-+	spin_lock_irqsave(&node->lock, iflags);
++	plist_del(&waiter->list_entry, &lock->wait_list);
++	waiter->task = NULL;
 +
 +	/*
-+	 * There may be multiple matches to snk because sometimes a
-+	 * deboost/free may still be pending an update when the same
-+	 * node has been added.  So we want to process all instances
++	 * We can stop boosting the owner if there are no more waiters
 +	 */
-+	list_for_each_entry(sinkref, &node->snks, list) {
-+		if (sinkref->snk =3D=3D snk) {
-+			_pi_sink_addref(sinkref);
-+			sinkrefs[count++] =3D sinkref;
-+		}
++	if (!rt_mutex_has_waiters(lock)) {
++		struct task_struct *owner = rt_mutex_owner(lock);
++		rtmutex_pi_owner(lock, owner, 0);
 +	}
+ 
+-	return res;
++	/*
++	 * Unlink the lock object from the waiter
++	 */
++	pi_del_sink(&p->pi.node, &lock->pi.node.snk, PI_FLAG_DEFER_UPDATE);
 +
-+	spin_unlock_irqrestore(&node->lock, iflags);
++	/*
++	 * Unlink the waiter object from the task.  Note that we
++	 * technically do not need an update for "p" because the
++	 * .deboost will be processed synchronous to this call
++	 * since there is no .deboost handler registered for
++	 * the waiter sink
++	 */
++	pi_del_sink(&p->pi.node, &waiter->pi.snk, PI_FLAG_DEFER_UPDATE);
+ }
+ 
+ /*
+@@ -566,24 +455,10 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+  */
+ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ {
+-	struct rt_mutex_waiter *waiter;
+-	struct task_struct *pendowner;
+-	struct rt_mutex_waiter *next;
+-
+-	spin_lock(&current->pi_lock);
++	struct rt_mutex_waiter *waiter = rt_mutex_top_waiter(lock);
++	struct task_struct *pendowner = waiter->task;
+ 
+-	waiter = rt_mutex_top_waiter(lock);
+-	plist_del(&waiter->list_entry, &lock->wait_list);
+-
+-	/*
+-	 * Remove it from current->pi_waiters. We do not adjust a
+-	 * possible priority boost right now. We execute wakeup in the
+-	 * boosted mode and go back to normal after releasing
+-	 * lock->wait_lock.
+-	 */
+-	plist_del(&waiter->pi_list_entry, &current->pi_waiters);
+-	pendowner = waiter->task;
+-	waiter->task = NULL;
++	remove_waiter(lock, waiter);
+ 
+ 	/*
+ 	 * Do the wakeup before the ownership change to give any spinning
+@@ -621,113 +496,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 	}
+ 
+ 	rt_mutex_set_owner(lock, pendowner, RT_MUTEX_OWNER_PENDING);
+-
+-	spin_unlock(&current->pi_lock);
+-
+-	/*
+-	 * Clear the pi_blocked_on variable and enqueue a possible
+-	 * waiter into the pi_waiters list of the pending owner. This
+-	 * prevents that in case the pending owner gets unboosted a
+-	 * waiter with higher priority than pending-owner->normal_prio
+-	 * is blocked on the unboosted (pending) owner.
+-	 */
+-
+-	if (rt_mutex_has_waiters(lock))
+-		next = rt_mutex_top_waiter(lock);
+-	else
+-		next = NULL;
+-
+-	spin_lock(&pendowner->pi_lock);
+-
+-	WARN_ON(!pendowner->pi_blocked_on);
+-	WARN_ON(pendowner->pi_blocked_on != waiter);
+-	WARN_ON(pendowner->pi_blocked_on->lock != lock);
+-
+-	pendowner->pi_blocked_on = NULL;
+-
+-	if (next)
+-		plist_add(&next->pi_list_entry, &pendowner->pi_waiters);
+-
+-	spin_unlock(&pendowner->pi_lock);
+-}
+-
+-/*
+- * Remove a waiter from a lock
+- *
+- * Must be called with lock->wait_lock held
+- */
+-static void remove_waiter(struct rt_mutex *lock,
+-			  struct rt_mutex_waiter *waiter,
+-			  unsigned long flags)
+-{
+-	int first = (waiter == rt_mutex_top_waiter(lock));
+-	struct task_struct *owner = rt_mutex_owner(lock);
+-	int chain_walk = 0;
+-
+-	spin_lock(&current->pi_lock);
+-	plist_del(&waiter->list_entry, &lock->wait_list);
+-	waiter->task = NULL;
+-	current->pi_blocked_on = NULL;
+-	spin_unlock(&current->pi_lock);
+-
+-	if (first && owner != current && !task_is_reader(owner)) {
+-
+-		spin_lock(&owner->pi_lock);
+-
+-		plist_del(&waiter->pi_list_entry, &owner->pi_waiters);
+-
+-		if (rt_mutex_has_waiters(lock)) {
+-			struct rt_mutex_waiter *next;
+-
+-			next = rt_mutex_top_waiter(lock);
+-			plist_add(&next->pi_list_entry, &owner->pi_waiters);
+-		}
+-		__rt_mutex_adjust_prio(owner);
+-
+-		if (owner->pi_blocked_on)
+-			chain_walk = 1;
+-
+-		spin_unlock(&owner->pi_lock);
+-	}
+-
+-	WARN_ON(!plist_node_empty(&waiter->pi_list_entry));
+-
+-	if (!chain_walk)
+-		return;
+-
+-	/* gets dropped in rt_mutex_adjust_prio_chain()! */
+-	get_task_struct(owner);
+-
+-	spin_unlock_irqrestore(&lock->wait_lock, flags);
+-
+-	rt_mutex_adjust_prio_chain(owner, 0, lock, NULL, current, 0);
+-
+-	spin_lock_irq(&lock->wait_lock);
+-}
+-
+-/*
+- * Recheck the pi chain, in case we got a priority setting
+- *
+- * Called from sched_setscheduler
+- */
+-void rt_mutex_adjust_pi(struct task_struct *task)
+-{
+-	struct rt_mutex_waiter *waiter;
+-	unsigned long flags;
+-
+-	spin_lock_irqsave(&task->pi_lock, flags);
+-
+-	waiter = task->pi_blocked_on;
+-	if (!waiter || waiter->list_entry.prio == task->prio) {
+-		spin_unlock_irqrestore(&task->pi_lock, flags);
+-		return;
+-	}
+-
+-	/* gets dropped in rt_mutex_adjust_prio_chain()! */
+-	get_task_struct(task);
+-	spin_unlock_irqrestore(&task->pi_lock, flags);
+-
+-	rt_mutex_adjust_prio_chain(task, 0, NULL, NULL, task, 0);
+ }
+ 
+ /*
+@@ -869,7 +637,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 		 * but the lock got stolen by an higher prio task.
+ 		 */
+ 		if (!waiter.task) {
+-			task_blocks_on_rt_mutex(lock, &waiter, 0, flags);
++			add_waiter(lock, &waiter, &flags);
+ 			/* Wakeup during boost ? */
+ 			if (unlikely(!waiter.task))
+ 				continue;
+@@ -917,7 +685,7 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	 * can end up with a non-NULL waiter.task:
+ 	 */
+ 	if (unlikely(waiter.task))
+-		remove_waiter(lock, &waiter, flags);
++		remove_waiter(lock, &waiter);
+ 	/*
+ 	 * try_to_take_rt_mutex() sets the waiter bit
+ 	 * unconditionally. We might have to fix that up:
+@@ -927,6 +695,9 @@ rt_spin_lock_slowlock(struct rt_mutex *lock)
+  unlock:
+ 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
++	/* Undo any pi boosting, if necessary */
++	task_pi_update(current, 0);
 +
-+	for (i =3D 0; i < count; ++i)
-+		_pi_del_sinkref(node, sinkrefs[i]);
+ 	debug_rt_mutex_free_waiter(&waiter);
+ }
+ 
+@@ -954,8 +725,8 @@ rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ 
+ 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+-	/* Undo pi boosting.when necessary */
+-	rt_mutex_adjust_prio(current);
++	/* Undo pi boosting when necessary */
++	task_pi_update(current, 0);
+ }
+ 
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+@@ -1126,6 +897,9 @@ static inline void
+ rt_rwlock_add_reader(struct reader_lock_struct *rls, struct rw_mutex *rwm)
+ {
+ 	list_add(&rls->list, &rwm->readers);
 +
-+	if (!(flags & PI_FLAG_DEFER_UPDATE))
-+		_pi_node_update(&node->snk, 0);
++	pi_source_init(&rls->pi_src, &rwm->prio);
++	task_pi_boost(rls->task, &rls->pi_src, PI_FLAG_DEFER_UPDATE);
+ }
+ 
+ /*
+@@ -1249,21 +1023,7 @@ static int try_to_take_rw_read(struct rw_mutex *rwm, int mtx)
+ 				waiter = rt_mutex_top_waiter(mutex);
+ 				if (!lock_is_stealable(waiter->task, mode))
+ 					return 0;
+-				/*
+-				 * The pending reader has PI waiters,
+-				 * but we are taking the lock.
+-				 * Remove the waiters from the pending owner.
+-				 */
+-				spin_lock(&mtxowner->pi_lock);
+-				plist_del(&waiter->pi_list_entry, &mtxowner->pi_waiters);
+-				spin_unlock(&mtxowner->pi_lock);
+ 			}
+-		} else if (rt_mutex_has_waiters(mutex)) {
+-			/* Readers do things differently with respect to PI */
+-			waiter = rt_mutex_top_waiter(mutex);
+-			spin_lock(&current->pi_lock);
+-			plist_del(&waiter->pi_list_entry, &current->pi_waiters);
+-			spin_unlock(&current->pi_lock);
+ 		}
+ 		/* Readers never own the mutex */
+ 		rt_mutex_set_owner(mutex, RT_RW_READER, 0);
+@@ -1275,7 +1035,7 @@ static int try_to_take_rw_read(struct rw_mutex *rwm, int mtx)
+ 	if (incr) {
+ 		atomic_inc(&rwm->owners);
+ 		rw_check_held(rwm);
+-		spin_lock(&current->pi_lock);
++		preempt_disable();
+ 		reader_count = current->reader_lock_count++;
+ 		if (likely(reader_count < MAX_RWLOCK_DEPTH)) {
+ 			rls = &current->owned_read_locks[reader_count];
+@@ -1285,10 +1045,11 @@ static int try_to_take_rw_read(struct rw_mutex *rwm, int mtx)
+ 			rt_rwlock_add_reader(rls, rwm);
+ 		} else
+ 			WARN_ON_ONCE(1);
+-		spin_unlock(&current->pi_lock);
++		preempt_enable();
+ 	}
+ 	rt_mutex_deadlock_account_lock(mutex, current);
+ 	atomic_inc(&rwm->count);
++
+ 	return 1;
+ }
+ 
+@@ -1378,7 +1139,7 @@ rt_read_slowlock(struct rw_mutex *rwm, int mtx)
+ 		 * but the lock got stolen by a higher prio task.
+ 		 */
+ 		if (!waiter.task) {
+-			task_blocks_on_rt_mutex(mutex, &waiter, 0, flags);
++			add_waiter(mutex, &waiter, &flags);
+ 			/* Wakeup during boost ? */
+ 			if (unlikely(!waiter.task))
+ 				continue;
+@@ -1417,7 +1178,7 @@ rt_read_slowlock(struct rw_mutex *rwm, int mtx)
+ 	}
+ 
+ 	if (unlikely(waiter.task))
+-		remove_waiter(mutex, &waiter, flags);
++		remove_waiter(mutex, &waiter);
+ 
+ 	WARN_ON(rt_mutex_owner(mutex) &&
+ 		rt_mutex_owner(mutex) != current &&
+@@ -1430,6 +1191,9 @@ rt_read_slowlock(struct rw_mutex *rwm, int mtx)
+ 	if (mtx && unlikely(saved_lock_depth >= 0))
+ 		rt_reacquire_bkl(saved_lock_depth);
+ 
++	/* Undo any pi boosting, if necessary */
++	task_pi_update(current, 0);
++
+ 	debug_rt_mutex_free_waiter(&waiter);
+ }
+ 
+@@ -1457,13 +1221,13 @@ __rt_read_fasttrylock(struct rw_mutex *rwm)
+ 		atomic_inc(&rwm->owners);
+ 		rw_check_held(rwm);
+ 		local_irq_save(flags);
+-		spin_lock(&current->pi_lock);
+ 		reader_count = current->reader_lock_count++;
+ 		if (likely(reader_count < MAX_RWLOCK_DEPTH)) {
+ 			current->owned_read_locks[reader_count].lock = rwm;
+ 			current->owned_read_locks[reader_count].count = 1;
+ 		} else
+ 			WARN_ON_ONCE(1);
++
+ 		/*
+ 		 * If this task is no longer the sole owner of the lock
+ 		 * or someone is blocking, then we need to add the task
+@@ -1473,16 +1237,12 @@ __rt_read_fasttrylock(struct rw_mutex *rwm)
+ 			struct rt_mutex *mutex = &rwm->mutex;
+ 			struct reader_lock_struct *rls;
+ 
+-			/* preserve lock order, we only need wait_lock now */
+-			spin_unlock(&current->pi_lock);
+-
+ 			spin_lock(&mutex->wait_lock);
+ 			rls = &current->owned_read_locks[reader_count];
+ 			if (!rls->list.prev || list_empty(&rls->list))
+-				rt_rwlock_add_reader(rlw, rwm);
++				rt_rwlock_add_reader(rls, rwm);
+ 			spin_unlock(&mutex->wait_lock);
+-		} else
+-			spin_unlock(&current->pi_lock);
++		}
+ 		local_irq_restore(flags);
+ 		return 1;
+ 	}
+@@ -1591,7 +1351,7 @@ rt_write_slowlock(struct rw_mutex *rwm, int mtx)
+ 		 * but the lock got stolen by a higher prio task.
+ 		 */
+ 		if (!waiter.task) {
+-			task_blocks_on_rt_mutex(mutex, &waiter, 0, flags);
++			add_waiter(mutex, &waiter, &flags);
+ 			/* Wakeup during boost ? */
+ 			if (unlikely(!waiter.task))
+ 				continue;
+@@ -1630,7 +1390,7 @@ rt_write_slowlock(struct rw_mutex *rwm, int mtx)
+ 	}
+ 
+ 	if (unlikely(waiter.task))
+-		remove_waiter(mutex, &waiter, flags);
++		remove_waiter(mutex, &waiter);
+ 
+ 	/* check on unlock if we have any waiters. */
+ 	if (rt_mutex_has_waiters(mutex))
+@@ -1642,6 +1402,9 @@ rt_write_slowlock(struct rw_mutex *rwm, int mtx)
+ 	if (mtx && unlikely(saved_lock_depth >= 0))
+ 		rt_reacquire_bkl(saved_lock_depth);
+ 
++	/* Undo any pi boosting, if necessary */
++	task_pi_update(current, 0);
++
+ 	debug_rt_mutex_free_waiter(&waiter);
+ 
+ }
+@@ -1733,7 +1496,7 @@ rt_read_slowunlock(struct rw_mutex *rwm, int mtx)
+ 
+ 	for (i = current->reader_lock_count - 1; i >= 0; i--) {
+ 		if (current->owned_read_locks[i].lock == rwm) {
+-			spin_lock(&current->pi_lock);
++			preempt_disable();
+ 			current->owned_read_locks[i].count--;
+ 			if (!current->owned_read_locks[i].count) {
+ 				current->reader_lock_count--;
+@@ -1743,9 +1506,11 @@ rt_read_slowunlock(struct rw_mutex *rwm, int mtx)
+ 				WARN_ON(!rls->list.prev || list_empty(&rls->list));
+ 				list_del_init(&rls->list);
+ 				rls->lock = NULL;
++				task_pi_deboost(current, &rls->pi_src,
++						PI_FLAG_DEFER_UPDATE);
+ 				rw_check_held(rwm);
+ 			}
+-			spin_unlock(&current->pi_lock);
++			preempt_enable();
+ 			break;
+ 		}
+ 	}
+@@ -1776,7 +1541,6 @@ rt_read_slowunlock(struct rw_mutex *rwm, int mtx)
+ 
+ 	/* If no one is blocked, then clear all ownership */
+ 	if (!rt_mutex_has_waiters(mutex)) {
+-		rwm->prio = MAX_PRIO;
+ 		/*
+ 		 * If count is not zero, we are under the limit with
+ 		 * no other readers.
+@@ -1835,28 +1599,11 @@ rt_read_slowunlock(struct rw_mutex *rwm, int mtx)
+ 		rt_mutex_set_owner(mutex, RT_RW_READER, 0);
+ 	}
+ 
+-	if (rt_mutex_has_waiters(mutex)) {
+-		waiter = rt_mutex_top_waiter(mutex);
+-		rwm->prio = waiter->task->prio;
+-		/*
+-		 * If readers still own this lock, then we need
+-		 * to update the pi_list too. Readers have a separate
+-		 * path in the PI chain.
+-		 */
+-		if (reader_count) {
+-			spin_lock(&pendowner->pi_lock);
+-			plist_del(&waiter->pi_list_entry,
+-				  &pendowner->pi_waiters);
+-			spin_unlock(&pendowner->pi_lock);
+-		}
+-	} else
+-		rwm->prio = MAX_PRIO;
+-
+  out:
+ 	spin_unlock_irqrestore(&mutex->wait_lock, flags);
+ 
+-	/* Undo pi boosting.when necessary */
+-	rt_mutex_adjust_prio(current);
++	/* Undo pi boosting when necessary */
++	task_pi_update(current, 0);
+ }
+ 
+ static inline void
+@@ -1874,9 +1621,9 @@ rt_read_fastunlock(struct rw_mutex *rwm,
+ 		int reader_count;
+ 		int owners;
+ 
+-		spin_lock_irqsave(&current->pi_lock, flags);
++		local_irq_save(flags);
+ 		reader_count = --current->reader_lock_count;
+-		spin_unlock_irqrestore(&current->pi_lock, flags);
++		local_irq_restore(flags);
+ 
+ 		rt_mutex_deadlock_account_unlock(current);
+ 		if (unlikely(reader_count < 0)) {
+@@ -1972,17 +1719,7 @@ rt_write_slowunlock(struct rw_mutex *rwm, int mtx)
+ 	while (waiter && !waiter->write_lock) {
+ 		struct task_struct *reader = waiter->task;
+ 
+-		spin_lock(&pendowner->pi_lock);
+-		plist_del(&waiter->list_entry, &mutex->wait_list);
+-
+-		/* nop if not on a list */
+-		plist_del(&waiter->pi_list_entry, &pendowner->pi_waiters);
+-		spin_unlock(&pendowner->pi_lock);
+-
+-		spin_lock(&reader->pi_lock);
+-		waiter->task = NULL;
+-		reader->pi_blocked_on = NULL;
+-		spin_unlock(&reader->pi_lock);
++		remove_waiter(mutex, waiter);
+ 
+ 		if (savestate)
+ 			wake_up_process_mutex(reader);
+@@ -1995,32 +1732,12 @@ rt_write_slowunlock(struct rw_mutex *rwm, int mtx)
+ 			waiter = NULL;
+ 	}
+ 
+-	/* If a writer is still pending, then update its plist. */
+-	if (rt_mutex_has_waiters(mutex)) {
+-		struct rt_mutex_waiter *next;
+-
+-		next = rt_mutex_top_waiter(mutex);
+-
+-		spin_lock(&pendowner->pi_lock);
+-		/* delete incase we didn't go through the loop */
+-		plist_del(&next->pi_list_entry, &pendowner->pi_waiters);
+-
+-		/* This could also be a reader (if reader_limit is set) */
+-		if (next->write_lock)
+-			/* add back in as top waiter */
+-			plist_add(&next->pi_list_entry, &pendowner->pi_waiters);
+-		spin_unlock(&pendowner->pi_lock);
+-
+-		rwm->prio = next->task->prio;
+-	} else
+-		rwm->prio = MAX_PRIO;
+-
+  out:
+ 
+ 	spin_unlock_irqrestore(&mutex->wait_lock, flags);
+ 
+-	/* Undo pi boosting.when necessary */
+-	rt_mutex_adjust_prio(current);
++	/* Undo pi boosting when necessary */
++	task_pi_update(current, 0);
+ }
+ 
+ static inline void
+@@ -2068,7 +1785,7 @@ rt_mutex_downgrade_write(struct rw_mutex *rwm)
+ 	atomic_inc(&rwm->owners);
+ 	rw_check_held(rwm);
+ 
+-	spin_lock(&current->pi_lock);
++	preempt_disable();
+ 	reader_count = current->reader_lock_count++;
+ 	rls = &current->owned_read_locks[reader_count];
+ 	if (likely(reader_count < MAX_RWLOCK_DEPTH)) {
+@@ -2076,12 +1793,11 @@ rt_mutex_downgrade_write(struct rw_mutex *rwm)
+ 		rls->count = 1;
+ 	} else
+ 		WARN_ON_ONCE(1);
+-	spin_unlock(&current->pi_lock);
++	preempt_enable();
+ 
+ 	if (!rt_mutex_has_waiters(mutex)) {
+ 		/* We are sole owner, we are done */
+ 		rwm->owner = current;
+-		rwm->prio = MAX_PRIO;
+ 		mutex->owner = NULL;
+ 		spin_unlock_irqrestore(&mutex->wait_lock, flags);
+ 		return;
+@@ -2102,17 +1818,8 @@ rt_mutex_downgrade_write(struct rw_mutex *rwm)
+ 	while (waiter && !waiter->write_lock) {
+ 		struct task_struct *reader = waiter->task;
+ 
+-		spin_lock(&current->pi_lock);
+ 		plist_del(&waiter->list_entry, &mutex->wait_list);
+-
+-		/* nop if not on a list */
+-		plist_del(&waiter->pi_list_entry, &current->pi_waiters);
+-		spin_unlock(&current->pi_lock);
+-
+-		spin_lock(&reader->pi_lock);
+ 		waiter->task = NULL;
+-		reader->pi_blocked_on = NULL;
+-		spin_unlock(&reader->pi_lock);
+ 
+ 		/* downgrade is only for mutexes */
+ 		wake_up_process(reader);
+@@ -2123,124 +1830,81 @@ rt_mutex_downgrade_write(struct rw_mutex *rwm)
+ 			waiter = NULL;
+ 	}
+ 
+-	/* If a writer is still pending, then update its plist. */
+-	if (rt_mutex_has_waiters(mutex)) {
+-		struct rt_mutex_waiter *next;
+-
+-		next = rt_mutex_top_waiter(mutex);
+-
+-		/* setup this mutex prio for read */
+-		rwm->prio = next->task->prio;
+-
+-		spin_lock(&current->pi_lock);
+-		/* delete incase we didn't go through the loop */
+-		plist_del(&next->pi_list_entry, &current->pi_waiters);
+-		spin_unlock(&current->pi_lock);
+-		/* No need to add back since readers don't have PI waiters */
+-	} else
+-		rwm->prio = MAX_PRIO;
+-
+ 	rt_mutex_set_owner(mutex, RT_RW_READER, 0);
+ 
+ 	spin_unlock_irqrestore(&mutex->wait_lock, flags);
+-
+-	/*
+-	 * Undo pi boosting when necessary.
+-	 * If one of the awoken readers boosted us, we don't want to keep
+-	 * that priority.
+-	 */
+-	rt_mutex_adjust_prio(current);
+-}
+-
+-void rt_mutex_rwsem_init(struct rw_mutex *rwm, const char *name)
+-{
+-	struct rt_mutex *mutex = &rwm->mutex;
+-
+-	rwm->owner = NULL;
+-	atomic_set(&rwm->count, 0);
+-	atomic_set(&rwm->owners, 0);
+-	rwm->prio = MAX_PRIO;
+-	INIT_LIST_HEAD(&rwm->readers);
+-
+-	__rt_mutex_init(mutex, name);
+ }
+ 
+-static int rt_mutex_get_readers_prio(struct task_struct *task, int prio)
++/*
++ * These callbacks are invoked whenever a rwlock has changed priority.
++ * Since rwlocks maintain their own lists of reader dependencies, we
++ * may need to reboost any readers manually
++ */
++static inline int rt_rwlock_pi_boost(struct pi_sink *snk,
++				     struct pi_source *src,
++				     unsigned int flags)
+ {
+-	struct reader_lock_struct *rls;
+ 	struct rw_mutex *rwm;
+-	int lock_prio;
+-	int i;
+ 
+-	for (i = 0; i < task->reader_lock_count; i++) {
+-		rls = &task->owned_read_locks[i];
+-		rwm = rls->lock;
+-		if (rwm) {
+-			lock_prio = rwm->prio;
+-			if (prio > lock_prio)
+-				prio = lock_prio;
+-		}
+-	}
++	rwm = container_of(snk, struct rw_mutex, pi_snk);
+ 
+-	return prio;
++	/*
++	 * We dont need to take any locks here because the
++	 * lock->pi.node interlock is already guaranteeing mutual
++	 * exclusion.
++	 */
++	rwm->prio = *src->prio;
 +
 +	return 0;
-+}
+ }
+ 
+-static int rt_mutex_adjust_readers(struct rt_mutex *orig_lock,
+-				   struct rt_mutex_waiter *orig_waiter,
+-				   struct task_struct *top_task,
+-				   struct rt_mutex *lock,
+-				   int recursion_depth)
++static inline int rt_rwlock_pi_update(struct pi_sink *snk,
++				     unsigned int flags)
+ {
++	struct rw_mutex *rwm;
++	struct rt_mutex *mutex;
+ 	struct reader_lock_struct *rls;
+-	struct rt_mutex_waiter *waiter;
+-	struct task_struct *task;
+-	struct rw_mutex *rwm = container_of(lock, struct rw_mutex, mutex);
++	unsigned long iflags;
+ 
+-	if (rt_mutex_has_waiters(lock)) {
+-		waiter = rt_mutex_top_waiter(lock);
+-		/*
+-		 * Do we need to grab the task->pi_lock?
+-		 * Really, we are only reading it. If it
+-		 * changes, then that should follow this chain
+-		 * too.
+-		 */
+-		rwm->prio = waiter->task->prio;
+-	} else
+-		rwm->prio = MAX_PRIO;
++	rwm = container_of(snk, struct rw_mutex, pi_snk);
++	mutex = &rwm->mutex;
+ 
+-	if (recursion_depth >= MAX_RWLOCK_DEPTH) {
+-		WARN_ON(1);
+-		return 1;
+-	}
++	spin_lock_irqsave(&mutex->wait_lock, iflags);
+ 
+-	list_for_each_entry(rls, &rwm->readers, list) {
+-		task = rls->task;
+-		get_task_struct(task);
+-		/*
+-		 * rt_mutex_adjust_prio_chain will do
+-		 * the put_task_struct
+-		 */
+-		rt_mutex_adjust_prio_chain(task, 0, orig_lock,
+-					   orig_waiter, top_task,
+-					   recursion_depth+1);
+-	}
++	list_for_each_entry(rls, &rwm->readers, list)
++		task_pi_boost(rls->task, &rls->pi_src, 0);
 +
++	spin_unlock_irqrestore(&mutex->wait_lock, iflags);
+ 
+ 	return 0;
+ }
+-#else
+-static int rt_mutex_adjust_readers(struct rt_mutex *orig_lock,
+-				   struct rt_mutex_waiter *orig_waiter,
+-				   struct task_struct *top_task,
+-				   struct rt_mutex *lock,
+-				   int recursion_depth)
+-{
+-	return 0;
+-}
+ 
+-static int rt_mutex_get_readers_prio(struct task_struct *task, int prio)
++static struct pi_sink rt_rwlock_pi_snk = {
++    .boost = rt_rwlock_pi_boost,
++    .update = rt_rwlock_pi_update,
++};
 +
++void rt_mutex_rwsem_init(struct rw_mutex *rwm, const char *name)
+ {
+-	return prio;
++	struct rt_mutex *mutex = &rwm->mutex;
 +
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
++	rwm->owner = NULL;
++	atomic_set(&rwm->count, 0);
++	atomic_set(&rwm->owners, 0);
++	rwm->prio = MAX_PRIO;
++	INIT_LIST_HEAD(&rwm->readers);
++
++	__rt_mutex_init(mutex, name);
++
++	/*
++	 * Link the rwlock object to the mutex so we get notified
++	 * of any priority changes in the future
++	 */
++	rwm->pi_snk = rt_rwlock_pi_snk;
++	pi_add_sink(&mutex->pi.node, &rwm->pi_snk,
++		    PI_FLAG_DEFER_UPDATE | PI_FLAG_ALREADY_BOOSTED);
+ }
++
+ #endif /* CONFIG_PREEMPT_RT */
+ 
+ static inline int rt_release_bkl(struct rt_mutex *lock, unsigned long flags)
+@@ -2335,8 +1999,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 		 * but the lock got stolen by a higher prio task.
+ 		 */
+ 		if (!waiter.task) {
+-			ret = task_blocks_on_rt_mutex(lock, &waiter,
+-						      detect_deadlock, flags);
++			ret = add_waiter(lock, &waiter, &flags);
+ 			/*
+ 			 * If we got woken up by the owner then start loop
+ 			 * all over without going into schedule to try
+@@ -2374,7 +2037,7 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	set_current_state(TASK_RUNNING);
+ 
+ 	if (unlikely(waiter.task))
+-		remove_waiter(lock, &waiter, flags);
++		remove_waiter(lock, &waiter);
+ 
+ 	/*
+ 	 * try_to_take_rt_mutex() sets the waiter bit
+@@ -2388,13 +2051,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	if (unlikely(timeout))
+ 		hrtimer_cancel(&timeout->timer);
+ 
+-	/*
+-	 * Readjust priority, when we did not get the lock. We might
+-	 * have been the pending owner and boosted. Since we did not
+-	 * take the lock, the PI boost has to go.
+-	 */
+-	if (unlikely(ret))
+-		rt_mutex_adjust_prio(current);
++	/* Undo any pi boosting, if necessary */
++	task_pi_update(current, 0);
+ 
+ 	/* Must we reaquire the BKL? */
+ 	if (unlikely(saved_lock_depth >= 0))
+@@ -2457,8 +2115,8 @@ rt_mutex_slowunlock(struct rt_mutex *lock)
+ 
+ 	spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+-	/* Undo pi boosting if necessary: */
+-	rt_mutex_adjust_prio(current);
++	/* Undo pi boosting when necessary */
++	task_pi_update(current, 0);
+ }
+ 
+ /*
+@@ -2654,6 +2312,8 @@ void __rt_mutex_init(struct rt_mutex *lock, const char *name)
+ 	spin_lock_init(&lock->wait_lock);
+ 	plist_head_init(&lock->wait_list, &lock->wait_lock);
+ 
++	init_pi(lock);
++
+ 	debug_rt_mutex_init(lock, name);
+ }
+ EXPORT_SYMBOL_GPL(__rt_mutex_init);
+diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
+index 70df5f5..7bf32d0 100644
+--- a/kernel/rtmutex_common.h
++++ b/kernel/rtmutex_common.h
+@@ -14,6 +14,7 @@
+ 
+ #include <linux/rtmutex.h>
+ #include <linux/rt_lock.h>
++#include <linux/pi.h>
+ 
+ /*
+  * The rtmutex in kernel tester is independent of rtmutex debugging. We
+@@ -48,10 +49,13 @@ extern void schedule_rt_mutex_test(struct rt_mutex *lock);
+  */
+ struct rt_mutex_waiter {
+ 	struct plist_node	list_entry;
+-	struct plist_node	pi_list_entry;
+ 	struct task_struct	*task;
+ 	struct rt_mutex		*lock;
+ 	int			write_lock;
++	struct {
++		struct pi_sink   snk;
++		int              prio;
++	} pi;
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ 	unsigned long		ip;
+ 	struct pid		*deadlock_task_pid;
+@@ -79,18 +83,6 @@ rt_mutex_top_waiter(struct rt_mutex *lock)
+ 	return w;
+ }
+ 
+-static inline int task_has_pi_waiters(struct task_struct *p)
+-{
+-	return !plist_head_empty(&p->pi_waiters);
+-}
+-
+-static inline struct rt_mutex_waiter *
+-task_top_pi_waiter(struct task_struct *p)
+-{
+-	return plist_first_entry(&p->pi_waiters, struct rt_mutex_waiter,
+-				  pi_list_entry);
+-}
+-
+ /*
+  * lock->owner state tracking:
+  */
+diff --git a/kernel/rwlock_torture.c b/kernel/rwlock_torture.c
+index 2820815..689a0d0 100644
+--- a/kernel/rwlock_torture.c
++++ b/kernel/rwlock_torture.c
+@@ -682,37 +682,7 @@ static int __init mutex_stress_init(void)
+ 
+ 			print_owned_read_locks(tsks[i]);
+ 
+-			if (tsks[i]->pi_blocked_on) {
+-				w = (void *)tsks[i]->pi_blocked_on;
+-				mtx = w->lock;
+-				spin_unlock_irq(&tsks[i]->pi_lock);
+-				spin_lock_irq(&mtx->wait_lock);
+-				spin_lock(&tsks[i]->pi_lock);
+-				own = (unsigned long)mtx->owner & ~3UL;
+-				oops_in_progress++;
+-				printk("%s:%d is blocked on ",
+-				       tsks[i]->comm, tsks[i]->pid);
+-				__print_symbol("%s", (unsigned long)mtx);
+-				if (own == 0x100)
+-					printk(" owner is READER\n");
+-				else if (!(own & ~300))
+-					printk(" owner is ILLEGAL!!\n");
+-				else if (!own)
+-					printk(" has no owner!\n");
+-				else {
+-					struct task_struct *owner = (void*)own;
+-
+-					printk(" owner is %s:%d\n",
+-					       owner->comm, owner->pid);
+-				}
+-				oops_in_progress--;
+-
+-				spin_unlock(&tsks[i]->pi_lock);
+-				spin_unlock_irq(&mtx->wait_lock);
+-			} else {
+-				print_owned_read_locks(tsks[i]);
+-				spin_unlock_irq(&tsks[i]->pi_lock);
+-			}
++			spin_unlock_irq(&tsks[i]->pi_lock);
+ 		}
+ 	}
+ #endif
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 729139d..a373250 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -2413,12 +2413,6 @@ task_pi_init(struct task_struct *p)
+ 	pi_source_init(&p->pi.src, &p->normal_prio);
+ 	task_pi_boost(p, &p->pi.src, PI_FLAG_DEFER_UPDATE);
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-	p->rtmutex_prio = MAX_PRIO;
+-	pi_source_init(&p->rtmutex_prio_src, &p->rtmutex_prio);
+-	task_pi_boost(p, &p->rtmutex_prio_src, PI_FLAG_DEFER_UPDATE);
+-#endif
+-
+ 	/*
+ 	 * We add our own task as a dependency of ourselves so that
+ 	 * we get boost-notifications (via task_pi_boost_cb) whenever
+@@ -5029,7 +5023,6 @@ task_pi_update_cb(struct pi_sink *snk, unsigned int flags)
+ 	 */
+ 	if (unlikely(p == rq->idle)) {
+ 		WARN_ON(p != rq->curr);
+-		WARN_ON(p->pi_blocked_on);
+ 		goto out_unlock;
+ 	}
+ 
+@@ -5360,7 +5353,6 @@ recheck:
+ 	spin_unlock_irqrestore(&p->pi_lock, flags);
+ 
+ 	task_pi_update(p, 0);
+-	rt_mutex_adjust_pi(p);
+ 
+ 	return 0;
+ }
+@@ -8494,10 +8486,6 @@ void __init sched_init(void)
+ 
+ 	task_pi_init(&init_task);
+ 
+-#ifdef CONFIG_RT_MUTEXES
+-	plist_head_init(&init_task.pi_waiters, &init_task.pi_lock);
+-#endif
