@@ -1,58 +1,191 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: [PATCH] Compile problems in locking-selftest.c with CONFIG_DEBUG_PREEMPT
-Date: Fri, 15 Aug 2008 17:57:32 +0200
-Message-ID: <520f0cf10808150857u5803d86cj205e671f640c81c4@mail.gmail.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH RT RFC v4 0/8] Priority Inheritance enhancements
+Date: Fri, 15 Aug 2008 16:28:18 -0400
+Message-ID: <20080815202408.668.23736.stgit@dev.haskins.net>
+References: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_2674_4995668.1218815852547"
-Cc: "Thomas Gleixner" <tglx@linutronix.de>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"Ingo Molnar" <mingo@elte.hu>
-To: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	gregory.haskins@gmail.com, David.Holmes@sun.com, jkacur@gmail.com
+To: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
+	tglx@linutronix.de, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.189]:42479 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760284AbYHOP5e (ORCPT
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:35992
+	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751818AbYHOUa3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Aug 2008 11:57:34 -0400
-Received: by nf-out-0910.google.com with SMTP id d3so685110nfc.21
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Aug 2008 08:57:32 -0700 (PDT)
+	Fri, 15 Aug 2008 16:30:29 -0400
+In-Reply-To: <20080801210945.3469.1183.stgit@lsg.lsg.lab.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-------=_Part_2674_4995668.1218815852547
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+** RFC for PREEMPT_RT branch, 26-rt1 **
 
-The attached patch fixes the following compiler error in the rt-kernel
-if CONFIG_DEBUG_PREEMPT is enabled.
+Synopsis: We gain a 13%+ IO improvement in the PREEMPT_RT kernel by
+re-working some of the PI logic.
 
-lib/locking-selftest.c: In function 'dotest':
-lib/locking-selftest.c:951: error: incompatible types in initialization
-lib/locking-selftest.c:1003: error: incompatible types in assignment
+[
+	Changelog:
 
-------=_Part_2674_4995668.1218815852547
-Content-Type: text/x-patch; name=locking-selftest-fix.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fjwzea8f0
-Content-Disposition: attachment; filename=locking-selftest-fix.patch
+	v4:
 
-U3ViamVjdDogQ29tcGlsZSBwcm9ibGVtcyBpbiBsb2NraW5nLXNlbGZ0ZXN0LmMgd2l0aCBDT05G
-SUdfREVCVUdfUFJFRU1QVAoKbGliL2xvY2tpbmctc2VsZnRlc3QuYzogSW4gZnVuY3Rpb24g4oCY
-ZG90ZXN04oCZOgpsaWIvbG9ja2luZy1zZWxmdGVzdC5jOjk1MTogZXJyb3I6IGluY29tcGF0aWJs
-ZSB0eXBlcyBpbiBpbml0aWFsaXphdGlvbgpsaWIvbG9ja2luZy1zZWxmdGVzdC5jOjEwMDM6IGVy
-cm9yOiBpbmNvbXBhdGlibGUgdHlwZXMgaW4gYXNzaWdubWVudAoKU2lnbmVkLW9mZi1ieTogSm9o
-biBLYWN1ciA8amthY3VyIGF0IGdtYWlsIGRvdCBjb20+CgpJbmRleDogbGludXgtMi42LjI2LjEt
-cnQxLmprL2xpYi9sb2NraW5nLXNlbGZ0ZXN0LmMKPT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQotLS0gbGludXgtMi42LjI2
-LjEtcnQxLmprLm9yaWcvbGliL2xvY2tpbmctc2VsZnRlc3QuYworKysgbGludXgtMi42LjI2LjEt
-cnQxLmprL2xpYi9sb2NraW5nLXNlbGZ0ZXN0LmMKQEAgLTk0OCw3ICs5NDgsNyBAQCBzdGF0aWMg
-dm9pZCBkb3Rlc3Qodm9pZCAoKnRlc3RjYXNlX2ZuKSh2CiAJdW5zaWduZWQgbG9uZyBzYXZlZF9w
-cmVlbXB0X2NvdW50ID0gcHJlZW1wdF9jb3VudCgpOwogCWludCBleHBlY3RlZF9mYWlsdXJlID0g
-MDsKICNpZiBkZWZpbmVkKENPTkZJR19ERUJVR19QUkVFTVBUKSAmJiBkZWZpbmVkKENPTkZJR19E
-RUJVR19SVF9NVVRFWEVTKQotICAgICAgICBpbnQgc2F2ZWRfbG9ja19jb3VudCA9IGN1cnJlbnQt
-PmxvY2tfY291bnQ7CisgICAgICAgIGF0b21pY190IHNhdmVkX2xvY2tfY291bnQgPSBjdXJyZW50
-LT5sb2NrX2NvdW50OwogI2VuZGlmCiAKIAlXQVJOX09OKGlycXNfZGlzYWJsZWQoKSk7Cg==
-------=_Part_2674_4995668.1218815852547--
+		1) Incorporated review comments
+
+		   *) Fixed checkpatch warning about extern in .c
+		   *) Renamed s/snk/sink
+		   *) Renamed s/addref/get
+		   *) Renamed s/dropref/put
+		   *) Made pi_sink use static *ops
+
+		2) Fixed a bug w.r.t. enabling interrupts too early  
+
+	v3:
+
+		*) fixed a race with sinkref->prio
+
+	v2:
+
+		*) Added proper reference counting to prevent tasks from
+	   	   deleting while a node->update() is still in flight
+		*) unified the RCU boost path
+
+	v1:
+
+		*) initial release
+]
+
+
+[
+	fyi -> you can find this series at the following URLs in
+	addition to this thread:
+
+  		 http://git.kernel.org/?p=linux/kernel/git/ghaskins/linux-2.6-hacks.git;a=shortlog;h=pi-rework
+
+  		 ftp://ftp.novell.com/dev/ghaskins/pi-rework.tar.bz2
+
+]
+
+Hi All,
+
+The following series applies to 26-rt1 as a request-for-comment on a 
+new approach to priority-inheritance (PI), as well as some performance
+enhancements to take advantage of those new approaches.  This yields at
+least a 13-15% improvement for diskio on my 4-way x86_64 system.  An
+8-way system saw as much as 700% improvement during early testing, but
+I have not recently reconfirmed this number.
+
+Motivation for series:
+
+I have several ideas on things we can do to enhance and improve kernel
+performance with respect to PREEMPT_RT
+
+1) For instance, it would be nice to support priority queuing and
+   (at least positional) inheritance in the wait-queue infrastructure.
+
+2) Reducing overhead in the real-time locks (sleepable replacements for
+   spinlock_t in PREEMPT_RT) to try to approach the minimal overhead
+   if their non-rt equivalent.  We have determined via instrumentation
+   that one area of major overhead is the pi-boost logic.
+
+However, today the PI code is entwined in the rtmutex infrastructure,
+yet we require more flexibility if we want to address (1) and (2)
+above.  Therefore the first step is to separate the PI code away from
+rtmutex into its own library (libpi). This is covered in patches 1-7.
+
+(I realize patch #7 is a little hard to review since I removed and added
+a lot of code that the unified diff is all mashing together...I will try
+to find a way to make this more readable).
+
+Patch 8 is the first real consumer of the libpi logic to try to enhance
+performance.  It accomplishes this by deferring pi-boosting a lock
+owner unless it is absolutely necessary.  Since instrumentation
+shows that the majority of locks are acquired either via the fast-path,
+or via the adaptive-spin path, we can eliminate most of the pi-overhead
+with this technique.  This yields a measurable performance gain (at least
+13% for workloads with heavy lock contention was observed in our lab).
+
+We have not yet completed the work on the pi-waitqueues or any of the other
+related pi enhancements.  Those will be coming in a follow-on announcement.
+
+Feedback/comments welcome!
+
+Regards,
+-Greg
+
+
+---
+
+Gregory Haskins (8):
+      rtmutex: pi-boost locks as late as possible
+      rtmutex: convert rtmutexes to fully use the PI library
+      rtmutex: use runtime init for rtmutexes
+      RT: wrap the rt_rwlock "add reader" logic
+      rtmutex: formally initialize the rt_mutex_waiters
+      sched: rework task reference counting to work with the pi infrastructure
+      sched: add the basic PI infrastructure to the task_struct
+      add generalized priority-inheritance interface
+
+
+ Documentation/libpi.txt   |   59 ++
+ include/linux/pi.h        |  278 +++++++++++
+ include/linux/rt_lock.h   |    2 
+ include/linux/rtmutex.h   |   18 -
+ include/linux/sched.h     |   57 +-
+ include/linux/workqueue.h |    2 
+ kernel/fork.c             |   35 +
+ kernel/rcupreempt-boost.c |   25 -
+ kernel/rtmutex-debug.c    |    4 
+ kernel/rtmutex-tester.c   |    4 
+ kernel/rtmutex.c          | 1091 ++++++++++++++++++---------------------------
+ kernel/rtmutex_common.h   |   19 -
+ kernel/rwlock_torture.c   |   32 -
+ kernel/sched.c            |  209 ++++++---
+ kernel/workqueue.c        |   39 +-
+ lib/Makefile              |    3 
+ lib/pi.c                  |  516 +++++++++++++++++++++
+ 17 files changed, 1543 insertions(+), 850 deletions(-)
+ create mode 100644 Documentation/libpi.txt
+ create mode 100644 include/linux/pi.h
+ create mode 100644 lib/pi.c
+
+
+
+
+---
+
+Gregory Haskins (8):
+      rtmutex: pi-boost locks as late as possible
+      rtmutex: convert rtmutexes to fully use the PI library
+      rtmutex: use runtime init for rtmutexes
+      RT: wrap the rt_rwlock "add reader" logic
+      rtmutex: formally initialize the rt_mutex_waiters
+      sched: rework task reference counting to work with the pi infrastructure
+      sched: add the basic PI infrastructure to the task_struct
+      add generalized priority-inheritance interface
+
+
+ Documentation/libpi.txt   |   59 ++
+ include/linux/pi.h        |  293 ++++++++++++
+ include/linux/rt_lock.h   |    2 
+ include/linux/rtmutex.h   |   18 -
+ include/linux/sched.h     |   59 +-
+ include/linux/workqueue.h |    2 
+ kernel/fork.c             |   35 +
+ kernel/rcupreempt-boost.c |   25 -
+ kernel/rtmutex-debug.c    |    4 
+ kernel/rtmutex-tester.c   |    4 
+ kernel/rtmutex.c          | 1091 ++++++++++++++++++---------------------------
+ kernel/rtmutex_common.h   |   19 -
+ kernel/rwlock_torture.c   |   32 -
+ kernel/sched.c            |  207 ++++++---
+ kernel/workqueue.c        |   39 +-
+ lib/Makefile              |    3 
+ lib/pi.c                  |  489 ++++++++++++++++++++
+ 17 files changed, 1531 insertions(+), 850 deletions(-)
+ create mode 100644 Documentation/libpi.txt
+ create mode 100644 include/linux/pi.h
+ create mode 100644 lib/pi.c
+
+-- 
+Signature
