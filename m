@@ -1,69 +1,62 @@
-From: "Matthias Behr" <linux@mcbehr.de>
-Subject: AW: [PATCH RT RFC v4 1/8] add generalized priority-inheritance interface
-Date: Sat, 16 Aug 2008 17:32:55 +0200
-Message-ID: <073b01c8ffb5$5c597870$150c6950$@de>
-References: <20080815202408.668.23736.stgit@dev.haskins.net> <20080815202823.668.26199.stgit@dev.haskins.net>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH RT RFC v4 1/8] add generalized priority-inheritance
+	interface
+Date: Sat, 16 Aug 2008 21:56:00 +0200
+Message-ID: <1218916561.10880.11.camel@lappy.programming.kicks-ass.net>
+References: <20080815202408.668.23736.stgit@dev.haskins.net>
+	 <20080815202823.668.26199.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="utf-8"
-Content-Transfer-Encoding: 8BIT
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	<gregory.haskins@gmail.com>, <mingo@elte.hu>,
-	<David.Holmes@sun.com>, <jkacur@gmail.com>,
-	<paulmck@linux.vnet.ibm.com>, <peterz@infradead.org>,
-	<tglx@linutronix.de>, <rostedt@goodmis.org>
-To: "'Gregory Haskins'" <ghaskins@novell.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, paulmck@linux.vnet.ibm.com, tglx@linutronix.de,
+	rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com,
+	David.Holmes@sun.com, jkacur@gmail.com
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mcbehr.de ([81.169.141.90]:44998 "EHLO
-	h1328092.stratoserver.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752307AbYHPQAp convert rfc822-to-8bit (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:42625 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751166AbYHPT4d (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 16 Aug 2008 12:00:45 -0400
+	Sat, 16 Aug 2008 15:56:33 -0400
 In-Reply-To: <20080815202823.668.26199.stgit@dev.haskins.net>
-Content-Language: de
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Greg,
+On Fri, 2008-08-15 at 16:28 -0400, Gregory Haskins wrote:
+> The kernel currently addresses priority-inversion through priority-
+> inheritence.  However, all of the priority-inheritence logic is
+> integrated into the Real-Time Mutex infrastructure.  This causes a few
+> problems:
+> 
+>  1) This tightly coupled relationship makes it difficult to extend to
+>     other areas of the kernel (for instance, pi-aware wait-queues may
+>     be desirable).
+>  2) Enhancing the rtmutex infrastructure becomes challenging because
+>     there is no seperation between the locking code, and the pi-code.
+> 
+> This patch aims to rectify these shortcomings by designing a stand-alone
+> pi framework which can then be used to replace the rtmutex-specific
+> version.  The goal of this framework is to provide similar functionality
+> to the existing subsystem, but with sole focus on PI and the
+> relationships between objects that can boost priority, and the objects
+> that get boosted.
+> 
+> We introduce the concept of a "pi_source" and a "pi_sink", where, as the
+> name suggests provides the basic relationship of a priority source, and
+> its boosted target.  A pi_source acts as a reference to some arbitrary
+> source of priority, and a pi_sink can be boosted (or deboosted) by
+> a pi_source.  For more details, please read the library documentation.
+> 
+> There are currently no users of this inteface.
 
-I got a few review comments/questions. Pls see below.
+You should have started out by discussing your design - the document
+just rambles a bit about some implementation details - it doesn't talk
+about how it maps to the PI problem space.
 
-Best Regards,
-Matthias
+Anyway - from what I can make of the code, you managed to convert the pi
+graph walking code that used to be in rt_mutex_adjust_prio_chain() and
+was iterative, into a recursive function call.
 
-P.S. I'm a kernel newbie so don't hesitate to tell me if I'm wrong ;-)
-
-> +/**
-> + * pi_sink_init - initialize a pi_sink before use
-> + * @sink: a sink context
-> + * @ops: pointer to an pi_sink_ops structure
-> + */
-> +static inline void
-> +pi_sink_init(struct pi_sink *sink, struct pi_sink_ops *ops)
-> +{
-> +	atomic_set(&sink->refs, 0);
-> +	sink->ops = ops;
-> +}
-
-Shouldn't ops be tested for 0 here? (ASSERT/BUG_ON/...) (get's dereferenced later quite often in the form "if (sink->ops->...)".
-
-> +/**
-> + * pi_sink_put - down the reference count, freeing the sink if 0
-> + * @node: the node context
-> + * @flags: optional flags to modify behavior.  Reserved, must be 0.
-> + *
-> + * Returns: none
-> + */
-> +static inline void
-> +pi_sink_put(struct pi_sink *sink, unsigned int flags)
-> +{
-> +	if (atomic_dec_and_test(&sink->refs)) {
-> +		if (sink->ops->free)
-> +			sink->ops->free(sink, flags);
-> +	}
-> +}
-
-Shouldn't the atomic/locked part cover the ...->free(...) as well? A pi_get right after the atomic_dec_and_test but before the free() could lead to a free() with refs>0?
-
-
+Not something you should do lightly..
 
