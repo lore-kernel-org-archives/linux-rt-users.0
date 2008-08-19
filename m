@@ -1,54 +1,71 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH RT 2/2] ftrace: fix elevated preempt_count in
-	wakeup-tracer
-Date: Tue, 19 Aug 2008 16:07:48 +0200
-Message-ID: <1219154869.10800.386.camel@twins>
-References: <20080819091817.21725.81831.stgit@dev.haskins.net>
-	 <20080819091923.21725.41087.stgit@dev.haskins.net>
-	 <1219151556.10800.383.camel@twins> <48AAC8E7.1030506@novell.com>
-	 <alpine.DEB.1.10.0808190942070.23667@gandalf.stny.rr.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH 1/2] [RT] hrtimers stuck in waitqueue
+Date: Tue, 19 Aug 2008 10:10:21 -0400
+Message-ID: <48AAD44D.8050000@novell.com>
+References: <1219070552-30783-1-git-send-email-gilles.carry@bull.net> <1219070552-30783-2-git-send-email-gilles.carry@bull.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig9DBB976533D7826988E5E73F"
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
+	tinytim@us.ibm.com, jean-pierre.dion@bull.net,
+	sebastien.dugue@bull.net
+To: Gilles Carry <gilles.carry@bull.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:54435 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751656AbYHSOHn (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:36253 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753198AbYHSOMn (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Aug 2008 10:07:43 -0400
-In-Reply-To: <alpine.DEB.1.10.0808190942070.23667@gandalf.stny.rr.com>
+	Tue, 19 Aug 2008 10:12:43 -0400
+In-Reply-To: <1219070552-30783-2-git-send-email-gilles.carry@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2008-08-19 at 09:45 -0400, Steven Rostedt wrote:
-> On Tue, 19 Aug 2008, Gregory Haskins wrote:
-> > > 
-> > > Is preempt_count > 1 at all times here?
-> > > 
-> > > If not, it might drop to 0 and any interrupt might cause preemption -
-> > > and its not obvious to me that that is actually correct.
-> > >   
-> > According to Steve, we are already in an interrupt-disabled section here, but
-> > I will defer to him.  He suggested I try this over an IRC conversation when I
-> > noticed a strange wakeup trace, and it seems to have solved the problem.
-> 
-> Exactly.
-> 
-> Peter,
-> 
-> We disable preemption, do a per_cpu check, if we are not nested we grab 
-> disable interrupts and grab the spin lock.
-> 
-> The issue that Gregory brought up, was that the tracer would always show 
-> that preemption was disabled, when it really wasn't. It was recording the
-> preempt disabled that the trace function itself made. The answer was 
-> simply to do as Greg did, and enable preemption (but interrupts are 
-> still disabled), call the function tracer, then disable preemption again 
-> (to match the outside preemption enabling.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig9DBB976533D7826988E5E73F
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-Ok good. 
+Hi Gilles,
 
+Gilles Carry wrote:
+> This patch makes hrtimers initialized with hrtimer_init_sleeper
+> to use another mode and then not be stuck in waitqueues when
+> hrtimer_interrupt is very busy.
+>  =20
+
+Not sure if this is related, but I just posted a patch to fix a=20
+condition where hrtimer_interrupt could get artificially busy for *very* =
+
+long periods of time (I observed 500ms).
+
+http://article.gmane.org/gmane.linux.rt.user/3357
+
+This bug was specific to 26-rt1.  Did you investigate the cause of the=20
+busy hrtimer_interrupt?  If not, its possible that your issue would be=20
+indirectly fixed now that the HRT subsystem doesn't spike-out like=20
+that.  Or do you believe these are orthogonal issues and we should still =
+
+protect against non-pathological cases of hrtimer_interrupt running hot?
+
+Regards,
+-Greg
+
+
+
+
+--------------enig9DBB976533D7826988E5E73F
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAkiq1E0ACgkQlOSOBdgZUxmOXQCfb8yOHd4a9ryIWJ0IfVZVT2s2
+3TkAn3Du5AkbtUHQjPLWFlKbmh6/SNoA
+=53km
+-----END PGP SIGNATURE-----
+
+--------------enig9DBB976533D7826988E5E73F--
