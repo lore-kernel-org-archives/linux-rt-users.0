@@ -1,113 +1,97 @@
-From: "John Kacur" <jkacur@gmail.com>
-Subject: Re: [PATCH] rt Kconfig.preempt fixes
-Date: Wed, 20 Aug 2008 19:14:42 +0200
-Message-ID: <520f0cf10808201014q3b9388fak99d1c95abea9e455@mail.gmail.com>
-References: <520f0cf10808010639y4c1a19a7kff429827d26dc8e9@mail.gmail.com>
-	 <alpine.DEB.1.10.0808201207470.27481@gandalf.stny.rr.com>
+From: mark gross <mgross@linux.intel.com>
+Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
+Date: Wed, 20 Aug 2008 12:14:37 -0700
+Message-ID: <20080820191437.GA12415@linux.intel.com>
+References: <520f0cf10808041352h78bd4319x1802f018aeffe6dc@mail.gmail.com> <1217921101.3589.98.camel@twins> <20080805204901.GA31132@linux.intel.com> <1217970588.29415.36.camel@lappy.programming.kicks-ass.net> <520f0cf10808051518h1459d353r8de78e98f79ec57c@mail.gmail.com> <20080812224926.GA20652@linux.intel.com> <520f0cf10808130124o301b6691ra37ac9007120b9df@mail.gmail.com> <20080814155241.GA31050@linux.intel.com> <1218736137.10800.234.camel@twins> <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>
+Reply-To: mgross@linux.intel.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_Part_46553_11285296.1219252482433"
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	arjan <arjan@infradead.org>
+To: John Kacur <jkacur@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nf-out-0910.google.com ([64.233.182.186]:2926 "EHLO
-	nf-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751224AbYHTROo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Aug 2008 13:14:44 -0400
-Received: by nf-out-0910.google.com with SMTP id d3so275943nfc.21
-        for <linux-rt-users@vger.kernel.org>; Wed, 20 Aug 2008 10:14:42 -0700 (PDT)
-In-Reply-To: <alpine.DEB.1.10.0808201207470.27481@gandalf.stny.rr.com>
+Received: from mga09.intel.com ([134.134.136.24]:20085 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753977AbYHTTOH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Aug 2008 15:14:07 -0400
+Content-Disposition: inline
+In-Reply-To: <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-------=_Part_46553_11285296.1219252482433
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+On Fri, Aug 15, 2008 at 12:51:11AM +0200, John Kacur wrote:
+> On Thu, Aug 14, 2008 at 7:48 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+> > On Thu, 2008-08-14 at 08:52 -0700, mark gross wrote:
+> >
+> >> Keeping a lock around the different "target_value"s may not be so
+> >> important.  Its just a 32bit scaler value, and perhaps we can make it an
+> >> atomic type?  That way we loose the raw_spinlock.
+> >
+> > My suggestion was to keep the locking for the write side - so as to
+> > avoid stuff stomping on one another, but drop the read side as:
+> >
+> >  spin_lock
+> >  foo = var;
+> >  spin_unlock
+> >  return foo;
+> >
+> > is kinda useless, it doesn't actually serialize against the usage of
+> > foo, that is, once it gets used, var might already have acquired a new
+> > value.
+> >
+> > The only thing it would protect is reading var, but since that is a
+> > machine sized read, its atomic anyway (assuming its naturally aligned).
+> >
+> > So no need for atomic_t (its read-side is just a read too), just drop
+> > the whole lock usage from pq_qos_requirement().
+> >
+> 
+> Thanks Peter.
+> 
+> Mark, is the following patch ok with you? This should be applied to
+> mainline, and then after that no special patches are necessary for
+> real-time.
 
-On Wed, Aug 20, 2008 at 6:10 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
->
->
-> On Fri, 1 Aug 2008, John Kacur wrote:
->
->> This is a non-critical patch, that makes configuring an rt kernel a
->> little nicer.
->> Comments are welcome of course.
->>
->> Signed-off-by: John Kacur <jkacur at gmail dot com>
->>
->> This patch makes the following changes.
->> 1. Hides the visibility of PREEMPT_SOFTIRQS and PREEMPT_HARDIRQS if PREEMPT_RT
->> (Complete Preemption) is choosen, since these values are then set (selected) to
->> be "y".
->>
->> 2. Changes the PREEMPT_HARDIRQS to depend on PREEMPT_SOFTIRQS instead of
->> forcing PREEMPT_SOFTIRQS to y if PREEMPT_HARDIRQS is choosen. (this is somewhat
->> an abuse of select)
->>
->> 3. Minor spelling fix. (tat to that)
->>
->
->
-> Hi John,
->
-> Thanks, but instead of this:
->
->  depends on PREEMPT_RT != y
->
-> could you do:
->
->  depends on !PREEMPT_RT
->
->
-> -- Steve
->
+It looks ok to me, do I need to add a compiler declaration to the
+structure to make sure the target_value is word aligned?
 
-Yes, regenerated patch attached.
+thanks,
 
-Thanks
+--mgross
 
-------=_Part_46553_11285296.1219252482433
-Content-Type: text/x-patch; name=threaded-irqs-kconfig-fix.patch
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fk47eift0
-Content-Disposition: attachment; filename=threaded-irqs-kconfig-fix.patch
 
-U2lnbmVkLW9mZi1ieTogSm9obiBLYWN1ciA8amthY3VyIGF0IGdtYWlsIGRvdCBjb20+CgpUaGlz
-IHBhdGNoIG1ha2VzIHRoZSBmb2xsb3dpbmcgY2hhbmdlcy4KMS4gSGlkZXMgdGhlIHZpc2liaWxp
-dHkgb2YgUFJFRU1QVF9TT0ZUSVJRUyBhbmQgUFJFRU1QVF9IQVJESVJRUyBpZiBQUkVFTVBUX1JU
-CihDb21wbGV0ZSBQcmVlbXB0aW9uKSBpcyBjaG9vc2VuLCBzaW5jZSB0aGVzZSB2YWx1ZXMgYXJl
-IHRoZW4gc2V0IChzZWxlY3RlZCkgdG8KYmUgInkiLgoKMi4gQ2hhbmdlcyB0aGUgUFJFRU1QVF9I
-QVJESVJRUyB0byBkZXBlbmQgb24gUFJFRU1QVF9TT0ZUSVJRUyBpbnN0ZWFkIG9mCmZvcmNpbmcg
-UFJFRU1QVF9TT0ZUSVJRUyB0byB5IGlmIFBSRUVNUFRfSEFSRElSUVMgaXMgY2hvb3Nlbi4gKHRo
-aXMgaXMgc29tZXdoYXQKYW4gYWJ1c2Ugb2Ygc2VsZWN0KQoKMy4gTWlub3Igc3BlbGxpbmcgZml4
-LiAodGF0IHRvIHRoYXQpCgpJbmRleDogbGludXgtMi42LjI2LjItcnQxLWprL2tlcm5lbC9LY29u
-ZmlnLnByZWVtcHQKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PQotLS0gbGludXgtMi42LjI2LjItcnQxLWprLm9yaWcva2Vy
-bmVsL0tjb25maWcucHJlZW1wdAorKysgbGludXgtMi42LjI2LjItcnQxLWprL2tlcm5lbC9LY29u
-ZmlnLnByZWVtcHQKQEAgLTg4LDggKzg4LDEwIEBAIGNvbmZpZyBQUkVFTVBUCiAKIGNvbmZpZyBQ
-UkVFTVBUX1NPRlRJUlFTCiAJYm9vbCAiVGhyZWFkIFNvZnRpcnFzIgorIyBQUkVFTVBUX1NPRlRJ
-UlFTIGlzIHZpc2libGUgb25seSBpZiAhUFJFRU1QVF9SVAorIyBIb3dldmVyLCBQUkVFTVBUX1JU
-IHdpbGwgc2V0IChzZWxlY3QpIFBSRUVNUFRfU09GVElSUVMgdG8geQorCWRlcGVuZHMgb24gIVBS
-RUVNUFRfUlQKIAlkZWZhdWx0IG4KLSMJZGVwZW5kcyBvbiBQUkVFTVBUCiAJaGVscAogCSAgVGhp
-cyBvcHRpb24gcmVkdWNlcyB0aGUgbGF0ZW5jeSBvZiB0aGUga2VybmVsIGJ5ICd0aHJlYWRpbmcn
-CiAgICAgICAgICAgc29mdCBpbnRlcnJ1cHRzLiBUaGlzIG1lYW5zIHRoYXQgYWxsIHNvZnRpcnFz
-IHdpbGwgZXhlY3V0ZQpAQCAtMTA0LDkgKzEwNiwxMiBAQCBjb25maWcgUFJFRU1QVF9TT0ZUSVJR
-UwogCiBjb25maWcgUFJFRU1QVF9IQVJESVJRUwogCWJvb2wgIlRocmVhZCBIYXJkaXJxcyIKKyMg
-UFJFRU1QVF9IQVJESVJRUyBpcyB2aXNpYmxlIG9ubHkgaWYgIVBSRUVNUFRfUlQKKyMgSG93ZXZl
-ciwgUFJFRU1QVF9SVCB3aWxsIHNldCA4c2VsZWN0KSBQUkVFTVBUX0hBUkRJUlFTIHRvIHkKKwlk
-ZXBlbmRzIG9uICFQUkVFTVBUX1JUCiAJZGVmYXVsdCBuCiAJZGVwZW5kcyBvbiAhR0VORVJJQ19I
-QVJESVJRU19OT19fRE9fSVJRCi0Jc2VsZWN0IFBSRUVNUFRfU09GVElSUVMKKwlkZXBlbmRzIG9u
-IFBSRUVNUFRfU09GVElSUVMKIAloZWxwCiAJICBUaGlzIG9wdGlvbiByZWR1Y2VzIHRoZSBsYXRl
-bmN5IG9mIHRoZSBrZXJuZWwgYnkgJ3RocmVhZGluZycKICAgICAgICAgICBoYXJkaXJxcy4gVGhp
-cyBtZWFucyB0aGF0IGFsbCAob3Igc2VsZWN0ZWQpIGhhcmRpcnFzIHdpbGwgcnVuCkBAIC0xNDEs
-NyArMTQ2LDcgQEAgY29uZmlnIFBSRUVNUFRfUkNVX0JPT1NUCiAJZGVmYXVsdCB5IGlmIFBSRUVN
-UFRfUlQKIAloZWxwCiAJICBUaGlzIG9wdGlvbiBwZXJtaXRzIHByaW9yaXR5IGJvb3N0aW5nIG9m
-IFJDVSByZWFkLXNpZGUgY3JpdGljYWwKLQkgIHNlY3Rpb25zIHRhdCBoYXZlIGJlZW4gcHJlZW1w
-dGVkIGFuZCBhIFJUIHByb2Nlc3MgaXMgd2FpdGluZworCSAgc2VjdGlvbnMgdGhhdCBoYXZlIGJl
-ZW4gcHJlZW1wdGVkIGFuZCBhIFJUIHByb2Nlc3MgaXMgd2FpdGluZwogCSAgb24gYSBzeW5jaHJv
-bml6ZV9yY3UuCiAKIAkgIEFuIFJDVSB0aHJlYWQgaXMgYWxzbyBjcmVhdGVkIHRoYXQgcGVyaW9k
-aWNhbGx5IHdha2VzIHVwIGFuZAo=
-------=_Part_46553_11285296.1219252482433--
+> 
+> Thanks
+> 
+> John Kacur
+
+> Subject: Remove unnecessary lock in pm_qos_requirement
+> 
+> Signed-off-by: John Kacur <jkacur at gmail dot com>
+> 
+> Index: linux-2.6/kernel/pm_qos_params.c
+> ===================================================================
+> --- linux-2.6.orig/kernel/pm_qos_params.c
+> +++ linux-2.6/kernel/pm_qos_params.c
+> @@ -193,14 +193,7 @@ static int find_pm_qos_object_by_minor(i
+>   */
+>  int pm_qos_requirement(int pm_qos_class)
+>  {
+> -	int ret_val;
+> -	unsigned long flags;
+> -
+> -	spin_lock_irqsave(&pm_qos_lock, flags);
+> -	ret_val = pm_qos_array[pm_qos_class]->target_value;
+> -	spin_unlock_irqrestore(&pm_qos_lock, flags);
+> -
+> -	return ret_val;
+> +	return pm_qos_array[pm_qos_class]->target_value;
+>  }
+>  EXPORT_SYMBOL_GPL(pm_qos_requirement);
+>  
+
