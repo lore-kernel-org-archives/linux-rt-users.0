@@ -1,66 +1,195 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "John Kacur" <jkacur@gmail.com>
 Subject: Re: 2.6.26.3-rt2
-Date: Thu, 21 Aug 2008 14:02:06 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0808211401200.678@gandalf.stny.rr.com>
-References: <1219339082.22710.16.camel@localhost.localdomain> <a3d4028e0808211056m1cc2a7a8gfbe453d65adc561c@mail.gmail.com>
+Date: Thu, 21 Aug 2008 21:33:33 +0200
+Message-ID: <520f0cf10808211233g1da3f06pf422c26accb70bf@mail.gmail.com>
+References: <1219339082.22710.16.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-2101232868-1219341727=:678"
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Javier Sanz <jsanza@gmail.com>
+Content-Type: multipart/mixed;
+	boundary="----=_Part_60447_28598297.1219347213989"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Chirag Jog" <chirag@linux.vnet.ibm.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:37273 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755456AbYHUSCI (ORCPT
+Received: from gv-out-0910.google.com ([216.239.58.185]:61679 "EHLO
+	gv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755180AbYHUTdf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Aug 2008 14:02:08 -0400
-In-Reply-To: <a3d4028e0808211056m1cc2a7a8gfbe453d65adc561c@mail.gmail.com>
+	Thu, 21 Aug 2008 15:33:35 -0400
+Received: by gv-out-0910.google.com with SMTP id e6so56315gvc.37
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Aug 2008 12:33:34 -0700 (PDT)
+In-Reply-To: <1219339082.22710.16.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+------=_Part_60447_28598297.1219347213989
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
---8323328-2101232868-1219341727=:678
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+On Thu, Aug 21, 2008 at 7:18 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> We are pleased to announce the 2.6.26.3-rt2 tree, which can be
+> downloaded from the location:
+>
+>  http://rt.et.redhat.com/download/
+>
+> Information on the RT patch can be found at:
+>
+>  http://rt.wiki.kernel.org/index.php/Main_Page
+>
+> Changes since 2.6.26-rt1
+>
+>  - ported to 2.6.26.3
+>
+>  - basic compile fixes (Steven Rostedt)
+>
+>  - basic raw lock conversions (Steven Rostedt)
+>
+>  - powerpc: irq radix tree updates (Sebastien Dugue)
+>
+>  - call_rcu_sched (Paul E. McKenney)
+>
+>  - rcu trace preemption fixes (Paul E. Mckenney)
+>
+>  - remove lock in pm_qos_requirement (John Kacur)
+>
+>  - rcu_process_callbacks (Paul E. McKenney)
+>
+>  - rcu memory barriers update (Paul E. McKenney)
+>
+>  - shorten posix_cpu_timers thread names (Arnaldo Carvalho de Melo)
+>
+>  - account IRQ and RT load in SCHED_OTHER (Peter Zijlstra)
+>
+>  - seq_lock updates/fixes (Gregory Haskins)
+>
+> to build a 2.6.26.3-rt2 tree, the following patches should be applied:
+>
+>  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+>  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.3.bz2
+>  http://rt.et.redhat.com/download/patch-2.6.26.3-rt2.bz2
+>
+>
+>
+> And like always, my RT version of Matt Mackall's ketchup will get this
+> for you nicely:
+>
+>  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+>
+>
+> The broken out patches are also available.
+>
 
+Hi Steve
 
+Probably one of the most important patches that was missed is the one
+from Chirag. I've taken it and updated it against 2.6.26.3-rt2 for
+you, in case that will speed up -rt3 (see attached). (two hunks were
+rejected because another applied fix fixed the same thing as part of
+Chirag's patch.
 
-On Thu, 21 Aug 2008, Javier Sanz wrote:
+I've compiled and done some limited testing, and among other things it
+removes this kind of message.
+BUG: sleeping function called from invalid context hald-runner(12244)
+at kernel/rtmutex.c:743
+in_atomic():1 [00000001], irqs_disabled():0
+Pid: 12244, comm: hald-runner Tainted: G        W 2.6.26.3-rt2 #1
 
-> Hello,
->=20
-> I got the following compiling problem with 2.6.23-rt2:
->=20
-> =A0<....>
-> =A0 CC=A0=A0=A0=A0=A0 kernel/ns_cgroup.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/utsname.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/user_namespace.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/pid_namespace.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/res_counter.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/stop_machine.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/audit.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/auditfilter.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/auditsc.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/audit_tree.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/kprobes.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/softlockup.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/seccomp.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/rcupreempt.o
-> =A0 CC=A0=A0=A0=A0=A0 kernel/rcupreempt-boost.o
-> kernel/rcupreempt-boost.c: In function '__rcu_preempt_unboost':
-> kernel/rcupreempt-boost.c:328: error: too few arguments to function
-> 'rcu_trace_boost_unboost_called'
-> make[1]: *** [kernel/rcupreempt-boost.o] Error 1
-> make: *** [kernel] Error 2
->=20
-> am i doing something wrong ?
+Call Trace:
+ [<ffffffff802d3cda>] ? mnt_want_write+0x19/0xbc
+ [<ffffffff802307b6>] __might_sleep+0x12d/0x132
+ [<ffffffff8046d3de>] __rt_spin_lock+0x34/0x7d
+ [<ffffffff8046d435>] rt_spin_lock+0xe/0x10
+ [<ffffffff802d3cfc>] mnt_want_write+0x3b/0xbc
+ [<ffffffff802cea88>] touch_atime+0x1c/0x101
+ [<ffffffff802c426c>] __link_path_walk+0x484/0xf24
+ [<ffffffff802c4d72>] path_walk+0x66/0xc9
+ [<ffffffff802c51bf>] do_path_lookup+0x209/0x264
+ [<ffffffff802c5509>] __path_lookup_intent_open+0x61/0xa4
+ [<ffffffff802c555d>] path_lookup_open+0x11/0x13
+ [<ffffffff802c61f1>] do_filp_open+0xb6/0x8f5
+ [<ffffffff8046d3de>] ? __rt_spin_lock+0x34/0x7d
+ [<ffffffff802b897d>] ? get_unused_fd_flags+0x119/0x12a
+ [<ffffffff802b89e4>] do_sys_open+0x56/0xd6
+ [<ffffffff8020c374>] ? system_call_after_swapgs+0xc4/0x168
+ [<ffffffff802b8a97>] sys_open+0x20/0x22
+ [<ffffffff8020c3ab>] system_call_after_swapgs+0xfb/0x168
 
-Probably not, I'll work on getting a -rt3 out today. There's several=20
-patches that need to go in.
+---------------------------
+| preempt count: 00000001 ]
+| 1-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffff802d3cda>] .... mnt_want_write+0x19/0xbc
+.....[<ffffffff802cea88>] ..   ( <= touch_atime+0x1c/0x101)
 
-Thanks,
+------=_Part_60447_28598297.1219347213989
+Content-Type: text/x-patch; name=fix-bug-messages.patch
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fk5rru060
+Content-Disposition: attachment; filename=fix-bug-messages.patch
 
--- Steve
-
---8323328-2101232868-1219341727=:678--
+RnJvbTogY2hpcmFnQGxpbnV4LnZuZXQuaWJtLmNvbSBDaGlyYWcgSm9nIApUbzogai5tZWxsQHQt
+b25saW5lLmRlIEo/cmdlbiBNZWxsLCB0Z2x4QGxpbnV0cm9uaXguZGUgVGhvbWFzIEdsZWl4bmVy
+IApEYXRlOiBXZWQsIDMwIEp1bCAyMDA4IDE5OjE4OjQyICswMjAwIApTdWJqZWN0OiBbUEFUQ0hd
+IEZpeCBCdWcgbWVzc2FnZXMgCgpUaGlzIHBhdGNoIHNob3VsZCBzb2x2ZSBzb21lIG9mIHRoZSBi
+dWcgbWVzc2FnZXMuCkl0IGRvZXMgdHdvIHRoaW5nczoKMS4gQ2hhbmdlIHJ0X3J1bnRpbWVfbG9j
+ayB0byBiZSBhIHJhdyBzcGlubG9jayBhcyB0aGUgY29tbWVudCBhYm92ZSBpdApzYXlzOiBpdCBp
+cyBuZXN0ZWQgaW5zaWRlIHRoZSBycSBsb2NrLgoKMi4gQ2hhbmdlIG1udF93cml0ZXJzIHRvIGJl
+IGEgcGVyX2NwdSBsb2NrZWQgdmFyaWFibGUuClRoaXMgZWxpbWluYXRlcyB0aGUgbmVlZCBmb3Ig
+dGhlIGNvZGVwYXRoIHRvIGRpc2FibGUgcHJlZW1wdGlvbiBhbmQKdGhlbiBwb3RlbnRpYWxseSBz
+bGVlcCwgbGVhZGluZyB0byB0aGUgQlVHIG1lc3NhZ2VzCgpTaWduZWQtb2ZmLWJ5OiBDaGlyYWcg
+PGNoaXJhZ0BsaW51eC52bmV0LmlibS5jb20+Clt1cGRhdGVkIENoaXJhZydzIHBhdGNoIGFnYWlu
+c3QgMi42LjI2LjMtcnQzXQpTaWduZWQtb2ZmLWJ5OiBKb2huIEthY3VyIDxqa2FjdXIgYXQgZ21h
+aWwgZG90IGNvbT4KCkluZGV4OiBsaW51eC0yLjYuMjYuMy9mcy9uYW1lc3BhY2UuYwo9PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09Ci0tLSBsaW51eC0yLjYuMjYuMy5vcmlnL2ZzL25hbWVzcGFjZS5jCisrKyBsaW51eC0yLjYu
+MjYuMy9mcy9uYW1lc3BhY2UuYwpAQCAtMTc4LDEzICsxNzgsMTMgQEAgc3RydWN0IG1udF93cml0
+ZXIgewogCXVuc2lnbmVkIGxvbmcgY291bnQ7CiAJc3RydWN0IHZmc21vdW50ICptbnQ7CiB9IF9f
+X19jYWNoZWxpbmVfYWxpZ25lZF9pbl9zbXA7Ci1zdGF0aWMgREVGSU5FX1BFUl9DUFUoc3RydWN0
+IG1udF93cml0ZXIsIG1udF93cml0ZXJzKTsKK3N0YXRpYyBERUZJTkVfUEVSX0NQVV9MT0NLRUQo
+c3RydWN0IG1udF93cml0ZXIsIG1udF93cml0ZXJzKTsKIAogc3RhdGljIGludCBfX2luaXQgaW5p
+dF9tbnRfd3JpdGVycyh2b2lkKQogewogCWludCBjcHU7CiAJZm9yX2VhY2hfcG9zc2libGVfY3B1
+KGNwdSkgewotCQlzdHJ1Y3QgbW50X3dyaXRlciAqd3JpdGVyID0gJnBlcl9jcHUobW50X3dyaXRl
+cnMsIGNwdSk7CisJCXN0cnVjdCBtbnRfd3JpdGVyICp3cml0ZXIgPSAmcGVyX2NwdV92YXJfbG9j
+a2VkKG1udF93cml0ZXJzLCBjcHUpOwogCQlzcGluX2xvY2tfaW5pdCgmd3JpdGVyLT5sb2NrKTsK
+IAkJbG9ja2RlcF9zZXRfY2xhc3MoJndyaXRlci0+bG9jaywgJndyaXRlci0+bG9ja19jbGFzcyk7
+CiAJCXdyaXRlci0+Y291bnQgPSAwOwpAQCAtMTk5LDcgKzE5OSw3IEBAIHN0YXRpYyB2b2lkIHVu
+bG9ja19tbnRfd3JpdGVycyh2b2lkKQogCXN0cnVjdCBtbnRfd3JpdGVyICpjcHVfd3JpdGVyOwog
+CiAJZm9yX2VhY2hfcG9zc2libGVfY3B1KGNwdSkgewotCQljcHVfd3JpdGVyID0gJnBlcl9jcHUo
+bW50X3dyaXRlcnMsIGNwdSk7CisJCWNwdV93cml0ZXIgPSAmcGVyX2NwdV92YXJfbG9ja2VkKG1u
+dF93cml0ZXJzLCBjcHUpOwogCQlzcGluX3VubG9jaygmY3B1X3dyaXRlci0+bG9jayk7CiAJfQog
+fQpAQCAtMjUxLDggKzI1MSw4IEBAIGludCBtbnRfd2FudF93cml0ZShzdHJ1Y3QgdmZzbW91bnQg
+Km1udCkKIHsKIAlpbnQgcmV0ID0gMDsKIAlzdHJ1Y3QgbW50X3dyaXRlciAqY3B1X3dyaXRlcjsK
+LQotCWNwdV93cml0ZXIgPSAmZ2V0X2NwdV92YXIobW50X3dyaXRlcnMpOworCWludCBjcHUgPSAw
+OworCWNwdV93cml0ZXIgPSAmZ2V0X2NwdV92YXJfbG9ja2VkKG1udF93cml0ZXJzLCAmY3B1KTsK
+IAlzcGluX2xvY2soJmNwdV93cml0ZXItPmxvY2spOwogCWlmIChfX21udF9pc19yZWFkb25seSht
+bnQpKSB7CiAJCXJldCA9IC1FUk9GUzsKQEAgLTI2Miw3ICsyNjIsNyBAQCBpbnQgbW50X3dhbnRf
+d3JpdGUoc3RydWN0IHZmc21vdW50ICptbnQpCiAJY3B1X3dyaXRlci0+Y291bnQrKzsKIG91dDoK
+IAlzcGluX3VubG9jaygmY3B1X3dyaXRlci0+bG9jayk7Ci0JcHV0X2NwdV92YXIobW50X3dyaXRl
+cnMpOworCXB1dF9jcHVfdmFyX2xvY2tlZChtbnRfd3JpdGVycywgY3B1KTsKIAlyZXR1cm4gcmV0
+OwogfQogRVhQT1JUX1NZTUJPTF9HUEwobW50X3dhbnRfd3JpdGUpOwpAQCAtMjczLDcgKzI3Myw3
+IEBAIHN0YXRpYyB2b2lkIGxvY2tfbW50X3dyaXRlcnModm9pZCkKIAlzdHJ1Y3QgbW50X3dyaXRl
+ciAqY3B1X3dyaXRlcjsKIAogCWZvcl9lYWNoX3Bvc3NpYmxlX2NwdShjcHUpIHsKLQkJY3B1X3dy
+aXRlciA9ICZwZXJfY3B1KG1udF93cml0ZXJzLCBjcHUpOworCQljcHVfd3JpdGVyID0gJnBlcl9j
+cHVfdmFyX2xvY2tlZChtbnRfd3JpdGVycywgY3B1KTsKIAkJc3Bpbl9sb2NrKCZjcHVfd3JpdGVy
+LT5sb2NrKTsKIAkJX19jbGVhcl9tbnRfY291bnQoY3B1X3dyaXRlcik7CiAJCWNwdV93cml0ZXIt
+Pm1udCA9IE5VTEw7CkBAIC0zMzIsOCArMzMyLDggQEAgdm9pZCBtbnRfZHJvcF93cml0ZShzdHJ1
+Y3QgdmZzbW91bnQgKm1udAogewogCWludCBtdXN0X2NoZWNrX3VuZGVyZmxvdyA9IDA7CiAJc3Ry
+dWN0IG1udF93cml0ZXIgKmNwdV93cml0ZXI7Ci0KLQljcHVfd3JpdGVyID0gJmdldF9jcHVfdmFy
+KG1udF93cml0ZXJzKTsKKwlpbnQgY3B1ID0gMDsKKwljcHVfd3JpdGVyID0gJmdldF9jcHVfdmFy
+X2xvY2tlZChtbnRfd3JpdGVycywgJmNwdSk7CiAJc3Bpbl9sb2NrKCZjcHVfd3JpdGVyLT5sb2Nr
+KTsKIAogCXVzZV9jcHVfd3JpdGVyX2Zvcl9tb3VudChjcHVfd3JpdGVyLCBtbnQpOwpAQCAtMzYw
+LDcgKzM2MCw3IEBAIHZvaWQgbW50X2Ryb3Bfd3JpdGUoc3RydWN0IHZmc21vdW50ICptbnQKIAkg
+KiBfX21udF93cml0ZXJzIGNhbiB1bmRlcmZsb3cuICBXaXRob3V0IGl0LAogCSAqIHdlIGNvdWxk
+IHRoZW9yZXRpY2FsbHkgd3JhcCBfX21udF93cml0ZXJzLgogCSAqLwotCXB1dF9jcHVfdmFyKG1u
+dF93cml0ZXJzKTsKKwlwdXRfY3B1X3Zhcl9sb2NrZWQobW50X3dyaXRlcnMsIGNwdSk7CiB9CiBF
+WFBPUlRfU1lNQk9MX0dQTChtbnRfZHJvcF93cml0ZSk7CiAKQEAgLTYxMiw3ICs2MTIsNyBAQCBz
+dGF0aWMgaW5saW5lIHZvaWQgX19tbnRwdXQoc3RydWN0IHZmc21vCiAJICogY2FuIGNvbWUgaW4u
+CiAJICovCiAJZm9yX2VhY2hfcG9zc2libGVfY3B1KGNwdSkgewotCQlzdHJ1Y3QgbW50X3dyaXRl
+ciAqY3B1X3dyaXRlciA9ICZwZXJfY3B1KG1udF93cml0ZXJzLCBjcHUpOworCQlzdHJ1Y3QgbW50
+X3dyaXRlciAqY3B1X3dyaXRlciA9ICZwZXJfY3B1X3Zhcl9sb2NrZWQobW50X3dyaXRlcnMsIGNw
+dSk7CiAJCWlmIChjcHVfd3JpdGVyLT5tbnQgIT0gbW50KQogCQkJY29udGludWU7CiAJCXNwaW5f
+bG9jaygmY3B1X3dyaXRlci0+bG9jayk7Cg==
+------=_Part_60447_28598297.1219347213989--
