@@ -1,8 +1,8 @@
 From: Gilles Carry <glscarry@free.fr>
-Subject: Re: [PATCH 1/2] [RT] hrtimers stuck in waitqueue
-Date: Fri, 22 Aug 2008 08:11:21 +0200
-Message-ID: <9D520574-2E78-4C1D-A1C6-801F82313F02@free.fr>
-References: <1219070552-30783-1-git-send-email-gilles.carry@bull.net> <1219070552-30783-2-git-send-email-gilles.carry@bull.net> <520f0cf10808210616s1d7d66fcpbddf6904c9c70870@mail.gmail.com>
+Subject: Re: [PATCH 2/2] [RT] hrtimer __run_hrtimer code cleanup
+Date: Fri, 22 Aug 2008 08:04:36 +0200
+Message-ID: <57EB7B7D-5A32-4BFB-8D3A-1D41166B12B4@free.fr>
+References: <1219070552-30783-1-git-send-email-gilles.carry@bull.net> <1219070552-30783-3-git-send-email-gilles.carry@bull.net> <520f0cf10808201448g2d0906c8g2ab18a8547fe285a@mail.gmail.com> <C9802590-A1FD-454C-9499-D6A07CBBBA01@free.fr> <520f0cf10808210603u2d63fe2dq9c34272ed510b89@mail.gmail.com>
 Mime-Version: 1.0 (Apple Message framework v926)
 Content-Type: text/plain; charset=ISO-8859-1;
 	format=flowed	delsp=yes
@@ -13,203 +13,89 @@ Cc: "Gilles Carry" <gilles.carry@bull.net>,
 	sebastien.dugue@bull.net
 To: John Kacur <jkacur@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailfe06.tele2.fr ([212.247.154.172]:58627 "EHLO swip.net"
+Received: from mailfe13.tele2.fr ([212.247.155.140]:47126 "EHLO swip.net"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752824AbYHVGLZ convert rfc822-to-8bit (ORCPT
+	id S1753412AbYHVHEm convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Aug 2008 02:11:25 -0400
-In-Reply-To: <520f0cf10808210616s1d7d66fcpbddf6904c9c70870@mail.gmail.com>
+	Fri, 22 Aug 2008 03:04:42 -0400
+In-Reply-To: <520f0cf10808210603u2d63fe2dq9c34272ed510b89@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-Le 21 ao=FBt 08 =E0 15:16, John Kacur a =E9crit :
+Le 21 ao=FBt 08 =E0 15:03, John Kacur a =E9crit :
 
-> On Mon, Aug 18, 2008 at 4:42 PM, Gilles Carry =20
-> <gilles.carry@bull.net> wrote:
->> This patch makes hrtimers initialized with hrtimer_init_sleeper
->> to use another mode and then not be stuck in waitqueues when
->> hrtimer_interrupt is very busy.
+> On Thu, Aug 21, 2008 at 2:18 PM, Gilles Carry <glscarry@free.fr> =20
+> wrote:
+>> Le 20 ao=FBt 08 =E0 23:48, John Kacur a =E9crit :
 >>
->> The new mode is HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFIRQ.
->> The above-mentionned timers have been moved from
->> HRTIMER_CB_IRQSAFE_NO_SOFTIRQ to
->> HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFIRQ.
+>>>
+>>> I kind of find this confusing, because the return value is only =20
+>>> useful
+>>> in one specific instance. In other cases, the return value is throw=
+n
+>>> away. People who are not aware of the history of this code and =20
+>>> examine
+>>> it later may ask why the return value is being ignored in some =20
+>>> cases.
+>>>
+>>>>
 >>
->> HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFIRQ timers use a slightly =20
->> different
->> state machine from HRTIMER_CB_IRQSAFE_NO_SOFTIRQ's as when removing =
-=20
+>> John,
+>>
+>> I don't see anything confusing here. It's similar to a function =20
+>> where you
+>> have plenty
+>> of parameters and depending on the context, only a few are useful. =20
+>> In the
+>> present
+>> case, the timers mode names (...NOSOFTIRQ) speak for themselves. =20
+>> They don't
+>> need
+>> this return code.
+>> As there is already plenty of explanations and comments within the =20
+>> code,
+>> people 'not aware' will do as everbody else do: decrypt and =20
+>> understand. ;-)
+>> Anyway, I don't mind adding comments at the head of the function.
+>>
+>> My goal here is only to make the code more readable and easier to =20
+>> maintain
+>> by
+>> factorization this is why I separated this patch from the fix.
+>> If you look at the factorized code, you see the only difference is =20
 >> the
->> timer, __run_hrtimer sets the status to INACTIVE _then_
->> wakes up the thread. This way, an awakened thread cannot enter
->> hrtimer_cancel before the timer's status has changed.
+>> raisesoftirq stuff.
+>> I thought it was worth doing it.
 >>
->> Signed-off-by: Gilles Carry <gilles.carry@bull.net>
->>
->> ---
->> include/linux/hrtimer.h |    4 ++++
->> kernel/hrtimer.c        |   26 +++++++++++++++++++++-----
->> 2 files changed, 25 insertions(+), 5 deletions(-)
->>
->> diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
->> index f3867fd..53f4d44 100644
->> --- a/include/linux/hrtimer.h
->> +++ b/include/linux/hrtimer.h
->> @@ -49,12 +49,16 @@ enum hrtimer_restart {
->> *                                     does not restart the timer
->> *     HRTIMER_CB_IRQSAFE_NO_SOFTIRQ:  Callback must run in hardirq =20
->> context
->> *                                     Special mode for tick =20
->> emultation
->> + *     HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ:
->> + *                                     Callback must run in =20
->> hardirq context and
->> + *                                     does not restart the timer
->> */
->> enum hrtimer_cb_mode {
->>       HRTIMER_CB_SOFTIRQ,
->>       HRTIMER_CB_IRQSAFE,
->>       HRTIMER_CB_IRQSAFE_NO_RESTART,
->>       HRTIMER_CB_IRQSAFE_NO_SOFTIRQ,
->> +       HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ,
->> };
->>
->> /*
->> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
->> index fa63a24..778eb7e 100644
->> --- a/kernel/hrtimer.c
->> +++ b/kernel/hrtimer.c
->> @@ -668,6 +668,7 @@ static inline int =20
->> hrtimer_enqueue_reprogram(struct hrtimer *timer,
->>               /* Timer is expired, act upon the callback mode */
->>               switch(timer->cb_mode) {
->>               case HRTIMER_CB_IRQSAFE_NO_RESTART:
->> +               case HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ:
->>                       debug_hrtimer_deactivate(timer);
->>                       /*
->>                        * We can call the callback from here. No =20
->> restart
->> @@ -1089,6 +1090,8 @@ int hrtimer_cancel(struct hrtimer *timer)
->>
->>               if (ret >=3D 0)
->>                       return ret;
->> +               WARN_ON (timer->cb_mode =3D=3D
->
-> Minor point here, we may as well squash checkpatch.pl complaints now,
-> to reduce any clean-up later to push to mainline. if you run
-> checkpatch.pl
-> WARNING: space prohibited between function name and open parenthesis =
-=20
-> '('
-> #69: FILE: kernel/hrtimer.c:1093:
-> +               WARN_ON (timer->cb_mode =3D=3D
-
-I will fix that soon.
-I split the line because it was to long. I know some people don't like =
-=20
-more than
-80 chars a line. This is why I did this.
-
->
->
->
->> +                       HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ);
->>               hrtimer_wait_for_timer(timer);
->>       }
->> }
->> @@ -1298,11 +1301,18 @@ static void __run_hrtimer(struct hrtimer =20
->> *timer)
->>       int restart;
->>
->>       debug_hrtimer_deactivate(timer);
->> -       __remove_hrtimer(timer, base, HRTIMER_STATE_CALLBACK, 0);
->> -       timer_stats_account_hrtimer(timer);
->>
->>       fn =3D timer->function;
->> -       if (timer->cb_mode =3D=3D HRTIMER_CB_IRQSAFE_NO_SOFTIRQ) {
->> +
->> +       switch (timer->cb_mode) {
->> +       case HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ:
->> +               __remove_hrtimer(timer, base, =20
->> HRTIMER_STATE_INACTIVE, 0);
->
-> Correct me if I'm wrong but there is a lot of code reworking and code
-> expansion here, when really the above line is the only difference
-> between your new HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTIRQ
-> and HRTIMER_CB_IRQSAFE_NO_SOFTIRQ.
-> It is not even strictly necessary to return, since the rest of the
-> function should be safe. I have attached an alternate smaller patch, =
--
-> maybe you'll find it simpler?
->
-
-You're right I did some reworking to have clear situation of what is =20
-to be done
-depending on the timer's mode.
-I'll check your patch as soon as I come back to my office (monday).
-I just have an email client down here.
-
-Thank-you for all your comments, John.
-
->
->> +               timer_stats_account_hrtimer(timer);
->> +               spin_unlock(&cpu_base->lock);
->> +               fn(timer);
->> +               spin_lock(&cpu_base->lock);
->> +               return;
->> +       case HRTIMER_CB_IRQSAFE_NO_SOFTIRQ:
->>               /*
->>                * Used for scheduler timers, avoid lock inversion wit=
-h
->>                * rq->lock and tasklist_lock.
->> @@ -1310,11 +1320,17 @@ static void __run_hrtimer(struct hrtimer =20
->> *timer)
->>                * These timers are required to deal with enqueue =20
->> expiry
->>                * themselves and are not allowed to migrate.
->>                */
->> +               __remove_hrtimer(timer, base, =20
->> HRTIMER_STATE_CALLBACK, 0);
->> +               timer_stats_account_hrtimer(timer);
->>               spin_unlock(&cpu_base->lock);
->>               restart =3D fn(timer);
->>               spin_lock(&cpu_base->lock);
->> -       } else
->> +               break;
->> +       default:
->> +               __remove_hrtimer(timer, base, =20
->> HRTIMER_STATE_CALLBACK, 0);
->> +               timer_stats_account_hrtimer(timer);
->>               restart =3D fn(timer);
->> +       }
->>
->>       /*
->>        * Note: We clear the CALLBACK bit after enqueue_hrtimer to =20
->> avoid
->> @@ -1516,7 +1532,7 @@ void hrtimer_init_sleeper(struct =20
->> hrtimer_sleeper *sl, struct task_struct *task)
->>       sl->timer.function =3D hrtimer_wakeup;
->>       sl->task =3D task;
->> #ifdef CONFIG_HIGH_RES_TIMERS
->> -       sl->timer.cb_mode =3D HRTIMER_CB_IRQSAFE_NO_SOFTIRQ;
->> +       sl->timer.cb_mode =3D HRTIMER_CB_IRQSAFE_NO_RESTART_NO_SOFTI=
-RQ;
->> #endif
->> }
->>
->> --
->> 1.5.2.2
->>
->> --
+>> Gilles.--
 >> To unsubscribe from this list: send the line "unsubscribe linux-rt-=20
 >> users" in
 >> the body of a message to majordomo@vger.kernel.org
 >> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >>
-> <hrtimers_stuck_in_waitq-jk.patch>
+>
+> The goal of factorization is a good one of course. I also don't want
+> to argue too much about the implementation when you have done the
+> detective work to solve a hard problem, but I am just wondering if
+> there is a better way to do this - that would make the code even more
+> readable. As I go over this code again, I'm also thinking that it
+> conceptually doesn't really belong in the __run_timer function, even
+> if it works. If you look at the code before your changes, the functio=
+n
+> __run_timer did just that, it ran a timer, but now it's manipulating
+> callback lists. Is there perhaps another way to common this code up
+> then?
 
---
+True, __run_hrtimer does a bit more than it used to but if you consider
+that this function as a method of an object of class_hrtimer, it is
+exactly what it would do. Also, wakeup_thread simply puts a thread
+back on a run queue which somewhat similar to put a timer in a
+callback list and change its status.
+
+But as I told you, this patch is only a proposal.
+
+Gilles.--
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
 the body of a message to majordomo@vger.kernel.org
