@@ -1,102 +1,218 @@
-From: Gilles Carry <glscarry@free.fr>
-Subject: Re: [PATCH 2/2] [RT] hrtimer __run_hrtimer code cleanup
-Date: Fri, 22 Aug 2008 08:04:36 +0200
-Message-ID: <57EB7B7D-5A32-4BFB-8D3A-1D41166B12B4@free.fr>
-References: <1219070552-30783-1-git-send-email-gilles.carry@bull.net> <1219070552-30783-3-git-send-email-gilles.carry@bull.net> <520f0cf10808201448g2d0906c8g2ab18a8547fe285a@mail.gmail.com> <C9802590-A1FD-454C-9499-D6A07CBBBA01@free.fr> <520f0cf10808210603u2d63fe2dq9c34272ed510b89@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v926)
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed	delsp=yes
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Gilles Carry" <gilles.carry@bull.net>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
-	tinytim@us.ibm.com, jean-pierre.dion@bull.net,
-	sebastien.dugue@bull.net
-To: John Kacur <jkacur@gmail.com>
+From: "Esben Nielsen" <nielsen.esben@googlemail.com>
+Subject: Re: [PATCH RT RFC v4 1/8] add generalized priority-inheritance interface
+Date: Fri, 22 Aug 2008 14:55:30 +0200
+Message-ID: <59929f7a0808220555r5a0b972cl5db047f74d7cabec@mail.gmail.com>
+References: <20080815202408.668.23736.stgit@dev.haskins.net>
+	 <20080815202823.668.26199.stgit@dev.haskins.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, paulmck@linux.vnet.ibm.com, peterz@infradead.org,
+	tglx@linutronix.de, rostedt@goodmis.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	gregory.haskins@gmail.com, David.Holmes@sun.com, jkacur@gmail.com
+To: "Gregory Haskins" <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailfe13.tele2.fr ([212.247.155.140]:47126 "EHLO swip.net"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753412AbYHVHEm convert rfc822-to-8bit (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.230]:33812 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753457AbYHVMzb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Aug 2008 03:04:42 -0400
-In-Reply-To: <520f0cf10808210603u2d63fe2dq9c34272ed510b89@mail.gmail.com>
+	Fri, 22 Aug 2008 08:55:31 -0400
+Received: by rv-out-0506.google.com with SMTP id k40so423280rvb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 22 Aug 2008 05:55:30 -0700 (PDT)
+In-Reply-To: <20080815202823.668.26199.stgit@dev.haskins.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Disclaimer: I am no longer actively involved and I must admit I might
+have lost out on much of
+what have been going on since I contributed to the PI system 2 years
+ago. But I allow myself to comment
+anyway.
 
-Le 21 ao=FBt 08 =E0 15:03, John Kacur a =E9crit :
-
-> On Thu, Aug 21, 2008 at 2:18 PM, Gilles Carry <glscarry@free.fr> =20
-> wrote:
->> Le 20 ao=FBt 08 =E0 23:48, John Kacur a =E9crit :
->>
->>>
->>> I kind of find this confusing, because the return value is only =20
->>> useful
->>> in one specific instance. In other cases, the return value is throw=
-n
->>> away. People who are not aware of the history of this code and =20
->>> examine
->>> it later may ask why the return value is being ignored in some =20
->>> cases.
->>>
->>>>
->>
->> John,
->>
->> I don't see anything confusing here. It's similar to a function =20
->> where you
->> have plenty
->> of parameters and depending on the context, only a few are useful. =20
->> In the
->> present
->> case, the timers mode names (...NOSOFTIRQ) speak for themselves. =20
->> They don't
->> need
->> this return code.
->> As there is already plenty of explanations and comments within the =20
->> code,
->> people 'not aware' will do as everbody else do: decrypt and =20
->> understand. ;-)
->> Anyway, I don't mind adding comments at the head of the function.
->>
->> My goal here is only to make the code more readable and easier to =20
->> maintain
->> by
->> factorization this is why I separated this patch from the fix.
->> If you look at the factorized code, you see the only difference is =20
->> the
->> raisesoftirq stuff.
->> I thought it was worth doing it.
->>
->> Gilles.--
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-=20
->> users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
+On Fri, Aug 15, 2008 at 10:28 PM, Gregory Haskins <ghaskins@novell.com> wrote:
+> The kernel currently addresses priority-inversion through priority-
+> inheritence.  However, all of the priority-inheritence logic is
+> integrated into the Real-Time Mutex infrastructure.  This causes a few
+> problems:
 >
-> The goal of factorization is a good one of course. I also don't want
-> to argue too much about the implementation when you have done the
-> detective work to solve a hard problem, but I am just wondering if
-> there is a better way to do this - that would make the code even more
-> readable. As I go over this code again, I'm also thinking that it
-> conceptually doesn't really belong in the __run_timer function, even
-> if it works. If you look at the code before your changes, the functio=
-n
-> __run_timer did just that, it ran a timer, but now it's manipulating
-> callback lists. Is there perhaps another way to common this code up
-> then?
+>  1) This tightly coupled relationship makes it difficult to extend to
+>    other areas of the kernel (for instance, pi-aware wait-queues may
+>    be desirable).
+>  2) Enhancing the rtmutex infrastructure becomes challenging because
+>    there is no seperation between the locking code, and the pi-code.
+>
+> This patch aims to rectify these shortcomings by designing a stand-alone
+> pi framework which can then be used to replace the rtmutex-specific
+> version.  The goal of this framework is to provide similar functionality
+> to the existing subsystem, but with sole focus on PI and the
+> relationships between objects that can boost priority, and the objects
+> that get boosted.
 
-True, __run_hrtimer does a bit more than it used to but if you consider
-that this function as a method of an object of class_hrtimer, it is
-exactly what it would do. Also, wakeup_thread simply puts a thread
-back on a run queue which somewhat similar to put a timer in a
-callback list and change its status.
+This is really a good idea. When I had time (2 years ago) to actively
+work on these problem
+I also came to the conclusion that PI should be more general than just
+the rtmutex. Preemptive RCU
+was the example which drove it.
 
-But as I told you, this patch is only a proposal.
+But I do disagree that general objects should get boosted: The end
+targets are always tasks. The objects might
+be boosted as intermediate steps, but priority end the only applies to tasks.
 
-Gilles.--
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I also have a few comments to the actual design:
+
+> ....
+> +
+> +Multiple sinks per Node:
+> +
+> +We allow multiple sinks to be associated with a node.  This is a slight departure from the previous implementation which had the notion of only a single sink (i.e. "task->pi_blocked_on").  The reason why we added the ability to add more than one sink was not to change the default chaining model (I.e. multiple boost targets), but rather to add a flexible notification mechanism that is peripheral to the chain, which are informally called "leaf sinks".
+> +
+> +Leaf-sinks are boostable objects that do not perpetuate a chain per se.  Rather, they act as endpoints to a priority boosting.  Ultimately, every chain ends with a leaf-sink, which presumably will act on the new priority information.  However, there may be any number of leaf-sinks along a chain as well.  Each one will act on its localized priority in its own implementation specific way.  For instance, a task_struct pi-leaf may change the priority of the task and reschedule it if necessary.  Whereas an rwlock leaf-sink may boost a list of reader-owners.
+
+This is bad from a RT point of view: You have a hard time determininig
+the number of sinks per node. An rw-lock could have an arbitrary
+number of readers (is supposed to really). Therefore
+you have no chance of knowing how long the boost/deboost operation
+will take. And you also know for how long the boosted tasks stay
+boosted. If there can be an arbitrary number of
+such tasks you can no longer be deterministic.
+
+> ...
+> +
+> +#define MAX_PI_DEPENDENCIES 5
+
+
+WHAT??? There is a finite lock depth defined. I know we did that
+originally but it wasn't hardcoded (as far as I remember) and
+it was certainly not as low as 5.
+
+Remember: PI is used by the user space futeces as well!
+
+> ....
+> +/*
+> + * _pi_node_update - update the chain
+> + *
+> + * We loop through up to MAX_PI_DEPENDENCIES times looking for stale entries
+> + * that need to propagate up the chain.  This is a step-wise process where we
+> + * have to be careful about locking and preemption.  By trying MAX_PI_DEPs
+> + * times, we guarantee that this update routine is an effective barrier...
+> + * all modifications made prior to the call to this barrier will have completed.
+> + *
+> + * Deadlock avoidance: This node may participate in a chain of nodes which
+> + * form a graph of arbitrary structure.  While the graph should technically
+> + * never close on itself barring any bugs, we still want to protect against
+> + * a theoretical ABBA deadlock (if for nothing else, to prevent lockdep
+> + * from detecting this potential).  To do this, we employ a dual-locking
+> + * scheme where we can carefully control the order.  That is: node->lock
+> + * protects most of the node's internal state, but it will never be held
+> + * across a chain update.  sinkref->lock, on the other hand, can be held
+> + * across a boost/deboost, and also guarantees proper execution order. Also
+> + * note that no locks are held across an sink->update.
+> + */
+> +static int
+> +_pi_node_update(struct pi_sink *sink, unsigned int flags)
+> +{
+> +       struct pi_node    *node = node_of(sink);
+> +       struct pi_sinkref *sinkref;
+> +       unsigned long      iflags;
+> +       int                count = 0;
+> +       int                i;
+> +       int                pprio;
+> +       struct updater     updaters[MAX_PI_DEPENDENCIES];
+> +
+> +       spin_lock_irqsave(&node->lock, iflags);
+> +
+> +       pprio = node->prio;
+> +
+> +       if (!plist_head_empty(&node->srcs))
+> +               node->prio = plist_first(&node->srcs)->prio;
+> +       else
+> +               node->prio = MAX_PRIO;
+> +
+> +       list_for_each_entry(sinkref, &node->sinks, list) {
+> +               /*
+> +                * If the priority is changing, or if this is a
+> +                * BOOST/DEBOOST, we consider this sink "stale"
+> +                */
+> +               if (pprio != node->prio
+> +                   || sinkref->state != pi_state_boosted) {
+> +                       struct updater *iter = &updaters[count++];
+
+What prevents count from overrun?
+
+> +
+> +                       BUG_ON(!atomic_read(&sinkref->sink->refs));
+> +                       _pi_sink_get(sinkref);
+> +
+> +                       iter->update  = 1;
+> +                       iter->sinkref = sinkref;
+> +                       iter->sink     = sinkref->sink;
+> +               }
+> +       }
+> +
+> +       spin_unlock(&node->lock);
+> +
+> +       for (i = 0; i < count; ++i) {
+> +               struct updater    *iter = &updaters[i];
+> +               unsigned int       lflags = PI_FLAG_DEFER_UPDATE;
+> +               struct pi_sink    *sink;
+> +
+> +               sinkref = iter->sinkref;
+> +               sink = iter->sink;
+> +
+> +               spin_lock(&sinkref->lock);
+> +
+> +               switch (sinkref->state) {
+> +               case pi_state_boost:
+> +                       sinkref->state = pi_state_boosted;
+> +                       /* Fall through */
+> +               case pi_state_boosted:
+> +                       sink->ops->boost(sink, &sinkref->src, lflags);
+> +                       break;
+> +               case pi_state_deboost:
+> +                       sink->ops->deboost(sink, &sinkref->src, lflags);
+> +                       sinkref->state = pi_state_free;
+> +
+> +                       /*
+> +                        * drop the ref that we took when the sinkref
+> +                        * was allocated.  We still hold a ref from
+> +                        * above.
+> +                        */
+> +                       _pi_sink_put_all(node, sinkref);
+> +                       break;
+> +               case pi_state_free:
+> +                       iter->update = 0;
+> +                       break;
+> +               default:
+> +                       panic("illegal sinkref type: %d", sinkref->state);
+> +               }
+> +
+> +               spin_unlock(&sinkref->lock);
+> +
+> +               /*
+> +                * We will drop the sinkref reference while still holding the
+> +                * preempt/irqs off so that the memory is returned synchronously
+> +                * to the system.
+> +                */
+> +               _pi_sink_put_local(node, sinkref);
+> +       }
+> +
+> +       local_irq_restore(iflags);
+
+Yack! You keep interrupts off while doing the chain. I think my main
+contribution to the PI system 2 years ago was to do this preemptively.
+I.e. there was points in the loop where interrupts and preemption
+where turned on.
+
+Remember: It goes into user space again. An evil user could craft an
+application with a very long lock depth and keep higher priority real
+time tasks from running for an arbitrary long time (if
+no limit on the lock depth is set, which is bad because it will be too
+low in some cases.)
+
+But as I said I have had no time to watch what has actually been going
+on in the kernel for the last 2 years roughly. The said defects might
+have creeped in by other contributers already :-(
+
+Esben
