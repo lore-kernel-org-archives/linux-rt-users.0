@@ -1,83 +1,60 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
-Date: Mon, 25 Aug 2008 18:35:29 +0200
-Message-ID: <1219682129.8515.81.camel@twins>
-References: <520f0cf10808041352h78bd4319x1802f018aeffe6dc@mail.gmail.com>
-	 <1217921101.3589.98.camel@twins> <20080805204901.GA31132@linux.intel.com>
-	 <1217970588.29415.36.camel@lappy.programming.kicks-ass.net>
-	 <520f0cf10808051518h1459d353r8de78e98f79ec57c@mail.gmail.com>
-	 <20080812224926.GA20652@linux.intel.com>
-	 <520f0cf10808130124o301b6691ra37ac9007120b9df@mail.gmail.com>
-	 <20080814155241.GA31050@linux.intel.com> <1218736137.10800.234.camel@twins>
-	 <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>
-	 <20080825163412.GA21910@linux.intel.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH 0/5] sched: misc rt fixes for tip/sched/devel
+Date: Mon, 25 Aug 2008 16:15:18 -0400
+Message-ID: <20080825200852.23217.13842.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@gmail.com>, LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	arjan <arjan@infradead.org>
-To: mgross@linux.intel.com
+Cc: srostedt@redhat.com, peterz@infradead.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	npiggin@suse.de, gregory.haskins@gmail.com
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:44916 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753816AbYHYQfd (ORCPT
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:36214
+	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1750750AbYHYURg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Aug 2008 12:35:33 -0400
-In-Reply-To: <20080825163412.GA21910@linux.intel.com>
+	Mon, 25 Aug 2008 16:17:36 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2008-08-25 at 09:34 -0700, mark gross wrote:
-> On Fri, Aug 15, 2008 at 12:51:11AM +0200, John Kacur wrote:
-> > On Thu, Aug 14, 2008 at 7:48 PM, Peter Zijlstra <peterz@infradead.org> wrote:
-> > > On Thu, 2008-08-14 at 08:52 -0700, mark gross wrote:
-> > >
-> > >> Keeping a lock around the different "target_value"s may not be so
-> > >> important.  Its just a 32bit scaler value, and perhaps we can make it an
-> > >> atomic type?  That way we loose the raw_spinlock.
-> > >
-> > > My suggestion was to keep the locking for the write side - so as to
-> > > avoid stuff stomping on one another, but drop the read side as:
-> > >
-> > >  spin_lock
-> > >  foo = var;
-> > >  spin_unlock
-> > >  return foo;
-> > >
-> > > is kinda useless, it doesn't actually serialize against the usage of
-> > > foo, that is, once it gets used, var might already have acquired a new
-> > > value.
-> > >
-> > > The only thing it would protect is reading var, but since that is a
-> > > machine sized read, its atomic anyway (assuming its naturally aligned).
-> > >
-> > > So no need for atomic_t (its read-side is just a read too), just drop
-> > > the whole lock usage from pq_qos_requirement().
-> > >
-> > 
-> > Thanks Peter.
-> > 
-> > Mark, is the following patch ok with you? This should be applied to
-> > mainline, and then after that no special patches are necessary for
-> > real-time.
-> 
-> I've been thinking about this patch and I worry that the readability
-> from making the use of this lock asymmetric WRT reads and writes to the
-> storage address is bothersome.
-> 
-> I would rather make the variable an atomic.  What do you think about
-> that?
+Hi Ingo,
 
-It would make the write side more expensive, as we already have the two
-atomic operations for the lock and unlock, this would add a third.
+The following repositories
 
-Then again, I doubt that this is really a fast path.
+     git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git tip/sched/devel/rtbalance 
 
-OTOH, a simple comment could clarify the situation for the reader.
+     ftp://ftp.novell.com/dev/ghaskins/tip-rt-fixes.tar.bz2
 
-Up to you I guess ;-)
+apply to tip/sched/devel to pick up the following fixes for the RT
+scheduler. 
 
+---
+
+Gregory Haskins (5):
+      sched: create "pushable_tasks" list to limit pushing to one attempt
+      sched: add sched_class->needs_post_schedule() member
+      sched: make double-lock-balance fair
+      sched: pull only one task during NEWIDLE balancing to limit critical section
+      sched: only try to push a task on wakeup if it is migratable
+
+
+ include/linux/init_task.h |    1 
+ include/linux/sched.h     |    2 +
+ kernel/sched.c            |   37 +++++++-----
+ kernel/sched_rt.c         |  139 ++++++++++++++++++++++++++++++++++++++-------
+ 4 files changed, 143 insertions(+), 36 deletions(-)
+
+-- 
+
+These patches were developed in the interest of shorting latencies in
+PREEMPT_RT, but they apply to the mainline scheduler as well, so I am
+offering them here first.
+
+This has been tested under both 26.3-rt3 and tip/sched/devel on x86_64 for
+both CONFIG_SMP and !CONFIG_SMP.
+
+Comments/bug-fixes welcome!
+
+Regards,
+-Greg
