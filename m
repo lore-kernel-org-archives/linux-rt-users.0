@@ -1,50 +1,74 @@
-From: robert <robje99@hotmail.com>
-Subject: Availability rt patch for older linux kernel 2.6.11.3
-Date: Mon, 25 Aug 2008 08:44:56 +0000 (UTC)
-Message-ID: <loom.20080825T083613-13@post.gmane.org>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH] Subject: x86: Move crashkernel reservation before
+	dma32_reserve_bootmem()
+Date: Mon, 25 Aug 2008 08:58:31 -0400
+Message-ID: <20080825125639.26874.80623.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:60958 "EHLO ciao.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752682AbYHYIuF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Aug 2008 04:50:05 -0400
-Received: from root by ciao.gmane.org with local (Exim 4.43)
-	id 1KXXly-00029k-Cm
-	for linux-rt-users@vger.kernel.org; Mon, 25 Aug 2008 08:50:02 +0000
-Received: from ip503d790e.speed.planet.nl ([80.61.121.14])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Aug 2008 08:50:02 +0000
-Received: from robje99 by ip503d790e.speed.planet.nl with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Aug 2008 08:50:02 +0000
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Bernhard Walle <bwalle@suse.de>,
+	Gregory Haskins <ghaskins@novell.com>
+To: srostedt@redhat.com, mingo@elte.hu, tglx@linutronix.de
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755773AbYHYNBA@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+Hi Steven, Ingo, Thomas,
+  Bernard (cc'd) sent me this patch for 26.3-rt3 to fix an issue where a kdump
+  kernel will fail to load, thereby disabling the crashdump feature.  Please
+  consider this patch for -rt4.  IIUC, this patch is already upstream in the
+  .27 series.
 
-I'm currently working with a older linux kernel, 2.6.11.3, running on a 
-powerpc.
-Currently I'm running against realtime performance problems, the reaction time 
-to interrupts is not good enough (sometimes 30 msec, while less then 8 msec is 
-needed).
-For this of course, are the realtime patches, but I can find them only for the 
-newer kernels.
-As our kernel is highly adopted to the hardware, I can't just move over to a 
-newer kernel.
+-Greg
 
-My question is:
-- does anyone know a link for me were I can still find a patch for a 2.6.11.3 
-kernel?
-- if they can be found, are these patches mature enough to be used, 
-particularly for a powerpc architecture?
+-----------------
+From: Bernhard Walle <bernhard.walle@gmx.de>
 
-Any help would be appreciated.
+On a x86-64 machine (nothing special I could encounter) I had the problem that
+crashkernel reservation with the usual "64M@16M" failed. While debugging that,
+I encountered that dma32_reserve_bootmem() reserves a memory region which is in
+that area.
 
-With kind regards,
-Robert pot
+Because dma32_reserve_bootmem() does not rely on a specific offset but
+crashkernel does, it makes sense to move the crashkernel reservation up a bit.
+I tested that patch and it works without problems. I don't see any negative
+effects of that move, but maybe I oversaw something ...
+
+While the long-term solution is to make the crashkernel reservation dynamic
+(which is already done in -tip), this bug should be fixed also short-term for
+2.6.26 (or 2.6.26-stable if it's too short), and that's why I made that patch.
 
 
+Signed-off-by: Bernhard Walle <bwalle@suse.de>
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
+
+ arch/x86/kernel/setup_64.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
+
+diff --git a/arch/x86/kernel/setup_64.c b/arch/x86/kernel/setup_64.c
+index 6dff128..158cefe 100644
+--- a/arch/x86/kernel/setup_64.c
++++ b/arch/x86/kernel/setup_64.c
+@@ -444,6 +444,12 @@ void __init setup_arch(char **cmdline_p)
+ 	contig_initmem_init(0, end_pfn);
+ #endif
+ 
++	/*
++	 * dma32_reserve_bootmem() allocates bootmem which may conflict
++	 * with the crashkernel command line, so do that before
++	 */
++	reserve_crashkernel();
++
+ 	dma32_reserve_bootmem();
+ 
+ #ifdef CONFIG_ACPI_SLEEP
+@@ -484,7 +490,6 @@ void __init setup_arch(char **cmdline_p)
+ 		}
+ 	}
+ #endif
+-	reserve_crashkernel();
+ 
+ 	reserve_ibft_region();
+ 
