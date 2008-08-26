@@ -1,376 +1,253 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH v2 6/6] sched: create "pushable_tasks" list to limit pushing
-	to one attempt
-Date: Tue, 26 Aug 2008 13:35:15 -0400
-Message-ID: <20080826173515.16413.39166.stgit@dev.haskins.net>
-References: <20080826173131.16413.17862.stgit@dev.haskins.net>
+From: "John Kacur" <jkacur@gmail.com>
+Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
+Date: Tue, 26 Aug 2008 19:45:37 +0200
+Message-ID: <520f0cf10808261045v9dddcdcnd1a86b224aa3feb0@mail.gmail.com>
+References: <1217970588.29415.36.camel@lappy.programming.kicks-ass.net>
+	 <20080812224926.GA20652@linux.intel.com>
+	 <520f0cf10808130124o301b6691ra37ac9007120b9df@mail.gmail.com>
+	 <20080814155241.GA31050@linux.intel.com>
+	 <1218736137.10800.234.camel@twins>
+	 <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>
+	 <20080825163412.GA21910@linux.intel.com>
+	 <1219682129.8515.81.camel@twins>
+	 <520f0cf10808260148k47368b71he2737ea1a59bbe4d@mail.gmail.com>
+	 <20080826161802.GB9862@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: srostedt@redhat.com, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
-To: mingo@elte.hu
+Content-Type: multipart/mixed;
+	boundary="----=_Part_7283_25843095.1219772737841"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Peter Zijlstra" <peterz@infradead.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"Ingo Molnar" <mingo@elte.hu>,
+	"Thomas Gleixner" <tglx@linutronix.de>, arjan <arjan@infradead.org>
+To: mgross@linux.intel.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:54202
-	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1759220AbYHZRhu (ORCPT
+Received: from ey-out-2122.google.com ([74.125.78.24]:62045 "EHLO
+	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757810AbYHZRpj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2008 13:37:50 -0400
-In-Reply-To: <20080826173131.16413.17862.stgit@dev.haskins.net>
+	Tue, 26 Aug 2008 13:45:39 -0400
+Received: by ey-out-2122.google.com with SMTP id 6so338166eyi.37
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Aug 2008 10:45:37 -0700 (PDT)
+In-Reply-To: <20080826161802.GB9862@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The RT scheduler employs a "push/pull" design to actively balance tasks
-within the system (on a per disjoint cpuset basis).  When a task is
-awoken, it is immediately determined if there are any lower priority
-cpus which should be preempted.  This is opposed to the way normal
-SCHED_OTHER tasks behave, which will wait for a periodic rebalancing
-operation to occur before spreading out load.
+------=_Part_7283_25843095.1219772737841
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-When a particular RQ has more than 1 active RT task, it is said to
-be in an "overloaded" state.  Once this occurs, the system enters
-the active balancing mode, where it will try to push the task away,
-or persuade a different cpu to pull it over.  The system will stay
-in this state until the system falls back below the <= 1 queued RT
-task per RQ.
+On Tue, Aug 26, 2008 at 6:18 PM, mark gross <mgross@linux.intel.com> wrote:
+> On Tue, Aug 26, 2008 at 10:48:13AM +0200, John Kacur wrote:
+>> On Mon, Aug 25, 2008 at 6:35 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> > On Mon, 2008-08-25 at 09:34 -0700, mark gross wrote:
+>> >> On Fri, Aug 15, 2008 at 12:51:11AM +0200, John Kacur wrote:
+>> >> > On Thu, Aug 14, 2008 at 7:48 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> >> > > On Thu, 2008-08-14 at 08:52 -0700, mark gross wrote:
+>> >> > >
+>> >> > >> Keeping a lock around the different "target_value"s may not be so
+>> >> > >> important.  Its just a 32bit scaler value, and perhaps we can make it an
+>> >> > >> atomic type?  That way we loose the raw_spinlock.
+>> >> > >
+>> >> > > My suggestion was to keep the locking for the write side - so as to
+>> >> > > avoid stuff stomping on one another, but drop the read side as:
+>> >> > >
+>> >> > >  spin_lock
+>> >> > >  foo = var;
+>> >> > >  spin_unlock
+>> >> > >  return foo;
+>> >> > >
+>> >> > > is kinda useless, it doesn't actually serialize against the usage of
+>> >> > > foo, that is, once it gets used, var might already have acquired a new
+>> >> > > value.
+>> >> > >
+>> >> > > The only thing it would protect is reading var, but since that is a
+>> >> > > machine sized read, its atomic anyway (assuming its naturally aligned).
+>> >> > >
+>> >> > > So no need for atomic_t (its read-side is just a read too), just drop
+>> >> > > the whole lock usage from pq_qos_requirement().
+>> >> > >
+>> >> >
+>> >> > Thanks Peter.
+>> >> >
+>> >> > Mark, is the following patch ok with you? This should be applied to
+>> >> > mainline, and then after that no special patches are necessary for
+>> >> > real-time.
+>> >>
+>> >> I've been thinking about this patch and I worry that the readability
+>> >> from making the use of this lock asymmetric WRT reads and writes to the
+>> >> storage address is bothersome.
+>> >>
+>> >> I would rather make the variable an atomic.  What do you think about
+>> >> that?
+>> >
+>> > It would make the write side more expensive, as we already have the two
+>> > atomic operations for the lock and unlock, this would add a third.
+>> >
+>> > Then again, I doubt that this is really a fast path.
+>> >
+>> > OTOH, a simple comment could clarify the situation for the reader.
+>> >
+>> > Up to you I guess ;-)
+>> >
+>>
+>> Personally I agree with Peter, a simple comment would clarify the
+>> situation, it seems quite silly to me to add complexity in the name of
+>> symmetry. This is not my definition of readability. Never-the-less I
+>> offer up solution number 3 here if that would please everyone more.
+>> Attached is a patch that changes the target value to an atomic
+>> variable as suggested by Arjan. To summarize.
+>>
+>> 3 Sol'ns - all of which solve the problem.
+>> 1. Add a raw spinlock around target value only. This makes the raw
+>> spinlock area very small, and is converted to a normal spinlock for
+>> non-preempt-rt.
+>> 2. Remove the spinlock altogether in pm_qos_requirement since the
+>> simple read is already atomic. Advantage - smallest patch and realtime
+>> doesn't require a special patch once this is included in mainline. I
+>> like this one the best.
+>> 3. make target_value atomic_t. Advantage - symmetry, some people find
+>> this more readable. The patch is larger than the above solution but as
+>> above, no special patch is required for realtime once this is included
+>> in mainline. Solution three is in the attached patch. Comments are
+>> appreciated as always.
+>
+> Thank you!  FWIW I'm really on the fence between option 2 and 3.
+>
+>> Remove the spinlock in pm_qos_requirement by making target_value an atomic type.
+>> This is necessary for real-time since pm_qos_requirement is called by idle and
+>> cannot be allowed to sleep.
+>> Signed-off-by: John Kacur <jkacur at gmail dot com>
+>>
+>> Index: linux-2.6.26.3-rt3/kernel/pm_qos_params.c
+>> ===================================================================
+>> --- linux-2.6.26.3-rt3.orig/kernel/pm_qos_params.c
+>> +++ linux-2.6.26.3-rt3/kernel/pm_qos_params.c
+>> @@ -42,7 +42,7 @@
+>>  #include <linux/uaccess.h>
+>>
+>>  /*
+>> - * locking rule: all changes to target_value or requirements or notifiers lists
+>> + * locking rule: all changes to requirements or notifiers lists
+>>   * or pm_qos_object list and pm_qos_objects need to happen with pm_qos_lock
+>>   * held, taken with _irqsave.  One lock to rule them all
+>>   */
+>> @@ -65,7 +65,7 @@ struct pm_qos_object {
+>>       struct miscdevice pm_qos_power_miscdev;
+>>       char *name;
+>>       s32 default_value;
+>> -     s32 target_value;
+>> +     atomic_t target_value;
+>>       s32 (*comparitor)(s32, s32);
+>>  };
+>>
+>> @@ -76,7 +76,7 @@ static struct pm_qos_object cpu_dma_pm_q
+>>       .notifiers = &cpu_dma_lat_notifier,
+>>       .name = "cpu_dma_latency",
+>>       .default_value = 2000 * USEC_PER_SEC,
+>> -     .target_value = 2000 * USEC_PER_SEC,
+>> +     .target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
+>>       .comparitor = min_compare
+>>  };
+>>
+>> @@ -86,7 +86,7 @@ static struct pm_qos_object network_lat_
+>>       .notifiers = &network_lat_notifier,
+>>       .name = "network_latency",
+>>       .default_value = 2000 * USEC_PER_SEC,
+>> -     .target_value = 2000 * USEC_PER_SEC,
+>> +     .target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
+>>       .comparitor = min_compare
+>>  };
+>>
+>> @@ -98,7 +98,7 @@ static struct pm_qos_object network_thro
+>>       .notifiers = &network_throughput_notifier,
+>>       .name = "network_throughput",
+>>       .default_value = 0,
+>> -     .target_value = 0,
+>> +     .target_value = ATOMIC_INIT(0),
+>>       .comparitor = max_compare
+>>  };
+>>
+>> @@ -149,13 +149,14 @@ static void update_target(int target)
+>>               extreme_value = pm_qos_array[target]->comparitor(
+>>                               extreme_value, node->value);
+>>       }
+>> -     if (pm_qos_array[target]->target_value != extreme_value) {
+>> +     spin_unlock_irqrestore(&pm_qos_lock, flags);
+>> +
+>
+> do we want to move the unlock before the setting of the target_value?
+> This feels wrong to me, the option 2 patch didn't do this.
+>
+> couldn't we have a race from 2 cpu's hitting update_target at the same
+> time with different values if we drop the lock before the target_value
+> is set?
 
-However, the current implementation suffers from a limitation in the
-push logic.  Once overloaded, all tasks (other than current) on the
-RQ are analyzed on every push operation, even if it was previously
-unpushable (due to affinity, etc).  Whats more, the operation stops
-at the first task that is unpushable and will not look at items
-lower in the queue.  This causes two problems:
+I think you are right since atomicity doesn't have anything to do with
+ordering, good catch, putting the the unlock back where it was before,
+new patch attached. (also shortened-up pm_qos_requirement)
 
-1) We can have the same tasks analyzed over and over again during each
-   push, which extends out the fast path in the scheduler for no
-   gain.  Consider a RQ that has dozens of tasks that are bound to a
-   core.  Each one of those tasks will be encountered and skipped
-   for each push operation while they are queued.
+---SNIP----
 
-2) There may be lower-priority tasks under the unpushable task that
-   could have been successfully pushed, but will never be considered
-   until either the unpushable task is cleared, or a pull operation
-   succeeds.  The net result is a potential latency source for mid
-   priority tasks.
+John
 
-This patch aims to rectify these two conditions by introducing a new
-priority sorted list: "pushable_tasks".  A task is added to the list
-each time a task is activated or preempted.  It is removed from the
-list any time it is deactivated, made current, or fails to push.
+------=_Part_7283_25843095.1219772737841
+Content-Type: text/x-patch; name=pm_qos_requirement.patch
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_fkct1qgy1
+Content-Disposition: attachment; filename=pm_qos_requirement.patch
 
-This works because a task only needs to be attempted to push once.
-After an initial failure to push, the other cpus will eventually try to
-pull the task when the conditions are proper.  This also solves the
-problem that we don't completely analyze all tasks due to encountering
-an unpushable tasks.  Now every task will have a push attempted (when
-appropriate).
-
-This reduces latency both by shorting the critical section of the
-rq->lock for certain workloads, and by making sure the algorithm
-considers all eligible tasks in the system.
-
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Steven Rostedt <srostedt@redhat.com>
----
-
- include/linux/init_task.h |    1 
- include/linux/sched.h     |    1 
- kernel/sched.c            |    4 ++
- kernel/sched_rt.c         |  111 +++++++++++++++++++++++++++++++++++++++++----
- 4 files changed, 107 insertions(+), 10 deletions(-)
-
-diff --git a/include/linux/init_task.h b/include/linux/init_task.h
-index 021d8e7..7f910f4 100644
---- a/include/linux/init_task.h
-+++ b/include/linux/init_task.h
-@@ -140,6 +140,7 @@ extern struct group_info init_groups;
- 		.nr_cpus_allowed = NR_CPUS,				\
- 	},								\
- 	.tasks		= LIST_HEAD_INIT(tsk.tasks),			\
-+	.pushable_tasks = PLIST_NODE_INIT(tsk.pushable_tasks, MAX_PRIO), \
- 	.ptraced	= LIST_HEAD_INIT(tsk.ptraced),			\
- 	.ptrace_entry	= LIST_HEAD_INIT(tsk.ptrace_entry),		\
- 	.real_parent	= &tsk,						\
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index cf8cd8c..3480c8a 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1078,6 +1078,7 @@ struct task_struct {
- #endif
- 
- 	struct list_head tasks;
-+	struct plist_node pushable_tasks;
- 
- 	struct mm_struct *mm, *active_mm;
- 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index c5b4459..d0b189d 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -447,6 +447,7 @@ struct rt_rq {
- #ifdef CONFIG_SMP
- 	unsigned long rt_nr_migratory;
- 	int overloaded;
-+	struct plist_head pushable_tasks;
- #endif
- 	int rt_throttled;
- 	u64 rt_time;
-@@ -2383,6 +2384,8 @@ void sched_fork(struct task_struct *p, int clone_flags)
- 	/* Want to start with kernel preemption disabled. */
- 	task_thread_info(p)->preempt_count = 1;
- #endif
-+	plist_node_init(&p->pushable_tasks, MAX_PRIO);
-+
- 	put_cpu();
- }
- 
-@@ -7905,6 +7908,7 @@ static void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
- #ifdef CONFIG_SMP
- 	rt_rq->rt_nr_migratory = 0;
- 	rt_rq->overloaded = 0;
-+	plist_head_init(&rq->rt.pushable_tasks, &rq->lock);
- #endif
- 
- 	rt_rq->rt_time = 0;
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index a3d695b..19cbbe4 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -49,6 +49,25 @@ static void update_rt_migration(struct rq *rq)
- 		rq->rt.overloaded = 0;
- 	}
- }
-+
-+static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
-+{
-+	BUG_ON(!plist_node_empty(&p->pushable_tasks));
-+
-+	plist_node_init(&p->pushable_tasks, p->prio);
-+	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+}
-+
-+static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
-+{
-+	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+}
-+
-+#else
-+
-+#define enqueue_pushable_task(rq, p) do { } while (0)
-+#define dequeue_pushable_task(rq, p) do { } while (0)
-+
- #endif /* CONFIG_SMP */
- 
- static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
-@@ -669,6 +688,9 @@ static void enqueue_task_rt(struct rq *rq, struct task_struct *p, int wakeup)
- 
- 	enqueue_rt_entity(rt_se);
- 
-+	if (!task_current(rq, p) && p->rt.nr_cpus_allowed > 1)
-+		enqueue_pushable_task(rq, p);
-+
- 	inc_cpu_load(rq, p->se.load.weight);
- }
- 
-@@ -679,6 +701,8 @@ static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int sleep)
- 	update_curr_rt(rq);
- 	dequeue_rt_entity(rt_se);
- 
-+	dequeue_pushable_task(rq, p);
-+
- 	dec_cpu_load(rq, p->se.load.weight);
- }
- 
-@@ -824,7 +848,7 @@ static struct sched_rt_entity *pick_next_rt_entity(struct rq *rq,
- 	return next;
- }
- 
--static struct task_struct *pick_next_task_rt(struct rq *rq)
-+static struct task_struct *_pick_next_task_rt(struct rq *rq)
- {
- 	struct sched_rt_entity *rt_se;
- 	struct task_struct *p;
-@@ -846,6 +870,18 @@ static struct task_struct *pick_next_task_rt(struct rq *rq)
- 
- 	p = rt_task_of(rt_se);
- 	p->se.exec_start = rq->clock;
-+
-+	return p;
-+}
-+
-+static struct task_struct *pick_next_task_rt(struct rq *rq)
-+{
-+	struct task_struct *p = _pick_next_task_rt(rq);
-+
-+	/* The running task is never eligible for pushing */
-+	if (p)
-+		dequeue_pushable_task(rq, p);
-+
- 	return p;
- }
- 
-@@ -853,6 +889,13 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
- {
- 	update_curr_rt(rq);
- 	p->se.exec_start = 0;
-+
-+	/*
-+	 * The previous task needs to be made eligible for pushing
-+	 * if it is still active
-+	 */
-+	if (p->se.on_rq && p->rt.nr_cpus_allowed > 1)
-+		enqueue_pushable_task(rq, p);
- }
- 
- #ifdef CONFIG_SMP
-@@ -1031,6 +1074,28 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
- 	return lowest_rq;
- }
- 
-+static inline int has_pushable_tasks(struct rq *rq)
-+{
-+	return !plist_head_empty(&rq->rt.pushable_tasks);
-+}
-+
-+static struct task_struct *pick_next_pushable_task(struct rq *rq)
-+{
-+	struct task_struct *p;
-+
-+	if (!has_pushable_tasks(rq))
-+		return NULL;
-+
-+	p = plist_first_entry(&rq->rt.pushable_tasks,
-+			      struct task_struct, pushable_tasks);
-+
-+	BUG_ON(rq->cpu != task_cpu(p));
-+	BUG_ON(task_current(rq, p));
-+	BUG_ON(p->rt.nr_cpus_allowed <= 1);
-+
-+	return p;
-+}
-+
- /*
-  * If the current CPU has more than one RT task, see if the non
-  * running task can migrate over to a CPU that is running a task
-@@ -1040,13 +1105,12 @@ static int push_rt_task(struct rq *rq)
- {
- 	struct task_struct *next_task;
- 	struct rq *lowest_rq;
--	int ret = 0;
- 	int paranoid = RT_MAX_TRIES;
- 
- 	if (!rq->rt.overloaded)
- 		return 0;
- 
--	next_task = pick_next_highest_task_rt(rq, -1);
-+	next_task = pick_next_pushable_task(rq);
- 	if (!next_task)
- 		return 0;
- 
-@@ -1078,12 +1142,19 @@ static int push_rt_task(struct rq *rq)
- 		 * so it is possible that next_task has changed.
- 		 * If it has, then try again.
- 		 */
--		task = pick_next_highest_task_rt(rq, -1);
-+		task = pick_next_pushable_task(rq);
- 		if (unlikely(task != next_task) && task && paranoid--) {
- 			put_task_struct(next_task);
- 			next_task = task;
- 			goto retry;
- 		}
-+
-+		/*
-+		 * Once we have failed to push this task, we will not
-+		 * try again, since the other cpus will pull from us
-+		 * when they are ready
-+		 */
-+		dequeue_pushable_task(rq, next_task);
- 		goto out;
- 	}
- 
-@@ -1095,11 +1166,10 @@ static int push_rt_task(struct rq *rq)
- 
- 	double_unlock_balance(rq, lowest_rq);
- 
--	ret = 1;
- out:
- 	put_task_struct(next_task);
- 
--	return ret;
-+	return 1;
- }
- 
- /*
-@@ -1128,7 +1198,7 @@ static int pull_rt_task(struct rq *this_rq)
- 	if (likely(!rt_overloaded(this_rq)))
- 		return 0;
- 
--	next = pick_next_task_rt(this_rq);
-+	next = _pick_next_task_rt(this_rq);
- 
- 	for_each_cpu_mask_nr(cpu, this_rq->rd->rto_mask) {
- 		if (this_cpu == cpu)
-@@ -1145,7 +1215,7 @@ static int pull_rt_task(struct rq *this_rq)
- 		if (double_lock_balance(this_rq, src_rq)) {
- 			struct task_struct *old_next = next;
- 
--			next = pick_next_task_rt(this_rq);
-+			next = _pick_next_task_rt(this_rq);
- 			if (next != old_next)
- 				ret = 1;
- 		}
-@@ -1217,7 +1287,7 @@ static void pre_schedule_rt(struct rq *rq, struct task_struct *prev)
-  */
- static int needs_post_schedule_rt(struct rq *rq)
- {
--	return rq->rt.overloaded ? 1 : 0;
-+	return has_pushable_tasks(rq);
- }
- 
- static void post_schedule_rt(struct rq *rq)
-@@ -1240,7 +1310,7 @@ static void task_wake_up_rt(struct rq *rq, struct task_struct *p)
- {
- 	if (!task_running(rq, p) &&
- 	    !test_tsk_need_resched(rq->curr) &&
--	    rq->rt.overloaded &&
-+	    has_pushable_tasks(rq) &&
- 	    p->rt.nr_cpus_allowed > 1)
- 		push_rt_tasks(rq);
- }
-@@ -1277,6 +1347,24 @@ static void set_cpus_allowed_rt(struct task_struct *p,
- 	if (p->se.on_rq && (weight != p->rt.nr_cpus_allowed)) {
- 		struct rq *rq = task_rq(p);
- 
-+		if (!task_current(rq, p)) {
-+			/*
-+			 * Make sure we dequeue this task from the pushable list
-+			 * before going further.  It will either remain off of
-+			 * the list because we are no longer pushable, or it
-+			 * will be requeued.
-+			 */
-+			if (p->rt.nr_cpus_allowed > 1)
-+				dequeue_pushable_task(rq, p);
-+
-+			/*
-+			 * Requeue if our weight is changing and still > 1
-+			 */
-+			if (weight > 1)
-+				enqueue_pushable_task(rq, p);
-+
-+		}
-+
- 		if ((p->rt.nr_cpus_allowed <= 1) && (weight > 1)) {
- 			rq->rt.rt_nr_migratory++;
- 		} else if ((p->rt.nr_cpus_allowed > 1) && (weight <= 1)) {
-@@ -1453,6 +1541,9 @@ static void set_curr_task_rt(struct rq *rq)
- 	struct task_struct *p = rq->curr;
- 
- 	p->se.exec_start = rq->clock;
-+
-+	/* The running task is never eligible for pushing */
-+	dequeue_pushable_task(rq, p);
- }
- 
- static const struct sched_class rt_sched_class = {
-
+UmVtb3ZlIHRoZSBzcGlubG9jayBpbiBwbV9xb3NfcmVxdWlyZW1lbnQgYnkgbWFraW5nIHRhcmdl
+dF92YWx1ZSBhbiBhdG9taWMgdHlwZS4KVGhpcyBpcyBuZWNlc3NhcnkgZm9yIHJlYWwtdGltZSBz
+aW5jZSBwbV9xb3NfcmVxdWlyZW1lbnQgaXMgY2FsbGVkIGJ5IGlkbGUgYW5kCmNhbm5vdCBiZSBh
+bGxvd2VkIHRvIHNsZWVwLgpTaWduZWQtb2ZmLWJ5OiBKb2huIEthY3VyIDxqa2FjdXIgYXQgZ21h
+aWwgZG90IGNvbT4KCkluZGV4OiBsaW51eC0yLjYuMjYuMy1ydDMva2VybmVsL3BtX3Fvc19wYXJh
+bXMuYwo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09Ci0tLSBsaW51eC0yLjYuMjYuMy1ydDMub3JpZy9rZXJuZWwvcG1fcW9z
+X3BhcmFtcy5jCisrKyBsaW51eC0yLjYuMjYuMy1ydDMva2VybmVsL3BtX3Fvc19wYXJhbXMuYwpA
+QCAtNDIsNyArNDIsNyBAQAogI2luY2x1ZGUgPGxpbnV4L3VhY2Nlc3MuaD4KIAogLyoKLSAqIGxv
+Y2tpbmcgcnVsZTogYWxsIGNoYW5nZXMgdG8gdGFyZ2V0X3ZhbHVlIG9yIHJlcXVpcmVtZW50cyBv
+ciBub3RpZmllcnMgbGlzdHMKKyAqIGxvY2tpbmcgcnVsZTogYWxsIGNoYW5nZXMgdG8gcmVxdWly
+ZW1lbnRzIG9yIG5vdGlmaWVycyBsaXN0cwogICogb3IgcG1fcW9zX29iamVjdCBsaXN0IGFuZCBw
+bV9xb3Nfb2JqZWN0cyBuZWVkIHRvIGhhcHBlbiB3aXRoIHBtX3Fvc19sb2NrCiAgKiBoZWxkLCB0
+YWtlbiB3aXRoIF9pcnFzYXZlLiAgT25lIGxvY2sgdG8gcnVsZSB0aGVtIGFsbAogICovCkBAIC02
+NSw3ICs2NSw3IEBAIHN0cnVjdCBwbV9xb3Nfb2JqZWN0IHsKIAlzdHJ1Y3QgbWlzY2RldmljZSBw
+bV9xb3NfcG93ZXJfbWlzY2RldjsKIAljaGFyICpuYW1lOwogCXMzMiBkZWZhdWx0X3ZhbHVlOwot
+CXMzMiB0YXJnZXRfdmFsdWU7CisJYXRvbWljX3QgdGFyZ2V0X3ZhbHVlOwogCXMzMiAoKmNvbXBh
+cml0b3IpKHMzMiwgczMyKTsKIH07CiAKQEAgLTc2LDcgKzc2LDcgQEAgc3RhdGljIHN0cnVjdCBw
+bV9xb3Nfb2JqZWN0IGNwdV9kbWFfcG1fcQogCS5ub3RpZmllcnMgPSAmY3B1X2RtYV9sYXRfbm90
+aWZpZXIsCiAJLm5hbWUgPSAiY3B1X2RtYV9sYXRlbmN5IiwKIAkuZGVmYXVsdF92YWx1ZSA9IDIw
+MDAgKiBVU0VDX1BFUl9TRUMsCi0JLnRhcmdldF92YWx1ZSA9IDIwMDAgKiBVU0VDX1BFUl9TRUMs
+CisJLnRhcmdldF92YWx1ZSA9IEFUT01JQ19JTklUKDIwMDAgKiBVU0VDX1BFUl9TRUMpLAogCS5j
+b21wYXJpdG9yID0gbWluX2NvbXBhcmUKIH07CiAKQEAgLTg2LDcgKzg2LDcgQEAgc3RhdGljIHN0
+cnVjdCBwbV9xb3Nfb2JqZWN0IG5ldHdvcmtfbGF0XwogCS5ub3RpZmllcnMgPSAmbmV0d29ya19s
+YXRfbm90aWZpZXIsCiAJLm5hbWUgPSAibmV0d29ya19sYXRlbmN5IiwKIAkuZGVmYXVsdF92YWx1
+ZSA9IDIwMDAgKiBVU0VDX1BFUl9TRUMsCi0JLnRhcmdldF92YWx1ZSA9IDIwMDAgKiBVU0VDX1BF
+Ul9TRUMsCisJLnRhcmdldF92YWx1ZSA9IEFUT01JQ19JTklUKDIwMDAgKiBVU0VDX1BFUl9TRUMp
+LAogCS5jb21wYXJpdG9yID0gbWluX2NvbXBhcmUKIH07CiAKQEAgLTk4LDcgKzk4LDcgQEAgc3Rh
+dGljIHN0cnVjdCBwbV9xb3Nfb2JqZWN0IG5ldHdvcmtfdGhybwogCS5ub3RpZmllcnMgPSAmbmV0
+d29ya190aHJvdWdocHV0X25vdGlmaWVyLAogCS5uYW1lID0gIm5ldHdvcmtfdGhyb3VnaHB1dCIs
+CiAJLmRlZmF1bHRfdmFsdWUgPSAwLAotCS50YXJnZXRfdmFsdWUgPSAwLAorCS50YXJnZXRfdmFs
+dWUgPSBBVE9NSUNfSU5JVCgwKSwKIAkuY29tcGFyaXRvciA9IG1heF9jb21wYXJlCiB9OwogCkBA
+IC0xNDksMTEgKzE0OSwxMSBAQCBzdGF0aWMgdm9pZCB1cGRhdGVfdGFyZ2V0KGludCB0YXJnZXQp
+CiAJCWV4dHJlbWVfdmFsdWUgPSBwbV9xb3NfYXJyYXlbdGFyZ2V0XS0+Y29tcGFyaXRvcigKIAkJ
+CQlleHRyZW1lX3ZhbHVlLCBub2RlLT52YWx1ZSk7CiAJfQotCWlmIChwbV9xb3NfYXJyYXlbdGFy
+Z2V0XS0+dGFyZ2V0X3ZhbHVlICE9IGV4dHJlbWVfdmFsdWUpIHsKKwlpZiAoYXRvbWljX3JlYWQo
+JnBtX3Fvc19hcnJheVt0YXJnZXRdLT50YXJnZXRfdmFsdWUpICE9IGV4dHJlbWVfdmFsdWUpIHsK
+IAkJY2FsbF9ub3RpZmllciA9IDE7Ci0JCXBtX3Fvc19hcnJheVt0YXJnZXRdLT50YXJnZXRfdmFs
+dWUgPSBleHRyZW1lX3ZhbHVlOworCQlhdG9taWNfc2V0KCZwbV9xb3NfYXJyYXlbdGFyZ2V0XS0+
+dGFyZ2V0X3ZhbHVlLCBleHRyZW1lX3ZhbHVlKTsKIAkJcHJfZGVidWcoS0VSTl9FUlIgIm5ldyB0
+YXJnZXQgZm9yIHFvcyAlZCBpcyAlZFxuIiwgdGFyZ2V0LAotCQkJcG1fcW9zX2FycmF5W3Rhcmdl
+dF0tPnRhcmdldF92YWx1ZSk7CisJCQlhdG9taWNfcmVhZCgmcG1fcW9zX2FycmF5W3RhcmdldF0t
+PnRhcmdldF92YWx1ZSkpOwogCX0KIAlzcGluX3VubG9ja19pcnFyZXN0b3JlKCZwbV9xb3NfbG9j
+aywgZmxhZ3MpOwogCkBAIC0xOTIsMTQgKzE5Miw3IEBAIHN0YXRpYyBpbnQgZmluZF9wbV9xb3Nf
+b2JqZWN0X2J5X21pbm9yKGkKICAqLwogaW50IHBtX3Fvc19yZXF1aXJlbWVudChpbnQgcG1fcW9z
+X2NsYXNzKQogewotCWludCByZXRfdmFsOwotCXVuc2lnbmVkIGxvbmcgZmxhZ3M7Ci0KLQlzcGlu
+X2xvY2tfaXJxc2F2ZSgmcG1fcW9zX2xvY2ssIGZsYWdzKTsKLQlyZXRfdmFsID0gcG1fcW9zX2Fy
+cmF5W3BtX3Fvc19jbGFzc10tPnRhcmdldF92YWx1ZTsKLQlzcGluX3VubG9ja19pcnFyZXN0b3Jl
+KCZwbV9xb3NfbG9jaywgZmxhZ3MpOwotCi0JcmV0dXJuIHJldF92YWw7CisJcmV0dXJuIGF0b21p
+Y19yZWFkKCZwbV9xb3NfYXJyYXlbcG1fcW9zX2NsYXNzXS0+dGFyZ2V0X3ZhbHVlKTsKIH0KIEVY
+UE9SVF9TWU1CT0xfR1BMKHBtX3Fvc19yZXF1aXJlbWVudCk7CiAK
+------=_Part_7283_25843095.1219772737841--
