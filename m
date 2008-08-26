@@ -1,175 +1,200 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 3/5] sched: make double-lock-balance fair
-Date: Tue, 26 Aug 2008 08:23:11 -0400
-Message-ID: <48B3F5AF.9060205@novell.com>
-References: <20080825200852.23217.13842.stgit@dev.haskins.net> <20080825201534.23217.14936.stgit@dev.haskins.net> <200808261614.49662.nickpiggin@yahoo.com.au>
+From: mark gross <mgross@linux.intel.com>
+Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
+Date: Tue, 26 Aug 2008 09:18:02 -0700
+Message-ID: <20080826161802.GB9862@linux.intel.com>
+References: <1217970588.29415.36.camel@lappy.programming.kicks-ass.net> <520f0cf10808051518h1459d353r8de78e98f79ec57c@mail.gmail.com> <20080812224926.GA20652@linux.intel.com> <520f0cf10808130124o301b6691ra37ac9007120b9df@mail.gmail.com> <20080814155241.GA31050@linux.intel.com> <1218736137.10800.234.camel@twins> <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com> <20080825163412.GA21910@linux.intel.com> <1219682129.8515.81.camel@twins> <520f0cf10808260148k47368b71he2737ea1a59bbe4d@mail.gmail.com>
+Reply-To: mgross@linux.intel.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig70220B40011E425C7E38E5BA"
-Cc: mingo@elte.hu, srostedt@redhat.com, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
-To: Nick Piggin <nickpiggin@yahoo.com.au>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	arjan <arjan@infradead.org>
+To: John Kacur <jkacur@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:34576 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754039AbYHZMZj (ORCPT
+Received: from mga05.intel.com ([192.55.52.89]:36909 "EHLO
+	fmsmga101.fm.intel.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753751AbYHZQRN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2008 08:25:39 -0400
-In-Reply-To: <200808261614.49662.nickpiggin@yahoo.com.au>
+	Tue, 26 Aug 2008 12:17:13 -0400
+Content-Disposition: inline
+In-Reply-To: <520f0cf10808260148k47368b71he2737ea1a59bbe4d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig70220B40011E425C7E38E5BA
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Tue, Aug 26, 2008 at 10:48:13AM +0200, John Kacur wrote:
+> On Mon, Aug 25, 2008 at 6:35 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+> > On Mon, 2008-08-25 at 09:34 -0700, mark gross wrote:
+> >> On Fri, Aug 15, 2008 at 12:51:11AM +0200, John Kacur wrote:
+> >> > On Thu, Aug 14, 2008 at 7:48 PM, Peter Zijlstra <peterz@infradead.org> wrote:
+> >> > > On Thu, 2008-08-14 at 08:52 -0700, mark gross wrote:
+> >> > >
+> >> > >> Keeping a lock around the different "target_value"s may not be so
+> >> > >> important.  Its just a 32bit scaler value, and perhaps we can make it an
+> >> > >> atomic type?  That way we loose the raw_spinlock.
+> >> > >
+> >> > > My suggestion was to keep the locking for the write side - so as to
+> >> > > avoid stuff stomping on one another, but drop the read side as:
+> >> > >
+> >> > >  spin_lock
+> >> > >  foo = var;
+> >> > >  spin_unlock
+> >> > >  return foo;
+> >> > >
+> >> > > is kinda useless, it doesn't actually serialize against the usage of
+> >> > > foo, that is, once it gets used, var might already have acquired a new
+> >> > > value.
+> >> > >
+> >> > > The only thing it would protect is reading var, but since that is a
+> >> > > machine sized read, its atomic anyway (assuming its naturally aligned).
+> >> > >
+> >> > > So no need for atomic_t (its read-side is just a read too), just drop
+> >> > > the whole lock usage from pq_qos_requirement().
+> >> > >
+> >> >
+> >> > Thanks Peter.
+> >> >
+> >> > Mark, is the following patch ok with you? This should be applied to
+> >> > mainline, and then after that no special patches are necessary for
+> >> > real-time.
+> >>
+> >> I've been thinking about this patch and I worry that the readability
+> >> from making the use of this lock asymmetric WRT reads and writes to the
+> >> storage address is bothersome.
+> >>
+> >> I would rather make the variable an atomic.  What do you think about
+> >> that?
+> >
+> > It would make the write side more expensive, as we already have the two
+> > atomic operations for the lock and unlock, this would add a third.
+> >
+> > Then again, I doubt that this is really a fast path.
+> >
+> > OTOH, a simple comment could clarify the situation for the reader.
+> >
+> > Up to you I guess ;-)
+> >
+> 
+> Personally I agree with Peter, a simple comment would clarify the
+> situation, it seems quite silly to me to add complexity in the name of
+> symmetry. This is not my definition of readability. Never-the-less I
+> offer up solution number 3 here if that would please everyone more.
+> Attached is a patch that changes the target value to an atomic
+> variable as suggested by Arjan. To summarize.
+> 
+> 3 Sol'ns - all of which solve the problem.
+> 1. Add a raw spinlock around target value only. This makes the raw
+> spinlock area very small, and is converted to a normal spinlock for
+> non-preempt-rt.
+> 2. Remove the spinlock altogether in pm_qos_requirement since the
+> simple read is already atomic. Advantage - smallest patch and realtime
+> doesn't require a special patch once this is included in mainline. I
+> like this one the best.
+> 3. make target_value atomic_t. Advantage - symmetry, some people find
+> this more readable. The patch is larger than the above solution but as
+> above, no special patch is required for realtime once this is included
+> in mainline. Solution three is in the attached patch. Comments are
+> appreciated as always.
 
-Nick Piggin wrote:
-> On Tuesday 26 August 2008 06:15, Gregory Haskins wrote:
->  =20
->> double_lock balance() currently favors logically lower cpus since they=
+Thank you!  FWIW I'm really on the fence between option 2 and 3.
 
->> often do not have to release their own lock to acquire a second lock.
->> The result is that logically higher cpus can get starved when there is=
+> Remove the spinlock in pm_qos_requirement by making target_value an atomic type.
+> This is necessary for real-time since pm_qos_requirement is called by idle and
+> cannot be allowed to sleep.
+> Signed-off-by: John Kacur <jkacur at gmail dot com>
+> 
+> Index: linux-2.6.26.3-rt3/kernel/pm_qos_params.c
+> ===================================================================
+> --- linux-2.6.26.3-rt3.orig/kernel/pm_qos_params.c
+> +++ linux-2.6.26.3-rt3/kernel/pm_qos_params.c
+> @@ -42,7 +42,7 @@
+>  #include <linux/uaccess.h>
+>  
+>  /*
+> - * locking rule: all changes to target_value or requirements or notifiers lists
+> + * locking rule: all changes to requirements or notifiers lists
+>   * or pm_qos_object list and pm_qos_objects need to happen with pm_qos_lock
+>   * held, taken with _irqsave.  One lock to rule them all
+>   */
+> @@ -65,7 +65,7 @@ struct pm_qos_object {
+>  	struct miscdevice pm_qos_power_miscdev;
+>  	char *name;
+>  	s32 default_value;
+> -	s32 target_value;
+> +	atomic_t target_value;
+>  	s32 (*comparitor)(s32, s32);
+>  };
+>  
+> @@ -76,7 +76,7 @@ static struct pm_qos_object cpu_dma_pm_q
+>  	.notifiers = &cpu_dma_lat_notifier,
+>  	.name = "cpu_dma_latency",
+>  	.default_value = 2000 * USEC_PER_SEC,
+> -	.target_value = 2000 * USEC_PER_SEC,
+> +	.target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
+>  	.comparitor = min_compare
+>  };
+>  
+> @@ -86,7 +86,7 @@ static struct pm_qos_object network_lat_
+>  	.notifiers = &network_lat_notifier,
+>  	.name = "network_latency",
+>  	.default_value = 2000 * USEC_PER_SEC,
+> -	.target_value = 2000 * USEC_PER_SEC,
+> +	.target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
+>  	.comparitor = min_compare
+>  };
+>  
+> @@ -98,7 +98,7 @@ static struct pm_qos_object network_thro
+>  	.notifiers = &network_throughput_notifier,
+>  	.name = "network_throughput",
+>  	.default_value = 0,
+> -	.target_value = 0,
+> +	.target_value = ATOMIC_INIT(0),
+>  	.comparitor = max_compare
+>  };
+>  
+> @@ -149,13 +149,14 @@ static void update_target(int target)
+>  		extreme_value = pm_qos_array[target]->comparitor(
+>  				extreme_value, node->value);
+>  	}
+> -	if (pm_qos_array[target]->target_value != extreme_value) {
+> +	spin_unlock_irqrestore(&pm_qos_lock, flags);
+> +
 
->> a lot of pressure on the RQs.  This can result in higher latencies on
->> higher cpu-ids.
->>
->> This patch makes the algorithm more fair by forcing all paths to have
->> to release both locks before acquiring them again.  Since callsites to=
+do we want to move the unlock before the setting of the target_value?
+This feels wrong to me, the option 2 patch didn't do this.
 
->> double_lock_balance already consider it a potential preemption/resched=
-ule
->> point, they have the proper logic to recheck for atomicity violations.=
+couldn't we have a race from 2 cpu's hitting update_target at the same
+time with different values if we drop the lock before the target_value
+is set?
 
->>
->> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> ---
->>
->>  kernel/sched.c |   17 +++++------------
->>  1 files changed, 5 insertions(+), 12 deletions(-)
->>
->> diff --git a/kernel/sched.c b/kernel/sched.c
->> index 6e0bde6..b7326cd 100644
->> --- a/kernel/sched.c
->> +++ b/kernel/sched.c
->> @@ -2790,23 +2790,16 @@ static int double_lock_balance(struct rq *this=
-_rq,
->> struct rq *busiest) __acquires(busiest->lock)
->>  	__acquires(this_rq->lock)
->>  {
->> -	int ret =3D 0;
->> -
->>  	if (unlikely(!irqs_disabled())) {
->>  		/* printk() doesn't work good under rq->lock */
->>  		spin_unlock(&this_rq->lock);
->>  		BUG_ON(1);
->>  	}
->> -	if (unlikely(!spin_trylock(&busiest->lock))) {
->> -		if (busiest < this_rq) {
->> -			spin_unlock(&this_rq->lock);
->> -			spin_lock(&busiest->lock);
->> -			spin_lock_nested(&this_rq->lock, SINGLE_DEPTH_NESTING);
->> -			ret =3D 1;
->> -		} else
->> -			spin_lock_nested(&busiest->lock, SINGLE_DEPTH_NESTING);
->> -	}
->> -	return ret;
->> +
->> +	spin_unlock(&this_rq->lock);
->> +	double_rq_lock(this_rq, busiest);
->>    =20
->
-> Rather than adding the extra atomic operation, can't you just put this
-> into the unlikely spin_trylock failure path rather than the unfair logi=
-c
-> there?
->  =20
+--mgross
 
-The trick is that we *must* first release this_rq before proceeding or
-the new proposal doesn't work as intended.  This patch effectively
-breaks up the this_rq->lock critical section evenly across all CPUs as
-if it hit the case common for higher cpus.  This modification decreased
-latency by over 800% (went from > 400us to < 50us) on cpus 6 and 7 in my
-8-way box namely because they were not forced to wait for all the other
-lower cores to finish, but rather completions of double_lock_balance
-were handled in true FIFO w.r.t. to other calls to
-double_lock_balance().  It has to do with the positioning within your
-FIFO ticket locks (though even if ticket locks are not present on a
-given architecture we should still see an improvement.)
+> +	if (atomic_read(&pm_qos_array[target]->target_value) != extreme_value) {
+>  		call_notifier = 1;
+> -		pm_qos_array[target]->target_value = extreme_value;
+> +		atomic_set(&pm_qos_array[target]->target_value, extreme_value);
+>  		pr_debug(KERN_ERR "new target for qos %d is %d\n", target,
+> -			pm_qos_array[target]->target_value);
+> +			atomic_read(&pm_qos_array[target]->target_value));
+>  	}
+> -	spin_unlock_irqrestore(&pm_qos_lock, flags);
+>  
+>  	if (call_notifier)
+>  		blocking_notifier_call_chain(pm_qos_array[target]->notifiers,
+> @@ -193,11 +194,8 @@ static int find_pm_qos_object_by_minor(i
+>  int pm_qos_requirement(int pm_qos_class)
+>  {
+>  	int ret_val;
+> -	unsigned long flags;
+>  
+> -	spin_lock_irqsave(&pm_qos_lock, flags);
+> -	ret_val = pm_qos_array[pm_qos_class]->target_value;
+> -	spin_unlock_irqrestore(&pm_qos_lock, flags);
+> +	ret_val = atomic_read(&pm_qos_array[pm_qos_class]->target_value);
+>  
+>  	return ret_val;
+>  }
 
-When a low cpu wants to double lock, it tends to hold this_rq and gets
-in line for busiest_rq with no bearing on how long it held this_rq.=20
-Therefore the following scenario can occur:
-
-cpu 0                     cpu N
-----------------------------------
-rq[0] locked
-=2E.
-=2E.
-=2E.
-                               double_lock(N, 0)
-                               rq[N] released
-                               blocked on rq[0]
-=2E.
-=2E.
-=2E.
-=2E.
-double_lock(0, N)
-rq[N] locked
-double_lock returns
-=2E.
-=2E.
-=2E.
-=2E.
-rq[0] released         rq[0] locked
-                                  double_lock returns
-                                  ...
-                                  ...
-                                  ...
-
----------------------------------
-
-So double lock acquisition favors the lower cpus unfairly.  They will
-always win, even if they were not first.  Now with the combination of my
-patch plus your ticket locks, entry into the double lock becomes FIFO
-because the "blocked on rq[0]" would have inserted it in the
-time-ordered head of rq[0].  The later call to double_lock(0, N)
-performed by cpu0 would be forced to queue up behind cpuN trying to
-reacquire its own lock.
-
-Effectively, double_lock_balance becomes as fair as the underlying
-spinlock governing the RQ.  If we have ticket locks, double_lock_balance
-is FIFO.  Lack of ticket locks means we have arbitrary fairness.  And
-lack of this patch means we have favor for the lower cpus.
-
-To your point about the extra atomic ops:  Perhaps I should predicate
-this change on CONFIG_PREEMPT so as to not slow down mainline where
-throughput is more valued.
-
-> FWIW, this is always going to be a *tiny* bit unfair, because of double=
-
-> rq lock taking the lower lock first.
-
-While this is technically true, I am not as concerned about the fairness
-while acquiring the locks. =20
-
-
-
---------------enig70220B40011E425C7E38E5BA
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAkiz9a8ACgkQlOSOBdgZUxlLNwCeJax0KSr5XSACXUmBL4k8LZ9U
-OisAnjYHnUsf3lEXvci8v14uk/zrA8fw
-=taVv
------END PGP SIGNATURE-----
-
---------------enig70220B40011E425C7E38E5BA--
