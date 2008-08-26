@@ -1,76 +1,164 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH 2/5] sched: pull only one task during NEWIDLE balancing
- to limit critical section
-Date: Tue, 26 Aug 2008 07:36:57 -0400
-Message-ID: <48B3EAD9.60609@novell.com>
-References: <20080825200852.23217.13842.stgit@dev.haskins.net> <20080825201529.23217.8708.stgit@dev.haskins.net> <200808261621.33810.nickpiggin@yahoo.com.au>
+Subject: Re: [PATCH 3/5] sched: make double-lock-balance fair
+Date: Tue, 26 Aug 2008 08:23:11 -0400
+Message-ID: <48B3F5AF.9060205@novell.com>
+References: <20080825200852.23217.13842.stgit@dev.haskins.net> <20080825201534.23217.14936.stgit@dev.haskins.net> <200808261614.49662.nickpiggin@yahoo.com.au>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
  protocol="application/pgp-signature";
- boundary="------------enig2EDC31A232C84FAA939EBA95"
+ boundary="------------enig70220B40011E425C7E38E5BA"
 Cc: mingo@elte.hu, srostedt@redhat.com, peterz@infradead.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	npiggin@suse.de, gregory.haskins@gmail.com
 To: Nick Piggin <nickpiggin@yahoo.com.au>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:34586 "EHLO
+Received: from victor.provo.novell.com ([137.65.250.26]:34576 "EHLO
 	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752642AbYHZLjS (ORCPT
+	with ESMTP id S1754039AbYHZMZj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2008 07:39:18 -0400
-In-Reply-To: <200808261621.33810.nickpiggin@yahoo.com.au>
+	Tue, 26 Aug 2008 08:25:39 -0400
+In-Reply-To: <200808261614.49662.nickpiggin@yahoo.com.au>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig2EDC31A232C84FAA939EBA95
+--------------enig70220B40011E425C7E38E5BA
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
 Nick Piggin wrote:
 > On Tuesday 26 August 2008 06:15, Gregory Haskins wrote:
 >  =20
->> git-id c4acb2c0669c5c5c9b28e9d02a34b5c67edf7092 attempted to limit
->> newidle critical section length by stopping after at least one task
->> was moved.  Further investigation has shown that there are other
->> paths nested further inside the algorithm which still remain that allo=
-w
->> long latencies to occur with newidle balancing.  This patch applies
->> the same technique inside balance_tasks() to limit the duration of
->> this optional balancing operation.
+>> double_lock balance() currently favors logically lower cpus since they=
+
+>> often do not have to release their own lock to acquire a second lock.
+>> The result is that logically higher cpus can get starved when there is=
+
+>> a lot of pressure on the RQs.  This can result in higher latencies on
+>> higher cpu-ids.
+>>
+>> This patch makes the algorithm more fair by forcing all paths to have
+>> to release both locks before acquiring them again.  Since callsites to=
+
+>> double_lock_balance already consider it a potential preemption/resched=
+ule
+>> point, they have the proper logic to recheck for atomicity violations.=
+
 >>
 >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
->> CC: Nick Piggin <npiggin@suse.de>
+>> ---
+>>
+>>  kernel/sched.c |   17 +++++------------
+>>  1 files changed, 5 insertions(+), 12 deletions(-)
+>>
+>> diff --git a/kernel/sched.c b/kernel/sched.c
+>> index 6e0bde6..b7326cd 100644
+>> --- a/kernel/sched.c
+>> +++ b/kernel/sched.c
+>> @@ -2790,23 +2790,16 @@ static int double_lock_balance(struct rq *this=
+_rq,
+>> struct rq *busiest) __acquires(busiest->lock)
+>>  	__acquires(this_rq->lock)
+>>  {
+>> -	int ret =3D 0;
+>> -
+>>  	if (unlikely(!irqs_disabled())) {
+>>  		/* printk() doesn't work good under rq->lock */
+>>  		spin_unlock(&this_rq->lock);
+>>  		BUG_ON(1);
+>>  	}
+>> -	if (unlikely(!spin_trylock(&busiest->lock))) {
+>> -		if (busiest < this_rq) {
+>> -			spin_unlock(&this_rq->lock);
+>> -			spin_lock(&busiest->lock);
+>> -			spin_lock_nested(&this_rq->lock, SINGLE_DEPTH_NESTING);
+>> -			ret =3D 1;
+>> -		} else
+>> -			spin_lock_nested(&busiest->lock, SINGLE_DEPTH_NESTING);
+>> -	}
+>> -	return ret;
+>> +
+>> +	spin_unlock(&this_rq->lock);
+>> +	double_rq_lock(this_rq, busiest);
 >>    =20
 >
-> Hmm, this (andc4acb2c0669c5c5c9b28e9d02a34b5c67edf7092) still could
-> increase the amount of work to do significantly for workloads where
-> the CPU is going idle and pulling tasks over frequently. I don't
-> really like either of them too much.
+> Rather than adding the extra atomic operation, can't you just put this
+> into the unlikely spin_trylock failure path rather than the unfair logi=
+c
+> there?
 >  =20
 
-I had a feeling you may object to this patch based on your comments on
-the first one.  Thats why I CC'd you so you wouldnt think I was trying
-to sneak something past ;)
+The trick is that we *must* first release this_rq before proceeding or
+the new proposal doesn't work as intended.  This patch effectively
+breaks up the this_rq->lock critical section evenly across all CPUs as
+if it hit the case common for higher cpus.  This modification decreased
+latency by over 800% (went from > 400us to < 50us) on cpus 6 and 7 in my
+8-way box namely because they were not forced to wait for all the other
+lower cores to finish, but rather completions of double_lock_balance
+were handled in true FIFO w.r.t. to other calls to
+double_lock_balance().  It has to do with the positioning within your
+FIFO ticket locks (though even if ticket locks are not present on a
+given architecture we should still see an improvement.)
 
-> Maybe increasing the limit would effectively amortize most of the
-> problem (say, limit to move 16 tasks at most).
->  =20
+When a low cpu wants to double lock, it tends to hold this_rq and gets
+in line for busiest_rq with no bearing on how long it held this_rq.=20
+Therefore the following scenario can occur:
 
-The problem I was seeing was that even moving 2 was too many in the
-ftraces traces I looked at.  I think the idea of making a variable limit
-(set via a sysctl, etc) here is a good one, but I would recommend we
-have the default be "1" for CONFIG_PREEMPT (or at least
-CONFIG_PREEMPT_RT) based on what I know right now.   I know last time
-you objected to any kind of special cases for the preemptible kernels,
-but I think this is a good compromise.  Would this be acceptable?
+cpu 0                     cpu N
+----------------------------------
+rq[0] locked
+=2E.
+=2E.
+=2E.
+                               double_lock(N, 0)
+                               rq[N] released
+                               blocked on rq[0]
+=2E.
+=2E.
+=2E.
+=2E.
+double_lock(0, N)
+rq[N] locked
+double_lock returns
+=2E.
+=2E.
+=2E.
+=2E.
+rq[0] released         rq[0] locked
+                                  double_lock returns
+                                  ...
+                                  ...
+                                  ...
 
-Thanks Nick,
+---------------------------------
 
--Greg
+So double lock acquisition favors the lower cpus unfairly.  They will
+always win, even if they were not first.  Now with the combination of my
+patch plus your ticket locks, entry into the double lock becomes FIFO
+because the "blocked on rq[0]" would have inserted it in the
+time-ordered head of rq[0].  The later call to double_lock(0, N)
+performed by cpu0 would be forced to queue up behind cpuN trying to
+reacquire its own lock.
+
+Effectively, double_lock_balance becomes as fair as the underlying
+spinlock governing the RQ.  If we have ticket locks, double_lock_balance
+is FIFO.  Lack of ticket locks means we have arbitrary fairness.  And
+lack of this patch means we have favor for the lower cpus.
+
+To your point about the extra atomic ops:  Perhaps I should predicate
+this change on CONFIG_PREEMPT so as to not slow down mainline where
+throughput is more valued.
+
+> FWIW, this is always going to be a *tiny* bit unfair, because of double=
+
+> rq lock taking the lower lock first.
+
+While this is technically true, I am not as concerned about the fairness
+while acquiring the locks. =20
 
 
---------------enig2EDC31A232C84FAA939EBA95
+
+--------------enig70220B40011E425C7E38E5BA
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -79,9 +167,9 @@ Content-Disposition: attachment; filename="signature.asc"
 Version: GnuPG v2.0.9 (GNU/Linux)
 Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
 
-iEYEARECAAYFAkiz6tkACgkQlOSOBdgZUxkStACfXhVj1AcDxA+2axQmFVSEpVx4
-loEAn2SqLVi2O7ZWp8hDvlyq4gh1Mptx
-=WBs5
+iEYEARECAAYFAkiz9a8ACgkQlOSOBdgZUxlLNwCeJax0KSr5XSACXUmBL4k8LZ9U
+OisAnjYHnUsf3lEXvci8v14uk/zrA8fw
+=taVv
 -----END PGP SIGNATURE-----
 
---------------enig2EDC31A232C84FAA939EBA95--
+--------------enig70220B40011E425C7E38E5BA--
