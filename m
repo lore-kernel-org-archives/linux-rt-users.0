@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH v2 2/6] sched: pull only one task during NEWIDLE balancing to
-	limit critical section
-Date: Tue, 26 Aug 2008 13:34:54 -0400
-Message-ID: <20080826173454.16413.10021.stgit@dev.haskins.net>
+Subject: [PATCH v2 4/6] sched: add sched_class->needs_post_schedule() member
+Date: Tue, 26 Aug 2008 13:35:05 -0400
+Message-ID: <20080826173505.16413.97897.stgit@dev.haskins.net>
 References: <20080826173131.16413.17862.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,60 +11,121 @@ Cc: srostedt@redhat.com, peterz@infradead.org,
 	npiggin@suse.de, gregory.haskins@gmail.com
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:54161
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:54182
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1757369AbYHZRhM (ORCPT
+	with ESMTP id S1758759AbYHZRhX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2008 13:37:12 -0400
+	Tue, 26 Aug 2008 13:37:23 -0400
 In-Reply-To: <20080826173131.16413.17862.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-git-id c4acb2c0669c5c5c9b28e9d02a34b5c67edf7092 attempted to limit
-newidle critical section length by stopping after at least one task
-was moved.  Further investigation has shown that there are other
-paths nested further inside the algorithm which still remain that allow
-long latencies to occur with newidle balancing.  This patch applies
-the same technique inside balance_tasks() to limit the duration of
-this optional balancing operation.
+We currently run class->post_schedule() outside of the rq->lock, which
+means that we need to test for the need to post_schedule outside of
+the lock to avoid a forced reacquistion.  This is currently not a problem
+as we only look at rq->rt.overloaded.  However, we want to enhance this
+going forward to look at more state to reduce the need to post_schedule to
+a bare minimum set.  Therefore, we introduce a new member-func called
+needs_post_schedule() which tests for the post_schedule condtion without
+actually performing the work.  Therefore it is safe to call this
+function before the rq->lock is released, because we are guaranteed not
+to drop the lock at an intermediate point (such as what post_schedule()
+may do).
+
+We will use this later in the series
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Nick Piggin <npiggin@suse.de>
 ---
 
- kernel/sched.c |   18 +++++++++++++++++-
- 1 files changed, 17 insertions(+), 1 deletions(-)
+ include/linux/sched.h |    1 +
+ kernel/sched.c        |   10 +++++++++-
+ kernel/sched_rt.c     |   24 ++++++++++++++----------
+ 3 files changed, 24 insertions(+), 11 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 08a87b5..cf8cd8c 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -912,6 +912,7 @@ struct sched_class {
+ 			      struct rq *busiest, struct sched_domain *sd,
+ 			      enum cpu_idle_type idle);
+ 	void (*pre_schedule) (struct rq *this_rq, struct task_struct *task);
++	int (*needs_post_schedule) (struct rq *this_rq);
+ 	void (*post_schedule) (struct rq *this_rq);
+ 	void (*task_wake_up) (struct rq *this_rq, struct task_struct *task);
+ #endif
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 6a43c89..df6b447 100644
+index 850b454..c5b4459 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -2962,6 +2962,16 @@ next:
- 	pulled++;
- 	rem_load_move -= p->se.load.weight;
- 
-+#ifdef CONFIG_PREEMPT
-+	/*
-+	 * NEWIDLE balancing is a source of latency, so preemptible kernels
-+	 * will stop after the first task is pulled to minimize the critical
-+	 * section.
-+	 */
-+	if (idle == CPU_NEWLY_IDLE)
-+		goto out;
-+#endif
+@@ -2525,6 +2525,14 @@ static void finish_task_switch(struct rq *rq, struct task_struct *prev)
+ {
+ 	struct mm_struct *mm = rq->prev_mm;
+ 	long prev_state;
++#ifdef CONFIG_SMP
++	int post_schedule = 0;
 +
- 	/*
- 	 * We only want to steal up to the prescribed amount of weighted load.
- 	 */
-@@ -3008,9 +3018,15 @@ static int move_tasks(struct rq *this_rq, int this_cpu, struct rq *busiest,
- 				sd, idle, all_pinned, &this_best_prio);
- 		class = class->next;
++	if (current->sched_class->needs_post_schedule) {
++		BUG_ON(!current->sched_class->post_schedule);
++		post_schedule = current->sched_class->needs_post_schedule(rq);
++	}
++#endif
  
-+#ifdef CONFIG_PREEMPT
-+		/*
-+		 * NEWIDLE balancing is a source of latency, so preemptible
-+		 * kernels will stop after the first task is pulled to minimize
-+		 * the critical section.
-+		 */
- 		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
- 			break;
+ 	rq->prev_mm = NULL;
+ 
+@@ -2543,7 +2551,7 @@ static void finish_task_switch(struct rq *rq, struct task_struct *prev)
+ 	finish_arch_switch(prev);
+ 	finish_lock_switch(rq, prev);
+ #ifdef CONFIG_SMP
+-	if (current->sched_class->post_schedule)
++	if (post_schedule)
+ 		current->sched_class->post_schedule(rq);
+ #endif
+ 
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 196c024..a3d695b 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -1212,20 +1212,23 @@ static void pre_schedule_rt(struct rq *rq, struct task_struct *prev)
+ 		pull_rt_task(rq);
+ }
+ 
++/*
++ * assumes rq->lock is held
++ */
++static int needs_post_schedule_rt(struct rq *rq)
++{
++	return rq->rt.overloaded ? 1 : 0;
++}
++
+ static void post_schedule_rt(struct rq *rq)
+ {
+ 	/*
+-	 * If we have more than one rt_task queued, then
+-	 * see if we can push the other rt_tasks off to other CPUS.
+-	 * Note we may release the rq lock, and since
+-	 * the lock was owned by prev, we need to release it
+-	 * first via finish_lock_switch and then reaquire it here.
++	 * This is only called if needs_post_schedule_rt() indicates that
++	 * we need to push tasks away
+ 	 */
+-	if (unlikely(rq->rt.overloaded)) {
+-		spin_lock_irq(&rq->lock);
+-		push_rt_tasks(rq);
+-		spin_unlock_irq(&rq->lock);
+-	}
++	spin_lock_irq(&rq->lock);
++	push_rt_tasks(rq);
++	spin_unlock_irq(&rq->lock);
+ }
+ 
+ /*
+@@ -1473,6 +1476,7 @@ static const struct sched_class rt_sched_class = {
+ 	.rq_online              = rq_online_rt,
+ 	.rq_offline             = rq_offline_rt,
+ 	.pre_schedule		= pre_schedule_rt,
++	.needs_post_schedule	= needs_post_schedule_rt,
+ 	.post_schedule		= post_schedule_rt,
+ 	.task_wake_up		= task_wake_up_rt,
+ 	.switched_from		= switched_from_rt,
+
