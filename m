@@ -1,59 +1,60 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH v2 3/6] sched: make double-lock-balance fair
-Date: Wed, 27 Aug 2008 08:13:31 -0400
-Message-ID: <48B544EB.4040201@novell.com>
-References: <20080826173131.16413.17862.stgit@dev.haskins.net> <20080826173500.16413.40514.stgit@dev.haskins.net> <1219825295.6462.54.camel@twins> <20080827102646.GA5818@wotan.suse.de> <1219833668.6462.72.camel@twins> <20080827105615.GB5818@wotan.suse.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Availability rt patch for older linux kernel 2.6.11.3
+Date: Wed, 27 Aug 2008 12:41:42 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0808271233350.16059@gandalf.stny.rr.com>
+References: <loom.20080825T083613-13@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigA481E99CD8D86C3BD7225082"
-Cc: Peter Zijlstra <peterz@infradead.org>, mingo@elte.hu,
-	srostedt@redhat.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com
-To: Nick Piggin <npiggin@suse.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: robert <robje99@hotmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:53589 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754406AbYH0MP4 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:56458 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753538AbYH0Qlo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Aug 2008 08:15:56 -0400
-In-Reply-To: <20080827105615.GB5818@wotan.suse.de>
+	Wed, 27 Aug 2008 12:41:44 -0400
+In-Reply-To: <loom.20080825T083613-13@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigA481E99CD8D86C3BD7225082
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
 
-Nick Piggin wrote:
-> On Wed, Aug 27, 2008 at 12:41:08PM +0200, Peter Zijlstra wrote:
->  =20
->  =20
->> Does it make sense to make this _double_lock_balance() thing depend on=
+On Mon, 25 Aug 2008, robert wrote:
 
->> that too?
->>    =20
->
-> Hmm, you might have a good point there. Greg?
->  =20
+> Hi,
+> 
+> I'm currently working with a older linux kernel, 2.6.11.3, running on a 
+> powerpc.
+> Currently I'm running against realtime performance problems, the reaction time 
+> to interrupts is not good enough (sometimes 30 msec, while less then 8 msec is 
+> needed).
 
-This makes sense to me.
+Wow, 30ms is huge. Have you run this with HZ=1000 and CONFIG_PREEMPT on?
+
+> For this of course, are the realtime patches, but I can find them only for the 
+> newer kernels.
+> As our kernel is highly adopted to the hardware, I can't just move over to a 
+> newer kernel.
+> 
+> My question is:
+> - does anyone know a link for me were I can still find a patch for a 2.6.11.3 
+> kernel?
+
+Here's something that is the closest that I can find:
+
+http://rostedt.homelinux.com/private/realtime-preempt-2.6.12-final-V0.7.51-28
 
 
+> - if they can be found, are these patches mature enough to be used, 
+> particularly for a powerpc architecture?
 
---------------enigA481E99CD8D86C3BD7225082
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+At a quick glance, it has support for ppc. But I need to warn you: This 
+patch is very old and may have issues. But perhaps it will work for you.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+There is no guarantee that comes with this.
 
-iEYEARECAAYFAki1ROsACgkQlOSOBdgZUxnHCgCffGZMpCCyQTlHu72PCbo+98Cw
-ba4AoITHFrXAnP3vqh713kvtTX7LsMXo
-=V7HR
------END PGP SIGNATURE-----
+Backporting the latest patch would be very difficult, especially since 
+a lot of the -rt work is already in mainline. To do such a thing would 
+take at least 6 months of effort.
 
---------------enigA481E99CD8D86C3BD7225082--
+-- Steve
+
