@@ -1,84 +1,96 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
-Subject: Re: [PATCH 2/5] sched: pull only one task during NEWIDLE balancing to limit critical section
-Date: Wed, 27 Aug 2008 16:41:46 +1000
-Message-ID: <200808271641.46359.nickpiggin@yahoo.com.au>
-References: <20080825200852.23217.13842.stgit@dev.haskins.net> <200808261621.33810.nickpiggin@yahoo.com.au> <48B3EAD9.60609@novell.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v2 3/6] sched: make double-lock-balance fair
+Date: Wed, 27 Aug 2008 10:21:35 +0200
+Message-ID: <1219825295.6462.54.camel@twins>
+References: <20080826173131.16413.17862.stgit@dev.haskins.net>
+	 <20080826173500.16413.40514.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, srostedt@redhat.com, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
+Cc: mingo@elte.hu, srostedt@redhat.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, npiggin@suse.de,
+	gregory.haskins@gmail.com
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp105.mail.mud.yahoo.com ([209.191.85.215]:35855 "HELO
-	smtp105.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1752320AbYH0Glx (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:50920 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753018AbYH0IVu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Aug 2008 02:41:53 -0400
-In-Reply-To: <48B3EAD9.60609@novell.com>
-Content-Disposition: inline
+	Wed, 27 Aug 2008 04:21:50 -0400
+In-Reply-To: <20080826173500.16413.40514.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 26 August 2008 21:36, Gregory Haskins wrote:
-> Nick Piggin wrote:
-> > On Tuesday 26 August 2008 06:15, Gregory Haskins wrote:
-> >> git-id c4acb2c0669c5c5c9b28e9d02a34b5c67edf7092 attempted to limit
-> >> newidle critical section length by stopping after at least one task
-> >> was moved.  Further investigation has shown that there are other
-> >> paths nested further inside the algorithm which still remain that allow
-> >> long latencies to occur with newidle balancing.  This patch applies
-> >> the same technique inside balance_tasks() to limit the duration of
-> >> this optional balancing operation.
-> >>
-> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> >> CC: Nick Piggin <npiggin@suse.de>
-> >
-> > Hmm, this (andc4acb2c0669c5c5c9b28e9d02a34b5c67edf7092) still could
-> > increase the amount of work to do significantly for workloads where
-> > the CPU is going idle and pulling tasks over frequently. I don't
-> > really like either of them too much.
->
-> I had a feeling you may object to this patch based on your comments on
-> the first one.  Thats why I CC'd you so you wouldnt think I was trying
-> to sneak something past ;)
+On Tue, 2008-08-26 at 13:35 -0400, Gregory Haskins wrote:
+> double_lock balance() currently favors logically lower cpus since they
+> often do not have to release their own lock to acquire a second lock.
+> The result is that logically higher cpus can get starved when there is
+> a lot of pressure on the RQs.  This can result in higher latencies on
+> higher cpu-ids.
+> 
+> This patch makes the algorithm more fair by forcing all paths to have
+> to release both locks before acquiring them again.  Since callsites to
+> double_lock_balance already consider it a potential preemption/reschedule
+> point, they have the proper logic to recheck for atomicity violations.
+> 
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> ---
+> 
+>  kernel/sched.c |   52 +++++++++++++++++++++++++++++++++++++++++++++-------
+>  1 files changed, 45 insertions(+), 7 deletions(-)
+> 
+> diff --git a/kernel/sched.c b/kernel/sched.c
+> index df6b447..850b454 100644
+> --- a/kernel/sched.c
+> +++ b/kernel/sched.c
+> @@ -2782,21 +2782,43 @@ static void double_rq_unlock(struct rq *rq1, struct rq *rq2)
+>  		__release(rq2->lock);
+>  }
+>  
+> +#ifdef CONFIG_PREEMPT
+> +
+>  /*
+> - * double_lock_balance - lock the busiest runqueue, this_rq is locked already.
+> + * fair double_lock_balance: Safely acquires both rq->locks in a fair
+> + * way at the expense of forcing extra atomic operations in all
+> + * invocations.  This assures that the double_lock is acquired using the
+> + * same underlying policy as the spinlock_t on this architecture, which
+> + * reduces latency compared to the unfair variant below.  However, it
+> + * also adds more overhead and therefore may reduce throughput.
+>   */
+> -static int double_lock_balance(struct rq *this_rq, struct rq *busiest)
+> +static inline int _double_lock_balance(struct rq *this_rq, struct rq *busiest)
+> +	__releases(this_rq->lock)
+> +	__acquires(busiest->lock)
+> +	__acquires(this_rq->lock)
+> +{
+> +	spin_unlock(&this_rq->lock);
+> +	double_rq_lock(this_rq, busiest);
+> +
+> +	return 1;
+> +}
 
-Appreciated.
+Right - so to belabour Nick's point:
 
+  if (!spin_trylock(&busiest->lock)) {
+    spin_unlock(&this_rq->lock);
+    double_rq_lock(this_rq, busiest);
+  }
 
-> > Maybe increasing the limit would effectively amortize most of the
-> > problem (say, limit to move 16 tasks at most).
->
-> The problem I was seeing was that even moving 2 was too many in the
-> ftraces traces I looked at.  I think the idea of making a variable limit
-> (set via a sysctl, etc) here is a good one, but I would recommend we
-> have the default be "1" for CONFIG_PREEMPT (or at least
-> CONFIG_PREEMPT_RT) based on what I know right now.   I know last time
-> you objected to any kind of special cases for the preemptible kernels,
-> but I think this is a good compromise.  Would this be acceptable?
+might unfairly treat someone who is waiting on this_rq if I understand
+it right?
 
-Well I _prefer_ not to have a special case for preemptible kernels, but
-we already have similar arbitrary kind of changes like in tlb flushing,
-so...
+I suppose one could then write it like:
 
-I understand and accept there are some places where fundamentally you
-have to trade latency for throughput, so at some point we have to have a
-config and/or sysctl for that.
+  if (spin_is_contended(&this_rq->lock) || !spin_trylock(&busiest->lock)) {
+    spin_unlock(&this_rq->lock);
+    double_rq_lock(this_rq, busiest);
+  }
 
-I'm surprised 2 is too much but 1 is OK. Seems pretty fragile to me. Are
-you just running insane tests that load up the runqueues heaps and tests
-latency? -rt users will have to understand that some algorithms scale
-linearly or so with the number of a particular resource allocated, so
-they aren't going to get a constant low latency under arbitrary
-conditions.
+But, I'm not sure that's worth the effort at that point..
 
-FWIW, if you haven't already, then for -rt you might want to look at a
-more advanced data structure than simple run ordered list for moving tasks
-from one rq to the other. A simple one I was looking at is a time ordered
-list to pull the most cache cold tasks (and thus we can stop searching
-when we encounter the first cache hot task, in situations where it is
-appropriate, etc).
+Anyway - I think all this is utterly defeated on CONFIG_PREEMPT by the
+spin with IRQs enabled logic in kernel/spinlock.c.
 
-Anyway... yeah I'm OK with this if it is under a config option.
+Making this an -rt only patch...
+
