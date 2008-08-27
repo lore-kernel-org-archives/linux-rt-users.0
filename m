@@ -1,59 +1,73 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
-Subject: Re: [PATCH 2/5] sched: pull only one task during NEWIDLE balancing to limit critical section
-Date: Wed, 27 Aug 2008 21:57:34 +1000
-Message-ID: <200808272157.34494.nickpiggin@yahoo.com.au>
-References: <20080825200852.23217.13842.stgit@dev.haskins.net> <200808271641.46359.nickpiggin@yahoo.com.au> <48B53F97.20101@novell.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH v2 3/6] sched: make double-lock-balance fair
+Date: Wed, 27 Aug 2008 08:00:03 -0400
+Message-ID: <48B541C3.1090901@novell.com>
+References: <20080826173131.16413.17862.stgit@dev.haskins.net>	 <20080826173500.16413.40514.stgit@dev.haskins.net>	 <1219825295.6462.54.camel@twins> <20080827102646.GA5818@wotan.suse.de>	 <1219833668.6462.72.camel@twins>  <20080827105615.GB5818@wotan.suse.de> <1219835224.6462.81.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: mingo@elte.hu, srostedt@redhat.com, peterz@infradead.org,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enigFB6ECC11701E4AF6000D3CA0"
+Cc: Nick Piggin <npiggin@suse.de>, mingo@elte.hu, srostedt@redhat.com,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
-To: Gregory Haskins <ghaskins@novell.com>
+	gregory.haskins@gmail.com,
+	Russell King <rmk+lkml@arm.linux.org.uk>, ralf@linux-mips.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp117.mail.mud.yahoo.com ([209.191.84.166]:44886 "HELO
-	smtp117.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1754126AbYH0L5m (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:36874 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754126AbYH0MC0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Aug 2008 07:57:42 -0400
-In-Reply-To: <48B53F97.20101@novell.com>
-Content-Disposition: inline
+	Wed, 27 Aug 2008 08:02:26 -0400
+In-Reply-To: <1219835224.6462.81.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wednesday 27 August 2008 21:50, Gregory Haskins wrote:
-> Nick Piggin wrote:
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigFB6ECC11701E4AF6000D3CA0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-> > I'm surprised 2 is too much but 1 is OK. Seems pretty fragile to me.
+Peter Zijlstra wrote:
+> On Wed, 2008-08-27 at 12:56 +0200, Nick Piggin wrote:
 >
-> Its not that 1 is magically "ok".  Its simply that newidle balancing
-> hurts latency, and 1 is the minimum to pull to reasonably reduce the
-> critical section.  I already check if we NEEDS_RESCHED before taking the
-> rq->lock in newidle, so waiting for one task to pull is the first
-> opportunity I have to end the section as quickly as possible.  It would
-> be nice if I could just keep going if  I could detect whether there was
-> not any real contention.  Let me  give this angle some more thought.
-
-OK. Beware of introducing more cache coherency transitions, branches,
-icache, etc. If you are already resigned to put some special cases under
-CONFIG_PREEMPT, I think there is a lot to say for keeping the logic
-really simple and correct even if there is a small expense to performance.
-
-But of course I never object to speedups ;)
-
-
-> > FWIW, if you haven't already, then for -rt you might want to look at a
-> > more advanced data structure than simple run ordered list for moving
-> > tasks from one rq to the other. A simple one I was looking at is a time
-> > ordered list to pull the most cache cold tasks (and thus we can stop
-> > searching when we encounter the first cache hot task, in situations where
-> > it is appropriate, etc).
+>  =20
+>> BTW. I wonder about other architectures that are of interest to -rt? L=
+ike
+>> mips or arm perhaps... Any plans to implement ticket locks on those, o=
+r
+>> do they not tend to be used in SMP configurations on -rt yte?
+>>    =20
 >
-> Im not sure I follow your point, but if I do note that the RT scheduler
-> uses a completely different load balancer (that is priority ordered).
+> I think both are starting to show more and more SMP machines, so yes,
+> eventually we'll want ticket locks for them too.
+>
+> That said, I'm not aware of anyone working on it - I suppose we could
+> poke the regular arch maintainers.. Ralf, Russell ?
+>
+>  =20
+As an aside:  I have an implementation of C-based ticket lock
+replacements for raw_spinlock_t that I could post.  I never posted them
+because I mostly care about x86 and Nick's solution is superior there
+since its hand-tuned asm.  But mine could be used in places that have
+not yet written arch support but need FIFO.  I basically have it as a
+config option to enable "generic fifo spinlocks" or something like that.
 
-You still use the normal scheduler for other tasks, though? At any
-rate, no I haven't looked closely at the scheduler for a while, so
-I'm quite likely to be talking nonsense.
+-Greg
 
+
+--------------enigFB6ECC11701E4AF6000D3CA0
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAki1QcMACgkQlOSOBdgZUxk2ZQCeMrc93DQBBS6zcAX8OODNsWIJ
+Ah4Anjz8/a7S9yLWWeN15toq525hS0QQ
+=zTo3
+-----END PGP SIGNATURE-----
+
+--------------enigFB6ECC11701E4AF6000D3CA0--
