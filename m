@@ -1,122 +1,171 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH v2 0/6] sched: misc rt fixes for tip/sched/devel (was:
- Series short description)
-Date: Tue, 26 Aug 2008 14:16:10 -0400
-Message-ID: <48B4486A.1010308@novell.com>
-References: <20080825200852.23217.13842.stgit@dev.haskins.net> <20080826173131.16413.17862.stgit@dev.haskins.net>
+From: Nick Piggin <nickpiggin@yahoo.com.au>
+Subject: Re: [PATCH 3/5] sched: make double-lock-balance fair
+Date: Wed, 27 Aug 2008 16:36:08 +1000
+Message-ID: <200808271636.09243.nickpiggin@yahoo.com.au>
+References: <20080825200852.23217.13842.stgit@dev.haskins.net> <200808261614.49662.nickpiggin@yahoo.com.au> <48B3F5AF.9060205@novell.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigFE4EE7E35EA025A693CE7FA1"
-Cc: srostedt@redhat.com, peterz@infradead.org,
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: mingo@elte.hu, srostedt@redhat.com, peterz@infradead.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	npiggin@suse.de, gregory.haskins@gmail.com
-To: mingo@elte.hu
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:46540 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756032AbYHZSSb (ORCPT
+Received: from smtp114.mail.mud.yahoo.com ([209.191.84.67]:23574 "HELO
+	smtp114.mail.mud.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1753007AbYH0GgS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2008 14:18:31 -0400
-In-Reply-To: <20080826173131.16413.17862.stgit@dev.haskins.net>
+	Wed, 27 Aug 2008 02:36:18 -0400
+In-Reply-To: <48B3F5AF.9060205@novell.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigFE4EE7E35EA025A693CE7FA1
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Tuesday 26 August 2008 22:23, Gregory Haskins wrote:
+> Nick Piggin wrote:
+> > On Tuesday 26 August 2008 06:15, Gregory Haskins wrote:
+> >> double_lock balance() currently favors logically lower cpus since they
+> >> often do not have to release their own lock to acquire a second lock.
+> >> The result is that logically higher cpus can get starved when there is
+> >> a lot of pressure on the RQs.  This can result in higher latencies on
+> >> higher cpu-ids.
+> >>
+> >> This patch makes the algorithm more fair by forcing all paths to have
+> >> to release both locks before acquiring them again.  Since callsites to
+> >> double_lock_balance already consider it a potential
+> >> preemption/reschedule point, they have the proper logic to recheck for
+> >> atomicity violations.
+> >>
+> >> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> >> ---
+> >>
+> >>  kernel/sched.c |   17 +++++------------
+> >>  1 files changed, 5 insertions(+), 12 deletions(-)
+> >>
+> >> diff --git a/kernel/sched.c b/kernel/sched.c
+> >> index 6e0bde6..b7326cd 100644
+> >> --- a/kernel/sched.c
+> >> +++ b/kernel/sched.c
+> >> @@ -2790,23 +2790,16 @@ static int double_lock_balance(struct rq
+> >> *this_rq, struct rq *busiest) __acquires(busiest->lock)
+> >>  	__acquires(this_rq->lock)
+> >>  {
+> >> -	int ret = 0;
+> >> -
+> >>  	if (unlikely(!irqs_disabled())) {
+> >>  		/* printk() doesn't work good under rq->lock */
+> >>  		spin_unlock(&this_rq->lock);
+> >>  		BUG_ON(1);
+> >>  	}
+> >> -	if (unlikely(!spin_trylock(&busiest->lock))) {
+> >> -		if (busiest < this_rq) {
+> >> -			spin_unlock(&this_rq->lock);
+> >> -			spin_lock(&busiest->lock);
+> >> -			spin_lock_nested(&this_rq->lock, SINGLE_DEPTH_NESTING);
+> >> -			ret = 1;
+> >> -		} else
+> >> -			spin_lock_nested(&busiest->lock, SINGLE_DEPTH_NESTING);
+> >> -	}
+> >> -	return ret;
+> >> +
+> >> +	spin_unlock(&this_rq->lock);
+> >> +	double_rq_lock(this_rq, busiest);
+> >
+> > Rather than adding the extra atomic operation, can't you just put this
+> > into the unlikely spin_trylock failure path rather than the unfair logic
+> > there?
+>
+> The trick is that we *must* first release this_rq before proceeding or
+> the new proposal doesn't work as intended.  This patch effectively
+> breaks up the this_rq->lock critical section evenly across all CPUs as
+> if it hit the case common for higher cpus.
 
-Gregory Haskins wrote:
-> Hi Ingo,
->
-> The following repositories
->
->      git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-h=
-acks.git tip/sched/devel/rtbalance=20
->
->      ftp://ftp.novell.com/dev/ghaskins/tip-rt-fixes.tar.bz2
->
-> apply to tip/sched/devel to pick up fixes for the RT scheduler.=20
->  =20
-
-[ It would help if I remembered to rename the default subject ;) ]
-
-I just wanted to add that these are not urgent fixes.  .28 at the
-earliest.  Thanks
-
--Greg
-
-> [
-> 	Changelog:
-> =09
-> 	v2:=20
-> 	    *) predicated newidle and double_lock changes on
-> 	       CONFIG_PREEMPT to address a concern by Nick Piggin
->
-> 	    *) fixed a build issue when DEBUG_PI_LIST is defined=20
->
-> 	v1:
-> 	    *) initial release
-> ]
->
-> These patches were developed in the interest of shorting latencies in
-> PREEMPT_RT, but they apply to the mainline scheduler as well, so I am
-> offering them here first.
->
-> This has been tested under both 26.3-rt3 and tip/sched/devel on x86_64 =
-for
-> both CONFIG_SMP and !CONFIG_SMP.
->
-> Comments/bug-fixes welcome!
->
-> Regards,
-> -Greg
->
->
-> ---
->
-> Gregory Haskins (6):
->       sched: create "pushable_tasks" list to limit pushing to one attem=
-pt
->       plist: fix PLIST_NODE_INIT to work with debug enabled
->       sched: add sched_class->needs_post_schedule() member
->       sched: make double-lock-balance fair
->       sched: pull only one task during NEWIDLE balancing to limit criti=
-cal section
->       sched: only try to push a task on wakeup if it is migratable
->
->
->  include/linux/init_task.h |    1=20
->  include/linux/plist.h     |    9 ++-
->  include/linux/sched.h     |    2 +
->  kernel/sched.c            |   84 ++++++++++++++++++++++++---
->  kernel/sched_rt.c         |  139 +++++++++++++++++++++++++++++++++++++=
-+-------
->  5 files changed, 202 insertions(+), 33 deletions(-)
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->  =20
+I don't exactly see why my proposal would introduce any more latency, because
+we only trylock while holding the existing lock -- this is will only ever add
+a small ~constant time to the critical section, regardless of whether it is a
+high or low CPU runqueue.
 
 
+> This modification decreased 
+> latency by over 800% (went from > 400us to < 50us) on cpus 6 and 7 in my
+> 8-way box namely because they were not forced to wait for all the other
+> lower cores to finish, but rather completions of double_lock_balance
+> were handled in true FIFO w.r.t. to other calls to
+> double_lock_balance().  It has to do with the positioning within your
+> FIFO ticket locks (though even if ticket locks are not present on a
+> given architecture we should still see an improvement.)
+>
+> When a low cpu wants to double lock, it tends to hold this_rq and gets
+> in line for busiest_rq with no bearing on how long it held this_rq.
+> Therefore the following scenario can occur:
+>
+> cpu 0                     cpu N
+> ----------------------------------
+> rq[0] locked
+> ..
+> ..
+> ..
+>                                double_lock(N, 0)
+>                                rq[N] released
+>                                blocked on rq[0]
+> ..
+> ..
+> ..
+> ..
+> double_lock(0, N)
+> rq[N] locked
+> double_lock returns
+> ..
+> ..
+> ..
+> ..
+> rq[0] released         rq[0] locked
+>                                   double_lock returns
+>                                   ...
+>                                   ...
+>                                   ...
+>
+> ---------------------------------
+>
+> So double lock acquisition favors the lower cpus unfairly.  They will
+> always win, even if they were not first.  Now with the combination of my
+> patch plus your ticket locks, entry into the double lock becomes FIFO
+> because the "blocked on rq[0]" would have inserted it in the
+> time-ordered head of rq[0].
 
---------------enigFE4EE7E35EA025A693CE7FA1
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Right, but I don't think it is particularly wrong to allow a given
+CPU to double_lock_balance ahead of another guy if we're already holding
+the lock. _So long as_ the lock we are trying to acquire is uncontended,
+and we don't introduce this skewed unfairness due to lower CPUs being
+allowed to hold their lower lock while higher CPUs have to release their
+lock and first queue on the lower.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+The difference is that with my patch, there is a small window where the
+guy who asks for the double lock first will go through second. I don't
+think this really adds a fundamental amount of latency, and the
+performance benefit should not be ignored.
 
-iEYEARECAAYFAki0SGoACgkQlOSOBdgZUxmsAgCdG+piCcBZdn6Xnm1QUYi8K2Iu
-nUsAoIKZxtbYsXFG7c8X3aBsGbAQeznp
-=bQfL
------END PGP SIGNATURE-----
+Linux's traditional and I suppose much largest user base does not require
+realtime or really strict fairness, so IMO it is always questionable to
+make changes like this.
 
---------------enigFE4EE7E35EA025A693CE7FA1--
+
+> The later call to double_lock(0, N) 
+> performed by cpu0 would be forced to queue up behind cpuN trying to
+> reacquire its own lock.
+>
+> Effectively, double_lock_balance becomes as fair as the underlying
+> spinlock governing the RQ.  If we have ticket locks, double_lock_balance
+> is FIFO.  Lack of ticket locks means we have arbitrary fairness.  And
+> lack of this patch means we have favor for the lower cpus.
+>
+> To your point about the extra atomic ops:  Perhaps I should predicate
+> this change on CONFIG_PREEMPT so as to not slow down mainline where
+> throughput is more valued.
+
+I am happy with that. Actually, I think we should have a CONFIG_ to trade
+off throughput for latency, and have that config select PREEMPT as well as
+enable small misc changes like this one and the tlb flushing latency
+reduction. But for the moment, CONFIG_PREEMPT is the traditional placeholder
+for such a config option.
