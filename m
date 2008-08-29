@@ -1,46 +1,36 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ RT PATCH] seqlock: serialize against writers
-Date: Fri, 29 Aug 2008 13:02:58 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0808291300580.17917@gandalf.stny.rr.com>
-References: <20080829154237.1196.66825.stgit@dev.haskins.net> <20080829095729.0966d38e@extreme>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: [PATCH] seqlock: serialize against writers
+Date: Fri, 29 Aug 2008 19:08:51 +0200
+Message-ID: <20080829170851.GZ26610@one.firstfloor.org>
+References: <20080829154237.1196.66825.stgit@dev.haskins.net> <87abevpzv7.fsf@basil.nowhere.org> <48B81F60.3080409@gmail.com> <20080829162216.GW26610@one.firstfloor.org> <48B823F6.1010509@novell.com> <20080829163749.GX26610@one.firstfloor.org> <48B826BD.9000308@novell.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com
-To: Stephen Hemminger <shemminger@vyatta.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Andi Kleen <andi@firstfloor.org>,
+	Gregory Haskins <gregory.haskins@gmail.com>, mingo@elte.hu,
+	rostedt@goodmis.org, tglx@linutronix.de,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:60417 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754566AbYH2RDA (ORCPT
+Received: from one.firstfloor.org ([213.235.205.2]:54892 "EHLO
+	one.firstfloor.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757519AbYH2RGK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 13:03:00 -0400
-In-Reply-To: <20080829095729.0966d38e@extreme>
+	Fri, 29 Aug 2008 13:06:10 -0400
+Content-Disposition: inline
+In-Reply-To: <48B826BD.9000308@novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-/me adds "RT" to subject.
+No idea on the problem itself because I don't understand it, just:
 
-On Fri, 29 Aug 2008, Stephen Hemminger wrote:
-> 
-> I have mixed feelings about this. The point of this primitive was for
-> cases where write contention was rare and writers only did small updates.
-> So what you did was fix the primitive for cases where it is being misused.
-> Do you have a real example where this is a problem? If so then the
-> user of seqlock should be fixed, rather than fixing seqlock.
-> 
+> Given that, we either need to address the const requirement
+> for userspace, alter userspace's usage, or find another way to address
+> the deadlock.  Any ideas?
 
+In the worst case you can always disable the vsyscall gtod() and
+thus the need for a user space safe seqlock_t, but it will
+hurt some workloads significantly. 
 
-I think there's some confusion here, because of the changes to raw. The 
-raw_seqlock_t and mainline seqlock_t has no issue, and should not be 
-touched.
-
-What Gregory is solving is an issue in -rt where we let write seqlocks be 
-preempted.  Thus this causes issues with determinism. This is a special 
-case for -rt, and -rt only. It should not affect mainline in anyway.
-
-Sorry for the noise.
-
--- Steve
+-Andi
 
