@@ -1,55 +1,96 @@
-From: Andi Kleen <andi@firstfloor.org>
+From: Gregory Haskins <ghaskins@novell.com>
 Subject: Re: [PATCH] seqlock: serialize against writers
-Date: Fri, 29 Aug 2008 18:45:51 +0200
-Message-ID: <20080829164551.GY26610@one.firstfloor.org>
-References: <20080829154237.1196.66825.stgit@dev.haskins.net> <87abevpzv7.fsf@basil.nowhere.org> <48B81F60.3080409@gmail.com> <20080829162216.GW26610@one.firstfloor.org> <48B82349.1020109@gmail.com> <alpine.DEB.1.10.0808291233280.17917@gandalf.stny.rr.com> <48B8254D.1010206@gmail.com>
+Date: Fri, 29 Aug 2008 12:41:33 -0400
+Message-ID: <48B826BD.9000308@novell.com>
+References: <20080829154237.1196.66825.stgit@dev.haskins.net> <87abevpzv7.fsf@basil.nowhere.org> <48B81F60.3080409@gmail.com> <20080829162216.GW26610@one.firstfloor.org> <48B823F6.1010509@novell.com> <20080829163749.GX26610@one.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Andi Kleen <andi@firstfloor.org>,
-	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Gregory Haskins <gregory.haskins@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig1C42A7E83BE93405CFF80494"
+Cc: Gregory Haskins <gregory.haskins@gmail.com>, mingo@elte.hu,
+	rostedt@goodmis.org, tglx@linutronix.de,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Andi Kleen <andi@firstfloor.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from one.firstfloor.org ([213.235.205.2]:49634 "EHLO
-	one.firstfloor.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751867AbYH2QnJ (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:47248 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751387AbYH2QoA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 12:43:09 -0400
-Content-Disposition: inline
-In-Reply-To: <48B8254D.1010206@gmail.com>
+	Fri, 29 Aug 2008 12:44:00 -0400
+In-Reply-To: <20080829163749.GX26610@one.firstfloor.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> I could just force all of the seqbegins to hit the slowpath by hacking
-> the code and see what happens (aside from slowing down, of course ;)
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig1C42A7E83BE93405CFF80494
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Only if you don't believe it will really crash? I think it's pretty
-clear even without trying it.
+Andi Kleen wrote:
+> On Fri, Aug 29, 2008 at 12:29:42PM -0400, Gregory Haskins wrote:
+>  =20
+>> Andi Kleen wrote:
+>>    =20
+>>>> Im running it on a x86_64 box as we speak.  How can I tell if there =
+is a
+>>>> certain mode that is permitting this?
+>>>>    =20
+>>>>        =20
+>>> If the boot up says you're running with PMtimer then it uses the fall=
+back
+>>> (usually happens on pre Fam10h AMD boxes). A typical Intel box
+>>> would use the faster ring 3 only TSC path and then explode with your
+>>> change I bet.=20
+>>>  =20
+>>>      =20
+>> Thinking about this some more, perhaps the issue is I am not hitting t=
+he
+>> contended path in vsyscall?
+>>    =20
+>
+> Yes it will be only contended when gettimeofday() races with the timer =
 
-> Question: Which seqlock_t does userspace use?  I assume it uses
-> seqlock_t and not raw_seqlock_t. 
+> interrupt.  You could try to run gettimeofday() in a loop and see how
+> long it holds up.
+>
+> But anyways from the theory you should crash when it happens.=20
+> Writes to kernel data are not allowed in vsyscalls and your read_lock c=
+learly=20
+> does a write.
+>  =20
 
-> But the only reason that I ask is that
-> I converted raw_seqlock_t to use the new style as well to be consistent,
+Oh I don't deny that it does.  The compiler neatly reminded me that it
+could no longer be "const".  I just was ignorant of the userspace
+requirement ;)
 
-There's no raw_seqlock_t anywhere in mainline?
+But we *do* have a serious problem here.  A non-preemptible seqlock_t
+will do bad things if it preempts the writer, so we need some kind of
+solution here, one way or the other.  So suggestions welcome :)  I
+realize this is only an issue currently in PREEMPT_RT so perhaps most
+will not care... but I do need to solve this at least for this branch.
 
-Anyways the variable is declared (in mainline) in asm-x86/vgtod.h 
+I currently do not see a way to solve this problem that doesn't involve
+some heavier involvement in the read path (read: const seqlock_t need
+not apply).  Given that, we either need to address the const requirement
+for userspace, alter userspace's usage, or find another way to address
+the deadlock.  Any ideas?
 
-> even though it is not strictly necessary for the same reasons.  So if
-> perchance userspace uses the raw variant, I could solve this issue by
-> only re-working the seqlock_t variant.  Kind of a long shot, but figured
-> I would mention it :)
+-Greg
 
-I guess you could define a new seqlock_t which is explicitely user space
-safe. That might avoid such issues in the future. But then
-that would likely require some code duplication and be ugly.
 
-On the other hand whatever problem you fixing in the kernel
-(to be honest it's still unclear to me what the problem is)
-needs to be likely fixed for the userland lock too.
 
--Andi
+--------------enig1C42A7E83BE93405CFF80494
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAki4Jr0ACgkQlOSOBdgZUxnocgCfVzLmgdUV5LPI95T8qs+Gmtid
+kUIAn2fhrLscugbNjKNUbP1JDZYFK1VA
+=JMDu
+-----END PGP SIGNATURE-----
+
+--------------enig1C42A7E83BE93405CFF80494--
