@@ -1,42 +1,112 @@
-From: Ralf Baechle <ralf@linux-mips.org>
-Subject: Re: [PATCH v2 3/6] sched: make double-lock-balance fair
-Date: Fri, 29 Aug 2008 13:49:16 +0100
-Message-ID: <20080829124916.GE16101@linux-mips.org>
-References: <20080826173131.16413.17862.stgit@dev.haskins.net> <20080826173500.16413.40514.stgit@dev.haskins.net> <1219825295.6462.54.camel@twins> <20080827102646.GA5818@wotan.suse.de> <1219833668.6462.72.camel@twins> <20080827105615.GB5818@wotan.suse.de> <1219835224.6462.81.camel@twins>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [PATCH v2 6/6] sched: create "pushable_tasks" list to limit pushing
+ to one attempt
+Date: Fri, 29 Aug 2008 09:24:07 -0400
+Message-ID: <48B7F877.6070906@novell.com>
+References: <20080826173131.16413.17862.stgit@dev.haskins.net> <20080826173515.16413.39166.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Nick Piggin <npiggin@suse.de>,
-	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	srostedt@redhat.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com,
-	Russell King <rmk+lkml@arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enigEC7EB108149896663D041132"
+Cc: srostedt@redhat.com, peterz@infradead.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	npiggin@suse.de, gregory.haskins@gmail.com
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ditditdahdahdah-dahditditditdit.dl5rb.org.uk ([217.169.26.26]:34551
-	"EHLO ditditdahdahdah-dahdahdahditdit.dl5rb.org.uk"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753202AbYH2NSj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 09:18:39 -0400
-Content-Disposition: inline
-In-Reply-To: <1219835224.6462.81.camel@twins>
+Received: from victor.provo.novell.com ([137.65.250.26]:60538 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754018AbYH2N0h (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Aug 2008 09:26:37 -0400
+In-Reply-To: <20080826173515.16413.39166.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Aug 27, 2008 at 01:07:04PM +0200, Peter Zijlstra wrote:
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigEC7EB108149896663D041132
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-> > BTW. I wonder about other architectures that are of interest to -rt? Like
-> > mips or arm perhaps... Any plans to implement ticket locks on those, or
-> > do they not tend to be used in SMP configurations on -rt yte?
-> 
-> I think both are starting to show more and more SMP machines, so yes,
-> eventually we'll want ticket locks for them too.
-> 
-> That said, I'm not aware of anyone working on it - I suppose we could
-> poke the regular arch maintainers.. Ralf, Russell ?
+Hi Ingo,
 
-I looked into this a bit and we definately need it.  One large MIPS user
-already had converted his kernel to ticket locks due to an excessive
-number of cacheline bounces having been observed.
+Gregory Haskins wrote:
+> The RT scheduler employs a "push/pull" design to actively balance tasks=
 
-  Ralf
+> within the system (on a per disjoint cpuset basis).  When a task is
+> awoken, it is immediately determined if there are any lower priority
+> cpus which should be preempted.  This is opposed to the way normal
+> SCHED_OTHER tasks behave, which will wait for a periodic rebalancing
+> operation to occur before spreading out load.
+>
+> When a particular RQ has more than 1 active RT task, it is said to
+> be in an "overloaded" state.  Once this occurs, the system enters
+> the active balancing mode, where it will try to push the task away,
+> or persuade a different cpu to pull it over.  The system will stay
+> in this state until the system falls back below the <=3D 1 queued RT
+> task per RQ.
+>
+> However, the current implementation suffers from a limitation in the
+> push logic.  Once overloaded, all tasks (other than current) on the
+> RQ are analyzed on every push operation, even if it was previously
+> unpushable (due to affinity, etc).  Whats more, the operation stops
+> at the first task that is unpushable and will not look at items
+> lower in the queue.  This causes two problems:
+>
+> 1) We can have the same tasks analyzed over and over again during each
+>    push, which extends out the fast path in the scheduler for no
+>    gain.  Consider a RQ that has dozens of tasks that are bound to a
+>    core.  Each one of those tasks will be encountered and skipped
+>    for each push operation while they are queued.
+>
+> 2) There may be lower-priority tasks under the unpushable task that
+>    could have been successfully pushed, but will never be considered
+>    until either the unpushable task is cleared, or a pull operation
+>    succeeds.  The net result is a potential latency source for mid
+>    priority tasks.
+>
+> This patch aims to rectify these two conditions by introducing a new
+> priority sorted list: "pushable_tasks".  A task is added to the list
+> each time a task is activated or preempted.  It is removed from the
+> list any time it is deactivated, made current, or fails to push.
+>
+> This works because a task only needs to be attempted to push once.
+> After an initial failure to push, the other cpus will eventually try to=
+
+> pull the task when the conditions are proper.  This also solves the
+> problem that we don't completely analyze all tasks due to encountering
+> an unpushable tasks.  Now every task will have a push attempted (when
+> appropriate).
+>
+> This reduces latency both by shorting the critical section of the
+> rq->lock for certain workloads, and by making sure the algorithm
+> considers all eligible tasks in the system.
+>
+> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+> CC: Steven Rostedt <srostedt@redhat.com>
+>  =20
+
+We have found a crash bug in this patch in our lab caused by this
+patch.  So if you had any plans to pull this series in, please skip this
+last patch for now (6/6).  I will send out a refresh after I fix the issu=
+e.
+
+Thanks,
+-Greg
+
+
+
+--------------enigEC7EB108149896663D041132
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAki3+HcACgkQlOSOBdgZUxmF7ACfb/ZJaddBCthbghoG2fLx+5Ht
+TdcAn2CrJC6ZLVokzoILsykHQMy5OU5n
+=9rTm
+-----END PGP SIGNATURE-----
+
+--------------enigEC7EB108149896663D041132--
