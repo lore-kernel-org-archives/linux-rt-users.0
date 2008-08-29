@@ -1,108 +1,46 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH] seqlock: serialize against writers
-Date: Fri, 29 Aug 2008 13:00:26 -0400
-Message-ID: <48B82B2A.6010806@novell.com>
-References: <20080829154237.1196.66825.stgit@dev.haskins.net> <87abevpzv7.fsf@basil.nowhere.org> <48B81F60.3080409@gmail.com> <20080829162216.GW26610@one.firstfloor.org> <48B82349.1020109@gmail.com> <alpine.DEB.1.10.0808291233280.17917@gandalf.stny.rr.com> <48B8254D.1010206@gmail.com> <20080829164551.GY26610@one.firstfloor.org> <alpine.DEB.1.10.0808291251510.17917@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ RT PATCH] seqlock: serialize against writers
+Date: Fri, 29 Aug 2008 13:02:58 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0808291300580.17917@gandalf.stny.rr.com>
+References: <20080829154237.1196.66825.stgit@dev.haskins.net> <20080829095729.0966d38e@extreme>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigF4DBF2361103993097DC0399"
-Cc: Andi Kleen <andi@firstfloor.org>,
-	Gregory Haskins <gregory.haskins@gmail.com>, mingo@elte.hu,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
 	tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com
+To: Stephen Hemminger <shemminger@vyatta.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:54327 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754566AbYH2RC6 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:60417 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754566AbYH2RDA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 13:02:58 -0400
-In-Reply-To: <alpine.DEB.1.10.0808291251510.17917@gandalf.stny.rr.com>
+	Fri, 29 Aug 2008 13:03:00 -0400
+In-Reply-To: <20080829095729.0966d38e@extreme>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigF4DBF2361103993097DC0399
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
 
-Steven Rostedt wrote:
-> The subject forgot to add "RT" in the brackets.
->
-> On Fri, 29 Aug 2008, Andi Kleen wrote:
->
->  =20
->>> I could just force all of the seqbegins to hit the slowpath by hackin=
-g
->>> the code and see what happens (aside from slowing down, of course ;)
->>>      =20
->> Only if you don't believe it will really crash? I think it's pretty
->> clear even without trying it.
->>
->>    =20
->>> Question: Which seqlock_t does userspace use?  I assume it uses
->>> seqlock_t and not raw_seqlock_t.=20
->>>      =20
->>> But the only reason that I ask is that
->>> I converted raw_seqlock_t to use the new style as well to be consiste=
-nt,
->>>      =20
->> There's no raw_seqlock_t anywhere in mainline?
->>    =20
->
-> Nope, raw_seqlock_t in -rt is equivelant to seqlock_t in mainline.
->
->  =20
->> Anyways the variable is declared (in mainline) in asm-x86/vgtod.h=20
->>
->>    =20
->>> even though it is not strictly necessary for the same reasons.  So if=
+/me adds "RT" to subject.
 
->>> perchance userspace uses the raw variant, I could solve this issue by=
-
->>> only re-working the seqlock_t variant.  Kind of a long shot, but figu=
-red
->>> I would mention it :)
->>>      =20
->> I guess you could define a new seqlock_t which is explicitely user spa=
-ce
->> safe. That might avoid such issues in the future. But then
->> that would likely require some code duplication and be ugly.
->>
->> On the other hand whatever problem you fixing in the kernel
->> (to be honest it's still unclear to me what the problem is)
->> needs to be likely fixed for the userland lock too.
->>    =20
->
-> I'm not convinced that the raw_seqlocks (mainline normal seqlocks) has =
-a=20
-> problem anyway.
->  =20
-(continuing from IRC)
-
-Agreed.   I converted them to be consistent.  Steve just told me that
-userspace actually uses the raw_seqlock_t variant, so the answer is
-simple.  Just leave raw_seqlock_t alone and the patch will work fine.
-
-Thoughts?
-
--Greg
+On Fri, 29 Aug 2008, Stephen Hemminger wrote:
+> 
+> I have mixed feelings about this. The point of this primitive was for
+> cases where write contention was rare and writers only did small updates.
+> So what you did was fix the primitive for cases where it is being misused.
+> Do you have a real example where this is a problem? If so then the
+> user of seqlock should be fixed, rather than fixing seqlock.
+> 
 
 
+I think there's some confusion here, because of the changes to raw. The 
+raw_seqlock_t and mainline seqlock_t has no issue, and should not be 
+touched.
 
---------------enigF4DBF2361103993097DC0399
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+What Gregory is solving is an issue in -rt where we let write seqlocks be 
+preempted.  Thus this causes issues with determinism. This is a special 
+case for -rt, and -rt only. It should not affect mainline in anyway.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+Sorry for the noise.
 
-iEYEARECAAYFAki4KyoACgkQlOSOBdgZUxlt7ACggWsLsaxeN6P+UEblZyFrORv4
-Zy0An0zODsB09V2r29WLHyxRa8MLzXu8
-=2cBr
------END PGP SIGNATURE-----
+-- Steve
 
---------------enigF4DBF2361103993097DC0399--
