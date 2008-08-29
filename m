@@ -1,41 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
-Date: Fri, 29 Aug 2008 10:29:40 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0808291028540.27078@gandalf.stny.rr.com>
-References: <20080812224926.GA20652@linux.intel.com>  <1218736137.10800.234.camel@twins>  <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>  <20080825163412.GA21910@linux.intel.com>  <1219682129.8515.81.camel@twins>
- <520f0cf10808260148k47368b71he2737ea1a59bbe4d@mail.gmail.com>  <20080826161802.GB9862@linux.intel.com>  <520f0cf10808261045v9dddcdcnd1a86b224aa3feb0@mail.gmail.com>  <20080828194420.GB6802@linux.intel.com>  <20080828173201.8912a1f3.akpm@linux-foundation.org>
- <520f0cf10808282331r3425f4f4jfac2d3a7d53c8821@mail.gmail.com>
+From: Ralf Baechle <ralf@linux-mips.org>
+Subject: Re: [PATCH v2 3/6] sched: make double-lock-balance fair
+Date: Fri, 29 Aug 2008 13:49:16 +0100
+Message-ID: <20080829124916.GE16101@linux-mips.org>
+References: <20080826173131.16413.17862.stgit@dev.haskins.net> <20080826173500.16413.40514.stgit@dev.haskins.net> <1219825295.6462.54.camel@twins> <20080827102646.GA5818@wotan.suse.de> <1219833668.6462.72.camel@twins> <20080827105615.GB5818@wotan.suse.de> <1219835224.6462.81.camel@twins>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Andrew Morton <akpm@linux-foundation.org>, mgross@linux.intel.com,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	peterz@infradead.org, mingo@elte.hu, tglx@linutronix.de,
-	arjan@infradead.org
-To: John Kacur <jkacur@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758741AbYH2O3y@vger.kernel.org>
-In-Reply-To: <520f0cf10808282331r3425f4f4jfac2d3a7d53c8821@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Nick Piggin <npiggin@suse.de>,
+	Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
+	srostedt@redhat.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, gregory.haskins@gmail.com,
+	Russell King <rmk+lkml@arm.linux.org.uk>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ditditdahdahdah-dahditditditdit.dl5rb.org.uk ([217.169.26.26]:34551
+	"EHLO ditditdahdahdah-dahdahdahditdit.dl5rb.org.uk"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1753202AbYH2NSj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Aug 2008 09:18:39 -0400
+Content-Disposition: inline
+In-Reply-To: <1219835224.6462.81.camel@twins>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Wed, Aug 27, 2008 at 01:07:04PM +0200, Peter Zijlstra wrote:
 
-
-On Fri, 29 Aug 2008, John Kacur wrote:
+> > BTW. I wonder about other architectures that are of interest to -rt? Like
+> > mips or arm perhaps... Any plans to implement ticket locks on those, or
+> > do they not tend to be used in SMP configurations on -rt yte?
 > 
-> Hi Andrew
+> I think both are starting to show more and more SMP machines, so yes,
+> eventually we'll want ticket locks for them too.
 > 
-> The purpose of the patch is to remove the spin_lock around the read in
-> the function pm_qos_requirement - since spinlocks can sleep in -rt and
-> this function is called from idle. I did propose a patch, that simply
-> removed the spinlock, since Peter Zilstra and others (yourself) point
-> out, the lock isn't needed to read a single word from memory. Although
-> the patch worked fine, Arjan objected to it, because it was not
-> symmetric. A reader of the code might wonder why it was locked in
-> other functions but not here. He suggested changing it to an atomic
-> type might be less confusing. The alternative which I like better
-> actually is to simply remove the lock in pm_qos_requirement and add a
-> comment for readers of the code.
+> That said, I'm not aware of anyone working on it - I suppose we could
+> poke the regular arch maintainers.. Ralf, Russell ?
 
-This is a much better changelog, and is what should have been written in 
-the first place ;-)
+I looked into this a bit and we definately need it.  One large MIPS user
+already had converted his kernel to ticket locks due to an excessive
+number of cacheline bounces having been observed.
 
--- Steve
+  Ralf
