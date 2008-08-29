@@ -1,112 +1,259 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [PATCH v2 6/6] sched: create "pushable_tasks" list to limit pushing
- to one attempt
-Date: Fri, 29 Aug 2008 09:24:07 -0400
-Message-ID: <48B7F877.6070906@novell.com>
-References: <20080826173131.16413.17862.stgit@dev.haskins.net> <20080826173515.16413.39166.stgit@dev.haskins.net>
+Subject: [PATCH] seqlock: serialize against writers
+Date: Fri, 29 Aug 2008 11:44:58 -0400
+Message-ID: <20080829154237.1196.66825.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigEC7EB108149896663D041132"
-Cc: srostedt@redhat.com, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
-To: mingo@elte.hu
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	gregory.haskins@gmail.com
+To: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:60538 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754018AbYH2N0h (ORCPT
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:54947
+	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751006AbYH2PrX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 09:26:37 -0400
-In-Reply-To: <20080826173515.16413.39166.stgit@dev.haskins.net>
+	Fri, 29 Aug 2008 11:47:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigEC7EB108149896663D041132
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+*Patch submitted for inclusion in PREEMPT_RT 26-rt4.  Applies to 2.6.26.3-rt3*
 
-Hi Ingo,
+Hi Ingo, Steven, Thomas,
+  Please consider for -rt4.  This fixes a nasty deadlock on my systems under
+  heavy load.
 
-Gregory Haskins wrote:
-> The RT scheduler employs a "push/pull" design to actively balance tasks=
-
-> within the system (on a per disjoint cpuset basis).  When a task is
-> awoken, it is immediately determined if there are any lower priority
-> cpus which should be preempted.  This is opposed to the way normal
-> SCHED_OTHER tasks behave, which will wait for a periodic rebalancing
-> operation to occur before spreading out load.
->
-> When a particular RQ has more than 1 active RT task, it is said to
-> be in an "overloaded" state.  Once this occurs, the system enters
-> the active balancing mode, where it will try to push the task away,
-> or persuade a different cpu to pull it over.  The system will stay
-> in this state until the system falls back below the <=3D 1 queued RT
-> task per RQ.
->
-> However, the current implementation suffers from a limitation in the
-> push logic.  Once overloaded, all tasks (other than current) on the
-> RQ are analyzed on every push operation, even if it was previously
-> unpushable (due to affinity, etc).  Whats more, the operation stops
-> at the first task that is unpushable and will not look at items
-> lower in the queue.  This causes two problems:
->
-> 1) We can have the same tasks analyzed over and over again during each
->    push, which extends out the fast path in the scheduler for no
->    gain.  Consider a RQ that has dozens of tasks that are bound to a
->    core.  Each one of those tasks will be encountered and skipped
->    for each push operation while they are queued.
->
-> 2) There may be lower-priority tasks under the unpushable task that
->    could have been successfully pushed, but will never be considered
->    until either the unpushable task is cleared, or a pull operation
->    succeeds.  The net result is a potential latency source for mid
->    priority tasks.
->
-> This patch aims to rectify these two conditions by introducing a new
-> priority sorted list: "pushable_tasks".  A task is added to the list
-> each time a task is activated or preempted.  It is removed from the
-> list any time it is deactivated, made current, or fails to push.
->
-> This works because a task only needs to be attempted to push once.
-> After an initial failure to push, the other cpus will eventually try to=
-
-> pull the task when the conditions are proper.  This also solves the
-> problem that we don't completely analyze all tasks due to encountering
-> an unpushable tasks.  Now every task will have a push attempted (when
-> appropriate).
->
-> This reduces latency both by shorting the critical section of the
-> rq->lock for certain workloads, and by making sure the algorithm
-> considers all eligible tasks in the system.
->
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> CC: Steven Rostedt <srostedt@redhat.com>
->  =20
-
-We have found a crash bug in this patch in our lab caused by this
-patch.  So if you had any plans to pull this series in, please skip this
-last patch for now (6/6).  I will send out a refresh after I fix the issu=
-e.
-
-Thanks,
 -Greg
 
+----
 
+Seqlocks have always advertised that readers do not "block", but this was
+never really true.  Readers have always logically blocked at the head of
+the critical section under contention with writers, regardless of whether
+they were allowed to run code or not.
 
---------------enigEC7EB108149896663D041132
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Recent changes in this space (88a411c07b6fedcfc97b8dc51ae18540bd2beda0)
+have turned this into a more explicit blocking operation in mainline.
+However, this change highlights a short-coming in -rt because the
+normal seqlock_ts are preemptible.  This means that we can potentially
+deadlock should a reader spin waiting for a write critical-section to end
+while the writer is preempted.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+This patch changes the internal implementation to use a rwlock and forces
+the readers to serialize with the writers under contention.  This will
+have the advantage that -rt seqlocks_t will sleep the reader if deadlock
+were imminent, and it will pi-boost the writer to prevent inversion.
 
-iEYEARECAAYFAki3+HcACgkQlOSOBdgZUxmF7ACfb/ZJaddBCthbghoG2fLx+5Ht
-TdcAn2CrJC6ZLVokzoILsykHQMy5OU5n
-=9rTm
------END PGP SIGNATURE-----
+This fixes a deadlock discovered under testing where all high prioritiy
+readers were hogging the cpus and preventing a writer from releasing the
+lock.
 
---------------enigEC7EB108149896663D041132--
+Since seqlocks are designed to be used as rarely-write locks, this should
+not affect the performance in the fast-path
+
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
+
+ include/linux/seqlock.h |   76 +++++++++++++++++++++++++----------------------
+ 1 files changed, 40 insertions(+), 36 deletions(-)
+
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index 345d726..7010169 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -3,9 +3,11 @@
+ /*
+  * Reader/writer consistent mechanism without starving writers. This type of
+  * lock for data where the reader wants a consistent set of information
+- * and is willing to retry if the information changes.  Readers never
+- * block but they may have to retry if a writer is in
+- * progress. Writers do not wait for readers. 
++ * and is willing to retry if the information changes. Readers block
++ * on write contention (and where applicable, pi-boost the writer).
++ * Readers without contention on entry acquire the critical section
++ * without any atomic operations, but they may have to retry if a writer
++ * enters before the critical section ends. Writers do not wait for readers.
+  *
+  * This is not as cache friendly as brlock. Also, this will not work
+  * for data that contains pointers, because any writer could
+@@ -24,6 +26,8 @@
+  *
+  * Based on x86_64 vsyscall gettimeofday 
+  * by Keith Owens and Andrea Arcangeli
++ *
++ * Priority inheritance and live-lock avoidance by Gregory Haskins
+  */
+ 
+ #include <linux/spinlock.h>
+@@ -31,12 +35,12 @@
+ 
+ typedef struct {
+ 	unsigned sequence;
+-	spinlock_t lock;
++	rwlock_t lock;
+ } __seqlock_t;
+ 
+ typedef struct {
+ 	unsigned sequence;
+-	raw_spinlock_t lock;
++	raw_rwlock_t lock;
+ } __raw_seqlock_t;
+ 
+ #define seqlock_need_resched(seq) lock_need_resched(&(seq)->lock)
+@@ -54,10 +58,10 @@ typedef __raw_seqlock_t raw_seqlock_t;
+  * OK now.  Be cautious.
+  */
+ #define __RAW_SEQLOCK_UNLOCKED(lockname) \
+-		{ 0, RAW_SPIN_LOCK_UNLOCKED(lockname) }
++		{ 0, RAW_RW_LOCK_UNLOCKED(lockname) }
+ 
+ #ifdef CONFIG_PREEMPT_RT
+-# define __SEQLOCK_UNLOCKED(lockname) { 0, __SPIN_LOCK_UNLOCKED(lockname) }
++# define __SEQLOCK_UNLOCKED(lockname) { 0, __RW_LOCK_UNLOCKED(lockname) }
+ #else
+ # define __SEQLOCK_UNLOCKED(lockname) __RAW_SEQLOCK_UNLOCKED(lockname)
+ #endif
+@@ -66,10 +70,10 @@ typedef __raw_seqlock_t raw_seqlock_t;
+ 		 __SEQLOCK_UNLOCKED(old_style_seqlock_init)
+ 
+ #define raw_seqlock_init(x) \
+-	do { *(x) = (raw_seqlock_t) __RAW_SEQLOCK_UNLOCKED(x); spin_lock_init(&(x)->lock); } while (0)
++	do { *(x) = (raw_seqlock_t) __RAW_SEQLOCK_UNLOCKED(x); rwlock_init(&(x)->lock); } while (0)
+ 
+ #define seqlock_init(x) \
+-		do { *(x) = (seqlock_t) __SEQLOCK_UNLOCKED(x); spin_lock_init(&(x)->lock); } while (0)
++		do { *(x) = (seqlock_t) __SEQLOCK_UNLOCKED(x); rwlock_init(&(x)->lock); } while (0)
+ 
+ #define DEFINE_SEQLOCK(x) \
+ 		seqlock_t x = __SEQLOCK_UNLOCKED(x)
+@@ -85,7 +89,7 @@ typedef __raw_seqlock_t raw_seqlock_t;
+  */
+ static inline void __write_seqlock(seqlock_t *sl)
+ {
+-	spin_lock(&sl->lock);
++	write_lock(&sl->lock);
+ 	++sl->sequence;
+ 	smp_wmb();
+ }
+@@ -103,14 +107,14 @@ static inline void __write_sequnlock(seqlock_t *sl)
+ {
+ 	smp_wmb();
+ 	sl->sequence++;
+-	spin_unlock(&sl->lock);
++	write_unlock(&sl->lock);
+ }
+ 
+ #define __write_sequnlock_irqrestore(sl, flags)	__write_sequnlock(sl)
+ 
+ static inline int __write_tryseqlock(seqlock_t *sl)
+ {
+-	int ret = spin_trylock(&sl->lock);
++	int ret = write_trylock(&sl->lock);
+ 
+ 	if (ret) {
+ 		++sl->sequence;
+@@ -120,18 +124,25 @@ static inline int __write_tryseqlock(seqlock_t *sl)
+ }
+ 
+ /* Start of read calculation -- fetch last complete writer token */
+-static __always_inline unsigned __read_seqbegin(const seqlock_t *sl)
++static __always_inline unsigned __read_seqbegin(seqlock_t *sl)
+ {
+ 	unsigned ret;
+ 
+-repeat:
+ 	ret = sl->sequence;
+ 	smp_rmb();
+ 	if (unlikely(ret & 1)) {
+-		cpu_relax();
+-		goto repeat;
++		/*
++		 * Serialze with the writer which will ensure they are
++		 * pi-boosted if necessary and prevent us from starving
++		 * them.
++		 */
++		read_lock(&sl->lock);
++		ret = sl->sequence;
++		read_unlock(&sl->lock);
+ 	}
+ 
++	BUG_ON(ret & 1);
++
+ 	return ret;
+ }
+ 
+@@ -142,25 +153,13 @@ repeat:
+  */
+ static inline int __read_seqretry(seqlock_t *sl, unsigned iv)
+ {
+-	int ret;
+-
+ 	smp_rmb();
+-	ret = (sl->sequence != iv);
+-	/*
+-	 * If invalid then serialize with the writer, to make sure we
+-	 * are not livelocking it:
+-	 */
+-	if (unlikely(ret)) {
+-		unsigned long flags;
+-		spin_lock_irqsave(&sl->lock, flags);
+-		spin_unlock_irqrestore(&sl->lock, flags);
+-	}
+-	return ret;
++	return (sl->sequence != iv);
+ }
+ 
+ static __always_inline void __write_seqlock_raw(raw_seqlock_t *sl)
+ {
+-	spin_lock(&sl->lock);
++	write_lock(&sl->lock);
+ 	++sl->sequence;
+ 	smp_wmb();
+ }
+@@ -191,7 +190,7 @@ static __always_inline void __write_sequnlock_raw(raw_seqlock_t *sl)
+ {
+ 	smp_wmb();
+ 	sl->sequence++;
+-	spin_unlock(&sl->lock);
++	write_unlock(&sl->lock);
+ }
+ 
+ static __always_inline void
+@@ -217,7 +216,7 @@ static __always_inline void __write_sequnlock_bh_raw(raw_seqlock_t *sl)
+ 
+ static __always_inline int __write_tryseqlock_raw(raw_seqlock_t *sl)
+ {
+-	int ret = spin_trylock(&sl->lock);
++	int ret = write_trylock(&sl->lock);
+ 
+ 	if (ret) {
+ 		++sl->sequence;
+@@ -226,18 +225,23 @@ static __always_inline int __write_tryseqlock_raw(raw_seqlock_t *sl)
+ 	return ret;
+ }
+ 
+-static __always_inline unsigned __read_seqbegin_raw(const raw_seqlock_t *sl)
++static __always_inline unsigned __read_seqbegin_raw(raw_seqlock_t *sl)
+ {
+ 	unsigned ret;
+ 
+-repeat:
+ 	ret = sl->sequence;
+ 	smp_rmb();
+ 	if (unlikely(ret & 1)) {
+-		cpu_relax();
+-		goto repeat;
++		/*
++		 * Serialize with the writer
++		 */
++		read_lock(&sl->lock);
++		ret = sl->sequence;
++		read_unlock(&sl->lock);
+ 	}
+ 
++	BUG_ON(ret & 1);
++
+ 	return ret;
+ }
+ 
+
