@@ -1,175 +1,81 @@
 From: "John Kacur" <jkacur@gmail.com>
-Subject: Re: [PATCH RFC] pm_qos_requirement might sleep
-Date: Fri, 29 Aug 2008 08:31:12 +0200
-Message-ID: <520f0cf10808282331r3425f4f4jfac2d3a7d53c8821@mail.gmail.com>
-References: <20080812224926.GA20652@linux.intel.com>
-	 <1218736137.10800.234.camel@twins>
-	 <520f0cf10808141551k283aecb8y647d0f5ae321b81f@mail.gmail.com>
-	 <20080825163412.GA21910@linux.intel.com>
-	 <1219682129.8515.81.camel@twins>
-	 <520f0cf10808260148k47368b71he2737ea1a59bbe4d@mail.gmail.com>
-	 <20080826161802.GB9862@linux.intel.com>
-	 <520f0cf10808261045v9dddcdcnd1a86b224aa3feb0@mail.gmail.com>
-	 <20080828194420.GB6802@linux.intel.com>
-	 <20080828173201.8912a1f3.akpm@linux-foundation.org>
+Subject: Re: 2.6.26.3-rt3 bug report
+Date: Fri, 29 Aug 2008 16:29:03 +0200
+Message-ID: <520f0cf10808290729q1d99b915s1543256796c8eeb7@mail.gmail.com>
+References: <520f0cf10808241551x2fe64e9esadf66634b3790c54@mail.gmail.com>
+	 <520f0cf10808251615r5953794x9816bd58ea771ab3@mail.gmail.com>
+	 <1219724080.25366.13.camel@perihelion> <48B39969.8060501@osadl.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: mgross@linux.intel.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, peterz@infradead.org,
-	rostedt@goodmis.org, mingo@elte.hu, tglx@linutronix.de,
-	arjan@infradead.org
-To: "Andrew Morton" <akpm@linux-foundation.org>
+Cc: "Jon Masters" <jonathan@jonmasters.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Ingo Molnar" <mingo@elte.hu>
+To: "Carsten Emde" <Carsten.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qb-out-0506.google.com ([72.14.204.235]:35667 "EHLO
-	qb-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751883AbYH2GbN (ORCPT
+Received: from ik-out-1112.google.com ([66.249.90.179]:63452 "EHLO
+	ik-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755728AbYH2O3H (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Aug 2008 02:31:13 -0400
-Received: by qb-out-0506.google.com with SMTP id f11so1344492qba.17
-        for <linux-rt-users@vger.kernel.org>; Thu, 28 Aug 2008 23:31:12 -0700 (PDT)
-In-Reply-To: <20080828173201.8912a1f3.akpm@linux-foundation.org>
+	Fri, 29 Aug 2008 10:29:07 -0400
+Received: by ik-out-1112.google.com with SMTP id c28so521453ika.5
+        for <linux-rt-users@vger.kernel.org>; Fri, 29 Aug 2008 07:29:03 -0700 (PDT)
+In-Reply-To: <48B39969.8060501@osadl.org>
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Aug 29, 2008 at 2:32 AM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Thu, 28 Aug 2008 12:44:20 -0700
-> mark gross <mgross@linux.intel.com> wrote:
->
->> From: John Kacur <jkacur at gmail dot com>
->
-> I tend to deobfuscate email addresses when preparing the changelogs.
->
-> Not sure why, really, and I feel a bit guilty about doing it (hey, you
-> can forward the resulting spam to me if you like).  One reason I guess
-> is to avoid breaking all the emails which my scripts will automatically
-> send out as the patch goes through its little lifecycle.  Some of which
-> can sometimes be quite important.
->
->> Patch to make PM_QOS and CPU_IDLE play nicer when ran with the
->> RT-Preempt kernel.  CPU_IDLE polls the target_value's of some of the
->> pm_qos parameters from the idle loop causing sleeping locking
->> warnings.  Changing the target_value to an atomic avoids this issue.
->>
->> Signed-off-by: mark gross <mgross@linux.intel.com>
->>
->> Thanks,
->>
->> --mgross
->>
->>
->> Remove the spinlock in pm_qos_requirement by making target_value an atomic type.
->> This is necessary for real-time since pm_qos_requirement is called by idle and
->> cannot be allowed to sleep.
->> Signed-off-by: John Kacur <jkacur at gmail dot com>
->
-> As usual when I get two different changelogs, I create a masterpiece
-> which is better than either of the originals!
->
->> Index: linux-2.6/kernel/pm_qos_params.c
->> ===================================================================
->> --- linux-2.6.orig/kernel/pm_qos_params.c     2008-08-08 07:52:01.000000000 -0700
->> +++ linux-2.6/kernel/pm_qos_params.c  2008-08-28 12:14:55.000000000 -0700
->> @@ -43,7 +43,7 @@
->>  #include <linux/uaccess.h>
->>
->>  /*
->> - * locking rule: all changes to target_value or requirements or notifiers lists
->> + * locking rule: all changes to requirements or notifiers lists
->>   * or pm_qos_object list and pm_qos_objects need to happen with pm_qos_lock
->>   * held, taken with _irqsave.  One lock to rule them all
->>   */
->> @@ -66,7 +66,7 @@
->>       struct miscdevice pm_qos_power_miscdev;
->>       char *name;
->>       s32 default_value;
->> -     s32 target_value;
->> +     atomic_t target_value;
->>       s32 (*comparitor)(s32, s32);
->>  };
->>
->> @@ -77,7 +77,7 @@
->>       .notifiers = &cpu_dma_lat_notifier,
->>       .name = "cpu_dma_latency",
->>       .default_value = 2000 * USEC_PER_SEC,
->> -     .target_value = 2000 * USEC_PER_SEC,
->> +     .target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
->>       .comparitor = min_compare
->>  };
->>
->> @@ -87,7 +87,7 @@
->>       .notifiers = &network_lat_notifier,
->>       .name = "network_latency",
->>       .default_value = 2000 * USEC_PER_SEC,
->> -     .target_value = 2000 * USEC_PER_SEC,
->> +     .target_value = ATOMIC_INIT(2000 * USEC_PER_SEC),
->>       .comparitor = min_compare
->>  };
->>
->> @@ -99,7 +99,7 @@
->>       .notifiers = &network_throughput_notifier,
->>       .name = "network_throughput",
->>       .default_value = 0,
->> -     .target_value = 0,
->> +     .target_value = ATOMIC_INIT(0),
->>       .comparitor = max_compare
->>  };
->>
->> @@ -150,11 +150,11 @@
->>               extreme_value = pm_qos_array[target]->comparitor(
->>                               extreme_value, node->value);
->>       }
->> -     if (pm_qos_array[target]->target_value != extreme_value) {
->> +     if (atomic_read(&pm_qos_array[target]->target_value) != extreme_value) {
->>               call_notifier = 1;
->> -             pm_qos_array[target]->target_value = extreme_value;
->> +             atomic_set(&pm_qos_array[target]->target_value, extreme_value);
->>               pr_debug(KERN_ERR "new target for qos %d is %d\n", target,
->> -                     pm_qos_array[target]->target_value);
->> +                     atomic_read(&pm_qos_array[target]->target_value));
->>       }
->>       spin_unlock_irqrestore(&pm_qos_lock, flags);
->>
->> @@ -193,14 +193,7 @@
->>   */
->>  int pm_qos_requirement(int pm_qos_class)
->>  {
->> -     int ret_val;
->> -     unsigned long flags;
->> -
->> -     spin_lock_irqsave(&pm_qos_lock, flags);
->> -     ret_val = pm_qos_array[pm_qos_class]->target_value;
->> -     spin_unlock_irqrestore(&pm_qos_lock, flags);
->> -
->> -     return ret_val;
->> +     return atomic_read(&pm_qos_array[pm_qos_class]->target_value);
->>  }
->>  EXPORT_SYMBOL_GPL(pm_qos_requirement);
->
-> OK, so I've stared and stared.  This patch doesn't do anything.
->
-> I'm suspecting that the rt patch might be doing something silly, like
-> thinking that it needs to take pm_qos_lock to read a single word from
-> memory, or something like that.
->
-> But this patch is simply not understandable given the amount of
-> information which you guys have provided.
+On Tue, Aug 26, 2008 at 7:49 AM, Carsten Emde <Carsten.Emde@osadl.org> wrote:
+> Jon Masters wrote:
+>> On Tue, 2008-08-26 at 01:15 +0200, John Kacur wrote:
+>>> Slightly different form today.
+>>> Bad page state in process 'firefox-bin'
+>>> page:ffffe20000daa360 flags:0x0100000000000000
+>>> mapping:ffffe20000daa378 mapcount:0 count:0
+>>> Trying to fix it up, but a reboot is needed
+>>> Backtrace:
+>>> Pid: 16955, comm: firefox-bin Not tainted 2.6.26.3-rt3 #3
+>> Er, does firefox run reliably on a non-RT 2.6.26.3 kernel? This many
+>> random calls to bad_page suggests more of a RAM problem.
+> Don't think so. Same problem here:
+> Bad page state in process 'bonobo-activati'
+> page:c18f66fc flags:0x40000000 mapping:c18f670c mapcount:0 count:0
+> Trying to fix it up, but a reboot is needed
+> Backtrace:
+> Pid: 4169, comm: bonobo-activati Not tainted 2.6.26.3-rt3 #2
+> [<c0438e52>] ? printk+0x14/0x1a
+> [<c026e8ef>] bad_page+0x4e/0x79
+> [<c026f3d3>] free_hot_cold_page+0x5b/0x1dc
+> [<c026f5a1>] free_hot_page+0xf/0x11
+> [<c026f5c3>] __free_pages+0x20/0x2b
+> [<c02789a0>] __pte_alloc+0x6f/0x77
+> [<c0278a4d>] handle_mm_fault+0xa5/0x56c
+> [<c0243a1c>] ? rt_mutex_down_read+0x15c/0x164
+> [<c0218759>] do_page_fault+0x2c1/0x674
+> [<c021b21d>] ? enqueue_task+0x5a/0x66
+> [<c043bb66>] ? __spin_unlock_irqrestore+0x24/0x42
+> [<c0241e4f>] ? rt_mutex_adjust_prio+0x1a/0x31
+> [<c043bc92>] ? __spin_lock_irqsave+0x1e/0x38
+> [<c021f37d>] ? try_to_wake_up+0x176/0x180
+> [<c043bb5a>] ? __spin_unlock_irqrestore+0x18/0x42
+> [<c0241e4f>] ? rt_mutex_adjust_prio+0x1a/0x31
+> [<c0241e61>] ? rt_mutex_adjust_prio+0x2c/0x31
+> [<c0241e61>] ? rt_mutex_adjust_prio+0x2c/0x31
+> [<c043a8f7>] ? rt_write_slowunlock+0x1cd/0x1d5
+> [<c027ccb0>] ? mprotect_fixup+0x238/0x282
+> [<c0259384>] ? audit_syscall_exit+0x2b6/0x2d1
+> [<c0204a4e>] ? resume_userspace+0x6/0x1c
+> [<c0218498>] ? do_page_fault+0x0/0x674
+> [<c043bf02>] error_code+0x72/0x78
 >
 
-Hi Andrew
+Hi Carsten
 
-The purpose of the patch is to remove the spin_lock around the read in
-the function pm_qos_requirement - since spinlocks can sleep in -rt and
-this function is called from idle. I did propose a patch, that simply
-removed the spinlock, since Peter Zilstra and others (yourself) point
-out, the lock isn't needed to read a single word from memory. Although
-the patch worked fine, Arjan objected to it, because it was not
-symmetric. A reader of the code might wonder why it was locked in
-other functions but not here. He suggested changing it to an atomic
-type might be less confusing. The alternative which I like better
-actually is to simply remove the lock in pm_qos_requirement and add a
-comment for readers of the code.
+Any progress or ideas here?
+
+Thank you
 
 John
