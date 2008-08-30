@@ -1,35 +1,46 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] seqlock: serialize against writers
-Date: Sat, 30 Aug 2008 13:08:17 +0200
-Message-ID: <1220094497.8426.9.camel@twins>
+Subject: Re: [RT PATCH v2] seqlock: serialize against writers
+Date: Sat, 30 Aug 2008 13:17:23 +0200
+Message-ID: <1220095043.8426.16.camel@twins>
 References: <20080829154237.1196.66825.stgit@dev.haskins.net>
+	 <20080829180135.22450.54780.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	gregory.haskins@gmail.com
+	gregory.haskins@gmail.com, andi@firstfloor.org,
+	shemminger@vyatta.com
 To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:50989 "EHLO
+Received: from bombadil.infradead.org ([18.85.46.34]:57076 "EHLO
 	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750847AbYH3LIb (ORCPT
+	with ESMTP id S1751292AbYH3LRg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 Aug 2008 07:08:31 -0400
-In-Reply-To: <20080829154237.1196.66825.stgit@dev.haskins.net>
+	Sat, 30 Aug 2008 07:17:36 -0400
+In-Reply-To: <20080829180135.22450.54780.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2008-08-29 at 11:44 -0400, Gregory Haskins wrote:
+On Fri, 2008-08-29 at 14:03 -0400, Gregory Haskins wrote:
 > *Patch submitted for inclusion in PREEMPT_RT 26-rt4.  Applies to 2.6.26.3-rt3*
 > 
 > Hi Ingo, Steven, Thomas,
 >   Please consider for -rt4.  This fixes a nasty deadlock on my systems under
 >   heavy load.
 > 
+> [
+> Changelog:
+> 	v2: only touch seqlock_t because raw_seqlock_t doesn't require
+> 	    serialization and userspace cannot modify data during a read
+> 
+> 	v1: initial release
+> ]
+> 
 > -Greg
 > 
 > ----
+> seqlock: serialize against writers
 > 
 > Seqlocks have always advertised that readers do not "block", but this was
 > never really true.  Readers have always logically blocked at the head of
@@ -43,15 +54,8 @@ On Fri, 2008-08-29 at 11:44 -0400, Gregory Haskins wrote:
 > deadlock should a reader spin waiting for a write critical-section to end
 > while the writer is preempted.
 
-I think the technical term is livelock.
-
-So the problem is that the write side gets preempted, and the read side
-spins in a non-preemptive fashion?
-
-Looking at the code, __read_seqbegin() doesn't disable preemption, so
-even while highly inefficient when spinning against a preempted lock, it
-shouldn't livelock, since the spinner can get preempted giving the
-writer a chance to finish.
+Ah, the point I was missing is higher-priority realtime task, in which
+case the write side will never run because it wont preempt.
 
 > This patch changes the internal implementation to use a rwlock and forces
 > the readers to serialize with the writers under contention.  This will
@@ -65,10 +69,7 @@ writer a chance to finish.
 > Since seqlocks are designed to be used as rarely-write locks, this should
 > not affect the performance in the fast-path
 
-Not quite, seqlocks never suffered the cacheline bounce rwlocks have -
-which was they strongest point - so I very much not like this change.
-
-As to the x86_64 gtod-vsyscall, that uses a raw_seqlock_t on -rt, which
-is still non-preemptable and should thus not be affected by this
-livelock scenario.
+Still dont like this patch, once you have a rwlock you might as well go
+all the way. Esp since this half-arsed construct defeats PI in certain
+cases.
 
