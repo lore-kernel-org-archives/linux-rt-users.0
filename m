@@ -1,165 +1,73 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [RT PATCH v2] seqlock: serialize against writers
-Date: Sat, 30 Aug 2008 09:05:09 -0400
-Message-ID: <48B94585.2070607@novell.com>
-References: <20080829154237.1196.66825.stgit@dev.haskins.net>	 <20080829180135.22450.54780.stgit@dev.haskins.net>	 <1220095043.8426.16.camel@twins>  <48B93DCD.2010503@novell.com> <1220099899.8426.34.camel@twins>
+From: Carsten Emde <Carsten.Emde@osadl.org>
+Subject: Re: 2.6.26.3-rt3 bug report
+Date: Sat, 30 Aug 2008 16:29:34 +0200
+Message-ID: <48B9594E.4010905@osadl.org>
+References: <520f0cf10808241551x2fe64e9esadf66634b3790c54@mail.gmail.com>	 <520f0cf10808251615r5953794x9816bd58ea771ab3@mail.gmail.com>	 <1219724080.25366.13.camel@perihelion> <48B39969.8060501@osadl.org> <520f0cf10808290729q1d99b915s1543256796c8eeb7@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig26CDE20D4CE29F341CB2AF6B"
-Cc: mingo@elte.hu, rostedt@goodmis.org, tglx@linutronix.de,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	gregory.haskins@gmail.com, andi@firstfloor.org,
-	shemminger@vyatta.com
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Jon Masters <jonathan@jonmasters.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: John Kacur <jkacur@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:46124 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753595AbYH3NHi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 Aug 2008 09:07:38 -0400
-In-Reply-To: <1220099899.8426.34.camel@twins>
+Received: from toro.web-alm.net ([62.245.132.31]:52692 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750817AbYH3ObT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 Aug 2008 10:31:19 -0400
+In-Reply-To: <520f0cf10808290729q1d99b915s1543256796c8eeb7@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig26CDE20D4CE29F341CB2AF6B
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Hi John,
 
-Peter Zijlstra wrote:
-> On Sat, 2008-08-30 at 08:32 -0400, Gregory Haskins wrote:
->  =20
->> Peter Zijlstra wrote:
->>    =20
->>> On Fri, 2008-08-29 at 14:03 -0400, Gregory Haskins wrote:
->>>  =20
->>>      =20
->>>> *Patch submitted for inclusion in PREEMPT_RT 26-rt4.  Applies to 2.6=
-=2E26.3-rt3*
->>>>
->>>> Hi Ingo, Steven, Thomas,
->>>>   Please consider for -rt4.  This fixes a nasty deadlock on my syste=
-ms under
->>>>   heavy load.
->>>>
->>>> [
->>>> Changelog:
->>>> 	v2: only touch seqlock_t because raw_seqlock_t doesn't require
->>>> 	    serialization and userspace cannot modify data during a read
->>>>
->>>> 	v1: initial release
->>>> ]
->>>>
->>>> -Greg
->>>>
->>>> ----
->>>> seqlock: serialize against writers
->>>>
->>>> Seqlocks have always advertised that readers do not "block", but thi=
-s was
->>>> never really true.  Readers have always logically blocked at the hea=
-d of
->>>> the critical section under contention with writers, regardless of wh=
-ether
->>>> they were allowed to run code or not.
->>>>
->>>> Recent changes in this space (88a411c07b6fedcfc97b8dc51ae18540bd2bed=
-a0)
->>>> have turned this into a more explicit blocking operation in mainline=
-=2E
->>>> However, this change highlights a short-coming in -rt because the
->>>> normal seqlock_ts are preemptible.  This means that we can potential=
-ly
->>>> deadlock should a reader spin waiting for a write critical-section t=
-o end
->>>> while the writer is preempted.
->>>>    =20
->>>>        =20
->>> Ah, the point I was missing is higher-priority realtime task, in whic=
-h
->>> case the write side will never run because it wont preempt.
->>>  =20
->>>      =20
->> Yep
->>    =20
->>>  =20
->>>      =20
->>>> This patch changes the internal implementation to use a rwlock and f=
-orces
->>>> the readers to serialize with the writers under contention.  This wi=
-ll
->>>> have the advantage that -rt seqlocks_t will sleep the reader if dead=
-lock
->>>> were imminent, and it will pi-boost the writer to prevent inversion.=
-
->>>>
->>>> This fixes a deadlock discovered under testing where all high priori=
-tiy
->>>> readers were hogging the cpus and preventing a writer from releasing=
- the
->>>> lock.
->>>>
->>>> Since seqlocks are designed to be used as rarely-write locks, this s=
-hould
->>>> not affect the performance in the fast-path
->>>>    =20
->>>>        =20
->>> Still dont like this patch, once you have a rwlock you might as well =
-go
->>> all the way.
->>>      =20
->> Why? =20
->>    =20
+> Carsten Emde wrote:
+>> Jon Masters wrote:
+>>> John Kacur wrote:
+>>>> Slightly different form today.
+>>>> Bad page state in process 'firefox-bin'
+>>>> page:ffffe20000daa360 flags:0x0100000000000000
+>>>> mapping:ffffe20000daa378 mapcount:0 count:0
+>>>> Trying to fix it up, but a reboot is needed
+>>>> Backtrace:
+>>>> Pid: 16955, comm: firefox-bin Not tainted 2.6.26.3-rt3 #3
+>>> Er, does firefox run reliably on a non-RT 2.6.26.3 kernel? This many
+>>> random calls to bad_page suggests more of a RAM problem.
+>> Don't think so. Same problem here:
+>> Bad page state in process 'bonobo-activati'
+>> page:c18f66fc flags:0x40000000 mapping:c18f670c mapcount:0 count:0
+>> [..]
 >
-> Because the second point.
->
->  =20
->> A full rwlock will still be much slower since the readers will
->> always need an atomic op.  This construct only uses atomic ops in the
->> slow path under contention, which should be rare, and is thus still
->> superior when retries are permissible to the design.
->>
->>    =20
->>>  Esp since this half-arsed construct defeats PI in certain
->>> cases.
->>>  =20
->>>      =20
->> Ouch.  While I admit that you can still get into inversion scenarios
->> once the reader leaves the seqbegin, this is the nature of seqlocks.=20
->> The only ways I can think of to get around this involve atomic ops in
->> the fast path, which I think should be avoided.  What would you sugges=
-t
->> otherwise?
->>    =20
->
-> Since we're talking -rt here, determinism rules, so bite the bullet and=
+> Hi Carsten
+> Any progress or ideas here?
+No. Admittedly, we have not yet started to take care of the 2.6.26 RT
+tree. Finishing the 2.6.24 RT tree was quite difficult and took somewhat
+longer than earlier trees so we now really need to use it and to
+integrate it into the various industrial projects that waited long
+enough for it. This will certainly keep us busy during the next weeks or so.
 
-> do full PI.
->
-> The only reason we made all that stuff preemptable is to gain
-> determinism, that also means we have to do the PI thing.
->  =20
-Yeah, you have a point.  I still think this patch will solve the
-deadlock thing, so please consider it in the interim.  I will whip up a
-full PI solution next week.
+Unfortunately, the "Bad page state" is not the only regression.
+Currently, we know of the following problems in 2.6.26.3-rt3:
+- Bad page state
+- Tasks blocked for more than 120 seconds
+- Various kernel OOPSes
+- Increased worst-case latencies as compared to 2.6.24.7-rt17
+The problem with these regressions is that they occur only very rarely
+and under specific high system load conditions. So we will probably
+first need to work on test conditions that will make them happen more
+frequently. The "Bad page state" thing appears especially difficult to
+fix, since it is probably due to memory corruption.
 
--Greg
+However, we will continuously check this and future releases of the
+2.6.26 RT tree and work on them as time permits, but we do not expect to
+have 2.6.26.X-rtY ready for production before October. Meanwhile, if you
+find a way to better reproduce the "Bad page state" message, we will
+certainly appreciate and use it here.
 
 
+Thanks,
 
---------------enig26CDE20D4CE29F341CB2AF6B
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAki5RYUACgkQlOSOBdgZUxlFYwCdFye4Z6C3izdBglBnrdtPsM/o
-2IUAnRsO8ui+4vl+AYLV5iXZ1q10xWo0
-=owLy
------END PGP SIGNATURE-----
-
---------------enig26CDE20D4CE29F341CB2AF6B--
+	Carsten.
