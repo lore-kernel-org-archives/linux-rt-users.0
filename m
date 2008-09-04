@@ -1,53 +1,56 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 2/2] powerpc - Make the irq reverse mapping radix tree
- lockless
-Date: Wed, 3 Sep 2008 15:41:05 +0200
-Message-ID: <20080903154105.7dff49db@bull.net>
+	lockless
+Date: Thu, 04 Sep 2008 12:52:19 +1000
+Message-ID: <1220496739.4879.20.camel@pasglop>
 References: <1218029429-21114-1-git-send-email-sebastien.dugue@bull.net>
-	<1218029429-21114-3-git-send-email-sebastien.dugue@bull.net>
-	<1219209781.21386.25.camel@pasglop>
+	 <1218029429-21114-3-git-send-email-sebastien.dugue@bull.net>
+	 <1219209781.21386.25.camel@pasglop>  <20080903154105.7dff49db@bull.net>
+Reply-To: benh@kernel.crashing.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org, paulus@samba.org,
 	michael@ellerman.id.au, jean-pierre.dion@bull.net,
 	gilles.carry@ext.bull.net, tinytim@us.ibm.com, tglx@linutronix.de,
 	rostedt@goodmis.org, dwalker@mvista.com
-To: benh@kernel.crashing.org
+To: Sebastien Dugue <sebastien.dugue@bull.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:60083 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754676AbYICNlP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Sep 2008 09:41:15 -0400
-In-Reply-To: <1219209781.21386.25.camel@pasglop>
+Received: from gate.crashing.org ([63.228.1.57]:45389 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753527AbYIDDpj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Sep 2008 23:45:39 -0400
+In-Reply-To: <20080903154105.7dff49db@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 20 Aug 2008 15:23:01 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
+On Wed, 2008-09-03 at 15:41 +0200, Sebastien Dugue wrote:
+> On Wed, 20 Aug 2008 15:23:01 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
+> 
+> > BTW. It would be good to try to turn the GFP_ATOMIC into GFP_KERNEL,
+> 
+>   That would be nice indeed
+> 
+> > maybe using a semaphore instead of a lock to protect insertion vs.
+> > initialisation.
+> 
+>   a semaphore? are you meaning a mutex? If not, I fail to understand what you're
+> implying.
 
-> BTW. It would be good to try to turn the GFP_ATOMIC into GFP_KERNEL,
+Right, a mutex, bad habit calling those semaphores from the old days :-)
 
-  That would be nice indeed
+>   Right, that's the problem with this new scheme and I'm still trying
+> to find a way to handle memory allocation failures be it for GFP_ATOMIC or
+> GFP_KERNEL.
+> 
+>   I could not think of anything simple so far and I'm open for suggestions.
 
-> maybe using a semaphore instead of a lock to protect insertion vs.
-> initialisation.
+GFP_KERNEL should not fail, it will just block no ? If it fails, it's
+probably catastrophic enough not to care. You can always fallback to
+linear lookup. I don't know if it's worth trying to fire off a new
+allocation attempt later, probably not.
 
-  a semaphore? are you meaning a mutex? If not, I fail to understand what you're
-implying.
+Ben.
 
-> The old scheme was fine because if the atomic allocation
-> failed, it could fallback to the linear search and try again on the next
-> interrupt. Not anymore.
-
-  Right, that's the problem with this new scheme and I'm still trying
-to find a way to handle memory allocation failures be it for GFP_ATOMIC or
-GFP_KERNEL.
-
-  I could not think of anything simple so far and I'm open for suggestions.
-
-  Thanks,
-
-  Sebastien.
 
