@@ -1,69 +1,50 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [TIP/SCHED/DEVEL PATCH v3 5/6] plist: fix PLIST_NODE_INIT to work
-	with debug enabled
-Date: Thu, 04 Sep 2008 08:55:25 -0400
-Message-ID: <20080904125525.23633.40405.stgit@dev.haskins.net>
-References: <20080904125029.23633.88210.stgit@dev.haskins.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [TIP/SCHED/DEVEL PATCH v3 4/6] sched: add sched_class->needs_post_schedule()
+ member
+Date: Thu, 4 Sep 2008 16:36:32 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0809041634580.3849@gandalf.stny.rr.com>
+References: <20080904125029.23633.88210.stgit@dev.haskins.net> <20080904125520.23633.64862.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	npiggin@suse.de, gregory.haskins@gmail.com
-To: mingo@elte.hu
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: mingo@elte.hu, peterz@infradead.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, npiggin@suse.de,
+	gregory.haskins@gmail.com
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:33378
-	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756972AbYIDM5u (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:33372 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760626AbYIDUgf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Sep 2008 08:57:50 -0400
-In-Reply-To: <20080904125029.23633.88210.stgit@dev.haskins.net>
+	Thu, 4 Sep 2008 16:36:35 -0400
+In-Reply-To: <20080904125520.23633.64862.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-It seems that PLIST_NODE_INIT breaks if used and DEBUG_PI_LIST is defined.
-Since there are no current users of PLIST_NODE_INIT, this has gone
-undetected.  This patch fixes the build issue that enables the
-DEBUG_PI_LIST later in the series when we use it in init_task.h
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
----
 
- include/linux/plist.h |    9 ++++++---
- 1 files changed, 6 insertions(+), 3 deletions(-)
+On Thu, 4 Sep 2008, Gregory Haskins wrote:
+> diff --git a/kernel/sched.c b/kernel/sched.c
+> index af4c6fa..ddc3877 100644
+> --- a/kernel/sched.c
+> +++ b/kernel/sched.c
+> @@ -2525,6 +2525,14 @@ static void finish_task_switch(struct rq *rq, struct task_struct *prev)
+>  {
+>  	struct mm_struct *mm = rq->prev_mm;
+>  	long prev_state;
+> +#ifdef CONFIG_SMP
+> +	int post_schedule = 0;
+> +
+> +	if (current->sched_class->needs_post_schedule) {
+> +		BUG_ON(!current->sched_class->post_schedule);
 
-diff --git a/include/linux/plist.h b/include/linux/plist.h
-index 85de2f0..2b65483 100644
---- a/include/linux/plist.h
-+++ b/include/linux/plist.h
-@@ -96,6 +96,10 @@ struct plist_node {
- # define PLIST_HEAD_LOCK_INIT(_lock)
- #endif
- 
-+#define _PLIST_HEAD_INIT(head)				\
-+	.prio_list = LIST_HEAD_INIT((head).prio_list),	\
-+	.node_list = LIST_HEAD_INIT((head).node_list)
-+
- /**
-  * PLIST_HEAD_INIT - static struct plist_head initializer
-  * @head:	struct plist_head variable name
-@@ -103,8 +107,7 @@ struct plist_node {
-  */
- #define PLIST_HEAD_INIT(head, _lock)			\
- {							\
--	.prio_list = LIST_HEAD_INIT((head).prio_list),	\
--	.node_list = LIST_HEAD_INIT((head).node_list),	\
-+	_PLIST_HEAD_INIT(head),                         \
- 	PLIST_HEAD_LOCK_INIT(&(_lock))			\
- }
- 
-@@ -116,7 +119,7 @@ struct plist_node {
- #define PLIST_NODE_INIT(node, __prio)			\
- {							\
- 	.prio  = (__prio),				\
--	.plist = PLIST_HEAD_INIT((node).plist, NULL),	\
-+	.plist = { _PLIST_HEAD_INIT((node).plist) }, 	\
- }
- 
- /**
+The only one to ever hit this BUG_ON is a kernel developer creating a new
+sched class. Since they should be smart enough to figure out why they get 
+a segv later on, we really don't need it. Because this BUG_ON is also in 
+a hot path, I strongly suggest nuking it.
 
+-- Steve
+
+
+> +		post_schedule = current->sched_class->needs_post_schedule(rq);
+> +	}
+> +#endif
