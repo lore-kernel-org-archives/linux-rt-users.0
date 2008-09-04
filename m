@@ -1,9 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [TIP/SCHED/DEVEL PATCH v3 2/6] sched: pull only one task during
-	NEWIDLE balancing to limit critical section
-Date: Thu, 04 Sep 2008 08:55:09 -0400
-Message-ID: <20080904125509.23633.22193.stgit@dev.haskins.net>
-References: <20080904125029.23633.88210.stgit@dev.haskins.net>
+Subject: [TIP/SCHED/DEVEL PATCH v3 0/6] sched: misc rt fixes
+Date: Thu, 04 Sep 2008 08:54:59 -0400
+Message-ID: <20080904125029.23633.88210.stgit@dev.haskins.net>
+References: <20080825200852.23217.13842.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -12,60 +11,80 @@ Cc: rostedt@goodmis.org, peterz@infradead.org,
 	npiggin@suse.de, gregory.haskins@gmail.com
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:33349
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:33329
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753709AbYIDM5e (ORCPT
+	with ESMTP id S1752699AbYIDM5b (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Sep 2008 08:57:34 -0400
-In-Reply-To: <20080904125029.23633.88210.stgit@dev.haskins.net>
+	Thu, 4 Sep 2008 08:57:31 -0400
+In-Reply-To: <20080825200852.23217.13842.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-git-id c4acb2c0669c5c5c9b28e9d02a34b5c67edf7092 attempted to limit
-newidle critical section length by stopping after at least one task
-was moved.  Further investigation has shown that there are other
-paths nested further inside the algorithm which still remain that allow
-long latencies to occur with newidle balancing.  This patch applies
-the same technique inside balance_tasks() to limit the duration of
-this optional balancing operation.
+Hi Ingo,
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-CC: Nick Piggin <npiggin@suse.de>
+The following repositories
+
+     git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.git tip/sched/devel/rtbalance 
+
+     ftp://ftp.novell.com/dev/ghaskins/tip-rt-fixes.tar.bz2
+
+[
+     *- Steve: I have also backported this to 2.6.26.3-rt5: *-
+
+     ftp://ftp.novell.com/dev/ghaskins/PREEMPT_RT-rt-fixes.tar.bz2
+]
+
+apply to tip/sched/devel to pick up the following fixes for the RT
+scheduler. 
+
+[
+	Changelog:
+
+	v3:
+	    *) fixed a bug in patch 6/6 in enqueue_pushable_task
+	    *) backported from tip to 26.3-rt5
+	
+	v2: 
+	    *) predicated newidle and double_lock changes on
+	       CONFIG_PREEMPT to address a concern by Nick Piggin
+
+	    *) fixed a build issue when DEBUG_PI_LIST is defined 
+
+	v1:
+	    *) initial release
+]
+
+
+These patches were developed in the interest of shorting latencies in
+PREEMPT_RT, but they apply to the mainline scheduler as well, so I am
+offering them here as well.
+
+This has been tested under both 26.3-rt5 and tip/sched/devel on x86_64 for
+both CONFIG_SMP and !CONFIG_SMP.
+
+Comments/bug-fixes welcome!
+
+Regards,
+-Greg
+
+
 ---
 
- kernel/sched.c |   18 +++++++++++++++++-
- 1 files changed, 17 insertions(+), 1 deletions(-)
+Gregory Haskins (6):
+      sched: create "pushable_tasks" list to limit pushing to one attempt
+      plist: fix PLIST_NODE_INIT to work with debug enabled
+      sched: add sched_class->needs_post_schedule() member
+      sched: make double-lock-balance fair
+      sched: pull only one task during NEWIDLE balancing to limit critical section
+      sched: only try to push a task on wakeup if it is migratable
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index b112caa..35e1f21 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -2962,6 +2962,16 @@ next:
- 	pulled++;
- 	rem_load_move -= p->se.load.weight;
- 
-+#ifdef CONFIG_PREEMPT
-+	/*
-+	 * NEWIDLE balancing is a source of latency, so preemptible kernels
-+	 * will stop after the first task is pulled to minimize the critical
-+	 * section.
-+	 */
-+	if (idle == CPU_NEWLY_IDLE)
-+		goto out;
-+#endif
-+
- 	/*
- 	 * We only want to steal up to the prescribed amount of weighted load.
- 	 */
-@@ -3008,9 +3018,15 @@ static int move_tasks(struct rq *this_rq, int this_cpu, struct rq *busiest,
- 				sd, idle, all_pinned, &this_best_prio);
- 		class = class->next;
- 
-+#ifdef CONFIG_PREEMPT
-+		/*
-+		 * NEWIDLE balancing is a source of latency, so preemptible
-+		 * kernels will stop after the first task is pulled to minimize
-+		 * the critical section.
-+		 */
- 		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
- 			break;
+
+ include/linux/init_task.h |    1 
+ include/linux/plist.h     |    9 ++-
+ include/linux/sched.h     |    2 +
+ kernel/sched.c            |   84 ++++++++++++++++++++++++---
+ kernel/sched_rt.c         |  138 ++++++++++++++++++++++++++++++++++++++-------
+ 5 files changed, 201 insertions(+), 33 deletions(-)
+
+
+
