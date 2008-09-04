@@ -1,56 +1,55 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH 2/2] powerpc - Make the irq reverse mapping radix tree
-	lockless
-Date: Thu, 04 Sep 2008 12:52:19 +1000
-Message-ID: <1220496739.4879.20.camel@pasglop>
-References: <1218029429-21114-1-git-send-email-sebastien.dugue@bull.net>
-	 <1218029429-21114-3-git-send-email-sebastien.dugue@bull.net>
-	 <1219209781.21386.25.camel@pasglop>  <20080903154105.7dff49db@bull.net>
-Reply-To: benh@kernel.crashing.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.26.3-rt5
+Date: Thu, 04 Sep 2008 00:09:56 -0400
+Message-ID: <1220501396.22713.7.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, paulus@samba.org,
-	michael@ellerman.id.au, jean-pierre.dion@bull.net,
-	gilles.carry@ext.bull.net, tinytim@us.ibm.com, tglx@linutronix.de,
-	rostedt@goodmis.org, dwalker@mvista.com
-To: Sebastien Dugue <sebastien.dugue@bull.net>
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:45389 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753527AbYIDDpj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Sep 2008 23:45:39 -0400
-In-Reply-To: <20080903154105.7dff49db@bull.net>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:60402 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750844AbYIDEJ7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Sep 2008 00:09:59 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2008-09-03 at 15:41 +0200, Sebastien Dugue wrote:
-> On Wed, 20 Aug 2008 15:23:01 +1000 Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
-> 
-> > BTW. It would be good to try to turn the GFP_ATOMIC into GFP_KERNEL,
-> 
->   That would be nice indeed
-> 
-> > maybe using a semaphore instead of a lock to protect insertion vs.
-> > initialisation.
-> 
->   a semaphore? are you meaning a mutex? If not, I fail to understand what you're
-> implying.
+We are pleased to announce the 2.6.26.3-rt5 tree, which can be
+downloaded from the location:
 
-Right, a mutex, bad habit calling those semaphores from the old days :-)
+  http://rt.et.redhat.com/download/
 
->   Right, that's the problem with this new scheme and I'm still trying
-> to find a way to handle memory allocation failures be it for GFP_ATOMIC or
-> GFP_KERNEL.
-> 
->   I could not think of anything simple so far and I'm open for suggestions.
+Information on the RT patch can be found at:
 
-GFP_KERNEL should not fail, it will just block no ? If it fails, it's
-probably catastrophic enough not to care. You can always fallback to
-linear lookup. I don't know if it's worth trying to fire off a new
-allocation attempt later, probably not.
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-Ben.
+Changes since 2.6.26-rt4
+
+  - minor bug fixes to ftrace (Steven Rostedt)
+
+  - seq_lock deadlock fix (Gregory Haskins)
+
+
+to build a 2.6.26.3-rt5 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.3.bz2
+  http://rt.et.redhat.com/download/patch-2.6.26.3-rt5.bz2
+
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
+-- Steve
 
 
