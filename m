@@ -1,7 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [TIP/SCHED/DEVEL PATCH v3 3/6] sched: make double-lock-balance fair
-Date: Thu, 04 Sep 2008 08:55:15 -0400
-Message-ID: <20080904125514.23633.91459.stgit@dev.haskins.net>
+Subject: [TIP/SCHED/DEVEL PATCH v3 2/6] sched: pull only one task during
+	NEWIDLE balancing to limit critical section
+Date: Thu, 04 Sep 2008 08:55:09 -0400
+Message-ID: <20080904125509.23633.22193.stgit@dev.haskins.net>
 References: <20080904125029.23633.88210.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,108 +12,60 @@ Cc: rostedt@goodmis.org, peterz@infradead.org,
 	npiggin@suse.de, gregory.haskins@gmail.com
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:33358
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:33349
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755361AbYIDM5j (ORCPT
+	with ESMTP id S1753709AbYIDM5e (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Sep 2008 08:57:39 -0400
+	Thu, 4 Sep 2008 08:57:34 -0400
 In-Reply-To: <20080904125029.23633.88210.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-double_lock balance() currently favors logically lower cpus since they
-often do not have to release their own lock to acquire a second lock.
-The result is that logically higher cpus can get starved when there is
-a lot of pressure on the RQs.  This can result in higher latencies on
-higher cpu-ids.
-
-This patch makes the algorithm more fair by forcing all paths to have
-to release both locks before acquiring them again.  Since callsites to
-double_lock_balance already consider it a potential preemption/reschedule
-point, they have the proper logic to recheck for atomicity violations.
+git-id c4acb2c0669c5c5c9b28e9d02a34b5c67edf7092 attempted to limit
+newidle critical section length by stopping after at least one task
+was moved.  Further investigation has shown that there are other
+paths nested further inside the algorithm which still remain that allow
+long latencies to occur with newidle balancing.  This patch applies
+the same technique inside balance_tasks() to limit the duration of
+this optional balancing operation.
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+CC: Nick Piggin <npiggin@suse.de>
 ---
 
- kernel/sched.c |   52 +++++++++++++++++++++++++++++++++++++++++++++-------
- 1 files changed, 45 insertions(+), 7 deletions(-)
+ kernel/sched.c |   18 +++++++++++++++++-
+ 1 files changed, 17 insertions(+), 1 deletions(-)
 
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 35e1f21..af4c6fa 100644
+index b112caa..35e1f21 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -2782,21 +2782,43 @@ static void double_rq_unlock(struct rq *rq1, struct rq *rq2)
- 		__release(rq2->lock);
- }
+@@ -2962,6 +2962,16 @@ next:
+ 	pulled++;
+ 	rem_load_move -= p->se.load.weight;
  
 +#ifdef CONFIG_PREEMPT
++	/*
++	 * NEWIDLE balancing is a source of latency, so preemptible kernels
++	 * will stop after the first task is pulled to minimize the critical
++	 * section.
++	 */
++	if (idle == CPU_NEWLY_IDLE)
++		goto out;
++#endif
 +
- /*
-- * double_lock_balance - lock the busiest runqueue, this_rq is locked already.
-+ * fair double_lock_balance: Safely acquires both rq->locks in a fair
-+ * way at the expense of forcing extra atomic operations in all
-+ * invocations.  This assures that the double_lock is acquired using the
-+ * same underlying policy as the spinlock_t on this architecture, which
-+ * reduces latency compared to the unfair variant below.  However, it
-+ * also adds more overhead and therefore may reduce throughput.
-  */
--static int double_lock_balance(struct rq *this_rq, struct rq *busiest)
-+static inline int _double_lock_balance(struct rq *this_rq, struct rq *busiest)
-+	__releases(this_rq->lock)
-+	__acquires(busiest->lock)
-+	__acquires(this_rq->lock)
-+{
-+	spin_unlock(&this_rq->lock);
-+	double_rq_lock(this_rq, busiest);
-+
-+	return 1;
-+}
-+
-+#else
-+
-+/*
-+ * Unfair double_lock_balance: Optimizes throughput at the expense of
-+ * latency by eliminating extra atomic operations when the locks are
-+ * already in proper order on entry.  This favors lower cpu-ids and will
-+ * grant the double lock to lower cpus over higher ids under contention,
-+ * regardless of entry order into the function.
-+ */
-+static inline int _double_lock_balance(struct rq *this_rq, struct rq *busiest)
- 	__releases(this_rq->lock)
- 	__acquires(busiest->lock)
- 	__acquires(this_rq->lock)
- {
- 	int ret = 0;
+ 	/*
+ 	 * We only want to steal up to the prescribed amount of weighted load.
+ 	 */
+@@ -3008,9 +3018,15 @@ static int move_tasks(struct rq *this_rq, int this_cpu, struct rq *busiest,
+ 				sd, idle, all_pinned, &this_best_prio);
+ 		class = class->next;
  
--	if (unlikely(!irqs_disabled())) {
--		/* printk() doesn't work good under rq->lock */
--		spin_unlock(&this_rq->lock);
--		BUG_ON(1);
--	}
- 	if (unlikely(!spin_trylock(&busiest->lock))) {
- 		if (busiest < this_rq) {
- 			spin_unlock(&this_rq->lock);
-@@ -2809,6 +2831,22 @@ static int double_lock_balance(struct rq *this_rq, struct rq *busiest)
- 	return ret;
- }
- 
-+#endif /* CONFIG_PREEMPT */
-+
-+/*
-+ * double_lock_balance - lock the busiest runqueue, this_rq is locked already.
-+ */
-+static int double_lock_balance(struct rq *this_rq, struct rq *busiest)
-+{
-+	if (unlikely(!irqs_disabled())) {
-+		/* printk() doesn't work good under rq->lock */
-+		spin_unlock(&this_rq->lock);
-+		BUG_ON(1);
-+	}
-+
-+	return _double_lock_balance(this_rq, busiest);
-+}
-+
- static void double_unlock_balance(struct rq *this_rq, struct rq *busiest)
- 	__releases(busiest->lock)
- {
-
++#ifdef CONFIG_PREEMPT
++		/*
++		 * NEWIDLE balancing is a source of latency, so preemptible
++		 * kernels will stop after the first task is pulled to minimize
++		 * the critical section.
++		 */
+ 		if (idle == CPU_NEWLY_IDLE && this_rq->nr_running)
+ 			break;
