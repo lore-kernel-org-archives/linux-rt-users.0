@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: Question regarding sched_setaffinity
-Date: Fri, 5 Sep 2008 16:28:54 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0809051625590.31439@gandalf.stny.rr.com>
+Date: Fri, 5 Sep 2008 16:45:23 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0809051642200.31439@gandalf.stny.rr.com>
 References: <1ca41c0f0808312012v4c52576cw307929992781eeca@mail.gmail.com> <alpine.DEB.1.10.0809051523270.23959@gandalf.stny.rr.com> <48C190CC.10400@compro.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -9,15 +9,14 @@ Cc: Karthik Singaram Lakshmanan <karthiksingaram@gmail.com>,
 	linux-rt-users@vger.kernel.org
 To: Mark Hounschell <markh@compro.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:46358 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:59196 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751605AbYIEU25 (ORCPT
+	with ESMTP id S1753824AbYIEUpZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Sep 2008 16:28:57 -0400
+	Fri, 5 Sep 2008 16:45:25 -0400
 In-Reply-To: <48C190CC.10400@compro.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-
 
 
 On Fri, 5 Sep 2008, Mark Hounschell wrote:
@@ -48,23 +47,19 @@ On Fri, 5 Sep 2008, Mark Hounschell wrote:
 > At least according to sched_getaffinity.
 
 
-Hmm, it is true:
+Note, I'm not just talking about that affinity being masked off, I'm 
+talking about a task that is bounded to only that cpu that is about to go 
+offline.
 
-[root@bxrhel51 bin]# ps ax |grep yes
- 6560 pts/1    R+     0:31 yes
- 6566 pts/0    S+     0:00 grep yes
-[root@bxrhel51 bin]# taskset -p 8 6560
-pid 6560's current affinity mask: f
-pid 6560's new affinity mask: 8
-[root@bxrhel51 bin]# taskset -p 6560
-pid 6560's current affinity mask: 8
-[root@bxrhel51 bin]# echo 0 > /sys/devices/system/cpu/cpu3/online
-[root@bxrhel51 bin]# taskset -p 6560
-pid 6560's current affinity mask: 7
+If you have a mask (bit mask) 0xf to be on all 4 cpus, and cpu 3 goes 
+offline, all those tasks will now be 0x7. But if you started with a task 
+with a affinity of mask 0x8, then when it goes offline, it too will be 
+0x7. The difference here is that this task is now running on CPUS that it 
+wasn't able to run on before going down.
 
+At least there's a warning about it in dmesg:
 
-I ran "yes" and made the affinity set to CPU3. Then I took CPU3 offline 
-and this just made the task move to _all_ other online CPUS.
+"process 6560 (yes) no longer affine to cpu3"
 
 -- Steve
 
