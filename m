@@ -1,58 +1,40 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.26.3-rt6
-Date: Fri, 05 Sep 2008 00:36:30 -0400
-Message-ID: <1220589390.22713.10.camel@localhost.localdomain>
+Subject: Re: Question regarding sched_setaffinity
+Date: Fri, 5 Sep 2008 15:24:50 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0809051523270.23959@gandalf.stny.rr.com>
+References: <1ca41c0f0808312012v4c52576cw307929992781eeca@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Karthik Singaram Lakshmanan <karthiksingaram@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:64375 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:33559 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750720AbYIEEgd (ORCPT
+	with ESMTP id S1751002AbYIETYw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Sep 2008 00:36:33 -0400
+	Fri, 5 Sep 2008 15:24:52 -0400
+In-Reply-To: <1ca41c0f0808312012v4c52576cw307929992781eeca@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.26.3-rt6 tree, which can be
-downloaded from the location:
 
-  http://rt.et.redhat.com/download/
+On Sun, 31 Aug 2008, Karthik Singaram Lakshmanan wrote:
 
-Information on the RT patch can be found at:
+> Hi,
+>  I am a noob to SMP real-time scheduling in linux, I have a question of
+> sched_setaffinity(). If I restrict an application to a single CPU
+> using the appropriate cpumask for sched_setaffinity(), Is it
+> guaranteed that the kernel will never schedule it on any other CPU? I
+> am asking this because looking at kernel/sched.c seems to use
+> cpu_clear during load balancing. I am interested in knowing whether the
+> cache will be invalidated when my task is assigned to a single CPU.
+> Are there exceptions where the cpu-mask will be overridden?
+> Thanks for taking the time to answer my query.
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.26-rt5
-
-  - rebased ftrace to latest (Steven Rostedt)
-
-  - schedule RT task push/pull improvements (Gregory Haskins)
-
-  - pm qos requirement updated patch (John Kacur)
-
-  - PowerPC ftrace mcount undefined symbol fix (Steven Rostedt)
-
-to build a 2.6.26.3-rt6 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.3.bz2
-  http://rt.et.redhat.com/download/patch-2.6.26.3-rt6.bz2
-
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
+A task should never be scheduled on a CPU that is not in its affinity. 
+(although I hear a rumor that if a task is bound to a single CPU, and that 
+CPU is taken offline, it will be migrated. But I doubt this is true, since 
+there are tasks that would crash the system if this were true).
 
 -- Steve
-
 
