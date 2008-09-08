@@ -1,80 +1,70 @@
-From: Chirag Jog <chirag@linux.vnet.ibm.com>
-Subject: [PATCH] Convert tlbstate_lock spin_lock to raw_spin_lock
-Date: Mon, 8 Sep 2008 13:07:32 +0530
-Message-ID: <20080908073732.GC5798@linux.vnet.ibm.com>
-References: <2c6d8d720809071806i54e58093vf87bec5175d9b074@mail.gmail.com>
-Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
+From: Mark Hounschell <markh@compro.net>
+Subject: Re: Question regarding sched_setaffinity
+Date: Mon, 08 Sep 2008 08:28:19 -0400
+Message-ID: <48C51A63.1070700@compro.net>
+References: <1ca41c0f0808312012v4c52576cw307929992781eeca@mail.gmail.com> <alpine.DEB.1.10.0809051523270.23959@gandalf.stny.rr.com> <48C190CC.10400@compro.net> <alpine.DEB.1.10.0809051642200.31439@gandalf.stny.rr.com>
+Reply-To: markh@compro.net
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Cc: linux-rt-users@vger.kernel.org,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: xavier droubay <xavier.droubay@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Karthik Singaram Lakshmanan <karthiksingaram@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp04.in.ibm.com ([59.145.155.4]:52876 "EHLO
-	e28esmtp04.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751237AbYIHHlI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Sep 2008 03:41:08 -0400
-Content-Disposition: inline
-In-Reply-To: <2c6d8d720809071806i54e58093vf87bec5175d9b074@mail.gmail.com>
+Received: from mx2.compro.net ([216.54.166.4]:38675 "EHLO mx2.compro.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751342AbYIHM2U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Sep 2008 08:28:20 -0400
+In-Reply-To: <alpine.DEB.1.10.0809051642200.31439@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* xavier droubay <xavier.droubay@gmail.com> [2008-09-08 03:06:51]:
-
-> Hello,
+Steven Rostedt wrote:
+> On Fri, 5 Sep 2008, Mark Hounschell wrote:
 > 
-> I experienced this "rtmutex.c:743" known bug with rt3 patch, using
+>> Steven Rostedt wrote:
+>>> On Sun, 31 Aug 2008, Karthik Singaram Lakshmanan wrote:
+>>>
+>>>> Hi,
+>>>>  I am a noob to SMP real-time scheduling in linux, I have a question of
+>>>> sched_setaffinity(). If I restrict an application to a single CPU
+>>>> using the appropriate cpumask for sched_setaffinity(), Is it
+>>>> guaranteed that the kernel will never schedule it on any other CPU? I
+>>>> am asking this because looking at kernel/sched.c seems to use
+>>>> cpu_clear during load balancing. I am interested in knowing whether the
+>>>> cache will be invalidated when my task is assigned to a single CPU.
+>>>> Are there exceptions where the cpu-mask will be overridden?
+>>>> Thanks for taking the time to answer my query.
+>>> A task should never be scheduled on a CPU that is not in its affinity.
+>>> (although I hear a rumor that if a task is bound to a single CPU, and that
+>>> CPU is taken offline, it will be migrated. But I doubt this is true, since
+>>> there are tasks that would crash the system if this were true).
+>>>
+>>> -- Steve
+>>>
+>> It seems to be true. It's affinity mask gets changed to the CPUs left online.
+>> At least according to sched_getaffinity.
 > 
->  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.3.tar.bz2
->  http://rt.et.redhat.com/download/patch-2.6.26.3-rt3.bz2
 > 
-> I compiled this kernel with the "make-kpkg" debian utility.
+> Note, I'm not just talking about that affinity being masked off, I'm 
+> talking about a task that is bounded to only that cpu that is about to go 
+> offline.
 > 
-> I first compiled this kernel with NO SMP, NO HIGHMEM, and partial ACPI
-> (without fan, processor, ... modules). Attached file
-> "config-2.6.26.3-rt3lowlty.frwr.gz".
-> I didn't experience any problem with this kernel.
+> If you have a mask (bit mask) 0xf to be on all 4 cpus, and cpu 3 goes 
+> offline, all those tasks will now be 0x7. But if you started with a task 
+> with a affinity of mask 0x8, then when it goes offline, it too will be 
+> 0x7. The difference here is that this task is now running on CPUS that it 
+> wasn't able to run on before going down.
 > 
-> I then enabled SMP and HIGHMEM, and experienced  "rtmutex.c:743" BUG.
-> Attached files
-> "config-2.6.26.3-rt3rt-smp-hm.gz" and  "dmesg.gz" for some BUGGY message.
+> At least there's a warning about it in dmesg:
+> 
+> "process 6560 (yes) no longer affine to cpu3"
+> 
+> -- Steve
 > 
 > 
-> I have seen somewhere on the archive, that some people still
-> experienced problems with SMP.
-> I guess no fix has been done from rt3 to rt7 patch. Can you confirm?
-> 
-> If so, which recent kernel should I use in order to get smp and rt
-> running without problems?
-> 
-This simple patch should solve the above problem. Seeing the config, its
-seems to be a 32bit box.
 
+Right, thats what I was referring to also. A task bound to a single cpu
+all by its self.
 
-It convert tlbstate_lock spin_lock to raw_spin_lock.
-Preemption has already been disabled, hence this change shouldn't
-affect latency numbers.
-
-
-Signed-Off-By: Chirag <chirag@linux.vnet.ibm.com>
-
-
-diff --git a/arch/x86/kernel/tlb_32.c b/arch/x86/kernel/tlb_32.c
-index 9bb2363..228849c 100644
---- a/arch/x86/kernel/tlb_32.c
-+++ b/arch/x86/kernel/tlb_32.c
-@@ -23,7 +23,7 @@ DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate)
- static cpumask_t flush_cpumask;
- static struct mm_struct *flush_mm;
- static unsigned long flush_va;
--static DEFINE_SPINLOCK(tlbstate_lock);
-+static DEFINE_RAW_SPINLOCK(tlbstate_lock);
- 
- /*
-  * We cannot call mmdrop() because we are in interrupt context,
-
-
-
+Mark
