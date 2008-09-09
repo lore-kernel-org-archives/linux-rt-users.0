@@ -1,51 +1,55 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] Convert tlbstate_lock spin_lock to raw_spin_lock
-Date: Mon, 8 Sep 2008 11:04:31 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0809081056530.23508@gandalf.stny.rr.com>
-References: <2c6d8d720809071806i54e58093vf87bec5175d9b074@mail.gmail.com>  <20080908073732.GC5798@linux.vnet.ibm.com> <921ca19c0809080715m6379b322x79edb239f6971560@mail.gmail.com>
+From: "xavier droubay" <xavier.droubay@gmail.com>
+Subject: Re: 2.6.26.3 with rt3 patch: BUG: sleeping function called kernel/rtmutex.c:743
+Date: Tue, 9 Sep 2008 20:29:49 +0200
+Message-ID: <2c6d8d720809091129n595a4cr3cfe522d4b6953b4@mail.gmail.com>
+References: <2c6d8d720809071806i54e58093vf87bec5175d9b074@mail.gmail.com>
+	 <48C4C253.7060401@osadl.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	xavier droubay <xavier.droubay@gmail.com>,
-	Chirag Jog <chirag@linux.vnet.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Sujit Karataparambil <sjt.kar@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org,
+	"Carsten Emde" <Carsten.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:35094 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750885AbYIHPEe (ORCPT
+Received: from py-out-1112.google.com ([64.233.166.181]:47899 "EHLO
+	py-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755512AbYIIS3v (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Sep 2008 11:04:34 -0400
-In-Reply-To: <921ca19c0809080715m6379b322x79edb239f6971560@mail.gmail.com>
+	Tue, 9 Sep 2008 14:29:51 -0400
+Received: by py-out-1112.google.com with SMTP id p76so1319725pyb.10
+        for <linux-rt-users@vger.kernel.org>; Tue, 09 Sep 2008 11:29:50 -0700 (PDT)
+In-Reply-To: <48C4C253.7060401@osadl.org>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Thanks Carsten, for your informations,
 
-[ Refrain from using "unlisted-recipients" please! ]
+
+> All 2.6.26 related rt-patches are experimental. In fact, it would be
+> better to call them 2.6.26.3-rtrc3 to indicate that this is, at best, a
+> release candidate - but no release.
+
+As I am these days interested in rt patches I can provide you more
+info on my attempts to bring a functional  rt 2.6.26 kernel. I usually
+log my compilation results and try to find usefull info (just recompiled
+kernel with full ACPI support with the rt7 patch, although I guess I will
+obtain the same results). I am not an expert but I have some
+background knowledge of linux system as a user.
+
+If you give me info or documentation to read for tests or debugging
+purpose, I am ready to help you at the moment, if I able to.
+
+>
+> Our "Latest Stable" is 2.6.24.7-rt17
+> (http://www.osadl.org/Latest-Stable.latest-stable-realtime-linux.0.html).
+> Can't you use this one? If this kernel has the problem you are
+> experiencing, we are certainly interested to fix it.
+>
+
+As first of all I need a stable kernel for a dual core on the box an
+impatient friend,
+I'll use 2.6.24.7-rt17 as your advise suggests, and tell you in case I
+get trouble with it.
 
 
-On Mon, 8 Sep 2008, Sujit Karataparambil wrote:
-
-> Chirag,
-> 
->   Kindly understand what xavier is trying to do. He is Trying to disable smp.
-> The RT - Linux Code is dependent on the mutex lock to perform some
-> soft/hard real time processing. This is an problem with the mutex lock.
-
-It is not a problem with the mutex lock.
-
-> 
-> Kindly check with some one before signing off patches.
-
-The patch is legit.
-
-The problem is simply that functions like flush_tlb_current_task and 
-flush_tlb_mm disable preemption and then call flush_tlb_others.
-This function locks the tlbstate_lock which is currently a rtmutex. An 
-rtmutex can not be called with preemption disabled. The tlbstate_lock is 
-static, small and confined. I'm not sure we can change this code (flushing 
-the TLB) in a way where we can allow preemption. This may just be a 
-latency that we must hit.
-
--- Steve
+Regards, Xavier Droubay.
