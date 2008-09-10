@@ -1,30 +1,36 @@
-From: Ankita Garg <ankita@in.ibm.com>
-Subject: Re: 2.6.24.7-rt18
-Date: Wed, 10 Sep 2008 11:36:24 +0530
-Message-ID: <20080910060624.GA7484@in.ibm.com>
-References: <1221018283.22713.20.camel@localhost.localdomain>
-Reply-To: Ankita Garg <ankita@in.ibm.com>
+From: Chirag Jog <chirag@linux.vnet.ibm.com>
+Subject: Re: 2.6.26.5-rt8
+Date: Wed, 10 Sep 2008 12:25:20 +0530
+Message-ID: <20080910065520.GC3966@linux.vnet.ibm.com>
+References: <1221018492.22713.24.camel@localhost.localdomain>
+Reply-To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=iso-8859-1
+To: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e28smtp07.in.ibm.com ([59.145.155.7]:54881 "EHLO
-	e28esmtp07.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750859AbYIJGHH (ORCPT
+Received: from E23SMTP01.au.ibm.com ([202.81.18.162]:48751 "EHLO
+	e23smtp01.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751075AbYIJG6Y (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Sep 2008 02:07:07 -0400
+	Wed, 10 Sep 2008 02:58:24 -0400
+Received: from sd0109e.au.ibm.com (d23rh905.au.ibm.com [202.81.18.225])
+	by e23smtp01.au.ibm.com (8.13.1/8.13.1) with ESMTP id m8A6wWMv000638
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Sep 2008 16:58:32 +1000
+Received: from d23av01.au.ibm.com (d23av01.au.ibm.com [9.190.234.96])
+	by sd0109e.au.ibm.com (8.13.8/8.13.8/NCO v9.1) with ESMTP id m8A6wGuX273934
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Sep 2008 16:58:16 +1000
+Received: from d23av01.au.ibm.com (loopback [127.0.0.1])
+	by d23av01.au.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id m8A6wGen025893
+	for <linux-rt-users@vger.kernel.org>; Wed, 10 Sep 2008 16:58:16 +1000
 Content-Disposition: inline
-In-Reply-To: <1221018283.22713.20.camel@localhost.localdomain>
+In-Reply-To: <1221018492.22713.24.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steven,
+* Steven Rostedt <rostedt@goodmis.org> [2008-09-09 23:48:12]:
 
-On Tue, Sep 09, 2008 at 11:44:42PM -0400, Steven Rostedt wrote:
-> We are pleased to announce the 2.6.24.7-rt18 tree, which can be
+> We are pleased to announce the 2.6.26.5-rt8 tree, which can be
 > downloaded from the location:
 > 
 >   http://rt.et.redhat.com/download/
@@ -33,36 +39,43 @@ On Tue, Sep 09, 2008 at 11:44:42PM -0400, Steven Rostedt wrote:
 > 
 >   http://rt.wiki.kernel.org/index.php/Main_Page
 > 
-> Changes since 2.6.24.7-rt17
+> Changes since 2.6.26.3-rt7
 > 
->   - seqlock serialize writes (Gregory Haskins)
+>   - Ported to 2.6.26.5
 > 
->   - Fix above patch that broke non PREEMPT_RT (Steven Rostedt)
+>   - x86_32 tlb flush use raw spinlock (Chirag Jog)
 > 
->   - Add sysctl to warn on RT task using non PI futex (Steven Rostedt)
->
+>   - seqlock fix non PREEMPT_RT and cleanup (Steven Rostedt)
+> 
+>   - add sysctl to warn on RT task using not PI futex (Steven Rostedt)
+> 
+> to build a 2.6.26.5-rt8 tree, the following patches should be applied:
+> 
+>   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+>   http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.5.bz2
+>   http://rt.et.redhat.com/download/patch-2.6.26.3-rt8.bz2
+This link ^^ is incorrect.
+Correct one is :
+http://rt.et.redhat.com/download/patch-2.6.26.5-rt8.bz2 
+> 
+> 
+> And like always, my RT version of Matt Mackall's ketchup will get this
+> for you nicely:
+> 
+>   http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+> 
+> 
+> The broken out patches are also available.
+> 
+> 
+> -- Steve
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
 
-A trivial patch to remove the hard coded value of MAX_RT_PRIO in the
-above patch.
- 
-Signed-off-by: Ankita Garg <ankita@in.ibm.com> 
-
-Index: linux-2.6.26.5/kernel/futex.c
-===================================================================
---- linux-2.6.26.5.orig/kernel/futex.c	2008-09-09 22:58:19.000000000 -0700
-+++ linux-2.6.26.5/kernel/futex.c	2008-09-09 22:58:38.000000000 -0700
-@@ -1241,7 +1241,7 @@
- 			       "RT task %s:%d with priority %d"
- 			       " using non PI futex\n",
- 			       current->comm, current->pid,
--			       100 - current->prio);
-+			       MAX_RT_PRIO - current->prio);
- 		}
- 	}
- 
 -- 
-Regards,
-Ankita Garg (ankita@in.ibm.com)
-Linux Technology Center
-IBM India Systems & Technology Labs, 
-Bangalore, India   
+-Thanks,Chirag
