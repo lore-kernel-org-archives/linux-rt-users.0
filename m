@@ -1,58 +1,68 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.26.5-rt8
-Date: Tue, 09 Sep 2008 23:48:12 -0400
-Message-ID: <1221018492.22713.24.camel@localhost.localdomain>
+From: Ankita Garg <ankita@in.ibm.com>
+Subject: Re: 2.6.24.7-rt18
+Date: Wed, 10 Sep 2008 11:36:24 +0530
+Message-ID: <20080910060624.GA7484@in.ibm.com>
+References: <1221018283.22713.20.camel@localhost.localdomain>
+Reply-To: Ankita Garg <ankita@in.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:46158 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751676AbYIJDsO (ORCPT
+Received: from e28smtp07.in.ibm.com ([59.145.155.7]:54881 "EHLO
+	e28esmtp07.in.ibm.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1750859AbYIJGHH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Sep 2008 23:48:14 -0400
+	Wed, 10 Sep 2008 02:07:07 -0400
+Content-Disposition: inline
+In-Reply-To: <1221018283.22713.20.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.26.5-rt8 tree, which can be
-downloaded from the location:
+Hi Steven,
 
-  http://rt.et.redhat.com/download/
+On Tue, Sep 09, 2008 at 11:44:42PM -0400, Steven Rostedt wrote:
+> We are pleased to announce the 2.6.24.7-rt18 tree, which can be
+> downloaded from the location:
+> 
+>   http://rt.et.redhat.com/download/
+> 
+> Information on the RT patch can be found at:
+> 
+>   http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> Changes since 2.6.24.7-rt17
+> 
+>   - seqlock serialize writes (Gregory Haskins)
+> 
+>   - Fix above patch that broke non PREEMPT_RT (Steven Rostedt)
+> 
+>   - Add sysctl to warn on RT task using non PI futex (Steven Rostedt)
+>
 
-Information on the RT patch can be found at:
+A trivial patch to remove the hard coded value of MAX_RT_PRIO in the
+above patch.
+ 
+Signed-off-by: Ankita Garg <ankita@in.ibm.com> 
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.26.3-rt7
-
-  - Ported to 2.6.26.5
-
-  - x86_32 tlb flush use raw spinlock (Chirag Jog)
-
-  - seqlock fix non PREEMPT_RT and cleanup (Steven Rostedt)
-
-  - add sysctl to warn on RT task using not PI futex (Steven Rostedt)
-
-to build a 2.6.26.5-rt8 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.5.bz2
-  http://rt.et.redhat.com/download/patch-2.6.26.3-rt8.bz2
-
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-
--- Steve
-
-
+Index: linux-2.6.26.5/kernel/futex.c
+===================================================================
+--- linux-2.6.26.5.orig/kernel/futex.c	2008-09-09 22:58:19.000000000 -0700
++++ linux-2.6.26.5/kernel/futex.c	2008-09-09 22:58:38.000000000 -0700
+@@ -1241,7 +1241,7 @@
+ 			       "RT task %s:%d with priority %d"
+ 			       " using non PI futex\n",
+ 			       current->comm, current->pid,
+-			       100 - current->prio);
++			       MAX_RT_PRIO - current->prio);
+ 		}
+ 	}
+ 
+-- 
+Regards,
+Ankita Garg (ankita@in.ibm.com)
+Linux Technology Center
+IBM India Systems & Technology Labs, 
+Bangalore, India   
