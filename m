@@ -1,51 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.24.7-rt18
-Date: Wed, 10 Sep 2008 07:32:01 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0809100731420.23257@gandalf.stny.rr.com>
-References: <1221018283.22713.20.camel@localhost.localdomain> <20080910060624.GA7484@in.ibm.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH] duplicate zap_rt_locks in preempt-realtime-core.patch
+Date: Wed, 10 Sep 2008 23:40:47 -0400
+Message-ID: <20080911034045.GA5729@windriver.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Ankita Garg <ankita@in.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:38454 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752009AbYIJLcE (ORCPT
+Received: from [128.224.252.2] ([128.224.252.2]:38556 "EHLO
+	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752446AbYIKDks (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Sep 2008 07:32:04 -0400
-In-Reply-To: <20080910060624.GA7484@in.ibm.com>
+	Wed, 10 Sep 2008 23:40:48 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Steven,
 
-On Wed, 10 Sep 2008, Ankita Garg wrote:
+It looks like patch was over-eager and gave you two copies of
+zap_rt_locks() within preempt-realtime-core.patch  -- I've increased
+the context so you can see the dup without going to compare against
+the original.
 
-> Hi Steven,
-> 
-> On Tue, Sep 09, 2008 at 11:44:42PM -0400, Steven Rostedt wrote:
-> > We are pleased to announce the 2.6.24.7-rt18 tree, which can be
-> > downloaded from the location:
-> > 
-> >   http://rt.et.redhat.com/download/
-> > 
-> > Information on the RT patch can be found at:
-> > 
-> >   http://rt.wiki.kernel.org/index.php/Main_Page
-> > 
-> > Changes since 2.6.24.7-rt17
-> > 
-> >   - seqlock serialize writes (Gregory Haskins)
-> > 
-> >   - Fix above patch that broke non PREEMPT_RT (Steven Rostedt)
-> > 
-> >   - Add sysctl to warn on RT task using non PI futex (Steven Rostedt)
-> >
-> 
-> A trivial patch to remove the hard coded value of MAX_RT_PRIO in the
-> above patch.
+Thanks,
+Paul.
 
-Thanks, I pulled it into the queue.
-
--- Steve
+diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+index 1f90d41..0931614 100644
+--- a/include/linux/kernel.h
++++ b/include/linux/kernel.h
+@@ -222,18 +222,12 @@ extern void __attribute__((format(printf, 1, 2)))
+ #ifdef CONFIG_PREEMPT_RT
+ extern void zap_rt_locks(void);
+ #else
+ # define zap_rt_locks() do { } while (0)
+ #endif
+ 
+-#ifdef CONFIG_PREEMPT_RT
+-extern void zap_rt_locks(void);
+-#else
+-# define zap_rt_locks() do { } while (0)
+-#endif
