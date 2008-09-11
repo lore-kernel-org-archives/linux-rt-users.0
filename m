@@ -1,40 +1,51 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] tasklets: fix __tasklet_hi_schedule()
-Date: Thu, 11 Sep 2008 10:03:07 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0809111002560.22104@gandalf.stny.rr.com>
-References: <20080911140008.05addc59@bull.net>
+Subject: 2.6.24.7-rt19
+Date: Thu, 11 Sep 2008 10:54:38 -0400
+Message-ID: <1221144878.22713.35.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Linux-rt <linux-rt-users@vger.kernel.org>,
-	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Gilles Carry <Gilles.Carry@ext.bull.net>,
-	Tim Chavez <tinytim@us.ibm.com>
-To: Sebastien Dugue <sebastien.dugue@bull.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:57007 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751380AbYIKODK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Sep 2008 10:03:10 -0400
-In-Reply-To: <20080911140008.05addc59@bull.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755246AbYIKOyw@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+We are pleased to announce the 2.6.24.7-rt19 tree, which can be
+downloaded from the location:
+
+  http://rt.et.redhat.com/download/
+
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24.7-rt18
+
+  - futex minor fix (Ankita Garg)
+
+  - qla-mbx compat semaphore fix (Steven Rostedt and Venkateswararao Jujjuri)
+
+  - rtmutex integrity magic (Steven Rostedt)
+
+  - remove extra zap_rt_locks (Paul Gortmaker)
+
+to build a 2.6.24.7-rt19 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt19.bz2
 
 
-On Thu, 11 Sep 2008, Sebastien Dugue wrote:
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
 
-> From b5ae1d4954394b05c17a87403e7584c7f90e457a Mon Sep 17 00:00:00 2001
-> From: Sebastien Dugue <sebastien.dugue@bull.net>
-> Date: Thu, 11 Sep 2008 13:47:40 +0200
-> Subject: [PATCH 1/1] tasklets: fix __tasklet_hi_schedule()
-> 
->   fix __tasklet_hi_schedule() which incorrectly puts the tasklet to be
-> scheduled on the wrong list (tasklet_vec instead of tasklet_hi_vec).
-> 
->   This broke rebooting a box with the ehea driver.
-> 
-> Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
 
-Thanks, applied.
+
+The broken out patches are also available.
+
+
 
 -- Steve
