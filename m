@@ -1,99 +1,121 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: Re: [PATCH HACK] powerpc: quick hack to get a functional eHEA with
- hardirq preemption
-Date: Tue, 16 Sep 2008 14:22:37 +0200
-Message-ID: <20080916142237.0dc5d024@bull.net>
+From: Christoph Raisch <RAISCH@de.ibm.com>
+Subject: Re: [PATCH HACK] powerpc: quick hack to get a functional eHEA with hardirq
+ preemption
+Date: Thu, 18 Sep 2008 09:53:54 +0200
+Message-ID: <OF39C3BF0F.17B60FAA-ONC12574C8.002AE138-C12574C8.002B6422@de.ibm.com>
 References: <20080915100406.342e027a@bull.net>
-	<48CE5684.4000506@de.ibm.com>
-	<20080915151332.6a3a7c80@bull.net>
-	<20080916115947.GA6995@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Klein <osstklei@de.ibm.com>, tklein@de.ibm.com,
-	tinytim@us.ibm.com, Linux-rt <linux-rt-users@vger.kernel.org>,
-	themann@de.ibm.com, netdev@vger.kernel.org,
+Cc: gilles.carry@ext.bull.net, Jan-Bernd Themann <THEMANN@de.ibm.com>,
+	jean-pierre.dion@bull.net,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	jean-pierre.dion@bull.net, linux-ppc <linuxppc-dev@ozlabs.org>,
-	raisch@de.ibm.com, gilles.carry@ext.bull.net
-To: avorontsov@ru.mvista.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:54227 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751335AbYIPMWt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Sep 2008 08:22:49 -0400
-In-Reply-To: <20080916115947.GA6995@oksana.dev.rtsoft.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Linux-rt <linux-rt-users@vger.kernel.org>,
+	linux-ppc <linuxppc-dev@ozlabs.org>, netdev@vger.kernel.org,
+	Thomas Q Klein <TKLEIN@de.ibm.com>, tinytim@us.ibm.com,
+	Benjamin Herrenschmidt <bherren@au1.ibm.com>
+To: Sebastien Dugue <sebastien.dugue@bull.net>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20080915100406.342e027a@bull.net>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-  Hi Anton,
-
-On Tue, 16 Sep 2008 15:59:47 +0400 Anton Vorontsov <avorontsov@ru.mvista.com> wrote:
-
-> On Mon, Sep 15, 2008 at 03:13:32PM +0200, Sebastien Dugue wrote:
-> [...]
-> > > we are a bit worried about putting this into the mainstream part of non real
-> > > time linux.
-> > 
-> >   Heck, I sure do not want this to be applied mainstream nor into any tree.
-> > The sole purpose of this patch was to trigger some reaction from the people who
-> > know the hardware and try to understand where the problem lies.
-> > 
-> > > There interrupts work perfectly fine, and it was a bit of a
-> > > challenge to get there for all cases / configurations / machines.
-> > 
-> >   Agreed, but the fact that it fails with hardirq preemption leads me to
-> > believe (without any more knowledge about the harware) that there might be
-> > something amiss with this driver (or the code concerning the XICS)
-> > nevertheless.
-> > 
-> > > 
-> > > Could you try to enable these changes only for RT-Linux via a real-time
-> > > kconfig switch?
-> > 
-> >   Nope, this is just a quick hack that allows me to have a functional eHEA under
-> > the rt kernel. I want to understand what the problem is:
-> > 
-> >   - Is the eHEA really delivering level interrupts to the XICS?
-> > 
-> >   - Is the XICS loosing interrupts when they are masked?
-> 
-> There is a known bug in the -rt kernels, the bug causes handlers
-> to lose edge interrupts.
-> 
-> See this patch:
-> 
-> http://lkml.org/lkml/2008/6/30/372
-
-  Yes, I've been following that thread back then and my hack is based on your
-patch. So yes, it seems to be the same problem and it lies in the way -rt handles
-the fasteoi flow.
-
-  But looking at the comments from the XICS code, it seems that its wired for
-level only interrupts. Therefore without any more specs, it's still not clear to
-me that there's not a bug with the way the xics handles eHEA interrupts.
-
-  Are the eHEA interrupts really level interrupts? If so why do they get lost
-when masked?
-
-  I just found that not masking that particular interrupt in the fasteoi path
-makes the thing work!
-
-  Thanks,
-
-  Sebastien.
-
-> 
-> >   - ...?
-> 
-> -- 
-> Anton Vorontsov
-> email: cbouatmailru@gmail.com
-> irc://irc.freenode.net/bd2
+Sebastien Dugue <sebastien.dugue@bull.net> wrote on 15.09.2008 10:04:06:
+> [PATCH HACK] powerpc: quick hack to get a functional eHEA with
+> hardirq preemption
+>
+> Sebastien Dugue
+>
+> to:
+>
+> 15.09.2008 10:07
+>
+> Cc:
+>
+> linux-ppc, linux-kernel, Linux-rt, netdev, Jan-Bernd Themann, Thomas
+> Q Klein, Christoph Raisch, jean-pierre.dion, gilles.carry, tinytim
+>
+>
+> WARNING: HACK - HACK - HACK
+> Not-Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
+> ---
+> --- a/arch/powerpc/kernel/ibmebus.c
+> +++ b/arch/powerpc/kernel/ibmebus.c
+> @@ -41,6 +41,7 @@
+> -   return request_irq(irq, handler, irq_flags, devname, dev_id);
+> +   ret = request_irq(irq, handler, irq_flags, devname, dev_id);
+> +
+> +   desc = irq_desc + irq;
+> +   desc->status &= ~(IRQ_TYPE_SENSE_MASK | IRQ_LEVEL);
+> +   desc->status |= IRQ_TYPE_EDGE_RISING;
+> +
+> +   return ret;
+This looks a bit like a set_irq_type call.
+Don't know if this is fully implemented for xics though...
+>  }
+>  EXPORT_SYMBOL(ibmebus_request_irq);
+>
+> diff --git a/kernel/irq/chip.c b/kernel/irq/chip.c
+> index b7b397a..6d366ca 100644
+> --- a/kernel/irq/chip.c
+> +++ b/kernel/irq/chip.c
+> @@ -430,7 +430,7 @@ handle_fasteoi_irq(unsigned int irq, struct
+> irq_desc *desc)
+>     action = desc->action;
+>     if (unlikely(!action || (desc->status & (IRQ_INPROGRESS |
+>                     IRQ_DISABLED)))) {
+> -      desc->status |= IRQ_PENDING;
+> +      desc->status |= IRQ_PENDING | IRQ_MASKED;
+>        if (desc->chip->mask)
+>           desc->chip->mask(irq);
+>        goto out;
+> @@ -439,9 +439,10 @@ handle_fasteoi_irq(unsigned int irq, struct
+> irq_desc *desc)
+>     desc->status |= IRQ_INPROGRESS;
+>     /*
+>      * In the threaded case we fall back to a mask+eoi sequence:
+> +    * excepted for edge interrupts which are not masked.
+>      */
+>     if (redirect_hardirq(desc)) {
+> -      if (desc->chip->mask)
+> +      if (desc->chip->mask && !(desc->status & IRQ_TYPE_EDGE_BOTH))
+>           desc->chip->mask(irq);
+>        goto out;
+>     }
+> diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+> index 3bffa20..3e39c71 100644
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -788,9 +788,12 @@ static void do_hardirq(struct irq_desc *desc)
+>        thread_simple_irq(desc);
+>     else if (desc->handle_irq == handle_level_irq)
+>        thread_level_irq(desc);
+> -   else if (desc->handle_irq == handle_fasteoi_irq)
+> -      thread_fasteoi_irq(desc);
+> -   else if (desc->handle_irq == handle_edge_irq)
+> +   else if (desc->handle_irq == handle_fasteoi_irq) {
+> +      if (desc->status & IRQ_TYPE_EDGE_BOTH)
+> +         thread_edge_irq(desc);
+> +      else
+> +         thread_fasteoi_irq(desc);
+> +   } else if (desc->handle_irq == handle_edge_irq)
+>        thread_edge_irq(desc);
+>     else
+>        thread_do_irq(desc);
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+> 1.6.0.1.308.gede4c
+>
+According to the specs at some point in the system the HEA IRQs have a edge
+characteristic.
+But since PCI-E edge and level can both be forwarded through a message
+interface
+(HEA is not PCI-E, it's only connected to the same internal bus, where the
+PHB resides)
+
+Anybody from the xics experts want to comment on this?
+
+
+
+Gruss / Regards
+Christoph R.  & Jan-Bernd
+
