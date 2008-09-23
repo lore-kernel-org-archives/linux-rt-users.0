@@ -1,58 +1,64 @@
-From: Sebastien Dugue <sebastien.dugue@bull.net>
-Subject: [PATCH][RT]: handle_IRQ_event() - fix thinko
-Date: Tue, 23 Sep 2008 10:10:52 +0200
-Message-ID: <20080923101052.16574a0f@bull.net>
+From: Jan-Bernd Themann <ossthema@de.ibm.com>
+Subject: Re: [PATCH HACK] powerpc: quick hack to get a functional eHEA with hardirq preemption, eHCA is close
+Date: Tue, 23 Sep 2008 17:43:23 +0200
+Message-ID: <200809231743.23828.ossthema@de.ibm.com>
+References: <20080915100406.342e027a@bull.net> <OFD7842B7A.ADC47EED-ONC12574C8.003A2CB3-C12574C8.003AC948@de.ibm.com> <20080918143146.77db81d5@bull.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Jean Pierre Dion <jean-pierre.dion@bull.net>,
-	Gilles Carry <Gilles.Carry@ext.bull.net>
-To: Linux-rt <linux-rt-users@vger.kernel.org>
+Cc: Christoph Raisch <RAISCH@de.ibm.com>,
+	Benjamin Herrenschmidt <bherren@au1.ibm.com>,
+	gilles.carry@ext.bull.net, Jan-Bernd Themann <THEMANN@de.ibm.com>,
+	jean-pierre.dion@bull.net,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Linux-rt <linux-rt-users@vger.kernel.org>,
+	linux-ppc <linuxppc-dev@ozlabs.org>, netdev@vger.kernel.org,
+	Thomas Q Klein <TKLEIN@de.ibm.com>, tinytim@us.ibm.com,
+	Hoang-Nam Nguyen <HNGUYEN@de.ibm.com>
+To: Sebastien Dugue <sebastien.dugue@bull.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:49675 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751103AbYIWILG (ORCPT
+Received: from mtagate4.de.ibm.com ([195.212.29.153]:36737 "EHLO
+	mtagate4.de.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751438AbYIWPn7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Sep 2008 04:11:06 -0400
+	Tue, 23 Sep 2008 11:43:59 -0400
+In-Reply-To: <20080918143146.77db81d5@bull.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
-  handle_IRQ_event() reenables interrupts for threaded IRQ handlers,
-provided said handler does not need to run with IRQF_DISABLED.
+I think these are the "functional" changes that need to be included in
+the ibmebus driver. We'll add a RT flag in the final version to enable
+these changes only for RT-Linux for now. 
+Ben, can you / your team look into the implementation
+of the set_irq_type functionality needed for XICS?
 
-  Therefore, unless I'm missing something, in the following:
+Regards,
+Jan-Bernd & Christoph
 
-if (!hardirq_count() || !(action->flags & IRQF_DISABLED))
-	local_irq_enable();
-
-  the logical OR should be a logical AND:
-
-if (!hardirq_count() && !(action->flags & IRQF_DISABLED))
-	local_irq_enable();
-
-  Or maybe I've not yet reached my daily cafeine dose. (Damned addiction)
-
-Signed-off-by: Sebastien Dugue <sebastien.dugue@bull.net>
----
- kernel/irq/handle.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
-index 9ea9f73..f1579b9 100644
---- a/kernel/irq/handle.c
-+++ b/kernel/irq/handle.c
-@@ -144,7 +144,7 @@ irqreturn_t handle_IRQ_event(unsigned int irq, struct irqaction *action)
- 	 * Unconditionally enable interrupts for threaded
- 	 * IRQ handlers:
- 	 */
--	if (!hardirq_count() || !(action->flags & IRQF_DISABLED))
-+	if (!hardirq_count() && !(action->flags & IRQF_DISABLED))
- 		local_irq_enable();
+diff -Nurp b/arch/powerpc/kernel/ibmebus.c a/arch/powerpc/kernel/ibmebus.c
+--- b/arch/powerpc/kernel/ibmebus.c	2008-09-22 00:29:55.000000000 +0200
++++ a/arch/powerpc/kernel/ibmebus.c	2008-09-23 12:04:53.000000000 +0200
+@@ -216,12 +216,16 @@ int ibmebus_request_irq(u32 ist, irq_han
+ 			unsigned long irq_flags, const char *devname,
+ 			void *dev_id)
+ {
++	int ret;
+ 	unsigned int irq = irq_create_mapping(NULL, ist);
  
- 	do {
--- 
-1.6.0.1.308.gede4c
+ 	if (irq == NO_IRQ)
+ 		return -EINVAL;
+ 
+-	return request_irq(irq, handler, irq_flags, devname, dev_id);
++	ret = request_irq(irq, handler, irq_flags, devname, dev_id);
++	set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
++
++	return ret;
+ }
+ EXPORT_SYMBOL(ibmebus_request_irq);
+ 
+
 
