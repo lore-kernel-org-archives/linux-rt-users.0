@@ -1,64 +1,49 @@
-From: Jan-Bernd Themann <ossthema@de.ibm.com>
-Subject: Re: [PATCH HACK] powerpc: quick hack to get a functional eHEA with hardirq preemption, eHCA is close
-Date: Tue, 23 Sep 2008 17:43:23 +0200
-Message-ID: <200809231743.23828.ossthema@de.ibm.com>
-References: <20080915100406.342e027a@bull.net> <OFD7842B7A.ADC47EED-ONC12574C8.003A2CB3-C12574C8.003AC948@de.ibm.com> <20080918143146.77db81d5@bull.net>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH][RT]: handle_IRQ_event() - fix thinko
+Date: Wed, 24 Sep 2008 17:45:36 +0200 (CEST)
+Message-ID: <alpine.LFD.1.10.0809241744110.4413@apollo.tec.linutronix.de>
+References: <20080923101052.16574a0f@bull.net>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Raisch <RAISCH@de.ibm.com>,
-	Benjamin Herrenschmidt <bherren@au1.ibm.com>,
-	gilles.carry@ext.bull.net, Jan-Bernd Themann <THEMANN@de.ibm.com>,
-	jean-pierre.dion@bull.net,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Linux-rt <linux-rt-users@vger.kernel.org>,
-	linux-ppc <linuxppc-dev@ozlabs.org>, netdev@vger.kernel.org,
-	Thomas Q Klein <TKLEIN@de.ibm.com>, tinytim@us.ibm.com,
-	Hoang-Nam Nguyen <HNGUYEN@de.ibm.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Linux-rt <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Jean Pierre Dion <jean-pierre.dion@bull.net>,
+	Gilles Carry <Gilles.Carry@ext.bull.net>
 To: Sebastien Dugue <sebastien.dugue@bull.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mtagate4.de.ibm.com ([195.212.29.153]:36737 "EHLO
-	mtagate4.de.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751438AbYIWPn7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Sep 2008 11:43:59 -0400
-In-Reply-To: <20080918143146.77db81d5@bull.net>
-Content-Disposition: inline
+Received: from www.tglx.de ([62.245.132.106]:42781 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752264AbYIXPqj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Sep 2008 11:46:39 -0400
+In-Reply-To: <20080923101052.16574a0f@bull.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Tue, 23 Sep 2008, Sebastien Dugue wrote:
 
-I think these are the "functional" changes that need to be included in
-the ibmebus driver. We'll add a RT flag in the final version to enable
-these changes only for RT-Linux for now. 
-Ben, can you / your team look into the implementation
-of the set_irq_type functionality needed for XICS?
+> 
+>   handle_IRQ_event() reenables interrupts for threaded IRQ handlers,
+> provided said handler does not need to run with IRQF_DISABLED.
+> 
+>   Therefore, unless I'm missing something, in the following:
+> 
+> if (!hardirq_count() || !(action->flags & IRQF_DISABLED))
+> 	local_irq_enable();
+> 
+>   the logical OR should be a logical AND:
+> 
+> if (!hardirq_count() && !(action->flags & IRQF_DISABLED))
+> 	local_irq_enable();
 
-Regards,
-Jan-Bernd & Christoph
+No. We don't want to run the threaded handler with interrupts disabled.
 
-diff -Nurp b/arch/powerpc/kernel/ibmebus.c a/arch/powerpc/kernel/ibmebus.c
---- b/arch/powerpc/kernel/ibmebus.c	2008-09-22 00:29:55.000000000 +0200
-+++ a/arch/powerpc/kernel/ibmebus.c	2008-09-23 12:04:53.000000000 +0200
-@@ -216,12 +216,16 @@ int ibmebus_request_irq(u32 ist, irq_han
- 			unsigned long irq_flags, const char *devname,
- 			void *dev_id)
- {
-+	int ret;
- 	unsigned int irq = irq_create_mapping(NULL, ist);
+!hardirq_count() tells us that we are in thread context.
  
- 	if (irq == NO_IRQ)
- 		return -EINVAL;
- 
--	return request_irq(irq, handler, irq_flags, devname, dev_id);
-+	ret = request_irq(irq, handler, irq_flags, devname, dev_id);
-+	set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
-+
-+	return ret;
- }
- EXPORT_SYMBOL(ibmebus_request_irq);
- 
+>   Or maybe I've not yet reached my daily cafeine dose. (Damned addiction)
 
+Looks like. :)
 
+Thanks,
+
+	tglx
