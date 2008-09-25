@@ -1,54 +1,52 @@
-From: "dalampu@tin.it" <dalampu@tin.it>
-Subject: patch 2.6.26.5 rt9 for ppc
-Date: Thu, 25 Sep 2008 10:06:32 +0100 (GMT+01:00)
-Message-ID: <11c98c274c0.dalampu@tin.it>
-Reply-To: "dalampu@tin.it" <dalampu@tin.it>
+From: Sebastien Dugue <sebastien.dugue@bull.net>
+Subject: Re: [PATCH][RT]: handle_IRQ_event() - fix thinko
+Date: Thu, 25 Sep 2008 11:40:40 +0200
+Message-ID: <20080925114040.25ca8aa7@bull.net>
+References: <20080923101052.16574a0f@bull.net>
+	<alpine.LFD.1.10.0809241744110.4413@apollo.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain;charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Linux-rt <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Jean Pierre Dion <jean-pierre.dion@bull.net>,
+	Gilles Carry <Gilles.Carry@ext.bull.net>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2web.tin.it ([212.216.176.236]:41775 "EHLO smtp2web.tin.it"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752834AbYIYJGe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Sep 2008 05:06:34 -0400
-Received: from pswm9.cp.tin.it (192.168.70.30) by smtp2web.tin.it (8.0.022)
-        id 488999AC0360F13A for linux-rt-users@vger.kernel.org; Thu, 25 Sep 2008 11:06:32 +0200
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:59054 "EHLO
+	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752978AbYIYJmK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Sep 2008 05:42:10 -0400
+In-Reply-To: <alpine.LFD.1.10.0809241744110.4413@apollo.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-HI, I'm trying to install a real time kernel
-into my powerpc system 
-(freescale powerpc 860).
+On Wed, 24 Sep 2008 17:45:36 +0200 (CEST) Thomas Gleixner <tglx@linutronix.de> wrote:
 
- Everything goes ok with kernel 2.6.26.5, but
- after patching with 2.6.26.5-rt9, after booting and after
- an 
-apparently random time interval, it crashes with
- the message kernel :
- 
-panic, aiee killing interrupt handler.
+> On Tue, 23 Sep 2008, Sebastien Dugue wrote:
+> 
+> > 
+> >   handle_IRQ_event() reenables interrupts for threaded IRQ handlers,
+> > provided said handler does not need to run with IRQF_DISABLED.
+> > 
+> >   Therefore, unless I'm missing something, in the following:
+> > 
+> > if (!hardirq_count() || !(action->flags & IRQF_DISABLED))
+> > 	local_irq_enable();
+> > 
+> >   the logical OR should be a logical AND:
+> > 
+> > if (!hardirq_count() && !(action->flags & IRQF_DISABLED))
+> > 	local_irq_enable();
+> 
+> No. We don't want to run the threaded handler with interrupts disabled.
+> 
+> !hardirq_count() tells us that we are in thread context.
 
- Sometimes after booting, it
- 
-appears ok, with shell prompt,
- but if i make some filesystem 
-operations
- like "ls" the problem
- appears. Is yet known this problem 
-or there's no
- feedback about ppc or powerpc systems with this rt 
-patches ?
- Is there a patch about this problem ?
- I tried with another 
-rt patches (like 2.6.26
- rt1, starting with a2.6.26 kernel),
- but the 
-problem remains.
- Waiting an answer, i would thank you for your time
- 
-and for your effort to make linux a realtime os.
+  OK, but then if a driver asked to run with IRQ disabled it will not
+be honored with threaded hardirq.
 
- Regards
- Lampugnani 
-Davide
+
+  Sebastien.
