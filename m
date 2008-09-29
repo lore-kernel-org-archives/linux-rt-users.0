@@ -1,125 +1,145 @@
 From: Gregory Haskins <ghaskins@novell.com>
 Subject: Re: [BUG][PPC64] BUG in 2.6.26.5-rt9 causing Hang
-Date: Mon, 29 Sep 2008 17:34:56 -0400
-Message-ID: <48E14A00.7060105@novell.com>
-References: <20080925123235.GA27916@linux.vnet.ibm.com> <48E1460A.5000504@novell.com>
+Date: Mon, 29 Sep 2008 18:00:01 -0400
+Message-ID: <48E14FE1.7040507@novell.com>
+References: <20080925123235.GA27916@linux.vnet.ibm.com> <48E1460A.5000504@novell.com> <48E14A00.7060105@novell.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
  protocol="application/pgp-signature";
- boundary="------------enig2DF373CE36AFD927296B31B8"
+ boundary="------------enigB62C0F83C307E6EBA17D6124"
+Cc: dvhltc@us.ibm.com
 To: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>, chirag@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:58251 "EHLO
+Received: from victor.provo.novell.com ([137.65.250.26]:43388 "EHLO
 	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751908AbYI2Vae (ORCPT
+	with ESMTP id S1751974AbYI2Vzh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Sep 2008 17:30:34 -0400
-In-Reply-To: <48E1460A.5000504@novell.com>
+	Mon, 29 Sep 2008 17:55:37 -0400
+In-Reply-To: <48E14A00.7060105@novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig2DF373CE36AFD927296B31B8
+--------------enigB62C0F83C307E6EBA17D6124
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
 Gregory Haskins wrote:
-> Hi Chirag
->
-> Chirag Jog wrote:
+> Gregory Haskins wrote:
 >  =20
->> Hi Gregory,
->> We see the following BUG followed by a hang on the latest kernel 2.6.2=
-6.5-rt9 on a Power6 blade (PPC64)
->> It is easily recreated by running the async_handler or sbrk_mutex (rea=
-ltime tests from ltp) tests.
+>> Hi Chirag
+>>
+>> Chirag Jog wrote:
 >>  =20
 >>    =20
->
-> Call me an LTP newbie, but where can I get the sbrk_mutex/async_handler=
+>>> Hi Gregory,
+>>> We see the following BUG followed by a hang on the latest kernel 2.6.=
+26.5-rt9 on a Power6 blade (PPC64)
+>>> It is easily recreated by running the async_handler or sbrk_mutex (re=
+altime tests from ltp) tests.
+>>>  =20
+>>>    =20
+>>>      =20
+>> Call me an LTP newbie, but where can I get the sbrk_mutex/async_handle=
+r
+>> tests.
+>>    =20
+> Ok, I figured out this part.  I needed a newer version of the .rpm from=
 
-> tests.
-Ok, I figured out this part.  I needed a newer version of the .rpm from
-a different repo.  However, both async_handler and sbrk_mutex seem to
-segfault for me.  Hmm
+> a different repo.  However, both async_handler and sbrk_mutex seem to
+> segfault for me.  Hmm
+>  =20
 
----
-
-ghaskins@test:~> uname -a
-Linux test 2.6.26.5-rt9-rt #1 SMP PREEMPT RT Mon Sep 29 14:26:45 EDT
-2008 x86_64 x86_64 x86_64 GNU/Linux
-
-test:/home/ghaskins #
-/usr/lib64/ltp/testcases/realtime/func/async_handler/async_handler
-
------------------------------------
-Asynchronous Event Handling Latency
------------------------------------
-
-jvmsim disabled
-Running 1000000 iterations
-Segmentation fault
-
----
-
-Any ideas?
+Thanks to help from Darren I got around this issue.  Unfortunately both
+tests pass so I cannot reproduce this issue, nor do I see the problem
+via code inspection.  Ill keep digging but I am currently at a loss.  I
+may need to send you some diagnostic patches to find this, if that is ok
+with you Chirag?
 
 -Greg
 
->   I installed the LTP rpm and I dont seem to have tests by that
-> name.  I have a 26.5-rt9 kernel all configured and ready to go but no
-> way to reproduce this issue.  Please advise.
+> ---
 >
-> Regards,
+> ghaskins@test:~> uname -a
+> Linux test 2.6.26.5-rt9-rt #1 SMP PREEMPT RT Mon Sep 29 14:26:45 EDT
+> 2008 x86_64 x86_64 x86_64 GNU/Linux
+>
+> test:/home/ghaskins #
+> /usr/lib64/ltp/testcases/realtime/func/async_handler/async_handler
+>
+> -----------------------------------
+> Asynchronous Event Handling Latency
+> -----------------------------------
+>
+> jvmsim disabled
+> Running 1000000 iterations
+> Segmentation fault
+>
+> ---
+>
+> Any ideas?
+>
 > -Greg
 >
->
 >  =20
->> login: cpu 0x2: Vector: 700 (Program Check) at [c0000000e8e875d0]
->>     pc: c00000000005110c: .pick_next_pushable_task+0x54/0x9c
->>     lr: c000000000059f50: .push_rt_task+0x44/0x2b4
->>     sp: c0000000e8e87850
->>    msr: 8000000000021032
->>   current =3D 0xc0000000ea5bb2e0
->>   paca    =3D 0xc000000000608700
->>     pid   =3D 2811, comm =3D async_handler
->> kernel BUG at kernel/sched_rt.c:1041! <---------------------
->> enter ? for help
->> [link register   ] c000000000059f50 .push_rt_task+0x44/0x2b4
->> [c0000000e8e87850] c0000000e8e878f0 (unreliable)
->> [c0000000e8e87900] c00000000005a1dc .push_rt_tasks+0x1c/0x38
->> [c0000000e8e87980] c00000000005a21c .post_schedule_rt+0x24/0x44
->> [c0000000e8e87a10] c000000000057cbc .finish_task_switch+0xd0/0x180
->> [c0000000e8e87ab0] c0000000003b6e88 .__schedule+0x6e0/0x798
->> [c0000000e8e87b90] c0000000003b7148 .schedule+0xec/0x11c
->> [c0000000e8e87c10] c0000000003b7a40 .do_nanosleep+0x6c/0xcc
->> [c0000000e8e87c90] c000000000080738 .hrtimer_nanosleep+0x7c/0x100
->> [c0000000e8e87d90] c000000000080830 .sys_nanosleep+0x74/0x94
->> [c0000000e8e87e30] c0000000000086ac syscall_exit+0x0/0x40
->> --- Exception: c00 (System Call) at 0000008026449844
->> SP (400014185f0) is in userspace
+>>   I installed the LTP rpm and I dont seem to have tests by that
+>> name.  I have a 26.5-rt9 kernel all configured and ready to go but no
+>> way to reproduce this issue.  Please advise.
+>>
+>> Regards,
+>> -Greg
 >>
 >>
->> This is generated by the BUG_ON lines in the pick_next_pushable functi=
-on
->> introduced by the sched-only-push-once-per-queue.patch .
->>
->> The -rt kernel prior to this patch didnot give such BUGes.
->>
->> All this was tried with
->> CONFIG_GROUP_SCHED=3DN
->> CONFIG_RT_GROUP_SCHED=3DN
->>
->>
->> Setting the options
->> CONFIG_GROUP_SCHED=3Dy
->> CONFIG_RT_GROUP_SCHED=3DY,
->> seems to solve the problem.
->>
->>
->>
+>>  =20
+>>    =20
+>>> login: cpu 0x2: Vector: 700 (Program Check) at [c0000000e8e875d0]
+>>>     pc: c00000000005110c: .pick_next_pushable_task+0x54/0x9c
+>>>     lr: c000000000059f50: .push_rt_task+0x44/0x2b4
+>>>     sp: c0000000e8e87850
+>>>    msr: 8000000000021032
+>>>   current =3D 0xc0000000ea5bb2e0
+>>>   paca    =3D 0xc000000000608700
+>>>     pid   =3D 2811, comm =3D async_handler
+>>> kernel BUG at kernel/sched_rt.c:1041! <---------------------
+>>> enter ? for help
+>>> [link register   ] c000000000059f50 .push_rt_task+0x44/0x2b4
+>>> [c0000000e8e87850] c0000000e8e878f0 (unreliable)
+>>> [c0000000e8e87900] c00000000005a1dc .push_rt_tasks+0x1c/0x38
+>>> [c0000000e8e87980] c00000000005a21c .post_schedule_rt+0x24/0x44
+>>> [c0000000e8e87a10] c000000000057cbc .finish_task_switch+0xd0/0x180
+>>> [c0000000e8e87ab0] c0000000003b6e88 .__schedule+0x6e0/0x798
+>>> [c0000000e8e87b90] c0000000003b7148 .schedule+0xec/0x11c
+>>> [c0000000e8e87c10] c0000000003b7a40 .do_nanosleep+0x6c/0xcc
+>>> [c0000000e8e87c90] c000000000080738 .hrtimer_nanosleep+0x7c/0x100
+>>> [c0000000e8e87d90] c000000000080830 .sys_nanosleep+0x74/0x94
+>>> [c0000000e8e87e30] c0000000000086ac syscall_exit+0x0/0x40
+>>> --- Exception: c00 (System Call) at 0000008026449844
+>>> SP (400014185f0) is in userspace
+>>>
+>>>
+>>> This is generated by the BUG_ON lines in the pick_next_pushable funct=
+ion
+>>> introduced by the sched-only-push-once-per-queue.patch .
+>>>
+>>> The -rt kernel prior to this patch didnot give such BUGes.
+>>>
+>>> All this was tried with
+>>> CONFIG_GROUP_SCHED=3DN
+>>> CONFIG_RT_GROUP_SCHED=3DN
+>>>
+>>>
+>>> Setting the options
+>>> CONFIG_GROUP_SCHED=3Dy
+>>> CONFIG_RT_GROUP_SCHED=3DY,
+>>> seems to solve the problem.
+>>>
+>>>
+>>>
+>>>  =20
+>>>    =20
+>>>      =20
 >>  =20
 >>    =20
 >
@@ -128,7 +148,7 @@ on
 
 
 
---------------enig2DF373CE36AFD927296B31B8
+--------------enigB62C0F83C307E6EBA17D6124
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -137,9 +157,9 @@ Content-Disposition: attachment; filename="signature.asc"
 Version: GnuPG v2.0.9 (GNU/Linux)
 Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
 
-iEYEARECAAYFAkjhSgAACgkQlOSOBdgZUxkoUwCcCngpurwiTG5oczTTKkCD2mWs
-c2MAmgKls1xGnJysUipFmKUjSYRXCBno
-=Xfpw
+iEYEARECAAYFAkjhT+EACgkQlOSOBdgZUxm1pQCePZF5i6Frqe3grrmFvyiHiIkf
+5dkAoI9Koi7jHmEMTjd7Bthe2OrVAW4R
+=kPRO
 -----END PGP SIGNATURE-----
 
---------------enig2DF373CE36AFD927296B31B8--
+--------------enigB62C0F83C307E6EBA17D6124--
