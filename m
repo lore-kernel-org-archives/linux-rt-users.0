@@ -1,55 +1,106 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 3/3] rt: sysctl compile fix for when profiling is off
-Date: Mon, 29 Sep 2008 10:32:53 -0400
-Message-ID: <dd82952098475b55a2e24cccaaeac37dc00edf76.1222698507.git.paul.gortmaker@windriver.com>
-References: <1222698773-5920-1-git-send-email-paul.gortmaker@windriver.com>
- <1fcdb5cc884c1e226bcdc40e8a9918c9f80be027.1222698507.git.paul.gortmaker@windriver.com>
- <2207c74a6dd86a8c88b6c0adfac45e7852f8b99b.1222698507.git.paul.gortmaker@windriver.com>
-Cc: linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [BUG][PPC64] BUG in 2.6.26.5-rt9 causing Hang
+Date: Mon, 29 Sep 2008 14:13:41 -0400
+Message-ID: <48E11AD5.8060508@novell.com>
+References: <20080925123235.GA27916@linux.vnet.ibm.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig881914E056A300BD217DBD85"
+To: ghaskins@novell.com,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:44178 "EHLO mail.wrs.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751556AbYI2OdF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Sep 2008 10:33:05 -0400
-In-Reply-To: <2207c74a6dd86a8c88b6c0adfac45e7852f8b99b.1222698507.git.paul.gortmaker@windriver.com>
-In-Reply-To: <1fcdb5cc884c1e226bcdc40e8a9918c9f80be027.1222698507.git.paul.gortmaker@windriver.com>
-References: <1fcdb5cc884c1e226bcdc40e8a9918c9f80be027.1222698507.git.paul.gortmaker@windriver.com>
+Received: from victor.provo.novell.com ([137.65.250.26]:33535 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755907AbYI2SJW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Sep 2008 14:09:22 -0400
+In-Reply-To: <20080925123235.GA27916@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-prof_pid will be an unresolved symbol if you don't enable
-profiling, and the final link of the kernel will fail. Make
-the sysctl entry conditional on the appropriate Kconfig option.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig881914E056A300BD217DBD85
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-This patch should be considered for merge into the existing
-preempt-realtime-debug-sysctl.patch.
+Hi Chirag
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- kernel/sysctl.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Chirag Jog wrote:
+> Hi Gregory,
+> We see the following BUG followed by a hang on the latest kernel 2.6.26=
+=2E5-rt9 on a Power6 blade (PPC64)
+> It is easily recreated by running the async_handler or sbrk_mutex (real=
+time tests from ltp) tests.
+>  =20
+FYI I am looking at this now.  I suspect a dequeue_pushable_task()
+probably found its way inside a conditional for GROUP_SCHED and
+inadventently gets compiled away if you disable the feature.=20
+Investigating now..
 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 584969c..ba2239e 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -366,6 +366,7 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= &proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_PROFILING
- 	{
- 		.ctl_name	= CTL_UNNUMBERED,
- 		.procname	= "prof_pid",
-@@ -374,6 +375,7 @@ static struct ctl_table kern_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= &proc_dointvec,
- 	},
-+#endif
- #ifdef CONFIG_PREEMPT
- 	{
- 		.ctl_name	= CTL_UNNUMBERED,
--- 
-1.6.0
+-Greg
 
+> login: cpu 0x2: Vector: 700 (Program Check) at [c0000000e8e875d0]
+>     pc: c00000000005110c: .pick_next_pushable_task+0x54/0x9c
+>     lr: c000000000059f50: .push_rt_task+0x44/0x2b4
+>     sp: c0000000e8e87850
+>    msr: 8000000000021032
+>   current =3D 0xc0000000ea5bb2e0
+>   paca    =3D 0xc000000000608700
+>     pid   =3D 2811, comm =3D async_handler
+> kernel BUG at kernel/sched_rt.c:1041! <---------------------
+> enter ? for help
+> [link register   ] c000000000059f50 .push_rt_task+0x44/0x2b4
+> [c0000000e8e87850] c0000000e8e878f0 (unreliable)
+> [c0000000e8e87900] c00000000005a1dc .push_rt_tasks+0x1c/0x38
+> [c0000000e8e87980] c00000000005a21c .post_schedule_rt+0x24/0x44
+> [c0000000e8e87a10] c000000000057cbc .finish_task_switch+0xd0/0x180
+> [c0000000e8e87ab0] c0000000003b6e88 .__schedule+0x6e0/0x798
+> [c0000000e8e87b90] c0000000003b7148 .schedule+0xec/0x11c
+> [c0000000e8e87c10] c0000000003b7a40 .do_nanosleep+0x6c/0xcc
+> [c0000000e8e87c90] c000000000080738 .hrtimer_nanosleep+0x7c/0x100
+> [c0000000e8e87d90] c000000000080830 .sys_nanosleep+0x74/0x94
+> [c0000000e8e87e30] c0000000000086ac syscall_exit+0x0/0x40
+> --- Exception: c00 (System Call) at 0000008026449844
+> SP (400014185f0) is in userspace
+>
+>
+> This is generated by the BUG_ON lines in the pick_next_pushable functio=
+n
+> introduced by the sched-only-push-once-per-queue.patch .
+>
+> The -rt kernel prior to this patch didnot give such BUGes.
+>
+> All this was tried with
+> CONFIG_GROUP_SCHED=3DN
+> CONFIG_RT_GROUP_SCHED=3DN
+>
+>
+> Setting the options
+> CONFIG_GROUP_SCHED=3Dy
+> CONFIG_RT_GROUP_SCHED=3DY,
+> seems to solve the problem.
+>
+>
+>
+>  =20
+
+
+
+--------------enig881914E056A300BD217DBD85
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAkjhGtUACgkQlOSOBdgZUxkCVgCffaEoDeJs6xpk6hMTxms94vYQ
+9YUAn0Mcc78HvOozpckeG+tfE4OIbTmS
+=ZbVA
+-----END PGP SIGNATURE-----
+
+--------------enig881914E056A300BD217DBD85--
