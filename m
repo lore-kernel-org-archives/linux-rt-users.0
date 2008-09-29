@@ -1,28 +1,23 @@
 From: Gregory Haskins <ghaskins@novell.com>
 Subject: Re: [BUG][PPC64] BUG in 2.6.26.5-rt9 causing Hang
-Date: Mon, 29 Sep 2008 14:13:41 -0400
-Message-ID: <48E11AD5.8060508@novell.com>
+Date: Mon, 29 Sep 2008 17:18:02 -0400
+Message-ID: <48E1460A.5000504@novell.com>
 References: <20080925123235.GA27916@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
  protocol="application/pgp-signature";
- boundary="------------enig881914E056A300BD217DBD85"
+ boundary="------------enig731E53F0DBD8A7EB399C5973"
 To: ghaskins@novell.com,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:33535 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755907AbYI2SJW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Sep 2008 14:09:22 -0400
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754106AbYI2VNy@vger.kernel.org>
 In-Reply-To: <20080925123235.GA27916@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig881914E056A300BD217DBD85
+--------------enig731E53F0DBD8A7EB399C5973
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
@@ -35,12 +30,15 @@ Chirag Jog wrote:
 > It is easily recreated by running the async_handler or sbrk_mutex (real=
 time tests from ltp) tests.
 >  =20
-FYI I am looking at this now.  I suspect a dequeue_pushable_task()
-probably found its way inside a conditional for GROUP_SCHED and
-inadventently gets compiled away if you disable the feature.=20
-Investigating now..
 
+Call me an LTP newbie, but where can I get the sbrk_mutex/async_handler
+tests.  I installed the LTP rpm and I dont seem to have tests by that
+name.  I have a 26.5-rt9 kernel all configured and ready to go but no
+way to reproduce this issue.  Please advise.
+
+Regards,
 -Greg
+
 
 > login: cpu 0x2: Vector: 700 (Program Check) at [c0000000e8e875d0]
 >     pc: c00000000005110c: .pick_next_pushable_task+0x54/0x9c
@@ -89,7 +87,7 @@ n
 
 
 
---------------enig881914E056A300BD217DBD85
+--------------enig731E53F0DBD8A7EB399C5973
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
@@ -98,9 +96,9 @@ Content-Disposition: attachment; filename="signature.asc"
 Version: GnuPG v2.0.9 (GNU/Linux)
 Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
 
-iEYEARECAAYFAkjhGtUACgkQlOSOBdgZUxkCVgCffaEoDeJs6xpk6hMTxms94vYQ
-9YUAn0Mcc78HvOozpckeG+tfE4OIbTmS
-=ZbVA
+iEYEARECAAYFAkjhRgoACgkQlOSOBdgZUxmlNgCfa/xFj965yDpe9DjTF4fptuwH
+TT8Anjf1YKB9XXwWXOmFT6kMoSjrtzPC
+=QOAH
 -----END PGP SIGNATURE-----
 
---------------enig881914E056A300BD217DBD85--
+--------------enig731E53F0DBD8A7EB399C5973--
