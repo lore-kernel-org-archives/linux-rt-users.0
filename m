@@ -1,165 +1,122 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [BUG][PPC64] BUG in 2.6.26.5-rt9 causing Hang
-Date: Mon, 29 Sep 2008 18:00:01 -0400
-Message-ID: <48E14FE1.7040507@novell.com>
-References: <20080925123235.GA27916@linux.vnet.ibm.com> <48E1460A.5000504@novell.com> <48E14A00.7060105@novell.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: RT patches against v2.6.27-rc7 available
+Date: Mon, 29 Sep 2008 23:32:50 -0400
+Message-ID: <20080930033248.GA24480@windriver.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigB62C0F83C307E6EBA17D6124"
-Cc: dvhltc@us.ibm.com
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, chirag@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:43388 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751974AbYI2Vzh (ORCPT
+Received: from [128.224.252.2] ([128.224.252.2]:47141 "EHLO
+	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751073AbYI3Dcy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Sep 2008 17:55:37 -0400
-In-Reply-To: <48E14A00.7060105@novell.com>
+	Mon, 29 Sep 2008 23:32:54 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigB62C0F83C307E6EBA17D6124
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+I've completed a carry forward of the 26rt9 broken out patchset onto
+the 2.6.27-rc7 kernel.  There were a lot of changes in 2.6.27, so this
+wasn't just a simple case of having all the patches magically work as-is.
 
-Gregory Haskins wrote:
-> Gregory Haskins wrote:
->  =20
->> Hi Chirag
->>
->> Chirag Jog wrote:
->>  =20
->>    =20
->>> Hi Gregory,
->>> We see the following BUG followed by a hang on the latest kernel 2.6.=
-26.5-rt9 on a Power6 blade (PPC64)
->>> It is easily recreated by running the async_handler or sbrk_mutex (re=
-altime tests from ltp) tests.
->>>  =20
->>>    =20
->>>      =20
->> Call me an LTP newbie, but where can I get the sbrk_mutex/async_handle=
-r
->> tests.
->>    =20
-> Ok, I figured out this part.  I needed a newer version of the .rpm from=
+I've done this by maintaining the existing series file and patch ordering
+and patch content as much as possible.  I've used guilt (quilt for git)
+since I wanted to try and maximize the usefulness to both the folks that
+want to work with the series and folks that want to work with git.  I've
+also annotated the series file with the conflicts (commit IDs) and details
+of the conflicts so that others can hopefully extract value from this
+carry forward if they want to look at it patch by patch.
 
-> a different repo.  However, both async_handler and sbrk_mutex seem to
-> segfault for me.  Hmm
->  =20
+There are several objectives that I'm hoping to cover with this:
 
-Thanks to help from Darren I got around this issue.  Unfortunately both
-tests pass so I cannot reproduce this issue, nor do I see the problem
-via code inspection.  Ill keep digging but I am currently at a loss.  I
-may need to send you some diagnostic patches to find this, if that is ok
-with you Chirag?
+  -assist the maintainers by hopefully saving them some of the gruntwork
+   of the basic carry forward task, so that folks who know this stuff
+   much better than I do can focus on features and technical issues.
 
--Greg
+  -provide early access to an RT tree, so that we can get early visibility
+   into the issues that the new content from 2.6.27 bring to the surface.
 
-> ---
->
-> ghaskins@test:~> uname -a
-> Linux test 2.6.26.5-rt9-rt #1 SMP PREEMPT RT Mon Sep 29 14:26:45 EDT
-> 2008 x86_64 x86_64 x86_64 GNU/Linux
->
-> test:/home/ghaskins #
-> /usr/lib64/ltp/testcases/realtime/func/async_handler/async_handler
->
-> -----------------------------------
-> Asynchronous Event Handling Latency
-> -----------------------------------
->
-> jvmsim disabled
-> Running 1000000 iterations
-> Segmentation fault
->
-> ---
->
-> Any ideas?
->
-> -Greg
->
->  =20
->>   I installed the LTP rpm and I dont seem to have tests by that
->> name.  I have a 26.5-rt9 kernel all configured and ready to go but no
->> way to reproduce this issue.  Please advise.
->>
->> Regards,
->> -Greg
->>
->>
->>  =20
->>    =20
->>> login: cpu 0x2: Vector: 700 (Program Check) at [c0000000e8e875d0]
->>>     pc: c00000000005110c: .pick_next_pushable_task+0x54/0x9c
->>>     lr: c000000000059f50: .push_rt_task+0x44/0x2b4
->>>     sp: c0000000e8e87850
->>>    msr: 8000000000021032
->>>   current =3D 0xc0000000ea5bb2e0
->>>   paca    =3D 0xc000000000608700
->>>     pid   =3D 2811, comm =3D async_handler
->>> kernel BUG at kernel/sched_rt.c:1041! <---------------------
->>> enter ? for help
->>> [link register   ] c000000000059f50 .push_rt_task+0x44/0x2b4
->>> [c0000000e8e87850] c0000000e8e878f0 (unreliable)
->>> [c0000000e8e87900] c00000000005a1dc .push_rt_tasks+0x1c/0x38
->>> [c0000000e8e87980] c00000000005a21c .post_schedule_rt+0x24/0x44
->>> [c0000000e8e87a10] c000000000057cbc .finish_task_switch+0xd0/0x180
->>> [c0000000e8e87ab0] c0000000003b6e88 .__schedule+0x6e0/0x798
->>> [c0000000e8e87b90] c0000000003b7148 .schedule+0xec/0x11c
->>> [c0000000e8e87c10] c0000000003b7a40 .do_nanosleep+0x6c/0xcc
->>> [c0000000e8e87c90] c000000000080738 .hrtimer_nanosleep+0x7c/0x100
->>> [c0000000e8e87d90] c000000000080830 .sys_nanosleep+0x74/0x94
->>> [c0000000e8e87e30] c0000000000086ac syscall_exit+0x0/0x40
->>> --- Exception: c00 (System Call) at 0000008026449844
->>> SP (400014185f0) is in userspace
->>>
->>>
->>> This is generated by the BUG_ON lines in the pick_next_pushable funct=
-ion
->>> introduced by the sched-only-push-once-per-queue.patch .
->>>
->>> The -rt kernel prior to this patch didnot give such BUGes.
->>>
->>> All this was tried with
->>> CONFIG_GROUP_SCHED=3DN
->>> CONFIG_RT_GROUP_SCHED=3DN
->>>
->>>
->>> Setting the options
->>> CONFIG_GROUP_SCHED=3Dy
->>> CONFIG_RT_GROUP_SCHED=3DY,
->>> seems to solve the problem.
->>>
->>>
->>>
->>>  =20
->>>    =20
->>>      =20
->>  =20
->>    =20
->
->
->  =20
+  -allow folks who maintain different arches or different eval boards
+   with less frequently used drivers to get early insight into how their
+   boards/drivers will work, and hopefully contribute back fixes.
+
+  -continue to keep the series carried forward to tip so that we essentially
+   have a "linux-rt-next" and thus we get close to immediate feedback on
+   how upstream changes impact the existing patchset.
+
+  -capitalize on the "linux-rt-next" aspect of things in terms of hopefully
+   making it easier to cherry pick bits from the 400 odd patches for
+   mainline inclusion and thus reduce the preempt_rt patch footprint.
+
+I'm open to suggestions on how to tailor this in a way that makes it
+the most benefit to the folks doing the real work.  At the moment, I'd
+figured on making both the broken out patch sets and the git tree with
+them all applied as a reasonable starting point.
+
+I'm not expecting anyone to adopt this wholesale in favour of dropping
+whatever they are currently working on -- since say if I was in Steven's
+shoes, I'd probably also be thinking "who is this chucklehead and why
+should I even assume he can manage to merge anything without completely
+making a mess."  Folks would be completely justified in thinking that,
+and I'd actually be more suprised if they weren't initially suspicious.
+
+With this in mind, it is why I annotated the series file with commit IDs
+of upstream patches.  Even if a person doesn't see any value in the merged
+patches, I'm hoping that the references of the upstream commits that cause
+issues with the existing patches will save time if a person decides to do
+an independent carry forward.  And a comparison of two independent carry
+forwards would still have the benefit of flushing out some hidden items.
+All my annotations in the series file start with PG, so it is clear what
+I've added to the existing file; there are comments at the top that help
+lay out what was done as well.  Long term, the PG comments can go, but
+in the interim, I wanted to capture this metadata for people somehow.
+
+I started with carrying forward 26rt6 onto 27rc1, then onto rc2...rc6,
+and once done that, I brought in the additions for rt7, rt8 and rt9. The
+move from rc6->rc7 was pretty much a no-op; all the work was in rc1..rc4.
+The series file shows which conflicts appeared at which points.  I also
+have the series files for each rcN along the way, if anyone wants those or
+sees value in those intermediate steps, let me know.
+
+Some patches only required some basic context modifications to become
+usable again, but things like the  __raw_spin_foo() --> __ticket_spin_foo(),
+the merge of various 32 and 64 bit files for x86, the required use of
+early_initcall for several things, and the netdev locking changes made
+things interesting and non trivial (at least from my point of view...)
+
+I'm getting this out now, since I've got it carried forward and booting
+on a basic old P4 box.  There are still things I want to do (e.g. non-x86
+testing, etc; see below) but I think it is now at a point where it can be
+a useful shared resource for folks to examine, poke at, kick the tires etc.  
+
+I'll follow up tomorrow with a discussion of some of the patches that had
+interesting aspects and/or warrant a highlight to ensure I've done the
+right thing with them; it would be too much to include that here.
 
 
+Location:
+---------
 
---------------enigB62C0F83C307E6EBA17D6124
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+The broken out patches and series file can be obtained from here:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+	git://opensource1.windriver.com/people/paulg/rt/patches
 
-iEYEARECAAYFAkjhT+EACgkQlOSOBdgZUxm1pQCePZF5i6Frqe3grrmFvyiHiIkf
-5dkAoI9Koi7jHmEMTjd7Bthe2OrVAW4R
-=kPRO
------END PGP SIGNATURE-----
+A fully patched 2.6.27-rc7 git tree can be had from here:
 
---------------enigB62C0F83C307E6EBA17D6124--
+	git://opensource1.windriver.com/people/paulg/rt/linux-2.6
+
+The latter is just the result of applying the broken out patches with guilt,
+and then committing the series file on the end as a useful reference.
+I intend to clean up some of the patch headers so that patch attribution
+in git comes out giving the proper credit - that is also on my todo list...
+(Note: pre-patched tree is on branch "v2.6.27-rc7-26rt9" and not "master".)
+
+As I mentioned earlier, I'm happy to take feedback on how this can be
+tailored to be a more useful resource to those who are doing the real work
+on the code -- there are folks out there who clearly have a much better
+understanding of RT than I do, and as such I'd like this be something
+of real value to them -- just to be clear, I don't have any interest
+(or the skill) for this to be a separate project, or fork or similar.
+
+Thanks,
+Paul.
