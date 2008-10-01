@@ -1,76 +1,103 @@
-From: "Paul Gortmaker" <paul.gortmaker@gmail.com>
-Subject: Re: RT patches against v2.6.27-rc7 available
-Date: Wed, 1 Oct 2008 01:12:59 -0400
-Message-ID: <7d1d9c250809302212n7845dd61w58847b98f74cfad@mail.gmail.com>
-References: <20080930033248.GA24480@windriver.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: RT points of interest associated with 2.6.27-rcN
+Date: Wed, 1 Oct 2008 09:23:21 -0400
+Message-ID: <20081001132319.GA4531@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org, rostedt@goodmis.org
+Content-Type: text/plain; charset=us-ascii
+Cc: rostedt@goodmis.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f16.google.com ([209.85.217.16]:50920 "EHLO
-	mail-gx0-f16.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750719AbYJAFNB (ORCPT
+Received: from [128.224.252.2] ([128.224.252.2]:31822 "EHLO
+	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752681AbYJANXX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Oct 2008 01:13:01 -0400
-Received: by gxk9 with SMTP id 9so12677639gxk.13
-        for <linux-rt-users@vger.kernel.org>; Tue, 30 Sep 2008 22:13:00 -0700 (PDT)
-In-Reply-To: <20080930033248.GA24480@windriver.com>
+	Wed, 1 Oct 2008 09:23:23 -0400
 Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Sep 29, 2008 at 11:32 PM, Paul Gortmaker
-<paul.gortmaker@windriver.com> wrote:
 
-> I've completed a carry forward of the 26rt9 broken out patchset onto
-> the 2.6.27-rc7 kernel.  There were a lot of changes in 2.6.27, so this
-> wasn't just a simple case of having all the patches magically work as-is.
->
+I didn't get a chance to cover any random technical items, discussion
+points, or my to do list in the previous e-mail where I gave a heads
+up to folks that the 1st cut of the patches for 2.6.27 existed.  So here
+are some of the things I encountered when carrying things forward:
 
-The git tree and patches are updated to rc8, and if you are using the
-patches, I've ensured they should be fuzz/offset free.  The patch
-headers should also be a bit more consistent;  there were some patch
-headers that guilt was truncating when it found the first match for "^---"
-which was incorrectly matching on ascii art and PGP sigs etc.
 
-Aside from the basic context changes of rc8, there are no real functional
-changes in this update.  Location remains the same as below.  There
-are branches for the previous versions and these versions,so you can
-easily do comparisons as you wish.
+-2.6.21-rc6-lockless6-speculative-get-page.patch essentially got merged
+ upstream as commit e286781, but they differ in that e286781 used
+ an optimization of setting page_count to zero instead of introducing
+ the PG_nonewrefs bit.  Since the PG_nonewrefs bit is used in other
+ patches within the series, and since it wasn't clear to me how or
+ whether the optimization using page_count would be valid in RT
+ context, I left the PG_nonewrefs bit in the patches (actually in
+ lock_page_ref.patch) for now.  I'll have to read the code more before
+ I'll be 100% confident I understand what the right approach is here.
 
-Thanks,
+-the rt-list-mods.patch was partly merged upstream via commit 7d283aee,
+ with the exception of the one-line lib/lock_list.c change and the
+ splice2 operations; I've retained those additional chunks in this
+ patch file.
+
+-ftrace tip merge/update; when I started working with 26rt6, there was
+ still considerable work being done for ftrace upstream; hence I set the
+ ftrace-upstream.patch aside, rather than carry it through the rc1..rc8
+ series and end up dropping already applied bits all along the way.
+ Now things are at rc8, I need to go back now and see what parts of
+ ftrace-upstream.patch are present and what needs to be added in.
+
+-preempt-realtime-i386.patch used to roll back FIRST_SYSTEM_VECTOR from
+ 0xef -> 0xee, but commit 305b92a2 seems to give this a dynamic "rewind"
+ capability vs. a hard compile time default, so I believe we don't
+ need the 0xef -> 0xee anymore.
+
+-preempt-realtime-x86_64.patch seems to orphan the io_apic_sync()
+ function.  If it truly has no users, we could consider removing it
+ as part of this patch.
+
+-the schedule_on_each_cpu-enhance.patch seems to essentially be reverting
+ the commit 8de6d30 where they replace set_bit+queue_work with
+ schedule_work_on() -- need to go back and look again to confirm/deny.
+
+-the no-warning-for-irqs-disabled-in-local-bh-enable.patch gets broken
+ by commit 0f476b6d, and the comments in that commit seem to indicate
+ that this can't happen anymore -- but I'm not sure those comments are
+ valid in RT context.  I'll keep this in mind when doing more testing.
+
+-the spinlock.h code in 27rcX is using typecheck() in spinlock.h, in
+ the places where the RT patches were doing the same within the macro
+ BUILD_CHECK_IRQ_FLAGS(); so I left it using the upstream, rather than
+ re-introducing the BUILD_CHECK_IRQ_FLAGS() macro.
+
+-commit 0d71d10a breaks the example /dev/rmem driver that was patched in
+ for doing the JVM conformance test by getting rid of the nopfn capability.
+ The fix/update wasn't immediately obvious to me, so I set it aside for
+ the moment, given that it doesn't appear to be key to the core functionality
+ of the patch set in general.
+
+-commit db70089 adds flush_work(), which knows nothing about PI workqueues,
+ and the adaptation of barriers.  I added rt-wq-flush_work.patch on the end
+ of the series, rather than contaminate existing patches with my changes, but
+ once a fix is agreed on, it would go in rt-workqeue-prio.patch after review.
+
+-PF_HARDIRQ and PF_SOFTIRQ; the number of vacant slots is dwindling, e.g.
+ PF_THREAD_BOUND bumped one of the above; it would be good if we could
+ claim spots for these upstream before there are no spots left.
+
+-drivers/base/class.c goes after __mutex_init() instead of mutex_init()
+ which in RT-land, isn't what it used to be; I want to look at this further
+ and determine why it didn't use mutex_init() to begin with.
+
+-testing on non-x86;  I've booted x86 but didn't have access to real non-x86
+ hardware last week on account of being away, so I've only verified that it
+ would cross compile for powerpc.  I'd like to test the waters with an
+ ARM and a powerpc at least sometime this week.
+
+-wider driver testing; The config I tested on the old P4 box had a minimal
+ .config file.  For example, I did notice that IRQ handler of the ehci (USB)
+ driver was doing something non-RT compatible, and I expect there to be 
+ several other drivers also needing attention.
+
+So that is about it.  I'll keep folks posted on patch updates and anything
+else I trip over that I think is of general interest.
+
 Paul.
-
-
-> Location:
-> ---------
->
-> The broken out patches and series file can be obtained from here:
->
->        git://opensource1.windriver.com/people/paulg/rt/patches
->
-> A fully patched 2.6.27-rc7 git tree can be had from here:
->
->        git://opensource1.windriver.com/people/paulg/rt/linux-2.6
->
-> The latter is just the result of applying the broken out patches with guilt,
-> and then committing the series file on the end as a useful reference.
-> I intend to clean up some of the patch headers so that patch attribution
-> in git comes out giving the proper credit - that is also on my todo list...
-> (Note: pre-patched tree is on branch "v2.6.27-rc7-26rt9" and not "master".)
->
-> As I mentioned earlier, I'm happy to take feedback on how this can be
-> tailored to be a more useful resource to those who are doing the real work
-> on the code -- there are folks out there who clearly have a much better
-> understanding of RT than I do, and as such I'd like this be something
-> of real value to them -- just to be clear, I don't have any interest
-> (or the skill) for this to be a separate project, or fork or similar.
->
-> Thanks,
-> Paul.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
