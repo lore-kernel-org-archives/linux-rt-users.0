@@ -1,132 +1,88 @@
-From: Gilles Carry <Gilles.Carry@bull.net>
-Subject: Re: [PATCH] sched: add a stacktrace on enqueue_pushable error
-Date: Thu, 02 Oct 2008 11:42:10 +0200
-Message-ID: <48E49772.10103@bull.net>
-References: <20080930044320.GA4685@linux.vnet.ibm.com> <20081001142117.27846.83759.stgit@dev.haskins.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Chirag Jog <chirag@linux.vnet.ibm.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	rostedt@goodmis.org, dvhltc@us.ibm.com, dino@in.ibm.com,
-	Jean-Pierre Dion <jean-pierre.dion@bull.net>,
-	=?UTF-8?B?U8OpYmFzdGllbiBEdWd1w6k=?= <sebastien.dugue@bull.net>,
-	Tim Chavez <tinytim@us.ibm.com>
-To: Gregory Haskins <ghaskins@novell.com>
+From: Gilles Carry <gilles.carry@bull.net>
+Subject: [PATCH][RT] Fix pushable_tasks list corruption
+Date: Thu,  2 Oct 2008 13:06:13 +0200
+Message-ID: <1222945573-29082-1-git-send-email-gilles.carry@bull.net>
+Cc: rostedt@goodmis.org, tinytim@us.ibm.com, jean-pierre.dion@bull.net,
+	sebastien.dugue@bull.net, gilles.carry@bull.net,
+	ghaskins@novell.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:51137 "EHLO
+Received: from ecfrec.frec.bull.fr ([129.183.4.8]:41172 "EHLO
 	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752662AbYJBJmW (ORCPT
+	with ESMTP id S1751983AbYJBLKl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Oct 2008 05:42:22 -0400
-In-Reply-To: <20081001142117.27846.83759.stgit@dev.haskins.net>
+	Thu, 2 Oct 2008 07:10:41 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+From: gilles.carry <gilles.carry@bull.net>
 
-I could reproduce the bug on an intel architecture.
-I found where the problem is.
-I'll post the patch in a few hours.
+Symptoms:
+System hang (endless loop in plist_check_list) or BUG because
+of faulty prev/next pointers in pushable_task node.
 
-Gilles.
 
-Gregory Haskins wrote:
-> Hi Chirag,
->   Please apply this patch to your 26.5-rt9 tree for ppc64, enable
->   CONFIG_PROVE_LOCKING (which enables CONFIG_STACKTRACE) and give it a whirl.
->   If you get an oops, please post the console output.
-> 
-> Thanks!
-> 
-> -Greg
-> 
-> ------------------
-> sched: add a stacktrace on enqueue_pushable error
-> 
-> NOT FOR INCLUSION!
-> 
-> This is to help debug an issue discovered by Chirag Jog in the thread
-> 
-> http://lkml.org/lkml/2008/9/25/189
-> 
-> Signed-off-by: Gregory Haskins <ghaskins@novell.com>
-> ---
-> 
->  include/linux/sched.h |    6 ++++++
->  kernel/sched_rt.c     |   20 +++++++++++++++++++-
->  2 files changed, 25 insertions(+), 1 deletions(-)
-> 
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 67da014..53e8a6a 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -87,6 +87,7 @@ struct sched_param {
->  #include <linux/task_io_accounting.h>
->  #include <linux/kobject.h>
->  #include <linux/latencytop.h>
-> +#include <linux/stacktrace.h>
->  
->  #include <asm/processor.h>
->  
-> @@ -1170,6 +1171,11 @@ struct task_struct {
->  
->  	struct list_head tasks;
->  	struct plist_node pushable_tasks;
-> +	struct {
-> +		unsigned long data[15];
-> +		struct stack_trace trace;
-> +		pid_t pid;
-> +	} pushable_stack;
->  
->  	/*
->  	 * ptrace_list/ptrace_children forms the list of my children
-> diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-> index 57a0c0d..0e6a88c 100644
-> --- a/kernel/sched_rt.c
-> +++ b/kernel/sched_rt.c
-> @@ -55,7 +55,25 @@ static void update_rt_migration(struct rq *rq)
->  
->  static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
->  {
-> -	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-> +	if (plist_node_empty(&p->pushable_tasks)) {
-> +		struct stack_trace *trace = &p->pushable_stack.trace;
-> +
-> +		trace->nr_entries = 0;
-> +		trace->max_entries = sizeof(p->pushable_stack.data)/sizeof(p->pushable_stack.data[0]);
-> +		trace->entries = &p->pushable_stack.data[0];
-> +		trace->skip = 0;
-> +
-> +		save_stack_trace(trace);
-> +
-> +		p->pushable_stack.pid = current->pid;
-> +	} else {
-> +		printk(KERN_CRIT "redundant enqueue by %d detected\n",
-> +		       p->pushable_stack.pid);
-> +		print_stack_trace(&p->pushable_stack.trace, 5);
-> +
-> +		BUG_ON(!plist_node_empty(&p->pushable_tasks));
-> +	}
-> +
->  	plist_node_init(&p->pushable_tasks, p->prio);
->  	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
->  }
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> 
+When push_rt_task successes finding a task to push away, it
+performs a double lock on the runqueues (local and target) but
+before getting both locks, it releases the local rq lock letting
+other cpus grab the task in between. (eg. pull_rt_task, timers...)
+When push_rt_task calls deactivate_task (which calls
+dequeue_pushable_task) the task may have already been removed
+from the pushable_tasks list by another cpu.
+Removing the node again corrupts the list.
 
+This patch adds a test to dequeue_pushable_task which only
+removes the node if it's still on the original list.
+
+Signed-off-by: Gilles Carry <gilles.carry@bull.net>
+Cc: ghaskins@novell.com
+
+
+---
+ kernel/sched_rt.c |   23 +++++++++++++++++++++++
+ 1 files changed, 23 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 57a0c0d..b6ec458 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -62,6 +62,20 @@ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+ 
+ static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
+ {
++	struct plist_node *next;
++	int	on = 0;
++
++	/* Check if node is still on this list */
++	plist_for_each(next, &rq->rt.pushable_tasks) {
++		if (&p->pushable_tasks == next) {
++			on = 1;
++			break;
++		}
++	}
++
++	if (!on)
++		return;
++
+ 	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
+ }
+ 
+@@ -1109,6 +1123,15 @@ static int push_rt_task(struct rq *rq)
+ 		goto out;
+ 	}
+ 
++	/*
++	 * Here is a critical point since next_task may have migrated.
++	 * find_lock_lowest/double_lock releases rq->lock for a while
++	 * which allows other cpus to grab the task and remove it from
++	 * the pushable list. This is why dequeue_pushable_task
++	 * (called by deactivate_task) now checks node is actually on
++	 * the list before any removal. Failing to do this check causes
++	 * pushable_tasks list corruption.
++	 */
+ 	deactivate_task(rq, next_task, 0);
+ 	set_task_cpu(next_task, lowest_rq->cpu);
+ 	activate_task(lowest_rq, next_task, 0);
 -- 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Gilles.Carry
-Linux Project team
-mailto: gilles.carry@bull.net
-Phone: +33 (0)4 76 29 74 27
-Addr.: BULL S.A.  1 rue de Provence, B.P. 208 38432 Echirolles Cedex
-http://www.bull.com
-http://www.bullopensource.org/
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.5.5.GIT
+
