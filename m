@@ -1,80 +1,43 @@
-From: Gilles Carry <gilles.carry@bull.net>
-Subject: [PATCH replace] Fix pushable_tasks list corruption
-Date: Fri,  3 Oct 2008 10:24:35 +0200
-Message-ID: <1223022275-6626-1-git-send-email-gilles.carry@bull.net>
-Cc: rostedt@goodmis.org, tinytim@us.ibm.com, jean-pierre.dion@bull.net,
-	sebastien.dugue@bull.net, gilles.carry@bull.net,
-	ghaskins@novell.com
-To: linux-rt-users@vger.kernel.org
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [RT PATCH 0/2] fix for BUG_ON crash in 26.5-rt9
+Date: Fri, 03 Oct 2008 08:42:55 -0400
+Message-ID: <20081003123745.17387.61782.stgit@dev.haskins.net>
+References: <20080925123235.GA27916@linux.vnet.ibm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	rostedt@goodmis.org, dvhltc@us.ibm.com, dino@in.ibm.com,
+	Gilles.Carry@bull.net
+To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ecfrec.frec.bull.fr ([129.183.4.8]:37228 "EHLO
-	ecfrec.frec.bull.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751821AbYJCI3J (ORCPT
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:42900
+	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751297AbYJCMic (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Oct 2008 04:29:09 -0400
+	Fri, 3 Oct 2008 08:38:32 -0400
+In-Reply-To: <20080925123235.GA27916@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: gilles.carry <gilles.carry@bull.net>
+Hi Chirag,
 
-Symptoms:
-System hang (endless loop in plist_check_list)
-or BUG because of faulty prev/next pointers in
-pushable_task node.
+ Please try the following patches applied to 26.5-rt9 and let me know what you
+ find.
 
-When push_rt_task successes finding a task to push away, it
-performs a double lock on the runqueues (local and target) but
-before getting both locks, it releases the local rq lock allowing
-other cpus grab the task in between. (eg. pull_rt_task, timers...)
-In some situations, when push_rt_task calls dequeue_pushable_task
-the task may have already been removed from the pushable_tasks
-list by another cpu. Removing the node again corrupts the list.
+Hi Steve,
+  If these look good to everyone, please consider them for inclusion in -rt10. 
 
-This patch adds a sanity check to dequeue_pushable_task which only
-removes the node if it's still on the original list.
+Regards,
+-Greg
 
-Signed-off-by: Gilles Carry <gilles.carry@bull.net>
-Cc: ghaskins@novell.com
 ---
- kernel/sched_rt.c |   18 +++++++++++++++++-
- 1 files changed, 17 insertions(+), 1 deletions(-)
 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 57a0c0d..7aa4450 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -62,7 +62,17 @@ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
- 
- static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
- {
--	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+	struct plist_node *next;
-+
-+	/* Sanity check: delete only if node is still on this list */
-+	plist_for_each(next, &rq->rt.pushable_tasks) {
-+		if (&p->pushable_tasks == next) {
-+			plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+			return;
-+		}
-+	}
-+
-+
- }
- 
- #else
-@@ -1105,6 +1115,12 @@ static int push_rt_task(struct rq *rq)
- 		 * try again, since the other cpus will pull from us
- 		 * when they are ready
- 		 */
-+
-+		/*
-+		 * If we reach here and the task has migrated to another cpu
-+		 * (paranoid == 0?) calling dequeue_pushable_task may cause
-+		 * pushable_tasks list corruption.
-+		 */
- 		dequeue_pushable_task(rq, next_task);
- 		goto out;
- 	}
--- 
-1.5.5.GIT
+Gregory Haskins (2):
+      RT: remove "paranoid" limit in push_rt_task
+      RT: Remove comment that is no longer true
+
+
+ kernel/sched_rt.c |   15 +++------------
+ 1 files changed, 3 insertions(+), 12 deletions(-)
 
