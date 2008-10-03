@@ -1,7 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH 2/2] RT: remove "paranoid" limit in push_rt_task
-Date: Fri, 03 Oct 2008 08:43:06 -0400
-Message-ID: <20081003124305.17387.90233.stgit@dev.haskins.net>
+Subject: [PATCH 1/2] RT: Remove comment that is no longer true
+Date: Fri, 03 Oct 2008 08:43:00 -0400
+Message-ID: <20081003124300.17387.53881.stgit@dev.haskins.net>
 References: <20081003123745.17387.61782.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,61 +11,43 @@ Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Gilles.Carry@bull.net
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:42919
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:42908
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751764AbYJCMig (ORCPT
+	with ESMTP id S1751277AbYJCMic (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Oct 2008 08:38:36 -0400
+	Fri, 3 Oct 2008 08:38:32 -0400
 In-Reply-To: <20081003123745.17387.61782.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-A panic was discovered by Chirag Jog and investigated by Gilles Carry
-to be originating in the fact that a task being pushed away
-may get migrated away during a double_lock_balance.  The result was
-that the pushable_tasks list may become corrupted.
+We fixed the condition noted in the comment with the "pushable_tasks"
+logic, but forgot to remove this comment.  Lets clean it up.
 
-The root cause is that the "paranoid" retry limit could cause us to
-bail out of a retry, but still try to remove the item from the (now
-potentially incorrect) list.  There are numerous ways to correct the
-condition, but the paranoid feature is no longer relevant with the new
-pushable logic (since pushable naturally limits the loop anyway), so
-lets just remove it.
-
-Reported By: Chirag Jog <chirag@linux.vnet.ibm.com>
-Found-by: Gilles Carry <gilles.carry@bull.net>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+ kernel/sched_rt.c |   10 ----------
+ 1 files changed, 0 insertions(+), 10 deletions(-)
 
 diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 59ead84..5a754fe 100644
+index 57a0c0d..59ead84 100644
 --- a/kernel/sched_rt.c
 +++ b/kernel/sched_rt.c
-@@ -1056,7 +1056,6 @@ static int push_rt_task(struct rq *rq)
+@@ -1125,16 +1125,6 @@ out:
+ 	return 1;
+ }
+ 
+-/*
+- * TODO: Currently we just use the second highest prio task on
+- *       the queue, and stop when it can't migrate (or there's
+- *       no more RT tasks).  There may be a case where a lower
+- *       priority RT task has a different affinity than the
+- *       higher RT task. In this case the lower RT task could
+- *       possibly be able to migrate where as the higher priority
+- *       RT task could not.  We currently ignore this issue.
+- *       Enhancements are welcome!
+- */
+ static void push_rt_tasks(struct rq *rq)
  {
- 	struct task_struct *next_task;
- 	struct rq *lowest_rq;
--	int paranoid = RT_MAX_TRIES;
- 
- 	if (!rq->rt.overloaded)
- 		return 0;
-@@ -1094,12 +1093,14 @@ static int push_rt_task(struct rq *rq)
- 		 * If it has, then try again.
- 		 */
- 		task = pick_next_pushable_task(rq);
--		if (unlikely(task != next_task) && task && paranoid--) {
-+		if (unlikely(task != next_task) && task) {
- 			put_task_struct(next_task);
- 			next_task = task;
- 			goto retry;
- 		}
- 
-+		BUG_ON(task_cpu(next_task) != rq->cpu);
-+
- 		/*
- 		 * Once we have failed to push this task, we will not
- 		 * try again, since the other cpus will pull from us
+ 	/* push_rt_task will return true if it moved an RT */
 
