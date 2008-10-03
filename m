@@ -1,8 +1,8 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [RT PATCH v2 0/2] Series short description
-Date: Fri, 03 Oct 2008 13:26:07 -0400
-Message-ID: <20081003172221.23714.71575.stgit@dev.haskins.net>
-References: <48E62253.1090000@bull.net>
+Subject: [RT PATCH v2 2/2] RT: remove "paranoid" limit in push_rt_task
+Date: Fri, 03 Oct 2008 13:26:18 -0400
+Message-ID: <20081003172618.23714.55546.stgit@dev.haskins.net>
+References: <20081003172221.23714.71575.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -11,53 +11,91 @@ Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Gilles.Carry@bull.net
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:48777
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:48797
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752843AbYJCRVi (ORCPT
+	with ESMTP id S1753878AbYJCRVs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Oct 2008 13:21:38 -0400
-In-Reply-To: <48E62253.1090000@bull.net>
+	Fri, 3 Oct 2008 13:21:48 -0400
+In-Reply-To: <20081003172221.23714.71575.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Gilles Carry wrote:
-> Sorry Greg,
->
-> Neither PPC64 nor Intel64 make it with this patch.
-> At boot time, it stops at the BUG_ON you added:
-> 0xc00000000004eca4 is in push_rt_task (kernel/sched_rt.c:1102)
->
+A panic was discovered by Chirag Jog and investigated by Gilles Carry
+to be originating in the fact that a task being pushed away
+may get migrated away during a double_lock_balance.  The result was
+that the pushable_tasks list may become corrupted.
 
+The root cause is that the "paranoid" retry limit could cause us to
+bail out of a retry, but still try to remove the item from the (now
+potentially incorrect) list.  There are numerous ways to correct the
+condition, but the paranoid feature is no longer relevant with the new
+pushable logic (since pushable naturally limits the loop anyway), so
+lets just remove it.
 
-Indeed.  Your report has revealed the problem to me.
-
-The issue is that there are three conditions embedded in that if(!lower_rq)
-code, but two are buried in the !retry case.  This was the mistake I was making.
-
-We basically need to 
-
-a) dequeue if the task hasnt moved
-b) retry if the task *has* moved AND there are more tasks left
-c) stop of the task *has* moved AND there are no more tasks
-
-I was missing logic to handle (c).  "v2" should fix this so it is handled.
-Please give it a try.  Thanks again, Gilles!
-
-(Again, only build-tested)
-
-Regards,
--Greg
-
-
+Reported By: Chirag Jog <chirag@linux.vnet.ibm.com>
+Found-by: Gilles Carry <gilles.carry@bull.net>
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
-Gregory Haskins (2):
-      RT: remove "paranoid" limit in push_rt_task
-      RT: Remove comment that is no longer true
+ kernel/sched_rt.c |   34 ++++++++++++++++++++++------------
+ 1 files changed, 22 insertions(+), 12 deletions(-)
 
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 59ead84..201bd97 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -1056,7 +1056,6 @@ static int push_rt_task(struct rq *rq)
+ {
+ 	struct task_struct *next_task;
+ 	struct rq *lowest_rq;
+-	int paranoid = RT_MAX_TRIES;
+ 
+ 	if (!rq->rt.overloaded)
+ 		return 0;
+@@ -1090,23 +1089,34 @@ static int push_rt_task(struct rq *rq)
+ 		struct task_struct *task;
+ 		/*
+ 		 * find lock_lowest_rq releases rq->lock
+-		 * so it is possible that next_task has changed.
+-		 * If it has, then try again.
++		 * so it is possible that next_task has migrated.
++		 *
++		 * We need to make sure that the task is still on the same
++		 * run-queue and is also still the next task eligible for
++		 * pushing.
+ 		 */
+ 		task = pick_next_pushable_task(rq);
+-		if (unlikely(task != next_task) && task && paranoid--) {
+-			put_task_struct(next_task);
+-			next_task = task;
+-			goto retry;
++		if (task_cpu(next_task) == rq->cpu && task == next_task) {
++			/*
++			 * If we get here, the task hasnt moved it all, but
++			 * it has failed to push.  We will not try again,
++			 * since the other cpus will pull from us when they
++			 * are ready.
++			 */
++			dequeue_pushable_task(rq, next_task);
++			goto out;
+ 		}
++		
++		if (!task)
++			/* No more tasks, just exit */
++			goto out;
+ 
+ 		/*
+-		 * Once we have failed to push this task, we will not
+-		 * try again, since the other cpus will pull from us
+-		 * when they are ready
++		 * Something has shifted, try again.
+ 		 */
+-		dequeue_pushable_task(rq, next_task);
+-		goto out;
++		put_task_struct(next_task);
++		next_task = task;
++		goto retry;
+ 	}
+ 
+ 	deactivate_task(rq, next_task, 0);
 
- kernel/sched_rt.c |   44 ++++++++++++++++++++++----------------------
- 1 files changed, 22 insertions(+), 22 deletions(-)
-
--- 
-Signature
