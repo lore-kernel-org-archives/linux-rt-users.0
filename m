@@ -1,8 +1,9 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [RT PATCH v3 1/2] RT: Remove comment that is no longer true
-Date: Mon, 06 Oct 2008 11:14:37 -0400
-Message-ID: <20081006151437.8452.80167.stgit@dev.haskins.net>
-References: <20081006151228.8452.69938.stgit@dev.haskins.net>
+Subject: [RT PATCH v3 0/2] Fix for "[BUG][PPC64] BUG in 2.6.26.5-rt9 causing
+	Hang"
+Date: Mon, 06 Oct 2008 11:14:32 -0400
+Message-ID: <20081006151228.8452.69938.stgit@dev.haskins.net>
+References: <20080925123235.GA27916@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,44 +11,27 @@ Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	rostedt@goodmis.org, dvhltc@us.ibm.com, dino@in.ibm.com,
 	Gilles.Carry@bull.net
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:45720
-	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751835AbYJFPKJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Oct 2008 11:10:09 -0400
-In-Reply-To: <20081006151228.8452.69938.stgit@dev.haskins.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754815AbYJFPKX@vger.kernel.org>
+In-Reply-To: <20080925123235.GA27916@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-We fixed the condition noted in the comment with the "pushable_tasks"
-logic, but forgot to remove this comment.  Lets clean it up.
+Hi Steve,
+  Chirag reported (via IRC) that v2 fixed his issue.  V3 is identical to v2
+  except I cleaned up the patch description and fixed a comment typo.  This
+  applies to 26.5-rt9.  Please consider it an urgent fix for -rt10.
 
-Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+Regards,
+-Greg
+
 ---
 
- kernel/sched_rt.c |   10 ----------
- 1 files changed, 0 insertions(+), 10 deletions(-)
+Gregory Haskins (2):
+      RT: fix push_rt_task() to handle dequeue_pushable properly
+      RT: Remove comment that is no longer true
 
-diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 57a0c0d..59ead84 100644
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -1125,16 +1125,6 @@ out:
- 	return 1;
- }
- 
--/*
-- * TODO: Currently we just use the second highest prio task on
-- *       the queue, and stop when it can't migrate (or there's
-- *       no more RT tasks).  There may be a case where a lower
-- *       priority RT task has a different affinity than the
-- *       higher RT task. In this case the lower RT task could
-- *       possibly be able to migrate where as the higher priority
-- *       RT task could not.  We currently ignore this issue.
-- *       Enhancements are welcome!
-- */
- static void push_rt_tasks(struct rq *rq)
- {
- 	/* push_rt_task will return true if it moved an RT */
 
+ kernel/sched_rt.c |   44 ++++++++++++++++++++++----------------------
+ 1 files changed, 22 insertions(+), 22 deletions(-)
+
+-- 
