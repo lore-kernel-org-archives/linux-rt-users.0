@@ -1,37 +1,40 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: [RT PATCH v3 0/2] Fix for "[BUG][PPC64] BUG in 2.6.26.5-rt9 causing
-	Hang"
-Date: Mon, 06 Oct 2008 11:14:32 -0400
-Message-ID: <20081006151228.8452.69938.stgit@dev.haskins.net>
-References: <20080925123235.GA27916@linux.vnet.ibm.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: PF_HARDIRQ used in preempt-realtime-core.patch
+Date: Mon, 6 Oct 2008 15:49:29 -0400
+Message-ID: <20081006194928.GA14183@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	rostedt@goodmis.org, dvhltc@us.ibm.com, dino@in.ibm.com,
-	Gilles.Carry@bull.net
-To: Chirag Jog <chirag@linux.vnet.ibm.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754815AbYJFPKX@vger.kernel.org>
-In-Reply-To: <20080925123235.GA27916@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: rostedt@goodmis.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from [128.224.252.2] ([128.224.252.2]:43264 "EHLO
+	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752850AbYJFTtb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Oct 2008 15:49:31 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve,
-  Chirag reported (via IRC) that v2 fixed his issue.  V3 is identical to v2
-  except I cleaned up the patch description and fixed a comment typo.  This
-  applies to 26.5-rt9.  Please consider it an urgent fix for -rt10.
+I noticed that preempt-realtime-core.patch does this to hardirq.h:
 
-Regards,
--Greg
+-#define in_irq()               (hardirq_count())
+-#define in_softirq()           (softirq_count())
+-#define in_interrupt()         (irq_count())
++#define in_irq()       (hardirq_count() || (current->flags & PF_HARDIRQ))
++#define in_softirq()   (softirq_count() || (current->flags & PF_SOFTIRQ))
++#define in_interrupt() (irq_count())
 
----
+I was thinking that in order to have better patch bisection for future
+hard/softirq segmentation, that this chunk would be better suited to
+live in preempt-irqs-core.patch (where PF_HARDIRQ is introduced).
 
-Gregory Haskins (2):
-      RT: fix push_rt_task() to handle dequeue_pushable properly
-      RT: Remove comment that is no longer true
+That would reduce the preempt-realtime-core.patch for hardirq.h to just
+one line, if we drop the whitespace shuffling in there at the same time.
 
+I can send diffs of the existing 26rt9 patches, but I'm not sure how useful
+folks would find diffs of diffs (if any at all.).  Since it doesn't
+impact the actual code base of the resulting patched tree, the other
+option is to just ignore it for 26 but keep it in mind for the future.
 
- kernel/sched_rt.c |   44 ++++++++++++++++++++++----------------------
- 1 files changed, 22 insertions(+), 22 deletions(-)
-
--- 
+Paul.
