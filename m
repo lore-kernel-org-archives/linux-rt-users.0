@@ -1,8 +1,7 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [RT PATCH v3 2/2] RT: fix push_rt_task() to handle dequeue_pushable
-	properly
-Date: Mon, 06 Oct 2008 11:14:43 -0400
-Message-ID: <20081006151442.8452.7838.stgit@dev.haskins.net>
+Subject: [RT PATCH v3 1/2] RT: Remove comment that is no longer true
+Date: Mon, 06 Oct 2008 11:14:37 -0400
+Message-ID: <20081006151437.8452.80167.stgit@dev.haskins.net>
 References: <20081006151228.8452.69938.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,112 +11,43 @@ Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Gilles.Carry@bull.net
 To: Chirag Jog <chirag@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:45730
+Received: from 75-130-108-43.dhcp.oxfr.ma.charter.com ([75.130.108.43]:45720
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753506AbYJFPKP (ORCPT
+	with ESMTP id S1751835AbYJFPKJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Oct 2008 11:10:15 -0400
+	Mon, 6 Oct 2008 11:10:09 -0400
 In-Reply-To: <20081006151228.8452.69938.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-A panic was discovered by Chirag Jog where a BUG_ON sanity check
-in the new "pushable_task" logic would trigger a panic under
-certain circumstances:
+We fixed the condition noted in the comment with the "pushable_tasks"
+logic, but forgot to remove this comment.  Lets clean it up.
 
-http://lkml.org/lkml/2008/9/25/189
-
-Gilles Carry discovered that the root cause was attributed to the
-pushable_tasks list getting corrupted in the push_rt_task logic.
-This was the result of a dropped rq lock in double_lock_balance
-allowing a task in the process of being pushed to potentially migrate
-away, and thus corrupt the pushable_tasks() list.
-
-I traced back the problem as introduced by the pushable_tasks patch
-that went in recently.   There is a "retry" path in push_rt_task()
-that actually had a compound conditional to decide whether to
-retry or exit.  I missed the meaning behind the rationale for the
-virtual "if(!task) goto out;" portion of the compound statement and
-thus did not handle it properly.  The new pushable_tasks logic
-actually creates three distinct conditions:
-
-1) an untouched and unpushable task should be dequeued
-2) a migrated task where more pushable tasks remain should be retried
-3) a migrated task where no more pushable tasks exist should exit
-
-The original logic mushed (1) and (3) together, resulting in the
-system dequeuing a migrated task (against an unlocked foreign run-queue
-nonetheless).
-
-To fix this, we get rid of the notion of "paranoid" and we support the
-three unique conditions properly.  The paranoid feature is no longer
-relevant with the new pushable logic (since pushable naturally limits
-the loop) anyway, so lets just remove it.
-
-Reported-By: Chirag Jog <chirag@linux.vnet.ibm.com>
-Found-by: Gilles Carry <gilles.carry@bull.net>
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |   34 ++++++++++++++++++++++------------
- 1 files changed, 22 insertions(+), 12 deletions(-)
+ kernel/sched_rt.c |   10 ----------
+ 1 files changed, 0 insertions(+), 10 deletions(-)
 
 diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index 59ead84..05a1d4a 100644
+index 57a0c0d..59ead84 100644
 --- a/kernel/sched_rt.c
 +++ b/kernel/sched_rt.c
-@@ -1056,7 +1056,6 @@ static int push_rt_task(struct rq *rq)
+@@ -1125,16 +1125,6 @@ out:
+ 	return 1;
+ }
+ 
+-/*
+- * TODO: Currently we just use the second highest prio task on
+- *       the queue, and stop when it can't migrate (or there's
+- *       no more RT tasks).  There may be a case where a lower
+- *       priority RT task has a different affinity than the
+- *       higher RT task. In this case the lower RT task could
+- *       possibly be able to migrate where as the higher priority
+- *       RT task could not.  We currently ignore this issue.
+- *       Enhancements are welcome!
+- */
+ static void push_rt_tasks(struct rq *rq)
  {
- 	struct task_struct *next_task;
- 	struct rq *lowest_rq;
--	int paranoid = RT_MAX_TRIES;
- 
- 	if (!rq->rt.overloaded)
- 		return 0;
-@@ -1090,23 +1089,34 @@ static int push_rt_task(struct rq *rq)
- 		struct task_struct *task;
- 		/*
- 		 * find lock_lowest_rq releases rq->lock
--		 * so it is possible that next_task has changed.
--		 * If it has, then try again.
-+		 * so it is possible that next_task has migrated.
-+		 *
-+		 * We need to make sure that the task is still on the same
-+		 * run-queue and is also still the next task eligible for
-+		 * pushing.
- 		 */
- 		task = pick_next_pushable_task(rq);
--		if (unlikely(task != next_task) && task && paranoid--) {
--			put_task_struct(next_task);
--			next_task = task;
--			goto retry;
-+		if (task_cpu(next_task) == rq->cpu && task == next_task) {
-+			/*
-+			 * If we get here, the task hasnt moved at all, but
-+			 * it has failed to push.  We will not try again,
-+			 * since the other cpus will pull from us when they
-+			 * are ready.
-+			 */
-+			dequeue_pushable_task(rq, next_task);
-+			goto out;
- 		}
-+		
-+		if (!task)
-+			/* No more tasks, just exit */
-+			goto out;
- 
- 		/*
--		 * Once we have failed to push this task, we will not
--		 * try again, since the other cpus will pull from us
--		 * when they are ready
-+		 * Something has shifted, try again.
- 		 */
--		dequeue_pushable_task(rq, next_task);
--		goto out;
-+		put_task_struct(next_task);
-+		next_task = task;
-+		goto retry;
- 	}
- 
- 	deactivate_task(rq, next_task, 0);
+ 	/* push_rt_task will return true if it moved an RT */
 
