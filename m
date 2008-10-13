@@ -1,49 +1,88 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.26.6-rt10
-Date: Mon, 13 Oct 2008 00:46:32 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0810130044390.26132@gandalf.stny.rr.com>
-References: <1223839814.19319.5.camel@localhost.localdomain> <48F29310.1030206@sapo.pt>
+Subject: [PATCH 1/2] cyclictest: preopen trace_enabled
+Date: Mon, 13 Oct 2008 15:09:14 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0810131506150.380@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Luis Henriques <henrix@sapo.pt>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:37627 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:60027 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751151AbYJMEqf (ORCPT
+	with ESMTP id S1753686AbYJMTJR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Oct 2008 00:46:35 -0400
-In-Reply-To: <48F29310.1030206@sapo.pt>
+	Mon, 13 Oct 2008 15:09:17 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
+The conversion to use kernvar caused an open and close at every iteration,
+which is very expensive. This patch opens the file at start up and closes
+it at exit.
 
-On Mon, 13 Oct 2008, Luis Henriques wrote:
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+---
+ src/cyclictest/cyclictest.c |   17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
 
-> >   - ftrace quick stop (Steven Rostedt)
-> > 
-
-> I found a compilation error while compiling this new version of the rt
-> pach.  I guess the following line is enough for you to trace the problem:
-> 
-> kernel/trace/trace_events.c:49: error: ?function_trace_stop? undeclared
-> (first use in this function)
-> 
-> It seems that an 'extern int function_trace_stop' is missing somewhere...
-> 
-
-Hi Luis,
-
-What arch did you compile this on?  I did a make allmodconfig on x86_64 
-and it compiled to completion. I also ran this on x86_64 and i386 boxes 
-(a more natural config).
-
-Could you send me your config and tell me what arch you compiled this for.
-
-Thanks,
-
--- Steve
+Index: rt-tests.git/src/cyclictest/cyclictest.c
+===================================================================
+--- rt-tests.git.orig/src/cyclictest/cyclictest.c	2008-10-13 13:01:59.000000000 -0400
++++ rt-tests.git/src/cyclictest/cyclictest.c	2008-10-13 15:01:00.000000000 -0400
+@@ -133,6 +133,8 @@ static int oscope_reduction = 1;
+ static int tracetype;
+ static int lockall = 0;
+ 
++static int traceenable_fd = -1;
++
+ /* Backup of kernel variables that we modify */
+ static struct kvars {
+ 	char name[KVARNAMELEN];
+@@ -276,20 +278,25 @@ static inline long calcdiff(struct times
+ 	return diff;
+ }
+ 
++void set_trace_enable(char val)
++{
++	write(traceenable_fd, &val, 1);
++}
++
+ void tracing(int on)
+ {
+ 	if (on) {
+ 		switch (kernelversion) {
+ 		case KV_26_LT18: gettimeofday(0,(struct timezone *)1); break;
+ 		case KV_26_LT24: prctl(0, 1); break;
+-		case KV_26_CURR: setkernvar("tracing_enabled", "1"); break;
++		case KV_26_CURR: set_trace_enable('1'); break;
+ 		default:	 break;
+ 		}
+ 	} else {
+ 		switch (kernelversion) {
+ 		case KV_26_LT18: gettimeofday(0,0); break;
+ 		case KV_26_LT24: prctl(0, 0); break;
+-		case KV_26_CURR: setkernvar("tracing_enabled", "0"); break;
++		case KV_26_CURR: set_trace_enable('0'); break;
+ 		default:	 break;
+ 		}
+ 	}
+@@ -846,7 +853,8 @@ int main(int argc, char **argv)
+ 
+ 		strcpy(testname, debugfileprefix);
+ 		strcat(testname, "tracing_enabled");
+-		if (access(testname, R_OK)) {
++		traceenable_fd = open(testname, O_RDWR);
++		if (traceenable_fd < 0) {
+ 			fprintf(stderr, "ERROR: %s not found\n"
+ 			    "debug fs not mounted, "
+ 			    "TRACERs not configured?\n", testname);
+@@ -958,5 +966,8 @@ int main(int argc, char **argv)
+ 	if (kernelversion != KV_26_CURR)
+ 		restorekernvars();
+ 
++	if (traceenable_fd >= 0)
++		close(traceenable_fd);
++
+ 	exit(ret);
+ }
 
