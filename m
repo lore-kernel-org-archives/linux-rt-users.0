@@ -1,40 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 2.6.26.6-rt10
-Date: Mon, 13 Oct 2008 15:51:39 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0810131550540.522@gandalf.stny.rr.com>
-References: <1223839814.19319.5.camel@localhost.localdomain> <48F29310.1030206@sapo.pt>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: New rt-tests maintainer
+Date: Mon, 13 Oct 2008 22:23:18 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0810132138540.15664@apollo>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Luis Henriques <henrix@sapo.pt>
+Cc: Clark Williams <williams@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Carsten Emde <ce@ceag.ch>, LKML <linux-kernel@vger.kernel.org>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:39459 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750979AbYJMTvl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Oct 2008 15:51:41 -0400
-In-Reply-To: <48F29310.1030206@sapo.pt>
+Received: from www.tglx.de ([62.245.132.106]:58508 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757714AbYJMUXu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Oct 2008 16:23:50 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi everyone,
 
-On Mon, 13 Oct 2008, Luis Henriques wrote:
-> 
-> I found a compilation error while compiling this new version of the rt
-> pach.  I guess the following line is enough for you to trace the problem:
-> 
-> kernel/trace/trace_events.c:49: error: ?function_trace_stop? undeclared
-> (first use in this function)
-> 
-> It seems that an 'extern int function_trace_stop' is missing somewhere...
-> 
+I'm handing over the maintainership of rt-tests (cyclictest,
+signaltest, pi_stress) to Clark Williams.
 
-Luis, I just released a -rt11 that should fix this for you. Can you 
-download it and give it a try.
+rt-tests started with cyclictest, a test program I wrote for
+validating the high resolution timers implementation. In hindsight I'm
+still surprised that cyclictest became a defacto standard for
+benchmarking preempt-rt, but on the technical side it's quite clear as
+it tests the whole chain: interrupt -> wakeup -> scheduler ->
+userspace.
+
+I never expected that cyclictest might ship with distros and I'm very
+grateful to all the people who contributed and helped to bring it and
+the whole rt-tests package into shape. I know that I'm a lousy user
+space programmer :)
+
+@Clark, thanks for taking over. It takes away my permanent guilty
+conscience of not caring about rt-tests enough.
+
+@all, please support Clark with his new project as you supported
+me. Thanks for all the support and help again !
 
 Thanks,
 
--- Steve
+	tglx
 
+P.S.: If you really need to add autocrap^H^H^H^Htools please do it in
+      a way so I still can hack on it :)
