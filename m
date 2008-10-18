@@ -1,54 +1,55 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: 2.6.26.6-rt11 boot failure on PREEMPT_DESKTOP
-Date: Sat, 18 Oct 2008 02:58:02 +0200
-Message-ID: <1224291482.10548.29.camel@lappy.programming.kicks-ass.net>
-References: <48F932B1.6020405@ct.jp.nec.com>
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Subject: [PATCH -rt] sched: remove unneeded #if directive
+Date: Fri, 17 Oct 2008 18:21:29 -0700
+Message-ID: <48F93A19.9070007@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:56989 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753224AbYJRA6V (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:20000 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751168AbYJRBVc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Oct 2008 20:58:21 -0400
-In-Reply-To: <48F932B1.6020405@ct.jp.nec.com>
+	Fri, 17 Oct 2008 21:21:32 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2008-10-17 at 17:49 -0700, Hiroshi Shimamoto wrote:
-> Hi,
-> 
-> I got an issue, 2.6.26.6-rt11 PREEMPT_DESKTOP doesn't boot on my box.
-> Attached my .config.
-> 
-> The boot stopped the following point.
-> [    1.285988] Real Time Clock Driver v1.12ac
-> [    1.290816] intel_rng: FWH not detected
-> [    1.295992] Linux agpgart interface v0.103
-> [    1.300385] Serial: 8250/16550 driver $Revision: 1.90 $ 4 ports, IRQ sharing disabled
-> [    1.308734] serial8250: ttyS0 at I/O 0x3f8 (irq = 4) is a 16550A
-> [    1.316818] serial8250: ttyS1 at I/O 0x2f8 (irq = 3) is a 16550A
-> [    1.325397] 00:0a: ttyS1 at I/O 0x2f8 (irq = 3) is a 16550A
-> [    1.329632] 00:0b: ttyS0 at I/O 0x3f8 (irq = 4) is a 16550A
-> [    1.336132] Floppy drive(s): fd0 is 1.44M
-> [    4.356923] floppy0: no floppy controllers found
-> 
-> I've bisected, the patch
-> sched-properly-account-irq-and-rt-load.patch
-> causes this issue.
-> 
-> I was looking for what's wrong, but couldn't find the root cause.
-> But tried to change load.weight to 1 instead of 0 for RT process,
-> the kernel booted fine.
-> This zero load weight causes rq load weight zero, I guess it might
-> make some badness. But I'm not sure about this.
-> I don't think this is correct fix.
+From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
 
-you're right, its not. but that patch is very likely busted anyway.
-totally forgot -rt was carrying it.
+__cond_resched_spinlock() is in #ifdef CONFIG_PREEMPT_RT.
+So the following line always true.
+#if (defined(CONFIG_SMP) && defined(CONFIG_PREEMPT)) || defined(CONFIG_PREEMPT_RT)
+
+Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+---
+ kernel/sched.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 0d68e79..2b34f00 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -5841,7 +5841,6 @@ EXPORT_SYMBOL(__cond_resched_raw_spinlock);
+ 
+ int __cond_resched_spinlock(spinlock_t *lock)
+ {
+-#if (defined(CONFIG_SMP) && defined(CONFIG_PREEMPT)) || defined(CONFIG_PREEMPT_RT)
+ 	if (lock->break_lock) {
+ 		lock->break_lock = 0;
+ 		spin_unlock_no_resched(lock);
+@@ -5849,7 +5848,7 @@ int __cond_resched_spinlock(spinlock_t *lock)
+ 		spin_lock(lock);
+ 		return 1;
+ 	}
+-#endif
++
+ 	return 0;
+ }
+ EXPORT_SYMBOL(__cond_resched_spinlock);
+-- 
+1.5.6
 
