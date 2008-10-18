@@ -1,55 +1,56 @@
-From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
-Subject: [PATCH -rt] sched: remove unneeded #if directive
-Date: Fri, 17 Oct 2008 18:21:29 -0700
-Message-ID: <48F93A19.9070007@ct.jp.nec.com>
+From: =?UTF-8?B?SsO8cmdlbiBNZWxs?= <mell@hedrich-winders.com>
+Subject: [-rt] 2.6.26.6-rt11: Another sleeping function called from invalid
+ context
+Date: Sat, 18 Oct 2008 22:17:40 +0200
+Message-ID: <48FA4464.4080100@hedrich-winders.com>
+Reply-To: mell@hedrich-winders.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
+	rostedt@goodmis.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway-1237.mvista.com ([63.81.120.158]:20000 "EHLO
-	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751168AbYJRBVc (ORCPT
+Received: from dispoweb.ifw.uni-hannover.de ([130.75.23.4]:52926 "EHLO
+	ketschua.hedrich-winders.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750966AbYJRUYs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Oct 2008 21:21:32 -0400
+	Sat, 18 Oct 2008 16:24:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
+Hi,
 
-__cond_resched_spinlock() is in #ifdef CONFIG_PREEMPT_RT.
-So the following line always true.
-#if (defined(CONFIG_SMP) && defined(CONFIG_PREEMPT)) || defined(CONFIG_PREEMPT_RT)
+when I boot the 2.6.26.6-rt11 kernel, I get another of these 'sleeping
+function called from invalid context' error messages:
 
-Signed-off-by: Hiroshi Shimamoto <h-shimamoto@ct.jp.nec.com>
----
- kernel/sched.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
+BUG: sleeping function called from invalid context IRQ-15(75) at
+arch/x86/mm/highmem_32.c:8
+in_atomic():0 [00000000], irqs_disabled():1
+Pid: 75, comm: IRQ-15 Not tainted 2.6.26.6-rt11-HWS #2
+ [<c01155ce>] __might_sleep+0xd4/0xdb
+ [<c0113da9>] kmap+0x42/0x55
+ [<f8cb7969>] ata_sff_hsm_move+0x3ca/0x671 [libata]
+ [<f8cb8865>] ata_sff_interrupt+0x141/0x1c0 [libata]
+ [<c014a1e6>] handle_IRQ_event+0x45/0xb6
+ [<c014ac23>] do_irqd+0x126/0x223
+ [<c014aafd>] ? do_irqd+0x0/0x223
+ [<c012b8c5>] kthread+0x39/0x60
+ [<c012b88c>] ? kthread+0x0/0x60
+ [<c0104507>] kernel_thread_helper+0x7/0x10
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 0d68e79..2b34f00 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -5841,7 +5841,6 @@ EXPORT_SYMBOL(__cond_resched_raw_spinlock);
- 
- int __cond_resched_spinlock(spinlock_t *lock)
- {
--#if (defined(CONFIG_SMP) && defined(CONFIG_PREEMPT)) || defined(CONFIG_PREEMPT_RT)
- 	if (lock->break_lock) {
- 		lock->break_lock = 0;
- 		spin_unlock_no_resched(lock);
-@@ -5849,7 +5848,7 @@ int __cond_resched_spinlock(spinlock_t *lock)
- 		spin_lock(lock);
- 		return 1;
- 	}
--#endif
-+
- 	return 0;
- }
- EXPORT_SYMBOL(__cond_resched_spinlock);
--- 
-1.5.6
+Hardware is a Pentium-M Processor on an industrial PC mainboard with
+Intel chip set, 1GB RAM, HDD + DVD ROM drives.
+Software is OpenSUSE 10.3 with KDE 3.5.
 
+The message comes up twice during start of the system and will be
+repeated indefintely if there is a CD or DVD in the drive.
+
+Bye,
+            J=C3=BCrgen
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
