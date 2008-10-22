@@ -1,29 +1,42 @@
 From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 2/2] netrate - network rate/rtt measurement utility
-Date: Tue, 21 Oct 2008 23:39:09 -0500
-Message-ID: <20081021233909.3a04a544@redhat.com>
-References: <20081021224029.0853b2ac@gmail.com>
+Subject: rt-tests version 0.28 available
+Date: Wed, 22 Oct 2008 15:22:49 -0500
+Message-ID: <20081022152249.3466e6a2@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: base64
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:51497 "EHLO mx2.redhat.com"
+Received: from mx2.redhat.com ([66.187.237.31]:42473 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750924AbYJVEja (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Oct 2008 00:39:30 -0400
-In-Reply-To: <20081021224029.0853b2ac@gmail.com>
+	id S1753561AbYJVUXG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 22 Oct 2008 16:23:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQoNClNpZ2gu
-IA0KDQpHbWFpbCByZWFsbHkgdHJhc2hlZCBteSBmaXJzdCBtZXNzYWdlLiBGcm9tIHdoYXQgRGF2
-ZSBNaWxsZXIgZm9yd2FyZGVkIHRvIG1lLCBpdCBsb29rcyBsaWtlIGl0IGdvdCBiYXNlNjQnZWQg
-YW5kIHdlbnQgb3ZlciB0aGUgMTAwSyBsaW1pdC4gDQoNCkVhc2lzdCB0aGluZyB0byBkbyBpcyBm
-ZXRjaCB0aGUgdGFyYmFsbDoNCg0KCWh0dHA6Ly9wZW9wbGUucmVkaGF0LmNvbS93aWxsaWFtcy9u
-ZXRyYXRlLTAuNC50YXIuYnoyDQoNClRoYW5rcywNCkNsYXJrDQotLS0tLUJFR0lOIFBHUCBTSUdO
-QVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC45IChHTlUvTGludXgpDQoNCmlFWUVBUkVD
-QUFZRkFraityblFBQ2drUUh5dWovK1RURXAxbVlRQ2NEQWowZHQyaitNcGsrWUhGam9vb3VYM1oN
-CkYza0FuMllXVUJwcWpZemVwVVh3M2YrNHIrWDBWcHFhDQo9WTdEOA0KLS0tLS1FTkQgUEdQIFNJ
-R05BVFVSRS0tLS0tDQo=
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpBbGwsDQoN
+ClRoZSBsYXRlc3QgdmVyc2lvbiBvZiBydC10ZXN0cyAoY3ljbGljdGVzdCwgc2lnbmFsdGVzdCwg
+cGlfc3RyZXNzKSBpcyBhdmFpbGFibGUgYXQ6DQoNCglodHRwOi8vd3d3Lmtlcm5lbC5vcmcvcHVi
+L2xpbnV4Ly9rZXJuZWwvcGVvcGxlL2Nscmt3bGxtcy9ydC10ZXN0cy9ydC10ZXN0cy0wLjI4LnRh
+ci5neg0KDQphcyBlaXRoZXIgYSBnemlwZWQgb3IgYnppcGVkIHRhcmJhbGwuIFRoaXMgdmVyc2lv
+biBoYXMgdHdvIG5ldyBvcHRpb25zIGFkZGVkOg0KDQoJLS1oaXN0b2dyYW0Jd2hpY2ggZHVtcHMg
+YSBoaXN0b2dyYW0gb2YgbGF0ZW5jaWVzIGFmdGVyIHRoZSBydW4NCgktLWR1cmF0aW9uIAl3aGlj
+aCBhbGxvd3MgdGhlIHJ1biB0byBiZSBvZiBhIHNwZWNpZmljIGR1cmF0aW9uDQoNClRoYW5rcyB0
+byBTdmVuIGZvciB0aGUgdmVyeSB1c2VmdWwgaGlzdG9ncmFtIGNvZGUhDQoNCklmIHlvdSBwcmVm
+ZXIsIHlvdSBjYW4gYWNjZXNzIHRoZSBnaXQgdHJlZSBhdDoNCg0KCWdpdDovL2dpdC5rZXJuZWwu
+b3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9jbHJrd2xsbXMvcnQtdGVzdHMuZ2l0DQoNClN1
+bW1hcnkgb2YgZ2l0IGNvbW1pdHM6DQoNCkNsYXJrIFdpbGxpYW1zICgzKToNCiAgYWRkIG9wdGlv
+biB0byBydW4gZm9yIHNwZWNpZmllZCBkdXJhdGlvbg0KICBjaGFuZ2VkIHJlbGVhc2UgdGFyZ2V0
+IGluIE1ha2VmaWxlDQogIHRvbGQgZ2l0IHRvIGlnbm9yZSB0YXJiYWxscyBhbmQgdG1wZGlyDQoN
+ClN2ZW4tVGhvcnN0ZW4gRGlldHJpY2ggKDEpOg0KICBTdWJqZWN0OiBBZGQgaGlzdG9ncmFtIHN1
+cHBvcnQgdG8gY3ljbGljdGVzdA0KDQogLmdpdGlnbm9yZSAgICAgICAgICAgICAgICAgIHwgICAg
+NCArLQ0KIE1ha2VmaWxlICAgICAgICAgICAgICAgICAgICB8ICAgIDYgKy0NCiBzcmMvY3ljbGlj
+dGVzdC9jeWNsaWN0ZXN0LjggfCAgIDExICsrKy0NCiBzcmMvY3ljbGljdGVzdC9jeWNsaWN0ZXN0
+LmMgfCAgMTI4ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0NCiA0
+IGZpbGVzIGNoYW5nZWQsIDEzOCBpbnNlcnRpb25zKCspLCAxMSBkZWxldGlvbnMoLSkNCg0KDQot
+LS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC45IChHTlUv
+TGludXgpDQoNCmlFWUVBUkVDQUFZRkFrai9pNTRBQ2drUUh5dWovK1RURXAzZGp3Q2ZVMWw5MWp0
+Y1UyTzNQeUE4MEUzZk5oQy8NCmJhNEFuMk1tOFVLRmFlQVl4RFVINXJhV29Pc0ZKTll0DQo9d01j
+dA0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
