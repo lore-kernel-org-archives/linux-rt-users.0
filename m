@@ -1,43 +1,41 @@
 From: Sergio Monteiro Basto <sergio@sergiomb.no-ip.org>
 Subject: Re: nohz=off
-Date: Mon, 03 Nov 2008 21:17:14 +0000
-Message-ID: <1225747034.24037.8.camel@segulix.localdomain>
+Date: Tue, 04 Nov 2008 15:10:48 +0000
+Message-ID: <1225811449.30849.2.camel@segulix.localdomain>
 References: <1225729643.10570.6.camel@segulix.localdomain>
 	 <20081103170234.GC19329@unix.sh>
-	 <1225734521.14192.5.camel@segulix.localdomain>
-	 <20081103195435.GG19329@unix.sh>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-GNm6sw/0YMKc/OghFjXB"
+Content-Type: multipart/signed; micalg=sha1; protocol="application/x-pkcs7-signature"; boundary="=-yHzIluVccbH9cTFoTOrW"
 Cc: linux-rt-users@vger.kernel.org
 To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay3.ptmail.sapo.pt ([212.55.154.23]:33424 "HELO sapo.pt"
+Received: from relay2.ptmail.sapo.pt ([212.55.154.22]:44869 "HELO sapo.pt"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-	id S1754227AbYKCVRT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Nov 2008 16:17:19 -0500
-In-Reply-To: <20081103195435.GG19329@unix.sh>
+	id S1752002AbYKDPLD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Nov 2008 10:11:03 -0500
+In-Reply-To: <20081103170234.GC19329@unix.sh>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---=-GNm6sw/0YMKc/OghFjXB
+--=-yHzIluVccbH9cTFoTOrW
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 
-On Mon, 2008-11-03 at 17:54 -0200, Luis Claudio R. Goncalves wrote:
-> What kernel versions are you are using? Which laptop model?
-2.6.24 and 2.6.27=20
+On Mon, 2008-11-03 at 15:02 -0200, Luis Claudio R. Goncalves wrote:
+> it is not a problem to use
+> RT with NOHZ disabled.
 
-http://www.insys.pt/lego.php?load=3DCatalogo&fid=3D1&exp=3D37&pcod=3D54
+Well but when NOHZ is enable and laptop hang on boot , this problem
+should be reported here ?=20
 
-INSYS 8761SU =20
-Chipset: SiS=C2=A9 671DX + SiS968
 
+Thanks,=20
 --=20
 S=C3=A9rgio M. B.
 
---=-GNm6sw/0YMKc/OghFjXB
+--=-yHzIluVccbH9cTFoTOrW
 Content-Type: application/x-pkcs7-signature; name=smime.p7s
 Content-Disposition: attachment; filename=smime.p7s
 Content-Transfer-Encoding: base64
@@ -74,14 +72,14 @@ YsPZOhl+hLGZGwDFGguCdJ4lUJRix9sncVcljd2pnDmOjCBPZV+V2vf3h9bGCE6u9uo05RAaWzVN
 d+NWIXiC3CEZNd4ksdMdRv9dX2VPMYIB/DCCAfgCAQEwdjBiMQswCQYDVQQGEwJaQTElMCMGA1UE
 ChMcVGhhd3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFs
 IEZyZWVtYWlsIElzc3VpbmcgQ0ECEA6CVh3keQ8TFtyrh/wrbgYwCQYFKw4DAhoFAKBdMBgGCSqG
-SIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTA4MTEwMzIxMTcxNFowIwYJKoZI
-hvcNAQkEMRYEFH6X6nHK7Zsb3eAsG4zd+b79bzi2MA0GCSqGSIb3DQEBAQUABIIBAHzVEG7hemFD
-TpUSMQiw+e2481ho9HK1m3hZ7ZyKJ8bnNb/B0zuTEUCyCe44P5HO39w/sc+O9CjfQYbXd6lw2NR8
-fyux9puLSPF+AhImeMFVD+oN1V+5TUd3YM4qG/s3Yh9Y5UbYz/CSp7A06L+kQGUufy6d3AWJCZsA
-QiJPfQsMyjZVBwLX8zHe0vMRDyfWjsrkC4xycVPFeZwr4j89sNBIeZN8WfAoqzllO0gH2JshtWZM
-kaGP1Fv4Q5v2dMWifYUJprN52qH/sy+z4NX2JJMN+6OPS3NGnGZmRdHZF+cdQj8mykCROI7DVSQC
-IuyfhDq+uscdgPAJV7kKBprsnbgAAAAAAAA=
+SIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTA4MTEwNDE1MTA0NVowIwYJKoZI
+hvcNAQkEMRYEFPvCjHFTMFZN5/1SdE4lUm9LXcfgMA0GCSqGSIb3DQEBAQUABIIBAFnpq/YC34H6
+F+Gop6HHtttVvFG6fryMpJQXexlQjYBl9sv7THmFzYs5mk+re8D2KkKvlQiV3Bzx7D600Z/6U3zd
+Q6W4OkIFkHD1p5wIFjHNZ64eqrd9GHpVdWYzTcG4LFln9n43IZgJSGhnT7mSpYq+N07XThsLxc1b
+fqkxsB380i7OyUbkEKhWF5NppR7rKTr/IbHt5X1JpwJ7dBn0lqs5XknFAcRHHY+KwI1wzNgx4P5F
+INNrPxe0ZOW9khz/153d23dAE8SZRguHymPHZzrDPTe0NuHq8VB53uQ2GGFmPP2FBXKodK+dkz1l
+0C0fDGQokLeE8ICKpQfBr/Kcm7QAAAAAAAA=
 
 
---=-GNm6sw/0YMKc/OghFjXB--
+--=-yHzIluVccbH9cTFoTOrW--
 
