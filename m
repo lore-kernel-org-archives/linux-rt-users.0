@@ -1,32 +1,40 @@
-From: Gautam Thaker <gautam.h.thaker@lmco.com>
-Subject: 2.6.26.6-rt11  nanosleep() does have accurate behavior
-Date: Fri, 07 Nov 2008 10:56:02 -0500
-Message-ID: <49146512.4020107@atl.lmco.com>
+From: Stephen Hemminger <shemminger@vyatta.com>
+Subject: Re: Network performance forwarding tests on RT
+Date: Fri, 7 Nov 2008 08:52:10 -0800
+Message-ID: <20081107085210.67d4c962@extreme>
+References: <20081105115205.14c5282f@s6510>
+	<20081106185029.0d4c5cd8@redhat.com>
+	<ccb913ac0811062303r7f94f8a8lfe48336d6dafb9f6@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset=ISO-8859-1
-Content-Transfer-Encoding: 7BIT
-Cc: "Gautam H. Thaker - LM ATL" <gautam.h.thaker@lmco.com>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: "Clark Williams" <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org, netdev@vger.kernel.org
+To: "Tobias Knutsson" <tobias.knutsson@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailgw1a.lmco.com ([192.31.106.7]:44189 "EHLO mailgw1a.lmco.com"
+Received: from mail.vyatta.com ([76.74.103.46]:44928 "EHLO mail.vyatta.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752014AbYKGQDD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Nov 2008 11:03:03 -0500
-Received: from emss07g01.ems.lmco.com (relay5.ems.lmco.com [166.29.2.16])by mailgw1a.lmco.com  (LM-6) with ESMTP id mA7Fu79Z017585for <linux-rt-users@vger.kernel.org>; Fri, 7 Nov 2008 08:56:07 -0700 (MST)
-Received: from CONVERSION2-DAEMON.lmco.com by lmco.com (PMDF V6.3-x14 #31428)
- id <0K9Z0050109JWX@lmco.com> for linux-rt-users@vger.kernel.org; Fri, 07 Nov 2008 08:56:07 -0700 (MST)
-Received: from enterprise.atl.lmco.com ([166.17.240.20]) by lmco.com (PMDF V6.3-x14 #31428)
- with ESMTP id <0K9Z00GEH09EFE@lmco.com> for linux-rt-users@vger.kernel.org; Fri, 07 Nov 2008 08:56:02 -0700 (MST)
+	id S1751272AbYKGQwQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Nov 2008 11:52:16 -0500
+In-Reply-To: <ccb913ac0811062303r7f94f8a8lfe48336d6dafb9f6@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I recently started to study how nanosleep() behaves under 2.6.26.6-rt11 compiled in in FULL PREEMPT, uniprocessor mode. 
-  I find that between 2.6.20-rt8 and this new kernel something has changed and nanosleep() is back to its old behavior 
-or sleeping for next higher number of msec rather than carefully following the "y=x" line.
+On Fri, 7 Nov 2008 08:03:44 +0100
+"Tobias Knutsson" <tobias.knutsson@gmail.com> wrote:
 
-I don't follow the RT world closely enough, but is this a regression or an expected change in behavior? The link below 
-show the results very clearly.
+> First off all, let me just say than I am relatively new to PREEMPT_RT and I
+> have no experience with Vyatta. It is just that some thoughts came to me
+> that might be useful to consider.
+> 
+> What priorities does the network related threads have? There should be one
+> for the ISR and one each for the soft irq responsible for the receiving and
+> transmitting of network data. Maybe adjusting some of these priorities could
+> improve the situation.
 
-http://www.atl.external.lmco.com/projects/QoS/documents/nanosleep_1.png
+What ever the default is, nothing was changed.
 
-Gautam
+Remember for this test there really is no application activity. Only the hard irq
+threads of the Ethernet device, and the soft irq threads from the network
+scheduler (NAPI).  I made the assumption that default priority is set
+to allow such that hard irq > soft irq.
