@@ -1,85 +1,57 @@
 From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Network performance forwarding tests on RT
-Date: Fri, 07 Nov 2008 13:22:43 -0800
-Message-ID: <1226092963.5685.14.camel@dd>
-References: <20081105115205.14c5282f@s6510>
-	 <20081106185029.0d4c5cd8@redhat.com>
+Subject: [PATCH][RT] Trivial: Correctly dereference when clearing unused
+	variable
+Date: Fri, 07 Nov 2008 13:19:42 -0800
+Message-ID: <1226092782.5685.11.camel@dd>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Stephen Hemminger <shemminger@vyatta.com>,
-	linux-rt-users@vger.kernel.org, netdev@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Cc: LKML <Linux-kernel@vger.kernel.org>, Tony Jones <tonyj@suse.de>
+To: RT Users List <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.230]:62240 "EHLO
+Received: from rv-out-0506.google.com ([209.85.198.237]:59978 "EHLO
 	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751121AbYKGVWt (ORCPT
+	with ESMTP id S1750934AbYKGVZP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Nov 2008 16:22:49 -0500
-In-Reply-To: <20081106185029.0d4c5cd8@redhat.com>
+	Fri, 7 Nov 2008 16:25:15 -0500
+Received: by rv-out-0506.google.com with SMTP id k40so1458989rvb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2008 13:25:15 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2008-11-06 at 18:50 -0600, Clark Williams wrote:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
-> 
-> On Wed, 5 Nov 2008 11:52:05 -0800
-> Stephen Hemminger <shemminger@vyatta.com> wrote:
-> 
-> > As an experiment, I rebuilt a version of Vyatta using 2.6.26-rt11 kernel.
-> > This required some fixes to unionfs and aufs which I'll send to anyone who wants.
-> 
-> I'd like to see those fixes.
 
-I have seen the same issues, and I think I had a patch for these laying
-around - I'll defer to Stephen for his version.
 
-> 
-> > 
-> > The performance of the RT PREEMPT kernel is worse than non-PREEMPT kernel.
-> > 
-> > Running RFC2544, frame loss test we the loss rate is worse on RT than non RT.
-> > Ideally, there would be no loss, but on this platform, the best we have
-> > seen is 70% loss at 64 bytes.
-> > 
-> 
-> We've seen that as you push the workloads up to max, the additional overhead of rt_mutexes starts to show and the performance of the RT kernel drops off.  So if you're trying to push the maximum amount of bits across a wire and you don't care about event latency, then I wouldn't recommend an RT kernel. 
-> 
-> > 
-> > Size	2.6.26		2.6.26-rt11
-> > 64	80.5%		99%
-> > 128	67		99
-> > 256	43		92
-> > 512	0		54
-> > 1024	0		3
-> > 1280	0		0
-> > 1518	0		0
-> > 
-> > More importantly, with RT PREEMPT, the driver gets stuck and times out
-> > under heavy load (see 99% loss above). It appears the change to network
-> > scheduling related to NAPI doesn't work well under load.
-> > 
-> 
-> Did you do anything with the priorities of interrupt threads? We generally boost hard IRQ threads (show up as [IRQ-xxx] in a ps) to SCHED_FIFO 80-85 and boost the softirq threads to between 70-75.
-> 
-> Since interrupt processing in RT takes place in SCHED_FIFO kernel threads, if you push the load up high enough, it's entirely possible to starve lower priority softirq/hardirq threads in the system.
+From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+Subject:  Correctly dereference flags when clearing unused variable.
 
-ON SMP, you can also affinitize the threads on different CPUs. 
+Its probably unsafe to set the flags pointer to 0, since this will oops,
+if it is dereferenced elsewhere for some odd reason. 
 
-Check out Cset on the RT Wiki.
+Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
 
-Sven
+---
+ mm/page_alloc.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
->  
-> Clark
-> -----BEGIN PGP SIGNATURE-----
-> Version: GnuPG v2.0.9 (GNU/Linux)
-> 
-> iEYEARECAAYFAkkTkNsACgkQHyuj/+TTEp1/oACdGj3cEsNTFD3zG1uXrJSnORx8
-> 1RkAoKYAPCAQ4ALi5NPRMNbEE6CjkZQj
-> =kO9h
-> -----END PGP SIGNATURE-----
-> NrybXv^){.n+{z"^nrzh&
-Gh(j"mzfh~m
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -170,7 +170,7 @@ static inline void __lock_cpu_pcp(unsign
+ {
+ #ifdef CONFIG_PREEMPT_RT
+ 	spin_lock(&__get_cpu_lock(pcp_locks, cpu));
+-	flags = 0;
++	*flags = 0;
+ #else
+ 	local_irq_save(*flags);
+ #endif
+@@ -180,7 +180,7 @@ static inline void lock_cpu_pcp(unsigned
+ {
+ #ifdef CONFIG_PREEMPT_RT
+ 	(void)get_cpu_var_locked(pcp_locks, this_cpu);
+-	flags = 0;
++	*flags = 0;
+ #else
+ 	local_irq_save(*flags);
+ 	*this_cpu = smp_processor_id();
+
 
