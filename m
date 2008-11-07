@@ -1,42 +1,44 @@
-From: "Leon Woestenberg" <leon.woestenberg@gmail.com>
-Subject: Re: 2.6.26.6-rt11 nanosleep() does have accurate behavior
-Date: Fri, 7 Nov 2008 20:17:09 +0100
-Message-ID: <c384c5ea0811071117y33a5a5fdq107037e7b2c56140@mail.gmail.com>
-References: <49146512.4020107@atl.lmco.com>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: [PATCH][RT] Dereference pointer to cpu id, not to address of CPUID
+Date: Fri, 07 Nov 2008 13:13:27 -0800
+Message-ID: <1226092407.5685.7.camel@dd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Gautam Thaker" <gautam.h.thaker@lmco.com>
+Cc: LKML <Linux-kernel@vger.kernel.org>, Tony Jones <tonyj@suse.de>
+To: RT Users List <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qw-out-2122.google.com ([74.125.92.27]:3806 "EHLO
-	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751665AbYKGTRL (ORCPT
+Received: from rn-out-0910.google.com ([64.233.170.188]:57973 "EHLO
+	rn-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751183AbYKGVNd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Nov 2008 14:17:11 -0500
-Received: by qw-out-2122.google.com with SMTP id 3so851944qwe.37
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2008 11:17:10 -0800 (PST)
-In-Reply-To: <49146512.4020107@atl.lmco.com>
-Content-Disposition: inline
+	Fri, 7 Nov 2008 16:13:33 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Gautam,
+This patch applies to 2.6.25-rt, 2.6.26-rt and 2.6.27-rt
 
-On Fri, Nov 7, 2008 at 4:56 PM, Gautam Thaker <gautam.h.thaker@lmco.com> wrote:
-> I recently started to study how nanosleep() behaves under 2.6.26.6-rt11
-> compiled in in FULL PREEMPT, uniprocessor mode.  I find that between
-> 2.6.20-rt8 and this new kernel something has changed and nanosleep() is back
-> to its old behavior or sleeping for next higher number of msec rather than
-> carefully following the "y=x" line.
->
-> I don't follow the RT world closely enough, but is this a regression or an
-> expected change in behavior? The link below show the results very clearly.
->
-> http://www.atl.external.lmco.com/projects/QoS/documents/nanosleep_1.png
->
-This suggests (to me) that you probably did not enable HRTIMERS?
 
-Regards,
--- 
-Leon
+From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+Subject: Dereference pointer to cpu id, when evaluating condition.
+
+Without dereferencing, the condition always evaluates to true.
+
+Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
+---
+ mm/slab.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -2033,7 +2033,7 @@ slab_destroy(struct kmem_cache *cachep,
+ 	} else {
+ 		kmem_freepages(cachep, addr);
+ 		if (OFF_SLAB(cachep)) {
+-			if (this_cpu)
++			if (*this_cpu)
+ 				__cache_free(cachep->slabp_cache, slabp, this_cpu);
+ 			else
+ 				kmem_cache_free(cachep->slabp_cache, slabp);
+
+
