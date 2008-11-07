@@ -1,54 +1,53 @@
-From: Stephen Hemminger <shemminger@vyatta.com>
-Subject: Network performance forwarding tests on RT
-Date: Wed, 5 Nov 2008 11:52:05 -0800
-Message-ID: <20081105115205.14c5282f@s6510>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Network performance forwarding tests on RT
+Date: Thu, 6 Nov 2008 18:50:29 -0600
+Message-ID: <20081106185029.0d4c5cd8@redhat.com>
+References: <20081105115205.14c5282f@s6510>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: netdev@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
-Return-path: <netdev-owner@vger.kernel.org>
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org, netdev@vger.kernel.org
+To: Stephen Hemminger <shemminger@vyatta.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx2.redhat.com ([66.187.237.31]:32834 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753772AbYKGAun (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 6 Nov 2008 19:50:43 -0500
+In-Reply-To: <20081105115205.14c5282f@s6510>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-As an experiment, I rebuilt a version of Vyatta using 2.6.26-rt11 kernel.
-This required some fixes to unionfs and aufs which I'll send to anyone who wants.
-
-The performance of the RT PREEMPT kernel is worse than non-PREEMPT kernel.
-
-Running RFC2544, frame loss test we the loss rate is worse on RT than non RT.
-Ideally, there would be no loss, but on this platform, the best we have
-seen is 70% loss at 64 bytes.
-
-
-Size	2.6.26		2.6.26-rt11
-64	80.5%		99%
-128	67		99
-256	43		92
-512	0		54
-1024	0		3
-1280	0		0
-1518	0		0
-
-More importantly, with RT PREEMPT, the driver gets stuck and times out
-under heavy load (see 99% loss above). It appears the change to network
-scheduling related to NAPI doesn't work well under load.
-
-I wouldn't recommend RT PREEMPT for heavy network loads.
-
-Hardware: Celeron 430 @ 1.80GHz  Intel dual-port 82546GB NIC
-
-Config:
-
-CONFIG_NR_CPUS=8
-CONFIG_SCHED_SMT=y
-CONFIG_SCHED_MC=y
-# CONFIG_PREEMPT_NONE is not set
-# CONFIG_PREEMPT_VOLUNTARY is not set
-# CONFIG_PREEMPT_DESKTOP is not set
-CONFIG_PREEMPT_RT=y
-CONFIG_PREEMPT=y
-CONFIG_PREEMPT_SOFTIRQS=y
-CONFIG_PREEMPT_HARDIRQS=y
-CONFIG_PREEMPT_RCU=y
-CONFIG_PREEMPT_RCU_BOOST=y
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBXZWQs
+IDUgTm92IDIwMDggMTE6NTI6MDUgLTA4MDANClN0ZXBoZW4gSGVtbWluZ2VyIDxzaGVtbWluZ2Vy
+QHZ5YXR0YS5jb20+IHdyb3RlOg0KDQo+IEFzIGFuIGV4cGVyaW1lbnQsIEkgcmVidWlsdCBhIHZl
+cnNpb24gb2YgVnlhdHRhIHVzaW5nIDIuNi4yNi1ydDExIGtlcm5lbC4NCj4gVGhpcyByZXF1aXJl
+ZCBzb21lIGZpeGVzIHRvIHVuaW9uZnMgYW5kIGF1ZnMgd2hpY2ggSSdsbCBzZW5kIHRvIGFueW9u
+ZSB3aG8gd2FudHMuDQoNCkknZCBsaWtlIHRvIHNlZSB0aG9zZSBmaXhlcy4NCg0KPiANCj4gVGhl
+IHBlcmZvcm1hbmNlIG9mIHRoZSBSVCBQUkVFTVBUIGtlcm5lbCBpcyB3b3JzZSB0aGFuIG5vbi1Q
+UkVFTVBUIGtlcm5lbC4NCj4gDQo+IFJ1bm5pbmcgUkZDMjU0NCwgZnJhbWUgbG9zcyB0ZXN0IHdl
+IHRoZSBsb3NzIHJhdGUgaXMgd29yc2Ugb24gUlQgdGhhbiBub24gUlQuDQo+IElkZWFsbHksIHRo
+ZXJlIHdvdWxkIGJlIG5vIGxvc3MsIGJ1dCBvbiB0aGlzIHBsYXRmb3JtLCB0aGUgYmVzdCB3ZSBo
+YXZlDQo+IHNlZW4gaXMgNzAlIGxvc3MgYXQgNjQgYnl0ZXMuDQo+IA0KDQpXZSd2ZSBzZWVuIHRo
+YXQgYXMgeW91IHB1c2ggdGhlIHdvcmtsb2FkcyB1cCB0byBtYXgsIHRoZSBhZGRpdGlvbmFsIG92
+ZXJoZWFkIG9mIHJ0X211dGV4ZXMgc3RhcnRzIHRvIHNob3cgYW5kIHRoZSBwZXJmb3JtYW5jZSBv
+ZiB0aGUgUlQga2VybmVsIGRyb3BzIG9mZi4gIFNvIGlmIHlvdSdyZSB0cnlpbmcgdG8gcHVzaCB0
+aGUgbWF4aW11bSBhbW91bnQgb2YgYml0cyBhY3Jvc3MgYSB3aXJlIGFuZCB5b3UgZG9uJ3QgY2Fy
+ZSBhYm91dCBldmVudCBsYXRlbmN5LCB0aGVuIEkgd291bGRuJ3QgcmVjb21tZW5kIGFuIFJUIGtl
+cm5lbC4gDQoNCj4gDQo+IFNpemUJMi42LjI2CQkyLjYuMjYtcnQxMQ0KPiA2NAk4MC41JQkJOTkl
+DQo+IDEyOAk2NwkJOTkNCj4gMjU2CTQzCQk5Mg0KPiA1MTIJMAkJNTQNCj4gMTAyNAkwCQkzDQo+
+IDEyODAJMAkJMA0KPiAxNTE4CTAJCTANCj4gDQo+IE1vcmUgaW1wb3J0YW50bHksIHdpdGggUlQg
+UFJFRU1QVCwgdGhlIGRyaXZlciBnZXRzIHN0dWNrIGFuZCB0aW1lcyBvdXQNCj4gdW5kZXIgaGVh
+dnkgbG9hZCAoc2VlIDk5JSBsb3NzIGFib3ZlKS4gSXQgYXBwZWFycyB0aGUgY2hhbmdlIHRvIG5l
+dHdvcmsNCj4gc2NoZWR1bGluZyByZWxhdGVkIHRvIE5BUEkgZG9lc24ndCB3b3JrIHdlbGwgdW5k
+ZXIgbG9hZC4NCj4gDQoNCkRpZCB5b3UgZG8gYW55dGhpbmcgd2l0aCB0aGUgcHJpb3JpdGllcyBv
+ZiBpbnRlcnJ1cHQgdGhyZWFkcz8gV2UgZ2VuZXJhbGx5IGJvb3N0IGhhcmQgSVJRIHRocmVhZHMg
+KHNob3cgdXAgYXMgW0lSUS14eHhdIGluIGEgcHMpIHRvIFNDSEVEX0ZJRk8gODAtODUgYW5kIGJv
+b3N0IHRoZSBzb2Z0aXJxIHRocmVhZHMgdG8gYmV0d2VlbiA3MC03NS4NCg0KU2luY2UgaW50ZXJy
+dXB0IHByb2Nlc3NpbmcgaW4gUlQgdGFrZXMgcGxhY2UgaW4gU0NIRURfRklGTyBrZXJuZWwgdGhy
+ZWFkcywgaWYgeW91IHB1c2ggdGhlIGxvYWQgdXAgaGlnaCBlbm91Z2gsIGl0J3MgZW50aXJlbHkg
+cG9zc2libGUgdG8gc3RhcnZlIGxvd2VyIHByaW9yaXR5IHNvZnRpcnEvaGFyZGlycSB0aHJlYWRz
+IGluIHRoZSBzeXN0ZW0uDQogDQpDbGFyaw0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0N
+ClZlcnNpb246IEdudVBHIHYyLjAuOSAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa2tUa05z
+QUNna1FIeXVqLytUVEVwMS9vQUNkR2ozY0VzTlRGRDN6RzF1WHJKU25PUng4DQoxUmtBb0tZQVBD
+QVE0QUxpNU5QUk1OYkVFNkNqa1pRag0KPWtPOWgNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0t
+LQ0K
