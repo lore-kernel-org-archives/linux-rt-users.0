@@ -1,53 +1,32 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Network performance forwarding tests on RT
-Date: Thu, 6 Nov 2008 18:50:29 -0600
-Message-ID: <20081106185029.0d4c5cd8@redhat.com>
-References: <20081105115205.14c5282f@s6510>
+From: Gautam Thaker <gautam.h.thaker@lmco.com>
+Subject: 2.6.26.6-rt11  nanosleep() does have accurate behavior
+Date: Fri, 07 Nov 2008 10:56:02 -0500
+Message-ID: <49146512.4020107@atl.lmco.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org, netdev@vger.kernel.org
-To: Stephen Hemminger <shemminger@vyatta.com>
+Content-Type: text/plain; format=flowed; charset=ISO-8859-1
+Content-Transfer-Encoding: 7BIT
+Cc: "Gautam H. Thaker - LM ATL" <gautam.h.thaker@lmco.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:32834 "EHLO mx2.redhat.com"
+Received: from mailgw1a.lmco.com ([192.31.106.7]:44189 "EHLO mailgw1a.lmco.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753772AbYKGAun (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Nov 2008 19:50:43 -0500
-In-Reply-To: <20081105115205.14c5282f@s6510>
+	id S1752014AbYKGQDD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Nov 2008 11:03:03 -0500
+Received: from emss07g01.ems.lmco.com (relay5.ems.lmco.com [166.29.2.16])by mailgw1a.lmco.com  (LM-6) with ESMTP id mA7Fu79Z017585for <linux-rt-users@vger.kernel.org>; Fri, 7 Nov 2008 08:56:07 -0700 (MST)
+Received: from CONVERSION2-DAEMON.lmco.com by lmco.com (PMDF V6.3-x14 #31428)
+ id <0K9Z0050109JWX@lmco.com> for linux-rt-users@vger.kernel.org; Fri, 07 Nov 2008 08:56:07 -0700 (MST)
+Received: from enterprise.atl.lmco.com ([166.17.240.20]) by lmco.com (PMDF V6.3-x14 #31428)
+ with ESMTP id <0K9Z00GEH09EFE@lmco.com> for linux-rt-users@vger.kernel.org; Fri, 07 Nov 2008 08:56:02 -0700 (MST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBXZWQs
-IDUgTm92IDIwMDggMTE6NTI6MDUgLTA4MDANClN0ZXBoZW4gSGVtbWluZ2VyIDxzaGVtbWluZ2Vy
-QHZ5YXR0YS5jb20+IHdyb3RlOg0KDQo+IEFzIGFuIGV4cGVyaW1lbnQsIEkgcmVidWlsdCBhIHZl
-cnNpb24gb2YgVnlhdHRhIHVzaW5nIDIuNi4yNi1ydDExIGtlcm5lbC4NCj4gVGhpcyByZXF1aXJl
-ZCBzb21lIGZpeGVzIHRvIHVuaW9uZnMgYW5kIGF1ZnMgd2hpY2ggSSdsbCBzZW5kIHRvIGFueW9u
-ZSB3aG8gd2FudHMuDQoNCkknZCBsaWtlIHRvIHNlZSB0aG9zZSBmaXhlcy4NCg0KPiANCj4gVGhl
-IHBlcmZvcm1hbmNlIG9mIHRoZSBSVCBQUkVFTVBUIGtlcm5lbCBpcyB3b3JzZSB0aGFuIG5vbi1Q
-UkVFTVBUIGtlcm5lbC4NCj4gDQo+IFJ1bm5pbmcgUkZDMjU0NCwgZnJhbWUgbG9zcyB0ZXN0IHdl
-IHRoZSBsb3NzIHJhdGUgaXMgd29yc2Ugb24gUlQgdGhhbiBub24gUlQuDQo+IElkZWFsbHksIHRo
-ZXJlIHdvdWxkIGJlIG5vIGxvc3MsIGJ1dCBvbiB0aGlzIHBsYXRmb3JtLCB0aGUgYmVzdCB3ZSBo
-YXZlDQo+IHNlZW4gaXMgNzAlIGxvc3MgYXQgNjQgYnl0ZXMuDQo+IA0KDQpXZSd2ZSBzZWVuIHRo
-YXQgYXMgeW91IHB1c2ggdGhlIHdvcmtsb2FkcyB1cCB0byBtYXgsIHRoZSBhZGRpdGlvbmFsIG92
-ZXJoZWFkIG9mIHJ0X211dGV4ZXMgc3RhcnRzIHRvIHNob3cgYW5kIHRoZSBwZXJmb3JtYW5jZSBv
-ZiB0aGUgUlQga2VybmVsIGRyb3BzIG9mZi4gIFNvIGlmIHlvdSdyZSB0cnlpbmcgdG8gcHVzaCB0
-aGUgbWF4aW11bSBhbW91bnQgb2YgYml0cyBhY3Jvc3MgYSB3aXJlIGFuZCB5b3UgZG9uJ3QgY2Fy
-ZSBhYm91dCBldmVudCBsYXRlbmN5LCB0aGVuIEkgd291bGRuJ3QgcmVjb21tZW5kIGFuIFJUIGtl
-cm5lbC4gDQoNCj4gDQo+IFNpemUJMi42LjI2CQkyLjYuMjYtcnQxMQ0KPiA2NAk4MC41JQkJOTkl
-DQo+IDEyOAk2NwkJOTkNCj4gMjU2CTQzCQk5Mg0KPiA1MTIJMAkJNTQNCj4gMTAyNAkwCQkzDQo+
-IDEyODAJMAkJMA0KPiAxNTE4CTAJCTANCj4gDQo+IE1vcmUgaW1wb3J0YW50bHksIHdpdGggUlQg
-UFJFRU1QVCwgdGhlIGRyaXZlciBnZXRzIHN0dWNrIGFuZCB0aW1lcyBvdXQNCj4gdW5kZXIgaGVh
-dnkgbG9hZCAoc2VlIDk5JSBsb3NzIGFib3ZlKS4gSXQgYXBwZWFycyB0aGUgY2hhbmdlIHRvIG5l
-dHdvcmsNCj4gc2NoZWR1bGluZyByZWxhdGVkIHRvIE5BUEkgZG9lc24ndCB3b3JrIHdlbGwgdW5k
-ZXIgbG9hZC4NCj4gDQoNCkRpZCB5b3UgZG8gYW55dGhpbmcgd2l0aCB0aGUgcHJpb3JpdGllcyBv
-ZiBpbnRlcnJ1cHQgdGhyZWFkcz8gV2UgZ2VuZXJhbGx5IGJvb3N0IGhhcmQgSVJRIHRocmVhZHMg
-KHNob3cgdXAgYXMgW0lSUS14eHhdIGluIGEgcHMpIHRvIFNDSEVEX0ZJRk8gODAtODUgYW5kIGJv
-b3N0IHRoZSBzb2Z0aXJxIHRocmVhZHMgdG8gYmV0d2VlbiA3MC03NS4NCg0KU2luY2UgaW50ZXJy
-dXB0IHByb2Nlc3NpbmcgaW4gUlQgdGFrZXMgcGxhY2UgaW4gU0NIRURfRklGTyBrZXJuZWwgdGhy
-ZWFkcywgaWYgeW91IHB1c2ggdGhlIGxvYWQgdXAgaGlnaCBlbm91Z2gsIGl0J3MgZW50aXJlbHkg
-cG9zc2libGUgdG8gc3RhcnZlIGxvd2VyIHByaW9yaXR5IHNvZnRpcnEvaGFyZGlycSB0aHJlYWRz
-IGluIHRoZSBzeXN0ZW0uDQogDQpDbGFyaw0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0N
-ClZlcnNpb246IEdudVBHIHYyLjAuOSAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa2tUa05z
-QUNna1FIeXVqLytUVEVwMS9vQUNkR2ozY0VzTlRGRDN6RzF1WHJKU25PUng4DQoxUmtBb0tZQVBD
-QVE0QUxpNU5QUk1OYkVFNkNqa1pRag0KPWtPOWgNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0t
-LQ0K
+I recently started to study how nanosleep() behaves under 2.6.26.6-rt11 compiled in in FULL PREEMPT, uniprocessor mode. 
+  I find that between 2.6.20-rt8 and this new kernel something has changed and nanosleep() is back to its old behavior 
+or sleeping for next higher number of msec rather than carefully following the "y=x" line.
+
+I don't follow the RT world closely enough, but is this a regression or an expected change in behavior? The link below 
+show the results very clearly.
+
+http://www.atl.external.lmco.com/projects/QoS/documents/nanosleep_1.png
+
+Gautam
