@@ -1,57 +1,42 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: [PATCH][RT] Trivial: Correctly dereference when clearing unused
-	variable
-Date: Fri, 07 Nov 2008 13:19:42 -0800
-Message-ID: <1226092782.5685.11.camel@dd>
+From: Stephen Hemminger <shemminger@vyatta.com>
+Subject: unionfs on RT
+Date: Fri, 7 Nov 2008 13:47:35 -0800
+Message-ID: <20081107134735.639c8c5d@extreme>
+References: <20081105115205.14c5282f@s6510>
+	<20081106185029.0d4c5cd8@redhat.com>
+	<1226092963.5685.14.camel@dd>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: LKML <Linux-kernel@vger.kernel.org>, Tony Jones <tonyj@suse.de>
-To: RT Users List <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.237]:59978 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750934AbYKGVZP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Nov 2008 16:25:15 -0500
-Received: by rv-out-0506.google.com with SMTP id k40so1458989rvb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Nov 2008 13:25:15 -0800 (PST)
+Received: from mail.vyatta.com ([76.74.103.46]:60061 "EHLO mail.vyatta.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751019AbYKGVrh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Nov 2008 16:47:37 -0500
+In-Reply-To: <1226092963.5685.14.camel@dd>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+commit 192308315fdc06659a43d5011d9be76eb2520579
+Author: Stephen Hemminger <stephen.hemminger@vyatta.com>
+Date:   Fri Oct 31 14:17:17 2008 -0700
 
+    Fix unionfs on RT
+    
+    RT changes inode stucture slightly.
 
-From: Sven-Thorsten Dietrich <sdietrich@suse.de>
-Subject:  Correctly dereference flags when clearing unused variable.
-
-Its probably unsafe to set the flags pointer to 0, since this will oops,
-if it is dereferenced elsewhere for some odd reason. 
-
-Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
-
----
- mm/page_alloc.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -170,7 +170,7 @@ static inline void __lock_cpu_pcp(unsign
- {
- #ifdef CONFIG_PREEMPT_RT
- 	spin_lock(&__get_cpu_lock(pcp_locks, cpu));
--	flags = 0;
-+	*flags = 0;
- #else
- 	local_irq_save(*flags);
+diff --git a/fs/unionfs/super.c b/fs/unionfs/super.c
+index 5fa4253..6f384e7 100644
+--- a/fs/unionfs/super.c
++++ b/fs/unionfs/super.c
+@@ -92,7 +92,7 @@ static void unionfs_delete_inode(struct inode *inode)
+ 	spin_unlock(&inode->i_lock);
  #endif
-@@ -180,7 +180,7 @@ static inline void lock_cpu_pcp(unsigned
- {
- #ifdef CONFIG_PREEMPT_RT
- 	(void)get_cpu_var_locked(pcp_locks, this_cpu);
--	flags = 0;
-+	*flags = 0;
- #else
- 	local_irq_save(*flags);
- 	*this_cpu = smp_processor_id();
-
-
+ 
+-	if (inode->i_data.nrpages)
++	if (mapping_nrpages(&inode->i_data))
+ 		truncate_inode_pages(&inode->i_data, 0);
+ 
+ 	clear_inode(inode);
