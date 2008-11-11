@@ -1,8 +1,9 @@
 Return-Path: linux-kernel-owner@vger.kernel.org
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [RFC PATCH 2/3] sched: use highest_prio.curr for pull threshold
-Date: Tue, 11 Nov 2008 09:26:24 -0500
-Message-ID: <20081111142624.28477.74329.stgit@dev.haskins.net>
+Subject: [RFC PATCH 1/3] sched: track the next-highest priority on each
+	runqueue
+Date: Tue, 11 Nov 2008 09:26:19 -0500
+Message-ID: <20081111142619.28477.33996.stgit@dev.haskins.net>
 In-Reply-To: <20081111142323.28477.41235.stgit@dev.haskins.net>
 References: <20081111142323.28477.41235.stgit@dev.haskins.net>
 MIME-Version: 1.0
@@ -13,93 +14,244 @@ To: mingo@elte.hu, rostedt@goodmis.org, peterz@infradead.org
 Cc: linux-kernel@vger.kernel.org, =linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-highest_prio.curr is actually a more accurate way to keep track of
-the pull_rt_task() threshold since it is always up to date, even
-if the "next" task migrates during double_lock.  Therefore, stop
-looking at the "next" task object and simply use the highest_prio.curr.
+We will use this later in the series to reduce the amount of rq-lock
+contention during a pull operation
 
 Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
- kernel/sched_rt.c |   31 ++++++-------------------------
- 1 files changed, 6 insertions(+), 25 deletions(-)
+ kernel/sched.c    |    8 +++-
+ kernel/sched_rt.c |  115 +++++++++++++++++++++++++++++++++++------------------
+ 2 files changed, 81 insertions(+), 42 deletions(-)
 
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 6625c3c..a29193b 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -448,7 +448,10 @@ struct rt_rq {
+ 	struct rt_prio_array active;
+ 	unsigned long rt_nr_running;
+ #if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
+-	int highest_prio; /* highest queued rt task prio */
++	struct {
++		int curr; /* highest queued rt task prio */
++		int next; /* next highest */
++	} highest_prio;
+ #endif
+ #ifdef CONFIG_SMP
+ 	unsigned long rt_nr_migratory;
+@@ -8040,7 +8043,8 @@ static void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
+ 	__set_bit(MAX_RT_PRIO, array->bitmap);
+ 
+ #if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
+-	rt_rq->highest_prio = MAX_RT_PRIO;
++	rt_rq->highest_prio.curr = MAX_RT_PRIO;
++	rt_rq->highest_prio.next = MAX_RT_PRIO;
+ #endif
+ #ifdef CONFIG_SMP
+ 	rt_rq->rt_nr_migratory = 0;
 diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
-index d3b54ba..b2305c9 100644
+index b446dc8..d3b54ba 100644
 --- a/kernel/sched_rt.c
 +++ b/kernel/sched_rt.c
-@@ -1206,14 +1206,12 @@ static void push_rt_tasks(struct rq *rq)
- static int pull_rt_task(struct rq *this_rq)
+@@ -108,7 +108,7 @@ static void sched_rt_rq_enqueue(struct rt_rq *rt_rq)
+ 	if (rt_rq->rt_nr_running) {
+ 		if (rt_se && !on_rt_rq(rt_se))
+ 			enqueue_rt_entity(rt_se);
+-		if (rt_rq->highest_prio < curr->prio)
++		if (rt_rq->highest_prio.curr < curr->prio)
+ 			resched_task(curr);
+ 	}
+ }
+@@ -473,7 +473,7 @@ static inline int rt_se_prio(struct sched_rt_entity *rt_se)
+ 	struct rt_rq *rt_rq = group_rt_rq(rt_se);
+ 
+ 	if (rt_rq)
+-		return rt_rq->highest_prio;
++		return rt_rq->highest_prio.curr;
+ #endif
+ 
+ 	return rt_task_of(rt_se)->prio;
+@@ -547,33 +547,66 @@ static void update_curr_rt(struct rq *rq)
+ 	}
+ }
+ 
++#if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
++
++static struct task_struct *pick_next_highest_task_rt(struct rq *rq, int cpu);
++
++static inline int next_prio(struct rq *rq)
++{
++	struct task_struct *next = pick_next_highest_task_rt(rq, rq->cpu);
++
++	if (next && rt_prio(next->prio))
++		return next->prio;
++	else
++		return MAX_RT_PRIO;
++}
++#endif
++
+ static inline
+ void inc_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
  {
- 	int this_cpu = this_rq->cpu, ret = 0, cpu;
--	struct task_struct *p, *next;
-+	struct task_struct *p;
- 	struct rq *src_rq;
+-	WARN_ON(!rt_prio(rt_se_prio(rt_se)));
+-	rt_rq->rt_nr_running++;
+ #if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
+-	if (rt_se_prio(rt_se) < rt_rq->highest_prio) {
++	int prio = rt_se_prio(rt_se);
++#endif
+ #ifdef CONFIG_SMP
+-		struct rq *rq = rq_of_rt_rq(rt_rq);
++	struct rq *rq = rq_of_rt_rq(rt_rq);
+ #endif
  
- 	if (likely(!rt_overloaded(this_rq)))
- 		return 0;
- 
--	next = pick_next_task_rt(this_rq);
+-		rt_rq->highest_prio = rt_se_prio(rt_se);
++	WARN_ON(!rt_prio(prio));
++	rt_rq->rt_nr_running++;
++#if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
++	if (prio < rt_rq->highest_prio.curr) {
++
++		/*
++		 * If the new task is higher in priority than anything on the
++		 * run-queue, we have a new high that must be published to
++		 * the world.  We also know that the previous high becomes
++		 * our next-highest.
++		 */
++		rt_rq->highest_prio.next = rt_rq->highest_prio.curr;
++		rt_rq->highest_prio.curr = prio;
+ #ifdef CONFIG_SMP
+ 		if (rq->online)
+-			cpupri_set(&rq->rd->cpupri, rq->cpu,
+-				   rt_se_prio(rt_se));
++			cpupri_set(&rq->rd->cpupri, rq->cpu, prio);
+ #endif
+-	}
++	} else if (prio == rt_rq->highest_prio.curr)
++		/*
++		 * If the next task is equal in priority to the highest on
++		 * the run-queue, then we implicitly know that the next highest
++		 * task cannot be any lower than current
++		 */
++		rt_rq->highest_prio.next = prio;
++	else if (prio < rt_rq->highest_prio.next)
++		/*
++		 * Otherwise, we need to recompute next-highest
++		 */
++		rt_rq->highest_prio.next = next_prio(rq);
+ #endif
+ #ifdef CONFIG_SMP
+-	if (rt_se->nr_cpus_allowed > 1) {
+-		struct rq *rq = rq_of_rt_rq(rt_rq);
 -
- 	for_each_cpu_mask_nr(cpu, this_rq->rd->rto_mask) {
- 		if (this_cpu == cpu)
- 			continue;
-@@ -1222,17 +1220,9 @@ static int pull_rt_task(struct rq *this_rq)
- 		/*
- 		 * We can potentially drop this_rq's lock in
- 		 * double_lock_balance, and another CPU could
--		 * steal our next task - hence we must cause
--		 * the caller to recalculate the next task
--		 * in that case:
-+		 * alter this_rq
- 		 */
--		if (double_lock_balance(this_rq, src_rq)) {
--			struct task_struct *old_next = next;
++	if (rt_se->nr_cpus_allowed > 1)
+ 		rq->rt.rt_nr_migratory++;
+-	}
+ 
+-	update_rt_migration(rq_of_rt_rq(rt_rq));
++	update_rt_migration(rq);
+ #endif
+ #ifdef CONFIG_RT_GROUP_SCHED
+ 	if (rt_se_boosted(rt_se))
+@@ -589,8 +622,9 @@ void inc_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+ static inline
+ void dec_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+ {
+-#ifdef CONFIG_SMP
+-	int highest_prio = rt_rq->highest_prio;
++#if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
++	struct rq *rq = rq_of_rt_rq(rt_rq);
++	int highest_prio = rt_rq->highest_prio.curr;
+ #endif
+ 
+ 	WARN_ON(!rt_prio(rt_se_prio(rt_se)));
+@@ -598,33 +632,34 @@ void dec_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+ 	rt_rq->rt_nr_running--;
+ #if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
+ 	if (rt_rq->rt_nr_running) {
+-		struct rt_prio_array *array;
++		int prio = rt_se_prio(rt_se);
++
++		WARN_ON(prio < rt_rq->highest_prio.curr);
+ 
+-		WARN_ON(rt_se_prio(rt_se) < rt_rq->highest_prio);
+-		if (rt_se_prio(rt_se) == rt_rq->highest_prio) {
+-			/* recalculate */
+-			array = &rt_rq->active;
+-			rt_rq->highest_prio =
++		/*
++		 * This may have been our highest or next-highest priority
++		 * task and therefore we may have some recomputation to do
++		 */
++		if (prio == rt_rq->highest_prio.curr) {
++			struct rt_prio_array *array = &rt_rq->active;
++
++			rt_rq->highest_prio.curr =
+ 				sched_find_first_bit(array->bitmap);
+-		} /* otherwise leave rq->highest prio alone */
++		}
++
++		if (prio == rt_rq->highest_prio.next)
++			rt_rq->highest_prio.next = next_prio(rq);
+ 	} else
+-		rt_rq->highest_prio = MAX_RT_PRIO;
++		rt_rq->highest_prio.curr = MAX_RT_PRIO;
+ #endif
+ #ifdef CONFIG_SMP
+-	if (rt_se->nr_cpus_allowed > 1) {
+-		struct rq *rq = rq_of_rt_rq(rt_rq);
++	if (rt_se->nr_cpus_allowed > 1)
+ 		rq->rt.rt_nr_migratory--;
+-	}
+ 
+-	if (rt_rq->highest_prio != highest_prio) {
+-		struct rq *rq = rq_of_rt_rq(rt_rq);
 -
--			next = pick_next_task_rt(this_rq);
--			if (next != old_next)
--				ret = 1;
--		}
-+		double_lock_balance(this_rq, src_rq);
+-		if (rq->online)
+-			cpupri_set(&rq->rd->cpupri, rq->cpu,
+-				   rt_rq->highest_prio);
+-	}
++	if (rq->online && rt_rq->highest_prio.curr != highest_prio)
++		cpupri_set(&rq->rd->cpupri, rq->cpu, rt_rq->highest_prio.curr);
  
- 		/*
- 		 * Are there still pullable RT tasks?
-@@ -1246,7 +1236,7 @@ static int pull_rt_task(struct rq *this_rq)
- 		 * Do we have an RT task that preempts
- 		 * the to-be-scheduled task?
- 		 */
--		if (p && (!next || (p->prio < next->prio))) {
-+		if (p && (p->prio < this_rq->rt.highest_prio.curr)) {
- 			WARN_ON(p == src_rq->curr);
- 			WARN_ON(!p->se.on_rq);
- 
-@@ -1256,12 +1246,9 @@ static int pull_rt_task(struct rq *this_rq)
- 			 * This is just that p is wakeing up and hasn't
- 			 * had a chance to schedule. We only pull
- 			 * p if it is lower in priority than the
--			 * current task on the run queue or
--			 * this_rq next task is lower in prio than
--			 * the current task on that rq.
-+			 * current task on the run queue
- 			 */
--			if (p->prio < src_rq->curr->prio ||
--			    (next && next->prio < src_rq->curr->prio))
-+			if (p->prio < src_rq->curr->prio)
- 				goto skip;
- 
- 			ret = 1;
-@@ -1274,13 +1261,7 @@ static int pull_rt_task(struct rq *this_rq)
- 			 * case there's an even higher prio task
- 			 * in another runqueue. (low likelyhood
- 			 * but possible)
--			 *
--			 * Update next so that we won't pick a task
--			 * on another cpu with a priority lower (or equal)
--			 * than the one we just picked.
- 			 */
--			next = p;
--
+-	update_rt_migration(rq_of_rt_rq(rt_rq));
++	update_rt_migration(rq);
+ #endif /* CONFIG_SMP */
+ #ifdef CONFIG_RT_GROUP_SCHED
+ 	if (rt_se_boosted(rt_se))
+@@ -1069,7 +1104,7 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
  		}
-  skip:
- 		double_unlock_balance(this_rq, src_rq);
+ 
+ 		/* If this rq is still suitable use it. */
+-		if (lowest_rq->rt.highest_prio > task->prio)
++		if (lowest_rq->rt.highest_prio.curr > task->prio)
+ 			break;
+ 
+ 		/* try again */
+@@ -1257,7 +1292,7 @@ static int pull_rt_task(struct rq *this_rq)
+ static void pre_schedule_rt(struct rq *rq, struct task_struct *prev)
+ {
+ 	/* Try to pull RT tasks here if we lower this rq's prio */
+-	if (unlikely(rt_task(prev)) && rq->rt.highest_prio > prev->prio)
++	if (unlikely(rt_task(prev)) && rq->rt.highest_prio.curr > prev->prio)
+ 		pull_rt_task(rq);
+ }
+ 
+@@ -1343,7 +1378,7 @@ static void rq_online_rt(struct rq *rq)
+ 
+ 	__enable_runtime(rq);
+ 
+-	cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio);
++	cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio.curr);
+ }
+ 
+ /* Assumes rq->lock is held */
+@@ -1426,7 +1461,7 @@ static void prio_changed_rt(struct rq *rq, struct task_struct *p,
+ 		 * can release the rq lock and p could migrate.
+ 		 * Only reschedule if p is still on the same runqueue.
+ 		 */
+-		if (p->prio > rq->rt.highest_prio && rq->curr == p)
++		if (p->prio > rq->rt.highest_prio.curr && rq->curr == p)
+ 			resched_task(p);
+ #else
+ 		/* For UP simply resched on drop of prio */
 
