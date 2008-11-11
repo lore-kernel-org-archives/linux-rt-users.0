@@ -1,52 +1,58 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: 2.6.27.5 RT patch status (26rt11)
-Date: Mon, 10 Nov 2008 18:47:40 -0500
-Message-ID: <20081110234740.GB18819@windriver.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Network performance forwarding tests on RT
+Date: Tue, 11 Nov 2008 08:13:19 -0600
+Message-ID: <20081111081319.6fce5337@redhat.com>
+References: <20081105115205.14c5282f@s6510>
+	<20081106185029.0d4c5cd8@redhat.com>
+	<ccb913ac0811062303r7f94f8a8lfe48336d6dafb9f6@mail.gmail.com>
+	<20081107085210.67d4c962@extreme>
+	<ccb913ac0811110537u20a05682x9f60bc69b42d943a@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: "Stephen Hemminger" <shemminger@vyatta.com>,
+	linux-rt-users@vger.kernel.org
+To: "Tobias Knutsson" <tobias.knutsson@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [128.224.252.2] ([128.224.252.2]:27212 "EHLO
-	yow-pgortmak-d1.corp.ad.wrs.com" rhost-flags-FAIL-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750759AbYKJXrm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Nov 2008 18:47:42 -0500
-Content-Disposition: inline
+Received: from mx2.redhat.com ([66.187.237.31]:57137 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755981AbYKKONa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Nov 2008 09:13:30 -0500
+In-Reply-To: <ccb913ac0811110537u20a05682x9f60bc69b42d943a@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I've updated from the 2.6.27-rc8 patch series based on 26rt9 to be
-based on 2.6.27.5 kernel.org and 26rt11 preempt_rt.
-
-I've done a successful boot to X11 on basic old P4 and it survived a
-make -j20 of kernel.org git.  There is still work to be done in order to
-stabilize more complex hardware (e.g. SMP etc) -- but I see this still
-being the baseline for that 2.6.27.x based work.
-
-The trees are where they were before, with the individual patches at:
-
-git://opensource1.windriver.com/people/paulg/rt/patches
-
-and the fully patched 2.6.27.5 git tree can be had from here:
-
-git://opensource1.windriver.com/people/paulg/rt/linux-2.6
-
-Note the patched tree is on the branch v2.6.27.5-26rt11 and that
-master is just kernel.org master.
-
-The patched trees are just the result of applying all the patches with
-guilt, and so for those interested in the details of what changed in the
-patches, looking at the patch repo is probably the most educational, i.e:
-
-	git whatchanged v2.6.27-rc8-26rt9..v2.6.27.5-26rt11
-
-There are gitweb links too:
-
-http://opensource1.windriver.com/gitweb/gitweb.cgi?p=people/paulg/rt/patches
-
-http://opensource1.windriver.com/gitweb/gitweb.cgi?p=people/paulg/rt/linux-2.6
-
-Both the patches repo and the pre-patched trees have some itermediary
-branches as well, (rt9, rt10, 2.6.27.0, etc.)
-
-Paul.
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUdWUs
+IDExIE5vdiAyMDA4IDE0OjM3OjQ2ICswMTAwDQoiVG9iaWFzIEtudXRzc29uIiA8dG9iaWFzLmtu
+dXRzc29uQGdtYWlsLmNvbT4gd3JvdGU6DQoNCj4gT2sgd2VsbCB0aGF0IGFzc3VtcHRpb24gaXMg
+cHJvYmFibHkgbm90IHJpZ2h0LiBJIGFtIHF1aXRlIHN1cmUgdGhhdCBib3RoIHRoZQ0KPiBzb2Z0
+IGFuZCBoYXJkIGlycXMgYXJlIGFzc2lnbmVkIHByaW9yaXR5IDUwLiBCdXQgeW91IHByb2JhYmx5
+IHNob3VsZCByYWlzZQ0KPiB0aGUgcHJpb3JpdHkgb2YgdGhlIGlycXMgcmVsYXRlZCB0byB5b3Vy
+IGltcGxlbWVudGF0aW9uLg0KPiANCj4gSSBhbSB3cml0aW5nIG15IG1hc3RlcidzIHRoZXNpcyBv
+biByZWFsLXRpbWUgTGludXggYW5kIEkgZm91bmQgdGhhdCB0aGUNCj4gd29yc3QtY2FzZSBsYXRl
+bmN5IGRyb3BwZWQgZnJvbSBhYm91dCAyMDAwdXMgdG8gMjUwdXMganVzdCBieSBjaGFuZ2luZyBz
+b21lDQo+IHByaW9yaXRpZXMgb2YgdGhlIHJlbGV2YW50IHRhc2tzLiBUaGlzIHdhcyBvbiBhbiBY
+U2NhbGUgYmFzZWQgc3lzdGVtIHJ1bm5pbmcNCj4gYXQgNTIwTWh6Lg0KPg0KDQpZZWFoLCB0aGV5
+IGRlZmF1bHQgdG8gNTAgYW5kIHRoZW4gbW9zdCBSVCBkaXN0cm9zIGFkanVzdCB0aGVtIGZyb20g
+dGhlcmUuIFdlIGdlbmVyYWxseSBwdXNoIHRoZSBoYXJkIElSUSB0aHJlYWRzIHVwIHRvIDg1IGFu
+ZCBrZWVwIHRoZSBzb2Z0IGlycSB0aHJlYWRzIGRvd24gYXJvdW5kIDc1LCBvbiB0aGUgYXNzdW1w
+dGlvbiB0aGF0IGFjdHVhbCBJUlFzIG5lZWQgdG8gYmUgc2VydmljZWQgaW1tZWRpYXRlbHksIHdp
+dGggdGhlIGhvcGUgdGhhdCB0aGUgc2VydmljZSByb3V0aW5lIHJ1bnMgcXVpY2t5IGFuZCB0aGVu
+IGRlZmVycyBmdXJ0aGVyIHdvcmsgdG8gYSBsb3dlciBwcmlvcml0eSBlbnRpdHkgKHRhc2tsZXQs
+IHNvZnRpcnEsIHdvcmtxdWV1ZSwgZXRjLikuIA0KDQpJZiB3ZSdyZSB0dW5pbmcgYSBzeXN0ZW0g
+Zm9yIGEgcGFydGljdWxhciB3b3JrbG9hZCBhbmQgd2UncmUgb24gYSBtdWx0aS1jb3JlIGJveCwg
+d2UnbGwgcHVzaCBhbGwgaW50ZXJydXB0cyBhbmQgbm9uLXdvcmtsb2FkIHJlbGF0ZWQgdGhyZWFk
+cyBvdmVyIHRvIGNwdTAsIHRoZW4gZGlzdHJpYnV0ZSB0aGUgYXBwbGljYXRpb24gYW5kIGludGVy
+cnVwdCB0aHJlYWRzIGFjcm9zcyB0aGUgcmVtYWluaW5nIGNwdXMuIFNvbWV0aW1lcyBvdmVya2ls
+bCBpbiB0ZXJtcyBvZiBkZWRpY2F0aW5nIGEgMkdIeiBjb3JlIHRvIGhhbmRsaW5nIG5ldHdvcmsg
+aW50ZXJydXB0cywgYnV0IGlmIHlvdSdyZSB0dW5pbmcgZm9yIG1heGltdW0gcGVyZm9ybWFuY2Ug
+Zm9yIHlvdXIgYXBwLCB3aG8gY2FyZXM/DQoNClN0ZXBoZW4sIGl0IG1pZ2h0IGJlIGludGVyZXN0
+aW5nIGZvciB5b3UgdG8gY2hhbmdlIHRoZSBoYXJkIElSUSB0aHJlYWQgZm9yIHlvdXIgTklDKHMp
+IHRvIGJlIHNvbWV0aGluZyBoaWdoZXIgdGhhbiA1MCwgd2l0aCB0aGUgdGhlIHNvZnQgaXJxIHRo
+cmVhZHMgZm9yIG5ldHdvcmtpbmcgKHNvZnRpcnEtbmV0LXt0eCxyeH0pIHRvIGJlIGp1c3QgdW5k
+ZXIgdGhhdCBhbmQgc2VlIHdoYXQgdGhhdCBkb2VzIHRvIHlvdXIgdGVzdC4gTWF5YmUgNTUgZm9y
+IGhhcmQgaXJxcyBhbmQgNTQgZm9yIHNvZnQgaXJxcz8NCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQ
+IFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjkgKEdOVS9MaW51eCkNCg0KaUVZ
+RUFSRUNBQVlGQWtrWmt3VUFDZ2tRSHl1ai8rVFRFcDBybWdDZ3VwOWJicm1QMjNUS2NEMERmaGpS
+NXY3NQ0KcXpvQW4xeEc3NUR1WkF2T0VWb0IxRHlPTFVrNlBXVlgNCj1BVSt5DQotLS0tLUVORCBQ
+R1AgU0lHTkFUVVJFLS0tLS0NCg==
