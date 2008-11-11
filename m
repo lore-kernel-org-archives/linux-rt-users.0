@@ -1,58 +1,106 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Network performance forwarding tests on RT
-Date: Tue, 11 Nov 2008 08:13:19 -0600
-Message-ID: <20081111081319.6fce5337@redhat.com>
-References: <20081105115205.14c5282f@s6510>
-	<20081106185029.0d4c5cd8@redhat.com>
-	<ccb913ac0811062303r7f94f8a8lfe48336d6dafb9f6@mail.gmail.com>
-	<20081107085210.67d4c962@extreme>
-	<ccb913ac0811110537u20a05682x9f60bc69b42d943a@mail.gmail.com>
+From: Juergen Beisert <jbe@pengutronix.de>
+Subject: kernel modules and ftrace
+Date: Tue, 11 Nov 2008 18:56:30 +0100
+Message-ID: <200811111856.31240.jbe@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: "Stephen Hemminger" <shemminger@vyatta.com>,
-	linux-rt-users@vger.kernel.org
-To: "Tobias Knutsson" <tobias.knutsson@gmail.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:57137 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755981AbYKKONa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Nov 2008 09:13:30 -0500
-In-Reply-To: <ccb913ac0811110537u20a05682x9f60bc69b42d943a@mail.gmail.com>
+Received: from metis.extern.pengutronix.de ([83.236.181.26]:54672 "EHLO
+	metis.extern.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752498AbYKKR4i convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Nov 2008 12:56:38 -0500
+Received: from themisto.extern.pengutronix.de ([83.236.181.29] helo=jupiter.intranet.kreuzholzen.de)
+	by metis.extern.pengutronix.de with esmtp (Exim 4.63)
+	(envelope-from <jbe@pengutronix.de>)
+	id 1KzxTc-0003FX-Ia
+	for linux-rt-users@vger.kernel.org; Tue, 11 Nov 2008 18:56:36 +0100
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUdWUs
-IDExIE5vdiAyMDA4IDE0OjM3OjQ2ICswMTAwDQoiVG9iaWFzIEtudXRzc29uIiA8dG9iaWFzLmtu
-dXRzc29uQGdtYWlsLmNvbT4gd3JvdGU6DQoNCj4gT2sgd2VsbCB0aGF0IGFzc3VtcHRpb24gaXMg
-cHJvYmFibHkgbm90IHJpZ2h0LiBJIGFtIHF1aXRlIHN1cmUgdGhhdCBib3RoIHRoZQ0KPiBzb2Z0
-IGFuZCBoYXJkIGlycXMgYXJlIGFzc2lnbmVkIHByaW9yaXR5IDUwLiBCdXQgeW91IHByb2JhYmx5
-IHNob3VsZCByYWlzZQ0KPiB0aGUgcHJpb3JpdHkgb2YgdGhlIGlycXMgcmVsYXRlZCB0byB5b3Vy
-IGltcGxlbWVudGF0aW9uLg0KPiANCj4gSSBhbSB3cml0aW5nIG15IG1hc3RlcidzIHRoZXNpcyBv
-biByZWFsLXRpbWUgTGludXggYW5kIEkgZm91bmQgdGhhdCB0aGUNCj4gd29yc3QtY2FzZSBsYXRl
-bmN5IGRyb3BwZWQgZnJvbSBhYm91dCAyMDAwdXMgdG8gMjUwdXMganVzdCBieSBjaGFuZ2luZyBz
-b21lDQo+IHByaW9yaXRpZXMgb2YgdGhlIHJlbGV2YW50IHRhc2tzLiBUaGlzIHdhcyBvbiBhbiBY
-U2NhbGUgYmFzZWQgc3lzdGVtIHJ1bm5pbmcNCj4gYXQgNTIwTWh6Lg0KPg0KDQpZZWFoLCB0aGV5
-IGRlZmF1bHQgdG8gNTAgYW5kIHRoZW4gbW9zdCBSVCBkaXN0cm9zIGFkanVzdCB0aGVtIGZyb20g
-dGhlcmUuIFdlIGdlbmVyYWxseSBwdXNoIHRoZSBoYXJkIElSUSB0aHJlYWRzIHVwIHRvIDg1IGFu
-ZCBrZWVwIHRoZSBzb2Z0IGlycSB0aHJlYWRzIGRvd24gYXJvdW5kIDc1LCBvbiB0aGUgYXNzdW1w
-dGlvbiB0aGF0IGFjdHVhbCBJUlFzIG5lZWQgdG8gYmUgc2VydmljZWQgaW1tZWRpYXRlbHksIHdp
-dGggdGhlIGhvcGUgdGhhdCB0aGUgc2VydmljZSByb3V0aW5lIHJ1bnMgcXVpY2t5IGFuZCB0aGVu
-IGRlZmVycyBmdXJ0aGVyIHdvcmsgdG8gYSBsb3dlciBwcmlvcml0eSBlbnRpdHkgKHRhc2tsZXQs
-IHNvZnRpcnEsIHdvcmtxdWV1ZSwgZXRjLikuIA0KDQpJZiB3ZSdyZSB0dW5pbmcgYSBzeXN0ZW0g
-Zm9yIGEgcGFydGljdWxhciB3b3JrbG9hZCBhbmQgd2UncmUgb24gYSBtdWx0aS1jb3JlIGJveCwg
-d2UnbGwgcHVzaCBhbGwgaW50ZXJydXB0cyBhbmQgbm9uLXdvcmtsb2FkIHJlbGF0ZWQgdGhyZWFk
-cyBvdmVyIHRvIGNwdTAsIHRoZW4gZGlzdHJpYnV0ZSB0aGUgYXBwbGljYXRpb24gYW5kIGludGVy
-cnVwdCB0aHJlYWRzIGFjcm9zcyB0aGUgcmVtYWluaW5nIGNwdXMuIFNvbWV0aW1lcyBvdmVya2ls
-bCBpbiB0ZXJtcyBvZiBkZWRpY2F0aW5nIGEgMkdIeiBjb3JlIHRvIGhhbmRsaW5nIG5ldHdvcmsg
-aW50ZXJydXB0cywgYnV0IGlmIHlvdSdyZSB0dW5pbmcgZm9yIG1heGltdW0gcGVyZm9ybWFuY2Ug
-Zm9yIHlvdXIgYXBwLCB3aG8gY2FyZXM/DQoNClN0ZXBoZW4sIGl0IG1pZ2h0IGJlIGludGVyZXN0
-aW5nIGZvciB5b3UgdG8gY2hhbmdlIHRoZSBoYXJkIElSUSB0aHJlYWQgZm9yIHlvdXIgTklDKHMp
-IHRvIGJlIHNvbWV0aGluZyBoaWdoZXIgdGhhbiA1MCwgd2l0aCB0aGUgdGhlIHNvZnQgaXJxIHRo
-cmVhZHMgZm9yIG5ldHdvcmtpbmcgKHNvZnRpcnEtbmV0LXt0eCxyeH0pIHRvIGJlIGp1c3QgdW5k
-ZXIgdGhhdCBhbmQgc2VlIHdoYXQgdGhhdCBkb2VzIHRvIHlvdXIgdGVzdC4gTWF5YmUgNTUgZm9y
-IGhhcmQgaXJxcyBhbmQgNTQgZm9yIHNvZnQgaXJxcz8NCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQ
-IFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjkgKEdOVS9MaW51eCkNCg0KaUVZ
-RUFSRUNBQVlGQWtrWmt3VUFDZ2tRSHl1ai8rVFRFcDBybWdDZ3VwOWJicm1QMjNUS2NEMERmaGpS
-NXY3NQ0KcXpvQW4xeEc3NUR1WkF2T0VWb0IxRHlPTFVrNlBXVlgNCj1BVSt5DQotLS0tLUVORCBQ
-R1AgU0lHTkFUVVJFLS0tLS0NCg==
+Hi list,
+
+when I'm compiling in FTRACE support I get the following output, when I=
+ load
+the first of a few modules:
+
+-----------------------------------------------------------------------=
+------
+[...]
+***********************************************************************=
+******
+*                                                                      =
+     *
+*  REMINDER, the following debugging options are turned on in your .con=
+fig: *
+*                                                                      =
+     *
+*        CONFIG_IRQSOFF_TRACER                                         =
+     *
+*        CONFIG_FTRACE                                                 =
+     *
+*                                                                      =
+     *
+*  they may increase runtime overhead and latencies.                   =
+     *
+*                                                                      =
+     *
+***********************************************************************=
+******
+[...]
+=46reeing unused kernel memory: 132k init
+[...]
+of-gpio-wdt watchdog.1: gpio-watchdog driver started using gpio 211.
+------------[ cut here ]------------
+Badness at kernel/trace/ftrace.c:632
+NIP: c00613a4 LR: c0061288 CTR: 00000000
+REGS: c187bea0 TRAP: 0700   Not tainted  (2.6.26.7-rt11-ptx-trunk)
+MSR: 00021032 <ME,IR,DR>  CR: 42002042  XER: 20000000
+TASK =3D c1879ad0[19] 'ftraced' THREAD: c187a000
+GPR00: 00000001 c187bf50 c1879ad0 00000002 c02d0118 c02b05ac c0053a60 1=
+8aaf80f
+GPR08: c02d0000 c02d0000 4800015d c187bf50 0aeac2fc 1006d448 c02d0000 0=
+0000001
+GPR16: 00000003 5b6cf500 c02e0000 c02d0000 c0260000 c0260000 00000001 c=
+00128f0
+GPR24: c02dd914 c02d0000 c02b05ac c18590f8 c02d0118 c185b0f8 c306e324 c=
+187bf50
+NIP [c00613a4] __ftrace_update_code+0x250/0x2d4
+LR [c0061288] __ftrace_update_code+0x134/0x2d4
+Call Trace:
+[c187bf50] [c0061288] __ftrace_update_code+0x134/0x2d4 (unreliable)
+[c187bfa0] [c006081c] ftrace_update_code+0x78/0xa4
+[c187bfb0] [c00618f0] ftraced+0xa8/0x1bc
+[c187bfd0] [c003d840] kthread+0x58/0x98
+[c187bff0] [c0011e14] kernel_thread+0x44/0x60
+Instruction dump:
+7fc4f378 3875c248 4bfc2769 7fc4f378 38748e08 4bff6081 92d3f1bc 4bfffe54
+3d20c02d 80090400 7c000034 5400d97e <0f000000> 2f800000 409e0074 3c60c0=
+26
+ftrace failed to modify [<c306e324>] of_gpio_wdt_probe+0x8/0x294 [of_gp=
+io_wdt]
+ expected: 48:fa:45:cd actual: 48:00:01:5d replace: 60:00:00:00
+-----------------------------------------------------------------------=
+------
+
+What does it mean? Anything wrong with my environment or my modules?
+
+BTW: Kernel is 2.6.26-rt11.
+
+Regards,
+Juergen
+
+--=20
+Dipl.-Ing. Juergen Beisert | http://www.pengutronix.de
+=A0Pengutronix - Linux Solutions for Science and Industry
+=A0   Handelsregister: Amtsgericht Hildesheim, HRA 2686
+=A0 =A0 =A0    Vertretung Sued/Muenchen, Germany
+   Phone: +49-8766-939 228 |  Fax: +49-5121-206917-9
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
