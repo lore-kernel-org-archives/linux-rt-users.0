@@ -1,30 +1,54 @@
 Return-Path: linux-kernel-owner@vger.kernel.org
-Date: Tue, 11 Nov 2008 18:56:49 +0100
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [RFC PATCH 0/3] Series short description
-Message-ID: <20081111175649.GA12339@elte.hu>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [RFC PATCH 3/3] sched: use highest_prio.next to optimize pull
+	operations
+Date: Tue, 11 Nov 2008 09:26:29 -0500
+Message-ID: <20081111142629.28477.84763.stgit@dev.haskins.net>
+In-Reply-To: <20081111142323.28477.41235.stgit@dev.haskins.net>
 References: <20081111142323.28477.41235.stgit@dev.haskins.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20081111142323.28477.41235.stgit@dev.haskins.net>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Sender: linux-kernel-owner@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
-Cc: rostedt@goodmis.org, peterz@infradead.org, linux-kernel@vger.kernel.org, =linux-rt-users@vger.kernel.org
+To: mingo@elte.hu, rostedt@goodmis.org, peterz@infradead.org
+Cc: linux-kernel@vger.kernel.org, =linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We currently take the rq->lock for every cpu in an overload state during
+pull_rt_tasks().  However, we now have enough information via the
+highest_prio.[curr|next] fields to determine if there is any tasks of
+interest to warrant the overhead of the rq->lock, before we actually take
+it.  So we use this information to reduce lock contention during the
+pull for the case where the source-rq doesnt have tasks that preempt
+the current task.
 
-* Gregory Haskins <ghaskins@novell.com> wrote:
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-> Hi Ingo, Steven, Peter,
->   This series applies roughly to mainline as an enhancement to the sched_rt
->   logic.  Peter and I were discussing some of the unecessary overhead in
->   pull_rt_tasks() via IRC, and this is my RFC attempt to address the problem.
-> 
->   I have built/booted this on a 4-way C2D Xeon box and it passes preempt-test.
-> 
->   Comments, please.
+ kernel/sched_rt.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-this direction looks very nifty to me. Peter, do you Ack them?
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index b2305c9..d722aef 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -1217,6 +1217,18 @@ static int pull_rt_task(struct rq *this_rq)
+ 			continue;
+ 
+ 		src_rq = cpu_rq(cpu);
++
++		/*
++		 * Don't bother taking the src_rq->lock if the next highest
++		 * task is known to be lower-priority than our current task.
++		 * This may look racy, but if this value is about to go
++		 * logically higher, the src_rq will push this task away.
++		 * And if its going logically lower, we do not care
++		 */
++		if (src_rq->rt.highest_prio.next >=
++		    this_rq->rt.highest_prio.curr)
++			continue;
++
+ 		/*
+ 		 * We can potentially drop this_rq's lock in
+ 		 * double_lock_balance, and another CPU could
 
-	Ingo
