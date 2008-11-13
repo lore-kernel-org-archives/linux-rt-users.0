@@ -1,33 +1,82 @@
-From: "Denis Borisevich" <dennisfen@gmail.com>
-Subject: Strange device behavior on SMP system with CONFIG_PREEMPT_RT patch
-Date: Thu, 13 Nov 2008 13:20:17 +0300
-Message-ID: <902d99b50811130220v3e6a31a7n826031863afb79ee@mail.gmail.com>
+From: Amir Aharon <amira@waves.com>
+Subject: RE: config_preempt_RT patch platform support question.
+Date: Thu, 13 Nov 2008 08:00:15 -0500
+Message-ID: <A58BC43ACBDDA54393A506C9A68AB8B402F8EB1784@maxx.waves.com>
+References: <A58BC43ACBDDA54393A506C9A68AB8B402F8EB14DD@maxx.waves.com>
+ <491BDA3D.8040904@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: RT-Users <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <Carsten.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa-out-1112.google.com ([209.85.146.178]:27694 "EHLO
-	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751006AbYKMKUS (ORCPT
+Received: from maxx.waves.com ([12.34.136.4]:28072 "EHLO maxx.waves.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753937AbYKMNAO convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Nov 2008 05:20:18 -0500
-Received: by wa-out-1112.google.com with SMTP id v27so406905wah.21
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Nov 2008 02:20:17 -0800 (PST)
-Content-Disposition: inline
+	Thu, 13 Nov 2008 08:00:14 -0500
+In-Reply-To: <491BDA3D.8040904@osadl.org>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everybody,
-I noticed a strange behavior of my PCI->RS422 adapter (MOXA CP-132
-using mxer kernel module) on SMP x86 system with kernel 2.6.26.6-rt11.
-This PCI board has 2 RS422/RS485 ports. When I try to send cyclicaly
-some ammount of data more than 16 bytes (it's internal buffer is 16
-bytes) from the second port to the first the data is lost at random
-iteration. If I try to send from first port to the second everything
-works fine no matter which ammount of data I write to the port. It
-seems that interrupts get lost.
-Can somebody help me with this problem? What can cause such a behavior?
+Here is the kernel dump:
+[] post_schedule_rt
+[] finish_task_switch
+[] __schedule
+[] check_preempt_curr_rt
+[] try_to_wake_up
+[] wake_up_process
+[] e1000_intr_msi
+[] handle_IRQ_event
+[] preempt_schedule
+[] do_irqd
+[] do_irqd
+[] kthread
+[] kthread
+[] kernel_thread_helper
 
-Thanks in advance,
-Denis
+EIP: push_rt_task
+ Node: IRQ-217[1433] exited with preempt_count 2
+
+
+I have got this when I run my app on octa core xeon (Xeon x5482 3.2GHz).
+
+I'll run my app with linux-2.6.24.7-rt21 during the weekend and see where it goes...
+
+Thanks,
+Amir.
+
+
+-----Original Message-----
+From: Carsten Emde [mailto:Carsten.Emde@osadl.org] 
+Sent: Thursday, November 13, 2008 9:42 AM
+To: Amir Aharon
+Cc: RT-Users
+Subject: Re: config_preempt_RT patch platform support question.
+
+Amir,
+
+> I work on a project which delivers low latency audio streaming via a
+> Linux machine. I receive/send audio frames of 4 samples each per
+> network frame (raw Ethernet) so I expect to have a network interrupt
+> each 90 microseconds. I use Linux 2.6.26.3-rt7 on different
+> platforms; unfortunately we encountered problems such as kernel
+> panics, depend on the platform running...
+The PREEMPT_RT patches for kernel 2.6.26 are still under development.
+Please post the various kernel messages you are observing. BTW: The most
+recent 2.6.26 patch is 2.6.26.6-rt11.
+
+> My questions are: How can I have more details on the tests which
+> where used to evaluate the platform running the config_preempt_RT
+> (specifically on networking issues)? Does Intel Q6600 2.4GHz (quad
+> core) has been tested? Are there known issues? Does Xeon x5482 3.2GHz
+> (x2 meaning octa core) has been tested? Are there known issues?
+For the time being, linux-2.6.24.7-rt21 is believed to be stable and
+ready for production. This version has been tested heavily under x86
+(slow/fast machines, single/dual/quad core, 32/64 bit) and under various
+PPC platforms. It has been tested less heavily on ARMs and MIPSes. There
+are no known issues on x86 platforms. Would you mind to run
+2.6.24.7-rt21 on your machines?
+
+	Carsten.
