@@ -1,24 +1,40 @@
 From: Amir Aharon <amira@waves.com>
 Subject: RE: config_preempt_RT patch platform support question.
-Date: Thu, 13 Nov 2008 08:00:15 -0500
-Message-ID: <A58BC43ACBDDA54393A506C9A68AB8B402F8EB1784@maxx.waves.com>
+Date: Sun, 16 Nov 2008 08:43:16 -0500
+Message-ID: <A58BC43ACBDDA54393A506C9A68AB8B402FB3AF3A5@maxx.waves.com>
 References: <A58BC43ACBDDA54393A506C9A68AB8B402F8EB14DD@maxx.waves.com>
  <491BDA3D.8040904@osadl.org>
+ <A58BC43ACBDDA54393A506C9A68AB8B402F8EB1784@maxx.waves.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
 Cc: RT-Users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <Carsten.Emde@osadl.org>
+To: Amir Aharon <amira@waves.com>,
+	Carsten Emde <Carsten.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from maxx.waves.com ([12.34.136.4]:28072 "EHLO maxx.waves.com"
+Received: from maxx.waves.com ([12.34.136.4]:56200 "EHLO maxx.waves.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753937AbYKMNAO convert rfc822-to-8bit (ORCPT
+	id S1751589AbYKPNnO convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Nov 2008 08:00:14 -0500
-In-Reply-To: <491BDA3D.8040904@osadl.org>
+	Sun, 16 Nov 2008 08:43:14 -0500
+In-Reply-To: <A58BC43ACBDDA54393A506C9A68AB8B402F8EB1784@maxx.waves.com>
 Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+Hi Carsten,
+
+Good new - 2.6.24.7-rt21 works perfectly on my Xeon x5482 3.2GHz, could not reproduce any of the kernel panic I had.
+
+Thanks for the tip.
+ 
+
+-----Original Message-----
+From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Amir Aharon
+Sent: Thursday, November 13, 2008 3:00 PM
+To: Carsten Emde
+Cc: RT-Users
+Subject: RE: config_preempt_RT patch platform support question.
 
 Here is the kernel dump:
 [] post_schedule_rt
@@ -80,3 +96,7 @@ are no known issues on x86 platforms. Would you mind to run
 2.6.24.7-rt21 on your machines?
 
 	Carsten.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
