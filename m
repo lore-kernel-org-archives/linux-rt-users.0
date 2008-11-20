@@ -1,105 +1,45 @@
 From: Arnaldo Carvalho de Melo <acme@redhat.com>
 Subject: Re: 2.6.27.5 RT patch status (26rt11)
-Date: Thu, 20 Nov 2008 12:19:26 -0200
-Message-ID: <20081120141926.GK30491@ghostprotocols.net>
-References: <20081110234740.GB18819@windriver.com> <20081120132544.GG30491@ghostprotocols.net> <20081120132910.GH30491@ghostprotocols.net> <63a49ef40811200543m75bb49deu4dc1c861b226c481@mail.gmail.com>
+Date: Thu, 20 Nov 2008 12:44:51 -0200
+Message-ID: <20081120144450.GL30491@ghostprotocols.net>
+References: <20081110234740.GB18819@windriver.com> <20081120132544.GG30491@ghostprotocols.net> <20081120132910.GH30491@ghostprotocols.net> <63a49ef40811200543m75bb49deu4dc1c861b226c481@mail.gmail.com> <20081120141926.GK30491@ghostprotocols.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users@vger.kernel.org
-To: Alessio Igor Bogani <abogani@texware.it>
+Cc: linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:60424 "EHLO mx2.redhat.com"
+Received: from mx2.redhat.com ([66.187.237.31]:41173 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754822AbYKTOTe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Nov 2008 09:19:34 -0500
+	id S1756538AbYKTOo5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 20 Nov 2008 09:44:57 -0500
 Content-Disposition: inline
-In-Reply-To: <63a49ef40811200543m75bb49deu4dc1c861b226c481@mail.gmail.com>
+In-Reply-To: <20081120141926.GK30491@ghostprotocols.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Em Thu, Nov 20, 2008 at 02:43:09PM +0100, Alessio Igor Bogani escreveu:
-> Dear Sir Carvalho de Melo,
->=20
-> 2008/11/20 Arnaldo Carvalho de Melo <acme@redhat.com>:
-> [...]
-> >> I hit one, DELL PE1900, dual dual core xeon, megasas disk controle=
-r,
-> [...]
-> >> BUG: unable to handle kernel NULL pointer dereference at 000000000=
-0000008
-> [...]
->=20
-> Could you try this patch, please?
->=20
-> Thanks!
->=20
-> Ciao,
-> Alessio
->=20
-> Index: linux-source-2.6.27/kernel/fork.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-source-2.6.27.orig/kernel/fork.c  2008-11-11 10:50:21.00000=
-0000 +0100
-> +++ linux-source-2.6.27/kernel/fork.c   2008-11-11 10:50:40.000000000=
- +0100
-> @@ -229,7 +229,7 @@
->     init_task.signal->rlim[RLIMIT_SIGPENDING] =3D
->         init_task.signal->rlim[RLIMIT_NPROC];
->=20
-> -   for (i =3D 0; i < NR_CPUS; i++)
-> +   for (i =3D 0; i < nr_cpu_ids; i++)
->         INIT_LIST_HEAD(&per_cpu(delayed_drop_list, i));
->  }
+Another one, this time with more context:
 
-Wouldn't it be better to use for_each_possible_cpu()? But yes, it fixes
-this problem, we go further then die with:
+(gdb) l *0xffffffff8105d5d9
+0xffffffff8105d5d9 is in wakeup_next_waiter
+(/home/acme/git/paulg-rt-linux-2.6/kernel/rtmutex_common.h:77).
+72	{
+73		struct rt_mutex_waiter *w;
+74=09
+75		w =3D plist_first_entry(&lock->wait_list, struct rt_mutex_waiter,
+76				       list_entry);
+77		BUG_ON(w->lock !=3D lock); <--------------------------
+78=09
+79		return w;
+80	}
+81=09
+(gdb)
 
-                                                    F2 =3D Setup
-Phoenix ROM BIOS PLUS Version 1.10 1.2.0            F10 =3D Utility Mod=
-e
-Copyright 1985-1988 Phoenix Technologies Ltd.       F11 =3D Boot Menu
-Copyright 1990-2006 Dell Inc.                       F12 =3D PXE Boot
-All Rights Reserved
-
-Dell System PowerEdge 1900
-www.dell.com
-
-
-Two 2.00 GHz Dual-core Processors, Bus Speed: 1333 MHz, L2 Cache: 4 MB
-
-System Memory Size: 4.0 GB, System Memory Speed: 533 MHz
-
-
-PowerEdge Expandable RAID Controller BIOS
-Copyright(c) 2006 LSI Logic Corporation
-Press <Ctrl><R> to Run Configuration Utility
-
-HA -0 (Bus 2 Dev 14) PERC 5/i Integrated
-=46W package: 5.1.1-0040
-  Booting 'Red Hat Enterprise Linux (realtime) (2.6.27.5-26rt11)'
-1 Logical Drive(s) found on the host adapter.
-rootg(hd0,0)ive(s) handled by BIOS
- Filesystem type is ext2fs, part  ion type 0x83
-kernel /vmlinuz-2.6.27.5-26rt11 ro root=3DLABEL=3D/ rhgb console=3DttyS=
-1,57600
-consol
-e=3Dtty0 idle=3Dpollnfiguration Utility 1.03
-   [Linux-bzImage, setup=3D0x3000, size=3D0x2vdb30]
-initrd /initrd-2.6.27.5-26rt11.img
-Bas[Linux-initrdm@n0x37d9a000,r0x2550f3nbytes]
-                          =20
-                      =20
-Initializing cgroup subsys cpuset
-Linux version 2.6.27.5-26rt11 (acme@mica.ghostprotocols.net) (gcc
-version 4.1.2 2007118
+Linux version 2.6.27.5-26rt11 (acme@mica.ghostprotocols.net) (gcc versi=
+on 4.1.2 20071124 (Red Hat 4.1.2-42)) #8
 Command line: ro root=3DLABEL=3D/ rhgb console=3DttyS1,57600 console=3D=
-tty0
-idle=3Dpoll
-KERNEL supported cpus:ote Access Setup within 5 sec......
+tty0 idle=3Dpoll
+KERNEL supported cpus:al.  Use ~? for help]
   Intel GenuineIntel
   AMD AuthenticAMD
   Centaur CentaurHauls
@@ -178,72 +118,24 @@ ACPI: LAPIC_NMI (acpi_id[0x05] high edge lint[0x1])
 ACPI: LAPIC_NMI (acpi_id[0x06] high edge lint[0x1])
 ACPI: LAPIC_NMI (acpi_id[0x07] high edge lint[0x1])
 ACPI: LAPIC_NMI (acpi_id[0x08] high edge lint[0x1])
-ACPI: IOAPIC (id[0x08] address[0xfec00000]
-gsi_bas=EF=BF=BD5%=EF=BF=BDe%B=CD=89=EF=BF=BD=EF=BF=BD}=EF=BF=BD=EF=BF=BD=
-=C5=9D=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD}=EF=BF=BD=EF=BF=BD=C5=
-=91=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BDACPI:)
+ACPI: IOAPIC (id[0x08] address[0xfec00000] gsi_base[0])
+IOAPIC[0]: apic_id 8, version 0, address 0xfec00000, GSI 0-23
+ACPI: IOAPIC (id[0x09] address[0xfec80000] gsi_base[32])
+IOAPIC[1]: apic_id 9, version 0, address 0xfec80000, GSI 32-55
+ACPI: IOAPIC (id[0x0a] address[0xfec83000] gsi_base[128])
+IOAPIC[2]: apic_id 10, version 0, address 0xfec83000, GSI 128-151
+ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
 Setting APIC routing to flat
-ACPI: HPET id: 0x8086a201 base: 0xfed00000
-Using ACPI (MADT) for SMP configuration information
-SMP: Allowing 8 CPUs, 4 hotplug CPUs
-PM: Registered nosave memory: 00000000000a0000 - 0000000000100000
-PM: Registered nosave memory: 00000000cffa8000 - 00000000cffb7000
-PM: Registered nosave memory: 00000000cffb7000 - 00000000cffb8000
-PM: Registered nosave memory: 00000000cffb8000 - 00000000d0000000
-PM: Registered nosave memory: 00000000d0000000 - 00000000e0000000
-PM: Registered nosave memory: 00000000e0000000 - 00000000f0000000
-PM: Registered nosave memory: 00000000f0000000 - 00000000fe000000
-PM: Registered nosave memory: 00000000fe000000 - 0000000100000000
-Allocating PCI resources starting at d1000000 (gap: d0000000:10000000)
-PERCPU: Allocating 57988 bytes of per cpu data
-Real-Time Preemption Support (C) 2004-2007 Ingo Molnar
-Built 1 zonelists in Node order, mobility grouping on.  Total pages:
-1015049
-Policy zone: Normal
-Kernel command line: ro root=3DLABEL=3D/ rhgb console=3DttyS1,57600
-console=3Dtty0 idle=3Dpoll
-Initializing CPU#0
-Preemptible RCU implementation.
-PID hash table entries: 4096 (order: 12, 32768 bytes)
-Extended CMOS year: 2000
-TSC: PIT calibration confirmed by PMTIMER.
-TSC: using PIT calibration value
-Detected 1994.983 MHz processor.
-Console: colour VGA+ 80x25
-console [tty0] enabled
-console [ttyS1] enabled
-Checking aperture...
-No AGP bridge found
-PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
-Placing software IO TLB between 0x20000000 - 0x24000000
-Memory: 4009156k/4980736k available (2784k kernel code, 184412k
-reserved, 1650k data, )
-Calibrating delay loop (skipped), value calculated using timer
-frequency.. 3989.96 Bog)
-Security Framework initialized
-SELinux:  Initializing.
-Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes)
-Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes)
-Mount-cache hash table entries: 256
-Initializing cgroup subsys ns
-Initializing cgroup subsys cpuacct
-Initializing cgroup subsys memory
-Initializing cgroup subsys devices
-CPU: L1 I cache: 32K, L1 D cache: 32K
-CPU: L2 cache: 4096K
-CPU 0/0 -> Node 0
-CPU: Physical Processor ID: 0
-CPU: Processor Core ID: 0
-CPU0: Thermal monitoring enabled (TM1)
-ACPI: Core revision 20080609
+ACPI: HJ=EF=BF=BDACPI: Core revision 20080609
 =2E.TIMER: vector=3D0x30 apic1=3D0 pin1=3D2 apic2=3D-1 pin2=3D-1
 CPU0: Intel(R) Xeon(R) CPU            5130  @ 2.00GHz stepping 06
 Using local APIC timer interrupts.
 Detected 20.781 MHz APIC timer.
 Booting processor 1/6 ip 6000
 Initializing CPU#1
-Calibrating delay using timer specific routine.. 3990.04 BogoMIPS
-(lpj=3D1995024)
+Calibrating delay using timer specific routine.. 3990.04 BogoMIPS (lpj=3D=
+1995024)
 CPU: L1 I cache: 32K, L1 D cache: 32K
 CPU: L2 cache: 4096K
 CPU 1/6 -> Node 0
@@ -251,37 +143,68 @@ CPU: Physical Processor ID: 3
 CPU: Processor Core ID: 0
 CPU1: Thermal monitoring enabled (TM2)
 x86 PAT enabled: cpu 1, old 0x7040600070406, new 0x7010600070106
-CPU1: Intel(R) X=EF=BF=BDbus: 0d index 1 mmio: [0, 0]
-bus: 0d index 2 mmio: [0, 0]
-bus: 0d index 3 mmio: [0, 0]
-bus: 0e index 0 mmio: [0, 0]
-bus: 0e index 1 mmio: [0, 0]
-bus: 0e index 2 mmio: [0, 0]
-bus: 0e index 3 mmio: [0, 0]
-bus: 04 index 0 mmio: [0, 0]
-bus: 04 index 1 mmio: [f8000000, fbffffff]
-bus: 04 index 2 mmio: [0, 0]
-bus: 04 index 3 mmio: [0, 0]
-bus: 05 index 0 mmio: [0, 0]
-bus: 05 index 1 mmio: [f8000000, fbffffff]
-bus: 05 index 2 mmio: [0, 0]
-bus: 05 index 3 mmio: [0, 0]
-bus: 0f index 0 io port: [e000, efff]
-bus: 0f index 1 mmio: [fc100000, fc2fffff]
-bus: 0f index 2 mmio: [d0000000, d7ffffff]
-bus: 0f index 3 io port: [0, ffff]
-bus: 0f index 4 mmio: [0, ffffffffffffffff]
-NET: Registered protocol family 2
-IP route cache hash table entries: 131072 (order: 8, 1048576 bytes)
-TCP established hash table entries: 524288 (order: 11, 8388608 bytes)
-TCP bind hash table entries: 65536 (order: 10, 4194304 bytes)
-TCP: Hash tables configured (established 524288 bind 65536)
-TCP reno registered
-NET: Registered protocol family 1
-checking if image is initramfs... it is
+CPU1: Intel(R) Xeon(R) CPU            5130  @ 2.00GHz stepping 06
+checking TSC synchronization [CPU#0 -> CPU#1]: passed.
+Booting processor 2/1 ip 6000
+Initializing CPU#2
+Calibrating delay using timer specific routine.. 3990.05 BogoMIPS (lpj=3D=
+1995027)
+CPU: L1 I cache: 32K, L1 D cache: 32K
+CPU: L2 cache: 4096K
+CPU 2/1 -> Node 0
+CPU: Physical Processor ID: 0
+CPU: Processor Core ID: 1
+CPU2: Thermal monitoring enabled (TM2)
+x86 PAT enabled: cpu 2, old 0x7040600070406, new 0x7010600070106
+CPU2: Intel(R) Xeon(R) CPU            5130  @ 2.00GHz stepping 06
+checking TSC synchronization [CPU#0 -> CPU#2]: passed.
+Booting processor 3/7 ip 6000
+Initializing CPU#3
+Calibrating delay using timer specific routine.. 3990.05 BogoMIPS (lpj=3D=
+1995027)
+CPU: L1 I cache: 32K, L1 D cache: 32K
+CPU: L2 cache: 4096K
+CPU 3/7 -> Node 0
+CPU: Physical Processor ID: 3
+CPU: Processor Core ID: 1
+CPU3: Thermal monitoring enabled (TM2)
+x86 PAT enabled: cpu 3, old 0x7040600070406, new 0x7010600070106
+CPU3: Intel(R) Xeon(R) CPU            5130  @ 2.00GHz stepping 06
+checking TSC synchronization [CPU#0 -> CPU#3]: passed.
+Brought up 4 CPUs
+Total of 4 processors activated (15960.10 BogoMIPS).
+net_namespace: 1712 bytes
+Booting paravirtualized kernel on bare hardware
+NET: Registered protocol family 16
+ACPI: bus type pci registered
+PCI: MCFG configuration 0: base e0000000 segment 0 buses 0 - 255
+PCI: MCFG area at e0000000 reserved in E820
+PCI: Using MMCONFIG at e0000000 - efffffff
+PCI: Using configuration type 1 for base access
+ACPI: Interpreter enabled
+ACPI: (supports S0 S4 S5)
+ACPI: Using IOAPIC for interrupt routing
+ACPI: PCI Root Bridge [PCI0] (0000:00)
+pci 0000:00:00.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:00.0: PME# disabled
+pci 0000:00:02.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:02.0: PME# disabled
+pci 0000:00:03.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:03.0: PME# disabled
+pci 0000:00:04.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:04.0: PME# disabled
+pci 0000:00:05.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:05.0: PME# disabled
+pci 0000:00:06.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:06.0: PME# disabled
+pci 0000:00:07.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:07.0: PME# disabled
+pci 0000:00:1c.0: PME# supported from D0 D3hot D3cold
+pci 0000:00:1c.0: PME# disabled
+pci 0000:00:1d.7: PME it is
 =46reeing initrd memory: 2388k freed
 audit: initializing netlink socket (disabled)
-type=3D2000 audit(1227190309.758:1): initialized
+type=3D2000 audit(1227191249.754:1): initialized
 krcupreemptd setsched 0
   prio =3D 98
 HugeTLB registered 2 MB page size, pre-allocated 0 pages
@@ -320,44 +243,184 @@ usbcore: registered new interface driver libusual
 PNP: No PS/2 controller found. Probing ports directly.
 serio: i8042 KBD port at 0x60,0x64 irq 1
 serio: i8042 AUX port at 0x60,0x64 irq 12
-mice: PS/2 mouse device cSCSI subsystem initialized
-Driver 'sd' needs updating - please use bus_type methods
-megasas: 00.00.04.01 Thu July 24 11:41:51 PST 2008
-megasas: 0x1028:0x0015:0x1028:0x1f03: bus 2:slot 14:func 0
-megaraid_sas 0000:02:0e.0: PCI INT A -> GSI 142 (level, low) -> IRQ 142
-megasas: FW now in Ready state
-scsi0 : LSI SAS based MegaRAID driver
-scsi 0:0:0:0: Direct-Access     MAXTOR   ATLAS10K5_073SAS BP00 PQ: 0 AN=
-SI: 5
-scsi 0:0:3:0: Direct-Access     MAXTOR   ATLAS10K5_073SAS BP00 PQ: 0 AN=
-SI: 5
-scsi 0:2:0:0: Direct-Access     DELL     PERC 5/i         1.03 PQ: 0 AN=
-SI: 5
-sd 0:2:0:0: [sda] 284164096 512-byte hardware sectors (145492 MB)
-sd 0:2:0:0: [sda] Write Protect is off
-sd 0:2:0:0: [sda] Write cache: disabled, read cache: enabled, supports =
-DPO and FUA
-sd 0:2:0:0: [sda] 284164096 512-byte hardware sectors (145492 MB)
-sd 0:2:0:0: [sda] Write Protect is off
-sd 0:2:0:0: [sda] Write cache: disabled, read cache: enabled, supports =
-DPO and FUA
- sda: sda1 sda2 sda3 sda4 < sda5 >
-sd 0:2:0:0: [sda] Attached SCSI disk
-kjournald starting.  Commit interval 5 seconds
+mice: PS/2 mouse device common for all mice
+rtc_cmos 00:04: rtc core: registered rtc_cmos as rtc0
+rtc0: alarms up to one day, y3k, hpet irqs
+cpuidle: using governor ladder
+cpuidle: using governor menu
+usbcore: registered new interface driver hiddev
+usbcore: registered new interface driver usbhid
+usbhid: v2.6:USB HID core driver
+TCP cubic registered
+Initializing XFRM netlink socket
+NET: Registered protocol family 17
+registered taskstats version 1
+=46reeing unused kernel memory: 496k freed
+Write protecting the kernel read-only data: 4084k
+ehci_hcd 0000:00:1d.7: PCI INT A -> GSI 21 (level, low) -> IRQ 21
+ehci_hcd 0000:00:1d.7: EHCI Host Controller
+ehci_hcd 0000:00:1d.7: new USB bus registered, assigned bus number 1
+ehci_hcd 0000:00:1d.7: debug port 1
+ehci_hcd 0000:00:1d.7: irq 21, io mem 0xfc800000
+ehci_hcd 0000:00:1d.7: USB 2.0 started, EHCI 1.00, driver 10 Dec 2004
+usb usb1: configuration #1 chosen from 1 choice
+hub 1-0:1.0: USB hub found
+hub 1-0:1.0: 8 ports detected
+USB Universal Host Controller Interface driver v3.0
+uhci_hcd 0000:00:1d.0: PCI INT A -> GSI 21 (kjournald starting.  Commit=
+ interval 5 seconds
 EXT3-fs: mounted filesystem with ordered data mode.
 SELinux:  Disabled at runtime.
-type=3D1404 audit(1227190315.328:2): selinux=3D0 auid=3D4294967295
-ses=3D4294967295
-Bad page state in process 'modprobe'
-page:ffffe20007966a88 flags:0x0200000000000008 mapping:0000000000000000
-mapcount:0 cou1
-Bad page sta
+type=3D1404 audit(1227191255.307:2): selinux=3D0 auid=3D4294967295 ses=3D=
+4294967295
+BUG: unable to handle kernel NULL pointer dereference at 00000000000000=
+40
+IP: [<ffffffff8105d5d9>] wakeup_next_waiter+0x35/0x173
+PGD 0=20
+Oops: 0000 [1] PREEMPT SMP=20
+CPU 3=20
+Modules linked in: megaraid_sas sd_mod scsi_mod ext3 jbd mbcache uhci_h=
+cd ohci_hcd ehci_hcd
+Pid: 733, comm: udevd Not tainted 2.6.27.5-26rt11 #2
+RIP: 0010:[<ffffffff8105d5d9>]  [<ffffffff8105d5d9>] wakeup_next_waiter=
++0x35/0x173
+RSP: 0018:ffff88012d65db18  EFLAGS: 00010097
+RAX: 0000000000006464 RBX: ffff880028070920 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: 0000000000000001 RDI: ffff88012d65ac48
+RBP: ffff88012d65db48 R08: ffff88012fb6926c R09: ffff88012d65dac8
+R10: ffff88012c519be8 R11: 0000000000000002 R12: ffff880028070920
+R13: ffffffffffffffe8 R14: 0000000000000001 R15: ffff88012d60ec38
+=46S:  00007f0ad6817710(0000) GS:ffff88012fb691c0(0000) knlGS:000000000=
+0000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 0000000000000040 CR3: 000000012dced000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process udevd (pid: 733, threadinfo ffff88012d65c000, task ffff88012d65=
+a5c0)
+Stack:  0000000000000000 ffff880028070920 0000000000000203 000000000000=
+0001
+ ffff88012e1c2980 ffff88012d60ec38 ffff88012d65db68 ffffffff812af932
+ ffff880028070960 0000000000000008 ffff88012d65db78 ffffffff812b0ba4
+Call Trace:
+ [<ffffffff812af932>] rt_spin_lock_slowunlock+0x3e/0x5c
+ [<ffffffff812b0ba4>] __lock_text_start+0x44/0x46
+ [<ffffffff8109b86a>] exit_mmap+0x12e/0x15d
+ [<ffffffff81039823>] mmput+0x2d/0xa8
+ [<ffffffff810bc7dc>] flush_old_exec+0x465/0x793
+ [<ffffffff810ebd9f>] load_elf_binary+0x382/0x1759
+ [<ffffffff8105dfc1>] ? rt_mutex_adjust_prio+0x35/0x3e
+ [<ffffffff812afe00>] ? rt_read_slowunlock+0x3f9/0x431
+ [<ffffffff810eba1d>] ? load_elf_binary+0x0/0x1759
+ [<ffffffff8105ec9d>] ? rt_rwlock_read_unlock+0x28d/0x296
+ [<ffffffff810eba1d>] ? load_elf_binary+0x0/0x1759
+ [<ffffffff810bb7dd>] search_binary_handler+0x105/0x2c4
+ [<ffffffff810eb0ac>] ? load_script+0x0/0x1c4
+ [<ffffffff810eb25a>] load_script+0x1ae/0x1c4
+ [<ffffffff812afe00>] ? rt_read_slowunlock+0x3f9/0x431
+ [<ffffffff810eb0ac>] ? load_script+0x0/0x1c4
+ [<ffffffff8105ec9d>] ? rt_rwlock_read_unlock+0x28d/0x296
+ [<ffffffff810bb7dd>] search_binary_handler+0x105/0x2c4
+ [<ffffffff810bcc88>] do_execve+0x17e/0x227
+ [<ffffffff8100a556>] sys_execve+0x3e/0x59
+ [<ffffffff8100c73a>] stub_execve+0x6a/0xc0
 
 
----------------------
-Truncated output over serial+ipmi, investigating...
+Code: f6 41 55 41 54 49 89 fc 53 48 83 ec 08 65 48 8b 3c 25 00 00 00 00=
+ 48 81 c7 88 06 00 00 e8 b0 38 25 00 4d=20
+RIP  [<ffffffff8105d5d9>] wakeup_next_waiter+0x35/0x173
+ RSP <ffff88012d65db18>
+CR2: 0000000000000040
+---[ end trace ccd0141168105e57 ]---
+------------[ cut here ]------------
+kernel BUG at /home/acme/git/paulg-rt-linux-2.6/kernel/rtmutex.c:831!
+invalid opcode: 0000 [2] PREEMPT SMP=20
+CPU 0=20
+Modules linked in: megaraid_sas sd_mod scsi_mod ext3 jbd mbcache uhci_h=
+cd ohci_hcd ehci_hcd
+Pid: 919, comm: udev_run_devd Tainted: G      D   2.6.27.5-26rt11 #2
+RIP: 0010:[<ffffffff812b062e>]  [<ffffffff812b062e>] rt_spin_lock_slowl=
+ock+0x69/0x235
+RSP: 0018:ffff88012ad7fc08  EFLAGS: 00010046
+RAX: ffff88012ad7c540 RBX: ffff880028061920 RCX: 0000000000000000
+RDX: ffff88012ad7c540 RSI: 0000000000000292 RDI: ffff880028061920
+RBP: ffff88012ad7fcb8 R08: ffff88012fc02cec R09: 000000000002b28a
+R10: 0000000000000000 R11: 0000000000000002 R12: ffff880028061920
+R13: ffffffff81578960 R14: ffff88012acf0c38 R15: 00007fffffffe000
+=46S:  00007f0ad6817710(0000) GS:ffffffff814eb100(0000) knlGS:000000000=
+0000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 00007f0ad61b0190 CR3: 000000012accc000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BDCall Trace:
+ [<ffffffff8109e747>] ? move_page_tables+0x39f/0x53a
+ [<ffffffff812b0c04>] __rt_spin_lock+0x5e/0x62
+ [<ffffffff812b0c11>] rt_spin_lock+0x9/0xb
+ [<ffffffff810bc0c7>] setup_arg_pages+0x1d5/0x301
+ [<ffffffff810ebf0a>] load_elf_binary+0x4ed/0x1759
+ [<ffffffff8105ebea>] ? rt_rwlock_read_unlock+0x1da/0x296
+ [<ffffffff810eba1d>] ? load_elf_binary+0x0/0x1759
+ [<ffffffff810bb7dd>] search_binary_handler+0x105/0x2c4
+ [<ffffffff810bcc88>] do_execve+0x17e/0x227
+ [<ffffffff8100a556>] sys_execve+0x3e/0x59
+ [<ffffffff8100c73a>] stub_execve+0x6a/0xc0
 
-- Arnaldo
+
+Code: 08 49 89 44 24 08 49 8d 44 24 18 49 89 44 24 18 48 89 40 08 49 8b=
+ 44 24 28 65 48 8b 14 25 00 00 00 00 48=20
+RIP  [<ffffffff812b062e>] rt_spin_lock_slowlock+0x69/0x235
+ RSP <ffff88012ad7fc08>
+---[ end trace ccd0141168105e57 ]---
+note: udev_run_devd[919] exited with preempt_count 1
+BUG: scheduling with irqs disabled: udev_run_devd/0x00000001/919
+caller is rt_read_slowlock+0x2e9/0x32c
+Pid: 919, comm: udev_run_devd Tainted: G      D   2.6.27.5-26rt11 #2
+
+Call Trace:
+ [<ffffffff812aec76>] schedule+0x73/0xf0
+ [<ffffffff8105f521>] rt_read_slowlock+0x2e9/0x32c
+ [<ffffffff8105f22f>] rt_mutex_down_read+0x178/0x181
+ [<ffffffff8105f8f8>] __rt_down_read+0x9/0xb
+ [<ffffffff8105f910>] rt_down_read+0xb/0xd
+ [<ffffffff810698a8>] acct_collect+0x4c/0x19d
+ [<ffffffff8103f3e6>] do_exit+0x1d1/0x88e
+ [<ffffffff811b2ec0>] ? do_unblank_screen+0xf/0x10b
+ [<ffffffff812b1a8d>] oops_begin+0x0/0x7c
+ [<ffffffff8100e2f3>] die+0x5d/0x66
+ [<ffffffff812b1f75>] do_trap+0x110/0x11f
+ [<ffffffff8100e88f>] do_invalid_op+0xa0/0xa9
+ [<ffffffff812b062e>] ? rt_spin_lock_slowlock+0x69/0x235
+ [<ffffffff8108caf0>] ? __alloc_pages_internal+0xcb/0x3ab
+ [<ffffffff812b156a>] error_exit+0x0/0x70
+ [<ffffffff812b062e>] ? rt_spin_lock_slowlock+0x69/0x235
+ [<ffffffff812b05f0>] ? rt_spin_lock_slowlock+0x2b/0x235
+ [<ffffffff8109e747>] ? move_page_tables+0x39f/0x53a
+ [<ffffffff812b0c04>] __rt_spin_lock+0x5e/0x62
+ [<ffffffff812b0c11>] rt_spin_lock+0x9/0xb
+ [<ffffffff810bc0c7>] setup_arg_pages+0x1d5/0x301
+ [<ffffffff810ebf0a>] load_elf_binary+0x4ed/0x1759
+ [<ffffffff8105ebea>] ? rt_rwlock_read_unlock+0x1da/0x296
+ [<ffffffff810eba1d>] ? load_elf_binary+0x0/0x1759
+ [<ffffffff810bb7dd>] search_binary_handler+0x105/0x2c4
+ [<ffffffff810bcc88>] do_execve+0x17e/0x227
+ [<ffffffff8100a556>] sys_execve+0x3e/0x59
+ [<ffffffff8100c73a>] stub_execve+0x6a/0xc0
+
+BUG: scheduling while atomic: udev_run_devd/0x00000002/919, CPU#0
+Modules linked in: megaraid_sas sd_mod scsi_mod ext3 jbd mbcache uhci_h=
+cd ohci_hcd ehci_hcd
+Pid: 919, comm: udev_run_devd Tainted: G      D   2.6.27.5-26rt11 #2
+
+Call Trace:
+ [<ffffffff810342f1>] __schedule_bug+0x71/0x76
+ [<ffffffff812ae3e4>] __schedule+0xdf/0x76e
+ [<ffffffff8100df96>] ? show_trace_log_lvl+0x61/0x6d
+ [<ffffffff8100e391>] ? show_trace+0x10/0x12
+ [<ffffffff8100e66b>] ?=20
+
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
