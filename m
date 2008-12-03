@@ -1,38 +1,46 @@
-From: Gregory Haskins <gregory.haskins.ml@gmail.com>
-Subject: Re: [RFC PATCH 0/3] sched: track next-highest priority (was "Series
- short discription")
-Date: Wed, 03 Dec 2008 15:39:13 -0500
-Message-ID: <4936EE71.5010200@gmail.com>
-References: <20081111142323.28477.41235.stgit@dev.haskins.net> <4936E587.40700@gmail.com> <4936EC83.2060900@oracle.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH v2 0/4] sched: track next-highest priority
+Date: Wed, 03 Dec 2008 17:09:29 -0500
+Message-ID: <20081203220628.11729.42174.stgit@dev.haskins.net>
+References: <20081203204025.GA31376@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>, mingo@elte.hu,
-	rostedt@goodmis.org, peterz@infradead.org,
+Cc: peterz@infradead.org, rostedt@goodmis.org, ghaskins@novell.com,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Randy Dunlap <randy.dunlap@oracle.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:34035 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754878AbYLCUfl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Dec 2008 15:35:41 -0500
-In-Reply-To: <4936EC83.2060900@oracle.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: mingo@elte.hu
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755378AbYLCWGD@vger.kernel.org>
+In-Reply-To: <20081203204025.GA31376@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Randy Dunlap wrote:
-> BTW, it sure would be nice if the Subject: gave some idea of
-> the, uh, subject of the patch series.
->
->   
+Hi Ingo,
+  This version of the patches is logically equivelent to v1 with the following
+  exceptions.
 
-Hi Randy,
-  Indeed.  I fat-fingered that one on the original patch submission and
-now it persists in the thread for all eternity for all who reply to the
-original ;)
+1) Rebased to tip/master df9fc0207
+2) split v1-1/3 into v2-1/4 (cleanup) and v2-2/4 (changes)
 
-I have fixed it above.  Sorry for the confusion.
 
+I talked to Peter today about reviewing/acking these.  I told him to wait for
+v2, so here it is.  Hopefully he will have a chance to look at these soon.
+
+
+Thanks guys,
 -Greg
 
+---
+
+Gregory Haskins (4):
+      sched: use highest_prio.next to optimize pull operations
+      sched: use highest_prio.curr for pull threshold
+      sched: track the next-highest priority on each runqueue
+      sched: cleanup inc/dec_rt_tasks
+
+
+ kernel/sched.c    |    8 ++-
+ kernel/sched_rt.c |  156 +++++++++++++++++++++++++++++++----------------------
+ 2 files changed, 98 insertions(+), 66 deletions(-)
+
+-- 
+Signature
