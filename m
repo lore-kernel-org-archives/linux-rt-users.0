@@ -1,65 +1,106 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: RFC: Latency reducing TCP modifications for thin-stream
- interactive applications
-Date: Thu, 04 Dec 2008 04:15:50 -0800
-Message-ID: <1228392950.9704.4.camel@sven.thebigcorporation.com>
-References: <492EA31D.8000704@simula.no>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [PATCH v3 3/4] sched: use highest_prio.curr for pull threshold
+Date: Thu, 04 Dec 2008 10:43:52 -0500
+Message-ID: <20081204154351.21712.75551.stgit@dev.haskins.net>
+References: <20081204154100.21712.88806.stgit@dev.haskins.net>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Andreas Petlund <apetlund@simula.no>
+Cc: peterz@infradead.org, rostedt@goodmis.org, ghaskins@novell.com,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rn-out-0910.google.com ([64.233.170.187]:38737 "EHLO
-	rn-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751711AbYLDMdH (ORCPT
+Received: from 68-112-229-48.dhcp.oxfr.ma.charter.com ([68.112.229.48]:53213
+	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1756849AbYLDPkN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Dec 2008 07:33:07 -0500
-Received: by rn-out-0910.google.com with SMTP id k40so3409097rnd.17
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Dec 2008 04:33:05 -0800 (PST)
-In-Reply-To: <492EA31D.8000704@simula.no>
+	Thu, 4 Dec 2008 10:40:13 -0500
+In-Reply-To: <20081204154100.21712.88806.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2008-11-27 at 14:39 +0100, Andreas Petlund wrote:
+highest_prio.curr is actually a more accurate way to keep track of
+the pull_rt_task() threshold since it is always up to date, even
+if the "next" task migrates during double_lock.  Therefore, stop
+looking at the "next" task object and simply use the highest_prio.curr.
 
-Hi -
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
+---
 
-Just a minor nit (trying your patch on a 2.6.22 Kernel):
+ kernel/sched_rt.c |   31 ++++++-------------------------
+ 1 files changed, 6 insertions(+), 25 deletions(-)
 
-These little white space tweaks are to be avoided, adding to the patch
-size unnecessarily.
-
-Do you have a version against 2.6.28, or Linux-tip?
-
-Regards,
-
-Sven
-
->                 }
-> -
-> +               
->                 /* Initial outgoing SYN's get put onto the write_queue
->                  * just like anything else we transmit.  It is not
->                  * true data, and if we misinform our callers that
-> @@ -2479,14 +2585,14 @@
->                         acked |= FLAG_SYN_ACKED;
->                         tp->retrans_stamp = 0;
->                 }
-> -
-> +               
->                 /* MTU probing checks */
->                 if (icsk->icsk_mtup.probe_size) {
->                         if (!after(tp->mtu_probe.probe_seq_end,
-> TCP_SKB_CB(skb)->end_seq)) {
->                                 tcp_mtup_probe_success(sk, skb);
->                         }
->                 }
-> -
-> +               
->                 if (sacked) {
->                         if (sacked & TCPCB_RETRANS) {
->                                 if (sacked & TCPCB_SACKED_RETRANS)
-> @@ -2510,24 +2616,32 @@
-
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index 7dad033..ffdd00e 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -1209,14 +1209,12 @@ static void push_rt_tasks(struct rq *rq)
+ static int pull_rt_task(struct rq *this_rq)
+ {
+ 	int this_cpu = this_rq->cpu, ret = 0, cpu;
+-	struct task_struct *p, *next;
++	struct task_struct *p;
+ 	struct rq *src_rq;
+ 
+ 	if (likely(!rt_overloaded(this_rq)))
+ 		return 0;
+ 
+-	next = pick_next_task_rt(this_rq);
+-
+ 	for_each_cpu(cpu, this_rq->rd->rto_mask) {
+ 		if (this_cpu == cpu)
+ 			continue;
+@@ -1225,17 +1223,9 @@ static int pull_rt_task(struct rq *this_rq)
+ 		/*
+ 		 * We can potentially drop this_rq's lock in
+ 		 * double_lock_balance, and another CPU could
+-		 * steal our next task - hence we must cause
+-		 * the caller to recalculate the next task
+-		 * in that case:
++		 * alter this_rq
+ 		 */
+-		if (double_lock_balance(this_rq, src_rq)) {
+-			struct task_struct *old_next = next;
+-
+-			next = pick_next_task_rt(this_rq);
+-			if (next != old_next)
+-				ret = 1;
+-		}
++		double_lock_balance(this_rq, src_rq);
+ 
+ 		/*
+ 		 * Are there still pullable RT tasks?
+@@ -1249,7 +1239,7 @@ static int pull_rt_task(struct rq *this_rq)
+ 		 * Do we have an RT task that preempts
+ 		 * the to-be-scheduled task?
+ 		 */
+-		if (p && (!next || (p->prio < next->prio))) {
++		if (p && (p->prio < this_rq->rt.highest_prio.curr)) {
+ 			WARN_ON(p == src_rq->curr);
+ 			WARN_ON(!p->se.on_rq);
+ 
+@@ -1259,12 +1249,9 @@ static int pull_rt_task(struct rq *this_rq)
+ 			 * This is just that p is wakeing up and hasn't
+ 			 * had a chance to schedule. We only pull
+ 			 * p if it is lower in priority than the
+-			 * current task on the run queue or
+-			 * this_rq next task is lower in prio than
+-			 * the current task on that rq.
++			 * current task on the run queue
+ 			 */
+-			if (p->prio < src_rq->curr->prio ||
+-			    (next && next->prio < src_rq->curr->prio))
++			if (p->prio < src_rq->curr->prio)
+ 				goto skip;
+ 
+ 			ret = 1;
+@@ -1277,13 +1264,7 @@ static int pull_rt_task(struct rq *this_rq)
+ 			 * case there's an even higher prio task
+ 			 * in another runqueue. (low likelyhood
+ 			 * but possible)
+-			 *
+-			 * Update next so that we won't pick a task
+-			 * on another cpu with a priority lower (or equal)
+-			 * than the one we just picked.
+ 			 */
+-			next = p;
