@@ -1,8 +1,9 @@
 From: Gregory Haskins <ghaskins@novell.com>
-Subject: [PATCH v3 0/4] sched: track next-highest priority
-Date: Thu, 04 Dec 2008 10:43:36 -0500
-Message-ID: <20081204154100.21712.88806.stgit@dev.haskins.net>
-References: <20081203220628.11729.42174.stgit@dev.haskins.net>
+Subject: [PATCH v3 4/4] sched: use highest_prio.next to optimize pull
+	operations
+Date: Thu, 04 Dec 2008 10:43:57 -0500
+Message-ID: <20081204154357.21712.52115.stgit@dev.haskins.net>
+References: <20081204154100.21712.88806.stgit@dev.haskins.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,34 +11,50 @@ Cc: peterz@infradead.org, rostedt@goodmis.org, ghaskins@novell.com,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: mingo@elte.hu
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 68-112-229-48.dhcp.oxfr.ma.charter.com ([68.112.229.48]:53191
+Received: from 68-112-229-48.dhcp.oxfr.ma.charter.com ([68.112.229.48]:53221
 	"EHLO dev.haskins.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756133AbYLDPj6 (ORCPT
+	with ESMTP id S1757032AbYLDPkS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Dec 2008 10:39:58 -0500
-In-Reply-To: <20081203220628.11729.42174.stgit@dev.haskins.net>
+	Thu, 4 Dec 2008 10:40:18 -0500
+In-Reply-To: <20081204154100.21712.88806.stgit@dev.haskins.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Ingo,
-  Here is the updated series, per my note about the bug in v2 last night.
+We currently take the rq->lock for every cpu in an overload state during
+pull_rt_tasks().  However, we now have enough information via the
+highest_prio.[curr|next] fields to determine if there is any tasks of
+interest to warrant the overhead of the rq->lock, before we actually take
+it.  So we use this information to reduce lock contention during the
+pull for the case where the source-rq doesnt have tasks that preempt
+the current task.
 
-Changes since v2
-
-Fix bug in 2/4 related to recomputing .next in dec_rt_task()
-
--Greg
-
+Signed-off-by: Gregory Haskins <ghaskins@novell.com>
 ---
 
-Gregory Haskins (4):
-      sched: use highest_prio.next to optimize pull operations
-      sched: use highest_prio.curr for pull threshold
-      sched: track the next-highest priority on each runqueue
-      sched: cleanup inc/dec_rt_tasks
+ kernel/sched_rt.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-
- kernel/sched.c    |    8 ++-
- kernel/sched_rt.c |  156 +++++++++++++++++++++++++++++++----------------------
- 2 files changed, 98 insertions(+), 66 deletions(-)
+diff --git a/kernel/sched_rt.c b/kernel/sched_rt.c
+index ffdd00e..afcc67a 100644
+--- a/kernel/sched_rt.c
++++ b/kernel/sched_rt.c
+@@ -1220,6 +1220,18 @@ static int pull_rt_task(struct rq *this_rq)
+ 			continue;
+ 
+ 		src_rq = cpu_rq(cpu);
++
++		/*
++		 * Don't bother taking the src_rq->lock if the next highest
++		 * task is known to be lower-priority than our current task.
++		 * This may look racy, but if this value is about to go
++		 * logically higher, the src_rq will push this task away.
++		 * And if its going logically lower, we do not care
++		 */
++		if (src_rq->rt.highest_prio.next >=
++		    this_rq->rt.highest_prio.curr)
++			continue;
++
+ 		/*
+ 		 * We can potentially drop this_rq's lock in
+ 		 * double_lock_balance, and another CPU could
 
