@@ -1,67 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Li Zefan <lizf@cn.fujitsu.com>
 Subject: Re: [PATCH] [RT] avoid preemption in memory controller code
-Date: Mon, 8 Dec 2008 12:23:17 -0500 (EST)
-Message-ID: <alpine.DEB.1.10.0812081218471.26257@gandalf.stny.rr.com>
-References: <1228746854-23875-1-git-send-email-tim@klingt.org>  <alpine.DEB.1.10.0812081138470.26257@gandalf.stny.rr.com> <1228756056.7862.8.camel@thinkpad>
+Date: Tue, 09 Dec 2008 09:13:12 +0800
+Message-ID: <493DC628.5060900@cn.fujitsu.com>
+References: <1228746854-23875-1-git-send-email-tim@klingt.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset=GB2312
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Balbir Singh <balbir@linux.vnet.ibm.com>,
+	KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
 To: Tim Blechmann <tim@klingt.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:63261 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753459AbYLHRXT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Dec 2008 12:23:19 -0500
-In-Reply-To: <1228756056.7862.8.camel@thinkpad>
+Received: from cn.fujitsu.com ([222.73.24.84]:56044 "EHLO song.cn.fujitsu.com"
+	rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org with ESMTP
+	id S1753187AbYLIBOp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Dec 2008 20:14:45 -0500
+In-Reply-To: <1228746854-23875-1-git-send-email-tim@klingt.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+CC: Balbir Singh <balbir@linux.vnet.ibm.com>
+CC: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
 
-On Mon, 8 Dec 2008, Tim Blechmann wrote:
-
-> > > the lru_lock of struct mem_group_per_zone is used to avoid preemption
-> > > during the __mem_cgroup_stat_add_safe function.
-> > > therefore, a raw_spinlock_t should be used.
-> > 
-> > What is the reason that this must avoid preemption? 
+Tim Blechmann wrote:
+> the lru_lock of struct mem_group_per_zone is used to avoid preemption
+> during the __mem_cgroup_stat_add_safe function.
+> therefore, a raw_spinlock_t should be used.
 > 
-> it guards a call to smp_processor_id() in __mem_cgroup_stat_add_safe().
-> see http://article.gmane.org/gmane.linux.rt.user/3690
 
-We could simply create a 
-	preempt_disable_rt();
-that will only disable preemption when CONFIG_PREEMPT_RT is set.
-and then we could add
+FYI, this lru_lock no longer exists in -mm tree. The following patch
+removes that lock:
 
-	int cpu;
+	http://marc.info/?l=linux-mm&m=122665814801979&w=2
 
-	preempt_disable_rt();
-	cpu = smp_processor_id();
-	stat->cpustat[cpu].count[idx] += val;
-	preempt_enable_rt();
+> Signed-off-by: Tim Blechmann <tim@klingt.org>
+> ---
+>  mm/memcontrol.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+> index 517f945..8661732 100644
+> --- a/mm/memcontrol.c
+> +++ b/mm/memcontrol.c
+> @@ -95,9 +95,9 @@ enum mem_cgroup_zstat_index {
+>  
+>  struct mem_cgroup_per_zone {
+>  	/*
+> -	 * spin_lock to protect the per cgroup LRU
+> +	 * raw_spin_lock to protect the per cgroup LRU
+>  	 */
+> -	spinlock_t		lru_lock;
+> +	raw_spinlock_t		lru_lock;
+>  	struct list_head	active_list;
+>  	struct list_head	inactive_list;
+>  	unsigned long count[NR_MEM_CGROUP_ZSTAT];
 
-Or something similar.
 
--- Steve
-
-> 
-> > Is there another
-> > way to solve this? I rather not just add a raw spinlock if we can
-> > help it.
-> 
-> not sure, maybe one can disable preemption for that specific function?
-> 
-> tim
-> 
-> --
-> tim@klingt.org
-> http://tim.klingt.org
-> 
-> Art is either a complaint or do something else
->   John Cage quoting Jasper Johns
-> 
