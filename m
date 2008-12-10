@@ -1,46 +1,62 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH][RT] Compile-time fix.
-Date: Wed, 10 Dec 2008 12:47:35 -0500 (EST)
-Message-ID: <alpine.DEB.1.10.0812101247220.11248@gandalf.stny.rr.com>
-References: <alpine.DEB.1.10.0812090946210.16798@gandalf.stny.rr.com>  <1228890920.9542.2.camel@dd> <1228892002.9542.4.camel@dd> <alpine.DEB.1.10.0812100643130.5912@gandalf.stny.rr.com> <493FED0D.4080204@novell.com>
+Subject: 2.6.24.7-rt24
+Date: Wed, 10 Dec 2008 13:04:24 -0500
+Message-ID: <1228932264.974.15.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
-	Darren Hart <dvhltc@us.ibm.com>
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <srostedt@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:42839 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:40475 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755320AbYLJRrj (ORCPT
+	with ESMTP id S1752783AbYLJSE0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Dec 2008 12:47:39 -0500
-In-Reply-To: <493FED0D.4080204@novell.com>
+	Wed, 10 Dec 2008 13:04:26 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are pleased to announce the 2.6.24.7-rt24 tree, which can be
+downloaded from the location:
 
-On Wed, 10 Dec 2008, Gregory Haskins wrote:
+  http://rt.et.redhat.com/download/
 
-> Steven Rostedt wrote:
-> >
-> > If you do want to help, look at any of the other branches. Some have not 
-> > been updated yet, and they all should be able to compile and boot on their 
-> > own. If they do not, then those need to be fixed.
-> >   
-> 
-> A good place to start for some low-hanging fruit would be rt/workqueue. 
-> I ported the patches, but it doesn't yet boot (assuming Steve merged the
-> work I had done...I havent looked recently).  I think its a relatively
-> trivial problem, but I have not had a chance to track it down yet.
+Information on the RT patch can be found at:
 
-I have not pulled it yet, I'll do it now.
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24.7-rt21 (yes we quietly released 22 and 23)
+
+  - fix of owners in rwlocks (Steven Rosted)
+
+  - fix rwlock boosting (Thomas Gleixner)
+
+  - force rwlock into slow path (Thomas Gleixner)
+
+  - fix missing get struct from previous patches (Thomas Gleixner)
+
+to build a 2.6.24.7-rt24 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt24.bz2
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+
+Note: 2.6.26-rt needs these updates too. We are still working on the new
+RT git tree, and will port these patches to 26 soon.
 
 -- Steve
+
+
 
