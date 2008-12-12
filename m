@@ -1,94 +1,73 @@
-From: Tim Blechmann <tim@klingt.org>
-Subject: Re: [PATCH] [RT] avoid preemption in memory controller code
-Date: Fri, 12 Dec 2008 10:08:18 +0100
-Message-ID: <1229072898.6629.24.camel@thinkpad>
-References: <preempt_enable_rt();>
-	 <1229022045-31670-1-git-send-email-tim@klingt.org>
-	 <20081212101731.6034a554.kamezawa.hiroyu@jp.fujitsu.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH][RT] - fix 32-bit breakage on rt/threadirqs branch
+Date: Fri, 12 Dec 2008 14:03:21 -0600
+Message-ID: <20081212140321.7dc1e04f@torg>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-p8s1audRejaHzep1P1Hk"
-Cc: rostedt@goodmis.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, mingo@elte.hu, tglx@linutronix.de
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Content-Type: multipart/mixed; boundary="MP_/dA/Hjp3GP6JUvoYgFwiGwMI"
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <srostedt@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.klingt.org ([86.59.21.178]:56214 "EHLO klingt.org"
+Received: from mx2.redhat.com ([66.187.237.31]:37854 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751133AbYLLJIw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Dec 2008 04:08:52 -0500
-In-Reply-To: <20081212101731.6034a554.kamezawa.hiroyu@jp.fujitsu.com>
+	id S1751585AbYLLUDc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Dec 2008 15:03:32 -0500
+Received: from int-mx2.corp.redhat.com (int-mx2.corp.redhat.com [172.16.27.26])
+	by mx2.redhat.com (8.13.8/8.13.8) with ESMTP id mBCK3Wbn023989
+	for <linux-rt-users@vger.kernel.org>; Fri, 12 Dec 2008 15:03:32 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+--MP_/dA/Hjp3GP6JUvoYgFwiGwMI
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
 
---=-p8s1audRejaHzep1P1Hk
-Content-Type: text/plain
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpTdGV2ZW4s
+DQoNCkF0dGFjaGVkIGlzIGEgcGF0Y2ggdGhhdCBmaXhlcyB0aGUgMzItYml0IGNvbXBpbGUgYnJl
+YWthZ2UgeW91IHRvbGQgbWUNCmFib3V0IG9uIHRoZSBydC90aHJlYWRpcnFzIGJyYW5jaC4gQ29t
+cGlsZXMgd2l0aCBhbiBhbGxtb2Rjb25maWcgYnVpbGQuDQoNCkNsYXJrDQotLS0tLUJFR0lOIFBH
+UCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC45IChHTlUvTGludXgpDQoNCmlF
+WUVBUkVDQUFZRkFrbEN3NDhBQ2drUUh5dWovK1RURXAwcjN3Q2FBajBRTjRCeExKZ2lmcnFZeEUx
+dzJEcmsNCnV0a0FvSnlZU3ZiKzZ2clduNmIrSS9Td2MrNGpXVXlrDQo9SGhTMw0KLS0tLS1FTkQg
+UEdQIFNJR05BVFVSRS0tLS0tDQo=
+
+--MP_/dA/Hjp3GP6JUvoYgFwiGwMI
+Content-Type: text/x-patch; name=fix-32-bit-breakage.patch
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment; filename=fix-32-bit-breakage.patch
 
-> > the lru_lock of struct mem_group_per_zone is used to avoid preemption
-> > during the mem_cgroup_charge_statistics function. this does not work
-> > correctly, when CONFIG_PREEMPT_RT is enabled.
-> > therefore, the preemption is disabled using the preempt_disable_rt macr=
-o
-> > in these cases.
-> >=20
-> > Signed-off-by: Tim Blechmann <tim@klingt.org>
->=20
-> Sorry, memcg's code this function in mmotm kernel is now, following.
-> Please give me advice if some more thinking is necessary for RT.
+=46rom e1d9cd6f8aa7261cbf299ad222e7e7cf8b0cce65 Mon Sep 17 00:00:00 2001
+From: Clark Williams <williams@redhat.com>
+Date: Fri, 12 Dec 2008 12:21:04 -0600
+Subject: [PATCH] fixed 32-bit breakage in arch/x86/kernel/io_apic.c
 
-using get_cpu/put_cpu, the preemption is disabled ... so mmotm should
-not require any changes. my patch would only be required for an
-rt-patch, based on a current kernel version ...
-instead of applying my patch, one could also use the specific part of
-mmotm for the RT tree ...
+I pulled in the wrong functions when merging 32 and 64-bit for threaded
+IRQs, then didn't test the 32-bit build. Builds now with allmodconfig.
 
-tim
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ arch/x86/kernel/io_apic.c |    6 ++----
+ 1 files changed, 2 insertions(+), 4 deletions(-)
 
-> static void mem_cgroup_charge_statistics(struct mem_cgroup *mem,
->                                          struct page_cgroup *pc,
->                                          bool charge)
-> {
->         int val =3D (charge)? 1 : -1;
->         struct mem_cgroup_stat *stat =3D &mem->stat;
->         struct mem_cgroup_stat_cpu *cpustat;
->         int cpu =3D get_cpu();
->=20
->         cpustat =3D &stat->cpustat[cpu];
->         if (PageCgroupCache(pc))
->                 __mem_cgroup_stat_add_safe(cpustat, MEM_CGROUP_STAT_CACHE=
-, val);
->         else
->                 __mem_cgroup_stat_add_safe(cpustat, MEM_CGROUP_STAT_RSS, =
-val);
->=20
->         if (charge)
->                 __mem_cgroup_stat_add_safe(cpustat,
->                                 MEM_CGROUP_STAT_PGPGIN_COUNT, 1);
->         else
->                 __mem_cgroup_stat_add_safe(cpustat,
->                                 MEM_CGROUP_STAT_PGPGOUT_COUNT, 1);
->         put_cpu();
-> }
+diff --git a/arch/x86/kernel/io_apic.c b/arch/x86/kernel/io_apic.c
+index 311d003..a66efd7 100644
+--- a/arch/x86/kernel/io_apic.c
++++ b/arch/x86/kernel/io_apic.c
+@@ -2412,10 +2412,8 @@ static void ack_apic_level(unsigned int irq)
+ 	if (!(v & (1 << (i & 0x1f)))) {
+ 		atomic_inc(&irq_mis_count);
+ 		spin_lock(&ioapic_lock);
+-		/* mask =3D 1, trigger =3D 0 */
+-		__modify_IO_APIC_irq(irq, 0x00010000, 0x00008000);
+-		/* mask =3D 0, trigger =3D 1 */
+-		__modify_IO_APIC_irq(irq, 0x00008000, 0x00010000);
++                __mask_and_edge_IO_APIC_irq(irq);
++                __unmask_and_level_IO_APIC_irq(irq);
+ 		spin_unlock(&ioapic_lock);
+ 	}
+ #endif
+--=20
+1.5.5.1
 
---
-tim@klingt.org
-http://tim.klingt.org
 
-Silence is only frightening to people who are compulsively
-verbalizing.
-  William S. Burroughs
-
---=-p8s1audRejaHzep1P1Hk
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEUEABECAAYFAklCKgAACgkQFz+XezW6HD6BoACfXXbZGtTDITPvcZNMq/Ry5WR5
-giUAljwm2xO5+No1gf84f5olSNBsXOA=
-=1gS5
------END PGP SIGNATURE-----
-
---=-p8s1audRejaHzep1P1Hk--
-
+--MP_/dA/Hjp3GP6JUvoYgFwiGwMI--
