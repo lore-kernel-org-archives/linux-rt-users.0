@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch 2/7] sched: remove useless nointeractive state
-Date: Fri, 19 Dec 2008 21:22:48 -0000
-Message-ID: <20081219211946.191787054@linutronix.de>
+Subject: [patch 6/7] rtmutex: remove useless schedule enforcement
+Date: Fri, 19 Dec 2008 21:23:06 -0000
+Message-ID: <20081219211948.821299520@linutronix.de>
 References: <20081219211656.875192771@linutronix.de>
 Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -10,36 +10,47 @@ Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
 	Linux-rt <linux-rt-users@vger.kernel.org>
 To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:55754 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:55803 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753461AbYLSVip (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Dec 2008 16:38:45 -0500
+	id S1752028AbYLSVjD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Dec 2008 16:39:03 -0500
 Content-Disposition: inline;
-	filename=sched-remove-useless-nointeractive-state.patch
+	filename=rtmutex-remove-useless-schedule-enforcement.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-gone task state reintroduced by rtmutex patches.
+For !mtx the call to schedule() is forced even if the waiter is
+already woken (waiter.task == NULL).
+
+This makes no sense at all and is just waste.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- include/linux/sched.h |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ kernel/rtmutex.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux-2.6.24/include/linux/sched.h
+Index: linux-2.6.24/kernel/rtmutex.c
 ===================================================================
---- linux-2.6.24.orig/include/linux/sched.h
-+++ linux-2.6.24/include/linux/sched.h
-@@ -202,8 +202,7 @@ extern struct semaphore kernel_sem;
- #define EXIT_ZOMBIE		32
- #define EXIT_DEAD		64
- /* in tsk->state again */
--#define TASK_NONINTERACTIVE	128
--#define TASK_DEAD		256
-+#define TASK_DEAD		128
+--- linux-2.6.24.orig/kernel/rtmutex.c
++++ linux-2.6.24/kernel/rtmutex.c
+@@ -1402,7 +1402,7 @@ rt_read_slowlock(struct rw_mutex *rwm, i
  
- #define __set_task_state(tsk, state_value)		\
- 	do { (tsk)->state = (state_value); } while (0)
+ 		debug_rt_mutex_print_deadlock(&waiter);
+ 
+-		if (!mtx || waiter.task)
++		if (waiter.task)
+ 			schedule_rt_mutex(mutex);
+ 
+ 		spin_lock_irqsave(&mutex->wait_lock, flags);
+@@ -1548,7 +1548,7 @@ rt_write_slowlock(struct rw_mutex *rwm, 
+ 
+ 		debug_rt_mutex_print_deadlock(&waiter);
+ 
+-		if (!mtx || waiter.task)
++		if (waiter.task)
+ 			schedule_rt_mutex(mutex);
+ 
+ 		spin_lock_irqsave(&mutex->wait_lock, flags);
 
 -- 
 
