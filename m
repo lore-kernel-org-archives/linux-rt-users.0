@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch 3/7] rtmutex: remove unused variable
-Date: Fri, 19 Dec 2008 21:22:52 -0000
-Message-ID: <20081219211946.740657176@linutronix.de>
+Subject: [patch 1/7] ftrace: fix task state printout
+Date: Fri, 19 Dec 2008 21:22:44 -0000
+Message-ID: <20081219211945.404968770@linutronix.de>
 References: <20081219211656.875192771@linutronix.de>
 Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -10,28 +10,116 @@ Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <rostedt@goodmis.org>,
 	Linux-rt <linux-rt-users@vger.kernel.org>
 To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:55771 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:55761 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753743AbYLSVit (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Dec 2008 16:38:49 -0500
-Content-Disposition: inline; filename=rtmutex-remove-unused-variable.patch
+	id S1753622AbYLSVir (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Dec 2008 16:38:47 -0500
+Content-Disposition: inline; filename=ftrace-fix-task-state-printout.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Remove the leftover of the rwlock fixes.
+Impact: tracer task state decoding is wrong, size check is buggy
+
+The tracing code has interesting varieties of printing out task state.
+Unfortunalely only one of the instances is correct as it copies the
+code from sched.c:sched_show_task(). The others are plain wrong as
+they treatthe bitfield as an integer offset into the character
+array. Also the size check of the character array is wrong as it
+includes the trailing \0.
+
+Use a common state decoder inline which does the Right Thing.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/rtmutex.c |    3 ---
- 1 file changed, 3 deletions(-)
+ kernel/trace/trace.c |   40 ++++++++++++++++++----------------------
+ 1 file changed, 18 insertions(+), 22 deletions(-)
 
-Index: linux-2.6.24/kernel/rtmutex.c
+Index: linux-2.6.24/kernel/trace/trace.c
 ===================================================================
---- linux-2.6.24.orig/kernel/rtmutex.c
-+++ linux-2.6.24/kernel/rtmutex.c
-@@ -1950,9 +1950,6 @@ rt_write_fastunlock(struct rw_mutex *rwm
- 					    int mtx),
- 		    int mtx)
- {
--	struct task_struct *val = (void *)((unsigned long)current |
--					   RT_RWLOCK_WRITER);
+--- linux-2.6.24.orig/kernel/trace/trace.c
++++ linux-2.6.24/kernel/trace/trace.c
+@@ -1626,6 +1626,13 @@ lat_print_timestamp(struct trace_seq *s,
+ 
+ static const char state_to_char[] = TASK_STATE_TO_CHAR_STR;
+ 
++static int task_state_char(unsigned long state)
++{
++	int bit = state ? __ffs(state) + 1 : 0;
++
++	return bit < sizeof(state_to_char) - 1 ? state_to_char[bit] : '?';
++}
++
+ extern unsigned long sys_call_table[NR_syscalls];
+ 
+ #if defined(CONFIG_COMPAT) && defined(CONFIG_X86)
+@@ -1654,7 +1661,6 @@ print_lat_fmt(struct trace_iterator *ite
+ 	char *comm;
+ 	int S, T;
+ 	int i;
+-	unsigned state;
+ 
+ 	if (!next_entry)
+ 		next_entry = entry;
+@@ -1685,11 +1691,8 @@ print_lat_fmt(struct trace_iterator *ite
+ 		break;
+ 	case TRACE_CTX:
+ 	case TRACE_WAKE:
+-		T = entry->ctx.next_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.next_state] : 'X';
+-
+-		state = entry->ctx.prev_state ? __ffs(entry->ctx.prev_state) + 1 : 0;
+-		S = state < sizeof(state_to_char) - 1 ? state_to_char[state] : 'X';
++		T = task_state_char(entry->ctx.next_state);
++		S = task_state_char(entry->ctx.prev_state);
+ 		comm = trace_find_cmdline(entry->ctx.next_pid);
+ 		trace_seq_printf(s, " %5d:%3d:%c %s %5d:%3d:%c %s\n",
+ 				 entry->ctx.prev_pid,
+@@ -1862,10 +1865,8 @@ static int print_trace_fmt(struct trace_
+ 		break;
+ 	case TRACE_CTX:
+ 	case TRACE_WAKE:
+-		S = entry->ctx.prev_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.prev_state] : 'X';
+-		T = entry->ctx.next_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.next_state] : 'X';
++		T = task_state_char(entry->ctx.next_state);
++		S = task_state_char(entry->ctx.prev_state);
+ 		ret = trace_seq_printf(s, " %5d:%3d:%c %s %5d:%3d:%c\n",
+ 				       entry->ctx.prev_pid,
+ 				       entry->ctx.prev_prio,
+@@ -2012,12 +2013,10 @@ static int print_raw_fmt(struct trace_it
+ 		break;
+ 	case TRACE_CTX:
+ 	case TRACE_WAKE:
+-		S = entry->ctx.prev_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.prev_state] : 'X';
+-		T = entry->ctx.next_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.next_state] : 'X';
+-		if (entry->type == TRACE_WAKE)
+-			S = '+';
++		T = task_state_char(entry->ctx.next_state);
++		S = entry->type == TRACE_WAKE ? '+' :
++			task_state_char(entry->ctx.prev_state);
++
+ 		ret = trace_seq_printf(s, "%d %d %c %d %d %c\n",
+ 				       entry->ctx.prev_pid,
+ 				       entry->ctx.prev_prio,
+@@ -2073,12 +2072,9 @@ static int print_hex_fmt(struct trace_it
+ 		break;
+ 	case TRACE_CTX:
+ 	case TRACE_WAKE:
+-		S = entry->ctx.prev_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.prev_state] : 'X';
+-		T = entry->ctx.next_state < sizeof(state_to_char) ?
+-			state_to_char[entry->ctx.next_state] : 'X';
+-		if (entry->type == TRACE_WAKE)
+-			S = '+';
++		T = task_state_char(entry->ctx.next_state);
++		S = entry->type == TRACE_WAKE ? '+' :
++			task_state_char(entry->ctx.prev_state);
+ 		SEQ_PUT_HEX_FIELD_RET(s, entry->ctx.prev_pid);
+ 		SEQ_PUT_HEX_FIELD_RET(s, entry->ctx.prev_prio);
+ 		SEQ_PUT_HEX_FIELD_RET(s, S);
+
+-- 
+
