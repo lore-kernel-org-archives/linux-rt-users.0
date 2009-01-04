@@ -1,62 +1,55 @@
-From: "MinChan Kim" <minchan.kim@gmail.com>
-Subject: Re: Specialization project, Real-Time Scheduling
-Date: Wed, 31 Dec 2008 14:25:38 +0900
-Message-ID: <28c262360812302125m3a884e42i36ac3312acbcb154@mail.gmail.com>
-References: <200812301222.36350.henrik@austad.us>
+From: Adam Sampson <ats-G+91BasbrijYtjvyW6yDsg@public.gmane.org>
+Subject: [LAU] [PATCH] [RT] tasklets: fix typo in tasklet_hi_action
+Date: Sun, 4 Jan 2009 15:20:58 +0000
+Message-ID: <20090104152053.GA4867@cartman.at.offog.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: kernelnewbies@nl.linux.org, linux-rt-users@vger.kernel.org
-To: "Henrik Austad" <henrik@austad.us>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f13.google.com ([209.85.217.13]:62774 "EHLO
-	mail-gx0-f13.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750741AbYLaFZk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 31 Dec 2008 00:25:40 -0500
-Received: by gxk6 with SMTP id 6so4372959gxk.13
-        for <linux-rt-users@vger.kernel.org>; Tue, 30 Dec 2008 21:25:38 -0800 (PST)
-In-Reply-To: <200812301222.36350.henrik@austad.us>
+Cc: linux-audio-user-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org
+To: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-audio-user-bounces-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+List-Unsubscribe: <http://lists.linuxaudio.org/mailman/listinfo/linux-audio-user>,
+	<mailto:linux-audio-user-request-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxaudio.org/pipermail/linux-audio-user>
+List-Post: <mailto:linux-audio-user-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org>
+List-Help: <mailto:linux-audio-user-request-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linuxaudio.org/mailman/listinfo/linux-audio-user>,
+	<mailto:linux-audio-user-request-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org?subject=subscribe>
+Sender: linux-audio-user-bounces-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org
+Errors-To: linux-audio-user-bounces-cunTk1MwBs/CEJeg2xFRV2D2FQJk+8+b@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Thanks for your effort to make good report.
-It's fun document to read in this holiday.
-Happy holidays, too!
+[l-a-u CCed because we've been talking about this problem there
+recently, and that's what prodded me to do the bisection to track it
+down... fortunately the -rt8 to -rt9 interdiff was pretty small!]
 
-On Tue, Dec 30, 2008 at 8:22 PM, Henrik Austad <henrik@austad.us> wrote:
-> Hi all,
->
-> Now that the holidays are upon us, I finally got around to upload the project
-> report. So, for those still interested in my scheduling efforts, the whole
-> shebang is available here:
->
-> http://folk.ntnu.no/henrikau/sched/
->
-> and in particular, the report:
-> http://folk.ntnu.no/henrikau/sched/rt_sched_pro.pdf
->
-> It includes this old comparison (including a few updates on CFS), as well as a
-> bit of dry theory ;-) and a comparision of 2.6.18 to 2.6.28-rc6, showing some
-> great improvement for rt-tasks
->
-> Anyway, do as you please, feedback are, as always, greatly appreciated.
->
-> Happy holidays!
->
-> --
->  -> henrik
->
-> --
-> To unsubscribe from this list: send an email with
-> "unsubscribe kernelnewbies" to ecartis@nl.linux.org
-> Please read the FAQ at http://kernelnewbies.org/FAQ
->
->
+Subject: [PATCH] [RT] tasklets: fix typo in tasklet_hi_action
 
+Fix a typo in tasklet_hi_action -- using the wrong tasklet list when removing
+actions.
 
+This appears to be what was causing the ALSA sequencer device not to work in
+2.6.26 with the RT patch: the sequencer was flaky in -rt1 to -rt8, and just
+hung in -rt9 and later, after tasklets-fix-tasklet_hi_schedule.patch which
+fixed the same typo when adding to the list. I guess that's because before -rt9
+the actions were going onto the wrong list, whereas after -rt9 they were being
+lost entirely once the first one had been performed. It seems happy now,
+anyway.
+
+Signed-off-by: Adam Sampson <ats-G+91BasbrijYtjvyW6yDsg@public.gmane.org>
+
+--- linux-2.6.26/kernel/softirq.c_orig	2009-01-04 14:41:06.000000000 +0000
++++ linux-2.6.26/kernel/softirq.c	2009-01-04 14:41:49.000000000 +0000
+@@ -657,7 +657,7 @@
+ 	local_irq_disable();
+ 	list = __get_cpu_var(tasklet_hi_vec).head;
+ 	__get_cpu_var(tasklet_hi_vec).head = NULL;
+-	__get_cpu_var(tasklet_hi_vec).tail = &__get_cpu_var(tasklet_vec).head;
++	__get_cpu_var(tasklet_hi_vec).tail = &__get_cpu_var(tasklet_hi_vec).head;
+ 	local_irq_enable();
+ 
+ 	__tasklet_action(a, list);
 
 -- 
-Kinds regards,
-MinChan Kim
+Adam Sampson <ats-G+91BasbrijYtjvyW6yDsg@public.gmane.org>                         <http://offog.org/>
