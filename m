@@ -1,74 +1,55 @@
-From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: RE: 2.6.24.7-rt26 and 2.6.26.8-rt13
-Date: Wed, 21 Jan 2009 13:30:41 +0100
-Message-ID: <CEE27071B8F0914B91B3076CEB63C2B60725B58E@de01ex08.GLOBAL.JHCN.NET>
-References: <1231557759.922.9.camel@localhost.localdomain>
+Date: Wed, 21 Jan 2009 08:10:28 -0500 (EST)
+Message-ID: <alpine.DEB.1.10.0901210809420.14906@gandalf.stny.rr.com>
+References: <1231557759.922.9.camel@localhost.localdomain> <CEE27071B8F0914B91B3076CEB63C2B60725B58E@de01ex08.GLOBAL.JHCN.NET>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0477043978=="
-To: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
+To: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx02.jhcn.net ([194.25.102.130]:4100 "EHLO mx02.jhcn.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756556AbZAUMnb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Jan 2009 07:43:31 -0500
-In-Reply-To: <1231557759.922.9.camel@localhost.localdomain>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:58145 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751902AbZAUNKb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Jan 2009 08:10:31 -0500
+In-Reply-To: <CEE27071B8F0914B91B3076CEB63C2B60725B58E@de01ex08.GLOBAL.JHCN.NET>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---===============0477043978==
-MIME-Version: 1.0
-Content-Language: de-DE
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Wed, 21 Jan 2009, Lampersperger Andreas wrote:
 
-I'm using kernel 2.6.26.8-rt13 with CONFIG_DYNAMIC_FTRACE=3Dy set.
-When loading a kernel object the following message appear:
+> Hi,
+> 
+> I'm using kernel 2.6.26.8-rt13 with CONFIG_DYNAMIC_FTRACE=y set.
+> When loading a kernel object the following message appear:
+> 
+> BUG: sleeping function called from invalid context insmod(1370) at include/asm/uaccess_32.h:560
+> in_atomic():0 [00000000], irqs_disabled():1
+> Pid: 1370, comm: insmod Not tainted 2.6.26.8-rt13-heros5 #8
+>  [<c011e13e>] __might_sleep+0xe5/0xea
+>  [<c011439a>] ftrace_modify_code+0x22/0xa6
+>  [<c0114364>] ? ftrace_test_p6nop+0x0/0xa
+>  [<c0162fb4>] __ftrace_update_code+0xed/0x2cf
+>  [<c0114364>] ? ftrace_test_p6nop+0x0/0xa
+>  [<c0163730>] ftrace_convert_nops+0x57/0x73
+>  [<c0163761>] ftrace_init_module+0x15/0x17
+>  [<c01491da>] sys_init_module+0x14c9/0x1a7d
+>  [<c016d89d>] ? generic_file_aio_read+0x49a/0x4d6
+>  [<c0311ef9>] ? sub_preempt_count+0xa2/0xb0
+>  [<c02180c4>] ? strpbrk+0x0/0x2b
+>  [<c019b7b9>] ? dput+0x34/0xe4
+>  [<c0104b31>] sysenter_past_esp+0x6a/0x99
+>  =======================
+> 
+> Is it not possible to use rt-patches and dynamic tracepoints?
 
-BUG: sleeping function called from invalid context insmod(1370) at include/=
-asm/uaccess_32.h:560
-in_atomic():0 [00000000], irqs_disabled():1
-Pid: 1370, comm: insmod Not tainted 2.6.26.8-rt13-heros5 #8
- [<c011e13e>] __might_sleep+0xe5/0xea
- [<c011439a>] ftrace_modify_code+0x22/0xa6
- [<c0114364>] ? ftrace_test_p6nop+0x0/0xa
- [<c0162fb4>] __ftrace_update_code+0xed/0x2cf
- [<c0114364>] ? ftrace_test_p6nop+0x0/0xa
- [<c0163730>] ftrace_convert_nops+0x57/0x73
- [<c0163761>] ftrace_init_module+0x15/0x17
- [<c01491da>] sys_init_module+0x14c9/0x1a7d
- [<c016d89d>] ? generic_file_aio_read+0x49a/0x4d6
- [<c0311ef9>] ? sub_preempt_count+0xa2/0xb0
- [<c02180c4>] ? strpbrk+0x0/0x2b
- [<c019b7b9>] ? dput+0x34/0xe4
- [<c0104b31>] sysenter_past_esp+0x6a/0x99
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+No, it should. That is a bug, I'll try to reproduce it, could you send me 
+your config.
 
-Is it not possible to use rt-patches and dynamic tracepoints?
+Thanks,
 
--Andreas
+-- Steve
 
-
---===============0477043978==
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
-
----------------------------------------------------------------------------=
-----------------------------
-Registergericht: Traunstein / Registry Court: HRB 275 =E2=80=93 Sitz / Head=
- Office: Traunreut
-Aufsichtsratsvorsitzender / Chairman of Supervisory Board: Rainer Burkhard
-Gesch=C3=A4ftsf=C3=BChrung / Management Board: Thomas Sesselmann (Vorsitzen=
-der / Chairman),
-Michael Grimm, Matthias Fauser
-
-E-Mail Haftungsausschluss / E-Mail Disclaimer: http://www.heidenhain.de/dis=
-claimer
-
-
---===============0477043978==--
