@@ -1,97 +1,79 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [RT] [git pull] updates for rt/sched
-Date: Wed, 21 Jan 2009 12:54:41 -0500
-Message-ID: <49776161.1080801@novell.com>
-References: <497760A1.9090806@novell.com>
+From: Esben Nielsen <esn@terma.com>
+Subject: Re: Which version of preempt_realtime to use?
+Date: Thu, 22 Jan 2009 08:40:29 +0100
+Message-ID: <1232610029.26807.8.camel@localhost.localdomain>
+References: <1232366467.31686.10.camel@localhost.localdomain>
+	 <49748567.30201@osadl.org>  <4974E686.60105@hedrich-winders.com>
+Reply-To: esn@terma.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig99955A69452C03ED1B28036A"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"linux >> LKML" <linux-kernel@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Carsten Emde <Carsten.Emde@osadl.org>,
+	linux-rt-users@vger.kernel.org
+To: mell@hedrich-winders.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:57341 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753074AbZAURvu (ORCPT
+Received: from asgaard.lystrup.terma.com ([193.163.1.112]:52213 "EHLO
+	asgaard.terma.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753929AbZAVHoJ convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Jan 2009 12:51:50 -0500
-In-Reply-To: <497760A1.9090806@novell.com>
+	Thu, 22 Jan 2009 02:44:09 -0500
+In-Reply-To: <4974E686.60105@hedrich-winders.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig99955A69452C03ED1B28036A
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On Mon, 2009-01-19 at 21:45 +0100, J=C3=BCrgen Mell wrote:
+> >
+> > Esben,
+> >
+> >  =20
+> >> I am going to suggest that we use preempt_realtime for a _real_ pr=
+oject
+> >> (i.e. costumers will depend on it). We will run on standeard x86 (=
+maybe
+> >> x86_64) hardware and will only need serial interfaces for realtime
+> >> purposes. Security is not an issue. Which version of preempt_realt=
+ime
+> >> should I pick?
+> >>    =20
+> > The latest and greatest *and* most stable version is 2.6.24.7-rt26.=
+ As
+> > far as I know (but maybe others know better), there are no unresolv=
+ed
+> > issues with this "Latest Stable". The kernel release 2.6.24 may not
+> > contain sufficient architecture support for PPC and ARM, but the la=
+rge
+> > majority of x86 based processors and chipsets is well supported.
+> >
+> > Please report, if anything does not work as expected.
+> >  =20
+> The only thing which is missing for me from the 2.6.24.7-rt series is
+> the patch
+> "x86-fpu-fix-config_preempt-y-corruption-of-application-s-fpu-stack.p=
+atch"
+> , GIT commit
+>  870568b39064cab2dd971fe57969916036982862 from mainline 2.6.25. This
+> might cause trouble with applications which are using floating point
+> arithmetics. Otherwise I am using the 2.6.24.7-rt series on a machine
+> control for a 16 axes machine and it is working mostly well. There ar=
+e
+> only some points where I get big delays (up to some milliseconds) wit=
+h
+> my timer routine, where normally delays are below 50 microseconds. Up=
+ to
+> now I could not find the application ( X ??) which is causing this.
+>=20
+> Bye,
+>            J=C3=BCrgen
+>=20
 
-Gregory Haskins wrote:
-> Hi Steve,
->   Here is a backport of the latest patches that went into tip/sched/rt
->
-> -Greg
->  =20
+Which GIT-tree are you refering to?
 
-[Adding Peter to CC, since he contributed too]
+Is there at all an up-to-date GIT repository with preempt realtime?
 
+Esben
 
->
-> -------------
-> The following changes since commit 0ea6fdc871f24f65e28cd9a92ead1c881783=
-741a:
->   Gregory Haskins (1):
->         rt/sched: ensure interrupts are disabled during post-schedule()=
-
-> processing
->
-> are available in the git repository at:
->
-> =20
-> git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/linux-2.6-hacks.=
-git
-> rt/sched
->
-> Gregory Haskins (6):
->       sched: cleanup inc/dec_rt_tasks
->       sched: track the next-highest priority on each runqueue
->       sched: use highest_prio.curr for pull threshold
->       sched: use highest_prio.next to optimize pull operations
->       sched: de CPP-ify the scheduler code
->       sched: fix build error in kernel/sched_rt.c when RT_GROUP_SCHED &=
-&
-> !SMP
->
-> Peter Zijlstra (1):
->       sched: make plist a library facility
->
->  init/Kconfig      |    1 -
->  kernel/sched.c    |   12 ++-
->  kernel/sched_rt.c |  372
-> ++++++++++++++++++++++++++++++++++------------------
->  lib/Kconfig       |    6 -
->  lib/Makefile      |    4 +-
->  5 files changed, 255 insertions(+), 140 deletions(-)
->
->
->  =20
-
-
-
---------------enig99955A69452C03ED1B28036A
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAkl3YWEACgkQlOSOBdgZUxmZkgCdGH81CVrIM5ms43BhwHNcnLU9
-xrIAn1T1tcik34OP/5iR0Zpt83+0wYJ9
-=Qcrk
------END PGP SIGNATURE-----
-
---------------enig99955A69452C03ED1B28036A--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
