@@ -1,106 +1,64 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Which version of preempt_realtime to use?
-Date: Sun, 25 Jan 2009 12:08:56 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0901251159240.3424@localhost.localdomain>
-References: <1232366467.31686.10.camel@localhost.localdomain>  <49748567.30201@osadl.org> <4974E686.60105@hedrich-winders.com>  <20090120074903.GX29067@pengutronix.de> <6d09081c0901200030o3eeb9145m4540631a80f442bb@mail.gmail.com>
+From: Bastien ROUCARIES <roucaries.bastien@gmail.com>
+Subject: Re: [RT] [RFC] simple SMI detector
+Date: Sun, 25 Jan 2009 12:49:18 +0100
+Message-ID: <195c7a900901250349t6c0cdc73gdbd71a9f87151d72@mail.gmail.com>
+References: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>
+	 <75b66ecd0901231833j2fda4554sb0f47457ab838566@mail.gmail.com>
+	 <alpine.LFD.2.00.0901241716540.3424@localhost.localdomain>
+	 <1232845026.3990.71.camel@perihelion.bos.jonmasters.org>
+	 <1232849565.29318.112.camel@sven.thebigcorporation.com>
+	 <20090125040246.GE9216@mit.edu>
+	 <alpine.LFD.2.00.0901251035050.3424@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
-	=?ISO-8859-15?Q?J=FCrgen_Mell?= <mell@hedrich-winders.com>,
-	Carsten Emde <Carsten.Emde@osadl.org>, esn@terma.com,
-	linux-rt-users@vger.kernel.org
-To: Pradyumna Sampath <pradysam@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Theodore Tso <tytso@mit.edu>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Lee Revell <rlrevell@joe-job.com>,
+	linux-rt-users@vger.kernel.org,
+	LKML <linux-kernel@vger.kernel.org>,
+	williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:39213 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752312AbZAYLJO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 Jan 2009 06:09:14 -0500
-In-Reply-To: <6d09081c0901200030o3eeb9145m4540631a80f442bb@mail.gmail.com>
+Received: from fg-out-1718.google.com ([72.14.220.152]:23208 "EHLO
+	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752680AbZAYLtV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 25 Jan 2009 06:49:21 -0500
+In-Reply-To: <alpine.LFD.2.00.0901251035050.3424@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Prady,
+On Sun, Jan 25, 2009 at 10:40 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Sat, 24 Jan 2009, Theodore Tso wrote:
+>> On Sun, Jan 25, 2009 at 01:12:45PM +1100, Sven-Thorsten Dietrich wrote:
+>> I will also note that for some applications (i.e., military hardware
+>> running under battle conditions), where it might be that running the
+>> hardware beyond its thermal limits might actually be *desirable*.
+>> After all, an extra 15 minutes of running beyond thermal limits that
+>> eventually causes the CPU to get flakey might be worth it if the
+>> alternative is the ship getting sunk because the BIOS decided that
+>> shutting down the CPU to save it from thermal damage was more
+>> important than say, running the anti-aircraft guns....
+>
+> In that case the system designer knows exactly what he is doing and he
+> is aware of the consequences.
+>
+> My concern about the SMI disable module is that it can damage Joe
+> users hardware. I have at least two reports where the CPU got fried
+> and some others where people got confused because chips started
+> behaving weird and it took quite a time to figure out that they used
+> the SMI disabler. A big fat warning about this code is definitely
+> necessary.
+>
+> Thanks,
 
-On Tue, 20 Jan 2009, Pradyumna Sampath wrote:
 
-> Hi Robert, Jurgen,
-> 
-> On Tue, Jan 20, 2009 at 1:19 PM, Robert Schwebel
-> <r.schwebel@pengutronix.de> wrote:
-> >
-> > Can you reproduce these long latencies with cyclictest, or does it only
-> > happen with your code?
-> >
-> 
-> A few months ago, I had hit some really long latencies when ptpd (1588
-> time synch) was trying to synchronize from 1970 to the current time.
-> After the time change we could observe some really long latencies.
-> Maybe, your device might also be
-> 
-> Here is the post I made about it.
-> http://marc.info/?l=linux-rt-users&m=122111918015981&w=4
+I suppose the non joe user could flash their motherboard with
+linuxcore and therefore do not distrub by SMI :)
 
-Fix for the kernel warning is below. The warning is a false positive
-caused by the huge time jump.
+Regards
 
-You said that your application is showing weird behaviour after the
-time was set. 
-
-Is your application using CLOCK_REALTIME ABSTIME timers ? We have had
-bug reports in the past where people run into problems with code like
-that:
-
-	while (1) {
-	      clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next, NULL);
-	      ...
-	      next += interval;
-	}
-
-If the clock is set into the future then the above loop will try to
-catch up for quite a while until next is past now. Using
-CLOCK_REALTIME/ABSTIME timers needs to be aware of the fact that
-CLOCK_REALTIME can be set and handle such a case gracefully.
-
-Thanks,
-
-	tglx
----
-
-Subject: hrtimer: prevent negative expiry value after clock_was_set()
-From: Thomas Gleixner <tglx@linutronix.de>
-Date: Sun, 25 Jan 2009 11:31:36 +0100
-
-Impact: prevent false positive WARN_ON() in clockevents_program_event()
-
-clock_was_set() changes the base->offset of CLOCK_REALTIME and
-enforces the reprogramming of the clockevent device to expire timers
-which are based on CLOCK_REALTIME. If the clock change is large enough
-then the subtraction of the timer expiry value and base->offset can
-become negative which triggers the warning in
-clockevents_program_event(). 
-
-Check the subtraction result and set a negative value to 0.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
----
- kernel/hrtimer.c |    7 +++++++
- 1 file changed, 7 insertions(+)
-
-Index: linux-2.6-rt/kernel/hrtimer.c
-===================================================================
---- linux-2.6-rt.orig/kernel/hrtimer.c
-+++ linux-2.6-rt/kernel/hrtimer.c
-@@ -405,6 +405,13 @@ static void hrtimer_force_reprogram(stru
- 			continue;
- 		timer = rb_entry(base->first, struct hrtimer, node);
- 		expires = ktime_sub(timer->expires, base->offset);
-+		/*
-+		 * clock_was_set has changed base->offset, so the
-+		 * result might be negative. Fix it up to prevent a
-+		 * false positive in clockevents_program_event()
-+		 */
-+		if (expires.tv64 < 0)
-+			expires.tv64 = 0;
- 		if (expires.tv64 < cpu_base->expires_next.tv64)
- 			cpu_base->expires_next = expires;
- 	}
+Bastien
