@@ -1,68 +1,42 @@
-From: Theodore Tso <tytso@mit.edu>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RT] [RFC] simple SMI detector
-Date: Sat, 24 Jan 2009 23:02:46 -0500
-Message-ID: <20090125040246.GE9216@mit.edu>
-References: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org> <75b66ecd0901231833j2fda4554sb0f47457ab838566@mail.gmail.com> <alpine.LFD.2.00.0901241716540.3424@localhost.localdomain> <1232845026.3990.71.camel@perihelion.bos.jonmasters.org> <1232849565.29318.112.camel@sven.thebigcorporation.com>
+Date: Sun, 25 Jan 2009 10:34:38 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0901251032060.3424@localhost.localdomain>
+References: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>  <75b66ecd0901231833j2fda4554sb0f47457ab838566@mail.gmail.com>  <alpine.LFD.2.00.0901241716540.3424@localhost.localdomain> <1232845026.3990.71.camel@perihelion.bos.jonmasters.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Jon Masters <jcm@redhat.com>, Thomas Gleixner <tglx@linutronix.de>,
-	Lee Revell <rlrevell@joe-job.com>,
-	linux-rt-users@vger.kernel.org,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Lee Revell <rlrevell@joe-job.com>, linux-rt-users@vger.kernel.org,
 	LKML <linux-kernel@vger.kernel.org>,
 	williams <williams@redhat.com>,
 	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: Jon Masters <jcm@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from thunk.org ([69.25.196.29]:33384 "EHLO thunker.thunk.org"
+Received: from www.tglx.de ([62.245.132.106]:36980 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755625AbZAYECy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 Jan 2009 23:02:54 -0500
-Content-Disposition: inline
-In-Reply-To: <1232849565.29318.112.camel@sven.thebigcorporation.com>
+	id S1751806AbZAYJfE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 25 Jan 2009 04:35:04 -0500
+In-Reply-To: <1232845026.3990.71.camel@perihelion.bos.jonmasters.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Jan 25, 2009 at 01:12:45PM +1100, Sven-Thorsten Dietrich wrote:
-> Latency-friendly SMI implementations may be found in some systems, and
-> not so much in others.
+On Sat, 24 Jan 2009, Jon Masters wrote:
+> > The only reasonable thing you can do on a SMI plagued system is to
+> > identify the device which makes use of SMIs. Legacy ISA devices and
+> > USB are usually good candidates. If that does not help, don't use it
+> > for real-time :)
 > 
-> It should be up to the promotional divisions of the particular hardware
-> suppliers to assess the market pressure, and to report the performance
-> advantages of their specific systems.
+> Indeed. This is why I wrote an smi_detector that sits in kernel space
+> and can be reasonably sure measured discrepancies are attributable to
+> SMI behavior. We want to log and detect such things before RT systems
+> are deployed, not have users actively trying to work around SMI overhead
+> after the fact.
 
-They definitely exist; I spent quite a bit of time working with IBM
-hardware engineers on what we called "SMI remediation".  In some cases
-it was necessary to have some custom kernel and/or user space code to
-run (at background priority) maintenance work such as predictive
-failure calculations that really didn't need to be done at SMI
-stop-the-OS-on-all-cpus priority, but which hardware manufacturers
-would do at the SMI level to avoid needing to create
-motherboard-specific device drivers and/or daemons for each OS that
-they might want to support.
+Agreed. A tool to detect SMI disturbance is a good thing. It just
+needs to be documented that users should take the results and talk to
+their board vendor. I know that off the shelf hardware will not be
+fixed, but industrial grade hardware vendors usually have an interest
+to get such problems resolved.
 
-> I envision documentation of these specs, in a similar fashion to the
-> manner in which CPU clock-cycles are documented for specific instruction
-> executions - for those systems eligible (certified?) for low-latency
-> operation.
+Thanks,
 
-I'm not sure exactly how one would do this certification, but I agree
-that some kind of "real-time ready" logo/certification program would
-make a huge amount of sense, with some standardized metrics of maximum
-time spent in an SMI routine, and under what circumstances (in some
-cases it occurs every 30-60 minutes; on other cases, only when the CPU
-is about to melt itself into slag, or when there are ECC errors, etc.)
-There is a huge difference between a system which stops the OS on all
-CPU's dead in its tracks for milliseconds once every 45 minutes,
-versus one which only triggers an SMI in extreme situations when the
-hardware is about to destroy itself.
-
-I will also note that for some applications (i.e., military hardware
-running under battle conditions), where it might be that running the
-hardware beyond its thermal limits might actually be *desirable*.
-After all, an extra 15 minutes of running beyond thermal limits that
-eventually causes the CPU to get flakey might be worth it if the
-alternative is the ship getting sunk because the BIOS decided that
-shutting down the CPU to save it from thermal damage was more
-important than say, running the anti-aircraft guns....
-
-							- Ted
+	tglx
