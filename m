@@ -1,58 +1,33 @@
-From: Pavel Machek <pavel@suse.cz>
+From: Jon Masters <jcm@redhat.com>
 Subject: Re: [RT] [RFC] simple SMI detector
-Date: Tue, 27 Jan 2009 12:22:22 +0100
-Message-ID: <20090127112222.GB21011@elf.ucw.cz>
+Date: Tue, 27 Jan 2009 10:17:44 -0500
+Message-ID: <1233069464.3797.0.camel@perihelion.bos.jonmasters.org>
 References: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>
+	 <20090127112222.GB21011@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org,
 	LKML <linux-kernel@vger.kernel.org>,
 	williams <williams@redhat.com>,
 	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: Jon Masters <jcm@redhat.com>
+To: Pavel Machek <pavel@suse.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from atrey.karlin.mff.cuni.cz ([195.113.26.193]:56965 "EHLO
-	atrey.karlin.mff.cuni.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753123AbZA0LWg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Jan 2009 06:22:36 -0500
-Content-Disposition: inline
-In-Reply-To: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>
+Received: from mx2.redhat.com ([66.187.237.31]:33547 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751727AbZA0PRt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Jan 2009 10:17:49 -0500
+In-Reply-To: <20090127112222.GB21011@elf.ucw.cz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
+On Tue, 2009-01-27 at 12:22 +0100, Pavel Machek wrote:
 
-> In case anyone wants to play with it, and especially help clean it up :)
-> 
-> SMI events are particularly unhelpful on Real Time systems because we
-> effectively have the CPU stolen from under us. We can't prevent this
-> easily without BIOS vendors/system vendor co-operation, but we can help
-> to diagnose and log that these are occuring...which can be very helpful
-> too.
-> 
-> Cheers,
-> 
-> Jon.
-> 
+> Please use Kconfig here.
 
-> This patch adds the module smi_detector under drivers/misc
-> 
-> Code from Jon Masters with small changes from Luis Goncalves and
-> documentation from Clark Williams.
-> 
-> ---
-> diff -uNp a/drivers/misc/Makefile b/drivers/misc/Makefile
-> --- a/drivers/misc/Makefile	2009-01-09 13:25:31.000000000 -0200
-> +++ b/drivers/misc/Makefile	2009-01-15 10:55:58.000000000 -0200
-> @@ -18,3 +18,5 @@ obj-$(CONFIG_SONY_LAPTOP)	+= sony-laptop
->  obj-$(CONFIG_THINKPAD_ACPI)	+= thinkpad_acpi.o
->  obj-$(CONFIG_FUJITSU_LAPTOP)	+= fujitsu-laptop.o
->  obj-$(CONFIG_EEPROM_93CX6)	+= eeprom_93cx6.o
-> +obj-m				+= smi_detector.o
-> +
+Oops. I didn't notice that...someone else did the build and config bits
+after I posted the module. Thanks, I'll get that fixed and repost!
 
-Please use Kconfig here.
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Jon.
+
+
