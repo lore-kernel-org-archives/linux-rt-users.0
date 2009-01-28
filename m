@@ -1,42 +1,51 @@
-From: Len Brown <lenb@kernel.org>
-Subject: Re: [RT] [RFC] simple SMI detector
-Date: Tue, 27 Jan 2009 13:00:42 -0500 (EST)
-Message-ID: <alpine.LFD.2.00.0901271249460.19655@localhost.localdomain>
-References: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>
+From: Claus Gindhart <claus.gindhart@kontron.com>
+Subject: Realtime capability of ioctl() vs. read() and write()
+Date: Wed, 28 Jan 2009 08:34:27 +0100
+Message-ID: <200901280834.28139.claus.gindhart@kontron.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org,
-	LKML <linux-kernel@vger.kernel.org>,
-	williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: Jon Masters <jcm@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756646AbZA0SBT@vger.kernel.org>
-In-reply-to: <1232751312.3990.59.camel@perihelion.bos.jonmasters.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: klaus weschmann <klaus.weschmann@kontron.com>,
+	Jochen Beier <jochen.beier@kontron.com>
+To: linux-rt-users@vger.kernel.org,
+	Gerd Koenig <gerd.koenig@kontron.com>,
+	Peter Widmann <peter.widmann@kontron.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kontron-modular.com ([213.179.130.140]:17652 "EHLO
+	mail.kontron-modular.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750839AbZA1Htt (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 Jan 2009 02:49:49 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Is it possible that if the detector is running,
-it may prevent (delay) the thing it is trying to detect?
+I am running a Linux 2.6.24.7-rt21 Kernel on our HW.
 
-Eg. some random AML gets interpreted by the kernel,
-it needs to touch an MSR, but MSRs are not accessible
-from AML, so it triggeres an SMI by touching a magic IO address
-with a magic value.
+This HW contains a number of IO-Ports, and the drivers for these IO-Ports are 
+designed in a way, that various ioctl() function provide the interface to 
+these Ports.
 
-So in this case, the random AML may not run until after
-the detector has stopped running, because the detector
-prevented some random user-space distro value-add
-from polling the battery or the temperature or something...
+Now, i recognized, that processes, which are using such ioctl()'s, absolutely 
+do not run in realtime (regardless on the priority). If i cat a huge file to 
+a /dev/ttyX device, the process jitters for many milliseconds.
 
-The other example that comes to mind is that dreaded
-USB PS/2 emulation done via SMM.
+This does NOT happen, if i modify the driver and the user space process to 
+access IO's via read() and write() instead of ioctl()'s.
 
-FWIW I detest SMM as much as any OS person should.
-But I also acknowledge that it is virtually impossible to prevent
-BIOS developers from giving it up.  We OS types have proposed an
-"SMI has happened bit or counter" many times,
-even though we'd rather have a "SMM disable" bit:-)
+My question is: Is it a known and intended behaviour, that ioctl()'s ruin 
+realtime behaviour, and that IO's should only be accessed via read() and 
+write() ?
+I didnt find any documentation, which would advice me not to use ioctl() in 
+realtime applications.
 
-cheers,
---
-Len Brown, Intel Open Source Technology Center
+-- 
+Mit freundlichen Gruessen / Best regards
+
+Claus Gindhart
+SW R&D
+Kontron Modular Computers
+phone :++49 (0)8341-803-374
+mailto:claus.gindhart@kontron-modular.com
+http://www.kontron.com
