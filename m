@@ -1,103 +1,117 @@
-From: Claus Gindhart <claus.gindhart@kontron.com>
-Subject: Re: Realtime capability of ioctl() vs. read() and write()
-Date: Wed, 28 Jan 2009 15:15:57 +0100
-Message-ID: <200901281515.57813.claus.gindhart@kontron.com>
-References: <200901280834.28139.claus.gindhart@kontron.com> <CEE27071B8F0914B91B3076CEB63C2B6080240F7@de01ex08.GLOBAL.JHCN.NET>
+From: =?UTF-8?B?SsO8cmdlbiBNZWxs?= <mell@hedrich-winders.com>
+Subject: Re: Which version of preempt_realtime to use?
+Date: Wed, 28 Jan 2009 20:32:47 +0100
+Message-ID: <4980B2DF.5030106@hedrich-winders.com>
+References: <1232366467.31686.10.camel@localhost.localdomain>	 <49748567.30201@osadl.org>  <4974E686.60105@hedrich-winders.com> <1232610029.26807.8.camel@localhost.localdomain>
+Reply-To: mell@hedrich-winders.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Carsten Emde <Carsten.Emde@osadl.org>,
+	linux-rt-users@vger.kernel.org
+To: esn@terma.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kontron-modular.com ([213.179.130.140]:38305 "EHLO
-	mail.kontron-modular.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751051AbZA1OQB (ORCPT
+Received: from dispoweb.ifw.uni-hannover.de ([130.75.23.4]:44381 "EHLO
+	ketschua.hedrich-winders.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751069AbZA1Tct (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Jan 2009 09:16:01 -0500
-In-Reply-To: <CEE27071B8F0914B91B3076CEB63C2B6080240F7@de01ex08.GLOBAL.JHCN.NET>
-Content-Disposition: inline
+	Wed, 28 Jan 2009 14:32:49 -0500
+In-Reply-To: <1232610029.26807.8.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Andreas,
+Esben,
+> On Mon, 2009-01-19 at 21:45 +0100, J=C3=BCrgen Mell wrote:
+>  =20
+>>> Esben,
+>>>
+>>>  =20
+>>>      =20
+>>>> I am going to suggest that we use preempt_realtime for a _real_ pr=
+oject
+>>>> (i.e. costumers will depend on it). We will run on standeard x86 (=
+maybe
+>>>> x86_64) hardware and will only need serial interfaces for realtime
+>>>> purposes. Security is not an issue. Which version of preempt_realt=
+ime
+>>>> should I pick?
+>>>>    =20
+>>>>        =20
+>>> The latest and greatest *and* most stable version is 2.6.24.7-rt26.=
+ As
+>>> far as I know (but maybe others know better), there are no unresolv=
+ed
+>>> issues with this "Latest Stable". The kernel release 2.6.24 may not
+>>> contain sufficient architecture support for PPC and ARM, but the la=
+rge
+>>> majority of x86 based processors and chipsets is well supported.
+>>>
+>>> Please report, if anything does not work as expected.
+>>>  =20
+>>>      =20
+>> The only thing which is missing for me from the 2.6.24.7-rt series i=
+s
+>> the patch
+>> "x86-fpu-fix-config_preempt-y-corruption-of-application-s-fpu-stack.=
+patch"
+>> , GIT commit
+>>  870568b39064cab2dd971fe57969916036982862 from mainline 2.6.25. This
+>> might cause trouble with applications which are using floating point
+>> arithmetics. Otherwise I am using the 2.6.24.7-rt series on a machin=
+e
+>> control for a 16 axes machine and it is working mostly well. There a=
+re
+>> only some points where I get big delays (up to some milliseconds) wi=
+th
+>> my timer routine, where normally delays are below 50 microseconds. U=
+p to
+>> now I could not find the application ( X ??) which is causing this.
+>>
+>> Bye,
+>>            J=C3=BCrgen
+>>
+>>    =20
+Thomas Gleixner, Carsten Emde and OSADL helped to track down the
+problem. The latency occurs while the X server is calling cache
+invalidate instructions in the drm code. According to Thomas, this is a
+known problem and might be addressed in later kernel versions. Thomas i=
+s
+clarifying the situation with the drm developers.
 
-yes, this works perfectly, thank you. The modification immediately eliminated 
-my task delays.
-However, this modification requires some additional modifications in the 
-driver, like described in 
-http://kerneltrap.org/mailarchive/linux-kernel/2008/1/8/548252
-But that's easy now !
+=46or the time being, I disabled the i810 drm driver and switched to th=
+e
+standard framebuffer device. My test machine is running now for two day=
+s
+with a maximum latency detected by cyclictest of 110 micro-seconds (38
+=C2=B5s average), which is completely suitable for my application. The
+performance impact of the frame buffer driver versus the i810 driver is
+not too bad so I can live pretty well with this solution.
 
-Claus
+Many thanks to Thomas, Carsten and the people at OSADL for their help!
 
+Bye,
+              J=C3=BCrgen
 
-On Wednesday 28 January 2009 09:09:37 am Lampersperger Andreas wrote:
-> Hello,
->
-> try to use .unlocked_ioctl instead of .ioctl for your drivers
-> file_operations struct.
->
-> Andreas
->
-> > -----Original Message-----
-> > From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> > owner@vger.kernel.org] On Behalf Of Claus Gindhart
-> > Sent: Wednesday, January 28, 2009 8:34 AM
-> > To: linux-rt-users@vger.kernel.org; Gerd Koenig; Peter Widmann
-> > Cc: klaus weschmann; Jochen Beier
-> > Subject: Realtime capability of ioctl() vs. read() and write()
-> >
-> > I am running a Linux 2.6.24.7-rt21 Kernel on our HW.
-> >
-> > This HW contains a number of IO-Ports, and the drivers for these IO-
-> > Ports are
-> > designed in a way, that various ioctl() function provide the interface
-> > to
-> > these Ports.
-> >
-> > Now, i recognized, that processes, which are using such ioctl()'s,
-> > absolutely
-> > do not run in realtime (regardless on the priority). If i cat a huge
-> > file to
-> > a /dev/ttyX device, the process jitters for many milliseconds.
-> >
-> > This does NOT happen, if i modify the driver and the user space process
-> > to
-> > access IO's via read() and write() instead of ioctl()'s.
-> >
-> > My question is: Is it a known and intended behaviour, that ioctl()'s
-> > ruin
-> > realtime behaviour, and that IO's should only be accessed via read()
-> > and
-> > write() ?
-> > I didnt find any documentation, which would advice me not to use
-> > ioctl() in
-> > realtime applications.
-> >
-> > --
-> > Mit freundlichen Gruessen / Best regards
-> >
-> > Claus Gindhart
-> > SW R&D
-> > Kontron Modular Computers
-> > phone :++49 (0)8341-803-374
-> > mailto:claus.gindhart@kontron-modular.com
-> > http://www.kontron.com
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-rt-
-> > users" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--=20
+J=C3=BCrgen Mell (Software-Entwicklung)           mell@hedrich.com
+Tel.:  +49-511-762-18226                     http://www.hedrich.com
+=46AX :  +49-511-762-18225
+Mobil: +49-160-7428156
+-----------------------------------------------------------------------=
+---------
+HEDRICH winding systems GmbH
+An der Universit=C3=A4t 2 (im PZH)
+D-30823 Garbsen (GERMANY)
+-----------------------------------------------------------------------=
+---------
+Gesch=C3=A4ftsf=C3=BChrer: Karsten Adam, Markus Gerth, Friedrich Frech
+Handelsregister: Wetzlar, HRB 4768
+Steuernr.: 020/235/20110                     USt-IdNr.: DE 258258279
+-----------------------------------------------------------------------=
+---------=20
 
-
-
--- 
-Mit freundlichen Gruessen / Best regards
-
-Claus Gindhart
-SW R&D
-Kontron Modular Computers
-phone :++49 (0)8341-803-374
-mailto:claus.gindhart@kontron-modular.com
-http://www.kontron.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
