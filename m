@@ -1,32 +1,61 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: 2.6.26 freezes since rt13
-Date: Thu, 29 Jan 2009 14:27:22 -0600
-Message-ID: <20090129142722.5825d4eb@torg>
-References: <4981AB45.8000202@gmail.com>
+From: Jon Masters <jonathan@jonmasters.org>
+Subject: Re: Creating the RT git tree
+Date: Thu, 29 Jan 2009 16:06:40 -0500
+Message-ID: <1233263200.3937.44.camel@perihelion.bos.jonmasters.org>
+References: <alpine.DEB.1.10.0812161556460.25356@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Aymeric <ejisneos@gmail.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>,
+	Clark Williams <clark.williams@gmail.com>,
+	Gregory Haskins <ghaskins@novell.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:52295 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751441AbZA2U1a (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2009 15:27:30 -0500
-In-Reply-To: <4981AB45.8000202@gmail.com>
+Received: from dallas.jonmasters.org ([72.29.103.172]:41324 "EHLO
+	dallas.jonmasters.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751348AbZA2VGq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Jan 2009 16:06:46 -0500
+In-Reply-To: <alpine.DEB.1.10.0812161556460.25356@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUaHUs
-IDI5IEphbiAyMDA5IDE0OjEyOjM3ICswMTAwDQpBeW1lcmljIDxlamlzbmVvc0BnbWFpbC5jb20+
-IHdyb3RlOg0KDQo+IA0KPiBJIGFsc28gd2FudGVkIHRvIGFzayB3aHkgdGhlIHBhdGNoIHlvdSBn
-YXZlIGF0IHRoZSBiZWdpbm5pbmcgb2YgamFudWFyeSwNCj4gdG8gbWFrZSBhbHNhX3NlcSB3b3Jr
-LCBoYXNuJ3QgYmVlbiBhcHBsaWVkIHRvIHRoZSBvZmZpY2lhbCBSVCBrZXJuZWwsDQo+IGV2ZW4g
-dG8gdGhlIEdJVCBvbmUsIGJlY2F1c2UgSSBzeXN0ZW1hdGljYWxseSBoYXZlIHRvIHVzZSBpdCBl
-YWNoIHRpbWUgSQ0KPiBjb21waWxlIGEgbmV3IHZlcnNpb24gb2YgdGhlIFJUIHBhdGNoLg0KPiAN
-Cg0KSXQncyBpbiAyLjYuMjYuOC1ydDE0LiBMb29rcyBsaWtlIGl0IGdvdCBsb3N0IGluIHRoZSBz
-aHVmZmxlIGZvciBhIGJpdC4gDQoNCkNsYWtyDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0t
-LQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa21D
-RVM0QUNna1FIeXVqLytUVEVwMDFSZ0NncGJSRWpmc3p1SjBxU3JqaEdCbjNrV1lvDQpKNmNBblJ5
-ajFqVnZMMW90S3dwcitMQm5zWkNNT0thNQ0KPUhuS08NCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUt
-LS0tLQ0K
+On Tue, 2008-12-16 at 17:36 -0500, Steven Rostedt wrote:
+
+> This email is an explanation on how the RT git tree is created. Note, the 
+> tree is still in a "broken" state. But it now compiles!
+
+Yay! I didn't spend enough time on this yet...but I'm poking at the
+threadirqs branch at the moment. Some things I figured out:
+
+*). The branches all seem to be remote. So you want to do something
+like:
+
+git checkout -b threadirqs origin/rt/threadirqs
+
+(I guess on your box they're not referenced relative to origin :P)
+
+*). I might not be the best git user on the planet (trying to fix that)
+but I would really like to just see the patches that are specific to a
+given topic branch, without the merge noise. For example, a git log on
+the threadirqs branch shows me all the other patches in linus' tree as
+merges are done. I could do a git log --grep="threadirqs" but is there a
+better way? How do I instruct git to show me just the patches added
+specifically in threadirqs?
+
+Otherwise, looks cool. I've got a few machines I'd love to setup for
+testing of the RT tree at home - if it's useful I have a 32-bit
+Powerbook and a 64-bit IBM OpenPOWER (POWER5) that you might not
+currently be doing build tests on?
+
+I think I'll work on upstreamable threadirqs via my own branch of linus
+rather than the RT tree - this should be pretty independent of RT for
+now.
+
+Jon.
+
+
