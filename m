@@ -1,7 +1,7 @@
 From: Steven Rostedt <srostedt@redhat.com>
 Subject: Re: 2.6.28-rt on PowerPC
 Date: Thu, 29 Jan 2009 18:00:43 -0500
-Message-ID: <1233270043.3833.57.camel__24714.4399480478$1233270481$gmane$org@localhost.localdomain>
+Message-ID: <1233270043.3833.57.camel__14237.897625617$1233270512$gmane$org@localhost.localdomain>
 References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -9,14 +9,10 @@ Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org,
 	linux-rt-users@vger.kernel.org
 To: avorontsov@ru.mvista.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:47156 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754017AbZA2XGD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2009 18:06:03 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759139AbZA2XGX@vger.kernel.org>
 In-Reply-To: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 On Fri, 2009-01-30 at 00:34 +0300, Anton Vorontsov wrote:
@@ -223,5 +219,3 @@ It is, but it is called convert-locks-list ;-)
 Yeah, you can blame me for bad naming.
 
 -- Steve
-
-
