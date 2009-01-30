@@ -1,45 +1,42 @@
-From: Steven Rostedt <srostedt@redhat.com>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: 2.6.28-rt on PowerPC
-Date: Thu, 29 Jan 2009 20:51:09 -0500
-Message-ID: <1233280269.3833.60.camel@localhost.localdomain>
+Date: Fri, 30 Jan 2009 13:11:50 +1100
+Message-ID: <1233281510.18767.17.camel__46851.0121376768$1233281637$gmane$org@pasglop>
 References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
-	 <1233270043.3833.57.camel@localhost.localdomain>
-	 <49823A13.50703@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: avorontsov@ru.mvista.com, linux-kernel@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, linux-rt-users@vger.kernel.org
-To: frank.rowand@am.sony.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:35304 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753279AbZA3Bv0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2009 20:51:26 -0500
-In-Reply-To: <49823A13.50703@am.sony.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linuxppc-dev@ozlabs.org, Steven Rostedt <srostedt@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: avorontsov@ru.mvista.com
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
+In-Reply-To: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-On Thu, 2009-01-29 at 15:21 -0800, Frank Rowand wrote:
-> Steven Rostedt wrote:
+> This is trivially solved by converting arch/powerpc/sysdev/ipic.c
+> back to spinlocks (ipic_lock).
+> 
+> Assuming that converting-back is automatic, there are few other
+> chained interrupt controllers you might want to convert-back:
+> 
+> arch/powerpc/sysdev/i8259.c (i8259_lock)
+> arch/powerpc/sysdev/mpic.c (mpic_lock)
+> arch/powerpc/sysdev/qe_lib/qe_ic.c (qe_ic_lock)
 
-> Your email can at an opportune time for me...  I was starting to try
-> 2.6.28-rt on ARM and quickly came to the conclusion that the arch
-> patches weren't the focus yet.  But I'm currently side-tracked with
-> getting my board to even boot a vanilla 2.6.28 kernel first.  Do
-> you expect to get to the arches in the next week or two?  If not,
-> I may head down that path for ARM myself.
+Except that a bunch of those can be both primary and chained... It's
+simply not a solution to have to "convert" interrupt controller code to
+use a different locking scheme depending on whether they are chained or
+primary...
 
-I'm going to try to apply the arch patches, but I do not have an arm
-board myself. I do have a PPC64 box that works, but that's about it. I
-have a powerbook too, but that box has never been able to boot an -rt
-kernel. Who knows, maybe this one will boot.
-
-I will create an rt/arm and an rt/ppc branch for the specific changes on
-each. I'll try to get them next week (maybe tomorrow if things go better
-than planned).
-
--- Steve
-
-
+Cheers,
+Ben.
