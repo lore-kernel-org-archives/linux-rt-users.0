@@ -1,7 +1,7 @@
 From: Steven Rostedt <srostedt@redhat.com>
 Subject: Re: 2.6.28-rt on PowerPC
 Date: Fri, 30 Jan 2009 12:57:01 -0500
-Message-ID: <1233338221.3833.65.camel__38269.9899412275$1233338648$gmane$org@localhost.localdomain>
+Message-ID: <1233338221.3833.65.camel__42182.1447126151$1233338660$gmane$org@localhost.localdomain>
 References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
 	 <1233270043.3833.57.camel@localhost.localdomain>
 	 <20090130174545.GA846@oksana.dev.rtsoft.ru>
@@ -11,14 +11,10 @@ Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org,
 	linux-rt-users@vger.kernel.org
 To: avorontsov@ru.mvista.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:46710 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752255AbZA3SC1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Jan 2009 13:02:27 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754984AbZA3SCi@vger.kernel.org>
 In-Reply-To: <20090130174545.GA846@oksana.dev.rtsoft.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 On Fri, 2009-01-30 at 20:45 +0300, Anton Vorontsov wrote:
@@ -130,5 +126,3 @@ archs will still have to wait. But thanks for taking the time to look at
 it. It gives me a preview to what I will need to deal with.
 
 -- Steve
-
-
