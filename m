@@ -1,19 +1,29 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
 Subject: Re: 2.6.28-rt on PowerPC
 Date: Sat, 31 Jan 2009 00:06:33 +0100
-Message-ID: <20090130230633.GG32026__13765.9039967277$1233356928$gmane$org@pengutronix.de>
-References: <20090129213429.GA29014@oksana.dev.rtsoft.ru> <1233270043.3833.57.camel@localhost.localdomain> <49823A13.50703@am.sony.com>
+Message-ID: <20090130230633.GG32026__7672.85707775063$1233356952$gmane$org@pengutronix.de>
+References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
+	<1233270043.3833.57.camel@localhost.localdomain>
+	<49823A13.50703@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: Steven Rostedt <srostedt@redhat.com>, avorontsov@ru.mvista.com,
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, Uwe Kleine-Koenig <ukl@pengutronix.de>,
 	linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org,
-	linux-rt-users@vger.kernel.org,
-	Uwe Kleine-Koenig <ukl@pengutronix.de>
+	Steven Rostedt <srostedt@redhat.com>
 To: Frank Rowand <frank.rowand@am.sony.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757652AbZA3XHT@vger.kernel.org>
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
 Content-Disposition: inline
 In-Reply-To: <49823A13.50703@am.sony.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Frank,
