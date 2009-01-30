@@ -1,221 +1,132 @@
-Return-Path: linux-kernel-owner@vger.kernel.org
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from mx2.redhat.com ([66.187.237.31]:46710 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752255AbZA3SC1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 30 Jan 2009 13:02:27 -0500
 Subject: Re: 2.6.28-rt on PowerPC
 From: Steven Rostedt <srostedt@redhat.com>
-In-Reply-To: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
+In-Reply-To: <20090130174545.GA846@oksana.dev.rtsoft.ru>
 References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
+	 <1233270043.3833.57.camel@localhost.localdomain>
+	 <20090130174545.GA846@oksana.dev.rtsoft.ru>
 Content-Type: text/plain
-Date: Thu, 29 Jan 2009 18:00:43 -0500
-Message-Id: <1233270043.3833.57.camel@localhost.localdomain>
+Date: Fri, 30 Jan 2009 12:57:01 -0500
+Message-Id: <1233338221.3833.65.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 To: avorontsov@ru.mvista.com
 Cc: linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org, linux-rt-users@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Fri, 2009-01-30 at 00:34 +0300, Anton Vorontsov wrote:
-> Hi Steven,
+On Fri, 2009-01-30 at 20:45 +0300, Anton Vorontsov wrote:
+> On Thu, Jan 29, 2009 at 06:00:43PM -0500, Steven Rostedt wrote:
+> [...]
+> > > BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
+> > > in_atomic(): 1 [00000100], irqs_disabled(): 0, pid: 7, name: sirq-net-rx/0
+> > > Call Trace:
+> > > [cf84bc20] [c0008be8] show_stack+0x4c/0x16c (unreliable)
+> > > [cf84bc60] [c001c194] __might_sleep+0xd8/0xf8
+> > > [cf84bc70] [c02b7768] rt_spin_lock+0x30/0x78
+> > > [cf84bc80] [c00800e0] kmem_cache_alloc+0x50/0x17c
+> > > [cf84bcb0] [c02568a4] ip_append_data+0x974/0x978
+> > > [cf84bd30] [c027aa0c] icmp_push_reply+0x54/0x128
+> > > [cf84bd50] [c027b59c] icmp_send+0x284/0x380
+> > > [cf84be40] [c0277328] __udp4_lib_rcv+0x3d4/0x5a0
+> > > [cf84bea0] [c0253208] ip_local_deliver_finish+0x74/0x128
+> [...]
+> > Turn on CONFIG_PREEMPT_TRACE (not TRACER) and it should show the
+> > location that left preemption disabled.
 > 
-> I know 2.6.28-rt isn't yet ready, but I could not resist to try
-> it anyway. ;-)
-> 
-> Here are few issues and ways to solve them:
-> 
-> Currently the -rt tree doesn't link for arch/powerpc:
-> 
->   LD      .tmp_vmlinux1
->   arch/powerpc/kernel/built-in.o: In function `show_interrupts':
->   (.text+0x27bc): undefined reference to `__call_bad_lock_func'
->   arch/powerpc/kernel/built-in.o: In function `show_interrupts':
->   (.text+0x28b0): undefined reference to `__call_bad_lock_func'
->   make: *** [.tmp_vmlinux1] Error 1
+> Thank you Steven, PREEMPT_TRACE is a great tool indeed (though on
+> PowerPC it doesn't work out of the box, but easily fixable).
 
-Thanks! I have not yet had the chance to apply any arch patches yet. I
-do plan on doing so after getting the code mostly working on x86.
+Cool, I'd be interested in those fixes.
 
 > 
-> This can be trivially fixed:
+> So, the result:
 > 
-> diff --git a/arch/powerpc/kernel/irq.c b/arch/powerpc/kernel/irq.c
-> index 838857f..cc7dd12 100644
-> --- a/arch/powerpc/kernel/irq.c
-> +++ b/arch/powerpc/kernel/irq.c
-> @@ -183,7 +183,7 @@ int show_interrupts(struct seq_file *p, void *v)
+> ---------------------------
+> | preempt count: 00000100 ]
+> | 1-level deep critical section nesting:
+> ----------------------------------------
+> .. [<c002d9fc>] .... local_bh_disable+0x1c/0x34
+> .....[<c02afef8>] ..   ( <= icmp_send+0xac/0x388)
+> 
+> icmp_send() calls icmp_xmit_lock() that disables bottom halves,
+> then icmp_send() calls ip_append_data() that tries to allocate
+> things with GFP_ATOMIC, which should be OK...
+
+I'll have a look at that code. to find out what's up with it.
+
+> 
+> I guess now this isn't true for -rt kernels, correct? A comment
+> in slab.c ("which in turn implies that nobody does allocations
+> from atomic contexts") seem to confirm this.
+> 
+> (A bit unrelated question: If that's how things work now (i.e.
+> GFP_ATOMIC is equal to GFP_KERNEL or vice-versa), how should we
+> allocate things in IRQF_NODELAY/TIMER interrupts?)
+
+Preallocate ;-)  Actually, we could never really allocate from NODELAY
+or TIMER interrupts in -rt. If we did, we were just lucky it worked.
+
+> 
+> Anyway, this snippet fixes the issue:
+> 
+> diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+> index 6bccfbe..4a4862b 100644
+> --- a/net/ipv4/icmp.c
+> +++ b/net/ipv4/icmp.c
+> @@ -222,6 +222,9 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+>  		local_bh_enable();
+>  		return NULL;
+>  	}
+> +#ifdef CONFIG_PREEMPT_RT
+> +	local_bh_enable();
+> +#endif
+
+That is definitely just a work around. I'll have to look at it to see
+the main problem.
+
+>  	return sk;
+>  }
 >  
->  	if (i < NR_IRQS) {
->  		desc = get_irq_desc(i);
-> -		acquire_lock_irqsave(&desc->lock, flags);
-> +		spin_lock_irqsave(&desc->lock, flags);
->  		action = desc->action;
->  		if (!action || !action->handler)
->  			goto skip;
-> @@ -204,7 +204,7 @@ int show_interrupts(struct seq_file *p, void *v)
->  			seq_printf(p, ", %s", action->name);
->  		seq_putc(p, '\n');
->  skip:
-> -		release_lock_irqrestore(&desc->lock, flags);
-> +		spin_unlock_irqrestore(&desc->lock, flags);
->  	} else if (i == NR_IRQS) {
->  #if defined(CONFIG_PPC32) && defined(CONFIG_TAU_INT)
->  		if (tau_initialized){
-> 
 > --
 > 
+> Now the kernel is able to boot up to the login prompt, cool!
 > 
+> But after a while this pops up:
 > 
-> While booting, this bug appears:
-> 
-> BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
-> in_atomic(): 1 [00010001], irqs_disabled(): 1, pid: 1, name: swapper
+> INFO: task sirq-high/0:4 blocked for more than 120 seconds.
+> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+> sirq-high/0   D 00000000     0     4      2
 > Call Trace:
-> [cf82f9a0] [c0008be8] show_stack+0x4c/0x16c (unreliable)
-> [cf82f9e0] [c001c184] __might_sleep+0xd8/0xf8
-> [cf82f9f0] [c02b7758] rt_spin_lock+0x30/0x78
-> [cf82fa00] [c001853c] ipic_mask_irq+0x3c/0xb0
-> [cf82fa20] [c0054064] handle_level_irq+0x40/0x178
-> [cf82fa40] [c00068ec] do_IRQ+0x68/0xe0
-> [cf82fa50] [c0012924] ret_from_except+0x0/0x14
-> --- Exception: 501 at internal_add_timer+0x4/0xe0
+> [cf839eb0] [60320800] 0x60320800 (unreliable)
+> [cf839f70] [c0009b34] __switch_to+0x50/0x74
+> [cf839f90] [c02ee48c] schedule+0x19c/0x380
+> [cf839fd0] [c00427ac] kthread+0x34/0x8c
+> [cf839ff0] [c001354c] kernel_thread+0x4c/0x68
+> ---------------------------
+> | preempt count: 00000002 ]
+> | 2-level deep critical section nesting:
+> ----------------------------------------
+> .. [<c02ee340>] .... schedule+0x50/0x380
+> .....[<c00427ac>] ..   ( <= kthread+0x34/0x8c)
+> .. [<c02f0700>] .... _spin_lock_irq+0x2c/0x4c
+> .....[<c02ee388>] ..   ( <= schedule+0x98/0x380)
 > 
-> This is trivially solved by converting arch/powerpc/sysdev/ipic.c
-> back to spinlocks (ipic_lock).
 > 
-> Assuming that converting-back is automatic, there are few other
-> chained interrupt controllers you might want to convert-back:
-> 
-> arch/powerpc/sysdev/i8259.c (i8259_lock)
-> arch/powerpc/sysdev/mpic.c (mpic_lock)
-> arch/powerpc/sysdev/qe_lib/qe_ic.c (qe_ic_lock)
+> And keeps popping up every 120 seconds, though both kernel and
+> userspace stay alive.
 
-Thanks! I'll add them to the file:
+Hmm, that will also take more looking into to. That is probably specific
+to PPC.
 
-	scripts/convert-locks-list
-
-
-> 
-> 
-> 
-> After this, kernel boots up to the userspace, but then bugs in the
-> middle (note: this is NFS boot, network activity etc.)...
-> 
-> INIT: version 2.86 booting
-> Starting the hotplug events dispatcher: udevd.
-> Synthesizing the initial hotplug events...done.
-> Waiting for /dev to be fully populated...done.
-> Activating swap...done.
-> Remounting root filesystem...done.
-> Checking all file systems: fsck
-> fsck 1.40 (29-Jun-2007)
-> Checking SELinux contexts: selinux-basics.
-> Starting network interfaces: done.
-> Starting portmap daemon....
-> Cleaning: /tmp /var/lock /var/run done.
-> Setting pseudo-terminal access permissions...done.
-> Updating /etc/motd...done.
-> INIT: Entering runlevel: 3
-> Starting irqbalance.
-> Starting system log daemon: syslogd
-> BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
-> in_atomic(): 1 [00000100], irqs_disabled(): 0, pid: 7, name: sirq-net-rx/0
-> Call Trace:
-> [cf84bc20] [c0008be8] show_stack+0x4c/0x16c (unreliable)
-> [cf84bc60] [c001c194] __might_sleep+0xd8/0xf8
-> [cf84bc70] [c02b7768] rt_spin_lock+0x30/0x78
-> [cf84bc80] [c00800e0] kmem_cache_alloc+0x50/0x17c
-> [cf84bcb0] [c02568a4] ip_append_data+0x974/0x978
-> [cf84bd30] [c027aa0c] icmp_push_reply+0x54/0x128
-> [cf84bd50] [c027b59c] icmp_send+0x284/0x380
-> [cf84be40] [c0277328] __udp4_lib_rcv+0x3d4/0x5a0
-> [cf84bea0] [c0253208] ip_local_deliver_finish+0x74/0x128
-> [cf84bec0] [c0252fd0] ip_rcv_finish+0x148/0x30c
-> [cf84bf00] [c0236774] netif_receive_skb+0x21c/0x2e8
-> [cf84bf30] [c0238ecc] process_backlog+0x98/0x138
-> [cf84bf60] [c0238b24] net_rx_action+0xd4/0x198
-> [cf84bf90] [c002989c] ksoftirqd+0x108/0x23c
-> [cf84bfd0] [c003c918] kthread+0x48/0x84
-> [cf84bff0] [c00120b0] kernel_thread+0x4c/0x68
-> BUG: scheduling while atomic: sirq-net-rx/0/7/0x10000101, CPU#0
-> Modules linked in:
-> Call Trace:
-> [cf84bee0] [c0008be8] show_stack+0x4c/0x16c (unreliable)
-> [cf84bf20] [c001e418] __schedule_bug+0x6c/0x80
-> [cf84bf30] [c02b5fdc] schedule+0x2e8/0x31c
-> [cf84bf70] [c001e460] __cond_resched+0x34/0x60
-> [cf84bf80] [c02b6348] _cond_resched+0x50/0x58
-> [cf84bf90] [c00298b8] ksoftirqd+0x124/0x23c
-> [cf84bfd0] [c003c918] kthread+0x48/0x84
-> [cf84bff0] [c00120b0] kernel_thread+0x4c/0x68
-
-Turn on CONFIG_PREEMPT_TRACE (not TRACER) and it should show the
-location that left preemption disabled.
-
-> 
-> 
-> And now this looks like not PowerPC specific... Converting mm/slab.c
-> back to spinlocks results in another, but similar bug in anther mm
-> routine:
-
-Oh, mm/slab.c should not have spinlocks.
-
-> 
-> BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
-> in_atomic(): 1 [00000001], irqs_disabled(): 0, pid: 1003, name: net.agent
-> Call Trace:
-> [cf057c40] [c0008be8] show_stack+0x4c/0x16c (unreliable)
-> [cf057c80] [c001c194] __might_sleep+0xd8/0xf8
-> [cf057c90] [c02b7768] rt_spin_lock+0x30/0x78
-> [cf057ca0] [c005d0ec] free_hot_cold_page+0xf8/0x35c
-> [cf057cc0] [c007f0b0] kmem_freepages+0xd8/0x134
-> [cf057cd0] [c007f620] slab_destroy+0x38/0xe0
-> [cf057cf0] [c007f814] free_block+0x14c/0x158
-> [cf057d30] [c007f174] cache_flusharray+0x68/0x150
-> [cf057d60] [c007f4fc] kmem_cache_free+0x110/0x140
-> [cf057d80] [c006eb04] remove_vma+0x78/0xc0
-> [cf057d90] [c006eccc] exit_mmap+0x180/0x208
-> [cf057dc0] [c00210c8] mmput+0x64/0x114
-> [cf057de0] [c008b580] exec_mmap+0xd8/0x1b4
-> [cf057e10] [c008b7c4] flush_old_exec+0x50/0x1d0
-> [cf057e40] [c00c2fac] load_elf_binary+0x2b0/0x96c
-> [cf057eb0] [c008ad6c] search_binary_handler+0xf4/0x31c
-> [cf057ef0] [c008c220] do_execve+0x1b4/0x1ec
-> [cf057f20] [c000983c] sys_execve+0x50/0x7c
-> [cf057f40] [c001228c] ret_from_syscall+0x0/0x38
-> --- Exception: c01 at 0xfeab104
->     LR = 0x10024540
-> 
-> ..proves that "convert-back" trick isn't panacea. ;-) So, before
-> I'll dig into this.. is this known issue? Any ideas of proper
-> fixing?
-> 
-> FWIW, following options enabled:
-> 
-> CONFIG_NO_HZ=y
-> CONFIG_HIGH_RES_TIMERS=y
-> CONFIG_PREEMPT_RT=y
-> CONFIG_PREEMPT=y
-> CONFIG_PREEMPT_RCU=y
-> CONFIG_PREEMPT_SOFTIRQS=y
-> CONFIG_PREEMPT_HARDIRQS=y
-> CONFIG_DEBUG_FS=y
-> CONFIG_DEBUG_KERNEL=y
-> CONFIG_SCHED_DEBUG=y
-> CONFIG_DEBUG_RT_MUTEXES=y
-> CONFIG_DEBUG_PI_LIST=y
-> CONFIG_DEBUG_SPINLOCK=y
-> CONFIG_DEBUG_SPINLOCK_SLEEP=y
-> CONFIG_DEBUG_BUGVERBOSE=y
-> CONFIG_SLAB=y
-> CONFIG_SLABINFO=y
-> # CONFIG_HIGHMEM is not set
-> 
-> Thanks,
-> 
-> p.s. Btw, having the convert-back script in scripts/ would be
-> useful. Could not find it anywhere.
-
-It is, but it is called convert-locks-list ;-)
-Yeah, you can blame me for bad naming.
+Again, my focus is currently on getting all the main pieces in. The
+archs will still have to wait. But thanks for taking the time to look at
+it. It gives me a preview to what I will need to deal with.
 
 -- Steve
 
