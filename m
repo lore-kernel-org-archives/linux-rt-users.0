@@ -1,7 +1,7 @@
 From: Robert Schwebel <r.schwebel@pengutronix.de>
 Subject: Re: 2.6.28-rt on PowerPC
 Date: Sat, 31 Jan 2009 00:06:33 +0100
-Message-ID: <20090130230633.GG32026__9605.06378110058$1233356927$gmane$org@pengutronix.de>
+Message-ID: <20090130230633.GG32026__13765.9039967277$1233356928$gmane$org@pengutronix.de>
 References: <20090129213429.GA29014@oksana.dev.rtsoft.ru> <1233270043.3833.57.camel@localhost.localdomain> <49823A13.50703@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-15
@@ -10,16 +10,11 @@ Cc: Steven Rostedt <srostedt@redhat.com>, avorontsov@ru.mvista.com,
 	linux-rt-users@vger.kernel.org,
 	Uwe Kleine-Koenig <ukl@pengutronix.de>
 To: Frank Rowand <frank.rowand@am.sony.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:47057 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756227AbZA3XHA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Jan 2009 18:07:00 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757652AbZA3XHT@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <49823A13.50703@am.sony.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 Frank,
 
