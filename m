@@ -1,75 +1,63 @@
-From: Anton Vorontsov <avorontsov@ru.mvista.com>
-Subject: [PATCH -rt] powerpc/tracing: Add support for "PREEMPT_TRACE" tracer
-Date: Sat, 31 Jan 2009 22:14:44 +0300
-Message-ID: <20090131191444.GA6896@oksana.dev.rtsoft.ru>
-References: <1233338221.3833.65.camel@localhost.localdomain>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
+Date: Sat, 31 Jan 2009 13:20:41 -0600
+Message-ID: <20090131132041.6b65408c@torg>
+References: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
+	<20090131085221.7fc4458d@torg>
+	<5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf8
-Cc: Paul Mackerras <paulus@samba.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Mark Knecht <markknecht@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft3.corbina.net ([85.21.88.6]:42360 "EHLO
-	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751517AbZAaTOq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Jan 2009 14:14:46 -0500
-Content-Disposition: inline
-In-Reply-To: <1233338221.3833.65.camel@localhost.localdomain>
+Received: from mx2.redhat.com ([66.187.237.31]:50674 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751430AbZAaTU4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 31 Jan 2009 14:20:56 -0500
+In-Reply-To: <5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The support is pretty straightforward: issue print_preempt_trace()
-just after the call trace.
-
-Without CONFIG_PREEMPT_TRACE=y the print_preempt_trace() call turns
-into no-op.
-
-Signed-off-by: Anton Vorontsov <avorontsov@ru.mvista.com>
----
-
-On Fri, Jan 30, 2009 at 12:57:01PM -0500, Steven Rostedt wrote:
-[...]
-> > > Turn on CONFIG_PREEMPT_TRACE (not TRACER) and it should show the
-> > > location that left preemption disabled.
-> > 
-> > Thank you Steven, PREEMPT_TRACE is a great tool indeed (though on
-> > PowerPC it doesn't work out of the box, but easily fixable).
-> 
-> Cool, I'd be interested in those fixes.
-
-Here it is. "ftrace: On PowerPC we don't need frame pointers for
-CALLER_ADDRs" patch (http://lkml.org/lkml/2009/1/31/141) is also
-needed for this to work.
-
-Thanks,
-
- arch/powerpc/kernel/process.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
-
-diff --git a/arch/powerpc/kernel/process.c b/arch/powerpc/kernel/process.c
-index 957bded..b8642bf 100644
---- a/arch/powerpc/kernel/process.c
-+++ b/arch/powerpc/kernel/process.c
-@@ -1020,7 +1020,7 @@ void show_stack(struct task_struct *tsk, unsigned long *stack)
- 	printk("Call Trace:\n");
- 	do {
- 		if (!validate_sp(sp, tsk, STACK_FRAME_OVERHEAD))
--			return;
-+			goto out;
- 
- 		stack = (unsigned long *) sp;
- 		newsp = stack[0];
-@@ -1049,6 +1049,8 @@ void show_stack(struct task_struct *tsk, unsigned long *stack)
- 
- 		sp = newsp;
- 	} while (count++ < kstack_depth_to_print);
-+out:
-+	print_preempt_trace(tsk);
- }
- 
- void dump_stack(void)
--- 
-1.5.6.5
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBTYXQs
+IDMxIEphbiAyMDA5IDA5OjU4OjI4IC0wODAwDQpNYXJrIEtuZWNodCA8bWFya2tuZWNodEBnbWFp
+bC5jb20+IHdyb3RlOg0KPiANCj4gQ2xhcmssDQo+ICAgIENPTkZJR19SVENfRFJWX0NNT1M9eSBp
+cyBzZXQuIEhvd2V2ZXIgYWxsIG9mIHRoZSBzcGVjaWZpYyBjaGlwDQo+IHZlcnNpb25zIGltbWVk
+aWF0ZWx5IGJlbG93IGl0IGFyZSBub3Qgc2V0IHNvIHdpdGhvdXQgYXQgbGVhc3Qgb25lIG9mDQo+
+IHRob3NlIGlzIHRoZSBDT05GSUdfUlRDX0RSVl9DTU9TIGRvaW5nIGFueXRoaW5nPw0KPiANCj4g
+ICAgSWYgYnkgY2hhbmdlIEkgbmVlZCB0byBzZXQgYXQgbGVhc3Qgb25lIG9mIHRob3NlIGNoaXAg
+b3B0aW9ucyBob3cNCj4gZG8gSSBkZXRlcm1pbmUgd2hhdCdzIG9uIHRoaXMgbW90aGVyYm9hcmQ/
+DQo+IA0KPiAgICBTY2FubmluZyBhcm91bmQgdGhpcyBhcmVhIEkgYWxzbyBub3RpY2UgdGhhdCBJ
+J3ZlIGdvaW5nIG5vbmUgb2YgdGhlDQo+IEkyQyBSVEMgZHJpdmVycyBzZWxlY3RlZCBlaXRoZXIu
+DQo+IA0KPiAgICBJIGhhdmVuJ3QgaGFkIHRpbWUgdG8gY2hlY2sgeWV0IGJ1dCB0aGUgMi42LjI3
+LWdlbnRvby1yOCBrZXJuZWwNCj4gZGlkbid0IGhhdmUgdGhpcyBwcm9ibGVtLiBJJ2xsIGNvbXBh
+cmUgLmNvbmZpZyBmaWxlcyBiZXR3ZWVuIHRoZSB0d28NCj4gYW5kIHNlZSB3aGF0IGRpZmZlcmVu
+Y2VzIEkgY2FuIGZpbmQuDQo+IA0KPiBUaGFua3MsDQo+IE1hcmsNCg0KTWFyaywNCg0KSSBkb24n
+dCBoYXZlIGFueSBvZiB0aGUgcGxhdGZvcm0gZHJpdmVycyBzZXQgZm9yIG15IGxhcHRvcCAoTGVu
+b3ZvIFQ2MCkNCm90aGVyIHRoYW4gdGhlIENNT1MgZHJpdmVyLiAgTm9uZSBvZiB0aGUgSTJDIG9y
+IFNQSSBkcml2ZXJzIHNldC4gSQ0Kc3RpbGwgdGhpbmsgeW91IG5lZWQgdG8gbG9vayBhdCB3aGF0
+IGRldmljZSB0aGUgc3RhcnR1cCBzY3JpcHRzIGFyZQ0KbG9va2luZyBmb3IgKHByb2JhYmx5IC9k
+ZXYvcnRjKS4NCg0KSGVyZSdzIGEgc25pcHBldCBvZiBteSBjb25maWc6DQoNCkNPTkZJR19SVENf
+TElCPXkNCkNPTkZJR19SVENfQ0xBU1M9eQ0KQ09ORklHX1JUQ19IQ1RPU1lTPXkNCkNPTkZJR19S
+VENfSENUT1NZU19ERVZJQ0U9InJ0YzAiDQpDT05GSUdfUlRDX0RFQlVHPXkNCg0KIw0KIyBSVEMg
+aW50ZXJmYWNlcw0KIw0KQ09ORklHX1JUQ19JTlRGX1NZU0ZTPXkNCkNPTkZJR19SVENfSU5URl9Q
+Uk9DPXkNCkNPTkZJR19SVENfSU5URl9ERVY9eQ0KIyBDT05GSUdfUlRDX0lOVEZfREVWX1VJRV9F
+TVVMIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfVEVTVCBpcyBub3Qgc2V0DQoNCiMNCiMg
+STJDIFJUQyBkcml2ZXJzDQojDQojIENPTkZJR19SVENfRFJWX0RTMTMwNyBpcyBub3Qgc2V0DQoj
+IENPTkZJR19SVENfRFJWX0RTMTM3NCBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX0RTMTY3
+MiBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX01BWDY5MDAgaXMgbm90IHNldA0KIyBDT05G
+SUdfUlRDX0RSVl9SUzVDMzcyIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfSVNMMTIwOCBp
+cyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1gxMjA1IGlzIG5vdCBzZXQNCiMgQ09ORklHX1JU
+Q19EUlZfUENGODU2MyBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1BDRjg1ODMgaXMgbm90
+IHNldA0KIyBDT05GSUdfUlRDX0RSVl9NNDFUODAgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RS
+Vl9TMzUzOTBBIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfRk0zMTMwIGlzIG5vdCBzZXQN
+Cg0KIw0KIyBTUEkgUlRDIGRyaXZlcnMNCiMNCiMNCiMgUGxhdGZvcm0gUlRDIGRyaXZlcnMNCiMN
+CkNPTkZJR19SVENfRFJWX0NNT1M9eQ0KIyBDT05GSUdfUlRDX0RSVl9EUzE1MTEgaXMgbm90IHNl
+dA0KIyBDT05GSUdfUlRDX0RSVl9EUzE1NTMgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RSVl9E
+UzE3NDIgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RSVl9TVEsxN1RBOCBpcyBub3Qgc2V0DQoj
+IENPTkZJR19SVENfRFJWX000OFQ4NiBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX000OFQ1
+OSBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1YzMDIwIGlzIG5vdCBzZXQNCg0KDQpDbGFy
+aw0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYyLjAuMTAg
+KEdOVS9MaW51eCkNCg0KaUVZRUFSRUNBQVlGQWttRXBJNEFDZ2tRSHl1ai8rVFRFcDB0QlFDZlcz
+SDlFMVdxMjJkMEs5a0lvaXRWY08yNA0KL0djQW9OZXFaYU1tdjBWOWVCMHN0dXNLbjhnM1dvMWoN
+Cj1NZzhYDQotLS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0NCg==
