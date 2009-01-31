@@ -1,63 +1,147 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
-Date: Sat, 31 Jan 2009 13:20:41 -0600
-Message-ID: <20090131132041.6b65408c@torg>
-References: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
-	<20090131085221.7fc4458d@torg>
-	<5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: 2.6.28-rt on ARM [Was: 2.6.28-rt on PowerPC]
+Date: Sat, 31 Jan 2009 21:23:23 +0100
+Message-ID: <20090131202323.GA26891@pengutronix.de>
+References: <20090129213429.GA29014@oksana.dev.rtsoft.ru> <1233270043.3833.57.camel@localhost.localdomain> <49823A13.50703@am.sony.com> <20090130230633.GG32026@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Mark Knecht <markknecht@gmail.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Frank Rowand <frank.rowand@am.sony.com>,
+	Steven Rostedt <srostedt@redhat.com>, avorontsov@ru.mvista.com,
+	Robert Schwebel <r.schwebel@pengutronix.de>,
+	linux-kernel@vger.kernel.org,
+	linux-arm-kernel@lists.arm.linux.org.uk
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:50674 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751430AbZAaTU4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Jan 2009 14:20:56 -0500
-In-Reply-To: <5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:55201 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751797AbZAaUXq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 31 Jan 2009 15:23:46 -0500
+Content-Disposition: inline
+In-Reply-To: <20090130230633.GG32026@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBTYXQs
-IDMxIEphbiAyMDA5IDA5OjU4OjI4IC0wODAwDQpNYXJrIEtuZWNodCA8bWFya2tuZWNodEBnbWFp
-bC5jb20+IHdyb3RlOg0KPiANCj4gQ2xhcmssDQo+ICAgIENPTkZJR19SVENfRFJWX0NNT1M9eSBp
-cyBzZXQuIEhvd2V2ZXIgYWxsIG9mIHRoZSBzcGVjaWZpYyBjaGlwDQo+IHZlcnNpb25zIGltbWVk
-aWF0ZWx5IGJlbG93IGl0IGFyZSBub3Qgc2V0IHNvIHdpdGhvdXQgYXQgbGVhc3Qgb25lIG9mDQo+
-IHRob3NlIGlzIHRoZSBDT05GSUdfUlRDX0RSVl9DTU9TIGRvaW5nIGFueXRoaW5nPw0KPiANCj4g
-ICAgSWYgYnkgY2hhbmdlIEkgbmVlZCB0byBzZXQgYXQgbGVhc3Qgb25lIG9mIHRob3NlIGNoaXAg
-b3B0aW9ucyBob3cNCj4gZG8gSSBkZXRlcm1pbmUgd2hhdCdzIG9uIHRoaXMgbW90aGVyYm9hcmQ/
-DQo+IA0KPiAgICBTY2FubmluZyBhcm91bmQgdGhpcyBhcmVhIEkgYWxzbyBub3RpY2UgdGhhdCBJ
-J3ZlIGdvaW5nIG5vbmUgb2YgdGhlDQo+IEkyQyBSVEMgZHJpdmVycyBzZWxlY3RlZCBlaXRoZXIu
-DQo+IA0KPiAgICBJIGhhdmVuJ3QgaGFkIHRpbWUgdG8gY2hlY2sgeWV0IGJ1dCB0aGUgMi42LjI3
-LWdlbnRvby1yOCBrZXJuZWwNCj4gZGlkbid0IGhhdmUgdGhpcyBwcm9ibGVtLiBJJ2xsIGNvbXBh
-cmUgLmNvbmZpZyBmaWxlcyBiZXR3ZWVuIHRoZSB0d28NCj4gYW5kIHNlZSB3aGF0IGRpZmZlcmVu
-Y2VzIEkgY2FuIGZpbmQuDQo+IA0KPiBUaGFua3MsDQo+IE1hcmsNCg0KTWFyaywNCg0KSSBkb24n
-dCBoYXZlIGFueSBvZiB0aGUgcGxhdGZvcm0gZHJpdmVycyBzZXQgZm9yIG15IGxhcHRvcCAoTGVu
-b3ZvIFQ2MCkNCm90aGVyIHRoYW4gdGhlIENNT1MgZHJpdmVyLiAgTm9uZSBvZiB0aGUgSTJDIG9y
-IFNQSSBkcml2ZXJzIHNldC4gSQ0Kc3RpbGwgdGhpbmsgeW91IG5lZWQgdG8gbG9vayBhdCB3aGF0
-IGRldmljZSB0aGUgc3RhcnR1cCBzY3JpcHRzIGFyZQ0KbG9va2luZyBmb3IgKHByb2JhYmx5IC9k
-ZXYvcnRjKS4NCg0KSGVyZSdzIGEgc25pcHBldCBvZiBteSBjb25maWc6DQoNCkNPTkZJR19SVENf
-TElCPXkNCkNPTkZJR19SVENfQ0xBU1M9eQ0KQ09ORklHX1JUQ19IQ1RPU1lTPXkNCkNPTkZJR19S
-VENfSENUT1NZU19ERVZJQ0U9InJ0YzAiDQpDT05GSUdfUlRDX0RFQlVHPXkNCg0KIw0KIyBSVEMg
-aW50ZXJmYWNlcw0KIw0KQ09ORklHX1JUQ19JTlRGX1NZU0ZTPXkNCkNPTkZJR19SVENfSU5URl9Q
-Uk9DPXkNCkNPTkZJR19SVENfSU5URl9ERVY9eQ0KIyBDT05GSUdfUlRDX0lOVEZfREVWX1VJRV9F
-TVVMIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfVEVTVCBpcyBub3Qgc2V0DQoNCiMNCiMg
-STJDIFJUQyBkcml2ZXJzDQojDQojIENPTkZJR19SVENfRFJWX0RTMTMwNyBpcyBub3Qgc2V0DQoj
-IENPTkZJR19SVENfRFJWX0RTMTM3NCBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX0RTMTY3
-MiBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX01BWDY5MDAgaXMgbm90IHNldA0KIyBDT05G
-SUdfUlRDX0RSVl9SUzVDMzcyIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfSVNMMTIwOCBp
-cyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1gxMjA1IGlzIG5vdCBzZXQNCiMgQ09ORklHX1JU
-Q19EUlZfUENGODU2MyBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1BDRjg1ODMgaXMgbm90
-IHNldA0KIyBDT05GSUdfUlRDX0RSVl9NNDFUODAgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RS
-Vl9TMzUzOTBBIGlzIG5vdCBzZXQNCiMgQ09ORklHX1JUQ19EUlZfRk0zMTMwIGlzIG5vdCBzZXQN
-Cg0KIw0KIyBTUEkgUlRDIGRyaXZlcnMNCiMNCiMNCiMgUGxhdGZvcm0gUlRDIGRyaXZlcnMNCiMN
-CkNPTkZJR19SVENfRFJWX0NNT1M9eQ0KIyBDT05GSUdfUlRDX0RSVl9EUzE1MTEgaXMgbm90IHNl
-dA0KIyBDT05GSUdfUlRDX0RSVl9EUzE1NTMgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RSVl9E
-UzE3NDIgaXMgbm90IHNldA0KIyBDT05GSUdfUlRDX0RSVl9TVEsxN1RBOCBpcyBub3Qgc2V0DQoj
-IENPTkZJR19SVENfRFJWX000OFQ4NiBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX000OFQ1
-OSBpcyBub3Qgc2V0DQojIENPTkZJR19SVENfRFJWX1YzMDIwIGlzIG5vdCBzZXQNCg0KDQpDbGFy
-aw0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYyLjAuMTAg
-KEdOVS9MaW51eCkNCg0KaUVZRUFSRUNBQVlGQWttRXBJNEFDZ2tRSHl1ai8rVFRFcDB0QlFDZlcz
-SDlFMVdxMjJkMEs5a0lvaXRWY08yNA0KL0djQW9OZXFaYU1tdjBWOWVCMHN0dXNLbjhnM1dvMWoN
-Cj1NZzhYDQotLS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0NCg==
+[removed linuxppc-dev from Cc: and put linux-arm-kernel there instead.]
+
+Hello,
+
+On Sat, Jan 31, 2009 at 12:06:33AM +0100, Robert Schwebel wrote:
+> On Thu, Jan 29, 2009 at 03:21:55PM -0800, Frank Rowand wrote:
+> > > Thanks! I have not yet had the chance to apply any arch patches y=
+et. I
+> > > do plan on doing so after getting the code mostly working on x86.
+> >=20
+> > Your email can at an opportune time for me...  I was starting to tr=
+y
+> > 2.6.28-rt on ARM and quickly came to the conclusion that the arch
+> > patches weren't the focus yet.  But I'm currently side-tracked with
+> > getting my board to even boot a vanilla 2.6.28 kernel first.  Do
+> > you expect to get to the arches in the next week or two?  If not,
+> > I may head down that path for ARM myself.
+>=20
+> Uwe has collected some patches for ARM here:
+> http://thread.gmane.org/gmane.linux.ports.arm.kernel/52108/focus=3D78=
+7937
+>=20
+> You might want to try them before starting, in order to avoid duplica=
+te
+> work.
+I take this as a motivation to give a status of my current work.
+
+My git repo[1] has a branch rt-master that is regularily rebased on
+Steven's linux-rt/master branch.  This is my working branch.  Currently
+all ARM defconfigs but clps7500, msm and omap_2430sdp can be build
+without error after enabling PREEMPT_RT.  (I have a script to build all
+these configs.  If someone wants it, just ask for it.)
+
+That branch has some netx related patches as this is my current
+platform.
+
+Currently booting my machine results in two BUGs:
+
+	...
+	BUG: swapper:0 task might have lost a preemption check!
+	[<c0242b48>] (dump_stack+0x0/0x18) from [<c0030304>] (preempt_enable_n=
+o_resched+0x54/0x60)
+	[<c00302b0>] (preempt_enable_no_resched+0x0/0x60) from [<c0023f48>] (c=
+pu_idle+0x50/0x68)
+	[<c0023ef8>] (cpu_idle+0x0/0x68) from [<c02421e4>] (rest_init+0x6c/0x8=
+0)
+	 r7:c02ee69c r6:c001cd90 r5:c031b950 r4:c06d7e5c
+	[<c0242178>] (rest_init+0x0/0x80) from [<c0008bb4>] (start_kernel+0x23=
+4/0x28c)
+	[<c0008980>] (start_kernel+0x0/0x28c) from [<80008034>] (0x80008034)
+	 r6:c001d194 r5:c031b9ec r4:00053175
+	...
+
+and
+
+	Freeing init memory: 104K
+	BUG: sleeping function called from invalid context at .../linux-2.6-rt=
+/kernel/rtmutex.c:711
+	in_atomic(): 1 [00000001], irqs_disabled(): 0, pid: 1, name: init
+	1 lock held by init/1:
+	  from [<c002eed4>] (__might_sleep+0x100/0x120)
+	[<c002edd4>] (__might_sleep+0x0/0x120) from [<c0244c70>] (rt_spin_lock=
++0x40/0x9c)
+	 r5:c0244c44 r4:c06d7990
+	[<c0244c30>] (rt_spin_lock+0x0/0x9c) from [<c007a2a4>] (free_hot_cold_=
+page+0x208/0x394)
+	 r5:c0714ca0 r4:c1c1c000
+	[<c007a09c>] (free_hot_cold_page+0x0/0x394) from [<c007a4a4>] (free_ho=
+t_page+0x18/0x1c)
+	 r8:c1516fb8 r7:bf000000 r6:bf000000 r5:c1516fb8 r4:bf000000
+	[<c007a48c>] (free_hot_page+0x0/0x1c) from [<c007a4ec>] (__free_pages+=
+0x44/0x50)
+	[<c007a4a8>] (__free_pages+0x0/0x50) from [<c00882a4>] (free_pgd_range=
++0x16c/0x190)
+	[<c0088138>] (free_pgd_range+0x0/0x190) from [<c00a30cc>] (setup_arg_p=
+ages+0x1f4/0x2d0)
+	[<c00a2ed8>] (setup_arg_pages+0x0/0x2d0) from [<c00d327c>] (load_elf_b=
+inary+0x458/0x1184)
+	[<c00d2e24>] (load_elf_binary+0x0/0x1184) from [<c00a219c>] (search_bi=
+nary_handler+0x100/0x2d0)
+	[<c00a209c>] (search_binary_handler+0x0/0x2d0) from [<c00a349c>] (do_e=
+xecve+0x1b4/0x250)
+	[<c00a32e8>] (do_execve+0x0/0x250) from [<c0025cfc>] (kernel_execve+0x=
+44/0x8c)
+	[<c0025cb8>] (kernel_execve+0x0/0x8c) from [<c0022590>] (init_post+0xf=
+4/0x17c)
+	 r7:00000000 r6:00000000 r5:c001bdf4 r4:c02ee46c
+	[<c002249c>] (init_post+0x0/0x17c) from [<c0008670>] (kernel_init+0x16=
+0/0x1d0)
+	 r4:c031b958
+	[<c0008510>] (kernel_init+0x0/0x1d0) from [<c0038040>] (do_exit+0x0/0x=
+7c0)
+	 r5:00000000 r4:00000000
+	Kernel panic - not syncing: Attempted to kill init!
+	Dumping ftrace buffer:
+	   (ftrace buffer empty)
+
+I havn't looked into these issues yet, but will do now.
+
+If someone has questions (or even can and wants to help) you can reach
+me by mail or on #linux-rt when online.
+
+Best regards
+Uwe
+
+[1] git://git.pengutronix.de/git/ukl/linux-2.6.git
+    http://git.pengutronix.de/?p=3Dukl/linux-2.6.git;a=3Dsummary
+--=20
+Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
+       |
+Industrial Linux Solutions                    | http://www.pengutronix.=
+de/  |
+Peiner Strasse 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-=
+0    |
+Amtsgericht Hildesheim, HRA 2686              | Fax:   +49-5121-206917-=
+5555 |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
