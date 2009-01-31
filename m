@@ -1,58 +1,93 @@
-From: Clark Williams <williams@redhat.com>
+From: Mark Knecht <markknecht@gmail.com>
 Subject: Re: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
-Date: Sat, 31 Jan 2009 08:52:21 -0600
-Message-ID: <20090131085221.7fc4458d@torg>
+Date: Sat, 31 Jan 2009 09:58:28 -0800
+Message-ID: <5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
 References: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
+	 <20090131085221.7fc4458d@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Cc: RT <linux-rt-users@vger.kernel.org>
-To: Mark Knecht <markknecht@gmail.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:51130 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755182AbZAaOwg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Jan 2009 09:52:36 -0500
-In-Reply-To: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
+Received: from wf-out-1314.google.com ([209.85.200.170]:52748 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751188AbZAaR6a (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 31 Jan 2009 12:58:30 -0500
+Received: by wf-out-1314.google.com with SMTP id 27so1022255wfd.4
+        for <linux-rt-users@vger.kernel.org>; Sat, 31 Jan 2009 09:58:29 -0800 (PST)
+In-Reply-To: <20090131085221.7fc4458d@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
-IDMwIEphbiAyMDA5IDE2OjAwOjI3IC0wODAwDQpNYXJrIEtuZWNodCA8bWFya2tuZWNodEBnbWFp
-bC5jb20+IHdyb3RlOg0KDQo+IEknbSBqdXN0IGdldHRpbmcgYXJvdW5kIHRvIHRyeWluZyAyLjYu
-MjYuOC1ydDEyIGZyb20gdGhlIEdlbnRvbw0KPiBwcm8tYXVkaW8gb3ZlcmxheS4gSSBidWlsdCB0
-aGUga2VybmVsIHVzaW5nIGFuIG9sZGVyIC5jb25maWcgYW5kIG1ha2UNCj4gb2xkY29uZmlnIHNv
-IG1heWJlIGl0IGRpZG4ndCBjYXRjaCBzb21ldGhpbmcgY29ycmVjdGx5LiBBbnl3YXksIGF0DQo+
-IGJvb3QgdGhlIHN5c3RlbSBpcyBjb21wbGFpbmluZyBhYm91dCBhbGwgZmlsZSB0aW1lcyBhcmUg
-aW4gdGhlIGZ1dHVyZQ0KPiBhbmQgbGF0ZXIgb24gSSBzZWUgYSBtZXNzYWdlIHRoYXQgaXQgY291
-bGRuJ3Qgc2V0IHRoZSBjbG9jayBhbmQgSSdsbA0KPiBoYXZlIHRvIGRvIHRoYXQgYnkgaGFuZC4g
-VGhlIG1hY2hpbmUgdGhlbiBmaW5pc2hlcyBib290aW5nIGFuZCBJIGdldA0KPiBhcyBmYXIgYXMg
-WC4gSGF2ZW4ndCB0ZXN0ZWQgYW55dGhpbmcgbW9yZSB0aGFuIHRoYXQuDQo+IA0KPiB0aGUgaXNz
-dWUgc2VlbXMgdG8gYmUgdGhhdCB0aGUgc3lzdGVtIGNhbm5vdCBmaW5kIG15IGhhcmR3YXJlIGNs
-b2NrLA0KPiBhbmQgZnJhbmtseSBuZWl0aGVyIGNhbiBJIGluIG1ha2UgbWVudWNvbmZpZyBzbyBt
-YXliZSBzb21lb25lIGNhbiB0ZWxsDQo+IG1lIHdoZXJlIGlzIHRoZSBoYXJkd2FyZSBjbG9jaz8g
-SSdtIGhvcGluZyBpdCdzIGp1c3QgbWlzY29uZmlndXJhdGlvbg0KPiBhbmQgbm90IHNvbWV0aGlu
-ZyBtb3JlIGRldmlvdXMuDQo+IA0KPiBNb3RoZXJib2FyZCBpcyBhbiBBc3VzIEE4Ti1FIHdoaWNo
-IGlzIG5WaWRpYSBiYXNlZC4gTW9yZSBpbmZvIHByb3ZpZGVkDQo+IGlmIG5lZWQgYmUuDQo+IA0K
-PiBUaGFua3MsDQo+IE1hcmsNCj4gDQo+IFtORVcgS0VSTkVMXQ0KPiANCj4gbGlnaHRuaW5nIH4g
-IyB1bmFtZSAtYQ0KPiBMaW51eCBsaWdodG5pbmcgMi42LjI2LjgtcnQxMiAjMSBQUkVFTVBUIFJU
-IEZyaSBKYW4gMzAgMTI6Mzk6MzggUFNUDQo+IDIwMDkgeDg2XzY0IEFNRCBBdGhsb24odG0pIDY0
-IFByb2Nlc3NvciAzMDAwKyBBdXRoZW50aWNBTUQgR05VL0xpbnV4DQo+IGxpZ2h0bmluZyB+ICMg
-aHdjbG9jayAtcg0KPiBDYW5ub3QgYWNjZXNzIHRoZSBIYXJkd2FyZSBDbG9jayB2aWEgYW55IGtu
-b3duIG1ldGhvZC4NCj4gVXNlIHRoZSAtLWRlYnVnIG9wdGlvbiB0byBzZWUgdGhlIGRldGFpbHMg
-b2Ygb3VyIHNlYXJjaCBmb3IgYW4gYWNjZXNzIG1ldGhvZC4NCj4gbGlnaHRuaW5nIH4gIw0KDQpB
-cyBJIHJlY2FsbCB0aGlzIHdhcyBhIGNoYW5nZSBpbiB0aGUgcnRjIGRyaXZlciB3aGVyZSBpdCB1
-c2VzIGNsYXNzZXMNCihhbmQgeW91IGNhbiBoYXZlIG11bHRpcGxlIHJ0YyBkZXZpY2UgaW5zdGFu
-Y2VzKS4gIFRoZSByZXN1bHQgaXMgdGhhdA0KdGhlIHJ0YyBkcml2ZXIgbm8gbG9uZ2VyIGNyZWF0
-ZXMgL2Rldi9ydGMgYnV0IHJhdGhlciAvZGV2L3J0YzAuIA0KDQpZb3UgbWlnaHQgdHJ5IGp1c3Qg
-Y3JlYXRpbmcgYSBzeW1saW5rIGluIC9kZXYgZnJvbSBydGMgLT4gcnRjMCBhbmQgc2VlDQppZiB0
-aGF0IG1ha2VzIHlvdXIgc3RhcnR1cCBsb2dpYyBoYXBweS4gSSBkb24ndCB0aGluayB0aGF0IHVz
-aW5nIHVkZXYNCnRvIGNyZWF0ZSB5b3VyIHN5bWxpbmsgb24gdGhlIGZseSBpcyBhbiBvcHRpb24s
-IGJlY2F1c2UgbW9zdCBkaXN0cm9zDQphY2Nlc3MgdGhlIFJUQyBiZWZvcmUgdWRldiBnZXRzIHJ1
-bi4NCg0KWW91IG1pZ2h0IGFsc28gbWFrZSBzdXJlIHRoYXQgQ09ORklHX1JUQ19EUlZfQ01PUz15
-LCBzbyB0aGF0IHlvdSBkb24ndA0KaGF2ZSB0byBsb2FkIGEgbW9kdWxlIGZyb20gYW4gaW5pdHJk
-IHRvIGdldCB0byB0aGUgY21vcyBjbG9jay4NCg0KQ2xhcmsNCg0KLS0tLS1CRUdJTiBQR1AgU0lH
-TkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYyLjAuMTAgKEdOVS9MaW51eCkNCg0KaUVZRUFS
-RUNBQVlGQWttRVpha0FDZ2tRSHl1ai8rVFRFcDJEUkFDZmV0TDJESk8wb1J6OVpUYjhoYkliWGwx
-dA0KY3JFQW9MTmJYNmh6RmNic296T09iQXhUa2NkRUFkcWkNCj0wWDErDQotLS0tLUVORCBQR1Ag
-U0lHTkFUVVJFLS0tLS0NCg==
+On Sat, Jan 31, 2009 at 6:52 AM, Clark Williams <williams@redhat.com> wrote:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> On Fri, 30 Jan 2009 16:00:27 -0800
+> Mark Knecht <markknecht@gmail.com> wrote:
+>
+>> I'm just getting around to trying 2.6.26.8-rt12 from the Gentoo
+>> pro-audio overlay. I built the kernel using an older .config and make
+>> oldconfig so maybe it didn't catch something correctly. Anyway, at
+>> boot the system is complaining about all file times are in the future
+>> and later on I see a message that it couldn't set the clock and I'll
+>> have to do that by hand. The machine then finishes booting and I get
+>> as far as X. Haven't tested anything more than that.
+>>
+>> the issue seems to be that the system cannot find my hardware clock,
+>> and frankly neither can I in make menuconfig so maybe someone can tell
+>> me where is the hardware clock? I'm hoping it's just misconfiguration
+>> and not something more devious.
+>>
+>> Motherboard is an Asus A8N-E which is nVidia based. More info provided
+>> if need be.
+>>
+>> Thanks,
+>> Mark
+>>
+>> [NEW KERNEL]
+>>
+>> lightning ~ # uname -a
+>> Linux lightning 2.6.26.8-rt12 #1 PREEMPT RT Fri Jan 30 12:39:38 PST
+>> 2009 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+>> lightning ~ # hwclock -r
+>> Cannot access the Hardware Clock via any known method.
+>> Use the --debug option to see the details of our search for an access method.
+>> lightning ~ #
+>
+> As I recall this was a change in the rtc driver where it uses classes
+> (and you can have multiple rtc device instances).  The result is that
+> the rtc driver no longer creates /dev/rtc but rather /dev/rtc0.
+>
+> You might try just creating a symlink in /dev from rtc -> rtc0 and see
+> if that makes your startup logic happy. I don't think that using udev
+> to create your symlink on the fly is an option, because most distros
+> access the RTC before udev gets run.
+>
+> You might also make sure that CONFIG_RTC_DRV_CMOS=y, so that you don't
+> have to load a module from an initrd to get to the cmos clock.
+>
+> Clark
+
+Norval,
+   I'll see about using a newer one soon. Thanks!
+
+Clark,
+   CONFIG_RTC_DRV_CMOS=y is set. However all of the specific chip
+versions immediately below it are not set so without at least one of
+those is the CONFIG_RTC_DRV_CMOS doing anything?
+
+   If by change I need to set at least one of those chip options how
+do I determine what's on this motherboard?
+
+   Scanning around this area I also notice that I've going none of the
+I2C RTC drivers selected either.
+
+   I haven't had time to check yet but the 2.6.27-gentoo-r8 kernel
+didn't have this problem. I'll compare .config files between the two
+and see what differences I can find.
+
+Thanks,
+Mark
