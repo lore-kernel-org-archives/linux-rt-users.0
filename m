@@ -1,25 +1,58 @@
-From: Norval Watson <norv2001@yahoo.com.au>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
-Date: Fri, 30 Jan 2009 23:35:32 -0800 (PST)
-Message-ID: <306643.6406.qm@web111311.mail.gq1.yahoo.com>
+Date: Sat, 31 Jan 2009 08:52:21 -0600
+Message-ID: <20090131085221.7fc4458d@torg>
 References: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-To: Mark Knecht <markknecht@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Mark Knecht <markknecht@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from n8.bullet.re3.yahoo.com ([68.142.237.93]:29859 "HELO
-	n8.bullet.re3.yahoo.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1750780AbZAaHfd convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Jan 2009 02:35:33 -0500
+Received: from mx2.redhat.com ([66.187.237.31]:51130 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755182AbZAaOwg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 31 Jan 2009 09:52:36 -0500
+In-Reply-To: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2.6.26.8-rt14 has just been released that includes important changes...
-Steven Rostedt posted the news here on Thursday.
-
-
-      Make Yahoo!7 your homepage and win a trip to the Quiksilver Pro. Find out more
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
+IDMwIEphbiAyMDA5IDE2OjAwOjI3IC0wODAwDQpNYXJrIEtuZWNodCA8bWFya2tuZWNodEBnbWFp
+bC5jb20+IHdyb3RlOg0KDQo+IEknbSBqdXN0IGdldHRpbmcgYXJvdW5kIHRvIHRyeWluZyAyLjYu
+MjYuOC1ydDEyIGZyb20gdGhlIEdlbnRvbw0KPiBwcm8tYXVkaW8gb3ZlcmxheS4gSSBidWlsdCB0
+aGUga2VybmVsIHVzaW5nIGFuIG9sZGVyIC5jb25maWcgYW5kIG1ha2UNCj4gb2xkY29uZmlnIHNv
+IG1heWJlIGl0IGRpZG4ndCBjYXRjaCBzb21ldGhpbmcgY29ycmVjdGx5LiBBbnl3YXksIGF0DQo+
+IGJvb3QgdGhlIHN5c3RlbSBpcyBjb21wbGFpbmluZyBhYm91dCBhbGwgZmlsZSB0aW1lcyBhcmUg
+aW4gdGhlIGZ1dHVyZQ0KPiBhbmQgbGF0ZXIgb24gSSBzZWUgYSBtZXNzYWdlIHRoYXQgaXQgY291
+bGRuJ3Qgc2V0IHRoZSBjbG9jayBhbmQgSSdsbA0KPiBoYXZlIHRvIGRvIHRoYXQgYnkgaGFuZC4g
+VGhlIG1hY2hpbmUgdGhlbiBmaW5pc2hlcyBib290aW5nIGFuZCBJIGdldA0KPiBhcyBmYXIgYXMg
+WC4gSGF2ZW4ndCB0ZXN0ZWQgYW55dGhpbmcgbW9yZSB0aGFuIHRoYXQuDQo+IA0KPiB0aGUgaXNz
+dWUgc2VlbXMgdG8gYmUgdGhhdCB0aGUgc3lzdGVtIGNhbm5vdCBmaW5kIG15IGhhcmR3YXJlIGNs
+b2NrLA0KPiBhbmQgZnJhbmtseSBuZWl0aGVyIGNhbiBJIGluIG1ha2UgbWVudWNvbmZpZyBzbyBt
+YXliZSBzb21lb25lIGNhbiB0ZWxsDQo+IG1lIHdoZXJlIGlzIHRoZSBoYXJkd2FyZSBjbG9jaz8g
+SSdtIGhvcGluZyBpdCdzIGp1c3QgbWlzY29uZmlndXJhdGlvbg0KPiBhbmQgbm90IHNvbWV0aGlu
+ZyBtb3JlIGRldmlvdXMuDQo+IA0KPiBNb3RoZXJib2FyZCBpcyBhbiBBc3VzIEE4Ti1FIHdoaWNo
+IGlzIG5WaWRpYSBiYXNlZC4gTW9yZSBpbmZvIHByb3ZpZGVkDQo+IGlmIG5lZWQgYmUuDQo+IA0K
+PiBUaGFua3MsDQo+IE1hcmsNCj4gDQo+IFtORVcgS0VSTkVMXQ0KPiANCj4gbGlnaHRuaW5nIH4g
+IyB1bmFtZSAtYQ0KPiBMaW51eCBsaWdodG5pbmcgMi42LjI2LjgtcnQxMiAjMSBQUkVFTVBUIFJU
+IEZyaSBKYW4gMzAgMTI6Mzk6MzggUFNUDQo+IDIwMDkgeDg2XzY0IEFNRCBBdGhsb24odG0pIDY0
+IFByb2Nlc3NvciAzMDAwKyBBdXRoZW50aWNBTUQgR05VL0xpbnV4DQo+IGxpZ2h0bmluZyB+ICMg
+aHdjbG9jayAtcg0KPiBDYW5ub3QgYWNjZXNzIHRoZSBIYXJkd2FyZSBDbG9jayB2aWEgYW55IGtu
+b3duIG1ldGhvZC4NCj4gVXNlIHRoZSAtLWRlYnVnIG9wdGlvbiB0byBzZWUgdGhlIGRldGFpbHMg
+b2Ygb3VyIHNlYXJjaCBmb3IgYW4gYWNjZXNzIG1ldGhvZC4NCj4gbGlnaHRuaW5nIH4gIw0KDQpB
+cyBJIHJlY2FsbCB0aGlzIHdhcyBhIGNoYW5nZSBpbiB0aGUgcnRjIGRyaXZlciB3aGVyZSBpdCB1
+c2VzIGNsYXNzZXMNCihhbmQgeW91IGNhbiBoYXZlIG11bHRpcGxlIHJ0YyBkZXZpY2UgaW5zdGFu
+Y2VzKS4gIFRoZSByZXN1bHQgaXMgdGhhdA0KdGhlIHJ0YyBkcml2ZXIgbm8gbG9uZ2VyIGNyZWF0
+ZXMgL2Rldi9ydGMgYnV0IHJhdGhlciAvZGV2L3J0YzAuIA0KDQpZb3UgbWlnaHQgdHJ5IGp1c3Qg
+Y3JlYXRpbmcgYSBzeW1saW5rIGluIC9kZXYgZnJvbSBydGMgLT4gcnRjMCBhbmQgc2VlDQppZiB0
+aGF0IG1ha2VzIHlvdXIgc3RhcnR1cCBsb2dpYyBoYXBweS4gSSBkb24ndCB0aGluayB0aGF0IHVz
+aW5nIHVkZXYNCnRvIGNyZWF0ZSB5b3VyIHN5bWxpbmsgb24gdGhlIGZseSBpcyBhbiBvcHRpb24s
+IGJlY2F1c2UgbW9zdCBkaXN0cm9zDQphY2Nlc3MgdGhlIFJUQyBiZWZvcmUgdWRldiBnZXRzIHJ1
+bi4NCg0KWW91IG1pZ2h0IGFsc28gbWFrZSBzdXJlIHRoYXQgQ09ORklHX1JUQ19EUlZfQ01PUz15
+LCBzbyB0aGF0IHlvdSBkb24ndA0KaGF2ZSB0byBsb2FkIGEgbW9kdWxlIGZyb20gYW4gaW5pdHJk
+IHRvIGdldCB0byB0aGUgY21vcyBjbG9jay4NCg0KQ2xhcmsNCg0KLS0tLS1CRUdJTiBQR1AgU0lH
+TkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYyLjAuMTAgKEdOVS9MaW51eCkNCg0KaUVZRUFS
+RUNBQVlGQWttRVpha0FDZ2tRSHl1ai8rVFRFcDJEUkFDZmV0TDJESk8wb1J6OVpUYjhoYkliWGwx
+dA0KY3JFQW9MTmJYNmh6RmNic296T09iQXhUa2NkRUFkcWkNCj0wWDErDQotLS0tLUVORCBQR1Ag
+U0lHTkFUVVJFLS0tLS0NCg==
