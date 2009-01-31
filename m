@@ -1,53 +1,57 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: 2.6.28-rt on PowerPC
-Date: Sat, 31 Jan 2009 00:06:33 +0100
-Message-ID: <20090130230633.GG32026__7672.85707775063$1233356952$gmane$org@pengutronix.de>
-References: <20090129213429.GA29014@oksana.dev.rtsoft.ru>
-	<1233270043.3833.57.camel@localhost.localdomain>
-	<49823A13.50703@am.sony.com>
+From: Mark Knecht <markknecht@gmail.com>
+Subject: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
+Date: Fri, 30 Jan 2009 16:00:27 -0800
+Message-ID: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Uwe Kleine-Koenig <ukl@pengutronix.de>,
-	linux-kernel@vger.kernel.org, linuxppc-dev@ozlabs.org,
-	Steven Rostedt <srostedt@redhat.com>
-To: Frank Rowand <frank.rowand@am.sony.com>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
-Content-Disposition: inline
-In-Reply-To: <49823A13.50703@am.sony.com>
-List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wf-out-1314.google.com ([209.85.200.173]:42839 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757249AbZAaAA2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 30 Jan 2009 19:00:28 -0500
+Received: by wf-out-1314.google.com with SMTP id 27so755474wfd.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jan 2009 16:00:27 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Frank,
+I'm just getting around to trying 2.6.26.8-rt12 from the Gentoo
+pro-audio overlay. I built the kernel using an older .config and make
+oldconfig so maybe it didn't catch something correctly. Anyway, at
+boot the system is complaining about all file times are in the future
+and later on I see a message that it couldn't set the clock and I'll
+have to do that by hand. The machine then finishes booting and I get
+as far as X. Haven't tested anything more than that.
 
-On Thu, Jan 29, 2009 at 03:21:55PM -0800, Frank Rowand wrote:
-> > Thanks! I have not yet had the chance to apply any arch patches yet. I
-> > do plan on doing so after getting the code mostly working on x86.
-> 
-> Your email can at an opportune time for me...  I was starting to try
-> 2.6.28-rt on ARM and quickly came to the conclusion that the arch
-> patches weren't the focus yet.  But I'm currently side-tracked with
-> getting my board to even boot a vanilla 2.6.28 kernel first.  Do
-> you expect to get to the arches in the next week or two?  If not,
-> I may head down that path for ARM myself.
+the issue seems to be that the system cannot find my hardware clock,
+and frankly neither can I in make menuconfig so maybe someone can tell
+me where is the hardware clock? I'm hoping it's just misconfiguration
+and not something more devious.
 
-Uwe has collected some patches for ARM here:
-http://thread.gmane.org/gmane.linux.ports.arm.kernel/52108/focus=787937
+Motherboard is an Asus A8N-E which is nVidia based. More info provided
+if need be.
 
-You might want to try them before starting, in order to avoid duplicate
-work.
+Thanks,
+Mark
 
-rsc
--- 
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+[NEW KERNEL]
+
+lightning ~ # uname -a
+Linux lightning 2.6.26.8-rt12 #1 PREEMPT RT Fri Jan 30 12:39:38 PST
+2009 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+lightning ~ # hwclock -r
+Cannot access the Hardware Clock via any known method.
+Use the --debug option to see the details of our search for an access method.
+lightning ~ #
+
+
+[OLD KERNEL]
+
+lightning ~ # uname -a
+Linux lightning 2.6.24-rt1 #1 PREEMPT RT Tue Feb 5 07:03:44 PST 2008
+x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
+lightning ~ # hwclock -r
+Fri 30 Jan 2009 03:49:39 PM PST  -0.555966 seconds
+lightning ~ #
