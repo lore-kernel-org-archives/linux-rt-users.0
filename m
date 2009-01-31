@@ -1,147 +1,156 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: 2.6.28-rt on ARM [Was: 2.6.28-rt on PowerPC]
-Date: Sat, 31 Jan 2009 21:23:23 +0100
-Message-ID: <20090131202323.GA26891@pengutronix.de>
-References: <20090129213429.GA29014@oksana.dev.rtsoft.ru> <1233270043.3833.57.camel@localhost.localdomain> <49823A13.50703@am.sony.com> <20090130230633.GG32026@pengutronix.de>
+From: Mark Knecht <markknecht@gmail.com>
+Subject: Re: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
+Date: Sat, 31 Jan 2009 14:36:56 -0800
+Message-ID: <5bdc1c8b0901311436vae23e5du3ceb54e6fdb19988@mail.gmail.com>
+References: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
+	 <20090131085221.7fc4458d@torg>
+	 <5bdc1c8b0901310958s555cfc0eg3ba649947d2581@mail.gmail.com>
+	 <20090131132041.6b65408c@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Frank Rowand <frank.rowand@am.sony.com>,
-	Steven Rostedt <srostedt@redhat.com>, avorontsov@ru.mvista.com,
-	Robert Schwebel <r.schwebel@pengutronix.de>,
-	linux-kernel@vger.kernel.org,
-	linux-arm-kernel@lists.arm.linux.org.uk
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:55201 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751797AbZAaUXq (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.227]:4767 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751502AbZAaWg6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Jan 2009 15:23:46 -0500
-Content-Disposition: inline
-In-Reply-To: <20090130230633.GG32026@pengutronix.de>
+	Sat, 31 Jan 2009 17:36:58 -0500
+Received: by rv-out-0506.google.com with SMTP id k40so958591rvb.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 31 Jan 2009 14:36:57 -0800 (PST)
+In-Reply-To: <20090131132041.6b65408c@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[removed linuxppc-dev from Cc: and put linux-arm-kernel there instead.]
+On Sat, Jan 31, 2009 at 11:20 AM, Clark Williams <williams@redhat.com> wrote:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> On Sat, 31 Jan 2009 09:58:28 -0800
+> Mark Knecht <markknecht@gmail.com> wrote:
+>>
+>> Clark,
+>>    CONFIG_RTC_DRV_CMOS=y is set. However all of the specific chip
+>> versions immediately below it are not set so without at least one of
+>> those is the CONFIG_RTC_DRV_CMOS doing anything?
+>>
+>>    If by change I need to set at least one of those chip options how
+>> do I determine what's on this motherboard?
+>>
+>>    Scanning around this area I also notice that I've going none of the
+>> I2C RTC drivers selected either.
+>>
+>>    I haven't had time to check yet but the 2.6.27-gentoo-r8 kernel
+>> didn't have this problem. I'll compare .config files between the two
+>> and see what differences I can find.
+>>
+>> Thanks,
+>> Mark
+>
+> Mark,
+>
+> I don't have any of the platform drivers set for my laptop (Lenovo T60)
+> other than the CMOS driver.  None of the I2C or SPI drivers set. I
+> still think you need to look at what device the startup scripts are
+> looking for (probably /dev/rtc).
+>
+> Here's a snippet of my config:
+>
+> CONFIG_RTC_LIB=y
+> CONFIG_RTC_CLASS=y
+> CONFIG_RTC_HCTOSYS=y
+> CONFIG_RTC_HCTOSYS_DEVICE="rtc0"
+> CONFIG_RTC_DEBUG=y
+>
+> #
+> # RTC interfaces
+> #
+> CONFIG_RTC_INTF_SYSFS=y
+> CONFIG_RTC_INTF_PROC=y
+> CONFIG_RTC_INTF_DEV=y
+> # CONFIG_RTC_INTF_DEV_UIE_EMUL is not set
+> # CONFIG_RTC_DRV_TEST is not set
+>
+> #
+> # I2C RTC drivers
+> #
+> # CONFIG_RTC_DRV_DS1307 is not set
+> # CONFIG_RTC_DRV_DS1374 is not set
+> # CONFIG_RTC_DRV_DS1672 is not set
+> # CONFIG_RTC_DRV_MAX6900 is not set
+> # CONFIG_RTC_DRV_RS5C372 is not set
+> # CONFIG_RTC_DRV_ISL1208 is not set
+> # CONFIG_RTC_DRV_X1205 is not set
+> # CONFIG_RTC_DRV_PCF8563 is not set
+> # CONFIG_RTC_DRV_PCF8583 is not set
+> # CONFIG_RTC_DRV_M41T80 is not set
+> # CONFIG_RTC_DRV_S35390A is not set
+> # CONFIG_RTC_DRV_FM3130 is not set
+>
+> #
+> # SPI RTC drivers
+> #
+> #
+> # Platform RTC drivers
+> #
+> CONFIG_RTC_DRV_CMOS=y
+> # CONFIG_RTC_DRV_DS1511 is not set
+> # CONFIG_RTC_DRV_DS1553 is not set
+> # CONFIG_RTC_DRV_DS1742 is not set
+> # CONFIG_RTC_DRV_STK17TA8 is not set
+> # CONFIG_RTC_DRV_M48T86 is not set
+> # CONFIG_RTC_DRV_M48T59 is not set
+> # CONFIG_RTC_DRV_V3020 is not set
+>
+>
+> Clark
 
-Hello,
+Clark,
+   Thanks. This is helpful. Turns out I have a number of
+inconsistencies in these 3 kernels. Neither of my old RT kernels have
+CONFIG_RTC_DRV_CMOS set. However 2.6.24-rt1 worked and 2.6.26.8-rt12
+doesn't. Now, the newer Gentoo kernel, 2.6.27-gentoo-r8 did have that
+set and that kernel works, so for now I'm suspecting that if I enable
+that maybe 2.6.26.8-rt12 will start working. We'll see. I cannot do
+anything until some other work on the machine finishes. In the
+meantime I'm looking around for how Gentoo sets the /dev/rtc link.
 
-On Sat, Jan 31, 2009 at 12:06:33AM +0100, Robert Schwebel wrote:
-> On Thu, Jan 29, 2009 at 03:21:55PM -0800, Frank Rowand wrote:
-> > > Thanks! I have not yet had the chance to apply any arch patches y=
-et. I
-> > > do plan on doing so after getting the code mostly working on x86.
-> >=20
-> > Your email can at an opportune time for me...  I was starting to tr=
-y
-> > 2.6.28-rt on ARM and quickly came to the conclusion that the arch
-> > patches weren't the focus yet.  But I'm currently side-tracked with
-> > getting my board to even boot a vanilla 2.6.28 kernel first.  Do
-> > you expect to get to the arches in the next week or two?  If not,
-> > I may head down that path for ARM myself.
->=20
-> Uwe has collected some patches for ARM here:
-> http://thread.gmane.org/gmane.linux.ports.arm.kernel/52108/focus=3D78=
-7937
->=20
-> You might want to try them before starting, in order to avoid duplica=
-te
-> work.
-I take this as a motivation to give a status of my current work.
+I've snipped out anything not set for readability.
 
-My git repo[1] has a branch rt-master that is regularily rebased on
-Steven's linux-rt/master branch.  This is my working branch.  Currently
-all ARM defconfigs but clps7500, msm and omap_2430sdp can be build
-without error after enabling PREEMPT_RT.  (I have a script to build all
-these configs.  If someone wants it, just ask for it.)
+[[ Real-Time - WORKS ]]
 
-That branch has some netx related patches as this is my current
-platform.
+lightning src # cat linux-2.6.24-rt1/.config | grep CONFIG_RTC
+CONFIG_RTC=y
+CONFIG_RTC_LIB=m
+CONFIG_RTC_CLASS=m
+CONFIG_RTC_INTF_SYSFS=y
+CONFIG_RTC_INTF_PROC=y
+CONFIG_RTC_INTF_DEV=y
 
-Currently booting my machine results in two BUGs:
 
-	...
-	BUG: swapper:0 task might have lost a preemption check!
-	[<c0242b48>] (dump_stack+0x0/0x18) from [<c0030304>] (preempt_enable_n=
-o_resched+0x54/0x60)
-	[<c00302b0>] (preempt_enable_no_resched+0x0/0x60) from [<c0023f48>] (c=
-pu_idle+0x50/0x68)
-	[<c0023ef8>] (cpu_idle+0x0/0x68) from [<c02421e4>] (rest_init+0x6c/0x8=
-0)
-	 r7:c02ee69c r6:c001cd90 r5:c031b950 r4:c06d7e5c
-	[<c0242178>] (rest_init+0x0/0x80) from [<c0008bb4>] (start_kernel+0x23=
-4/0x28c)
-	[<c0008980>] (start_kernel+0x0/0x28c) from [<80008034>] (0x80008034)
-	 r6:c001d194 r5:c031b9ec r4:00053175
-	...
 
-and
+[[ Real-Time - FAILS ]]
 
-	Freeing init memory: 104K
-	BUG: sleeping function called from invalid context at .../linux-2.6-rt=
-/kernel/rtmutex.c:711
-	in_atomic(): 1 [00000001], irqs_disabled(): 0, pid: 1, name: init
-	1 lock held by init/1:
-	  from [<c002eed4>] (__might_sleep+0x100/0x120)
-	[<c002edd4>] (__might_sleep+0x0/0x120) from [<c0244c70>] (rt_spin_lock=
-+0x40/0x9c)
-	 r5:c0244c44 r4:c06d7990
-	[<c0244c30>] (rt_spin_lock+0x0/0x9c) from [<c007a2a4>] (free_hot_cold_=
-page+0x208/0x394)
-	 r5:c0714ca0 r4:c1c1c000
-	[<c007a09c>] (free_hot_cold_page+0x0/0x394) from [<c007a4a4>] (free_ho=
-t_page+0x18/0x1c)
-	 r8:c1516fb8 r7:bf000000 r6:bf000000 r5:c1516fb8 r4:bf000000
-	[<c007a48c>] (free_hot_page+0x0/0x1c) from [<c007a4ec>] (__free_pages+=
-0x44/0x50)
-	[<c007a4a8>] (__free_pages+0x0/0x50) from [<c00882a4>] (free_pgd_range=
-+0x16c/0x190)
-	[<c0088138>] (free_pgd_range+0x0/0x190) from [<c00a30cc>] (setup_arg_p=
-ages+0x1f4/0x2d0)
-	[<c00a2ed8>] (setup_arg_pages+0x0/0x2d0) from [<c00d327c>] (load_elf_b=
-inary+0x458/0x1184)
-	[<c00d2e24>] (load_elf_binary+0x0/0x1184) from [<c00a219c>] (search_bi=
-nary_handler+0x100/0x2d0)
-	[<c00a209c>] (search_binary_handler+0x0/0x2d0) from [<c00a349c>] (do_e=
-xecve+0x1b4/0x250)
-	[<c00a32e8>] (do_execve+0x0/0x250) from [<c0025cfc>] (kernel_execve+0x=
-44/0x8c)
-	[<c0025cb8>] (kernel_execve+0x0/0x8c) from [<c0022590>] (init_post+0xf=
-4/0x17c)
-	 r7:00000000 r6:00000000 r5:c001bdf4 r4:c02ee46c
-	[<c002249c>] (init_post+0x0/0x17c) from [<c0008670>] (kernel_init+0x16=
-0/0x1d0)
-	 r4:c031b958
-	[<c0008510>] (kernel_init+0x0/0x1d0) from [<c0038040>] (do_exit+0x0/0x=
-7c0)
-	 r5:00000000 r4:00000000
-	Kernel panic - not syncing: Attempted to kill init!
-	Dumping ftrace buffer:
-	   (ftrace buffer empty)
+lightning src # cat linux-2.6.26.8-rt12/.config | grep CONFIG_RTC
+CONFIG_RTC_LIB=m
+CONFIG_RTC_CLASS=m
+CONFIG_RTC_INTF_SYSFS=y
+CONFIG_RTC_INTF_PROC=y
+CONFIG_RTC_INTF_DEV=y
 
-I havn't looked into these issues yet, but will do now.
 
-If someone has questions (or even can and wants to help) you can reach
-me by mail or on #linux-rt when online.
 
-Best regards
-Uwe
+[[ Gentoo non-RT - WORKS]]
 
-[1] git://git.pengutronix.de/git/ukl/linux-2.6.git
-    http://git.pengutronix.de/?p=3Dukl/linux-2.6.git;a=3Dsummary
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
-Peiner Strasse 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-=
-0    |
-Amtsgericht Hildesheim, HRA 2686              | Fax:   +49-5121-206917-=
-5555 |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+lightning src # cat linux-2.6.27-gentoo-r8/.config | grep CONFIG_RTC
+CONFIG_RTC_LIB=y
+CONFIG_RTC_CLASS=y
+CONFIG_RTC_INTF_SYSFS=y
+CONFIG_RTC_INTF_PROC=y
+CONFIG_RTC_INTF_DEV=y
+CONFIG_RTC_DRV_CMOS=y
+
+thanks much!
+
+- Mark
