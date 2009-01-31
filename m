@@ -1,57 +1,81 @@
-From: Mark Knecht <markknecht@gmail.com>
-Subject: 2.6.26.8-rt12 - No hwclock - works under 2.6.24-rt1
-Date: Fri, 30 Jan 2009 16:00:27 -0800
-Message-ID: <5bdc1c8b0901301600k13a06b0laf048293f037374c@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.26.8-rt15
+Date: Sat, 31 Jan 2009 02:34:10 -0500
+Message-ID: <1233387250.922.52.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.173]:42839 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757249AbZAaAA2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Jan 2009 19:00:28 -0500
-Received: by wf-out-1314.google.com with SMTP id 27so755474wfd.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Jan 2009 16:00:27 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <srostedt@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752921AbZAaHeY@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-I'm just getting around to trying 2.6.26.8-rt12 from the Gentoo
-pro-audio overlay. I built the kernel using an older .config and make
-oldconfig so maybe it didn't catch something correctly. Anyway, at
-boot the system is complaining about all file times are in the future
-and later on I see a message that it couldn't set the clock and I'll
-have to do that by hand. The machine then finishes booting and I get
-as far as X. Haven't tested anything more than that.
+We are pleased to announce the 2.6.26.8-rt15 tree which can be
+downloaded from the following location:
 
-the issue seems to be that the system cannot find my hardware clock,
-and frankly neither can I in make menuconfig so maybe someone can tell
-me where is the hardware clock? I'm hoping it's just misconfiguration
-and not something more devious.
+  http://rt.et.redhat.com/download/
 
-Motherboard is an Asus A8N-E which is nVidia based. More info provided
-if need be.
+Information on the RT patch can be found at:
 
-Thanks,
-Mark
+  http://rt.wiki.kernel.org/index.php/Main_Page
 
-[NEW KERNEL]
+Changes since 2.6.26.6-rt14
 
-lightning ~ # uname -a
-Linux lightning 2.6.26.8-rt12 #1 PREEMPT RT Fri Jan 30 12:39:38 PST
-2009 x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
-lightning ~ # hwclock -r
-Cannot access the Hardware Clock via any known method.
-Use the --debug option to see the details of our search for an access method.
-lightning ~ #
+ - x86, mm: fix pte_free()  (Peter Zijlstra)
+
+ - hrtimer: prevent negative expiry value after clack_was_set
+ 		(Thomas Gleixner)
+
+ - Fixed confusing Kconfig label of WAKEUP_LATENCY_HIST
+	 	(Carsten Emde)
+
+ - x86: remove redundant local_irq_enable in handle_singal
+		(Carsten Emde)
+
+ - trace: warn if irqs already enabled in irqs_off latency check
+		(Carsten Emde)
+
+to build the 2.6.26.8-rt15 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.8.bz2
+  http://rt.et.redhat.com/download/patch-2.6.26.8-rt15.bz2
 
 
-[OLD KERNEL]
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
 
-lightning ~ # uname -a
-Linux lightning 2.6.24-rt1 #1 PREEMPT RT Tue Feb 5 07:03:44 PST 2008
-x86_64 AMD Athlon(tm) 64 Processor 3000+ AuthenticAMD GNU/Linux
-lightning ~ # hwclock -r
-Fri 30 Jan 2009 03:49:39 PM PST  -0.555966 seconds
-lightning ~ #
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+***************************************************************
+***************************************************************
+******  COMING SOON !!! COMING SOON !!! COMING SOON !!! *******
+******  COMING SOON !!! COMING SOON !!! COMING SOON !!! *******
+***************************************************************
+***************************************************************
+
+The RT git tree is almost ready!  It is currently based off of 2.6.28,
+until it becomes a little more stable. You can down load it now from the
+git repo:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-2.6-rt.git
+
+It boots on x86_64. A few more patches still need to be applied, but the
+majority of them have been incorporated. Work on the non x86 archs also
+needs to be done.
+
+Once the git tree is pretty stable I will release a 2.6.28-rt1 patch,
+make a v2.6.28-rt branch and then go right in sync with the mainline
+tree.
+
+Feel free to download it now and give it a try. And you can send me any
+crashes that you see.
+
+
+-- Steve
