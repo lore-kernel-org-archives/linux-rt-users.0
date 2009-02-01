@@ -1,45 +1,62 @@
 From: Luis Henriques <henrix@sapo.pt>
-Subject: [PATCH -rt] Trivial changes to mm/page_alloc.c in -rt git tree
-Date: Sun, 1 Feb 2009 19:47:19 +0000
-Message-ID: <20090201194719.GA5383@hades.domain.com>
+Subject: [BUG -rt] scheduling while atomic in -rt git tree
+Date: Sun, 1 Feb 2009 19:52:59 +0000
+Message-ID: <20090201195259.GB5383@hades.domain.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755501AbZBATso@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from relay3.ptmail.sapo.pt ([212.55.154.23]:42657 "HELO sapo.pt"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
+	id S1751571AbZBATyN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 1 Feb 2009 14:54:13 -0500
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Some trivial changes in function drain_zone_pages, in -rt tree.
+Hi,
 
-Invocations to functions get_cpu_lock_cpu_irqsave/restore in function
-drain_zone_pages missing the ';' character.
+I am using an x86_64 and getting the following log while executing the master in
+the -rt git tree:
 
----
- mm/page_alloc.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+[   28.182621] BUG: scheduling while atomic: sirq-net-rx/0/8/0x00000101, CPU#0
+[   28.182744] Modules linked in: parport_pc ppdev parport ipv6 powernow_k8
+cpufreq_stats cpufreq_conservative cpufreq_ondemand freq_table cpufreq_powersave
+cpufreq_userspace af_packet sbp2 loop joydev arc4 snd_hda_intel ecb snd_pcm
+snd_page_alloc uvcvideo snd_hwdep ath5k snd_seq compat_ioctl32 mac80211 psmouse
+snd_timer videodev snd_seq_device k8temp v4l1_compat led_class snd soundcore
+cfg80211 rfkill input_polldev battery video output ac button evdev ext3 jbd
+mbcache sg sr_mod cdrom ide_pci_generic ide_core ata_generic sd_mod pata_acpi
+ohci1394 ahci ehci_hcd pata_atiixp ohci_hcd ieee1394 libata usbcore scsi_mod
+r8169 mii thermal processor fan
+[   28.186632] Pid: 8, comm: sirq-net-rx/0 Tainted: G        W
+2.6.28-rt-00209-g82e0a07 #1
+[   28.186747] Call Trace:
+[   28.186831]  [<ffffffff80455cb4>] ? netif_receive_skb+0x2c4/0x590
+[   28.186938]  [<ffffffff80242795>] __schedule_bug+0x85/0x90
+[   28.187033]  [<ffffffff804ead38>] thread_return+0x142/0x70a
+[   28.187127]  [<ffffffff8020c3c8>] ? ftrace_call+0x5/0x2b
+[   28.187218]  [<ffffffff8024f42f>] ksoftirqd+0x1df/0x270
+[   28.187306]  [<ffffffff8024f250>] ? ksoftirqd+0x0/0x270
+[   28.187395]  [<ffffffff802621de>] kthread+0x4e/0x90
+[   28.187481]  [<ffffffff8020d639>] child_rip+0xa/0x11
+[   28.187569]  [<ffffffff802408d9>] ? finish_task_switch+0x59/0x130
+[   28.187663]  [<ffffffff804ed1ab>] ? _spin_unlock_irq+0x1b/0x40
+[   28.187753]  [<ffffffff8020cb25>] ? restore_args+0x0/0x30
+[   28.187842]  [<ffffffff80262190>] ? kthread+0x0/0x90
+[   28.187929]  [<ffffffff8020d62f>] ? child_rip+0x0/0x11
+[   28.188034] ---------------------------
+[   28.188111] | preempt count: 00000101 ]
+[   28.188189] | 2-level deep critical section nesting:
+[   28.188272] ----------------------------------------
+[   28.188356] .. [<ffffffff804a9c16>] .... icmp_send+0xc6/0x6a0
+[   28.188497] .....[<ffffffff804a9c16>] ..   ( <= icmp_send+0xc6/0x6a0)
+[   28.188639] .. [<ffffffff804ea7ac>] .... schedule+0x2c/0x476
+[   28.188777] .....[<ffffffff8024f42f>] ..   ( <= ksoftirqd+0x1df/0x270)
+[   28.188918] 
 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 238e192..3b18a12 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -889,14 +889,14 @@ void drain_zone_pages(int cpu, struct zone *zone, struct per_cpu_pages *pcp)
- 	unsigned long flags;
- 	int to_drain;
- 
--	get_cpu_lock_cpu_irqsave(zone, cpu, flags)
-+	get_cpu_lock_cpu_irqsave(zone, cpu, flags);
- 	if (pcp->count >= pcp->batch)
- 		to_drain = pcp->batch;
- 	else
- 		to_drain = pcp->count;
- 	free_pages_bulk(zone, to_drain, &pcp->list, 0);
- 	pcp->count -= to_drain;
--	put_cpu_lock_irqrestore(zone, cpu, flags)
-+	put_cpu_lock_irqrestore(zone, cpu, flags);
- }
- #endif
- 
+Can also provide my config file if needed.
+
 -- 
-1.5.6.5
+Luis Henriques
