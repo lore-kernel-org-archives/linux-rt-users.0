@@ -1,75 +1,61 @@
-From: Luis Henriques <henrix@sapo.pt>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: 2.6.26.8-rt15
-Date: Mon, 2 Feb 2009 19:06:25 +0000
-Message-ID: <20090202190625.GA7742@hades.domain.com>
-References: <1233387250.922.52.camel@localhost.localdomain>
+Date: Mon, 2 Feb 2009 14:53:08 -0500 (EST)
+Message-ID: <alpine.DEB.1.10.0902021452570.28708@gandalf.stny.rr.com>
+References: <1233387250.922.52.camel@localhost.localdomain> <20090202190625.GA7742@hades.domain.com> <498707870200005A00044F86@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-590738310-1233604389=:28708"
+Cc: Luis Henriques <henrix@sapo.pt>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <srostedt@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+	Steven Rostedt <srostedt@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay4.ptmail.sapo.pt ([212.55.154.24]:39294 "HELO sapo.pt"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-	id S1752855AbZBBTHp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Feb 2009 14:07:45 -0500
-Content-Disposition: inline
-In-Reply-To: <1233387250.922.52.camel@localhost.localdomain>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:63329 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752701AbZBBTxL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Feb 2009 14:53:11 -0500
+In-Reply-To: <498707870200005A00044F86@sinclair.provo.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Jan 31, 2009 at 02:34:10AM -0500, Steven Rostedt wrote:
-> We are pleased to announce the 2.6.26.8-rt15 tree which can be
-> downloaded from the following location:
-> 
->   http://rt.et.redhat.com/download/
-> 
-> Information on the RT patch can be found at:
-> 
->   http://rt.wiki.kernel.org/index.php/Main_Page
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-I'm having compilation issues with this new patch.  Here's the error I got:
+--8323328-590738310-1233604389=:28708
+Content-Type: TEXT/PLAIN; charset=ISO-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
-In file included from
-/root/lmcorrei/linux/linux-2.6.26.8-rt15/kernel/sched.c:1701:
-/root/lmcorrei/linux/linux-2.6.26.8-rt15/kernel/sched_rt.c: In
-function 'inc_rt_tasks':
-/root/lmcorrei/linux/linux-2.6.26.8-rt15/kernel/sched_rt.c:434: error:
-'struct rq' has no member named 'online'
 
-Now, function in question has the following code:
+On Mon, 2 Feb 2009, Gregory Haskins wrote:
 
-static inline
-void inc_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
-{
-        WARN_ON(!rt_prio(rt_se_prio(rt_se)));
-        rt_rq->rt_nr_running++;
-#if defined CONFIG_SMP || defined CONFIG_RT_GROUP_SCHED
-        if (rt_se_prio(rt_se) < rt_rq->highest_prio) {
-                struct rq *rq = rq_of_rt_rq(rt_rq);
-                rt_rq->highest_prio = rt_se_prio(rt_se);
+>=20
+> Hi Luis,
+>=20
+> >>>> Luis Henriques <henrix@sapo.pt> 2/2/2009 2:06 PM >>>
+> >On Sat, Jan 31, 2009 at 02:34:10AM -0500, Steven Rostedt wrote:
+> >> We are pleased to announce the 2.6.26.8-rt15 tree which can be
+> >> downloaded from the following location:
+> >>
+> >>=A0=A0 http://rt.et.redhat.com/download/
+> >>
+> >> Information on the RT patch can be found at:
+> >>
+> >>=A0=A0 http://rt.wiki.kernel.org/index.php/Main_Page
+> >
+> > I'm having compilation issues with this new patch.=A0 Here's the error =
+I
+> got:
+>=20
+>=20
+> I have already fixed this in -tip.git and -rt.git, but it hasnt been
+> backported to 26-rt yet. =A0I will take care of getting these patches
+> backported for Steven to include in -rt16.
 
-                if (rq->online)
-                        cpupri_set(&rq->rd->cpupri, rq->cpu,
-                                   rt_se_prio(rt_se));
-        }
-#endif
+Thanks Greg!
 
-The issue is that the 'online' member is actually defined only if CONFIG_SMP is
-enabled and in my config I do not have it but I have CONFIG_RT_GROUP_SCHED.
+-- Steve
 
-I am not sending any patch because I actually do not know what is the best way
-to solve this issue since I am not (yet!) a sched expert.  However, I forsee two
-possible solutions:
-
- 1. Nest another #ifdef inside the first one, so that the code is only compiled
-    when CONFIG_SMP option is set (which will result in ugly code)
- 2. Define 'online' member in structure outside of the CONFIG_SMP (which, I
-    believe, is not an optimal solution)
-
-Regards,
--- 
-Luis Henriques
-
+--8323328-590738310-1233604389=:28708--
