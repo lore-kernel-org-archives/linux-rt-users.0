@@ -1,59 +1,43 @@
-From: Clark Williams <williams@redhat.com>
+From: Remy Bohmer <linux@bohmer.net>
 Subject: Re: Hard lockup with 2.6.24.7-rt26 on x86
-Date: Tue, 3 Feb 2009 10:26:21 -0600
-Message-ID: <20090203102621.5eb71333@torg>
+Date: Tue, 3 Feb 2009 20:20:45 +0100
+Message-ID: <3efb10970902031120g21b4586k4e7f2f03bbca6c77@mail.gmail.com>
 References: <37144.1233608136@vtxmail.ch>
-	<20090203090052.6a4dc4de@torg>
-	<4988664A.3080601@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: m.luescher@vtxmail.ch, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Carsten Emde <Carsten.Emde@osadl.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: m.luescher@vtxmail.ch
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:47493 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751230AbZBCQ1Y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Feb 2009 11:27:24 -0500
-In-Reply-To: <4988664A.3080601@osadl.org>
+Received: from mail-qy0-f11.google.com ([209.85.221.11]:45068 "EHLO
+	mail-qy0-f11.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756481AbZBCTUr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Feb 2009 14:20:47 -0500
+Received: by qyk4 with SMTP id 4so2827154qyk.13
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Feb 2009 11:20:45 -0800 (PST)
+In-Reply-To: <37144.1233608136@vtxmail.ch>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUdWUs
-IDAzIEZlYiAyMDA5IDE2OjQ0OjEwICswMTAwDQpDYXJzdGVuIEVtZGUgPENhcnN0ZW4uRW1kZUBv
-c2FkbC5vcmc+IHdyb3RlOg0KDQo+IENsYXJrLA0KPiANCj4gPj4gT24gdHdvIGRpZmZlcmVudCBk
-ZXNrdG9wIFBDIChib3RoIENvcmUgMiBEdW8pIGFuZCBvbiBhIG5vdGVib29rDQo+ID4+IChDb3Jl
-IER1bykgdGhlIGtlcm5lbCAoMi42LjI0LjctcnQyNiwgQ09ORklHX1g4Nl8zMikgbG9ja3MgdXAg
-aGFyZA0KPiA+PiB1bmRlciBhIGNlcnRhaW4gcnQgbG9hZC4gVGhlIGZhaWx1cmUgY2FuIGJlIHJl
-cHJvZHVjZWQgcmVsaWFibHkNCj4gPj4gd2l0aCB0aGUgZm9sbG93aW5nIGNvbW1hbmQ6DQo+ID4+
-IHN1ZG8gLi9jeWNsaWN0ZXN0IC1wOTkgLXQxMCAtbiAtaTI1MA0KPiA+IE15IGd1ZXNzIHdvdWxk
-IGJlIHRoYXQgc2luY2UgeW91J3JlIHJ1bm5pbmcgMTAgdGhyZWFkcyBvbiB0d28gDQo+ID4gcHJv
-Y2Vzc29ycyBhdCB0aGUgaGlnaGVzdCBhdmFpbGFibGUgcHJpb3JpdHksIHlvdSdyZSBzdGFydmlu
-ZyBhbGwgdGhlDQo+ID4gaGFyZCBJUlEgdGhyZWFkcyAoYXMgd2VsbCBhcyBzb2Z0IGlycSBhbmQg
-b3RoZXIga2VybmVsIHRocmVhZHMpLg0KPiA+IFRoaXMgaXMgb25lIG9mIHRob3NlIHBvd2VyLXRv
-b2wgbW9tZW50cyB3aGVyZSB5b3UgY2FuIGxvY2sgdXAgdGhlIA0KPiA+IHN5c3RlbSB3aXRoIHRo
-ZSB3cm9uZyB3b3JrbG9hZC9wcmlvcml0eSBjb21iaW5hdGlvbi4NCj4gSG1tLCBJIHdvdWxkIGFn
-cmVlIGltbWVkaWF0ZWx5LCBpZiB0aGUgdGFza3Mgd2VyZSB1c2luZyBhbGwgb2YgdGhlIENQVQ0K
-PiBwb3dlci4gQnV0IHRoaXMgaXMgbm90IHRoZSBjYXNlLiBJbiB0aGUgcHJlc2VudCBjYXNlLCBy
-dW5uaW5nDQo+IA0KPiAjIGN5Y2xpY3Rlc3QgLXA5OSAtdDEwIC1uIC1pMjUwDQo+IA0KPiByZXN1
-bHRzIGluIGFib3V0IDEwJSBDUFUgbG9hZC4gU28gdGhlcmUgaXMgcGxlbnR5IG9mIHRpbWUgaW4g
-YmV0d2VlbiB0bw0KPiBsZXQgdGhlIHN5c3RlbSByZXNwb25kLiBJIGNhbiByZXByb2R1Y2UgdGhl
-IHByb2JsZW0gaGVyZSAoMi42LjI0LXJ0LA0KPiAyLjYuMjYtcnQsIHZhcmlvdXMgY29uZmlndXJh
-dGlvbnMpLiBUaGUgc3lzdGVtIGRvZXMgbm90IGNyYXNoIGV2ZXJ5IHRpbWUNCj4gd2hlbiBjeWNs
-aWN0ZXN0IGlzIHN0YXJ0ZWQsIG9ubHkgb25jZSBpbiBhYm91dCA1IHRyaWFscyBvciBzby4gSWYg
-aXQNCj4gY3Jhc2hlcywgdGhlbiBpdCBkb2VzIHNvIGltbWVkaWF0ZWx5IGFmdGVyIGJlaW5nIHN0
-YXJ0ZWQuIFdoZW5ldmVyDQo+IGN5Y2xpY3Rlc3Qgc3Vydml2ZXMgZm9yIHNldmVyYWwgc2Vjb25k
-cywgdGhlbiBpdCBuZXZlciBjcmFzaGVzIGF0IGENCj4gbGF0ZXIgdGltZS4gSSB0ZW5kIHRvIGJl
-bGlldmUgdGhhdCB3ZSBoYXZlIGEgYnVnIGhlcmUsIG5vdCBhIHJlZ3VsYXINCj4gYmVoYXZpb3Iu
-DQo+IA0KDQpUaGF0J3Mgd2hhdCBJIGdldCBmb3IgZmlyaW5nIG9mZiBhIHJlc3BvbnNlIHdpdGgg
-b3V0IHJ1bm5pbmcgaXQgZmlyc3QgOikNCg0KSSBkb24ndCBoYXZlIGEgMi42LjI2IHRlc3QgYm94
-IGhhbmR5LCBidXQgSSdsbCBzZXQgdGhhdCB1cCB0aGlzDQphZnRlcm5vb24uIEkgYWdyZWUgd2l0
-aCB5b3VyIHJlc3VsdHMgdGhhdCB0aGlzIGlzIGEgYnVnLCBzaW5jZSBJDQpoYXZlbid0IGJlZW4g
-YWJsZSB0byBraWxsIG15IDIuNi4yNC43LWJhc2VkIFJUIHRlc3Qgc3lzdGVtIGFuZCBpZiBpdA0K
-d2FzIGp1c3Qgc3RhcnZhdGlvbiBJIHNob3VsZCBiZSBhYmxlIHRvIGRvIHRoYXQgZWFzaWx5Lg0K
-DQpDbGFyaw0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYy
-LjAuMTAgKEdOVS9MaW51eCkNCg0KaUVZRUFSRUNBQVlGQWttSWNETUFDZ2tRSHl1ai8rVFRFcDIx
-RGdDZlVpaEgvNkJVVVM1bzNTd2xybks1N2RKQw0KL0hRQW9NRVpwOGJZdU9FQmlTNndWdGJHZ0Ew
-dmkwTVMNCj1YMWpCDQotLS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0NCg==
+Hello Matthias,
+
+2009/2/2  <m.luescher@vtxmail.ch>:
+> Dear Linux rt users
+>
+> On two different desktop PC (both Core 2 Duo) and on a notebook (Core Duo) the kernel (2.6.24.7-rt26, CONFIG_X86_32)
+> locks up hard under a certain rt load. The failure can be reproduced reliably with the following command:
+
+In noticed some hangups too while using 2.6.24.7-rt26, while
+2.6.24.7-rt20 was running fine.
+I can reproduce it here on an ARM11 core, when
+CONFIG_DEBUG_LOCKING_API_SELFTESTS is set the system hangs during boot
+on rt26, while it boots properly on rt20. So, there is a regression
+here.
+I did not find the time yet to bisect it to the offending RT-patch.
+
+Kind regards,
+
+Remy
