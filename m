@@ -1,38 +1,52 @@
-From: m.luescher@vtxmail.ch
-Subject: Hard lockup with 2.6.24.7-rt26 on x86
-Date: Mon, 2 Feb 2009 21:55:36 +0100
-Message-ID: <37144.1233608136@vtxmail.ch>
-Reply-To: m.luescher@vtxmail.ch
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Hard lockup with 2.6.24.7-rt26 on x86
+Date: Tue, 3 Feb 2009 09:00:52 -0600
+Message-ID: <20090203090052.6a4dc4de@torg>
+References: <37144.1233608136@vtxmail.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8BIT
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: <linux-rt-users@vger.kernel.org>
+To: m.luescher@vtxmail.ch
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-02.datacomm.ch ([212.40.2.27]:49993 "EHLO
-	smtp-02.datacomm.ch" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752951AbZBBVQe convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Feb 2009 16:16:34 -0500
-Received: from localhost (webmail-01.datacomm.ch [212.40.2.18])
-	by smtp-02.datacomm.ch (VTX Datacomm AG) with ESMTP id 05ED712020C
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Feb 2009 21:55:36 +0100 (CET)
+Received: from mx2.redhat.com ([66.187.237.31]:39973 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752166AbZBCPA7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Feb 2009 10:00:59 -0500
+In-Reply-To: <37144.1233608136@vtxmail.ch>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear Linux rt users
-
-On two different desktop PC (both Core 2 Duo) and on a notebook (Core Duo) the kernel (2.6.24.7-rt26, CONFIG_X86_32) locks up hard under a certain rt load. The failure can be reproduced reliably with the following command:
-
-sudo ./cyclictest -p99 -t10 -n -i250
-
-During the test I made some additional observations:
-- The lockup is really hard: there is no output on a netconsole and even the magic sysrequest keys to reboot the system (Alt+SysRQ+b) do not work anymore.
-- with a lower realtime priority the system seems to run at least more stable (e.g. sudo ./cyclictest -p95 -t10 -n -i250)
-- with the vanilla 2.6.26.6-rt11 kernel I observed probably the same crash
-- the problem also appears on Ubuntu Hardy Heron with the latest official kernel (2.6.24.23.25 with rt21 patch)
-- the problem did not appear on Ubuntu Hardy Heron with older rt-kernel versions (also 2.6.24 but based on rt3 patch)
-
-So at the moment I am really clueless and I would be happy for any hint on how I can further debug this crash.
-
-Best regards
-Matthias
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
+IDIgRmViIDIwMDkgMjE6NTU6MzYgKzAxMDANCm0ubHVlc2NoZXJAdnR4bWFpbC5jaCB3cm90ZToN
+Cg0KPiBEZWFyIExpbnV4IHJ0IHVzZXJzDQo+IA0KPiBPbiB0d28gZGlmZmVyZW50IGRlc2t0b3Ag
+UEMgKGJvdGggQ29yZSAyIER1bykgYW5kIG9uIGEgbm90ZWJvb2sgKENvcmUgRHVvKSB0aGUga2Vy
+bmVsICgyLjYuMjQuNy1ydDI2LCBDT05GSUdfWDg2XzMyKSBsb2NrcyB1cCBoYXJkIHVuZGVyIGEg
+Y2VydGFpbiBydCBsb2FkLiBUaGUgZmFpbHVyZSBjYW4gYmUgcmVwcm9kdWNlZCByZWxpYWJseSB3
+aXRoIHRoZSBmb2xsb3dpbmcgY29tbWFuZDoNCj4gDQo+IHN1ZG8gLi9jeWNsaWN0ZXN0IC1wOTkg
+LXQxMCAtbiAtaTI1MA0KPiANCj4gRHVyaW5nIHRoZSB0ZXN0IEkgbWFkZSBzb21lIGFkZGl0aW9u
+YWwgb2JzZXJ2YXRpb25zOg0KPiAtIFRoZSBsb2NrdXAgaXMgcmVhbGx5IGhhcmQ6IHRoZXJlIGlz
+IG5vIG91dHB1dCBvbiBhIG5ldGNvbnNvbGUgYW5kIGV2ZW4gdGhlIG1hZ2ljIHN5c3JlcXVlc3Qg
+a2V5cyB0byByZWJvb3QgdGhlIHN5c3RlbSAoQWx0K1N5c1JRK2IpIGRvIG5vdCB3b3JrIGFueW1v
+cmUuDQo+IC0gd2l0aCBhIGxvd2VyIHJlYWx0aW1lIHByaW9yaXR5IHRoZSBzeXN0ZW0gc2VlbXMg
+dG8gcnVuIGF0IGxlYXN0IG1vcmUgc3RhYmxlIChlLmcuIHN1ZG8gLi9jeWNsaWN0ZXN0IC1wOTUg
+LXQxMCAtbiAtaTI1MCkNCj4gLSB3aXRoIHRoZSB2YW5pbGxhIDIuNi4yNi42LXJ0MTEga2VybmVs
+IEkgb2JzZXJ2ZWQgcHJvYmFibHkgdGhlIHNhbWUgY3Jhc2gNCj4gLSB0aGUgcHJvYmxlbSBhbHNv
+IGFwcGVhcnMgb24gVWJ1bnR1IEhhcmR5IEhlcm9uIHdpdGggdGhlIGxhdGVzdCBvZmZpY2lhbCBr
+ZXJuZWwgKDIuNi4yNC4yMy4yNSB3aXRoIHJ0MjEgcGF0Y2gpDQo+IC0gdGhlIHByb2JsZW0gZGlk
+IG5vdCBhcHBlYXIgb24gVWJ1bnR1IEhhcmR5IEhlcm9uIHdpdGggb2xkZXIgcnQta2VybmVsIHZl
+cnNpb25zIChhbHNvIDIuNi4yNCBidXQgYmFzZWQgb24gcnQzIHBhdGNoKQ0KPiANCj4gU28gYXQg
+dGhlIG1vbWVudCBJIGFtIHJlYWxseSBjbHVlbGVzcyBhbmQgSSB3b3VsZCBiZSBoYXBweSBmb3Ig
+YW55IGhpbnQgb24gaG93IEkgY2FuIGZ1cnRoZXIgZGVidWcgdGhpcyBjcmFzaC4NCj4gDQo+IEJl
+c3QgcmVnYXJkcw0KPiBNYXR0aGlhcw0KDQpNeSBndWVzcyB3b3VsZCBiZSB0aGF0IHNpbmNlIHlv
+dSdyZSBydW5uaW5nIDEwIHRocmVhZHMgb24gdHdvDQpwcm9jZXNzb3JzIGF0IHRoZSBoaWdoZXN0
+IGF2YWlsYWJsZSBwcmlvcml0eSwgeW91J3JlIHN0YXJ2aW5nIGFsbCB0aGUNCmhhcmQgSVJRIHRo
+cmVhZHMgKGFzIHdlbGwgYXMgc29mdCBpcnEgYW5kIG90aGVyIGtlcm5lbCB0aHJlYWRzKS4NCg0K
+VGhpcyBpcyBvbmUgb2YgdGhvc2UgcG93ZXItdG9vbCBtb21lbnRzIHdoZXJlIHlvdSBjYW4gbG9j
+ayB1cCB0aGUNCnN5c3RlbSB3aXRoIHRoZSB3cm9uZyB3b3JrbG9hZC9wcmlvcml0eSBjb21iaW5h
+dGlvbi4gDQoNCkNhbiB5b3UgbG9jayB1cCB0aGUgc3lzdGVtIHJ1bm5pbmcgYXQgLXA0OSAoSSAg
+c3VzcGVjdCBhbGwgeW91ciBbSVJRLVhdDQp0aHJlYWRzIGFyZSBydW5uaW5nIGF0IHByaW9yaXR5
+IDUwKT8NCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBH
+bnVQRyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbUlYQ2NBQ2drUUh5dWov
+K1RURXAwbnFnQ2Zkb2RkWnZweFV3Y3BONUVYUkFFOTBrbWYNCmhlZ0FuMThEMUppNWNHcWVKd2dI
+TmszWGI4ZnhNckNlDQo9RjA0RQ0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
