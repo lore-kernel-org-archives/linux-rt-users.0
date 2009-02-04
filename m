@@ -1,50 +1,92 @@
-From: Thomas Meyer <thomas@m3y3r.de>
-Subject: Re: [Announce] 2.6.29-rc6-rt3
-Date: Thu, 26 Feb 2009 19:46:29 +0100
-Message-ID: <1235673989.3338.1.camel@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-	 <alpine.LFD.2.  <1235587399.4645.3789.camel@laptop>
+Return-Path: linux-kernel-owner@vger.kernel.org
+Subject: Re: [PATCH 3/3] tracing: Tracers that use CALLER_ADDR macros
+	should select FRAME_POINTER
+From: Steven Rostedt <srostedt@redhat.com>
+In-Reply-To: <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
+	 <20090204150840.GC30027@oksana.dev.rtsoft.ru>
+	 <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8
+Date: Wed, 04 Feb 2009 10:31:21 -0500
+Message-Id: <1233761481.16878.12.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www17.your-server.de ([213.133.104.17]:36945 "EHLO
-	www17.your-server.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752064AbZBZSq7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Feb 2009 13:46:59 -0500
-In-Reply-To: <1235587399.4645.3789.camel@laptop>
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Transfer-Encoding: 8bit
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?ISO-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>
+Cc: Anton Vorontsov <avorontsov@ru.mvista.com>, Ingo Molnar <mingo@elte.hu>, Paul Mackerras <paulus@samba.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Mittwoch, den 25.02.2009, 19:43 +0100 schrieb Peter Zijlstra:
-> On Wed, 2009-02-25 at 20:34 +0100, Thomas Meyer wrote:
-> > Am Dienstag, den 24.02.2009, 18:57 +0100 schrieb Thomas Gleixner:
-> 
-> > >   http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc6.tar.bz2
-> > >   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc6-rt3.bz2
-> > >   
-> 
-> > Should suspend&resume to ram work with this patchset applied?
-> 
-> If it works for you without (plain .29-rc6), then it ought to work with.
-> 
 
-plain .29-rc6 suspends and resumes just fine.
-but .29-rc6-rt3 suspends just fine, but never resumes.
-Is there an early_dma thing for the resume path for 1394?
+On Wed, 2009-02-04 at 16:26 +0100, Frédéric Weisbecker wrote:
+> 2009/2/4 Anton Vorontsov <avorontsov@ru.mvista.com>:
+> > Irqsoff, switch and preempt tracers use CALLER_ADDR macros, so they
+> > should select FRAME_POINTER. Otherwise traces are meaningless.
+> >
+> > Signed-off-by: Anton Vorontsov <avorontsov@ru.mvista.com>
+> > ---
+> >  kernel/trace/Kconfig |    3 +++
+> >  1 files changed, 3 insertions(+), 0 deletions(-)
+> >
+> > diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
+> > index e2a4ff6..48f7a37 100644
+> > --- a/kernel/trace/Kconfig
+> > +++ b/kernel/trace/Kconfig
+> > @@ -86,6 +86,7 @@ config IRQSOFF_TRACER
+> >        select TRACE_IRQFLAGS
+> >        select TRACING
+> >        select TRACER_MAX_TRACE
+> > +       select FRAME_POINTER
+> >        help
+> >          This option measures the time spent in irqs-off critical
+> >          sections, with microsecond accuracy.
+> > @@ -108,6 +109,7 @@ config PREEMPT_TRACER
+> >        depends on DEBUG_KERNEL
+> >        select TRACING
+> >        select TRACER_MAX_TRACE
+> > +       select FRAME_POINTER
+> >        help
+> >          This option measures the time spent in preemption off critical
+> >          sections, with microsecond accuracy.
+> > @@ -136,6 +138,7 @@ config SCHED_TRACER
+> >        select TRACING
+> >        select CONTEXT_SWITCH_TRACER
+> >        select TRACER_MAX_TRACE
+> > +       select FRAME_POINTER
+> >        help
+> >          This tracer tracks the latency of the highest priority task
+> >          to be scheduled in, starting from the point it has woken up.
+> > --
+> 
+> 
+> Looks right.
+> 
+> BTW, how behaves builtin_return_address in case of !FRAME_POINTERS ?
+> I guess it would only work with the first caller builtin_return_address(0)
 
-greets
-thomas
+
+>>From ftrace.h:
+
+#ifdef CONFIG_FRAME_POINTER
+/* TODO: need to fix this for ARM */
+# define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+# define CALLER_ADDR1 ((unsigned long)__builtin_return_address(1))
+# define CALLER_ADDR2 ((unsigned long)__builtin_return_address(2))
+# define CALLER_ADDR3 ((unsigned long)__builtin_return_address(3))
+# define CALLER_ADDR4 ((unsigned long)__builtin_return_address(4))
+# define CALLER_ADDR5 ((unsigned long)__builtin_return_address(5))
+# define CALLER_ADDR6 ((unsigned long)__builtin_return_address(6))
+#else
+# define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+# define CALLER_ADDR1 0UL
+# define CALLER_ADDR2 0UL
+# define CALLER_ADDR3 0UL
+# define CALLER_ADDR4 0UL
+# define CALLER_ADDR5 0UL
+# define CALLER_ADDR6 0UL
+#endif
+
+Yep!
+
+-- Steve
 
 
