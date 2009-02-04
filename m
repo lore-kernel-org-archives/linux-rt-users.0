@@ -1,22 +1,28 @@
 From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
-	possible
+Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as possible
 Date: Wed, 4 Feb 2009 22:26:12 +0100
-Message-ID: <20090204212612.GN22608__12562.5090943233$1233782920$gmane$org@elte.hu>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150835.GA30027@oksana.dev.rtsoft.ru>
+Message-ID: <20090204212612.GN22608__32192.8967525766$1233782925$gmane$org@elte.hu>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
+	<20090204150835.GA30027@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <srostedt@redhat.com>,
-	Paul Mackerras <paulus@samba.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Anton Vorontsov <avorontsov@ru.mvista.com>,
-	Sam Ravnborg <sam@ravnborg.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756494AbZBDV0y@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linuxppc-dev@ozlabs.org, Steven Rostedt <srostedt@redhat.com>,
+	Paul Mackerras <paulus@samba.org>
+To: Anton Vorontsov <avorontsov@ru.mvista.com>, Sam Ravnborg <sam@ravnborg.org>
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
 Content-Disposition: inline
 In-Reply-To: <20090204150835.GA30027@oksana.dev.rtsoft.ru>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
