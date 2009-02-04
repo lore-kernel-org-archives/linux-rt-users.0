@@ -1,37 +1,54 @@
 Return-Path: linux-kernel-owner@vger.kernel.org
-Subject: Re: [PATCH 2/3] powerpc: Make it possible to safely select
- CONFIG_FRAME_POINTER
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-In-Reply-To: <1233794154.16878.20.camel@localhost.localdomain>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	 <20090204150838.GB30027@oksana.dev.rtsoft.ru>
-	 <1233793889.4612.33.camel@pasglop>
-	 <1233794154.16878.20.camel@localhost.localdomain>
-Content-Type: text/plain
-Date: Thu, 05 Feb 2009 12:15:31 +1100
-Message-Id: <1233796531.4612.35.camel@pasglop>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Date: Wed, 4 Feb 2009 22:26:12 +0100
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
+	possible
+Message-ID: <20090204212612.GN22608@elte.hu>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150835.GA30027@oksana.dev.rtsoft.ru>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20090204150835.GA30027@oksana.dev.rtsoft.ru>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <srostedt@redhat.com>
-Cc: Anton Vorontsov <avorontsov@ru.mvista.com>, Ingo Molnar <mingo@elte.hu>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Anton Vorontsov <avorontsov@ru.mvista.com>, Sam Ravnborg <sam@ravnborg.org>
+Cc: Steven Rostedt <srostedt@redhat.com>, Paul Mackerras <paulus@samba.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-02-04 at 19:35 -0500, Steven Rostedt wrote:
-> On Thu, 2009-02-05 at 11:31 +1100, Benjamin Herrenschmidt wrote:
-> > On Wed, 2009-02-04 at 18:08 +0300, Anton Vorontsov wrote:
-> > > Remove -fno-omit-frame-pointer flag from CFLAGS.
-> > > Remove -fno-omit-frame-pointer workarounds.
-> > 
-> > But what about -pg -requires -fno-omit-frame-pointer ?
+
+* Anton Vorontsov <avorontsov@ru.mvista.com> wrote:
+
+> This patch gives arches more freedom on overwriting CFLAGS, specifically
+> on PowerPC we want to remove -fno-omit-frame-pointer flag.
 > 
-> I don't think it requires -fno-omit-frame-pointer. It is just
-> incompatible with -fomit-frame-pointer.
+> Signed-off-by: Anton Vorontsov <avorontsov@ru.mvista.com>
+> ---
+>  Makefile |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Makefile b/Makefile
+> index 7715b2c..d1ba93f 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -525,8 +525,6 @@ else
+>  KBUILD_CFLAGS	+= -O2
+>  endif
+>  
+> -include $(srctree)/arch/$(SRCARCH)/Makefile
+> -
+>  ifneq (CONFIG_FRAME_WARN,0)
+>  KBUILD_CFLAGS += $(call cc-option,-Wframe-larger-than=${CONFIG_FRAME_WARN})
+>  endif
+> @@ -555,6 +553,8 @@ ifdef CONFIG_DEBUG_SECTION_MISMATCH
+>  KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
+>  endif
+>  
+> +include $(srctree)/arch/$(SRCARCH)/Makefile
+> +
+>  # arch Makefile may override CC so keep this after arch Makefile is included
+>  NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
+>  CHECKFLAGS     += $(NOSTDINC_FLAGS)
+> -- 
 
->>From a quick test, you seem to be right.
+this patch is really for Sam to judge - Cc:-ed him.
 
-Now the question of course is whether -pg will internally trigger
-the bug for which we need the workaround tho...
-
-Ben.
-
+	Ingo
