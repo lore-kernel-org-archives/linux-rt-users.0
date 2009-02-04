@@ -1,76 +1,66 @@
-From: Steven Rostedt <srostedt@redhat.com>
+From: Anton Vorontsov <avorontsov@ru.mvista.com>
 Subject: Re: [PATCH 3/3] tracing: Tracers that use CALLER_ADDR macros
 	should select FRAME_POINTER
-Date: Wed, 04 Feb 2009 10:31:21 -0500
-Message-ID: <1233761481.16878.12.camel__36639.4227989533$1233761893$gmane$org@localhost.localdomain>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	<20090204150840.GC30027@oksana.dev.rtsoft.ru>
-	<c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+Date: Wed, 4 Feb 2009 18:36:43 +0300
+Message-ID: <20090204153643.GA16681@oksana.dev.rtsoft.ru>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150840.GC30027@oksana.dev.rtsoft.ru> <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+Reply-To: avorontsov@ru.mvista.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, Paul Mackerras <paulus@samba.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: =?ISO-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
+Content-Type: text/plain; charset=utf8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Paul Mackerras <paulus@samba.org>,
+	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: =?utf8?B?RnLDqWTDqXJpYw==?= Weisbecker <fweisbec@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from rtsoft3.corbina.net ([85.21.88.6]:60333 "EHLO
+	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1753170AbZBDPgp (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 4 Feb 2009 10:36:45 -0500
+Content-Disposition: inline
 In-Reply-To: <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
-List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Ck9uIFdlZCwgMjAwOS0wMi0wNCBhdCAxNjoyNiArMDEwMCwgRnLDqWTDqXJpYyBXZWlzYmVja2Vy
-IHdyb3RlOgo+IDIwMDkvMi80IEFudG9uIFZvcm9udHNvdiA8YXZvcm9udHNvdkBydS5tdmlzdGEu
-Y29tPjoKPiA+IElycXNvZmYsIHN3aXRjaCBhbmQgcHJlZW1wdCB0cmFjZXJzIHVzZSBDQUxMRVJf
-QUREUiBtYWNyb3MsIHNvIHRoZXkKPiA+IHNob3VsZCBzZWxlY3QgRlJBTUVfUE9JTlRFUi4gT3Ro
-ZXJ3aXNlIHRyYWNlcyBhcmUgbWVhbmluZ2xlc3MuCj4gPgo+ID4gU2lnbmVkLW9mZi1ieTogQW50
-b24gVm9yb250c292IDxhdm9yb250c292QHJ1Lm12aXN0YS5jb20+Cj4gPiAtLS0KPiA+ICBrZXJu
-ZWwvdHJhY2UvS2NvbmZpZyB8ICAgIDMgKysrCj4gPiAgMSBmaWxlcyBjaGFuZ2VkLCAzIGluc2Vy
-dGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCj4gPgo+ID4gZGlmZiAtLWdpdCBhL2tlcm5lbC90cmFj
-ZS9LY29uZmlnIGIva2VybmVsL3RyYWNlL0tjb25maWcKPiA+IGluZGV4IGUyYTRmZjYuLjQ4Zjdh
-MzcgMTAwNjQ0Cj4gPiAtLS0gYS9rZXJuZWwvdHJhY2UvS2NvbmZpZwo+ID4gKysrIGIva2VybmVs
-L3RyYWNlL0tjb25maWcKPiA+IEBAIC04Niw2ICs4Niw3IEBAIGNvbmZpZyBJUlFTT0ZGX1RSQUNF
-Ugo+ID4gICAgICAgIHNlbGVjdCBUUkFDRV9JUlFGTEFHUwo+ID4gICAgICAgIHNlbGVjdCBUUkFD
-SU5HCj4gPiAgICAgICAgc2VsZWN0IFRSQUNFUl9NQVhfVFJBQ0UKPiA+ICsgICAgICAgc2VsZWN0
-IEZSQU1FX1BPSU5URVIKPiA+ICAgICAgICBoZWxwCj4gPiAgICAgICAgICBUaGlzIG9wdGlvbiBt
-ZWFzdXJlcyB0aGUgdGltZSBzcGVudCBpbiBpcnFzLW9mZiBjcml0aWNhbAo+ID4gICAgICAgICAg
-c2VjdGlvbnMsIHdpdGggbWljcm9zZWNvbmQgYWNjdXJhY3kuCj4gPiBAQCAtMTA4LDYgKzEwOSw3
-IEBAIGNvbmZpZyBQUkVFTVBUX1RSQUNFUgo+ID4gICAgICAgIGRlcGVuZHMgb24gREVCVUdfS0VS
-TkVMCj4gPiAgICAgICAgc2VsZWN0IFRSQUNJTkcKPiA+ICAgICAgICBzZWxlY3QgVFJBQ0VSX01B
-WF9UUkFDRQo+ID4gKyAgICAgICBzZWxlY3QgRlJBTUVfUE9JTlRFUgo+ID4gICAgICAgIGhlbHAK
-PiA+ICAgICAgICAgIFRoaXMgb3B0aW9uIG1lYXN1cmVzIHRoZSB0aW1lIHNwZW50IGluIHByZWVt
-cHRpb24gb2ZmIGNyaXRpY2FsCj4gPiAgICAgICAgICBzZWN0aW9ucywgd2l0aCBtaWNyb3NlY29u
-ZCBhY2N1cmFjeS4KPiA+IEBAIC0xMzYsNiArMTM4LDcgQEAgY29uZmlnIFNDSEVEX1RSQUNFUgo+
-ID4gICAgICAgIHNlbGVjdCBUUkFDSU5HCj4gPiAgICAgICAgc2VsZWN0IENPTlRFWFRfU1dJVENI
-X1RSQUNFUgo+ID4gICAgICAgIHNlbGVjdCBUUkFDRVJfTUFYX1RSQUNFCj4gPiArICAgICAgIHNl
-bGVjdCBGUkFNRV9QT0lOVEVSCj4gPiAgICAgICAgaGVscAo+ID4gICAgICAgICAgVGhpcyB0cmFj
-ZXIgdHJhY2tzIHRoZSBsYXRlbmN5IG9mIHRoZSBoaWdoZXN0IHByaW9yaXR5IHRhc2sKPiA+ICAg
-ICAgICAgIHRvIGJlIHNjaGVkdWxlZCBpbiwgc3RhcnRpbmcgZnJvbSB0aGUgcG9pbnQgaXQgaGFz
-IHdva2VuIHVwLgo+ID4gLS0KPiAKPiAKPiBMb29rcyByaWdodC4KPiAKPiBCVFcsIGhvdyBiZWhh
-dmVzIGJ1aWx0aW5fcmV0dXJuX2FkZHJlc3MgaW4gY2FzZSBvZiAhRlJBTUVfUE9JTlRFUlMgPwo+
-IEkgZ3Vlc3MgaXQgd291bGQgb25seSB3b3JrIHdpdGggdGhlIGZpcnN0IGNhbGxlciBidWlsdGlu
-X3JldHVybl9hZGRyZXNzKDApCgoKPkZyb20gZnRyYWNlLmg6CgojaWZkZWYgQ09ORklHX0ZSQU1F
-X1BPSU5URVIKLyogVE9ETzogbmVlZCB0byBmaXggdGhpcyBmb3IgQVJNICovCiMgZGVmaW5lIENB
-TExFUl9BRERSMCAoKHVuc2lnbmVkIGxvbmcpX19idWlsdGluX3JldHVybl9hZGRyZXNzKDApKQoj
-IGRlZmluZSBDQUxMRVJfQUREUjEgKCh1bnNpZ25lZCBsb25nKV9fYnVpbHRpbl9yZXR1cm5fYWRk
-cmVzcygxKSkKIyBkZWZpbmUgQ0FMTEVSX0FERFIyICgodW5zaWduZWQgbG9uZylfX2J1aWx0aW5f
-cmV0dXJuX2FkZHJlc3MoMikpCiMgZGVmaW5lIENBTExFUl9BRERSMyAoKHVuc2lnbmVkIGxvbmcp
-X19idWlsdGluX3JldHVybl9hZGRyZXNzKDMpKQojIGRlZmluZSBDQUxMRVJfQUREUjQgKCh1bnNp
-Z25lZCBsb25nKV9fYnVpbHRpbl9yZXR1cm5fYWRkcmVzcyg0KSkKIyBkZWZpbmUgQ0FMTEVSX0FE
-RFI1ICgodW5zaWduZWQgbG9uZylfX2J1aWx0aW5fcmV0dXJuX2FkZHJlc3MoNSkpCiMgZGVmaW5l
-IENBTExFUl9BRERSNiAoKHVuc2lnbmVkIGxvbmcpX19idWlsdGluX3JldHVybl9hZGRyZXNzKDYp
-KQojZWxzZQojIGRlZmluZSBDQUxMRVJfQUREUjAgKCh1bnNpZ25lZCBsb25nKV9fYnVpbHRpbl9y
-ZXR1cm5fYWRkcmVzcygwKSkKIyBkZWZpbmUgQ0FMTEVSX0FERFIxIDBVTAojIGRlZmluZSBDQUxM
-RVJfQUREUjIgMFVMCiMgZGVmaW5lIENBTExFUl9BRERSMyAwVUwKIyBkZWZpbmUgQ0FMTEVSX0FE
-RFI0IDBVTAojIGRlZmluZSBDQUxMRVJfQUREUjUgMFVMCiMgZGVmaW5lIENBTExFUl9BRERSNiAw
-VUwKI2VuZGlmCgpZZXAhCgotLSBTdGV2ZQoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fCkxpbnV4cHBjLWRldiBtYWlsaW5nIGxpc3QKTGludXhwcGMtZGV2
-QG96bGFicy5vcmcKaHR0cHM6Ly9vemxhYnMub3JnL21haWxtYW4vbGlzdGluZm8vbGludXhwcGMt
-ZGV2
+On Wed, Feb 04, 2009 at 04:26:15PM +0100, Fr=C3=A9d=C3=A9ric Weisbecker=
+ wrote:
+[...]
+> > @@ -136,6 +138,7 @@ config SCHED_TRACER
+> >        select TRACING
+> >        select CONTEXT_SWITCH_TRACER
+> >        select TRACER_MAX_TRACE
+> > +       select FRAME_POINTER
+> >        help
+> >          This tracer tracks the latency of the highest priority tas=
+k
+> >          to be scheduled in, starting from the point it has woken u=
+p.
+> > --
+>=20
+>=20
+> Looks right.
+>=20
+> BTW, how behaves builtin_return_address in case of !FRAME_POINTERS ?
+> I guess it would only work with the first caller builtin_return_addre=
+ss(0)
+
+It depends on the architecture. On PowerPC we always have frame pointer=
+s,
+thus __builtin_return_address(1..) will always work. On x86 it won't wo=
+rk
+that way.
+
+Thanks,
+
+--=20
+Anton Vorontsov
+email: cbouatmailru@gmail.com
+irc://irc.freenode.net/bd2
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
