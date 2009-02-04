@@ -1,47 +1,45 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: Hard lockup with 2.6.24.7-rt26 on x86
-Date: Wed, 4 Feb 2009 12:56:26 +0100
-Message-ID: <3efb10970902040356y46cb304bi2855769398d16439@mail.gmail.com>
-References: <37144.1233608136@vtxmail.ch>
-	 <3efb10970902031120g21b4586k4e7f2f03bbca6c77@mail.gmail.com>
-	 <902d99b50902040046u3257591fxe29cef4e62315b1a@mail.gmail.com>
+From: Brian Ford <bsfford@yahoo.co.uk>
+Subject: Questions on developing applications...
+Date: Wed, 4 Feb 2009 11:50:07 +0000 (GMT)
+Message-ID: <296402.26723.qm@web28616.mail.ukl.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Denis Borisevich <dennisfen@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qw-out-2122.google.com ([74.125.92.24]:30196 "EHLO
-	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751067AbZBDL41 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 06:56:27 -0500
-Received: by qw-out-2122.google.com with SMTP id 3so1367799qwe.37
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Feb 2009 03:56:26 -0800 (PST)
-In-Reply-To: <902d99b50902040046u3257591fxe29cef4e62315b1a@mail.gmail.com>
+Received: from n26.bullet.mail.ukl.yahoo.com ([87.248.110.143]:25778 "HELO
+	n26.bullet.mail.ukl.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1751188AbZBDL5C convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 4 Feb 2009 06:57:02 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Denis,
+Hi Everyone,
 
-Please keep the mailinglist on the CC.
+I'm new to real time linux programming, apologies if these questions are 
+very simple.
 
-Kind Regards,
+I've recently setup a real time Linux kernel using patch-2.6.24.7-rt26  
+and got the simple "Hello World" program working. However, I'm unable
+to find any guides on how to write more complex software. 
 
-Remy
+Can you tell me how to do real time inter process message passing in linux?
+I'm familiar with shared memory and pipes -- is it ok to use these in 
+a real time context?
 
-2009/2/4 Denis Borisevich <dennisfen@gmail.com>:
-> 2009/2/3 Remy Bohmer <linux@bohmer.net>:
->> In noticed some hangups too while using 2.6.24.7-rt26, while
->> 2.6.24.7-rt20 was running fine.
->> I can reproduce it here on an ARM11 core, when
->> CONFIG_DEBUG_LOCKING_API_SELFTESTS is set the system hangs during boot
->> on rt26, while it boots properly on rt20. So, there is a regression
->> here.
->
-> I second that. With CONFIG_DEBUG_LOCKING_API_SELFTEST system hangs on
-> boot with -rt26.
->
-> --
-> Denis
->
+Also, I've read that printf may not provide real time performance. 
+(http://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application)
+If I use printf/printk to a X UI terminal, will the output be deterministic (take a fixed time)?
+
+I'm also interested in building a cyclic executive scheduler to control individual process. At
+the moment I'm guessing the only way to do this would be to modify the kernel scheduler. 
+Is it possible to do this at the application/process level?
+
+Thanks in advance for your help,
+
+Brian
+
+
+      
+
