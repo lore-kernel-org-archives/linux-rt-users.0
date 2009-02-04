@@ -1,66 +1,66 @@
-From: Anton Vorontsov <avorontsov@ru.mvista.com>
-Subject: Re: [PATCH 3/3] tracing: Tracers that use CALLER_ADDR macros
-	should select FRAME_POINTER
-Date: Wed, 4 Feb 2009 18:36:43 +0300
-Message-ID: <20090204153643.GA16681@oksana.dev.rtsoft.ru>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150840.GC30027@oksana.dev.rtsoft.ru> <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
-Reply-To: avorontsov@ru.mvista.com
+From: =?ISO-8859-1?Q?Fr=E9d=E9ric_Weisbecker?= <fweisbec@gmail.com>
+Subject: Re: [PATCH 3/3] tracing: Tracers that use CALLER_ADDR macros should
+	select FRAME_POINTER
+Date: Wed, 4 Feb 2009 17:50:24 +0100
+Message-ID: <c62985530902040850u5f9e7ca2w6ffbf553ec15eec5@mail.gmail.com>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
+	 <20090204150840.GC30027@oksana.dev.rtsoft.ru>
+	 <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+	 <20090204153643.GA16681@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
-	Paul Mackerras <paulus@samba.org>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>, Paul Mackerras <paulus@samba.org>,
 	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
 	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: =?utf8?B?RnLDqWTDqXJpYw==?= Weisbecker <fweisbec@gmail.com>
+To: avorontsov@ru.mvista.com, Steven Rostedt <srostedt@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft3.corbina.net ([85.21.88.6]:60333 "EHLO
-	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753170AbZBDPgp (ORCPT
+Received: from mail-fx0-f20.google.com ([209.85.220.20]:37591 "EHLO
+	mail-fx0-f20.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751513AbZBDQu1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 10:36:45 -0500
-Content-Disposition: inline
-In-Reply-To: <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
+	Wed, 4 Feb 2009 11:50:27 -0500
+In-Reply-To: <20090204153643.GA16681@oksana.dev.rtsoft.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Feb 04, 2009 at 04:26:15PM +0100, Fr=C3=A9d=C3=A9ric Weisbecker=
- wrote:
-[...]
-> > @@ -136,6 +138,7 @@ config SCHED_TRACER
-> >        select TRACING
-> >        select CONTEXT_SWITCH_TRACER
-> >        select TRACER_MAX_TRACE
-> > +       select FRAME_POINTER
-> >        help
-> >          This tracer tracks the latency of the highest priority tas=
-k
-> >          to be scheduled in, starting from the point it has woken u=
-p.
-> > --
->=20
->=20
-> Looks right.
->=20
-> BTW, how behaves builtin_return_address in case of !FRAME_POINTERS ?
-> I guess it would only work with the first caller builtin_return_addre=
-ss(0)
+2009/2/4 Steven Rostedt <srostedt@redhat.com>:
+>
+> >From ftrace.h:
+>
+> #ifdef CONFIG_FRAME_POINTER
+> /* TODO: need to fix this for ARM */
+> # define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+> # define CALLER_ADDR1 ((unsigned long)__builtin_return_address(1))
+> # define CALLER_ADDR2 ((unsigned long)__builtin_return_address(2))
+> # define CALLER_ADDR3 ((unsigned long)__builtin_return_address(3))
+> # define CALLER_ADDR4 ((unsigned long)__builtin_return_address(4))
+> # define CALLER_ADDR5 ((unsigned long)__builtin_return_address(5))
+> # define CALLER_ADDR6 ((unsigned long)__builtin_return_address(6))
+> #else
+> # define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+> # define CALLER_ADDR1 0UL
+> # define CALLER_ADDR2 0UL
+> # define CALLER_ADDR3 0UL
+> # define CALLER_ADDR4 0UL
+> # define CALLER_ADDR5 0UL
+> # define CALLER_ADDR6 0UL
+> #endif
+>
+> Yep!
+>
 
-It depends on the architecture. On PowerPC we always have frame pointer=
-s,
-thus __builtin_return_address(1..) will always work. On x86 it won't wo=
-rk
-that way.
+Ok.
 
-Thanks,
+2009/2/4 Anton Vorontsov <avorontsov@ru.mvista.com>:
+> It depends on the architecture. On PowerPC we always have frame pointers,
+> thus __builtin_return_address(1..) will always work. On x86 it won't work
+> that way.
+>
+> Thanks,
+>
+> --
+> Anton Vorontsov
 
---=20
-Anton Vorontsov
-email: cbouatmailru@gmail.com
-irc://irc.freenode.net/bd2
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks for your answers!
