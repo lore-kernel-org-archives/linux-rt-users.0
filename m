@@ -2,7 +2,7 @@ From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
 	possible
 Date: Wed, 4 Feb 2009 22:26:12 +0100
-Message-ID: <20090204212612.GN22608__49452.2606641569$1233782906$gmane$org@elte.hu>
+Message-ID: <20090204212612.GN22608__12562.5090943233$1233782920$gmane$org@elte.hu>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150835.GA30027@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -13,15 +13,11 @@ Cc: Steven Rostedt <srostedt@redhat.com>,
 	linux-rt-users@vger.kernel.org
 To: Anton Vorontsov <avorontsov@ru.mvista.com>,
 	Sam Ravnborg <sam@ravnborg.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:44896 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750782AbZBDV0l (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 16:26:41 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756494AbZBDV0y@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20090204150835.GA30027@oksana.dev.rtsoft.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 * Anton Vorontsov <avorontsov@ru.mvista.com> wrote:
