@@ -2,7 +2,7 @@ From: Steven Rostedt <srostedt@redhat.com>
 Subject: Re: [PATCH 3/3] tracing: Tracers that use CALLER_ADDR macros
 	should select FRAME_POINTER
 Date: Wed, 04 Feb 2009 10:31:21 -0500
-Message-ID: <1233761481.16878.12.camel__481.188754975115$1233761810$gmane$org@localhost.localdomain>
+Message-ID: <1233761481.16878.12.camel__37224.5378363461$1233761827$gmane$org@localhost.localdomain>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
 	 <20090204150840.GC30027@oksana.dev.rtsoft.ru>
 	 <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
@@ -15,14 +15,10 @@ Cc: Anton Vorontsov <avorontsov@ru.mvista.com>,
 	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
 To: =?ISO-8859-1?Q?Fr=E9d=E9ric?= Weisbecker <fweisbec@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:58279 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752485AbZBDPe4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 10:34:56 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756209AbZBDPfM@vger.kernel.org>
 In-Reply-To: <c62985530902040726x34aeee7fr3b2937d898d3061e@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 On Wed, 2009-02-04 at 16:26 +0100, Fr=C3=A9d=C3=A9ric Weisbecker wrote:
@@ -100,10 +96,3 @@ ss(0)
 Yep!
 
 -- Steve
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
