@@ -1,20 +1,28 @@
 From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 2/3] powerpc: Make it possible to safely select
- CONFIG_FRAME_POINTER
+	CONFIG_FRAME_POINTER
 Date: Thu, 05 Feb 2009 11:31:29 +1100
-Message-ID: <1233793889.4612.33.camel__43685.9163725332$1233794068$gmane$org@pasglop>
+Message-ID: <1233793889.4612.33.camel__3613.86530935324$1233794104$gmane$org@pasglop>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	 <20090204150838.GB30027@oksana.dev.rtsoft.ru>
+	<20090204150838.GB30027@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
-	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linuxppc-dev@ozlabs.org, Steven Rostedt <srostedt@redhat.com>,
+	Paul Mackerras <paulus@samba.org>, Ingo Molnar <mingo@elte.hu>
 To: Anton Vorontsov <avorontsov@ru.mvista.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759479AbZBEAcv@vger.kernel.org>
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
 In-Reply-To: <20090204150838.GB30027@oksana.dev.rtsoft.ru>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Wed, 2009-02-04 at 18:08 +0300, Anton Vorontsov wrote:
