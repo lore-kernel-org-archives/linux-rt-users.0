@@ -2,7 +2,7 @@ From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 2/3] powerpc: Make it possible to safely select
  CONFIG_FRAME_POINTER
 Date: Thu, 05 Feb 2009 11:31:29 +1100
-Message-ID: <1233793889.4612.33.camel__24217.0637975962$1233794048$gmane$org@pasglop>
+Message-ID: <1233793889.4612.33.camel__43685.9163725332$1233794068$gmane$org@pasglop>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
 	 <20090204150838.GB30027@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
@@ -12,14 +12,10 @@ Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
 	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Anton Vorontsov <avorontsov@ru.mvista.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:60479 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753957AbZBEAci (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 19:32:38 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759479AbZBEAcv@vger.kernel.org>
 In-Reply-To: <20090204150838.GB30027@oksana.dev.rtsoft.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 On Wed, 2009-02-04 at 18:08 +0300, Anton Vorontsov wrote:
 > Remove -fno-omit-frame-pointer flag from CFLAGS.
@@ -133,4 +129,3 @@ Ben.
 >  	select KALLSYMS
 >  	select KALLSYMS_ALL
 >  	select STACKTRACE
-
