@@ -1,30 +1,33 @@
-From: Anton Vorontsov <avorontsov@ru.mvista.com>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 2/3] powerpc: Make it possible to safely select
 	CONFIG_FRAME_POINTER
-Date: Thu, 5 Feb 2009 04:12:04 +0300
-Message-ID: <20090205011204.GA25628@oksana.dev.rtsoft.ru>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150838.GB30027@oksana.dev.rtsoft.ru> <1233793889.4612.33.camel@pasglop> <1233794154.16878.20.camel@localhost.localdomain>
-Reply-To: avorontsov@ru.mvista.com
+Date: Thu, 05 Feb 2009 12:15:31 +1100
+Message-ID: <1233796531.4612.35.camel__41676.9289681271$1233796675$gmane$org@pasglop>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
+	<20090204150838.GB30027@oksana.dev.rtsoft.ru>
+	<1233793889.4612.33.camel@pasglop>
+	<1233794154.16878.20.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf8
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	Ingo Molnar <mingo@elte.hu>, Paul Mackerras <paulus@samba.org>,
-	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linuxppc-dev@ozlabs.org, Paul Mackerras <paulus@samba.org>,
+	Ingo Molnar <mingo@elte.hu>
 To: Steven Rostedt <srostedt@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rtsoft3.corbina.net ([85.21.88.6]:61697 "EHLO
-	buildserver.ru.mvista.com" rhost-flags-OK-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757477AbZBEBMM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Feb 2009 20:12:12 -0500
-Content-Disposition: inline
+Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
 In-Reply-To: <1233794154.16878.20.camel@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
+List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
+List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Feb 04, 2009 at 07:35:54PM -0500, Steven Rostedt wrote:
-> 
+On Wed, 2009-02-04 at 19:35 -0500, Steven Rostedt wrote:
 > On Thu, 2009-02-05 at 11:31 +1100, Benjamin Herrenschmidt wrote:
 > > On Wed, 2009-02-04 at 18:08 +0300, Anton Vorontsov wrote:
 > > > Remove -fno-omit-frame-pointer flag from CFLAGS.
@@ -35,68 +38,9 @@ On Wed, Feb 04, 2009 at 07:35:54PM -0500, Steven Rostedt wrote:
 > I don't think it requires -fno-omit-frame-pointer. It is just
 > incompatible with -fomit-frame-pointer.
 
-Yep, -fno-omit-frame-poiner isn't needed for -pg.
+>From a quick test, you seem to be right.
 
-I explained this in http://lkml.org/lkml/2009/2/3/342 :
+Now the question of course is whether -pg will internally trigger
+the bug for which we need the workaround tho...
 
-| Ah...
-|
-| $ gcc -pg -fomit-frame-pointer -S c.c
-| gcc: -pg and -fomit-frame-pointer are incompatible
-|
-| It's hard-coded in gcc, in the code that don't know about
-| architecture details.
-|
-| But on PowerPC -O1 implies -fomit-frame-pointer, that is
-|
-| gcc -pg -O1 -fno-omit-frame-pointer
-| and
-| gcc -pg -O1
-|
-| produce different outputs. Thus -pg -O should be the same
-| as "-pg -O -fomit-framepointer".
-
-That is,
-
-`gcc -O -pg -fno-omit-frame-pointer -S` output:
-
-main:
-        mflr 0
-        stw 0,4(1)
-        bl _mcount
-        stwu 1,-16(1)
-        mflr 0
-        stw 0,20(1)
-        stw 31,12(1)
-        mr 31,1
-        li 3,0
-        lwz 11,0(1)
-        lwz 0,4(11)
-        mtlr 0
-        lwz 31,-4(11)
-        mr 1,11
-        blr
-
-^^ -pg works (_mcount call), but r31 wasted.
-
-Now `gcc -O -pg -S` output:
-
-main:
-        mflr 0
-        stw 0,4(1)
-        bl _mcount
-        stwu 1,-16(1)
-        mflr 0
-        stw 0,20(1)
-        li 3,0
-        lwz 0,20(1)
-        mtlr 0
-        addi 1,1,16
-        blr
-
-^^ _mcount is still there, and r31 isn't used.
-
--- 
-Anton Vorontsov
-email: cbouatmailru@gmail.com
-irc://irc.freenode.net/bd2
+Ben.
