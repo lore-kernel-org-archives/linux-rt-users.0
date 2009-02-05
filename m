@@ -1,65 +1,136 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as possible
-Date: Wed, 4 Feb 2009 22:26:12 +0100
-Message-ID: <20090204212612.GN22608__32192.8967525766$1233782925$gmane$org@elte.hu>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Subject: Re: [PATCH 2/3] powerpc: Make it possible to safely select
+ CONFIG_FRAME_POINTER
+Date: Thu, 05 Feb 2009 11:31:29 +1100
+Message-ID: <1233793889.4612.33.camel__24217.0637975962$1233794048$gmane$org@pasglop>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	<20090204150835.GA30027@oksana.dev.rtsoft.ru>
+	 <20090204150838.GB30027@oksana.dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, Steven Rostedt <srostedt@redhat.com>,
-	Paul Mackerras <paulus@samba.org>
-To: Anton Vorontsov <avorontsov@ru.mvista.com>, Sam Ravnborg <sam@ravnborg.org>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
-Content-Disposition: inline
-In-Reply-To: <20090204150835.GA30027@oksana.dev.rtsoft.ru>
-List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Anton Vorontsov <avorontsov@ru.mvista.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gate.crashing.org ([63.228.1.57]:60479 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753957AbZBEAci (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 4 Feb 2009 19:32:38 -0500
+In-Reply-To: <20090204150838.GB30027@oksana.dev.rtsoft.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Wed, 2009-02-04 at 18:08 +0300, Anton Vorontsov wrote:
+> Remove -fno-omit-frame-pointer flag from CFLAGS.
+> Remove -fno-omit-frame-pointer workarounds.
 
-* Anton Vorontsov <avorontsov@ru.mvista.com> wrote:
+But what about -pg -requires -fno-omit-frame-pointer ?
 
-> This patch gives arches more freedom on overwriting CFLAGS, specifically
-> on PowerPC we want to remove -fno-omit-frame-pointer flag.
-> 
+Ben.
+
 > Signed-off-by: Anton Vorontsov <avorontsov@ru.mvista.com>
 > ---
->  Makefile |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+>  arch/powerpc/Makefile                    |   10 ++++++----
+>  arch/powerpc/kernel/Makefile             |   10 +++++-----
+>  arch/powerpc/platforms/powermac/Makefile |    2 +-
+>  lib/Kconfig.debug                        |    8 ++++----
+>  4 files changed, 16 insertions(+), 14 deletions(-)
 > 
-> diff --git a/Makefile b/Makefile
-> index 7715b2c..d1ba93f 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -525,8 +525,6 @@ else
->  KBUILD_CFLAGS	+= -O2
+> diff --git a/arch/powerpc/Makefile b/arch/powerpc/Makefile
+> index 72d17f5..627aa7f 100644
+> --- a/arch/powerpc/Makefile
+> +++ b/arch/powerpc/Makefile
+> @@ -120,10 +120,12 @@ ifeq ($(CONFIG_6xx),y)
+>  KBUILD_CFLAGS		+= -mcpu=powerpc
 >  endif
 >  
-> -include $(srctree)/arch/$(SRCARCH)/Makefile
-> -
->  ifneq (CONFIG_FRAME_WARN,0)
->  KBUILD_CFLAGS += $(call cc-option,-Wframe-larger-than=${CONFIG_FRAME_WARN})
->  endif
-> @@ -555,6 +553,8 @@ ifdef CONFIG_DEBUG_SECTION_MISMATCH
->  KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
+> -# Work around a gcc code-gen bug with -fno-omit-frame-pointer.
+> -ifeq ($(CONFIG_FUNCTION_TRACER),y)
+> -KBUILD_CFLAGS		+= -mno-sched-epilog
+> -endif
+> +# Remove -fno-omit-frame-pointer flag. There are two reasons:
+> +# 1. On powerpc we always have frame pointers.
+> +# 2. Some gcc versions might generate wrong code with -fno-omit-frame-pointer
+> +#    flag. So, if for some reason you're going to remove this line, then add
+> +#    -mno-sched-epilog to workaround the gcc bug.
+> +KBUILD_CFLAGS := $(subst -fno-omit-frame-pointer,,$(KBUILD_CFLAGS))
+>  
+>  cpu-as-$(CONFIG_4xx)		+= -Wa,-m405
+>  cpu-as-$(CONFIG_6xx)		+= -Wa,-maltivec
+> diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
+> index 8d1a419..a97f215 100644
+> --- a/arch/powerpc/kernel/Makefile
+> +++ b/arch/powerpc/kernel/Makefile
+> @@ -14,14 +14,14 @@ endif
+>  
+>  ifdef CONFIG_FUNCTION_TRACER
+>  # Do not trace early boot code
+> -CFLAGS_REMOVE_cputable.o = -pg -mno-sched-epilog
+> -CFLAGS_REMOVE_prom_init.o = -pg -mno-sched-epilog
+> -CFLAGS_REMOVE_btext.o = -pg -mno-sched-epilog
+> -CFLAGS_REMOVE_prom.o = -pg -mno-sched-epilog
+> +CFLAGS_REMOVE_cputable.o = -pg
+> +CFLAGS_REMOVE_prom_init.o = -pg
+> +CFLAGS_REMOVE_btext.o = -pg
+> +CFLAGS_REMOVE_prom.o = -pg
+>  
+>  ifdef CONFIG_DYNAMIC_FTRACE
+>  # dynamic ftrace setup.
+> -CFLAGS_REMOVE_ftrace.o = -pg -mno-sched-epilog
+> +CFLAGS_REMOVE_ftrace.o = -pg
 >  endif
 >  
-> +include $(srctree)/arch/$(SRCARCH)/Makefile
-> +
->  # arch Makefile may override CC so keep this after arch Makefile is included
->  NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
->  CHECKFLAGS     += $(NOSTDINC_FLAGS)
-> -- 
+>  endif
+> diff --git a/arch/powerpc/platforms/powermac/Makefile b/arch/powerpc/platforms/powermac/Makefile
+> index 50f1693..0eb8781 100644
+> --- a/arch/powerpc/platforms/powermac/Makefile
+> +++ b/arch/powerpc/platforms/powermac/Makefile
+> @@ -2,7 +2,7 @@ CFLAGS_bootx_init.o  		+= -fPIC
+>  
+>  ifdef CONFIG_FUNCTION_TRACER
+>  # Do not trace early boot code
+> -CFLAGS_REMOVE_bootx_init.o = -pg -mno-sched-epilog
+> +CFLAGS_REMOVE_bootx_init.o = -pg
+>  endif
+>  
+>  obj-y				+= pic.o setup.o time.o feature.o pci.o \
+> diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+> index 29044f5..657126c 100644
+> --- a/lib/Kconfig.debug
+> +++ b/lib/Kconfig.debug
+> @@ -402,7 +402,7 @@ config LOCKDEP
+>  	bool
+>  	depends on DEBUG_KERNEL && TRACE_IRQFLAGS_SUPPORT && STACKTRACE_SUPPORT && LOCKDEP_SUPPORT
+>  	select STACKTRACE
+> -	select FRAME_POINTER if !X86 && !MIPS && !PPC
+> +	select FRAME_POINTER if !X86 && !MIPS
+>  	select KALLSYMS
+>  	select KALLSYMS_ALL
+>  
+> @@ -583,7 +583,7 @@ config FRAME_POINTER
+>  	bool "Compile the kernel with frame pointers"
+>  	depends on DEBUG_KERNEL && \
+>  		(CRIS || M68K || M68KNOMMU || FRV || UML || S390 || \
+> -		 AVR32 || SUPERH || BLACKFIN || MN10300) || \
+> +		 AVR32 || SUPERH || BLACKFIN || MN10300 || PPC) || \
+>  		ARCH_WANT_FRAME_POINTERS
+>  	default y if (DEBUG_INFO && UML) || ARCH_WANT_FRAME_POINTERS
+>  	help
+> @@ -771,13 +771,13 @@ config FAULT_INJECTION_STACKTRACE_FILTER
+>  	depends on FAULT_INJECTION_DEBUG_FS && STACKTRACE_SUPPORT
+>  	depends on !X86_64
+>  	select STACKTRACE
+> -	select FRAME_POINTER if !PPC
+> +	select FRAME_POINTER
+>  	help
+>  	  Provide stacktrace filter for fault-injection capabilities
+>  
+>  config LATENCYTOP
+>  	bool "Latency measuring infrastructure"
+> -	select FRAME_POINTER if !MIPS && !PPC
+> +	select FRAME_POINTER if !MIPS
+>  	select KALLSYMS
+>  	select KALLSYMS_ALL
+>  	select STACKTRACE
 
-this patch is really for Sam to judge - Cc:-ed him.
-
-	Ingo
