@@ -1,48 +1,58 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Re: Re: Hard lockup with 2.6.24.7-rt26 on x86 - cause found
-Date: Fri, 6 Feb 2009 09:16:05 -0500 (EST)
-Message-ID: <alpine.DEB.1.10.0902060915300.10059@gandalf.stny.rr.com>
-References: <49725.1233916457@vtxmail.ch> <1233919704.10894.5.camel@laptop>
+From: Klaas van Gend <klaas.van.gend@mvista.com>
+Subject: Re: Questions on developing applications...
+Date: Fri, 06 Feb 2009 12:32:30 -0800
+Message-ID: <498C9E5E.7060708@mvista.com>
+References: <296402.26723.qm@web28616.mail.ukl.yahoo.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: m.luescher@vtxmail.ch, ghaskins@novell.com,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten.Emde@osadl.org
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Brian Ford <bsfford@yahoo.co.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:50533 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752104AbZBFOQH (ORCPT
+Received: from gateway-1237.mvista.com ([63.81.120.158]:57597 "EHLO
+	gateway-1237.mvista.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752368AbZBFUce (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Feb 2009 09:16:07 -0500
-In-Reply-To: <1233919704.10894.5.camel@laptop>
+	Fri, 6 Feb 2009 15:32:34 -0500
+In-Reply-To: <296402.26723.qm@web28616.mail.ukl.yahoo.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Fri, 6 Feb 2009, Peter Zijlstra wrote:
-
-> On Fri, 2009-02-06 at 11:34 +0100, Matthias Luescher wrote:
-> > Hi
-> > 
-> > I finally found out which patch does not work well with my configuration:
-> > 
-> > 2.6.24.7-rt12 seems to be ok, with 2.6.24.7-rt13 the command cyclictest -p99 -t10 -n -i250 crashes the kernel.
-> > 
-> > 2.6.24.7-rt13 has the follwing new patches:
-> > ftrace-hotplug-fix.patch
-> > ftrace-wakeup-rawspinlock.patch
-> > radix-tree-lockdep-plus1.patch
-> > sched-cpupri-hotplug-support.patch
-> > sched-cpupri-priocount.patch
-> > 
-> > No I went again to 2.6.24.7-rt26 but removed some patches:
-> > 2.6.24.7-rt26 with all patches -> CRASH
-> > 2.6.24.7-rt26 without sched-cpupri-hotplug-support.patch and without sched-cpupri-priocount.patch ->OK
-> > 2.6.24.7-rt26 without sched-cpupri-hotplug-support.patch ->CRASH
+Brian Ford wrote:
+> Hi Everyone,
 > 
-> sched-cpupri-priocount.patch is buggy
+> I'm new to real time linux programming, apologies if these questions are 
+> very simple.
+> 
+> I've recently setup a real time Linux kernel using patch-2.6.24.7-rt26  
+> and got the simple "Hello World" program working. However, I'm unable
+> to find any guides on how to write more complex software. 
+> 
+> Can you tell me how to do real time inter process message passing in linux?
+> I'm familiar with shared memory and pipes -- is it ok to use these in 
+> a real time context?
+> 
+> Also, I've read that printf may not provide real time performance. 
+> (http://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application)
+> If I use printf/printk to a X UI terminal, will the output be deterministic (take a fixed time)?
+> 
+> I'm also interested in building a cyclic executive scheduler to control individual process. At
+> the moment I'm guessing the only way to do this would be to modify the kernel scheduler. 
+> Is it possible to do this at the application/process level?
 
-Yes, I was suppose to remove that patch. It somehow escaped deletion.
+It depends. Do you know about SCHED_FIFO and SCHED_RR ?
+It sounds like that may already suit your needs.
 
--- Steve
+If you're not familiar with those, please read up on this - e.g. in
+Chapter 4 of Robert Love's book:    http://www.amazon.co.uk/dp/0672327201
+
+
+-- 
+Best regards,
+
+Klaas van Gend
+
+Senior Solutions & Services Architect
+MontaVista Software
+Phone: (408) 572 7962 (Santa Clara Office)
+Phone: +31 40 2801386 (for European calls)
