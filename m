@@ -1,36 +1,45 @@
-From: wuzj@lemote.com
-Subject: the current status of RT_PREEMPT for mips
-Date: Mon, 9 Feb 2009 08:07:12 +0800 (CST)
-Message-ID: <20955.222.92.8.142.1234138032.squirrel@mail.lemote.com>
+From: Luis Henriques <henrix@sapo.pt>
+Subject: [PATCH][rt-tests] Trivial patch for cyclictest
+Date: Mon, 9 Feb 2009 18:51:40 +0000
+Message-ID: <20090209185140.GA6052@hades.domain.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=gb2312
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [222.92.8.141] ([222.92.8.141]:42879 "EHLO lemote.com"
-	rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with ESMTP
-	id S1752930AbZBIAbQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 8 Feb 2009 19:31:16 -0500
+Received: from relay1.ptmail.sapo.pt ([212.55.154.21]:47652 "HELO sapo.pt"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
+	id S1751668AbZBISxF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Feb 2009 13:53:05 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-HI!
+The help for the -C option was being printed out inside the help of the -c
+option.
+Signed-off-by: Luis Henriques <henrix@sapo.pt>
 
-I'm planning to port RE_PREEMPT to loongson2f(a mipsel compatible
-processor), the "FAQ" web page of RTWiKi(rt.wiki.kernel.org) shows that
-"There are systems representing the x86, x86_64, ARM, MIPS, and Power
-architectures using the CONFIG_PREEMPT_RT patch.", does it means that
-RT_PREEMPT support  MIPS architecture? because i can not find any more
-information about it, I tried to use the latest RT_PREEMPT on qemu
-0.9.1/mipssim, it can not boot, so I come to get your help, could you give
-any current status of RT_PREEMPT for mips? such as:
+---
+ src/cyclictest/cyclictest.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-1. does the latest RT_PREEMPT(for linux 2.6.26.8) support MIPS
-architecture? or any older one support it?
-2. if Yes, which MIPS processors have been successfully running RT_PREEMPT?
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 2706914..63bf140 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -642,9 +642,9 @@ static void display_help(void)
+ 	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+ 	       "-B       --preemptirqs     both preempt and irqsoff tracing (used with -b)\n"
+ 	       "-c CLOCK --clock=CLOCK     select clock\n"
+-	       "-C       --context         context switch tracing (used with -b)\n"
+ 	       "                           0 = CLOCK_MONOTONIC (default)\n"
+ 	       "                           1 = CLOCK_REALTIME\n"
++	       "-C       --context         context switch tracing (used with -b)\n"
+ 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+ 	       "-E       --event           event tracing (used with -b)\n"
+ 	       "-f       --ftrace          function trace (when -b is active)\n"
+-- 
+1.5.6.5
 
-looking forward to your reply, thanks!
-
-Best Regards,
-falcon
 
