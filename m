@@ -1,57 +1,36 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: Build error: 2.6.26.8-rt15 on ARM.
-Date: Sat, 7 Feb 2009 20:39:32 +0100
-Message-ID: <20090207193931.GA32296@pengutronix.de>
-References: <49895AB1.2090205@albentia.com> <20090204101503.GB12738@pengutronix.de>
+From: wuzj@lemote.com
+Subject: the current status of RT_PREEMPT for mips
+Date: Mon, 9 Feb 2009 08:07:12 +0800 (CST)
+Message-ID: <20955.222.92.8.142.1234138032.squirrel@mail.lemote.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Iratxo Pichel Ortiz <ipichel@albentia.com>
+Content-Type: text/plain;charset=gb2312
+Content-Transfer-Encoding: 8bit
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:39483 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752721AbZBGTje (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 7 Feb 2009 14:39:34 -0500
-Content-Disposition: inline
-In-Reply-To: <20090204101503.GB12738@pengutronix.de>
+Received: from [222.92.8.141] ([222.92.8.141]:42879 "EHLO lemote.com"
+	rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with ESMTP
+	id S1752930AbZBIAbQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 8 Feb 2009 19:31:16 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+HI!
 
-On Wed, Feb 04, 2009 at 11:15:03AM +0100, Uwe Kleine-K=F6nig wrote:
-> On Wed, Feb 04, 2009 at 10:06:57AM +0100, Iratxo Pichel Ortiz wrote:
-> > I think that I have found a built error on 2.6.26.8-rt15 on ARM (ix=
-p4xx):
-> >
-> > Here (warning):
-> >
-> > In file included from kernel/trace/trace.c:37:
-> > include/asm/asm-offsets.h:49:1: warning: "VM_EXEC" redefined
-> > In file included from include/linux/pagemap.h:7,
-> >                 from kernel/trace/trace.c:19:
-> > include/linux/mm.h:77:1: warning: this is the location of the previ=
-ous =20
-> > definition
-> IIRC the resolution for that one was not to include both headers that
-> define VM_EXEC.  Try searching the archives of linux-arm-kernel ML.
-I had that warning now on Steven's tip, too.  For me removing
-#include asm-offsets.h solved the situation.  Not sure this works in
-general though.  And I was unable to find the thread on the ML?!
+I'm planning to port RE_PREEMPT to loongson2f(a mipsel compatible
+processor), the "FAQ" web page of RTWiKi(rt.wiki.kernel.org) shows that
+"There are systems representing the x86, x86_64, ARM, MIPS, and Power
+architectures using the CONFIG_PREEMPT_RT patch.", does it means that
+RT_PREEMPT support  MIPS architecture? because i can not find any more
+information about it, I tried to use the latest RT_PREEMPT on qemu
+0.9.1/mipssim, it can not boot, so I come to get your help, could you give
+any current status of RT_PREEMPT for mips? such as:
 
-Best regards
-Uwe
+1. does the latest RT_PREEMPT(for linux 2.6.26.8) support MIPS
+architecture? or any older one support it?
+2. if Yes, which MIPS processors have been successfully running RT_PREEMPT?
 
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+looking forward to your reply, thanks!
+
+Best Regards,
+falcon
+
