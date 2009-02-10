@@ -1,45 +1,24 @@
-From: Luis Henriques <henrix@sapo.pt>
-Subject: [PATCH][rt-tests] Trivial patch for cyclictest
-Date: Mon, 9 Feb 2009 18:51:40 +0000
-Message-ID: <20090209185140.GA6052@hades.domain.com>
+From: Aymeric <ejisneos@gmail.com>
+Subject: Re: 2.6.26 freezes since rt13
+Date: Tue, 10 Feb 2009 20:28:48 +0100
+Message-ID: <4991D570.1010907@gmail.com>
+References: <4981AB45.8000202@gmail.com> <20090129142722.5825d4eb@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay1.ptmail.sapo.pt ([212.55.154.21]:47652 "HELO sapo.pt"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-	id S1751668AbZBISxF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Feb 2009 13:53:05 -0500
-Content-Disposition: inline
+Received: from ey-out-2122.google.com ([74.125.78.24]:11219 "EHLO
+	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752457AbZBJT2s (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 10 Feb 2009 14:28:48 -0500
+Received: by ey-out-2122.google.com with SMTP id 25so615795eya.37
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Feb 2009 11:28:46 -0800 (PST)
+In-Reply-To: <20090129142722.5825d4eb@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The help for the -C option was being printed out inside the help of the -c
-option.
-Signed-off-by: Luis Henriques <henrix@sapo.pt>
-
----
- src/cyclictest/cyclictest.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 2706914..63bf140 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -642,9 +642,9 @@ static void display_help(void)
- 	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
- 	       "-B       --preemptirqs     both preempt and irqsoff tracing (used with -b)\n"
- 	       "-c CLOCK --clock=CLOCK     select clock\n"
--	       "-C       --context         context switch tracing (used with -b)\n"
- 	       "                           0 = CLOCK_MONOTONIC (default)\n"
- 	       "                           1 = CLOCK_REALTIME\n"
-+	       "-C       --context         context switch tracing (used with -b)\n"
- 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
- 	       "-E       --event           event tracing (used with -b)\n"
- 	       "-f       --ftrace          function trace (when -b is active)\n"
--- 
-1.5.6.5
-
-
+Great, 2.6.26.8-rt16 seems to have solved my problem!
+Thank you very much!
