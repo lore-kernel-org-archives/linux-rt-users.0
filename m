@@ -1,7 +1,9 @@
 From: Katsuya Matsubara <matsu@igel.co.jp>
-Subject: [PATCH RT 0/4] sh arch support for 2.6.28-rt
-Date: Thu, 12 Feb 2009 00:01:39 +0900
-Message-ID: <1234364503-857-1-git-send-email-matsu@igel.co.jp>
+Subject: [PATCH RT 2/4] sh: enable interrupts in signal handling
+Date: Thu, 12 Feb 2009 00:01:41 +0900
+Message-ID: <1234364503-857-3-git-send-email-matsu@igel.co.jp>
+References: <1234364503-857-1-git-send-email-matsu@igel.co.jp>
+ <1234364503-857-2-git-send-email-matsu@igel.co.jp>
 Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Paul Mundt <lethal@linux-sh.org>,
@@ -9,33 +11,41 @@ Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
 	Katsuya Matsubara <matsu@igel.co.jp>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailhost.igel.co.jp ([219.106.231.130]:41197 "EHLO
+Received: from mailhost.igel.co.jp ([219.106.231.130]:41199 "EHLO
 	mailhost.igel.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751215AbZBKPXY (ORCPT
+	with ESMTP id S1754249AbZBKPXY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 11 Feb 2009 10:23:24 -0500
+In-Reply-To: <1234364503-857-2-git-send-email-matsu@igel.co.jp>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-These patches apply preempt-rt treatments into sh specific code.
-64 bit support is not included because I have no sh64 board.
-These are based on the 2.6.28-rt git.
+Fully-preemptible kernel does not need interrupts disabled in signal
+handling. The same treatment can be found in x86 and arm code.
 
-I made sure that these work on renesas rts7751r2dplus.
-
--- Katsuya Matsubara / matsu@igel.co.jp
-
+Signed-off-by: Katsuya Matsubara <matsu@igel.co.jp>
 ---
+ arch/sh/kernel/signal_32.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-Katsuya Matsubara (4):
-  sh: use __preempt_enable_no_resched in cpu_idle()
-  sh: enable interrupts in signal handling
-  sh: decouple the pagefault-disabled logic
-  convert-locks-list: add sh specific spin locks
-
- arch/sh/kernel/process_32.c |    2 +-
- arch/sh/kernel/signal_32.c  |    7 +++++++
- arch/sh/mm/fault_32.c       |    2 +-
- scripts/convert-locks-list  |   12 ++++++++++++
- 4 files changed, 21 insertions(+), 2 deletions(-)
+diff --git a/arch/sh/kernel/signal_32.c b/arch/sh/kernel/signal_32.c
+index 6d6e408..9f633b5 100644
+--- a/arch/sh/kernel/signal_32.c
++++ b/arch/sh/kernel/signal_32.c
+@@ -571,6 +571,13 @@ static void do_signal(struct pt_regs *regs, unsigned int save_r0)
+ 	struct k_sigaction ka;
+ 	sigset_t *oldset;
+ 
++#ifdef CONFIG_PREEMPT_RT
++	/*
++	* Fully-preemptible kernel does not need interrupts disabled:
++	*/
++	local_irq_enable();
++	preempt_check_resched();
++#endif
+ 	/*
+ 	 * We want the common case to go fast, which
+ 	 * is why we may in certain cases get here from
+-- 
+1.6.1
 
