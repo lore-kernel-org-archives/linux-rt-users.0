@@ -1,52 +1,46 @@
 From: Steven Rostedt <srostedt@redhat.com>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
-	possible
-Date: Wed, 11 Feb 2009 09:11:42 -0500
-Message-ID: <1234361502.31601.0.camel__4750.64957649938$1234361705$gmane$org@localhost.localdomain>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	 <20090204150835.GA30027@oksana.dev.rtsoft.ru>
-	 <20090204212612.GN22608@elte.hu> <1234324294.29851.0.camel@pasglop>
-	 <20090211132338.GQ16535@elte.hu>
+Subject: Re: [PATCH RT 0/4] sh arch support for 2.6.28-rt
+Date: Wed, 11 Feb 2009 10:16:21 -0500
+Message-ID: <1234365381.31601.2.camel@localhost.localdomain>
+References: <1234364503-857-1-git-send-email-matsu@igel.co.jp>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	Anton Vorontsov <avorontsov@ru.mvista.com>,
-	Sam Ravnborg <sam@ravnborg.org>,
-	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756577AbZBKOMg@vger.kernel.org>
-In-Reply-To: <20090211132338.GQ16535@elte.hu>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Paul Mundt <lethal@linux-sh.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Katsuya Matsubara <matsu@igel.co.jp>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx2.redhat.com ([66.187.237.31]:36654 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755230AbZBKPQr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Feb 2009 10:16:47 -0500
+In-Reply-To: <1234364503-857-1-git-send-email-matsu@igel.co.jp>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Wed, 2009-02-11 at 14:23 +0100, Ingo Molnar wrote:
-> * Benjamin Herrenschmidt <benh@kernel.crashing.org> wrote:
+On Thu, 2009-02-12 at 00:01 +0900, Katsuya Matsubara wrote:
+> These patches apply preempt-rt treatments into sh specific code.
+> 64 bit support is not included because I have no sh64 board.
+> These are based on the 2.6.28-rt git.
 > 
-> > On Wed, 2009-02-04 at 22:26 +0100, Ingo Molnar wrote:
-> > > > +include $(srctree)/arch/$(SRCARCH)/Makefile
-> > > > +
-> > > >  # arch Makefile may override CC so keep this after arch Makefile is
-> > > included
-> > > >  NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC)
-> > > -print-file-name=include)
-> > > >  CHECKFLAGS     += $(NOSTDINC_FLAGS)
-> > > > -- 
-> > > 
-> > > this patch is really for Sam to judge - Cc:-ed him.
-> > 
-> > Sam ? I have a few more powerpc patches depending on that one... so I'd
-> > like to know if it's totally doomed or not :-)
+> I made sure that these work on renesas rts7751r2dplus.
 > 
-> Well, toplevel Makefile changes are not to be taken lightly :-)
+> -- Katsuya Matsubara / matsu@igel.co.jp
 > 
-> Looks good to me but it's handy to have Sam's Ack on it too.
+> ---
 > 
+> Katsuya Matsubara (4):
+>   sh: use __preempt_enable_no_resched in cpu_idle()
+>   sh: enable interrupts in signal handling
+>   sh: decouple the pagefault-disabled logic
+>   convert-locks-list: add sh specific spin locks
 
-Someone on IRC said that Sam is on vacation. This could take a while for
-an ACK.
-
+Applied. Thanks!
 
 -- Steve
+
+
