@@ -1,46 +1,81 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
- possible
-Date: Wed, 11 Feb 2009 14:51:34 +1100
-Message-ID: <1234324294.29851.0.camel__10064.9971784607$1234325168$gmane$org@pasglop>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	 <20090204150835.GA30027@oksana.dev.rtsoft.ru>
-	 <20090204212612.GN22608@elte.hu>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: 2.6.24.7-rt27 and 2.6.26.8-rt16
+Date: Wed, 11 Feb 2009 01:09:55 -0500
+Message-ID: <1234332595.13863.10.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Anton Vorontsov <avorontsov@ru.mvista.com>,
-	Sam Ravnborg <sam@ravnborg.org>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
+Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <srostedt@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:32896 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753321AbZBKEDp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 10 Feb 2009 23:03:45 -0500
-In-Reply-To: <20090204212612.GN22608@elte.hu>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:49758 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751207AbZBKGJ7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Feb 2009 01:09:59 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-02-04 at 22:26 +0100, Ingo Molnar wrote:
-> > +include $(srctree)/arch/$(SRCARCH)/Makefile
-> > +
-> >  # arch Makefile may override CC so keep this after arch Makefile is
-> included
-> >  NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC)
-> -print-file-name=include)
-> >  CHECKFLAGS     += $(NOSTDINC_FLAGS)
-> > -- 
-> 
-> this patch is really for Sam to judge - Cc:-ed him.
+We are pleased to announce the 2.6.24.7-rt27 and 2.6.26.8-rt16 trees,
+which can be downloaded from the location:
 
-Sam ? I have a few more powerpc patches depending on that one... so I'd
-like to know if it's totally doomed or not :-)
+  http://rt.et.redhat.com/download/
 
-Cheers,
-Ben.
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+Changes since 2.6.24.7-rt26
+
+Carsten Emde (1):
+      ftrace: display real preempt_count in ftracer
+
+Thomas Gleixner (4):
+      hrtimer: prevent negative expiry value after clock_was_set()
+      x86: remove redundant local_irq_enable() in handle_signal()
+      trace: warn if irqs already enabled in irqs_off latency check
+      sched: fix the cpuprio count really
+
+
+Changes since 2.6.26.8-rt15
+
+Steven Rostedt (1):
+      Reverted sched-properly-account-irq-and-rt-load.patch
+
+Thomas Gleixner (1):
+      sched: fix the cpuprio count really
+
+
+to build a 2.6.24.7-rt27 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
+  http://rt.et.redhat.com/download/patch-2.6.24.7-rt27.bz2
+
+
+to build a 2.6.26.8-rt16 tree, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
+  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.8.bz2
+  http://rt.et.redhat.com/download/patch-2.6.26.8-rt16.bz2
+
+
+And like always, my RT version of Matt Mackall's ketchup will get this
+for you nicely:
+
+  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
+
+
+The broken out patches are also available.
+
+The git tree is almost finished. It has most of the patches of the rt
+tree in already.
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-2.6-rt.git
+
+-- Steve
 
 
 
