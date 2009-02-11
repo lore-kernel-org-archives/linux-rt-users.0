@@ -1,61 +1,76 @@
-From: Katsuya Matsubara <matsu@igel.co.jp>
-Subject: [PATCH RT 4/4] convert-locks-list: add sh specific spin locks
-Date: Thu, 12 Feb 2009 00:01:43 +0900
-Message-ID: <1234364503-857-5-git-send-email-matsu@igel.co.jp>
-References: <1234364503-857-1-git-send-email-matsu@igel.co.jp>
- <1234364503-857-2-git-send-email-matsu@igel.co.jp>
- <1234364503-857-3-git-send-email-matsu@igel.co.jp>
- <1234364503-857-4-git-send-email-matsu@igel.co.jp>
-Cc: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Paul Mundt <lethal@linux-sh.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Katsuya Matsubara <matsu@igel.co.jp>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Thomas Gleixner <tglx@tglx.de>
+Subject: [Announce] 2.6.29-rc4-rt1
+Date: Wed, 11 Feb 2009 23:43:44 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailhost.igel.co.jp ([219.106.231.130]:41200 "EHLO
-	mailhost.igel.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752831AbZBKPXY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Feb 2009 10:23:24 -0500
-In-Reply-To: <1234364503-857-4-git-send-email-matsu@igel.co.jp>
+Received: from www.tglx.de ([62.245.132.106]:33961 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755661AbZBKWpQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Feb 2009 17:45:16 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The preempt-rt converts all spin locks into sleepable locks. However
-some of the locks, for example, used in preempt-disabled code, must
-keep the original behavior. The convert-locks script can revert such
-locks specified by convert-locks-list. This patch add sh specific spin
-locks into the list.
+After a 1.5 years sabbatical from preempt-rt we are pleased to
+announce a refactored preempt-rt patch against linux-2.6.29-rc4.
 
-Signed-off-by: Katsuya Matsubara <matsu@igel.co.jp>
----
- scripts/convert-locks-list |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+The patch is working on x86 (32 and 64bit) but we have not yet updated
+ARM, PPC and MIPS (work in progress).
 
-diff --git a/scripts/convert-locks-list b/scripts/convert-locks-list
-index daba5a8..44793fb 100644
---- a/scripts/convert-locks-list
-+++ b/scripts/convert-locks-list
-@@ -84,6 +84,18 @@ arch/powerpc/include/asm/mpic.h:fixup_lock
- arch/powerpc/include/asm/rtas.h:lock
- arch/powerpc/include/asm/rwsem.h:wait_lock
- 
-+arch/sh/kernel/irq.c:(.*)lock
-+arch/sh/kernel/traps_32.c:die_lock
-+arch/sh/kernel/io_trapped.c:trapped_lock
-+arch/sh/kernel/cpu/sh4/sq.c:sq_mapping_lock
-+arch/sh/kernel/cpu/clock.c:clock_lock
-+arch/sh/drivers/pci/ops-sh4.c:sh4_pci_lock
-+arch/sh/mm/pmb.c:pmb_list_lock
-+
-+arch/sh/include/asm/dma.h:dma_spin_lock
-+arch/sh/drivers/dma/dma-api.c:dma_spin_lock
-+arch/sh/drivers/dma/dma-isa.c:dma_spin_lock
-+
- arch/mips/kernel/i8259.c:i8259A_lock
- arch/mips/kernel/module.c:dbe_lock
- arch/mips/kernel/smp.c:smp_call_lock
--- 
-1.6.1
+We also dropped some experimental features of the base preempt-rt
+queue 2.6.26.8-rt15 simply because we wanted to survive the forward
+port over 3 kernel releases with the least amount of surprises. These
+features (e.g. multiple reader PI locks) are not essential for the
+preempt-rt functionality and need some serious overhaul anyway.
 
+The interested -rt observer might have noticed that we based our work
+on the 2.6.26.8-rt15 patch queue and did not pick the git-rt tree
+which is based on 2.6.28. The reason for this is that we wanted to pick
+the most stable patch queue and the git-rt tree has a lot of rewritten
+new code. Our work is not making the work which was done over the last
+months in the git-rt tree obsolete, quite the contrary: we want to
+provide a stable yet latest-kernel based foundation and integrate those
+changes gradually, as they become ready.
+
+The further plan for the new -rt series is to merge it fully into git
+and integrate it into the -tip git tree so it gets the same treatment
+as all of our -tip based work: fully automated compile and boot
+testing. Furthermore an automated multi architecture -rt performance
+regression test based on the same infrastructure is currently being
+built.
+
+The integration into the -tip tree also allows us to seperate out parts
+of -rt which are ready for mainline more easily and integrate them
+with our usual propagation to mainline.
+
+The structure of the patches is likely to change over the next days
+when we tackle the git integration, but we appreciate your feedback in
+the form of comments, bugreports and patches.
+
+Enough said. You can find the new patches at the following location:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Information on the RT patch can be found at:
+
+  http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29-rc4-rt1 tree, the following patches should be
+applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc4.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc4-rt1.bz2
+
+The broken out patches are also available at the same download
+location.
+
+Enjoy !
+
+      Thomas, Ingo
