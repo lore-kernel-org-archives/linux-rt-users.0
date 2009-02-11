@@ -1,81 +1,48 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: 2.6.24.7-rt27 and 2.6.26.8-rt16
-Date: Wed, 11 Feb 2009 01:09:55 -0500
-Message-ID: <1234332595.13863.10.camel@localhost.localdomain>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: WARN_ON(!rt_rq->rt_nr_running) question?
+Date: Wed, 11 Feb 2009 10:19:11 +0100
+Message-ID: <20090211091911.GA29388@pengutronix.de>
+References: <229545.37726.qm@web59515.mail.ac4.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <srostedt@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: raja gobi <raja.gobi@yahoo.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:49758 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751207AbZBKGJ7 (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:39986 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754236AbZBKJTO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Feb 2009 01:09:59 -0500
+	Wed, 11 Feb 2009 04:19:14 -0500
+Content-Disposition: inline
+In-Reply-To: <229545.37726.qm@web59515.mail.ac4.yahoo.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the 2.6.24.7-rt27 and 2.6.26.8-rt16 trees,
-which can be downloaded from the location:
+Hello,
 
-  http://rt.et.redhat.com/download/
+On Tue, Feb 10, 2009 at 07:17:57PM -0800, raja gobi wrote:
+> This is a question about sched_rt.c. I am hoping this is the correct
+> mailing list for such questions. If not, could somebody direct me to
+> the correct place?
+>=20
+> I am using 2.6.25.16 on an MX27 (ARM)
+If you're not running an -rt kernel, probably the linux-arm-kernel ML i=
+s
+the right place to ask.  Or if you think this problem is not ARM
+specific, use LKML.  And probably you should Cc: Ingo Molnar.
 
-Information on the RT patch can be found at:
+Best regards
+Uwe
 
-  http://rt.wiki.kernel.org/index.php/Main_Page
-
-Changes since 2.6.24.7-rt26
-
-Carsten Emde (1):
-      ftrace: display real preempt_count in ftracer
-
-Thomas Gleixner (4):
-      hrtimer: prevent negative expiry value after clock_was_set()
-      x86: remove redundant local_irq_enable() in handle_signal()
-      trace: warn if irqs already enabled in irqs_off latency check
-      sched: fix the cpuprio count really
-
-
-Changes since 2.6.26.8-rt15
-
-Steven Rostedt (1):
-      Reverted sched-properly-account-irq-and-rt-load.patch
-
-Thomas Gleixner (1):
-      sched: fix the cpuprio count really
-
-
-to build a 2.6.24.7-rt27 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.24.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.24.7.bz2
-  http://rt.et.redhat.com/download/patch-2.6.24.7-rt27.bz2
-
-
-to build a 2.6.26.8-rt16 tree, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.26.tar.bz2
-  http://kernel.org/pub/linux/kernel/v2.6/patch-2.6.26.8.bz2
-  http://rt.et.redhat.com/download/patch-2.6.26.8-rt16.bz2
-
-
-And like always, my RT version of Matt Mackall's ketchup will get this
-for you nicely:
-
-  http://people.redhat.com/srostedt/rt/tools/ketchup-0.9.8-rt3
-
-
-The broken out patches are also available.
-
-The git tree is almost finished. It has most of the patches of the rt
-tree in already.
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-2.6-rt.git
-
--- Steve
-
-
-
+--=20
+Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
+       |
+Industrial Linux Solutions                    | http://www.pengutronix.=
+de/  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
