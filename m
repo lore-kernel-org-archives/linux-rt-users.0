@@ -1,99 +1,212 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [patch] rt: res_counter fix, v2
-Date: Thu, 12 Feb 2009 12:28:54 +0100
-Message-ID: <20090212112854.GD31613@elte.hu>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere> <20090212101650.GA1096@elte.hu> <20090212102113.GA10031@elte.hu> <20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [patch] generic-ipi: remove kmalloc, cleanup
+Date: Thu, 12 Feb 2009 13:09:14 +0100
+Message-ID: <1234440554.23438.264.camel@twins>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
+	 <20090212081801.GA22979@elte.hu> <20090212081923.GA26838@elte.hu>
+	 <1234430564.23438.205.camel@twins>  <20090212100756.GA12790@elte.hu>
+	 <1234433770.23438.210.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>,
 	Clark Williams <williams@redhat.com>,
-	"balbir@linux.vnet.ibm.com" <balbir@linux.vnet.ibm.com>
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+	rusty <rusty@rustcorp.com.au>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:41159 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756854AbZBLL3b (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 06:29:31 -0500
-Content-Disposition: inline
-In-Reply-To: <20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
+Received: from casper.infradead.org ([85.118.1.10]:44446 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756502AbZBLMHb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 07:07:31 -0500
+In-Reply-To: <1234433770.23438.210.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-* KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
-
-> On Thu, 12 Feb 2009 11:21:13 +0100
-> Ingo Molnar <mingo@elte.hu> wrote:
+On Thu, 2009-02-12 at 11:16 +0100, Peter Zijlstra wrote:
+> On Thu, 2009-02-12 at 11:07 +0100, Ingo Molnar wrote:
+> > * Peter Zijlstra <peterz@infradead.org> wrote:
+> > 
+> > > On Thu, 2009-02-12 at 09:19 +0100, Ingo Molnar wrote:
+> > > > * Ingo Molnar <mingo@elte.hu> wrote:
+> > > > 
+> > > > > hm, that's a complex one - we do kfree() from IPI context, [...]
+> > > > 
+> > > > The patch below might do the trick - it offloads this to a softirq.
+> > > > Not tested yet.
+> > > 
+> > > The simple fix is something like:
+> > > 
+> > > ---
+> > >  kernel/smp.c |    8 ++++++++
+> > >  1 files changed, 8 insertions(+), 0 deletions(-)
+> > 
+> > ok, i made it unconditional (not just a PREEMPT_RT hac) and did the
+> > cleanup below on top of it.
+> > 
+> > I dont think repeat, queued IPIs are all that interesting from a
+> > performance point of view. If they are, it will all be clearly
+> > bisectable.
 > 
-> > 
-> > * Ingo Molnar <mingo@elte.hu> wrote:
-> > 
-> > > Frederic, could you try the patch below?
-> > 
-> > Please try v2 below - it might even build ;-)
-> > 
-> > 	Ingo
-> > 
-> > ------------------->
-> > Subject: rt: res_counter fix
-> > From: Ingo Molnar <mingo@elte.hu>
-> > Date: Thu Feb 12 11:11:47 CET 2009
-> > 
-> > Frederic Weisbecker reported this warning:
-> > 
-> > [   45.228562] BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
-> > [   45.228571] in_atomic(): 0, irqs_disabled(): 1, pid: 4290, name: ntpdate
-> > [   45.228576] INFO: lockdep is turned off.
-> > [   45.228580] irq event stamp: 0
-> > [   45.228583] hardirqs last  enabled at (0): [<(null)>] (null)
-> > [   45.228589] hardirqs last disabled at (0): [<ffffffff8025449d>] copy_process+0x68d/0x1500
-> > [   45.228602] softirqs last  enabled at (0): [<ffffffff8025449d>] copy_process+0x68d/0x1500
-> > [   45.228609] softirqs last disabled at (0): [<(null)>] (null)
-> > [   45.228617] Pid: 4290, comm: ntpdate Tainted: G        W  2.6.29-rc4-rt1-tip #1
-> > [   45.228622] Call Trace:
-> > [   45.228632]  [<ffffffff8027dfb0>] ? print_irqtrace_events+0xd0/0xe0
-> > [   45.228639]  [<ffffffff8024cd73>] __might_sleep+0x113/0x130
-> > [   45.228646]  [<ffffffff8077c811>] rt_spin_lock+0xa1/0xb0
-> > [   45.228653]  [<ffffffff80296a3d>] res_counter_charge+0x5d/0x130
-> > [   45.228660]  [<ffffffff802fb67f>] __mem_cgroup_try_charge+0x7f/0x180
-> > [   45.228667]  [<ffffffff802fc407>] mem_cgroup_charge_common+0x57/0x90
-> > [   45.228674]  [<ffffffff80212096>] ? ftrace_call+0x5/0x2b
-> > [   45.228680]  [<ffffffff802fc49d>] mem_cgroup_newpage_charge+0x5d/0x60
-> > [   45.228688]  [<ffffffff802d94ce>] __do_fault+0x29e/0x4c0
-> > [   45.228694]  [<ffffffff8077c843>] ? rt_spin_unlock+0x23/0x80
-> > [   45.228700]  [<ffffffff802db8b5>] handle_mm_fault+0x205/0x890
-> > [   45.228707]  [<ffffffff80212096>] ? ftrace_call+0x5/0x2b
-> > [   45.228714]  [<ffffffff8023495e>] do_page_fault+0x11e/0x2a0
-> > [   45.228720]  [<ffffffff8077e5a5>] page_fault+0x25/0x30
-> > [   45.228727]  [<ffffffff8043e1ed>] ? __clear_user+0x3d/0x70
-> > [   45.228733]  [<ffffffff8043e1d1>] ? __clear_user+0x21/0x70
-> > 
-> > The reason is the raw IRQ flag use of kernel/res_counter.c.
-> > 
-> > The irq flags tricks there seem a bit pointless: it cannot
-> > protect the c->parent linkage because local_irq_save() is
-> > only per CPU.
-> > 
-> > So replace it with _nort(). This code needs a second look.
-> > 
-> I'm sorry for no knowledge about RT. Could you teach me what
-> local_irq_save_nort() does ?
+> Right, except I really don't like the smp_call_function_many() slow path
+> that's now the only path.
 > 
-> Hmm, how about just replacaing _irq() with preempt_disable()/enable() ?
-> xxx_nort() is better ?
+> Rusty did that I think, but he also had some idea on how to fix it, I
+> think it boiled down to sticking a count in the call data instead of the
+> full cpumask.
 > 
-> AFAIK, these will not be called from irq context. (Added Balbir to CC:)
+> So I'd rather we first fix that code, and then remove the kmalloc
+> all-together like you propose here.
 
-_nort() will just turn them into NOPs in essence.
+Right, I can't see a way around carrying that cpumask, there's just too
+much that can go wrong without it.
 
-The question is, are these local IRQ flags manipulations really needed
-in this code, and if yes, why?
+So it put in unconditionally, how about this?
 
-	Ingo
+
+--
+Subject: generic-smp: remove single ipi fallback for smp_call_function_many()
+
+In preparation of removing the kmalloc() calls from the generic-ipi code
+get rid of the single ipi fallback for smp_call_function_many().
+
+Because we cannot get around carrying the cpumask in the data -- imagine
+2 such calls with different but overlapping masks -- put in a full mask.
+
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+---
+ kernel/smp.c |   47 ++++++++++++++++++++++++-----------------------
+ 1 files changed, 24 insertions(+), 23 deletions(-)
+
+diff --git a/kernel/smp.c b/kernel/smp.c
+index bbedbb7..e6658e5 100644
+--- a/kernel/smp.c
++++ b/kernel/smp.c
+@@ -26,7 +26,7 @@ struct call_function_data {
+ 	spinlock_t lock;
+ 	unsigned int refs;
+ 	struct rcu_head rcu_head;
+-	unsigned long cpumask_bits[];
++	struct cpumask cpumask;
+ };
+ 
+ struct call_single_queue {
+@@ -111,13 +111,13 @@ void generic_smp_call_function_interrupt(void)
+ 	list_for_each_entry_rcu(data, &call_function_queue, csd.list) {
+ 		int refs;
+ 
+-		if (!cpumask_test_cpu(cpu, to_cpumask(data->cpumask_bits)))
++		if (!cpumask_test_cpu(cpu, &data->cpumask))
+ 			continue;
+ 
+ 		data->csd.func(data->csd.info);
+ 
+ 		spin_lock(&data->lock);
+-		cpumask_clear_cpu(cpu, to_cpumask(data->cpumask_bits));
++		cpumask_clear_cpu(cpu, &data->cpumask);
+ 		WARN_ON(data->refs == 0);
+ 		data->refs--;
+ 		refs = data->refs;
+@@ -137,8 +137,10 @@ void generic_smp_call_function_interrupt(void)
+ 			 */
+ 			smp_wmb();
+ 			data->csd.flags &= ~CSD_FLAG_WAIT;
+-		}
+-		if (data->csd.flags & CSD_FLAG_ALLOC)
++		} else if (data->csd.flags & CSD_FLAG_LOCK) {
++			smp_wmb();
++			data->csd.flags &= ~CSD_FLAG_LOCK;
++		} else if (data->csd.flags & CSD_FLAG_ALLOC)
+ 			call_rcu(&data->rcu_head, rcu_free_call_data);
+ 	}
+ 	rcu_read_unlock();
+@@ -302,6 +304,8 @@ void __smp_call_function_single(int cpu, struct call_single_data *data)
+ 	arch_send_call_function_ipi(*(maskp))
+ #endif
+ 
++static DEFINE_PER_CPU(struct call_function_data, cfd_data);
++
+ /**
+  * smp_call_function_many(): Run a function on a set of other CPUs.
+  * @mask: The set of cpus to run on (only runs on online subset).
+@@ -323,14 +327,14 @@ void smp_call_function_many(const struct cpumask *mask,
+ {
+ 	struct call_function_data *data;
+ 	unsigned long flags;
+-	int cpu, next_cpu;
++	int cpu, next_cpu, me = smp_processor_id();
+ 
+ 	/* Can deadlock when called with interrupts disabled */
+ 	WARN_ON(irqs_disabled());
+ 
+ 	/* So, what's a CPU they want?  Ignoring this one. */
+ 	cpu = cpumask_first_and(mask, cpu_online_mask);
+-	if (cpu == smp_processor_id())
++	if (cpu == me)
+ 		cpu = cpumask_next_and(cpu, mask, cpu_online_mask);
+ 	/* No online cpus?  We're done. */
+ 	if (cpu >= nr_cpu_ids)
+@@ -338,7 +342,7 @@ void smp_call_function_many(const struct cpumask *mask,
+ 
+ 	/* Do we have another CPU which isn't us? */
+ 	next_cpu = cpumask_next_and(cpu, mask, cpu_online_mask);
+-	if (next_cpu == smp_processor_id())
++	if (next_cpu == me)
+ 		next_cpu = cpumask_next_and(next_cpu, mask, cpu_online_mask);
+ 
+ 	/* Fastpath: do that cpu by itself. */
+@@ -347,27 +351,24 @@ void smp_call_function_many(const struct cpumask *mask,
+ 		return;
+ 	}
+ 
+-	data = kmalloc(sizeof(*data) + cpumask_size(), GFP_ATOMIC);
+-	if (unlikely(!data)) {
+-		/* Slow path. */
+-		for_each_online_cpu(cpu) {
+-			if (cpu == smp_processor_id())
+-				continue;
+-			if (cpumask_test_cpu(cpu, mask))
+-				smp_call_function_single(cpu, func, info, wait);
+-		}
+-		return;
++	data = kmalloc(sizeof(*data), GFP_ATOMIC);
++	if (data)
++		data->csd.flags = CSD_FLAG_ALLOC;
++	else {
++		data = &per_cpu(cfd_data, me);
++		while (data->csd.flags & CSD_FLAG_LOCK)
++			cpu_relax();
++		data->csd.flags = CSD_FLAG_LOCK;
+ 	}
+ 
+ 	spin_lock_init(&data->lock);
+-	data->csd.flags = CSD_FLAG_ALLOC;
+ 	if (wait)
+ 		data->csd.flags |= CSD_FLAG_WAIT;
+ 	data->csd.func = func;
+ 	data->csd.info = info;
+-	cpumask_and(to_cpumask(data->cpumask_bits), mask, cpu_online_mask);
+-	cpumask_clear_cpu(smp_processor_id(), to_cpumask(data->cpumask_bits));
+-	data->refs = cpumask_weight(to_cpumask(data->cpumask_bits));
++	cpumask_and(&data->cpumask, mask, cpu_online_mask);
++	cpumask_clear_cpu(smp_processor_id(), &data->cpumask);
++	data->refs = cpumask_weight(&data->cpumask);
+ 
+ 	spin_lock_irqsave(&call_function_lock, flags);
+ 	list_add_tail_rcu(&data->csd.list, &call_function_queue);
+@@ -379,7 +380,7 @@ void smp_call_function_many(const struct cpumask *mask,
+ 	smp_mb();
+ 
+ 	/* Send a message to all CPUs in the map */
+-	arch_send_call_function_ipi_mask(to_cpumask(data->cpumask_bits));
++	arch_send_call_function_ipi_mask(&data->cpumask);
+ 
+ 	/* optionally wait for the CPUs to complete */
+ 	if (wait)
+
