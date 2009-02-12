@@ -1,72 +1,55 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: [PATCH -rt] nmi: fix a build error
-Date: Thu, 12 Feb 2009 04:43:11 +0100
-Message-ID: <20090212034310.GA4809@nowhere>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [Announce] 2.6.29-rc4-rt1
+Date: Thu, 12 Feb 2009 09:18:01 +0100
+Message-ID: <20090212081801.GA22979@elte.hu>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@tglx.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: Frederic Weisbecker <fweisbec@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f161.google.com ([209.85.218.161]:35664 "EHLO
-	mail-bw0-f161.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753583AbZBLDnQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Feb 2009 22:43:16 -0500
+Received: from mx3.mail.elte.hu ([157.181.1.138]:56126 "EHLO mx3.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750748AbZBLISR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 03:18:17 -0500
 Content-Disposition: inline
+In-Reply-To: <20090212021257.GB4697@nowhere>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Note this patch applies against rt:origin/master
-I guess it relies on a specific topic but I can't find which one.
---
-Latest -rt tree fails to build:
 
-arch/x86/kernel/nmi.c: In function =E2=80=98nmi_watchdog_tick=E2=80=99:
-arch/x86/kernel/nmi.c:463: erreur: implicit declaration of function =E2=
-=80=98__profile_tick=E2=80=99
-make[1]: *** [arch/x86/kernel/nmi.o] Erreur 1
-make: *** [arch/x86/kernel] Erreur 2
+* Frederic Weisbecker <fweisbec@gmail.com> wrote:
 
-nmi.c uses __profile_tick() but lacks its prototype, it needs to includ=
-e
-linux/profile.c
-Also, __profile_tick() is missing an off case (!CONFIG_PROFILING) on li=
-nux/profile.h
+> The first one, a lockdep warning:
+> 
+> [    2.975320]  [<ffffffff8077c7f5>] rt_spin_lock+0x85/0xb0
+> [    2.975320]  [<ffffffff802f6823>] ? kfree+0x43/0xc0
+> [    2.975320]  [<ffffffff802f6823>] kfree+0x43/0xc0
+> [    2.975320]  [<ffffffff8027f2fd>] ? trace_hardirqs_off+0xd/0x10
+> [    2.975320]  [<ffffffff8028a156>] generic_smp_call_function_single_interrupt+0x106/0x110
+> [    2.975320]  [<ffffffff80227144>] smp_call_function_single_interrupt+0x24/0x40
+> [    2.975320]  [<ffffffff80213223>] call_function_single_interrupt+0x13/0x20
+> [    2.975320]  <EOI>  [<ffffffff8022df7b>] ? native_safe_halt+0xb/0x10
+> [    2.975320]  [<ffffffff8022df79>] ? native_safe_halt+0x9/0x10
+> [    2.975320]  [<ffffffff8021a93a>] ? default_idle+0x5a/0x60
+> [    2.975320]  [<ffffffff8021136e>] ? cpu_idle+0x7e/0x100
+> [    2.975320]  [<ffffffff80775b6c>] ? start_secondary+0x197/0x1eb
 
-Signed-off-by: Frederic Weisbecker <fweisbec@gmail.com>
----
-diff --git a/arch/x86/kernel/nmi.c b/arch/x86/kernel/nmi.c
-index c9afd16..4f26868 100644
---- a/arch/x86/kernel/nmi.c
-+++ b/arch/x86/kernel/nmi.c
-@@ -26,6 +26,7 @@
- #include <linux/kernel_stat.h>
- #include <linux/kdebug.h>
- #include <linux/smp.h>
-+#include <linux/profile.h>
-=20
- #include <asm/i8259.h>
- #include <asm/io_apic.h>
-diff --git a/include/linux/profile.h b/include/linux/profile.h
-index 2e1de8a..e440411 100644
---- a/include/linux/profile.h
-+++ b/include/linux/profile.h
-@@ -97,6 +97,11 @@ static inline int profile_init(void)
- 	return 0;
- }
-=20
-+static inline void __profile_tick(int type, struct pt_regs *regs)
-+{
-+	return;
-+}
-+
- static inline void profile_tick(int type)
- {
- 	return;
+hm, that's a complex one - we do kfree() from IPI context, dunno why this
+never triggered in our testing of -rt1.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> The second, a sysfs warning:
+> 
+> [    8.042459] ------------[ cut here ]------------
+> [    8.054763] WARNING: at fs/sysfs/dir.c:462 sysfs_add_one+0x51/0x60()
+> [    8.066777] Hardware name: AMILO Li 2727                  
+> [    8.078555] sysfs: duplicate filename '14:4' can not be created
+
+that should be harmless - unless you only get it under -rt1.
+
+	Ingo
