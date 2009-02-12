@@ -1,73 +1,41 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch] generic-ipi: remove kmalloc, cleanup
-Date: Thu, 12 Feb 2009 16:57:36 +0100
-Message-ID: <1234454256.10603.31.camel@laptop>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [patch] irq threading: fix PF_HARDIRQ definition
+Date: Thu, 12 Feb 2009 10:50:34 -0600
+Message-ID: <20090212105034.586c53d1@torg>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
-	 <20090212081801.GA22979@elte.hu> <20090212081923.GA26838@elte.hu>
-	 <1234430564.23438.205.camel@twins>  <20090212100756.GA12790@elte.hu>
-	 <1234433770.23438.210.camel@twins> <1234440554.23438.264.camel@twins>
-	 <alpine.DEB.1.10.0902121039230.15469@gandalf.stny.rr.com>
+	<20090211205533.329cea1c@torg>
+	<20090212083850.GA29995@elte.hu>
+	<20090212084222.GA32091@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Thomas Gleixner <tglx@tglx.de>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	rusty <rusty@rustcorp.com.au>
-To: Steven Rostedt <rostedt@goodmis.org>
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:33612 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750968AbZBLP5y (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 10:57:54 -0500
-In-Reply-To: <alpine.DEB.1.10.0902121039230.15469@gandalf.stny.rr.com>
+Received: from mx2.redhat.com ([66.187.237.31]:40409 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757173AbZBLQvY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 11:51:24 -0500
+In-Reply-To: <20090212084222.GA32091@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-02-12 at 10:43 -0500, Steven Rostedt wrote:
-> > +     data = kmalloc(sizeof(*data), GFP_ATOMIC);
-> > +     if (data)
-> > +             data->csd.flags = CSD_FLAG_ALLOC;
-> > +     else {
-> > +             data = &per_cpu(cfd_data, me);
-> > +             while (data->csd.flags & CSD_FLAG_LOCK)
-> > +                     cpu_relax();
-> > +             data->csd.flags = CSD_FLAG_LOCK;
-> 
-> Wont the first CPU that runs the callback unlock this? And then we run the
-> risk of two back to back callers on the same CPU, having the second
-> caller possibly corrupt the first.
-
-No, there's a ref count in there that ensures the last one unlocks it.
-
-But that's still not enough, the global queue is RCU protected.
-
-Suppose you have 4 cpus, and use smp_function_call_mask() to 2 others,
-now its possible the 4th is also doing global ipis and is traversing the
-global queue.
-
-Therefore, if you remove the cfd when its done, it might be the 4th cpu
-is in it trying to iterate to the next entry --> BANG.
-
-The solution used is RCU freeing cfd's. This also means we have to RCU
-free the LOCK flag, sadly an RCU grace period is waaaay too long to spin
-wait on.
-
-Hence this whole solution is not quite feasible.
-
-There's various alternative solutions, but I'm not quite sure which
-makes most sense.
-
-The one I'm currently pondering is using the global queue only for
-all-but-self cfd's, this matches the all-but-self ipi APIC case.
-
-For smaller masks we could queue a csd per queue and send single ipis.
-
-
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUaHUs
+IDEyIEZlYiAyMDA5IDA5OjQyOjIyICswMTAwDQpJbmdvIE1vbG5hciA8bWluZ29AZWx0ZS5odT4g
+d3JvdGU6DQo+IA0KPiBBbnl3YXksIG15IGZpeCBzaG91bGQgc29sdmUgdGhpcy4gRG8geW91IHN0
+aWxsIHNlZSB0aGUgbG9ja3VwIHVuZGVyIFg/IChtYWtlDQo+IHN1cmUgeW91IGFsc28gaGF2ZSB0
+aGUgSVBJIGZpeCBhcHBsaWVkLCBzZWUgdGhlIHBhdGNoIGluIHRoaXMgc2FtZSB0aHJlYWQuKQ0K
+DQpUaGF0IGRpZCBpdCAodGhlIElQSSBwYXRjaCBhbmQgdGhlIHJlZGVmaW5pdGlvbikuIEknbSB1
+cCB3aXRoOg0KDQokIHVuYW1lIC1hDQpMaW51eCB0b3JnIDIuNi4yOS1yYzQtcnQxLXRpcCAjNTEg
+U01QIFBSRUVNUFQgUlQgVGh1IEZlYiAxMiAwOTo0MDowNg0KQ1NUIDIwMDkgeDg2XzY0IHg4Nl82
+NCB4ODZfNjQgR05VL0xpbnV4DQoNClRoYW5rcywgSSdsbCBkbyBzb21lIGxhdGVuY3kgdGVzdGlu
+ZyBvbiBteSB0ZXN0IGJveGVzIG5leHQuLi4NCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQIFNJR05B
+VFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVD
+QUFZRkFrbVVVMmdBQ2drUUh5dWovK1RURXAzYzd3Q2dqblF1WWdvTG1HT21xMjZhMlQxOThlaC8N
+CktkZ0Fuam1YK2Nxd3hZQXR6YUhlTUg2L25PNk1OdVVIDQo9TkhoLw0KLS0tLS1FTkQgUEdQIFNJ
+R05BVFVSRS0tLS0tDQo=
