@@ -1,56 +1,70 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [patch] irq threading: fix PF_HARDIRQ definition
-Date: Thu, 12 Feb 2009 09:42:22 +0100
-Message-ID: <20090212084222.GA32091@elte.hu>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090211205533.329cea1c@torg> <20090212083850.GA29995@elte.hu>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [patch] rt: fix ipi kfree(), introduce IPI_SOFTIRQ
+Date: Thu, 12 Feb 2009 10:22:44 +0100
+Message-ID: <1234430564.23438.205.camel@twins>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
+	 <20090212081801.GA22979@elte.hu>  <20090212081923.GA26838@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@tglx.de>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>
-To: Clark Williams <williams@redhat.com>
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.mail.elte.hu ([157.181.151.9]:43356 "EHLO mx2.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752831AbZBLImo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 03:42:44 -0500
-Content-Disposition: inline
-In-Reply-To: <20090212083850.GA29995@elte.hu>
+Received: from bombadil.infradead.org ([18.85.46.34]:56865 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754467AbZBLJUz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 04:20:55 -0500
+In-Reply-To: <20090212081923.GA26838@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-* Ingo Molnar <mingo@elte.hu> wrote:
-
-> hardirq_count() is correct, but looking at PF_HARDIRQ's definition in sched.h:
+On Thu, 2009-02-12 at 09:19 +0100, Ingo Molnar wrote:
+> * Ingo Molnar <mingo@elte.hu> wrote:
 > 
->  #define PF_EXITPIDONE  0x00000008      /* pi exit done on shut down */
->  #define PF_VCPU        0x00000010      /* I'm a virtual CPU */
->  #define PF_HARDIRQ     0x08000020      /* hardirq context */
->  #define PF_NOSCHED     0x00000020      /* Userspace does not expect scheduling */
->  #define PF_FORKNOEXEC  0x00000040      /* forked but didn't exec */
+> > hm, that's a complex one - we do kfree() from IPI context, [...]
 > 
-> Reveals that due to a typo it not only overlaps the PF_NOSCHED bit, but
-> also has a spurious 0x08000000 component.
+> The patch below might do the trick - it offloads this to a softirq.
+> Not tested yet.
 
-The reason is that when we forward ported the definition, i first moved it
-to the 0x08000000 slot - but that slot was already taken. (our PF_ task
-flag space is really crowded ...)
+The simple fix is something like:
 
-Then i moved it to a free spot, 0x20. Or so i thought: a later -rt patch
-in the queue introduced PF_NOSCHED which overlapped it.
+---
+ kernel/smp.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-But the bigger problem was the spurious 0x08000000 component, which overlaps
-with:
+diff --git a/kernel/smp.c b/kernel/smp.c
+index bbedbb7..9b974c1 100644
+--- a/kernel/smp.c
++++ b/kernel/smp.c
+@@ -252,7 +252,11 @@ int smp_call_function_single(int cpu, void (*func) (void *info), void *info,
+ 			 * will make sure the callee is done with the
+ 			 * data before a new caller will use it.
+ 			 */
++#ifndef CONFIG_PREEMPT_RT
+ 			data = kmalloc(sizeof(*data), GFP_ATOMIC);
++#else
++			data = NULL;
++#endif
+ 			if (data)
+ 				data->flags = CSD_FLAG_ALLOC;
+ 			else {
+@@ -347,7 +351,11 @@ void smp_call_function_many(const struct cpumask *mask,
+ 		return;
+ 	}
+ 
++#ifndef CONFIG_PREEMPT_RT
+ 	data = kmalloc(sizeof(*data) + cpumask_size(), GFP_ATOMIC);
++#else
++	data = NULL;
++#endif
+ 	if (unlikely(!data)) {
+ 		/* Slow path. */
+ 		for_each_online_cpu(cpu) {
 
- #define PF_SOFTIRQ      0x08000000      /* softirq context */
-
-Explaining why the warning triggered in ksoftirqd ;-)
-
-Anyway, my fix should solve this. Do you still see the lockup under X? (make
-sure you also have the IPI fix applied, see the patch in this same thread.)
-
-	Ingo
