@@ -1,91 +1,99 @@
 From: Ingo Molnar <mingo@elte.hu>
-Subject: [patch] sched: cpu hotplug fix
-Date: Thu, 12 Feb 2009 11:50:27 +0100
-Message-ID: <20090212105027.GA12474@elte.hu>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere> <20090212081801.GA22979@elte.hu>
+Subject: Re: [patch] rt: res_counter fix, v2
+Date: Thu, 12 Feb 2009 12:28:54 +0100
+Message-ID: <20090212112854.GD31613@elte.hu>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere> <20090212101650.GA1096@elte.hu> <20090212102113.GA10031@elte.hu> <20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@tglx.de>,
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Frederic Weisbecker <fweisbec@gmail.com>
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	"balbir@linux.vnet.ibm.com" <balbir@linux.vnet.ibm.com>
+To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:41277 "EHLO mx3.mail.elte.hu"
+Received: from mx3.mail.elte.hu ([157.181.1.138]:41159 "EHLO mx3.mail.elte.hu"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754362AbZBLKuw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 05:50:52 -0500
+	id S1756854AbZBLL3b (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 06:29:31 -0500
 Content-Disposition: inline
-In-Reply-To: <20090212081801.GA22979@elte.hu>
+In-Reply-To: <20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-The fix below addresses a lockdep warning i triggered with your config.
+* KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
 
-(You could hit this if you try to use s2ram or hibernation or explicit
-CPU hotplug ops.)
+> On Thu, 12 Feb 2009 11:21:13 +0100
+> Ingo Molnar <mingo@elte.hu> wrote:
+> 
+> > 
+> > * Ingo Molnar <mingo@elte.hu> wrote:
+> > 
+> > > Frederic, could you try the patch below?
+> > 
+> > Please try v2 below - it might even build ;-)
+> > 
+> > 	Ingo
+> > 
+> > ------------------->
+> > Subject: rt: res_counter fix
+> > From: Ingo Molnar <mingo@elte.hu>
+> > Date: Thu Feb 12 11:11:47 CET 2009
+> > 
+> > Frederic Weisbecker reported this warning:
+> > 
+> > [   45.228562] BUG: sleeping function called from invalid context at kernel/rtmutex.c:683
+> > [   45.228571] in_atomic(): 0, irqs_disabled(): 1, pid: 4290, name: ntpdate
+> > [   45.228576] INFO: lockdep is turned off.
+> > [   45.228580] irq event stamp: 0
+> > [   45.228583] hardirqs last  enabled at (0): [<(null)>] (null)
+> > [   45.228589] hardirqs last disabled at (0): [<ffffffff8025449d>] copy_process+0x68d/0x1500
+> > [   45.228602] softirqs last  enabled at (0): [<ffffffff8025449d>] copy_process+0x68d/0x1500
+> > [   45.228609] softirqs last disabled at (0): [<(null)>] (null)
+> > [   45.228617] Pid: 4290, comm: ntpdate Tainted: G        W  2.6.29-rc4-rt1-tip #1
+> > [   45.228622] Call Trace:
+> > [   45.228632]  [<ffffffff8027dfb0>] ? print_irqtrace_events+0xd0/0xe0
+> > [   45.228639]  [<ffffffff8024cd73>] __might_sleep+0x113/0x130
+> > [   45.228646]  [<ffffffff8077c811>] rt_spin_lock+0xa1/0xb0
+> > [   45.228653]  [<ffffffff80296a3d>] res_counter_charge+0x5d/0x130
+> > [   45.228660]  [<ffffffff802fb67f>] __mem_cgroup_try_charge+0x7f/0x180
+> > [   45.228667]  [<ffffffff802fc407>] mem_cgroup_charge_common+0x57/0x90
+> > [   45.228674]  [<ffffffff80212096>] ? ftrace_call+0x5/0x2b
+> > [   45.228680]  [<ffffffff802fc49d>] mem_cgroup_newpage_charge+0x5d/0x60
+> > [   45.228688]  [<ffffffff802d94ce>] __do_fault+0x29e/0x4c0
+> > [   45.228694]  [<ffffffff8077c843>] ? rt_spin_unlock+0x23/0x80
+> > [   45.228700]  [<ffffffff802db8b5>] handle_mm_fault+0x205/0x890
+> > [   45.228707]  [<ffffffff80212096>] ? ftrace_call+0x5/0x2b
+> > [   45.228714]  [<ffffffff8023495e>] do_page_fault+0x11e/0x2a0
+> > [   45.228720]  [<ffffffff8077e5a5>] page_fault+0x25/0x30
+> > [   45.228727]  [<ffffffff8043e1ed>] ? __clear_user+0x3d/0x70
+> > [   45.228733]  [<ffffffff8043e1d1>] ? __clear_user+0x21/0x70
+> > 
+> > The reason is the raw IRQ flag use of kernel/res_counter.c.
+> > 
+> > The irq flags tricks there seem a bit pointless: it cannot
+> > protect the c->parent linkage because local_irq_save() is
+> > only per CPU.
+> > 
+> > So replace it with _nort(). This code needs a second look.
+> > 
+> I'm sorry for no knowledge about RT. Could you teach me what
+> local_irq_save_nort() does ?
+> 
+> Hmm, how about just replacaing _irq() with preempt_disable()/enable() ?
+> xxx_nort() is better ?
+> 
+> AFAIK, these will not be called from irq context. (Added Balbir to CC:)
+
+_nort() will just turn them into NOPs in essence.
+
+The question is, are these local IRQ flags manipulations really needed
+in this code, and if yes, why?
 
 	Ingo
-
--------------->
-Subject: sched: cpu hotplug fix
-From: Ingo Molnar <mingo@elte.hu>
-Date: Thu Feb 12 11:35:40 CET 2009
-
-rq_attach_root() does a kfree() with the runqueue lock held.
-
-That's not a very wise move, fix it.
-
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/sched.c |   15 ++++++++++++---
- 1 file changed, 12 insertions(+), 3 deletions(-)
-
-Index: tip/kernel/sched.c
-===================================================================
---- tip.orig/kernel/sched.c
-+++ tip/kernel/sched.c
-@@ -7619,20 +7619,26 @@ static void free_rootdomain(struct root_
- 
- static void rq_attach_root(struct rq *rq, struct root_domain *rd)
- {
-+	struct root_domain *old_rd = NULL;
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&rq->lock, flags);
- 
- 	if (rq->rd) {
--		struct root_domain *old_rd = rq->rd;
-+		old_rd = rq->rd;
- 
- 		if (cpumask_test_cpu(rq->cpu, old_rd->online))
- 			set_rq_offline(rq);
- 
- 		cpumask_clear_cpu(rq->cpu, old_rd->span);
- 
--		if (atomic_dec_and_test(&old_rd->refcount))
--			free_rootdomain(old_rd);
-+		/*
-+		 * If we dont want to free the old_rt yet then
-+		 * set old_rd to NULL to skip the freeing later
-+		 * in this function:
-+		 */
-+		if (!atomic_dec_and_test(&old_rd->refcount))
-+			old_rd = NULL;
- 	}
- 
- 	atomic_inc(&rd->refcount);
-@@ -7643,6 +7649,9 @@ static void rq_attach_root(struct rq *rq
- 		set_rq_online(rq);
- 
- 	spin_unlock_irqrestore(&rq->lock, flags);
-+
-+	if (old_rd)
-+		free_rootdomain(old_rd);
- }
- 
- static int __init_refok init_rootdomain(struct root_domain *rd, bool bootmem)
-
