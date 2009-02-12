@@ -1,11 +1,16 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Subject: Re: [patch] rt: res_counter fix, v2
-Date: Thu, 12 Feb 2009 15:50:11 +0100
-Message-ID: <20090212145010.GB6056@nowhere>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere> <20090212101650.GA1096@elte.hu> <20090212102113.GA10031@elte.hu> <20090212142806.GA5865@nowhere> <1234449701.10603.10.camel@laptop> <20090212144624.GB14616@elte.hu>
+Date: Thu, 12 Feb 2009 15:51:46 +0100
+Message-ID: <1234450306.10603.12.camel@laptop>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
+	 <20090212101650.GA1096@elte.hu> <20090212102113.GA10031@elte.hu>
+	 <20090212142806.GA5865@nowhere> <1234449701.10603.10.camel@laptop>
+	 <20090212144624.GB14616@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
 	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
@@ -13,18 +18,16 @@ Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f20.google.com ([209.85.220.20]:41505 "EHLO
-	mail-fx0-f20.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755469AbZBLOuS (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:50183 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756610AbZBLOv7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 09:50:18 -0500
-Content-Disposition: inline
+	Thu, 12 Feb 2009 09:51:59 -0500
 In-Reply-To: <20090212144624.GB14616@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Feb 12, 2009 at 03:46:24PM +0100, Ingo Molnar wrote:
-> 
+On Thu, 2009-02-12 at 15:46 +0100, Ingo Molnar wrote:
 > * Peter Zijlstra <a.p.zijlstra@chello.nl> wrote:
 > 
 > > On Thu, 2009-02-12 at 15:28 +0100, Frederic Weisbecker wrote:
@@ -51,16 +54,9 @@ On Thu, Feb 12, 2009 at 03:46:24PM +0100, Ingo Molnar wrote:
 > > #endif
 > > 
 > > the sequence count of 0 basically tells you it hasn't been set yet.
-
-
-Oh I see now, thanks Peter.
-
- 
+> 
 > maybe we should initialize it to -1 to make this more apparent?
 
-
-Or why not set p->{hard,soft}irq_disable_ip = NULL ? (or 0, I don't know its type).
-
-
-> 	Ingo
+I think the current state makes sense, it reflects the actual state of
+copy_process.
 
