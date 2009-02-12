@@ -1,46 +1,23 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: [patch] rt: res_counter fix, v2
-Date: Thu, 12 Feb 2009 18:29:09 +0100
-Message-ID: <1234459749.10603.35.camel@laptop>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <20090212005032.GA4788@nowhere> <20090212021257.GB4697@nowhere>
-	 <20090212101650.GA1096@elte.hu> <20090212102113.GA10031@elte.hu>
-	 <20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
-	 <20090212112854.GD31613@elte.hu>  <20090212165833.GB6298@balbir.in.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Thomas Gleixner <tglx@tglx.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: balbir@linux.vnet.ibm.com
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch 0/2] rt-tests updated
+Date: Thu, 12 Feb 2009 22:40:18 -0000
+Message-ID: <20090212221944.272839206@linutronix.de>
+Cc: Clark Williams <williams@redhat.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:55750 "EHLO
-	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750742AbZBLR32 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 12:29:28 -0500
-In-Reply-To: <20090212165833.GB6298@balbir.in.ibm.com>
+Received: from www.tglx.de ([62.245.132.106]:47254 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1761476AbZBLWlF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Feb 2009 17:41:05 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-02-12 at 22:28 +0530, Balbir Singh wrote:
+Clark,
 
-> > _nort() will just turn them into NOPs in essence.
-> > 
-> > The question is, are these local IRQ flags manipulations really needed
-> > in this code, and if yes, why?
-> 
-> We needed the local IRQ flags, since these counters are updated from
-> page fault context and from reclaim context with lru_lock held with
-> IRQ's disabled. I've been thinking about replacing the spin lock with
-> seq lock, but have not gotten to it yet.
+please apply the following cleanup patch and a patch to make
+cyclictest work with latests versions of the tracer.
 
-Ah, in that case we can get away with _nort I think, as both those
-contexts are preemptable on -rt.
+Thanks,
+
+	tglx
 
