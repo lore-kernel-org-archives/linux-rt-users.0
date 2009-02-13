@@ -1,46 +1,52 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [patch] rt: sysprof hrtimer fix
-Date: Fri, 13 Feb 2009 21:03:08 +0100
-Message-ID: <20090213200305.GA5833@nowhere>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <20090213004812.GA5824@nowhere> <20090213021626.GA5807@nowhere> <20090213030919.GA5826@nowhere> <20090213072601.GA26946@elte.hu> <20090213120451.GA5782@nowhere> <20090213124928.GC5483@elte.hu>
+From: Rusty Russell <rusty@rustcorp.com.au>
+Subject: Re: [patch] generic-ipi: remove kmalloc, cleanup
+Date: Sat, 14 Feb 2009 07:46:44 +1030
+Message-ID: <200902140746.45320.rusty@rustcorp.com.au>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <1234433770.23438.210.camel@twins> <1234440554.23438.264.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@elte.hu>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
 	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
+	"rt-users" <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Ingo Molnar <mingo@elte.hu>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f20.google.com ([209.85.220.20]:48038 "EHLO
-	mail-fx0-f20.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752760AbZBMUDN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Feb 2009 15:03:13 -0500
+Received: from ozlabs.org ([203.10.76.45]:55060 "EHLO ozlabs.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752336AbZBMXj7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Feb 2009 18:39:59 -0500
+In-Reply-To: <1234440554.23438.264.camel@twins>
 Content-Disposition: inline
-In-Reply-To: <20090213124928.GC5483@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 13, 2009 at 01:49:28PM +0100, Ingo Molnar wrote:
+On Thursday 12 February 2009 22:39:14 Peter Zijlstra wrote:
+> So it put in unconditionally, how about this?
 > 
-> * Frederic Weisbecker <fweisbec@gmail.com> wrote:
 > 
-> > So, just a thing.
-> > -rt make the hrtimer's timers running on softirq context because the hrtimer_interrupt
-> > doesn't run as a threaded interrupt, and then it is not preemptible right?
-> > 
-> > In that case, sysprof will continue to run in hardirq context, as before, and
-> > it will considerably increase the latency. And that matters here.
-> > So I think it is important to put it on the reminder:
+> --
+> Subject: generic-smp: remove single ipi fallback for smp_call_function_many()
 > 
-> hm, not sure. Do you know it numerically how much worst-case overhead it
-> induces?
+> In preparation of removing the kmalloc() calls from the generic-ipi code
+> get rid of the single ipi fallback for smp_call_function_many().
 > 
-> 	Ingo
+> Because we cannot get around carrying the cpumask in the data -- imagine
+> 2 such calls with different but overlapping masks -- put in a full mask.
 
-Not at all.
-But when I find some time, I will compare some rt average tests with and without sysprof.
+OK, if you really want this, please just change it to:
+	unsigned long cpumask_bits[BITS_TO_LONGS(CONFIG_NR_CPUS)];
 
+The 'struct cpumask' will be undefined soon when CONFIG_CPUMASK_OFFSTACK=y,
+which will prevent assignment and declaration on stack.
+
+I'd be fascinated to see perf numbers once you kill the kmalloc.  Because
+this patch will add num_possible_cpus * NR_CPUS/8 bytes to the kernel which
+is something we're trying to avoid unless necessary.
+
+Thanks,
+Rusty.
