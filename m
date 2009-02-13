@@ -1,93 +1,93 @@
-From: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-Subject: Re: [patch] rt: res_counter fix, v2
-Date: Fri, 13 Feb 2009 09:29:32 +0900
-Message-ID: <20090213092932.a503c4a7.kamezawa.hiroyu@jp.fujitsu.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	<20090212005032.GA4788@nowhere>
-	<20090212021257.GB4697@nowhere>
-	<20090212101650.GA1096@elte.hu>
-	<20090212102113.GA10031@elte.hu>
-	<20090212194644.98d275cf.kamezawa.hiroyu@jp.fujitsu.com>
-	<20090212112854.GD31613@elte.hu>
-	<20090212165833.GB6298@balbir.in.ibm.com>
-	<20090213085640.704caf34.kamezawa.hiroyu@jp.fujitsu.com>
+From: Frederic Weisbecker <fweisbec@gmail.com>
+Subject: Re: [Announce] 2.6.29-rc4-rt2
+Date: Fri, 13 Feb 2009 01:48:13 +0100
+Message-ID: <20090213004812.GA5824@nowhere>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: balbir@linux.vnet.ibm.com, Ingo Molnar <mingo@elte.hu>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Thomas Gleixner <tglx@tglx.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fgwmail5.fujitsu.co.jp ([192.51.44.35]:58323 "EHLO
-	fgwmail5.fujitsu.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754409AbZBMAas (ORCPT
+Received: from mail-bw0-f161.google.com ([209.85.218.161]:45146 "EHLO
+	mail-bw0-f161.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757652AbZBMAsT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 19:30:48 -0500
-In-Reply-To: <20090213085640.704caf34.kamezawa.hiroyu@jp.fujitsu.com>
+	Thu, 12 Feb 2009 19:48:19 -0500
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 13 Feb 2009 08:56:40 +0900
-KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
-
-> On Thu, 12 Feb 2009 22:28:33 +0530
-> Balbir Singh <balbir@linux.vnet.ibm.com> wrote:
+On Thu, Feb 12, 2009 at 11:56:38PM +0100, Thomas Gleixner wrote:
+> We are pleased to announce the first update to our new preempt-rt
+> series. It fixes the reported bugs and some more.
 > 
-> > * Ingo Molnar <mingo@elte.hu> [2009-02-12 12:28:54]:
-> > 
-> > > 
-> > > * KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
-> > > 
-> > > > On Thu, 12 Feb 2009 11:21:13 +0100
-> > > > Ingo Molnar <mingo@elte.hu> wrote:
-> > > The question is, are these local IRQ flags manipulations really needed
-> > > in this code, and if yes, why?
-> > 
-> > We needed the local IRQ flags, since these counters are updated from
-> > page fault context and from reclaim context with lru_lock held with
-> > IRQ's disabled. I've been thinking about replacing the spin lock with
-> > seq lock, but have not gotten to it yet.
-> > 
-> Hmm ?  I can't understand. Why we have to disable IRQ here again ?
-> And,
->   - try_to_unmap() is called in shrink_page_list(),  there, no zone->lru_lock.
->   - page fault path doesn't hold zone->lru_lock.
+> Download locations:
 > 
-> My concern is only shmem. But I think it doesn't call charge() within lock, actually
-
-Clarification :)
-  res_counter_charge() is called from
-    - page fault 
-        => under down_read(mmap_sem), lock_page() may be held.  IRQ=ENABLED)
-    - add_to_page_cache
-        => under lock_page(), mapping->tree_lock is *not* held, IRQ=DISABLED
-    - shmem
-        => info->lock is held, we use __GFP_NOWAIT here. IRQ=ENABLED
-    - shmem
-        => info->lock is *not* held with GFP_KERNEL here, IRQ=ENABLED.
-    - migration
-        => under lock_page() and mmap_sem, IRQ=ENABLED
-
-  res_counter_uncharge() is called from
-    - page_remove_rmap()//(Only when ANON)
-         => anon_vma->lock and pte_lock(),lock_page() can be held. IRQ=ENABLED?
-    - remove_from_page_cache()
-         => lock_page() and mapping->tree_lock is held, IRQ=DISABLED.
-
-Summary:
-   "Charge" is considered as heavy operation and the call path is placed where the
-    thread can sleep, AMAP.
-   "Uncharge" is considered as light operation and call path is under some # of
-    spinlocks.
+>    http://rt.et.redhat.com/download/
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+>  
+> Information on the RT patch can be found at:
+> 
+>   http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> to build the 2.6.29-rc4-rt2 tree, the following patches should be
+> applied:
+> 
+>   http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc4.tar.bz2
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc4-rt2.bz2
+> 
+> The broken out patches are also available at the same download
+> locations.
+> 
+> Enjoy !
+> 
+>       Thomas, Ingo
 
 
-Bye,
--Kame
+Hi,
+
+It fixes the rt-concerned warning I had.
+Now, a new little lockdep info, tell me if you need my config, I changed
+it a bit:
+
+[    0.012874] INFO: trying to register non-static key.
+[    0.012940] the code is fine but needs lockdep annotation.
+[    0.013008] turning off the locking correctness validator.
+[    0.013847] Pid: 0, comm: swapper Not tainted 2.6.29-rc4-rt2-tip #2
+[    0.013917] Call Trace:
+[    0.013981]  [<ffffffff80285985>] __lock_acquire+0x1825/0x1b20
+[    0.014053]  [<ffffffff802846fb>] ? __lock_acquire+0x59b/0x1b20
+[    0.014125]  [<ffffffff80283326>] ? mark_held_locks+0x56/0xa0
+[    0.014197]  [<ffffffff80285d1f>] lock_acquire+0x9f/0xe0
+[    0.014267]  [<ffffffff80780ea8>] ? rt_spin_lock_slowlock+0x38/0x310
+[    0.014342]  [<ffffffff80783211>] __spin_lock_irqsave+0x51/0x70
+[    0.014415]  [<ffffffff80780ea8>] ? rt_spin_lock_slowlock+0x38/0x310
+[    0.014489]  [<ffffffff80780ea8>] rt_spin_lock_slowlock+0x38/0x310
+[    0.014562]  [<ffffffff802836dc>] ? debug_check_no_locks_freed+0x9c/0x160
+[    0.014636]  [<ffffffff80781edc>] rt_spin_lock+0x4c/0xa0
+[    0.014706]  [<ffffffff80276f51>] compat_down_timeout+0x21/0x60
+[    0.014780]  [<ffffffff804910ca>] acpi_os_wait_semaphore+0x4e/0x5d
+[    0.014853]  [<ffffffff804aafa9>] acpi_ut_acquire_mutex+0x43/0x87
+[    0.014926]  [<ffffffff804a06cd>] acpi_ns_root_initialize+0x28/0x2ab
+[    0.014999]  [<ffffffff80449d88>] ? __raw_spin_lock_init+0x38/0x70
+[    0.015073]  [<ffffffff80acbd6a>] acpi_initialize_subsystem+0x69/0x91
+[    0.015147]  [<ffffffff80acc24a>] acpi_early_init+0x50/0xf5
+[    0.015219]  [<ffffffff80aa1ea5>] start_kernel+0x3d2/0x4ca
+[    0.015290]  [<ffffffff80aa12b9>] x86_64_start_reservations+0x99/0xb9
+[    0.015362]  [<ffffffff80aa13d5>] x86_64_start_kernel+0xfc/0x10b
+[    0.015436]  [<ffffffff80aa1140>] ? early_idt_handler+0x0/0x71
+
+Oh and I just tested the tracers.
+It seems to run fine for all of them except sysprof.
+It passes the self-test but doesn't produce any trace when I manually try.
+
+Not completely sure this is only in -rt so I'm pulling very latest -tip
+and will see if I find the same problem there.
 
