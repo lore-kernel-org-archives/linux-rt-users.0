@@ -1,112 +1,83 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [Announce] 2.6.29-rc4-rt2
-Date: Fri, 13 Feb 2009 04:09:20 +0100
-Message-ID: <20090213030919.GA5826@nowhere>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <20090213004812.GA5824@nowhere> <20090213021626.GA5807@nowhere>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: [patch] rt: sysprof hrtimer fix
+Date: Fri, 13 Feb 2009 08:26:01 +0100
+Message-ID: <20090213072601.GA26946@elte.hu>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <20090213004812.GA5824@nowhere> <20090213021626.GA5807@nowhere> <20090213030919.GA5826@nowhere>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@tglx.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Frederic Weisbecker <fweisbec@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fk-out-0910.google.com ([209.85.128.188]:33492 "EHLO
-	fk-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752470AbZBMDJZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Feb 2009 22:09:25 -0500
+Received: from mx3.mail.elte.hu ([157.181.1.138]:40675 "EHLO mx3.mail.elte.hu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751399AbZBMH0R (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Feb 2009 02:26:17 -0500
 Content-Disposition: inline
-In-Reply-To: <20090213021626.GA5807@nowhere>
+In-Reply-To: <20090213030919.GA5826@nowhere>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 13, 2009 at 03:16:26AM +0100, Frederic Weisbecker wrote:
-> On Fri, Feb 13, 2009 at 01:48:12AM +0100, Frederic Weisbecker wrote:
-> > On Thu, Feb 12, 2009 at 11:56:38PM +0100, Thomas Gleixner wrote:
-> > > We are pleased to announce the first update to our new preempt-rt
-> > > series. It fixes the reported bugs and some more.
+
+* Frederic Weisbecker <fweisbec@gmail.com> wrote:
+
+> > > It seems to run fine for all of them except sysprof. It passes the self-test 
+> > > but doesn't produce any trace when I manually try.
 > > > 
-> > > Download locations:
-> > > 
-> > >    http://rt.et.redhat.com/download/
-> > >    http://www.kernel.org/pub/linux/kernel/projects/rt/
-> > >  
-> > > Information on the RT patch can be found at:
-> > > 
-> > >   http://rt.wiki.kernel.org/index.php/Main_Page
-> > > 
-> > > to build the 2.6.29-rc4-rt2 tree, the following patches should be
-> > > applied:
-> > > 
-> > >   http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc4.tar.bz2
-> > >   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc4-rt2.bz2
-> > > 
-> > > The broken out patches are also available at the same download
-> > > locations.
-> > > 
-> > > Enjoy !
-> > > 
-> > >       Thomas, Ingo
+> > > Not completely sure this is only in -rt so I'm pulling very latest -tip and 
+> > > will see if I find the same problem there.
 > > 
+> > About sysprof, it's an -rt problem, I don't see it on -tip. The sysprof hrtimer 
+> > callback is never called.
 > > 
-> > Hi,
-> > 
-> > It fixes the rt-concerned warning I had.
-> > Now, a new little lockdep info, tell me if you need my config, I changed
-> > it a bit:
-> > 
-> > [    0.012874] INFO: trying to register non-static key.
-> > [    0.012940] the code is fine but needs lockdep annotation.
-> > [    0.013008] turning off the locking correctness validator.
-> > [    0.013847] Pid: 0, comm: swapper Not tainted 2.6.29-rc4-rt2-tip #2
-> > [    0.013917] Call Trace:
-> > [    0.013981]  [<ffffffff80285985>] __lock_acquire+0x1825/0x1b20
-> > [    0.014053]  [<ffffffff802846fb>] ? __lock_acquire+0x59b/0x1b20
-> > [    0.014125]  [<ffffffff80283326>] ? mark_held_locks+0x56/0xa0
-> > [    0.014197]  [<ffffffff80285d1f>] lock_acquire+0x9f/0xe0
-> > [    0.014267]  [<ffffffff80780ea8>] ? rt_spin_lock_slowlock+0x38/0x310
-> > [    0.014342]  [<ffffffff80783211>] __spin_lock_irqsave+0x51/0x70
-> > [    0.014415]  [<ffffffff80780ea8>] ? rt_spin_lock_slowlock+0x38/0x310
-> > [    0.014489]  [<ffffffff80780ea8>] rt_spin_lock_slowlock+0x38/0x310
-> > [    0.014562]  [<ffffffff802836dc>] ? debug_check_no_locks_freed+0x9c/0x160
-> > [    0.014636]  [<ffffffff80781edc>] rt_spin_lock+0x4c/0xa0
-> > [    0.014706]  [<ffffffff80276f51>] compat_down_timeout+0x21/0x60
-> > [    0.014780]  [<ffffffff804910ca>] acpi_os_wait_semaphore+0x4e/0x5d
-> > [    0.014853]  [<ffffffff804aafa9>] acpi_ut_acquire_mutex+0x43/0x87
-> > [    0.014926]  [<ffffffff804a06cd>] acpi_ns_root_initialize+0x28/0x2ab
-> > [    0.014999]  [<ffffffff80449d88>] ? __raw_spin_lock_init+0x38/0x70
-> > [    0.015073]  [<ffffffff80acbd6a>] acpi_initialize_subsystem+0x69/0x91
-> > [    0.015147]  [<ffffffff80acc24a>] acpi_early_init+0x50/0xf5
-> > [    0.015219]  [<ffffffff80aa1ea5>] start_kernel+0x3d2/0x4ca
-> > [    0.015290]  [<ffffffff80aa12b9>] x86_64_start_reservations+0x99/0xb9
-> > [    0.015362]  [<ffffffff80aa13d5>] x86_64_start_kernel+0xfc/0x10b
-> > [    0.015436]  [<ffffffff80aa1140>] ? early_idt_handler+0x0/0x71
-> > 
-> > Oh and I just tested the tracers.
-> > It seems to run fine for all of them except sysprof.
-> > It passes the self-test but doesn't produce any trace when I manually try.
-> > 
-> > Not completely sure this is only in -rt so I'm pulling very latest -tip
-> > and will see if I find the same problem there.
+> > I'm digging to see what is happening.
 > 
-> 
-> About sysprof, it's an -rt problem, I don't see it on -tip.
-> The sysprof hrtimer callback is never called.
-> 
-> I'm digging to see what is happening.
+> I didn't put my ftrace_printk at the right place. It doesn't come from hrtimer. 
+> The problem comes from get_irq_regs() which always returns NULL on the sysprof 
+> hrtimer calback, then the trace is immediately dropped by sysprof.
 
-I didn't put my ftrace_printk at the right place.
-It doesn't come from hrtimer.
-The problem comes from get_irq_regs() which always returns NULL on the
-sysprof hrtimer calback, then the trace is immediately dropped
-by sysprof.
+Ah, that makes sense - under -rt the default hrtimer execution is to
+execute in a softirq context. Could you try the patch below please,
+does it fix sysprof?
 
-That's weird, smp_apic_timer_interrupt() calls set_irq_regs() so
-it should find it.
+	Ingo
 
-Now I'm preempted by my bed.
+------------------>
+Subject: rt: sysprof hrtimer fix
+From: Ingo Molnar <mingo@elte.hu>
+Date: Fri Feb 13 08:22:14 CET 2009
 
+Frederic Weisbecker noticed that sysprof does not work under
+.29-rt2, and tracked it down to a NULL result that get_irq_regs()
+gives to the sysprof plugin.
+
+The reason for the NULL is that it executes in the HRTIMER_SOFTIRQ
+context, hence it does not interrupt any real context and thus
+there's no IRQ registers to take a look at.
+
+Since the sysprof functionality is atomic, the fix is to move the
+sysprof hrtimers to hardirq context.
+
+Reported-by: Frederic Weisbecker <fweisbec@gmail.com>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+---
+ kernel/trace/trace_sysprof.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: tip/kernel/trace/trace_sysprof.c
+===================================================================
+--- tip.orig/kernel/trace/trace_sysprof.c
++++ tip/kernel/trace/trace_sysprof.c
+@@ -202,6 +202,7 @@ static void start_stack_timer(void *unus
+ 
+ 	hrtimer_init(hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+ 	hrtimer->function = stack_trace_timer_fn;
++	hrtimer->irqsafe = 1;
+ 
+ 	hrtimer_start(hrtimer, ns_to_ktime(sample_period), HRTIMER_MODE_REL);
+ }
