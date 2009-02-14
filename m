@@ -1,58 +1,76 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch] generic-ipi: remove kmalloc, cleanup
-Date: Sat, 14 Feb 2009 00:48:05 +0100
-Message-ID: <1234568885.4831.14.camel@laptop>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <1234433770.23438.210.camel@twins> <1234440554.23438.264.camel@twins>
-	 <200902140746.45320.rusty@rustcorp.com.au>
+From: Sam Ravnborg <sam@ravnborg.org>
+Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as possible
+Date: Sat, 14 Feb 2009 20:57:02 +0100
+Message-ID: <20090214195702.GB1241@uranus.ravnborg.org>
+References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150835.GA30027@oksana.dev.rtsoft.ru> <20090204212612.GN22608@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Thomas Gleixner <tglx@tglx.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Rusty Russell <rusty@rustcorp.com.au>
+Content-Type: text/plain; charset=us-ascii
+Cc: Anton Vorontsov <avorontsov@ru.mvista.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	Paul Mackerras <paulus@samba.org>,
+	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:43465 "EHLO
-	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753125AbZBMXs3 (ORCPT
+Received: from pfepa.post.tele.dk ([195.41.46.235]:54104 "EHLO
+	pfepa.post.tele.dk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752046AbZBNTzM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Feb 2009 18:48:29 -0500
-In-Reply-To: <200902140746.45320.rusty@rustcorp.com.au>
+	Sat, 14 Feb 2009 14:55:12 -0500
+Content-Disposition: inline
+In-Reply-To: <20090204212612.GN22608@elte.hu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2009-02-14 at 07:46 +1030, Rusty Russell wrote:
-> On Thursday 12 February 2009 22:39:14 Peter Zijlstra wrote:
-> > So it put in unconditionally, how about this?
-> > 
-> > 
-> > --
-> > Subject: generic-smp: remove single ipi fallback for smp_call_function_many()
-> > 
-> > In preparation of removing the kmalloc() calls from the generic-ipi code
-> > get rid of the single ipi fallback for smp_call_function_many().
-> > 
-> > Because we cannot get around carrying the cpumask in the data -- imagine
-> > 2 such calls with different but overlapping masks -- put in a full mask.
+On Wed, Feb 04, 2009 at 10:26:12PM +0100, Ingo Molnar wrote:
 > 
-> OK, if you really want this, please just change it to:
-> 	unsigned long cpumask_bits[BITS_TO_LONGS(CONFIG_NR_CPUS)];
+> * Anton Vorontsov <avorontsov@ru.mvista.com> wrote:
 > 
-> The 'struct cpumask' will be undefined soon when CONFIG_CPUMASK_OFFSTACK=y,
-> which will prevent assignment and declaration on stack.
+> > This patch gives arches more freedom on overwriting CFLAGS, specifically
+> > on PowerPC we want to remove -fno-omit-frame-pointer flag.
+> > 
+> > Signed-off-by: Anton Vorontsov <avorontsov@ru.mvista.com>
+> > ---
+> >  Makefile |    4 ++--
+> >  1 files changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/Makefile b/Makefile
+> > index 7715b2c..d1ba93f 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -525,8 +525,6 @@ else
+> >  KBUILD_CFLAGS	+= -O2
+> >  endif
+> >  
+> > -include $(srctree)/arch/$(SRCARCH)/Makefile
+> > -
+> >  ifneq (CONFIG_FRAME_WARN,0)
+> >  KBUILD_CFLAGS += $(call cc-option,-Wframe-larger-than=${CONFIG_FRAME_WARN})
+> >  endif
+> > @@ -555,6 +553,8 @@ ifdef CONFIG_DEBUG_SECTION_MISMATCH
+> >  KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
+> >  endif
+> >  
+> > +include $(srctree)/arch/$(SRCARCH)/Makefile
+> > +
+> >  # arch Makefile may override CC so keep this after arch Makefile is included
+> >  NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
+> >  CHECKFLAGS     += $(NOSTDINC_FLAGS)
+> > -- 
 > 
-> I'd be fascinated to see perf numbers once you kill the kmalloc.  Because
-> this patch will add num_possible_cpus * NR_CPUS/8 bytes to the kernel which
-> is something we're trying to avoid unless necessary.
+> this patch is really for Sam to judge - Cc:-ed him.
 
-You're free to make it a pointer and do node affine allocations from an
-init section of choice and add a hotplug handler.
+If we move the include further down then the following:
 
-But I'm not quite sure how perf is affected by size overhead on
-ridiculous configs.
+    # Force gcc to behave correct even for buggy distributions
+    # Arch Makefiles may override this setting
+    KBUILD_CFLAGS += $(call cc-option, -fno-stack-protector)
 
+will most likely fail.
+
+If popwerpc needs to get rid of "-fno-omit-frame-pointer" then
+we need a way to express this at KConfig level and NOT by doing
+some tricks with CFLAGS.
+
+	Sam
