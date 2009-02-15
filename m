@@ -1,31 +1,29 @@
 From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as possible
+Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
+ possible
 Date: Sun, 15 Feb 2009 11:19:56 +1100
-Message-ID: <1234657196.26036.86.camel__23148.505020845$1234657340$gmane$org@pasglop>
+Message-ID: <1234657196.26036.86.camel__2946.28618653423$1234657345$gmane$org@pasglop>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
-	<20090204150835.GA30027@oksana.dev.rtsoft.ru>
-	<20090204212612.GN22608@elte.hu>
-	<20090214195702.GB1241@uranus.ravnborg.org>
-	<20090214220326.GA5200@elte.hu>
+	 <20090204150835.GA30027@oksana.dev.rtsoft.ru>
+	 <20090204212612.GN22608@elte.hu>
+	 <20090214195702.GB1241@uranus.ravnborg.org> <20090214220326.GA5200@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linuxppc-dev@ozlabs.org, Steven Rostedt <srostedt@redhat.com>,
-	Paul Mackerras <paulus@samba.org>, Sam Ravnborg <sam@ravnborg.org>
+Cc: Sam Ravnborg <sam@ravnborg.org>,
+	Anton Vorontsov <avorontsov@ru.mvista.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gate.crashing.org ([63.228.1.57]:33654 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752717AbZBOAUy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 14 Feb 2009 19:20:54 -0500
 In-Reply-To: <20090214220326.GA5200@elte.hu>
-List-Unsubscribe: <https://ozlabs.org/mailman/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=unsubscribe>
-List-Archive: <http://ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@ozlabs.org?subject=help>
-List-Subscribe: <https://ozlabs.org/mailman/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 On Sat, 2009-02-14 at 23:03 +0100, Ingo Molnar wrote:
 > 
@@ -40,3 +38,4 @@ how to handle that afaik.
 
 Cheers,
 Ben.
+
