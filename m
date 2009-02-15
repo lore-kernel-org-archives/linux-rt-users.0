@@ -2,7 +2,7 @@ From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as
  possible
 Date: Sun, 15 Feb 2009 11:19:56 +1100
-Message-ID: <1234657196.26036.86.camel__2946.28618653423$1234657345$gmane$org@pasglop>
+Message-ID: <1234657196.26036.86.camel__19624.6303072714$1234657370$gmane$org@pasglop>
 References: <20090204150755.GA24163@oksana.dev.rtsoft.ru>
 	 <20090204150835.GA30027@oksana.dev.rtsoft.ru>
 	 <20090204212612.GN22608@elte.hu>
@@ -16,14 +16,10 @@ Cc: Sam Ravnborg <sam@ravnborg.org>,
 	Paul Mackerras <paulus@samba.org>, linuxppc-dev@ozlabs.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:33654 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752717AbZBOAUy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 14 Feb 2009 19:20:54 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754704AbZBOAVL@vger.kernel.org>
 In-Reply-To: <20090214220326.GA5200@elte.hu>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 On Sat, 2009-02-14 at 23:03 +0100, Ingo Molnar wrote:
 > 
@@ -38,4 +34,3 @@ how to handle that afaik.
 
 Cheers,
 Ben.
-
