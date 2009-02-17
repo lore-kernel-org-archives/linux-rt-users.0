@@ -1,45 +1,84 @@
-From: Sam Ravnborg <sam@ravnborg.org>
-Subject: Re: [PATCH 1/3] Makefile: Include arch Makefiles as late as possible
-Date: Mon, 16 Feb 2009 21:04:15 +0100
-Message-ID: <20090216200415.GA16721@uranus.ravnborg.org>
-References: <20090204150755.GA24163@oksana.dev.rtsoft.ru> <20090204150835.GA30027@oksana.dev.rtsoft.ru> <20090204212612.GN22608@elte.hu> <20090214195702.GB1241@uranus.ravnborg.org> <20090216142001.GA27869@oksana.dev.rtsoft.ru> <20090216145317.GA3616@oksana.dev.rtsoft.ru>
+From: Florian Boelstler <euphoria@arcor.de>
+Subject: 2.6.26.8-rt16 powerpc and mem=...
+Date: Tue, 17 Feb 2009 18:46:23 +0100
+Message-ID: <gnet5c$7k2$1@ger.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Ingo Molnar <mingo@elte.hu>, Steven Rostedt <srostedt@redhat.com>,
-	Paul Mackerras <paulus@samba.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Ralf Baechle <ralf@linux-mips.org>
-To: Anton Vorontsov <avorontsov@ru.mvista.com>
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pfepb.post.tele.dk ([195.41.46.236]:47872 "EHLO
-	pfepb.post.tele.dk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754039AbZBPUC0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Feb 2009 15:02:26 -0500
-Content-Disposition: inline
-In-Reply-To: <20090216145317.GA3616@oksana.dev.rtsoft.ru>
+Received: from main.gmane.org ([80.91.229.2]:39141 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752382AbZBQRqb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2009 12:46:31 -0500
+Received: from list by ciao.gmane.org with local (Exim 4.43)
+	id 1LZU1e-0006Km-Pe
+	for linux-rt-users@vger.kernel.org; Tue, 17 Feb 2009 17:46:30 +0000
+Received: from fw-emea.rohde-schwarz.com ([80.246.32.33])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 17:46:30 +0000
+Received: from euphoria by fw-emea.rohde-schwarz.com with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 17:46:30 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> 
-> There are few arches that have "auto detection" of CROSS_COMPILE
-> variable: mips, m68k, parisc, xtensa, h8300 and blackfin.
-> 
-> So `normal' arches don't have any chance to overwrite the flags
-> because of the few offenders above. ;-)
+Hi,
 
-We also have archs where we add options to gcc that may
-impact for example -fno-stack-protector.
-We had a bug in x86 in this area for a while.
+I'm currently running 2.6.26.8-rt16 on a custom MPC8540-based board.
+I was wondering whether there is any experience reducing the available 
+memory using the mem= kernel argument on linux-rt.
+(Use case: A specific memory portion is reserved for configuration data, 
+which is set by an external system attached over PCI)
 
-So the only sane thing is to only add the most generic options to
-KBUILD_CFLAGS before we include the arch specific part.
-And we can then add the conditional options later - like
-the KBUILD_CFLAGS += $(call cc-option, -fno-stack-protector)
-in this case.
+It seems that there is a race condition, which is hit during extraction 
+of the initrd only if the available memory is reduced.
+(For vanilla 2.6.26.8 it works without any problems. The problem occurs 
+in 2.6.24.7-rt24 as well)
 
-We learned a few lessons in this area over time as your
-history digging also showed.
+[...]
+RAMDISK: Compressed image found at block 0
+crc error
+VFS: Mounted root (ext2 filesystem).
+Freeing unused kernel memory: 140k init
+Kernel panic - not syncing: No init found.  Try passing init= option to 
+kernel.
+Call Trace:
+[d7441e90] [c00072c4] show_stack+0x54/0x188 (unreliable)
+[d7441ec0] [c0020d58] panic+0x98/0x160
+[d7441f50] [c0001bf8] name_to_dev_t+0x0/0x25c
+[d7441f60] [c03059e0] kernel_init+0x250/0x284
+[d7441ff0] [c000d910] kernel_thread+0x44/0x60
 
-	Sam
+Sometimes the output is slightly different, and init is actually called. 
+But the file system is corrupt. E.g.:
+
+[...]
+RAMDISK: Compressed image found at block 0
+RAMDISK: incomplete write (-28 != 7032) 33554432
+crc error
+VFS: Mounted root (ext2 filesystem).
+Freeing unused kernel memory: 140k init
+init started:  BusyBox v1.1.0 (2007.01.23-00:05+0000) multi-call binary
+[...]
+EXT2-fs error (device ram0): ext2_check_page: bad entry in directory 
+#1594: : directory entry across blocks - offset=0, inode=909341804, 
+rec_len=14392, name_len=55
+Remounting filesystem read-only
+[...]
+
+In a single case Linux even booted without any problems.
+
+Some details about my setup:
+- 512MB RAM in total
+- Memory available for Linux is reduced to 508M (mem=520192K)
+- Linux is booted from U-Boot (v1.2.0), which places the initrd image in 
+lowmem below 0x18000000 (initrd_high=0x18000000). This is done because 
+Linux seems to not allow having the initrd in highmem. (Output from 
+kernel regarding CAMs: "Memory CAM mapping: CAM0=256Mb, CAM1=64Mb, 
+CAM2=64Mb residual: 124Mb")
+
+
+
+
