@@ -1,42 +1,53 @@
-From: Florian Boelstler <euphoria@arcor.de>
-Subject: Re: 2.6.26.8-rt16 powerpc and mem=...
-Date: Tue, 17 Feb 2009 18:54:39 +0100
-Message-ID: <gnetkr$9v0$1@ger.gmane.org>
-References: <gnet5c$7k2$1@ger.gmane.org>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Linux Plumbers Conf 09 - RT topic suggestions?
+Date: Tue, 17 Feb 2009 11:40:56 -0800
+Message-ID: <499B12C8.4060201@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:47818 "EHLO ciao.gmane.org"
+Received: from e9.ny.us.ibm.com ([32.97.182.139]:54037 "EHLO e9.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751543AbZBQRyw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2009 12:54:52 -0500
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1LZU9e-0006fd-TO
-	for linux-rt-users@vger.kernel.org; Tue, 17 Feb 2009 17:54:46 +0000
-Received: from fw-emea.rohde-schwarz.com ([80.246.32.33])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 17:54:46 +0000
-Received: from euphoria by fw-emea.rohde-schwarz.com with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 17:54:46 +0000
-In-Reply-To: <gnet5c$7k2$1@ger.gmane.org>
+	id S1751628AbZBQTkS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2009 14:40:18 -0500
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e9.ny.us.ibm.com (8.13.1/8.13.1) with ESMTP id n1HJWf5l023881
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 14:32:41 -0500
+Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v9.1) with ESMTP id n1HJeHbC156098
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 14:40:17 -0500
+Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
+	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n1HJeHhJ007879
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 14:40:17 -0500
+Received: from [9.47.22.115] (dyn9047022115.beaverton.ibm.com [9.47.22.115])
+	by d01av03.pok.ibm.com (8.12.11.20060308/8.12.11) with ESMTP id n1HJeGtx007863
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2009 14:40:17 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sorry, that message was sent too early.
+Folks,
 
-Additionally I put the boot output here:
-http://pastebin.ch/1009
+Paul McKenney (program chair for LPC 09) has put out
+a call for topics for LPC:
 
-Please let me know if you need any other information, which may help 
-fixing this issue.
+http://lwn.net/Articles/319215/
 
-Thanks.
+Note that this is not the official, formal CFP or
+CFM(icroconfs/miniconfs/tutorials) etc. That will
+come later - but this is an initial effort by the
+LPC Program Committee to feed the brain on potential
+topics/areas for discussion.
 
-Cheers,
+If you have any suggestions for any real-time topics,
+would appreciate you posting to that thread!
 
-    Florian
+LPC is intended to be a developers conference to
+work out issues, design solutions or just present
+papers if appropriate (ok, you might prefer to read
+the authoritative Paul M version at link above ;)).
 
+I thought I'd get the word out...
+
+thanks,
+Nivedita
