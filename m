@@ -1,42 +1,34 @@
-From: Jan Engelhardt <jengelh@medozas.de>
-Subject: Re: [Announce] 2.6.29-rc4-rt2
-Date: Tue, 17 Feb 2009 22:02:20 +0100 (CET)
-Message-ID: <alpine.LSU.2.00.0902172200520.5620@fbirervta.pbzchgretzou.qr>
-References: alpine.LFD.2.00.0902122353050.16972@localhost.localdomain  <alpine.LSU.2.00.0902172104480.3930@fbirervta.pbzchgretzou.qr> <1234902258.13010.97.camel@perihelion.bos.jonmasters.org>
+From: Nicola Manica <nicola.manica@gmail.com>
+Subject: info softirq
+Date: Wed, 18 Feb 2009 10:47:16 +0100
+Message-ID: <30047d300902180147s1bbdbf45u1b194db53c9480a9@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Jon Masters <jonathan@jonmasters.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sovereign.computergmbh.de ([85.214.69.204]:36954 "EHLO
-	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754649AbZBQVCW (ORCPT
+Received: from mail-bw0-f161.google.com ([209.85.218.161]:54636 "EHLO
+	mail-bw0-f161.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752046AbZBRJrS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2009 16:02:22 -0500
-In-Reply-To: <1234902258.13010.97.camel@perihelion.bos.jonmasters.org>
+	Wed, 18 Feb 2009 04:47:18 -0500
+Received: by bwz5 with SMTP id 5so5163501bwz.13
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Feb 2009 01:47:16 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Tuesday 2009-02-17 21:24, Jon Masters wrote:
-
->On Tue, 2009-02-17 at 21:15 +0100, Jan Engelhardt wrote:
->
->> It happens to spew a warning (see full dmesg below)
->> and a call trace. Seems harmless otherwise, though.
->
->> ------------[ cut here ]------------
->> WARNING: at mm/highmem.c:225 kmap_flush_unused+0x1d/0x2c()
->> Hardware name: VMware Virtual Platform
->> Modules linked in:
->
->You removed the linked in module list? Either way, I'd love to see if
->this happens with vanilla. Do you actually have the VMWare modules
->loaded?
-
-I removed nothing actually. At this point in time, there just _was_
-no module loaded. This happened before initramfs even started.
-(You see the "unpacking initramfs... done", do you? ;-)
-
-
-Jan
+Hi,
+For my Master thesis I'm testing a module for kernel 2.6.21.4-rt12, so
+I need to use this "old" version of kernel.
+The kernel is compiled with complete preemption.
+I'm testing network interface with netperf.
+When I run a simple test I see that most of the time the CPU execute
+IRQ-16 (or the one assigned to my eth card) but softirq-net-rx is
+never triggered.
+If I try the same test with 2.6.24.7-rt24 most of the work is done by
+sirq-net-rx.
+Maybe I made mistakes somewhere in my configuration.
+Could someone give some hints where I have to investigate? Are there
+runtime parameters that I can check to see if everything is in order?
+Thanks,
+Nicola
