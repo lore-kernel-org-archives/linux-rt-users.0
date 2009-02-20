@@ -1,90 +1,110 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Thomas Meyer <thomas@m3y3r.de>
 Subject: Re: [Announce] 2.6.29-rc4-rt2
-Date: Thu, 19 Feb 2009 21:50:57 +0100
-Message-ID: <1235076657.4612.652.camel@laptop>
+Date: Fri, 20 Feb 2009 07:32:48 +0100
+Message-ID: <1235111568.3363.3.camel@localhost.localdomain>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <1235069043.3841.15.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Thomas Gleixner <tglx@tglx.de>,
+Cc: Thomas Gleixner <tglx@tglx.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Thomas Meyer <thomas@m3y3r.de>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:52306 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751720AbZBSUvT (ORCPT
+Received: from www17.your-server.de ([213.133.104.17]:44813 "EHLO
+	www17.your-server.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753966AbZBTHdf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Feb 2009 15:51:19 -0500
-In-Reply-To: <1235069043.3841.15.camel@localhost.localdomain>
+	Fri, 20 Feb 2009 02:33:35 -0500
+In-Reply-To: <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-02-19 at 19:44 +0100, Thomas Meyer wrote:
+Am Donnerstag, den 12.02.2009, 23:56 +0100 schrieb Thomas Gleixner: 
+> We are pleased to announce the first update to our new preempt-rt
+> series. It fixes the reported bugs and some more.
+> 
+> Download locations:
+> 
+>    http://rt.et.redhat.com/download/
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+>  
+> Information on the RT patch can be found at:
+> 
+>   http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> to build the 2.6.29-rc4-rt2 tree, the following patches should be
+> applied:
+> 
+>   http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc4.tar.bz2
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc4-rt2.bz2
+> 
+> The broken out patches are also available at the same download
+> locations.
+> 
+> Enjoy !
+> 
+>       Thomas, Ingo
 
-> [    0.003333] ------------[ cut here ]------------
-> [    0.003333] WARNING: at mm/highmem.c:225 kmap_flush_unused+0x2b/0x4b()
-> [    0.003333] Hardware name: MacBookPro1,1
-> [    0.003333] Modules linked in:
-> [    0.003333] Pid: 0, comm: swapper Not tainted 2.6.29-rc4-rt2-tip #54
-> [    0.003333] Call Trace:
-> [    0.003333]  [<c0451e70>] warn_slowpath+0x8a/0xd3
-> [    0.003333]  [<c043ee71>] ? kmap+0x6c/0x77
-> [    0.003333]  [<c04ad7f5>] ? get_page_from_freelist+0x389/0x42b
-> [    0.003333]  [<c04adb8f>] ? __alloc_pages_internal+0xbf/0x3a6
-> [    0.003333]  [<c04b9b92>] kmap_flush_unused+0x2b/0x4b
-> [    0.003333]  [<c043b877>] change_page_attr_set_clr+0xe8/0x2ca
-> [    0.003333]  [<c09aabd9>] ? rt_spin_lock+0x32/0x79
-> [    0.003333]  [<c04bbeb3>] ? __pte_alloc_kernel+0x50/0x83
-> [    0.003333]  [<c043bd16>] _set_memory_uc+0x27/0x3a
-> [    0.003333]  [<c043ac3d>] ioremap_change_attr+0x24/0x47
-> [    0.003333]  [<c043ae62>] __ioremap_caller+0x202/0x256
-> [    0.003333]  [<c0cd0b79>] ? hpet_enable+0x2d/0x26c
-> [    0.003333]  [<c043afe0>] ioremap_nocache+0x1c/0x2f
-> [    0.003333]  [<c0cd0b79>] ? hpet_enable+0x2d/0x26c
-> [    0.003333]  [<c0cd0b79>] hpet_enable+0x2d/0x26c
-> [    0.003333]  [<c0cc34fb>] hpet_time_init+0x16/0x37
-> [    0.003333]  [<c0cbd997>] start_kernel+0x289/0x345
-> [    0.003333]  [<c0cbd093>] __init_begin+0x93/0xac
-> [    0.003333] ---[ end trace a7919e7f17c0a725 ]---
+Hi,
 
-Hmm, this appears unimplemented on -rt, shouldn't hurt much, but could
-be fixed.
+Are you interested in these BUG reports?
 
-> [   13.169831] BUG: sleeping function called from invalid context at arch/x86/mm/highmem_32.c:8
-> [   13.169957] in_atomic(): 0, irqs_disabled(): 1, pid: 1030, name: cryptsetup
-> [   13.170075] Pid: 1030, comm: cryptsetup Tainted: G        W  2.6.29-rc4-rt2-tip #54
-> [   13.170196] Call Trace:
-> [   13.170284]  [<c0444cdd>] __might_sleep+0xda/0xf0
-> [   13.170374]  [<c043ee55>] kmap+0x50/0x77
-> [   13.170460]  [<c043db3b>] gup_pte_range+0x4b/0xe9
-> [   13.170548]  [<c043dcb7>] get_user_pages_fast+0xde/0x17f
-> [   13.170639]  [<c04f75f1>] dio_get_page+0x59/0x124
-> [   13.170729]  [<c04f8258>] __blockdev_direct_IO+0x4ad/0xabe
-> [   13.170819]  [<c04f5cdb>] ? blkdev_get_blocks+0x0/0x11c
-> [   13.170837]  [<c04f730a>] blkdev_direct_IO+0x3f/0x55
-> [   13.170837]  [<c04f5cdb>] ? blkdev_get_blocks+0x0/0x11c
-> [   13.170837]  [<c04a977a>] generic_file_aio_read+0xfd/0x587
-> [   13.170837]  [<c05ff445>] ? avc_has_perm+0x56/0x71
-> [   13.170837]  [<c04d0fcf>] do_sync_read+0xc6/0x118
-> [   13.170837]  [<c0467414>] ? autoremove_wake_function+0x0/0x54
-> [   13.170837]  [<c06046d6>] ? selinux_file_permission+0x119/0x132
-> [   13.170837]  [<c05fa4dc>] ? security_file_permission+0x1e/0x31
-> [   13.170837]  [<c04d0f09>] ? do_sync_read+0x0/0x118
-> [   13.170837]  [<c04d1b61>] vfs_read+0x99/0x14e
-> [   13.170837]  [<c04d1cf7>] sys_read+0x50/0x87
-> [   13.170837]  [<c0420086>] sysenter_do_call+0x12/0x21
+Without CONFIG_HIGHPTE kernel boots and seems to work correct, but I'm
+hitting these two BUGs:
 
-Caused by CONFIG_HIGHPTE=y,
+[   19.840100] BUG: sleeping function called from invalid context at arch/x86/mm/highmem_32.c:8
+[   19.840105] in_atomic(): 0, irqs_disabled(): 1, pid: 718, name: IRQ-14
+[   19.840110] Pid: 718, comm: IRQ-14 Tainted: G        W  2.6.29-rc4-rt2-tip #55
+[   19.840113] Call Trace:
+[   19.840123]  [<c0444cbd>] __might_sleep+0xda/0xf0
+[   19.840128]  [<c043ee31>] kmap+0x50/0x77
+[   19.840133]  [<c0663e35>] sg_miter_next+0xc1/0xdf
+[   19.840137]  [<c0663ee8>] sg_copy_buffer+0x95/0xc5
+[   19.840141]  [<c0663f35>] sg_copy_to_buffer+0x1d/0x33
+[   19.840149]  [<c0774ab1>] atapi_qc_complete+0x25a/0x2c5
+[   19.840153]  [<c076dece>] __ata_qc_complete+0xb4/0xcd
+[   19.840157]  [<c076f844>] ata_qc_complete+0x1be/0x1d7
+[   19.840162]  [<c077c812>] ata_hsm_qc_complete+0xa9/0xd3
+[   19.840166]  [<c077ceb7>] ata_sff_hsm_move+0x67b/0x6da
+[   19.840171]  [<c077d19b>] ata_sff_interrupt+0x15d/0x205
+[   19.840176]  [<c049440a>] handle_IRQ_event+0x4b/0xce
+[   19.840180]  [<c0494ac7>] do_irqd+0x141/0x271
+[   19.840184]  [<c0494986>] ? do_irqd+0x0/0x271
+[   19.840189]  [<c0467022>] kthread+0x4a/0x82
+[   19.840192]  [<c0466fd8>] ? kthread+0x0/0x82
+[   19.840197]  [<c0420b67>] kernel_thread_helper+0x7/0x10
 
-as long as TLB flushes are IPIs we really need to disable IRQs for
-gup_fast() and thus will either need non-preemptible kmap or disabled
-high-pte or disable the gup_fast() fast-path, which would be a shame.
+and:
+[  357.286589] BUG: sleeping function called from invalid context at arch/x86/mm/highmem_32.c:8
+[  357.286597] in_atomic(): 0, irqs_disabled(): 1, pid: 718, name: IRQ-14
+[  357.286605] Pid: 718, comm: IRQ-14 Tainted: G        W  2.6.29-rc4-rt2-tip #55
+[  357.286611] Call Trace:
+[  357.286624]  [<c0444cbd>] __might_sleep+0xda/0xf0
+[  357.286631]  [<c043ee31>] kmap+0x50/0x77
+[  357.286640]  [<c0663e35>] sg_miter_next+0xc1/0xdf
+[  357.286647]  [<c0663ee8>] sg_copy_buffer+0x95/0xc5
+[  357.286654]  [<c0663f35>] sg_copy_to_buffer+0x1d/0x33
+[  357.286664]  [<c0774ab1>] atapi_qc_complete+0x25a/0x2c5
+[  357.286672]  [<c076dece>] __ata_qc_complete+0xb4/0xcd
+[  357.286680]  [<c076f844>] ata_qc_complete+0x1be/0x1d7
+[  357.286688]  [<c09ab024>] ? __spin_unlock+0x1e/0x43
+[  357.286696]  [<c077c812>] ata_hsm_qc_complete+0xa9/0xd3
+[  357.286703]  [<c077ceb7>] ata_sff_hsm_move+0x67b/0x6da
+[  357.286711]  [<c077d19b>] ata_sff_interrupt+0x15d/0x205
+[  357.286720]  [<c049440a>] handle_IRQ_event+0x4b/0xce
+[  357.286727]  [<c0494ac7>] do_irqd+0x141/0x271
+[  357.286734]  [<c0494986>] ? do_irqd+0x0/0x271
+[  357.286742]  [<c0467022>] kthread+0x4a/0x82
+[  357.286757]  [<c0466fd8>] ? kthread+0x0/0x82
+[  357.286762]  [<c0420b67>] kernel_thread_helper+0x7/0x10
+
+greets
+thomas
 
 
