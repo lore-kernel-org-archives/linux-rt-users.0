@@ -1,42 +1,115 @@
 From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH-rt26] irq handle: use cached status instead of dereference NULL action
-Date: Fri, 20 Feb 2009 15:17:55 -0500
-Message-ID: <1235161075-11358-1-git-send-email-paul.gortmaker@windriver.com>
-Cc: tglx@linutronix.de
-To: linux-rt-users@vger.kernel.org, rostedt@goodmis.org
+Subject: Re: BUG: using smp_processor_id() in preemptible
+Date: Fri, 20 Feb 2009 15:42:51 -0500
+Message-ID: <7d1d9c250902201242ieed279fi98c0c2c413dab4f9@mail.gmail.com>
+References: <ghj31b$bmr$1@ger.gmane.org> <gkhnq8$buj$1@ger.gmane.org>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary=000e0cd2e2d251cfa104635fb2b7
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Tim Blechmann <tim@klingt.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:47079 "EHLO mail.wrs.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752576AbZBTUS1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Feb 2009 15:18:27 -0500
+Received: from yx-out-2324.google.com ([74.125.44.30]:46072 "EHLO
+	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753550AbZBTUmx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Feb 2009 15:42:53 -0500
+Received: by yx-out-2324.google.com with SMTP id 8so428640yxm.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Feb 2009 12:42:52 -0800 (PST)
+In-Reply-To: <gkhnq8$buj$1@ger.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Patch "irq-tracer-fix.patch" from the additions at rt13 of the
-26 preempt_rt patch set introduced a test on action->flags, but it
-comes at the end of a loop where we will have run all the
-chained handlers until action==NULL.  Since we have stored the
-action->flags (or'd) in status while walking the action chain,
-use status in the check instead.
+--000e0cd2e2d251cfa104635fb2b7
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- kernel/irq/handle.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On Tue, Jan 13, 2009 at 4:44 AM, Tim Blechmann <tim@klingt.org> wrote:
+> fyi, this is still an issue in 2.6.26.8-rt13.
+>
+> tim
 
-diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
-index ed6deaa..314c9d7 100644
---- a/kernel/irq/handle.c
-+++ b/kernel/irq/handle.c
-@@ -164,7 +164,7 @@ irqreturn_t handle_IRQ_event(unsigned int irq, struct irqaction *action)
- 	} while (action);
- 
- 	if (status & IRQF_SAMPLE_RANDOM) {
--		if (hardirq_count() && (action->flags & IRQF_DISABLED))
-+		if (hardirq_count() && (status & IRQF_DISABLED))
- 			local_irq_enable();
- 		add_interrupt_randomness(irq);
- 	}
--- 
-1.6.0.4
+The attached patch should fix it ; it is based on the discussion
+that took place here on rt-users.
 
+Paul.
+
+>
+>  Tim Blechmann wrote:
+>
+>> hi all,
+>>
+>> using the 2.6.26.6-rt11 patchset on a 2.6.26.8 kernel, i get the
+>> following stack traces:
+>>
+>> [ 4262.931832] BUG: using smp_processor_id() in preemptible [00000000]
+>> code: bash/361 [ 4262.931846] caller is
+>> mem_cgroup_charge_statistics+0x6d/0xa0 [ 4262.931852] Pid: 361, comm:
+>> bash Not tainted 2.6.26.8-rt11 #3 [ 4262.931855]
+>> [ 4262.931856] Call Trace:
+>> [ 4262.931886]  [<ffffffff80396e8c>] debug_smp_processor_id+0xcc/0xd0 [
+>> 4262.931895]  [<ffffffff802daead>]
+>> mem_cgroup_charge_statistics+0x6d/0xa0 [ 4262.931905]
+
+--000e0cd2e2d251cfa104635fb2b7
+Content-Type: text/x-patch; charset=US-ASCII;
+	name="0001-memcg-fix-BUG-using-smp_processor_id.patch"
+Content-Disposition: attachment;
+	filename="0001-memcg-fix-BUG-using-smp_processor_id.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_frfbuxju0
+
+RnJvbSBmYWEwZWEzMTQwNWVjOWQ0NGU4MjQyZTIyNGY4ZTYwNzY0MmYzYzVlIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBQYXVsIEdvcnRtYWtlciA8cGF1bC5nb3J0bWFrZXJAd2luZHJp
+dmVyLmNvbT4KRGF0ZTogTW9uLCAyNiBKYW4gMjAwOSAyMToxNToyMiAtMDUwMApTdWJqZWN0OiBb
+UEFUQ0hdIG1lbWNnOiBmaXggQlVHOiB1c2luZyBzbXBfcHJvY2Vzc29yX2lkKCkgaW4gcHJlZW1w
+dGlibGUKCkEgY29tYmluYXRpb24gb2YgdXBzdHJlYW0gKGUuZy4gYWRkYjllZmUpIGFuZCBhcyBw
+ZXIgZGlzY3Vzc2lvbgpvbiBydCBsaXN0IChEZWMgMjAwOCkgYmV0d2VlbiBUaW0gQmxlY2htYW5u
+IGFuZCBLYW1lemF3YSBIaXJveXVraSwKdGhpcyBpcyBuZWVkZWQgdG8gZml4IHRoZSBmb2xsb3dp
+bmc6CgpCVUc6IHVzaW5nIHNtcF9wcm9jZXNzb3JfaWQoKSBpbiBwcmVlbXB0aWJsZSBbMDAwMDAw
+MDBdIGNvZGU6IHN3YXBwZXIvMQpjYWxsZXIgaXMgbWVtX2Nncm91cF9jaGFyZ2Vfc3RhdGlzdGlj
+cysweDg1LzB4YTAKUGlkOiAxLCBjb21tOiBzd2FwcGVyIE5vdCB0YWludGVkIDIuNi4yNi44LXJ0
+MTIgIzEKCkNhbGwgVHJhY2U6CiBbPGZmZmZmZmZmODAzOGViOTQ+XSBkZWJ1Z19zbXBfcHJvY2Vz
+c29yX2lkKzB4YzQvMHhkMAogWzxmZmZmZmZmZjgwMjlmZmU1Pl0gbWVtX2Nncm91cF9jaGFyZ2Vf
+c3RhdGlzdGljcysweDg1LzB4YTAKIFs8ZmZmZmZmZmY4MDJhMDAzOT5dIF9fbWVtX2Nncm91cF9h
+ZGRfbGlzdCsweDM5LzB4NjAKIFs8ZmZmZmZmZmY4MDJhMDgwNz5dIG1lbV9jZ3JvdXBfY2hhcmdl
+X2NvbW1vbisweDMxNy8weDM0MAogWzxmZmZmZmZmZjgwMmEwODQ5Pl0gbWVtX2Nncm91cF9jYWNo
+ZV9jaGFyZ2UrMHgxOS8weDIwCiBbPGZmZmZmZmZmODAyNzY5MTg+XSBhZGRfdG9fcGFnZV9jYWNo
+ZSsweDM4LzB4MjUwCiBbPGZmZmZmZmZmODAyN2Q0M2Q+XSA/IF9fYWxsb2NfcGFnZXNfaW50ZXJu
+YWwrMHhlZC8weDRmMAogWzxmZmZmZmZmZjgwMjc2YjQ5Pl0gYWRkX3RvX3BhZ2VfY2FjaGVfbHJ1
+KzB4MTkvMHg0MAogWzxmZmZmZmZmZjgwMjc3NjAzPl0gZmluZF9vcl9jcmVhdGVfcGFnZSsweDYz
+LzB4YjAKIFs8ZmZmZmZmZmY4MDJjZDQwMT5dIF9fZ2V0YmxrKzB4MTAxLzB4MzIwCiBbPGZmZmZm
+ZmZmODAyZmRkZDY+XSBfX2V4dDNfZ2V0X2lub2RlX2xvYysweDEwNi8weDMyMAogWzxmZmZmZmZm
+ZjgwMmZlMDYwPl0gZXh0M19pZ2V0KzB4NzAvMHg0MjAKIFs8ZmZmZmZmZmY4MDMwNTA2OD5dIGV4
+dDNfbG9va3VwKzB4YTgvMHgxMDAKClNpZ25lZC1vZmYtYnk6IFBhdWwgR29ydG1ha2VyIDxwYXVs
+LmdvcnRtYWtlckB3aW5kcml2ZXIuY29tPgotLS0KIG1tL21lbWNvbnRyb2wuYyB8ICAgMTkgKysr
+KysrKysrKysrLS0tLS0tLQogMSBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCA3IGRl
+bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL21tL21lbWNvbnRyb2wuYyBiL21tL21lbWNvbnRyb2wu
+YwppbmRleCBlZDFjZmIxLi44NmU3ZjE0IDEwMDY0NAotLS0gYS9tbS9tZW1jb250cm9sLmMKKysr
+IGIvbW0vbWVtY29udHJvbC5jCkBAIC02NSwxMSArNjUsMTEgQEAgc3RydWN0IG1lbV9jZ3JvdXBf
+c3RhdCB7CiAvKgogICogRm9yIGFjY291bnRpbmcgdW5kZXIgaXJxIGRpc2FibGUsIG5vIG5lZWQg
+Zm9yIGluY3JlbWVudCBwcmVlbXB0IGNvdW50LgogICovCi1zdGF0aWMgdm9pZCBfX21lbV9jZ3Jv
+dXBfc3RhdF9hZGRfc2FmZShzdHJ1Y3QgbWVtX2Nncm91cF9zdGF0ICpzdGF0LAorc3RhdGljIGlu
+bGluZSB2b2lkIF9fbWVtX2Nncm91cF9zdGF0X2FkZF9zYWZlKHN0cnVjdCBtZW1fY2dyb3VwX3N0
+YXRfY3B1ICpzdGF0LAogCQllbnVtIG1lbV9jZ3JvdXBfc3RhdF9pbmRleCBpZHgsIGludCB2YWwp
+CiB7Ci0JaW50IGNwdSA9IHNtcF9wcm9jZXNzb3JfaWQoKTsKLQlzdGF0LT5jcHVzdGF0W2NwdV0u
+Y291bnRbaWR4XSArPSB2YWw7CisJc3RhdC0+Y291bnRbaWR4XSArPSB2YWw7CisKIH0KIAogc3Rh
+dGljIHM2NCBtZW1fY2dyb3VwX3JlYWRfc3RhdChzdHJ1Y3QgbWVtX2Nncm91cF9zdGF0ICpzdGF0
+LApAQCAtMTk1LDE5ICsxOTUsMjQgQEAgc3RhdGljIHZvaWQgbWVtX2Nncm91cF9jaGFyZ2Vfc3Rh
+dGlzdGljcyhzdHJ1Y3QgbWVtX2Nncm91cCAqbWVtLCBpbnQgZmxhZ3MsCiB7CiAJaW50IHZhbCA9
+IChjaGFyZ2UpPyAxIDogLTE7CiAJc3RydWN0IG1lbV9jZ3JvdXBfc3RhdCAqc3RhdCA9ICZtZW0t
+PnN0YXQ7CisJc3RydWN0IG1lbV9jZ3JvdXBfc3RhdF9jcHUgKmNwdXN0YXQ7CisJaW50IGNwdSA9
+IGdldF9jcHUoKTsKIAogCVZNX0JVR19PTighaXJxc19kaXNhYmxlZCgpKTsKKworCWNwdXN0YXQg
+PSAmc3RhdC0+Y3B1c3RhdFtjcHVdOwogCWlmIChmbGFncyAmIFBBR0VfQ0dST1VQX0ZMQUdfQ0FD
+SEUpCi0JCV9fbWVtX2Nncm91cF9zdGF0X2FkZF9zYWZlKHN0YXQsIE1FTV9DR1JPVVBfU1RBVF9D
+QUNIRSwgdmFsKTsKKwkJX19tZW1fY2dyb3VwX3N0YXRfYWRkX3NhZmUoY3B1c3RhdCwgTUVNX0NH
+Uk9VUF9TVEFUX0NBQ0hFLCB2YWwpOwogCWVsc2UKLQkJX19tZW1fY2dyb3VwX3N0YXRfYWRkX3Nh
+ZmUoc3RhdCwgTUVNX0NHUk9VUF9TVEFUX1JTUywgdmFsKTsKKwkJX19tZW1fY2dyb3VwX3N0YXRf
+YWRkX3NhZmUoY3B1c3RhdCwgTUVNX0NHUk9VUF9TVEFUX1JTUywgdmFsKTsKIAogCWlmIChjaGFy
+Z2UpCi0JCV9fbWVtX2Nncm91cF9zdGF0X2FkZF9zYWZlKHN0YXQsCisJCV9fbWVtX2Nncm91cF9z
+dGF0X2FkZF9zYWZlKGNwdXN0YXQsCiAJCQkJTUVNX0NHUk9VUF9TVEFUX1BHUEdJTl9DT1VOVCwg
+MSk7CiAJZWxzZQotCQlfX21lbV9jZ3JvdXBfc3RhdF9hZGRfc2FmZShzdGF0LAorCQlfX21lbV9j
+Z3JvdXBfc3RhdF9hZGRfc2FmZShjcHVzdGF0LAogCQkJCU1FTV9DR1JPVVBfU1RBVF9QR1BHT1VU
+X0NPVU5ULCAxKTsKKwlwdXRfY3B1KCk7CiB9CiAKIHN0YXRpYyBzdHJ1Y3QgbWVtX2Nncm91cF9w
+ZXJfem9uZSAqCi0tIAoxLjYuMC40Cgo=
+--000e0cd2e2d251cfa104635fb2b7--
