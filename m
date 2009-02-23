@@ -1,93 +1,54 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: [linux-2.6.26.8-rt14] RT Page Fault.
-Date: Mon, 23 Feb 2009 21:46:56 +0100
-Message-ID: <20090223204656.GO5367@pengutronix.de>
-References: <49A1BA49.7060308@gmail.com> <3efb10970902221329h89b18cbl60c8d3365009e2d9@mail.gmail.com> <49A1D930.4010600@gmail.com> <20090223124016.GH5367@pengutronix.de> <49A2CD10.4080605@gmail.com>
+From: Mark Knecht <markknecht@gmail.com>
+Subject: Arm me with info - root != real-time
+Date: Mon, 23 Feb 2009 14:29:37 -0800
+Message-ID: <5bdc1c8b0902231429r320efb5by507f3cb26c2d5162@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: linux-rt-users@vger.kernel.org
-To: Lukasz Majewski <majess1982@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:45555 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751572AbZBWUq7 (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.236]:47777 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753095AbZBWW3k (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Feb 2009 15:46:59 -0500
-Content-Disposition: inline
-In-Reply-To: <49A2CD10.4080605@gmail.com>
+	Mon, 23 Feb 2009 17:29:40 -0500
+Received: by rv-out-0506.google.com with SMTP id g37so2134677rvb.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 Feb 2009 14:29:37 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Lukasz,
+Hi Ingo, Steven, Thomas and other RT developers,
+  As always, thanks for what you do. I've been subscribed here for a
+few years. Don't say much. Do read a lot.
 
-On Mon, Feb 23, 2009 at 05:21:36PM +0100, Lukasz Majewski wrote:
-> I'm building toolchain for AT572D940HF Atmel chip. It's ARM9 combined
-> with DSP. I'd like to build toolchain for ARM9 (ARMv5tej) with
-> -msoft-float support, EABI and full glibc ,to support all stuff
-> connected with PREEMPT_RT patch - especially librt.
+   As a user type I've run the RT kernels for years now. 5 years ago
+it was really crucial for my music work. I still use it faithfully.
+However on many lists now I'm seeing new people say there's no need
+for the RT kernel because they run their applications as root and feel
+they get the 'same' or 'good enough' results. I wonder how they know
+if they don't run both and compare but that's their business. I'm
+suspect but not technically deep enough in this subject to have a
+conversation so I thought I'd ask for a little simple (if possible)
+education.
 
-Ok.
+I PROCLAIM - Running an application as root on the standard kernel is
+not as real time capable as running the same application as a normal
+user with proper priorities & permissions on the RT kernel.
 
-> Now I've downloaded:
-> ptxdist-1.99.11 and ptxdist-1.99.11-patches.
+True or false?
 
-yup
+   Is there a source of measured data to show this is true or false?
 
-> and
-> OSELAS.Toolchain-1.99.3
+   I know a lot of what you've done over the years is now mainline but
+I don't know how much of it is turned on by default.
 
-exactly
+   Clearly, I think folks don't have their head screwed on tight if
+they are running development apps as root, but people are doing it.
+They don't seem to care about security or the obvious fact that
+running as root might allow an app to erase their hard drive, etc.
+Their minds will change when something goes wrong, but in the meantime
+what can I tell them about this subject to get them to use the RT
+kernel and be as happy as I am with it.
 
-> I've selected
-> ./ptxconfigs/arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized
->
-> I need toolchain with -msoft-float support and EABI.
-
-The toolchain you've selected above actually is softfloat and EABI. You
-don't have to change anything, just do the steps you've mentioned above
-and 'ptxdist go'.
-
-> Unfortunately there is an error about mismatch in the linux-kernel
-> headers.
-
-Please send the exact error message (if too long, please off-list, to me
-and "Marc Kleine-Budde <m.kleine-budde@pengutronix.de>").
-
-> My Host PC has linux-kernel of 2.6.24 and not 2.6.27.
-
-That's no problem; the toolchain you are trying to build is based on the
-2.6.27 sanitized kernel headers. It's usually no problem at all using
-such a toolchain on a variety of other kernel versions.
-
-> My target is working under 2.6.26.8-rt14 kernel.
-
-Should work.
-
-> The error is in building of NTPL library, after successfully compilation
-> of gcc compiler.
->
-> How can I provide proper kernel headers?
-
-See above, error messages, please.
-
-> Now I'm trying with
-> arm-v5te-linux-gnueabi-gcc-4.1.2-glibc-2.5-binutils-2.17-kernel-2.6.18
-> ptxconfig. I hope that this will be sufficiently new to provide priority
-> inheritance, futexes , librt with all features.
-
-Yes, it is.
-
-> I'm building it now and hope that I won't encounter any problems.
-
-You may want to check that we have an update for 1.99.3 here:
-http://www.pengutronix.de/oselas/toolchain/download/OSELAS.Toolchain-1.99.3.1.tar.bz2
-
-There has been a build error on some distros and it might happen that
-you are seeing exactly this issue.
-
-rsc
--- 
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+Thanks,
+Mark
