@@ -1,8 +1,8 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [Announce] 2.6.29-rc6-rt2
-Date: Tue, 24 Feb 2009 18:51:25 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+Subject: [Announce] 2.6.29-rc6-rt3
+Date: Tue, 24 Feb 2009 18:57:31 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: rt-users <linux-rt-users@vger.kernel.org>,
@@ -12,17 +12,17 @@ Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
 To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:58826 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:46269 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754340AbZBXRwP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Feb 2009 12:52:15 -0500
-In-Reply-To: <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+	id S1757317AbZBXR6A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Feb 2009 12:58:00 -0500
+In-Reply-To: <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 We are pleased to announce the next update to our new preempt-rt
 series. It contains only one new patch:
- 
+  
   - fix the nf_conntrack bug, which was reported by various folks
 
 Download locations:
@@ -32,7 +32,7 @@ Download locations:
   
 Information on the RT patch can be found at:
 
-   http://rt.wiki.kernel.org/index.php/Main_Page
+    http://rt.wiki.kernel.org/index.php/Main_Page
 
 to build the 2.6.29-rc6-rt3 tree, the following patches should be
 applied:
