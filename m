@@ -1,136 +1,220 @@
-From: Jan Engelhardt <jengelh@medozas.de>
-Subject: 2.6.29-rc bug near nf_conntrack_tuple_taken
-Date: Tue, 24 Feb 2009 00:49:05 +0100 (CET)
-Message-ID: <alpine.LSU.2.00.0902240044320.8597@fbirervta.pbzchgretzou.qr>
+From: Lukasz Majewski <majess1982@gmail.com>
+Subject: Re: [linux-2.6.26.8-rt14] RT Page Fault.
+Date: Tue, 24 Feb 2009 01:00:24 +0100
+Message-ID: <49A33898.5010000@gmail.com>
+References: <49A1BA49.7060308@gmail.com> <3efb10970902221329h89b18cbl60c8d3365009e2d9@mail.gmail.com> <49A1D930.4010600@gmail.com> <20090223124016.GH5367@pengutronix.de> <49A2CD10.4080605@gmail.com> <20090223204656.GO5367@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: Netfilter Developer Mailing List <netfilter-devel@vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII;
+	format=flowed
+Content-Transfer-Encoding: 7BIT
+Cc: Marc Kleine-Budde <m.kleine-budde@pengutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sovereign.computergmbh.de ([85.214.69.204]:57213 "EHLO
-	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751664AbZBWXtK (ORCPT
+Received: from mail-bw0-f161.google.com ([209.85.218.161]:46945 "EHLO
+	mail-bw0-f161.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755620AbZBXAA3 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Feb 2009 18:49:10 -0500
+	Mon, 23 Feb 2009 19:00:29 -0500
+Received: by bwz5 with SMTP id 5so5331196bwz.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 Feb 2009 16:00:25 -0800 (PST)
+In-Reply-To: <20090223204656.GO5367@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Robert,
 
-2.6.29-rc4-rt2 spuriously locks up after 30 min to 2 h.
-First the network dies (no ping either to or from), later it
-takes the whole machine down as file I/O is blocked too.
+I've tried to build toolchain using the following ptxconfig file:
 
-I have also observed this on a no-RT patched 2.6.29-rc4, though
-need to get a clean gpl trace there first.
+./ptxconfigs/arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized
 
-(Note that this -rt dump has not tainted.)
 
-Feb 23 19:15:11 yaguchi kernel: BUG: unable to handle kernel paging request at 00100100
-Feb 23 19:15:11 yaguchi kernel: IP: [<f0f305c4>] nf_conntrack_tuple_taken+0xe4/0x112 [nf_conntrack]
-Feb 23 19:15:11 yaguchi kernel: *pde = 00000000 
-Feb 23 19:15:11 yaguchi kernel: Oops: 0000 [#1] PREEMPT SMP 
-Feb 23 19:15:11 yaguchi kernel: last sysfs file: /sys/devices/pci0000:00/0000:00:0d.0/modalias
-Feb 23 19:15:11 yaguchi kernel: Modules linked in: nfsd snd_cs46xx af_packet snd_pcm_oss snd_mixer_oss nfs lockd nfs_acl auth_rpcgss sunrpc ip6t_REJECT ip6table_filter ip6_tables ipv6 iptable_raw xt_DELUDE xt_TARPIT ipt_REJECT xt_CHAOS compat_xtables xt_condition xt_tcpudp xt_multiport xt_conntrack iptable_filter xt_MASQUERADE xt_mark iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_connmark xt_CONNMARK nf_conntrack xt_MARK iptable_mangle ip_tables x_tables fuse sha256_generic cbc uhci_hcd dm_crypt nls_iso8859_1 nls_cp437 vfat fat loop aes_i586 aes_generic dm_mod gameport snd_rawmidi snd_seq_device snd_ac97_codec ac97_bus thermal snd_pcm processor ppdev snd_timer i2c_sis96x thermal_sys snd parport_pc shpchp rtc_cmos i2c_core sis900 hwmon 8139too soundcore button sr_mod sis_agp rtc_co
- re pci_hotplug parport snd_page_alloc pcspkr mii rtc_lib cdrom agpgart floppy sg usbhid hid ehci_hcd ohci_hcd usbcore sd_mod crc_t10dif xfs exportfs pata_sis libata scsi_mod [last unloaded: 
- snd_cs46xx]
-Feb 23 19:15:11 yaguchi kernel: 
-Feb 23 19:15:11 yaguchi kernel: Pid: 7, comm: sirq-net-rx/0 Tainted: G        W  (2.6.29-rc4-jen74-rt #1) L7S7A2
-Feb 23 19:15:11 yaguchi kernel: EIP: 0060:[<f0f305c4>] EFLAGS: 00010206 CPU: 0
-Feb 23 19:15:11 yaguchi kernel: EIP is at nf_conntrack_tuple_taken+0xe4/0x112 [nf_conntrack]
-Feb 23 19:15:11 yaguchi kernel: EAX: ee54f120 EBX: 0000244d ECX: 00100100 EDX: efa7cd00
-Feb 23 19:15:11 yaguchi kernel: ESI: ef893d30 EDI: ed65ca2c EBP: ef893d28 ESP: ef893d1c
-Feb 23 19:15:11 yaguchi kernel:  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068 preempt:00000001
-Feb 23 19:15:11 yaguchi kernel: Process sirq-net-rx/0 (pid: 7, ti=ef892000 task=ef890d30 task.ti=ef892000)
-Feb 23 19:15:11 yaguchi kernel: Stack:
-Feb 23 19:15:11 yaguchi kernel:  ef893d30 ed65ca2c ef893df4 ef893d60 f184367b a16a0a0a 00000000 00000000
-Feb 23 19:15:11 yaguchi kernel:  00000000 0002eddb 420a4c86 00000000 00000000 00000000 0106380c f1844d74
-Feb 23 19:15:13 yaguchi kernel:  ef893e1c ef893d88 f1843817 ef893e30 ef893df4 ef893dcc ef893de0 a16a0a0a
-Feb 23 19:15:13 yaguchi kernel: Call Trace:
-Feb 23 19:15:13 yaguchi kernel:  [<f184367b>] ? nf_nat_used_tuple+0x1f/0x26 [nf_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f1843817>] ? get_unique_tuple+0x195/0x1b6 [nf_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f184391c>] ? nf_nat_setup_info+0xe4/0x2c6 [nf_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f0efb522>] ? ipt_do_table+0x453/0x489 [ip_tables]
-Feb 23 19:15:13 yaguchi kernel:  [<f185e115>] ? alloc_null_binding+0x89/0x91 [iptable_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f185e164>] ? nf_nat_rule_find+0x47/0x4f [iptable_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f185e34c>] ? nf_nat_fn+0x13c/0x1aa [iptable_nat]
-Feb 23 19:15:13 yaguchi kernel:  [<f185e54b>] ? nf_nat_in+0x1e/0x4f [iptable_nat]
-Feb 23 19:15:15 yaguchi kernel:  [<c02de790>] ? ip_rcv_finish+0x0/0x273
-Feb 23 19:15:15 yaguchi kernel:  [<c02d949b>] ? nf_iterate+0x2f/0x62
-Feb 23 19:15:15 yaguchi kernel:  [<c02de790>] ? ip_rcv_finish+0x0/0x273
-Feb 23 19:15:15 yaguchi kernel:  [<c02d95db>] ? nf_hook_slow+0x42/0x9f
-Feb 23 19:15:15 yaguchi kernel:  [<c02de790>] ? ip_rcv_finish+0x0/0x273
-Feb 23 19:15:15 yaguchi kernel:  [<c02debe1>] ? ip_rcv+0x1de/0x217
-Feb 23 19:15:15 yaguchi kernel:  [<c02de790>] ? ip_rcv_finish+0x0/0x273
-Feb 23 19:15:15 yaguchi kernel:  [<c02c1f85>] ? netif_receive_skb+0x409/0x42d
-Feb 23 19:15:15 yaguchi kernel:  [<c02c233e>] ? napi_gro_receive+0x3b/0x49
-Feb 23 19:15:15 yaguchi kernel:  [<c02c23c0>] ? process_backlog+0x74/0xa6
-Feb 23 19:15:15 yaguchi kernel:  [<c02c069d>] ? net_rx_action+0x93/0x178
-Feb 23 19:15:15 yaguchi kernel:  [<c012fd72>] ? ksoftirqd+0x131/0x212
-Feb 23 19:15:15 yaguchi kernel:  [<c012fc41>] ? ksoftirqd+0x0/0x212
-Feb 23 19:15:15 yaguchi kernel:  [<c013c1c7>] ? kthread+0x3b/0x61
-Feb 23 19:15:15 yaguchi kernel:  [<c013c18c>] ? kthread+0x0/0x61
-Feb 23 19:15:15 yaguchi kernel:  [<c0103ff7>] ? kernel_thread_helper+0x7/0x10
-Feb 23 19:15:15 yaguchi kernel: Code: 8b 04 82 ff 40 04 e8 54 49 23 cf b8 01 00 00 00 eb 42 8b 15 48 8f 5b c0 64 a1 80 54 51 c0 f7 d2 8b 04 82 ff 00 8b 09 85 c9 74 22 <8b> 01 0f 18 00 90 0f b6 41 2f 89 ca 6b c0 0c 8d 04 85 04 00 00 
-Feb 23 19:15:15 yaguchi kernel: EIP: [<f0f305c4>] nf_conntrack_tuple_taken+0xe4/0x112 [nf_conntrack] SS:ESP 0068:ef893d1c
-Feb 23 19:15:15 yaguchi kernel: ---[ end trace 4eaa2a86a8e2da24 ]---
-Feb 23 19:15:15 yaguchi kernel: BUG: unable to handle kernel paging request at 00100100
-Feb 23 19:15:15 yaguchi kernel: IP: [<f0f302a1>] __nf_conntrack_find+0xc4/0xe5 [nf_conntrack]
-Feb 23 19:15:15 yaguchi kernel: *pde = 00000000 
-Feb 23 19:15:15 yaguchi kernel: Oops: 0000 [#2] PREEMPT SMP 
-Feb 23 19:15:15 yaguchi kernel: last sysfs file: /sys/devices/pci0000:00/0000:00:0d.0/modalias
-Feb 23 19:15:15 yaguchi kernel: Modules linked in: nfsd snd_cs46xx af_packet snd_pcm_oss snd_mixer_oss nfs lockd nfs_acl auth_rpcgss sunrpc ip6t_REJECT ip6table_filter ip6_tables ipv6 iptable_raw xt_DELUDE xt_TARPIT ipt_REJECT xt_CHAOS compat_xtables xt_condition xt_tcpudp xt_multiport xt_conntrack iptable_filter xt_MASQUERADE xt_mark iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_connmark xt_CONNMARK nf_conntrack xt_MARK iptable_mangle ip_tables x_tables fuse sha256_generic cbc uhci_hcd dm_crypt nls_iso8859_1 nls_cp437 vfat fat loop aes_i586 aes_generic dm_mod gameport snd_rawmidi snd_seq_device snd_ac97_codec ac97_bus thermal snd_pcm processor ppdev snd_timer i2c_sis96x thermal_sys snd parport_pc shpchp rtc_cmos i2c_core sis900 hwmon 8139too soundcore button sr_mod sis_agp rtc_co
- re pci_hotplug parport snd_page_alloc pcspkr mii rtc_lib cdrom agpgart floppy sg usbhid hid ehci_hcd ohci_hcd usbcore sd_mod crc_t10dif xfs exportfs pata_sis libata scsi_mod [last unloaded: 
- snd_cs46xx]
-Feb 23 19:15:15 yaguchi kernel: 
-Feb 23 19:15:15 yaguchi kernel: Pid: 5, comm: sirq-timer/0 Tainted: G      D W  (2.6.29-rc4-jen74-rt #1) L7S7A2
-Feb 23 19:15:15 yaguchi kernel: EIP: 0060:[<f0f302a1>] EFLAGS: 00010206 CPU: 0
-Feb 23 19:15:15 yaguchi kernel: EIP is at __nf_conntrack_find+0xc4/0xe5 [nf_conntrack]
-Feb 23 19:15:15 yaguchi kernel: EAX: ee54f120 EBX: ef88ddb0 ECX: 00100100 EDX: efa7cd00
-Feb 23 19:15:15 yaguchi kernel: ESI: e655922c EDI: c05b8c20 EBP: ef88dd84 ESP: ef88dd78
-Feb 23 19:15:15 yaguchi kernel:  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068 preempt:00000001
-Feb 23 19:15:15 yaguchi kernel: Process sirq-timer/0 (pid: 5, ti=ef88c000 task=ef88ad10 task.ti=ef88c000)
-Feb 23 19:15:15 yaguchi kernel: Stack:
-Feb 23 19:15:15 yaguchi kernel:  ef88ddb0 c05b8c20 00000014 ef88dd98 f0f3060a ef88ddb0 f1821024 00000014
-Feb 23 19:15:15 yaguchi kernel:  ef88ddf0 f0f31acc 00000003 c05b8c20 00000002 f0f3fc24 a16a0a0a 00000000
-Feb 23 19:15:15 yaguchi kernel:  00000000 00000000 0002eddb 420a4c86 00000000 00000000 00000000 0006380c
-Feb 23 19:15:15 yaguchi kernel: Call Trace:
-Feb 23 19:15:15 yaguchi kernel:  [<f0f3060a>] ? nf_conntrack_find_get+0x18/0x55 [nf_conntrack]
-Feb 23 19:15:15 yaguchi kernel:  [<f0f31acc>] ? nf_conntrack_in+0x1ca/0x432 [nf_conntrack]
-Feb 23 19:15:19 yaguchi kernel:  [<f181f495>] ? ipv4_conntrack_local+0x2e/0x38 [nf_conntrack_ipv4]
-Feb 23 19:15:19 yaguchi kernel:  [<c02d949b>] ? nf_iterate+0x2f/0x62
-Feb 23 19:15:19 yaguchi kernel:  [<c02e0b44>] ? dst_output+0x0/0xb
-Feb 23 19:15:19 yaguchi kernel:  [<c02d95db>] ? nf_hook_slow+0x42/0x9f
-Feb 23 19:15:19 yaguchi kernel:  [<c02e0b44>] ? dst_output+0x0/0xb
-Feb 23 19:15:19 yaguchi kernel:  [<c02e22b0>] ? __ip_local_out+0x87/0x91
-Feb 23 19:15:19 yaguchi kernel:  [<c02e0b44>] ? dst_output+0x0/0xb
-Feb 23 19:15:19 yaguchi kernel:  [<c02e22c5>] ? ip_local_out+0xb/0x1b
-Feb 23 19:15:19 yaguchi kernel:  [<c02e2a8e>] ? ip_queue_xmit+0x2b4/0x323
-Feb 23 19:15:19 yaguchi kernel:  [<c0116b26>] ? default_spin_lock_flags+0x8/0xe
-Feb 23 19:15:21 yaguchi kernel:  [<c0170e76>] ? cpupri_set+0xdd/0xfb
-Feb 23 19:15:21 yaguchi kernel:  [<c02f57fa>] ? tcp_v4_send_check+0x7d/0xb7
-Feb 23 19:15:21 yaguchi kernel:  [<c02f2255>] ? tcp_transmit_skb+0x59c/0x5d4
-Feb 23 19:15:21 yaguchi kernel:  [<c0192ab8>] ? __kmalloc+0x9a/0xcf
-Feb 23 19:15:21 yaguchi kernel:  [<c02f2413>] ? tcp_send_ack+0xe2/0xea
-Feb 23 19:15:21 yaguchi kernel:  [<c02f4cbf>] ? tcp_delack_timer+0x156/0x1af
-Feb 23 19:15:21 yaguchi kernel:  [<c01337c2>] ? run_timer_softirq+0x207/0x298
-Feb 23 19:15:21 yaguchi kernel:  [<c02f4b69>] ? tcp_delack_timer+0x0/0x1af
-Feb 23 19:15:21 yaguchi kernel:  [<c02f4b69>] ? tcp_delack_timer+0x0/0x1af
-Feb 23 19:15:21 yaguchi kernel:  [<c012fd72>] ? ksoftirqd+0x131/0x212
-Feb 23 19:15:21 yaguchi kernel:  [<c012fc41>] ? ksoftirqd+0x0/0x212
-Feb 23 19:15:21 yaguchi kernel:  [<c013c1c7>] ? kthread+0x3b/0x61
-Feb 23 19:15:21 yaguchi kernel:  [<c013c18c>] ? kthread+0x0/0x61
-Feb 23 19:15:21 yaguchi kernel:  [<c0103ff7>] ? kernel_thread_helper+0x7/0x10
-Feb 23 19:15:21 yaguchi kernel: Code: 8b 97 28 03 00 00 74 10 f7 d2 64 a1 80 54 51 c0 8b 04 82 ff 40 04 eb 2d f7 d2 64 a1 80 54 51 c0 8b 04 82 ff 00 8b 09 85 c9 74 18 <8b> 01 0f 18 00 90 8b 03 89 ce 3b 41 08 0f 85 7b ff ff ff e9 51 
-Feb 23 19:15:21 yaguchi kernel: EIP: [<f0f302a1>] __nf_conntrack_find+0xc4/0xe5 [nf_conntrack] SS:ESP 0068:ef88dd78
-Feb 23 19:15:21 yaguchi kernel: ---[ end trace 4eaa2a86a8e2da25 ]---
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
-Feb 23 19:15:21 yaguchi kernel: NOHZ: local_softirq_pending 02
+I've also (as You advice) downloaded and used
+
+OSELAS.Toolchain-1.99.3.1.tar.bz2
+
+Then I've started building of my toolchain with
+
+lukma@xxx:~/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1$ ../bin/ptxdist go
+
+I've encountered following error (I hope that it's long enough to track 
+it down.):
+
+gawk -f ../scripts/gen-as-const.awk ../ports/sysdeps/arm/nptl/tcb-offsets.sym \
+
+    | /usr/bin/gcc -S -o /home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/tcb-offsets.hT3 -std=gnu99 -fgnu89-inline -O2 -Wall -Winline -Wwrite-strings -fmerge-all-constants -g -Wstrict-prototypes      -I../include -I/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/csu -I/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build -I../ports/sysdeps/arm/elf -I../ports/sysdeps/unix/sysv/linux/arm/eabi/nptl
+  -I../ports/sysdeps/unix/sysv/linux/arm/eabi -I../ports/sysdeps/unix/sysv/linux/arm/nptl -I../ports/sysdeps/unix/sysv/linux/arm -I../ports/sysdeps/unix/sysv/linux -I../nptl/sysdeps/unix/sysv/linux -I../nptl/sysdeps/pthread -I../sysdeps/pthread -I../sysdeps/unix/sysv/linux -I../sysdeps/gnu -I../sysdeps/unix/common -I../sysdeps/unix/mman -I../sysdeps/unix/inet -I../ports/sysdeps/unix/sysv -I../nptl/sysdeps/unix/sysv -I../sysdeps/unix/sysv -I../ports/sysdeps/unix/arm -I../ports/sysdeps/unix -I../nptl/sysdeps/unix -I../sysdeps/unix -I../sysdeps/posix -I../ports/sysdeps/arm/eabi -I../ports/sysdeps/arm/nptl -I../ports/sysdeps/arm -I../sysdeps/wordsize-32 -I../sysdeps/ieee754/flt-32 -I../sysdeps/ieee754/dbl-64 -I../sysdeps/ieee754 -I../sysdeps/generic/elf -I../sysdeps/generic -I../ports -I../np
+ tl  -I.. -I../libio -I. -nostdinc -isystem /usr/lib/gcc/i486-linux-gnu/4.2.4/include -isystem /home/lukma/sbox_lukma/tools/arm-d940/arm-v5te-linux-gnueabi/gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/sysroot-arm-v5te-linux-gnueabi/usr/include -D_LIBC_REENTRANT -include ../include/libc-symbols.h        -DHAVE_INITFINI -x c - \
+
+        -MD -MP -MF /home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/tcb-offsets.h.dT -MT '/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/tcb-offsets.h.d /home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/tcb-offsets.h'
+
+In file included from ../include/tls.h:6,
+
+                 from ../ports/sysdeps/unix/sysv/linux/arm/eabi/sysdep.h:28,
+
+                 from <stdin>:1:
+
+../ports/sysdeps/arm/nptl/tls.h:48:3: error: #error "TLS support is required."
+
+In file included from ../include/tls.h:6,
+
+                 from ../include/link.h:45,
+
+                 from ../include/dlfcn.h:3,
+
+                 from ../sysdeps/generic/ldsodefs.h:32,
+
+                 from ../ports/sysdeps/arm/ldsodefs.h:39,
+
+                 from ../sysdeps/unix/sysv/linux/ldsodefs.h:25,
+
+                 from <stdin>:2:
+
+../ports/sysdeps/arm/nptl/tls.h:48:3: error: #error "TLS support is required."
+
+In file included from ../ports/sysdeps/arm/nptl/tls.h:57,
+
+                 from ../include/tls.h:6,
+
+                 from ../include/link.h:45,
+
+                 from ../include/dlfcn.h:3,
+
+                 from ../sysdeps/generic/ldsodefs.h:32,
+
+                 from ../ports/sysdeps/arm/ldsodefs.h:39,
+
+                 from ../sysdeps/unix/sysv/linux/ldsodefs.h:25,
+
+                 from <stdin>:2:
+
+../ports/sysdeps/unix/sysv/linux/arm/eabi/sysdep.h:31:3: error: #error Kernel headers are too old
+
+In file included from <stdin>:1:
+
+../ports/sysdeps/unix/sysv/linux/arm/eabi/sysdep.h:31:3: error: #error Kernel headers are too old
+
+make[3]: *** [/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/rtld-global-offsets.h] Error 1
+
+make[3]: *** Waiting for unfinished jobs....
+
+make[3]: *** [/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build/tcb-offsets.h] Error 1
+
+make[3]: Leaving directory `/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8/csu'
+
+make[2]: *** [csu/subdir_lib] Error 2
+
+make[2]: Leaving directory `/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8'
+
+make[1]: Leaving directory `/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/build-target/glibc-2.8-crt-build'
+
+make[1]: *** [csu/subdir_lib] Error 2
+
+make: *** [/home/lukma/sbox_lukma/build-tools/OSELAS.Toolchain-1.99.3.1/platform-arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized/state/glibc-crt.compile] Error 2
+
+I don't know what kind of error it is.
+
+My host PC is running at Ubuntu 2.6.24-22-generic with gcc 4.2.4. I've 
+only changed target directory from '/opt' to 
+'/home/lukma/sbox_lukma/tools' with "ptxdist menuconfig". Above error is 
+the same for
+
+OSELAS.Toolchain-1.99.3 and OSELAS.Toolchain-1.99.3.1
+
+
+Regards,
+Lukasz.
+
+
+Robert Schwebel wrote:
+> Hi Lukasz,
+>
+> On Mon, Feb 23, 2009 at 05:21:36PM +0100, Lukasz Majewski wrote:
+>   
+>> I'm building toolchain for AT572D940HF Atmel chip. It's ARM9 combined
+>> with DSP. I'd like to build toolchain for ARM9 (ARMv5tej) with
+>> -msoft-float support, EABI and full glibc ,to support all stuff
+>> connected with PREEMPT_RT patch - especially librt.
+>>     
+>
+> Ok.
+>
+>   
+>> Now I've downloaded:
+>> ptxdist-1.99.11 and ptxdist-1.99.11-patches.
+>>     
+>
+> yup
+>
+>   
+>> and
+>> OSELAS.Toolchain-1.99.3
+>>     
+>
+> exactly
+>
+>   
+>> I've selected
+>> ./ptxconfigs/arm-v5te-linux-gnueabi-gcc-4.3.2-glibc-2.8-binutils-2.18-kernel-2.6.27-sanitized
+>>
+>> I need toolchain with -msoft-float support and EABI.
+>>     
+>
+> The toolchain you've selected above actually is softfloat and EABI. You
+> don't have to change anything, just do the steps you've mentioned above
+> and 'ptxdist go'.
+>
+>   
+>> Unfortunately there is an error about mismatch in the linux-kernel
+>> headers.
+>>     
+>
+> Please send the exact error message (if too long, please off-list, to me
+> and "Marc Kleine-Budde <m.kleine-budde@pengutronix.de>").
+>
+>   
+>> My Host PC has linux-kernel of 2.6.24 and not 2.6.27.
+>>     
+>
+> That's no problem; the toolchain you are trying to build is based on the
+> 2.6.27 sanitized kernel headers. It's usually no problem at all using
+> such a toolchain on a variety of other kernel versions.
+>
+>   
+>> My target is working under 2.6.26.8-rt14 kernel.
+>>     
+>
+> Should work.
+>
+>   
+>> The error is in building of NTPL library, after successfully compilation
+>> of gcc compiler.
+>>
+>> How can I provide proper kernel headers?
+>>     
+>
+> See above, error messages, please.
+>
+>   
+>> Now I'm trying with
+>> arm-v5te-linux-gnueabi-gcc-4.1.2-glibc-2.5-binutils-2.17-kernel-2.6.18
+>> ptxconfig. I hope that this will be sufficiently new to provide priority
+>> inheritance, futexes , librt with all features.
+>>     
+>
+> Yes, it is.
+>
+>   
+>> I'm building it now and hope that I won't encounter any problems.
+>>     
+>
+> You may want to check that we have an update for 1.99.3 here:
+> http://www.pengutronix.de/oselas/toolchain/download/OSELAS.Toolchain-1.99.3.1.tar.bz2
+>
+> There has been a build error on some distros and it might happen that
+> you are seeing exactly this issue.
+>
+> rsc
+>   
+
+
