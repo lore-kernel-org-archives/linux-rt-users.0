@@ -1,46 +1,48 @@
-From: Patrick McHardy <kaber@trash.net>
-Subject: Re: 2.6.29-rc bug near nf_conntrack_tuple_taken
-Date: Tue, 24 Feb 2009 15:14:47 +0100
-Message-ID: <49A400D7.1010404@trash.net>
-References: <alpine.LSU.2.00.0902240044320.8597@fbirervta.pbzchgretzou.qr>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [Announce] 2.6.29-rc6-rt2
+Date: Tue, 24 Feb 2009 18:51:25 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Netfilter Developer Mailing List
-	<netfilter-devel@vger.kernel.org>
-To: Jan Engelhardt <jengelh@medozas.de>
-Return-path: <netfilter-devel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LSU.2.00.0902240044320.8597@fbirervta.pbzchgretzou.qr>
-Sender: netfilter-devel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:58826 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754340AbZBXRwP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Feb 2009 12:52:15 -0500
+In-Reply-To: <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Jan Engelhardt wrote:
-> 2.6.29-rc4-rt2 spuriously locks up after 30 min to 2 h.
-> First the network dies (no ping either to or from), later it
-> takes the whole machine down as file I/O is blocked too.
-> 
-> I have also observed this on a no-RT patched 2.6.29-rc4, though
-> need to get a clean gpl trace there first.
-> 
-> (Note that this -rt dump has not tainted.)
-> 
-> Feb 23 19:15:11 yaguchi kernel: BUG: unable to handle kernel paging request at 00100100
-> Feb 23 19:15:11 yaguchi kernel: IP: [<f0f305c4>] nf_conntrack_tuple_taken+0xe4/0x112 [nf_conntrack]
+We are pleased to announce the next update to our new preempt-rt
+series. It contains only one new patch:
+ 
+  - fix the nf_conntrack bug, which was reported by various folks
 
-> Feb 23 19:15:13 yaguchi kernel: Call Trace:
-> Feb 23 19:15:13 yaguchi kernel:  [<f184367b>] ? nf_nat_used_tuple+0x1f/0x26 [nf_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f1843817>] ? get_unique_tuple+0x195/0x1b6 [nf_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f184391c>] ? nf_nat_setup_info+0xe4/0x2c6 [nf_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f0efb522>] ? ipt_do_table+0x453/0x489 [ip_tables]
-> Feb 23 19:15:13 yaguchi kernel:  [<f185e115>] ? alloc_null_binding+0x89/0x91 [iptable_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f185e164>] ? nf_nat_rule_find+0x47/0x4f [iptable_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f185e34c>] ? nf_nat_fn+0x13c/0x1aa [iptable_nat]
-> Feb 23 19:15:13 yaguchi kernel:  [<f185e54b>] ? nf_nat_in+0x1e/0x4f [iptable_nat]
+Download locations:
+ 
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+  
+Information on the RT patch can be found at:
 
-This would mean something has used the non-rcu list functions
-when removing a conntrack from the hash. Which I don't see
-happening anywhere. Another possibility would be that the connntrack
-was already confirmed when the tuple got mangled and the list
-got corrupted. The pr_debug in nf_conntrack_alter_reply should
-trigger in that case.
+   http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29-rc6-rt3 tree, the following patches should be
+applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc6.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc6-rt3.bz2
+  
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+      tglx
