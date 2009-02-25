@@ -1,41 +1,72 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [Announce] 2.6.29-rc6-rt3
-Date: Wed, 25 Feb 2009 19:43:19 +0100
-Message-ID: <1235587399.4645.3789.camel@laptop>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
-	 <1235590444.3907.5.camel@localhost.localdomain>
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Subject: [ANNOUNCE] OpenSUSE RT Kernel
+Date: Wed, 25 Feb 2009 14:50:33 -0800
+Message-ID: <1235602233.19636.491.camel@quadrophenia.thebigcorporation.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Thomas Meyer <thomas@m3y3r.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:59037 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755123AbZBYSnk (ORCPT
+Received: from victor.provo.novell.com ([137.65.250.26]:51231 "EHLO
+	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755599AbZBYWuk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Feb 2009 13:43:40 -0500
-In-Reply-To: <1235590444.3907.5.camel@localhost.localdomain>
+	Wed, 25 Feb 2009 17:50:40 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-02-25 at 20:34 +0100, Thomas Meyer wrote:
-> Am Dienstag, den 24.02.2009, 18:57 +0100 schrieb Thomas Gleixner:
+For your information:
 
-> >   http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc6.tar.bz2
-> >   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc6-rt3.bz2
-> >   
+-------- Forwarded Message --------
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: opensuse-kernel <opensuse-kernel@opensuse.org>
+Subject: [ANNOUNCE] RT Kernel
+Date: Wed, 25 Feb 2009 14:47:37 -0800
 
-> Should suspend&resume to ram work with this patchset applied?
+RT Kernels are available for OpenSuse 11.1 and Factory.
 
-If it works for you without (plain .29-rc6), then it ought to work with.
+The repos for latest version (current 2.6.29-rc6-rt3) are located here:
+
+http://download.opensuse.org/repositories/Kernel://RT-devel/openSUSE_11.1/
+
+http://download.opensuse.org/repositories/Kernel://RT-devel/openSUSE_Factory/
+
+
+An older version (currently 2.6.26) is available here:
+
+http://download.opensuse.org/repositories/Kernel://RT/openSUSE_11.1/
+
+http://download.opensuse.org/repositories/Kernel://RT/openSUSE_Factory/
+
+
+Finally, latest / experimental versions for 10.3, 11.0, 11.1 and Factory
+are available in the repos below:
+
+http://download.opensuse.org/repositories/home://sdietrich://Kernel-RT/
+
+
+These Kernels generally correspond to the patch sets available at 
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+There are minor modifications for integration with the Suse build
+system, as well as additional features that we are working on.
+
+Apparmor is not currently supported in the 2.6.29 variety, and has not
+been tested on any Kernel version.
+
+Due to the packaging-related (and possible other) variation from
+upstream RT, please report bugs on the OpenSUSE forums, rather than to
+the general RT community. 
+
+http://bugzilla.novell.com/
+
+We will sort them out accordingly.
+
+Please CC me on bug reports and feature requests.
+
+Regards,
+
+Sven
 
