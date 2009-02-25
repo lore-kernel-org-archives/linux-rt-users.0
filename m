@@ -1,72 +1,31 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: [ANNOUNCE] OpenSUSE RT Kernel
-Date: Wed, 25 Feb 2009 14:50:33 -0800
-Message-ID: <1235602233.19636.491.camel@quadrophenia.thebigcorporation.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 2.6.29-rc bug near nf_conntrack_tuple_taken
+Date: Thu, 26 Feb 2009 00:35:20 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0902260034330.9135@localhost.localdomain>
+References: <alpine.LSU.2.00.0902240044320.8597@fbirervta.pbzchgretzou.qr> <49A400D7.1010404@trash.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:51231 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755599AbZBYWuk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Feb 2009 17:50:40 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Jan Engelhardt <jengelh@medozas.de>,
+	linux-rt-users@vger.kernel.org,
+	Netfilter Developer Mailing List
+	<netfilter-devel@vger.kernel.org>
+To: Patrick McHardy <kaber@trash.net>
+Return-path: <netfilter-devel-owner@vger.kernel.org>
+In-Reply-To: <49A400D7.1010404@trash.net>
+Sender: netfilter-devel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-For your information:
+On Tue, 24 Feb 2009, Patrick McHardy wrote:
+> This would mean something has used the non-rcu list functions
+> when removing a conntrack from the hash. Which I don't see
+> happening anywhere. Another possibility would be that the connntrack
+> was already confirmed when the tuple got mangled and the list
+> got corrupted. The pr_debug in nf_conntrack_alter_reply should
+> trigger in that case.
 
--------- Forwarded Message --------
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-To: opensuse-kernel <opensuse-kernel@opensuse.org>
-Subject: [ANNOUNCE] RT Kernel
-Date: Wed, 25 Feb 2009 14:47:37 -0800
+Don't worry, that's a fallout of -rt, which is fixed in 2.6.29-rc6-rt3
+already.
 
-RT Kernels are available for OpenSuse 11.1 and Factory.
+Thanks,
 
-The repos for latest version (current 2.6.29-rc6-rt3) are located here:
-
-http://download.opensuse.org/repositories/Kernel://RT-devel/openSUSE_11.1/
-
-http://download.opensuse.org/repositories/Kernel://RT-devel/openSUSE_Factory/
-
-
-An older version (currently 2.6.26) is available here:
-
-http://download.opensuse.org/repositories/Kernel://RT/openSUSE_11.1/
-
-http://download.opensuse.org/repositories/Kernel://RT/openSUSE_Factory/
-
-
-Finally, latest / experimental versions for 10.3, 11.0, 11.1 and Factory
-are available in the repos below:
-
-http://download.opensuse.org/repositories/home://sdietrich://Kernel-RT/
-
-
-These Kernels generally correspond to the patch sets available at 
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-There are minor modifications for integration with the Suse build
-system, as well as additional features that we are working on.
-
-Apparmor is not currently supported in the 2.6.29 variety, and has not
-been tested on any Kernel version.
-
-Due to the packaging-related (and possible other) variation from
-upstream RT, please report bugs on the OpenSUSE forums, rather than to
-the general RT community. 
-
-http://bugzilla.novell.com/
-
-We will sort them out accordingly.
-
-Please CC me on bug reports and feature requests.
-
-Regards,
-
-Sven
-
+	tglx
