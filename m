@@ -1,18 +1,59 @@
-From: "Allan" <akonieczny@rnaiglobal.org>
-Subject: See what I've found!
-Date: Mon, 2 Mar 2009 15:41:40 +0700
-Message-ID: <20090302154140.7030900@rnaiglobal.org>
+From: Thomas Pfaff <tpfaff@pcs.com>
+Subject: Re: loadavg problem with 2.6.26.8-rt16 on Atmel AT91SAM9260
+Date: Mon, 2 Mar 2009 14:18:30 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.0903021406350.32555@lxtpfaff.pcs.ditec.de>
+References: <Pine.LNX.4.64.0902191110060.22561@lxtpfaff.pcs.ditec.de>
+ <7d1d9c250902201012r4a01ca2w2d4a4ef7ba4f9883@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from localhost ([222.252.33.185]:2006 "HELO localhost"
-	rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org with SMTP
-	id S1754910AbZCBI45 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Mar 2009 03:56:57 -0500
+Received: from mail.pcs.de ([145.253.69.50]:50271 "EHLO mail.pcs.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751276AbZCBNSd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Mar 2009 08:18:33 -0500
+In-Reply-To: <7d1d9c250902201012r4a01ca2w2d4a4ef7ba4f9883@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I think it will be interesting for you http://xe.greatsalesgroup.com/run.php
 
+On Fri, 20 Feb 2009, Paul Gortmaker wrote:
+
+> On Thu, Feb 19, 2009 at 7:11 AM, Thomas Pfaff <tpfaff@pcs.com> wrote:
+> > While testing the 2.6.26.8-rt16 kernel on an AT91SAM9260-EK Arm9 board i noticed
+> > a small regression to 2.6.24.7-rt27.
+> >
+> > The kernel compiles and boots fine but the average load when the cpu is idle
+> > tends to be 1, it starts at 0 when the system boots and goes to 1 or above after
+> > some time.
+> >
+> > All kernels have the at91 patches from http://maxim.org.za/sam9.html
+> >
+> > Following kernels are ok:
+> >
+> > 2.6.24.7-rt27
+> > 2.6.26.8 without rt
+> >
+> > With the rt patch i have tested several combinations of the PREEMPT options:
+> >
+> > Without CONFIG_PREEMPT_HARDIRQ i get an oops on boot (see next mail).
+> >
+> > All other CONFIG_PREEMPT_[NONE|VOLUNTARY|DESKTOP|RT] options are working but
+> > with the wrong average load.
+> 
+> Please test the following patch.  I think you should find it fixes the problem.
+> 
+
+I am sorry for the delay but i was on vacation last week.
+
+The patch does not fix the average load and i would be surprised if it did 
+because i have this problem with CONFIG_PREEMPT_RT too.
+
+Digging a little deeper i found the difference between 2.6.24.7-rt27 and 
+2.6.26.8-rt16:
+
+while nr_active() returns 1 on 2.6.24.7-rt27 when my system is idle it returns 2 
+on 2.6.26.8-rt16 .
+
+--Thomas
