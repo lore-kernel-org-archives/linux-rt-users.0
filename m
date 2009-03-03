@@ -1,112 +1,113 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: Large amount of scsi-sgpool objects
-Date: Tue, 03 Mar 2009 15:25:43 -0600
-Message-ID: <1236115544.15993.22.camel@localhost.localdomain>
-References: <alpine.LSU.2.00.0903030220050.2438@fbirervta.pbzchgretzou.qr>
-	 <49ACF8FE.2020904@panasas.com>
-	 <1236093718.3263.3.camel@localhost.localdomain>
-	 <alpine.LSU.2.00.0903031703270.855@fbirervta.pbzchgretzou.qr>
-	 <1236097526.3263.17.camel@localhost.localdomain>
-	 <20090303192212.GA20705@elte.hu>
+Date: Tue, 3 Mar 2009 22:44:54 +0100
+Message-ID: <20090303214454.GA8288@elte.hu>
+References: <alpine.LSU.2.00.0903030220050.2438@fbirervta.pbzchgretzou.qr> <49ACF8FE.2020904@panasas.com> <1236093718.3263.3.camel@localhost.localdomain> <alpine.LSU.2.00.0903031703270.855@fbirervta.pbzchgretzou.qr> <1236097526.3263.17.camel@localhost.localdomain> <20090303192212.GA20705@elte.hu> <1236115544.15993.22.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: Jan Engelhardt <jengelh@medozas.de>,
 	Boaz Harrosh <bharrosh@panasas.com>,
 	linux-scsi@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
 	linux-rt-users@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from accolon.hansenpartnership.com ([76.243.235.52]:51662 "EHLO
-	accolon.hansenpartnership.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753268AbZCCVZs (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Mar 2009 16:25:48 -0500
-In-Reply-To: <20090303192212.GA20705@elte.hu>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1236115544.15993.22.camel@localhost.localdomain>
+Sender: linux-scsi-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2009-03-03 at 20:22 +0100, Ingo Molnar wrote:
-> * James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
-> 
-> > On Tue, 2009-03-03 at 17:08 +0100, Jan Engelhardt wrote:
-> > > On Tuesday 2009-03-03 16:21, James Bottomley wrote:
-> > > >> > $ slabtop
-> > > >> >   OBJS ACTIVE  USE OBJ SIZE  SLABS OBJ/SLAB CACHE SIZE NAME                   
-> > > >> > 818616 818616 100%    0.16K  34109       24    136436K sgpool-8
-> > > >> > 253692 253692 100%    0.62K  42282        6    169128K sgpool-32
-> > > >> >  52017  52016  99%    2.50K  17339        3    138712K sgpool-128
-> > > >> >  26220  26219  99%    0.31K   2185       12      8740K sgpool-16
-> > > >> >   8927   8574  96%    0.03K     79      113       316K size-32
-> > > >> 
-> > > >> Looks like a leak, by failing to call scsi_release_buffers()
-> > > >> somehow. (Which was changed recently)
-> > > >
-> > > >Firstly, I have to say I don't see this in the mainline tree, so could
-> > > >you try that with your setup just to verify (git head at 2.6.29-rc6).
-> > > 
-> > > Yes, looking at the rt patch (in broken-out it's in origin.diff),
-> > > it seems a bit obvious - the scsi_release_buffers is not called anymore:
+
+* James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+
+> On Tue, 2009-03-03 at 20:22 +0100, Ingo Molnar wrote:
+> > * James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
 > > 
-> > OK, this is a bad patch, so just revert it.  It was posted to 
-> > linux-scsi initially in this form before the author posted a 
-> > new one with the missing release buffers added.  It looks like 
-> > the first incarnation got pulled into the -rt tree for some 
-> > reasons.
+> > > On Tue, 2009-03-03 at 17:08 +0100, Jan Engelhardt wrote:
+> > > > On Tuesday 2009-03-03 16:21, James Bottomley wrote:
+> > > > >> > $ slabtop
+> > > > >> >   OBJS ACTIVE  USE OBJ SIZE  SLABS OBJ/SLAB CACHE SIZE NAME                   
+> > > > >> > 818616 818616 100%    0.16K  34109       24    136436K sgpool-8
+> > > > >> > 253692 253692 100%    0.62K  42282        6    169128K sgpool-32
+> > > > >> >  52017  52016  99%    2.50K  17339        3    138712K sgpool-128
+> > > > >> >  26220  26219  99%    0.31K   2185       12      8740K sgpool-16
+> > > > >> >   8927   8574  96%    0.03K     79      113       316K size-32
+> > > > >> 
+> > > > >> Looks like a leak, by failing to call scsi_release_buffers()
+> > > > >> somehow. (Which was changed recently)
+> > > > >
+> > > > >Firstly, I have to say I don't see this in the mainline tree, so could
+> > > > >you try that with your setup just to verify (git head at 2.6.29-rc6).
+> > > > 
+> > > > Yes, looking at the rt patch (in broken-out it's in origin.diff),
+> > > > it seems a bit obvious - the scsi_release_buffers is not called anymore:
+> > > 
+> > > OK, this is a bad patch, so just revert it.  It was posted to 
+> > > linux-scsi initially in this form before the author posted a 
+> > > new one with the missing release buffers added.  It looks like 
+> > > the first incarnation got pulled into the -rt tree for some 
+> > > reasons.
+> > 
+> > Uhm. I applied a test-patch from Alan Stern, to possibly fix an 
+> > SCSI lockup with aic7xxx that _I_ reported to you and then to 
+> > the scsi-list.
+> > 
+> > You were Cc:-ed to that test patch and to my bugreport as well, 
+> > all the way. Do you claim that you dont remember it?
 > 
-> Uhm. I applied a test-patch from Alan Stern, to possibly fix an 
-> SCSI lockup with aic7xxx that _I_ reported to you and then to 
-> the scsi-list.
+> ?  If I've just quoted the patch above why would I not remember it now.
+> I've just said it's the cause of the problems in the -rt tree.
 > 
-> You were Cc:-ed to that test patch and to my bugreport as well, 
-> all the way. Do you claim that you dont remember it?
-
-?  If I've just quoted the patch above why would I not remember it now.
-I've just said it's the cause of the problems in the -rt tree.
-
-> The saga is still documented in tip:out-of-tree (which is a 
-> special branch with out-of-tree hotfixes):
+> > The saga is still documented in tip:out-of-tree (which is a 
+> > special branch with out-of-tree hotfixes):
+> > 
+> >  7e4cbd1: fix "scsi: aic7xxx hang since v2.6.28-rc1"
+> >  e027abc: scsi: temporarily undo scsi reverts
+> >  813104e: Revert "[SCSI] simplify scsi_io_completion()"
+> >  84db545: Revert "[SCSI] Fix uninitialized variable error in scsi_io_completion"
+> >  0eb6038: Revert "[SCSI] Fix error handling for DIF/DIX"
+> >  3cd94dd: Revert "[SCSI] scsi_lib: don't decrement busy counters when inserting commands"
+> >  c27aed5: Revert "[SCSI] scsi_lib: fix DID_RESET status problems"
+> > 
+> > I wasnt Cc:-ed on the updated patch AFAICS, so i didnt pick it 
+> > up.
 > 
->  7e4cbd1: fix "scsi: aic7xxx hang since v2.6.28-rc1"
->  e027abc: scsi: temporarily undo scsi reverts
->  813104e: Revert "[SCSI] simplify scsi_io_completion()"
->  84db545: Revert "[SCSI] Fix uninitialized variable error in scsi_io_completion"
->  0eb6038: Revert "[SCSI] Fix error handling for DIF/DIX"
->  3cd94dd: Revert "[SCSI] scsi_lib: don't decrement busy counters when inserting commands"
->  c27aed5: Revert "[SCSI] scsi_lib: fix DID_RESET status problems"
+> Actually, you were cc'd, you probably just missed it.
+
+Correct, see my earlier reply to Alan Stern for the details of 
+why it got missed.
+
+> > > So the real question is why does the -rt tree even have 
+> > > patches not in the vanilla SCSI tree?  This type of cockup 
+> > > clearly demonstrates why it's a bad idea.
+> > 
+> > Believe me, i have better things to do than to track down your 
+> > regressions. I applied a fix/test patch sent to me by SCSI 
+> > folks.
 > 
-> I wasnt Cc:-ed on the updated patch AFAICS, so i didnt pick it 
-> up.
+> Look, I've no problem with you collecting random patches.  I 
+> have a problem when you start pushing random SCSI patches into 
+> other trees. [...]
 
-Actually, you were cc'd, you probably just missed it.
+Both -tip and -rt are generic trees and there's a connection 
+between them that the maintainers of both are one and the same 
+set of people.
 
-> > So the real question is why does the -rt tree even have 
-> > patches not in the vanilla SCSI tree?  This type of cockup 
-> > clearly demonstrates why it's a bad idea.
-> 
-> Believe me, i have better things to do than to track down your 
-> regressions. I applied a fix/test patch sent to me by SCSI 
-> folks.
+So i'm not sure on what grounds you purport to be able to 
+prevent fixes from flowing from -tip into -rt and vice versa.
 
-Look, I've no problem with you collecting random patches.  I have a
-problem when you start pushing random SCSI patches into other trees.  I
-think this thread clearly illustrates why it's a problem.
+You have no monopoly on the propagation and testing of SCSI 
+fixes. We picked up a v1 patch from the SCSI list and did not 
+add nor remove anything from it.
 
-Even if *I* sent you a patch asking if it fixes your bug, it doesn't
-mean you should be deploying it on production systems ... we have
-process, like code inspection and integration testing to got through
-before patches appear in the SCSI trees.
+Yes, v1 was buggy and I missed the v2 patch because it had the 
+same subject line and no easily visible differentiator that it 
+was a v2 patch.
 
-For the particular patch in question (the corrected form).  I don't
-actually believe it's a bug fix.  I've gone over it and best I can tell,
-it does what it says it does (merely reposition the code) ... there's no
-actual logic alterations at all.  So I think, unfortunately, whatever
-the bug is, it's timing related (the patch does shorten some code
-paths).  Now, sure, we can cover it up and pretend it's gone, but it's
-bound to show up again down the road, so I'd like to find it's root
-cause now rather than later.
+In fact you should be happy that people are helping you out 
+fixing your bugs. I never even thought of flaming anyone for 
+having picked up a v1 scheduler fix and getting burned by it 
+while a v2 existed. I find it unexplainable and irrational that 
+you feel the need to do so for SCSI fixes.
 
-James
-
-
+	Ingo
