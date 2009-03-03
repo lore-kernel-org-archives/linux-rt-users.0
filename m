@@ -1,53 +1,45 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
+From: Boaz Harrosh <bharrosh@panasas.com>
 Subject: Re: Large amount of scsi-sgpool objects
-Date: Tue, 03 Mar 2009 16:25:26 +0000
-Message-ID: <1236097526.3263.17.camel@localhost.localdomain>
-References: <alpine.LSU.2.00.0903030220050.2438@fbirervta.pbzchgretzou.qr>
-	 <49ACF8FE.2020904@panasas.com>
-	 <1236093718.3263.3.camel@localhost.localdomain>
-	 <alpine.LSU.2.00.0903031703270.855@fbirervta.pbzchgretzou.qr>
+Date: Tue, 03 Mar 2009 18:24:20 +0200
+Message-ID: <49AD59B4.1060304@panasas.com>
+References: <alpine.LSU.2.00.0903030220050.2438@fbirervta.pbzchgretzou.qr>  <49ACF8FE.2020904@panasas.com> <1236093718.3263.3.camel@localhost.localdomain> <alpine.LSU.2.00.0903031703270.855@fbirervta.pbzchgretzou.qr>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: Boaz Harrosh <bharrosh@panasas.com>, linux-scsi@vger.kernel.org,
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>,
+	linux-scsi@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
+	linux-rt-users@vger.kernel.org,
+	Alan Stern <stern@rowland.harvard.edu>
 To: Jan Engelhardt <jengelh@medozas.de>
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ip67-152-220-66.z220-152-67.customer.algx.net ([67.152.220.66]:31238
+	"EHLO natasha.panasas.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751412AbZCCQl1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Mar 2009 11:41:27 -0500
 In-Reply-To: <alpine.LSU.2.00.0903031703270.855@fbirervta.pbzchgretzou.qr>
-Sender: linux-scsi-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2009-03-03 at 17:08 +0100, Jan Engelhardt wrote:
+Jan Engelhardt wrote:
 > On Tuesday 2009-03-03 16:21, James Bottomley wrote:
-> >> > $ slabtop
-> >> >   OBJS ACTIVE  USE OBJ SIZE  SLABS OBJ/SLAB CACHE SIZE NAME                   
-> >> > 818616 818616 100%    0.16K  34109       24    136436K sgpool-8
-> >> > 253692 253692 100%    0.62K  42282        6    169128K sgpool-32
-> >> >  52017  52016  99%    2.50K  17339        3    138712K sgpool-128
-> >> >  26220  26219  99%    0.31K   2185       12      8740K sgpool-16
-> >> >   8927   8574  96%    0.03K     79      113       316K size-32
-> >> 
-> >> Looks like a leak, by failing to call scsi_release_buffers()
-> >> somehow. (Which was changed recently)
-> >
-> >Firstly, I have to say I don't see this in the mainline tree, so could
-> >you try that with your setup just to verify (git head at 2.6.29-rc6).
+>>>> $ slabtop
+>>>>   OBJS ACTIVE  USE OBJ SIZE  SLABS OBJ/SLAB CACHE SIZE NAME                   
+>>>> 818616 818616 100%    0.16K  34109       24    136436K sgpool-8
+>>>> 253692 253692 100%    0.62K  42282        6    169128K sgpool-32
+>>>>  52017  52016  99%    2.50K  17339        3    138712K sgpool-128
+>>>>  26220  26219  99%    0.31K   2185       12      8740K sgpool-16
+>>>>   8927   8574  96%    0.03K     79      113       316K size-32
+>>> Looks like a leak, by failing to call scsi_release_buffers()
+>>> somehow. (Which was changed recently)
+>> Firstly, I have to say I don't see this in the mainline tree, so could
+>> you try that with your setup just to verify (git head at 2.6.29-rc6).
 > 
 > Yes, looking at the rt patch (in broken-out it's in origin.diff),
 > it seems a bit obvious - the scsi_release_buffers is not called anymore:
-
-OK, this is a bad patch, so just revert it.  It was posted to linux-scsi
-initially in this form before the author posted a new one with the
-missing release buffers added.  It looks like the first incarnation got
-pulled into the -rt tree for some reasons.
-
-So the real question is why does the -rt tree even have patches not in
-the vanilla SCSI tree?  This type of cockup clearly demonstrates why
-it's a bad idea.
-
-James
-
+> 
+> 
 > diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
 > index 940dc32..d4c6ac3 100644
 > --- a/drivers/scsi/scsi_lib.c
@@ -177,11 +169,20 @@ James
 > Would you happen to know where I have to reinsert them in the
 > rt modification shown here?
 > 
-> >If this holds true, there must be a bad patch in the -rt tree.  You
-> >should be able to diff scsi_lib.c to see if there's something missing.
-> >
-> >Finally, there are one or two drivers (SCSI target) that do their own
-> >buffer management, so what drivers are you using?
+
+You lost me. Why does rt needs to patch scsi_io_completion at all?
+You should remove any rt patches that modify scsi_lib.c and revert to
+vanilla 2.6.29-rc6 (scsi wise that is).
+
+The above diff looks like something that was sent in the past to the mailing
+list, but only half of it. It was sent by Alan Stern. It might patch but
+it is not applicable any more because of changes made since. 
+
+>> If this holds true, there must be a bad patch in the -rt tree.  You
+>> should be able to diff scsi_lib.c to see if there's something missing.
+>>
+>> Finally, there are one or two drivers (SCSI target) that do their own
+>> buffer management, so what drivers are you using?
 > 
 > 
 > ata1.00: ATA-5: WDC WD400EB-00CPF0, 06.04G06, max UDMA/100
