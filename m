@@ -1,56 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Large amount of scsi-sgpool objects
-Date: Wed, 4 Mar 2009 21:09:41 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903042058100.29264@localhost.localdomain>
-References: <20090303192212.GA20705@elte.hu> <1236115544.15993.22.camel@localhost.localdomain> <20090303214454.GA8288@elte.hu> <1236119990.24019.35.camel@localhost.localdomain> <20090303230323.GA21644@elte.hu> <49ADBE29.4040706@s5r6.in-berlin.de>
- <20090303234834.GA13389@elte.hu> <49AE221D.9010909@s5r6.in-berlin.de> <1236150752.6049.19.camel@marge.simson.net> <49AE32B5.9040603@s5r6.in-berlin.de> <20090304112455.GB14593@elte.hu> <20090304111114.aed7b225.akpm@linux-foundation.org>
+From: Cliff Brake <cliff.brake@gmail.com>
+Subject: Re: [Announce] 2.6.29-rc6-rt3
+Date: Fri, 6 Mar 2009 17:23:59 -0500
+Message-ID: <f96d234e0903061423j4820acefie0cd7d7bf9089b16@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
+	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, stefanr@s5r6.in-berlin.de,
-	efault@gmx.de, James.Bottomley@HansenPartnership.com,
-	jengelh@medozas.de, bharrosh@panasas.com,
-	linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20090304111114.aed7b225.akpm@linux-foundation.org>
-Sender: linux-scsi-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from rv-out-0506.google.com ([209.85.198.234]:34621 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755874AbZCFWYB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 6 Mar 2009 17:24:01 -0500
+Received: by rv-out-0506.google.com with SMTP id g37so698426rvb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Mar 2009 14:23:59 -0800 (PST)
+In-Reply-To: <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 4 Mar 2009, Andrew Morton wrote:
-> On Wed, 4 Mar 2009 12:24:55 +0100
-> Ingo Molnar <mingo@elte.hu> wrote:
-> 
-> > FYI, we still have not tracked down the SCSI bug. Latest 
-> > tip:master is able to boot and work on the affected systems, 
-> > while the upstream kernel does not even boot because the fix (or 
-> > the revert, should the fix be deemed unwanted) is stuck in the 
-> > SCSI tree.
-> 
-> <wakes up>
-> 
-> There are fixes in the scsi tree?
-> 
-> Does the scsi tree fix all the regressions which you guys are seeing?
-> 
-> I must say that it seems to be awfully late in the cycle to have this
-> amount of breakage remaining in mainline when we know exactly which
-> patches need to be reverted to unbreak things.
+On Tue, Feb 24, 2009 at 12:57 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> We are pleased to announce the next update to our new preempt-rt
 
-We are looking at two breakages:
+What is the issues with JFFS2?
 
-1) the hang which is observed on AIC7xxx, which is identified (Ingo
-tracked it down to a bunch of commits). There is a tentative fix right
-now, which needs more testing and the ack of James. James has some
-objections which stalled the fix, but I did not come around to dig
-into this yet as I'm busy with #2.
+--- linux-2.6-tip.orig/fs/jffs2/Kconfig
++++ linux-2.6-tip/fs/jffs2/Kconfig
+@@ -2,6 +2,8 @@ config JFFS2_FS
+ 	tristate "Journalling Flash File System v2 (JFFS2) support"
+ 	select CRC32
+ 	depends on MTD
++	# build breakage
++	depends on 0
+ 	help
+ 	  JFFS2 is the second generation of the Journalling Flash File System
+ 	  for use on diskless embedded devices. It provides improved wear
 
-2) a crash caused by blk_rq_map_sg() using more sg entries than the
-code which setup the request estimated. That one is dangerous, it
-already trashed a complete filesystem. I'm in the process of providing
-the necessary debug data, as I found a way to reproduce the problem
-halfsways.
 
 Thanks,
-
-	tglx
+Cliff
