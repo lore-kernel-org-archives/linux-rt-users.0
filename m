@@ -1,47 +1,55 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Seeing 800us of latency with cyclictest on a PC with 2.6.26.8
- rt patch. Is that normal?
-Date: Thu, 12 Mar 2009 07:24:19 -0500
-Message-ID: <20090312072419.3c4447b1@redhat.com>
-References: <14400.1236703161@vtxmail.ch>
-	<loom.20090311T192407-52@post.gmane.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [Announce] 2.6.29-rc7-rt1
+Date: Thu, 12 Mar 2009 20:17:50 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+ <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org, Jon Masters <jcm@redhat.com>
-To: Brian Hutchinson <b.hutchman@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:36518 "EHLO mx2.redhat.com"
+Received: from www.tglx.de ([62.245.132.106]:35055 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752632AbZCLMYg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2009 08:24:36 -0400
-In-Reply-To: <loom.20090311T192407-52@post.gmane.org>
+	id S1751079AbZCLTUA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2009 15:20:00 -0400
+In-Reply-To: <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBXZWQs
-IDExIE1hciAyMDA5IDE5OjMxOjAxICswMDAwIChVVEMpDQpCcmlhbiBIdXRjaGluc29uIDxiLmh1
-dGNobWFuQGdtYWlsLmNvbT4gd3JvdGU6DQo+IA0KPiBUaGFua3MgdG8gZXZlcnlvbmUgZm9yIGFs
-bCB0aGUgc3VnZ2VzdGlvbnMuICBJIHdvdWxkbid0IGhhdmUgdGhvdWdodCB0aGF0IDEwDQo+IHll
-YXIgb2xkIGRlc2t0b3AgaGFyZHdhcmUgY291bGQgYmVhdCB0aGUgcGFudHMgb2ZmIGEgbW9kZXJu
-IGxhcHRvcC4NCj4gDQo+DQoNCkFsbW9zdCBjZXJ0YWlubHkgaXQncyBiZWNhdXNlIHlvdXIgb2xk
-IGRlc2t0b3AgZG9lc24ndCBoYXZlIGxvdHMgb2YNCnRoaW5ncyBnb2luZyBvbiBiZWhpbmQtdGhl
-LXNjZW5lcyBpbiB0aGUgQklPUy4gTW9kZXJuIHg4Ni94ODZfNjQgaC93DQp2ZW5kb3JzIGhhdmUg
-YWRkZWQgbG90cyBvZiBvdXRzaWRlIHRoZSBPUyBmdW5jdGlvbnMgc3VjaCBhcyB0aGVybWFsDQpt
-b25pdG9yaW5nIGFuZCBzcGVjaWFsIGZ1bmN0aW9uIGtleXMgKGFsYSB0aGUgVGhpbmtsaWdodCBv
-biBtb3N0DQpUaGlua3BhZHMpIHRoYXQgYXJlIGhhbmRsZWQgdmlhIFN5c3RlbSBNYW5hZ2VtZW50
-IEludGVycnVwdHMgKFNNSSkNCmRpcmVjdGx5IGJ5IHRoZSBCSU9TLiBJZiB0aGUgU01JIHNlcnZp
-Y2Ugcm91dGluZXMgdGFrZSBsb25nIHRpbWVzIHRvIGRvDQp3aGF0ZXZlciB0aGV5J3JlIGRvaW5n
-LCB5b3UgZ2V0IHVuZXhwbGFpbmVkIGxhdGVuY2llcy4gDQoNCkpvbiBNYXN0ZXJzIHdyb3RlIGFu
-IFNNSSBkZXRlY3RvciBtb2R1bGUgdGhhdCB3ZSd2ZSBiZWVuIHVzaW5nIHRvIGdvb2QNCmVmZmVj
-dCB0byBkZXRlY3QgYW5kIGNsYXNzaWZ5IFNNSXMgKC9tZSBydW1tYWdlcyBmb3IgTEtNTCBsaW5r
-KS4NCkFjdHVhbGx5LCBJIHRoaW5rIHdlJ3ZlIGFkZGVkIHNvbWUgc3R1ZmYgc2luY2UgaGUgcG9z
-dGVkIGl0IGxhc3QsIHNvDQpJJ2xsIHBva2UgaGltIHRvIHBvc3QgaXQgYWdhaW4uIEl0J3MgYSBz
-cGVjaWFsIHB1cnBvc2UgbW9kdWxlIHRoYXQgcnVucw0KYSBmdW5jdGlvbiBpbiB0aGUgc3RvcF9t
-YWNoaW5lKCkgbW9kZS4gVGhlIGZ1bmN0aW9uIGp1c3QgcG9sbHMgdGhlIFRTQw0KbG9va2luZyBm
-b3IgZ2FwcyB0aGF0IGV4Y2VlZCBhIGNlcnRhaW4gdGhyZXNob2xkLiBBbnkgZ2FwIGluIHRoZSBU
-U0MNCnZhbHVlcyBvbiBhIHBhcnRpY3VsYXIgY29yZSBhcmUgdmVyeSBnb29kIGNhbmRpZGF0ZXMg
-Zm9yIFNNSXMuDQoNCkNsYXJrDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lv
-bjogR251UEcgdjIuMC45IChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbTQvdm9BQ2drUUh5
-dWovK1RURXAxL3h3Q2d3Z1k1TXByTnlRNlp0MVdUTXZmTlAwc1cNCmp3TUFvS1RxK2FpanFabE5B
-NE16TjJ2S2wvUUZmOGhEDQo9YXNnSg0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
+We are pleased to announce the next update to our new preempt-rt
+series. It contains only one new patch:
+   
+   - port forward to 2.6.29-rc7
+   - disable CONFIG_MAXCPUS for now (undebugged runtime bug)
+   - fix CONFIG_HIGHMEM problems
+   - fix netfilter problems
+   - make debugobjects -rt safe
+   - various build fixes
+
+Download locations:
+ 
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+  
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29-rc7-rt1 tree, the following patches should be
+applied:
+
+  http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc7.tar.bz2
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc7-rt1.bz2
+  
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+      tglx
+
