@@ -1,74 +1,47 @@
-From: Brian Hutchinson <b.hutchman@gmail.com>
-Subject: Re: Seeing 800us of latency with cyclictest on a PC with 2.6.26.8 rt patch. Is that normal?
-Date: Wed, 11 Mar 2009 19:31:01 +0000 (UTC)
-Message-ID: <loom.20090311T192407-52@post.gmane.org>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Seeing 800us of latency with cyclictest on a PC with 2.6.26.8
+ rt patch. Is that normal?
+Date: Thu, 12 Mar 2009 07:24:19 -0500
+Message-ID: <20090312072419.3c4447b1@redhat.com>
 References: <14400.1236703161@vtxmail.ch>
+	<loom.20090311T192407-52@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org, Jon Masters <jcm@redhat.com>
+To: Brian Hutchinson <b.hutchman@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:38716 "EHLO ciao.gmane.org"
+Received: from mx2.redhat.com ([66.187.237.31]:36518 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753923AbZCKTbR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Mar 2009 15:31:17 -0400
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1LhU95-0008Iu-8g
-	for linux-rt-users@vger.kernel.org; Wed, 11 Mar 2009 19:31:15 +0000
-Received: from 64-4-119-229.va.mvl.ntelos.net ([64.4.119.229])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 Mar 2009 19:31:15 +0000
-Received: from b.hutchman by 64-4-119-229.va.mvl.ntelos.net with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 Mar 2009 19:31:15 +0000
+	id S1752632AbZCLMYg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2009 08:24:36 -0400
+In-Reply-To: <loom.20090311T192407-52@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Matthias Luescher <m.luescher <at> vtxmail.ch> writes:
-
-> 
-> > Specifically, my laptop is a Dell Latitude D620.
-> 
-> We have tried very hard to achieve real time performance with the 
-> Dell Latitude D620 (we have tested different kernels, different configurations,
-> different bios versions, modified the bios settings, called the Dell customer
-service, ...). 
-> After all it looks like there is no way to achieve hard real time performance
-with this
-> type of device.
-> 
-> We had more luck (sub 100us latency) with the following notebooks:
-> - Lenovo T61, with dual core processor T8300, 2 GB RAM
-> - Asus V1SSeries with dual core processor T7500
-> 
-> On both devices we had to disable some power management features.
-> Please note that pressing some function keys can still result in huge
-latencies if 
-> the bios implementation is bad enough.
-> 
-> Desktop PCs usually work without big latencies.
-> 
-> Best regards
-> Matthias
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo <at> vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> 
-
-Just wanted to post an update.  I build 2.6.24.7 with rt patch and installed on
-a 10 year old ASUS MEW motherboard with a 366MHz Celeron running Debian 5.0.
-
-Cyclictest -a -t -n -p99 reports avg of 29us and max of 74us!!!  Wow!
-
-OK, now I just need to do the same thing on a ARM 926EJ-S board (once I get one).
-
-Thanks to everyone for all the suggestions.  I wouldn't have thought that 10
-year old desktop hardware could beat the pants off a modern laptop.
-
-
-
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBXZWQs
+IDExIE1hciAyMDA5IDE5OjMxOjAxICswMDAwIChVVEMpDQpCcmlhbiBIdXRjaGluc29uIDxiLmh1
+dGNobWFuQGdtYWlsLmNvbT4gd3JvdGU6DQo+IA0KPiBUaGFua3MgdG8gZXZlcnlvbmUgZm9yIGFs
+bCB0aGUgc3VnZ2VzdGlvbnMuICBJIHdvdWxkbid0IGhhdmUgdGhvdWdodCB0aGF0IDEwDQo+IHll
+YXIgb2xkIGRlc2t0b3AgaGFyZHdhcmUgY291bGQgYmVhdCB0aGUgcGFudHMgb2ZmIGEgbW9kZXJu
+IGxhcHRvcC4NCj4gDQo+DQoNCkFsbW9zdCBjZXJ0YWlubHkgaXQncyBiZWNhdXNlIHlvdXIgb2xk
+IGRlc2t0b3AgZG9lc24ndCBoYXZlIGxvdHMgb2YNCnRoaW5ncyBnb2luZyBvbiBiZWhpbmQtdGhl
+LXNjZW5lcyBpbiB0aGUgQklPUy4gTW9kZXJuIHg4Ni94ODZfNjQgaC93DQp2ZW5kb3JzIGhhdmUg
+YWRkZWQgbG90cyBvZiBvdXRzaWRlIHRoZSBPUyBmdW5jdGlvbnMgc3VjaCBhcyB0aGVybWFsDQpt
+b25pdG9yaW5nIGFuZCBzcGVjaWFsIGZ1bmN0aW9uIGtleXMgKGFsYSB0aGUgVGhpbmtsaWdodCBv
+biBtb3N0DQpUaGlua3BhZHMpIHRoYXQgYXJlIGhhbmRsZWQgdmlhIFN5c3RlbSBNYW5hZ2VtZW50
+IEludGVycnVwdHMgKFNNSSkNCmRpcmVjdGx5IGJ5IHRoZSBCSU9TLiBJZiB0aGUgU01JIHNlcnZp
+Y2Ugcm91dGluZXMgdGFrZSBsb25nIHRpbWVzIHRvIGRvDQp3aGF0ZXZlciB0aGV5J3JlIGRvaW5n
+LCB5b3UgZ2V0IHVuZXhwbGFpbmVkIGxhdGVuY2llcy4gDQoNCkpvbiBNYXN0ZXJzIHdyb3RlIGFu
+IFNNSSBkZXRlY3RvciBtb2R1bGUgdGhhdCB3ZSd2ZSBiZWVuIHVzaW5nIHRvIGdvb2QNCmVmZmVj
+dCB0byBkZXRlY3QgYW5kIGNsYXNzaWZ5IFNNSXMgKC9tZSBydW1tYWdlcyBmb3IgTEtNTCBsaW5r
+KS4NCkFjdHVhbGx5LCBJIHRoaW5rIHdlJ3ZlIGFkZGVkIHNvbWUgc3R1ZmYgc2luY2UgaGUgcG9z
+dGVkIGl0IGxhc3QsIHNvDQpJJ2xsIHBva2UgaGltIHRvIHBvc3QgaXQgYWdhaW4uIEl0J3MgYSBz
+cGVjaWFsIHB1cnBvc2UgbW9kdWxlIHRoYXQgcnVucw0KYSBmdW5jdGlvbiBpbiB0aGUgc3RvcF9t
+YWNoaW5lKCkgbW9kZS4gVGhlIGZ1bmN0aW9uIGp1c3QgcG9sbHMgdGhlIFRTQw0KbG9va2luZyBm
+b3IgZ2FwcyB0aGF0IGV4Y2VlZCBhIGNlcnRhaW4gdGhyZXNob2xkLiBBbnkgZ2FwIGluIHRoZSBU
+U0MNCnZhbHVlcyBvbiBhIHBhcnRpY3VsYXIgY29yZSBhcmUgdmVyeSBnb29kIGNhbmRpZGF0ZXMg
+Zm9yIFNNSXMuDQoNCkNsYXJrDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lv
+bjogR251UEcgdjIuMC45IChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbTQvdm9BQ2drUUh5
+dWovK1RURXAxL3h3Q2d3Z1k1TXByTnlRNlp0MVdUTXZmTlAwc1cNCmp3TUFvS1RxK2FpanFabE5B
+NE16TjJ2S2wvUUZmOGhEDQo9YXNnSg0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
