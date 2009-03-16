@@ -1,90 +1,68 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: some ARM fixes for 2.6.29-rc7-rt1
-Date: Sun, 15 Mar 2009 07:48:03 +0100
-Message-ID: <20090315064803.GB6982@pengutronix.de>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <20090313010458.GB1192@pengutronix.de>
+From: Cliff Brake <cliff.brake@gmail.com>
+Subject: Re: rt application question with rs232 communication
+Date: Mon, 16 Mar 2009 16:05:15 -0400
+Message-ID: <f96d234e0903161305q40b78e40neeeb0f1a4d4e9271@mail.gmail.com>
+References: <f96d234e0903091434xafaedcamc68023ebce5c7799@mail.gmail.com>
+	 <f96d234e0903100544p5bc17143l8916aefd49d78562@mail.gmail.com>
+	 <c384c5ea0903141907o79ccd790h7b48605feaeba107@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>, Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Leon Woestenberg <leon.woestenberg@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:45253 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751992AbZCOGsK (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.229]:17753 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753444AbZCPUFS convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Mar 2009 02:48:10 -0400
-Content-Disposition: inline
-In-Reply-To: <20090313010458.GB1192@pengutronix.de>
+	Mon, 16 Mar 2009 16:05:18 -0400
+Received: by rv-out-0506.google.com with SMTP id g9so2204515rvb.5
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Mar 2009 13:05:15 -0700 (PDT)
+In-Reply-To: <c384c5ea0903141907o79ccd790h7b48605feaeba107@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Sat, Mar 14, 2009 at 10:07 PM, Leon Woestenberg
+<leon.woestenberg@gmail.com> wrote:
+> Hello Cliff,
+>
+> On Tue, Mar 10, 2009 at 1:44 PM, Cliff Brake <cliff.brake@gmail.com> =
+wrote:
+>> Clarification, I don't have the RT patch applied, just CONFIG_PREEMP=
+T
+>> from Linus's kernel. =A0Reviewing my notes from several years ago, I=
+ ran
+>> into a similar issue and the RT patch fixed it, so now to figure out
+>> the best way to get a recent RT patched ARM kernel ...
+>>
+>>> timing. =A0However, it seems that the system has trouble receiving =
+the
+>>> response in a timely fashion. =A0I often observe that it takes at l=
+east
+>>> 10ms for the application to receive the response data after the dat=
+a
+>>> has appeared on the rs232 bus. =A0Is the RT patch something that wo=
+uld
+>
+> We are running a real-time RS-485 protocol where the time window is 1
+> ms and only under heavy load we got deadline misses > 1 ms.
+> Unfortunately I didn't measure the max latency then, but 10 ms sounds
+> like excessive latency to me.
+>
+> Under 2.6.24.7-rt24 (or whatever -rtxy in that series) we have never
+> missed the 1 ms deadline.
 
-On Fri, Mar 13, 2009 at 02:04:58AM +0100, Uwe Kleine-K=F6nig wrote:
-> on top of 2.6.29-rc7-rc1 I did some ARM related fixes that you can fi=
-nd
-> at
->=20
-> 	git://git.pengutronix.de/git/ukl/linux-2.6.git v2.6.29-rc7-rt1-pu
->=20
-> The top commit currently isn't pretty as it contains several independ=
-ant
-> fixes.  Some of them are netX specific so you probably don't need the=
-m,
-> but they shouldn't hurt you either.
->=20
-> I will update this branch as I continue working in a non-fast-forward
-> manner.  I use TopGit to manage this branch, you might want to use it=
-,
-> too, if you intend to follow my work.
->=20
-> My status quo is:
->=20
-> 	Testing tracer sched_switch: PASSED
-> 	Testing tracer function: PASSED
-> 	Testing tracer irqsoff: .. no entries found ..FAILED!
-> 	Testing tracer preemptoff: .. no entries found ..FAILED!
-> 	Testing tracer preemptirqsoff: .. no entries found ..
-[removed stack dump]
-> 	FAILED!
-I still have this problem.  I digged into irqsoff without finding the r=
-eason.
+Thanks Leon.  I guess its pretty obvious at this point I need the RT
+patch.  Still trying to figure out the best way to get this with
+2.6.27 or later -- I really don't want to go back to 2.6.26.
 
-Looking at trace_selftest_startup_irqsoff I saw that
-trace_buffer_lock_reserve is called thrice successfully.
-
-Steven (or someone else of course), do you can give me a hint?
-
-> Other than that my machine boots and reports from time to time
->=20
-> 	scheduling while atomic
->=20
-> and
->=20
-> 	sleeping function called from invalid context at kernel/rtmutex.c:68=
-3
->=20
-> Both errors probably happen because some spin_locks need to be conver=
-ted
-> to raw_spin_locks.  Will look later.
-Up to now I didn't try to do much with my system, but just booting
-doesn't yield such BUGs or Warnings anymore.
-=20
-Best regards
-Uwe
+Thanks,
+Cliff
 
 --=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Cliff Brake
+http://bec-systems.com
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
