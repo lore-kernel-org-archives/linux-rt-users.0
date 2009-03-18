@@ -1,44 +1,69 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: [PATCH] Avoid ChangeLog erasing in tarball release
-Date: Tue, 17 Mar 2009 21:50:42 +0100
-Message-ID: <1237323042-5959-1-git-send-email-abogani@texware.it>
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Alessio Igor Bogani <abogani@texware.it>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f169.google.com ([209.85.218.169]:45217 "EHLO
-	mail-bw0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753170AbZCQU6Y (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Mar 2009 16:58:24 -0400
-Received: by bwz17 with SMTP id 17so253595bwz.37
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Mar 2009 13:58:21 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Vernon Mauery <vernux@us.ibm.com>
+Subject: High contention on the sk_buff_head.lock
+Date: Wed, 18 Mar 2009 10:24:52 -0700
+Message-ID: <49C12E64.1000301@us.ibm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: netdev <netdev@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Execute a make clean into a rt-tests directory, exploded from a tarball,
-cause erroneous erasing of the ChangeLog file. Let make do it only if it
-executes under git tree.
+I have been beating on network throughput in the -rt kernel for some time
+now.  After digging down through the send path of UDP packets, I found
+that the sk_buff_head.lock is under some very high contention.  This lock
+is acquired each time a packet is enqueued on a qdisc and then acquired
+again to dequeue the packet.  Under high networking loads, the enqueueing
+processes are not only contending among each other for the lock, but also
+with the net-tx soft irq.  This makes for some very high contention on this
+one lock.  My testcase is running varying numbers of concurrent netperf
+instances pushing UDP traffic to another machine.  As the count goes from
+1 to 2, the network performance increases.  But from 2 to 4 and from 4 to 8,
+we see a big decline, with 8 instances pushing about half of what a single
+thread can do.
 
-Signed-off-by: Alessio Igor Bogani <abogani@texware.it>
----
- Makefile |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+Running 2.6.29-rc6-rt3 on an 8-way machine with a 10GbE card (I have tried
+both NetXen and Broadcom, with very similar results), I can only push about
+1200 Mb/s.  Whereas with the mainline 2.6.29-rc8 kernel, I can push nearly
+6000 Mb/s. But still not as much as I think is possible.  I was curious and
+decided to see if the mainline kernel was hitting the same lock, and using
+/proc/lock_stat, it is hitting the sk_buff_head.lock as well (it was the
+number one contended lock).
 
-diff --git a/Makefile b/Makefile
-index 1d9da78..fb8f917 100644
---- a/Makefile
-+++ b/Makefile
-@@ -21,7 +21,8 @@ classic_pi: src/pi_tests/classic_pi.c
- pi_stress:  src/pi_tests/pi_stress.c
- 	$(CC) $(FLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
- 
--CLEANUP = $(TARGETS) *.o .depend *.*~ ChangeLog *.orig *.rej rt-tests.spec
-+CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec
-+CLEANUP += $(if $(wildcard .git), ChangeLog)
- 
- clean:
- 	for F in $(CLEANUP); do find -type f -name $$F | xargs rm -f; done
--- 
-1.6.0.4
+So while this issue really hits -rt kernels hard, it has a real effect on
+mainline kernels as well.  The contention of the spinlocks is amplified
+when they get turned into rt-mutexes, which causes a double context switch.
+
+Below is the top of the lock_stat for 2.6.29-rc8.  This was captured from
+a 1 minute network stress test.  The next high contender had 2 orders of
+magnitude fewer contentions.  Think of the throughput increase if we could
+ease this contention a bit.  We might even be able to saturate a 10GbE
+link.
+
+lock_stat version 0.3
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+       class name    con-bounces    contentions   waittime-min   waittime-max   waittime-total    acq-bounces   acquisitions   holdtime-min  holdtime-max holdtime-total
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    &list->lock#3:      24517307       24643791           0.71        1286.62      56516392.42       34834296       44904018           0.60        164.79    31314786.02
+     -------------
+    &list->lock#3       15596927    [<ffffffff812474da>] dev_queue_xmit+0x2ea/0x468
+    &list->lock#3        9046864    [<ffffffff812546e9>] __qdisc_run+0x11b/0x1ef
+     -------------
+    &list->lock#3        6525300    [<ffffffff812546e9>] __qdisc_run+0x11b/0x1ef
+    &list->lock#3       18118491    [<ffffffff812474da>] dev_queue_xmit+0x2ea/0x468
+
+
+The story is the same for -rt kernels, only the waittime and holdtime are both
+orders of magnitude greater.
+
+I am not exactly clear on the solution, but if I understand correctly, in the
+past there has been some discussion of batched enqueueing and dequeueing.  Is
+anyone else working on this problem right now who has just not yet posted
+anything for review?  Questions, comments, flames?
+
+--Vernon
 
