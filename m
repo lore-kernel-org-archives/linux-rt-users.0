@@ -1,11 +1,11 @@
 From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Subject: Re: High contention on the sk_buff_head.lock
-Date: Wed, 18 Mar 2009 18:13:11 -0700
-Message-ID: <1237425191.8204.41.camel@quadrophenia.thebigcorporation.com>
-References: <49C16349.9030503@us.ibm.com>
-	 <20090318.143844.173112261.davem@davemloft.net>
-	 <49C16D7C.3080003@novell.com>
+Date: Wed, 18 Mar 2009 18:43:27 -0700
+Message-ID: <1237427007.8204.55.camel@quadrophenia.thebigcorporation.com>
+References: <49C16D7C.3080003@novell.com>
 	 <20090318.180355.228447835.davem@davemloft.net>
+	 <1237425191.8204.41.camel@quadrophenia.thebigcorporation.com>
+	 <20090318.181713.62394874.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -13,47 +13,55 @@ Cc: ghaskins@novell.com, vernux@us.ibm.com, andi@firstfloor.org,
 	netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org, pmullaney@novell.com
 To: David Miller <davem@davemloft.net>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20090318.180355.228447835.davem@davemloft.net>
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wa-out-1112.google.com ([209.85.146.182]:4099 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752044AbZCSBoa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 18 Mar 2009 21:44:30 -0400
+In-Reply-To: <20090318.181713.62394874.davem@davemloft.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-03-18 at 18:03 -0700, David Miller wrote:
-> From: Gregory Haskins <ghaskins@novell.com>
-> Date: Wed, 18 Mar 2009 17:54:04 -0400
+On Wed, 2009-03-18 at 18:17 -0700, David Miller wrote:
+> From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+> Date: Wed, 18 Mar 2009 18:13:11 -0700
 > 
-> > Note that -rt doesnt typically context-switch under contention anymore
-> > since we introduced adaptive-locks.  Also note that the contention
-> > against the lock is still contention, regardless of whether you have -rt
-> > or not.  Its just that the slow-path to handle the contended case for
-> > -rt is more expensive than mainline.  However, once you have the
-> > contention as stated, you have already lost.
+> > On Wed, 2009-03-18 at 18:03 -0700, David Miller wrote:
+> > > From: Gregory Haskins <ghaskins@novell.com>
+> > > Date: Wed, 18 Mar 2009 17:54:04 -0400
+> > > 
+> > > > Note that -rt doesnt typically context-switch under contention anymore
+> > > > since we introduced adaptive-locks.  Also note that the contention
+> > > > against the lock is still contention, regardless of whether you have -rt
+> > > > or not.  Its just that the slow-path to handle the contended case for
+> > > > -rt is more expensive than mainline.  However, once you have the
+> > > > contention as stated, you have already lost.
+> > > 
+> > > First, contention is not implicitly a bad thing.
+> >
+> > Its a bad thing when it does not scale.
 > 
-> First, contention is not implicitly a bad thing.
+> You have only one pipe to shove packets into in this case, and for
+> your workload multiple cpus are going to be trying to stuff a single
+> packet at a time from a single UDP send request.
+> 
+> There is no added parallelism you can create for that kind of workload
+> on that kind of hardware.
 > 
 
-Its a bad thing when it does not scale.
+Do we have to rule-out per-CPU queues, that aggregate into a master
+queue in a batch-wise manner? 
 
-> Second, if the -rt kernel is doing adaptive spinning I see no
-> reason why that adaptive spinning is not kicking in here to
-> make this problem just go away.
-> 
+I speculate that might reduce the lock contention by a factor of NCPUs.
+I cannot say this would be enough to mitigate the consequent overhead
+penalty. 
 
-If only the first of N contending threads gets to spin, 2..N would
-context-switch.
+> It is one of the issues addressed by multiqueue.
 
-
-> This lock is held for mere cycles, just to unlink an SKB from
-> the networking qdisc, and then it is immediately released.
-
-For very short hold times, and heavy contention, as well as for
-scalability, the solution may lie in tunable spinner-count and adaptive
-spinner time-out.
+Properly tuned adaptive locks, would theoretically perform
+near-optimally compared to the mainline case, and would provide better
+CPU utilization on very large parallel architectures. 
 
 Sven
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
