@@ -1,76 +1,54 @@
-From: Rick Jones <rick.jones2@hp.com>
+From: David Miller <davem@davemloft.net>
 Subject: Re: High contention on the sk_buff_head.lock
-Date: Wed, 18 Mar 2009 15:19:47 -0700
-Message-ID: <49C17383.2090909@hp.com>
-References: <49C12E64.1000301@us.ibm.com> <87prge1rhu.fsf@basil.nowhere.org>	<49C16294.8050101@us.ibm.com>	<1237412732.29116.2.camel@lb-tlvb-eliezer>	<49C16CD4.3010708@us.ibm.com> <20090318215901.GV11935@one.firstfloor.org>
+Date: Wed, 18 Mar 2009 18:02:27 -0700 (PDT)
+Message-ID: <20090318.180227.256169134.davem@davemloft.net>
+References: <49C16349.9030503@us.ibm.com>
+	<20090318.143844.173112261.davem@davemloft.net>
+	<49C16C5D.5090306@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: Vernon Mauery <vernux@us.ibm.com>,
-	Eilon Greenstein <eilong@broadcom.com>,
-	netdev <netdev@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Andi Kleen <andi@firstfloor.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from g5t0007.atlanta.hp.com ([15.192.0.44]:48662 "EHLO
-	g5t0007.atlanta.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750895AbZCRWTy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Mar 2009 18:19:54 -0400
-In-Reply-To: <20090318215901.GV11935@one.firstfloor.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: andi@firstfloor.org, netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: vernux@us.ibm.com
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <49C16C5D.5090306@us.ibm.com>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Andi Kleen wrote:
->>Thanks.  I will test to see how this affects this lock contention the
->>next time the broadcom hardware is available.
-> 
-> 
-> The other strategy to reduce lock contention here is to use TSO/GSO/USO.
-> With that the lock has to be taken less often because there are less packets
-> travelling down the stack. I'm not sure how well that works with netperf style 
-> workloads though. 
+From: Vernon Mauery <vernux@us.ibm.com>
+Date: Wed, 18 Mar 2009 14:49:17 -0700
 
-All depends on what the user provides with the test-specific -m option for how 
-much data they shove into the socket each time "send" is called, and I suppose if 
-they use a test-specific -D option to set TCP_NODELAY in the case of a TCP test 
-when they have small values of -m.  Eg
+> Yes, the double context switches surely hurt the temporal and
+> spatial locality of the vanilla codepath, but it also induces a
+> longer penalty for blocking on a lock -- instead of a nanoseconds
+> or a few microseconds, the task gets delayed for tens of
+> microseconds.  So really, the -rt kernel has more to fix than
+> the vanilla kernel in this case, but any improvement in the lock
+> contention in the vanilla case would be magnified and would cause
+> dramatic improvements in the -rt kernel.
 
-netperf -t TCP_STREAM ... -- -m 64K
-vs
-netperf -t TCP_STREAM ... -- -m 1024
-vs
-netperf -t TCP_STREAM ... -- -m 1024 -D
-vs
-netperf -t UDP_STREAM ... -- -m 1024
+Contention on a shared resource is not implicitly bad.
 
-etc etc.
+And with upstream spinlocks the cost is relatively low for a case like
+this where a thread of control goes in and only holds the lock for
+long enough to unlink a packet from the list and immediately the lock
+is released.
 
-If the netperf test is:
+The cost should be, cache line move from cpu-to-cpu, atomic lock,
+linked list unlink, a store, and a memory barrier.  And that's
+all it is upstream.
 
-netperf -t TCP_RR ... -- -r 1   (single-byte request/response)
+If the -rt kernel makes this 10 times more expensive, I really don't
+see why that is an upstream concern at the current point in time.
 
-then TSO/GSO/USO won't matter at all, and probably still wont matter even if the 
-user has ./configure'd netperf with --enable-burst and does:
+That's the tradeoff, common situations where locks are held by
+multiple threads with contention, but only for mere cycles, are
+seemingly a lot more expensive in the -rt kernel.
 
-netperf -t TCP_RR ... -- -r 1 -b 64
-or
-netperf -t TCP_RR ... -- -r 1 -b 64 -D
-
-which was basically what I was doing for the 32-core scaling stuff I posted about 
-a few weeks ago.  That was running on multi-queue NICs, so looking at some of the 
-profiles of the "no iptables" data may help show how big/small the problem is, 
-keeping in mind that my runs (either the XFrame II runs, or the Chelsio T3C runs 
-before them) had one queue per core in the system...and as such may be a best 
-case scenario as far as lock contention on a per-queue basis goes.
-
-ftp://ftp.netperf.org/
-
-happy benchmarking,
-
-rick jones
-
-BTW, that setup went "poof" and had to go to other nefarious porpoises.  I'm not 
-sure when I can recreate it, but I still have both the XFrame and T3C NICs when 
-the HW comes free again.
+I mean, for example, why doesn't the -rt kernel just spin for a little
+while like a normal spinlock would instead of always entering that
+expensive contended code path?  It would be a huge win here, but I
+have yet to see discussion of changes in that area of the -rt kernel
+to combat these effects.  Is it the networking that always has to
+change for the sake of -rt? :-)
