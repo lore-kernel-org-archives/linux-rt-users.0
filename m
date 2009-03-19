@@ -1,33 +1,32 @@
 From: Andi Kleen <andi@firstfloor.org>
 Subject: Re: High contention on the sk_buff_head.lock
-Date: Thu, 19 Mar 2009 14:45:40 +0100
-Message-ID: <20090319134540.GW11935@one.firstfloor.org>
-References: <49C16D7C.3080003@novell.com> <20090318.180355.228447835.davem@davemloft.net> <1237425191.8204.41.camel@quadrophenia.thebigcorporation.com> <20090318.181713.62394874.davem@davemloft.net> <1237427007.8204.55.camel@quadrophenia.thebigcorporation.com>
+Date: Thu, 19 Mar 2009 14:46:49 +0100
+Message-ID: <20090319134649.GX11935@one.firstfloor.org>
+References: <49C12E64.1000301@us.ibm.com> <87prge1rhu.fsf@basil.nowhere.org> <1237467559.6926.31.camel@hermosa>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: David Miller <davem@davemloft.net>, ghaskins@novell.com,
-	vernux@us.ibm.com, andi@firstfloor.org, netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	pmullaney@novell.com
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Cc: Andi Kleen <andi@firstfloor.org>,
+	Vernon Mauery <vernux@us.ibm.com>,
+	netdev <netdev@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: "Peter W. Morreale" <pmorreale@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from one.firstfloor.org ([213.235.205.2]:54268 "EHLO
+Received: from one.firstfloor.org ([213.235.205.2]:54273 "EHLO
 	one.firstfloor.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752311AbZCSNpJ (ORCPT
+	with ESMTP id S1754460AbZCSNqQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Mar 2009 09:45:09 -0400
+	Thu, 19 Mar 2009 09:46:16 -0400
 Content-Disposition: inline
-In-Reply-To: <1237427007.8204.55.camel@quadrophenia.thebigcorporation.com>
+In-Reply-To: <1237467559.6926.31.camel@hermosa>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> Do we have to rule-out per-CPU queues, that aggregate into a master
-> queue in a batch-wise manner? 
+> Recall that adaptive spin,developed in RT, is now in mainline. 
 
-TSO/GSO/USO is that actually in a very specific way. It batches
-packets into larger packets and then less per packet locks need to be taken.  
-It was unclear if that was used in this workload or not.
+For mutexes, but not for spinlocks. And qdisc uses spinlocks.
 
 -Andi
+
 -- 
 ak@linux.intel.com -- Speaking for myself only.
