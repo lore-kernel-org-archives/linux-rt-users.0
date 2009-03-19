@@ -1,61 +1,48 @@
-From: David Miller <davem@davemloft.net>
+From: Evgeniy Polyakov <zbr@ioremap.net>
 Subject: Re: High contention on the sk_buff_head.lock
-Date: Wed, 18 Mar 2009 22:58:22 -0700 (PDT)
-Message-ID: <20090318.225822.179893347.davem@davemloft.net>
-References: <1237427007.8204.55.camel@quadrophenia.thebigcorporation.com>
-	<20090318.185441.138157931.davem@davemloft.net>
-	<49C1DCDF.6050300@cosmosbay.com>
+Date: Thu, 19 Mar 2009 10:15:18 +0300
+Message-ID: <20090319071517.GA7389@ioremap.net>
+References: <87prge1rhu.fsf@basil.nowhere.org> <20090318.140340.55290859.davem@davemloft.net> <49C16349.9030503@us.ibm.com> <20090318.143844.173112261.davem@davemloft.net> <49C16D7C.3080003@novell.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: sven@thebigcorporation.com, ghaskins@novell.com, vernux@us.ibm.com,
+Content-Type: text/plain; charset=us-ascii
+Cc: David Miller <davem@davemloft.net>, vernux@us.ibm.com,
 	andi@firstfloor.org, netdev@vger.kernel.org,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	pmullaney@novell.com
-To: dada1@cosmosbay.com
+	Patrick Mullaney <pmullaney@novell.com>
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:45066
-	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
-	by vger.kernel.org with ESMTP id S1751851AbZCSF6f (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Mar 2009 01:58:35 -0400
-In-Reply-To: <49C1DCDF.6050300@cosmosbay.com>
+Received: from matrixpower.ru ([195.178.208.66]:54812 "EHLO tservice.net.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751235AbZCSHP3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Mar 2009 03:15:29 -0400
+Content-Disposition: inline
+In-Reply-To: <49C16D7C.3080003@novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Eric Dumazet <dada1@cosmosbay.com>
-Date: Thu, 19 Mar 2009 06:49:19 +0100
-
-> Still, there is room for improvements, since :
+On Wed, Mar 18, 2009 at 05:54:04PM -0400, Gregory Haskins (ghaskins@novell.com) wrote:
+> Note that -rt doesnt typically context-switch under contention anymore
+> since we introduced adaptive-locks.  Also note that the contention
+> against the lock is still contention, regardless of whether you have -rt
+> or not.  Its just that the slow-path to handle the contended case for
+> -rt is more expensive than mainline.  However, once you have the
+> contention as stated, you have already lost.
 > 
-> 1) default qdisc is pfifo_fast. This beast uses three sk_buff_head (96 bytes)
->   where it could use 3 smaller list_head (3 * 16 = 48 bytes on x86_64)
-> 
->  (assuming sizeof(spinlock_t) is only 4 bytes, but it's more than that
->  on various situations (LOCKDEP, ...)
+> We have observed the posters findings ourselves in both mainline and
+> -rt.  I.e. That lock doesnt scale very well once you have more than a
+> handful of cores.  It's certainly a great area to look at for improving
+> the overall stack, IMO, as I believe there is quite a bit of headroom
+> left to be recovered that is buried there.
 
-I already plan on doing this, skb->{next,prev} will be replaced with a
-list_head and nearly all of the sk_buff_head usage will simply
-disappear.  It's a lot of work because every piece of SKB queue
-handling code has to be sanitized to only use the interfaces in
-linux/skbuff.h and lots of extremely ugly code like the PPP
-defragmenter make many non-trivial direct skb->{next,prev}
-manipulations.
+Something tells me that you observer skb head lock contention because
+you stressed the network and anything else on that machine slacked in
+sleep. What if you will start IO stress, will __queue_lock contention
+have the same magnitude order? Or having as many processes as skbs each
+of which will race for the scheduler? Will run-queue lock show up in the
+stats?
 
-> 2) struct Qdisc layout could be better, letting read mostly fields
->    at beginning of structure. (ie move 'dev_queue', 'next_sched', reshape_fail,
->    u32_node, __parent, ...)
+I believe the asnwer is yes for all the questions.
+You stressed one subsystem and it showed up in the statistics.
 
-I have no problem with your struct layout changes, submit it formally.
-
-> 3) In stress situation a CPU A queues a skb to a sk_buff_head, but a CPU B
->    dequeues it to feed device, involving an expensive cache line miss
->    on the skb.{next|prev} (to set them to NULL)
-> 
->    We could:
->       Use a special dequeue op that doesnt touch skb.{next|prev}
->    Eventually set next/prev to NULL after q.lock is released
-
-You absolutely can't do this, as it would break GSO/GRO.  The whole
-transmit path is littered with checks of skb->next being NULL for the
-purposes of segmentation handling.
+-- 
+	Evgeniy Polyakov
