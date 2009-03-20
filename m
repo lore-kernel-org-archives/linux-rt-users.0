@@ -1,129 +1,96 @@
-From: Luis Henriques <henrix@sapo.pt>
-Subject: [RFC] cyclictest: Added option for results in nanoseconds
-Date: Fri, 20 Mar 2009 19:43:18 +0000
-Message-ID: <20090320194318.GA6742@hades.domain.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [Announce] 2.6.29-rc78rt1
+Date: Fri, 20 Mar 2009 14:55:26 -0700
+Message-ID: <49C410CE.8070204@am.sony.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine <49C2F37B.3030909@am.sony.com> <alpine.LFD.2.00.0903201645400.29264@localhost.localdomain>
+Reply-To: frank.rowand@am.sony.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay3.ptmail.sapo.pt ([212.55.154.23]:46866 "HELO sapo.pt"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-	id S1755564AbZCTTwP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Mar 2009 15:52:15 -0400
-Content-Disposition: inline
+Received: from wa4ehsobe003.messaging.microsoft.com ([216.32.181.13]:14112
+	"EHLO WA4EHSOBE003.bigfish.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751435AbZCTWLQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Mar 2009 18:11:16 -0400
+In-Reply-To: <alpine.LFD.2.00.0903201645400.29264@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-cyclictest results are presented in microseconds, although internal precision
-uses nanosecond unit.  This patch adds a command-line option for keeping the
-nanoseconds precision.  man page has also been update.
+Thomas Gleixner wrote:
+> On Thu, 19 Mar 2009, Frank Rowand wrote:
+>>>    - lots of tracer updates from -tip (check the tip git logs)
+>> I have been trying to reverse engineer which git commits
+>> comprise origin.patch, but my git-foo is not up to the
+>> task.  For any single file in origin.patch, I can work
+>> backwards to find the git commit associated with it, but I
+>> don't know how to easily create a list of all of the git commits
+>> that are associated with origin.patch.  Do you have any quick
+>> hints that would assist me in my quest?
+> 
+>   git log v.2.6.29-rc8..
+> 
+> I'm going to add a log to the broken out tarball next time.
+> 
 
-Signed-off-by: Luis Henriques <henrix@sapo.pt>
----
- src/cyclictest/cyclictest.8 |    3 +++
- src/cyclictest/cyclictest.c |   21 ++++++++++++++++++---
- 2 files changed, 21 insertions(+), 3 deletions(-)
+Thanks for the info!  I'm getting closer, but I'm still missing
+something or doing something wrong.
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 4b4eedc..a917b45 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -96,6 +96,9 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
- .B \-n, \-\-nanosleep
- Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
- .TP
-+.B \-N, \-\-nsecs
-+Show results in nanoseconds instead of microseconds, which is the default unit.
-+.TP
- .B \-o, \-\-oscope=RED
- Oscilloscope mode, reduce verbose output by RED.
- .TP
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 5f49fbb..ed96864 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -139,6 +139,7 @@ static int lockall = 0;
- static int tracetype = NOTRACE;
- static int histogram = 0;
- static int duration = 0;
-+static int use_nsecs = 0;
- 
- /* Backup of kernel variables that we modify */
- static struct kvars {
-@@ -286,6 +287,14 @@ static inline long calcdiff(struct timespec t1, struct timespec t2)
- 	return diff;
- }
- 
-+static inline long calcdiff_ns(struct timespec t1, struct timespec t2)
-+{
-+	long diff;
-+	diff = NSEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
-+	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
-+	return diff;
-+}
-+
- void tracing(int on)
- {
- 	if (on) {
-@@ -580,7 +589,10 @@ void *timerthread(void *param)
- 		}
- 		clock_gettime(par->clock, &now);
- 
--		diff = calcdiff(now, next);
-+		if (use_nsecs)
-+			diff = calcdiff_ns(now, next);
-+		else
-+			diff = calcdiff(now, next);
- 		if (diff < stat->min)
- 			stat->min = diff;
- 		if (diff > stat->max)
-@@ -657,6 +669,7 @@ static void display_help(void)
- 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
- 	       "-m       --mlockall        lock current and future memory allocations\n"
- 	       "-n       --nanosleep       use clock_nanosleep\n"
-+	       "-N       --nsecs           print results in ns instead of ms (default ms)\n"
- 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
- 	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
- 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
-@@ -726,6 +739,7 @@ static void process_options (int argc, char *argv[])
- 			{"loops", required_argument, NULL, 'l'},
- 			{"mlockall", no_argument, NULL, 'm' },
- 			{"nanosleep", no_argument, NULL, 'n'},
-+			{"nsecs", no_argument, NULL, 'N'},
- 			{"oscope", required_argument, NULL, 'o'},
- 			{"priority", required_argument, NULL, 'p'},
- 			{"preemptoff", no_argument, NULL, 'P'},
-@@ -738,7 +752,7 @@ static void process_options (int argc, char *argv[])
- 			{"help", no_argument, NULL, '?'},
- 			{NULL, 0, NULL, 0}
- 		};
--		int c = getopt_long (argc, argv, "a::b:Bc:d:fh:i:Il:no:p:Pmqrst::vD:",
-+		int c = getopt_long (argc, argv, "a::b:Bc:d:fh:i:Il:nNo:p:Pmqrst::vD:",
- 			long_options, &option_index);
- 		if (c == -1)
- 			break;
-@@ -766,6 +780,7 @@ static void process_options (int argc, char *argv[])
- 		case 'I': tracetype = IRQSOFF; break;
- 		case 'l': max_cycles = atoi(optarg); break;
- 		case 'n': use_nanosleep = MODE_CLOCK_NANOSLEEP; break;
-+		case 'N': use_nsecs = 1; break;
- 		case 'o': oscope_reduction = atoi(optarg); break;
- 		case 'p': priority = atoi(optarg); break;
- 		case 'P': tracetype = PREEMPTOFF; break;
-@@ -908,7 +923,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
- 	if (!verbose) {
- 		if (quiet != 1) {
- 			printf("T:%2d (%5d) P:%2d I:%ld C:%7lu "
--			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
-+			       "Min:%7ld Act:%8ld Avg:%8ld Max:%8ld\n",
- 			       index, stat->tid, par->prio, par->interval,
- 			       stat->cycles, stat->min, stat->act,
- 			       stat->cycles ?
--- 
-1.6.2
+The git tree I'm using (from .git/config):
+[remote "origin"]
+        url = git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git
 
+On branch "master".
 
--- 
-Luis Henriques
+I tried to re-create origin.patch by:
+
+  git format-patch --abbrev=7 --stdout -p v2.6.29-rc8.. >MY_ORIGIN.PATCH
+
+but got different results than what is in origin.patch.bz.
+MY_ORIGIN.PATCH has the same source changes as origin.patch.bz
+(at least for the small sample of files that I checked), but
+sometimes split across several patches instead of a single patch.
+
+Using Documentation/x86/boot.txt as an example of the difference:
+
+  patch-2.6.29-rc8-rt1-broken-out.tar.bz2 origin.patch.bz shows:
+
+    diff --git a/Documentation/x86/boot.txt b/Documentation/x86/boot.txt
+    index 7b4596a..e020366 100644
+
+  But the same changes in the git tree are split across two git commits
+  (so I get two patches in my MY_ORIGIN.PATCH instead of the single
+  patch in origin.patch.bz):
+
+    $ git log v2.6.29-rc8.. -- Documentation/x86/boot.txt | grep commit
+    commit 8b0e5860cb099d7958d13b00ffbc35ad02735700
+    commit e56d0cfe7790fd3218ae4f6aae1335547fea8763
+    commit ee287587dafd77fd211e50637561224605c214b4
+
+    (8b0e5860 is a merge of branches)
+
+    $ git format-patch --abbrev=7 --stdout -p e56d0cfe^1..e56d0cfe \
+      | grep -E "(^diff)|(^index)"
+    diff --git a/Documentation/x86/boot.txt b/Documentation/x86/boot.txt
+    index 7b4596a..1229969 100644
+
+    $ git format-patch --abbrev=7 --stdout -p ee287587^1..ee287587 \
+      | grep -E "(^diff)|(^index)"
+    diff --git a/Documentation/x86/boot.txt b/Documentation/x86/boot.txt
+    index fcdc62b..9ac70ff 100644
+
+  So I'm obviously in the wrong place or using the wrong technique
+  to be able to re-create origin.patch.bz from the git repository.
+  Any more quick hints to help me out here?
+
+  Also, "git log v2.6.29-rc8.." presumes that HEAD in my repository is
+  the same as when the RT preempt patch was created.  Is there a tag
+  or a git id or some other way to identify that point?
+
+Thanks!
+
+Frank Rowand
+Sony Corporation of America
+
