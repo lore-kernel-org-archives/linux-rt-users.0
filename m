@@ -1,39 +1,56 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Cliff Brake <cliff.brake@gmail.com>
 Subject: Re: [Announce] 2.6.29-rc78rt1
-Date: Fri, 20 Mar 2009 16:48:08 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903201645400.29264@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine
- <49C2F37B.3030909@am.sony.com>
+Date: Fri, 20 Mar 2009 12:31:22 -0400
+Message-ID: <f96d234e0903200931w2d57155cm81b67265d42861bf@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
+	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Frank Rowand <frank.rowand@am.sony.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:55860 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754225AbZCTPsY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Mar 2009 11:48:24 -0400
-In-Reply-To: <49C2F37B.3030909@am.sony.com>
+Received: from yx-out-2324.google.com ([74.125.44.30]:51496 "EHLO
+	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751981AbZCTQbZ convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Mar 2009 12:31:25 -0400
+In-Reply-To: <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 19 Mar 2009, Frank Rowand wrote:
-> 
-> >    - lots of tracer updates from -tip (check the tip git logs)
-> 
-> I have been trying to reverse engineer which git commits
-> comprise origin.patch, but my git-foo is not up to the
-> task.  For any single file in origin.patch, I can work
-> backwards to find the git commit associated with it, but I
-> don't know how to easily create a list of all of the git commits
-> that are associated with origin.patch.  Do you have any quick
-> hints that would assist me in my quest?
+On Thu, Mar 19, 2009 at 8:31 PM, Thomas Gleixner <tglx@linutronix.de> w=
+rote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
 
-  git log v.2.6.29-rc8..
+> P.S.: ARM/PowerPC support is in the pipeline and will be available
+> =A0 =A0 =A0with -rt2 (hopefully :)
 
-I'm going to add a log to the broken out tarball next time.
+Do you have a time estimate for -rt2/ARM support, and is there
+anything that can be done to help (testing, etc).
 
 Thanks,
+Cliff
 
-	tglx
-
+--=20
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Cliff Brake
+http://bec-systems.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
