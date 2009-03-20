@@ -1,43 +1,32 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [Announce] 2.6.29-rc78rt1
-Date: Thu, 19 Mar 2009 18:38:03 -0700
-Message-ID: <49C2F37B.3030909@am.sony.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine
-Reply-To: frank.rowand@am.sony.com
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH] net: reorder struct Qdisc for better SMP performance
+Date: Fri, 20 Mar 2009 01:33:56 -0700 (PDT)
+Message-ID: <20090320.013356.246706473.davem@davemloft.net>
+References: <49C1DCDF.6050300@cosmosbay.com>
+	<20090318.225822.179893347.davem@davemloft.net>
+	<49C250DB.3050707@cosmosbay.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: sven@thebigcorporation.com, ghaskins@novell.com, vernux@us.ibm.com,
+	andi@firstfloor.org, netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	pmullaney@novell.com
+To: dada1@cosmosbay.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe001.messaging.microsoft.com ([216.32.180.11]:1649 "EHLO
-	VA3EHSOBE001.bigfish.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751056AbZCTBiY (ORCPT
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:55693
+	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1756342AbZCTIeK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Mar 2009 21:38:24 -0400
-In-Reply-To: <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
+	Fri, 20 Mar 2009 04:34:10 -0400
+In-Reply-To: <49C250DB.3050707@cosmosbay.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas Gleixner wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->    
+From: Eric Dumazet <dada1@cosmosbay.com>
+Date: Thu, 19 Mar 2009 15:04:11 +0100
 
-( snip )
+> [PATCH] net: reorder struct Qdisc for better SMP performance
 
->    - lots of tracer updates from -tip (check the tip git logs)
-
-I have been trying to reverse engineer which git commits
-comprise origin.patch, but my git-foo is not up to the
-task.  For any single file in origin.patch, I can work
-backwards to find the git commit associated with it, but I
-don't know how to easily create a list of all of the git commits
-that are associated with origin.patch.  Do you have any quick
-hints that would assist me in my quest?
-
-Thanks!
-
-Frank Rowand
-Sony Corporation of America
+Applied, thanks.
 
