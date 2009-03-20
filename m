@@ -1,167 +1,129 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [Announce] 2.6.29-rc8-rt2
-Date: Fri, 20 Mar 2009 20:25:21 +0100
-Message-ID: <20090320192521.GH6224@elte.hu>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain> <1237576751.8951.146.camel@lexx>
+From: Luis Henriques <henrix@sapo.pt>
+Subject: [RFC] cyclictest: Added option for results in nanoseconds
+Date: Fri, 20 Mar 2009 19:43:18 +0000
+Message-ID: <20090320194318.GA6742@hades.domain.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
-To: Will Schmidt <will_schmidt@vnet.ibm.com>
+	linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:52313 "EHLO mx3.mail.elte.hu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751689AbZCTTZj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Mar 2009 15:25:39 -0400
+Received: from relay3.ptmail.sapo.pt ([212.55.154.23]:46866 "HELO sapo.pt"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
+	id S1755564AbZCTTwP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Mar 2009 15:52:15 -0400
 Content-Disposition: inline
-In-Reply-To: <1237576751.8951.146.camel@lexx>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+cyclictest results are presented in microseconds, although internal precision
+uses nanosecond unit.  This patch adds a command-line option for keeping the
+nanoseconds precision.  man page has also been update.
 
-* Will Schmidt <will_schmidt@vnet.ibm.com> wrote:
-
-> On Fri, 2009-03-20 at 18:45 +0100, Thomas Gleixner wrote:
-> > We are pleased to announce the next update to our new preempt-rt
-> > series.
-> >    =20
-> >      - resurrected ARM and PowerPC support
-> >      - tracing fixes for ARM (Uwe Kleine-Koenig)
-> >=20
-> > The support for ARM/PowerPC has only been lightly tested. It might
-> > crash and burn your system, make your hair curl, frigthen your cat =
-and
-> > give you sleepless nights. You have been warned !
->=20
-> During a build attempt on powerpc, I am seeing:
->=20
-> In file included from include/linux/mmzone.h:776,
->                  from include/linux/gfp.h:5,
->                  from include/linux/slab.h:13,
->                  from include/linux/percpu.h:6,
->                  from include/linux/rcupdate.h:40,
->                  from include/linux/rculist.h:11,
->                  from include/linux/dcache.h:7,
->                  from include/linux/fs.h:299,
->                  from init/do_mounts_rd.c:4:
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/mmzone.h:32: error:
-> expected =E2=80=98=3D=E2=80=99, =E2=80=98,=E2=80=99, =E2=80=98;=E2=80=
-=99, =E2=80=98asm=E2=80=99 or =E2=80=98__attribute__=E2=80=99 before
-> =E2=80=98numa_cpumask_lookup_table=E2=80=99
-> In file included from include/linux/topology.h:35,
->                  from include/linux/gfp.h:8,
->                  from include/linux/slab.h:13,
->                  from include/linux/percpu.h:6,
->                  from include/linux/rcupdate.h:40,
->                  from include/linux/rculist.h:11,
->                  from include/linux/dcache.h:7,
->                  from include/linux/fs.h:299,
->                  from init/do_mounts_rd.c:4:
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h: In functi=
-on
-> =E2=80=98node_to_cpumask=E2=80=99:
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h:22: error:
-> =E2=80=98numa_cpumask_lookup_table=E2=80=99 undeclared (first use in =
-this function)
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h:22: error:
-> (Each undeclared identifier is reported only once
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h:22: error:
-> for each function it appears in.)
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h: In functi=
-on
-> =E2=80=98node_to_first_cpu=E2=80=99:
-> /root/linux-2.6.29-rc8/arch/powerpc/include/asm/topology.h:29: error:
-> =E2=80=98numa_cpumask_lookup_table=E2=80=99 undeclared (first use in =
-this function)
-> make[1]: *** [init/do_mounts_rd.o] Error 1
-> make[1]: *** Waiting for unfinished jobs....
->=20
->=20
->=20
-> I have locally fixed by adding an include just above the cpumask_t
-> reference.  The include may belong elsewhere, but in case I got it
-> right,.. :-)
->=20
-> Signed-Off-By:  Will Schmidt <will_schmidt@vnet.ibm.com>
-
-you got it right :-) The full fix (the bug also affects sparc) is=20
-already queued up - see it below.
-
-	Ingo
-
--------------->
-=46rom 0c7e5b187fc599a40c1e6392926424d26cd0cf41 Mon Sep 17 00:00:00 200=
-1
-=46rom: Stephen Rothwell <sfr@canb.auug.org.au>
-Date: Thu, 19 Mar 2009 22:03:22 +1100
-Subject: [PATCH] numa, cpumask: move numa_node_id default implementatio=
-n to topology.h, fix
-
-Impact: build fix for powerpc and sparc
-
-Today's linux-next build (powerpc allyesconfig) failed like this:
-
-> In file included from include/linux/mmzone.h:776,
->                  from include/linux/gfp.h:5,
->                  from include/linux/kmod.h:23,
->                  from include/linux/module.h:14,
->                  from init/version.c:11:
-> arch/powerpc/include/asm/mmzone.h:32: error: expected '=3D', ',', ';'=
-, 'asm' or '__attribute__' before 'numa_cpumask_lookup_table'
-
-Caused by commit 082edb7bf443eb8eda15b482d16ad9dd8137ad24 ("numa,
-cpumask: move numa_node_id default implementation to topology.h") from
-the cpus4096 tree which removed the include of linux/topology.h from
-linux/mmzone.h.
-
-Same for sparc64 defconfig.
-
-Signed-off-by: Stephen Rothwell <sfr@canb.auug.org.au>
-Acked-b: Rusty Russell <rusty@rustcorp.com.au>
-Cc: ppc-dev <linuxppc-dev@ozlabs.org>
-LKML-Reference: <20090319220322.3baa4613.sfr@canb.auug.org.au>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Luis Henriques <henrix@sapo.pt>
 ---
- arch/powerpc/include/asm/mmzone.h |    1 +
- arch/sparc/include/asm/mmzone.h   |    2 ++
- 2 files changed, 3 insertions(+), 0 deletions(-)
+ src/cyclictest/cyclictest.8 |    3 +++
+ src/cyclictest/cyclictest.c |   21 ++++++++++++++++++---
+ 2 files changed, 21 insertions(+), 3 deletions(-)
 
-diff --git a/arch/powerpc/include/asm/mmzone.h b/arch/powerpc/include/a=
-sm/mmzone.h
-index 19f299b..35acac9 100644
---- a/arch/powerpc/include/asm/mmzone.h
-+++ b/arch/powerpc/include/asm/mmzone.h
-@@ -8,6 +8,7 @@
- #define _ASM_MMZONE_H_
- #ifdef __KERNEL__
-=20
-+#include <linux/cpumask.h>
-=20
- /*
-  * generic non-linear memory support:
-diff --git a/arch/sparc/include/asm/mmzone.h b/arch/sparc/include/asm/m=
-mzone.h
-index ebf5986..e8c6487 100644
---- a/arch/sparc/include/asm/mmzone.h
-+++ b/arch/sparc/include/asm/mmzone.h
-@@ -3,6 +3,8 @@
-=20
- #ifdef CONFIG_NEED_MULTIPLE_NODES
-=20
-+#include <linux/cpumask.h>
+diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
+index 4b4eedc..a917b45 100644
+--- a/src/cyclictest/cyclictest.8
++++ b/src/cyclictest/cyclictest.8
+@@ -96,6 +96,9 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
+ .B \-n, \-\-nanosleep
+ Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
+ .TP
++.B \-N, \-\-nsecs
++Show results in nanoseconds instead of microseconds, which is the default unit.
++.TP
+ .B \-o, \-\-oscope=RED
+ Oscilloscope mode, reduce verbose output by RED.
+ .TP
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 5f49fbb..ed96864 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -139,6 +139,7 @@ static int lockall = 0;
+ static int tracetype = NOTRACE;
+ static int histogram = 0;
+ static int duration = 0;
++static int use_nsecs = 0;
+ 
+ /* Backup of kernel variables that we modify */
+ static struct kvars {
+@@ -286,6 +287,14 @@ static inline long calcdiff(struct timespec t1, struct timespec t2)
+ 	return diff;
+ }
+ 
++static inline long calcdiff_ns(struct timespec t1, struct timespec t2)
++{
++	long diff;
++	diff = NSEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
++	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
++	return diff;
++}
 +
- extern struct pglist_data *node_data[];
-=20
- #define NODE_DATA(nid)		(node_data[nid])
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ void tracing(int on)
+ {
+ 	if (on) {
+@@ -580,7 +589,10 @@ void *timerthread(void *param)
+ 		}
+ 		clock_gettime(par->clock, &now);
+ 
+-		diff = calcdiff(now, next);
++		if (use_nsecs)
++			diff = calcdiff_ns(now, next);
++		else
++			diff = calcdiff(now, next);
+ 		if (diff < stat->min)
+ 			stat->min = diff;
+ 		if (diff > stat->max)
+@@ -657,6 +669,7 @@ static void display_help(void)
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+ 	       "-m       --mlockall        lock current and future memory allocations\n"
+ 	       "-n       --nanosleep       use clock_nanosleep\n"
++	       "-N       --nsecs           print results in ns instead of ms (default ms)\n"
+ 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+ 	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+ 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
+@@ -726,6 +739,7 @@ static void process_options (int argc, char *argv[])
+ 			{"loops", required_argument, NULL, 'l'},
+ 			{"mlockall", no_argument, NULL, 'm' },
+ 			{"nanosleep", no_argument, NULL, 'n'},
++			{"nsecs", no_argument, NULL, 'N'},
+ 			{"oscope", required_argument, NULL, 'o'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"preemptoff", no_argument, NULL, 'P'},
+@@ -738,7 +752,7 @@ static void process_options (int argc, char *argv[])
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:Bc:d:fh:i:Il:no:p:Pmqrst::vD:",
++		int c = getopt_long (argc, argv, "a::b:Bc:d:fh:i:Il:nNo:p:Pmqrst::vD:",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -766,6 +780,7 @@ static void process_options (int argc, char *argv[])
+ 		case 'I': tracetype = IRQSOFF; break;
+ 		case 'l': max_cycles = atoi(optarg); break;
+ 		case 'n': use_nanosleep = MODE_CLOCK_NANOSLEEP; break;
++		case 'N': use_nsecs = 1; break;
+ 		case 'o': oscope_reduction = atoi(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'P': tracetype = PREEMPTOFF; break;
+@@ -908,7 +923,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 	if (!verbose) {
+ 		if (quiet != 1) {
+ 			printf("T:%2d (%5d) P:%2d I:%ld C:%7lu "
+-			       "Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n",
++			       "Min:%7ld Act:%8ld Avg:%8ld Max:%8ld\n",
+ 			       index, stat->tid, par->prio, par->interval,
+ 			       stat->cycles, stat->min, stat->act,
+ 			       stat->cycles ?
+-- 
+1.6.2
+
+
+-- 
+Luis Henriques
