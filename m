@@ -1,32 +1,39 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH] net: reorder struct Qdisc for better SMP performance
-Date: Fri, 20 Mar 2009 01:33:56 -0700 (PDT)
-Message-ID: <20090320.013356.246706473.davem@davemloft.net>
-References: <49C1DCDF.6050300@cosmosbay.com>
-	<20090318.225822.179893347.davem@davemloft.net>
-	<49C250DB.3050707@cosmosbay.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [Announce] 2.6.29-rc78rt1
+Date: Fri, 20 Mar 2009 16:48:08 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903201645400.29264@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine
+ <49C2F37B.3030909@am.sony.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: sven@thebigcorporation.com, ghaskins@novell.com, vernux@us.ibm.com,
-	andi@firstfloor.org, netdev@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	pmullaney@novell.com
-To: dada1@cosmosbay.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Frank Rowand <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:55693
-	"EHLO sunset.davemloft.net" rhost-flags-OK-FAIL-OK-OK)
-	by vger.kernel.org with ESMTP id S1756342AbZCTIeK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Mar 2009 04:34:10 -0400
-In-Reply-To: <49C250DB.3050707@cosmosbay.com>
+Received: from www.tglx.de ([62.245.132.106]:55860 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754225AbZCTPsY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Mar 2009 11:48:24 -0400
+In-Reply-To: <49C2F37B.3030909@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Eric Dumazet <dada1@cosmosbay.com>
-Date: Thu, 19 Mar 2009 15:04:11 +0100
+On Thu, 19 Mar 2009, Frank Rowand wrote:
+> 
+> >    - lots of tracer updates from -tip (check the tip git logs)
+> 
+> I have been trying to reverse engineer which git commits
+> comprise origin.patch, but my git-foo is not up to the
+> task.  For any single file in origin.patch, I can work
+> backwards to find the git commit associated with it, but I
+> don't know how to easily create a list of all of the git commits
+> that are associated with origin.patch.  Do you have any quick
+> hints that would assist me in my quest?
 
-> [PATCH] net: reorder struct Qdisc for better SMP performance
+  git log v.2.6.29-rc8..
 
-Applied, thanks.
+I'm going to add a log to the broken out tarball next time.
+
+Thanks,
+
+	tglx
 
