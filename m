@@ -1,54 +1,37 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [Announce] 2.6.29-rc8-rt3
-Date: Mon, 23 Mar 2009 17:26:52 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
- <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+From: "=?iso-8859-1?q?=54=68=6f=6d=61=73=20=48=e4=62=65=72=6c=65?="
+	<thomas.haeberle@vipco.de>
+Subject: potential and requirements of RT-patched Linux
+Date: Mon, 23 Mar 2009 17:06:35 +0100 (MET)
+Message-ID: <200903231606.n2NG6Zqc001174@post.webmailer.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:43777 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753999AbZCWQ1l (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Mar 2009 12:27:41 -0400
-In-Reply-To: <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+Received: from em-p00-ob.rzone.de ([81.169.146.225]:14593 "EHLO
+	em-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753728AbZCWQhS convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Mar 2009 12:37:18 -0400
+Received: from post.webmailer.de (bel.store [192.168.41.68])
+	by snori-em-01.store (RZmta 18.28) with ESMTP id a0410al2NCDJYB
+	for <linux-rt-users@vger.kernel.org>;
+	Mon, 23 Mar 2009 17:25:18 +0100 (MET)
+Received: (from httpd@localhost)
+	by post.webmailer.de (8.13.7/8.13.6) id n2NG6Zqc001174
+	for linux-rt-users@vger.kernel.org; Mon, 23 Mar 2009 17:06:35 +0100 (MET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
 
-    - fix a x86 32bit PAE pagetable corruption caused by a hard to
-      trigger race.
+Hello!
 
-    - update to latest linus and tip
+I am currently collecting information about the potential and requirements of a RT-patched Linux.
+Some systems, numbers and thus perspectives are already on the RT-patch-wiki site, but I would like to know more about your recent experiences since the last contribution to the "Platforms Tested and in Use with CONFIG_PREEMPT_RT" table is about a year old.
 
-Download locations:
+What systems are you developing on? What about PowerPCs? What performance can I roughly expect if I take my little MPC5200 (500MHz, 64MB DRAM) and run it with a RT-patched Linux? Can I control my own laser-robot like the Trumpf guys? ;-)
+No, seriously: The realtime capabilities on high-end hardware are quite impressive, but how do they change downward to smaller embedded systems? It's surely not a linear regession, is it?
 
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
- 
-Information on the RT patch can be found at:
+Greetings,
+Thomas
 
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.29-rc8-rt3 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29-rc8.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rc8-rt3.bz2
-
-The broken out patches are also available at the same download
-locations.
-
-Enjoy !
-
-       tglx
