@@ -1,54 +1,39 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Grammostola Rosea <rosea.grammostola@gmail.com>
 Subject: Re: [Announce] 2.6.29-rt1
-Date: Wed, 25 Mar 2009 22:09:14 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903252208440.3397@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>  <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>  <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
- <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>  <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>  <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>  <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
- <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>  <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <1238015156.2500.83.camel@ht.satnam>
+Date: Wed, 25 Mar 2009 22:16:09 +0100
+Message-ID: <49CA9F19.7070100@gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain> <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>,
 	Clark Williams <williams@redhat.com>,
 	Frank Rowand <frank.rowand@am.sony.com>
-To: Jaswinder Singh Rajput <jaswinder@kernel.org>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:35466 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750862AbZCYVK5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Mar 2009 17:10:57 -0400
-In-Reply-To: <1238015156.2500.83.camel@ht.satnam>
+Received: from smtpq4.tb.mail.iss.as9143.net ([212.54.42.167]:40291 "EHLO
+	smtpq4.tb.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751669AbZCYVTY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Mar 2009 17:19:24 -0400
+In-Reply-To: <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 26 Mar 2009, Jaswinder Singh Rajput wrote:
+Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+>  
+> Enjoy !
+>
+>        tglx
 
-> On Wed, 2009-03-25 at 21:59 +0100, Thomas Gleixner wrote:
-> > We are pleased to announce the next update to our new preempt-rt
-> > series.
-> >  
-> >      - port forward to 2.6.29 final
-> > 
-> > Download locations:
-> > 
-> >     http://rt.et.redhat.com/download/
-> >     http://www.kernel.org/pub/linux/kernel/projects/rt/
-> >  
-> > Information on the RT patch can be found at:
-> > 
-> >     http://rt.wiki.kernel.org/index.php/Main_Page
-> > 
-> > to build the 2.6.29-rt1 tree, the following patches should be
-> > applied:
-> > 
-> >     http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29.tar.bz2
-> 
-> Is this valid ?
+Thankx!
 
-If we remove the testing/ it should work better :)
+Is there also an announce mailinglist? Would be good imho. So people can 
+subscribe.
 
-   tglx
+\r
