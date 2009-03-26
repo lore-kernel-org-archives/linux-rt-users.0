@@ -1,7 +1,7 @@
 From: GeunSik Lim <leemgs1@gmail.com>
 Subject: Re: [Announce] 2.6.29-rt1
-Date: Thu, 26 Mar 2009 16:52:31 +0900
-Message-ID: <49b7c2350903260052o74b1184chba7964c040fa55ce@mail.gmail.com>
+Date: Thu, 26 Mar 2009 17:02:49 +0900
+Message-ID: <49b7c2350903260102p772b2910xfe245e4b91fe2c0b@mail.gmail.com>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
 	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
@@ -26,11 +26,11 @@ Cc: Jaswinder Singh Rajput <jaswinder@kernel.org>,
 	Frank Rowand <frank.rowand@am.sony.com>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.175]:54729 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754620AbZCZHwd convert rfc822-to-8bit (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.233]:36166 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754751AbZCZICv convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 03:52:33 -0400
+	Thu, 26 Mar 2009 04:02:51 -0400
 In-Reply-To: <alpine.LFD.2.00.0903252208440.3397@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -109,15 +109,6 @@ l" in
 ml
 > Please read the FAQ at =C2=A0http://www.tux.org/lkml/
 >
---
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at =C2=A0http://www.tux.org/lkml/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
