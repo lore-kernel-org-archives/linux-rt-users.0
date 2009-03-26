@@ -1,38 +1,52 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [LAD] [Fwd: Re: realtime kernel for Debian]
-Date: Thu, 26 Mar 2009 15:29:07 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903261528190.3397@localhost.localdomain>
-References: <49C8FF4D.1040204@gmail.com> <49CA0982.5090404@gmail.com> <49CA976C.4070004@gmail.com> <49CABC0C.8060704@alice-dsl.net>
+From: Grammostola Rosea <rosea.grammostola@gmail.com>
+Subject: RT kernel for Debian or maybe in mainline?
+Date: Thu, 26 Mar 2009 16:13:07 +0100
+Message-ID: <49CB9B83.4010507@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Grammostola Rosea <rosea.grammostola@gmail.com>,
-	pkg-multimedia-maintainers@lists.alioth.debian.org,
-	linux-audio-user <linux-audio-user@lists.linuxaudio.org>,
-	linux-rt-users@vger.kernel.org, 64studio-devel@lists.64studio.com,
-	Musix GNU+Linux users list <musix-users@lists.ourproject.org>,
-	Ubuntu Studio Development & Technical Discussion
-	<ubuntu-studio-devel@lists.ubuntu.com>,
-	Linux-audio-dev@lists.linuxaudio.org
-To: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:41731 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758329AbZCZObM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 10:31:12 -0400
-In-Reply-To: <49CABC0C.8060704@alice-dsl.net>
+Received: from smtpq3.tb.mail.iss.as9143.net ([212.54.42.166]:52975 "EHLO
+	smtpq3.tb.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753030AbZCZPQl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Mar 2009 11:16:41 -0400
+Received: from [212.54.42.144] (helo=smtp13.tb.mail.iss.as9143.net)
+	by smtpq3.tb.mail.iss.as9143.net with esmtp (Exim 4.69)
+	(envelope-from <rosea.grammostola@gmail.com>)
+	id 1LmrJu-0008Hd-Ss
+	for linux-rt-users@vger.kernel.org; Thu, 26 Mar 2009 16:16:38 +0100
+Received: from cc305009-a.groni1.gr.home.nl ([82.73.157.254] helo=[192.168.1.104])
+	by smtp13.tb.mail.iss.as9143.net with esmtp (Exim 4.69)
+	(envelope-from <rosea.grammostola@gmail.com>)
+	id 1LmrJb-0001uG-NZ
+	for linux-rt-users@vger.kernel.org; Thu, 26 Mar 2009 16:16:19 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 26 Mar 2009, Ralf Mardorf wrote:
-> I often patch vanillas with the rt patch and check them for my hardware,
-> until now all kernels failed with my hardware. I stopped with 64 Studio
-> 2.1 based on etch running a self compiled kernel 2.6.24.7-rt17 for
-> Debian based distros. For music I now run a stable Windows, but I will
-> test any kernel, if someone else will build it.
+Hi,
 
-Does vanilla work on your hardware ? What's the failure which you
-observe on your hardware with the -rt patches applied ?
+There is an discussion on the Debian-developer mailinglist about 
+including a RT kernel in Debian. Which would be great imo. Maybe it 
+would even be better if the default kernels supports realtime. And isn't 
+that an goal of developers of the RT patches, that it will hit mainline?
 
-Thanks,
+So my question is whether some RT patches developers or other people who 
+knows a lot about this topic, are will to contribute in building a RT 
+kernel for Debian or if they see possibilities in improving the default 
+Debian kernel for RT.
 
-	tglx
+Maybe it's a good time to work on that and maybe an RT kernel of RT 
+possibilities in the default Debian kernel will help the goals of the RT 
+kernel team!?
+
+Maybe some people can join the discussion on the Debian developers list?
+
+Here are two discussion about it:
+http://www.linux-archive.org/debian-development/266877-please-improve-debian-multimedia-production-2.html
+http://www.linux-archive.org/debian-development/268999-realtime-kernel-debian.html
+
+Thanks in advance,
+
+\r
