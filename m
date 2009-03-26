@@ -1,105 +1,29 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [Announce] 2.6.29-rt1
-Date: Thu, 26 Mar 2009 19:54:25 +0900
-Message-ID: <49b7c2350903260354p6eaf50ebo87985dcfb8d48ba0@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: RE: Small fix for MIPs
+Date: Thu, 26 Mar 2009 15:26:00 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903261524490.3397@localhost.localdomain>
+References: <400C43189542CE41BC0A5B252FC9013649F00BEF97@SJEXCHCCR02.corp.ad.broadcom.com> <400C43189542CE41BC0A5B252FC9013649F00BEF9A@SJEXCHCCR02.corp.ad.broadcom.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: John Ulvr <julvr@broadcom.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.173]:30908 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751041AbZCZKy1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 06:54:27 -0400
+Received: from www.tglx.de ([62.245.132.106]:42424 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755592AbZCZO0J (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Mar 2009 10:26:09 -0400
+In-Reply-To: <400C43189542CE41BC0A5B252FC9013649F00BEF9A@SJEXCHCCR02.corp.ad.broadcom.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, 25 Mar 2009, John Ulvr wrote:
 
-I understood statement that Thosmas explained about invalid access of
-2.6.29-rt1 soruces.
-In general,
-We remeber rc directory (./v2.6/testing/ and release directory
-(./v2.6/) certainly.
+> Just to clarify, the bellow applies to the RT_PREEMPT patch on the
+> 2.6.29-rc8 kernel, and fixes a compile error.
 
-Release Version is located in http://www.kernel.org/pub/linux/kernel/v2.6/ site.
-RC      Version is located in
-http://www.kernel.org/pub/linux/kernel/v2.6/testing/ site.
+It needs a little more than that. The MIPS preempt-rt changes got
+dropped, but I'll resurrect them in one of the next releases.
 
-I summarized quick howto per notice of "2.6.* rt patch" file.
-fc9#> wget http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.tar.bz2
-  (If linux version is RC[release candidate] version,
- use "wget http://www.kernel.org/pub/linux/kernel/v2.6/testing/***" command.)
-fc9#> wget http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt1.bz2
-fc9#> tar xjf ./linux-2.6.29.tar.bz2
-fc9#> tar xvjf ./patch-2.6.29-rt1-broken-out.tar.bz2
-fc9#> cd ./linux-2.6.29
-fc9#> for i in `cat ../patches/series | grep patch | grep -v "#"  `;do
-echo "+++ patching $i"; patch -p1 <
+Thanks,
 
-../patches/$i;done
-fc9#> cp ./arch/x86/configs/i386_defconfig ./.config
-fc9#> make menuconfig
-        ..... Below Omission .....
-  	
-
-Regards,
-GeunSik Lim
-
------ Original Message -----
-From: "Thomas Gleixner" <tglx@linutronix.de>
-To: "Jaswinder Singh Rajput" <jaswinder@kernel.org>
-Cc: "LKML" <linux-kernel@vger.kernel.org>; "rt-users"
-<linux-rt-users@vger.kernel.org>; "Ingo Molnar" <mingo@elte.hu>;
-"Steven Rostedt" <rostedt@goodmis.org>; "Peter Zijlstra"
-<peterz@infradead.org>; "Carsten Emde" <ce@ceag.ch>; "Clark Williams"
-<williams@redhat.com>; "Frank Rowand" <frank.rowand@am.sony.com>
-Sent: Thursday, March 26, 2009 6:09 AM
-Subject: Re: [Announce] 2.6.29-rt1
-
-
-> On Thu, 26 Mar 2009, Jaswinder Singh Rajput wrote:
->
->> On Wed, 2009-03-25 at 21:59 +0100, Thomas Gleixner wrote:
->> > We are pleased to announce the next update to our new preempt-rt
->> > series.
->> >
->> >      - port forward to 2.6.29 final
->> >
->> > Download locations:
->> >
->> >     http://rt.et.redhat.com/download/
->> >     http://www.kernel.org/pub/linux/kernel/projects/rt/
->> >
->> > Information on the RT patch can be found at:
->> >
->> >     http://rt.wiki.kernel.org/index.php/Main_Page
->> >
->> > to build the 2.6.29-rt1 tree, the following patches should be
->> > applied:
->> >
->> >     http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29.tar.bz2
->>
->> Is this valid ?
->
-> If we remove the testing/ it should work better :)
->
->   tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
->
->
->
->
+	tglx
