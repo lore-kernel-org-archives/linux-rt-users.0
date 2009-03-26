@@ -1,28 +1,37 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: RE: Small fix for MIPs
-Date: Thu, 26 Mar 2009 15:26:00 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0903261524490.3397@localhost.localdomain>
-References: <400C43189542CE41BC0A5B252FC9013649F00BEF97@SJEXCHCCR02.corp.ad.broadcom.com> <400C43189542CE41BC0A5B252FC9013649F00BEF9A@SJEXCHCCR02.corp.ad.broadcom.com>
+Subject: Re: [LAD] [Fwd: Re: realtime kernel for Debian]
+Date: Thu, 26 Mar 2009 15:29:07 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903261528190.3397@localhost.localdomain>
+References: <49C8FF4D.1040204@gmail.com> <49CA0982.5090404@gmail.com> <49CA976C.4070004@gmail.com> <49CABC0C.8060704@alice-dsl.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: John Ulvr <julvr@broadcom.com>
+Cc: Grammostola Rosea <rosea.grammostola@gmail.com>,
+	pkg-multimedia-maintainers@lists.alioth.debian.org,
+	linux-audio-user <linux-audio-user@lists.linuxaudio.org>,
+	linux-rt-users@vger.kernel.org, 64studio-devel@lists.64studio.com,
+	Musix GNU+Linux users list <musix-users@lists.ourproject.org>,
+	Ubuntu Studio Development & Technical Discussion
+	<ubuntu-studio-devel@lists.ubuntu.com>,
+	Linux-audio-dev@lists.linuxaudio.org
+To: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:42424 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:41731 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755592AbZCZO0J (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 10:26:09 -0400
-In-Reply-To: <400C43189542CE41BC0A5B252FC9013649F00BEF9A@SJEXCHCCR02.corp.ad.broadcom.com>
+	id S1758329AbZCZObM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Mar 2009 10:31:12 -0400
+In-Reply-To: <49CABC0C.8060704@alice-dsl.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 25 Mar 2009, John Ulvr wrote:
+On Thu, 26 Mar 2009, Ralf Mardorf wrote:
+> I often patch vanillas with the rt patch and check them for my hardware,
+> until now all kernels failed with my hardware. I stopped with 64 Studio
+> 2.1 based on etch running a self compiled kernel 2.6.24.7-rt17 for
+> Debian based distros. For music I now run a stable Windows, but I will
+> test any kernel, if someone else will build it.
 
-> Just to clarify, the bellow applies to the RT_PREEMPT patch on the
-> 2.6.29-rc8 kernel, and fixes a compile error.
-
-It needs a little more than that. The MIPS preempt-rt changes got
-dropped, but I'll resurrect them in one of the next releases.
+Does vanilla work on your hardware ? What's the failure which you
+observe on your hardware with the -rt patches applied ?
 
 Thanks,
 
