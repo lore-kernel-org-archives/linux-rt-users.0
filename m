@@ -1,61 +1,105 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [Fwd: Re: realtime kernel for Debian]
-Date: Thu, 26 Mar 2009 11:27:15 +0100
-Message-ID: <20090326102715.GA11566@pengutronix.de>
-References: <49C8FF4D.1040204@gmail.com> <49CA0982.5090404@gmail.com> <49CA976C.4070004@gmail.com>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: [Announce] 2.6.29-rt1
+Date: Thu, 26 Mar 2009 19:54:25 +0900
+Message-ID: <49b7c2350903260354p6eaf50ebo87985dcfb8d48ba0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: pkg-multimedia-maintainers@lists.alioth.debian.org,
-	linux-audio-user <linux-audio-user@lists.linuxaudio.org>,
-	linux-rt-users@vger.kernel.org, 64studio-devel@lists.64studio.com,
-	Musix GNU+Linux users list <musix-users@lists.ourproject.org>,
-	Ubuntu Studio Development & Technical Discussion
-	<ubuntu-studio-devel@lists.ubuntu.com>,
-	Linux-audio-dev@lists.linuxaudio.org
-To: Grammostola Rosea <rosea.grammostola@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:40756 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751291AbZCZK1U (ORCPT
+Received: from wf-out-1314.google.com ([209.85.200.173]:30908 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751041AbZCZKy1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 06:27:20 -0400
-Content-Disposition: inline
-In-Reply-To: <49CA976C.4070004@gmail.com>
+	Thu, 26 Mar 2009 06:54:27 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Hi,
 
-On Wed, Mar 25, 2009 at 09:43:24PM +0100, Grammostola Rosea wrote:
-> Sorry, but I've to call again...
+I understood statement that Thosmas explained about invalid access of
+2.6.29-rt1 soruces.
+In general,
+We remeber rc directory (./v2.6/testing/ and release directory
+(./v2.6/) certainly.
+
+Release Version is located in http://www.kernel.org/pub/linux/kernel/v2.6/ site.
+RC      Version is located in
+http://www.kernel.org/pub/linux/kernel/v2.6/testing/ site.
+
+I summarized quick howto per notice of "2.6.* rt patch" file.
+fc9#> wget http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.tar.bz2
+  (If linux version is RC[release candidate] version,
+ use "wget http://www.kernel.org/pub/linux/kernel/v2.6/testing/***" command.)
+fc9#> wget http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt1.bz2
+fc9#> tar xjf ./linux-2.6.29.tar.bz2
+fc9#> tar xvjf ./patch-2.6.29-rt1-broken-out.tar.bz2
+fc9#> cd ./linux-2.6.29
+fc9#> for i in `cat ../patches/series | grep patch | grep -v "#"  `;do
+echo "+++ patching $i"; patch -p1 <
+
+../patches/$i;done
+fc9#> cp ./arch/x86/configs/i386_defconfig ./.config
+fc9#> make menuconfig
+        ..... Below Omission .....
+  	
+
+Regards,
+GeunSik Lim
+
+----- Original Message -----
+From: "Thomas Gleixner" <tglx@linutronix.de>
+To: "Jaswinder Singh Rajput" <jaswinder@kernel.org>
+Cc: "LKML" <linux-kernel@vger.kernel.org>; "rt-users"
+<linux-rt-users@vger.kernel.org>; "Ingo Molnar" <mingo@elte.hu>;
+"Steven Rostedt" <rostedt@goodmis.org>; "Peter Zijlstra"
+<peterz@infradead.org>; "Carsten Emde" <ce@ceag.ch>; "Clark Williams"
+<williams@redhat.com>; "Frank Rowand" <frank.rowand@am.sony.com>
+Sent: Thursday, March 26, 2009 6:09 AM
+Subject: Re: [Announce] 2.6.29-rt1
+
+
+> On Thu, 26 Mar 2009, Jaswinder Singh Rajput wrote:
 >
-> The developers seems very willing to include a realtime kernel there =
-=20
-> repo. They need some people who wants to build and maintain it. This =
-is =20
-> really  a chance  for  linux audio, especially on Debian.  *This is t=
-he =20
-> moment!*
+>> On Wed, 2009-03-25 at 21:59 +0100, Thomas Gleixner wrote:
+>> > We are pleased to announce the next update to our new preempt-rt
+>> > series.
+>> >
+>> >      - port forward to 2.6.29 final
+>> >
+>> > Download locations:
+>> >
+>> >     http://rt.et.redhat.com/download/
+>> >     http://www.kernel.org/pub/linux/kernel/projects/rt/
+>> >
+>> > Information on the RT patch can be found at:
+>> >
+>> >     http://rt.wiki.kernel.org/index.php/Main_Page
+>> >
+>> > to build the 2.6.29-rt1 tree, the following patches should be
+>> > applied:
+>> >
+>> >     http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29.tar.bz2
+>>
+>> Is this valid ?
 >
-> So please consider to offer your help in building, maintaining  and/o=
-r =20
-> testing!
-I don't know x86 at all and the inner rt-things not enough to do this
-alone, but I have some knowledge about RT on ARM, the kernel in general
-and Debian packaging.  So this is what I can offer.
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> If we remove the testing/ it should work better :)
+>
+>   tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
+>
+>
+>
