@@ -1,83 +1,44 @@
-From: Gregory Haskins <ghaskins@novell.com>
+From: Robin Gareus <robin@gareus.org>
 Subject: Re: 2.6.29-rt1+ irqbalance = OOPS
-Date: Fri, 27 Mar 2009 12:49:46 -0400
-Message-ID: <49CD03AA.4030000@novell.com>
-References: <49CCFBCA.6050702@gareus.org>
+Date: Fri, 27 Mar 2009 18:24:17 +0100
+Message-ID: <49CD0BC1.6090305@gareus.org>
+References: <49CCFBCA.6050702@gareus.org> <49CD03AA.4030000@novell.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enig36DD2609EF8214909B5FC198"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Robin Gareus <robin@gareus.org>
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from victor.provo.novell.com ([137.65.250.26]:49271 "EHLO
-	victor.provo.novell.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754064AbZC0Qrc (ORCPT
+Received: from mo-p05-ob.rzone.de ([81.169.146.182]:10416 "EHLO
+	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754140AbZC0RYd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Mar 2009 12:47:32 -0400
-In-Reply-To: <49CCFBCA.6050702@gareus.org>
+	Fri, 27 Mar 2009 13:24:33 -0400
+In-Reply-To: <49CD03AA.4030000@novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig36DD2609EF8214909B5FC198
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Gregory Haskins wrote:
+> Robin Gareus wrote:
+>> Hello,
+>>
+>> Starting the irqbalance daemon ( http://www.irqbalance.org/ ) on
+>> 2.6.29-rt1 causes the system to OOPS and freeze. irqbalance works fine
+>> with previous realtime kernels (2.6.24.7-rt27).
+>>
+>> The OOPS seems to be caused by the PID of the [timer] IRQ-1
+> This in of itself might be part of the problem.  I didn't think the
+> timer was supposed to be threaded.  Thomas?
 
-Robin Gareus wrote:
-> Hello,
->
-> Starting the irqbalance daemon ( http://www.irqbalance.org/ ) on
-> 2.6.29-rt1 causes the system to OOPS and freeze. irqbalance works fine
-> with previous realtime kernels (2.6.24.7-rt27).
->
-> The OOPS seems to be caused by the PID of the [timer] IRQ-1
-This in of itself might be part of the problem.  I didn't think the
-timer was supposed to be threaded.  Thomas?
+OOPS ;) my bad. IRQ-0 is the timer and it's indeed not threaded.
 
-> . However the
-> OOPS message is too long and I can't read the beginning lines on the
-> terminal. The system hangs so I can't scroll back and it's not written
-> to any log. SysRq does also not work after the OOPS.
->
-> A bit off topic, but how can I capture those OOPSes?
->  =20
-A serial-console or netconsole is generally better than a VT for
-catching the whole output.
+IRQ-1 is i8042
 
-> I could get a larger screen and a digital camera ;) The lkcd.sf.net
-> patch does not apply to 2.6.29. Running a realtime kernel in qemu does
-> not make much sense, although it may be sufficient to reproduce this OO=
-PS.
-> Is there a way to use USB as serial console using a hub and two
-> computers?
-I think so, though I have never tried.
+The OOPS can be triggered by launching irqbalance. pressing any key.
+For whatever reason the OOPS also takes place after a random amount of
+time without pressing any key..
 
-> I guess I'll need a dongle or sth. Besides would a printk()
-> to a serial port work even if some IRQ handler hangs?
->  =20
-Usually yes.  Of course, it depends on what is actually broken, but
-*most* issues still allow the printks to work.
-
-Good luck!
--Greg
+robin
 
 
-
-
---------------enig36DD2609EF8214909B5FC198
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAknNA6oACgkQlOSOBdgZUxmpaACfaNgXWz8kCsD1pkv6ixytPaCO
-EqUAn3RpAiaJrNRi+OjEzXAhgtDtmYsp
-=qIX4
------END PGP SIGNATURE-----
-
---------------enig36DD2609EF8214909B5FC198--
