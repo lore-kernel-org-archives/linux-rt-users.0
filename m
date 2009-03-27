@@ -1,165 +1,226 @@
-From: Jens M Andreasen <jens.andreasen@comhem.se>
-Subject: Re: [LAD] [Fwd: Re: realtime kernel for Debian]
-Date: Thu, 26 Mar 2009 19:34:30 +0100
-Message-ID: <1238092470.6651.21.camel@c80-216-254-250.bredband.comhem.se>
-References: <49C8FF4D.1040204@gmail.com> <49CA0982.5090404@gmail.com>
-	 <49CA976C.4070004@gmail.com>
+From: Philippe Reynes <philippe.reynes@isismpp.fr>
+Subject: Re: [Announce] 2.6.29-rt1
+Date: Fri, 27 Mar 2009 09:37:17 +0000 (UTC)
+Message-ID: <gqi6oc$1s3$1@ger.gmane.org>
+References: <49b7c2350903260354p6eaf50ebo87985dcfb8d48ba0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: pkg-multimedia-maintainers@lists.alioth.debian.org,
-	linux-audio-user <linux-audio-user@lists.linuxaudio.org>,
-	linux-rt-users@vger.kernel.org, 64studio-devel@lists.64studio.com,
-	Musix GNU+Linux users list <musix-users@lists.ourproject.org>,
-	Ubuntu Studio Development & Technical Discussion
-	<ubuntu-studio-devel@lists.ubuntu.com>,
-	Linux-audio-dev@lists.linuxaudio.org
-To: Grammostola Rosea <rosea.grammostola@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch-smtp02.sth.basefarm.net ([80.76.149.213]:54600 "EHLO
-	ch-smtp02.sth.basefarm.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754200AbZCZSgH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Mar 2009 14:36:07 -0400
-In-Reply-To: <49CA976C.4070004@gmail.com>
+Received: from main.gmane.org ([80.91.229.2]:48457 "EHLO ciao.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755122AbZC0JuK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 27 Mar 2009 05:50:10 -0400
+Received: from root by ciao.gmane.org with local (Exim 4.43)
+	id 1Ln8hO-00078E-M0
+	for linux-rt-users@vger.kernel.org; Fri, 27 Mar 2009 09:50:02 +0000
+Received: from extranet.isismpp.fr ([86.65.130.100])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Mar 2009 09:50:02 +0000
+Received: from philippe.reynes by extranet.isismpp.fr with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Mar 2009 09:50:02 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt1.bz2
-
-... is out :)
-
-/j
+Hi
 
 
-On Wed, 2009-03-25 at 21:43 +0100, Grammostola Rosea wrote:
+I've got crashes when I run an app with thread with RT priority.
+This crash could happen on any comman, here some log of crashes :
+
+
+=46irst one :
+
+server calling Oops: Exception in kernel mode, sig: 5 [#1]
+PREEMPT MPC837x RR605
+Modules linked in:
+NIP: c0075b08 LR: c0075a50 CTR: c00d7d90
+REGS: dbb6dcb0 TRAP: 0700   Not tainted  (2.6.29-rt1)
+MSR: 00029032 <EE,ME,CE,IR,DR>  CR: 24002488  XER: 00000000
+TASK =3D dddea1e0[1769] 'vsftpd' THREAD: dbb6c000
+GPR00: 00000001 dbb6dd60 dddea1e0 df803e24 df803e10 df803e08 00000000=20
+ddc72020=20
+GPR08: 00000000 0000001b dddea1e0 df803e24 24000482 100bf094 00000000=20
+c04aa6fc=20
+GPR16: 00200200 00100100 c04e5958 c04e595c dbb6dd68 c04e0000 c04e0000=20
+c04aa6bc=20
+GPR24: 00000020 dbb6ddd8 00000010 df80ae00 00000000 dbb6de38 df816800=20
+df803e00=20
+NIP [c0075b08] cache_alloc_refill+0x180/0x62c
+LR [c0075a50] cache_alloc_refill+0xc8/0x62c
+Call Trace:
+[dbb6dd60] [c038878c] preempt_schedule_irq+0x5c/0x80 (unreliable)
+[dbb6ddd0] [c00761a0] kmem_cache_alloc+0x6c/0x140
+[dbb6de00] [c002ddb4] __sigqueue_do_alloc+0xa0/0xec
+[dbb6de10] [c002e2f8] send_signal+0xa4/0x224
+[dbb6de30] [c002f680] do_notify_parent+0x1a8/0x1d4
+[dbb6ded0] [c0025608] do_exit+0x584/0x69c
+[dbb6df10] [c00257a0] do_group_exit+0x80/0xac
+[dbb6df30] [c00257e0] sys_exit_group+0x14/0x28
+[dbb6df40] [c00117f4] ret_from_syscall+0x0/0x38
+--- Exception: c01 at 0xfef463c
+    LR =3D 0xffa5884
+Instruction dump:
+7f87f800 40be0018 80ff0010 38000001 901f0048 7f872000 419e00e8 80070010=
+=20
+813b001c 7c090010 38000000 7c000114 <0f000000> 381a0001 38c7001c 7c0903=
+a6=20
+---[ end trace 99200bd45c29aa91 ]---
+=46ixing recursive fault but reboot is needed!
+
+
+Second one :
+I've run my app, and after just run a simple "ifconfig"
+
+
+-sh-2.05b# ifconfig=20
+eth0      Link eOops: Exception in kernel mode, sig: 5 [#1]
+PREEMPT MPC837x RR605
+Modules linked in:
+NIP: c0075b08 LR: c0075a50 CTR: c02cf170
+REGS: dab41cb0 TRAP: 0700   Not tainted  (2.6.29-rt1)
+MSR: 00029032 <EE,ME,CE,IR,DR>  CR: 24002488  XER: 00000000
+TASK =3D df8be100[1756] 'ifconfig' THREAD: dab40000
+GPR00: 00000001 dab41d60 df8be100 df803e24 df803e10 df803e08 00000000=20
+dddcc000=20
+GPR08: 00000000 0000001b df8be100 df803e24 24000482 10023370 00000000=20
+c04aa6fc=20
+GPR16: 00200200 00100100 c04e5958 c04e595c dab41d68 c04e0000 c04e0000=20
+c04aa6bc=20
+GPR24: 00000020 dab41dd8 00000010 df80ae00 00000000 dab41e38 df816800=20
+df803e00=20
+NIP [c0075b08] cache_alloc_refill+0x180/0x62c
+LR [c0075a50] cache_alloc_refill+0xc8/0x62c
+Call Trace:
+[dab41d60] [00000001] 0x1 (unreliable)
+[dab41dd0] [c00761a0] kmem_cache_alloc+0x6c/0x140
+[dab41e00] [c002ddb4] __sigqueue_do_alloc+0xa0/0xec
+[dab41e10] [c002e2f8] send_signal+0xa4/0x224
+[dab41e30] [c002f680] do_notify_parent+0x1a8/0x1d4
+[dab41ed0] [c0025608] do_exit+0x584/0x69c
+[dab41f10] [c00257a0] do_group_exit+0x80/0xac
+[dab41f30] [c00257e0] sys_exit_group+0x14/0x28
+[dab41f40] [c00117f4] ret_from_syscall+0x0/0x38
+--- Exception: c01 at 0xff3b63c
+    LR =3D 0xffec884
+Instruction dump:
+7f87f800 40be0018 80ff0010 38000001 901f0048 7f872000 419e00e8 80070010=
+=20
+813b001c 7c090010 38000000 7c000114 <0f000000> 381a0001 38c7001c 7c0903=
+a6=20
+---[ end trace f43c24570097662c ]---
+=46ixing recursive fault but reboot is needed!
+
+
+
+The kernel is a 2.6.29-rt1 compiled with ltib for powerpc (mpc8377E).
+
+Philippe
+
+
+
+Le Thu, 26 Mar 2009 19:54:25 +0900, GeunSik Lim a =C3=A9crit=C2=A0:
+
 > Hi,
-> 
-> Sorry, but I've to call again...
-> 
-> The developers seems very willing to include a realtime kernel there 
-> repo. They need some people who wants to build and maintain it. This is 
-> really  a chance  for  linux audio, especially on Debian.  *This is the 
-> moment!*
-> 
-> So please consider to offer your help in building, maintaining  and/or 
-> testing!
-> 
-> Thanks in advance,
-> 
-> \r
-> 
-> 
-> 
-> 
-> 
-> Grammostola Rosea wrote:
-> > Grammostola Rosea wrote:
-> >> Hi,
-> >>
-> >> There is an promising discussion on the debian-dev mailinglist. Maybe 
-> >> some people who knows more about realtime kernels could join. Also 
-> >> users who might want to have an realtime kernel in Debian and/or want 
-> >> help testing could join the discussion. I think it would be nice if 
-> >> there is also an realtime kernel in Debian or that the default kernel 
-> >> would be improved for realtime (audio) usage.
-> >>
-> >>
-> >> http://www.debian.org/MailingLists/subscribe
-> > Here is the thread about a realtime kernel in Debian:
-> >
-> >
-> > http://www.linux-archive.org/debian-development/268999-realtime-kernel-debian.html 
-> >
-> >
-> >
-> > Kind regards,
-> >
-> > \r
-> >
-> >
-> >
-> >
-> >>
-> >> \r
-> >>
-> >> ------------------------------------------------------------------------
-> >>
-> >> Subject:
-> >> Re: realtime kernel for Debian
-> >> From:
-> >> "Giacomo A. Catenazzi" <cate@debian.org>
-> >> Date:
-> >> Tue, 24 Mar 2009 13:26:35 +0100
-> >> To:
-> >> debian-devel@lists.debian.org
-> >>
-> >> To:
-> >> debian-devel@lists.debian.org
-> >>
-> >>
-> >> Raphael Hertzog wrote:
-> >>> On Tue, 24 Mar 2009, Giacomo A. Catenazzi wrote:
-> >>>> Do you really need real time kernel?
-> >>>> Debian is a technical driven project, but reading the previous two 
-> >>>> quotes,
-> >>>> "real time" is used as marketing thing.
-> >>>
-> >>> It's good to question the use of any feature, but a real-time kernel is
-> >>> certainly very useful in many industrial applications and Debian is
-> >>> popular in that field. (Don't put a marketing label on anything where
-> >>> you are not yourself sure of your expertise.)
-> >>
-> >> Yes, I didn't write very well my sentence: the previous quotes was more
-> >> about "there exist rt kernels", "ubuntu has a rt kernel", but not solid
-> >> requirements. I had to write some "seems", and I'm sorry for the two
-> >> quoted people if it seems an attack.
-> >> Anyway, later in the mail, I asked for precise needs, so we could see
-> >> better what we should improve.
-> >>
-> >> IMHO most users want a low latency kernel, but not a slower kernel, so
-> >> a CONFIG_HZ_1000 would be nice.  But the original post was about
-> >> multimedia production (and not reproduction), so the needs are probably
-> >> other.
-> >>
-> >> My point was more:
-> >> - Debian has not rt kernel. Why? Non DD interested or/and low demand?
-> >>   This is an important point. We must not produce a rt-kernel if
-> >>   we cannot provide testers and developers (in unstable).
-> >> - kernel management is a weak point in distribution: no good method
-> >>   for kernel dependencies, using full capabilities, ...
-> >>
-> >> so IMHO we should try harder with the normal kernel, so that we
-> >> can use the same infrastructure and testers. If we fail and we
-> >> are able to support rt kernels, IMO it is good to provide it in Debian.
-> >>
-> >> The original mail was about "multimedia production" and few year ago 
-> >> kernel
-> >> developers had a lot of interaction with music industries.
-> >> I'm not an expert in the field, but how far are we in their need with
-> >> standard kernels?)
-> >>
-> >>
-> >>> I do use a real-time kernel on a Debian based system for one of my
-> >>> customers (but I have to recompile the kernel anyway because I do other
-> >>> customizations) and I have good reasons to do so because I can't suffer
-> >>> serial overrun and I must ensure that the serial interrupt handler
-> >>> is run in the required time and that no other (kernel) task has higher
-> >>> priority.
-> >>
-> >> These *other customizations* are important to rt-kernel. So we need
-> >> a person (or more) that know the needs and could support us.
-> >> "realtime" alone is only a label ;-)
-> >>
-> >> ciao
-> >>     cate
-> >>
-> >>
-> >
-> >
-> 
-> _______________________________________________
-> Linux-audio-dev mailing list
-> Linux-audio-dev@lists.linuxaudio.org
-> http://lists.linuxaudio.org/mailman/listinfo/linux-audio-dev
+>=20
+> I understood statement that Thosmas explained about invalid access of
+> 2.6.29-rt1 soruces.
+> In general,
+> We remeber rc directory (./v2.6/testing/ and release directory (./v2.=
+6/)
+> certainly.
+>=20
+> Release Version is located in
+> http://www.kernel.org/pub/linux/kernel/v2.6/ site. RC      Version is
+> located in
+> http://www.kernel.org/pub/linux/kernel/v2.6/testing/ site.
+>=20
+> I summarized quick howto per notice of "2.6.* rt patch" file. fc9#> w=
+get
+> http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.tar.bz2
+>   (If linux version is RC[release candidate] version,
+>  use "wget http://www.kernel.org/pub/linux/kernel/v2.6/testing/***"
+>  command.)
+> fc9#> wget
+> http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt1.b=
+z2
+> fc9#> tar xjf ./linux-2.6.29.tar.bz2
+> fc9#> tar xvjf ./patch-2.6.29-rt1-broken-out.tar.bz2 fc9#> cd
+> ./linux-2.6.29
+> fc9#> for i in `cat ../patches/series | grep patch | grep -v "#"  `;d=
+o
+> echo "+++ patching $i"; patch -p1 <
+>=20
+> ../patches/$i;done
+> fc9#> cp ./arch/x86/configs/i386_defconfig ./.config fc9#> make
+> menuconfig
+>         ..... Below Omission .....
+>   =09
+>   =09
+> Regards,
+> GeunSik Lim
+>=20
+> ----- Original Message -----
+> From: "Thomas Gleixner" <tglx@linutronix.de> To: "Jaswinder Singh
+> Rajput" <jaswinder@kernel.org> Cc: "LKML"
+> <linux-kernel@vger.kernel.org>; "rt-users"
+> <linux-rt-users@vger.kernel.org>; "Ingo Molnar" <mingo@elte.hu>; "Ste=
+ven
+> Rostedt" <rostedt@goodmis.org>; "Peter Zijlstra" <peterz@infradead.or=
+g>;
+> "Carsten Emde" <ce@ceag.ch>; "Clark Williams" <williams@redhat.com>;
+> "Frank Rowand" <frank.rowand@am.sony.com> Sent: Thursday, March 26, 2=
+009
+> 6:09 AM Subject: Re: [Announce] 2.6.29-rt1
+>=20
+>=20
+>> On Thu, 26 Mar 2009, Jaswinder Singh Rajput wrote:
+>>
+>>> On Wed, 2009-03-25 at 21:59 +0100, Thomas Gleixner wrote:
+>>> > We are pleased to announce the next update to our new preempt-rt
+>>> > series.
+>>> >
+>>> >      - port forward to 2.6.29 final
+>>> >
+>>> > Download locations:
+>>> >
+>>> >     http://rt.et.redhat.com/download/
+>>> >     http://www.kernel.org/pub/linux/kernel/projects/rt/
+>>> >
+>>> > Information on the RT patch can be found at:
+>>> >
+>>> >     http://rt.wiki.kernel.org/index.php/Main_Page
+>>> >
+>>> > to build the 2.6.29-rt1 tree, the following patches should be
+>>> > applied:
+>>> >
+>>> >     http://www.kernel.org/pub/linux/kernel/v2.6/testing/
+linux-2.6.29.tar.bz2
+>>>
+>>> Is this valid ?
+>>
+>> If we remove the testing/ it should work better :)
+>>
+>>   tglx
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-kern=
+el"
+>> in the body of a message to majordomo@vger.kernel.org More majordomo
+>> info at  http://vger.kernel.org/majordomo-info.html Please read the =
+=46AQ
+>> at  http://www.tux.org/lkml/
+>>
+>>
+>>
+>>
 
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
