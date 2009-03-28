@@ -1,42 +1,47 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch 1/2] cyclictest: fix priviledge test
-Date: Sat, 28 Mar 2009 12:18:52 -0000
-Message-ID: <20090328121805.106328691@linutronix.de>
-References: <20090328121720.138287980@linutronix.de>
-Cc: RT-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Subject: Re: 2.6.29-rt1+ irqbalance = OOPS
+Date: Sat, 28 Mar 2009 15:37:24 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0903281536420.3397@localhost.localdomain>
+References: <49CCFBCA.6050702@gareus.org> <49CD03AA.4030000@novell.com> <49CD0BC1.6090305@gareus.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Gregory Haskins <ghaskins@novell.com>,
+	linux-rt-users@vger.kernel.org
+To: Robin Gareus <robin@gareus.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:37800 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:39767 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752698AbZC1MWP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Mar 2009 08:22:15 -0400
-Content-Disposition: inline; filename=fix-priviledge-test.patch
+	id S1753791AbZC1Ohe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 28 Mar 2009 10:37:34 -0400
+In-Reply-To: <49CD0BC1.6090305@gareus.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Switching back to SCHED_OTHER in check_priv() fails due to the param
-argument of sched_setscheduler() set to NULL.
+On Fri, 27 Mar 2009, Robin Gareus wrote:
+> Gregory Haskins wrote:
+> > Robin Gareus wrote:
+> >> Hello,
+> >>
+> >> Starting the irqbalance daemon ( http://www.irqbalance.org/ ) on
+> >> 2.6.29-rt1 causes the system to OOPS and freeze. irqbalance works fine
+> >> with previous realtime kernels (2.6.24.7-rt27).
+> >>
+> >> The OOPS seems to be caused by the PID of the [timer] IRQ-1
+> > This in of itself might be part of the problem.  I didn't think the
+> > timer was supposed to be threaded.  Thomas?
+> 
+> OOPS ;) my bad. IRQ-0 is the timer and it's indeed not threaded.
+> 
+> IRQ-1 is i8042
+> 
+> The OOPS can be triggered by launching irqbalance. pressing any key.
+> For whatever reason the OOPS also takes place after a random amount of
+> time without pressing any key..
 
-Set the priority to 0 and hand in params.
+Hmm. Works fine here. Can you please provide the output of
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
----
- src/cyclictest/cyclictest.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+# cat /proc/interrupts
 
-Index: rt-tests/src/cyclictest/cyclictest.c
-===================================================================
---- rt-tests.orig/src/cyclictest/cyclictest.c
-+++ rt-tests/src/cyclictest/cyclictest.c
-@@ -955,7 +955,8 @@ check_privs(void)
- 	}
- 
- 	/* we're good; change back and return success */
--	sched_setscheduler(0, policy, NULL);
-+	param.sched_priority = 0;
-+	sched_setscheduler(0, policy, &param);
- 	return 0;
- }
- 
+Thanks,
 
-
+	tglx
