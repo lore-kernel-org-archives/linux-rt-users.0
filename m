@@ -1,68 +1,97 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
 	<u.kleine-koenig@pengutronix.de>
-Subject: Re: realtime kernel for Debian
-Date: Sun, 29 Mar 2009 21:56:38 +0200
-Message-ID: <20090329195638.GA25453@pengutronix.de>
-References: <alpine.DEB.2.00.0903250812230.17709@wr-linux02> <49CA1781.3050603@gmail.com> <20090325131713.GH15865@ltw.loris.tv> <49CDFB4D.7070908@gmail.com> <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com>
+Subject: [PATCH] include CONFIG_STACK_TRACER in boot warning about debug options
+Date: Mon, 30 Mar 2009 09:13:00 +0200
+Message-ID: <1238397180-26913-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Debian Developers <debian-devel@lists.debian.org>,
-	pkg-multimedia-maintainers@lists.alioth.debian.org,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Grammostola Rosea <rosea.grammostola@gmail.com>
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:54042 "EHLO
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:54205 "EHLO
 	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753469AbZC2T4n (ORCPT
+	with ESMTP id S1750986AbZC3HNF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 29 Mar 2009 15:56:43 -0400
-Content-Disposition: inline
-In-Reply-To: <49CFC58D.4010803@gmail.com>
+	Mon, 30 Mar 2009 03:13:05 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+CONFIG_STACK_TRACER=3Dy contributes to DEBUG_COUNT, but it was not
+included in the list.  This resulted in the following snipplet in my ke=
+rnel
+log:
+
+[   16.170275] ********************************************************=
+*********************
+[   16.178530] *                                                       =
+                    *
+[   16.186782] *  REMINDER, the following debugging option is turned on=
+ in your .config:   *
+[   16.195033] *                                                       =
+                    *
+[   16.203288] *                                                       =
+                    *
+[   16.211535] *  it may increase runtime overhead and latencies.      =
+                    *
+[   16.219777] *                                                       =
+                    *
+[   16.228026] ********************************************************=
+*********************
+
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
 Hello,
 
-[your To: header was strange, maybe my mail reaches less recipents than
-your's]
+this patch applies on top of=20
 
->>> To get some progress here, I'm searching for a person who wants and=
-=20
->>> is  capable in filing a wishlist bug (with a patch vs. the package=20
->>> linux-2.6
->>>    =20
->> Maybe providing a patch package is a better first step?
->>  =20
-> thanks for thinking. Who could provide such a patch package?
-I can.  I'd need a sponsor, though.  I know two Debian developers, I
-will ask them.
+	realtime: preempt warn about tracing
 
-The patch on top of Debian's 2.6.29 is already made[1]---I just merged
-v2.6.29-rt1 and Debian's tree.
+in the latest preempt-rt patch set.
 
 Best regards
 Uwe
 
-[1] Available in my git repo at
+ init/main.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-	git://git.pengutronix.de/git/ukl/linux-2.6.git debian-rt
-
-or browsable at:
-
-	http://git.pengutronix.de/?p=3Dukl/linux-2.6.git;a=3Dshortlog;h=3Ddebi=
-an-rt
-
-The actual diff is at:
-
-	http://git.pengutronix.de/?p=3Dukl/linux-2.6.git;a=3Dcommitdiff;h=3Dde=
-bian-rt;hp=3Ddebian/v2.6.29
-
+diff --git a/init/main.c b/init/main.c
+index 661cc0f..1e27ac5 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -924,8 +924,8 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_PREEMPT_TRACER
+ 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                      =
+                        *\n");
+ #endif
+-#ifdef CONFIG_FTRACE
+-	printk(KERN_ERR "*        CONFIG_FTRACE                              =
+                        *\n");
++#ifdef CONFIG_STACK_TRACER
++	printk(KERN_ERR "*        CONFIG_STACK_TRACER                        =
+                        *\n");
+ #endif
+ #ifdef CONFIG_WAKEUP_LATENCY_HIST
+ 	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                 =
+                        *\n");
+@@ -939,6 +939,9 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_LOCKDEP
+ 	printk(KERN_ERR "*        CONFIG_LOCKDEP                             =
+                        *\n");
+ #endif
++#ifdef CONFIG_FTRACE
++	printk(KERN_ERR "*        CONFIG_FTRACE                              =
+                        *\n");
++#endif
+ 	printk(KERN_ERR "*                                                   =
+                        *\n");
+ #if DEBUG_COUNT =3D=3D 1
+ 	printk(KERN_ERR "*  it may increase runtime overhead and latencies.  =
+                        *\n");
 --=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
+1.6.2.1
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
