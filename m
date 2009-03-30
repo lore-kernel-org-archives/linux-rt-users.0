@@ -1,99 +1,64 @@
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH] include CONFIG_STACK_TRACER in boot warning about debug options
-Date: Mon, 30 Mar 2009 09:13:00 +0200
-Message-ID: <1238397180-26913-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Alexander Reichle-Schmehl <tolimar@debian.org>
+Subject: Re: realtime kernel for Debian
+Date: Mon, 30 Mar 2009 10:22:02 +0200
+Message-ID: <49D0812A.3000605@debian.org>
+References: <alpine.DEB.2.00.0903250812230.17709@wr-linux02> <49CA1781.3050603@gmail.com> <20090325131713.GH15865@ltw.loris.tv> <49CDFB4D.7070908@gmail.com> <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com> <20090329195638.GA25453@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:54205 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750986AbZC3HNF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Mar 2009 03:13:05 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enigE34B6A9E13935214468C5F96"
+Cc: Grammostola Rosea <rosea.grammostola@gmail.com>,
+ Debian Developers <debian-devel@lists.debian.org>,
+ pkg-multimedia-maintainers@lists.alioth.debian.org,
+ rt-users <linux-rt-users@vger.kernel.org>
+To: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?= <u.kleine-koenig@pengutronix.de>
+Return-path: <bounce-debian-devel=debian-devel=m.gmane.org@lists.debian.org>
+In-Reply-To: <20090329195638.GA25453@pengutronix.de>
+Resent-Message-ID: <tqmIdVKwiuF.A.a2C.cDI0JB@liszt>
+List-Post: <mailto:debian-devel@lists.debian.org>
+List-Help: <mailto:debian-devel-request@lists.debian.org?subject=help>
+List-Subscribe: <mailto:debian-devel-request@lists.debian.org?subject=subscribe>
+List-Unsubscribe: <mailto:debian-devel-request@lists.debian.org?subject=unsubscribe>
+List-Id: linux-rt-users.vger.kernel.org
 
-CONFIG_STACK_TRACER=3Dy contributes to DEBUG_COUNT, but it was not
-included in the list.  This resulted in the following snipplet in my ke=
-rnel
-log:
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigE34B6A9E13935214468C5F96
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-[   16.170275] ********************************************************=
-*********************
-[   16.178530] *                                                       =
-                    *
-[   16.186782] *  REMINDER, the following debugging option is turned on=
- in your .config:   *
-[   16.195033] *                                                       =
-                    *
-[   16.203288] *                                                       =
-                    *
-[   16.211535] *  it may increase runtime overhead and latencies.      =
-                    *
-[   16.219777] *                                                       =
-                    *
-[   16.228026] ********************************************************=
-*********************
+Hi!
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
----
-Hello,
+Uwe Kleine-K=F6nig schrieb:
 
-this patch applies on top of=20
+> [your To: header was strange, maybe my mail reaches less recipents than=
 
-	realtime: preempt warn about tracing
+> your's]
 
-in the latest preempt-rt patch set.
+Well, at least it reached me ;)
 
-Best regards
-Uwe
+>>> Maybe providing a patch package is a better first step?
+>> thanks for thinking. Who could provide such a patch package?
+> I can.  I'd need a sponsor, though.  I know two Debian developers, I
+> will ask them.
 
- init/main.c |    7 +++++--
- 1 files changed, 5 insertions(+), 2 deletions(-)
+Willing to sponsor as soon as you've got a package to test ready.
 
-diff --git a/init/main.c b/init/main.c
-index 661cc0f..1e27ac5 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -924,8 +924,8 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_PREEMPT_TRACER
- 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                      =
-                        *\n");
- #endif
--#ifdef CONFIG_FTRACE
--	printk(KERN_ERR "*        CONFIG_FTRACE                              =
-                        *\n");
-+#ifdef CONFIG_STACK_TRACER
-+	printk(KERN_ERR "*        CONFIG_STACK_TRACER                        =
-                        *\n");
- #endif
- #ifdef CONFIG_WAKEUP_LATENCY_HIST
- 	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                 =
-                        *\n");
-@@ -939,6 +939,9 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_LOCKDEP
- 	printk(KERN_ERR "*        CONFIG_LOCKDEP                             =
-                        *\n");
- #endif
-+#ifdef CONFIG_FTRACE
-+	printk(KERN_ERR "*        CONFIG_FTRACE                              =
-                        *\n");
-+#endif
- 	printk(KERN_ERR "*                                                   =
-                        *\n");
- #if DEBUG_COUNT =3D=3D 1
- 	printk(KERN_ERR "*  it may increase runtime overhead and latencies.  =
-                        *\n");
---=20
-1.6.2.1
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Best regards,
+  Alexander
+
+
+--------------enigE34B6A9E13935214468C5F96
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEARECAAYFAknQgS4ACgkQBxd04ADYzRYhIACffXtW9qBcqN4PyEb91nQggz/2
+kbMAoKmv7Rr2fTZ8PfxsD/giRftiO8x2
+=iLKG
+-----END PGP SIGNATURE-----
+
+--------------enigE34B6A9E13935214468C5F96--
