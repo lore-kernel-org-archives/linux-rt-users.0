@@ -1,91 +1,64 @@
-From: Robin Gareus <robin@gareus.org>
-Subject: Re: 2.6.29-rt1+ irqbalance = OOPS
-Date: Mon, 30 Mar 2009 15:43:00 +0200
-Message-ID: <49D0CC64.5010605@gareus.org>
-References: <49CCFBCA.6050702@gareus.org> <49CD03AA.4030000@novell.com> <49CD0BC1.6090305@gareus.org> <alpine.LFD.2.00.0903281536420.3397@localhost.localdomain> <49CE48FD.5040506@gareus.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: realtime kernel for Debian
+Date: Mon, 30 Mar 2009 17:13:39 +0200
+Message-ID: <20090330151339.GA16045@pengutronix.de>
+References: <20090325131713.GH15865@ltw.loris.tv> <49CDFB4D.7070908@gmail.com> <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com> <20090329195638.GA25453@pengutronix.de> <49D0812A.3000605@debian.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <ghaskins@novell.com>,
-	linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Grammostola Rosea <rosea.grammostola@gmail.com>,
+	Debian Developers <debian-devel@lists.debian.org>,
+	pkg-multimedia-maintainers@lists.alioth.debian.org,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Alexander Reichle-Schmehl <tolimar@debian.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p05-ob.rzone.de ([81.169.146.181]:63774 "EHLO
-	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751061AbZC3NnN (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:43732 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750872AbZC3PNs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Mar 2009 09:43:13 -0400
-In-Reply-To: <49CE48FD.5040506@gareus.org>
+	Mon, 30 Mar 2009 11:13:48 -0400
+Content-Disposition: inline
+In-Reply-To: <49D0812A.3000605@debian.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Robin Gareus wrote:
+Hi Alexander,
 
-> The corresponding .config is available at
-> http://rg42.org/_media/wiki/kernel/config-2.6.29-rt1.txt
+On Mon, Mar 30, 2009 at 10:22:02AM +0200, Alexander Reichle-Schmehl wro=
+te:
+> Hi!
+>=20
+> Uwe Kleine-K=F6nig schrieb:
+>=20
+> > [your To: header was strange, maybe my mail reaches less recipents =
+than
+> > your's]
+>=20
+> Well, at least it reached me ;)
+>=20
+> >>> Maybe providing a patch package is a better first step?
+> >> thanks for thinking. Who could provide such a patch package?
+> > I can.  I'd need a sponsor, though.  I know two Debian developers, =
+I
+> > will ask them.
+>=20
+> Willing to sponsor as soon as you've got a package to test ready.
+Great thanks.  I plan to package rt-tests, too.  Maybe you can sponser
+that, too?
 
-BTW. This is a vanilla 2.6.29 with only the 2.6.29-rt1 patch applied.
+Expect me to contact you via irc to go into details.
 
-> I just tested Fernando's CCRMA 2.6.29-rt1 kernel which is x686 plus
-> generic x86-compat (mine is MCORE2) and irqbalance does not produce an
-> OOPS there.
-> 
-> I'll see if can get a dump of the OOPS on Monday using netconsole.
+Best regards
+Uwe
 
-If the netconsole module is loaded, the OOPS is produced without the
-Call and Stack Trace (both on local terminal and remote) and the cause
-is no longer the keyboard-interrupt but ethernet (IRQ 28)
-
-Starting `irqbalance` still reliably hangs this system (Thinkpad X60s).
-
-------------[ cut here ]------------
-kernel BUG at kernel/sched_rt.c:1602!
-invalid opcode: 0000 [#1] PREEMPT SMP kernel BUG at kernel/sched_rt.c:1602!
-invalid opcode: 0000 [#1] PREEMPT SMP
-last sysfs file: /sys/devices/pci0000:00/0000:00:1c.0/0000:02:00.0/irq
-Modules linked in: netconsole ipv6 nfsd exportfs nfs lockd nfs_acl
-auth_rpcgss sunrpc deflate zlib_deflate twofish twofish_common camellia
-serpent blowfish des_generic cbc aes_i586 aes_generic xcbc rmd160
-sha256_generic sha1_generic
-last sysfs file: /sys/devices/pci0000:00/0000:00:1c.0/0000:02:00.0/irq
-Modules linked in: netconsole ipv6 nfsd exportfs nfs lockd nfs_acl
-auth_rpcgss sunrpc deflate zlib_deflate twofish twofish_common camellia
-serpent blowfish des_generic cbc aes_i586 aes_generic xcbc rmd160
-sha256_generic sha1_generic
-
-
--=-=-=-=-
-
-# lspci ..
-
-00:1c.0 PCI bridge: Intel Corporation 82801G (ICH7 Family) PCI Express
-Port 1 (rev 02) (prog-if 00 [Normal decode])
-
-# cat /proc/interrupts
-
-          CPU0       CPU1
-  0:     416869          0   IO-APIC-edge      timer
-  1:       2921          0   IO-APIC-edge      i8042
-  8:         48          0   IO-APIC-edge      rtc0
-  9:      36105          0   IO-APIC-fasteoi   acpi
- 12:      23294          0   IO-APIC-edge      i8042
- 14:      19922          0   IO-APIC-edge      ata_piix
- 15:          0          0   IO-APIC-edge      ata_piix
- 16:          0          0   IO-APIC-fasteoi   uhci_hcd:usb2, yenta,
-i915@pci:0000:00:02.0
- 17:      51665          0   IO-APIC-fasteoi   uhci_hcd:usb3, ohci1394,
-HDA Intel
- 18:          0          0   IO-APIC-fasteoi   uhci_hcd:usb4, mmc0
- 19:         28          0   IO-APIC-fasteoi   ehci_hcd:usb1, uhci_hcd:usb5
- 28:       2669          0   PCI-MSI-edge      eth1
- 29:        449          0   PCI-MSI-edge      iwl3945
-NMI:          0          0   Non-maskable interrupts
-LOC:      79098     252004   Local timer interrupts
-SPU:          0          0   Spurious interrupts
-CNT:          0          0   Performance counter interrupts
-RES:      86816     141218   Rescheduling interrupts
-CAL:       6852       5954   Function call interrupts
-TLB:        268        266   TLB shootdowns
-TRM:          0          0   Thermal event interrupts
-ERR:          0
-MIS:          0
+--=20
+Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
+       |
+Industrial Linux Solutions                    | http://www.pengutronix.=
+de/  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
