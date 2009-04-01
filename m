@@ -1,109 +1,58 @@
-From: Gregory Haskins <ghaskins@novell.com>
-Subject: Re: [RFC PATCH 00/17] virtual-bus
-Date: Wed, 01 Apr 2009 10:42:33 -0400
-Message-ID: <49D37D59.2030107@novell.com>
-References: <20090331184057.28333.77287.stgit@dev.haskins.net> <87ab71monw.fsf@basil.nowhere.org> <49D35825.3050001@novell.com> <20090401132340.GT11935@one.firstfloor.org> <49D37805.1060301@novell.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Difference between chrt and nice
+Date: Thu, 2 Apr 2009 01:54:36 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904020139340.12916@localhost.localdomain>
+References: <901f25b80903302243q5ae531fs92113638539ea557@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="------------enigDBF9BC5F089882EEB16EBB82"
-Cc: linux-kernel@vger.kernel.org, agraf@suse.de, pmullaney@novell.com,
-	pmorreale@novell.com, anthony@codemonkey.ws, rusty@rustcorp.com.au,
-	netdev@vger.kernel.org, kvm@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Andi Kleen <andi@firstfloor.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932364AbZDAOkk@vger.kernel.org>
-In-Reply-To: <49D37805.1060301@novell.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Jaakko Sipari <jaakko.sipari@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:47483 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752858AbZDAXyo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Apr 2009 19:54:44 -0400
+In-Reply-To: <901f25b80903302243q5ae531fs92113638539ea557@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enigDBF9BC5F089882EEB16EBB82
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On Tue, 31 Mar 2009, Jaakko Sipari wrote:
 
-Gregory Haskins wrote:
-> Andi Kleen wrote:
->  =20
->> On Wed, Apr 01, 2009 at 08:03:49AM -0400, Gregory Haskins wrote:
->>  =20
->>    =20
->>> Andi Kleen wrote:
->>>    =20
->>>      =20
->>>> Gregory Haskins <ghaskins@novell.com> writes:
->>>>
->>>> What might be useful is if you could expand a bit more on what the h=
-igh level
->>>> use cases for this.=20
->>>>
->>>> Questions that come to mind and that would be good to answer:
->>>>
->>>> This seems to be aimed at having multiple VMs talk
->>>> to each other, but not talk to the rest of the world, correct?=20
->>>> Is that a common use case?=20
->>>>  =20
->>>>      =20
->>>>        =20
->>> Actually we didn't design specifically for either type of environment=
-=2E=20
->>>    =20
->>>      =20
->> But surely you must have some specific use case in mind? Something
->> that it does better than the various methods that are available
->> today. Or rather there must be some problem you're trying
->> to solve. I'm just not sure what that problem exactly is.
->>  =20
->>    =20
-> Performance.  We are trying to create a high performance IO infrastruct=
-ure.
->  =20
-Actually, I should also state that I am interested in enabling some new
-kinds of features based on having in-kernel devices like this.  For
-instance (and this is still very theoretical and half-baked), I would
-like to try to support RT guests.
+> Hi!
+> 
+> I've already asked this in a couple of forums but got no answers. I
+> would appreciate it if someone in this list could take some time to
+> answer to my possibly stupid question(s):
+> 
+> What's the difference of setting process priority with chrt and nice?
 
-[adding linux-rt-users]
+"nice" is an historic utility which was used in the early days of batch
+computing to be "nice" to other users and give up some CPU time. It's
+still in use and useful and applies only to processes which run with
+the SCHED_OTHER policy on Linux. 
 
-I think one of the things that we need in order to do that is being able
-to convey vcpu priority state information to the host in an efficient
-way.  I was thinking that a shared-page per vcpu could have something
-like "current" and "theshold" priorties.  The guest modifies "current"
-while the host modifies "threshold".   The guest would be allowed to
-increase its "current" priority without a hypercall (after all, if its
-already running presumably it is already of sufficient priority that the
-scheduler).  But if the guest wants to drop below "threshold", it needs
-to hypercall the host to give it an opportunity to schedule() a new task
-(vcpu or not).
+"chrt" is a tool to change scheduling policy(SCHED_OTHER, _FIFO, RR)
+and the priority of a process/task. With chrt you can either start a
+process with such a policy or modify an already running process/tasks
+policy. You need to have the permissions to do that.
 
-The host, on the other hand, could apply a mapping so that the guests
-priority of RT1-RT99 might map to RT20-RT30 on the host, or something
-like that.  We would have to take other considerations as well, such as
-implicit boosting on IRQ injection (e.g. the guest could be in HLT/IDLE
-when an interrupt is injected...but by virtue of injecting that
-interrupt we may need to boost it to (guest-relative) RT50).
+So the main difference is that "nice" can only operate within the nice
+levels of the SCHED_OTHER policy while "chrt" can change the policy
+and the priority of a process/task.
 
-Like I said, this is all half-baked right now.  My primary focus is
-improving performance, but I did try to lay the groundwork for taking
-things in new directions too..rt being an example.
+> And how do using both of these commands compare with a normal vs.
+> realtime-kernel  (PREEMPT_RT)?
 
-Hope that helps!
--Greg
+Both commands are the same on vanilla and -rt kernels. The difference
+is just the runtime behaviour of the -rt enabled kernel. processes /
+tasks which run with real time scheduling policy have a deterministic
+behaviour which is not and can not (yet) be guaranteed by the vanilla
+kernel.
 
+Hope that helps.
 
+Thanks,
 
---------------enigDBF9BC5F089882EEB16EBB82
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+	tglx
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.9 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
-
-iEYEARECAAYFAknTfVkACgkQlOSOBdgZUxkvGgCfcwaE3PyW6wViIAfD1G3/Phpu
-0vUAn05ChWnEmKi+YrYgLCSsQiYmUUxD
-=CzGJ
------END PGP SIGNATURE-----
-
---------------enigDBF9BC5F089882EEB16EBB82--
+P.S.: further info at http://rt.wiki.kernel.org
