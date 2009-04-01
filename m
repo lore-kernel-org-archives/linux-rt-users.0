@@ -1,53 +1,109 @@
-From: John Kacur <jkacur@gmail.com>
-Subject: Re: Real-time kernel compile-fix for 32-bit when disabling
-	CONFIG_PREEMPT_RT
-Date: Wed, 1 Apr 2009 10:51:02 +0200
-Message-ID: <520f0cf10904010151q27683014t389a16da59427d9b@mail.gmail.com>
-References: <bhm9a-75O-9@gated-at.bofh.it>
-	 <f9ba8adc-60a4-43ba-b609-22e80ed984e1@p6g2000pre.googlegroups.com>
-	 <520f0cf10903310339r41263cdat961ab40dc2565d9f@mail.gmail.com>
-	 <a7a71e0d0904010136h360bf771o39b21614f033011e@mail.gmail.com>
-	 <a7a71e0d0904010138r1a0bf6f5wa07c9d6cc770d3f@mail.gmail.com>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: Re: [RFC PATCH 00/17] virtual-bus
+Date: Wed, 01 Apr 2009 10:42:33 -0400
+Message-ID: <49D37D59.2030107@novell.com>
+References: <20090331184057.28333.77287.stgit@dev.haskins.net> <87ab71monw.fsf@basil.nowhere.org> <49D35825.3050001@novell.com> <20090401132340.GT11935@one.firstfloor.org> <49D37805.1060301@novell.com>
 Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enigDBF9BC5F089882EEB16EBB82"
+Cc: linux-kernel@vger.kernel.org, agraf@suse.de, pmullaney@novell.com,
+	pmorreale@novell.com, anthony@codemonkey.ws, rusty@rustcorp.com.au,
+	netdev@vger.kernel.org, kvm@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Andi Kleen <andi@firstfloor.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932364AbZDAOkk@vger.kernel.org>
+In-Reply-To: <49D37805.1060301@novell.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigDBF9BC5F089882EEB16EBB82
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Geoffrey Chien <geoffchien@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qw-out-2122.google.com ([74.125.92.26]:29277 "EHLO
-	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751725AbZDAI4h (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Apr 2009 04:56:37 -0400
-Received: by qw-out-2122.google.com with SMTP id 8so3602729qwh.37
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Apr 2009 01:56:34 -0700 (PDT)
-In-Reply-To: <a7a71e0d0904010138r1a0bf6f5wa07c9d6cc770d3f@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: quoted-printable
 
-2009/4/1 Geoffrey Chien <geoffchien@gmail.com>:
-> Sorry, I accidentally hit the "send" button, I haven't typed my question
-> yet,
-> Yes, it worked now, but I have to enable "multi-core schedular support", and
-> in the "preemption mode(complete preemption real time), I also have to do
-> -->[X]Complete Preemption (Real Time)
->
-> After doing the two things above, it worked,
-> well, I'm wondering, if I disable "Complete Preemption(Real Time), Is it
-> gonna make any differences?
+Gregory Haskins wrote:
+> Andi Kleen wrote:
+>  =20
+>> On Wed, Apr 01, 2009 at 08:03:49AM -0400, Gregory Haskins wrote:
+>>  =20
+>>    =20
+>>> Andi Kleen wrote:
+>>>    =20
+>>>      =20
+>>>> Gregory Haskins <ghaskins@novell.com> writes:
+>>>>
+>>>> What might be useful is if you could expand a bit more on what the h=
+igh level
+>>>> use cases for this.=20
+>>>>
+>>>> Questions that come to mind and that would be good to answer:
+>>>>
+>>>> This seems to be aimed at having multiple VMs talk
+>>>> to each other, but not talk to the rest of the world, correct?=20
+>>>> Is that a common use case?=20
+>>>>  =20
+>>>>      =20
+>>>>        =20
+>>> Actually we didn't design specifically for either type of environment=
+=2E=20
+>>>    =20
+>>>      =20
+>> But surely you must have some specific use case in mind? Something
+>> that it does better than the various methods that are available
+>> today. Or rather there must be some problem you're trying
+>> to solve. I'm just not sure what that problem exactly is.
+>>  =20
+>>    =20
+> Performance.  We are trying to create a high performance IO infrastruct=
+ure.
+>  =20
+Actually, I should also state that I am interested in enabling some new
+kinds of features based on having in-kernel devices like this.  For
+instance (and this is still very theoretical and half-baked), I would
+like to try to support RT guests.
 
-Could you please reply to all so the people on the linux-rt-users list
-can see your questions. Someone may know an answer to your questions
-better than I do. Also, you're supposed to post under the other text
-not above it. (I just snipped it out)
-There really is no point to the rt patch if you disable complete
-preemption, however, I suppose you should be able to so because
-someday the rt-developers would like this integrated into the
-mainstream linux kernel. So, I would suggest to you, that if you can
-find a config that doesn't compile for you, please send it to the
-list, and someone will generate a patch to make sure that either that
-combination compiles, or is impossible to select.
+[adding linux-rt-users]
 
-Thanks
+I think one of the things that we need in order to do that is being able
+to convey vcpu priority state information to the host in an efficient
+way.  I was thinking that a shared-page per vcpu could have something
+like "current" and "theshold" priorties.  The guest modifies "current"
+while the host modifies "threshold".   The guest would be allowed to
+increase its "current" priority without a hypercall (after all, if its
+already running presumably it is already of sufficient priority that the
+scheduler).  But if the guest wants to drop below "threshold", it needs
+to hypercall the host to give it an opportunity to schedule() a new task
+(vcpu or not).
 
------SNIP-----
+The host, on the other hand, could apply a mapping so that the guests
+priority of RT1-RT99 might map to RT20-RT30 on the host, or something
+like that.  We would have to take other considerations as well, such as
+implicit boosting on IRQ injection (e.g. the guest could be in HLT/IDLE
+when an interrupt is injected...but by virtue of injecting that
+interrupt we may need to boost it to (guest-relative) RT50).
+
+Like I said, this is all half-baked right now.  My primary focus is
+improving performance, but I did try to lay the groundwork for taking
+things in new directions too..rt being an example.
+
+Hope that helps!
+-Greg
+
+
+
+--------------enigDBF9BC5F089882EEB16EBB82
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.9 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iEYEARECAAYFAknTfVkACgkQlOSOBdgZUxkvGgCfcwaE3PyW6wViIAfD1G3/Phpu
+0vUAn05ChWnEmKi+YrYgLCSsQiYmUUxD
+=CzGJ
+-----END PGP SIGNATURE-----
+
+--------------enigDBF9BC5F089882EEB16EBB82--
