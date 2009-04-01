@@ -1,55 +1,53 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 2.6.29-rt1+ irqbalance = OOPS
-Date: Wed, 1 Apr 2009 08:43:10 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904010840500.12916@localhost.localdomain>
-References: <49CCFBCA.6050702@gareus.org> <49CD03AA.4030000@novell.com> <49CD0BC1.6090305@gareus.org> <alpine.LFD.2.00.0903281536420.3397@localhost.localdomain> <49CE48FD.5040506@gareus.org> <49D0CC64.5010605@gareus.org>
+From: John Kacur <jkacur@gmail.com>
+Subject: Re: Real-time kernel compile-fix for 32-bit when disabling
+	CONFIG_PREEMPT_RT
+Date: Wed, 1 Apr 2009 10:51:02 +0200
+Message-ID: <520f0cf10904010151q27683014t389a16da59427d9b@mail.gmail.com>
+References: <bhm9a-75O-9@gated-at.bofh.it>
+	 <f9ba8adc-60a4-43ba-b609-22e80ed984e1@p6g2000pre.googlegroups.com>
+	 <520f0cf10903310339r41263cdat961ab40dc2565d9f@mail.gmail.com>
+	 <a7a71e0d0904010136h360bf771o39b21614f033011e@mail.gmail.com>
+	 <a7a71e0d0904010138r1a0bf6f5wa07c9d6cc770d3f@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Gregory Haskins <ghaskins@novell.com>,
-	linux-rt-users@vger.kernel.org
-To: Robin Gareus <robin@gareus.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Geoffrey Chien <geoffchien@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:33761 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751009AbZDAGnT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Apr 2009 02:43:19 -0400
-In-Reply-To: <49D0CC64.5010605@gareus.org>
+Received: from qw-out-2122.google.com ([74.125.92.26]:29277 "EHLO
+	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751725AbZDAI4h (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Apr 2009 04:56:37 -0400
+Received: by qw-out-2122.google.com with SMTP id 8so3602729qwh.37
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Apr 2009 01:56:34 -0700 (PDT)
+In-Reply-To: <a7a71e0d0904010138r1a0bf6f5wa07c9d6cc770d3f@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Mon, 30 Mar 2009, Robin Gareus wrote:
-
-> Robin Gareus wrote:
-> 
-> > The corresponding .config is available at
-> > http://rg42.org/_media/wiki/kernel/config-2.6.29-rt1.txt
-> 
-> BTW. This is a vanilla 2.6.29 with only the 2.6.29-rt1 patch applied.
-> 
-> > I just tested Fernando's CCRMA 2.6.29-rt1 kernel which is x686 plus
-> > generic x86-compat (mine is MCORE2) and irqbalance does not produce an
-> > OOPS there.
-
-Ah, so there is some delta in the .configs which exposes this
-problem. I got your .config and try to reproduce.
-
-> > I'll see if can get a dump of the OOPS on Monday using netconsole.
-> 
-> If the netconsole module is loaded, the OOPS is produced without the
-> Call and Stack Trace (both on local terminal and remote) and the cause
-> is no longer the keyboard-interrupt but ethernet (IRQ 28)
-> 
-> Starting `irqbalance` still reliably hangs this system (Thinkpad X60s).
+2009/4/1 Geoffrey Chien <geoffchien@gmail.com>:
+> Sorry, I accidentally hit the "send" button, I haven't typed my question
+> yet,
+> Yes, it worked now, but I have to enable "multi-core schedular support", and
+> in the "preemption mode(complete preemption real time), I also have to do
+> -->[X]Complete Preemption (Real Time)
 >
->
-> ------------[ cut here ]------------
-> kernel BUG at kernel/sched_rt.c:1602!
-> invalid opcode: 0000 [#1] PREEMPT SMP kernel BUG at kernel/sched_rt.c:1602!
+> After doing the two things above, it worked,
+> well, I'm wondering, if I disable "Complete Preemption(Real Time), Is it
+> gonna make any differences?
 
-Unfortunately this does not tell us much. It tells us that something
-went wrong, but not where and when :)
+Could you please reply to all so the people on the linux-rt-users list
+can see your questions. Someone may know an answer to your questions
+better than I do. Also, you're supposed to post under the other text
+not above it. (I just snipped it out)
+There really is no point to the rt patch if you disable complete
+preemption, however, I suppose you should be able to so because
+someday the rt-developers would like this integrated into the
+mainstream linux kernel. So, I would suggest to you, that if you can
+find a config that doesn't compile for you, please send it to the
+list, and someone will generate a patch to make sure that either that
+combination compiles, or is impossible to select.
 
-Thanks,
+Thanks
 
-	tglx
+-----SNIP-----
