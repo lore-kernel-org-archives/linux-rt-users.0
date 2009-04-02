@@ -1,58 +1,72 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Difference between chrt and nice
-Date: Thu, 2 Apr 2009 01:54:36 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904020139340.12916@localhost.localdomain>
-References: <901f25b80903302243q5ae531fs92113638539ea557@mail.gmail.com>
+Subject: [Announce] 2.6.29-rt2
+Date: Thu, 2 Apr 2009 02:17:43 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+ <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Jaakko Sipari <jaakko.sipari@gmail.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:47483 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:32850 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752858AbZDAXyo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Apr 2009 19:54:44 -0400
-In-Reply-To: <901f25b80903302243q5ae531fs92113638539ea557@mail.gmail.com>
+	id S1758103AbZDBATA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Apr 2009 20:19:00 -0400
+In-Reply-To: <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 31 Mar 2009, Jaakko Sipari wrote:
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+      - fix a fork/exit bug in the signal per task cache (/me puts on
+        a huge brown paper bag - Thanks to Phillipe Reynes and Will
+        Schmidt for reporting and testing)
 
-> Hi!
-> 
-> I've already asked this in a couple of forums but got no answers. I
-> would appreciate it if someone in this list could take some time to
-> answer to my possibly stupid question(s):
-> 
-> What's the difference of setting process priority with chrt and nice?
+      - fix a group scheduling migration accounting bug (decoded with
+        and fixed by Peter Zijlstra - reported by Robin Gareus)
 
-"nice" is an historic utility which was used in the early days of batch
-computing to be "nice" to other users and give up some CPU time. It's
-still in use and useful and applies only to processes which run with
-the SCHED_OTHER policy on Linux. 
+      - tlb gather rework by Peter Zijlstra - Thanks Peter !
 
-"chrt" is a tool to change scheduling policy(SCHED_OTHER, _FIFO, RR)
-and the priority of a process/task. With chrt you can either start a
-process with such a policy or modify an already running process/tasks
-policy. You need to have the permissions to do that.
+      - the usual fixlets
 
-So the main difference is that "nice" can only operate within the nice
-levels of the SCHED_OTHER policy while "chrt" can change the policy
-and the priority of a process/task.
+The tlb rework might be incomplete on some of the uncountable
+incarnations of PowerPC and ARM platforms, so look out for wreckage
+and keep the usual tools (fire-extinguishers, brooms, buckets etc.)
+handy.
 
-> And how do using both of these commands compare with a normal vs.
-> realtime-kernel  (PREEMPT_RT)?
+Download locations:
 
-Both commands are the same on vanilla and -rt kernels. The difference
-is just the runtime behaviour of the -rt enabled kernel. processes /
-tasks which run with real time scheduling policy have a deterministic
-behaviour which is not and can not (yet) be guaranteed by the vanilla
-kernel.
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+ 
+Information on the RT patch can be found at:
 
-Hope that helps.
+    http://rt.wiki.kernel.org/index.php/Main_Page
 
-Thanks,
+to build the 2.6.29-rt2 tree, the following patches should be
+applied:
 
-	tglx
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt2.bz2
 
-P.S.: further info at http://rt.wiki.kernel.org
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
