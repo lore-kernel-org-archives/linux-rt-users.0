@@ -1,72 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [Announce] 2.6.29-rt2
-Date: Thu, 2 Apr 2009 02:17:43 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
- <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
- <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: High contention on the sk_buff_head.lock
+Date: Thu, 2 Apr 2009 22:13:42 +0800
+Message-ID: <20090402141342.GA377@gondor.apana.org.au>
+References: <20090323.013749.122944803.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:32850 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758103AbZDBATA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Apr 2009 20:19:00 -0400
-In-Reply-To: <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: dada1@cosmosbay.com, jarkao2@gmail.com, vernux@us.ibm.com,
+	netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20090323.013749.122944803.davem@davemloft.net>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-      - fix a fork/exit bug in the signal per task cache (/me puts on
-        a huge brown paper bag - Thanks to Phillipe Reynes and Will
-        Schmidt for reporting and testing)
+David Miller <davem@davemloft.net> wrote:
+> From: Eric Dumazet <dada1@cosmosbay.com>
+> Date: Mon, 23 Mar 2009 09:32:39 +0100
+> 
+>> I dont understand, doesnt it defeat the ticket spinlock thing and fairness ?
+>> 
+>> Thread doing __qdisc_run() already owns the __QDISC_STATE_RUNNING bit.
+> 
+> Right.
+> 
+> Remember, the way this is designed is that if there is a busy
+> cpu taking packets out of the queue and putting them into the
+> device then other cpus will simply add to the queue and immediately
+> return.  This effectively keeps the queue running there processing
+> all the new work that other cpus are adding to the qdisc.
+> 
+> Those other cpus make these decisions by looking at that
+> __QDISC_STATE_RUNNING bit, which the queue runner grabs before
+> it does any work.
 
-      - fix a group scheduling migration accounting bug (decoded with
-        and fixed by Peter Zijlstra - reported by Robin Gareus)
+Come on guys, if this lock is a problem. go out and buy a proper
+NIC that supports multiequeue TX!
 
-      - tlb gather rework by Peter Zijlstra - Thanks Peter !
-
-      - the usual fixlets
-
-The tlb rework might be incomplete on some of the uncountable
-incarnations of PowerPC and ARM platforms, so look out for wreckage
-and keep the usual tools (fire-extinguishers, brooms, buckets etc.)
-handy.
-
-Download locations:
-
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
- 
-Information on the RT patch can be found at:
-
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.29-rt2 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29-rt2.bz2
-
-The broken out patches are also available at the same download
-locations.
-
-Enjoy !
-
-       tglx
-
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
