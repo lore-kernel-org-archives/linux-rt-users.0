@@ -1,67 +1,93 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
-Date: Fri, 3 Apr 2009 11:20:10 +0900
-Message-ID: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [Announce] 2.6.29-rt2
+Date: Fri, 03 Apr 2009 11:43:13 +0200
+Message-ID: <1238751793.798.22.camel@twins>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
+	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+	 <1238688145.8813.16.camel@lexx>
+	 <alpine.LFD.2.00.0904021842050.12916@localhost.localdomain>
+	 <1238693053.8813.27.camel@lexx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: will_schmidt@vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.172]:65319 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751436AbZDCCUQ (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:56368 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762245AbZDCJm2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Apr 2009 22:20:16 -0400
-Received: by wf-out-1314.google.com with SMTP id 29so957882wff.4
-        for <linux-rt-users@vger.kernel.org>; Thu, 02 Apr 2009 19:20:11 -0700 (PDT)
+	Fri, 3 Apr 2009 05:42:28 -0400
+In-Reply-To: <1238693053.8813.27.camel@lexx>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi, all.
+On Thu, 2009-04-02 at 12:24 -0500, Will Schmidt wrote:
 
-This is Result about Booting using linux-2.6.29-rt2 Kernel on X86 Targets.
-I used below desktop and netbook in this test.
--------------------------------------------------------------------------------------------------------------------------------------
-CPU Info of Desktop/Netbook                               Kernel
-        rootFS               Booting
--------------------------------------------------------------------------------------------------------------------------------------
-Intel Atom(TM)  CPU N270   @ 1.60GHz /         Linux-2.6.29-rt2
-Fedora 9          Success
-Intel Core(TM)2 Quad CPU Q6600 @2.40GHz    same as above       CentOS
-5.2      Success
-Intel Core(TM)2 Quad CPU Q6600 @2.40GHz    same as above       Ubuntu
-8.04      Success
-Intel Core(TM)2 Quad CPU Q9300 @2.50GHz    same as above       Fedora
-9           Fail(Always)
-Intel Core(TM)2 Quad CPU Q8200 @2.33GHz    same as above       Fedora
-9           Fail(Always)
--------------------------------------------------------------------------------------------------------------------------------------
--http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29.tar.bz2
--http://www.kernel.org/pub/linux/kernel/projects/rt/older/patch-2.6.29-rt2.bz2
--config file: http://mfiles.naver.net/6eb85b8594cfa2143352/data42/2009/4/3/195/i386.2.6.29-rt2.ftrace.config-invain-invain.20090402?type=attachment
+> > --------
+> > 
+> > Index: linux-2.6-tip/arch/powerpc/mm/tlb_hash64.c
+> > ===================================================================
+> > --- linux-2.6-tip.orig/arch/powerpc/mm/tlb_hash64.c
+> > +++ linux-2.6-tip/arch/powerpc/mm/tlb_hash64.c
+> > @@ -32,6 +32,8 @@
+> >  #include <asm/bug.h>
+> >  #include <asm/machdep.h>
+> > 
+> > +DEFINE_PER_CPU(struct ppc64_tlb_batch, ppc64_tlb_batch);
+> > +
+> >  /*
+> >   * A linux PTE was changed and the corresponding hash table entry
+> >   * neesd to be flushed. This function will either perform the flush
 
-I captured when display error messages on console.
-<error messages>
-mount: error mounting /dev/root on /sysroot as ext3: No such file or
-directory ......
+Will, could you see if the below makes your splat go away?
 
-2.6.29-rt1 kernel -->
-http://blogfiles7.naver.net/data41/2009/3/31/22/panic.2.6.29-rt1_invain.png
-2.6.29-rt2 kernel -->
-http://blogfiles5.naver.net/data42/2009/4/2/164/2.6.29-rt2.error.q8200_invain.png
+diff --git a/arch/powerpc/include/asm/tlb.h b/arch/powerpc/include/asm/tlb.h
+index ec82dac..3ddc8f6 100644
+--- a/arch/powerpc/include/asm/tlb.h
++++ b/arch/powerpc/include/asm/tlb.h
+@@ -38,6 +38,8 @@ struct arch_mmu_gather {
+ 	struct pte_freelist_batch *batch;
+ };
+ 
++#define ARCH_MMU_GATHER_INIT (struct arch_mmu_gather){ .batch = NULL, }
++
+ #if !defined(CONFIG_PPC_STD_MMU)
+ 
+ #define tlb_flush(tlb)			flush_tlb_mm((tlb)->mm)
+diff --git a/include/asm-generic/tlb.h b/include/asm-generic/tlb.h
+index 7f2167e..50a09de 100644
+--- a/include/asm-generic/tlb.h
++++ b/include/asm-generic/tlb.h
+@@ -71,6 +71,10 @@ tlb_gather_mmu(struct mmu_gather *tlb, struct mm_struct *mm, unsigned int full_m
+ 		tlb->nr = ~0U;
+ 
+ 	tlb->fullmm = full_mm_flush;
++
++#ifdef HAVE_ARCH_MMU_GATHER
++	tlb->arch = ARCH_MMU_GATHER_INIT;
++#endif
+ }
+ 
+ static inline void
 
-
-I read RedHat Bugzilla's pages about the problems.
-for example,
-https://bugzilla.redhat.com/show_bug.cgi?id=479188
-
-Anyone have this problems on Fedora Linux Distribution with linux-2.6.29-rt2 ?
-
--- 
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
