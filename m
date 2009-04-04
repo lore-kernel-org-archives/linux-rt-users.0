@@ -1,65 +1,118 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [Announce] 2.6.29.1-rt4
-Date: Fri, 03 Apr 2009 16:04:12 -0700
-Message-ID: <1238799852.3871.6.camel@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
-	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
-	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
+Date: Sat, 4 Apr 2009 11:04:29 +0900
+Message-ID: <49b7c2350904031904w7fd63cc9o2c0f700a879e217@mail.gmail.com>
+References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S936959AbZDCXDv@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wf-out-1314.google.com ([209.85.200.168]:34705 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752969AbZDDCEb convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 Apr 2009 22:04:31 -0400
+Received: by wf-out-1314.google.com with SMTP id 29so1458641wff.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 03 Apr 2009 19:04:30 -0700 (PDT)
+In-Reply-To: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2009-04-03 at 19:21 +0200, Thomas Gleixner wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->   
-> 	- rebased to 2.6.29.1
-> 
-> 	- powerpc64 tlb rework fix by Peter
+I solved  mounting error  with "acpi=3Doff  noapic nodma" options about
+below problem .
+ ( reference : ./linux-2.6.29-rt2/Documentation/x86/x86_64/boot-options=
+=2Etxt )
+Hope this helps for fedora users.
+This is kernel issues? In fact, I am not sure.
+Thanks reading.
 
-Thanks for cc'ing me...
 
-Just a heads up. I'm still having shutdown/suspend problems with this
-release as before (I had not reported the suspend problem, I think -
-machine hangs and has to be power cycled). Booting with "noreplace-smp"
-fixes both. Is this something I could disable through configuration
-options?
 
-I was also seeing a hard hang when running a java program (with the
-Fedora 10 open source java) - the swingosc gui component of
-SuperCollider 3 (a computer music synthesis program). Impossible to know
-what had failed, machine completely catatonic and nothing left on the
-logs. 
+2009/4/3 GeunSik Lim <leemgs1@gmail.com>:
+> Hi, all.
+>
+> This is Result about Booting using linux-2.6.29-rt2 Kernel on X86 Tar=
+gets.
+> I used below desktop and netbook in this test.
+> ---------------------------------------------------------------------=
+----------------------------------------------------------------
+> CPU Info of Desktop/Netbook =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Kernel
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0rootFS =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 Booting
+> ---------------------------------------------------------------------=
+----------------------------------------------------------------
+> Intel Atom(TM) =C2=A0CPU N270 =C2=A0 @ 1.60GHz / =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 Linux-2.6.29-rt2
+> Fedora 9 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Success
+> Intel Core(TM)2 Quad CPU Q6600 @2.40GHz =C2=A0 =C2=A0same as above =C2=
+=A0 =C2=A0 =C2=A0 CentOS
+> 5.2 =C2=A0 =C2=A0 =C2=A0Success
+> Intel Core(TM)2 Quad CPU Q6600 @2.40GHz =C2=A0 =C2=A0same as above =C2=
+=A0 =C2=A0 =C2=A0 Ubuntu
+> 8.04 =C2=A0 =C2=A0 =C2=A0Success
+> Intel Core(TM)2 Quad CPU Q9300 @2.50GHz =C2=A0 =C2=A0same as above =C2=
+=A0 =C2=A0 =C2=A0 Fedora
+> 9 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Fail(Always)
+> Intel Core(TM)2 Quad CPU Q8200 @2.33GHz =C2=A0 =C2=A0same as above =C2=
+=A0 =C2=A0 =C2=A0 Fedora
+> 9 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Fail(Always)
+> ---------------------------------------------------------------------=
+----------------------------------------------------------------
+> -http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.29.tar=
+=2Ebz2
+> -http://www.kernel.org/pub/linux/kernel/projects/rt/older/patch-2.6.2=
+9-rt2.bz2
+> -config file: http://mfiles.naver.net/6eb85b8594cfa2143352/data42/200=
+9/4/3/195/i386.2.6.29-rt2.ftrace.config-invain-invain.20090402?type=3Da=
+ttachment
+>
+> I captured when display error messages on console.
+> <error messages>
+> mount: error mounting /dev/root on /sysroot as ext3: No such file or
+> directory ......
+>
+> 2.6.29-rt1 kernel -->
+> http://blogfiles7.naver.net/data41/2009/3/31/22/panic.2.6.29-rt1_inva=
+in.png
+> 2.6.29-rt2 kernel -->
+> http://blogfiles5.naver.net/data42/2009/4/2/164/2.6.29-rt2.error.q820=
+0_invain.png
+>
+>
+> I read RedHat Bugzilla's pages about the problems.
+> for example,
+> https://bugzilla.redhat.com/show_bug.cgi?id=3D479188
+>
+> Anyone have this problems on Fedora Linux Distribution with linux-2.6=
+=2E29-rt2 ?
+>
+> --
+> Regards,
+> GeunSik Lim
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
 
-I managed to start the same program _once_ (have not tested again) with
-2.6.29.1/rt4 + some patches & config from fc10' koji 2.6.29.1-15. The
-mouse seemed to pause a couple of times and then I killed the program.
-Restarting it again was successful. Sorry to not have more hard info...
 
--- Fernando
+
+--=20
+Regards,
+GeunSik Lim
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
