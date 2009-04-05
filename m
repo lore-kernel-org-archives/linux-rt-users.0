@@ -1,48 +1,63 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [Announce] 2.6.29.1-rt4
-Date: Sun, 5 Apr 2009 15:53:29 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904051552320.747@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>  <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>  <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
- <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>  <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>  <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>  <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
- <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>  <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>  <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
- <1238799852.3871.6.camel@localhost.localdomain>  <alpine.LFD.2.00.0904040628310.12916@localhost.localdomain> <1238828273.15225.17.camel@localhost.localdomain>
+Subject: Re: cyclictest - fix comparison about flexible word counts of
+ available_tracers file.
+Date: Sun, 5 Apr 2009 16:05:14 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904051559570.747@localhost.localdomain>
+References: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Cc: Clark Williams <williams@redhat.com>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: GeunSik Lim <leemgs1@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:47116 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:34591 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752234AbZDENyY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 09:54:24 -0400
-In-Reply-To: <1238828273.15225.17.camel@localhost.localdomain>
+	id S1752578AbZDEOFg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Apr 2009 10:05:36 -0400
+In-Reply-To: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 3 Apr 2009, Fernando Lopez-Lezcano wrote:
-> > > Just a heads up. I'm still having shutdown/suspend problems with this
-> > > release as before (I had not reported the suspend problem, I think -
-> > > machine hangs and has to be power cycled). Booting with "noreplace-smp"
-> > > fixes both. Is this something I could disable through configuration
-> > > options?
-> > 
-> > No. I have this shutdown/suspend thing on my todo list. 
+On Sun, 5 Apr 2009, GeunSik Lim wrote:
+> [root@fedora9 tracing]# ./cyclictest  -n -t 3 -b 1000000 -P-D 2 --> Success
+> [root@fedora9 tracing]#./cyclictest  -n -t 3 -b 1000000 -I -D 2  --> Failed
+> [root@fedora9 tracing]#./cyclictest  -n -t 3 -b 1000000 -B-D 2 --> Failed
 > 
-> Ah, ok. No problem. If it were not for this feature I'd probably release
-> a test version for Planet CCRMA. 
+> So I made  patch file to consider above case.
+> If I mistake, correct me.
 
-Happens this shutdown/suspend problem every time or is this sporadic ?
+Good catch. Can you please clean up the patch and resend it with a
+patch description and your Signed-off-by line ? 
+
+> --------------------------------------------------
+> [root@fedora9 cyclictest]# diff -urN ./cyclictest.c.ori  ./cyclictest.c
+> --- ./cyclictest.c.ori	2009-04-05 23:48:03.000000000 +0900
+> +++ ./cyclictest.c	2009-04-06 00:15:51.000000000 +0900
+> @@ -320,7 +320,7 @@
+>  	char name[100];
+>  	FILE *fp;
+>  	int ret;
+> -	int i;
+> +	//int i;
+
+  Please remove
+
+>  	/* Make sure tracer is available */
+>  	strncpy(filename, debugfileprefix, sizeof(filename));
+> @@ -330,7 +330,7 @@
+>  	if (!fp)
+>  		return -1;
+> 
+> -	for (i = 0; i < 10; i++) {
+> +	while(1) {
+
+  	while (1) {
+
+  please
+
+>  		ret = fscanf(fp, "%99s", name);
+>  		if (!ret) {
+>  			ret = -1;
 
 Thanks,
 
