@@ -1,131 +1,60 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: cyclictest - fix comparison about flexible word counts of
-	available_tracers file.
-Date: Sun, 5 Apr 2009 15:45:33 +0900
-Message-ID: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [Announce] 2.6.29.1-rt4
+Date: Sun, 5 Apr 2009 10:47:11 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904051038350.747@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>  <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>  <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>  <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>  <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>  <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+ <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <49b7c2350904042028q8865f80tcf56500e8a009c0d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=000e0cd32c48f0ec170466c92088
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>
+To: GeunSik Lim <leemgs1@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.226]:54710 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752365AbZDEGpf (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 02:45:35 -0400
-Received: by rv-out-0506.google.com with SMTP id f9so1761943rvb.1
-        for <linux-rt-users@vger.kernel.org>; Sat, 04 Apr 2009 23:45:34 -0700 (PDT)
+Received: from www.tglx.de ([62.245.132.106]:56637 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754336AbZDEIsY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Apr 2009 04:48:24 -0400
+In-Reply-To: <49b7c2350904042028q8865f80tcf56500e8a009c0d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---000e0cd32c48f0ec170466c92088
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+GeunSik,
 
-Dear Thomas,
+On Sun, 5 Apr 2009, GeunSik Lim wrote:
+> I have one question. What is "broken-out" 's meaning  for rt patch file?
 
-I found bug at settracer function of cyclictest.c source (rt-test ver 0.33).
-settracer func use 10 times in the for() statement to searching tracer
-like preemptoff , irqsoff , preemptirqsoff.
-But, I think that we have to consider 10+ words in the available_tracers file.
+The broken out tar ball contains a patch series of smaller patches,
+which need to be applied in a give order. The order is determined from
+the series file. It's a "quilt" series. quilt is a patch series
+management tool. "man script" 
 
-[root@fedora9 tracing]# cd /debug/tracing/
-[root@fedora9 tracing]# cat available_tracers
-syscall blk kmemtrace power branch function_graph mmiotrace wakeup_rt
-wakeup preemptirqsoff preemptoff irqsoff function sched_switch
-initcall nop
-[root@fedora9 tracing]# cat available_tracers  | wc -w
-16
-[root@fedora9 tracing]#
-[root@fedora9 tracing]# git clone
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-[root@fedora9 tracing]# cd rt-tests
-[root@fedora9 tracing]# make clean ; make all
-[root@fedora9 tracing]# ./cyclictest  -n -t 3 -b 1000000 -P-D 2 --> Success
-[root@fedora9 tracing]#./cyclictest  -n -t 3 -b 1000000 -I -D 2  --> Failed
-[root@fedora9 tracing]#./cyclictest  -n -t 3 -b 1000000 -B-D 2 --> Failed
+We keep those smaller patches for various reasons:
 
+- It's way easier to move forward to the next kernel version with
+  smaller patches than with a huge all in one patch.
 
-So I made  patch file to consider above case.
-If I mistake, correct me.
+- It's easier to split out functionality from the patches and rework
+  that particular issue and replace the patches in the series
 
---------------------------------------------------
-[root@fedora9 cyclictest]# diff -urN ./cyclictest.c.ori  ./cyclictest.c
---- ./cyclictest.c.ori	2009-04-05 23:48:03.000000000 +0900
-+++ ./cyclictest.c	2009-04-06 00:15:51.000000000 +0900
-@@ -320,7 +320,7 @@
- 	char name[100];
- 	FILE *fp;
- 	int ret;
--	int i;
-+	//int i;
+The broken out series is provided for people who want to look into the
+details of the patches and for preempt-rt developers.
 
- 	/* Make sure tracer is available */
- 	strncpy(filename, debugfileprefix, sizeof(filename));
-@@ -330,7 +330,7 @@
- 	if (!fp)
- 		return -1;
+patch-2.6.X-rtY.bz2 is the combination of all patches from the series
+applied. We provide this as a conveniance for users and testers so
+they just have to apply one big patch.
 
--	for (i = 0; i < 10; i++) {
-+	while(1) {
- 		ret = fscanf(fp, "%99s", name);
- 		if (!ret) {
- 			ret = -1;
+Thanks,
 
-
---------------------------------------------------
-
-After patching .....
-
-[root@fedora9 tracing]#./cyclictest  -n -t 3 -b 1000000 -I -D 2
-[root@fedora9 tracing]# cat trace
-# tracer: irqsoff
-#
-# irqsoff latency trace v1.1.5 on 2.6.29.1-rt4.20090403-ftrace-lgs
-# --------------------------------------------------------------------
-# latency: 108 us, #3/3, CPU#0 | (M:preempt VP:0, KP:0, SP:0 HP:0 #P:2)
-#    -----------------
-#    | task: swapper-0 (uid:0 nice:0 policy:0 rt_prio:0)
-#    -----------------
-#
-#                  _------=> CPU#
-#                 / _-----=> irqs-off
-#                | / _----=> need-resched
-#                || / _---=> hardirq/softirq
-#                ||| / _--=> preempt-depth
-#                |||| /
-#                |||||     delay
-#  cmd     pid   ||||| time  |   caller
-#     \   /      |||||   \   |   /
-  <idle>-0       0d..1    3us!: acpi_idle_do_entry <-acpi_idle_enter_bm
-  <idle>-0       0.N.1  107us+: cpu_idle <-rest_init
-  <idle>-0       0.N.1  110us : trace_preempt_on <-rest_init
-
-
--- 
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
---000e0cd32c48f0ec170466c92088
-Content-Type: application/octet-stream;
-	name="fix-comparison-wordcount-available-tracers.patch"
-Content-Disposition: attachment;
-	filename="fix-comparison-wordcount-available-tracers.patch"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_ft5wjoal0
-
-LS0tIC4vY3ljbGljdGVzdC5jLm9yaQkyMDA5LTA0LTA1IDIzOjQ4OjAzLjAwMDAwMDAwMCArMDkw
-MAorKysgLi9jeWNsaWN0ZXN0LmMJMjAwOS0wNC0wNiAwMDoxNTo1MS4wMDAwMDAwMDAgKzA5MDAK
-QEAgLTMyMCw3ICszMjAsNyBAQAogCWNoYXIgbmFtZVsxMDBdOwogCUZJTEUgKmZwOwogCWludCBy
-ZXQ7Ci0JaW50IGk7CisJLy9pbnQgaTsKIAogCS8qIE1ha2Ugc3VyZSB0cmFjZXIgaXMgYXZhaWxh
-YmxlICovCiAJc3RybmNweShmaWxlbmFtZSwgZGVidWdmaWxlcHJlZml4LCBzaXplb2YoZmlsZW5h
-bWUpKTsKQEAgLTMzMCw3ICszMzAsNyBAQAogCWlmICghZnApCiAJCXJldHVybiAtMTsKIAotCWZv
-ciAoaSA9IDA7IGkgPCAxMDsgaSsrKSB7CisJd2hpbGUoMSkgewogCQlyZXQgPSBmc2NhbmYoZnAs
-ICIlOTlzIiwgbmFtZSk7CiAJCWlmICghcmV0KSB7CiAJCQlyZXQgPSAtMTsK
---000e0cd32c48f0ec170466c92088--
+	tglx
