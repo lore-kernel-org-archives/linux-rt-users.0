@@ -1,42 +1,48 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: cyclictest - fix comparison about flexible word counts of
- available_tracers file.
-Date: Sun, 5 Apr 2009 09:50:01 -0500
-Message-ID: <20090405095001.6dc50fbc@torg>
-References: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: System deadlock on 2.6.24-rt20 (-rt27 panics on
+	locking-api-selftests)
+Date: Sun, 5 Apr 2009 20:39:11 +0200
+Message-ID: <3efb10970904051139ue3802b1ib33487418188e4bc@mail.gmail.com>
+References: <3efb10970904030502q1068731fl5b92f93d5341b43e@mail.gmail.com>
+	 <alpine.LFD.2.00.0904051257470.747@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: GeunSik Lim <leemgs1@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:47061 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752088AbZDEOuZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 10:50:25 -0400
-In-Reply-To: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
+Received: from rv-out-0506.google.com ([209.85.198.233]:27836 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751941AbZDESjO (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Apr 2009 14:39:14 -0400
+In-Reply-To: <alpine.LFD.2.00.0904051257470.747@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBTdW4s
-IDUgQXByIDIwMDkgMTU6NDU6MzMgKzA5MDANCkdldW5TaWsgTGltIDxsZWVtZ3MxQGdtYWlsLmNv
-bT4gd3JvdGU6DQoNCj4gRGVhciBUaG9tYXMsDQo+IA0KPiBJIGZvdW5kIGJ1ZyBhdCBzZXR0cmFj
-ZXIgZnVuY3Rpb24gb2YgY3ljbGljdGVzdC5jIHNvdXJjZSAocnQtdGVzdCB2ZXIgMC4zMykuDQo+
-IHNldHRyYWNlciBmdW5jIHVzZSAxMCB0aW1lcyBpbiB0aGUgZm9yKCkgc3RhdGVtZW50IHRvIHNl
-YXJjaGluZyB0cmFjZXINCj4gbGlrZSBwcmVlbXB0b2ZmICwgaXJxc29mZiAsIHByZWVtcHRpcnFz
-b2ZmLg0KPiBCdXQsIEkgdGhpbmsgdGhhdCB3ZSBoYXZlIHRvIGNvbnNpZGVyIDEwKyB3b3JkcyBp
-biB0aGUgYXZhaWxhYmxlX3RyYWNlcnMgZmlsZS4NCj4gDQoNCkdldW5TaWssDQoNCkdvb2QgY2F0
-Y2ghICBJIGFwcGxpZWQgeW91ciBwYXRjaCwgYnV0IHRoZW4gZm91bmQgYSBidWcgaW4gZWl0aGVy
-DQpmc2NhbmYgb3IgZGVidWdmcyAocHJvYmFibHkgZGVidWdmcykuIFNpbmNlIEkgZGlkbid0IGhh
-dmUgSVJRU09GRiBvcg0KUFJFRU1QVE9GRiBzZXQgaW4gbXkga2VybmVsLCB0aG9zZSB0cmFjZXJz
-IHdlcmVuJ3QgYXZhaWxhYmxlIGFuZCBmc2NhbmYNCm5ldmVyIHJldHVybmVkIEVPRiAoaXQga2Vw
-dCByZXR1cm5pbmcgdGhlICJub3AiIHRyYWNlcikuIFNvIEkgcmV3b3JrZWQNCnlvdXIgcGF0Y2gg
-dG8gcmVhZCBldmVyeXRoaW5nIGluIGFuZCBwYXJzZSBpdCB1c2luZyBzdHJ0b2soMykuIA0KDQpU
-aGUgZ2l0IHRyZWUgaGFzIGJlZW4gdXBkYXRlZCBhbmQgYW4gcnQtdGVzdHMtMC4zNC50YXIuZ3og
-dGFyYmFsbCBpcw0KYXZhaWxhYmxlIGF0Og0KDQpodHRwOi8vd3d3Lmtlcm5lbC5vcmcvcHViL2xp
-bnV4Ly9rZXJuZWwvcGVvcGxlL2Nscmt3bGxtcy9ydC10ZXN0cy8NCg0KQ2xhcmsNCi0tLS0tQkVH
-SU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUvTGludXgp
-DQoNCmlFWUVBUkVDQUFZRkFrbll4UjRBQ2drUUh5dWovK1RURXAzVE53Q2JCTnJFSE1MalBtQVM2
-SmNpd2p5WFdxTUUNCndwY0FuMytuVUdkT3dDSlI2c0ZHZnd1bmRQdGFJVHJrDQo9ZFQrMw0KLS0t
-LS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
+Hello Thomas,
+
+>> I integrated -rt27, but this one fails on the locking api-selftests.
+>> Is this a bug in the selftest? Or is there a real locking bug behind
+>> it?
+>
+> Don't think so. The rw locks fixups which we did between -rt20 and
+> -rt27 might have screwed the lockdep selftests where we create
+> deadlock situations.
+
+This is what I hoped for ;-)  (A bug in the testtooling...)
+
+> What happens if you disable the self tests ?
+
+The system boots and seems to run properly. We did not yet test for a
+longer period of time, but the first looks are that the hangups we had
+are gone now. But it would be good for the peace of mind if the
+locking-selftest was working properly.
+
+Thanks.
+
+Kind Regards,
+
+Remy
