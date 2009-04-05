@@ -1,70 +1,115 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
-Date: Sun, 5 Apr 2009 11:51:51 +0900
-Message-ID: <49b7c2350904041951i2d984221qca33229dff6f0df4@mail.gmail.com>
-References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
-	 <49b7c2350904031904w7fd63cc9o2c0f700a879e217@mail.gmail.com>
-	 <alpine.LFD.2.00.0904040637480.12916@localhost.localdomain>
+Subject: Re: [Announce] 2.6.29.1-rt4
+Date: Sun, 5 Apr 2009 12:28:42 +0900
+Message-ID: <49b7c2350904042028q8865f80tcf56500e8a009c0d@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.173]:32960 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756697AbZDECvx convert rfc822-to-8bit (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.239]:47646 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754183AbZDED2p convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 4 Apr 2009 22:51:53 -0400
-Received: by wf-out-1314.google.com with SMTP id 29so1763887wff.4
-        for <linux-rt-users@vger.kernel.org>; Sat, 04 Apr 2009 19:51:52 -0700 (PDT)
-In-Reply-To: <alpine.LFD.2.00.0904040637480.12916@localhost.localdomain>
+	Sat, 4 Apr 2009 23:28:45 -0400
+In-Reply-To: <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Dear Thomas,
+>
+>The broken out patches are also available at the same download
+>locations.
+>
+>Enjoy !
 
-Thank you for your fast response.
+Thank you for new release announce.
+I am using new version ( linux-2.6.29.1-rt4 ) now .
+config file is http://leemgs1.googlecode.com/files/i386.2.6.29.1-rt4.ft=
+race.config.20090404
+
+I have one question. What is "broken-out" 's meaning  for rt patch file=
+?
+
+When I opened  realtime patch  files for vanilla kernel,
+I always checked 2 files like belows.
+http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt4-b=
+roken-out.tar.bz2
+<-- collection of seperate files for each patch.
+http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt4.b=
+z2
+<-- only one patch file.
+
+What is difference  meaning of file-name format
+between "patch-2.6.29.1-rt4-broken-out.tar.bz2" and "patch-2.6.29.1-rt4=
+=2Ebz2" ?=09
+I have always wondered that.
+I am sorry for sending this stupid and easy question.
+
+Thanks,
+GeunSik Lim,
 
 2009/4/4 Thomas Gleixner <tglx@linutronix.de>:
-> On Sat, 4 Apr 2009, GeunSik Lim wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
 >
->> I solved =C2=A0mounting error =C2=A0with "acpi=3Doff =C2=A0noapic no=
-dma" options about
->> below problem .
->> =C2=A0( reference : ./linux-2.6.29-rt2/Documentation/x86/x86_64/boot=
--options.txt )
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- rebased to 2.6.29.1
 >
-> Ouch. That's not a real solution.
-I think so.
-But, I need trick for  kernel booting on Q9300 &Q8200Target successfull=
-y.
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- powerpc64 tlb rework fix by Peter
 >
->> Hope this helps for fedora users.
->> This is kernel issues? In fact, I am not sure.
+> Download locations:
 >
-> Hmm. You said the same kernel works fine on other distros, right ? Do
-> you use the same .config for the different distros. If not you could
-> try to build the kernel on fedora with the other-distro config.
-Yes.
-I used the same kernel on various distros as I said previously.
-( config file :
-http://leemgs1.googlecode.com/files/i386.2.6.29-rt2.ftrace.config-invai=
-n-invain.20090402)
-for example,
-At first,I built linux-2.6.29.rt2 kernel source.
-And then,  I tested
-kernel booting with this same kernel
-binary(ex:vmlinuz,Systemmap,initrd , /lib/modules/2.6.29.rt2) on other
-distros.
-
-I will test with the same kernel binary on Q8200 /Q9300(Core2Quad)
-using ubuntu 8.04 without fedora 9 later on.
-
+> =C2=A0 =C2=A0 http://rt.et.redhat.com/download/
+> =C2=A0 =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/
 >
-> Thanks,
+> Information on the RT patch can be found at:
 >
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0tglx
+> =C2=A0 =C2=A0 http://rt.wiki.kernel.org/index.php/Main_Page
+>
+> to build the 2.6.29.1-rt4 tree, the following patches should be
+> applied:
+>
+> =C2=A0 =C2=A0 http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.2=
+9.1.tar.bz2
+> =C2=A0 =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/patc=
+h-2.6.29.1-rt4.bz2
+>
+> The broken out patches are also available at the same download
+> locations.
+>
+> Enjoy !
+>
+> =C2=A0 =C2=A0 =C2=A0 tglx
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
 >
 
 
