@@ -1,96 +1,42 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [Announce] 2.6.29.1-rt4
-Date: Sun, 05 Apr 2009 16:10:52 -0700
-Message-ID: <1238973052.4995.29.camel@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
-	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
-	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-	 <1238799852.3871.6.camel@localhost.localdomain>
-	 <alpine.LFD.2.00.0904040628310.12916@localhost.localdomain>
-	 <1238828273.15225.17.camel@localhost.localdomain>
-	 <alpine.LFD.2.00.0904051552320.747@localhost.localdomain>
-	 <1238968196.4995.15.camel@localhost.localdomain>
-	 <alpine.LFD.2.00.0904060001480.747@localhost.localdomain>
+From: Kazuyoshi Furutaka <furutaka.kazuyoshi@jaea.go.jp>
+Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
+Date: Mon, 06 Apr 2009 07:57:53 +0900 (JST)
+Message-ID: <20090406.075753.260126012.furutaka.kazuyoshi@jaea.go.jp>
+References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp5.Stanford.EDU ([171.67.219.85]:34026 "EHLO
-	smtp5.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754025AbZDEXKY (ORCPT
+Received: from cirius.tokai-sc.jaea.go.jp ([133.53.249.1]:60340 "EHLO
+	cirius.tokai-sc.jaea.go.jp" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752594AbZDEXkS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 19:10:24 -0400
-In-Reply-To: <alpine.LFD.2.00.0904060001480.747@localhost.localdomain>
+	Sun, 5 Apr 2009 19:40:18 -0400
+Received: from jupiter.tokai-sc.jaea.go.jp (jupiter.tokai-sc.jaea.go.jp [133.53.11.8])
+	by cirius.tokai-sc.jaea.go.jp (New/3.7W-natsu) with ESMTP id n35MvGFA023090
+	for <linux-rt-users@vger.kernel.org>; Mon, 6 Apr 2009 07:57:16 +0900 (JST)
+Received: from rg1.jaea.go.jp (localhost [127.0.0.1])
+	by jupiter.tokai-sc.jaea.go.jp (New/3.7W-natsu) with ESMTP id n35Mvu1B012358
+	for <linux-rt-users@vger.kernel.org>; Mon, 6 Apr 2009 07:57:56 +0900 (JST)
+In-Reply-To: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2009-04-06 at 00:02 +0200, Thomas Gleixner wrote:
-> On Sun, 5 Apr 2009, Fernando Lopez-Lezcano wrote:
-> > On Sun, 2009-04-05 at 15:53 +0200, Thomas Gleixner wrote:
-> > > On Fri, 3 Apr 2009, Fernando Lopez-Lezcano wrote:
-> > > > > > Just a heads up. I'm still having shutdown/suspend problems with this
-> > > > > > release as before (I had not reported the suspend problem, I think -
-> > > > > > machine hangs and has to be power cycled). Booting with "noreplace-smp"
-> > > > > > fixes both. Is this something I could disable through configuration
-> > > > > > options?
-> > > > > 
-> > > > > No. I have this shutdown/suspend thing on my todo list. 
-> > > > 
-> > > > Ah, ok. No problem. If it were not for this feature I'd probably release
-> > > > a test version for Planet CCRMA. 
-> > > 
-> > > Happens this shutdown/suspend problem every time or is this sporadic ?
-> > 
-> > For me it is repeatable (on both a laptop and a desktop machine so it
-> > does not appear to be very hardware specific). It might be of course an
-> > interaction with the Fedora patches I use. 
-> > 
-> > In the category of "I wish I had a crystal ball" reports with no hard
-> > data, I can confirm that my build of rt4 does hang. I was trying
-> > 2.6.29.1-rt4 during a rehearsal for a concert yesterday[*] and after a
-> > hard hang I reverted to the vanilla Fedora kernel (which is what I had
-> > been using because of that problem - no clues left behind in logs). 
-> 
-> Hmm. Can you upload your full patch queue and the binary rpm so I can
-> give it a test ride ?
+Hi linux-rt-users list,
 
-Sure, no problem. I just did a release to planetcore-testing repo (with
-a warning to the planetccrma list), you can find it here:
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
+Date: Fri, 3 Apr 2009 11:20:10 +0900
 
-http://ccrma.stanford.edu/planetccrma/mirror/fedora/linux/planetcore/testing/10/i386/repoview/index.html
-http://ccrma.stanford.edu/planetccrma/mirror/fedora/linux/planetcore/testing/10/x86_64/repoview/index.html
+> Anyone have this problems on Fedora Linux Distribution with linux-2.6.29-rt2 ?
 
-(the one I have tested and hangs is the i386 PAE version)
-Source here:
+FYI, I'm running a few Fedora "10" systems (not exactly the
+same as GeunSik's) with preempt-rt kernels (2.6.29-rc8-rt3
+to 2.6.29-rt2, and I'll test 2.6.29.1-rt4 soon), but I've
+never experienced such a trouble with them.
 
-http://ccrma.stanford.edu/planetccrma/mirror/fedora/linux/planetcore/testing/10/SRPMS/
-
-(if you don't want to figure out the .src.rpm - I would not blame you -
-I can give you a list of the patches that were actually applied - of the
-ones that are included in the package)
-
--- Fernando
-
-
+Kazuyoshi
+--
+Kazuyoshi Furutaka
+furutaka _dot_ kazuyoshi _at_ jaea _dot_ go _dot_ jp
