@@ -1,43 +1,42 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on
- Fedora.
-Date: Sun, 5 Apr 2009 16:10:51 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904051606170.747@localhost.localdomain>
-References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>  <49b7c2350904031904w7fd63cc9o2c0f700a879e217@mail.gmail.com>  <alpine.LFD.2.00.0904040637480.12916@localhost.localdomain>
- <49b7c2350904041951i2d984221qca33229dff6f0df4@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: cyclictest - fix comparison about flexible word counts of
+ available_tracers file.
+Date: Sun, 5 Apr 2009 09:50:01 -0500
+Message-ID: <20090405095001.6dc50fbc@torg>
+References: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
 To: GeunSik Lim <leemgs1@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:51079 "EHLO www.tglx.de"
+Received: from mx2.redhat.com ([66.187.237.31]:47061 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754549AbZDEOLA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 10:11:00 -0400
-In-Reply-To: <49b7c2350904041951i2d984221qca33229dff6f0df4@mail.gmail.com>
+	id S1752088AbZDEOuZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Apr 2009 10:50:25 -0400
+In-Reply-To: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 5 Apr 2009, GeunSik Lim wrote:
-> > Hmm. You said the same kernel works fine on other distros, right ? Do
-> > you use the same .config for the different distros. If not you could
-> > try to build the kernel on fedora with the other-distro config.
-> Yes.
-> I used the same kernel on various distros as I said previously.
-> ( config file :
-> http://leemgs1.googlecode.com/files/i386.2.6.29-rt2.ftrace.config-invain-invain.20090402)
-> for example,
-> At first,I built linux-2.6.29.rt2 kernel source.
-> And then,  I tested
-> kernel booting with this same kernel
-> binary(ex:vmlinuz,Systemmap,initrd , /lib/modules/2.6.29.rt2) on other
-> distros.
-
-Ok, can you try the following ? Boot into fedora, copy the fedora
-config file into your -rt build directory and enable preempt-rt on
-it. Now build the kernel and install it with "make modules_install
-install". Does this work ?
-
-Thanks,
-
-	tglx
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBTdW4s
+IDUgQXByIDIwMDkgMTU6NDU6MzMgKzA5MDANCkdldW5TaWsgTGltIDxsZWVtZ3MxQGdtYWlsLmNv
+bT4gd3JvdGU6DQoNCj4gRGVhciBUaG9tYXMsDQo+IA0KPiBJIGZvdW5kIGJ1ZyBhdCBzZXR0cmFj
+ZXIgZnVuY3Rpb24gb2YgY3ljbGljdGVzdC5jIHNvdXJjZSAocnQtdGVzdCB2ZXIgMC4zMykuDQo+
+IHNldHRyYWNlciBmdW5jIHVzZSAxMCB0aW1lcyBpbiB0aGUgZm9yKCkgc3RhdGVtZW50IHRvIHNl
+YXJjaGluZyB0cmFjZXINCj4gbGlrZSBwcmVlbXB0b2ZmICwgaXJxc29mZiAsIHByZWVtcHRpcnFz
+b2ZmLg0KPiBCdXQsIEkgdGhpbmsgdGhhdCB3ZSBoYXZlIHRvIGNvbnNpZGVyIDEwKyB3b3JkcyBp
+biB0aGUgYXZhaWxhYmxlX3RyYWNlcnMgZmlsZS4NCj4gDQoNCkdldW5TaWssDQoNCkdvb2QgY2F0
+Y2ghICBJIGFwcGxpZWQgeW91ciBwYXRjaCwgYnV0IHRoZW4gZm91bmQgYSBidWcgaW4gZWl0aGVy
+DQpmc2NhbmYgb3IgZGVidWdmcyAocHJvYmFibHkgZGVidWdmcykuIFNpbmNlIEkgZGlkbid0IGhh
+dmUgSVJRU09GRiBvcg0KUFJFRU1QVE9GRiBzZXQgaW4gbXkga2VybmVsLCB0aG9zZSB0cmFjZXJz
+IHdlcmVuJ3QgYXZhaWxhYmxlIGFuZCBmc2NhbmYNCm5ldmVyIHJldHVybmVkIEVPRiAoaXQga2Vw
+dCByZXR1cm5pbmcgdGhlICJub3AiIHRyYWNlcikuIFNvIEkgcmV3b3JrZWQNCnlvdXIgcGF0Y2gg
+dG8gcmVhZCBldmVyeXRoaW5nIGluIGFuZCBwYXJzZSBpdCB1c2luZyBzdHJ0b2soMykuIA0KDQpU
+aGUgZ2l0IHRyZWUgaGFzIGJlZW4gdXBkYXRlZCBhbmQgYW4gcnQtdGVzdHMtMC4zNC50YXIuZ3og
+dGFyYmFsbCBpcw0KYXZhaWxhYmxlIGF0Og0KDQpodHRwOi8vd3d3Lmtlcm5lbC5vcmcvcHViL2xp
+bnV4Ly9rZXJuZWwvcGVvcGxlL2Nscmt3bGxtcy9ydC10ZXN0cy8NCg0KQ2xhcmsNCi0tLS0tQkVH
+SU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUvTGludXgp
+DQoNCmlFWUVBUkVDQUFZRkFrbll4UjRBQ2drUUh5dWovK1RURXAzVE53Q2JCTnJFSE1MalBtQVM2
+SmNpd2p5WFdxTUUNCndwY0FuMytuVUdkT3dDSlI2c0ZHZnd1bmRQdGFJVHJrDQo9ZFQrMw0KLS0t
+LS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
