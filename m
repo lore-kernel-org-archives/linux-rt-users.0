@@ -1,227 +1,76 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: cyclictest - duplicate explanation of cyclictest option
-Date: Mon, 6 Apr 2009 17:29:04 +0900
-Message-ID: <49b7c2350904060129r640a3db6r5487e72f2cf6330f@mail.gmail.com>
-References: <49b7c2350904051956n214efbb5pc8cd9990820a534f@mail.gmail.com>
+Subject: [PATCH] Update old Mini-HOWTO for ftrace
+Date: Mon, 6 Apr 2009 23:02:59 +0900
+Message-ID: <49b7c2350904060702j3f725a45ub5e7d3ee3af883c1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=001636e1fca2f89a060466deb04c
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/mixed; boundary=000e0cd311a21c6b1d0466e35b29
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.175]:56564 "EHLO
+Received: from wf-out-1314.google.com ([209.85.200.173]:56063 "EHLO
 	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752872AbZDFI3G (ORCPT
+	with ESMTP id S1754621AbZDFODB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Apr 2009 04:29:06 -0400
-Received: by wf-out-1314.google.com with SMTP id 29so2149643wff.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 06 Apr 2009 01:29:04 -0700 (PDT)
-In-Reply-To: <49b7c2350904051956n214efbb5pc8cd9990820a534f@mail.gmail.com>
+	Mon, 6 Apr 2009 10:03:01 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---001636e1fca2f89a060466deb04c
+--000e0cd311a21c6b1d0466e35b29
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 
-Dear Thomas & Clark,
+   Dear Steven,
 
-This is e-mail about patch to support wakeup & wakeup_rt tracing additional=
-ly
-at the argument of cyclictest.
-Currently, cyclictest v 0.34 support  three tracing like PREEMPTOFF ,
-IRQSOFF , PREEMPTIRQSOFF.
-I want you to append WAKEUP & WAKEUP_RT at the current cyclictest version.
+   The author of ftrace(Internal kernel Function Tracer) feature
+renamed the ftrace tracer
+    to function to avoid further confusion between the ftrace
+infrastructure and the
+    function tracer on Oct-20, 2008.
 
-and, cyclictest ver 0.34 have a bug about context switching  and event opti=
-on.
-for example,
-we can not use  "-C" option without --context option.
-we can not use  "-E" option without --event option.
+    But, Update of Mini-HOWTO document are still not working
+    .
+    Most of the developers often utilize "/debug/tracing/README" file
+as Mini-HOWTO.
+    They will confuse definition and usage about ftrace  between
+README(ftrace) file
+    and available_tracers(function) file after linux-2.6.27 like me.
+    And, I want you to append "chrt -f 5 sleep 1" command as simple
+example for latency.
 
-Belows is result after patching in sequence.
- 1) adjust  "remove-duplicate-h-option.patch" file.
- 2) and then,  adjust
-"add-wakeup-wakeuprt-tracing-and-misc-bugfix.patch"  file.
+    Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+    Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+    Signed-off-by: Ingo Molnar <mingo@elte.hu>
+---
+ kernel/trace/trace.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-Hope this helps.  If I mistake, correct me.
-Thanks.
-
-After Patching ....
-
-#### [ wakeup test]###############################################
-[root@fedora9 rt-tests-temp0]# cat /debug/tracing/available_tracers
-syscall blk kmemtrace power branch function_graph mmiotrace wakeup_rt
-wakeup preemptirqsoff preemptoff irqsoff function sched_switch
-initcall nop
-
-[root@fedora9 rt-tests-temp0]# ./cyclictest  -t 2 -b 200 -W -D 5
-could not set latency_hist/wakeup_latency/reset to 1
-0.16 0.27 0.21 2/308 2521
-
-T: 0 ( 2520) P: 0 I:1000 C:   4288 Min:     16 Act:   27 Avg:   28 Max:    =
- 152
-T: 1 ( 2521) P: 0 I:1500 C:   2859 Min:     19 Act:   29 Avg:   27 Max:    =
-  72
-
-[root@fedora9 rt-tests-temp0]# cat /debug/tracing/trace
-# tracer: wakeup
-#
-# wakeup latency trace v1.1.5 on 2.6.29-rt2-ftrace
-# --------------------------------------------------------------------
-# latency: 20 us, #3/3, CPU#2 | (M:preempt VP:0, KP:0, SP:0 HP:0 #P:4)
-#    -----------------
-#    | task: gnome-terminal-3884 (uid:504 nice:0 policy:0 rt_prio:0)
-#    -----------------
-#
-#                  _------=3D> CPU#
-#                 / _-----=3D> irqs-off
-#                | / _----=3D> need-resched
-#                || / _---=3D> hardirq/softirq
-#                ||| / _--=3D> preempt-depth
-#                |||| /
-#                |||||     delay
-#  cmd     pid   ||||| time  |   caller
-#     \   /      |||||   \   |   /
-gnome-te-3884    2d.h.    1us+: irq_enter <-smp_apic_timer_interrupt
-gnome-te-3884    2dN.1   20us : irq_exit <-smp_apic_timer_interrupt
-gnome-te-3884    2dN.1   21us : trace_preempt_on <-smp_apic_timer_interrupt
-
-#####[ Context Switching Test]#####################################
-
-[root@fedora9 rt-tests-temp0]# ./cyclictest  -t 10 -b 100000 -C -m -D 5
-could not set latency_hist/wakeup_latency/reset to 1
-0.17 0.17 0.17 1/326 2706
-
-T: 0 ( 2697) P: 0 I:1000 C:   4000 Min:     12 Act:   21 Avg:   20 Max:    =
- 107
-T: 1 ( 2698) P: 0 I:1500 C:   2667 Min:     13 Act:   27 Avg:   22 Max:    =
- 138
-T: 2 ( 2699) P: 0 I:2000 C:   2000 Min:     12 Act:   13 Avg:   13 Max:    =
-  40
-T: 3 ( 2700) P: 0 I:2500 C:   1600 Min:     12 Act:   16 Avg:   13 Max:    =
-  41
-T: 4 ( 2701) P: 0 I:3000 C:   1334 Min:     12 Act:   15 Avg:   13 Max:    =
-  39
-T: 5 ( 2702) P: 0 I:3500 C:   1143 Min:     12 Act:   28 Avg:   16 Max:    =
-  61
-T: 6 ( 2703) P: 0 I:4000 C:   1000 Min:     12 Act:   13 Avg:   13 Max:    =
- 102
-T: 7 ( 2704) P: 0 I:4500 C:    889 Min:     12 Act:   13 Avg:   15 Max:    =
- 184
-T: 8 ( 2705) P: 0 I:5000 C:    800 Min:     12 Act:   13 Avg:   13 Max:    =
-  32
-T: 9 ( 2706) P: 0 I:5500 C:    728 Min:     12 Act:   15 Avg:   15 Max:    =
-  54
-[root@fedora9 rt-tests-temp0]# cat /debug/tracing/trace |head
-# tracer: sched_switch
-#
-#           TASK-PID    CPU#    TIMESTAMP  FUNCTION
-#              | |       |          |         |
-##### CPU 0 buffer started ####
-          <idle>-0     [000]  1107.917632:      0:140:R   + [000]
-10: 49:D sirq-sched/0
-          <idle>-0     [000]  1107.917635:      0:140:R   + [000]
-5: 49:D sirq-timer/0
-          <idle>-0     [000]  1107.917642:      0:140:R =3D=3D> [000]
-10: 49:R sirq-sched/0
-    sirq-sched/0-10    [000]  1107.917655:     10: 49:D =3D=3D> [000]
-5: 49:R sirq-timer/0
-    sirq-timer/0-5     [000]  1107.917660:      5: 49:D =3D=3D> [000]
-0:140:R <idle>
-[root@fedora9 rt-tests-temp0]#
-
-
-###########################################################################=
-######
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index a0174a4..15f0eec 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -2358,7 +2358,7 @@ static const char readme_msg[] =
+        "# mkdir /debug\n"
+        "# mount -t debugfs nodev /debug\n\n"
+        "# cat /debug/tracing/available_tracers\n"
+-       "wakeup preemptirqsoff preemptoff irqsoff ftrace sched_switch none\n\n"
++       "wakeup preemptirqsoff preemptoff irqsoff function
+sched_switch none\n\n"
+        "# cat /debug/tracing/current_tracer\n"
+        "none\n"
+        "# echo sched_switch > /debug/tracing/current_tracer\n"
+@@ -2368,6 +2368,7 @@ static const char readme_msg[] =
+        "noprint-parent nosym-offset nosym-addr noverbose\n"
+        "# echo print-parent > /debug/tracing/trace_options\n"
+        "# echo 1 > /debug/tracing/tracing_enabled\n"
++       "# chrt -f 5 sleep 1\n"
+        "# cat /debug/tracing/trace > /tmp/trace.txt\n"
+        "echo 0 > /debug/tracing/tracing_enabled\n"
+ ;
 
 
 
-
-
-2009/4/6 GeunSik Lim <leemgs1@gmail.com>:
-> Dear Clark,
->
-> This is trivial contents about option of cyclictest.
->
-> Cyclictest utiltiy (ver 0.34) display the information with duplicate
-> "-h" options,
-> when a user run "cyclictest --help" command.
-> User will confuse =C2=A0exact understanding because of duplicate
-> description of -h option.
-> How about you remove "-h H_MAX =C2=A0*****" line?
-> Thanks reading.
->
-> Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
->
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index f878217..cedc36f 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -688,7 +688,8 @@ static void display_help(void)
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-d DIST =C2=A0--distanc=
-e=3DDIST =C2=A0 distance of thread
-> intervals in us default=3D500\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-E =C2=A0 =C2=A0 =C2=A0=
- --event =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 event tracing (used with -b)\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-f =C2=A0 =C2=A0 =C2=A0=
- --ftrace =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0function trace (when -b is acti=
-ve)\n"
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h H_MAX =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 latency histogram size in
-> us default 0 (off)\n"
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h =C2=A0 =C2=A0 =C2=
-=A0 --histogram=3DUS =C2=A0 =C2=A0dump a latency histogram to
-> stdout after the run\n"
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0" =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 US is=
- the max time to be be
-> tracked in microseconds\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-i INTV =C2=A0--interva=
-l=3DINTV =C2=A0 base interval of thread in
-> us default=3D1000\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-I =C2=A0 =C2=A0 =C2=A0=
- --irqsoff =C2=A0 =C2=A0 =C2=A0 =C2=A0 Irqsoff tracing (used with -b)\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-l LOOPS --loops=3DLOOP=
-S =C2=A0 =C2=A0 number of loops:
-> default=3D0(endless)\n"
-> @@ -710,8 +711,6 @@ static void display_help(void)
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-D =C2=A0 =C2=A0 =C2=A0=
- --duration=3Dt =C2=A0 =C2=A0 =C2=A0specify a length for the test run\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 " =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 defau=
-lt is in seconds, but
-> 'm', 'h', or 'd' maybe added\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 " =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 to mo=
-dify value to minutes,
-> hours or days\n"
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h =C2=A0 =C2=A0 =C2=
-=A0 --histogram=3DUS =C2=A0 =C2=A0dump a latency histogram to
-> stdout after the run\n"
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0" =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 US is=
- the max time to be be
-> tracked in microseconds\n"
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0);
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0exit(0);
-> =C2=A0}
->
->
-> --
-> Regards,
-> GeunSik Lim
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" i=
-n
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
->
-
-
-
---=20
+-- 
 Regards,
 GeunSik Lim
 --
@@ -230,119 +79,45 @@ the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
 Please read the FAQ at  http://www.tux.org/lkml/
 
---001636e1fca2f89a060466deb04c
-Content-Type: application/octet-stream;
-	name="add-wakeup-wakeuprt-tracing-and-misc-bugfix.patch"
-Content-Disposition: attachment;
-	filename="add-wakeup-wakeuprt-tracing-and-misc-bugfix.patch"
+--000e0cd311a21c6b1d0466e35b29
+Content-Type: application/octet-stream; name="update-minihowto-ftrace.patch"
+Content-Disposition: attachment; filename="update-minihowto-ftrace.patch"
 Content-Transfer-Encoding: base64
-X-Attachment-Id: f_ft6w9w3i1
+X-Attachment-Id: f_ft7rotyk0
 
-QXV0aG9yOiBHZXVuU2lrIExpbSA8bGVlbWdzMUBnbWFpbC5jb20+CkRhdGU6ICAgTW9uIEFwciA2
-IDE3OjE1OjA5IDIwMDkgKzA5MDAKCiAgICBTdXBwb3J0IHdha2V1cCB0cmFjaW5nIGFuZCBtaXNj
-IGJ1Z2ZpeC4KICAgIAogICAgVGhpcyBpcyBwYXRjaCB0byBzdXBwb3J0IHdha2V1cCAmIHdha2V1
-cF9ydCB0cmFjaW5nIGF0IHRoZSBhcmd1bWVudCBvZiBjeWNsaWN0ZXN0IGFkZGl0aW9uYWxseS4K
-ICAgIEN1cnJlbnRseSwgY3ljbGljdGVzdCh2ZXIgMC4zNCkgc3VwcG9ydCB0aHJlZSB0cmFjaW5n
-IGxpa2UgUFJFRU1QVE9GRiwgSVJRU09GRiwgUFJFRU1QVElSUVNPRkYuCiAgICBJIHdhbnQgeW91
-IHRvIGFwcGVuZCBXQUtFVVAgJiBXQUtFVVBfUlQgdHJhY2luZyBhdCB0aGUgY3VycmVudCBjeWNs
-aWN0ZXN0IHZlcnNpb24uCiAgICAKICAgIGFuZCwgY3ljbGljdGVzdCB2ZXIgMC4zNCBoYXZlIGEg
-bWlzYyBidWcgYWJvdXQgY29udGV4dCBzd2l0Y2hpbmcgYW5kIGV2ZW50IG9wdGlvbi4KICAgIGZv
-ciBleGFtcGxlLAogICAgd2UgY2FuIG5vdCB1c2UgICItQyIgb3B0aW9uIHdpdGhvdXQgLS1jb250
-ZXh0IG9wdGlvbi4KICAgIHdlIGNhbiBub3QgdXNlICAiLUUiIG9wdGlvbiB3aXRob3V0IC0tZXZl
-bnQgb3B0aW9uLgogICAgCiAgICBTaWduZWQtb2ZmLWJ5OiBHZXVuU2lrIExpbSA8bGVlbWdzMUBn
-bWFpbC5jb20+CiAgICBTaWduZWQtb2ZmLWJ5OiBUaG9tYXMgR2xlaXhuZXIgPHRnbHhAbGludXRy
-b25peC5kZT4KICAgIFNpZ25lZC1vZmYtYnk6IENsYXJrIFdpbGxpYW1zIDx3aWxsaWFtc0ByZWRo
-YXQuY29tPgoKZGlmZiAtLWdpdCBhL3NyYy9jeWNsaWN0ZXN0L2N5Y2xpY3Rlc3QuYyBiL3NyYy9j
-eWNsaWN0ZXN0L2N5Y2xpY3Rlc3QuYwppbmRleCBjZWRjMzZmLi43NDZiNDRmIDEwMDY0NAotLS0g
-YS9zcmMvY3ljbGljdGVzdC9jeWNsaWN0ZXN0LmMKKysrIGIvc3JjL2N5Y2xpY3Rlc3QvY3ljbGlj
-dGVzdC5jCkBAIC05Myw2ICs5Myw4IEBAIGVudW0gewogICAgICAgIElSUVNPRkYsCiAgICAgICAg
-UFJFRU1QVE9GRiwKICAgICAgICBJUlFQUkVFTVBUT0ZGLAorICAgICAgIFdBS0VVUCwKKyAgICAg
-ICBXQUtFVVBSVCwKIH07CiAKICNkZWZpbmUgSElTVF9NQVggICAgICAgICAgICAgICAxMDAwMDAw
-CkBAIC00MTUsNiArNDE3LDEyIEBAIHN0YXRpYyB2b2lkIHNldHVwX3RyYWNlcih2b2lkKQogICAg
-ICAgICAgICAgICAgY2FzZSBDVFhUU1dJVENIOgogICAgICAgICAgICAgICAgICAgICAgICByZXQg
-PSBzZXR0cmFjZXIoInNjaGVkX3N3aXRjaCIpOwogICAgICAgICAgICAgICAgICAgICAgICBicmVh
-azsKKyAgICAgICAgICAgICAgIGNhc2UgV0FLRVVQOgorICAgICAgICAgICAgICAgICAgICAgICBy
-ZXQgPSBzZXR0cmFjZXIoIndha2V1cCIpOworICAgICAgICAgICAgICAgICAgICAgICBicmVhazsK
-KyAgICAgICAgICAgICAgIGNhc2UgV0FLRVVQUlQ6CisgICAgICAgICAgICAgICAgICAgICAgIHJl
-dCA9IHNldHRyYWNlcigid2FrZXVwX3J0Iik7CisgICAgICAgICAgICAgICAgICAgICAgIGJyZWFr
-OwogICAgICAgICAgICAgICAgZGVmYXVsdDoKICAgICAgICAgICAgICAgICAgICAgICAgcHJpbnRm
-KCJjeWNsaWN0ZXN0OiB1bmtub3duIHRyYWNlciFcbiIpOwogICAgICAgICAgICAgICAgICAgICAg
-ICByZXQgPSAwOwpAQCAtNjg2LDYgKzY5NCw5IEBAIHN0YXRpYyB2b2lkIGRpc3BsYXlfaGVscCh2
-b2lkKQogICAgICAgICAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgMSA9IENMT0NL
-X1JFQUxUSU1FXG4iCiAgICAgICAgICAgICAgICItQyAgICAgICAtLWNvbnRleHQgICAgICAgICBj
-b250ZXh0IHN3aXRjaCB0cmFjaW5nICh1c2VkIHdpdGggLWIpXG4iCiAgICAgICAgICAgICAgICIt
-ZCBESVNUICAtLWRpc3RhbmNlPURJU1QgICBkaXN0YW5jZSBvZiB0aHJlYWQgaW50ZXJ2YWxzIGlu
-IHVzIGRlZmF1bHQ9NTAwXG4iCisgICAgICAgICAgICAgICItRCAgICAgICAtLWR1cmF0aW9uPXQg
-ICAgICBzcGVjaWZ5IGEgbGVuZ3RoIGZvciB0aGUgdGVzdCBydW5cbiIKKyAgICAgICAgICAgICAg
-IiAgICAgICAgICAgICAgICAgICAgICAgICAgIGRlZmF1bHQgaXMgaW4gc2Vjb25kcywgYnV0ICdt
-JywgJ2gnLCBvciAnZCcgbWF5YmUgYWRkZWRcbiIKKyAgICAgICAgICAgICAgIiAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIHRvIG1vZGlmeSB2YWx1ZSB0byBtaW51dGVzLCBob3VycyBvciBkYXlz
-XG4iCiAgICAgICAgICAgICAgICItRSAgICAgICAtLWV2ZW50ICAgICAgICAgICBldmVudCB0cmFj
-aW5nICh1c2VkIHdpdGggLWIpXG4iCiAgICAgICAgICAgICAgICItZiAgICAgICAtLWZ0cmFjZSAg
-ICAgICAgICBmdW5jdGlvbiB0cmFjZSAod2hlbiAtYiBpcyBhY3RpdmUpXG4iCiAgICAgICAgICAg
-ICAgICItaCAgICAgICAtLWhpc3RvZ3JhbT1VUyAgICBkdW1wIGEgbGF0ZW5jeSBoaXN0b2dyYW0g
-dG8gc3Rkb3V0IGFmdGVyIHRoZSBydW5cbiIKQEAgLTcwOCw5ICs3MTksOCBAQCBzdGF0aWMgdm9p
-ZCBkaXNwbGF5X2hlbHAodm9pZCkKICAgICAgICAgICAgICAgIiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgIHdpdGhvdXQgLXQgZGVmYXVsdCA9IDFcbiIKICAgICAgICAgICAgICAgIi12ICAgICAg
-IC0tdmVyYm9zZSAgICAgICAgIG91dHB1dCB2YWx1ZXMgb24gc3Rkb3V0IGZvciBzdGF0aXN0aWNz
-XG4iCiAgICAgICAgICAgICAgICIgICAgICAgICAgICAgICAgICAgICAgICAgICBmb3JtYXQ6IG46
-Yzp2IG49dGFza251bSBjPWNvdW50IHY9dmFsdWUgaW4gdXNcbiIKLSAgICAgICAgICAgICAgIi1E
-ICAgICAgIC0tZHVyYXRpb249dCAgICAgIHNwZWNpZnkgYSBsZW5ndGggZm9yIHRoZSB0ZXN0IHJ1
-blxuIgotICAgICAgICAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgZGVmYXVsdCBp
-cyBpbiBzZWNvbmRzLCBidXQgJ20nLCAnaCcsIG9yICdkJyBtYXliZSBhZGRlZFxuIgotICAgICAg
-ICAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgdG8gbW9kaWZ5IHZhbHVlIHRvIG1p
-bnV0ZXMsIGhvdXJzIG9yIGRheXNcbiIKKyAgICAgICAgICAgICAgIi13ICAgICAgIC0td2FrZXVw
-ICAgICAgICAgIHJ0IHRhc2sgd2FrZXVwIHRyYWNpbmcgKHVzZWQgd2l0aCAtYilcbiIKKyAgICAg
-ICAgICAgICAgIi1XICAgICAgIC0td2FrZXVwcnQgICAgICAgIG5vbl9ydCB0YXNrIHdha2V1cF9y
-dCB0cmFjaW5nICh1c2VkIHdpdGggLWIpXG4iCiAgICAgICAgICAgICAgICApOwogICAgICAgIGV4
-aXQoMCk7CiB9CkBAIC03NTUsNiArNzY1LDcgQEAgc3RhdGljIHZvaWQgcHJvY2Vzc19vcHRpb25z
-IChpbnQgYXJnYywgY2hhciAqYXJndltdKQogICAgICAgICAgICAgICAgICAgICAgICB7ImNsb2Nr
-IiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdjJ30sCiAgICAgICAgICAgICAgICAgICAgICAg
-IHsiY29udGV4dCIsIG5vX2FyZ3VtZW50LCBOVUxMLCAnQyd9LAogICAgICAgICAgICAgICAgICAg
-ICAgICB7ImRpc3RhbmNlIiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdkJ30sCisgICAgICAg
-ICAgICAgICAgICAgICAgIHsiZHVyYXRpb24iLHJlcXVpcmVkX2FyZ3VtZW50LCBOVUxMLCAnRCd9
-LAogICAgICAgICAgICAgICAgICAgICAgICB7ImV2ZW50Iiwgbm9fYXJndW1lbnQsIE5VTEwsICdF
-J30sCiAgICAgICAgICAgICAgICAgICAgICAgIHsiZnRyYWNlIiwgbm9fYXJndW1lbnQsIE5VTEws
-ICdmJ30sCiAgICAgICAgICAgICAgICAgICAgICAgIHsiaGlzdG9ncmFtIiwgcmVxdWlyZWRfYXJn
-dW1lbnQsIE5VTEwsICdoJ30sCkBAIC03NzIsMTEgKzc4MywxMiBAQCBzdGF0aWMgdm9pZCBwcm9j
-ZXNzX29wdGlvbnMgKGludCBhcmdjLCBjaGFyICphcmd2W10pCiAgICAgICAgICAgICAgICAgICAg
-ICAgIHsic3lzdGVtIiwgbm9fYXJndW1lbnQsIE5VTEwsICdzJ30sCiAgICAgICAgICAgICAgICAg
-ICAgICAgIHsidGhyZWFkcyIsIG9wdGlvbmFsX2FyZ3VtZW50LCBOVUxMLCAndCd9LAogICAgICAg
-ICAgICAgICAgICAgICAgICB7InZlcmJvc2UiLCBub19hcmd1bWVudCwgTlVMTCwgJ3YnfSwKLSAg
-ICAgICAgICAgICAgICAgICAgICAgeyJkdXJhdGlvbiIscmVxdWlyZWRfYXJndW1lbnQsIE5VTEws
-ICdEJ30sCisgICAgICAgICAgICAgICAgICAgICAgIHsid2FrZXVwIiwgbm9fYXJndW1lbnQsIE5V
-TEwsICd3J30sCisgICAgICAgICAgICAgICAgICAgICAgIHsid2FrZXVwcnQiLCBub19hcmd1bWVu
-dCwgTlVMTCwgJ1cnfSwKICAgICAgICAgICAgICAgICAgICAgICAgeyJoZWxwIiwgbm9fYXJndW1l
-bnQsIE5VTEwsICc/J30sCiAgICAgICAgICAgICAgICAgICAgICAgIHtOVUxMLCAwLCBOVUxMLCAw
-fQogICAgICAgICAgICAgICAgfTsKLSAgICAgICAgICAgICAgIGludCBjID0gZ2V0b3B0X2xvbmcg
-KGFyZ2MsIGFyZ3YsICJhOjpiOkJjOmQ6Zmg6aTpJbDpuTm86cDpQbXFyc3Q6OnZEOiIsCisgICAg
-ICAgICAgICAgICBpbnQgYyA9IGdldG9wdF9sb25nIChhcmdjLCBhcmd2LCAiYTo6YjpCY0M6ZEQ6
-RWZoOmk6SWw6bW5ObzpwOlBxcnN0Ojp2OndXOiIsCiAgICAgICAgICAgICAgICAgICAgICAgIGxv
-bmdfb3B0aW9ucywgJm9wdGlvbl9pbmRleCk7CiAgICAgICAgICAgICAgICBpZiAoYyA9PSAtMSkK
-ICAgICAgICAgICAgICAgICAgICAgICAgYnJlYWs7CkBAIC03OTcsMTIgKzgwOSwxNCBAQCBzdGF0
-aWMgdm9pZCBwcm9jZXNzX29wdGlvbnMgKGludCBhcmdjLCBjaGFyICphcmd2W10pCiAgICAgICAg
-ICAgICAgICBjYXNlICdjJzogY2xvY2tzZWwgPSBhdG9pKG9wdGFyZyk7IGJyZWFrOwogICAgICAg
-ICAgICAgICAgY2FzZSAnQyc6IHRyYWNldHlwZSA9IENUWFRTV0lUQ0g7IGJyZWFrOwogICAgICAg
-ICAgICAgICAgY2FzZSAnZCc6IGRpc3RhbmNlID0gYXRvaShvcHRhcmcpOyBicmVhazsKKyAgICAg
-ICAgICAgICAgIGNhc2UgJ0QnOiBkdXJhdGlvbiA9IHBhcnNlX3RpbWVfc3RyaW5nKG9wdGFyZyk7
-IGJyZWFrOwogICAgICAgICAgICAgICAgY2FzZSAnRSc6IHRyYWNldHlwZSA9IEVWRU5UUzsgYnJl
-YWs7CiAgICAgICAgICAgICAgICBjYXNlICdmJzogZnRyYWNlID0gMTsgYnJlYWs7CiAgICAgICAg
-ICAgICAgICBjYXNlICdoJzogaGlzdG9ncmFtID0gYXRvaShvcHRhcmcpOyBicmVhazsKICAgICAg
-ICAgICAgICAgIGNhc2UgJ2knOiBpbnRlcnZhbCA9IGF0b2kob3B0YXJnKTsgYnJlYWs7CiAgICAg
-ICAgICAgICAgICBjYXNlICdJJzogdHJhY2V0eXBlID0gSVJRU09GRjsgYnJlYWs7CiAgICAgICAg
-ICAgICAgICBjYXNlICdsJzogbWF4X2N5Y2xlcyA9IGF0b2kob3B0YXJnKTsgYnJlYWs7CisgICAg
-ICAgICAgICAgICBjYXNlICdtJzogbG9ja2FsbCA9IDE7IGJyZWFrOwogICAgICAgICAgICAgICAg
-Y2FzZSAnbic6IHVzZV9uYW5vc2xlZXAgPSBNT0RFX0NMT0NLX05BTk9TTEVFUDsgYnJlYWs7CiAg
-ICAgICAgICAgICAgICBjYXNlICdOJzogdXNlX25zZWNzID0gMTsgYnJlYWs7CiAgICAgICAgICAg
-ICAgICBjYXNlICdvJzogb3Njb3BlX3JlZHVjdGlvbiA9IGF0b2kob3B0YXJnKTsgYnJlYWs7CkBA
-IC04MjAsOSArODM0LDggQEAgc3RhdGljIHZvaWQgcHJvY2Vzc19vcHRpb25zIChpbnQgYXJnYywg
-Y2hhciAqYXJndltdKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG51bV90aHJlYWRz
-ID0gbWF4X2NwdXM7CiAgICAgICAgICAgICAgICAgICAgICAgIGJyZWFrOwogICAgICAgICAgICAg
-ICAgY2FzZSAndic6IHZlcmJvc2UgPSAxOyBicmVhazsKLSAgICAgICAgICAgICAgIGNhc2UgJ20n
-OiBsb2NrYWxsID0gMTsgYnJlYWs7Ci0gICAgICAgICAgICAgICBjYXNlICdEJzogZHVyYXRpb24g
-PSBwYXJzZV90aW1lX3N0cmluZyhvcHRhcmcpOwotICAgICAgICAgICAgICAgICAgICAgICBicmVh
-azsKKyAgICAgICAgICAgICAgIGNhc2UgJ3cnOiB0cmFjZXR5cGUgPSBXQUtFVVA7IGJyZWFrOwor
-ICAgICAgICAgICAgICAgY2FzZSAnVyc6IHRyYWNldHlwZSA9IFdBS0VVUFJUOyBicmVhazsKICAg
-ICAgICAgICAgICAgIGNhc2UgJz8nOiBlcnJvciA9IDE7IGJyZWFrOwogICAgICAgICAgICAgICAg
-fQogICAgICAgIH0KCg==
---001636e1fca2f89a060466deb04c--
+QXV0aG9yOiBHZXVuU2lrICBMaW08bGVlbWdzMUBnbWFpbC5jb20+CkRhdGU6ICAgTW9uIEFwciA2
+IDIyOjQ4OjE2IDIwMDkgKzA5MDAKCiAgICBbUEFUQ0hdIFVwZGF0ZSBNaW5pLUhPV1RPIGZvciBm
+dHJhY2UKICAgIAogICAgVGhlIGF1dGhvciBvZiBmdHJhY2UoSW50ZXJuYWwga2VybmVsIEZ1bmN0
+aW9uIFRyYWNlcikgZmVhdHVyZSByZW5hbWVkIHRoZSBmdHJhY2UgdHJhY2VyCiAgICB0byBmdW5j
+dGlvbiB0byBhdm9pZCBmdXJ0aGVyIGNvbmZ1c2lvbiBiZXR3ZWVuIHRoZSBmdHJhY2UgaW5mcmFz
+dHJ1Y3R1cmUgYW5kIHRoZQogICAgZnVuY3Rpb24gdHJhY2VyIG9uIE9jdC0yMCwgMjAwOC4KICAg
+IAogICAgQnV0LCBVcGRhdGUgb2YgTWluaS1IT1dUTyBkb2N1bWVudCBhcmUgc3RpbGwgbm90IHdv
+cmtpbmcKICAgIC4KICAgIE1vc3Qgb2YgdGhlIGRldmVsb3BlcnMgb2Z0ZW4gdXRpbGl6ZSAiL2Rl
+YnVnL3RyYWNpbmcvUkVBRE1FIiBmaWxlIGFzIE1pbmktSE9XVE8uCiAgICBUaGV5IHdpbGwgY29u
+ZnVzZSBkZWZpbml0aW9uIGFuZCB1c2FnZSBhYm91dCBmdHJhY2UgIGJldHdlZW4gUkVBRE1FKGZ0
+cmFjZSkgZmlsZQogICAgYW5kIGF2YWlsYWJsZV90cmFjZXJzKGZ1bmN0aW9uKSBmaWxlIGFmdGVy
+IGxpbnV4LTIuNi4yNyBsaWtlIG1lLgogICAgQW5kLCBJIHdhbnQgeW91IHRvIGFwcGVuZCAiY2hy
+dCAtZiA1IHNsZWVwIDEiIGNvbW1hbmQgYXMgc2ltcGxlIGV4YW1wbGUgZm9yIGxhdGVuY3kuCiAg
+ICAKICAgIFNpZ25lZC1vZmYtYnk6IEdldW5TaWsgTGltIDxsZWVtZ3MxQGdtYWlsLmNvbT4KICAg
+IFNpZ25lZC1vZmYtYnk6IFN0ZXZlbiBSb3N0ZWR0IDxzcm9zdGVkdEByZWRoYXQuY29tPgogICAg
+U2lnbmVkLW9mZi1ieTogSW5nbyBNb2xuYXIgPG1pbmdvQGVsdGUuaHU+Ci0tLQoga2VybmVsL3Ry
+YWNlL3RyYWNlLmMgfCAgICAzICsrLQogMSBmaWxlcyBjaGFuZ2VkLCAyIGluc2VydGlvbnMoKyks
+IDEgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEva2VybmVsL3RyYWNlL3RyYWNlLmMgYi9rZXJu
+ZWwvdHJhY2UvdHJhY2UuYwppbmRleCBhMDE3NGE0Li4xNWYwZWVjIDEwMDY0NAotLS0gYS9rZXJu
+ZWwvdHJhY2UvdHJhY2UuYworKysgYi9rZXJuZWwvdHJhY2UvdHJhY2UuYwpAQCAtMjM1OCw3ICsy
+MzU4LDcgQEAgc3RhdGljIGNvbnN0IGNoYXIgcmVhZG1lX21zZ1tdID0KICAgICAgICAiIyBta2Rp
+ciAvZGVidWdcbiIKICAgICAgICAiIyBtb3VudCAtdCBkZWJ1Z2ZzIG5vZGV2IC9kZWJ1Z1xuXG4i
+CiAgICAgICAgIiMgY2F0IC9kZWJ1Zy90cmFjaW5nL2F2YWlsYWJsZV90cmFjZXJzXG4iCi0gICAg
+ICAgIndha2V1cCBwcmVlbXB0aXJxc29mZiBwcmVlbXB0b2ZmIGlycXNvZmYgZnRyYWNlIHNjaGVk
+X3N3aXRjaCBub25lXG5cbiIKKyAgICAgICAid2FrZXVwIHByZWVtcHRpcnFzb2ZmIHByZWVtcHRv
+ZmYgaXJxc29mZiBmdW5jdGlvbiBzY2hlZF9zd2l0Y2ggbm9uZVxuXG4iCiAgICAgICAgIiMgY2F0
+IC9kZWJ1Zy90cmFjaW5nL2N1cnJlbnRfdHJhY2VyXG4iCiAgICAgICAgIm5vbmVcbiIKICAgICAg
+ICAiIyBlY2hvIHNjaGVkX3N3aXRjaCA+IC9kZWJ1Zy90cmFjaW5nL2N1cnJlbnRfdHJhY2VyXG4i
+CkBAIC0yMzY4LDYgKzIzNjgsNyBAQCBzdGF0aWMgY29uc3QgY2hhciByZWFkbWVfbXNnW10gPQog
+ICAgICAgICJub3ByaW50LXBhcmVudCBub3N5bS1vZmZzZXQgbm9zeW0tYWRkciBub3ZlcmJvc2Vc
+biIKICAgICAgICAiIyBlY2hvIHByaW50LXBhcmVudCA+IC9kZWJ1Zy90cmFjaW5nL3RyYWNlX29w
+dGlvbnNcbiIKICAgICAgICAiIyBlY2hvIDEgPiAvZGVidWcvdHJhY2luZy90cmFjaW5nX2VuYWJs
+ZWRcbiIKKyAgICAgICAiIyBjaHJ0IC1mIDUgc2xlZXAgMVxuIgogICAgICAgICIjIGNhdCAvZGVi
+dWcvdHJhY2luZy90cmFjZSA+IC90bXAvdHJhY2UudHh0XG4iCiAgICAgICAgImVjaG8gMCA+IC9k
+ZWJ1Zy90cmFjaW5nL3RyYWNpbmdfZW5hYmxlZFxuIgogOwoKCg==
+--000e0cd311a21c6b1d0466e35b29--
