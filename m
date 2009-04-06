@@ -1,76 +1,120 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: [PATCH] Update old Mini-HOWTO for ftrace
-Date: Mon, 6 Apr 2009 23:02:59 +0900
-Message-ID: <49b7c2350904060702j3f725a45ub5e7d3ee3af883c1@mail.gmail.com>
+Subject: Re: [PATCH] Update old Mini-HOWTO for ftrace
+Date: Mon, 6 Apr 2009 23:17:43 +0900
+Message-ID: <49b7c2350904060717l1a87cca7p880b6843ea92c702@mail.gmail.com>
+References: <49b7c2350904060702j3f725a45ub5e7d3ee3af883c1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=000e0cd311a21c6b1d0466e35b29
+Content-Type: multipart/mixed; boundary=001636e0aedfd49bfb0466e38f77
 Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 To: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.173]:56063 "EHLO
+Received: from wf-out-1314.google.com ([209.85.200.170]:57420 "EHLO
 	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754621AbZDFODB (ORCPT
+	with ESMTP id S1752970AbZDFORp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Apr 2009 10:03:01 -0400
+	Mon, 6 Apr 2009 10:17:45 -0400
+In-Reply-To: <49b7c2350904060702j3f725a45ub5e7d3ee3af883c1@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---000e0cd311a21c6b1d0466e35b29
+--001636e0aedfd49bfb0466e38f77
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 
-   Dear Steven,
+I attached patch file again because no-operation is changed
+from "none"word to "nop" word.
 
-   The author of ftrace(Internal kernel Function Tracer) feature
-renamed the ftrace tracer
-    to function to avoid further confusion between the ftrace
-infrastructure and the
-    function tracer on Oct-20, 2008.
+for example,
+-       "wakeup preemptirqsoff preemptoff irqsoff ftrace sched_switch none\=
+n\n"
++       "wakeup preemptirqsoff preemptoff irqsoff function sched_switch nop=
+\n\n"
 
-    But, Update of Mini-HOWTO document are still not working
-    .
-    Most of the developers often utilize "/debug/tracing/README" file
-as Mini-HOWTO.
-    They will confuse definition and usage about ftrace  between
-README(ftrace) file
-    and available_tracers(function) file after linux-2.6.27 like me.
-    And, I want you to append "chrt -f 5 sleep 1" command as simple
-example for latency.
-
-    Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
-    Signed-off-by: Steven Rostedt <srostedt@redhat.com>
-    Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/trace/trace.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index a0174a4..15f0eec 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2358,7 +2358,7 @@ static const char readme_msg[] =
-        "# mkdir /debug\n"
-        "# mount -t debugfs nodev /debug\n\n"
-        "# cat /debug/tracing/available_tracers\n"
--       "wakeup preemptirqsoff preemptoff irqsoff ftrace sched_switch none\n\n"
-+       "wakeup preemptirqsoff preemptoff irqsoff function
-sched_switch none\n\n"
-        "# cat /debug/tracing/current_tracer\n"
-        "none\n"
-        "# echo sched_switch > /debug/tracing/current_tracer\n"
-@@ -2368,6 +2368,7 @@ static const char readme_msg[] =
-        "noprint-parent nosym-offset nosym-addr noverbose\n"
-        "# echo print-parent > /debug/tracing/trace_options\n"
-        "# echo 1 > /debug/tracing/tracing_enabled\n"
-+       "# chrt -f 5 sleep 1\n"
-        "# cat /debug/tracing/trace > /tmp/trace.txt\n"
-        "echo 0 > /debug/tracing/tracing_enabled\n"
- ;
+./trace_nop.c:struct tracer nop_trace __read_mostly =3D
+	.name	=3D "nop",
+	.init		=3D nop_trace_init,
+	.reset	=3D nop_trace_reset,
+	.selftest	=3D trace_selftest_startup_nop,
+	.flags	=3D &nop_flags,
+	.set_flag	=3D nop_set_flag
 
 
 
--- 
+2009/4/6 GeunSik Lim <leemgs1@gmail.com>:
+> =C2=A0 Dear Steven,
+>
+> =C2=A0 The author of ftrace(Internal kernel Function Tracer) feature
+> renamed the ftrace tracer
+> =C2=A0 =C2=A0to function to avoid further confusion between the ftrace
+> infrastructure and the
+> =C2=A0 =C2=A0function tracer on Oct-20, 2008.
+>
+> =C2=A0 =C2=A0But, Update of Mini-HOWTO document are still not working
+> =C2=A0 =C2=A0.
+> =C2=A0 =C2=A0Most of the developers often utilize "/debug/tracing/README"=
+ file
+> as Mini-HOWTO.
+> =C2=A0 =C2=A0They will confuse definition and usage about ftrace =C2=A0be=
+tween
+> README(ftrace) file
+> =C2=A0 =C2=A0and available_tracers(function) file after linux-2.6.27 like=
+ me.
+> =C2=A0 =C2=A0And, I want you to append "chrt -f 5 sleep 1" command as sim=
+ple
+> example for latency.
+>
+> =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+> =C2=A0 =C2=A0Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+> =C2=A0 =C2=A0Signed-off-by: Ingo Molnar <mingo@elte.hu>
+> ---
+> =C2=A0kernel/trace/trace.c | =C2=A0 =C2=A03 ++-
+> =C2=A01 files changed, 2 insertions(+), 1 deletions(-)
+>
+> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> index a0174a4..15f0eec 100644
+> --- a/kernel/trace/trace.c
+> +++ b/kernel/trace/trace.c
+> @@ -2358,7 +2358,7 @@ static const char readme_msg[] =3D
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# mkdir /debug\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# mount -t debugfs nodev /debug\n\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/available_tracers\n"
+> - =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff ftrace s=
+ched_switch none\n\n"
+> + =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff function
+> sched_switch none\n\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/current_tracer\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"none\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo sched_switch > /debug/tracing/current_=
+tracer\n"
+> @@ -2368,6 +2368,7 @@ static const char readme_msg[] =3D
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"noprint-parent nosym-offset nosym-addr noverb=
+ose\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/trace_op=
+tions\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enabled\n"
+> + =C2=A0 =C2=A0 =C2=A0 "# chrt -f 5 sleep 1\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.txt\n=
+"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"echo 0 > /debug/tracing/tracing_enabled\n"
+> =C2=A0;
+>
+>
+>
+> --
+> Regards,
+> GeunSik Lim
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" i=
+n
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
+
+
+
+--=20
 Regards,
 GeunSik Lim
 --
@@ -79,11 +123,13 @@ the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
 Please read the FAQ at  http://www.tux.org/lkml/
 
---000e0cd311a21c6b1d0466e35b29
-Content-Type: application/octet-stream; name="update-minihowto-ftrace.patch"
-Content-Disposition: attachment; filename="update-minihowto-ftrace.patch"
+--001636e0aedfd49bfb0466e38f77
+Content-Type: application/octet-stream;
+	name="update-minihowto-ftrace-nop.patch"
+Content-Disposition: attachment;
+	filename="update-minihowto-ftrace-nop.patch"
 Content-Transfer-Encoding: base64
-X-Attachment-Id: f_ft7rotyk0
+X-Attachment-Id: f_ft7s2dzr0
 
 QXV0aG9yOiBHZXVuU2lrICBMaW08bGVlbWdzMUBnbWFpbC5jb20+CkRhdGU6ICAgTW9uIEFwciA2
 IDIyOjQ4OjE2IDIwMDkgKzA5MDAKCiAgICBbUEFUQ0hdIFVwZGF0ZSBNaW5pLUhPV1RPIGZvciBm
@@ -110,14 +156,14 @@ ciAvZGVidWdcbiIKICAgICAgICAiIyBtb3VudCAtdCBkZWJ1Z2ZzIG5vZGV2IC9kZWJ1Z1xuXG4i
 CiAgICAgICAgIiMgY2F0IC9kZWJ1Zy90cmFjaW5nL2F2YWlsYWJsZV90cmFjZXJzXG4iCi0gICAg
 ICAgIndha2V1cCBwcmVlbXB0aXJxc29mZiBwcmVlbXB0b2ZmIGlycXNvZmYgZnRyYWNlIHNjaGVk
 X3N3aXRjaCBub25lXG5cbiIKKyAgICAgICAid2FrZXVwIHByZWVtcHRpcnFzb2ZmIHByZWVtcHRv
-ZmYgaXJxc29mZiBmdW5jdGlvbiBzY2hlZF9zd2l0Y2ggbm9uZVxuXG4iCiAgICAgICAgIiMgY2F0
-IC9kZWJ1Zy90cmFjaW5nL2N1cnJlbnRfdHJhY2VyXG4iCiAgICAgICAgIm5vbmVcbiIKICAgICAg
-ICAiIyBlY2hvIHNjaGVkX3N3aXRjaCA+IC9kZWJ1Zy90cmFjaW5nL2N1cnJlbnRfdHJhY2VyXG4i
-CkBAIC0yMzY4LDYgKzIzNjgsNyBAQCBzdGF0aWMgY29uc3QgY2hhciByZWFkbWVfbXNnW10gPQog
-ICAgICAgICJub3ByaW50LXBhcmVudCBub3N5bS1vZmZzZXQgbm9zeW0tYWRkciBub3ZlcmJvc2Vc
-biIKICAgICAgICAiIyBlY2hvIHByaW50LXBhcmVudCA+IC9kZWJ1Zy90cmFjaW5nL3RyYWNlX29w
-dGlvbnNcbiIKICAgICAgICAiIyBlY2hvIDEgPiAvZGVidWcvdHJhY2luZy90cmFjaW5nX2VuYWJs
-ZWRcbiIKKyAgICAgICAiIyBjaHJ0IC1mIDUgc2xlZXAgMVxuIgogICAgICAgICIjIGNhdCAvZGVi
-dWcvdHJhY2luZy90cmFjZSA+IC90bXAvdHJhY2UudHh0XG4iCiAgICAgICAgImVjaG8gMCA+IC9k
-ZWJ1Zy90cmFjaW5nL3RyYWNpbmdfZW5hYmxlZFxuIgogOwoKCg==
---000e0cd311a21c6b1d0466e35b29--
+ZmYgaXJxc29mZiBmdW5jdGlvbiBzY2hlZF9zd2l0Y2ggbm9wXG5cbiIKICAgICAgICAiIyBjYXQg
+L2RlYnVnL3RyYWNpbmcvY3VycmVudF90cmFjZXJcbiIKICAgICAgICAibm9uZVxuIgogICAgICAg
+ICIjIGVjaG8gc2NoZWRfc3dpdGNoID4gL2RlYnVnL3RyYWNpbmcvY3VycmVudF90cmFjZXJcbiIK
+QEAgLTIzNjgsNiArMjM2OCw3IEBAIHN0YXRpYyBjb25zdCBjaGFyIHJlYWRtZV9tc2dbXSA9CiAg
+ICAgICAgIm5vcHJpbnQtcGFyZW50IG5vc3ltLW9mZnNldCBub3N5bS1hZGRyIG5vdmVyYm9zZVxu
+IgogICAgICAgICIjIGVjaG8gcHJpbnQtcGFyZW50ID4gL2RlYnVnL3RyYWNpbmcvdHJhY2Vfb3B0
+aW9uc1xuIgogICAgICAgICIjIGVjaG8gMSA+IC9kZWJ1Zy90cmFjaW5nL3RyYWNpbmdfZW5hYmxl
+ZFxuIgorICAgICAgICIjIGNocnQgLWYgNSBzbGVlcCAxXG4iCiAgICAgICAgIiMgY2F0IC9kZWJ1
+Zy90cmFjaW5nL3RyYWNlID4gL3RtcC90cmFjZS50eHRcbiIKICAgICAgICAiZWNobyAwID4gL2Rl
+YnVnL3RyYWNpbmcvdHJhY2luZ19lbmFibGVkXG4iCiA7CgoK
+--001636e0aedfd49bfb0466e38f77--
