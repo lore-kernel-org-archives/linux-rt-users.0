@@ -1,42 +1,105 @@
-From: Kazuyoshi Furutaka <furutaka.kazuyoshi@jaea.go.jp>
-Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
-Date: Mon, 06 Apr 2009 07:57:53 +0900 (JST)
-Message-ID: <20090406.075753.260126012.furutaka.kazuyoshi@jaea.go.jp>
-References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: cyclictest - fix comparison about flexible word counts of
+	available_tracers file.
+Date: Mon, 6 Apr 2009 11:49:58 +0900
+Message-ID: <49b7c2350904051949m3a52d270j912b56693683e27c@mail.gmail.com>
+References: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
+	 <20090405095001.6dc50fbc@torg>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cirius.tokai-sc.jaea.go.jp ([133.53.249.1]:60340 "EHLO
-	cirius.tokai-sc.jaea.go.jp" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752594AbZDEXkS (ORCPT
+Received: from wf-out-1314.google.com ([209.85.200.172]:10348 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752667AbZDFCuA convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 19:40:18 -0400
-Received: from jupiter.tokai-sc.jaea.go.jp (jupiter.tokai-sc.jaea.go.jp [133.53.11.8])
-	by cirius.tokai-sc.jaea.go.jp (New/3.7W-natsu) with ESMTP id n35MvGFA023090
-	for <linux-rt-users@vger.kernel.org>; Mon, 6 Apr 2009 07:57:16 +0900 (JST)
-Received: from rg1.jaea.go.jp (localhost [127.0.0.1])
-	by jupiter.tokai-sc.jaea.go.jp (New/3.7W-natsu) with ESMTP id n35Mvu1B012358
-	for <linux-rt-users@vger.kernel.org>; Mon, 6 Apr 2009 07:57:56 +0900 (JST)
-In-Reply-To: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
+	Sun, 5 Apr 2009 22:50:00 -0400
+Received: by wf-out-1314.google.com with SMTP id 29so2044363wff.4
+        for <linux-rt-users@vger.kernel.org>; Sun, 05 Apr 2009 19:49:58 -0700 (PDT)
+In-Reply-To: <20090405095001.6dc50fbc@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi linux-rt-users list,
+Dear Clark
 
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
-Date: Fri, 3 Apr 2009 11:20:10 +0900
+Thanks your patching.
 
-> Anyone have this problems on Fedora Linux Distribution with linux-2.6.29-rt2 ?
+Since I didn't have IRQSOFF or
+> PREEMPTOFF set in my kernel, those tracers weren't available and fsca=
+nf
+> never returned EOF (it kept returning the "nop" tracer).
 
-FYI, I'm running a few Fedora "10" systems (not exactly the
-same as GeunSik's) with preempt-rt kernels (2.6.29-rc8-rt3
-to 2.6.29-rt2, and I'll test 2.6.29.1-rt4 soon), but I've
-never experienced such a trouble with them.
+Clark. I think that Your approach is right.
 
-Kazuyoshi
+In fact , I also thought  this case that  a developer disable
+PREEMPTOFF or IRQSOFF on "#>make menuconfig" setting menu.
+As you know, Most peoples will use -P or -I option when they enabled
+PREEMPTOFF or IRQSOFF in Linux Kernel just.
+
+But, Exception Handling is important as your explanation.
+Thanks again.
+
+
+2009/4/5 Clark Williams <williams@redhat.com>:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> On Sun, 5 Apr 2009 15:45:33 +0900
+> GeunSik Lim <leemgs1@gmail.com> wrote:
+>
+>> Dear Thomas,
+>>
+>> I found bug at settracer function of cyclictest.c source (rt-test ve=
+r 0.33).
+>> settracer func use 10 times in the for() statement to searching trac=
+er
+>> like preemptoff , irqsoff , preemptirqsoff.
+>> But, I think that we have to consider 10+ words in the available_tra=
+cers file.
+>>
+>
+> GeunSik,
+>
+> Good catch! =C2=A0I applied your patch, but then found a bug in eithe=
+r
+> fscanf or debugfs (probably debugfs). Since I didn't have IRQSOFF or
+> PREEMPTOFF set in my kernel, those tracers weren't available and fsca=
+nf
+> never returned EOF (it kept returning the "nop" tracer). So I reworke=
+d
+> your patch to read everything in and parse it using strtok(3).
+>
+> The git tree has been updated and an rt-tests-0.34.tar.gz tarball is
+> available at:
+>
+> http://www.kernel.org/pub/linux//kernel/people/clrkwllms/rt-tests/
+>
+> Clark
+> -----BEGIN PGP SIGNATURE-----
+> Version: GnuPG v2.0.10 (GNU/Linux)
+>
+> iEYEARECAAYFAknYxR4ACgkQHyuj/+TTEp3TNwCbBNrEHMLjPmAS6JciwjyXWqME
+> wpcAn3+nUGdOwCJR6sFGfwundPtaITrk
+> =3DdT+3
+> -----END PGP SIGNATURE-----
+>
+
+
+
+--=20
+Regards,
+GeunSik Lim
 --
-Kazuyoshi Furutaka
-furutaka _dot_ kazuyoshi _at_ jaea _dot_ go _dot_ jp
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
