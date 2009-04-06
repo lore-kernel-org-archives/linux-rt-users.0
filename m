@@ -1,121 +1,254 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [PATCH] Update old Mini-HOWTO for ftrace
-Date: Tue, 7 Apr 2009 08:09:50 +0900
-Message-ID: <49b7c2350904061609q7984d5f0u478a092ffcabe12c@mail.gmail.com>
-References: <49b7c2350904060702j3f725a45ub5e7d3ee3af883c1@mail.gmail.com>
-	 <49b7c2350904060717l1a87cca7p880b6843ea92c702@mail.gmail.com>
+Subject: Re: cyclictest - duplicate explanation of cyclictest option
+Date: Tue, 7 Apr 2009 08:15:34 +0900
+Message-ID: <49b7c2350904061615g525dfec2kdbf14f6ea6f05ee@mail.gmail.com>
+References: <49b7c2350904051956n214efbb5pc8cd9990820a534f@mail.gmail.com>
+	 <49b7c2350904060129r640a3db6r5487e72f2cf6330f@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <srostedt@redhat.com>, Ingo Molnar <mingo@elte.hu>
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.224]:28907 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752677AbZDFXJx convert rfc822-to-8bit (ORCPT
+Received: from wf-out-1314.google.com ([209.85.200.173]:33903 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751966AbZDFXPg convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Apr 2009 19:09:53 -0400
-In-Reply-To: <49b7c2350904060717l1a87cca7p880b6843ea92c702@mail.gmail.com>
+	Mon, 6 Apr 2009 19:15:36 -0400
+Received: by wf-out-1314.google.com with SMTP id 29so2475228wff.4
+        for <linux-rt-users@vger.kernel.org>; Mon, 06 Apr 2009 16:15:34 -0700 (PDT)
+In-Reply-To: <49b7c2350904060129r640a3db6r5487e72f2cf6330f@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sorry,
+Dear Thomas,
+
+I read http://kernelnewbies.org/UpstreamMerge/SubmittingPatches about
+Submitting patches.
 I mistake because I don't understand how to submit patch exactly.
 I just appended below "singned-off" contents for convenience.
-Sorry again.
+I am sorry for the confusion.
 
-   Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
-   Signed-off-by: Steven Rostedt <srostedt@redhat.com>
-   Signed-off-by: Ingo Molnar <mingo@elte.hu>
+    Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+    Signed-off-by: Clark Williams <williams@redhat.com>
+
+
+Regards,
+
 
 2009/4/6 GeunSik Lim <leemgs1@gmail.com>:
-> I attached patch file again because no-operation is changed
-> from "none"word to "nop" word.
+> Dear Thomas & Clark,
 >
+> This is e-mail about patch to support wakeup & wakeup_rt tracing addi=
+tionally
+> at the argument of cyclictest.
+> Currently, cyclictest v 0.34 support =C2=A0three tracing like PREEMPT=
+OFF ,
+> IRQSOFF , PREEMPTIRQSOFF.
+> I want you to append WAKEUP & WAKEUP_RT at the current cyclictest ver=
+sion.
+>
+> and, cyclictest ver 0.34 have a bug about context switching =C2=A0and=
+ event option.
 > for example,
-> - =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff ftra=
-ce sched_switch none\n\n"
-> + =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff func=
-tion sched_switch nop\n\n"
+> we can not use =C2=A0"-C" option without --context option.
+> we can not use =C2=A0"-E" option without --event option.
 >
-> ./trace_nop.c:struct tracer nop_trace __read_mostly =3D
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.name =C2=A0 =3D "nop",
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.init =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D=
- nop_trace_init,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.reset =C2=A0=3D nop_trace_reset,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.selftest =C2=A0 =C2=A0 =C2=A0 =3D trace_s=
-elftest_startup_nop,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.flags =C2=A0=3D &nop_flags,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.set_flag =C2=A0 =C2=A0 =C2=A0 =3D nop_set=
-_flag
+> Belows is result after patching in sequence.
+> =C2=A01) adjust =C2=A0"remove-duplicate-h-option.patch" file.
+> =C2=A02) and then, =C2=A0adjust
+> "add-wakeup-wakeuprt-tracing-and-misc-bugfix.patch" =C2=A0file.
+>
+> Hope this helps. =C2=A0If I mistake, correct me.
+> Thanks.
+>
+> After Patching ....
+>
+> #### [ wakeup test]###############################################
+> [root@fedora9 rt-tests-temp0]# cat /debug/tracing/available_tracers
+> syscall blk kmemtrace power branch function_graph mmiotrace wakeup_rt
+> wakeup preemptirqsoff preemptoff irqsoff function sched_switch
+> initcall nop
+>
+> [root@fedora9 rt-tests-temp0]# ./cyclictest =C2=A0-t 2 -b 200 -W -D 5
+> could not set latency_hist/wakeup_latency/reset to 1
+> 0.16 0.27 0.21 2/308 2521
+>
+> T: 0 ( 2520) P: 0 I:1000 C: =C2=A0 4288 Min: =C2=A0 =C2=A0 16 Act: =C2=
+=A0 27 Avg: =C2=A0 28 Max: =C2=A0 =C2=A0 152
+> T: 1 ( 2521) P: 0 I:1500 C: =C2=A0 2859 Min: =C2=A0 =C2=A0 19 Act: =C2=
+=A0 29 Avg: =C2=A0 27 Max: =C2=A0 =C2=A0 =C2=A072
+>
+> [root@fedora9 rt-tests-temp0]# cat /debug/tracing/trace
+> # tracer: wakeup
+> #
+> # wakeup latency trace v1.1.5 on 2.6.29-rt2-ftrace
+> # -------------------------------------------------------------------=
+-
+> # latency: 20 us, #3/3, CPU#2 | (M:preempt VP:0, KP:0, SP:0 HP:0 #P:4=
+)
+> # =C2=A0 =C2=A0-----------------
+> # =C2=A0 =C2=A0| task: gnome-terminal-3884 (uid:504 nice:0 policy:0 r=
+t_prio:0)
+> # =C2=A0 =C2=A0-----------------
+> #
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0_----=
+--=3D> CPU#
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 / _-----=3D=
+> irqs-off
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| / _----=3D=
+> need-resched
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|| / _---=3D=
+> hardirq/softirq
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0||| / _--=3D=
+> preempt-depth
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|||| /
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0||||| =C2=A0=
+ =C2=A0 delay
+> # =C2=A0cmd =C2=A0 =C2=A0 pid =C2=A0 ||||| time =C2=A0| =C2=A0 caller
+> # =C2=A0 =C2=A0 \ =C2=A0 / =C2=A0 =C2=A0 =C2=A0||||| =C2=A0 \ =C2=A0 =
+| =C2=A0 /
+> gnome-te-3884 =C2=A0 =C2=A02d.h. =C2=A0 =C2=A01us+: irq_enter <-smp_a=
+pic_timer_interrupt
+> gnome-te-3884 =C2=A0 =C2=A02dN.1 =C2=A0 20us : irq_exit <-smp_apic_ti=
+mer_interrupt
+> gnome-te-3884 =C2=A0 =C2=A02dN.1 =C2=A0 21us : trace_preempt_on <-smp=
+_apic_timer_interrupt
+>
+> #####[ Context Switching Test]#####################################
+>
+> [root@fedora9 rt-tests-temp0]# ./cyclictest =C2=A0-t 10 -b 100000 -C =
+-m -D 5
+> could not set latency_hist/wakeup_latency/reset to 1
+> 0.17 0.17 0.17 1/326 2706
+>
+> T: 0 ( 2697) P: 0 I:1000 C: =C2=A0 4000 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 21 Avg: =C2=A0 20 Max: =C2=A0 =C2=A0 107
+> T: 1 ( 2698) P: 0 I:1500 C: =C2=A0 2667 Min: =C2=A0 =C2=A0 13 Act: =C2=
+=A0 27 Avg: =C2=A0 22 Max: =C2=A0 =C2=A0 138
+> T: 2 ( 2699) P: 0 I:2000 C: =C2=A0 2000 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 13 Avg: =C2=A0 13 Max: =C2=A0 =C2=A0 =C2=A040
+> T: 3 ( 2700) P: 0 I:2500 C: =C2=A0 1600 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 16 Avg: =C2=A0 13 Max: =C2=A0 =C2=A0 =C2=A041
+> T: 4 ( 2701) P: 0 I:3000 C: =C2=A0 1334 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 15 Avg: =C2=A0 13 Max: =C2=A0 =C2=A0 =C2=A039
+> T: 5 ( 2702) P: 0 I:3500 C: =C2=A0 1143 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 28 Avg: =C2=A0 16 Max: =C2=A0 =C2=A0 =C2=A061
+> T: 6 ( 2703) P: 0 I:4000 C: =C2=A0 1000 Min: =C2=A0 =C2=A0 12 Act: =C2=
+=A0 13 Avg: =C2=A0 13 Max: =C2=A0 =C2=A0 102
+> T: 7 ( 2704) P: 0 I:4500 C: =C2=A0 =C2=A0889 Min: =C2=A0 =C2=A0 12 Ac=
+t: =C2=A0 13 Avg: =C2=A0 15 Max: =C2=A0 =C2=A0 184
+> T: 8 ( 2705) P: 0 I:5000 C: =C2=A0 =C2=A0800 Min: =C2=A0 =C2=A0 12 Ac=
+t: =C2=A0 13 Avg: =C2=A0 13 Max: =C2=A0 =C2=A0 =C2=A032
+> T: 9 ( 2706) P: 0 I:5500 C: =C2=A0 =C2=A0728 Min: =C2=A0 =C2=A0 12 Ac=
+t: =C2=A0 15 Avg: =C2=A0 15 Max: =C2=A0 =C2=A0 =C2=A054
+> [root@fedora9 rt-tests-temp0]# cat /debug/tracing/trace |head
+> # tracer: sched_switch
+> #
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 TASK-PID =C2=A0 =C2=A0CPU# =C2=A0=
+ =C2=A0TIMESTAMP =C2=A0FUNCTION
+> # =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| | =C2=A0 =C2=A0 =C2=
+=A0 | =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 =C2=A0 =C2=A0 =C2=A0 |
+> ##### CPU 0 buffer started ####
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<idle>-0 =C2=A0 =C2=A0 [000] =C2=A0=
+1107.917632: =C2=A0 =C2=A0 =C2=A00:140:R =C2=A0 + [000]
+> 10: 49:D sirq-sched/0
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<idle>-0 =C2=A0 =C2=A0 [000] =C2=A0=
+1107.917635: =C2=A0 =C2=A0 =C2=A00:140:R =C2=A0 + [000]
+> 5: 49:D sirq-timer/0
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0<idle>-0 =C2=A0 =C2=A0 [000] =C2=A0=
+1107.917642: =C2=A0 =C2=A0 =C2=A00:140:R =3D=3D> [000]
+> 10: 49:R sirq-sched/0
+> =C2=A0 =C2=A0sirq-sched/0-10 =C2=A0 =C2=A0[000] =C2=A01107.917655: =C2=
+=A0 =C2=A0 10: 49:D =3D=3D> [000]
+> 5: 49:R sirq-timer/0
+> =C2=A0 =C2=A0sirq-timer/0-5 =C2=A0 =C2=A0 [000] =C2=A01107.917660: =C2=
+=A0 =C2=A0 =C2=A05: 49:D =3D=3D> [000]
+> 0:140:R <idle>
+> [root@fedora9 rt-tests-temp0]#
+>
+>
+> #####################################################################=
+############
+>
+>
 >
 >
 >
 > 2009/4/6 GeunSik Lim <leemgs1@gmail.com>:
->> =C2=A0 Dear Steven,
+>> Dear Clark,
 >>
->> =C2=A0 The author of ftrace(Internal kernel Function Tracer) feature
->> renamed the ftrace tracer
->> =C2=A0 =C2=A0to function to avoid further confusion between the ftra=
-ce
->> infrastructure and the
->> =C2=A0 =C2=A0function tracer on Oct-20, 2008.
+>> This is trivial contents about option of cyclictest.
 >>
->> =C2=A0 =C2=A0But, Update of Mini-HOWTO document are still not workin=
-g
->> =C2=A0 =C2=A0.
->> =C2=A0 =C2=A0Most of the developers often utilize "/debug/tracing/RE=
-ADME" file
->> as Mini-HOWTO.
->> =C2=A0 =C2=A0They will confuse definition and usage about ftrace =C2=
-=A0between
->> README(ftrace) file
->> =C2=A0 =C2=A0and available_tracers(function) file after linux-2.6.27=
- like me.
->> =C2=A0 =C2=A0And, I want you to append "chrt -f 5 sleep 1" command a=
-s simple
->> example for latency.
+>> Cyclictest utiltiy (ver 0.34) display the information with duplicate
+>> "-h" options,
+>> when a user run "cyclictest --help" command.
+>> User will confuse =C2=A0exact understanding because of duplicate
+>> description of -h option.
+>> How about you remove "-h H_MAX =C2=A0*****" line?
+>> Thanks reading.
 >>
->> =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
->> =C2=A0 =C2=A0Signed-off-by: Steven Rostedt <srostedt@redhat.com>
->> =C2=A0 =C2=A0Signed-off-by: Ingo Molnar <mingo@elte.hu>
->> ---
->> =C2=A0kernel/trace/trace.c | =C2=A0 =C2=A03 ++-
->> =C2=A01 files changed, 2 insertions(+), 1 deletions(-)
+>> Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
 >>
->> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
->> index a0174a4..15f0eec 100644
->> --- a/kernel/trace/trace.c
->> +++ b/kernel/trace/trace.c
->> @@ -2358,7 +2358,7 @@ static const char readme_msg[] =3D
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# mkdir /debug\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# mount -t debugfs nodev /debug\n\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/available_tracers\n=
-"
->> - =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff ftr=
-ace sched_switch none\n\n"
->> + =C2=A0 =C2=A0 =C2=A0 "wakeup preemptirqsoff preemptoff irqsoff fun=
-ction
->> sched_switch none\n\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/current_tracer\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"none\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo sched_switch > /debug/tracing/cur=
-rent_tracer\n"
->> @@ -2368,6 +2368,7 @@ static const char readme_msg[] =3D
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"noprint-parent nosym-offset nosym-addr n=
-overbose\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/tra=
-ce_options\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enable=
-d\n"
->> + =C2=A0 =C2=A0 =C2=A0 "# chrt -f 5 sleep 1\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.=
-txt\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"echo 0 > /debug/tracing/tracing_enabled\=
-n"
->> =C2=A0;
->>
+>> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest=
+=2Ec
+>> index f878217..cedc36f 100644
+>> --- a/src/cyclictest/cyclictest.c
+>> +++ b/src/cyclictest/cyclictest.c
+>> @@ -688,7 +688,8 @@ static void display_help(void)
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-d DIST =C2=A0--di=
+stance=3DDIST =C2=A0 distance of thread
+>> intervals in us default=3D500\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-E =C2=A0 =C2=A0 =C2=
+=A0 --event =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 event tracing (used with=
+ -b)\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-f =C2=A0 =C2=A0 =C2=
+=A0 --ftrace =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0function trace (when -b =
+is active)\n"
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h H_MAX =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 latency histogram =
+size in
+>> us default 0 (off)\n"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h =C2=A0 =C2=A0 =
+=C2=A0 --histogram=3DUS =C2=A0 =C2=A0dump a latency histogram to
+>> stdout after the run\n"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0" =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ US is the max time to be be
+>> tracked in microseconds\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-i INTV =C2=A0--in=
+terval=3DINTV =C2=A0 base interval of thread in
+>> us default=3D1000\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-I =C2=A0 =C2=A0 =C2=
+=A0 --irqsoff =C2=A0 =C2=A0 =C2=A0 =C2=A0 Irqsoff tracing (used with -b=
+)\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-l LOOPS --loops=3D=
+LOOPS =C2=A0 =C2=A0 number of loops:
+>> default=3D0(endless)\n"
+>> @@ -710,8 +711,6 @@ static void display_help(void)
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "-D =C2=A0 =C2=A0 =C2=
+=A0 --duration=3Dt =C2=A0 =C2=A0 =C2=A0specify a length for the test ru=
+n\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 " =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ default is in seconds, but
+>> 'm', 'h', or 'd' maybe added\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 " =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ to modify value to minutes,
+>> hours or days\n"
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"-h =C2=A0 =C2=A0 =
+=C2=A0 --histogram=3DUS =C2=A0 =C2=A0dump a latency histogram to
+>> stdout after the run\n"
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0" =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ US is the max time to be be
+>> tracked in microseconds\n"
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0);
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0exit(0);
+>> =C2=A0}
 >>
 >>
 >> --
