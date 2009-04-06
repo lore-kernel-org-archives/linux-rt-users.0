@@ -1,105 +1,123 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: cyclictest - fix comparison about flexible word counts of
-	available_tracers file.
-Date: Mon, 6 Apr 2009 11:49:58 +0900
-Message-ID: <49b7c2350904051949m3a52d270j912b56693683e27c@mail.gmail.com>
-References: <49b7c2350904042345x574edfcbx553ba1caccb8bd06@mail.gmail.com>
-	 <20090405095001.6dc50fbc@torg>
+Subject: cyclictest - duplicate explanation of cyclictest option
+Date: Mon, 6 Apr 2009 11:56:46 +0900
+Message-ID: <49b7c2350904051956n214efbb5pc8cd9990820a534f@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: multipart/mixed; boundary=000e0cd331de8f1a2e0466da0c27
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wf-out-1314.google.com ([209.85.200.172]:10348 "EHLO
-	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752667AbZDFCuA convert rfc822-to-8bit (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.231]:52105 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751492AbZDFC4s (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Apr 2009 22:50:00 -0400
-Received: by wf-out-1314.google.com with SMTP id 29so2044363wff.4
-        for <linux-rt-users@vger.kernel.org>; Sun, 05 Apr 2009 19:49:58 -0700 (PDT)
-In-Reply-To: <20090405095001.6dc50fbc@torg>
+	Sun, 5 Apr 2009 22:56:48 -0400
+Received: by rv-out-0506.google.com with SMTP id f9so1991267rvb.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 05 Apr 2009 19:56:46 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear Clark
+--000e0cd331de8f1a2e0466da0c27
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Thanks your patching.
+Dear Clark,
 
-Since I didn't have IRQSOFF or
-> PREEMPTOFF set in my kernel, those tracers weren't available and fsca=
-nf
-> never returned EOF (it kept returning the "nop" tracer).
+This is trivial contents about option of cyclictest.
 
-Clark. I think that Your approach is right.
+Cyclictest utiltiy (ver 0.34) display the information with duplicate
+"-h" options,
+when a user run "cyclictest --help" command.
+User will confuse  exact understanding because of duplicate
+description of -h option.
+How about you remove "-h H_MAX  *****" line?
+Thanks reading.
 
-In fact , I also thought  this case that  a developer disable
-PREEMPTOFF or IRQSOFF on "#>make menuconfig" setting menu.
-As you know, Most peoples will use -P or -I option when they enabled
-PREEMPTOFF or IRQSOFF in Linux Kernel just.
+Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
 
-But, Exception Handling is important as your explanation.
-Thanks again.
-
-
-2009/4/5 Clark Williams <williams@redhat.com>:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
->
-> On Sun, 5 Apr 2009 15:45:33 +0900
-> GeunSik Lim <leemgs1@gmail.com> wrote:
->
->> Dear Thomas,
->>
->> I found bug at settracer function of cyclictest.c source (rt-test ve=
-r 0.33).
->> settracer func use 10 times in the for() statement to searching trac=
-er
->> like preemptoff , irqsoff , preemptirqsoff.
->> But, I think that we have to consider 10+ words in the available_tra=
-cers file.
->>
->
-> GeunSik,
->
-> Good catch! =C2=A0I applied your patch, but then found a bug in eithe=
-r
-> fscanf or debugfs (probably debugfs). Since I didn't have IRQSOFF or
-> PREEMPTOFF set in my kernel, those tracers weren't available and fsca=
-nf
-> never returned EOF (it kept returning the "nop" tracer). So I reworke=
-d
-> your patch to read everything in and parse it using strtok(3).
->
-> The git tree has been updated and an rt-tests-0.34.tar.gz tarball is
-> available at:
->
-> http://www.kernel.org/pub/linux//kernel/people/clrkwllms/rt-tests/
->
-> Clark
-> -----BEGIN PGP SIGNATURE-----
-> Version: GnuPG v2.0.10 (GNU/Linux)
->
-> iEYEARECAAYFAknYxR4ACgkQHyuj/+TTEp3TNwCbBNrEHMLjPmAS6JciwjyXWqME
-> wpcAn3+nUGdOwCJR6sFGfwundPtaITrk
-> =3DdT+3
-> -----END PGP SIGNATURE-----
->
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index f878217..cedc36f 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -688,7 +688,8 @@ static void display_help(void)
+               "-d DIST  --distance=DIST   distance of thread
+intervals in us default=500\n"
+               "-E       --event           event tracing (used with -b)\n"
+               "-f       --ftrace          function trace (when -b is active)\n"
+-              "-h H_MAX                   latency histogram size in
+us default 0 (off)\n"
++              "-h       --histogram=US    dump a latency histogram to
+stdout after the run\n"
++              "                           US is the max time to be be
+tracked in microseconds\n"
+               "-i INTV  --interval=INTV   base interval of thread in
+us default=1000\n"
+               "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+               "-l LOOPS --loops=LOOPS     number of loops:
+default=0(endless)\n"
+@@ -710,8 +711,6 @@ static void display_help(void)
+               "-D       --duration=t      specify a length for the test run\n"
+               "                           default is in seconds, but
+'m', 'h', or 'd' maybe added\n"
+               "                           to modify value to minutes,
+hours or days\n"
+-              "-h       --histogram=US    dump a latency histogram to
+stdout after the run\n"
+-              "                           US is the max time to be be
+tracked in microseconds\n"
+                );
+        exit(0);
+ }
 
 
-
---=20
+-- 
 Regards,
 GeunSik Lim
 --
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
 Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--000e0cd331de8f1a2e0466da0c27
+Content-Type: application/octet-stream;
+	name="remove-duplicate-h-option.patch"
+Content-Disposition: attachment; filename="remove-duplicate-h-option.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_ft6kesce0
+
+CkZyb206IEdldW5TaWsgTGltIDxsZWVtZ3MxQGdtYWlsLmNvbT4KQ3ljbGljdGVzdCB1dGlsdGl5
+IGRpc3BsYXkgdGhlIGluZm9ybWF0aW9uIHdpdGggZHVwbGljYXRlICItaCIgb3B0aW9ucywKd2hl
+biBhIHVzZXIgcnVuICJjeWNsaWN0ZXN0IC0taGVscCIgY29tbWFuZC4KVXNlciB3aWxsIGNvbmZ1
+c2UgIGV4YWN0IHVuZGVyc3RhbmRpbmcgYmVjYXVzZSBvZiBkdXBsaWNhdGUgZGVzY3JpcHRpb24g
+b2YgLWggb3B0aW9uIAoKClNpZ25lZC1vZmYtYnk6IEdldW5TaWsgTGltIDxsZWVtZ3MxQGdtYWls
+LmNvbT4KCmRpZmYgLS1naXQgYS9zcmMvY3ljbGljdGVzdC9jeWNsaWN0ZXN0LmMgYi9zcmMvY3lj
+bGljdGVzdC9jeWNsaWN0ZXN0LmMKaW5kZXggZjg3ODIxNy4uY2VkYzM2ZiAxMDA2NDQKLS0tIGEv
+c3JjL2N5Y2xpY3Rlc3QvY3ljbGljdGVzdC5jCisrKyBiL3NyYy9jeWNsaWN0ZXN0L2N5Y2xpY3Rl
+c3QuYwpAQCAtNjg4LDcgKzY4OCw4IEBAIHN0YXRpYyB2b2lkIGRpc3BsYXlfaGVscCh2b2lkKQog
+ICAgICAgICAgICAgICAiLWQgRElTVCAgLS1kaXN0YW5jZT1ESVNUICAgZGlzdGFuY2Ugb2YgdGhy
+ZWFkIGludGVydmFscyBpbiB1cyBkZWZhdWx0PTUwMFxuIgogICAgICAgICAgICAgICAiLUUgICAg
+ICAgLS1ldmVudCAgICAgICAgICAgZXZlbnQgdHJhY2luZyAodXNlZCB3aXRoIC1iKVxuIgogICAg
+ICAgICAgICAgICAiLWYgICAgICAgLS1mdHJhY2UgICAgICAgICAgZnVuY3Rpb24gdHJhY2UgKHdo
+ZW4gLWIgaXMgYWN0aXZlKVxuIgotICAgICAgICAgICAgICAiLWggSF9NQVggICAgICAgICAgICAg
+ICAgICAgbGF0ZW5jeSBoaXN0b2dyYW0gc2l6ZSBpbiB1cyBkZWZhdWx0IDAgKG9mZilcbiIKKyAg
+ICAgICAgICAgICAgIi1oICAgICAgIC0taGlzdG9ncmFtPVVTICAgIGR1bXAgYSBsYXRlbmN5IGhp
+c3RvZ3JhbSB0byBzdGRvdXQgYWZ0ZXIgdGhlIHJ1blxuIgorICAgICAgICAgICAgICAiICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgVVMgaXMgdGhlIG1heCB0aW1lIHRvIGJlIGJlIHRyYWNrZWQg
+aW4gbWljcm9zZWNvbmRzXG4iCiAgICAgICAgICAgICAgICItaSBJTlRWICAtLWludGVydmFsPUlO
+VFYgICBiYXNlIGludGVydmFsIG9mIHRocmVhZCBpbiB1cyBkZWZhdWx0PTEwMDBcbiIKICAgICAg
+ICAgICAgICAgIi1JICAgICAgIC0taXJxc29mZiAgICAgICAgIElycXNvZmYgdHJhY2luZyAodXNl
+ZCB3aXRoIC1iKVxuIgogICAgICAgICAgICAgICAiLWwgTE9PUFMgLS1sb29wcz1MT09QUyAgICAg
+bnVtYmVyIG9mIGxvb3BzOiBkZWZhdWx0PTAoZW5kbGVzcylcbiIKQEAgLTcxMCw4ICs3MTEsNiBA
+QCBzdGF0aWMgdm9pZCBkaXNwbGF5X2hlbHAodm9pZCkKICAgICAgICAgICAgICAgIi1EICAgICAg
+IC0tZHVyYXRpb249dCAgICAgIHNwZWNpZnkgYSBsZW5ndGggZm9yIHRoZSB0ZXN0IHJ1blxuIgog
+ICAgICAgICAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgZGVmYXVsdCBpcyBpbiBz
+ZWNvbmRzLCBidXQgJ20nLCAnaCcsIG9yICdkJyBtYXliZSBhZGRlZFxuIgogICAgICAgICAgICAg
+ICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgdG8gbW9kaWZ5IHZhbHVlIHRvIG1pbnV0ZXMs
+IGhvdXJzIG9yIGRheXNcbiIKLSAgICAgICAgICAgICAgIi1oICAgICAgIC0taGlzdG9ncmFtPVVT
+ICAgIGR1bXAgYSBsYXRlbmN5IGhpc3RvZ3JhbSB0byBzdGRvdXQgYWZ0ZXIgdGhlIHJ1blxuIgot
+ICAgICAgICAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgVVMgaXMgdGhlIG1heCB0
+aW1lIHRvIGJlIGJlIHRyYWNrZWQgaW4gbWljcm9zZWNvbmRzXG4iCiAgICAgICAgICAgICAgICAp
+OwogICAgICAgIGV4aXQoMCk7CiB9Cgo=
+--000e0cd331de8f1a2e0466da0c27--
