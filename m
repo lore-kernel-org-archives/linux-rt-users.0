@@ -1,208 +1,218 @@
 From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: [Patch 1/2] backport of x86: add rdtsc barrier to TSC sync check
-Date: Tue, 7 Apr 2009 11:33:54 -0300
-Message-ID: <20090407143354.GD1833@unix.sh>
-References: <20090407143141.GC1833@unix.sh>
+Subject: Re: [Patch 2/2] TSC: several enhancements on callers of
+	mark_tsc_unstable()
+Date: Tue, 7 Apr 2009 11:36:03 -0300
+Message-ID: <20090407143603.GE1833@unix.sh>
+References: <20090407143141.GC1833@unix.sh> <20090407143354.GD1833@unix.sh>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.234]:28700 "EHLO
+Received: from rv-out-0506.google.com ([209.85.198.230]:41055 "EHLO
 	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752120AbZDGOeB (ORCPT
+	with ESMTP id S1751657AbZDGOgK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Apr 2009 10:34:01 -0400
-Received: by rv-out-0506.google.com with SMTP id b25so315238rvf.5
-        for <linux-rt-users@vger.kernel.org>; Tue, 07 Apr 2009 07:34:00 -0700 (PDT)
+	Tue, 7 Apr 2009 10:36:10 -0400
+Received: by rv-out-0506.google.com with SMTP id f9so2755827rvb.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Apr 2009 07:36:09 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <20090407143141.GC1833@unix.sh>
+In-Reply-To: <20090407143354.GD1833@unix.sh>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This changeset is mainly a backport of upstream commit
-93ce99e849433ede4ce8b410b749dc0cad1100b2 and its required
-infrastructure.
+This patch is a backport from Linus' linux-2.6 git tree of various
+enhancements related to the functions that could eventually call
+mark_tsc_unstable().
 
-| commit 93ce99e849433ede4ce8b410b749dc0cad1100b2
-| Author: Venki Pallipadi <venkatesh.pallipadi@intel.com>
-| Date:   Mon Nov 17 14:43:58 2008 -0800
-| 
-|     x86: add rdtsc barrier to TSC sync check
-|     
-|     Impact: fix incorrectly marked unstable TSC clock
-|     
-|     Patch (commit 0d12cdd "sched: improve sched_clock() performance") has
-|     a regression on one of the test systems here.
-|     
-|     With the patch, I see:
-|     
-|      checking TSC synchronization [CPU#0 -> CPU#1]:
-|      Measured 28 cycles TSC warp between CPUs, turning off TSC clock.
-|      Marking TSC unstable due to check_tsc_sync_source failed
-|     
-|     Whereas, without the patch syncs pass fine on all CPUs:
-|     
-|      checking TSC synchronization [CPU#0 -> CPU#1]: passed.
-|     
-|     Due to this, TSC is marked unstable, when it is not actually unstable.
-|     This is because syncs in check_tsc_wrap() goes away due to this commit.
-|     
-|     As per the discussion on this thread, correct way to fix this is to add
-|     explicit syncs as below?
-|     
-|     Signed-off-by: Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
-|     Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Kernel 2.6.24.7-rt27 has been marking TSC as unstable in several machines
+where it is, in fact, stable and constant.
 
-Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+Signed-off-by: Luis Claudio R. Goncalves <lclaudio@redhat.com>
 
 ---
-diff --git a/arch/x86/kernel/tsc_sync.c b/arch/x86/kernel/tsc_sync.c
-index 4f08c7b..f5fd23c 100644
---- a/arch/x86/kernel/tsc_sync.c
-+++ b/arch/x86/kernel/tsc_sync.c
-@@ -46,7 +46,9 @@ static __cpuinit void check_tsc_warp(void)
- 	cycles_t start, now, prev, end;
- 	int i;
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index 1ff88c7..184cb50 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -259,8 +259,10 @@ static void __cpuinit init_amd(struct cpuinfo_x86 *c)
  
--	start = get_cycles_sync();
-+	rdtsc_barrier();
-+	start = get_cycles();
-+	rdtsc_barrier();
- 	/*
- 	 * The measurement runs for 20 msecs:
- 	 */
-@@ -61,18 +63,20 @@ static __cpuinit void check_tsc_warp(void)
- 		 */
- 		__raw_spin_lock(&sync_lock);
- 		prev = last_tsc;
--		now = get_cycles_sync();
-+		rdtsc_barrier();
-+		now = get_cycles();
-+		rdtsc_barrier();
- 		last_tsc = now;
- 		__raw_spin_unlock(&sync_lock);
- 
- 		/*
- 		 * Be nice every now and then (and also check whether
--		 * measurement is done [we also insert a 100 million
-+		 * measurement is done [we also insert a 10 million
- 		 * loops safety exit, so we dont lock up in case the
- 		 * TSC readout is totally broken]):
- 		 */
- 		if (unlikely(!(i & 7))) {
--			if (now > end || i > 100000000)
-+			if (now > end || i > 10000000)
- 				break;
- 			cpu_relax();
- 			touch_nmi_watchdog();
-@@ -87,8 +91,10 @@ static __cpuinit void check_tsc_warp(void)
- 			nr_warps++;
- 			__raw_spin_unlock(&sync_lock);
- 		}
--
+ 	if (cpuid_eax(0x80000000) >= 0x80000007) {
+ 		c->x86_power = cpuid_edx(0x80000007);
+-		if (c->x86_power & (1<<8))
++		if (c->x86_power & (1<<8)) {
+ 			set_bit(X86_FEATURE_CONSTANT_TSC, c->x86_capability);
++			set_bit(X86_FEATURE_NONSTOP_TSC, c->x86_capability);
++		}
  	}
-+	if (!(now-start))
-+		printk(KERN_WARNING "Warning: zero tsc calibration delta:"
-+			" %lld [max: %lld]\n", now-start, end-start);
+ 
+ #ifdef CONFIG_X86_HT
+diff --git a/arch/x86/kernel/cpu/intel.c b/arch/x86/kernel/cpu/intel.c
+index cc8c501..450f7f1 100644
+--- a/arch/x86/kernel/cpu/intel.c
++++ b/arch/x86/kernel/cpu/intel.c
+@@ -211,6 +211,15 @@ static void __cpuinit init_intel(struct cpuinfo_x86 *c)
+ 		(c->x86 == 0x6 && c->x86_model >= 0x0e))
+ 		set_bit(X86_FEATURE_CONSTANT_TSC, c->x86_capability);
+ 
++	/*
++	* c->x86_power is 8000_0007 edx. Bit 8 is TSC runs at constant rate
++	* with P/T states and does not stop in deep C-states
++	*/
++	if (c->x86_power & (1 << 8)) {
++		set_bit(X86_FEATURE_NONSTOP_TSC, c->x86_capability);
++		set_bit(X86_FEATURE_CONSTANT_TSC, c->x86_capability);
++	}
++
+ 	if (cpu_has_ds) {
+ 		unsigned int l1;
+ 		rdmsr(MSR_IA32_MISC_ENABLE, l1, l2);
+diff --git a/arch/x86/kernel/setup_64.c b/arch/x86/kernel/setup_64.c
+index 30d94d1..167d62b 100644
+--- a/arch/x86/kernel/setup_64.c
++++ b/arch/x86/kernel/setup_64.c
+@@ -663,8 +663,10 @@ static void __cpuinit init_amd(struct cpuinfo_x86 *c)
+ 	display_cacheinfo(c);
+ 
+ 	/* c->x86_power is 8000_0007 edx. Bit 8 is constant TSC */
+-	if (c->x86_power & (1<<8))
++	if (c->x86_power & (1<<8)) {
+ 		set_bit(X86_FEATURE_CONSTANT_TSC, &c->x86_capability);
++		set_bit(X86_FEATURE_NONSTOP_TSC, &c->x86_capability);
++	}
+ 
+ 	/* Multi core CPU? */
+ 	if (c->extended_cpuid_level >= 0x80000008)
+@@ -810,8 +812,10 @@ static void __cpuinit init_intel(struct cpuinfo_x86 *c)
+ 	if (c->x86 == 15)
+ 		c->x86_cache_alignment = c->x86_clflush_size * 2;
+ 	if ((c->x86 == 0xf && c->x86_model >= 0x03) ||
+-	    (c->x86 == 0x6 && c->x86_model >= 0x0e))
++	    (c->x86 == 0x6 && c->x86_model >= 0x0e)) {
+ 		set_bit(X86_FEATURE_CONSTANT_TSC, &c->x86_capability);
++		set_bit(X86_FEATURE_NONSTOP_TSC, &c->x86_capability);
++	}
+ 	if (c->x86 == 6)
+ 		set_bit(X86_FEATURE_REP_GOOD, &c->x86_capability);
+ 	if (c->x86 == 15)
+diff --git a/arch/x86/kernel/tsc_32.c b/arch/x86/kernel/tsc_32.c
+index 1feecd4..0aa43ed 100644
+--- a/arch/x86/kernel/tsc_32.c
++++ b/arch/x86/kernel/tsc_32.c
+@@ -214,6 +214,9 @@ time_cpufreq_notifier(struct notifier_block *nb, unsigned long val, void *data)
+ {
+ 	struct cpufreq_freqs *freq = data;
+ 
++	if (cpu_has(&cpu_data(freq->cpu), X86_FEATURE_CONSTANT_TSC))
++		return 0;
++
+ 	if (!ref_freq) {
+ 		if (!freq->old){
+ 			ref_freq = freq->new;
+diff --git a/arch/x86/kernel/tsc_64.c b/arch/x86/kernel/tsc_64.c
+index 5d24959..72a389e 100644
+--- a/arch/x86/kernel/tsc_64.c
++++ b/arch/x86/kernel/tsc_64.c
+@@ -215,27 +215,26 @@ void __init tsc_calibrate(void)
+  */
+ __cpuinit int unsynchronized_tsc(void)
+ {
+-	if (tsc_unstable)
++	if (!cpu_has_tsc || tsc_unstable)
+ 		return 1;
+ 
+-#ifdef CONFIG_SMP
++#ifdef CONFIG_X86_SMP
+ 	if (apic_is_clustered_box())
+ 		return 1;
+ #endif
+-	/* Most intel systems have synchronized TSCs except for
+-	   multi node systems */
+-	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) {
+-#ifdef CONFIG_ACPI
+-		/* But TSC doesn't tick in C3 so don't use it there */
+-		if (acpi_gbl_FADT.header.length > 0 &&
+-		    acpi_gbl_FADT.C3latency < 1000)
+-			return 1;
+-#endif
++	if (boot_cpu_has(X86_FEATURE_CONSTANT_TSC))
+ 		return 0;
++	/*
++	 * Intel systems are normally all synchronized.
++	 * Exceptions must mark TSC as unstable:
++	 */
++	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL) {
++		/* assume multi socket systems are not synchronized: */
++		if (num_possible_cpus() > 1)
++			tsc_unstable = 1;
+ 	}
+ 
+-	/* Assume multi socket systems are not synchronized */
+-	return num_present_cpus() > 1;
++	return tsc_unstable;
  }
  
- /*
-@@ -97,7 +103,6 @@ static __cpuinit void check_tsc_warp(void)
-  */
- void __cpuinit check_tsc_sync_source(int cpu)
- {
--	unsigned long flags;
- 	int cpus = 2;
+ int __init notsc_setup(char *s)
+diff --git a/drivers/acpi/processor_idle.c b/drivers/acpi/processor_idle.c
+index e5d21e4..a91246a 100644
+--- a/drivers/acpi/processor_idle.c
++++ b/drivers/acpi/processor_idle.c
+@@ -516,7 +516,8 @@ static void acpi_processor_idle(void)
  
- 	/*
-@@ -118,11 +123,8 @@ void __cpuinit check_tsc_sync_source(int cpu)
- 	/*
- 	 * Wait for the target to arrive:
- 	 */
--	local_save_flags(flags);
--	local_irq_enable();
- 	while (atomic_read(&start_count) != cpus-1)
- 		cpu_relax();
--	local_irq_restore(flags);
- 	/*
- 	 * Trigger the target to continue into the measurement too:
- 	 */
-@@ -133,24 +135,24 @@ void __cpuinit check_tsc_sync_source(int cpu)
- 	while (atomic_read(&stop_count) != cpus-1)
- 		cpu_relax();
+ #if defined (CONFIG_GENERIC_TIME) && defined (CONFIG_X86_TSC)
+ 		/* TSC halts in C2, so notify users */
+-		mark_tsc_unstable("possible TSC halt in C2");
++		if (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
++			mark_tsc_unstable("possible TSC halt in C2");
+ #endif
+ 		/* Compute time (ticks) that we were actually asleep */
+ 		sleep_ticks = ticks_elapsed(t1, t2);
+@@ -579,7 +580,8 @@ static void acpi_processor_idle(void)
  
--	/*
--	 * Reset it - just in case we boot another CPU later:
--	 */
--	atomic_set(&start_count, 0);
--
- 	if (nr_warps) {
- 		printk("\n");
- 		printk(KERN_WARNING "Measured %Ld cycles TSC warp between CPUs,"
- 				    " turning off TSC clock.\n", max_warp);
- 		mark_tsc_unstable("check_tsc_sync_source failed");
--		nr_warps = 0;
--		max_warp = 0;
--		last_tsc = 0;
- 	} else {
- 		printk(" passed.\n");
- 	}
+ #if defined (CONFIG_GENERIC_TIME) && defined (CONFIG_X86_TSC)
+ 		/* TSC halts in C3, so notify users */
+-		mark_tsc_unstable("TSC halts in C3");
++		if (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
++			mark_tsc_unstable("TSC halts in C3");
+ #endif
+ 		/* Compute time (ticks) that we were actually asleep */
+ 		sleep_ticks = ticks_elapsed(t1, t2);
+@@ -1456,7 +1458,8 @@ static int acpi_idle_enter_simple(struct cpuidle_device *dev,
  
- 	/*
-+	 * Reset it - just in case we boot another CPU later:
-+	 */
-+	atomic_set(&start_count, 0);
-+	nr_warps = 0;
-+	max_warp = 0;
-+	last_tsc = 0;
-+
-+	/*
- 	 * Let the target continue with the bootup:
- 	 */
- 	atomic_inc(&stop_count);
+ #if defined (CONFIG_GENERIC_TIME) && defined (CONFIG_X86_TSC)
+ 	/* TSC could halt in idle, so notify users */
+-	mark_tsc_unstable("TSC halts in idle");;
++	if (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
++		mark_tsc_unstable("TSC halts in idle");;
+ #endif
+ 	sleep_ticks = ticks_elapsed(t1, t2);
+ 
+@@ -1567,7 +1570,8 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
+ 
+ #if defined (CONFIG_GENERIC_TIME) && defined (CONFIG_X86_TSC)
+ 	/* TSC could halt in idle, so notify users */
+-	mark_tsc_unstable("TSC halts in idle");
++	if (!boot_cpu_has(X86_FEATURE_NONSTOP_TSC))
++		mark_tsc_unstable("TSC halts in idle");
+ #endif
+ 	sleep_ticks = ticks_elapsed(t1, t2);
+ 	/* Tell the scheduler how much we idled: */
 diff --git a/include/asm-x86/cpufeature_32.h b/include/asm-x86/cpufeature_32.h
-index f17e688..49f14b4 100644
+index 49f14b4..bdc6e27 100644
 --- a/include/asm-x86/cpufeature_32.h
 +++ b/include/asm-x86/cpufeature_32.h
-@@ -82,6 +82,8 @@
- /* 14 free */
- #define X86_FEATURE_SYNC_RDTSC	(3*32+15)  /* RDTSC synchronizes the CPU */
+@@ -84,6 +84,8 @@
  #define X86_FEATURE_REP_GOOD   (3*32+16) /* rep microcode works well on this CPU */
-+#define X86_FEATURE_MFENCE_RDTSC (3*32+17) /* "" Mfence synchronizes RDTSC */
-+#define X86_FEATURE_LFENCE_RDTSC (3*32+18) /* "" Lfence synchronizes RDTSC */
+ #define X86_FEATURE_MFENCE_RDTSC (3*32+17) /* "" Mfence synchronizes RDTSC */
+ #define X86_FEATURE_LFENCE_RDTSC (3*32+18) /* "" Lfence synchronizes RDTSC */
++#define X86_FEATURE_TSC_RELIABLE (3*32+23) /* TSC is known to be reliable */
++#define X86_FEATURE_NONSTOP_TSC (3*32+24) /* TSC does not stop in C states */
  
  /* Intel-defined CPU features, CPUID level 0x00000001 (ecx), word 4 */
  #define X86_FEATURE_XMM3	(4*32+ 0) /* Streaming SIMD Extensions-3 */
-diff --git a/include/asm-x86/processor.h b/include/asm-x86/processor.h
-index 46e1c04..e1dc8fc 100644
---- a/include/asm-x86/processor.h
-+++ b/include/asm-x86/processor.h
-@@ -1,5 +1,23 @@
-+#ifndef __ASM_PROCESSOR_H
-+#define __ASM_PROCESSOR_H
-+
- #ifdef CONFIG_X86_32
- # include "processor_32.h"
- #else
- # include "processor_64.h"
- #endif
-+
-+/*
-+ * Stop RDTSC speculation. This is needed when you need to use RDTSC
-+ * (or get_cycles or vread that possibly accesses the TSC) in a defined
-+ * code region.
-+ *
-+ * (Could use an alternative three way for this if there was one.)
-+ */
-+static inline void rdtsc_barrier(void)
-+{
-+	alternative(ASM_NOP3, "mfence", X86_FEATURE_MFENCE_RDTSC);
-+	alternative(ASM_NOP3, "lfence", X86_FEATURE_LFENCE_RDTSC);
-+}
-+
-+#endif /* __ASM_PROCESSOR_H */
+---
+
 -- 
 [ Luis Claudio R. Goncalves             Red Hat  -  Realtime Team ]
 [ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
