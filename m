@@ -1,71 +1,43 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on Fedora.
-Date: Thu, 9 Apr 2009 17:11:29 +0900
-Message-ID: <49b7c2350904090111x3dc5055s6a21862d5e7f9fd6@mail.gmail.com>
-References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>
-	 <20090406.075753.260126012.furutaka.kazuyoshi@jaea.go.jp>
+From: ulmo@sonic.net
+Subject: 2.6.29.1-rt4 first stable RT since 2.6.25.8-rt7 on AMD64 sys
+Date: Thu, 9 Apr 2009 01:01:25 -0700 (PDT)
+Message-ID: <fd55b1a034eac9f0d40d6a8bd575765b.squirrel@webmail.sonic.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Kazuyoshi Furutaka <furutaka.kazuyoshi@jaea.go.jp>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: ulmo@sonic.net
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f160.google.com ([209.85.217.160]:33060 "EHLO
-	mail-gx0-f160.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757204AbZDIILb convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Apr 2009 04:11:31 -0400
-Received: by gxk4 with SMTP id 4so1209622gxk.13
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Apr 2009 01:11:29 -0700 (PDT)
-In-Reply-To: <20090406.075753.260126012.furutaka.kazuyoshi@jaea.go.jp>
+Received: from b.mail.sonic.net ([64.142.19.5]:39490 "EHLO b.mail.sonic.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753424AbZDIINg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Apr 2009 04:13:36 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2009/4/6 Kazuyoshi Furutaka <furutaka.kazuyoshi@jaea.go.jp>:
-> Hi linux-rt-users list,
->
-> From: GeunSik Lim <leemgs1@gmail.com>
-> Subject: About "error mounting as ext3" when using 2.6.29-rt2 on Fedo=
-ra.
-> Date: Fri, 3 Apr 2009 11:20:10 +0900
->
->> Anyone have this problems on Fedora Linux Distribution with linux-2.=
-6.29-rt2 ?
->
-> FYI, I'm running a few Fedora "10" systems (not exactly the
-> same as GeunSik's) with preempt-rt kernels (2.6.29-rc8-rt3
-> to 2.6.29-rt2, and I'll test 2.6.29.1-rt4 soon), but I've
-> never experienced such a trouble with them.
->
-Thank you for sharing your test.
-On all of the tests, It seems that error case of linux-2.6.29-rt2 is
-depenend on Desktop H/W Spec Like Q8200(Core2 Quad) Desktop.
+I found out that my Asterisk system works beautifully with Linux RT
+patches, but basically not at all (unacceptable) without.  Unfortunately,
+all the dozen or so RT patches for kernels between 2.6.25.8-rt7 and
+2.6.29.1-rt4 crashed so soon in the boot scripts that I never had a chance
+to incrementally find out what programs were causing the crashes; I think
+it was deeper than that, anyway, because it happened so fast, and even in
+single user mode from what I recall.
 
-> Kazuyoshi
-> --
-> Kazuyoshi Furutaka
-> furutaka _dot_ kazuyoshi _at_ jaea _dot_ go _dot_ jp
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
->
+I am very happy to report that my Asterisk system is working as expected
+with RT settings, in 2.6.29.1-rt4.  Thank you for fixing whatever bug you
+found that caused that fix.  I have no idea whether it is a Linux kernel
+or RT patch fix.
 
+I must admit that I also recently upgraded my Gentoo packages, as I
+usually do periodically.  If this was a libc bug or something causing a
+kernel crash, or something to that effect, well, then, I'm happy to have a
+temporary reprieve.  I doubt it's that, though.  What makes more sense is
+that I did see GCC got upgraded in my system just prior to the new RT
+kernel build, so maybe a GCC bug was causing the crashes before, and since
+I compiled the new kernel and all modules with the new GCC, that may have
+affected it too.  GCC version is now gcc-4.3.2-r3, and I think before it
+was gcc-4.1.2.
 
+Sincerely,
+Brad Allen
 
---=20
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
