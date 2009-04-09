@@ -1,48 +1,62 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Fedora 10 as basis for RT?
-Date: Thu, 9 Apr 2009 13:06:31 -0500
-Message-ID: <20090409130631.553833e9@torg>
-References: <loom.20090409T134400-381@post.gmane.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [Announce] 2.6.29.1-rt6
+Date: Thu, 9 Apr 2009 20:53:26 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+ <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org
-To: Al Dorrington <albert.dorrington@lmco.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:43371 "EHLO mx2.redhat.com"
+Received: from www.tglx.de ([62.245.132.106]:43942 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758663AbZDISG4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Apr 2009 14:06:56 -0400
-In-Reply-To: <loom.20090409T134400-381@post.gmane.org>
+	id S1761655AbZDISyq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Apr 2009 14:54:46 -0400
+In-Reply-To: <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUaHUs
-IDkgQXByIDIwMDkgMTM6NDk6MjkgKzAwMDAgKFVUQykNCkFsIERvcnJpbmd0b24gPGFsYmVydC5k
-b3JyaW5ndG9uQGxtY28uY29tPiB3cm90ZToNCg0KPiBIaSwNCj4gDQo+IEkgYW0gd29ya2luZyBv
-biBhIHByb29mIG9mIGNvbmNlcHQgcHJvamVjdCB3aGVyZSB3ZSBhcmUgZ29pbmcgdG8gdHJ5IG1v
-dmluZyBhbg0KPiBhcHBsaWNhdGlvbiB0aGF0IHJ1bnMgb24gVnhXb3JrcyB0byBMaW51eC4gSSBi
-ZWxpZXZlIHdpdGggd2hhdCBJJ3ZlIHJlYWQgb24gdGhpcw0KPiBtYWlsaW5nIGxpc3QsIGFuZCB0
-aGUgUlR3aWtpIHNpdGUgdGhhdCBMaW51eCBpcyBkZWZpbml0ZWx5IHVwIHRvIHRoZSB0YXNrIHdp
-dGgNCj4gdGhlc2Uga2VybmVsIHBhdGNoZXMuDQo+IA0KPiBIb3dldmVyLCBJIGFtIG5vdCByZWFs
-bHkgc3VyZSB3aGljaCBkaXN0cmlidXRpb24gb2YgTGludXggd2Ugc2hvdWxkIHVzZSBhcyB0aGUN
-Cj4gYmFzZSwgbm9yIGFtIEkgc3VyZSBpZiBpdCB3b3VsZCBiZSBiZXR0ZXIgdG8gc3RpY2sgd2l0
-aCB0aGUgJ2kzODYnIGRpc3RyaWJ1dGlvbg0KPiBvciBnbyB3aXRoIHRoZSB4ODZfNjQgdmFyaWFu
-dC4NCj4gDQo+IEkgYW0gY29uc2lkZXJpbmcgRmVkb3JhIDEwLCBlaXRoZXIgaTM4NiBvciB4ODZf
-NjQuIA0KPiANCj4gRG9lcyBhbnlvbmUgaGF2ZSBhbnkgY29tbWVudHMgb3IgcmVjb21tZW5kYXRp
-b25zIGZvciB3aGljaCBtaWdodCBiZSBiZXR0ZXIgdG8NCj4gdXNlLCBvciBpZiB3ZSB3b3VsZCBi
-ZSBiZXR0ZXIgb2ZmIHVzaW5nIGFub3RoZXIgZGlzdHJpYnV0aW9uPw0KPiANCj4gVGhhbmtzIQ0K
-PiAtIEFsIERvcnJpbmd0b24NCj4gDQoNCkknbSBydW5uaW5nIHRoZSAtcnQga2VybmVsIG9uIEYx
-MCBhbmQgaXQgcnVucyBmaW5lIChib3RoIDMyIGFuZCA2NCBiaXQNCnZlcnNpb25zKS4gVGhhdCBz
-YWlkLCBJIGV4cGVjdCBhbnkgbW9kZXJuIGRpc3RybyB3aXRoIGFuIHVwLXRvLWRhdGUNCmdsaWJj
-IHdpbGwgYmUgcGVyZmVjdGx5IGZpbmUgZm9yIHJ1bm5pbmcgYW4gLXJ0IExpbnV4IHN5c3RlbS4N
-Cg0KSSdkIG1ha2UgbXkgcGljayBhcyB0byB0aGUgYXJjaCBiYXNlZCBvbiBob3cgbXVjaCBtZW1v
-cnkgeW91DQphbnRpY2lwYXRlIHN0dWZmaW5nIGludG8gdGhlIHN5c3RlbTogbW9yZSB0aGFuIDRH
-QiwgdXNlIDY0LWJpdDsgbGVzcyBvcg0KZXF1YWwgdG8gNEdCLCB1c2Ugd2hhdCdzIG5hdGl2ZSB0
-byB0aGUgQ1BVLiBJIGdlbmVyYWxseSB1c2UgNjQtYml0DQpub3dhZGF5cywgYnV0IHRoYXQncyBy
-ZWFsbHkganVzdCBwZXJzb25hbCBwcmVmZXJlbmNlLiBTb21lIGZvbGtzIHN0aWxsDQpjbGFpbSB0
-aGF0IDMyLWJpdCBpcyBmYXN0ZXIsIGJ1dCBJIGhhdmVuJ3Qgc2VlbiBpdC4NCg0KQ2xhcmsNCi0t
-LS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUv
-TGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbmVPU3dBQ2drUUh5dWovK1RURXAyNU53Q2dpWHl6RHRk
-dnRXdlhCVDQ5Q0U5M05Wdm8NClhsd0FuMVhLMDFWa2p4TzNRYkVscW5sQnllTkVldU1EDQo9Y2Mz
-Zg0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
+We are pleased to announce the next update to our new preempt-rt
+series.
+
+  	- rt locks fixes (Jan Blunck, tglx)
+	- kvm vs. -rt fixes (Jan Blunck)
+	- hpet interrupt fix (tglx, reported and tested by Hans Peter Bock)
+
+Download locations:
+
+     http://rt.et.redhat.com/download/
+     http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Information on the RT patch can be found at:
+
+     http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.1-rt6 tree, the following patches should be
+applied:
+
+     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.1.tar.bz2
+     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt6.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
