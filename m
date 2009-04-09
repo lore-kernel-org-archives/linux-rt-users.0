@@ -1,38 +1,48 @@
-From: Al Dorrington <albert.dorrington@lmco.com>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: Fedora 10 as basis for RT?
-Date: Thu, 9 Apr 2009 15:12:45 +0000 (UTC)
-Message-ID: <loom.20090409T145656-139@post.gmane.org>
-References: <loom.20090409T134400-381@post.gmane.org> <5bdc1c8b0904090745k675acde6v51df7dae4ac433d9@mail.gmail.com>
+Date: Thu, 9 Apr 2009 13:06:31 -0500
+Message-ID: <20090409130631.553833e9@torg>
+References: <loom.20090409T134400-381@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org
+To: Al Dorrington <albert.dorrington@lmco.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from main.gmane.org ([80.91.229.2]:33017 "EHLO ciao.gmane.org"
+Received: from mx2.redhat.com ([66.187.237.31]:43371 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758211AbZDIPNE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Apr 2009 11:13:04 -0400
-Received: from list by ciao.gmane.org with local (Exim 4.43)
-	id 1Lrvw6-0004fz-Dx
-	for linux-rt-users@vger.kernel.org; Thu, 09 Apr 2009 15:13:02 +0000
-Received: from proxy3a.external.lmco.com ([192.35.35.34])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Apr 2009 15:13:02 +0000
-Received: from albert.dorrington by proxy3a.external.lmco.com with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 Apr 2009 15:13:02 +0000
+	id S1758663AbZDISG4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Apr 2009 14:06:56 -0400
+In-Reply-To: <loom.20090409T134400-381@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thank you for your quick responses! We had thought that the distribution and
-32-bit/64-bit wouldn't be a major concern, but glad to have it confirmed by the
-experts.
-
-
-
-
-
-
-
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUaHUs
+IDkgQXByIDIwMDkgMTM6NDk6MjkgKzAwMDAgKFVUQykNCkFsIERvcnJpbmd0b24gPGFsYmVydC5k
+b3JyaW5ndG9uQGxtY28uY29tPiB3cm90ZToNCg0KPiBIaSwNCj4gDQo+IEkgYW0gd29ya2luZyBv
+biBhIHByb29mIG9mIGNvbmNlcHQgcHJvamVjdCB3aGVyZSB3ZSBhcmUgZ29pbmcgdG8gdHJ5IG1v
+dmluZyBhbg0KPiBhcHBsaWNhdGlvbiB0aGF0IHJ1bnMgb24gVnhXb3JrcyB0byBMaW51eC4gSSBi
+ZWxpZXZlIHdpdGggd2hhdCBJJ3ZlIHJlYWQgb24gdGhpcw0KPiBtYWlsaW5nIGxpc3QsIGFuZCB0
+aGUgUlR3aWtpIHNpdGUgdGhhdCBMaW51eCBpcyBkZWZpbml0ZWx5IHVwIHRvIHRoZSB0YXNrIHdp
+dGgNCj4gdGhlc2Uga2VybmVsIHBhdGNoZXMuDQo+IA0KPiBIb3dldmVyLCBJIGFtIG5vdCByZWFs
+bHkgc3VyZSB3aGljaCBkaXN0cmlidXRpb24gb2YgTGludXggd2Ugc2hvdWxkIHVzZSBhcyB0aGUN
+Cj4gYmFzZSwgbm9yIGFtIEkgc3VyZSBpZiBpdCB3b3VsZCBiZSBiZXR0ZXIgdG8gc3RpY2sgd2l0
+aCB0aGUgJ2kzODYnIGRpc3RyaWJ1dGlvbg0KPiBvciBnbyB3aXRoIHRoZSB4ODZfNjQgdmFyaWFu
+dC4NCj4gDQo+IEkgYW0gY29uc2lkZXJpbmcgRmVkb3JhIDEwLCBlaXRoZXIgaTM4NiBvciB4ODZf
+NjQuIA0KPiANCj4gRG9lcyBhbnlvbmUgaGF2ZSBhbnkgY29tbWVudHMgb3IgcmVjb21tZW5kYXRp
+b25zIGZvciB3aGljaCBtaWdodCBiZSBiZXR0ZXIgdG8NCj4gdXNlLCBvciBpZiB3ZSB3b3VsZCBi
+ZSBiZXR0ZXIgb2ZmIHVzaW5nIGFub3RoZXIgZGlzdHJpYnV0aW9uPw0KPiANCj4gVGhhbmtzIQ0K
+PiAtIEFsIERvcnJpbmd0b24NCj4gDQoNCkknbSBydW5uaW5nIHRoZSAtcnQga2VybmVsIG9uIEYx
+MCBhbmQgaXQgcnVucyBmaW5lIChib3RoIDMyIGFuZCA2NCBiaXQNCnZlcnNpb25zKS4gVGhhdCBz
+YWlkLCBJIGV4cGVjdCBhbnkgbW9kZXJuIGRpc3RybyB3aXRoIGFuIHVwLXRvLWRhdGUNCmdsaWJj
+IHdpbGwgYmUgcGVyZmVjdGx5IGZpbmUgZm9yIHJ1bm5pbmcgYW4gLXJ0IExpbnV4IHN5c3RlbS4N
+Cg0KSSdkIG1ha2UgbXkgcGljayBhcyB0byB0aGUgYXJjaCBiYXNlZCBvbiBob3cgbXVjaCBtZW1v
+cnkgeW91DQphbnRpY2lwYXRlIHN0dWZmaW5nIGludG8gdGhlIHN5c3RlbTogbW9yZSB0aGFuIDRH
+QiwgdXNlIDY0LWJpdDsgbGVzcyBvcg0KZXF1YWwgdG8gNEdCLCB1c2Ugd2hhdCdzIG5hdGl2ZSB0
+byB0aGUgQ1BVLiBJIGdlbmVyYWxseSB1c2UgNjQtYml0DQpub3dhZGF5cywgYnV0IHRoYXQncyBy
+ZWFsbHkganVzdCBwZXJzb25hbCBwcmVmZXJlbmNlLiBTb21lIGZvbGtzIHN0aWxsDQpjbGFpbSB0
+aGF0IDMyLWJpdCBpcyBmYXN0ZXIsIGJ1dCBJIGhhdmVuJ3Qgc2VlbiBpdC4NCg0KQ2xhcmsNCi0t
+LS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUv
+TGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbmVPU3dBQ2drUUh5dWovK1RURXAyNU53Q2dpWHl6RHRk
+dnRXdlhCVDQ5Q0U5M05Wdm8NClhsd0FuMVhLMDFWa2p4TzNRYkVscW5sQnllTkVldU1EDQo9Y2Mz
+Zg0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
