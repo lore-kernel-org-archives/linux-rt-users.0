@@ -1,62 +1,54 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [Announce] 2.6.29.1-rt6
-Date: Thu, 9 Apr 2009 20:53:26 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
- <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
- <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
- <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
+Subject: Re: About "error mounting as ext3" when using 2.6.29-rt2 on
+ Fedora.
+Date: Thu, 9 Apr 2009 21:03:18 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904092102470.21577@localhost.localdomain>
+References: <49b7c2350904021920o1fbffeffn22b9fa7ea1365db1@mail.gmail.com>  <49b7c2350904031904w7fd63cc9o2c0f700a879e217@mail.gmail.com>  <alpine.LFD.2.00.0904040637480.12916@localhost.localdomain>  <49b7c2350904041951i2d984221qca33229dff6f0df4@mail.gmail.com>
+  <alpine.LFD.2.00.0904051606170.747@localhost.localdomain>  <49b7c2350904080611s35947c65q87baa8183c69ec7c@mail.gmail.com> <49b7c2350904090036h7182d547u952c52b94c2e18c0@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>
-To: LKML <linux-kernel@vger.kernel.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: GeunSik Lim <leemgs1@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:43942 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:47307 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761655AbZDISyq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Apr 2009 14:54:46 -0400
-In-Reply-To: <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
+	id S1751580AbZDITDY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Apr 2009 15:03:24 -0400
+In-Reply-To: <49b7c2350904090036h7182d547u952c52b94c2e18c0@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
+On Thu, 9 Apr 2009, GeunSik Lim wrote:
 
-  	- rt locks fixes (Jan Blunck, tglx)
-	- kvm vs. -rt fixes (Jan Blunck)
-	- hpet interrupt fix (tglx, reported and tested by Hans Peter Bock)
+> Below is test result about Quad CPU Q8200.
+> When I boot with linux-2.6.29-rt2 on Intel Core2 Quad CPU Q8200, I
+> still meet below error.
+> (http://leemgs1.googlecode.com/files/kernel-error-2.6.29-rt2-core2quad-q8200.PNG)
+> --------------------------------------------------
+> Process IRQ-25 (pid: 309, ti=f73d6000 task=f73d4530 task.ti=f73d6000)
+> Stack:
+> F73d6f68 c016fa99 00000001 c016fa7c f7af97c0 00000019 f73d6f74 c0125ab1
+> 00000000 f73d6f9c c017f17f 00000019 00000000 00000000 00000000 00000000
+> 00000000 c0a25740 00000019 f73d6fd0 c017fc9d c0a257b0 c0a2579c 00000246
+> Call Trace:
+> [<c016fa99>] ? tick_handle_periodic+0x1d/0x98
+> [<c016fa7c>] ? tick_handle_peroidic+0x0/0x98
+> [<c0125ab1>] ? hpet_interrupt_handler+0x3d/0x47
+> [<c017f17f>] ? handle_IRQ_event+0x136/0x2bb
+> [<c017fc9d>] ? do_irqd+0x247/0x3ee
+> [<c017fa56>] ? do_irqd+0x0/0x3ee
+> [<c017fa56>] ? do_irqd+0x0/0x3ee
+> [<c01620a4>] ? kthread+0x56/0x92
+> [<c016204e>] ? kthread+0x0/0x92
+> [<c010434f>] ? kthread_thread_helper+0x7/0x10
+> Code: 01 00 00 00 8b 15 d0 d9 b0 c0 11 15 c8 d9 b0 c0 e8 99 50 fe ff b8 44 42 a2
+> c0 ff 05 40 42 a2 c0 e8 b5 25 47 00 64 a1 0c 40 ab c0 <8b> 40 34 83 e0 03 83 f8
+> 03 0f 94 c0 0f b6 c0 e8 aa 50 fe ff 5d
+> EIP: [<c016fa66>] tick_perioidic+0x6d/0x83 SS:ESP 0068:f73d6f50
+> CR2: 0000000000000034
 
-Download locations:
+Bug is fixed in -rt6.
 
-     http://rt.et.redhat.com/download/
-     http://www.kernel.org/pub/linux/kernel/projects/rt/
+Thanks,
 
-Information on the RT patch can be found at:
-
-     http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.29.1-rt6 tree, the following patches should be
-applied:
-
-     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.1.tar.bz2
-     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt6.bz2
-
-The broken out patches are also available at the same download
-locations.
-
-Enjoy !
-
-       tglx
-
+	tglx
