@@ -1,90 +1,34 @@
-From: jvrao <jvrao@linux.vnet.ibm.com>
-Subject: Interrupts are being dropped under heavy IO on -rt .
-Date: Fri, 10 Apr 2009 09:20:31 -0700
-Message-ID: <49DF71CF.7070509@linux.vnet.ibm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: futex warning tracback on 2.6.29.1-rt6
+Date: Fri, 10 Apr 2009 12:10:48 -0500
+Message-ID: <20090410121048.2d06360d@torg>
+References: <20090409215520.7daf9835@torg>
+	<49DF6AC2.4000801@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------050606060004070408080800"
-Cc: Mike Anderson <andmike@linux.vnet.ibm.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	linux-driver@qlogic.com
-To: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e37.co.us.ibm.com ([32.97.110.158]:52573 "EHLO
-	e37.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756294AbZDJQUh (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Apr 2009 12:20:37 -0400
+Received: from mx2.redhat.com ([66.187.237.31]:34976 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754484AbZDJRLO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Apr 2009 13:11:14 -0400
+In-Reply-To: <49DF6AC2.4000801@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------050606060004070408080800
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-
-Qlogic driver uses MSI-EDGE interrupts by default.
- 
-On -rt kernel under heavy IO load we observed that the driver missed 
-interrupts occasionally.
-
-Missing interrupts caused spurious mailbox timeouts and path failovers.
-
-Suspecting MSI interrupts, we disabled MSI and forcing the driver to use 
-APIC interrupts (Patch attached).
-
-With this change, our IO tests ran for extended period of time without 
-any issues.
-
-It would be interesting to see if the MSI infrastructure itself has 
-issues on realtime, or it is the combination of qla2xxx/MSI.
-
-Right now we don't have any setup to test out MSI with other adapters. 
-Hence, wondering if anyone faced similar issues.
-
-Thanks,
-JV
-
-
---------------050606060004070408080800
-Content-Type: text/x-patch;
- name="qla_nomsi.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="qla_nomsi.patch"
-
-Index: linux-2.6.29.1/drivers/scsi/qla2xxx/qla_isr.c
-===================================================================
---- linux-2.6.29.1.orig/drivers/scsi/qla2xxx/qla_isr.c
-+++ linux-2.6.29.1/drivers/scsi/qla2xxx/qla_isr.c
-@@ -1983,7 +1983,13 @@ qla2x00_request_irqs(struct qla_hw_data 
- 	/* If possible, enable MSI-X. */
- 	if (!IS_QLA2432(ha) && !IS_QLA2532(ha) &&
- 	    !IS_QLA8432(ha) && !IS_QLA8001(ha))
-+#ifdef CONFIG_PREEMPT_RT
-+		/* Observed IO timeouts with MSI iterrupts on -rt kernel. */
-+		/* This code change forces the driver to use APIC interrupts. */
-+		goto skip_msi;
-+#else
- 		goto skip_msix;
-+#endif /* CONFIG_PREEMPT_RT */
- 
- 	if (IS_QLA2432(ha) && (ha->pdev->revision < QLA_MSIX_CHIP_REV_24XX ||
- 		!QLA_MSIX_FW_MODE_1(ha->fw_attributes))) {
-Index: linux-2.6.29.1/drivers/scsi/qla2xxx/qla_version.h
-===================================================================
---- linux-2.6.29.1.orig/drivers/scsi/qla2xxx/qla_version.h
-+++ linux-2.6.29.1/drivers/scsi/qla2xxx/qla_version.h
-@@ -7,7 +7,7 @@
- /*
-  * Driver version
-  */
--#define QLA2XXX_VERSION      "8.03.00-k4"
-+#define QLA2XXX_VERSION      "8.03.00-k4-rt1"
- 
- #define QLA_DRIVER_MAJOR_VER	8
- #define QLA_DRIVER_MINOR_VER	3
-
---------------050606060004070408080800--
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
+IDEwIEFwciAyMDA5IDA4OjUwOjI2IC0wNzAwDQpEYXJyZW4gSGFydCA8ZHZobHRjQHVzLmlibS5j
+b20+IHdyb3RlOg0KPiANCj4gT0ssIGxvb2tzIGxpa2Ugd2UgaGF2ZSBzb21lIGtleSBtYW5hZ2Vt
+ZW50IGlzc3VlcyB0byBzb3J0IG91dC4gIENsYXJrLCBJIHByZXN1bWUgeW91IHdlcmVuJ3QgcnVu
+bmluZw0KPiB0aGUgZ2xpYmMgcGF0Y2ggdG8gZW5hYmxlIHJlcXVldWVfcGk/ICBGcm9tIHRoZSB0
+cmFjZSBiZWxvdyB0aGlzIGFwcGVhcnMgdG8gaGF2ZSBoYXBwZW5lZCBkdXJpbmcgYQ0KPiBub3Jt
+YWwgZnV0ZXhfd2FpdCgpIGNhbGwuICBMb29raW5nIGF0IGZ1dGV4X3dhaXRfc2V0dXAoKSBJIHNl
+ZSBhIHJhdGhlciBvYnZpb3VzIGJ1ZzoNCj4gDQoNClRoYXQncyBjb3JyZWN0LCBJIHdhcyBqdXN0
+IHJ1bm5pbmcgdGhlIHN0b2NrIEYxMCBnbGliYy4NCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0t
+LS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFr
+bmZmWjBBQ2drUUh5dWovK1RURXAyeVhBQ2VKQjBwL0dsZ3pqdU1YVTVNSEdkT25pTlQNCkoyb0Ft
+d1JFcE5mcTgzSk9QK091eFRxUFRhWGt6TERRDQo9dFp1Kw0KLS0tLS1FTkQgUEdQIFNJR05BVFVS
+RS0tLS0tDQo=
