@@ -1,52 +1,61 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Interrupts are being dropped under heavy IO on -rt .
-Date: Fri, 10 Apr 2009 23:59:48 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0904102357470.21577@localhost.localdomain>
-References: <49DF71CF.7070509@linux.vnet.ibm.com>
+Subject: [Announce] 2.6.29.1-rt7
+Date: Sat, 11 Apr 2009 00:05:28 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+ <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Anderson <andmike@linux.vnet.ibm.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	linux-driver@qlogic.com
-To: jvrao <jvrao@linux.vnet.ibm.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:58910 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:34412 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752104AbZDJWAL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Apr 2009 18:00:11 -0400
-In-Reply-To: <49DF71CF.7070509@linux.vnet.ibm.com>
+	id S1756058AbZDJWGe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Apr 2009 18:06:34 -0400
+In-Reply-To: <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 10 Apr 2009, jvrao wrote:
-> Qlogic driver uses MSI-EDGE interrupts by default.
-> 
-> On -rt kernel under heavy IO load we observed that the driver missed
-> interrupts occasionally.
-> 
-> Missing interrupts caused spurious mailbox timeouts and path failovers.
-> 
-> Suspecting MSI interrupts, we disabled MSI and forcing the driver to use APIC
-> interrupts (Patch attached).
-> 
-> With this change, our IO tests ran for extended period of time without any
-> issues.
-> 
-> It would be interesting to see if the MSI infrastructure itself has issues on
-> realtime, or it is the combination of qla2xxx/MSI.
-> 
-> Right now we don't have any setup to test out MSI with other adapters. Hence,
-> wondering if anyone faced similar issues.
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+   	- futex testing fallout fix (Darren Hart)
+ 	- kvm vs. -rt fix resurrected (tglx)
 
-Hmm. Can we get down to the root cause of that problem instead of
-applying a bandaid patch ?
+Download locations:
 
-If -rt has problems with MSI edge interrupts then we really need to
-figure out why. If the qlogic driver has problems with the different
-timings of -rt then we need to fix that one.
+     http://rt.et.redhat.com/download/
+     http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-Thanks,
+Information on the RT patch can be found at:
 
-	tglx
+     http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.1-rt7 tree, the following patches should be
+applied:
+
+     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.1.tar.bz2
+     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt7.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
