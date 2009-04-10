@@ -1,34 +1,41 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: futex warning tracback on 2.6.29.1-rt6
-Date: Fri, 10 Apr 2009 12:10:48 -0500
-Message-ID: <20090410121048.2d06360d@torg>
-References: <20090409215520.7daf9835@torg>
-	<49DF6AC2.4000801@us.ibm.com>
+From: Al Dorrington <albert.dorrington@lmco.com>
+Subject: Re: Fedora 10 as basis for RT?
+Date: Fri, 10 Apr 2009 17:28:01 +0000 (UTC)
+Message-ID: <loom.20090410T171457-788@post.gmane.org>
+References: <loom.20090409T134400-381@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Darren Hart <dvhltc@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:34976 "EHLO mx2.redhat.com"
+Received: from main.gmane.org ([80.91.229.2]:34623 "EHLO ciao.gmane.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754484AbZDJRLO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Apr 2009 13:11:14 -0400
-In-Reply-To: <49DF6AC2.4000801@us.ibm.com>
+	id S1765648AbZDJR2R (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Apr 2009 13:28:17 -0400
+Received: from list by ciao.gmane.org with local (Exim 4.43)
+	id 1LsKWS-0001si-MR
+	for linux-rt-users@vger.kernel.org; Fri, 10 Apr 2009 17:28:13 +0000
+Received: from proxy3b.external.lmco.com ([192.35.35.35])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Apr 2009 17:28:12 +0000
+Received: from albert.dorrington by proxy3b.external.lmco.com with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 10 Apr 2009 17:28:12 +0000
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
-IDEwIEFwciAyMDA5IDA4OjUwOjI2IC0wNzAwDQpEYXJyZW4gSGFydCA8ZHZobHRjQHVzLmlibS5j
-b20+IHdyb3RlOg0KPiANCj4gT0ssIGxvb2tzIGxpa2Ugd2UgaGF2ZSBzb21lIGtleSBtYW5hZ2Vt
-ZW50IGlzc3VlcyB0byBzb3J0IG91dC4gIENsYXJrLCBJIHByZXN1bWUgeW91IHdlcmVuJ3QgcnVu
-bmluZw0KPiB0aGUgZ2xpYmMgcGF0Y2ggdG8gZW5hYmxlIHJlcXVldWVfcGk/ICBGcm9tIHRoZSB0
-cmFjZSBiZWxvdyB0aGlzIGFwcGVhcnMgdG8gaGF2ZSBoYXBwZW5lZCBkdXJpbmcgYQ0KPiBub3Jt
-YWwgZnV0ZXhfd2FpdCgpIGNhbGwuICBMb29raW5nIGF0IGZ1dGV4X3dhaXRfc2V0dXAoKSBJIHNl
-ZSBhIHJhdGhlciBvYnZpb3VzIGJ1ZzoNCj4gDQoNClRoYXQncyBjb3JyZWN0LCBJIHdhcyBqdXN0
-IHJ1bm5pbmcgdGhlIHN0b2NrIEYxMCBnbGliYy4NCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0t
-LS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFr
-bmZmWjBBQ2drUUh5dWovK1RURXAyeVhBQ2VKQjBwL0dsZ3pqdU1YVTVNSEdkT25pTlQNCkoyb0Ft
-d1JFcE5mcTgzSk9QK091eFRxUFRhWGt6TERRDQo9dFp1Kw0KLS0tLS1FTkQgUEdQIFNJR05BVFVS
-RS0tLS0tDQo=
+Ok - one more question about Fedora 10...
+
+Fedora 10 uses the 2.6.27 kernel, looking at the patches available at the RT
+kernel project site at kernel.org, I see patches for 2.6.26 and 2.6.29.
+
+I am not sure what the correct way to integrate the RT patches at this point.
+Are there alternate patch sites, or should I downgrade to 2.6.26 or upgrade to
+2.6.29?
+
+Thanks - Al
+
+
+
+
