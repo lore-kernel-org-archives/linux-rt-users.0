@@ -1,43 +1,54 @@
-From: Tim Sander <tstone@vlsi.informatik.tu-darmstadt.de>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: Measuring timer interrupt latency
-Date: Mon, 13 Apr 2009 12:56:59 +0200
-Message-ID: <200904131256.59826.tstone@vlsi.informatik.tu-darmstadt.de>
-References: <002901c9bc03$54aa23d0$3f52c70a@dlh.st.com>
+Date: Mon, 13 Apr 2009 09:14:05 -0500
+Message-ID: <20090413091405.380e42f8@torg>
+References: <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+	<002901c9bc03$54aa23d0$3f52c70a@dlh.st.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="ansi_x3.4-1968"
-Content-Transfer-Encoding: 7bit
-To: "'rt-users'" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: "'rt-users'" <linux-rt-users@vger.kernel.org>
+To: Suresh Kumar SHUKLA <suresh.shukla@st.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lnx503.hrz.tu-darmstadt.de ([130.83.156.232]:50620 "EHLO
-	lnx503.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752907AbZDMLFK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Apr 2009 07:05:10 -0400
-Received: from mailserver3.hrz.tu-darmstadt.de (lnx505.hrz.tu-darmstadt.de [130.83.156.234])
-	by lnx503.hrz.tu-darmstadt.de (8.14.2/8.13.8/HRZ/PMX) with ESMTP id n3DAv3jV021905
-	for <linux-rt-users@vger.kernel.org>; Mon, 13 Apr 2009 12:57:03 +0200
-	(envelope-from tstone@vlsi.informatik.tu-darmstadt.de)
-Received: from [213.157.27.17] (helo=IP-213157027017.dialin.heagmedianet.de)
-	by mailserver3.hrz.tu-darmstadt.de with esmtpsa (TLS-1.0:DHE_RSA_AES_128_CBC_SHA1:16)
-	(Exim 4.63)
-	(envelope-from <tstone@vlsi.informatik.tu-darmstadt.de>)
-	id 1LtJqZ-00059I-KT
-	for linux-rt-users@vger.kernel.org; Mon, 13 Apr 2009 12:57:03 +0200
+Received: from mx2.redhat.com ([66.187.237.31]:41349 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751944AbZDMOOQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Apr 2009 10:14:16 -0400
 In-Reply-To: <002901c9bc03$54aa23d0$3f52c70a@dlh.st.com>
-Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-HI Suresh
-> Is there any test program which captures interrupt latency (for x86) ?
-> I checked realfeel but it is user mode program and am not sure of its
-> accuracy.
-I've posted some code to this list on this 3.3.09 with the subject:
-"Latency measurement module". Which does exactly that. ableit with the 
-small problem that the TSC is not in sync on AMD SMP machines.
-
-Regards
-Tim
--- 
-''=~('(?{'.('._@@[~'^'^-)./^').'"'.('}@@~-]@_^__'^'))-^~<.;;-}').',$/})')
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
+IDEzIEFwciAyMDA5IDEyOjE0OjQyICswNTMwDQpTdXJlc2ggS3VtYXIgU0hVS0xBIDxzdXJlc2gu
+c2h1a2xhQHN0LmNvbT4gd3JvdGU6DQoNCj4gSGksDQo+IA0KPiBJIHdhbnQgdG8gcHJvZmlsZSB0
+aGUgaW1wcm92ZW1lbnRzIGluIGludGVycnVwdCBsYXRlbmN5IHdpdGggYW5kIHdpdGhvdXQgUlQN
+Cj4gcGF0Y2hlcy4NCj4gDQo+IFRoZSBhcHByb2FjaCBJIGhhdmUgaW4gbWluZCBpcyB0aGF0IHRp
+bWUgZ2FwIGJldHdlZW4gSVJRIGZpcmluZyBhbmQgSVJRDQo+IGhhbmRsZXIgcmVhZGluZyB2YWx1
+ZSBvZiBjb3VudGVyIHdvdWxkIGJlIHN1ZmZpY2llbnQgdG8gcmV2ZWFsIHRoZSBpbnRlcnJ1cHQN
+Cj4gbGF0ZW5jeS4gVGhlc2UgdmFsdWVzIGNhbiBiZSBhbmFseXNlZCBmb3IgbWluL21heC9hdmcu
+DQo+IA0KPiBJcyB0aGVyZSBhbnkgdGVzdCBwcm9ncmFtIHdoaWNoIGNhcHR1cmVzIGludGVycnVw
+dCBsYXRlbmN5IChmb3IgeDg2KSA/IA0KPiBJIGNoZWNrZWQgcmVhbGZlZWwgYnV0IGl0IGlzIHVz
+ZXIgbW9kZSBwcm9ncmFtIGFuZCBhbSBub3Qgc3VyZSBvZiBpdHMNCj4gYWNjdXJhY3kuDQo+IA0K
+PiByZWdhcmRzLA0KPiBTdXJlc2gNCj4gDQoNCkhhdmUgeW91IHRyaWVkIGN5Y2xpY3Rlc3Q/IEl0
+J3MgcGFydCBvZiB0aGUgcnQtdGVzdHMgcGFja2FnZSB0aGF0DQpUaG9tYXMgR2xlaXhuZXIgd3Jv
+dGUgYW5kIHRoYXQgSSBub3cgbWFpbnRhaW4uIA0KDQpZb3UgY2FuIHBpY2sgdXAgdGhlIGxhdGVz
+dCB0YXJiYWxsIGhlcmU6DQoNCmh0dHA6Ly93d3cua2VybmVsLm9yZy9wdWIvbGludXgvL2tlcm5l
+bC9wZW9wbGUvY2xya3dsbG1zL3J0LXRlc3RzL3J0LXRlc3RzLTAuMzUudGFyLmJ6Mg0KDQpUaGUg
+dGhpbmcgaXMsIEknbSBub3Qgc3VyZSBob3cgdXNlZnVsIG1lYXN1cmluZyB0aGUgaW50ZXJ2YWwg
+YmV0d2Vlbg0KaW50ZXJydXB0IGFuZCBJU1IuIEl0J3Mgc3VjaCBhIHNtYWxsIGNvbXBvbmVudCBv
+ZiB0aGUgdG90YWwgbGF0ZW5jeQ0KdmFsdWUgdGhhdCBpdCB1c3VhbGx5IGdldHMgbG9zdCBpbiB0
+aGUgbm9pc2UuIEN5Y2xpY3Rlc3QgbWVhc3VyZXMgdGhlDQp0aW1lIGJldHdlZW4gYSB0aW1lciBm
+aXJlcyBhbmQgd2hlbiB0aGUgdXNlci1zcGFjZSBwcm9ncmFtIChjeWNsaWN0ZXN0KQ0KYWN0dWFs
+bHkgZ2V0cyB0byBydW4gYWZ0ZXIgYSBzbGVlcCwgd2hpY2ggaXMgdGhlIGVudGlyZSBsYXRlbmN5
+IHZhbHVlLg0KV2hhdCB5b3UncmUgdGFsa2luZyBhYm91dCBtZWFzdXJpbmcgb24gUlQgaXMgYmFz
+aWNhbGx5IGEgbG9va3VwIGFuZA0Kc2NoZWR1bGUoKSBjYWxsLCBzaW5jZSBhbGwgaW50ZXJydXB0
+cyBoYXZlIHRocmVhZGVkIGhhbmRsZXJzIG9uIFJULg0KDQpJZiB5b3UgYXJlIHdhbnRpbmcgdG8g
+ZGVjb21wb3NlIHRoZSBsYXRlbmN5IGludG8gaXQncyBjb21wb25lbnRzIG9uIFJULA0KSSB0aGlu
+ayB5b3UnZCBoYXZlOg0KDQoJMS4gSVNSIGxhdGVuY3kNCgkyLiBTY2hlZHVsZXIgbGF0ZW5jeSBm
+b3IgSVJRIHRocmVhZA0KCTMuIElSUSBoYW5kbGVyIHRpbWUNCgk0LiBTY2hlZHVsZXIgbGF0ZW5j
+eSBmb3IgdXNlci1zcGFjZSB0aHJlYWQNCg0KQ3ljbGljdGVzdCBtZWFzdXJlcyB0aGUgYWdncmVn
+YXRlIG9mIGFsbCB0aGVzZS4gDQoNCkNsYXJrDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0t
+LQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa25q
+U0xFQUNna1FIeXVqLytUVEVwMWt1QUNmU2kxM1dhUnQ2blpEYzUzTFhXcVNzYnNLDQpUdjBBb0pI
+cGVYQWpPa0NQdTV5Qk1FbE5ETXIzSWoweQ0KPTVMSWENCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUt
+LS0tLQ0K
