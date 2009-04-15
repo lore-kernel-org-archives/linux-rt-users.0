@@ -1,59 +1,65 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] preempt-rt: implement rt_downgrade_write
-Date: Wed, 15 Apr 2009 11:44:08 -0400 (EDT)
-Message-ID: <alpine.DEB.2.00.0904151142420.31828@gandalf.stny.rr.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Measuring timer interrupt latency
+Date: Wed, 15 Apr 2009 10:46:51 -0500
+Message-ID: <20090415104651.701ac397@torg>
+References: <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+	<002901c9bc03$54aa23d0$3f52c70a@dlh.st.com>
+	<20090413091405.380e42f8@torg>
+	<200904131822.02125.tstone@vlsi.informatik.tu-darmstadt.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: base64
+Cc: "'rt-users'" <linux-rt-users@vger.kernel.org>
+To: Tim Sander <tstone@vlsi.informatik.tu-darmstadt.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:47842 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752425AbZDOPoL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Apr 2009 11:44:11 -0400
+Received: from mx2.redhat.com ([66.187.237.31]:49955 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751284AbZDOPrB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 Apr 2009 11:47:01 -0400
+In-Reply-To: <200904131822.02125.tstone@vlsi.informatik.tu-darmstadt.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-From: Steven Rostedt <srostedt@redhat.com>
-Subject: preempt-rt: implement rt_downgrade_write
-
-The current code of rt_downgrade_write simply does a BUG(). There
-are places in the kernel that uses this code, and will crash a runnning
-preempt-rt kernel.
-
-The rt_downgrade_write converts a rwsem held for write into a rwsem
-held for read without ever releasing the semaphore. In -rt, the rwsems
-are simply a mutex. There is nothing different between a rwsem held
-for write, and one held for read. The difference is that one held for
-read can nest.
-
-This patch changes the BUG_ON() to simply BUG if the caller is not
-the owner of the semaphore.
-
-This patch comes from my rt-git repo, and has been tested there.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/rt.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-2.6-rt/kernel/rt.c
-===================================================================
---- linux-2.6-rt.orig/kernel/rt.c	2009-04-15 10:02:37.000000000 -0400
-+++ linux-2.6-rt/kernel/rt.c	2009-04-15 11:28:13.000000000 -0400
-@@ -316,7 +316,7 @@ EXPORT_SYMBOL(rt_up_read);
-  */
- void  rt_downgrade_write(struct rw_semaphore *rwsem)
- {
--	BUG();
-+	BUG_ON(rt_mutex_real_owner(&rwsem->lock) != current);
- }
- EXPORT_SYMBOL(rt_downgrade_write);
- 
-
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
+IDEzIEFwciAyMDA5IDE4OjIyOjAxICswMjAwDQpUaW0gU2FuZGVyIDx0c3RvbmVAdmxzaS5pbmZv
+cm1hdGlrLnR1LWRhcm1zdGFkdC5kZT4gd3JvdGU6DQoNCj4gSGkNCj4gPiBIYXZlIHlvdSB0cmll
+ZCBjeWNsaWN0ZXN0PyBJdCdzIHBhcnQgb2YgdGhlIHJ0LXRlc3RzIHBhY2thZ2UgdGhhdA0KPiA+
+IFRob21hcyBHbGVpeG5lciB3cm90ZSBhbmQgdGhhdCBJIG5vdyBtYWludGFpbi4NCj4gSSB0aGlu
+ayBjeWNsaWN0ZXN0IGlzIG5pY2UgdG8gZ2V0IHNvbWUgZmlyc3QgaW1wcmVzc2lvbnMgYW5kIGkg
+cmVhbGx5IGxpa2UgDQo+IGl0Li4uIGJ1dCBpdCBvbmx5IGdpdmUgdGhlIGFnZ3JlZ2F0ZS4NCg0K
+V2VsbCwgSSB0aGluayBpdCdzIG1vcmUgdXNlZnVsIHRoYW4gZmlyc3QgaW1wcmVzc2lvbnMsIGJ1
+dCBJJ20gYmlhc2VkIDopDQoNCj4gDQo+ID4gVGhlIHRoaW5nIGlzLCBJJ20gbm90IHN1cmUgaG93
+IHVzZWZ1bCBtZWFzdXJpbmcgdGhlIGludGVydmFsIGJldHdlZW4NCj4gPiBpbnRlcnJ1cHQgYW5k
+IElTUi4gSXQncyBzdWNoIGEgc21hbGwgY29tcG9uZW50IG9mIHRoZSB0b3RhbCBsYXRlbmN5DQo+
+ID4gdmFsdWUgdGhhdCBpdCB1c3VhbGx5IGdldHMgbG9zdCBpbiB0aGUgbm9pc2UuIA0KPiBJIGRv
+bid0IHRoaW5rIHRoYXQgeW91IGNhbiBuZWdsZWN0IHRoZXNlIG51bWJlcnMgaW4gYSBoYXJkIHJ0
+IGVudmlyb25tZW50Lg0KPiBBcyBmYXIgYXMgaSB1bmRlcnN0YW5kLCB0aGUgaXJxLXRhc2tsZXQg
+aGFzIHRvIGJlIHNjaGVkdWxlZCBieSB0aGUga2VybmVsLg0KDQpXaGF0IEkgbWVhbiBpcyB0aGF0
+IHRoZSBsYXRlbmN5IGZyb20gaW50ZXJycnVwdCBzaWduYWwgdG8gc3lzdGVtIElTUiBpcw0Kc28g
+c21hbGwgdGhhdCB5b3UnZCBiZSBiZXR0ZXIgb2ZmIHRyeWluZyB0byByZWR1Y2Ugc29tZSBvZiB0
+aGUgb3RoZXINCmNvbXBvbmVudHMgdG8gdHJ5IGFuZCByZWR1Y2UgdG90YWwgbGF0ZW5jeS4gDQoN
+Ck9mIGNvdXJzZSBJIGRvbid0IGhhdmUgYW55IGhhcmQgbnVtYmVycyBvbiBob3cgc21hbGwgdGhl
+IElTUiBsYXRlbmN5IGlzDQpjb21wYXJlZCB0byBzY2hlZHVsaW5nIHRoZSBJUlEgdGhyZWFkIGFu
+ZCBzY2hlZHVsaW5nIHRoZSB1c2VyLXRocmVhZA0KdGhhdCB3YXMgd2FpdGluZyBmb3IgdGhlIGlu
+dGVycnVwdCBldmVudC4gIEkgd29uZGVyIGlmIHRoZXJlIGFyZSBhbnkNCm1hcmtlcnMgYWxyZWFk
+eSBpbiB0aGUgUlQga2VybmVsIHRoYXQgd291bGQgbGV0IHVzIG1lYXN1cmUgdGhvc2UNCmNvbXBv
+bmVudHM/IFRoYXQgd2F5IHdlIGNvdWxkIGFyZ3VlIGNvbmNyZXRlIG51bWJlcnMgcmF0aGVyIHRo
+YW4ganVzdA0KYWJzdHJhY3QgaWRlYXMuDQoNCkknbGwgYXNrIHJvc3RlZHQuLi4NCg0KDQo+ID4g
+SWYgeW91IGFyZSB3YW50aW5nIHRvIGRlY29tcG9zZSB0aGUgbGF0ZW5jeSBpbnRvIGl0J3MgY29t
+cG9uZW50cyBvbiBSVCwNCj4gPiBJIHRoaW5rIHlvdSdkIGhhdmU6DQo+ID4gCTEuIElTUiBsYXRl
+bmN5DQo+ID4gCTIuIFNjaGVkdWxlciBsYXRlbmN5IGZvciBJUlEgdGhyZWFkDQo+ID4gCTMuIElS
+USBoYW5kbGVyIHRpbWUNCj4gPiAJNC4gU2NoZWR1bGVyIGxhdGVuY3kgZm9yIHVzZXItc3BhY2Ug
+dGhyZWFkDQo+ID4gQ3ljbGljdGVzdCBtZWFzdXJlcyB0aGUgYWdncmVnYXRlIG9mIGFsbCB0aGVz
+ZS4NCg0KPiBPbmUgZ29vZCBhcHJvYWNoIHRvIG1pbmltaXplIHVzZXIgbW9kZSBsYXRlbmN5IGFy
+ZSBwcm9iYWJseSB1c2VyIG1vZGUgZHJpdmVycy4gDQo+IFRoaXMgYXBwcm9hY2ggaGFzIGJlZW4g
+cHJlc2VudGVkIGF0IHRoZSBFbWJlZGRlZCBpbiBO/HJuYmVyZyB0aGlzIHllYXIgYnkgDQo+IGxp
+bnV0cm9uaXguIFNvIHlvdSBjYW4gc2hhdmUgb2ZmICMyIG9mIHRoZSBhYm92ZSBsaXN0LiBXaGlj
+aCBtZWFucyBvbmx5IG9uZSANCj4gcmVzY2hlZHVsaW5nIHJ1bnMgaW5zdGVhZCBvZiB0d28uIFVz
+ZXJtb2RlIGhhcyBvZiBjb3Vyc2UgdG8gYmUgcnVuIHdpdGggcnQgDQo+IHByaW9yaXR5Lg0KPiAN
+Cg0KWWVhaCwgYnV0IHlvdSdyZSBsaW1pdGVkIHRvIHBvbGxpbmcgdGhlIGgvdyBhdCB0aGF0IHBv
+aW50LiBHb29kIGlmIHlvdQ0KaGF2ZSBhIHNwYXJlIGNvcmUgYW5kIGEgaGlnaCBkYXRhIHJhdGUs
+IGJhZCBpZiB5b3UncmUgY3B1LWxpbWl0ZWQgYW5kDQpoYXZlIGEgc3BvcmFkaWMgZGF0YSByYXRl
+LiANCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQ
+RyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbm1BVzhBQ2drUUh5dWovK1RU
+RXAwOERBQ2ZZQURuRkwxQlNEZmdFcjN0WmpTOHFGR1UNCnVkTUFvS3FwMmJSTzZGL3RaT09EbUVZ
+Q3prazBMREZkDQo9MU8yTA0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
