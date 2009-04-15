@@ -1,65 +1,52 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Measuring timer interrupt latency
-Date: Wed, 15 Apr 2009 10:46:51 -0500
-Message-ID: <20090415104651.701ac397@torg>
-References: <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	<002901c9bc03$54aa23d0$3f52c70a@dlh.st.com>
-	<20090413091405.380e42f8@torg>
-	<200904131822.02125.tstone@vlsi.informatik.tu-darmstadt.de>
+From: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Subject: Re: Interrupts are being dropped under heavy IO on -rt .
+Date: Wed, 15 Apr 2009 12:48:02 -0700
+Message-ID: <20090415194802.GD1382@plap4-2.local>
+References: <49DF71CF.7070509@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: base64
-Cc: "'rt-users'" <linux-rt-users@vger.kernel.org>
-To: Tim Sander <tstone@vlsi.informatik.tu-darmstadt.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Anderson <andmike@linux.vnet.ibm.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Linux Driver <Linux-Driver@qlogic.com>
+To: jvrao <jvrao@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:49955 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751284AbZDOPrB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Apr 2009 11:47:01 -0400
-In-Reply-To: <200904131822.02125.tstone@vlsi.informatik.tu-darmstadt.de>
+Received: from avexch1.qlogic.com ([198.70.193.115]:51551 "EHLO
+	avexch1.qlogic.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754769AbZDOTsE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 Apr 2009 15:48:04 -0400
+Content-Disposition: inline
+In-Reply-To: <49DF71CF.7070509@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
-IDEzIEFwciAyMDA5IDE4OjIyOjAxICswMjAwDQpUaW0gU2FuZGVyIDx0c3RvbmVAdmxzaS5pbmZv
-cm1hdGlrLnR1LWRhcm1zdGFkdC5kZT4gd3JvdGU6DQoNCj4gSGkNCj4gPiBIYXZlIHlvdSB0cmll
-ZCBjeWNsaWN0ZXN0PyBJdCdzIHBhcnQgb2YgdGhlIHJ0LXRlc3RzIHBhY2thZ2UgdGhhdA0KPiA+
-IFRob21hcyBHbGVpeG5lciB3cm90ZSBhbmQgdGhhdCBJIG5vdyBtYWludGFpbi4NCj4gSSB0aGlu
-ayBjeWNsaWN0ZXN0IGlzIG5pY2UgdG8gZ2V0IHNvbWUgZmlyc3QgaW1wcmVzc2lvbnMgYW5kIGkg
-cmVhbGx5IGxpa2UgDQo+IGl0Li4uIGJ1dCBpdCBvbmx5IGdpdmUgdGhlIGFnZ3JlZ2F0ZS4NCg0K
-V2VsbCwgSSB0aGluayBpdCdzIG1vcmUgdXNlZnVsIHRoYW4gZmlyc3QgaW1wcmVzc2lvbnMsIGJ1
-dCBJJ20gYmlhc2VkIDopDQoNCj4gDQo+ID4gVGhlIHRoaW5nIGlzLCBJJ20gbm90IHN1cmUgaG93
-IHVzZWZ1bCBtZWFzdXJpbmcgdGhlIGludGVydmFsIGJldHdlZW4NCj4gPiBpbnRlcnJ1cHQgYW5k
-IElTUi4gSXQncyBzdWNoIGEgc21hbGwgY29tcG9uZW50IG9mIHRoZSB0b3RhbCBsYXRlbmN5DQo+
-ID4gdmFsdWUgdGhhdCBpdCB1c3VhbGx5IGdldHMgbG9zdCBpbiB0aGUgbm9pc2UuIA0KPiBJIGRv
-bid0IHRoaW5rIHRoYXQgeW91IGNhbiBuZWdsZWN0IHRoZXNlIG51bWJlcnMgaW4gYSBoYXJkIHJ0
-IGVudmlyb25tZW50Lg0KPiBBcyBmYXIgYXMgaSB1bmRlcnN0YW5kLCB0aGUgaXJxLXRhc2tsZXQg
-aGFzIHRvIGJlIHNjaGVkdWxlZCBieSB0aGUga2VybmVsLg0KDQpXaGF0IEkgbWVhbiBpcyB0aGF0
-IHRoZSBsYXRlbmN5IGZyb20gaW50ZXJycnVwdCBzaWduYWwgdG8gc3lzdGVtIElTUiBpcw0Kc28g
-c21hbGwgdGhhdCB5b3UnZCBiZSBiZXR0ZXIgb2ZmIHRyeWluZyB0byByZWR1Y2Ugc29tZSBvZiB0
-aGUgb3RoZXINCmNvbXBvbmVudHMgdG8gdHJ5IGFuZCByZWR1Y2UgdG90YWwgbGF0ZW5jeS4gDQoN
-Ck9mIGNvdXJzZSBJIGRvbid0IGhhdmUgYW55IGhhcmQgbnVtYmVycyBvbiBob3cgc21hbGwgdGhl
-IElTUiBsYXRlbmN5IGlzDQpjb21wYXJlZCB0byBzY2hlZHVsaW5nIHRoZSBJUlEgdGhyZWFkIGFu
-ZCBzY2hlZHVsaW5nIHRoZSB1c2VyLXRocmVhZA0KdGhhdCB3YXMgd2FpdGluZyBmb3IgdGhlIGlu
-dGVycnVwdCBldmVudC4gIEkgd29uZGVyIGlmIHRoZXJlIGFyZSBhbnkNCm1hcmtlcnMgYWxyZWFk
-eSBpbiB0aGUgUlQga2VybmVsIHRoYXQgd291bGQgbGV0IHVzIG1lYXN1cmUgdGhvc2UNCmNvbXBv
-bmVudHM/IFRoYXQgd2F5IHdlIGNvdWxkIGFyZ3VlIGNvbmNyZXRlIG51bWJlcnMgcmF0aGVyIHRo
-YW4ganVzdA0KYWJzdHJhY3QgaWRlYXMuDQoNCkknbGwgYXNrIHJvc3RlZHQuLi4NCg0KDQo+ID4g
-SWYgeW91IGFyZSB3YW50aW5nIHRvIGRlY29tcG9zZSB0aGUgbGF0ZW5jeSBpbnRvIGl0J3MgY29t
-cG9uZW50cyBvbiBSVCwNCj4gPiBJIHRoaW5rIHlvdSdkIGhhdmU6DQo+ID4gCTEuIElTUiBsYXRl
-bmN5DQo+ID4gCTIuIFNjaGVkdWxlciBsYXRlbmN5IGZvciBJUlEgdGhyZWFkDQo+ID4gCTMuIElS
-USBoYW5kbGVyIHRpbWUNCj4gPiAJNC4gU2NoZWR1bGVyIGxhdGVuY3kgZm9yIHVzZXItc3BhY2Ug
-dGhyZWFkDQo+ID4gQ3ljbGljdGVzdCBtZWFzdXJlcyB0aGUgYWdncmVnYXRlIG9mIGFsbCB0aGVz
-ZS4NCg0KPiBPbmUgZ29vZCBhcHJvYWNoIHRvIG1pbmltaXplIHVzZXIgbW9kZSBsYXRlbmN5IGFy
-ZSBwcm9iYWJseSB1c2VyIG1vZGUgZHJpdmVycy4gDQo+IFRoaXMgYXBwcm9hY2ggaGFzIGJlZW4g
-cHJlc2VudGVkIGF0IHRoZSBFbWJlZGRlZCBpbiBO/HJuYmVyZyB0aGlzIHllYXIgYnkgDQo+IGxp
-bnV0cm9uaXguIFNvIHlvdSBjYW4gc2hhdmUgb2ZmICMyIG9mIHRoZSBhYm92ZSBsaXN0LiBXaGlj
-aCBtZWFucyBvbmx5IG9uZSANCj4gcmVzY2hlZHVsaW5nIHJ1bnMgaW5zdGVhZCBvZiB0d28uIFVz
-ZXJtb2RlIGhhcyBvZiBjb3Vyc2UgdG8gYmUgcnVuIHdpdGggcnQgDQo+IHByaW9yaXR5Lg0KPiAN
-Cg0KWWVhaCwgYnV0IHlvdSdyZSBsaW1pdGVkIHRvIHBvbGxpbmcgdGhlIGgvdyBhdCB0aGF0IHBv
-aW50LiBHb29kIGlmIHlvdQ0KaGF2ZSBhIHNwYXJlIGNvcmUgYW5kIGEgaGlnaCBkYXRhIHJhdGUs
-IGJhZCBpZiB5b3UncmUgY3B1LWxpbWl0ZWQgYW5kDQpoYXZlIGEgc3BvcmFkaWMgZGF0YSByYXRl
-LiANCg0KQ2xhcmsNCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQ
-RyB2Mi4wLjEwIChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbm1BVzhBQ2drUUh5dWovK1RU
-RXAwOERBQ2ZZQURuRkwxQlNEZmdFcjN0WmpTOHFGR1UNCnVkTUFvS3FwMmJSTzZGL3RaT09EbUVZ
-Q3prazBMREZkDQo9MU8yTA0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
+On Fri, 10 Apr 2009, jvrao wrote:
+
+> Qlogic driver uses MSI-EDGE interrupts by default.
+>  
+> On -rt kernel under heavy IO load we observed that the driver missed 
+> interrupts occasionally.
+> 
+> Missing interrupts caused spurious mailbox timeouts and path failovers.
+> 
+> Suspecting MSI interrupts, we disabled MSI and forcing the driver to use 
+> APIC interrupts (Patch attached).
+> 
+> With this change, our IO tests ran for extended period of time without 
+> any issues.
+> 
+> It would be interesting to see if the MSI infrastructure itself has 
+> issues on realtime, or it is the combination of qla2xxx/MSI.
+> 
+> Right now we don't have any setup to test out MSI with other adapters. 
+> Hence, wondering if anyone faced similar issues.
+
+Could you perhaps provide some details on hardware used within your
+testing -- HBA type, storage, etc?  Also, can you share any logs of
+the failures with extended-error-logging enabled
+(ql2xextended_error_logging)?
+
+Regards,
+Andrew Vasquez
