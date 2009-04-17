@@ -1,52 +1,43 @@
-From: Andrew Vasquez <andrew.vasquez@qlogic.com>
-Subject: Re: Interrupts are being dropped under heavy IO on -rt .
-Date: Wed, 15 Apr 2009 12:48:02 -0700
-Message-ID: <20090415194802.GD1382@plap4-2.local>
-References: <49DF71CF.7070509@linux.vnet.ibm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH] netlink workaround silly yield()
+Date: Fri, 17 Apr 2009 13:20:10 -0500
+Message-ID: <20090417132010.0191c749@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Anderson <andmike@linux.vnet.ibm.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Linux Driver <Linux-Driver@qlogic.com>
-To: jvrao <jvrao@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from avexch1.qlogic.com ([198.70.193.115]:51551 "EHLO
-	avexch1.qlogic.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754769AbZDOTsE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Apr 2009 15:48:04 -0400
-Content-Disposition: inline
-In-Reply-To: <49DF71CF.7070509@linux.vnet.ibm.com>
+Received: from mx2.redhat.com ([66.187.237.31]:41402 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1761943AbZDQSU1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 17 Apr 2009 14:20:27 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 10 Apr 2009, jvrao wrote:
-
-> Qlogic driver uses MSI-EDGE interrupts by default.
->  
-> On -rt kernel under heavy IO load we observed that the driver missed 
-> interrupts occasionally.
-> 
-> Missing interrupts caused spurious mailbox timeouts and path failovers.
-> 
-> Suspecting MSI interrupts, we disabled MSI and forcing the driver to use 
-> APIC interrupts (Patch attached).
-> 
-> With this change, our IO tests ran for extended period of time without 
-> any issues.
-> 
-> It would be interesting to see if the MSI infrastructure itself has 
-> issues on realtime, or it is the combination of qla2xxx/MSI.
-> 
-> Right now we don't have any setup to test out MSI with other adapters. 
-> Hence, wondering if anyone faced similar issues.
-
-Could you perhaps provide some details on hardware used within your
-testing -- HBA type, storage, etc?  Also, can you share any logs of
-the failures with extended-error-logging enabled
-(ql2xextended_error_logging)?
-
-Regards,
-Andrew Vasquez
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpUaG9tYXMs
+DQoNCkJlbG93IGlzIGEgcGF0Y2ggd2UgYWRkZWQgdG8gYXZvaWQgZGVhZGxvY2tzIGluIGNlcnRh
+aW4gUlQgSlZNIGNhc2VzLg0KVGhlIG9yaWdpbmFsIHdhcyBhdXRob3JlZCBieSByb3N0ZWR0IGFu
+ZCB3YXMgbW9kaWZpZWQgZnVydGhlciBieSBhY21lLg0KVGhpcyB2ZXJzaW9uIGFwcGxpZXMgdG8g
+Mi42LjI5LjEtcnQ3Lg0KDQpDbGFyaw0KDQoNCkFkZGVkIHRlc3QgZm9yIHJ0X3Rhc2soY3VycmVu
+dCkgdG8gYXZvaWQgZGVhZGxvY2sgd2l0aA0KUlQgdGFzayBjYWxsaW5nIHNjaGVkX3lpZWxkKCkN
+Cg0KQXV0aG9yOiBTdGV2ZW4gUm9zdGVkdCA8c3Jvc3RlZHRAcmVkaGF0LmNvbT4NCkFja2VkLWJ5
+OiBBcm5hbGRvIENhcnZhbGhvIGRlIE1lbG8gPGFjbWVAcmVkaGF0LmNvbT4NCkFja2VkLWJ5OiBM
+dWlzIENsYXVkaW8gUi4gR29uY2FsdmVzIDxsZ29uY2FsdkByZWRoYXQuY29tPg0KU2lnbmVkLW9m
+Zi1ieTogQ2xhcmsgV2lsbGlhbXMgPHdpbGxpYW1zQHJlZGhhdC5jb20+DQotIC0tLQ0KDQogbmV0
+L25ldGxpbmsvYWZfbmV0bGluay5jIHwgICAgMiArLQ0KIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNl
+cnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQ0KDQoNCmRpZmYgLS1naXQgYS9uZXQvbmV0bGluay9h
+Zl9uZXRsaW5rLmMgYi9uZXQvbmV0bGluay9hZl9uZXRsaW5rLmMNCmluZGV4IDNhZTNjYjguLmU4
+ZjI3NzUgMTAwNjQ0DQotIC0tLSBhL25ldC9uZXRsaW5rL2FmX25ldGxpbmsuYw0KKysrIGIvbmV0
+L25ldGxpbmsvYWZfbmV0bGluay5jDQpAQCAtMTA0Niw3ICsxMDQ2LDcgQEAgaW50IG5ldGxpbmtf
+YnJvYWRjYXN0KHN0cnVjdCBzb2NrICpzc2ssIHN0cnVjdCBza19idWZmICpza2IsIHUzMiBwaWQs
+DQogCQlrZnJlZV9za2IoaW5mby5za2IyKTsNCiANCiAJaWYgKGluZm8uZGVsaXZlcmVkKSB7DQot
+IC0JCWlmIChpbmZvLmNvbmdlc3RlZCAmJiAoYWxsb2NhdGlvbiAmIF9fR0ZQX1dBSVQpKQ0KKwkJ
+aWYgKGluZm8uY29uZ2VzdGVkICYmIChhbGxvY2F0aW9uICYgX19HRlBfV0FJVCkgJiYgIXJ0X3Rh
+c2soY3VycmVudCkpDQogCQkJeWllbGQoKTsNCiAJCXJldHVybiAwOw0KIAl9DQotLS0tLUJFR0lO
+IFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAoR05VL0xpbnV4KQ0K
+DQppRVlFQVJFQ0FBWUZBa25veUY0QUNna1FIeXVqLytUVEVwMmdvUUNnMDJCTVlVcnpzMVIrUDZX
+Q3JBUTMyZXBYDQpXRkFBbjJLNVZYSVE5bHdwY1dGdjhHZTZSMEx2MkNDMw0KPWJuSGwNCi0tLS0t
+RU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
