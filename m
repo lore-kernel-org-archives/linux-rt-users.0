@@ -1,43 +1,91 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [PATCH] netlink workaround silly yield()
-Date: Fri, 17 Apr 2009 13:20:10 -0500
-Message-ID: <20090417132010.0191c749@torg>
+From: Len Brown <lenb@kernel.org>
+Subject: Re: Subject: PATCH : offline scheduler
+Date: Sat, 18 Apr 2009 00:44:53 -0400 (EDT)
+Message-ID: <alpine.LFD.2.00.0904180032000.30751@localhost.localdomain>
+References: <1240006279.7801.0.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: lkml <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org
+To: raz ben yehuda <raziebe@013.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:41402 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1761943AbZDQSU1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Apr 2009 14:20:27 -0400
+Received: from vms173005pub.verizon.net ([206.46.173.5]:61253 "EHLO
+	vms173005pub.verizon.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750980AbZDREo6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 18 Apr 2009 00:44:58 -0400
+In-reply-to: <1240006279.7801.0.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpUaG9tYXMs
-DQoNCkJlbG93IGlzIGEgcGF0Y2ggd2UgYWRkZWQgdG8gYXZvaWQgZGVhZGxvY2tzIGluIGNlcnRh
-aW4gUlQgSlZNIGNhc2VzLg0KVGhlIG9yaWdpbmFsIHdhcyBhdXRob3JlZCBieSByb3N0ZWR0IGFu
-ZCB3YXMgbW9kaWZpZWQgZnVydGhlciBieSBhY21lLg0KVGhpcyB2ZXJzaW9uIGFwcGxpZXMgdG8g
-Mi42LjI5LjEtcnQ3Lg0KDQpDbGFyaw0KDQoNCkFkZGVkIHRlc3QgZm9yIHJ0X3Rhc2soY3VycmVu
-dCkgdG8gYXZvaWQgZGVhZGxvY2sgd2l0aA0KUlQgdGFzayBjYWxsaW5nIHNjaGVkX3lpZWxkKCkN
-Cg0KQXV0aG9yOiBTdGV2ZW4gUm9zdGVkdCA8c3Jvc3RlZHRAcmVkaGF0LmNvbT4NCkFja2VkLWJ5
-OiBBcm5hbGRvIENhcnZhbGhvIGRlIE1lbG8gPGFjbWVAcmVkaGF0LmNvbT4NCkFja2VkLWJ5OiBM
-dWlzIENsYXVkaW8gUi4gR29uY2FsdmVzIDxsZ29uY2FsdkByZWRoYXQuY29tPg0KU2lnbmVkLW9m
-Zi1ieTogQ2xhcmsgV2lsbGlhbXMgPHdpbGxpYW1zQHJlZGhhdC5jb20+DQotIC0tLQ0KDQogbmV0
-L25ldGxpbmsvYWZfbmV0bGluay5jIHwgICAgMiArLQ0KIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNl
-cnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQ0KDQoNCmRpZmYgLS1naXQgYS9uZXQvbmV0bGluay9h
-Zl9uZXRsaW5rLmMgYi9uZXQvbmV0bGluay9hZl9uZXRsaW5rLmMNCmluZGV4IDNhZTNjYjguLmU4
-ZjI3NzUgMTAwNjQ0DQotIC0tLSBhL25ldC9uZXRsaW5rL2FmX25ldGxpbmsuYw0KKysrIGIvbmV0
-L25ldGxpbmsvYWZfbmV0bGluay5jDQpAQCAtMTA0Niw3ICsxMDQ2LDcgQEAgaW50IG5ldGxpbmtf
-YnJvYWRjYXN0KHN0cnVjdCBzb2NrICpzc2ssIHN0cnVjdCBza19idWZmICpza2IsIHUzMiBwaWQs
-DQogCQlrZnJlZV9za2IoaW5mby5za2IyKTsNCiANCiAJaWYgKGluZm8uZGVsaXZlcmVkKSB7DQot
-IC0JCWlmIChpbmZvLmNvbmdlc3RlZCAmJiAoYWxsb2NhdGlvbiAmIF9fR0ZQX1dBSVQpKQ0KKwkJ
-aWYgKGluZm8uY29uZ2VzdGVkICYmIChhbGxvY2F0aW9uICYgX19HRlBfV0FJVCkgJiYgIXJ0X3Rh
-c2soY3VycmVudCkpDQogCQkJeWllbGQoKTsNCiAJCXJldHVybiAwOw0KIAl9DQotLS0tLUJFR0lO
-IFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAoR05VL0xpbnV4KQ0K
-DQppRVlFQVJFQ0FBWUZBa25veUY0QUNna1FIeXVqLytUVEVwMmdvUUNnMDJCTVlVcnpzMVIrUDZX
-Q3JBUTMyZXBYDQpXRkFBbjJLNVZYSVE5bHdwY1dGdjhHZTZSMEx2MkNDMw0KPWJuSGwNCi0tLS0t
-RU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
+On Sat, 18 Apr 2009, raz ben yehuda wrote:
+
+> Len Hello 
+> offsched is a platform aimed to assign a service to an off-lined processor.
+> Motivation is explained in: 
+> http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED.pdf
+> Currently I have implemented two services:
+> 
+> HYBRID REAL TIME LINUX 
+> Implemented as a A 1us timer. This timer shows how a true real time system may co-exist with a 
+> regular linux server. This way there is no enforcement of a real time system requirements on the
+> entire kernel. Full documentation is at:
+> http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RT.pdf
+> 
+> RTOP
+> This piece of software send system statistics to a remove server.
+> The user benefit is that even if the machine is un-accessible (remotely or locally) 
+> RTOP still sends system statistics to a remote server. I have showed in a small paper what RTOP is:
+> http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RTOP.pdf
+> 
+> The patch is mostly a facility for offsched. The exporting of tasklist_lock is because RTOP is implemented as a driver
+> and it must lock the tasks list.
+> This is the 4-th post. I will be grateful for your reply.
+> 
+> Signed-off-by: Raz Ben Yehuda <raziebe@013.net.il>
+> 
+> arch/x86/kernel/process.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+> arch/x86/kernel/smpboot.c |   11 +++++++----
+> include/linux/cpu.h       |   20 ++++++++++++++++++++
+> include/linux/sched.h     |    2 +-
+> kernel/cpu.c              |    1 +
+> kernel/fork.c             |    6 ++++++
+> 6 files changed, 77 insertions(+), 5 deletions(-)
+
+
+Interesting project Raz, must have been fun to develop!
+
+A couple of comments...
+
+It would probably be of most interest to Ingo and the RT guys on
+linux-rt-users@vger.kernel.org rather than the ACPI guys
+on linux-acpi@vger.kernel.org. (cc updated)
+
+I don't understand the utility of the "offline timer"
+use in section 6.1 of the paper.
+With Nehalem, Intel is finally shipping a hardware TSC that is
+guaranteed to be C-state, P-state, T-state invarient and not to drift --
+so an extremely accurate cycle counter is just an MSR read away
+on all cores...
+
+I also don't understand 6.2, the system monitor use --
+for the hardware also provides numerous perfmon counters
+in hardware for monitoring, and exposing those in a friendly way
+seems to me to be a more interesting exercise than
+trying to do monitoring in software with a dedicated CPU.
+
+For 6.3, the traffic shaper...
+The newer NICs have dedicated hardware to detect and shape
+traffic flows -- again, probably much more efficient than
+dedicating a general purpose processor...
+
+For RT...
+Certainly the performance of a dedicated CPU would be
+what the rt kernel would want to strive for.  I guess
+the question is if you can measure an actual performance
+difference to quanitfy the theoretical beneifts
+of the lack of locks, lack of protection etc.
+
+cheers,
+Len Brown, Intel Open Source Technology Center
+
+
