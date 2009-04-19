@@ -1,55 +1,107 @@
 From: raz ben yehuda <raziebe@013.net>
-Subject: Re: Subject: PATCH : offline scheduler ( some refer to it as a CPU
-	isolation )
-Date: Sun, 19 Apr 2009 13:09:33 +0300
-Message-ID: <1240135773.3395.18.camel@raz>
-References: <1240081024.3534.3.camel@raz>
- <c384c5ea0904181823m42a180d7p34d57ad8212ccc54@mail.gmail.com>
+Subject: Re: Subject: PATCH : offline scheduler
+Date: Sun, 19 Apr 2009 13:12:43 +0300
+Message-ID: <1240135963.3395.23.camel@raz>
+References: <1240006279.7801.0.camel@raz>
+ <alpine.LFD.2.00.0904180032000.30751@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7BIT
-Cc: raz ben yehuda <raziebe@013.net>, linux-rt-users@vger.kernel.org
-To: Leon Woestenberg <leon.woestenberg@gmail.com>
+Cc: raz ben yehuda <raziebe@013.net>,
+	lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Len Brown <lenb@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mxout12.netvision.net.il ([194.90.6.37]:40013 "EHLO
+Received: from mxout12.netvision.net.il ([194.90.6.37]:40646 "EHLO
 	mxout12.netvision.net.il" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752057AbZDSHJf (ORCPT
+	with ESMTP id S1751966AbZDSHMo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 19 Apr 2009 03:09:35 -0400
-Received: from [192.168.2.102] ([217.132.154.72]) by mxout12.netvision.net.il
- (Sun Java System Messaging Server 6.2-8.04 (built Feb 28 2007))
- with ESMTPA id <0KIC0031A6KFIJB0@mxout12.netvision.net.il> for
- linux-rt-users@vger.kernel.org; Sun, 19 Apr 2009 10:09:51 +0300 (IDT)
-In-reply-to: <c384c5ea0904181823m42a180d7p34d57ad8212ccc54@mail.gmail.com>
+	Sun, 19 Apr 2009 03:12:44 -0400
+In-reply-to: <alpine.LFD.2.00.0904180032000.30751@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On Sun, 2009-04-19 at 03:23 +0200, Leon Woestenberg wrote:
-> Raz,
+first , i really appreciate having Len Brown reading my paper. you also
+have my sympathy :)
+On Sat, 2009-04-18 at 00:44 -0400, Len Brown wrote:
+> On Sat, 18 Apr 2009, raz ben yehuda wrote:
 > 
-> On Sat, Apr 18, 2009 at 8:57 PM, raz ben yehuda <raziebe@013.net> wrote:
+> > Len Hello 
 > > offsched is a platform aimed to assign a service to an off-lined processor.
-> > Motivation is explained in:
+> > Motivation is explained in: 
 > > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED.pdf
+> > Currently I have implemented two services:
+> > 
+> > HYBRID REAL TIME LINUX 
+> > Implemented as a A 1us timer. This timer shows how a true real time system may co-exist with a 
+> > regular linux server. This way there is no enforcement of a real time system requirements on the
+> > entire kernel. Full documentation is at:
+> > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RT.pdf
+> > 
+> > RTOP
+> > This piece of software send system statistics to a remove server.
+> > The user benefit is that even if the machine is un-accessible (remotely or locally) 
+> > RTOP still sends system statistics to a remote server. I have showed in a small paper what RTOP is:
+> > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RTOP.pdf
+> > 
+> > The patch is mostly a facility for offsched. The exporting of tasklist_lock is because RTOP is implemented as a driver
+> > and it must lock the tasks list.
+> > This is the 4-th post. I will be grateful for your reply.
+> > 
+> > Signed-off-by: Raz Ben Yehuda <raziebe@013.net.il>
+> > 
+> > arch/x86/kernel/process.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+> > arch/x86/kernel/smpboot.c |   11 +++++++----
+> > include/linux/cpu.h       |   20 ++++++++++++++++++++
+> > include/linux/sched.h     |    2 +-
+> > kernel/cpu.c              |    1 +
+> > kernel/fork.c             |    6 ++++++
+> > 6 files changed, 77 insertions(+), 5 deletions(-)
 > 
-> I quickly glanced over but could not find a comparison with other methods?
+> 
+> Interesting project Raz, must have been fun to develop!
+> 
+> A couple of comments...
+> 
+> It would probably be of most interest to Ingo and the RT guys on
+> linux-rt-users@vger.kernel.org rather than the ACPI guys
+> on linux-acpi@vger.kernel.org. (cc updated)
+> 
+> I don't understand the utility of the "offline timer"
+> use in section 6.1 of the paper.
+> With Nehalem, Intel is finally shipping a hardware TSC that is
+> guaranteed to be C-state, P-state, T-state invarient and not to drift --
+> so an extremely accurate cycle counter is just an MSR read away
+> on all cores...
+> 
+I was not clear . I meant timer and not a clock. Having a more accurate
+TSC is even better, because reading from hpet or cmos clocks
+takes too long time.
+> I also don't understand 6.2, the system monitor use --
+> for the hardware also provides numerous perfmon counters
+> in hardware for monitoring, and exposing those in a friendly way
+> seems to me to be a more interesting exercise than
+> trying to do monitoring in software with a dedicated CPU.
+rtop is meant to be used only when you cannot access the machine because it is 
+too overloaded. RTOP pushes information out from the system.
+> For 6.3, the traffic shaper...
+> The newer NICs have dedicated hardware to detect and shape
+> traffic flows -- again, probably much more efficient than
+> dedicating a general purpose processor...
+You are correct.I think i will design a new kind of offlet, one than can offload 
+the entire tcp stack, this way i will have nice ultra fast web server. I
+cannot rely on TOE as a general solution for all interfaces. and I do
+not think TOE is support ether channeling.  
+> For RT...
+> Certainly the performance of a dedicated CPU would be
+> what the rt kernel would want to strive for.  I guess
+> the question is if you can measure an actual performance
+> difference to quanitfy the theoretical beneifts
+> of the lack of locks, lack of protection etc.
+well, you are correct , again. i will provide benchmarks(if my 
+tutor will allow me to change my plans that is).
+> cheers,
+> Len Brown, Intel Open Source Technology Center
 > 
 > 
-> Suppose I run /bin/init with a certain CPU affinity (not covering all
-> CPUs) and then run my own specific service on the remaining CPUs, how
-> would this differ from your approach?
-First , not all services are children of init. there are workqueues,
-kernel daemons, softirqs and so on. offlet provides hard real time,in
-the sense that one can pre-determine how long an operation cost, it is
-NMI mode after all. Also, this is why i chose to implement a 1us timer,
-because i can do it.
-> >From what I quickly gathered, you are running parts of the kernel
-> space on the second CPU set, or is that too simple a statement?
-I am running **no kernel** on the offloaded processors, but offsched code, 
-and the rest of the processors run the "kernel". 
-> 
-> Looks like a very fresh approach, nice project!
-Thank you. i appreciate it.  
-> Regards,
 
