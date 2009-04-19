@@ -1,107 +1,58 @@
-From: raz ben yehuda <raziebe@013.net>
-Subject: Re: Subject: PATCH : offline scheduler
-Date: Sun, 19 Apr 2009 13:12:43 +0300
-Message-ID: <1240135963.3395.23.camel@raz>
-References: <1240006279.7801.0.camel@raz>
- <alpine.LFD.2.00.0904180032000.30751@localhost.localdomain>
+From: Robin Gareus <robin@gareus.org>
+Subject: Re: [Announce] 2.6.29.1-rt8
+Date: Sun, 19 Apr 2009 16:12:20 +0200
+Message-ID: <49EB3144.8040204@gareus.org>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain> <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain> <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain> <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain> <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.
+ 00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7BIT
-Cc: raz ben yehuda <raziebe@013.net>,
-	lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: Len Brown <lenb@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mxout12.netvision.net.il ([194.90.6.37]:40646 "EHLO
-	mxout12.netvision.net.il" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751966AbZDSHMo (ORCPT
+Received: from mo-p05-ob.rzone.de ([81.169.146.182]:56970 "EHLO
+	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757693AbZDSOMY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 19 Apr 2009 03:12:44 -0400
-In-reply-to: <alpine.LFD.2.00.0904180032000.30751@localhost.localdomain>
+	Sun, 19 Apr 2009 10:12:24 -0400
+Received: from [192.168.0.2]
+	(vol75-8-82-233-237-72.fbx.proxad.net [82.233.237.72])
+	by post.strato.de (mrclete mo19) (RZmta 18.28)
+	with ESMTP id C013ddl3JDlLmK for <linux-rt-users@vger.kernel.org>;
+	Sun, 19 Apr 2009 16:12:21 +0200 (MEST)
+In-Reply-To: <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-first , i really appreciate having Len Brown reading my paper. you also
-have my sympathy :)
-On Sat, 2009-04-18 at 00:44 -0400, Len Brown wrote:
-> On Sat, 18 Apr 2009, raz ben yehuda wrote:
+Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+>   
+>    	- 32bit PAE SMP alternatives crash fixed (mainline fix)
+>  	- hrtimer UP deadlock fix (tglx)
+> 	- missing fixlets picked from -24/26 (clarkw, acme)
 > 
-> > Len Hello 
-> > offsched is a platform aimed to assign a service to an off-lined processor.
-> > Motivation is explained in: 
-> > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED.pdf
-> > Currently I have implemented two services:
-> > 
-> > HYBRID REAL TIME LINUX 
-> > Implemented as a A 1us timer. This timer shows how a true real time system may co-exist with a 
-> > regular linux server. This way there is no enforcement of a real time system requirements on the
-> > entire kernel. Full documentation is at:
-> > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RT.pdf
-> > 
-> > RTOP
-> > This piece of software send system statistics to a remove server.
-> > The user benefit is that even if the machine is un-accessible (remotely or locally) 
-> > RTOP still sends system statistics to a remote server. I have showed in a small paper what RTOP is:
-> > http://sos-linux.svn.sourceforge.net/viewvc/sos-linux/offsched/trunk/Documentation/OFFSCHED-RTOP.pdf
-> > 
-> > The patch is mostly a facility for offsched. The exporting of tasklist_lock is because RTOP is implemented as a driver
-> > and it must lock the tasks list.
-> > This is the 4-th post. I will be grateful for your reply.
-> > 
-> > Signed-off-by: Raz Ben Yehuda <raziebe@013.net.il>
-> > 
-> > arch/x86/kernel/process.c |   42 ++++++++++++++++++++++++++++++++++++++++++
-> > arch/x86/kernel/smpboot.c |   11 +++++++----
-> > include/linux/cpu.h       |   20 ++++++++++++++++++++
-> > include/linux/sched.h     |    2 +-
-> > kernel/cpu.c              |    1 +
-> > kernel/fork.c             |    6 ++++++
-> > 6 files changed, 77 insertions(+), 5 deletions(-)
+> Download locations:
 > 
+>      http://rt.et.redhat.com/download/
+>      http://www.kernel.org/pub/linux/kernel/projects/rt/
 > 
-> Interesting project Raz, must have been fun to develop!
+> Information on the RT patch can be found at:
 > 
-> A couple of comments...
+>      http://rt.wiki.kernel.org/index.php/Main_Page
 > 
-> It would probably be of most interest to Ingo and the RT guys on
-> linux-rt-users@vger.kernel.org rather than the ACPI guys
-> on linux-acpi@vger.kernel.org. (cc updated)
+> to build the 2.6.29.1-rt8 tree, the following patches should be
+> applied:
 > 
-> I don't understand the utility of the "offline timer"
-> use in section 6.1 of the paper.
-> With Nehalem, Intel is finally shipping a hardware TSC that is
-> guaranteed to be C-state, P-state, T-state invarient and not to drift --
-> so an extremely accurate cycle counter is just an MSR read away
-> on all cores...
+>      http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.1.tar.bz2
+>      http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.1-rt8.bz2
 > 
-I was not clear . I meant timer and not a clock. Having a more accurate
-TSC is even better, because reading from hpet or cmos clocks
-takes too long time.
-> I also don't understand 6.2, the system monitor use --
-> for the hardware also provides numerous perfmon counters
-> in hardware for monitoring, and exposing those in a friendly way
-> seems to me to be a more interesting exercise than
-> trying to do monitoring in software with a dedicated CPU.
-rtop is meant to be used only when you cannot access the machine because it is 
-too overloaded. RTOP pushes information out from the system.
-> For 6.3, the traffic shaper...
-> The newer NICs have dedicated hardware to detect and shape
-> traffic flows -- again, probably much more efficient than
-> dedicating a general purpose processor...
-You are correct.I think i will design a new kind of offlet, one than can offload 
-the entire tcp stack, this way i will have nice ultra fast web server. I
-cannot rely on TOE as a general solution for all interfaces. and I do
-not think TOE is support ether channeling.  
-> For RT...
-> Certainly the performance of a dedicated CPU would be
-> what the rt kernel would want to strive for.  I guess
-> the question is if you can measure an actual performance
-> difference to quanitfy the theoretical beneifts
-> of the lack of locks, lack of protection etc.
-well, you are correct , again. i will provide benchmarks(if my 
-tutor will allow me to change my plans that is).
-> cheers,
-> Len Brown, Intel Open Source Technology Center
+> The broken out patches are also available at the same download
+> locations.
 > 
-> 
+> Enjoy !
+
+I really do enjoy this new realtime kernel!
+Many many thanks to you and the whole team for your great work
+from the linuxaudio.org dept.
+robin
 
