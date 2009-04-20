@@ -1,54 +1,58 @@
-From: Wu Zhangjin <wuzhangjin@gmail.com>
-Subject: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
-Date: Mon, 20 Apr 2009 10:12:27 +0800
-Message-ID: <1240193547.25532.52.camel@falcon>
-Reply-To: wuzhangjin@gmail.com
+From: Zhang Le <r0bertz@gentoo.org>
+Subject: Re: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
+Date: Mon, 20 Apr 2009 13:04:20 +0800
+Message-ID: <20090420050419.GA22520@adriano.hkcable.com.hk>
+References: <1240193547.25532.52.camel@falcon>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Nicholas Mc Guire <hofrat@hofr.at>, Ingo Molnar <mingo@elte.hu>,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
+Cc: linux-kernel@vger.kernel.org, Nicholas Mc Guire <hofrat@hofr.at>,
+	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>, zhangfx@lemote.com,
 	loongson-dev@googlegroups.com, yanh@lemote.com,
 	Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org,
-	Zhang Le <r0bertz@gentoo.org>, linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ti-out-0910.google.com ([209.85.142.191]:34757 "EHLO
-	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751690AbZDTCMy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 19 Apr 2009 22:12:54 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	linux-rt-users@vger.kernel.org
+To: Wu Zhangjin <wuzhangjin@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754102AbZDTFFK@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1240193547.25532.52.camel@falcon>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-hi, all
 
-I just update "RT_PREEMPT for loongson" to the latest RT_PREEMPT
-(patch-2.6.29.1-rt8), welcome to pull & test it.
+--opJtzjQTFsWo+cga
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-$ git clone git://dev.lemote.com/rt4ls.git
-or
-http://dev.lemote.com/http_git/rt4ls.git
+Hi, Zhangjin,
 
-this version include basic-RT support for mips, ftrace support for mips
-(static function tracer/dynamic function tracer/function graph
-tracer/system call tracer). 
+Ralf told me he has a ftrace implementation too.
 
-* current status
+11:47 < Ralf> r0bertz: ftrace looks nice but not yet mergable yet.
+11:47 < Ralf> r0bertz: I also have my own ftrace implementation which in so=
+me
+parts is better, in some is worse.=20
+11:47 < Ralf> r0bertz: So this is going to be quite a job. =20
 
-the "system call tracer" need to fix when compiled in 64bit, because
-there are several sys_call_table entries for different mips64
-standards(o32, n32), currently, i only use the one in
-arch/mips/kernel/scall64-o32.S via EXPORT(sys_call_table).
+So I think you can talk to Ralf about how to get this merged, :)
 
-the "function graph tracer" is not stable under 100% load(lots of
-"find /" background). 
+--=20
+Zhang, Le
+Gentoo/Loongson Developer
+http://zhangle.is-a-geek.org
+0260 C902 B8F8 6506 6586 2B90 BC51 C808 1E4E 2973
 
-best regards,
-Wu Zhangjin
+--opJtzjQTFsWo+cga
+Content-Type: application/pgp-signature
+Content-Disposition: inline
 
--- 
-Wu Zhangjin
-DSLab, Lanzhou University, China
-www.lemote.com, Jiangsu Province, China
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.11 (GNU/Linux)
 
+iEYEARECAAYFAknsAlMACgkQvFHICB5OKXP8FACgjDtvahfiKVOXeBVoi4RDq22y
+TGwAoITlCsglF5WzSujLFiECiM3YVA8V
+=QGmr
+-----END PGP SIGNATURE-----
+
+--opJtzjQTFsWo+cga--
