@@ -1,106 +1,57 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [PATCH] fix argument -C on cyclictest
-Date: Mon, 20 Apr 2009 23:14:27 +0900
-Message-ID: <49b7c2350904200714y30776380w9c6999e0e7822c88@mail.gmail.com>
-References: <gsfer5$6sr$1@ger.gmane.org>
-	 <20090419175218.GA22205@pengutronix.de>
+From: Ralf Baechle <ralf@linux-mips.org>
+Subject: Re: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
+Date: Mon, 20 Apr 2009 15:10:22 +0200
+Message-ID: <20090420131022.GA10183@linux-mips.org>
+References: <1240193547.25532.52.camel@falcon> <20090420050419.GA22520@adriano.hkcable.com.hk> <1240211926.8884.27.camel@falcon> <20090420080155.GA11621@linux-mips.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: trem <tremyfr@yahoo.fr>, linux-rt-users@vger.kernel.org
-To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.29]:30719 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755552AbZDTOO3 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Apr 2009 10:14:29 -0400
-Received: by yx-out-2324.google.com with SMTP id 3so781471yxj.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Apr 2009 07:14:28 -0700 (PDT)
-In-Reply-To: <20090419175218.GA22205@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Zhang Le <r0bertz@gentoo.org>, linux-kernel@vger.kernel.org,
+	Nicholas Mc Guire <hofrat@hofr.at>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>, zhangfx@lemote.com,
+	loongson-dev@googlegroups.com, yanh@lemote.com,
+	linux-mips@linux-mips.org, linux-rt-users@vger.kernel.org
+To: Wu Zhangjin <wuzhangjin@gmail.com>
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Disposition: inline
+In-Reply-To: <20090420080155.GA11621@linux-mips.org>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Uwe Kleine-Konig
+On Mon, Apr 20, 2009 at 10:01:55AM +0200, Ralf Baechle wrote:
 
-I already submited same issues.  for example, --context  and --event.
-Is your patch proposal is different?
+> > I have divided ftrace to several commits in the above git tree, hop=
+e you
+> > can check it, thx :-)=20
+> >=20
+> > in addition to the static/dynamic/graph function tracer & system ca=
+ll
+> > tracer implementation, a mips specific ring_buffer_time_stamp
+> > (kernel/trace/ring_buffer.c) is also implemented to get 1us precisi=
+on
+> > time, this is very important to make ftrace available in mips,
+> > otherwise, we can only get 1ms precision time for the original
+> > ring_buffer_time_stamp is based on sched_clock(jiffies based).=20
+> >=20
+> > perhaps we can implement a more precise sched_clock directly, just =
+as
+> > x86 does(native_sched_clock, tsc based), but in mips, there is only=
+ a
+> > 32bit timer count which will quickly overflow, so it will need an e=
+xtra
+> > overflow protection, which may influence the other parts of the ker=
+nel.
+>=20
+> My git clone is still running to I'm commenting only on the patches y=
+ou
+> posted earlier.  #ifdef-MIPS'ing things into the generic kernel code
+> definately won't be an acceptable way to get =B5s resolution.
 
-Refer to  http://marc.info/?l=3Dlinux-rt-users&m=3D123919858213957&w=3D=
-2 webpage.
+In changeset e67f78d663a84ef93aa12c3c8c1adf3033c4f9a1 you introduce
+<asm/rwsem.h> but because RWSEM_GENERIC_SPINLOCK is always set that fil=
+e
+won't ever be included.
 
-
-Regards,
-GeunSik Lim.
-
-
-2009/4/20 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>:
-> Hi,
->
-> On Sun, Apr 19, 2009 at 05:09:25PM +0200, trem wrote:
->> The argument -C isn't used in cyclictest, only --context is recogniz=
-ed.
->>
->> Signed-off-by: trem <trem@mandriva.org>
->> ---
->> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest=
-=2Ec
->> index f878217..e67d0d3 100644
->> --- a/src/cyclictest/cyclictest.c
->> +++ b/src/cyclictest/cyclictest.c
->> @@ -777,7 +777,7 @@ static void process_options (int argc, char *arg=
-v[])
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0{"help", no_argument, NULL, '?'},
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0{NULL, 0, NULL, 0}
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0};
->> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 int c =3D getopt_=
-long (argc, argv, "a::b:Bc:d:fh:i:Il:nNo:p:Pmqrst::vD:",
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 int c =3D getopt_=
-long (argc, argv, "a::b:Bc:Cd:fh:i:Il:nNo:p:Pmqrst::vD:",
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0long_options, &option_index);
-> After the commit log I would have expected that you remove C from the
-> options list. =C2=A0I would suggest something like "make cyclictest a=
-ccept -C
-> as documented. =C2=A0This is the same as --context".
->
-> BTW, I just noticed that both -C and --context don't appear in the ma=
-n
-> page.
->
-> Best regards
-> Uwe
->
-> --
-> Pengutronix e.K. =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| Uwe Kleine-K=C3=B6=
-nig =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|
-> Industrial Linux Solutions =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0| http://www.pengutronix.de/ =C2=A0|
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
->
-
-
-
---=20
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+  Ralf
