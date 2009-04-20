@@ -1,27 +1,51 @@
-From: tom smith <tsmithtree@gmail.com>
-Subject: Kernel Panic: Early exception with 2.6.29.1-rt8 on x86_64
-Date: Mon, 20 Apr 2009 01:44:08 -0600
-Message-ID: <e743c9de0904200044j1f71310ar122c8ea1fdcd2649@mail.gmail.com>
+From: Ralf Baechle <ralf@linux-mips.org>
+Subject: Re: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
+Date: Mon, 20 Apr 2009 10:01:55 +0200
+Message-ID: <20090420080155.GA11621@linux-mips.org>
+References: <1240193547.25532.52.camel@falcon> <20090420050419.GA22520@adriano.hkcable.com.hk> <1240211926.8884.27.camel@falcon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.30]:38073 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751562AbZDTHoL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Apr 2009 03:44:11 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Zhang Le <r0bertz@gentoo.org>, linux-kernel@vger.kernel.org,
+	Nicholas Mc Guire <hofrat@hofr.at>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>, zhangfx@lemote.com,
+	loongson-dev@googlegroups.com, yanh@lemote.com,
+	linux-mips@linux-mips.org, linux-rt-users@vger.kernel.org
+To: Wu Zhangjin <wuzhangjin@gmail.com>
+Return-path: <linux-mips-bounce@linux-mips.org>
+Content-Disposition: inline
+In-Reply-To: <1240211926.8884.27.camel@falcon>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi, I'm using kernel 2.6.29.1 without the rt patch and it works fine,
-but with the rt8 patch I recieve a kernel panic immediately after the
-bootloader. Both were using the same configuration with the exception
-of the realtime preemption options. I previously used 2.6.26.8-rt16
-iirc and it worked fine, with the same configuration as well. early
-printk is enabled. I have uploaded my .config, lspci, dmesg from a
-working kernel, and the crash output from the kernel.
-http://www.persuasiveigloo.com/linux/ Thanks for reading, if you think
-any other outputs/configs would be helpful to debug this issue I will
-gladly upload them. please cc me as I am off list for linux-kernel
+On Mon, Apr 20, 2009 at 03:18:46PM +0800, Wu Zhangjin wrote:
+
+> On Mon, 2009-04-20 at 13:04 +0800, Zhang Le wrote:
+
+> to Ralf,=20
+>=20
+> I have divided ftrace to several commits in the above git tree, hope =
+you
+> can check it, thx :-)=20
+>=20
+> in addition to the static/dynamic/graph function tracer & system call
+> tracer implementation, a mips specific ring_buffer_time_stamp
+> (kernel/trace/ring_buffer.c) is also implemented to get 1us precision
+> time, this is very important to make ftrace available in mips,
+> otherwise, we can only get 1ms precision time for the original
+> ring_buffer_time_stamp is based on sched_clock(jiffies based).=20
+>=20
+> perhaps we can implement a more precise sched_clock directly, just as
+> x86 does(native_sched_clock, tsc based), but in mips, there is only a
+> 32bit timer count which will quickly overflow, so it will need an ext=
+ra
+> overflow protection, which may influence the other parts of the kerne=
+l.
+
+My git clone is still running to I'm commenting only on the patches you
+posted earlier.  #ifdef-MIPS'ing things into the generic kernel code
+definately won't be an acceptable way to get =B5s resolution.
+
+  Ralf
