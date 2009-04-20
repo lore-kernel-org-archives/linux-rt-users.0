@@ -1,58 +1,69 @@
-From: Zhang Le <r0bertz@gentoo.org>
+From: Wu Zhangjin <wuzhangjin@gmail.com>
 Subject: Re: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
-Date: Mon, 20 Apr 2009 13:04:20 +0800
-Message-ID: <20090420050419.GA22520@adriano.hkcable.com.hk>
+Date: Mon, 20 Apr 2009 15:18:46 +0800
+Message-ID: <1240211926.8884.27.camel@falcon>
 References: <1240193547.25532.52.camel@falcon>
+	 <20090420050419.GA22520@adriano.hkcable.com.hk>
+Reply-To: wuzhangjin@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, Nicholas Mc Guire <hofrat@hofr.at>,
 	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>, zhangfx@lemote.com,
 	loongson-dev@googlegroups.com, yanh@lemote.com,
 	Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org,
 	linux-rt-users@vger.kernel.org
-To: Wu Zhangjin <wuzhangjin@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754102AbZDTFFK@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1240193547.25532.52.camel@falcon>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Zhang Le <r0bertz@gentoo.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ti-out-0910.google.com ([209.85.142.184]:64128 "EHLO
+	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751562AbZDTHTD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 20 Apr 2009 03:19:03 -0400
+In-Reply-To: <20090420050419.GA22520@adriano.hkcable.com.hk>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon, 2009-04-20 at 13:04 +0800, Zhang Le wrote:
+> Hi, Zhangjin,
+> 
+> Ralf told me he has a ftrace implementation too.
+> 
+> 11:47 < Ralf> r0bertz: ftrace looks nice but not yet mergable yet.
+> 11:47 < Ralf> r0bertz: I also have my own ftrace implementation which in some
+> parts is better, in some is worse. 
+> 11:47 < Ralf> r0bertz: So this is going to be quite a job.  
+> 
+> So I think you can talk to Ralf about how to get this merged, :)
+> 
 
---opJtzjQTFsWo+cga
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+to Zhangle, 
 
-Hi, Zhangjin,
+thx very much for your info :-) 
 
-Ralf told me he has a ftrace implementation too.
+hope Ralf can reply this E-mail and pull the source code from my git
+tree:
 
-11:47 < Ralf> r0bertz: ftrace looks nice but not yet mergable yet.
-11:47 < Ralf> r0bertz: I also have my own ftrace implementation which in so=
-me
-parts is better, in some is worse.=20
-11:47 < Ralf> r0bertz: So this is going to be quite a job. =20
+git://dev.lemote.com/rt4ls.git
 
-So I think you can talk to Ralf about how to get this merged, :)
+to Ralf, 
 
---=20
-Zhang, Le
-Gentoo/Loongson Developer
-http://zhangle.is-a-geek.org
-0260 C902 B8F8 6506 6586 2B90 BC51 C808 1E4E 2973
+I have divided ftrace to several commits in the above git tree, hope you
+can check it, thx :-) 
 
---opJtzjQTFsWo+cga
-Content-Type: application/pgp-signature
-Content-Disposition: inline
+in addition to the static/dynamic/graph function tracer & system call
+tracer implementation, a mips specific ring_buffer_time_stamp
+(kernel/trace/ring_buffer.c) is also implemented to get 1us precision
+time, this is very important to make ftrace available in mips,
+otherwise, we can only get 1ms precision time for the original
+ring_buffer_time_stamp is based on sched_clock(jiffies based). 
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.11 (GNU/Linux)
+perhaps we can implement a more precise sched_clock directly, just as
+x86 does(native_sched_clock, tsc based), but in mips, there is only a
+32bit timer count which will quickly overflow, so it will need an extra
+overflow protection, which may influence the other parts of the kernel.
 
-iEYEARECAAYFAknsAlMACgkQvFHICB5OKXP8FACgjDtvahfiKVOXeBVoi4RDq22y
-TGwAoITlCsglF5WzSujLFiECiM3YVA8V
-=QGmr
------END PGP SIGNATURE-----
+best regards,
+Wu Zhangjin
 
---opJtzjQTFsWo+cga--
