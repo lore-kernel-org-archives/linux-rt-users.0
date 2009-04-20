@@ -1,96 +1,38 @@
-From: Wu Zhangjin <wuzhangjin@gmail.com>
-Subject: Re: "RT_PREEMPT for loongson" is updated to patch-2.6.29.1-rt8
-Date: Mon, 20 Apr 2009 22:22:03 +0800
-Message-ID: <1240237323.8884.42.camel@falcon>
-References: <1240193547.25532.52.camel@falcon>
-	 <20090420050419.GA22520@adriano.hkcable.com.hk>
-	 <1240211926.8884.27.camel@falcon> <20090420080155.GA11621@linux-mips.org>
-	 <20090420131022.GA10183@linux-mips.org>
-Reply-To: wuzhangjin@gmail.com
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] fix argument -C on cyclictest
+Date: Mon, 20 Apr 2009 14:16:26 -0500
+Message-ID: <20090420141626.0384d357@torg>
+References: <gsfer5$6sr$1@ger.gmane.org>
+	<20090419175218.GA22205@pengutronix.de>
+	<49b7c2350904200714y30776380w9c6999e0e7822c88@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Zhang Le <r0bertz@gentoo.org>, linux-kernel@vger.kernel.org,
-	Nicholas Mc Guire <hofrat@hofr.at>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>, zhangfx@lemote.com,
-	loongson-dev@googlegroups.com, yanh@lemote.com,
-	linux-mips@linux-mips.org, linux-rt-users@vger.kernel.org
-To: Ralf Baechle <ralf@linux-mips.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: base64
+Cc: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
+	<u.kleine-koenig@pengutronix.de>, trem <tremyfr@yahoo.fr>,
+	linux-rt-users@vger.kernel.org
+To: GeunSik Lim <leemgs1@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ti-out-0910.google.com ([209.85.142.184]:39936 "EHLO
-	ti-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755459AbZDTOWU (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Apr 2009 10:22:20 -0400
-In-Reply-To: <20090420131022.GA10183@linux-mips.org>
+Received: from mx2.redhat.com ([66.187.237.31]:57111 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754744AbZDTTQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 20 Apr 2009 15:16:45 -0400
+In-Reply-To: <49b7c2350904200714y30776380w9c6999e0e7822c88@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2009-04-20 at 15:10 +0200, Ralf Baechle wrote:
-> On Mon, Apr 20, 2009 at 10:01:55AM +0200, Ralf Baechle wrote:
->=20
-> > > I have divided ftrace to several commits in the above git tree, h=
-ope you
-> > > can check it, thx :-)=20
-> > >=20
-> > > in addition to the static/dynamic/graph function tracer & system =
-call
-> > > tracer implementation, a mips specific ring_buffer_time_stamp
-> > > (kernel/trace/ring_buffer.c) is also implemented to get 1us preci=
-sion
-> > > time, this is very important to make ftrace available in mips,
-> > > otherwise, we can only get 1ms precision time for the original
-> > > ring_buffer_time_stamp is based on sched_clock(jiffies based).=20
-> > >=20
-> > > perhaps we can implement a more precise sched_clock directly, jus=
-t as
-> > > x86 does(native_sched_clock, tsc based), but in mips, there is on=
-ly a
-> > > 32bit timer count which will quickly overflow, so it will need an=
- extra
-> > > overflow protection, which may influence the other parts of the k=
-ernel.
-> >=20
-> > My git clone is still running to I'm commenting only on the patches=
- you
-> > posted earlier.  #ifdef-MIPS'ing things into the generic kernel cod=
-e
-> > definately won't be an acceptable way to get =C2=B5s resolution.
->=20
-
-just fix it via moving mips specific ring_buffer_time_stamp to
-arch/mips/kernel/ftrace.c via defining the original one as
-__attribute__(weak).
-
-in arch/mips/kernel/ftrace.c:=20
-
-u64 native_ring_buffer_time_stamp(...) {
-=2E..
-}
-u64 ring_buffer_time_stamp(...)
-__attribute__((alias("native_ring_buffer_time_stamp")));
-
-in kernel/trace/ring_buffer.c:
-
--u64 ring_buffer_time_stamp(struct ring_buffer *buffer, int cpu)
-+ u64 __attribute__((weak)) ring_buffer_time_stamp(struct ring_buffer
-*buffer, int cpu)
-
-*** not push to the git tree yet.
-
-> In changeset e67f78d663a84ef93aa12c3c8c1adf3033c4f9a1 you introduce
-> <asm/rwsem.h> but because RWSEM_GENERIC_SPINLOCK is always set that f=
-ile
-> won't ever be included.
->=20
-
-Yes, currently, I'm trying to fix it.
-
->   Ralf
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
+IDIwIEFwciAyMDA5IDIzOjE0OjI3ICswOTAwDQpHZXVuU2lrIExpbSA8bGVlbWdzMUBnbWFpbC5j
+b20+IHdyb3RlOg0KDQo+IEhpIFV3ZSBLbGVpbmUtS29uaWcNCj4gDQo+IEkgYWxyZWFkeSBzdWJt
+aXRlZCBzYW1lIGlzc3Vlcy4gIGZvciBleGFtcGxlLCAtLWNvbnRleHQgIGFuZCAtLWV2ZW50Lg0K
+PiBJcyB5b3VyIHBhdGNoIHByb3Bvc2FsIGlzIGRpZmZlcmVudD8NCj4gDQo+IFJlZmVyIHRvICBo
+dHRwOi8vbWFyYy5pbmZvLz9sPWxpbnV4LXJ0LXVzZXJzJm09MTIzOTE5ODU4MjEzOTU3Jnc9MiB3
+ZWJwYWdlLg0KPiANCj4gDQo+IFJlZ2FyZHMsDQo+IEdldW5TaWsgTGltLg0KPiANCj4gDQoNClRo
+YW5rcyBmb3IgdGhlIHJlbWluZGVyOyBJIGp1c3QgcHVzaGVkIHJ0LXRlc3RzLTAuMzYsIHdoaWNo
+IGhhcyB0aGUNCi0gLUMvLUUgcGF0Y2ggYW5kIGFuIHVwZGF0ZWQgbWFuIHBhZ2UgZm9yIHRob3Nl
+IHR3byBvcHRpb25zIChhbHRob3VnaA0KYW55b25lIHRoYXQgd2FudHMgdG8gc3VibWl0IGEgYmV0
+dGVyIGRlc2NyaXB0aW9uIGlzIG1vcmUgdGhhbiB3ZWxjb21lDQp0byBkbyBzbyA6KSkuDQoNCkNs
+YXJrDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4x
+MCAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa25zeWhJQUNna1FIeXVqLytUVEVwMGtjd0Nm
+WGs1NW5LT1VZLzl3VE9FWGNKcEc0L0FGDQpFeTBBb002TDJKcG5WUW1mbTBYNjVQa1hEZjBEdlli
+Wg0KPVg5bVQNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
