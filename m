@@ -1,79 +1,102 @@
-From: Wu Zhangjin <wuzhangjin@gmail.com>
-Subject: [BUG] 2.6.29.1-rt8, undefined reference to hrtimer_wait_for_timer
-Date: Tue, 21 Apr 2009 09:47:40 +0800
-Message-ID: <1240278460.27360.8.camel@falcon>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
-	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
-	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
-	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
-	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
-	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-Reply-To: wuzhangjin@gmail.com
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: [PATCH] cyclictest: Remove duplicated description of cyclictest
+	usage like -h.
+Date: Tue, 21 Apr 2009 16:28:55 +0900
+Message-ID: <1240298935.30137.33.camel@centos51>
+Reply-To: leemgs1@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757809AbZDUBs3@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org
+To: williams@redhat.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wa-out-1112.google.com ([209.85.146.180]:25763 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751362AbZDUH3B (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 21 Apr 2009 03:29:01 -0400
+Received: by wa-out-1112.google.com with SMTP id j5so1268801wah.21
+        for <linux-rt-users@vger.kernel.org>; Tue, 21 Apr 2009 00:29:00 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-when using patch-2.6.29.1-rt8 with CONFIG_PREEMPT_SOFTIRQS=y, but not
-enable PREEMPT_RT, there will be an error when linking kernel:
+Author: Lim,GeunSik <leemgs1@gmail.com>
+Date:   Tue Apr 21 16:03:56 2009 +0900
 
-undefined reference to hrtimer_wait_for_timer
+    [PATCH] cyclictest: Remove duplicated description of cyclictest usage like -h.
+    
+    We often utilize a various options with "#>cyclictest --help" command in the terminal environment.
+    When We run "#> cyclictest --help" command, We can show duplicated description about "-h" option
+    for latency histogram.
+    Unfortunatley, Some of the users is confusing because of two options about latency histogram.
+    
+    [root@fedora9 invain]# ./cyclictest --help
+    cyclictest V 0.36
+    Usage:
+    cyclictest <options>
+    
+    -a [NUM] --affinity        run thread #N on processor #N, if possible
+                               with NUM pin all threads to the processor NUM
+    -b USEC  --breaktrace=USEC send break trace command when latency > USEC
+    -B       --preemptirqs     both preempt and irqsoff tracing (used with -b)
+    -c CLOCK --clock=CLOCK     select clock
+                               0 = CLOCK_MONOTONIC (default)
+                               1 = CLOCK_REALTIME
+    -C       --context         context switch tracing (used with -b)
+    -d DIST  --distance=DIST   distance of thread intervals in us default=500
+    -E       --event           event tracing (used with -b)
+    -f       --ftrace          function trace (when -b is active)
+    -h H_MAX                   latency histogram size in us default 0 (off)
+    -i INTV  --interval=INTV   base interval of thread in us default=1000
+    
+         ................. [Middle Omission] ...................
+    
+    -v       --verbose         output values on stdout for statistics
+                               format: n:c:v n=tasknum c=count v=value in us
+    -D       --duration=t      specify a length for the test run
+                               default is in seconds, but 'm', 'h', or 'd' maybe added
+                               to modify value to minutes, hours or days
+    -h       --histogram=US    dump a latency histogram to stdout after the run
+                               US is the max time to be be tracked in microseconds
+    
+    For example,
+    
+    -h H_MAX                   latency histogram size in us default 0 (off)
+    
+    -h       --histogram=US    dump a latency histogram to stdout after the run
+                               US is the max time to be be tracked in microseconds
 
-I found that, hrtimer_wait_for_timer is only defined when PREEMPT_RT is
-enabled, but in include/linux/hrtimer.h, the source code is like this:
+    As you see, We don't need "-h H_MAX  . . . . . ." description.    
+    So, I think that We have to remove old option about description of histogram function.
+    
+    Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+---
+ src/cyclictest/cyclictest.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
 
-#ifdef CONFIG_PREEMPT_SOFTIRQS
- extern void hrtimer_wait_for_timer(const struct hrtimer *timer);
-#else
-# define hrtimer_wait_for_timer(timer) do { cpu_relax(); } while (0)
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 1660893..884f2c3 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -688,7 +688,6 @@ static void display_help(void)
+ 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+ 	       "-E       --event           event tracing (used with -b)\n"
+ 	       "-f       --ftrace          function trace (when -b is active)\n"
+-	       "-h H_MAX                   latency histogram size in us default 0 (off)\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 
-a possible fix should be:
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 8bafa35..1c1cdf3 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -366,7 +366,7 @@ static inline int hrtimer_restart(struct hrtimer
-*timer)
- }
- 
- /* Softirq preemption could deadlock timer removal */
--#ifdef CONFIG_PREEMPT_SOFTIRQS
-+#if defined(CONFIG_PREEMPT_SOFTIRQS) && defined(CONFIG_PREEMPT_RT)
-   extern void hrtimer_wait_for_timer(const struct hrtimer *timer);
- #else
- # define hrtimer_wait_for_timer(timer) do { cpu_relax(); } while (0)
+-----------------------------------------------
+To unsubscribe from this list: send the line "unsubscribe linux-***" 
+in the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
 
--- 
-Wu Zhangjin
-DSLab, Lanzhou University, China
-www.lemote.com, Jiangsu Province, China
+GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
+e-Mail  :1) geunsik.lim@samsung.com
+         2) leemgs@gmail.com , leemgs1@gmail.com
+HomePage: http://intomail.dnip.net/invain/me/
+-----------------------------------------------
+
