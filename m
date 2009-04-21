@@ -1,38 +1,79 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] fix argument -C on cyclictest
-Date: Mon, 20 Apr 2009 14:16:26 -0500
-Message-ID: <20090420141626.0384d357@torg>
-References: <gsfer5$6sr$1@ger.gmane.org>
-	<20090419175218.GA22205@pengutronix.de>
-	<49b7c2350904200714y30776380w9c6999e0e7822c88@mail.gmail.com>
+From: Wu Zhangjin <wuzhangjin@gmail.com>
+Subject: [BUG] 2.6.29.1-rt8, undefined reference to hrtimer_wait_for_timer
+Date: Tue, 21 Apr 2009 09:47:40 +0800
+Message-ID: <1240278460.27360.8.camel@falcon>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0902122353050.16972@localhost.localdomain>
+	 <alpine.LFD.2.00.0902231854360.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241849230.3523@localhost.localdomain>
+	 <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain>
+	 <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain>
+	 <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+	 <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+Reply-To: wuzhangjin@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-Cc: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
-	<u.kleine-koenig@pengutronix.de>, trem <tremyfr@yahoo.fr>,
-	linux-rt-users@vger.kernel.org
-To: GeunSik Lim <leemgs1@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:57111 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754744AbZDTTQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Apr 2009 15:16:45 -0400
-In-Reply-To: <49b7c2350904200714y30776380w9c6999e0e7822c88@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757809AbZDUBs3@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBNb24s
-IDIwIEFwciAyMDA5IDIzOjE0OjI3ICswOTAwDQpHZXVuU2lrIExpbSA8bGVlbWdzMUBnbWFpbC5j
-b20+IHdyb3RlOg0KDQo+IEhpIFV3ZSBLbGVpbmUtS29uaWcNCj4gDQo+IEkgYWxyZWFkeSBzdWJt
-aXRlZCBzYW1lIGlzc3Vlcy4gIGZvciBleGFtcGxlLCAtLWNvbnRleHQgIGFuZCAtLWV2ZW50Lg0K
-PiBJcyB5b3VyIHBhdGNoIHByb3Bvc2FsIGlzIGRpZmZlcmVudD8NCj4gDQo+IFJlZmVyIHRvICBo
-dHRwOi8vbWFyYy5pbmZvLz9sPWxpbnV4LXJ0LXVzZXJzJm09MTIzOTE5ODU4MjEzOTU3Jnc9MiB3
-ZWJwYWdlLg0KPiANCj4gDQo+IFJlZ2FyZHMsDQo+IEdldW5TaWsgTGltLg0KPiANCj4gDQoNClRo
-YW5rcyBmb3IgdGhlIHJlbWluZGVyOyBJIGp1c3QgcHVzaGVkIHJ0LXRlc3RzLTAuMzYsIHdoaWNo
-IGhhcyB0aGUNCi0gLUMvLUUgcGF0Y2ggYW5kIGFuIHVwZGF0ZWQgbWFuIHBhZ2UgZm9yIHRob3Nl
-IHR3byBvcHRpb25zIChhbHRob3VnaA0KYW55b25lIHRoYXQgd2FudHMgdG8gc3VibWl0IGEgYmV0
-dGVyIGRlc2NyaXB0aW9uIGlzIG1vcmUgdGhhbiB3ZWxjb21lDQp0byBkbyBzbyA6KSkuDQoNCkNs
-YXJrDQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4x
-MCAoR05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa25zeWhJQUNna1FIeXVqLytUVEVwMGtjd0Nm
-WGs1NW5LT1VZLzl3VE9FWGNKcEc0L0FGDQpFeTBBb002TDJKcG5WUW1mbTBYNjVQa1hEZjBEdlli
-Wg0KPVg5bVQNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
+when using patch-2.6.29.1-rt8 with CONFIG_PREEMPT_SOFTIRQS=y, but not
+enable PREEMPT_RT, there will be an error when linking kernel:
+
+undefined reference to hrtimer_wait_for_timer
+
+I found that, hrtimer_wait_for_timer is only defined when PREEMPT_RT is
+enabled, but in include/linux/hrtimer.h, the source code is like this:
+
+#ifdef CONFIG_PREEMPT_SOFTIRQS
+ extern void hrtimer_wait_for_timer(const struct hrtimer *timer);
+#else
+# define hrtimer_wait_for_timer(timer) do { cpu_relax(); } while (0)
+
+a possible fix should be:
+
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 8bafa35..1c1cdf3 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -366,7 +366,7 @@ static inline int hrtimer_restart(struct hrtimer
+*timer)
+ }
+ 
+ /* Softirq preemption could deadlock timer removal */
+-#ifdef CONFIG_PREEMPT_SOFTIRQS
++#if defined(CONFIG_PREEMPT_SOFTIRQS) && defined(CONFIG_PREEMPT_RT)
+   extern void hrtimer_wait_for_timer(const struct hrtimer *timer);
+ #else
+ # define hrtimer_wait_for_timer(timer) do { cpu_relax(); } while (0)
+
+-- 
+Wu Zhangjin
+DSLab, Lanzhou University, China
+www.lemote.com, Jiangsu Province, China
