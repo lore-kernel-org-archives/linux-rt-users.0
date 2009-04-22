@@ -1,41 +1,41 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: Triggering UserCode from KernelModule (IRQ)
-Date: Wed, 22 Apr 2009 21:59:56 +0200
-Message-ID: <20090422195956.GM5367@pengutronix.de>
-References: <6669682.1240409688443.JavaMail.ngmail@webmail19.ha2.local>
+From: Mark Hounschell <markh@compro.net>
+Subject: external gpl kernel module build problem on 2.6.26.8-rt16
+Date: Wed, 22 Apr 2009 16:55:37 -0400
+Message-ID: <49EF8449.2030000@compro.net>
+Reply-To: markh@compro.net
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: linux-rt-users@vger.kernel.org
-To: "M. Koehrer" <mathias_koehrer@arcor.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:50382 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756608AbZDVT75 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Apr 2009 15:59:57 -0400
-Content-Disposition: inline
-In-Reply-To: <6669682.1240409688443.JavaMail.ngmail@webmail19.ha2.local>
+Received: from mx2.compro.net ([216.54.166.4]:4826 "EHLO mx2.compro.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754011AbZDVVJu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 22 Apr 2009 17:09:50 -0400
+Received: from [10.15.1.121] (unknown [10.15.1.121])
+	by texas.compro.net (Postfix) with ESMTP id 2A67F67048E
+	for <linux-rt-users@vger.kernel.org>; Wed, 22 Apr 2009 16:55:38 -0400 (EDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Apr 22, 2009 at 04:14:48PM +0200, M. Koehrer wrote:
-> However, there is one operation mode that uses interrupts to signal
-> incoming data.  The interrupt handler is realized as a tiny kernel
-> module (that one that provides also the mmap for the user mode
-> application).  Now I am not sure how the signalling of the IRQ from
-> kernel to user mode could be realized best (in terms of low latency).
->
-> The "classical" approach for this task is to provide a character
-> driver with a .poll file operation. In Xenomai I could use a semaphore
-> that was accessible from kernel and user space for this. What is the
-> best way in the RT_PREEMPT "world"?
+I get the following while trying to build this driver. What does it mean.
 
-UIO might be a good choice here, the rest is giving the interrupt
-handler and the processes the right priorities.
+ Building modules, stage 2.
+ MODPOST 1 modules
+WARNING: "__bad_func_type" [/local/work/markh/pci5565-linux/driver/rfm2g.ko]
+undefined!
 
-rsc
--- 
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+Then obviously the module doesn't load for the same reason.
+
+When I grep the kernel for bad_func_type all I see is
+
+include/linux/rt_lock.h:192:extern int __bad_func_type(void);
+include/linux/pickop.h:8:extern int __bad_func_type(void);
+include/linux/pickop.h:16:      else __bad_func_type();
+                \
+include/linux/pickop.h:27:      else __ret = __bad_func_type();
+
+Any help or hints would be appreciated
+
+Thanks in advance
+Mark
