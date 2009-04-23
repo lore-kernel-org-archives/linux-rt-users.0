@@ -1,67 +1,62 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: external gpl kernel module build problem on 2.6.26.8-rt16
-Date: Wed, 22 Apr 2009 15:21:00 -0700
-Message-ID: <49EF984C.50403@am.sony.com>
-References: <49EF8449.2030000@compro.net>
-Reply-To: frank.rowand@am.sony.com
+From: "M. Koehrer" <mathias_koehrer@arcor.de>
+Subject: Re: Re: Triggering UserCode from KernelModule (IRQ)
+Date: Thu, 23 Apr 2009 08:36:38 +0200 (CEST)
+Message-ID: <20485155.1240468598325.JavaMail.ngmail@webmail14.arcor-online.net>
+References: <200904221628.27659.claus.gindhart@kontron.com> <6669682.1240409688443.JavaMail.ngmail@webmail19.ha2.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: markh@compro.net
+To: claus.gindhart@kontron.com, mathias_koehrer@arcor.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wa4ehsobe002.messaging.microsoft.com ([216.32.181.12]:50002
-	"EHLO WA4EHSOBE002.bigfish.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756146AbZDVWWD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Apr 2009 18:22:03 -0400
-In-Reply-To: <49EF8449.2030000@compro.net>
+Received: from mail-in-07.arcor-online.net ([151.189.21.47]:53742 "EHLO
+	mail-in-07.arcor-online.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753515AbZDWGgj convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 23 Apr 2009 02:36:39 -0400
+In-Reply-To: <200904221628.27659.claus.gindhart@kontron.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Mark Hounschell wrote:
-> I get the following while trying to build this driver. What does it mean.
-> 
->  Building modules, stage 2.
->  MODPOST 1 modules
-> WARNING: "__bad_func_type" [/local/work/markh/pci5565-linux/driver/rfm2g.ko]
-> undefined!
-> 
-> Then obviously the module doesn't load for the same reason.
-> 
-> When I grep the kernel for bad_func_type all I see is
-> 
-> include/linux/rt_lock.h:192:extern int __bad_func_type(void);
-> include/linux/pickop.h:8:extern int __bad_func_type(void);
-> include/linux/pickop.h:16:      else __bad_func_type();
->                 \
-> include/linux/pickop.h:27:      else __ret = __bad_func_type();
-> 
-> Any help or hints would be appreciated
-> 
-> Thanks in advance
-> Mark
+Hi Claus,=20
 
-#define PICK_FUNCTION(type1, type2, func1, func2, arg0, ...)            \
-do {                                                                    \
-        if (PICK_TYPE_EQUAL((arg0), type1))                             \
-                func1((type1)(arg0), ##__VA_ARGS__);                    \
-        else if (PICK_TYPE_EQUAL((arg0), type2))                        \
-                func2((type2)(arg0), ##__VA_ARGS__);                    \
-        else __bad_func_type();                                         \
-} while (0)
+thanks for the feedback.
+> simply write an UIO driver for your I/O-HW. You find an excellent how=
+to in
+> http://www.osadl.org/UIO.uio0.0.html
+>=20
+> The UIO-driver has 2 benefits for you:
+> 1. It provides you with direct access to the mmapped area from user s=
+pace,=20
+> freeing you from the necessity to communicate via the /dev interface.
+> 2. It can invoke a handler function in user space, if an interrupt oc=
+curs.
+That is really cool for a new driver, however I have an already existin=
+g driver
+(that works with Xenomai) and in the first step I do not want to change=
+ too much...
+The only missing piece here is the "triggering" of my user space task w=
+henever
+an interrupt occurred.
+Is the .poll approach real time capable or is there another approach be=
+tter?
 
-And PICK_FUNCTION_RET() uses the same technique.
+Thanks a lot
 
-Something that invokes PICK_FUNCTION() or PICK_FUNCTION_RET() is passing
-in an arg0 that is not type1 and is not type2.
+Regards
 
-One easy way to figure out what is invoking PICK_FUNCTION()/PICK_FUNCTION_RET()
-is to look at the output from the cpp of your driver.  The method I usually
-use is to add the flags "-C -E" to my compile command (and remove "-c").
-Then search the cpp output for __bad_func_type.
+Mathias
 
--Frank Rowand
-Sony Corporation of America
+--=20
+Mathias Koehrer
+mathias_koehrer@arcor.de
 
 
+Arcor.de Gaming Area - kostenfrei daddeln bis der Arzt kommt!
+Jetzt checken und aus =FCber 80 Spielen w=E4hlen!
+http://www.arcor.de/footer-gaming/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
