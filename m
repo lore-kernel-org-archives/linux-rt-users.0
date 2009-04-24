@@ -1,77 +1,217 @@
-From: jvrao <jvrao@linux.vnet.ibm.com>
-Subject: Re: Interrupts are being dropped under heavy IO on -rt .
-Date: Thu, 23 Apr 2009 14:38:31 -0700
-Message-ID: <49F0DFD7.5040107@linux.vnet.ibm.com>
-References: <49DF71CF.7070509@linux.vnet.ibm.com> <20090415194802.GD1382@plap4-2.local>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: [PATCH] cyclictest: Remove duplicated description of
+	cyclictest usage like -h.
+Date: Fri, 24 Apr 2009 09:13:31 +0900
+Message-ID: <1240532011.30137.48.camel@centos51>
+References: <1240298935.30137.33.camel@centos51>
+Reply-To: leemgs1@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Anderson <andmike@linux.vnet.ibm.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Linux Driver <Linux-Driver@qlogic.com>
-To: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Content-Type: multipart/mixed; boundary="=-CaWpBnvF/Mk4ZRwQW0jM"
+Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org
+To: williams@redhat.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e38.co.us.ibm.com ([32.97.110.159]:45835 "EHLO
-	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753066AbZDWVid (ORCPT
+Received: from yx-out-2324.google.com ([74.125.44.28]:13543 "EHLO
+	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750986AbZDXANk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Apr 2009 17:38:33 -0400
-In-Reply-To: <20090415194802.GD1382@plap4-2.local>
+	Thu, 23 Apr 2009 20:13:40 -0400
+Received: by yx-out-2324.google.com with SMTP id 3so505435yxj.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Apr 2009 17:13:39 -0700 (PDT)
+In-Reply-To: <1240298935.30137.33.camel@centos51>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Andrew Vasquez wrote:
-> On Fri, 10 Apr 2009, jvrao wrote:
+
+--=-CaWpBnvF/Mk4ZRwQW0jM
+Content-Type: text/plain; charset=euckr
+Content-Transfer-Encoding: 8bit
+
+Dear Clark Williams,
+
+I submitted trivial patch about "cyclictest --help" command.
+Can you check patch about duplication display about "-h" option of
+"cyclictest --help" command?
+
+for example,
+#> cyclictest --help [enter]
+ -h H_MAX                   latency histogram size in us default 0 (off)
+ -h       --histogram=US    dump a latency histogram to stdout after the run
+                            US is the max time to be be tracked in microseconds
+
+
+
+Thanks reading.
+
+
+
+Regards,
+GeunSik Lim,
+
+
+2009-04-21 (화), 16:29 +0900, GeunSik Lim 쓰시길:
+> Author: Lim,GeunSik <leemgs1@gmail.com>
+> Date:   Tue Apr 21 16:03:56 2009 +0900
 > 
->> Qlogic driver uses MSI-EDGE interrupts by default.
->>  
->> On -rt kernel under heavy IO load we observed that the driver missed 
->> interrupts occasionally.
->>
->> Missing interrupts caused spurious mailbox timeouts and path failovers.
->>
->> Suspecting MSI interrupts, we disabled MSI and forcing the driver to use 
->> APIC interrupts (Patch attached).
->>
->> With this change, our IO tests ran for extended period of time without 
->> any issues.
->>
->> It would be interesting to see if the MSI infrastructure itself has 
->> issues on realtime, or it is the combination of qla2xxx/MSI.
->>
->> Right now we don't have any setup to test out MSI with other adapters. 
->> Hence, wondering if anyone faced similar issues.
+>     [PATCH] cyclictest: Remove duplicated description of cyclictest usage like -h.
+>     
+>     We often utilize a various options with "#>cyclictest --help" command in the terminal environment.
+>     When We run "#> cyclictest --help" command, We can show duplicated description about "-h" option
+>     for latency histogram.
+>     Unfortunatley, Some of the users is confusing because of two options about latency histogram.
+>     
+>     [root@fedora9 invain]# ./cyclictest --help
+>     cyclictest V 0.36
+>     Usage:
+>     cyclictest <options>
+>     
+>     -a [NUM] --affinity        run thread #N on processor #N, if possible
+>                                with NUM pin all threads to the processor NUM
+>     -b USEC  --breaktrace=USEC send break trace command when latency > USEC
+>     -B       --preemptirqs     both preempt and irqsoff tracing (used with -b)
+>     -c CLOCK --clock=CLOCK     select clock
+>                                0 = CLOCK_MONOTONIC (default)
+>                                1 = CLOCK_REALTIME
+>     -C       --context         context switch tracing (used with -b)
+>     -d DIST  --distance=DIST   distance of thread intervals in us default=500
+>     -E       --event           event tracing (used with -b)
+>     -f       --ftrace          function trace (when -b is active)
+>     -h H_MAX                   latency histogram size in us default 0 (off)
+>     -i INTV  --interval=INTV   base interval of thread in us default=1000
+>     
+>          ................. [Middle Omission] ...................
+>     
+>     -v       --verbose         output values on stdout for statistics
+>                                format: n:c:v n=tasknum c=count v=value in us
+>     -D       --duration=t      specify a length for the test run
+>                                default is in seconds, but 'm', 'h', or 'd' maybe added
+>                                to modify value to minutes, hours or days
+>     -h       --histogram=US    dump a latency histogram to stdout after the run
+>                                US is the max time to be be tracked in microseconds
+>     
+>     For example,
+>     
+>     -h H_MAX                   latency histogram size in us default 0 (off)
+>     
+>     -h       --histogram=US    dump a latency histogram to stdout after the run
+>                                US is the max time to be be tracked in microseconds
 > 
-> Could you perhaps provide some details on hardware used within your
-> testing -- HBA type, storage, etc?  Also, can you share any logs of
-> the failures with extended-error-logging enabled
-> (ql2xextended_error_logging)?
-
-Hi, the following link provides more information on the logs and our analysis.
-
-https://bugzilla.redhat.com/show_bug.cgi?id=466903
-
-[root@elm3c29 R2-SR1]# lspci | grep -i qlogic
-03:05.0 Fibre Channel: QLogic Corp. ISP2422-based 4Gb Fibre Channel to PCI-X HBA (rev 02)
-03:05.1 Fibre Channel: QLogic Corp. ISP2422-based 4Gb Fibre Channel to PCI-X HBA (rev 02)
-
-
-Storage is DS4700 (Product ID: 1814)
-
-If you need more information, please let me know, I can generate more information/logs.
-I will also find time to reproduce this with ql2xextended_error_logging enabled.
-
-Thanks,
-JV
-
+>     As you see, We don't need "-h H_MAX  . . . . . ." description.    
+>     So, I think that We have to remove old option about description of histogram function.
+>     
+>     Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+> ---
+>  src/cyclictest/cyclictest.c |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
 > 
-> Regards,
-> Andrew Vasquez
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 1660893..884f2c3 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -688,7 +688,6 @@ static void display_help(void)
+>  	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+>  	       "-E       --event           event tracing (used with -b)\n"
+>  	       "-f       --ftrace          function trace (when -b is active)\n"
+> -	       "-h H_MAX                   latency histogram size in us default 0 (off)\n"
+>  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+>  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> 
+> 
+> -----------------------------------------------
+> To unsubscribe from this list: send the line "unsubscribe linux-***" 
+> in the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
+> GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
+> e-Mail  :1) geunsik.lim@samsung.com
+>          2) leemgs@gmail.com , leemgs1@gmail.com
+> HomePage: http://intomail.dnip.net/invain/me/
+> -----------------------------------------------
+-- 
+-----------------------------------------------
+To unsubscribe from this list: send the line "unsubscribe linux-***" 
+in the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
 
+GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
+e-Mail  :1) geunsik.lim@samsung.com
+         2) leemgs@gmail.com , leemgs1@gmail.com
+HomePage: http://intomail.dnip.net/invain/me/
+-----------------------------------------------
+
+--=-CaWpBnvF/Mk4ZRwQW0jM
+Content-Disposition: attachment; filename=remove-dup-histogram-desc.patch
+Content-Type: text/x-patch; name=remove-dup-histogram-desc.patch; charset=euckr
+Content-Transfer-Encoding: 7bit
+
+Author: Lim,GeunSik <leemgs1@gmail.com>
+Date:   Tue Apr 21 16:03:56 2009 +0900
+
+    [PATCH] cyclictest: Remove duplicated description of cyclictest usage like -h.
+    
+    We often utilize a various options with "#>cyclictest --help" command in the terminal environment.
+    When We run "#> cyclictest --help" command, We can show duplicated description about "-h" option
+    for latency histogram.
+    Unfortunatley, Some of the users is confusing because of two options about latency histogram.
+    
+    [root@fedora9 invain]# ./cyclictest --help
+    cyclictest V 0.36
+    Usage:
+    cyclictest <options>
+    
+    -a [NUM] --affinity        run thread #N on processor #N, if possible
+                               with NUM pin all threads to the processor NUM
+    -b USEC  --breaktrace=USEC send break trace command when latency > USEC
+    -B       --preemptirqs     both preempt and irqsoff tracing (used with -b)
+    -c CLOCK --clock=CLOCK     select clock
+                               0 = CLOCK_MONOTONIC (default)
+                               1 = CLOCK_REALTIME
+    -C       --context         context switch tracing (used with -b)
+    -d DIST  --distance=DIST   distance of thread intervals in us default=500
+    -E       --event           event tracing (used with -b)
+    -f       --ftrace          function trace (when -b is active)
+    -h H_MAX                   latency histogram size in us default 0 (off)
+    -i INTV  --interval=INTV   base interval of thread in us default=1000
+    
+         ................. [Middle Omission] ...................
+    
+    -v       --verbose         output values on stdout for statistics
+                               format: n:c:v n=tasknum c=count v=value in us
+    -D       --duration=t      specify a length for the test run
+                               default is in seconds, but 'm', 'h', or 'd' maybe added
+                               to modify value to minutes, hours or days
+    -h       --histogram=US    dump a latency histogram to stdout after the run
+                               US is the max time to be be tracked in microseconds
+    
+    For example,
+    
+    -h H_MAX                   latency histogram size in us default 0 (off)
+    
+    -h       --histogram=US    dump a latency histogram to stdout after the run
+                               US is the max time to be be tracked in microseconds
+
+    As you see, We don't need "-h H_MAX  . . . . . ." description.    
+    So, I think that We have to remove old option about description of histogram function.
+    
+        Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
+---
+ src/cyclictest/cyclictest.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 1660893..884f2c3 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -688,7 +688,6 @@ static void display_help(void)
+ 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+ 	       "-E       --event           event tracing (used with -b)\n"
+ 	       "-f       --ftrace          function trace (when -b is active)\n"
+-	       "-h H_MAX                   latency histogram size in us default 0 (off)\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+
+--=-CaWpBnvF/Mk4ZRwQW0jM--
 
