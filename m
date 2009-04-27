@@ -1,113 +1,86 @@
-From: joel silvestre <j.silvestre@wanadoo.fr>
-Subject: 2.6.29.1-rt9 INFO: possible circular locking dependency detected
-Date: Sun, 26 Apr 2009 14:09:46 +0200
-Message-ID: <1240747786.9289.7.camel@zordi2>
+From: Stefan Agner <stefan.agner@yahoo.com>
+Subject: [PATCH] sched_clock implementation for orion platforms
+Date: Mon, 27 Apr 2009 04:11:30 -0700 (PDT)
+Message-ID: <584907.38379.qm@web59806.mail.ac4.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-To: rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="0-2013681764-1240830690=:38379"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2a.orange.fr ([80.12.242.138]:63074 "EHLO smtp2a.orange.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753074AbZDZMJt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 26 Apr 2009 08:09:49 -0400
-Received: from me-wanadoo.net (localhost [127.0.0.1])
-	by mwinf2a02.orange.fr (SMTP Server) with ESMTP id 5C11480000AE
-	for <linux-rt-users@vger.kernel.org>; Sun, 26 Apr 2009 14:09:48 +0200 (CEST)
-Received: from [192.168.0.3] (AAnnecy-256-1-91-179.w90-10.abo.wanadoo.fr [90.10.170.179])
-	by mwinf2a02.orange.fr (SMTP Server) with ESMTP id 1E7C380000AA
-	for <linux-rt-users@vger.kernel.org>; Sun, 26 Apr 2009 14:09:48 +0200 (CEST)
+Received: from n4b.bullet.mail.ac4.yahoo.com ([76.13.13.74]:42688 "HELO
+	n4b.bullet.mail.ac4.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1752386AbZD0LRQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Apr 2009 07:17:16 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
 
-I get this message at boot time on i386:
+--0-2013681764-1240830690=:38379
+Content-Type: text/plain; charset=us-ascii
 
-All the best.
+Hello,
 
-=======================================================
-[ INFO: possible circular locking dependency detected ]
-2.6.29.1-rt9-moa1-debug #1
--------------------------------------------------------
-alsactl/2244 is trying to acquire lock:
- (&ice->gpio_mutex){+.+.+.}, at: [<f85a8133>] wm_master_mute_put
-+0x2c/0x109 [snd_ice1724]
+First of all, altough I added Patch in the subject and post it here, I don't think that this patch should be applied to rt tree... Read the rest of the email to see why...
 
-but task is already holding lock:
- ((struct rw_semaphore *)(&card->controls_rwsem)){++++.+}, at:
-[<c0151f4b>] rt_down_read+0xa/0xc
+On my ARM SoC with a marvell orion chip I get weird cpu usage values in top when I load my kernel module (different processes shows very high cpu usage). My kernel module sends ethernet frames every 200us. Therefor I use hrtimers and send this network frames in the callback method of the timer. I use 2.6.29.1-rt9. All the involved processes (IRQ-21 (irq of the network interface), sirq-net-rx, sirq-hrtimer) gets randomly high cpu usage. Sometimes I get no cpu usage at all. Its different each time I load my module. Sometimes IRQ-21 gets high cpu load, sometimes sirq-net-rx... Load average seems to show realistic values (~0.6). 
+This have a unpleasant side effect: Due to the limited runtime for rt tasks (in /proc/sys/kernel/sched_rt_runtime_us), i get a delay of 50ms once every second. When i disable the limit (echo -1 >/proc/sys/kernel/sched_rt_runtime_us) i don't get this delay. However, it would be great if the cpu usage per process would be fixed anyway....
+Therefor I implemented a sched_clock implementation for my orion platform (see attached patch). I tested the values that sched_clock returns, it should be ok! But it still doesn't work...
 
-which lock already depends on the new lock.
+Any ideas?
+
+Thanks
+Stefan aka falstaff
 
 
-the existing dependency chain (in reverse order) is:
+      
+--0-2013681764-1240830690=:38379
+Content-Type: text/x-patch; name="sched_clock-implementation-for-orion-platforms.patch"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="sched_clock-implementation-for-orion-platforms.patch"
 
--> #1 ((struct rw_semaphore *)(&card->controls_rwsem)){++++.+}:
-       [<c014bbb8>] __lock_acquire+0x105d/0x1397
-       [<c014bfa1>] lock_acquire+0xaf/0xcc
-       [<c0151fc6>] rt_down_write+0x1b/0x2a
-       [<f8408210>] snd_ctl_add+0x3a/0x17b [snd]
-       [<f85accc1>] aureon_add_controls+0x169/0x1cd [snd_ice1724]
-       [<f85ac641>] snd_vt1724_probe+0xba9/0xcf9 [snd_ice1724]
-       [<c0224674>] local_pci_probe+0xe/0x10
-       [<c0224fe9>] pci_device_probe+0x46/0x69
-       [<c028311b>] driver_probe_device+0xa2/0x13e
-       [<c0283206>] __driver_attach+0x4f/0x71
-       [<c0282a9f>] bus_for_each_dev+0x40/0x6a
-       [<c0282fad>] driver_attach+0x14/0x16
-       [<c028249b>] bus_add_driver+0xfa/0x216
-       [<c02833bf>] driver_register+0x87/0xe4
-       [<c0225244>] __pci_register_driver+0x49/0x75
-       [<f85bb017>] 0xf85bb017
-       [<c0101137>] do_one_initcall+0x4a/0x111
-       [<c0155dae>] sys_init_module+0x87/0x186
-       [<c0102ab8>] sysenter_do_call+0x12/0x36
-       [<ffffffff>] 0xffffffff
+RnJvbSA5YWIzYzYwMzBkYzAxZmZlNDA2NWMzMzRjYWMxYTA3YzBmZjZhZjVk
+IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBTdGVmYW4gQWduZXIg
+PHN0ZWZhbi5hZ25lckB5YWhvby5jb20+CkRhdGU6IE1vbiwgMjcgQXByIDIw
+MDkgMTE6MTE6MTggKzAyMDAKU3ViamVjdDogW1BBVENIXSBzY2hlZF9jbG9j
+ayBpbXBsZW1lbnRhdGlvbiBmb3Igb3Jpb24gcGxhdGZvcm1zCgotLS0KIGFy
+Y2gvYXJtL3BsYXQtb3Jpb24vdGltZS5jIHwgICAzNSArKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKwogMSBmaWxlcyBjaGFuZ2VkLCAzNSBp
+bnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2Fy
+Y2gvYXJtL3BsYXQtb3Jpb24vdGltZS5jIGIvYXJjaC9hcm0vcGxhdC1vcmlv
+bi90aW1lLmMKaW5kZXggNmZhMjkyMy4uZjg3M2Y2NyAxMDA2NDQKLS0tIGEv
+YXJjaC9hcm0vcGxhdC1vcmlvbi90aW1lLmMKKysrIGIvYXJjaC9hcm0vcGxh
+dC1vcmlvbi90aW1lLmMKQEAgLTE3LDYgKzE3LDggQEAKICNpbmNsdWRlIDxs
+aW51eC9pcnEuaD4KICNpbmNsdWRlIDxhc20vbWFjaC90aW1lLmg+CiAjaW5j
+bHVkZSA8bWFjaC9oYXJkd2FyZS5oPgorI2luY2x1ZGUgPGxpbnV4L3NjaGVk
+Lmg+CisjaW5jbHVkZSA8bGludXgvY250MzJfdG9fNjMuaD4KIAogLyoKICAq
+IE51bWJlciBvZiB0aW1lciB0aWNrcyBwZXIgamlmZnkuCkBAIC0zOSw2ICs0
+MSwzNSBAQCBzdGF0aWMgdTMyIHRpY2tzX3Blcl9qaWZmeTsKIAogCiAvKgor
+ICogT3Jpb24ncyBzY2hlZF9jbG9jayBpbXBsZW1lbnRhdGlvbi4gSXQgaGFz
+IGEgcmVzb2x1dGlvbgorICogb2YgYXQgbGVhc3QgNy41bnMgKDEzM01IeiBU
+Q0xLKSBhbmQgYSBtYXhpbXVtIHZhbHVlIG9mCisgKiAzMiBzZWNvbmRzLgor
+ICovCisjZGVmaW5lIE9SSU9OQ0xLMk5TX1NDQUxFX0ZBQ1RPUiAyMAorCitz
+dGF0aWMgdW5zaWduZWQgbG9uZyBvcmlvbjJuc19zY2FsZTsKKworc3RhdGlj
+IHZvaWQgX19pbml0IHNldF9vcmlvbjJuc19zY2FsZSh1bnNpZ25lZCBsb25n
+IG9yaW9uX3JhdGUpCit7CisJdW5zaWduZWQgbG9uZyBsb25nIHYgPSAoKHVu
+c2lnbmVkIGxvbmcgbG9uZylOU0VDX1BFUl9TRUMpIDw8IE9SSU9OQ0xLMk5T
+X1NDQUxFX0ZBQ1RPUjsKKwlkb19kaXYodiwgb3Jpb25fcmF0ZSk7CisJLyoK
+KwkgKiBXZSB3YW50IGFuIGV2ZW4gdmFsdWUgdG8gYXV0b21hdGljYWxseSBj
+bGVhciB0aGUgdG9wIGJpdAorCSAqIHJldHVybmVkIGJ5IGNudDMyX3RvXzYz
+KCkgd2l0aG91dCBhbiBhZGRpdGlvbmFsIHJ1biB0aW1lCisJICogaW5zdHJ1
+Y3Rpb24uIFNvIGlmIHRoZSBMU0IgaXMgMSB0aGVuIHJvdW5kIGl0IHVwLgor
+CSAqLworCWlmKHYgJiAxKQorCQl2Kys7CisJb3Jpb24ybnNfc2NhbGUgPSB2
+OworfQorCit1bnNpZ25lZCBsb25nIGxvbmcgc2NoZWRfY2xvY2sodm9pZCkK
+K3sKKwl1bnNpZ25lZCBsb25nIGxvbmcgdiA9IGNudDMyX3RvXzYzKDB4ZmZm
+ZmZmZmYgLSByZWFkbChUSU1FUjBfVkFMKSk7CisJcmV0dXJuICh2ICogb3Jp
+b24ybnNfc2NhbGUpID4+IE9SSU9OQ0xLMk5TX1NDQUxFX0ZBQ1RPUjsKK30K
+KworLyoKICAqIENsb2Nrc291cmNlIGhhbmRsaW5nLgogICovCiBzdGF0aWMg
+Y3ljbGVfdCBvcmlvbl9jbGtzcmNfcmVhZCh2b2lkKQpAQCAtMTc2LDYgKzIw
+NywxMCBAQCB2b2lkIF9faW5pdCBvcmlvbl90aW1lX2luaXQodW5zaWduZWQg
+aW50IGlycSwgdW5zaWduZWQgaW50IHRjbGspCiAKIAl0aWNrc19wZXJfamlm
+ZnkgPSAodGNsayArIEhaLzIpIC8gSFo7CiAKKwkvKgorCSAqIFNldCBzY2Fs
+ZSBmb3Igc2NoZWRfY2xvY2sKKwkgKi8KKwlzZXRfb3Jpb24ybnNfc2NhbGUo
+dGNsayk7CiAKIAkvKgogCSAqIFNldHVwIGZyZWUtcnVubmluZyBjbG9ja3Nv
+dXJjZSB0aW1lciAoaW50ZXJydXB0cwotLSAKMS41LjYuMwoK
 
--> #0 (&ice->gpio_mutex){+.+.+.}:
-       [<c014b91e>] __lock_acquire+0xdc3/0x1397
-       [<c014bfa1>] lock_acquire+0xaf/0xcc
-       [<c0312109>] _mutex_lock+0x1b/0x2a
-       [<f85a8133>] wm_master_mute_put+0x2c/0x109 [snd_ice1724]
-       [<f8408f27>] snd_ctl_ioctl+0x926/0xd7f [snd]
-       [<c01a4f6f>] vfs_ioctl+0x22/0x69
-       [<c01a54e4>] do_vfs_ioctl+0x46a/0x4a3
-       [<c01a555d>] sys_ioctl+0x40/0x5a
-       [<c0102ab8>] sysenter_do_call+0x12/0x36
-       [<ffffffff>] 0xffffffff
-
-other info that might help us debug this:
-
-2 locks held by alsactl/2244:
- #0:  (&card->power_lock){+.+...}, at: [<f8408e79>] snd_ctl_ioctl
-+0x878/0xd7f [snd]
- #1:  ((struct rw_semaphore *)(&card->controls_rwsem)){++++.+}, at:
-[<c0151f4b>] rt_down_read+0xa/0xc
-
-stack backtrace:
-Pid: 2244, comm: alsactl Not tainted 2.6.29.1-rt9-moa1-debug #1
-Call Trace:
- [<c030fc0c>] ? printk+0xf/0x13
- [<c014a770>] print_circular_bug_tail+0xaa/0xb5
- [<c014b91e>] __lock_acquire+0xdc3/0x1397
- [<c014bfa1>] lock_acquire+0xaf/0xcc
- [<f85a8133>] ? wm_master_mute_put+0x2c/0x109 [snd_ice1724]
- [<c0312109>] _mutex_lock+0x1b/0x2a
- [<f85a8133>] ? wm_master_mute_put+0x2c/0x109 [snd_ice1724]
- [<f85a8133>] wm_master_mute_put+0x2c/0x109 [snd_ice1724]
- [<f8408f27>] snd_ctl_ioctl+0x926/0xd7f [snd]
- [<c014bed9>] ? __lock_acquire+0x137e/0x1397
- [<c012ef67>] ? wakeup_softirqd+0x11/0x36
- [<c012f8e8>] ? __do_softirq+0x32/0x196
- [<f8408601>] ? snd_ctl_ioctl+0x0/0xd7f [snd]
- [<c01a4f6f>] vfs_ioctl+0x22/0x69
- [<c01a54e4>] do_vfs_ioctl+0x46a/0x4a3
- [<c0219550>] ? trace_hardirqs_on_thunk+0xc/0x10
- [<c0102b84>] ? restore_nocheck_notrace+0x0/0xe
- [<c019aec9>] ? fget_light+0x1a/0x95
- [<c01a555d>] sys_ioctl+0x40/0x5a
- [<c0102ab8>] sysenter_do_call+0x12/0x36
-
-
+--0-2013681764-1240830690=:38379--
 
