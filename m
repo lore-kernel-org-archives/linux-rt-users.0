@@ -1,191 +1,176 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [PATCH] cyclictest: Remove duplicated description of
-	cyclictest usage like -h.
-Date: Wed, 29 Apr 2009 11:14:00 +0900
-Message-ID: <1240971240.30137.66.camel@centos51>
-References: <1240298935.30137.33.camel@centos51>
-	 <1240532011.30137.48.camel@centos51>
-Reply-To: leemgs1@gmail.com
+From: Peter Wurmsdobler <peter@wurmsdobler.org>
+Subject: Annoucement: RTLWS 2009
+Date: Wed, 29 Apr 2009 10:42:27 +0100
+Message-ID: <49F82103.2090304@wurmsdobler.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=euckr
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org
-To: williams@redhat.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.30]:9814 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755162AbZD2COJ (ORCPT
+Received: from webbox84.server-home.net ([195.137.212.101]:33281 "EHLO
+	webbox84.server-home.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756123AbZD2Jm2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 28 Apr 2009 22:14:09 -0400
-Received: by yx-out-2324.google.com with SMTP id 3so538750yxj.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 28 Apr 2009 19:14:08 -0700 (PDT)
-In-Reply-To: <1240532011.30137.48.camel@centos51>
+	Wed, 29 Apr 2009 05:42:28 -0400
+Received: from [193.35.220.126] (unknown [212.44.20.206])
+	by webbox84.server-home.net (Postfix) with ESMTP id DE61521B80AE
+	for <linux-rt-users@vger.kernel.org>; Wed, 29 Apr 2009 11:42:28 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi All,
+Apologies if you have already received this annoucement, else:
 
-Anyone have opinion about below contents that I sent previously?
-I want to discuss and fix about duplicated description of -h option=20
-after "#> cyclictest --help"command.=20
+                         CALL FOR PAPERS
 
-If I mistake , Correct me.=20
-Thanks Reading.=20
+                Eleventh Real-Time Linux Workshop
 
+                    September 28 to 30, 2009
+                Technische Universit=E4t Dresden
+                 Faculty of Computer Science
+               Chair of Operating System (TUDOS)
+                      Dresden, Germany
 
-Regards,
-GeunSik , Lim
+=46ollowing the meetings of developers and users at the previous ten=20
+successful Real Time Linux Workshops held in Vienna, Orlando, Milano,=20
+Boston, Valencia, Singapore, Lille, Lanzhou, Linz and Guadalajara, the=20
+Real Time Linux Workshop 2009 will come to Germany.
 
-2009-04-24 (Fri), 09:13 +0900, GeunSik Lim wrote:
-> Dear Clark Williams,
->=20
-> I submitted trivial patch about "cyclictest --help" command.
-> Can you check patch about duplication display about "-h" option of
-> "cyclictest --help" command?
->=20
-> for example,
-> #> cyclictest --help [enter]
->  -h H_MAX                   latency histogram size in us default 0 (o=
-ff)
->  -h       --histogram=3DUS    dump a latency histogram to stdout afte=
-r the run
->                             US is the max time to be be tracked in mi=
-croseconds
->=20
->=20
->=20
-> Thanks reading.
->=20
->=20
->=20
-> Regards,
-> GeunSik Lim,
->=20
->=20
-> 2009-04-21 (=C8=AD), 16:29 +0900, GeunSik Lim =BE=B2=BD=C3=B1=E6:
-> > Author: Lim,GeunSik <leemgs1@gmail.com>
-> > Date:   Tue Apr 21 16:03:56 2009 +0900
-> >=20
-> >     [PATCH] cyclictest: Remove duplicated description of cyclictest=
- usage like -h.
-> >    =20
-> >     We often utilize a various options with "#>cyclictest --help" c=
-ommand in the terminal environment.
-> >     When We run "#> cyclictest --help" command, We can show duplica=
-ted description about "-h" option
-> >     for latency histogram.
-> >     Unfortunatley, Some of the users is confusing because of two op=
-tions about latency histogram.
-> >    =20
-> >     [root@fedora9 invain]# ./cyclictest --help
-> >     cyclictest V 0.36
-> >     Usage:
-> >     cyclictest <options>
-> >    =20
-> >     -a [NUM] --affinity        run thread #N on processor #N, if po=
-ssible
-> >                                with NUM pin all threads to the proc=
-essor NUM
-> >     -b USEC  --breaktrace=3DUSEC send break trace command when late=
-ncy > USEC
-> >     -B       --preemptirqs     both preempt and irqsoff tracing (us=
-ed with -b)
-> >     -c CLOCK --clock=3DCLOCK     select clock
-> >                                0 =3D CLOCK_MONOTONIC (default)
-> >                                1 =3D CLOCK_REALTIME
-> >     -C       --context         context switch tracing (used with -b=
-)
-> >     -d DIST  --distance=3DDIST   distance of thread intervals in us=
- default=3D500
-> >     -E       --event           event tracing (used with -b)
-> >     -f       --ftrace          function trace (when -b is active)
-> >     -h H_MAX                   latency histogram size in us default=
- 0 (off)
-> >     -i INTV  --interval=3DINTV   base interval of thread in us defa=
-ult=3D1000
-> >    =20
-> >          ................. [Middle Omission] ...................
-> >    =20
-> >     -v       --verbose         output values on stdout for statisti=
-cs
-> >                                format: n:c:v n=3Dtasknum c=3Dcount =
-v=3Dvalue in us
-> >     -D       --duration=3Dt      specify a length for the test run
-> >                                default is in seconds, but 'm', 'h',=
- or 'd' maybe added
-> >                                to modify value to minutes, hours or=
- days
-> >     -h       --histogram=3DUS    dump a latency histogram to stdout=
- after the run
-> >                                US is the max time to be be tracked =
-in microseconds
-> >    =20
-> >     For example,
-> >    =20
-> >     -h H_MAX                   latency histogram size in us default=
- 0 (off)
-> >    =20
-> >     -h       --histogram=3DUS    dump a latency histogram to stdout=
- after the run
-> >                                US is the max time to be be tracked =
-in microseconds
-> >=20
-> >     As you see, We don't need "-h H_MAX  . . . . . ." description. =
-  =20
-> >     So, I think that We have to remove old option about description=
- of histogram function.
-> >    =20
-> >     Signed-off-by: GeunSik Lim <leemgs1@gmail.com>
-> > ---
-> >  src/cyclictest/cyclictest.c |    1 -
-> >  1 files changed, 0 insertions(+), 1 deletions(-)
-> >=20
-> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictes=
-t.c
-> > index 1660893..884f2c3 100644
-> > --- a/src/cyclictest/cyclictest.c
-> > +++ b/src/cyclictest/cyclictest.c
-> > @@ -688,7 +688,6 @@ static void display_help(void)
-> >  	       "-d DIST  --distance=3DDIST   distance of thread intervals=
- in us default=3D500\n"
-> >  	       "-E       --event           event tracing (used with -b)\n=
-"
-> >  	       "-f       --ftrace          function trace (when -b is act=
-ive)\n"
-> > -	       "-h H_MAX                   latency histogram size in us d=
-efault 0 (off)\n"
-> >  	       "-i INTV  --interval=3DINTV   base interval of thread in u=
-s default=3D1000\n"
-> >  	       "-I       --irqsoff         Irqsoff tracing (used with -b)=
-\n"
-> >  	       "-l LOOPS --loops=3DLOOPS     number of loops: default=3D0=
-(endless)\n"
-> >=20
-> >=20
-> > -----------------------------------------------
-> > To unsubscribe from this list: send the line "unsubscribe linux-***=
-"=20
-> > in the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > Please read the FAQ at  http://www.tux.org/lkml/
-> >=20
-> > GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
-> > e-Mail  :1) geunsik.lim@samsung.com
-> >          2) leemgs@gmail.com , leemgs1@gmail.com
-> > HomePage: http://intomail.dnip.net/invain/me/
-> > -----------------------------------------------
---=20
------------------------------------------------
-To unsubscribe from this list: send the line "unsubscribe linux-***"=20
-in the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
+The Real Time Linux Foundation Working Group is glad to announce that=20
+the Eleventh Real Time Linux Workshop will be held in Dresden, Germany.=
+=20
+Our thanks go to Prof. Hermann H=E4rtig and the TU Dresden for hosting =
+the=20
+workshop in Dresden at the Faculty of Computer Science from September 2=
+8=20
+to 30, 2009.
 
-GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
-e-Mail  :1) geunsik.lim@samsung.com
-         2) leemgs@gmail.com , leemgs1@gmail.com
-HomePage: http://intomail.dnip.net/invain/me/
------------------------------------------------
+Embedded and real-time Linux is a continuously growing player in the=20
+embedded appliance market world wide. Notably initiatives in the=20
+industrial world have been moving embedded and real-time Linux into=20
+automation/control safety related applications and into industrial=20
+applications with high security demands alongside typical control=20
+capabilities. Embedded systems in automation/control, measurement and=20
+robotics have been continuously moving towards 32-bit systems, opening=20
+the door for the use of full-featured operating systems like GNU/Linux=20
+on COTS based systems. With real-time capabilities being a common deman=
+d=20
+for embedded systems, the various real-time variants are important=20
+features of the versatile GNU/Linux GPOS.
+
+Authors are invited to submit original work dealing with general topics=
+=20
+related to real-time Linux research, experiments and case studies, as=20
+well as issues of integration of real-time and embedded Linux. A specia=
+l=20
+focus will be on industrial applications and safety related systems.
+
+Topics of interest include, but are not limited to:
+
+     * Real-time programming models and methods in mainstream-Linux
+     * Modifications and variants of the GNU/Linux operating system
+       extending its real-time capabilities
+     * Contributions to real-time Linux variants, drivers and extension=
+s
+     * User-mode real-time concepts, implementation and experiences
+     * Real-time Linux applications, in academia, research and industry
+     * Real-time Linux in measurement and data acquisition systems
+     * Linux/real-time Linux in safety related systems
+     * Signal processing with Linux/real-time Linux
+     * Work in progress reports, covering recent developments
+     * Educational material on real-time Linux
+     * Tools for embedding Linux or real-time Linux and embedded
+       real-time Linux applications
+     * RTOS core concepts, RT-safe synchronization mechanisms
+     * Analysis and benchmarking methods and results of real-time
+       GNU/Linux variants
+     * Debugging techniques and tools, both for code and temporal
+       debugging of core RTOS components, drivers and real-time
+       applications
+     * Real-time related extensions to development environments
+
+Registration
+
+In order to participate at the workshop, please register on the=20
+registration page http://www.osadl.org/RTLWS11-Registration.form.0.html=
+=2E
+Abstract Submission
+
+If you wish to present a paper at the workshop, please submit an=20
+abstract using the submission page at=20
+http://www.osadl.org/RTLWS11-Abstract.submission-form.0.html.
+Venue of the TU Dresden, Faculty of Computer Science
+
+Campus of TU Dresden
+
+Address and location
+The Faculty of Computer Science is located on the TU Dresden campus, in=
+=20
+the south of Dresden, at N=F6thnitzer Stra=DFe 46. Details are given on=
+ the=20
+faculty's Website "How to find us".
+
+Campus
+An overview about the TU Dresden campus is available here.
+
+Street map
+Click on the red pin marker of this map to display a street map of the=20
+location and calculate directions to it.
+
+About the Faculty of Computer Science
+With more than 2500 students, the Faculty of Computer Science of the TU=
+=20
+Dresden is one of Germany's largest education centers in the field of=20
+computer science. The faculty offers a total of twelve different types=20
+of final qualifications such as diploma, Master's degree, Bachelor's=20
+degree and a degree in teacher education studies. In addition to=20
+Computer Science and Media and Computer Science, there are five other=20
+courses to choose from. These include two Master's degree programs whic=
+h=20
+are held in English.
+
+A bit of history
+The roots of Computer Science at the TU Dresden go back to the early=20
+days of electronic computing. Researchers from Dresden under the=20
+leadership of Prof. N. J. Lehmann were among the first to develop drum=20
+storages and digital electronic computers. Founded in 1828, the TU=20
+Dresden is one of the oldest established technical universities in=20
+Germany with a strong emphasis on research and international=20
+cooperation. In 1990, the Faculty of Computer Science was established i=
+n=20
+its present form. Today, 28 professors and lecturers as well as more=20
+than 260 staff members work at its six institutes.
+
+Presentation of the Faculty of Computer Science at the TU Dresden
+This presentation (in PDF format) contains some more information about=20
+the Faculty of Computer Science at the TU Dresden.
+Important dates
+
+     * Release of this Call for Papers on January 19, 2009
+     * Second Call for Papers on March 16, 2009
+     * Extended abstract submission until May 18, 2009
+     * Notification upon acceptance by June 26, 2009
+     * Paper submission deadline on Aug 3, 2009
+     * Workshop from September 28 to 30, 2009
+
+Organization committee
+
+     * Prof. Hermann H=E4rtig (TU Dresden, Germany)
+     * Dr. Carsten Emde (OSADL, Germany)
+     * Dr. Peter Wurmsdobler (OSADL, Germany)
+     * Prof. Nicholas Mc Guire, (Lanzhou University, China)
+     * Dr. Zhou Qingguo, (Lanzhou University, China)
+
+Program committee
+
+The members of the program committee who will review the submitted=20
+abstracts will be announced along with the Second Call for Papers=20
+scheduled for March 16, 2009.
+Workshop organizers
+
+     * Faculty of Computer Science, TU Dresden, Germany
+     * OSADL Real Time Linux Foundation Working Group
+     * Distributed and Embedded Systems Lab, Lanzhou University, China
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
