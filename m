@@ -1,43 +1,86 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: version 0.37 of rt-tests available
-Date: Thu, 30 Apr 2009 09:10:48 -0500
-Message-ID: <20090430091048.79914910@torg>
-References: <20090429155011.09e2218f@torg>
-	<49b7c2350904291830u79c827e6od323164fc19725e6@mail.gmail.com>
-	<49b7c2350904292226r5c130b3ct1c520f2c25fb01cc@mail.gmail.com>
-	<20090430065259.GA15709@pengutronix.de>
+From: Stefan Agner <stefan.agner@yahoo.com>
+Subject: Re: Ethernet communication from real time thread
+Date: Thu, 30 Apr 2009 16:14:34 -0700 (PDT)
+Message-ID: <971214.98609.qm@web59809.mail.ac4.yahoo.com>
+References: <20308172.1241074857487.JavaMail.ngmail@webmail19.ha2.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: base64
-Cc: GeunSik Lim <leemgs1@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: text/plain; charset=us-ascii
+To: "M. Koehrer" <mathias_koehrer@arcor.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:46349 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1764003AbZD3OLD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Apr 2009 10:11:03 -0400
-In-Reply-To: <20090430065259.GA15709@pengutronix.de>
+Received: from n7.bullet.mail.ac4.yahoo.com ([76.13.13.235]:45825 "HELO
+	n7.bullet.mail.ac4.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1750981AbZD3XOf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Apr 2009 19:14:35 -0400
+In-Reply-To: <20308172.1241074857487.JavaMail.ngmail@webmail19.ha2.local>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBUaHUs
-IDMwIEFwciAyMDA5IDA4OjUyOjU5ICswMjAwDQpVd2UgS2xlaW5lLUv2bmlnICA8dS5rbGVpbmUt
-a29lbmlnQHBlbmd1dHJvbml4LmRlPiB3cm90ZToNCg0KPiBPbiBUaHUsIEFwciAzMCwgMjAwOSBh
-dCAwMjoyNjo1MlBNICswOTAwLCBHZXVuU2lrIExpbSB3cm90ZToNCj4gPiBEZWFyIENsYXJrIFdp
-bGxhbXMuDQo+ID4gDQo+ID4gSXQncyBzdHJhbmdlLiBJdCBzZWVtcyB0aGF0IHlvdSBkaWQndCBy
-dW4gIiM+IGdpdCBjb21taXQgLWEiIGNvbW1hbmQuDQo+ID4gDQo+ID4gV2hlbiBJIHZpc2l0ZWQg
-aHR0cDovL2dpdC5rZXJuZWwub3JnLz9wPWxpbnV4L2tlcm5lbC9naXQvY2xya3dsbG1zL3J0LXRl
-c3RzLmdpdDthPXN1bW1hcnkNCj4gPiB3ZWJwYWdlLCBJIGNhbid0IGZpbmQgdjAuMzcgcmVsYXRl
-ZCAiZGlmZiIgY29udGVudHMgaW4gdGhlIHNob3J0bG9nDQo+ID4gdGFibGUuDQo+IFRoZSBwcm9i
-bGVtIGlzLCB0aGF0IG9ubHkgdGhlIHRhZyB3YXMgcHVzaGVkLCBub3QgdGhlIG1hc3RlciBicmFu
-Y2guDQo+IEdldW5TaWsgTGltLCB3aGF0IHlvdSBjYW4gZG8gaXMgY2hlY2sgb3V0IENsYXJrJ3Mg
-bWFzdGVyIGJyYW5jaCAoYmVpbmcNCj4gYXQgMC4zNikgYW5kIHNpbXBseSBwdWxsIGluIHYwLjM3
-Lg0KPiANCg0KTm8gdGhlIHByb2JsZW0gaXMgdGhhdCBJJ20gYW4gaWRpb3QgOikuICBJIGRpZCBh
-bGwgbXkgd29yayBvbiBhICJjbGFyayINCmJyYW5jaCBhbmQgZm9yZ290IHRvIG1lcmdlIHRvIG1h
-c3RlciBiZWZvcmUgcHVzaGluZy4gU2lnaC4uDQoNCg0KVGhhdCdzIGRvbmUgbm93LiANCg0KQ2xh
-cmsNCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mi4wLjEw
-IChHTlUvTGludXgpDQoNCmlFWUVBUkVDQUFZRkFrbjVzV3NBQ2drUUh5dWovK1RURXAxS1h3Q2dn
-bndKb2NSM2djMU5Gc1Q3NWIwK0ZKd3oNCko0a0FvSURkcCtGWWhkZU1tRVkxUXhCUzdjT21RaENZ
-DQo9eEFjdQ0KLS0tLS1FTkQgUEdQIFNJR05BVFVSRS0tLS0tDQo=
+
+Hi Mathias,
+
+
+From: M. Koehrer <mathias_koehrer@arcor.de>>
+> My questions are now:
+> A call of send() in my user space application to transmit a UDP message 
+> ends up in the network stack of Linux.
+> Which real time priority will be used in the network stack?
+When you make a system call (e.g. socket) then your system call is 
+processed in the same thread as your application is running... Just in kernel
+space
+> Is it the priority of the user space thread that is calling send()?
+Therefor, yes!
+> Or is it the priority of the kernel thread [sirq-net-tx/3]?
+Yes too, because your network packet will be put in a queue, which
+is processed by sirq-net-tx. (Altough, on my system sending packet
+are processed by sirq-net-rx, it might be a bug...)
+
+> On the receive side (calling recv()):
+> Which threads are relevant here?
+> IRQ-XX for the NIC's irq thread, [sirq-net-rx/3] or also the user space 
+> thread that is calling recv()?
+Your IRQ-XX thread is relevant too. Interrupts can be shared, and they
+are first dispatched by this IRQ-XX thread, which then calls
+the sirq-net-rx. So you need to prioritize both threads... And you're 
+final reciption thread too...
+
+To be sure that you take the right IRQ-XX thread you can look up which
+IRQ is used by your network card by invoking this: 
+cat /proc/interrupts
+
+To be sure you took every thread which is used by your application you 
+can do a function trace, or a scheduling trace, which might be less verbose.
+You need to enable that in your kernel (onder kernel hacking, Tracers...)
+
+Mount you're debug fs:
+sudo mount -t debugfs debugfs /debug
+
+Get available tracers
+cat /debug/tracing/available_tracers
+
+Enable one and do a the trace, while you're app is running:
+echo sched_switch > /debug/tracing/current_tracer
+echo 1 > /debug/tracing/tracing_enabled
+wait a short while
+echo 0 > /debug/tracing/tracing_enabled
+cat /debug/tracing/trace > /tmp/yourtrace
+
+Thats how i understand the thing atm, Im pretty new to preempt rt and linux 
+kernel hacking too, so some of my explanations might be wrong... :-)
+
+I send network packets with preempt rt too, it might be interessting to
+share some expirences... With which frequency do you send packets? 
+Does it happen for you that you're top is somehow messed up? I use to have 
+different cpu usages each time i start my application... It seems that the
+scheduler has some problems with short period tasks, networking and 
+accounting...
+
+
+Bye
+Stefan
+
+
+
+      
+
