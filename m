@@ -1,49 +1,105 @@
-From: Clark Williams <williams@redhat.com>
-Subject: version 0.37 of rt-tests available
-Date: Wed, 29 Apr 2009 15:50:11 -0500
-Message-ID: <20090429155011.09e2218f@torg>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: version 0.37 of rt-tests available
+Date: Thu, 30 Apr 2009 10:30:07 +0900
+Message-ID: <49b7c2350904291830u79c827e6od323164fc19725e6@mail.gmail.com>
+References: <20090429155011.09e2218f@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: base64
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:47875 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750963AbZD2UuV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Apr 2009 16:50:21 -0400
-Received: from int-mx2.corp.redhat.com (int-mx2.corp.redhat.com [172.16.27.26])
-	by mx2.redhat.com (8.13.8/8.13.8) with ESMTP id n3TKoLPQ031872
-	for <linux-rt-users@vger.kernel.org>; Wed, 29 Apr 2009 16:50:21 -0400
-Received: from ns3.rdu.redhat.com (ns3.rdu.redhat.com [10.11.255.199])
-	by int-mx2.corp.redhat.com (8.13.1/8.13.1) with ESMTP id n3TKoKCs026548
-	for <linux-rt-users@vger.kernel.org>; Wed, 29 Apr 2009 16:50:21 -0400
-Received: from torg (torg.hsv.redhat.com [172.16.16.136])
-	by ns3.rdu.redhat.com (8.13.8/8.13.8) with ESMTP id n3TKoJO1011713
-	for <linux-rt-users@vger.kernel.org>; Wed, 29 Apr 2009 16:50:20 -0400
+Received: from mail-gx0-f166.google.com ([209.85.217.166]:40781 "EHLO
+	mail-gx0-f166.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751104AbZD3BaI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 29 Apr 2009 21:30:08 -0400
+Received: by gxk10 with SMTP id 10so3234965gxk.13
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Apr 2009 18:30:07 -0700 (PDT)
+In-Reply-To: <20090429155011.09e2218f@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQoNCkkndmUg
-cHVzaGVkIDAuMzcgb2YgdGhlIHJ0LXRlc3RzIHVwIHRvIG15IGdpdCByZXBvIGF0Og0KDQpnaXQ6
-Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvY2xya3dsbG1zL3J0LXRl
-c3RzLmdpdA0KDQp0YXJiYWxscyBhdmFpbGFibGUgYXQ6DQoNCmh0dHA6Ly93d3cua2VybmVsLm9y
-Zy9wdWIvbGludXgva2VybmVsL3Blb3BsZS9jbHJrd2xsbXMvcnQtdGVzdHMvDQoNClRoaXMgdmVy
-c2lvbiBoYXMgYSBjb3VwbGUgb2YgZml4ZXMgZnJvbSBHZXVuU2lrIExpbQ0KPGdldW5zaWsubGlt
-QHNhbXN1bmcuY29tPiAobWFuIHBhZ2UgZml4ZXMgYW5kIHR3byBuZXcgb3B0aW9ucyBmb3INCndh
-a2V1cCBhbmQgd2FrZXVwX3J0IHRyYWNpbmcpLiANCg0KQWZ0ZXIgc2VlaW5nIHRoYXQgd2UgaGF2
-ZSBhIG5ldmVyLWVuZGluZyBzdHJlYW0gb2YgZnRyYWNlIHRyYWNpbmcNCmZ1bmN0aW9ucyBhbmQg
-b3B0aW9ucyBhdmFpbGFibGUgdG8gdXMsIEkgZGVjaWRlZCB0aGF0IHdlIG5lZWQgYSBiZXR0ZXIN
-CndheSB0byBzcGVjaWZ5IHRoZSB0cmFjZXJzLiBTbyBJIGFkZGVkIHRoZSAtLXRyYWNlciBvcHRp
-b24gKHdoaWNoDQphY2NlcHRzIHRoZSBuYW1lIG9mIGEgdHJhY2luZyBmdW5jdGlvbikgYW5kIHRo
-ZSAtLXRyYWNlb3B0IG9wdGlvbg0KKHdoaWNoIGFjY2VwdHMgdHJhY2luZyBvcHRpb25zKSwgZS5n
-LjoNCg0KJCBjeWNsaWN0ZXN0IC1iIDUwMCAtLXRyYWNlcj1ldmVudHMgLS10cmFjZW9wdHM9bm9y
-YXcgLS10cmFjZW9wdHM9bm9oZXgNCg0KSSBndWVzcyBJIGNvdWxkIG1ha2UgdHJhY2VvcHRzIHRh
-a2UgYSBjb21tYSBzZXBhcmF0ZWQgbGlzdCwgYnV0IGZvciBub3cNCml0IHdhcyBqdXN0IGVhc2ll
-ciB0byBhbGxvdyBtdWx0aXBsZSBpbnZvY2F0aW9ucyBvbiBhIGNvbW1hbmQgbGluZS4NCg0KSSd2
-ZSBsZWZ0IHRoZSBvdGhlciB0cmFjaW5nIG9wdGlvbnMgYWxvbmUgZm9yIG5vdywgc2luY2UgSSdt
-IHN1cmUgcGVvcGxlDQpoYXZlIHNjcmlwdHMgdGhhdCB1c2UgdGhlbS4gSSB3b3VsZG4ndCBtaW5k
-IGdldHRpbmcgcmlkIG9mIHRoZW0gaW4gdGhlDQpmdXR1cmUgdGhvdWdoLg0KDQpDbGFyaw0KLS0t
-LS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0NClZlcnNpb246IEdudVBHIHYyLjAuMTAgKEdOVS9M
-aW51eCkNCg0KaUVZRUFSRUNBQVlGQWtuNHZZb0FDZ2tRSHl1ai8rVFRFcDBlUmdDZ3lKeTdqZzRv
-N3FFR3hxbHdDb1pScXdCcQ0KQ3Q0QW4xMjlzVmtDN01kNmZva1VEcFc4UU93MDNQUFINCj1IUEpq
-DQotLS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0NCg==
+Thank you for thinking about needs of the frace options using cyclictest.
+
+As you said, I think that most rt developers will need ftrace utility based on
+command line for tuning internal kernel latencies in their complicated
+realtime system.
+
+Maybe, If cyclictest is written by contribution of many developers successfully,
+Most peoples will use this cyclictest utility generally.
+In special, Interested developers will make gui based
+cyclictest(ex:gcyclictest) utility
+additionally like gmplayer based on mplayer and tsclient based on rdesktop.
+
+So, I agree with your opinion absoultely.
+
+And, Clark Williams. Is a below remark right?
+This year is 2009 as you know.
+How about you modify  date info from "(C) 2008-2008 " to "(C) 2008-2009".
+(Just my thinking...)
+
+I am happy because you append your name in cyclictest source code.
+In gerneal, When some developers want to send their patches and
+opinion, They often
+find author and maintainer from source code like me.
+
+< cyclictest source file>
+ * High resolution timer test software *
+ * (C) 2008-2008 Clark Williams <williams@redhat.com>
+ * (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
+
+
+
+2009/4/30 Clark Williams <williams@redhat.com>:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+>
+> I've pushed 0.37 of the rt-tests up to my git repo at:
+>
+> git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+>
+> tarballs available at:
+>
+> http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests/
+>
+> This version has a couple of fixes from GeunSik Lim
+> <geunsik.lim@samsung.com> (man page fixes and two new options for
+> wakeup and wakeup_rt tracing).
+>
+> After seeing that we have a never-ending stream of ftrace tracing
+> functions and options available to us, I decided that we need a better
+> way to specify the tracers. So I added the --tracer option (which
+> accepts the name of a tracing function) and the --traceopt option
+> (which accepts tracing options), e.g.:
+>
+> $ cyclictest -b 500 --tracer=events --traceopts=noraw --traceopts=nohex
+>
+> I guess I could make traceopts take a comma separated list, but for now
+> it was just easier to allow multiple invocations on a command line.
+>
+> I've left the other tracing options alone for now, since I'm sure people
+> have scripts that use them. I wouldn't mind getting rid of them in the
+> future though.
+>
+> Clark
+> -----BEGIN PGP SIGNATURE-----
+> Version: GnuPG v2.0.10 (GNU/Linux)
+>
+> iEYEARECAAYFAkn4vYoACgkQHyuj/+TTEp0eRgCgyJy7jg4o7qEGxqlwCoZRqwBq
+> Ct4An129sVkC7Md6fokUDpW8QOw03PPR
+> =HPJj
+> -----END PGP SIGNATURE-----
+>
+
+
+
+-- 
+Regards,
+GeunSik Lim
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
