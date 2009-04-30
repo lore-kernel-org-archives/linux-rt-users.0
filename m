@@ -1,47 +1,73 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: version 0.37 of rt-tests available
-Date: Thu, 30 Apr 2009 08:52:59 +0200
-Message-ID: <20090430065259.GA15709@pengutronix.de>
-References: <20090429155011.09e2218f@torg> <49b7c2350904291830u79c827e6od323164fc19725e6@mail.gmail.com> <49b7c2350904292226r5c130b3ct1c520f2c25fb01cc@mail.gmail.com>
+From: "M. Koehrer" <mathias_koehrer@arcor.de>
+Subject: Ethernet communication from real time thread
+Date: Thu, 30 Apr 2009 09:00:57 +0200 (CEST)
+Message-ID: <20308172.1241074857487.JavaMail.ngmail@webmail19.ha2.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: GeunSik Lim <leemgs1@gmail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:40091 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751039AbZD3GxB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Apr 2009 02:53:01 -0400
-Content-Disposition: inline
-In-Reply-To: <49b7c2350904292226r5c130b3ct1c520f2c25fb01cc@mail.gmail.com>
+Received: from mail-in-06.arcor-online.net ([151.189.21.46]:36829 "EHLO
+	mail-in-06.arcor-online.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750995AbZD3HA6 convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Apr 2009 03:00:58 -0400
+Received: from mail-in-03-z2.arcor-online.net (mail-in-03-z2.arcor-online.net [151.189.8.15])
+	by mx.arcor.de (Postfix) with ESMTP id A45F839A3FA
+	for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2009 09:00:57 +0200 (CEST)
+Received: from mail-in-04.arcor-online.net (mail-in-04.arcor-online.net [151.189.21.44])
+	by mail-in-03-z2.arcor-online.net (Postfix) with ESMTP id 9D8A32D376D
+	for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2009 09:00:57 +0200 (CEST)
+Received: from webmail19.ha2.local (webmail19.arcor-online.net [151.189.8.77])
+	by mail-in-04.arcor-online.net (Postfix) with ESMTP id 7EA0633A794
+	for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2009 09:00:57 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Apr 30, 2009 at 02:26:52PM +0900, GeunSik Lim wrote:
-> Dear Clark Willams.
->=20
-> It's strange. It seems that you did't run "#> git commit -a" command.
->=20
-> When I visited http://git.kernel.org/?p=3Dlinux/kernel/git/clrkwllms/=
-rt-tests.git;a=3Dsummary
-> webpage, I can't find v0.37 related "diff" contents in the shortlog
-> table.
-The problem is, that only the tag was pushed, not the master branch.
-GeunSik Lim, what you can do is check out Clark's master branch (being
-at 0.36) and simply pull in v0.37.
+Hi all,
+
+I have an application which is (so far) running using Xenomai and Rtnet=
+=2E
+I am about to evaluate this using the rt_preemption patch (V2.6.29.1-rt=
+9).
+It works quite smoothly, however I have some questions on the prioritie=
+s that are used for
+Ethernet, UDP/IP based network communication.
+I have one separate NIC in my (Intel QuadCore) PC, that is used for a p=
+oint-to-point connection
+with an embedded device. Communication is done via UDP.
+I have now a user thread (RT prio: 80) to do some computation and also =
+the communication with
+the embedded device. This thread is the only running on core 3.
+
+My questions are now:
+A call of send() in my user space application to transmit a UDP message=
+=20
+ends up in the network stack of Linux.
+Which real time priority will be used in the network stack?
+Is it the priority of the user space thread that is calling send()?
+Or is it the priority of the kernel thread [sirq-net-tx/3]?
+
+On the receive side (calling recv()):
+Which threads are relevant here?
+IRQ-XX for the NIC's irq thread, [sirq-net-rx/3] or also the user space=
+ thread that is calling recv()?
+
+Thanks for all feedback on that basic question!
 
 Best regards
-Uwe
+
+Mathias
+
 
 --=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
+Mathias Koehrer
+mathias_koehrer@arcor.de
+
+
+Arcor.de Gaming Area - kostenfrei daddeln bis der Arzt kommt!
+Jetzt checken und aus =FCber 80 Spielen w=E4hlen!
+http://www.arcor.de/footer-gaming/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
