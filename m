@@ -1,53 +1,44 @@
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH 3/3] Makefile: don't override DESTDIR, prefix, bindir and mandir
-Date: Sat,  2 May 2009 20:53:22 +0200
-Message-ID: <1241290402-15234-3-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Leon Woestenberg <leon.woestenberg@gmail.com>
+Subject: Re: [PATCH 3/3] Makefile: don't override DESTDIR, prefix, bindir and
+	mandir
+Date: Sun, 3 May 2009 15:37:18 +0200
+Message-ID: <c384c5ea0905030637m4d8bc960l956fa1e90d40598c@mail.gmail.com>
 References: <20090502185004.GA14150@cassiopeia.tralala>
+	 <1241290402-15234-3-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-1?Q?Uwe_Kleine=2DK=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:46494 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754508AbZEBSxg (ORCPT
+Received: from yx-out-2324.google.com ([74.125.44.30]:29590 "EHLO
+	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752239AbZECNnj convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 2 May 2009 14:53:36 -0400
-In-Reply-To: <20090502185004.GA14150@cassiopeia.tralala>
+	Sun, 3 May 2009 09:43:39 -0400
+Received: by yx-out-2324.google.com with SMTP id 3so1916059yxj.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 03 May 2009 06:43:39 -0700 (PDT)
+In-Reply-To: <1241290402-15234-3-git-send-email-u.kleine-koenig@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This eases packaging rt-tests and shouldn't have any further impact.
+Hello,
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
----
- Makefile |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+2009/5/2 Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>:
+> This eases packaging rt-tests and shouldn't have any further impact.
+>
+> Signed-off-by: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
 
-diff --git a/Makefile b/Makefile
-index 294d588..e139eb4 100644
---- a/Makefile
-+++ b/Makefile
-@@ -3,10 +3,10 @@ VERSION_STRING =3D "0.38"
- TARGETS	=3D cyclictest signaltest classic_pi pi_stress
- FLAGS	=3D -Wall -Wno-nonnull -O2
- LIBS 	=3D -lpthread -lrt
--DESTDIR	=3D
--prefix  =3D /usr/local
--bindir  =3D $(prefix)/bin
--mandir	=3D $(prefix)/share/man/man8
-+DESTDIR	?=3D
-+prefix  ?=3D /usr/local
-+bindir  ?=3D $(prefix)/bin
-+mandir	?=3D $(prefix)/share/man/man8
-=20
- all: $(TARGETS)
-=20
+In addition to this, could LDFLAGS be respected?)
+
+Acked-by: Leon Woestenberg <leon@sidebranch.com>
+
+
+Regards,
 --=20
-1.6.2.4
-
+Leon
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
