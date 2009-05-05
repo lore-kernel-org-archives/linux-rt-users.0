@@ -1,46 +1,36 @@
-From: Leon Woestenberg <leon.woestenberg@gmail.com>
-Subject: Re: [PATCH 3/3] Makefile: don't override DESTDIR, prefix, bindir and
-	mandir
-Date: Sun, 3 May 2009 15:37:18 +0200
-Message-ID: <c384c5ea0905030637m4d8bc960l956fa1e90d40598c@mail.gmail.com>
-References: <20090502185004.GA14150@cassiopeia.tralala>
-	 <1241290402-15234-3-git-send-email-u.kleine-koenig@pengutronix.de>
+From: vivek satpute <vivekssatpute@gmail.com>
+Subject: Is rt-patchset for 2.6.28.4 available ?
+Date: Tue, 5 May 2009 18:25:39 +0500
+Message-ID: <7aa9ec30905050625g2c23d38eiac42c313e94d01fe@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: =?ISO-8859-1?Q?Uwe_Kleine=2DK=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yx-out-2324.google.com ([74.125.44.30]:29590 "EHLO
-	yx-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752239AbZECNnj convert rfc822-to-8bit (ORCPT
+Received: from wa-out-1112.google.com ([209.85.146.178]:53472 "EHLO
+	wa-out-1112.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755431AbZEENZi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 3 May 2009 09:43:39 -0400
-Received: by yx-out-2324.google.com with SMTP id 3so1916059yxj.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 03 May 2009 06:43:39 -0700 (PDT)
-In-Reply-To: <1241290402-15234-3-git-send-email-u.kleine-koenig@pengutronix.de>
+	Tue, 5 May 2009 09:25:38 -0400
+Received: by wa-out-1112.google.com with SMTP id j5so2525810wah.21
+        for <linux-rt-users@vger.kernel.org>; Tue, 05 May 2009 06:25:39 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Hi All,	
 
-2009/5/2 Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>:
-> This eases packaging rt-tests and shouldn't have any further impact.
->
-> Signed-off-by: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
+I want to apply Real-Time linux patches on linux-2.6.28.4 kernel. I
+did not found patches for required kernel. I found rt-patches for
+linux-2.6.29.1. I tried to apply those on linux-2.6.28.4, but patches
+are not getting applied successfully as there is a huge changes in
+code from linux-2.6.28.4 to linux-2.6.29.1.
 
-In addition to this, could LDFLAGS be respected?)
+Can anyone knows, if rt patches for linux-2.6.28.4 are available ?
+Is there any good tool to apply rt-2.6.29.1 patches on linux-2.6.28.4
+? ( Currently, I am using quilt for applying patches)
 
-Acked-by: Leon Woestenberg <leon@sidebranch.com>
+Any suggestions will be appreciated.
 
+Thanks in advance.
 
-Regards,
---=20
-Leon
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Vivek Satpute.
