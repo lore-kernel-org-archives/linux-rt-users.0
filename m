@@ -1,114 +1,62 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [PATCH]sched: fix typo in sched-rt-group.txt file
-Date: Tue, 12 May 2009 20:05:06 +0900
-Message-ID: <49b7c2350905120405w3591a92bj265dff000929a928@mail.gmail.com>
-References: <1242117459.31161.11.camel@centos51>
-	 <1242119738.11251.322.camel@twins> <20090512094210.GD32292@elte.hu>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [Announce] 2.6.29.3-rt12
+Date: Wed, 13 May 2009 01:27:37 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0902241856480.9135@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain> <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	tglx <tglx@linutronix.de>, williams <williams@redhat.com>
-To: Ingo Molnar <mingo@elte.hu>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.28]:32124 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751174AbZELLFF convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 May 2009 07:05:05 -0400
-In-Reply-To: <20090512094210.GD32292@elte.hu>
+Received: from www.tglx.de ([62.245.132.106]:49853 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758306AbZELX2h (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 May 2009 19:28:37 -0400
+In-Reply-To: <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2009/5/12 Ingo Molnar <mingo@elte.hu>:
->
-> * Peter Zijlstra <a.p.zijlstra@chello.nl> wrote:
->
->> On Tue, 2009-05-12 at 17:37 +0900, GeunSik Lim wrote:
->> >
->> >
->> > Dear Ingo,
->> >
->> > I found typo about the range of static priority ( =3D realtime pri=
-ority )
->> > in "./Documentation/scheduler/sched-rt-group.txt" file.
->> >
->> > If I don't understand static priority levels, Correct me.
->>
->> Right, that 'confusion' stems from the fact that our in-kernel prior=
-ity
->> lists do consider all 140 priorities.
->>
->> The patch looks good though.
->>
->> > commit d6af702008117ca489a2f5476239d1688a517e98
->> > Author: GeunSik,Lim <leemgs1@gmail.com>
->> > Date: =C2=A0 Tue May 12 17:20:32 2009 +0900
->> >
->> > =C2=A0 =C2=A0 sched: fix typo in sched-rt-group.txt file
->> >
->> > =C2=A0 =C2=A0 Fix typo about static priority's range.
->> > =C2=A0 =C2=A0 =C2=A0Kernel Space priority: 0 =C2=A0 to 99 =C2=A0 -=
--> User Space RT priority 99 to 0
->> > =C2=A0 =C2=A0 =C2=A0Kernel Space priority: 100 to 139 =C2=A0--> Us=
-er Space nice -20 to 19
->> >
->> > =C2=A0 =C2=A0 Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
->> >
->> > diff --git a/Documentation/scheduler/sched-rt-group.txt b/Document=
-ation/scheduler/sched-rt-group.txt
->> > index 5ba4d3f..1537146 100644
->> > --- a/Documentation/scheduler/sched-rt-group.txt
->> > +++ b/Documentation/scheduler/sched-rt-group.txt
->> > @@ -169,7 +169,7 @@ get their allocated time.
->> >
->> > =C2=A0Implementing SCHED_EDF might take a while to complete. Prior=
-ity Inheritance is
->> > =C2=A0the biggest challenge as the current linux PI infrastructure=
- is geared towards
->> > -the limited static priority levels 0-139. With deadline schedulin=
-g you need to
->> > +the limited static priority levels 0-99. With deadline scheduling=
- you need to
->
-> SCHED_FIFO goes from 1 to 99. So it's either 0-98 or 1-99. From
-> sched_setscheduler(2):
->
-> =C2=A0 =C2=A0 =C2=A0 Processes scheduled under one of =C2=A0the =C2=A0=
-real-time =C2=A0policies =C2=A0(SCHED_FIFO,
-> =C2=A0 =C2=A0 =C2=A0 SCHED_RR) have a sched_priority value in the ran=
-ge 1 (low) to 99 (high).
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0Ingo
->
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-Thank you for explanation about userspace rt priority's range like
-sched_setscheduler(2).
+    - rebase to 2.6.29.3 (NOP)
+    - loadavg optimization
+    - futex updates (tglx, peterz)
 
-Processes scheduled with SCHED_OTHER (or SCHED_BATCH) must be assigned
-the static priority 0.  Processes scheduled under SCHED_FIFO (or
-SCHED_RR) can have a static priority in the range 1 to 99.
+Download locations:
 
-So, I think that the below summary is right.
-* Kernel Space priority: 0(high) to 99(low) --> User Space RT priority
-99(high) to 0(low)
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-Is it incorrect?
+Information on the RT patch can be found at:
 
+    http://rt.wiki.kernel.org/index.php/Main_Page
 
---=20
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+to build the 2.6.29.3-rt12 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.3.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.3-rt12.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
