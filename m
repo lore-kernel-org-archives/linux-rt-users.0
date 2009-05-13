@@ -1,116 +1,56 @@
-From: Hugo Vincent <hugo.vincent@gmail.com>
-Subject: Re: [Announce] 2.6.29.3-rt12
-Date: Wed, 13 May 2009 12:16:09 +1200
-Message-ID: <5a7b8b7b0905121716y646a2f68qad9181362caa22f6@mail.gmail.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH] ARM: __builtin_return_address works with argument 0
+Date: Wed, 13 May 2009 11:00:13 +0200
+Message-ID: <1242205213-27452-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.31]:61055 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753041AbZEMAQK convert rfc822-to-8bit (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:44494 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758065AbZEMJAR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 May 2009 20:16:10 -0400
-In-Reply-To: <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+	Wed, 13 May 2009 05:00:17 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This patch resulted in a broken build for me, until I did this:
+This saves the function overhead for CALLER_ADDRESS0.
 
---- a/patch-2.6.29.3-rt12
-+++ b/patch-2.6.29.3-rt12
-@@ -121754,7 +121754,7 @@ Index: linux-2.6-tip/kernel/sched.c
-  }
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+---
+Hi Thomas,
 
-  /*
--@@ -2801,6 +3177,15 @@ static void update_cpu_load(struct rq *t
-+@@ -2801,6 +3177,17 @@ static void update_cpu_load(struct rq *t
-  			new_load +=3D scale-1;
-  		this_rq->cpu_load[i] =3D (old_load*(scale-1) + new_load) >> i;
-  	}
-@@ -121765,8 +121765,10 @@ Index: linux-2.6-tip/kernel/sched.c
- +	this_rq->calc_load_update +=3D LOAD_FREQ;
- +	calc_load_account_active(this_rq);
- +
-++#ifdef CONFIG_SMP
- +	if (this_rq->cpu =3D=3D calc_load_cpu)
- +		calc_global_load();
-++#endif
-  }
+this applies to .29.3-rt12.  Feel free to squash this into
+arm-tracing-updates.patch.
 
-  #ifdef CONFIG_SMP
+Best regards
+Uwe
 
-I have no idea if that is a valid thing to do, but it seems to work for=
- me.
+ arch/arm/include/asm/ftrace.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Regards,
+diff --git a/arch/arm/include/asm/ftrace.h b/arch/arm/include/asm/ftrac=
+e.h
+index 900fc19..f7e8bac 100644
+--- a/arch/arm/include/asm/ftrace.h
++++ b/arch/arm/include/asm/ftrace.h
+@@ -15,7 +15,7 @@ extern void mcount(void);
+ void *return_address(unsigned int);
+=20
+ #define HAVE_ARCH_CALLER_ADDR
+-#define CALLER_ADDR0 ((unsigned long)return_address(0))
++#define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+ #define CALLER_ADDR1 ((unsigned long)return_address(1))
+ #define CALLER_ADDR2 ((unsigned long)return_address(2))
+ #define CALLER_ADDR3 ((unsigned long)return_address(3))
+--=20
+1.6.2.1
 
-Hugo Vincent
-
-On Wed, May 13, 2009 at 11:27 AM, Thomas Gleixner <tglx@linutronix.de> =
-wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->
-> =A0 =A0- rebase to 2.6.29.3 (NOP)
-> =A0 =A0- loadavg optimization
-> =A0 =A0- futex updates (tglx, peterz)
->
-> Download locations:
->
-> =A0 =A0http://rt.et.redhat.com/download/
-> =A0 =A0http://www.kernel.org/pub/linux/kernel/projects/rt/
->
-> Information on the RT patch can be found at:
->
-> =A0 =A0http://rt.wiki.kernel.org/index.php/Main_Page
->
-> to build the 2.6.29.3-rt12 tree, the following patches should be
-> applied:
->
-> =A0 =A0http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.3.tar=
-=2Ebz2
-> =A0 =A0http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.2=
-9.3-rt12.bz2
->
-> The broken out patches are also available at the same download
-> locations.
->
-> Enjoy !
->
-> =A0 =A0 =A0 tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
