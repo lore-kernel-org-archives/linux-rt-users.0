@@ -1,75 +1,65 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: realtime kernel for Debian
-Date: Wed, 13 May 2009 11:35:17 +0200
-Message-ID: <20090513093517.GA11278@pengutronix.de>
-References: <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com> <20090329195638.GA25453@pengutronix.de> <49DF05B6.6000603@gmail.com> <20090413195356.GA13942@pengutronix.de> <4A09CEBC.70207@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [Announce] 2.6.29.3-rt12
+Date: Wed, 13 May 2009 12:19:07 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0905131217240.3561@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>  <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>  <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>  <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+ <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>  <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <5a7b8b7b0905121716y646a2f68qad9181362caa22f6@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Debian Developers <debian-devel@lists.debian.org>,
-	pkg-multimedia-maintainers@lists.alioth.debian.org,
-	linux-rt-users@vger.kernel.org, 521893@bugs.debian.org
-To: Grammostola Rosea <rosea.grammostola@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: Hugo Vincent <hugo.vincent@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:34141 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758517AbZEMJfY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 May 2009 05:35:24 -0400
-Content-Disposition: inline
-In-Reply-To: <4A09CEBC.70207@gmail.com>
+Received: from www.tglx.de ([62.245.132.106]:49496 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755168AbZEMKUH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 May 2009 06:20:07 -0400
+In-Reply-To: <5a7b8b7b0905121716y646a2f68qad9181362caa22f6@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, 13 May 2009, Hugo Vincent wrote:
+> This patch resulted in a broken build for me, until I did this:
+> 
+> --- a/patch-2.6.29.3-rt12
+> +++ b/patch-2.6.29.3-rt12
+> @@ -121754,7 +121754,7 @@ Index: linux-2.6-tip/kernel/sched.c
+>   }
+> 
+>   /*
+> -@@ -2801,6 +3177,15 @@ static void update_cpu_load(struct rq *t
+> +@@ -2801,6 +3177,17 @@ static void update_cpu_load(struct rq *t
+>   			new_load += scale-1;
+>   		this_rq->cpu_load[i] = (old_load*(scale-1) + new_load) >> i;
+>   	}
+> @@ -121765,8 +121765,10 @@ Index: linux-2.6-tip/kernel/sched.c
+>  +	this_rq->calc_load_update += LOAD_FREQ;
+>  +	calc_load_account_active(this_rq);
+>  +
+> ++#ifdef CONFIG_SMP
+>  +	if (this_rq->cpu == calc_load_cpu)
+>  +		calc_global_load();
+> ++#endif
+>   }
 
->>> I was wondering about how far are we with implementing a RT kernel =
-in=20
->>>  Debian... Some progress here? Would be nice.
->>>    =20
->> The patch I created that "fits" on Debian's vanilla kernel creates
->> conflicts on the sources with the Debian patches.
->> I hope to be able to clean that up by minimizing the -rt series (e.g=
-=2E
->> the first broken out patch consists usually of various bits from the
->> -tip tree that are (AFAIK) not all needed.)
->>
->> So just have some more patience.
->>
->>  =20
-> How are things going? Just interest...
-Hhhm, well, I spottet a problem.  The thing is that linux-rt does many
-deep changes in the kernel and I won't be able to support the harder
-problems.  And upstream probably won't help because the Debian rt-kerne=
-l
-isn't a vanilla rt-kernel.  Moreover even the broken out rt-patch isn't
-nicely sorted (e.g. bisectable, some patches undo changes of other
-patches earier in the series etc. pp), so I fear the Debian kernel team
-isn't filled with enthusiasm when asked to add an rt variant.
+Darn. the patch is halfways right. the #ifdef needs to be only around
+the if() line. Otherwise your /proc/loadavg values will never be
+updated. I'll push out -rt13 with the proper fix..
 
-I already thought about packaging debian-kernel + rt for Debian and
-vanilla-kernel + rt for a non-Debian package repository such that it's
-easy for bug reporters to try out a vanilla kernel.  But that still nee=
-ds
-more work.
+Thanks,
 
-I currently investigate how the Debian kernel packages are created.  An=
-y
-help is welcome.  Probably the first step will be to create a vanilla-r=
-t
-package, but that wont be accepted to go into Debian main.
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+	tglx
