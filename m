@@ -1,70 +1,86 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [Announce] 2.6.29.3-rt12
-Date: Wed, 13 May 2009 13:05:49 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0905131305310.3561@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>  <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>  <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>  <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
- <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>  <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>  <5a7b8b7b0905121716y646a2f68qad9181362caa22f6@mail.gmail.com>  <alpine.LFD.2.00.0905131217240.3561@localhost.localdomain>
- <1242210288.26820.18.camel@twins>
+From: Sujit Karataparambil <sjt.kar@gmail.com>
+Subject: Re: [PATCH] ARM: __builtin_return_address works with argument 0
+Date: Wed, 13 May 2009 18:33:12 +0530
+Message-ID: <921ca19c0905130603g3823b213vdb2b62b75934104d@mail.gmail.com>
+References: <1242205213-27452-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Hugo Vincent <hugo.vincent@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: =?ISO-8859-1?Q?Uwe_Kleine=2DK=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:50578 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758030AbZEMLHB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 May 2009 07:07:01 -0400
-In-Reply-To: <1242210288.26820.18.camel@twins>
+Received: from wf-out-1314.google.com ([209.85.200.171]:42565 "EHLO
+	wf-out-1314.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757790AbZEMNDM convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 May 2009 09:03:12 -0400
+In-Reply-To: <1242205213-27452-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 13 May 2009, Peter Zijlstra wrote:
-> On Wed, 2009-05-13 at 12:19 +0200, Thomas Gleixner wrote:
-> > On Wed, 13 May 2009, Hugo Vincent wrote:
-> > > This patch resulted in a broken build for me, until I did this:
-> > > 
-> > > --- a/patch-2.6.29.3-rt12
-> > > +++ b/patch-2.6.29.3-rt12
-> > > @@ -121754,7 +121754,7 @@ Index: linux-2.6-tip/kernel/sched.c
-> > >   }
-> > > 
-> > >   /*
-> > > -@@ -2801,6 +3177,15 @@ static void update_cpu_load(struct rq *t
-> > > +@@ -2801,6 +3177,17 @@ static void update_cpu_load(struct rq *t
-> > >   			new_load += scale-1;
-> > >   		this_rq->cpu_load[i] = (old_load*(scale-1) + new_load) >> i;
-> > >   	}
-> > > @@ -121765,8 +121765,10 @@ Index: linux-2.6-tip/kernel/sched.c
-> > >  +	this_rq->calc_load_update += LOAD_FREQ;
-> > >  +	calc_load_account_active(this_rq);
-> > >  +
-> > > ++#ifdef CONFIG_SMP
-> > >  +	if (this_rq->cpu == calc_load_cpu)
-> > >  +		calc_global_load();
-> > > ++#endif
-> > >   }
-> > 
-> > Darn. the patch is halfways right. the #ifdef needs to be only around
-> > the if() line. Otherwise your /proc/loadavg values will never be
-> > updated. I'll push out -rt13 with the proper fix..
-> 
-> if (cpu_of(this_rq) == calc_load_cpu)
-> 
-> to reduce if-deffery
+These seem to be required too. Mostly for optimizations the compiler ca=
+n
+provide. Seem to be supported in gnu.
 
-That's what I did :)
+__builtin_clz
+__builtin_constant_p
+__builtin_expect
+__builtin_frame_address
+
+http://infocenter.arm.com/help/index.jsp?topic=3D/com.arm.doc.dui0376a/=
+Caceiddh.html
+
+
+
+2009/5/13 Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>:
+> This saves the function overhead for CALLER_ADDRESS0.
+>
+> Signed-off-by: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> ---
+> Hi Thomas,
+>
+> this applies to .29.3-rt12. =A0Feel free to squash this into
+> arm-tracing-updates.patch.
+>
+> Best regards
+> Uwe
+>
+> =A0arch/arm/include/asm/ftrace.h | =A0 =A02 +-
+> =A01 files changed, 1 insertions(+), 1 deletions(-)
+>
+> diff --git a/arch/arm/include/asm/ftrace.h b/arch/arm/include/asm/ftr=
+ace.h
+> index 900fc19..f7e8bac 100644
+> --- a/arch/arm/include/asm/ftrace.h
+> +++ b/arch/arm/include/asm/ftrace.h
+> @@ -15,7 +15,7 @@ extern void mcount(void);
+> =A0void *return_address(unsigned int);
+>
+> =A0#define HAVE_ARCH_CALLER_ADDR
+> -#define CALLER_ADDR0 ((unsigned long)return_address(0))
+> +#define CALLER_ADDR0 ((unsigned long)__builtin_return_address(0))
+> =A0#define CALLER_ADDR1 ((unsigned long)return_address(1))
+> =A0#define CALLER_ADDR2 ((unsigned long)return_address(2))
+> =A0#define CALLER_ADDR3 ((unsigned long)return_address(3))
+> --
+> 1.6.2.1
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
+
+
+
+--=20
+-- Sujit K M
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
