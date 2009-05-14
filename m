@@ -1,94 +1,90 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: [PATCH]append prompt in /debug/tracing/README file.
-Date: Thu, 14 May 2009 17:23:38 +0900
-Message-ID: <1242289418.31161.45.camel@centos51>
-Reply-To: leemgs1@gmail.com
+From: Minchan Kim <minchan.kim@gmail.com>
+Subject: Re: [PATCH]append prompt in /debug/tracing/README file.
+Date: Thu, 14 May 2009 17:28:29 +0900
+Message-ID: <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
+References: <1242289418.31161.45.camel@centos51>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-xkFD98a1ZiSFQomIxpPW"
-Cc: Ingo Molnar <mingo@elte.hu>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	williams <williams@redhat.com>, tglx <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+	williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
+	Jiri Kosina <trivial@kernel.org>
+To: leemgs1@gmail.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f115.google.com ([209.85.222.115]:42544 "EHLO
-	mail-pz0-f115.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760554AbZENIXp (ORCPT
+Received: from yw-out-2324.google.com ([74.125.46.31]:3725 "EHLO
+	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753859AbZENI22 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 May 2009 04:23:45 -0400
+	Thu, 14 May 2009 04:28:28 -0400
+In-Reply-To: <1242289418.31161.45.camel@centos51>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi, GeunkSik.
 
---=-xkFD98a1ZiSFQomIxpPW
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+=46or fixing trivial typo, Let Cced trivial patch maintainer.
 
-
-Dear Steven Rostedt,
-
-    Please, Append prompt in /debug/tracing/README file.
-    
-    This is trivial issue. Fix typo Mini Howto file(README) for ftrace.
-
-    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 1ce5dc6..a4726f5 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2380,7 +2380,7 @@ static const char readme_msg[] =
- 	"# echo print-parent > /debug/tracing/trace_options\n"
- 	"# echo 1 > /debug/tracing/tracing_enabled\n"
- 	"# cat /debug/tracing/trace > /tmp/trace.txt\n"
--	"echo 0 > /debug/tracing/tracing_enabled\n"
-+	"# echo 0 > /debug/tracing/tracing_enabled\n"
- ;
- 
- static ssize_t
+TRIVIAL PATCHES
+P:  Jiri Kosina
+M:  trivial@kernel.org
+L:  linux-kernel@vger.kernel.org
+T:  git kernel.org:/pub/scm/linux/kernel/git/jikos/trivial.git
+S:  Maintained
 
 
+2009/5/14 GeunSik Lim <leemgs1@gmail.com>:
+>
+> Dear Steven Rostedt,
+>
+> =C2=A0 =C2=A0Please, Append prompt in /debug/tracing/README file.
+>
+> =C2=A0 =C2=A0This is trivial issue. Fix typo Mini Howto file(README) =
+for ftrace.
+>
+> =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+>
+> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> index 1ce5dc6..a4726f5 100644
+> --- a/kernel/trace/trace.c
+> +++ b/kernel/trace/trace.c
+> @@ -2380,7 +2380,7 @@ static const char readme_msg[] =3D
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/trac=
+e_options\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enabled=
+\n"
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.t=
+xt\n"
+> - =C2=A0 =C2=A0 =C2=A0 "echo 0 > /debug/tracing/tracing_enabled\n"
+> + =C2=A0 =C2=A0 =C2=A0 "# echo 0 > /debug/tracing/tracing_enabled\n"
+> =C2=A0;
+>
+> =C2=A0static ssize_t
+>
+>
+>
+> -----------------------------------------------
+> To unsubscribe from this list: send the line "unsubscribe linux-***"
+> in the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
+> GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
+> e-Mail =C2=A0:1) geunsik.lim@samsung.com
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 2) leemgs@gmail.com , leemgs1@gmail.com
+> HomePage: http://intomail.dnip.net/invain/me/
+> -----------------------------------------------
+>
 
------------------------------------------------
-To unsubscribe from this list: send the line "unsubscribe linux-***" 
-in the body of a message to majordomo@vger.kernel.org
+
+
+--=20
+Kinds regards,
+Minchan Kim
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
-GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
-e-Mail  :1) geunsik.lim@samsung.com
-         2) leemgs@gmail.com , leemgs1@gmail.com
-HomePage: http://intomail.dnip.net/invain/me/
------------------------------------------------
-
---=-xkFD98a1ZiSFQomIxpPW
-Content-Disposition: attachment; filename=append-prompt-in-readme-ftrace.patch
-Content-Type: text/x-patch; name=append-prompt-in-readme-ftrace.patch; charset=euckr
-Content-Transfer-Encoding: 7bit
-
-commit 52d07e507de331cff1623d60cda05a5c2435fac8
-Author: GeunSik,Lim <leemgs1@gmail.com>
-Date:   Thu May 14 17:18:09 2009 +0900
-
-    append prompt in /debug/tracing/README file.
-    
-    This is trivial issue. Fix typo Mini Howto file(README) for ftrace.
-
-    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 1ce5dc6..a4726f5 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2380,7 +2380,7 @@ static const char readme_msg[] =
- 	"# echo print-parent > /debug/tracing/trace_options\n"
- 	"# echo 1 > /debug/tracing/tracing_enabled\n"
- 	"# cat /debug/tracing/trace > /tmp/trace.txt\n"
--	"echo 0 > /debug/tracing/tracing_enabled\n"
-+	"# echo 0 > /debug/tracing/tracing_enabled\n"
- ;
- 
- static ssize_t
-
---=-xkFD98a1ZiSFQomIxpPW--
-
