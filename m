@@ -1,112 +1,61 @@
-From: GeunSik Lim <leemgs1@gmail.com>
+From: Jiri Kosina <jkosina@suse.cz>
 Subject: Re: [PATCH]append prompt in /debug/tracing/README file.
-Date: Thu, 14 May 2009 21:18:55 +0900
-Message-ID: <49b7c2350905140518k29d540a7o32265ba753d729d1@mail.gmail.com>
-References: <1242289418.31161.45.camel@centos51>
-	 <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
+Date: Thu, 14 May 2009 15:41:25 +0200 (CEST)
+Message-ID: <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
+References: <1242289418.31161.45.camel@centos51> <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
+Content-Type: MULTIPART/MIXED; BOUNDARY="168427776-1233069248-1242308485=:22712"
+Cc: leemgs1@gmail.com, Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
 	williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
 	Jiri Kosina <trivial@kernel.org>
 To: Minchan Kim <minchan.kim@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f166.google.com ([209.85.217.166]:49657 "EHLO
-	mail-gx0-f166.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750906AbZENMSz convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 May 2009 08:18:55 -0400
+Received: from cantor2.suse.de ([195.135.220.15]:38688 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752574AbZENNlZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 May 2009 09:41:25 -0400
 In-Reply-To: <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-hi minchan,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-thank you for explanation about a trivial patch.
+--168427776-1233069248-1242308485=:22712
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-regards,
-geunsik lim ( invain )
+On Thu, 14 May 2009, Minchan Kim wrote:
 
-2009/5/14 Minchan Kim <minchan.kim@gmail.com>:
-> Hi, GeunkSik.
->
-> For fixing trivial typo, Let Cced trivial patch maintainer.
->
-> TRIVIAL PATCHES
-> P: =C2=A0Jiri Kosina
-> M: =C2=A0trivial@kernel.org
-> L: =C2=A0linux-kernel@vger.kernel.org
-> T: =C2=A0git kernel.org:/pub/scm/linux/kernel/git/jikos/trivial.git
-> S: =C2=A0Maintained
->
->
-> 2009/5/14 GeunSik Lim <leemgs1@gmail.com>:
->>
->> Dear Steven Rostedt,
->>
->> =C2=A0 =C2=A0Please, Append prompt in /debug/tracing/README file.
->>
->> =C2=A0 =C2=A0This is trivial issue. Fix typo Mini Howto file(README)=
- for ftrace.
->>
->> =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
->>
->> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
->> index 1ce5dc6..a4726f5 100644
->> --- a/kernel/trace/trace.c
->> +++ b/kernel/trace/trace.c
->> @@ -2380,7 +2380,7 @@ static const char readme_msg[] =3D
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/tra=
-ce_options\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enable=
-d\n"
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.=
-txt\n"
->> - =C2=A0 =C2=A0 =C2=A0 "echo 0 > /debug/tracing/tracing_enabled\n"
->> + =C2=A0 =C2=A0 =C2=A0 "# echo 0 > /debug/tracing/tracing_enabled\n"
->> =C2=A0;
->>
->> =C2=A0static ssize_t
->>
->>
->>
->> -----------------------------------------------
->> To unsubscribe from this list: send the line "unsubscribe linux-***"
->> in the body of a message to majordomo@vger.kernel.org
->> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.h=
-tml
->> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
->>
->> GeunSik Lim (ELS - OS Group - S/W Lab - SAIT - SAMSUNG)
->> e-Mail =C2=A0:1) geunsik.lim@samsung.com
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 2) leemgs@gmail.com , leemgs1@gmail.com
->> HomePage: http://intomail.dnip.net/invain/me/
->> -----------------------------------------------
->>
->
->
->
-> --
-> Kinds regards,
-> Minchan Kim
->
+> >    Please, Append prompt in /debug/tracing/README file.
+> >
+> >    This is trivial issue. Fix typo Mini Howto file(README) for ftrace.
+> >
+> >    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+> >
+> > diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> > index 1ce5dc6..a4726f5 100644
+> > --- a/kernel/trace/trace.c
+> > +++ b/kernel/trace/trace.c
+> > @@ -2380,7 +2380,7 @@ static const char readme_msg[] =
+> >        "# echo print-parent > /debug/tracing/trace_options\n"
+> >        "# echo 1 > /debug/tracing/tracing_enabled\n"
+> >        "# cat /debug/tracing/trace > /tmp/trace.txt\n"
+> > -       "echo 0 > /debug/tracing/tracing_enabled\n"
+> > +       "# echo 0 > /debug/tracing/tracing_enabled\n"
+> >  ;
+> >
+> >  static ssize_t
 
+I have applied this to trivial tree. If anyone else has already applied it 
+to his tree, please let me know so that I can drop it.
 
+Thanks,
 
---=20
-Regards,
-GeunSik Lim
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Jiri Kosina
+SUSE Labs
+--168427776-1233069248-1242308485=:22712--
