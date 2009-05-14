@@ -1,61 +1,75 @@
-From: Jiri Kosina <jkosina@suse.cz>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH]append prompt in /debug/tracing/README file.
-Date: Thu, 14 May 2009 15:41:25 +0200 (CEST)
-Message-ID: <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
-References: <1242289418.31161.45.camel@centos51> <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
+Date: Thu, 14 May 2009 10:01:56 -0400 (EDT)
+Message-ID: <alpine.DEB.2.00.0905141001120.30591@gandalf.stny.rr.com>
+References: <1242289418.31161.45.camel@centos51> <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com> <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="168427776-1233069248-1242308485=:22712"
-Cc: leemgs1@gmail.com, Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-846517749-1242309716=:30591"
+Cc: Minchan Kim <minchan.kim@gmail.com>, leemgs1@gmail.com,
 	Ingo Molnar <mingo@elte.hu>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
 	williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
 	Jiri Kosina <trivial@kernel.org>
-To: Minchan Kim <minchan.kim@gmail.com>
+To: Jiri Kosina <jkosina@suse.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:38688 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752574AbZENNlZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 May 2009 09:41:25 -0400
-In-Reply-To: <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:62774 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752931AbZENOB4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 May 2009 10:01:56 -0400
+In-Reply-To: <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
 
---168427776-1233069248-1242308485=:22712
+--8323328-846517749-1242309716=:30591
 Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
-On Thu, 14 May 2009, Minchan Kim wrote:
 
-> >    Please, Append prompt in /debug/tracing/README file.
-> >
-> >    This is trivial issue. Fix typo Mini Howto file(README) for ftrace.
-> >
-> >    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-> >
-> > diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-> > index 1ce5dc6..a4726f5 100644
-> > --- a/kernel/trace/trace.c
-> > +++ b/kernel/trace/trace.c
-> > @@ -2380,7 +2380,7 @@ static const char readme_msg[] =
-> >        "# echo print-parent > /debug/tracing/trace_options\n"
-> >        "# echo 1 > /debug/tracing/tracing_enabled\n"
-> >        "# cat /debug/tracing/trace > /tmp/trace.txt\n"
-> > -       "echo 0 > /debug/tracing/tracing_enabled\n"
-> > +       "# echo 0 > /debug/tracing/tracing_enabled\n"
-> >  ;
-> >
-> >  static ssize_t
+On Thu, 14 May 2009, Jiri Kosina wrote:
 
-I have applied this to trivial tree. If anyone else has already applied it 
-to his tree, please let me know so that I can drop it.
+> On Thu, 14 May 2009, Minchan Kim wrote:
+>=20
+> > > =C2=A0 =C2=A0Please, Append prompt in /debug/tracing/README file.
+> > >
+> > > =C2=A0 =C2=A0This is trivial issue. Fix typo Mini Howto file(README) =
+for ftrace.
+> > >
+> > > =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+> > >
+> > > diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> > > index 1ce5dc6..a4726f5 100644
+> > > --- a/kernel/trace/trace.c
+> > > +++ b/kernel/trace/trace.c
+> > > @@ -2380,7 +2380,7 @@ static const char readme_msg[] =3D
+> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/trac=
+e_options\n"
+> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enabled=
+\n"
+> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.t=
+xt\n"
+> > > - =C2=A0 =C2=A0 =C2=A0 "echo 0 > /debug/tracing/tracing_enabled\n"
+> > > + =C2=A0 =C2=A0 =C2=A0 "# echo 0 > /debug/tracing/tracing_enabled\n"
+> > > =C2=A0;
+> > >
+> > > =C2=A0static ssize_t
+>=20
+> I have applied this to trivial tree. If anyone else has already applied i=
+t=20
+> to his tree, please let me know so that I can drop it.
 
-Thanks,
+It's fine with me that this goes via the trivial tree.
 
--- 
-Jiri Kosina
-SUSE Labs
---168427776-1233069248-1242308485=:22712--
+If you want, you can also add:
+
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+
+Thanks!
+
+-- Steve
+
+--8323328-846517749-1242309716=:30591--
