@@ -1,75 +1,38 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH]append prompt in /debug/tracing/README file.
-Date: Thu, 14 May 2009 10:01:56 -0400 (EDT)
-Message-ID: <alpine.DEB.2.00.0905141001120.30591@gandalf.stny.rr.com>
-References: <1242289418.31161.45.camel@centos51> <28c262360905140128q3458e39fu62def873f2d95ae0@mail.gmail.com> <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: [PATCH 0/9] Backport of ftrace's function profiler
+Date: Tue, 19 May 2009 11:36:07 -0300
+Message-ID: <20090519143607.GH27687@unix.sh>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-846517749-1242309716=:30591"
-Cc: Minchan Kim <minchan.kim@gmail.com>, leemgs1@gmail.com,
-	Ingo Molnar <mingo@elte.hu>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
-	Jiri Kosina <trivial@kernel.org>
-To: Jiri Kosina <jkosina@suse.cz>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@elte.hu>,
+	williams <williams@redhat.com>, tglx <tglx@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:62774 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752931AbZENOB4 (ORCPT
+Received: from mail-px0-f123.google.com ([209.85.216.123]:52405 "EHLO
+	mail-px0-f123.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752538AbZESOgL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 May 2009 10:01:56 -0400
-In-Reply-To: <alpine.LNX.2.00.0905141540470.22712@wotan.suse.de>
+	Tue, 19 May 2009 10:36:11 -0400
+Received: by pxi29 with SMTP id 29so2448814pxi.33
+        for <linux-rt-users@vger.kernel.org>; Tue, 19 May 2009 07:36:12 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hello,
 
---8323328-846517749-1242309716=:30591
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+The following patches are the backport of Steven Rostedt's ftrace's
+function profiler, as published in his RFC series posted to LKML. This
+backport has been done on top of 2.6.29.3-rt14.
 
+The feature is fully functional but we do have one known problem, a kernel
+panic when stressing the function profiler (a fast sequence of start, stop,
+read in loop for 30+ minutes). This problem has a Bugzilla entry at:
 
-On Thu, 14 May 2009, Jiri Kosina wrote:
+	https://bugzilla.redhat.com/show_bug.cgi?id=500156
 
-> On Thu, 14 May 2009, Minchan Kim wrote:
->=20
-> > > =C2=A0 =C2=A0Please, Append prompt in /debug/tracing/README file.
-> > >
-> > > =C2=A0 =C2=A0This is trivial issue. Fix typo Mini Howto file(README) =
-for ftrace.
-> > >
-> > > =C2=A0 =C2=A0Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-> > >
-> > > diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-> > > index 1ce5dc6..a4726f5 100644
-> > > --- a/kernel/trace/trace.c
-> > > +++ b/kernel/trace/trace.c
-> > > @@ -2380,7 +2380,7 @@ static const char readme_msg[] =3D
-> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo print-parent > /debug/tracing/trac=
-e_options\n"
-> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# echo 1 > /debug/tracing/tracing_enabled=
-\n"
-> > > =C2=A0 =C2=A0 =C2=A0 =C2=A0"# cat /debug/tracing/trace > /tmp/trace.t=
-xt\n"
-> > > - =C2=A0 =C2=A0 =C2=A0 "echo 0 > /debug/tracing/tracing_enabled\n"
-> > > + =C2=A0 =C2=A0 =C2=A0 "# echo 0 > /debug/tracing/tracing_enabled\n"
-> > > =C2=A0;
-> > >
-> > > =C2=A0static ssize_t
->=20
-> I have applied this to trivial tree. If anyone else has already applied i=
-t=20
-> to his tree, please let me know so that I can drop it.
+Luis
+-- 
+[ Luis Claudio R. Goncalves             Red Hat  -  Realtime Team ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
 
-It's fine with me that this goes via the trivial tree.
-
-If you want, you can also add:
-
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
-
-Thanks!
-
--- Steve
-
---8323328-846517749-1242309716=:30591--
