@@ -1,69 +1,75 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: [PATCH 1/1] ftrace: fix typo in ftrace.txt file
-Date: Wed, 20 May 2009 10:41:32 +0900
-Message-ID: <1242783692.31161.56.camel@centos51>
+Subject: [PATCH 0/1] sched: fix typo in sched-rt-group.txt file
+Date: Wed, 20 May 2009 10:39:12 +0900
+Message-ID: <1242783552.31161.53.camel@centos51>
 Reply-To: leemgs1@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-6Ih8P79J4J1g0dZLXpZ6"
+Content-Type: multipart/mixed; boundary="=-0ZxL3H7JOejuuPCyGgBd"
 Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	tglx <tglx@linutronix.de>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	tglx <tglx@linutronix.de>, williams <williams@redhat.com>
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Ingo Molnar <mingo@elte.hu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.224]:30333 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755304AbZETBlj (ORCPT
+Received: from mail-px0-f123.google.com ([209.85.216.123]:37300 "EHLO
+	mail-px0-f123.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755143AbZETBqg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 May 2009 21:41:39 -0400
+	Tue, 19 May 2009 21:46:36 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---=-6Ih8P79J4J1g0dZLXpZ6
+--=-0ZxL3H7JOejuuPCyGgBd
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 
 
 
-commit 43bf3fdddfd6b0ac65ef59bec3c79d9f9064e8bd
+Dear Ingo,
+
+
+I made 2 patch files again about static prioriy levels according to ingo's advice 
+and explanation. (Reference: http://marc.info/?t=124211992800003&r=1&w=2 archives. )
+
+Fix static priority related range and chart map(userspace/kernelspace) of ftrace.
+   - about chart map of static priority in  ftrace.txt file
+   - about static priority levels(range) in sched-rt-group.txt file 
+
+
+commit d6af702008117ca489a2f5476239d1688a517e98
 Author: GeunSik,Lim <leemgs1@gmail.com>
-Date:   Thu May 14 13:39:18 2009 +0900
+Date:   Tue May 12 17:20:32 2009 +0900
 
-    ftrace: fix typo in ftrace.txt file.
+    sched: fix typo in sched-rt-group.txt file
     
-    Fix typo about chart to map the kernel priority to
-    user land priorities.
-    
-    About sched_setscheduler(2)
-    Processes scheduled under SCHED_FIFO or SCHED_RR
-    can have a static priority in the range 1 to 99.
-    
-        Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+    Fix typo about static priority's range.
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index fd9a3e6..0e17632 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -518,9 +518,14 @@ priority with zero (0) being the highest priority and the nice
- values starting at 100 (nice -20). Below is a quick chart to map
- the kernel priority to user land priorities.
+    * Kernel Space priority 0(high) to 99(low)   --> User Space RT priority 99(high) to 1(low)
+    * Kernel Space priority 100(high) to 139(low)--> User Space nice -20(high) to 19(low)
+
+    Processes scheduled with SCHED_OTHER or SCHED_BATCH must be assigned
+    the static priority 0. Processes scheduled under SCHED_FIFO or SCHED_RR 
+    can have a static priority in the range 1 to 99. 
+    (reference: $> man 2 sched_setscheduler)
+    
+    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+
+diff --git a/Documentation/scheduler/sched-rt-group.txt b/Documentation/scheduler/sched-rt-group.txt
+index 5ba4d3f..1537146 100644
+--- a/Documentation/scheduler/sched-rt-group.txt
++++ b/Documentation/scheduler/sched-rt-group.txt
+@@ -169,7 +169,7 @@ get their allocated time.
  
--  Kernel priority: 0 to 99    ==> user RT priority 99 to 0
--  Kernel priority: 100 to 139 ==> user nice -20 to 19
--  Kernel priority: 140        ==> idle task priority
-+ Kernel priority: 0(high) to 99(low)    ==> user RT priority 99(high) to 1(low)
-+ Kernel priority: 100(high) to 139(low) ==> user nice -20(high) to 19(low)
-+ Kernel priority: 140                   ==> idle task priority
-+
-+Processes scheduled with SCHED_OTHER or SCHED_BATCH must be assigned
-+the static priority 0. Processes scheduled under SCHED_FIFO or SCHED_RR 
-+can have a static priority in the range 1 to 99. 
-+ (reference: $> man 2 sched_setscheduler)
+ Implementing SCHED_EDF might take a while to complete. Priority Inheritance is
+ the biggest challenge as the current linux PI infrastructure is geared towards
+-the limited static priority levels 0-139. With deadline scheduling you need to
++the limited static priority levels 0-99. With deadline scheduling you need to
+ do deadline inheritance (since priority is inversely proportional to the
+ deadline delta (deadline - now).
  
- The task states are:
- 
+
 
 
 -----------------------------------------------
@@ -78,48 +84,42 @@ e-Mail  :1) geunsik.lim@samsung.com
 HomePage: http://intomail.dnip.net/invain/me/
 -----------------------------------------------
 
---=-6Ih8P79J4J1g0dZLXpZ6
-Content-Disposition: attachment; filename=fix-typo-chart-map-priority-ftrace.patch
-Content-Type: text/x-patch; name=fix-typo-chart-map-priority-ftrace.patch; charset=euckr
+--=-0ZxL3H7JOejuuPCyGgBd
+Content-Disposition: attachment; filename=fix-typo-static-priority-levels-sched-rt-group.patch
+Content-Type: text/x-patch; name=fix-typo-static-priority-levels-sched-rt-group.patch; charset=euckr
 Content-Transfer-Encoding: 7bit
 
-commit 43bf3fdddfd6b0ac65ef59bec3c79d9f9064e8bd
+commit d6af702008117ca489a2f5476239d1688a517e98
 Author: GeunSik,Lim <leemgs1@gmail.com>
-Date:   Thu May 14 13:39:18 2009 +0900
+Date:   Tue May 12 17:20:32 2009 +0900
 
-    ftrace: fix typo in ftrace.txt file.
+    sched: fix typo in sched-rt-group.txt file
     
-    Fix typo about chart to map the kernel priority to
-    user land priorities.
-    
-    About sched_setscheduler(2)
-    Processes scheduled under SCHED_FIFO or SCHED_RR
-    can have a static priority in the range 1 to 99.
-    
-        Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+    Fix typo about static priority's range.
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index fd9a3e6..0e17632 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -518,9 +518,14 @@ priority with zero (0) being the highest priority and the nice
- values starting at 100 (nice -20). Below is a quick chart to map
- the kernel priority to user land priorities.
+    * Kernel Space priority 0(high) to 99(low)   --> User Space RT priority 99(high) to 1(low)
+    * Kernel Space priority 100(high) to 139(low)--> User Space nice -20(high) to 19(low)
+
+    Processes scheduled with SCHED_OTHER or SCHED_BATCH must be assigned
+    the static priority 0. Processes scheduled under SCHED_FIFO or SCHED_RR 
+    can have a static priority in the range 1 to 99. 
+    (reference: $> man 2 sched_setscheduler)
+    
+    Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+
+diff --git a/Documentation/scheduler/sched-rt-group.txt b/Documentation/scheduler/sched-rt-group.txt
+index 5ba4d3f..1537146 100644
+--- a/Documentation/scheduler/sched-rt-group.txt
++++ b/Documentation/scheduler/sched-rt-group.txt
+@@ -169,7 +169,7 @@ get their allocated time.
  
--  Kernel priority: 0 to 99    ==> user RT priority 99 to 0
--  Kernel priority: 100 to 139 ==> user nice -20 to 19
--  Kernel priority: 140        ==> idle task priority
-+ Kernel priority: 0(high) to 99(low)    ==> user RT priority 99(high) to 1(low)
-+ Kernel priority: 100(high) to 139(low) ==> user nice -20(high) to 19(low)
-+ Kernel priority: 140                   ==> idle task priority
-+
-+Processes scheduled with SCHED_OTHER or SCHED_BATCH must be assigned
-+the static priority 0. Processes scheduled under SCHED_FIFO or SCHED_RR 
-+can have a static priority in the range 1 to 99. 
-+ (reference: $> man 2 sched_setscheduler)
- 
- The task states are:
+ Implementing SCHED_EDF might take a while to complete. Priority Inheritance is
+ the biggest challenge as the current linux PI infrastructure is geared towards
+-the limited static priority levels 0-139. With deadline scheduling you need to
++the limited static priority levels 0-99. With deadline scheduling you need to
+ do deadline inheritance (since priority is inversely proportional to the
+ deadline delta (deadline - now).
  
 
---=-6Ih8P79J4J1g0dZLXpZ6--
+--=-0ZxL3H7JOejuuPCyGgBd--
 
