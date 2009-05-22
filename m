@@ -1,92 +1,62 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 1/1 ,v3] ftrace: fix typo in ftrace.txt file
-Date: Thu, 21 May 2009 12:14:14 -0400 (EDT)
-Message-ID: <alpine.DEB.2.00.0905211213520.4632@gandalf.stny.rr.com>
-References: <1242884365.31161.78.camel@centos51>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [Announce] 2.6.29.4-rt15
+Date: Fri, 22 May 2009 15:02:43 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903122013230.29264@localhost.localdomain> <alpine.LFD.2.00.0903200014320.29264@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain>
+ <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@elte.hu>, williams <williams@redhat.com>,
-	tglx <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: GeunSik Lim <leemgs1@gmail.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:35693 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754247AbZEUQOP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 May 2009 12:14:15 -0400
-In-Reply-To: <1242884365.31161.78.camel@centos51>
+Received: from www.tglx.de ([62.245.132.106]:47256 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750916AbZEVNDt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 May 2009 09:03:49 -0400
+In-Reply-To: <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-On Thu, 21 May 2009, GeunSik Lim wrote:
+    - rebase to 2.6.29.4 (no conflicts)
+    - futex updates (tglx, dvhart)
 
-> 
-> -- 
-> 
-> commit 16d92cb2334b19751db851d221aab814cd9da1af
-> Author: GeunSik,Lim <leemgs1@gmail.com>
-> Date:   Thu May 21 14:31:17 2009 +0900
-> 
->             ftrace: fix typo in ftrace.txt file.
->     
->             Fix typo about chart to map the kernel priority to
->             user land priorities.
->     
->             * About sched_setscheduler(2)
->               Processes scheduled under SCHED_FIFO or SCHED_RR
->               can have a (user-space) static priority in the range 1 to 99.
->               (reference: http://www.kernel.org/doc/man-pages/online/pages/
->                           man2/sched_setscheduler.2.html)
->     
->             * From: Steven Rostedt
->               0 to 98 - maps to RT tasks 99 to 1 (SCHED_RR or SCHED_FIFO)
->     
->               99 - maps to internal kernel threads that want to be lower than RT tasks
->               but higher than SCHED_OTHER tasks. Although I'm not sure if any
->               kernel thread actually uses this. I'm not even sure how this can be
->               set, because the internal sched_setscheduler function does not allow
->               for it.
->     
->               100 to 139 - maps nice levels -20 to 19. These are not set via
->               sched_setscheduler, but are set via the nice system call.
->     
->               140 - reserved for idle tasks.
->     
->                 Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-> 
-> diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-> index fd9a3e6..e362f50 100644
-> --- a/Documentation/trace/ftrace.txt
-> +++ b/Documentation/trace/ftrace.txt
-> @@ -518,9 +518,18 @@ priority with zero (0) being the highest priority and the nice
->  values starting at 100 (nice -20). Below is a quick chart to map
->  the kernel priority to user land priorities.
->  
-> -  Kernel priority: 0 to 99    ==> user RT priority 99 to 0
-> -  Kernel priority: 100 to 139 ==> user nice -20 to 19
-> -  Kernel priority: 140        ==> idle task priority
-> +   Kernel Space                     User Space
-> + ===============================================================
-> +   0(high) to  98(low)     user RT priority 99(high) to 1(low)
-> +                           with SCHED_RR or SCHED_FIFO
-> + ---------------------------------------------------------------
-> +  99                       sched_priority is not used in scheduling
-> +                           decisions(it must be specified as 0)
-> + ---------------------------------------------------------------
-> + 100(high) to 139(low)     user nice -20(high) to 19(low)
-> + ---------------------------------------------------------------
-> + 140                       idle task priority
-> + ---------------------------------------------------------------
->  
->  The task states are:
+Download locations:
 
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-Thanks,
+Information on the RT patch can be found at:
 
--- Steve
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.4-rt15 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.4.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.4-rt15.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
 
