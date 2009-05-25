@@ -1,54 +1,68 @@
-From: ekam@kolumbus.fi
-Subject: Linux audio on mini-laptop
-Date: Mon, 25 May 2009 18:30:04 +0300 (EEST)
-Message-ID: <21938316.1112611243265405549.JavaMail.ekam@kolumbus.fi>
+From: Robin Gareus <robin@gareus.org>
+Subject: Re: Linux audio on mini-laptop
+Date: Tue, 26 May 2009 01:48:02 +0200
+Message-ID: <4A1B2E32.7080203@gareus.org>
+References: <21938316.1112611243265405549.JavaMail.ekam@kolumbus.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1;
-	Format=Flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: ekam@kolumbus.fi
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gw03.mail.saunalahti.fi ([195.197.172.111]:43877 "EHLO
-	gw03.mail.saunalahti.fi" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751503AbZEYPkA convert rfc822-to-8bit (ORCPT
+Received: from mo-p05-ob.rzone.de ([81.169.146.182]:31903 "EHLO
+	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752904AbZEZAAG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 May 2009 11:40:00 -0400
-Received: from cfo-10-2.mail.saunalahti.fi (cfo-10.mail.saunalahti.fi [62.142.5.104])
-	by gw03.mail.saunalahti.fi (Postfix) with ESMTP id 1A6422166C6
-	for <linux-rt-users@vger.kernel.org>; Mon, 25 May 2009 18:30:05 +0300 (EEST)
-Received: from cfo-10.mail.saunalahti.fi (localhost [127.0.0.1])
-	by cfo-10-2.mail.saunalahti.fi (Postfix) with SMTP id B843854094
-	for <linux-rt-users@vger.kernel.org>; Mon, 25 May 2009 18:30:05 +0300 (EEST)
-Received: from capuccino.webmail.saunalahti.fi (capuccino.webmail.saunalahti.fi [195.197.55.114])
-	by cfo-10-2.mail.saunalahti.fi (Postfix) with ESMTP id 8B63154090
-	for <linux-rt-users@vger.kernel.org>; Mon, 25 May 2009 18:30:05 +0300 (EEST)
+	Mon, 25 May 2009 20:00:06 -0400
+In-Reply-To: <21938316.1112611243265405549.JavaMail.ekam@kolumbus.fi>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-I hope you could help me. I have used linux for audio recording for age=
-s. I have stable environent LG laptop with realtime kernel and firewire=
- interface.
-Now, I have bought Lenovo Ideapad s10e mini-laptop and I'm trying to ge=
-t all working there too, but no success yet.
+ekam@kolumbus.fi wrote:
+> Hi,
+> 
+> I hope you could help me. I have used linux for audio recording for
+> ages. I have stable environent LG laptop with realtime kernel and
+> firewire interface.
+> Now, I have bought Lenovo Ideapad s10e mini-laptop and I'm trying to get
+> all working there too, but no success yet.
+> 
+> I installed LinuxMint with realtime kernel (same combination in my LG).
+> I also tried with Ubuntu and XUbuntu.
+> 
+> I have tried different jack parameters but I have several xruns also as
+> a root user and my DAW (energyXT) stucks.
+> 
+> This Lenovo is quite powerfull (1,6 GHz Intel Atom N270, 1 Gt memory),
+> so I thought that everything should work with it, but is there something
+> I don't know ( I quess, yes there is)?
+> Please help me, I haven't found answers from net.
 
-I installed LinuxMint with realtime kernel (same combination in my LG).=
- I also tried with Ubuntu and XUbuntu.
+Which kernel-version are you running?
+and what does `cat /proc/interrupts` say?
 
-I have tried different jack parameters but I have several xruns also as=
- a root user and my DAW (energyXT) stucks.
+I don't know about the s10e, but thinkpads allow to re-assign interupts
+from the BIOS. Check if you can get the Firewire interface it's own
+interrupt line.
+If the 1394's IRQ is shared with another device, see if the xruns stop
+once you unload the module of that other device..
 
-This Lenovo is quite powerfull (1,6 GHz Intel Atom N270, 1 Gt memory), =
-so I thought that everything should work with it, but is there somethin=
-g I don't know ( I quess, yes there is)?=20
+Are you using Rui's rtirq script
+(http://www.rncbc.org/jack/rtirq-20090131.tar.gz)  to assign rt-priority
+to audio device's interrupts?
 
-Please help me, I haven't found answers from net.
+BTW. if you grant rtprio and memlock to the audio-user/group in
+/etc/security/limits.conf, there's no difference in running jackd as
+root, or user.
 
-Best Regards,
-Markku Hypp=F6nen
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+robin
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEARECAAYFAkobLjIACgkQeVUk8U+VK0JtgQCgmcMf9A3uCEdeeK71P2tNkzro
+UBoAoLpRYztfsWlGwidG+uwS8iLbg0j9
+=0fBg
+-----END PGP SIGNATURE-----
