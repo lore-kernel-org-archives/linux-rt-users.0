@@ -1,74 +1,61 @@
-From: Stefan Agner <stefan@agner.ch>
-Subject: Re: [PATCH RESEND] cyclictest: calcdiff calculated wrong seconds
- if the difference was bigger than 2147s
-Date: Wed, 27 May 2009 23:53:07 +0200
-Message-ID: <4A1DB643.60302@agner.ch>
-References: <4A1DAF07.6020704@agner.ch> <826434.45900.qm@web59805.mail.ac4.yahoo.com>
+From: Lee Revell <rlrevell@joe-job.com>
+Subject: Re: Real-Time & Determinism
+Date: Wed, 27 May 2009 21:21:39 -0400
+Message-ID: <75b66ecd0905271821q110b52dbq186242a3738d98a3@mail.gmail.com>
+References: <4A17F444.6070005@free.fr>
+	 <c384c5ea0905230609q5cce9b01ya2004b312b98b1e1@mail.gmail.com>
+	 <4A180113.8030203@free.fr> <20090526232202.GC7006@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Antoine Nourry <nourry@free.fr>,
+	Leon Woestenberg <leon.woestenberg@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.deheime.ch ([62.12.167.34]:42262 "EHLO limpopo.deheime.ch"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752351AbZE0Vwa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 May 2009 17:52:30 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by limpopo.deheime.ch (Postfix) with ESMTP id AE628C
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2009 23:55:44 +0200 (CEST)
-Received: from limpopo.deheime.ch ([127.0.0.1])
-	by localhost (limpopo.deheime.ch [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id nBk6wI++SRnz for <linux-rt-users@vger.kernel.org>;
-	Wed, 27 May 2009 23:55:44 +0200 (CEST)
-Received: from localhost (localhost [127.0.0.1])
-	by limpopo.deheime.ch (Postfix) with ESMTP id 55A95F
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2009 23:55:44 +0200 (CEST)
-Received: from [192.168.0.20] (250-251.0-85.cust.bluewin.ch [85.0.251.250])
-	(Authenticated sender: falstaff@deheime.ch)
-	by limpopo.deheime.ch (Postfix) with ESMTP id 255F8C
-	for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2009 23:55:44 +0200 (CEST)
-In-Reply-To: <826434.45900.qm@web59805.mail.ac4.yahoo.com>
+Received: from mail-ew0-f176.google.com ([209.85.219.176]:36263 "EHLO
+	mail-ew0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754197AbZE1BVi convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 27 May 2009 21:21:38 -0400
+Received: by ewy24 with SMTP id 24so4842941ewy.37
+        for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2009 18:21:39 -0700 (PDT)
+In-Reply-To: <20090526232202.GC7006@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Tue, May 26, 2009 at 7:22 PM, Paul E. McKenney
+<paulmck@linux.vnet.ibm.com> wrote:
+> In theory, one could analyze the Linux kernel to identify the longest
+> section of code running with preemption disabled, but as far as I kno=
+w
+> this has not yet been done.
+>
+> So if you need a mathematical proof that your real-time OS will respo=
+nd
+> within a bounded time, then RT Linux might not be the right tool for
+> your job. =A0But a surprisingly large number of RT applications do no=
+t
+> need that level of assurance.
+>
+> And I would not be surprised to hear that someone decided to bite the
+> bullet and actually mechanically analyze the Linux source/binary for
+> maximum latency. =A0;-)
 
-My first fix didn't took into account that long is 4 byte long on ARM. Therefor 
-I changed it to long long now, which works on my ARM board...
+Hi Antoine,
 
+Keep in mind also that in -rt the non-preemptible sections are a very
+small subset of the kernel code - last time I checked it was just the
+timer ISR, the scheduler's SCHED_FIFO code, and the stub ISRs for the
+other interrupts.  The rest does not need to be audited for
+determinism.
 
-Signed-off-by: Stefan Agner <stefan@agner.ch>
----
- src/cyclictest/cyclictest.c |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
+Of course, for "total determinism" you also have to mathematically
+prove the hardware behaves as expected...
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index be9a3f9..3035a0a 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -287,18 +287,18 @@ static inline void tsnorm(struct timespec *ts)
- 	}
- }
- 
--static inline long calcdiff(struct timespec t1, struct timespec t2)
-+static inline long long calcdiff(struct timespec t1, struct timespec t2)
- {
--	long diff;
--	diff = USEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
-+	long long diff;
-+	diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
- 	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
- 	return diff;
- }
- 
--static inline long calcdiff_ns(struct timespec t1, struct timespec t2)
-+static inline long long calcdiff_ns(struct timespec t1, struct timespec t2)
- {
--	long diff;
--	diff = NSEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
-+	long long diff;
-+	diff = NSEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
- 	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
- 	return diff;
- }
--- 1.6.0.4 
+Lee
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
