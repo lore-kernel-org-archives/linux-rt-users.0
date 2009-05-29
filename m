@@ -1,48 +1,37 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [RESEND] [PATCH 0/2 V3] description about static priority.
-Date: Fri, 29 May 2009 10:07:12 +0900
-Message-ID: <49b7c2350905281807uf4931eft9257c9025411394@mail.gmail.com>
-References: <1242884360.31161.77.camel@centos51>
-	 <1243474566.14685.35.camel@centos51>
-	 <1243515970.6600.105.camel@laptop>
+From: Jan Blunck <jblunck@infradead.org>
+Subject: NOHZ: local_softirq_pending 02
+Date: Fri, 29 May 2009 13:58:38 +0200
+Message-ID: <4de7f8a60905290458y478c73ban1275d92ff01997c5@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	tglx <tglx@linutronix.de>, williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f166.google.com ([209.85.217.166]:33943 "EHLO
-	mail-gx0-f166.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751078AbZE2BHM (ORCPT
+Received: from mail-fx0-f168.google.com ([209.85.220.168]:52187 "EHLO
+	mail-fx0-f168.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756561AbZE2L6h (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 May 2009 21:07:12 -0400
-In-Reply-To: <1243515970.6600.105.camel@laptop>
+	Fri, 29 May 2009 07:58:37 -0400
+Received: by fxm12 with SMTP id 12so4336087fxm.37
+        for <linux-rt-users@vger.kernel.org>; Fri, 29 May 2009 04:58:38 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 28, 2009 at 10:06 PM, Peter Zijlstra <a.p.zijlstra@chello.nl> wrote:
-> On Thu, 2009-05-28 at 10:36 +0900, GeunSik Lim wrote:
->> Please, merge my patch.
->
-> ok, I've queued them up for my next push to ingo.
-Thanks Peter.
->
->
+With 2.6.29.4-rt16 I get after some time under load following warnings:
 
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+Clocksource tsc unstable (delta = 65308166 ns)
 
+Seems that TIMER_SOFTIRQ is not run when properly. Any idea who caused this?
 
--- 
-Regards,
-GeunSik Lim ( SAMSUNG ELECTRONICS)
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-           leemgs@gmail.com , leemgs1@gmail.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
+Cheers,
+Jan
