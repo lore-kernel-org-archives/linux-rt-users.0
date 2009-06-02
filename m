@@ -1,87 +1,41 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: [PATCH V2 ]cyclictest: fix invalid comment of debugfs mount
-	directory.
-Date: Tue, 02 Jun 2009 14:14:02 +0900
-Message-ID: <1243919642.20635.53.camel@centos51>
-References: <1243821987.20635.42.camel@centos51>
-Reply-To: leemgs1@gmail.com
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: NOHZ: local_softirq_pending 02
+Date: Tue, 2 Jun 2009 22:32:31 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906022231480.3419@localhost.localdomain>
+References: <4de7f8a60905290458y478c73ban1275d92ff01997c5@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>, lclaudio@uudg.org
-To: williams <williams@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Jan Blunck <jblunck@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f191.google.com ([209.85.216.191]:39286 "EHLO
-	mail-px0-f191.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753132AbZFBFOI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Jun 2009 01:14:08 -0400
-Received: by pxi29 with SMTP id 29so3173097pxi.33
-        for <linux-rt-users@vger.kernel.org>; Mon, 01 Jun 2009 22:14:09 -0700 (PDT)
-In-Reply-To: <1243821987.20635.42.camel@centos51>
+Received: from www.tglx.de ([62.245.132.106]:56521 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752621AbZFBUc4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 2 Jun 2009 16:32:56 -0400
+In-Reply-To: <4de7f8a60905290458y478c73ban1275d92ff01997c5@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Fri, 29 May 2009, Jan Blunck wrote:
 
+> With 2.6.29.4-rt16 I get after some time under load following warnings:
+> 
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> NOHZ: local_softirq_pending 02
+> Clocksource tsc unstable (delta = 65308166 ns)
+> 
+> Seems that TIMER_SOFTIRQ is not run when properly. Any idea who caused this?
 
- 
-Dear Clark Williams, 
+Hmm, no. Any receipe how to reproduce that ?
 
-This is tracing directory's comment related patch files.
-Please, merge my patch.
+Thanks,
 
-Regards,
-GeunSik Lim. 
-
-
-
-
-Subject: [PATCH V2] cyclictest: Fix invalid comment of debugfs mount directory.
-
-The "debugfs/tracing" name is invalid in cyclictest.c source file.
-Example,
-#> mount -t debugfs nodev /sys/kernel/debug [enter]
-#> ln -s /sys/kernel/debug /debug [enter]
-#> ls /debug/tracing [enter]
-
-I updated a initial patch thanks to Luis Claudio R. Goncalves.
-Fix directory name normally from debugfs/tracing to */tracing.
-
-         Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-         Reviewed-by  : Luis Claudio R. Goncalves <lclaudio@uudg.org>
----
- src/cyclictest/cyclictest.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index be9a3f9..2186de2 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -179,7 +179,9 @@ static char functiontracer[MAX_PATH];
- static char traceroptions[MAX_PATH];
- 
- /*
-- * Finds the path to the debugfs/tracing
-+ * Finds the path to the tracing direcroty inside the default 
-+ * mountpoint of debugfs filesystem.
-+ * - debugfs related reference: http://lwn.net/Articles/334546/
-  */
- static int set_debugfileprefix(void)
- {
--- 
-1.6.3.1
-
-
-
------------------------------------------------
-To unsubscribe from this list: send the line "unsubscribe linux-***" 
-in the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
-GeunSik Lim ( Samsung Electronics )
-e-Mail  :1) geunsik.lim@samsung.com
-         2) leemgs@gmail.com , leemgs1@gmail.com
-HomePage: http://blog.naver.com/invain/
------------------------------------------------
-
+	tglx
