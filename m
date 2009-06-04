@@ -1,61 +1,665 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:51326 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750909AbZFMWV5 (ORCPT
+Received: from smtpq1.gn.mail.iss.as9143.net ([212.54.34.164]:39988 "EHLO
+	smtpq1.gn.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752065AbZFDTS6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 13 Jun 2009 18:21:57 -0400
-Received: from octopus.hi.pengutronix.de ([2001:6f8:1178:2:215:17ff:fe12:23b0])
-	by metis.ext.pengutronix.de with esmtp (Exim 4.63)
-	(envelope-from <ukl@pengutronix.de>)
-	id 1MFbbr-00082e-C3
-	for linux-rt-users@vger.kernel.org; Sun, 14 Jun 2009 00:21:59 +0200
-Received: from ukl by octopus.hi.pengutronix.de with local (Exim 4.69)
-	(envelope-from <ukl@pengutronix.de>)
-	id 1MFbbr-00086Y-97
-	for linux-rt-users@vger.kernel.org; Sun, 14 Jun 2009 00:21:59 +0200
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH -rt] disable building all staging drivers
-Date: Sat, 13 Jun 2009 23:38:38 +0200
-Message-Id: <1244929118-23326-1-git-send-email-u.kleine-koenig@pengutronix.de>
+	Thu, 4 Jun 2009 15:18:58 -0400
+Received: from [212.54.34.145] (helo=smtp14.gn.mail.iss.as9143.net)
+	by smtpq1.gn.mail.iss.as9143.net with esmtp (Exim 4.69)
+	(envelope-from <hermantenbrugge@home.nl>)
+	id 1MCI9T-0007aV-0l
+	for linux-rt-users@vger.kernel.org; Thu, 04 Jun 2009 20:58:59 +0200
+Received: from cc717655-a.hnglo1.ov.home.nl ([82.75.52.184] helo=[192.168.123.3])
+	by smtp14.gn.mail.iss.as9143.net with esmtp (Exim 4.69)
+	(envelope-from <hermantenbrugge@home.nl>)
+	id 1MCI9R-0005CH-PC
+	for linux-rt-users@vger.kernel.org; Thu, 04 Jun 2009 20:58:58 +0200
+Message-ID: <4A281971.1040406@home.nl>
+Date: Thu, 04 Jun 2009 20:58:57 +0200
+From: Herman ten Brugge <hermantenbrugge@home.nl>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Subject: Analyze sched_switch ftrace data with vcd viewer
+Content-Type: multipart/mixed;
+ boundary="------------010909030900050701000006"
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-kernel@vger.kernel.org
-Cc: linux-rt-users@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Greg Kroah-Hartman <greg@kroah.com>, Ian Abbott <abbotti@mev.co.uk>, Frank Mori Hess <fmhess@users.sourceforge.net>
+To: linux-rt-users@vger.kernel.org
 
-I know that at least COMEDI and RT2870 are broken with -rt, but Thomas
-requested disabling all of staging.  He's the maintainer.
+This is a multi-part message in MIME format.
+--------------010909030900050701000006
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Greg Kroah-Hartman <greg@kroah.com>
-Cc: Ian Abbott <abbotti@mev.co.uk>
-Cc: Frank Mori Hess <fmhess@users.sourceforge.net>
----
- drivers/staging/Kconfig |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+I have written some code to convert the ascii sched_switch output to
+vcd format (value change data). Now it is possible to view the context
+switches in a vcd viewer. I personally use gtkwave because it is free
+and is present in the fedora repository.
+To use this program first make a ftrace file with something like:
 
-diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
-index 211af86..3d1a966 100644
---- a/drivers/staging/Kconfig
-+++ b/drivers/staging/Kconfig
-@@ -1,6 +1,7 @@
- menuconfig STAGING
- 	bool "Staging drivers"
- 	default n
-+	depends on BROKEN
- 	---help---
- 	  This option allows you to select a number of drivers that are
- 	  not of the "normal" Linux kernel quality level.  These drivers
---=20
-1.6.3.1
+mount -t debugfs debugfs /debug
+echo sched_switch > /debug/tracing/current_tracer
+echo 1 > /debug/tracing/tracing_enabled
+sleep 10
+echo 0 > /debug/tracing/tracing_enabled
+cat /debug/tracing/trace > /tmp/trace.txt
 
+Now convert the ascii data and start the viewer:
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+sched_switch /tmp/trace.txt /tmp/trace.vcd
+gtkwave /tmp/trace.vcd
+
+I use the following definitions in the vcd file:
+Z   tri state signal (no cpu assigned)
+U   undefined (wake up is done waiting for a cpu to become ready)
+0/1 binary encoded cpu number
+L/H binary encoded cpu number with priority inheritance
+
+De signal names are displayed as:
+program_name_as_in_trace_file#priority#processor_load
+The priority is:
+idle for the idle process
+r1..r99 for real time processes
+n-19..20 for nice processes
+
+I find this much easier to use then the ascii file that is produced by 
+the kernel.
+
+    Herman.
+
+--------------010909030900050701000006
+Content-Type: text/plain;
+ name="sched_switch.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="sched_switch.c"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct sched_switch_struct
+{
+  unsigned int program_id;
+  unsigned int from_cpu;
+  double time;
+  unsigned int from_pid;
+  unsigned int from_prio;
+  unsigned int from_state_id;
+  unsigned int wakeup_id;
+  unsigned int to_cpu;
+  unsigned int to_pid;
+  unsigned int to_prio;
+  unsigned int to_state_id;
+} sched_switch_type;
+
+typedef struct program_struct
+{
+  char *name;
+  double time;
+  unsigned int task;
+  unsigned int prio;
+  unsigned int idle_task;
+  char *tag;
+  unsigned int running;
+  double last_time;
+  double max_time;
+  double max_pos;
+} program_type;
+
+static void
+print_help (const char *programname)
+{
+  printf ("Usage: %s [options] input output\n", programname);
+  printf ("       -m  : output in matlab format\n");
+  printf ("       -v  : output in vcd format (default)\n");
+  printf ("       -p  : print priority inheritance lines\n");
+  printf ("       -s  : print max scheduling delay\n");
+  printf ("       -h  : print this help\n");
+  exit (0);
+}
+
+int
+main (int argc, char **argv)
+{
+  enum
+  { VCD, MATLAB } output = VCD;
+  unsigned int priority_inheritance = 0;
+  unsigned int max_sched_delay = 0;
+  char *infilename = NULL;
+  char *outfilename = NULL;
+  unsigned int i;
+  unsigned int j;
+  unsigned int n;
+  unsigned int last_comment = 0;
+  FILE *fpi;
+  FILE *fpo;
+  unsigned int max_cpu = 0;
+  unsigned int last_max_cpu = 0;
+  unsigned int *first = NULL;
+  double *last_time = NULL;
+  unsigned int nof_bits = 0;
+  unsigned int program_id;
+  unsigned int from_cpu;
+  double time;
+  unsigned int from_pid;
+  unsigned int from_prio;
+  unsigned int from_state_id;
+  unsigned int wakeup_id;
+  unsigned int to_cpu;
+  unsigned int to_pid;
+  unsigned int to_prio;
+  unsigned int to_state_id;
+  char line[1000];
+  char array[1000];
+  char program_name[1000];
+  char from_state[1000];
+  char to_state[1000];
+  char wakeup_str[1000];
+  unsigned int n_program = 0;
+  program_type *program = NULL;
+  unsigned int n_state = 0;
+  char **state = NULL;
+  unsigned int n_wakeup = 0;
+  char **wakeup = NULL;
+  unsigned int n_sched_switch = 0;
+  unsigned int m_sched_switch = 0;
+  sched_switch_type *sched_switch = NULL;
+
+  for (i = 1; i < (unsigned int) argc; i++) {
+    if (argv[i][0] == '-') {
+      switch (argv[i][1]) {
+      case 'm':
+	output = MATLAB;
+	break;
+      case 'v':
+	output = VCD;
+	break;
+      case 'p':
+	priority_inheritance = 1;
+	break;
+      case 's':
+	max_sched_delay = 1;
+	break;
+      case 'h':
+      default:
+	print_help (argv[0]);
+	return (0);
+      }
+    }
+    else if (infilename == NULL) {
+      infilename = argv[i];
+    }
+    else if (outfilename == NULL) {
+      outfilename = argv[i];
+    }
+  }
+  if (infilename == NULL || outfilename == NULL) {
+    print_help (argv[0]);
+    return (0);
+  }
+  fpi = fopen (infilename, "r");
+  if (fpi == NULL) {
+    fprintf (stderr, "Cannot open filename %s\n", infilename);
+    return 1;
+  }
+  fpo = fopen (outfilename, "w");
+  if (fpo == NULL) {
+    fprintf (stderr, "Cannot create filename %s\n", outfilename);
+    return 1;
+  }
+  while (fgets (line, sizeof (line), fpi) != NULL) {
+    if (line[0] == '#') {
+      last_comment = n_sched_switch;
+    }
+    to_cpu = (unsigned int) -1;
+    if (sscanf
+	(line, " %s [ %u ] %lf : %u : %u : %s %s %u : %u : %s ", program_name,
+	 &from_cpu, &time, &from_pid, &from_prio, from_state, wakeup_str,
+	 &to_pid, &to_prio, to_state) == 10 ||
+	sscanf (line, " %s [ %u ] %lf : %u : %u : %s %s [ %u ] %u : %u : %s ",
+		program_name, &from_cpu, &time, &from_pid, &from_prio,
+		from_state, wakeup_str, &to_cpu, &to_pid, &to_prio,
+		to_state) == 11) {
+      if (to_cpu == (unsigned int) -1) {
+	/* incorrect but we have to set something */
+	to_cpu = from_cpu;
+      }
+      if (from_cpu > max_cpu) {
+	max_cpu = from_cpu;
+      }
+      if (to_cpu > max_cpu) {
+	max_cpu = to_cpu;
+      }
+      if (first == NULL || max_cpu != last_max_cpu) {
+	first =
+	  (unsigned int *) realloc (first,
+				    (max_cpu + 1) * sizeof (unsigned int));
+	last_time =
+	  (double *) realloc (last_time, (max_cpu + 1) * sizeof (double));
+	if (first == NULL || last_time == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	for (i = last_max_cpu; i <= max_cpu; i++) {
+	  /* 2 because first time is not allways correct */
+	  first[i] = 2;
+	  last_time[i] = 0;
+	}
+	last_max_cpu = max_cpu;
+      }
+      for (program_id = 0; program_id < n_program; program_id++) {
+	if (strcmp (program[program_id].name, program_name) == 0) {
+	  break;
+	}
+      }
+      if (program_id == n_program) {
+	program =
+	  (program_type *) realloc (program,
+				    (n_program + 1) * sizeof (program_type));
+	if (program == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	program[n_program].name = strdup (program_name);
+	program[n_program].time = 0;
+	program[n_program].task = from_pid;
+	program[n_program].prio = 0;
+	program[n_program].idle_task = strcmp (program_name, "<idle>-0") == 0;
+	program[n_program].tag = NULL;
+	if (program[n_program++].name == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+      }
+      for (from_state_id = 0; from_state_id < n_state; from_state_id++) {
+	if (strcmp (state[from_state_id], from_state) == 0) {
+	  break;
+	}
+      }
+      if (from_state_id == n_state) {
+	state = (char **) realloc (state, (n_state + 1) * sizeof (char *));
+	if (state == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	state[n_state] = strdup (from_state);
+	if (state[n_state++] == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+      }
+      for (to_state_id = 0; to_state_id < n_state; to_state_id++) {
+	if (strcmp (state[to_state_id], to_state) == 0) {
+	  break;
+	}
+      }
+      if (to_state_id == n_state) {
+	state = (char **) realloc (state, (n_state + 1) * sizeof (char *));
+	if (state == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	state[n_state] = strdup (to_state);
+	if (state[n_state++] == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+      }
+      for (wakeup_id = 0; wakeup_id < n_wakeup; wakeup_id++) {
+	if (strcmp (wakeup[wakeup_id], wakeup_str) == 0) {
+	  break;
+	}
+      }
+      if (wakeup_id == n_wakeup) {
+	wakeup = (char **) realloc (wakeup, (n_wakeup + 1) * sizeof (char *));
+	if (wakeup == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	wakeup[n_wakeup] = strdup (wakeup_str);
+	if (wakeup[n_wakeup++] == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+      }
+      if (n_sched_switch >= m_sched_switch) {
+	sched_switch =
+	  (sched_switch_type *) realloc (sched_switch,
+					 (m_sched_switch +
+					  1024) * sizeof (sched_switch_type));
+	if (sched_switch == NULL) {
+	  fprintf (stderr, "Cannot malloc\n");
+	  return 1;
+	}
+	m_sched_switch += 1024;
+      }
+      sched_switch[n_sched_switch].program_id = program_id;
+      sched_switch[n_sched_switch].from_cpu = from_cpu;
+      sched_switch[n_sched_switch].time = time;
+      sched_switch[n_sched_switch].from_pid = from_pid;
+      sched_switch[n_sched_switch].from_prio = from_prio;
+      sched_switch[n_sched_switch].from_state_id = from_state_id;
+      sched_switch[n_sched_switch].wakeup_id = wakeup_id;
+      sched_switch[n_sched_switch].to_cpu = to_cpu;
+      sched_switch[n_sched_switch].to_pid = to_pid;
+      sched_switch[n_sched_switch].to_prio = to_prio;
+      sched_switch[n_sched_switch].to_state_id = to_state_id;
+      n_sched_switch++;
+      if (wakeup_str[0] == '=') {
+	if (first[from_cpu] == 0) {
+	  program[program_id].time += time - last_time[from_cpu];
+	}
+	else if (first[from_cpu]) {
+	  first[from_cpu]--;
+	}
+	last_time[from_cpu] = time;
+      }
+    }
+  }
+  for (nof_bits = 31; nof_bits > 0; nof_bits--) {
+    if (max_cpu & (1 << nof_bits)) {
+      break;
+    }
+  }
+  time = 0;
+  for (i = 0; i < n_program; i++) {
+    time += program[i].time;
+  }
+  if (time == 0) {
+    time = 1;
+  }
+  for (i = 0; i < n_sched_switch; i++) {
+    for (j = 0; j < n_program; j++) {
+      if (sched_switch[i].from_pid == program[j].task) {
+	break;
+      }
+    }
+    sched_switch[i].from_pid = j == n_program ? 0 : j;
+    for (j = 0; j < n_program; j++) {
+      if (sched_switch[i].to_pid == program[j].task) {
+	break;
+      }
+    }
+    sched_switch[i].to_pid = j == n_program ? 0 : j;
+  }
+  for (i = 0; i < n_program; i++) {
+    /* Take the highest priority and hope that this is the correct one. */
+    /* It might be incorrect due to priority inheritance. */
+    n = 0;
+    for (j = 0; j < n_sched_switch; j++) {
+      if (sched_switch[j].from_pid == i) {
+	if (sched_switch[j].from_prio > n) {
+	  n = sched_switch[j].from_prio;
+	}
+      }
+      if (sched_switch[j].to_pid == i) {
+	if (sched_switch[j].to_prio > n) {
+	  n = sched_switch[j].to_prio;
+	}
+      }
+    }
+    program[i].prio = n;
+    if (program[i].prio < 100) {
+      sprintf (line, "%s#r%u#%d", program[i].name, 99 - program[i].prio,
+	       (int) (100.0 * program[i].time / time + 0.5));
+    }
+    else if (program[i].prio == 140) {
+      sprintf (line, "%s#idle#%d", program[i].name,
+	       (int) (100.0 * program[i].time / time + 0.5));
+    }
+    else {
+      sprintf (line, "%s#n%d#%d", program[i].name,
+	       (int) (120 - program[i].prio),
+	       (int) (100.0 * program[i].time / time + 0.5));
+    }
+    free (program[i].name);
+    program[i].name = strdup (line);
+    if (program[i].name == NULL) {
+      fprintf (stderr, "Cannot malloc\n");
+      return 1;
+    }
+    if (priority_inheritance) {
+      for (n = 0; n < n_sched_switch; n++) {
+	if (sched_switch[n].from_pid == i &&
+	    sched_switch[n].from_prio != program[i].prio) {
+	  printf ("%.6f %.0fus %s %u %u\n", sched_switch[n].time,
+		  (sched_switch[n].time - sched_switch[0].time) * 1e6,
+		  program[i].name, sched_switch[n].from_prio,
+		  program[i].prio);
+	}
+	if (sched_switch[n].to_pid == i &&
+	    sched_switch[n].to_prio != program[i].prio) {
+	  printf ("%.6f %.0fus %s %u %u\n", sched_switch[n].time,
+		  (sched_switch[n].time - sched_switch[0].time) * 1e6,
+		  program[i].name, sched_switch[n].to_prio, program[i].prio);
+	}
+      }
+    }
+  }
+  if (max_sched_delay) {
+    for (i = 0; i < n_program; i++) {
+      program[i].running = 0;
+      program[i].last_time = 0;
+      program[i].max_time = 0;
+      program[i].max_pos = 0;
+    }
+    for (i = last_comment; i < n_sched_switch; i++) {
+      if (wakeup[sched_switch[i].wakeup_id][0] == '=') {
+	if (program[sched_switch[i].to_pid].running == (unsigned int) -2) {
+	  if (sched_switch[i].time -
+	      program[sched_switch[i].to_pid].last_time >
+	      program[sched_switch[i].to_pid].max_time) {
+	    program[sched_switch[i].to_pid].max_time =
+	      sched_switch[i].time -
+	      program[sched_switch[i].to_pid].last_time;
+	    program[sched_switch[i].to_pid].max_pos = sched_switch[i].time;
+	  }
+	}
+	program[sched_switch[i].from_pid].running = (unsigned int) -1;
+	program[sched_switch[i].to_pid].running = sched_switch[i].to_cpu;
+      }
+      else if (wakeup[sched_switch[i].wakeup_id][0] == '+') {
+	program[sched_switch[i].to_pid].running = (unsigned int) -2;
+	program[sched_switch[i].to_pid].last_time = sched_switch[i].time;
+      }
+    }
+    for (i = 0; i < n_program; i++) {
+      if (program[i].max_time != 0.0) {
+	printf ("%8.6f %8.6f %.0fus %s\n", program[i].max_time,
+		program[i].max_pos,
+		(program[i].max_pos - sched_switch[0].time) * 1e6,
+		program[i].name);
+      }
+    }
+  }
+  if (output == MATLAB) {
+    for (i = 0; i < n_program; i++) {
+      fprintf (fpo,
+	       "program(%u).str = '%s'; program_time(%u) = %.6f; "
+	       "cpuload(%u) = %.6f; program_task(%u) = %u;\n", i + 1,
+	       program[i].name, i + 1, program[i].time, i + 1,
+	       100.0 * program[i].time / time, i + 1, program[i].task);
+    }
+    for (i = 0; i < n_state; i++) {
+      fprintf (fpo, "state(%u).str = '%s';\n", i + 1, state[i]);
+    }
+    for (i = 0; i < n_wakeup; i++) {
+      fprintf (fpo, "wakeup(%u).str = '%s';\n", i + 1, wakeup[i]);
+    }
+    fprintf (fpo, "program_id = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].program_id);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "from_cpu = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].from_cpu);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "time = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%.6f ", sched_switch[i].time);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "from_pid = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].from_pid);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "from_prio = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].from_prio);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "from_state_id = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].from_state_id);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "wakeup_id = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].wakeup_id);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "to_cpu = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].to_cpu);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "to_pid = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].to_pid);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "to_prio = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].to_prio);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo, "to_state_id = { ");
+    for (i = 0; i < n_sched_switch; i++) {
+      fprintf (fpo, "%u ", sched_switch[i].to_state_id);
+    }
+    fprintf (fpo, "};\n");
+    fprintf (fpo,
+	     "save -v7 sched_switch.mat program program_time program_task "
+	     "cpuload state wakeup program_id from_cpu time from_pid "
+	     "from_prio from_state_id wakeup_id to_cpu to_pid to_prio "
+	     "to_state_id;\n");
+  }
+  else {
+    fprintf (fpo, "$timescale 1us $end\n");
+    fprintf (fpo, "$scope module sched_switch $end\n");
+    for (i = 0; i < n_program; i++) {
+      j = 0;
+      n = i;
+      do {
+	line[j++] = (n % 94) + 33;
+	n = n / 94;
+      } while (n != 0);
+      line[j] = '\0';
+      array[0] = '\0';
+      if (nof_bits > 0) {
+	sprintf (array, "[%u:0] ", nof_bits);
+      }
+      fprintf (fpo, "$var wire %u %s %s %s$end\n", nof_bits + 1, line,
+	       program[i].name, array);
+      program[i].tag = strdup (line);
+      if (program[i].tag == NULL) {
+	fprintf (stderr, "Cannot malloc\n");
+	return 1;
+      }
+    }
+    fprintf (fpo, "$upscope $end\n");
+    fprintf (fpo, "$enddefinitions $end\n");
+    /* Z   tri-state signal (no cpu assigned) */
+    /* U   undefined (wakeup is done waiting for cpu to become ready) */
+    /* 0/1 binary encoded cpu number */
+    /* L/H binary encoded cpu number with priority inheritance */
+    fprintf (fpo, "#0\n");
+    for (i = 0; i < n_program; i++) {
+      if (nof_bits > 0) {
+	fprintf (fpo, "b");
+      }
+      for (j = 0; j <= nof_bits; j++) {
+	fprintf (fpo, "Z");
+      }
+      if (nof_bits > 0) {
+	fprintf (fpo, " ");
+      }
+      fprintf (fpo, "%s\n", program[i].tag);
+    }
+    for (i = 0; i < n_sched_switch; i++) {
+      if (sched_switch[i].time - sched_switch[0].time != 0) {
+	if (wakeup[sched_switch[i].wakeup_id][0] == '=') {
+	  if (i == 0 || sched_switch[i].time != sched_switch[i - 1].time) {
+	    fprintf (fpo, "#%.0f\n",
+		     (sched_switch[i].time - sched_switch[0].time) * 1e6);
+	  }
+	  if (sched_switch[i].from_pid != sched_switch[i].to_pid) {
+	    if (nof_bits > 0) {
+	      fprintf (fpo, "b");
+	    }
+	    for (j = 0; j <= nof_bits; j++) {
+	      fprintf (fpo, "Z");
+	    }
+	    if (nof_bits > 0) {
+	      fprintf (fpo, " ");
+	    }
+	    fprintf (fpo, "%s\n", program[sched_switch[i].from_pid].tag);
+	  }
+	  if (nof_bits > 0) {
+	    fprintf (fpo, "b");
+	  }
+	  if (sched_switch[i].to_prio != program[sched_switch[i].to_pid].prio) {
+	    for (j = 0; j <= nof_bits; j++) {
+	      fprintf (fpo, "%c",
+		       "LH"[(sched_switch[i].to_cpu >> (nof_bits - j)) & 1]);
+	    }
+	  }
+	  else {
+	    for (j = 0; j <= nof_bits; j++) {
+	      fprintf (fpo, "%c",
+		       "01"[(sched_switch[i].to_cpu >> (nof_bits - j)) & 1]);
+	    }
+	  }
+	  if (nof_bits > 0) {
+	    fprintf (fpo, " ");
+	  }
+	  fprintf (fpo, "%s\n", program[sched_switch[i].to_pid].tag);
+	}
+	else if (wakeup[sched_switch[i].wakeup_id][0] == '+') {
+	  if (i == 0 || sched_switch[i].time != sched_switch[i - 1].time) {
+	    fprintf (fpo, "#%.0f\n",
+		     (sched_switch[i].time - sched_switch[0].time) * 1e6);
+	  }
+	  if (nof_bits > 0) {
+	    fprintf (fpo, "b");
+	  }
+	  for (j = 0; j <= nof_bits; j++) {
+	    fprintf (fpo, "X");
+	  }
+	  if (nof_bits > 0) {
+	    fprintf (fpo, " ");
+	  }
+	  fprintf (fpo, "%s\n", program[sched_switch[i].to_pid].tag);
+	}
+      }
+    }
+  }
+  fclose (fpi);
+  fclose (fpo);
+  free (first);
+  free (last_time);
+  for (i = 0; i < n_program; i++) {
+    free (program[i].name);
+    free (program[i].tag);
+  }
+  free (program);
+  free (state);
+  free (wakeup);
+  free (sched_switch);
+  return 0;
+}
+
+--------------010909030900050701000006--
