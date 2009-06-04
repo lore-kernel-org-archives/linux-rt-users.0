@@ -1,85 +1,72 @@
-From: Grammostola Rosea <rosea.grammostola@gmail.com>
-Subject: Re: realtime kernel for Debian
-Date: Thu, 04 Jun 2009 11:28:57 +0200
-Message-ID: <4A2793D9.308@gmail.com>
-References: <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com> <20090329195638.GA25453@pengutronix.de> <49DF05B6.6000603@gmail.com> <20090413195356.GA13942@pengutronix.de> <4A09CEBC.70207@gmail.com> <20090513093517.GA11278@pengutronix.de>
+From: Jan Engelhardt <jengelh@medozas.de>
+Subject: Re: Intel graphics and kernel RT failure
+Date: Fri, 5 Jun 2009 00:21:05 +0200 (CEST)
+Message-ID: <alpine.LSU.2.00.0906050020110.8173@fbirervta.pbzchgretzou.qr>
+References: <695e1a650906041442q445109a2p5871a1ff9f1d3f5a@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Debian Developers <debian-devel@lists.debian.org>,
-	linux-rt-users@vger.kernel.org, 521893@bugs.debian.org
-To: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Hector Centeno <hcengar@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpq2.gn.mail.iss.as9143.net ([212.54.34.165]:54226 "EHLO
-	smtpq2.gn.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750885AbZFDJtM (ORCPT
+Received: from sovereign.computergmbh.de ([85.214.69.204]:36287 "EHLO
+	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751077AbZFDWVE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jun 2009 05:49:12 -0400
-In-Reply-To: <20090513093517.GA11278@pengutronix.de>
+	Thu, 4 Jun 2009 18:21:04 -0400
+In-Reply-To: <695e1a650906041442q445109a2p5871a1ff9f1d3f5a@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Uwe Kleine-K=F6nig wrote:
-> Hi,
->
->  =20
->>>> I was wondering about how far are we with implementing a RT kernel=
- in=20
->>>>  Debian... Some progress here? Would be nice.
->>>>    =20
->>>>        =20
->>> The patch I created that "fits" on Debian's vanilla kernel creates
->>> conflicts on the sources with the Debian patches.
->>> I hope to be able to clean that up by minimizing the -rt series (e.=
-g.
->>> the first broken out patch consists usually of various bits from th=
-e
->>> -tip tree that are (AFAIK) not all needed.)
->>>
->>> So just have some more patience.
->>>
->>>  =20
->>>      =20
->> How are things going? Just interest...
->>    =20
-> Hhhm, well, I spottet a problem.  The thing is that linux-rt does man=
-y
-> deep changes in the kernel and I won't be able to support the harder
-> problems.  And upstream probably won't help because the Debian rt-ker=
-nel
-> isn't a vanilla rt-kernel.  Moreover even the broken out rt-patch isn=
-'t
-> nicely sorted (e.g. bisectable, some patches undo changes of other
-> patches earier in the series etc. pp), so I fear the Debian kernel te=
-am
-> isn't filled with enthusiasm when asked to add an rt variant.
->
-> I already thought about packaging debian-kernel + rt for Debian and
-> vanilla-kernel + rt for a non-Debian package repository such that it'=
-s
-> easy for bug reporters to try out a vanilla kernel.  But that still n=
-eeds
-> more work.
->
-> I currently investigate how the Debian kernel packages are created.  =
-Any
-> help is welcome.  Probably the first step will be to create a vanilla=
--rt
-> package, but that wont be accepted to go into Debian main.
->
->  =20
-Just trying to keep thinks a bit alive here ;)
 
-How are things going Uwe?
 
-Kind regards,
 
-\r
+Cc'ing linux-rt. Mabye someone has a flash of an idea.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Thursday 2009-06-04 23:42, Hector Centeno wrote to Jan Engelhardt:
+>
+>I hope it is OK to contact you directly to this email. I've been
+>trying to use your 2.6.29 RT kernel for OpenSuse 11.1 and came across
+>some problems related to the Intel graphics driver (I have a laptop
+>with intel GMA 950). The problem seems to be related to the new intel
+>driver development that is going on and that seems to affect older
+>hardware like mine. I get a constantly growing list of errors in
+>/var/log/mesages like these:
+>
+>kernel: BUG: using smp_processor_id() in preemptible [00000000] code: X/3257
+>kernel: caller is kmap_atomic_prot_pfn+0x1a/0x94
+>kernel: Pid: 3257, comm: X Tainted: G   N  2.6.29.4-jen80-rt #1
+>kernel: Call Trace:
+>kernel:  [<b033c3f2>] ? printk+0xf/0x15
+>kernel:  [<b022712e>] debug_smp_processor_id+0xa6/0xbc
+>kernel:  [<b011d617>] kmap_atomic_prot_pfn+0x1a/0x94
+>kernel:  [<f8a23c4c>] i915_gem_object_flush_cpu_write_domain+0x1c/0x27 [i915]
+>kernel:  [<b011d6b7>] iomap_atomic_prot_pfn+0x26/0x2b
+>kernel:  [<f8a270be>] i915_gem_gtt_pwrite+0x102/0x1b8 [i915]
+>kernel:  [<f8a27290>] i915_gem_pwrite_ioctl+0x11c/0x1a8 [i915]
+>kernel:  [<b0223e73>] ? copy_from_user+0x34/0x11b
+>kernel:  [<f89d2776>] drm_ioctl+0x1b7/0x22f [drm]
+>kernel:  [<f8a27174>] ? i915_gem_pwrite_ioctl+0x0/0x1a8 [i915]
+>kernel:  [<b01ae63f>] vfs_ioctl+0x4e/0x67
+>kernel:  [<b01aec30>] do_vfs_ioctl+0x22a/0x242
+>kernel:  [<b01aec88>] sys_ioctl+0x40/0x5a
+>kernel:  [<b01032fc>] sysenter_do_call+0x12/0x28
+>kernel: BUG: using smp_processor_id() in preemptible [00000000] code: X/3257
+>kernel: caller is iounmap_atomic+0x18/0x9b
+>kernel: Pid: 3257, comm: X Tainted: G   N  2.6.29.4-jen80-rt #1
+>kernel: Call Trace:
+>kernel:  [<b033c3f2>] ? printk+0xf/0x15
+>kernel:  [<b022712e>] debug_smp_processor_id+0xa6/0xbc
+>kernel:  [<b011d57a>] iounmap_atomic+0x18/0x9b
+>kernel:  [<f8a270df>] i915_gem_gtt_pwrite+0x123/0x1b8 [i915]
+>kernel:  [<f8a27290>] i915_gem_pwrite_ioctl+0x11c/0x1a8 [i915]
+>kernel:  [<b0223e73>] ? copy_from_user+0x34/0x11b
+>kernel:  [<f89d2776>] drm_ioctl+0x1b7/0x22f [drm]
+>kernel:  [<f8a27174>] ? i915_gem_pwrite_ioctl+0x0/0x1a8 [i915]
+>kernel:  [<b01ae63f>] vfs_ioctl+0x4e/0x67
+>kernel:  [<b01aec30>] do_vfs_ioctl+0x22a/0x242
+>kernel:  [<b01aec88>] sys_ioctl+0x40/0x5a
+>kernel:  [<b01032fc>] sysenter_do_call+0x12/0x28
+>
+>I'm assuming it is related to the Intel graphics driver because there
+>is mention to i915 but I might be wrong. If the Intel driver is
+>causing this I wonder if this has been fixed in upstream [...]
