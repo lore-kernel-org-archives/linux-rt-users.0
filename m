@@ -1,58 +1,85 @@
-From: Hugo Vincent <hugo.vincent@gmail.com>
-Subject: OMAP: sporadic hard lock-up when GPIO interrupts occur too fast (with
-	preempt-RT and PREEMPT_HARDIRQ)
-Date: Thu, 4 Jun 2009 11:51:57 +1200
-Message-ID: <5a7b8b7b0906031651l709eb6b7qd6691bf543ccca33@mail.gmail.com>
+From: Grammostola Rosea <rosea.grammostola@gmail.com>
+Subject: Re: realtime kernel for Debian
+Date: Thu, 04 Jun 2009 11:28:57 +0200
+Message-ID: <4A2793D9.308@gmail.com>
+References: <f1357b430903280615u215182fan2e62581394174603@mail.gmail.com> <alpine.DEB.2.00.0903282331360.22173@wr-linux02> <49CF50D3.1080000@gmail.com> <49CFBDBE.5020408@gmail.com> <20090329185525.GB25154@pengutronix.de> <49CFC58D.4010803@gmail.com> <20090329195638.GA25453@pengutronix.de> <49DF05B6.6000603@gmail.com> <20090413195356.GA13942@pengutronix.de> <4A09CEBC.70207@gmail.com> <20090513093517.GA11278@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-omap <linux-omap@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Debian Developers <debian-devel@lists.debian.org>,
+	linux-rt-users@vger.kernel.org, 521893@bugs.debian.org
+To: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f214.google.com ([209.85.217.214]:57491 "EHLO
-	mail-gx0-f214.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753055AbZFCXv4 (ORCPT
+Received: from smtpq2.gn.mail.iss.as9143.net ([212.54.34.165]:54226 "EHLO
+	smtpq2.gn.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750885AbZFDJtM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Jun 2009 19:51:56 -0400
+	Thu, 4 Jun 2009 05:49:12 -0400
+In-Reply-To: <20090513093517.GA11278@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everyone,
+Uwe Kleine-K=F6nig wrote:
+> Hi,
+>
+>  =20
+>>>> I was wondering about how far are we with implementing a RT kernel=
+ in=20
+>>>>  Debian... Some progress here? Would be nice.
+>>>>    =20
+>>>>        =20
+>>> The patch I created that "fits" on Debian's vanilla kernel creates
+>>> conflicts on the sources with the Debian patches.
+>>> I hope to be able to clean that up by minimizing the -rt series (e.=
+g.
+>>> the first broken out patch consists usually of various bits from th=
+e
+>>> -tip tree that are (AFAIK) not all needed.)
+>>>
+>>> So just have some more patience.
+>>>
+>>>  =20
+>>>      =20
+>> How are things going? Just interest...
+>>    =20
+> Hhhm, well, I spottet a problem.  The thing is that linux-rt does man=
+y
+> deep changes in the kernel and I won't be able to support the harder
+> problems.  And upstream probably won't help because the Debian rt-ker=
+nel
+> isn't a vanilla rt-kernel.  Moreover even the broken out rt-patch isn=
+'t
+> nicely sorted (e.g. bisectable, some patches undo changes of other
+> patches earier in the series etc. pp), so I fear the Debian kernel te=
+am
+> isn't filled with enthusiasm when asked to add an rt variant.
+>
+> I already thought about packaging debian-kernel + rt for Debian and
+> vanilla-kernel + rt for a non-Debian package repository such that it'=
+s
+> easy for bug reporters to try out a vanilla kernel.  But that still n=
+eeds
+> more work.
+>
+> I currently investigate how the Debian kernel packages are created.  =
+Any
+> help is welcome.  Probably the first step will be to create a vanilla=
+-rt
+> package, but that wont be accepted to go into Debian main.
+>
+>  =20
+Just trying to keep thinks a bit alive here ;)
 
-I'm trying to debug a problem with GPIO interrupts on my OMAP3503
-(Gumstix Overo) platform with kernel 2.6.29.4-rt16-omap1.
+How are things going Uwe?
 
-While this is a sporadic lock-up, I haven't been able to reproduce it
-when PREEMPT_HARDIRQ is disabled.
+Kind regards,
 
-I think it might have something to do with this patch (which is applied BTW):
-   http://patchwork.kernel.org/patch/16046/
-And see this thread:
-   http://markmail.org/message/aaqpk5jztrrypsxz
+\r
 
-Sometimes, I see a spurious IRQ message like this:
-   Spurious irq 95: 0xffffffdf, please flush posted write for irq 31
-that the above patch is supposed to fix, just before the system locks
-up. Is it possible that the interrupt handler is getting preempted
-between acknowledging the interrupt and the 'flush posted write', and
-meanwhile another interrupt from the same bank occurs?
-
-To check this hypothesis, I built the kernel with
-   CONFIG_PREEMPT_DESKTOP=y
-   # CONFIG_PREEMPT_RT is not set
-   CONFIG_PREEMPT=y
-   CONFIG_PREEMPT_SOFTIRQS=y
-   CONFIG_PREEMPT_HARDIRQS=y
-
-which gives a /proc/irq/<irq>/<handler>/threaded flag. When I tried
-disabling threading on irqs 246-249 (which are the virtual irqs for
-the problematic GPIO interrupts), the problem still occured. I'm not
-sure how to disable threading or preemption on the intermediate ISR
-(gpio_irq_handler() at arch/arm/plat-omap/gpio.c:959) which determines
-which GPIO in the bank caused the interrupt and spawns the virtual
-interrupts.
-
-Any ideas for debugging or narrowing down on the cause?
-
-Many thanks,
-Hugo
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
