@@ -1,83 +1,73 @@
-From: Tony Godshall <togo@of.net>
+From: Vivek Satpute <vivek@linsyssoft.com>
 Subject: Re: RT-linux on MIPS..
-Date: Tue, 9 Jun 2009 14:53:03 -0700
-Message-ID: <3424dc900906091453h658c1f7cicfd5893251d13be3@mail.gmail.com>
+Date: Wed, 10 Jun 2009 20:10:19 +0530
+Message-ID: <fae6a9700906100740q4c32a01fjb08b04b9ecd4496f@mail.gmail.com>
 References: <74848fb40906090018m267594f7u6225cf77388f8b4c@mail.gmail.com>
+	 <9f1ddb481cf54eb91d48d76457d8f134@walsimou.com>
+	 <fae6a9700906090505m4386dc0clde443ec8f1f857ec@mail.gmail.com>
+	 <alpine.LFD.2.00.0906092313230.3351@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Tom Desouza <desouza.tom@gmail.com>
+Cc: walsimou@walsimou.com, Tom Desouza <desouza.tom@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f210.google.com ([209.85.219.210]:43071 "EHLO
-	mail-ew0-f210.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752997AbZFIVxF convert rfc822-to-8bit (ORCPT
+Received: from mail-qy0-f180.google.com ([209.85.221.180]:62162 "EHLO
+	mail-qy0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755986AbZFJOkT convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Jun 2009 17:53:05 -0400
-Received: by ewy6 with SMTP id 6so372389ewy.37
-        for <linux-rt-users@vger.kernel.org>; Tue, 09 Jun 2009 14:53:04 -0700 (PDT)
-In-Reply-To: <74848fb40906090018m267594f7u6225cf77388f8b4c@mail.gmail.com>
+	Wed, 10 Jun 2009 10:40:19 -0400
+Received: by qyk10 with SMTP id 10so642668qyk.33
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Jun 2009 07:40:21 -0700 (PDT)
+In-Reply-To: <alpine.LFD.2.00.0906092313230.3351@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Let me scroogle that for you...
+Hi Thomas,
 
-So there is activity back in the early ought's through 2.6.24 fairly re=
-cently
-
-1. TimeSys to port Linux/RT to MIPS
-
-      "News, views, articles, and discussion on using Linux in mobile
-and embedded devices."
-      www.linuxdevices.com/news/NS6948507242.html
-
-2. Lineo contributes MIPS port to RTAI real-time Linux add-on
-
-      "24 Jan 2002 ... News, views, articles, and discussion on using
-Linux in mobile and embedded devices."
-      www.linuxdevices.com/news/NS6193204523.html
-
-3. 2.6.24-rc2-rt1: msg#00081 linux.rt.user
-
-      "rostedt@gandalf:~/linux-2.6.24-rc2$ tar -xf
-patch-2.6.24-rc2-rt1-broken-out.tar. bz2
-rostedt@gandalf:~/linux-2.6.24-rc2$ quilt push preempt-realtime-mips.
-=2E.."
-      osdir.com/ml/linux.rt.user/2007-11/msg00081.html
-
-
-By the way, this list should not be confused with the proprietary
-technology now owned by Wind River
-
-2. RTLinux - Wikipedia, the free encyclopedia
-
-      "15 Apr 2009 ... RTLinux or RTCore (or Real-Time Linux) is a
-hard realtime RTOS microkernel that runs the entire Linux operating
-system as a fully ..."
-      en.wikipedia.org/wiki/RTLinux
-
-
-Best Regards.
-
-
-
-On Tue, Jun 9, 2009 at 12:18 AM, Tom Desouza<desouza.tom@gmail.com> wro=
-te:
-> Hi all,
+On Wed, Jun 10, 2009 at 2:45 AM, Thomas Gleixner <tglx@linutronix.de> w=
+rote:
 >
-> Can anyone have tried rt-patches on MIPS architecture ? Is RT-linux w=
-orks
-> on MIPS architecture with all features support i.e. PREEMPT_HARDIRQS,
-> PREEMPT_SOFTIRQ, PREEMPT_RCU?
+> Vivek,
 >
+> please do _NOT_ toppost. Thanks.
+>
+> On Tue, 9 Jun 2009, Vivek Satpute wrote:
+> > Could I know the current state of rt-support on MIPS arch ? When wi=
+ll
+> > it be released with full MIPS support ?
+>
+> There have been patches posted on this Mailinglist. I did not come
+> around yet to go through them and there are pending review issues fro=
+m
+> the MIPS maintainter IIRC. If you need MIPS -RT support please grab
+> the patches and help to get them in shape.
+>
+
+I searched MIPS specific rt-patches in mailing list upto 27 Jun 2008.
+I found only 2 patches
+specific to MIPS arch. Posting after 27th Jun 2008 seems to be for
+linux-2.6.25.8. I have few
+doubts, could you please help me out ?
+
+1) Currently, I am using rt-patches
+patch-2.6.29.1-rt9-broken-out.tar.bz2, picked up from
+    http://www.kernel.org/pub/linux/kernel/projects/rt/ . It has
+patches for MIPS arch also.
+    Are all those patches specific to MIPS are tested and working ? I
+mean does those
+    have any unsolved issues ? Or do I have to test them ?
+2) Could I know how many patches posted on mailing list, have been
+released so far ?
+
+
 > Thanks,
-> Tom
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
 >
+> =A0 =A0 =A0 =A0tglx
+
+Thanks,
+Vivek
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
