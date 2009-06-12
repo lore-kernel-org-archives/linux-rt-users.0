@@ -1,43 +1,70 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] Make comment describing set_debugfileprefix a bit
- clearer
-Date: Fri, 12 Jun 2009 10:36:07 -0500
-Message-ID: <20090612103607.73f0d1f8@torg>
-References: <20090608045353.GA11319@pengutronix.de>
-	<1244814086-10929-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [Announce] 2.6.29.4-rt18
+Date: Fri, 12 Jun 2009 19:31:51 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903201832590.29264@localhost.localdomain> <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain>
+ <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+ <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org, GeunSik Lim <leemgs1@gmail.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:56557 "EHLO mx2.redhat.com"
+Received: from www.tglx.de ([62.245.132.106]:37178 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753507AbZFLPg2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Jun 2009 11:36:28 -0400
-In-Reply-To: <1244814086-10929-1-git-send-email-u.kleine-koenig@pengutronix.de>
+	id S1751676AbZFLReH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Jun 2009 13:34:07 -0400
+In-Reply-To: <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
-IDEyIEp1biAyMDA5IDE1OjQxOjI2ICswMjAwDQpVd2UgS2xlaW5lLUv2bmlnICA8dS5rbGVpbmUt
-a29lbmlnQHBlbmd1dHJvbml4LmRlPiB3cm90ZToNCg0KPiBUaGlzIHdhcyBub3RpY2VkIGJ5IEdl
-dW5TaWsgTGltLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogVXdlIEtsZWluZS1L9m5pZyA8dS5rbGVp
-bmUta29lbmlnQHBlbmd1dHJvbml4LmRlPg0KPiBDYzogR2V1blNpayBMaW0gPGxlZW1nczFAZ21h
-aWwuY29tPg0KPiBDYzogTHVpcyBDbGF1ZGlvIFIuIEdvbmNhbHZlcyA8bGNsYXVkaW9AdXVkZy5v
-cmc+DQo+IENjOiBDbGFyayBXaWxsaWFtcyA8d2lsbGlhbXNAcmVkaGF0LmNvbT4NCj4gLS0tDQo+
-IEhlbGxvLA0KPiANCj4ganVzdCB0byBoYXZlIHRoZSBhbHRlcm5hdGl2ZSBzdWdnZXN0aW9uIGlu
-IHBhdGNoIGZvcm0sIHRvby4NCj4gDQo+IEBDbGFyazogIElmIHlvdSBwcmVmZXIgdGhpcyB2ZXJz
-aW9uLCB0b28sIHlvdSBjYW4gcHVsbCBpdCBmcm9tIG15IHJlcG8gYXQ6DQo+IA0KPiAJZ2l0Oi8v
-Z2l0LnBlbmd1dHJvbml4LmRlL2dpdC91a2wvcnQtdGVzdHMuZ2l0IGZvci1jbGFyaw0KPiANCj4g
-dG9nZXRoZXIgd2l0aCBhIG1hbnBhZ2UgZm9ybWF0IGZpeC4NCj4gDQo+IEJlc3QgcmVnYXJkcw0K
-PiBVd2UNCj4gDQoNClRoYW5rcyBVd2UgKGFuZCBHZXVuU2lrKS4gSSBwdWxsZWQgZnJvbSB0aGUg
-YWJvdmUgYW5kIG1lcmdlZC4gDQoNCkknbSB3b3JraW5nIG9uIGdldHRpbmcgaHdsYXRkZXRlY3Qg
-dG8gd29yayBwcm9wZXJseSB3aXRoIGpjbSdzIGxhdGVzdA0KdmVyc2lvbiwgc28gaXQgd2lsbCBi
-ZSBhIGJpdCBiZWZvcmUgSSBwdXNoIGEgbmV3IHZlcnNpb24gb2YgcnQtdGVzdHMuDQoNCkNsYXJr
-DQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAo
-R05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa295ZGVzQUNna1FIeXVqLytUVEVwMHFFd0NlTEhq
-OVo4U3pkWDF6U0xQSm52TVY2cDArDQpWc2NBbjJLVGxTaW56dmtJV1NyQk5XM29MenRnUnFLQQ0K
-PUpDRmQNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+     - futex bug fix (tglx)
+     - hwlat latency detector module (Jon Cool Masters)
+
+I have to say it works pretty well when you call someone a Slacker :)
+
+Clark is working on user space tools which help you to use it w/o
+fiddling module parameters. It's going to be in the next rt-tests
+release which has a not yet defined schedule. I wonder whether I
+should try that slacker trick again :)
+
+Download locations:
+
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.4-rt18 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.4.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.4-rt18.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
