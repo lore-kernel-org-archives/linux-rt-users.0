@@ -1,185 +1,67 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: Analyze sched_switch ftrace data with vcd viewer
-Date: Fri, 12 Jun 2009 15:12:04 +0900
-Message-ID: <49b7c2350906112312o1ca2aefeq658e6e645021c63f@mail.gmail.com>
-References: <4A281971.1040406@home.nl>
+From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH] Make comment describing set_debugfileprefix a bit clearer
+Date: Fri, 12 Jun 2009 15:41:26 +0200
+Message-ID: <1244814086-10929-1-git-send-email-u.kleine-koenig@pengutronix.de>
+References: <20090608045353.GA11319@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=000e0cd4d1aa5fab58046c2096c2
-Cc: linux-rt-users@vger.kernel.org
-To: Herman ten Brugge <hermantenbrugge@home.nl>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: GeunSik Lim <leemgs1@gmail.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Clark Williams <williams@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from yw-out-2324.google.com ([74.125.46.31]:28841 "EHLO
-	yw-out-2324.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752984AbZFLGMD (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:58929 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760878AbZFLNlc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Jun 2009 02:12:03 -0400
-Received: by yw-out-2324.google.com with SMTP id 5so1354202ywb.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Jun 2009 23:12:05 -0700 (PDT)
-In-Reply-To: <4A281971.1040406@home.nl>
+	Fri, 12 Jun 2009 09:41:32 -0400
+In-Reply-To: <20090608045353.GA11319@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---000e0cd4d1aa5fab58046c2096c2
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+This was noticed by GeunSik Lim.
 
-On Fri, Jun 5, 2009 at 3:58 AM, Herman ten
-Brugge<hermantenbrugge@home.nl> wrote:
-> I have written some code to convert the ascii sched_switch output to
-> vcd format (value change data). Now it is possible to view the context
-> switches in a vcd viewer. I personally use gtkwave because it is free
-> and is present in the fedora repository.
-> To use this program first make a ftrace file with something like:
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Cc: GeunSik Lim <leemgs1@gmail.com>
+Cc: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Cc: Clark Williams <williams@redhat.com>
+---
+Hello,
 
+just to have the alternative suggestion in patch form, too.
 
-Hi Herman ten Brugge,
+@Clark:  If you prefer this version, too, you can pull it from my repo =
+at:
 
-Thansk you for sharing your code to visualize  sched_switch ftrace data
-with vcd viewer like GTKWave.
+	git://git.pengutronix.de/git/ukl/rt-tests.git for-clark
 
-This is my H/W requirements.
-* core: Core2 Quad Q9300
-* Memory: DDR3G
-* Kernel: 2.6.29-3.fc10.i686.smp kernel
+together with a manpage format fix.
 
-I tested in my fedora 9 distribution with below methods.
-But I can not show normal result using "#> gtkware trace.vcd" command.
-* screenshot : http://blogfiles5.naver.net/data43/2009/6/12/228/gtkwave-vcd-20090609.1503-invain.png
+Best regards
+Uwe
 
+ src/cyclictest/cyclictest.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-It seems that you have to update your code for stablization and
-functions continually.
-
-
-F-Geunsik#> wget http://www.osadl.org/uploads/media/sched_switch-0.1.tgz
-F-Geunsik#> tar -zxvf sched_switch-0.1.tgz
-F-Geunsik#> cd sched_switch-0.1
-F-Geunsik#> make
-F-Geunsik#> cp ./sched_switch /usr/bin/
-F-Geunsik#> cd /syskerneldebug/tracing/
-F-Geunsik#> echo sched_switch >current_tracer
-F-Geunsik#> echo 1 >tracing_enable
-F-Geunsik#> chrt -f 20 sleep 5
-F-Geunsik#> cyclictest -t 5 -p 99 -d 60 -i 1000
-F-Geunsik#> echo 0 >tracing_enable
-F-Geunsik#> cat trace >/tmp/trace.txt
-F-Geunsik#> /usr/bin/sched_switch /tmp/trace.txt /tmp/trace.vcd
-F-Geunsik#> yum install gtkwave
-F-Geunsik#> gtkwave /tmp/trace.vcd
-
-
-
-
--- 
-Regards,
-GeunSik Lim ( Samsung Electronics )
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-           leemgs@gmail.com , leemgs1@gmail.com
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index be9a3f9..558091e 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -179,7 +179,7 @@ static char functiontracer[MAX_PATH];
+ static char traceroptions[MAX_PATH];
+=20
+ /*
+- * Finds the path to the debugfs/tracing
++ * Finds the tracing directory in a mounted debugfs
+  */
+ static int set_debugfileprefix(void)
+ {
+--=20
+1.6.3.1
 --
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
---000e0cd4d1aa5fab58046c2096c2
-Content-Type: text/plain; charset=US-ASCII; name="trace.txt"
-Content-Disposition: attachment; filename="trace.txt"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fvuhomk61
-
-IyB0cmFjZXI6IHNjaGVkX3N3aXRjaAojCiMgICAgICAgICAgIFRBU0stUElEICAgIENQVSMgICAg
-VElNRVNUQU1QICBGVU5DVElPTgojICAgICAgICAgICAgICB8IHwgICAgICAgfCAgICAgICAgICB8
-ICAgICAgICAgfAojIyMjIyBDUFUgMiBidWZmZXIgc3RhcnRlZCAjIyMjCiAgICAgICAgICA8aWRs
-ZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NDg4ODM6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0g
-MTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg0ODg4
-NDogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEw
-OTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ4ODg2OiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAw
-OjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NDkwMzE6ICAg
-ICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBb
-MDAyXSA0MTU0NTAzODAwLjg0OTAzMzogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6
-UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ5MDM1OiAgMTA5ODc6
-ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0g
-NDE1NDUwMzgwMC44NDkxODE6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAg
-ICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg0OTE4MjogICAgICAwOjE0MDpS
-ID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1
-MDM4MDAuODQ5MTg1OiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAg
-ICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NDkzMzE6ICAgICAgMDoxNDA6UiAgICsg
-WzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAw
-Ljg0OTMzMjogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0
-ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ5MzM1OiAgMTA5ODc6ICAyOlMgPT0+IFswMDJd
-ICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NDk0
-ODA6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0w
-ICAgICBbMDAyXSA0MTU0NTAzODAwLjg0OTQ4MTogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4
-NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ5NDg0OiAg
-MTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAg
-WzAwMl0gNDE1NDUwMzgwMC44NDk2MzA6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAy
-OlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg0OTYzMTogICAgICAw
-OjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJd
-IDQxNTQ1MDM4MDAuODQ5NjM0OiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAg
-ICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NDk3ODE6ICAgICAgMDoxNDA6
-UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0
-NTAzODAwLjg0OTc4MjogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBj
-eWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ5Nzg1OiAgMTA5ODc6ICAyOlMgPT0+
-IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgw
-MC44NDk5MzA6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxp
-ZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg0OTkzMTogICAgICAwOjE0MDpSID09PiBbMDAy
-XSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODQ5
-OTM0OiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4t
-MCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NTAwNzk6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5
-ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg1MDA4MTog
-ICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3
-IFswMDJdIDQxNTQ1MDM4MDAuODUwMDgzOiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0
-MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NTAyMjk6ICAgICAg
-MDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAy
-XSA0MTU0NTAzODAwLjg1MDIzMTogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6Ugog
-ICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODUwMjMzOiAgMTA5ODc6ICAy
-OlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1
-NDUwMzgwMC44NTAzNzk6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAg
-ICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg1MDM4MTogICAgICAwOjE0MDpSID09
-PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4
-MDAuODUwMzgzOiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8
-aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NTA1Mjg6ICAgICAgMDoxNDA6UiAgICsgWzAw
-Ml0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg1
-MDUzMDogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0
-LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODUwNTMyOiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAg
-ICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NTA2Nzg6
-ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAg
-ICBbMDAyXSA0MTU0NTAzODAwLjg1MDY4MDogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4Nzog
-IDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODUwNjgyOiAgMTA5
-ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAw
-Ml0gNDE1NDUwMzgwMC44NTA4Mjg6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMK
-ICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg1MDgzMDogICAgICAwOjE0
-MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNsaWN0ZXN0LTEwOTg3IFswMDJdIDQx
-NTQ1MDM4MDAuODUwODMzOiAgMTA5ODc6ICAyOlMgPT0+IFswMDJdICAgICAwOjE0MDpSCiAgICAg
-ICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44NTA5Nzg6ICAgICAgMDoxNDA6UiAg
-ICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxlPi0wICAgICBbMDAyXSA0MTU0NTAz
-ODAwLjg1MDk4MDogICAgICAwOjE0MDpSID09PiBbMDAyXSAxMDk4NzogIDI6UgogICAgICBjeWNs
-aWN0ZXN0LTEwOTg3IFswMDJdIDQxNTQ1MDM4MDAuODUwOTgyOiAgMTA5ODc6ICAyOlMgPT0+IFsw
-MDJdICAgICAwOjE0MDpSCiAgICAgICAgICA8aWRsZT4tMCAgICAgWzAwMl0gNDE1NDUwMzgwMC44
-NTExMjg6ICAgICAgMDoxNDA6UiAgICsgWzAwMl0gMTA5ODc6ICAyOlMKICAgICAgICAgIDxpZGxl
-Pi0wICAgICBbMDAyXSA0MTU0NTAzODAwLjg1MTEyOTogICAgICAwOjE0MDpSID09PiBbMDAyXSAx
-MDk4NzogIDI6Ugo=
---000e0cd4d1aa5fab58046c2096c2
-Content-Type: application/x-cdlink; name="trace.vcd"
-Content-Disposition: attachment; filename="trace.vcd"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_fvuhomkl2
-
-JHRpbWVzY2FsZSAxdXMgJGVuZAokc2NvcGUgbW9kdWxlIHNjaGVkX3N3aXRjaCAkZW5kCiR2YXIg
-d2lyZSAyICEgPGlkbGU+LTAjaWRsZSM5OCBbMTowXSAkZW5kCiR2YXIgd2lyZSAyICIgY3ljbGlj
-dGVzdC0xMDk4NyNyOTcjMiBbMTowXSAkZW5kCiR1cHNjb3BlICRlbmQKJGVuZGRlZmluaXRpb25z
-ICRlbmQKIzAKYlpaICEKYlpaICIKIzEKYlpaICEKYjEwICIKIzMKYlpaICIKYjEwICEKIzE0OApi
-WFggIgojMTUwCmJaWiAhCmIxMCAiCiMxNTIKYlpaICIKYjEwICEKIzI5OApiWFggIgojMjk5CmJa
-WiAhCmIxMCAiCiMzMDIKYlpaICIKYjEwICEKIzQ0OApiWFggIgojNDQ5CmJaWiAhCmIxMCAiCiM0
-NTIKYlpaICIKYjEwICEKIzU5NwpiWFggIgojNTk4CmJaWiAhCmIxMCAiCiM2MDEKYlpaICIKYjEw
-ICEKIzc0NwpiWFggIgojNzQ4CmJaWiAhCmIxMCAiCiM3NTEKYlpaICIKYjEwICEKIzg5OApiWFgg
-IgojODk5CmJaWiAhCmIxMCAiCiM5MDIKYlpaICIKYjEwICEKIzEwNDcKYlhYICIKIzEwNDgKYlpa
-ICEKYjEwICIKIzEwNTEKYlpaICIKYjEwICEKIzExOTYKYlhYICIKIzExOTgKYlpaICEKYjEwICIK
-IzEyMDAKYlpaICIKYjEwICEKIzEzNDYKYlhYICIKIzEzNDgKYlpaICEKYjEwICIKIzEzNTAKYlpa
-ICIKYjEwICEKIzE0OTYKYlhYICIKIzE0OTgKYlpaICEKYjEwICIKIzE1MDAKYlpaICIKYjEwICEK
-IzE2NDUKYlhYICIKIzE2NDcKYlpaICEKYjEwICIKIzE2NDkKYlpaICIKYjEwICEKIzE3OTUKYlhY
-ICIKIzE3OTcKYlpaICEKYjEwICIKIzE3OTkKYlpaICIKYjEwICEKIzE5NDUKYlhYICIKIzE5NDcK
-YlpaICEKYjEwICIKIzE5NTAKYlpaICIKYjEwICEKIzIwOTUKYlhYICIKIzIwOTcKYlpaICEKYjEw
-ICIKIzIwOTkKYlpaICIKYjEwICEKIzIyNDUKYlhYICIKIzIyNDYKYlpaICEKYjEwICIK
---000e0cd4d1aa5fab58046c2096c2--
