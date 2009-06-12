@@ -1,34 +1,43 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: Analyze sched_switch ftrace data with vcd viewer
-Date: Fri, 12 Jun 2009 16:53:23 +0200
-Message-ID: <4A326BE3.40202@osadl.org>
-References: <4A281971.1040406@home.nl> <49b7c2350906112312o1ca2aefeq658e6e645021c63f@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] Make comment describing set_debugfileprefix a bit
+ clearer
+Date: Fri, 12 Jun 2009 10:36:07 -0500
+Message-ID: <20090612103607.73f0d1f8@torg>
+References: <20090608045353.GA11319@pengutronix.de>
+	<1244814086-10929-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Herman ten Brugge <hermantenbrugge@home.nl>,
-	linux-rt-users@vger.kernel.org
-To: GeunSik Lim <leemgs1@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org, GeunSik Lim <leemgs1@gmail.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:44658 "EHLO toro.web-alm.net"
+Received: from mx2.redhat.com ([66.187.237.31]:56557 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750869AbZFLPAF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Jun 2009 11:00:05 -0400
-In-Reply-To: <49b7c2350906112312o1ca2aefeq658e6e645021c63f@mail.gmail.com>
+	id S1753507AbZFLPg2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Jun 2009 11:36:28 -0400
+In-Reply-To: <1244814086-10929-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear GeunSik Lim,
-
-> [..]
-> But I can not show normal result using "#> gtkware trace.vcd" command.
-> * screenshot : http://blogfiles5.naver.net/data43/2009/6/12/228/gtkwave-vcd-20090609.1503-invain.png
-The Quick HOWTO on our download page says:
-To select a particular data channel within gtkwave, select sched_switch 
-in the top left window and drag and drop the label of the requested 
-channel from the bottom left window labeled "Signals" to the drop area 
-at the left side of the main wave display area (also labeled "Signals").
-
-Please do so. I have every confidence that it will work.
-
-	Carsten.
+LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMQ0KDQpPbiBGcmks
+IDEyIEp1biAyMDA5IDE1OjQxOjI2ICswMjAwDQpVd2UgS2xlaW5lLUv2bmlnICA8dS5rbGVpbmUt
+a29lbmlnQHBlbmd1dHJvbml4LmRlPiB3cm90ZToNCg0KPiBUaGlzIHdhcyBub3RpY2VkIGJ5IEdl
+dW5TaWsgTGltLg0KPiANCj4gU2lnbmVkLW9mZi1ieTogVXdlIEtsZWluZS1L9m5pZyA8dS5rbGVp
+bmUta29lbmlnQHBlbmd1dHJvbml4LmRlPg0KPiBDYzogR2V1blNpayBMaW0gPGxlZW1nczFAZ21h
+aWwuY29tPg0KPiBDYzogTHVpcyBDbGF1ZGlvIFIuIEdvbmNhbHZlcyA8bGNsYXVkaW9AdXVkZy5v
+cmc+DQo+IENjOiBDbGFyayBXaWxsaWFtcyA8d2lsbGlhbXNAcmVkaGF0LmNvbT4NCj4gLS0tDQo+
+IEhlbGxvLA0KPiANCj4ganVzdCB0byBoYXZlIHRoZSBhbHRlcm5hdGl2ZSBzdWdnZXN0aW9uIGlu
+IHBhdGNoIGZvcm0sIHRvby4NCj4gDQo+IEBDbGFyazogIElmIHlvdSBwcmVmZXIgdGhpcyB2ZXJz
+aW9uLCB0b28sIHlvdSBjYW4gcHVsbCBpdCBmcm9tIG15IHJlcG8gYXQ6DQo+IA0KPiAJZ2l0Oi8v
+Z2l0LnBlbmd1dHJvbml4LmRlL2dpdC91a2wvcnQtdGVzdHMuZ2l0IGZvci1jbGFyaw0KPiANCj4g
+dG9nZXRoZXIgd2l0aCBhIG1hbnBhZ2UgZm9ybWF0IGZpeC4NCj4gDQo+IEJlc3QgcmVnYXJkcw0K
+PiBVd2UNCj4gDQoNClRoYW5rcyBVd2UgKGFuZCBHZXVuU2lrKS4gSSBwdWxsZWQgZnJvbSB0aGUg
+YWJvdmUgYW5kIG1lcmdlZC4gDQoNCkknbSB3b3JraW5nIG9uIGdldHRpbmcgaHdsYXRkZXRlY3Qg
+dG8gd29yayBwcm9wZXJseSB3aXRoIGpjbSdzIGxhdGVzdA0KdmVyc2lvbiwgc28gaXQgd2lsbCBi
+ZSBhIGJpdCBiZWZvcmUgSSBwdXNoIGEgbmV3IHZlcnNpb24gb2YgcnQtdGVzdHMuDQoNCkNsYXJr
+DQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogR251UEcgdjIuMC4xMCAo
+R05VL0xpbnV4KQ0KDQppRVlFQVJFQ0FBWUZBa295ZGVzQUNna1FIeXVqLytUVEVwMHFFd0NlTEhq
+OVo4U3pkWDF6U0xQSm52TVY2cDArDQpWc2NBbjJLVGxTaW56dmtJV1NyQk5XM29MenRnUnFLQQ0K
+PUpDRmQNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K
