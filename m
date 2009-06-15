@@ -1,46 +1,62 @@
-From: Jon Masters <jcm@redhat.com>
-Subject: Re: [PATCH -rt] include linux/delay.h in hwlat_detector
-Date: Sun, 14 Jun 2009 20:54:19 -0400
-Message-ID: <1245027259.31611.14.camel@localhost.localdomain>
-References: <1245015102-22057-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: 2.6.29.4-rt19
+Date: Mon, 15 Jun 2009 11:19:55 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903231723090.29264@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
+ <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:59149 "EHLO mx2.redhat.com"
+Received: from www.tglx.de ([62.245.132.106]:53521 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750789AbZFOAys (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 14 Jun 2009 20:54:48 -0400
-In-Reply-To: <1245015102-22057-1-git-send-email-u.kleine-koenig@pengutronix.de>
+	id S1757841AbZFOJUw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Jun 2009 05:20:52 -0400
+In-Reply-To: <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2009-06-14 at 23:31 +0200, Uwe Kleine-K=C3=B6nig wrote:
-> This broke when compiling on i386 without X86_LOCAL_APIC because then
-> arch/x86/include/asm/smp.h doesn't include asm/apic.h which in turn i=
-ncludes
-> linux/delay.h.
->=20
-> Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Jon Masters <jcm@redhat.com>
-> ---
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-Oh, thanks. I will also look at better handling hotplug CPU just to mak=
-e
-Paul happy (probably just disable on hotplug as you'll need to restart
-any testing then), though as he said, it's obvious one shouldn't be
-removing CPUs at the same time as benchmarking.
+    - futex: plug page ref leak (stupid me)
+    - hwlat: add missing include (ukleinek)
 
-Jon.
+Download locations:
 
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.4-rt19 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.4.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.4-rt19.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
