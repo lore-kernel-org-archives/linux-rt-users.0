@@ -1,93 +1,171 @@
-From: Wolfgang Johann BETZ <wolfgang.betz@st.com>
-Subject: Re: 2.6.29.4-rt19
-Date: Tue, 16 Jun 2009 15:49:40 +0200
-Message-ID: <4A37A2F4.1010509@st.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00
- .0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+From: Iratxo Pichel Ortiz <ipichel@albentia.com>
+Subject: Re: NOHZ: local_softirq_pending
+Date: Tue, 16 Jun 2009 16:45:40 +0200
+Message-ID: <4A37B014.4040104@albentia.com>
+References: <4A35171C.9090800@albentia.com>	 <8e6b7a710906141250m2a991ca9r5949e502b9976e39@mail.gmail.com>	 <alpine.LFD.2.00.0906151501200.2800@localhost.localdomain>	 <4A365CCF.2020707@albentia.com> <8e6b7a710906160101x6a8ae9d5qa7638627f513278@mail.gmail.com> <4A376450.5020209@albentia.com> <4A376559.5060604@albentia.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------040107060700090301090902"
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	=?ISO-8859-1?Q?Noeli?= =?ISO-8859-1?Q?a_Mor=F3n?=
+	<nmoron@albentia.com>,
+	'Rodrigo Partearroyo' <rpartearroyo@albentia.com>,
+	Iratxo Pichel Ortiz <ipichel@albentia.com>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from eu1sys200aog108.obsmtp.com ([207.126.144.125]:56821 "EHLO
-	eu1sys200aog108.obsmtp.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751341AbZFPOVe (ORCPT
+Received: from llsc497-a04.servidoresdns.net ([82.223.190.48]:55682 "EHLO
+	llsc497-a04.servidoresdns.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752376AbZFPOpm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Jun 2009 10:21:34 -0400
-In-Reply-To: <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+	Tue, 16 Jun 2009 10:45:42 -0400
+In-Reply-To: <4A376559.5060604@albentia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------040107060700090301090902
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Please find below more detailed infor regarding this "NOHZ:=20
+local_softirq_pending".
 
-Ciao Thomas,
+Iratxo Pichel Ortiz wrote:
+> Thomas,
+>
+> More info below, I hope it helps.
+>
+> Iratxo Pichel Ortiz wrote:
+>> Thomas,
+>>
+>> Iratxo Pichel Ortiz wrote:
+>>
+>>>> Do you know what could be causing this issue. I have managed to=20
+>>>> repeat this
+>>>> traces (NOHZ...) without using my code, using a workqueue and in=20
+>>>> the work
+>>>> just by doing something like:
+>>>>
+>>>> work_func() {
+>>>>   mdelay(10);
+>>>>   msleep(10);
+>>>>
+>>>>  queue_work(myqueue, mywork);
+>>>> }
+>>>>
+>>>> And then by heavy loading the box from the outside.
+>>>>    =20
+>> I have written a very small module that causes the
+>> "local_softirq_pending" under not some load. Please find code at the=
+ end
+>> of this email. Here is pasted some traces of dmesg (I have increased=
+ the
+>> ratelimit of the "NOHZ: local..." trace to 250.
+>>
+>> The only strange thing here is that I am calling "set_workqueue_prio=
+" (I
+>> have hacked source to export this symbol), and I am starting to thin=
+k
+>> that this could not be a good idea. Any hints about this?
+>>
+>> [  648.954000] NOHZ: local_softirq_pending
+>> 0e
+>>
+>> [  648.955000] NOHZ: local_softirq_pending
+>> 0e
+>>
+>> [  648.956000] NOHZ: local_softirq_pending
+>> 0e
+> I have changed the implementation of the module test to use kthreads
+> instead of workqueues. The behavior is exactly the same. I have tried
+> with prios from 1 to 99. Please find the code below as before. I have
+> also atached the differente softirqs codes that had been pending in s=
+ome
+> of the tests.
+I have even tried this without any system-loader module. Just by bootin=
+g=20
+the kernel and pinging the box very heavily, there are a lot of NOHZ...=
+=20
+traces in dmesg. Indeed they follow a very strange pattern that I canno=
+t=20
+match without any part of the kernel. The pattern is the following (NOH=
+Z=20
+and HZ=3D1000):
+[4294715.247000] NOHZ: local_softirq_pending=20
+06                                             =20
+[4294715.248000] NOHZ: local_softirq_pending=20
+06                                             =20
+[4294715.249000] NOHZ: local_softirq_pending=20
+06                                             =20
+=2E.. It repeats every jiffy ...                                     =20
+[4294715.290000] NOHZ: local_softirq_pending=20
+06                                             =20
+[4294715.291000] NOHZ: local_softirq_pending=20
+06                                             =20
+[4294715.292000] NOHZ: local_softirq_pending 06     =20
 
-this new version of the preempt-rt patch seems to be a good step forward 
-with respect to a problem I have in a benchmark application I am running 
-on top of a kernel v2.6.29.4 patched with it on a quad-core Intel(R) 
-Xeon(R) machine. Within this benchmark I am making use of pthreads and 
-semaphores and sometime it happens that a call to "sem_wait()" returns 
-"-1" and sets the "errno" to "512" - which corresponds to "ERESTARTSYS" 
-- which up to my poor kernel knowledge should never be delivered to the 
-user space.
-Now, with the new version of the preempt-rt patch, the frequency of 
-these odd "sem_wait()" return values has notably diminished, though not 
-completely stopped. So, I thought it might be interesting for you if I 
-share a workaround with you which seems to eliminate the odd 
-"sem_wait()" return values (as it did work already for preempt-rt patch 
-version rt17). Note, that this for sure is not a bug fix, but just a 
-workaround for which I am even not a 100% sure that it is semantically 
-correct, but maybe it gives you a hint on what might still go wrong in 
-the RT patch. Pls. find attach the "rcsdiff" output on file 
-"kernel/futex.c" containing the workaround.
+And then back again at some seconds later:
+[4294723.246000] NOHZ: local_softirq_pending=20
+0e                                             =20
+[4294723.246000] NOHZ: local_softirq_pending=20
+0e                                             =20
+[4294723.247000] NOHZ: local_softirq_pending=20
+0e                                             =20
+=2E.. It repeats every jiffy ...=20
+                                                            =20
+[4294723.293000] NOHZ: local_softirq_pending=20
+10e                                            =20
+[4294723.294000] NOHZ: local_softirq_pending=20
+10e                                            =20
+[4294723.295000] NOHZ: local_softirq_pending 10e      =20
 
-Best regards,
-Wolfgang Betz
+The patter always starts about X.246/X.248 and always stops at X.295, s=
+o=20
+I believe that this points to some subsystem, but dont know where to=20
+look for.
 
+So it seems that my "RT" tasks is delayed, as you said in your original=
+=20
+mail, when the 02 SIRQ is delayed, but the rest of the time is correctl=
+y=20
+running. This problem appears to be a Kernel or RT patch issue, so=20
+please let me know which tests would you like me to do, I have a couple=
+=20
+of boxes here and some time to build and test kernels. Alternatively, i=
+f=20
+you would like me to look at any part of the system, let me know and I=20
+will try my best.
 
---------------040107060700090301090902
-Content-Type: text/plain;
- name="futex_rcsdiff.txt"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="futex_rcsdiff.txt"
+>>
+>>
+>>>>> Does it work when you disable CONFIG_NOHZ ?
+>>>>>      =20
+>> Still pending to test.
+>>>> I will try this and let the list know.
+>>>>  =20
+>>>>> Thanks,
+>>>>>
+>>>>>        tglx
+>>>>>    =20
+Thanks,
 
-===================================================================
-RCS file: kernel/RCS/futex.c,v
-retrieving revision 1.1
-diff -r1.1 kernel/futex.c
+    Iratxo.
 
---------------040107060700090301090902
-Content-Type: text/plain;
- name="futex_diff.txt"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="futex_diff.txt"
+--=20
+Iratxo Pichel Ortiz
+Software Development Manager
 
-1839a1840,1849
-> 	// betzw: added WARN_ON(!signal_pending(current))
-> 	if(!signal_pending(current)) {
-> 	  static unsigned int warn_count = 1;
-> 
-> 	  // WARN_ON(!signal_pending(current));
-> 	  printk(KERN_WARNING "=====> betzw: futex_wait warning #%u\n", warn_count++);
-> 
-> 	  // betzw: trial for a workaround
-> 	  set_tsk_thread_flag(current,TIF_SIGPENDING);
-> 	}
-2600a2611,2619
-> 
-> 	// betzw: added WARN_ON(!signal_pending(current))
-> 	if((ret < -256) && !signal_pending(current)) {
-> 	  static unsigned int warn_count = 1;
-> 
-> 	  // WARN_ON(!signal_pending(current));
-> 	  printk(KERN_WARNING "=====> betzw: do_futex warning (ret: %d, cmd: %d) #%u\n", -ret, cmd, warn_count++);
-> 	}
-> 
+Albentia Systems S.A.
+http://www.albentia.com
 
---------------040107060700090301090902--
+Tel: +34 914400567
+Cel: +34 663808405
+=46ax: +34 914400569
+
+C\Margarita Salas 22
+Parque Tecnol=F3gico de Legan=E9s
+Legan=E9s (28918)
+Madrid
+Spain
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
