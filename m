@@ -1,66 +1,114 @@
-From: Thomas Pfaff <tpfaff@pcs.com>
-Subject: Re: Setting the priority of an IRQ thread
-Date: Wed, 17 Jun 2009 10:27:22 +0200 (CEST)
-Message-ID: <Pine.LNX.4.64.0906171024250.6186@lxtpfaff.pcs.ditec.de>
-References: <loom.20090615T222836-377@post.gmane.org>
- <000001c9ee36$218cf3a0$a852c70a@dlh.st.com> <loom.20090616T074347-549@post.gmane.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.29.5-rt21
+Date: Wed, 17 Jun 2009 10:45:38 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
+ <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+ <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Martin Shepherd <mcs@astro.caltech.edu>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.pcs.de ([145.253.69.50]:58285 "EHLO mail.pcs.com"
+Received: from www.tglx.de ([62.245.132.106]:58878 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1763478AbZFQIes (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Jun 2009 04:34:48 -0400
-In-Reply-To: <loom.20090616T074347-549@post.gmane.org>
+	id S932411AbZFQIqv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Jun 2009 04:46:51 -0400
+In-Reply-To: <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are pleased to announce the next update to our new preempt-rt
+series.
 
+   - update to 2.6.29.5 (2.6.29.5-rt20, which I uploaded yesterday but
+     did not announce due to the findings below)
+ 
+   - softirq: lower default priority below hardirq default priority
 
-On Tue, 16 Jun 2009, Martin Shepherd wrote:
+This fixes a long standing default priority configuration problem of
+the -rt series. On UP machines this can result in net_tx softirq
+running in an endless loop and starving the irq threads and the other
+softirq threads and of course everything with lower priority. It might
+be possible to happen on a SMP machine when the hardirq thread
+affinities are tweaked in the right way.
 
-> Suresh Kumar SHUKLA <suresh.shukla <at> st.com> writes:
-> > 	// get IRQ descriptor from IRQ, it contains pid
-> > 	desc = &irq_desc[IRQ_BASIC_TIMER_3_1];
-> 
-> That's a very useful clue. I was thinking that I would have to walk the process
-> tree to find the thread by name. Following up on this clue, it appears as though
-> in kernel 2.6.29.4 I should be able to use desc=irq_to_desc(irq) to look up the
-> IRQ descriptor, then use pid=get_task_pid(desc->thread), to get the PID of the
-> IRQ thread, then use sys_sched_setscheduler(pid,...) to change its priority.
-> I'll try that out in the morning.
-> 
+What happens is:
 
-FYI, i use following code to set the interrupt thread prio on first interrupt 
-and it works so far:
+     tx interrupt
+        lock(card->tx_lock);
+        dev_kfree_skb_any(skb);
+          blocks on a contended lock
+	    
+     net_tx softirq runs
+        unlocks contended lock but does not schedule away due to equal prio
+	repeat:
+         calls xmit
+	 try_lock(card->tx_lock) fails
+	   -> reschedule skb which keeps net_tx running
+         goto repeat;
 
-atomic_t first_irq;
+The scheduler does not schedule away net_tx, so this goes on forever.
 
-static irqreturn_t irq_handler (int irq, void *devp)
-{
-#ifdef CONFIG_PREEMPT_HARDIRQS
-	if (atomic_cmpxchg (&first_irq, 1, 0))
-	{
-		struct sched_param param = { .sched_priority = 55 };
+This has been there forever, but it seems to be easier to trigger in
+the 29 -rt series which is probably due to the slab cache lock breaks
+we did.
 
-		/* raise thread prio on first interrupt */
-		sched_setscheduler(current, SCHED_FIFO, &param);
-	}
-#endif
+The problem is restricted to a dozen of wireless adapters and network
+cards where e1000e is the most popular one. We could patch the
+affected drivers for -rt, but we need to have a closer look at the
+general assumptions of drivers vs. hardirq/softirq. Note, this is not
+a mainline problem as the semantics are entirely correct there.
 
-	/* handle interrupt */
+Lowering the priorities of the softirq threads below the hardirq
+threads priorities is a safe workaround for now. It prevents the
+runaway scenario under all circumstances as it resembles the mainline
+semantics closely.
 
-	return IRQ_RETVAL(IRQ_HANDLED);
-}
+For all existing -rt systems the problem can be solved w/o patching
+the kernel by adjusting the priority of the softirq threads from the
+init scripts with chrt.
 
-static int init_irqhandler (void)
-{
-	request_irq (...);
-	atomic_set (&dev->first_irq, 1);
+It's extremly hard to trigger this, we never had a report of that
+before, and I want to say thanks to Bernd Oelker who meticulously
+worked on reproducing the problem and debugging it with all evil
+methods and patches I could come up with. And no, I'm not going to
+tell you which nasty hacks made it possible to decode this :)
 
-	...
-}
+Download locations:
 
-Thomas
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.5-rt21 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.5.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.5-rt21.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
