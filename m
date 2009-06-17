@@ -1,49 +1,65 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: Setting the priority of an IRQ thread
-Date: Wed, 17 Jun 2009 11:00:53 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0906171058330.2800@localhost.localdomain>
-References: <loom.20090615T222836-377@post.gmane.org> <000001c9ee36$218cf3a0$a852c70a@dlh.st.com> <loom.20090616T074347-549@post.gmane.org> <20090616182734.GD13048@pengutronix.de> <loom.20090616T215133-122@post.gmane.org> <alpine.LFD.2.00.0906170706220.2800@localhost.localdomain>
- <Pine.LNX.4.64.0906162232100.21049@goblin.caltech.edu>
+Date: Wed, 17 Jun 2009 11:17:03 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906171114560.2800@localhost.localdomain>
+References: <loom.20090615T222836-377@post.gmane.org> <000001c9ee36$218cf3a0$a852c70a@dlh.st.com> <loom.20090616T074347-549@post.gmane.org> <20090616182734.GD13048@pengutronix.de> <alpine.LFD.2.00.0906170025080.2800@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Martin Shepherd <mcs@astro.caltech.edu>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-2142236691-1245230224=:2800"
+Cc: Martin Shepherd <mcs@astro.caltech.edu>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:50033 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:55835 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752293AbZFQJBD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Jun 2009 05:01:03 -0400
-In-Reply-To: <Pine.LNX.4.64.0906162232100.21049@goblin.caltech.edu>
+	id S1756256AbZFQJRV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Jun 2009 05:17:21 -0400
+In-Reply-To: <alpine.LFD.2.00.0906170025080.2800@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 16 Jun 2009, Martin Shepherd wrote:
-> On Wed, 17 Jun 2009, Thomas Gleixner wrote:
-> > > It seems much more friendly and efficient for my driver to provide
-> > > applications with an ioctl that tells it to set the priority of its
-> > > IRQ thread.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--8323328-2142236691-1245230224=:2800
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
+
+On Wed, 17 Jun 2009, Thomas Gleixner wrote:
+> On Tue, 16 Jun 2009, Uwe Kleine-König wrote:
+> > On Tue, Jun 16, 2009 at 07:59:28AM +0000, Martin Shepherd wrote:
+> > > Suresh Kumar SHUKLA <suresh.shukla <at> st.com> writes:
+> > > > 	// get IRQ descriptor from IRQ, it contains pid
+> > > > 	desc = &irq_desc[IRQ_BASIC_TIMER_3_1];
+> > > 
+> > > That's a very useful clue. I was thinking that I would have to walk the process
+> > > tree to find the thread by name. Following up on this clue, it appears as though
+> > > in kernel 2.6.29.4 I should be able to use desc=irq_to_desc(irq) to look up the
+> > > IRQ descriptor, then use pid=get_task_pid(desc->thread), to get the PID of the
+> > > IRQ thread, then use sys_sched_setscheduler(pid,...) to change its priority.
+> > > I'll try that out in the morning.
+> > I wouldn't recommend calling sys_sched_setscheduler from kernel space.
+> > That's the userspace API and you need to pass a __user pointer as third
+> > argument.
 > > 
-> > Wrong. That information is already available in sysfs and there is no
-> > reason to use an ioctl for that.
+> > The right way is to do this change from userspace.
 > 
-> Could you point out where please? Searching sysfs I see the following
-> two files that contain the IRQ numbers of two of the boards that my
-> driver handles:
+> What a nonsense. Care to look at the code ?
 > 
->  /bus/pci/drivers/accpcidio/0000:03:02.0/irq
->  /bus/pci/drivers/accpcidio/0000:03:03.0/irq
-> 
-> However, I don't see how a user application could figure out which of
-> these corresponded to the board that it opened using a particular
-> device file. Only the device driver knows which device file is
-> associated with a given PCI device ID, and that isn't recorded in
-> sysfs.
+> The irq/softirq threads call sys_sched_setscheduler() already to
+> change their priorities.
 
-Errm, and how does udev figure out which device node to create for
-which device ?
+More awake, it should be changed for correctness sake. :)
 
-/sys/devices/pci0000:00/0000:00:1d.7/usb1/dev
+> The right way to do this is to have an interface
+> set_irq_thread_prio(irq, prio)
+
+This still stands, if we need a way to change the prio from the
+driver.
+
+But the more I think about it should be done from user space.
 
 Thanks,
 
 	tglx
+--8323328-2142236691-1245230224=:2800--
