@@ -1,114 +1,49 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.29.5-rt21
-Date: Wed, 17 Jun 2009 10:45:38 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0903252154040.3397@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
- <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
- <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+Subject: Re: Setting the priority of an IRQ thread
+Date: Wed, 17 Jun 2009 11:00:53 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906171058330.2800@localhost.localdomain>
+References: <loom.20090615T222836-377@post.gmane.org> <000001c9ee36$218cf3a0$a852c70a@dlh.st.com> <loom.20090616T074347-549@post.gmane.org> <20090616182734.GD13048@pengutronix.de> <loom.20090616T215133-122@post.gmane.org> <alpine.LFD.2.00.0906170706220.2800@localhost.localdomain>
+ <Pine.LNX.4.64.0906162232100.21049@goblin.caltech.edu>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Martin Shepherd <mcs@astro.caltech.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:58878 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:50033 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932411AbZFQIqv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Jun 2009 04:46:51 -0400
-In-Reply-To: <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+	id S1752293AbZFQJBD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Jun 2009 05:01:03 -0400
+In-Reply-To: <Pine.LNX.4.64.0906162232100.21049@goblin.caltech.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
+On Tue, 16 Jun 2009, Martin Shepherd wrote:
+> On Wed, 17 Jun 2009, Thomas Gleixner wrote:
+> > > It seems much more friendly and efficient for my driver to provide
+> > > applications with an ioctl that tells it to set the priority of its
+> > > IRQ thread.
+> > 
+> > Wrong. That information is already available in sysfs and there is no
+> > reason to use an ioctl for that.
+> 
+> Could you point out where please? Searching sysfs I see the following
+> two files that contain the IRQ numbers of two of the boards that my
+> driver handles:
+> 
+>  /bus/pci/drivers/accpcidio/0000:03:02.0/irq
+>  /bus/pci/drivers/accpcidio/0000:03:03.0/irq
+> 
+> However, I don't see how a user application could figure out which of
+> these corresponded to the board that it opened using a particular
+> device file. Only the device driver knows which device file is
+> associated with a given PCI device ID, and that isn't recorded in
+> sysfs.
 
-   - update to 2.6.29.5 (2.6.29.5-rt20, which I uploaded yesterday but
-     did not announce due to the findings below)
- 
-   - softirq: lower default priority below hardirq default priority
+Errm, and how does udev figure out which device node to create for
+which device ?
 
-This fixes a long standing default priority configuration problem of
-the -rt series. On UP machines this can result in net_tx softirq
-running in an endless loop and starving the irq threads and the other
-softirq threads and of course everything with lower priority. It might
-be possible to happen on a SMP machine when the hardirq thread
-affinities are tweaked in the right way.
+/sys/devices/pci0000:00/0000:00:1d.7/usb1/dev
 
-What happens is:
+Thanks,
 
-     tx interrupt
-        lock(card->tx_lock);
-        dev_kfree_skb_any(skb);
-          blocks on a contended lock
-	    
-     net_tx softirq runs
-        unlocks contended lock but does not schedule away due to equal prio
-	repeat:
-         calls xmit
-	 try_lock(card->tx_lock) fails
-	   -> reschedule skb which keeps net_tx running
-         goto repeat;
-
-The scheduler does not schedule away net_tx, so this goes on forever.
-
-This has been there forever, but it seems to be easier to trigger in
-the 29 -rt series which is probably due to the slab cache lock breaks
-we did.
-
-The problem is restricted to a dozen of wireless adapters and network
-cards where e1000e is the most popular one. We could patch the
-affected drivers for -rt, but we need to have a closer look at the
-general assumptions of drivers vs. hardirq/softirq. Note, this is not
-a mainline problem as the semantics are entirely correct there.
-
-Lowering the priorities of the softirq threads below the hardirq
-threads priorities is a safe workaround for now. It prevents the
-runaway scenario under all circumstances as it resembles the mainline
-semantics closely.
-
-For all existing -rt systems the problem can be solved w/o patching
-the kernel by adjusting the priority of the softirq threads from the
-init scripts with chrt.
-
-It's extremly hard to trigger this, we never had a report of that
-before, and I want to say thanks to Bernd Oelker who meticulously
-worked on reproducing the problem and debugging it with all evil
-methods and patches I could come up with. And no, I'm not going to
-tell you which nasty hacks made it possible to decode this :)
-
-Download locations:
-
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Information on the RT patch can be found at:
-
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.29.5-rt21 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.5.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.5-rt21.bz2
-
-The broken out patches are also available at the same download
-locations.
-
-Enjoy !
-
-       tglx
-
+	tglx
