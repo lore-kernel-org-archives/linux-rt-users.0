@@ -1,72 +1,46 @@
-From: Martin Shepherd <mcs@astro.caltech.edu>
-Subject: Re: Setting the priority of an IRQ thread
-Date: Wed, 17 Jun 2009 18:08:21 -0700 (PDT)
-Message-ID: <Pine.LNX.4.64.0906171644341.921@goblin.caltech.edu>
-References: <loom.20090615T222836-377@post.gmane.org>
- <000001c9ee36$218cf3a0$a852c70a@dlh.st.com> <loom.20090616T074347-549@post.gmane.org>
- <20090616182734.GD13048@pengutronix.de> <loom.20090616T215133-122@post.gmane.org>
- <alpine.LFD.2.00.0906170706220.2800@localhost.localdomain>
- <Pine.LNX.4.64.0906162232100.21049@goblin.caltech.edu>
- <alpine.LFD.2.00.0906171058330.2800@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: NOHZ: local_softirq_pending
+Date: Thu, 18 Jun 2009 10:57:44 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906181048500.2800@localhost.localdomain>
+References: <4A35171C.9090800@albentia.com>  <8e6b7a710906141250m2a991ca9r5949e502b9976e39@mail.gmail.com>  <alpine.LFD.2.00.0906151501200.2800@localhost.localdomain>  <4A365CCF.2020707@albentia.com> <8e6b7a710906160101x6a8ae9d5qa7638627f513278@mail.gmail.com>
+ <4A376450.5020209@albentia.com> <4A376559.5060604@albentia.com> <4A37B014.4040104@albentia.com> <4A37E6D1.5010207@albentia.com> <alpine.LFD.2.00.0906180001210.2800@localhost.localdomain> <4A396FB8.3020807@albentia.com> <alpine.LFD.2.00.0906180133220.2800@localhost.localdomain>
+ <4A398B4F.6080702@albentia.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Cc: linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	=?ISO-8859-15?Q?Noelia_Mor=F3n?= <nmoron@albentia.com>,
+	"'Rodrigo Partearroyo'" <rpartearroyo@albentia.com>
+To: Iratxo Pichel Ortiz <ipichel@albentia.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from phobos.caltech.edu ([131.215.193.100]:58500 "EHLO
-	phobos.caltech.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751998AbZFRBIn (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Jun 2009 21:08:43 -0400
-In-Reply-To: <alpine.LFD.2.00.0906171058330.2800@localhost.localdomain>
+Received: from www.tglx.de ([62.245.132.106]:46823 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752618AbZFRI5s (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Jun 2009 04:57:48 -0400
+In-Reply-To: <4A398B4F.6080702@albentia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 17 Jun 2009, Thomas Gleixner wrote:
-> Errm, and how does udev figure out which device node to create for
-> which device ?
->
-> /sys/devices/pci0000:00/0000:00:1d.7/usb1/dev
+Iratxo,
 
-Thanks for the hint. I wasn't aware of the need to call
-device_create() etc in my driver, and had been creating device files
-by hand.  Having now remedied this omission, I have taken the
-opportunity to add an irq attribute file under each of my device
-entries in sysfs. Next I would like to add an attribute that indicates
-the corresponding thread PID. To do that, I need a kernel function
-that can be called to determine the IRQ thread ID.
+On Thu, 18 Jun 2009, Iratxo Pichel Ortiz wrote:
+> Having read the three of them, regardless of the last process before the
+> "NOHZ...", there is always a call to the FPE emulator. I am going to do some
+> tests changing the FPE emulator, in case it helps.
 
-I have just written and tested the following function for doing this:
+No, what happens is that the -RT starvation protector kicks in. That's
+a mechanism which checks whether the CPU is monopolized by rt tasks
+for longer than 950ms. It then blocks execution of rt tasks for
+50ms. The silly thing is that it goes idle, but that's a different
+problem.
 
-#ifdef CONFIG_PREEMPT_HARDIRQS
+It's default on and can be disabled via:
 
-pid_t get_irq_thread_pid(unsigned int irq, struct pid_namespace *ns)
-{
-         struct irq_desc *desc = irq_to_desc(irq);
-         pid_t pid = 0;
+echo 0 > /proc/sys/kernel/rt_runtime_us
 
-         if(desc) {
-                 unsigned long flags;
-                 spin_lock_irqsave(&desc->lock, flags);
-                 if(desc->thread)
-                         pid = task_pid_nr_ns(desc->thread, ns);
-                 spin_unlock_irqrestore(&desc->lock, flags);
-         }
-         return pid;
-}
+Sorry that I did not notice that earlier, but when that triggers, then
+something is really wrong. There should never be a situation where -rt
+tasks (neither irq threads nor softirqs) should monopolize the CPU.
 
-EXPORT_SYMBOL(get_irq_thread_pid);
+Thanks,
 
-#endif
-
-This would most frequently be called like:
-
-   pid = get_irq_thread_pid(irq, current->nsproxy->pid_ns);
-   if(pid) {
-     ...
-   }
-
-Would this function be acceptible for inclusion in the preempt-rt
-kernel, or do you have something else in mind?
-
-Martin
+	tglx
