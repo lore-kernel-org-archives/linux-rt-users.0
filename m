@@ -1,106 +1,95 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Test Scenario for Realtime latency benchmark in the worstcase
-	environment.
-Date: Fri, 19 Jun 2009 08:42:36 +0900
-Message-ID: <1245368556.2153.10.camel@centos51>
-Reply-To: leemgs1@gmail.com
+From: Iratxo Pichel Ortiz <ipichel@albentia.com>
+Subject: Re: NOHZ: local_softirq_pending
+Date: Thu, 18 Jun 2009 18:52:09 +0200
+Message-ID: <4A3A70B9.4070702@albentia.com>
+References: <4A35171C.9090800@albentia.com>  <8e6b7a710906141250m2a991ca9r5949e502b9976e39@mail.gmail.com>  <alpine.LFD.2.00.0906151501200.2800@localhost.localdomain>  <4A365CCF.2020707@albentia.com> <8e6b7a710906160101x6a8ae9d5qa7638627f513278@mail.gmail.com> <4A376450.5020209@albentia.com> <4A376559.5060604@albentia.com> <4A37B014.4040104@albentia.com> <4A37E6D1.5010207@albentia.com> <alpine.LFD.2.00.0906180001210.2800@localhost.localdomain> <4A396FB8.3020807@albentia.com> <alpine.LFD.2.00.0906180133220.2800@localhost.localdomain> <4A398B4F.6080702@albentia.com> <alpine.LFD.2.00.0906181048500.2800@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: tglx <tglx@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	=?ISO-8859-1?Q?Noeli?= =?ISO-8859-1?Q?a_Mor=F3n?=
+	<nmoron@albentia.com>,
+	'Rodrigo Partearroyo' <rpartearroyo@albentia.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f189.google.com ([209.85.216.189]:58408 "EHLO
-	mail-px0-f189.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753667AbZFROnX (ORCPT
+Received: from llsc497-a04.servidoresdns.net ([82.223.190.48]:43579 "EHLO
+	llsc497-a04.servidoresdns.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750794AbZFRQwR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Jun 2009 10:43:23 -0400
-Received: by pxi27 with SMTP id 27so1141864pxi.33
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Jun 2009 07:43:26 -0700 (PDT)
+	Thu, 18 Jun 2009 12:52:17 -0400
+In-Reply-To: <alpine.LFD.2.00.0906181048500.2800@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Thomas,
 
-Hi all,
+Thomas Gleixner wrote:
+> No, what happens is that the -RT starvation protector kicks in. That'=
+s
+> a mechanism which checks whether the CPU is monopolized by rt tasks
+> for longer than 950ms. It then blocks execution of rt tasks for
+> 50ms. The silly thing is that it goes idle, but that's a different
+> problem.
+>  =20
+> It's default on and can be disabled via:
+>
+> echo 0 > /proc/sys/kernel/rt_runtime_us
+>
+> Sorry that I did not notice that earlier, but when that triggers, the=
+n
+> something is really wrong. There should never be a situation where -r=
+t
+> tasks (neither irq threads nor softirqs) should monopolize the CPU.
+>  =20
+No problem at all! Please let me know if the following assumption is=20
+right: This protection mechanism is dependent on the available CPU=20
+power. I mean, if the system has low CPU power, and if, for example, th=
+e=20
+network has very very high load, the total time taken to process all th=
+e=20
+data will be long. Generally much longer than in more powerful systems,=
+=20
+so this protection arises. Is this right or it should not happen by=20
+design of the softirqs/RT tasks?
 
-This is Realtime Latency Test Scenario during 24hours.
-In this experiment, 
-I adjusted CPU Affinity Policy to reduce Latency overheads in the Multicore.
+Anyway, seems to be correctly working. I still have to check why with =20
+HZ=3D100 it was periodically happening this events even with low load, =
+but=20
+that could be very probably related to my software.
 
-Prepare cyclictest(rt-tests), taskset, chrt, ltp-full-20090531.tar.gz , 
-hackbench , ping, dd, tar, netperf commands.
+Again, thank you very much.
 
-I want to listen some advices and opinions about below test scenario 
-to measure a latency guarantee in the worstcase environments 
-using simple script and commands. If I mistake, Please Correct me. 
+Best regards,
 
-- H/W Informatoin : Core2 Quad 9300 , DDR2 2G , Sata 400G, Realtek 1G Lan.
-- 192.168.155.20(Private IP) is target board.
-
-
-
-Thanks,
-
-- - - - - - - - - - - - - - - - - - - - - - - -  - - - - - - - -
-ssh root@192.168.155.20
-cd /opt/testsuite.20080909/cyclictest/rt-tests-0.42
-
-# This is task to keep Latency(Max limitation: 200uSec) at the worst case.
-# If you need histogram information just, Please Use -h option.
-time ./cyclictest -t1 -p 99 -i 1000 -n -l 1000000000000 -d 86400 -m -a 1      
-
-# Now, Below test code is background stress for the worst case in RT system.
-time ./cyclictest -t50 -p 80 -i 10000 -n -l 100000000000 -d 86400  -a 3
-
-taskset -c 2,3 ./stress.20080904.sh
----------------------------
-#!/bin/sh
-# Most hardcore test (Ingo Molnar - http://lkml.org/lkml/2005/6/22/347)
-# For Heavy CPU Ratio.
-while true; do /bin/dd if=/dev/zero of=bigfile bs=1024000 count=1024; done &
-while true; do /usr/bin/killall hackbench; sleep 5; done &
-while true; do /sbin/hackbench 20; done &
-cd ltp-full-20090531; while true; do ./runalltests.sh -x 40; done  & 
-----------------------------
-# Tip) Utilize iotop & top command to monitor CPU & IO Ratio.
-# for 100% Usage of CPU Load using ping 
-taskset -c 0 /bin/ping -l 100000 -q -s 10 -f localhost &
-taskset -c 1 /bin/ping -l 100000 -q -s 10 -f localhost &
-taskset -c 2 /bin/ping -l 100000 -q -s 10 -f localhost &
-taskset -c 3 /bin/ping -l 100000 -q -s 10 -f localhost & 
-
-# for 100% Usage of I/O Load using linux-2.6.30 tar source like tiobench s/w.
-# Don't forget disk total usage ratio (ex: df ).
-cd /opt
-while true; do taskset -c 0 tar cvzf test1.tgz  ./linux-2.6.30 ; done  &
-while true; do taskset -c 1 tar cvzf test2.tgz  ./linux-2.6.30 ; done  &
-while true; do taskset -c 2 tar cvzf test3.tgz  ./linux-2.6.30 ; done  &
-while true; do taskset -c 3 tar cvzf test4.tgz  ./linux-2.6.30 ; done  &
-
-# Estimate file space usage ( for I/O Load)
-while true; do taskset -c 3 /bin/du / ; done  &
-
-# Network Stress ( Network Performance & Stress )
-/usr/bin/netserver
-/usr/bin/netperf -H 192.168.155.20 -t TCP_STREAM -A 16K,16K -l 3600
-# Streamming Stress using firefox webbrowser.
-firefox http://www.intomail.net/stream.php
-
-# USB Disk I/O Stress (External HDD's I/O )
-cd /media/usb/
-taskset -c 2 tar cvzf test5.tgz  /media/usb/linux-2.6.30 &
+    Iratxo.
+> Thanks,
+>
+> 	tglx
+>
+>  =20
 
 
+--=20
+Iratxo Pichel Ortiz
+Software Development Manager
 
------------------------------------------------
-To unsubscribe from this list: send the line "unsubscribe linux-***" 
-in the body of a message to majordomo@vger.kernel.org
+Albentia Systems S.A.
+http://www.albentia.com
+
+Tel: +34 914400567
+Cel: +34 663808405
+=46ax: +34 914400569
+
+C\Margarita Salas 22
+Parque Tecnol=F3gico de Legan=E9s
+Legan=E9s (28918)
+Madrid
+Spain
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
-GeunSik Lim ( Samsung Electronics )
-e-Mail  :1) geunsik.lim@samsung.com
-         2) leemgs@gmail.com , leemgs1@gmail.com
-HomePage: http://blog.naver.com/invain/
------------------------------------------------
-
