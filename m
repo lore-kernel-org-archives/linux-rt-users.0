@@ -1,74 +1,81 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Intel graphics and kernel RT failurery
-Date: Sat, 20 Jun 2009 17:35:56 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0906201725020.2784@localhost.localdomain>
-References: <695e1a650906041442q445109a2p5871a1ff9f1d3f5a@mail.gmail.com>  <alpine.LSU.2.00.0906050020110.8173@fbirervta.pbzchgretzou.qr> <1244164487.27779.31.camel@quadrophenia.thebigcorporation.com>
+Subject: [ANNOUNCE] 2.6.29.5-rt22
+Date: Tue, 23 Jun 2009 14:30:40 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904020155320.12916@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
+ <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+ <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Jan Engelhardt <jengelh@medozas.de>,
-	Hector Centeno <hcengar@gmail.com>,
-	linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:59855 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:45783 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751769AbZFTPgH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 20 Jun 2009 11:36:07 -0400
-In-Reply-To: <1244164487.27779.31.camel@quadrophenia.thebigcorporation.com>
+	id S1752910AbZFWMbw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Jun 2009 08:31:52 -0400
+In-Reply-To: <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 4 Jun 2009, Sven-Thorsten Dietrich wrote:
-> On Fri, 2009-06-05 at 00:21 +0200, Jan Engelhardt wrote:
-> > 
-> > 
-> > Cc'ing linux-rt. Mabye someone has a flash of an idea.
-> > 
-> > On Thursday 2009-06-04 23:42, Hector Centeno wrote to Jan Engelhardt:
-> > >
-> > >I hope it is OK to contact you directly to this email. I've been
-> > >trying to use your 2.6.29 RT kernel for OpenSuse 11.1 and came across
-> > >some problems related to the Intel graphics driver (I have a laptop
-> > >with intel GMA 950). The problem seems to be related to the new intel
-> > >driver development that is going on and that seems to affect older
-> > >hardware like mine. I get a constantly growing list of errors in
-> > >/var/log/mesages like these:
-> > >
-> 
-> Try this patch:
-> 
-> Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
-> 
-> Index: b/arch/x86/mm/iomap_32.c
-> ===================================================================
-> --- a/arch/x86/mm/iomap_32.c
-> +++ b/arch/x86/mm/iomap_32.c
-> @@ -38,7 +38,7 @@ void *kmap_atomic_prot_pfn(unsigned long
->  
->  	pagefault_disable();
->  
-> -	idx = type + KM_TYPE_NR * smp_processor_id();
-> +	idx = type + KM_TYPE_NR * raw_smp_processor_id();
->  	vaddr = __fix_to_virt(FIX_KMAP_BEGIN + idx);
->  	set_pte(kmap_pte - idx, pfn_pte(pfn, prot));
->  	arch_flush_lazy_mmu_mode();
-> @@ -69,7 +69,7 @@ void
->  iounmap_atomic(void *kvaddr, enum km_type type)
->  {
->  	unsigned long vaddr = (unsigned long) kvaddr & PAGE_MASK;
-> -	enum fixed_addresses idx = type + KM_TYPE_NR*smp_processor_id();
-> +	enum fixed_addresses idx = type + KM_TYPE_NR*raw_smp_processor_id();
->  
->  	/*
->  	 * Force other mappings to Oops if they'll try to access this pte
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+    - fix the network live lock issue for real
 
-No, that's wrong. We need to disable preemption across that
-pagefault_disabled region. We might get preempted or migrated
-otherwise.
+    - disable preemption across iomap atomic section
 
-Actually the correct fix for preempt-rt is to map this atomic mapping
-magic to standard mappings, but that's more than a 5 minutes job.
+    - indentify false positives in the softirq pending check
+      in the nohz code.
 
-Thanks,
+The network issue which I described in the -21 release still persists
+between net-rx and net-tx softirqs. The real fix is replacing the
+spin_trylock with spin_lock in the affected drivers.
 
-	tglx
+On -rt we had several unexplained reports of cpus going idle with a
+pending softirq. I got hands on a trace of such a situation. What
+happens is that a softirq is blocked on a lock which is held by a task
+which is either blocked itself or running on another CPU. When there
+is no other active task on the CPU then it goes idle but the softirq
+pending bit of the blocked softirq thread is still set. This leads to
+false positive warnings. To filter out those cases the blocked state
+of the softirq needs to be checked instead of printing the warning
+blindly.
+
+Download locations:
+
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.29.5-rt22 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.5.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.5-rt22.bz2
+
+The broken out patches are also available at the same download
+locations.
+
+Enjoy !
+
+       tglx
+
