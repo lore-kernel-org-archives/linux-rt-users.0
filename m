@@ -1,8 +1,8 @@
 From: GeunSik Lim <leemgs1@gmail.com>
-Subject: [PATCH 2/3] cyclictest: Fix  the same priority method of many
-	threads with -h option.
-Date: Sat, 27 Jun 2009 00:38:09 +0900
-Message-ID: <1246030689.2153.32.camel@centos51>
+Subject: [PATCH 3/3] cyclictest: Arrange alphabetically for readability of
+	"cyclictest --help" output.
+Date: Sat, 27 Jun 2009 00:38:32 +0900
+Message-ID: <1246030712.2153.34.camel@centos51>
 Reply-To: leemgs1@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -11,47 +11,79 @@ Cc: tglx <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f190.google.com ([209.85.216.190]:40145 "EHLO
-	mail-px0-f190.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750904AbZFZPiP (ORCPT
+Received: from rv-out-0506.google.com ([209.85.198.237]:11951 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751312AbZFZPii (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Jun 2009 11:38:15 -0400
-Received: by pxi28 with SMTP id 28so1749095pxi.33
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Jun 2009 08:38:17 -0700 (PDT)
+	Fri, 26 Jun 2009 11:38:38 -0400
+Received: by rv-out-0506.google.com with SMTP id f6so649951rvb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Jun 2009 08:38:40 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 
->From 63c01db3e4b2c3a76f0dd5191f46535137e310c8 Mon Sep 17 00:00:00 2001
+>From 8d5c2ce5eeec92cca91a448a9699cab9ebc58704 Mon Sep 17 00:00:00 2001
 From: GeunSik,Lim <leemgs1@gmail.com>
-Date: Fri, 26 Jun 2009 23:36:45 +0900
-Subject: [PATCH 2/3] cyclictest: Fix priority-- method of many threads with -h.
+Date: Sat, 27 Jun 2009 00:05:18 +0900
+Subject: [PATCH 3/3] cyclictest: Arrange alphabetically for readability of "cyclictest --help" output.
 
-If we run a many threads with -t option, "priority--" rt priority will assign
-per thread in sequence. But, If we use -h option, all threads is same priority.
-Adjust the same prirotiy method about below two examples for consistency.
-ex) cyclictest -t 5 -p 50        [enter] <-- without -h
-ex) cyclictest -t 5 -p 50 -h 100 [enter] <-- with    -h
+When we use "#> cyclictest --help" command, we are confusing because of
+random order of many options. Arrange alphabetically.
 
-        Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+      Signed-by-off: GeunSik Lim <geunsik.lim@samsung.com>
+
 ---
- src/cyclictest/cyclictest.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ src/cyclictest/cyclictest.c |   16 ++++++++--------
+ 1 files changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index ad4c421..3505de5 100644
+index 3505de5..f9d8d1f 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1150,7 +1150,7 @@ int main(int argc, char **argv)
- 		}
- 
- 		par[i].prio = priority;
--		if (priority && !histogram)
-+		if (priority)
- 			priority--;
-                 if      ( policy == 0) par[i].policy = SCHED_OTHER;
-                 else if ( policy == 1) par[i].policy = SCHED_FIFO;
+@@ -746,8 +746,13 @@ static void display_help(void)
+ 	       "                           1 = CLOCK_REALTIME\n"
+ 	       "-C       --context         context switch tracing (used with -b)\n"
+ 	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
++	       "-D       --duration=t      specify a length for the test run\n"
++	       "                           default is in seconds, but 'm', 'h', or 'd' maybe added\n"
++	       "                           to modify value to minutes, hours or days\n"
+ 	       "-E       --event           event tracing (used with -b)\n"
+ 	       "-f       --ftrace          function trace (when -b is active)\n"
++	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
++	       "                           US is the max time to be be tracked in microseconds\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+@@ -755,25 +760,20 @@ static void display_help(void)
+ 	       "-n       --nanosleep       use clock_nanosleep\n"
+ 	       "-N       --nsecs           print results in ns instead of ms (default ms)\n"
+ 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+-	       "-O TOPT  --traceopt=TOPT    trace option\n"
++	       "-O TOPT  --traceopt=TOPT   trace option\n"
+ 	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+ 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
+ 	       "-q       --quiet           print only a summary on exit\n"
+ 	       "-r       --relative        use relative timer instead of absolute\n"
+ 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
+-	       "-T TRACE --tracer=TRACER   set tracing function\n"
+-	       "    configured tracers: %s\n"
+ 	       "-t       --threads         one thread per available processor\n"
+ 	       "-t [NUM] --threads=NUM     number of threads:\n"
+ 	       "                           without NUM, threads = max_cpus\n"
+ 	       "                           without -t default = 1\n"
++	       "-T TRACE --tracer=TRACER   set tracing function\n"
++	       "    configured tracers: %s\n"
+ 	       "-v       --verbose         output values on stdout for statistics\n"
+ 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
+-	       "-D       --duration=t      specify a length for the test run\n"
+-	       "                           default is in seconds, but 'm', 'h', or 'd' maybe added\n"
+-	       "                           to modify value to minutes, hours or days\n"
+-	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
+-	       "                           US is the max time to be be tracked in microseconds\n"
+                "-w       --wakeup          task wakeup tracing (used with -b)\n"
+                "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
+ 	       "-y POLI  --policy=POLI     policy of realtime thread (0:OTHER, 1:FIFO, 2:RR)\n"
 -- 
 1.6.3.1
 
@@ -67,4 +99,6 @@ e-Mail  :1) geunsik.lim@samsung.com
          2) leemgs@gmail.com , leemgs1@gmail.com
 HomePage: http://blog.naver.com/invain/
 -----------------------------------------------
+
+
 
