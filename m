@@ -1,146 +1,122 @@
-From: Vivek Satpute <vivek@linsyssoft.com>
-Subject: Re: [PATCH-rt 1/1] Fix spinlock issue in net/core/sock.c
-Date: Mon, 29 Jun 2009 19:24:17 +0530
-Message-ID: <fae6a9700906290654w1e4e258aw3690bf9403c1b777@mail.gmail.com>
-References: <1245931645.6269.15.camel@localhost.localdomain>
-	 <4de7f8a60906290457v2c25839kd38273323e648428@mail.gmail.com>
-	 <fae6a9700906290649j176493f7u39c4ce674a3a66fc@mail.gmail.com>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: [Fwd: Re: [Rtibm-dev] [RFC] SLES HZ setting for "soft-realtime"]
+Date: Mon, 29 Jun 2009 07:18:06 -0700
+Message-ID: <4A48CD1E.7070404@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: prtproj@linsyssoft.com
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Fulton <fultonm@ca.ibm.com>,
+	Alan Stevens <alan_stevens@uk.ibm.com>,
+	Mark Stoodley <mstoodle@ca.ibm.com>,
+	Sean Foley <Sean_Foley@ca.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from qw-out-2122.google.com ([74.125.92.25]:22084 "EHLO
-	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752119AbZF2NyT convert rfc822-to-8bit (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:60368 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751226AbZF2OS2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Jun 2009 09:54:19 -0400
-Received: by qw-out-2122.google.com with SMTP id 9so1668996qwb.37
-        for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 06:54:21 -0700 (PDT)
-In-Reply-To: <fae6a9700906290649j176493f7u39c4ce674a3a66fc@mail.gmail.com>
+	Mon, 29 Jun 2009 10:18:28 -0400
+Received: from d03relay05.boulder.ibm.com (d03relay05.boulder.ibm.com [9.17.195.107])
+	by e33.co.us.ibm.com (8.13.1/8.13.1) with ESMTP id n5TEGN6r013632
+	for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 08:16:23 -0600
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d03relay05.boulder.ibm.com (8.13.8/8.13.8/NCO v9.2) with ESMTP id n5TEIBV8169510
+	for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 08:18:13 -0600
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n5TEI7Oe028991
+	for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 08:18:07 -0600
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Jan,
+Mike,
 
-(Sending mail again as first mail to mailing-list got bounced due to
-Rich Text Format)
+This was Novell's response.  It's not looking good for
+HZ=3D1000 in vanilla SLES train.
 
-On Mon, Jun 29, 2009 at 5:27 PM, Jan Blunck <jblunck@gmail.com> wrote:
->
-> On Thu, Jun 25, 2009 at 2:07 PM, Vivek Satpute<vivek@linsyssoft.com> =
-wrote:
-> > Kernel panic's and reboot while doing network operations such ifcon=
-fig
-> > and ping on MIPS architecture after RT-patches applied.
-> >
-> > In case of CONFIG_PREEMPT_RT, after releasing the lock with
-> > "spin_unlock", context switch might occur before enabling the botto=
-m
-> > half with local_bh_enable and this causes the kernel to panic.
-> > The issue is resolved by releasing the lock afer acquiring the mute=
-x
-> > using spin_unlock_bh.
-> >
-> > Tested the fix on MIPS and X86 architecture.
-> >
-> > Signed-off-by: Vivek Satpute <vivek@linsyssoft.com>
-> > ---
-> > net/core/sock.c | =A0 =A08 ++++++++
-> > 1 file changed, 8 insertions(+)
-> >
-> > Index: linux-2.6.28.4/net/core/sock.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- linux-2.6.28.4.orig/net/core/sock.c
-> > +++ linux-2.6.28.4/net/core/sock.c
-> > @@ -1752,12 +1752,20 @@ void lock_sock_nested(struct sock *sk, i
-> > =A0 =A0 =A0 =A0if (sk->sk_lock.owned)
-> > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0__lock_sock(sk);
-> > =A0 =A0 =A0 =A0sk->sk_lock.owned =3D 1;
-> > +
-> > +#ifndef CONFIG_PREEMPT_RT
-> > =A0 =A0 =A0 =A0spin_unlock(&sk->sk_lock.slock);
-> > +#endif
-> > =A0 =A0 =A0 =A0/*
-> > =A0 =A0 =A0 =A0 * The sk_lock has mutex_lock() semantics here:
-> > =A0 =A0 =A0 =A0 */
-> > =A0 =A0 =A0 =A0mutex_acquire(&sk->sk_lock.dep_map, subclass, 0, _RE=
-T_IP_);
-> > +
-> > +#ifdef CONFIG_PREEMPT_RT
-> > + =A0 =A0 =A0 spin_unlock_bh(&sk->sk_lock.slock);
-> > +#else
-> > =A0 =A0 =A0 =A0local_bh_enable();
-> > +#endif
-> > =A0}
-> >
->
-> I don't think you should move the unlock after the mutex_acquire(). I
-> guess that this will lead to false positive lockdep warnings.
->
-> Anyway, I wonder why using spin_unlock_bh() is fixing the problem tha=
-t
-> you are having. Do you have more context about the problem or maybe a=
-n
-> Oops or so?
+If that's the case, what is going to be the customer
+impact, from what you can tell?  And for Websphere
+Soft Real Time going forward?
 
-On firing command "ifconfig", I get following messages:
-
---------------------------------<snip>--------------------------------
-# ifconfig
-Kernel panic - not syncing: Aiee, killing interrupt handler!
-Rebooting in 1 seconds..
---------------------------------<snip>--------------------------------
+thanks,
+Nivedita
 
 
-If kernel compiled with Lock Debugging options then it gives following
-call trace:
 
---------------------------------<snip>--------------------------------
-Call Trace:
-[<80111768>] dump_stack+0x8/0x34
-[<8012e9a0>] warn_on_slowpath+0x60/0x88
-[<80135b48>] local_bh_enable+0x40/0x11c
-[<8035d05c>] lock_sock_nested+0xf8/0x11c
-[<803bbba8>] inet_bind+0x100/0x210
-[<803d7888>] xs_bind4+0x70/0x158
-[<803d9ac0>] xs_udp_connect_worker4+0x120/0x1a4
-[<801440f8>] run_workqueue+0x1d0/0x264
-[<801450ac>] worker_thread+0x7c/0xec
-[<80148f70>] kthread+0x58/0x94
-[<8010cc2c>] kernel_thread_helper+0x10/0x18
---------------------------------<snip>--------------------------------
+-------- Original Message --------
+Subject: Re: [Rtibm-dev] [RFC] SLES HZ setting for "soft-realtime"
+Date: Sat, 27 Jun 2009 15:25:18 +0200
+=46rom: Matthias G. Eckermann <mge@novell.com>
+Reply-To: marc.ruehrschneck@novell.com, Thomas Staudt <tstaudt@de.ibm.c=
+om>, rtibm-dev@forge.novell.com
+To: Alex Tsariounov <alext@novell.com>, marc.ruehrschneck@novell.com,  =
+Thomas Staudt <tstaudt@de.ibm.com>
+CC: niv@linux.vnet.ibm.com, rtibm-dev <rtibm-dev@forge.novell.com>
+References: <4A456A05.5020701@us.ibm.com> <1246063597.6101.68.camel@zuu=
+l.thistledown>
 
+Hello Alex and all @IBM,
 
->
-> Thanks,
-> Jan
->
-> > =A0EXPORT_SYMBOL(lock_sock_nested);
-> >
-> >
-> >
-> >
-> > Thanks and Regards,
-> > Vivek Satpute
-> > System Software Engineer
-> > LinSysSoft Technologies, Pune
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-rt-=
-users" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at =A0http://vger.kernel.org/majordomo-info.htm=
-l
-> >
+On 2009-06-26 T 18:46 -0600 Alex Tsariounov wrote:
+> On Fri, 2009-06-26 at 17:38 -0700, Darren Hart wrote:
+> > IBM has recently announced a beta version of WebSphere
+> > Realtime (the rt JVM)  with "soft real-time" support running
+> > on 32 and 64 bit x86 platforms with standard enterprise
+> > distributions.  It just came to my attention that this
+> > product requires either HZ=3D1000 or NOHZ in order to meet its
+> > timing requirements.  As the SLES 10 SP2 kernel has HZ=3D250,
+> > I wanted to raise the issue with the Novell devs and get
+> > their take on it.
+> >=20
+> > At this point in the SLES10 life cycle, I assume that a
+> > change to HZ=3D1000 is unlikely and targetting SLES11 as a
+> > supported platform would be the preferred course of action.
+> > Can someone at Novell please comment?
+> >=20
+> > Note: I understand this is not SLE-RT related, but it is
+> > real-time related, and I thought the recipients would know
+> > where to best direct this question if this isn't the right
+> > place.
+>=20
+> Yes, SLES runs at 250 Hz and it is in fact too late for SLES11
+> as it has been released for a while. =20
+>=20
+> I can see how it would be advantageous for SLES to support
+> WebSphere Soft Realtime however.  So, in this light I've CC'ed
+> Matthias Eckermann who is our Product Manager for SLES to get
+> his take on the possibility of changing the HZ value that SLES
+> is built with and when such a change could possibly be made.
 
-Thanks and Regards,
-Vivek Satpute
-System Software Engineer
-LinSysSoft Technologies, Pune
+without going into technical details today to much, please let
+me introduce Marc R=C3=BChrschneck (Technical Accound Manager for IBM
+with Novell) and Thomas Staudt (LTC Distro Architect for
+Novell/SUSE with IBM). All communication regarding feature
+requests for SUSE Linux Enterprise should be coordinated by
+Thomas and Marc.
+
+According to the rules we jointly (IBM and Novell) have in place for
+SUSE Linux Enterprise (Marc and Thomas, please jump in here with
+explaining those rules to the teams!), and looking at the negative
+impact (mainly regarding throughput) other (non-Novell) Linux Systems
+are suffering from with their switch to HZ=3D1000, HZ=3D250 will remain
+for SUSE Linux Enterprise Server 11 also with SP 1 and later in the
+default kernel, as far as I can say. ( But we have enable CONFIG_NO_HZ
+in SLES 11 - isn't that sufficient? )
+
+so long -
+	MgE
+
+--=20
+Matthias G. Eckermann
+Senior Product Manager - SUSE=C2=AE Linux Enterprise  - Server Product =
+Line
+Phone: +49 30 44315731 - Mobile: +49 179 2949448 - E-Mail: mge@novell.c=
+om
+SUSE  LINUX Products GmbH, GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
+_______________________________________________
+rtibm-dev mailing list
+rtibm-dev@forge.novell.com
+http://forge.novell.com/mailman/listinfo/rtibm-dev
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
