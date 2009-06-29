@@ -1,91 +1,101 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: [PATCH 2/3] cyclictest: Fix  the same priority method of many threads with -h option.
-Date: Mon, 29 Jun 2009 04:05:37 -0700
-Message-ID: <D432A3F0-C516-43A3-9561-B6DD5F2E6BDA@thebigcorporation.com>
-References: <1246030689.2153.32.camel@centos51>
-Mime-Version: 1.0 (iPhone Mail 7A341)
-Content-Type: text/plain;
-	charset=us-ascii;
-	format=flowed;
-	delsp=yes
-Content-Transfer-Encoding: 7bit
-Cc: williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "leemgs1@gmail.com" <leemgs1@gmail.com>
+From: Jan Blunck <jblunck@gmail.com>
+Subject: Re: [PATCH-rt 1/1] Fix spinlock issue in net/core/sock.c
+Date: Mon, 29 Jun 2009 13:57:52 +0200
+Message-ID: <4de7f8a60906290457v2c25839kd38273323e648428@mail.gmail.com>
+References: <1245931645.6269.15.camel@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org, prtproj@linsyssoft.com,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Vivek Satpute <vivek@linsyssoft.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rv-out-0506.google.com ([209.85.198.229]:8355 "EHLO
-	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755827AbZF2LFp (ORCPT
+Received: from fg-out-1718.google.com ([72.14.220.155]:45371 "EHLO
+	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751852AbZF2L5v convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Jun 2009 07:05:45 -0400
-Received: by rv-out-0506.google.com with SMTP id f6so1246314rvb.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 04:05:48 -0700 (PDT)
-In-Reply-To: <1246030689.2153.32.camel@centos51>
+	Mon, 29 Jun 2009 07:57:51 -0400
+Received: by fg-out-1718.google.com with SMTP id e21so878402fga.17
+        for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 04:57:53 -0700 (PDT)
+In-Reply-To: <1245931645.6269.15.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Nak.
-
-Sorry for terse, top-post. I'll respond in more detail within 24 hrs.
-
-+ 1 (415) 694 2930
-
-On Jun 26, 2009, at 8:38, GeunSik Lim <leemgs1@gmail.com> wrote:
-
+On Thu, Jun 25, 2009 at 2:07 PM, Vivek Satpute<vivek@linsyssoft.com> wr=
+ote:
+> Kernel panic's and reboot while doing network operations such ifconfi=
+g
+> and ping on MIPS architecture after RT-patches applied.
 >
+> In case of CONFIG_PREEMPT_RT, after releasing the lock with
+> "spin_unlock", context switch might occur before enabling the bottom
+> half with local_bh_enable and this causes the kernel to panic.
+> The issue is resolved by releasing the lock afer acquiring the mutex
+> using spin_unlock_bh.
 >
->> From 63c01db3e4b2c3a76f0dd5191f46535137e310c8 Mon Sep 17 00:00:00  
->> 2001
-> From: GeunSik,Lim <leemgs1@gmail.com>
-> Date: Fri, 26 Jun 2009 23:36:45 +0900
-> Subject: [PATCH 2/3] cyclictest: Fix priority-- method of many  
-> threads with -h.
+> Tested the fix on MIPS and X86 architecture.
 >
-> If we run a many threads with -t option, "priority--" rt priority  
-> will assign
-> per thread in sequence. But, If we use -h option, all threads is  
-> same priority.
-> Adjust the same prirotiy method about below two examples for  
-> consistency.
-> ex) cyclictest -t 5 -p 50        [enter] <-- without -h
-> ex) cyclictest -t 5 -p 50 -h 100 [enter] <-- with    -h
->
->        Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
+> Signed-off-by: Vivek Satpute <vivek@linsyssoft.com>
 > ---
-> src/cyclictest/cyclictest.c |    2 +-
-> 1 files changed, 1 insertions(+), 1 deletions(-)
+> net/core/sock.c | =A0 =A08 ++++++++
+> 1 file changed, 8 insertions(+)
 >
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index ad4c421..3505de5 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1150,7 +1150,7 @@ int main(int argc, char **argv)
->        }
+> Index: linux-2.6.28.4/net/core/sock.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.28.4.orig/net/core/sock.c
+> +++ linux-2.6.28.4/net/core/sock.c
+> @@ -1752,12 +1752,20 @@ void lock_sock_nested(struct sock *sk, i
+> =A0 =A0 =A0 =A0if (sk->sk_lock.owned)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0__lock_sock(sk);
+> =A0 =A0 =A0 =A0sk->sk_lock.owned =3D 1;
+> +
+> +#ifndef CONFIG_PREEMPT_RT
+> =A0 =A0 =A0 =A0spin_unlock(&sk->sk_lock.slock);
+> +#endif
+> =A0 =A0 =A0 =A0/*
+> =A0 =A0 =A0 =A0 * The sk_lock has mutex_lock() semantics here:
+> =A0 =A0 =A0 =A0 */
+> =A0 =A0 =A0 =A0mutex_acquire(&sk->sk_lock.dep_map, subclass, 0, _RET_=
+IP_);
+> +
+> +#ifdef CONFIG_PREEMPT_RT
+> + =A0 =A0 =A0 spin_unlock_bh(&sk->sk_lock.slock);
+> +#else
+> =A0 =A0 =A0 =A0local_bh_enable();
+> +#endif
+> =A0}
 >
->        par[i].prio = priority;
-> -        if (priority && !histogram)
-> +        if (priority)
->            priority--;
->                 if      ( policy == 0) par[i].policy = SCHED_OTHER;
->                 else if ( policy == 1) par[i].policy = SCHED_FIFO;
-> -- 
-> 1.6.3.1
+
+I don't think you should move the unlock after the mutex_acquire(). I
+guess that this will lead to false positive lockdep warnings.
+
+Anyway, I wonder why using spin_unlock_bh() is fixing the problem that
+you are having. Do you have more context about the problem or maybe an
+Oops or so?
+
+Thanks,
+Jan
+
+> =A0EXPORT_SYMBOL(lock_sock_nested);
 >
 >
-> -----------------------------------------------
-> To unsubscribe from this list: send the line "unsubscribe linux-***"
-> in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
 >
-> GeunSik Lim ( Samsung Electronics )
-> e-Mail  :1) geunsik.lim@samsung.com
->         2) leemgs@gmail.com , leemgs1@gmail.com
-> HomePage: http://blog.naver.com/invain/
-> -----------------------------------------------
+>
+> Thanks and Regards,
+> Vivek Satpute
+> System Software Engineer
+> LinSysSoft Technologies, Pune
 >
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt- 
-> users" in
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
