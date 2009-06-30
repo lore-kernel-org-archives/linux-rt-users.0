@@ -1,65 +1,74 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: [PATCH 2/3] cyclictest: Fix  the same priority method of many
- threads with -h option.
-Date: Mon, 29 Jun 2009 19:56:04 -0700
-Message-ID: <1246330564.8104.37.camel@sven.thebigcorporation.com>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: [PATCH 2/3] cyclictest: Fix the same priority method of many
+	threads with -h option.
+Date: Tue, 30 Jun 2009 16:12:10 +0900
+Message-ID: <49b7c2350906300012x3a188622o3f15240199faf901@mail.gmail.com>
 References: <1246030689.2153.32.camel@centos51>
+	 <1246330564.8104.37.camel@sven.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Cc: williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: leemgs1@gmail.com
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ey-out-1920.google.com ([74.125.78.148]:16426 "EHLO
-	ey-out-1920.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755149AbZF3C4K (ORCPT
+Received: from qw-out-2122.google.com ([74.125.92.27]:50323 "EHLO
+	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751191AbZF3HMI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Jun 2009 22:56:10 -0400
-Received: by ey-out-1920.google.com with SMTP id 3so544708eyh.36
-        for <linux-rt-users@vger.kernel.org>; Mon, 29 Jun 2009 19:56:12 -0700 (PDT)
-In-Reply-To: <1246030689.2153.32.camel@centos51>
+	Tue, 30 Jun 2009 03:12:08 -0400
+Received: by qw-out-2122.google.com with SMTP id 9so2020404qwb.37
+        for <linux-rt-users@vger.kernel.org>; Tue, 30 Jun 2009 00:12:11 -0700 (PDT)
+In-Reply-To: <1246330564.8104.37.camel@sven.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2009-06-27 at 00:38 +0900, GeunSik Lim wrote:
-> 
-> >From 63c01db3e4b2c3a76f0dd5191f46535137e310c8 Mon Sep 17 00:00:00 2001
-> From: GeunSik,Lim <leemgs1@gmail.com>
-> Date: Fri, 26 Jun 2009 23:36:45 +0900
-> Subject: [PATCH 2/3] cyclictest: Fix priority-- method of many threads with -h.
-> 
-> If we run a many threads with -t option, "priority--" rt priority will assign
-> per thread in sequence. But, If we use -h option, all threads is same priority.
-> Adjust the same prirotiy method about below two examples for consistency.
-> ex) cyclictest -t 5 -p 50        [enter] <-- without -h
-> ex) cyclictest -t 5 -p 50 -h 100 [enter] <-- with    -h
-> 
->         Signed-off-by: GeunSik Lim <geunsik.lim@samsung.com>
-> ---
->  src/cyclictest/cyclictest.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index ad4c421..3505de5 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1150,7 +1150,7 @@ int main(int argc, char **argv)
->  		}
->  
->  		par[i].prio = priority;
-> -		if (priority && !histogram)
-> +		if (priority)
->  			priority--;
+On Tue, Jun 30, 2009 at 11:56 AM, Sven-Thorsten
+Dietrich<sven@thebigcorporation.com> wrote:
+> When generating a histogram on multiple cores, the priority of
+> cyclictest threads should be the same on each CPU.
+Of course, But original cyclictest is different  test scenario using
+many threads.
 
-When generating a histogram on multiple cores, the priority of
-cyclictest threads should be the same on each CPU.
+> This change would make the priority lower on higher CPU ids, resulting
+> in apparent performance skew in favor of CPU0.
+Um. I don't agree with your opinions because we can try  cyclictest
+commands like belows
+using "-h" option.
 
-This change would make the priority lower on higher CPU ids, resulting
-in apparent performance skew in favor of CPU0.
+In other words,
+If cyclictest user want to same priority about many threads ,
+They can assign same priority  with belows method or additional  bash scripts.
 
-Sven
+For example,
 
->                  if      ( policy == 0) par[i].policy = SCHED_OTHER;
->                  else if ( policy == 1) par[i].policy = SCHED_FIFO;
+case )  before remove your some patches
+#> cyclictest -t 3    -p 90 -h -D 100 &[enter]
 
+case )  after remove your some patches
+#> cyclictest -t 1    -p 90 -h -D 100 &[enter]
+#> cyclictest -t 1    -p 90 -h -D 100 &[enter]
+#> cyclictest -t 1    -p 90 -h -D 100 &[enter]
+
+or
+#> define i=3; while ($i) do  cyclictest -t 1   -p 90 -h -D 100 & ;
+$i-- ; done
+
+I think that many users will confuse  output  results  because of the
+differnece output style
+between  "without -h" option and "with -h" option.
+If I mistake , Pleasse correct me.
+
+Thks.
+
+-- 
+Regards,
+GeunSik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+e-Mail: geunsik.lim@samsung.com
+           leemgs@gmail.com , leemgs1@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
