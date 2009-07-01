@@ -1,665 +1,134 @@
-Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from smtpq1.gn.mail.iss.as9143.net ([212.54.34.164]:39988 "EHLO
-	smtpq1.gn.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752065AbZFDTS6 (ORCPT
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: [PATCH 2/3] cyclictest: Fix the same priority method of many
+	threads with -h option.
+Date: Wed, 1 Jul 2009 22:42:56 +0900
+Message-ID: <49b7c2350907010642ga8c261p8c3a7c58937b7d0a@mail.gmail.com>
+References: <1246030689.2153.32.camel@centos51>
+	 <1246330564.8104.37.camel@sven.thebigcorporation.com>
+	 <49b7c2350906300012x3a188622o3f15240199faf901@mail.gmail.com>
+	 <1246354219.11056.36.camel@quadrophenia.thebigcorporation.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: williams <williams@redhat.com>, tglx <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pz0-f188.google.com ([209.85.222.188]:59213 "EHLO
+	mail-pz0-f188.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751046AbZGANmy convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jun 2009 15:18:58 -0400
-Received: from [212.54.34.145] (helo=smtp14.gn.mail.iss.as9143.net)
-	by smtpq1.gn.mail.iss.as9143.net with esmtp (Exim 4.69)
-	(envelope-from <hermantenbrugge@home.nl>)
-	id 1MCI9T-0007aV-0l
-	for linux-rt-users@vger.kernel.org; Thu, 04 Jun 2009 20:58:59 +0200
-Received: from cc717655-a.hnglo1.ov.home.nl ([82.75.52.184] helo=[192.168.123.3])
-	by smtp14.gn.mail.iss.as9143.net with esmtp (Exim 4.69)
-	(envelope-from <hermantenbrugge@home.nl>)
-	id 1MCI9R-0005CH-PC
-	for linux-rt-users@vger.kernel.org; Thu, 04 Jun 2009 20:58:58 +0200
-Message-ID: <4A281971.1040406@home.nl>
-Date: Thu, 04 Jun 2009 20:58:57 +0200
-From: Herman ten Brugge <hermantenbrugge@home.nl>
-MIME-Version: 1.0
-Subject: Analyze sched_switch ftrace data with vcd viewer
-Content-Type: multipart/mixed;
- boundary="------------010909030900050701000006"
+	Wed, 1 Jul 2009 09:42:54 -0400
+Received: by pzk26 with SMTP id 26so831202pzk.33
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Jul 2009 06:42:56 -0700 (PDT)
+In-Reply-To: <1246354219.11056.36.camel@quadrophenia.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------010909030900050701000006
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Sorry I'm late according to going out.
 
-I have written some code to convert the ascii sched_switch output to
-vcd format (value change data). Now it is possible to view the context
-switches in a vcd viewer. I personally use gtkwave because it is free
-and is present in the fedora repository.
-To use this program first make a ftrace file with something like:
+On Tue, Jun 30, 2009 at 6:30 PM, Sven-Thorsten
+Dietrich<sven@thebigcorporation.com> wrote:
+> I that was a single CPU scenario.
+> For testing on SMP, the cyclictest threads need to behave identicalll=
+y
+> (even in priority) on all CPUs.
+Additionally, I want you to consider  both Unicore  and Multicore
+when some users  will use  -h option.
 
-mount -t debugfs debugfs /debug
-echo sched_switch > /debug/tracing/current_tracer
-echo 1 > /debug/tracing/tracing_enabled
-sleep 10
-echo 0 > /debug/tracing/tracing_enabled
-cat /debug/tracing/trace > /tmp/trace.txt
+> That same argument also applies to this patch, doesn't it?
+> In other words, without changing the existing code, you could change =
+the
+> prios for the histogram mode via a similar script, right?
+Yes, It's right.
+But. I am talking about output style of prios to avoid confusion
+between without -h and with -h.
+As you know, Cyclictest  display  result of latencies on the console
+without detailed  explanation.
+So, When we add -h option to get histogram data,  Most users have to
+view source code
+because of  the different output style suddenly.
 
-Now convert the ascii data and start the viewer:
+> I don't disagree, but I think the proper fix may be to decouple
+> histogram from priority, via another parameter.
+>
+> Note that the thread interval is also held constant when histogram is
+> configured -- not just the priority.
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!histogram=
+) /* histogram requires same interval on CPUs*/
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0interval +=3D distance;
+>
+>
+> The patch you sent basically reverts a bug-fix for the histogram
+> application on SMP, but doesn't change the interval behavior.
+>
+> So you would also have to decouple the interval code as well.
+Thank you for explanation  of  histogram related  patches like
+priority and interval.
+If you accept  my proposal to avoid confusion of output style,
+I want to change  interval code reversely .  -:)
 
-sched_switch /tmp/trace.txt /tmp/trace.vcd
-gtkwave /tmp/trace.vcd
+But,
+If you and others don't  agree with my opinions,
+I think that  We have to append  additional explanation in the "#>
+cyclictest --help" to
+understand output  using -h option at least like belows.
 
-I use the following definitions in the vcd file:
-Z   tri state signal (no cpu assigned)
-U   undefined (wake up is done waiting for a cpu to become ready)
-0/1 binary encoded cpu number
-L/H binary encoded cpu number with priority inheritance
+ before) "-h       --histogram=3DUS    dump a latency histogram to
+stdout after the run\n"
+ after   ) "-h       --histogram=3DUS    dump a latency histogram to
+stdout after the run (with same priority about threads)\n"
 
-De signal names are displayed as:
-program_name_as_in_trace_file#priority#processor_load
-The priority is:
-idle for the idle process
-r1..r99 for real time processes
-n-19..20 for nice processes
+How about you think  this my opinions?
 
-I find this much easier to use then the ascii file that is produced by 
-the kernel.
+> It would be better to be able to explicitly set priorities and interv=
+als
+> to be the same, when distributed per-CPU on SMP. That is one kind of
+> test, which is important.
+>
+> Inversely relating priority versus interval on UP is another kind of
+> test. This seems to be what you are trying to do.
+>
+> So to have both, means you can to stack threads on SMP and have multi=
+ple
+> threads on each CPU, operating at increasing intervals. Each thread
+> would report data.
+>
+> But that implies a 3-D table to log the data returned from cyclictest
+> threads at lower priorities (lower than the highest priority).
+>
+> The histogram code is only able to log one set of data for each threa=
+d
+> as it is today.
+>
+> And as-is, the histogram assumes threads are distributed per-cpu via
+> affinity on SMP. Changing to a 3-D matrix is interesting, but how wou=
+ld
+> you represent that / store ?
+>
+> What exactly are you testing / looking for?
+I want to test maximum latencies based on background stress conditions =
+ on SMP.
+And, I  want to get histogram data about worstcase latencies using -h o=
+ption.
 
-    Herman.
 
---------------010909030900050701000006
-Content-Type: text/plain;
- name="sched_switch.c"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="sched_switch.c"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-typedef struct sched_switch_struct
-{
-  unsigned int program_id;
-  unsigned int from_cpu;
-  double time;
-  unsigned int from_pid;
-  unsigned int from_prio;
-  unsigned int from_state_id;
-  unsigned int wakeup_id;
-  unsigned int to_cpu;
-  unsigned int to_pid;
-  unsigned int to_prio;
-  unsigned int to_state_id;
-} sched_switch_type;
-
-typedef struct program_struct
-{
-  char *name;
-  double time;
-  unsigned int task;
-  unsigned int prio;
-  unsigned int idle_task;
-  char *tag;
-  unsigned int running;
-  double last_time;
-  double max_time;
-  double max_pos;
-} program_type;
-
-static void
-print_help (const char *programname)
-{
-  printf ("Usage: %s [options] input output\n", programname);
-  printf ("       -m  : output in matlab format\n");
-  printf ("       -v  : output in vcd format (default)\n");
-  printf ("       -p  : print priority inheritance lines\n");
-  printf ("       -s  : print max scheduling delay\n");
-  printf ("       -h  : print this help\n");
-  exit (0);
-}
-
-int
-main (int argc, char **argv)
-{
-  enum
-  { VCD, MATLAB } output = VCD;
-  unsigned int priority_inheritance = 0;
-  unsigned int max_sched_delay = 0;
-  char *infilename = NULL;
-  char *outfilename = NULL;
-  unsigned int i;
-  unsigned int j;
-  unsigned int n;
-  unsigned int last_comment = 0;
-  FILE *fpi;
-  FILE *fpo;
-  unsigned int max_cpu = 0;
-  unsigned int last_max_cpu = 0;
-  unsigned int *first = NULL;
-  double *last_time = NULL;
-  unsigned int nof_bits = 0;
-  unsigned int program_id;
-  unsigned int from_cpu;
-  double time;
-  unsigned int from_pid;
-  unsigned int from_prio;
-  unsigned int from_state_id;
-  unsigned int wakeup_id;
-  unsigned int to_cpu;
-  unsigned int to_pid;
-  unsigned int to_prio;
-  unsigned int to_state_id;
-  char line[1000];
-  char array[1000];
-  char program_name[1000];
-  char from_state[1000];
-  char to_state[1000];
-  char wakeup_str[1000];
-  unsigned int n_program = 0;
-  program_type *program = NULL;
-  unsigned int n_state = 0;
-  char **state = NULL;
-  unsigned int n_wakeup = 0;
-  char **wakeup = NULL;
-  unsigned int n_sched_switch = 0;
-  unsigned int m_sched_switch = 0;
-  sched_switch_type *sched_switch = NULL;
-
-  for (i = 1; i < (unsigned int) argc; i++) {
-    if (argv[i][0] == '-') {
-      switch (argv[i][1]) {
-      case 'm':
-	output = MATLAB;
-	break;
-      case 'v':
-	output = VCD;
-	break;
-      case 'p':
-	priority_inheritance = 1;
-	break;
-      case 's':
-	max_sched_delay = 1;
-	break;
-      case 'h':
-      default:
-	print_help (argv[0]);
-	return (0);
-      }
-    }
-    else if (infilename == NULL) {
-      infilename = argv[i];
-    }
-    else if (outfilename == NULL) {
-      outfilename = argv[i];
-    }
-  }
-  if (infilename == NULL || outfilename == NULL) {
-    print_help (argv[0]);
-    return (0);
-  }
-  fpi = fopen (infilename, "r");
-  if (fpi == NULL) {
-    fprintf (stderr, "Cannot open filename %s\n", infilename);
-    return 1;
-  }
-  fpo = fopen (outfilename, "w");
-  if (fpo == NULL) {
-    fprintf (stderr, "Cannot create filename %s\n", outfilename);
-    return 1;
-  }
-  while (fgets (line, sizeof (line), fpi) != NULL) {
-    if (line[0] == '#') {
-      last_comment = n_sched_switch;
-    }
-    to_cpu = (unsigned int) -1;
-    if (sscanf
-	(line, " %s [ %u ] %lf : %u : %u : %s %s %u : %u : %s ", program_name,
-	 &from_cpu, &time, &from_pid, &from_prio, from_state, wakeup_str,
-	 &to_pid, &to_prio, to_state) == 10 ||
-	sscanf (line, " %s [ %u ] %lf : %u : %u : %s %s [ %u ] %u : %u : %s ",
-		program_name, &from_cpu, &time, &from_pid, &from_prio,
-		from_state, wakeup_str, &to_cpu, &to_pid, &to_prio,
-		to_state) == 11) {
-      if (to_cpu == (unsigned int) -1) {
-	/* incorrect but we have to set something */
-	to_cpu = from_cpu;
-      }
-      if (from_cpu > max_cpu) {
-	max_cpu = from_cpu;
-      }
-      if (to_cpu > max_cpu) {
-	max_cpu = to_cpu;
-      }
-      if (first == NULL || max_cpu != last_max_cpu) {
-	first =
-	  (unsigned int *) realloc (first,
-				    (max_cpu + 1) * sizeof (unsigned int));
-	last_time =
-	  (double *) realloc (last_time, (max_cpu + 1) * sizeof (double));
-	if (first == NULL || last_time == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	for (i = last_max_cpu; i <= max_cpu; i++) {
-	  /* 2 because first time is not allways correct */
-	  first[i] = 2;
-	  last_time[i] = 0;
-	}
-	last_max_cpu = max_cpu;
-      }
-      for (program_id = 0; program_id < n_program; program_id++) {
-	if (strcmp (program[program_id].name, program_name) == 0) {
-	  break;
-	}
-      }
-      if (program_id == n_program) {
-	program =
-	  (program_type *) realloc (program,
-				    (n_program + 1) * sizeof (program_type));
-	if (program == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	program[n_program].name = strdup (program_name);
-	program[n_program].time = 0;
-	program[n_program].task = from_pid;
-	program[n_program].prio = 0;
-	program[n_program].idle_task = strcmp (program_name, "<idle>-0") == 0;
-	program[n_program].tag = NULL;
-	if (program[n_program++].name == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-      }
-      for (from_state_id = 0; from_state_id < n_state; from_state_id++) {
-	if (strcmp (state[from_state_id], from_state) == 0) {
-	  break;
-	}
-      }
-      if (from_state_id == n_state) {
-	state = (char **) realloc (state, (n_state + 1) * sizeof (char *));
-	if (state == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	state[n_state] = strdup (from_state);
-	if (state[n_state++] == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-      }
-      for (to_state_id = 0; to_state_id < n_state; to_state_id++) {
-	if (strcmp (state[to_state_id], to_state) == 0) {
-	  break;
-	}
-      }
-      if (to_state_id == n_state) {
-	state = (char **) realloc (state, (n_state + 1) * sizeof (char *));
-	if (state == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	state[n_state] = strdup (to_state);
-	if (state[n_state++] == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-      }
-      for (wakeup_id = 0; wakeup_id < n_wakeup; wakeup_id++) {
-	if (strcmp (wakeup[wakeup_id], wakeup_str) == 0) {
-	  break;
-	}
-      }
-      if (wakeup_id == n_wakeup) {
-	wakeup = (char **) realloc (wakeup, (n_wakeup + 1) * sizeof (char *));
-	if (wakeup == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	wakeup[n_wakeup] = strdup (wakeup_str);
-	if (wakeup[n_wakeup++] == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-      }
-      if (n_sched_switch >= m_sched_switch) {
-	sched_switch =
-	  (sched_switch_type *) realloc (sched_switch,
-					 (m_sched_switch +
-					  1024) * sizeof (sched_switch_type));
-	if (sched_switch == NULL) {
-	  fprintf (stderr, "Cannot malloc\n");
-	  return 1;
-	}
-	m_sched_switch += 1024;
-      }
-      sched_switch[n_sched_switch].program_id = program_id;
-      sched_switch[n_sched_switch].from_cpu = from_cpu;
-      sched_switch[n_sched_switch].time = time;
-      sched_switch[n_sched_switch].from_pid = from_pid;
-      sched_switch[n_sched_switch].from_prio = from_prio;
-      sched_switch[n_sched_switch].from_state_id = from_state_id;
-      sched_switch[n_sched_switch].wakeup_id = wakeup_id;
-      sched_switch[n_sched_switch].to_cpu = to_cpu;
-      sched_switch[n_sched_switch].to_pid = to_pid;
-      sched_switch[n_sched_switch].to_prio = to_prio;
-      sched_switch[n_sched_switch].to_state_id = to_state_id;
-      n_sched_switch++;
-      if (wakeup_str[0] == '=') {
-	if (first[from_cpu] == 0) {
-	  program[program_id].time += time - last_time[from_cpu];
-	}
-	else if (first[from_cpu]) {
-	  first[from_cpu]--;
-	}
-	last_time[from_cpu] = time;
-      }
-    }
-  }
-  for (nof_bits = 31; nof_bits > 0; nof_bits--) {
-    if (max_cpu & (1 << nof_bits)) {
-      break;
-    }
-  }
-  time = 0;
-  for (i = 0; i < n_program; i++) {
-    time += program[i].time;
-  }
-  if (time == 0) {
-    time = 1;
-  }
-  for (i = 0; i < n_sched_switch; i++) {
-    for (j = 0; j < n_program; j++) {
-      if (sched_switch[i].from_pid == program[j].task) {
-	break;
-      }
-    }
-    sched_switch[i].from_pid = j == n_program ? 0 : j;
-    for (j = 0; j < n_program; j++) {
-      if (sched_switch[i].to_pid == program[j].task) {
-	break;
-      }
-    }
-    sched_switch[i].to_pid = j == n_program ? 0 : j;
-  }
-  for (i = 0; i < n_program; i++) {
-    /* Take the highest priority and hope that this is the correct one. */
-    /* It might be incorrect due to priority inheritance. */
-    n = 0;
-    for (j = 0; j < n_sched_switch; j++) {
-      if (sched_switch[j].from_pid == i) {
-	if (sched_switch[j].from_prio > n) {
-	  n = sched_switch[j].from_prio;
-	}
-      }
-      if (sched_switch[j].to_pid == i) {
-	if (sched_switch[j].to_prio > n) {
-	  n = sched_switch[j].to_prio;
-	}
-      }
-    }
-    program[i].prio = n;
-    if (program[i].prio < 100) {
-      sprintf (line, "%s#r%u#%d", program[i].name, 99 - program[i].prio,
-	       (int) (100.0 * program[i].time / time + 0.5));
-    }
-    else if (program[i].prio == 140) {
-      sprintf (line, "%s#idle#%d", program[i].name,
-	       (int) (100.0 * program[i].time / time + 0.5));
-    }
-    else {
-      sprintf (line, "%s#n%d#%d", program[i].name,
-	       (int) (120 - program[i].prio),
-	       (int) (100.0 * program[i].time / time + 0.5));
-    }
-    free (program[i].name);
-    program[i].name = strdup (line);
-    if (program[i].name == NULL) {
-      fprintf (stderr, "Cannot malloc\n");
-      return 1;
-    }
-    if (priority_inheritance) {
-      for (n = 0; n < n_sched_switch; n++) {
-	if (sched_switch[n].from_pid == i &&
-	    sched_switch[n].from_prio != program[i].prio) {
-	  printf ("%.6f %.0fus %s %u %u\n", sched_switch[n].time,
-		  (sched_switch[n].time - sched_switch[0].time) * 1e6,
-		  program[i].name, sched_switch[n].from_prio,
-		  program[i].prio);
-	}
-	if (sched_switch[n].to_pid == i &&
-	    sched_switch[n].to_prio != program[i].prio) {
-	  printf ("%.6f %.0fus %s %u %u\n", sched_switch[n].time,
-		  (sched_switch[n].time - sched_switch[0].time) * 1e6,
-		  program[i].name, sched_switch[n].to_prio, program[i].prio);
-	}
-      }
-    }
-  }
-  if (max_sched_delay) {
-    for (i = 0; i < n_program; i++) {
-      program[i].running = 0;
-      program[i].last_time = 0;
-      program[i].max_time = 0;
-      program[i].max_pos = 0;
-    }
-    for (i = last_comment; i < n_sched_switch; i++) {
-      if (wakeup[sched_switch[i].wakeup_id][0] == '=') {
-	if (program[sched_switch[i].to_pid].running == (unsigned int) -2) {
-	  if (sched_switch[i].time -
-	      program[sched_switch[i].to_pid].last_time >
-	      program[sched_switch[i].to_pid].max_time) {
-	    program[sched_switch[i].to_pid].max_time =
-	      sched_switch[i].time -
-	      program[sched_switch[i].to_pid].last_time;
-	    program[sched_switch[i].to_pid].max_pos = sched_switch[i].time;
-	  }
-	}
-	program[sched_switch[i].from_pid].running = (unsigned int) -1;
-	program[sched_switch[i].to_pid].running = sched_switch[i].to_cpu;
-      }
-      else if (wakeup[sched_switch[i].wakeup_id][0] == '+') {
-	program[sched_switch[i].to_pid].running = (unsigned int) -2;
-	program[sched_switch[i].to_pid].last_time = sched_switch[i].time;
-      }
-    }
-    for (i = 0; i < n_program; i++) {
-      if (program[i].max_time != 0.0) {
-	printf ("%8.6f %8.6f %.0fus %s\n", program[i].max_time,
-		program[i].max_pos,
-		(program[i].max_pos - sched_switch[0].time) * 1e6,
-		program[i].name);
-      }
-    }
-  }
-  if (output == MATLAB) {
-    for (i = 0; i < n_program; i++) {
-      fprintf (fpo,
-	       "program(%u).str = '%s'; program_time(%u) = %.6f; "
-	       "cpuload(%u) = %.6f; program_task(%u) = %u;\n", i + 1,
-	       program[i].name, i + 1, program[i].time, i + 1,
-	       100.0 * program[i].time / time, i + 1, program[i].task);
-    }
-    for (i = 0; i < n_state; i++) {
-      fprintf (fpo, "state(%u).str = '%s';\n", i + 1, state[i]);
-    }
-    for (i = 0; i < n_wakeup; i++) {
-      fprintf (fpo, "wakeup(%u).str = '%s';\n", i + 1, wakeup[i]);
-    }
-    fprintf (fpo, "program_id = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].program_id);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "from_cpu = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].from_cpu);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "time = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%.6f ", sched_switch[i].time);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "from_pid = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].from_pid);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "from_prio = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].from_prio);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "from_state_id = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].from_state_id);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "wakeup_id = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].wakeup_id);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "to_cpu = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].to_cpu);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "to_pid = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].to_pid);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "to_prio = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].to_prio);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo, "to_state_id = { ");
-    for (i = 0; i < n_sched_switch; i++) {
-      fprintf (fpo, "%u ", sched_switch[i].to_state_id);
-    }
-    fprintf (fpo, "};\n");
-    fprintf (fpo,
-	     "save -v7 sched_switch.mat program program_time program_task "
-	     "cpuload state wakeup program_id from_cpu time from_pid "
-	     "from_prio from_state_id wakeup_id to_cpu to_pid to_prio "
-	     "to_state_id;\n");
-  }
-  else {
-    fprintf (fpo, "$timescale 1us $end\n");
-    fprintf (fpo, "$scope module sched_switch $end\n");
-    for (i = 0; i < n_program; i++) {
-      j = 0;
-      n = i;
-      do {
-	line[j++] = (n % 94) + 33;
-	n = n / 94;
-      } while (n != 0);
-      line[j] = '\0';
-      array[0] = '\0';
-      if (nof_bits > 0) {
-	sprintf (array, "[%u:0] ", nof_bits);
-      }
-      fprintf (fpo, "$var wire %u %s %s %s$end\n", nof_bits + 1, line,
-	       program[i].name, array);
-      program[i].tag = strdup (line);
-      if (program[i].tag == NULL) {
-	fprintf (stderr, "Cannot malloc\n");
-	return 1;
-      }
-    }
-    fprintf (fpo, "$upscope $end\n");
-    fprintf (fpo, "$enddefinitions $end\n");
-    /* Z   tri-state signal (no cpu assigned) */
-    /* U   undefined (wakeup is done waiting for cpu to become ready) */
-    /* 0/1 binary encoded cpu number */
-    /* L/H binary encoded cpu number with priority inheritance */
-    fprintf (fpo, "#0\n");
-    for (i = 0; i < n_program; i++) {
-      if (nof_bits > 0) {
-	fprintf (fpo, "b");
-      }
-      for (j = 0; j <= nof_bits; j++) {
-	fprintf (fpo, "Z");
-      }
-      if (nof_bits > 0) {
-	fprintf (fpo, " ");
-      }
-      fprintf (fpo, "%s\n", program[i].tag);
-    }
-    for (i = 0; i < n_sched_switch; i++) {
-      if (sched_switch[i].time - sched_switch[0].time != 0) {
-	if (wakeup[sched_switch[i].wakeup_id][0] == '=') {
-	  if (i == 0 || sched_switch[i].time != sched_switch[i - 1].time) {
-	    fprintf (fpo, "#%.0f\n",
-		     (sched_switch[i].time - sched_switch[0].time) * 1e6);
-	  }
-	  if (sched_switch[i].from_pid != sched_switch[i].to_pid) {
-	    if (nof_bits > 0) {
-	      fprintf (fpo, "b");
-	    }
-	    for (j = 0; j <= nof_bits; j++) {
-	      fprintf (fpo, "Z");
-	    }
-	    if (nof_bits > 0) {
-	      fprintf (fpo, " ");
-	    }
-	    fprintf (fpo, "%s\n", program[sched_switch[i].from_pid].tag);
-	  }
-	  if (nof_bits > 0) {
-	    fprintf (fpo, "b");
-	  }
-	  if (sched_switch[i].to_prio != program[sched_switch[i].to_pid].prio) {
-	    for (j = 0; j <= nof_bits; j++) {
-	      fprintf (fpo, "%c",
-		       "LH"[(sched_switch[i].to_cpu >> (nof_bits - j)) & 1]);
-	    }
-	  }
-	  else {
-	    for (j = 0; j <= nof_bits; j++) {
-	      fprintf (fpo, "%c",
-		       "01"[(sched_switch[i].to_cpu >> (nof_bits - j)) & 1]);
-	    }
-	  }
-	  if (nof_bits > 0) {
-	    fprintf (fpo, " ");
-	  }
-	  fprintf (fpo, "%s\n", program[sched_switch[i].to_pid].tag);
-	}
-	else if (wakeup[sched_switch[i].wakeup_id][0] == '+') {
-	  if (i == 0 || sched_switch[i].time != sched_switch[i - 1].time) {
-	    fprintf (fpo, "#%.0f\n",
-		     (sched_switch[i].time - sched_switch[0].time) * 1e6);
-	  }
-	  if (nof_bits > 0) {
-	    fprintf (fpo, "b");
-	  }
-	  for (j = 0; j <= nof_bits; j++) {
-	    fprintf (fpo, "X");
-	  }
-	  if (nof_bits > 0) {
-	    fprintf (fpo, " ");
-	  }
-	  fprintf (fpo, "%s\n", program[sched_switch[i].to_pid].tag);
-	}
-      }
-    }
-  }
-  fclose (fpi);
-  fclose (fpo);
-  free (first);
-  free (last_time);
-  for (i = 0; i < n_program; i++) {
-    free (program[i].name);
-    free (program[i].tag);
-  }
-  free (program);
-  free (state);
-  free (wakeup);
-  free (sched_switch);
-  return 0;
-}
-
---------------010909030900050701000006--
+--=20
+Regards,
+GeunSik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+e-Mail: geunsik.lim@samsung.com
+           leemgs@gmail.com , leemgs1@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
