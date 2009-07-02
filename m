@@ -1,51 +1,54 @@
 From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] clock_nanosleep interrupt
-Date: Thu, 2 Jul 2009 09:48:26 -0500
-Message-ID: <20090702094826.7f4cbf8f@torg>
-References: <20090429155011.09e2218f@torg>
-	<1246499863.32598.3.camel@sven.thebigcorporation.com>
+Subject: Re: [PATCH] cyclictest:
+ change-output-format-to-allow-6-digits.patch
+Date: Thu, 2 Jul 2009 09:49:23 -0500
+Message-ID: <20090702094923.117fbd09@torg>
+References: <1246500132.32598.12.camel@sven.thebigcorporation.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/LfUlwmLh2sAmufuJS.By.Tj"; protocol="application/pgp-signature"
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Daniel Gollub <gollub@b1-systems.de>
+ boundary="Sig_/0PV7P/r3tQwAw0RqTGAU3LX"; protocol="application/pgp-signature"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:40747 "EHLO mx2.redhat.com"
+Received: from mx2.redhat.com ([66.187.237.31]:40759 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751475AbZGBOsg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Jul 2009 10:48:36 -0400
-In-Reply-To: <1246499863.32598.3.camel@sven.thebigcorporation.com>
+	id S1751475AbZGBOtZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 2 Jul 2009 10:49:25 -0400
+In-Reply-To: <1246500132.32598.12.camel@sven.thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/LfUlwmLh2sAmufuJS.By.Tj
+--Sig_/0PV7P/r3tQwAw0RqTGAU3LX
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 01 Jul 2009 18:57:43 -0700
+On Wed, 01 Jul 2009 19:02:12 -0700
 Sven-Thorsten Dietrich <sven@thebigcorporation.com> wrote:
 
-> Subject: Avoid segfault of cyclictest if it gets immediately interrupted.
+> From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+> Date: Sat, 21 Mar 2009 16:41:40 -0700
+> Subject: [PATCH] Change output format to allow 6 digits.
 >=20
-> From: Daniel Gollub <dgollub@suse.de>
->=20
+> This is useful when testing PREEMPT_NONE Kernels with cyclictest,
+> where latencies approaching 1 second can be observed.
 >
 
-Thanks, applied; will go out with 0.45 shortly.
+Thanks, applied.
+
+v0.45 has been pushed to kernel.org (git and tarball).
 
 Clark
 
---Sig_/LfUlwmLh2sAmufuJS.By.Tj
+--Sig_/0PV7P/r3tQwAw0RqTGAU3LX
 Content-Type: application/pgp-signature; name=signature.asc
 Content-Disposition: attachment; filename=signature.asc
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2.0.11 (GNU/Linux)
 
-iEYEARECAAYFAkpMyL4ACgkQHyuj/+TTEp0XYACgoO8xZwyvx+okAfAuI6lBJrtd
-PC0AnR7EJA/dYmvfNCFqHRsRA8OePG4Q
-=yX6j
+iEYEARECAAYFAkpMyPYACgkQHyuj/+TTEp1yWgCgsKbcEkzAgv4xp1SGQisUjwgF
+OS8AnRzF9gEKmns/q2T+1oaKIZIQ3Sfb
+=PSvV
 -----END PGP SIGNATURE-----
 
---Sig_/LfUlwmLh2sAmufuJS.By.Tj--
+--Sig_/0PV7P/r3tQwAw0RqTGAU3LX--
