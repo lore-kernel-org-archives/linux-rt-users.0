@@ -1,400 +1,702 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Subrata Modak <subrata@linux.vnet.ibm.com>
 Subject: Re: [LTP] LTP RT Tests (Cyclic, rt-migrate, etc)
-Date: Mon, 6 Jul 2009 10:26:56 -0400 (EDT)
-Message-ID: <alpine.DEB.2.00.0907061024200.8813@gandalf.stny.rr.com>
-References: <1224509719.5152.116.camel@subratamodak.linux.ibm.com>  <1224840077.5270.69.camel@subratamodak.linux.ibm.com>  <alpine.DEB.1.10.0810240749470.25677@gandalf.stny.rr.com>  <1229093480.5171.60.camel@subratamodak.linux.ibm.com>
- <alpine.DEB.1.10.0812121533350.29763@gandalf.stny.rr.com>  <1229347938.5353.8.camel@subratamodak.linux.ibm.com>  <alpine.DEB.1.10.0812150851290.18692@gandalf.stny.rr.com> <1245768486.4860.53.camel@subratamodak.linux.ibm.com>
+Date: Mon, 06 Jul 2009 20:01:38 +0530
+Message-ID: <1246890698.4887.24.camel@subratamodak.linux.ibm.com>
+References: <1224509719.5152.116.camel@subratamodak.linux.ibm.com>
+	 <1224840077.5270.69.camel@subratamodak.linux.ibm.com>
+	 <alpine.DEB.1.10.0810240749470.25677@gandalf.stny.rr.com>
+	 <1229093480.5171.60.camel@subratamodak.linux.ibm.com>
+	 <alpine.DEB.1.10.0812121533350.29763@gandalf.stny.rr.com>
+	 <1229347938.5353.8.camel@subratamodak.linux.ibm.com>
+	 <alpine.DEB.1.10.0812150851290.18692@gandalf.stny.rr.com>
+	 <1245768486.4860.53.camel@subratamodak.linux.ibm.com>
+	 <alpine.DEB.2.00.0907061024200.8813@gandalf.stny.rr.com>
+Reply-To: subrata@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1566466487-1246890419=:8813"
+Content-Type: multipart/mixed; boundary="=-KM7O5Q+RZBEcOsxasTmF"
 Cc: Clark Williams <clark.williams@gmail.com>,
 	Gregory Haskins <ghaskins@novell.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Subrata Modak <subrata@linux.vnet.ibm.com>
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	ltp-list <ltp-list@lists.sf.net>,
+	dvhltc <dvhltc@linux.vnet.ibm.com>,
+	Gowrishankar <gomuthuk@linux.vnet.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:43349 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750782AbZGFO06 (ORCPT
+Received: from e39.co.us.ibm.com ([32.97.110.160]:37871 "EHLO
+	e39.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750862AbZGFOb7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Jul 2009 10:26:58 -0400
-In-Reply-To: <1245768486.4860.53.camel@subratamodak.linux.ibm.com>
+	Mon, 6 Jul 2009 10:31:59 -0400
+Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
+	by e39.co.us.ibm.com (8.13.1/8.13.1) with ESMTP id n66ERam5011380
+	for <linux-rt-users@vger.kernel.org>; Mon, 6 Jul 2009 08:27:36 -0600
+Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
+	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v9.2) with ESMTP id n66EVnLV111738
+	for <linux-rt-users@vger.kernel.org>; Mon, 6 Jul 2009 08:31:53 -0600
+Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av02.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n66EVkIe013212
+	for <linux-rt-users@vger.kernel.org>; Mon, 6 Jul 2009 08:31:47 -0600
+In-Reply-To: <alpine.DEB.2.00.0907061024200.8813@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
 
---8323328-1566466487-1246890419=:8813
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+--=-KM7O5Q+RZBEcOsxasTmF
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-
-
-On Tue, 23 Jun 2009, Subrata Modak wrote:
-
-> Steven,
+On Mon, 2009-07-06 at 10:26 -0400, Steven Rostedt wrote:
 > 
-> Do you remember this ?
+> On Tue, 23 Jun 2009, Subrata Modak wrote:
+> 
+> > Steven,
+> > 
+> > Do you remember this ?
+> 
+> Yes, and I finally got time to fix it up a little ;-)
 
-Yes, and I finally got time to fix it up a little ;-)
+Great. Forwarding to the ltp mailing list as well. Thanks steven.
 
-OK, here it is. To run it, just do:
-
- ./rt-migrate-test -c 
-
-You need to be root since it changes the priorities. It will check the 
-number of processors and create N+1 threads (where N is the number of 
-processors). Each thread will wake up at the same time and try to do a 
-busy loop for 20 millisecs. If a lower prio thread runs for 1ms before a 
-higher prio thread, it will fail. This should test the migration of the 
-threads to make sure that the higher prio threads run first.
-
-Sorry for taking so long.
-
--- Steve
-
-
+Regards--
+Subrata
 
 > 
-> Regards--
-> Subrata
+> OK, here it is. To run it, just do:
 > 
-> On Mon, 2008-12-15 at 08:52 -0500, Steven Rostedt wrote: 
-> > On Mon, 15 Dec 2008, Subrata Modak wrote:
+>  ./rt-migrate-test -c 
+> 
+> You need to be root since it changes the priorities. It will check the 
+> number of processors and create N+1 threads (where N is the number of 
+> processors). Each thread will wake up at the same time and try to do a 
+> busy loop for 20 millisecs. If a lower prio thread runs for 1ms before a 
+> higher prio thread, it will fail. This should test the migration of the 
+> threads to make sure that the higher prio threads run first.
+> 
+> Sorry for taking so long.
+> 
+> -- Steve
+> 
+> 
+> 
+> > 
+> > Regards--
+> > Subrata
+> > 
+> > On Mon, 2008-12-15 at 08:52 -0500, Steven Rostedt wrote: 
+> > > On Mon, 15 Dec 2008, Subrata Modak wrote:
+> > > > > 
+> > > > > Lets see, you wanted my rt migration test. I'll clean that up now. Is 
 > > > > 
-> > > > Lets see, you wanted my rt migration test. I'll clean that up now. Is 
+> > > > Oh yes.
 > > > 
-> > > Oh yes.
-> > 
-> > OK, I'm cleaning it up to be more for production use.
-> > 
+> > > OK, I'm cleaning it up to be more for production use.
 > > > 
-> > > > there something else I needed to send you? If you remember.
+> > > > 
+> > > > > there something else I needed to send you? If you remember.
+> > > > 
+> > > > I am not quite sure now. Will let you know in future.
 > > > 
-> > > I am not quite sure now. Will let you know in future.
+> > > OK, thanks,
+> > > 
+> > > -- Steve
+> > > 
 > > 
-> > OK, thanks,
 > > 
-> > -- Steve
-> > 
-> 
-> 
---8323328-1566466487-1246890419=:8813
-Content-Type: TEXT/x-csrc; name=rt-migrate-test.c
-Content-Transfer-Encoding: BASE64
-Content-ID: <alpine.DEB.2.00.0907061026560.8813@gandalf.stny.rr.com>
-Content-Description: 
+
+--=-KM7O5Q+RZBEcOsxasTmF
 Content-Disposition: attachment; filename=rt-migrate-test.c
+Content-Type: text/x-csrc; name=rt-migrate-test.c; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-LyoNCiAqIHJ0LW1pZ3JhdGUtdGVzdC5jDQogKg0KICogQ29weXJpZ2h0IChD
-KSAyMDA3LTIwMDkgU3RldmVuIFJvc3RlZHQgPHNyb3N0ZWR0QHJlZGhhdC5j
-b20+DQogKg0KICogfn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn4NCiAq
-DQogKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiBy
-ZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQ0KICogaXQgdW5kZXIgdGhl
-IHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhcyBw
-dWJsaXNoZWQgYnkNCiAqIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247
-IHZlcnNpb24gMiBvZiB0aGUgTGljZW5zZSAobm90IGxhdGVyISkNCiAqDQog
-KiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhh
-dCBpdCB3aWxsIGJlIHVzZWZ1bCwNCiAqIGJ1dCBXSVRIT1VUIEFOWSBXQVJS
-QU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mDQog
-KiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFS
-IFBVUlBPU0UuICBTZWUgdGhlDQogKiBHTlUgR2VuZXJhbCBQdWJsaWMgTGlj
-ZW5zZSBmb3IgbW9yZSBkZXRhaWxzLg0KICoNCiAqIFlvdSBzaG91bGQgaGF2
-ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBM
-aWNlbnNlDQogKiBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbTsgaWYgbm90LCB3
-cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZQ0KICogRm91bmRhdGlvbiwgSW5j
-LiwgNTkgVGVtcGxlIFBsYWNlLCBTdWl0ZSAzMzAsIEJvc3RvbiwgTUEgIDAy
-MTExLTEzMDcgIFVTQQ0KICoNCiAqIH5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+
-fn5+fn5+DQogKi8NCiNkZWZpbmUgX0dOVV9TT1VSQ0UNCiNpbmNsdWRlIDxz
-dGRpby5oPg0KI2lmbmRlZiBfX1VTRV9YT1BFTjJLDQojIGRlZmluZSBfX1VT
-RV9YT1BFTjJLDQojZW5kaWYNCiNpbmNsdWRlIDxzdGRsaWIuaD4NCiNpbmNs
-dWRlIDxzdHJpbmcuaD4NCiNpbmNsdWRlIDxnZXRvcHQuaD4NCiNpbmNsdWRl
-IDxzdGRhcmcuaD4NCiNpbmNsdWRlIDx1bmlzdGQuaD4NCiNpbmNsdWRlIDxj
-dHlwZS5oPg0KI2luY2x1ZGUgPHRpbWUuaD4NCiNpbmNsdWRlIDxzeXMvdHlw
-ZXMuaD4NCiNpbmNsdWRlIDxzeXMvc3RhdC5oPg0KI2luY2x1ZGUgPGZjbnRs
-Lmg+DQojaW5jbHVkZSA8c2lnbmFsLmg+DQojaW5jbHVkZSA8c3lzL3RpbWUu
-aD4NCiNpbmNsdWRlIDxsaW51eC91bmlzdGQuaD4NCiNpbmNsdWRlIDxzeXMv
-c3lzY2FsbC5oPg0KI2luY2x1ZGUgPGVycm5vLmg+DQojaW5jbHVkZSA8c2No
-ZWQuaD4NCiNpbmNsdWRlIDxwdGhyZWFkLmg+DQojaWZkZWYgTE9HREVWDQoj
-IGluY2x1ZGUgPGR1bXBfbG9nLmg+DQojIGRlZmluZSBkb19sb2dkZXZfb3Bl
-bigpIG9wZW4oIi9kZWJ1Zy9sb2dkZXYvd3JpdGUiLCBPX1dST05MWSkNCiMg
-ZGVmaW5lIGRvX2xvZ2Rldl9jbG9zZShsZCkgY2xvc2UobGQpDQpfX3RocmVh
-ZCBjaGFyIGJ1ZmZbQlVGU0laXTsNCnN0YXRpYyBsZ3ByaW50KGludCBmZCwg
-Y29uc3QgY2hhciAqZm10LCAuLi4pDQp7DQoJdmFfbGlzdCBhcDsNCglpbnQg
-bjsNCg0KCXZhX3N0YXJ0KGFwLCBmbXQpOw0KCW4gPSB2c25wcmludGYoYnVm
-ZiwgQlVGU0laLCBmbXQsIGFwKTsNCgl2YV9lbmQoYXApOw0KDQoJd3JpdGUo
-ZmQsIGJ1ZmYsIG4pOw0KfQ0KI2Vsc2UNCiMgZGVmaW5lIGRvX2xvZ2Rldl9v
-cGVuKCkgKDApDQojIGRlZmluZSBkb19sb2dkZXZfY2xvc2UobGZkKSBkbyB7
-IH0gd2hpbGUoMCkNCiMgZGVmaW5lIGxvZ2Rldl9wcmludF9zZXQoeCkgIGRv
-IHsgfSB3aGlsZSgwKQ0KIyBkZWZpbmUgbG9nZGV2X3N3aXRjaF9zZXQoeCkg
-IGRvIHsgfSB3aGlsZSgwKQ0KIyBkZWZpbmUgbGdwcmludCh4Li4uKSBkbyB7
-IH0gd2hpbGUoMCkNCiNlbmRpZg0KDQoNCiNkZWZpbmUgZ2V0dGlkKCkgc3lz
-Y2FsbChfX05SX2dldHRpZCkNCg0KI2RlZmluZSBWRVJTSU9OX1NUUklORyAi
-ViAwLjMiDQoNCmludCBucl90YXNrczsNCmludCBsZmQ7DQoNCiNkZWZpbmUg
-bmFubzJzZWMobmFuKSAobmFuIC8gMTAwMDAwMDAwMFVMTCkNCiNkZWZpbmUg
-bmFubzJtcyhuYW4pIChuYW4gLyAxMDAwMDAwVUxMKQ0KI2RlZmluZSBuYW5v
-MnVzZWMobmFuKSAobmFuIC8gMTAwMFVMTCkNCiNkZWZpbmUgdXNlYzJuYW5v
-KHNlYykgKHNlYyAqIDEwMDBVTEwpDQojZGVmaW5lIG1zMm5hbm8obXMpICht
-cyAqIDEwMDAwMDBVTEwpDQojZGVmaW5lIHNlYzJuYW5vKHNlYykgKHNlYyAq
-IDEwMDAwMDAwMDBVTEwpDQojZGVmaW5lIElOVEVSVkFMIG1zMm5hbm8oMTAw
-VUxMKQ0KI2RlZmluZSBSVU5fSU5URVJWQUwgbXMybmFubygyMFVMTCkNCiNk
-ZWZpbmUgTlJfUlVOUyA1MA0KI2RlZmluZSBQUklPX1NUQVJUIDINCi8qIDEg
-bWlsbGlzZWMgb2ZmICovDQojZGVmaW5lIE1BWF9FUlIgIHVzZWMybmFubygx
-MDAwKQ0KDQojZGVmaW5lIFBST0dSRVNTX0NIQVJTIDcwDQoNCnN0YXRpYyB1
-bnNpZ25lZCBsb25nIGxvbmcgaW50ZXJ2YWwgPSBJTlRFUlZBTDsNCnN0YXRp
-YyB1bnNpZ25lZCBsb25nIGxvbmcgcnVuX2ludGVydmFsID0gUlVOX0lOVEVS
-VkFMOw0Kc3RhdGljIHVuc2lnbmVkIGxvbmcgbG9uZyBtYXhfZXJyID0gTUFY
-X0VSUjsNCnN0YXRpYyBpbnQgbnJfcnVucyA9IE5SX1JVTlM7DQpzdGF0aWMg
-aW50IHByaW9fc3RhcnQgPSBQUklPX1NUQVJUOw0Kc3RhdGljIGludCBjaGVj
-azsNCnN0YXRpYyBpbnQgc3RvcDsNCg0Kc3RhdGljIHVuc2lnbmVkIGxvbmcg
-bG9uZyBub3c7DQoNCnN0YXRpYyBpbnQgZG9uZTsNCnN0YXRpYyBpbnQgbG9v
-cDsNCg0Kc3RhdGljIHB0aHJlYWRfYmFycmllcl90IHN0YXJ0X2JhcnJpZXI7
-DQpzdGF0aWMgcHRocmVhZF9iYXJyaWVyX3QgZW5kX2JhcnJpZXI7DQpzdGF0
-aWMgdW5zaWduZWQgbG9uZyBsb25nICoqaW50ZXJ2YWxzOw0Kc3RhdGljIHVu
-c2lnbmVkIGxvbmcgbG9uZyAqKmludGVydmFsc19sZW5ndGg7DQpzdGF0aWMg
-dW5zaWduZWQgbG9uZyAqKmludGVydmFsc19sb29wczsNCnN0YXRpYyBsb25n
-ICp0aHJlYWRfcGlkczsNCg0Kc3RhdGljIGNoYXIgYnVmZmVyW0JVRlNJWl07
-DQoNCnN0YXRpYyB2b2lkIHBlcnIoY2hhciAqZm10LCAuLi4pDQp7DQoJdmFf
-bGlzdCBhcDsNCg0KCXZhX3N0YXJ0KGFwLCBmbXQpOw0KCXZzbnByaW50Zihi
-dWZmZXIsIEJVRlNJWiwgZm10LCBhcCk7DQoJdmFfZW5kKGFwKTsNCg0KCXBl
-cnJvcihidWZmZXIpOw0KCWZmbHVzaChzdGRlcnIpOw0KCWV4aXQoLTEpOw0K
-fQ0KDQpzdGF0aWMgdm9pZCBwcmludF9wcm9ncmVzc19iYXIoaW50IHBlcmNl
-bnQpDQp7DQoJaW50IGk7DQoJaW50IHA7DQoNCglpZiAocGVyY2VudCA+IDEw
-MCkNCgkJcGVyY2VudCA9IDEwMDsNCg0KCS8qIFVzZSBzdGRlcnIsIHNvIHdl
-IGRvbid0IGNhcHR1cmUgaXQgKi8NCglwdXRjKCdccicsIHN0ZGVycik7DQoJ
-cHV0YygnfCcsIHN0ZGVycik7DQoJZm9yIChpPTA7IGkgPCBQUk9HUkVTU19D
-SEFSUzsgaSsrKQ0KCQlwdXRjKCcgJywgc3RkZXJyKTsNCglwdXRjKCd8Jywg
-c3RkZXJyKTsNCglwdXRjKCdccicsIHN0ZGVycik7DQoJcHV0YygnfCcsIHN0
-ZGVycik7DQoNCglwID0gUFJPR1JFU1NfQ0hBUlMgKiBwZXJjZW50IC8gMTAw
-Ow0KDQoJZm9yIChpPTA7IGkgPCBwOyBpKyspDQoJCXB1dGMoJy0nLCBzdGRl
-cnIpOw0KDQoJZmZsdXNoKHN0ZGVycik7DQp9DQoNCnN0YXRpYyB2b2lkIHVz
-YWdlKGNoYXIgKiphcmd2KQ0Kew0KCWNoYXIgKmFyZyA9IGFyZ3ZbMF07DQoJ
-Y2hhciAqcCA9IGFyZytzdHJsZW4oYXJnKTsNCg0KCXdoaWxlIChwID49IGFy
-ZyAmJiAqcCAhPSAnLycpDQoJCXAtLTsNCglwKys7DQoNCglwcmludGYoIiVz
-ICVzXG4iLCBwLCBWRVJTSU9OX1NUUklORyk7DQoJcHJpbnRmKCJVc2FnZTpc
-biINCgkgICAgICAgIiVzIDxvcHRpb25zPiBucl90YXNrc1xuXG4iDQoJICAg
-ICAgICItcCBwcmlvIC0tcHJpbyAgcHJpbyAgICAgICAgYmFzZSBwcmlvcml0
-eSB0byBzdGFydCBSVCB0YXNrcyB3aXRoICgyKSBcbiINCgkgICAgICAgIi1y
-IHRpbWUgLS1ydW4tdGltZSB0aW1lICAgICBSdW4gdGltZSAobXMpIHRvIGJ1
-c3kgbG9vcCB0aGUgdGhyZWFkcyAoMjApXG4iDQoJICAgICAgICItcyB0aW1l
-IC0tc2xlZXAtdGltZSB0aW1lICAgU2xlZXAgdGltZSAobXMpIGJldHdlZW4g
-aW50ZXJ2YWxzICgxMDApXG4iDQoJICAgICAgICItbSB0aW1lIC0tbWF4ZXJy
-IHRpbWUgICAgICAgTWF4IGFsbG93ZWQgZXJyb3IgKG1pY3Jvc2VjcylcbiIN
-CgkgICAgICAgIi1sIGxvb3BzIC0tbG9vcHMgbG9vcHMgICAgICBOdW1iZXIg
-b2YgaXRlcmF0aW9ucyB0byBydW4gKDUwKVxuIg0KCSAgICAgICAiLWMgICAg
-LS1jaGVjayAgICAgICAgICAgICAgIFN0b3AgaWYgbG93ZXIgcHJpbyB0YXNr
-IGlzIHF1aWNrIHRoYW4gaGlnaGVyIChvZmYpXG4iDQoJICAgICAgICIgICgp
-IGFib3ZlIGFyZSBkZWZhdWx0cyBcbiIsDQoJCXApOw0KCWV4aXQoMCk7DQp9
-DQoNCnN0YXRpYyB2b2lkIHBhcnNlX29wdGlvbnMgKGludCBhcmdjLCBjaGFy
-ICphcmd2W10pDQp7DQoJZm9yICg7Oykgew0KCQlpbnQgb3B0aW9uX2luZGV4
-ID0gMDsNCgkJLyoqIE9wdGlvbnMgZm9yIGdldG9wdCAqLw0KCQlzdGF0aWMg
-c3RydWN0IG9wdGlvbiBsb25nX29wdGlvbnNbXSA9IHsNCgkJCXsicHJpbyIs
-IHJlcXVpcmVkX2FyZ3VtZW50LCBOVUxMLCAncCd9LA0KCQkJeyJydW4tdGlt
-ZSIsIHJlcXVpcmVkX2FyZ3VtZW50LCBOVUxMLCAncid9LA0KCQkJeyJzbGVl
-cC10aW1lIiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdzJ30sDQoJCQl7
-Im1heGVyciIsIHJlcXVpcmVkX2FyZ3VtZW50LCBOVUxMLCAnbSd9LA0KCQkJ
-eyJsb29wcyIsIHJlcXVpcmVkX2FyZ3VtZW50LCBOVUxMLCAnbCd9LA0KCQkJ
-eyJjaGVjayIsIG5vX2FyZ3VtZW50LCBOVUxMLCAnYyd9LA0KCQkJeyJoZWxw
-Iiwgbm9fYXJndW1lbnQsIE5VTEwsICc/J30sDQoJCQl7TlVMTCwgMCwgTlVM
-TCwgMH0NCgkJfTsNCgkJaW50IGMgPSBnZXRvcHRfbG9uZyAoYXJnYywgYXJn
-diwgInA6cjpzOm06bDpjaCIsDQoJCQlsb25nX29wdGlvbnMsICZvcHRpb25f
-aW5kZXgpOw0KCQlpZiAoYyA9PSAtMSkNCgkJCWJyZWFrOw0KCQlzd2l0Y2gg
-KGMpIHsNCgkJY2FzZSAncCc6IHByaW9fc3RhcnQgPSBhdG9pKG9wdGFyZyk7
-IGJyZWFrOw0KCQljYXNlICdyJzoNCgkJCXJ1bl9pbnRlcnZhbCA9IGF0b2ko
-b3B0YXJnKTsNCgkJCWJyZWFrOw0KCQljYXNlICdzJzogaW50ZXJ2YWwgPSBh
-dG9pKG9wdGFyZyk7IGJyZWFrOw0KCQljYXNlICdsJzogbnJfcnVucyA9IGF0
-b2kob3B0YXJnKTsgYnJlYWs7DQoJCWNhc2UgJ20nOiBtYXhfZXJyID0gdXNl
-YzJuYW5vKGF0b2kob3B0YXJnKSk7IGJyZWFrOw0KCQljYXNlICdjJzogY2hl
-Y2sgPSAxOyBicmVhazsNCgkJY2FzZSAnPyc6DQoJCWNhc2UgJ2gnOg0KCQkJ
-dXNhZ2UoYXJndik7DQoJCQlicmVhazsNCgkJfQ0KCX0NCg0KfQ0KDQpzdGF0
-aWMgdW5zaWduZWQgbG9uZyBsb25nIGdldF90aW1lKHZvaWQpDQp7DQoJc3Ry
-dWN0IHRpbWV2YWwgdHY7DQoJdW5zaWduZWQgbG9uZyBsb25nIHRpbWU7DQoN
-CglnZXR0aW1lb2ZkYXkoJnR2LCBOVUxMKTsNCg0KCXRpbWUgPSBzZWMybmFu
-byh0di50dl9zZWMpOw0KCXRpbWUgKz0gdXNlYzJuYW5vKHR2LnR2X3VzZWMp
-Ow0KDQoJcmV0dXJuIHRpbWU7DQp9DQoNCnN0YXRpYyB2b2lkIHJlY29yZF90
-aW1lKGludCBpZCwgdW5zaWduZWQgbG9uZyBsb25nIHRpbWUsIHVuc2lnbmVk
-IGxvbmcgbCkNCnsNCgl1bnNpZ25lZCBsb25nIGxvbmcgbHRpbWU7DQoNCglp
-ZiAobG9vcCA+PSBucl9ydW5zKQ0KCQlyZXR1cm47DQoJdGltZSAtPSBub3c7
-DQoJbHRpbWUgPSBnZXRfdGltZSgpOw0KCWx0aW1lIC09IG5vdzsNCglpbnRl
-cnZhbHNbbG9vcF1baWRdID0gdGltZTsNCglpbnRlcnZhbHNfbGVuZ3RoW2xv
-b3BdW2lkXSA9IGx0aW1lOw0KCWludGVydmFsc19sb29wc1tsb29wXVtpZF0g
-PSBsOw0KfQ0KDQpzdGF0aWMgdm9pZCBwcmludF9yZXN1bHRzKHZvaWQpDQp7
-DQoJaW50IGk7DQoJaW50IHQ7DQoJdW5zaWduZWQgbG9uZyBsb25nIHRhc2tz
-X21heFtucl90YXNrc107DQoJdW5zaWduZWQgbG9uZyBsb25nIHRhc2tzX21p
-bltucl90YXNrc107DQoJdW5zaWduZWQgbG9uZyBsb25nIHRhc2tzX2F2Z1tu
-cl90YXNrc107DQoNCgltZW1zZXQodGFza3NfbWF4LCAwLCBzaXplb2YodGFz
-a3NfbWF4WzBdKSpucl90YXNrcyk7DQoJbWVtc2V0KHRhc2tzX21pbiwgMHhm
-Ziwgc2l6ZW9mKHRhc2tzX21pblswXSkqbnJfdGFza3MpOw0KCW1lbXNldCh0
-YXNrc19hdmcsIDAsIHNpemVvZih0YXNrc19hdmdbMF0pKm5yX3Rhc2tzKTsN
-Cg0KCXByaW50ZigiSXRlcjogIik7DQoJZm9yICh0PTA7IHQgPCBucl90YXNr
-czsgdCsrKQ0KCQlwcmludGYoIiU2ZCAgIiwgdCk7DQoJcHJpbnRmKCJcbiIp
-Ow0KDQoJZm9yIChpPTA7IGkgPCBucl9ydW5zOyBpKyspIHsNCgkJcHJpbnRm
-KCIlNGQ6ICAgIiwgaSk7DQoJCWZvciAodD0wOyB0IDwgbnJfdGFza3M7IHQr
-Kykgew0KCQkJdW5zaWduZWQgbG9uZyBsb25nIGl0diA9IGludGVydmFsc1tp
-XVt0XTsNCg0KCQkJaWYgKHRhc2tzX21heFt0XSA8IGl0dikNCgkJCQl0YXNr
-c19tYXhbdF0gPSBpdHY7DQoJCQlpZiAodGFza3NfbWluW3RdID4gaXR2KQ0K
-CQkJCXRhc2tzX21pblt0XSA9IGl0djsNCgkJCXRhc2tzX2F2Z1t0XSArPSBp
-dHY7DQoJCQlwcmludGYoIiU2bGxkICAiLCBuYW5vMnVzZWMoaXR2KSk7DQoJ
-CX0NCgkJcHJpbnRmKCJcbiIpOw0KCQlwcmludGYoIiBsZW46ICAgIik7DQoJ
-CWZvciAodD0wOyB0IDwgbnJfdGFza3M7IHQrKykgew0KCQkJdW5zaWduZWQg
-bG9uZyBsb25nIGxlbiA9IGludGVydmFsc19sZW5ndGhbaV1bdF07DQoNCgkJ
-CXByaW50ZigiJTZsbGQgICIsIG5hbm8ydXNlYyhsZW4pKTsNCgkJfQ0KCQlw
-cmludGYoIlxuIik7DQoJCXByaW50ZigiIGxvb3BzOiAiKTsNCgkJZm9yICh0
-PTA7IHQgPCBucl90YXNrczsgdCsrKSB7DQoJCQl1bnNpZ25lZCBsb25nIGxv
-b3BzID0gaW50ZXJ2YWxzX2xvb3BzW2ldW3RdOw0KDQoJCQlwcmludGYoIiU2
-bGQgICIsIGxvb3BzKTsNCgkJfQ0KCQlwcmludGYoIlxuIik7DQoJCXByaW50
-ZigiXG4iKTsNCgl9DQoNCglwcmludGYoIlBhcmVudCBwaWQ6ICVkXG4iLCBn
-ZXRwaWQoKSk7DQoNCglmb3IgKHQ9MDsgdCA8IG5yX3Rhc2tzOyB0KyspIHsN
-CgkJcHJpbnRmKCIgVGFzayAlZCAocHJpbyAlZCkgKHBpZCAlbGQpOlxuIiwg
-dCwgdCArIHByaW9fc3RhcnQsDQoJCQl0aHJlYWRfcGlkc1t0XSk7DQoJCXBy
-aW50ZigiICAgTWF4OiAlbGxkIHVzXG4iLCBuYW5vMnVzZWModGFza3NfbWF4
-W3RdKSk7DQoJCXByaW50ZigiICAgTWluOiAlbGxkIHVzXG4iLCBuYW5vMnVz
-ZWModGFza3NfbWluW3RdKSk7DQoJCXByaW50ZigiICAgVG90OiAlbGxkIHVz
-XG4iLCBuYW5vMnVzZWModGFza3NfYXZnW3RdKSk7DQoJCXByaW50ZigiICAg
-QXZnOiAlbGxkIHVzXG4iLCBuYW5vMnVzZWModGFza3NfYXZnW3RdIC8gbnJf
-cnVucykpOw0KCQlwcmludGYoIlxuIik7DQoJfQ0KDQoJaWYgKGNoZWNrKSB7
-DQoJCWlmIChjaGVjayA8IDApDQoJCQlwcmludGYoIiBGYWlsZWQhXG4iKTsN
-CgkJZWxzZQ0KCQkJcHJpbnRmKCIgUGFzc2VkIVxuIik7DQoJfQ0KfQ0KDQpz
-dGF0aWMgdW5zaWduZWQgbG9uZyBidXN5X2xvb3AodW5zaWduZWQgbG9uZyBs
-b25nIHN0YXJ0X3RpbWUpDQp7DQoJdW5zaWduZWQgbG9uZyBsb25nIHRpbWU7
-DQoJdW5zaWduZWQgbG9uZyBsID0gMDsNCg0KCWRvIHsNCgkJbCsrOw0KCQl0
-aW1lID0gZ2V0X3RpbWUoKTsNCgl9IHdoaWxlICgodGltZSAtIHN0YXJ0X3Rp
-bWUpIDwgUlVOX0lOVEVSVkFMKTsNCg0KCXJldHVybiBsOw0KfQ0KDQp2b2lk
-ICpzdGFydF90YXNrKHZvaWQgKmRhdGEpDQp7DQoJbG9uZyBpZCA9IChsb25n
-KWRhdGE7DQoJdW5zaWduZWQgbG9uZyBsb25nIHN0YXJ0X3RpbWU7DQoJc3Ry
-dWN0IHNjaGVkX3BhcmFtIHBhcmFtID0gew0KCQkuc2NoZWRfcHJpb3JpdHkg
-PSBpZCArIHByaW9fc3RhcnQsDQoJfTsNCglpbnQgcmV0Ow0KCWludCBoaWdo
-ID0gMDsNCgljcHVfc2V0X3QgY3B1bWFzazsNCgljcHVfc2V0X3Qgc2F2ZV9j
-cHVtYXNrOw0KCWludCBjcHUgPSAwOw0KCXVuc2lnbmVkIGxvbmcgbDsNCgls
-b25nIHBpZDsNCg0KCXJldCA9IHNjaGVkX2dldGFmZmluaXR5KDAsIHNpemVv
-ZihzYXZlX2NwdW1hc2spLCAmc2F2ZV9jcHVtYXNrKTsNCglpZiAocmV0IDwg
-MCkNCgkJcGVycigiZ2V0dGluZyBhZmZpbml0eSIpOw0KDQoJcGlkID0gZ2V0
-dGlkKCk7DQoNCgkvKiBDaGVjayBpZiB3ZSBhcmUgdGhlIGhpZ2hlc3QgcHJp
-byB0YXNrICovDQoJaWYgKGlkID09IG5yX3Rhc2tzLTEpDQoJCWhpZ2ggPSAx
-Ow0KDQoJcmV0ID0gc2NoZWRfc2V0c2NoZWR1bGVyKDAsIFNDSEVEX0ZJRk8s
-ICZwYXJhbSk7DQoJaWYgKHJldCA8IDAgJiYgIWlkKQ0KCQlmcHJpbnRmKHN0
-ZGVyciwgIldhcm5pbmcsIGNhbid0IHNldCBwcmlvcml0aWVzXG4iKTsNCg0K
-CXdoaWxlICghZG9uZSkgew0KCQlpZiAoaGlnaCkgew0KCQkJLyogcm90YXRl
-IGFyb3VuZCB0aGUgQ1BVUyAqLw0KCQkJaWYgKCFDUFVfSVNTRVQoY3B1LCAm
-c2F2ZV9jcHVtYXNrKSkNCgkJCQljcHUgPSAwOw0KCQkJQ1BVX1pFUk8oJmNw
-dW1hc2spOw0KCQkJQ1BVX1NFVChjcHUsICZjcHVtYXNrKTsgY3B1Kys7DQoJ
-CQlzY2hlZF9zZXRhZmZpbml0eSgwLCBzaXplb2YoY3B1bWFzayksICZjcHVt
-YXNrKTsNCgkJfQ0KCQlwdGhyZWFkX2JhcnJpZXJfd2FpdCgmc3RhcnRfYmFy
-cmllcik7DQoJCXN0YXJ0X3RpbWUgPSBnZXRfdGltZSgpOw0KCQlsZ3ByaW50
-KGxmZCwgIlRocmVhZCAlZDogc3RhcnRlZCAlbGxkIGRpZmYgJWxsZFxuIiwN
-CgkJCXBpZCwgc3RhcnRfdGltZSwgc3RhcnRfdGltZSAtIG5vdyk7DQoJCWwg
-PSBidXN5X2xvb3Aoc3RhcnRfdGltZSk7DQoJCXJlY29yZF90aW1lKGlkLCBz
-dGFydF90aW1lLCBsKTsNCgkJcHRocmVhZF9iYXJyaWVyX3dhaXQoJmVuZF9i
-YXJyaWVyKTsNCgl9DQoNCglyZXR1cm4gKHZvaWQqKXBpZDsNCn0NCg0Kc3Rh
-dGljIGludCBjaGVja190aW1lcyhpbnQgbCkNCnsNCglpbnQgaTsNCgl1bnNp
-Z25lZCBsb25nIGxvbmcgbGFzdDsNCgl1bnNpZ25lZCBsb25nIGxvbmcgbGFz
-dF9sb29wczsNCgl1bnNpZ25lZCBsb25nIGxvbmcgbGFzdF9sZW5ndGg7DQoN
-Cglmb3IgKGk9MDsgaSA8IG5yX3Rhc2tzOyBpKyspIHsNCgkJaWYgKGkgJiYg
-bGFzdCA8IGludGVydmFsc1tsXVtpXSAmJg0KCQkgICAgKChpbnRlcnZhbHNb
-bF1baV0gLSBsYXN0KSA+IG1heF9lcnIpKSB7DQoJCQkvKg0KCQkJICogTWF5
-IGJlIGEgZmFsc2UgcG9zaXRpdmUuDQoJCQkgKiBNYWtlIHN1cmUgdGhhdCB3
-ZSBkaWQgbW9yZSBsb29wcw0KCQkJICogb3VyIHN0YXJ0IGlzIGJlZm9yZSB0
-aGUgZW5kDQoJCQkgKiBhbmQgdGhlIGVuZCBzaG91bGQgYmUgdGVzdGVkLg0K
-CQkJICovDQoJCQlpZiAoaW50ZXJ2YWxzX2xvb3BzW2xdW2ldIDwgbGFzdF9s
-b29wcyB8fA0KCQkJICAgIGludGVydmFsc1tsXVtpXSA+IGxhc3RfbGVuZ3Ro
-IHx8DQoJCQkgICAgKGludGVydmFsc19sZW5ndGhbbF1baV0gPiBsYXN0X2xl
-bmd0aCAmJg0KCQkJICAgICBpbnRlcnZhbHNfbGVuZ3RoW2xdW2ldIC0gbGFz
-dF9sZW5ndGggPiBtYXhfZXJyKSkgew0KCQkJCWNoZWNrID0gLTE7DQoJCQkJ
-cmV0dXJuIDE7DQoJCQl9DQoJCX0NCgkJbGFzdCA9IGludGVydmFsc1tsXVtp
-XTsNCgkJbGFzdF9sb29wcyA9IGludGVydmFsc19sb29wc1tsXVtpXTsNCgkJ
-bGFzdF9sZW5ndGggPSBpbnRlcnZhbHNfbGVuZ3RoW2xdW2ldOw0KCX0NCgly
-ZXR1cm4gMDsNCn0NCg0Kc3RhdGljIHZvaWQgc3RvcF9sb2coaW50IHNpZykN
-CnsNCglsb2dkZXZfcHJpbnRfc2V0KDApOw0KCWxvZ2Rldl9zd2l0Y2hfc2V0
-KDApOw0KCXN0b3AgPSAxOw0KfQ0KDQpzdGF0aWMgaW50IGNvdW50X2NwdXMo
-dm9pZCkNCnsNCglGSUxFICpmcDsNCgljaGFyIGJ1ZlsxMDI0XTsNCglpbnQg
-Y3B1cyA9IDA7DQoJY2hhciAqcGJ1ZjsNCglzaXplX3QgKnBuOw0KCXNpemVf
-dCBuOw0KCWludCByOw0KDQoJbiA9IDEwMjQ7DQoJcG4gPSAmbjsNCglwYnVm
-ID0gYnVmOw0KDQoJZnAgPSBmb3BlbigiL3Byb2MvY3B1aW5mbyIsICJyIik7
-DQoJaWYgKCFmcCkNCgkJcGVycigiQ2FuIG5vdCByZWFkIGNwdWluZm8iKTsN
-Cg0KCXdoaWxlICgociA9IGdldGxpbmUoJnBidWYsIHBuLCBmcCkpID49IDAp
-IHsNCgkJY2hhciAqcDsNCg0KCQlpZiAoc3RybmNtcChidWYsICJwcm9jZXNz
-b3IiLCA5KSAhPSAwKQ0KCQkJY29udGludWU7DQoJCWZvciAocCA9IGJ1Zis5
-OyBpc3NwYWNlKCpwKTsgcCsrKQ0KCQkJOw0KCQlpZiAoKnAgPT0gJzonKQ0K
-CQkJY3B1cysrOw0KCX0NCglmY2xvc2UoZnApOw0KDQoJcmV0dXJuIGNwdXM7
-DQp9DQoNCmludCBtYWluIChpbnQgYXJnYywgY2hhciAqKmFyZ3YpDQp7DQoJ
-cHRocmVhZF90ICp0aHJlYWRzOw0KCWxvbmcgaTsNCglpbnQgcmV0Ow0KCXN0
-cnVjdCB0aW1lc3BlYyBpbnR2Ow0KCXN0cnVjdCBzY2hlZF9wYXJhbSBwYXJh
-bTsNCg0KCXBhcnNlX29wdGlvbnMoYXJnYywgYXJndik7DQoNCglzaWduYWwo
-U0lHSU5ULCBzdG9wX2xvZyk7DQoNCglpZiAoYXJnYyA+PSAob3B0aW5kICsg
-MSkpDQoJCW5yX3Rhc2tzID0gYXRvaShhcmd2W29wdGluZF0pOw0KCWVsc2UN
-CgkJbnJfdGFza3MgPSBjb3VudF9jcHVzKCkgKyAxOw0KDQoJdGhyZWFkcyA9
-IG1hbGxvYyhzaXplb2YoKnRocmVhZHMpICogbnJfdGFza3MpOw0KCWlmICgh
-dGhyZWFkcykNCgkJcGVycigibWFsbG9jIik7DQoJbWVtc2V0KHRocmVhZHMs
-IDAsIHNpemVvZigqdGhyZWFkcykgKiBucl90YXNrcyk7DQoNCglyZXQgPSBw
-dGhyZWFkX2JhcnJpZXJfaW5pdCgmc3RhcnRfYmFycmllciwgTlVMTCwgbnJf
-dGFza3MgKyAxKTsNCglyZXQgPSBwdGhyZWFkX2JhcnJpZXJfaW5pdCgmZW5k
-X2JhcnJpZXIsIE5VTEwsIG5yX3Rhc2tzICsgMSk7DQoJaWYgKHJldCA8IDAp
-DQoJCXBlcnIoInB0aHJlYWRfYmFycmllcl9pbml0Iik7DQoNCglpbnRlcnZh
-bHMgPSBtYWxsb2Moc2l6ZW9mKHZvaWQqKSAqIG5yX3J1bnMpOw0KCWlmICgh
-aW50ZXJ2YWxzKQ0KCQlwZXJyKCJtYWxsb2MgaW50ZXJ2YWxzIGFycmF5Iik7
-DQoNCglpbnRlcnZhbHNfbGVuZ3RoID0gbWFsbG9jKHNpemVvZih2b2lkKikg
-KiBucl9ydW5zKTsNCglpZiAoIWludGVydmFsc19sZW5ndGgpDQoJCXBlcnIo
-Im1hbGxvYyBpbnRlcnZhbHMgbGVuZ3RoIGFycmF5Iik7DQoNCglpbnRlcnZh
-bHNfbG9vcHMgPSBtYWxsb2Moc2l6ZW9mKHZvaWQqKSAqIG5yX3J1bnMpOw0K
-CWlmICghaW50ZXJ2YWxzX2xvb3BzKQ0KCQlwZXJyKCJtYWxsb2MgaW50ZXJ2
-YWxzIGxvb3BzIGFycmF5Iik7DQoNCgl0aHJlYWRfcGlkcyA9IG1hbGxvYyhz
-aXplb2YobG9uZykgKiBucl90YXNrcyk7DQoJaWYgKCF0aHJlYWRfcGlkcykN
-CgkJcGVycigibWFsbG9jIHRocmVhZF9waWRzIik7DQoNCglmb3IgKGk9MDsg
-aSA8IG5yX3J1bnM7IGkrKykgew0KCQlpbnRlcnZhbHNbaV0gPSBtYWxsb2Mo
-c2l6ZW9mKHVuc2lnbmVkIGxvbmcgbG9uZykqbnJfdGFza3MpOw0KCQlpZiAo
-IWludGVydmFsc1tpXSkNCgkJCXBlcnIoIm1hbGxvYyBpbnRlcnZhbHMiKTsN
-CgkJbWVtc2V0KGludGVydmFsc1tpXSwgMCwgc2l6ZW9mKHVuc2lnbmVkIGxv
-bmcgbG9uZykqbnJfdGFza3MpOw0KDQoJCWludGVydmFsc19sZW5ndGhbaV0g
-PSBtYWxsb2Moc2l6ZW9mKHVuc2lnbmVkIGxvbmcgbG9uZykqbnJfdGFza3Mp
-Ow0KCQlpZiAoIWludGVydmFsc19sZW5ndGhbaV0pDQoJCQlwZXJyKCJtYWxs
-b2MgbGVuZ3RoIGludGVydmFscyIpOw0KCQltZW1zZXQoaW50ZXJ2YWxzX2xl
-bmd0aFtpXSwgMCwgc2l6ZW9mKHVuc2lnbmVkIGxvbmcgbG9uZykqbnJfdGFz
-a3MpOw0KDQoJCWludGVydmFsc19sb29wc1tpXSA9IG1hbGxvYyhzaXplb2Yo
-dW5zaWduZWQgbG9uZykqbnJfdGFza3MpOw0KCQlpZiAoIWludGVydmFsc19s
-b29wc1tpXSkNCgkJCXBlcnIoIm1hbGxvYyBsb29wcyBpbnRlcnZhbHMiKTsN
-CgkJbWVtc2V0KGludGVydmFsc19sb29wc1tpXSwgMCwgc2l6ZW9mKHVuc2ln
-bmVkIGxvbmcpKm5yX3Rhc2tzKTsNCgl9DQoNCglmb3IgKGk9MDsgaSA8IG5y
-X3Rhc2tzOyBpKyspIHsNCgkJaWYgKHB0aHJlYWRfY3JlYXRlKCZ0aHJlYWRz
-W2ldLCBOVUxMLCBzdGFydF90YXNrLCAodm9pZCAqKWkpKQ0KCQkJcGVycigi
-cHRocmVhZF9jcmVhdGUiKTsNCg0KCX0NCg0KCS8qDQoJICogUHJvZ3Jlc3Mg
-YmFyIHVzZXMgc3RkZXJyIHRvIGxldCB1c2VycyBzZWUgaXQgd2hlbg0KCSAq
-IHJlZGlyZWN0aW5nIG91dHB1dC4gU28gd2UgY29udmVydCBzdGRlcnIgdG8g
-dXNlIGxpbmUNCgkgKiBidWZmZXJpbmcgc28gdGhlIHByb2dyZXNzIGJhciBk
-b2Vzbid0IGZsaWNrZXIuDQoJICovDQoJc2V0bGluZWJ1ZihzdGRlcnIpOw0K
-DQoJLyogdXAgb3VyIHByaW8gYWJvdmUgYWxsIHRhc2tzICovDQoJbWVtc2V0
-KCZwYXJhbSwgMCwgc2l6ZW9mKHBhcmFtKSk7DQoJcGFyYW0uc2NoZWRfcHJp
-b3JpdHkgPSBucl90YXNrcyArIHByaW9fc3RhcnQ7DQoJaWYgKHNjaGVkX3Nl
-dHNjaGVkdWxlcigwLCBTQ0hFRF9GSUZPLCAmcGFyYW0pKQ0KCQlmcHJpbnRm
-KHN0ZGVyciwgIldhcm5pbmcsIGNhbid0IHNldCBwcmlvcml0eSBvZiBtYWlu
-IHRocmVhZCFcbiIpOw0KCQkNCg0KDQoJaW50di50dl9zZWMgPSBuYW5vMnNl
-YyhJTlRFUlZBTCk7DQoJaW50di50dl9uc2VjID0gSU5URVJWQUwgJSBzZWMy
-bmFubygxKTsNCg0KCXByaW50X3Byb2dyZXNzX2JhcigwKTsNCg0KCWxmZCA9
-IGRvX2xvZ2Rldl9vcGVuKCk7DQoJbG9nZGV2X3ByaW50X3NldCgxKTsNCgls
-b2dkZXZfc3dpdGNoX3NldCgxKTsNCg0KCWZvciAobG9vcD0wOyBsb29wIDwg
-bnJfcnVuczsgbG9vcCsrKSB7DQoJCXVuc2lnbmVkIGxvbmcgbG9uZyBlbmQ7
-DQoNCgkJbm93ID0gZ2V0X3RpbWUoKTsNCg0KCQlsZ3ByaW50KGxmZCwgIkxv
-b3AgJWQgbm93PSVsbGRcbiIsIGxvb3AsIG5vdyk7DQoNCgkJcHRocmVhZF9i
-YXJyaWVyX3dhaXQoJnN0YXJ0X2JhcnJpZXIpOw0KDQoJCWxncHJpbnQobGZk
-LCAiQWxsIHJ1bm5pbmchISFcbiIpOw0KDQoJCW5hbm9zbGVlcCgmaW50diwg
-TlVMTCk7DQoNCgkJcHJpbnRfcHJvZ3Jlc3NfYmFyKChsb29wICogMTAwKS8g
-bnJfcnVucyk7DQoNCgkJZW5kID0gZ2V0X3RpbWUoKTsNCgkJbGdwcmludChs
-ZmQsICJMb29wICVkIGVuZCBub3c9JWxsZCBkaWZmPSVsbGRcbiIsIGxvb3As
-IGVuZCwgZW5kIC0gbm93KTsNCg0KCQlwdGhyZWFkX2JhcnJpZXJfd2FpdCgm
-ZW5kX2JhcnJpZXIpOw0KDQoJCWlmIChzdG9wIHx8IChjaGVjayAmJiBjaGVj
-a190aW1lcyhsb29wKSkpIHsNCgkJCWxvb3ArKzsNCgkJCW5yX3J1bnMgPSBs
-b29wOw0KCQkJYnJlYWs7DQoJCX0NCgl9DQoJZG9fbG9nZGV2X2Nsb3NlKGxm
-ZCk7DQoNCglwdXRjKCdcbicsIHN0ZGVycik7DQoNCglwdGhyZWFkX2JhcnJp
-ZXJfd2FpdCgmc3RhcnRfYmFycmllcik7DQoJZG9uZSA9IDE7DQoJcHRocmVh
-ZF9iYXJyaWVyX3dhaXQoJmVuZF9iYXJyaWVyKTsNCg0KCWZvciAoaT0wOyBp
-IDwgbnJfdGFza3M7IGkrKykNCgkJcHRocmVhZF9qb2luKHRocmVhZHNbaV0s
-ICh2b2lkKikmdGhyZWFkX3BpZHNbaV0pOw0KDQoJbG9nZGV2X3ByaW50X3Nl
-dCgwKTsNCglsb2dkZXZfc3dpdGNoX3NldCgwKTsNCg0KCXByaW50X3Jlc3Vs
-dHMoKTsNCg0KCWlmIChzdG9wKSB7DQoJCS8qDQoJCSAqIFdlIHVzZSB0aGlz
-IHRlc3QgaW4gYmFzaCB3aGlsZSBsb29wcw0KCQkgKiBTbyBpZiB3ZSBoaXQg
-Q3RybC1DIHRoZW4gbGV0IHRoZSB3aGlsZQ0KCQkgKiBsb29wIGtub3cgdG8g
-YnJlYWsuDQoJCSAqLw0KCQlpZiAoY2hlY2sgPCAwKQ0KCQkJZXhpdCgtMSk7
-DQoJCWVsc2UNCgkJCWV4aXQoMSk7DQoJfQ0KCWlmIChjaGVjayA8IDApDQoJ
-CWV4aXQoLTEpOw0KCWVsc2UNCgkJZXhpdCgwKTsNCg0KCXJldHVybiAwOw0K
-fQ0K
+/*
+ * rt-migrate-test.c
+ *
+ * Copyright (C) 2007-2009 Steven Rostedt <srostedt@redhat.com>
+ *
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License (not later!)
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+#define _GNU_SOURCE
+#include <stdio.h>
+#ifndef __USE_XOPEN2K
+# define __USE_XOPEN2K
+#endif
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <linux/unistd.h>
+#include <sys/syscall.h>
+#include <errno.h>
+#include <sched.h>
+#include <pthread.h>
+#ifdef LOGDEV
+# include <dump_log.h>
+# define do_logdev_open() open("/debug/logdev/write", O_WRONLY)
+# define do_logdev_close(ld) close(ld)
+__thread char buff[BUFSIZ];
+static lgprint(int fd, const char *fmt, ...)
+{
+	va_list ap;
+	int n;
 
---8323328-1566466487-1246890419=:8813--
+	va_start(ap, fmt);
+	n = vsnprintf(buff, BUFSIZ, fmt, ap);
+	va_end(ap);
+
+	write(fd, buff, n);
+}
+#else
+# define do_logdev_open() (0)
+# define do_logdev_close(lfd) do { } while(0)
+# define logdev_print_set(x)  do { } while(0)
+# define logdev_switch_set(x)  do { } while(0)
+# define lgprint(x...) do { } while(0)
+#endif
+
+
+#define gettid() syscall(__NR_gettid)
+
+#define VERSION_STRING "V 0.3"
+
+int nr_tasks;
+int lfd;
+
+#define nano2sec(nan) (nan / 1000000000ULL)
+#define nano2ms(nan) (nan / 1000000ULL)
+#define nano2usec(nan) (nan / 1000ULL)
+#define usec2nano(sec) (sec * 1000ULL)
+#define ms2nano(ms) (ms * 1000000ULL)
+#define sec2nano(sec) (sec * 1000000000ULL)
+#define INTERVAL ms2nano(100ULL)
+#define RUN_INTERVAL ms2nano(20ULL)
+#define NR_RUNS 50
+#define PRIO_START 2
+/* 1 millisec off */
+#define MAX_ERR  usec2nano(1000)
+
+#define PROGRESS_CHARS 70
+
+static unsigned long long interval = INTERVAL;
+static unsigned long long run_interval = RUN_INTERVAL;
+static unsigned long long max_err = MAX_ERR;
+static int nr_runs = NR_RUNS;
+static int prio_start = PRIO_START;
+static int check;
+static int stop;
+
+static unsigned long long now;
+
+static int done;
+static int loop;
+
+static pthread_barrier_t start_barrier;
+static pthread_barrier_t end_barrier;
+static unsigned long long **intervals;
+static unsigned long long **intervals_length;
+static unsigned long **intervals_loops;
+static long *thread_pids;
+
+static char buffer[BUFSIZ];
+
+static void perr(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsnprintf(buffer, BUFSIZ, fmt, ap);
+	va_end(ap);
+
+	perror(buffer);
+	fflush(stderr);
+	exit(-1);
+}
+
+static void print_progress_bar(int percent)
+{
+	int i;
+	int p;
+
+	if (percent > 100)
+		percent = 100;
+
+	/* Use stderr, so we don't capture it */
+	putc('\r', stderr);
+	putc('|', stderr);
+	for (i=0; i < PROGRESS_CHARS; i++)
+		putc(' ', stderr);
+	putc('|', stderr);
+	putc('\r', stderr);
+	putc('|', stderr);
+
+	p = PROGRESS_CHARS * percent / 100;
+
+	for (i=0; i < p; i++)
+		putc('-', stderr);
+
+	fflush(stderr);
+}
+
+static void usage(char **argv)
+{
+	char *arg = argv[0];
+	char *p = arg+strlen(arg);
+
+	while (p >= arg && *p != '/')
+		p--;
+	p++;
+
+	printf("%s %s\n", p, VERSION_STRING);
+	printf("Usage:\n"
+	       "%s <options> nr_tasks\n\n"
+	       "-p prio --prio  prio        base priority to start RT tasks with (2) \n"
+	       "-r time --run-time time     Run time (ms) to busy loop the threads (20)\n"
+	       "-s time --sleep-time time   Sleep time (ms) between intervals (100)\n"
+	       "-m time --maxerr time       Max allowed error (microsecs)\n"
+	       "-l loops --loops loops      Number of iterations to run (50)\n"
+	       "-c    --check               Stop if lower prio task is quick than higher (off)\n"
+	       "  () above are defaults \n",
+		p);
+	exit(0);
+}
+
+static void parse_options (int argc, char *argv[])
+{
+	for (;;) {
+		int option_index = 0;
+		/** Options for getopt */
+		static struct option long_options[] = {
+			{"prio", required_argument, NULL, 'p'},
+			{"run-time", required_argument, NULL, 'r'},
+			{"sleep-time", required_argument, NULL, 's'},
+			{"maxerr", required_argument, NULL, 'm'},
+			{"loops", required_argument, NULL, 'l'},
+			{"check", no_argument, NULL, 'c'},
+			{"help", no_argument, NULL, '?'},
+			{NULL, 0, NULL, 0}
+		};
+		int c = getopt_long (argc, argv, "p:r:s:m:l:ch",
+			long_options, &option_index);
+		if (c == -1)
+			break;
+		switch (c) {
+		case 'p': prio_start = atoi(optarg); break;
+		case 'r':
+			run_interval = atoi(optarg);
+			break;
+		case 's': interval = atoi(optarg); break;
+		case 'l': nr_runs = atoi(optarg); break;
+		case 'm': max_err = usec2nano(atoi(optarg)); break;
+		case 'c': check = 1; break;
+		case '?':
+		case 'h':
+			usage(argv);
+			break;
+		}
+	}
+
+}
+
+static unsigned long long get_time(void)
+{
+	struct timeval tv;
+	unsigned long long time;
+
+	gettimeofday(&tv, NULL);
+
+	time = sec2nano(tv.tv_sec);
+	time += usec2nano(tv.tv_usec);
+
+	return time;
+}
+
+static void record_time(int id, unsigned long long time, unsigned long l)
+{
+	unsigned long long ltime;
+
+	if (loop >= nr_runs)
+		return;
+	time -= now;
+	ltime = get_time();
+	ltime -= now;
+	intervals[loop][id] = time;
+	intervals_length[loop][id] = ltime;
+	intervals_loops[loop][id] = l;
+}
+
+static void print_results(void)
+{
+	int i;
+	int t;
+	unsigned long long tasks_max[nr_tasks];
+	unsigned long long tasks_min[nr_tasks];
+	unsigned long long tasks_avg[nr_tasks];
+
+	memset(tasks_max, 0, sizeof(tasks_max[0])*nr_tasks);
+	memset(tasks_min, 0xff, sizeof(tasks_min[0])*nr_tasks);
+	memset(tasks_avg, 0, sizeof(tasks_avg[0])*nr_tasks);
+
+	printf("Iter: ");
+	for (t=0; t < nr_tasks; t++)
+		printf("%6d  ", t);
+	printf("\n");
+
+	for (i=0; i < nr_runs; i++) {
+		printf("%4d:   ", i);
+		for (t=0; t < nr_tasks; t++) {
+			unsigned long long itv = intervals[i][t];
+
+			if (tasks_max[t] < itv)
+				tasks_max[t] = itv;
+			if (tasks_min[t] > itv)
+				tasks_min[t] = itv;
+			tasks_avg[t] += itv;
+			printf("%6lld  ", nano2usec(itv));
+		}
+		printf("\n");
+		printf(" len:   ");
+		for (t=0; t < nr_tasks; t++) {
+			unsigned long long len = intervals_length[i][t];
+
+			printf("%6lld  ", nano2usec(len));
+		}
+		printf("\n");
+		printf(" loops: ");
+		for (t=0; t < nr_tasks; t++) {
+			unsigned long loops = intervals_loops[i][t];
+
+			printf("%6ld  ", loops);
+		}
+		printf("\n");
+		printf("\n");
+	}
+
+	printf("Parent pid: %d\n", getpid());
+
+	for (t=0; t < nr_tasks; t++) {
+		printf(" Task %d (prio %d) (pid %ld):\n", t, t + prio_start,
+			thread_pids[t]);
+		printf("   Max: %lld us\n", nano2usec(tasks_max[t]));
+		printf("   Min: %lld us\n", nano2usec(tasks_min[t]));
+		printf("   Tot: %lld us\n", nano2usec(tasks_avg[t]));
+		printf("   Avg: %lld us\n", nano2usec(tasks_avg[t] / nr_runs));
+		printf("\n");
+	}
+
+	if (check) {
+		if (check < 0)
+			printf(" Failed!\n");
+		else
+			printf(" Passed!\n");
+	}
+}
+
+static unsigned long busy_loop(unsigned long long start_time)
+{
+	unsigned long long time;
+	unsigned long l = 0;
+
+	do {
+		l++;
+		time = get_time();
+	} while ((time - start_time) < RUN_INTERVAL);
+
+	return l;
+}
+
+void *start_task(void *data)
+{
+	long id = (long)data;
+	unsigned long long start_time;
+	struct sched_param param = {
+		.sched_priority = id + prio_start,
+	};
+	int ret;
+	int high = 0;
+	cpu_set_t cpumask;
+	cpu_set_t save_cpumask;
+	int cpu = 0;
+	unsigned long l;
+	long pid;
+
+	ret = sched_getaffinity(0, sizeof(save_cpumask), &save_cpumask);
+	if (ret < 0)
+		perr("getting affinity");
+
+	pid = gettid();
+
+	/* Check if we are the highest prio task */
+	if (id == nr_tasks-1)
+		high = 1;
+
+	ret = sched_setscheduler(0, SCHED_FIFO, &param);
+	if (ret < 0 && !id)
+		fprintf(stderr, "Warning, can't set priorities\n");
+
+	while (!done) {
+		if (high) {
+			/* rotate around the CPUS */
+			if (!CPU_ISSET(cpu, &save_cpumask))
+				cpu = 0;
+			CPU_ZERO(&cpumask);
+			CPU_SET(cpu, &cpumask); cpu++;
+			sched_setaffinity(0, sizeof(cpumask), &cpumask);
+		}
+		pthread_barrier_wait(&start_barrier);
+		start_time = get_time();
+		lgprint(lfd, "Thread %d: started %lld diff %lld\n",
+			pid, start_time, start_time - now);
+		l = busy_loop(start_time);
+		record_time(id, start_time, l);
+		pthread_barrier_wait(&end_barrier);
+	}
+
+	return (void*)pid;
+}
+
+static int check_times(int l)
+{
+	int i;
+	unsigned long long last;
+	unsigned long long last_loops;
+	unsigned long long last_length;
+
+	for (i=0; i < nr_tasks; i++) {
+		if (i && last < intervals[l][i] &&
+		    ((intervals[l][i] - last) > max_err)) {
+			/*
+			 * May be a false positive.
+			 * Make sure that we did more loops
+			 * our start is before the end
+			 * and the end should be tested.
+			 */
+			if (intervals_loops[l][i] < last_loops ||
+			    intervals[l][i] > last_length ||
+			    (intervals_length[l][i] > last_length &&
+			     intervals_length[l][i] - last_length > max_err)) {
+				check = -1;
+				return 1;
+			}
+		}
+		last = intervals[l][i];
+		last_loops = intervals_loops[l][i];
+		last_length = intervals_length[l][i];
+	}
+	return 0;
+}
+
+static void stop_log(int sig)
+{
+	logdev_print_set(0);
+	logdev_switch_set(0);
+	stop = 1;
+}
+
+static int count_cpus(void)
+{
+	FILE *fp;
+	char buf[1024];
+	int cpus = 0;
+	char *pbuf;
+	size_t *pn;
+	size_t n;
+	int r;
+
+	n = 1024;
+	pn = &n;
+	pbuf = buf;
+
+	fp = fopen("/proc/cpuinfo", "r");
+	if (!fp)
+		perr("Can not read cpuinfo");
+
+	while ((r = getline(&pbuf, pn, fp)) >= 0) {
+		char *p;
+
+		if (strncmp(buf, "processor", 9) != 0)
+			continue;
+		for (p = buf+9; isspace(*p); p++)
+			;
+		if (*p == ':')
+			cpus++;
+	}
+	fclose(fp);
+
+	return cpus;
+}
+
+int main (int argc, char **argv)
+{
+	pthread_t *threads;
+	long i;
+	int ret;
+	struct timespec intv;
+	struct sched_param param;
+
+	parse_options(argc, argv);
+
+	signal(SIGINT, stop_log);
+
+	if (argc >= (optind + 1))
+		nr_tasks = atoi(argv[optind]);
+	else
+		nr_tasks = count_cpus() + 1;
+
+	threads = malloc(sizeof(*threads) * nr_tasks);
+	if (!threads)
+		perr("malloc");
+	memset(threads, 0, sizeof(*threads) * nr_tasks);
+
+	ret = pthread_barrier_init(&start_barrier, NULL, nr_tasks + 1);
+	ret = pthread_barrier_init(&end_barrier, NULL, nr_tasks + 1);
+	if (ret < 0)
+		perr("pthread_barrier_init");
+
+	intervals = malloc(sizeof(void*) * nr_runs);
+	if (!intervals)
+		perr("malloc intervals array");
+
+	intervals_length = malloc(sizeof(void*) * nr_runs);
+	if (!intervals_length)
+		perr("malloc intervals length array");
+
+	intervals_loops = malloc(sizeof(void*) * nr_runs);
+	if (!intervals_loops)
+		perr("malloc intervals loops array");
+
+	thread_pids = malloc(sizeof(long) * nr_tasks);
+	if (!thread_pids)
+		perr("malloc thread_pids");
+
+	for (i=0; i < nr_runs; i++) {
+		intervals[i] = malloc(sizeof(unsigned long long)*nr_tasks);
+		if (!intervals[i])
+			perr("malloc intervals");
+		memset(intervals[i], 0, sizeof(unsigned long long)*nr_tasks);
+
+		intervals_length[i] = malloc(sizeof(unsigned long long)*nr_tasks);
+		if (!intervals_length[i])
+			perr("malloc length intervals");
+		memset(intervals_length[i], 0, sizeof(unsigned long long)*nr_tasks);
+
+		intervals_loops[i] = malloc(sizeof(unsigned long)*nr_tasks);
+		if (!intervals_loops[i])
+			perr("malloc loops intervals");
+		memset(intervals_loops[i], 0, sizeof(unsigned long)*nr_tasks);
+	}
+
+	for (i=0; i < nr_tasks; i++) {
+		if (pthread_create(&threads[i], NULL, start_task, (void *)i))
+			perr("pthread_create");
+
+	}
+
+	/*
+	 * Progress bar uses stderr to let users see it when
+	 * redirecting output. So we convert stderr to use line
+	 * buffering so the progress bar doesn't flicker.
+	 */
+	setlinebuf(stderr);
+
+	/* up our prio above all tasks */
+	memset(&param, 0, sizeof(param));
+	param.sched_priority = nr_tasks + prio_start;
+	if (sched_setscheduler(0, SCHED_FIFO, &param))
+		fprintf(stderr, "Warning, can't set priority of main thread!\n");
+		
+
+
+	intv.tv_sec = nano2sec(INTERVAL);
+	intv.tv_nsec = INTERVAL % sec2nano(1);
+
+	print_progress_bar(0);
+
+	lfd = do_logdev_open();
+	logdev_print_set(1);
+	logdev_switch_set(1);
+
+	for (loop=0; loop < nr_runs; loop++) {
+		unsigned long long end;
+
+		now = get_time();
+
+		lgprint(lfd, "Loop %d now=%lld\n", loop, now);
+
+		pthread_barrier_wait(&start_barrier);
+
+		lgprint(lfd, "All running!!!\n");
+
+		nanosleep(&intv, NULL);
+
+		print_progress_bar((loop * 100)/ nr_runs);
+
+		end = get_time();
+		lgprint(lfd, "Loop %d end now=%lld diff=%lld\n", loop, end, end - now);
+
+		pthread_barrier_wait(&end_barrier);
+
+		if (stop || (check && check_times(loop))) {
+			loop++;
+			nr_runs = loop;
+			break;
+		}
+	}
+	do_logdev_close(lfd);
+
+	putc('\n', stderr);
+
+	pthread_barrier_wait(&start_barrier);
+	done = 1;
+	pthread_barrier_wait(&end_barrier);
+
+	for (i=0; i < nr_tasks; i++)
+		pthread_join(threads[i], (void*)&thread_pids[i]);
+
+	logdev_print_set(0);
+	logdev_switch_set(0);
+
+	print_results();
+
+	if (stop) {
+		/*
+		 * We use this test in bash while loops
+		 * So if we hit Ctrl-C then let the while
+		 * loop know to break.
+		 */
+		if (check < 0)
+			exit(-1);
+		else
+			exit(1);
+	}
+	if (check < 0)
+		exit(-1);
+	else
+		exit(0);
+
+	return 0;
+}
+
+--=-KM7O5Q+RZBEcOsxasTmF--
+
