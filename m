@@ -1,68 +1,73 @@
-From: Jan Blunck <jblunck@gmail.com>
-Subject: Re: hwlat latency readings [WAS: IRC Alert]
-Date: Tue, 7 Jul 2009 16:03:49 +0200
-Message-ID: <4de7f8a60907070703g621d9b79w91467c99945353d5@mail.gmail.com>
-References: <E1MMhLr-0007zJ-D9@dallas.jonmasters.org>
-	 <1246643444.5270.380.camel@perihelion.bos.jonmasters.org>
+From: Steve Rottinger <steve@pentek.com>
+Subject: Re: PREEMPT_RT + HIGHMEM = segfaults during boot on ppc32
+Date: Tue, 07 Jul 2009 14:46:13 -0400
+Message-ID: <4A5397F5.30500@pentek.com>
+References: <4A51F4C1.6060604@pentek.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	irc-freenode <irc-freenode@jonmasters.org>
-To: Jon Masters <jonathan@jonmasters.org>
+Cc: tglx@linutronix.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f218.google.com ([209.85.220.218]:55586 "EHLO
-	mail-fx0-f218.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756043AbZGGODu (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Jul 2009 10:03:50 -0400
-Received: by fxm18 with SMTP id 18so4927759fxm.37
-        for <linux-rt-users@vger.kernel.org>; Tue, 07 Jul 2009 07:03:49 -0700 (PDT)
-In-Reply-To: <1246643444.5270.380.camel@perihelion.bos.jonmasters.org>
+Received: from mail.pentek.com ([12.35.250.145]:1083 "HELO mailhost.pentek.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1753394AbZGGSrW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 7 Jul 2009 14:47:22 -0400
+In-Reply-To: <4A51F4C1.6060604@pentek.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jul 3, 2009 at 7:50 PM, Jon Masters<jonathan@jonmasters.org> wrote:
-> On Fri, 2009-07-03 at 11:54 +0000, jbl wrote:
->
->> [11:52:41] <jbl:#linux-rt> +jonmasters: ping
->> [11:53:27] <jbl> +how long should be max latencies seen with hwlat detector?
->
-> It's a US holiday, so I'll reply by email as I'm not really around for
-> IRC, but I don't want to forget to add something to this - especially as
-> people seem to be trying to also track down new latencies in RT itself.
-> I don't think these are SMI related - though now you can check.
+Hi Thomas,
 
-First I wondered if I should reply via twitter or blog ... just to be
-more 2.0 ;)
+This patch solved my problem.
 
-> The default for the latency detector is to regard any unexplained time
-> interval over (greater than, not greater than or equal to) 10us as a
-> latency worthy of some regard. But you can also configure it down to 1us
-> since anything over 0us represents some kind of interruption - it's all
-> down to what threshold you actually care about (few people notice 1us).
+Thanks!
+
+-Steve
+
+Thomas Gleixner wrote:
+
+> does the patch below help ?
 >
-> Anyway. How high should it go? Theoretically, that is an open ended
-> question. But we have seen in practice latencies up to many milliseconds
-> or even higher - I don't expect you'll go over 100ms and in reality, I
-> don't expect it to be anything like that, maybe hundreds of us on a
-> modern enough system. But the range is really down to whatever crap the
-> BIOS is doing when it's taking your CPU cycles away, and that could
-> literally be anything (reformulating the coke recipe isn't unlikely).
+> Thanks,
 >
-> If you're seeing something irregular, for widely long periods of time it
-> is less likely to be the kind of SMIs we see, which do tend to be
-> semi-predictable as they rely upon counters for most of the
-> non-asynchronous (e.g. hardware emulation) activities. But if you see
-> something short many times per second, or something longer on a
-> predictable schedule then it is quite likely to be an SMI hitting you.
-
-I was wondering about the "samples recorded" value. First I thought
-there is something wrong since that value was always zero on my test
-machine. I expected that this this value would reflect somehow
-duration / window length. I guess the documentation could be extended
-to explain a bit how to work with various settings of sample window
-and width to find out the exact interval of the disturbance.
-
-Thanks,
-Jan
+>	tglx
+> ---
+> Subject: powerpc-fixup-pagefault-disable-changes.patch
+> From: Thomas Gleixner <tglx@xxxxxxxxxxxxx>
+> Date: Mon, 06 Jul 2009 17:36:01 +0200
+>
+> Signed-off-by: Thomas Gleixner <tglx@xxxxxxxxxxxxx>
+> ---
+> arch/powerpc/include/asm/highmem.h |    3 +++
+> 1 file changed, 3 insertions(+)
+>
+> Index: linux-2.6-tip/arch/powerpc/include/asm/highmem.h
+> ===================================================================
+> --- linux-2.6-tip.orig/arch/powerpc/include/asm/highmem.h
+> +++ linux-2.6-tip/arch/powerpc/include/asm/highmem.h
+> @@ -90,6 +90,7 @@ static inline void *kmap_atomic_prot(str
+>  	unsigned long vaddr;
+>
+>  	/* even !CONFIG_PREEMPT needs this, for in_atomic in
+> do_page_fault */
+> +	preempt_disable();
+> 	pagefault_disable();
+> 	if (!PageHighMem(page))
+> 		return page_address(page);
+> @@ -118,6 +119,7 @@ static inline void kunmap_atomic(void *k
+>
+> 	if (vaddr < __fix_to_virt(FIX_KMAP_END)) {
+> 		pagefault_enable();
+> +		preempt_enable();
+> 		return;
+> 	}
+>
+> @@ -131,6 +133,7 @@ static inline void kunmap_atomic(void *k
+>  	local_flush_tlb_page(NULL, vaddr);
+>  #endif
+> 	pagefault_enable();
+> +	preempt_enable();
+> }
+>
+> static inline struct page *kmap_atomic_to_page(void *ptr)
