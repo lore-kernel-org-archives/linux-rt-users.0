@@ -1,97 +1,142 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 2.6.29.6-rt23
-Date: Fri, 10 Jul 2009 11:03:22 -0700
-Message-ID: <1247249002.18898.11.camel@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
-	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
-	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
-	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: [LTP] LTP RT Tests (Cyclic, rt-migrate, etc)
+Date: Fri, 10 Jul 2009 11:28:28 -0700
+Message-ID: <4A57884C.10401@us.ibm.com>
+References: <1224509719.5152.116.camel@subratamodak.linux.ibm.com> <1246890698.4887.24.camel@subratamodak.linux.ibm.com> <1247076833.5405.48.camel@subratamodak.linux.ibm.com> <200907102200.12804.sripathik@in.ibm.com> <1247244446.5040.0.camel@subratamodak.linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
+Cc: Sripathi Kodi <sripathik@in.ibm.com>,
+	Gowrishankar <gomuthuk@linux.vnet.ibm.com>,
+	ltp-list <ltp-list@lists.sf.net>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Clark Williams <clark.williams@gmail.com>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: subrata@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:48247 "EHLO
-	smtp4.stanford.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751056AbZGJSMc (ORCPT
+Received: from e35.co.us.ibm.com ([32.97.110.153]:53781 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753031AbZGJS2c (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Jul 2009 14:12:32 -0400
-In-Reply-To: <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+	Fri, 10 Jul 2009 14:28:32 -0400
+Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
+	by e35.co.us.ibm.com (8.13.1/8.13.1) with ESMTP id n6AIKf8S017247
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:20:41 -0600
+Received: from d03av03.boulder.ibm.com (d03av03.boulder.ibm.com [9.17.195.169])
+	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v9.2) with ESMTP id n6AISW6q226330
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:28:32 -0600
+Received: from d03av03.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av03.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n6AISUhd007225
+	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:28:31 -0600
+In-Reply-To: <1247244446.5040.0.camel@subratamodak.linux.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-07-09 at 20:25 +0200, Thomas Gleixner wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->  
->      - update to 2.6.29.6
->  
->      - compile fixes (Wu Zhangjin)
+Subrata Modak wrote:
+> On Fri, 2009-07-10 at 22:00 +0530, Sripathi Kodi wrote:
+>> On Wednesday 08 July 2009 23:43:53 Subrata Modak wrote:
+>>> Darren/Sri/Gowri,
+>>>
+>>> Where do you want me to put this exactly inside the RT tree ?
+>> Hi Subrata,
+>>
+>> Going by how the tests are organized currently, I think this should go
+>> into it's own directory under testcases/realtime/func. We will need to
+>> add a makefile to it. Are you looking at us to help you with this?
 > 
->      - powerpc highmem fix
-> 
->      - hwlat smp_processor_id() fix (Carsten)
-> 
->      - ktime_get* speedups (Martin)
+> Correct. Please send me a patch which integrates it into RT tests build,
+> install & run.
 
-I'm getting slightly weird behavior from rt23 in an intel quad core
-machine (my T61 laptop is fine), rt22 was fine. It is some timer issue,
-if I type continuously I get (every few seconds) repeated keys. Nothing
-in the logs, nothing in dmesg that is (significantly) different from an
-rt22 boot. 
+Just got back from a week vacation and am burning through mail as fast 
+as I can :-) Haven't had a look yet, but does this test use librttest.h? 
+  I suspect not.  We'll need to adapt it to run within the existing ltp 
+real-time testing framework, which includes things like buffered output 
+as well as mlocking support.
 
--- Fernando
+Lastly, I'm not sure this test does anything effectively different than 
+prio-wake, already in the tree.  My other concerns with the test are its 
+explicit 1ms preemption criteria (as Steven described it anyway).  We 
+are trying to move away from criteria being inherent in measurement 
+tests, and 1 ms seems like an awfully long priority inversion to be an 
+acceptable criteria to many users.
+
+Steven, am I missing something conceptually here?
+
+--
+Darren
+
+> 
+> Regards--
+> Subrata
+> 
+>> Thanks,
+>> Sripathi.
+>>
+>>> Regards--
+>>> Subrata
+>>>
+>>> On Mon, 2009-07-06 at 20:01 +0530, Subrata Modak wrote: 
+>>>> On Mon, 2009-07-06 at 10:26 -0400, Steven Rostedt wrote:
+>>>>> On Tue, 23 Jun 2009, Subrata Modak wrote:
+>>>>>
+>>>>>> Steven,
+>>>>>>
+>>>>>> Do you remember this ?
+>>>>> Yes, and I finally got time to fix it up a little ;-)
+>>>> Great. Forwarding to the ltp mailing list as well. Thanks steven.
+>>>>
+>>>> Regards--
+>>>> Subrata
+>>>>
+>>>>> OK, here it is. To run it, just do:
+>>>>>
+>>>>>  ./rt-migrate-test -c 
+>>>>>
+>>>>> You need to be root since it changes the priorities. It will check the 
+>>>>> number of processors and create N+1 threads (where N is the number of 
+>>>>> processors). Each thread will wake up at the same time and try to do a 
+>>>>> busy loop for 20 millisecs. If a lower prio thread runs for 1ms before a 
+>>>>> higher prio thread, it will fail. This should test the migration of the 
+>>>>> threads to make sure that the higher prio threads run first.
+>>>>>
+>>>>> Sorry for taking so long.
+>>>>>
+>>>>> -- Steve
+>>>>>
+>>>>>
+>>>>>
+>>>>>> Regards--
+>>>>>> Subrata
+>>>>>>
+>>>>>> On Mon, 2008-12-15 at 08:52 -0500, Steven Rostedt wrote: 
+>>>>>>> On Mon, 15 Dec 2008, Subrata Modak wrote:
+>>>>>>>>> Lets see, you wanted my rt migration test. I'll clean that up now. Is 
+>>>>>>>> Oh yes.
+>>>>>>> OK, I'm cleaning it up to be more for production use.
+>>>>>>>
+>>>>>>>>> there something else I needed to send you? If you remember.
+>>>>>>>> I am not quite sure now. Will let you know in future.
+>>>>>>> OK, thanks,
+>>>>>>>
+>>>>>>> -- Steve
+>>>>>>>
+>>>>>>
+>>>> ------------------------------------------------------------------------------
+>>>> _______________________________________________
+>>>> Ltp-list mailing list
+>>>> Ltp-list@lists.sourceforge.net
+>>>> https://lists.sourceforge.net/lists/listinfo/ltp-list
+>>> --
+>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>>> the body of a message to majordomo@vger.kernel.org
+>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>
+>>>
+> 
 
 
-> Download locations:
-> 
->     http://rt.et.redhat.com/download/
->     http://www.kernel.org/pub/linux/kernel/projects/rt/
-> 
-> Information on the RT patch can be found at:
-> 
->     http://rt.wiki.kernel.org/index.php/Main_Page
-> 
-> to build the 2.6.29.6-rt23 tree, the following patches should be
-> applied:
-> 
->     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.6.tar.bz2
->     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.6-rt22.bz2
-> 
-> The broken out patches are also available at the same download
-> locations.
-> 
-> Enjoy !
-> 
->        tglx
-> 
-> P.S.: 30-rt is coming close and runs the final tests right now
-
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
