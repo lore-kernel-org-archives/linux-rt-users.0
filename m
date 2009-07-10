@@ -1,71 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.29.6-rt23
-Date: Thu, 9 Jul 2009 20:25:33 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
- <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
- <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: Test Scenario for Realtime latency benchmark in the worstcase
+ environment.
+Date: Thu, 09 Jul 2009 20:25:43 -0700
+Message-ID: <1247196343.5398.22.camel@sven.thebigcorporation.com>
+References: <1245368556.2153.10.camel@centos51>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	tglx <tglx@linutronix.de>
+To: leemgs1@gmail.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:41821 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753497AbZGIS0y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Jul 2009 14:26:54 -0400
-In-Reply-To: <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+Received: from qw-out-2122.google.com ([74.125.92.25]:50665 "EHLO
+	qw-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750835AbZGJD0B (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Jul 2009 23:26:01 -0400
+Received: by qw-out-2122.google.com with SMTP id 9so241787qwb.37
+        for <linux-rt-users@vger.kernel.org>; Thu, 09 Jul 2009 20:26:00 -0700 (PDT)
+In-Reply-To: <1245368556.2153.10.camel@centos51>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-     - update to 2.6.29.6
- 
-     - compile fixes (Wu Zhangjin)
+On Fri, 2009-06-19 at 08:42 +0900, GeunSik Lim wrote:
+> Hi all,
+> 
+> This is Realtime Latency Test Scenario during 24hours.
+> In this experiment, 
+> I adjusted CPU Affinity Policy to reduce Latency overheads in the Multicore.
+> 
+> Prepare cyclictest(rt-tests), taskset, chrt, ltp-full-20090531.tar.gz , 
+> hackbench , ping, dd, tar, netperf commands.
+> 
+> I want to listen some advices and opinions about below test scenario 
+> to measure a latency guarantee
 
-     - powerpc highmem fix
+There are no guarantees.
 
-     - hwlat smp_processor_id() fix (Carsten)
+Only extensive testing can validate the application.
 
-     - ktime_get* speedups (Martin)
- 
-Download locations:
+IMO 24 hours is not nearly enough.
 
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
+I know of stress tests that have been run for multiple weeks.
 
-Information on the RT patch can be found at:
+Regards,
 
-    http://rt.wiki.kernel.org/index.php/Main_Page
+Sven
 
-to build the 2.6.29.6-rt23 tree, the following patches should be
-applied:
 
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.6.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.29.6-rt22.bz2
-
-The broken out patches are also available at the same download
-locations.
-
-Enjoy !
-
-       tglx
-
-P.S.: 30-rt is coming close and runs the final tests right now
