@@ -1,142 +1,280 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [LTP] LTP RT Tests (Cyclic, rt-migrate, etc)
-Date: Fri, 10 Jul 2009 11:28:28 -0700
-Message-ID: <4A57884C.10401@us.ibm.com>
-References: <1224509719.5152.116.camel@subratamodak.linux.ibm.com> <1246890698.4887.24.camel@subratamodak.linux.ibm.com> <1247076833.5405.48.camel@subratamodak.linux.ibm.com> <200907102200.12804.sripathik@in.ibm.com> <1247244446.5040.0.camel@subratamodak.linux.ibm.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 2.6.29.6-rt23
+Date: Fri, 10 Jul 2009 20:29:43 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>  <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>  <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>  <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+ <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>  <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>  <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>  <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
+ <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>  <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>  <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>  <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+ <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <1247249002.18898.11.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Sripathi Kodi <sripathik@in.ibm.com>,
-	Gowrishankar <gomuthuk@linux.vnet.ibm.com>,
-	ltp-list <ltp-list@lists.sf.net>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
-	Clark Williams <clark.williams@gmail.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: subrata@linux.vnet.ibm.com
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e35.co.us.ibm.com ([32.97.110.153]:53781 "EHLO
-	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753031AbZGJS2c (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Jul 2009 14:28:32 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e35.co.us.ibm.com (8.13.1/8.13.1) with ESMTP id n6AIKf8S017247
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:20:41 -0600
-Received: from d03av03.boulder.ibm.com (d03av03.boulder.ibm.com [9.17.195.169])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v9.2) with ESMTP id n6AISW6q226330
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:28:32 -0600
-Received: from d03av03.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av03.boulder.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n6AISUhd007225
-	for <linux-rt-users@vger.kernel.org>; Fri, 10 Jul 2009 12:28:31 -0600
-In-Reply-To: <1247244446.5040.0.camel@subratamodak.linux.ibm.com>
+Received: from www.tglx.de ([62.245.132.106]:60352 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754906AbZGJSaz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Jul 2009 14:30:55 -0400
+In-Reply-To: <1247249002.18898.11.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Subrata Modak wrote:
-> On Fri, 2009-07-10 at 22:00 +0530, Sripathi Kodi wrote:
->> On Wednesday 08 July 2009 23:43:53 Subrata Modak wrote:
->>> Darren/Sri/Gowri,
->>>
->>> Where do you want me to put this exactly inside the RT tree ?
->> Hi Subrata,
->>
->> Going by how the tests are organized currently, I think this should go
->> into it's own directory under testcases/realtime/func. We will need to
->> add a makefile to it. Are you looking at us to help you with this?
+On Fri, 10 Jul 2009, Fernando Lopez-Lezcano wrote:
+> On Thu, 2009-07-09 at 20:25 +0200, Thomas Gleixner wrote:
+> > We are pleased to announce the next update to our new preempt-rt
+> > series.
+> >  
+> >      - update to 2.6.29.6
+> >  
+> >      - compile fixes (Wu Zhangjin)
+> > 
+> >      - powerpc highmem fix
+> > 
+> >      - hwlat smp_processor_id() fix (Carsten)
+> > 
+> >      - ktime_get* speedups (Martin)
 > 
-> Correct. Please send me a patch which integrates it into RT tests build,
-> install & run.
+> I'm getting slightly weird behavior from rt23 in an intel quad core
+> machine (my T61 laptop is fine), rt22 was fine. It is some timer issue,
+> if I type continuously I get (every few seconds) repeated keys. Nothing
+> in the logs, nothing in dmesg that is (significantly) different from an
+> rt22 boot. 
 
-Just got back from a week vacation and am burning through mail as fast 
-as I can :-) Haven't had a look yet, but does this test use librttest.h? 
-  I suspect not.  We'll need to adapt it to run within the existing ltp 
-real-time testing framework, which includes things like buffered output 
-as well as mlocking support.
+Hmm. The only change which touches timer related stuff is the ktime*
+speedups. Can you please apply the revert patch below and check
+whether that changes anything? If not, then we need to look at the
+2.6.29.5 -> .6 delta.
 
-Lastly, I'm not sure this test does anything effectively different than 
-prio-wake, already in the tree.  My other concerns with the test are its 
-explicit 1ms preemption criteria (as Steven described it anyway).  We 
-are trying to move away from criteria being inherent in measurement 
-tests, and 1 ms seems like an awfully long priority inversion to be an 
-acceptable criteria to many users.
+Thanks,
 
-Steven, am I missing something conceptually here?
-
---
-Darren
-
-> 
-> Regards--
-> Subrata
-> 
->> Thanks,
->> Sripathi.
->>
->>> Regards--
->>> Subrata
->>>
->>> On Mon, 2009-07-06 at 20:01 +0530, Subrata Modak wrote: 
->>>> On Mon, 2009-07-06 at 10:26 -0400, Steven Rostedt wrote:
->>>>> On Tue, 23 Jun 2009, Subrata Modak wrote:
->>>>>
->>>>>> Steven,
->>>>>>
->>>>>> Do you remember this ?
->>>>> Yes, and I finally got time to fix it up a little ;-)
->>>> Great. Forwarding to the ltp mailing list as well. Thanks steven.
->>>>
->>>> Regards--
->>>> Subrata
->>>>
->>>>> OK, here it is. To run it, just do:
->>>>>
->>>>>  ./rt-migrate-test -c 
->>>>>
->>>>> You need to be root since it changes the priorities. It will check the 
->>>>> number of processors and create N+1 threads (where N is the number of 
->>>>> processors). Each thread will wake up at the same time and try to do a 
->>>>> busy loop for 20 millisecs. If a lower prio thread runs for 1ms before a 
->>>>> higher prio thread, it will fail. This should test the migration of the 
->>>>> threads to make sure that the higher prio threads run first.
->>>>>
->>>>> Sorry for taking so long.
->>>>>
->>>>> -- Steve
->>>>>
->>>>>
->>>>>
->>>>>> Regards--
->>>>>> Subrata
->>>>>>
->>>>>> On Mon, 2008-12-15 at 08:52 -0500, Steven Rostedt wrote: 
->>>>>>> On Mon, 15 Dec 2008, Subrata Modak wrote:
->>>>>>>>> Lets see, you wanted my rt migration test. I'll clean that up now. Is 
->>>>>>>> Oh yes.
->>>>>>> OK, I'm cleaning it up to be more for production use.
->>>>>>>
->>>>>>>>> there something else I needed to send you? If you remember.
->>>>>>>> I am not quite sure now. Will let you know in future.
->>>>>>> OK, thanks,
->>>>>>>
->>>>>>> -- Steve
->>>>>>>
->>>>>>
->>>> ------------------------------------------------------------------------------
->>>> _______________________________________________
->>>> Ltp-list mailing list
->>>> Ltp-list@lists.sourceforge.net
->>>> https://lists.sourceforge.net/lists/listinfo/ltp-list
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>>
->>>
-> 
-
-
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+	tglx
+-----
+diff --git b/kernel/hrtimer.c a/kernel/hrtimer.c
+index 93affb0..cb8a15c 100644
+--- b/kernel/hrtimer.c
++++ a/kernel/hrtimer.c
+@@ -46,6 +46,37 @@
+ 
+ #include <asm/uaccess.h>
+ 
++/**
++ * ktime_get - get the monotonic time in ktime_t format
++ *
++ * returns the time in ktime_t format
++ */
++ktime_t ktime_get(void)
++{
++	struct timespec now;
++
++	ktime_get_ts(&now);
++
++	return timespec_to_ktime(now);
++}
++EXPORT_SYMBOL_GPL(ktime_get);
++
++/**
++ * ktime_get_real - get the real (wall-) time in ktime_t format
++ *
++ * returns the time in ktime_t format
++ */
++ktime_t ktime_get_real(void)
++{
++	struct timespec now;
++
++	getnstimeofday(&now);
++
++	return timespec_to_ktime(now);
++}
++
++EXPORT_SYMBOL_GPL(ktime_get_real);
++
+ /*
+  * The timer bases:
+  *
+@@ -73,6 +104,31 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
+ 	}
+ };
+ 
++/**
++ * ktime_get_ts - get the monotonic clock in timespec format
++ * @ts:		pointer to timespec variable
++ *
++ * The function calculates the monotonic clock from the realtime
++ * clock and the wall_to_monotonic offset and stores the result
++ * in normalized timespec format in the variable pointed to by @ts.
++ */
++void ktime_get_ts(struct timespec *ts)
++{
++	struct timespec tomono;
++	unsigned long seq;
++
++	do {
++		seq = read_seqbegin(&xtime_lock);
++		getnstimeofday(ts);
++		tomono = wall_to_monotonic;
++
++	} while (read_seqretry(&xtime_lock, seq));
++
++	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
++				ts->tv_nsec + tomono.tv_nsec);
++}
++EXPORT_SYMBOL_GPL(ktime_get_ts);
++
+ /*
+  * Get the coarse grained time at the softirq based on xtime and
+  * wall_to_monotonic.
+diff --git b/kernel/time/timekeeping.c a/kernel/time/timekeeping.c
+index 4c99c98..3192dd0 100644
+--- b/kernel/time/timekeeping.c
++++ a/kernel/time/timekeeping.c
+@@ -118,75 +118,6 @@ void getnstimeofday(struct timespec *ts)
+ 
+ EXPORT_SYMBOL(getnstimeofday);
+ 
+-ktime_t ktime_get(void)
+-{
+-	cycle_t cycle_now, cycle_delta;
+-	unsigned int seq;
+-	s64 secs, nsecs;
+-
+-	WARN_ON(timekeeping_suspended);
+-
+-	do {
+-		seq = read_seqbegin(&xtime_lock);
+-		secs = xtime.tv_sec + wall_to_monotonic.tv_sec;
+-		nsecs = xtime.tv_nsec + wall_to_monotonic.tv_nsec;
+-
+-		/* read clocksource: */
+-		cycle_now = clocksource_read(clock);
+-
+-		/* calculate the delta since the last update_wall_time: */
+-		cycle_delta = (cycle_now - clock->cycle_last) & clock->mask;
+-
+-		/* convert to nanoseconds: */
+-		nsecs += cyc2ns(clock, cycle_delta);
+-
+-	} while (read_seqretry(&xtime_lock, seq));
+-	/*
+-	 * Use ktime_set/ktime_add_ns to create a proper ktime on
+-	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
+-	 */
+-	return ktime_add_ns(ktime_set(secs, 0), nsecs);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get);
+-
+-/**
+- * ktime_get_ts - get the monotonic clock in timespec format
+- * @ts:		pointer to timespec variable
+- *
+- * The function calculates the monotonic clock from the realtime
+- * clock and the wall_to_monotonic offset and stores the result
+- * in normalized timespec format in the variable pointed to by @ts.
+- */
+-void ktime_get_ts(struct timespec *ts)
+-{
+-	cycle_t cycle_now, cycle_delta;
+-	struct timespec tomono;
+-	unsigned int seq;
+-	s64 nsecs;
+-
+-	WARN_ON(timekeeping_suspended);
+-
+-	do {
+-		seq = read_seqbegin(&xtime_lock);
+-		*ts = xtime;
+-		tomono = wall_to_monotonic;
+-
+-		/* read clocksource: */
+-		cycle_now = clocksource_read(clock);
+-
+-		/* calculate the delta since the last update_wall_time: */
+-		cycle_delta = (cycle_now - clock->cycle_last) & clock->mask;
+-
+-		/* convert to nanoseconds: */
+-		nsecs = cyc2ns(clock, cycle_delta);
+-
+-	} while (read_seqretry(&xtime_lock, seq));
+-
+-	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
+-				ts->tv_nsec + tomono.tv_nsec + nsecs);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get_ts);
+-
+ /**
+  * do_gettimeofday - Returns the time of day in a timeval
+  * @tv:		pointer to the timeval to be set
+@@ -278,65 +209,10 @@ static void change_clocksource(void)
+ 	       clock->name);
+ 	 */
+ }
+-#else /* GENERIC_TIME */
++#else
+ static inline void clocksource_forward_now(void) { }
+ static inline void change_clocksource(void) { }
+-
+-/**
+- * ktime_get - get the monotonic time in ktime_t format
+- *
+- * returns the time in ktime_t format
+- */
+-ktime_t ktime_get(void)
+-{
+-	struct timespec now;
+-
+-	ktime_get_ts(&now);
+-
+-	return timespec_to_ktime(now);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get);
+-
+-/**
+- * ktime_get_ts - get the monotonic clock in timespec format
+- * @ts:		pointer to timespec variable
+- *
+- * The function calculates the monotonic clock from the realtime
+- * clock and the wall_to_monotonic offset and stores the result
+- * in normalized timespec format in the variable pointed to by @ts.
+- */
+-void ktime_get_ts(struct timespec *ts)
+-{
+-	struct timespec tomono;
+-	unsigned long seq;
+-
+-	do {
+-		seq = read_seqbegin(&xtime_lock);
+-		getnstimeofday(ts);
+-		tomono = wall_to_monotonic;
+-
+-	} while (read_seqretry(&xtime_lock, seq));
+-
+-	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
+-				ts->tv_nsec + tomono.tv_nsec);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get_ts);
+-#endif /* !GENERIC_TIME */
+-
+-/**
+- * ktime_get_real - get the real (wall-) time in ktime_t format
+- *
+- * returns the time in ktime_t format
+- */
+-ktime_t ktime_get_real(void)
+-{
+-	struct timespec now;
+-
+-	getnstimeofday(&now);
