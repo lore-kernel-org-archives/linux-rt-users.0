@@ -1,142 +1,93 @@
-From: Henrik Austad <henrik@austad.us>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Sun, 12 Jul 2009 08:17:40 +0200
-Message-ID: <200907120817.41560.henrik@austad.us>
-References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop>
+Date: Sun, 12 Jul 2009 17:31:48 +0200
+Message-ID: <1247412708.6704.105.camel@laptop>
+References: <200907102350.47124.henrik@austad.us>
+	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+Cc: Henrik Austad <henrik@austad.us>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
 	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Dhaval Giani <dhaval.giani@gmail.com>,
+	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	KUSP Google Group <kusp@googlegroups.com>
+To: Douglas Niehaus <niehaus@ittc.ku.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cassarossa.samfundet.no ([129.241.93.19]:35069 "EHLO
-	cassarossa.samfundet.no" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751058AbZGLGR6 (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:43718 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754334AbZGLPcV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 12 Jul 2009 02:17:58 -0400
-In-Reply-To: <1247336891.9978.32.camel@laptop>
-Content-Disposition: inline
+	Sun, 12 Jul 2009 11:32:21 -0400
+In-Reply-To: <4A594D2D.3080101@ittc.ku.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Saturday 11 July 2009 20:28:11 Peter Zijlstra wrote:
-> On Fri, 2009-07-10 at 23:50 +0200, Henrik Austad wrote:
-> > Hi all!
-> >
-> > This is a proposal for a global [1], deadline driven scheduler for
-> > real-time tasks in the Linux kernel. I thought I should send out an RFC
-> > to gather some feedback instead of wildy hack away at it.
-> >
-> > This proposed scheduler is a modified MLLF (modified Least Laxity First)
-> > called Earliest Failure First (EFF) as it orders tasks according to when
-> > they will miss their deadlines, not when the actual deadline is.
->
-> <snip>
->
-> Everybody agrees we want a deadline scheduler, we'll probably put a user
-> interface into -rt shortly which should work for all the involved
-> research groups so that we can share tests and have better comparisons.
+On Sat, 2009-07-11 at 21:40 -0500, Douglas Niehaus wrote:
+> Peter:
+>     Perhaps you could expand on what you meant when you said:
+> 
+> 	Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
+> 	but SMP leaves things to be desired. Dhaval is currently working on a
+> 	PEP implementation that will migrate all the blocked tasks to the
+> 	owner's cpu, basically reducing it to the UP problem.
+> 
+> What is left to be desired with PEP on SMP? I am not saying it is 
+> perfect, as I can think of a few things I would like to improve or 
+> understand better, but I am curious what you have in mind.
 
-My plan is to start working on this with Bill's framework once that is stable 
-enough and it has the expressiveness I need.
+Right, please don't take this as a critism against PEP, any scheme I
+know of has enormous complications on SMP ;-)
 
-> The only thing (aside from an utter lack of time to work on things
-> recently) that has been holding us back is a proper solution to the
-> priority inversion issue.
->
-> I haven't fully read through the proposed algorithm below, and left it
-> in place for the new people on CC.
->
-> As already mentioned on IRC, the fact that you push the work to the last
-> possible moment indicates that this algorithm will utterly fall apart on
-> overload and would thus be unsuited for soft-rt loads, but I guess we
-> could implement things like EDF-fm and keep this as a hard-rt class.
+But the thing that concerns me most, there seem to be a few O(n)
+consequences. Suppose that for each resource (or lock) R_i, there is a
+block graph G_i, which consists of n nodes and would be m deep.
 
-Not pushing the work to the last instance per se, but scheduling out a running 
-thread only when it is absolutely necessary to reduce the number of 
-task-preemptions.
+Functionally (generalized) PIP and PEP are identical, their big
+difference is that PIP uses waitqueues to encode the block graph G,
+whereas PEP leaves everybody on the runqueue and uses the proxy field to
+encode the block graph G.
 
-When a new task (A) arrives you compare it to the head of the waiting queue 
-(B), and if A has a 'graver' need for running than B, you move on to look at 
-the tail of the running queue (C). If A has higher need than C, you let A 
-run, but only if not running A will cause a dl-miss and not for B.
+The downside of PIP is that the waitqueue needs to re-implement the full
+schedule function in order to evaluate the highest prio task on the
+waitqueue. Ttraditionally this was rather easy, since you'd only
+consider the limited SCHED_FIFO static prio range, leaving you with a
+O(1) evaluation, when you add more complex scheduling functions things
+get considerably more involved. Let's call this cost S.
 
-> > [...]
-> > There are still some issues left to solve, for instance how to best
-> > handle sporadic tasks, and whether or not deadline-miss should be allow,
-> > or just 'bounded deadline tardiness'. Either way, EFF should be able to
-> > handle it. Then, there are problems concerning blocking of tasks. One
-> > solution would be BWI or PEP, but I have not had the time to read
-> > properly through those, but from what I've gathered a combination of BWI
-> > and PEP looks promising (anyone with good info about BWI and PEP - feel
-> > free to share! (-: ).
->
-> Our SSSUP friends have a BWI paper here:
->
->   http://retis.sssup.it/~tommaso/publications/OSPERT-2008.pdf
+So for PIP you get O(m*S) evaluations whenever you get a change to the
+block graph.
 
-thanks!
+Now for PEP, you get an increased O(m) cost on schedule, which can be
+compared to the PIP cost.
 
-> The thing we call PEP was christened so by Douglas Niehaus (on CC), I'm
-> not sure if he has any papers on it.
+However PEP on SMP needs to ensure all n tasks in G_i are on the same
+cpu, because otherwise we can end up wanting to execute the resource
+owner on multiple cpus at the same time, which is bad.
 
-A general outline would also be great as I treat PEP the way I *think* it is 
-after some discussions on IRC etc.
+This can of course be amortized, but you end up having to migrate the
+task (or an avatar thereof) to the owner's cpu (if you'd want to migrate
+the owner to the blocker's cpu, then you're quickly into trouble when
+there's multiple blockers), but any way around this ends up being O(n).
 
-> Also, when talking about it at OSPERT last week Ted Baker (also on CC)
-> said it reminded him of something else of which I seem to have forgotten
-> the name.
->
-> Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
-> but SMP leaves things to be desired. Dhaval is currently working on a
-> PEP implementation that will migrate all the blocked tasks to the
-> owner's cpu, basically reducing it to the UP problem.
+Also, when the owner gets blocked on something that doesn't have an
+owner (io completion, or a traditional semaphore), you have to take all
+n tasks from the runqueue (and back again when they do become runnable).
 
-I think that PEP will work better on MP, at least for the entire system, but 
-not for a single thread.
+PIP doesn't suffer this, but does suffer the pain from having to
+reimplement the full schedule function on the waitqueues, which when you
+have hierarchical scheduling means you have to replicate the full
+hierarchy per waitqueue.
 
-If you move the task holding the resource to the CPU of the blocked task, and 
-let the holder consume part of the requestor's budget, it will be easier to 
-to schedule the actual thread for running as you have complete control over 
-the current CPU. More importantly, you can ensure that the total utilization 
-is bounded, not only within the group (if you use EFF in a clustered setup), 
-but also when the holder belongs to another group.
+Furthermore we cannot assume locked sections are short, and we must
+indeed assume that its any resource in the kernel associated with any
+service which can be used by any thread, worse, it can be any odd
+userspace resource/thread too, since we expose the block graph to
+userspace processes through PI-futexes.
 
-If several threads want to run the holder through the proxy, things will of 
-course get complicated, but the same goes for BWI.
-
-The downside of PEP, is that you introduce unpredictability with consumed 
-resource as other threads can consume a threads resource. This makes it 
-harder to analyze a single thread.
-
-
-> > 1) Before you freeze at 'global' and get all caught up on "This won't
-> >    ever scale to X", or "He will be haunted by Y" - I do not want to
-> >    extend a global algorithm to 2000 cores. I would like to scale to a
-> >    single *chip* and then we can worry about 2-way and 4-way systems
-> >    later. For the record, I've donned my asbestos suit anyway.
->
-> My preferred approach here is to find a distributed algorithm that
-> converges to the global one.
->
-> > 2) http://austad.us/kernel/thesis_henrikau.pdf
-> >
-> > 3) Anyone want to include LaTeX-notation into an email-rfc?
->
-> Not unheard of ;-)
-
-perhaps this 'Web 2.0' will come up with a solution :)
-
--- 
-henrik
--- 
-     henrik
