@@ -1,12 +1,11 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Sun, 12 Jul 2009 17:31:48 +0200
-Message-ID: <1247412708.6704.105.camel@laptop>
+Date: Mon, 13 Jul 2009 11:55:55 +0200
+Message-ID: <1247478955.8107.24.camel@Palantir>
 References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
+	 <1247336891.9978.32.camel@laptop>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-+4spjaKWxCIlYZtLbDkP"
 Cc: Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
@@ -14,80 +13,84 @@ Cc: Henrik Austad <henrik@austad.us>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
 	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
-	Noah Watkins <jayhawk@soe.ucsc.edu>,
-	KUSP Google Group <kusp@googlegroups.com>
-To: Douglas Niehaus <niehaus@ittc.ku.edu>
+	Dhaval Giani <dhaval.giani@gmail.com>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:43718 "EHLO
-	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754334AbZGLPcV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 12 Jul 2009 11:32:21 -0400
-In-Reply-To: <4A594D2D.3080101@ittc.ku.edu>
+Received: from ms01.sssup.it ([193.205.80.99]:53176 "EHLO sssup.it"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752197AbZGMJ4A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2009 05:56:00 -0400
+In-Reply-To: <1247336891.9978.32.camel@laptop>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2009-07-11 at 21:40 -0500, Douglas Niehaus wrote:
-> Peter:
->     Perhaps you could expand on what you meant when you said:
-> 
-> 	Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
-> 	but SMP leaves things to be desired. Dhaval is currently working on a
-> 	PEP implementation that will migrate all the blocked tasks to the
-> 	owner's cpu, basically reducing it to the UP problem.
-> 
-> What is left to be desired with PEP on SMP? I am not saying it is 
-> perfect, as I can think of a few things I would like to improve or 
-> understand better, but I am curious what you have in mind.
 
-Right, please don't take this as a critism against PEP, any scheme I
-know of has enormous complications on SMP ;-)
+--=-+4spjaKWxCIlYZtLbDkP
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-But the thing that concerns me most, there seem to be a few O(n)
-consequences. Suppose that for each resource (or lock) R_i, there is a
-block graph G_i, which consists of n nodes and would be m deep.
+On Sat, 2009-07-11 at 20:28 +0200, Peter Zijlstra wrote:=20
+> > There are still some issues left to solve, for instance how to best
+> > handle sporadic tasks, and whether or not deadline-miss should be allow=
+,
+> > or just 'bounded deadline tardiness'. Either way, EFF should be able to
+> > handle it. Then, there are problems concerning blocking of tasks. One
+> > solution would be BWI or PEP, but I have not had the time to read
+> > properly through those, but from what I've gathered a combination of BW=
+I
+> > and PEP looks promising (anyone with good info about BWI and PEP - feel
+> > free to share! (-: ).
+>=20
+> Our SSSUP friends have a BWI paper here:
+>=20
+>   http://retis.sssup.it/~tommaso/publications/OSPERT-2008.pdf
+>=20
+And here we are! :-)
 
-Functionally (generalized) PIP and PEP are identical, their big
-difference is that PIP uses waitqueues to encode the block graph G,
-whereas PEP leaves everybody on the runqueue and uses the proxy field to
-encode the block graph G.
+The paper Peter pointed you to mainly describes the work I did some
+months ago to implement BandWidth Inheritance inside one real-time Linux
+variant of us (ReTiS Lab, in Pisa, Italy)... Feel free to ask anything
+related to it directly to me.
 
-The downside of PIP is that the waitqueue needs to re-implement the full
-schedule function in order to evaluate the highest prio task on the
-waitqueue. Ttraditionally this was rather easy, since you'd only
-consider the limited SCHED_FIFO static prio range, leaving you with a
-O(1) evaluation, when you add more complex scheduling functions things
-get considerably more involved. Let's call this cost S.
+It is exactly implemented as a "proxy execution" protocol and things
+were easy there, since --for now-- the framework I was talking about is
+UP-only! :-(
 
-So for PIP you get O(m*S) evaluations whenever you get a change to the
-block graph.
+Now we are back on work on it, especially thinking on how to extend the
+protocol to SMP architectures...
 
-Now for PEP, you get an increased O(m) cost on schedule, which can be
-compared to the PIP cost.
+> Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
+> but SMP leaves things to be desired. Dhaval is currently working on a
+> PEP implementation that will migrate all the blocked tasks to the
+> owner's cpu, basically reducing it to the UP problem.
+>=20
+Nice... Only one question, doesn't this impact with task affinity
+related issues?
 
-However PEP on SMP needs to ensure all n tasks in G_i are on the same
-cpu, because otherwise we can end up wanting to execute the resource
-owner on multiple cpus at the same time, which is bad.
+regards,
+Dario
 
-This can of course be amortized, but you end up having to migrate the
-task (or an avatar thereof) to the owner's cpu (if you'd want to migrate
-the owner to the blocker's cpu, then you're quickly into trouble when
-there's multiple blockers), but any way around this ends up being O(n).
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-Also, when the owner gets blocked on something that doesn't have an
-owner (io completion, or a traditional semaphore), you have to take all
-n tasks from the runqueue (and back again when they do become runnable).
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
-PIP doesn't suffer this, but does suffer the pain from having to
-reimplement the full schedule function on the waitqueues, which when you
-have hierarchical scheduling means you have to replicate the full
-hierarchy per waitqueue.
+--=-+4spjaKWxCIlYZtLbDkP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-Furthermore we cannot assume locked sections are short, and we must
-indeed assume that its any resource in the kernel associated with any
-service which can be used by any thread, worse, it can be any odd
-userspace resource/thread too, since we expose the block graph to
-userspace processes through PI-futexes.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEABECAAYFAkpbBKQACgkQk4XaBE3IOsRNpACglOdL6qHSJA9hwycAfqM8SDxP
+hh8An0mU67WmrweuEaoCN6dYe6eFpdeZ
+=uE15
+-----END PGP SIGNATURE-----
+
+--=-+4spjaKWxCIlYZtLbDkP--
 
