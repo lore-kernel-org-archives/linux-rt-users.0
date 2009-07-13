@@ -1,107 +1,57 @@
-From: Raistlin <raistlin@linux.it>
+From: "Chris Friesen" <cfriesen@nortel.com>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Mon, 13 Jul 2009 18:06:22 +0200
-Message-ID: <1247501182.8107.572.camel@Palantir>
-References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <1247478955.8107.24.camel@Palantir>
-	 <1247480080.7529.66.camel@twins>
+Date: Mon, 13 Jul 2009 10:33:35 -0600
+Message-ID: <4A5B61DF.8090101@nortel.com>
+References: <200907102350.47124.henrik@austad.us>	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-ryIXLi2tO2mV3Uj8JAon"
-Cc: Henrik Austad <henrik@austad.us>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
 	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Dhaval Giani <dhaval.giani@gmail.com>,
+	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	KUSP Google Group <kusp@googlegroups.com>,
+	Tommaso Cucinotta <cucinotta@sssup.it>,
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Raistlin <raistlin@linux.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:38672 "EHLO sssup.it"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1756296AbZGMQG0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2009 12:06:26 -0400
-In-Reply-To: <1247480080.7529.66.camel@twins>
+Received: from zrtps0kp.nortel.com ([47.140.192.56]:55112 "EHLO
+	zrtps0kp.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755870AbZGMQds (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2009 12:33:48 -0400
+In-Reply-To: <1247499843.8107.548.camel@Palantir>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Raistlin wrote:
 
---=-ryIXLi2tO2mV3Uj8JAon
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+> Very basically: from the analysis point of view one easy and effective
+> solution would be to have the blocked-running tasks --i.e., the tasks
+> blocked on some lock that have been left on the rq to proxy-execute the
+> lock owner-- busy waiting while the lock owner is running. This allows
+> for retaining a lot of nice properties BWI already has, as far as
+> analyzability is concerned.
+> 
+> On the other hand, from the practical end efficiency point of view, it
+> would be not that difficult to block these otherwise-spinning tasks, in
+> order to avoid wasting CPU time too much... The only important thing is
+> to properly account the budget of the correct server/group (which
+> probably must be the otherwise-spinning task's one), or the analysis is
+> gone again! :-O
 
-On Mon, 2009-07-13 at 12:14 +0200, Peter Zijlstra wrote:
-> > Nice... Only one question, doesn't this impact with task affinity
-> > related issues?
->=20
-> No :-), well maybe.
->=20
-:-D
+Could you elaborate on this "proper accounting"?
 
-> Since the task is blocked and will this not actually run, we can place
-> it on any CPU, only once it becomes runnable again should we take care
-> to place it on a CPU that's part of its affinity mask.
->=20
-Well, it's difficult to find an argument against this! :-)
+If task A is blocked waiting for a lock (held by a task B on another
+cpu) and we run task C instead, how would you propose that the
+accounting be handled?
 
-Anyway, maybe if, on some architecture, for some kind of application,
-the affinity may have been set to preserve some kind actual cache or
-memory locality for the task access pattern, maybe this could be an
-issue, couldn't it? :-)
-I mean, in some case where being sure of having a task running on a
-particular CPU is somehow of paramount importance...
-
-Anyway, I know, I'm just wandering around, I'm not that "affinity
-expert" and I'm far from having a real example of the scenario I tried
-to describe! :-(
-
-> Of course, underlying this is the question of what to do for
-> 'partitioned' tasks sharing a resource. I think we've talked about this
-> a few times.
->
-Yes, there is a lot of chatting about partitioned task sets where
-resource sharing crosses the partition in the literature...
-
-> Since these 'partitioned' tasks do share a resource, they're not really
-> all that partitioned,=20
-... and I definitely agree with you on that: where's partitioning?
-Anyway, I also think that, if that is true, e.g., for user-space
-locks/resources, there are resources that two tasks _have_ to share,
-even if being partitioned, e.g., when they come to compete, in kernel
-space, e.g., for a lock on the virtual terminal... And that's the only
-situation where such a problem make sense.
-
-These just to point out one more reason why we are trying something
-different (as explained in the other message), and light year far from
-saying that the approach you proposed is not the good one!
-
-On the contrary, I think all this make the problem even more
-interesting! :-)
-
-Regards,
-Dario
-
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
-
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
-
---=-ryIXLi2tO2mV3Uj8JAon
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEABECAAYFAkpbW3cACgkQk4XaBE3IOsSw1QCfVsFqPAJLQitaiqI1jxWovZNy
-SOQAn1mEaatC2VvlANiURnYBGm8aasbf
-=T0ia
------END PGP SIGNATURE-----
-
---=-ryIXLi2tO2mV3Uj8JAon--
-
+Chris
