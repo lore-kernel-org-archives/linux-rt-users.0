@@ -1,49 +1,67 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Mon, 13 Jul 2009 12:14:40 +0200
-Message-ID: <1247480080.7529.66.camel@twins>
-References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <1247478955.8107.24.camel@Palantir>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] cyclictest: exit with an error code in error case
+Date: Mon, 13 Jul 2009 14:32:09 +0200
+Message-ID: <20090713123209.GA2515@www.tglx.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Henrik Austad <henrik@austad.us>,
-	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Bill Huey <billh@gnuppy.monkey.org>,
-	Linux RT <linux-rt-users@vger.kernel.org>,
-	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
-	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>
-To: Raistlin <raistlin@linux.it>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755370AbZGMKOt@vger.kernel.org>
-In-Reply-To: <1247478955.8107.24.camel@Palantir>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-15
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:53182 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755542AbZGMMc3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2009 08:32:29 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2009-07-13 at 11:55 +0200, Raistlin wrote:
-> > Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
-> > but SMP leaves things to be desired. Dhaval is currently working on a
-> > PEP implementation that will migrate all the blocked tasks to the
-> > owner's cpu, basically reducing it to the UP problem.
-> > 
-> Nice... Only one question, doesn't this impact with task affinity
-> related issues?
+if cyclictest is started with invalid arguments or $SOMETHING, then it
+prints the help screen and the exit code is 0 which is wrong.
 
-No :-), well maybe.
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ src/cyclictest/cyclictest.c |    8 +++++---
+ 1 files changed, 5 insertions(+), 3 deletions(-)
 
-Since the task is blocked and will this not actually run, we can place
-it on any CPU, only once it becomes runnable again should we take care
-to place it on a CPU that's part of its affinity mask.
-
-Of course, underlying this is the question of what to do for
-'partitioned' tasks sharing a resource. I think we've talked about this
-a few times.
-
-Since these 'partitioned' tasks do share a resource, they're not really
-all that partitioned, and I think the best way to keep the system going
-is to simply Inherit/Donate/Proxy right through the partition.
-
-~ Peter
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index bfb8aa9..e1c9e0e 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -746,7 +746,7 @@ out:
+ 
+ 
+ /* Print usage information */
+-static void display_help(void)
++static void display_help(int error)
+ {
+ 	char tracers[MAX_PATH];
+ 
+@@ -805,6 +805,8 @@ static void display_help(void)
+                "                           format: --policy=fifo(default) or --policy=rr\n",
+ 	       tracers
+ 		);
++	if (error)
++		exit(-1);
+ 	exit(0);
+ }
+ 
+@@ -977,7 +979,7 @@ static void process_options (int argc, char *argv[])
+                 case 'w': tracetype = WAKEUP; break;
+                 case 'W': tracetype = WAKEUPRT; break;
+                 case 'y': handlepolicy(optarg); break;
+-		case '?': error = 1; break;
++		case '?': display_help(0); break;
+ 		}
+ 	}
+ 
+@@ -1028,7 +1030,7 @@ static void process_options (int argc, char *argv[])
+ 
+ 
+ 	if (error)
+-		display_help ();
++		display_help(1);
+ }
+ 
+ static int check_kernel(void)
+-- 
+1.6.2.5
