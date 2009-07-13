@@ -1,52 +1,70 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] cyclictest: process option before checking for
- permissions
-Date: Mon, 13 Jul 2009 12:38:26 -0500
-Message-ID: <20090713123826.56612b42@torg>
-References: <20090713123448.GB2515@www.tglx.de>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/tirPZ_4DHebxNubzgwBvQgH"; protocol="application/pgp-signature"
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Noah Watkins <jayhawk@soe.ucsc.edu>
+Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
+Date: Mon, 13 Jul 2009 11:14:30 -0700
+Message-ID: <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
+References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu> <1247412708.6704.105.camel@laptop>  <1247499843.8107.548.camel@Palantir> <1247505941.7500.39.camel@twins>
+Mime-Version: 1.0 (Apple Message framework v753.1)
+Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Raistlin <raistlin@linux.it>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Bill Huey <billh@gnuppy.monkey.org>,
+	Linux RT <linux-rt-users@vger.kernel.org>,
+	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ted Baker <baker@cs.fsu.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
+	KUSP Google Group <kusp@googlegroups.com>,
+	Tommaso Cucinotta <cucinotta@sssup.it>,
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:47055 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753562AbZGMRij (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2009 13:38:39 -0400
-In-Reply-To: <20090713123448.GB2515@www.tglx.de>
+Received: from mail-01.cse.ucsc.edu ([128.114.48.32]:57991 "EHLO
+	mail-01.cse.ucsc.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756587AbZGMSUv (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2009 14:20:51 -0400
+In-Reply-To: <1247505941.7500.39.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/tirPZ_4DHebxNubzgwBvQgH
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+> I think you can extend PIP to include things like bandwidth  
+> inheritance
+> too. Instead of simply propagating the priority through the waitqueue
+> hierarchy, you can pass the actual task around, and having this  
+> task you
+> can indeed consume its bandwidth etc..
 
-On Mon, 13 Jul 2009 14:34:48 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+I think I understand what you are suggesting by "pass the actual task  
+around". If not, this message might seem out of place.
 
-> so a normal user is able to take a look on the available options
->=20
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  src/cyclictest/cyclictest.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
->=20
+Consider this locking chain/graph:
 
-Thanks (I've been meaning to and forgetting to do this for *forever*).
+A-->L1-->B-->L2-->C
+D-->L3-->E-->L2
 
-Merged and pushed in 0.49
+The way I understand what you are suggesting is that tasks A,B,D,E  
+(or some representation of them) can be passed around such that when  
+C executes it consumes some resource associated with the the tasks it  
+is blocking (A,B,D,E). Obviously which tasks and what quantities are  
+dependent on scheduling semantics and configuration.
 
---Sig_/tirPZ_4DHebxNubzgwBvQgH
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+The biggest implementation hurdle we have encountered is that as  
+tasks are passed forward along a locking chain knowledge about the  
+structure of the locking chain is lost. For example, as C releases  
+L2, C must be able to distinguish between A and D as having been  
+passed to C's location through B or E, respectively.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.11 (GNU/Linux)
+Keeping a representation of the locking chain as a full graph is the  
+solution we have used. Another solution is to allow A and D to re- 
+block and walk the locking chain again, but obviously some thundering- 
+hurd issues arise.
 
-iEYEARECAAYFAkpbcRUACgkQHyuj/+TTEp2YZgCghNpfigUFegHb2Ve3YXD5ZnNw
-4kEAn1KtMYABSFIOlpOU82l7YwJu+Vno
-=AOkw
------END PGP SIGNATURE-----
+noah
 
---Sig_/tirPZ_4DHebxNubzgwBvQgH--
+
+
+
