@@ -1,11 +1,12 @@
-From: Raistlin <raistlin@linux.it>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Mon, 13 Jul 2009 11:55:55 +0200
-Message-ID: <1247478955.8107.24.camel@Palantir>
+Date: Mon, 13 Jul 2009 12:14:40 +0200
+Message-ID: <1247480080.7529.66.camel@twins>
 References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>
+	 <1247336891.9978.32.camel@laptop>  <1247478955.8107.24.camel@Palantir>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-+4spjaKWxCIlYZtLbDkP"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
@@ -16,81 +17,33 @@ Cc: Henrik Austad <henrik@austad.us>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Ted Baker <baker@cs.fsu.edu>,
 	Dhaval Giani <dhaval.giani@gmail.com>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:53176 "EHLO sssup.it"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752197AbZGMJ4A (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2009 05:56:00 -0400
-In-Reply-To: <1247336891.9978.32.camel@laptop>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Raistlin <raistlin@linux.it>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755370AbZGMKOt@vger.kernel.org>
+In-Reply-To: <1247478955.8107.24.camel@Palantir>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, 2009-07-13 at 11:55 +0200, Raistlin wrote:
+> > Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
+> > but SMP leaves things to be desired. Dhaval is currently working on a
+> > PEP implementation that will migrate all the blocked tasks to the
+> > owner's cpu, basically reducing it to the UP problem.
+> > 
+> Nice... Only one question, doesn't this impact with task affinity
+> related issues?
 
---=-+4spjaKWxCIlYZtLbDkP
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+No :-), well maybe.
 
-On Sat, 2009-07-11 at 20:28 +0200, Peter Zijlstra wrote:=20
-> > There are still some issues left to solve, for instance how to best
-> > handle sporadic tasks, and whether or not deadline-miss should be allow=
-,
-> > or just 'bounded deadline tardiness'. Either way, EFF should be able to
-> > handle it. Then, there are problems concerning blocking of tasks. One
-> > solution would be BWI or PEP, but I have not had the time to read
-> > properly through those, but from what I've gathered a combination of BW=
-I
-> > and PEP looks promising (anyone with good info about BWI and PEP - feel
-> > free to share! (-: ).
->=20
-> Our SSSUP friends have a BWI paper here:
->=20
->   http://retis.sssup.it/~tommaso/publications/OSPERT-2008.pdf
->=20
-And here we are! :-)
+Since the task is blocked and will this not actually run, we can place
+it on any CPU, only once it becomes runnable again should we take care
+to place it on a CPU that's part of its affinity mask.
 
-The paper Peter pointed you to mainly describes the work I did some
-months ago to implement BandWidth Inheritance inside one real-time Linux
-variant of us (ReTiS Lab, in Pisa, Italy)... Feel free to ask anything
-related to it directly to me.
+Of course, underlying this is the question of what to do for
+'partitioned' tasks sharing a resource. I think we've talked about this
+a few times.
 
-It is exactly implemented as a "proxy execution" protocol and things
-were easy there, since --for now-- the framework I was talking about is
-UP-only! :-(
+Since these 'partitioned' tasks do share a resource, they're not really
+all that partitioned, and I think the best way to keep the system going
+is to simply Inherit/Donate/Proxy right through the partition.
 
-Now we are back on work on it, especially thinking on how to extend the
-protocol to SMP architectures...
-
-> Thing is, both BWI and PEP seems to work brilliantly on Uni-Processor
-> but SMP leaves things to be desired. Dhaval is currently working on a
-> PEP implementation that will migrate all the blocked tasks to the
-> owner's cpu, basically reducing it to the UP problem.
->=20
-Nice... Only one question, doesn't this impact with task affinity
-related issues?
-
-regards,
-Dario
-
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
-
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
-
---=-+4spjaKWxCIlYZtLbDkP
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEABECAAYFAkpbBKQACgkQk4XaBE3IOsRNpACglOdL6qHSJA9hwycAfqM8SDxP
-hh8An0mU67WmrweuEaoCN6dYe6eFpdeZ
-=uE15
------END PGP SIGNATURE-----
-
---=-+4spjaKWxCIlYZtLbDkP--
-
+~ Peter
