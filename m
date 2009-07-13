@@ -1,70 +1,91 @@
-From: Meha Mehta <mehtameha@gmail.com>
-Subject: Re: Kernel Panic with preempt RT patch 2.6.29.5-rt21
-Date: Mon, 13 Jul 2009 17:30:41 -0400
-Message-ID: <af81d2bf0907131430u4251893eqfadfea094d3e64c@mail.gmail.com>
-References: <af81d2bf0907130807w7af6aef0ha0210c263f93b01b@mail.gmail.com>
-	 <af81d2bf0907130939vcad717ct64778d8f1be98ada@mail.gmail.com>
-	 <4A5B90F4.6070200@us.ibm.com>
+From: "Chris Friesen" <cfriesen@nortel.com>
+Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
+Date: Mon, 13 Jul 2009 15:45:11 -0600
+Message-ID: <4A5BAAE7.5020906@nortel.com>
+References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu> <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir> <1247505941.7500.39.camel@twins> <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu> <20090713201305.GA25386@cs.fsu.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Darren Hart <dvhltc@us.ibm.com>
+Content-Transfer-Encoding: 7bit
+Cc: Noah Watkins <jayhawk@soe.ucsc.edu>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Raistlin <raistlin@linux.it>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Bill Huey <billh@gnuppy.monkey.org>,
+	Linux RT <linux-rt-users@vger.kernel.org>,
+	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
+	KUSP Google Group <kusp@googlegroups.com>,
+	Tommaso Cucinotta <cucinotta@sssup.it>,
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Ted Baker <baker@cs.fsu.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f184.google.com ([209.85.210.184]:40110 "EHLO
-	mail-yx0-f184.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757282AbZGMVao convert rfc822-to-8bit (ORCPT
+Received: from zrtps0kp.nortel.com ([47.140.192.56]:61247 "EHLO
+	zrtps0kp.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755596AbZGMVpZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2009 17:30:44 -0400
-Received: by yxe14 with SMTP id 14so3582955yxe.33
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2009 14:30:42 -0700 (PDT)
-In-Reply-To: <4A5B90F4.6070200@us.ibm.com>
+	Mon, 13 Jul 2009 17:45:25 -0400
+In-Reply-To: <20090713201305.GA25386@cs.fsu.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thanks. It was a problem with creating initrd. I was creating initrd
-with couple of ohci modules excluded and I guess that was creating
-problem. Thanks for your help.
+Ted Baker wrote:
 
-Meha.
+> I recognize that this complexity is a product of the desire to
+> provide an implementation that does the right thing in all cases,
+> but one needs keep a sense of proportion.  When one ends up having
+> to solve a more complex mutual exclusion problem (on the wait-for
+> graph and task priorities) in order to implement a mutual
+> exclusion primitive, you have a case of abstraction inversion--
+> something is out of whack.
 
-On Mon, Jul 13, 2009 at 3:54 PM, Darren Hart<dvhltc@us.ibm.com> wrote:
-> Meha Mehta wrote:
->>
->> Hi all,
->>
->> I am trying to boot Linux 2.6.29.5 with PREEMPT RT patch on x86
->> system. I have enabled all the configuration option required for
->> PREEMPT_RT.
->> I get kernel panic with message "Attempted to kill init!". Here is
->> panic output.
->>
->> ? panic 0x48/0xd1
->> ? do_exit + 0x5e/0x637
->> ? do_group_exit+0x5b/0x83
->> ? sys_exit_group+0xd/0x10
->> ? syscall_call+0x7/0xb
->>
->> I get same panic with 2.6.29.5-rt22 and 2.6.29.6-rt23.
->>
->> Has anybody tried 2.6.29.5-rt21 patch? What am I missing here? Any
->> suggestions?
->
-> Most likely a configuration issue or a bad initrd. =A0Tell us a bit a=
-bout
-> which OS you're building on and what the messages were before the pan=
-ic.
-> =A0First guess is you may have failed to include the module for your =
-root
-> filesystem either in the initrd or as =3Dy in the kernel.
->
-> --
-> Darren Hart
-> IBM Linux Technology Center
-> Real-Time Linux Team
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Given that the semantics of POSIX PI locking assumes certain scheduler
+behaviours, is it actually abstraction inversion to have that same
+dependency expressed in the kernel code that implements it?
+
+> For schedulability analysis, one just needs a way to bound the
+> duration of priority inversion.  Simple non-preemption (Linux
+> spinlock_t) is sufficient for that, and it is easy to implement.
+> You just have to be careful not to voluntarily suspend (give up
+> the processor) while holding a lock.
+
+The whole point of mutexes (and semaphores) within the linux kernel is
+that it is possible to block while holding them.  I suspect you're going
+to find it fairly difficult to convince people to spinlocks just to make
+it possible to provide latency guarantees.
+
+> The only selling point for PIP has been the ability of a thread to
+> suspend itself while holding a lock, such as to wait for
+> completion of an I/O operation.
+
+You're comparing a full-featured PI implementation with a stripped-down
+PP (priority protection, aka priority ceiling) approach.  In an
+apples-to-apples comparison, the selling point for PI vs PP is that
+under PIP the priority of the lock holder is automatically boosted only
+if necessary, and only as high as necessary.  On the other hand, PP
+requires code analysis to properly set the ceilings for each individual
+mutex.
+
+> I would argue that this practice
+> is generally a sign of poor design, and it certainly throws out
+> the notion of bounding the priority inversion due to blocking on a
+> lock for schedulability analysis -- since now the lock-holding
+> time can depend on I/O completion time, timers, etc.
+
+Certainly if you block waiting for I/O while holding a lock then it
+impacts the ability to provide latency guarantees for others waiting for
+that lock.  But this has nothing to do with PI vs PP or spinlocks, and
+everything to do with how the lock is actually used.
+
+> Regarding the notion of charging proxy execution to the budget of
+> the client task, I have grave concerns. It is already hard enough
+> to estimate the amount of budget that a real-time task requires,
+> without this additional complication.  
+
+Agreed.
+
+Chris
+
