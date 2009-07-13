@@ -1,70 +1,56 @@
-From: Noah Watkins <jayhawk@soe.ucsc.edu>
-Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Mon, 13 Jul 2009 11:14:30 -0700
-Message-ID: <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
-References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu> <1247412708.6704.105.camel@laptop>  <1247499843.8107.548.camel@Palantir> <1247505941.7500.39.camel@twins>
-Mime-Version: 1.0 (Apple Message framework v753.1)
-Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: Kernel Panic with preempt RT patch 2.6.29.5-rt21
+Date: Mon, 13 Jul 2009 12:54:28 -0700
+Message-ID: <4A5B90F4.6070200@us.ibm.com>
+References: <af81d2bf0907130807w7af6aef0ha0210c263f93b01b@mail.gmail.com> <af81d2bf0907130939vcad717ct64778d8f1be98ada@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Raistlin <raistlin@linux.it>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
-	Henrik Austad <henrik@austad.us>,
-	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Bill Huey <billh@gnuppy.monkey.org>,
-	Linux RT <linux-rt-users@vger.kernel.org>,
-	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
-	KUSP Google Group <kusp@googlegroups.com>,
-	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: linux-rt-users@vger.kernel.org
+To: Meha Mehta <mehtameha@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-01.cse.ucsc.edu ([128.114.48.32]:57991 "EHLO
-	mail-01.cse.ucsc.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756587AbZGMSUv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2009 14:20:51 -0400
-In-Reply-To: <1247505941.7500.39.camel@twins>
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:60125 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755714AbZGMTyb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2009 15:54:31 -0400
+Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
+	by e3.ny.us.ibm.com (8.13.1/8.13.1) with ESMTP id n6DJmqoV011264
+	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2009 15:48:52 -0400
+Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
+	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v9.2) with ESMTP id n6DJsUj2065696
+	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2009 15:54:30 -0400
+Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
+	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n6DJsUVI011201
+	for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2009 15:54:30 -0400
+In-Reply-To: <af81d2bf0907130939vcad717ct64778d8f1be98ada@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> I think you can extend PIP to include things like bandwidth  
-> inheritance
-> too. Instead of simply propagating the priority through the waitqueue
-> hierarchy, you can pass the actual task around, and having this  
-> task you
-> can indeed consume its bandwidth etc..
+Meha Mehta wrote:
+> Hi all,
+> 
+> I am trying to boot Linux 2.6.29.5 with PREEMPT RT patch on x86
+> system. I have enabled all the configuration option required for
+> PREEMPT_RT.
+> I get kernel panic with message "Attempted to kill init!". Here is
+> panic output.
+> 
+> ? panic 0x48/0xd1
+> ? do_exit + 0x5e/0x637
+> ? do_group_exit+0x5b/0x83
+> ? sys_exit_group+0xd/0x10
+> ? syscall_call+0x7/0xb
+> 
+> I get same panic with 2.6.29.5-rt22 and 2.6.29.6-rt23.
+> 
+> Has anybody tried 2.6.29.5-rt21 patch? What am I missing here? Any suggestions?
 
-I think I understand what you are suggesting by "pass the actual task  
-around". If not, this message might seem out of place.
+Most likely a configuration issue or a bad initrd.  Tell us a bit about 
+which OS you're building on and what the messages were before the panic. 
+  First guess is you may have failed to include the module for your root 
+filesystem either in the initrd or as =y in the kernel.
 
-Consider this locking chain/graph:
-
-A-->L1-->B-->L2-->C
-D-->L3-->E-->L2
-
-The way I understand what you are suggesting is that tasks A,B,D,E  
-(or some representation of them) can be passed around such that when  
-C executes it consumes some resource associated with the the tasks it  
-is blocking (A,B,D,E). Obviously which tasks and what quantities are  
-dependent on scheduling semantics and configuration.
-
-The biggest implementation hurdle we have encountered is that as  
-tasks are passed forward along a locking chain knowledge about the  
-structure of the locking chain is lost. For example, as C releases  
-L2, C must be able to distinguish between A and D as having been  
-passed to C's location through B or E, respectively.
-
-Keeping a representation of the locking chain as a full graph is the  
-solution we have used. Another solution is to allow A and D to re- 
-block and walk the locking chain again, but obviously some thundering- 
-hurd issues arise.
-
-noah
-
-
-
-
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
