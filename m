@@ -1,128 +1,128 @@
-From: Jaswinder Singh Rajput <jaswinder@kernel.org>
-Subject: Re: [ANNOUNCE] 2.6.29.6-rt23
-Date: Tue, 14 Jul 2009 14:42:33 +0530
-Message-ID: <1247562753.2473.4.camel@ht.satnam>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
-	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
-	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
-	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	 <1247249002.18898.11.camel@localhost.localdomain>
-	 <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
+Date: Tue, 14 Jul 2009 11:15:12 +0200
+Message-ID: <1247562912.7500.78.camel@twins>
+References: <200907102350.47124.henrik@austad.us>
+	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
+	 <1247412708.6704.105.camel@laptop>  <1247499843.8107.548.camel@Palantir>
+	 <1247505941.7500.39.camel@twins>
+	 <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hera.kernel.org ([140.211.167.34]:33535 "EHLO hera.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753386AbZGNJOM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 05:14:12 -0400
-In-Reply-To: <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Raistlin <raistlin@linux.it>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Bill Huey <billh@gnuppy.monkey.org>,
+	Linux RT <linux-rt-users@vger.kernel.org>,
+	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ted Baker <baker@cs.fsu.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
+	KUSP Google Group <kusp@googlegroups.com>,
+	Tommaso Cucinotta <cucinotta@sssup.it>,
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Noah Watkins <jayhawk@soe.ucsc.edu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754076AbZGNJP0@vger.kernel.org>
+In-Reply-To: <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2009-07-10 at 20:29 +0200, Thomas Gleixner wrote:
-> On Fri, 10 Jul 2009, Fernando Lopez-Lezcano wrote:
-> > On Thu, 2009-07-09 at 20:25 +0200, Thomas Gleixner wrote:
-> > > We are pleased to announce the next update to our new preempt-rt
-> > > series.
-> > >  
-> > >      - update to 2.6.29.6
-> > >  
-> > >      - compile fixes (Wu Zhangjin)
-> > > 
-> > >      - powerpc highmem fix
-> > > 
-> > >      - hwlat smp_processor_id() fix (Carsten)
-> > > 
-> > >      - ktime_get* speedups (Martin)
-> > 
-> > I'm getting slightly weird behavior from rt23 in an intel quad core
-> > machine (my T61 laptop is fine), rt22 was fine. It is some timer issue,
-> > if I type continuously I get (every few seconds) repeated keys. Nothing
-> > in the logs, nothing in dmesg that is (significantly) different from an
-> > rt22 boot. 
+On Mon, 2009-07-13 at 11:14 -0700, Noah Watkins wrote:
+> > I think you can extend PIP to include things like bandwidth  
+> > inheritance
+> > too. Instead of simply propagating the priority through the waitqueue
+> > hierarchy, you can pass the actual task around, and having this  
+> > task you
+> > can indeed consume its bandwidth etc..
 > 
-> Hmm. The only change which touches timer related stuff is the ktime*
-> speedups. Can you please apply the revert patch below and check
-> whether that changes anything? If not, then we need to look at the
-> 2.6.29.5 -> .6 delta.
+> I think I understand what you are suggesting by "pass the actual task  
+> around". If not, this message might seem out of place.
 > 
-> Thanks,
+> Consider this locking chain/graph:
 > 
-> 	tglx
-> -----
-> diff --git b/kernel/hrtimer.c a/kernel/hrtimer.c
-> index 93affb0..cb8a15c 100644
-> --- b/kernel/hrtimer.c
-> +++ a/kernel/hrtimer.c
-> @@ -46,6 +46,37 @@
->  
->  #include <asm/uaccess.h>
->  
-> +/**
-> + * ktime_get - get the monotonic time in ktime_t format
-> + *
-> + * returns the time in ktime_t format
-> + */
-> +ktime_t ktime_get(void)
-> +{
-> +	struct timespec now;
-> +
-> +	ktime_get_ts(&now);
-> +
-> +	return timespec_to_ktime(now);
-> +}
-> +EXPORT_SYMBOL_GPL(ktime_get);
-> +
-> +/**
-> + * ktime_get_real - get the real (wall-) time in ktime_t format
-> + *
-> + * returns the time in ktime_t format
-> + */
-> +ktime_t ktime_get_real(void)
-> +{
-> +	struct timespec now;
-> +
-> +	getnstimeofday(&now);
-> +
-> +	return timespec_to_ktime(now);
-> +}
-> +
-> +EXPORT_SYMBOL_GPL(ktime_get_real);
-> +
+> A-->L1-->B-->L2-->C
+> D-->L3-->E-->L2
 
-Remove extra line before EXPORT_SYMBOL_GPL(ktime_get_real);
+       C
+       |
+       L2
+      /  \
+     B    E
+     |    |
+     L1   L3
+     |    |
+     A    D
 
---
-JSR
+> The way I understand what you are suggesting is that tasks A,B,D,E  
+> (or some representation of them) can be passed around such that when  
+> C executes it consumes some resource associated with the the tasks it  
+> is blocking (A,B,D,E). Obviously which tasks and what quantities are  
+> dependent on scheduling semantics and configuration.
+> 
+> The biggest implementation hurdle we have encountered is that as  
+> tasks are passed forward along a locking chain knowledge about the  
+> structure of the locking chain is lost. For example, as C releases  
+> L2, C must be able to distinguish between A and D as having been  
+> passed to C's location through B or E, respectively.
+> 
+> Keeping a representation of the locking chain as a full graph is the  
+> solution we have used. Another solution is to allow A and D to re- 
+> block and walk the locking chain again, but obviously some thundering- 
+> hurd issues arise.
 
+Right, we too keep the full graph (as Ted has noted with disgust).
+
+Douglas mentions that since there is no priority in things like
+proportional bandwidth schedulers (CFS), priority inheritance cannot
+work.
+
+I would beg to differ in that a straight forward extension of the
+protocol can indeed work, even for such cases.
+
+One needs to change the sorting function used in the waitqueues (Li) to
+reflect the full scheduler function (which in itself can be expressed as
+a (partial?) sorting function.
+
+One needs to pass along the 'highest' task, not simply the priority.
+
+And, one needs to cancel and re-acquire this task's contention whenever
+the leading task (C) gets preempted.
+
+We let the scheduler use and consume the task that is passed up as being
+the 'highest' in C's stead (it might actually be C).
+
+
+For example, suppose the above block graph and add a single unrelated
+task F, all of equal and unit (1) weight. Now traditionally that'd
+result in 2 runnable tasks of equal weight, such that they both get 50%
+cpu time (assuming single cpu).
+
+However, PEP and the above modified PIP will in fact result in C
+receiving an effective weight of 5 versus 1 for F.
+
+The sorting function for proportional bandwidth schedulers is the
+typical least service received one -- such that the task with least
+service will be deemed the 'highest' one.
+
+Now suppose that that task would be found to be A, we'll run C with A's
+values until its quanta is consumed and we'd force preempt. Normally
+that would lead to the selection of F, however if we first cancel and
+retry A, leading to a re-sorting of the graph, we might well find that E
+is the 'highest' task in the graph, and also more eligible than F.
+
+
+Furthermore Ted raises the point:
+
+> Regarding the notion of charging proxy execution to the budget of
+> the client task, I have grave concerns. It is already hard enough
+> to estimate the amount of budget that a real-time task requires,
+> without this additional complication. 
+
+I hope the above illustrates the use of this, furthermore I think Dario
+and team did some actual analysis on it wrt deadline schedulers. Dario
+could you expand?
+
+~ Peter
