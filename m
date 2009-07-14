@@ -1,184 +1,115 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 18:31:39 +0200
-Message-ID: <1247589099.7500.191.camel@twins>
+Date: Tue, 14 Jul 2009 18:48:32 +0200
+Message-ID: <1247590112.9086.936.camel@Palantir>
 References: <200907102350.47124.henrik@austad.us>
 	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
 	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
 	 <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
 	 <4A5C9ABA.9070909@nortel.com>
-	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Chris Friesen <cfriesen@nortel.com>, Raistlin <raistlin@linux.it>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-a3XbtIbHgMooya90Thxg"
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Ted Baker <baker@cs.fsu.edu>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>,
-	Bjoern Brandenburg <bbb@cs.unc.edu>
-To: "James H. Anderson" <anderson@cs.unc.edu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755442AbZGNQbu@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Chris Friesen <cfriesen@nortel.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755617AbZGNQsi@vger.kernel.org>
+In-Reply-To: <4A5C9ABA.9070909@nortel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-Hi Jim,
+--=-a3XbtIbHgMooya90Thxg
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2009-07-14 at 11:19 -0400, James H. Anderson wrote:
-> The first email in this thread that I was cc'ed on talked about
-> implementing global EDF,
+On Tue, 2009-07-14 at 08:48 -0600, Chris Friesen wrote:
+> Let's call the highest priority task A, while the task holding the lock
+> (that A wants) is called B.  Suppose we're on an dual-cpu system.
+>=20
+Ok.
 
-Hendrik says that its a modified Modified-Least-Laxity-First, so
-something like M^2-LLF, and I cc'ed you (and I meant to add Bjorn too,
-but now see I failed to actually do so) in the hope that you would have
-some thoughts on his scheduling algorithm, since that is what you do a
-lot of ;-)
+> According to your proposal above we would have A busy-waiting while B
+> runs with A's priority.  When B gives up the lock it gets downgraded and
+> A acquires it and continues to run.
+>=20
+Yes. The first part of my proposal --the "theoretically safe" one.
 
-It could well be he modified M-LLF into G-EDF, but I'm behind in my
-reading here, so I'll have to leave that up to others.
+> Alternately, we could have A blocked waiting for the lock, a separate
+> task C running, and B runs with A's priority on the other cpu.  When B
+> gives up the lock it gets downgraded and A acquires it and continues to r=
+un.
+>=20
+Right. And this is in my proposal as well.
 
-> but the discussion since has been entirely about synchronization issues.
+I'm just saying that the analysis gets more complicated, that some of
+the nice properties may be lost, and suggested a first draft of idea to
+turn it back to be easy again... With, unfortunately, a lot of flaws in
+there yet. :-(
 
-Right, this seems to be a very hot topic.
+In fact, I'm suggesting that, in the scenario you described, C should be
+able to run, but B's budget have to be affected somehow.
 
->   To the best of my
-> knowledge, the only published real-time locking protocol that
-> can be used under global EDF (and many other algorithms) without
-> restricting critical sections (like not allowing certain resources
-> to be accessed in a nested manner) is a protocol we designed called
-> the flexible multiprocessor locking protocol (FMLP). 
+> From an overall system perspective we allowed C to make additional
+> forward progress, increasing the throughput.
+As said, I agre with this from the very beginning of the whole
+thing! :-)
 
-> The FMLP is really embarrassingly simple.  It's main mechanisms are:
-> 
-> 1. Require critical sections to execute non-preemptively (I know,
-> non-preemption violates the "real-fast" religion -- I've been in
-> these discussion before :-)).
+>  On the other hand, there
+> is a small window where A isn't running and it theoretically should be.
+>   If we can bound it, would this window really cause so much difficulty
+> to the schedulability analysis?
+>=20
+Well, I'm not sure right now... I would need to do some math to be!
 
-Lets simply state that industry would like to be able to deal with very
-short deadlines :-)
+Remember that all my points are concerned with budgets, i.e., a scenario
+where you have some mean to limit the capability of a task to ask for
+CPU time over some kind of period.
+And here it is where the problem comes since running C instead of having
+A busy waiting means:
+- that A is actually blocked, as said before;
+- that A's budget is not diminished.
+And this certainly improves system throughput but may affect its
+predictability and, in this particular case, task's isolation among each
+other...
 
-> 2. Execute critical sections in FIFO order (I know, FIFO violates
-> the "real-time" religion).
+Anyway, if you are saying that this could be a possible theory-practice
+compromise, well, could be... And I'm open and ready to (try to)
+contribute even in a discussion of such kind. :-)
 
-For those locks that are indeed non-preempt busy wait (raw_spinlock_t)
-we generally use a FIFO-fair implementation (x86 at least, but I thought
-several other platforms were looking at, or have already, implemented a
-similar spinlock).
+Regards,
+Dario
 
-> 3. Deal with nested lock accesses by requiring a higher-level,
-> coarser lock to be acquired.  While this many seem "too dumb", traces
-> we have taken of real systems (including Linux) indicate that
-> two-level nesting is not that common and deep nesting is quite rare.
-> Why design complicated mechanisms that are both hard to implement
-> and analyze to deal with something that is not so common?
-> 
-> In the FMLP, waiting can be implemented via either spinning or
-> suspension (technically, critical sections are categorized as
-> "short" or "long" and spinning is used for short CSs and suspension
-> for long ones -- this categorization is entirely up to the user).
-> Spinning is done non-preemptively (suspending obviously is not).
-> 
-> The beauty of non-preemptive, FIFO is that on an m-processor system,
-> blocking behavior is easy to analyze.  For example, with spin-based
-> waiting, the blocking per critical-section access is (m-1) times the
-> cost of one critical section.  Someone remarked in an earlier email
-> that we're really thinking of m being somewhat small (4, maybe 8).
-> As such, this is a blocking term that is really hard to beat.  As I
-> said, simplicity wins.  With suspension-based waiting, things are a
-> bit more complicated, but not much.
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-Our problems are many (and I think you know about most if not all).
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
- - Linux is _huge_:
-    o  and while we seem to do a reasonable job of
-       getting people to cope with basic concurrency, asking them to
-       take RT constraints into account when doing so will surely be too
-       much -- worse, we might not ever convince people its a worthy
-       goal to begin with.
+--=-a3XbtIbHgMooya90Thxg
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-    o  auditing each and every lock in the kernel simply isn't possible.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
 
- - Linux needs to provide isolation:
-    o  we must assume userspace is hostile and try to minimize the
-       impact of such tasks on others.
+iEYEABECAAYFAkpcttoACgkQk4XaBE3IOsSXXQCfXH6qWxbjttUGo5TIwFBeanhS
+WYMAn1+blGt2ZWRTfI3Jp2dITKv6ogIi
+=idP9
+-----END PGP SIGNATURE-----
 
- - POSIX:
-    o  we're stuck with the legacy here, but we're looking fwd outside
-       of POSIX.
-
-(I'm probably forgetting half)
-
-> In our experience, the blocking analysis of any multiprocessor protocol
-> that uses priority-inheritance-related mechanisms is a nightmare.  The
-> problem is that, to handle all the corner cases, pessimistic assumptions
-> have to be made.  This pessimism can really add up and lead to huge
-> blocking terms.
-
-Right, Ted holds similar opinions.
-
-Practically though, active Priority Inheritance has enormous benefits
-for us simple people that need to get things done :-)
-
-It has allowed us to convert this huge mass of code into something that
-is real-time enough for a lot of practical uses, including industrial
-robots and the like without the need to analyze each and every lock out
-there.
-
-Now I fully appreciate the theoretical trouble full PI and its ilk
-gives, so maybe we can do something with lockdep/stat to track and
-qualify the lock nesting depths and critical section lengths and use
-those to improve upon the situation.
-
-At worst we could use the data to qualify the usability of certain
-system calls/traps wrt RT applications.
-
-Also, can't we employ the PI framework to act as a debug/help-guide in
-validating/figuring out the PCP levels?
-
-On that, how does the priority ceiling/protection protocol extend to
-deadline schedulers?
-
-> This email thread has also touched on group-based scheduling.  We
-> proposed a very simple scheme several years ago called "skipping"
-> in the context of Pfair scheduling that makes this easy:
-
-> In this approach, critical-section lengths must be known, and any
-> lock request that occurs when a task doesn't have sufficient
-> budget is simply denied -- the request is done later when that task
-> receives additional budget.  This avoids a task in one group from
-> holding a lock while it is preempted (which could severely hurt
-> lock-requesting tasks in other groups).  This scheme is really easy
-> to implement in conjunction with the FMLP and it doesn't require
-> complicated budget tracking.  Its effects on blocking terms are
-> also easy to analyze.  Thomas Nolte and colleagues (in Sweden) have
-> written some papers where they've used skip-based locks in
-> hierarchically-scheduled systems.
-
-Not granting locks when the contender doesn't have enough budget to
-finish them seems like a very attractive solution, however the cost of
-having to analyze the critical section seems prohibitive.
-
-That said, we could maybe experiment with this for a few key lock sites.
-
-Anyway, our goal (the linux-rt folks) is to make Linux a better RT OS.
-I'm sure we'll never get hard enough for some people, but I'm sure we
-can do better than we do today.
-
-Furthermore we're limited by the existing legacy (both spec and code
-wise), but I think we have been able to make good progress through tools
-that help us, such as lockdep and the latency tracer (now ftrace), which
-help us find trouble in an active manner.
-
-And I think discussion such as these help us find new directions to
-explore, so carry on!
+--=-a3XbtIbHgMooya90Thxg--
