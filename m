@@ -1,128 +1,80 @@
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 11:15:12 +0200
-Message-ID: <1247562912.7500.78.camel@twins>
+Date: Tue, 14 Jul 2009 11:36:12 +0200
+Message-ID: <1247564172.9086.26.camel@Palantir>
 References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
-	 <1247412708.6704.105.camel@laptop>  <1247499843.8107.548.camel@Palantir>
-	 <1247505941.7500.39.camel@twins>
-	 <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
+	 <1247336891.9978.32.camel@laptop>  <1247478955.8107.24.camel@Palantir>
+	 <1247480080.7529.66.camel@twins>  <1247501182.8107.572.camel@Palantir>
+	 <1247560935.7500.48.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Raistlin <raistlin@linux.it>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
-	Henrik Austad <henrik@austad.us>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-UYxh8sgEJVKJL0aRDM2q"
+Cc: Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
 	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
-	KUSP Google Group <kusp@googlegroups.com>,
-	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Noah Watkins <jayhawk@soe.ucsc.edu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754076AbZGNJP0@vger.kernel.org>
-In-Reply-To: <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
-
-On Mon, 2009-07-13 at 11:14 -0700, Noah Watkins wrote:
-> > I think you can extend PIP to include things like bandwidth  
-> > inheritance
-> > too. Instead of simply propagating the priority through the waitqueue
-> > hierarchy, you can pass the actual task around, and having this  
-> > task you
-> > can indeed consume its bandwidth etc..
-> 
-> I think I understand what you are suggesting by "pass the actual task  
-> around". If not, this message might seem out of place.
-> 
-> Consider this locking chain/graph:
-> 
-> A-->L1-->B-->L2-->C
-> D-->L3-->E-->L2
-
-       C
-       |
-       L2
-      /  \
-     B    E
-     |    |
-     L1   L3
-     |    |
-     A    D
-
-> The way I understand what you are suggesting is that tasks A,B,D,E  
-> (or some representation of them) can be passed around such that when  
-> C executes it consumes some resource associated with the the tasks it  
-> is blocking (A,B,D,E). Obviously which tasks and what quantities are  
-> dependent on scheduling semantics and configuration.
-> 
-> The biggest implementation hurdle we have encountered is that as  
-> tasks are passed forward along a locking chain knowledge about the  
-> structure of the locking chain is lost. For example, as C releases  
-> L2, C must be able to distinguish between A and D as having been  
-> passed to C's location through B or E, respectively.
-> 
-> Keeping a representation of the locking chain as a full graph is the  
-> solution we have used. Another solution is to allow A and D to re- 
-> block and walk the locking chain again, but obviously some thundering- 
-> hurd issues arise.
-
-Right, we too keep the full graph (as Ted has noted with disgust).
-
-Douglas mentions that since there is no priority in things like
-proportional bandwidth schedulers (CFS), priority inheritance cannot
-work.
-
-I would beg to differ in that a straight forward extension of the
-protocol can indeed work, even for such cases.
-
-One needs to change the sorting function used in the waitqueues (Li) to
-reflect the full scheduler function (which in itself can be expressed as
-a (partial?) sorting function.
-
-One needs to pass along the 'highest' task, not simply the priority.
-
-And, one needs to cancel and re-acquire this task's contention whenever
-the leading task (C) gets preempted.
-
-We let the scheduler use and consume the task that is passed up as being
-the 'highest' in C's stead (it might actually be C).
+	Dhaval Giani <dhaval.giani@gmail.com>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ms01.sssup.it ([193.205.80.99]:49572 "EHLO sssup.it"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1753619AbZGNJgT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Jul 2009 05:36:19 -0400
+In-Reply-To: <1247560935.7500.48.camel@twins>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-For example, suppose the above block graph and add a single unrelated
-task F, all of equal and unit (1) weight. Now traditionally that'd
-result in 2 runnable tasks of equal weight, such that they both get 50%
-cpu time (assuming single cpu).
+--=-UYxh8sgEJVKJL0aRDM2q
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-However, PEP and the above modified PIP will in fact result in C
-receiving an effective weight of 5 versus 1 for F.
+On Tue, 2009-07-14 at 10:42 +0200, Peter Zijlstra wrote:
+> On Mon, 2009-07-13 at 18:06 +0200, Raistlin wrote:
+> > Anyway, maybe if, on some architecture, for some kind of application,
+> > the affinity may have been set to preserve some kind actual cache or
+> > memory locality for the task access pattern, maybe this could be an
+> > issue, couldn't it? :-)
+> > I mean, in some case where being sure of having a task running on a
+> > particular CPU is somehow of paramount importance...
+>=20
+> Right, and you answered your own question :-), its _running_ that is
+> important, so as long as its blocked (not running), you're free to place
+> the task on another cpu if that helps out with something.
+>=20
+Yep! Re-reading both your and my comments I saw I misunderstood your
+point! :-(
 
-The sorting function for proportional bandwidth schedulers is the
-typical least service received one -- such that the task with least
-service will be deemed the 'highest' one.
+I agree thet you have to move some task and, moving the "blocked" ones,
+would allow the lock-owner to continue running in its place, which
+sounds good to me to. :-)
 
-Now suppose that that task would be found to be A, we'll run C with A's
-values until its quanta is consumed and we'd force preempt. Normally
-that would lead to the selection of F, however if we first cancel and
-retry A, leading to a re-sorting of the graph, we might well find that E
-is the 'highest' task in the graph, and also more eligible than F.
+Sorry!
+Dario
 
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-Furthermore Ted raises the point:
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
-> Regarding the notion of charging proxy execution to the budget of
-> the client task, I have grave concerns. It is already hard enough
-> to estimate the amount of budget that a real-time task requires,
-> without this additional complication. 
+--=-UYxh8sgEJVKJL0aRDM2q
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-I hope the above illustrates the use of this, furthermore I think Dario
-and team did some actual analysis on it wrt deadline schedulers. Dario
-could you expand?
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
 
-~ Peter
+iEYEABECAAYFAkpcUYUACgkQk4XaBE3IOsS95wCeOGAiZRgfqY4RotkmSG1IA3UP
+ArsAnAjpf2rzuI3k6qWHOx8sY8VtA5t6
+=GjuC
+-----END PGP SIGNATURE-----
+
+--=-UYxh8sgEJVKJL0aRDM2q--
+
