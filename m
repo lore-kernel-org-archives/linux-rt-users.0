@@ -1,68 +1,81 @@
-From: "James H. Anderson" <anderson@cs.unc.edu>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 13:16:52 -0400 (EDT)
-Message-ID: <alpine.LRH.2.00.0907141259100.16818@anderson.cs.unc.edu>
-References: <200907102350.47124.henrik@austad.us>  <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>  <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>  <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
-  <4A5C9ABA.9070909@nortel.com>  <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu> <1247589099.7500.191.camel@twins>
+Date: Tue, 14 Jul 2009 20:19:52 +0200
+Message-ID: <1247595592.4839.41.camel@Palantir>
+References: <200907102350.47124.henrik@austad.us>
+	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
+	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
+	 <4A5B61DF.8090101@nortel.com>  <1247568455.9086.115.camel@Palantir>
+	 <1247569415.7500.95.camel@twins>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; format=flowed; charset=US-ASCII
-Cc: Chris Friesen <cfriesen@nortel.com>, Raistlin <raistlin@linux.it>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-3X2Clk+TyzyyA86ngRt/"
+Cc: Chris Friesen <cfriesen@nortel.com>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Ted Baker <baker@cs.fsu.edu>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
-	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>,
-	Bjoern Brandenburg <bbb@cs.unc.edu>,
-	"James H. Anderson" <anderson@cs.unc.edu>
+	Giuseppe Lipari <lipari@retis.sssup.it>
 To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fafnir.cs.unc.edu ([152.2.129.90]:36411 "EHLO fafnir.cs.unc.edu"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755858AbZGNRRh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 13:17:37 -0400
-In-Reply-To: <1247589099.7500.191.camel@twins>
+Received: from ms01.sssup.it ([193.205.80.99]:34794 "EHLO sssup.it"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752537AbZGNSUA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Jul 2009 14:20:00 -0400
+In-Reply-To: <1247569415.7500.95.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
+--=-3X2Clk+TyzyyA86ngRt/
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, 14 Jul 2009, Peter Zijlstra wrote:
+On Tue, 2009-07-14 at 13:03 +0200, Peter Zijlstra wrote:=20
+> On Tue, 2009-07-14 at 12:47 +0200, Raistlin wrote:
+> > [1] http://feanor.sssup.it/%7Elipari/papers/rtss2001-bwi.ps.gz
+>=20
+> That link seems to require a user/pass combination.
+>=20
+Oh, damn, sorry about that!
 
-> On that, how does the priority ceiling/protection protocol extend to
-> deadline schedulers?
+I thought I downloaded the paper once from Peppe's website, but I
+suppose I'm wrong. Now I see there's also a disclaimer about that IEEE
+copyright stuff there, but I did not notice it! :-(
 
-Sorry -- I should have responded to this.
+Anyway, here are two working links to all the BWI details for UPs:
+ http://feanor.sssup.it/~faggioli/lipari_lamastra_abeni_bwi.pdf
+ http://feanor.sssup.it/~faggioli/rtss2001-bwi.ps.gz
 
-These things are pretty easy to extend to deadline scheduling if
-partitioning is assumed, and this has been done.  However, it is not
-easy to do under global scheduling.  Having tasks pinned to processors
-(partitioning) makes it much easier to compute blocking terms (it's much
-easier to predict what is happening on each processor at any time).
-Without this, it is *really* hard to compute reasonable blocking
-terms.  Even doing something as mundane as avoiding deadlocks without a lot
-of overhead may not be trivial.  At the time we developed the FMLP
-(a couple of years ago), there was *no* published locking protocol (to my
-knowledge) that worked under GEDF.  To my knowledge, the FMLP is still the
-only one that works under GEDF.  (BTW, I should say that I am not
-familiar with the PEP protocol that has been discussed in this thread.
-I assume it doesn't work under GEDF, or you wouldn't have asked the
-question.)
+Sorry again and Regards,
+Dario
 
-BTW, FIFO waiting makes blocking terms in the global case much easier
-to compute: once a lock request is initiated, the set of blocking lock
-requests (onces initiated earlier) is fixed.  (This is actually a bit
-of an over-simplification if waiting is by suspending.)  With priority-based
-waiting, higher-priority requests can come later.  Determining a
-reasonable bound on the number of such requests is hard.
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-You can find references to papers by others in our FMLP papers.
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
--Jim
+--=-3X2Clk+TyzyyA86ngRt/
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEABECAAYFAkpczEgACgkQk4XaBE3IOsRJHQCgqAnu1nuPoDaOdYLm/GxPDjyr
+/EcAn1hVnRUKoTRXe4i740V3302Y+gD9
+=t82s
+-----END PGP SIGNATURE-----
+
+--=-3X2Clk+TyzyyA86ngRt/--
+
