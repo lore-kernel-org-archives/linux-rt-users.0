@@ -1,15 +1,12 @@
-From: Raistlin <raistlin@linux.it>
+From: "Chris Friesen" <cfriesen@nortel.com>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 20:19:52 +0200
-Message-ID: <1247595592.4839.41.camel@Palantir>
-References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
-	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
-	 <4A5B61DF.8090101@nortel.com>  <1247568455.9086.115.camel@Palantir>
-	 <1247569415.7500.95.camel@twins>
+Date: Tue, 14 Jul 2009 12:24:26 -0600
+Message-ID: <4A5CCD5A.80108@nortel.com>
+References: <200907102350.47124.henrik@austad.us>	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>	 <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>	 <4A5C9ABA.9070909@nortel.com> <1247590112.9086.936.camel@Palantir>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-3X2Clk+TyzyyA86ngRt/"
-Cc: Chris Friesen <cfriesen@nortel.com>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
@@ -21,61 +18,37 @@ Cc: Chris Friesen <cfriesen@nortel.com>,
 	Ted Baker <baker@cs.fsu.edu>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
 	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Raistlin <raistlin@linux.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:34794 "EHLO sssup.it"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752537AbZGNSUA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 14:20:00 -0400
-In-Reply-To: <1247569415.7500.95.camel@twins>
+Received: from zcars04e.nortel.com ([47.129.242.56]:59136 "EHLO
+	zcars04e.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753987AbZGNSYh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Jul 2009 14:24:37 -0400
+In-Reply-To: <1247590112.9086.936.camel@Palantir>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Raistlin wrote:
 
---=-3X2Clk+TyzyyA86ngRt/
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+> Remember that all my points are concerned with budgets, i.e., a scenario
+> where you have some mean to limit the capability of a task to ask for
+> CPU time over some kind of period.
+> And here it is where the problem comes since running C instead of having
+> A busy waiting means:
+> - that A is actually blocked, as said before;
 
-On Tue, 2009-07-14 at 13:03 +0200, Peter Zijlstra wrote:=20
-> On Tue, 2009-07-14 at 12:47 +0200, Raistlin wrote:
-> > [1] http://feanor.sssup.it/%7Elipari/papers/rtss2001-bwi.ps.gz
->=20
-> That link seems to require a user/pass combination.
->=20
-Oh, damn, sorry about that!
+Why does it make any difference that A is blocked rather than busy
+waiting?  In either case A cannot make forward progress.
 
-I thought I downloaded the paper once from Peppe's website, but I
-suppose I'm wrong. Now I see there's also a disclaimer about that IEEE
-copyright stuff there, but I did not notice it! :-(
+> - that A's budget is not diminished.
 
-Anyway, here are two working links to all the BWI details for UPs:
- http://feanor.sssup.it/~faggioli/lipari_lamastra_abeni_bwi.pdf
- http://feanor.sssup.it/~faggioli/rtss2001-bwi.ps.gz
+If we're running B with A's priority, presumably it will get some amount
+of cpu time above and beyond what it would normally have gotten during a
+particular scheduling interval.  Perhaps it would make sense to charge B
+what it would normally have gotten, and charge the excess amount to A?
 
-Sorry again and Regards,
-Dario
-
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
-
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
-
---=-3X2Clk+TyzyyA86ngRt/
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEABECAAYFAkpczEgACgkQk4XaBE3IOsRJHQCgqAnu1nuPoDaOdYLm/GxPDjyr
-/EcAn1hVnRUKoTRXe4i740V3302Y+gD9
-=t82s
------END PGP SIGNATURE-----
-
---=-3X2Clk+TyzyyA86ngRt/--
-
+Chris
