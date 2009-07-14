@@ -1,106 +1,45 @@
-From: Douglas Niehaus <niehaus@ittc.ku.edu>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 02:44:52 -0500
-Message-ID: <4A5C3774.6090901@ittc.ku.edu>
-References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu> <002301ca0403$47f9d9d0$d7ed8d70$@tlh@comcast.net> <4A5BC7AB.4020703@ittc.ku.edu> <4A5C3361.70007@nortel.com>
+Date: Tue, 14 Jul 2009 10:42:15 +0200
+Message-ID: <1247560935.7500.48.camel@twins>
+References: <200907102350.47124.henrik@austad.us>
+	 <1247336891.9978.32.camel@laptop>  <1247478955.8107.24.camel@Palantir>
+	 <1247480080.7529.66.camel@twins>  <1247501182.8107.572.camel@Palantir>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: Ted & Syauchen Baker <baker.tlh@comcast.net>,
-	'Peter Zijlstra' <a.p.zijlstra@chello.nl>,
-	'Henrik Austad' <henrik@austad.us>,
-	'LKML' <linux-kernel@vger.kernel.org>,
-	'Ingo Molnar' <mingo@elte.hu>,
-	'Bill Huey' <billh@gnuppy.monkey.org>,
-	'Linux RT' <linux-rt-users@vger.kernel.org>,
-	'Fabio Checconi' <fabio@gandalf.sssup.it>,
-	"'James H. Anderson'" <anderson@cs.unc.edu>,
-	'Thomas Gleixner' <tglx@linutronix.de>,
-	'Ted Baker' <baker@cs.fsu.edu>,
-	'Dhaval Giani' <dhaval.giani@gmail.com>,
-	'Noah Watkins' <jayhawk@soe.ucsc.edu>,
-	'KUSP Google Group' <kusp@googlegroups.com>
-To: Chris Friesen <cfriesen@nortel.com>
+Cc: Henrik Austad <henrik@austad.us>,
+	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Bill Huey <billh@gnuppy.monkey.org>,
+	Linux RT <linux-rt-users@vger.kernel.org>,
+	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Ted Baker <baker@cs.fsu.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>
+To: Raistlin <raistlin@linux.it>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stephens.ittc.ku.edu ([129.237.125.220]:49407 "EHLO
-	stephens.ittc.ku.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753986AbZGNHoy (ORCPT
+Received: from viefep14-int.chello.at ([62.179.121.34]:19277 "EHLO
+	viefep14-int.chello.at" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750820AbZGNImU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 03:44:54 -0400
-In-Reply-To: <4A5C3361.70007@nortel.com>
+	Tue, 14 Jul 2009 04:42:20 -0400
+In-Reply-To: <1247501182.8107.572.camel@Palantir>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon, 2009-07-13 at 18:06 +0200, Raistlin wrote:
+> Anyway, maybe if, on some architecture, for some kind of application,
+> the affinity may have been set to preserve some kind actual cache or
+> memory locality for the task access pattern, maybe this could be an
+> issue, couldn't it? :-)
+> I mean, in some case where being sure of having a task running on a
+> particular CPU is somehow of paramount importance...
 
-Chris Friesen wrote:
-> Douglas Niehaus wrote:
->
->   
->>      (1.1) Will the use of system services (system calls) by RT threads 
->> need to be explicitly supported by, perhaps, explicitly making the 
->> schedulers of *other* threads also using those system calls aware of 
->> that and take it into account to make those other tasks non-preemptible 
->> while holding system call related locks.
->>
->>      (1.2) Can Linux SMP ever support this in an acceptable manner since 
->> locks associated with systems services are shared across CPU boundaries. 
->> THus, I can isolate a set of RT tasks on a CPU easily, and they are well 
->> isolated and can run under strict predictability, *until they use a 
->> system call that uses a lock*. Then, the system call is an interaction 
->> channel with every other thread on the system using the same system call.
->>     
->
->
-> This may be a terminology issue, but I think it would be more correct to
-> say that the lock is the interaction channel, not the system call, and
-> it is an interaction channel with every other entity on the system using
-> the same lock.  Depending on the specific lock, this could be other
-> userspace tasks, kernel threads, or even hardware interrupt handlers.
->
->   
-Sorry, sloppiness on my part while typing quickly, resulting in the 
-terminolgy problem of --- my using the wrong terminology.
+Right, and you answered your own question :-), its _running_ that is
+important, so as long as its blocked (not running), you're free to place
+the task on another cpu if that helps out with something.
 
-Yes, the lock, is the interaction channel.
 
-Admittedly, which locks are the interaction channels is correlated with 
-which system services are used by threads, but sometimes more and 
-sometimes less strongly correlated.
-
-When I explain it to less expert audiences than this, I tend to talk in 
-terms of the system services because they at least know what some of 
-them are, while many have no idea what the concurrency control in the 
-kernel is. They can fairly easily see that if RT tasks use a range of 
-services used by generic Linux tasks, then some interaction between RT 
-and non-RT tasks is a result.
-
-Still, no excuses, only explanation. Sorry to have over-simplified to 
-this audience.
-
-Thanks for clarifying.
-> This goes back to your first question of which system services an RT
-> task can use while maintaining schedulability analysis.  Unfortunately
-> this may be a moving target, since the exact answer depends on what
-> locks are taken in the underlying kernel implementation.
->
-> Chris
->   
-Yes. This is true and is also the point I was trying to make. When 
-talking to people about RT over the years I have observed that it is 
-often hard to communicate the full cost of the predictability required 
-for RT tasks
-
-Extremely detailed information is required, and getting it can be 
-expensive. This is one reason why supporting RT in Linux proper is even 
-harder than it first appears.
-
-However, I think that while completely arbitrary use of Linux system 
-services by RT tasks is extremely complicated, many RT applications can 
-be happy using only a small subset of services, and so various classes 
-of applications can be supported successfully with merely extreme 
-effort, as opposed to completely insane effort.
-
-It is a really hard problem, no doubt, though.
-
-Doug
 
