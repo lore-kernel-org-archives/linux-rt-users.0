@@ -1,118 +1,51 @@
-From: Raistlin <raistlin@linux.it>
+From: Luca Abeni <lucabe72@gmail.com>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 13:16:17 +0200
-Message-ID: <1247570177.9086.173.camel@Palantir>
-References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu>
-	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
-	 <1247505941.7500.39.camel@twins>
-	 <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
-	 <20090713201305.GA25386@cs.fsu.edu>  <4A5BAAE7.5020906@nortel.com>
+Date: Tue, 14 Jul 2009 13:56:57 +0200
+Message-ID: <4A5C7289.2080701@gmail.com>
+References: <200907102350.47124.henrik@austad.us>	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>	 <4A5B61DF.8090101@nortel.com>  <1247568455.9086.115.camel@Palantir> <1247569415.7500.95.camel@twins>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-F4cUQnlwK9ZPxDXPdR/F"
-Cc: Ted Baker <baker@cs.fsu.edu>, Noah Watkins <jayhawk@soe.ucsc.edu>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Douglas Niehaus <niehaus@ittc.ku.edu>,
-	Henrik Austad <henrik@austad.us>,
-	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Bill Huey <billh@gnuppy.monkey.org>,
-	Linux RT <linux-rt-users@vger.kernel.org>,
-	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
-	KUSP Google Group <kusp@googlegroups.com>,
-	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Chris Friesen <cfriesen@nortel.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: Linux RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:54661 "EHLO sssup.it"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751161AbZGNLQX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 07:16:23 -0400
-In-Reply-To: <4A5BAAE7.5020906@nortel.com>
+Received: from mail0.unitn.it ([193.205.206.51]:46843 "EHLO mail0.unitn.it"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751248AbZGNMFO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Jul 2009 08:05:14 -0400
+Received: from mail0.unitn.it (localhost.localdomain [127.0.0.1])
+	by localhost (Postfix) with SMTP id 095F044295
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2009 13:56:36 +0200 (CEST)
+Received: from mailhub2.unitn.it (mailhub2.unitn.it [192.168.206.47])
+	by mail0.unitn.it (Postfix) with ESMTP id D05D444210
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2009 13:56:35 +0200 (CEST)
+Received: from disi.unitn.it (brenta.disi.unitn.it [193.205.194.4])
+	by mailhub2.unitn.it (Postfix) with ESMTP id C69F1B0D3D5
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2009 13:56:35 +0200 (CEST)
+Received: from [193.205.213.42] (nowhere.science.unitn.it [193.205.213.42])
+	(authenticated bits=0)
+	by disi.unitn.it (8.13.8/8.13.8) with ESMTP id n6EBuZff027939
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2009 13:56:35 +0200
+In-Reply-To: <1247569415.7500.95.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
---=-F4cUQnlwK9ZPxDXPdR/F
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+Peter Zijlstra wrote:
+> On Tue, 2009-07-14 at 12:47 +0200, Raistlin wrote:
+>   
+>> [1] http://feanor.sssup.it/%7Elipari/papers/rtss2001-bwi.ps.gz
+>>     
+>
+> That link seems to require a user/pass combination.
+>   
+Sorry for jumping in the discussion :)
+Anyway, you can look at the BWI technical report:
+http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.24.3440
+(click on the cached PDF), or you can search for
+"Task synchronization in reservation-based real-time systems"
+on google scholar (it is able to find a PDF for download).
 
-On Mon, 2009-07-13 at 15:45 -0600, Chris Friesen wrote:
-> > The only selling point for PIP has been the ability of a thread to
-> > suspend itself while holding a lock, such as to wait for
-> > completion of an I/O operation.
->=20
-> You're comparing a full-featured PI implementation with a stripped-down
-> PP (priority protection, aka priority ceiling) approach.  In an
-> apples-to-apples comparison, the selling point for PI vs PP is that
-> under PIP the priority of the lock holder is automatically boosted only
-> if necessary, and only as high as necessary.  On the other hand, PP
-> requires code analysis to properly set the ceilings for each individual
-> mutex.
->=20
-I think I agree with this.
 
-Moreover, talking about server/group based scheduling and considering
-BWI/PEP, which are natural extensions of PI, you get the very nice
-property of being independent from the actual knowledge of the blocking
-time(s): you can run your scheduling test only considering the bandwidth
-assigned to each component... And this is, at least for now and as far
-as I know, not possible if you go for preventivate-blocking approaches
-like P(C)P or SRP, and also for BROE or SIRAP I think.
-
-I mean, if you only want to be sure to isolate applications and/or
-components among themselves, without any knowledge of the blocking times
-and critical section access patterns of the task running inside such
-components, you can do it! Just pick up the bandwidths and see if they
-fit with a scheduling test unmodified by any --very difficult to find
-out, actually-- blocking term.
-I know, this does not cover all the possible situations, and that it is
-biased toward _soft_ real-time workloads, but I think it's a meaningful
-use-case, especially considering Linux...
-
-Anyway, it is more than possible that this belief is due to lack of
-knowledge of mine about some other already existing solution... If so,
-please, any pointer to it/them is more than welcome. :-)
-
-> > Regarding the notion of charging proxy execution to the budget of
-> > the client task, I have grave concerns. It is already hard enough
-> > to estimate the amount of budget that a real-time task requires,
-> > without this additional complication. =20
->=20
-> Agreed.
->=20
-Well, indeed, I agre with this as well... But it yields the, to me, very
-nice property described above (and in the other e-mail).
-
-However, I'm light year far from proposing it as the "solutions for all
-evils"! I know that, for instance, overhead and code twisting are severe
-issues. The all I hope is to be able and have the time to give it a try,
-and try to guess if it is worth. :-D
-
-Regards again,
-Dario
-
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
-
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
-
---=-F4cUQnlwK9ZPxDXPdR/F
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEABECAAYFAkpcaPoACgkQk4XaBE3IOsTFWgCgj/vHKSDWIbJQkEpmo5yCFplp
-77gAniAUENFCB1hlWugSh/DmqJ6H187l
-=aFoP
------END PGP SIGNATURE-----
-
---=-F4cUQnlwK9ZPxDXPdR/F--
-
+                                           Luca
