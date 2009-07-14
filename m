@@ -1,7 +1,7 @@
 From: "James H. Anderson" <anderson@cs.unc.edu>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 12:54:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
+Date: Tue, 14 Jul 2009 13:16:52 -0400 (EDT)
+Message-ID: <alpine.LRH.2.00.0907141259100.16818@anderson.cs.unc.edu>
 References: <200907102350.47124.henrik@austad.us>  <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>  <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>  <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
   <4A5C9ABA.9070909@nortel.com>  <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu> <1247589099.7500.191.camel@twins>
 Mime-Version: 1.0
@@ -23,63 +23,46 @@ Cc: Chris Friesen <cfriesen@nortel.com>, Raistlin <raistlin@linux.it>,
 	Bjoern Brandenburg <bbb@cs.unc.edu>,
 	"James H. Anderson" <anderson@cs.unc.edu>
 To: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755717AbZGNQzO@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from fafnir.cs.unc.edu ([152.2.129.90]:36411 "EHLO fafnir.cs.unc.edu"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755858AbZGNRRh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Jul 2009 13:17:37 -0400
 In-Reply-To: <1247589099.7500.191.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 
 On Tue, 14 Jul 2009, Peter Zijlstra wrote:
 
->
-> Hi Jim,
->
-> On Tue, 2009-07-14 at 11:19 -0400, James H. Anderson wrote:
->> The first email in this thread that I was cc'ed on talked about
->> implementing global EDF,
->
-> Hendrik says that its a modified Modified-Least-Laxity-First, so
-> something like M^2-LLF, and I cc'ed you (and I meant to add Bjorn too,
-> but now see I failed to actually do so) in the hope that you would have
-> some thoughts on his scheduling algorithm, since that is what you do a
-> lot of ;-)
->
-> It could well be he modified M-LLF into G-EDF, but I'm behind in my
-> reading here, so I'll have to leave that up to others.
+> On that, how does the priority ceiling/protection protocol extend to
+> deadline schedulers?
 
-I meant to say something about this algorithm earlier that may be
-worthwhile.  If I understand Hendrik's algorithm correctly, it falls
-within a class of global schedulers for which bounded deadline
-tardiness is guaranteed (as long as total utilization doesn't exceed
-the system's capacity).  This follows from results in:
+Sorry -- I should have responded to this.
 
-H. Leontyev and J. Anderson, "Generalized Tardiness Bounds for Global
-Multiprocessor Scheduling",  Proceedings of the 28th IEEE Real-Time
-Systems Symposium, pp. 413-422, December 2007.
+These things are pretty easy to extend to deadline scheduling if
+partitioning is assumed, and this has been done.  However, it is not
+easy to do under global scheduling.  Having tasks pinned to processors
+(partitioning) makes it much easier to compute blocking terms (it's much
+easier to predict what is happening on each processor at any time).
+Without this, it is *really* hard to compute reasonable blocking
+terms.  Even doing something as mundane as avoiding deadlocks without a lot
+of overhead may not be trivial.  At the time we developed the FMLP
+(a couple of years ago), there was *no* published locking protocol (to my
+knowledge) that worked under GEDF.  To my knowledge, the FMLP is still the
+only one that works under GEDF.  (BTW, I should say that I am not
+familiar with the PEP protocol that has been discussed in this thread.
+I assume it doesn't work under GEDF, or you wouldn't have asked the
+question.)
 
-This is a positive thing w.r.t. wanting to support soft real-time
-workloads.  However, global EDF also has this property and (I would
-think) is easier to implement (I'm just guessing here -- we haven't
-actually implemented any algorithm that involves laxities in
-LITMUS^RT).  Ted Baker did some work on an algorithm called EDZL
-(EDF until zero laxity) that is essentially a hybrid of these two
-algorithms.  In simulations we've done (not based on real implementations),
-EDZL exhibits really low tardiness (almost non-existent).  EDZL may
-give you the benefits of using laxities where useful and be easier
-to implement (but that's just my guess)
+BTW, FIFO waiting makes blocking terms in the global case much easier
+to compute: once a lock request is initiated, the set of blocking lock
+requests (onces initiated earlier) is fixed.  (This is actually a bit
+of an over-simplification if waiting is by suspending.)  With priority-based
+waiting, higher-priority requests can come later.  Determining a
+reasonable bound on the number of such requests is hard.
 
-Regarding all these "legacy" issues, I think it would be helpful to
-write them all down carefully and formally, and then think about
-what are the *simplest* mechanisms that will do the job in the common
-case.  It is not worthwhile (in my opinion) to introduce tons of
-complexity to nip at corner cases that aren't that common.  Of course,
-this begs the question of what is "common" and what is not: something
-that may also be worth trying to find evidence for and writing down.
-
-Or better yet, someone needs to define a new standard for multicore...
-but I'm not sure how that gets done.
-
-Gotta go....
+You can find references to papers by others in our FMLP papers.
 
 -Jim
