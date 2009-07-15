@@ -1,84 +1,92 @@
 From: Ted Baker <baker@cs.fsu.edu>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Wed, 15 Jul 2009 18:14:11 -0400
-Message-ID: <20090715221410.GE14993@cs.fsu.edu>
-References: <200907102350.47124.henrik@austad.us> <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu> <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir> <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com> <1247590112.9086.936.camel@Palantir> <4A5CCD5A.80108@nortel.com>
+Date: Wed, 15 Jul 2009 18:34:00 -0400
+Message-ID: <20090715223400.GF14993@cs.fsu.edu>
+References: <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir> <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com> <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu> <1247589099.7500.191.camel@twins> <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu> <20090715205503.GA14993@cs.fsu.edu> <4A5E4FDD.7090307@nortel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 8BIT
-Cc: Raistlin <raistlin@linux.it>,
+Cc: "James H. Anderson" <anderson@cs.unc.edu>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Raistlin <raistlin@linux.it>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
+	Giuseppe Lipari <lipari@retis.sssup.it>,
+	Bjoern Brandenburg <bbb@cs.unc.edu>
 To: Chris Friesen <cfriesen@nortel.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755652AbZGOWOS@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtpout.cs.fsu.edu ([128.186.122.75]:5737 "EHLO mail.cs.fsu.edu"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1755945AbZGOWeE convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 Jul 2009 18:34:04 -0400
 Content-Disposition: inline
-In-Reply-To: <4A5CCD5A.80108@nortel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <4A5E4FDD.7090307@nortel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jul 14, 2009 at 12:24:26PM -0600, Chris Friesen wrote:
+On Wed, Jul 15, 2009 at 03:53:33PM -0600, Chris Friesen wrote:
 
-> > - that A's budget is not diminished.
+> >From an API standpoint, the "group scheduling" functionality in linux
+> allows for the creation of an arbitrary hierarchy of groups, each of
+> which may contain zero or more tasks.  (Each task is associated with
+> exactly one group.)
 > 
-> If we're running B with A's priority, presumably it will get some amount
-> of cpu time above and beyond what it would normally have gotten during a
-> particular scheduling interval.  Perhaps it would make sense to charge B
-> what it would normally have gotten, and charge the excess amount to A?
+> There is a distinction between groups containing realtime tasks, and
+> groups containing non-realtime tasks.  For realtime groups, each group
+> is allocated a specific amount of cpu time.  For non-realtime groups,
+> each group is allocated a specific weight.
+> 
+> A realtime group may use up to its specified amount of cpu time.  Any
+> cpu time not used by a realtime group is distributed to the non-realtime
+> groups according to their relative weights.
+> 
+> This does add a whole different API to the mix, but allows for controls
+> to be set by the administrator on existing POSIX apps without needing to
+> recompile them.
 
-First, why will B get any excess time, if is charged?  There will
-certainly be excess time used in any context switch, including
-premptions and blocking/unblocking for locks, but that will come
-out of some task's budget. Given the realities of the scheduler,
-the front-end portion of the context-switch will be charged to the
-preempted or blocking task, and the back-end portion of the
-context-switch cost will be charged to the task to which the CPU
-is switched.  In a cross-processor proxy situation like the one
-above we have four switches: (1) from A to C on processor #1; (2)
-from whatever else (call it D) that was running on processor #2 to
-B, when B receives A's priority; (3) from B back to D when B
-releasse the lock; (4) from C to A when A gets the lock.  A will
-naturally be charged for the front-end cost of (1) and the
-back-end cost of (4), and B will naturally be charged for the
-back-end cost of (2) and the front-end cost of (3).
+This is in the right direction, but there is a lot about Linux groups
+that I either do not understand or which falls short of what is needed.
+Perhaps you can point me to an up to date detailed explanation of
+how they work?
 
-The budget of each task must be over-provisioned enough to
-allow for these additional costs.  This is messy, but seems
-unavoidable, and is an important reason for using scheduling
-policies that minimize context switches.
+>From what I've been able to infer from my brief foray into that
+part of the kernel code (a year ago), there seemed to be several
+aspects of the group scheduling that did not seem to admit
+schedulability analysis.  (I admit that I may have read it wrong,
+and these statements are false.)
 
-Back to the original question, of who should be charged for
-the actual critical section.
+1) The priority of a group seemed to be defined by the priority of
+the highest-priority thread in the group's run-queue, which means
+it varies dynamically according to which threads in the group are
+contending.
 
->From the schedulability analysis point of view, B is getting
-higher priority time than it normally would be allowed to execute,
-potentially causing priority inversion (a.k.a. "interference" or
-"blocking") to a higher priority task D (which does not even share
-a need for the lock that B is holding) that would otherwise run on
-the same processor as B.  Without priority inheritance this kind
-of interferfence would not happen.  So, we are benefiting A at the
-expense of D. In the analysis, we can either allow for all such
-interference in a "blocking term" in the analysis for D, or we
-might call it "preemption" in the analysis of D and charge it to A
-(if A has higher priority than D).  Is the latter any better?  I
-think not, since we now have to inflate the nominal WCET of A to
-include all of the critical sections that block it.
+2) Budget enforcement seemed to only occur at system tick
+boundaries, which means precision can only be achieved at the cost
+of frequent clock interrupts.
 
-So, it seems most logical and simplest to leave the charges where
-they naturally occur, on B.  That is, if you allow priority
-inheritance, you allow tasks to sometimes run at higher priority
-than they originally were allocated, but not to execute more 
-than originally budgeted.
+3) It seemed that a thread could belong to more than one group, 
+and so distributed charges arbitrarily between groups.
+If so, budget allocation would seem very difficult.
+
+4) On an SMP, more than one thread could be running against
+the same budget at the same time, resulting in budget over-charges.
+
+I am particularly concerned about the latter.  The published
+analyses of hierarchical generalizations of bandwidth
+limiting/guaranteeing aperiodic server scheduling algorithms I
+have seen so far all seem to require allocating bandwidth/budget
+to groups on a per-processor basis, so as to void concurrent
+charges to the same budget.
 
 Ted
+
