@@ -1,18 +1,22 @@
-From: Raistlin <raistlin@linux.it>
+From: "Bjoern B. Brandenburg" <bbb@cs.unc.edu>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Tue, 14 Jul 2009 21:54:54 +0200
-Message-ID: <1247601294.4839.137.camel@Palantir>
+Date: Wed, 15 Jul 2009 00:25:26 -0400
+Message-ID: <20090715002526.camdiuc3k48go0sk@webmail3.isis.unc.edu>
 References: <200907102350.47124.henrik@austad.us>
-	 <1247336891.9978.32.camel@laptop>  <4A594D2D.3080101@ittc.ku.edu>
-	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
-	 <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
-	 <4A5C9ABA.9070909@nortel.com>
-	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
-	 <1247589099.7500.191.camel@twins>
+	<1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu>
+	<1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
+	<4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
+	<4A5C9ABA.9070909@nortel.com>
+	<alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
+	<1247589099.7500.191.camel@twins>
+	<alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-Gr5SOStY/8HMQWAPltg5"
-Cc: "James H. Anderson" <anderson@cs.unc.edu>,
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Chris Friesen <cfriesen@nortel.com>,
+	Raistlin <raistlin@linux.it>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
@@ -26,100 +30,60 @@ Cc: "James H. Anderson" <anderson@cs.unc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
 	Giuseppe Lipari <lipari@retis.sssup.it>,
-	Bjoern Brandenburg <bbb@cs.unc.edu>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Bjoern Brandenburg <bbb@cs.unc.edu>, shinpei@ny.ics.keio.ac.jp,
+	yamasaki@ny.ics.keio.ac.jp
+To: "James H. Anderson" <anderson@cs.unc.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:43027 "EHLO sssup.it"
+Received: from mxp3.isis.unc.edu ([152.2.2.161]:38418 "EHLO mxpm.isis.unc.edu"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1755469AbZGNTzS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2009 15:55:18 -0400
-In-Reply-To: <1247589099.7500.191.camel@twins>
+	id S1751619AbZGOFqz convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 Jul 2009 01:46:55 -0400
+In-Reply-To: <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Quoting "James H. Anderson" <anderson@cs.unc.edu>:
+> Ted Baker did some work on an algorithm called EDZL
+> (EDF until zero laxity) that is essentially a hybrid of these two
+> algorithms.  In simulations we've done (not based on real implementat=
+ions),
+> EDZL exhibits really low tardiness (almost non-existent).  EDZL may
+> give you the benefits of using laxities where useful and be easier
+> to implement (but that's just my guess)
 
---=-Gr5SOStY/8HMQWAPltg5
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+EDZL has nice properties but may be hard to implement efficiently=20
+because it requires (a lot of) fine-grained timers.  However, Shinpei=20
+Kato and Nobuyuki Yamasaki (CC'ed) presented an EDZL-derived scheduler=20
+called EDCL at RTCSA'08 that has similar performance guarantees but=20
+only does priority promotions at the release and completion times of=20
+jobs (hence, no additional timers are required).
 
-On Tue, 2009-07-14 at 18:31 +0200, Peter Zijlstra wrote:
-> > but the discussion since has been entirely about synchronization issues=
-.
->=20
-> Right, this seems to be a very hot topic.
->=20
-Indeed! :-D
+  Global EDF-based Scheduling with Efficient Priority Promotion
+  Shinpei Kato and Nobuyuki Yamasaki
+  Proceedings of the 14th International Conference on Embedded and
+  Real-Time Computing Systems and Applications, pages 197-206. IEEE, 20=
+08.
+  http://www.ny.ics.keio.ac.jp/members/shinpei/papers/rtcsa08.pdf
 
-> Right, Ted holds similar opinions.
->=20
-> Practically though, active Priority Inheritance has enormous benefits
-> for us simple people that need to get things done :-)
->=20
-> It has allowed us to convert this huge mass of code into something that
-> is real-time enough for a lot of practical uses, including industrial
-> robots and the like without the need to analyze each and every lock out
-> there.
->=20
-As said to you personally, I put quite a lot of efforts trying to find
-some code using PI-futexes directly or PTHREAD_PRIO_INHERIT POSIX
-mutexes, for personal curiosity and research interest... But I did not
-manage for now. :-(
+I know that Shinpei and friends implemented EDCL on top of LITMUS^RT,=20
+but I never got around to incorporating the patches into the "official"=
+=20
+LITMUS^RT patch. (Sorry, Shinpei!)
 
-Do you think it would be possible to have some pointers?
+Regarding the comments about the availability of academic papers (which=
+=20
+were also voiced repeatedly at OSPERT'09), I'd like to point out that=20
+you can find almost any recent paper by searching for the title with=20
+scholar.google.com and clicking on the "All XYZ versions" link... most=20
+researches make PDFs available on their homepages.
 
-> > In this approach, critical-section lengths must be known, and any
-> > lock request that occurs when a task doesn't have sufficient
-> > budget is simply denied -- the request is done later when that task
-> > receives additional budget.  This avoids a task in one group from
-> > holding a lock while it is preempted (which could severely hurt
-> > lock-requesting tasks in other groups).  This scheme is really easy
-> > to implement in conjunction with the FMLP and it doesn't require
-> > complicated budget tracking.  Its effects on blocking terms are
-> > also easy to analyze.  Thomas Nolte and colleagues (in Sweden) have
-> > written some papers where they've used skip-based locks in
-> > hierarchically-scheduled systems.
->=20
-> Not granting locks when the contender doesn't have enough budget to
-> finish them seems like a very attractive solution, however the cost of
-> having to analyze the critical section seems prohibitive.
->=20
-I've always thought so... We have some work related to this as well (can
-give pointers if interested), but I personally like PI/BWI-PEP etc.
-because such a knowledge is not required at all... Anyway...
+- Bj=F6rn
 
-> That said, we could maybe experiment with this for a few key lock sites.
->=20
-... This would be nice!
 
-> Furthermore we're limited by the existing legacy (both spec and code
-> wise), but I think we have been able to make good progress through tools
-> that help us, such as lockdep and the latency tracer (now ftrace), which
-> help us find trouble in an active manner.
->=20
-Well, in my very humble opinion you're definitely doing great job! :-D
-
-Regards,
-Dario
-
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
-
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
-
---=-Gr5SOStY/8HMQWAPltg5
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEABECAAYFAkpc4o4ACgkQk4XaBE3IOsT7WQCaA43n07lRdElL3mJUuN1fO4D0
-f0AAn12dihlRyUy3x/TtCI/SXkTcCz30
-=UiOy
------END PGP SIGNATURE-----
-
---=-Gr5SOStY/8HMQWAPltg5--
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
