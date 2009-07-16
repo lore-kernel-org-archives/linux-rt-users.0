@@ -1,95 +1,111 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Thu, 16 Jul 2009 11:11:01 +0200
-Message-ID: <1247735461.15471.92.camel@twins>
-References: <4A5B61DF.8090101@nortel.com>
-	 <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com>
-	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
-	 <1247589099.7500.191.camel@twins>
-	 <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
-	 <20090715205503.GA14993@cs.fsu.edu> <4A5E4FDD.7090307@nortel.com>
-	 <20090715223400.GF14993@cs.fsu.edu>
-	 <8aa016e10907151539t16fb1d7fk3122d77e69ac7de5@mail.gmail.com>
-	 <20090715231646.GI14993@cs.fsu.edu>  <1247734722.15471.83.camel@twins>
+Date: Thu, 16 Jul 2009 14:17:51 +0200
+Message-ID: <1247746671.5775.279.camel@Palantir>
+References: <200907102350.47124.henrik@austad.us>
+	 <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu>
+	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
+	 <1247505941.7500.39.camel@twins>
+	 <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
+	 <20090713201305.GA25386@cs.fsu.edu> <4A5BAAE7.5020906@nortel.com>
+	 <20090715231109.GH14993@cs.fsu.edu>  <1247731113.15471.24.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Dhaval Giani <dhaval.giani@gmail.com>,
-	Chris Friesen <cfriesen@nortel.com>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
-	Raistlin <raistlin@linux.it>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-0QERlx0qfh2blMbyId6I"
+Cc: Ted Baker <baker@cs.fsu.edu>, Chris Friesen <cfriesen@nortel.com>,
+	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>,
-	Bjoern Brandenburg <bbb@cs.unc.edu>
-To: Ted Baker <baker@cs.fsu.edu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754752AbZGPJMJ@vger.kernel.org>
-In-Reply-To: <1247734722.15471.83.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Giuseppe Lipari <lipari@retis.sssup.it>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ms01.sssup.it ([193.205.80.99]:33886 "EHLO sssup.it"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1755433AbZGPMRz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 08:17:55 -0400
+In-Reply-To: <1247731113.15471.24.camel@twins>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-07-16 at 10:58 +0200, Peter Zijlstra wrote:
-> On Wed, 2009-07-15 at 19:16 -0400, Ted Baker wrote:
-> > > > 1) The priority of a group seemed to be defined by the priority of
-> > > > the highest-priority thread in the group's run-queue, which means
-> > > > it varies dynamically according to which threads in the group are
-> > > > contending.
-> > > >
-> > > 
-> > > This is true, but it also ensures that the time allocated to the group
-> > > is also consumed by group if it wants to.
-> > 
-> > I don't see how schedulability analysis can be done with this model,
-> > since a single budget is being expended at varying priorities/deadlines.
-> > 
-> > > > 4) On an SMP, more than one thread could be running against
-> > > > the same budget at the same time, resulting in budget over-charges.
-> > > >
-> > > 
-> > > The rt group scheduler does split the budget per cpu. On expiring the
-> > > budget, it tries to borrow from other CPUs if possible.
-> > 
-> > First, how is the splitting of the budget between CPU's controlled
-> > by the application?
-> > 
-> > Second, I don't see how schedulabiliyt analysis could be done if
-> > CPU's can "borrow" budget from other CPUs, unless there is some
-> > mechanism in place to "pay it back".  How do you do the analysis?
-> 
-> Right so control-groups (cgroups for short) are a form of
-> virtualization. Each controller is specific to a resource. We have
-> memory controllers, namespace controllers and also a scheduler
-> controller.
-> 
-> If you would apply all controllers to the same task groups you get a
-> result like chroot on steroids, or jails etc. But you can also use them
-> individually to control resources in creative ways.
 
-To add to this, it is by no means a way of introducing deadline
-scheduling to tasks, for that you're quite right in that we should
-extend sched_setscheduler() and struct sched_param.
+--=-0QERlx0qfh2blMbyId6I
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Somewhere before RTLWS we'll add:
- 
- struct sched_param2;
+On Thu, 2009-07-16 at 09:58 +0200, Peter Zijlstra wrote:=20
+> > Again, I don't think that either PP or PI is appropriate for use
+> > in a (SMP) kernel. For non-blocking locks, the current
+> > no-preeemption spinlock mechanism works.  For higher-level
+> > (blocking) locks, I'm attracted to Jim Anderson's model of
+> > non-preemptable critical sections, combined with FIFO queue
+> > service.
+>=20
+But, if I remember well how FMLP works, there is not that much
+difference between them two... I mean, if you, at any (kernel|user)
+level define a short critical section, this is protected by a
+non-preemptive FIFO "queue lock", which is how Linux implements --at
+least on x86-- spinlocks! :-O
 
- sys_sched_setscheduler2(pid_t pid, int policy, struct sched_param2 *param);
- sys_sched_setparam2(pid_t pid, struct sched_param2 *param);
- sys_sched_getparam2(pid_t pid, struct sched_param2 *param);
+Also, I'm not sure I can find in the FMLP paper information about the
+possibility of a task to suspend itself (e.g., I/O completion) while
+holding a short lock... I assume this is not recommended, but may be
+wrong, and, in that case, I hope Prof. Anderson and Bjorn will excuse
+and correct me. :-)
 
- SCHED_SOFT_DEADLINE (bounded tardiness)
- SCHED_DEADLINE      (no tardiness)
+On the other hand, if with "blocking locks" you intended the long ones,
+I think they hare dealt right with suspension and priority inheritance,
+even in there.
 
-and hopefully enough hooks to make people happy :-)
+> Right, so there's two points here I think:
+>=20
+>  A) making most locks preemptible
+>  B) adding PI to all preemptible locks
+>=20
+> I think that we can all agree that if you do A, B makes heaps of sense,
+> right?
+>=20
+I don't know about all, but I do... I hope I'm not offending anyone
+saying that I like priority inheritance!! :-P
 
-The intention is to add these to -rt only for now, so that we can still
-poke at the interfaces and only move then to mainline once the dust
-settles down.
+> Of course, when the decreased period is still sufficient for the
+> application at hand, the non-preemptible case allows for better
+> analysis.
+>=20
+Sure! I am impressed as well by the amazing results approaches like the
+FMLP give in term of schedulabiulity analysis, and think a little bit of
+spinning would not hurt that much, but not to the point of moving all
+the locking to spinlocks. :-)
+
+Regards,
+Dario
+
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
+
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
+
+--=-0QERlx0qfh2blMbyId6I
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEABECAAYFAkpfGmkACgkQk4XaBE3IOsT0EwCdHyfbCSU/pUqWTPii+dcBD/BD
+o+sAnAvxx4FLDHBrVRn0/Bee11dlrHzi
+=QAyg
+-----END PGP SIGNATURE-----
+
+--=-0QERlx0qfh2blMbyId6I--
+
