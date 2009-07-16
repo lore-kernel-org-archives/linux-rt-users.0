@@ -1,196 +1,113 @@
-From: Ted Baker <baker@cs.fsu.edu>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Thu, 16 Jul 2009 19:13:23 -0400
-Message-ID: <20090716231323.GE27757@cs.fsu.edu>
-References: <200907102350.47124.henrik@austad.us> <4A5CCD5A.80108@nortel.com> <20090715221410.GE14993@cs.fsu.edu> <200907160917.10098.henrik@austad.us>
+Date: Fri, 17 Jul 2009 01:29:11 +0200
+Message-ID: <1247786951.4929.52.camel@Palantir>
+References: <1247336891.9978.32.camel@laptop> <4A594D2D.3080101@ittc.ku.edu>
+	 <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir>
+	 <4A5B61DF.8090101@nortel.com> <1247568455.9086.115.camel@Palantir>
+	 <4A5C9ABA.9070909@nortel.com>
+	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
+	 <1247589099.7500.191.camel@twins>
+	 <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
+	 <20090715205503.GA14993@cs.fsu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Chris Friesen <cfriesen@nortel.com>, Raistlin <raistlin@linux.it>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-iixmZwmzoqEb8NdtUbUW"
+Cc: "James H. Anderson" <anderson@cs.unc.edu>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Chris Friesen <cfriesen@nortel.com>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Henrik Austad <henrik@austad.us>
+	Giuseppe Lipari <lipari@retis.sssup.it>,
+	Bjoern Brandenburg <bbb@cs.unc.edu>
+To: Ted Baker <baker@cs.fsu.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpout.cs.fsu.edu ([128.186.122.75]:1952 "EHLO mail.cs.fsu.edu"
+Received: from ms01.sssup.it ([193.205.80.99]:44130 "EHLO sssup.it"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S933534AbZGPXN1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jul 2009 19:13:27 -0400
-Content-Disposition: inline
-In-Reply-To: <200907160917.10098.henrik@austad.us>
+	id S933582AbZGPX3P (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 19:29:15 -0400
+In-Reply-To: <20090715205503.GA14993@cs.fsu.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 16, 2009 at 09:17:09AM +0200, Henrik Austad wrote:
 
-> My understanding of PEP is that when B executes through the
-> A-proxy, B will consume parts of A's resources until the lock is
-> freed. This makes sense when A and B runs on different CPUs and
-> B is moved (temporarily) to CPU#A. If B were to use it's own
-> budget when running here, once A resumes execution and exhaustes
-> its entire budget, you can have over-utilization on that CPU
-> (and under-util on CPU#B).
+--=-iixmZwmzoqEb8NdtUbUW
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-To be sure we are using A and B the same way here:
-  B is holding a lock.  
-  A wants that lock.
-  A grants its priority B until B releases the lock.
+On Wed, 2009-07-15 at 16:55 -0400, Ted Baker wrote:
+> I hope that Linux will not pursue EDF or EDZL in only a narrow
+> sense, as simple priority scheduling algorithms, without providing
+> for bandwidth guaranteees and limits.
+>=20
+Yes, me to...
 
-How to look at the charges for usage seems not to have a perfect
-solution.  That is, you can't get around the fact that either:
+> By bandwith "guarantee" I mean that the task/scheduling entity is
+> guaranteed to be able to at least *compete* at a certain level for
+> a certain percentage of the CPU, if we cannot (better) provide an
+> admission control mechanism that guarantees it will actually get a
+> certain percentage of the CPU.
+>
+Again, I agree... But giving a group an explicit priority assignment,
+although very simple conceptually, raises a lot of issues when the
+current implementation of global task scheduling in Linux, with
+"distributed" (one per CPU) runqueue, is concerned.
 
-(1) B is using some its time at the wrong priority (priority inversion)
+> For example, in the fixed-priority domain, we have Sporadic
+> Server.  This guarantees the server a chance to compete at its top
+> priority for at least sched_ss_init_budget time in every
+> sched_ss_repl_period time, at sched_priority, within some
+> tolerance.  It also should not be permitted to use more than
+> sched_ss_init_budget time in every sched_ss_repl_period time, at
+> sched_priority, within some tolerance.
+>=20
+And that's why I'm trying what I said before... For, e.g., the sporadic
+server policy to extend and be applied to group scheduling, groups need
+to have priorities for the standard, already existent, analysis to work.
 
-or
+> In the deadline scheduling domain, we have algorithms like
+> Constant Bandwidth Server (and some improved variants) that
+> provide similar gurantees and limites, in terms of deadlines.  (I
+> recall seeing one very good version in a paper I recently saw,
+> which I could seek out and provide to the list if there is
+> interest.)
+>=20
+Well, if it does not bother you too much, I'm curious about that
+solution... When you find some time, even via private mail, if I'm the
+only one, it would be nice if you can point that paper out to me.
 
-(2) B is using some of A's time to do B's work (the right
-priority, but the wrong task)
+Thanks in advice.
 
-The right way to resolve this conflict seems to depend a lot on
-where B runs, as well as whether you are managing budget per-CPU
-(partitioned model) or managing it globally (free migration
-model).
+Regards,
+Dario
 
-1) In a global scheduling model, it does not matter where B runs.
-We want to charge B's critical section to B, since our
-schedulability analysis is based on the processor usage of each
-task.  It would be broken if A could be charged random bits of
-time for the execution of other tasks.  So, we must charge B.
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-2) In a partitioned scheuling model, we worry about the
-CPU utilization of each processor.  We have several cases, depending
-where B runs when it runs with A's priority:
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
-2.1) If B gets to run on A's processor, we have a problem
-with processor overload unless we charge the usage to A.  This
-is still a bad thing, though, since we then need to over-provision
-A to allow for this.
+--=-iixmZwmzoqEb8NdtUbUW
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-2.2) If B runs on its own processor, we want to use B's budget.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
 
-2.3) A third variatin is that all the critical sections for A and
-B run on a separate synchronization procesor.  In that case, the
-synchronization processor needs its own budget, and in effect we
-the critical sections of tasks A and B become aperiodic tasks in
-their own right. 
+iEYEABECAAYFAkpft8AACgkQk4XaBE3IOsRXKgCfWxk+FvELsneO/20uoyxcqGK4
+KrEAoKr5NV5KJNJYRUsgek1kUscg/apE
+=bpkS
+-----END PGP SIGNATURE-----
 
-> AFAIK, there are no such things as preemption-overhead charging
-> to a task's budget in the kernel today. This time simply
-> vanishes and must be compensated for when running a task through
-> the acceptance-stage (say, only 95% util pr CPU or some such).
+--=-iixmZwmzoqEb8NdtUbUW--
 
-I don't see that anything can or does "vanish".  Consider this
-sequence of events on one processor:
-
-1. task A is running, and calls scheduler (synchronously or maybe
-via IRQ, say from timer)
-
-2. scheduler computes how much time A has used recently, and charges
-it to A's budget
-
-The overhead of the IRQ handler and scheduler are therefore
-charged to A.
-
-3. scheduler switches to B
-
-4. B calls scheduler
-
-6. scheduler computes how much time B has used recently,
-and charges it to B's budget
-
-The rest of the overhead of the context switch from A to B, including cache
-misses and page faults immediately following 3 are now
-effectively charged to B.
-
-> > Back to the original question, of who should be charged for
-> > the actual critical section.
-
-> That depends on where you want to run the tasks. If you want to
-> migrate B to CPU#A, A should be charged. If you run B on CPU#B,
-> then B should be charged (for the exact same reasoning A should
-> be charged in the first case).
-
-As I mentioned above, it also depends on whether you are using
-a partitioned or global scheduling policy for your analysis.
-
-> The beauty of PEP, is that enabling B to run is very easy. In
-> the case where B runs on CPU#B, B must be updated statically so
-> that the scheduler will trigger on the new priority. In PEP,
-> this is done automatically when A is picked. One solution to
-> this, would be to migrate A to CPU#B and insert A into the
-> runqueue there. However, then you add more overhead by moving
-> the task around instead of just 'borrowing' the task_struct.
-
-> > From the schedulability analysis point of view, B is getting
-> > higher priority time than it normally would be allowed to execute,
-> > potentially causing priority inversion (a.k.a. "interference" or
-> > "blocking") to a higher priority task D (which does not even share
-> > a need for the lock that B is holding) that would otherwise run on
-> > the same processor as B.  Without priority inheritance this kind
-> > of interferfence would not happen.  So, we are benefiting A at the
-> > expense of D. In the analysis, we can either allow for all such
-> > interference in a "blocking term" in the analysis for D, or we
-> > might call it "preemption" in the analysis of D and charge it to A
-> > (if A has higher priority than D).  Is the latter any better?  
-
-> If D has higher priority than A, then neither A nor B (with the
-> locks held) should be allowed to run before D.
-
-Yes, but I only meant D has higher priority than B.  A may have
-higher priority than D, but with multiple processors we can't just
-focus on the one highest priority task.  We need to look at the
-(number of CPUs) highest priority tasks, or we will may end
-up with our system behaving as if we have only one processor.
-
-This is a key difference with multiprocessor scheduling,
-and also with processor "share" scheduilng.
-
-Expediting the highest priority task is *not* always the
-best strategy.  Assuming that each task has some amount of slack,
-there is no great benefit for completing a high-priority task
-early, if that means causing other tasks to miss their deadlines.
-
-That is, if by delaying the highest-priority task a little bit
-on one processor you can keep more processors busy,
-you may be able to successfully schedule a set of tasks that
-could not be scheduled to meet deadlines otherwise.
-
-(I can give you an example of how this happens if you want, but it
-would tedious if you can get my point without the example.)
-
-> Yes, no task should be allowed to run more than the budget, but
-> that requires B to execute *only* on CPU#B.
-
-As mentioned above, that depends on whether you are
-applying a global or partitioned model.  With a global
-scheduling model the budget is not per-CPU.
-
-> On the other hand, one could say that if you run PEP and B is
-> executed on CPU#A, and A then exhausts its budget, you could
-> blame A as well, as lock-contention is a common problem and it's
-> not only the kernel's fault. Do we need perfect or best-effort
-> lock-resolving?
-
-Yes. For application locks, with application-managed partitioned
-scheduling, you can blame the application designer for building
-in cross-CPU contention.
-
-For kernel (hidden from the application) locks, it is a harder
-problem.
-
-I don't think there is a perfect solution for the partitioned
-scheduling model.  As mentioned above, you get to choose between B
-causing short-term priority inversion for other tasks on B's
-processor (but not using more than its budget on the average), or
-B causing budget over-run for A on A's processor.
-
-Ted
