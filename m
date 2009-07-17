@@ -1,15 +1,16 @@
-From: Ted Baker <baker@cs.fsu.edu>
+From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Thu, 16 Jul 2009 19:54:29 -0400
-Message-ID: <20090716235429.GG27757@cs.fsu.edu>
-References: <1247412708.6704.105.camel@laptop> <1247499843.8107.548.camel@Palantir> <1247505941.7500.39.camel@twins> <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu> <20090713201305.GA25386@cs.fsu.edu> <4A5BAAE7.5020906@nortel.com> <20090715231109.GH14993@cs.fsu.edu> <4A5F448C.2050909@nortel.com> <20090716212603.GB27757@cs.fsu.edu> <4A5FA4EF.6000506@nortel.com>
+Date: Fri, 17 Jul 2009 02:19:37 +0200
+Message-ID: <1247789977.4929.147.camel@Palantir>
+References: <200907102350.47124.henrik@austad.us>
+	 <4A5CCD5A.80108@nortel.com> <20090715221410.GE14993@cs.fsu.edu>
+	 <200907160917.10098.henrik@austad.us>  <20090716231323.GE27757@cs.fsu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Noah Watkins <jayhawk@soe.ucsc.edu>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-LdgTw/7PkSw4aR9kHdpt"
+Cc: Henrik Austad <henrik@austad.us>,
+	Chris Friesen <cfriesen@nortel.com>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Raistlin <raistlin@linux.it>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
-	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
@@ -17,67 +18,88 @@ Cc: Noah Watkins <jayhawk@soe.ucsc.edu>,
 	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
+	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
 	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Chris Friesen <cfriesen@nortel.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933665AbZGPXyd@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4A5FA4EF.6000506@nortel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Ted Baker <baker@cs.fsu.edu>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ms01.sssup.it ([193.205.80.99]:36236 "EHLO sssup.it"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S933687AbZGQATn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 20:19:43 -0400
+In-Reply-To: <20090716231323.GE27757@cs.fsu.edu>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 16, 2009 at 04:08:47PM -0600, Chris Friesen wrote:
 
-> > However, there is still a difference in context-switching
-> > overhead.  Worst-case, you have twice as many context switches
-> > per critical section with PIP as with PP.
-> 
-> On the other hand, with PI the uncontended case can be implemented as
-> atomic operations in userspace.  With PP we need to issue at least two
-> syscalls per lock/unlock cycle even in the uncontended case (to handle
-> the priority manipulations).
+--=-LdgTw/7PkSw4aR9kHdpt
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Needing syscalls to change the priority of a thread may be an
-artifact of system design, that might be correctable.
+On Thu, 2009-07-16 at 19:13 -0400, Ted Baker wrote:
+> To be sure we are using A and B the same way here:
+>   B is holding a lock. =20
+>   A wants that lock.
+>   A grants its priority B until B releases the lock.
+>=20
+> How to look at the charges for usage seems not to have a perfect
+> solution.  That is, you can't get around the fact that either:
+>
+> [...]
+>
+> The right way to resolve this conflict seems to depend a lot on
+> where B runs, as well as whether you are managing budget per-CPU
+> (partitioned model) or managing it globally (free migration
+> model).
+>=20
+> 1) In a global scheduling model, it does not matter where B runs.
+> We want to charge B's critical section to B, since our
+> schedulability analysis is based on the processor usage of each
+> task.  It would be broken if A could be charged random bits of
+> time for the execution of other tasks.  So, we must charge B.
+>=20
+Mmm... Why can't we make B able to exploit A's bandwidth to speed up
+critical section completion, to the benefit of A as well? I mean, it
+depends on how analysis is being carried out, and it is probably good or
+bad depending on what you care most, e.g., making all task's deadline or
+isolating the various components between each other... But I wouldn't
+say it is "broken".
 
-Suppose you put the effective priority of each thread in a
-per-thread page that is mapped into a fixed location in the
-thread's address space (and different locations in the kernel
-memory).  It is nice to have such a page for each thread
-in any case.  I don't recall whether Linux already does this,
-but it is a well proven technique.
+Especially because I implemented it once... Very rough, very
+experimental, far from being ready for anything different than some
+experiments... But it worked! :-)
 
-Taking a PP lock then involves:
+> 2) In a partitioned scheuling model, we worry about the
+> CPU utilization of each processor.  We have several cases, depending
+> where B runs when it runs with A's priority:
+>=20
+Ok, I'm not going into this, since I need a little bit more time to
+figure out the details... I'm concentrating on global scheduling for
+now! :-D
 
-1) push old priority on the thread's stack
-2) overwrite thread's priority with max of the lock priority
-   and the thread priority
-3) try to grab the lock (test-and-set, etc.)
-... conditionally queue, etc.
+Regards,
+Dario
 
-Releasing the PP lock then involves:
+--=20
+<<This happens because I choose it to happen!>> (Raistlin Majere)
+----------------------------------------------------------------------
+Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 
-1) conditionally find another thread to grant the lock to,
-   call scheduler, etc., otherwise
-2) give up the actual lock (set bit, etc.)
-3) pop the old priority from the stack, and
-   write it back into the per-thread location
+http://blog.linux.it/raistlin / raistlin@ekiga.net /
+dario.faggioli@jabber.org
 
-Of course you also have explicit priority changes.  The way we
-handled those was to defer the effect until the lock release
-point.  This means keeping two priority values (the nominal one,
-and the effective one).  Just as you need conditional
-code to do the ugly stuff that requires a kernel trap
-in the case that the lock release requires unblocking
-a task, you need conditional code to copy the copy the
-new nominal priority to the effective priority, if that
-is called for.  We were able to combine these two conditions
-into a single bit test, which then branched out to handle
-each of the cases, if necessary.
+--=-LdgTw/7PkSw4aR9kHdpt
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-I can't swerar there are nocomplexities in Linux that might break
-this scheme, since we were not trying to support all the
-functionality now in Linux.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
 
-Ted
+iEYEABECAAYFAkpfw5IACgkQk4XaBE3IOsSQnwCdELcvebzT4LYHjt7is8dWqYW5
+8w8AnREW7vhwYlg88bxSIb7s6gvtDnS6
+=aqI2
+-----END PGP SIGNATURE-----
+
+--=-LdgTw/7PkSw4aR9kHdpt--
+
