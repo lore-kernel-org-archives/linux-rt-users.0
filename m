@@ -1,7 +1,7 @@
 From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Fri, 17 Jul 2009 02:32:23 +0200
-Message-ID: <1247790743.4929.169.camel@Palantir>
+Date: Fri, 17 Jul 2009 02:43:17 +0200
+Message-ID: <1247791397.4929.191.camel@Palantir>
 References: <4A5B61DF.8090101@nortel.com>
 	 <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com>
 	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
@@ -12,7 +12,7 @@ References: <4A5B61DF.8090101@nortel.com>
 	 <8aa016e10907151539t16fb1d7fk3122d77e69ac7de5@mail.gmail.com>
 	 <20090715231646.GI14993@cs.fsu.edu>  <1247734722.15471.83.camel@twins>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-gCBOqnj7FPo9/Pu1mCZc"
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-/hVZGFjHDzKHtQjDG7Mg"
 Cc: Ted Baker <baker@cs.fsu.edu>,
 	Dhaval Giani <dhaval.giani@gmail.com>,
 	Chris Friesen <cfriesen@nortel.com>,
@@ -31,101 +31,47 @@ Cc: Ted Baker <baker@cs.fsu.edu>,
 	Bjoern Brandenburg <bbb@cs.unc.edu>
 To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:39603 "EHLO sssup.it"
+Received: from ms01.sssup.it ([193.205.80.99]:42745 "EHLO sssup.it"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S933734AbZGQAc1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jul 2009 20:32:27 -0400
+	id S933314AbZGQAnY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 20:43:24 -0400
 In-Reply-To: <1247734722.15471.83.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---=-gCBOqnj7FPo9/Pu1mCZc
+--=-/hVZGFjHDzKHtQjDG7Mg
 Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
 On Thu, 2009-07-16 at 10:58 +0200, Peter Zijlstra wrote:
-> Right so control-groups (cgroups for short) are a form of
-> virtualization. Each controller is specific to a resource. We have
-> memory controllers, namespace controllers and also a scheduler
-> controller.
+> Now, let me first state that the current code is a hack, and I know its
+> nowhere near proper. But it was the best I could come up with on a short
+> notice -- and Fabio is now looking at doing better :-)
 >=20
-> If you would apply all controllers to the same task groups you get a
-> result like chroot on steroids, or jails etc. But you can also use them
-> individually to control resources in creative ways.
->=20
-> In order to manage RT resources you want:
->=20
->   - a minimum bandwidth guarantee
->   - isolation
->=20
-> So ideally you want a CBS server that schedules your RT (FIFO/RR) tasks.
->=20
-Or, maybe, an RT fix-priority RT scheduling class (for FIFO/RR tasks)
-with some kind of bandwidth limiting fix-priority algorithm for groups,
-such as deferrable server (which is basically what you have now) or,
-sporadic server.
+If I can say something (more!) there is quite a lot of work in our lab
+on this stuff, starting from different perspective and aiming at
+different goals.
 
-What do you think about this?
+I've been involved, and continuing being, on sporadic server
+implementation, EDF implementation in separate scheduling class (with
+Michael), while Fabio is doing a lot (and a lot better!) work on
+deadlines in sched-rt.
 
-The only thing you need to have this working is adding the capability of
-explicitly assigning priorities to groups!
-I'm sending some code for this in the next days... It has some (even
-serious) issues, or at least some features that would need discussing
-about, but it's a start.
+Independently from what concerns priorities or deadlines, the way the
+global scheduling is implemented, i.e., with distributed ready queues,
+raises a lot of issues with the implementation of _global_
+_hierarchical_ scheduling policies of both kind, EDF and FP.
+It is being very hard to figure out, and much more to implement, how
+things should go when you have push, pull, affinity, and so on! :-(
 
-Obviously, you can also have EDF in place, maybe as a different
-scheduling class than sched-rt, able to accomodate EDF tasks, if wanted,
-or again FIFO and RR task sets ("ghosts"), as in Fabio's proposal.
+I'll be more precise when I have the code ready, but here the question
+is, do you think the push and pull approach "is there to stay", or is
+there room, maybe after trials, errors, experiments and exhaustive
+search for the correct data structure, to migrate to something that
+would make global scheduling easier?
 
-To me, this seems the very best solution both for real-time people
-(which will get FP and EDF!) and for other users... And it also makes it
-easier to retain POSIX compatibility (if the system is properly
-configured) than if we add deadlines to sched-rt groups.
-
-But that's only my very humble opinion. :-D
-
-> Furthermore the whole feature is still marked EXPERIMENTAL, basically
-> because I do recognize it for the hack it is -- that said, some people
-> might find it useful.
->=20
-Hey, it is very useful for me actually!! Without it I would be sleeping
-right now... And not here coding and answering mails at this late time
-in the night!! :-P
-
-> These groups get assigned a bandwidth through the use of a period and
-> runtime group parameter -- the documentation states that using different
-> periods is currently broken and would require a deadline server.
->=20
-Or a priority, since we are in the fixed priority scheduling class?
-
-> Therefore we can assume all periods are equal, for the rest of this
-> description -- and set it to 1s.
->=20
->=20
-> So what does it do, its a hierarchical FIFO scheduler, with the prio of
-> a group being that of the max prio of its children. If a group runs out
-> of quota it will be dequeued. When the period timer comes along and
-> refreshes the quota it will be requeued.
->=20
->       R
->      / \
->     A   B
->    / \  |\
->   1   4 C 3
->         |
->         2
->=20
-> groups in letters, tasks in digits.
->
-> [...]
->
-WoW!! Very nice, thorough and clear explanation... Consider adding it to
-Documentation/! :-D
-
-Regards,
 Dario
-
 --=20
 <<This happens because I choose it to happen!>> (Raistlin Majere)
 ----------------------------------------------------------------------
@@ -134,17 +80,17 @@ Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 http://blog.linux.it/raistlin / raistlin@ekiga.net /
 dario.faggioli@jabber.org
 
---=-gCBOqnj7FPo9/Pu1mCZc
+--=-/hVZGFjHDzKHtQjDG7Mg
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: This is a digitally signed message part
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iEYEABECAAYFAkpfxpAACgkQk4XaBE3IOsSUNQCeKjz7n0RU/CnqV19DCV8jJBd5
-faYAn0JfGMPRP6x8QS20QaZvgxou1LL/
-=GndO
+iEYEABECAAYFAkpfyR4ACgkQk4XaBE3IOsR3/ACfcQFOsY/OgLPCjhjYUS3wpciQ
+2EAAnAwtWbR6ghmdQL7ilK41sLyETf3u
+=cSQp
 -----END PGP SIGNATURE-----
 
---=-gCBOqnj7FPo9/Pu1mCZc--
+--=-/hVZGFjHDzKHtQjDG7Mg--
 
