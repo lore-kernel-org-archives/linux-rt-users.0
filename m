@@ -1,96 +1,132 @@
-From: Raistlin <raistlin@linux.it>
+From: Karthik Singaram Lakshmanan <karthiksingaram@gmail.com>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Fri, 17 Jul 2009 02:43:17 +0200
-Message-ID: <1247791397.4929.191.camel@Palantir>
-References: <4A5B61DF.8090101@nortel.com>
-	 <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com>
-	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
-	 <1247589099.7500.191.camel@twins>
-	 <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
-	 <20090715205503.GA14993@cs.fsu.edu> <4A5E4FDD.7090307@nortel.com>
-	 <20090715223400.GF14993@cs.fsu.edu>
-	 <8aa016e10907151539t16fb1d7fk3122d77e69ac7de5@mail.gmail.com>
-	 <20090715231646.GI14993@cs.fsu.edu>  <1247734722.15471.83.camel@twins>
+Date: Thu, 16 Jul 2009 21:44:09 -0400
+Message-ID: <1ca41c0f0907161844l14176743y3520b1376389bfc@mail.gmail.com>
+References: <1247412708.6704.105.camel@laptop> <1247505941.7500.39.camel@twins>
+	 <5B78D181-E446-4266-B9DD-AC0A2629C638@soe.ucsc.edu>
+	 <20090713201305.GA25386@cs.fsu.edu> <4A5BAAE7.5020906@nortel.com>
+	 <20090715231109.GH14993@cs.fsu.edu> <1247731113.15471.24.camel@twins>
+	 <20090716221514.GC27757@cs.fsu.edu>
+	 <1ca41c0f0907161534j1918bb44m73f8005d47258534@mail.gmail.com>
+	 <20090716233836.GF27757@cs.fsu.edu>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-/hVZGFjHDzKHtQjDG7Mg"
-Cc: Ted Baker <baker@cs.fsu.edu>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Peter Zijlstra <peterz@infradead.org>,
 	Chris Friesen <cfriesen@nortel.com>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
+	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	Raistlin <raistlin@linux.it>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
 	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Noah Watkins <jayhawk@soe.ucsc.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
 	Giuseppe Lipari <lipari@retis.sssup.it>,
-	Bjoern Brandenburg <bbb@cs.unc.edu>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Raj Rajkumar <raj@ece.cmu.edu>, dionisio@sei.cmu.edu
+To: Ted Baker <baker@cs.fsu.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:42745 "EHLO sssup.it"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S933314AbZGQAnY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jul 2009 20:43:24 -0400
-In-Reply-To: <1247734722.15471.83.camel@twins>
+Received: from mail-ew0-f226.google.com ([209.85.219.226]:57971 "EHLO
+	mail-ew0-f226.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933497AbZGQBoL convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 21:44:11 -0400
+In-Reply-To: <20090716233836.GF27757@cs.fsu.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+> This does not solve the problem of avoiding queue reordering in
+> response to dynamic priority changes, since where you insert the
+> task in the queue (including the bit setting for the priority and
+> the linking/unlinking) depends on the curent priority.
+>
 
---=-/hVZGFjHDzKHtQjDG7Mg
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+I completely agree with this. The bit map needs to be modified for
+dynamic priority changes. However, atomic operations (like
+Compare-And-Swap) can be used to modify the bitmap. Barring any
+(highly unlikely but bounded) contention scenarios from other
+processors, this implementation would still continue to be efficient
+than maintaining a priority-ordered queue.
 
-On Thu, 2009-07-16 at 10:58 +0200, Peter Zijlstra wrote:
-> Now, let me first state that the current code is a hack, and I know its
-> nowhere near proper. But it was the best I could come up with on a short
-> notice -- and Fabio is now looking at doing better :-)
->=20
-If I can say something (more!) there is quite a lot of work in our lab
-on this stuff, starting from different perspective and aiming at
-different goals.
+> By the way, the use of bit-maps is very appealing for the O(1)
+> operations, including bit-scan, especially if your machine has
+> atomic set/test bit instructions. =A0We used this structure for some
+> single-processor RT kernels in the 1980's. =A0The task scheduling
+> and sleep/wakeup operations were just a few instructions. =A0However
+> the use of bit-maps forced us to set a fixed limit on the number
+> of tasks in the system. =A0We also could not change priorities
+> without doing an ugly (non-atomic) re-shuffling of the structures.
+>
+> You are proposing one bit per priority level, of course, rather
+> than one bit per task. =A0This allows you to use linked lists within
+> priorities, but you lose the one-instruction suspend/unsuspend.
+>
 
-I've been involved, and continuing being, on sporadic server
-implementation, EDF implementation in separate scheduling class (with
-Michael), while Fabio is doing a lot (and a lot better!) work on
-deadlines in sched-rt.
+We can still maintain the O(1) instruction-suspend/unsuspend, if we
+maintain a counter for each priority level.
 
-Independently from what concerns priorities or deadlines, the way the
-global scheduling is implemented, i.e., with distributed ready queues,
-raises a lot of issues with the implementation of _global_
-_hierarchical_ scheduling policies of both kind, EDF and FP.
-It is being very hard to figure out, and much more to implement, how
-things should go when you have push, pull, affinity, and so on! :-(
+(a) When a task suspends on a lock, we can do an atomic increment of
+the counter for its priority level and set the bit on the priority map
+of tasks waiting for the lock. Attaching the task to a
+per-priority-level linked list queue should take O(1) assuming that
+there is a tail pointer.
 
-I'll be more precise when I have the code ready, but here the question
-is, do you think the push and pull approach "is there to stay", or is
-there room, maybe after trials, errors, experiments and exhaustive
-search for the correct data structure, to migrate to something that
-would make global scheduling easier?
+(b) When the lock is released, find the highest priority bit set on
+the lock's priority map, index into the appropriate per-priority-level
+linked list, and wake up the task at the head of the queue (delete
+operation with O(1)). Do an atomic decrement of the counter, if it
+reaches zero unset the bit on the priority map.
 
-Dario
---=20
-<<This happens because I choose it to happen!>> (Raistlin Majere)
-----------------------------------------------------------------------
-Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
+While there are still contention issues that arise with updating the
+linked list and counters, these are restricted to tasks within the
+same priority level (highly unlikely that multiple tasks from the same
+priority level decide to acquire the same lock within a window of a
+couple of instructions), and should be much less than the contention
+arising from all the tasks in the system.
 
-http://blog.linux.it/raistlin / raistlin@ekiga.net /
-dario.faggioli@jabber.org
+> It is not immediately obvious how to extend this technique to
+> deadline-based scheduling.
+>
+> There can only be a finite number of distinct deadlines in a
+> system at any one time. =A0So at any point in time a finite number
+> of bits is sufficient. =A0The problem is that the deadlines are
+> advancing, so a fixed mapping of bit positions to deadlines does
+> not work.
+>
+> There is one way this can be used with EDF, at least for a single
+> processor, which is related to the way I came up with the SRP. =A0If
+> you keep a stack of preempting tasks (earliest deadline on top),
+> the positions in the stack do map nicely to a bit vector.
+>
+> You then need some other structure for the tasks with deadlines
+> later than the bottom of your stack.
+>
+Yes. I did not think about EDF based schedulers when I proposed the
+implementation mechanism. I believe we can work on the SRP idea to get
+a corresponding version for EDF.
 
---=-/hVZGFjHDzKHtQjDG7Mg
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+> I don't see how this generalizes to SMP.
+>
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
+I agree that there needs to be more work to generalize the idea to EDF
+based schedulers on SMP, however, the idea still applies to
+fixed-priority scheduling in the SMP context. Many SMP processors
+support atomic instructions (for example:
+http://software.intel.com/en-us/articles/implementing-scalable-atomic-l=
+ocks-for-multi-core-intel-em64t-and-ia32-architectures/).
+We can utilize these instructions to efficiently implement such locks
+at least in fixed-priority schedulers (like Deadline Monotonic
+Schedulers) for SMP systems.
 
-iEYEABECAAYFAkpfyR4ACgkQk4XaBE3IOsR3/ACfcQFOsY/OgLPCjhjYUS3wpciQ
-2EAAnAwtWbR6ghmdQL7ilK41sLyETf3u
-=cSQp
------END PGP SIGNATURE-----
-
---=-/hVZGFjHDzKHtQjDG7Mg--
-
+Thanks
+- Karthik
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
