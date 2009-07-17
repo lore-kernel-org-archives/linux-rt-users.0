@@ -1,82 +1,127 @@
 From: Raistlin <raistlin@linux.it>
 Subject: Re: RFC for a new Scheduling policy/class in the Linux-kernel
-Date: Fri, 17 Jul 2009 02:19:37 +0200
-Message-ID: <1247789977.4929.147.camel@Palantir>
-References: <200907102350.47124.henrik@austad.us>
-	 <4A5CCD5A.80108@nortel.com> <20090715221410.GE14993@cs.fsu.edu>
-	 <200907160917.10098.henrik@austad.us>  <20090716231323.GE27757@cs.fsu.edu>
+Date: Fri, 17 Jul 2009 02:32:23 +0200
+Message-ID: <1247790743.4929.169.camel@Palantir>
+References: <4A5B61DF.8090101@nortel.com>
+	 <1247568455.9086.115.camel@Palantir> <4A5C9ABA.9070909@nortel.com>
+	 <alpine.LRH.2.00.0907141109190.16818@anderson.cs.unc.edu>
+	 <1247589099.7500.191.camel@twins>
+	 <alpine.LRH.2.00.0907141234280.16818@anderson.cs.unc.edu>
+	 <20090715205503.GA14993@cs.fsu.edu> <4A5E4FDD.7090307@nortel.com>
+	 <20090715223400.GF14993@cs.fsu.edu>
+	 <8aa016e10907151539t16fb1d7fk3122d77e69ac7de5@mail.gmail.com>
+	 <20090715231646.GI14993@cs.fsu.edu>  <1247734722.15471.83.camel@twins>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-LdgTw/7PkSw4aR9kHdpt"
-Cc: Henrik Austad <henrik@austad.us>,
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-gCBOqnj7FPo9/Pu1mCZc"
+Cc: Ted Baker <baker@cs.fsu.edu>,
+	Dhaval Giani <dhaval.giani@gmail.com>,
 	Chris Friesen <cfriesen@nortel.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	"James H. Anderson" <anderson@cs.unc.edu>,
 	Douglas Niehaus <niehaus@ittc.ku.edu>,
+	Henrik Austad <henrik@austad.us>,
 	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
 	Bill Huey <billh@gnuppy.monkey.org>,
 	Linux RT <linux-rt-users@vger.kernel.org>,
 	Fabio Checconi <fabio@gandalf.sssup.it>,
-	"James H. Anderson" <anderson@cs.unc.edu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Dhaval Giani <dhaval.giani@gmail.com>,
 	Noah Watkins <jayhawk@soe.ucsc.edu>,
 	KUSP Google Group <kusp@googlegroups.com>,
 	Tommaso Cucinotta <cucinotta@sssup.it>,
-	Giuseppe Lipari <lipari@retis.sssup.it>
-To: Ted Baker <baker@cs.fsu.edu>
+	Giuseppe Lipari <lipari@retis.sssup.it>,
+	Bjoern Brandenburg <bbb@cs.unc.edu>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ms01.sssup.it ([193.205.80.99]:36236 "EHLO sssup.it"
+Received: from ms01.sssup.it ([193.205.80.99]:39603 "EHLO sssup.it"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S933687AbZGQATn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jul 2009 20:19:43 -0400
-In-Reply-To: <20090716231323.GE27757@cs.fsu.edu>
+	id S933734AbZGQAc1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jul 2009 20:32:27 -0400
+In-Reply-To: <1247734722.15471.83.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---=-LdgTw/7PkSw4aR9kHdpt
+--=-gCBOqnj7FPo9/Pu1mCZc
 Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2009-07-16 at 19:13 -0400, Ted Baker wrote:
-> To be sure we are using A and B the same way here:
->   B is holding a lock. =20
->   A wants that lock.
->   A grants its priority B until B releases the lock.
+On Thu, 2009-07-16 at 10:58 +0200, Peter Zijlstra wrote:
+> Right so control-groups (cgroups for short) are a form of
+> virtualization. Each controller is specific to a resource. We have
+> memory controllers, namespace controllers and also a scheduler
+> controller.
 >=20
-> How to look at the charges for usage seems not to have a perfect
-> solution.  That is, you can't get around the fact that either:
+> If you would apply all controllers to the same task groups you get a
+> result like chroot on steroids, or jails etc. But you can also use them
+> individually to control resources in creative ways.
+>=20
+> In order to manage RT resources you want:
+>=20
+>   - a minimum bandwidth guarantee
+>   - isolation
+>=20
+> So ideally you want a CBS server that schedules your RT (FIFO/RR) tasks.
+>=20
+Or, maybe, an RT fix-priority RT scheduling class (for FIFO/RR tasks)
+with some kind of bandwidth limiting fix-priority algorithm for groups,
+such as deferrable server (which is basically what you have now) or,
+sporadic server.
+
+What do you think about this?
+
+The only thing you need to have this working is adding the capability of
+explicitly assigning priorities to groups!
+I'm sending some code for this in the next days... It has some (even
+serious) issues, or at least some features that would need discussing
+about, but it's a start.
+
+Obviously, you can also have EDF in place, maybe as a different
+scheduling class than sched-rt, able to accomodate EDF tasks, if wanted,
+or again FIFO and RR task sets ("ghosts"), as in Fabio's proposal.
+
+To me, this seems the very best solution both for real-time people
+(which will get FP and EDF!) and for other users... And it also makes it
+easier to retain POSIX compatibility (if the system is properly
+configured) than if we add deadlines to sched-rt groups.
+
+But that's only my very humble opinion. :-D
+
+> Furthermore the whole feature is still marked EXPERIMENTAL, basically
+> because I do recognize it for the hack it is -- that said, some people
+> might find it useful.
+>=20
+Hey, it is very useful for me actually!! Without it I would be sleeping
+right now... And not here coding and answering mails at this late time
+in the night!! :-P
+
+> These groups get assigned a bandwidth through the use of a period and
+> runtime group parameter -- the documentation states that using different
+> periods is currently broken and would require a deadline server.
+>=20
+Or a priority, since we are in the fixed priority scheduling class?
+
+> Therefore we can assume all periods are equal, for the rest of this
+> description -- and set it to 1s.
+>=20
+>=20
+> So what does it do, its a hierarchical FIFO scheduler, with the prio of
+> a group being that of the max prio of its children. If a group runs out
+> of quota it will be dequeued. When the period timer comes along and
+> refreshes the quota it will be requeued.
+>=20
+>       R
+>      / \
+>     A   B
+>    / \  |\
+>   1   4 C 3
+>         |
+>         2
+>=20
+> groups in letters, tasks in digits.
 >
 > [...]
 >
-> The right way to resolve this conflict seems to depend a lot on
-> where B runs, as well as whether you are managing budget per-CPU
-> (partitioned model) or managing it globally (free migration
-> model).
->=20
-> 1) In a global scheduling model, it does not matter where B runs.
-> We want to charge B's critical section to B, since our
-> schedulability analysis is based on the processor usage of each
-> task.  It would be broken if A could be charged random bits of
-> time for the execution of other tasks.  So, we must charge B.
->=20
-Mmm... Why can't we make B able to exploit A's bandwidth to speed up
-critical section completion, to the benefit of A as well? I mean, it
-depends on how analysis is being carried out, and it is probably good or
-bad depending on what you care most, e.g., making all task's deadline or
-isolating the various components between each other... But I wouldn't
-say it is "broken".
-
-Especially because I implemented it once... Very rough, very
-experimental, far from being ready for anything different than some
-experiments... But it worked! :-)
-
-> 2) In a partitioned scheuling model, we worry about the
-> CPU utilization of each processor.  We have several cases, depending
-> where B runs when it runs with A's priority:
->=20
-Ok, I'm not going into this, since I need a little bit more time to
-figure out the details... I'm concentrating on global scheduling for
-now! :-D
+WoW!! Very nice, thorough and clear explanation... Consider adding it to
+Documentation/! :-D
 
 Regards,
 Dario
@@ -89,17 +134,17 @@ Dario Faggioli, ReTiS Lab, Scuola Superiore Sant'Anna, Pisa  (Italy)
 http://blog.linux.it/raistlin / raistlin@ekiga.net /
 dario.faggioli@jabber.org
 
---=-LdgTw/7PkSw4aR9kHdpt
+--=-gCBOqnj7FPo9/Pu1mCZc
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: This is a digitally signed message part
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iEYEABECAAYFAkpfw5IACgkQk4XaBE3IOsSQnwCdELcvebzT4LYHjt7is8dWqYW5
-8w8AnREW7vhwYlg88bxSIb7s6gvtDnS6
-=aqI2
+iEYEABECAAYFAkpfxpAACgkQk4XaBE3IOsSUNQCeKjz7n0RU/CnqV19DCV8jJBd5
+faYAn0JfGMPRP6x8QS20QaZvgxou1LL/
+=GndO
 -----END PGP SIGNATURE-----
 
---=-LdgTw/7PkSw4aR9kHdpt--
+--=-gCBOqnj7FPo9/Pu1mCZc--
 
