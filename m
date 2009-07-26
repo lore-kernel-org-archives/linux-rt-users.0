@@ -1,29 +1,57 @@
-From: Avi Kivity <avi@redhat.com>
-Subject: Re: Host latency peaks due to kvm-intel
-Date: Sat, 25 Jul 2009 17:52:05 +0300
-Message-ID: <4A6B1C15.6090608@redhat.com>
-References: <4A68A6E5.6010808@siemens.com> <4A68BD5D.1070302@gmail.com> <4A6981B0.3000008@siemens.com>
+From: Sbs <sbs.pub@gmail.com>
+Subject: Re: Doubt: Does RT patch reduce interrupt latency?
+Date: Sun, 26 Jul 2009 08:51:56 +0530
+Message-ID: <4cd511390907252021m78ae5c14hb8faaef9459eed6e@mail.gmail.com>
+References: <4cd511390907241111x3c6c9bbcw25230775c34ba3e@mail.gmail.com>
+	 <1248462240.7533.14.camel@sven.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Gregory Haskins <gregory.haskins@gmail.com>,
-	kvm-devel <kvm@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Yang, Sheng" <sheng.yang@intel.com>
-To: Jan Kiszka <jan.kiszka@siemens.com>
-Return-path: <kvm-owner@vger.kernel.org>
-In-Reply-To: <4A6981B0.3000008@siemens.com>
-Sender: kvm-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from rv-out-0506.google.com ([209.85.198.239]:1289 "EHLO
+	rv-out-0506.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752681AbZGZDV4 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 25 Jul 2009 23:21:56 -0400
+Received: by rv-out-0506.google.com with SMTP id f6so683949rvb.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 25 Jul 2009 20:21:56 -0700 (PDT)
+In-Reply-To: <1248462240.7533.14.camel@sven.thebigcorporation.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/24/2009 12:41 PM, Jan Kiszka wrote:
-> Jan (who is now patching his guest to avoid wbinvd where possible)
+> Did you raise the priority for the 1 ms IRQ thread?
+
+Sorry, this test was done by one of my team-mate. I should have
+gathered enough information before mailing. I will check with him and
+if that was not done, we will try again with raised priority. Then I
+will get back to the list with more details and queries.
+
+However, we did use the nodelay flag while requesting the IRQ. If
+nodelay flag is used, does the priority still matter? Doesn't the use
+of this flag make the kernel to treat this interrupt in the
+traditional way? Are we really making use of any rt capability?
+
+Btw, we are testing this on ARM platform.
+
+Thanks,
+Sbs
+
 >
->    
-
-Is there ever a case where it is required?  What about under a 
-hypervisor (i.e. check the hypervisor enabled bit).
-
--- 
-Do not meddle in the internals of kernels, for they are subtle and quick to panic.
-
+>> Thanks in advance,
+>>
+>> Regards,
+>> Sbs
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
+sers" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
