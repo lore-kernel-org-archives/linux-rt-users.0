@@ -1,78 +1,64 @@
-From: Jan Kiszka <jan.kiszka@siemens.com>
-Subject: cpuinfo and HVM features (was: Host latency peaks due to kvm-intel)
-Date: Mon, 27 Jul 2009 11:08:42 +0200
-Message-ID: <4A6D6E9A.6030400@siemens.com>
-References: <4A68A6E5.6010808@siemens.com> <4A6AD69E.7030201@web.de> <4A6CAB8B.4080706@intel.com> <200907270912.00470.sheng.yang@intel.com>
+From: Avi Kivity <avi@redhat.com>
+Subject: Re: cpuinfo and HVM features
+Date: Mon, 27 Jul 2009 13:31:07 +0300
+Message-ID: <4A6D81EB.6020307@redhat.com>
+References: <4A68A6E5.6010808@siemens.com> <4A6AD69E.7030201@web.de> <4A6CAB8B.4080706@intel.com> <200907270912.00470.sheng.yang@intel.com> <4A6D6E9A.6030400@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: "H. Peter Anvin" <h.peter.anvin@intel.com>,
-	Avi Kivity <avi@redhat.com>,
+Cc: "Yang, Sheng" <sheng.yang@intel.com>,
+	"H. Peter Anvin" <h.peter.anvin@intel.com>,
 	Gregory Haskins <gregory.haskins@gmail.com>,
 	kvm-devel <kvm@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: "Yang, Sheng" <sheng.yang@intel.com>
+To: Jan Kiszka <jan.kiszka@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from goliath.siemens.de ([192.35.17.28]:17753 "EHLO
-	goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755913AbZG0Jop (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 27 Jul 2009 05:44:45 -0400
-In-Reply-To: <200907270912.00470.sheng.yang@intel.com>
+Received: from mx2.redhat.com ([66.187.237.31]:39480 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755986AbZG0KbO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Jul 2009 06:31:14 -0400
+In-Reply-To: <4A6D6E9A.6030400@siemens.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[ carrying this to LKML ]
+On 07/27/2009 12:08 PM, Jan Kiszka wrote:
+>> When I add feature reporting to cpuinfo, I just put highlight features there,
+>> otherwise the VMX feature list would at least as long as CPU one.
+>>      
+>
+> That could become true. But the question is always what the highlights
+> are. Often this depends on the hypervisor as it may implement
+> workarounds for missing features differently (or not at all). So I'm
+> also for exposing feature information consistently.
+>    
 
-Yang, Sheng wrote:
-> On Monday 27 July 2009 03:16:27 H. Peter Anvin wrote:
->> Jan Kiszka wrote:
->>> Avi Kivity wrote:
->>>> On 07/24/2009 12:41 PM, Jan Kiszka wrote:
->>>>> I vaguely recall that someone promised to add a feature reporting
->>>>> facility for all those nice things, modern VM-extensions may or may not
->>>>> support (something like or even an extension of /proc/cpuinfo). What is
->>>>> the state of this plan? Would be specifically interesting for Intel
->>>>> CPUs as there seem to be many of them out there with restrictions for
->>>>> special use cases - like real-time.
->>>> Newer kernels do report some vmx features (like flexpriority) in
->>>> /proc/cpuinfo but not all.
->>> Ah, nice. Then we just need this?
->> Fine with me.
+
+I'd put everything in there.  It's information that is often useful.  
+Even minor features can expose bugs in the hypervisor.
+
+>> I have also suggested another field for virtualization feature for it, but
+>> some concern again userspace tools raised.
 >>
->> Acked-by: H. Peter Anvin <hpa@zytor.com>
->>
->> However, I guess the real question if we shouldn't export ALL VMX
->> features in a consistent way instead?
->>
-> When I add feature reporting to cpuinfo, I just put highlight features there, 
-> otherwise the VMX feature list would at least as long as CPU one.
+>> For we got indeed quite a lot features, and would get more, would it better to
+>> export the part of struct vmcs_config entries(that's pin_based_exec_ctrl,
+>> cpu_based_exec_ctrl, and cpu_based_2nd_exec_ctrl) through
+>> sys/module/kvm_intel/? Put every feature to cpuinfo seems not that necessary
+>> for such a big list.
+>>      
+>
+> I don't think this information should only come from KVM. Consider you
+> didn't build it into some kernel but still want to find out what your
+> system is able to provide.
+>
+> What about adding some dedicated /proc entry for CPU virtualization
+> features, say /proc/hvminfo?
+>    
 
-That could become true. But the question is always what the highlights
-are. Often this depends on the hypervisor as it may implement
-workarounds for missing features differently (or not at all). So I'm
-also for exposing feature information consistently.
-
-> 
-> I have also suggested another field for virtualization feature for it, but 
-> some concern again userspace tools raised.
-> 
-> For we got indeed quite a lot features, and would get more, would it better to 
-> export the part of struct vmcs_config entries(that's pin_based_exec_ctrl, 
-> cpu_based_exec_ctrl, and cpu_based_2nd_exec_ctrl) through 
-> sys/module/kvm_intel/? Put every feature to cpuinfo seems not that necessary 
-> for such a big list.
-
-I don't think this information should only come from KVM. Consider you
-didn't build it into some kernel but still want to find out what your
-system is able to provide.
-
-What about adding some dedicated /proc entry for CPU virtualization
-features, say /proc/hvminfo?
-
-Jan
+The flags line is already very long, and already has some virt features, 
+so I see no problem extending it.  If we don't want that. I'd prefer a 
+virtualization  line in /proc/cpuinfo rather than a new file.
 
 -- 
-Siemens AG, Corporate Technology, CT SE 2
-Corporate Competence Center Embedded Linux
+Do not meddle in the internals of kernels, for they are subtle and quick to panic.
+
