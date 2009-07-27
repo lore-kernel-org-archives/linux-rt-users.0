@@ -1,64 +1,54 @@
-From: Avi Kivity <avi@redhat.com>
-Subject: Re: cpuinfo and HVM features
-Date: Mon, 27 Jul 2009 13:31:07 +0300
-Message-ID: <4A6D81EB.6020307@redhat.com>
-References: <4A68A6E5.6010808@siemens.com> <4A6AD69E.7030201@web.de> <4A6CAB8B.4080706@intel.com> <200907270912.00470.sheng.yang@intel.com> <4A6D6E9A.6030400@siemens.com>
+From: Stefan Agner <stefan.agner@yahoo.com>
+Subject: Re: Doubt: Does RT patch reduce interrupt latency?
+Date: Mon, 27 Jul 2009 03:47:15 -0700 (PDT)
+Message-ID: <776909.49461.qm@web59812.mail.ac4.yahoo.com>
+References: <4cd511390907241111x3c6c9bbcw25230775c34ba3e@mail.gmail.com>  <4A6A30B2.5070709@us.ibm.com> <4cd511390907252328h4d82225cy2ae02d230fddbe61@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: "Yang, Sheng" <sheng.yang@intel.com>,
-	"H. Peter Anvin" <h.peter.anvin@intel.com>,
-	Gregory Haskins <gregory.haskins@gmail.com>,
-	kvm-devel <kvm@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Jan Kiszka <jan.kiszka@siemens.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: Sbs <sbs.pub@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:39480 "EHLO mx2.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755986AbZG0KbO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 27 Jul 2009 06:31:14 -0400
-In-Reply-To: <4A6D6E9A.6030400@siemens.com>
+Received: from web59812.mail.ac4.yahoo.com ([76.13.12.204]:23693 "HELO
+	web59812.mail.ac4.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1756045AbZG0Kxz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Jul 2009 06:53:55 -0400
+In-Reply-To: <4cd511390907252328h4d82225cy2ae02d230fddbe61@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/27/2009 12:08 PM, Jan Kiszka wrote:
->> When I add feature reporting to cpuinfo, I just put highlight features there,
->> otherwise the VMX feature list would at least as long as CPU one.
->>      
->
-> That could become true. But the question is always what the highlights
-> are. Often this depends on the hypervisor as it may implement
-> workarounds for missing features differently (or not at all). So I'm
-> also for exposing feature information consistently.
->    
+
+Hi,
 
 
-I'd put everything in there.  It's information that is often useful.  
-Even minor features can expose bugs in the hypervisor.
 
->> I have also suggested another field for virtualization feature for it, but
->> some concern again userspace tools raised.
->>
->> For we got indeed quite a lot features, and would get more, would it better to
->> export the part of struct vmcs_config entries(that's pin_based_exec_ctrl,
->> cpu_based_exec_ctrl, and cpu_based_2nd_exec_ctrl) through
->> sys/module/kvm_intel/? Put every feature to cpuinfo seems not that necessary
->> for such a big list.
->>      
->
-> I don't think this information should only come from KVM. Consider you
-> didn't build it into some kernel but still want to find out what your
-> system is able to provide.
->
-> What about adding some dedicated /proc entry for CPU virtualization
-> features, say /proc/hvminfo?
->    
+> Thank you for this clarification. This really made me think. In
+> mainline kernel, my interrupt will not be affected by other processes.
+> But, it can be affected by other interrupts in the system, right? So,
+> I still gain something from rt patch where I can scale down the
+> priority of other interrupts so that they don't come in the way of my
+> 1 ms interrupt.
+Yes this is correct...
 
-The flags line is already very long, and already has some virt features, 
-so I see no problem extending it.  If we don't want that. I'd prefer a 
-virtualization  line in /proc/cpuinfo rather than a new file.
+> Now, if I got it correct, what I will have to see is whether this
+> advantage outweighs the disadvantage of context switching delays. A
+> quick search showed me http://choices.cs.uiuc.edu/ExpCS07.pdf. In page
+> 25 they have listed time for context switches and interrupts. Those
+> figures are rather dismal (~few milli seconds). Can someone familiar
+> with ARM here tell me whether these numbers can be trusted? From the
+> rt wiki I see that, on ARM, worst case latency is less than 300us. I
+> will anyway repeat the tests that we did so far and will post the
+> results again.
+I did such messures in my diploma work, its written in german but you should 
+be able to read the figures (the messures are done on an arm cpu):
+http://www.agner.ch/linuxrealtime/Linux-Realtime-Faehigkeiten.pdf
 
--- 
-Do not meddle in the internals of kernels, for they are subtle and quick to panic.
+PDF Page 47 and following are interessting. You can see the 
+"Durchschnittslatenzzeiten" (average latencies) rt compared with mainline
 
+Bye
+Stefan
+
+
+
+      
