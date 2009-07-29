@@ -1,52 +1,99 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: Real-Time Clocks and POSIX
-Date: Wed, 29 Jul 2009 09:44:48 +0200
-Message-ID: <20090729074448.GA7911@pengutronix.de>
-References: <0DEF6B92D4B25D479DDA432440101F33C96F33@CHM-EMAIL1.ad.mc.com>
+From: Dennis Borgmann <dennis.borgmann@googlemail.com>
+Subject: BUG - kernel NULL pointer reference
+Date: Wed, 29 Jul 2009 10:44:58 +0200
+Message-ID: <4A700C0A.6000309@googlemail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: "Pilhofer, Frank" <fpilhofe@mc.com>
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:34103 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750861AbZG2Hot (ORCPT
+Received: from mail-bw0-f221.google.com ([209.85.218.221]:53082 "EHLO
+	mail-bw0-f221.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752755AbZG2Io6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Jul 2009 03:44:49 -0400
-Content-Disposition: inline
-In-Reply-To: <0DEF6B92D4B25D479DDA432440101F33C96F33@CHM-EMAIL1.ad.mc.com>
+	Wed, 29 Jul 2009 04:44:58 -0400
+Received: by bwz21 with SMTP id 21so544024bwz.37
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jul 2009 01:44:56 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Frank,
+Hello RT-Users!
 
-On Tue, Jul 28, 2009 at 01:21:48PM -0400, Pilhofer, Frank wrote:
-> I'm looking into real-time clocks.
-This is the wrong forum for real-time clocks.  This list is about
-realtime systems, not clocks.  The relevant MAINTAINER entry for you is=
-:
+I am using preemption-patches with such an uname:
 
-	REAL TIME CLOCK (RTC) SUBSYSTEM
-	P:      Alessandro Zummo
-	M:      a.zummo@towertech.it
-	L:      rtc-linux@googlegroups.com
-	S:      Maintained
-	F:      Documentation/rtc.txt
-	F:      drivers/rtc/
-	F:      include/linux/rtc.h
+client30:/tmp# uname -a
+Linux client30 2.6.29.5-rt22-486-voyage #1 PREEMPT RT Fri Jul 17
+08:55:16 GMT 2009 i586 GNU/Linux
 
-Best regards
-Uwe
+I did let an ALIX-board with an ALSA-application run for one night and I
+ran into this bug:
 
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ BUG: unable to handle kernel NULL pointer dereference at 4
+IP: [<d0131749>] snd_pcm_period_elapsed+0x11/0x1e3
+[snd_pcm]                    
+*pde =
+00000000                                                                 
+Oops: 0000 [#1]
+PREEMPT                                                         
+last sysfs file:
+/sys/class/net/lo/operstate                                    
+Modules linked in: ipv6 dm_mod ledtrig_timer ledtrig_heartbeat led_class
+scx2002
+                                                                              
+ 
+Pid: 3148, comm: IRQ-11 Tainted: P           (2.6.29.5-rt22-486-voyage
+#1)      
+EIP: 0060:[<d0131749>] EFLAGS: 00010292 CPU:
+0                                  
+EIP is at snd_pcm_period_elapsed+0x11/0x1e3
+[snd_pcm]                           
+EAX: 00000000 EBX: ce9c1f38 ECX: ce9c1f38 EDX:
+cf053110                         
+ESI: ce9c1f20 EDI: cf333400 EBP: ce4bff64 ESP:
+ce4bff4c                         
+ DS: 007b ES: 007b FS: 0000 GS: 0000 SS: 0068
+preempt:00000001                  
+Process IRQ-11 (pid: 3148, ti=ce4bf000 task=cf053110
+task.ti=ce4bf000)          
+Stack:                                                                        
+ 
+ ce4bff5c 00000000 ceabe89c ce9c1f38 ce9c1f20 00000004 ce4bff7c
+d01dc1ba        
+ cf010210 cf07e7a0 00000000 0000000b ce4bff9c c01351da 0000000b
+00000000        
+ 00000000 c0392c10 0000000b 0000000b ce4bffb4 c0135596 cf07e7a0
+c0392c10        
+Call
+Trace:                                                                     
+ [<d01dc1ba>] ? snd_cs5535audio_interrupt+0x80/0xf6
+[snd_cs5535audio]           
+ [<c01351da>] ?
+handle_IRQ_event+0x45/0xb6                                      
+ [<c0135596>] ?
+thread_simple_irq+0x43/0x7c                                     
+ [<c0135b5c>] ?
+do_irqd+0x95/0x247                                              
+ [<c0135ac7>] ?
+do_irqd+0x0/0x247                                               
+ [<c012501c>] ?
+kthread+0x39/0x61                                               
+ [<c0124fe3>] ?
+kthread+0x0/0x61                                                
+ [<c0103047>] ?
+kernel_thread_helper+0x7/0x10                                   
+Code: ff ff 59 43 8b 0c 9d 80 88 13 d0 83 f9 ff 75 d0 8d 65 f4 31 c0 5b
+5e 5f 5
+EIP: [<d0131749>] snd_pcm_period_elapsed+0x11/0x1e3 [snd_pcm] SS:ESP
+0068:ce4bfc
+CR2:
+00000000000001f4                                                           
+---[ end trace ab661b3967ef3988
+]---                                            
+Clocksource tsc unstable (delta = 186926649 ns)
+
+If you need any additional informations about this problem, just let me
+know. I hope, this will help you in improving the preemtion-patches. In
+addition, a fix of my problem would be nice ;-)
+
+Kind regards,
+Dennis
