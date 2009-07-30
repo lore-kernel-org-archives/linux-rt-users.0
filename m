@@ -1,57 +1,36 @@
 From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [LTP] LTP RT Tests (Cyclic, rt-migrate, etc)
-Date: Thu, 30 Jul 2009 13:10:32 -0700
-Message-ID: <4A71FE38.20501@us.ibm.com>
-References: <1224509719.5152.116.camel@subratamodak.linux.ibm.com> <1246890698.4887.24.camel@subratamodak.linux.ibm.com> <1247076833.5405.48.camel@subratamodak.linux.ibm.com> <200907102200.12804.sripathik@in.ibm.com> <1247244446.5040.0.camel@subratamodak.linux.ibm.com> <4A57884C.10401@us.ibm.com> <alpine.DEB.2.00.0907201039140.3858@gandalf.stny.rr.com> <4A64A369.8040808@us.ibm.com> <1248978525.5788.55.camel@subratamodak.linux.ibm.com> <alpine.DEB.2.00.0907301440460.21267@gandalf.stny.rr.com> <4A71F964.1060507@us.ibm.com> <alpine.DEB.2.00.0907301600560.21267@gandalf.stny.rr.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
+Date: Thu, 30 Jul 2009 16:04:27 -0700
+Message-ID: <4A7226FB.3070202@us.ibm.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.09
+ 06231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <4A716E54.90105@klingt.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Subrata Modak <subrata@linux.vnet.ibm.com>,
-	Sripathi Kodi <sripathik@in.ibm.com>,
-	Gowrishankar <gomuthuk@linux.vnet.ibm.com>,
-	ltp-list <ltp-list@lists.sf.net>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Clark Williams <clark.williams@gmail.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Tim Blechmann <tim@klingt.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e7.ny.us.ibm.com ([32.97.182.137]:50883 "EHLO e7.ny.us.ibm.com"
+Received: from e5.ny.us.ibm.com ([32.97.182.145]:47823 "EHLO e5.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751387AbZG3UKg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Jul 2009 16:10:36 -0400
-Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
-	by e7.ny.us.ibm.com (8.14.3/8.13.1) with ESMTP id n6UKAFYZ017250
-	for <linux-rt-users@vger.kernel.org>; Thu, 30 Jul 2009 16:10:15 -0400
-Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
-	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id n6UKAaoa255082
-	for <linux-rt-users@vger.kernel.org>; Thu, 30 Jul 2009 16:10:36 -0400
-Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
-	by d01av03.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n6UKAYtT017745
-	for <linux-rt-users@vger.kernel.org>; Thu, 30 Jul 2009 16:10:35 -0400
-In-Reply-To: <alpine.DEB.2.00.0907301600560.21267@gandalf.stny.rr.com>
+	id S1751953AbZG3XEa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Jul 2009 19:04:30 -0400
+In-Reply-To: <4A716E54.90105@klingt.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven Rostedt wrote:
-> On Thu, 30 Jul 2009, Darren Hart wrote:
->> Just to be clear, Steven you want us to modify this test case so that it uses
->> the librttest facilities, including those for standardized argument parsing,
->> buffered out, and thread creation, then commit this to the repository?  I
->> don't feel it should go in without those changes.  We've expended a lot of
->> effort making the tests in ltp/realtime be consistent in those areas (they all
->> use some common command line arguments and coding styles).  This ensures that
->> they can be easily maintained along with the other tests in the suite and that
->> users can know what to expect from the test in terms of output, etc.
+Tim Blechmann wrote:
+> On 07/30/2009 02:48 AM, Thomas Gleixner wrote:
+>>    Part of that semaphore rework is the RFC patch series I posted
+>>    recently to get rid of the init_MUTEX[_LOCKED] irritation (minus
+>>    the ones which turned out to be wrong)
 > 
-> The test is GPL, do what you want ;-)
-> 
-> I have my own version that I may play with, but I have no qualms about 
-> changing the interface. Especially if it is to be consistent with the rest 
-> of LTP. But please CC me on any changes. I can tell if the changes modify 
-> the the way the test works, or I may want to incorporate the changes into 
-> my local copy.
+> this change breaks the compilation of the binary nvidia kernel module.
+> in order to build the module, i need to apply the attached patch.
 
-OK, will do.
+Please report this to nvidia.  They have accepted patches in the past 
+for -rt support and have been reasonably easy to work with.
 
 -- 
 Darren Hart
