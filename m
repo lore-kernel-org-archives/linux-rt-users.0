@@ -1,212 +1,84 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Thu, 30 Jul 2009 02:48:04 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
- <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
- <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+From: Tim Blechmann <tim@klingt.org>
+Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
+Date: Thu, 30 Jul 2009 11:56:36 +0200
+Message-ID: <4A716E54.90105@klingt.org>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.09
+ 06231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755944AbZG3AtK@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig72BAC721EF3030EE88D796D1"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752620AbZG3KFH@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-    - update to 2.6.31-rc4
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig72BAC721EF3030EE88D796D1
+Content-Type: multipart/mixed;
+ boundary="------------000600040706050305030305"
 
-This is a major rework of the rt patch series. Thanks to Clark
-Williams and John Kacur for providing the merge to 2.6.30 while I was
-stabilizing .29-rt. While the 30-rt series looked quite stable, we
-decided to skip 30-rt entirely to keep track with the ongoing mainline
-development for various reaons. The .31-rt series is planned to be
-stabilized as we have done with .29-rt.
+This is a multi-part message in MIME format.
+--------------000600040706050305030305
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-The main changes in this release are:
+On 07/30/2009 02:48 AM, Thomas Gleixner wrote:
+>    Part of that semaphore rework is the RFC patch series I posted
+>    recently to get rid of the init_MUTEX[_LOCKED] irritation (minus
+>    the ones which turned out to be wrong)
 
-- interrupt threading
+this change breaks the compilation of the binary nvidia kernel module.
+in order to build the module, i need to apply the attached patch.
 
-    interrupt threading is now a pure extension of the mainline
-    threaded interrupt infrastructure. This reduced the patch size of
-    the forced irq threading to mere
+best, tim
 
-      8 files changed, 178 insertions(+), 13 deletions(-)
+--=20
+tim@klingt.org
+http://tim.klingt.org
 
-    Another interesting detail is that the new forced threaded code
-    uses per device threads instead of per interrupt line threads as
-    we have done in the past. This was just a logical consequence of
-    the per device thread (voluntary threading) infrastructure in
-    mainline and allows us now to share an interrupt line between a
-    hardirq based handler and a threaded handler device. One use case
-    which comes to my mind is AT91 which shares the timer and the
-    serial port interrupt; we now can solve that problem w/o nasty
-    hacks by requesting a threaded handler for the serial port which
-    shuts up the serial device interrupt in the hard interrupt handler
-    part.
+Silence is only frightening to people who are compulsively
+verbalizing.
+  William S. Burroughs
 
-- rework of the locking infrastructure
-   
-   Up to now the -rt patches changed the raw_spinlock_t to
-   __raw_spinlock_t and added another two levels of underscores to
-   many of the locking primitives. A compiler trick was used to chose
-   the implementation for RT=y and RT=n compiles depending on the lock
-   type in the lock definition.
+--------------000600040706050305030305
+Content-Type: text/x-diff;
+ name="rt_preempt_31.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+ filename="rt_preempt_31.patch"
 
-   This is nasty as there is no destinction in the source code which
-   kind of lock we are dealing with except if one looks up the lock
-   definition/declaration. It definitely was a clever move in the
-   first place to get things going, but aside of the underscore
-   conflicts which were introduced by lockdep it was not longer
-   acceptable to hide the fact that we are treating a lock
-   differently. Same applies for the changes to (rw_)semaphores which
-   used the compat_ trick for those ownerless anonymous semaphores
-   which are taken in one context and released in another.
+--- /home/tim/.emacs.d/backups/!var!lib!dkms!nvidia!185.18.29!build!nv-li=
+nux.h.~1~	2009-07-30 11:21:49.069661782 +0200
++++ /usr/src/nvidia-185.18.29/nv-linux.h	2009-07-30 11:38:44.857538204 +0=
+200
+@@ -721,7 +721,7 @@
+ #define nv_up(lock)                     up(&lock)
+=20
+ #if defined(CONFIG_PREEMPT_RT)
+-#define NV_INIT_MUTEX(mutex) init_MUTEX(mutex)
++#define NV_INIT_MUTEX(mutex) semaphore_init(mutex)
+ #else
+ #if !defined(__SEMAPHORE_INITIALIZER) && defined(__COMPAT_SEMAPHORE_INIT=
+IALIZER)
+ #define __SEMAPHORE_INITIALIZER __COMPAT_SEMAPHORE_INITIALIZER
 
-   The annotation of the code which uses those special treated locks
-   has been long discussed and one of the proposed solutions was to
-   change all spinlocks which are converted by -rt to sleeping
-   spinlocks from spinlock_t to lock_t and have another set of
-   lock/unlock/trylock functions for those. That is definitely the
-   _preferred_ solution, but it's a massive and horribly intrusive
-   change. Steven was working on it for some time, but it simply does
-   not scale IMNSHO.
+--------------000600040706050305030305--
 
-   I went the other way round. In -RT we have identified the locks
-   which can _not_ be converted to sleeping locks and so I went there
-   and converted them to atomic_spinlock_t and created a set of
-   functions for them. I converted the already known locks to that
-   type and fixed up all the functions (s/spin_*/atomic_spin_*/) which
-   annotates the code and makes it clear what we are dealing with.
+--------------enig72BAC721EF3030EE88D796D1
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-   [ I admit "atomic_spinlock_t" is a horrible name, but it's the best
-     I came up with so far. If you have a better idea please feel free
-     to add it to 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
 
-         http://rt.wiki.kernel.org/index.php/Atomic_Spinlock
+iEYEARECAAYFAkpxblQACgkQdL+4qsZfVsswygCgmNAw+26d4Jt0g8CmNNkF0Ssn
+65UAoIMSDrMoNRKdZLYgOWjwzc2t9b9P
+=cA6B
+-----END PGP SIGNATURE-----
 
-     instead of starting a bikeshed painting thread on the mailing
-     lists about that name. Once we have something better it's just a
-     sed script to fix it. ]
-
-   For !RT the spin_* functions are mapped to atomic_spin_* via inline
-   functions which do the type conversion. That has another nice side
-   effect: some places in the kernel (mostly scheduler) use
-   _raw_spin_* functions on locks to avoid the lockdep invocation in
-   some places. With the type conversion a lock needs to be defined
-   atomic_spinlock_t (or raw_spinlock_t) to have access to that
-   _raw_spin_* functions. Using e.g. _raw_spin_lock() on a lock
-   defined with spinlock_t/DEFINE_SPINLOCK will cause a compiler
-   warning. I think that's a Good Thing.
-
-   On RT the spin_* functions are mapped to the corresponding rt_lock
-   functions with inlines as well. Very simple and much more
-   understandable than the nifty PICK_OP magic with the underscore
-   convolution. :)
-
-   I did the same conversion for all (rw_)semaphores which are known
-   from -rt to be ownerless anonymous semaphores; i.e. taken in one
-   context and released in another. We renamed them to
-   compat_(rw_)semaphores up to now and let the compiler pick the
-   right function. Again here I went down the road and annotated the
-   code for those with newly created anon_* and [read|write]_anon_*
-   functions. In !RT the non annotated ones map to the anon_ functions
-   and on RT we map them to the corresponging rt_* ones. This
-   annotation should also be helpful to cover at least the non
-   anonymous (rw_)semaphores via lockdep.
-
-   Part of that semaphore rework is the RFC patch series I posted
-   recently to get rid of the init_MUTEX[_LOCKED] irritation (minus
-   the ones which turned out to be wrong)
-
-   The spinlock and semaphore annotation work is separate now and can
-   be found in the rt/atomic-lock and rt/semaphore branches of the
-   -tip git repository, which leads me to the next important point:
-
-- start of gitification
-
-   While reworking all of the above I went through the quilt queue and
-   sorted out patches into different rt/ branches. If you clone the
-   -tip git tree you'll find a bunch of branches starting with rt/.
-   They contain various independent changes which are all part of the
-   -rt patch. The combination of those branches can be found in the
-   rt/base branch.
-
-   I still have a leftover of ~140 patches (roughly 40% of the -rt
-   queue) which I committed into the rt/rt-2.6.31-rc4 branch just as
-   is simply because I ran out of time. My annual summer vacation
-   (helping my wife to run the kitchen in the church community kids
-   summer camp) is starting on friday.
-
-   While the other rt/ branches are mostly bisectable the final one is
-   not yet there. I restructured the patch queue in a logical way, but
-   there is more work to be done to clean it up. So expect it to be
-   replaced.
-
-Further plans:
-
-   1) We seriously want to tackle the elimination of the PREEMPT_RT
-   annoyance #1, aka BKL. The Big Kernel Lock is still used in ~330
-   files all across the kernel. A lot of work has been done already to
-   push down the lock into the code which still thinks it needs to be
-   protected by it. Some work has been done already in the (a little
-   bit stale) kill-the-BKL and core/kill-the-BKL branches of the -tip
-   git tree. If you want to help, please check those branches whether
-   the code has been tackled already or not to avoid redundant
-   work. If you decide to take care of one please note it on:
-
-       http://rt.wiki.kernel.org/index.php/Big_Kernel_Lock
-
-   2) I'm going on vacation for 10 days. Please send patches and
-   bugreports^Wsuccess stories to the mailinglist as usual. There are
-   folks looking out.
-
-Enough said. Get the code and have fun!
-
-Download locations:
-
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/rt-2.6.31-rc4-rt1
-
-Gitweb:
-    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/rt-2.6.31-rc4
-
-Information on the RT patch can be found at:
-
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.31-rc4-rt1 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
-    http://kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc4.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rc4-rt1.bz2
-
-Thanks to Carsten Emde, Clark Williams and John Kacur who were testing
-my various steps to get the code into the shape where it is now.
- 
-Enjoy !
-
-       tglx
+--------------enig72BAC721EF3030EE88D796D1--
