@@ -1,99 +1,212 @@
-From: Dennis Borgmann <dennis.borgmann@googlemail.com>
-Subject: BUG - kernel NULL pointer reference
-Date: Wed, 29 Jul 2009 10:44:58 +0200
-Message-ID: <4A700C0A.6000309@googlemail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.31-rc4-rt1
+Date: Thu, 30 Jul 2009 02:48:04 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+ <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
+ <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+ <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-To: rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f221.google.com ([209.85.218.221]:53082 "EHLO
-	mail-bw0-f221.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752755AbZG2Io6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Jul 2009 04:44:58 -0400
-Received: by bwz21 with SMTP id 21so544024bwz.37
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jul 2009 01:44:56 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755944AbZG3AtK@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT-Users!
-
-I am using preemption-patches with such an uname:
-
-client30:/tmp# uname -a
-Linux client30 2.6.29.5-rt22-486-voyage #1 PREEMPT RT Fri Jul 17
-08:55:16 GMT 2009 i586 GNU/Linux
-
-I did let an ALIX-board with an ALSA-application run for one night and I
-ran into this bug:
-
- BUG: unable to handle kernel NULL pointer dereference at 4
-IP: [<d0131749>] snd_pcm_period_elapsed+0x11/0x1e3
-[snd_pcm]                    
-*pde =
-00000000                                                                 
-Oops: 0000 [#1]
-PREEMPT                                                         
-last sysfs file:
-/sys/class/net/lo/operstate                                    
-Modules linked in: ipv6 dm_mod ledtrig_timer ledtrig_heartbeat led_class
-scx2002
-                                                                              
+We are pleased to announce the next update to our new preempt-rt
+series.
  
-Pid: 3148, comm: IRQ-11 Tainted: P           (2.6.29.5-rt22-486-voyage
-#1)      
-EIP: 0060:[<d0131749>] EFLAGS: 00010292 CPU:
-0                                  
-EIP is at snd_pcm_period_elapsed+0x11/0x1e3
-[snd_pcm]                           
-EAX: 00000000 EBX: ce9c1f38 ECX: ce9c1f38 EDX:
-cf053110                         
-ESI: ce9c1f20 EDI: cf333400 EBP: ce4bff64 ESP:
-ce4bff4c                         
- DS: 007b ES: 007b FS: 0000 GS: 0000 SS: 0068
-preempt:00000001                  
-Process IRQ-11 (pid: 3148, ti=ce4bf000 task=cf053110
-task.ti=ce4bf000)          
-Stack:                                                                        
+    - update to 2.6.31-rc4
+
+This is a major rework of the rt patch series. Thanks to Clark
+Williams and John Kacur for providing the merge to 2.6.30 while I was
+stabilizing .29-rt. While the 30-rt series looked quite stable, we
+decided to skip 30-rt entirely to keep track with the ongoing mainline
+development for various reaons. The .31-rt series is planned to be
+stabilized as we have done with .29-rt.
+
+The main changes in this release are:
+
+- interrupt threading
+
+    interrupt threading is now a pure extension of the mainline
+    threaded interrupt infrastructure. This reduced the patch size of
+    the forced irq threading to mere
+
+      8 files changed, 178 insertions(+), 13 deletions(-)
+
+    Another interesting detail is that the new forced threaded code
+    uses per device threads instead of per interrupt line threads as
+    we have done in the past. This was just a logical consequence of
+    the per device thread (voluntary threading) infrastructure in
+    mainline and allows us now to share an interrupt line between a
+    hardirq based handler and a threaded handler device. One use case
+    which comes to my mind is AT91 which shares the timer and the
+    serial port interrupt; we now can solve that problem w/o nasty
+    hacks by requesting a threaded handler for the serial port which
+    shuts up the serial device interrupt in the hard interrupt handler
+    part.
+
+- rework of the locking infrastructure
+   
+   Up to now the -rt patches changed the raw_spinlock_t to
+   __raw_spinlock_t and added another two levels of underscores to
+   many of the locking primitives. A compiler trick was used to chose
+   the implementation for RT=y and RT=n compiles depending on the lock
+   type in the lock definition.
+
+   This is nasty as there is no destinction in the source code which
+   kind of lock we are dealing with except if one looks up the lock
+   definition/declaration. It definitely was a clever move in the
+   first place to get things going, but aside of the underscore
+   conflicts which were introduced by lockdep it was not longer
+   acceptable to hide the fact that we are treating a lock
+   differently. Same applies for the changes to (rw_)semaphores which
+   used the compat_ trick for those ownerless anonymous semaphores
+   which are taken in one context and released in another.
+
+   The annotation of the code which uses those special treated locks
+   has been long discussed and one of the proposed solutions was to
+   change all spinlocks which are converted by -rt to sleeping
+   spinlocks from spinlock_t to lock_t and have another set of
+   lock/unlock/trylock functions for those. That is definitely the
+   _preferred_ solution, but it's a massive and horribly intrusive
+   change. Steven was working on it for some time, but it simply does
+   not scale IMNSHO.
+
+   I went the other way round. In -RT we have identified the locks
+   which can _not_ be converted to sleeping locks and so I went there
+   and converted them to atomic_spinlock_t and created a set of
+   functions for them. I converted the already known locks to that
+   type and fixed up all the functions (s/spin_*/atomic_spin_*/) which
+   annotates the code and makes it clear what we are dealing with.
+
+   [ I admit "atomic_spinlock_t" is a horrible name, but it's the best
+     I came up with so far. If you have a better idea please feel free
+     to add it to 
+
+         http://rt.wiki.kernel.org/index.php/Atomic_Spinlock
+
+     instead of starting a bikeshed painting thread on the mailing
+     lists about that name. Once we have something better it's just a
+     sed script to fix it. ]
+
+   For !RT the spin_* functions are mapped to atomic_spin_* via inline
+   functions which do the type conversion. That has another nice side
+   effect: some places in the kernel (mostly scheduler) use
+   _raw_spin_* functions on locks to avoid the lockdep invocation in
+   some places. With the type conversion a lock needs to be defined
+   atomic_spinlock_t (or raw_spinlock_t) to have access to that
+   _raw_spin_* functions. Using e.g. _raw_spin_lock() on a lock
+   defined with spinlock_t/DEFINE_SPINLOCK will cause a compiler
+   warning. I think that's a Good Thing.
+
+   On RT the spin_* functions are mapped to the corresponding rt_lock
+   functions with inlines as well. Very simple and much more
+   understandable than the nifty PICK_OP magic with the underscore
+   convolution. :)
+
+   I did the same conversion for all (rw_)semaphores which are known
+   from -rt to be ownerless anonymous semaphores; i.e. taken in one
+   context and released in another. We renamed them to
+   compat_(rw_)semaphores up to now and let the compiler pick the
+   right function. Again here I went down the road and annotated the
+   code for those with newly created anon_* and [read|write]_anon_*
+   functions. In !RT the non annotated ones map to the anon_ functions
+   and on RT we map them to the corresponging rt_* ones. This
+   annotation should also be helpful to cover at least the non
+   anonymous (rw_)semaphores via lockdep.
+
+   Part of that semaphore rework is the RFC patch series I posted
+   recently to get rid of the init_MUTEX[_LOCKED] irritation (minus
+   the ones which turned out to be wrong)
+
+   The spinlock and semaphore annotation work is separate now and can
+   be found in the rt/atomic-lock and rt/semaphore branches of the
+   -tip git repository, which leads me to the next important point:
+
+- start of gitification
+
+   While reworking all of the above I went through the quilt queue and
+   sorted out patches into different rt/ branches. If you clone the
+   -tip git tree you'll find a bunch of branches starting with rt/.
+   They contain various independent changes which are all part of the
+   -rt patch. The combination of those branches can be found in the
+   rt/base branch.
+
+   I still have a leftover of ~140 patches (roughly 40% of the -rt
+   queue) which I committed into the rt/rt-2.6.31-rc4 branch just as
+   is simply because I ran out of time. My annual summer vacation
+   (helping my wife to run the kitchen in the church community kids
+   summer camp) is starting on friday.
+
+   While the other rt/ branches are mostly bisectable the final one is
+   not yet there. I restructured the patch queue in a logical way, but
+   there is more work to be done to clean it up. So expect it to be
+   replaced.
+
+Further plans:
+
+   1) We seriously want to tackle the elimination of the PREEMPT_RT
+   annoyance #1, aka BKL. The Big Kernel Lock is still used in ~330
+   files all across the kernel. A lot of work has been done already to
+   push down the lock into the code which still thinks it needs to be
+   protected by it. Some work has been done already in the (a little
+   bit stale) kill-the-BKL and core/kill-the-BKL branches of the -tip
+   git tree. If you want to help, please check those branches whether
+   the code has been tackled already or not to avoid redundant
+   work. If you decide to take care of one please note it on:
+
+       http://rt.wiki.kernel.org/index.php/Big_Kernel_Lock
+
+   2) I'm going on vacation for 10 days. Please send patches and
+   bugreports^Wsuccess stories to the mailinglist as usual. There are
+   folks looking out.
+
+Enough said. Get the code and have fun!
+
+Download locations:
+
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/rt-2.6.31-rc4-rt1
+
+Gitweb:
+    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/rt-2.6.31-rc4
+
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.31-rc4-rt1 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
+    http://kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc4.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rc4-rt1.bz2
+
+Thanks to Carsten Emde, Clark Williams and John Kacur who were testing
+my various steps to get the code into the shape where it is now.
  
- ce4bff5c 00000000 ceabe89c ce9c1f38 ce9c1f20 00000004 ce4bff7c
-d01dc1ba        
- cf010210 cf07e7a0 00000000 0000000b ce4bff9c c01351da 0000000b
-00000000        
- 00000000 c0392c10 0000000b 0000000b ce4bffb4 c0135596 cf07e7a0
-c0392c10        
-Call
-Trace:                                                                     
- [<d01dc1ba>] ? snd_cs5535audio_interrupt+0x80/0xf6
-[snd_cs5535audio]           
- [<c01351da>] ?
-handle_IRQ_event+0x45/0xb6                                      
- [<c0135596>] ?
-thread_simple_irq+0x43/0x7c                                     
- [<c0135b5c>] ?
-do_irqd+0x95/0x247                                              
- [<c0135ac7>] ?
-do_irqd+0x0/0x247                                               
- [<c012501c>] ?
-kthread+0x39/0x61                                               
- [<c0124fe3>] ?
-kthread+0x0/0x61                                                
- [<c0103047>] ?
-kernel_thread_helper+0x7/0x10                                   
-Code: ff ff 59 43 8b 0c 9d 80 88 13 d0 83 f9 ff 75 d0 8d 65 f4 31 c0 5b
-5e 5f 5
-EIP: [<d0131749>] snd_pcm_period_elapsed+0x11/0x1e3 [snd_pcm] SS:ESP
-0068:ce4bfc
-CR2:
-00000000000001f4                                                           
----[ end trace ab661b3967ef3988
-]---                                            
-Clocksource tsc unstable (delta = 186926649 ns)
+Enjoy !
 
-If you need any additional informations about this problem, just let me
-know. I hope, this will help you in improving the preemtion-patches. In
-addition, a fix of my problem would be nice ;-)
-
-Kind regards,
-Dennis
+       tglx
