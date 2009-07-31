@@ -1,112 +1,161 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: 2.6.31-rc4-rt1: BUG: unable to handle kernel NULL pointer
-	dereference at 0000006
-Date: Thu, 30 Jul 2009 23:29:01 -0300
-Message-ID: <20090731022901.GG22657@unix.sh>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
+Date: Fri, 31 Jul 2009 09:12:46 -0500
+Message-ID: <20090731091246.1b8e169d@torg>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	<alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+	<alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+	<alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
+	<alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+	<alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
+	<alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+	<alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+	<alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
+	<alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+	<alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+	<alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
+	<alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+	<alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+	<alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+	<4A722ABA.1090903@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/7hS0pw.MAUAhTc/I.gchqJO"; protocol="application/pgp-signature"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f196.google.com ([209.85.221.196]:58497 "EHLO
-	mail-qy0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752855AbZGaC3M (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Jul 2009 22:29:12 -0400
-Received: by qyk34 with SMTP id 34so1307755qyk.33
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jul 2009 19:29:12 -0700 (PDT)
-Content-Disposition: inline
+Received: from mx2.redhat.com ([66.187.237.31]:51937 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750759AbZGaOUc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 31 Jul 2009 10:20:32 -0400
+In-Reply-To: <4A722ABA.1090903@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+--Sig_/7hS0pw.MAUAhTc/I.gchqJO
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-I was booting my brand new 2.6.31-rc4-rt1 kernel to impress some friends and
-stumbled over this nasty BUG message:
+On Thu, 30 Jul 2009 16:20:26 -0700
+Darren Hart <dvhltc@us.ibm.com> wrote:
 
-Starting autofs:  Loading autofs4: 
-BUG: unable to handle kernel NULL pointer dereference at 0000006
-IP: [<ffffffff811ff47c>] strcmp+0x1b/0x46
-PGD 794bd067 PUD 77578067 PMD 0 
-Oops: 0000 [#1] PREEMPT SMP 
-last sysfs file: /sys/class/misc/rfkill/dev
-CPU 1 
-Modules linked in: autofs4 hidp rfcomm l2cap bluetooth rfkill sunrpc nf_conntrack_netbios_ns ipt_R]
-Pid: 19, comm: sirq-timer/1 Not tainted 2.6.31-rc4-rt1 #2 8810A56
-RIP: 0010:[<ffffffff811ff47c>]  [<ffffffff811ff47c>] strcmp+0x1b/0x46
-RSP: 0018:ffff88007e88b760  EFLAGS: 00010046
-RAX: 0000000000000026 RBX: 0000000000000000 RCX: ffffffff819d2020
-RDX: ffffffff819d1e26 RSI: 0000000000000006 RDI: ffffffff815467a2
-RBP: ffff88007e88b770 R08: ffffffff81a28b60 R09: 0000000000000006
-R10: 0000000000000000 R11: ffffffff81db3020 R12: ffff8800045ac580
-R13: ffffffff81a28b50 R14: 0000000000056d30 R15: ffffffff81db3020
-FS:  0000000000000000(0000) GS:ffff8800043da000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
-CR2: 0000000000000006 CR3: 00000000779d3000 CR4: 00000000000006e0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Process sirq-timer/1 (pid: 19, threadinfo ffff88007e88a000, task ffff88007e88c4c0)
-Stack:
- ffff8800045ac580 00000000a1159f0c ffff88007e88b810 ffffffff81086203
-<0> 0000000000000006 ffffffff81a28b60 ffffffff81db3020 ffff880000000000
-<0> ffffffff819d1e20 ffffffff819d2020 ffff8800045ac580 00000000a1159f0c
+> Thomas Gleixner wrote:
+>  > We are pleased to announce the next update to our new preempt-rt
+>  > series.
+>  >
+>  >     - update to 2.6.31-rc4
+>  >
+>  > This is a major rework of the rt patch series. Thanks to Clark
+>  > Williams and John Kacur for providing the merge to 2.6.30 while I was
+>  > stabilizing .29-rt. While the 30-rt series looked quite stable, we
+>  > decided to skip 30-rt entirely to keep track with the ongoing mainline
+>  > development for various reaons. The .31-rt series is planned to be
+>  > stabilized as we have done with .29-rt.
+>=20
+> I hit this on boot on an IBM Thinkpad T60p (Intel Core Duo).  Haven't
+> had a chance to dig in yet, but wanted to post sooner rather than later.
+>=20
+> [    4.764702] Freeing unused kernel memory: 552k freed
+> [    4.765205] Write protecting the kernel text: 4552k
+> [    4.765389] Write protecting the kernel read-only data: 1776k
+> [    4.766458] BUG: sleeping function called from invalid context at=20
+> kernel/rtmutex.c:684
+> [    4.766596] in_atomic(): 1, irqs_disabled(): 0, pid: 103, name: init
+> [    4.766723] Pid: 103, comm: init Not tainted 2.6.31-rc4-rt1-dvh01 #1
+> [    4.766848] Call Trace:
+> [    4.766973]  [<c012d881>] __might_sleep+0xe1/0x100
+> [    4.767099]  [<c056ccba>] rt_spin_lock+0x2a/0x70
+> [    4.767224]  [<c018243a>] res_counter_uncharge+0x2a/0x50
+> [    4.767350]  [<c01e6e23>] __mem_cgroup_uncharge_common+0x93/0x190
+> [    4.767477]  [<c01e6fb8>] mem_cgroup_uncharge_page+0x28/0x30
+> [    4.767604]  [<c01d6b87>] page_remove_rmap+0x47/0x50
+> [    4.767728]  [<c01cf2d9>] unmap_vmas+0x349/0x6b0
+> [    4.767852]  [<c01d45e5>] exit_mmap+0xc5/0x1c0
+> [    4.767977]  [<c037d634>] ? get_random_int+0xb4/0xe0
+> [    4.768114]  [<c0140481>] mmput+0x51/0xc0
+> [    4.768237]  [<c01ef651>] flush_old_exec+0x381/0x6c0
+> [    4.768361]  [<c01ea0c6>] ? vfs_read+0x126/0x190
+> [    4.768484]  [<c01eea3f>] ? kernel_read+0x3f/0x60
+> [    4.768609]  [<c02228cb>] load_elf_binary+0x33b/0x18c0
+> [    4.768734]  [<c012f06f>] ? __wake_up+0x3f/0x50
+> [    4.768859]  [<c01ccfee>] ? kunmap_high+0x7e/0xb0
+> [    4.768983]  [<c01ccede>] ? page_address+0x8e/0x90
+> [    4.769125]  [<c01cd15b>] ? kmap_high+0x13b/0x4c0
+> [    4.769248]  [<c01d1752>] ? __get_user_pages+0x112/0x3d0
+> [    4.769374]  [<c012f06f>] ? __wake_up+0x3f/0x50
+> [    4.769498]  [<c056cd9a>] ? __rt_spin_lock+0x2a/0x70
+> [    4.769623]  [<c0222590>] ? load_elf_binary+0x0/0x18c0
+> [    4.769747]  [<c01eedbd>] search_binary_handler+0xfd/0x300
+> [    4.769872]  [<c01f0568>] do_execve+0x228/0x300
+> [    4.769996]  [<c0319626>] ? strncpy_from_user+0x46/0x70
+> [    4.770121]  [<c0101b16>] sys_execve+0x36/0x60
+> [    4.770244]  [<c0103025>] syscall_call+0x7/0xb
+>=20
+
+
+Ok, here's a traceback I got running 2.6.31-rc4-rt1 on a Lenovo T60 that
+had been running for a while:
+
+BUG: scheduling while atomic: gkrellm/0x00000001/2483, CPU#0
+Modules linked in: ati_remote pl2303 usbserial fuse i915 drm i2c_algo_bit s=
+unrpc ipv6 cpufreq_ondemand acpi_cpufreq freq_table loop dm_multipath scsi_=
+dh kvm_intel kvm uinput arc4 ecb iwl3945 btusb iwlcore snd_hda_codec_analog=
+ bluetooth snd_hda_intel snd_hda_codec snd_hwdep mac80211 snd_pcm thinkpad_=
+acpi snd_timer hwmon snd cfg80211 soundcore video rfkill iTCO_wdt iTCO_vend=
+or_support sr_mod joydev cdrom ata_generic yenta_socket snd_page_alloc pcsp=
+kr i2c_i801 i2c_core output e1000e ata_piix rsrc_nonstatic sg ahci libata s=
+d_mod scsi_mod dm_snapshot dm_zero dm_mirror dm_region_hash dm_log dm_mod u=
+hci_hcd ohci_hcd ssb [last unloaded: microcode]
+Pid: 2483, comm: gkrellm Not tainted 2.6.31-rc4-rt1 #31
 Call Trace:
- [<ffffffff81086203>] register_lock_class+0x245/0x351
- [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
- [<ffffffff810875d3>] __lock_acquire+0xac/0x3d3
- [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
- [<ffffffff81087c9c>] lock_acquire+0x104/0x13d
- [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
- [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
- [<ffffffff813e6c7e>] rt_spin_lock+0x45/0x60
- [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
- [<ffffffffa036dcec>] ip6t_do_table+0xbf/0x65b [ip6_tables]
- [<ffffffff810876ec>] ? __lock_acquire+0x1c5/0x3d3
- [<ffffffff81088156>] ? put_lock_stats+0x3b/0x5a
- [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
- [<ffffffffa03760d9>] ip6t_local_out_hook+0x37/0x52 [ip6table_filter]
- [<ffffffff81357f7c>] nf_iterate+0x5c/0xb3
- [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
- [<ffffffff81358060>] nf_hook_slow+0x8d/0x109
- [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
- [<ffffffffa032af3b>] mld_sendpack+0x2c7/0x4a2 [ipv6]
- [<ffffffff810882bf>] ? lock_release_holdtime+0x14a/0x165
- [<ffffffffa032b75a>] mld_ifc_timer_expire+0x255/0x2ab [ipv6]
- [<ffffffff810640e6>] ? run_timer_softirq+0x234/0x397
- [<ffffffffa032b505>] ? mld_ifc_timer_expire+0x0/0x2ab [ipv6]
- [<ffffffff8106415d>] run_timer_softirq+0x2ab/0x397
- [<ffffffff810640e6>] ? run_timer_softirq+0x234/0x397
- [<ffffffff8105ee36>] ksoftirqd+0x16e/0x2a0
- [<ffffffff8105ecc8>] ? ksoftirqd+0x0/0x2a0
- [<ffffffff810735ab>] kthread+0xa8/0xb0
- [<ffffffff8100d1da>] child_rip+0xa/0x20
- [<ffffffff81073503>] ? kthread+0x0/0xb0
- [<ffffffff8100d1d0>] ? child_rip+0x0/0x20
-Code: 33 14 25 28 00 00 00 74 05 e8 fa 77 e5 ff c9 c3 55 48 89 e5 48 83 ec 10 65 48 8b 04 25 28 00 
-RIP  [<ffffffff811ff47c>] strcmp+0x1b/0x46
- RSP <ffff88007e88b760>
-CR2: 0000000000000006
----[ end trace 0c5a17dc9397339f ]---
-NOHZ: local_softirq_pending 02
-[  OK  ]
-Starting automount: NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
-NOHZ: local_softirq_pending 02
+ [<ffffffff8105742b>] __schedule_bug+0x97/0x9c
+ [<ffffffff8153856b>] __schedule+0xc7/0x112c
+ [<ffffffff8153c8c6>] ? _atomic_spin_unlock+0x46/0x62
+ [<ffffffff81539ad5>] schedule+0x1f/0x70
+ [<ffffffff8153b163>] rt_spin_lock_slowlock+0x313/0x475
+ [<ffffffff8153c1ed>] rt_spin_lock+0xd4/0xd9
+ [<ffffffff810c5d6b>] res_counter_uncharge+0x2e/0x53
+ [<ffffffff8115b1f5>] __mem_cgroup_uncharge_common+0x24e/0x376
+ [<ffffffff8115b3f7>] mem_cgroup_uncharge_page+0x52/0x54
+ [<ffffffff8113e9ca>] page_remove_rmap+0x5a/0x7d
+ [<ffffffff8112eb62>] unmap_vmas+0xb0b/0x111b
+ [<ffffffff81112ec0>] ? __alloc_pages_nodemask+0x1ea/0xa16
+ [<ffffffff81137f16>] unmap_region+0x148/0x294
+ [<ffffffff81139940>] do_munmap+0x35d/0x3e5
+ [<ffffffff81139a0e>] sys_munmap+0x46/0x5d
+ [<ffffffff8100cf72>] system_call_fastpath+0x16/0x1b
 
+Steven seemed to think that we have a mismatched preempt_disable() and
+preempt_enable() but I haven't had enough coffee to actually try
+debugging it.=20
 
-I remember seeing these last bits about local_softirq_pending in the list
-few weeks ago. I intend to check the other BUG message but decided posting
-to the list just in case someone is suffering from insomnia...
+ Clark
 
-Cheers,
-Luis
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+--Sig_/7hS0pw.MAUAhTc/I.gchqJO
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.11 (GNU/Linux)
+
+iEYEARECAAYFAkpy++MACgkQHyuj/+TTEp2L2QCfcyqSje2/EmkJe9gHRduw5Wav
+rbgAmwXQeXl2mRFRQ0ncBM7OFZOHCL5R
+=PN4y
+-----END PGP SIGNATURE-----
+
+--Sig_/7hS0pw.MAUAhTc/I.gchqJO--
