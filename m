@@ -1,214 +1,112 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH][RT] stacktrace: dump out last preempt disable locations
-Date: Thu, 30 Jul 2009 22:29:04 -0400 (EDT)
-Message-ID: <alpine.DEB.2.00.0907302225500.21267@gandalf.stny.rr.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: 2.6.31-rc4-rt1: BUG: unable to handle kernel NULL pointer
+	dereference at 0000006
+Date: Thu, 30 Jul 2009 23:29:01 -0300
+Message-ID: <20090731022901.GG22657@unix.sh>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark.williams@gmail.com>,
-	Darren Hart <dvhltc@us.ibm.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:56102 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752855AbZGaC3G (ORCPT
+Received: from mail-qy0-f196.google.com ([209.85.221.196]:58497 "EHLO
+	mail-qy0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752855AbZGaC3M (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Jul 2009 22:29:06 -0400
+	Thu, 30 Jul 2009 22:29:12 -0400
+Received: by qyk34 with SMTP id 34so1307755qyk.33
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jul 2009 19:29:12 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas,
+Hello,
 
-This patch was somehow dropped from the 31-rt port. It is very useful 
-since it shows the last locations that preemption was disabled. The bugs 
-that Darren and Clark are seeing would probably be spotted by this patch. 
-Could you add it back.
+I was booting my brand new 2.6.31-rc4-rt1 kernel to impress some friends and
+stumbled over this nasty BUG message:
 
-Ingo wrote the original version of this code, but as things changed I 
-needed to rewrite it.
+Starting autofs:  Loading autofs4: 
+BUG: unable to handle kernel NULL pointer dereference at 0000006
+IP: [<ffffffff811ff47c>] strcmp+0x1b/0x46
+PGD 794bd067 PUD 77578067 PMD 0 
+Oops: 0000 [#1] PREEMPT SMP 
+last sysfs file: /sys/class/misc/rfkill/dev
+CPU 1 
+Modules linked in: autofs4 hidp rfcomm l2cap bluetooth rfkill sunrpc nf_conntrack_netbios_ns ipt_R]
+Pid: 19, comm: sirq-timer/1 Not tainted 2.6.31-rc4-rt1 #2 8810A56
+RIP: 0010:[<ffffffff811ff47c>]  [<ffffffff811ff47c>] strcmp+0x1b/0x46
+RSP: 0018:ffff88007e88b760  EFLAGS: 00010046
+RAX: 0000000000000026 RBX: 0000000000000000 RCX: ffffffff819d2020
+RDX: ffffffff819d1e26 RSI: 0000000000000006 RDI: ffffffff815467a2
+RBP: ffff88007e88b770 R08: ffffffff81a28b60 R09: 0000000000000006
+R10: 0000000000000000 R11: ffffffff81db3020 R12: ffff8800045ac580
+R13: ffffffff81a28b50 R14: 0000000000056d30 R15: ffffffff81db3020
+FS:  0000000000000000(0000) GS:ffff8800043da000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+CR2: 0000000000000006 CR3: 00000000779d3000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process sirq-timer/1 (pid: 19, threadinfo ffff88007e88a000, task ffff88007e88c4c0)
+Stack:
+ ffff8800045ac580 00000000a1159f0c ffff88007e88b810 ffffffff81086203
+<0> 0000000000000006 ffffffff81a28b60 ffffffff81db3020 ffff880000000000
+<0> ffffffff819d1e20 ffffffff819d2020 ffff8800045ac580 00000000a1159f0c
+Call Trace:
+ [<ffffffff81086203>] register_lock_class+0x245/0x351
+ [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
+ [<ffffffff810875d3>] __lock_acquire+0xac/0x3d3
+ [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
+ [<ffffffff81087c9c>] lock_acquire+0x104/0x13d
+ [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
+ [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
+ [<ffffffff813e6c7e>] rt_spin_lock+0x45/0x60
+ [<ffffffffa036dcec>] ? ip6t_do_table+0xbf/0x65b [ip6_tables]
+ [<ffffffffa036dcec>] ip6t_do_table+0xbf/0x65b [ip6_tables]
+ [<ffffffff810876ec>] ? __lock_acquire+0x1c5/0x3d3
+ [<ffffffff81088156>] ? put_lock_stats+0x3b/0x5a
+ [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
+ [<ffffffffa03760d9>] ip6t_local_out_hook+0x37/0x52 [ip6table_filter]
+ [<ffffffff81357f7c>] nf_iterate+0x5c/0xb3
+ [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
+ [<ffffffff81358060>] nf_hook_slow+0x8d/0x109
+ [<ffffffffa03284dc>] ? dst_output+0x0/0x39 [ipv6]
+ [<ffffffffa032af3b>] mld_sendpack+0x2c7/0x4a2 [ipv6]
+ [<ffffffff810882bf>] ? lock_release_holdtime+0x14a/0x165
+ [<ffffffffa032b75a>] mld_ifc_timer_expire+0x255/0x2ab [ipv6]
+ [<ffffffff810640e6>] ? run_timer_softirq+0x234/0x397
+ [<ffffffffa032b505>] ? mld_ifc_timer_expire+0x0/0x2ab [ipv6]
+ [<ffffffff8106415d>] run_timer_softirq+0x2ab/0x397
+ [<ffffffff810640e6>] ? run_timer_softirq+0x234/0x397
+ [<ffffffff8105ee36>] ksoftirqd+0x16e/0x2a0
+ [<ffffffff8105ecc8>] ? ksoftirqd+0x0/0x2a0
+ [<ffffffff810735ab>] kthread+0xa8/0xb0
+ [<ffffffff8100d1da>] child_rip+0xa/0x20
+ [<ffffffff81073503>] ? kthread+0x0/0xb0
+ [<ffffffff8100d1d0>] ? child_rip+0x0/0x20
+Code: 33 14 25 28 00 00 00 74 05 e8 fa 77 e5 ff c9 c3 55 48 89 e5 48 83 ec 10 65 48 8b 04 25 28 00 
+RIP  [<ffffffff811ff47c>] strcmp+0x1b/0x46
+ RSP <ffff88007e88b760>
+CR2: 0000000000000006
+---[ end trace 0c5a17dc9397339f ]---
+NOHZ: local_softirq_pending 02
+[  OK  ]
+Starting automount: NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
+NOHZ: local_softirq_pending 02
 
--- Steve
 
------
-Track preempt disable nesting
+I remember seeing these last bits about local_softirq_pending in the list
+few weeks ago. I intend to check the other BUG message but decided posting
+to the list just in case someone is suffering from insomnia...
 
-This code was largly influenced by work from Ingo Molnar.
-
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
----
- arch/arm/kernel/traps.c      |    1 +
- include/linux/preempt.h      |    3 ++-
- include/linux/sched.h        |   11 +++++++++++
- kernel/sched.c               |   17 +++++++++++++++--
- kernel/trace/Kconfig         |    8 ++++++++
- kernel/trace/Makefile        |    2 ++
- kernel/trace/preempt-trace.c |   30 ++++++++++++++++++++++++++++++
- 7 files changed, 69 insertions(+), 3 deletions(-)
-
-Index: linux-2.6.31-rc4-rt1/arch/arm/kernel/traps.c
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/arch/arm/kernel/traps.c	2009-07-30 21:28:57.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/arch/arm/kernel/traps.c	2009-07-30 21:30:58.000000000 -0400
-@@ -365,6 +365,7 @@ asmlinkage void do_unexp_fiq (struct pt_
- {
- 	printk("Hmm.  Unexpected FIQ received, but trying to continue\n");
- 	printk("You may have a hardware problem...\n");
-+	print_preempt_trace(current);
- }
- 
- /*
-Index: linux-2.6.31-rc4-rt1/include/linux/preempt.h
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/include/linux/preempt.h	2009-07-30 21:28:58.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/include/linux/preempt.h	2009-07-30 21:30:58.000000000 -0400
-@@ -10,7 +10,8 @@
- #include <linux/linkage.h>
- #include <linux/list.h>
- 
--#if defined(CONFIG_DEBUG_PREEMPT) || defined(CONFIG_PREEMPT_TRACER)
-+#if defined(CONFIG_DEBUG_PREEMPT) || defined(CONFIG_PREEMPT_TRACER) || \
-+	defined(CONFIG_PREEMPT_TRACE)
-   extern void add_preempt_count(int val);
-   extern void sub_preempt_count(int val);
- #else
-Index: linux-2.6.31-rc4-rt1/include/linux/sched.h
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/include/linux/sched.h	2009-07-30 21:28:58.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/include/linux/sched.h	2009-07-30 21:33:50.000000000 -0400
-@@ -1437,6 +1437,11 @@ struct task_struct {
- 
- #define MAX_PREEMPT_TRACE 25
- #define MAX_LOCK_STACK	MAX_PREEMPT_TRACE
-+#ifdef CONFIG_PREEMPT_TRACE
-+	unsigned long preempt_trace_eip[MAX_PREEMPT_TRACE];
-+	unsigned long preempt_trace_parent_eip[MAX_PREEMPT_TRACE];
-+#endif
-+
- #ifdef CONFIG_DEBUG_PREEMPT
- 	atomic_t lock_count;
- # ifdef CONFIG_PREEMPT_RT
-@@ -2605,6 +2610,12 @@ static inline int task_is_current(struct
- }
- #endif
- 
-+#ifdef CONFIG_PREEMPT_TRACE
-+void print_preempt_trace(struct task_struct *tsk);
-+#else
-+static inline void print_preempt_trace(struct task_struct *tsk) { }
-+#endif
-+
- #endif /* __KERNEL__ */
- 
- #endif
-Index: linux-2.6.31-rc4-rt1/kernel/sched.c
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/kernel/sched.c	2009-07-30 21:28:58.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/kernel/sched.c	2009-07-30 22:01:03.000000000 -0400
-@@ -5349,10 +5349,14 @@ EXPORT_SYMBOL(preempt_enable_no_resched)
- #endif
- 
- #if defined(CONFIG_PREEMPT) && (defined(CONFIG_DEBUG_PREEMPT) || \
--				defined(CONFIG_PREEMPT_TRACER))
-+				defined(CONFIG_PREEMPT_TRACER) || \
-+				defined(CONFIG_PREEMPT_TRACE))
- 
- void __kprobes add_preempt_count(int val)
- {
-+	unsigned long eip = CALLER_ADDR0;
-+	unsigned long parent_eip = get_parent_ip(CALLER_ADDR1);
-+
- #ifdef CONFIG_DEBUG_PREEMPT
- 	/*
- 	 * Underflow?
-@@ -5361,6 +5365,15 @@ void __kprobes add_preempt_count(int val
- 		return;
- #endif
- 	preempt_count() += val;
-+#ifdef CONFIG_PREEMPT_TRACE
-+	if (val <= 10) {
-+		unsigned int idx = preempt_count() & PREEMPT_MASK;
-+		if (idx < MAX_PREEMPT_TRACE) {
-+			current->preempt_trace_eip[idx] = eip;
-+			current->preempt_trace_parent_eip[idx] = parent_eip;
-+		}
-+	}
-+#endif
- #ifdef CONFIG_DEBUG_PREEMPT
- 	/*
- 	 * Spinlock count overflowing soon?
-@@ -5369,7 +5382,7 @@ void __kprobes add_preempt_count(int val
- 				PREEMPT_MASK - 10);
- #endif
- 	if (preempt_count() == val)
--		trace_preempt_off(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
-+		trace_preempt_off(eip, parent_eip);
- }
- EXPORT_SYMBOL(add_preempt_count);
- 
-Index: linux-2.6.31-rc4-rt1/kernel/trace/Kconfig
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/kernel/trace/Kconfig	2009-07-30 21:28:58.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/kernel/trace/Kconfig	2009-07-30 21:36:14.000000000 -0400
-@@ -502,6 +502,14 @@ config RING_BUFFER_BENCHMARK
- 
- 	  If unsure, say N
- 
-+config PREEMPT_TRACE
-+	bool "Keep a record of preempt disabled spots"
-+	depends on DEBUG_KERNEL
-+	depends on PREEMPT
-+	select TRACING
-+	help
-+	  Keeps a record of the last 25 preempt disabled locations.
-+
- endif # FTRACE
- 
- endif # TRACING_SUPPORT
-Index: linux-2.6.31-rc4-rt1/kernel/trace/Makefile
-===================================================================
---- linux-2.6.31-rc4-rt1.orig/kernel/trace/Makefile	2009-07-30 21:26:32.000000000 -0400
-+++ linux-2.6.31-rc4-rt1/kernel/trace/Makefile	2009-07-30 21:34:40.000000000 -0400
-@@ -55,4 +55,6 @@ obj-$(CONFIG_FTRACE_SYSCALLS) += trace_s
- obj-$(CONFIG_EVENT_PROFILE) += trace_event_profile.o
- obj-$(CONFIG_EVENT_TRACING) += trace_events_filter.o
- 
-+obj-$(CONFIG_PREEMPT_TRACE) += preempt-trace.o
-+
- libftrace-y := ftrace.o
-Index: linux-2.6.31-rc4-rt1/kernel/trace/preempt-trace.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.31-rc4-rt1/kernel/trace/preempt-trace.c	2009-07-30 21:30:58.000000000 -0400
-@@ -0,0 +1,30 @@
-+#include <linux/sched.h>
-+#include <linux/hardirq.h>
-+#include <linux/kallsyms.h>
-+
-+void print_preempt_trace(struct task_struct *task)
-+{
-+	unsigned int count;
-+	unsigned int i, lim;
-+
-+	if (!task)
-+		task = current;
-+
-+	count = task_thread_info(task)->preempt_count;
-+	lim = count & PREEMPT_MASK;
-+
-+	if (lim >= MAX_PREEMPT_TRACE)
-+		lim = MAX_PREEMPT_TRACE-1;
-+	printk("---------------------------\n");
-+	printk("| preempt count: %08x ]\n", count);
-+	printk("| %d-level deep critical section nesting:\n", lim);
-+	printk("----------------------------------------\n");
-+	for (i = 1; i <= lim; i++) {
-+		printk(".. [<%08lx>] .... ", task->preempt_trace_eip[i]);
-+		print_symbol("%s\n", task->preempt_trace_eip[i]);
-+		printk(".....[<%08lx>] ..   ( <= ",
-+				task->preempt_trace_parent_eip[i]);
-+		print_symbol("%s)\n", task->preempt_trace_parent_eip[i]);
-+	}
-+	printk("\n");
-+}
+Cheers,
+Luis
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
 
