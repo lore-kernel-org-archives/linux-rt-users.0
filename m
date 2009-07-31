@@ -1,59 +1,93 @@
-Return-Path: linux-kernel-owner@vger.kernel.org
-Message-ID: <4A5F91F4.5070505@ece.cmu.edu>
-Date: Thu, 16 Jul 2009 16:47:48 -0400
-From: Raj Rajkumar <raj@ece.cmu.edu>
-MIME-Version: 1.0
-Subject: Re: [Fwd: Re: RFC for a new Scheduling policy/class in the Linux-kernel]
-References: <4A5F7254.3020809@ece.cmu.edu> <alpine.LRH.2.00.0907161513050.3814@anderson.cs.unc.edu> <4A5F806D.6040701@ece.cmu.edu> <alpine.LRH.2.00.0907161538340.3814@anderson.cs.unc.edu>
-In-Reply-To: <alpine.LRH.2.00.0907161538340.3814@anderson.cs.unc.edu>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: [PATCH] futex: futex_wait_requeue_pi commentary corrections
+Date: Fri, 31 Jul 2009 15:38:25 -0700
+Message-ID: <4A737261.20601@us.ibm.com>
+Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Sender: linux-kernel-owner@vger.kernel.org
-To: "James H. Anderson" <anderson@cs.unc.edu>
-Cc: Ted Baker <baker@cs.fsu.edu>, Noah Watkins <jayhawk@soe.ucsc.edu>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Raistlin <raistlin@linux.it>, Douglas Niehaus <niehaus@ittc.ku.edu>, Henrik Austad <henrik@austad.us>, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>, Bill Huey <billh@gnuppy.monkey.org>, "Linux RT <linux-rt-users@vger.kernel.org> Fabio Checconi" <fabio@gandalf.sssup.it>, Thomas Gleixner <tglx@linutronix.de>, Dhaval Giani <dhaval.giani@gmail.com>, Tommaso Cucinotta <cucinotta@sssup.it>, Giuseppe Lipari <lipari@retis.sssup.it>, Bjoern Brandenburg <bbb@cs.unc.edu>, Karthik Singaram Lakshmanan <lakshmanan@cmu.edu>, Dionisio de Niz <dionisio@sei.cmu.edu>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>
+To: "lkml, " <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e34.co.us.ibm.com ([32.97.110.152]:41860 "EHLO
+	e34.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751113AbZGaWi1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 31 Jul 2009 18:38:27 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Jim:
+futex: futex_wait_requeue_pi commentary corrections
 
-Good discussion.   THanks for taking the time to educate me on past 
-exchanges.
+From: Darren Hart <dvhltc@us.ibm.com>
 
- > We didn't talk about the low processor utlization (Dhall effect)
- > mentioned in your last email.  However, that applies to hard real-time
- > workloads, not soft real-time workloads.  This discussion has been
- > touching on both.
+The state machine described in the comments wasn't updated with a follow-on
+fix.  Address that and cleanup the corresponding commentary in the function.
 
-For hard real-time workloads, partitioning (static binding to specific 
-processors) works well, with developer control over where tasks run and 
-their contenders.  For soft real-time workloads, global scheduling 
-(dynamic binding to available processors) should do well.   The 
-situation is analogous to what we see in banks and airports.  There is a 
-common global queue serviced by multiple counters for "soft" real-time 
-customers, and for those (business or first-class/special) customers 
-needing higher QoS,  separate queues are provided.  In the OS context, 
-we need to ensure that the two queues/servers do not interfere.  
-Ceilings would help even when the hard and soft real-time tasks use the 
-same processors.
-
-However, the question of dealing with mutexes shared by processes 
-allocated to different processors remains.  As Ted has pointed out, 
-avoiding them would be best!  In practice, moving them to a 
-synchronization processor (as was pointed out by Peter? and also 
-discussed in one of my earlier papers on synchronization on 
-multi-processors) ought to be considered.  I think the first-order 
-improvements are
-from
-
-(1) ensuring that task waiting times are bounded as a function of 
-critical sections only (i.e. avoiding the "unbounded" priority inversion 
-problem) - this is accomplished by having critical sections execute at 
-ceiling priorities (or higher) in the multiprocessor case,
-(2) avoiding the wait from very long critical sections used only by 
-lower-priority tasks - using priority ceilings instead of higher 
-priority values for long critical sections mitigates this problem.
- 
+Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@elte.hu>
 ---
-Raj
+
+ kernel/futex.c |   23 ++++++++++-------------
+ 1 files changed, 10 insertions(+), 13 deletions(-)
 
 
-
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 0672ff8..18752ae 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -2102,11 +2102,11 @@ int handle_early_requeue_pi_wakeup(struct futex_hash_bucket *hb,
+  * We call schedule in futex_wait_queue_me() when we enqueue and return there
+  * via the following:
+  * 1) wakeup on uaddr2 after an atomic lock acquisition by futex_requeue()
+- * 2) wakeup on uaddr2 after a requeue and subsequent unlock
+- * 3) signal (before or after requeue)
+- * 4) timeout (before or after requeue)
++ * 2) wakeup on uaddr2 after a requeue
++ * 3) signal
++ * 4) timeout
+  *
+- * If 3, we setup a restart_block with futex_wait_requeue_pi() as the function.
++ * If 3, we setup a restart_block and return -ERESTARTNOINTR.
+  *
+  * If 2, we may then block on trying to take the rt_mutex and return via:
+  * 5) successful lock
+@@ -2114,7 +2114,7 @@ int handle_early_requeue_pi_wakeup(struct futex_hash_bucket *hb,
+  * 7) timeout
+  * 8) other lock acquisition failure
+  *
+- * If 6, we setup a restart_block with futex_lock_pi() as the function.
++ * If 6, return -EWOULDBLOCK (restarting the syscall would do the same).
+  *
+  * If 4 or 7, we cleanup and return with -ETIMEDOUT.
+  *
+@@ -2232,14 +2232,11 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, int fshared,
+ 			rt_mutex_unlock(pi_mutex);
+ 	} else if (ret == -EINTR) {
+ 		/*
+-		 * We've already been requeued, but we have no way to
+-		 * restart by calling futex_lock_pi() directly. We
+-		 * could restart the syscall, but that will look at
+-		 * the user space value and return right away. So we
+-		 * drop back with EWOULDBLOCK to tell user space that
+-		 * "val" has been changed. That's the same what the
+-		 * restart of the syscall would do in
+-		 * futex_wait_setup().
++		 * We've already been requeued, but cannot restart by calling
++		 * futex_lock_pi() directly. We could restart this syscall, but
++		 * it would detect that the user space "val" changed and return
++		 * -EWOULDBLOCK.  Save the overhead of the restart and return
++		 * -EWOULDBLOCK directly.
+ 		 */
+ 		ret = -EWOULDBLOCK;
+ 	}
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
