@@ -1,72 +1,56 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
+From: Thomas Meyer <thomas@m3y3r.de>
 Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Sat, 1 Aug 2009 03:20:01 +0200
-Message-ID: <20090801012000.GA5309@nowhere>
-References: <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <20090731232205.GA7574@nowhere> <4A738F78.9020106@us.ibm.com>
+Date: Sat, 01 Aug 2009 11:48:55 +0200
+Message-ID: <1249120135.14496.1.camel@localhost>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
+	 <alpine.LFD.2.00  <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>,
 	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: Darren Hart <dvhltc@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f217.google.com ([209.85.220.217]:41604 "EHLO
-	mail-fx0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752121AbZHABUF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Jul 2009 21:20:05 -0400
-Content-Disposition: inline
-In-Reply-To: <4A738F78.9020106@us.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Frank Rowand <frank.rowand@am.sony.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752641AbZHAJt2@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jul 31, 2009 at 05:42:32PM -0700, Darren Hart wrote:
-> Frederic Weisbecker wrote:
->> On Thu, Jul 30, 2009 at 02:48:04AM +0200, Thomas Gleixner wrote:
->
->>> Further plans:
->>>
->>>    1) We seriously want to tackle the elimination of the PREEMPT_RT
->>>    annoyance #1, aka BKL. The Big Kernel Lock is still used in ~330
->>>    files all across the kernel. A lot of work has been done already to
->>>    push down the lock into the code which still thinks it needs to be
->>>    protected by it. Some work has been done already in the (a little
->>>    bit stale) kill-the-BKL and core/kill-the-BKL branches of the -tip
->>>    git tree. If you want to help, please check those branches whether
->>>    the code has been tackled already or not to avoid redundant
->>>    work. If you decide to take care of one please note it on:
->>>
->>>        http://rt.wiki.kernel.org/index.php/Big_Kernel_Lock
->>
->>
->> We (I) can't write to this file :)
->>
->> However, I'll try to attack the remaining bkl that resides in tty...
->
-> I took a look at the perms, then the history - looks like you sorted it out.
+Thomas Gleixner wrote:
 
+> Enough said. Get the code and have fun!
 
-Yeah, I just had to register. I'm an idiot.
-
-Thanks!
-
-
-> -- 
-> Darren Hart
-> IBM Linux Technology Center
-> Real-Time Linux Team
-
+BUG: scheduling while atomic: kjournald2/0x00000001/1128, CPU#1 
+Modules linked in: olympic forcedeth rndis_wlan floppy [last unloaded: scsi_wait_scan]
+Pid: 1128, comm: kjournald2 Tainted: G        W  2.6.31-rc4-rt1 #3
+Call Trace:
+ [<ffffffff81809a2d>] ? __schedule+0x88/0x76c
+ [<ffffffff8109baca>] ? task_blocks_on_rt_mutex+0x15b/0x1c4
+ [<ffffffff8180a45b>] ? schedule+0x1a/0x3e
+ [<ffffffff8180b22e>] ? rt_spin_lock_slowlock+0x149/0x21c
+ [<ffffffff810e630d>] ? lock_cpu_pcp+0x4b/0x85
+ [<ffffffff810e762b>] ? free_hot_cold_page+0x5a/0x216
+ [<ffffffff8110fe0a>] ? slab_irq_enable+0x9d/0xc1
+ [<ffffffff81110516>] ? kmem_cache_free+0x42/0xc3
+ [<ffffffff811df024>] ? jbd2_journal_remove_journal_head+0x2d/0x54
+ [<ffffffff811dbe56>] ? journal_clean_one_cp_list+0x82/0xed
+ [<ffffffff811dbf0a>] ? __jbd2_journal_clean_checkpoint_list+0x49/0xa0
+ [<ffffffff811d9e1d>] ? jbd2_journal_commit_transaction+0x2f3/0x125a
+ [<ffffffff8180a162>] ? thread_return+0x51/0xe4
+ [<ffffffff810884bd>] ? autoremove_wake_function+0x0/0x55
+ [<ffffffff810797d1>] ? try_to_del_timer_sync+0x59/0x77
+ [<ffffffff811e00f2>] ? kjournald2+0x106/0x27c
+ [<ffffffff810884bd>] ? autoremove_wake_function+0x0/0x55
+ [<ffffffff811dffec>] ? kjournald2+0x0/0x27c
+ [<ffffffff8108800e>] ? kthread+0x90/0x98
+ [<ffffffff8102cf8a>] ? child_rip+0xa/0x20
+ [<ffffffff81087f7e>] ? kthread+0x0/0x98
+ [<ffffffff8102cf80>] ? child_rip+0x0/0x20
