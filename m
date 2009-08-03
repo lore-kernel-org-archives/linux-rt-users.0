@@ -1,56 +1,55 @@
-From: Thomas Meyer <thomas@m3y3r.de>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Sat, 01 Aug 2009 11:48:55 +0200
-Message-ID: <1249120135.14496.1.camel@localhost>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00  <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+From: Gregory Haskins <ghaskins@novell.com>
+Subject: [ANNOUNCE] AlacrityVM hypervisor project
+Date: Mon, 03 Aug 2009 09:53:40 -0400
+Message-ID: <4A76EBE4.5090102@novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752641AbZHAJt2@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enigDA0BB35BDF06047D12E73334"
+Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932140AbZHCNxw@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Thomas Gleixner wrote:
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigDA0BB35BDF06047D12E73334
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-> Enough said. Get the code and have fun!
+We are pleased to announce the formation of the AlacrityVM project and
+the availability of v0.1 of the code.  AlacrityVM is a hypervisor based
+on KVM targeted specifically at performance sensitive workloads such as
+HPC and real-time.
 
-BUG: scheduling while atomic: kjournald2/0x00000001/1128, CPU#1 
-Modules linked in: olympic forcedeth rndis_wlan floppy [last unloaded: scsi_wait_scan]
-Pid: 1128, comm: kjournald2 Tainted: G        W  2.6.31-rc4-rt1 #3
-Call Trace:
- [<ffffffff81809a2d>] ? __schedule+0x88/0x76c
- [<ffffffff8109baca>] ? task_blocks_on_rt_mutex+0x15b/0x1c4
- [<ffffffff8180a45b>] ? schedule+0x1a/0x3e
- [<ffffffff8180b22e>] ? rt_spin_lock_slowlock+0x149/0x21c
- [<ffffffff810e630d>] ? lock_cpu_pcp+0x4b/0x85
- [<ffffffff810e762b>] ? free_hot_cold_page+0x5a/0x216
- [<ffffffff8110fe0a>] ? slab_irq_enable+0x9d/0xc1
- [<ffffffff81110516>] ? kmem_cache_free+0x42/0xc3
- [<ffffffff811df024>] ? jbd2_journal_remove_journal_head+0x2d/0x54
- [<ffffffff811dbe56>] ? journal_clean_one_cp_list+0x82/0xed
- [<ffffffff811dbf0a>] ? __jbd2_journal_clean_checkpoint_list+0x49/0xa0
- [<ffffffff811d9e1d>] ? jbd2_journal_commit_transaction+0x2f3/0x125a
- [<ffffffff8180a162>] ? thread_return+0x51/0xe4
- [<ffffffff810884bd>] ? autoremove_wake_function+0x0/0x55
- [<ffffffff810797d1>] ? try_to_del_timer_sync+0x59/0x77
- [<ffffffff811e00f2>] ? kjournald2+0x106/0x27c
- [<ffffffff810884bd>] ? autoremove_wake_function+0x0/0x55
- [<ffffffff811dffec>] ? kjournald2+0x0/0x27c
- [<ffffffff8108800e>] ? kthread+0x90/0x98
- [<ffffffff8102cf8a>] ? child_rip+0xa/0x20
- [<ffffffff81087f7e>] ? kthread+0x0/0x98
- [<ffffffff8102cf80>] ? child_rip+0x0/0x20
+You can find more information on the AlacrityVM wiki, available here:
+
+http://developer.novell.com/wiki/index.php/AlacrityVM
+
+Anyone who may be interested in further developments surrounding this
+project is encouraged to subscribe to one or both of the following lists:=
+
+
+https://lists.sourceforge.net/lists/listinfo/alacrityvm-users
+https://lists.sourceforge.net/lists/listinfo/alacrityvm-devel
+
+Regards,
+-Greg
+
+
+--------------enigDA0BB35BDF06047D12E73334
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG/MacGPG2 v2.0.11 (Darwin)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+
+iEYEARECAAYFAkp26+QACgkQP5K2CMvXmqGRkgCaAgCz4qqVSL/WwAANPHwf4qfP
+qTwAn2Ai2GTuiSrC0wDKyuirWmmPWJ1J
+=zQ/X
+-----END PGP SIGNATURE-----
+
+--------------enigDA0BB35BDF06047D12E73334--
