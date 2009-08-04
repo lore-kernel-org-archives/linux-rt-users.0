@@ -1,66 +1,153 @@
 From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: realtime measurement tests: approach to criteria
-Date: Tue, 04 Aug 2009 07:28:00 -0700
-Message-ID: <4A784570.4080201@us.ibm.com>
-References: <4A7772FE.20808@us.ibm.com> <1249387682.15587.32.camel@subratamodak.linux.ibm.com>
+Subject: 2.6.31-rc4-rt1: BUG: panic in requeue_pi test case
+Date: Tue, 04 Aug 2009 07:37:45 -0700
+Message-ID: <4A7847B9.5050907@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LTP <ltp-list@lists.sourceforge.net>,
-	Clark Williams <williams@redhat.com>,
-	amrith <amrith@linux.ibm.com>,
-	Sripathi Kodi <sripathik@in.ibm.com>
-To: subrata@linux.vnet.ibm.com
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"lkml, " <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mi
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e9.ny.us.ibm.com ([32.97.182.139]:41549 "EHLO e9.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754530AbZHDO2D (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Aug 2009 10:28:03 -0400
-Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
-	by e9.ny.us.ibm.com (8.14.3/8.13.1) with ESMTP id n74ERYL3029491
-	for <linux-rt-users@vger.kernel.org>; Tue, 4 Aug 2009 10:27:34 -0400
-Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
-	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id n74ES3mY238978
-	for <linux-rt-users@vger.kernel.org>; Tue, 4 Aug 2009 10:28:03 -0400
-Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
-	by d01av04.pok.ibm.com (8.12.11.20060308/8.13.3) with ESMTP id n74ES2SC022219
-	for <linux-rt-users@vger.kernel.org>; Tue, 4 Aug 2009 10:28:03 -0400
-In-Reply-To: <1249387682.15587.32.camel@subratamodak.linux.ibm.com>
+Received: from e39.co.us.ibm.com ([32.97.110.160]:36056 "EHLO
+	e39.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754506AbZHDOiG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Aug 2009 10:38:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Subrata Modak wrote:
-> Hi Darren,
-> 
-> On Mon, 2009-08-03 at 16:30 -0700, Darren Hart wrote: 
->> The current ltp/testcases/realtime tests belong to one of func, perf, or 
->> stress.  While strict pass/fail criteria make sense for functional tests 
->> (did the tasks wake up in priority order?), the others use "arbitrary" 
->> values and compare those against the whatever is being measured (wakeup 
->> latency, etc.) and then determine pass/fail.  Ideally the tests 
->> themselves would not determine the pass/fail criteria, and would instead 
->> simply report on their measurements since the criteria will vary in 
->> every use-case based on requirements, workload, hardware, etc.
->>
->> I'd like to propose an approach where the tests only report their 
->> measured values (with the exception of the func/* tests which will 
->> maintain their pass/fail criteria).  Users should be able to populate a 
->> criteria.conf file that specified the criteria of each test.  The 
->> results could then be parsed, compared against the results, and a 
->> pass/fail determined from there.  I suspect it would be best for the .c 
->> tests to just report the numbers and the statistics in a common format 
->> and rely on python parser scripts to read the config file and determine 
->> pass/fail from there.
->>
->> I'd like users thoughts on this approach before we jump in and start 
->> changing things (as this is a fairly invasive change).
-> 
-> This is indeed a good approach. Should we also ask the RT-USERS, who
-> might be interested to comment on this ?
+Using a slightly modified version of pthread_cond_many from 
+ltp/testcases/realtime/perf/latency I tripped over the following crash 
+while using a patched glibc to make use of the new futex requeue_pi 
+syscalls.  The changes to the test boil down to making the "child_mutex" 
+PI aware.  The unmodified test ran for 10 hours using the old futex 
+behavior (stock glibc).  I'll do some more investigation and see if I 
+can reproduce on mainline, or on a 2.6.29 rt kernel.
 
-Thanks for including the rt-users list, yes I should have done that 
-originally as well.
+
+Kernel panic - not syncing: softlockup: hung tasks
+BUG: soft lockup - CPU#5 stuck for 61s! [pthread_cond_ma:30534]
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Call Trace:
+  [<ffffffff813fe78a>] ? rt_spin_lock_slowlock+0xdb/0x1b9
+  [<ffffffff813fe6af>] ? rt_spin_lock_slowlock+0x0/0x1b9
+  [<ffffffff8108de6d>] ? rt_spin_lock_fastlock+0x77/0x93
+  [<ffffffff813feddf>] ? rt_spin_lock+0x28/0x3e
+  [<ffffffff8108a6c8>] ? queue_lock+0x46/0x66
+  [<ffffffff8108bcc0>] ? futex_lock_pi+0xf9/0x2c1
+  [<ffffffff8113a59b>] ? __pollwait+0x0/0x107
+  [<ffffffff813ff581>] ? _atomic_spin_unlock_irqrestore+0x49/0x68
+  [<ffffffff8108e296>] ? rt_mutex_adjust_prio+0x49/0x68
+  [<ffffffff8108ddc5>] ? rt_spin_lock_fastunlock+0x54/0x85
+  [<ffffffff8108cc43>] ? do_futex+0x7e2/0xb41
+  [<ffffffff810421a0>] ? pick_next_task_idle+0x2b/0x4d
+  [<ffffffff81060809>] ? timespec_add_safe+0x4b/0x94
+  [<ffffffff8100cdde>] ? apic_timer_interrupt+0xe/0x20
+  [<ffffffff8108d0c7>] ? sys_futex+0x125/0x157
+  [<ffffffff8100c29b>] ? system_call_fastpath+0x16/0x1b
+Kernel panic - not syncing: softlockup: hung tasks
+BUG: soft lockup - CPU#6 stuck for 61s! [pthread_cond_ma:30536]
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Call Trace:
+  [<ffffffff813fe78a>] ? rt_spin_lock_slowlock+0xdb/0x1b9
+  [<ffffffff813fe6af>] ? rt_spin_lock_slowlock+0x0/0x1b9
+  [<ffffffff8108de6d>] ? rt_spin_lock_fastlock+0x77/0x93
+  [<ffffffff813feddf>] ? rt_spin_lock+0x28/0x3e
+  [<ffffffff8108a6c8>] ? queue_lock+0x46/0x66
+  [<ffffffff8108bcc0>] ? futex_lock_pi+0xf9/0x2c1
+  [<ffffffff8113a59b>] ? __pollwait+0x0/0x107
+  [<ffffffff8108e296>] ? rt_mutex_adjust_prio+0x49/0x68
+  [<ffffffff813fe692>] ? rt_spin_lock_slowunlock+0x6f/0x8c
+  [<ffffffff813fe623>] ? rt_spin_lock_slowunlock+0x0/0x8c
+  [<ffffffff8108ddd9>] ? rt_spin_lock_fastunlock+0x68/0x85
+  [<ffffffff8108cc43>] ? do_futex+0x7e2/0xb41
+  [<ffffffff810421a0>] ? pick_next_task_idle+0x2b/0x4d
+  [<ffffffff81060809>] ? timespec_add_safe+0x4b/0x94
+  [<ffffffff8100cdde>] ? apic_timer_interrupt+0xe/0x20
+  [<ffffffff8108d0c7>] ? sys_futex+0x125/0x157
+  [<ffffffff8100c29b>] ? system_call_fastpath+0x16/0x1b
+Kernel panic - not syncing: softlockup: hung tasks
+BUG: soft lockup - CPU#7 stuck for 61s! [pthread_cond_ma:30537]
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Modules linked in: ipv6 autofs4 i2c_dev i2c_core hidp rfcomm l2cap 
+bluetooth rfkill sunrpc dm_mirror dm_multipath scsi_dh video output sbs 
+sbshc battery ac parport_pc lp parport sg snd_seq_dummy snd_seq_oss 
+button serio_raw bnx2 bnx2x snd_seq_midi_event snd_seq i5k_amb hwmon 
+crc32c snd_seq_device i5000_edac pata_acpi snd_pcm_oss iTCO_wdt 
+ata_generic snd_mixer_oss edac_core iTCO_vendor_support libcrc32c 
+snd_pcm snd_timer snd soundcore snd_page_alloc pcspkr dm_region_hash 
+dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase 
+scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd 
+ohci_hcd ehci_hcd
+Call Trace:
+  [<ffffffff813fe78a>] ? rt_spin_lock_slowlock+0xdb/0x1b9
+  [<ffffffff813fe6af>] ? rt_spin_lock_slowlock+0x0/0x1b9
+  [<ffffffff8108de6d>] ? rt_spin_lock_fastlock+0x77/0x93
+  [<ffffffff813feddf>] ? rt_spin_lock+0x28/0x3e
+  [<ffffffff8108a6c8>] ? queue_lock+0x46/0x66
+  [<ffffffff8108bcc0>] ? futex_lock_pi+0xf9/0x2c1
+  [<ffffffff8113a59b>] ? __pollwait+0x0/0x107
+  [<ffffffff8108e296>] ? rt_mutex_adjust_prio+0x49/0x68
+  [<ffffffff813fe692>] ? rt_spin_lock_slowunlock+0x6f/0x8c
+  [<ffffffff813fe623>] ? rt_spin_lock_slowunlock+0x0/0x8c
+  [<ffffffff8108ddd9>] ? rt_spin_lock_fastunlock+0x68/0x85
+  [<ffffffff8108cc43>] ? do_futex+0x7e2/0xb41
+  [<ffffffff810421a0>] ? pick_next_task_idle+0x2b/0x4d
+  [<ffffffff81060809>] ? timespec_add_safe+0x4b/0x94
+  [<ffffffff8108d0c7>] ? sys_futex+0x125/0x157
+  [<ffffffff8100c29b>] ? system_call_fastpath+0x16/0x1b
+Kernel panic - not syncing: softlockup: hung tasks
+
 
 -- 
 Darren Hart
