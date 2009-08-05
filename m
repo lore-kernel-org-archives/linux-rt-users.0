@@ -1,30 +1,10 @@
-From: Will Schmidt <will_schmidt@vnet.ibm.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Wed, 05 Aug 2009 14:20:06 -0500
-Message-ID: <1249500006.4365.86.camel@lexx>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
-	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
-	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
-	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-Reply-To: will_schmidt@vnet.ibm.com
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [ANNOUNCE] linux-2.6.31-rc5-rt1.1
+Date: Wed, 5 Aug 2009 23:42:27 +0200
+Message-ID: <20090805214227.GA6732@tycho.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -34,244 +14,71 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:43630 "EHLO e4.ny.us.ibm.com"
+Received: from mx2.redhat.com ([66.187.237.31]:34818 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750867AbZHETUO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Aug 2009 15:20:14 -0400
-In-Reply-To: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+	id S1750746AbZHEVnN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 5 Aug 2009 17:43:13 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-07-30 at 02:48 +0200, Thomas Gleixner wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->=20
->     - update to 2.6.31-rc4
+>While Thomas Gleixner is away at summer camp, Clark Williams and myself
+>decided to release an unofficial preempt-rt kernel to prevent the -rt code from
+>developing bit rot. Unofficial until Thomas either blesses it with some Weizen
+or slaps us with a large stinkin' trout.
+>
+>We are pleased to present
+>
+>-linux-2.6.31-rc5-rt1.1
+>
+>This kernel is an incremental release.
+>It rebases linux-2.6.31-rc4-rt1 to linux-2.6.31-rc5
+>In-addition we added the following patches
+>
+>- stacktrace-dump_out_last_preempt_disable_locations.patch
+>- futex_wait_requeue_pi_commentary_corrections.patch
+>- hw_lat-simple-solution-001.patch
+>
+>stacktrace-dump_out_last_preempt_disable_locations.patch
+>is a rewrite by Steven Rostedt of an Ingo Molnar patch. It is useful for
+>tracing, since it shows the last location that preemption was disabled.
+>
+>futex_wait_requeue_pi_commentary_corrections.patch
+>Was posted to the rt-users list by Darren Hart to fix some of the comments in
+>his futex code.
+>
+>hw_lat-simple-solution-001.patch
+>Is a fix from Luis Claudio R.Goncalves for the hardware latency detector.
+>It fixes a problem where wake_up was called with irqs disabled.
+>Jon Masters will be pushing some form of it upstream.
+>
+>Information on the RT patch can be found at:
+>http://rt.wiki.kernel.org/index.php/Main_Page
+>
+>Download location
+>git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-linux.git
+>
+>Branch Name
+>linux-2.6.31-rc5-rt1.1
 
+We are also making this available as a patch here:
+http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-unofficial/patch-2.6.31-rc5-rt1.1.bz2
 
-I'm unable to do a clean build of this on powerpc64.  Related to change=
-s
-in the locking code, I'm sure.   I've spent some time poking at this,
-but it's not something I think I will be able to figure out short-term.
-Suggestions are welcomed. :-)
+To build the 2.6.31-rc5-rt1.1 tree, the following patches shouuld be applied.
 
-I can share my .config if requested, but I suspect the problem will be
-obvious to someone more familiar with the spinlock changes. =20
+http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
+http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc5.bz2
+http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-unofficial/patch-2.6.31-rc5-rt1.1.bz2
 
-The build error:
-/test/willschm/linux-2.6.31-rtx/kernel/spinlock.c: In function
-=E2=80=98_atomic_spin_lock=E2=80=99:
-/test/willschm/linux-2.6.31-rtx/kernel/spinlock.c:103: error: implicit
-declaration of function =E2=80=98_raw_atomic_spin_trylock=E2=80=99
-/test/willschm/linux-2.6.31-rtx/kernel/spinlock.c:103: error: implicit
-declaration of function =E2=80=98_raw_atomic_spin_relax=E2=80=99
-
-I can't find the definitions for =E2=80=98_raw_atomic_spin_trylock=E2=80=
-=99 or
-=E2=80=98_raw_atomic_spin_relax=E2=80=99 with any of my grepping either=
-, for any of the
-architectures.   I suspect this ties back into the
-CONFIG_GENERIC_LOCKBREAK being defined, or not being defined for the
-architecture.  (It's on for Power, not on for x86).
-
-With lots of code trimmed, the relevant code appears to be (in
-kernel/spinlock.c) :
-#if !defined(CONFIG_GENERIC_LOCKBREAK) || defined(CONFIG_DEBUG_LOCK_ALL=
-OC)
-	...
-#else
-	BUILD_LOCK_OPS(atomic_spin, atomic_spinlock);     /* line 103*/
-#fi
-
-As an experiment, I did force the CONFIG_GENERIC_LOCKBREAK option off
-and built successfully, but my system turns into a doorstop during very
-early boot, down the find_legacy_serial_ports() path, eventually ending
-up stuck in _atomic_spin_lock()->debug_smp_processor_id().   This is
-before the early console or xmon itself has gone through setup, so not =
-a
-lot of debug options.. :-o :-)
-
-Thanks,=20
--Will
+Thanks!
 
 
 
-> - rework of the locking infrastructure
->   =20
->    Up to now the -rt patches changed the raw_spinlock_t to
->    __raw_spinlock_t and added another two levels of underscores to
->    many of the locking primitives. A compiler trick was used to chose
->    the implementation for RT=3Dy and RT=3Dn compiles depending on the=
- lock
->    type in the lock definition.
->=20
->    This is nasty as there is no destinction in the source code which
->    kind of lock we are dealing with except if one looks up the lock
->    definition/declaration. It definitely was a clever move in the
->    first place to get things going, but aside of the underscore
->    conflicts which were introduced by lockdep it was not longer
->    acceptable to hide the fact that we are treating a lock
->    differently. Same applies for the changes to (rw_)semaphores which
->    used the compat_ trick for those ownerless anonymous semaphores
->    which are taken in one context and released in another.
->=20
->    The annotation of the code which uses those special treated locks
->    has been long discussed and one of the proposed solutions was to
->    change all spinlocks which are converted by -rt to sleeping
->    spinlocks from spinlock_t to lock_t and have another set of
->    lock/unlock/trylock functions for those. That is definitely the
->    _preferred_ solution, but it's a massive and horribly intrusive
->    change. Steven was working on it for some time, but it simply does
->    not scale IMNSHO.
->=20
->    I went the other way round. In -RT we have identified the locks
->    which can _not_ be converted to sleeping locks and so I went there
->    and converted them to atomic_spinlock_t and created a set of
->    functions for them. I converted the already known locks to that
->    type and fixed up all the functions (s/spin_*/atomic_spin_*/) whic=
-h
->    annotates the code and makes it clear what we are dealing with.
->=20
->    [ I admit "atomic_spinlock_t" is a horrible name, but it's the bes=
-t
->      I came up with so far. If you have a better idea please feel fre=
-e
->      to add it to=20
->=20
->          http://rt.wiki.kernel.org/index.php/Atomic_Spinlock
->=20
->      instead of starting a bikeshed painting thread on the mailing
->      lists about that name. Once we have something better it's just a
->      sed script to fix it. ]
->=20
->    For !RT the spin_* functions are mapped to atomic_spin_* via inlin=
-e
->    functions which do the type conversion. That has another nice side
->    effect: some places in the kernel (mostly scheduler) use
->    _raw_spin_* functions on locks to avoid the lockdep invocation in
->    some places. With the type conversion a lock needs to be defined
->    atomic_spinlock_t (or raw_spinlock_t) to have access to that
->    _raw_spin_* functions. Using e.g. _raw_spin_lock() on a lock
->    defined with spinlock_t/DEFINE_SPINLOCK will cause a compiler
->    warning. I think that's a Good Thing.
->=20
->    On RT the spin_* functions are mapped to the corresponding rt_lock
->    functions with inlines as well. Very simple and much more
->    understandable than the nifty PICK_OP magic with the underscore
->    convolution. :)
->=20
->    I did the same conversion for all (rw_)semaphores which are known
->    from -rt to be ownerless anonymous semaphores; i.e. taken in one
->    context and released in another. We renamed them to
->    compat_(rw_)semaphores up to now and let the compiler pick the
->    right function. Again here I went down the road and annotated the
->    code for those with newly created anon_* and [read|write]_anon_*
->    functions. In !RT the non annotated ones map to the anon_ function=
-s
->    and on RT we map them to the corresponging rt_* ones. This
->    annotation should also be helpful to cover at least the non
->    anonymous (rw_)semaphores via lockdep.
->=20
->    Part of that semaphore rework is the RFC patch series I posted
->    recently to get rid of the init_MUTEX[_LOCKED] irritation (minus
->    the ones which turned out to be wrong)
->=20
->    The spinlock and semaphore annotation work is separate now and can
->    be found in the rt/atomic-lock and rt/semaphore branches of the
->    -tip git repository, which leads me to the next important point:
->=20
-> - start of gitification
->=20
->    While reworking all of the above I went through the quilt queue an=
-d
->    sorted out patches into different rt/ branches. If you clone the
->    -tip git tree you'll find a bunch of branches starting with rt/.
->    They contain various independent changes which are all part of the
->    -rt patch. The combination of those branches can be found in the
->    rt/base branch.
->=20
->    I still have a leftover of ~140 patches (roughly 40% of the -rt
->    queue) which I committed into the rt/rt-2.6.31-rc4 branch just as
->    is simply because I ran out of time. My annual summer vacation
->    (helping my wife to run the kitchen in the church community kids
->    summer camp) is starting on friday.
->=20
->    While the other rt/ branches are mostly bisectable the final one i=
-s
->    not yet there. I restructured the patch queue in a logical way, bu=
-t
->    there is more work to be done to clean it up. So expect it to be
->    replaced.
->=20
-> Further plans:
->=20
->    1) We seriously want to tackle the elimination of the PREEMPT_RT
->    annoyance #1, aka BKL. The Big Kernel Lock is still used in ~330
->    files all across the kernel. A lot of work has been done already t=
-o
->    push down the lock into the code which still thinks it needs to be
->    protected by it. Some work has been done already in the (a little
->    bit stale) kill-the-BKL and core/kill-the-BKL branches of the -tip
->    git tree. If you want to help, please check those branches whether
->    the code has been tackled already or not to avoid redundant
->    work. If you decide to take care of one please note it on:
->=20
->        http://rt.wiki.kernel.org/index.php/Big_Kernel_Lock
->=20
->    2) I'm going on vacation for 10 days. Please send patches and
->    bugreports^Wsuccess stories to the mailinglist as usual. There are
->    folks looking out.
->=20
-> Enough said. Get the code and have fun!
->=20
-> Download locations:
->=20
->     http://rt.et.redhat.com/download/
->     http://www.kernel.org/pub/linux/kernel/projects/rt/
->=20
-> Git:
->=20
->     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.g=
-it rt/rt-2.6.31-rc4-rt1
->=20
-> Gitweb:
->     http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git=
-;a=3Dshortlog;h=3Drt/rt-2.6.31-rc4
->=20
-> Information on the RT patch can be found at:
->=20
->     http://rt.wiki.kernel.org/index.php/Main_Page
->=20
-> to build the 2.6.31-rc4-rt1 tree, the following patches should be
-> applied:
->=20
->     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
->     http://kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc4.=
-bz2
->     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-r=
-c4-rt1.bz2
->=20
-> Thanks to Carsten Emde, Clark Williams and John Kacur who were testin=
-g
-> my various steps to get the code into the shape where it is now.
->=20
-> Enjoy !
->=20
->        tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
