@@ -1,78 +1,100 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1 (problem with
- CONFIG_SYSFS_DEPRECATED_V2)
-Date: Thu, 06 Aug 2009 07:46:25 -0700
-Message-ID: <1249569985.6772.3.camel@quadrophenia.thebigcorporation.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
-	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
-	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
-	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
-	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-	 <4A79214B.5070003@linux.vnet.ibm.com> <20090805083247.0b84d1c0@torg>
-	 <4A7A7C37.7020609@linux.vnet.ibm.com>  <20090806093628.216bb27f@torg>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC][PATCH] fixup pi_state in futex_requeue on lock steal
+Date: Thu, 06 Aug 2009 18:37:40 +0200
+Message-ID: <1249576660.32113.585.camel@twins>
+References: <4A7A1D48.7040309@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: gowrishankar.m@linux.vnet.ibm.com,
+Cc: "lkml," <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Jon Masters <jcm@redhat.com>
-To: Clark Williams <williams@redhat.com>
+	Ingo Molnar <mingo@elte.hu>, John Kacur <jkacur@redhat.com>,
+	Dinakar Guniguntala <dino@in.ibm.com>,
+	John Stultz <johnstul@linux.vnet.ibm.com>
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from charybdis-ext.suse.de ([195.135.221.2]:44450 "EHLO
-	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753573AbZHFPGl (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:40202 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755704AbZHFQiN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Aug 2009 11:06:41 -0400
-In-Reply-To: <20090806093628.216bb27f@torg>
+	Thu, 6 Aug 2009 12:38:13 -0400
+In-Reply-To: <4A7A1D48.7040309@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-08-06 at 09:36 -0500, Clark Williams wrote:
-> On Thu, 06 Aug 2009 12:16:15 +0530
-> gowrishankar <gowrishankar.m@linux.vnet.ibm.com> wrote:
+On Wed, 2009-08-05 at 17:01 -0700, Darren Hart wrote:
+> NOT FOR INCLUSION
 > 
-> > Only if I set CONFIG_SYSFS_DEPRECATED_V2=y, I could successfully boot
-> > which I have tested with this kernel in same system.
-> > 
-> > Is it not set by default from 2.6.31 onwards ?
-> > 
-> > Thanks,
-> > Gowri
+> Fixup the uval and pi_state owner in futex_requeue(requeue_pi=1) in the event
+> of a lock steal or owner died.  I had hoped to leave it up to the new owner to
+> fix up the userspace value since we can't really handle a fault here
+> gracefully.  This should be safe as the lock is contended and should force all
+> userspace attempts to lock or unlock into the kernel where they'll block on the
+> hb lock.  However, when I don't update the uaddr, I hit the WARN_ON(pid !=
+> pi_state->owner->pid) as expected, and the userspace testcase deadlocks.
 > 
-> I wasn't sure when it would move from 'y' to 'n', but looks like .31 is
-> it. You'll need that option back on for booting on RHEL (since the boot
-> infrastructure uses the old /sys format) but I don't think you'll need
-> it for Fedora. Not sure about SLERT. Bet Greg Haskins would know
-> though :)
+> I need to try and better understand what's happening to hang userspace.  In the
+> meantime I thought I'd share what I'm working with atm.  This is a complete HACK
+> and is ugly, non-modular, etc etc.  However, it currently works.  It would explode
+> in a most impressive fashion should we happen to fault.  So the remaining questions
+> are:
 > 
+> o Why does userspace deadlock if we leave the uval updating to the new owner
+>   waking up in futex_wait_requeue_pi()?
+> 
+> o If we have to handle a fault in futex_requeue(), how can we best cleanup the
+>   proxy lock acquisition and get things back into a sane state.  We faulted, so
+>   determinism is out the window anyway, we just need to recover gracefully.
 
-You need it Y to boot on SLES 10 / SLERT 10 file systems. 
 
-Its ok with 'N' on openSUSE 10.3 or later.
+Do you have a trace of the thing going down?
 
-Sven
+Tglx and me usually use sched_switch and a few trace_printk()s sprinkled
+around, the typical one would be in sys_futex, printing the futex cmd
+and arg.
 
-> Clark
+OK, so run me through this one more time.
+
+A condvar has two futexes, an inner and an outer. The inner futex is
+always locked and the waiting threads are stacked on that.
+
+Then on signal/broadcast, we lock the outer lock and requeue all the
+blocked tasks from the inner to the outer, then we release the outer
+lock and let them rip.
+
+Since we're seeing lock steals, I'm thinking the outer lock isn't taken
+when we're doing the requeue?
+
+Anyway, during the requeue we lock-steal because the owner isn't running
+yet and we iterate a higher prio task in the requeue loop?
+
+This leaves the outer lock's futex field messed up because it points to
+the wrong TID.
+
+After we finish the requeue loop, we unlock the HBs.
+
+
+So far so good?
+
+
+Now, normally the waking thread will find itself owner and will check
+the futex variable and fix her up -- while holding the HB lock.
+
+However, in case the outer lock gets contended again, we can get
+interrupted between requeue and wakeup/fixup and observe this messed up
+futex value, which is causing this WARN to trigger.
+
+
+So where do we deadlock, after this all goes down? Do we perhaps lookup
+the wrong pi_state using that wrong TID?
+
+
+
+Since its only the outer futex's value that matters, right? Can't we pin
+that using get_user_pages() before we take the HB lock and go into the
+requeue loop? That way we're sure to be able to change it without
+faulting.
+
 
