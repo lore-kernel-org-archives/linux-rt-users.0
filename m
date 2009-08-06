@@ -1,65 +1,94 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [PATCH 1/2] Update woken requeued futex_q lock_ptr
-Date: Wed, 05 Aug 2009 22:15:03 -0700
-Message-ID: <4A7A66D7.3090203@us.ibm.com>
-References: <4A7A009E.2000202@us.ibm.com> <4A7A016C.1090002@us.ibm.com>
+From: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1 (problem with CONFIG_SYSFS_DEPRECATED_V2)
+Date: Thu, 06 Aug 2009 12:16:15 +0530
+Message-ID: <4A7A7C37.7020609@linux.vnet.ibm.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.090
+ 7092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <4A79214B.5070003@linux.vnet.ibm.com> <20090805083247.0b84d1c0@torg>
+Reply-To: gowrishankar.m@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, peterz@infradead.org, rostedt@goodmis.org,
-	mingo@elte.hu, dino@in.ibm.com, johnstul@us.ibm.com,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: gowrishankar.m@linux.vnet.ibm.com,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e7.ny.us.ibm.com ([32.97.182.137]:33050 "EHLO e7.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751263AbZHFFPG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Aug 2009 01:15:06 -0400
-In-Reply-To: <4A7A016C.1090002@us.ibm.com>
+Received: from e28smtp09.in.ibm.com ([59.145.155.9]:51494 "EHLO
+	e28smtp09.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750952AbZHFGqa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 6 Aug 2009 02:46:30 -0400
+In-Reply-To: <20090805083247.0b84d1c0@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Darren Hart wrote:
-> futex_requeue() can acquire the lock on behalf of a waiter during the 
-> requeue
-> loop in the event of a lock steal or owner died. futex_wait_requeue_pi() 
-> cleans
-> up the pi_state owner, using the lock_ptr to protect against concurrent 
-> access
-> to the pi_state.  The pi_state is found on the requeue target futex hash 
-> bucket
-> so the lock_ptr needs to be updated accordingly.  The problem manifested by
-> triggering the WARN_ON in lookup_pi_state() about the pid != 
-> pi_state->owner
-> pid.
-> The astute reviewer will note that still exists a race between the time
-> futex_requeue() releases hb2->lock() and the time when 
-> futex_wait_requeue_pi()
-> acquires it.  During this time the pi_state and the futex uaddr are not 
-> in sync
-> with the rt_mutex ownership.  This patch closes the window to the point 
-> where
-> my tests now pass, but we still need to address it.
+Clark Williams wrote:
+> On Wed, 05 Aug 2009 11:36:03 +0530
+> gowrishankar <gowrishankar.m@linux.vnet.ibm.com> wrote:
 > 
-> Note: Please apply to mainline and rt
+>> Thomas Gleixner wrote:
+>>> We are pleased to announce the next update to our new preempt-rt
+>>> series.
+>>>
+>>>     - update to 2.6.31-rc4
+>> Hi,
+>> I am seeing below kernel panic on 8 way Intel and 4 way AMD blades.
+>>
+>> Kernel panic - not syncing: Attempted to kill init!
+>> Pid: 1, comm: init Not tainted 2.6.31-rc4-rt1-autotest #1
+>> Call Trace:
+>>   [<ffffffff8104c887>] panic+0xc1/0x171
+>>   [<ffffffff8104ec9a>] ? put_files_struct+0xc3/0xe6
+>>   [<ffffffff81394313>] ? rt_write_unlock+0x1c/0x32
+>>   [<ffffffff810582fd>] ? exit_ptrace+0xab/0x130
+>>   [<ffffffff81394313>] ? rt_write_unlock+0x1c/0x32
+>>   [<ffffffff810500af>] do_exit+0x88/0x726
+>>   [<ffffffff810507d5>] do_group_exit+0x88/0xbb
+>>   [<ffffffff8105082d>] sys_exit_group+0x25/0x3d
+>>   [<ffffffff8100be2b>] system_call_fastpath+0x16/0x1b
+>>
+>> Thanks,
+>> Gowri
+> 
+> Gowri, 
+> 
+> Would you post your .config so we can see what options you have enabled?
+> 
+Hi Clark,
+Thanks for the attention. I just looked at error message before the trace I posted.
+
+setuproot: moving /dev failed: No such file or directory
+no fstab.sys, mounting internal defaults
+setuproot: error mounting /proc: No such file or directory
+setuproot: error mounting /sys: No such file or directory
+Switching to new root and running init.
+unmounting old /dev
+unmounting old /proc
+unmounting old /sys
+switchroot: mount failed: No such file or directory
+
+Only if I set CONFIG_SYSFS_DEPRECATED_V2=y, I could successfully boot
+which I have tested with this kernel in same system.
+
+Is it not set by default from 2.6.31 onwards ?
+
+Thanks,
+Gowri
+
+> Clark
 > 
 
-
-> static inline
-> -void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key)
-> +void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key,
-> +               struct futex_hash_bucket *hb)
-> {
->     drop_futex_key_refs(&q->key);
->     get_futex_key_refs(key);
->     q->key = *key;
-> +    q->lock_ptr = &hb->lock;
-
-Hrm... turns out changing this breaks the 
-handle_early_requeue_pi_wakeup() logic.  I'll have to respin this patch 
-to account for that as well.  Please hold off on this patch.
-
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
