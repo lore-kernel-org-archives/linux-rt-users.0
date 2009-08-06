@@ -1,17 +1,26 @@
-From: John Kacur <jkacur@gmail.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1 (problem with CONFIG_SYSFS_DEPRECATED_V2)
-Date: Thu, 6 Aug 2009 16:55:22 +0200
-Message-ID: <520f0cf10908060755v11fd771buae6bb6c905a454df@mail.gmail.com>
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1 (problem with
+ CONFIG_SYSFS_DEPRECATED_V2)
+Date: Thu, 06 Aug 2009 07:46:25 -0700
+Message-ID: <1249569985.6772.3.camel@quadrophenia.thebigcorporation.com>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
+	 <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>
+	 <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+	 <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
+	 <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
+	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
 	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
 	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
 	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
 	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
 	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
 	 <4A79214B.5070003@linux.vnet.ibm.com> <20090805083247.0b84d1c0@torg>
-	 <4A7A7C37.7020609@linux.vnet.ibm.com> <20090806093628.216bb27f@torg>
+	 <4A7A7C37.7020609@linux.vnet.ibm.com>  <20090806093628.216bb27f@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: gowrishankar.m@linux.vnet.ibm.com,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -25,36 +34,45 @@ Cc: gowrishankar.m@linux.vnet.ibm.com,
 	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
 	Will Schmidt <will_schmidt@vnet.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>
 To: Clark Williams <williams@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755628AbZHFOzY@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from charybdis-ext.suse.de ([195.135.221.2]:44450 "EHLO
+	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753573AbZHFPGl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 6 Aug 2009 11:06:41 -0400
 In-Reply-To: <20090806093628.216bb27f@torg>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Aug 6, 2009 at 4:36 PM, Clark Williams<williams@redhat.com> wrote:
+On Thu, 2009-08-06 at 09:36 -0500, Clark Williams wrote:
 > On Thu, 06 Aug 2009 12:16:15 +0530
 > gowrishankar <gowrishankar.m@linux.vnet.ibm.com> wrote:
->
->> Only if I set CONFIG_SYSFS_DEPRECATED_V2=y, I could successfully boot
->> which I have tested with this kernel in same system.
->>
->> Is it not set by default from 2.6.31 onwards ?
->>
->> Thanks,
->> Gowri
->
+> 
+> > Only if I set CONFIG_SYSFS_DEPRECATED_V2=y, I could successfully boot
+> > which I have tested with this kernel in same system.
+> > 
+> > Is it not set by default from 2.6.31 onwards ?
+> > 
+> > Thanks,
+> > Gowri
+> 
 > I wasn't sure when it would move from 'y' to 'n', but looks like .31 is
 > it. You'll need that option back on for booting on RHEL (since the boot
 > infrastructure uses the old /sys format) but I don't think you'll need
 > it for Fedora. Not sure about SLERT. Bet Greg Haskins would know
 > though :)
->
-> Clark
->
+> 
 
-The default 'n' works fine for Fedora 10 and Fedora 11.
+You need it Y to boot on SLES 10 / SLERT 10 file systems. 
+
+Its ok with 'N' on openSUSE 10.3 or later.
+
+Sven
+
+> Clark
+
