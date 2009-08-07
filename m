@@ -1,45 +1,51 @@
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH 6/6] [ARM] Use atomic_spin_lock/atomic_spin_unlock for irqdesc lock
-Date: Fri,  7 Aug 2009 22:55:16 +0200
-Message-ID: <1249678516-8639-1-git-send-email-u.kleine-koenig@pengutronix.de>
-References: <1249677761-19470-6-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Alan Stern <stern@rowland.harvard.edu>
+Subject: Re: [RT] Lockdep warning on boot with 2.6.31-rc5-rt1.1
+Date: Fri, 7 Aug 2009 17:30:45 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.0908071725510.8084-100000@netrider.rowland.org>
+References: <1249663785.32113.754.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755269AbZHGUzZ@vger.kernel.org>
-In-Reply-To: <1249677761-19470-6-git-send-email-u.kleine-koenig@pengutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Clark Williams <williams@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"greg@kroah.com" <greg@kroah.com>,
+	"Rafael J. Wysocki" <rjw@sisk.pl>,
+	Kay Sievers <kay.sievers@vrfy.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756303AbZHGVaq@vger.kernel.org>
+In-Reply-To: <1249663785.32113.754.camel@twins>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This was missed in commit
+On Fri, 7 Aug 2009, Peter Zijlstra wrote:
 
-	fd2bde5 (genirq: Convert irqdesc lock to atomic_spinlock)
+> On Fri, 2009-08-07 at 12:45 -0400, Alan Stern wrote:
+> > On Fri, 7 Aug 2009, Peter Zijlstra wrote:
+> 
+> > > The other proposal was creating a fixed list of classes and register
+> > > each device at a class corresponding to its depth in the tree. I can't
+> > > remember what was wrong with that, but I seem to have been persuaded
+> > > that that was hard too.
+> > 
+> > It probably would work for the most part.  However a possible scenario
+> > involves first locking a parent and then locking all its children.  (I
+> > don't know if this ever happens anywhere, but it might.)  This can't
+> > cause a deadlock but it would run into trouble with depth-based
+> > classes.
+> 
+> If you know which parent is locked, we can solve that with
+> mutex_lock_nest_lock() [ doesn't currently exist, but is analogous to
+> spin_lock_nest_lock() ] and together with
+> http://lkml.org/lkml/2009/7/23/222 that would allow you to lock up to
+> 2048 children.
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
----
- arch/arm/include/asm/mach/irq.h |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Not only do I know not which parent is locked, I don't even know if 
+this ever happens anywhere at all!  My point was purely theoretical.
 
-diff --git a/arch/arm/include/asm/mach/irq.h b/arch/arm/include/asm/mac=
-h/irq.h
-index acac530..3981cf2 100644
---- a/arch/arm/include/asm/mach/irq.h
-+++ b/arch/arm/include/asm/mach/irq.h
-@@ -26,9 +26,9 @@ extern int show_fiq_list(struct seq_file *, void *);
-  */
- #define do_bad_IRQ(irq,desc)				\
- do {							\
--	spin_lock(&desc->lock);				\
-+	atomic_spin_lock(&desc->lock);			\
- 	handle_bad_irq(irq, desc);			\
--	spin_unlock(&desc->lock);			\
-+	atomic_spin_unlock(&desc->lock);		\
- } while(0)
-=20
- #endif
---=20
-1.6.3.3
+> Would something like that work?
+
+Perhaps -- I don't understand what spin_lock_nest_lock() is supposed to
+do.
+
+Alan Stern
