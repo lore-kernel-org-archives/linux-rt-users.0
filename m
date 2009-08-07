@@ -1,8 +1,8 @@
 From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
 	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH 3/6] [ARM] msm: include linux/cache.h in proc_comm.c
-Date: Fri,  7 Aug 2009 22:42:38 +0200
-Message-ID: <1249677761-19470-3-git-send-email-u.kleine-koenig@pengutronix.de>
+Subject: [PATCH 5/6] [NET] ixp2000/enp2611: don't set non-existent member get_stats
+Date: Fri,  7 Aug 2009 22:42:40 +0200
+Message-ID: <1249677761-19470-5-git-send-email-u.kleine-koenig@pengutronix.de>
 References: <20090807203939.GA19374@pengutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -10,49 +10,54 @@ Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Russell King <linux@arm.linux.org.uk>,
-	Brian Swetland <swetland@google.com>
+	Dmitry Baryshkov <dbaryshkov@gmail.com>,
+	Lennert Buytenhek <kernel@wantstofly.org>,
+	netdev@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933900AbZHGUmx@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933984AbZHGUnR@vger.kernel.org>
 In-Reply-To: <20090807203939.GA19374@pengutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This fixes a a build failure for 2.6.31-rc4-rt1 (ARCH=3Darm,
-msm_defconfig):
+This fixes a build failure for 2.6.31-rc5 (ARCH=3Darm, ixp2000_defconfi=
+g):
 
-  CC      arch/arm/mach-msm/proc_comm.o
-/ptx/work/octopus/WORK_2_A/ukl/gsrc/linux-2.6/arch/arm/mach-msm/proc_co=
-mm.c:43: error: expected '=3D', ',', ';', 'asm' or '__attribute__' befo=
-re '__cacheline_aligned_in_smp'
-/ptx/work/octopus/WORK_2_A/ukl/gsrc/linux-2.6/arch/arm/mach-msm/proc_co=
-mm.c: In function 'msm_proc_comm':
-/ptx/work/octopus/WORK_2_A/ukl/gsrc/linux-2.6/arch/arm/mach-msm/proc_co=
-mm.c:76: error: 'proc_comm_lock' undeclared (first use in this function=
-)
-/ptx/work/octopus/WORK_2_A/ukl/gsrc/linux-2.6/arch/arm/mach-msm/proc_co=
-mm.c:76: error: (Each undeclared identifier is reported only once
-/ptx/work/octopus/WORK_2_A/ukl/gsrc/linux-2.6/arch/arm/mach-msm/proc_co=
-mm.c:76: error: for each function it appears in.)
+	  CC      drivers/net/ixp2000/enp2611.o
+	drivers/net/ixp2000/enp2611.c: In function 'enp2611_init_module':
+	drivers/net/ixp2000/enp2611.c:213: error: 'struct net_device' has no m=
+ember named 'get_stats'
 
 Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Brian Swetland <swetland@google.com>
+Cc: Dmitry Baryshkov <dbaryshkov@gmail.com>
+Cc: Lennert Buytenhek <kernel@wantstofly.org>
+Cc: netdev@vger.kernel.org
 ---
- arch/arm/mach-msm/proc_comm.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hello,
 
-diff --git a/arch/arm/mach-msm/proc_comm.c b/arch/arm/mach-msm/proc_com=
-m.c
-index 915ee70..e825c36 100644
---- a/arch/arm/mach-msm/proc_comm.c
-+++ b/arch/arm/mach-msm/proc_comm.c
-@@ -14,6 +14,7 @@
-  *
-  */
+obviously this has the downside that the stats won't work, I let the fi=
+x
+for someone else :-)
+
+Best regards
+Uwe
+---
+ drivers/net/ixp2000/enp2611.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/net/ixp2000/enp2611.c b/drivers/net/ixp2000/enp261=
+1.c
+index b02a981..d6ef176 100644
+--- a/drivers/net/ixp2000/enp2611.c
++++ b/drivers/net/ixp2000/enp2611.c
+@@ -210,7 +210,7 @@ static int __init enp2611_init_module(void)
+ 			return -ENOMEM;
+ 		}
 =20
-+#include <linux/cache.h>
- #include <linux/delay.h>
- #include <linux/errno.h>
- #include <linux/io.h>
+-		nds[i]->get_stats =3D enp2611_get_stats;
++		/* nds[i]->get_stats =3D enp2611_get_stats; */
+ 		pm3386_init_port(i);
+ 		pm3386_get_mac(i, nds[i]->dev_addr);
+ 	}
 --=20
 1.6.3.3
