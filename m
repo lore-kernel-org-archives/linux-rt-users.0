@@ -1,114 +1,106 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Fri, 07 Aug 2009 07:30:04 -0700
-Message-ID: <4A7C3A6C.4050907@us.ibm.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain> <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.090
- 7092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <20090807095603.44c21333@sripathi.ibm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [RT] Lockdep warning on boot with 2.6.31-rc5-rt1.1
+Date: Fri, 7 Aug 2009 09:46:08 -0500
+Message-ID: <20090807094608.4b0efea1@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>
-To: Sripathi Kodi <sripathik@in.ibm.com>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/Fv2+NwoBsXTwCjJOA_tm_kG"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:42450 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932525AbZHGOal (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Aug 2009 10:30:41 -0400
-In-Reply-To: <20090807095603.44c21333@sripathi.ibm.com>
+Received: from mx2.redhat.com ([66.187.237.31]:53148 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932574AbZHGOqY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Aug 2009 10:46:24 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sripathi Kodi wrote:
-> On Thu, 30 Jul 2009 02:48:04 +0200 (CEST)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> 
->> We are pleased to announce the next update to our new preempt-rt
->> series.
->>
->>     - update to 2.6.31-rc4
->>
->> This is a major rework of the rt patch series. Thanks to Clark
->> Williams and John Kacur for providing the merge to 2.6.30 while I was
->> stabilizing .29-rt. While the 30-rt series looked quite stable, we
->> decided to skip 30-rt entirely to keep track with the ongoing mainline
->> development for various reaons. The .31-rt series is planned to be
->> stabilized as we have done with .29-rt.
-> 
-> I searched the mails in this chain, but did not find the following
-> BUG reported yet. I hit this once while booting up.
+--Sig_/Fv2+NwoBsXTwCjJOA_tm_kG
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-I hit this occasionally as well.
+Peter,
 
---
-Darren
+I'm getting this warning from lockdep when booting on my T60.=20
 
-> 
-> INIT: version 2.86 bootingBUG: unable to handle kernel NULL pointer dereference at 0000000000000024
-> IP: [<ffffffff81050fe6>] try_to_wake_up+0x3b/0x2e2
-> PGD 0 
-> Oops: 0000 [#1] PREEMPT SMP 
-> last sysfs file: /sys/block/sda/dev
-> CPU 5 
-> Modules linked in: dm_region_hash dm_log dm_mod ata_piix libata shpchp mptsas mptscsih mptbase scsi_transport_sas sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd ohci_hcd ehci_hcd
-> Pid: 0, comm: swapper Not tainted 2.6.31-rc4-rt1 #1 IBM eServer BladeCenter HS21 -[7995AAA]-
-> RIP: 0010:[<ffffffff81050fe6>]  [<ffffffff81050fe6>] try_to_wake_up+0x3b/0x2e2
-> RSP: 0018:ffff880028199e38  EFLAGS: 00010082
-> RAX: 0000000000000000 RBX: 000000000000001e RCX: 0000000000000000
-> RDX: 0000000000000000 RSI: 000000000000001e RDI: 0000000000000000
-> RBP: ffff880028199e88 R08: b000000000000000 R09: 0000000000000001
-> R10: 0000000000000001 R11: 017dbbb7ec537836 R12: 0000000000000000
-> R13: 0000000000000001 R14: 0000000000000000 R15: 0000000000000000
-> FS:  0000000000000000(0000) GS:ffff880028196000(0000) knlGS:0000000000000000
-> CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
-> CR2: 0000000000000024 CR3: 0000000001001000 CR4: 00000000000006e0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-> Process swapper (pid: 0, threadinfo ffff88022f342000, task ffff88022f340000)
-> Stack:
->  ffffffff810bd00b 00000000ec537836 ffffffff81619840 ffff88022c58e640
-> <0> 017dbbb7ec537836 ffffffff81619840 ffff88022c58e640 0000000000000001
-> <0> 0000000000000004 0000000000000000 ffff880028199ea8 ffffffff810513fb
-> Call Trace:
->  <IRQ> 
->  [<ffffffff810bd00b>] ? handle_edge_irq+0x35/0x13d
->  [<ffffffff810513fb>] wake_up_process+0x2a/0x40
->  [<ffffffff810baf12>] handle_IRQ_event+0x169/0x1a1
->  [<ffffffff810bd0b7>] handle_edge_irq+0xe1/0x13d
->  [<ffffffff8100f031>] handle_irq+0x9d/0xbf
->  [<ffffffff8100acc9>] ? exit_idle+0x33/0x49
->  [<ffffffff813f0b12>] do_IRQ+0x72/0xd9
->  [<ffffffff8100cc93>] ret_from_intr+0x0/0xa
->  <EOI> 
->  [<ffffffff810151dd>] ? mwait_idle+0x8b/0xb2
->  [<ffffffff810151d0>] ? mwait_idle+0x7e/0xb2
->  [<ffffffff8100abfe>] ? enter_idle+0x38/0x4e
->  [<ffffffff8100b3da>] ? cpu_idle+0xae/0x100
->  [<ffffffff813e3f4e>] ? start_secondary+0x19d/0x1b8
-> Code: 28 0f 1f 44 00 00 65 48 8b 04 25 28 00 00 00 48 89 45 d0 31 c0 80 3d 09 e4 5c 00 00 41 89 d6 89 4d bc 49 89 fc 89 f3 44 0f 49 f0 <83> 7f 24 63 44 0f 4e f0 48 8d 75 c8 89 db e8 95 53 ff ff 48 89 
-> RIP  [<ffffffff81050fe6>] try_to_wake_up+0x3b/0x2e2
->  RSP <ffff880028199e38>
-> CR2: 0000000000000024
-> ---[ end trace f21e517c335b6dab ]---
-> Kernel panic - not syncing: Fatal exception in interrupt
-> 
-> Thanks,
-> Sripathi.
-> 
-> <snip>
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The two addresses reported (0xffffffff812664a2 and 0xffffffff812664ae)
+actually bracket one call to mutex_lock() in driver_attach() so I'm not
+sure what the complaint is.
 
+Clark
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+[ INFO: possible recursive locking detected ]
+2.6.31-rc5-rt1.1 #37
+---------------------------------------------
+swapper/1 is trying to acquire lock:
+ (&dev->mutex){+.+...}, at: [<ffffffff812664ae>]
+__driver_attach+0x48/0x81
+
+but task is already holding lock:
+ (&dev->mutex){+.+...}, at: [<ffffffff812664a2>]
+__driver_attach+0x3c/0x81
+
+other info that might help us debug this:
+1 lock held by swapper/1:
+ #0:  (&dev->mutex){+.+...}, at: [<ffffffff812664a2>]
+__driver_attach+0x3c/0x81
+
+stack backtrace:
+Pid: 1, comm: swapper Not tainted 2.6.31-rc5-rt1.1 #37
+Call Trace:
+ [<ffffffff81071e38>] __lock_acquire+0x14ae/0x153c
+ [<ffffffff812664ae>] ? __driver_attach+0x48/0x81
+ [<ffffffff81071fc3>] lock_acquire+0xfd/0x129
+ [<ffffffff812664ae>] ? __driver_attach+0x48/0x81
+ [<ffffffff8137b667>] _mutex_lock+0x31/0x40
+ [<ffffffff812664ae>] ? __driver_attach+0x48/0x81
+ [<ffffffff812664ae>] __driver_attach+0x48/0x81
+ [<ffffffff81266466>] ? __driver_attach+0x0/0x81
+ [<ffffffff81265b9c>] bus_for_each_dev+0x59/0x8e
+ [<ffffffff81266245>] driver_attach+0x1e/0x20
+ [<ffffffff81265465>] bus_add_driver+0x13f/0x288
+ [<ffffffff812667b3>] driver_register+0x9d/0x10e
+ [<ffffffff81207e26>] acpi_bus_register_driver+0x43/0x45
+ [<ffffffff815f5fdf>] acpi_ec_init+0x37/0x55
+ [<ffffffff815f5d47>] acpi_init+0x224/0x265
+ [<ffffffff815f5b23>] ? acpi_init+0x0/0x265
+ [<ffffffff81009080>] do_one_initcall+0x75/0x18a
+ [<ffffffff8106dd0a>] ? put_lock_stats+0xe/0x27
+ [<ffffffff8137b3d1>] ? rt_spin_unlock+0x23/0x6d
+ [<ffffffff8106dcc8>] ? get_lock_stats+0x16/0x4a
+ [<ffffffff8106dcc8>] ? get_lock_stats+0x16/0x4a
+ [<ffffffff81145616>] ? proc_register+0x18c/0x1a2
+ [<ffffffff8137e6fe>] ? sub_preempt_count+0x35/0x49
+ [<ffffffff8106dd0a>] ? put_lock_stats+0xe/0x27
+ [<ffffffff8106de1c>] ? lock_release_holdtime+0xf9/0xfe
+ [<ffffffff8137b3d1>] ? rt_spin_unlock+0x23/0x6d
+ [<ffffffff81145616>] ? proc_register+0x18c/0x1a2
+ [<ffffffff8114574a>] ? create_proc_entry+0x79/0x91
+ [<ffffffff8109c069>] ? register_irq_proc+0xb3/0xcf
+ [<ffffffff81140000>] ? pde_users_dec+0x20/0x45
+ [<ffffffff815d370a>] kernel_init+0x17e/0x28b
+ [<ffffffff8100d15a>] child_rip+0xa/0x20
+ [<ffffffff8100ca94>] ? restore_args+0x0/0x30
+ [<ffffffff815d358c>] ? kernel_init+0x0/0x28b
+ [<ffffffff8100d150>] ? child_rip+0x0/0x20
+---------------------------
+| preempt count: 00000000 ]
+| 0-level deep critical section nesting:
+----------------------------------------
+
+--Sig_/Fv2+NwoBsXTwCjJOA_tm_kG
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.11 (GNU/Linux)
+
+iEYEARECAAYFAkp8PjMACgkQHyuj/+TTEp2UKACeOFDs1K228u0OMDfNKMqlmFMW
+gI4AoK6hntlHpoQbbLvZ/ZVBlzSeDNWi
+=cAA4
+-----END PGP SIGNATURE-----
+
+--Sig_/Fv2+NwoBsXTwCjJOA_tm_kG--
