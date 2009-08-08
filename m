@@ -1,70 +1,86 @@
-From: Ming Lei <tom.leiming@gmail.com>
+From: Theodore Tso <tytso@mit.edu>
 Subject: Re: [RT] Lockdep warning on boot with 2.6.31-rc5-rt1.1
-Date: Sat, 8 Aug 2009 17:06:04 +0800
-Message-ID: <d82e647a0908080206j78a49674i99ba80801398055d@mail.gmail.com>
-References: <1249657743.32113.733.camel@twins>
-	 <Pine.LNX.4.44L0.0908071154530.3063-100000@iolanthe.rowland.org>
+Date: Sat, 8 Aug 2009 08:00:26 -0400
+Message-ID: <20090808120026.GA13183@mit.edu>
+References: <20090807094608.4b0efea1@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Cc: Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"greg@kroah.com" <greg@kroah.com>,
-	"Rafael J. Wysocki" <rjw@sisk.pl>,
-	Kay Sievers <kay.sievers@vrfy.org>
-To: Alan Stern <stern@rowland.harvard.edu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933713AbZHHJGG@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.44L0.0908071154530.3063-100000@iolanthe.rowland.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	RT <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from thunk.org ([69.25.196.29]:59407 "EHLO thunker.thunk.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751890AbZHHMAj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 8 Aug 2009 08:00:39 -0400
+Content-Disposition: inline
+In-Reply-To: <20090807094608.4b0efea1@torg>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-2009/8/8 Alan Stern <stern@rowland.harvard.edu>:
-> On Fri, 7 Aug 2009, Peter Zijlstra wrote:
+On Fri, Aug 07, 2009 at 09:46:08AM -0500, Clark Williams wrote:
+> Peter,
+> 
+> I'm getting this warning from lockdep when booting on my T60. 
+> 
+> The two addresses reported (0xffffffff812664a2 and 0xffffffff812664ae)
+> actually bracket one call to mutex_lock() in driver_attach() so I'm not
+> sure what the complaint is.
 
->> It used to be that _all_ dev->sem instances were taken on suspend or
->> something like that, I think that got fixed a long while back.
->>
->> I'd have to look at what the current locking requirements for dev->s=
-em
->> are.
->
-> It is supposed to be locked whenever the driver core invokes a probe,
-> remove, or PM-related callback. =A0Under some circumstances, the pare=
-nt's
-> semaphore is supposed to be locked as well. =A0Individual subsystems =
-may
-> have their own requirements in addition to these.
->
-> The ordering requirement is: Don't try to acquire a device's lock if
-> you already hold the lock for a non-ancestor device. =A0More generall=
-y
-> (if more obscurely): If you already hold device A's lock, then don't
-> try to acquire the lock for device B unless you already hold the lock
-> for A & B's most recent common ancestor.
->
+I'm getting a different lockdep warning when booting on my T400 using
+2.6.31-rc5; not sure if it's related or not....
 
-It seems that the following case is very common, and A and B have no
-common ancestor, but we can hold device A and B's lock at the same
-time, can't we?
+In any case, it's screwing up the ability for lockdep to find any
+other problems.
 
-Thanks.
+[    0.297775] INFO: trying to register non-static key.
+[    0.297775] the code is fine but needs lockdep annotation.
+[    0.297775] turning off the locking correctness validator.
+[    0.297775] Pid: 1, comm: swapper Not tainted 2.6.31-rc5-00256-gf124845 #4
+[    0.297775] Call Trace:
+[    0.297775]  [<c0511a2f>] ? printk+0x14/0x1d
+[    0.297775]  [<c016de1f>] register_lock_class+0x5a/0x2a1
+[    0.297775]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.297775]  [<c016f673>] __lock_acquire+0x9c/0xb1e
+[    0.297775]  [<c01be910>] ? mod_zone_page_state+0x9f/0xaf
+[    0.297775]  [<c016ed98>] ? trace_hardirqs_on_caller+0x103/0x124
+[    0.297775]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.297775]  [<c016eb3b>] ? mark_held_locks+0x43/0x5b
+[    0.297775]  [<c01d490f>] ? kmem_cache_alloc+0xaf/0x127
+[    0.297775]  [<c016ed98>] ? trace_hardirqs_on_caller+0x103/0x124
+[    0.297775]  [<c0170189>] lock_acquire+0x94/0xb7
+[    0.297775]  [<c045d6bd>] ? alloc_netdev_mq+0x105/0x1cc
+[    0.297775]  [<c0513f8d>] _spin_lock_bh+0x28/0x58
+[    0.297775]  [<c045d6bd>] ? alloc_netdev_mq+0x105/0x1cc
+[    0.297775]  [<c045d6bd>] alloc_netdev_mq+0x105/0x1cc
+[    0.297775]  [<c03f7bbf>] ? loopback_setup+0x0/0x79
+[    0.297775]  [<c03f7c6f>] loopback_net_init+0x25/0x68
+[    0.297782]  [<c0457317>] register_pernet_operations+0x2f/0xa1
+[    0.297832]  [<c0512fcd>] ? mutex_lock_nested+0x33/0x3b
+[    0.297891]  [<c0457435>] register_pernet_device+0x24/0x4c
+[    0.297951]  [<c0796a09>] net_dev_init+0x101/0x150
+[    0.298010]  [<c0796908>] ? net_dev_init+0x0/0x150
+[    0.298069]  [<c010115c>] do_one_initcall+0x6a/0x177
+[    0.298127]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.298185]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.298244]  [<c01b371a>] ? get_page_from_freelist+0x28f/0x3be
+[    0.298304]  [<c016ed98>] ? trace_hardirqs_on_caller+0x103/0x124
+[    0.298364]  [<c016edc4>] ? trace_hardirqs_on+0xb/0xd
+[    0.298423]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.298482]  [<c016e932>] ? mark_lock+0x1e/0x1e4
+[    0.298540]  [<c016edc4>] ? trace_hardirqs_on+0xb/0xd
+[    0.298600]  [<c03104ad>] ? ida_get_new_above+0x157/0x171
+[    0.298660]  [<c0213468>] ? proc_register+0x14b/0x15c
+[    0.298719]  [<c011e5f6>] ? sched_clock+0x8/0xb
+[    0.298777]  [<c016d9b1>] ? lock_release_holdtime+0x30/0x131
+[    0.298837]  [<c0213468>] ? proc_register+0x14b/0x15c
+[    0.298896]  [<c0513dfb>] ? _spin_unlock+0x22/0x25
+[    0.298954]  [<c0213468>] ? proc_register+0x14b/0x15c
+[    0.299013]  [<c021359b>] ? create_proc_entry+0x80/0x96
+[    0.299073]  [<c0191064>] ? register_irq_proc+0x91/0xad
+[    0.299132]  [<c01910d8>] ? init_irq_proc+0x58/0x65
+[    0.299191]  [<c0768301>] kernel_init+0x131/0x182
+[    0.299249]  [<c07681d0>] ? kernel_init+0x0/0x182
 
-device A  comes in one bus:
-	device_add()
-         ->bus_attach_device()
-            ->device_attach():drivers/base/dd.c /*holding device A's lo=
-ck*/
-               ->...drv->probe()		/*sleep here some time*/
-
-then device B comes in another bus:
-	device_add()
-         ->bus_attach_device()
-            ->device_attach():drivers/base/dd.c /*holding device B's lo=
-ck*/
-               ->...drv->probe()		/*sleep here some time*/
-
---=20
-Lei Ming
+							- Ted
