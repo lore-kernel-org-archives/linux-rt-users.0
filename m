@@ -1,84 +1,99 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: [PATCH V2] futex: Fix handling of bad requeue syscall pairing
-Date: Fri, 07 Aug 2009 15:20:48 -0700
-Message-ID: <4A7CA8C0.7010809@us.ibm.com>
-References: <4A7CA06E.1090904@us.ibm.com>
+From: Dave Young <hidave.darkstar@gmail.com>
+Subject: Re: [RT] Lockdep warning on boot with 2.6.31-rc5-rt1.1
+Date: Sat, 8 Aug 2009 11:20:29 +0800
+Message-ID: <a8e1da0908072020k45ede762v34b78ea3d3716379@mail.gmail.com>
+References: <20090807094608.4b0efea1@torg> <1249657743.32113.733.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>, John Kacur <jkacur@redhat.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	Dinakar Guniguntala <dino@in.ibm.com>,
-	John Stultz <johnstul@linux.vnet.ibm.com>
-To: "lkml, " <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Clark Williams <williams@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Alan Stern <stern@rowland.harvard.edu>,
+	"greg@kroah.com" <greg@kroah.com>,
+	"Rafael J. Wysocki" <rjw@sisk.pl>,
+	Kay Sievers <kay.sievers@vrfy.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:40921 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753191AbZHGWU6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Aug 2009 18:20:58 -0400
-In-Reply-To: <4A7CA06E.1090904@us.ibm.com>
+Received: from mail-fx0-f228.google.com ([209.85.220.228]:56517 "EHLO
+	mail-fx0-f228.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932900AbZHHDU3 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Aug 2009 23:20:29 -0400
+In-Reply-To: <1249657743.32113.733.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Darren Hart <dvhltc@us.ibm.com>
+On Fri, Aug 7, 2009 at 11:09 PM, Peter Zijlstra<peterz@infradead.org> w=
+rote:
+> On Fri, 2009-08-07 at 09:46 -0500, Clark Williams wrote:
+>> Peter,
+>>
+>> I'm getting this warning from lockdep when booting on my T60.
+>>
+>> The two addresses reported (0xffffffff812664a2 and 0xffffffff812664a=
+e)
+>> actually bracket one call to mutex_lock() in driver_attach() so I'm =
+not
+>> sure what the complaint is.
+>>
+>> Clark
+>>
+>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>> [ INFO: possible recursive locking detected ]
+>> 2.6.31-rc5-rt1.1 #37
+>> ---------------------------------------------
+>> swapper/1 is trying to acquire lock:
+>> =C2=A0(&dev->mutex){+.+...}, at: [<ffffffff812664ae>]
+>> __driver_attach+0x48/0x81
+>>
+>> but task is already holding lock:
+>> =C2=A0(&dev->mutex){+.+...}, at: [<ffffffff812664a2>]
+>> __driver_attach+0x3c/0x81
+>>
+>> other info that might help us debug this:
+>> 1 lock held by swapper/1:
+>> =C2=A0#0: =C2=A0(&dev->mutex){+.+...}, at: [<ffffffff812664a2>]
+>> __driver_attach+0x3c/0x81
+>
+> Oh, that's tglx who's gone wild with sem->mutex conversions.
+>
+> It used to be that _all_ dev->sem instances were taken on suspend or
+> something like that, I think that got fixed a long while back.
+>
+> I'd have to look at what the current locking requirements for dev->se=
+m
+> are.
+>
+> I remember talking to Alan on several occasions about this, and I jus=
+t
+> went over some of the old emails, but I must say the precise
+> requirements stay hidden from me. Also, I'm not sure these emails are
+> still representative of the current state.
 
-If futex_requeue(requeue_pi=1) finds a futex_q that was created by a call
-other the futex_wait_requeue_pi(), the q.rt_waiter may be null.  If so,
-this will result in an oops from the following call graph:
+I think you means this thread:
 
-futex_requeue()
-  rt_mutex_start_proxy_lock()
-    task_blocks_on_rt_mutex()
-      waiter->task dereference
-        OOPS
+http://lkml.org/lkml/2008/4/17/305
 
-We currently WARN_ON() if this is detected, clearly this is inadequate.
-If we detect a mispairing in futex_requeue(), bail out, seding -EINVAL to
-user-space.
-
-V2: Fix parenthesis warnings.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@elte.hu>
-CC: Eric Dumazet <eric.dumazet@gmail.com>
-CC: Dinakar Guniguntala <dino@in.ibm.com>
-CC: John Stultz <johnstul@us.ibm.com>
----
-
- kernel/futex.c |   11 +++++++++--
- 1 files changed, 9 insertions(+), 2 deletions(-)
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
 
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index df30983..4705d89 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1306,8 +1306,15 @@ retry_private:
- 		if (!match_futex(&this->key, &key1))
- 			continue;
- 
--		WARN_ON(!requeue_pi && this->rt_waiter);
--		WARN_ON(requeue_pi && !this->rt_waiter);
-+		/*
-+		 * FUTEX_WAIT_REQEUE_PI and FUTEX_CMP_REQUEUE_PI should always
-+		 * be paired with each other and no other futex ops.
-+		 */
-+		if ((requeue_pi && !this->rt_waiter) ||
-+		    (!requeue_pi && this->rt_waiter)) {
-+			ret = -EINVAL;
-+			break;
-+		}
- 
- 		/*
- 		 * Wake nr_wake waiters.  For requeue_pi, if we acquired the
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+
+--=20
+Regards
+dave
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
