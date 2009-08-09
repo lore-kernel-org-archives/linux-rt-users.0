@@ -1,38 +1,118 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: [PATCH RT 8/6] [ARM, WATCHDOG] davinci: include mach/timex.h
-	in davinci_wdt.c
-Date: Sun, 9 Aug 2009 10:43:06 +0100
-Message-ID: <20090809094306.GA26591@n2100.arm.linux.org.uk>
-References: <20090807203939.GA19374@pengutronix.de> <1249810600-21946-1-git-send-email-u.kleine-koenig@pengutronix.de> <1249810600-21946-2-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Robin Gareus <robin@gareus.org>
+Subject: remembering rt-sched attributes - was: [LAD] rtirq script is broken
+ with  2.6.31
+Date: Sun, 09 Aug 2009 16:52:01 +0200
+Message-ID: <4A7EE291.3000500@gareus.org>
+References: <4A7B01F3.2060200@gareus.org> <4A7B3EA6.1080509@rncbc.org> <4A7C259D.9020409@gareus.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Wim Van Sebroeck <wim@iguana.be>,
-	Kevin Hilman <khilman@deeprootsystems.com>,
-	linux-arm-kernel@lists.arm.linux.org.uk
-To: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753519AbZHIJn2@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1249810600-21946-2-git-send-email-u.kleine-koenig@pengutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: The Linux Audio Developers' Mailing List
+	<linux-audio-dev@lists.linuxaudio.org>,
+	Rui Nuno Capela <rncbc@rncbc.org>
+To: rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mo-p00-ob.rzone.de ([81.169.146.162]:17100 "EHLO
+	mo-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751242AbZHIOwa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 9 Aug 2009 10:52:30 -0400
+In-Reply-To: <4A7C259D.9020409@gareus.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Aug 09, 2009 at 11:36:39AM +0200, Uwe Kleine-K=F6nig wrote:
-> This fixes a a build failure for 2.6.31-rc4-rt1 (ARCH=3Darm,
-> davinci_all_defconfig):
->=20
-> 	drivers/watchdog/davinci_wdt.c: In function 'wdt_enable':
-> 	drivers/watchdog/davinci_wdt.c:102: error: 'CLOCK_TICK_RATE' undecla=
-red (first use in this function)
-> 	drivers/watchdog/davinci_wdt.c:102: error: (Each undeclared identifi=
-er is reported only once
-> 	drivers/watchdog/davinci_wdt.c:102: error: for each function it appe=
-ars in.)
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-It should not be using CLOCK_TICK_RATE - there was a move to clean
-up the use of that symbol and restrict it just to the i8253 PIT.
-Please create something else like DAVINCI_TICK_RATE instead.
+Hello rt-users and -devs,
+
+I have a question about per-device-IRQ-threads in 2.6.31-rc5-rt1.1:
+
+After a suspend/resume cycle some IRQ-threads come up with a new PID.
+The scheduling policy of those threads is reset to default values
+instead of retaining the previously set values.
+
+Is this an issue that is being worked on? Or must userspace from now on
+re-init rtprio settings after each suspend/resume cycle?
+
+As you can see from the information below (from linux-audio-dev @
+linuxaudio.org) not all IRQ-threads are re-started, but for example the
+HDA-Intel is. It may just as well be a specific issue with snd_hda_intel
+(and sdhci, e1000e, i810/intelfb,..).
+
+Robin Gareus wrote:
+> Rui Nuno Capela wrote:
+>>>  [..]
+>>>
+>>> Yes, I'm also baffled at the high PIDs for IRQs. I hazard a guess that
+>>> those are a result of a suspend/resume cycle; and I'll check later if
+>>> the chrt settings do persist after a suspend/resume.
+> 
+> It looks like the guess was correct. The PIDs change after
+> suspend/resume and the chrt settings are retained here.
+Sorry I was too quick, there. After some more suspend/resumes cycles and
+a closer look: the previous statement is not correct.
+
+RTPRIO is reset when the IRQ handler process restarts under new PID.
+However not all IRQ threads are re-launched:
+
+[from /proc/interrupts]
+ 17:   78393056     873204   IO-APIC-fasteoi   uhci_hcd:usb3, HDA Intel,
+ohci1394
+ 18:     451927    2099364   IO-APIC-fasteoi   uhci_hcd:usb4, mmc0
+
+before suspend:
+  PID CLS RTPRIO  NI PRI %CPU STAT COMMAND
+ 1418 FF      90   - 130  0.0 S<   irq/8-rtc0	
+ 1450 FF      89   - 129  0.0 S<   irq/18-uhci_hcd	
+32506 FF      88   - 128  0.1 S<   irq/17-HDA Inte	
+32507 FF      87   - 127  0.0 S<   irq/17-ohci1394	
+ 1447 FF      50   -  90  0.2 S<   irq/17-uhci_hcd	
+32508 FF      50   -  90  0.0 S<   irq/18-mmc0	
+...
+
+after resume:
+
+  PID CLS RTPRIO  NI PRI %CPU STAT COMMAND
+ 1418 FF      90   - 130  0.0 S<   irq/8-rtc0	
+ 1450 FF      89   - 129  0.0 S<   irq/18-uhci_hcd	
+  388 FF      50   -  90  0.0 S<   irq/17-HDA Inte	
+  389 FF      50   -  90  0.0 S<   irq/17-ohci1394	
+  390 FF      50   -  90  0.0 S<   irq/18-mmc0	
+ 1447 FF      50   -  90  0.2 S<   irq/17-uhci_hcd	
+...
+
+As you can see all IRQ17 threads get reset completely; on IRQ18 only
+mmc0 gets a new PID but the usb retains it's PID and rtprio.
+
+
+My first assumption - that it could correlate with the device being in
+use while suspending - did also proove wrong: I tried suspending with
+JACKd using an USB audio device on IRQ18 (instead of HDA-Intel on IRQ17)
+and after resume IRQ18 has still high rtprio, while IRQ17 has been reset
+whether in use or not.
+
+However, after unloading the HDA-Intel module, the other IRQ-threads on
+IRQ17 (ohci1394 and uhci_hcd:usb3) retain their PID and rtprio. So it
+seems there's something with the HDA driver and/or hardware that causes
+the kernel to re-initialize IRQ process.
+
+<OT>
+I usually unload the sd-card mmc0 driver and connect a USB-UA25 on
+uhci_hcd:usb4; It then is the sole device on IRQ18 and works without
+x-runs even at 64 spp * 3p / 48000sps = 4ms audio latency with JACKd.
+
+With 2.6.29.6-rt23 I get x-runs at these low latencies when not
+unloading the mmc0 driver. With 2.6.31-rc5-rt1.1 I don't. So the
+per-driver IRQ priority does work.. YAY.
+</OT>
+
+so long,
+robin
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEARECAAYFAkp+4pEACgkQeVUk8U+VK0KZXACgiJCtcEfH6syPYsyoEVp19VS1
+mE8AnRTyEwKD+kMI39+HSfLl4Ms8Zd58
+=SEQi
+-----END PGP SIGNATURE-----
