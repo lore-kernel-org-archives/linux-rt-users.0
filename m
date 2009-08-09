@@ -1,98 +1,38 @@
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
-Subject: [PATCH RT 9/6] [RFH] Build failure on 2.6.31-rc4-rt1 in mm/highmem.c
-Date: Sun,  9 Aug 2009 11:36:40 +0200
-Message-ID: <1249810600-21946-3-git-send-email-u.kleine-koenig@pengutronix.de>
-References: <20090807203939.GA19374@pengutronix.de>
- <1249810600-21946-1-git-send-email-u.kleine-koenig@pengutronix.de>
- <1249810600-21946-2-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+Subject: Re: [PATCH RT 8/6] [ARM, WATCHDOG] davinci: include mach/timex.h
+	in davinci_wdt.c
+Date: Sun, 9 Aug 2009 10:43:06 +0100
+Message-ID: <20090809094306.GA26591@n2100.arm.linux.org.uk>
+References: <20090807203939.GA19374@pengutronix.de> <1249810600-21946-1-git-send-email-u.kleine-koenig@pengutronix.de> <1249810600-21946-2-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Cc: LKML <linux-kernel@vger.kernel.org>, rt-users <linux-rt-users@vger.kernel.org>, Nicolas Pitre <nico@marvell.com>, MinChan Kim <minchan.kim@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>, Li Zefan <lizf@cn.fujitsu.com>, Jens Axboe <jens.axboe@oracle.com>, linux-mm@kvack.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Wim Van Sebroeck <wim@iguana.be>,
+	Kevin Hilman <khilman@deeprootsystems.com>,
+	linux-arm-kernel@lists.arm.linux.org.uk
+To: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753519AbZHIJn2@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <1249810600-21946-2-git-send-email-u.kleine-koenig@pengutronix.de>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The two commits
+On Sun, Aug 09, 2009 at 11:36:39AM +0200, Uwe Kleine-K=F6nig wrote:
+> This fixes a a build failure for 2.6.31-rc4-rt1 (ARCH=3Darm,
+> davinci_all_defconfig):
+>=20
+> 	drivers/watchdog/davinci_wdt.c: In function 'wdt_enable':
+> 	drivers/watchdog/davinci_wdt.c:102: error: 'CLOCK_TICK_RATE' undecla=
+red (first use in this function)
+> 	drivers/watchdog/davinci_wdt.c:102: error: (Each undeclared identifi=
+er is reported only once
+> 	drivers/watchdog/davinci_wdt.c:102: error: for each function it appe=
+ars in.)
 
-	b38cb5a (mm: remove kmap_lock)
-
-and
-
-	3297e76 (highmem: atomic highmem kmap page pinning)
-
-conflict (without causing a text based conflict) because the latter
-introduces a usage of kmap_lock.
-
-The actual compiler output is (e.g. for ARCH=3Darm, stmp378x_defconfig):
-
-	  CC      mm/highmem.o
-	mm/highmem.c: In function 'pkmap_try_free':
-	mm/highmem.c:116: warning: unused variable 'addr'
-	mm/highmem.c: In function 'kmap_high_get':
-	mm/highmem.c:372: error: 'kmap_lock' undeclared (first use in this funct=
-ion)
-	mm/highmem.c:372: error: (Each undeclared identifier is reported only on=
-ce
-	mm/highmem.c:372: error: for each function it appears in.)
-	mm/highmem.c:375: error: invalid operands to binary < (have 'atomic_t' a=
-nd 'int')
-	mm/highmem.c:376: error: wrong type argument to increment
-
-The problems in lines 116 and 375f are resolved by the patch below, but
-I don't know highmem enough to fix the remaining error.  Moreover I
-don't have a machine that makes use of highmem.
-
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
-Cc: Nicolas Pitre <nico@marvell.com>
-Cc: MinChan Kim <minchan.kim@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Li Zefan <lizf@cn.fujitsu.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
-Cc: linux-mm@kvack.org
-Cc: linux-kernel@vger.kernel.org
----
- mm/highmem.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/mm/highmem.c b/mm/highmem.c
-index 66e915a..4aa9eea 100644
---- a/mm/highmem.c
-+++ b/mm/highmem.c
-@@ -113,10 +113,10 @@ static int pkmap_try_free(int pos)
- 	 */
- 	if (!pte_none(pkmap_page_table[pos])) {
- 		struct page *page =3D pte_page(pkmap_page_table[pos]);
--		unsigned long addr =3D PKMAP_ADDR(pos);
- 		pte_t *ptep =3D &pkmap_page_table[pos];
-=20
--		VM_BUG_ON(addr !=3D (unsigned long)page_address(page));
-+		VM_BUG_ON((unsigned long)PKMAP_ADDR(pos) !=3D
-+				(unsigned long)page_address(page));
-=20
- 		if (!__set_page_address(page, NULL, pos))
- 			BUG();
-@@ -372,8 +372,8 @@ void *kmap_high_get(struct page *page)
- 	lock_kmap_any(flags);
- 	vaddr =3D (unsigned long)page_address(page);
- 	if (vaddr) {
--		BUG_ON(pkmap_count[PKMAP_NR(vaddr)] < 1);
--		pkmap_count[PKMAP_NR(vaddr)]++;
-+		BUG_ON(atomic_read(&pkmap_count[PKMAP_NR(vaddr)]) < 1);
-+		atomic_add(1, pkmap_count[PKMAP_NR(vaddr)]);
- 	}
- 	unlock_kmap_any(flags);
- 	return (void*) vaddr;
---=20
-1.6.3.3
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+It should not be using CLOCK_TICK_RATE - there was a move to clean
+up the use of that symbol and restrict it just to the i8253 PIT.
+Please create something else like DAVINCI_TICK_RATE instead.
