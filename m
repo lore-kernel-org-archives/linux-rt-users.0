@@ -1,118 +1,121 @@
-From: Robin Gareus <robin@gareus.org>
-Subject: remembering rt-sched attributes - was: [LAD] rtirq script is broken
- with  2.6.31
-Date: Sun, 09 Aug 2009 16:52:01 +0200
-Message-ID: <4A7EE291.3000500@gareus.org>
-References: <4A7B01F3.2060200@gareus.org> <4A7B3EA6.1080509@rncbc.org> <4A7C259D.9020409@gareus.org>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: [PATCH v3] futex: update futex_q lock_ptr on requeue proxy lock
+Date: Sun, 09 Aug 2009 15:34:39 -0700
+Message-ID: <4A7F4EFF.6090903@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: The Linux Audio Developers' Mailing List
-	<linux-audio-dev@lists.linuxaudio.org>,
-	Rui Nuno Capela <rncbc@rncbc.org>
-To: rt-users <linux-rt-users@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"lkml, " <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@in
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p00-ob.rzone.de ([81.169.146.162]:17100 "EHLO
-	mo-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751242AbZHIOwa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 9 Aug 2009 10:52:30 -0400
-In-Reply-To: <4A7C259D.9020409@gareus.org>
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:54652 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751183AbZHIWep (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 9 Aug 2009 18:34:45 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+From: Darren Hart <dvhltc@us.ibm.com>
 
-Hello rt-users and -devs,
+futex_requeue() can acquire the lock on behalf of a waiter early on or during
+the requeue loop if it is uncontended or in the event of a lock steal or owner
+died. On wakeup, the waiter (in futex_wait_requeue_pi()) cleans up the pi_state
+owner using the lock_ptr to protect against concurrent access to the pi_state.
+The pi_state is hung off futex_q's on the requeue target futex hash bucket so
+the lock_ptr needs to be updated accordingly.
 
-I have a question about per-device-IRQ-threads in 2.6.31-rc5-rt1.1:
+The problem manifested by triggering the WARN_ON in lookup_pi_state() about the
+pid != pi_state->owner->pid.  With this patch, the pi_state is properly guarded
+against concurrent access via the requeue target hb lock.
 
-After a suspend/resume cycle some IRQ-threads come up with a new PID.
-The scheduling policy of those threads is reset to default values
-instead of retaining the previously set values.
+The astute reviewer may notice that there is a window of time between when
+futex_requeue() unlocks the hb locks and when futex_wait_requeue_pi() will
+acquire hb2->lock.  During this time the pi_state and uval are not in sync with
+the underlying rtmutex owner (but the uval does indicate there are waiters, so
+no atomic changes will occur in userspace).  However, this is not a problem.
+Should a contending thread enter lookup_pi_state() and acquire hb2->lock before
+the ownership is fixed up, it will find the pi_state hung off a waiter's
+(possibly the pending owner's) futex_q and block on the rtmutex.  Once
+futex_wait_requeue_pi() fixes up the owner, it will also move the pi_state from
+the old owner's task->pi_state_list to its own.
 
-Is this an issue that is being worked on? Or must userspace from now on
-re-init rtprio settings after each suspend/resume cycle?
+V3: Fix plist lock name for application to mainline (rather than -rt)
+    Compile tested against tip/v2.6.31-rc5.
 
-As you can see from the information below (from linux-audio-dev @
-linuxaudio.org) not all IRQ-threads are re-started, but for example the
-HDA-Intel is. It may just as well be a specific issue with snd_hda_intel
-(and sdhci, e1000e, i810/intelfb,..).
+Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@elte.hu>
+CC: Eric Dumazet <eric.dumazet@gmail.com>
+CC: Dinakar Guniguntala <dino@in.ibm.com>
+CC: John Stultz <johnstul@us.ibm.com>
+---
 
-Robin Gareus wrote:
-> Rui Nuno Capela wrote:
->>>  [..]
->>>
->>> Yes, I'm also baffled at the high PIDs for IRQs. I hazard a guess that
->>> those are a result of a suspend/resume cycle; and I'll check later if
->>> the chrt settings do persist after a suspend/resume.
-> 
-> It looks like the guess was correct. The PIDs change after
-> suspend/resume and the chrt settings are retained here.
-Sorry I was too quick, there. After some more suspend/resumes cycles and
-a closer look: the previous statement is not correct.
-
-RTPRIO is reset when the IRQ handler process restarts under new PID.
-However not all IRQ threads are re-launched:
-
-[from /proc/interrupts]
- 17:   78393056     873204   IO-APIC-fasteoi   uhci_hcd:usb3, HDA Intel,
-ohci1394
- 18:     451927    2099364   IO-APIC-fasteoi   uhci_hcd:usb4, mmc0
-
-before suspend:
-  PID CLS RTPRIO  NI PRI %CPU STAT COMMAND
- 1418 FF      90   - 130  0.0 S<   irq/8-rtc0	
- 1450 FF      89   - 129  0.0 S<   irq/18-uhci_hcd	
-32506 FF      88   - 128  0.1 S<   irq/17-HDA Inte	
-32507 FF      87   - 127  0.0 S<   irq/17-ohci1394	
- 1447 FF      50   -  90  0.2 S<   irq/17-uhci_hcd	
-32508 FF      50   -  90  0.0 S<   irq/18-mmc0	
-...
-
-after resume:
-
-  PID CLS RTPRIO  NI PRI %CPU STAT COMMAND
- 1418 FF      90   - 130  0.0 S<   irq/8-rtc0	
- 1450 FF      89   - 129  0.0 S<   irq/18-uhci_hcd	
-  388 FF      50   -  90  0.0 S<   irq/17-HDA Inte	
-  389 FF      50   -  90  0.0 S<   irq/17-ohci1394	
-  390 FF      50   -  90  0.0 S<   irq/18-mmc0	
- 1447 FF      50   -  90  0.2 S<   irq/17-uhci_hcd	
-...
-
-As you can see all IRQ17 threads get reset completely; on IRQ18 only
-mmc0 gets a new PID but the usb retains it's PID and rtprio.
+ kernel/futex.c |   17 +++++++++++++----
+ 1 files changed, 13 insertions(+), 4 deletions(-)
 
 
-My first assumption - that it could correlate with the device being in
-use while suspending - did also proove wrong: I tried suspending with
-JACKd using an USB audio device on IRQ18 (instead of HDA-Intel on IRQ17)
-and after resume IRQ18 has still high rtprio, while IRQ17 has been reset
-whether in use or not.
-
-However, after unloading the HDA-Intel module, the other IRQ-threads on
-IRQ17 (ohci1394 and uhci_hcd:usb3) retain their PID and rtprio. So it
-seems there's something with the HDA driver and/or hardware that causes
-the kernel to re-initialize IRQ process.
-
-<OT>
-I usually unload the sd-card mmc0 driver and connect a USB-UA25 on
-uhci_hcd:usb4; It then is the sole device on IRQ18 and works without
-x-runs even at 64 spp * 3p / 48000sps = 4ms audio latency with JACKd.
-
-With 2.6.29.6-rt23 I get x-runs at these low latencies when not
-unloading the mmc0 driver. With 2.6.31-rc5-rt1.1 I don't. So the
-per-driver IRQ priority does work.. YAY.
-</OT>
-
-so long,
-robin
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-
-iEYEARECAAYFAkp+4pEACgkQeVUk8U+VK0KZXACgiJCtcEfH6syPYsyoEVp19VS1
-mE8AnRTyEwKD+kMI39+HSfLl4Ms8Zd58
-=SEQi
------END PGP SIGNATURE-----
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 0672ff8..8cc3ee1 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -1010,15 +1010,19 @@ void requeue_futex(struct futex_q *q, struct futex_hash_bucket *hb1,
+  * requeue_pi_wake_futex() - Wake a task that acquired the lock during requeue
+  * q:	the futex_q
+  * key:	the key of the requeue target futex
++ * hb:  the hash_bucket of the requeue target futex
+  *
+  * During futex_requeue, with requeue_pi=1, it is possible to acquire the
+  * target futex if it is uncontended or via a lock steal.  Set the futex_q key
+  * to the requeue target futex so the waiter can detect the wakeup on the right
+  * futex, but remove it from the hb and NULL the rt_waiter so it can detect
+- * atomic lock acquisition.  Must be called with the q->lock_ptr held.
++ * atomic lock acquisition.  Set the q->lock_ptr to the requeue target hb->lock
++ * to protect access to the pi_state to fixup the owner later.  Must be called
++ * with both q->lock_ptr and hb->lock held.
+  */
+ static inline
+-void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key)
++void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key,
++			   struct futex_hash_bucket *hb)
+ {
+ 	drop_futex_key_refs(&q->key);
+ 	get_futex_key_refs(key);
+@@ -1030,6 +1034,11 @@ void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key)
+ 	WARN_ON(!q->rt_waiter);
+ 	q->rt_waiter = NULL;
+ 
++	q->lock_ptr = &hb->lock;
++#ifdef CONFIG_DEBUG_PI_LIST
++	q->list.plist.lock = &hb->lock;
++#endif
++
+ 	wake_up_state(q->task, TASK_NORMAL);
+ }
+ 
+@@ -1088,7 +1097,7 @@ static int futex_proxy_trylock_atomic(u32 __user *pifutex,
+ 	ret = futex_lock_pi_atomic(pifutex, hb2, key2, ps, top_waiter->task,
+ 				   set_waiters);
+ 	if (ret == 1)
+-		requeue_pi_wake_futex(top_waiter, key2);
++		requeue_pi_wake_futex(top_waiter, key2, hb2);
+ 
+ 	return ret;
+ }
+@@ -1273,7 +1282,7 @@ retry_private:
+ 							this->task, 1);
+ 			if (ret == 1) {
+ 				/* We got the lock. */
+-				requeue_pi_wake_futex(this, &key2);
++				requeue_pi_wake_futex(this, &key2, hb2);
+ 				continue;
+ 			} else if (ret) {
+ 				/* -EDEADLK */
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
