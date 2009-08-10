@@ -1,48 +1,84 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH 5/6] [NET] ixp2000/enp2611: don't set non-existent
- member get_stats
-Date: Mon, 10 Aug 2009 08:00:42 -0700 (PDT)
-Message-ID: <20090810.080042.259707687.davem@davemloft.net>
-References: <1249677761-19470-5-git-send-email-u.kleine-koenig@pengutronix.de>
-	<20090809.214906.143672876.davem@davemloft.net>
-	<20090810094027.GA22200@pengutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH V2] futex: Fix handling of bad requeue syscall pairing
+Date: Mon, 10 Aug 2009 17:27:44 +0200
+Message-ID: <1249918064.17467.143.camel@twins>
+References: <4A7CA06E.1090904@us.ibm.com>  <4A7CA8C0.7010809@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, linux@arm.linux.org.uk,
-	dbaryshkov@gmail.com, kernel@wantstofly.org, netdev@vger.kernel.org
-To: u.kleine-koenig@pengutronix.de
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: "lkml," <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@elte.hu>, John Kacur <jkacur@redhat.com>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	Dinakar Guniguntala <dino@in.ibm.com>,
+	John Stultz <johnstul@linux.vnet.ibm.com>
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:51615
-	"EHLO sunset.davemloft.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753175AbZHJPAc convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Aug 2009 11:00:32 -0400
-In-Reply-To: <20090810094027.GA22200@pengutronix.de>
+Received: from bombadil.infradead.org ([18.85.46.34]:46766 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752374AbZHJP2T (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2009 11:28:19 -0400
+In-Reply-To: <4A7CA8C0.7010809@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-=46rom: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
-Date: Mon, 10 Aug 2009 11:40:27 +0200
+On Fri, 2009-08-07 at 15:20 -0700, Darren Hart wrote:
+> From: Darren Hart <dvhltc@us.ibm.com>
+> 
+> If futex_requeue(requeue_pi=1) finds a futex_q that was created by a call
+> other the futex_wait_requeue_pi(), the q.rt_waiter may be null.  If so,
+> this will result in an oops from the following call graph:
+> 
+> futex_requeue()
+>   rt_mutex_start_proxy_lock()
+>     task_blocks_on_rt_mutex()
+>       waiter->task dereference
+>         OOPS
+> 
+> We currently WARN_ON() if this is detected, clearly this is inadequate.
+> If we detect a mispairing in futex_requeue(), bail out, seding -EINVAL to
+> user-space.
+> 
+> V2: Fix parenthesis warnings.
+> 
+> Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
 
-> Yes, I tried that, but stopped when I saw it's declared const.  I don=
-'t
-> know if this is required.  If yes then the only way to fix it is to a=
-dd
-> a platform callback that is called if non-NULL.
+Acked-by: Peter Zijlstra <peterz@infradead.org>
 
-The easiest way to handle this is to have another copy of the ops,
-which has the other get_stats member value, and to assign that as
-the netdev_ops when the relevant condition holds.
-
-> I don't want to invest time here without a word by the maintainers
-> though.
-
-But we can't apply the patch you initially posted, that's for sure
-:-)
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Ingo Molnar <mingo@elte.hu>
+> CC: Eric Dumazet <eric.dumazet@gmail.com>
+> CC: Dinakar Guniguntala <dino@in.ibm.com>
+> CC: John Stultz <johnstul@us.ibm.com>
+> ---
+> 
+>  kernel/futex.c |   11 +++++++++--
+>  1 files changed, 9 insertions(+), 2 deletions(-)
+> 
+> 
+> diff --git a/kernel/futex.c b/kernel/futex.c
+> index df30983..4705d89 100644
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -1306,8 +1306,15 @@ retry_private:
+>  		if (!match_futex(&this->key, &key1))
+>  			continue;
+>  
+> -		WARN_ON(!requeue_pi && this->rt_waiter);
+> -		WARN_ON(requeue_pi && !this->rt_waiter);
+> +		/*
+> +		 * FUTEX_WAIT_REQEUE_PI and FUTEX_CMP_REQUEUE_PI should always
+> +		 * be paired with each other and no other futex ops.
+> +		 */
+> +		if ((requeue_pi && !this->rt_waiter) ||
+> +		    (!requeue_pi && this->rt_waiter)) {
+> +			ret = -EINVAL;
+> +			break;
+> +		}
+>  
+>  		/*
+>  		 * Wake nr_wake waiters.  For requeue_pi, if we acquired the
