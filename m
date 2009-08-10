@@ -1,81 +1,48 @@
-From: Wolfgang Steinwender <wolfgang@psysteme.de>
-Subject: Re: Problem with hwlat detector in smp_processor_id()
-Date: Mon, 10 Aug 2009 16:07:27 +0200
-Message-ID: <4A80299F.2040008@psysteme.de>
-References: <4A55D53A.6040108@psysteme.de> <4A560069.6010602@osadl.org>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH 5/6] [NET] ixp2000/enp2611: don't set non-existent
+ member get_stats
+Date: Mon, 10 Aug 2009 08:00:42 -0700 (PDT)
+Message-ID: <20090810.080042.259707687.davem@davemloft.net>
+References: <1249677761-19470-5-git-send-email-u.kleine-koenig@pengutronix.de>
+	<20090809.214906.143672876.davem@davemloft.net>
+	<20090810094027.GA22200@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Carsten Emde <Carsten.Emde@osadl.org>
-To: linux-rt-users@vger.kernel.org
+Content-Type: Text/Plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: tglx@linutronix.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, linux@arm.linux.org.uk,
+	dbaryshkov@gmail.com, kernel@wantstofly.org, netdev@vger.kernel.org
+To: u.kleine-koenig@pengutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.171]:65151 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755032AbZHJOHG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Aug 2009 10:07:06 -0400
-In-Reply-To: <4A560069.6010602@osadl.org>
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:51615
+	"EHLO sunset.davemloft.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753175AbZHJPAc convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2009 11:00:32 -0400
+In-Reply-To: <20090810094027.GA22200@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Carsten Emde wrote:
-> Does the attached patch help?
+=46rom: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
+Date: Mon, 10 Aug 2009 11:40:27 +0200
 
-Sorry for the late reply. I now switched to linux-2.6.29.6-rt23
-(which has the patch included) and verified that the problem is
-solved. Reverting the patch gives the problem again.
+> Yes, I tried that, but stopped when I saw it's declared const.  I don=
+'t
+> know if this is required.  If yes then the only way to fix it is to a=
+dd
+> a platform callback that is called if non-NULL.
 
-Now the error messages have disappeared, but I really cannot
-tell if the test is doing something at all.
+The easiest way to handle this is to have another copy of the ops,
+which has the other get_stats member value, and to assign that as
+the netdev_ops when the relevant condition holds.
 
-Here's the output from running the python script from rt-tests-50:
-$> hwlatdetect --debug
-debugging prints turned on
-looking for modules
-module path: /lib/modules/2.6.29.6-rt23-pae-debug/kernel/drivers/misc
-checking
-/lib/modules/2.6.29.6-rt23-pae-debug/kernel/drivers/misc/hwlat_detector.ko
-not mounting debugfs
-test duration is 120s
-hwlatdetect:  test duration 120 seconds
-   parameters:
-        Latency threshold: 10us
-        Sample window:     1000000us
-        Sample width:      500000us
-     Non-sampling period:  500000us
-        Output File:       None
+> I don't want to invest time here without a word by the maintainers
+> though.
 
-Starting test
-Starting hardware latency detection for 120 seconds
-enabling detector module
-first attempt at enable
-detector module enabled
-disabling detector module
-first attempt at disable
-detector module disabled
-Hardware latency detection done (0 samples)
-test finished
-Max Latency: 0us
-Samples recorded: 0
-Samples exceeding threshold: 0
-not umounting debugfs
-
-The output from the hwlat_detector module is:
-hwlat_detector: version 1.0.0
-
-For me, the output "Samples recorded: 0" means that no samples have
-been read at all. Or do I misinterpret the output?
-
-It is also not possible for me to cat the sample entry
-when the module is enabled: "strace cat sample"
-just waits forever:
-open("sample", O_RDONLY|O_LARGEFILE)    = 3
-fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
-read(3,
-
-Is there anything else I can try?
-
-
-Best regards,
-W. Steinwender
-
+But we can't apply the patch you initially posted, that's for sure
+:-)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
