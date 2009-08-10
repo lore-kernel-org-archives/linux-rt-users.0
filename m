@@ -1,59 +1,81 @@
-From: Dinakar Guniguntala <dino@in.ibm.com>
-Subject: [PATCH] futex: fix compat_futex to be same as futex for REQUEUE_PI
-Date: Mon, 10 Aug 2009 18:31:42 +0530
-Message-ID: <20090810130142.GA23619@in.ibm.com>
-Reply-To: dino@in.ibm.com
+From: Wolfgang Steinwender <wolfgang@psysteme.de>
+Subject: Re: Problem with hwlat detector in smp_processor_id()
+Date: Mon, 10 Aug 2009 16:07:27 +0200
+Message-ID: <4A80299F.2040008@psysteme.de>
+References: <4A55D53A.6040108@psysteme.de> <4A560069.6010602@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Darren Hart <dvhltc@us.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: Carsten Emde <Carsten.Emde@osadl.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e8.ny.us.ibm.com ([32.97.182.138]:54252 "EHLO e8.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751668AbZHJNB4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Aug 2009 09:01:56 -0400
-Content-Disposition: inline
+Received: from moutng.kundenserver.de ([212.227.126.171]:65151 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755032AbZHJOHG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2009 10:07:06 -0400
+In-Reply-To: <4A560069.6010602@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Dinakar Guniguntala <dino@in.ibm.com>
+Carsten Emde wrote:
+> Does the attached patch help?
 
-Need to add the REQUEUE_PI checks to the compat_sys_futex API as well to
-ensure 32 bit requeue's work fine on a 64 bit system.
-Patch is against latest tip
+Sorry for the late reply. I now switched to linux-2.6.29.6-rt23
+(which has the patch included) and verified that the problem is
+solved. Reverting the patch gives the problem again.
 
-Signed-off-by: Dinakar Guniguntala <dino@in.ibm.com>
-CC: Darren Hart <dvhltc@us.ibm.com>
+Now the error messages have disappeared, but I really cannot
+tell if the test is doing something at all.
 
-	-Dinakar
+Here's the output from running the python script from rt-tests-50:
+$> hwlatdetect --debug
+debugging prints turned on
+looking for modules
+module path: /lib/modules/2.6.29.6-rt23-pae-debug/kernel/drivers/misc
+checking
+/lib/modules/2.6.29.6-rt23-pae-debug/kernel/drivers/misc/hwlat_detector.ko
+not mounting debugfs
+test duration is 120s
+hwlatdetect:  test duration 120 seconds
+   parameters:
+        Latency threshold: 10us
+        Sample window:     1000000us
+        Sample width:      500000us
+     Non-sampling period:  500000us
+        Output File:       None
+
+Starting test
+Starting hardware latency detection for 120 seconds
+enabling detector module
+first attempt at enable
+detector module enabled
+disabling detector module
+first attempt at disable
+detector module disabled
+Hardware latency detection done (0 samples)
+test finished
+Max Latency: 0us
+Samples recorded: 0
+Samples exceeding threshold: 0
+not umounting debugfs
+
+The output from the hwlat_detector module is:
+hwlat_detector: version 1.0.0
+
+For me, the output "Samples recorded: 0" means that no samples have
+been read at all. Or do I misinterpret the output?
+
+It is also not possible for me to cat the sample entry
+when the module is enabled: "strace cat sample"
+just waits forever:
+open("sample", O_RDONLY|O_LARGEFILE)    = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+read(3,
+
+Is there anything else I can try?
 
 
- futex_compat.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+Best regards,
+W. Steinwender
 
-
-diff -X ignore -Nurp linux-tip/kernel/futex_compat.c linux-tip.mod/kernel/futex_compat.c
---- linux-tip/kernel/futex_compat.c	2009-08-10 05:37:17.000000000 -0700
-+++ linux-tip.mod/kernel/futex_compat.c	2009-08-10 05:46:42.000000000 -0700
-@@ -180,7 +180,8 @@ asmlinkage long compat_sys_futex(u32 __u
- 	int cmd = op & FUTEX_CMD_MASK;
- 
- 	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
--		      cmd == FUTEX_WAIT_BITSET)) {
-+		      cmd == FUTEX_WAIT_BITSET ||
-+		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
- 		if (get_compat_timespec(&ts, utime))
- 			return -EFAULT;
- 		if (!timespec_valid(&ts))
-@@ -191,7 +192,8 @@ asmlinkage long compat_sys_futex(u32 __u
- 			t = ktime_add_safe(ktime_get(), t);
- 		tp = &t;
- 	}
--	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE)
-+	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE ||
-+	    cmd == FUTEX_CMP_REQUEUE_PI || cmd == FUTEX_WAKE_OP)
- 		val2 = (int) (unsigned long) utime;
- 
- 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
