@@ -1,126 +1,46 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: [PATCH RT v3] futex: update futex_q lock_ptr on requeue proxy lock
-Date: Sun, 09 Aug 2009 15:38:54 -0700
-Message-ID: <4A7F4FFE.4000603@us.ibm.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH 5/6] [NET] ixp2000/enp2611: don't set non-existent
+ member get_stats
+Date: Sun, 09 Aug 2009 21:49:06 -0700 (PDT)
+Message-ID: <20090809.214906.143672876.davem@davemloft.net>
+References: <20090807203939.GA19374@pengutronix.de>
+	<1249677761-19470-5-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	Dinakar Guniguntala <dino@in.ibm.com>,
-	John Stultz <jstultz@us.ibm.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"lkml, " <linux-kernel@vger.kernel.org>
+Content-Type: Text/Plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: tglx@linutronix.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, linux@arm.linux.org.uk,
+	dbaryshkov@gmail.com, kernel@wantstofly.org, netdev@vger.kernel.org
+To: u.kleine-koenig@pengutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:60824 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751183AbZHIWjL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 9 Aug 2009 18:39:11 -0400
+Received: from 74-93-104-97-Washington.hfc.comcastbusiness.net ([74.93.104.97]:59232
+	"EHLO sunset.davemloft.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751206AbZHJEs4 convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2009 00:48:56 -0400
+In-Reply-To: <1249677761-19470-5-git-send-email-u.kleine-koenig@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Darren Hart <dvhltc@us.ibm.com>
+=46rom: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
+Date: Fri,  7 Aug 2009 22:42:40 +0200
 
-futex_requeue() can acquire the lock on behalf of a waiter early on or during
-the requeue loop if it is uncontended or in the event of a lock steal or owner
-died. On wakeup, the waiter (in futex_wait_requeue_pi()) cleans up the pi_state
-owner using the lock_ptr to protect against concurrent access to the pi_state.
-The pi_state is hung off futex_q's on the requeue target futex hash bucket so
-the lock_ptr needs to be updated accordingly.
+> This fixes a build failure for 2.6.31-rc5 (ARCH=3Darm, ixp2000_defcon=
+fig):
+>=20
+> 	  CC      drivers/net/ixp2000/enp2611.o
+> 	drivers/net/ixp2000/enp2611.c: In function 'enp2611_init_module':
+> 	drivers/net/ixp2000/enp2611.c:213: error: 'struct net_device' has no=
+ member named 'get_stats'
+>=20
+> Signed-off-by: Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>
 
-The problem manifested by triggering the WARN_ON in lookup_pi_state() about the
-pid != pi_state->owner->pid.  With this patch, the pi_state is properly guarded
-against concurrent access via the requeue target hb lock.
+This is far from the way to fix this, unfortunately.
 
-The astute reviewer may notice that there is a window of time between when
-futex_requeue() unlocks the hb locks and when futex_wait_requeue_pi() will
-acquire hb2->lock.  During this time the pi_state and uval are not in sync with
-the underlying rtmutex owner (but the uval does indicate there are waiters, so
-no atomic changes will occur in userspace).  However, this is not a problem.
-Should a contending thread enter lookup_pi_state() and acquire hb2->lock before
-the ownership is fixed up, it will find the pi_state hung off a waiter's
-(possibly the pending owner's) futex_q and block on the rtmutex.  Once
-futex_wait_requeue_pi() fixes up the owner, it will also move the pi_state from
-the old owner's task->pi_state_list to its own.
-
-V3: Resend of V2 with updated patch header indicating it is for RT
-V2: Add DEBUG_PI_LIST support and correct locking requirements commentary
-V1: Initial Patch
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@elte.hu>
-CC: Eric Dumazet <eric.dumazet@gmail.com>
-CC: Dinakar Guniguntala <dino@in.ibm.com>
-CC: John Stultz <johnstul@us.ibm.com>
----
-
- kernel/futex.c |   17 +++++++++++++----
- 1 files changed, 13 insertions(+), 4 deletions(-)
-
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index abce822..df30983 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1059,15 +1059,19 @@ void requeue_futex(struct futex_q *q, struct futex_hash_bucket *hb1,
-  * requeue_pi_wake_futex() - Wake a task that acquired the lock during requeue
-  * q:	the futex_q
-  * key:	the key of the requeue target futex
-+ * hb:  the hash_bucket of the requeue target futex
-  *
-  * During futex_requeue, with requeue_pi=1, it is possible to acquire the
-  * target futex if it is uncontended or via a lock steal.  Set the futex_q key
-  * to the requeue target futex so the waiter can detect the wakeup on the right
-  * futex, but remove it from the hb and NULL the rt_waiter so it can detect
-- * atomic lock acquisition.  Must be called with the q->lock_ptr held.
-+ * atomic lock acquisition.  Set the q->lock_ptr to the requeue target hb->lock
-+ * to protect access to the pi_state to fixup the owner later.  Must be called
-+ * with both q->lock_ptr and hb->lock held.
-  */
- static inline
--void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key)
-+void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key,
-+			   struct futex_hash_bucket *hb)
- {
- 	drop_futex_key_refs(&q->key);
- 	get_futex_key_refs(key);
-@@ -1079,6 +1083,11 @@ void requeue_pi_wake_futex(struct futex_q *q, union futex_key *key)
- 	WARN_ON(!q->rt_waiter);
- 	q->rt_waiter = NULL;
- 
-+	q->lock_ptr = &hb->lock;
-+#ifdef CONFIG_DEBUG_PI_LIST
-+	q->list.plist.slock = &hb->lock;
-+#endif
-+
- 	wake_up_state(q->task, TASK_NORMAL);
- }
- 
-@@ -1137,7 +1146,7 @@ static int futex_proxy_trylock_atomic(u32 __user *pifutex,
- 	ret = futex_lock_pi_atomic(pifutex, hb2, key2, ps, top_waiter->task,
- 				   set_waiters);
- 	if (ret == 1)
--		requeue_pi_wake_futex(top_waiter, key2);
-+		requeue_pi_wake_futex(top_waiter, key2, hb2);
- 
- 	return ret;
- }
-@@ -1323,7 +1332,7 @@ retry_private:
- 							this->task, 1);
- 			if (ret == 1) {
- 				/* We got the lock. */
--				requeue_pi_wake_futex(this, &key2);
-+				requeue_pi_wake_futex(this, &key2, hb2);
- 				continue;
- 			} else if (ret) {
- 				/* -EDEADLK */
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+We need to find a way to propagate this assignment into
+the netdev_ops method vector instead.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
