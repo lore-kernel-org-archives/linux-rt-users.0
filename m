@@ -1,61 +1,27 @@
-From: Jan Engelhardt <jengelh@medozas.de>
-Subject: Re: [ANNOUNCE] 2.6.29.6-rt23
-Date: Tue, 11 Aug 2009 12:52:02 +0200 (CEST)
-Message-ID: <alpine.LSU.2.00.0908111140280.5036@fbirervta.pbzchgretzou.qr>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
- <alpine.LFD. <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain>
+From: Meha Mehta <mehtameha@gmail.com>
+Subject: CONFIG_4KSTACK with rt patch
+Date: Tue, 11 Aug 2009 14:01:04 -0400
+Message-ID: <af81d2bf0908111101h3d72e3f2o48e2e411c02306b9@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>, Fra@jasper.es
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from sovereign.computergmbh.de ([85.214.69.204]:40910 "EHLO
-	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753929AbZHKM3E (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.246]:24443 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752394AbZHKSBD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Aug 2009 08:29:04 -0400
-In-Reply-To: <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain>
+	Tue, 11 Aug 2009 14:01:03 -0400
+Received: by an-out-0708.google.com with SMTP id d40so4210793and.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Aug 2009 11:01:04 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+I have a question regarding CONFIG_4KSTACK. From the code it looks
+like with rt patch and CONFIG_PREEMPT_SOFTIRQ enabled, codepath still
+uses interrupt stack rather than softirq thread's own stack. Is it
+correct?
+Should CONFIG_4KSTACK enabled with CONFIG_PREMPT_SOFTIRQ also enabled?
 
-On Friday 2009-07-10 20:29, Thomas Gleixner wrote:
->On Fri, 10 Jul 2009, Fernando Lopez-Lezcano wrote:
->> On Thu, 2009-07-09 at 20:25 +0200, Thomas Gleixner wrote:
->> 
->> I'm getting slightly weird behavior from rt23 in an intel quad core
->> machine (my T61 laptop is fine), rt22 was fine. It is some timer issue,
->> if I type continuously I get (every few seconds) repeated keys. Nothing
->> in the logs, nothing in dmesg that is (significantly) different from an
->> rt22 boot. 
-
-I am getting the same issue, reliably reproducibly - though ironically
-only with the proprietary NVIDIA. Key repeats, screen going "No signal"
-for a sec, sometimes comes back, sometimes hangs the whole machine.
-
-nv is fine, as is tty1 with or without NVIDIA.
-
->Hmm. The only change which touches timer related stuff is the ktime*
->speedups. Can you please apply the revert patch below and check
->whether that changes anything? If not, then we need to look at the
->2.6.29.5 -> .6 delta.
->
->diff --git b/kernel/time/timekeeping.c a/kernel/time/timekeeping.c
->index 4c99c98..3192dd0 100644
->--- b/kernel/time/timekeeping.c
->+++ a/kernel/time/timekeeping.c
-
-This 2nd part (timekeeping.c) of your patch unfortunately does not
-apply on -rt23, but I have edited it manually to get a result.
-
-Works ok so far.
-
-(BTW, CONFIG_GENERIC_TIME=y).
-
+Thanks,
+Meha
