@@ -1,71 +1,90 @@
-From: Robin Gareus <robin@gareus.org>
-Subject: Re: remembering rt-sched attributes - was: [LAD] rtirq script is
- broken with  2.6.31
-Date: Wed, 12 Aug 2009 11:24:17 +0200
-Message-ID: <4A828A41.9040109@gareus.org>
-References: <4A7B01F3.2060200@gareus.org> <4A7B3EA6.1080509@rncbc.org> <4A7C259D.9020409@gareus.org> <4A7EE291.3000500@gareus.org> <4A80A0A7.8000807@rncbc.org>
+From: Clark Williams <williams@redhat.com>
+Subject: [RT PATCH] Changed boot warning to look for CONFIG_FUNCTION &&
+ !CONFIG_DYNAMIC_FTRACE
+Date: Wed, 12 Aug 2009 10:28:43 -0500
+Message-ID: <20090812102843.1e0c6d73@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	The Linux Audio Developers' Mailing List
-	<linux-audio-dev@lists.linuxaudio.org>
-To: Rui Nuno Capela <rncbc@rncbc.org>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/tV_Q5R.WLwdS8crv4_i+3i+"; protocol="application/pgp-signature"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p00-ob.rzone.de ([81.169.146.160]:22582 "EHLO
-	mo-p00-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752253AbZHLJYT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 12 Aug 2009 05:24:19 -0400
-In-Reply-To: <4A80A0A7.8000807@rncbc.org>
+Received: from mx2.redhat.com ([66.187.237.31]:52725 "EHLO mx2.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753532AbZHLP3F (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 12 Aug 2009 11:29:05 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+--Sig_/tV_Q5R.WLwdS8crv4_i+3i+
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Rui Nuno Capela wrote:
-> Robin Gareus wrote:
->> Hello rt-users and -devs,
->>
->> I have a question about per-device-IRQ-threads in 2.6.31-rc5-rt1.1:
->>
->> After a suspend/resume cycle some IRQ-threads come up with a new PID.
->> The scheduling policy of those threads is reset to default values
->> instead of retaining the previously set values.
->>
->> Is this an issue that is being worked on? Or must userspace from now on
->> re-init rtprio settings after each suspend/resume cycle?
->>
->> As you can see from the information below (from linux-audio-dev @
->> linuxaudio.org) not all IRQ-threads are re-started, but for example the
->> HDA-Intel is. It may just as well be a specific issue with snd_hda_intel
->> (and sdhci, e1000e, i810/intelfb,..).
->>
->> [...]
-> 
-> picking on old subject, why not doing a plain `/etc/init.d/rtirq
-> restart` on resume?
-> 
+Thomas,
 
-Sure, adding it to
-/usr/lib/hal/scripts/linux/hal-system-power-suspend-linux
-or a script in /etc/acpi/resume.d/ (depending on the distribution)
-does the trick.
+After a conversation with Steven, I changed the boot warning for
+configs that may hurt performance to look for CONFIG_FUNCTION
+&& !CONFIG_DYNAMIC_FTRACE, rather than just CONFIG_FTRACE.
 
-However it would be necessary to be included in quite a few
-distributions: Ubuntustudio, 64studio, AVlinux, JACKlab, etc. It would
-be better if the problem could be solved at the source.
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ init/main.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-Anyways, can anyone explain why only a particular set of IRQ-threads are
-affected by this issue?
+diff --git a/init/main.c b/init/main.c
+index a04e102..9a0d510 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -935,7 +935,7 @@ static int __init kernel_init(void * unused)
+ 	WARN_ON(irqs_disabled());
+ #endif
+=20
+-#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQ=
+SOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER=
+) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defi=
+ned(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTR=
+ACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
++#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQ=
+SOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER=
+) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defi=
+ned(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FUN=
+CTION) - defined(CONFIG_DYNAMIC_FTRACE)))
+=20
+ #if DEBUG_COUNT > 0
+ 	printk(KERN_ERR "********************************************************=
+*********************\n");
+@@ -955,8 +955,8 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_PREEMPT_TRACER
+ 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                          =
+                    *\n");
+ #endif
+-#ifdef CONFIG_FTRACE
+-	printk(KERN_ERR "*        CONFIG_FTRACE                                  =
+                    *\n");
++#if defined(CONFIG_FUNCTION) && !defined(CONFIG_DYNAMIC_FTRACE)
++	printk(KERN_ERR "*        CONFIG_FUNCTION                                =
+                    *\n");
+ #endif
+ #ifdef CONFIG_WAKEUP_LATENCY_HIST
+ 	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                     =
+                    *\n");
+--=20
+1.6.2.5
 
-robin
+
+--Sig_/tV_Q5R.WLwdS8crv4_i+3i+
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+Version: GnuPG v2.0.11 (GNU/Linux)
 
-iEYEARECAAYFAkqCikEACgkQeVUk8U+VK0J0eQCeNPiTVO6wLBkuNc2CaQLpPuK4
-h/sAnRGExpwt4zKQ1PH7LSo2NlCF6Y55
-=oGVR
+iEYEARECAAYFAkqC37AACgkQHyuj/+TTEp2u8wCeIvYsWfoUqfhh+JgM4rtCEIg9
+69AAmwQwuWEriOROCICx0d59uDQTxKCh
+=hIzg
 -----END PGP SIGNATURE-----
+
+--Sig_/tV_Q5R.WLwdS8crv4_i+3i+--
