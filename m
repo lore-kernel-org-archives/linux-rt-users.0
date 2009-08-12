@@ -1,165 +1,158 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 2.6.31-rc4-rt1
-Date: Tue, 11 Aug 2009 20:09:06 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0908112005190.1283@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>  <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>  <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain>  <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>  <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
- <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>  <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>  <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>  <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
- <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>  <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>  <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>  <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
- <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <1249500006.4365.86.camel@lexx>
+From: taejin kim <tj7.kim@gmail.com>
+Subject: 2.6.29.6-rt23 - Locking API testsuite Fail
+Date: Wed, 12 Aug 2009 11:39:40 +0900
+Message-ID: <ce93db530908111939k45c052eahb18e0ef59e4fa250@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-474308224-1250014150=:1283"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: Will Schmidt <will_schmidt@vnet.ibm.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755371AbZHKSKT@vger.kernel.org>
-In-Reply-To: <1249500006.4365.86.camel@lexx>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-yx0-f175.google.com ([209.85.210.175]:63771 "EHLO
+	mail-yx0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752931AbZHLCjj convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Aug 2009 22:39:39 -0400
+Received: by yxe5 with SMTP id 5so5305062yxe.33
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Aug 2009 19:39:40 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hello.
+I found the CONFIG_DEBUG_LOCKING_API_SELFTESTS hangs at (double
+unlock)-(rlock) pair.
 
---8323328-474308224-1250014150=:1283
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+The kernel sources are at
+www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.29.6.tar.bz2
+rt.et.redhat.com/download/patch-2.6.29.6-rt23.bz2
 
-On Wed, 5 Aug 2009, Will Schmidt wrote:
-> /test/willschm/linux-2.6.31-rtx/kernel/spinlock.c:103: error: implicit
-> declaration of function ‘_raw_atomic_spin_relax’
+We ported this kernel to ARM target. And we tested with our modules
+which uses kernel semaphore API.
+We found some mutex(semaphore) problems. So we activated =93Locking API
+test=94option which is in kernel hacking menu.
 
-Fix below. Thanks,
+How can I fix this problem? Is there some patch about this?
 
-    tglx
 
--------
-commit ffc969930727238b847176c203bdbe1f9dffe403
-Author: Thomas Gleixner <tglx@linutronix.de>
-Date:   Tue Aug 11 20:03:47 2009 +0200
+Here is log.
+------------------------
+| Locking API testsuite:
+-----------------------------------------------------------------------=
+-----
+                                 | spin |wlock |rlock |mutex | wsem | r=
+sem |
+  ---------------------------------------------------------------------=
+-----
+                     A-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+                 A-B-B-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+             A-B-B-C-C-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+             A-B-C-A-B-C deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+         A-B-B-C-C-D-D-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+         A-B-C-D-B-D-D-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+         A-B-C-D-B-C-D-A deadlock:  ok  |  ok  |  ok  |  ok  |  ok  |  =
+ok  |
+                    double unlock:  ok  |  ok  |<2>kernel BUG at
+kernel/rt.c:257!
+Unable to handle kernel NULL pointer dereference at virtual address 000=
+00000
+pgd =3D c0004000
+[00000000] *pgd=3D00000000
+Internal error: Oops: 805 [#1] PREEMPT
+Modules linked in:
+CPU: 0    Not tainted  (2.6.29.6-rt23 #1)
+PC is at __bug+0x20/0x2c
+LR is at rt_up+0x48/0x64
+pc : [<c0020ce0>]    lr : [<c005e7f8>]    psr: 00000153
+sp : c021ff40  ip : c021fe58  fp : c021ff4c
+r10: 20018e5c  r9 : 4117b362  r8 : 00000001
+r7 : 00000002  r6 : 00000001  r5 : 00000000  r4 : c038ee20
+r3 : 00000000  r2 : 00000001  r1 : 00000001  r0 : 00000022
+=46lags: nzcv  IRQs on  FIQs off  Mode SVC_32  ISA ARM  Segment kernel
+Control: 00c5387d  Table: 20004008  DAC: 00000017
+Process swapper (pid: 0, stack limit =3D 0xc021e268)
+Stack: (0xc021ff40 to 0xc0220000)
+ff40: c021ff64 c021ff50 c01ab07c c0020ccc c038ee20 c038ee20 c021ff7c c0=
+21ff68
+ff60: c0104c68 c01ab04c c021ff58 c0104c3c c021ffa4 c021ff80 c0103818 c0=
+104c48
+ff80: c039727c c0397250 c039727c c038e3e8 c0222550 20018e90 c021ffc4 c0=
+21ffa8
+ffa0: c0105c48 c01037d4 c01f5e20 c0397250 c039727c c001aee4 c021fff4 c0=
+21ffc8
+ffc0: c0008a34 c010586c c0008398 00000000 00000000 c001aee4 00000000 00=
+c5387d
+ffe0: c03972e0 c001b2e8 00000000 c021fff8 20008038 c0008888 00000000 00=
+000000
+Backtrace:
+[<c0020cc0>] (__bug+0x0/0x2c) from [<c01ab07c>] (rt_read_unlock+0x3c/0x=
+60)
+[<c01ab040>] (rt_read_unlock+0x0/0x60) from [<c0104c68>]
+(double_unlock_rlock+0x2c/0x34)
+ r4:c038ee20
+[<c0104c3c>] (double_unlock_rlock+0x0/0x34) from [<c0103818>]
+(dotest+0x50/0x4f8)
+ r4:c0104c3c
+[<c01037c8>] (dotest+0x0/0x4f8) from [<c0105c48>] (locking_selftest+0x3=
+e8/0x8b0)
+ r8:20018e90 r7:c0222550 r6:c038e3e8 r5:c039727c r4:c0397250
+[<c0105860>] (locking_selftest+0x0/0x8b0) from [<c0008a34>]
+(start_kernel+0x1b8/0x308)
+ r6:c001aee4 r5:c039727c r4:c0397250
+[<c000887c>] (start_kernel+0x0/0x308) from [<20008038>] (0x20008038)
+ r6:c001b2e8 r5:c03972e0 r4:00c5387d
+Code: e1a01000 e59f000c eb0050a9 e3a03000 (e5833000)
+---[ end trace 1b75b31a2719ed1c ]---
+Kernel panic - not syncing: Attempted to kill the idle task!
+[<c0021330>] (dump_stack+0x0/0x14) from [<c0034054>] (panic+0x54/0x130)
+[<c0034000>] (panic+0x0/0x130) from [<c003711c>] (do_exit+0x68/0x648)
+ r3:00000000 r2:00000001 r1:00000001 r0:c01f41d4
+[<c00370b4>] (do_exit+0x0/0x648) from [<c0021230>] (die+0x1ac/0x1fc)
+[<c0021084>] (die+0x0/0x1fc) from [<c00234c4>] (__do_kernel_fault+0x6c/=
+0x7c)
+[<c0023458>] (__do_kernel_fault+0x0/0x7c) from [<c00236fc>]
+(do_page_fault+0x228/0x248)
+ r7:c021fef8 r6:c0220c80 r5:c022294c r4:ffffffff
+[<c00234d4>] (do_page_fault+0x0/0x248) from [<c00237bc>]
+(do_translation_fault+0x1c/0x84)
+[<c00237a0>] (do_translation_fault+0x0/0x84) from [<c001c23c>]
+(do_DataAbort+0x3c/0xa0)
+ r6:00000805 r5:c022294c r4:ffffffff
+[<c001c200>] (do_DataAbort+0x0/0xa0) from [<c001c9ec>] (__dabt_svc+0x4c=
+/0x60)
+Exception stack(0xc021fef8 to 0xc021ff40)
+fee0:                                                       00000022 00=
+000001
+ff00: 00000001 00000000 c038ee20 00000000 00000001 00000002 00000001 41=
+17b362
+ff20: 20018e5c c021ff4c c021fe58 c021ff40 c005e7f8 c0020ce0 00000153 ff=
+ffffff
+ r8:00000001 r7:00000002 r6:00000001 r5:c021ff2c r4:ffffffff
+[<c0020cc0>] (__bug+0x0/0x2c) from [<c01ab07c>] (rt_read_unlock+0x3c/0x=
+60)
+[<c01ab040>] (rt_read_unlock+0x0/0x60) from [<c0104c68>]
+(double_unlock_rlock+0x2c/0x34)
+ r4:c038ee20
+[<c0104c3c>] (double_unlock_rlock+0x0/0x34) from [<c0103818>]
+(dotest+0x50/0x4f8)
+ r4:c0104c3c
+[<c01037c8>] (dotest+0x0/0x4f8) from [<c0105c48>] (locking_selftest+0x3=
+e8/0x8b0)
+ r8:20018e90 r7:c0222550 r6:c038e3e8 r5:c039727c r4:c0397250
+[<c0105860>] (locking_selftest+0x0/0x8b0) from [<c0008a34>]
+(start_kernel+0x1b8/0x308)
+ r6:c001aee4 r5:c039727c r4:c0397250
+[<c000887c>] (start_kernel+0x0/0x308) from [<20008038>] (0x20008038)
+ r6:c001b2e8 r5:c03972e0 r4:00c5387d
 
-    locks: Fix PREEMPT=y, LOCKBREAK=y, DEBUG_LOCK_ALLOC=n compile
-    
-    Should be folded back into the atomic lock conversion
-    
-    Reported-by: Will Schmidt <will_schmidt@vnet.ibm.com>
-    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-
-diff --git a/kernel/lock-internals.h b/kernel/lock-internals.h
-index 4f0bc8b..76f694c 100644
---- a/kernel/lock-internals.h
-+++ b/kernel/lock-internals.h
-@@ -9,8 +9,8 @@
-  * (We do this in a function because inlining it would be excessive.)
-  */
- 
--#define BUILD_LOCK_OPS(op, locktype)					\
--void __lockfunc _##op##_lock(locktype##_t *lock)			\
-+#define BUILD_LOCK_OPS(prefix, op, locktype)				\
-+void __lockfunc _##prefix##_lock(locktype##_t *lock)			\
- {									\
- 	for (;;) {							\
- 		preempt_disable();					\
-@@ -20,15 +20,15 @@ void __lockfunc _##op##_lock(locktype##_t *lock)			\
- 									\
- 		if (!(lock)->break_lock)				\
- 			(lock)->break_lock = 1;				\
--		while (!op##_can_lock(lock) && (lock)->break_lock)	\
-+		while (!prefix##_can_lock(lock) && (lock)->break_lock)	\
- 			_raw_##op##_relax(&lock->raw_lock);		\
- 	}								\
- 	(lock)->break_lock = 0;						\
- }									\
- 									\
--EXPORT_SYMBOL(_##op##_lock);						\
-+EXPORT_SYMBOL(_##prefix##_lock);					\
- 									\
--unsigned long __lockfunc _##op##_lock_irqsave(locktype##_t *lock)	\
-+unsigned long __lockfunc _##prefix##_lock_irqsave(locktype##_t *lock)	\
- {									\
- 	unsigned long flags;						\
- 									\
-@@ -42,23 +42,23 @@ unsigned long __lockfunc _##op##_lock_irqsave(locktype##_t *lock)	\
- 									\
- 		if (!(lock)->break_lock)				\
- 			(lock)->break_lock = 1;				\
--		while (!op##_can_lock(lock) && (lock)->break_lock)	\
-+		while (!prefix##_can_lock(lock) && (lock)->break_lock)	\
- 			_raw_##op##_relax(&lock->raw_lock);		\
- 	}								\
- 	(lock)->break_lock = 0;						\
- 	return flags;							\
- }									\
- 									\
--EXPORT_SYMBOL(_##op##_lock_irqsave);					\
-+EXPORT_SYMBOL(_##prefix##_lock_irqsave);				\
- 									\
--void __lockfunc _##op##_lock_irq(locktype##_t *lock)			\
-+void __lockfunc _##prefix##_lock_irq(locktype##_t *lock)		\
- {									\
--	_##op##_lock_irqsave(lock);					\
-+	_##prefix##_lock_irqsave(lock);					\
- }									\
- 									\
--EXPORT_SYMBOL(_##op##_lock_irq);					\
-+EXPORT_SYMBOL(_##prefix##_lock_irq);					\
- 									\
--void __lockfunc _##op##_lock_bh(locktype##_t *lock)			\
-+void __lockfunc _##prefix##_lock_bh(locktype##_t *lock)			\
- {									\
- 	unsigned long flags;						\
- 									\
-@@ -67,9 +67,9 @@ void __lockfunc _##op##_lock_bh(locktype##_t *lock)			\
- 	/* irq-disabling. We use the generic preemption-aware	*/	\
- 	/* function:						*/	\
- 	/**/								\
--	flags = _##op##_lock_irqsave(lock);				\
-+	flags = _##prefix##_lock_irqsave(lock);				\
- 	local_bh_disable();						\
- 	local_irq_restore(flags);					\
- }									\
- 									\
--EXPORT_SYMBOL(_##op##_lock_bh)
-+EXPORT_SYMBOL(_##prefix##_lock_bh)
-diff --git a/kernel/rwlock.c b/kernel/rwlock.c
-index 35460b3..eaf34c8 100644
---- a/kernel/rwlock.c
-+++ b/kernel/rwlock.c
-@@ -146,8 +146,8 @@ EXPORT_SYMBOL(_write_lock);
-  *         _[read|write]_lock_irqsave()
-  *         _[read|write]_lock_bh()
-  */
--BUILD_LOCK_OPS(read, rwlock);
--BUILD_LOCK_OPS(write, rwlock);
-+BUILD_LOCK_OPS(read, read, rwlock);
-+BUILD_LOCK_OPS(write, write, rwlock);
- 
- #endif /* CONFIG_PREEMPT */
- 
-diff --git a/kernel/spinlock.c b/kernel/spinlock.c
-index 6a3c0c4..e3194d5 100644
---- a/kernel/spinlock.c
-+++ b/kernel/spinlock.c
-@@ -100,7 +100,7 @@ EXPORT_SYMBOL(_atomic_spin_lock);
-  *         _atomic_spin_lock_irqsave()
-  *         _atomic_spin_lock_bh()
-  */
--BUILD_LOCK_OPS(atomic_spin, atomic_spinlock);
-+BUILD_LOCK_OPS(atomic_spin, spin, atomic_spinlock);
- 
- #endif /* CONFIG_PREEMPT */
- 
-
---8323328-474308224-1250014150=:1283--
+Thank you
+taejin
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
