@@ -1,90 +1,98 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [RT PATCH] Changed boot warning to look for CONFIG_FUNCTION &&
- !CONFIG_DYNAMIC_FTRACE
-Date: Wed, 12 Aug 2009 10:28:43 -0500
-Message-ID: <20090812102843.1e0c6d73@torg>
+From: John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] linux-2.6.31-rc5-rt1.2
+Date: Wed, 12 Aug 2009 20:56:09 +0200
+Message-ID: <20090812185609.GA11568@tycho.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/tV_Q5R.WLwdS8crv4_i+3i+"; protocol="application/pgp-signature"
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx2.redhat.com ([66.187.237.31]:52725 "EHLO mx2.redhat.com"
+Received: from mx2.redhat.com ([66.187.237.31]:52849 "EHLO mx2.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753532AbZHLP3F (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 12 Aug 2009 11:29:05 -0400
+	id S1751447AbZHLS5I (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 12 Aug 2009 14:57:08 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/tV_Q5R.WLwdS8crv4_i+3i+
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
 
-Thomas,
+We are pleased to present, another non-official -rt tree.
 
-After a conversation with Steven, I changed the boot warning for
-configs that may hurt performance to look for CONFIG_FUNCTION
-&& !CONFIG_DYNAMIC_FTRACE, rather than just CONFIG_FTRACE.
+linux-2.6.31-rc5-rt1.2
 
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- init/main.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+This is an incremental release based on the work of Thomas Gleixner and=
+ other -rt developers.
 
-diff --git a/init/main.c b/init/main.c
-index a04e102..9a0d510 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -935,7 +935,7 @@ static int __init kernel_init(void * unused)
- 	WARN_ON(irqs_disabled());
- #endif
-=20
--#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQ=
-SOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER=
-) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defi=
-ned(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTR=
-ACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
-+#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQ=
-SOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER=
-) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defi=
-ned(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FUN=
-CTION) - defined(CONFIG_DYNAMIC_FTRACE)))
-=20
- #if DEBUG_COUNT > 0
- 	printk(KERN_ERR "********************************************************=
-*********************\n");
-@@ -955,8 +955,8 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_PREEMPT_TRACER
- 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                          =
-                    *\n");
- #endif
--#ifdef CONFIG_FTRACE
--	printk(KERN_ERR "*        CONFIG_FTRACE                                  =
-                    *\n");
-+#if defined(CONFIG_FUNCTION) && !defined(CONFIG_DYNAMIC_FTRACE)
-+	printk(KERN_ERR "*        CONFIG_FUNCTION                                =
-                    *\n");
- #endif
- #ifdef CONFIG_WAKEUP_LATENCY_HIST
- 	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                     =
-                    *\n");
---=20
-1.6.2.5
+The goal once again is to prevent the official -rt version from develop=
+ing bit rot while
+Thomas and others work on new -rt development.
 
+It will allow you to exercise many of the patches submitted by -rt deve=
+lopers
+before they appear in the official branch.
 
---Sig_/tV_Q5R.WLwdS8crv4_i+3i+
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+It starts with linux-2.6.31-rc5-rt1.1 (which is a rebase of linux-2.6.3=
+1-rc4-rt1)
+and adds the following patches
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.11 (GNU/Linux)
+- Thomas Gleixner: Fix PREEMPT=3Dy, LOCKBREAK=3Dy, DEBUG_LOCK_ALLOC=3Dn=
+ compile
+- Dinakar Guniguntala: fix compat_futex to be same as futex for REQUEUE=
+_PI
+- Darren Hart - futex fixes:
+	- Update futex_q lock_ptr on requeue proxy lock
+	- Fix handling of bad requeue syscall pairing
+	- Avoid deadlock in rt_mutex_start_proxy_lock()
+- Uwe Kleine-K=F6nig: Various compile fixes for ARM
+	- Add missing includes
+	- Convert semaphore to mutex sound/soc/s3c24xx/s3c2443-ac97.c
+	- ixp2000: fix type of ixp2000_timer_interrupt
+	- Use atomic_spin_lock/atomic_spin_unlock for irqdesc lock
+- Kevin Hilman: watchdog: davinci: use clock framework for timer freque=
+ncy
+- Clark Williams: Changed boot warning to look for CONFIG_FUNCTION &&
+ !CONFIG_DYNAMIC_FTRACE
 
-iEYEARECAAYFAkqC37AACgkQHyuj/+TTEp2u8wCeIvYsWfoUqfhh+JgM4rtCEIg9
-69AAmwQwuWEriOROCICx0d59uDQTxKCh
-=hIzg
------END PGP SIGNATURE-----
+You can download it at the following locations:
 
---Sig_/tV_Q5R.WLwdS8crv4_i+3i+--
+Git location: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/r=
+t-linux.git
+Git branch: linux-2.6.31-rc5-rt1.2
+
+Or in patch form
+http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-unofficial/p=
+atch-2.6.31-rc5-rt1.2.bz2
+
+Please send your success and bug reports to
+LKML <linux-kernel@vger.kernel.org> and rt-users <linux-rt-users@vger.k=
+ernel.org>
+
+Thanks once again to all of the -rt developers who participated in the =
+discussions on the list and to
+Thomas Gleixner, Dinakar Guniguntala, Darren Hart, Uwe Kleine-K=F6nig, =
+Kevin Hilman, and Clark Williams whose
+patches I incorporated into this tree.
+
+Enjoy!
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
