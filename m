@@ -1,42 +1,44 @@
 From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: [PATCH][RT] pty low latency
-Date: Wed, 12 Aug 2009 21:42:17 -0700
-Message-ID: <1250138537.15796.18.camel@quadrophenia.thebigcorporation.com>
+Subject: [PATCH][RT] btrfs compile fix
+Date: Wed, 12 Aug 2009 21:45:29 -0700
+Message-ID: <1250138729.15796.22.camel@quadrophenia.thebigcorporation.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from charybdis-ext.suse.de ([195.135.221.2]:47415 "EHLO
-	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751512AbZHMEmW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Aug 2009 00:42:22 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752663AbZHMEpg@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+Subject: add back in btrfs commit_root_sem.
+From: rt-2.6.31-rc4-rt1
 
-Subject: add hunks dropped in rt 2.6.31-rc5-rt1.1 forward port
-From: patch-2.6.31-rc4-rt1
+Seems to be in flux, but these are required for the status-quo to compile.
+
+Not run-time tested.
+
 Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
---- a/drivers/char/pty.c
-+++ b/drivers/char/pty.c
-@@ -52,6 +52,7 @@ static void pty_close(struct tty_struct *tty, struct file *filp)
- 		return;
- 	tty->link->packet = 0;
- 	set_bit(TTY_OTHER_CLOSED, &tty->link->flags);
-+	tty_flip_buffer_push(tty->link);
- 	wake_up_interruptible(&tty->link->read_wait);
- 	wake_up_interruptible(&tty->link->write_wait);
- 	if (tty->driver->subtype == PTY_TYPE_MASTER) {
-@@ -207,6 +208,7 @@ static int pty_open(struct tty_struct *tty, struct file *filp)
- 	clear_bit(TTY_OTHER_CLOSED, &tty->link->flags);
- 	set_bit(TTY_THROTTLED, &tty->flags);
- 	retval = 0;
-+	tty->low_latency = 1;
- out:
- 	return retval;
- }
-
-
+--- a/fs/btrfs/ctree.h
++++ b/fs/btrfs/ctree.h
+@@ -942,6 +959,9 @@ struct btrfs_root {
+ 	/* the node lock is held while changing the node pointer */
+ 	spinlock_t node_lock;
+ 
++	/* taken when updating the commit root */
++	struct rw_semaphore commit_root_sem;
++
+ 	struct extent_buffer *commit_root;
+ 	struct btrfs_root *log_root;
+ 	struct btrfs_root *reloc_root;
+--- a/fs/btrfs/disk-io.c
++++ b/fs/btrfs/disk-io.c
+@@ -909,6 +909,7 @@ static int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
+ 	spin_lock_init(&root->inode_lock);
+ 	mutex_init(&root->objectid_mutex);
+ 	mutex_init(&root->log_mutex);
++	init_rwsem(&root->commit_root_sem);
+ 	init_waitqueue_head(&root->log_writer_wait);
+ 	init_waitqueue_head(&root->log_commit_wait[0]);
+ 	init_waitqueue_head(&root->log_commit_wait[1]);
+ 
