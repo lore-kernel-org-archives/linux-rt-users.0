@@ -1,180 +1,115 @@
-From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
-Subject: [PATCH] [RFC, RT] fix kmap_high_get
-Date: Thu, 13 Aug 2009 23:34:03 +0200
-Message-ID: <1250199243-18677-1-git-send-email-u.kleine-koenig@pengutronix.de>
-References: <1249810600-21946-3-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: [PATCH] futex: detect mismatched requeue targets
+Date: Thu, 13 Aug 2009 17:36:53 -0700
+Message-ID: <20090814003650.14634.63916.stgit@Aeon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Cc: rt-users <linux-rt-users@vger.kernel.org>, Nicolas Pitre <nico@marvell.com>, MinChan Kim <minchan.kim@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>, Li Zefan <lizf@cn.fujitsu.com>, Jens Axboe <jens.axboe@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1249810600-21946-3-git-send-email-u.kleine-koenig@pengutronix.de>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: Darren Hart <dvhltc@us.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	John Kacur <jkacur@redhat.com>,
+	Dinakar Guniguntala <dino@in.ibm.com>,
+	John Stultz <johnstul@us.ibm.com>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e39.co.us.ibm.com ([32.97.110.160]:48066 "EHLO
+	e39.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753611AbZHNAhB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Aug 2009 20:37:01 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-This fixes the build failure with ARCH_NEEDS_KMAP_HIGH_GET.
-This is only compile tested.
+There is currently no check to ensure that userspace uses the same futex
+requeue target (uaddr2) in futex_requeue() that the waiter used in
+futex_wait_requeue_pi().  A mismatch here could very unexpected results as the
+waiter assumes it either wakes on uaddr1 or uaddr2.  We could detect this on
+wakeup in the waiter, but the cleanup is more intense after the improper
+requeue has occured.  This patch stores the waiter's expected requeue target in
+a new requeue_pi_key pointer in the futex_q which futex_requeue() checks prior
+to attempting to do a proxy lock acquistion or a requeue when requeue_pi=1.  If
+they don't match, return -EINVAL from futex_requeue, aborting the requeue of
+any remaining waiters.
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
-Cc: Nicolas Pitre <nico@marvell.com>
-Cc: MinChan Kim <minchan.kim@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: Ingo Molnar <mingo@elte.hu>
+I've run basic non-requeue-pi futex testing as well as a SpecJBB run (as Java
+is fairly heavy futex user).  I saw no perceptible difference.  I did not
+create a test case which generates the error path this patch addresses,
+although I feel the fix is straighforward.
+
+Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Li Zefan <lizf@cn.fujitsu.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
-Cc: linux-mm@kvack.org
-Cc: linux-kernel@vger.kernel.org
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@elte.hu>
+CC: Eric Dumazet <eric.dumazet@gmail.com>
+CC: John Kacur <jkacur@redhat.com>
+CC: Dinakar Guniguntala <dino@in.ibm.com>
+CC: John Stultz <johnstul@us.ibm.com>
 ---
-Hello
 
-this bases on the patch "[PATCH RT 9/6] [RFH] Build failure on
-2.6.31-rc4-rt1 in mm/highmem.c" earlier in this thread.
+ kernel/futex.c |   24 ++++++++++++++++++++----
+ 1 files changed, 20 insertions(+), 4 deletions(-)
 
-I don't know if kmap_high_get() has to call kmap_account().  Anyone?
-
-As I don't have any knowledge about highmem (or mm in general) I'll go in=
-to
-hiding before tglx caughts me with his trout.
-
-Best regards
-Uwe
-
- mm/highmem.c |   79 ++++++++++++++++++++--------------------------------=
------
- 1 files changed, 28 insertions(+), 51 deletions(-)
-
-diff --git a/mm/highmem.c b/mm/highmem.c
-index 4aa9eea..b5f5faf 100644
---- a/mm/highmem.c
-+++ b/mm/highmem.c
-@@ -75,26 +75,6 @@ pte_t * pkmap_page_table;
-=20
- static DECLARE_WAIT_QUEUE_HEAD(pkmap_wait);
-=20
--
--/*
-- * Most architectures have no use for kmap_high_get(), so let's abstract
-- * the disabling of IRQ out of the locking in that case to save on a
-- * potential useless overhead.
-- */
--#ifdef ARCH_NEEDS_KMAP_HIGH_GET
--#define lock_kmap()             spin_lock_irq(&kmap_lock)
--#define unlock_kmap()           spin_unlock_irq(&kmap_lock)
--#define lock_kmap_any(flags)    spin_lock_irqsave(&kmap_lock, flags)
--#define unlock_kmap_any(flags)  spin_unlock_irqrestore(&kmap_lock, flags=
-)
--#else
--#define lock_kmap()             spin_lock(&kmap_lock)
--#define unlock_kmap()           spin_unlock(&kmap_lock)
--#define lock_kmap_any(flags)    \
--		do { spin_lock(&kmap_lock); (void)(flags); } while (0)
--#define unlock_kmap_any(flags)  \
--		do { spin_unlock(&kmap_lock); (void)(flags); } while (0)
--#endif
--
- /*
-  * Try to free a given kmap slot.
-  *
-@@ -313,22 +293,32 @@ static void kunmap_account(void)
- 	wake_up(&pkmap_wait);
- }
-=20
--void *kmap_high(struct page *page)
-+/**
-+ * kmap_high_get - pin a highmem page into memory
-+ * @page: &struct page to pin
-+ *
-+ * Returns the page's current virtual memory address, or NULL if no mapp=
-ing
-+ * exists.  When and only when a non null address is returned then a
-+ * matching call to kunmap_high() is necessary.
-+ *
-+ * This can be called from any context.
-+ */
-+void *kmap_high_get(struct page *page)
- {
- 	unsigned long vaddr;
-=20
--
--	kmap_account();
- again:
- 	vaddr =3D (unsigned long)page_address(page);
- 	if (vaddr) {
- 		atomic_t *counter =3D &pkmap_count[PKMAP_NR(vaddr)];
- 		if (atomic_inc_not_zero(counter)) {
- 			/*
--			 * atomic_inc_not_zero implies a (memory) barrier on success
--			 * so page address will be reloaded.
-+			 * atomic_inc_not_zero implies a (memory) barrier on
-+			 * success, so page address will be reloaded.
- 			 */
--			unsigned long vaddr2 =3D (unsigned long)page_address(page);
-+			unsigned long vaddr2 =3D
-+				(unsigned long)page_address(page);
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 0672ff8..8b0d8fe 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -115,6 +115,9 @@ struct futex_q {
+ 	/* rt_waiter storage for requeue_pi: */
+ 	struct rt_mutex_waiter *rt_waiter;
+ 
++	/* The expected requeue pi target futex key: */
++	union futex_key *requeue_pi_key;
 +
- 			if (likely(vaddr =3D=3D vaddr2))
- 				return (void *)vaddr;
-=20
-@@ -344,6 +334,18 @@ again:
- 			goto again;
+ 	/* Bitset for the optional bitmasked wakeup */
+ 	u32 bitset;
+ };
+@@ -1080,6 +1083,10 @@ static int futex_proxy_trylock_atomic(u32 __user *pifutex,
+ 	if (!top_waiter)
+ 		return 0;
+ 
++	/* Ensure we requeue to the expected futex. */
++	if (!match_futex(top_waiter->requeue_pi_key, key2))
++		return -EINVAL;
++
+ 	/*
+ 	 * Try to take the lock for top_waiter.  Set the FUTEX_WAITERS bit in
+ 	 * the contended case or if set_waiters is 1.  The pi_state is returned
+@@ -1260,6 +1267,12 @@ retry_private:
+ 			continue;
  		}
- 	}
-+	return NULL;
-+}
+ 
++		/* Ensure we requeue to the expected futex for requeue_pi. */
++		if (requeue_pi && !match_futex(this->requeue_pi_key, &key2)) {
++			ret = -EINVAL;
++			break;
++		}
 +
-+void *kmap_high(struct page *page)
-+{
-+	unsigned long vaddr;
-+
-+	kmap_account();
-+again:
-+	vaddr =3D (unsigned long)kmap_high_get(page);
-+	if (vaddr)
-+		return (void *)vaddr;
-=20
- 	vaddr =3D pkmap_insert(page);
- 	if (!vaddr)
-@@ -354,31 +356,6 @@ again:
-=20
- EXPORT_SYMBOL(kmap_high);
-=20
--#ifdef ARCH_NEEDS_KMAP_HIGH_GET
--/**
-- * kmap_high_get - pin a highmem page into memory
-- * @page: &struct page to pin
-- *
-- * Returns the page's current virtual memory address, or NULL if no mapp=
-ing
-- * exists.  When and only when a non null address is returned then a
-- * matching call to kunmap_high() is necessary.
-- *
-- * This can be called from any context.
-- */
--void *kmap_high_get(struct page *page)
--{
--	unsigned long vaddr, flags;
--
--	lock_kmap_any(flags);
--	vaddr =3D (unsigned long)page_address(page);
--	if (vaddr) {
--		BUG_ON(atomic_read(&pkmap_count[PKMAP_NR(vaddr)]) < 1);
--		atomic_add(1, pkmap_count[PKMAP_NR(vaddr)]);
--	}
--	unlock_kmap_any(flags);
--	return (void*) vaddr;
--}
--#endif
-=20
-  void kunmap_high(struct page *page)
- {
---=20
-1.6.3.3
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+ 		/*
+ 		 * Requeue nr_requeue waiters and possibly one more in the case
+ 		 * of requeue_pi if we couldn't acquire the lock atomically.
+@@ -1735,6 +1748,7 @@ static int futex_wait(u32 __user *uaddr, int fshared,
+ 	q.pi_state = NULL;
+ 	q.bitset = bitset;
+ 	q.rt_waiter = NULL;
++	q.requeue_pi_key = NULL;
+ 
+ 	if (abs_time) {
+ 		to = &timeout;
+@@ -1842,6 +1856,7 @@ static int futex_lock_pi(u32 __user *uaddr, int fshared,
+ 
+ 	q.pi_state = NULL;
+ 	q.rt_waiter = NULL;
++	q.requeue_pi_key = NULL;
+ retry:
+ 	q.key = FUTEX_KEY_INIT;
+ 	ret = get_futex_key(uaddr, fshared, &q.key, VERIFY_WRITE);
+@@ -2153,15 +2168,16 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, int fshared,
+ 	debug_rt_mutex_init_waiter(&rt_waiter);
+ 	rt_waiter.task = NULL;
+ 
+-	q.pi_state = NULL;
+-	q.bitset = bitset;
+-	q.rt_waiter = &rt_waiter;
