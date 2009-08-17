@@ -1,90 +1,117 @@
-From: Bo Hansen <bh@newtec.dk>
-Subject: kernel oops 2.6.31-rc6-rt2
-Date: Mon, 17 Aug 2009 11:16:16 +0200
-Message-ID: <4A891FE0.6070803@newtec.dk>
+From: Dale Stimson <DaleStimson@gmail.com>
+Subject: 2.6.31-rc6-rt2 bug report
+Date: Mon, 17 Aug 2009 09:08:07 -0700
+Message-ID: <20090817160807.GA13679@cupro.opengvs.com>
+References: <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pasmtpb.tele.dk ([80.160.77.98]:34838 "EHLO pasmtpB.tele.dk"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932310AbZHQJfV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Aug 2009 05:35:21 -0400
-Received: from [192.168.0.120] (unknown [93.165.103.94])
-	by pasmtpB.tele.dk (Postfix) with ESMTP id D25E1E30DC5
-	for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2009 11:16:16 +0200 (CEST)
+Received: from 68-185-24-58.static.mdfd.or.charter.com ([68.185.24.58]:60825
+	"EHLO cupro.opengvs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753104AbZHQQX5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Aug 2009 12:23:57 -0400
+Received: from cupro.opengvs.com (cupro.opengvs.com [127.0.0.1])
+	by cupro.opengvs.com (8.14.3/8.14.3) with ESMTP id n7HG87ld013922
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2009 09:08:07 -0700
+Received: (from dale@localhost)
+	by cupro.opengvs.com (8.14.3/8.14.3/Submit) id n7HG879u013921
+	for linux-rt-users@vger.kernel.org; Mon, 17 Aug 2009 09:08:07 -0700
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+With 2.6.31-rc6-rt2, on a Dell XPS-GEN2 laptop of 2005 vintage,
+I'm seeing hundreds of bugs like the following reported to the
+system log.  X graphics go away (as if screen-saver activated)
+apparently at random, after maybe 10 seconds.
 
-I am running the latest release on a AT91RM9200 based board. I get the 
-following during bootup:
-Unable to handle kernel NULL pointer dereference at virtual address 
-00000000   
-pgd = 
-c0004000                                                                 
-[00000000] 
-*pgd=00000000                                                       
-Internal error: Oops: 5 [#1] 
-PREEMPT                                           
-Modules linked 
-in:                                                             
-CPU: 0    Not tainted  (2.6.31-rc6-rt2 
-#1)                                     
-PC is at 
-__wake_up_common+0x30/0x88                                            
-LR is at 
-__wake_up+0x3c/0x4c                                                   
-pc : [<c002f420>]    lr : [<c00306e0>]    psr: 
-00000013                        
-sp : c3851f48  ip : fffffff4  fp : 
-c3851f74                                    
-r10: 00000006  r9 : 00000000  r8 : 
-c0313e38                                    
-r7 : 00000001  r6 : 00000001  r5 : 00000001  r4 : 
-00000006                     
-r3 : 00000001  r2 : 00000001  r1 : 00000006  r0 : 
-c0313e38                     
-Flags: nzcv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment 
-kernel            
-Control: c000717f  Table: 20004000  DAC: 
-00000017                              
-Process irq/100-eth0 (pid: 253, stack limit = 
-0xc3850270)                      
-Stack: (0xc3851f48 to 
-0xc3852000)                                              
-1f40:                   00000001 00000006 00000001 c0313e20 00000000 
-00000000  
-1f60: 00000000 00000000 c3851f9c c3851f78 c00306e0 c002f400 00000000 
-c3850000  
-1f80: c3851fa4 c0313ddc c3850000 c387bba0 00000000 c3851fa0 c00640a0 
-c00306b4  
-1fa0: c024ffb4 00000032 c3821e30 c3821e30 c387bba0 c0063f7c 00000000 
-c004b810  
-1fc0: 00000000 00000000 c3851fc8 c3851fc8 c3851fd0 c3851fd0 00000000 
-00000000  
-1fe0: c3851fe0 c3851fe0 00000000 00000000 00000000 c00257a0 13dc7148 
-338c31c4  
-[<c002f420>] (__wake_up_common+0x30/0x88) from [<c00306e0>] 
-(__wake_up+0x3c/0x4)
-[<c00306e0>] (__wake_up+0x3c/0x4c) from [<c00640a0>] 
-(irq_thread+0x124/0x1ac)  
-[<c00640a0>] (irq_thread+0x124/0x1ac) from [<c004b810>] 
-(kthread+0x7c/0x84)    
-[<c004b810>] (kthread+0x7c/0x84) from [<c00257a0>] 
-(kernel_thread_exit+0x0/0x8)
-Code: e1a0a001 e1a08000 e1a06002 e59b9004 
-(e59c300c)                           
----[ end trace 3cc2d5361266da66 
-]---                                           
-exiting task "irq/100-eth0" (253) is an active IRQ thread (irq 0) 
+All reported bugs are of the type:
+    "sleeping function called from invalid context at kernel/rtmutex.c:684"
 
-The systems boots and seems to be running ok, although I noticed that 
-network activity
-results in a higher worst case latency in cyclictest than with 2.6.29-rt23.
+However, the callers that trigger the bug vary.  I've included a
+few representative call traces below.
 
-Best regards,
-Bo
+----------------------------------------------------------------
+Aug 17 08:28:46 ddl kernel: BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+Aug 17 08:28:46 ddl kernel: in_atomic(): 1, irqs_disabled(): 0, pid: 1, name: init
+Aug 17 08:28:46 ddl kernel: Pid: 1, comm: init Not tainted 2.6.31-0.1.rc6.rt2.ds.fc11.i686.PAE #1
+Aug 17 08:28:46 ddl kernel: Call Trace:
+Aug 17 08:28:46 ddl kernel: [<c042f594>] __might_sleep+0xc4/0xc9
+Aug 17 08:28:46 ddl kernel: [<c04620c5>] rt_spin_lock_fastlock.clone.1+0x29/0x62
+Aug 17 08:28:46 ddl kernel: [<c0764c79>] rt_spin_lock+0xd/0xf
+Aug 17 08:28:46 ddl kernel: [<c0472856>] res_counter_uncharge+0x21/0x3d
+Aug 17 08:28:46 ddl kernel: [<c04c39f1>] __mem_cgroup_uncharge_common+0x8e/0xf2
+Aug 17 08:28:46 ddl kernel: [<c04c3a64>] mem_cgroup_uncharge_cache_page+0xf/0x11
+Aug 17 08:28:46 ddl kernel: [<c049d6e3>] remove_from_page_cache+0x37/0x3b
+Aug 17 08:28:46 ddl kernel: [<c04a399a>] truncate_complete_page+0x3b/0x4a
+Aug 17 08:28:46 ddl kernel: [<c04a3a8a>] truncate_inode_pages_range+0xe1/0x26c
+Aug 17 08:28:46 ddl kernel: [<c04a3c27>] truncate_inode_pages+0x12/0x1b
+Aug 17 08:28:46 ddl kernel: [<c04e63e8>] kill_bdev+0x31/0x34
+Aug 17 08:28:46 ddl kernel: [<c04e6ec9>] __blkdev_put+0x48/0xf5
+Aug 17 08:28:46 ddl kernel: [<c04e6f85>] blkdev_put+0xf/0x11
+Aug 17 08:28:46 ddl kernel: [<c04e6fb7>] blkdev_close+0x30/0x34
+Aug 17 08:28:46 ddl kernel: [<c04c7b45>] __fput+0xee/0x17e
+Aug 17 08:28:46 ddl kernel: [<c04c7bed>] fput+0x18/0x1a
+Aug 17 08:28:46 ddl kernel: [<c04c4eeb>] filp_close+0x56/0x60
+Aug 17 08:28:46 ddl kernel: [<c04c4f66>] sys_close+0x71/0xa5
+Aug 17 08:28:46 ddl kernel: [<c040904c>] sysenter_do_call+0x12/0x28
+
+----------------------------------------------------------------
+
+Aug 17 08:28:46 ddl kernel: BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+Aug 17 08:28:46 ddl kernel: in_atomic(): 1, irqs_disabled(): 0, pid: 1, name: init
+Aug 17 08:28:46 ddl kernel: Pid: 1, comm: init Not tainted 2.6.31-0.1.rc6.rt2.ds.fc11.i686.PAE #1
+Aug 17 08:28:46 ddl kernel: Call Trace:
+Aug 17 08:28:46 ddl kernel: [<c042f594>] __might_sleep+0xc4/0xc9
+Aug 17 08:28:46 ddl kernel: [<c04620c5>] rt_spin_lock_fastlock.clone.1+0x29/0x62
+Aug 17 08:28:46 ddl kernel: [<c0764c79>] rt_spin_lock+0xd/0xf
+Aug 17 08:28:46 ddl kernel: [<c0472856>] res_counter_uncharge+0x21/0x3d
+Aug 17 08:28:46 ddl kernel: [<c04c39f1>] __mem_cgroup_uncharge_common+0x8e/0xf2
+Aug 17 08:28:46 ddl kernel: [<c04c3a8b>] mem_cgroup_uncharge_page+0x25/0x27
+Aug 17 08:28:46 ddl kernel: [<c04b6309>] page_remove_rmap+0x24/0x43
+Aug 17 08:28:46 ddl kernel: [<c04ae78a>] unmap_vmas+0x404/0x5a5
+Aug 17 08:28:46 ddl kernel: [<c04b305c>] unmap_region+0x60/0xa1
+Aug 17 08:28:46 ddl kernel: [<c04b3abb>] ? split_vma+0x101/0x114
+Aug 17 08:28:46 ddl kernel: [<c04b3c97>] do_munmap+0x1c9/0x222
+Aug 17 08:28:46 ddl kernel: [<c04b3d27>] sys_munmap+0x37/0x47
+Aug 17 08:28:46 ddl kernel: [<c040904c>] sysenter_do_call+0x12/0x28
+
+----------------------------------------------------------------
+
+Aug 17 08:28:46 ddl kernel: BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+Aug 17 08:28:46 ddl kernel: in_atomic(): 1, irqs_disabled(): 0, pid: 164, name: udevd
+Aug 17 08:28:46 ddl kernel: Pid: 164, comm: udevd Not tainted 2.6.31-0.1.rc6.rt2.ds.fc11.i686.PAE #1
+Aug 17 08:28:46 ddl kernel: Call Trace:
+Aug 17 08:28:46 ddl kernel: [<c042f594>] __might_sleep+0xc4/0xc9
+Aug 17 08:28:46 ddl kernel: [<c04620c5>] rt_spin_lock_fastlock.clone.1+0x29/0x62
+Aug 17 08:28:46 ddl kernel: [<c0764c79>] rt_spin_lock+0xd/0xf
+Aug 17 08:28:46 ddl kernel: [<c0472856>] res_counter_uncharge+0x21/0x3d
+Aug 17 08:28:46 ddl kernel: [<c04c39f1>] __mem_cgroup_uncharge_common+0x8e/0xf2
+Aug 17 08:28:46 ddl kernel: [<c04c3a64>] mem_cgroup_uncharge_cache_page+0xf/0x11
+Aug 17 08:28:46 ddl kernel: [<c049d6e3>] remove_from_page_cache+0x37/0x3b
+Aug 17 08:28:46 ddl kernel: [<c04a399a>] truncate_complete_page+0x3b/0x4a
+Aug 17 08:28:46 ddl kernel: [<c04a3a8a>] truncate_inode_pages_range+0xe1/0x26c
+Aug 17 08:28:46 ddl kernel: [<c04a3c27>] truncate_inode_pages+0x12/0x1b
+Aug 17 08:28:46 ddl kernel: [<c04aee19>] vmtruncate+0xc9/0x117
+Aug 17 08:28:46 ddl kernel: [<c04d704b>] inode_setattr+0x61/0x132
+Aug 17 08:28:46 ddl kernel: [<c04a8708>] shmem_notify_change+0x9f/0xce
+Aug 17 08:28:46 ddl kernel: [<c04d728b>] notify_change+0x16f/0x2bc
+Aug 17 08:28:46 ddl kernel: [<c04c5bf2>] do_truncate+0x64/0x7d
+Aug 17 08:28:46 ddl kernel: [<c0764ccf>] ? _mutex_lock+0xd/0xf
+Aug 17 08:28:46 ddl kernel: [<c04c5bf2>] ? do_truncate+0x64/0x7d
+Aug 17 08:28:46 ddl kernel: [<c04cf2eb>] may_open+0x187/0x18b
+Aug 17 08:28:46 ddl kernel: [<c04cf944>] do_filp_open+0x3c3/0x6ea
+Aug 17 08:28:46 ddl kernel: [<c04620c5>] ? rt_spin_lock_fastlock.clone.1+0x29/0x62
+Aug 17 08:28:46 ddl kernel: [<c04620c5>] ? rt_spin_lock_fastlock.clone.1+0x29/0x62
+Aug 17 08:28:46 ddl kernel: [<c04d7d88>] ? alloc_fd+0xc2/0xcf
+Aug 17 08:28:46 ddl kernel: [<c04c4fe7>] do_sys_open+0x4d/0xe4
+Aug 17 08:28:46 ddl kernel: [<c047951b>] ? audit_syscall_entry+0x12a/0x14c
+Aug 17 08:28:46 ddl kernel: [<c04c50ca>] sys_open+0x23/0x2b
+Aug 17 08:28:46 ddl kernel: [<c040904c>] sysenter_do_call+0x12/0x28
+
+----------------------------------------------------------------
 
