@@ -1,89 +1,90 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31-rc6-rt2
-Date: Sun, 16 Aug 2009 22:41:59 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain> <alpine.LFD.2.00.0904110003370.21577@localhost.localdomain> <alpine.LFD.2.00.0904181204420.21577@localhost.localdomain>
- <alpine.LFD.2.00.0904251500150.4529@localhost.localdomain> <alpine.LFD.2.00.0904290036500.4529@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
- <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
- <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+From: Bo Hansen <bh@newtec.dk>
+Subject: kernel oops 2.6.31-rc6-rt2
+Date: Mon, 17 Aug 2009 11:16:16 +0200
+Message-ID: <4A891FE0.6070803@newtec.dk>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:47108 "EHLO www.tglx.de"
+Received: from pasmtpb.tele.dk ([80.160.77.98]:34838 "EHLO pasmtpB.tele.dk"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752212AbZHPUmv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 16 Aug 2009 16:42:51 -0400
-In-Reply-To: <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+	id S932310AbZHQJfV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Aug 2009 05:35:21 -0400
+Received: from [192.168.0.120] (unknown [93.165.103.94])
+	by pasmtpB.tele.dk (Postfix) with ESMTP id D25E1E30DC5
+	for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2009 11:16:16 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-    - update to 2.6.31-rc6
+Hello,
 
-    - ARM updates (Uwe Kleine-Koenig)
+I am running the latest release on a AT91RM9200 based board. I get the 
+following during bootup:
+Unable to handle kernel NULL pointer dereference at virtual address 
+00000000   
+pgd = 
+c0004000                                                                 
+[00000000] 
+*pgd=00000000                                                       
+Internal error: Oops: 5 [#1] 
+PREEMPT                                           
+Modules linked 
+in:                                                             
+CPU: 0    Not tainted  (2.6.31-rc6-rt2 
+#1)                                     
+PC is at 
+__wake_up_common+0x30/0x88                                            
+LR is at 
+__wake_up+0x3c/0x4c                                                   
+pc : [<c002f420>]    lr : [<c00306e0>]    psr: 
+00000013                        
+sp : c3851f48  ip : fffffff4  fp : 
+c3851f74                                    
+r10: 00000006  r9 : 00000000  r8 : 
+c0313e38                                    
+r7 : 00000001  r6 : 00000001  r5 : 00000001  r4 : 
+00000006                     
+r3 : 00000001  r2 : 00000001  r1 : 00000006  r0 : 
+c0313e38                     
+Flags: nzcv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment 
+kernel            
+Control: c000717f  Table: 20004000  DAC: 
+00000017                              
+Process irq/100-eth0 (pid: 253, stack limit = 
+0xc3850270)                      
+Stack: (0xc3851f48 to 
+0xc3852000)                                              
+1f40:                   00000001 00000006 00000001 c0313e20 00000000 
+00000000  
+1f60: 00000000 00000000 c3851f9c c3851f78 c00306e0 c002f400 00000000 
+c3850000  
+1f80: c3851fa4 c0313ddc c3850000 c387bba0 00000000 c3851fa0 c00640a0 
+c00306b4  
+1fa0: c024ffb4 00000032 c3821e30 c3821e30 c387bba0 c0063f7c 00000000 
+c004b810  
+1fc0: 00000000 00000000 c3851fc8 c3851fc8 c3851fd0 c3851fd0 00000000 
+00000000  
+1fe0: c3851fe0 c3851fe0 00000000 00000000 00000000 c00257a0 13dc7148 
+338c31c4  
+[<c002f420>] (__wake_up_common+0x30/0x88) from [<c00306e0>] 
+(__wake_up+0x3c/0x4)
+[<c00306e0>] (__wake_up+0x3c/0x4c) from [<c00640a0>] 
+(irq_thread+0x124/0x1ac)  
+[<c00640a0>] (irq_thread+0x124/0x1ac) from [<c004b810>] 
+(kthread+0x7c/0x84)    
+[<c004b810>] (kthread+0x7c/0x84) from [<c00257a0>] 
+(kernel_thread_exit+0x0/0x8)
+Code: e1a0a001 e1a08000 e1a06002 e59b9004 
+(e59c300c)                           
+---[ end trace 3cc2d5361266da66 
+]---                                           
+exiting task "irq/100-eth0" (253) is an active IRQ thread (irq 0) 
 
-    - OF fixes
+The systems boots and seems to be running ok, although I noticed that 
+network activity
+results in a higher worst case latency in cyclictest than with 2.6.29-rt23.
 
-    - threaded interrupt crash fix (Linus)
+Best regards,
+Bo
 
-    - locking build fix
-
-    - minor fixes all over the place
-
-There is a known boot problem on PSeries machines which is still
-investigated by Will. If you have access to such a beast please help
-to get this decoded.
-
-I have not merged one of the proposed fixed for the ARM highmem
-problem. We really want someone with such a hardware to have a look
-and confirm the fix.
-
-Download locations:
-
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git release branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31-rc6
-
-Git development branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Gitweb:
-    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31-rc6
-
-Information on the RT patch can be found at:
-
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.31-rc6-rt2 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc6.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rc6-rt2.bz2
-
-Thanks to Clark and John for collecting patches and providing updated
-trees while I was on vacation.
-
-Enjoy !
-
-       tglx
