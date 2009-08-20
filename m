@@ -1,21 +1,13 @@
-From: john stultz <johnstul@us.ibm.com>
+From: Dinakar Guniguntala <dino@in.ibm.com>
 Subject: Re: [ANNOUNCE] 2.6.31-rc6-rt5
-Date: Wed, 19 Aug 2009 19:19:02 -0700
-Message-ID: <1f1b08da0908191919x77c8e9edu9f31a9a56ba41ee@mail.gmail.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-	 <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
-	 <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
-	 <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+Date: Thu, 20 Aug 2009 20:59:31 +0530
+Message-ID: <20090820152931.GA5731@in.ibm.com>
+References: <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <1f1b08da0908191919x77c8e9edu9f31a9a56ba41ee@mail.gmail.com>
+Reply-To: dino@in.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
@@ -30,28 +22,37 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Will Schmidt <will_schmidt@vnet.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Dinakar Guniguntala <dino@in.ibm.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Jon Masters <jcm@redhat.com>
+To: john stultz <johnstul@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f175.google.com ([209.85.210.175]:64141 "EHLO
-	mail-yx0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751779AbZHTCTE (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:33845 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751206AbZHTP3k (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Aug 2009 22:19:04 -0400
-In-Reply-To: <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+	Thu, 20 Aug 2009 11:29:40 -0400
+Content-Disposition: inline
+In-Reply-To: <1f1b08da0908191919x77c8e9edu9f31a9a56ba41ee@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Aug 19, 2009 at 2:48 PM, Thomas Gleixner<tglx@linutronix.de> wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
+On Wed, Aug 19, 2009 at 07:19:02PM -0700, john stultz wrote:
+> On Wed, Aug 19, 2009 at 2:48 PM, Thomas Gleixner<tglx@linutronix.de> wrote:
+> > We are pleased to announce the next update to our new preempt-rt
+> > series.
+> 
+> Hey Thomas, Peter, Ingo,
+>     I'm still seeing the odd SMP scheduler behavior (where all the
+> processes line up on a single cpu) with -rt5. This can be easily
+> reproduced with a "make -j8 bzImage".  I'm I the only one seeing this?
 
-Hey Thomas, Peter, Ingo,
-    I'm still seeing the odd SMP scheduler behavior (where all the
-processes line up on a single cpu) with -rt5. This can be easily
-reproduced with a "make -j8 bzImage".  I'm I the only one seeing this?
- Any suggestions on further debugging this?
+I am seeing it with 2.6.31-rcX-rtY kernels on both a 8 CPU AMD/Intel box
+Specjbb was returning pathetically low numbers which turns out to be
+because all threads are running on just one of the cpus
 
-thanks
--john
+	-Dinakar
+
+
+>  Any suggestions on further debugging this?
+> 
+> thanks
+> -john
