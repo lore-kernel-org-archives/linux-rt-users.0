@@ -1,132 +1,116 @@
-From: Mark Knecht <markknecht@gmail.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc6-rt6
-Date: Fri, 21 Aug 2009 15:57:47 -0700
-Message-ID: <5bdc1c8b0908211557q74eefag6cccb5ab321e3997@mail.gmail.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-	 <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
-	 <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
-	 <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
-	 <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
+From: raz ben yehuda <raziebe@gmail.com>
+Subject: Re: RFC: THE OFFLINE SCHEDULER
+Date: Sun, 23 Aug 2009 12:09:11 +0300
+Message-ID: <1251018551.3810.35.camel@raz>
+References: <1250983671.5688.21.camel@raz>
+	 <1251004897.7043.70.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f175.google.com ([209.85.210.175]:50959 "EHLO
-	mail-yx0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932617AbZHUW5q convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Aug 2009 18:57:46 -0400
-Received: by yxe5 with SMTP id 5so529174yxe.33
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 Aug 2009 15:57:47 -0700 (PDT)
-In-Reply-To: <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: riel@redhat.com, mingo@elte.hu, peterz@infradead.org,
+	andrew motron <akpm@osdl.org>, wiseman@macs.biu.ac.il,
+	lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1750846AbZHWGJJ@vger.kernel.org>
+In-Reply-To: <1251004897.7043.70.camel@marge.simson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Aug 21, 2009 at 2:26 PM, Thomas Gleixner<tglx@linutronix.de> wr=
-ote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->
-<SNIP>
->
-> Information on the RT patch can be found at:
->
-> =C2=A0 =C2=A0http://rt.wiki.kernel.org/index.php/Main_Page
->
-> to build the 2.6.31-rc6-rt6 tree, the following patches should be
-> applied:
->
-> =C2=A0 =C2=A0http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30=
-=2Etar.bz2
-> =C2=A0 =C2=A0http://www.kernel.org/pub/linux/kernel/v2.6/testing/patc=
-h-2.6.31-rc6.bz2
-> =C2=A0 =C2=A0http://www.kernel.org/pub/linux/kernel/projects/rt/patch=
--2.6.31-rc6-rt6.bz2
->
-> Enjoy !
->
-> =C2=A0 =C2=A0 =C2=A0 tglx
+On Sun, 2009-08-23 at 07:21 +0200, Mike Galbraith wrote:
+> On Sun, 2009-08-23 at 02:27 +0300, raz ben yehuda wrote:
+> > 			The Open University of Israel
+> > 		  Department of Mathematics and computer science=09
+> > 		=09
+> > 		  	 	FINAL PAPER
+> > 			     OFFLINE  SCHEDULER
+> >=20
+> >=20
+> >=20
+> > OFFSCHED is a platform aimed to assign an assignment to an offloade=
+d processor.An offloaded processor is a processor that is hot un-plugge=
+d from the operating system.
+> >=20
+> > Description
+> >=20
+> > In today=E2=80=99s computer world, we find that most processors hav=
+e several embedded cores and hyper-threading. Most programmers do not r=
+eally use these powerful features and let the operating system do the w=
+ork.
+> > At most, a programmer will bound an application to a certain proces=
+sor or assign an interrupt to a different processor. At the end, we get=
+ system busy in maintaining tasks across processors, balancing interrup=
+ts, flushing TLBs and DTLBs using atomic operations even when not neede=
+d and worst of all, spin locks across processors in vein; and the more =
+processors the merrier. I argue that in some cases, part of this behavi=
+or is due to fact the multiple core operating system is not service ori=
+ented but a system oriented. There is no easy way to assign a processor=
+ to do a distinct service, undisturbed, accurate, and fast as long as t=
+he processor is an active part of an operating system and still be a pa=
+rt of most of the operating system address space.
+> >=20
+> > OFFSCHED Purpose
+> >=20
+> > The purpose of the OFFSCHED is to create a platform for services. F=
+or example, assume a firewall is being attacked; the Linux operating sy=
+stem will generate endless number of interrupts and/or softirqs to anal=
+yze the traffic and throw out bad packets. This is on the expense of =E2=
+=80=9Cgood=E2=80=9D packets. Have you ever tried to =E2=80=9Cssh=E2=80=9D=
+ to an attacked machine? Who protects the operating system ?
+> > What if we can simply do the packet analysis outside the operating =
+system, without being interrupted ?
+> > Why not assign a core to do only =E2=80=9Cfirewalling=E2=80=9D? Or =
+just routing? Design a new type of Real Time system? Maybe assign it as=
+ an ultra accurate timer? Create a delaying service that does not just =
+spin? Offload a TCP stack? perhaps a new type of a locking scheme? New =
+type bottom-halves? Debug a running kernel through an offloaded process=
+or? Maybe assign a GPU to do other things than just graphics?
+> > Amdahl Law teaches us that linear speed-up is not very feasible , s=
+o why not spare a processor to do certain tasks better?
+> > Technologically speaking, I am referring to the Linux kernel abilit=
+y to virtually hot unplug a (SMT) processor ;but instead of letting it =
+wonder in endless =E2=80=9Chalts=E2=80=9D, assign it a service.
+>=20
+> Seems to me this boils down to a different way to make a SW box in a =
+HW
+> box, which already exists.  What does this provide that  partitioning=
+ a
+> box with csets and virtualization doesn't?
+OFFSCHED does not compete with cpu sets nor virtualization.it is
+different.
 
-Hi Thomas,
-   Been awhile since I updated my kernel. Our Gentoo pro-audio overlay
-seems to be dieing and the maintainers haven't been giving us many
-update options so I've been running 2.6.29.2-rt11 for quite a long
-time. I saw your announcement and thought I'd give this kernel a try
-by hand.
+1. Neither virtuallization nor cpu sets provide hard real time. OFFSCHE=
+D
+does this with a little cost and no impact on the OS.OFFSCHED is not
+just accurate , it is also extremely fast,after all, it is NMI'ed
+processor.
 
-   I had no problems downloading the code above and patching it as per
-the rtWiki instructions. I grabbed a copy of my 2.6.29-rt11 .config
-file, did make oldconfig, then make menuconfig to check that things
-looked good. The build went fine and I installed the kernel. No
-problems so far.
+2. OFFSCHED has a access to every piece of memory in the system. so it
+can act as a centry for the system, or use linux facilities. Also, the
+kernel can access OFFSCHED memory, it is the same address space.
 
-   Unfortunately when I tried to boot it the kernel is getting stuck
-VERY early in the boot process looking for my hard drives. It waits
-for maybe 30-60 seconds looking for the drive and then says something
-like 'interrupt lost' or some other such thing.
+3. OFFSCHED can improve the linux OS ( NAPI,OFFSCHED firewall,RTOP ),
+while a guest OS cannot.
 
-   If it continues I'll get the exact text but I'm wondering if there
-are any places in the kernel config I should be looking for changes in
-how the basic kernel would handle finding drives? Did the driver
-config change at all? It is acting almost like the machine doesn't
-have any hard drives or CDs.
+4. cpu sets cannot replace softirqs and hardirqs. OFFSCHED can. cpu set=
+s
+deals with kernel threads and user space threads. in OFFSCHED we use
+offlets.=20
 
-   This is an AMD64 processor running on a 5 year old nVidia chipset.
+5. cpu sets and  virtualization are services provided by the kernel to
+the "system".who serves the kernel ? who protects the kernel ?=20
 
-   I'm back in 2.6.29-rt11 for now.
+6. offlets gives the programmer full control over an entire processor.
+no preemption, no interrupts, no quiesce. you know what happens , and
+when it happens.
 
-   I'll see about building just the 2.6.31 kernel as a test also.
+I have this hard real time system several years on my SMP/MC/SMT
+machines. It serves me well. The core of OFFSCHED patch was 4 lines.
+So,i simply compile a ***entirely regular*** linux bzImage and that's
+it. It did not mess with drivers, spinlocks, softirqs ..., OFFSCHED jus=
+t
+directed the cpu_down to my own hard real time piece of code. The rest
+of the kernel remained the same. =20
 
-Cheers,
-Mark
-
-lightning ~ # lspci
-00:00.0 Memory controller: nVidia Corporation CK804 Memory Controller (=
-rev a3)
-00:01.0 ISA bridge: nVidia Corporation CK804 ISA Bridge (rev a3)
-00:01.1 SMBus: nVidia Corporation CK804 SMBus (rev a2)
-00:02.0 USB Controller: nVidia Corporation CK804 USB Controller (rev a2=
-)
-00:02.1 USB Controller: nVidia Corporation CK804 USB Controller (rev a3=
-)
-00:04.0 Multimedia audio controller: nVidia Corporation CK804 AC'97
-Audio Controller (rev a2)
-00:06.0 IDE interface: nVidia Corporation CK804 IDE (rev f2)
-00:07.0 IDE interface: nVidia Corporation CK804 Serial ATA Controller (=
-rev f3)
-00:08.0 IDE interface: nVidia Corporation CK804 Serial ATA Controller (=
-rev f3)
-00:09.0 PCI bridge: nVidia Corporation CK804 PCI Bridge (rev a2)
-00:0a.0 Bridge: nVidia Corporation CK804 Ethernet Controller (rev a3)
-00:0b.0 PCI bridge: nVidia Corporation CK804 PCIE Bridge (rev a3)
-00:0c.0 PCI bridge: nVidia Corporation CK804 PCIE Bridge (rev a3)
-00:0d.0 PCI bridge: nVidia Corporation CK804 PCIE Bridge (rev a3)
-00:0e.0 PCI bridge: nVidia Corporation CK804 PCIE Bridge (rev a3)
-00:18.0 Host bridge: Advanced Micro Devices [AMD] K8
-[Athlon64/Opteron] HyperTransport Technology Configuration
-00:18.1 Host bridge: Advanced Micro Devices [AMD] K8
-[Athlon64/Opteron] Address Map
-00:18.2 Host bridge: Advanced Micro Devices [AMD] K8
-[Athlon64/Opteron] DRAM Controller
-00:18.3 Host bridge: Advanced Micro Devices [AMD] K8
-[Athlon64/Opteron] Miscellaneous Control
-01:00.0 VGA compatible controller: ATI Technologies Inc RV370 5B60
-[Radeon X300 (PCIE)]
-01:00.1 Display controller: ATI Technologies Inc RV370 [Radeon X300SE]
-05:06.0 Multimedia audio controller: Xilinx Corporation RME Hammerfall
-DSP (rev 68)
-05:08.0 FireWire (IEEE 1394): Texas Instruments TSB82AA2 IEEE-1394b
-Link Layer Controller (rev 01)
-lightning ~ #
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 	-Mike
+>=20
