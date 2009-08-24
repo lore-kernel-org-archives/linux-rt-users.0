@@ -1,81 +1,59 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: About update-server-info of rt-tests git tree
-Date: Mon, 24 Aug 2009 09:09:38 -0500
-Message-ID: <20090824090938.376cff39@torg>
-References: <1251073539.2153.61.camel@centos51>
+From: Meha Mehta <mehtameha@gmail.com>
+Subject: mod_timer() with interrupt disabled (RT patch)
+Date: Mon, 24 Aug 2009 13:12:55 -0400
+Message-ID: <af81d2bf0908241012j41144f9i3b10e9f466fdafa@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/3ot3849DmmFGHxuRr8+MBJ9"; protocol="application/pgp-signature"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: leemgs1@gmail.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:38762 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752525AbZHXOJm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Aug 2009 10:09:42 -0400
-In-Reply-To: <1251073539.2153.61.camel@centos51>
+Received: from mail-yw0-f183.google.com ([209.85.211.183]:50098 "EHLO
+	mail-yw0-f183.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752759AbZHXRMy (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 24 Aug 2009 13:12:54 -0400
+Received: by ywh13 with SMTP id 13so2938378ywh.15
+        for <linux-rt-users@vger.kernel.org>; Mon, 24 Aug 2009 10:12:56 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/3ot3849DmmFGHxuRr8+MBJ9
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-On Mon, 24 Aug 2009 09:25:39 +0900
-GeunSik Lim <leemgs1@gmail.com> wrote:
+I am doing few modification in kernel with RT patch enabled. I am
+calling mod_timer  with interrupt disabled ( I can not avoid this with
+my code design).  mod_timer() has rt_spin_lock (mutex that block) for
+locking timer base. So I am getting kernel following bug
 
->=20
->=20
-> Dear Clarks ,=20
->=20
-> I have one favor for you.=20
-> As you know, Some developers often use http protocol(80) without git prot=
-ocol(9418)=20
-> because of firewall problems. Recently, I used " git clone" command with =
-http protocol.=20
-> But, I can not get rt-tests v0.50.
->=20
-> This is a history.=20
-> fedora11$> git clone http://www.kernel.org/pub/scm/linux/kernel/git/clrkw=
-llms/rt-tests.git
-> fedora11$> cd rt-tests
-> fedora11$> git tag
-> v0.18
-> v0.19
-> v0.20
-> v0.21
-> v0.22
-> v0.23
-> v0.24
-> v0.25
-> v0.26
-> v0.27
->=20
-> Please, Can you run below command for http protocol users?=20
-> e.g) git update-server-info [enter]
->=20
->
+BUG: sleeping function called from invalid context at
+kernel/rtmutex.c:685 in_atomic(): 1, irqs_disabled(): 1
 
-I logged in and ran:
 
-$ git --bare update-server-info
+My question is it alright to convert timer lock type into
+raw_spinlock_t from spinlock_t? I tried to do it and solves problem
+with mod_timer() bug. But it run into another bug listed as follows.
 
-Hopefully that will do the trick. Please let me know if it doesn't.
+
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:685
+in_atomic(): 1, irqs_disabled(): 1, pid: 5, name: sirq-timer/0
+Pid: 5, comm: sirq-timer/0 Not tainted 2.6.29.6-rt23 #92
+Call Trace:
+ [<ffffffff804d4502>] ? rt_spin_lock+0x27/0x66
+ [<ffffffff8023ad76>] ? __wake_up+0x1c/0x42
+ [<ffffffff802471a4>] ? run_timer_softirq+0x23f/0x252
+ [<ffffffff802435b0>] ? ksoftirqd+0x14b/0x241
+ [<ffffffff80243465>] ? ksoftirqd+0x0/0x241
+ [<ffffffff80243465>] ? ksoftirqd+0x0/0x241
+ [<ffffffff80250fb9>] ? kthread+0x47/0x76
+ [<ffffffff8023910c>] ? schedule_tail+0x3f/0xab
+ [<ffffffff8020caca>] ? child_rip+0xa/0x20
+ [<ffffffff80250f72>] ? kthread+0x0/0x76
+ [<ffffffff8020cac0>] ? child_rip+0x0/0x20
+
+I think solving problem with raw_spinlock_t will not work. Are there
+any other suggestions so that I can call mod_timer routine with
+interrupt disabled?
+
+Thank you in advance.
 
 Thanks,
-Clark
-
-
---Sig_/3ot3849DmmFGHxuRr8+MBJ9
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.11 (GNU/Linux)
-
-iEYEARECAAYFAkqSnyYACgkQHyuj/+TTEp0CAgCfaUgRfaWbEQItLDrBkPVxEiGJ
-W+4AoMpFChrBWCcM8eiBDQ57VyA6Tbs1
-=Js5G
------END PGP SIGNATURE-----
-
---Sig_/3ot3849DmmFGHxuRr8+MBJ9--
+Meha
