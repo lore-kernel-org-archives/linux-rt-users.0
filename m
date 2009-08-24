@@ -1,35 +1,44 @@
-From: Cliff Brake <cliff.brake@gmail.com>
-Subject: RT tests on OMAP3
-Date: Mon, 31 Aug 2009 16:50:53 -0400
-Message-ID: <f96d234e0908311350u5d3d7680gfbf46a1c8f9de58f@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: rt-users <linux-rt-users@vger.kernel.org>,
-	Linux OMAP Users <linux-omap@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f189.google.com ([209.85.216.189]:60533 "EHLO
-	mail-px0-f189.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751660AbZHaU57 (ORCPT
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from sovereign.computergmbh.de ([85.214.69.204]:51480 "EHLO
+	sovereign.computergmbh.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751680AbZHXKwP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Aug 2009 16:57:59 -0400
+	Mon, 24 Aug 2009 06:52:15 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by sovereign.computergmbh.de (Postfix) with ESMTP id EF2384179336
+	for <linux-rt-users@vger.kernel.org>; Mon, 24 Aug 2009 12:52:14 +0200 (CEST)
+Date: Mon, 24 Aug 2009 12:52:14 +0200 (CEST)
+From: Jan Engelhardt <jengelh@medozas.de>
+Subject: might_sleep warnings 'temporary hack'
+Message-ID: <alpine.LSU.2.00.0908241230240.2296@fbirervta.pbzchgretzou.qr>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 
-Hello,
+Hi,
 
-I'm trying to run 2.6.31-rc8-rt9-omap1 on a OMAP3 cpu.  So far, it
-seems fairly unstable:
 
-http://www.bec-systems.com/omap-rt-tests/
+in kernel/rtmutex.c near line 685 in function rt_spin_lock_fastlock I do 
+see:
 
-2.6.31-rc8-rt9 boots and runs well on a PXA270.
+	/* temporary hack! */
+	if (likely(!current->in_printk))
+		might_sleep();
 
-The following mail also references udev failures:
-http://lkml.org/lkml/2009/8/11/250
+and Virtualbox constantly trips on this. Can I assume this is a problem 
+in the virtualbox 3.0.4 host modules?
 
-Any suggestions on how to debug this?  I'd be glad to do testing, etc.
 
-The OMAP3 is superscaler where the PXA270 is not.
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:685
+in_atomic(): 1, irqs_disabled(): 0, pid: 11724, name: VirtualBox
+Pid: 11724, comm: VirtualBox Tainted: G          N  2.6.29.6-jen82-rt #1
+Call Trace:
+ [<ffffffff802388e6>] __might_sleep+0x10a/0x10c
+ [<ffffffff804c6edf>] rt_spin_lock+0x2f/0x78
+ [<ffffffffa05cb89f>] RTSpinlockAcquire+0xd/0xf [vboxdrv]
+ [<ffffffffa05ceb13>] RTHandleTableLookupWithCtx+0x79/0x102 [vboxdrv]
 
-Thanks,
-Cliff
+(To note that their RT* functions have nothing to do with realtime—sigh)
