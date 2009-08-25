@@ -1,59 +1,48 @@
-From: Meha Mehta <mehtameha@gmail.com>
-Subject: mod_timer() with interrupt disabled (RT patch)
-Date: Mon, 24 Aug 2009 13:12:55 -0400
-Message-ID: <af81d2bf0908241012j41144f9i3b10e9f466fdafa@mail.gmail.com>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: About update-server-info of rt-tests git tree
+Date: Tue, 25 Aug 2009 13:38:26 +0900
+Message-ID: <49b7c2350908242138j277b07f4j7649f29871d2d9c2@mail.gmail.com>
+References: <1251073539.2153.61.camel@centos51> <20090824090938.376cff39@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f183.google.com ([209.85.211.183]:50098 "EHLO
+Received: from mail-yw0-f183.google.com ([209.85.211.183]:39812 "EHLO
 	mail-yw0-f183.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752759AbZHXRMy (ORCPT
+	with ESMTP id S1752764AbZHYEiZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Aug 2009 13:12:54 -0400
-Received: by ywh13 with SMTP id 13so2938378ywh.15
-        for <linux-rt-users@vger.kernel.org>; Mon, 24 Aug 2009 10:12:56 -0700 (PDT)
+	Tue, 25 Aug 2009 00:38:25 -0400
+Received: by ywh13 with SMTP id 13so3605506ywh.15
+        for <linux-rt-users@vger.kernel.org>; Mon, 24 Aug 2009 21:38:26 -0700 (PDT)
+In-Reply-To: <20090824090938.376cff39@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Mon, Aug 24, 2009 at 11:09 PM, Clark Williams<williams@redhat.com> wrote:
+> $ git --bare update-server-info
+> Hopefully that will do the trick. Please let me know if it doesn't.
+I checked with below command again after your action.
+$ git clone http://www.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+I can get recent rt-tests version based ver 0.50.  It's normal thanks to you.
 
-I am doing few modification in kernel with RT patch enabled. I am
-calling mod_timer  with interrupt disabled ( I can not avoid this with
-my code design).  mod_timer() has rt_spin_lock (mutex that block) for
-locking timer base. So I am getting kernel following bug
+Thks,
+GeunSik Lim,
 
-BUG: sleeping function called from invalid context at
-kernel/rtmutex.c:685 in_atomic(): 1, irqs_disabled(): 1
-
-
-My question is it alright to convert timer lock type into
-raw_spinlock_t from spinlock_t? I tried to do it and solves problem
-with mod_timer() bug. But it run into another bug listed as follows.
+>
+>
 
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:685
-in_atomic(): 1, irqs_disabled(): 1, pid: 5, name: sirq-timer/0
-Pid: 5, comm: sirq-timer/0 Not tainted 2.6.29.6-rt23 #92
-Call Trace:
- [<ffffffff804d4502>] ? rt_spin_lock+0x27/0x66
- [<ffffffff8023ad76>] ? __wake_up+0x1c/0x42
- [<ffffffff802471a4>] ? run_timer_softirq+0x23f/0x252
- [<ffffffff802435b0>] ? ksoftirqd+0x14b/0x241
- [<ffffffff80243465>] ? ksoftirqd+0x0/0x241
- [<ffffffff80243465>] ? ksoftirqd+0x0/0x241
- [<ffffffff80250fb9>] ? kthread+0x47/0x76
- [<ffffffff8023910c>] ? schedule_tail+0x3f/0xab
- [<ffffffff8020caca>] ? child_rip+0xa/0x20
- [<ffffffff80250f72>] ? kthread+0x0/0x76
- [<ffffffff8020cac0>] ? child_rip+0x0/0x20
 
-I think solving problem with raw_spinlock_t will not work. Are there
-any other suggestions so that I can call mod_timer routine with
-interrupt disabled?
-
-Thank you in advance.
-
-Thanks,
-Meha
+-- 
+Regards,
+GeunSik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+e-Mail: geunsik.lim@samsung.com
+           leemgs@gmail.com , leemgs1@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
