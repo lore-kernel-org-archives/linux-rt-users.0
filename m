@@ -1,48 +1,25 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: About update-server-info of rt-tests git tree
-Date: Tue, 25 Aug 2009 13:38:26 +0900
-Message-ID: <49b7c2350908242138j277b07f4j7649f29871d2d9c2@mail.gmail.com>
-References: <1251073539.2153.61.camel@centos51> <20090824090938.376cff39@torg>
+From: Christoph Lameter <cl@linux-foundation.org>
+Subject: Re: RFC: THE OFFLINE SCHEDULER
+Date: Tue, 25 Aug 2009 11:23:51 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0908251122020.26329@gentwo.org>
+References: <1250983671.5688.21.camel@raz>  <1251004897.7043.70.camel@marge.simson.net>  <1251018551.3810.35.camel@raz>  <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz> <1251021133.14003.172.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f183.google.com ([209.85.211.183]:39812 "EHLO
-	mail-yw0-f183.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752764AbZHYEiZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Aug 2009 00:38:25 -0400
-Received: by ywh13 with SMTP id 13so3605506ywh.15
-        for <linux-rt-users@vger.kernel.org>; Mon, 24 Aug 2009 21:38:26 -0700 (PDT)
-In-Reply-To: <20090824090938.376cff39@torg>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: raz ben yehuda <raziebe@gmail.com>, riel@redhat.com, mingo@elte.hu,
+	peterz@infradead.org, andrew motron <akpm@linux-foundation.org>,
+	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755201AbZHYPd5@vger.kernel.org>
+In-Reply-To: <1251021133.14003.172.camel@marge.simson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Aug 24, 2009 at 11:09 PM, Clark Williams<williams@redhat.com> wrote:
-> $ git --bare update-server-info
-> Hopefully that will do the trick. Please let me know if it doesn't.
-I checked with below command again after your action.
-$ git clone http://www.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-I can get recent rt-tests version based ver 0.50.  It's normal thanks to you.
+On Sun, 23 Aug 2009, Mike Galbraith wrote:
 
-Thks,
-GeunSik Lim,
+> The rest, I'll leave off replying to, we're kinda splitting hairs.  I
+> don't see a big generic benefit to OFFSCHED or ilk, others do.
 
->
->
-
-
-
--- 
-Regards,
-GeunSik Lim ( Samsung Electronics )
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-           leemgs@gmail.com , leemgs1@gmail.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
+No we are not splitting hairs. OFFSCHED takes the OS noise (interrupts,
+timers, RCU, cacheline stealing etc etc) out of certain processors. You
+cannot run an undisturbed piece of software on the OS right now.
