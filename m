@@ -1,86 +1,54 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+From: =?UTF-8?B?w4lyaWMgUGllbA==?= <E.A.B.Piel@tudelft.nl>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Tue, 25 Aug 2009 13:35:44 -0700
-Message-ID: <1251232544.8208.18.camel@quadrophenia.thebigcorporation.com>
-References: <1250983671.5688.21.camel@raz>
-	 <1251004897.7043.70.camel@marge.simson.net> <1251018551.3810.35.camel@raz>
-	 <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz>
-	 <1251021133.14003.172.camel@marge.simson.net>
-	 <alpine.DEB.1.10.0908251122020.26329@gentwo.org>
-	 <1251222993.7023.53.camel@marge.simson.net>
-	 <alpine.DEB.1.10.0908251402300.17963@gentwo.org>
-	 <1251227322.7538.1172.camel@twins>  <4A943A00.9080609@nortel.com>
+Date: Tue, 25 Aug 2009 23:09:43 +0200
+Message-ID: <4A945317.5040501@tudelft.nl>
+References: <1250983671.5688.21.camel@raz>	 <1251004897.7043.70.camel@marge.simson.net> <1251018551.3810.35.camel@raz>	 <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz>	 <1251021133.14003.172.camel@marge.simson.net>	 <alpine.DEB.1.10.0908251122020.26329@gentwo.org>	 <1251222993.7023.53.camel@marge.simson.net>	 <alpine.DEB.1.10.0908251402300.17963@gentwo.org> <1251227322.7538.1172.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Christoph Lameter <cl@linux-foundation.org>,
+Cc: Christoph Lameter <cl@linux-foundation.org>,
 	Mike Galbraith <efault@gmx.de>,
 	raz ben yehuda <raziebe@gmail.com>, riel@redhat.com,
 	mingo@elte.hu, andrew motron <akpm@linux-foundation.org>,
 	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
 	linux-rt-users@vger.kernel.org
-To: Chris Friesen <cfriesen@nortel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f194.google.com ([209.85.222.194]:33630 "EHLO
-	mail-pz0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756029AbZHYUfq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Aug 2009 16:35:46 -0400
-In-Reply-To: <4A943A00.9080609@nortel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932244AbZHYVJw@vger.kernel.org>
+In-Reply-To: <1251227322.7538.1172.camel@twins>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2009-08-25 at 13:22 -0600, Chris Friesen wrote:
-> On 08/25/2009 01:08 PM, Peter Zijlstra wrote:
+Op 25-08-09 21:08, Peter Zijlstra schreef:
+> On Tue, 2009-08-25 at 14:03 -0400, Christoph Lameter wrote:
+>> On Tue, 25 Aug 2009, Mike Galbraith wrote:
+>>
+>>> I asked the questions I did out of pure curiosity, and that curiosity
+>>> has been satisfied.  It's not that I find it useless or whatnot (or that
+>>> my opinion matters to anyone but me;).  I personally find the concept of
+>>> injecting an RTOS into a general purpose OS with no isolation to be
+>>> alien.  Intriguing, but very very alien.
+>> Well lets work on the isolation piece then. We could run a regular process
+>> on the RT cpu and switch back when OS services are needed?
 > 
-> > Christoph, stop being silly, this offline scheduler thing won't happen,
-> > full stop.
-> > 
-> > Its not a maintainable solution, it doesn't integrate with existing
-> > kernel infrastructure, and its plain ugly.
-> > 
-> > If you want something work within Linux, don't build kernels in kernels
-> > or other such ugly hacks.
+> Christoph, stop being silly, this offline scheduler thing won't happen,
+> full stop.
 > 
-> Is it the whole concept of isolating one or more cpus from all normal
-> kernel tasks that you don't like, or just this particular implementation?
+> Its not a maintainable solution, it doesn't integrate with existing
+> kernel infrastructure, and its plain ugly.
 > 
-> I ask because I know of at least one project that would have used this
-> capability had it been available.  As it stands they have to live with
-> the usual kernel threads running on the cpu that they're trying to
-> dedicate to their app.
-> 
+> If you want something work within Linux, don't build kernels in kernels
+> or other such ugly hacks.
+Hello,
 
-Its already possible to *almost* vacate a CPU except for a handful of
-kernel threads.
+For the one interested in such approach, you can have a look at an now
+unmaintained project that we developed, ARTiS:
+http://www2.lifl.fr/west/artis/
 
-There are various hacks being distributed which also offload / suppress
-timer and rcu activity from specific CPUs.
+It allows several RT tasks to share a "RT" cpu, and if a task tries to
+"cheat" by calling a kernel function which disables the preemption or
+the interrupts, it is temporally migrated to another CPU. This is a
+working approach, with some good low latency results which can be seen
+in the papers on the website.
 
-Everything I have looked at has been hackish and racy, and no one using
-this is pusing any of it upstream.
-
-OFFLINING solves the problem in a minimalist way, and only for tasks
-with very limited interaction with the Kernel.
-
-In contrast however, almost all tasks with such limited Kernel
-interaction should be able to do fine under PREEMPT_RT after some cpuset
-work.
-
-For those which absolutely cannot handle a handful of kernel threads
-sharing the CPU, the only option today is one or another form of
-hackery, and amongst those options, this would seem attractive by its
-mere simplicity.
-
-But complete CPU isolation for user-space tasks still eludes.
-
-Sven
-
-
-> Chris
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+See you,
+Eric
