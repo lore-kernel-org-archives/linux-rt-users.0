@@ -1,13 +1,22 @@
-From: Christoph Lameter <cl@linux-foundation.org>
+From: raz ben yehuda <raziebe@gmail.com>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 17:26:19 -0400 (EDT)
-Message-ID: <alpine.DEB.1.10.0908261718420.19579@gentwo.org>
-References: <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz> <1251300625.18584.18.camel@twins> <alpine.DEB.1.10.0908261136590.9933@gentwo.org> <1251302598.18584.31.camel@twins> <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
- <20090826180407.GA13632@elte.hu> <alpine.DEB.1.10.0908261509580.9933@gentwo.org> <20090826193252.GA14721@elte.hu> <alpine.DEB.1.10.0908261627110.5554@gentwo.org> <20090826210812.GA22765@elte.hu>
+Date: Thu, 27 Aug 2009 00:32:09 +0300
+Message-ID: <1251322329.3882.42.camel@raz>
+References: <1251282598.3514.20.camel@raz>
+	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
+	 <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>
+	 <1251300625.18584.18.camel@twins>
+	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
+	 <1251302598.18584.31.camel@twins>
+	 <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
+	 <20090826180407.GA13632@elte.hu>
+	 <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
+	 <20090826193252.GA14721@elte.hu>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	raz ben yehuda <raziebe@gmail.com>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Christoph Lameter <cl@linux-foundation.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Maxim Levitsky <maximlevitsky@gmail.com>,
 	Chris Friesen <cfriesen@nortel.com>,
 	Mike Galbraith <efault@gmx.de>, riel@redhat.com,
@@ -15,35 +24,96 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
 	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
 	linux-rt-users@vger.kernel.org
 To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753872AbZHZV0a@vger.kernel.org>
-In-Reply-To: <20090826210812.GA22765@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753670AbZHZVcP@vger.kernel.org>
+In-Reply-To: <20090826193252.GA14721@elte.hu>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 26 Aug 2009, Ingo Molnar wrote:
+Ingo Hello 
+First thank you for your interest.
 
-> I'm saying that your lack of trying to reduce even low-hanging-fruit
-> latency sources that were pointed out to you fundamentally destroys
-> your credibility in claiming that they are unfixable for all
-> practical purposes.
+OFFSCHED is a variant of a proprietary software. it is 4 years old.It is
+stable. and.. well...this thing works .And it is so simple. SO VERY VERY
+SIMPLE. ONCE YOU GO OFFLINE YOU NEVER LOOK BACK. 
 
-I have never claimed that they are unfixable. However, reducing latencies
-does not remove a disturbance.
+OFFSCHED has a full access to many kernel facilities. My software
+transmits packets, encrypt packets, and reaches network throughput
+traffic ( 25Gbs), same as pktgen while saturating its 8 SSD disks.
 
-> Or, to come up with a car analogy: it's a bit as if at a repair shop
-> you complained that your car has a scratch on its cooler grid that
-> annoys you, and you insisted that it be outfitted with a new diesel
-> engine which needs no cooler grid (throwing away the nice Hemi block
-> it has currently) - and ignored the mechanic's opinion that he loves
-> the Hemi and that to him the scratch looks very much like bird-sh*t
-> and that a proper car wash might do the trick too ;-)
+My software take statistics of an offloaded processor usage, and unlike
+OS processors, since I have a full control of the processor, the usage
+is growing quite linearly. there are no bursts of CPU usage. it remains
+stable of X% usage even when I transmit 25Gbps.
 
-Nope. Its like you want to get rid of your car and the person you talk to
-tries to convince you to keep it. He claims if you would just wash it and
-repair it then it will be maybe become almost invisible and you would have
-reached your goal of not having a car.
+OFFSCHED __oldest__ patch was 4 lines. this how it started. 4 lines of
+patch and My 2.6.18-8.el5 kernel is suddenly a hard real time kernel.
+Today, I patch this kernel, build only a bzImage, throw this 2MB bzImage
+on a server running regular centos/redhat distribution, and caboom, I
+have a real time server in god-know-where. I do not mess with any
+driver, i do not mess with initrd. I just fix 4 lines. that all.
 
-> That would benefit ordinary Linux users too, not just rare isolation
-> apps.
+OFFSCHED is not just for real time. It can monitor the kernel, protect
+it and do whatever come to mind. please see OFFSCHED-RTOP.pdf. 
 
-We are talking about apps that need isolation here not regular app.
+thank you
+raz
+
+ 
+On Wed, 2009-08-26 at 21:32 +0200, Ingo aMolnar wrote:
+> * Christoph Lameter <cl@linux-foundation.org> wrote:
+> 
+> > On Wed, 26 Aug 2009, Ingo Molnar wrote:
+> > 
+> > > The thing is, you have cut out (and have not replied to) this
+> > > crutial bit of what Peter wrote:
+> > >
+> > > > > The past year or so you've been whining about the tick latency,
+> > > > > and I've seen exactly _0_ patches from you slimming down the
+> > > > > work done in there, even though I pointed out some obvious
+> > > > > things that could be done.
+> > >
+> > > ... which pretty much settles the issue as far as i'm concerned. 
+> > > If you were truly interested in a constructive solution to lower 
+> > > latencies in Linux you should have sent patches already for the 
+> > > low hanging fruits Peter pointed out.
+> > 
+> > The noise latencies were already reduced in years earlier to the 
+> > mininum (f.e. the work on slab queue cleaning). Certainly more 
+> > could be done there but that misses the point.
+> 
+> Peter suggested various improvements to the timer tick related 
+> latencies _you_ were complaining about earlier this year. Those 
+> latencies sure were not addressed 'years earlier'.
+> 
+> If you are unwilling to reduce the very latencies you apparently 
+> cared and complained about then you dont have much real standing to 
+> complain now.
+> 
+> ( If you on the other hand were approaching this issue with 
+>   pragmatism and with intellectual honesty, if you were at the end 
+>   of a string of patches that gradually improved latencies but 
+>   couldnt get them below a certain threshold, and if scheduler 
+>   developers couldnt give you any ideas what else to improve, and 
+>   _then_ suggested some other solution, you might have a point.
+>   You are far away from being able to claim that. )
+> 
+> Really, it's a straightforward application of Occam's Razor to the 
+> scheduler. We go for the simplest solution first, and try to help 
+> more people first, before going for some specialist hack.
+> 
+> > The point of the OFFLINE scheduler is to completely eliminate the 
+> > OS disturbances by getting rid of *all* OS processing on some 
+> > cpus.
+> > 
+> > For some reason scheduler developers seem to be threatened by this 
+> > idea and they go into bizarre lines of arguments to avoid the 
+> > issue. Its simple and doable and the scheduler will still be there 
+> > after we do this.
+> 
+> If you meant to include me in that summary categorization, i dont 
+> feel 'threatened' by any such patches (why would i? They dont seem 
+> to have sharp teeth nor any apparent poison fangs) - i simply concur 
+> with the reasons Peter listed that it is a technically inferior 
+> solution.
+> 
+> 	Ingo
