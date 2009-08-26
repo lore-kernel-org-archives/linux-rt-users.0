@@ -1,45 +1,49 @@
-From: "Chris Friesen" <cfriesen@nortel.com>
+From: Christoph Lameter <cl@linux-foundation.org>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 15:15:26 -0600
-Message-ID: <4A95A5EE.90400@nortel.com>
-References: <1251282598.3514.20.camel@raz>	<alpine.DEB.1.10.0908260943090.9924@gentwo.org>	<1251297910.1791.22.camel@maxim-laptop>	<1251298443.4791.7.camel@raz>	<1251300625.18584.18.camel@twins>	<alpine.DEB.1.10.0908261136590.9933@gentwo.org>	<1251302598.18584.31.camel@twins>	<alpine.DEB.1.10.0908261211340.9933@gentwo.org>	<20090826180407.GA13632@elte.hu>	<alpine.DEB.1.10.0908261509580.9933@gentwo.org>	<20090826193252.GA14721@elte.hu>	<alpine.DEB.1.10.0908261627110.5554@gentwo.org> <20090826135041.e6169d18.akpm@linux-foundation.org>
+Date: Wed, 26 Aug 2009 17:26:19 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0908261718420.19579@gentwo.org>
+References: <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz> <1251300625.18584.18.camel@twins> <alpine.DEB.1.10.0908261136590.9933@gentwo.org> <1251302598.18584.31.camel@twins> <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
+ <20090826180407.GA13632@elte.hu> <alpine.DEB.1.10.0908261509580.9933@gentwo.org> <20090826193252.GA14721@elte.hu> <alpine.DEB.1.10.0908261627110.5554@gentwo.org> <20090826210812.GA22765@elte.hu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux-foundation.org>, mingo@elte.hu,
-	peterz@infradead.org, raziebe@gmail.com, maximlevitsky@gmail.com,
-	efault@gmx.de, riel@redhat.com, wiseman@macs.biu.ac.il,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from zrtps0kp.nortel.com ([47.140.192.56]:50773 "EHLO
-	zrtps0kp.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753367AbZHZVP4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Aug 2009 17:15:56 -0400
-In-Reply-To: <20090826135041.e6169d18.akpm@linux-foundation.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	raz ben yehuda <raziebe@gmail.com>,
+	Maxim Levitsky <maximlevitsky@gmail.com>,
+	Chris Friesen <cfriesen@nortel.com>,
+	Mike Galbraith <efault@gmx.de>, riel@redhat.com,
+	andrew motron <akpm@linux-foundation.org>,
+	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753872AbZHZV0a@vger.kernel.org>
+In-Reply-To: <20090826210812.GA22765@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 08/26/2009 02:50 PM, Andrew Morton wrote:
+On Wed, 26 Aug 2009, Ingo Molnar wrote:
 
-> What problem?
-> 
-> All I've seen is "I want 100% access to a CPU".  That's not a problem
-> statement - it's an implementation.
-> 
-> What is the problem statement?
+> I'm saying that your lack of trying to reduce even low-hanging-fruit
+> latency sources that were pointed out to you fundamentally destroys
+> your credibility in claiming that they are unfixable for all
+> practical purposes.
 
-I can only speak for myself...
+I have never claimed that they are unfixable. However, reducing latencies
+does not remove a disturbance.
 
-In our case the problem statement was that we had an inherently
-single-threaded emulator app that we wanted to push as hard as
-absolutely possible.
+> Or, to come up with a car analogy: it's a bit as if at a repair shop
+> you complained that your car has a scratch on its cooler grid that
+> annoys you, and you insisted that it be outfitted with a new diesel
+> engine which needs no cooler grid (throwing away the nice Hemi block
+> it has currently) - and ignored the mechanic's opinion that he loves
+> the Hemi and that to him the scratch looks very much like bird-sh*t
+> and that a proper car wash might do the trick too ;-)
 
-We gave it as close to a whole cpu as we could using cpu and irq
-affinity and we used message queues in shared memory to allow another
-cpu to handle I/O.  In our case we still had kernel threads running on
-the app cpu, but if we'd had a straightforward way to avoid them we
-would have used it.
+Nope. Its like you want to get rid of your car and the person you talk to
+tries to convince you to keep it. He claims if you would just wash it and
+repair it then it will be maybe become almost invisible and you would have
+reached your goal of not having a car.
 
-Chris
+> That would benefit ordinary Linux users too, not just rare isolation
+> apps.
+
+We are talking about apps that need isolation here not regular app.
