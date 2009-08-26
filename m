@@ -1,63 +1,83 @@
-From: Pekka Enberg <penberg@cs.helsinki.fi>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 18:21:53 +0300
-Message-ID: <84144f020908260821n5b0b9f7ejec8bbe9586150f37@mail.gmail.com>
+Date: Wed, 26 Aug 2009 17:30:25 +0200
+Message-ID: <1251300625.18584.18.camel@twins>
 References: <1250983671.5688.21.camel@raz>
-	 <1251012621.14003.71.camel@marge.simson.net>
-	 <1251025557.3810.65.camel@raz>
+	 <1251004897.7043.70.camel@marge.simson.net> <1251018551.3810.35.camel@raz>
+	 <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz>
 	 <1251021133.14003.172.camel@marge.simson.net>
 	 <alpine.DEB.1.10.0908251122020.26329@gentwo.org>
 	 <1251222993.7023.53.camel@marge.simson.net>
 	 <alpine.DEB.1.10.0908251402300.17963@gentwo.org>
-	 <1251227322.7538.1172.camel@twins> <4A943A00.9080609@nortel.com>
-	 <1251264700.7538.1178.camel@twins>
+	 <1251227322.7538.1172.camel@twins>  <4A943A00.9080609@nortel.com>
+	 <1251264700.7538.1178.camel@twins> <1251282598.3514.20.camel@raz>
+	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
+	 <1251297910.1791.22.camel@maxim-laptop>  <1251298443.4791.7.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Chris Friesen <cfriesen@nortel.com>,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Maxim Levitsky <maximlevitsky@gmail.com>,
 	Christoph Lameter <cl@linux-foundation.org>,
-	Mike Galbraith <efault@gmx.de>,
-	raz ben yehuda <raziebe@gmail.com>, riel@redhat.com,
-	mingo@elte.hu, andrew motron <akpm@linux-foundation.org>,
+	Chris Friesen <cfriesen@nortel.com>,
+	Mike Galbraith <efault@gmx.de>, riel@redhat.com, mingo@elte.hu,
+	andrew motron <akpm@linux-foundation.org>,
 	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
 	linux-rt-users@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751074AbZHZPVy@vger.kernel.org>
-In-Reply-To: <1251264700.7538.1178.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: raz ben yehuda <raziebe@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from bombadil.infradead.org ([18.85.46.34]:43933 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751101AbZHZPbr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Aug 2009 11:31:47 -0400
+In-Reply-To: <1251298443.4791.7.camel@raz>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Peter,
+On Wed, 2009-08-26 at 17:54 +0300, raz ben yehuda wrote:
+> This is exactly what offsched (sos) is. you got it. SOS was partly
+> inspired by the notion of a GPU. 
 
-On Wed, Aug 26, 2009 at 8:31 AM, Peter Zijlstra<peterz@infradead.org> w=
-rote:
->> Is it the whole concept of isolating one or more cpus from all norma=
-l
->> kernel tasks that you don't like, or just this particular implementa=
-tion?
->>
->> I ask because I know of at least one project that would have used th=
-is
->> capability had it been available. =A0As it stands they have to live =
-with
->> the usual kernel threads running on the cpu that they're trying to
->> dedicate to their app.
->
-> Its the simple fact of going around the kernel instead of using the
-> kernel.
->
-> Going around the kernel doesn't benefit anybody, least of all Linux.
->
-> So its the concept of running stuff on a CPU outside of Linux that I
-> don't like. I mean, if you want that, go ahead and run RTLinux, RTAI,
-> L4-Linux etc.. lots of special non-Linux hypervisor/exo-kernel like
-> things around for you to run things outside Linux with.
+It is not, GPUs and other paired chips form a hybrid system. Linux is
+known to run on one or more of such chips and communicate through
+whatever means these chips have.
 
-Out of curiosity, what's the problem with it? Why can't the scheduler
-be taught to bind one user-space thread on a given CPU and make sure
-no other threads are scheduled on that CPU? I'm not a scheduler expert
-but that seems like a logical extension to the current cpuset logic
-and would help the low-latency workload Christoph has described in the
-past.
+But what you propose here is hard partitioning a homogeneous system,
+totally different.
 
-                        Pekka
+> Processors are to become more and more redundant and Linux as an
+> evolutionary system must use it. why not offload raid5 write engine ?
+> why not encrypt in a different processor ?
+
+Why waste a whole cpu for something that could be done by part of one?
+
+> Also , having so many processors in a single OS means a bug prone
+> system , with endless contention points when two or more OS processors
+> interacts. 
+
+You're bound to have interaction between the core os and these
+partitions you want, non of it different from how threads in the kernel
+would interact, other than that you're going to re-invent everything
+already present in the kernel.
+
+> let's make things simpler.
+
+You don't, you make things more complex by introducing duplicate
+functionality.
+
+What's more, you burden the user with having to configure such a system,
+and make choices on having to give up parts of his system, nothing like
+that should be needed on a homogeneous system.
+
+Work spend on trimming fat of of the core kernel helps everybody, even
+users not otherwise interested in things like giving up a whole cpu for
+some odd purpose.
+
+There is no reason something could be done more efficiently on a
+dedicated CPU than not when you assume a homogeneous system (which is
+all Linux supports in the single image sense).
+
+If you think the kernel is too fat and does superfluous things for your
+needs, help trim it.
+
+
