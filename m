@@ -1,106 +1,136 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 18:03:18 +0200
-Message-ID: <1251302598.18584.31.camel@twins>
-References: <1250983671.5688.21.camel@raz>
-	 <1251004897.7043.70.camel@marge.simson.net> <1251018551.3810.35.camel@raz>
-	 <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz>
-	 <1251021133.14003.172.camel@marge.simson.net>
-	 <alpine.DEB.1.10.0908251122020.26329@gentwo.org>
-	 <1251222993.7023.53.camel@marge.simson.net>
-	 <alpine.DEB.1.10.0908251402300.17963@gentwo.org>
-	 <1251227322.7538.1172.camel@twins>  <4A943A00.9080609@nortel.com>
-	 <1251264700.7538.1178.camel@twins> <1251282598.3514.20.camel@raz>
-	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
-	 <1251297910.1791.22.camel@maxim-laptop>  <1251298443.4791.7.camel@raz>
-	 <1251300625.18584.18.camel@twins>
-	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: cyclictest: add --update_on_max option
+Date: Wed, 26 Aug 2009 13:11:33 -0300
+Message-ID: <20090826161132.GB5255@ghostprotocols.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: raz ben yehuda <raziebe@gmail.com>,
-	Maxim Levitsky <maximlevitsky@gmail.com>,
-	Chris Friesen <cfriesen@nortel.com>,
-	Mike Galbraith <efault@gmx.de>, riel@redhat.com, mingo@elte.hu,
-	andrew motron <akpm@linux-foundation.org>,
-	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: Christoph Lameter <cl@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:56785 "EHLO
-	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751133AbZHZQEp (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Aug 2009 12:04:45 -0400
-In-Reply-To: <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
+Received: from mx1.redhat.com ([209.132.183.28]:17742 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751256AbZHZQLg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Aug 2009 12:11:36 -0400
+Received: from int-mx07.intmail.prod.int.phx2.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id n7QGBcJr023202
+	for <linux-rt-users@vger.kernel.org>; Wed, 26 Aug 2009 12:11:38 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-08-26 at 11:41 -0400, Christoph Lameter wrote:
-> On Wed, 26 Aug 2009, Peter Zijlstra wrote:
-> 
-> > Why waste a whole cpu for something that could be done by part of one?
-> 
-> Because of latency and performance requirements
+When running on a machine with not enough bandwidth it can be helpful to
+only update the status when a new max is hit.
 
-Latency is the only one, and yes people have been using hacks like this,
-I've also earlier mentioned RTAI, RTLinux and L4-Linux which basically
-do the same thing.
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 
-The problem is, that its not linux, you cannot run something on a these
-off-cores and use the same functionality as linux, if you could it'd not
-be offline.
-
-The past year or so you've been whining about the tick latency, and I've
-seen exactly _0_ patches from you slimming down the work done in there,
-even though I pointed out some obvious things that could be done.
-
-Carving out cpus just doesn't work in the long run (see below for more),
-it adds configuration burdens on people and it would duplicate
-functionality (below), or it provides it in a (near) useless manner.
-
-If you were to work on lowering the linux latency in the full kernel
-sense, you'd help out a lot of people, many use-cases would improve and
-you'd be helpful to he greater good.
-
-If you hack up special cases like this, then only your one use-case gets
-better and the rest doesn't, or it might actually get worse, because it
-got less attention.
-
-> > You're bound to have interaction between the core os and these
-> > partitions you want, non of it different from how threads in the kernel
-> > would interact, other than that you're going to re-invent everything
-> > already present in the kernel.
-> 
-> The kernel interactions can be done while running on another (not
-> isolated) cpu.
-
-There needs to be some communication between the isolated and non
-isolated part, otherwise what's the point. Even when you'd let it handle
-say a network device as pure firewall, you'd need to configure the
-thing, requiring interaction.
-
-Interaction of any sorts gets serialization requirements, and from there
-on things tend to grow.
-
-> > You don't, you make things more complex by introducing duplicate
-> > functionality.
-> 
-> The functionality does not exist. This is about new features.
-
-It is not, he is proposing to use these cores for:
-
- - network stuff, we already have that
- - raid5 stuff, we already have that
- - other stuff we already have
-
-Then there is the issue of what happens when a single core isn't
-sufficient for the given task, then you'd need to split up, again
-creating more interaction.
-
-> > If you think the kernel is too fat and does superfluous things for your
-> > needs, help trim it.
-> 
-> Mind boogling nonsense. Please stop fantasizing and trolling.
-
-Oh, to lay down the crack-pipe and sod off.
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 2b4dc50..8181ff7 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -135,6 +135,7 @@ struct thread_stat {
+ 	pthread_t thread;
+ 	int threadstarted;
+ 	int tid;
++	int new_max;
+ 	long reduce;
+ 	long redmax;
+ 	long cycleofmax;
+@@ -147,6 +148,7 @@ static int kernelversion;
+ static int verbose = 0;
+ static int oscope_reduction = 1;
+ static int lockall = 0;
++static int refresh_on_max;
+ static int tracetype = NOTRACE;
+ static int histogram = 0;
+ static int histogram_limit_exceeded = 0;
+@@ -685,8 +687,10 @@ void *timerthread(void *param)
+ 			diff = calcdiff(now, next);
+ 		if (diff < stat->min)
+ 			stat->min = diff;
+-		if (diff > stat->max)
++		if (diff > stat->max) {
+ 			stat->max = diff;
++			++stat->new_max;
++		}
+ 		stat->avg += (double) diff;
+ 
+ 		if (duration && (calcdiff(now, stop) >= 0))
+@@ -904,6 +908,7 @@ static void process_options (int argc, char *argv[])
+ 			{"irqsoff", no_argument, NULL, 'I'},
+ 			{"loops", required_argument, NULL, 'l'},
+ 			{"mlockall", no_argument, NULL, 'm' },
++			{"refresh_on_max", no_argument, NULL, 'M' },
+ 			{"nanosleep", no_argument, NULL, 'n'},
+ 			{"nsecs", no_argument, NULL, 'N'},
+ 			{"oscope", required_argument, NULL, 'o'},
+@@ -923,7 +928,7 @@ static void process_options (int argc, char *argv[])
+ 			{"traceopt", required_argument, NULL, 'O'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
++                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:MnNo:O:p:Pmqrst::vD:wWTy:",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -974,6 +979,7 @@ static void process_options (int argc, char *argv[])
+ 		case 'T': strncpy(tracer, optarg, sizeof(tracer)); break;
+ 		case 'v': verbose = 1; break;
+ 		case 'm': lockall = 1; break;
++		case 'M': refresh_on_max = 1; break;
+ 		case 'D': duration = parse_time_string(optarg);
+ 			break;
+                 case 'w': tracetype = WAKEUP; break;
+@@ -1124,6 +1130,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
+ 			else
+                                 fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
+ 					"Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n";
++
+                         printf(fmt, index, stat->tid, par->prio, 
+                                par->interval, stat->cycles, stat->min, stat->act,
+ 			       stat->cycles ?
+@@ -1271,13 +1278,13 @@ int main(int argc, char **argv)
+ 
+ 	while (!shutdown) {
+ 		char lavg[256];
+-		int fd, len, allstopped = 0;
++		int fd, len, allstopped = 0, threads_with_new_max = 0;
+ 		char *policystr = NULL;
+ 
+ 		if (!policystr)
+ 			policystr = policyname(policy);
+ 
+-		if (!verbose && !quiet) {
++		if (!verbose && !quiet && !refresh_on_max) {
+ 			fd = open("/proc/loadavg", O_RDONLY, 0666);
+ 			len = read(fd, &lavg, 255);
+ 			close(fd);
+@@ -1287,8 +1294,13 @@ int main(int argc, char **argv)
+ 		}
+ 
+ 		for (i = 0; i < num_threads; i++) {
+-
+-			print_stat(&par[i], i, verbose);
++			if (!refresh_on_max || par[i].stats->new_max) {
++				print_stat(&par[i], i, verbose);
++				if (par[i].stats->new_max)
++					--par[i].stats->new_max;
++				threads_with_new_max++;
++			}
++			
+ 			if(max_cycles && stat[i].cycles >= max_cycles)
+ 				allstopped++;
+ 		}
+@@ -1296,8 +1308,11 @@ int main(int argc, char **argv)
+ 		usleep(10000);
+ 		if (shutdown || allstopped)
+ 			break;
+-		if (!verbose && !quiet)
+-			printf("\033[%dA", num_threads + 2);
++		if (!verbose && !quiet && threads_with_new_max) {
++			if (!refresh_on_max)
++				threads_with_new_max += 2;
++			printf("\033[%dA", threads_with_new_max);
++		}
+ 	}
+ 	ret = EXIT_SUCCESS;
+ 
