@@ -1,69 +1,65 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: raz ben yehuda <raziebe@gmail.com>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 23:34:00 +0200
-Message-ID: <20090826213400.GA25536@elte.hu>
-References: <1251298443.4791.7.camel@raz> <1251300625.18584.18.camel@twins> <alpine.DEB.1.10.0908261136590.9933@gentwo.org> <1251302598.18584.31.camel@twins> <alpine.DEB.1.10.0908261211340.9933@gentwo.org> <20090826180407.GA13632@elte.hu> <alpine.DEB.1.10.0908261509580.9933@gentwo.org> <20090826193252.GA14721@elte.hu> <alpine.DEB.1.10.0908261627110.5554@gentwo.org> <20090826135041.e6169d18.akpm@linux-foundation.org>
+Date: Thu, 27 Aug 2009 00:37:43 +0300
+Message-ID: <1251322663.3882.48.camel@raz>
+References: <1251282598.3514.20.camel@raz>
+	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
+	 <1251297910.1791.22.camel@maxim-laptop>	<1251298443.4791.7.camel@raz>
+	 <1251300625.18584.18.camel@twins>
+	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
+	 <1251302598.18584.31.camel@twins>
+	 <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
+	 <20090826180407.GA13632@elte.hu>
+	 <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
+	 <20090826193252.GA14721@elte.hu>
+	 <alpine.DEB.1.10.0908261627110.5554@gentwo.org>
+	 <20090826135041.e6169d18.akpm@linux-foundation.org>
+	 <4A95A5EE.90400@nortel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Lameter <cl@linux-foundation.org>, peterz@infradead.org,
-	raziebe@gmail.com, maximlevitsky@gmail.com, cfriesen@nortel.com,
-	efault@gmx.de, riel@redhat.com, wiseman@macs.biu.ac.il,
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Christoph Lameter <cl@linux-foundation.org>, mingo@elte.hu,
+	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
+	riel@redhat.com, wiseman@macs.biu.ac.il,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753935AbZHZVeb@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090826135041.e6169d18.akpm@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Chris Friesen <cfriesen@nortel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ew0-f206.google.com ([209.85.219.206]:50740 "EHLO
+	mail-ew0-f206.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753400AbZHZVht (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Aug 2009 17:37:49 -0400
+In-Reply-To: <4A95A5EE.90400@nortel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-* Andrew Morton <akpm@linux-foundation.org> wrote:
-
-> On Wed, 26 Aug 2009 16:40:09 -0400 (EDT)
-> Christoph Lameter <cl@linux-foundation.org> wrote:
+On Wed, 2009-08-26 at 15:15 -0600, Chris Friesen wrote:
+> On 08/26/2009 02:50 PM, Andrew Morton wrote:
 > 
-> > Peter has not given a solution to the problem. Nor have you.
+> > What problem?
+> > 
+> > All I've seen is "I want 100% access to a CPU".  That's not a problem
+> > statement - it's an implementation.
+> > 
+> > What is the problem statement?
 > 
-> What problem?
+> I can only speak for myself...
 > 
-> All I've seen is "I want 100% access to a CPU".  That's not a problem
-> statement - it's an implementation.
+> In our case the problem statement was that we had an inherently
+> single-threaded emulator app that we wanted to push as hard as
+> absolutely possible.
 > 
-> What is the problem statement?
+> We gave it as close to a whole cpu as we could using cpu and irq
+> affinity and we used message queues in shared memory to allow another
+> cpu to handle I/O.  In our case we still had kernel threads running on
+> the app cpu, but if we'd had a straightforward way to avoid them we
+> would have used it.
 > 
-> My take on these patches: the kernel gives userspace unmediated 
-> access to memory resources if it wants that. The kernel gives 
-> userspace unmediated access to IO devices if it wants that. But 
-> for some reason people freak out at the thought of providing 
-> unmediated access to CPU resources.
+> Chris
+Chris. I offer myself to help anyone wishes to apply OFFSCHED.
+  
 
-Claiming all user-available CPU time from user-space is already 
-possible: use SCHED_FIFO - the only question are remaining latencies 
-in the final 0.01% of CPU time you cannot claim via SCHED_FIFO.
 
-( Btw., this scheduling feature was implemented in Linux well before
-  raw IO block devices were implemented, so i'm not sure what you
-  mean by 'freaking out'. )
 
-What we are objecting to are these easy isolation side-hacks for the 
-remaining 0.01% that fail to address the real problem: the 
-latencies. Those latencies can hurt not just isolated apps but _non 
-isolated_ (and latency critical) apps too, and what we insist on is 
-getting the proper fixes, not just ugly workarounds that side-step 
-the problem.
-
-( a secondary objection is the extension and extra layering
-  of something that could be done within existing APIs/ABIs too. We
-  want to minimize the configuration space. )
-
-> Don't get all religious about this.  If the change is clean, 
-> maintainable and useful then there's no reason to not merge it.
-
-Precisely. This feature as proposed here hinders the correct 
-solution being implemented - and hence hurts long term 
-maintainability and hence is a no-merge right now. [It also weakens 
-the pressure to fix latencies for a much wider set of applications, 
-hence hurts the quality of Linux in the long run. (i.e. is a net 
-step backwards)]
-
-	Ingo
