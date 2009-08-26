@@ -1,70 +1,54 @@
-From: Raz <raziebe@gmail.com>
+From: Christoph Lameter <cl@linux-foundation.org>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 10:16:59 +0200
-Message-ID: <5d96567b0908260116w2e1bcffeqb67f92d89b34b2c@mail.gmail.com>
-References: <1250983671.5688.21.camel@raz> <1251021133.14003.172.camel@marge.simson.net>
-	<alpine.DEB.1.10.0908251122020.26329@gentwo.org> <1251222993.7023.53.camel@marge.simson.net>
-	<alpine.DEB.1.10.0908251402300.17963@gentwo.org> <1251227322.7538.1172.camel@twins>
-	<4A943A00.9080609@nortel.com> <1251264700.7538.1178.camel@twins>
-	<1251282598.3514.20.camel@raz> <1251273755.16910.16.camel@marge.simson.net>
+Date: Wed, 26 Aug 2009 09:47:15 -0400 (EDT)
+Message-ID: <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
+References: <1250983671.5688.21.camel@raz>  <1251004897.7043.70.camel@marge.simson.net> <1251018551.3810.35.camel@raz>  <1251012621.14003.71.camel@marge.simson.net> <1251025557.3810.65.camel@raz>  <1251021133.14003.172.camel@marge.simson.net>
+ <alpine.DEB.1.10.0908251122020.26329@gentwo.org>  <1251222993.7023.53.camel@marge.simson.net>  <alpine.DEB.1.10.0908251402300.17963@gentwo.org>  <1251227322.7538.1172.camel@twins>  <4A943A00.9080609@nortel.com>  <1251264700.7538.1178.camel@twins>
+ <1251282598.3514.20.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Peter Zijlstra <peterz@infradead.org>,
 	Chris Friesen <cfriesen@nortel.com>,
-	Christoph Lameter <cl@linux-foundation.org>, riel@redhat.com,
-	mingo@elte.hu, andrew motron <akpm@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, riel@redhat.com, mingo@elte.hu,
+	andrew motron <akpm@linux-foundation.org>,
 	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
 	linux-rt-users@vger.kernel.org
-To: Mike Galbraith <efault@gmx.de>
+To: raz ben yehuda <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f219.google.com ([209.85.218.219]:57314 "EHLO
-	mail-bw0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751072AbZHZIRT convert rfc822-to-8bit (ORCPT
+Received: from smtp4.ultrahosting.com ([74.213.175.253]:47000 "EHLO
+	smtp.ultrahosting.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1757361AbZHZNr2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Aug 2009 04:17:19 -0400
-In-Reply-To: <1251273755.16910.16.camel@marge.simson.net>
+	Wed, 26 Aug 2009 09:47:28 -0400
+In-Reply-To: <1251282598.3514.20.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Aug 26, 2009 at 10:02 AM, Mike Galbraith<efault@gmx.de> wrote:
-> On Wed, 2009-08-26 at 13:29 +0300, raz ben yehuda wrote:
->
->> OFFSCHED is bad name to my project. My project is called SOS =3D Ser=
-vice
->> Oriented System.
->> SOS, has nothing to do with Real time.
->
-> ??
->
-> The paper you pointed me at maintains it's very much about realtime.
->
-> <quote>
-> This paper argues that OFFSCHED fits to the niche of Multiprocessors
-> real time systems by partitioning a system to two; the operating syst=
-em
-> and OFFSCHED. OFFSHCED is a hybrid system. It is hybrid because it is
-> both real time and still a regular Linux server. Real time is mainly
-> achieved by the NMI characteristic and the CPU isolation. It is a hyb=
-rid
-> system because OFFSCHED scheduler interacts with the operating system=
-=2E
-> </quote>
->
-> =A0 =A0 =A0 =A0-Mike.
->
->
-Mike Hello
-Correct. OFFSCHED has a real time facet that puts it in the SMP real
-time system arena. it has other facets such as security and
-monitoring. If you take a look at OFFSCHED-RTOP and OFFSCHED-SECURED
-you will see that I can actually get information and change a system
-properties  (very pool implementation so far, i am a bit tired...)
-even if this kernel is not **accessible**.
+On Wed, 26 Aug 2009, raz ben yehuda wrote:
 
-Raz
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> How will the kernel is going to handle 32 processors machines ?  These
+> numbers are no longer a science-fiction.
+
+The kernel is already running on 4096 processor machines. Dont worry about
+that.
+
+> What i am suggesting is merely a different approach of how to handle
+> multiple core systems. instead of thinking in processes, threads and so
+> on i am thinking in services. Why not take  a processor and define this
+> processor to do just firewalling ? encryption ? routing ? transmission ?
+> video processing... and so on...
+
+I think that is a valuable avenue to explore. What we do so far is
+treating each processor equally. Dedicating a processor has benefits in
+terms of cache hotness and limits OS noise.
+
+Most of the large processor configurations already partition the system
+using cpusets in order to limit the disturbance by OS processing. A set of
+cpus is used for OS activities and system daemons are put into that set.
+But what can be done is limited because the OS threads as well as
+interrupt and timer processing etc cannot currently be moved. The ideas
+that you are proposing are particularly usedful for applications that
+require low latencies and cannot tolerate OS noise easily (Infiniband MPI
+base jobs f.e.)
+
+
