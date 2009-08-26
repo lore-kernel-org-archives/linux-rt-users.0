@@ -1,84 +1,107 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Wed, 26 Aug 2009 21:32:52 +0200
-Message-ID: <20090826193252.GA14721@elte.hu>
-References: <1251282598.3514.20.camel@raz> <alpine.DEB.1.10.0908260943090.9924@gentwo.org> <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz> <1251300625.18584.18.camel@twins> <alpine.DEB.1.10.0908261136590.9933@gentwo.org> <1251302598.18584.31.camel@twins> <alpine.DEB.1.10.0908261211340.9933@gentwo.org> <20090826180407.GA13632@elte.hu> <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: [PATCH v2] cyclictest: add --update_on_max option
+Date: Wed, 26 Aug 2009 17:31:34 -0300
+Message-ID: <20090826203134.GC5255@ghostprotocols.net>
+References: <20090826161132.GB5255@ghostprotocols.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	raz ben yehuda <raziebe@gmail.com>,
-	Maxim Levitsky <maximlevitsky@gmail.com>,
-	Chris Friesen <cfriesen@nortel.com>,
-	Mike Galbraith <efault@gmx.de>, riel@redhat.com,
-	andrew motron <akpm@linux-foundation.org>,
-	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: Christoph Lameter <cl@linux-foundation.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx3.mail.elte.hu ([157.181.1.138]:44492 "EHLO mx3.mail.elte.hu"
+Received: from mx1.redhat.com ([209.132.183.28]:35477 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750873AbZHZTdg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Aug 2009 15:33:36 -0400
+	id S1753055AbZHZUbk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Aug 2009 16:31:40 -0400
+Received: from int-mx04.intmail.prod.int.phx2.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.17])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id n7QKVgow003476
+	for <linux-rt-users@vger.kernel.org>; Wed, 26 Aug 2009 16:31:42 -0400
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
+In-Reply-To: <20090826161132.GB5255@ghostprotocols.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Note: the previous one sucked rockz, please try this one instead.
 
-* Christoph Lameter <cl@linux-foundation.org> wrote:
+When running on a machine with not enough bandwidth it can be helpful to
+only update the status when a new max is hit.
 
-> On Wed, 26 Aug 2009, Ingo Molnar wrote:
-> 
-> > The thing is, you have cut out (and have not replied to) this
-> > crutial bit of what Peter wrote:
-> >
-> > > > The past year or so you've been whining about the tick latency,
-> > > > and I've seen exactly _0_ patches from you slimming down the
-> > > > work done in there, even though I pointed out some obvious
-> > > > things that could be done.
-> >
-> > ... which pretty much settles the issue as far as i'm concerned. 
-> > If you were truly interested in a constructive solution to lower 
-> > latencies in Linux you should have sent patches already for the 
-> > low hanging fruits Peter pointed out.
-> 
-> The noise latencies were already reduced in years earlier to the 
-> mininum (f.e. the work on slab queue cleaning). Certainly more 
-> could be done there but that misses the point.
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 
-Peter suggested various improvements to the timer tick related 
-latencies _you_ were complaining about earlier this year. Those 
-latencies sure were not addressed 'years earlier'.
-
-If you are unwilling to reduce the very latencies you apparently 
-cared and complained about then you dont have much real standing to 
-complain now.
-
-( If you on the other hand were approaching this issue with 
-  pragmatism and with intellectual honesty, if you were at the end 
-  of a string of patches that gradually improved latencies but 
-  couldnt get them below a certain threshold, and if scheduler 
-  developers couldnt give you any ideas what else to improve, and 
-  _then_ suggested some other solution, you might have a point.
-  You are far away from being able to claim that. )
-
-Really, it's a straightforward application of Occam's Razor to the 
-scheduler. We go for the simplest solution first, and try to help 
-more people first, before going for some specialist hack.
-
-> The point of the OFFLINE scheduler is to completely eliminate the 
-> OS disturbances by getting rid of *all* OS processing on some 
-> cpus.
-> 
-> For some reason scheduler developers seem to be threatened by this 
-> idea and they go into bizarre lines of arguments to avoid the 
-> issue. Its simple and doable and the scheduler will still be there 
-> after we do this.
-
-If you meant to include me in that summary categorization, i dont 
-feel 'threatened' by any such patches (why would i? They dont seem 
-to have sharp teeth nor any apparent poison fangs) - i simply concur 
-with the reasons Peter listed that it is a technically inferior 
-solution.
-
-	Ingo
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 2b4dc50..97461e5 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -152,7 +152,10 @@ static int histogram = 0;
+ static int histogram_limit_exceeded = 0;
+ static int duration = 0;
+ static int use_nsecs = 0;
++static int refresh_on_max;
+ 
++static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
++static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
+ 
+ /* Backup of kernel variables that we modify */
+ static struct kvars {
+@@ -685,8 +688,11 @@ void *timerthread(void *param)
+ 			diff = calcdiff(now, next);
+ 		if (diff < stat->min)
+ 			stat->min = diff;
+-		if (diff > stat->max)
++		if (diff > stat->max) {
+ 			stat->max = diff;
++			if (refresh_on_max)
++				pthread_cond_signal(&refresh_on_max_cond);
++		}
+ 		stat->avg += (double) diff;
+ 
+ 		if (duration && (calcdiff(now, stop) >= 0))
+@@ -904,6 +910,7 @@ static void process_options (int argc, char *argv[])
+ 			{"irqsoff", no_argument, NULL, 'I'},
+ 			{"loops", required_argument, NULL, 'l'},
+ 			{"mlockall", no_argument, NULL, 'm' },
++			{"refresh_on_max", no_argument, NULL, 'M' },
+ 			{"nanosleep", no_argument, NULL, 'n'},
+ 			{"nsecs", no_argument, NULL, 'N'},
+ 			{"oscope", required_argument, NULL, 'o'},
+@@ -923,8 +930,8 @@ static void process_options (int argc, char *argv[])
+ 			{"traceopt", required_argument, NULL, 'O'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
+-			long_options, &option_index);
++		int c = getopt_long(argc, argv, "a::b:Bc:Cd:Efh:i:Il:MnNo:O:p:Pmqrst::vD:wWTy:",
++				    long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
+@@ -974,6 +981,7 @@ static void process_options (int argc, char *argv[])
+ 		case 'T': strncpy(tracer, optarg, sizeof(tracer)); break;
+ 		case 'v': verbose = 1; break;
+ 		case 'm': lockall = 1; break;
++		case 'M': refresh_on_max = 1; break;
+ 		case 'D': duration = parse_time_string(optarg);
+ 			break;
+                 case 'w': tracetype = WAKEUP; break;
+@@ -1078,6 +1086,8 @@ static int check_timer(void)
+ static void sighand(int sig)
+ {
+ 	shutdown = 1;
++	if (refresh_on_max)
++		pthread_cond_signal(&refresh_on_max_cond);
+ 	if (tracelimit)
+ 		tracing(0);
+ }
+@@ -1298,6 +1308,13 @@ int main(int argc, char **argv)
+ 			break;
+ 		if (!verbose && !quiet)
+ 			printf("\033[%dA", num_threads + 2);
++
++		if (refresh_on_max) {
++			pthread_mutex_lock(&refresh_on_max_lock);
++			pthread_cond_wait(&refresh_on_max_cond,
++					  &refresh_on_max_lock);
++			pthread_mutex_unlock(&refresh_on_max_lock);
++		}
+ 	}
+ 	ret = EXIT_SUCCESS;
+ 
