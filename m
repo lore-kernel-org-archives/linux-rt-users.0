@@ -1,86 +1,123 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Gregory Haskins <ghaskins@novell.com>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Fri, 28 Aug 2009 00:05:14 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0908272348370.2888@localhost.localdomain>
-References: <1251282598.3514.20.camel@raz>  <alpine.DEB.1.10.0908260943090.9924@gentwo.org>  <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>  <1251300625.18584.18.camel@twins>  <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
- <1251302598.18584.31.camel@twins>  <alpine.DEB.1.10.0908261211340.9933@gentwo.org>  <20090826180407.GA13632@elte.hu>  <alpine.DEB.1.10.0908261509580.9933@gentwo.org>  <20090826193252.GA14721@elte.hu>  <alpine.DEB.1.10.0908261627110.5554@gentwo.org>
- <20090826135041.e6169d18.akpm@linux-foundation.org>  <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz>  <4A96B997.1070001@nortel.com> <1251408785.3700.22.camel@raz>
+Date: Thu, 27 Aug 2009 18:22:23 -0400
+Message-ID: <4A97071F.5070804@novell.com>
+References: <1251282598.3514.20.camel@raz>  <alpine.DEB.1.10.0908260943090.9924@gentwo.org>  <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>  <1251300625.18584.18.camel@twins>  <alpine.DEB.1.10.0908261136590.9933@gentwo.org>  <1251302598.18584.31.camel@twins>  <alpine.DEB.1.10.0908261211340.9933@gentwo.org>  <20090826180407.GA13632@elte.hu>  <alpine.DEB.1.10.0908261509580.9933@gentwo.org>  <20090826193252.GA14721@elte.hu>  <alpine.DEB.1.10.0908261627110.5554@gentwo.org>  <20090826135041.e6169d18.akpm@linux-foundation.org>  <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz> <4A96B997.1070001@nortel.com> <alpine.DEB.1.10.0908271257270.17470@gentwo.org> <alpine.LFD.2.00.0908272242500.2888@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Chris Friesen <cfriesen@nortel.com>,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="------------enig353EA08A2E3493907A255907"
+Cc: Christoph Lameter <cl@linux-foundation.org>,
+	Chris Friesen <cfriesen@nortel.com>,
+	raz ben yehuda <raziebe@gmail.com>,
 	Andrew Morton <akpm@linux-foundation.org>, mingo@elte.hu,
 	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
 	riel@redhat.com, wiseman@macs.biu.ac.il,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: raz ben yehuda <raziebe@gmail.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:41945 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753301AbZH0WH4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Aug 2009 18:07:56 -0400
-In-Reply-To: <1251408785.3700.22.camel@raz>
+In-Reply-To: <alpine.LFD.2.00.0908272242500.2888@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 28 Aug 2009, raz ben yehuda wrote:
-> On Thu, 2009-08-27 at 10:51 -0600, Chris Friesen wrote:
-> > On 08/26/2009 03:37 PM, raz ben yehuda wrote:
-> > > 
-> > > On Wed, 2009-08-26 at 15:15 -0600, Chris Friesen wrote:
-> > 
-> > >> We gave it as close to a whole cpu as we could using cpu and irq
-> > >> affinity and we used message queues in shared memory to allow another
-> > >> cpu to handle I/O.  In our case we still had kernel threads running on
-> > >> the app cpu, but if we'd had a straightforward way to avoid them we
-> > >> would have used it.
-> > 
-> > > Chris. I offer myself to help anyone wishes to apply OFFSCHED.
-> > 
-> > I just went and read the docs.  One of the things I noticed is that it
-> > says that the offlined cpu cannot run userspace tasks.  For our
-> > situation that's a showstopper, unfortunately.
->
-> Given that your entire software is T size , and T' is the amount of real
-> time size, what is the relation T'/T ?
-> If T'/T << 1 then dissect it, and put the T' in OFFSCHED. 
-> My software T's is about 100MB while the real time section is about 60K.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enig353EA08A2E3493907A255907
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Chris was stating that your offlined cpu cannot run userspace
-tasks. How is your answer connected to Chris' statement ? Please stop
-useless marketing. LKML is about technical problems not advertisement.
+Thomas Gleixner wrote:
+> On Thu, 27 Aug 2009, Christoph Lameter wrote:
+>> On Thu, 27 Aug 2009, Chris Friesen wrote:
+>>
+>>> I just went and read the docs.  One of the things I noticed is that i=
+t
+>>> says that the offlined cpu cannot run userspace tasks.  For our
+>>> situation that's a showstopper, unfortunately.
+>> It needs to be implemented the right way. Essentially this is a variat=
+ion
+>> on the isolcpu kernel boot option. We probably need some syscall to mo=
+ve
+>> a user space process to a bare metal cpu since the cpu cannot be
+>> considered online in the regular sense.
+>=20
+> It can. It needs to be flagged as reserved for special tasks and you
+> need a separate mechanism to move and pin a task to such a CPU.
+>=20
+>> An isolated cpu can then only execute one process at a time. A process=
 
-> They communicate through a simple ioctls.  
+>> would do all initialization and lock itsresources in memory before goi=
+ng
+>> to the isolated processor. Any attempt to use OS facilities need to ca=
+use
+>> the process to be moved back to a cpu with OS services.
+>=20
+> You are creating a "one special case" operation mode which is not
+> justified in my opinion. Let's look at the problem you want to solve:
+>=20
+>   Run exactly one thread on a dedicated CPU w/o any disturbance by the
+>   scheduler tick.
+>=20
+> You can move away anything else than the scheduler tick from a CPU
+> today already w/o a single line of code change.
+>=20
+> But you want to impose restrictions like resource locking and moving
+> back to another CPU in case of a syscall. What's the purpose of this ?
+> It does not buy anything except additional complexity.
+>=20
+> That's just the wrong approach. All you need is a way to tell the
+> kernel that CPUx can switch off the scheduler tick when only one
+> thread is running and that very thread is running in user space. Once
+> another thread arrives on that CPU or the single thread enters the
+> kernel for a blocking syscall the scheduler tick has to be
+> restarted.
+>=20
+> It's not rocket science to fix the well known issues of stopping and
+> eventually restarting the scheduler tick, the CPU time accounting and
+> some other small details. Such a modification would be of general use
+> contrary to your proposed solution which is just a hack to solve your
+> particular special case of operation.
 
-This is totally irrelevant and we all know how communication channels
-between Linux and whatever hackery (RT-Linux, RTAI, ... OFFLINE)
-works.
+I wonder if it makes sense to do something along the lines of the
+sched-class...
 
->               CPU isolation example: a transmission engine.
-> 
-> In the image bellow, I am presenting 4 streaming engines, over 4 Intels
-> 82598EB 10Gbps. A streaming engine is actually a Xeon E5420 2.5GHz.
-> Each engine has ***full control*** over its own interface. So you can:
-> 
-> 1. fully control the processor's usage.
+IOW: What if we adopted one of the following models:
 
-By disabling the OS control over the CPU resource. How innovative.
+1) Create a new class that is higher prio than FIFO/RR and, when
+selected, disables the tick.
 
-> 2. know **exactly*** how much each single packet transmission costs. for
-> example, in this case in processor 3 a single packet average
-> transmission is 1974tscs, which is ~700ns.
-> 
-> 3. know how many packets fails to transmit right **on time** ( the Lates
-> counter) . and on time in this case means within the 122us jitter. 
+2) Modify FIFO so that it disables tick by default...update accounting
+info at next reschedule event.
 
-Are those statistics a crucial property of your OFFLINE thing ?
- 
-> 4. There are 8 cores in this machine. The rest 4 OS cores are ~95% idle.
-> The only resource these cores share is the bus. 
+3) Variation of 2..leave FIFO+tick as is by default, but have some kind
+of parameter to optionally disable tick if desired.
 
-That does not change the problem that you cannot run ordinary user
-space tasks on your offlined CPUs and you are simply hacking round the
-real problem which I outlined in my previous mail.
+In a way, we should probably consider (2) independent of this particular
+thread.  FIFO doesn't need a tick anyway afaict...only a RESCHED+IPI
+truly ever matter here....or am I missing something obvious (probably
+w.r.t accounting)?
 
-Thanks,
+You could then couple this solution with cpusets (possibly with a little
+work to get rid of any pesky per-cpy kthreads) to achieve the desired
+effect of interference-free operation.  You wouldn't even have to have
+funky rules eluded to above w.r.t. making sure only one userspace thread
+is running on the core.
 
-	tglx
+Thoughts?
+-Greg
+
+
+--------------enig353EA08A2E3493907A255907
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG/MacGPG2 v2.0.11 (Darwin)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
+
+iEYEARECAAYFAkqXBx8ACgkQP5K2CMvXmqFh+ACfdHEqhvEAmSZ4uoeiMJ5QNr/s
+42wAn2LMe5KV54wp8HvXszgdrzH6NezA
+=j22u
+-----END PGP SIGNATURE-----
+
+--------------enig353EA08A2E3493907A255907--
