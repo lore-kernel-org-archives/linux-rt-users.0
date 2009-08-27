@@ -1,60 +1,106 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Thu, 27 Aug 2009 09:15:56 +0200
-Message-ID: <1251357356.7051.97.camel@marge.simson.net>
-References: <4A943A00.9080609@nortel.com> <1251264700.7538.1178.camel@twins>
-	 <1251282598.3514.20.camel@raz>
-	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
-	 <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>
-	 <1251300625.18584.18.camel@twins>
-	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
-	 <1251302598.18584.31.camel@twins>
-	 <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
-	 <20090826180407.GA13632@elte.hu>
-	 <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
+From: Kevin Hilman <khilman@deeprootsystems.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rc7-rt8
+Date: Thu, 27 Aug 2009 14:03:05 +0300
+Message-ID: <878wh5friu.fsf@deeprootsystems.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	<alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
+	<alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
+	<alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
+	<alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+	<alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
+	<alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+	<alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+	<alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
+	<alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+	<alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+	<alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+	<alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
+	<alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
+	<alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+	<alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
+	<alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@elte.hu>, Peter Zijlstra <peterz@infradead.org>,
-	raz ben yehuda <raziebe@gmail.com>,
-	Maxim Levitsky <maximlevitsky@gmail.com>,
-	Chris Friesen <cfriesen@nortel.com>, riel@redhat.com,
-	andrew motron <akpm@linux-foundation.org>,
-	wiseman@macs.biu.ac.il, lkml <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: Christoph Lameter <cl@linux-foundation.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751452AbZH0HQD@vger.kernel.org>
-In-Reply-To: <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-fx0-f217.google.com ([209.85.220.217]:61608 "EHLO
+	mail-fx0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751138AbZH0LDH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Aug 2009 07:03:07 -0400
+In-Reply-To: <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> (Thomas Gleixner's message of "Wed\, 26 Aug 2009 19\:23\:46 +0200 \(CEST\)")
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2009-08-26 at 15:15 -0400, Christoph Lameter wrote:
+Thomas Gleixner <tglx@linutronix.de> writes:
 
-> The point of the OFFLINE scheduler is to completely eliminate the
-> OS disturbances by getting rid of *all* OS processing on some cpus.
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+>  
+>     - update to Linus' latest
+>  
+>     - perf counter crash fix (peterz)
+>     
+>     - disabled MARKERS on RT. Code with no use(rs) which just causes
+>       trouble.
+>
+>     - edge irq forced threading fix. Fixes the IDE "interrupt lost"
+>       reports
+>
 
-No, that's not the point of OFFSCHED.  It's about offloading kernel
-functionality to a peer, and as it currently exists after some years of
-development. kernel functionality only.  Raz has already stated that
-hard RT is not the point.
+Hi Thomas,
 
-<quote> (for full context, jump back a bit in this thread)
-> On the other hand, I could see this as a jump platform for more
-> proprietary code, something like that: we use linux in out server
-> platform, but out "insert buzzword here" network stack pro+ can handle
-> 100% more load that linux does, and it runs on a dedicated core....
-> 
-> In the other words, we might see 'firmwares' that take an entire cpu
-for
-> their usage.
-This is exactly what offsched (sos) is. you got it. SOS was partly
-inspired by the notion of a GPU. 
-Processors are to become more and more redundant and Linux as an
-evolutionary system must use it. why not offload raid5 write engine ?
-why not encrypt in a different processor ?
-Also , having so many processors in a single OS means a bug prone
-system , with endless contention points when two or more OS processors
-interacts. let's make things simpler.
-</quote>
+Here's one more atomic_spin_lock conversion for a driver update
+that went in for -rc7.
 
-	-Mike
+Kevin
+
+>From 4faf27a4c0ceaddd7cb13f5d11928babc9c4cddc Mon Sep 17 00:00:00 2001
+From: Kevin Hilman <khilman@deeprootsystems.com>
+Date: Thu, 27 Aug 2009 13:51:47 +0300
+Subject: [PATCH -rt] MFD: twl4030: convert irq_desc lock to atomic spinlock
+
+Signed-off-by: Kevin Hilman <khilman@deeprootsystems.com>
+---
+ drivers/mfd/twl4030-irq.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/mfd/twl4030-irq.c b/drivers/mfd/twl4030-irq.c
+index 7d43083..c1bc157 100644
+--- a/drivers/mfd/twl4030-irq.c
++++ b/drivers/mfd/twl4030-irq.c
+@@ -458,12 +458,12 @@ static void twl4030_sih_do_edge(struct work_struct *work)
+ 
+ 		bytes[byte] &= ~(0x03 << off);
+ 
+-		spin_lock_irq(&d->lock);
++		atomic_spin_lock_irq(&d->lock);
+ 		if (d->status & IRQ_TYPE_EDGE_RISING)
+ 			bytes[byte] |= BIT(off + 1);
+ 		if (d->status & IRQ_TYPE_EDGE_FALLING)
+ 			bytes[byte] |= BIT(off + 0);
+-		spin_unlock_irq(&d->lock);
++		atomic_spin_unlock_irq(&d->lock);
+ 
+ 		edge_change &= ~BIT(i);
+ 	}
+-- 
+1.6.4
+
