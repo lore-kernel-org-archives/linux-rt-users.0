@@ -1,106 +1,42 @@
-From: Kevin Hilman <khilman@deeprootsystems.com>
-Subject: Re: [ANNOUNCE] 2.6.31-rc7-rt8
-Date: Thu, 27 Aug 2009 14:03:05 +0300
-Message-ID: <878wh5friu.fsf@deeprootsystems.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	<alpine.LFD.2.00.0904290036500.4529@localhost.localdomain>
-	<alpine.LFD.2.00.0905012348200.3375@localhost.localdomain>
-	<alpine.LFD.2.00.0905130122250.3561@localhost.localdomain>
-	<alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
-	<alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
-	<alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
-	<alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
-	<alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
-	<alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
-	<alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
-	<alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
-	<alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
-	<alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
-	<alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
-	<alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
-	<alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
+From: "Chris Friesen" <cfriesen@nortel.com>
+Subject: Re: RFC: THE OFFLINE SCHEDULER
+Date: Thu, 27 Aug 2009 10:51:35 -0600
+Message-ID: <4A96B997.1070001@nortel.com>
+References: <1251282598.3514.20.camel@raz>	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>	 <1251297910.1791.22.camel@maxim-laptop>	<1251298443.4791.7.camel@raz>	 <1251300625.18584.18.camel@twins>	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>	 <1251302598.18584.31.camel@twins>	 <alpine.DEB.1.10.0908261211340.9933@gentwo.org>	 <20090826180407.GA13632@elte.hu>	 <alpine.DEB.1.10.0908261509580.9933@gentwo.org>	 <20090826193252.GA14721@elte.hu>	 <alpine.DEB.1.10.0908261627110.5554@gentwo.org>	 <20090826135041.e6169d18.akpm@linux-foundation.org>	 <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Christoph Lameter <cl@linux-foundation.org>, mingo@elte.hu,
+	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
+	riel@redhat.com, wiseman@macs.biu.ac.il,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: raz ben yehuda <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f217.google.com ([209.85.220.217]:61608 "EHLO
-	mail-fx0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751138AbZH0LDH (ORCPT
+Received: from zrtps0kp.nortel.com ([47.140.192.56]:57762 "EHLO
+	zrtps0kp.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752968AbZH0QwG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Aug 2009 07:03:07 -0400
-In-Reply-To: <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> (Thomas Gleixner's message of "Wed\, 26 Aug 2009 19\:23\:46 +0200 \(CEST\)")
+	Thu, 27 Aug 2009 12:52:06 -0400
+In-Reply-To: <1251322663.3882.48.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas Gleixner <tglx@linutronix.de> writes:
+On 08/26/2009 03:37 PM, raz ben yehuda wrote:
+> 
+> On Wed, 2009-08-26 at 15:15 -0600, Chris Friesen wrote:
 
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->  
->     - update to Linus' latest
->  
->     - perf counter crash fix (peterz)
->     
->     - disabled MARKERS on RT. Code with no use(rs) which just causes
->       trouble.
->
->     - edge irq forced threading fix. Fixes the IDE "interrupt lost"
->       reports
->
+>> We gave it as close to a whole cpu as we could using cpu and irq
+>> affinity and we used message queues in shared memory to allow another
+>> cpu to handle I/O.  In our case we still had kernel threads running on
+>> the app cpu, but if we'd had a straightforward way to avoid them we
+>> would have used it.
 
-Hi Thomas,
+> Chris. I offer myself to help anyone wishes to apply OFFSCHED.
 
-Here's one more atomic_spin_lock conversion for a driver update
-that went in for -rc7.
+I just went and read the docs.  One of the things I noticed is that it
+says that the offlined cpu cannot run userspace tasks.  For our
+situation that's a showstopper, unfortunately.
 
-Kevin
-
->From 4faf27a4c0ceaddd7cb13f5d11928babc9c4cddc Mon Sep 17 00:00:00 2001
-From: Kevin Hilman <khilman@deeprootsystems.com>
-Date: Thu, 27 Aug 2009 13:51:47 +0300
-Subject: [PATCH -rt] MFD: twl4030: convert irq_desc lock to atomic spinlock
-
-Signed-off-by: Kevin Hilman <khilman@deeprootsystems.com>
----
- drivers/mfd/twl4030-irq.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/mfd/twl4030-irq.c b/drivers/mfd/twl4030-irq.c
-index 7d43083..c1bc157 100644
---- a/drivers/mfd/twl4030-irq.c
-+++ b/drivers/mfd/twl4030-irq.c
-@@ -458,12 +458,12 @@ static void twl4030_sih_do_edge(struct work_struct *work)
- 
- 		bytes[byte] &= ~(0x03 << off);
- 
--		spin_lock_irq(&d->lock);
-+		atomic_spin_lock_irq(&d->lock);
- 		if (d->status & IRQ_TYPE_EDGE_RISING)
- 			bytes[byte] |= BIT(off + 1);
- 		if (d->status & IRQ_TYPE_EDGE_FALLING)
- 			bytes[byte] |= BIT(off + 0);
--		spin_unlock_irq(&d->lock);
-+		atomic_spin_unlock_irq(&d->lock);
- 
- 		edge_change &= ~BIT(i);
- 	}
--- 
-1.6.4
+Chris
 
