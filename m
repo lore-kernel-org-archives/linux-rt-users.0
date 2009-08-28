@@ -1,106 +1,114 @@
-From: raz ben yehuda <raziebe@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Fri, 28 Aug 2009 11:38:17 +0300
-Message-ID: <1251448697.3872.15.camel@raz>
-References: <1251282598.3514.20.camel@raz>
-	 <alpine.DEB.1.10.0908260943090.9924@gentwo.org>
-	 <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>
-	 <1251300625.18584.18.camel@twins>
-	 <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
-	 <1251302598.18584.31.camel@twins>
-	 <alpine.DEB.1.10.0908261211340.9933@gentwo.org>
-	 <20090826180407.GA13632@elte.hu>
-	 <alpine.DEB.1.10.0908261509580.9933@gentwo.org>
-	 <20090826193252.GA14721@elte.hu>
-	 <alpine.DEB.1.10.0908261627110.5554@gentwo.org>
-	 <20090826135041.e6169d18.akpm@linux-foundation.org>
-	 <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz>
-	 <4A96B997.1070001@nortel.com> <1251408785.3700.22.camel@raz>
-	 <alpine.LFD.2.00.0908272348370.2888@localhost.localdomain>
+Date: Fri, 28 Aug 2009 12:05:22 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0908281057070.2888@localhost.localdomain>
+References: <1251282598.3514.20.camel@raz>  <alpine.DEB.1.10.0908260943090.9924@gentwo.org>  <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>  <1251300625.18584.18.camel@twins>  <alpine.DEB.1.10.0908261136590.9933@gentwo.org>
+ <1251302598.18584.31.camel@twins>  <alpine.DEB.1.10.0908261211340.9933@gentwo.org>  <20090826180407.GA13632@elte.hu>  <alpine.DEB.1.10.0908261509580.9933@gentwo.org>  <20090826193252.GA14721@elte.hu>  <alpine.DEB.1.10.0908261627110.5554@gentwo.org>
+ <20090826135041.e6169d18.akpm@linux-foundation.org>  <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz>  <4A96B997.1070001@nortel.com> <1251408785.3700.22.camel@raz>  <alpine.LFD.2.00.0908272348370.2888@localhost.localdomain>
+ <1251448697.3872.15.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Chris Friesen <cfriesen@nortel.com>,
 	Andrew Morton <akpm@linux-foundation.org>, mingo@elte.hu,
 	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
 	riel@redhat.com, wiseman@macs.biu.ac.il,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+To: raz ben yehuda <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f206.google.com ([209.85.219.206]:43777 "EHLO
-	mail-ew0-f206.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751453AbZH1IiT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Aug 2009 04:38:19 -0400
-In-Reply-To: <alpine.LFD.2.00.0908272348370.2888@localhost.localdomain>
+Received: from www.tglx.de ([62.245.132.106]:41852 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751451AbZH1KIQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Aug 2009 06:08:16 -0400
+In-Reply-To: <1251448697.3872.15.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Fri, 28 Aug 2009, raz ben yehuda wrote:
+> On Fri, 2009-08-28 at 00:05 +0200, Thomas Gleixner wrote:
+> > This is totally irrelevant and we all know how communication channels
+> > between Linux and whatever hackery (RT-Linux, RTAI, ... OFFLINE)
+> > works.
+>
+> Why are you referring to the above projects as hacks ? What is a hack ?
 
-On Fri, 2009-08-28 at 00:05 +0200, Thomas Gleixner wrote:
-> On Fri, 28 Aug 2009, raz ben yehuda wrote:
-> > On Thu, 2009-08-27 at 10:51 -0600, Chris Friesen wrote:
-> > > On 08/26/2009 03:37 PM, raz ben yehuda wrote:
-> > > > 
-> > > > On Wed, 2009-08-26 at 15:15 -0600, Chris Friesen wrote:
-> > > 
-> > > >> We gave it as close to a whole cpu as we could using cpu and irq
-> > > >> affinity and we used message queues in shared memory to allow another
-> > > >> cpu to handle I/O.  In our case we still had kernel threads running on
-> > > >> the app cpu, but if we'd had a straightforward way to avoid them we
-> > > >> would have used it.
-> > > 
-> > > > Chris. I offer myself to help anyone wishes to apply OFFSCHED.
-> > > 
-> > > I just went and read the docs.  One of the things I noticed is that it
-> > > says that the offlined cpu cannot run userspace tasks.  For our
-> > > situation that's a showstopper, unfortunately.
-> >
-> > Given that your entire software is T size , and T' is the amount of real
-> > time size, what is the relation T'/T ?
-> > If T'/T << 1 then dissect it, and put the T' in OFFSCHED. 
-> > My software T's is about 100MB while the real time section is about 60K.
-> 
-> Chris was stating that your offlined cpu cannot run userspace
-> tasks. How is your answer connected to Chris' statement ? Please stop
-> useless marketing. LKML is about technical problems not advertisement.
-> 
-> > They communicate through a simple ioctls.  
-> 
-> This is totally irrelevant and we all know how communication channels
-> between Linux and whatever hackery (RT-Linux, RTAI, ... OFFLINE)
-> works.
-Why are you referring to the above projects as hacks ? What is a hack ?
-> >               CPU isolation example: a transmission engine.
-> > 
-> > In the image bellow, I am presenting 4 streaming engines, over 4 Intels
-> > 82598EB 10Gbps. A streaming engine is actually a Xeon E5420 2.5GHz.
-> > Each engine has ***full control*** over its own interface. So you can:
-> > 
-> > 1. fully control the processor's usage.
-> 
-> By disabling the OS control over the CPU resource. How innovative.
-I must say when a john doe like me receives this kind of response from names like Thomas Gleixner
-it aches. 
-> > 2. know **exactly*** how much each single packet transmission costs. for
-> > example, in this case in processor 3 a single packet average
-> > transmission is 1974tscs, which is ~700ns.
-> > 
-> > 3. know how many packets fails to transmit right **on time** ( the Lates
-> > counter) . and on time in this case means within the 122us jitter. 
-> 
-> Are those statistics a crucial property of your OFFLINE thing ?
-yes. latency is a crucial property. 
-> > 4. There are 8 cores in this machine. The rest 4 OS cores are ~95% idle.
-> > The only resource these cores share is the bus. 
-> 
-> That does not change the problem that you cannot run ordinary user
-> space tasks on your offlined CPUs and you are simply hacking round the
-> real problem which I outlined in my previous mail.
-OFFSCHED is not just about RT. it is about assigning assignments to another resource 
-outside the operating system. very much like GPUs, network processors,
-and so on, but just with software that is accessible to the OS.
-> Thanks,
-> 
-> 	tglx
+Everything which works around the real problem instead of solving it.
 
+> > > 2. know **exactly*** how much each single packet transmission costs. for
+> > > example, in this case in processor 3 a single packet average
+> > > transmission is 1974tscs, which is ~700ns.
+> > > 
+> > > 3. know how many packets fails to transmit right **on time** ( the Lates
+> > > counter) . and on time in this case means within the 122us jitter. 
+> > 
+> > Are those statistics a crucial property of your OFFLINE thing ?
+
+> yes. latency is a crucial property. 
+
+You are not answering my quesiton.
+
+Also reducing latencies is something we want to do in the kernel
+proper in the first place. We all know that you can reduce the
+latencies by taking control away from the kernel and running a side
+show. But that's nothing new. It has been done for decades already and
+none of these projects has ever improved the kernel itself.
+
+> > > 4. There are 8 cores in this machine. The rest 4 OS cores are ~95% idle.
+> > > The only resource these cores share is the bus. 
+> > 
+> > That does not change the problem that you cannot run ordinary user
+> > space tasks on your offlined CPUs and you are simply hacking round the
+> > real problem which I outlined in my previous mail.
+>
+> OFFSCHED is not just about RT. it is about assigning assignments to
+> another resource outside the operating system. very much like GPUs,
+> network processors, and so on, but just with software that is
+> accessible to the OS.
+
+I was not talking about RT. I was talking about the problem that you
+cannot run an ordinary user space task on your offlined CPU. That's
+the main point where the design sucks. Having specialized programming
+environments which impose tight restrictions on the application
+programmer for no good reason are horrible.
+
+Also how are GPUs, network processors related to my statements ?
+Running specialized software on dedicated hardware which is an addon
+to the base system controlled by the kernel is not new. There are
+enough real world applications running Linux on the main CPU and some
+extra code on an add on DSP or whatever. Cell/SPU or the TI ARM/DSP
+combos are just the most obvious examples which come to my mind. Where
+is the point of OFFSCHED here ?
+
+In your earlier mails you talked about isolating cores of the base
+system by taking the control away from the kernel and what a wonderful
+solution this is because it allows you full control over that core.
+
+We can dedicate a core to special computations today and we can assign
+resources of any kind to it under the full control of the OS. The only
+disturbing factor is the scheduler tick.
+
+So you work around the scheduler tick problem by taking the core away
+from the OS. That does not solve the problem, it simply introduces a
+complete set of new problems:
+
+ - accounting of CPU utilization excludes the offlined core
+
+ - resource assignment is restricted to startup of the application
+
+ - standard admin tools (top, ps ....) are not working
+
+ - unnecessary restrictions for the application programmer:
+    - no syscalls
+    - no standard IPC
+    - ....
+
+ - debugging of the code which runs on the offlined core needs
+   separate tools
+
+ - performance analysis e.g. with profiling/performance counters
+   cannot use the existing mechanisms
+
+ - ....
+
+Thanks,
+
+	tglx
