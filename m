@@ -1,41 +1,84 @@
-From: "Chris Friesen" <cfriesen@nortel.com>
-Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Fri, 28 Aug 2009 15:20:05 -0600
-Message-ID: <4A984A05.9080009@nortel.com>
-References: <1251282598.3514.20.camel@raz>  <alpine.DEB.1.10.0908260943090.9924@gentwo.org>  <1251297910.1791.22.camel@maxim-laptop> <1251298443.4791.7.camel@raz>  <1251300625.18584.18.camel@twins>  <alpine.DEB.1.10.0908261136590.9933@gentwo.org>  <1251302598.18584.31.camel@twins>  <alpine.DEB.1.10.0908261211340.9933@gentwo.org>  <20090826180407.GA13632@elte.hu>  <alpine.DEB.1.10.0908261509580.9933@gentwo.org>  <20090826193252.GA14721@elte.hu>  <alpine.DEB.1.10.0908261627110.5554@gentwo.org>  <20090826135041.e6169d18.akpm@linux-foundation.org>  <4A95A5EE.90400@nortel.com> <1251322663.3882.48.camel@raz> <4A96B997.1070001@nortel.com> <alpine.DEB.1.10.0908271257270.17470@gentwo.org> <alpine.LFD.2.00.0908272242500.2888@localhost.localdomain> <4A971C18.7050109@nortel.com> <alpine.LFD.2.00.09082
- 80238290.2888@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 2.6.31-rc7-rt8
+Date: Fri, 28 Aug 2009 23:36:04 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0905012348200.3375@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+ <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
+ <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
+ <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux-foundation.org>,
-	raz ben yehuda <raziebe@gmail.com>,
-	Andrew Morton <akpm@linux-foundation.org>, mingo@elte.hu,
-	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
-	riel@redhat.com, wiseman@macs.biu.ac.il,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from zrtps0kp.nortel.com ([47.140.192.56]:44569 "EHLO
-	zrtps0kp.nortel.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750971AbZH1VUl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Aug 2009 17:20:41 -0400
-In-Reply-To: <alpine.LFD.2.00.0908280238290.2888@localhost.localdomain>
+Received: from www.tglx.de ([62.245.132.106]:55773 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751171AbZH1VhN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Aug 2009 17:37:13 -0400
+In-Reply-To: <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/27/2009 06:44 PM, Thomas Gleixner wrote:
-> On Thu, 27 Aug 2009, Chris Friesen wrote:
->> How would you deal with per-cpu kernel threads (softirqs, etc.) or
->> softirq processing while in the kernel?
-> 
-> If you have pinned an interrupt to that CPU then you need to process
-> the softirq for it as well. If that's the device your very single user
-> space thread is talking to then you better want that, if you are not
-> interested then simply pin that device irq to some other CPU: no irq
-> -> no softirq.
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+    - update to Linus' latest
+ 
+    - more perf counters rt education
 
-Ah, okay.  For some reason I had thought that the incoming work was
-queued up globally and might be handled by any softirq.
+    - !RT build fix (jstultz)
 
-Chris
+    - MFD rt fix (khilman)
+    
+Known issues:
+      - ARM highmem
+      - scheduler load balancing oddities. Peter is working on it.
+      - latency tracer oddities (latency tracers in combination with
+        events). Steven is working on those
+
+Give it a good testing. We aim for releasing a stable .31-rt in less
+than 24 hrs after Linus releases .31 :)
+
+Download locations:
+ 
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git release branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+  
+Git development branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+
+Gitweb:
+     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.31-rc8-rt9 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.30.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.31-rc8.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rc8-rt9.bz2
+
+Enjoy !
+
+      tglx
