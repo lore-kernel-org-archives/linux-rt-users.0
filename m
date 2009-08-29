@@ -1,52 +1,62 @@
-From: Daniel Walker <dwalker@fifo99.com>
-Subject: Re: System lockup with 2.6.26.8-rt16 on ARM9 [Solved]
-Date: Sat, 29 Aug 2009 07:42:45 -0700
-Message-ID: <1251556965.9909.10.camel@desktop>
-References: <3efb10970908290047k6f4d5a14of148db7f2b179f18@mail.gmail.com>
+From: jim owens <jowens@hp.com>
+Subject: Re: RFC: THE OFFLINE SCHEDULER
+Date: Sat, 29 Aug 2009 13:03:15 -0400
+Message-ID: <4A995F53.50509@hp.com>
+References: <1251282598.3514.20.camel@raz>  <alpine.DEB.1.10.0908260943090.9924@gentwo.org>  <1251297910.1791.22.camel@maxim-laptop> <1251322663.3882.48.camel@raz> <4A96B997.1070001@nortel.com> <alpine.DEB.1.10.0908271257270.17470@gentwo.org> <alpine.LFD.2.00.0908272242500.2888@localhost.localdomain> <4A97071F.5070804@novell.com> <4A973DAE.4020508@redhat.com> <4A975025.8030500@novell.com> <4A975CC4.1090208@novell.com> <alpine.LFD.2.00.0908281218560.2888@localhost.localdomain> <alpine.DEB.1.10.0908281446520.7317@gentwo.org> <alpine.LFD.2.00.0908282100040.19335@localhost.localdomain> <alpine.DEB.1.10.0908281551450.17784@gentwo.org> <alpine.LFD.2.00.0908282158100.19335@localhost.localdomain> <alpine.DEB.1.10.0908281619520.15573@gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
+	Gregory Haskins <ghaskins@novell.com>,
+	Rik van Riel <riel@redhat.com>,
+	Chris Friesen <cfriesen@nortel.com>,
+	raz ben yehuda <raziebe@gmail.com>,
+	Andrew Morton <akpm@linux-foundation.org>, mingo@elte.hu,
+	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
+	wiseman@macs.biu.ac.il, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Christoph Lameter <cl@linux-foundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fifo99.com ([67.223.236.141]:56620 "EHLO fifo99.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751700AbZH2Omt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 29 Aug 2009 10:42:49 -0400
-In-Reply-To: <3efb10970908290047k6f4d5a14of148db7f2b179f18@mail.gmail.com>
+Received: from g4t0014.houston.hp.com ([15.201.24.17]:25793 "EHLO
+	g4t0014.houston.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751604AbZH2RDs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 29 Aug 2009 13:03:48 -0400
+In-Reply-To: <alpine.DEB.1.10.0908281619520.15573@gentwo.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2009-08-29 at 09:47 +0200, Remy Bohmer wrote:
-
-> Well, we found the root cause of this problem.
-> It turned out to be caused by sched_clock() that made disjunct time jumps.
-> This caused this check to become true in kernel/sched_rt.c:370:
->          if (rt_rq->rt_time > runtime) {
->                 rt_rq->rt_throttled = 1;
->                 if (rt_rq_throttled(rt_rq)) {
->                         sched_rt_rq_dequeue(rt_rq);
->                         return 1;
->                 }
->         }
+Christoph Lameter wrote:
+> On Fri, 28 Aug 2009, Thomas Gleixner wrote:
+>> What slab queue stuff is running on timers and cannot be switched off
+>> in such a context?
 > 
-> The end results is that all realtime tasks got throttled for a long
-> time, and that time got extended every time sched_clock() made such a
-> jump. I would never have expected the scheduler would show this kind
-> of behaviour while CONFIG_RT_GROUP_SCHED is _not_ set...
+> slab does run a timer every 2 second to age queues. If there was activity
+> then there can be a relatively long time in which we periodically throw
+> out portions of the cached data.
+
+OK, you have me fully confused now.
+
+ From other HPC people, I know the "no noise in my math application"
+requirement.  But that means the user code that is running on the
+CPU must not do anything that wakes the kernel.  Not even page faults,
+so they pin the memory at job start.
+
+Anything the user code does that needs kernel statistics or
+kernel action is "I must fix my user code", or "I accept that
+the noise is necessary".
+
+So we don't need to offload stats to other CPUs, stats are not needed.
+
+>> Device specific stuff should not happen on such a CPU when there is no
+>> device handled on it.
 > 
-> The root-cause of the sched_clock being faulty was a synchronisation
-> issue between 2 clock domains. The CPU clock and the clock domain of
-> the peripheral (GPT) on which the sched_clock() implementation was
-> based. The GPT made jumps backwards which triggered a false wraparound
-> detection in the conversion of 32->64 bit timestamps, causing the time
-> to jump about 356 seconds in the future...
-> 
+> The device may periodically check for conditions that require action.
 
-Can you tell us more about what type of board this was? I've never heard
-of a ARM board having an unstable clocksource before ..
+Again, what is this device and why is it controlled directly by
+user-space code.  Devices should be controlled even in an HPC
+environment by the kernel.  AFAIK HPC wants the kernel to be the
+bootstrap and data transfer manager running on a small subset of
+the total CPUs, with the dedicated CPUs running math jobs.
 
-Daniel
-
+jim
