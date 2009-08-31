@@ -1,64 +1,60 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Subject: Re: Latest PreemptRT patch error on imx35
-Date: Mon, 31 Aug 2009 13:48:23 +0200
-Message-ID: <4A9BB887.1040407@osadl.org>
+Date: Mon, 31 Aug 2009 15:22:00 +0200
+Message-ID: <20090831132200.GA21836@pengutronix.de>
 References: <200908311143.08952.tim01@vlsi.informatik.tu-darmstadt.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"David S. Miller" <davem@davemloft.net>,
+	Sascha Hauer <s.hauer@pengutronix.de>,
+	Greg Ungerer <gerg@uclinux.org>, netdev@vger.kernel.org
 To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:42942 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751753AbZHaMnZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Aug 2009 08:43:25 -0400
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:51450 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753415AbZHaNWc (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 31 Aug 2009 09:22:32 -0400
+Content-Disposition: inline
 In-Reply-To: <200908311143.08952.tim01@vlsi.informatik.tu-darmstadt.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Tim,
+Hello Tim,
 
 > I just bootet 2.6.31-rc8-rt9 on the phycore-imx35 development board,=20
 > without any additional patches. The FEC Ethernet Controller went bell=
 y=20
-> up, but the system booted nevertheless. I tried cyclictest:
-> root@pmx:~ cyclictest -t1 -p 80 -n -i 10000 -l 10000
-As a role of thumb, the -i option is normally set to twice the expected
-latency. If, for example you expect 100 us, set it to -i200. Your loop
-end is then reached 50 times faster, or - what is much better - you may
-specify 50 times more loops for a test of the same duration which
-considerably increases the quality of your assessment. Normally,
-however, you would probably wait for 100 million or even a billion loop=
-s.
+> up, but the system booted nevertheless. [...]
+The problem is that &fep->mii_lock is taken twice.  On a normal (i.e.
+non-RT) UP system that doesn't hurt because spinlocks are noops (unless
+you have some debugging code activated).
 
-> 0.05 0.10 0.05 1/39 570
-> T: 0 (  570) P:80 I:10000 C:  10000 Min:     14 Act:   20 Avg:   19 M=
-ax:      27
-> These  are Numbers from an Idle Machine (no network), but they look r=
-eally good.
-With an average of 19 and a maximum of 27, the result is probably not
-very relevant. This indicates that the CPU was idle most of the time
-when the wakeup occurred - every OS can do this. The challenge of an
-RTOS is to wakeup in time also when the kernel is not idle, e.g. from
-kernel or driver code while a lock is held. Therefore, adequate stress
-tools must be running during a latency measurement.
+The exact problem is:
+	fec_enet_mii (this takes &fep->mii_lock) and calls mip->mii_func
+	which happens to be mii_queue.  mii_queue in turn takes
+	&fep->mii_lock again.
 
-> They are much better than my last tests on the imx31 with an older pr=
-eemptrt-kernel=20
-> (2.6.29) which had idle latencys up to 80=B5s.=20
-> Given the fact, that ftrace is enabled, this is really impressive pro=
-gress!
-Please keep in mind that ftrace configured is not ftrace enabled. To
-enable it, use cyclictest's -f option or execute
-  echo function >/sys/kernel/debug/tracing/current_tracer
-  echo 1 >/sys/kernel/debug/tracing/tracing_enabled
-from command line.
+The correct fix is probably to split mii_queue into a function that
+locks and a function that does the actual work.  And then use the latte=
+r
+in fec_enet_mii.
 
+I'd prepare a patch but my wife just called me to eat some cake :-)
 
-I hope that this hasn't tempered your joy with your new hardware.
+So maybe later today or tomorrow, we'll see.
 
-	Carsten.
+Best regards
+Uwe
+
+--=20
+Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
+       |
+Industrial Linux Solutions                    | http://www.pengutronix.=
+de/  |
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
