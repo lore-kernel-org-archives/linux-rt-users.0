@@ -1,62 +1,65 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+From: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
 Subject: Re: Latest PreemptRT patch error on imx35
-Date: Mon, 31 Aug 2009 15:22:00 +0200
-Message-ID: <20090831132200.GA21836@pengutronix.de>
-References: <200908311143.08952.tim01@vlsi.informatik.tu-darmstadt.de>
+Date: Mon, 31 Aug 2009 15:40:17 +0200
+Message-ID: <200908311540.18118.tim01@vlsi.informatik.tu-darmstadt.de>
+References: <200908311143.08952.tim01@vlsi.informatik.tu-darmstadt.de> <4A9BB887.1040407@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"David S. Miller" <davem@davemloft.net>,
-	Sascha Hauer <s.hauer@pengutronix.de>,
-	Greg Ungerer <gerg@uclinux.org>, netdev@vger.kernel.org
-To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:51450 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753415AbZHaNWc (ORCPT
+Received: from lnx500.hrz.tu-darmstadt.de ([130.83.156.225]:60397 "EHLO
+	lnx500.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750715AbZHaNmK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Aug 2009 09:22:32 -0400
+	Mon, 31 Aug 2009 09:42:10 -0400
+Received: from iss1.vlsi.informatik.tu-darmstadt.de (iss1.vlsi.informatik.tu-darmstadt.de [130.83.164.1])
+	by lnx500.hrz.tu-darmstadt.de (8.14.2/8.14.2/HRZ/PMX) with ESMTP id n7V6rq4U012628
+	for <linux-rt-users@vger.kernel.org>; Mon, 31 Aug 2009 08:53:52 +0200
+	(envelope-from tim01@vlsi.informatik.tu-darmstadt.de)
+Received: from localhost (localhost [127.0.0.1])
+	by iss1.vlsi.informatik.tu-darmstadt.de (Postfix) with ESMTP id 3B5C4CE0D
+	for <linux-rt-users@vger.kernel.org>; Mon, 31 Aug 2009 15:42:11 +0200 (CEST)
+Received: from iss1.vlsi.informatik.tu-darmstadt.de ([127.0.0.1])
+	by localhost (iss1.vlsi.informatik.tu-darmstadt.de [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id yAJm3pDa1eNE for <linux-rt-users@vger.kernel.org>;
+	Mon, 31 Aug 2009 15:42:11 +0200 (CEST)
+Received: from fpga3.vlsi.informatik.tu-darmstadt.de (iss37.vlsi.informatik.tu-darmstadt.de [130.83.164.37])
+	by iss1.vlsi.informatik.tu-darmstadt.de (Postfix) with ESMTP id 1BA66770C
+	for <linux-rt-users@vger.kernel.org>; Mon, 31 Aug 2009 15:42:11 +0200 (CEST)
+In-Reply-To: <4A9BB887.1040407@osadl.org>
 Content-Disposition: inline
-In-Reply-To: <200908311143.08952.tim01@vlsi.informatik.tu-darmstadt.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Tim,
+Hi  Carsten
+> As a role of thumb, the -i option is normally set to twice the expected
+> latency. If, for example you expect 100 us, set it to -i200. Your loop
+> end is then reached 50 times faster, or - what is much better - you may
+> specify 50 times more loops for a test of the same duration which
+> considerably increases the quality of your assessment. Normally,
+> however, you would probably wait for 100 million or even a billion loops.
+Thanks for the tipps, will try more sane values once i have a booting system 
+again. Just testing non patched kernels.
+> With an average of 19 and a maximum of 27, the result is probably not
+> very relevant. This indicates that the CPU was idle most of the time
+> when the wakeup occurred - every OS can do this. The challenge of an
+> RTOS is to wakeup in time also when the kernel is not idle, e.g. from
+> kernel or driver code while a lock is held. Therefore, adequate stress
+> tools must be running during a latency measurement.
+As i mentioned i did tests on a imx31 with an older premptRT patch, and even 
+Idle numbers where much worse. Probably due to the fact that arm support has
+just trickled in and is now more mature?
 
-> I just bootet 2.6.31-rc8-rt9 on the phycore-imx35 development board,=20
-> without any additional patches. The FEC Ethernet Controller went bell=
-y=20
-> up, but the system booted nevertheless. [...]
-The problem is that &fep->mii_lock is taken twice.  On a normal (i.e.
-non-RT) UP system that doesn't hurt because spinlocks are noops (unless
-you have some debugging code activated).
-
-The exact problem is:
-	fec_enet_mii (this takes &fep->mii_lock) and calls mip->mii_func
-	which happens to be mii_queue.  mii_queue in turn takes
-	&fep->mii_lock again.
-
-The correct fix is probably to split mii_queue into a function that
-locks and a function that does the actual work.  And then use the latte=
-r
-in fec_enet_mii.
-
-I'd prepare a patch but my wife just called me to eat some cake :-)
-
-So maybe later today or tomorrow, we'll see.
+> Please keep in mind that ftrace configured is not ftrace enabled. To
+> enable it, use cyclictest's -f option or execute
+>   echo function >/sys/kernel/debug/tracing/current_tracer
+>   echo 1 >/sys/kernel/debug/tracing/tracing_enabled
+> from command line.
+Again with my older tests only enabling tracing functionality made a 
+significant performance hit. But well, its all moving in the right direction
+:-).
 
 Best regards
-Uwe
-
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Tim
