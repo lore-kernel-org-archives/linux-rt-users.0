@@ -1,51 +1,115 @@
-From: Roland Dreier <rdreier@cisco.com>
-Subject: Re: RFC: THE OFFLINE SCHEDULER
-Date: Tue, 01 Sep 2009 09:15:46 -0700
-Message-ID: <adaskf6od3h.fsf@cisco.com>
-References: <1251282598.3514.20.camel@raz>
-	<alpine.DEB.1.10.0908260943090.9924@gentwo.org>
-	<1251297910.1791.22.camel@maxim-laptop> <1251322663.3882.48.camel@raz>
-	<4A96B997.1070001@nortel.com>
-	<alpine.DEB.1.10.0908271257270.17470@gentwo.org>
-	<alpine.LFD.2.00.0908272242500.2888@localhost.localdomain>
-	<4A97071F.5070804@novell.com> <4A973DAE.4020508@redhat.com>
-	<4A975025.8030500@novell.com> <4A975CC4.1090208@novell.com>
-	<alpine.LFD.2.00.0908281218560.2888@localhost.localdomain>
-	<alpine.DEB.1.10.0908281446520.7317@gentwo.org>
-	<alpine.LFD.2.00.0908282100040.19335@localhost.localdomain>
-	<alpine.DEB.1.10.0908281551450.17784@gentwo.org>
-	<alpine.LFD.2.00.0908282158100.19335@localhost.localdomain>
-	<alpine.DEB.1.10.0908281619520.15573@gentwo.org>
-	<alpine.LFD.2.00.0908282231260.19335@localhost.localdomain>
-	<alpine.DEB.1.10.0908311517410.26046@V090114053VZO-1>
-	<adavdk3q3nk.fsf@cisco.com>
-	<alpine.DEB.1.10.0909011440210.12112@V090114053VZO-1>
+From: =?utf-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH 2/2] fec: don't enable irqs in hard irq context
+Date: Wed,  2 Sep 2009 11:14:16 +0200
+Message-ID: <1251882856-23549-2-git-send-email-u.kleine-koenig@pengutronix.de>
+References: <20090831132200.GA21836@pengutronix.de>
+ <1251882856-23549-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Rik van Riel <riel@redhat.com>,
-	Chris Friesen <cfriesen@nortel.com>,
-	raz ben yehuda <raziebe@gmail.com>,
-	Andrew Morton <akpm@linux-foundation.org>, mingo@elte.hu,
-	peterz@infradead.org, maximlevitsky@gmail.com, efault@gmx.de,
-	wiseman@macs.biu.ac.il, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Christoph Lameter <cl@linux-foundation.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755075AbZIAQPq@vger.kernel.org>
-In-Reply-To: <alpine.DEB.1.10.0909011440210.12112@V090114053VZO-1> (Christoph
-	Lameter's message of "Tue, 1 Sep 2009 14:42:29 -0400 (EDT)")
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Greg Ungerer <gerg@uclinux.org>,
+	Ben Hutchings <ben@decadent.org.uk>,
+	Patrick McHardy <kaber@trash.net>,
+	Sascha Hauer <s.hauer@pengutronix.de>,
+	Matt Waddel <Matt.Waddel@freescale.com>,
+	netdev@vger.kernel.org,
+	Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:55587 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752014AbZIBJPV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Sep 2009 05:15:21 -0400
+In-Reply-To: <1251882856-23549-1-git-send-email-u.kleine-koenig@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+fec_enet_mii, fec_enet_rx and fec_enet_tx are both only called by
+fec_enet_interrupt in interrupt context.  So they must not use
+spin_lock_irq/spin_unlock_irq.
 
- > Ok then these per cpu irqs are there to support something different? There
- > are per cpu irqs here. Seems to be hardware supported?
+This fixes:
+	WARNING: at kernel/lockdep.c:2140 trace_hardirqs_on_caller+0x130/0x194=
+()
+	...
 
-Yes, the driver now creates per-cpu IRQs for completions.  However if
-you don't trigger any completion events then you won't get any
-interrupts.  That's different from the workqueues, which are used to
-poll the hardware for port changes and internal errors (and which are
-single-threaded and can be put on whatever "system services" CPU you want)
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Cc: Greg Ungerer <gerg@uclinux.org>
+Cc: Ben Hutchings <ben@decadent.org.uk>
+Cc: Patrick McHardy <kaber@trash.net>
+Cc: Sascha Hauer <s.hauer@pengutronix.de>
+Cc: Matt Waddel <Matt.Waddel@freescale.com>
+Cc: netdev@vger.kernel.org
+Cc: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+---
+ drivers/net/fec.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
- - R.
+diff --git a/drivers/net/fec.c b/drivers/net/fec.c
+index ef82606..9c49d56 100644
+--- a/drivers/net/fec.c
++++ b/drivers/net/fec.c
+@@ -427,7 +427,7 @@ fec_enet_tx(struct net_device *dev)
+ 	struct	sk_buff	*skb;
+=20
+ 	fep =3D netdev_priv(dev);
+-	spin_lock_irq(&fep->hw_lock);
++	spin_lock(&fep->hw_lock);
+ 	bdp =3D fep->dirty_tx;
+=20
+ 	while (((status =3D bdp->cbd_sc) & BD_ENET_TX_READY) =3D=3D 0) {
+@@ -486,7 +486,7 @@ fec_enet_tx(struct net_device *dev)
+ 		}
+ 	}
+ 	fep->dirty_tx =3D bdp;
+-	spin_unlock_irq(&fep->hw_lock);
++	spin_unlock(&fep->hw_lock);
+ }
+=20
+=20
+@@ -509,7 +509,7 @@ fec_enet_rx(struct net_device *dev)
+ 	flush_cache_all();
+ #endif
+=20
+-	spin_lock_irq(&fep->hw_lock);
++	spin_lock(&fep->hw_lock);
+=20
+ 	/* First, grab all of the stats for the incoming packet.
+ 	 * These get messed up if we get called due to a busy condition.
+@@ -604,7 +604,7 @@ rx_processing_done:
+ 	}
+ 	fep->cur_rx =3D bdp;
+=20
+-	spin_unlock_irq(&fep->hw_lock);
++	spin_unlock(&fep->hw_lock);
+ }
+=20
+ /* called from interrupt context */
+@@ -615,7 +615,7 @@ fec_enet_mii(struct net_device *dev)
+ 	mii_list_t	*mip;
+=20
+ 	fep =3D netdev_priv(dev);
+-	spin_lock_irq(&fep->mii_lock);
++	spin_lock(&fep->mii_lock);
+=20
+ 	if ((mip =3D mii_head) =3D=3D NULL) {
+ 		printk("MII and no head!\n");
+@@ -633,7 +633,7 @@ fec_enet_mii(struct net_device *dev)
+ 		writel(mip->mii_regval, fep->hwp + FEC_MII_DATA);
+=20
+ unlock:
+-	spin_unlock_irq(&fep->mii_lock);
++	spin_unlock(&fep->mii_lock);
+ }
+=20
+ static int
+--=20
+1.6.3.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
