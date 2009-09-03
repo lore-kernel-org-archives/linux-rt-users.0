@@ -1,115 +1,55 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: hrtimer problem on AT91RM9200
-Date: Thu, 3 Sep 2009 16:12:17 +0200
-Message-ID: <20090903141217.GB22289@pengutronix.de>
-References: <4A8BEF09.2080300@newtec.dk> <20090820195200.GA3331@pengutronix.de> <4A8E99C7.6080106@newtec.dk>
+From: Kevin Hilman <khilman@deeprootsystems.com>
+Subject: Re: RT tests on OMAP3
+Date: Thu, 03 Sep 2009 07:28:00 -0700
+Message-ID: <87tyzkw1an.fsf@deeprootsystems.com>
+References: <f96d234e0908311350u5d3d7680gfbf46a1c8f9de58f@mail.gmail.com>
+	<f96d234e0908312016v4ffb9765pe06dc53e5e679758@mail.gmail.com>
+	<f96d234e0908312018j5f36d6e1s95319f4669105d06@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Bo Hansen <bh@newtec.dk>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:53166 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752639AbZICOMP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Sep 2009 10:12:15 -0400
-Content-Disposition: inline
-In-Reply-To: <4A8E99C7.6080106@newtec.dk>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Linux OMAP Users <linux-omap@vger.kernel.org>
+To: Cliff Brake <cliff.brake@gmail.com>
+Return-path: <linux-omap-owner@vger.kernel.org>
+In-Reply-To: <f96d234e0908312018j5f36d6e1s95319f4669105d06@mail.gmail.com> (Cliff Brake's message of "Mon\, 31 Aug 2009 23\:18\:33 -0400")
+Sender: linux-omap-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+Cliff Brake <cliff.brake@gmail.com> writes:
 
-On Fri, Aug 21, 2009 at 02:57:43PM +0200, Bo Hansen wrote:
-> Hi Uwe,
+> On Mon, Aug 31, 2009 at 11:16 PM, Cliff Brake<cliff.brake@gmail.com> =
+wrote:
 >
-> I cannot find anything in the dmesg or serial output regarding the
-> WARN_ON_ONCE(...)
-> I guess the WARN_ON_ONCE(...) should show up in dmesg output?
+>> Applying
+>>
+>> http://cgit.openembedded.org/cgit.cgi/openembedded/diff/recipes/linu=
+x/linux-omap-2.6.29/0001-implement-TIF_RESTORE_SIGMASK-support-and-enab=
+le-the.patch?id=3D1f0d91e152f16fbd40bb2fb3c44a30d774d4dede
+>>
+>> Seems to fix or mask the udev problems. =A0But, with preempt-rt, and
+>> EHCI enabled, I still get messages continually scrolling:
 >
-> What puzzles me is that I tried the CONFIG_DEBUG_BUGVERBOSE=3Dy
-> also when I enabled CONFIG_DEBUG_INFO. When I do
-> this I don't get the kernel panic. Is this somehow related to the
-> WARN_ON_ONCE?
->
-> Attachments only sent to Uwe - anybody are welcome to get a copy.
-Hhhhmm, clkevt32k_next_event is called with delta=3D1 which hits
-BUG_ON(delta < 2).
+> A few more notes, the above patch is not required to make the PXA270
+> work.  Without EHCI enabled, the system boots and performs fairly
+> normal (I'm able to log in, etc).
 
-I calculated the clockeventdevice parameters by hand, and the numbers
-look good:
+This looks to me like a case of poor (or non-existent) locking in the
+USB/EHCI driver, resulting in some corruption since the PC is at a
+bogus address (0x14).
 
-	clkevt.shift =3D 32
-	clkevt.mult =3D div_sc(AT91_SLOW_CLOCK, NSEC_PER_SEC, clkevt.shift)
-		=3D (32768 << 32) / 1000000000
-		=3D 140737
-	clkevt.min_delta_ns =3D clockevent_delta2ns(2, &clkevt) + 1
-		=3D (2 << clkevt.shift) / clkevt.mult + 1
-		=3D (2 << 32) / 140737 + 1
-		=3D 61036
-	min_delta =3D (clkevt.min_delta_ns * mult) >> clkevt.shift
-		=3D (61036 * 140737) >> 32
-		=3D 2
+Does your PXA270 use the same EHCI driver?  I assume not.
 
-Can you please apply the patch below, reproduce and provide the two
-lines of output resulting from the two added printks?
+I've been using -rt on a basic OMAP3 kernel, but have not enabled
+EHCI so haven't seen this.
 
-Best regards
-Uwe
+Might be useful to enable some of the in-kernel lock debugging to
+see if it turns up anything.
 
-diff --git a/arch/arm/mach-at91/at91rm9200_time.c b/arch/arm/mach-at91/=
-at91rm9200_time.c
-index 1ff1bda..83a7379 100644
---- a/arch/arm/mach-at91/at91rm9200_time.c
-+++ b/arch/arm/mach-at91/at91rm9200_time.c
-@@ -136,7 +136,13 @@ clkevt32k_next_event(unsigned long delta, struct c=
-lock_event_device *dev)
- 	u32		alm;
- 	int		status =3D 0;
-=20
--	BUG_ON(delta < 2);
-+	if (unlikely(delta < 2)) {
-+		pr_emerg("************** %s: shift=3D%d, mult=3D%lu, "
-+				"min_delta_ns=3D%lu, dev=3D%pS\n", __func__,
-+				dev->shift, dev->mult,
-+				dev->min_delta_ns, dev);
-+		BUG();
-+	}
-=20
- 	/* Use "raw" primitives so we behave correctly on RT kernels. */
- 	raw_local_irq_save(flags);
-@@ -205,6 +211,18 @@ void __init at91rm9200_timer_init(void)
- 	clkevt.mult =3D div_sc(AT91_SLOW_CLOCK, NSEC_PER_SEC, clkevt.shift);
- 	clkevt.max_delta_ns =3D clockevent_delta2ns(AT91_ST_ALMV, &clkevt);
- 	clkevt.min_delta_ns =3D clockevent_delta2ns(2, &clkevt) + 1;
-+
-+	{
-+		unsigned long long clc =3D (int64_t)clkevt.min_delta_ns *
-+			clkevt.mult;
-+
-+		clc >>=3D clkevt.shift;
-+
-+		pr_info("************** %s: shift=3D%d, mult=3D%lu, "
-+				"min_delta_ns=3D%lu, minclc=3D%llu\n", __func__,
-+				clkevt.shift, clkevt.mult,
-+				clkevt.min_delta_ns, clc);
-+	}
- 	clkevt.cpumask =3D cpumask_of(0);
- 	clockevents_register_device(&clkevt);
-=20
+Kevin
 
-
-
-
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
+To unsubscribe from this list: send the line "unsubscribe linux-omap" i=
+n
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
