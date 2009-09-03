@@ -1,46 +1,35 @@
-From: Koen Kooi <k.kooi@student.utwente.nl>
+From: Cliff Brake <cliff.brake@gmail.com>
 Subject: Re: RT tests on OMAP3
-Date: Thu, 3 Sep 2009 16:44:02 +0200
-Message-ID: <50C13C4A-A0E0-4CC8-B4FD-E66B35D79348@student.utwente.nl>
-References: <f96d234e0908311350u5d3d7680gfbf46a1c8f9de58f@mail.gmail.com> <f96d234e0908312016v4ffb9765pe06dc53e5e679758@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1075.2)
-Content-Type: text/plain; charset=us-ascii; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
+Date: Thu, 3 Sep 2009 12:02:45 -0400
+Message-ID: <f96d234e0909030902u7db7bc6cu27e38481b6ae41bf@mail.gmail.com>
+References: <f96d234e0908311350u5d3d7680gfbf46a1c8f9de58f@mail.gmail.com>
+	 <f96d234e0908312016v4ffb9765pe06dc53e5e679758@mail.gmail.com>
+	 <50C13C4A-A0E0-4CC8-B4FD-E66B35D79348@student.utwente.nl>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
 Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Linux OMAP Users <linux-omap@vger.kernel.org>
-To: Cliff Brake <cliff.brake@gmail.com>
-Return-path: <linux-omap-owner@vger.kernel.org>
-In-Reply-To: <f96d234e0908312016v4ffb9765pe06dc53e5e679758@mail.gmail.com>
-Sender: linux-omap-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Koen Kooi <k.kooi@student.utwente.nl>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-yw0-f177.google.com ([209.85.211.177]:65438 "EHLO
+	mail-yw0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755893AbZICQDK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 Sep 2009 12:03:10 -0400
+In-Reply-To: <50C13C4A-A0E0-4CC8-B4FD-E66B35D79348@student.utwente.nl>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-Op 1 sep 2009, om 05:16 heeft Cliff Brake het volgende geschreven:
-
-> On Mon, Aug 31, 2009 at 4:50 PM, Cliff Brake<cliff.brake@gmail.com>  
-> wrote:
->> Hello,
+On Thu, Sep 3, 2009 at 10:44 AM, Koen Kooi<k.kooi@student.utwente.nl> wrote:
 >>
->> I'm trying to run 2.6.31-rc8-rt9-omap1 on a OMAP3 cpu.  So far, it
->> seems fairly unstable:
->>
->> http://www.bec-systems.com/omap-rt-tests/
->>
->> 2.6.31-rc8-rt9 boots and runs well on a PXA270.
->>
->> The following mail also references udev failures:
->> http://lkml.org/lkml/2009/8/11/250
+>> http://cgit.openembedded.org/cgit.cgi/openembedded/diff/recipes/linux/linux-omap-2.6.29/0001-implement-TIF_RESTORE_SIGMASK-support-and-enable-the.patch?id=1f0d91e152f16fbd40bb2fb3c44a30d774d4dede
 >
-> A few more observations:
->
-> Applying
->
-> http://cgit.openembedded.org/cgit.cgi/openembedded/diff/recipes/linux/linux-omap-2.6.29/0001-implement-TIF_RESTORE_SIGMASK-support-and-enable-the.patch?id=1f0d91e152f16fbd40bb2fb3c44a30d774d4dede
+> If people want to push that upstream, please do so, I only updated the patch
+> to a more recent kernel but don't have the time nor skills to make it
+> suitable for upstream.
 
-If people want to push that upstream, please do so, I only updated the  
-patch to a more recent kernel but don't have the time nor skills to  
-make it suitable for upstream.
+I think this is already queued:
 
-regards,
+http://www.spinics.net/lists/arm-kernel/msg72676.html
 
-KOen
+Cliff
