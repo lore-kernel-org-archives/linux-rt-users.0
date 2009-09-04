@@ -1,172 +1,308 @@
-From: Wu Zhangjin <wuzhangjin@gmail.com>
-Subject: [PATCH] [RT] fix the non-RT version of swap_get_cpu_var
-Date: Fri,  4 Sep 2009 11:22:02 +0800
-Message-ID: <1252034522-32653-1-git-send-email-wuzhangjin@gmail.com>
-Cc: Ingo Molnar <mingo@elte.hu>, Thomas Gleixner <tglx@linutronix.de>,
-	<ralf.roesch@rw-gmbh.de>, Nicholas Mc Guire <der.herr@hofr.at>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>,
-	Wu Zhangjin <wuzhangjin@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
+From: OB <obconseil@gmail.com>
+Subject: Patch to add the TimerFD API to "cyclictest"
+Date: Fri, 04 Sep 2009 09:18:06 +0200
+Message-ID: <4AA0BF2E.5060607@gmail.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed;
+ boundary="------------000406030506090703070909"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f194.google.com ([209.85.216.194]:60467 "EHLO
-	mail-px0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932568AbZIDDus (ORCPT
+Received: from mail-fx0-f217.google.com ([209.85.220.217]:59466 "EHLO
+	mail-fx0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756547AbZIDHSF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Sep 2009 23:50:48 -0400
+	Fri, 4 Sep 2009 03:18:05 -0400
+Received: by fxm17 with SMTP id 17so469402fxm.37
+        for <linux-rt-users@vger.kernel.org>; Fri, 04 Sep 2009 00:18:06 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Wu Zhangjin <wuzhangjin@gmail.com>
+This is a multi-part message in MIME format.
+--------------000406030506090703070909
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-The commit(f8382688) have converted swap to percpu locked, the
-non-RT version of swap_get_cpu_var should be the same as the old
-implementation, but in reality, it not works as the old one:
+Hello,
 
-...
-+#define swap_get_cpu_var(var, cpu)                     \
-+       ({                                              \
-+               (void)cpu;                              \
-+               &get_cpu_var(var);                      \
-+        })
-...
- void __lru_cache_add(struct page *page, enum lru_list lru)
- {
--       struct pagevec *pvec = &get_cpu_var(lru_add_pvecs)[lru];
-+       struct pagevec *pvec;
-+       int cpu;
+Please find below a patch to enable the use of the TimerFD API
+to the cyclictest program.
 
-+       pvec = swap_get_cpu_var(lru_add_pvecs, cpu)[lru];
-        page_cache_get(page);
-        if (!pagevec_add(pvec, page))
-                ____pagevec_lru_add(pvec, lru);
--       put_cpu_var(lru_add_pvecs);
-+       swap_put_cpu_var(lru_add_pvecs, cpu);
- }
+It add the -F option for this, and can be used on either MONOTONIC and REALTIME
+clock, in absolute or relative time.
 
-Here is the point, the old version:
+It has been tested on CentOS4 with a custom , 2.6.19-rt15 kernel and on a
+Debian Lenny with a -wireless-testing kernel (non-preempt-rt), so far.
+(The latest shown a strange behavior : in MONOTONIC / RELATIVE clocking,
+sometimes it happen that the minimum delay become negative. In my opinion, it
+would mean that the read() syscall returned *before* the required expiration
+delay - but it might just be a bug in my code. It does not appear on the
+preempt-rt kernel)
 
-      pvec = &get_cpu_var(lru_add_pvecs)[lru];
-     	   = & (get_cpu_var(lru_add_pvecs)[lru]);
+Please let me know if you see any obvious mistake. You may include this patch
+in the repository at will.
 
-new version from commit f8382688:
+Bye,
 
-      pvec = ({ (void)cpu; &get_cpu_var(lru_add_pvecs); })[lru];
-           = (&get_cpu_var(lru_add_pvecs)) [lru];
-
-so, we can see, these two are really different. and it made the non-RT boot
-fail:
-
-...
-
-ide-gd driver 1.18
-hda: max request size: 512KiB
-hda: 312581808 sectors (160041 MB) w/8192KiB Cache, CHS=19457/255/63
-hda: cache flushes supported
- hda:Unhandled kernel unaligned access[#1]:
-Cpu 0
-$ 0   : 0000000000000000 000000001400c4e1 98000000013699d0 0000000000000000
-$ 4   : 0000000000000000 98000000be04f980 0000000000000010 000000007fd78b57
-$ 8   : 0000000000000001 0000000000200200 0000000000100100 98000000be00f210
-$12   : 000000001400c4e1 000000001000001e ffffffffffffffff 98000000bd0180a8
-$16   : 0000000000000000 98000000be04f998 fffffffb81a72600 ffffffff802d3270
-$20   : 0000000000000000 0000000000000000 ffffffffffffffef ffffffff80667a90
-$24   : 0000000000000228 ffffffff803ded88
-$28   : 98000000be04c000 98000000be04f950 00000000003fffff ffffffff80200404
-Hi    : 0000000000000000
-Lo    : 0000000000000320
-epc   : ffffffff80217194 do_ade+0x298/0x3bc
-    Not tainted
-ra    : ffffffff80200404 ret_from_exception+0x0/0x10
-Status: 1400c4e3    KX SX UX KERNEL EXL IE
-Cause : 00000014
-BadVA : fffffffb81a72607
-PrId  : 00006303 (ICT Loongson-2)
-Modules linked in:
-Process swapper (pid: 1, threadinfo=98000000be04c000, task=98000000be04b7d8, tls=0000000000000000)
-Stack : ffffffff80666f60 ffffffff8025165c 98000000013699d0 0000000000000001
-        98000000bd00ae30 ffffffff80200404 0000000000000000 000000001400c4e1
-        000000007fd78b57 98000000013699d0 ffffffff80638070 0000000000000002
-        fffffffb81a72600 000000007fd78b57 0000000000000001 0000000000200200
-        0000000000100100 98000000be00f210 98000000be00f220 000000000000001d
-        ffffffffffffffff 98000000bd0180a8 98000000013699d0 0000000000000001
-        98000000bd00ae30 ffffffff802d3270 0000000000000000 0000000000000000
-        ffffffffffffffef ffffffff80667a90 0000000000000228 ffffffff803ded88
-        98000000bd00ae30 98000000bd00ae30 98000000be04c000 98000000be04fab0
-        00000000003fffff ffffffff80275350 000000001400c4e3 0000000000000000
-        ...
-Call Trace:
-[<ffffffff80217194>] do_ade+0x298/0x3bc
-[<ffffffff80200404>] ret_from_exception+0x0/0x10
-[<ffffffff8027fafc>] __lru_cache_add+0x94/0xd8
-[<ffffffff80275350>] add_to_page_cache_lru+0x84/0xa8
-[<ffffffff80275520>] read_cache_page_async+0xa8/0x1dc
-[<ffffffff80275664>] read_cache_page+0x10/0x74
-[<ffffffff802fed34>] read_dev_sector+0x34/0xe0
-[<ffffffff802ff96c>] adfspart_check_ICS+0x44/0x1b0
-[<ffffffff802ff6e4>] rescan_partitions+0x178/0x3a8
-[<ffffffff802d3840>] __blkdev_get+0x238/0x318
-[<ffffffff802feeb0>] register_disk+0xd0/0x15c
-[<ffffffff8037c1e8>] add_disk+0xcc/0x128
-[<ffffffff803fcbc4>] ide_gd_probe+0x170/0x1d0
-[<ffffffff803e6e08>] driver_probe_device+0xbc/0x180
-[<ffffffff803e6f38>] __driver_attach+0x6c/0xa4
-[<ffffffff803e6508>] bus_for_each_dev+0x58/0xa4
-[<ffffffff803e5bbc>] bus_add_driver+0xc8/0x284
-[<ffffffff803e72d8>] driver_register+0xc4/0x17c
-[<ffffffff8020fa5c>] do_one_initcall+0x64/0x18c
-[<ffffffff806701d8>] kernel_init+0xe0/0x14c
-[<ffffffff80212e5c>] kernel_thread_helper+0x10/0x18
-
-Code: 001188f8  00b1882d  de220000 <b2420007> b6420000  24120000  1640000c  00a0202d  8ca20120
-Disabling lock debugging due to kernel taint
-note: swapper[1] exited with preempt_count 1
-Kernel panic - not syncing: Attempted to kill init!
-
-This patch will keep the swap_get_cpu_var as the one before commit f8382688,
-and put "(void)cpu;" to swap_put_cpu_var() to avoid warning about unused
-variable.
-
-Signed-off-by: Wu Zhangjin <wuzhangjin@gmail.com>
----
- mm/swap.c |   11 ++++++-----
- 1 files changed, 6 insertions(+), 5 deletions(-)
-
-diff --git a/mm/swap.c b/mm/swap.c
-index a981acd..c2dfe5f 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -95,12 +95,13 @@ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
- 	local_irq_restore(flags)
- 
- #define swap_get_cpu_var(var, cpu)			\
--	({						\
--		(void)cpu;				\
--		&get_cpu_var(var);			\
--	 })
-+	&get_cpu_var(var)			\
- 
--#define swap_put_cpu_var(var, cpu)	put_cpu_var(var)
-+#define swap_put_cpu_var(var, cpu)		\
-+	({					\
-+		(void)cpu;			\
-+		put_cpu_var(var);		\
-+	 })
- 
- #define swap_per_cpu_lock(var, cpu)	&per_cpu(var, cpu)
- 
+obconseil
 -- 
-1.6.2.1
+People in the embedded space don't do prototypes. They hack something until it
+works, then it's done.
+---
+Always code as if the person who will maintain your code is a maniac serial
+killer that knows where you live
 
+
+--------------000406030506090703070909
+Content-Type: text/x-patch;
+ name="cyclictest_timerfd.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="cyclictest_timerfd.patch"
+
+diff --git a/Makefile b/Makefile
+index 911b05e..e9491dd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ VERSION_STRING = 0.50
+ 
+ TARGETS	= cyclictest signaltest classic_pi pi_stress hwlatdetect
+-FLAGS	= -Wall -Wno-nonnull -O2
++FLAGS	= -Wall -Wno-nonnull -O2 -DWITH_TIMERFD
+ LIBS 	= -lpthread -lrt
+ DESTDIR	?=
+ prefix  ?= /usr/local
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 2b4dc50..580f140 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -46,6 +46,43 @@
+ #define gettid() syscall(__NR_gettid)
+ #define sigev_notify_thread_id _sigev_un._tid
+ 
++#ifdef WITH_TIMERFD
++/*
++ * This were good at the time of 2.6.23-rc7 ...
++ */
++#ifndef __NR_timerfd
++
++#if defined(__x86_64__)
++#define __NR_timerfd_create 283
++#define __NR_timerfd_settime 286
++#define __NR_timerfd_gettime 287
++
++#elif defined(__i386__)
++#define __NR_timerfd_create 322
++#define __NR_timerfd_settime 325
++#define __NR_timerfd_gettime 326
++
++#else
++#error Cannot detect your architecture!
++#endif
++
++#define TFD_TIMER_ABSTIME (1 << 0)
++inline int timerfd_create(int clockid, int flags) {
++	return syscall(__NR_timerfd_create, clockid, flags);
++}
++
++inline int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
++		    struct itimerspec *otmr) {
++	return syscall(__NR_timerfd_settime, ufc, flags, utmr, otmr);
++}
++
++inline int timerfd_gettime(int ufc, struct itimerspec *otmr) {
++	return syscall(__NR_timerfd_gettime, ufc, otmr);
++}
++#endif
++#endif // timerfd
++
++
+ #ifdef __UCLIBC__
+ #define MAKE_PROCESS_CPUCLOCK(pid, clock) \
+ 	((~(clockid_t) (pid) << 3) | (clockid_t) (clock))
+@@ -74,7 +111,7 @@ static void CPU_ZERO(cpu_set_t *set) { }
+ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+ 			   __const struct timespec *__req,
+ 			   struct timespec *__rem);
+-#endif
++#endif // uclibc
+ 
+ #define USEC_PER_SEC		1000000
+ #define NSEC_PER_SEC		1000000000
+@@ -86,6 +123,7 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+ #define MODE_SYS_ITIMER		2
+ #define MODE_SYS_NANOSLEEP	3
+ #define MODE_SYS_OFFSET		2
++#define MODE_TIMERFD	        4
+ 
+ #define TIMER_RELTIME		0
+ 
+@@ -553,6 +591,7 @@ parse_time_string(char *val)
+  * Modes:
+  * - clock_nanosleep based
+  * - cyclic timer based
++ * - timerfd based 
+  *
+  * Clock:
+  * - CLOCK_MONOTONIC
+@@ -574,6 +613,10 @@ void *timerthread(void *param)
+ 	struct thread_stat *stat = par->stats;
+ 	int stopped = 0;
+ 	cpu_set_t mask;
++#ifdef WITH_TIMERFD
++	int timerfd_id = 0;
++	unsigned long long timerfd_data=0;
++#endif
+ 
+ 	if (par->cpu != -1) {
+ 		CPU_ZERO(&mask);
+@@ -599,7 +642,13 @@ void *timerthread(void *param)
+ 		timer_create(par->clock, &sigev, &timer);
+ 		tspec.it_interval = interval;
+ 	}
+-
++#ifdef WITH_TIMERFD
++	if (par->mode == MODE_TIMERFD) {
++		timerfd_id =  timerfd_create(par->clock, 0);
++		if (timerfd_id == -1)
++			fprintf(stderr,"Error : Cannot create the timerfd\n");
++	}
++#endif
+ 	memset(&schedp, 0, sizeof(schedp));
+ 	schedp.sched_priority = par->prio;
+ 	sched_setscheduler(0, par->policy, &schedp);
+@@ -615,6 +664,7 @@ void *timerthread(void *param)
+ 		stop.tv_sec += duration;
+ 		tsnorm(&stop);
+ 	}
++
+ 	if (par->mode == MODE_CYCLIC) {
+ 		if (par->timermode == TIMER_ABSTIME)
+ 			tspec.it_value = next;
+@@ -632,7 +682,20 @@ void *timerthread(void *param)
+ 		itimer.it_interval.tv_usec = interval.tv_nsec / 1000;
+ 		setitimer (ITIMER_REAL, &itimer, NULL);
+ 	}
+-
++#ifdef WITH_TIMERFD
++	if (par->mode == MODE_TIMERFD) {
++		tspec.it_interval.tv_sec = interval.tv_sec;
++		tspec.it_interval.tv_nsec = interval.tv_nsec;
++		if (par->timermode == TIMER_ABSTIME) {
++			tspec.it_value = next;
++			timerfd_settime(timerfd_id,TFD_TIMER_ABSTIME,&tspec,NULL);
++		} else {
++			tspec.it_value.tv_nsec = 0;
++			tspec.it_value.tv_sec   = 1;
++			timerfd_settime(timerfd_id,0,&tspec,NULL);
++		}
++	}
++#endif
+ 	stat->threadstarted++;
+ 
+ 	while (!shutdown) {
+@@ -656,7 +719,7 @@ void *timerthread(void *param)
+ 				clock_gettime(par->clock, &now);
+ 				ret = clock_nanosleep(par->clock, TIMER_RELTIME,
+ 						&interval, NULL);
+-				next.tv_sec = now.tv_sec + interval.tv_sec;
++				next.tv_sec =   now.tv_sec + interval.tv_sec;
+ 				next.tv_nsec = now.tv_nsec + interval.tv_nsec;
+ 				tsnorm(&next);
+ 			}
+@@ -676,9 +739,22 @@ void *timerthread(void *param)
+ 			next.tv_nsec = now.tv_nsec + interval.tv_nsec;
+ 			tsnorm(&next);
+ 			break;
++#ifdef WITH_TIMERFD
++		case MODE_TIMERFD:
++			if (par->timermode == TIMER_ABSTIME) {
++				read(timerfd_id,&timerfd_data,8);
++			} else {
++				clock_gettime(par->clock, &now);
++				timerfd_gettime(timerfd_id,&tspec);
++				read(timerfd_id,&timerfd_data,8);
++				next.tv_sec =   now.tv_sec +  tspec.it_value.tv_sec;
++				next.tv_nsec = now.tv_nsec + tspec.it_value.tv_nsec;
++				tsnorm(&next);
++			}
++			break;
++#endif
+ 		}
+ 		clock_gettime(par->clock, &now);
+-
+ 		if (use_nsecs)
+ 			diff = calcdiff_ns(now, next);
+ 		else
+@@ -734,7 +810,11 @@ out:
+ 		itimer.it_interval.tv_usec = 0;
+ 		setitimer (ITIMER_REAL, &itimer, NULL);
+ 	}
+-
++#ifdef WITH_TIMERFD
++	if (par->mode == MODE_TIMERFD) {
++		close(timerfd_id);
++	}
++#endif
+ 	/* switch to normal */
+ 	schedp.sched_priority = 0;
+ 	sched_setscheduler(0, SCHED_OTHER, &schedp);
+@@ -775,6 +855,9 @@ static void display_help(int error)
+ 	       "                           to modify value to minutes, hours or days\n"
+ 	       "-E       --event           event tracing (used with -b)\n"
+ 	       "-f       --ftrace          function trace (when -b is active)\n"
++#ifdef WITH_TIMERFD
++	       "-F       --timerfd    	   Use TimerFD API\n"
++#endif
+ 	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
+                "                           (with same priority about many threads)\n"
+ 	       "                           US is the max time to be be tracked in microseconds\n"
+@@ -813,6 +896,7 @@ static void display_help(int error)
+ static int use_nanosleep;
+ static int timermode = TIMER_ABSTIME;
+ static int use_system;
++static int use_timerfd;
+ static int priority;
+ static int policy = 0;
+ static int num_threads = 1;
+@@ -899,6 +983,9 @@ static void process_options (int argc, char *argv[])
+ 			{"distance", required_argument, NULL, 'd'},
+ 			{"event", no_argument, NULL, 'E'},
+ 			{"ftrace", no_argument, NULL, 'f'},
++#ifdef WITH_TIMERFD
++			{"timerfd",no_argument,NULL,'F'},
++#endif
+ 			{"histogram", required_argument, NULL, 'h'},
+ 			{"interval", required_argument, NULL, 'i'},
+ 			{"irqsoff", no_argument, NULL, 'I'},
+@@ -923,7 +1010,7 @@ static void process_options (int argc, char *argv[])
+ 			{"traceopt", required_argument, NULL, 'O'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
++                int c = getopt_long (argc, argv, "a::b:Bc:Cd:EfFh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -946,6 +1033,9 @@ static void process_options (int argc, char *argv[])
+ 		case 'd': distance = atoi(optarg); break;
+ 		case 'E': tracetype = EVENTS; break;
+ 		case 'f': ftrace = 1; break;
++#ifdef WITH_TIMERFD
++		case 'F': use_timerfd = MODE_TIMERFD; break;
++#endif
+ 		case 'h': histogram = atoi(optarg); break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'I': tracetype = IRQSOFF; break;
+@@ -1207,7 +1297,7 @@ int main(int argc, char **argv)
+ 	if (check_timer())
+ 		fprintf(stderr, "WARNING: High resolution timers not available\n");
+ 
+-	mode = use_nanosleep + use_system;
++	mode = use_timerfd ? use_timerfd : (use_nanosleep + use_system);
+ 
+ 	sigemptyset(&sigset);
+ 	sigaddset(&sigset, signum);
+
+
+--------------000406030506090703070909--
