@@ -1,308 +1,115 @@
-From: OB <obconseil@gmail.com>
-Subject: Patch to add the TimerFD API to "cyclictest"
-Date: Fri, 04 Sep 2009 09:18:06 +0200
-Message-ID: <4AA0BF2E.5060607@gmail.com>
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: Re: [PATCH 00/18] tracing/ring-buffer: fixes for latency tracer
+	[2.6.32]
+Date: Sat, 5 Sep 2009 12:06:58 -0300
+Message-ID: <20090905150658.GA13387@ghostprotocols.net>
+References: <20090904235527.520961911@goodmis.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------000406030506090703070909"
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f217.google.com ([209.85.220.217]:59466 "EHLO
-	mail-fx0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756547AbZIDHSF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Sep 2009 03:18:05 -0400
-Received: by fxm17 with SMTP id 17so469402fxm.37
-        for <linux-rt-users@vger.kernel.org>; Fri, 04 Sep 2009 00:18:06 -0700 (PDT)
+Received: from mx1.redhat.com ([209.132.183.28]:25602 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751196AbZIEPHR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 5 Sep 2009 11:07:17 -0400
+Content-Disposition: inline
+In-Reply-To: <20090904235527.520961911@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------000406030506090703070909
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Em Fri, Sep 04, 2009 at 07:55:27PM -0400, Steven Rostedt escreveu:
+> Thomas,
+> 
+> I can port these over to -rt if you want, or you could just
+> add them yourself. I know the spinlocks need to be converted to atomic.
+> Just let me know if you want me to do it.
 
-Hello,
+I did a quick port to tip/rt/head and couldn't reproduce the problems I
+was experiencing, thanks!
 
-Please find below a patch to enable the use of the TimerFD API
-to the cyclictest program.
+I've put the ported patch series at:
 
-It add the -F option for this, and can be used on either MONOTONIC and REALTIME
-clock, in absolute or relative time.
+http://userweb.kernel.org/~acme/rostedt-rb-rt
 
-It has been tested on CentOS4 with a custom , 2.6.19-rt15 kernel and on a
-Debian Lenny with a -wireless-testing kernel (non-preempt-rt), so far.
-(The latest shown a strange behavior : in MONOTONIC / RELATIVE clocking,
-sometimes it happen that the minimum delay become negative. In my opinion, it
-would mean that the read() syscall returned *before* the required expiration
-delay - but it might just be a bug in my code. It does not appear on the
-preempt-rt kernel)
+Tested using:
 
-Please let me know if you see any obvious mistake. You may include this patch
-in the repository at will.
+echo 1 > /sys/kernel/debug/tracing/events/irq/enable
+echo 1 > /sys/kernel/debug/tracing/events/sched/enable
+echo wakeup > /sys/kernel/debug/tracing/current_tracer
 
-Bye,
+Then a make -j64 allyesconfig + cyclictest -p95 ...
+[root@hs21xm-1 ~]# uname -a
+Linux hs21xm-1 2.6.31-rc8-rt9 #2 SMP PREEMPT RT Sat Sep 5 09:42:03 CDT
+2009 x86_64 x86_64 x86_64 GNU/Linux
+[root@hs21xm-1 ~]# cat /sys/kernel/debug/tracing/trace
+# tracer: wakeup
+#
+# wakeup latency trace v1.1.5 on 2.6.31-rc8-rt9
+# --------------------------------------------------------------------
+# latency: 220 us, #43/43, CPU#4 | (M:preempt VP:0, KP:0, SP:0 HP:0 #P:8)
+#    -----------------
+#    | task: -2924 (uid:0 nice:-5 policy:1 rt_prio:85)
+#    -----------------
+#
+#                  _------=> CPU#            
+#                 / _-----=> irqs-off        
+#                | / _----=> need-resched    
+#                || / _---=> hardirq/softirq 
+#                ||| / _--=> preempt-depth   
+#                |||| /                      
+#                |||||     delay             
+#  cmd     pid   ||||| time  |   caller      
+#     \   /      |||||   \   |   /           
+sirq-rcu-52      3d..3    0us : sched_switch: task sirq-rcu/3:52 [29] (D) ==> cc1:13267 [120]
+  <idle>-0       5d.h3    0us :      0:140:R   + [004]  2924: 14:R irq/60-eth2
+  <idle>-0       5d.h3    1us+: wake_up_process <-handle_IRQ_event
+irq/60-e-2924    4d..2    4us+: sched_wakeup: task sirq-net-rx/4:60 [24] success=1
+   <...>-13267   3d..3    8us : sched_switch: task cc1:13267 [120] (T|0x100) ==> cc1:13085 [120]
+irq/60-e-2924    4d.h2    8us+: sched_wakeup: task sirq-timer/4:58 [29] success=1
+irq/60-e-2924    4d.h2   10us+: sched_wakeup: task sirq-rcu/4:65 [29] success=1
+irq/60-e-2924    4d..3   15us+: sched_switch: task irq/60-eth2:2924 [14] (D) ==> sirq-net-rx/4:60 [24]
+   <...>-12172   0d..4   26us+: sched_wakeup: task cc1:13566 [120] success=0
+   <...>-13566   7d..4   36us+: sched_wakeup: task cc1:12172 [120] success=0
+   <...>-60      4d..2   39us+: sched_wakeup: task cc1:12985 [120] success=1
+   <...>-13300   2d..4   44us+: sched_wakeup: task cc1:12172 [120] success=0
+   <...>-13566   7d..3   46us+: sched_switch: task cc1:13566 [120] (R) ==> cc1:12985 [120]
+   <...>-60      4d..2   55us+: sched_wakeup: task cc1:13149 [120] success=1
+   <...>-60      4d..4   59us+: sched_wakeup: task cc1:12985 [120] success=0
+   <...>-12985   7d..2   65us : sched_migrate_task: task cc1:13274 [120] from: 4  to: 7
+  <idle>-0       5d.h3   67us+: sched_wakeup: task sirq-timer/5:71 [29] success=1
+   <...>-12985   7d..2   68us+: sched_wakeup: task cc1:13274 [120] success=1
+  <idle>-0       5d..3   70us+: sched_switch: task swapper:0 [140] (R) ==> sirq-timer/5:71 [29]
+sirq-tim-71      5d..3   74us+: sched_switch: task sirq-timer/5:71 [29] (D) ==> swapper:0 [140]
+   <...>-60      4d..2   82us+: sched_wakeup: task cc1:12683 [120] success=1
+   <...>-60      4d..3   89us+: sched_switch: task sirq-net-rx/4:60 [24] (D) ==> sirq-timer/4:58 [29]
+sirq-tim-58      4d..3   93us+: sched_switch: task sirq-timer/4:58 [29] (D) ==> sirq-rcu/4:65 [29]
+sirq-rcu-65      4d..3   97us+: sched_switch: task sirq-rcu/4:65 [29] (D) ==> cc1:13355 [120]
+   <...>-13210   6d..3  103us+: sched_switch: task cc1:13210 [120] (T|0x100) ==> fixdep:13407 [120]
+   <...>-13407   6d..2  127us+: sched_wakeup: task cc1:13127 [120] success=1
+   <...>-13407   6d.h3  134us+: sched_wakeup: task sirq-timer/6:84 [29] success=1
+   <...>-13407   6dNh3  137us+: sched_wakeup: task sirq-rcu/6:91 [29] success=1
+   <...>-13407   6d..3  141us+: sched_switch: task fixdep:13407 [120] (R) ==> sirq-timer/6:84 [29]
+   <...>-13300   2d..4  145us : sched_wakeup: task cc1:12172 [120] success=0
+sirq-tim-84      6d..3  146us+: sched_switch: task sirq-timer/6:84 [29] (D) ==> sirq-rcu/6:91 [29]
+sirq-rcu-91      6d..3  153us+: sched_switch: task sirq-rcu/6:91 [29] (D) ==> genksyms:13194 [120]
+   <...>-12985   7d.h2  194us+: sched_wakeup: task sirq-timer/7:97 [29] success=1
+   <...>-13358   1d..3  199us : sched_switch: task genksyms:13358 [120] (D) ==> as:12659 [120]
+   <...>-12985   7dNh2  199us+: sched_wakeup: task sirq-rcu/7:104 [29] success=1
+   <...>-12985   7d..3  204us+: sched_switch: task cc1:12985 [120] (R) ==> sirq-timer/7:97 [29]
+sirq-tim-97      7d.h1  207us : irq_handler_entry: irq=60 handler=eth2
+sirq-tim-97      7d.h1  208us+: irq_handler_exit: irq=60 return=handled
+sirq-tim-97      7d.h2  211us+: sched_wakeup: task irq/60-eth2:2924 [14] success=1
+sirq-tim-97      7d..3  216us+: sched_switch: task sirq-timer/7:97 [29] (D) ==> sirq-rcu/7:104 [29]
+   <...>-13355   4d..3  219us : sched_switch: task cc1:13355 [120] (R) ==> irq/60-eth2:2924 [14]
+   <...>-13355   4d..3  219us : __schedule <-schedule
+   <...>-13355   4d..3  220us :  13355:120:R ==> [004]  2924: 14:R irq/60-eth2
 
-obconseil
--- 
-People in the embedded space don't do prototypes. They hack something until it
-works, then it's done.
----
-Always code as if the person who will maintain your code is a maniac serial
-killer that knows where you live
-
-
---------------000406030506090703070909
-Content-Type: text/x-patch;
- name="cyclictest_timerfd.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="cyclictest_timerfd.patch"
-
-diff --git a/Makefile b/Makefile
-index 911b05e..e9491dd 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,7 +1,7 @@
- VERSION_STRING = 0.50
- 
- TARGETS	= cyclictest signaltest classic_pi pi_stress hwlatdetect
--FLAGS	= -Wall -Wno-nonnull -O2
-+FLAGS	= -Wall -Wno-nonnull -O2 -DWITH_TIMERFD
- LIBS 	= -lpthread -lrt
- DESTDIR	?=
- prefix  ?= /usr/local
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 2b4dc50..580f140 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -46,6 +46,43 @@
- #define gettid() syscall(__NR_gettid)
- #define sigev_notify_thread_id _sigev_un._tid
- 
-+#ifdef WITH_TIMERFD
-+/*
-+ * This were good at the time of 2.6.23-rc7 ...
-+ */
-+#ifndef __NR_timerfd
-+
-+#if defined(__x86_64__)
-+#define __NR_timerfd_create 283
-+#define __NR_timerfd_settime 286
-+#define __NR_timerfd_gettime 287
-+
-+#elif defined(__i386__)
-+#define __NR_timerfd_create 322
-+#define __NR_timerfd_settime 325
-+#define __NR_timerfd_gettime 326
-+
-+#else
-+#error Cannot detect your architecture!
-+#endif
-+
-+#define TFD_TIMER_ABSTIME (1 << 0)
-+inline int timerfd_create(int clockid, int flags) {
-+	return syscall(__NR_timerfd_create, clockid, flags);
-+}
-+
-+inline int timerfd_settime(int ufc, int flags, const struct itimerspec *utmr,
-+		    struct itimerspec *otmr) {
-+	return syscall(__NR_timerfd_settime, ufc, flags, utmr, otmr);
-+}
-+
-+inline int timerfd_gettime(int ufc, struct itimerspec *otmr) {
-+	return syscall(__NR_timerfd_gettime, ufc, otmr);
-+}
-+#endif
-+#endif // timerfd
-+
-+
- #ifdef __UCLIBC__
- #define MAKE_PROCESS_CPUCLOCK(pid, clock) \
- 	((~(clockid_t) (pid) << 3) | (clockid_t) (clock))
-@@ -74,7 +111,7 @@ static void CPU_ZERO(cpu_set_t *set) { }
- extern int clock_nanosleep(clockid_t __clock_id, int __flags,
- 			   __const struct timespec *__req,
- 			   struct timespec *__rem);
--#endif
-+#endif // uclibc
- 
- #define USEC_PER_SEC		1000000
- #define NSEC_PER_SEC		1000000000
-@@ -86,6 +123,7 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
- #define MODE_SYS_ITIMER		2
- #define MODE_SYS_NANOSLEEP	3
- #define MODE_SYS_OFFSET		2
-+#define MODE_TIMERFD	        4
- 
- #define TIMER_RELTIME		0
- 
-@@ -553,6 +591,7 @@ parse_time_string(char *val)
-  * Modes:
-  * - clock_nanosleep based
-  * - cyclic timer based
-+ * - timerfd based 
-  *
-  * Clock:
-  * - CLOCK_MONOTONIC
-@@ -574,6 +613,10 @@ void *timerthread(void *param)
- 	struct thread_stat *stat = par->stats;
- 	int stopped = 0;
- 	cpu_set_t mask;
-+#ifdef WITH_TIMERFD
-+	int timerfd_id = 0;
-+	unsigned long long timerfd_data=0;
-+#endif
- 
- 	if (par->cpu != -1) {
- 		CPU_ZERO(&mask);
-@@ -599,7 +642,13 @@ void *timerthread(void *param)
- 		timer_create(par->clock, &sigev, &timer);
- 		tspec.it_interval = interval;
- 	}
--
-+#ifdef WITH_TIMERFD
-+	if (par->mode == MODE_TIMERFD) {
-+		timerfd_id =  timerfd_create(par->clock, 0);
-+		if (timerfd_id == -1)
-+			fprintf(stderr,"Error : Cannot create the timerfd\n");
-+	}
-+#endif
- 	memset(&schedp, 0, sizeof(schedp));
- 	schedp.sched_priority = par->prio;
- 	sched_setscheduler(0, par->policy, &schedp);
-@@ -615,6 +664,7 @@ void *timerthread(void *param)
- 		stop.tv_sec += duration;
- 		tsnorm(&stop);
- 	}
-+
- 	if (par->mode == MODE_CYCLIC) {
- 		if (par->timermode == TIMER_ABSTIME)
- 			tspec.it_value = next;
-@@ -632,7 +682,20 @@ void *timerthread(void *param)
- 		itimer.it_interval.tv_usec = interval.tv_nsec / 1000;
- 		setitimer (ITIMER_REAL, &itimer, NULL);
- 	}
--
-+#ifdef WITH_TIMERFD
-+	if (par->mode == MODE_TIMERFD) {
-+		tspec.it_interval.tv_sec = interval.tv_sec;
-+		tspec.it_interval.tv_nsec = interval.tv_nsec;
-+		if (par->timermode == TIMER_ABSTIME) {
-+			tspec.it_value = next;
-+			timerfd_settime(timerfd_id,TFD_TIMER_ABSTIME,&tspec,NULL);
-+		} else {
-+			tspec.it_value.tv_nsec = 0;
-+			tspec.it_value.tv_sec   = 1;
-+			timerfd_settime(timerfd_id,0,&tspec,NULL);
-+		}
-+	}
-+#endif
- 	stat->threadstarted++;
- 
- 	while (!shutdown) {
-@@ -656,7 +719,7 @@ void *timerthread(void *param)
- 				clock_gettime(par->clock, &now);
- 				ret = clock_nanosleep(par->clock, TIMER_RELTIME,
- 						&interval, NULL);
--				next.tv_sec = now.tv_sec + interval.tv_sec;
-+				next.tv_sec =   now.tv_sec + interval.tv_sec;
- 				next.tv_nsec = now.tv_nsec + interval.tv_nsec;
- 				tsnorm(&next);
- 			}
-@@ -676,9 +739,22 @@ void *timerthread(void *param)
- 			next.tv_nsec = now.tv_nsec + interval.tv_nsec;
- 			tsnorm(&next);
- 			break;
-+#ifdef WITH_TIMERFD
-+		case MODE_TIMERFD:
-+			if (par->timermode == TIMER_ABSTIME) {
-+				read(timerfd_id,&timerfd_data,8);
-+			} else {
-+				clock_gettime(par->clock, &now);
-+				timerfd_gettime(timerfd_id,&tspec);
-+				read(timerfd_id,&timerfd_data,8);
-+				next.tv_sec =   now.tv_sec +  tspec.it_value.tv_sec;
-+				next.tv_nsec = now.tv_nsec + tspec.it_value.tv_nsec;
-+				tsnorm(&next);
-+			}
-+			break;
-+#endif
- 		}
- 		clock_gettime(par->clock, &now);
--
- 		if (use_nsecs)
- 			diff = calcdiff_ns(now, next);
- 		else
-@@ -734,7 +810,11 @@ out:
- 		itimer.it_interval.tv_usec = 0;
- 		setitimer (ITIMER_REAL, &itimer, NULL);
- 	}
--
-+#ifdef WITH_TIMERFD
-+	if (par->mode == MODE_TIMERFD) {
-+		close(timerfd_id);
-+	}
-+#endif
- 	/* switch to normal */
- 	schedp.sched_priority = 0;
- 	sched_setscheduler(0, SCHED_OTHER, &schedp);
-@@ -775,6 +855,9 @@ static void display_help(int error)
- 	       "                           to modify value to minutes, hours or days\n"
- 	       "-E       --event           event tracing (used with -b)\n"
- 	       "-f       --ftrace          function trace (when -b is active)\n"
-+#ifdef WITH_TIMERFD
-+	       "-F       --timerfd    	   Use TimerFD API\n"
-+#endif
- 	       "-h       --histogram=US    dump a latency histogram to stdout after the run\n"
-                "                           (with same priority about many threads)\n"
- 	       "                           US is the max time to be be tracked in microseconds\n"
-@@ -813,6 +896,7 @@ static void display_help(int error)
- static int use_nanosleep;
- static int timermode = TIMER_ABSTIME;
- static int use_system;
-+static int use_timerfd;
- static int priority;
- static int policy = 0;
- static int num_threads = 1;
-@@ -899,6 +983,9 @@ static void process_options (int argc, char *argv[])
- 			{"distance", required_argument, NULL, 'd'},
- 			{"event", no_argument, NULL, 'E'},
- 			{"ftrace", no_argument, NULL, 'f'},
-+#ifdef WITH_TIMERFD
-+			{"timerfd",no_argument,NULL,'F'},
-+#endif
- 			{"histogram", required_argument, NULL, 'h'},
- 			{"interval", required_argument, NULL, 'i'},
- 			{"irqsoff", no_argument, NULL, 'I'},
-@@ -923,7 +1010,7 @@ static void process_options (int argc, char *argv[])
- 			{"traceopt", required_argument, NULL, 'O'},
- 			{NULL, 0, NULL, 0}
- 		};
--                int c = getopt_long (argc, argv, "a::b:Bc:Cd:Efh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
-+                int c = getopt_long (argc, argv, "a::b:Bc:Cd:EfFh:i:Il:nNo:O:p:Pmqrst::vD:wWTy:",
- 			long_options, &option_index);
- 		if (c == -1)
- 			break;
-@@ -946,6 +1033,9 @@ static void process_options (int argc, char *argv[])
- 		case 'd': distance = atoi(optarg); break;
- 		case 'E': tracetype = EVENTS; break;
- 		case 'f': ftrace = 1; break;
-+#ifdef WITH_TIMERFD
-+		case 'F': use_timerfd = MODE_TIMERFD; break;
-+#endif
- 		case 'h': histogram = atoi(optarg); break;
- 		case 'i': interval = atoi(optarg); break;
- 		case 'I': tracetype = IRQSOFF; break;
-@@ -1207,7 +1297,7 @@ int main(int argc, char **argv)
- 	if (check_timer())
- 		fprintf(stderr, "WARNING: High resolution timers not available\n");
- 
--	mode = use_nanosleep + use_system;
-+	mode = use_timerfd ? use_timerfd : (use_nanosleep + use_system);
- 
- 	sigemptyset(&sigset);
- 	sigaddset(&sigset, signum);
-
-
---------------000406030506090703070909--
+- Arnaldo
