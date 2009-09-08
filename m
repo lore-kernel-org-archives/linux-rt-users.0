@@ -1,48 +1,60 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH 2/2] fec: don't enable irqs in hard irq context
-Date: Mon, 7 Sep 2009 16:01:38 +0200
-Message-ID: <20090907140138.GA20441@pengutronix.de>
-References: <1251882856-23549-1-git-send-email-u.kleine-koenig@pengutronix.de> <1251882856-23549-2-git-send-email-u.kleine-koenig@pengutronix.de> <4A9F1870.7070408@snapgear.com> <20090902.231709.224187980.davem@davemloft.net>
+From: John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] 2.6.31-rc9-rt9.1
+Date: Tue, 8 Sep 2009 11:14:01 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0909081049430.31237@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, John Kacur <jkacur@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:37673 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753318AbZIGOBm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Sep 2009 10:01:42 -0400
-Content-Disposition: inline
-In-Reply-To: <20090902.231709.224187980.davem@davemloft.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; format=flowed; charset=US-ASCII
+Cc: Thomas Gleixner <tglx@linuxtronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novells.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Jon Masters <jcm@redhat.com>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Mark Knecht <markknecht@gmail.com>
+To: lkml <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754107AbZIHJPU@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+While Thomas Gleixner is on vacation, we decided to release another 
+incremental real-time kernel. This is for those of you who want to run 
+Linus' latest release, but still want the real-time patches.
 
-> Applied to net-next-2.6
-who ever does the next .30-rt release, can you please cherry pick these
-patches?
+So, this is simply a merge of 2.6.31-rc8-rt9 with 2.6.31-rc9.
+In addition, we added the tracing / ring-buffer patches for the latency 
+tracer from Steven Rostedt, modified by Arnaldo Carvalho de Melo 
+for real-time. In addition, Clark Williams added an extra commit to 
+clean-up some compile problems.
 
-Assuming the commit ids don't change anymore it's:
+There were a few other patches that we could have added, but 
+since the purpose of this is just to keep the current -rt code running on 
+the latest release from Linus, we decided to play it conservatively - 
+we'll let Thomas do the heavy lifting we he comes back from vacation.
 
-	$ git fetch git://git.kernel.org/pub/scm/linux/kernel/git/davem/net-ne=
-xt-2.6.git master
-	$ git cherry-pick -x 84177a20799072c65a69b62571660d4d9780823c
-	$ git cherry-pick -x 81538e74ca12a71ea37ce72f809ebc65a90b9538
+You can download it at the following locations:
 
-Best regards and thanks
-Uwe
+Git location:
+git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-linux.git
+Git branch: linux-2.6.31-rc9-rt9.1
 
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Or in patch form here:
+http://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-unofficial/patch-2.6.31-rc9-rt9.1.bz2
+
+As usual, please report any problems to linux-kernel@vger.kernel.org and 
+you can cc linux-rt-users@vger.kernel.org too.
+
+Enjoy!
+
+John Kacur
+Clark Williams
