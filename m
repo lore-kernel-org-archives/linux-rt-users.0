@@ -1,114 +1,82 @@
-From: John Ogness <john.ogness@linutronix.de>
+From: Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>
 Subject: Re: IRQ timeout
-Date: Wed, 09 Sep 2009 09:55:16 +0200
-Message-ID: <80bplkr1qz.fsf@merkur.tec.linutronix.de>
+Date: Wed, 9 Sep 2009 14:40:51 +0200
+Message-ID: <20090909124051.GA20154@isw.uni-stuttgart.de>
 References: <20090908122650.GI14282@isw.uni-stuttgart.de>
-	<80ws49y23l.fsf@merkur.tec.linutronix.de>
-	<20090908142726.GJ14282@isw.uni-stuttgart.de>
+ <80ws49y23l.fsf@merkur.tec.linutronix.de>
+ <20090908142726.GJ14282@isw.uni-stuttgart.de>
+ <80bplkr1qz.fsf@merkur.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>
-To: linux-rt-users@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="OXfL5xGRrasGEqWY"
+Cc: linux-rt-users@vger.kernel.org,
+	Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>
+To: John Ogness <john.ogness@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:47083 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752107AbZIIHzU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Sep 2009 03:55:20 -0400
-In-Reply-To: <20090908142726.GJ14282@isw.uni-stuttgart.de> (Hans-Peter Bock's message of "Tue\, 8 Sep 2009 16\:27\:26 +0200")
+Received: from isw70.isw.uni-stuttgart.de ([141.58.102.70]:35734 "EHLO
+	mail.isw.uni-stuttgart.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751585AbZIIMku (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Sep 2009 08:40:50 -0400
+Content-Disposition: inline
+In-Reply-To: <80bplkr1qz.fsf@merkur.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2009-09-08, Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de> wrote:
->> 2. What are the rt-priorities for your application (including the UIO
->>    thread) and for the network stack threads?
->>    $ ps -Alm
->
-> The process "geos" is using the uio_sercos3 driver.
->
-> F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
-...
-> 1 -     0     3     2  0   -   - -     0 -      ?        00:00:00 migration/0
-> 1 S     0     -     -  0 -40   - -     - migrat -        00:00:00 -
-> 5 -     0     4     2  0   -   - -     0 -      ?        00:00:00 sirq-high/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0     5     2  0   -   - -     0 -      ?        00:00:00 sirq-timer/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0     6     2  0   -   - -     0 -      ?        00:00:00 sirq-net-tx/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0     7     2  0   -   - -     0 -      ?        00:00:00 sirq-net-rx/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0     8     2  0   -   - -     0 -      ?        00:00:00 sirq-block/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0     9     2  0   -   - -     0 -      ?        00:00:00 sirq-tasklet/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0    10     2  0   -   - -     0 -      ?        00:00:00 sirq-sched/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0    11     2  0   -   - -     0 -      ?        00:00:00 sirq-hrtimer/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 5 -     0    12     2  0   -   - -     0 -      ?        00:00:00 sirq-rcu/0
-> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
-> 1 -     0    13     2  0   -   - -     0 -      ?        00:00:00 posixcputmr/0
-> 1 S     0     -     -  0 -40   - -     - posix_ -        00:00:00 -
-> 5 -     0    14     2  0   -   - -     0 -      ?        00:00:00 watchdog/0
-> 5 S     0     -     -  0 -40   - -     - watchd -        00:00:00 -
-...
-> 7 -     0  1576     2  0   -   - -     0 -      ?        00:00:00 IRQ-17
-> 7 S     0     -     -  0   9   - -     - irqd   -        00:00:00 -
-...
-> 7 -     0  2196     2  0   -   - -     0 -      ?        00:00:00 IRQ-16
-> 7 S     0     -     -  0   9   - -     - irqd   -        00:00:00 -
-...
-> 4 -     0  2229  2212  0   -   - - 22379 -      pts/0    00:00:00 geos
-> 4 S     0     -     -  0 -40   - -     - futex_ -        00:00:00 -
-> 5 S     0     -     -  0 -30   - -     - uio_re -        00:00:00 -
 
-Your network stack threads have a priority of 49. The network interrupt
-thread (IRQ-17) has a priority of 50. The sercos interrupt thread
-(IRQ-16) also has a priority of 50. Your geos UIO thread has a priority
-of 89. And another geos thread (most likely the one executing the main
-sercos driver logic) has the highest priority possible: 99!
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset=iso-8859-15
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I don't know exactly what your geos threads are doing, but I suspect
-that they are the cause. Try reducing the priority of the non-UIO
-application thread. I do not know why it should have a higher priority
-than the UIO thread. (Is there ever a reason to run an application at
-the same priority as such important processes as the watchdog?)
+Hello John,
 
-If reducing the priority below that of the UIO thread does not help,
-consider reducing the priority below that of the network stack
-(<49). If your application is more important that any network activity,
-then you would not want to do this. But for now it would be helpful to
-identify if the non-UIO thread is really at fault here.
+how can I change the rt priority of a running process?
 
->> 3. How many interrupts per second (approx.) are being generated by
->>    the Sercos hardware while your application is running?
->>    $ cat /proc/interrupts; sleep 1; cat /proc/interrupts
->
-> The SERCOS III master runs a cycle time of 2ms, that should be 500
-> interrupts per second:
->
->            CPU0       CPU1       
->  16:      26948          0   IO-APIC-fasteoi   Sercos_III_PCI
-> LOC:     129961      98461   Local timer interrupts
->
->            CPU0       CPU1       
->  16:      27448          0   IO-APIC-fasteoi   Sercos_III_PCI
-> LOC:     130597      99473   Local timer interrupts
 
-Indeed. There are also over 500 timer interrupts per second, so I assume
-that your non-UIO geos thread is using a 2ms timer to perform the sercos
-driver duties.
+> >> 3. How many interrupts per second (approx.) are being generated by
+> >>    the Sercos hardware while your application is running?
+> >>    $ cat /proc/interrupts; sleep 1; cat /proc/interrupts
+> ...
+> Indeed. There are also over 500 timer interrupts per second, so I assume
+> that your non-UIO geos thread is using a 2ms timer to perform the sercos
+> driver duties.
 
->> 4. What is the system load while your application is running and when
->>    the network stops working?
->>    $ cat /proc/loadavg
->
-> The system is idle:
->
-> 0.01 0.02 0.00 1/114 2374
+There is no timer, the geos thread sleeps on a conditional variable which i=
+s triggered by uio_sercos3 in the function UsrCb_t3().
 
-Was this after the application was running for a few minutes? This
-surprises me because the reported error implies that the network isn't
-getting properly scheduled.
 
-John Ogness
+> > The system is idle:
+> >
+> > 0.01 0.02 0.00 1/114 2374
+>=20
+> Was this after the application was running for a few minutes? This
+> surprises me because the reported error implies that the network isn't
+> getting properly scheduled.
+
+The system actually is idle. The geos thread and the other CNC threads do n=
+ot have much work to do since they were not completely ramped up.
+
+
+Best regards, Hans-Peter
+--=20
+(=B0< Hans-Peter Bock, Dipl.-Ing., http://www.isw.uni-stuttgart.de/ >=B0)
+(/) ISW - Universit=E4t Stuttgart, Seidenstra=DFe 36, 70174 Stuttgart (\)
+
+--OXfL5xGRrasGEqWY
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.11 (GNU/Linux)
+
+iQEcBAEBAgAGBQJKp6JTAAoJEFsH0RM0g3luKq0H/3/WOcu+NH8syzTkLQKqcpP0
+nh46ndIQ4b794ePI680Pzh6sAQE/jhEMdclwDXGhRSMc7k6COBmF54lBL+CRrqsK
+PJi8k2upFZi55rXnyV8fNAsfrW09lCHcaLY1n3YkC5kxVpKmBHbTQdnK3+3NpVGe
+y48nXfninbk0ugpPLMmZSi51ciIz0L1gxpzcHpYE3ujCoFZGosq3qc4CnCb0orgC
+eepB99a4qvo1O4xdmK0NoU05G8NYTpMCcnjoO9/r+Cu4F2+T/Dzbi4kdbJ/tSbt1
+nu22z/XQ+KvzDVhgbIw+MFtkngtnRbeRO9i3fBXMQI0NNg+zl312oWFoAr1L2XY=
+=lr88
+-----END PGP SIGNATURE-----
+
+--OXfL5xGRrasGEqWY--
