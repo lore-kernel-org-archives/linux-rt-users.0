@@ -1,86 +1,114 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 00/18] tracing/ring-buffer: fixes for latency tracer
- [2.6.32]
-Date: Tue, 08 Sep 2009 11:39:10 -0400
-Message-ID: <1252424350.15626.9.camel@gandalf.stny.rr.com>
-References: <20090904235527.520961911@goodmis.org>
-	 <20090905150658.GA13387@ghostprotocols.net>
-	 <4de7f8a60909070320j692d746drb06bd635ca7f7c55@mail.gmail.com>
-	 <4de7f8a60909080742m3497f6cfo6cce42b1dcee09ab@mail.gmail.com>
-Reply-To: rostedt@goodmis.org
+From: John Ogness <john.ogness@linutronix.de>
+Subject: Re: IRQ timeout
+Date: Wed, 09 Sep 2009 09:55:16 +0200
+Message-ID: <80bplkr1qz.fsf@merkur.tec.linutronix.de>
+References: <20090908122650.GI14282@isw.uni-stuttgart.de>
+	<80ws49y23l.fsf@merkur.tec.linutronix.de>
+	<20090908142726.GJ14282@isw.uni-stuttgart.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Arnaldo Carvalho de Melo <acme@redhat.com>,
-	linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Frederic Weisbecker <fweisbec@gmail.com>
-To: Jan Blunck <jblunck@suse.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751362AbZIHPjN@vger.kernel.org>
-In-Reply-To: <4de7f8a60909080742m3497f6cfo6cce42b1dcee09ab@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:47083 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752107AbZIIHzU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Sep 2009 03:55:20 -0400
+In-Reply-To: <20090908142726.GJ14282@isw.uni-stuttgart.de> (Hans-Peter Bock's message of "Tue\, 8 Sep 2009 16\:27\:26 +0200")
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2009-09-08 at 16:42 +0200, Jan Blunck wrote:
-> On Mon, Sep 7, 2009 at 12:20 PM, Jan Blunck<jblunck@suse.de> wrote:
-> > On Sat, Sep 5, 2009 at 5:06 PM, Arnaldo Carvalho de Melo<acme@redhat.com> wrote:
-> >>
-> >> I did a quick port to tip/rt/head and couldn't reproduce the problems I
-> >> was experiencing, thanks!
-> >>
-> >> I've put the ported patch series at:
-> >>
-> >> http://userweb.kernel.org/~acme/rostedt-rb-rt
-> >>
-> 
-> Besides the problem with the wakeup tracer I see traces with
-> preemptirqsoff that I think are invalid:
-> 
-> # tracer: preemptirqsoff
-> #
-> # preemptirqsoff latency trace v1.1.5 on 2.6.31-rc8-rt9-rt_trace
-> # --------------------------------------------------------------------
-> # latency: 332 us, #4/4, CPU#24 | (M:preempt VP:0, KP:0, SP:0 HP:0 #P:32)
-> #    -----------------
-> #    | task: -0 (uid:0 nice:0 policy:0 rt_prio:0)
-> #    -----------------
-> #  => started at: start_secondary
-> #  => ended at:   start_secondary
-> #
-> #
-> #                  _------=> CPU#
-> #                 / _-----=> irqs-off
-> #                | / _----=> need-resched
-> #                || / _---=> hardirq/softirq
-> #                ||| / _--=> preempt-depth
-> #                |||| /
-> #                |||||     delay
-> #  cmd     pid   ||||| time  |   caller
-> #     \   /      |||||   \   |   /
->   <idle>-0      24.N.1    0us : cpu_idle <-start_secondary
->   <idle>-0      24dN.1    1us!: tick_nohz_stop_idle <-tick_nohz_restart_sched_ti
-> ck
->   <idle>-0      24dN.1  332us+: cpu_idle <-start_secondary
->   <idle>-0      24dN.1  336us : trace_preempt_on <-start_secondary
-> 
-> I have set kernel.ftrace_enabled = 1 but still not a single function
-> is recorded in tick_nohz_stop_idle().
-> 
-> Any ideas?
+On 2009-09-08, Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de> wrote:
+>> 2. What are the rt-priorities for your application (including the UIO
+>>    thread) and for the network stack threads?
+>>    $ ps -Alm
+>
+> The process "geos" is using the uio_sercos3 driver.
+>
+> F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+...
+> 1 -     0     3     2  0   -   - -     0 -      ?        00:00:00 migration/0
+> 1 S     0     -     -  0 -40   - -     - migrat -        00:00:00 -
+> 5 -     0     4     2  0   -   - -     0 -      ?        00:00:00 sirq-high/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0     5     2  0   -   - -     0 -      ?        00:00:00 sirq-timer/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0     6     2  0   -   - -     0 -      ?        00:00:00 sirq-net-tx/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0     7     2  0   -   - -     0 -      ?        00:00:00 sirq-net-rx/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0     8     2  0   -   - -     0 -      ?        00:00:00 sirq-block/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0     9     2  0   -   - -     0 -      ?        00:00:00 sirq-tasklet/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0    10     2  0   -   - -     0 -      ?        00:00:00 sirq-sched/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0    11     2  0   -   - -     0 -      ?        00:00:00 sirq-hrtimer/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 5 -     0    12     2  0   -   - -     0 -      ?        00:00:00 sirq-rcu/0
+> 5 S     0     -     -  0  10   - -     - ksofti -        00:00:00 -
+> 1 -     0    13     2  0   -   - -     0 -      ?        00:00:00 posixcputmr/0
+> 1 S     0     -     -  0 -40   - -     - posix_ -        00:00:00 -
+> 5 -     0    14     2  0   -   - -     0 -      ?        00:00:00 watchdog/0
+> 5 S     0     -     -  0 -40   - -     - watchd -        00:00:00 -
+...
+> 7 -     0  1576     2  0   -   - -     0 -      ?        00:00:00 IRQ-17
+> 7 S     0     -     -  0   9   - -     - irqd   -        00:00:00 -
+...
+> 7 -     0  2196     2  0   -   - -     0 -      ?        00:00:00 IRQ-16
+> 7 S     0     -     -  0   9   - -     - irqd   -        00:00:00 -
+...
+> 4 -     0  2229  2212  0   -   - - 22379 -      pts/0    00:00:00 geos
+> 4 S     0     -     -  0 -40   - -     - futex_ -        00:00:00 -
+> 5 S     0     -     -  0 -30   - -     - uio_re -        00:00:00 -
 
-Which arch is this for? When the system goes into idle, it usually
-disables preemption and maybe interrupts. But the idle call in assembly
-will enable interrupts. And when an interrupt happens it comes out.
+Your network stack threads have a priority of 49. The network interrupt
+thread (IRQ-17) has a priority of 50. The sercos interrupt thread
+(IRQ-16) also has a priority of 50. Your geos UIO thread has a priority
+of 89. And another geos thread (most likely the one executing the main
+sercos driver logic) has the highest priority possible: 99!
 
-There should be callbacks in cpu_idle to disable latency tracing. These
-functions are called stop_critical_timings and start_critical_timings.
-You'll see these calls in both process_64.c and process_32.c in the x86
-arch.
+I don't know exactly what your geos threads are doing, but I suspect
+that they are the cause. Try reducing the priority of the non-UIO
+application thread. I do not know why it should have a higher priority
+than the UIO thread. (Is there ever a reason to run an application at
+the same priority as such important processes as the watchdog?)
 
-Is you set up not calling cpu_idle?
+If reducing the priority below that of the UIO thread does not help,
+consider reducing the priority below that of the network stack
+(<49). If your application is more important that any network activity,
+then you would not want to do this. But for now it would be helpful to
+identify if the non-UIO thread is really at fault here.
 
--- Steve
+>> 3. How many interrupts per second (approx.) are being generated by
+>>    the Sercos hardware while your application is running?
+>>    $ cat /proc/interrupts; sleep 1; cat /proc/interrupts
+>
+> The SERCOS III master runs a cycle time of 2ms, that should be 500
+> interrupts per second:
+>
+>            CPU0       CPU1       
+>  16:      26948          0   IO-APIC-fasteoi   Sercos_III_PCI
+> LOC:     129961      98461   Local timer interrupts
+>
+>            CPU0       CPU1       
+>  16:      27448          0   IO-APIC-fasteoi   Sercos_III_PCI
+> LOC:     130597      99473   Local timer interrupts
+
+Indeed. There are also over 500 timer interrupts per second, so I assume
+that your non-UIO geos thread is using a 2ms timer to perform the sercos
+driver duties.
+
+>> 4. What is the system load while your application is running and when
+>>    the network stops working?
+>>    $ cat /proc/loadavg
+>
+> The system is idle:
+>
+> 0.01 0.02 0.00 1/114 2374
+
+Was this after the application was running for a few minutes? This
+surprises me because the reported error implies that the network isn't
+getting properly scheduled.
+
+John Ogness
