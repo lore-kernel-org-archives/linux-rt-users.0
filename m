@@ -1,43 +1,244 @@
 From: Jan Engelhardt <jengelh@medozas.de>
-Subject: Re: [ANNOUNCE] 2.6.29.6-rt23
-Date: Sat, 12 Sep 2009 11:44:47 +0200 (CEST)
-Message-ID: <alpine.LSU.2.00.0909121124340.15677@obet.zrqbmnf.qr>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0904031918090.12916@localhost.localdomain>  <alpine.LFD.2.00.0904081937191.21577@localhost.localdomain>  <alpine.LFD.2.00.0904092046440.21577@localhost.localdomain>
- <alpine.LFD. <alpine.LFD.2.00.0907102023500.2768@localhost.localdomain> <alpine.LSU.2.00.0908111140280.5036@fbirervta.pbzchgretzou.qr>
+Subject: [archive] 2.6.31-rt timekeeping workaround
+Date: Sat, 12 Sep 2009 21:00:35 +0200 (CEST)
+Message-ID: <alpine.LSU.2.00.0909122057160.5958@obet.zrqbmnf.qr>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>, Fra@jasper.es
-To: Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from borg.medozas.de ([188.40.89.202]:50886 "EHLO borg.medozas.de"
+Received: from borg.medozas.de ([188.40.89.202]:57561 "EHLO borg.medozas.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752585AbZILJoq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 12 Sep 2009 05:44:46 -0400
-In-Reply-To: <alpine.LSU.2.00.0908111140280.5036@fbirervta.pbzchgretzou.qr>
+	id S1754781AbZILTAe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 12 Sep 2009 15:00:34 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by borg.medozas.de (Postfix) with ESMTP id 14B3E25C6A
+	for <linux-rt-users@vger.kernel.org>; Sat, 12 Sep 2009 21:00:36 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-On Tuesday 2009-08-11 12:52, Jan Engelhardt wrote:
->On Friday 2009-07-10 20:29, Thomas Gleixner wrote:
->>On Fri, 10 Jul 2009, Fernando Lopez-Lezcano wrote:
->>> 
->>> I'm getting slightly weird behavior from rt23 in an intel quad core
->>> machine (my T61 laptop is fine), rt22 was fine. It is some timer issue,
->>> if I type continuously I get (every few seconds) repeated keys. Nothing
->>> in the logs, nothing in dmesg that is (significantly) different from an
->>> rt22 boot. 
->
->I am getting the same issue, reliably reproducibly - though ironically
->only with the proprietary NVIDIA. Key repeats, screen going "No signal"
->for a sec, sometimes comes back, sometimes hangs the whole machine.
+As previously suggested[1], the patch still works, but seemed to 
+have needed some rebasing onto the new version. It is provided below.
+Makes my Xorg behave normal again in 2.6.31-(rc8)-rt. (It reading 2.6.30
+is just a side artifact of the build environment.)
 
-The problem is reproducible on 2.6.31-rc8-rt9. Keys repeat, and the
-patch for 2.6.31-rt does not want to compile anymore.
+[1] http://marc.info/?l=linux-kernel&m=124725068404348&w=2
+
+---
+ kernel/hrtimer.c          |   56 ++++++++++++++++++++
+ kernel/time/timekeeping.c |  123 ----------------------------------------------
+ 2 files changed, 56 insertions(+), 123 deletions(-)
+
+Index: linux-2.6.30/kernel/hrtimer.c
+===================================================================
+--- linux-2.6.30.orig/kernel/hrtimer.c
++++ linux-2.6.30/kernel/hrtimer.c
+@@ -48,6 +48,37 @@
+ 
+ #include <asm/uaccess.h>
+ 
++/**
++ * ktime_get - get the monotonic time in ktime_t format
++ *
++ * returns the time in ktime_t format
++ */
++ktime_t ktime_get(void)
++{
++	struct timespec now;
++
++	ktime_get_ts(&now);
++
++	return timespec_to_ktime(now);
++}
++EXPORT_SYMBOL_GPL(ktime_get);
++
++/**
++ * ktime_get_real - get the real (wall-) time in ktime_t format
++ *
++ * returns the time in ktime_t format
++ */
++ktime_t ktime_get_real(void)
++{
++	struct timespec now;
++
++	getnstimeofday(&now);
++
++	return timespec_to_ktime(now);
++}
++
++EXPORT_SYMBOL_GPL(ktime_get_real);
++
+ /*
+  * The timer bases:
+  *
+@@ -75,6 +106,31 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base,
+ 	}
+ };
+ 
++/**
++ * ktime_get_ts - get the monotonic clock in timespec format
++ * @ts:		pointer to timespec variable
++ *
++ * The function calculates the monotonic clock from the realtime
++ * clock and the wall_to_monotonic offset and stores the result
++ * in normalized timespec format in the variable pointed to by @ts.
++ */
++void ktime_get_ts(struct timespec *ts)
++{
++	struct timespec tomono;
++	unsigned long seq;
++
++	do {
++		seq = read_atomic_seqbegin(&xtime_lock);
++		getnstimeofday(ts);
++		tomono = wall_to_monotonic;
++
++	} while (read_atomic_seqretry(&xtime_lock, seq));
++
++	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
++				ts->tv_nsec + tomono.tv_nsec);
++}
++EXPORT_SYMBOL_GPL(ktime_get_ts);
++
+ /*
+  * Get the coarse grained time at the softirq based on xtime and
+  * wall_to_monotonic.
+Index: linux-2.6.30/kernel/time/timekeeping.c
+===================================================================
+--- linux-2.6.30.orig/kernel/time/timekeeping.c
++++ linux-2.6.30/kernel/time/timekeeping.c
+@@ -124,75 +124,6 @@ void getnstimeofday(struct timespec *ts)
+ 
+ EXPORT_SYMBOL(getnstimeofday);
+ 
+-ktime_t ktime_get(void)
+-{
+-	cycle_t cycle_now, cycle_delta;
+-	unsigned int seq;
+-	s64 secs, nsecs;
+-
+-	WARN_ON(timekeeping_suspended);
+-
+-	do {
+-		seq = read_atomic_seqbegin(&xtime_lock);
+-		secs = xtime.tv_sec + wall_to_monotonic.tv_sec;
+-		nsecs = xtime.tv_nsec + wall_to_monotonic.tv_nsec;
+-
+-		/* read clocksource: */
+-		cycle_now = clocksource_read(clock);
+-
+-		/* calculate the delta since the last update_wall_time: */
+-		cycle_delta = (cycle_now - clock->cycle_last) & clock->mask;
+-
+-		/* convert to nanoseconds: */
+-		nsecs += cyc2ns(clock, cycle_delta);
+-
+-	} while (read_atomic_seqretry(&xtime_lock, seq));
+-	/*
+-	 * Use ktime_set/ktime_add_ns to create a proper ktime on
+-	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
+-	 */
+-	return ktime_add_ns(ktime_set(secs, 0), nsecs);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get);
+-
+-/**
+- * ktime_get_ts - get the monotonic clock in timespec format
+- * @ts:		pointer to timespec variable
+- *
+- * The function calculates the monotonic clock from the realtime
+- * clock and the wall_to_monotonic offset and stores the result
+- * in normalized timespec format in the variable pointed to by @ts.
+- */
+-void ktime_get_ts(struct timespec *ts)
+-{
+-	cycle_t cycle_now, cycle_delta;
+-	struct timespec tomono;
+-	unsigned int seq;
+-	s64 nsecs;
+-
+-	WARN_ON(timekeeping_suspended);
+-
+-	do {
+-		seq = read_atomic_seqbegin(&xtime_lock);
+-		*ts = xtime;
+-		tomono = wall_to_monotonic;
+-
+-		/* read clocksource: */
+-		cycle_now = clocksource_read(clock);
+-
+-		/* calculate the delta since the last update_wall_time: */
+-		cycle_delta = (cycle_now - clock->cycle_last) & clock->mask;
+-
+-		/* convert to nanoseconds: */
+-		nsecs = cyc2ns(clock, cycle_delta);
+-
+-	} while (read_atomic_seqretry(&xtime_lock, seq));
+-
+-	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
+-				ts->tv_nsec + tomono.tv_nsec + nsecs);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get_ts);
+-
+ /**
+  * do_gettimeofday - Returns the time of day in a timeval
+  * @tv:		pointer to the timeval to be set
+@@ -293,63 +224,9 @@ static void change_clocksource(void)
+ static inline void clocksource_forward_now(void) { }
+ static inline void change_clocksource(void) { }
+ 
+-/**
+- * ktime_get - get the monotonic time in ktime_t format
+- *
+- * returns the time in ktime_t format
+- */
+-ktime_t ktime_get(void)
+-{
+-	struct timespec now;
+-
+-	ktime_get_ts(&now);
+-
+-	return timespec_to_ktime(now);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get);
+-
+-/**
+- * ktime_get_ts - get the monotonic clock in timespec format
+- * @ts:		pointer to timespec variable
+- *
+- * The function calculates the monotonic clock from the realtime
+- * clock and the wall_to_monotonic offset and stores the result
+- * in normalized timespec format in the variable pointed to by @ts.
+- */
+-void ktime_get_ts(struct timespec *ts)
+-{
+-	struct timespec tomono;
+-	unsigned long seq;
+-
+-	do {
+-		seq = read_atomic_seqbegin(&xtime_lock);
+-		getnstimeofday(ts);
+-		tomono = wall_to_monotonic;
+-
+-	} while (read_atomic_seqretry(&xtime_lock, seq));
+-
+-	set_normalized_timespec(ts, ts->tv_sec + tomono.tv_sec,
+-				ts->tv_nsec + tomono.tv_nsec);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get_ts);
+ #endif /* !GENERIC_TIME */
+ 
+ /**
+- * ktime_get_real - get the real (wall-) time in ktime_t format
+- *
+- * returns the time in ktime_t format
+- */
+-ktime_t ktime_get_real(void)
+-{
+-	struct timespec now;
+-
+-	getnstimeofday(&now);
+-
+-	return timespec_to_ktime(now);
+-}
+-EXPORT_SYMBOL_GPL(ktime_get_real);
