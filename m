@@ -1,21 +1,25 @@
 From: John Kacur <jkacur@redhat.com>
 Subject: [PATCH 6/6] pi_stress clean-ups, fix hang.
-Date: Mon, 14 Sep 2009 16:39:49 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0909141638550.4675@localhost.localdomain>
+Date: Mon, 14 Sep 2009 16:45:41 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0909141644090.4675@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org
 To: williams@redhat.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:44580 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:44791 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755237AbZINOju (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Sep 2009 10:39:50 -0400
-Received: from int-mx02.intmail.prod.int.phx2.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id n8EEdr51024794
-	for <linux-rt-users@vger.kernel.org>; Mon, 14 Sep 2009 10:39:53 -0400
+	id S1752259AbZINOpm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Sep 2009 10:45:42 -0400
+Received: from int-mx04.intmail.prod.int.phx2.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.17])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id n8EEjje7023745
+	for <linux-rt-users@vger.kernel.org>; Mon, 14 Sep 2009 10:45:45 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+My apologies for this resend, only the "Subject" is different - but it is
+important that the patches are applied in order. (so I had to add the 
+"6/6" part.
 
 >From a8774c1f30a2cd91954fb10f3d748cf9a926f778 Mon Sep 17 00:00:00 2001
 From: John Kacur <jkacur@redhat.com>
