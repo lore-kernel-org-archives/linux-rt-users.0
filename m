@@ -1,11 +1,11 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31-rt10
-Date: Tue, 15 Sep 2009 23:11:33 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0905130122250.3561@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
- <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
- <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
- <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+Subject: Re: [ANNOUNCE] 2.6.31-rt10
+Date: Wed, 16 Sep 2009 00:30:05 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0909160028020.8957@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+ <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+ <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+ <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: rt-users <linux-rt-users@vger.kernel.org>,
@@ -26,64 +26,35 @@ Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Mark Knecht <markknecht@gmail.com>
 To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:39586 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:42508 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753594AbZIOVM3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Sep 2009 17:12:29 -0400
-In-Reply-To: <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+	id S1753454AbZIOWas (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Sep 2009 18:30:48 -0400
+In-Reply-To: <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-   - update to 2.6.31
- 
-   - timekeeping 32bit overflow fix
+On Tue, 15 Sep 2009, Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+>  
+>    - update to 2.6.31
+>  
+>    - timekeeping 32bit overflow fix
+> 
+>    - rt locking fix for rw_locks and rwsems. Solves a kvm crash
+> 
+>    - kvm might sleep warning fix
+> 
+>    - remove empty cpumask warning in x86(32bit) IPI code
+> 
+>    - tracer fixes - picked from mainline
+> 
+>    - perf counter fix - picked from mainline
 
-   - rt locking fix for rw_locks and rwsems. Solves a kvm crash
+Oops, forgot to mention that the latency histograms are back. 
 
-   - kvm might sleep warning fix
+Thanks to Carsten Emde for keeping up with the ongoing changes in the
+tracer infrastructure.
 
-   - remove empty cpumask warning in x86(32bit) IPI code
-
-   - tracer fixes - picked from mainline
-
-   - perf counter fix - picked from mainline
-
-Known issues:
-   - ARM highmem
-   - scheduler load balancing oddities. Peter is working on it.
-   - timer_interrupt hang check (fix queued for .31-rt11)
-
-Pending updates:
-   - I'm planning to add back MIPS support in the .31-rt11 release.
-
-Download locations:
- 
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git release branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
-  
-Git development branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Gitweb:
-     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
- 
-Information on the RT patch can be found at:
-
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.31-rt10 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rt10.bz2
-
-Enjoy !
-
-      tglx
-
+	tglx
