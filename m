@@ -1,7 +1,7 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Jaswinder Singh Rajput <jaswinder@kernel.org>
 Subject: Re: [ANNOUNCE] 2.6.31-rt11
-Date: Sat, 19 Sep 2009 09:38:10 -0400
-Message-ID: <1253367490.20020.336.camel@gandalf.stny.rr.com>
+Date: Sat, 19 Sep 2009 20:31:33 +0530
+Message-ID: <1253372493.3118.5.camel@ht.satnam>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
 	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
@@ -20,7 +20,7 @@ References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
 	 <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
 	 <1253334889.3309.5.camel@ht.satnam>
-Reply-To: rostedt@goodmis.org
+	 <1253367490.20020.336.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -41,30 +41,35 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>
-To: Jaswinder Singh Rajput <jaswinder@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:45423 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754039AbZISNiK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Sep 2009 09:38:10 -0400
-In-Reply-To: <1253334889.3309.5.camel@ht.satnam>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: rostedt@goodmis.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755587AbZISPCj@vger.kernel.org>
+In-Reply-To: <1253367490.20020.336.camel@gandalf.stny.rr.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2009-09-19 at 10:04 +0530, Jaswinder Singh Rajput wrote:
-> On Sat, 2009-09-19 at 00:39 +0200, Thomas Gleixner wrote:
+Hello Steve,
 
-> Great work Tom. I am very glad to see -rt branch in -tip tree. When -rt
+On Sat, 2009-09-19 at 09:38 -0400, Steven Rostedt wrote:
+> On Sat, 2009-09-19 at 10:04 +0530, Jaswinder Singh Rajput wrote:
+> > On Sat, 2009-09-19 at 00:39 +0200, Thomas Gleixner wrote:
+> 
+> > Great work Tom. I am very glad to see -rt branch in -tip tree. When -rt
+> 
+> Note, Thomas is German, not American. German's do not shorten their
+> names like they do in America. Thus, his name is Thomas and not Tom.
+> 
 
-Note, Thomas is German, not American. German's do not shorten their
-names like they do in America. Thus, his name is Thomas and not Tom.
+Thanks for clarification. Now I understood why he started unnecessary
+wars and his funny actions(shouts when need to stay mum and stay mum
+when needs to speak) which leads to lot of confusions.
 
-> will hit linus tree, .33 or .34 ?
+> > will hit linus tree, .33 or .34 ?
+> 
+> We're working on it. But don't expect it that early. Our estimate is the
+> same as we've said for the last 5 years. "It will be in next year".
+> 
 
-We're working on it. But don't expect it that early. Our estimate is the
-same as we've said for the last 5 years. "It will be in next year".
+Great.
 
--- Steve
-
-
+--
+JSR
