@@ -1,7 +1,7 @@
-From: Jaswinder Singh Rajput <jaswinder@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 2.6.31-rt11
-Date: Sat, 19 Sep 2009 10:04:49 +0530
-Message-ID: <1253334889.3309.5.camel@ht.satnam>
+Date: Sat, 19 Sep 2009 09:38:10 -0400
+Message-ID: <1253367490.20020.336.camel@gandalf.stny.rr.com>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
 	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
@@ -19,13 +19,15 @@ References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
 	 <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
 	 <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+	 <1253334889.3309.5.camel@ht.satnam>
+Reply-To: rostedt@goodmis.org
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <ce@ceag.ch>,
 	Clark Williams <williams@redhat.com>,
@@ -39,49 +41,30 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Jaswinder Singh Rajput <jaswinder@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hera.kernel.org ([140.211.167.34]:57397 "EHLO hera.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750786AbZISEfl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Sep 2009 00:35:41 -0400
-In-Reply-To: <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:45423 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754039AbZISNiK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 19 Sep 2009 09:38:10 -0400
+In-Reply-To: <1253334889.3309.5.camel@ht.satnam>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2009-09-19 at 00:39 +0200, Thomas Gleixner wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->  
->    - latencytop fix
->  
->    - disable SPARSE_IRQ, DMAR, IRQ_REMAP for -rt
-> 
-> Known issues:
->    - ARM highmem
->    - scheduler load balancing oddities. Peter is working on it.
->    - timer_interrupt hang check (still working on somthing useful)
-> 
-> The planned "add back MIPS support" is postponed to rt12.
-> 
-> Download locations:
->  
->     http://rt.et.redhat.com/download/
->     http://www.kernel.org/pub/linux/kernel/projects/rt/
-> 
-> Git release branch:
->     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
->   
-> Git development branch:
->     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-> 
-> Gitweb:
->     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+On Sat, 2009-09-19 at 10:04 +0530, Jaswinder Singh Rajput wrote:
+> On Sat, 2009-09-19 at 00:39 +0200, Thomas Gleixner wrote:
 
-Great work Tom. I am very glad to see -rt branch in -tip tree. When -rt
-will hit linus tree, .33 or .34 ?
+> Great work Tom. I am very glad to see -rt branch in -tip tree. When -rt
 
-Thanks,
---
-JSR
+Note, Thomas is German, not American. German's do not shorten their
+names like they do in America. Thus, his name is Thomas and not Tom.
+
+> will hit linus tree, .33 or .34 ?
+
+We're working on it. But don't expect it that early. Our estimate is the
+same as we've said for the last 5 years. "It will be in next year".
+
+-- Steve
+
 
