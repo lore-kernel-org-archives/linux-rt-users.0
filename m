@@ -1,94 +1,115 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: 2.6.31-rt11 freeze on userland start on ARM
-Date: Mon, 21 Sep 2009 20:36:34 +0200
-Message-ID: <3efb10970909211136g4e74c8b3vc339d548cdd0959f@mail.gmail.com>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: [ANNOUNCE] 2.6.31-rt11
+Date: Tue, 22 Sep 2009 11:31:51 -0700
+Message-ID: <4AB91817.1050108@us.ibm.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.09082
+ 82326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: LKML <linux-kernel@vger.kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f194.google.com ([209.85.211.194]:36435 "EHLO
-	mail-yw0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751505AbZIUSmV (ORCPT
+Received: from e38.co.us.ibm.com ([32.97.110.159]:44794 "EHLO
+	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750963AbZIVScI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Sep 2009 14:42:21 -0400
+	Tue, 22 Sep 2009 14:32:08 -0400
+In-Reply-To: <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+> 
+>    - latencytop fix
+> 
+>    - disable SPARSE_IRQ, DMAR, IRQ_REMAP for -rt
+> 
+> Known issues:
+>    - ARM highmem
+>    - scheduler load balancing oddities. Peter is working on it.
+>    - timer_interrupt hang check (still working on somthing useful)
+> 
+> The planned "add back MIPS support" is postponed to rt12.
+> 
+> Download locations:
+> 
+>     http://rt.et.redhat.com/download/
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/
+> 
+> Git release branch:
+>     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+>   
+> Git development branch:
+>     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+> 
+> Gitweb:
+>     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+> 
+> Information on the RT patch can be found at:
+> 
+>     http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> to build the 2.6.31-rt11 tree, the following patches should be
+> applied:
+> 
+>     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.tar.bz2
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rt11.bz2
+> 
+> Enjoy !
+> 
+>       tglx
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-I am integrating the 2.6.31-rt11 kernel on our ARM9 based (Atmel
-at91sam9261) board.
-Kernel boots fine but when userland starts the linuxrc process, and
-the first 'echo' from the /etc/init.d/rcS script is printed to the
-serial console (DBGU) the system locks up completely, from userland no
-character ever makes it to the terminal.
+Hitting a repeating BUG at boot on my Thinkpad T60p:
 
-I found the reason of the lockup and know a workaround, but I can use
-some good suggestions to solve it the correct way.
+[    2.861699] BUG: sleeping function called from invalid context at 
+kernel/rtmutex.c:684
+[    2.861839] in_atomic(): 1, irqs_disabled(): 0, pid: 777, name: sleep
+[    2.861967] Pid: 777, comm: sleep Not tainted 2.6.31-rc4-rt1-dvh01 #1
+[    2.862092] Call Trace:
+[    2.862217]  [<c012d881>] __might_sleep+0xe1/0x100
+[    2.862343]  [<c056ccba>] rt_spin_lock+0x2a/0x70
+[    2.862468]  [<c018243a>] res_counter_uncharge+0x2a/0x50
+[    2.862593]  [<c01e6e23>] __mem_cgroup_uncharge_common+0x93/0x190
+[    2.862720]  [<c01e6fb8>] mem_cgroup_uncharge_page+0x28/0x30
+[    2.862845]  [<c01d6b87>] page_remove_rmap+0x47/0x50
+[    2.862969]  [<c01cf2d9>] unmap_vmas+0x349/0x6b0
+[    2.863093]  [<c01d45e5>] exit_mmap+0xc5/0x1c0
+[    2.863217]  [<c0140481>] mmput+0x51/0xc0
+[    2.863339]  [<c0146465>] exit_mm+0x105/0x140
+[    2.863462]  [<c01465b5>] do_exit+0x115/0x760
+[    2.863584]  [<c0146cc4>] sys_exit+0x14/0x20
+[    2.863707]  [<c0103025>] syscall_call+0x7/0xb
 
-What happens is that the kernel continuously schedules a IRQ-thread;
-namely IRQ1-atmel_serial. And this IRQ thread keeps getting scheduled
-forever...
+I'm looking for a problem with preempt_disable() between LinuxCon 
+seesions now.  But if someone already knows the problem, thought I'd post.
 
-Looking more closely I noticed that it is new compared to 2.6.24/26-RT
-that a IRQ thread is started for this driver.
-Notice that the DBGU interrupt is called the system-interrupt and it
-is shared with the timer interrupt. The timer interrupt has IRQF_TIMER
-set which incorporates IRQF_NODELAY. This is different compared to
-2.6.24/26 where a sharing with a IRQF_NODELAY interrupt would make all
-shared handlers also run in IRQF_NODELAY context.
-As such we have here a interrupt handler running as NODELAY handler,
-that is shared with a interrupt handler that runs in thread context.
+Thanks,
 
-So, as workaround/test I made this change:
-
-Index: linux-2.6.31/drivers/serial/atmel_serial.c
-===================================================================
---- linux-2.6.31.orig/drivers/serial/atmel_serial.c	2009-09-21
-19:44:48.000000000 +0200
-+++ linux-2.6.31/drivers/serial/atmel_serial.c	2009-09-21
-19:45:15.000000000 +0200
-@@ -808,7 +808,8 @@ static int atmel_startup(struct uart_por
- 	/*
- 	 * Allocate the IRQ
- 	 */
--	retval = request_irq(port->irq, atmel_interrupt, IRQF_SHARED,
-+	retval = request_irq(port->irq, atmel_interrupt,
-+			IRQF_SHARED | IRQF_NODELAY,
- 			tty ? tty->name : "atmel_serial", port);
- 	if (retval) {
- 		printk("atmel_serial: atmel_startup - Can't get irq\n");
----
-
-This change makes the atmel-serial driver interrupt handler run as
-IRQF_NODELAY handler again, just as on 2.6.24/26, and the board is
-booting properly again with 2.6.31.
-Anyone any ideas how to fix it properly? Or interested in more
-debugging information. (I have an ETM tracer hooked up...)
-
-Notice that this driver actually needs the NODELAY flag set on
-preempt-RT to prevent missing characters with its 1 byte FIFO-hardware
-without flow-control ;-)  (I will provide a clean patch later)
-For now, at least it shows a bug in the new irq-threading mechanisms...
-
-I also have a few related questions, besides investigating the
-root-cause of this bug:
-What is the rationale behind the per-driver irq-thread? What is the
-gain here for RT? My first impression is that this would increase the
-latencies in case of sharing interrupts with NODELAY interrupts. All
-handlers need to run, so the master interrupt cannot be enabled again
-until all IRQ-threads have run, so the NODELAY handler must wait until
-all IRQ-threads have run. So, giving different prios to the
-IRQ-threads that share the same source would increase the latencies
-even more.
-If different drivers share the same interrupt line, even additional
-schedule overhead can be added to the latencies...
-On first impression the former implementation seems more efficient. I
-guess it is changed for a good reason, so, I must be missing something
-here... I hope someone can explain...
-
-Kind regards,
-
-Remy
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
