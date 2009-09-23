@@ -1,12 +1,28 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Will Schmidt <will_schmidt@vnet.ibm.com>
 Subject: Re: [ANNOUNCE] 2.6.31-rt11
-Date: Wed, 23 Sep 2009 09:25:06 -0700 (PDT)
-Message-ID: <alpine.LFD.2.00.0909230922160.2981@nanos>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>  <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>  <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
- <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>  <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>  <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>  <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
- <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>  <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <4de7f8a60909230839j3d6beca8l9a677d38bc3a80d3@mail.gmail.com>
+Date: Wed, 23 Sep 2009 16:33:48 -0500
+Message-ID: <1253741628.5001.4.camel@lexx>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0905221459030.3570@localhost.localdomain>
+	 <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain>
+	 <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain>
+	 <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
+	 <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
+	 <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+	 <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+	 <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+	 <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
+	 <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
+	 <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+	 <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
+	 <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
+	 <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+	 <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
+	 <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+Reply-To: will_schmidt@vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1924910231-1253723120=:2981"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
@@ -18,48 +34,77 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>
-To: Jan Blunck <jblunck@suse.de>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:53520 "EHLO www.tglx.de"
+Received: from e2.ny.us.ibm.com ([32.97.182.142]:48515 "EHLO e2.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752214AbZIWQ0M (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Sep 2009 12:26:12 -0400
-In-Reply-To: <4de7f8a60909230839j3d6beca8l9a677d38bc3a80d3@mail.gmail.com>
+	id S1751816AbZIWVdt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Sep 2009 17:33:49 -0400
+In-Reply-To: <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---8323328-1924910231-1253723120=:2981
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Wed, 23 Sep 2009, Jan Blunck wrote:
-
-> On Sat, Sep 19, 2009 at 12:39 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> > We are pleased to announce the next update to our new preempt-rt
-> > series.
-> >
-> >   - disable SPARSE_IRQ, DMAR, IRQ_REMAP for -rt
-> >
+On Sat, 2009-09-19 at 00:39 +0200, Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
 > 
-> Do you have any reports that there is a bug in the SPARSE_IRQ code or
-> why did you disable it?
+>    - latencytop fix
+> 
+>    - disable SPARSE_IRQ, DMAR, IRQ_REMAP for -rt
+> 
+> Known issues:
+>    - ARM highmem
+>    - scheduler load balancing oddities. Peter is working on it.
+>    - timer_interrupt hang check (still working on somthing useful)
+> 
+> The planned "add back MIPS support" is postponed to rt12.
 
-Sparse irq is allocating memory in irq/preempt disabled regions which
-makes preempt debug pretty unhappy. It needs some restructuring of
-that code. dmar and irqremap have the same problem.
 
-Thanks,
+Just a light workload and a couple boot tests so far, 2.6.31-rt11
+appears to be running good on my powerpc64 systems.  (power6 JS22
+blades).  
 
-	tglx
---8323328-1924910231-1253723120=:2981--
+Thanks. :-)
+-Will
+
+
+
+> 
+> Download locations:
+> 
+>     http://rt.et.redhat.com/download/
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/
+> 
+> Git release branch:
+>     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+>   
+> Git development branch:
+>     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+> 
+> Gitweb:
+>     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+> 
+> Information on the RT patch can be found at:
+> 
+>     http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> to build the 2.6.31-rt11 tree, the following patches should be
+> applied:
+> 
+>     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.tar.bz2
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31-rt11.bz2
+> 
+> Enjoy !
+> 
+>       tglx
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
