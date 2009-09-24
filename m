@@ -1,63 +1,68 @@
 From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: [PATCH] get rid of [softirq-NULL]
-Date: Thu, 24 Sep 2009 22:46:36 +0200
-Message-ID: <3efb10970909241346r36d284ebufbe17e24fb133bd6@mail.gmail.com>
-References: <1253825033-30094-1-git-send-email-linux@bohmer.net>
+Subject: Re: RT Latency on Atmel Processors
+Date: Thu, 24 Sep 2009 22:40:56 +0200
+Message-ID: <3efb10970909241340v75375381m8f833e41ba96b733@mail.gmail.com>
+References: <a9067d050909240502n3377f3c5gb70fcf16c58b3942@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Remy Bohmer <linux@bohmer.net>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Azraiyl <azraiyl@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f183.google.com ([209.85.210.183]:52846 "EHLO
-	mail-yx0-f183.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752535AbZIXUqd convert rfc822-to-8bit (ORCPT
+Received: from an-out-0708.google.com ([209.85.132.251]:18621 "EHLO
+	an-out-0708.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751676AbZIXUse (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Sep 2009 16:46:33 -0400
-In-Reply-To: <1253825033-30094-1-git-send-email-linux@bohmer.net>
+	Thu, 24 Sep 2009 16:48:34 -0400
+Received: by an-out-0708.google.com with SMTP id d40so1666651and.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Sep 2009 13:48:38 -0700 (PDT)
+In-Reply-To: <a9067d050909240502n3377f3c5gb70fcf16c58b3942@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2009/9/24 Remy Bohmer <linux@bohmer.net>:
-> if CONFIG_HIGH_RES_TIMERS is not configured, still the hrtimer-softir=
-q
-> is started, so to prevent the name 'softirq-NULL' in 'ps' output we
-> should still define its name here.
-> Preventing the softirq from starting at all would touch much more cod=
-e, so
-> I chose the easy way here, it is a cosmetic fix anyway.
->
-> Signed-off-by: Remy Bohmer <linux@bohmer.net>
+Hi,
 
-oops... Forgot to mention that this patch applies to 2.6.31-rt11 (preem=
-pt-RT)
+> When I compare this results with:
+>
+> http://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch
+>
+> it should be possible to get worst case latency below 150 us (for this kind of
+> processor). The problem with this page is that there are no details, about the
+> test environment. Was it measured with cyclictest? Was there anything running in
 
-> ---
-> =A0kernel/softirq.c | =A0 =A02 --
-> =A01 files changed, 0 insertions(+), 2 deletions(-)
->
-> diff --git a/kernel/softirq.c b/kernel/softirq.c
-> index aae8d45..590049c 100644
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -1139,9 +1139,7 @@ static const char *softirq_names [] =3D
-> =A0 [NET_RX_SOFTIRQ] =A0 =A0 =3D "net-rx",
-> =A0 [BLOCK_SOFTIRQ] =A0 =A0 =A0=3D "block",
-> =A0 [TASKLET_SOFTIRQ] =A0 =A0=3D "tasklet",
-> -#ifdef CONFIG_HIGH_RES_TIMERS
-> =A0 [HRTIMER_SOFTIRQ] =A0 =A0=3D "hrtimer",
-> -#endif
-> =A0 [RCU_SOFTIRQ] =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=3D "rcu",
-> =A0};
->
-> --
-> 1.6.0.4
->
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Well, those seem to be my measured figures, so I will try to explain
+them. It is _not_ measured with cyclictest.
+The worst case latency here is determined by:
+1: a periodic interrupt of which the handler runs in IRQF_NODELAY domain.
+2: A user space thread running as SCHED_FIFO at prio 99 that goes to
+sleep and that is woken up directly by the periodic interrupt handler
+with wake_up_process(). (the posix_cpu_timers thread is pushed down to
+98 so only 1 thread is running at 99)
+3: The user space thread toggles a GPIO line
+4: With a scope the wost-case time is measured between the interrupt
+generation and the moment the GPIO toggles.
+
+With a optimal configured kernel it is even possible to reach latency
+times in user-space close to about 40-50us, it is merely limited by
+the time a cache flush takes due to process context switching. But in
+practice the 150us is a nice figure to calculate with in a environment
+like this.
+
+The lower the priority of your realtime thread is set, and the more
+softirqs/irq-threads are prioritised above it, the higher the
+latencies count up. So, cyclictest will likely not reach these kind of
+figures, because it is highly dependant on the OS timer framework, and
+on softirqs/interrupts. IIRC those were in the 500us area...
+
+The fun is that system load does not have much impact on the worst
+case figures, it only increases the chance the worst case figures
+occur.
+
+These numbers are measured on 2.6.23-rt and 2.6.24-rt quite some time
+ago. I have no figures yet on how 2.6.31-rt behaves now.
+But, I have not found any real stability problems so far, except the
+serial terminal problem with shared interrupts that is solved by using
+irqf_nodelay for this interrupt handler.
+
+Kind Regards,
+
+Remy
