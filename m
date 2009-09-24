@@ -1,69 +1,45 @@
-From: Jan Blunck <jblunck@suse.de>
-Subject: Re: [ANNOUNCE] 2.6.31-rt11
-Date: Thu, 24 Sep 2009 17:16:58 +0200
-Message-ID: <20090924151658.GQ18706@bolzano.suse.de>
-References: <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <4de7f8a60909230839j3d6beca8l9a677d38bc3a80d3@mail.gmail.com> <alpine.LFD.2.00.0909230922160.2981@nanos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: [PATCH] get rid of [softirq-NULL]
+Date: Thu, 24 Sep 2009 22:43:53 +0200
+Message-ID: <1253825033-30094-1-git-send-email-linux@bohmer.net>
+Cc: Remy Bohmer <linux@bohmer.net>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:41345 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751693AbZIXPQ5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Sep 2009 11:16:57 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.0909230922160.2981@nanos>
+Received: from mail-ew0-f211.google.com ([209.85.219.211]:34341 "EHLO
+	mail-ew0-f211.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753236AbZIXUnx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Sep 2009 16:43:53 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Sep 23, Thomas Gleixner wrote:
+if CONFIG_HIGH_RES_TIMERS is not configured, still the hrtimer-softirq
+is started, so to prevent the name 'softirq-NULL' in 'ps' output we
+should still define its name here.
+Preventing the softirq from starting at all would touch much more code, so
+I chose the easy way here, it is a cosmetic fix anyway.
 
->=20
->=20
-> On Wed, 23 Sep 2009, Jan Blunck wrote:
->=20
-> > On Sat, Sep 19, 2009 at 12:39 AM, Thomas Gleixner <tglx@linutronix.=
-de> wrote:
-> > > We are pleased to announce the next update to our new preempt-rt
-> > > series.
-> > >
-> > > =A0 - disable SPARSE_IRQ, DMAR, IRQ_REMAP for -rt
-> > >
-> >=20
-> > Do you have any reports that there is a bug in the SPARSE_IRQ code =
-or
-> > why did you disable it?
->=20
-> Sparse irq is allocating memory in irq/preempt disabled regions which
-> makes preempt debug pretty unhappy. It needs some restructuring of
-> that code. dmar and irqremap have the same problem.
+Signed-off-by: Remy Bohmer <linux@bohmer.net>
+---
+ kernel/softirq.c |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
 
-Is this with the patch I sent on Aug 31:
-[PATCH] Allocate memory before disabling memory in irq_to_desc_alloc_no=
-de()
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index aae8d45..590049c 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -1139,9 +1139,7 @@ static const char *softirq_names [] =
+   [NET_RX_SOFTIRQ]	= "net-rx",
+   [BLOCK_SOFTIRQ]	= "block",
+   [TASKLET_SOFTIRQ]	= "tasklet",
+-#ifdef CONFIG_HIGH_RES_TIMERS
+   [HRTIMER_SOFTIRQ]	= "hrtimer",
+-#endif
+   [RCU_SOFTIRQ]		= "rcu",
+ };
+ 
+-- 
+1.6.0.4
 
-Thanks,
-Jan
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
