@@ -1,37 +1,45 @@
-From: Jan Blunck <jblunck@suse.de>
-Subject: Re: [PATCH] get rid of [softirq-NULL]
-Date: Fri, 25 Sep 2009 10:16:22 +0200
-Message-ID: <4de7f8a60909250116o69a52b09wbbeec340de4b7158@mail.gmail.com>
-References: <1253825033-30094-1-git-send-email-linux@bohmer.net>
+From: Robert Schwebel <r.schwebel@pengutronix.de>
+Subject: [ANNOUNCE] Linux-RT for Debian
+Date: Sat, 26 Sep 2009 19:12:18 +0200
+Message-ID: <20090926171218.GD13150@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f211.google.com ([209.85.219.211]:58453 "EHLO
-	mail-ew0-f211.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751983AbZIYIQT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 25 Sep 2009 04:16:19 -0400
-In-Reply-To: <1253825033-30094-1-git-send-email-linux@bohmer.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-15
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751358AbZIZRMR@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Sep 24, 2009 at 10:43 PM, Remy Bohmer <linux@bohmer.net> wrote:
-> if CONFIG_HIGH_RES_TIMERS is not configured, still the hrtimer-softirq
-> is started, so to prevent the name 'softirq-NULL' in 'ps' output we
-> should still define its name here.
-> Preventing the softirq from starting at all would touch much more code, so
-> I chose the easy way here, it is a cosmetic fix anyway.
+Hi,
 
-Anyway, it would be the right thing to do just that.
+Pengutronix has started providing the Realtime Preemption Linux kernel
+packages for the Debian distribution on http://debian.pengutronix.de.
 
-Just un-define the enum HRTIMER_SOFTIRQ and the code that needs
-modification should pop up. Removing it from the enum also disables
-the kthread. Most of the code that raises the softirq should be
-guarded by CONFIG_HIGH_RES_TIMERS anyway.
+Debian is well established as a solid base for IT services for years.
+Nevertheless, users from the automation industry until now still had the
+problem that they had to patch their kernels manually if they had hard
+realtime requirements.
 
-HtH,
-Jan
+The Debian packets provided now consist of the kernels in exactly the
+state as they have been released by the maintainers. This makes it
+possible that users can direct their bug reports directly into the
+upstream Realtime Preemption project, in order to improve the common
+code base.
+
+The project page is here:
+http://www.pengutronix.de/software/linux-rt/debian_en.html
+
+For discussions, bug reports etc. please use the linux-rt-users mailing
+list. Kudos to the Pengutronix Debian team (Uwe Kleine-Koenig, Meike
+Reichle and Alexander Reichle-Schmehl) for making this possible!
+
+If you happen to be at the Dresden during the next days, please come
+around and meet parts of the Pengutronix RT team there:
+http://www.osadl.org/RTLWS-2009.rtlws-2009.0.html
+
+Robert
+-- 
+Pengutronix e.K.                           |                             |
+Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
+Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
