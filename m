@@ -1,43 +1,150 @@
-From: Azraiyl <azraiyl@gmail.com>
+From: Remy Bohmer <linux@bohmer.net>
 Subject: Re: RT Latency on Atmel Processors
-Date: Tue, 29 Sep 2009 22:46:53 +0200
-Message-ID: <a9067d050909291346g43e777a1ya02cb12e7625de0d@mail.gmail.com>
+Date: Tue, 29 Sep 2009 23:19:26 +0200
+Message-ID: <3efb10970909291419x28b48dd5hf60442390295afe9@mail.gmail.com>
 References: <a9067d050909240502n3377f3c5gb70fcf16c58b3942@mail.gmail.com>
 	 <3efb10970909241340v75375381m8f833e41ba96b733@mail.gmail.com>
 	 <a9067d050909290727wc4659e8m55b55503d43979b5@mail.gmail.com>
 	 <3efb10970909291126w4d64fcf6s2b48277fe079a09c@mail.gmail.com>
+	 <a9067d050909291346g43e777a1ya02cb12e7625de0d@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: multipart/mixed; boundary=0016e64098c60ee7a00474bdf831
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
+To: Azraiyl <azraiyl@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f210.google.com ([209.85.218.210]:37208 "EHLO
-	mail-bw0-f210.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751445AbZI2Uqu (ORCPT
+Received: from mail-yw0-f199.google.com ([209.85.211.199]:64461 "EHLO
+	mail-yw0-f199.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752860AbZI2VTW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Sep 2009 16:46:50 -0400
-Received: by bwz6 with SMTP id 6so2339048bwz.37
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2009 13:46:53 -0700 (PDT)
-In-Reply-To: <3efb10970909291126w4d64fcf6s2b48277fe079a09c@mail.gmail.com>
+	Tue, 29 Sep 2009 17:19:22 -0400
+Received: by ywh37 with SMTP id 37so5734934ywh.4
+        for <linux-rt-users@vger.kernel.org>; Tue, 29 Sep 2009 14:19:26 -0700 (PDT)
+In-Reply-To: <a9067d050909291346g43e777a1ya02cb12e7625de0d@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> introduces inside the system. Look at the CPU-load this is
-> generating... High latencies would not surprise me since it is likely
-> that the processor just cannot keep up...
+--0016e64098c60ee7a00474bdf831
+Content-Type: text/plain; charset=ISO-8859-1
 
-With some simple work inside the loop the max. cpu usage is 19%.
-Normally it's ca. 15%.
+Hi,
 
-> Better use the TC-library to generate a dedicated interrupt if you
-> want some realtime responsiveness and somewhat reasonable CPU-load.
-> Personally I would not go beyond the 1kHz boundary with this
-> processor...
+2009/9/29 Azraiyl <azraiyl@gmail.com>:
+>> introduces inside the system. Look at the CPU-load this is
+>> generating... High latencies would not surprise me since it is likely
+>> that the processor just cannot keep up...
+>
+> With some simple work inside the loop the max. cpu usage is 19%.
+> Normally it's ca. 15%.
 
-I'll try this. Thanks for the hint.
+I would expect the load is much higher... Do you have a proper
+sched_clock() implementation or the default fallback-to-jiffies based
+sched_clock()? Load statistics might be misleading...
+See attached for a preliminary patch... (using it on a sam9261 core)
 
-Anyway, I'm still worried about these worst case latencies and like to
-know from where
-they come from. Is the ftrace infrastructure supposed to work on ARM?
+>> Better use the TC-library to generate a dedicated interrupt if you
+>> want some realtime responsiveness and somewhat reasonable CPU-load.
+>> Personally I would not go beyond the 1kHz boundary with this
+>> processor...
+>
+> I'll try this. Thanks for the hint.
+>
+> Anyway, I'm still worried about these worst case latencies and like to
+> know from where
+> they come from. Is the ftrace infrastructure supposed to work on ARM?
 
-Azaraiyl
+I used it for tracing sched_switches on 2.6.31 and it works there. Not
+tested it myself on 2.6.29 though.
+
+Remy
+
+--0016e64098c60ee7a00474bdf831
+Content-Type: text/x-patch; charset=US-ASCII; name="add-sched-clock-for-at91.patch"
+Content-Disposition: attachment; filename="add-sched-clock-for-at91.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_g0759n0l0
+
+QWRkIHNjaGVkX2Nsb2NrIHRvIEFUOTEgY2xvY2tzb3VyY2UgZHJpdmVyCgpXaXRob3V0IHRoaXMg
+cGF0Y2ggdGhlIHRvb2xzIGxpa2UgJ3RvcCcgd2lsbCBkaXNwbGF5IGEgZmFyIHRvbyBsb3cgQ1BV
+LWxvYWQgdXNhZ2UuCkhvd2V2ZXIsIG9uIEFUOTEgdGhlcmUgaXMgbm8gYXJjaGl0ZWN0dXJlIHNw
+ZWNpZmljIHNjaGVkX2Nsb2NrKCkgaW1wbGVtZW50YXRpb24sIHNvCnRoZSBkZWZhdWx0IGZhbGxi
+YWNrIGlzIHVzZWQuIFRoaXMgZmFsbGJhY2sgdXNlcyB0aGUgamlmZmllIGNvdW50ZXIgYXMgc2No
+ZWRfY2xvY2soKQoKT24gQVQ5MSB0aGVyZSBpcyBOTyBzdGFuZGFyZCBjbG9ja3NvdXJjZSBhdmFp
+bGFibGUgdGhhdCBpcyBhY3VyYXRlIGVub3VnaCwgZXhjZXB0IHRoZQpUQy1iYXNlZCBjbG9ja3Nv
+dXJjZSBpbXBsZW1lbnRhdGlvbi4gVGhlcmVmb3IgdGhpcyBpbXBsZW1lbnRhdGlvbiBpcyB1c2Vk
+IGFzIGJhc2UgZm9yCnRoZSBzY2hlZF9jbG9jaygpLiBUaGlzIGNsb2Nrc291cmNlIG9mZmVycyBz
+dWItbWlsbGlzZWNvbmQgdGltZXN0YW1waW5nLiAoPCAyMDAgbnMpCgpTaWduZWQtb2ZmLWJ5OiBS
+ZW15IEJvaG1lciA8bGludXhAYm9obWVyLm5ldD4KLS0tCiBkcml2ZXJzL2Nsb2Nrc291cmNlL3Rj
+Yl9jbGtzcmMuYyB8ICAgNjggKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0t
+CiAxIGZpbGUgY2hhbmdlZCwgNjEgaW5zZXJ0aW9ucygrKSwgNyBkZWxldGlvbnMoLSkKCkluZGV4
+OiBsaW51eC0yLjYuMzEvZHJpdmVycy9jbG9ja3NvdXJjZS90Y2JfY2xrc3JjLmMKPT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PQotLS0gbGludXgtMi42LjMxLm9yaWcvZHJpdmVycy9jbG9ja3NvdXJjZS90Y2JfY2xrc3JjLmMJ
+MjAwOS0wOS0yOSAyMzowMzoyMS4wMDAwMDAwMDAgKzAyMDAKKysrIGxpbnV4LTIuNi4zMS9kcml2
+ZXJzL2Nsb2Nrc291cmNlL3RjYl9jbGtzcmMuYwkyMDA5LTA5LTI5IDIzOjA5OjE5LjAwMDAwMDAw
+MCArMDIwMApAQCAtMTEsNiArMTEsNyBAQAogI2luY2x1ZGUgPGxpbnV4L3BsYXRmb3JtX2Rldmlj
+ZS5oPgogI2luY2x1ZGUgPGxpbnV4L2F0bWVsX3RjLmg+CiAKKyNpbmNsdWRlIDxsaW51eC9zY2hl
+ZC5oPiAvKiBmb3Igc2NoZWRfY2xvY2soKSBwcm90b3R5cGUgKi8KIAogLyoKICAqIFdlJ3JlIGNv
+bmZpZ3VyZWQgdG8gdXNlIGEgc3BlY2lmaWMgVEMgYmxvY2ssIG9uZSB0aGF0J3Mgbm90IGhvb2tl
+ZApAQCAtMzgsMTkgKzM5LDIyIEBACiAgKi8KIAogc3RhdGljIHZvaWQgX19pb21lbSAqdGNhZGRy
+Oworc3RhdGljIGludCBjbG9ja3NvdXJjZV9pbml0aWFsaXNlZDsKK3N0YXRpYyB1bnNpZ25lZCBs
+b25nIGxvbmcgbnNlY3NfcGVyX2Nsb2NrOworc3RhdGljIERFRklORV9BVE9NSUNfU1BJTkxPQ0so
+c2NoZWRfY2xvY2tfbG9jayk7CiAKIHN0YXRpYyBjeWNsZV90IHRjX2dldF9jeWNsZXMoc3RydWN0
+IGNsb2Nrc291cmNlICpjcykKIHsKIAl1bnNpZ25lZCBsb25nCWZsYWdzOwogCXUzMgkJbG93ZXIs
+IHVwcGVyOwogCi0JcmF3X2xvY2FsX2lycV9zYXZlKGZsYWdzKTsKKwlhdG9taWNfc3Bpbl9sb2Nr
+X2lycXNhdmUoJnNjaGVkX2Nsb2NrX2xvY2ssIGZsYWdzKTsKIAlkbyB7CiAJCXVwcGVyID0gX19y
+YXdfcmVhZGwodGNhZGRyICsgQVRNRUxfVENfUkVHKDEsIENWKSk7CiAJCWxvd2VyID0gX19yYXdf
+cmVhZGwodGNhZGRyICsgQVRNRUxfVENfUkVHKDAsIENWKSk7CiAJfSB3aGlsZSAodXBwZXIgIT0g
+X19yYXdfcmVhZGwodGNhZGRyICsgQVRNRUxfVENfUkVHKDEsIENWKSkpOwogCi0JcmF3X2xvY2Fs
+X2lycV9yZXN0b3JlKGZsYWdzKTsKKwlhdG9taWNfc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmc2No
+ZWRfY2xvY2tfbG9jaywgZmxhZ3MpOwogCXJldHVybiAodXBwZXIgPDwgMTYpIHwgbG93ZXI7CiB9
+CiAKQEAgLTYzLDYgKzY3LDUzIEBAIHN0YXRpYyBzdHJ1Y3QgY2xvY2tzb3VyY2UgY2xrc3JjID0g
+ewogCS5mbGFncwkJPSBDTE9DS19TT1VSQ0VfSVNfQ09OVElOVU9VUywKIH07CiAKKy8qIE92ZXJs
+b2FkIHRoZSBzY2hlZF9jbG9jaygpIGltcGxlbWVudGF0aW9uICovCit1bnNpZ25lZCBsb25nIGxv
+bmcgc2NoZWRfY2xvY2sodm9pZCkKK3sKKwl1bnNpZ25lZCBsb25nICAgICAgICAgICAJZmxhZ3M7
+CisJdW5zaWduZWQgbG9uZyBsb25nCQljeWNsZXM7CisJdTMyCQkJCXVwcGVyMzIsIGxvd2VyMzI7
+CisJdTMyCQkJCWN5Y2xlczMyOworCXN0YXRpYyB1MzIJCQlwcmV2X2N5Y2xlczMyOworCXN0YXRp
+YyB1bnNpZ25lZCBsb25nIGxvbmcJdXBwZXI2NDsKKworCWlmIChjbG9ja3NvdXJjZV9pbml0aWFs
+aXNlZCkgeworCQkvKiBUcmFuc2ZlciB0aGUgMzIgYml0cyBjeWNsZXMgdG8gYSA2NCBiaXRzIGN5
+Y2xlcy4gV2UKKwkJICAgYXNzdW1lIGJlaW5nIGNhbGxlZCBmYXN0ZXIgdGhhbiBvbmNlIGV2ZXJ5
+IDUuNzI2IG1pbnV0ZXMuLi4KKwkJICAgKHRoaXMgdGltZSBpcyBkZXJpdmVkIGZyb20gYSBjbG9j
+ayByYXRlIGF0IDEyLjUgTUh6KSAqLworCQlhdG9taWNfc3Bpbl9sb2NrX2lycXNhdmUoJnNjaGVk
+X2Nsb2NrX2xvY2ssIGZsYWdzKTsKKworCQlkbyB7CisJCQl1cHBlcjMyID0gX19yYXdfcmVhZGwo
+dGNhZGRyICsgQVRNRUxfVENfUkVHKDEsIENWKSk7CisJCQlsb3dlcjMyID0gX19yYXdfcmVhZGwo
+dGNhZGRyICsgQVRNRUxfVENfUkVHKDAsIENWKSk7CisJCQkvKiBNYWtlIHN1cmUgdGhlIGxvdyBj
+b3VudGVyIGRvZXMgbm90IHdyYXAgd2hpbGUKKwkJCSAgIHJlYWRpbmcgdGhlIHRpbWUgKi8KKwkJ
+fSB3aGlsZSAodXBwZXIzMiAhPSBfX3Jhd19yZWFkbCh0Y2FkZHIgKyBBVE1FTF9UQ19SRUcoMSwg
+Q1YpKSk7CisKKwkJY3ljbGVzMzIgPSAodXBwZXIzMiA8PCAxNikgfCBsb3dlcjMyOworCisJCWlm
+IChjeWNsZXMzMiA8IHByZXZfY3ljbGVzMzIpIHsKKwkJCS8qIFdyYXAgYXJvdW5kIGRldGVjdGVk
+LCBvciBhIGp1bXAgaW4gdGltZSBiYWNrd2FyZHMKKwkJCSAgIG9mIHRoZSBsb3dlciAxNiBiaXRz
+IGRldmljZT8gSWdub3JlIHRob3NlLgorCQkJICAgUkVWSVNJVDogVW5mb3J0dW5hdGVseSB3ZSBo
+YXZlIHNlZW4gdGhlc2UuIFdpdGhvdXQKKwkJCSAgIHRoaXMgY2hlY2sgeW91IHdpbGwgc2VlIHRo
+ZSBwcmludGsgY2xvY2sgbWFrZSBodWdlCisJCQkgICBqdW1wcyBpbiB0aW1lIGZvcndhcmQgZHVy
+aW5nIGJvb3QuICovCisJCQlpZiAoKHByZXZfY3ljbGVzMzIgLSBjeWNsZXMzMikgPiAoMSA8PCAx
+NikpCisJCQkJdXBwZXI2NCArPSAxTExVIDw8IDMyOyAvKiBBIGZ1bGwgd3JhcCBhcm91bmQgKi8K
+KwkJfQorCQlwcmV2X2N5Y2xlczMyID0gY3ljbGVzMzI7CisKKwkJY3ljbGVzID0gdXBwZXI2NCB8
+ICh1bnNpZ25lZCBsb25nIGxvbmcpY3ljbGVzMzI7CisKKwkJYXRvbWljX3NwaW5fdW5sb2NrX2ly
+cXJlc3RvcmUoJnNjaGVkX2Nsb2NrX2xvY2ssIGZsYWdzKTsKKworCQljeWNsZXMgKj0gbnNlY3Nf
+cGVyX2Nsb2NrOworCQlyZXR1cm4gY3ljbGVzOworCX0gZWxzZSB7CisJCXJldHVybiAwOworCX0K
+K30KKwogI2lmZGVmIENPTkZJR19HRU5FUklDX0NMT0NLRVZFTlRTCiAKIHN0cnVjdCB0Y19jbGtl
+dnRfZGV2aWNlIHsKQEAgLTIxMiw5ICsyNjMsNiBAQCBzdGF0aWMgdm9pZCBfX2luaXQgc2V0dXBf
+Y2xrZXZlbnRzKHN0cnVjCiAKIHN0YXRpYyBpbnQgX19pbml0IHRjYl9jbGtzcmNfaW5pdCh2b2lk
+KQogewotCXN0YXRpYyBjaGFyIGJvb3RpbmZvW10gX19pbml0ZGF0YQotCQk9IEtFUk5fREVCVUcg
+IiVzOiB0YyVkIGF0ICVkLiUwM2QgTUh6XG4iOwotCiAJc3RydWN0IHBsYXRmb3JtX2RldmljZSAq
+cGRldjsKIAlzdHJ1Y3QgYXRtZWxfdGMgKnRjOwogCXN0cnVjdCBjbGsgKnQwX2NsazsKQEAgLTI1
+OCw5ICszMDYsMTEgQEAgc3RhdGljIGludCBfX2luaXQgdGNiX2Nsa3NyY19pbml0KHZvaWQpCiAK
+IAljbGtzcmMubXVsdCA9IGNsb2Nrc291cmNlX2h6Mm11bHQoZGl2aWRlZF9yYXRlLCBjbGtzcmMu
+c2hpZnQpOwogCi0JcHJpbnRrKGJvb3RpbmZvLCBjbGtzcmMubmFtZSwgQ09ORklHX0FUTUVMX1RD
+Ql9DTEtTUkNfQkxPQ0ssCisJcHJpbnRrKEtFUk5fREVCVUcgIiVzOiB0YyVkIGF0ICVkLiUwM2Qg
+TUh6XG4iLAorCQkJY2xrc3JjLm5hbWUsIENPTkZJR19BVE1FTF9UQ0JfQ0xLU1JDX0JMT0NLLAog
+CQkJZGl2aWRlZF9yYXRlIC8gMTAwMDAwMCwKLQkJCSgoZGl2aWRlZF9yYXRlICsgNTAwMDAwKSAl
+IDEwMDAwMDApIC8gMTAwMCk7CisJCQkoZGl2aWRlZF9yYXRlIC0KKwkJCSAoKGRpdmlkZWRfcmF0
+ZSAvIDEwMDAwMDApICogMTAwMDAwMCkpIC8gMTAwMCk7CiAKIAkvKiB0Y2xpYiB3aWxsIGdpdmUg
+dXMgdGhyZWUgY2xvY2tzIG5vIG1hdHRlciB3aGF0IHRoZQogCSAqIHVuZGVybHlpbmcgcGxhdGZv
+cm0gc3VwcG9ydHMuCkBAIC0yOTcsNiArMzQ3LDEwIEBAIHN0YXRpYyBpbnQgX19pbml0IHRjYl9j
+bGtzcmNfaW5pdCh2b2lkKQogCS8qIGNoYW5uZWwgMjogIHBlcmlvZGljIGFuZCBvbmVzaG90IHRp
+bWVyIHN1cHBvcnQgKi8KIAlzZXR1cF9jbGtldmVudHModGMsIGNsazMya19kaXZpc29yX2lkeCk7
+CiAKKwkvKiBDYWxjdWxhdGUgdGhlIHRpbWUgcGVyIGNsb2NrdGljay4gTmVlZGVkIGZvciBzY2hl
+ZF9jbG9jaygpICovCisJbnNlY3NfcGVyX2Nsb2NrID0gKDEwMDAgKiAxMDAwICogMTAwMCkgLyBk
+aXZpZGVkX3JhdGU7CisJY2xvY2tzb3VyY2VfaW5pdGlhbGlzZWQgPSAxOworCiAJcmV0dXJuIDA7
+CiB9CiBhcmNoX2luaXRjYWxsKHRjYl9jbGtzcmNfaW5pdCk7Cg==
+--0016e64098c60ee7a00474bdf831--
