@@ -1,58 +1,90 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: Problem with 2.6.31-rt11 + iptables on shutdown
-Date: Wed, 30 Sep 2009 11:02:55 -0300
-Message-ID: <20090930140255.GO3466@uudg.org>
-References: <20090930131054.GM3466@uudg.org> <alpine.LFD.2.00.0909301513230.2518@nanos> <alpine.LFD.2.00.0909301542000.2518@nanos>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: 2.6.31-rt11 freeze on userland start on ARM
+Date: Wed, 30 Sep 2009 18:11:01 +0200
+Message-ID: <3efb10970909300911j44638434mc22adfd64aaef421@mail.gmail.com>
+References: <3efb10970909211136g4e74c8b3vc339d548cdd0959f@mail.gmail.com>
+	 <alpine.LFD.2.00.0909301448030.2518@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fg-out-1718.google.com ([72.14.220.159]:31884 "EHLO
-	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753869AbZI3OCt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Sep 2009 10:02:49 -0400
-Received: by fg-out-1718.google.com with SMTP id 22so2113048fge.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Sep 2009 07:02:52 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.0909301542000.2518@nanos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754872AbZI3QK7@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0909301448030.2518@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Sep 30, 2009 at 03:42:52PM +0200, Thomas Gleixner wrote:
-| On Wed, 30 Sep 2009, Thomas Gleixner wrote:
-| 
-| > On Wed, 30 Sep 2009, Luis Claudio R. Goncalves wrote:
-| > 
-| > > Hello,
-| > > 
-| > > This is apparently a new manifestation of the same issue I have been chasing
-| > > for quite a while and have been failing in a very shameful way to fix. In
-| > > the original issue, whenever I run deluge (bit torrent client) at
-| > > SCHED_FIFO, I got the error message below and system would freeze / panic
-| > > during shutdown:
-| > > 
-| > >   ================================================
-| > >   [ BUG: lock held when returning to user space! ]
-| > >   ------------------------------------------------
-| > >   deluged/3035 is leaving the kernel with locks still held!
-| > >   1 lock held by deluged/3035:
-| > >    #0:  (&lock->lock){......}, at: [<ffffffffa02ae965>] ipt_do_table+0x10c/0x5f3 [ip_tables]
-| > 
-| > Yikes. Can you please decode the code line for ffffffffa02ae965 ? Does
-| > the bug happen with function tracer enabled ? If yes, enable
-| > ftrace_dump_on_oops hook up a serial console and capture the dump.
-| 
-| I'm quite sure that I know what breaks. Working on a fix.
+Hi Thomas,
 
-I will get the ftrace data anyway. I tried at first converting xt_info_lock
-to atomic_spin_lock but it lead to a bigger series of warnings :)
+Thanks for your answer. But it is not entirely clear to me...
 
-Thanks for looking at this issue!
+2009/9/30 Thomas Gleixner <tglx@linutronix.de>:
+> On Mon, 21 Sep 2009, Remy Bohmer wrote:
+>> So, as workaround/test I made this change:
+>>
+>> Index: linux-2.6.31/drivers/serial/atmel_serial.c
+>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>> --- linux-2.6.31.orig/drivers/serial/atmel_serial.c =A0 2009-09-21
+>> 19:44:48.000000000 +0200
+>> +++ linux-2.6.31/drivers/serial/atmel_serial.c =A0 =A0 =A0 =A02009-0=
+9-21
+>> 19:45:15.000000000 +0200
+>> @@ -808,7 +808,8 @@ static int atmel_startup(struct uart_por
+>> =A0 =A0 =A0 /*
+>> =A0 =A0 =A0 =A0* Allocate the IRQ
+>> =A0 =A0 =A0 =A0*/
+>> - =A0 =A0 retval =3D request_irq(port->irq, atmel_interrupt, IRQF_SH=
+ARED,
+>> + =A0 =A0 retval =3D request_irq(port->irq, atmel_interrupt,
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 IRQF_SHARED | IRQF_NODELAY=
+,
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 tty ? tty->name : "atmel=
+_serial", port);
+>> =A0 =A0 =A0 if (retval) {
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 printk("atmel_serial: atmel_startup - Ca=
+n't get irq\n");
+>
+> The serial irq cannot run in hard irq context.
 
-Luis
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+Indeed most drivers cannot, but for this particular handler can you
+please explain me why?
+Maybe I am missing some new mechanism that prevents it that was not
+there on older RT-kernels (tested up-to latest 2.6.24-rt +
+2.6.26-rt)...
+The atmel_serial IRQ was adapted such (I think it was mainlined in
+2.6.25 already) to make it suitable to run in hard-irq context. (I
+know, because I did that myself)
+=46WIW... it seems to run stable in hard-irq context on 2.6.31-rt with
+the patch above as well... (coincidence?)
 
+> There are two solutions to this problem:
+>
+> 1) Use the other timer which is available on AT91.
+
+You mean the TC-timer? This is what I am actually using as well. But
+that does not solve the problem... Hmm, I do not use the clockevent
+part of that TC-lib, because I needed that 3th block for something
+else. (and 32kHz is not a very pleasant timer to use as well...)
+So, I guess this is not an option for me, and need to move to the next =
+option...
+
+> 2) Make the serial driver explicitely threaded and check in the
+> hardirq handler whether the irq originated from the serial driver. If
+> yes, disable it in the serial device and return IRQ_WAKE_THREAD
+> otherwise return IRQ_NONE.
+
+Interesting, this sounds new, and I have to dig into it to find out
+how this is supposed to work... Do you happen to have any good
+pointers for examples or doc?
+TOL: could the generic interrupt code not check for this? It can see
+the timer interrupt handler not returning 'IRQ_HANDLED', and still see
+the interrupt being active, and know that there is a IRQ thread on the
+same line, so it can conclude itself to mask the source in the
+interrupt controller and wake the thread... Or am I wrong?
+
+Kind regards,
+
+Remy
