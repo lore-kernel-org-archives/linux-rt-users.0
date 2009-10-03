@@ -1,76 +1,76 @@
-From: Jose Angel Martinez Conde <joseangel@taller-id.com>
-Subject: Re: [ANNOUNCE] Linux-RT for Debian
-Date: Sat, 3 Oct 2009 10:48:25 +0200 (CEST)
-Message-ID: <1666069362.31254559705990.JavaMail.root@groupware>
-References: <20090926171218.GD13150@pengutronix.de>
-Reply-To: Jose Angel Martinez Conde <joseangel@taller-id.com>
+From: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Subject: Re: [PATCH][UHCI-DEBUG] Don't kmalloc with BKL held
+Date: Sat, 03 Oct 2009 05:35:59 -0700
+Message-ID: <1254573359.11691.0.camel@sven.thebigcorporation.com>
+References: <1254474744.28661.2.camel@sven.thebigcorporation.com>
+	 <20091002092021.GA25083@gambetta>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Robert Schwebel <r.schwebel@pengutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Frederik Deweerdt <frederik.deweerdt@xprog.eu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 43.pool85-52-160.static.orange.es ([85.52.160.43]:56280 "EHLO
-	groupware.taller-id.com" rhost-flags-OK-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752642AbZJCI5m (ORCPT
+Received: from charybdis-ext.suse.de ([195.135.221.2]:45708 "EHLO
+	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1755884AbZJCMgJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 Oct 2009 04:57:42 -0400
-In-Reply-To: <20090926171218.GD13150@pengutronix.de>
+	Sat, 3 Oct 2009 08:36:09 -0400
+In-Reply-To: <20091002092021.GA25083@gambetta>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Fri, 2009-10-02 at 09:20 +0000, Frederik Deweerdt wrote:
+> Hi Sven-Thorsten,
+> 
+> On Fri, Oct 02, 2009 at 11:12:24AM +0200, Sven-Thorsten Dietrich wrote:
+> > Subject: Don't kmalloc with BKL held.
+> > From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+> > 
+> > I'm eyeballing this file for complete removal of lock_kernel but 
+> > at first glance, we definitely don't need BKL to kmalloc(). 
+> You need to move the unlock_kernel() above the out: label too.
+> 
 
-Thanks a lot for your work.
+How about this ?
 
---
-joseangel
+Subject: Don't kmalloc with BKL held.
+From: Sven-Thorsten Dietrich sdietrich@suse.de Sat Oct 3 01:27:27 2009 -0700
+Date: Sat Oct 3 01:27:27 2009 -0700:
+Git: 4f62eb81e827eb857129101e49757d84ac9ee7eb
 
+We don't need BKL to kmalloc
 
------ "Robert Schwebel" <r.schwebel@pengutronix.de> wrote:
-
-> Hi,
-> 
-> Pengutronix has started providing the Realtime Preemption Linux
-> kernel
-> packages for the Debian distribution on http://debian.pengutronix.de.
-> 
-> Debian is well established as a solid base for IT services for years.
-> Nevertheless, users from the automation industry until now still had
-> the
-> problem that they had to patch their kernels manually if they had
-> hard
-> realtime requirements.
-> 
-> The Debian packets provided now consist of the kernels in exactly the
-> state as they have been released by the maintainers. This makes it
-> possible that users can direct their bug reports directly into the
-> upstream Realtime Preemption project, in order to improve the common
-> code base.
-> 
-> The project page is here:
-> http://www.pengutronix.de/software/linux-rt/debian_en.html
-> 
-> For discussions, bug reports etc. please use the linux-rt-users
-> mailing
-> list. Kudos to the Pengutronix Debian team (Uwe Kleine-Koenig, Meike
-> Reichle and Alexander Reichle-Schmehl) for making this possible!
-> 
-> If you happen to be at the Dresden during the next days, please come
-> around and meet parts of the Pengutronix RT team there:
-> http://www.osadl.org/RTLWS-2009.rtlws-2009.0.html
-> 
-> Robert
-> -- 
-> Pengutronix e.K.                           |                          
->   |
-> Industrial Linux Solutions                 |
-> http://www.pengutronix.de/  |
-> Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0 
->   |
-> Amtsgericht Hildesheim, HRA 2686           | Fax:  
-> +49-5121-206917-5555 |
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/usb/host/uhci-debug.c b/drivers/usb/host/uhci-debug.c
+index e52b954..3fd5602 100644
+--- a/drivers/usb/host/uhci-debug.c
++++ b/drivers/usb/host/uhci-debug.c
+@@ -494,32 +494,30 @@ static int uhci_debug_open(struct inode *inode, struct file *file)
+ {
+ 	struct uhci_hcd *uhci = inode->i_private;
+ 	struct uhci_debug *up;
+-	int ret = -ENOMEM;
+ 	unsigned long flags;
+ 
+-	lock_kernel();
+ 	up = kmalloc(sizeof(*up), GFP_KERNEL);
+ 	if (!up)
+-		goto out;
++		return -ENOMEM;
+ 
+ 	up->data = kmalloc(MAX_OUTPUT, GFP_KERNEL);
+ 	if (!up->data) {
+ 		kfree(up);
+-		goto out;
++		return -ENOMEM;
+ 	}
+ 
+ 	up->size = 0;
++
++	lock_kernel();
+ 	spin_lock_irqsave(&uhci->lock, flags);
+ 	if (uhci->is_initialized)
+ 		up->size = uhci_sprint_schedule(uhci, up->data, MAX_OUTPUT);
+ 	spin_unlock_irqrestore(&uhci->lock, flags);
+ 
+ 	file->private_data = up;
