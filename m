@@ -1,45 +1,43 @@
-From: Gautam Thaker <gautam.h.thaker@lmco.com>
-Subject: is there a PREEMPT-realtime  patch for stable kernel version 2.6.31.1 ??
-Date: Sat, 03 Oct 2009 17:23:08 -0400
-Message-ID: <4AC7C0BC.70301@atl.lmco.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: slab_irq_enable is receiving corrupted / deleted list entries
+Date: Sun, 4 Oct 2009 19:08:05 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0910041905040.2646@localhost.localdomain>
+References: <20091002144711.GF3466@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset=ISO-8859-1
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>, dmarlin@redhat.com
+To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailgw2a.lmco.com ([192.91.147.7]:46188 "EHLO mailgw2a.lmco.com"
+Received: from www.tglx.de ([62.245.132.106]:44612 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752257AbZJCV75 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 Oct 2009 17:59:57 -0400
-Received: from emss01g01.ems.lmco.com (relay1.ems.lmco.com [137.249.139.141])by mailgw2a.lmco.com  (LM-6) with ESMTP id n93LNDAw025567for <linux-rt-users@vger.kernel.org>; Sat, 3 Oct 2009 17:23:13 -0400 (EDT)
-Received: from CONVERSION2-DAEMON.lmco.com by lmco.com (PMDF V6.3-x14 #31428)
- id <0KQY00901JEPIV@lmco.com> for linux-rt-users@vger.kernel.org; Sat, 03 Oct 2009 14:23:13 -0700 (PDT)
-Received: from enterprise.atl.lmco.com ([166.17.240.20]) by lmco.com (PMDF V6.3-x14 #31428)
- with ESMTP id <0KQY004Z0JEKON@lmco.com> for linux-rt-users@vger.kernel.org; Sat, 03 Oct 2009 14:23:08 -0700 (PDT)
-Received: from [166.17.240.47] (sophie [166.17.240.47])	by enterprise.atl.lmco.com (Postfix)
- with ESMTP id 352F6B6C7	for <linux-rt-users@vger.kernel.org>; Sat, 03 Oct 2009 17:23:08 -0400 (EDT)
+	id S1752175AbZJDRJA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 4 Oct 2009 13:09:00 -0400
+In-Reply-To: <20091002144711.GF3466@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Also, as I was reading the RT_PREEMPT_HOWTO at:
+Luis,
 
-http://rt.wiki.kernel.org/index.php/Main_Page 	
+On Fri, 2 Oct 2009, Luis Claudio R. Goncalves wrote:
 
-I noticed that the image shown by this link:	
+> Hello,
+> 
+> The function slab_irq_enable is receiving list entries that are already
+> deleted. In fact, they seem to be corrupted as entry->next is pointing
+> to LIST_POISON1, meaning that it was already deleted but entry->prev
+> points to a valid address.
+> 
+> This email has debug data I have collected, the original report and the
+> patch I used to gather data. That was observed on 2.6.31-rt11.
 
+The debug output is not really helpful. It tells us that we are
+looking at a list corruption. 
 
-http://www.pengutronix.de/images/rt-wiki/menuconfig3.PNG
+Can you please add tracing_off() to that error code path and try to
+reproduce the problem with the function tracer enabled ? That might us
+give an idea what fiddled with that list entry.
 
-is possibly outdated, I could not find
+Thanks,
 
-"Non-preemptible critical section latency timing" option when I did
-
-make menuconfig.
-
-
-I have built and booted many RT kernels over the years, but not in the last 6 
-months to a year. Somehow I am having trouble getting 2.6.31-rt11  to boot. 
-(No doubt I have forgotten some important step, so I am doing things step by 
-step per the wiki pages.)
-
-Gautam
+	tglx
