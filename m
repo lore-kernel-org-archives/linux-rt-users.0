@@ -1,41 +1,65 @@
-From: Leon Woestenberg <leon.woestenberg@gmail.com>
-Subject: -rt kernel hitting yield()s in I2C non-default code paths (2.6.24)
-Date: Sat, 31 Oct 2009 10:39:35 +0100
-Message-ID: <c384c5ea0910310239l549a13c5h7289ffc53ff0a648@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f227.google.com ([209.85.218.227]:53146 "EHLO
-	mail-bw0-f227.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756678AbZJaJjc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Oct 2009 05:39:32 -0400
-Received: by bwz27 with SMTP id 27so4437555bwz.21
-        for <linux-rt-users@vger.kernel.org>; Sat, 31 Oct 2009 02:39:36 -0700 (PDT)
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from www.tglx.de ([62.245.132.106]:59186 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752257AbZJDMAE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 4 Oct 2009 08:00:04 -0400
+Date: Sun, 4 Oct 2009 13:59:04 +0200 (CEST)
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 2.6.31-rt11 freeze on userland start on ARM
+In-Reply-To: <3efb10970909300911j44638434mc22adfd64aaef421@mail.gmail.com>
+Message-ID: <alpine.LFD.2.00.0910041202110.2646@localhost.localdomain>
+References: <3efb10970909211136g4e74c8b3vc339d548cdd0959f@mail.gmail.com>  <alpine.LFD.2.00.0909301448030.2518@nanos> <3efb10970909300911j44638434mc22adfd64aaef421@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+To: Remy Bohmer <linux@bohmer.net>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 
-Hello,
+On Wed, 30 Sep 2009, Remy Bohmer wrote:
+> > The serial irq cannot run in hard irq context.
+> 
+> Indeed most drivers cannot, but for this particular handler can you
+> please explain me why?
+> Maybe I am missing some new mechanism that prevents it that was not
+> there on older RT-kernels (tested up-to latest 2.6.24-rt +
+> 2.6.26-rt)...
 
+Which had the same problem ....
 
-yesterday while debugging embedded systems I noticed the non-happy
-paths in the I2C code hitting yield() code, this resulted in
-a BUG: RT-Task yielding. This was with 2.6.24 (yes I know).
+> The atmel_serial IRQ was adapted such (I think it was mainlined in
+> 2.6.25 already) to make it suitable to run in hard-irq context. (I
+> know, because I did that myself)
 
-A real-time task (prio 99, low real-time priority) on the generic
-workqueue was executing I2C functions, such as try_address() and
-hitting the yield().
+That's fine for mainline but not for -rt.
 
-http://lxr.linux.no/#linux+v2.6.31/drivers/i2c/algos/i2c-algo-bit.c#L319
+> FWIW... it seems to run stable in hard-irq context on 2.6.31-rt with
+> the patch above as well... (coincidence?)
 
-Further grepping shows yield()s sprinkled throughout device driver
-code, especially in the non-default execution paths.
+Yes. The serial code takes locks which are converted to sleeping locks
+on -RT. That's a nono.
 
-What's the -rt devs opinion on this one?
+> > 2) Make the serial driver explicitely threaded and check in the
+> > hardirq handler whether the irq originated from the serial driver. If
+> > yes, disable it in the serial device and return IRQ_WAKE_THREAD
+> > otherwise return IRQ_NONE.
+> 
+> Interesting, this sounds new, and I have to dig into it to find out
+> how this is supposed to work... Do you happen to have any good
+> pointers for examples or doc?
 
-For most of the yield()s I really could not think why they are there...
+drivers/net/wireless/b43/main.c in mainline
 
-Regards,
--- 
-Leon
+> TOL: could the generic interrupt code not check for this? It can see
+> the timer interrupt handler not returning 'IRQ_HANDLED', and still see
+> the interrupt being active, and know that there is a IRQ thread on the
+> same line, so it can conclude itself to mask the source in the
+> interrupt controller and wake the thread... Or am I wrong?
+
+What happens if both are active at the same time ? Also masking the
+interrupt line will block your timer interrupts until the threaded
+handler has completed.
+
+Thanks,
+
+	tglx
