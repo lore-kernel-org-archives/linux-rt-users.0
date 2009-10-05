@@ -1,112 +1,99 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: 2.6.31-rt11 freeze on userland start on ARM
-Date: Sun, 4 Oct 2009 22:59:13 +0200
-Message-ID: <3efb10970910041359m1db64926pcf83ebd98a8b1bdd@mail.gmail.com>
-References: <3efb10970909211136g4e74c8b3vc339d548cdd0959f@mail.gmail.com>
-	 <alpine.LFD.2.00.0909301448030.2518@nanos>
-	 <3efb10970909300911j44638434mc22adfd64aaef421@mail.gmail.com>
-	 <alpine.LFD.2.00.0910041202110.2646@localhost.localdomain>
+From: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
+Subject: Re: Problems with FTrace
+Date: Mon, 05 Oct 2009 08:58:34 +0530
+Message-ID: <4AC967E2.5070907@linux.vnet.ibm.com>
+References: <6f2879e10909280832x3e5fadebha9b2966495812da8@mail.gmail.com>
+Reply-To: gowrishankar.m@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Paolo <prallo@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f210.google.com ([209.85.218.210]:60004 "EHLO
-	mail-bw0-f210.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758021AbZJDU7v (ORCPT
+Received: from e23smtp09.au.ibm.com ([202.81.31.142]:48232 "EHLO
+	e23smtp09.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758292AbZJED3T (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 4 Oct 2009 16:59:51 -0400
-In-Reply-To: <alpine.LFD.2.00.0910041202110.2646@localhost.localdomain>
+	Sun, 4 Oct 2009 23:29:19 -0400
+Received: from d23relay05.au.ibm.com (d23relay05.au.ibm.com [202.81.31.247])
+	by e23smtp09.au.ibm.com (8.14.3/8.13.1) with ESMTP id n953Ih6Q023786
+	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:18:43 +1100
+Received: from d23av02.au.ibm.com (d23av02.au.ibm.com [9.190.235.138])
+	by d23relay05.au.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id n953QEnn979120
+	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:26:16 +1100
+Received: from d23av02.au.ibm.com (loopback [127.0.0.1])
+	by d23av02.au.ibm.com (8.14.3/8.13.1/NCO v10.0 AVout) with ESMTP id n953ScLR011855
+	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:28:39 +1100
+In-Reply-To: <6f2879e10909280832x3e5fadebha9b2966495812da8@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi Paolo,
 
-2009/10/4 Thomas Gleixner <tglx@linutronix.de>:
-> On Wed, 30 Sep 2009, Remy Bohmer wrote:
->> > The serial irq cannot run in hard irq context.
->>
->> Indeed most drivers cannot, but for this particular handler can you
->> please explain me why?
->> Maybe I am missing some new mechanism that prevents it that was not
->> there on older RT-kernels (tested up-to latest 2.6.24-rt +
->> 2.6.26-rt)...
->
-> Which had the same problem ....
+Paolo wrote:
+> I need to know if a task is periodic or not and other informations (as
+> the duration). I used the sched_switch function of ftrace to trace
+> this behaviour.
+> In order to have a proof of the tracing I used the cyclictest program.
+> 
+> The first time I tested the tracing goddness with a single cpu and the
+> second time with all cpu online (2).
+> In the first call the times was correct, in the second not: the
+> periodicity of the cyclictask doesn't seem correct.
+> 
+> The periodicity is the interval between two wakes up of the same task
+> and has to be  more or less constant, right?
+> The difference between two wakes up in my test (with 2 cpu) is not
+> constant, and the misured time is very different from the time set.
+> 
 
-what problem...?
+I suspect if sirq-timer is taking up the chance to slightly disturb the
+periodicity. To confirm more, you can try with sched_switch visualizer
 
->> The atmel_serial IRQ was adapted such (I think it was mainlined in
->> 2.6.25 already) to make it suitable to run in hard-irq context. (I
->> know, because I did that myself)
->
-> That's fine for mainline but not for -rt.
+http://www.osadl.org/Visualize-the-temporal-relationship-of-L.taks-visualizer.0.html
 
-The goal was making its interrupt handler suitable for -rt as well as
-mainline (on older kernels...).
+Thanks,
+Gowri
 
-> Yes. The serial code takes locks which are converted to sleeping locks
-> on -RT. That's a nono.
+> The test was:
+> 
+> mount -t debugfs nodev /tmp
+> 
+> echo nop > /tmp/tracing/current_tracer
+> echo 1 > /tmp/tracing/tracing_enabled
+> echo 0 > /tmp/tracing/tracing_enabled
+> 
+> echo sched_switch > /tmp/tracing/current_tracer
+> echo 1 > /tmp/tracing/tracing_enabled
+> 
+> ./cyclictest -l 1000 -i 500 -n -t1
+> 
+> echo 0 > /tmp/tracing/tracing_enabled
+> 
+> The trace file shows (cat trace | grep + | grep 5036, where 5036 is
+> the pid of the cyclictest thread):
+> ...
+>           <idle>-0     [001]   174.705470:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.705559:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.705648:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.705738:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.705966:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.706056:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.706500:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.706999:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707505:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707602:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707691:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707781:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707868:      0:140:R   + [001]  5036:120:S
+>           <idle>-0     [001]   174.707957:      0:140:R   + [001]  5036:120:S
+> ...
+> 
+> Maybe I didn't set correctly the parameter of cyclictest and/or sched_switch.
+> Is it possible a bug? Notice I use the 2.6.29.rc6 kernel.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
 
-Yes, I know that spinlocks are converted to mutexes and as such they
-can sleep which is not allowed in hard interrupt context.
-
-But, maybe I am really overlooking something, the serial interrupt
-handler code of the atmel serial driver only reads the characters from
-the device, and puts them in a local ringbuffer with atomic
-instructions, then a tasklet is being scheduled to handle the data
-outside interrupt context. This tasklet/softirq is being scheduled by
-wake_up_process(), which is afaik allowed to be called from hard-irq
-context.
-
-The interface to the generic serial driver (that uses spinlocks) is
-handled by the tasklet (softirq), not by the interrupt handler.
-
-So, technically, as far as I can see the atmel-serial driver itself
-should be safe to be run as nodelay-handler as it is now...(it is
-doing that here for years already).
-I do not see any path that conflicts with this rule. So,  I still do
-not see what is technically wrong with this particular driver, except
-that there is a new mechanism available now to solve this differently.
-
->> > 2) Make the serial driver explicitely threaded and check in the
->> > hardirq handler whether the irq originated from the serial driver. If
->> > yes, disable it in the serial device and return IRQ_WAKE_THREAD
->> > otherwise return IRQ_NONE.
->>
->> Interesting, this sounds new, and I have to dig into it to find out
->> how this is supposed to work... Do you happen to have any good
->> pointers for examples or doc?
->
-> drivers/net/wireless/b43/main.c in mainline
-
-Thanks, This is indeed a good/clear example.
-I will adapt the atmel-serial driver to this new irq-threading model
-and provide a patch for it, it seems cleaner and makes the tasklet
-stuff obsolete for this driver.
-
->> TOL: could the generic interrupt code not check for this? It can see
->> the timer interrupt handler not returning 'IRQ_HANDLED', and still see
->> the interrupt being active, and know that there is a IRQ thread on the
->> same line, so it can conclude itself to mask the source in the
->> interrupt controller and wake the thread... Or am I wrong?
->
-> What happens if both are active at the same time ? Also masking the
-> interrupt line will block your timer interrupts until the threaded
-> handler has completed.
-
-That is indeed true, and proves once again that shared interrupt
-handlers are really annoying, especially on -rt...
-
-The old way we did in 2.6.24-rt + 2.6.26-rt was to adapt the handler
-to allow it to run in hard-irq context for -rt as well as mainline.
-The new way handles this differently... Since a -rt-friendly generic
-solution seems not possible, I guess before -rt ever becomes mainline
-_all_ interrupt handlers that are shared with a nodelay interrupt in
-some configuration must be adapted to the new threaded_irq model... A
-huge job...
-
-Kind regards,
-
-Remy
