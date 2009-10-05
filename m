@@ -1,99 +1,134 @@
-From: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
-Subject: Re: Problems with FTrace
-Date: Mon, 05 Oct 2009 08:58:34 +0530
-Message-ID: <4AC967E2.5070907@linux.vnet.ibm.com>
-References: <6f2879e10909280832x3e5fadebha9b2966495812da8@mail.gmail.com>
-Reply-To: gowrishankar.m@linux.vnet.ibm.com
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Subject: Please advice on realtime application architecture
+Date: Mon, 5 Oct 2009 12:45:30 +0400
+Message-ID: <200910051245.37688@blacky.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: multipart/signed;
+  boundary="nextPart1349833.A9MRYJKk20";
+  protocol="application/pgp-signature";
+  micalg=pgp-sha1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Paolo <prallo@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e23smtp09.au.ibm.com ([202.81.31.142]:48232 "EHLO
-	e23smtp09.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758292AbZJED3T (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 4 Oct 2009 23:29:19 -0400
-Received: from d23relay05.au.ibm.com (d23relay05.au.ibm.com [202.81.31.247])
-	by e23smtp09.au.ibm.com (8.14.3/8.13.1) with ESMTP id n953Ih6Q023786
-	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:18:43 +1100
-Received: from d23av02.au.ibm.com (d23av02.au.ibm.com [9.190.235.138])
-	by d23relay05.au.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id n953QEnn979120
-	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:26:16 +1100
-Received: from d23av02.au.ibm.com (loopback [127.0.0.1])
-	by d23av02.au.ibm.com (8.14.3/8.13.1/NCO v10.0 AVout) with ESMTP id n953ScLR011855
-	for <linux-rt-users@vger.kernel.org>; Mon, 5 Oct 2009 14:28:39 +1100
-In-Reply-To: <6f2879e10909280832x3e5fadebha9b2966495812da8@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, Stas Bezzubtsev <stas@lvk.cs.msu.su>,
+	Alexander Gordeev <lasaine@lvk.cs.msu.su>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758703AbZJEIqe@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Paolo,
+--nextPart1349833.A9MRYJKk20
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-Paolo wrote:
-> I need to know if a task is periodic or not and other informations (as
-> the duration). I used the sched_switch function of ftrace to trace
-> this behaviour.
-> In order to have a proof of the tracing I used the cyclictest program.
-> 
-> The first time I tested the tracing goddness with a single cpu and the
-> second time with all cpu online (2).
-> In the first call the times was correct, in the second not: the
-> periodicity of the cyclictask doesn't seem correct.
-> 
-> The periodicity is the interval between two wakes up of the same task
-> and has to be  more or less constant, right?
-> The difference between two wakes up in my test (with 2 cpu) is not
-> constant, and the misured time is very different from the time set.
-> 
+Hi
 
-I suspect if sirq-timer is taking up the chance to slightly disturb the
-periodicity. To confirm more, you can try with sched_switch visualizer
+I'm currently trying to port a realtime application from an in-house RT=20
+kernel to something standard, preferrably preempt-rt linux.
 
-http://www.osadl.org/Visualize-the-temporal-relationship-of-L.taks-visualizer.0.html
+Application controls a set of i/o cards with some data computed in=20
+realtime.
+The cards are relatively slow:
+=2D single word transmit with inl()/outl() or ioread32()/iowrite32() takes =
+a=20
+microsecond or more;
+=2D setting up single i/o request requires up to several tens of these word=
+=20
+operations;
+=2D large number of i/o operations has to be programmed on several devices =
+in=20
+parallel.
+=2D in total, significant portion of raw CPU time (20% or more) is needed t=
+o=20
+execute raw hardware-control operations.
 
-Thanks,
-Gowri
+Application can generate a large number [hundreds] of i/o requests at a=20
+lime, however later it could "change it's mind" and decide to change some=20
+of those, or cancel the queue altogether.
 
-> The test was:
-> 
-> mount -t debugfs nodev /tmp
-> 
-> echo nop > /tmp/tracing/current_tracer
-> echo 1 > /tmp/tracing/tracing_enabled
-> echo 0 > /tmp/tracing/tracing_enabled
-> 
-> echo sched_switch > /tmp/tracing/current_tracer
-> echo 1 > /tmp/tracing/tracing_enabled
-> 
-> ./cyclictest -l 1000 -i 500 -n -t1
-> 
-> echo 0 > /tmp/tracing/tracing_enabled
-> 
-> The trace file shows (cat trace | grep + | grep 5036, where 5036 is
-> the pid of the cyclictest thread):
-> ...
->           <idle>-0     [001]   174.705470:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.705559:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.705648:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.705738:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.705966:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.706056:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.706500:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.706999:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707505:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707602:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707691:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707781:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707868:      0:140:R   + [001]  5036:120:S
->           <idle>-0     [001]   174.707957:      0:140:R   + [001]  5036:120:S
-> ...
-> 
-> Maybe I didn't set correctly the parameter of cyclictest and/or sched_switch.
-> Is it possible a bug? Notice I use the 2.6.29.rc6 kernel.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+Writing all generated i/o requests to hardware at a time is not feasible=20
+since it will use enough CPU to make the main application miss it's=20
+deadlines. Also, writing requests that will be later changed or cancelled=20
+is a pure waste of CPU time.
 
+So we once implemented "late/lazy hardware control".
+There was a thread dedicated to hardware control, that:
+=2D normally worked as an idle thread;
+=2D but got highest priority in case of i/o operation not programmed yet wh=
+en=20
+hardware should execute it "soon".
+
+That worked well in our previous environment where thread rescheduling was=
+=20
+very fast and lightweight.
+
+And now we want to move to rt-preempt linux.
+
+Here is bit more abstract model of the situation.
+=2D there is a stream of "requests" that have to be executed on CPU;
+=2D each request has a deadline, missing that deadline is absolutely=20
+unacceptable;
+=2D for each "request", approximate CPU time is more or less known; normall=
+y=20
+is is between 10 and 40 microseconds;
+=2D number of requests is large, total execution of those consumes 20% of r=
+aw=20
+cpu time or even more;
+=2D deadlines are distributed more or less uniform over the time;
+=2D requests arre async, NOT periodic;
+=2D in common case, request arrives long before deadline (99% of requests -=
+=20
+more than 500us, 70% of requests - more than 5 ms), but in some rare cases=
+=20
+time left between request arrive and deadline could be 100us or less=20
+[although the lower margin could be probably increased by some changes at=20
+highlevel];=20
+=2D request may be cancelled by application; that may happen at any moment =
+up=20
+to the deadline;
+=2D this request cancellation is a common case (say 30% of all requests get=
+=20
+cancelled)
+=2D running cancelled request is no harm other than wasting CPU time;
+=2D requests are preemptible by nature, however preempted request will have=
+=20
+to continue execution when resumed even if cancelled in meantime;=20
+=2D monopolizong CPU for request execution for more than several tens of=20
+microseconds should be avoided when possible.
+
+This will likely run on x86-based industrial computers.
+Dedication a cpu core to request processing does not look good: want to=20
+make use of 80% of core's time not spent by to request processing; also=20
+unsure that all installations of the system will have several cores.
+
+A naive implementation may have a kernel thread running requests, with EDF=
+=20
+ordering; priority of the thread may be normally low, but raised to=20
+SCHED_FIFO 99 from an hrtimer if deadlines become near, and lowered back=20
+when no near deadlines.
+
+However, there is a concern that if trying not to monopolize cpu too much,=
+=20
+hrtimer and reschedule overhead will become larger than actual request=20
+execution time.
+
+So I'm looking for some advice on how to implement the request processing.=
+=20
+Maybe there are some better ways than "naive implementation" described=20
+above? What do you think?
+
+Many thanks for any advice.
+
+--nextPart1349833.A9MRYJKk20
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEABECAAYFAkrJsisACgkQv3x5OskTLdt8ZwCfSS+TswLX9qYTnvKkj9wPxeKo
+qJwAn0Oa25Gu9fKbxW/mzaZfBOLrZt3K
+=ibvg
+-----END PGP SIGNATURE-----
+
+--nextPart1349833.A9MRYJKk20--
