@@ -1,66 +1,41 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31.2-rt13
-Date: Tue, 6 Oct 2009 12:15:30 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906101803210.3367@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain>
- <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
- <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
- <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: [ANNOUNCE] 2.6.31.2-rt13
+Date: Tue, 6 Oct 2009 20:23:53 +0200
+Message-ID: <3efb10970910061123k2b6826bci11f0f42509173b26@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
+	 <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
+	 <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+	 <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
+	 <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
+	 <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+	 <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
+	 <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+	 <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932121AbZJFKRF@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933098AbZJFSYd@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-   - Forward to 2.6.31.2
-   - Futex fix
-   - iptables fix
+Hi Thomas,
 
-Download locations:
-  
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
+2009/10/6 Thomas Gleixner <tglx@linutronix.de>:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+>
+> =A0 - Forward to 2.6.31.2
+> =A0 - Futex fix
+> =A0 - iptables fix
 
-Git release branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
-  
-Git development branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+Great!
 
-Gitweb:
-    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
- 
-Information on the RT patch can be found at:
+But I was wondering if you missed this one:
+http://patchwork.kernel.org/patch/50044/
 
-    http://rt.wiki.kernel.org/index.php/Main_Page
-
-to build the 2.6.31.2-rt13 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.2.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.2-rt13.bz2
-
-Enjoy !
-
-      tglx
+Remy
