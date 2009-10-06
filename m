@@ -1,63 +1,72 @@
-From: Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>
-Subject: Re: Problem with network on kernel 2.6.29.6-rt23 (Debian)
-Date: Tue, 6 Oct 2009 11:27:28 +0200
-Message-ID: <20091006092728.GD14219@isw.uni-stuttgart.de>
-References: <1804966706.191254768514851.JavaMail.root@groupware>
- <369171892.211254768721569.JavaMail.root@groupware>
- <20091006064740.GB14219@isw.uni-stuttgart.de>
- <20091006091509.GA11134@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH][UHCI-DEBUG] Don't kmalloc with BKL held
+Date: Tue, 6 Oct 2009 12:09:36 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0910061206120.2646@localhost.localdomain>
+References: <1254474744.28661.2.camel@sven.thebigcorporation.com>  <20091002092021.GA25083@gambetta> <1254573359.11691.0.camel@sven.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="vni90+aGYgRvsTuO"
-Cc: Hans-Peter Bock <Hans-Peter.Bock@isw.uni-stuttgart.de>,
-	Jose Angel Martinez Conde <joseangel@taller-id.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Uwe =?iso-8859-15?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from isw70.isw.uni-stuttgart.de ([141.58.102.70]:46862 "EHLO
-	mail.isw.uni-stuttgart.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756153AbZJFJ2V (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Oct 2009 05:28:21 -0400
-Content-Disposition: inline
-In-Reply-To: <20091006091509.GA11134@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Frederik Deweerdt <frederik.deweerdt@xprog.eu>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <sdietrich@novell.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756924AbZJFKKW@vger.kernel.org>
+In-Reply-To: <1254573359.11691.0.camel@sven.thebigcorporation.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Sat, 3 Oct 2009, Sven-Thorsten Dietrich wrote:
+> On Fri, 2009-10-02 at 09:20 +0000, Frederik Deweerdt wrote:
+> > Hi Sven-Thorsten,
+> > 
+> > On Fri, Oct 02, 2009 at 11:12:24AM +0200, Sven-Thorsten Dietrich wrote:
+> > > Subject: Don't kmalloc with BKL held.
+> > > From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+> > > 
+> > > I'm eyeballing this file for complete removal of lock_kernel but 
+> > > at first glance, we definitely don't need BKL to kmalloc(). 
+> > You need to move the unlock_kernel() above the out: label too.
+> > 
+> 
+> How about this ?
+> 
+> Subject: Don't kmalloc with BKL held.
+> From: Sven-Thorsten Dietrich sdietrich@suse.de Sat Oct 3 01:27:27 2009 -0700
+> Date: Sat Oct 3 01:27:27 2009 -0700:
+> Git: 4f62eb81e827eb857129101e49757d84ac9ee7eb
+> 
+> We don't need BKL to kmalloc
+> 
+> diff --git a/drivers/usb/host/uhci-debug.c b/drivers/usb/host/uhci-debug.c
+> index e52b954..3fd5602 100644
+> --- a/drivers/usb/host/uhci-debug.c
+> +++ b/drivers/usb/host/uhci-debug.c
+> @@ -494,32 +494,30 @@ static int uhci_debug_open(struct inode *inode, struct file *file)
+>  {
+>  	struct uhci_hcd *uhci = inode->i_private;
+>  	struct uhci_debug *up;
+> -	int ret = -ENOMEM;
+>  	unsigned long flags;
+>  
+> -	lock_kernel();
+>  	up = kmalloc(sizeof(*up), GFP_KERNEL);
+>  	if (!up)
+> -		goto out;
+> +		return -ENOMEM;
+>  
+>  	up->data = kmalloc(MAX_OUTPUT, GFP_KERNEL);
+>  	if (!up->data) {
+>  		kfree(up);
+> -		goto out;
+> +		return -ENOMEM;
+>  	}
+>  
+>  	up->size = 0;
+> +
+> +	lock_kernel();
 
---vni90+aGYgRvsTuO
-Content-Type: text/plain; charset=iso-8859-15
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Why don't you remove it completely ? That lock_kernel() protects
+exactly nothing.
 
-Hello Uwe,
+Thanks,
 
-> > My computer with the similar issue has an nVidia chipset, see lspci
-> > beneath. Does your computer have the same chipset?
-> If so, do you have problems with a non-rt kernel, too?
-
-no, without preempt-rt patch it runs fine.
-
-Best regards, Hans-Peter
---=20
-(=B0< Hans-Peter Bock, Dipl.-Ing., http://www.isw.uni-stuttgart.de/ >=B0)
-(/) ISW - Universit=E4t Stuttgart, Seidenstra=DFe 36, 70174 Stuttgart (\)
-
---vni90+aGYgRvsTuO
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.11 (GNU/Linux)
-
-iQEcBAEBAgAGBQJKyw2AAAoJEFsH0RM0g3lu3LgIAKIcIAv4HCDvVDTIGGUL0F9l
-Ebc1vLTgmkJ4R9+7MhyssxTlfJm6wnj9LxIUpQT0zejINq9/tXwPO4n2Wp99e/nt
-EOBbkdWQv+LnTNdauDiMxDylMRJYAzVkWZF8G0gPE5wmeSZXO0ip4cWClZ5eOOwx
-xm42ILs8yq/z4eJagWgFWTCXtxWuvI0IEkA8ooDQ+BrE0YCMDsgJ8sr/n0kmD+TM
-n75gmyhq8EmKbsUpAM0T3P+xRifOVTkMDticn006UA+k6QvYTFF/vxll7ZmKihs0
-sFqhgQy9Zw6CtpBAYa6QqcwuIwQGUTeTmH0VvLGXGRmU/mVpfAVvVUCFPL8vP0c=
-=/Qhk
------END PGP SIGNATURE-----
-
---vni90+aGYgRvsTuO--
+	tglx
