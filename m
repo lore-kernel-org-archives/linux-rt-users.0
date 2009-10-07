@@ -1,68 +1,46 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+From: Frederic Weisbecker <fweisbec@gmail.com>
 Subject: Re: [PATCH RFC] BKL not necessary in cpuid_open
-Date: Wed, 07 Oct 2009 13:00:17 -0700
-Message-ID: <1254945617.15477.25.camel@quadrophenia.thebigcorporation.com>
+Date: Wed, 7 Oct 2009 22:13:41 +0200
+Message-ID: <20091007201338.GE5903@nowhere>
 References: <alpine.LFD.2.00.0910072016190.15183@localhost.localdomain>
-	 <1254942848.15477.16.camel@quadrophenia.thebigcorporation.com>
-	 <alpine.LFD.2.00.0910072129070.15183@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, Ingo Molnar <mingo@elte.hu>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
 	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f188.google.com ([209.85.222.188]:55348 "EHLO
-	mail-pz0-f188.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754169AbZJGUA4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Oct 2009 16:00:56 -0400
-In-Reply-To: <alpine.LFD.2.00.0910072129070.15183@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760006AbZJGUOy@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.0910072016190.15183@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2009-10-07 at 21:31 +0200, John Kacur wrote:
+On Wed, Oct 07, 2009 at 08:19:32PM +0200, John Kacur wrote:
 > 
-> On Wed, 7 Oct 2009, Sven-Thorsten Dietrich wrote:
+> I've been staring at the BKL lock in cpuid_open, and I can't see what it 
+> is protecting. However, I may have missed something - even something 
+> obvious, so comments are welcome.
 > 
-> > On Wed, 2009-10-07 at 20:19 +0200, John Kacur wrote:
-> > > I've been staring at the BKL lock in cpuid_open, and I can't see what it 
-> > > is protecting. However, I may have missed something - even something 
-> > > obvious, so comments are welcome.
-> > 
-> > I have been using this patch to first see if the BKL is being used
-> > simply as mutex, which would allow easier break-down.
-> > 
-> > Sven
-> > 
-
-> Cool! Seems like an excellent experiment. However this is a separate patch
-> from the one initially proposed in this thread. I'm willing to risk just 
-> removing it in this case without any intermediary step. However, if anyone 
-> points out to me why I'm a knuckle head and missed something obvious - I'll 
-> listen. Otherwise, let's use your patch as a separate tactic to kill BKL.
+> From 25c0f07b3ec5533c0e690e06198baa4300ee4a8c Mon Sep 17 00:00:00 2001
+> From: John Kacur <jkacur@redhat.com>
+> Date: Wed, 7 Oct 2009 20:06:12 +0200
+> Subject: [PATCH] The BKL is not necessary in cpuid_open
+>  Most of the variables are local to the function. It IS possible that for
+>  struct cpuinfo_x86 *c
+>  c could point to the same area. However, this is used read only.
 > 
-
-Yes, I meant to send this out as RFC Monday, but got side-tracked with
-catch-up work, so you prompted me to just reply to your patch.
-
-I was also looking at the cycle_kernel_lock() call in 
-arch/x86/kernel/microcode_core.c, which is not obvious to me.
-
-I converted that to cycle_kernel_mutex() using the patch I sent earlier,
-but have not had time to actually boot and test.
-
-In any case, I see bkl accesses all over various driver open() and
-ioctl() calls.
-
-I think that a number of these are safe to remove, as I still fail to
-understand why its necessary to take BKL during any driver open()
-routing.
-
-So if its fine for the cpuid_open() call, then I would assume its ok for
-others.
-
-Sven
+> Signed-off-by: John Kacur <jkacur@redhat.com>
 
 
+Hmm, I'm discovering that in tip:rt/kill-the-bkl
+
+http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=commitdiff;h=55968ede164ae523692f00717f50cd926f1382a0
+
+Looks like we have overlaped.
+
+Thomas it would be nice to post these patches on LKML (or I missed
+them?) and may be to merge them into tip:master, so that they are
+visible and then we lower the risk of any duplicate works in this area.
+
+Thanks.
