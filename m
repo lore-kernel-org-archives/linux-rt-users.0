@@ -1,60 +1,85 @@
-From: John Kacur <jkacur@redhat.com>
+From: Frederic Weisbecker <fweisbec@gmail.com>
 Subject: Re: [PATCH RFC] BKL not necessary in cpuid_open
-Date: Fri, 9 Oct 2009 17:55:21 -0400 (EDT)
-Message-ID: <571973584.1452471255125321659.JavaMail.root@zmail07.collab.prod.int.phx2.redhat.com>
-References: <1033457751.1452271255124941735.JavaMail.root@zmail07.collab.prod.int.phx2.redhat.com>
+Date: Sat, 10 Oct 2009 23:18:14 +0200
+Message-ID: <20091010211812.GG5150@nowhere>
+References: <alpine.LFD.2.00.0910072016190.15183@localhost.localdomain> <20091007201338.GE5903@nowhere> <alpine.LFD.2.00.0910072259230.9428@localhost.localdomain> <alpine.LFD.2.00.0910072356050.15183@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, Ingo Molnar <mingo@elte.hu>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Clark Williams <williams@redhat.com>
-To: Arnd Bergmann <arnd@arndb.de>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:9547 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S934529AbZJIV4G (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Oct 2009 17:56:06 -0400
-In-Reply-To: <1033457751.1452271255124941735.JavaMail.root@zmail07.collab.prod.int.phx2.redhat.com>
+Received: from mail-ew0-f208.google.com ([209.85.219.208]:54225 "EHLO
+	mail-ew0-f208.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762055AbZJJVSz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 10 Oct 2009 17:18:55 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.00.0910072356050.15183@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
------ "Arnd Bergmann" <arnd@arndb.de> wrote:
-
-> On Wednesday 07 October 2009, John Kacur wrote:
+On Wed, Oct 07, 2009 at 11:58:20PM +0200, John Kacur wrote:
+> 
+> 
+> On Wed, 7 Oct 2009, Thomas Gleixner wrote:
+> 
+> > On Wed, 7 Oct 2009, Frederic Weisbecker wrote:
+> > > Hmm, I'm discovering that in tip:rt/kill-the-bkl
+> > > 
+> > > http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=commitdiff;h=55968ede164ae523692f00717f50cd926f1382a0
+> > > 
+> > > Looks like we have overlaped.
+> > > 
+> > > Thomas it would be nice to post these patches on LKML (or I missed
+> > > them?) and may be to merge them into tip:master, so that they are
+> > > visible and then we lower the risk of any duplicate works in this area.
 > > 
-> > I've been staring at the BKL lock in cpuid_open, and I can't see
-> what it 
-> > is protecting. However, I may have missed something - even something
-> 
-> > obvious, so comments are welcome.
+> > Now guess why I mentioned this branch sevaral times at the rt summit
+> > last week. It's even documented in Jonathans excellent meeting
+> > minutes on lwn.net :)
 > > 
 > 
-> Hi John,
+> Well, the overlap is unfortunate but I did do a git diff with 
+> tip/core/kill-the-BKL BEFORE I posted.
 > 
-> In general, the lock_kernel() calls in any chardev open() file
-> operation
-> are the result of the BKL pushdown by Jon Corbet and others, which has
-> happened
-> some time last year[1]. I'd assume that the vast majority is not
-> needed
-> at all, so these are an easy target for removal.
+> not sure what the difference is between
+> tip/kill-the-BKL
+> and 
+> tip/core/kill-the-BKL
+> btw
+
+
+Ah yeah, may be you've made a confusion.
+
+tip/kill-bkl = tip/core/bkl = a branch created by Ingo inside which the
+bkl has been turned into a regular mutex. This branch was helpful to find
+the points where the bkl was acquired recursively, and how it
+gained bad dependencies once turned into a regular sleeping lock because
+it makes it analyzable by lockdep.
+
+We did some work on this tree (various bkl pushdown and removals, also
+the removal in reiserfs started there).
+But this tree is not active currently, although it could still be (and its
+key piece makes it useful to debug the bkl).
+
+But currently, the tree that gathers the work in this area is rt/kill-the-bkl
+
+Although it's possible Thomas might choose another name if it's scheduled
+for .33 ?
+
+
+ 
+> Also
+> git describe 55968ede164ae523692f00717f50cd926f1382a0
+> v2.6.31-rc6-4-g55968ed
 > 
-> 	Arnd
+> Not sure what to make of that either, since my patch was against the 
+> latest linus updated this morning.
 > 
-> [1] http://lkml.indiana.edu/hypermail/linux/kernel/0805.2/0257.html
+> Frederic: what was your method to discover that patch from Thomas?
 
-yup - I'm aware of all the hard work that many people put in before I ever looked at this.
-Thomas asked the -rt folks to have a look at removing the bkl look during the rt-mini summit
-in Dresden. I was looking for low hanging fruit to get started. The confusion was over what
-was already implemented in tip/rt/bkl. I merely looked at the latest linus/master build.
-The result was a good one though, because basically Thomas' work got pushed from tip/rt/bkl
-into tip/master, and can hopefully be pushed upstream during the next merge window.
 
-Even if getting starting means just reviewing what is in rt/bkl and not yet in linus/master,
-I think that would be positive. I'm sure Thomas will stomp on me if I start to annoy him. :)
+I looked at the rt/kill-the-bkl in my local git :)
 
-Thanks
-
-John
