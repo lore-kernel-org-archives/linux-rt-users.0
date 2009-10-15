@@ -1,80 +1,95 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31.4-rt14
-Date: Wed, 14 Oct 2009 12:02:07 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906121800590.3369@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain>
- <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain>
- <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain>
- <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: 2.6.31.4-rt14 posix message queues problem
+Date: Thu, 15 Oct 2009 22:19:16 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0910152217390.3486@localhost.localdomain>
+References: <4AD76126.1000408@alcatel-lucent.de> <520f0cf10910151202k2ba01453r10e96eeb064232e8@mail.gmail.com> <alpine.LFD.2.00.0910152105430.8932@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:58264 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932271AbZJNKDm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Oct 2009 06:03:42 -0400
-In-Reply-To: <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
+	linux-rt-users@vger.kernel.org
+To: Joerg.Abraham@alcatel-lucent.de, linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S935464AbZJOUUN@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0910152105430.8932@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-We are pleased to announce the next update to our new preempt-rt
-series.
 
-   - Forward to 2.6.31.4
-   - Handle futex spurious wakeups
-   - slab fixes for NUMA (peterz)
 
-The slab problem is still not completely resolved. It's hard to
-reproduce and was only seen on Nehalem dual socket systems so far. If
-you have such a machine you might help providing a back trace, just run
+On Thu, 15 Oct 2009, John Kacur wrote:
 
- while true; do hackbench N; done
-
-until it explodes. Adjust N to your system, the larger the
-better. Make sure you have a serial console to capture the oops.
-
-Download locations:
-  
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git release branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
-  
-Git development branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Gitweb:
-    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+> 
+> > From: Joerg Abraham <Joerg.Abraham@alcatel-lucent.de>
+> > Date: Thu, Oct 15, 2009 at 7:51 PM
+> > Subject: 2.6.31.4-rt14 posix message queues problem
+> > To: LKML <linux-kernel@vger.kernel.org>
+> > 
+> > 
+> > Hi,
+> > 
+> > During some performance measurement I stumbled over unexpected bad
+> > results for a posix message queue test case. Which is not surprising
+> > since the kernel log shows a "BUG: scheduling while atomic:" on every
+> > measurement trigger.
+> > 
+> > Attached is the kernel log for an embedded 8572ds powerpc system and a
+> > condensed user space test appli. The test appli uses 2 processes
+> > (mq_server and mq_client) and pingpongs some messages via posix
+> > message queues. Please see the c-file header for details (the appli
+> > itself makes not much sense but shows the problem).
+> > 
+> > ./mq_server
+> > ./mq_client # just crashes during run
+> > 
+> > The problem does _not_ occur on kernels 2.6.29.6-rt24, 2.6.29.6
+> > vanilla and 2.6.31.4 vanilla. The problem does _also_ show up on an
+> > embedded x86_64 system and a full featured fc11 x86_64 system running
+> > a 2.6.31.4-rt14 based kernel, so I dont think it's arch dependent.
+> > 
+> > Can anybody reproduce the crash ???
+> > 
+> > If you need more info's please let me know.
+> > 
+> > [And if I'm doing stupid things just forgive me]
+> > 
+> > Thanx
+> > 
+> > Joerg
+> 
+> Hello Joerg
+> 
+> Does the following patch solve your problem? 
+> 
+> From 69fde4357db4a054733cbca4158606160e821a3a Mon Sep 17 00:00:00 2001
+> From: John Kacur <jkacur@redhat.com>
+> Date: Thu, 15 Oct 2009 20:52:37 +0200
+> Subject: [PATCH] preempt_disable_rt(); should be paired with preempt_enable_rt()
+> 
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  ipc/mqueue.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> 
+> diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+> index 63a47f7..ab4df36 100644
+> --- a/ipc/mqueue.c
+> +++ b/ipc/mqueue.c
+> @@ -830,7 +830,7 @@ static inline void pipelined_send(struct mqueue_inode_info *info,
+>  	wake_up_process(receiver->task);
+>  	smp_wmb();
+>  	receiver->state = STATE_READY;
+> -	preempt_enable_nort();
+> +	preempt_enable_rt();
+>  }
+>  
+>  /* pipelined_receive() - if there is task waiting in sys_mq_timedsend()
+> -- 
+> 1.6.0.6
+> 
+>
  
-Information on the RT patch can be found at:
+fyi: I completed my testing, and  I was able to reproduce your problem on 
+v2.6.31.4-rt14, and it goes away with the above patch.
 
-    http://rt.wiki.kernel.org/index.php/Main_Page
+Cheers
 
-to build the 2.6.31.4-rt14 tree, the following patches should be
-applied:
-
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.4.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.4-rt14.bz2
-
-Enjoy !
-
-      tglx
-
+John
