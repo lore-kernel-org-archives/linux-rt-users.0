@@ -1,63 +1,43 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: 2.6.31.4-rt14 posix message queues problem
-Date: Thu, 15 Oct 2009 22:19:16 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0910152217390.3486@localhost.localdomain>
-References: <4AD76126.1000408@alcatel-lucent.de> <520f0cf10910151202k2ba01453r10e96eeb064232e8@mail.gmail.com> <alpine.LFD.2.00.0910152105430.8932@localhost.localdomain>
+From: Joerg Abraham <Joerg.Abraham@alcatel-lucent.de>
+Subject: [Fwd: Re: 2.6.31.4-rt14 posix message queues problem (solved)]
+Date: Fri, 16 Oct 2009 10:25:55 +0200
+Message-ID: <4AD82E13.3080301@alcatel-lucent.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
-	linux-rt-users@vger.kernel.org
-To: Joerg.Abraham@alcatel-lucent.de, linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S935464AbZJOUUN@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.0910152105430.8932@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smail3.alcatel.fr ([64.208.49.56]:37079 "EHLO smail3.alcatel.fr"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751479AbZJPIr5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Oct 2009 04:47:57 -0400
+Received: from FRMRSSXCHHUB01.dc-m.alcatel-lucent.com (FRMRSSXCHHUB01.dc-m.alcatel-lucent.com [135.120.45.61])
+	by smail3.alcatel.fr (8.13.8/8.13.8/ICT) with ESMTP id n9G8PrYb026385
+	(version=TLSv1/SSLv3 cipher=RC4-MD5 bits=128 verify=NOT)
+	for <linux-rt-users@vger.kernel.org>; Fri, 16 Oct 2009 10:26:02 +0200
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+forgot to cc rt-users list
+
+Thanx again,
 
 
+Hi John,
 
-On Thu, 15 Oct 2009, John Kacur wrote:
-
-> 
-> > From: Joerg Abraham <Joerg.Abraham@alcatel-lucent.de>
-> > Date: Thu, Oct 15, 2009 at 7:51 PM
-> > Subject: 2.6.31.4-rt14 posix message queues problem
-> > To: LKML <linux-kernel@vger.kernel.org>
-> > 
-> > 
-> > Hi,
-> > 
-> > During some performance measurement I stumbled over unexpected bad
-> > results for a posix message queue test case. Which is not surprising
-> > since the kernel log shows a "BUG: scheduling while atomic:" on every
-> > measurement trigger.
-> > 
-> > Attached is the kernel log for an embedded 8572ds powerpc system and a
-> > condensed user space test appli. The test appli uses 2 processes
-> > (mq_server and mq_client) and pingpongs some messages via posix
-> > message queues. Please see the c-file header for details (the appli
-> > itself makes not much sense but shows the problem).
-> > 
-> > ./mq_server
-> > ./mq_client # just crashes during run
-> > 
-> > The problem does _not_ occur on kernels 2.6.29.6-rt24, 2.6.29.6
-> > vanilla and 2.6.31.4 vanilla. The problem does _also_ show up on an
-> > embedded x86_64 system and a full featured fc11 x86_64 system running
-> > a 2.6.31.4-rt14 based kernel, so I dont think it's arch dependent.
-> > 
-> > Can anybody reproduce the crash ???
-> > 
-> > If you need more info's please let me know.
-> > 
-> > [And if I'm doing stupid things just forgive me]
-> > 
-> > Thanx
-> > 
-> > Joerg
-> 
 > Hello Joerg
 > 
 > Does the following patch solve your problem? 
+
+yes, (verified on powerpc and x86_64)
+
+so it may be save to include your patch into the next rt release.
+
+Thanx,
+
+Joerg
+
+
 > 
 > From 69fde4357db4a054733cbca4158606160e821a3a Mon Sep 17 00:00:00 2001
 > From: John Kacur <jkacur@redhat.com>
@@ -82,14 +62,4 @@ On Thu, 15 Oct 2009, John Kacur wrote:
 >  }
 >  
 >  /* pipelined_receive() - if there is task waiting in sys_mq_timedsend()
-> -- 
-> 1.6.0.6
-> 
->
- 
-fyi: I completed my testing, and  I was able to reproduce your problem on 
-v2.6.31.4-rt14, and it goes away with the above patch.
 
-Cheers
-
-John
