@@ -1,49 +1,38 @@
-From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
-Subject: possible bug in cyclictest
-Date: Mon, 12 Oct 2009 21:49:26 +0200
-Message-ID: <200910122149.28487.bernhard@schiffner-limbach.de>
+From: Lee Revell <rlrevell@joe-job.com>
+Subject: Re: fork() blocking rt-threads?
+Date: Sun, 18 Oct 2009 02:11:22 -0400
+Message-ID: <75b66ecd0910172311i36c519b1xec6b0cb0c4eb18e8@mail.gmail.com>
+References: <20091016162521.457c18ee@gmx.at> <20091016162258.GH3394@uudg.org>
+	 <87k4yvb8s8.fsf@usbix.spacelabs.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org
+To: Nedko Arnaudov <nedko@arnaudov.name>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.10]:50855 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751457AbZJPTQQ (ORCPT
+Received: from mail-px0-f171.google.com ([209.85.216.171]:58176 "EHLO
+	mail-px0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750977AbZJRGLT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Oct 2009 15:16:16 -0400
-Content-Disposition: inline
+	Sun, 18 Oct 2009 02:11:19 -0400
+Received: by pxi1 with SMTP id 1so468568pxi.33
+        for <linux-rt-users@vger.kernel.org>; Sat, 17 Oct 2009 23:11:24 -0700 (PDT)
+In-Reply-To: <87k4yvb8s8.fsf@usbix.spacelabs.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Fri, Oct 16, 2009 at 12:31 PM, Nedko Arnaudov <nedko@arnaudov.name> wrote:
+>> Another question that comes to mind is: was Ardour running with a realtime
+>> priority too? Higher or lower prio than jack's?
+>
+> Ardour process has realtime thread(s) started by libjack.
 
-on recent a recent kernel:
-bs7:~# uname -r
-2.6.31.3-rt13
+AFAICT, fork() is inherently unusable from any thread of a process
+with realtime threads.  It locks the page tables and the process
+structure of the parent among other things.
 
-cyclictest fails to set a variable because the path is slightly different now:
+Anyone know if posix_spawn() is supported by any major distro's glibc?
+ Apparently it was developed to solve this exact problem.
 
-bs4:/usr/src/rt-tests# git diff
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 97461e5..b01b76e 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -497,7 +497,7 @@ static void setup_tracer(void)
-                                setkernvar(traceroptions, traceptr[i]);
-                }
-                setkernvar("tracing_max_latency", "0");
--               setkernvar("latency_hist/wakeup_latency/reset", "1");
-+               setkernvar("latency_hist/wakeup/reset", "1");
-        } else {
-                setkernvar("trace_all_cpus", "1");
-                setkernvar("trace_freerunning", "1");
+http://www.opengroup.org/onlinepubs/009695399/functions/posix_spawn.html
 
-helps me.
-
-TIA!
-
-Bernhard
-
-
+Lee
