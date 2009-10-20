@@ -1,68 +1,122 @@
-From: John Kacur <jkacur@gmail.com>
-Subject: Re: MIPS SUPPORT with rt-24
-Date: Tue, 20 Oct 2009 11:28:04 +0200
-Message-ID: <520f0cf10910200228qc47b84ar78931c6a9ff2f70d@mail.gmail.com>
-References: <2cc9eb1b0910200155p5761c44djed6ab3a1de7d2984@mail.gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] futex: Detect mismatched requeue targets
+Date: Tue, 20 Oct 2009 13:30:39 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.0910201325480.3609@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org
-To: fabio <fabio7774@gmail.com>
+To: linux-kernel@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f217.google.com ([209.85.219.217]:49280 "EHLO
-	mail-ew0-f217.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751653AbZJTJ2A convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Oct 2009 05:28:00 -0400
-Received: by ewy17 with SMTP id 17so5132358ewy.39
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Oct 2009 02:28:04 -0700 (PDT)
-In-Reply-To: <2cc9eb1b0910200155p5761c44djed6ab3a1de7d2984@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:18642 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750885AbZJTLas (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 Oct 2009 07:30:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Oct 20, 2009 at 10:55 AM, fabio <fabio7774@gmail.com> wrote:
-> (re-sent with title).
->
-> I just installed the rt-patches (rt-24) on top of 2.6.29-rc6 for a MI=
-PS board.
->
-> After I noticed that it doesn't compile out of the box, I found out
-> that it has not been tested on MIPS except for Lemote in 2.6.26 I
-> think.
->
-> Questions:
->
-> Is there a schedule date for MIPS =A0support ? otherwise from which
-> stable version may I start on or even better from which patches shoul=
-d I
-> start in order to make rt-24 support for MIPS.
->
-> Also how about rt14 ? Is there any MIPS support ?
->
+Hello Darren
 
-Hi Fabio
+I took your patch from commit 84bc4af59081ee974dd80210e694ab59ebe51ce8
+and I tried to git-cherry-pick it for v2.6.31.4-rt14
 
-The -rtX numbering starts with X=3D1 when we start developing against
-a new kernel. (or usually a release candidate).
+I had a little merge-commit to resolve. That wasn't too hard, but as the 
+code is a bit different between the two versions, I would appreciate it if 
+you could review the patch, and make sure that it still makes sense for 
+v2.6.31.r-rt14
 
-So for example, the latest -rt kernel is 2.6.31.4-rt14
-The first one in that series was, 2.6.31-rc4-rt1
-
-So, you need to refer to the whole kernel version number or
-we can't tell which version you are talking about.
-
-If you would like to contribute MIPS patches that would be great. I rec=
-ommend
-you do so against the latest version though or else you'll most likely
-be on your own!
-
-Also, there are no schedules. If the support isn't there, you can eithe=
-r try
-to provide it yourself, or pay a company to do so for you.
-
+Thanks!
 John
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+>From 7135729cbbc5bf16c95abdca5366ec5de0a01909 Mon Sep 17 00:00:00 2001
+From: Darren Hart <dvhltc@us.ibm.com>
+Date: Thu, 13 Aug 2009 17:36:53 -0700
+Subject: [PATCH] futex: Detect mismatched requeue targets
+
+There is currently no check to ensure that userspace uses the same
+futex requeue target (uaddr2) in futex_requeue() that the waiter used
+in futex_wait_requeue_pi().  A mismatch here could very unexpected
+results as the waiter assumes it either wakes on uaddr1 or uaddr2. We
+could detect this on wakeup in the waiter, but the cleanup is more
+intense after the improper requeue has occured.
+
+This patch stores the waiter's expected requeue target in a new
+requeue_pi_key pointer in the futex_q which futex_requeue() checks
+prior to attempting to do a proxy lock acquistion or a requeue when
+requeue_pi=1. If they don't match, return -EINVAL from futex_requeue,
+aborting the requeue of any remaining waiters.
+
+Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Dinakar Guniguntala <dino@in.ibm.com>
+Cc: John Stultz <johnstul@us.ibm.com>
+LKML-Reference: <20090814003650.14634.63916.stgit@Aeon>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ kernel/futex.c |   24 ++++++++++++++++++++----
+ 1 files changed, 20 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 7c4a6ac..5978a84 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -115,6 +115,9 @@ struct futex_q {
+ 	/* rt_waiter storage for requeue_pi: */
+ 	struct rt_mutex_waiter *rt_waiter;
+ 
++	/* The expected requeue pi target futex key: */
++	union futex_key *requeue_pi_key;
++
+ 	/* Bitset for the optional bitmasked wakeup */
+ 	u32 bitset;
+ };
+@@ -1089,6 +1092,10 @@ static int futex_proxy_trylock_atomic(u32 __user *pifutex,
+ 	if (!top_waiter)
+ 		return 0;
+ 
++	/* Ensure we requeue to the expected futex. */
++	if (!match_futex(top_waiter->requeue_pi_key, key2))
++		return -EINVAL;
++
+ 	/*
+ 	 * Try to take the lock for top_waiter.  Set the FUTEX_WAITERS bit in
+ 	 * the contended case or if set_waiters is 1.  The pi_state is returned
+@@ -1276,6 +1283,12 @@ retry_private:
+ 			continue;
+ 		}
+ 
++		/* Ensure we requeue to the expected futex for requeue_pi. */
++		if (requeue_pi && !match_futex(this->requeue_pi_key, &key2)) {
++			ret = -EINVAL;
++			break;
++		}
++
+ 		/*
+ 		 * Requeue nr_requeue waiters and possibly one more in the case
+ 		 * of requeue_pi if we couldn't acquire the lock atomically.
+@@ -1742,6 +1755,7 @@ static int futex_wait(u32 __user *uaddr, int fshared,
+ 	q.pi_state = NULL;
+ 	q.bitset = bitset;
+ 	q.rt_waiter = NULL;
++	q.requeue_pi_key = NULL;
+ 
+ 	if (abs_time) {
+ 		to = &timeout;
+@@ -1855,6 +1869,7 @@ static int futex_lock_pi(u32 __user *uaddr, int fshared,
+ 
+ 	q.pi_state = NULL;
+ 	q.rt_waiter = NULL;
++	q.requeue_pi_key = NULL;
+ retry:
+ 	q.key = FUTEX_KEY_INIT;
+ 	ret = get_futex_key(uaddr, fshared, &q.key, VERIFY_WRITE);
+@@ -2167,16 +2182,17 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, int fshared,
+ 	debug_rt_mutex_init_waiter(&rt_waiter);
+ 	rt_waiter.task = NULL;
+ 
+-	q.pi_state = NULL;
+-	q.bitset = bitset;
+-	q.rt_waiter = &rt_waiter;
