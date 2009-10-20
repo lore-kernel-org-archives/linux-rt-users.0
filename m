@@ -1,60 +1,35 @@
-From: Lee Revell <rlrevell@joe-job.com>
-Subject: Re: fork() blocking rt-threads?
-Date: Mon, 19 Oct 2009 19:57:43 -0400
-Message-ID: <75b66ecd0910191657g56ecae1fp5ffebfeae80015ef@mail.gmail.com>
-References: <20091016162521.457c18ee@gmx.at> <20091016162258.GH3394@uudg.org>
-	 <87k4yvb8s8.fsf@usbix.spacelabs.org>
-	 <75b66ecd0910172311i36c519b1xec6b0cb0c4eb18e8@mail.gmail.com>
-	 <20091019103339.583b6511@torg>
+From: fabio <fabio7774@gmail.com>
+Subject: MIPS SUPPORT with rt-24
+Date: Tue, 20 Oct 2009 10:55:34 +0200
+Message-ID: <2cc9eb1b0910200155p5761c44djed6ab3a1de7d2984@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Nedko Arnaudov <nedko@arnaudov.name>,
-	linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f171.google.com ([209.85.216.171]:36791 "EHLO
-	mail-px0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755088AbZJSX5k convert rfc822-to-8bit (ORCPT
+Received: from mail-fx0-f218.google.com ([209.85.220.218]:41349 "EHLO
+	mail-fx0-f218.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751340AbZJTIzb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Oct 2009 19:57:40 -0400
-Received: by pxi1 with SMTP id 1so799869pxi.33
-        for <linux-rt-users@vger.kernel.org>; Mon, 19 Oct 2009 16:57:44 -0700 (PDT)
-In-Reply-To: <20091019103339.583b6511@torg>
+	Tue, 20 Oct 2009 04:55:31 -0400
+Received: by fxm18 with SMTP id 18so6128747fxm.37
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Oct 2009 01:55:35 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
- On Mon, Oct 19, 2009 at 11:33 AM, Clark Williams <williams@redhat.com>=
- wrote:
-> Just tried it on a RHEL5.4 and Fedora 11 system. The pthread_spawn(3P=
-)
-> function is implemented using vfork(2) under the covers. Makes sense,
-> since the stated intent is to work without VM.
->
-> Still, anyone wanting to create processes/threads in a realtime
-> environment needs to do that stuff up front, since there's a ton of
-> work required to make a scheduleable entity. Whether you're just
-> creating a pthread or you're generating a full-up process, memory wil=
-l
-> have to be allocated and locks taken. =A0Not sure I'd depend on
-> *anything* to do the right thing for me...
+(re-sent with title).
 
-Interesting.
+I just installed the rt-patches (rt-24) on top of 2.6.29-rc6 for a MIPS board.
 
-Last time I tested it, pthread creation could be realtime safe, if you
-allocate and mlock() a pool of memory beforehand and use
-pthread_setstack on the preallocated and pre-locked memory.
+After I noticed that it doesn't compile out of the box, I found out
+that it has not been tested on MIPS except for Lemote in 2.6.26 I
+think.
 
-However I for one did not think that any system call from a
-non-realtime thread will cause realtime threads of the same process to
-get blocked.  I can't think of any other action that does that.
+Questions:
 
-Regarding the Ardour help menu issue, does this mean that using gtk
-APIs from a non RT thread of a process with RT threads is unsafe?
+Is there a schedule date for MIPS  support ? otherwise from which
+stable version may I start on or even better from which patches should I
+start in order to make rt-24 support for MIPS.
 
-Lee
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Also how about rt14 ? Is there any MIPS support ?
+
+Thanks in advance
