@@ -1,410 +1,155 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH -rt] Futex Comments-fix-ups (from Darren Hart)
-Date: Tue, 20 Oct 2009 14:06:32 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.0910201359280.3609@localhost.localdomain>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: [PATCH] futex: Detect mismatched requeue targets
+Date: Tue, 20 Oct 2009 08:32:43 -0700
+Message-ID: <4ADDD81B.3030208@us.ibm.com>
+References: <alpine.LFD.2.00.0910201325480.3609@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Darren Hart <dvhltc@us.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:10884 "EHLO mx1.redhat.com"
+Received: from e5.ny.us.ibm.com ([32.97.182.145]:34603 "EHLO e5.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751933AbZJTMGm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Oct 2009 08:06:42 -0400
+	id S1752447AbZJTPcv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 Oct 2009 11:32:51 -0400
+In-Reply-To: <alpine.LFD.2.00.0910201325480.3609@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Darren
+John Kacur wrote:
+> Hello Darren
+> 
+> I took your patch from commit 84bc4af59081ee974dd80210e694ab59ebe51ce8
+> and I tried to git-cherry-pick it for v2.6.31.4-rt14
+> 
+> I had a little merge-commit to resolve. That wasn't too hard, but as the 
+> code is a bit different between the two versions, I would appreciate it if 
+> you could review the patch, and make sure that it still makes sense for 
+> v2.6.31.r-rt14
 
-As requested, I took your futex comment fix-ups from the following commits
+Hi John,
 
-9beba3c54dd180a26a1da2027cfbe9edfaf9c40e
-d8d88fbb186fe3ea37b2a58adb32413c98b59656
-d96ee56ce0582967fba9f3f0ac4503957147bea6
-d40d65c8dbdd39f0b64e043f6bd08f8a38f55194
-56ec1607b15b6a5f6de5aab14f16a763b88296fc
+It looks good to me.  Where did you have the conflicts?
 
-and cherry-picked them all for v2.6.31.4-rt14
+--
+Darren
 
-Here they are all, put together as one patch.
-Signed-off-by: John Kacur <jkacur@redhat.com>
+> 
+> Thanks!
+> John
+> 
+> From 7135729cbbc5bf16c95abdca5366ec5de0a01909 Mon Sep 17 00:00:00 2001
+> From: Darren Hart <dvhltc@us.ibm.com>
+> Date: Thu, 13 Aug 2009 17:36:53 -0700
+> Subject: [PATCH] futex: Detect mismatched requeue targets
+> 
+> There is currently no check to ensure that userspace uses the same
+> futex requeue target (uaddr2) in futex_requeue() that the waiter used
+> in futex_wait_requeue_pi().  A mismatch here could very unexpected
+> results as the waiter assumes it either wakes on uaddr1 or uaddr2. We
+> could detect this on wakeup in the waiter, but the cleanup is more
+> intense after the improper requeue has occured.
+> 
+> This patch stores the waiter's expected requeue target in a new
+> requeue_pi_key pointer in the futex_q which futex_requeue() checks
+> prior to attempting to do a proxy lock acquistion or a requeue when
+> requeue_pi=1. If they don't match, return -EINVAL from futex_requeue,
+> aborting the requeue of any remaining waiters.
+> 
+> Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Eric Dumazet <eric.dumazet@gmail.com>
+> Cc: John Kacur <jkacur@redhat.com>
+> Cc: Dinakar Guniguntala <dino@in.ibm.com>
+> Cc: John Stultz <johnstul@us.ibm.com>
+> LKML-Reference: <20090814003650.14634.63916.stgit@Aeon>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  kernel/futex.c |   24 ++++++++++++++++++++----
+>  1 files changed, 20 insertions(+), 4 deletions(-)
+> 
+> diff --git a/kernel/futex.c b/kernel/futex.c
+> index 7c4a6ac..5978a84 100644
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -115,6 +115,9 @@ struct futex_q {
+>  	/* rt_waiter storage for requeue_pi: */
+>  	struct rt_mutex_waiter *rt_waiter;
+> 
+> +	/* The expected requeue pi target futex key: */
+> +	union futex_key *requeue_pi_key;
+> +
+>  	/* Bitset for the optional bitmasked wakeup */
+>  	u32 bitset;
+>  };
+> @@ -1089,6 +1092,10 @@ static int futex_proxy_trylock_atomic(u32 __user *pifutex,
+>  	if (!top_waiter)
+>  		return 0;
+> 
+> +	/* Ensure we requeue to the expected futex. */
+> +	if (!match_futex(top_waiter->requeue_pi_key, key2))
+> +		return -EINVAL;
+> +
+>  	/*
+>  	 * Try to take the lock for top_waiter.  Set the FUTEX_WAITERS bit in
+>  	 * the contended case or if set_waiters is 1.  The pi_state is returned
+> @@ -1276,6 +1283,12 @@ retry_private:
+>  			continue;
+>  		}
+> 
+> +		/* Ensure we requeue to the expected futex for requeue_pi. */
+> +		if (requeue_pi && !match_futex(this->requeue_pi_key, &key2)) {
+> +			ret = -EINVAL;
+> +			break;
+> +		}
+> +
+>  		/*
+>  		 * Requeue nr_requeue waiters and possibly one more in the case
+>  		 * of requeue_pi if we couldn't acquire the lock atomically.
+> @@ -1742,6 +1755,7 @@ static int futex_wait(u32 __user *uaddr, int fshared,
+>  	q.pi_state = NULL;
+>  	q.bitset = bitset;
+>  	q.rt_waiter = NULL;
+> +	q.requeue_pi_key = NULL;
+> 
+>  	if (abs_time) {
+>  		to = &timeout;
+> @@ -1855,6 +1869,7 @@ static int futex_lock_pi(u32 __user *uaddr, int fshared,
+> 
+>  	q.pi_state = NULL;
+>  	q.rt_waiter = NULL;
+> +	q.requeue_pi_key = NULL;
+>  retry:
+>  	q.key = FUTEX_KEY_INIT;
+>  	ret = get_futex_key(uaddr, fshared, &q.key, VERIFY_WRITE);
+> @@ -2167,16 +2182,17 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, int fshared,
+>  	debug_rt_mutex_init_waiter(&rt_waiter);
+>  	rt_waiter.task = NULL;
+> 
+> -	q.pi_state = NULL;
+> -	q.bitset = bitset;
+> -	q.rt_waiter = &rt_waiter;
+> -
+>  retry:
+>  	key2 = FUTEX_KEY_INIT;
+>  	ret = get_futex_key(uaddr2, fshared, &key2, VERIFY_WRITE);
+>  	if (unlikely(ret != 0))
+>  		goto out;
+> 
+> +	q.pi_state = NULL;
+> +	q.bitset = bitset;
+> +	q.rt_waiter = &rt_waiter;
+> +	q.requeue_pi_key = &key2;
+> +
+>  	/* Prepare to wait on uaddr. */
+>  	ret = futex_wait_setup(uaddr, val, fshared, &q, &hb);
+>  	if (ret)
 
->From dc4073833a7543322f945c4bcf67bc106d7128f6 Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Thu, 24 Sep 2009 11:54:47 -0700
-Subject: [PATCH] futex: Add memory barrier commentary to futex_wait_queue_me()
 
-The memory barrier semantics of futex_wait_queue_me() are
-non-obvious. Add some commentary to try and clarify it.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Dinakar Guniguntala <dino@in.ibm.com>
-Cc: John Stultz <johnstul@us.ibm.com>
-LKML-Reference: <20090924185447.694.38948.stgit@Aeon>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/futex.c |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 5978a84..61761ef 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1638,6 +1638,12 @@ out:
- static void futex_wait_queue_me(struct futex_hash_bucket *hb, struct futex_q *q,
- 				struct hrtimer_sleeper *timeout)
- {
-+	/*
-+	 * The task state is guaranteed to be set before another task can
-+	 * wake it. set_current_state() is implemented using set_mb() and
-+	 * queue_me() calls spin_unlock() upon completion, both serializing
-+	 * access to the hash list and forcing another memory barrier.
-+	 */
- 	set_current_state(TASK_INTERRUPTIBLE);
- 	queue_me(q, hb);
- 
 -- 
-1.6.0.6
-
->From 6575a45a2ed6bad78390cdfd2668fbbaceb6956a Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Mon, 21 Sep 2009 22:30:22 -0700
-Subject: [PATCH] futex: Make function kernel-doc commentary consistent
-
-Make the existing function kernel-doc consistent throughout
-futex.c, following Documentation/kernel-doc-nano-howto.txt as
-closely as possible.
-
-When unsure, at least be consistent within futex.c.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Dinakar Guniguntala <dino@in.ibm.com>
-Cc: John Stultz <johnstul@us.ibm.com>
-LKML-Reference: <20090922053022.8717.13339.stgit@Aeon>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/futex.c |   41 +++++++++++++++++++++--------------------
- 1 files changed, 21 insertions(+), 20 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 61761ef..5df1f49 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -198,11 +198,12 @@ static void drop_futex_key_refs(union futex_key *key)
- }
- 
- /**
-- * get_futex_key - Get parameters which are the keys for a futex.
-- * @uaddr: virtual address of the futex
-- * @fshared: 0 for a PROCESS_PRIVATE futex, 1 for PROCESS_SHARED
-- * @key: address where result is stored.
-- * @rw: mapping needs to be read/write (values: VERIFY_READ, VERIFY_WRITE)
-+ * get_futex_key() - Get parameters which are the keys for a futex
-+ * @uaddr:	virtual address of the futex
-+ * @fshared:	0 for a PROCESS_PRIVATE futex, 1 for PROCESS_SHARED
-+ * @key:	address where result is stored.
-+ * @rw:		mapping needs to be read/write (values: VERIFY_READ,
-+ * 		VERIFY_WRITE)
-  *
-  * Returns a negative error code or 0
-  * The key words are stored in *key on success.
-@@ -288,8 +289,8 @@ void put_futex_key(int fshared, union futex_key *key)
- 	drop_futex_key_refs(key);
- }
- 
--/*
-- * fault_in_user_writeable - fault in user address and verify RW access
-+/**
-+ * fault_in_user_writeable() - Fault in user address and verify RW access
-  * @uaddr:	pointer to faulting user space address
-  *
-  * Slow path to fixup the fault we just took in the atomic write
-@@ -309,8 +310,8 @@ static int fault_in_user_writeable(u32 __user *uaddr)
- 
- /**
-  * futex_top_waiter() - Return the highest priority waiter on a futex
-- * @hb:     the hash bucket the futex_q's reside in
-- * @key:    the futex key (to distinguish it from other futex futex_q's)
-+ * @hb:		the hash bucket the futex_q's reside in
-+ * @key:	the futex key (to distinguish it from other futex futex_q's)
-  *
-  * Must be called with the hb lock held.
-  */
-@@ -588,7 +589,7 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
- }
- 
- /**
-- * futex_lock_pi_atomic() - atomic work required to acquire a pi aware futex
-+ * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
-  * @uaddr:		the pi futex user address
-  * @hb:			the pi futex hash bucket
-  * @key:		the futex key associated with uaddr and hb
-@@ -1011,9 +1012,9 @@ void requeue_futex(struct futex_q *q, struct futex_hash_bucket *hb1,
- 
- /**
-  * requeue_pi_wake_futex() - Wake a task that acquired the lock during requeue
-- * q:	the futex_q
-- * key:	the key of the requeue target futex
-- * hb:  the hash_bucket of the requeue target futex
-+ * @q:		the futex_q
-+ * @key:	the key of the requeue target futex
-+ * @hb:		the hash_bucket of the requeue target futex
-  *
-  * During futex_requeue, with requeue_pi=1, it is possible to acquire the
-  * target futex if it is uncontended or via a lock steal.  Set the futex_q key
-@@ -2313,9 +2314,9 @@ out:
-  */
- 
- /**
-- * sys_set_robust_list - set the robust-futex list head of a task
-- * @head: pointer to the list-head
-- * @len: length of the list-head, as userspace expects
-+ * sys_set_robust_list() - Set the robust-futex list head of a task
-+ * @head:	pointer to the list-head
-+ * @len:	length of the list-head, as userspace expects
-  */
- SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
- 		size_t, len)
-@@ -2334,10 +2335,10 @@ SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
- }
- 
- /**
-- * sys_get_robust_list - get the robust-futex list head of a task
-- * @pid: pid of the process [zero for current task]
-- * @head_ptr: pointer to a list-head pointer, the kernel fills it in
-- * @len_ptr: pointer to a length field, the kernel fills in the header size
-+ * sys_get_robust_list() - Get the robust-futex list head of a task
-+ * @pid:	pid of the process [zero for current task]
-+ * @head_ptr:	pointer to a list-head pointer, the kernel fills it in
-+ * @len_ptr:	pointer to a length field, the kernel fills in the header size
-  */
- SYSCALL_DEFINE3(get_robust_list, int, pid,
- 		struct robust_list_head __user * __user *, head_ptr,
--- 
-1.6.0.6
-
->From bfe470aa42687965162cb68219ffd583f628cac8 Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Mon, 21 Sep 2009 22:30:15 -0700
-Subject: [PATCH] futex: Correct queue_me and unqueue_me commentary
-
-The queue_me/unqueue_me commentary is oddly placed and out of date.
-Clean it up and correct the inaccurate bits.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Dinakar Guniguntala <dino@in.ibm.com>
-Cc: John Stultz <johnstul@us.ibm.com>
-LKML-Reference: <20090922053015.8717.71713.stgit@Aeon>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/futex.c |   41 +++++++++++++++++++++++++++++------------
- 1 files changed, 29 insertions(+), 12 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 5df1f49..77cc68e 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1351,6 +1351,25 @@ static inline struct futex_hash_bucket *queue_lock(struct futex_q *q)
- 	return hb;
- }
- 
-+static inline void
-+queue_unlock(struct futex_q *q, struct futex_hash_bucket *hb)
-+{
-+	spin_unlock(&hb->lock);
-+	drop_futex_key_refs(&q->key);
-+}
-+
-+/**
-+ * queue_me() - Enqueue the futex_q on the futex_hash_bucket
-+ * @q:	The futex_q to enqueue
-+ * @hb:	The destination hash bucket
-+ *
-+ * The hb->lock must be held by the caller, and is released here. A call to
-+ * queue_me() is typically paired with exactly one call to unqueue_me().  The
-+ * exceptions involve the PI related operations, which may use unqueue_me_pi()
-+ * or nothing if the unqueue is done as part of the wake process and the unqueue
-+ * state is implicit in the state of woken task (see futex_wait_requeue_pi() for
-+ * an example).
-+ */
- static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
- {
- 	int prio;
-@@ -1374,19 +1393,17 @@ static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
- 	spin_unlock(&hb->lock);
- }
- 
--static inline void
--queue_unlock(struct futex_q *q, struct futex_hash_bucket *hb)
--{
--	spin_unlock(&hb->lock);
--	drop_futex_key_refs(&q->key);
--}
--
--/*
-- * queue_me and unqueue_me must be called as a pair, each
-- * exactly once.  They are called with the hashed spinlock held.
-+/**
-+ * unqueue_me() - Remove the futex_q from its futex_hash_bucket
-+ * @q:	The futex_q to unqueue
-+ *
-+ * The q->lock_ptr must not be held by the caller. A call to unqueue_me() must
-+ * be paired with exactly one earlier call to queue_me().
-+ *
-+ * Returns:
-+ *   1 - if the futex_q was still queued (and we removed unqueued it)
-+ *   0 - if the futex_q was already removed by the waking thread
-  */
--
--/* Return 1 if we were still queued (ie. 0 means we were woken) */
- static int unqueue_me(struct futex_q *q)
- {
- 	spinlock_t *lock_ptr;
--- 
-1.6.0.6
-
->From 176b6c836c722fdeb50ba33c24a009b77708209a Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Mon, 21 Sep 2009 22:30:30 -0700
-Subject: [PATCH] futex: Correct futex_q woken state commentary
-
-Use kernel-doc format to describe struct futex_q.
-
-Correct the wakeup definition to eliminate the statement about
-waking the waiter between the plist_del() and the q->lock_ptr = 0.
-
-Note in the comment that PI futexes have a different definition of
-the woken state.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Dinakar Guniguntala <dino@in.ibm.com>
-Cc: John Stultz <johnstul@us.ibm.com>
-LKML-Reference: <20090922053029.8717.62798.stgit@Aeon>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/futex.c |   32 ++++++++++++++++----------------
- 1 files changed, 16 insertions(+), 16 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 77cc68e..3e0455a 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -89,36 +89,36 @@ struct futex_pi_state {
- 	union futex_key key;
- };
- 
--/*
-- * We use this hashed waitqueue instead of a normal wait_queue_t, so
-+/**
-+ * struct futex_q - The hashed futex queue entry, one per waiting task
-+ * @task:		the task waiting on the futex
-+ * @lock_ptr:		the hash bucket lock
-+ * @key:		the key the futex is hashed on
-+ * @pi_state:		optional priority inheritance state
-+ * @rt_waiter:		rt_waiter storage for use with requeue_pi
-+ * @requeue_pi_key:	the requeue_pi target futex key
-+ * @bitset:		bitset for the optional bitmasked wakeup
-+ *
-+ * We use this hashed waitqueue, instead of a normal wait_queue_t, so
-  * we can wake only the relevant ones (hashed queues may be shared).
-  *
-  * A futex_q has a woken state, just like tasks have TASK_RUNNING.
-  * It is considered woken when plist_node_empty(&q->list) || q->lock_ptr == 0.
-  * The order of wakup is always to make the first condition true, then
-- * wake up q->waiter, then make the second condition true.
-+ * the second.
-+ *
-+ * PI futexes are typically woken before they are removed from the hash list via
-+ * the rt_mutex code. See unqueue_me_pi().
-  */
- struct futex_q {
- 	struct plist_node list;
--	/* Waiter reference */
--	struct task_struct *task;
- 
--	/* Which hash list lock to use: */
-+	struct task_struct *task;
- 	spinlock_t *lock_ptr;
--
--	/* Key which the futex is hashed on: */
- 	union futex_key key;
--
--	/* Optional priority inheritance state: */
- 	struct futex_pi_state *pi_state;
--
--	/* rt_waiter storage for requeue_pi: */
- 	struct rt_mutex_waiter *rt_waiter;
--
--	/* The expected requeue pi target futex key: */
- 	union futex_key *requeue_pi_key;
--
--	/* Bitset for the optional bitmasked wakeup */
- 	u32 bitset;
- };
- 
--- 
-1.6.0.6
-
->From 0694a339cdbd4bb41a1699d6aa9d1671baae1edc Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Mon, 21 Sep 2009 22:29:59 -0700
-Subject: [PATCH] futex: Correct futex_wait_requeue_pi() commentary
-
-Correct various typos and formatting inconsistencies in the
-commentary of futex_wait_requeue_pi().
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Dinakar Guniguntala <dino@in.ibm.com>
-Cc: John Stultz <johnstul@us.ibm.com>
-LKML-Reference: <20090922052958.8717.21932.stgit@Aeon>
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/futex.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 3e0455a..fb2386c 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -2136,12 +2136,12 @@ int handle_early_requeue_pi_wakeup(struct futex_hash_bucket *hb,
- 
- /**
-  * futex_wait_requeue_pi() - Wait on uaddr and take uaddr2
-- * @uaddr:	the futex we initialyl wait on (non-pi)
-+ * @uaddr:	the futex we initially wait on (non-pi)
-  * @fshared:	whether the futexes are shared (1) or not (0).  They must be
-  * 		the same type, no requeueing from private to shared, etc.
-  * @val:	the expected value of uaddr
-  * @abs_time:	absolute timeout
-- * @bitset:	32 bit wakeup bitset set by userspace, defaults to all.
-+ * @bitset:	32 bit wakeup bitset set by userspace, defaults to all
-  * @clockrt:	whether to use CLOCK_REALTIME (1) or CLOCK_MONOTONIC (0)
-  * @uaddr2:	the pi futex we will take prior to returning to user-space
-  *
-@@ -2269,7 +2269,7 @@ retry:
- 		res = fixup_owner(uaddr2, fshared, &q, !ret);
- 		/*
- 		 * If fixup_owner() returned an error, proprogate that.  If it
--		 * acquired the lock, clear our -ETIMEDOUT or -EINTR.
-+		 * acquired the lock, clear -ETIMEDOUT or -EINTR.
- 		 */
- 		if (res)
- 			ret = (res < 0) ? res : 0;
--- 
-1.6.0.6
-
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
