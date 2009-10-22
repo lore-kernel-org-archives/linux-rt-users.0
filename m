@@ -1,99 +1,128 @@
 From: dino@in.ibm.com
-Subject: [patch -rt 03/17] sched: update the cpu_power sum during load-balance
-Date: Thu, 22 Oct 2009 18:07:46 +0530
-Message-ID: <20091022124110.216791990@spinlock.in.ibm.com>
+Subject: [patch -rt 12/17] x86: sched: provide arch implementations using aperf/mperf
+Date: Thu, 22 Oct 2009 18:07:55 +0530
+Message-ID: <20091022124112.184099152@spinlock.in.ibm.com>
 References: <20091022123743.506956796@spinlock.in.ibm.com>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	John Stultz <johnstul@us.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, John Kacur <jkacur@redhat.com>
 To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755685AbZJVMlR@vger.kernel.org>
-Content-Disposition: inline; filename=sched-lb-3.patch
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755937AbZJVMla@vger.kernel.org>
+Content-Disposition: inline; filename=sched-lb-11.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In order to prepare for a more dynamic cpu_power, update the group sum
-while walking the sched domains during load-balance.
+APERF/MPERF support for cpu_power.
+
+APERF/MPERF is arch defined to be a relative scale of work capacity
+per logical cpu, this is assumed to include SMT and Turbo mode.
+
+APERF/MPERF are specified to both reset to 0 when either counter
+wraps, which is highly inconvenient, since that'll give a blimp when
+that happens. The manual specifies writing 0 to the counters after
+each read, but that's 1) too expensive, and 2) destroys the
+possibility of sharing these counters with other users, so we live
+with the blimp - the other existing user does too.
 
 Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Signed-off-by: Dinakar Guniguntala <dino@in.ibm.com>
 ---
- kernel/sched.c |   33 +++++++++++++++++++++++++++++----
- 1 file changed, 29 insertions(+), 4 deletions(-)
+ arch/x86/kernel/cpu/Makefile |    2 -
+ arch/x86/kernel/cpu/sched.c  |   58 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/sched.h        |    4 ++
+ 3 files changed, 63 insertions(+), 1 deletion(-)
 
-Index: linux-2.6.31.4-rt14/kernel/sched.c
+Index: linux-2.6.31.4-rt14-lb1/arch/x86/kernel/cpu/Makefile
 ===================================================================
---- linux-2.6.31.4-rt14.orig/kernel/sched.c	2009-10-16 09:15:30.000000000 -0400
-+++ linux-2.6.31.4-rt14/kernel/sched.c	2009-10-16 09:15:32.000000000 -0400
-@@ -3780,6 +3780,28 @@
- }
- #endif /* CONFIG_SCHED_MC || CONFIG_SCHED_SMT */
+--- linux-2.6.31.4-rt14-lb1.orig/arch/x86/kernel/cpu/Makefile	2009-10-21 10:47:15.000000000 -0400
++++ linux-2.6.31.4-rt14-lb1/arch/x86/kernel/cpu/Makefile	2009-10-21 10:49:00.000000000 -0400
+@@ -13,7 +13,7 @@
  
-+static void update_sched_power(struct sched_domain *sd)
+ obj-y			:= intel_cacheinfo.o addon_cpuid_features.o
+ obj-y			+= proc.o capflags.o powerflags.o common.o
+-obj-y			+= vmware.o hypervisor.o
++obj-y			+= vmware.o hypervisor.o sched.o
+ 
+ obj-$(CONFIG_X86_32)	+= bugs.o cmpxchg.o
+ obj-$(CONFIG_X86_64)	+= bugs_64.o
+Index: linux-2.6.31.4-rt14-lb1/arch/x86/kernel/cpu/sched.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.31.4-rt14-lb1/arch/x86/kernel/cpu/sched.c	2009-10-21 10:49:00.000000000 -0400
+@@ -0,0 +1,58 @@
++#include <linux/sched.h>
++#include <linux/math64.h>
++#include <linux/percpu.h>
++#include <linux/irqflags.h>
++
++#include <asm/cpufeature.h>
++#include <asm/processor.h>
++
++static DEFINE_PER_CPU(struct aperfmperf, old_aperfmperf);
++
++static unsigned long scale_aperfmperf(void)
 +{
-+	struct sched_domain *child = sd->child;
-+	struct sched_group *group, *sdg = sd->groups;
-+	unsigned long power = sdg->__cpu_power;
++	struct aperfmperf cur, val, *old = &__get_cpu_var(old_aperfmperf);
++	unsigned long ratio = SCHED_LOAD_SCALE;
++	unsigned long flags;
 +
-+	if (!child) {
-+		/* compute cpu power for this cpu */
-+		return;
-+	}
++	local_irq_save(flags);
++	get_aperfmperf(&val);
++	local_irq_restore(flags);
 +
-+	sdg->__cpu_power = 0;
++	cur = val;
++	cur.aperf -= old->aperf;
++	cur.mperf -= old->mperf;
++	*old = val;
 +
-+	group = child->groups;
-+	do {
-+		sdg->__cpu_power += group->__cpu_power;
-+		group = group->next;
-+	} while (group != child->groups);
++	cur.mperf >>= SCHED_LOAD_SHIFT;
++	if (cur.mperf)
++		ratio = div_u64(cur.aperf, cur.mperf);
 +
-+	if (power != sdg->__cpu_power)
-+		sdg->reciprocal_cpu_power = reciprocal_value(sdg->__cpu_power);
++	return ratio;
 +}
- 
- /**
-  * update_sg_lb_stats - Update sched_group's statistics for load balancing.
-@@ -3793,7 +3815,8 @@
-  * @balance: Should we balance.
-  * @sgs: variable to hold the statistics for this group.
-  */
--static inline void update_sg_lb_stats(struct sched_group *group, int this_cpu,
-+static inline void update_sg_lb_stats(struct sched_domain *sd,
-+			struct sched_group *group, int this_cpu,
- 			enum cpu_idle_type idle, int load_idx, int *sd_idle,
- 			int local_group, const struct cpumask *cpus,
- 			int *balance, struct sg_lb_stats *sgs)
-@@ -3804,8 +3827,11 @@
- 	unsigned long sum_avg_load_per_task;
- 	unsigned long avg_load_per_task;
- 
--	if (local_group)
-+	if (local_group) {
- 		balance_cpu = group_first_cpu(group);
-+		if (balance_cpu == this_cpu)
-+			update_sched_power(sd);
-+	}
- 
- 	/* Tally up the load of all CPUs in the group */
- 	sum_avg_load_per_task = avg_load_per_task = 0;
-@@ -3909,7 +3935,7 @@
- 		local_group = cpumask_test_cpu(this_cpu,
- 					       sched_group_cpus(group));
- 		memset(&sgs, 0, sizeof(sgs));
--		update_sg_lb_stats(group, this_cpu, idle, load_idx, sd_idle,
-+		update_sg_lb_stats(sd, group, this_cpu, idle, load_idx, sd_idle,
- 				local_group, cpus, balance, &sgs);
- 
- 		if (local_group && balance && !(*balance))
-@@ -3944,7 +3970,6 @@
- 		update_sd_power_savings_stats(group, sds, local_group, &sgs);
- 		group = group->next;
- 	} while (group != sd->groups);
--
++
++unsigned long arch_scale_freq_power(struct sched_domain *sd, int cpu)
++{
++	/*
++	 * do aperf/mperf on the cpu level because it includes things
++	 * like turbo mode, which are relevant to full cores.
++	 */
++	if (boot_cpu_has(X86_FEATURE_APERFMPERF))
++		return scale_aperfmperf();
++
++	/*
++	 * maybe have something cpufreq here
++	 */
++
++	return default_scale_freq_power(sd, cpu);
++}
++
++unsigned long arch_scale_smt_power(struct sched_domain *sd, int cpu)
++{
++	/*
++	 * aperf/mperf already includes the smt gain
++	 */
++	if (boot_cpu_has(X86_FEATURE_APERFMPERF))
++		return SCHED_LOAD_SCALE;
++
++	return default_scale_smt_power(sd, cpu);
++}
+Index: linux-2.6.31.4-rt14-lb1/include/linux/sched.h
+===================================================================
+--- linux-2.6.31.4-rt14-lb1.orig/include/linux/sched.h	2009-10-21 10:47:15.000000000 -0400
++++ linux-2.6.31.4-rt14-lb1/include/linux/sched.h	2009-10-21 10:49:00.000000000 -0400
+@@ -1047,6 +1047,10 @@
  }
+ #endif	/* !CONFIG_SMP */
  
- /**
++
++unsigned long default_scale_freq_power(struct sched_domain *sd, int cpu);
++unsigned long default_scale_smt_power(struct sched_domain *sd, int cpu);
++
+ struct io_context;			/* See blkdev.h */
+ 
+ 
 
 --
