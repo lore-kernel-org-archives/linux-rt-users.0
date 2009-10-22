@@ -1,7 +1,7 @@
 From: dino@in.ibm.com
-Subject: [patch -rt 11/17] Provide an arch specific hook for cpufreq based scaling of cpu_power.
-Date: Thu, 22 Oct 2009 18:07:54 +0530
-Message-ID: <20091022124111.966875893@spinlock.in.ibm.com>
+Subject: [patch -rt 09/17] x86: move APERF/MPERF into a X86_FEATURE
+Date: Thu, 22 Oct 2009 18:07:52 +0530
+Message-ID: <20091022124111.570692063@spinlock.in.ibm.com>
 References: <20091022123743.506956796@spinlock.in.ibm.com>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	John Stultz <johnstul@us.ibm.com>,
@@ -9,65 +9,80 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e9.ny.us.ibm.com ([32.97.182.139]:50417 "EHLO e9.ny.us.ibm.com"
+Received: from e8.ny.us.ibm.com ([32.97.182.138]:51704 "EHLO e8.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755323AbZJVMlL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	id S1755328AbZJVMlL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 22 Oct 2009 08:41:11 -0400
-Content-Disposition: inline; filename=sched-lb-10.patch
+Content-Disposition: inline; filename=sched-lb-8.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+Move the APERFMPERF capacility into a X86_FEATURE flag so that it can
+be used outside of the acpi cpufreq driver.
 
 Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Signed-off-by: Dinakar Guniguntala <dino@in.ibm.com>
 ---
- kernel/sched.c |   21 +++++++++++++++++++--
- 1 file changed, 19 insertions(+), 2 deletions(-)
+ arch/x86/include/asm/cpufeature.h          |    1 +
+ arch/x86/kernel/cpu/cpufreq/acpi-cpufreq.c |    9 ++-------
+ arch/x86/kernel/cpu/intel.c                |    6 ++++++
+ 3 files changed, 9 insertions(+), 7 deletions(-)
 
-Index: linux-2.6.31.4-rt14-lb1/kernel/sched.c
+Index: linux-2.6.31.4-rt14/arch/x86/include/asm/cpufeature.h
 ===================================================================
---- linux-2.6.31.4-rt14-lb1.orig/kernel/sched.c	2009-10-21 10:47:15.000000000 -0400
-+++ linux-2.6.31.4-rt14-lb1/kernel/sched.c	2009-10-21 10:48:58.000000000 -0400
-@@ -3793,7 +3793,18 @@
- }
- #endif /* CONFIG_SCHED_MC || CONFIG_SCHED_SMT */
+--- linux-2.6.31.4-rt14.orig/arch/x86/include/asm/cpufeature.h	2009-10-12 16:15:40.000000000 -0400
++++ linux-2.6.31.4-rt14/arch/x86/include/asm/cpufeature.h	2009-10-16 09:15:39.000000000 -0400
+@@ -95,6 +95,7 @@
+ #define X86_FEATURE_NONSTOP_TSC	(3*32+24) /* TSC does not stop in C states */
+ #define X86_FEATURE_CLFLUSH_MONITOR (3*32+25) /* "" clflush reqd with monitor */
+ #define X86_FEATURE_EXTD_APICID	(3*32+26) /* has extended APICID (8 bits) */
++#define X86_FEATURE_APERFMPERF	(3*32+27) /* APERFMPERF */
  
--unsigned long __weak arch_scale_smt_power(struct sched_domain *sd, int cpu)
-+
-+unsigned long default_scale_freq_power(struct sched_domain *sd, int cpu)
-+{
-+	return SCHED_LOAD_SCALE;
-+}
-+
-+unsigned long __weak arch_scale_freq_power(struct sched_domain *sd, int cpu)
-+{
-+	return default_scale_freq_power(sd, cpu);
-+}
-+
-+unsigned long default_scale_smt_power(struct sched_domain *sd, int cpu)
- {
- 	unsigned long weight = cpumask_weight(sched_domain_span(sd));
- 	unsigned long smt_gain = sd->smt_gain;
-@@ -3803,6 +3814,11 @@
- 	return smt_gain;
- }
+ /* Intel-defined CPU features, CPUID level 0x00000001 (ecx), word 4 */
+ #define X86_FEATURE_XMM3	(4*32+ 0) /* "pni" SSE-3 */
+Index: linux-2.6.31.4-rt14/arch/x86/kernel/cpu/cpufreq/acpi-cpufreq.c
+===================================================================
+--- linux-2.6.31.4-rt14.orig/arch/x86/kernel/cpu/cpufreq/acpi-cpufreq.c	2009-10-12 16:15:40.000000000 -0400
++++ linux-2.6.31.4-rt14/arch/x86/kernel/cpu/cpufreq/acpi-cpufreq.c	2009-10-16 09:15:39.000000000 -0400
+@@ -60,7 +60,6 @@
+ };
  
-+unsigned long __weak arch_scale_smt_power(struct sched_domain *sd, int cpu)
-+{
-+	return default_scale_smt_power(sd, cpu);
-+}
+ #define INTEL_MSR_RANGE		(0xffff)
+-#define CPUID_6_ECX_APERFMPERF_CAPABILITY	(0x1)
+ 
+ struct acpi_cpufreq_data {
+ 	struct acpi_processor_performance *acpi_data;
+@@ -731,12 +730,8 @@
+ 	acpi_processor_notify_smm(THIS_MODULE);
+ 
+ 	/* Check for APERF/MPERF support in hardware */
+-	if (c->x86_vendor == X86_VENDOR_INTEL && c->cpuid_level >= 6) {
+-		unsigned int ecx;
+-		ecx = cpuid_ecx(6);
+-		if (ecx & CPUID_6_ECX_APERFMPERF_CAPABILITY)
+-			acpi_cpufreq_driver.getavg = get_measured_perf;
+-	}
++	if (cpu_has(c, X86_FEATURE_APERFMPERF))
++		acpi_cpufreq_driver.getavg = get_measured_perf;
+ 
+ 	dprintk("CPU%u - ACPI performance management activated.\n", cpu);
+ 	for (i = 0; i < perf->state_count; i++)
+Index: linux-2.6.31.4-rt14/arch/x86/kernel/cpu/intel.c
+===================================================================
+--- linux-2.6.31.4-rt14.orig/arch/x86/kernel/cpu/intel.c	2009-10-12 16:15:40.000000000 -0400
++++ linux-2.6.31.4-rt14/arch/x86/kernel/cpu/intel.c	2009-10-16 09:15:39.000000000 -0400
+@@ -349,6 +349,12 @@
+ 			set_cpu_cap(c, X86_FEATURE_ARCH_PERFMON);
+ 	}
+ 
++	if (c->cpuid_level > 6) {
++		unsigned ecx = cpuid_ecx(6);
++		if (ecx & 0x01)
++			set_cpu_cap(c, X86_FEATURE_APERFMPERF);
++	}
 +
- unsigned long scale_rt_power(int cpu)
- {
- 	struct rq *rq = cpu_rq(cpu);
-@@ -3827,7 +3843,8 @@
- 	unsigned long power = SCHED_LOAD_SCALE;
- 	struct sched_group *sdg = sd->groups;
- 
--	/* here we could scale based on cpufreq */
-+	power *= arch_scale_freq_power(sd, cpu);
-+	power >> SCHED_LOAD_SHIFT;
- 
- 	if ((sd->flags & SD_SHARE_CPUPOWER) && weight > 1) {
- 		power *= arch_scale_smt_power(sd, cpu);
+ 	if (cpu_has_xmm2)
+ 		set_cpu_cap(c, X86_FEATURE_LFENCE_RDTSC);
+ 	if (cpu_has_ds) {
 
 --
