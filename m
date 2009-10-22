@@ -1,67 +1,81 @@
-From: yi li <liyi.dev@gmail.com>
-Subject: Re: A question about cpu_idle()
-Date: Fri, 23 Oct 2009 00:24:24 +0800
-Message-ID: <a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>
-References: <a0e7fce50910202007l587d2cfcu91b455ff0486110b@mail.gmail.com>
-	 <4ADE5A2B0200005A00057082@sinclair.provo.novell.com>
-	 <a0e7fce50910212130h385cdbe1ucbb4fe00233eb0bb@mail.gmail.com>
-	 <4AE019210200005A00057226@sinclair.provo.novell.com>
+From: Clark Williams <williams@redhat.com>
+Subject: proposed FAQ entry for rt.wiki.kernel.org
+Date: Thu, 22 Oct 2009 12:08:32 -0500
+Message-ID: <20091022120832.4bfd29e2@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Gregory Haskins <ghaskins@novell.com>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/43THr3nbJmHhp9VuU9.tPNJ"; protocol="application/pgp-signature"
+To: RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f187.google.com ([209.85.210.187]:59658 "EHLO
-	mail-yx0-f187.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756407AbZJVQYU convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Oct 2009 12:24:20 -0400
-Received: by yxe17 with SMTP id 17so7130001yxe.33
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Oct 2009 09:24:24 -0700 (PDT)
-In-Reply-To: <4AE019210200005A00057226@sinclair.provo.novell.com>
+Received: from mx1.redhat.com ([209.132.183.28]:11190 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750882AbZJVRIs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 22 Oct 2009 13:08:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Oct 22, 2009 at 8:34 PM, Gregory Haskins <ghaskins@novell.com> =
-wrote:
-> Yes, that is right. =A0irq_disable is a effective superset of preempt=
--disable() in this context because it also blocks those RESCHED_IPI eve=
-nts from being received. =A0Of course, disabling interrupts also has ot=
-her side effects since it also disables *all* interrupts (like timers, =
-etc) so it should be used sparingly. =A0In this case, we are simply bri=
-dging the preempt_enable_no_resched() and schedule() to make sure it is=
- truly an atomic transition to a sleep state, so its use is justified.
->
-> I hope this helps, and feel free to ask any more questions you wish.
+--Sig_/43THr3nbJmHhp9VuU9.tPNJ
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Thanks. Yes it make sense to me.
+Today, for the Nth time, I was asked by a potential customer "How does
+the RT patch improve latency?". I looked at rt.wiki.kernel.org,
+hoping (vainly) that someone had written up an elevator-pitch for the
+RT patch, but it was not to be. So I wrote up something that I hope
+made sense and sent it off.=20
 
-Another question may be basic - but I just cannot figure out.
+Since then I did a little bit of tweaking and expansion and thought I'd
+send it to the RT users list to see if we can agree on an answer, then
+put that in the RT FAQ.=20
 
-Why PREEMPT_RT patch disables local irq (with local_irq_disable())
-before __schedule()? Is it to ensure atomic excution of __schedule()?
-If so, does that mean, linux kernel without PREEMPT_RT patch suffers
-from racy problem in schedule()?
+So, please read and critique the following:
 
-asmlinkage void __sched schedule(void)
-{
-  need_resched:
-         local_irq_disable();
-         __schedule();
-         local_irq_enable();
+Q. How does the Linux RT kernel improve "latency"?
 
-        if (need_resched())
-                goto need_resched;
-}
+A. The Linux RT patch modifies the behavior of spinlocks and
+interrupt handling, to increase the number of points where a
+preemption or reschedule may occur. This reduces the amount of time a
+high priority task must wait to be scheduled when it becomes ready to
+run, reducing event service time (or "latency").=20
 
-I saw similiar code in preempt_schedule(), __cond_schedule() and
-preempt_schedule_irq().
+Most spinlocks in the kernel are converted to a construct called an
+rtmutex, which has the property of *not* disabling interrupts while
+the lock is held and will sleep rather than spin. This means that
+interrupts will occur while rtmutexes are held and interrupt handling
+is a potential preemption point; on return from handling an interrupt,
+a scheduler check is made as to whether a higher priority thread needs
+to run.
 
-Regards,
--Yi
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The rtmutex locking construct also has a property known as "priority
+inheritance", which is a mechanism for avoiding a deadlock situation
+known as "priority inversion". In order to prevent a low priority
+thread that is holding a lock from preventing a higher priority thread
+from running, the low priority thread temporarily inherits the
+priority of the highest priority thread that is requesting the lock,
+which allows the low-priority thread to run until it completes its
+critical section and releases the lock.=20
+
+In addition to changing spinlocks, interrupts have been threaded,
+meaning that instead of handling interrupts in a special "interrupt
+context", each IRQ has a dedicated thread for running its
+ISRs. Interrupts go to a common handler and the handler schedules the
+appropriate thread to handle the interrupt. This means that sleeping
+spinlocks (rtmutexes) have a context to return to and that interrupt
+handling can be prioritized by assigning appropriate realtime
+priorities to the interrupt threads.=20
+
+--Sig_/43THr3nbJmHhp9VuU9.tPNJ
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.12 (GNU/Linux)
+
+iEYEARECAAYFAkrgkZQACgkQHyuj/+TTEp0WDACfUFmroffmLeX7B1geW9twXwaw
+m/UAoIEf9ZWMNHRWj8iZqd8dXr7qR9Fx
+=iLzN
+-----END PGP SIGNATURE-----
+
+--Sig_/43THr3nbJmHhp9VuU9.tPNJ--
