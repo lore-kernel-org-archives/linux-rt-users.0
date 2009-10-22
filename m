@@ -1,37 +1,99 @@
 From: dino@in.ibm.com
-Subject: [patch -rt 15/17] sched: Add a missing =
-Date: Thu, 22 Oct 2009 18:07:58 +0530
-Message-ID: <20091022124112.768152567@spinlock.in.ibm.com>
+Subject: [patch -rt 03/17] sched: update the cpu_power sum during load-balance
+Date: Thu, 22 Oct 2009 18:07:46 +0530
+Message-ID: <20091022124110.216791990@spinlock.in.ibm.com>
 References: <20091022123743.506956796@spinlock.in.ibm.com>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	John Stultz <johnstul@us.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, John Kacur <jkacur@redhat.com>
 To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:36462 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755710AbZJVMlT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Oct 2009 08:41:19 -0400
-Content-Disposition: inline; filename=sched_fixes.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755685AbZJVMlR@vger.kernel.org>
+Content-Disposition: inline; filename=sched-lb-3.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+In order to prepare for a more dynamic cpu_power, update the group sum
+while walking the sched domains during load-balance.
+
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Signed-off-by: Dinakar Guniguntala <dino@in.ibm.com>
+---
+ kernel/sched.c |   33 +++++++++++++++++++++++++++++----
+ 1 file changed, 29 insertions(+), 4 deletions(-)
 
-Index: linux-2.6.31.4-rt14-lb1/kernel/sched.c
+Index: linux-2.6.31.4-rt14/kernel/sched.c
 ===================================================================
---- linux-2.6.31.4-rt14-lb1.orig/kernel/sched.c	2009-10-21 10:48:58.000000000 -0400
-+++ linux-2.6.31.4-rt14-lb1/kernel/sched.c	2009-10-21 10:49:03.000000000 -0400
-@@ -3844,7 +3844,7 @@
- 	struct sched_group *sdg = sd->groups;
+--- linux-2.6.31.4-rt14.orig/kernel/sched.c	2009-10-16 09:15:30.000000000 -0400
++++ linux-2.6.31.4-rt14/kernel/sched.c	2009-10-16 09:15:32.000000000 -0400
+@@ -3780,6 +3780,28 @@
+ }
+ #endif /* CONFIG_SCHED_MC || CONFIG_SCHED_SMT */
  
- 	power *= arch_scale_freq_power(sd, cpu);
--	power >> SCHED_LOAD_SHIFT;
-+	power >>= SCHED_LOAD_SHIFT;
++static void update_sched_power(struct sched_domain *sd)
++{
++	struct sched_domain *child = sd->child;
++	struct sched_group *group, *sdg = sd->groups;
++	unsigned long power = sdg->__cpu_power;
++
++	if (!child) {
++		/* compute cpu power for this cpu */
++		return;
++	}
++
++	sdg->__cpu_power = 0;
++
++	group = child->groups;
++	do {
++		sdg->__cpu_power += group->__cpu_power;
++		group = group->next;
++	} while (group != child->groups);
++
++	if (power != sdg->__cpu_power)
++		sdg->reciprocal_cpu_power = reciprocal_value(sdg->__cpu_power);
++}
  
- 	if ((sd->flags & SD_SHARE_CPUPOWER) && weight > 1) {
- 		power *= arch_scale_smt_power(sd, cpu);
+ /**
+  * update_sg_lb_stats - Update sched_group's statistics for load balancing.
+@@ -3793,7 +3815,8 @@
+  * @balance: Should we balance.
+  * @sgs: variable to hold the statistics for this group.
+  */
+-static inline void update_sg_lb_stats(struct sched_group *group, int this_cpu,
++static inline void update_sg_lb_stats(struct sched_domain *sd,
++			struct sched_group *group, int this_cpu,
+ 			enum cpu_idle_type idle, int load_idx, int *sd_idle,
+ 			int local_group, const struct cpumask *cpus,
+ 			int *balance, struct sg_lb_stats *sgs)
+@@ -3804,8 +3827,11 @@
+ 	unsigned long sum_avg_load_per_task;
+ 	unsigned long avg_load_per_task;
+ 
+-	if (local_group)
++	if (local_group) {
+ 		balance_cpu = group_first_cpu(group);
++		if (balance_cpu == this_cpu)
++			update_sched_power(sd);
++	}
+ 
+ 	/* Tally up the load of all CPUs in the group */
+ 	sum_avg_load_per_task = avg_load_per_task = 0;
+@@ -3909,7 +3935,7 @@
+ 		local_group = cpumask_test_cpu(this_cpu,
+ 					       sched_group_cpus(group));
+ 		memset(&sgs, 0, sizeof(sgs));
+-		update_sg_lb_stats(group, this_cpu, idle, load_idx, sd_idle,
++		update_sg_lb_stats(sd, group, this_cpu, idle, load_idx, sd_idle,
+ 				local_group, cpus, balance, &sgs);
+ 
+ 		if (local_group && balance && !(*balance))
+@@ -3944,7 +3970,6 @@
+ 		update_sd_power_savings_stats(group, sds, local_group, &sgs);
+ 		group = group->next;
+ 	} while (group != sd->groups);
+-
+ }
+ 
+ /**
 
 --
