@@ -1,49 +1,60 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: proposed FAQ entry for rt.wiki.kernel.org
-Date: Thu, 22 Oct 2009 11:57:20 -0700
-Message-ID: <1256237840.10735.46.camel@quadrophenia.thebigcorporation.com>
-References: <20091022120832.4bfd29e2@torg>
-	 <1256235503.10735.32.camel@quadrophenia.thebigcorporation.com>
-	 <20091022134139.0c8a4cc2@torg>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: A question about cpu_idle()
+Date: Thu, 22 Oct 2009 12:59:11 -0600
+Message-ID: <4AE0733F0200005A00057289@sinclair.provo.novell.com>
+References: <a0e7fce50910202007l587d2cfcu91b455ff0486110b@mail.gmail.com>
+ <4ADE5A2B0200005A00057082@sinclair.provo.novell.com>
+ <a0e7fce50910212130h385cdbe1ucbb4fe00233eb0bb@mail.gmail.com>
+ <4AE019210200005A00057226@sinclair.provo.novell.com>
+ <a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <linux-rt-users@vger.kernel.org>
+To: "yi li" <liyi.dev@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pw0-f42.google.com ([209.85.160.42]:46991 "EHLO
-	mail-pw0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756757AbZJVS5R (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Oct 2009 14:57:17 -0400
-Received: by pwj1 with SMTP id 1so1607999pwj.21
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Oct 2009 11:57:22 -0700 (PDT)
-In-Reply-To: <20091022134139.0c8a4cc2@torg>
+In-Reply-To: <a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-10-22 at 13:41 -0500, Clark Williams wrote:
-> > Further, user-level processes may be prioritized above device-level
-> > services, allowing computational load and I/O load to be dynamically
-> > expedited, partitioned, or decoupled.
+>>> On 10/22/2009 at 12:24 PM, in message
+<a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>, yi li
+<liyi.dev@gmail.com> wrote: 
+> On Thu, Oct 22, 2009 at 8:34 PM, Gregory Haskins <ghaskins@novell.com> wrote:
+>> Yes, that is right.  irq_disable is a effective superset of preempt-disable() 
+> in this context because it also blocks those RESCHED_IPI events from being 
+> received.  Of course, disabling interrupts also has other side effects since 
+> it also disables *all* interrupts (like timers, etc) so it should be used 
+> sparingly.  In this case, we are simply bridging the 
+> preempt_enable_no_resched() and schedule() to make sure it is truly an atomic 
+> transition to a sleep state, so its use is justified.
+>>
+>> I hope this helps, and feel free to ask any more questions you wish.
 > 
-> You used to work in marketing, didn't you :)
+> Thanks. Yes it make sense to me.
 > 
-
-No, but I learned English in Germany :)
-
-> How about:
+> Another question may be basic - but I just cannot figure out.
 > 
-> Further, using realtime priorities, user-level threads may be
-> prioritized *above* certain device level activity, allowing critical
-> application tasks to take precedence over device activity deemed less
-> important.
+> Why PREEMPT_RT patch disables local irq (with local_irq_disable())
+> before __schedule()?
 
-Gets the point across.
+Yes, but note that even mainline disables interrupts before doing a context switch.  It just does it in a different place within schedule() (see spin_lock_irq(rq->lock)).
 
-Cheers,
+I believe PREEMPT_RT introduces the non-irq disabled form of __schedule() so that it can be used in those no_sched() + schedule() instances that we already discussed.  The schedule() function then becomes a client of __schedule(), properly disabling interrupts first as is required
 
-Sven
+> Is it to ensure atomic excution of __schedule()?
+
+Yes, atomic execution of the context switch is a requirement for both mainline and PREEMPT_RT, and thus interrupts must eventually be turned off as the registers are reloaded.
+
+> If so, does that mean, linux kernel without PREEMPT_RT patch suffers
+> from racy problem in schedule()?
+
+No, mainline schedule() works just fine to my knowledge.  The issue is for the implementation of preempt_enable_no_resched() + schedule().  On a preemptible kernel (such as PREEMPT or PREEMPT_RT), you may have a narrow race w.r.t. a preemption point occurring between the time that preemption is enabled and we call schedule().  IOW: The code would still work fine even if we hit the race, but it results in suboptimal behavior.
+
+What would happen is that the system may preempt the task, leave it on the RQ, run some other task, and then return control to this original task only to have it finish putting itself to sleep.  It is more efficient to just let it fully complete the deactivation than it would be to allow the one extra context switch, but it technically works either way.  Since RT is about reducing latency, and the scheduler itself is a source of latency, it is wise to eliminate any extraneous switches whenever possible.  However, this enhancement is technically applicable for CONFIG_PREEMPT mainline as well, afaict. 
+
+Kind Regards,
+-Greg
+
 
