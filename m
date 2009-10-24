@@ -1,131 +1,105 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [patch -rt] Fix infinite loop with 2.6.31.4-rt14 V2
-Date: Fri, 23 Oct 2009 16:29:56 -0700
-Message-ID: <4AE23C74.1090502@us.ibm.com>
-References: <20091023134700.GA5578@in.ibm.com> <4AE1D802.6050906@us.ibm.com> <20091023200858.GA7011@in.ibm.com> <4AE214E8.9020406@us.ibm.com>
+From: yi li <liyi.dev@gmail.com>
+Subject: Re: A question about cpu_idle()
+Date: Sat, 24 Oct 2009 18:04:00 +0800
+Message-ID: <a0e7fce50910240304o43b43b91qe109cffed3cdd966@mail.gmail.com>
+References: <a0e7fce50910202007l587d2cfcu91b455ff0486110b@mail.gmail.com>
+	 <4ADE5A2B0200005A00057082@sinclair.provo.novell.com>
+	 <a0e7fce50910212130h385cdbe1ucbb4fe00233eb0bb@mail.gmail.com>
+	 <4AE019210200005A00057226@sinclair.provo.novell.com>
+	 <a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>
+	 <4AE0733F0200005A00057289@sinclair.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	John Stultz <johnstul@linux.vnet.ibm.com>
-To: dino@in.ibm.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:35339 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752244AbZJWX36 (ORCPT
+Received: from mail-yw0-f202.google.com ([209.85.211.202]:47793 "EHLO
+	mail-yw0-f202.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751376AbZJXKD4 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 23 Oct 2009 19:29:58 -0400
-In-Reply-To: <4AE214E8.9020406@us.ibm.com>
+	Sat, 24 Oct 2009 06:03:56 -0400
+Received: by ywh40 with SMTP id 40so7103087ywh.33
+        for <linux-rt-users@vger.kernel.org>; Sat, 24 Oct 2009 03:04:00 -0700 (PDT)
+In-Reply-To: <4AE0733F0200005A00057289@sinclair.provo.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Darren Hart wrote:
-> Dinakar Guniguntala wrote:
->  > Application threads calling futex_wait_requeue_pi run in an infinite 
-> loop
->  > in the kernel if the futex value changes during the call. The following
->  > patch fixes the problem.
-> 
-> The key bit here being that EAGAIN == EWOULDBLOCK - who thought that was 
-> a good idea?
+On Fri, Oct 23, 2009 at 2:59 AM, Gregory Haskins <ghaskins@novell.com> =
+wrote:
+>>>> On 10/22/2009 at 12:24 PM, in message
+> <a0e7fce50910220924s4b640cbi51af6d7e791e98e9@mail.gmail.com>, yi li
+> <liyi.dev@gmail.com> wrote:
+>> On Thu, Oct 22, 2009 at 8:34 PM, Gregory Haskins <ghaskins@novell.co=
+m> wrote:
+>>> Yes, that is right. =A0irq_disable is a effective superset of preem=
+pt-disable()
+>> in this context because it also blocks those RESCHED_IPI events from=
+ being
+>> received. =A0Of course, disabling interrupts also has other side eff=
+ects since
+>> it also disables *all* interrupts (like timers, etc) so it should be=
+ used
+>> sparingly. =A0In this case, we are simply bridging the
+>> preempt_enable_no_resched() and schedule() to make sure it is truly =
+an atomic
+>> transition to a sleep state, so its use is justified.
+>>>
+>>> I hope this helps, and feel free to ask any more questions you wish=
+=2E
+>>
+>> Thanks. Yes it make sense to me.
+>>
+>> Another question may be basic - but I just cannot figure out.
+>>
+>> Why PREEMPT_RT patch disables local irq (with local_irq_disable())
+>> before __schedule()?
+>
+> Yes, but note that even mainline disables interrupts before doing a c=
+ontext switch. =A0It just does it in a different place within schedule(=
+) (see spin_lock_irq(rq->lock)).
+>
+> I believe PREEMPT_RT introduces the non-irq disabled form of __schedu=
+le() so that it can be used in those no_sched() + schedule() instances =
+that we already discussed. =A0The schedule() function then becomes a cl=
+ient of __schedule(), properly disabling interrupts first as is require=
+d
+>
+>> Is it to ensure atomic excution of __schedule()?
+>
+> Yes, atomic execution of the context switch is a requirement for both=
+ mainline and PREEMPT_RT, and thus interrupts must eventually be turned=
+ off as the registers are reloaded.
+>
+>> If so, does that mean, linux kernel without PREEMPT_RT patch suffers
+>> from racy problem in schedule()?
+>
+> No, mainline schedule() works just fine to my knowledge. =A0The issue=
+ is for the implementation of preempt_enable_no_resched() + schedule().=
+ =A0On a preemptible kernel (such as PREEMPT or PREEMPT_RT), you may ha=
+ve a narrow race w.r.t. a preemption point occurring between the time t=
+hat preemption is enabled and we call schedule(). =A0IOW: The code woul=
+d still work fine even if we hit the race, but it results in suboptimal=
+ behavior.
+>
+> What would happen is that the system may preempt the task, leave it o=
+n the RQ, run some other task, and then return control to this original=
+ task only to have it finish putting itself to sleep. =A0It is more eff=
+icient to just let it fully complete the deactivation than it would be =
+to allow the one extra context switch, but it technically works either =
+way. =A0Since RT is about reducing latency, and the scheduler itself is=
+ a source of latency, it is wise to eliminate any extraneous switches w=
+henever possible. =A0However, this enhancement is technically applicabl=
+e for CONFIG_PREEMPT mainline as well, afaict.
+>
+> Kind Regards,
+> -Greg
+>
+Thanks Greg. This makes sense to me. I appreciate your explanation.
 
-And now that I think about it, when I reviewed this original patch I
-remember mentioning that this isn't even needed for
-futex_wait_requeue_pi() because we don't have the same wake-up race as
-futex_wait() suffers from - since we don't use the same lock_ptr == NULL
-test (nor do we use the wake_list in the requeue code). I suspect the
-only case where -EAGAIN is being used here is when the uval doesn't
-match val - no spurious wakeups.
-
-Dino, can you try with the following patch which just reverts the
-spurious wakeup handling for the requeue_pi path.
-
-
->From c21e762bf384e0a559fdf964e0ba7576550d90ec Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Fri, 23 Oct 2009 16:18:48 -0700
-Subject: [PATCH] futex: revert spurious wakeup fix for requeue_pi
-
-The requeue_pi path doesn't use unqueue_me() (and the racy lock_ptr ==
-NULL test) nor does it use the wake_list of futex_wake() which led to
-the following fix.
-
-41890f2... futex: Handle spurious wake up
-
-See debugging discussing on LKML Message-ID: <4AD4080C.20703@us.ibm.com>
-
-The changes in this fix to the requeue_pi path were considered to be a
-likely unecessary, but harmless safety net. Since they are in fact
-causing a problem, just remove them and insert a warning in their place.
-We can remove the warning later, or even in this commit if folks would
-rather.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@elte.hu>
-CC: Eric Dumazet <eric.dumazet@gmail.com>
-CC: Dinakar Guniguntala <dino@in.ibm.com>
-CC: John Stultz <johnstul@us.ibm.com>
-
-Witholding CC to stable for further discussion.
----
- kernel/futex.c |   15 +++++++++------
- 1 files changed, 9 insertions(+), 6 deletions(-)
-
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 7c4a6ac..7e4e8b2 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -2085,12 +2085,19 @@ int handle_early_requeue_pi_wakeup(struct futex_hash_bucket *hb,
- 		 */
- 		plist_del(&q->list, &q->list.plist);
- 
--		/* Handle spurious wakeups gracefully */
--		ret = -EAGAIN;
- 		if (timeout && !timeout->task)
- 			ret = -ETIMEDOUT;
- 		else if (signal_pending(current))
- 			ret = -ERESTARTNOINTR;
-+		else {
-+			/*
-+			 * We don't use the racy unqueue_me() path with the
-+			 * q.lock_ptr NULL test, nor does requeue use a
-+			 * wake_list. All wakeups here should be accounted for.
-+			 */
-+			printk(KERN_ERR "Spurious wakeup in %s\n",
-+			       __FUNCTION__);
-+		}
- 	}
- 	return ret;
- }
-@@ -2171,7 +2178,6 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, int fshared,
- 	q.bitset = bitset;
- 	q.rt_waiter = &rt_waiter;
- 
--retry:
- 	key2 = FUTEX_KEY_INIT;
- 	ret = get_futex_key(uaddr2, fshared, &key2, VERIFY_WRITE);
- 	if (unlikely(ret != 0))
-@@ -2264,9 +2270,6 @@ out_put_keys:
- out_key2:
- 	put_futex_key(fshared, &key2);
- 
--	/* Spurious wakeup ? */
--	if (ret == -EAGAIN)
--		goto retry;
- out:
- 	if (to) {
- 		hrtimer_cancel(&to->timer);
--- 
-1.6.0.4
-
-
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+-Yi
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
