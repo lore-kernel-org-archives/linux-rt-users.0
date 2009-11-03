@@ -1,47 +1,66 @@
-From: Pedro Ribeiro <pedrib@gmail.com>
-Subject: Re: Odd bug in SATA link power management
-Date: Tue, 3 Nov 2009 15:33:21 +0000
-Message-ID: <74fd948d0911030733o47817673la81b34057c1f68f4@mail.gmail.com>
-References: <74fd948d0910301225k207ec1f9sf2744ba0c5de6d33@mail.gmail.com>
-	 <alpine.LFD.2.00.0911021550120.12138@localhost.localdomain>
+From: Ng Oon-Ee <ngoonee@gmail.com>
+Subject: Re: Using -rt and TuxOnIce at the same time
+Date: Wed, 04 Nov 2009 06:39:31 +0800
+Message-ID: <1257287971.24428.2.camel@localhost.localdomain>
+References: <74fd948d0911030640m11993d57hd634210307a6c623@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-9"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Pedro Ribeiro <pedrib@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f207.google.com ([209.85.219.207]:64327 "EHLO
-	mail-ew0-f207.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751783AbZKCPdR convert rfc822-to-8bit (ORCPT
+Received: from mail-bw0-f227.google.com ([209.85.218.227]:35829 "EHLO
+	mail-bw0-f227.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753835AbZKCWiA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Nov 2009 10:33:17 -0500
-Received: by ewy3 with SMTP id 3so2079778ewy.37
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2009 07:33:21 -0800 (PST)
-In-Reply-To: <alpine.LFD.2.00.0911021550120.12138@localhost.localdomain>
+	Tue, 3 Nov 2009 17:38:00 -0500
+Received: by bwz27 with SMTP id 27so8177907bwz.21
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2009 14:38:04 -0800 (PST)
+In-Reply-To: <74fd948d0911030640m11993d57hd634210307a6c623@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Apparently this a vanilla kernel bug. Thanks for your help.
+On Tue, 2009-11-03 at 14:40 +0000, Pedro Ribeiro wrote:
+> Hello all,
+> 
+> I'm interested in using both the -rt patchset and the TuxOnIce for hibernation.
+> If you're not aware, TuxOnIce is a patch to enable "proper"
+> hibernation in Linux, IMO much superior to the one provided by the
+> base kernel.
+> 
+> Anyway, there is a collision in fork.c which is easily solvable, but
+> apart from that the patches don't collide. However, when I try to
+> hibernate the computer just hangs up. I brought this up on the
+> TuxOnIce mailing list and the main developer told me to contact you
+> first. He also told me that we would like to work with you to solve
+> this problem, since TOX is also  going to be slowly integrated in the
+> mainline kernel over time.
+> 
+> The problem is that the computer hangs and I have no way to capture
+> the output. The only thing I could do was to take some photos of the
+> screen. The first photo is what appears immediately after the
+> beggining of the hibernation process. After a few seconds, a rapid
+> succession of text appears and it captured partially on the second
+> (crappy) photo of the screen. On the 3rd photo shows how the system
+> stays indefinitely, and must be restarted by pressing the power button
+> for 3 secs.
+> 
+> I know the material I provided is a bit crap, but please let me know
+> how can I help you.
+> 
+> The zipped file containing the photos is here
+> http://www.2shared.com/file/8900964/61ee7898/rt-crashtar.html
+> 
+> Thanks in advance,
+> Pedro Ribeiro
 
-On Mon, Nov 2, 2009 at 2:51 PM, Thomas Gleixner <tglx@linutronix.de> wr=
-ote:
-> On Fri, 30 Oct 2009, Pedro Ribeiro wrote:
->> This bug is always reproducible and does not happen with Debian kern=
-el
->> 2.6.30.2. I didn't test any other kernel, not even the 2.6.31.4
->> vanilla.
->>
->> Below I'm sending the script which does the pm-utils action and my
->> lspci -vv. Is there any advice you can give me?
->
-> Yes, please test 2.6.31.4 vanilla so we know whether the problem is
-> related to the -rt patch or not.
->
-> Thanks,
->
-> =A0 =A0 =A0 =A0tglx
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Hi, I do have RT and ToI working together on Arch Linux here. Do you by
+any chance use an nVidia card? Your issue sounds like an issue with
+hibernating with stock nVidia drivers without the ToI workarounds... You
+need to add "procsetting extra_pages_allowance 7500" to common.conf or
+something like that.
+
+I know I did a single successful hibernate and restart with my RT and
+ToI hybrid (am currently using BFS/ToI for daily use) for testing
+purposes, so it does work, for me at least.
+
