@@ -1,63 +1,47 @@
-From: Jon Masters <jcm@redhat.com>
-Subject: Re: [PATCH -rt] Updates-from-Jon-Masters-for-hwlat_detector.c.patch
-Date: Tue, 03 Nov 2009 10:17:21 -0500
-Message-ID: <1257261441.12638.111.camel@tonnant>
-References: <alpine.LFD.2.00.0910230007030.3737@localhost.localdomain>
-	 <alpine.LFD.2.00.0911021620580.12138@localhost.localdomain>
-	 <520f0cf10911021146i136af7bfg370a217185b5154c@mail.gmail.com>
+From: Pedro Ribeiro <pedrib@gmail.com>
+Subject: Re: Odd bug in SATA link power management
+Date: Tue, 3 Nov 2009 15:33:21 +0000
+Message-ID: <74fd948d0911030733o47817673la81b34057c1f68f4@mail.gmail.com>
+References: <74fd948d0910301225k207ec1f9sf2744ba0c5de6d33@mail.gmail.com>
+	 <alpine.LFD.2.00.0911021550120.12138@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753442AbZKCPQZ@vger.kernel.org>
-In-Reply-To: <520f0cf10911021146i136af7bfg370a217185b5154c@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ew0-f207.google.com ([209.85.219.207]:64327 "EHLO
+	mail-ew0-f207.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751783AbZKCPdR convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Nov 2009 10:33:17 -0500
+Received: by ewy3 with SMTP id 3so2079778ewy.37
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2009 07:33:21 -0800 (PST)
+In-Reply-To: <alpine.LFD.2.00.0911021550120.12138@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2009-11-02 at 20:46 +0100, John Kacur wrote:
-> On Mon, Nov 2, 2009 at 4:43 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+Apparently this a vanilla kernel bug. Thanks for your help.
 
-> >> diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-> >> index be6553f..7191e17 100644
-> >> --- a/drivers/misc/hwlat_detector.c
-> >> +++ b/drivers/misc/hwlat_detector.c
-> >> @@ -262,6 +262,8 @@ static int get_sample(void *unused)
-> >>               /* Keep a running maximum ever recorded hardware latency */
-> >>               if (sample > data.max_sample)
-> >>                       data.max_sample = sample;
-> >> +
-> >> +             wake_up(&data.wq); /* wake up reader(s) */
-> >>       }
-> >>
-> >>       ret = 0;
-> >> @@ -299,8 +301,6 @@ static int kthread_fn(void *unused)
-> >>                       goto err_out;
-> >>               }
-> >>
-> >> -             wake_up(&data.wq); /* wake up reader(s) */
-> >> -
-> >
-> > This reverts -rt commit 5fc485f6341c177e9d5f641c6fb9e33ca465aa84.
-> >
-> > CONFIG_DEBUG_SPINLOCK_SLEEP resp. CONFIG_DEBUG_PREEMPT will tell you
-> > why this is a bad idea on -rt :)
-> >
-> > Thanks,
-> >
-> >        tglx
-> > --
-> 
-> Ugh. Thanks for catching that. To be honest not sure how it happened,
-> so it must be my fault. :)
-> 
-> Updated patch just adds the error checking from Jon Masters then,
-> patched against -rt.
-
-Actually, I think it might be my fault. I'll talk to you about the best
-way to proceed with updates since we're still looking for a reproducer
-on that lockup Clark was seeing a while back.
-
-Jon.
+On Mon, Nov 2, 2009 at 2:51 PM, Thomas Gleixner <tglx@linutronix.de> wr=
+ote:
+> On Fri, 30 Oct 2009, Pedro Ribeiro wrote:
+>> This bug is always reproducible and does not happen with Debian kern=
+el
+>> 2.6.30.2. I didn't test any other kernel, not even the 2.6.31.4
+>> vanilla.
+>>
+>> Below I'm sending the script which does the pm-utils action and my
+>> lspci -vv. Is there any advice you can give me?
+>
+> Yes, please test 2.6.31.4 vanilla so we know whether the problem is
+> related to the -rt patch or not.
+>
+> Thanks,
+>
+> =A0 =A0 =A0 =A0tglx
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
