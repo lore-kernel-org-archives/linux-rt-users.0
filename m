@@ -1,51 +1,72 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: rt file i/o
-Date: Thu, 5 Nov 2009 21:30:41 +0100
-Message-ID: <3efb10970911051230n57deab7fvbcaea5406164484c@mail.gmail.com>
-References: <hcs6dr$235$1@ger.gmane.org>
-	 <5bdc1c8b0911040743h7e4eaa08w97ac8287b806b54f@mail.gmail.com>
-	 <4AF1A327.3040103@klingt.org> <20091104171412.GB1702@opentech.at>
-	 <4AF1BAB9.5080104@klingt.org> <20091104164413.3aff479c@torg>
-	 <4AF29B16.1000104@klingt.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.31.5-rt17
+Date: Fri, 6 Nov 2009 17:46:45 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
+ <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
+ <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
+ <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Clark Williams <williams@redhat.com>,
-	Nicholas Mc Guire <der.herr@hofr.at>, y@opentech.at,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>,
-	linux-rt-users@vger.kernel.org
-To: Tim Blechmann <tim@klingt.org>
+	John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gv-out-0910.google.com ([216.239.58.189]:34383 "EHLO
-	gv-out-0910.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758549AbZKEUag (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Nov 2009 15:30:36 -0500
-Received: by gv-out-0910.google.com with SMTP id r4so127829gve.37
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Nov 2009 12:30:41 -0800 (PST)
-In-Reply-To: <4AF29B16.1000104@klingt.org>
+Received: from www.tglx.de ([62.245.132.106]:57490 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1759423AbZKFQso (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 6 Nov 2009 11:48:44 -0500
+In-Reply-To: <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+B1;2005;0cWe are pleased to announce the next update to our new preempt-rt
+series.
 
->>> that is what i thought for years ... but according to [1] a page fault
->>> in an rt process freezes the entire process with both rt and non-rt
->>> threads until the page fault is handled ...
->>
->> No, we need to get that fixed in the wiki. It may have been the case
->> that the entire process was frozen while a fault was being handled, but
->> I don't believe that is the case now. If you're in a thread on core0
->> and a sibling thread on core1 faults, you shouldn't be impacted unless
->> you're trying to reference the same memory.
->
-> well, then my application seems to be real-time safe ... it would be
-> nice if the wiki would reflect the current state of the rt-preempt
-> kernel, though ...
+    - forward to 2.6.31.5
+    - scheduler improvements (peterz, dino)
+    - various security fixes
+    - tracer enhancements (carsten)
 
-Well, I wrote this part of the wiki quite some time ago, and yes it
-might be outdated on some points.
-I will look into it, and update it in a couple of days.
+Download locations:
+   
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-Kind regards,
+Git release branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+  
+Git development branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
 
-Remy
+Gitweb:
+    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+  
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.31.5-rt17 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.5.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.5-rt17.bz2
+
+Enjoy !
+
+      tglx
