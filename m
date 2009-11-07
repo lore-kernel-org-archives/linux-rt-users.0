@@ -1,72 +1,43 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.31.5-rt17
-Date: Fri, 6 Nov 2009 17:46:45 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906151117440.2800@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain>
- <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain>
- <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain>
- <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
+From: Leon Woestenberg <leon.woestenberg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: yield() in i2c non-happy paths hits BUG under -rt patch
+Date: Sat, 7 Nov 2009 20:01:59 +0100
+Message-ID: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>,
-	John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:57490 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759423AbZKFQso (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Nov 2009 11:48:44 -0500
-In-Reply-To: <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	"Jean Delvare (PC drivers, core)" <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>,
+	"Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>
+Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-B1;2005;0cWe are pleased to announce the next update to our new preempt-rt
-series.
+Hello Jean, Ben, -i2c and -rt devs,
 
-    - forward to 2.6.31.5
-    - scheduler improvements (peterz, dino)
-    - various security fixes
-    - tracer enhancements (carsten)
 
-Download locations:
-   
-    http://rt.et.redhat.com/download/
-    http://www.kernel.org/pub/linux/kernel/projects/rt/
+during testing the Linux PREEMP_RT work (step-by-step being merged
+with mainline) together with I2C functionality I hit the fact that the
+I2C
+subsystem uses yield() in some of the non-happy code paths (mostly
+during chip / address probing etc).
 
-Git release branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
-  
-Git development branch:
-    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+My (embedded) system was running a low-priority real-time work on the
+generic workqueue which tried to blink a LED using an I2C I/O
+multiplexer
+when I hit the BUG where this real-time task ran into the yield() of
+try_address().
 
-Gitweb:
-    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
-  
-Information on the RT patch can be found at:
+Grepping through the I2C subsystem code there where more yield()
+sprinkled in, without it being clear to me why they are there.
 
-    http://rt.wiki.kernel.org/index.php/Main_Page
 
-to build the 2.6.31.5-rt17 tree, the following patches should be
-applied:
+Can those yield()s please be removed, and if they are needed for some
+reason (??) be replaced with something equivalent?
 
-    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.5.tar.bz2
-    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.5-rt17.bz2
 
-Enjoy !
+I am no longer with this particular project, I do not have the
+defconfig and kernel logs at my disposal.
 
-      tglx
+Regards,
+-- 
+Leon
