@@ -1,41 +1,71 @@
-From: Sven-Thorsten Dietrich <sven-IsH+rWyeNGyzjR9+/8zPv5owlv4uC7bZ@public.gmane.org>
-Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
-Date: Sun, 08 Nov 2009 10:57:16 -0800
-Message-ID: <4AF7148C.9090706@thebigcorporation.com>
-References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com> <20091107210147.3e754278@hyperion.delvare>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.31.6-rt19
+Date: Tue, 10 Nov 2009 13:28:45 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906170903370.2800@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain>
+ <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain>
+ <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
+ <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Leon Woestenberg <leon.woestenberg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
-	linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	"Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>
-To: Jean Delvare <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20091107210147.3e754278-ig7AzVSIIG7kN2dkZ6Wm7A@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>,
+	John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:58753 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756044AbZKJM3e (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 10 Nov 2009 07:29:34 -0500
+In-Reply-To: <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/07/2009 12:01 PM, Jean Delvare wrote:
->
-> One thing I do not understand: if yield() is a bug to RT kernels, then
-> we would have to remove them all? But so far, yield() still exists in
-> the kernel tree, and it serves a purpose. Are you going to ask all
-> developers to remove all occurrences of yield() in their code? Doesn't
-> sound terribly realistic.
->
->    
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-The flaw in using yield() with RT priorities, is that it doesn't do what 
-you expect.
+    - forward to 2.6.31.6
 
-The scheduler will run, and pick the highest-priority thread, which is 
-the one yield()-ing.
+    - Add missing preemption point in ksoftirqd (Jupyung Lee)
 
-So the risk is, that whatever the yield() intended to do, it won't do, 
-and worse, that you will end up endlessly yielding to yourself, locking 
-the machine.
+Download locations:
+   
+    http://rt.et.redhat.com/download/
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-So the call is for something more explicit of an implementation.
+Git release branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+  
+Git development branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
 
-Sven
+Gitweb:
+    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+  
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.31.6-rt19 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.6.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.6-rt19.bz2
+
+Enjoy !
+
+      tglx
