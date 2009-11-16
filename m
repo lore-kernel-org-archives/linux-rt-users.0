@@ -1,41 +1,72 @@
-From: Mark Brown <broonie-yzvPICuk2AATkU/dhu1WVueM+bqZidxxQQ4Iyu8u01E@public.gmane.org>
-Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
-Date: Mon, 16 Nov 2009 15:56:06 +0000
-Message-ID: <20091116155606.GC29479@sirena.org.uk>
-References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com> <20091107210147.3e754278@hyperion.delvare> <4AF7148C.9090706@thebigcorporation.com> <20091112211255.09cd884a@hyperion.delvare> <alpine.LFD.2.00.0911132139560.24119@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Jean Delvare <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>,
-	Sven-Thorsten Dietrich <sven-IsH+rWyeNGyzjR9+/8zPv5owlv4uC7bZ@public.gmane.org>,
-	Leon Woestenberg <leon.woestenberg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
-	linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	"Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>,
-	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
-	LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.0911132139560.24119-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/3] rt-tests: Makefile - Change FLAGS to CFLAGS
+Date: Mon, 16 Nov 2009 19:40:12 +0100
+Message-ID: <1258396814-12929-2-git-send-email-jkacur@redhat.com>
+References: <1258396814-12929-1-git-send-email-jkacur@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-fx0-f221.google.com ([209.85.220.221]:44546 "EHLO
+	mail-fx0-f221.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752748AbZKPSkM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Nov 2009 13:40:12 -0500
+Received: by fxm21 with SMTP id 21so3019125fxm.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Nov 2009 10:40:17 -0800 (PST)
+In-Reply-To: <1258396814-12929-1-git-send-email-jkacur@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 13, 2009 at 11:03:39PM +0100, Thomas Gleixner wrote:
+Change FLAGS to CFLAGS as this is the standard
 
-> Q: Why put people yield() into their code ?
-> A: Because:
->    - it is less nasty than busy waiting for a long time
->    - it works better
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ Makefile |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-...
+diff --git a/Makefile b/Makefile
+index 6a56a65..9685587 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@ VERSION_STRING = 0.53
+ 
+ TARGETS	= cyclictest signaltest classic_pi pi_stress \
+ 	  hwlatdetect rt-migrate-test
+-FLAGS	= -Wall -Wno-nonnull -O2
++CFLAGS	= -Wall -Wno-nonnull -O2
+ LIBS 	= -lpthread -lrt
+ DESTDIR	?=
+ prefix  ?= /usr/local
+@@ -12,23 +12,23 @@ mandir	?= $(prefix)/share/man/man8
+ all: $(TARGETS)
+ 
+ cyclictest: src/cyclictest/cyclictest.c
+-	$(CC) $(FLAGS) -D VERSION_STRING=$(VERSION_STRING) $^ -o $@ $(LIBS)
++	$(CC) $(CFLAGS) -D VERSION_STRING=$(VERSION_STRING) $^ -o $@ $(LIBS)
+ 
+ signaltest: src/signaltest/signaltest.c
+-	$(CC) $(FLAGS) -D VERSION_STRING=$(VERSION_STRING) $^ -o $@ $(LIBS)
++	$(CC) $(CFLAGS) -D VERSION_STRING=$(VERSION_STRING) $^ -o $@ $(LIBS)
+ 
+ classic_pi: src/pi_tests/classic_pi.c
+-	$(CC) $(FLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
++	$(CC) $(CFLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
+ 
+ pi_stress:  src/pi_tests/pi_stress.c
+-	$(CC) $(FLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
++	$(CC) $(CFLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
+ 
+ hwlatdetect:  src/hwlatdetect/hwlatdetect.py
+ 	chmod +x src/hwlatdetect/hwlatdetect.py
+ 	ln -s src/hwlatdetect/hwlatdetect.py hwlatdetect
+ 
+ rt-migrate-test: src/rt-migrate-test/rt-migrate-test.c
+-	$(CC) $(FLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
++	$(CC) $(CFLAGS) -D_GNU_SOURCE -D VERSION_STRING=\"$(VERSION_STRING)\" $^ -o $@ $(LIBS)
+ 
+ CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec
+ CLEANUP += $(if $(wildcard .git), ChangeLog)
+-- 
+1.6.2.5
 
-> I can see the idea of using yield() to let other tasks making progress
-> in situations where the hardware is a design failure as well,
-> e.g. bitbang devices. But if we have to deal with hardware which is
-> crap by design yield() is the worst of all answers simply due to its
-> horrible semantics.
-
-What other options are there available for the first case (which is
-often why things work better with the use of yield) that don't involve
-sleeps, or is the idea that in situations like this drivers should
-always sleep?
