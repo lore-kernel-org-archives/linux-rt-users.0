@@ -1,7 +1,7 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
-Date: Thu, 19 Nov 2009 14:18:40 +0100
-Message-ID: <1258636720.4372.350.camel@twins>
+Date: Thu, 19 Nov 2009 14:21:12 +0100
+Message-ID: <1258636872.4372.354.camel@twins>
 References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
 	 <20091107210147.3e754278@hyperion.delvare>
 	 <4AF7148C.9090706@thebigcorporation.com>
@@ -14,10 +14,11 @@ References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
 	 <20091118175202.490989d8@hyperion.delvare>
 	 <alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
 	 <20091119130526.23a69b85@hyperion.delvare>
+	 <alpine.LFD.2.00.0911191357490.24119@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: Jean Delvare <khali@linux-fr.org>,
 	Leon Woestenberg <leon.woestenberg@gmail.com>,
 	Alan Cox <alan@lxorguk.ukuu.org.uk>,
 	Mark Brown <broonie@opensource.wolfsonmicro.com>,
@@ -26,45 +27,24 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	"Ben Dooks (embedded platforms)" <ben-linux@fluff.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Jean Delvare <khali@linux-fr.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bombadil.infradead.org ([18.85.46.34]:55957 "EHLO
+Received: from bombadil.infradead.org ([18.85.46.34]:56038 "EHLO
 	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752697AbZKSNRQ convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752293AbZKSNTq convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Nov 2009 08:17:16 -0500
-In-Reply-To: <20091119130526.23a69b85@hyperion.delvare>
+	Thu, 19 Nov 2009 08:19:46 -0500
+In-Reply-To: <alpine.LFD.2.00.0911191357490.24119@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-11-19 at 13:05 +0100, Jean Delvare wrote:
+On Thu, 2009-11-19 at 14:11 +0100, Thomas Gleixner wrote:
+> > You say "NOOP by default", does this imply there is a way to change
+> > this?
 > 
-> Was yield() turned into NOOP by design, or was it a bug?
+> There is a sysctl: sysctl_sched_compat_yield 
 
-Design.
-
-yield() for SCHED_OTHER is not specified, so everything goes.
-
-There's two possible 'sane' options for yield for (CFS's) SCHED_OTHER:
-
- - place the task behind all other tasks of the same nice level
-
-   This is however an O(n) operation for CFS since we don't separate
-   things out based on nice level, hence we don't do that.
-
- - service the task that is most starved of service
-
-   That fits nicely into the fairness thing, and is what we default to.
-   The thing is, that's current in 99% of the cases, otherwise we would
-   already be running another task.
-
-   So its not strictly a NOP, but in practice it is.
+This makes yield() place current behind all other tasks, and sucks too
+for some workloads.
 
 
-There is also another option, place the task behind _all_ other tasks,
-but that also surprises people and causes regressions, because they
-don't expect yield() to wait _that_ long.
-
-
-And all this is irrespective of the question of whether yield() is ever
-a sane thing to do (I say not).
