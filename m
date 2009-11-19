@@ -1,63 +1,87 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH] cleanup sched_yield (sys)call nesting.
-Date: Thu, 19 Nov 2009 11:36:42 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0911191122210.24119@localhost.localdomain>
-References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>  <20091107210147.3e754278@hyperion.delvare>  <4AF7148C.9090706@thebigcorporation.com>  <20091112211255.09cd884a@hyperion.delvare>  <alpine.LFD.2.00.0911132139560.24119@localhost.localdomain>
-  <20091116155606.GC29479@sirena.org.uk>  <c384c5ea0911171650t1c441dc4v746d31e4154fcb30@mail.gmail.com>  <20091118010520.4cd397d4@lxorguk.ukuu.org.uk>  <c384c5ea0911180828x7c857189w3316c93bb78100ab@mail.gmail.com>  <20091118175202.490989d8@hyperion.delvare>
-  <1258577194.12429.86.camel@sven.thebigcorporation.com>  <alpine.LFD.2.00.0911182153010.24119@localhost.localdomain>  <1258578290.12429.108.camel@sven.thebigcorporation.com>  <alpine.LFD.2.00.0911182233510.24119@localhost.localdomain>
- <1258606116.25022.57.camel@sven.thebigcorporation.com>
+From: Jean Delvare <khali@linux-fr.org>
+Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
+Date: Thu, 19 Nov 2009 13:05:26 +0100
+Message-ID: <20091119130526.23a69b85@hyperion.delvare>
+References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
+	<20091107210147.3e754278@hyperion.delvare>
+	<4AF7148C.9090706@thebigcorporation.com>
+	<20091112211255.09cd884a@hyperion.delvare>
+	<alpine.LFD.2.00.0911132139560.24119@localhost.localdomain>
+	<20091116155606.GC29479@sirena.org.uk>
+	<c384c5ea0911171650t1c441dc4v746d31e4154fcb30@mail.gmail.com>
+	<20091118010520.4cd397d4@lxorguk.ukuu.org.uk>
+	<c384c5ea0911180828x7c857189w3316c93bb78100ab@mail.gmail.com>
+	<20091118175202.490989d8@hyperion.delvare>
+	<alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo-X9Un+BFzKDI@public.gmane.org>, Jean Delvare <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>,
-	Leon Woestenberg <leon.woestenberg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
-	Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>,
-	Mark Brown <broonie-yzvPICuk2AATkU/dhu1WVueM+bqZidxxQQ4Iyu8u01E@public.gmane.org>,
-	linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	"Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>,
-	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
-	LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-To: Sven-Thorsten Dietrich <sven-IsH+rWyeNGyzjR9+/8zPv5owlv4uC7bZ@public.gmane.org>
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1258606116.25022.57.camel-ZUMNgey8dAdBci4yedNfAfz91O0DMRRp0E9HWUfgJXw@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Leon Woestenberg <leon.woestenberg@gmail.com>,
+	Alan Cox <alan@lxorguk.ukuu.org.uk>,
+	Mark Brown <broonie@opensource.wolfsonmicro.com>,
+	Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
+	linux-i2c@vger.kernel.org,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Ben Dooks (embedded platforms)" <ben-linux@fluff.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from bamako.nerim.net ([62.4.17.28]:50198 "EHLO bamako.nerim.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750716AbZKSMFY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Nov 2009 07:05:24 -0500
+In-Reply-To: <alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 18 Nov 2009, Sven-Thorsten Dietrich wrote:
-> We are trying to get rid of __sched_yield calls from-inside-the-Kernel,
-> but sys_sched_yield() from user-space will remain.
+On Wed, 18 Nov 2009 21:36:48 +0100 (CET), Thomas Gleixner wrote:
+> On Wed, 18 Nov 2009, Jean Delvare wrote:
 > 
-> This patch breaks out the in-Kernel interface for the yield()
-> functionality and deprecates it explicitly.
+> > On Wed, 18 Nov 2009 17:28:53 +0100, Leon Woestenberg wrote:
+> > > On Wed, Nov 18, 2009 at 2:05 AM, Alan Cox <alan@lxorguk.ukuu.org.uk> wrote:
+> > > > Our timers are very efficient and some day we will need to make jiffies a
+> > > > function and stop the timer ticking for best performance. At that point
+> > > > timers are probably the most efficient way to do much of this.
+> > >
+> > > The problem with I2C bitbanged is the stringent timing, we need a way
+> > > to have fine-grained sleeping
+> > > mixed with real-time tasks in order to make this work.
+> > 
+> > FWIW, the problem that was initially reported has nothing to do with
+> > this. i2c-algo-bit used mdelay() during transactions, not yield().
+> > yield() is used only in once place, _between_ transactions attempts.
+> > There are no strict timing constraints there.
 > 
-> The sys_sched_yield() variety, however is not deprecated.
-> 
-> The objective is to deprecate *only* the in-kernel calls to
-> sched_yield(), in hopes of reducing new calls to sched_yield() being
-> added.
+> That still does not explain why yield() is necessary _between_ the
+> transaction attempts.
 
-Nothing in the kernel calls sched_yield() because there is no such
-function.
+It is not _necessary_. We are just trying to be fair to other kernel
+threads, because bit-banging is expensive and this is the only case
+where we know we can tolerate a delay.
 
-> Eventually, when the in-Kernel calls are gone, the __sched_yield() would
-> be removed, and the first 2 hunks would essentially be reverted, leaving
-> only the user-space caller sys_sched_yield. 
-> 
-> For the time being we add 2 lines and 2 braces of bulk, in hopes that
-> elsewhere this eliminates more __sched_yield() calls being added while
-> we work to eliminate the ones that exist already.
+Just to clarify things... does (or did) yield() have anything to do
+with CONFIG_PREEMPT_VOLUNTARY?
 
-Err ? WTF do you need to fiddle in sched.c to deprecate a function ?
+> That code is fully preemptible, otherwise you could not call
+> yield().
 
-Nothing in the kernel calls sys_sched_yield() except the syscall and
-the implementation of yield() in sched.c. The drivers,... call yield()
-nothing else.
+How does one know what code is preemtible and what code is not? The
+rest of the i2c-algo-bit code should definitely _not_ be preemtible, as
+it is highly timing sensitive.
 
-To deprecate yield() all you need is adding __deprecated to the
-function prototype in sched.h. And that's the only way you alert users
-because it warns when compiling code which _calls_ yield() not when
-compiling the implementation in sched.c.
+> And as I said before nobody even noticed that the yield()
+> default implementation was changed to a NOOP by default in the
+> scheduler.
 
-Sigh,
+Well, I guess only people monitoring system latency would notice, as
+this is the only thing yield() was supposed to help with in the first
+place.
 
-	tglx
+You say "NOOP by default", does this imply there is a way to change
+this?
+
+Was yield() turned into NOOP by design, or was it a bug?
+
+-- 
+Jean Delvare
