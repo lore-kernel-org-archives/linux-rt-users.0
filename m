@@ -1,7 +1,7 @@
-From: Jean Delvare <khali@linux-fr.org>
+From: Alan Cox <alan-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
 Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
-Date: Thu, 19 Nov 2009 13:05:26 +0100
-Message-ID: <20091119130526.23a69b85@hyperion.delvare>
+Date: Thu, 19 Nov 2009 12:59:06 +0000
+Message-ID: <20091119125906.6ad00edd@lxorguk.ukuu.org.uk>
 References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
 	<20091107210147.3e754278@hyperion.delvare>
 	<4AF7148C.9090706@thebigcorporation.com>
@@ -13,75 +13,32 @@ References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
 	<c384c5ea0911180828x7c857189w3316c93bb78100ab@mail.gmail.com>
 	<20091118175202.490989d8@hyperion.delvare>
 	<alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
+	<20091119130526.23a69b85@hyperion.delvare>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Leon Woestenberg <leon.woestenberg@gmail.com>,
-	Alan Cox <alan@lxorguk.ukuu.org.uk>,
-	Mark Brown <broonie@opensource.wolfsonmicro.com>,
-	Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	linux-i2c@vger.kernel.org,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	"Ben Dooks (embedded platforms)" <ben-linux@fluff.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bamako.nerim.net ([62.4.17.28]:50198 "EHLO bamako.nerim.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750716AbZKSMFY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Nov 2009 07:05:24 -0500
-In-Reply-To: <alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
+	Leon Woestenberg <leon.woestenberg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
+	Mark Brown <broonie-yzvPICuk2AATkU/dhu1WVueM+bqZidxxQQ4Iyu8u01E@public.gmane.org>,
+	Sven-Thorsten Dietrich <sven-IsH+rWyeNGyzjR9+/8zPv5owlv4uC7bZ@public.gmane.org>,
+	linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	"Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>,
+	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
+	LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Jean Delvare <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>
+Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20091119130526.23a69b85-ig7AzVSIIG7kN2dkZ6Wm7A@public.gmane.org>
+Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 18 Nov 2009 21:36:48 +0100 (CET), Thomas Gleixner wrote:
-> On Wed, 18 Nov 2009, Jean Delvare wrote:
-> 
-> > On Wed, 18 Nov 2009 17:28:53 +0100, Leon Woestenberg wrote:
-> > > On Wed, Nov 18, 2009 at 2:05 AM, Alan Cox <alan@lxorguk.ukuu.org.uk> wrote:
-> > > > Our timers are very efficient and some day we will need to make jiffies a
-> > > > function and stop the timer ticking for best performance. At that point
-> > > > timers are probably the most efficient way to do much of this.
-> > >
-> > > The problem with I2C bitbanged is the stringent timing, we need a way
-> > > to have fine-grained sleeping
-> > > mixed with real-time tasks in order to make this work.
-> > 
-> > FWIW, the problem that was initially reported has nothing to do with
-> > this. i2c-algo-bit used mdelay() during transactions, not yield().
-> > yield() is used only in once place, _between_ transactions attempts.
-> > There are no strict timing constraints there.
-> 
-> That still does not explain why yield() is necessary _between_ the
-> transaction attempts.
+> Well, I guess only people monitoring system latency would notice, as
+> this is the only thing yield() was supposed to help with in the first
+> place.
 
-It is not _necessary_. We are just trying to be fair to other kernel
-threads, because bit-banging is expensive and this is the only case
-where we know we can tolerate a delay.
+	if (need_resched())
+		schedule();
 
-Just to clarify things... does (or did) yield() have anything to do
-with CONFIG_PREEMPT_VOLUNTARY?
-
-> That code is fully preemptible, otherwise you could not call
-> yield().
-
-How does one know what code is preemtible and what code is not? The
-rest of the i2c-algo-bit code should definitely _not_ be preemtible, as
-it is highly timing sensitive.
-
-> And as I said before nobody even noticed that the yield()
-> default implementation was changed to a NOOP by default in the
-> scheduler.
-
-Well, I guess only people monitoring system latency would notice, as
-this is the only thing yield() was supposed to help with in the first
-place.
-
-You say "NOOP by default", does this imply there is a way to change
-this?
-
-Was yield() turned into NOOP by design, or was it a bug?
-
--- 
-Jean Delvare
+will make non-rt tasks act politely at the right moments. RT tasks will
+likely immediately get to take the CPU again depending upon the
+scheduling parameters in use.
