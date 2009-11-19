@@ -1,95 +1,43 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: yield() in i2c non-happy paths hits BUG under -rt patch
-Date: Thu, 19 Nov 2009 15:15:54 +0100
-Message-ID: <1258640154.3931.407.camel@laptop>
-References: <c384c5ea0911071101u7415d37o2611c542e5fae309@mail.gmail.com>
-	 <20091107210147.3e754278@hyperion.delvare>
-	 <4AF7148C.9090706@thebigcorporation.com>
-	 <20091112211255.09cd884a@hyperion.delvare>
-	 <alpine.LFD.2.00.0911132139560.24119@localhost.localdomain>
-	 <20091116155606.GC29479@sirena.org.uk>
-	 <c384c5ea0911171650t1c441dc4v746d31e4154fcb30@mail.gmail.com>
-	 <20091118010520.4cd397d4@lxorguk.ukuu.org.uk>
-	 <c384c5ea0911180828x7c857189w3316c93bb78100ab@mail.gmail.com>
-	 <20091118175202.490989d8@hyperion.delvare>
-	 <alpine.LFD.2.00.0911182127040.24119@localhost.localdomain>
-	 <20091119130526.23a69b85@hyperion.delvare>
-	 <20091119125906.6ad00edd@lxorguk.ukuu.org.uk>
-	 <1258636014.4372.328.camel@twins>
-	 <20091119150008.6e757c26@hyperion.delvare>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Alan Cox <alan@lxorguk.ukuu.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Leon Woestenberg <leon.woestenberg@gmail.com>,
-	Mark Brown <broonie@opensource.wolfsonmicro.com>,
-	Sven-Thorsten Dietrich <sven@thebigcorporation.com>,
-	linux-i2c@vger.kernel.org,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	"Ben Dooks (embedded platforms)" <ben-linux@fluff.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Jean Delvare <khali@linux-fr.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 0/3] rt-tests: pi_stress fixes
+Date: Thu, 19 Nov 2009 17:35:12 +0100
+Message-ID: <1258648515-7566-1-git-send-email-jkacur@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:34658 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752678AbZKSOQI (ORCPT
+Received: from mail-fx0-f221.google.com ([209.85.220.221]:42674 "EHLO
+	mail-fx0-f221.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757275AbZKSQfM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Nov 2009 09:16:08 -0500
-In-Reply-To: <20091119150008.6e757c26@hyperion.delvare>
+	Thu, 19 Nov 2009 11:35:12 -0500
+Received: by fxm21 with SMTP id 21so2597597fxm.21
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Nov 2009 08:35:17 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2009-11-19 at 15:00 +0100, Jean Delvare wrote:
+I have tested these patches on a Nehalem machine with 4 cores and HT.
+It would be good if folks with larger machines tested too.
 
-> > 	cond_resched();
-> 
-> Are you saying that most calls to yield() should be replaced with calls
-> to cond_resched()?
+I pushed the changes to
+git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
+branch rt-tests-dev
+In the order they should be applied starting with the first:
+97dbb3cebd200a4d45d89d8e264e43b119b2cbcf 
+9093a5de51964f3a9ab1454a77181fad2d3e7217
+2712903a40560378cb61336994258780cfbb83d9
 
-No, depends on the reason yield() is used. Some cases can be replaced by
-locking constructs, such as a condition variable.
-
-> I admit I a little skeptical. While the description of cond_resched()
-> ("latency reduction via explicit rescheduling in places that are safe")
-> sounds promising, following the calls leads me to:
-> 
-> static inline int need_resched(void)
-> {
-> 	return unlikely(test_thread_flag(TIF_NEED_RESCHED));
-> }
-> 
-> So apparently the condition for need_resched() to do anything is
-> considered unlikely... suggesting that cond_resched() is a no-op in
-> most cases? I don't quite get the point of moving away from sched()
-> because it is a no-op, if we end up with a no-op under a different name.
-
-TIF_NEED_RESCHED gets set by the scheduler whenever it decides current
-needs to get preempted, its unlikely() because that reduces the code
-impact of cond_resched() and similar in the case we don't schedule, if
-we do schedule() a mis-predicted branch isn't going to be noticed on the
-overhead of scheduling.
-
-So there's a few cases,
-
-1) PREEMPT=n
-2) Voluntary preempt
-3) PREEMPT=y
+Thanks
 
 
-1) non of this has any effect, if the scheduler wants to reschedule a
-task that's in the kernel, it'll have to wait until it gets back to
-user-space.
+John Kacur (3):
+  rt-tests: pi_stress: Use a pthread_mutex_t for the global variable
+    shutdown
+  rt-tests: pi_stress: Check whether quiet is set, before taking
+    shutdown_mtx
+  rt-tests: pi_stress: Remove racy state variables that cause watchdog
+    to trigger
 
-2) uses cond_resched() and similar to have explicit preemption points,
-so we don't need to wait as long as 1).
-
-3) preempts directly when !preempt_count(), when IRQs are disabled, the
-IPI that will accompany TIF_NEED_RESCHED will be delayed and
-local_irq_enable()/restore() will effect a reschedule due to the pending
-IPI. If preemption was disabled while the IPI hit nothing will happen,
-but preempt_enable() will do the reschedule once preempt_count reaches
-0.
-
-
+ src/pi_tests/pi_stress.c |   58 +++++++++++++++++++++++++++-------------------
+ 1 files changed, 34 insertions(+), 24 deletions(-)
 
