@@ -1,97 +1,57 @@
 From: "Leyendecker, Robert" <Robert.Leyendecker@lsi.com>
 Subject: RE: help needed, 2.6.31.6-rt19 hang with network user app
-Date: Mon, 23 Nov 2009 10:34:56 -0500
-Message-ID: <8C8865ED624BB94F8FE50259E2B5C5B304593DAAED@palmail03.lsi.com>
+Date: Tue, 24 Nov 2009 10:47:03 -0500
+Message-ID: <8C8865ED624BB94F8FE50259E2B5C5B304593DAB2E@palmail03.lsi.com>
 References: <8C8865ED624BB94F8FE50259E2B5C5B304593DAA9E@palmail03.lsi.com>
  <200911210044.09962@blacky.localdomain>
  <8C8865ED624BB94F8FE50259E2B5C5B304593DAACF@palmail03.lsi.com>
  <200911211125.38161@blacky.localdomain>
  <8C8865ED624BB94F8FE50259E2B5C5B304593DAAD2@palmail03.lsi.com>
+ <8C8865ED624BB94F8FE50259E2B5C5B304593DAAED@palmail03.lsi.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: "Leyendecker, Robert" <Robert.Leyendecker@lsi.com>,
-	"Nikita V. Youshchenko" <yoush@cs.msu.su>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from na3sys009aog108.obsmtp.com ([74.125.149.199]:36507 "EHLO
-	na3sys009aog108.obsmtp.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755669AbZKWPfC convert rfc822-to-8bit
+Received: from na3sys009aog109.obsmtp.com ([74.125.149.201]:59074 "EHLO
+	na3sys009aog109.obsmtp.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1758080AbZKXPrH convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Nov 2009 10:35:02 -0500
-In-Reply-To: <8C8865ED624BB94F8FE50259E2B5C5B304593DAAD2@palmail03.lsi.com>
+	Tue, 24 Nov 2009 10:47:07 -0500
+Received: from milmhbs0.lsil.com (mhbs.lsil.com [147.145.1.30])
+	by mail0.lsil.com (8.12.11/8.12.11) with ESMTP id nAOFl5A5029611
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Nov 2009 07:47:05 -0800 (PST)
+Received: from PALHUB01.lsi.com (palhub01.lsi.com [128.94.213.114])
+	by milmhbs0.lsil.com (8.12.11/8.12.11) with ESMTP id nAOFl76G029234
+	for <linux-rt-users@vger.kernel.org>; Tue, 24 Nov 2009 07:47:08 -0800
+In-Reply-To: <8C8865ED624BB94F8FE50259E2B5C5B304593DAAED@palmail03.lsi.com>
 Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-> -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> owner@vger.kernel.org] On Behalf Of Leyendecker, Robert
-> Sent: Saturday, November 21, 2009 10:21 AM
-> To: Nikita V. Youshchenko
-> Cc: rt-users
-> Subject: RE: help needed, 2.6.31.6-rt19 hang with network user app
-> 
-> 
-> 
-> > -----Original Message-----
-> > From: Nikita V. Youshchenko [mailto:yoush@cs.msu.su]
-> > Sent: Saturday, November 21, 2009 2:26 AM
-> > To: Leyendecker, Robert
-> > Cc: rt-users
-> > Subject: Re: help needed, 2.6.31.6-rt19 hang with network user app
-> >
-> > > > Does host A have a serial port? If yes, connect that to another
-> > host
-> > > > using a null-modem cable, boot host A with serial console (boot
-> arg
-> > > > console=ttyS0,15200), and use that to extract kernel crash
-> message.
-> > > > Then post that to this list.
 > > >
-> > > unfortunately - nothing shows up in the serial log after the normal
-> > boot
-> > > spew. I do see some sort of cr/lf every second for a while.
+> > > > Nov 20 21:12:00 localhost kernel: BUG: using smp_processor_id()
+> in
+> > > preemptible [00000000] code: smash/6801
+> > > > Nov 20 21:12:00 localhost kernel: caller is  __schedule+0xe/0x7d4
+> > Nov
+> > > 20 21:12:00 localhost kernel: Pid: 6801, comm: smash Not tainted
+> > > 2.6.31.6-rt19 #1
+> > > > Nov 20 21:12:00 localhost kernel: Call Trace:
+> > > > Nov 20 21:12:00 localhost kernel: [<c06dc3df>] ? printk+0xf/0x18
+> > > > Nov 20 21:12:00 localhost kernel: [<c05499a6>]
+> > > debug_smp_processor_id+0xa6/0xbc
+> > > > Nov 20 21:12:00 localhost kernel: [<c06dc689>]
+> __schedule+0xe/0x7d4
+> > > > Nov 20 21:12:00 localhost kernel: [<c046621f>] ?
+> > > audit_syscall_exit+0xfa/0x10f
+> > > > Nov 20 21:12:00 localhost kernel: [<c040a955>] ?
+> > > syscall_trace_leave+0xc8/0xef
+> > > > Nov 20 21:12:00 localhost kernel: [<c040338a>]
+> > work_resched+0x5/0x19
+> > >
+> > > Hopely somebody on list will be able to comment on this.
 > >
-> > Of course that should be console=ttyS0,115200
-> > And on other side serial communication software should be configured
-> > to use 115200 8n1 with no flow control.
-> No problem, I caught that. During boot, console messages are displayed
-> in tty and it looks normal, after boot tty is quiet. I'll look at it
-> some more because it would be very nice to have the console working.
-> Are the regular tty HUPs a result of failed auto baud detect?
-> >
-> > > Nov 20 21:12:00 localhost kernel: BUG: using smp_processor_id() in
-> > preemptible [00000000] code: smash/6801
-> > > Nov 20 21:12:00 localhost kernel: caller is  __schedule+0xe/0x7d4
-> Nov
-> > 20 21:12:00 localhost kernel: Pid: 6801, comm: smash Not tainted
-> > 2.6.31.6-rt19 #1
-> > > Nov 20 21:12:00 localhost kernel: Call Trace:
-> > > Nov 20 21:12:00 localhost kernel: [<c06dc3df>] ? printk+0xf/0x18
-> > > Nov 20 21:12:00 localhost kernel: [<c05499a6>]
-> > debug_smp_processor_id+0xa6/0xbc
-> > > Nov 20 21:12:00 localhost kernel: [<c06dc689>] __schedule+0xe/0x7d4
-> > > Nov 20 21:12:00 localhost kernel: [<c046621f>] ?
-> > audit_syscall_exit+0xfa/0x10f
-> > > Nov 20 21:12:00 localhost kernel: [<c040a955>] ?
-> > syscall_trace_leave+0xc8/0xef
-> > > Nov 20 21:12:00 localhost kernel: [<c040338a>]
-> work_resched+0x5/0x19
-> >
-> > Hopely somebody on list will be able to comment on this.
 > 
 
-One other piece of information - from program start to program start, the irq-net-rx is taking between 0% and 20% CPU. I can start the program and top report 50% CPU loading and net-rx at 20%. Kill the app restart and I get 1%/0% (in fact, net-rx never makes it to top of list). Kill the app and restart and I get 80%/10% and net-rx is pegged at top of list, etc, etc. 
-
-When top reports CPU load at 1% and net-rx at 0%, this seems to give me my longest run time without crash (I don't think I've recorded one in this state), however it might take 20 starts or more to get into this state. So there is some sort of phase relationship. Whether or not the app is receiving data at time of program start doesn't seem to have any effect on the variance reported by top. Seems random.
-
-Open question, should I move this post to LKML or is it better to do some additional troubleshooting here first?
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-
-> users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Re-posted to LKML http://lkml.org/lkml/2009/11/23/548 and opened a bug in Fedora Bugzilla 540961.
