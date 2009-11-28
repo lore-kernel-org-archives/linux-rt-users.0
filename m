@@ -1,30 +1,35 @@
-From: "Ardhan Madras" <ajhwb@knac.com>
-Subject: PREEMPT_RT on X/GTK+
-Date: Fri, 27 Nov 2009 21:31:28 -0800
-Message-ID: <20091127213128.FCC9A1E@resin13.mta.everyone.net>
-Reply-To: <ajhwb@knac.com>
+From: Carsten Emde <Carsten.Emde@osadl.org>
+Subject: Re: PREEMPT_RT on X/GTK+
+Date: Sat, 28 Nov 2009 14:23:56 +0100
+Message-ID: <4B11246C.4030600@osadl.org>
+References: <20091127213128.FCC9A1E@resin13.mta.everyone.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: RT-Users <linux-rt-users@vger.kernel.org>
+To: Ardhan Madras <ajhwb@knac.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imta-38.everyone.net ([216.200.145.38]:42779 "EHLO
-	omta0110.mta.everyone.net" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750822AbZK1FbW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Nov 2009 00:31:22 -0500
-Received: from dm24.mta.everyone.net (sj1-slb03-gw2 [172.16.1.96])
-	by omta0110.mta.everyone.net (Postfix) with ESMTP id 792A563A659
-	for <linux-rt-users@vger.kernel.org>; Fri, 27 Nov 2009 21:31:28 -0800 (PST)
+Received: from toro.web-alm.net ([62.245.132.31]:55894 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751283AbZK1OfM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 28 Nov 2009 09:35:12 -0500
+In-Reply-To: <20091127213128.FCC9A1E@resin13.mta.everyone.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+Ardhan,
 
-Is there are special care when using PREEMPT_RT patch in X/GTK+ applications?, i need to build a realtime control application using RS-232 with X/GTK+ interfaces.
+> Is there special care when using PREEMPT_RT patch in X/GTK+ 
+> applications? [..]
+In general, no other care than with any other RT application.
 
-Thanks,
+Do you wish the GUI to immediately and smoothly reflect important
+states of your control application? In this case, you should
+consider that the display only changes, if both the GTK+ application
+and the X server react in time. For this purpose, it is sometimes
+recommended to set the priority of the X server a little less
+than that of the control application. Never assign the highest
+priority of the system to the X server, since this may completely
+block the server. A priority of < 49, however, is normally safe.
 
-             - Ardhan
-
-_____________________________________________________________
-Listen to KNAC, Hit the Home page and Tune In Live! ---> http://www.knac.com
+	Carsten.
