@@ -1,85 +1,94 @@
-From: Yogesh Chaudhari <mr.yogesh@gmail.com>
-Subject: Re: Ethernet issues with lite5200 board from linux-2.6.31
-Date: Thu, 3 Dec 2009 09:44:04 +0530
-Message-ID: <d1f76ba30912022014y1f688827qe8145a7d40de5321@mail.gmail.com>
-References: <d1f76ba30911300038w272578dfx9adb116bde493e00@mail.gmail.com>
-	<d1f76ba30911300150g10c1382clb2958245ebf94362@mail.gmail.com>
-	<fa686aa40911300759h153b3300uc54b5d1871bfc839@mail.gmail.com>
+From: Hector Perez Tijero <perezh@unican.es>
+Subject: Re: Posix Execution time clock
+Date: Fri, 04 Dec 2009 18:23:21 -0800
+Message-ID: <4B19C419.2020204@unican.es>
+References: <4B1508B5.7030202@unican.es> <20091201123228.GM3864@uudg.org>
+	<20091202190845.GB22051@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Cc: Robin Gareus <robin@gareus.org>, rt-users <linux-rt-users@vger.kernel.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Mark Knecht <markknecht@gmail.com>, Steven Rostedt <rostedt@goodmis.org>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Clark Williams <williams@redhat.com>, Darren Hart <dvhltc@us.ibm.com>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Jon Masters <jcm@redhat.com>, John Kacur <jkacur@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>, Jan Blunck <jblunck@suse.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	linuxppc-dev <linuxppc-dev@ozlabs.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <fa686aa40911300759h153b3300uc54b5d1871bfc839@mail.gmail.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@lists.ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppd-linuxppc64-dev=m.gmane.org@lists.ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ccserver2.unican.es ([130.206.5.101]:56402 "EHLO
+	ccserver2.unican.es" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752538AbZLECXu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Dec 2009 21:23:50 -0500
+Received: from ccserver2.unican.es (ccserver2.unican.es [127.0.0.1])
+	by ccserver2.unican.es (Postfix) with ESMTP id D03B8182A46
+	for <linux-rt-users@vger.kernel.org>; Sat,  5 Dec 2009 03:23:50 +0100 (CET)
+Received: from correo.unican.es (ccserver18.unican.es [130.206.5.18])by
+	ccserver2.unican.es (Postfix) with ESMTP id C343A182A44for
+	<linux-rt-users@vger.kernel.org>; Sat,  5 Dec 2009 03:23:50 +0100 (CET)
+In-Reply-To: <20091202190845.GB22051@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-2009/11/30 Grant Likely <grant.likely@secretlab.ca>:
-> On Mon, Nov 30, 2009 at 2:50 AM, Yogesh Chaudhari <mr.yogesh@gmail.com> w=
+Hi all,
+
+Just to complete the info. I have repeated a similar test (SMP and=20
+scaling frequency disabled in the BIOS, TSC clock) with another functio=
+n:
+
+If I measure the attached function with CLOCK_THREAD_CPUTIME_ID, I keep=
+=20
+getting variable timing results. The execution of this function takes=20
+about 400 usecs in my system. Having called it more than 10_000 times,=20
+most of the measures are within 100 usecs from this value. This range=20
+makes sense to me. But I have found a few measures (less than 10 out of=
+=20
+10_000) which are over 1100 usecs, which it's a bit suspicious. Since=20
+this clock just takes the execution time associated to a single thread=20
+(no preemption time should be included) and the function's execution=20
+time could be considered as "constant", it seems that something is goin=
+g=20
+wrong with this kind of clock.
+
+Any idea?
+
+Thanks
+
+Hector
+
+PS: Ubuntu 2.6.24.-25-rt is based on 2.6.24.7-rt27 patch (link=20
+<http://packages.ubuntu.com/hardy-updates/linux-restricted-modules-2.6.=
+24-25-rt>)
+
+void make_job ()
+{
+  long temp =3D 0;
+  int index, index2 =3D 0;
+  for (index =3D 0; index < 5000; index ++) {
+     temp +=3D index;
+     if (index%97 =3D=3D 0) {
+       for (index2 =3D 0; index2 < 1000; index2 ++) {
+          temp +=3Dindex;
+       }
+     }
+  }
+}
+
+Uwe Kleine-K=F6nig escribi=F3:
+> On Tue, Dec 01, 2009 at 10:32:28AM -0200, Luis Claudio R. Goncalves w=
 rote:
->> Hello,
->> =A0 =A0 =A0 =A0 I am running linux kernel with rt patch on embedded board
->> based on lite5200 eval board. From linux-2.6.31 release, in which the
->> mdio patch has gone inside, =A0the fec ethernet does not come up on this
->> board. I get the following message at startup:
->> mpc52xx MII bus: probed
->> mdio_bus f0003000: error probing PHY at address 1
->>
->>
->> After the bootup if I try to do a ifconfig I get the message:
->> net eth2: of_phy_connect failed
->>
->>
->> If I change the value of reg in dts file (lite5200.dts) to 0 then this
->> ethernet comes up. However upto this kernel version, this was not
->> required.
->>
->> Ethernet does not come up on board with original lite5200.dts file
+>  =20
+>> Along with that, the latest version for 2.6.24, IIRC, was 2.6.24.7-r=
+t27.
+>> So, it sounds like you are using older versions of old software.
+>>    =20
+> The version scheme of Ubuntu doesn't allow to read the used rt patch
+> from the kernel version.  The Ubuntu version used is 2.6.24-25-rt.  T=
+his
+> only means something like:  The 25th Ubuntu revision of the 2.6.24
+> kernel in the rt feature set.
 >
-> Is your board based on the Lite5200 or the Lite5200B? =A0The phys are at
-> different addresses on those two revisions of the board. =A0There is a
-> different .dts file for each board.
+> Best regards
+> Uwe
 >
->> phy0: ethernet-phy@1 {
->> =A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0reg =
-=3D <1>;
->> =A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0};
->>
->> Ethernet comes up on board with this change
->> phy0: ethernet-phy@1 {
->> =A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0reg =
-=3D <0>;
->> =A0=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0};
->
-> Some PHYs treat address 0 as the 'broadcast' address. =A0You need to
-> fill in this field (and modify the ethernet-phy@<address> node name)
-> to reflect the address that your phy is actually at.
->
-> g.
->
- I have tried the same with the latest kernel both with and without
-rt, but with the same end result. I have checked that the mpc52xx fec
-driver was changed from 2.6.31 version but I am not able to point
-where this error is coming up from and how changing the reg value in
-dts (which is not required till previous versions) is solving this.
+>  =20
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
