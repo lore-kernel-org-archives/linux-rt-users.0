@@ -1,39 +1,59 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 4/7] Add the following new tests - ptsematest -
- sigwaittest - svsematest - sendme
-Date: Tue, 15 Dec 2009 09:46:15 -0500 (EST)
-Message-ID: <404827952.1772021260888375479.JavaMail.root@zmail07.collab.prod.int.phx2.redhat.com>
-References: <4B26E524.7010602@osadl.org>
+From: Clark Williams <williams@redhat.com>
+Subject: v0.57 of rt-tests available
+Date: Tue, 15 Dec 2009 13:59:36 -0600
+Message-ID: <20091215135936.5a7f2d56@torg>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Carsten Emde <c.emde@osadl.org>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/Ha20NZVN/JW.5=lOkGh/Z/d"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>, Carsten Emde <ce@ceag.ch>,
+	John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:63064 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:16561 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752983AbZLOOqb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Dec 2009 09:46:31 -0500
-In-Reply-To: <4B26E524.7010602@osadl.org>
+	id S1759861AbZLOT7q (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Dec 2009 14:59:46 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+--Sig_/Ha20NZVN/JW.5=lOkGh/Z/d
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
------ "Carsten Emde" <c.emde@osadl.org> wrote:
+Version 0.57 of the rt-tests package is now available both as a tarball
+on kernel.org and in my git repository:
 
-> John,
-> 
-> thanks a lot for taking care of the new tests.
-> 
-> By some reason, the spec file was not included in the patch. This
-> patch is needed to prevent the rpm build from finding installed
-> but unpackaged files.
-> 
-> 
-> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+tarball:
 
-Thanks Carsten - applied.
-Clark, you can pull it from branch rt-tests-dev
-in git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
+http://www.kernel.org/pub/linux//kernel/people/clrkwllms/rt-tests/rt-tests-=
+0.57.tar.bz2
+
+git:
+	git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+
+This version adds tests from Carsten Emde:
+
+- backfire/sendme - measure signal propagation time from driver to
+  userspace
+- ptsematest - measure latency of posix mutex
+- sigwaittest - measure interthread signal latency
+- svsematest - measure interthread SystemV semaphore latency
+
+Many thanks to John Kacur <jkacur@redhat.com> for doing the integration
+work in adding these tests.=20
+
+Clark
+
+--Sig_/Ha20NZVN/JW.5=lOkGh/Z/d
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.12 (GNU/Linux)
+
+iEYEARECAAYFAksn6q4ACgkQHyuj/+TTEp2kRgCgs2YZlbGA+sWCUdRL/JSLJnH8
+LZwAoLJX7VfE3XxS0n1OxswOSyy8E/zj
+=S3gB
+-----END PGP SIGNATURE-----
+
+--Sig_/Ha20NZVN/JW.5=lOkGh/Z/d--
