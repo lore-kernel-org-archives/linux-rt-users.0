@@ -1,20 +1,23 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 2/4] Missing parsing of --mlockall in signaltest
-Date: Tue, 22 Dec 2009 22:00:11 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0912222155390.8838@localhost.localdomain>
-References: <1261496858-12744-1-git-send-email-davids@redhat.com> <1261496858-12744-3-git-send-email-davids@redhat.com>
+Subject: Re: [PATCH 3/4] Added --help screen info about -M / --refresh-on-max
+ in cyclictest
+Date: Tue, 22 Dec 2009 22:02:38 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0912222201120.8838@localhost.localdomain>
+References: <1261496858-12744-1-git-send-email-davids@redhat.com> <1261496858-12744-4-git-send-email-davids@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org,
-	Clark Williams <williams@redhat.com>,
-	Carsten Emde <carsten.emde@osadl.org>
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
 To: David Sommerseth <davids@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:44601 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:26381 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755051AbZLVVAX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Dec 2009 16:00:23 -0500
-In-Reply-To: <1261496858-12744-3-git-send-email-davids@redhat.com>
+	id S1751669AbZLVVCn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 Dec 2009 16:02:43 -0500
+Received: from int-mx02.intmail.prod.int.phx2.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id nBML2hRi028516
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
+	for <linux-rt-users@vger.kernel.org>; Tue, 22 Dec 2009 16:02:43 -0500
+In-Reply-To: <1261496858-12744-4-git-send-email-davids@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -22,33 +25,38 @@ List-ID: <linux-rt-users.vger.kernel.org>
 
 On Tue, 22 Dec 2009, David Sommerseth wrote:
 
+> Also renamed --refresh_on_max to --refresh-on-max
+> 
 > Signed-off-by: David Sommerseth <davids@redhat.com>
 > ---
->  src/signaltest/signaltest.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
+>  src/cyclictest/cyclictest.c |    3 ++-
+>  1 files changed, 2 insertions(+), 1 deletions(-)
 > 
-> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index b637aae..24ac959 100644
-> --- a/src/signaltest/signaltest.c
-> +++ b/src/signaltest/signaltest.c
-> @@ -235,6 +235,7 @@ static void process_options (int argc, char *argv[])
->  			{"quiet", no_argument, NULL, 'q'},
->  			{"threads", required_argument, NULL, 't'},
->  			{"verbose", no_argument, NULL, 'v'},
-> +			{"mlockall", no_argument, NULL, 'm'},
->  			{"help", no_argument, NULL, '?'},
->  			{NULL, 0, NULL, 0}
->  		};
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 223f343..7979a77 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -788,6 +788,7 @@ static void display_help(int error)
+>  	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+>  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+>  	       "-m       --mlockall        lock current and future memory allocations\n"
+> +	       "-M       --refresh-on-max  delay updating the screen until a new max latency is hit\n"
+>  	       "-n       --nanosleep       use clock_nanosleep\n"
+>  	       "-N       --nsecs           print results in ns instead of us (default us)\n"
+>  	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+> @@ -910,7 +911,7 @@ static void process_options (int argc, char *argv[])
+>  			{"irqsoff", no_argument, NULL, 'I'},
+>  			{"loops", required_argument, NULL, 'l'},
+>  			{"mlockall", no_argument, NULL, 'm' },
+> -			{"refresh_on_max", no_argument, NULL, 'M' },
+> +			{"refresh-on-max", no_argument, NULL, 'M' },
+>  			{"nanosleep", no_argument, NULL, 'n'},
+>  			{"nsecs", no_argument, NULL, 'N'},
+>  			{"oscope", required_argument, NULL, 'o'},
 > -- 
 > 1.6.2.5
 > 
 > 
-Nice catch! I cced Carsten - as this is his code.
-
-Clark I pushed this to
-git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
-branch: rt-tests-dev-new
-
-Please pull from there. (61b1309)
-
-Thanks
+Hmnn, I'm not sure that I want to apply this one.
+What is the motifivation for changing the name to refresh-on-max?
+Right now refresh_on_max matches the global variable.
