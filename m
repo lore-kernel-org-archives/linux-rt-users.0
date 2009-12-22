@@ -1,22 +1,22 @@
 From: John Kacur <jkacur@redhat.com>
 Subject: Re: [PATCH 3/4] Added --help screen info about -M / --refresh-on-max
  in cyclictest
-Date: Tue, 22 Dec 2009 22:02:38 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0912222201120.8838@localhost.localdomain>
+Date: Tue, 22 Dec 2009 22:59:32 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0912222257060.8838@localhost.localdomain>
 References: <1261496858-12744-1-git-send-email-davids@redhat.com> <1261496858-12744-4-git-send-email-davids@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
 To: David Sommerseth <davids@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:26381 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:28816 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751669AbZLVVCn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Dec 2009 16:02:43 -0500
-Received: from int-mx02.intmail.prod.int.phx2.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
-	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id nBML2hRi028516
+	id S1753019AbZLVV7i (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 Dec 2009 16:59:38 -0500
+Received: from int-mx05.intmail.prod.int.phx2.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.18])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id nBMLxaib007634
 	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Dec 2009 16:02:43 -0500
+	for <linux-rt-users@vger.kernel.org>; Tue, 22 Dec 2009 16:59:37 -0500
 In-Reply-To: <1261496858-12744-4-git-send-email-davids@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -55,8 +55,19 @@ On Tue, 22 Dec 2009, David Sommerseth wrote:
 >  			{"oscope", required_argument, NULL, 'o'},
 > -- 
 > 1.6.2.5
-> 
-> 
-Hmnn, I'm not sure that I want to apply this one.
-What is the motifivation for changing the name to refresh-on-max?
-Right now refresh_on_max matches the global variable.
+
+
+David:
+
+I altered your patch, to keep the missing help info, but without the name
+change.
+
+Clark: applied and pushed to
+
+git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
+branch: rt-tests-dev-new
+(d3f77dc)
+
+Please pull
+
+John
