@@ -1,79 +1,56 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: [PATCH 3/4] rt-tests: Clean-up - protect rt-utils.h
-Date: Tue, 22 Dec 2009 00:43:40 +0100
-Message-ID: <4B30082C.80107@osadl.org>
-References: <1261431950-28500-1-git-send-email-jkacur@redhat.com>	<1261431950-28500-2-git-send-email-jkacur@redhat.com>	<1261431950-28500-3-git-send-email-jkacur@redhat.com>	<1261431950-28500-4-git-send-email-jkacur@redhat.com>	<4B30002F.3030209@osadl.org> <20091221171913.5ae81e6d@torg>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: Clean-up, Fix the comment part of the #endif
+ protecting include files
+Date: Tue, 22 Dec 2009 01:08:18 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.0912220106360.9791@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------050607020905000006020402"
-Cc: John Kacur <jkacur@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>,
+	Carsten Emde <carsten.emde@osadl.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:37536 "EHLO toro.web-alm.net"
+Received: from mx1.redhat.com ([209.132.183.28]:27091 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751871AbZLUXtV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Dec 2009 18:49:21 -0500
-In-Reply-To: <20091221171913.5ae81e6d@torg>
+	id S1751050AbZLVAIj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 Dec 2009 19:08:39 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------050607020905000006020402
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+>From b1ff404d5545dd69ecc44b0055efb5478ec624f6 Mon Sep 17 00:00:00 2001
+From: John Kacur <jkacur@redhat.com>
+Date: Tue, 22 Dec 2009 00:43:04 +0100
+Subject: [PATCH] rt-tests: Clean-up, Fix the comment part of the #endif protecting include files
 
-Clark,
+Clean-up, Fix the comment part of the #endif protecting include files
 
->>> Clean-up: Protect rt-utils.h with #ifndef RT_UTILS_H
->>> [..]
->>> +#ifndef RT_UTILS.H
->> Macro names should only consist of alphanumeric characters and
->> underscores, i.e. 'a-z', 'A-Z', '0-9', and '_', and the first character
->> should not be a digit.
-> Yeah, I caught that and also pushed it out of application name space
-> with two leading underscores. 
-Great.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/lib/rt-get_cpu.h |    2 +-
+ src/lib/rt-utils.h   |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-I did some first tests on 0.58, and all works very well now. Thanks a
-lot, you and John, for all the work!
+diff --git a/src/lib/rt-get_cpu.h b/src/lib/rt-get_cpu.h
+index 2338a56..15d05fc 100644
+--- a/src/lib/rt-get_cpu.h
++++ b/src/lib/rt-get_cpu.h
+@@ -42,5 +42,5 @@ static inline int getcpu_vdso(void)
+ 
+ #endif
+ 
+-#endif	/* RT_GET_CPU_H */
++#endif	/* __RT_GET_CPU_H */
+ 
+diff --git a/src/lib/rt-utils.h b/src/lib/rt-utils.h
+index 61cd800..cc23c33 100644
+--- a/src/lib/rt-utils.h
++++ b/src/lib/rt-utils.h
+@@ -8,4 +8,4 @@
+ int check_privs(void);
+ char *get_debugfileprefix(void);
+ 
+-#endif	/* RT_UTILS.H */
++#endif	/* __RT_UTILS.H */
+-- 
+1.6.0.6
 
-As a very minor issue, the below patch still didn't make it into your
-tree.
-
-	Carsten.
-
--=--------------------------------------------------------------------=-
-Explain in the sendme error message how to make the backfire module,
-if not available.
-
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-
---------------050607020905000006020402
-Content-Type: text/x-patch;
- name="explain-howto-make-backfire-module.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="explain-howto-make-backfire-module.patch"
-
-diff --git a/src/backfire/sendme.c b/src/backfire/sendme.c
-index fdc1056..1f02c72 100644
---- a/src/backfire/sendme.c
-+++ b/src/backfire/sendme.c
-@@ -209,7 +209,12 @@ int main(int argc, char *argv[])
- 	path = open("/dev/backfire", O_RDWR);
- 	if (path < 0) {
- 		fprintf(stderr, "ERROR: Could not access backfire device, "
--				"try 'modprobe backfire'\n");
-+				"try 'modprobe backfire'.\n"
-+				"If the module backfire can't be loaded, "
-+				"it may need to be built first.\n"
-+				"Execute 'cd src/backfire; make' in the "
-+				"rt-tests directory (requires rt-tests\n"
-+				"sources and kernel-devel package).\n");
- 		return 1;
- 	}
- 	fl.l_type = F_WRLCK;
-
---------------050607020905000006020402--
