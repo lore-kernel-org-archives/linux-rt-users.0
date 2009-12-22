@@ -1,58 +1,33 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: Better explanation in the kernel module
-Date: Tue, 22 Dec 2009 01:11:36 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.0912220109520.9791@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>,
-	Carsten Emde <carsten.emde@osadl.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+From: David Sommerseth <davids@redhat.com>
+Subject: [PATCH 0/4] Minor rt-tests updates
+Date: Tue, 22 Dec 2009 16:47:34 +0100
+Message-ID: <1261496858-12744-1-git-send-email-davids@redhat.com>
+Cc: jkacur@redhat.com, williams@redhat.com,
+	David Sommerseth <davids@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:6401 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:14648 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751082AbZLVALz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Dec 2009 19:11:55 -0500
+	id S1753445AbZLVPrk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 Dec 2009 10:47:40 -0500
+Received: from int-mx05.intmail.prod.int.phx2.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.18])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id nBMFle33029509
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
+	for <linux-rt-users@vger.kernel.org>; Tue, 22 Dec 2009 10:47:40 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Clark: I'm not sure how we missed Carsten's patch again.
-you can pull the following and the last clean-up from
-rt-tests-dev-new
-and the usual git repo
-(notice the branch has changed)
+Several minor updates cleaning up arguments and man page.
 
-Thanks
+David Sommerseth (4):
+  Fixed missing parsing of short arguments in classic_pi
+  Missing parsing of --mlockall in signaltest
+  Added --help screen info about -M / --refresh-on-max in cyclictest
+  Updated man page to reflect --refresh-on-max argument name change
 
->From 77c00420d06ec5010a251d4ecac1f74201cd20ca Mon Sep 17 00:00:00 2001
-From: Carsten Emde <C.Emde@osadl.org>
-Date: Tue, 22 Dec 2009 00:58:59 +0100
-Subject: [PATCH] rt-tests: Better explanation in the kernel module
-
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/backfire/sendme.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
-
-diff --git a/src/backfire/sendme.c b/src/backfire/sendme.c
-index fdc1056..27ea077 100644
---- a/src/backfire/sendme.c
-+++ b/src/backfire/sendme.c
-@@ -209,7 +209,12 @@ int main(int argc, char *argv[])
- 	path = open("/dev/backfire", O_RDWR);
- 	if (path < 0) {
- 		fprintf(stderr, "ERROR: Could not access backfire device, "
--				"try 'modprobe backfire'\n");
-+				"try 'modprobe backfire'\n"
-+				"If the module backfire can't be loaded, "
-+				"it may need to be built first.\n"
-+				"Execute 'cd src/backfire; make' in the "
-+				"rt-tests directory (requires rt-tests\n"
-+				"sources and kernel-devel package).\n");
- 		return 1;
- 	}
- 	fl.l_type = F_WRLCK;
--- 
-1.6.0.6
+ src/cyclictest/cyclictest.8 |    2 +-
+ src/cyclictest/cyclictest.c |    3 ++-
+ src/pi_tests/classic_pi.c   |    2 +-
+ src/signaltest/signaltest.c |    1 +
+ 4 files changed, 5 insertions(+), 3 deletions(-)
 
