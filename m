@@ -1,41 +1,71 @@
-From: Bryan Donlan <bdonlan@gmail.com>
-Subject: Re: Lockup with "BUG: using smp_processor_id() in preemptible"
-Date: Thu, 31 Dec 2009 12:34:26 -0500
-Message-ID: <3e8340490912310934r2a8df5f0p62044592f7e7f808@mail.gmail.com>
-References: <3e8340490912310821i625daf3bu6024f6644d2789a4@mail.gmail.com>
-	<8C8865ED624BB94F8FE50259E2B5C5B3045943388F@palmail03.lsi.com>
+From: Cameron Elliott <garapa1@gmail.com>
+Subject: Embedded programmer new to rt-linux, what distribution / release to
+	start with?
+Date: Mon, 4 Jan 2010 14:40:25 -0800
+Message-ID: <1fb80681001041440k3769b02aodf9358d72465e2fe@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: "Leyendecker, Robert" <Robert.Leyendecker@lsi.com>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f219.google.com ([209.85.219.219]:53487 "EHLO
-	mail-ew0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752565AbZLaRet convert rfc822-to-8bit (ORCPT
+Received: from mail-pw0-f42.google.com ([209.85.160.42]:45891 "EHLO
+	mail-pw0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753421Ab0ADWkZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Dec 2009 12:34:49 -0500
-Received: by ewy19 with SMTP id 19so4818938ewy.21
-        for <linux-rt-users@vger.kernel.org>; Thu, 31 Dec 2009 09:34:47 -0800 (PST)
-In-Reply-To: <8C8865ED624BB94F8FE50259E2B5C5B3045943388F@palmail03.lsi.com>
+	Mon, 4 Jan 2010 17:40:25 -0500
+Received: by pwj9 with SMTP id 9so9651926pwj.21
+        for <linux-rt-users@vger.kernel.org>; Mon, 04 Jan 2010 14:40:25 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Dec 31, 2009 at 12:16 PM, Leyendecker, Robert
-<Robert.Leyendecker@lsi.com> wrote:
+Hello,
 
-> Yes - from looking at trace and smp code it seems to occur during migration, however, there is a fair amount of asm woven in to this part and I have trouble following it and have no idea about root cause. With smp support I eventually hit this trap using brute force polling, epoll or async signals, regardless of application level affinity, irq priority, etc. Time to fault seems to very between a few minutes to several hours.
->
-> I have encountered this exception using core duo with a network application. It does not occur on single core machines (I am also testing with SMP disabled and it also seems to resolve the issue). It seems very reproducible on my core duo, both 32 and 64 bit and using the latest stable kernel and rt patch.
->
-> My app hammers the network interface with packets. I'm planning to boil it down into a couple of peer to peer test routines so that network processing latency can be accurately measured under rt patch for streaming applications. Rt patch seems to give excellent results that I cannot achieve using non-patch kernel (even with hand tuned affinity, IRQs, priorities, etc), so I'm hoping we can figure it out and fix it.
->
-> For now, I plan to set everyone up with smp disabled in our test lab. Things seem stable with this setting.
+Please excuse me if this is not welcome here, if you know a better
+location to ask,
+please tell me.
 
-Okay, good to know it's a known issue. I've captured a function_graph
-trace, if it will help, of the flow leading up to the printk in
-debug_smp_processor_id(): http://fushizen.net/~bd/trace.1.gz (occurs
-on CPU 1 at the end of the trace; the printk is clearly visible)
+I'm an experienced embedded programmer new to the rt-linux world.
 
-The patch used to generate it is at
-http://fushizen.net/~bd/smp-procid-trace-trap.patch
+My main task will to be to receive a high volume of UDP packets and
+handle TCP streams with minimum latency and jitter.
+
+I am mainly interested in off the shelf kernels and distributions, and
+so far think RH or SUSE  would probably be my best bet.
+
+My goal at this point is to determine which distribution and release
+to start with.
+
+Here is what I'm confused about:
+
+1. Just to confirm the RH MRG kernel is not the same as the SUSE
+realtime kernel?
+
+
+Does RH MRG use the standard linux kernel?
+
+
+3.
+If I should to decide to go with SUSE, should I start with SLES 11.2
+or, instead use SLES 10 SP2 with the Real time extension
+(SLERT 10 SP2) ?
+The current Novell web pages indicate that SUSE 10 SP2 is what to use
+with the realtime extensions, although I understand
+a realtime kernel was included in the 11.2 distribution. (This is the
+source of my confusion)
+http://www.novell.com/products/realtime/eval.html
+
+
+4.
+If I decide to go with RH MRG, is the realtime package available at no
+cost or low-cost (<200US)?
+Some RH links indicate the MRG package sets maybe avaialbe via 'yum'
+at no cost (I have not been able to test this yet):
+http://www.redhat.com/docs/en-US/Red_Hat_Enterprise_MRG/1.2/html/Realtime_Installation_Guide/sect-Realtime_Installation_Guide-Download-Installing_RT_using_Yum.html
+
+
+
+5. Any idea whether RH or SUSE whould have any advantages for high
+volume bursty UDP traffic while minimizing latency (&jitter) ?
+
+
+Thanks for your feedback,
+Cameron
