@@ -1,81 +1,72 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [RFC] [rt-tests] change to cyclictest behavior
-Date: Wed, 06 Jan 2010 22:39:09 +0100
-Message-ID: <4B4502FD.1000404@osadl.org>
-References: <20100106130400.7f30ae55@torg> <520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>
+Date: Wed, 6 Jan 2010 16:04:34 -0600
+Message-ID: <20100106160434.77efc790@torg>
+References: <20100106130400.7f30ae55@torg>
+	<520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>
+	<4B4502FD.1000404@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/WZ4aAU4MRzTO.weBUrzZgsH"; protocol="application/pgp-signature"
+Cc: John Kacur <jkacur@redhat.com>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:51438 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755747Ab0AFVkZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Jan 2010 16:40:25 -0500
-In-Reply-To: <520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Carsten Emde <Carsten.Emde@osadl.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756371Ab0AFWFA@vger.kernel.org>
+In-Reply-To: <4B4502FD.1000404@osadl.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 01/06/2010 08:39 PM, John Kacur wrote:
-> On Wed, Jan 6, 2010 at 8:04 PM, Clark Williams <williams@redhat.com> wrote:
->> I have a problem with the way cyclictest sets up measurement threads,
->> but before I went and changed things I thought I would ask if people
->> cherished this particular behavior.
->>
->> Currently, when cyclictest is run with multiple threads (i.e. -t
->> option) it distributes both the sample interval and the realtime
->> priority by adding the 'distance' parameter to the interval and
->> decrementing the priority by one. This means if you have a distance of
->> 500us (default), a specified RT priority of 95 and start four threads,
->> they will be started with the following parameters:
->>
->> $ cyclictest -t4 -p95
->>
->> Will give you:
->>
->> thread          priority        sample interval
->> 0               95              500
->> 1               94              1000
->> 2               93              1500
->> 3               92              2000
->>
->> What I'd like to do is modify this logic so that when '-a' (affinity) is
->> specified, the priority and sample interval will not be altered. I
->> don't think there's any point in distributing the priority's and
->> sample intervals when the measurement threads are pinned to their own
->> CPU.
->>
->> So:
->>
->> $ cyclictest -t4 -p95 -a
->>
->> Would have each thread at SCHED_FIFO 95 and a sample interval of 500us.
->>
->> Note that this behavior also occurs when the histogram (-h) option is
->> specified).
-> Seems reasonable to me. Maybe it would also be nice to have a flag to
-> get the old behaviour back even with -a?
-I know that there are quite a few people out there who get furious, if
-someone breaks backward compatibility - especially in things that are
-used for automatic testing. Cyclictest is such a thing.
+--Sig_/WZ4aAU4MRzTO.weBUrzZgsH
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-In addition, I would propose to consider not only affinity but also the
-number of threads. If, for example, someone specifies -a -t5 on a
-four-way machine, then it may not make sense to use the same priority
-and the same interval on all threads. If any, the new feature would only
-make sense in cases where both the -a and the -t option do not have an
-argument so the number of threads matches the number of CPUs and every
-thread runs on its own CPU. Another pitfall is hyperthreading in which
-case it may be desired to have as many threads at the same priority as
-real CPUs rather than as available hyperthreads.
+On Wed, 06 Jan 2010 22:39:09 +0100
+Carsten Emde <Carsten.Emde@osadl.org> wrote:
+> I know that there are quite a few people out there who get furious, if
+> someone breaks backward compatibility - especially in things that are
+> used for automatic testing. Cyclictest is such a thing.
+>=20
+> In addition, I would propose to consider not only affinity but also the
+> number of threads. If, for example, someone specifies -a -t5 on a
+> four-way machine, then it may not make sense to use the same priority
+> and the same interval on all threads. If any, the new feature would only
+> make sense in cases where both the -a and the -t option do not have an
+> argument so the number of threads matches the number of CPUs and every
+> thread runs on its own CPU. Another pitfall is hyperthreading in which
+> case it may be desired to have as many threads at the same priority as
+> real CPUs rather than as available hyperthreads.
+>=20
+> Here is my proposal:
+> Do not change the meaning of existing options. Introduce a new option
+> that is mutual exclusive with the -a, the -t and the -d option. This new
+> option does the same as -a and -t and -d0 and sets the same priority to
+> all threads. How about that?
+>=20
 
-Here is my proposal:
-Do not change the meaning of existing options. Introduce a new option
-that is mutual exclusive with the -a, the -t and the -d option. This new
-option does the same as -a and -t and -d0 and sets the same priority to
-all threads. How about that?
+Ugh, I truly *hate* adding options. Do you know that cyclictest is
+halfway to having as many options as 'ls'? That being said, I had
+forgotten that you can provide a list of cpus to -a (as well as -t) so
+my quick hack really isn't as safe as I first thought it would be.=20
 
-	Carsten.
+How about if we create the -S/--smp option that takes no arguments and
+causes -a, -t and -d to be ignored (with a warning). This option would
+create one thread per cpu, each thread pinned to it's corresponding
+cpu, all with the same sampling interval (i.e. -d0) and the same
+priority?
+
+Clark
+
+--Sig_/WZ4aAU4MRzTO.weBUrzZgsH
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.12 (GNU/Linux)
+
+iEYEARECAAYFAktFCPYACgkQHyuj/+TTEp2LvwCgnJFMaTfRT6Q0zoTGzvr7D0YQ
+B6QAn1jNsXB6Rps6UDFj18E4R+iwdth/
+=B8t/
+-----END PGP SIGNATURE-----
+
+--Sig_/WZ4aAU4MRzTO.weBUrzZgsH--
