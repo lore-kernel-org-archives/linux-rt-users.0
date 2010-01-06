@@ -1,50 +1,76 @@
-From: Tim Sander <tim01@iss.tu-darmstadt.de>
-Subject: Re: Embedded programmer new to rt-linux, what distribution / release to start with?
-Date: Tue, 5 Jan 2010 21:46:12 +0100
-Message-ID: <201001052146.12882.tim01@iss.tu-darmstadt.de>
-References: <1fb80681001041440k3769b02aodf9358d72465e2fe@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [RFC] [rt-tests] change to cyclictest behavior
+Date: Wed, 6 Jan 2010 13:04:00 -0600
+Message-ID: <20100106130400.7f30ae55@torg>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/SJyudqVlUyknBmoKuo3cu9t"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lnx141.hrz.tu-darmstadt.de ([130.83.156.236]:47133 "EHLO
-	lnx141.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755508Ab0AEUyn (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 5 Jan 2010 15:54:43 -0500
-Received: from lnx503.hrz.tu-darmstadt.de (lnx503.hrz.tu-darmstadt.de [130.83.156.232])
-	by lnx141.hrz.tu-darmstadt.de (8.14.2/8.13.8) with ESMTP id o05KrnKl014395
-	for <linux-rt-users@vger.kernel.org>; Tue, 5 Jan 2010 21:53:49 +0100
-	(envelope-from tim01@iss.tu-darmstadt.de)
-Received: from mailserver3.hrz.tu-darmstadt.de (lnx504.hrz.tu-darmstadt.de [130.83.156.233])
-	by lnx503.hrz.tu-darmstadt.de (8.14.2/8.14.2/HRZ/PMX) with ESMTP id o05KlAkq014501
-	for <linux-rt-users@vger.kernel.org>; Tue, 5 Jan 2010 21:47:10 +0100
-	(envelope-from tim01@iss.tu-darmstadt.de)
-Received: from [213.157.9.123] (helo=ligeia.localnet)
-	by mailserver3.hrz.tu-darmstadt.de with esmtpsa (TLSv1:AES256-SHA:256)
-	(Exim 4.69)
-	(envelope-from <tim01@iss.tu-darmstadt.de>)
-	id 1NSGJ4-0002OU-3O
-	for linux-rt-users@vger.kernel.org; Tue, 05 Jan 2010 21:47:10 +0100
-In-Reply-To: <1fb80681001041440k3769b02aodf9358d72465e2fe@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:1865 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932494Ab0AFTEJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 6 Jan 2010 14:04:09 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Cameron
+--Sig_/SJyudqVlUyknBmoKuo3cu9t
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Just my 2 cents:
-> I am mainly interested in off the shelf kernels and distributions, and
-> so far think RH or SUSE  would probably be my best bet.
-As far as i know the guys from Pengutronix are maintaining some 
--rt Kernels for Debian. Haven't tested them but i guess they fit your needs.
+RT-ers,
 
-> My goal at this point is to determine which distribution and release
-> to start with.
-The textonly debian installer is quite neat with DM, MD etc functionality just 
-download a netboot installer cd and your ready to go. 
+I have a problem with the way cyclictest sets up measurement threads,
+but before I went and changed things I thought I would ask if people
+cherished this particular behavior.=20
 
-Don't know anything about the other questions concerning RH or Suse.
+Currently, when cyclictest is run with multiple threads (i.e. -t
+option) it distributes both the sample interval and the realtime
+priority by adding the 'distance' parameter to the interval and
+decrementing the priority by one. This means if you have a distance of
+500us (default), a specified RT priority of 95 and start four threads,
+they will be started with the following parameters:
 
-Tim 
+$ cyclictest -t4 -p95
+
+Will give you:
+
+thread		priority	sample interval
+0		95		500
+1		94		1000
+2		93		1500
+3		92		2000
+
+What I'd like to do is modify this logic so that when '-a' (affinity) is
+specified, the priority and sample interval will not be altered. I
+don't think there's any point in distributing the priority's and
+sample intervals when the measurement threads are pinned to their own
+CPU.=20
+
+So:
+
+$ cyclictest -t4 -p95 -a
+
+Would have each thread at SCHED_FIFO 95 and a sample interval of 500us.
+
+Note that this behavior also occurs when the histogram (-h) option is
+specified).
+
+Thoughts?
+
+Clark
+
+--Sig_/SJyudqVlUyknBmoKuo3cu9t
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.12 (GNU/Linux)
+
+iEYEARECAAYFAktE3qYACgkQHyuj/+TTEp0WHACfT3omcXL1B3L7zbgH+9fluw+H
+/ZEAoMbgZb2cCe2HwhLnunUiYLbSO3VB
+=FpyC
+-----END PGP SIGNATURE-----
+
+--Sig_/SJyudqVlUyknBmoKuo3cu9t--
