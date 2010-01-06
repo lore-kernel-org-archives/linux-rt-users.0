@@ -1,72 +1,48 @@
-From: Clark Williams <williams@redhat.com>
+From: Carsten Emde <Carsten.Emde@osadl.org>
 Subject: Re: [RFC] [rt-tests] change to cyclictest behavior
-Date: Wed, 6 Jan 2010 16:04:34 -0600
-Message-ID: <20100106160434.77efc790@torg>
-References: <20100106130400.7f30ae55@torg>
-	<520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>
-	<4B4502FD.1000404@osadl.org>
+Date: Wed, 06 Jan 2010 23:24:17 +0100
+Message-ID: <4B450D91.7060403@osadl.org>
+References: <20100106130400.7f30ae55@torg>	<520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>	<4B4502FD.1000404@osadl.org> <20100106160434.77efc790@torg>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/WZ4aAU4MRzTO.weBUrzZgsH"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: John Kacur <jkacur@redhat.com>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Carsten Emde <Carsten.Emde@osadl.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756371Ab0AFWFA@vger.kernel.org>
-In-Reply-To: <4B4502FD.1000404@osadl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from toro.web-alm.net ([62.245.132.31]:51940 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932259Ab0AFWZU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 6 Jan 2010 17:25:20 -0500
+In-Reply-To: <20100106160434.77efc790@torg>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/WZ4aAU4MRzTO.weBUrzZgsH
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Clark,
 
-On Wed, 06 Jan 2010 22:39:09 +0100
-Carsten Emde <Carsten.Emde@osadl.org> wrote:
-> I know that there are quite a few people out there who get furious, if
-> someone breaks backward compatibility - especially in things that are
-> used for automatic testing. Cyclictest is such a thing.
->=20
-> In addition, I would propose to consider not only affinity but also the
-> number of threads. If, for example, someone specifies -a -t5 on a
-> four-way machine, then it may not make sense to use the same priority
-> and the same interval on all threads. If any, the new feature would only
-> make sense in cases where both the -a and the -t option do not have an
-> argument so the number of threads matches the number of CPUs and every
-> thread runs on its own CPU. Another pitfall is hyperthreading in which
-> case it may be desired to have as many threads at the same priority as
-> real CPUs rather than as available hyperthreads.
->=20
-> Here is my proposal:
-> Do not change the meaning of existing options. Introduce a new option
-> that is mutual exclusive with the -a, the -t and the -d option. This new
-> option does the same as -a and -t and -d0 and sets the same priority to
-> all threads. How about that?
->=20
+>> [..]
+>> Here is my proposal:
+>> Do not change the meaning of existing options. Introduce a new option
+>> that is mutual exclusive with the -a, the -t and the -d option. This new
+>> option does the same as -a and -t and -d0 and sets the same priority to
+>> all threads. How about that?
+> Ugh, I truly *hate* adding options. Do you know that cyclictest is
+> halfway to having as many options as 'ls'?
+Well, yes, we have the choice between two bad things, breaking
+compatibility or adding another option. I prefer the latter.
+> [..]
+> How about if we create the -S/--smp option that takes no arguments and
+> causes -a, -t and -d to be ignored (with a warning). This option would
+> create one thread per cpu, each thread pinned to it's corresponding
+> cpu, all with the same sampling interval (i.e. -d0) and the same
+> priority?
+Sounds good to me.
 
-Ugh, I truly *hate* adding options. Do you know that cyclictest is
-halfway to having as many options as 'ls'? That being said, I had
-forgotten that you can provide a list of cpus to -a (as well as -t) so
-my quick hack really isn't as safe as I first thought it would be.=20
+May I ask you to also include the -n option which is almost always
+needed? This would then give:
 
-How about if we create the -S/--smp option that takes no arguments and
-causes -a, -t and -d to be ignored (with a warning). This option would
-create one thread per cpu, each thread pinned to it's corresponding
-cpu, all with the same sampling interval (i.e. -d0) and the same
-priority?
+-S      --smp              Standard SMP testing (equals -a -t -n -d0),
+                           same priority on all threads.
 
-Clark
-
---Sig_/WZ4aAU4MRzTO.weBUrzZgsH
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.12 (GNU/Linux)
-
-iEYEARECAAYFAktFCPYACgkQHyuj/+TTEp2LvwCgnJFMaTfRT6Q0zoTGzvr7D0YQ
-B6QAn1jNsXB6Rps6UDFj18E4R+iwdth/
-=B8t/
------END PGP SIGNATURE-----
-
---Sig_/WZ4aAU4MRzTO.weBUrzZgsH--
+	Carsten.
