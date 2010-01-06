@@ -1,76 +1,77 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [RFC] [rt-tests] change to cyclictest behavior
-Date: Wed, 6 Jan 2010 13:04:00 -0600
-Message-ID: <20100106130400.7f30ae55@torg>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [RFC] [rt-tests] change to cyclictest behavior
+Date: Wed, 6 Jan 2010 20:39:25 +0100
+Message-ID: <520f0cf11001061139j2af13403qfcbf567647bdfaa8@mail.gmail.com>
+References: <20100106130400.7f30ae55@torg>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/SJyudqVlUyknBmoKuo3cu9t"; protocol="application/pgp-signature"
-Cc: LKML <linux-kernel@vger.kernel.org>
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:1865 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932494Ab0AFTEJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Jan 2010 14:04:09 -0500
+Received: from mail-ew0-f219.google.com ([209.85.219.219]:40332 "EHLO
+	mail-ew0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932455Ab0AFTj1 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 6 Jan 2010 14:39:27 -0500
+In-Reply-To: <20100106130400.7f30ae55@torg>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/SJyudqVlUyknBmoKuo3cu9t
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Wed, Jan 6, 2010 at 8:04 PM, Clark Williams <williams@redhat.com> wr=
+ote:
+> RT-ers,
+>
+> I have a problem with the way cyclictest sets up measurement threads,
+> but before I went and changed things I thought I would ask if people
+> cherished this particular behavior.
+>
+> Currently, when cyclictest is run with multiple threads (i.e. -t
+> option) it distributes both the sample interval and the realtime
+> priority by adding the 'distance' parameter to the interval and
+> decrementing the priority by one. This means if you have a distance o=
+f
+> 500us (default), a specified RT priority of 95 and start four threads=
+,
+> they will be started with the following parameters:
+>
+> $ cyclictest -t4 -p95
+>
+> Will give you:
+>
+> thread =A0 =A0 =A0 =A0 =A0priority =A0 =A0 =A0 =A0sample interval
+> 0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 95 =A0 =A0 =A0 =A0 =A0 =A0 =A0500
+> 1 =A0 =A0 =A0 =A0 =A0 =A0 =A0 94 =A0 =A0 =A0 =A0 =A0 =A0 =A01000
+> 2 =A0 =A0 =A0 =A0 =A0 =A0 =A0 93 =A0 =A0 =A0 =A0 =A0 =A0 =A01500
+> 3 =A0 =A0 =A0 =A0 =A0 =A0 =A0 92 =A0 =A0 =A0 =A0 =A0 =A0 =A02000
+>
+> What I'd like to do is modify this logic so that when '-a' (affinity)=
+ is
+> specified, the priority and sample interval will not be altered. I
+> don't think there's any point in distributing the priority's and
+> sample intervals when the measurement threads are pinned to their own
+> CPU.
+>
+> So:
+>
+> $ cyclictest -t4 -p95 -a
+>
+> Would have each thread at SCHED_FIFO 95 and a sample interval of 500u=
+s.
+>
+> Note that this behavior also occurs when the histogram (-h) option is
+> specified).
+>
+> Thoughts?
+>
 
-RT-ers,
+Seems reasonable to me. Maybe it would also be nice to have a flag to
+get the old behaviour back even with -a?
 
-I have a problem with the way cyclictest sets up measurement threads,
-but before I went and changed things I thought I would ask if people
-cherished this particular behavior.=20
-
-Currently, when cyclictest is run with multiple threads (i.e. -t
-option) it distributes both the sample interval and the realtime
-priority by adding the 'distance' parameter to the interval and
-decrementing the priority by one. This means if you have a distance of
-500us (default), a specified RT priority of 95 and start four threads,
-they will be started with the following parameters:
-
-$ cyclictest -t4 -p95
-
-Will give you:
-
-thread		priority	sample interval
-0		95		500
-1		94		1000
-2		93		1500
-3		92		2000
-
-What I'd like to do is modify this logic so that when '-a' (affinity) is
-specified, the priority and sample interval will not be altered. I
-don't think there's any point in distributing the priority's and
-sample intervals when the measurement threads are pinned to their own
-CPU.=20
-
-So:
-
-$ cyclictest -t4 -p95 -a
-
-Would have each thread at SCHED_FIFO 95 and a sample interval of 500us.
-
-Note that this behavior also occurs when the histogram (-h) option is
-specified).
-
-Thoughts?
-
-Clark
-
---Sig_/SJyudqVlUyknBmoKuo3cu9t
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.12 (GNU/Linux)
-
-iEYEARECAAYFAktE3qYACgkQHyuj/+TTEp0WHACfT3omcXL1B3L7zbgH+9fluw+H
-/ZEAoMbgZb2cCe2HwhLnunUiYLbSO3VB
-=FpyC
------END PGP SIGNATURE-----
-
---Sig_/SJyudqVlUyknBmoKuo3cu9t--
+John
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
