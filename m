@@ -1,50 +1,56 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: [RFC] [rt-tests] change to cyclictest behavior
-Date: Tue, 12 Jan 2010 12:13:15 -0500
-Message-ID: <4B4CADAB.5090607@gmail.com>
-References: <20100106130400.7f30ae55@torg>	<1263315590.374.6.camel@sven.thebigcorporation.com> <20100112110453.4589d05e@torg>
+From: gwen.cooke@homecall.co.uk
+Subject: {Mystery Shopper/Apply =?utf-8?B?V2l0aGluwq59?=
+Date: Tue, 19 Jan 2010 12:46:34 +0000
+Message-ID: <E1NXDTe-000L4O-NK__33671.6243451976$1263905800$gmane$org@mk-webmail-2.b2b.uk.tiscali.com>
+Reply-To: jamesbadmus29@aol.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: jamesbadmus29@aol.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f209.google.com ([209.85.219.209]:59764 "EHLO
-	mail-ew0-f209.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751791Ab0ALRNg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jan 2010 12:13:36 -0500
-In-Reply-To: <20100112110453.4589d05e@torg>
+Received: from mk-filter-4-a-2.mail.uk.tiscali.com ([212.74.100.51]:59470 "EHLO
+	mk-filter-4-a-2.mail.uk.tiscali.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751357Ab0ASM4a convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Jan 2010 07:56:30 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/12/2010 12:04 PM, Clark Williams wrote:
-> On Tue, 12 Jan 2010 11:59:50 -0500
-> Sven-Thorsten Dietrich <thebigcorporation@gmail.com> wrote:
->
->   
->> On Wed, 2010-01-06 at 13:04 -0600, Clark Williams wrote:
->>     
->>> RT-ers,
->>>       
->> Hi Clark,
->>
->> sorry to be late to this, I have been out on a sailboat in the Bahamas.
->>
->> When using the histogram feature, cyclictest already behaves the way you
->> describe below.
->>
->> Sven
->>
->>     
-> Yeah I know, but sometimes I don't want to have to deal with the
-> histogram...
->   
+Join our Field Network!=20
 
-Absolutely, just pointing out that at least some of the logic is in there.
 
-I think that decoupling that functionality, and making it implicit for
-histogram would be a good thing and not very hard.
+As profiled on Good Morning America, mystery shopping and merchandising
+provide a flexible way for individuals to earn extra money. =E2=80=9CA =
+nationwide
+leader in mystery shopping and merchandising among top brands,=E2=80=9D=
+ Market
+=46orce Information is constantly looking for people just like you to b=
+e our
+eyes and ears in well-known stores, restaurants and banks.=20
 
-Sven
+Mystery shopping, also known as secret shopping, and merchandising are =
+fun
+and YOU can make a huge difference for future customers=20
+
+
+As a mystery shopper you work and shop together for pleasure and the pa=
+y is
+$200 on each assignment and its on Part time basis, you only work 2-3ho=
+urs
+twice in a week. If you are interested kindly send me your Name,Address=
+ In
+=46ull,Home and Cell number.for assessment and registration to
+(jamesbadmus29@aol.com)=20
+
+
+Thanks
+James Cole
+Market Force Information=C2=AE=20
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
