@@ -1,73 +1,40 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/2] rt-tests: Makefile: Add NUMA compile option.
-Date: Wed, 20 Jan 2010 16:36:23 +0100
-Message-ID: <1264001784-11965-2-git-send-email-jkacur@redhat.com>
-References: <1264001784-11965-1-git-send-email-jkacur@redhat.com>
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	"Nikita V. Youshchenko" <yoush@cs.msu.su>,
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Subject: Re: RFC: NUMA modifications to cyclictest
+Date: Wed, 20 Jan 2010 18:54:45 +0300
+Message-ID: <201001201854.46935@zigzag.lvk.cs.msu.su>
+References: <20100119171439.24726f2e@torg> <alpine.LFD.2.00.1001200741000.2906@localhost.localdomain> <20100120073734.4be7a52b@torg>
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>, Carsten Emde <ce@ceag.ch>,
 	John Kacur <jkacur@redhat.com>
-To: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f220.google.com ([209.85.220.220]:48598 "EHLO
-	mail-fx0-f220.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753494Ab0ATPoO (ORCPT
+Received: from gate.lvk.cs.msu.su ([158.250.17.1]:39586 "EHLO
+	mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750952Ab0ATPyt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Jan 2010 10:44:14 -0500
-In-Reply-To: <1264001784-11965-1-git-send-email-jkacur@redhat.com>
+	Wed, 20 Jan 2010 10:54:49 -0500
+In-Reply-To: <20100120073734.4be7a52b@torg>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This adds a NUMA compile option, and links to numa only for the tests that
-need it. (Currently that is only cyclictest)
+> The other idea I toyed with was dynamic loading of libnuma so there's
+> not an install dependency for the libnuma package with the rt-tests
+> package. I only use five functions from libnuma, so that's not too bad
+> a set of function pointers to manage. Hmmm, that probably won't work
+> very well, since I'll still have to include numa.h. Sigh...
 
-If you want to build with the NUMA feature, then define NUMA to anything.
-Eg., make NUMA=1
+It's an overkill.
 
-This only adds support to the Makefile. Further patches are required
-to make this work in cyclictest itself.
+We are not talking about use package to be installed into millions of 
+systems in binary form.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- Makefile |    9 +++++++--
- 1 files changed, 7 insertions(+), 2 deletions(-)
+rt-tests are used by developers; developers may compile those with needed 
+options.
 
-diff --git a/Makefile b/Makefile
-index 5db524d..4e1a7e3 100644
---- a/Makefile
-+++ b/Makefile
-@@ -3,7 +3,7 @@ VERSION_STRING = 0.61
- TARGETS	= cyclictest signaltest pi_stress \
- 	  hwlatdetect rt-migrate-test ptsematest sigwaittest svsematest \
- 	  sendme pip
--LIBS 	= -lpthread -lrt -lnuma
-+LIBS 	= -lpthread -lrt
- EXTRA_LIBS ?= -ldl	# for get_cpu
- DESTDIR	?=
- prefix  ?= /usr/local
-@@ -19,6 +19,11 @@ else
- 	CFLAGS	+= -O0 -g
- endif
- 
-+ifdef NUMA
-+	CFLAGS += -DNUMA
-+	NUMA_LIBS = -lnuma
-+endif
-+
- VPATH	= src/cyclictest:
- VPATH	+= src/signaltest:
- VPATH	+= src/pi_tests:
-@@ -36,7 +41,7 @@ VPATH	+= src/lib
- all: $(TARGETS)
- 
- cyclictest: cyclictest.o rt-utils.o
--	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
-+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(NUMA_LIBS)
- 
- signaltest: signaltest.o rt-utils.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
--- 
-1.6.6
-
+Nikita
