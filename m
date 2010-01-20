@@ -1,48 +1,37 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
 Subject: Re: RFC: NUMA modifications to cyclictest
-Date: Wed, 20 Jan 2010 07:51:41 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1001200741000.2906@localhost.localdomain>
-References: <20100119171439.24726f2e@torg>
+Date: Wed, 20 Jan 2010 12:23:35 +0300
+Message-ID: <201001201223.36670@zigzag.lvk.cs.msu.su>
+References: <20100119171439.24726f2e@torg> <alpine.LFD.2.00.1001200741000.2906@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>, Carsten Emde <ce@ceag.ch>,
-	John Kacur <jkacur@redhat.com>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:56075 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751822Ab0ATGwL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Jan 2010 01:52:11 -0500
-In-Reply-To: <20100119171439.24726f2e@torg>
+Received: from gate.lvk.cs.msu.su ([158.250.17.1]:53214 "EHLO
+	mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750807Ab0ATJXj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Jan 2010 04:23:39 -0500
+Received: from mail.lvk.cs.msu.su (localhost [127.0.0.1])
+	by mail.lvk.cs.msu.su (Postfix) with ESMTP id 207A1974
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Jan 2010 12:23:37 +0300 (MSK)
+Received: from desktopvm.lvknet (desktopvm.lvknet [192.168.132.1])
+	by mail.lvk.cs.msu.su (Postfix) with ESMTP id 0CF21950
+	for <linux-rt-users@vger.kernel.org>; Wed, 20 Jan 2010 12:23:37 +0300 (MSK)
+In-Reply-To: <alpine.LFD.2.00.1001200741000.2906@localhost.localdomain>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 19 Jan 2010, Clark Williams wrote:
-> RT-ers,
-> 
-> Lately we've been struggling with some performance issues on high-core
-> count (>16 cores) NUMA machines with the RT kernel. During the course
-> of troubleshooting this issue, we tried using the 'numactl' program to
-> constrain our measurement testing tool (rteval) to a particular memory
-> node, rather than letting everything float. Doing so showed marked
-> improvement in both max latency and jitter.  While this doesn't solve
-> our performance problems I thought it might make sense to have a --numa
-> mode for cylictest that compliments the --smp mode just added. 
-> 
-> The big difference here is that when using --numa, each measurement
-> thread (one per cpu) has it's stack allocated from the memory node
-> associated with it's cpu. Also, the major data structures for each
-> thread (parameter block, statistics block and histogram) are allocated
-> from the appropriate node. This is done with calls into libnuma,
-> which means this will add a dependency on libnuma. 
+> > The big difference here is that when using --numa, each measurement
+> > thread (one per cpu) has it's stack allocated from the memory node
+> > associated with it's cpu. Also, the major data structures for each
+> > thread (parameter block, statistics block and histogram) are allocated
+> > from the appropriate node. This is done with calls into libnuma,
+> > which means this will add a dependency on libnuma.
+>
+> That might cause some trouble for embedded folks. :(
 
-That might cause some trouble for embedded folks. :(
- 
-> The intent is to measure latency on a numa system in the same way a
-> well-written RT application would run on a NUMA machine, that is
-> minimizing the off-node memory references. 
-
-Agreed.
-
-	tglx
+Maybe make that a compile-time option?
