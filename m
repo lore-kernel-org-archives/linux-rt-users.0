@@ -1,103 +1,104 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [PATCH]cyclictest: CFLAGS to support static compiliation with ARM
-	Crosscompiler
-Date: Thu, 21 Jan 2010 22:10:46 +0900
-Message-ID: <49b7c2351001210510r545a086er2fe6badcd3657fa6@mail.gmail.com>
-References: <1246593855.2153.55.camel@centos51>
-	 <1264032570.2121.4.camel@centos51>
-	 <520f0cf11001201640r4f1cf00ew3b4a4e9424c28602@mail.gmail.com>
-	 <49b7c2351001201737l403a20cduf3c32072e8e4f8d1@mail.gmail.com>
-	 <alpine.LFD.2.00.1001211201340.3873@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.31.12-rt20
+Date: Thu, 21 Jan 2010 22:23:10 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0906231418500.2767@localhost.localdomain> <alpine.LFD.2.00.0907092020410.2768@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain>
+ <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain>
+ <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+ <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain> <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	tglx <tglx@linutronix.de>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pw0-f42.google.com ([209.85.160.42]:59223 "EHLO
-	mail-pw0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751514Ab0AUNRV convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Jan 2010 08:17:21 -0500
-Received: by pwj9 with SMTP id 9so3910271pwj.21
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jan 2010 05:17:20 -0800 (PST)
-In-Reply-To: <alpine.LFD.2.00.1001211201340.3873@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>,
+	John Kacur <jkacur@redhat.com>,
+	Nick Piggin <nickpiggin@yahoo.com.au>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755279Ab0AUVYS@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jan 21, 2010 at 8:40 PM, John Kacur <jkacur@redhat.com> wrote:
->
->
-> On Thu, 21 Jan 2010, GeunSik Lim wrote:
->
->> On Thu, Jan 21, 2010 at 9:40 AM, John Kacur <jkacur@redhat.com> wrot=
-e:
->> >
->> > Did you leave something out?
->> Not at all.
->> I summary, We have to =C2=A0change =C2=A0CFLAGS from "-lpthread -lrt=
-" to "-lrt
->> -lpthread" to compile
->> rt-tests source successfully =C2=A0for static linking with GCC based=
- arm
->> cross compiler.
->>
->> This is testcase.
->> Fedora11#> git clone
->> git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
->> Fedora11#> cd rt-tests
->> Fedora11#> vi Makefile ( for static linking)
->> =C2=A0 CFLAGS =C2=A0+=3D -O2 -static <--- Edit this line.
->> Fedora11#> make CC=3Darm-linux-eabi-gcc
->> =C2=A0 =C2=A0We will meet some errors like =C2=A0"undefined referenc=
-e to . . . . . .
->> " messages.
->
-> Okay, I tested that change on normal x86_64 with the static flag, and=
- it
-> does seem to work, so I have no problem with your change.
-Thank you for verification on X86 64bit.
-=46or reference, I tested that change on X86 32bit with the "-static"op=
-tion.
->
-> Are you sure you need a -static link flag for embedded? I was talking=
- to
-> another arm developer who also cross compiles but doesn't need it.
-Of course. In general, Most embedded developers use shared linking for
-Embedded environment. But, Consider some case like Speedup and
-independent binary for debugging. In this case, We need useful
-"-static"option.
->
-> Also, the reason I asked whether something was missing, is that the t=
-ext
-> to your patch contains "Subject: [PATCH 2/2] bugfix: Support static
-> linking(-static) with"
->
-> so I was wondering where Patch 1/2 was.
->
-Sorry. I mistook.:)
-Patch is just one.
-> Thanks.
->
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+   - forward to 2.6.31.12
 
+   - large number of RCU assumption fixes vs. cred and tasklist_lock
 
+   - Priority Inheritance POSIX compliance fix
 
---=20
-Regards,
-GeunSik Lim ( Samsung Electronics )
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-           leemgs@gmail.com , leemgs1@gmail.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+   - workaround for Priority Protection POSIX compliance problem
+
+   - misc. fixlets here and there
+
+It took quite a while to get this update out for various reasons:
+
+   - mainline merge of the locking infrastructure changes which are a
+     further milestone on the way to full rt integration. That merge
+     will shave off a large portion of the rt patch (don't worry, we
+     have enough new and exiting stuff in the pipeline to keep the
+     patch size large enough)
+
+  - fixing RCU assumptions in mainline and backport to 31-rt
+
+  - lots of brain twisting around the POSIX scheduling policy
+    compliance problems which got reported vs. Priority
+    Inheritance/Protection
+
+  - an extended christmas break and the resulting email backlog
+
+  - our new housemate: http://tglx.de/~tglx/housemate.png
+
+Further plans:
+
+  - a last big feature for 31-rt is pending, which is worth a separate
+    release: Nick Piggins VFS scalability patches. I'm still running
+    tests on that, so no promise.
+
+  - I'm going to switch 31-rt into maintaince mode (with or without
+    the VFS patches) and concentrate on getting .33-rcX-rt out. Yes,
+    there will be no .32-rt. The reason is simply that the locking
+    changes which got merged into .33 are making my life easier and
+    are the base to sort out more ready for the mainline stuff.
+
+Download locations:
+   
+   http://rt.et.redhat.com/download/ (temporary out of sync)
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.31
+  
+Git development branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.31
+  
+Information on the RT patch can be found at:
+
+   http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.31.12-rt20 tree, the following patches should be
+applied:
+
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.12.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.12-rt20.bz2
+
+Enjoy !
+
+      tglx
