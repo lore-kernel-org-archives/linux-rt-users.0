@@ -1,12 +1,12 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: ARM fixes for 2.6.31.12-rt20
-Date: Mon, 25 Jan 2010 14:07:25 +0100
-Message-ID: <20100125130725.GA8159@pengutronix.de>
-References: <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain> <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain> <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain> <20100125103341.GA3712@pengutronix.de> <alpine.LFD.2.00.1001251142210.2906@localhost.localdomain>
+Date: Mon, 25 Jan 2010 13:45:26 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1001251142210.2906@localhost.localdomain>
+References: <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
+ <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+ <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain> <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain> <20100125103341.GA3712@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-568851917-1264423530=:2906"
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
@@ -26,40 +26,54 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Mark Knecht <markknecht@gmail.com>,
 	John Kacur <jkacur@redhat.com>,
 	Nick Piggin <nickpiggin@yahoo.com.au>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753074Ab0AYNHi@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.00.1001251142210.2906@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:38037 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752503Ab0AYMr3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jan 2010 07:47:29 -0500
+In-Reply-To: <20100125103341.GA3712@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Thomas,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-On Mon, Jan 25, 2010 at 01:45:26PM +0100, Thomas Gleixner wrote:
-> On Mon, 25 Jan 2010, Uwe Kleine-K=F6nig wrote:
-> > Hello,
-> >=20
-> > I have done build tests for ARCH=3Darm on 2.6.31.12-rt20 and to fix=
- most
-> > platforms I needed to cherry pick three commits from post-2.6.31
-> > mainline:
-> >=20
-> > 	9fd868f ([WATCHDOG] davinci: use clock framework for timer frequen=
-cy)
-> > 	b9696ea (net: Fix IXP 2000 network driver building.)
-> > 	0bfb34f (ARM: S3C2440: mini2440: Fix missing CONFIG_S3C_DEV_USB_HO=
-ST)
->=20
-> I have a hard time to see, why these patches fix most
-> platforms. AFAICT tell each one is fixing a single mach or board.=20
-That's right.  The more exact wording is:  After cherry picking these
-most platforms (i.e. 133/137) compile without error.
+--8323328-568851917-1264423530=:2906
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
 
-Best regards
-Uwe
+On Mon, 25 Jan 2010, Uwe Kleine-König wrote:
+> Hello,
+> 
+> I have done build tests for ARCH=arm on 2.6.31.12-rt20 and to fix most
+> platforms I needed to cherry pick three commits from post-2.6.31
+> mainline:
+> 
+> 	9fd868f ([WATCHDOG] davinci: use clock framework for timer frequency)
+> 	b9696ea (net: Fix IXP 2000 network driver building.)
+> 	0bfb34f (ARM: S3C2440: mini2440: Fix missing CONFIG_S3C_DEV_USB_HOST)
 
---=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
+I have a hard time to see, why these patches fix most
+platforms. AFAICT tell each one is fixing a single mach or board. 
+
+> (One of these fails to cleanly apply on top of 2.6.31.12-rt20 so I made
+> them available at
+> 
+> 	git://git.pengutronix.de/git/ukl/linux-2.6.git rt/arm
+> 
+> based on tip/rt/arm).  Then there is a problem with highmem (only on
+> ARM).  A fix was discussed already earlier, but as there havn't been
+> anyone volunteering to test it, Thomas didn't take it.  As I don't have
+> a machine needing highmem I cannot test either.  So I just resend it as
+> it changed slightly since the last post to keep it in the archives (or
+> for the case Thomas wants to take it now).
+
+No, I don't. Thanks,
+
+    tglx
+
+
+
+--8323328-568851917-1264423530=:2906--
