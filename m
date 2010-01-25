@@ -1,37 +1,72 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Problem with interrupt handler
-Date: Mon, 25 Jan 2010 20:35:04 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1001252034290.5926@localhost.localdomain>
-References: <e97c14da1001250916u9b20444k2bdb550211aca1ea@mail.gmail.com>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH] Add copyright statements to files in src/lib
+Date: Mon, 25 Jan 2010 21:22:54 +0100
+Message-ID: <1264450974-6923-1-git-send-email-u.kleine-koenig@pengutronix.de>
+References: <1264191496-11663-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Julian Fuchs <julian@fuchs.cc>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: John Kacur <jkacur@redhat.com>,
+	Carsten Emde <carsten.emde@osadl.org>,
+	Clark Williams <williams@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:37482 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751559Ab0AYTfK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jan 2010 14:35:10 -0500
-In-Reply-To: <e97c14da1001250916u9b20444k2bdb550211aca1ea@mail.gmail.com>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:44505 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751470Ab0AYUWy (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jan 2010 15:22:54 -0500
+In-Reply-To: <1264191496-11663-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 25 Jan 2010, Julian Fuchs wrote:
-> Hello,
-> 
-> being aware of the risk to bother some people here I would
-> nevertheless really appreciate your help with the following issue:
-> 
-> Is there any difference in the request_irq() function call in
-> comparison to the one in the normal kernel?
-> 
-> I'm trying to run
-> 
-> request_irq(irq, interrupt_handler, IRQF_SHARED | IRQF_DISABLED |
-> IRQF_NODELAY, MODULE_IDENT, &stage)
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Carsten Emde <carsten.emde@osadl.org>
+Cc: Clark Williams <williams@redhat.com>
+---
+Hello,
 
-Does the function return 0 ?
- 
-Thanks,
+compared to the previous patch I modified the comment in src/lib/error.=
+c as
+requested by John via irc.
 
-	tglx
+Best regards
+Uwe
+
+ src/lib/error.c      |    6 ++++++
+ src/lib/rt-get_cpu.c |    4 +++-
+ src/lib/rt-utils.c   |    8 ++++++++
+ 3 files changed, 17 insertions(+), 1 deletions(-)
+
+diff --git a/src/lib/error.c b/src/lib/error.c
+index d5ad2aa..e9fe58f 100644
+--- a/src/lib/error.c
++++ b/src/lib/error.c
+@@ -1,3 +1,9 @@
++/*
++ * Copyright (C) 2009 John Kacur <jkacur@redhat.com>
++ *
++ * error routines, similar to those found in
++ * Advanced Programming in the UNIX Environment 2nd ed.
++ */
+ #include "error.h"
+=20
+ /* Print an error message, plus a message for err and exit with error =
+err */
+diff --git a/src/lib/rt-get_cpu.c b/src/lib/rt-get_cpu.c
+index 6ebda90..83430dd 100644
+--- a/src/lib/rt-get_cpu.c
++++ b/src/lib/rt-get_cpu.c
+@@ -1,3 +1,6 @@
++/*
++ * Copyright (C) 2009 John Kacur <jkacur@redhat.com>
++ */
+ #include "rt-get_cpu.h"
+ #ifdef __NR_getcpu
+ #elif defined(__GLIBC__) && defined(__GLIBC_MINOR__)	\
+@@ -22,4 +25,3 @@ int get_cpu_setup(void)
+ }
+=20
+ #endif
