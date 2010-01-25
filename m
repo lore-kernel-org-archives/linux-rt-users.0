@@ -1,79 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: ARM fixes for 2.6.31.12-rt20
-Date: Mon, 25 Jan 2010 13:45:26 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1001251142210.2906@localhost.localdomain>
-References: <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
- <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
- <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain> <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain> <20100125103341.GA3712@pengutronix.de>
+From: Julian Fuchs <julian@fuchs.cc>
+Subject: Problem with interrupt handler
+Date: Mon, 25 Jan 2010 18:16:08 +0100
+Message-ID: <e97c14da1001250916u9b20444k2bdb550211aca1ea@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-568851917-1264423530=:2906"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>,
-	John Kacur <jkacur@redhat.com>,
-	Nick Piggin <nickpiggin@yahoo.com.au>
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:38037 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752503Ab0AYMr3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jan 2010 07:47:29 -0500
-In-Reply-To: <20100125103341.GA3712@pengutronix.de>
+Received: from mail-iw0-f173.google.com ([209.85.223.173]:51222 "EHLO
+	mail-iw0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754220Ab0AYRQN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jan 2010 12:16:13 -0500
+Received: by iwn3 with SMTP id 3so1056011iwn.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2010 09:16:13 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hello,
 
---8323328-568851917-1264423530=:2906
-Content-Type: TEXT/PLAIN; charset=iso-8859-1
-Content-Transfer-Encoding: 8BIT
+being aware of the risk to bother some people here I would
+nevertheless really appreciate your help with the following issue:
 
-On Mon, 25 Jan 2010, Uwe Kleine-König wrote:
-> Hello,
-> 
-> I have done build tests for ARCH=arm on 2.6.31.12-rt20 and to fix most
-> platforms I needed to cherry pick three commits from post-2.6.31
-> mainline:
-> 
-> 	9fd868f ([WATCHDOG] davinci: use clock framework for timer frequency)
-> 	b9696ea (net: Fix IXP 2000 network driver building.)
-> 	0bfb34f (ARM: S3C2440: mini2440: Fix missing CONFIG_S3C_DEV_USB_HOST)
+Is there any difference in the request_irq() function call in
+comparison to the one in the normal kernel?
 
-I have a hard time to see, why these patches fix most
-platforms. AFAICT tell each one is fixing a single mach or board. 
+I'm trying to run
 
-> (One of these fails to cleanly apply on top of 2.6.31.12-rt20 so I made
-> them available at
-> 
-> 	git://git.pengutronix.de/git/ukl/linux-2.6.git rt/arm
-> 
-> based on tip/rt/arm).  Then there is a problem with highmem (only on
-> ARM).  A fix was discussed already earlier, but as there havn't been
-> anyone volunteering to test it, Thomas didn't take it.  As I don't have
-> a machine needing highmem I cannot test either.  So I just resend it as
-> it changed slightly since the last post to keep it in the archives (or
-> for the case Thomas wants to take it now).
+request_irq(irq, interrupt_handler, IRQF_SHARED | IRQF_DISABLED |
+IRQF_NODELAY, MODULE_IDENT, &stage)
 
-No, I don't. Thanks,
+on 2.6.31.6-rt19 but it doesn't call interrupt_handler() when an
+interrupt is received.
 
-    tglx
+In the plain kernel 2.6.31 it works with this call:
 
+request_irq(irq, interrupt_handler, IRQF_SHARED | IRQF_DISABLED,
+MODULE_IDENT, &stage)
 
+Do you have hints to literature / tutorials / code I should look at?
 
---8323328-568851917-1264423530=:2906--
+I would really appreciate any kind of help,
+
+thanks,
+
+Julian
