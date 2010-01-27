@@ -1,162 +1,90 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] cyclictest: Set tracing_thresh optionally
-Date: Wed, 27 Jan 2010 14:06:51 +0100
-Message-ID: <520f0cf11001270506ge76cca1ha259539a101522c2@mail.gmail.com>
-References: <a0e7fce51001270318q6f16aea1j765849bb09df8640@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: williams@redhat.com, tglx@linutronix.de,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org
-To: yi li <liyi.dev@gmail.com>
+From: tstone@vlsi.informatik.tu-darmstadt.de (Tim Sander)
+Subject: Ooops 805 2.6.31.12-rt20
+Date: Wed, 27 Jan 2010 15:09:02 +0100 (CET)
+Message-ID: <20100127140902.8EDEBE967@iss1.vlsi.informatik.tu-darmstadt.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f219.google.com ([209.85.219.219]:38788 "EHLO
-	mail-ew0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752311Ab0A0NGy convert rfc822-to-8bit (ORCPT
+Received: from lnx503.hrz.tu-darmstadt.de ([130.83.156.232]:58770 "EHLO
+	lnx503.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754719Ab0A0OOd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jan 2010 08:06:54 -0500
-In-Reply-To: <a0e7fce51001270318q6f16aea1j765849bb09df8640@mail.gmail.com>
+	Wed, 27 Jan 2010 09:14:33 -0500
+Received: from iss1.vlsi.informatik.tu-darmstadt.de (iss1.vlsi.informatik.tu-darmstadt.de [130.83.164.1])
+	by lnx503.hrz.tu-darmstadt.de (8.14.2/8.14.2/HRZ/PMX) with ESMTP id o0RE92u2029194
+	for <linux-rt-users@vger.kernel.org>; Wed, 27 Jan 2010 15:09:02 +0100
+	(envelope-from tstone@vlsi.informatik.tu-darmstadt.de)
+Received: from localhost (localhost [127.0.0.1])
+	by iss1.vlsi.informatik.tu-darmstadt.de (Postfix) with ESMTP id A86E8E9F3
+	for <linux-rt-users@vger.kernel.org>; Wed, 27 Jan 2010 15:09:02 +0100 (CET)
+Received: from iss1.vlsi.informatik.tu-darmstadt.de ([127.0.0.1])
+	by localhost (iss1.vlsi.informatik.tu-darmstadt.de [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id Ssv0cKtvh0si for <linux-rt-users@vger.kernel.org>;
+	Wed, 27 Jan 2010 15:09:02 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jan 27, 2010 at 12:18 PM, yi li <liyi.dev@gmail.com> wrote:
-> Hi,
->
-> In cyclictest, by default "tracing_thresh" will be set to "tracelimit=
-"
-> (given to cyclictest with option "-b tracelimit").
-> If the maximum latency of the tracer currently used is less than
-> "tracelimit", no trace will be recorded.
+Hi
 
-So, can't you just set the tracing_thresh to your desired value with th=
-e
--b tracelimit option?
-
-Explain to me how cyclictest will behave if tracelimit and tracing_thre=
-sh
-are set to different values.
-
-If you showed us two sets of outputs (with and without your option)
-to show what setting tracing_thresh separately would achieve that
-would be helpful.
-
->
-> e.g:
-> ./cyclictest -p 80 -t 1 -n -l 10000 -i 10000 -b 8000 -I -f
-> If the "irqsoff" maximum latency is less than 8000,
-> "/sys/kernel/debug/tracing/trace" will no contain valid "irqsoff"
-> trace.
->
-> This is not expected sometimes if e.g, the maximum latency of
-> cyclictest is caused by wakeup, but I want to see the irqsoff latency=
-=2E
-> So I think it may be better to allow user set "tracing_thresh"
-> optionally, by adding a "--tracing_thresh=3DTHRESH" option.
->
-> Here is a simple patch to show the idea:
->
-> Signed-off-by: yi.li@analog.com
->
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.=
-c
-> index ce4d911..c2f1c07 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -144,6 +144,7 @@ struct thread_stat {
->
-> =A0static int shutdown;
-> =A0static int tracelimit =3D 0;
-> +static int tracing_thresh =3D 0;
-> =A0static int ftrace =3D 0;
-> =A0static int kernelversion;
-> =A0static int verbose =3D 0;
-> @@ -384,9 +385,11 @@ static void setup_tracer(void)
-> =A0 =A0 =A0 =A0if (kernelversion =3D=3D KV_26_CURR) {
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0char buffer[32];
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0int ret;
-> -
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 sprintf(buffer, "%d", tracelimit);
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 setkernvar("tracing_thresh", buffer);
-> +
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (tracing_thresh > 0 && tracing_thres=
-h <=3D tracelimit) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 sprintf(buffer, "%d", t=
-racing_thresh);
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 setkernvar("tracing_thr=
-esh", buffer);
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 }
-
-Do you need an else part that sets tracing_thresh to tracelimit?
+I have just tested the newest RT Kernel. It gives me an oops:
+FEC Ethernet Driver
+kernel BUG at kernel/rtmutex.c:807!
+Unable to handle kernel NULL pointer dereference at virtual address 00000000
+pgd = c0004000
+[00000000] *pgd=00000000
+Internal error: Oops: 805 [#1] PREEMPT
+Modules linked in:
+CPU: 0    Not tainted  (2.6.31.12-rt20-00001-g36e2ecd #1)
+PC is at __bug+0x1c/0x28
+LR is at __bug+0x18/0x28
+pc : [<c00231d0>]    lr : [<c00231cc>]    psr: 00000093
+sp : c784bef0  ip : c784be30  fp : 00000002
+r10: c79cfc24  r9 : c02e2074  r8 : c030e7f4
+r7 : 40000013  r6 : c0188624  r5 : c784a000  r4 : 600e0000
+r3 : 00000000  r2 : 00000001  r1 : c784a000  r0 : 0000002a
+Flags: nzcv  IRQs off  FIQs on  Mode SVC_32  ISA ARM  Segment kernel
+Control: 00c5387d  Table: 80004008  DAC: 00000017
+Process irq/57-fec (pid: 115, stack limit = 0xc784a268)
+Stack: (0xc784bef0 to 0xc784c000)
+bee0:                                     c022ef38 c022f134 00000000 40000013
+bf00: ffffffff c784bf10 c022f0d4 c0030704 c0031a3c c00317f4 c78c2840 c02de460
+bf20: 00000073 00000001 00000000 c784bf38 c005b4fc 600e0000 c79cf800 c0188624
+bf40: c79cfc24 c030e7f4 c02e2074 c030e7f8 00000002 c01887ac c030e704 c79cfb20
+bf60: c79cf800 c79cfc24 c030e7f4 c0189144 c02e2030 c02e206c c790a760 c784a000
+bf80: c02e2030 c790a788 c02e208c c0061110 00000000 00000032 c784bfbc c781de4c
+bfa0: c790a760 c0060fdc 00000000 00000000 00000000 00000000 00000000 c004ad68
+bfc0: 00000000 00000000 c784bfc8 c784bfc8 c784bfd0 c784bfd0 00000000 00000000
+bfe0: c784bfe0 c784bfe0 00000000 00000000 00000000 c00208b4 cfee7cd4 8fcd69f9
+[<c00231d0>] (__bug+0x1c/0x28) from [<c022f134>] (rt_spin_lock_slowlock+0x220/0x234)
+[<c022f134>] (rt_spin_lock_slowlock+0x220/0x234) from [<c01887ac>] (mii_queue+0x20/0xb4)
+[<c01887ac>] (mii_queue+0x20/0xb4) from [<c0189144>] (fec_enet_interrupt+0x84/0x104)
+[<c0189144>] (fec_enet_interrupt+0x84/0x104) from [<c0061110>] (irq_thread+0x134/0x1c0)
+[<c0061110>] (irq_thread+0x134/0x1c0) from [<c004ad68>] (kthread+0x7c/0x84)
+[<c004ad68>] (kthread+0x7c/0x84) from [<c00208b4>] (kernel_thread_exit+0x0/0x8)
+Code: e1a01000 e59f000c eb08299b e3a03000 (e5833000)
+---[ end trace 7ce2cf1764dda59d ]---
+exiting task "irq/57-fec" (115) is an active IRQ thread (irq 57)
+note: irq/57-fec[115] exited with preempt_count 1
+physmap platform flash device: 02000000 at a0000000
+physmap-flash.0: Found 1 x16 devices at 0x0 in 16-bit bank
 
 
->
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0/* ftrace_enabled is a sysctl variable=
- */
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0fileprefix =3D procfileprefix;
-> @@ -766,6 +769,7 @@ static void display_help(int error)
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 " =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0 without -t default =3D 1\n"
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 "-T TRACE --tracer=3DTRACER =A0 set traci=
-ng function\n"
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 " =A0 =A0configured tracers: %s\n"
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0"--tracing_thresh=3DTHRESH =A0 =A0set tr=
-acing_thresh of current
-> tracer to THRESH\n"
+...
+and later than
+------------[ cut here ]------------
+WARNING: at net/sched/sch_generic.c:250 dev_watchdog+0x288/0x2a8()
+NETDEV WATCHDOG: eth0 (fec): transmit queue 0 timed out
+Modules linked in:
+[<c002492c>] (unwind_backtrace+0x0/0xe4) from [<c0035ea8>] (warn_slowpath_common+0x4c/0x80)
+[<c0035ea8>] (warn_slowpath_common+0x4c/0x80) from [<c0035f18>] (warn_slowpath_fmt+0x28/0x38)
+[<c0035f18>] (warn_slowpath_fmt+0x28/0x38) from [<c01c8e58>] (dev_watchdog+0x288/0x2a8)
+[<c01c8e58>] (dev_watchdog+0x288/0x2a8) from [<c0040350>] (run_timer_softirq+0x160/0x280)
+[<c0040350>] (run_timer_softirq+0x160/0x280) from [<c003b32c>] (ksoftirqd+0x11c/0x224)
+[<c003b32c>] (ksoftirqd+0x11c/0x224) from [<c004ad68>] (kthread+0x7c/0x84)
+[<c004ad68>] (kthread+0x7c/0x84) from [<c00208b4>] (kernel_thread_exit+0x0/0x8)
+---[ end trace 7ce2cf1764dda59f ]---
 
-If you run your patch through checkpatch you'll get
+it seems as if the FEC ethernet driver of the phycore pcm043 freescale imx35 is unhappy.
+If there is an easy way to test this i would give it a try.
 
-ERROR: patch seems to be corrupt (line wrapped?)
-#64: FILE: src/cyclictest/cyclictest.c:772:
-tracer to THRESH\n"
-
-And because of the above, I am unable to apply your patch
-with git am
-
-We don't follow all the kernel style recommendations in cyclictest
-but we try to follow most of them. So please run your patch
-through checkpatch and fix-up the warnings.
-
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 "-u =A0 =A0 =A0 --unbuffered =A0 =A0 =A0f=
-orce unbuffered output for live
-> processing\n"
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 "-v =A0 =A0 =A0 --verbose =A0 =A0 =A0 =A0=
- output values on stdout for statistics\n"
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 " =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0 format: n:c:v n=3Dtasknum c=3Dcount
-> v=3Dvalue in us\n"
-> @@ -896,6 +900,7 @@ static void process_options (int argc, char *argv=
-[])
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"help", no_argument, =
-NULL, '?'},
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"tracer", required_ar=
-gument, NULL, 'T'},
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"traceopt", required_=
-argument, NULL, 'O'},
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 {"tracing_thresh", requ=
-ired_argument, NULL, 1},
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"smp", no_argument, N=
-ULL, 'S'},
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{NULL, 0, NULL, 0}
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0};
-> @@ -972,6 +977,7 @@ static void process_options (int argc, char *argv=
-[])
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0use_nanosleep =3D MODE=
-_CLOCK_NANOSLEEP;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0break;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0case '?': display_help(0); break;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 case 1 : tracing_thresh =3D atoi(optarg=
-); break;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0}
-> =A0 =A0 =A0 =A0}
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Best regards
+Tim
