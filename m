@@ -1,76 +1,38 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [rt-tests] version 0.63 available
-Date: Wed, 27 Jan 2010 10:23:54 -0600
-Message-ID: <20100127102354.0b5c0f9d@torg>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/VD65l3F.iQiLEE3vtyYxpRe"; protocol="application/pgp-signature"
-Cc: LKML <linux-kernel@vger.kernel.org>, Carsten Emde <ce@ceag.ch>,
-	Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
-	<u.kleine-koenig@pengutronix.de>, John Kacur <jkacur@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 0/5] rt-tests: rt_numa.h clean-ups, and dependency files
+Date: Wed, 27 Jan 2010 21:24:23 +0100
+Message-ID: <1264623868-23595-1-git-send-email-jkacur@redhat.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	Carsten Emde <C.Emde@osadl.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:47529 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752571Ab0A0QYT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jan 2010 11:24:19 -0500
+Received: from mail-bw0-f219.google.com ([209.85.218.219]:32839 "EHLO
+	mail-bw0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751214Ab0A0UYh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 27 Jan 2010 15:24:37 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/VD65l3F.iQiLEE3vtyYxpRe
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+This set of patches are mostly clean-up to our new rt_numa.h file.
+We need to add a copyright notice in every file for some distributions.
+This also creates some changes to simplify and clean-up
+the differences between the code for the older LIBNUMA_API_VERSION and the
+newer ones. (or at least I hope you will think so).
+Finally there is a change to automatically generate dependencies for the
+Makefile.
 
+John Kacur (5):
+  rt-tests: Add header including copyright notice to rt_numa.h
+  rt-tests: Separate the #ifdef LIBNUMA_API_VERSION functions.
+  rt-tests: Remove the ret variable, the end label and the goto.
+  rt-tests: Fix some style problems, such as spaces instead of tabs.
+  rt-tests: Automatically generate dependencies.
 
-The latest version of rt-tests is now available as a tarball from:
+ Makefile                 |   20 ++++++++++++---
+ src/cyclictest/rt_numa.h |   58 ++++++++++++++++++++++++++++-----------------
+ 2 files changed, 52 insertions(+), 26 deletions(-)
 
-http://www.kernel.org/pub/linux//kernel/people/clrkwllms/rt-tests/rt-tests-=
-0.63.tar.bz2
-
-Also available in my git repo:
-
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-
-under tag v0.63
-
-This version includes a new option: --numa, which is a counterpart to
-the recently introduced --smp option.=20
-
-The --smp option is a shorthand for:  -t -a -n, meaning that one
-measurement thread is created per active CPU and is affined to that cpu
-and that clock_nanosleep is used for measurements.=20
-
-The --numa option does the same options as --smp, but also makes calls
-into libnuma to ensure that measurement threads are always bound to the
-memory node that is local to it's cpu (avoiding cross-node memory
-references). Each measurement thread's stack and major data structures
-are allocated from the local memory node.
-
-Note that to actually use --numa mode, you must pass NUMA=3D1 to the make
-build command:
-
-	$ make NUMA=3D1
-
-This is for all you embedded guys that could care less about NUMA :)
-
-Other changes from previous releases are that the hwlatdetect test has
-been moved to the python site-library (so that other tests can import
-it) and then symlinked to /usr/bin/hwlatdetect. Also, copyright
-messages have been updated in the source files (thanks Uwe).=20
-
-Clark
-
---Sig_/VD65l3F.iQiLEE3vtyYxpRe
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.13 (GNU/Linux)
-
-iEYEARECAAYFAktgaKEACgkQHyuj/+TTEp1tZwCgm3OiZRwEFlf0ulesae0nFznM
-ILYAn372JoaLxroeo5kXzJFD/bFnOP7S
-=zvDH
------END PGP SIGNATURE-----
-
---Sig_/VD65l3F.iQiLEE3vtyYxpRe--
