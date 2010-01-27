@@ -1,7 +1,7 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 3/5] rt-tests: Remove the ret variable, the end label and the goto.
-Date: Wed, 27 Jan 2010 21:24:26 +0100
-Message-ID: <1264623868-23595-4-git-send-email-jkacur@redhat.com>
+Subject: [PATCH 1/5] rt-tests: Add header including copyright notice to rt_numa.h
+Date: Wed, 27 Jan 2010 21:24:24 +0100
+Message-ID: <1264623868-23595-2-git-send-email-jkacur@redhat.com>
 References: <1264623868-23595-1-git-send-email-jkacur@redhat.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	lkml <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
@@ -9,62 +9,38 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	John Kacur <jkacur@redhat.com>
 To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f215.google.com ([209.85.220.215]:52868 "EHLO
-	mail-fx0-f215.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754632Ab0A0UYl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jan 2010 15:24:41 -0500
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755018Ab0A0UZe@vger.kernel.org>
 In-Reply-To: <1264623868-23595-1-git-send-email-jkacur@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Remove the ret variable, the end lable and the goto. We already have
-inconsistent exit points for the function, and the end lable wasn't strictly
-for errors. Directly returning simplifies and shortens the code.
+Add a header which includes a copyright notice to rt_numa.h for cyclictest.
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/rt_numa.h |   14 +++++---------
- 1 files changed, 5 insertions(+), 9 deletions(-)
+ src/cyclictest/rt_numa.h |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
 diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-index 8d44097..ac2aca2 100644
+index a0ebe7f..14837ff 100644
 --- a/src/cyclictest/rt_numa.h
 +++ b/src/cyclictest/rt_numa.h
-@@ -73,7 +73,7 @@ static int rt_numa_numa_node_of_cpu(int cpu)
- static int rt_numa_numa_node_of_cpu(int cpu)
- {
- 	unsigned char cpumask[16];
--        int node, ret, idx, bit;
-+        int node, idx, bit;
- 	int max_node, max_cpus;
+@@ -1,3 +1,16 @@
++/*
++ * A numa library for cyclictest.
++ * The functions here are designed to work whether cyclictest has been
++ * compiled with numa support or not, and whether the user uses the --numa
++ * option or not.
++ * They should also work correctly with older versions of the numactl lib
++ * such as the one found on RHEL5, or with the newer version 2 and above.
++ *
++ * (C) 2010 John Kacur <jkacur@redhat.com>
++ * (C) 2010 Clark Williams <williams@redhat.com>
++ *
++ */
++
+ #ifndef _RT_NUMA_H
+ #define _RT_NUMA_H
  
- 	max_node = numa_max_node();
-@@ -88,19 +88,15 @@ static int rt_numa_numa_node_of_cpu(int cpu)
- 	idx = cpu / 8;
- 	bit = cpu % 8;
- 
--        for (node = 0; node <= max_node; node++){
-+        for (node = 0; node <= max_node; node++) {
- 		if (numa_node_to_cpus(node, (void *) cpumask, sizeof(cpumask)))
- 			return -1;
- 
--		if (cpumask[idx] & (1<<bit)) {
--			ret = node;
--			goto end;
--		}
-+		if (cpumask[idx] & (1<<bit))
-+			return node;
-         }
--        ret = -1;
-         errno = EINVAL;
--end:
--        return ret;
-+	return -1;
- }
- 
- #endif	/* LIBNUMA_API_VERSION */
 -- 
 1.6.6
-
