@@ -1,57 +1,70 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: Ooops 805 2.6.31.12-rt20
-Date: Thu, 28 Jan 2010 09:01:25 +0100
-Message-ID: <20100128080125.GC13756@pengutronix.de>
-References: <20100127140902.8EDEBE967@iss1.vlsi.informatik.tu-darmstadt.de>
+From: "M. Koehrer" <mathias_koehrer@arcor.de>
+Subject: Replacement for Xenomai's Message queues?
+Date: Thu, 28 Jan 2010 09:09:56 +0100 (CET)
+Message-ID: <21390406.1264666196447.JavaMail.ngmail@webmail08.arcor-online.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Tim Sander <tstone@vlsi.informatik.tu-darmstadt.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:51459 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754605Ab0A1IB1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jan 2010 03:01:27 -0500
-Content-Disposition: inline
-In-Reply-To: <20100127140902.8EDEBE967@iss1.vlsi.informatik.tu-darmstadt.de>
+Received: from mail-in-14.arcor-online.net ([151.189.21.54]:35972 "EHLO
+	mail-in-14.arcor-online.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753679Ab0A1IJ5 convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jan 2010 03:09:57 -0500
+Received: from mail-in-14-z2.arcor-online.net (mail-in-14-z2.arcor-online.net [151.189.8.31])
+	by mx.arcor.de (Postfix) with ESMTP id AC5C528B024
+	for <linux-rt-users@vger.kernel.org>; Thu, 28 Jan 2010 09:09:56 +0100 (CET)
+Received: from mail-in-09.arcor-online.net (mail-in-09.arcor-online.net [151.189.21.49])
+	by mail-in-14-z2.arcor-online.net (Postfix) with ESMTP id 99A7A10109
+	for <linux-rt-users@vger.kernel.org>; Thu, 28 Jan 2010 09:09:56 +0100 (CET)
+Received: from webmail08.arcor-online.net (webmail08.arcor-online.net [151.189.8.44])
+	by mail-in-09.arcor-online.net (Postfix) with ESMTP id 78B6F1AFCF9
+	for <linux-rt-users@vger.kernel.org>; Thu, 28 Jan 2010 09:09:56 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi all,
 
-> it seems as if the FEC ethernet driver of the phycore pcm043 freescal=
-e imx35 is unhappy.
-> If there is an easy way to test this i would give it a try.
-This is already fixed in mainline.  (And you were Cc:d for the two
-most relevant patches!)
+I am about to switch an realtime application from Xenomai to the RT_PRE=
+EMPTION patch.
+Everything works really smooth, however I have one question.
+With my Xenomai application I use the message queue which combine trans=
+fer (including queuing)
+of data with activation of the thread.
+In my Xenomai application I use this feature quite frequently. Now, I a=
+m not sure how to do an equivalent
+with the RT_PREEMPT patch.
+(see http://www.xenomai.org/documentation/xenomai-2.4/html/api/group__n=
+ative__queue.html)
+Of course I could use condition variables and a struct or array to hold=
+ the data I want to pass with the activation
+of a thread. However, using this approach I do not have the queuing (wh=
+ich is some extra effort I could spent...).
+Another idea I have: I could use sockets which realize the queuing but =
+the overhead is too high.
 
-	$ git lg v2.6.31.12-rt20..linus/master -- drivers/net/fec.c
-	78abcb1 net: fix section mismatch in fec.c
-	66bc4a6 Merge branch 'for-linus' of git://git.kernel.org/pub/scm/linux=
-/kernel/git/gerg/m68knommu
-	4980296 m68knommu: remove ColdFire direct interrupt register access
-	81538e7 fec: don't enable irqs in hard irq context
-	84177a2 fec: fix recursive locking of mii_lock
-	aa11d95 Merge branch 'master' of master.kernel.org:/pub/scm/linux/kern=
-el/git/davem/net-2.6
-	da81203 Merge branch 'master' of master.kernel.org:/pub/scm/linux/kern=
-el/git/davem/net-2.6
-	6ed1065 net: use NETDEV_TX_OK instead of 0 in ndo_start_xmit() functio=
-ns
+Is there any suitable way to implement a message queue like approach us=
+ing RT_PREEMPT patch?
+I am running x86 (Dual/Quad Cores).
 
-84177a2 and 81538e7 are the important ones for you, I didn't check the
-others.
+Thanks for all answers on this question.
 
-Uwe
+Regards
+
+Mathias
+
+
 
 --=20
-Pengutronix e.K.                              | Uwe Kleine-K=F6nig     =
-       |
-Industrial Linux Solutions                    | http://www.pengutronix.=
-de/  |
+Mathias Koehrer
+mathias_koehrer@arcor.de
+
+
+Immer auf dem Laufenden! Sport, Auto, Reise, Politik und Promis. Von un=
+s f=FCr Sie: der neue Arcor.de-Newsletter!
+Jetzt anmelden und einfach alles wissen: http://www.arcor.de/rd/footer.=
+newsletter
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
