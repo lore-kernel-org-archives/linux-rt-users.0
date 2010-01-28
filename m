@@ -1,46 +1,268 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/5] rt-tests: Add header including copyright notice to rt_numa.h
-Date: Wed, 27 Jan 2010 21:24:24 +0100
-Message-ID: <1264623868-23595-2-git-send-email-jkacur@redhat.com>
-References: <1264623868-23595-1-git-send-email-jkacur@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Carsten Emde <C.Emde@osadl.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755018Ab0A0UZe@vger.kernel.org>
-In-Reply-To: <1264623868-23595-1-git-send-email-jkacur@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: yi li <liyi.dev@gmail.com>
+Subject: Re: [PATCH] cyclictest: Set tracing_thresh optionally
+Date: Thu, 28 Jan 2010 14:46:27 +0800
+Message-ID: <a0e7fce51001272246o17b36c60r337221f79b40a103@mail.gmail.com>
+References: <a0e7fce51001270318q6f16aea1j765849bb09df8640@mail.gmail.com>
+	 <520f0cf11001270506ge76cca1ha259539a101522c2@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: williams@redhat.com, tglx@linutronix.de,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ew0-f219.google.com ([209.85.219.219]:33130 "EHLO
+	mail-ew0-f219.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750759Ab0A1Gq3 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jan 2010 01:46:29 -0500
+In-Reply-To: <520f0cf11001270506ge76cca1ha259539a101522c2@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add a header which includes a copyright notice to rt_numa.h for cyclictest.
+On Wed, Jan 27, 2010 at 9:06 PM, John Kacur <jkacur@redhat.com> wrote:
+> On Wed, Jan 27, 2010 at 12:18 PM, yi li <liyi.dev@gmail.com> wrote:
+>> Hi,
+>>
+>> In cyclictest, by default "tracing_thresh" will be set to "tracelimi=
+t"
+>> (given to cyclictest with option "-b tracelimit").
+>> If the maximum latency of the tracer currently used is less than
+>> "tracelimit", no trace will be recorded.
+>
+> So, can't you just set the tracing_thresh to your desired value with =
+the
+> -b tracelimit option?
+>
+> Explain to me how cyclictest will behave if tracelimit and tracing_th=
+resh
+> are set to different values.
+>
+> If you showed us two sets of outputs (with and without your option)
+> to show what setting tracing_thresh separately would achieve that
+> would be helpful.
+>
+Here is an example:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/cyclictest/rt_numa.h |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+1.  run cyclictest with "wakeup-rt" tracer (In my case, max latency of
+cyclictest is caused by "wakeup"):
 
-diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-index a0ebe7f..14837ff 100644
---- a/src/cyclictest/rt_numa.h
-+++ b/src/cyclictest/rt_numa.h
-@@ -1,3 +1,16 @@
-+/*
-+ * A numa library for cyclictest.
-+ * The functions here are designed to work whether cyclictest has been
-+ * compiled with numa support or not, and whether the user uses the --numa
-+ * option or not.
-+ * They should also work correctly with older versions of the numactl lib
-+ * such as the one found on RHEL5, or with the newer version 2 and above.
-+ *
-+ * (C) 2010 John Kacur <jkacur@redhat.com>
-+ * (C) 2010 Clark Williams <williams@redhat.com>
-+ *
-+ */
-+
- #ifndef _RT_NUMA_H
- #define _RT_NUMA_H
- 
--- 
-1.6.6
+root:/> ./cyclictest -p 80 -n -t 1 -l 10000 -i 20000 -b 5000 -W
+could not set latency_hist/wakeup_latency/reset to 1
+policy: fifo: loadavg: 4.98 3.32 1.47 6/30 363
+
+T: 0 (  359) P:80 I:20000 C:    373 Min:     74 Act: 5194 Avg:  158 Max=
+:    5194
+# Thread Ids: 00359
+# Break thread: 359
+root:/> cat /sys/kernel/debug/tracing/trace
+# tracer: wakeup_rt
+#
+# wakeup_rt latency trace v1.1.5 on 2.6.32.6-ADI-2010R1-pre-svn8240
+# --------------------------------------------------------------------
+# latency: 5138 us, #5/5, CPU#0 | (M:desktop VP:0, KP:0, SP:0 HP:0)
+#    -----------------
+#    | task: -359 (uid:0 nice:0 policy:1 rt_prio:80)
+#    -----------------
+#
+#                  _------=3D> CPU#
+#                 / _-----=3D> irqs-off
+#                | / _----=3D> need-resched
+#                || / _---=3D> hardirq/softirq
+#                ||| / _--=3D> preempt-depth
+#                |||| /_--=3D> lock-depth
+#                |||||/     delay
+#  cmd     pid   |||||| time  |   caller
+#     \   /      ||||||   \   |   /
+      ls-364     0dNh..    7us+:    364:120:R   + [000]   359: 19:S cyc=
+lictest
+      ls-364     0dNh..   20us!: _wake_up_process <-_hrtimer_wakeup
+      ls-364     0d.... 5127us+: _schedule <-_system_call
+      ls-364     0d.... 5130us :    364:120:R =3D=3D> [000]   359: 19:R=
+ cyclictest
+
+2. Now we want to run cyclictest with "irqsoff" tracer:
+Without my patch, "irqsoff" tracer cannot recored valid trace,
+because "tracing_thresh" will be set to "5000", and max latency of
+"irqsoff" in this case is less than "5000".
+
+root:/> ./cyclictest -p 80 -n -t 1 -l 10000 -i 20000 -b 5000 -I
+could not set latency_hist/wakeup_latency/reset to 1
+policy: fifo: loadavg: 5.08 3.78 1.80 6/30 408
+
+T: 0 (  402) P:80 I:20000 C:   1217 Min:     84 Act:  179 Avg:  167 Max=
+:    3933
+# Thread Ids: 00402
+# Break thread: 402
+root:/> cat /sys/kernel/debug/tracing/trace
+# tracer: irqsoff
+#
+# irqsoff latency trace v1.1.5 on 2.6.32.6-ADI-2010R1-pre-svn8240
+# --------------------------------------------------------------------
+# latency: 5138 us, #5/5, CPU#0 | (M:desktop VP:0, KP:0, SP:0 HP:0)
+#    -----------------
+#    | task: -359 (uid:0 nice:0 policy:1 rt_prio:80)
+#    -----------------
+#
+#                  _------=3D> CPU#
+#                 / _-----=3D> irqs-off
+#                | / _----=3D> need-resched
+#                || / _---=3D> hardirq/softirq
+#                ||| / _--=3D> preempt-depth
+#                |||| /_--=3D> lock-depth
+#                |||||/     delay
+#  cmd     pid   |||||| time  |   caller
+#     \   /      ||||||   \   |   /
+      ls-364     0dNh..    7us+:    364:120:R   + [000]   359: 19:S cyc=
+lictest
+      ls-364     0dNh..   20us!: _wake_up_process <-_hrtimer_wakeup
+      ls-364     0d.... 5127us+: _schedule <-_system_call
+      ls-364     0d.... 5130us :    364:120:R =3D=3D> [000]   359: 19:R=
+ cyclictest
+
+3. With my patch, run cyclic test with "irqsoff" tracer can get expecte=
+d trace
+ (because "tracing_thresh" is reset to "0" in this case).
+
+root:/> ./cyclictest -p 80 -n -t 1 -l 10000 -i 20000 -b 5000 -I
+could not set latency_hist/wakeup_latency/reset to 1
+policy: fifo: loadavg: 5.00 4.79 3.15 6/30 701
+
+T: 0 (  700) P:80 I:20000 C:    147 Min:     92 Act: 8706 Avg:  226 Max=
+:    8706
+# Thread Ids: 00700
+# Break thread: 700
+root:/> cat /sys/kernel/debug/tracing/trace
+# tracer: irqsoff
+#
+# irqsoff latency trace v1.1.5 on 2.6.32.6-ADI-2010R1-pre-svn8240
+# --------------------------------------------------------------------
+# latency: 116 us, #3/3, CPU#0 | (M:desktop VP:0, KP:0, SP:0 HP:0)
+#    -----------------
+#    | task: -694 (uid:0 nice:0 policy:0 rt_prio:0)
+#    -----------------
+#  =3D> started at: _user_path_at
+#  =3D> ended at:   _irq_exit
+#
+#
+#                  _------=3D> CPU#
+#                 / _-----=3D> irqs-off
+#                | / _----=3D> need-resched
+#                || / _---=3D> hardirq/softirq
+#                ||| / _--=3D> preempt-depth
+#                |||| /_--=3D> lock-depth
+#                |||||/     delay
+#  cmd     pid   |||||| time  |   caller
+#     \   /      ||||||   \   |   /
+      ls-694     0d....    1us!: __common_int_entry <-_user_path_at
+      ls-694     0dNs..  112us+: ___do_softirq <-_irq_exit
+      ls-694     0dNs..  119us : _trace_hardirqs_on <-_irq_exit
+
+
+4. Or we can set a smaller "tracing_thresh" (e.g 100).
+
+root:/> ./cyclictest -p 80 -n -t 1 -l 10000 -i 20000 -b 5000 -I --traci=
+ng_thresh
+ 100
+could not set latency_hist/wakeup_latency/reset to 1
+policy: fifo: loadavg: 5.04 5.01 4.92 6/30 4235
+
+T: 0 ( 4234) P:80 I:20000 C:    262 Min:     83 Act:  100 Avg:  165 Max=
+:    1366
+# Thread Ids: 04234
+# Break thread: 4234
+
+root:/> cat /sys/kernel/debug/tracing/tracing_thresh
+100
+
+root:/> cat /sys/kernel/debug/tracing/trace
+# tracer: irqsoff
+#
+# irqsoff latency trace v1.1.5 on 2.6.32.6-ADI-2010R1-pre-svn8240
+# --------------------------------------------------------------------
+# latency: 102 us, #3/3, CPU#0 | (M:desktop VP:0, KP:0, SP:0 HP:0)
+#    -----------------
+#    | task: -4231 (uid:0 nice:0 policy:0 rt_prio:0)
+#    -----------------
+#  =3D> started at: _dput
+#  =3D> ended at:   _irq_exit
+#
+#
+#                  _------=3D> CPU#
+#                 / _-----=3D> irqs-off
+#                | / _----=3D> need-resched
+#                || / _---=3D> hardirq/softirq
+#                ||| / _--=3D> preempt-depth
+#                |||| /_--=3D> lock-depth
+#                |||||/     delay
+#  cmd     pid   |||||| time  |   caller
+#     \   /      ||||||   \   |   /
+      ls-4231    0d....    1us+: __common_int_entry <-_dput
+      ls-4231    0d.s..   99us+: ___do_softirq <-_irq_exit
+      ls-4231    0d.s..  105us : _trace_hardirqs_on <-_irq_exit
+
+>> +
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (tracing_thresh > 0 && tracing_thre=
+sh <=3D tracelimit) {
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 sprintf(buffer, "%d", =
+tracing_thresh);
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 setkernvar("tracing_th=
+resh", buffer);
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 }
+>
+> Do you need an else part that sets tracing_thresh to tracelimit?
+>
+
+I think by default set "tracing_thresh" to "0" makes more sense, i.e,
+disable tracing thresh.
+So max latency of current tracer can be recorded.
+
+If people want the old behavior, cyclictest can be called with option
+like " cyclictest -b 1000 --tracing_thresh 1000".
+
+I will change this code and resend the patch:
+
++		if (tracing_thresh >=3D 0 && tracing_thresh <=3D tracelimit) {
++			sprintf(buffer, "%d", tracing_thresh);
++			setkernvar("tracing_thresh", buffer);
++		}
+
+
+>
+>>
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0/* ftrace_enabled is a sysctl variabl=
+e */
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0fileprefix =3D procfileprefix;
+>> @@ -766,6 +769,7 @@ static void display_help(int error)
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 " =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 =A0 without -t default =3D 1\n"
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 "-T TRACE --tracer=3DTRACER =A0 set trac=
+ing function\n"
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 " =A0 =A0configured tracers: %s\n"
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0"--tracing_thresh=3DTHRESH =A0 =A0set t=
+racing_thresh of current
+>> tracer to THRESH\n"
+>
+> If you run your patch through checkpatch you'll get
+>
+> ERROR: patch seems to be corrupt (line wrapped?)
+> #64: FILE: src/cyclictest/cyclictest.c:772:
+> tracer to THRESH\n"
+>
+> And because of the above, I am unable to apply your patch
+> with git am
+>
+> We don't follow all the kernel style recommendations in cyclictest
+> but we try to follow most of them. So please run your patch
+> through checkpatch and fix-up the warnings.
+>
+
+Sorry about that. I will resend the patch soon.
+
+-Yi
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
