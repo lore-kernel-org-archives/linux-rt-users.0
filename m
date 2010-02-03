@@ -1,31 +1,24 @@
-From: Tim Sander <tim01@iss.tu-darmstadt.de>
-Subject: Re: Replacement for Xenomai's Message queues?
-Date: Thu, 28 Jan 2010 23:18:52 +0100
-Message-ID: <201001282318.52919.tim01@iss.tu-darmstadt.de>
-References: <4B61DDF2.6010309@us.ibm.com> <21390406.1264666196447.JavaMail.ngmail@webmail08.arcor-online.net> <5579824.1264709193179.JavaMail.ngmail@webmail08.arcor-online.net>
+From: Tina Jama <tinajama005@sify.com>
+Subject: hello
+Date: Tue, 2 Feb 2010 22:58:07 -0800 (PST)
+Message-ID: <352388.45564.qm@web1110.biz.mail.sk1.yahoo.com>
+Reply-To: tinajama005@sify.com
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: dvhltc@us.ibm.com, linux-rt-users@vger.kernel.org
-To: "M. Koehrer" <mathias_koehrer@arcor.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+To: undisclosed recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lnx500.hrz.tu-darmstadt.de ([130.83.156.225]:55514 "EHLO
-	lnx500.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753943Ab0A1WTH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jan 2010 17:19:07 -0500
-In-Reply-To: <5579824.1264709193179.JavaMail.ngmail@webmail08.arcor-online.net>
+Received: from n4b.bullet.mail.ac4.yahoo.com ([76.13.13.74]:26607 "HELO
+	n4b.bullet.mail.ac4.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1752340Ab0BCG6J convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Feb 2010 01:58:09 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Mathias
+Dear one, my name is Tina Jama and I am 22 years of age female. I saw your profile and it interested me a lot. I will like to know you and get acquainted with you. I have something very important to tell you. Please write me on my email address which is (tinajama05@sify.com) or you can send to me your email address to enable me tell you more about myself and also send to you my photos. bye Tina email (tinajama05@sify.com)
 
-What about http://www.zeromq.org/? Haven't tested it myself
-but if you do give some feedback please.
 
-The even have done some tests with preemt-rt linux. With quite good
-results.
 
-Best Regards
-Tim
+
+
