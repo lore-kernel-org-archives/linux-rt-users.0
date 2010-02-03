@@ -1,24 +1,22 @@
-From: Tina Jama <tinajama005@sify.com>
-Subject: hello
-Date: Tue, 2 Feb 2010 22:58:07 -0800 (PST)
-Message-ID: <352388.45564.qm@web1110.biz.mail.sk1.yahoo.com>
-Reply-To: tinajama005@sify.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-To: undisclosed recipients:;
+From: "Braun beef" <judy34@gmail.com>
+Subject: I have a list of 150,000 financial planners in the USA
+Date: Wed,  3 Feb 2010 15:08:12 -0200 (ARST)
+Message-ID: <20100203170813.61821760986@arw1.arrowvt.com.ar>
+Reply-To: bobfreeman2006@gmail.com
+To: kenneth.crawford@wku.edu, majorlookworld@gmail.com,
+	majorlou@wesley.edu, majorlxiv@frontiernet.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from n4b.bullet.mail.ac4.yahoo.com ([76.13.13.74]:26607 "HELO
-	n4b.bullet.mail.ac4.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1752340Ab0BCG6J convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Feb 2010 01:58:09 -0500
+Received: from 105.141.11.190.powervt.com.ar ([190.11.141.105]:56338 "EHLO
+	arw1.arrowvt.com.ar" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1751744Ab0BCSSe (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Feb 2010 13:18:34 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear one, my name is Tina Jama and I am 22 years of age female. I saw your profile and it interested me a lot. I will like to know you and get acquainted with you. I have something very important to tell you. Please write me on my email address which is (tinajama05@sify.com) or you can send to me your email address to enable me tell you more about myself and also send to you my photos. bye Tina email (tinajama05@sify.com)
+I have many good quality lists at decent prices. Drop me a line here:  Angela.Winter@leadsparadise.com
+I'll get you all the details and samples. 
+  
 
 
-
-
-
+this is where to go to stop the mailing please send an email to disappear@leadsparadise.com
