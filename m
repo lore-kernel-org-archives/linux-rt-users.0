@@ -1,18 +1,18 @@
 From: Armin Steinhoff <as@steinhoff-automation.com>
 Subject: Re: Converting a device driver for real time kernel - OT
-Date: Wed, 10 Feb 2010 13:51:44 +0100
-Message-ID: <4B72ABE0.1060906@steinhoff-automation.com>
+Date: Wed, 10 Feb 2010 13:53:33 +0100
+Message-ID: <4B72AC4D.2060900@steinhoff-automation.com>
 References: <B5339992F194184BABF87ECF0296990D02716BA7@GLKMS2105.GREENLNK.NET> <alpine.LFD.2.00.1002092317420.2811@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.9]:56509 "EHLO
+Received: from moutng.kundenserver.de ([212.227.17.8]:61703 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750933Ab0BJMuh (ORCPT
+	with ESMTP id S1750933Ab0BJMwW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Feb 2010 07:50:37 -0500
+	Wed, 10 Feb 2010 07:52:22 -0500
 In-Reply-To: <alpine.LFD.2.00.1002092317420.2811@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
