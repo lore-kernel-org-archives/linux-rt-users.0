@@ -1,96 +1,51 @@
-From: =?ISO-8859-15?Q?Max_M=FCller?= <mxmr@gmx.net>
-Subject: Re: Tweak Latency on Intel ATOM
-Date: Thu, 11 Feb 2010 08:54:29 +0100
-Message-ID: <4B73B7B5.4070509@gmx.net>
-References: <loom.20100209T081421-234@post.gmane.org> <20100210163818.7f54ec3a@torg>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: uio_pci_generic not working ?
+Date: Thu, 11 Feb 2010 09:20:23 +0100
+Message-ID: <4B73BDC7.209@steinhoff.de>
+References: <B5339992F194184BABF87ECF0296990D02716BA7@GLKMS2105.GREENLNK.NET> <alpine.LFD.2.00.1002092317420.2811@localhost.localdomain> <4B72AF32.7000103@steinhoff.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p05-ob.rzone.de ([81.169.146.181]:42306 "EHLO
-	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751259Ab0BKIFf (ORCPT
+Received: from moutng.kundenserver.de ([212.227.126.186]:64908 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751259Ab0BKITK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Feb 2010 03:05:35 -0500
-In-Reply-To: <20100210163818.7f54ec3a@torg>
+	Thu, 11 Feb 2010 03:19:10 -0500
+In-Reply-To: <4B72AF32.7000103@steinhoff.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Clark Williams schrieb:
-> On Tue, 9 Feb 2010 07:41:58 +0000 (UTC)
-> Max Miller <mxmr@gmx.net> wrote:
+
+Hi,
+
+problem solved ... the board specific module is working.  uio_pci _ 
+generic is sorted out ...
+
+Regards
+
+--Armin
+
+Armin Steinhoff wrote:
 >
->  =20
->> Hello,
->>
->> im am using the PREEMPT-RT patch on linux 2.6.29.6. It runs on a MSI=
-965GSE
->> industial board with Intel ATOM CPU (N270, 1,6GHz) and i945GSE North=
-bridge.=20
->>
->> I got about 45=B5s as maximum and 13=B5s as average latency when hyp=
-erthreading is
->> disabled. With enabled Hyperthreading the maximum latency increses t=
-o about
->> 100=B5s. I measured the latency with cyclictest.=20
->>
->> What can i do to get better maximum latency? Can I do somthing in th=
-e kernel
->> configuration or are there some kernel bootoptions? Or is it still i=
-mpossible
->> with this CPU to get better results?
->>
->> Thanks in advance,
->> Max Miller=20
->>
->>
->>    =20
+> Hello,
 >
-> Make sure you turn off any power management settings in the BIOS and
-> turn off the irqbalance and cpuspeed services on the Linux side.
+> I'm using the module uio_pci_generic of the kernel 2.6.32 together 
+> with uio of kernel 2.6.22 (openSUSE 10.3).  I hope this is OK ... ?
 >
-> What cyclictest command are you using to measure latency?
+> After insmod uio.ko and insmod uio_pci_generic.ko I don't see the 
+> device   /dev/uio0 ... also /sys/class doesn't have any related entries.
 >
-> Clark
->  =20
+> What's the proper usage of uio_pci_generic ?
+>
+> Best Regards
+>
+> --Armin
+> -- 
+> To unsubscribe from this list: send the line "unsubscribe 
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-I run cyclictest as follows:
-
-cyclictest -n -t3 -p99
-
-=46or generating additional system load i run (one to several instances=
-):
-
-while true; do echo "blah" > /dev/null; done &
-
-Then i watch the max. latency from the thread with the highest priority=
-=2E
-Sometimes i add the parameter '-h' to generate a history. In this=20
-history i can
-see that the most latency times are under 20=B5s, only  about 5ppm are=20
-worse than 30=B5s.
-Am i doing this correctly?
-
-
-The only powersave setting in the BIOS is "Intel speedstep" which i=20
-disabled.
-
-
-I will check with disabled "irqbalance and cpuspeed services" disabled=20
-and will report later.
-
-
-What should the adequate max. latency on this system?
-
-
-
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
