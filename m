@@ -1,69 +1,52 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Tweak Latency on Intel ATOM
-Date: Mon, 15 Feb 2010 08:38:47 -0600
-Message-ID: <20100215083847.1a4a7ef0@torg>
-References: <loom.20100209T081421-234@post.gmane.org>
-	<20100210163818.7f54ec3a@torg>
-	<4B73B7B5.4070509@gmx.net>
-	<20100211093447.3c0a97cd@torg>
-	<4B7914C6.8080005@gmx.net>
+From: Carsten Emde <Carsten.Emde@osadl.org>
+Subject: Re: 2.6.31.12-rt20:  BUG: sleeping function called from invalid
+ context at kernel/rtmutex.c:684
+Date: Tue, 16 Feb 2010 00:38:14 +0100
+Message-ID: <4B79DAE6.9010500@osadl.org>
+References: <f1abefc50f3730ba8ff4b099170c9a85.squirrel@webmail.sonic.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_//t0u58tajivxmm+=c9AvHME"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: Max =?ISO-8859-1?B?TfxsbGVy?= <mxmr@gmx.net>
+To: ulmo@sonic.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:4848 "EHLO mx1.redhat.com"
+Received: from toro.web-alm.net ([62.245.132.31]:54076 "EHLO toro.web-alm.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751556Ab0BOOiz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Feb 2010 09:38:55 -0500
-In-Reply-To: <4B7914C6.8080005@gmx.net>
+	id S932090Ab0BOXkQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Feb 2010 18:40:16 -0500
+In-Reply-To: <f1abefc50f3730ba8ff4b099170c9a85.squirrel@webmail.sonic.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_//t0u58tajivxmm+=c9AvHME
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On 02/14/2010 07:26 PM, ulmo@sonic.net wrote:
+> I'm getting plenty of dmesg errors in 2.6.31.12-rt20, a stock 2.6.31.12
+> with rt20 patch applied.  Reviewing lkml (google pointed me that way, not
+> surprisingly), I see that it's been happening variously for a few years.
+Triggered from different places.
 
-On Mon, 15 Feb 2010 10:32:54 +0100
-Max M=FCller <mxmr@gmx.net> wrote:
-=20
-> >
-> > I'd say you're doing pretty good keeping under 50us. You might want to
-> > try it under a heavier load than the shell script you've been running.
-> > If you don't want to fool with rteval, try kicking off a kernel compile
-> > in another window like this:
-> >
-> > $ while true; do make -j4 clean bzImage modules; done
-> >
-> > and then run cyclictest. A kernel compile with parallel jobs (-j) is a
-> > good overall load of computation and I/O.
-> >
-> >  =20
->=20
-> I tested now like you told me with irqbalance and cpuspeed services=20
-> disabled. I hope i made the right for disabling irqbalance, i used the=20
-> kernel parameter acpi_no_irqbalance. Is this correct? Unfortunately the=20
-> results were nearly equal as before.
+> My first theory is that it is started by X somehow.  I noted the "tainted"
+> in the output, so I do have to mention I have nvidia driver 190.53-r1
+> installed.  It happened first at 3266.451642 seconds kernel running, at
+> Feb 13 13:25:04.  Looking for processes aged that much, I see that "kdm"
+> started at 13:23, and some others:
+> [..]
+> It happened well after I loaded the nvidia driver, but perhaps using it is
+> what causes it, since it happened first two minutes after starting X.  The
+> fact that the kernel ran for 3266.451641 seconds without trouble then
+> suddenly starts having lots of them when X starts indicates that X is very
+> related to the problem.
+You did a perfect job. Based on the evidence you provided, your
+assumption appears correct that the nvidia driver is triggering kernel
+BUG messages. However, fixing this bug requires access to the driver
+sources which Nvidia refuses to provide. Alternatively, a company may
+decide to provide appropriate documentation to let a community write a
+Linux driver. But Nvidia fails to do so as well. Many people decide not
+to buy from such manufacturers.
 
-I don't think you're going to get much better results on the Atom. I
-have an MSI Nettop box with the dual-core version and I saw about the
-same results as you.
+Open source support for ATI Radeon graphic boards is much better now.
+The X1950 Pro, for example, perfectly runs Compiz, Torcs and other 3D
+applications on 2.6.31.12-rt20 and does not interfere with the real-time
+capabilities of the kernel. If you are lucky, you may get one at an
+online marketplace for less than 30 bucks.
 
-What sort of scheduling deadlines are you trying to meet?=20
-
-Clark
-
---Sig_//t0u58tajivxmm+=c9AvHME
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.13 (GNU/Linux)
-
-iEYEARECAAYFAkt5XHsACgkQHyuj/+TTEp1TdQCfXREs8loyNB6UJXSvW7MqRxDp
-QGwAnipUSWRY2qYS2sTBiX8QE+zDHrN2
-=yH7A
------END PGP SIGNATURE-----
-
---Sig_//t0u58tajivxmm+=c9AvHME--
+	Carsten.
