@@ -1,10 +1,10 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
-Date: Mon, 22 Feb 2010 16:00:20 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1002221559510.3281@localhost.localdomain>
-References: <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
- <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain> <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain> <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
- <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain> <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain> <20100222133629.GD5416@bicker>
+Date: Mon, 22 Feb 2010 16:16:03 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1002221614480.4136@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>  <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>  <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+ <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>  <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>  <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>  <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
+ <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>  <alpine.LFD.2.00.1002221228130.2811@localhost.localdomain> <520f0cf11002220423u64daf89dxa6a4249522adabee@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
@@ -18,38 +18,67 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
 	Will Schmidt <will_schmidt@vnet.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>,
-	John Kacur <jkacur@redhat.com>,
 	Nick Piggin <nickpiggin@yahoo.com.au>
-To: Dan Carpenter <error27@gmail.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:57093 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:58311 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753770Ab0BVPCK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Feb 2010 10:02:10 -0500
-In-Reply-To: <20100222133629.GD5416@bicker>
+	id S1753804Ab0BVPRI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Feb 2010 10:17:08 -0500
+In-Reply-To: <520f0cf11002220423u64daf89dxa6a4249522adabee@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 22 Feb 2010, Dan Carpenter wrote:
+On Mon, 22 Feb 2010, John Kacur wrote:
+> That patch fixes the symptom I reported, but unfortunately, I still
+> can't log-in to my laptop without the machine freezing.
+> Not sure why, investigating.
 
-> mm/slab.c
->   2117                  kmem_freepages(cachep, addr, *this_cpu);
->   2118                  if (OFF_SLAB(cachep)) {
->   2119                          if (this_cpu)
-> 
-> 	We already dereferenced "this_cpu" two lines earlier. 
-> 
->   2120                                  __cache_free(cachep->slabp_cache, slabp, this_cpu);
->   2121                          else
->   2122                                  kmem_cache_free(cachep->slabp_cache, slabp);
-> 
+Found it, at least it make my mouse/keyboard work again and fixes the
+weird double character problem on VT login.
 
-Good catch. Thanks,
+Thanks,
 
-     tglx
+	tglx
+----
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 25642d1..1efad98 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -563,15 +563,20 @@ irq_wait_for_interrupt(struct irq_desc *desc, struct irqaction *action)
+  * handler finished. unmask if the interrupt has not been disabled and
+  * is marked MASKED.
+  */
+-static void irq_finalize_oneshot(unsigned int irq, struct irq_desc *desc)
++static void irq_finalize_oneshot(unsigned int irq, struct irq_desc *desc,
++				 struct irqaction *action)
+ {
+ 	chip_bus_lock(irq, desc);
++#ifndef CONFIG_PREEMPT_RT
+ 	raw_spin_lock_irq(&desc->lock);
+ 	if (!(desc->status & IRQ_DISABLED) && (desc->status & IRQ_MASKED)) {
+ 		desc->status &= ~IRQ_MASKED;
+ 		desc->chip->unmask(irq);
+ 	}
+ 	raw_spin_unlock_irq(&desc->lock);
++#else
++	preempt_hardirq_thread_done(desc, action);
++#endif
+ 	chip_bus_sync_unlock(irq, desc);
+ }
+ 
+@@ -645,7 +650,7 @@ static int irq_thread(void *data)
+ 			action->thread_fn(action->irq, action->dev_id);
+ 
+ 			if (oneshot)
+-				irq_finalize_oneshot(action->irq, desc);
++				irq_finalize_oneshot(action->irq, desc, action);
+ 		}
+ 
+ 		wake = atomic_dec_and_test(&desc->threads_active);
