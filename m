@@ -1,94 +1,94 @@
-From: naresh kamboju <naresh.kernel@gmail.com>
-Subject: Re: [ltt-dev] LTTng 0.193 fixes RT kernel support
-Date: Mon, 22 Feb 2010 21:07:13 +0530
-Message-ID: <f5a7b3811002220737r502e75c1w5ab5a64b6cc27b68@mail.gmail.com>
-References: <f5a7b3811002160717y65b4577buf53e5784c71575c3@mail.gmail.com>
-	 <1266337450.24271.140.camel@gandalf.stny.rr.com>
-	 <alpine.LFD.2.00.1002161727570.2811@localhost.localdomain>
-	 <20100216164744.GA25115@Krystal>
-	 <alpine.LFD.2.00.1002161757050.2811@localhost.localdomain>
-	 <20100216170540.GA28039@Krystal>
-	 <f5a7b3811002170236i6c560eadp2de7deb10082db4f@mail.gmail.com>
-	 <20100217230854.GA25636@Krystal>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
+Date: Mon, 22 Feb 2010 16:53:13 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1002221652190.3770@localhost.localdomain>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>  <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>  <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>  <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+ <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>  <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>  <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>  <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
+ <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>  <alpine.LFD.2.00.1002221228130.2811@localhost.localdomain> <520f0cf11002220423u64daf89dxa6a4249522adabee@mail.gmail.com> <alpine.LFD.2.00.1002221614480.4136@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@elte.hu>,
-	ltt-dev@lists.casi.polymtl.ca, linux-kernel@vger.kernel.org,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pw0-f46.google.com ([209.85.160.46]:38172 "EHLO
-	mail-pw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752955Ab0BVPhN convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Feb 2010 10:37:13 -0500
-In-Reply-To: <20100217230854.GA25636@Krystal>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>,
+	Nick Piggin <nickpiggin@yahoo.com.au>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.1002221614480.4136@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 18, 2010 at 4:38 AM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> * naresh kamboju (naresh.kernel@gmail.com) wrote:
->> Hi,
->>
->> On Tue, Feb 16, 2010 at 10:35 PM, Mathieu Desnoyers <compudj@krystal=
-=2Edyndns.org> wrote:
-> [...]
->> > Oh, right. Thanks for the explanation. I'll look into moving LTTng=
- to a
->> > saner del_timer_sync() scheme to delete the timers.
->>
->> Could you give more info regarding, what kind of changes we can work=
- on.
->> let me also work around on it.
->>
->
-> I just released LTTng 0.193 for kernel 2.6.32.4 which includes patche=
-s
-> fixing these odd per-cpu timer teardowns.
 
-I have downloaded LTTng 0.193 patches and viewed i can see below patche=
-s
 
-1. lttng-transport-lockless-add-timer-on-works-with-del-timer-sync.patc=
-h
-2. omap-trace-clock-use-del-timer-sync.patch
-3. x86-trace-clock-use-mod-timer.patch
-4. trace-clock-32-to-64-use-del-timer-sync.patch
+On Mon, 22 Feb 2010, Thomas Gleixner wrote:
 
-Thank you very much.
-
->The patches concerned are:
->
-> lttng transport lockless add timer on works with del timer sync
-> omap trace clock use del timer sync
-> x86 trace clock use mod timer
-> trace clock 32 to 64 use del timer sync
->
-> (they are at the end of the LTTng 0.193 tree)
->
-> Feedback is welcome,
-
-I have ARM environment and currently working with 2.6.29-RT on ARM-SMP
-hardware.
-Let me test and comeback.
-
-Best regards,
-Naresh Kamboju
->
+> On Mon, 22 Feb 2010, John Kacur wrote:
+> > That patch fixes the symptom I reported, but unfortunately, I still
+> > can't log-in to my laptop without the machine freezing.
+> > Not sure why, investigating.
+> 
+> Found it, at least it make my mouse/keyboard work again and fixes the
+> weird double character problem on VT login.
+> 
 > Thanks,
->
-> Mathieu
->
-> --
-> Mathieu Desnoyers
-> OpenPGP key fingerprint: 8CD5 52C3 8E3C 4140 715F =A0BA06 3F25 A8FE 3=
-BAE 9A68
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 	tglx
+> ----
+> diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+> index 25642d1..1efad98 100644
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -563,15 +563,20 @@ irq_wait_for_interrupt(struct irq_desc *desc, struct irqaction *action)
+>   * handler finished. unmask if the interrupt has not been disabled and
+>   * is marked MASKED.
+>   */
+> -static void irq_finalize_oneshot(unsigned int irq, struct irq_desc *desc)
+> +static void irq_finalize_oneshot(unsigned int irq, struct irq_desc *desc,
+> +				 struct irqaction *action)
+>  {
+>  	chip_bus_lock(irq, desc);
+> +#ifndef CONFIG_PREEMPT_RT
+>  	raw_spin_lock_irq(&desc->lock);
+>  	if (!(desc->status & IRQ_DISABLED) && (desc->status & IRQ_MASKED)) {
+>  		desc->status &= ~IRQ_MASKED;
+>  		desc->chip->unmask(irq);
+>  	}
+>  	raw_spin_unlock_irq(&desc->lock);
+> +#else
+> +	preempt_hardirq_thread_done(desc, action);
+> +#endif
+>  	chip_bus_sync_unlock(irq, desc);
+>  }
+>  
+> @@ -645,7 +650,7 @@ static int irq_thread(void *data)
+>  			action->thread_fn(action->irq, action->dev_id);
+>  
+>  			if (oneshot)
+> -				irq_finalize_oneshot(action->irq, desc);
+> +				irq_finalize_oneshot(action->irq, desc, action);
+>  		}
+>  
+>  		wake = atomic_dec_and_test(&desc->threads_active);
+> 
+
+
+Thanks Thomas
+
+The fix seems to work for me.
+I've got some other issues, but for now I'm going to assume they are the
+same acpi problems I have reported to lkml for the "vanilla" -rc8
+
+John
