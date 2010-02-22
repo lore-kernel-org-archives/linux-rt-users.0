@@ -1,12 +1,19 @@
-From: Xavier Miller <xavier.miller@cauwe.org>
-Subject: Re: [ANNOUNCE] 2.6.31.12-rt21
-Date: Fri, 19 Feb 2010 09:22:49 +0100
-Message-ID: <4B7E4A59.8090403@cauwe.org>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain> <alpine.LFD.2.00.0907300006250.2936@localhost.localdomain> <alpine.LFD.2.00.0908162207370.2782@localhost.localdomain> <alpine.LFD.2.00.0908182140340.3361@localhost.localdomain> <alpine.LFD.2.00.0908192344500.3361@localhost.localdomain> <alpine.LFD.2.00.0908212319370.1769@localhost.localdomain> <alpine.LFD.2.00.0908261910460.2888@localhost.localdomain> <alpine.LFD.2.00.0908282326460.19335@localhost.localdomain> <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain> <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain> <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain> <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain> <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain> <alpine.LFD.2.00.091
- 1101326280.2725@localhost.localdomain> <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain> <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
+Date: Mon, 22 Feb 2010 12:11:28 +0100
+Message-ID: <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.0909152257590.8957@localhost.localdomain>
+	 <alpine.LFD.2.00.0909190027400.2889@localhost.localdomain>
+	 <alpine.LFD.2.00.0910061210400.2646@localhost.localdomain>
+	 <alpine.LFD.2.00.0910141115020.9428@localhost.localdomain>
+	 <alpine.LFD.2.00.0911061743210.12138@localhost.localdomain>
+	 <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>
+	 <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
+	 <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
+	 <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
@@ -19,110 +26,142 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Robin Gareus <robin@gareus.org>,
 	Gregory Haskins <ghaskins@novell.com>,
 	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
 	Will Schmidt <will_schmidt@vnet.ibm.com>,
 	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
 	Sven-Thorsten Dietrich <sdietrich@novell.com>,
 	Jon Masters <jcm@redhat.com>,
 	Mark Knecht <markknecht@gmail.com>,
-	John Kacur <jkacur@redhat.com>,
 	Nick Piggin <nickpiggin@yahoo.com.au>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailrelay009.isp.belgacom.be ([195.238.6.176]:28575 "EHLO
-	mailrelay009.isp.belgacom.be" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752545Ab0BSIWw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Feb 2010 03:22:52 -0500
-In-Reply-To: <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello Thomas,
-
-Thank you for this announce.
-
-I just put this new version into the Gentoo Pro-Audio overlay, which is=
-=20
-thus now available for Gentoo users.
-
-Kind regards,
-Xavier.
-
-Le 18/02/2010 17:54, Thomas Gleixner a =E9crit :
+On Mon, Feb 22, 2010 at 12:24 AM, Thomas Gleixner <tglx@linutronix.de> =
+wrote:
 > We are pleased to announce the next update to our new preempt-rt
 > series.
 >
->       - fixes and cherry-picks all over the place
+> =A0 =A0- Forward to 2.6.33-rc8
 >
->       - tracer fixes from Carsten
+> Finally I managed to get that beast tamed.
 >
-> Short log of the changes since v2.6.31.12-rt20
+> Some folks were already joking, that my dog ate the 33-rt patch. The
+> truth is that my reject fixup skills were one line off in the mm/*
+> code which resulted in -rt eating my files :)
 >
->        bfbf2bf: v2.6.31.12-rt21
->        16e4137: tracing: Include zero offset in timer histogram
->        75df1a4: tracing: Do not assume shared prio in latency histogr=
-am
->        5f18c0d: sched: Run task on same cpu if idle and allowed
->        e4ab2c9: tracing: Abort wakeup hist if task already running
->        49cf381: tracing: Abort wakeup tracer if task already running
->        91b077f: tracing: Fix taskstates in sched_switch trace
->        27d8f71: mutex: Move in_interrupt() debug code
->        2309ca6: lockdep: Fix LOCKDEP=3DN compile of no_validate class
->        68fd52c: lockdep: Add novalidate class for dev->mutex
->        e99b72b: sched: Don't use possibly stale sched_class
->        449c496: tracing: fix transposed numbers of lock_depth and pre=
-empt_count
->        3862a7e: futex: Handle futex value corruption gracefully
->        b9be6de: futex: Handle user space corruption gracefully
->        eb9a3d2: futex_lock_pi() key refcnt fix
->        54afa95: futexes: Remove rw parameter from get_futex_key()
->        365db4e: bkl: Fix fatfingered irq_enable logic
->        86f64b7: rework-hrtimer_offset-hist.patch
->        005ab8c: [WATCHDOG] davinci: use clock framework for timer fre=
-quency
->        05a3118: net: Fix IXP 2000 network driver building.
->        3e786b2: ARM: S3C2440: mini2440: Fix missing CONFIG_S3C_DEV_US=
-B_HOST
+> When I fixed the wreckage of my own stupidty I found out that -rt
+> triggered a nasty and hard to reproduce mainline scheduler bug, which
+> refused to reproduce with kernel tracing enabled. Thanks to Peter
+> Zijlstra for helping me to decode the initial mainline problem and th=
+e
+> ones which resulted from fixing the mainline bug!
 >
-> This is (hopefully) the last release in the 31-rt series.
+> It's all fixed now and I'm pretty happy about the state of this
+> release with the following exceptions:
 >
-> Download locations:
+> =A01) it is only runtime tested on x86_64 (compiles on x86_32, arm,
+> =A0 =A0powerpc_32/64).
 >
->     http://rt.et.redhat.com/download/ (temporary out of sync)
->     http://www.kernel.org/pub/linux/kernel/projects/rt/
+> =A0 =A0I'm going to throw it at my testing infrastructure tomorrow, b=
+ut I
+> =A0 =A0wanted to release this before .33-final and of course you folk=
+s
+> =A0 =A0are heartely invited to help out with fixing the fallout :)
 >
-> Git release branch:
->     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.g=
-it rt/2.6.31
+> =A02) I broke the histogram tracer stuff simply because I got lost in
+> =A0 =A0the divergence of -rt and mainline kernel/trace/* changes
 >
-> Gitweb:
->     http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git=
-;a=3Dshortlog;h=3Drt/2.6.31
+> =A0 =A0I apologize to Carsten, but I'm sure he will fix that in no ti=
+me
+> =A0 =A0as usual
 >
-> Information on the RT patch can be found at:
+> The current state of the patch on x86_64 is: rock stable!
 >
->     http://rt.wiki.kernel.org/index.php/Main_Page
+> =A0 =A0[rt-tests]# chrt -f 1 ./cyclictest -t -a -n -d0 -p80 -i125
+> =A0 =A0policy: fifo: loadavg: 509.19 490.53 486.66 364/1055 31899
 >
-> to build the 2.6.31.12-rt21 tree, the following patches should be
-> applied:
+> =A0 =A0T: 0 (27682) P:80 I:125 C:1170997397 Min: 2 Act: 3 Avg: 3 Max:=
+ 34
+> =A0 =A0T: 1 (27683) P:79 I:125 C:1170997397 Min: 2 Act: 3 Avg: 3 Max:=
+ 34
 >
->     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.31.12.tar.b=
-z2
->     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.31.1=
-2-rt20.bz2
+> =A0 =A0That's an uptime of ~1.6 days with a load of hackbench, recurs=
+ive
+> =A0 =A0grep and extensive networking traffic going on.
 >
-> Enjoy !
+> The merge of the spinlock namespace cleanup and the initial
+> annotations took a big chunk away from the -rt patch size:
 >
->        tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> =A0 =A0 =A0 =A0patch-2.6.31.12-rt21.patch =A0 =A0 1680354
+> =A0 =A0 =A0 =A0patch-2.6.33-rc8.patch =A0 =A0 =A0 =A0 1179390
+> =A0 =A0 =A0 =A0patch-2.6.33-rc8+git.patch =A0 =A0 1067064
+>
+> We are zooming in, but there is still a way to go!
+>
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Woohoo! More -rt fun.
+
+Unfortunately, I can't log in on my T500 with this kernel though.
+The following shows-up on my serial console.
+------------[ cut here ]------------
+WARNING: at /home/jkacur/rt.linux.git/net/mac80211/rx.c:2467 ieee80211_=
+rx+0x4c/0
+x721 [mac80211]()
+Hardware name: 2241B48
+Modules linked in: bridge stp bnep sco btusb l2cap crc16 bluetooth sunr=
+pc ipt_RE
+JECT nf_conntrack_ipv4 nf_defrag_ipv4 iptable_filter ip_tables ip6t_REJ=
+ECT xt_tc
+pudp nf_conntrack_ipv6 xt_state ip6table_filter ip6_tables x_tables ipv=
+6 cpufreq
+_ondemand acpi_cpufreq ext3 jbd mbcache dm_mirror dm_region_hash dm_log=
+ dm_multi
+path scsi_dh dm_mod kvm_intel kvm uinput arc4 ecb snd_hda_codec_conexan=
+t iwlagn
+snd_hda_intel iwlcore snd_hda_codec snd_hwdep snd_seq_dummy mac80211 sn=
+d_seq_oss
+ snd_seq_midi_event snd_seq snd_seq_device snd_pcm_oss snd_mixer_oss th=
+inkpad_ac
+pi snd_pcm firewire_ohci firewire_core hwmon video ppdev tpm_tis cfg802=
+11 sr_mod
+ battery wmi ricoh_mmc parport_pc sg tpm cdrom tpm_bios button ac ata_g=
+eneric e1
+000e iTCO_wdt snd_timer sdhci_pci pata_acpi sdhci i2c_i801 i2c_core par=
+port mmc_
+core iTCO_vendor_support snd joydev snd_page_alloc pcspkr intel_agp sou=
+ndcore cr
+c_itu_t rfkill output ahci libata sd_mod scsi_mod crc_t10dif xfs export=
+fs uhci_h
+cd ohci_hcd ehci_hcd [last unloaded: microcode]
+Pid: 10, comm: sirq-tasklet/0 Not tainted 2.6.33-rc8-rt1-debug #1
+Call Trace:
+ [<ffffffffa033524f>] ? ieee80211_rx+0x4c/0x721 [mac80211]
+ [<ffffffff81041f25>] warn_slowpath_common+0x77/0xa4
+ [<ffffffff81041f61>] warn_slowpath_null+0xf/0x11
+ [<ffffffffa033524f>] ieee80211_rx+0x4c/0x721 [mac80211]
+ [<ffffffffa039f380>] ? iwl_led_pattern+0x17a/0x189 [iwlcore]
+ [<ffffffff810c0fd1>] ? free_compound_page+0x16/0x18
+ [<ffffffffa039f3f5>] ? iwl_leds_background+0x66/0x219 [iwlcore]
+ [<ffffffffa0393524>] iwl_rx_reply_rx+0xc29/0xc5a [iwlcore]
+ [<ffffffff8106ee74>] ? trace_hardirqs_on+0xd/0xf
+ [<ffffffff8135cf7e>] ? _raw_spin_unlock_irqrestore+0x4c/0x68
+ [<ffffffff811b4e32>] ? unmap_single+0x27/0x4f
+ [<ffffffffa03cec81>] iwl_rx_handle+0x2a0/0x48d [iwlagn]
+ [<ffffffff8135cf7e>] ? _raw_spin_unlock_irqrestore+0x4c/0x68
+ [<ffffffffa03cfbb3>] iwl_irq_tasklet+0x5a3/0x73f [iwlagn]
+ [<ffffffff81047b5a>] __tasklet_action+0x8f/0xfd
+ [<ffffffff81047cc9>] tasklet_action+0x7c/0x85
+ [<ffffffff81048209>] run_ksoftirqd+0x18e/0x2d5
+ [<ffffffff8104807b>] ? run_ksoftirqd+0x0/0x2d5
+ [<ffffffff8105d794>] kthread+0x8c/0x94
+ [<ffffffff8135cfca>] ? _raw_spin_unlock+0x30/0x4b
+ [<ffffffff81003a54>] kernel_thread_helper+0x4/0x10
+ [<ffffffff8135d340>] ? restore_args+0x0/0x30
+ [<ffffffff8105d708>] ? kthread+0x0/0x94
+ [<ffffffff81003a50>] ? kernel_thread_helper+0x0/0x10
+---[ end trace 01358557eee38037 ]---
+
+Thanks
