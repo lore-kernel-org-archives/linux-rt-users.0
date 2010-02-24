@@ -1,120 +1,62 @@
-From: GeunSik Lim <leemgs1@gmail.com>
-Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
-Date: Thu, 25 Feb 2010 01:52:31 +0900
-Message-ID: <49b7c2351002240852u3b2e7a56g1b0140d37a02c81f@mail.gmail.com>
-References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.0911101326280.2725@localhost.localdomain>
-	 <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
-	 <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
-	 <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
-	 <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>
-	 <49b7c2351002231708r279049f9hcc9cc6ff205a47fb@mail.gmail.com>
-	 <25891f3e1002231719u4d38ed52w99c66ac669c3d965@mail.gmail.com>
-	 <49b7c2351002240643s1aebe384wee5ee7951e62640e@mail.gmail.com>
-	 <alpine.LFD.2.00.1002241609050.4245@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.33-rc8-rt2
+Date: Wed, 24 Feb 2010 17:52:06 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Dhaval Giani <dhaval.lists@thegianis.in>,
-	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
-	Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Robin Gareus <robin@gareus.org>,
-	Gregory Haskins <ghaskins@novell.com>,
-	Philippe Reynes <philippe.reynes@isismpp.fr>,
-	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Will Schmidt <will_schmidt@vnet.ibm.com>,
-	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
-	Sven-Thorsten Dietrich <sdietrich@novell.com>,
-	Jon Masters <jcm@redhat.com>,
-	Mark Knecht <markknecht@gmail.com>,
-	Nick Piggin <nickpiggin@yahoo.com.au>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pv0-f174.google.com ([74.125.83.174]:46502 "EHLO
-	mail-pv0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752938Ab0BXQwc convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Feb 2010 11:52:32 -0500
-In-Reply-To: <alpine.LFD.2.00.1002241609050.4245@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
+	Carsten Emde <ce@ceag.ch>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 25, 2010 at 12:09 AM, Thomas Gleixner <tglx@linutronix.de> =
-wrote:
->> So, I tried linux-2.6.33-rc8-rt1 based on tip/rt/head as you explain=
-ed.
->>
->> Git development branch:
->> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-t=
-ip.git rt/head
-> What's the sha1 of the head commit ?
-> Thanks,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0tglx
->
-Dear Thoomas,
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-Below was the  recent commit number  when I typed "git clone" command.
+    - Update to linus latest
 
-commit ed0799048b4a38ffb6e33755ba5e6b5dfa9a24d2
-Author: Thomas Gleixner <tglx@linutronix.de>
-Date:   Sun Feb 21 23:14:28 2010 +0100
+    - Fixes all over the place for the merge fallout
 
-    v2.6.33-rt1
+    - KVM fix from Jan
 
-    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+    - perf fix from Peter
 
-commit b635a77f9aadc5ed3fc5a949e3f219c24cdd254c
-Author: Carsten Emde <C.Emde@osadl.org>
-Date:   Sat Jan 16 17:14:04 2010 +0100
+    - tracer fixes from Carsten
 
-    hwlat_detector-avoid-smp_processor_id.patch
+Known issues:
 
-    Avoid smp_processor_id() in preemptible code.
+    - the highmem problem which Fernando reported with i915 on 32bit
+      i386 is not yet solved.
 
-    Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-             . . . . . . below omission . . . . . .
+Download locations:
+   
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
 
+Git development branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
 
-and, version info is 2.6.33-rc8-rt1 as belows.
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
 
-[invain@localhost head]$ head Makefile
-VERSION =3D 2
-PATCHLEVEL =3D 6
-SUBLEVEL =3D 33
-EXTRAVERSION =3D -rc8-rt1
-NAME =3D Man-Eating Seals of Antiquity
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
 
-# *DOCUMENTATION*
-# To see a list of typical targets execute "make help"
-# More info can be located in ./README
-# Comments in this file are targeted only to the developer, do not
+Information on the RT patch can be found at:
 
+   http://rt.wiki.kernel.org/index.php/Main_Page
+ 
+To build the 2.6.33-rc8-rt2 tree, the following patches should be
+applied:
 
-Thanks,
-Geunsik Lim.
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.32.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.33-rc8.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33-rc8-rt2.bz2
 
---=20
-Regards,
-GeunSik Lim ( Samsung Electronics )
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-           leemgs@gmail.com , leemgs1@gmail.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Enjoy !
+
+      tglx
