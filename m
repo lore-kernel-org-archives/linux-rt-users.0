@@ -1,9 +1,8 @@
 From: GeunSik Lim <leemgs1@gmail.com>
 Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
-Date: Thu, 25 Feb 2010 02:05:17 +0900
-Message-ID: <49b7c2351002240905n299f86fcq67a16fd97c47021@mail.gmail.com>
+Date: Thu, 25 Feb 2010 02:40:05 +0900
+Message-ID: <49b7c2351002240940u41020034n3e9bcdb40161d175@mail.gmail.com>
 References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
-	 <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
 	 <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
 	 <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
 	 <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>
@@ -12,6 +11,7 @@ References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
 	 <49b7c2351002240643s1aebe384wee5ee7951e62640e@mail.gmail.com>
 	 <alpine.LFD.2.00.1002241609050.4245@localhost.localdomain>
 	 <49b7c2351002240852u3b2e7a56g1b0140d37a02c81f@mail.gmail.com>
+	 <49b7c2351002240905n299f86fcq67a16fd97c47021@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -37,81 +37,139 @@ Cc: Dhaval Giani <dhaval.lists@thegianis.in>,
 	Nick Piggin <nickpiggin@yahoo.com.au>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f174.google.com ([209.85.222.174]:51179 "EHLO
+Received: from mail-pz0-f174.google.com ([209.85.222.174]:46266 "EHLO
 	mail-pz0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757334Ab0BXRFT convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1755524Ab0BXRkG convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Feb 2010 12:05:19 -0500
-In-Reply-To: <49b7c2351002240852u3b2e7a56g1b0140d37a02c81f@mail.gmail.com>
+	Wed, 24 Feb 2010 12:40:06 -0500
+In-Reply-To: <49b7c2351002240905n299f86fcq67a16fd97c47021@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas. Um.  I checked new -rt tag now.
-I will move rt number from v2.6.33-rc8-rt2 to v2.6.33-rc8-rt2.
-And then, I will test v2.6.33-rc8-rt2 on my desktop pc
-1) intel core2 quad Q6600 (SSD 64G , 2G DDR RAM )
-2) intel core2 quad Q9400 (SATA 320G, 2G DDR RAM)
+Hi Thomas,
 
-Thanks,
+Thank you for linux-2.6.33-rc8-rt2 release quickly. :)
+I can boot this linux version  on my desktop (intel core2 Quad Q9400)
+successfully now.
+I uploaded a screenshot file.
+
+*  Booting result of linux-2.6.33-rc8-rt2 on Q9400 PC. --> Passed.
+http://picasaweb.google.com/leemgs/LinuxRelatedScreenshot#5441865625183=
+643634
+
+
+Thanks.
 Geunsik Lim.
 
-On Thu, Feb 25, 2010 at 1:52 AM, GeunSik Lim <leemgs1@gmail.com> wrote:
-> On Thu, Feb 25, 2010 at 12:09 AM, Thomas Gleixner <tglx@linutronix.de=
-> wrote:
->>> So, I tried linux-2.6.33-rc8-rt1 based on tip/rt/head as you explai=
-ned.
->>>
->>> Git development branch:
->>> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-=
-tip.git rt/head
->> What's the sha1 of the head commit ?
->> Thanks,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0tglx
->>
-> Dear Thoomas,
->
-> Below was the =C2=A0recent commit number =C2=A0when I typed "git clon=
-e" command.
->
-> commit ed0799048b4a38ffb6e33755ba5e6b5dfa9a24d2
-> Author: Thomas Gleixner <tglx@linutronix.de>
-> Date: =C2=A0 Sun Feb 21 23:14:28 2010 +0100
->
-> =C2=A0 =C2=A0v2.6.33-rt1
->
-> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
->
-> commit b635a77f9aadc5ed3fc5a949e3f219c24cdd254c
-> Author: Carsten Emde <C.Emde@osadl.org>
-> Date: =C2=A0 Sat Jan 16 17:14:04 2010 +0100
->
-> =C2=A0 =C2=A0hwlat_detector-avoid-smp_processor_id.patch
->
-> =C2=A0 =C2=A0Avoid smp_processor_id() in preemptible code.
->
-> =C2=A0 =C2=A0Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 . . . . . . below omission =
-=2E . . . . .
->
->
-> and, version info is 2.6.33-rc8-rt1 as belows.
->
-> [invain@localhost head]$ head Makefile
-> VERSION =3D 2
-> PATCHLEVEL =3D 6
-> SUBLEVEL =3D 33
-> EXTRAVERSION =3D -rc8-rt1
-> NAME =3D Man-Eating Seals of Antiquity
->
-> # *DOCUMENTATION*
-> # To see a list of typical targets execute "make help"
-> # More info can be located in ./README
-> # Comments in this file are targeted only to the developer, do not
->
+
+commit 5fd3a249542494b19e3c77c92b5d5ddc7fb8ece4
+Author: Thomas Gleixner <tglx@linutronix.de>
+Date:   Wed Feb 24 17:45:03 2010 +0100
+
+    v2.6.33-rc8-rt2
+
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
+commit c3bde8f3a7af0bcdc8844102a08896e3fdd77153
+Merge: ed07990 5f00286
+Author: Thomas Gleixner <tglx@linutronix.de>
+Date:   Wed Feb 24 17:44:48 2010 +0100
+
+    Merge branch 'rt/head' into rt/2.6.33
+
+    Conflicts:
+        Makefile
+
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
+
+
+On Thu, Feb 25, 2010 at 2:05 AM, GeunSik Lim <leemgs1@gmail.com> wrote:
+> Thomas. Um. =C2=A0I checked new -rt tag now.
+> I will move rt number from v2.6.33-rc8-rt2 to v2.6.33-rc8-rt2.
+> And then, I will test v2.6.33-rc8-rt2 on my desktop pc
+> 1) intel core2 quad Q6600 (SSD 64G , 2G DDR RAM )
+> 2) intel core2 quad Q9400 (SATA 320G, 2G DDR RAM)
 >
 > Thanks,
 > Geunsik Lim.
+>
+> On Thu, Feb 25, 2010 at 1:52 AM, GeunSik Lim <leemgs1@gmail.com> wrot=
+e:
+>> On Thu, Feb 25, 2010 at 12:09 AM, Thomas Gleixner <tglx@linutronix.d=
+e> wrote:
+>>>> So, I tried linux-2.6.33-rc8-rt1 based on tip/rt/head as you expla=
+ined.
+>>>>
+>>>> Git development branch:
+>>>> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6=
+-tip.git rt/head
+>>> What's the sha1 of the head commit ?
+>>> Thanks,
+>>> =C2=A0 =C2=A0 =C2=A0 =C2=A0tglx
+>>>
+>> Dear Thoomas,
+>>
+>> Below was the =C2=A0recent commit number =C2=A0when I typed "git clo=
+ne" command.
+>>
+>> commit ed0799048b4a38ffb6e33755ba5e6b5dfa9a24d2
+>> Author: Thomas Gleixner <tglx@linutronix.de>
+>> Date: =C2=A0 Sun Feb 21 23:14:28 2010 +0100
+>>
+>> =C2=A0 =C2=A0v2.6.33-rt1
+>>
+>> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+>>
+>> commit b635a77f9aadc5ed3fc5a949e3f219c24cdd254c
+>> Author: Carsten Emde <C.Emde@osadl.org>
+>> Date: =C2=A0 Sat Jan 16 17:14:04 2010 +0100
+>>
+>> =C2=A0 =C2=A0hwlat_detector-avoid-smp_processor_id.patch
+>>
+>> =C2=A0 =C2=A0Avoid smp_processor_id() in preemptible code.
+>>
+>> =C2=A0 =C2=A0Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+>> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 . . . . . . below omission=
+ . . . . . .
+>>
+>>
+>> and, version info is 2.6.33-rc8-rt1 as belows.
+>>
+>> [invain@localhost head]$ head Makefile
+>> VERSION =3D 2
+>> PATCHLEVEL =3D 6
+>> SUBLEVEL =3D 33
+>> EXTRAVERSION =3D -rc8-rt1
+>> NAME =3D Man-Eating Seals of Antiquity
+>>
+>> # *DOCUMENTATION*
+>> # To see a list of typical targets execute "make help"
+>> # More info can be located in ./README
+>> # Comments in this file are targeted only to the developer, do not
+>>
+>>
+>> Thanks,
+>> Geunsik Lim.
+>>
+>> --
+>> Regards,
+>> GeunSik Lim ( Samsung Electronics )
+>> Blog : http://blog.naver.com/invain/
+>> e-Mail: geunsik.lim@samsung.com
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 leemgs@gmail.com , leemgs1@gmail.=
+com
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-kern=
+el" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.h=
+tml
+>> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>>
+>
+>
 >
 > --
 > Regards,
