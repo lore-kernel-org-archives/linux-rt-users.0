@@ -1,49 +1,148 @@
-From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH 2/3] install backfire.c to $(srcdir)/backfire/
-Date: Wed, 24 Feb 2010 17:58:07 +0100
-Message-ID: <1267030688-12244-2-git-send-email-u.kleine-koenig@pengutronix.de>
-References: <20100224165611.GA22159@pengutronix.de>
+From: GeunSik Lim <leemgs1@gmail.com>
+Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt1
+Date: Thu, 25 Feb 2010 02:05:17 +0900
+Message-ID: <49b7c2351002240905n299f86fcq67a16fd97c47021@mail.gmail.com>
+References: <alpine.LFD.2.00.0902112332370.415@localhost.localdomain>
+	 <alpine.LFD.2.00.1001212102220.2906@localhost.localdomain>
+	 <alpine.LFD.2.00.1002181748460.2811@localhost.localdomain>
+	 <alpine.LFD.2.00.1002212322450.2811@localhost.localdomain>
+	 <520f0cf11002220311l2a0caa83lf3ae2817b78501b6@mail.gmail.com>
+	 <49b7c2351002231708r279049f9hcc9cc6ff205a47fb@mail.gmail.com>
+	 <25891f3e1002231719u4d38ed52w99c66ac669c3d965@mail.gmail.com>
+	 <49b7c2351002240643s1aebe384wee5ee7951e62640e@mail.gmail.com>
+	 <alpine.LFD.2.00.1002241609050.4245@localhost.localdomain>
+	 <49b7c2351002240852u3b2e7a56g1b0140d37a02c81f@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>
-To: linux-rt-users@vger.kernel.org
+Cc: Dhaval Giani <dhaval.lists@thegianis.in>,
+	John Kacur <jkacur@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <ce@ceag.ch>,
+	Clark Williams <williams@redhat.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Robin Gareus <robin@gareus.org>,
+	Gregory Haskins <ghaskins@novell.com>,
+	Philippe Reynes <philippe.reynes@isismpp.fr>,
+	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+	Will Schmidt <will_schmidt@vnet.ibm.com>,
+	Darren Hart <dvhltc@us.ibm.com>, Jan Blunck <jblunck@suse.de>,
+	Sven-Thorsten Dietrich <sdietrich@novell.com>,
+	Jon Masters <jcm@redhat.com>,
+	Mark Knecht <markknecht@gmail.com>,
+	Nick Piggin <nickpiggin@yahoo.com.au>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:40832 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757320Ab0BXQ6N (ORCPT
+Received: from mail-pz0-f174.google.com ([209.85.222.174]:51179 "EHLO
+	mail-pz0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757334Ab0BXRFT convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Feb 2010 11:58:13 -0500
-In-Reply-To: <20100224165611.GA22159@pengutronix.de>
+	Wed, 24 Feb 2010 12:05:19 -0500
+In-Reply-To: <49b7c2351002240852u3b2e7a56g1b0140d37a02c81f@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
----
- Makefile |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Thomas. Um.  I checked new -rt tag now.
+I will move rt number from v2.6.33-rc8-rt2 to v2.6.33-rc8-rt2.
+And then, I will test v2.6.33-rc8-rt2 on my desktop pc
+1) intel core2 quad Q6600 (SSD 64G , 2G DDR RAM )
+2) intel core2 quad Q9400 (SATA 320G, 2G DDR RAM)
 
-diff --git a/Makefile b/Makefile
-index 043b747..99fbba4 100644
---- a/Makefile
-+++ b/Makefile
-@@ -110,6 +110,7 @@ install: all
- 	install -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwla=
-tdetect.py
- 	ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect"
- 	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
-+	install -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/=
-backfire.c"
- 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4=
-=2Egz"
- 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclic=
-test.8.gz"
- 	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress=
-=2E8.gz"
+Thanks,
+Geunsik Lim.
+
+On Thu, Feb 25, 2010 at 1:52 AM, GeunSik Lim <leemgs1@gmail.com> wrote:
+> On Thu, Feb 25, 2010 at 12:09 AM, Thomas Gleixner <tglx@linutronix.de=
+> wrote:
+>>> So, I tried linux-2.6.33-rc8-rt1 based on tip/rt/head as you explai=
+ned.
+>>>
+>>> Git development branch:
+>>> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-=
+tip.git rt/head
+>> What's the sha1 of the head commit ?
+>> Thanks,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0tglx
+>>
+> Dear Thoomas,
+>
+> Below was the =C2=A0recent commit number =C2=A0when I typed "git clon=
+e" command.
+>
+> commit ed0799048b4a38ffb6e33755ba5e6b5dfa9a24d2
+> Author: Thomas Gleixner <tglx@linutronix.de>
+> Date: =C2=A0 Sun Feb 21 23:14:28 2010 +0100
+>
+> =C2=A0 =C2=A0v2.6.33-rt1
+>
+> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+>
+> commit b635a77f9aadc5ed3fc5a949e3f219c24cdd254c
+> Author: Carsten Emde <C.Emde@osadl.org>
+> Date: =C2=A0 Sat Jan 16 17:14:04 2010 +0100
+>
+> =C2=A0 =C2=A0hwlat_detector-avoid-smp_processor_id.patch
+>
+> =C2=A0 =C2=A0Avoid smp_processor_id() in preemptible code.
+>
+> =C2=A0 =C2=A0Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+> =C2=A0 =C2=A0Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 . . . . . . below omission =
+=2E . . . . .
+>
+>
+> and, version info is 2.6.33-rc8-rt1 as belows.
+>
+> [invain@localhost head]$ head Makefile
+> VERSION =3D 2
+> PATCHLEVEL =3D 6
+> SUBLEVEL =3D 33
+> EXTRAVERSION =3D -rc8-rt1
+> NAME =3D Man-Eating Seals of Antiquity
+>
+> # *DOCUMENTATION*
+> # To see a list of typical targets execute "make help"
+> # More info can be located in ./README
+> # Comments in this file are targeted only to the developer, do not
+>
+>
+> Thanks,
+> Geunsik Lim.
+>
+> --
+> Regards,
+> GeunSik Lim ( Samsung Electronics )
+> Blog : http://blog.naver.com/invain/
+> e-Mail: geunsik.lim@samsung.com
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 leemgs@gmail.com , leemgs1@gmail.c=
+om
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
+
+
+
 --=20
-1.6.6.2
-
+Regards,
+GeunSik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+e-Mail: geunsik.lim@samsung.com
+           leemgs@gmail.com , leemgs1@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
