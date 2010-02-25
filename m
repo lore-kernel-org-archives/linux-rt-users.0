@@ -1,61 +1,449 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [PATCH RT] trivial fix to REMINDER block in init/main.c
-Date: Thu, 25 Feb 2010 16:39:23 -0600
-Message-ID: <20100225163923.3621094e@torg>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt2
+Date: Thu, 25 Feb 2010 23:56:02 +0100
+Message-ID: <1267138562.22519.568.camel@laptop>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	 <1267051101.12790.4.camel@laptop>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/ucqxtQORnFxg4ra0wB55QcW"; protocol="application/pgp-signature"
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
+	Carsten Emde <ce@ceag.ch>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:26209 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S934167Ab0BYWjj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Feb 2010 17:39:39 -0500
+Received: from casper.infradead.org ([85.118.1.10]:56623 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934246Ab0BYW40 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Feb 2010 17:56:26 -0500
+In-Reply-To: <1267051101.12790.4.camel@laptop>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/ucqxtQORnFxg4ra0wB55QcW
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Wed, 2010-02-24 at 23:38 +0100, Peter Zijlstra wrote:
+> On Wed, 2010-02-24 at 17:52 +0100, Thomas Gleixner wrote:
+> > 
+> >     - the highmem problem which Fernando reported with i915 on 32bit
+> >       i386 is not yet solved. 
+> 
+> The below compiles and boots a i386 defconfig kernel in kvm, I don't
+> have a system with 32bit userspace and i915 handy further test this.
+> 
 
-Thomas,
+The below seems to boot on 32bit with i915, but since the box was
+headless not much was thrown at it.
 
-Here's a trivial patch to the RT tree. I noticed during testing that I
-was getting an empty REMINDER block in dmesg. Looks like STACK_TRACER
-got dropped.
 
-Clark
+---
+ arch/x86/include/asm/highmem.h |    9 ++-
+ arch/x86/mm/highmem_32.c       |   27 +++++---
+ arch/x86/mm/iomap_32.c         |   32 +--------
+ mm/highmem.c                   |  152 +++++++++++++++++++++++++++------------
+ 4 files changed, 130 insertions(+), 90 deletions(-)
 
-diff --git a/init/main.c b/init/main.c
-index aa48b7b..48393c0 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -928,6 +928,9 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_PREEMPT_TRACER
- 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                          =
-                    *\n");
- #endif
-+#ifdef CONFIG_STACK_TRACER
-+	printk(KERN_ERR "*        CONFIG_STACK_TRACER                            =
-                    *\n");
+diff --git a/arch/x86/include/asm/highmem.h b/arch/x86/include/asm/highmem.h
+index 433ae1f..8279657 100644
+--- a/arch/x86/include/asm/highmem.h
++++ b/arch/x86/include/asm/highmem.h
+@@ -55,14 +55,17 @@ extern unsigned long highstart_pfn, highend_pfn;
+ #define PKMAP_ADDR(nr)  (PKMAP_BASE + ((nr) << PAGE_SHIFT))
+ 
+ extern void *kmap_high(struct page *page);
++extern void *kmap_pfn_prot(unsigned long pfn, pgprot_t prot);
+ extern void kunmap_high(struct page *page);
+ 
+ void *kmap(struct page *page);
++void *kmap_page_prot(struct page *page, pgprot_t prot);
+ extern void kunmap_virt(void *ptr);
+ extern struct page *kmap_to_page(void *ptr);
+ void kunmap(struct page *page);
+ 
+ void *__kmap_atomic_prot(struct page *page, enum km_type type, pgprot_t prot);
++void *__kmap_atomic_prot_pfn(unsigned long pfn, enum km_type type, pgprot_t prot);
+ void *__kmap_atomic(struct page *page, enum km_type type);
+ void *__kmap_atomic_direct(struct page *page, enum km_type type);
+ void __kunmap_atomic(void *kvaddr, enum km_type type);
+@@ -85,15 +88,17 @@ extern void add_highpages_with_active_regions(int nid, unsigned long start_pfn,
+  * on PREEMPT_RT kmap_atomic() is a wrapper that uses kmap():
+  */
+ #ifdef CONFIG_PREEMPT_RT
+-# define kmap_atomic_prot(page, type, prot)	({ pagefault_disable(); kmap(page); })
++# define kmap_atomic_prot(page, type, prot)	({ pagefault_disable(); kmap_pfn_prot(page_to_pfn(page), prot); })
++# define kmap_atomic_prot_pfn(pfn, type, prot)	({ pagefault_disable(); kmap_pfn_prot(pfn, prot); })
+ # define kmap_atomic(page, type)	({ pagefault_disable(); kmap(page); })
+ # define kmap_atomic_pfn(pfn, type)	kmap(pfn_to_page(pfn))
+-# define kunmap_atomic(kvaddr, type)	do { pagefault_enable(); kunmap_virt(kvaddr); } while(0)
++# define kunmap_atomic(kvaddr, type)	do { kunmap_virt(kvaddr); pagefault_enable(); } while(0)
+ # define kmap_atomic_to_page(kvaddr)	kmap_to_page(kvaddr)
+ # define kmap_atomic_direct(page, type)	__kmap_atomic_direct(page, type)
+ # define kunmap_atomic_direct(kvaddr, type)	__kunmap_atomic(kvaddr, type)
+ #else
+ # define kmap_atomic_prot(page, type, prot)	__kmap_atomic_prot(page, type, prot)
++# define kmap_atomic_prot_pfn(pfn, type, prot)  __kmap_atomic_prot_pfn(pfn, type, prot)
+ # define kmap_atomic(page, type)	__kmap_atomic(page, type)
+ # define kmap_atomic_pfn(pfn, type)	__kmap_atomic_pfn(pfn, type)
+ # define kunmap_atomic(kvaddr, type)	__kunmap_atomic(kvaddr, type)
+diff --git a/arch/x86/mm/highmem_32.c b/arch/x86/mm/highmem_32.c
+index dcb1899..b4eb59a 100644
+--- a/arch/x86/mm/highmem_32.c
++++ b/arch/x86/mm/highmem_32.c
+@@ -19,16 +19,6 @@ void kunmap(struct page *page)
+ 	kunmap_high(page);
+ }
+ 
+-void kunmap_virt(void *ptr)
+-{
+-	struct page *page;
+-
+-	if ((unsigned long)ptr < PKMAP_ADDR(0))
+-		return;
+-	page = pte_page(pkmap_page_table[PKMAP_NR((unsigned long)ptr)]);
+-	kunmap(page);
+-}
+-
+ struct page *kmap_to_page(void *ptr)
+ {
+ 	struct page *page;
+@@ -70,6 +60,23 @@ void *__kmap_atomic_prot(struct page *page, enum km_type type, pgprot_t prot)
+ 	return (void *)vaddr;
+ }
+ 
++void *__kmap_atomic_prot_pfn(unsigned long pfn, enum km_type type, pgprot_t prot)
++{
++	enum fixed_addresses idx;
++	unsigned long vaddr;
++
++	preempt_disable();
++	pagefault_disable();
++
++	debug_kmap_atomic(type);
++	idx = type + KM_TYPE_NR * smp_processor_id();
++	vaddr = __fix_to_virt(FIX_KMAP_BEGIN + idx);
++	set_pte(kmap_pte - idx, pfn_pte(pfn, prot));
++	arch_flush_lazy_mmu_mode();
++
++	return (void *)vaddr;
++}
++
+ void *__kmap_atomic_direct(struct page *page, enum km_type type)
+ {
+ 	return __kmap_atomic_prot(page, type, kmap_prot);
+diff --git a/arch/x86/mm/iomap_32.c b/arch/x86/mm/iomap_32.c
+index 715d822..38a1a68 100644
+--- a/arch/x86/mm/iomap_32.c
++++ b/arch/x86/mm/iomap_32.c
+@@ -55,23 +55,6 @@ iomap_free(resource_size_t base, unsigned long size)
+ }
+ EXPORT_SYMBOL_GPL(iomap_free);
+ 
+-void *kmap_atomic_prot_pfn(unsigned long pfn, enum km_type type, pgprot_t prot)
+-{
+-	enum fixed_addresses idx;
+-	unsigned long vaddr;
+-
+-	preempt_disable();
+-	pagefault_disable();
+-
+-	debug_kmap_atomic(type);
+-	idx = type + KM_TYPE_NR * smp_processor_id();
+-	vaddr = __fix_to_virt(FIX_KMAP_BEGIN + idx);
+-	set_pte(kmap_pte - idx, pfn_pte(pfn, prot));
+-	arch_flush_lazy_mmu_mode();
+-
+-	return (void *)vaddr;
+-}
+-
+ /*
+  * Map 'pfn' using fixed map 'type' and protections 'prot'
+  */
+@@ -94,19 +77,6 @@ EXPORT_SYMBOL_GPL(iomap_atomic_prot_pfn);
+ void
+ iounmap_atomic(void *kvaddr, enum km_type type)
+ {
+-	unsigned long vaddr = (unsigned long) kvaddr & PAGE_MASK;
+-	enum fixed_addresses idx = type + KM_TYPE_NR*smp_processor_id();
+-
+-	/*
+-	 * Force other mappings to Oops if they'll try to access this pte
+-	 * without first remap it.  Keeping stale mappings around is a bad idea
+-	 * also, in case the page changes cacheability attributes or becomes
+-	 * a protected page in a hypervisor.
+-	 */
+-	if (vaddr == __fix_to_virt(FIX_KMAP_BEGIN+idx))
+-		kpte_clear_flush(kmap_pte-idx, vaddr);
+-
+-	pagefault_enable();
+-	preempt_enable();
++	kunmap_atomic(kvaddr, type);
+ }
+ EXPORT_SYMBOL_GPL(iounmap_atomic);
+diff --git a/mm/highmem.c b/mm/highmem.c
+index 446b75c..1b534a8 100644
+--- a/mm/highmem.c
++++ b/mm/highmem.c
+@@ -66,7 +66,13 @@ unsigned int nr_free_highpages (void)
+  *  1 means its free for use - either mapped or not.
+  *  n means that there are (n-1) current users of it.
+  */
+-static atomic_t pkmap_count[LAST_PKMAP];
++
++struct pkmap_state {
++	atomic_t count;
++	int	 pfn;
++};
++
++static struct pkmap_state pkmap[LAST_PKMAP];
+ static atomic_t pkmap_hand;
+ static atomic_t pkmap_free;
+ static atomic_t pkmap_users;
+@@ -105,25 +111,26 @@ static DECLARE_WAIT_QUEUE_HEAD(pkmap_wait);
+  */
+ static int pkmap_try_free(int pos)
+ {
+-	if (atomic_cmpxchg(&pkmap_count[pos], 1, 0) != 1)
++	if (atomic_cmpxchg(&pkmap[pos].count, 1, 0) != 1)
+ 		return -1;
+ 	atomic_dec(&pkmap_free);
+ 	/*
+ 	 * TODO: add a young bit to make it CLOCK
+ 	 */
+ 	if (!pte_none(pkmap_page_table[pos])) {
+-		struct page *page = pte_page(pkmap_page_table[pos]);
+ 		unsigned long addr = PKMAP_ADDR(pos);
+ 		pte_t *ptep = &pkmap_page_table[pos];
+ 
+-		VM_BUG_ON(addr != (unsigned long)page_address(page));
++		if (!pkmap[pos].pfn) {
++			struct page *page = pte_page(pkmap_page_table[pos]);
++			VM_BUG_ON(addr != (unsigned long)page_address(page));
++			if (!__set_page_address(page, NULL, pos))
++				BUG();
++			flush_kernel_dcache_page(page);
++		}
+ 
+-		if (!__set_page_address(page, NULL, pos))
+-			BUG();
+-		flush_kernel_dcache_page(page);
+ 		pte_clear(&init_mm, addr, ptep);
+ 
+-
+ 		return 1;
+ 	}
+ 
+@@ -187,7 +194,7 @@ got_one:
+ 				continue;
+ 
+ 			if (!flush) {
+-				atomic_t *counter = &pkmap_count[pos2];
++				atomic_t *counter = &pkmap[pos2].count;
+ 				VM_BUG_ON(atomic_read(counter) != 0);
+ 				atomic_set(counter, 2);
+ 				pkmap_put(counter);
+@@ -197,7 +204,7 @@ got_one:
+ 		flush_tlb_kernel_range(PKMAP_ADDR(0), PKMAP_ADDR(LAST_PKMAP));
+ 
+ 		for (i = 0; i < nr; i++) {
+-			atomic_t *counter = &pkmap_count[entries[i]];
++			atomic_t *counter = &pkmap[entries[i]].count;
+ 			VM_BUG_ON(atomic_read(counter) != 0);
+ 			atomic_set(counter, 2);
+ 			pkmap_put(counter);
+@@ -207,32 +214,51 @@ got_one:
+ 	return pos;
+ }
+ 
+-static unsigned long pkmap_insert(struct page *page)
++static unsigned long pkmap_insert(unsigned long pfn, pgprot_t prot)
+ {
+ 	int pos = pkmap_get_free();
+ 	unsigned long vaddr = PKMAP_ADDR(pos);
+ 	pte_t *ptep = &pkmap_page_table[pos];
+-	pte_t entry = mk_pte(page, kmap_prot);
+-	atomic_t *counter = &pkmap_count[pos];
++	pte_t entry = pfn_pte(pfn, prot);
++	atomic_t *counter = &pkmap[pos].count;
+ 
+ 	VM_BUG_ON(atomic_read(counter) != 0);
+-
+ 	set_pte_at(&init_mm, vaddr, ptep, entry);
+-	if (unlikely(!__set_page_address(page, (void *)vaddr, pos))) {
++
++	pkmap[pos].pfn =
++		!(pgprot_val(prot) == pgprot_val(kmap_prot) && pfn_valid(pfn));
++
++	if (!pkmap[pos].pfn) {
++		struct page *page = pfn_to_page(pfn);
++
++		if (unlikely(!__set_page_address(page, (void *)vaddr, pos))) {
++			/*
++			 * concurrent pkmap_inserts for this page -
++			 * the other won the race, release this entry.
++			 *
++			 * we can still clear the pte without a tlb flush since
++			 * it couldn't have been used yet.
++			 */
++			pte_clear(&init_mm, vaddr, ptep);
++			VM_BUG_ON(atomic_read(counter) != 0);
++			atomic_set(counter, 2);
++			pkmap_put(counter);
++			return 0;
++		}
++	} else {
++#ifdef ARCH_NEEDS_KMAP_HIGH_GET
+ 		/*
+-		 * concurrent pkmap_inserts for this page -
+-		 * the other won the race, release this entry.
++		 * non-default prot and pure pfn memory doesn't
++		 * get map deduplication, nor a working page_address
+ 		 *
+-		 * we can still clear the pte without a tlb flush since
+-		 * it couldn't have been used yet.
++		 * this also makes it incompatible with
++		 * ARCH_NEEDS_KMAP_HIGH_GET
+ 		 */
+-		pte_clear(&init_mm, vaddr, ptep);
+-		VM_BUG_ON(atomic_read(counter) != 0);
+-		atomic_set(counter, 2);
+-		pkmap_put(counter);
+-		vaddr = 0;
+-	} else
+-		atomic_set(counter, 2);
++		BUG();
 +#endif
- #if defined(CONFIG_FTRACE) && !defined(CONFIG_FTRACE_MCOUNT_RECORD)
- 	printk(KERN_ERR "*        CONFIG_FTRACE                                  =
-                    *\n");
++	}
++
++	atomic_set(counter, 2);
+ 
+ 	return vaddr;
+ }
+@@ -313,20 +339,17 @@ static void kunmap_account(void)
+ 	wake_up(&pkmap_wait);
+ }
+ 
+-void *kmap_high(struct page *page)
++void *kmap_get(struct page *page)
+ {
+ 	unsigned long vaddr;
+-
+-
+-	kmap_account();
+ again:
+ 	vaddr = (unsigned long)page_address(page);
+ 	if (vaddr) {
+-		atomic_t *counter = &pkmap_count[PKMAP_NR(vaddr)];
++		atomic_t *counter = &pkmap[PKMAP_NR(vaddr)].count;
+ 		if (atomic_inc_not_zero(counter)) {
+ 			/*
+-			 * atomic_inc_not_zero implies a (memory) barrier on success
+-			 * so page address will be reloaded.
++			 * atomic_inc_not_zero implies a (memory) barrier on
++			 * success so page address will be reloaded.
+ 			 */
+ 			unsigned long vaddr2 = (unsigned long)page_address(page);
+ 			if (likely(vaddr == vaddr2))
+@@ -341,19 +364,49 @@ again:
+ 			 * reused.
+ 			 */
+ 			pkmap_put(counter);
+-			goto again;
+ 		}
++		goto again;
+ 	}
++	return (void *)vaddr;
++}
+ 
+-	vaddr = pkmap_insert(page);
+-	if (!vaddr)
+-		goto again;
++void *kmap_high(struct page *page)
++{
++	unsigned long vaddr;
++
++	kmap_account();
++
++again:
++	vaddr = (unsigned long)kmap_get(page);
++	if (!vaddr) {
++		vaddr = pkmap_insert(page_to_pfn(page), kmap_prot);
++		if (!vaddr)
++			goto again;
++	}
+ 
+ 	return (void *)vaddr;
+ }
+ 
+ EXPORT_SYMBOL(kmap_high);
+ 
++void *kmap_pfn_prot(unsigned long pfn, pgprot_t prot)
++{
++	unsigned long vaddr;
++
++	if (pgprot_val(prot) == pgprot_val(kmap_prot) &&
++			pfn_valid(pfn) && PageHighMem(pfn_to_page(pfn)))
++		return kmap_high(pfn_to_page(pfn));
++
++	kmap_account();
++
++	vaddr = pkmap_insert(pfn, prot);
++	BUG_ON(!vaddr);
++
++	return (void *)vaddr;
++}
++
++EXPORT_SYMBOL(kmap_pfn_prot);
++
+ #ifdef ARCH_NEEDS_KMAP_HIGH_GET
+ /**
+  * kmap_high_get - pin a highmem page into memory
+@@ -370,21 +423,26 @@ void *kmap_high_get(struct page *page)
+ 	unsigned long vaddr, flags;
+ 
+ 	lock_kmap_any(flags);
+-	vaddr = (unsigned long)page_address(page);
+-	if (vaddr) {
+-		BUG_ON(pkmap_count[PKMAP_NR(vaddr)] < 1);
+-		pkmap_count[PKMAP_NR(vaddr)]++;
+-	}
++	vaddr = (unsigned long)kmap_get(page);
+ 	unlock_kmap_any(flags);
+-	return (void*) vaddr;
++	return (void *)vaddr;
+ }
  #endif
+ 
+- void kunmap_high(struct page *page)
++void kunmap_virt(void *ptr)
++{
++	unsigned long vaddr = (unsigned long)ptr;
++	if (vaddr < PKMAP_ADDR(0) || vaddr >= PKMAP_ADDR(LAST_PKMAP))
++		return;
++	pkmap_put(&pkmap[PKMAP_NR(vaddr)].count);
++	kunmap_account();
++}
++
++void kunmap_high(struct page *page)
+ {
+ 	unsigned long vaddr = (unsigned long)page_address(page);
+ 	BUG_ON(!vaddr);
+-	pkmap_put(&pkmap_count[PKMAP_NR(vaddr)]);
++	pkmap_put(&pkmap[PKMAP_NR(vaddr)].count);
+ 	kunmap_account();
+ }
+ 
+@@ -539,8 +597,8 @@ void __init page_address_init(void)
+ #ifdef CONFIG_HIGHMEM
+ 	int i;
+ 
+-	for (i = 0; i < ARRAY_SIZE(pkmap_count); i++)
+-		atomic_set(&pkmap_count[i], 1);
++	for (i = 0; i < ARRAY_SIZE(pkmap); i++)
++		atomic_set(&pkmap[i].count, 1);
+ 	atomic_set(&pkmap_hand, 0);
+ 	atomic_set(&pkmap_free, LAST_PKMAP);
+ 	atomic_set(&pkmap_users, 0);
 
---Sig_/ucqxtQORnFxg4ra0wB55QcW
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.13 (GNU/Linux)
-
-iEYEARECAAYFAkuG/B8ACgkQHyuj/+TTEp2gJQCgiipfXtMk1g8/LnpM83e/QJUZ
-IpYAn2V1D4xh+8OpWwgSNw0vVL07sApP
-=IQQ2
------END PGP SIGNATURE-----
-
---Sig_/ucqxtQORnFxg4ra0wB55QcW--
