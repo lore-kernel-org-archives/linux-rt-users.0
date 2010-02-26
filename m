@@ -1,54 +1,41 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH RT] trivial fix to REMINDER block in init/main.c
-Date: Fri, 26 Feb 2010 10:03:33 +0100
-Message-ID: <20100226090333.GA3088@pengutronix.de>
-References: <20100225163923.3621094e@torg>
+From: John Blackwood <john.blackwood@ccur.com>
+Subject: Re: ANTS Report
+Date: Fri, 26 Feb 2010 08:59:21 -0600
+Message-ID: <4B87E1C9.8030209@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
+To: <linux-rt-users@vger.kernel.org>,
+	Jeff Hollensen <jeff.hollensen@ccur.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:38490 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935599Ab0BZJDj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2010 04:03:39 -0500
-Content-Disposition: inline
-In-Reply-To: <20100225163923.3621094e@torg>
+Received: from flmx07.ccur.com ([12.192.68.12]:17605 "EHLO flmx07.ccur.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S964837Ab0BZPEd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Feb 2010 10:04:33 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+ >
+ > Friday, February 26, 2010
+ >
+ > HAWKER FAILURES
+ >    2.6.31.12-RedHawk-5.4.2-debug (32-bit):
+ >       ihawk1     shield_all
 
-On Thu, Feb 25, 2010 at 04:39:23PM -0600, Clark Williams wrote:
-> Thomas,
->=20
-> Here's a trivial patch to the RT tree. I noticed during testing that =
-I
-> was getting an empty REMINDER block in dmesg. Looks like STACK_TRACER
-> got dropped.
+For what ever it's worth, this failure was the 'invalidate_ktlb' kernel
+variety, not the user space 'invalidate_tlb_x' type of tlbflush.
 
-This patch doesn't qualify for a patent:
+Just an idea (maybe a bad one)...
 
-http://marc.info/?l=3Dlinux-rt-users&m=3D123839719221161&w=3D2
+I'm wondering if this shield_all test script should be changed to not
+fail if it sees just one invalidate_ktlb occur during a 10 second shield
+trace on a given cpu....  maybe this would be only for 32bit systems
+with HIGHMEM.
 
-:-)  (IIRC I reordered the tests to have the same order as in the #if,
-but didn't recheck.)
+Feel free to ignore this suggestion.
 
-Best regards
-Uwe
+It's just that we'll (I'll) have to look at manufacturing
+systems everytime this test fails, and say whether or not
+this is a user or kernel failure and whether to ignore it.
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
