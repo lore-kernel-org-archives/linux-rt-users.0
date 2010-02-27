@@ -1,91 +1,125 @@
-From: Xavier Miller <xavier.miller@cauwe.org>
+From: GeunSik Lim <leemgs1@gmail.com>
 Subject: Re: [ANNOUNCE] 2.6.33-rt3
-Date: Sat, 27 Feb 2010 10:25:07 +0100
-Message-ID: <4B88E4F3.4010308@cauwe.org>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
+Date: Sat, 27 Feb 2010 18:50:36 +0900
+Message-ID: <49b7c2351002270150l1ed375et71821ffdbbe26d13@mail.gmail.com>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	 <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
+	Clark Williams <williams@redhat.com>, nando@ccrma.stanford.edu,
 	Carsten Emde <ce@ceag.ch>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailrelay004.isp.belgacom.be ([195.238.6.170]:18905 "EHLO
-	mailrelay004.isp.belgacom.be" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S968038Ab0B0JZJ (ORCPT
+Received: from mail-qy0-f179.google.com ([209.85.221.179]:35207 "EHLO
+	mail-qy0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S968079Ab0B0Juh convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2010 04:25:09 -0500
+	Sat, 27 Feb 2010 04:50:37 -0500
 In-Reply-To: <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Dear Thomas,
 
-The name is -rt4, not -rt3
+Thank you for notice about 2.6.33 based -rt3.
 
-Xavier Miller.
+I tested system booting with linux-2.6.33-rt3 on my Q6600 based Desktop=
+=2E
+=46or reference, I am using Centos 5.4 rootFS.
+As a result, I booted this version on my desktop successfully.
 
-Le 26/02/10 20:54, Thomas Gleixner a =E9crit :
+* Booting result of linux-2.6.33-rt3 on Q6600 PC. --> Passed.
+http://picasaweb.google.com/leemgs/LinuxRelatedScreenshot#5442856195052=
+253634
+
+Regards,
+Geunsik Lim.
+
+On Sat, Feb 27, 2010 at 4:54 AM, Thomas Gleixner <tglx@linutronix.de> w=
+rote:
 > We are pleased to announce the next update to our new preempt-rt
 > series.
->=20
->     - Update to 2.6.33
->=20
->     - rt fixes:
->=20
->       	 Peter Zijlstra (1):
->     	       highmem, -rt: Implement pfn and prot kmaps
->=20
-> 	Thomas Gleixner (2):
->       	       x86: pci: Prevent mmconfig memory corruption
->       	       mmc: omap_hsmmc: Fix the locking mess
->=20
+>
+> =C2=A0 =C2=A0- Update to 2.6.33
+>
+> =C2=A0 =C2=A0- rt fixes:
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Peter Zijlstra (1):
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 highmem, -rt: Implem=
+ent pfn and prot kmaps
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0Thomas Gleixner (2):
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 x86: pci: Prevent mm=
+config memory corruption
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mmc: omap_hsmmc: Fix=
+ the locking mess
+>
 > A note on the development process:
->=20
->   The rt/2.6.33 branch is now stabilization only. The rt/head branch
->   will follow linus tree from now on, so it will inherit all
->   (mis)features which come in the merge window.
->=20
+>
+> =C2=A0The rt/2.6.33 branch is now stabilization only. The rt/head bra=
+nch
+> =C2=A0will follow linus tree from now on, so it will inherit all
+> =C2=A0(mis)features which come in the merge window.
+>
 > Download locations:
->   =20
->    http://www.kernel.org/pub/linux/kernel/projects/rt/
->=20
+>
+> =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/
+>
 > Git development branch:
->    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.gi=
-t rt/head
->=20
+> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-ti=
+p.git rt/head
+>
 > Git release branch:
->    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.gi=
-t rt/2.6.33
->=20
+> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-ti=
+p.git rt/2.6.33
+>
 > Gitweb:
->    http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git;=
-a=3Dshortlog;h=3Drt/2.6.33
->=20
+> =C2=A0 http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.=
+git;a=3Dshortlog;h=3Drt/2.6.33
+>
 > Information on the RT patch can be found at:
->=20
->    http://rt.wiki.kernel.org/index.php/Main_Page
-> =20
+>
+> =C2=A0 http://rt.wiki.kernel.org/index.php/Main_Page
+>
 > To build the 2.6.33-rt3 tree, the following patches should be
 > applied:
->=20
->    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.tar.bz2
->    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33-rt=
-3.bz2
->=20
+>
+> =C2=A0 http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.tar.b=
+z2
+> =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.3=
+3-rt3.bz2
+>
 > Enjoy !
->=20
->       tglx
+>
+> =C2=A0 =C2=A0 =C2=A0tglx
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
 ers" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+>
+
+
+
+--=20
+Regards,
+GeunSik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+e-Mail: geunsik.lim@samsung.com
+           leemgs@gmail.com , leemgs1@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
