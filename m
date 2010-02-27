@@ -1,69 +1,53 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.33-rt3
-Date: Fri, 26 Feb 2010 20:54:25 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+Subject: Re: [ANNOUNCE] 2.6.33-rc8-rt2
+Date: Sat, 27 Feb 2010 09:10:24 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1002270907470.4245@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <20100226194436.GE8417@bicker>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
 	Carsten Emde <ce@ceag.ch>
-To: LKML <linux-kernel@vger.kernel.org>
+To: Dan Carpenter <error27@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:35906 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:55511 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S965897Ab0BZTzI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2010 14:55:08 -0500
-In-Reply-To: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	id S967911Ab0B0ILG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Feb 2010 03:11:06 -0500
+In-Reply-To: <20100226194436.GE8417@bicker>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
+On Fri, 26 Feb 2010, Dan Carpenter wrote:
+> kernel/trace/latency_hist.c
+>    341  static ssize_t
+>    342  latency_hist_reset(struct file *file, const char __user *a,
+>    343                     size_t size, loff_t *off)
+>    344  {
+>    345          int cpu;
+>    346          struct hist_data *hist = NULL;
+>    347  #if defined(CONFIG_WAKEUP_LATENCY_HIST) || \
+>    348      defined(CONFIG_MISSED_TIMER_OFFSETS_HIST)
+>    349          struct maxlatproc_data *mp = NULL;
+>    350  #endif
+>    351          off_t latency_type = (off_t) file->private_data;
+>    352  
+>    353          for_each_online_cpu(cpu) {
+>    354  
+>    355                  switch (latency_type) {
+> 
+> It seems like this switch statement should have a default case.
+> 
+> I haven't looked into it very closely but it seems like if you had all 
+> those config options turned off then "hist" would be still be NULL.
 
-    - Update to 2.6.33
+When all config options are turned off then the file is not compiled
+at all.
 
-    - rt fixes:
+Thanks,
 
-      	 Peter Zijlstra (1):
-    	       highmem, -rt: Implement pfn and prot kmaps
-
-	Thomas Gleixner (2):
-      	       x86: pci: Prevent mmconfig memory corruption
-      	       mmc: omap_hsmmc: Fix the locking mess
-
-A note on the development process:
-
-  The rt/2.6.33 branch is now stabilization only. The rt/head branch
-  will follow linus tree from now on, so it will inherit all
-  (mis)features which come in the merge window.
-
-Download locations:
-   
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git development branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Git release branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
-
-Gitweb:
-   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
-
-Information on the RT patch can be found at:
-
-   http://rt.wiki.kernel.org/index.php/Main_Page
- 
-To build the 2.6.33-rt3 tree, the following patches should be
-applied:
-
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.tar.bz2
-   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33-rt3.bz2
-
-Enjoy !
-
-      tglx
+	tglx
