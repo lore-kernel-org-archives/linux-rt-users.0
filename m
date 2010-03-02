@@ -1,48 +1,45 @@
-From: Tim Blechmann <tim@klingt.org>
-Subject: Re: Nvidia patches for 2.6.33-rt?
-Date: Tue, 02 Mar 2010 10:47:57 +0100
-Message-ID: <hmimsd$jmt$1@dough.gmane.org>
-References: <4ccf65461003020059h272bccfay1c9200906995a9e2@mail.gmail.com> <20100302101613.10143wu0pseylo3k@neverland.cauwe.org>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 2.6.33-rt3
+Date: Tue, 02 Mar 2010 13:25:38 -0800
+Message-ID: <1267565138.6898.28.camel@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	 <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
+	 <4B88E4F3.4010308@cauwe.org>
+	 <alpine.LFD.2.00.1002271252300.4245@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7Bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: nando@ccrma.Stanford.EDU, Xavier Miller <xavier.miller@cauwe.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>, Carsten Emde <ce@ceag.ch>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lo.gmane.org ([80.91.229.12]:45800 "EHLO lo.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752224Ab0CBJsL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Mar 2010 04:48:11 -0500
-Received: from list by lo.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1NmOi0-0007ET-Px
-	for linux-rt-users@vger.kernel.org; Tue, 02 Mar 2010 10:48:08 +0100
-Received: from 85-127-157-205.dynamic.xdsl-line.inode.at ([85.127.157.205])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Mar 2010 10:48:08 +0100
-Received: from tim by 85-127-157-205.dynamic.xdsl-line.inode.at with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Mar 2010 10:48:08 +0100
+Received: from smtp4.Stanford.EDU ([171.67.219.84]:40655 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1750905Ab0CBV01 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 2 Mar 2010 16:26:27 -0500
+In-Reply-To: <alpine.LFD.2.00.1002271252300.4245@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> I don't think the problem is rt-related, but generally to the vanilla
-> version.
+On Sat, 2010-02-27 at 12:53 +0100, Thomas Gleixner wrote:
+> On Sat, 27 Feb 2010, Xavier Miller wrote:
+> 
+> > Hello,
+> > 
+> > The name is -rt4, not -rt3
+> 
+> I pushed out an -rt4 w/o notice in the morning because I forgot to
+> pick up a few trivial fixes for -rt3.
 
-actually, it is ... atomic_spinlock_t was renamed to raw_spinlock_t, and 
-apparently semaphore_init isn't there any more ... 
+Hmm, I had to comment out a VM_BUG_ON for pkmap_count in mm/highmem.c,
+looks like pkmap_count is not defined anywhere else?
 
-the first issue is trivial, for the second, i didn't follow the rt patches 
-closely enough ...
-
-tim
-
--- 
-tim@klingt.org
-http://tim.klingt.org
-
-Your mind will answer most questions if you learn to relax and wait
-for the answer.
-  William S. Burroughs
+-- Fernando
 
 
