@@ -1,47 +1,49 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 2.6.33-rt3
-Date: Tue, 2 Mar 2010 22:53:16 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1003022249570.4245@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>  <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>  <4B88E4F3.4010308@cauwe.org>  <alpine.LFD.2.00.1002271252300.4245@localhost.localdomain>
- <1267565138.6898.28.camel@localhost.localdomain>
+From: Jonathan Schmidt <j.schmidt@archlinux.us>
+Subject: Re: Nvidia patches for 2.6.33-rt?
+Date: Wed, 3 Mar 2010 12:16:17 +0000 (UTC)
+Message-ID: <loom.20100303T130614-97@post.gmane.org>
+References: <4ccf65461003020059h272bccfay1c9200906995a9e2@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Xavier Miller <xavier.miller@cauwe.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>, Carsten Emde <ce@ceag.ch>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:56801 "EHLO www.tglx.de"
+Received: from lo.gmane.org ([80.91.229.12]:49520 "EHLO lo.gmane.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753305Ab0CBVyE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Mar 2010 16:54:04 -0500
-In-Reply-To: <1267565138.6898.28.camel@localhost.localdomain>
+	id S1750939Ab0CCMUg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Mar 2010 07:20:36 -0500
+Received: from list by lo.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1NmnYZ-0001ar-LH
+	for linux-rt-users@vger.kernel.org; Wed, 03 Mar 2010 13:20:03 +0100
+Received: from tn-76-7-143-28.dhcp.embarqhsd.net ([76.7.143.28])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 03 Mar 2010 13:20:03 +0100
+Received: from j.schmidt by tn-76-7-143-28.dhcp.embarqhsd.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 03 Mar 2010 13:20:03 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Fernando,
+Ng Oon-Ee <ngoonee <at> gmail.com> writes:
 
-On Tue, 2 Mar 2010, Fernando Lopez-Lezcano wrote:
-
-> On Sat, 2010-02-27 at 12:53 +0100, Thomas Gleixner wrote:
-> > On Sat, 27 Feb 2010, Xavier Miller wrote:
-> > 
-> > > Hello,
-> > > 
-> > > The name is -rt4, not -rt3
-> > 
-> > I pushed out an -rt4 w/o notice in the morning because I forgot to
-> > pick up a few trivial fixes for -rt3.
 > 
-> Hmm, I had to comment out a VM_BUG_ON for pkmap_count in mm/highmem.c,
-> looks like pkmap_count is not defined anywhere else?
+> Hi all, has anyone patched the nvidia binary installer for 2.6.33-rt?
+> Would like to have a look. I use nvidia-beta myself, but from previous
+> -rt kernels I know I can figure out the patch from that given the
+> patch for any other nvidia installer.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo <at> vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
 
-yuck, did not notice due to CONFIG_VM_DEBUG=n. Will fix.
 
-Thanks,
+I have absolutely no idea if this is the best way to handle the semaphore_init
+issue, I don't even know what a semaphore is, but I submitted a simple patch at
+http://www.nvnews.net/vbulletin/showthread.php?t=148509 anyway. It builds and
+appears to be working, but I'd like some verification that sema_init(mutex,1) is
+a valid substitute for semaphore_init(mutex).
 
-	tglx
