@@ -1,55 +1,67 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] =?UTF-8?q?mm/highmem.c:=20Fix=20=E2=80=98pkmap=5Fcount=E2=80=99=20undeclared?=
-Date: Wed,  3 Mar 2010 23:49:06 +0100
-Message-ID: <1267656546-19173-1-git-send-email-jkacur@redhat.com>
+From: Ng Oon-Ee <ngoonee@gmail.com>
+Subject: Re: Nvidia patches for 2.6.33-rt?
+Date: Thu, 4 Mar 2010 11:20:05 +0800
+Message-ID: <4ccf65461003031920x4384ab8cg2b89ba890009ea8f@mail.gmail.com>
+References: <4ccf65461003020059h272bccfay1c9200906995a9e2@mail.gmail.com>
+	 <loom.20100303T130614-97@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
-	Xavier Miller <xavier.miller@cauwe.org>,
-	LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	Carsten Emde <ce@ceag.ch>, John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f209.google.com ([209.85.218.209]:65086 "EHLO
-	mail-bw0-f209.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753164Ab0CCWtP (ORCPT
+Received: from mail-pw0-f46.google.com ([209.85.160.46]:61702 "EHLO
+	mail-pw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754468Ab0CDDUG convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Mar 2010 17:49:15 -0500
+	Wed, 3 Mar 2010 22:20:06 -0500
+Received: by pwj8 with SMTP id 8so1363817pwj.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 03 Mar 2010 19:20:05 -0800 (PST)
+In-Reply-To: <loom.20100303T130614-97@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This fixes the following problem that occurs when CONFIG_DEBUG_VM=3Dy
+On Wed, Mar 3, 2010 at 8:16 PM, Jonathan Schmidt <j.schmidt@archlinux.u=
+s> wrote:
+> Ng Oon-Ee <ngoonee <at> gmail.com> writes:
+>
+>>
+>> Hi all, has anyone patched the nvidia binary installer for 2.6.33-rt=
+?
+>> Would like to have a look. I use nvidia-beta myself, but from previo=
+us
+>> -rt kernels I know I can figure out the patch from that given the
+>> patch for any other nvidia installer.
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
+sers" in
+>> the body of a message to majordomo <at> vger.kernel.org
+>> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>>
+>>
+>
+>
+> I have absolutely no idea if this is the best way to handle the semap=
+hore_init
+> issue, I don't even know what a semaphore is, but I submitted a simpl=
+e patch at
+> http://www.nvnews.net/vbulletin/showthread.php?t=3D148509 anyway. It =
+builds and
+> appears to be working, but I'd like some verification that sema_init(=
+mutex,1) is
+> a valid substitute for semaphore_init(mutex).
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
 
-mm/highmem.c:534: error: =E2=80=98pkmap_count=E2=80=99 undeclared (firs=
-t use in this function)
+Works here as well (for nvidia 195.36.08). Many thanks, Jonathan. Such
+a simple patch compared to the previous one for 2.6.31-rt.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- mm/highmem.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-diff --git a/mm/highmem.c b/mm/highmem.c
-index 1b534a8..887a487 100644
---- a/mm/highmem.c
-+++ b/mm/highmem.c
-@@ -531,7 +531,7 @@ static int __set_page_address(struct page *page, vo=
-id *virtual, int pos)
- 	struct page_address_map *pam;
-=20
- 	VM_BUG_ON(!PageHighMem(page));
--	VM_BUG_ON(atomic_read(&pkmap_count[pos]) !=3D 0);
-+	VM_BUG_ON(atomic_read(&pkmap[pos].count) !=3D 0);
- 	VM_BUG_ON(pos < 0 || pos >=3D LAST_PKMAP);
-=20
- 	pas =3D page_slot(page);
---=20
-1.6.5.7
-
+Would still appreciate information from someone who knows the code
+about sema_init(mutex,1) though =3D).
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
