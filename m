@@ -1,82 +1,66 @@
-From: "M. Koehrer" <mathias_koehrer@arcor.de>
-Subject: Re: Re: Disabling lapic timer for a certain core
-Date: Fri, 5 Mar 2010 14:54:51 +0100 (CET)
-Message-ID: <8898.1267797291298.JavaMail.ngmail@webmail11.arcor-online.net>
-References: <alpine.LFD.2.00.1003050659380.2014@localhost.localdomain> <6756648.1267736627501.JavaMail.ngmail@webmail08.arcor-online.net>
+From: Michael Mueller <ss7box@gmail.com>
+Subject: new to linux RT
+Date: Fri, 5 Mar 2010 15:17:57 -0500
+Message-ID: <615761851003051217u733c4717wd04679de318f5153@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: lclaudio@uudg.org, linux-rt-users@vger.kernel.org
-To: tglx@linutronix.de, mathias_koehrer@arcor.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-in-14.arcor-online.net ([151.189.21.54]:43620 "EHLO
-	mail-in-14.arcor-online.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751820Ab0CENyw convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Mar 2010 08:54:52 -0500
-In-Reply-To: <alpine.LFD.2.00.1003050659380.2014@localhost.localdomain>
+Received: from mail-gy0-f174.google.com ([209.85.160.174]:62356 "EHLO
+	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753031Ab0CEUYg (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Mar 2010 15:24:36 -0500
+Received: by gyd10 with SMTP id 10so685gyd.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Mar 2010 12:24:35 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas,=20
+Hi,
 
-thank you very much for the reply.
-> Please do _NOT_ top post. Please reply inline and in context.
-Sorry for that...
+I am new to linux RT.  Not so new to rtos.  Have compiled/loaded/run
+kernels from kernel.org with success in past.
 
-> > The issue is here, that the interrupt routine of the kernel
-> > takes too long here.
-> > It would be fine to have the timer interrupt called more=20
-> > often and to process with each call only a subset of the=20
-> > jobs to be done...
-> > This would reduce the time the CPU the user mode=20
-> > is interrupted by the timer routine.
->=20
-> Err, by splitting the work you introduce even more overhead. That's
-> the wrong approach. The first question is which timers are running on
-> that CPU as you have isolated it.
-You are right. The total overhead is of course larger.
-However, the overhead that could appear within a single of our 40us loo=
-ps
-would be smaller. It is fine for me to have a 5us add on with each loop=
-=2E
-But it is not allowed to have a 15us add on with every 1000th loop...
+I am trying to find a kernel and RT patch combination that are
+compatible.  Not so much success.  Latest attempt is with
+linux-2.6.31.12 where I am getting:
 
->=20
-> In theory it's possible to remove the timer interrupt from such an
-> isolated core completely, but there needs to be some work done vs. th=
-e
-> scheduler, accounting, RCU etc. There are people looking into this,
-> but we have no patches yet.
-I have checked the LAPIC addresses via the MSRs.
-All LAPIC addresses for all CPU cores are the same.=20
-I assume they share the very same configuration, thus a minimum step=20
-would be to make a copy of this configuration data and to let CPU core =
-3
-point to this copy. This would allow to disable the timer.
+  LD      init/built-in.o
+  LD      .tmp_vmlinux1
+drivers/built-in.o(.init.text+0x3c5e): In function `con_init':
+: undefined reference to `.L1446'
+make: *** [.tmp_vmlinux1] Error 1
 
-=20
->=20
-> What kind of application is that ? Data acquistion or closed loop
-> processsing ?
-I am running a close loop application.
+this is using the default .config
 
-Thank you very much.
+i've had this problem in other kernels as well
 
-Regards
+I was successful building 2.6.27.5 but there is not a rt patch for this release
 
-Mathias
+Linux g115 2.6.27.45 #2 Tue Feb 16 11:56:21 EST 2010 i686 i686 i386 GNU/Linux
 
---=20
-Mathias Koehrer
-mathias_koehrer@arcor.de
+my gcc is:
 
+Reading specs from /usr/lib/gcc/i386-redhat-linux/3.4.6/specs
+Configured with: ../configure --prefix=/usr --mandir=/usr/share/man
+--infodir=/usr/share/info --enable-shared --enable-threads=posix
+--disable-checking --with-system-zlib --enable-__cxa_atexit
+--disable-libunwind-exceptions --enable-java-awt=gtk
+--host=i386-redhat-linux
+Thread model: posix
+gcc version 3.4.6 20060404 (Red Hat 3.4.6-11)
 
-Tolle Dekollet=E9s oder scharfe Tatoos? Vote jetzt ... oder mach selbst=
- mit und zeige Deine Schokoladenseite
-bei Topp oder Hopp von Arcor: http://www.arcor.de/rd/footer.toh
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+any ideas, pointers, corrections, admonishments, chastisements,
+thoughts, etc. would be appreciated
+
+thanks
+-- 
+Mike Mueller
+Xygnada Technology, Inc.
+Raleigh, NC, USA
+http://www.ss7box.com
+ss7box@gmail.com
+MSN IM: ss7box@hotmail.com
+Google IM: ss7box@gmail.com
+Yahoo IM: ss7box
+Skype: ss7box
