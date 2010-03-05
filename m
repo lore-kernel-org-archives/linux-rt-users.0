@@ -1,66 +1,68 @@
-From: Michael Mueller <ss7box@gmail.com>
-Subject: new to linux RT
-Date: Fri, 5 Mar 2010 15:17:57 -0500
-Message-ID: <615761851003051217u733c4717wd04679de318f5153@mail.gmail.com>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: new to linux RT
+Date: Fri, 5 Mar 2010 21:39:43 +0100
+Message-ID: <3efb10971003051239p1d2bd857w1fe198850b52aafe@mail.gmail.com>
+References: <615761851003051217u733c4717wd04679de318f5153@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Michael Mueller <ss7box@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gy0-f174.google.com ([209.85.160.174]:62356 "EHLO
-	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753031Ab0CEUYg (ORCPT
+Received: from fg-out-1718.google.com ([72.14.220.159]:22591 "EHLO
+	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750941Ab0CEUjp convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Mar 2010 15:24:36 -0500
-Received: by gyd10 with SMTP id 10so685gyd.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Mar 2010 12:24:35 -0800 (PST)
+	Fri, 5 Mar 2010 15:39:45 -0500
+Received: by fg-out-1718.google.com with SMTP id l26so395145fgb.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Mar 2010 12:39:44 -0800 (PST)
+In-Reply-To: <615761851003051217u733c4717wd04679de318f5153@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
 
-I am new to linux RT.  Not so new to rtos.  Have compiled/loaded/run
-kernels from kernel.org with success in past.
+2010/3/5 Michael Mueller <ss7box@gmail.com>:
+> Hi,
+>
+> I am new to linux RT. =A0Not so new to rtos. =A0Have compiled/loaded/=
+run
+> kernels from kernel.org with success in past.
+> I am trying to find a kernel and RT patch combination that are
+> compatible. =A0Not so much success. =A0Latest attempt is with
+> linux-2.6.31.12 where I am getting:
+>
+> =A0LD =A0 =A0 =A0init/built-in.o
+> =A0LD =A0 =A0 =A0.tmp_vmlinux1
+> drivers/built-in.o(.init.text+0x3c5e): In function `con_init':
+> : undefined reference to `.L1446'
+> make: *** [.tmp_vmlinux1] Error 1
 
-I am trying to find a kernel and RT patch combination that are
-compatible.  Not so much success.  Latest attempt is with
-linux-2.6.31.12 where I am getting:
+> ... <snip>
 
-  LD      init/built-in.o
-  LD      .tmp_vmlinux1
-drivers/built-in.o(.init.text+0x3c5e): In function `con_init':
-: undefined reference to `.L1446'
-make: *** [.tmp_vmlinux1] Error 1
+> my gcc is:
+> gcc version 3.4.6 20060404 (Red Hat 3.4.6-11)
 
-this is using the default .config
+=46irst start by using a recent compiler.
 
-i've had this problem in other kernels as well
+> ... <snip>
 
-I was successful building 2.6.27.5 but there is not a rt patch for this release
+> any ideas, pointers, corrections, admonishments, chastisements,
+> thoughts, etc. would be appreciated
 
-Linux g115 2.6.27.45 #2 Tue Feb 16 11:56:21 EST 2010 i686 i686 i386 GNU/Linux
+Then start reading this:
+http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO
 
-my gcc is:
+You can find the latest RT-patches here:
+http://www.eu.kernel.org/pub/linux/kernel/projects/rt/
+The patches suit the same base kernel as listed in the name of the patc=
+h.
 
-Reading specs from /usr/lib/gcc/i386-redhat-linux/3.4.6/specs
-Configured with: ../configure --prefix=/usr --mandir=/usr/share/man
---infodir=/usr/share/info --enable-shared --enable-threads=posix
---disable-checking --with-system-zlib --enable-__cxa_atexit
---disable-libunwind-exceptions --enable-java-awt=gtk
---host=i386-redhat-linux
-Thread model: posix
-gcc version 3.4.6 20060404 (Red Hat 3.4.6-11)
+Kind regards,
 
-any ideas, pointers, corrections, admonishments, chastisements,
-thoughts, etc. would be appreciated
-
-thanks
--- 
-Mike Mueller
-Xygnada Technology, Inc.
-Raleigh, NC, USA
-http://www.ss7box.com
-ss7box@gmail.com
-MSN IM: ss7box@hotmail.com
-Google IM: ss7box@gmail.com
-Yahoo IM: ss7box
-Skype: ss7box
+Remy
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
