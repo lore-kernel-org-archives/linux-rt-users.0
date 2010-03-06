@@ -1,44 +1,73 @@
-From: Michael Mueller <ss7box@gmail.com>
-Subject: Re: new to linux RT
-Date: Fri, 5 Mar 2010 15:54:51 -0500
-Message-ID: <615761851003051254w39b13c8l1c72dbfda7020e6e@mail.gmail.com>
-References: <615761851003051217u733c4717wd04679de318f5153@mail.gmail.com>
-	 <3efb10971003051239p1d2bd857w1fe198850b52aafe@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Disabling lapic timer for a certain core
+Date: Sat, 6 Mar 2010 10:10:17 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1003060955250.2014@localhost.localdomain>
+References: <14900780.1267705793289.JavaMail.ngmail@webmail16.arcor-online.net> <20100304140453.GX2553@uudg.org> <4B90D618.2060100@cfl.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	"M. Koehrer" <mathias_koehrer@arcor.de>,
+	linux-rt-users@vger.kernel.org, Mark Hounschell <markh@compro.net>
+To: Mark Hounschell <dmarkh@cfl.rr.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f189.google.com ([209.85.210.189]:40561 "EHLO
-	mail-yx0-f189.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751430Ab0CEUyw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Mar 2010 15:54:52 -0500
-Received: by yxe27 with SMTP id 27so2281404yxe.21
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Mar 2010 12:54:51 -0800 (PST)
-In-Reply-To: <3efb10971003051239p1d2bd857w1fe198850b52aafe@mail.gmail.com>
+Received: from www.tglx.de ([62.245.132.106]:51653 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750813Ab0CFJKd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 6 Mar 2010 04:10:33 -0500
+In-Reply-To: <4B90D618.2060100@cfl.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Mar 5, 2010 at 3:39 PM, Remy Bohmer <linux@bohmer.net> wrote:
+On Fri, 5 Mar 2010, Mark Hounschell wrote:
+> On 03/04/2010 09:04 AM, Luis Claudio R. Goncalves wrote:
+> > On Thu, Mar 04, 2010 at 01:29:53PM +0100, M. Koehrer wrote:
+> > | Is it possible to disable the "Local Timer Interrupt" for core 3 as it is actually not required here?
+> > | I want to use the full 100% CPU core time for this single loop.
+> > | 
+> > | Any help or ideas are welcome!
+> > | 
+> 
+> This has been a long standing issue with me too. Moving your process to
+> another socket won't help you. It is not a cache issue. It is the local
+> timer interrupt just as you suspect. I've played with disabling it on a
+> core but haven't been successful. This is a problem with both the vanilla
+> and RT kernels. No matter what you do as far as isolation of tasks and
+> normal interrupts, the local timer interrupt kills ya. The kernel is broken
+> in this regard, by design. Your processors aren't yours. The kernel
+> developers insist on claiming a piece of every one of them for their code.
+> The kernel people will never change/fix this flaw in it's basic design
+> because only a few (hard real-time) consider it a problem. Those people are
+> told to use something else and that Linux wasn't designed for that kind of
+> thing.
 
->> my gcc is:
->> gcc version 3.4.6 20060404 (Red Hat 3.4.6-11)
->
-> First start by using a recent compiler.
+That's crap in several ways.
 
- thanks, will do
+1) This is not a problem where only real-time folks are interested
+   in. HPC folks complain about the same thing.
 
-> Then start reading this:
-> http://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO
+2) As I said yesterday, we are aware of the problem and people are
+   working on a solution. It's just not that trivial as disabling the
+   timer interrupt. We need to sort out housekeeping stuff and solve
+   other problems to gain full isolation of a core.
 
-have not read thoroughly yet; thanks again
->
-> You can find the latest RT-patches here:
-> http://www.eu.kernel.org/pub/linux/kernel/projects/rt/
-> The patches suit the same base kernel as listed in the name of the patch.
+I'm really fed up with the attitude of folks who claim that the kernel
+is broken and we just are not interested to fix it. This has been
+discussed several times in great length and all the details have been
+pointed out which need work. But we have not seen a single patch from
+the very people who whine about it.
 
-i'm here instead; looks same; again, thanks
+> Unfortunately, the instructions (rdmsr and wrmsr) that could be used to
+> disable/re-enable the local timer interrupt require DOM-0 privileges and
+> can't be executed from user land. If it were not for that one little thing
+> a solution would be easy. You wouldn't even need the RT patch set any more.
+> 
+> You could probably hack the kernel up such that you could get DOM-0
+> privileges in user land but don't expect any help from any kernel people
+> for that sort of thing.
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/
--- 
-mike
+True, simply because we are not interested in hacked up one off shit,
+which breaks things left and right.
+ 
+Thanks,
+
+	tglx
