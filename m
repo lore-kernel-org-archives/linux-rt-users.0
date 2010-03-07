@@ -1,104 +1,70 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: [PATCH 2/2] add-smp-option-to-svsematest.patch
-Date: Sun, 07 Mar 2010 21:48:02 +0100
-Message-ID: <20100307204909.626988443@osadl.org>
-References: <20100307204800.456744470@osadl.org>
-Cc: RT-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>
-To: Clark Williams <williams@redhat.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 1/2] do-not-allow-prio-less-than-one-in-cyclictest.patch
+Date: Sun, 7 Mar 2010 23:37:29 +0100
+Message-ID: <520f0cf11003071437p13cda9f9n1dba8d01ad33aedd@mail.gmail.com>
+References: <20100307203955.895980022@osadl.org>
+	 <20100307204241.033320249@osadl.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Clark Williams <williams@redhat.com>,
+	RT-users <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:60222 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754678Ab0CGV3t (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 7 Mar 2010 16:29:49 -0500
-Content-Disposition: inline; filename=add-smp-option-to-svsematest.patch
+Received: from mail-ew0-f220.google.com ([209.85.219.220]:64188 "EHLO
+	mail-ew0-f220.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752805Ab0CGWhb convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 7 Mar 2010 17:37:31 -0500
+Received: by ewy20 with SMTP id 20so1293912ewy.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 07 Mar 2010 14:37:30 -0800 (PST)
+In-Reply-To: <20100307204241.033320249@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Add SMP testing option (-S, --smp) to svsematest, same as in
-cyclictest.
+On Sun, Mar 7, 2010 at 9:39 PM, Carsten Emde <C.Emde@osadl.org> wrote:
+> If not in SMP testing mode, the priority may go below 1, if the speci=
+fied
+> priority is lower than the number of threads, e.g.
+> # cyclictest -p2 -t3
+> T: 0 (21970) P: 2 [..]
+> T: 1 (21971) P: 1 [..]
+> T: 2 (21972) P: 0 [..]
+>
+> Do not allow priority to go below 1.
+>
+> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+>
+> Index: rt-tests/src/cyclictest/cyclictest.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- rt-tests.orig/src/cyclictest/cyclictest.c
+> +++ rt-tests/src/cyclictest/cyclictest.c
+> @@ -1304,7 +1304,7 @@ int main(int argc, char **argv)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0}
+>
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0par->prio =3D priority;
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (!sameprio)
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (priority > 1 && !sameprio)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0priority--;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 if =A0 =A0 =A0(priority && policy <=3D=
+ 1) par->policy =3D SCHED_FIFO;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 else if (priority && policy =3D=3D 2)=
+ par->policy =3D SCHED_RR;
+>
+> --
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+I'm not sure about this, why not allow a priority below 1? The code
+below properly sets the third thead to SCHED_OTHER.
+I could imagine wanting to test that too. If you don't want to go
+below 1 then just set a higher prio, p3 in the scenario you
+showed.
 
-Index: rt-tests/src/svsematest/svsematest.c
-===================================================================
---- rt-tests.orig/src/svsematest/svsematest.c
-+++ rt-tests/src/svsematest/svsematest.c
-@@ -248,6 +248,8 @@ static void display_help(void)
- 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
- 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
- 	"-p PRIO  --prio=PRIO       priority\n"
-+	"-S       --smp             SMP testing: options -a -t and same priority\n"
-+        "                           of all threads\n"
- 	"-t       --threads         one thread per available processor\n"
- 	"-t [NUM] --threads=NUM     number of threads:\n"
- 	"                           without NUM, threads = max_cpus\n"
-@@ -263,6 +265,8 @@ static int num_threads = 1;
- static int max_cycles;
- static int interval = 1000;
- static int distance = 500;
-+static int smp;
-+static int sameprio;
- 
- static void process_options (int argc, char *argv[])
- {
-@@ -281,16 +285,21 @@ static void process_options (int argc, c
- 			{"interval", required_argument, NULL, 'i'},
- 			{"loops", required_argument, NULL, 'l'},
- 			{"priority", required_argument, NULL, 'p'},
-+			{"smp", no_argument, NULL, 'S'},
- 			{"threads", optional_argument, NULL, 't'},
- 			{"help", no_argument, NULL, '?'},
- 			{NULL, 0, NULL, 0}
- 		};
--		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:t::",
-+		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:St::",
- 			long_options, &option_index);
- 		if (c == -1)
- 			break;
- 		switch (c) {
- 		case 'a':
-+			if (smp) {
-+				warn("-a ignored due to --smp\n");
-+				break;
-+			}
- 			if (optarg != NULL) {
- 				affinity = atoi(optarg);
- 				setaffinity = AFFINITY_SPECIFIED;
-@@ -317,7 +326,16 @@ static void process_options (int argc, c
- 		case 'i': interval = atoi(optarg); break;
- 		case 'l': max_cycles = atoi(optarg); break;
- 		case 'p': priority = atoi(optarg); break;
-+		case 'S':
-+			smp = 1;
-+			num_threads = max_cpus;
-+			setaffinity = AFFINITY_USEALL;
-+			break;
- 		case 't':
-+			if (smp) {
-+				warn("-t ignored due to --smp\n");
-+				break;
-+			}
- 			if (optarg != NULL)
- 				num_threads = atoi(optarg);
- 			else if (optind<argc && atoi(argv[optind]))
-@@ -347,6 +365,9 @@ static void process_options (int argc, c
- 		if (priority < 0 || priority > 99)
- 			error = 1;
- 
-+		if (priority && smp)
-+			sameprio = 1;
-+
- 		tracelimit = thistracelimit;
- 	}
- 	if (error)
-@@ -525,7 +546,7 @@ int main(int argc, char *argv[])
- 		}
- 		receiver[i].priority = priority;
- 		receiver[i].tracelimit = tracelimit;
--		if (priority > 0)
-+		if (priority > 1 && !sameprio)
- 			priority--;
- 		receiver[i].delay.tv_sec = interval / USEC_PER_SEC;
- 		receiver[i].delay.tv_nsec = (interval % USEC_PER_SEC) * 1000;
-
+Thanks.
+John
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
