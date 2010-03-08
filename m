@@ -1,9 +1,9 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 1/2] add-smp-option-to-ptsematest.patch
-Date: Mon, 8 Mar 2010 13:45:27 +0100
-Message-ID: <520f0cf11003080445i2733a309v3362fa217e542050@mail.gmail.com>
+Subject: Re: [PATCH 2/2] add-smp-option-to-svsematest.patch
+Date: Mon, 8 Mar 2010 13:45:59 +0100
+Message-ID: <520f0cf11003080445h44fbd3a9l8dcbbdfb07483883@mail.gmail.com>
 References: <20100307204800.456744470@osadl.org>
-	 <20100307204907.464728076@osadl.org>
+	 <20100307204909.626988443@osadl.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -11,30 +11,30 @@ Cc: Clark Williams <williams@redhat.com>,
 	RT-users <linux-rt-users@vger.kernel.org>
 To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ey-out-2122.google.com ([74.125.78.26]:2541 "EHLO
-	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752417Ab0CHMp2 convert rfc822-to-8bit (ORCPT
+Received: from mail-ew0-f216.google.com ([209.85.219.216]:40778 "EHLO
+	mail-ew0-f216.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752417Ab0CHMqB convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Mar 2010 07:45:28 -0500
-Received: by ey-out-2122.google.com with SMTP id 25so267152eya.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 08 Mar 2010 04:45:27 -0800 (PST)
-In-Reply-To: <20100307204907.464728076@osadl.org>
+	Mon, 8 Mar 2010 07:46:01 -0500
+Received: by ewy8 with SMTP id 8so28079ewy.28
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Mar 2010 04:45:59 -0800 (PST)
+In-Reply-To: <20100307204909.626988443@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Sun, Mar 7, 2010 at 9:48 PM, Carsten Emde <C.Emde@osadl.org> wrote:
-> Add SMP testing option (-S, --smp) to ptsematest, same as in
+> Add SMP testing option (-S, --smp) to svsematest, same as in
 > cyclictest.
 >
 > Signed-off-by: Carsten Emde <C.Emde@osadl.org>
 >
-> Index: rt-tests/src/ptsematest/ptsematest.c
+> Index: rt-tests/src/svsematest/svsematest.c
 > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- rt-tests.orig/src/ptsematest/ptsematest.c
-> +++ rt-tests/src/ptsematest/ptsematest.c
-> @@ -173,6 +173,8 @@ static void display_help(void)
+> --- rt-tests.orig/src/svsematest/svsematest.c
+> +++ rt-tests/src/svsematest/svsematest.c
+> @@ -248,6 +248,8 @@ static void display_help(void)
 > =A0 =A0 =A0 =A0"-i INTV =A0--interval=3DINTV =A0 base interval of thr=
 ead in us default=3D1000\n"
 > =A0 =A0 =A0 =A0"-l LOOPS --loops=3DLOOPS =A0 =A0 number of loops: def=
@@ -50,7 +50,7 @@ er available processor\n"
 "
 > =A0 =A0 =A0 =A0" =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
 without NUM, threads =3D max_cpus\n"
-> @@ -189,6 +191,8 @@ static int num_threads =3D 1;
+> @@ -263,6 +265,8 @@ static int num_threads =3D 1;
 > =A0static int max_cycles;
 > =A0static int interval =3D 1000;
 > =A0static int distance =3D 500;
@@ -59,7 +59,7 @@ without NUM, threads =3D max_cpus\n"
 >
 > =A0static void process_options (int argc, char *argv[])
 > =A0{
-> @@ -205,16 +209,21 @@ static void process_options (int argc, c
+> @@ -281,16 +285,21 @@ static void process_options (int argc, c
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"interval", required_=
 argument, NULL, 'i'},
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{"loops", required_arg=
@@ -75,9 +75,9 @@ NULL, '?'},
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0{NULL, 0, NULL, 0}
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0};
 > - =A0 =A0 =A0 =A0 =A0 =A0 =A0 int c =3D getopt_long (argc, argv, "a::=
-b:d:i:l:p:t::",
+b:d:f::i:l:p:t::",
 > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 int c =3D getopt_long (argc, argv, "a::=
-b:d:i:l:p:St::",
+b:d:f::i:l:p:St::",
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0long_options, &option_=
 index);
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (c =3D=3D -1)
@@ -95,7 +95,7 @@ a ignored due to --smp\n");
 ty =3D atoi(optarg);
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0setaff=
 inity =3D AFFINITY_SPECIFIED;
-> @@ -230,7 +239,16 @@ static void process_options (int argc, c
+> @@ -317,7 +326,16 @@ static void process_options (int argc, c
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0case 'i': interval =3D atoi(optarg); b=
 reak;
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0case 'l': max_cycles =3D atoi(optarg);=
@@ -120,17 +120,17 @@ t ignored due to --smp\n");
 reads =3D atoi(optarg);
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0else if (optind<argc &=
 & atoi(argv[optind]))
-> @@ -261,6 +279,9 @@ static void process_options (int argc, c
-> =A0 =A0 =A0 =A0if (num_threads < 1)
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0error =3D 1;
+> @@ -347,6 +365,9 @@ static void process_options (int argc, c
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (priority < 0 || priority > 99)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0error =3D 1;
 >
-> + =A0 =A0 =A0 if (priority && smp)
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 sameprio =3D 1;
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (priority && smp)
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 sameprio =3D 1;
 > +
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0tracelimit =3D thistracelimit;
+> =A0 =A0 =A0 =A0}
 > =A0 =A0 =A0 =A0if (error)
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0display_help ();
-> =A0}
-> @@ -327,7 +348,7 @@ int main(int argc, char *argv[])
+> @@ -525,7 +546,7 @@ int main(int argc, char *argv[])
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0}
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0receiver[i].priority =3D priority;
 > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0receiver[i].tracelimit =3D tracelimit;
@@ -143,7 +143,6 @@ reads =3D atoi(optarg);
 l % USEC_PER_SEC) * 1000;
 >
 > --
-
 Acked-by: John Kacur <jkacur@redhat.com>
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
