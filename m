@@ -1,7 +1,8 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] Build break in v2.6.33-rt6
-Date: Fri, 12 Mar 2010 13:10:49 +0100
-Message-ID: <1268395850-23408-1-git-send-email-jkacur@redhat.com>
+Subject: [PATCH] ide: Build break in ide-iops.c
+Date: Fri, 12 Mar 2010 13:10:50 +0100
+Message-ID: <1268395850-23408-2-git-send-email-jkacur@redhat.com>
+References: <1268395850-23408-1-git-send-email-jkacur@redhat.com>
 Cc: lkml <linux-kernel@vger.kernel.org>,
 	"David S. Miller" <davem@davemloft.net>,
 	Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>,
@@ -10,21 +11,36 @@ Cc: lkml <linux-kernel@vger.kernel.org>,
 	John Kacur <jkacur@redhat.com>
 To: Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fg-out-1718.google.com ([72.14.220.156]:16495 "EHLO
-	fg-out-1718.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751802Ab0CLMK7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Mar 2010 07:10:59 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1268395850-23408-1-git-send-email-jkacur@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-The following fixes a build break in v2.6.33-rt6 due to the merging of
-git://dev.lemote.com/rt4ls into rt 1054085e15d189e05d4d6ea7e30580c4e0b36d7f
+I get the following build break due to 876c52cc046e00eaa2ffc5124dc187106ef57594
 
-John Kacur (1):
-  ide: Build break in ide-iops.c
+drivers/ide/ide-iops.c:29:26: error: asm/bootinfo.h: No such file or directory
 
+Protect the include by #ifdef CONFIG_MIPS
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
  drivers/ide/ide-iops.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
+diff --git a/drivers/ide/ide-iops.c b/drivers/ide/ide-iops.c
+index 9dba71e..8d32dda 100644
+--- a/drivers/ide/ide-iops.c
++++ b/drivers/ide/ide-iops.c
+@@ -26,7 +26,10 @@
+ #include <asm/irq.h>
+ #include <asm/uaccess.h>
+ #include <asm/io.h>
++
++#ifdef CONFIG_MIPS
+ #include <asm/bootinfo.h>
++#endif
+ 
+ void SELECT_MASK(ide_drive_t *drive, int mask)
+ {
+-- 
+1.6.6.1
