@@ -1,43 +1,48 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] ide: Build break in ide-iops.c
-Date: Fri, 12 Mar 2010 13:40:54 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1003121340120.22855@localhost.localdomain>
-References: <1268395850-23408-1-git-send-email-jkacur@redhat.com>  <1268395850-23408-2-git-send-email-jkacur@redhat.com> <1268396220.9130.4.camel@falcon>
+From: John Kacur <jkacur@redhat.com>
+Subject: [BUG REPORT] MAX_STACK_TRACE_ENTRIES too low! in v2.6.33-rt6
+Date: Fri, 12 Mar 2010 14:09:31 +0100
+Message-ID: <520f0cf11003120509j1dd6f2cicb1d87b0a16d31dd@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: John Kacur <jkacur@redhat.com>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	lkml <linux-kernel@vger.kernel.org>,
-	"David S. Miller" <davem@davemloft.net>,
-	Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>,
-	Sergei Shtylyov <sshtylyov@ru.mvista.com>
-To: Wu Zhangjin <wuzhangjin@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:34766 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752993Ab0CLMlU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Mar 2010 07:41:20 -0500
-In-Reply-To: <1268396220.9130.4.camel@falcon>
+Received: from mail-ew0-f216.google.com ([209.85.219.216]:55341 "EHLO
+	mail-ew0-f216.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752223Ab0CLNJd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Mar 2010 08:09:33 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 12 Mar 2010, Wu Zhangjin wrote:
+This is just fyi: Note, I do have a large number of debug options
+turned on, that could influence this.
+This occurred on a Lenovo T500 Laptop, and x86_64 v2.6.33-rt6
 
-> On Fri, 2010-03-12 at 13:10 +0100, John Kacur wrote:
-> > I get the following build break due to 876c52cc046e00eaa2ffc5124dc187106ef57594
-> > 
-> > drivers/ide/ide-iops.c:29:26: error: asm/bootinfo.h: No such file or directory
-> > 
-> 
-> I think we'd better revert that commit
-> 876c52cc046e00eaa2ffc5124dc187106ef57594 for it has introduced some arch
-> specific parts into the common ide source code.
-> 
-> And that commit doesn't influence the preempt-rt support, so, Thomas,
-> could you please revert it directly, thanks!
-
-Right, that just popped up in testing. I pushed -rt7 with the revert
-
-Thanks,
-
-	tglx
+BUG: MAX_STACK_TRACE_ENTRIES too low!
+turning off the locking correctness validator.
+Pid: 3334, comm: pulseaudio Not tainted 2.6.33-rt6 #1
+Call Trace:
+ [<ffffffff8106d099>] save_trace+0xab/0xb3
+ [<ffffffff8106d123>] add_lock_to_list+0x82/0xc2
+ [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
+ [<ffffffff81070a77>] __lock_acquire+0xbdc/0xda3
+ [<ffffffff81037c1d>] ? finish_task_switch+0x77/0xf4
+ [<ffffffff81037ba6>] ? finish_task_switch+0x0/0xf4
+ [<ffffffff81070d16>] lock_acquire+0xd8/0xf5
+ [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
+ [<ffffffff8135c971>] _raw_spin_lock_irqsave+0x47/0x7f
+ [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
+ [<ffffffff81076387>] rt_mutex_adjust_prio+0x1f/0x3e
+ [<ffffffff8135b51c>] rt_mutex_slowunlock+0x6d/0x76
+ [<ffffffff8135b52e>] rt_mutex_unlock+0x9/0xb
+ [<ffffffff81078115>] rt_up_read+0x3b/0x40
+ [<ffffffff81043cd1>] ? exit_mm+0xd4/0x156
+ [<ffffffff81043ce4>] exit_mm+0xe7/0x156
+ [<ffffffff810979e0>] ? audit_free_context+0xa7/0xd0
+ [<ffffffff810457f7>] do_exit+0x1fe/0x784
+ [<ffffffff8106ee4c>] ? trace_hardirqs_on_caller+0x113/0x13e
+ [<ffffffff81097ca0>] ? audit_syscall_entry+0x114/0x140
+ [<ffffffff81045e59>] complete_and_exit+0x0/0x1f
+ [<ffffffff81002c2b>] system_call_fastpath+0x16/0x1b
