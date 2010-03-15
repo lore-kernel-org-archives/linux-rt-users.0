@@ -1,48 +1,55 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [BUG REPORT] MAX_STACK_TRACE_ENTRIES too low! in v2.6.33-rt6
-Date: Fri, 12 Mar 2010 14:09:31 +0100
-Message-ID: <520f0cf11003120509j1dd6f2cicb1d87b0a16d31dd@mail.gmail.com>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: 2.6.33-rt6 on Beagle
+Date: Mon, 15 Mar 2010 10:20:43 +0100
+Message-ID: <20100315092043.GC31275@pengutronix.de>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <2A3DCF3DA181AD40BDE86A3150B27B6B030D084301@dbde02.ent.ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: "Chatterjee, Amit" <amit.chatterjee@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f216.google.com ([209.85.219.216]:55341 "EHLO
-	mail-ew0-f216.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752223Ab0CLNJd (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:34211 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935930Ab0COJUo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Mar 2010 08:09:33 -0500
+	Mon, 15 Mar 2010 05:20:44 -0400
+Content-Disposition: inline
+In-Reply-To: <2A3DCF3DA181AD40BDE86A3150B27B6B030D084301@dbde02.ent.ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is just fyi: Note, I do have a large number of debug options
-turned on, that could influence this.
-This occurred on a Lenovo T500 Laptop, and x86_64 v2.6.33-rt6
+Hello Amit,
 
-BUG: MAX_STACK_TRACE_ENTRIES too low!
-turning off the locking correctness validator.
-Pid: 3334, comm: pulseaudio Not tainted 2.6.33-rt6 #1
-Call Trace:
- [<ffffffff8106d099>] save_trace+0xab/0xb3
- [<ffffffff8106d123>] add_lock_to_list+0x82/0xc2
- [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
- [<ffffffff81070a77>] __lock_acquire+0xbdc/0xda3
- [<ffffffff81037c1d>] ? finish_task_switch+0x77/0xf4
- [<ffffffff81037ba6>] ? finish_task_switch+0x0/0xf4
- [<ffffffff81070d16>] lock_acquire+0xd8/0xf5
- [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
- [<ffffffff8135c971>] _raw_spin_lock_irqsave+0x47/0x7f
- [<ffffffff81076387>] ? rt_mutex_adjust_prio+0x1f/0x3e
- [<ffffffff81076387>] rt_mutex_adjust_prio+0x1f/0x3e
- [<ffffffff8135b51c>] rt_mutex_slowunlock+0x6d/0x76
- [<ffffffff8135b52e>] rt_mutex_unlock+0x9/0xb
- [<ffffffff81078115>] rt_up_read+0x3b/0x40
- [<ffffffff81043cd1>] ? exit_mm+0xd4/0x156
- [<ffffffff81043ce4>] exit_mm+0xe7/0x156
- [<ffffffff810979e0>] ? audit_free_context+0xa7/0xd0
- [<ffffffff810457f7>] do_exit+0x1fe/0x784
- [<ffffffff8106ee4c>] ? trace_hardirqs_on_caller+0x113/0x13e
- [<ffffffff81097ca0>] ? audit_syscall_entry+0x114/0x140
- [<ffffffff81045e59>] complete_and_exit+0x0/0x1f
- [<ffffffff81002c2b>] system_call_fastpath+0x16/0x1b
+On Fri, Mar 12, 2010 at 05:47:56PM +0530, Chatterjee, Amit wrote:
+> Hi,
+> 	I am unable to boot the kernel (as available in this link - http://g=
+it.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git;a=3Dshortlog;=
+h=3Drefs/heads/rt/2.6.33) on Beagle board. Kernel is unable to uncompre=
+ss itself & crashing. Tool chain used is - gcc version 4.4.1 (Sourcery =
+G++ Lite 2009q3-67). I will check with older toolchain & keep it posted=
+=2E
+
+Can you try to cherry-pick 5de813b6cd06460b337f9da9afe316823cf3ef45
+currently sitting in Russell Kings devel branch[1]?
+
+The decompressor has a known bug in .33 on ARM.
+
+Best regards
+Uwe
+
+[1]
+http://ftp.arm.linux.org.uk/pub/linux/arm/kernel/git-cur/linux-2.6-arm.=
+git/
+
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
