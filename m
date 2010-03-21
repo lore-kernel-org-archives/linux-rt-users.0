@@ -1,69 +1,45 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.33.1-rt11
-Date: Sun, 21 Mar 2010 12:06:22 +0100 (CET)
-Message-ID: <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
+From: Erik Sandbraaten <erik.sandbraaten@gmail.com>
+Subject: [PATCH] 2.6.33.1-rt11 : Fix missing include in at91_mci.c
+Date: Sun, 21 Mar 2010 23:09:02 +0100
+Message-ID: <7dfa3d3b1003211509nef10515rb27b1a31b1eda80@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
-	Carsten Emde <ce@ceag.ch>, Wu Zhangjin <wuzhangjin@gmail.com>,
-	Nicholas Mc Guire <der.herr@hofr.at>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org
+To: nicolas.ferre@atmel.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bw0-f211.google.com ([209.85.218.211]:42774 "EHLO
+	mail-bw0-f211.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753616Ab0CUWJF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 21 Mar 2010 18:09:05 -0400
+Received: by bwz3 with SMTP id 3so4841406bwz.29
+        for <linux-rt-users@vger.kernel.org>; Sun, 21 Mar 2010 15:09:02 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
+Hi.
 
-I pushed out a bunch of updates while traveling w/o a release mail, so
-here is the change log from rt6 to rt11
+When attempting to build the most recent kernel for my arm at91sam9G20
+system, the build failed due to
+missing function declarations concerning kmap_atomic() and friends.
 
-Changes from rt10 to rt11
-318e45e: sched: Fix pick_next_highest_task_rt() for cgroups
-6d79084: ARM: Eliminate decompressor -Dstatic= PIC hack
+The following patch fixed the build:
 
-Changes from rt9 to rt10
-e89fab2: x86: Fix the highmem fallout really
+<PATCH START>
+diff -uNr linux-2.6.33.1-vanilla/drivers/mmc/host/at91_mci.c
+linux-2.6.33.1-new/drivers/mmc/host/at91_mci.c
+--- linux-2.6.33.1-vanilla/drivers/mmc/host/at91_mci.c    2010-03-15
+17:09:39.000000000 +0100
++++ linux-2.6.33.1-new/drivers/mmc/host/at91_mci.c    2010-03-21
+22:24:06.889257314 +0100
+@@ -65,6 +65,7 @@
+ #include <linux/dma-mapping.h>
+ #include <linux/clk.h>
+ #include <linux/atmel_pdc.h>
++#include <linux/highmem.h>
 
-Changes from rt8 to rt9
-Update to 2.6.33.1, see http://lwn.net/Articles/378613/
+ #include <linux/mmc/host.h>
+<PATCH END>
 
-Changes from rt7 to rt8
-5d2740b: sched: Break out from load_balancing on rq_lock contention
-cd4ac9b: x86: Fix iomap_atomic with highmem=y again
 
-Changes from rt6 to rt7
-2c5f66a: Revert "Loongson: add a new option FUJITSU_QUIRKS"
-
-Download locations:
-   
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git development branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Git release branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
-
-Gitweb:
-   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
-
-Information on the RT patch can be found at:
-
-   http://rt.wiki.kernel.org/index.php/Main_Page
- 
-To build the 2.6.33-rt11 tree, the following patches should be
-applied:
-
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.1.tar.bz2
-   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.1-rt11.bz2
-
-Enjoy !
-
-      tglx
+Best Regards.
