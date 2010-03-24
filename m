@@ -1,50 +1,57 @@
-From: Pradyumna Sampath <pradysam@gmail.com>
+From: Sujit K M <sjt.kar@gmail.com>
 Subject: Re: mq_timedrecieve timeout accuracy
-Date: Wed, 24 Mar 2010 14:37:23 +0100
-Message-ID: <6d09081c1003240637w28ee6861tfcef4c7876ef3e40@mail.gmail.com>
+Date: Wed, 24 Mar 2010 19:15:09 +0530
+Message-ID: <921ca19c1003240645s5c69fde9l464618ec7aa644af@mail.gmail.com>
 References: <6d09081c1003240527r471ee34etbba11b4b7c7e92b3@mail.gmail.com>
 	 <8226231.1269436934345.JavaMail.ngmail@webmail10.arcor-online.net>
+	 <6d09081c1003240637w28ee6861tfcef4c7876ef3e40@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org, rachana.rao@in.abb.com
-To: "M. Koehrer" <mathias_koehrer@arcor.de>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "M. Koehrer" <mathias_koehrer@arcor.de>,
+	linux-rt-users@vger.kernel.org, rachana.rao@in.abb.com
+To: Pradyumna Sampath <pradysam@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f216.google.com ([209.85.219.216]:33566 "EHLO
-	mail-ew0-f216.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754982Ab0CXNhZ (ORCPT
+Received: from mail-pv0-f174.google.com ([74.125.83.174]:37261 "EHLO
+	mail-pv0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755331Ab0CXNpK convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Mar 2010 09:37:25 -0400
-Received: by ewy8 with SMTP id 8so1211517ewy.28
-        for <linux-rt-users@vger.kernel.org>; Wed, 24 Mar 2010 06:37:24 -0700 (PDT)
-In-Reply-To: <8226231.1269436934345.JavaMail.ngmail@webmail10.arcor-online.net>
+	Wed, 24 Mar 2010 09:45:10 -0400
+Received: by pva18 with SMTP id 18so409876pva.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Mar 2010 06:45:10 -0700 (PDT)
+In-Reply-To: <6d09081c1003240637w28ee6861tfcef4c7876ef3e40@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+> time =3D schedule_timeout(timeout);
+=46ine.
 
-On Wed, Mar 24, 2010 at 2:22 PM, M. Koehrer <mathias_koehrer@arcor.de> wrote:
-> Does it help to run the posix threads with realtime priority by calling
-> pthread_setschedparam() with SCHED_FIFO and a suitable priority?
-> As fas as I understand your code, the threads run with standard (non realtime
-> priority).
+> Maybe this is why produces a timeout that is inaccurate. Shouldnt it
+> be schedule_hrtimeout ?
 
-Yes. I tried this with a chrt -f 99. But I still end up getting those
-large deviations.
+Does the RT Patch change anything. OR is it the same.
 
-John, mq_timedrecieve takes abstime. Isnt it supposed to be
-CLOCK_REALTIME ? Anyway, I tried with MONOTONIC .. mq_timedrecieve
-doesnt block on that.
+>
+> regards
+> /prady
+>
+> --
+> http://www.prady.in
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
 
-I was just looking at some code in the kernel. linux/ipc/mqueue.c
-+442. This line says:
 
-time = schedule_timeout(timeout);
 
-Maybe this is why produces a timeout that is inaccurate. Shouldnt it
-be schedule_hrtimeout ?
+--=20
+-- Sujit K M
 
-regards
-/prady
-
+blog(http://kmsujit.blogspot.com/)
 --
-http://www.prady.in
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
