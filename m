@@ -1,73 +1,21 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 2/2] rt: Remove CONFIG_STACK_TRACER from DEBUG_COUNT
-Date: Wed, 24 Mar 2010 15:27:28 -0400 (EDT)
-Message-ID: <1088471101.823551269458848070.JavaMail.root@zmail07.collab.prod.int.phx2.redhat.com>
-References: <1269454428.2957.2890.camel@gandalf.stny.rr.com>
+From: =?UTF-8?Q?OBAMA'S_FOUNDATION=C2=A9_2010?= <lyach@vidnoe-online.ru>
+Subject: Scam Victim Compensation ,($500,000)have been awarded to you.Contact with
+ your Name,Age,Sex, Country,Phone Number and Address sent to Mrs joy stevne,
+ email:mrsjoycestevne01@gmail.com
+Date: Thu, 25 Mar 2010 04:40:55 +0300
+Message-ID: <7616e43a8404317ef9ac4e8be3e10dd0@mail.vidnoe.net>
+Reply-To: mrsjoycestevne01@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: rostedt@goodmis.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+To: undisclosed-recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx4-phx2.redhat.com ([209.132.183.25]:34157 "EHLO
-	mx02.colomx.prod.int.phx2.redhat.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932200Ab0CXUM7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Mar 2010 16:12:59 -0400
-In-Reply-To: <1269454428.2957.2890.camel@gandalf.stny.rr.com>
+Received: from ns.vidnoe.net ([94.143.41.2]:34945 "EHLO mail.vidnoe.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751737Ab0CYEpV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Mar 2010 00:45:21 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
------ "Steven Rostedt" <rostedt@goodmis.org> wrote:
 
-> On Wed, 2010-03-24 at 18:35 +0100, John Kacur wrote:
-> > Remove CONFIG_STACK_TRACER from DEBUG_COUNT so that reminder
-> messages
-> > are printed correctly, and don't leave an empty reminder block for
-> example.
-> > 
-> 
-> I think this should be attached to patch 1. Why have two patches for
-> this?
-
-Because patch 1 is a revert, I thought this makes the git history cleaner.
-
-John
-
-> 
-> -- Steve
-> 
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > ---
-> >  init/main.c |    2 +-
-> >  1 files changed, 1 insertions(+), 1 deletions(-)
-> > 
-> > diff --git a/init/main.c b/init/main.c
-> > index aa48b7b..17fd973 100644
-> > --- a/init/main.c
-> > +++ b/init/main.c
-> > @@ -908,7 +908,7 @@ static int __init kernel_init(void * unused)
-> >  	WARN_ON(irqs_disabled());
-> >  #endif
-> >  
-> > -#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) +
-> defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) +
-> defined(CONFIG_STACK_TRACER) + defined(CONFIG_INTERRUPT_OFF_HIST) +
-> defined(CONFIG_PREEMPT_OFF_HIST) + defined(CONFIG_WAKEUP_LATENCY_HIST)
-> + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC) +
-> defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTRACE) -
-> defined(CONFIG_FTRACE_MCOUNT_RECORD)))
-> > +#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) +
-> defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) +
-> defined(CONFIG_INTERRUPT_OFF_HIST) + defined(CONFIG_PREEMPT_OFF_HIST)
-> + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) +
-> defined(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) +
-> (defined(CONFIG_FTRACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
-> >  
-> >  #if DEBUG_COUNT > 0
-> >  	printk(KERN_ERR
-> "*****************************************************************************\n");
