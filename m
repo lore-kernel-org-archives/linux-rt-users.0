@@ -1,734 +1,319 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: [PATCH] Add test of message queues to rt-tests
-Date: Mon, 29 Mar 2010 17:08:35 +0200
-Message-ID: <4BB0C273.2040606@osadl.org>
+From: Pradyumna Sampath <pradysam@gmail.com>
+Subject: Re: [PATCH] Re: mq_timedrecieve timeout accuracy
+Date: Tue, 30 Mar 2010 09:41:57 +0200
+Message-ID: <m2u6d09081c1003300041h2bb7bdf6wb30773e513284f31@mail.gmail.com>
+References: <6d09081c1003240527r471ee34etbba11b4b7c7e92b3@mail.gmail.com>
+	 <8226231.1269436934345.JavaMail.ngmail@webmail10.arcor-online.net>
+	 <6d09081c1003240637w28ee6861tfcef4c7876ef3e40@mail.gmail.com>
+	 <6d09081c1003240703o19ad3dffx20abae9d15e2d0b@mail.gmail.com>
+	 <6d09081c1003240846s31fa5917p470f8936a39662f@mail.gmail.com>
+	 <4BB0C269.9050408@osadl.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------050508050904010604080405"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT-Users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: multipart/mixed; boundary=0014852d24c0ace62b0482ffc34f
+Cc: "M. Koehrer" <mathias_koehrer@arcor.de>,
+	linux-rt-users@vger.kernel.org, rachana.rao@in.abb.com,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Carsten Emde <Carsten.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:40802 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753437Ab0C2PK3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Mar 2010 11:10:29 -0400
+Received: from ey-out-2122.google.com ([74.125.78.24]:56416 "EHLO
+	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751409Ab0C3HmB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Mar 2010 03:42:01 -0400
+Received: by ey-out-2122.google.com with SMTP id d26so1199820eyd.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 30 Mar 2010 00:41:59 -0700 (PDT)
+In-Reply-To: <4BB0C269.9050408@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------050508050904010604080405
+--0014852d24c0ace62b0482ffc34f
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 
-This patch adds the program pmqtest to the rt-tests suite.
-The test mechanism is the same as in ptsematest, svsematest
-and friends, but it uses message queues to synchronize the
-test threads. To test the - now hopefully fixed - kernel
-problem that occurred when a timeout was specified, the
--T option is available.
+Hi Carsten,
 
-On an 8-way machine, the test result may look like:
+On Mon, Mar 29, 2010 at 5:08 PM, Carsten Emde <Carsten.Emde@osadl.org> wrote:
+> Does the attached patch work for you?
+>
+> - Fixed error handling
+> - Replaced schedule_timeout() with schedule_hrtimeout()
+> - Let schedule_hrtimeout() handle expired timers
 
-# pmqtest -Sp99 -i100 -d0
-#0: ID19903, P99, CPU0, I100; #1: ID19904, P99, CPU0, Cycles 870686
-#2: ID19905, P99, CPU1, I100; #3: ID19906, P99, CPU1, Cycles 872555
-#4: ID19907, P99, CPU2, I100; #5: ID19908, P99, CPU2, Cycles 894958
-#6: ID19909, P99, CPU3, I100; #7: ID19910, P99, CPU3, Cycles 897776
-#8: ID19911, P99, CPU4, I100; #9: ID19912, P99, CPU4, Cycles 870067
-#10: ID19913, P99, CPU5, I100; #11: ID19914, P99, CPU5, Cycles 872351
-#12: ID19915, P99, CPU6, I100; #13: ID19916, P99, CPU6, Cycles 894460
-#14: ID19917, P99, CPU7, I100; #15: ID19918, P99, CPU7, Cycles 897480
-#1 -> #0, Min    1, Cur    4, Avg    5, Max   19
-#3 -> #2, Min    1, Cur    7, Avg    5, Max   18
-#5 -> #4, Min    1, Cur    5, Avg    5, Max   19
-#7 -> #6, Min    1, Cur    5, Avg    4, Max   23
-#9 -> #8, Min    1, Cur    4, Avg    6, Max   20
-#11 -> #10, Min    1, Cur    8, Avg    5, Max   18
-#13 -> #12, Min    1, Cur    5, Avg    5, Max   33
-#15 -> #14, Min    1, Cur    5, Avg    4, Max   18
+Well no, the mq_timedrecieve blocks for ever using my test program.
+This behaviour would not really be evident in the pmqtest since the
+frequency of sending the test messages is lesser than the timeout
+value.
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+So, I have modified the pmqtest (attached) to
+- Not send test messages
 
---------------050508050904010604080405
-Content-Type: text/x-patch;
- name="add-pmqtest-program.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="add-pmqtest-program.patch"
+This means when the -T1 option is used it should wait on
+mq_timedrecieve for 1 second and then exit. On a normal kernel this
+behaviour is demostrated but with the patch on, the timeout never
+expires and hence the program does not exit.
 
-diff --git a/Makefile b/Makefile
-index d6ab07a..f98111b 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,8 +1,8 @@
- VERSION_STRING = 0.68
- 
- sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
--	  ptsematest.c sigwaittest.c svsematest.c sendme.c pip_stress.c \
--	  hackbench.c
-+	  ptsematest.c sigwaittest.c svsematest.c pmqtest.c sendme.c 	\
-+	  pip_stress.c hackbench.c
- 
- TARGETS = $(sources:.c=)
- 
-@@ -36,6 +36,7 @@ VPATH	+= src/rt-migrate-test:
- VPATH	+= src/ptsematest:
- VPATH	+= src/sigwaittest:
- VPATH	+= src/svsematest:
-+VPATH	+= src/pmqtest:
- VPATH	+= src/backfire:
- VPATH	+= src/lib
- VPATH	+= src/hackbench
-@@ -78,6 +79,9 @@ sigwaittest: sigwaittest.o rt-utils.o rt-get_cpu.o
- svsematest: svsematest.o rt-utils.o rt-get_cpu.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
-+pmqtest: pmqtest.o rt-utils.o rt-get_cpu.o
-+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
-+
- sendme: sendme.o rt-utils.o rt-get_cpu.o
- 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) $(EXTRA_LIBS)
- 
-@@ -120,6 +124,7 @@ install: all
- 	gzip src/ptsematest/ptsematest.8 -c >"$(DESTDIR)$(mandir)/man8/ptsematest.8.gz"
- 	gzip src/sigwaittest/sigwaittest.8 -c >"$(DESTDIR)$(mandir)/man8/sigwaittest.8.gz"
- 	gzip src/svsematest/svsematest.8 -c >"$(DESTDIR)$(mandir)/man8/svsematest.8.gz"
-+	gzip src/pmqtest/pmqtest.8 -c >"$(DESTDIR)$(mandir)/man8/pmqtest.8.gz"
- 	gzip src/backfire/sendme.8 -c >"$(DESTDIR)$(mandir)/man8/sendme.8.gz"
- 	gzip src/hackbench/hackbench.8 -c >"$(DESTDIR)$(mandir)/man8/hackbench.8.gz"
- 
-diff --git a/rt-tests.spec-in b/rt-tests.spec-in
-index 6f45db4..7279813 100644
---- a/rt-tests.spec-in
-+++ b/rt-tests.spec-in
-@@ -45,6 +45,7 @@ rm -rf $RPM_BUILD_ROOT
- /usr/bin/sendme
- /usr/bin/sigwaittest
- /usr/bin/svsematest
-+/usr/bin/pmqtest
- /usr/bin/hackbench
- /usr/src/backfire/backfire.c
- %doc
-@@ -56,6 +57,7 @@ rm -rf $RPM_BUILD_ROOT
- /usr/share/man/man8/sendme.8.gz
- /usr/share/man/man8/sigwaittest.8.gz
- /usr/share/man/man8/svsematest.8.gz
-+/usr/share/man/man8/pmqtest.8.gz
- /usr/share/man/man8/hackbench.8.gz
- 
- %changelog
-diff --git a/src/pmqtest/Makefile b/src/pmqtest/Makefile
-new file mode 100644
-index 0000000..0902c9b
---- /dev/null
-+++ b/src/pmqtest/Makefile
-@@ -0,0 +1,16 @@
-+CFLAGS += -Wall -O2
-+LDFLAGS += -lpthread
-+
-+all:	pmqtest
-+	@echo Done
-+
-+pmqtest.o: pmqtest.c
-+
-+pmqtest:
-+
-+clean:
-+	@rm -f *.o
-+
-+tar:	clean
-+	@rm -f pmqtest
-+	$(shell bn=`basename $$PWD`; cd ..; tar -zcf $$bn.tgz $$bn)
-diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
-new file mode 100644
-index 0000000..7c886c9
---- /dev/null
-+++ b/src/pmqtest/pmqtest.8
-@@ -0,0 +1,68 @@
-+.TH "pmqtest" "8" "0.1" "" ""
-+.SH "NAME"
-+.LP
-+\fBpmqtest\fR \- Start pairs of threads and measure the latency of interprocess communication with POSIX messages queues
-+.SH "SYNTAX"
-+.LP
-+pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-i INTV] [-l loops] [-p PRIO] [-S] [-t|-t NUM] [-T TO]
-+.br
-+.SH "DESCRIPTION"
-+.LP
-+The program \fBpmqtest\fR starts pairs of threads that are synchronized via mq_send/mw_receive() and measures the latency between sending and receiving the message.
-+.SH "OPTIONS"
-+.TP
-+.B \-a, \-\-affinity[=PROC]
-+Run on procesor number PROC. If PROC is not specified, run on current processor.
-+.TP
-+.B \-b, \-\-breaktrace=USEC
-+Send break trace command when latency > USEC. This is a debugging option to control the latency tracer in the realtime preemption patch.
-+It is useful to track down unexpected large latencies of a system.
-+.TP
-+.B \-d, \-\-distance=DIST
-+Set the distance of thread intervals in microseconds (default is 500 us). When  cylictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
-+.TP
-+.B \-i, \-\-interval=INTV
-+Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
-+.TP
-+.B \-l, \-\-loops=LOOPS
-+Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. pmqtest is stopped once the number of timer intervals has been reached.
-+.TP
-+.B \-p, \-\-prio=PRIO
-+Set the priority of the process.
-+.TP
-+.B \-S, \-\-smp
-+Test mode for symmetric multi-processing, implies -a and -t and uses the same priority on all threads.
-+.TP
-+.B \-t, \-\-threads[=NUM]
-+Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specifed, NUM is set to the number of available CPUs.
-+.TP
-+.B \-T, \-\-timeout=TO
-+Use mq_timedreceive() instead of mq_receive() and specify timeout TO in seconds.
-+.SH "EXAMPLES"
-+The following example was running on an 8-way processor:
-+.LP
-+.nf
-+# pmqtest -Sp99 -i100 -d0
-+#0: ID10047, P99, CPU0, I100; #1: ID10048, P99, CPU0, Cycles 153695
-+#2: ID10049, P99, CPU1, I100; #3: ID10050, P99, CPU1, Cycles 154211
-+#4: ID10051, P99, CPU2, I100; #5: ID10052, P99, CPU2, Cycles 156823
-+#6: ID10053, P99, CPU3, I100; #7: ID10054, P99, CPU3, Cycles 158202
-+#8: ID10055, P99, CPU4, I100; #9: ID10056, P99, CPU4, Cycles 153399
-+#10: ID10057, P99, CPU5, I100; #11: ID10058, P99, CPU5, Cycles 153992
-+#12: ID10059, P99, CPU6, I100; #13: ID10060, P99, CPU6, Cycles 156576
-+#14: ID10061, P99, CPU7, I100; #15: ID10062, P99, CPU7, Cycles 157957
-+#1 -> #0, Min    1, Cur    8, Avg    5, Max   18
-+#3 -> #2, Min    1, Cur    4, Avg    5, Max   18
-+#5 -> #4, Min    1, Cur    5, Avg    5, Max   19
-+#7 -> #6, Min    1, Cur    4, Avg    4, Max   17
-+#9 -> #8, Min    1, Cur    9, Avg    5, Max   18
-+#11 -> #10, Min    1, Cur    8, Avg    5, Max   18
-+#13 -> #12, Min    1, Cur    4, Avg    5, Max   29
-+#15 -> #14, Min    1, Cur    8, Avg    4, Max   17
-+.fi
-+.SH "AUTHORS"
-+.LP
-+Carsten Emde <C.Emde@osadl.org>
-+.SH "SEE ALSO"
-+.LP
-+mq_send(3p), mq_receive(3p)
-diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-new file mode 100644
-index 0000000..9e81f23
---- /dev/null
-+++ b/src/pmqtest/pmqtest.c
-@@ -0,0 +1,510 @@
-+/*
-+ * pmqtest.c
-+ *
-+ * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-+ * USA.
-+ */
-+
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <unistd.h>
-+#include <limits.h>
-+#include <fcntl.h>
-+#include <getopt.h>
-+#include <signal.h>
-+#include <string.h>
-+#include <time.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <sys/time.h>
-+#include <sys/mman.h>
-+#include <linux/unistd.h>
-+#include <utmpx.h>
-+#include <mqueue.h>
-+#include "rt-utils.h"
-+#include "rt-get_cpu.h"
-+
-+#include <pthread.h>
-+
-+#define gettid() syscall(__NR_gettid)
-+
-+#define USEC_PER_SEC 1000000
-+
-+#define SYNCMQ_NAME "/syncmsg%d"
-+#define TESTMQ_NAME "/testmsg%d"
-+#define MSG_SIZE 8
-+#define MSEC_PER_SEC 1000
-+#define NSEC_PER_SEC 1000000000
-+
-+char *syncmsg = "Syncing";
-+char *testmsg = "Testing";
-+
-+enum {
-+	AFFINITY_UNSPECIFIED,
-+	AFFINITY_SPECIFIED,
-+	AFFINITY_USEALL
-+};
-+
-+struct params {
-+	int num;
-+	int cpu;
-+	int priority;
-+	int affinity;
-+	int sender;
-+	int samples;
-+	int max_cycles;
-+	int tracelimit;
-+	int tid;
-+	int shutdown;
-+	int stopped;
-+	struct timespec delay;
-+	unsigned int mindiff, maxdiff;
-+	double sumdiff;
-+	struct timeval sent, received, diff;
-+	pthread_t threadid;
-+	int timeout;
-+	mqd_t syncmq, testmq;
-+	char recvsyncmsg[MSG_SIZE];
-+	char recvtestmsg[MSG_SIZE];
-+	struct params *neighbor;
-+	char error[MAX_PATH * 2];
-+};
-+
-+void *pmqthread(void *param)
-+{
-+	int mustgetcpu = 0;
-+	struct params *par = param;
-+	cpu_set_t mask;
-+	int policy = SCHED_FIFO;
-+	struct sched_param schedp;
-+	struct timespec ts;
-+
-+	memset(&schedp, 0, sizeof(schedp));
-+	schedp.sched_priority = par->priority;
-+	sched_setscheduler(0, policy, &schedp);
-+
-+	if (par->cpu != -1) {
-+		CPU_ZERO(&mask);
-+		CPU_SET(par->cpu, &mask);
-+		if(sched_setaffinity(0, sizeof(mask), &mask) == -1)
-+			fprintf(stderr,	"WARNING: Could not set CPU affinity "
-+				"to CPU #%d\n", par->cpu);
-+	} else
-+		mustgetcpu = 1;
-+
-+	par->tid = gettid();
-+
-+	while (!par->shutdown) {
-+		if (par->sender) {
-+			/* Send message: Start of latency measurement ... */
-+			gettimeofday(&par->sent, NULL);
-+			if (mq_send(par->testmq, testmsg, strlen(testmsg), 1) != 0) {
-+				fprintf(stderr, "could not send test message\n");
-+				par->shutdown = 1;
-+			}
-+			par->samples++;
-+			if(par->max_cycles && par->samples >= par->max_cycles)
-+				par->shutdown = 1;
-+			if (mustgetcpu)
-+				par->cpu = get_cpu();
-+			/* Wait until receiver ready */
-+			if (par->timeout) {
-+				clock_gettime(CLOCK_REALTIME, &ts);
-+				ts.tv_sec += par->timeout;
-+	
-+				if (mq_timedreceive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL, &ts)
-+				    != strlen(syncmsg)) {
-+					fprintf(stderr, "could not receive sync message\n");
-+					par->shutdown = 1;				
-+				}
-+			} else {
-+				if (mq_receive(par->syncmq, par->recvsyncmsg, MSG_SIZE, NULL) !=
-+				    strlen(syncmsg)) {
-+					perror("could not receive sync message");
-+					par->shutdown = 1;				
-+				}
-+			}
-+			if (!par->shutdown && strcmp(syncmsg, par->recvsyncmsg)) {
-+				fprintf(stderr, "ERROR: Sync message mismatch detected\n");
-+				fprintf(stderr, "  %s != %s\n", syncmsg, par->recvsyncmsg);
-+				par->shutdown = 1;
-+			}
-+		} else {
-+			/* Receiver */
-+			if (par->timeout) {
-+				clock_gettime(CLOCK_REALTIME, &ts);
-+				ts.tv_sec += par->timeout;
-+				if (mq_timedreceive(par->testmq, par->recvtestmsg, MSG_SIZE, NULL, &ts) !=
-+				    strlen(testmsg)) {
-+					perror("could not receive test message");
-+					par->shutdown = 1;
-+				}
-+			} else {
-+				if (mq_receive(par->testmq, par->recvtestmsg, MSG_SIZE, NULL) !=
-+				    strlen(testmsg)) {
-+					perror("could not receive test message");
-+					par->shutdown = 1;
-+				}
-+			}
-+			/* ... Received the message: End of latency measurement */
-+			gettimeofday(&par->received, NULL);
-+
-+			if (!par->shutdown && strcmp(testmsg, par->recvtestmsg)) {
-+				fprintf(stderr, "ERROR: Test message mismatch detected\n");
-+				fprintf(stderr, "  %s != %s\n", testmsg, par->recvtestmsg);
-+				par->shutdown = 1;
-+			}
-+			par->samples++;
-+			timersub(&par->received, &par->neighbor->sent,
-+			    &par->diff);
-+
-+			if (par->diff.tv_usec < par->mindiff)
-+				par->mindiff = par->diff.tv_usec;
-+			if (par->diff.tv_usec > par->maxdiff)
-+				par->maxdiff = par->diff.tv_usec;
-+			par->sumdiff += (double) par->diff.tv_usec;
-+			if (par->tracelimit && par->maxdiff > par->tracelimit) {
-+				char tracing_enabled_file[MAX_PATH];
-+
-+				strcpy(tracing_enabled_file, get_debugfileprefix());
-+				strcat(tracing_enabled_file, "tracing_enabled");
-+				int tracing_enabled =
-+				    open(tracing_enabled_file, O_WRONLY);
-+				if (tracing_enabled >= 0) {
-+					write(tracing_enabled, "0", 1);
-+					close(tracing_enabled);
-+				} else
-+					snprintf(par->error, sizeof(par->error),
-+					    "Could not access %s\n",
-+					    tracing_enabled_file);
-+				par->shutdown = 1;
-+				par->neighbor->shutdown = 1;
-+			}
-+
-+			if (par->max_cycles && par->samples >= par->max_cycles)
-+				par->shutdown = 1;
-+			if (mustgetcpu)
-+				par->cpu = get_cpu();
-+			nanosleep(&par->delay, NULL);
-+
-+			/* Tell receiver that we are ready for the next measurement */
-+			if (mq_send(par->syncmq, syncmsg, strlen(syncmsg), 1) != 0) {
-+				fprintf(stderr, "could not send sync message\n");
-+				par->shutdown = 1;
-+			}
-+		}
-+	}
-+	par->stopped = 1;
-+	return NULL;
-+}
-+
-+
-+static void display_help(void)
-+{
-+	printf("pmqtest V %1.2f\n", VERSION_STRING);
-+	puts("Usage: pmqtest <options>");
-+	puts("Function: test POSIX message queue latency");
-+	puts(
-+	"Options:\n"
-+	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
-+	"                           with NUM pin all threads to the processor NUM\n"
-+	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
-+	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
-+	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
-+	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-+	"-p PRIO  --prio=PRIO       priority\n"
-+	"-S       --smp             SMP testing: options -a -t and same priority\n"
-+        "                           of all threads\n"
-+	"-t       --threads         one thread per available processor\n"
-+	"-t [NUM] --threads=NUM     number of threads:\n"
-+	"                           without NUM, threads = max_cpus\n"
-+	"                           without -t default = 1\n"
-+	"-T TO    --timeout=TO      use mq_timedreceive() instead of mq_receive()\n"
-+	"                           with timeout TO in seconds\n");
-+	exit(1);
-+}
-+
-+
-+static int setaffinity = AFFINITY_UNSPECIFIED;
-+static int affinity;
-+static int tracelimit;
-+static int priority;
-+static int num_threads = 1;
-+static int max_cycles;
-+static int interval = 1000;
-+static int distance = 500;
-+static int smp;
-+static int sameprio;
-+static int timeout;
-+
-+static void process_options (int argc, char *argv[])
-+{
-+	int error = 0;
-+	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
-+
-+	for (;;) {
-+		int option_index = 0;
-+		/** Options for getopt */
-+		static struct option long_options[] = {
-+			{"affinity", optional_argument, NULL, 'a'},
-+			{"breaktrace", required_argument, NULL, 'b'},
-+			{"distance", required_argument, NULL, 'd'},
-+			{"interval", required_argument, NULL, 'i'},
-+			{"loops", required_argument, NULL, 'l'},
-+			{"priority", required_argument, NULL, 'p'},
-+			{"smp", no_argument, NULL, 'S'},
-+			{"threads", optional_argument, NULL, 't'},
-+			{"timeout", required_argument, NULL, 'T'},
-+			{"help", no_argument, NULL, '?'},
-+			{NULL, 0, NULL, 0}
-+		};
-+		int c = getopt_long (argc, argv, "a::b:d:i:l:p:St::T:",
-+			long_options, &option_index);
-+		if (c == -1)
-+			break;
-+		switch (c) {
-+		case 'a':
-+			if (smp) {
-+				warn("-a ignored due to --smp\n");
-+				break;
-+			}
-+			if (optarg != NULL) {
-+				affinity = atoi(optarg);
-+				setaffinity = AFFINITY_SPECIFIED;
-+			} else if (optind<argc && atoi(argv[optind])) {
-+				affinity = atoi(argv[optind]);
-+				setaffinity = AFFINITY_SPECIFIED;
-+			} else {
-+				setaffinity = AFFINITY_USEALL;
-+			}
-+			break;
-+		case 'b': tracelimit = atoi(optarg); break;
-+		case 'd': distance = atoi(optarg); break;
-+		case 'i': interval = atoi(optarg); break;
-+		case 'l': max_cycles = atoi(optarg); break;
-+		case 'p': priority = atoi(optarg); break;
-+		case 'S':
-+			smp = 1;
-+			num_threads = max_cpus;
-+			setaffinity = AFFINITY_USEALL;
-+			break;
-+		case 't':
-+			if (smp) {
-+				warn("-t ignored due to --smp\n");
-+				break;
-+			}
-+			if (optarg != NULL)
-+				num_threads = atoi(optarg);
-+			else if (optind<argc && atoi(argv[optind]))
-+				num_threads = atoi(argv[optind]);
-+			else
-+				num_threads = max_cpus;
-+			break;
-+		case 'T': timeout = atoi(optarg); break;
-+		case '?': error = 1; break;
-+		}
-+	}
-+
-+	if (setaffinity == AFFINITY_SPECIFIED) {
-+		if (affinity < 0)
-+			error = 1;
-+		if (affinity >= max_cpus) {
-+			fprintf(stderr, "ERROR: CPU #%d not found, only %d CPUs available\n",
-+			    affinity, max_cpus);
-+			error = 1;
-+		}
-+	}
-+
-+	if (num_threads < 0 || num_threads > 255)
-+		error = 1;
-+
-+	if (priority < 0 || priority > 99)
-+		error = 1;
-+
-+	if (num_threads < 1)
-+		error = 1;
-+
-+	if (priority && smp)
-+		sameprio = 1;
-+
-+	if (error)
-+		display_help ();
-+}
-+
-+
-+static int volatile shutdown;
-+
-+static void sighand(int sig)
-+{
-+	shutdown = 1;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int i;
-+	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
-+	int oldsamples = 1;
-+	struct params *receiver = NULL;
-+	struct params *sender = NULL;
-+	sigset_t sigset;
-+	struct timespec maindelay;
-+	int oflag = O_CREAT|O_RDWR;
-+	struct mq_attr mqstat;
-+
-+	memset(&mqstat, 0, sizeof(mqstat));
-+	mqstat.mq_maxmsg = 1;
-+	mqstat.mq_msgsize = 8;
-+	mqstat.mq_flags = 0;
-+
-+	process_options(argc, argv);
-+
-+	if (check_privs())
-+		return 1;
-+
-+	if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) {
-+		perror("mlockall");
-+		return 1;
-+	}
-+
-+	signal(SIGINT, sighand);
-+	signal(SIGTERM, sighand);
-+
-+	receiver = calloc(num_threads, sizeof(struct params));
-+	sender = calloc(num_threads, sizeof(struct params));
-+	if (receiver == NULL || sender == NULL)
-+		goto nomem;
-+
-+	for (i = 0; i < num_threads; i++) {
-+		char mqname[16];
-+
-+		sprintf(mqname, SYNCMQ_NAME, i);
-+		receiver[i].syncmq = mq_open(mqname, oflag, 0777, &mqstat);
-+		if (receiver[i].syncmq == (mqd_t) -1) {
-+			fprintf(stderr, "could not open POSIX message queue #1\n");
-+			return 1;
-+		}
-+		sprintf(mqname, TESTMQ_NAME, i);
-+		receiver[i].testmq = mq_open(mqname, oflag, 0777, &mqstat);
-+		if (receiver[i].testmq == (mqd_t) -1) {
-+			fprintf(stderr, "could not open POSIX message queue #2\n");
-+			return 1;
-+		}
-+
-+		receiver[i].mindiff = UINT_MAX;
-+		receiver[i].maxdiff = 0;
-+		receiver[i].sumdiff = 0.0;
-+
-+		receiver[i].num = i;
-+		receiver[i].cpu = i;
-+		switch (setaffinity) {
-+		case AFFINITY_UNSPECIFIED: receiver[i].cpu = -1; break;
-+		case AFFINITY_SPECIFIED: receiver[i].cpu = affinity; break;
-+		case AFFINITY_USEALL: receiver[i].cpu = i % max_cpus; break;
-+		}
-+		receiver[i].priority = priority;
-+		receiver[i].tracelimit = tracelimit;
-+		if (priority > 1 && !sameprio)
-+			priority--;
-+		receiver[i].delay.tv_sec = interval / USEC_PER_SEC;
-+		receiver[i].delay.tv_nsec = (interval % USEC_PER_SEC) * 1000;
-+		interval += distance;
-+		receiver[i].max_cycles = max_cycles;
-+		receiver[i].sender = 0;
-+		receiver[i].neighbor = &sender[i];
-+		receiver[i].timeout = timeout;
-+		pthread_create(&receiver[i].threadid, NULL, pmqthread, &receiver[i]);
-+		memcpy(&sender[i], &receiver[i], sizeof(receiver[0]));
-+		sender[i].sender = 1;
-+		sender[i].neighbor = &receiver[i];
-+		pthread_create(&sender[i].threadid, NULL, pmqthread, &sender[i]);
-+	}
-+
-+	maindelay.tv_sec = 0;
-+	maindelay.tv_nsec = 50000000; /* 50 ms */
-+
-+	while (!shutdown) {
-+		int printed;
-+		int errorlines = 0;
-+
-+		for (i = 0; i < num_threads; i++)
-+			shutdown |= receiver[i].shutdown | sender[i].shutdown;
-+
-+		if (receiver[0].samples > oldsamples || shutdown) {
-+			for (i = 0; i < num_threads; i++) {
-+				printf("#%1d: ID%d, P%d, CPU%d, I%ld; #%1d: ID%d, P%d, CPU%d, Cycles %d\n",
-+				    i*2, receiver[i].tid, receiver[i].priority, receiver[i].cpu,
-+				    receiver[i].delay.tv_nsec / 1000,
-+				    i*2+1, sender[i].tid, sender[i].priority, sender[i].cpu,
-+				    sender[i].samples);
-+			}
-+			for (i = 0; i < num_threads; i++) {
-+				printf("#%d -> #%d, Min %4d, Cur %4d, Avg %4d, Max %4d\n",
-+					i*2+1, i*2,
-+					receiver[i].mindiff, (int) receiver[i].diff.tv_usec,
-+					(int) ((receiver[i].sumdiff / receiver[i].samples) + 0.5),
-+					receiver[i].maxdiff);
-+				if (receiver[i].error[0] != '\0') {
-+					printf(receiver[i].error);
-+					errorlines++;
-+					receiver[i].error[0] = '\0';
-+				}
-+				if (sender[i].error[0] != '\0') {
-+					printf(sender[i].error);
-+					errorlines++;
-+					receiver[i].error[0] = '\0';
-+				}
-+			}
-+			printed = 1;
-+		} else
-+			printed = 0;
-+
-+		sigemptyset(&sigset);
-+		sigaddset(&sigset, SIGTERM);
-+		sigaddset(&sigset, SIGINT);
-+		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
-+
-+		nanosleep(&maindelay, NULL);
-+
-+		sigemptyset(&sigset);
-+		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
-+
-+		if (printed && !shutdown)
-+			printf("\033[%dA", num_threads*2 + errorlines);
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		receiver[i].shutdown = 1;
-+		sender[i].shutdown = 1;
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		if (!receiver[i].stopped)
-+			pthread_kill(receiver[i].threadid, SIGTERM);
-+		if (!sender[i].stopped)
-+			pthread_kill(sender[i].threadid, SIGTERM);
-+	}
-+	nanosleep(&maindelay, NULL);
-+	for (i = 0; i < num_threads; i++) {
-+		mq_close(receiver[i].syncmq);
-+		mq_close(receiver[i].testmq);
-+	}
-+
-+	nomem:
-+
-+	return 0;
-+}
-+
+regards
+/prady
 
---------------050508050904010604080405--
+-- 
+http://www.prady.in
+
+--0014852d24c0ace62b0482ffc34f
+Content-Type: text/plain; charset=US-ASCII; name="pmqtest.c"
+Content-Disposition: attachment; filename="pmqtest.c"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_g7eef5sh1
+
+LyoNCiAqIHBtcXRlc3QuYw0KICoNCiAqIENvcHlyaWdodCAoQykgMjAwOSBDYXJzdGVuIEVtZGUg
+PEMuRW1kZUBvc2FkbC5vcmc+DQogKg0KICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7
+IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnkNCiAqIGl0IHVuZGVyIHRoZSB0
+ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYXMgcHVibGlzaGVkIGJ5DQog
+KiB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uIGVpdGhlciB2ZXJzaW9uIDIgb2YgdGhlIExp
+Y2Vuc2UsIG9yDQogKiAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLg0KICoNCiAq
+IFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUg
+dXNlZnVsLA0KICogYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGlt
+cGxpZWQgd2FycmFudHkgb2YNCiAqIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBB
+UlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGUNCiAqIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNl
+IGZvciBtb3JlIGRldGFpbHMuDQogKg0KICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29w
+eSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UNCiAqIGFsb25nIHdpdGggdGhpcyBw
+cm9ncmFtOyBpZiBub3QsIHdyaXRlIHRvIHRoZSBGcmVlIFNvZnR3YXJlDQogKiBGb3VuZGF0aW9u
+LCBJbmMuLCA1OSBUZW1wbGUgUGxhY2UsIFN1aXRlIDMzMCwgQm9zdG9uLCBNQSAwMjExMS0xMzA3
+LA0KICogVVNBLg0KICovDQoNCiNpbmNsdWRlIDxzdGRpby5oPg0KI2luY2x1ZGUgPHN0ZGxpYi5o
+Pg0KI2luY2x1ZGUgPHVuaXN0ZC5oPg0KI2luY2x1ZGUgPGxpbWl0cy5oPg0KI2luY2x1ZGUgPGZj
+bnRsLmg+DQojaW5jbHVkZSA8Z2V0b3B0Lmg+DQojaW5jbHVkZSA8c2lnbmFsLmg+DQojaW5jbHVk
+ZSA8c3RyaW5nLmg+DQojaW5jbHVkZSA8dGltZS5oPg0KI2luY2x1ZGUgPHN5cy90eXBlcy5oPg0K
+I2luY2x1ZGUgPHN5cy9zdGF0Lmg+DQojaW5jbHVkZSA8c3lzL3RpbWUuaD4NCiNpbmNsdWRlIDxz
+eXMvbW1hbi5oPg0KI2luY2x1ZGUgPGxpbnV4L3VuaXN0ZC5oPg0KI2luY2x1ZGUgPHV0bXB4Lmg+
+DQojaW5jbHVkZSA8bXF1ZXVlLmg+DQojaW5jbHVkZSAicnQtdXRpbHMuaCINCiNpbmNsdWRlICJy
+dC1nZXRfY3B1LmgiDQoNCiNpbmNsdWRlIDxwdGhyZWFkLmg+DQoNCiNkZWZpbmUgZ2V0dGlkKCkg
+c3lzY2FsbChfX05SX2dldHRpZCkNCg0KI2RlZmluZSBVU0VDX1BFUl9TRUMgMTAwMDAwMA0KDQoj
+ZGVmaW5lIFNZTkNNUV9OQU1FICIvc3luY21zZyVkIg0KI2RlZmluZSBURVNUTVFfTkFNRSAiL3Rl
+c3Rtc2clZCINCiNkZWZpbmUgTVNHX1NJWkUgOA0KI2RlZmluZSBNU0VDX1BFUl9TRUMgMTAwMA0K
+I2RlZmluZSBOU0VDX1BFUl9TRUMgMTAwMDAwMDAwMA0KDQpjaGFyICpzeW5jbXNnID0gIlN5bmNp
+bmciOw0KY2hhciAqdGVzdG1zZyA9ICJUZXN0aW5nIjsNCg0KZW51bSB7DQoJQUZGSU5JVFlfVU5T
+UEVDSUZJRUQsDQoJQUZGSU5JVFlfU1BFQ0lGSUVELA0KCUFGRklOSVRZX1VTRUFMTA0KfTsNCg0K
+c3RydWN0IHBhcmFtcyB7DQoJaW50IG51bTsNCglpbnQgY3B1Ow0KCWludCBwcmlvcml0eTsNCglp
+bnQgYWZmaW5pdHk7DQoJaW50IHNlbmRlcjsNCglpbnQgc2FtcGxlczsNCglpbnQgbWF4X2N5Y2xl
+czsNCglpbnQgdHJhY2VsaW1pdDsNCglpbnQgdGlkOw0KCWludCBzaHV0ZG93bjsNCglpbnQgc3Rv
+cHBlZDsNCglzdHJ1Y3QgdGltZXNwZWMgZGVsYXk7DQoJdW5zaWduZWQgaW50IG1pbmRpZmYsIG1h
+eGRpZmY7DQoJZG91YmxlIHN1bWRpZmY7DQoJc3RydWN0IHRpbWV2YWwgc2VudCwgcmVjZWl2ZWQs
+IGRpZmY7DQoJcHRocmVhZF90IHRocmVhZGlkOw0KCWludCB0aW1lb3V0Ow0KCW1xZF90IHN5bmNt
+cSwgdGVzdG1xOw0KCWNoYXIgcmVjdnN5bmNtc2dbTVNHX1NJWkVdOw0KCWNoYXIgcmVjdnRlc3Rt
+c2dbTVNHX1NJWkVdOw0KCXN0cnVjdCBwYXJhbXMgKm5laWdoYm9yOw0KCWNoYXIgZXJyb3JbTUFY
+X1BBVEggKiAyXTsNCn07DQoNCmludCBub19zZW5kID0gMTsNCg0Kdm9pZCAqcG1xdGhyZWFkKHZv
+aWQgKnBhcmFtKQ0Kew0KCWludCBtdXN0Z2V0Y3B1ID0gMDsNCglzdHJ1Y3QgcGFyYW1zICpwYXIg
+PSBwYXJhbTsNCgljcHVfc2V0X3QgbWFzazsNCglpbnQgcG9saWN5ID0gU0NIRURfRklGTzsNCglz
+dHJ1Y3Qgc2NoZWRfcGFyYW0gc2NoZWRwOw0KCXN0cnVjdCB0aW1lc3BlYyB0czsNCg0KCW1lbXNl
+dCgmc2NoZWRwLCAwLCBzaXplb2Yoc2NoZWRwKSk7DQoJc2NoZWRwLnNjaGVkX3ByaW9yaXR5ID0g
+cGFyLT5wcmlvcml0eTsNCglzY2hlZF9zZXRzY2hlZHVsZXIoMCwgcG9saWN5LCAmc2NoZWRwKTsN
+Cg0KCWlmIChwYXItPmNwdSAhPSAtMSkgew0KCQlDUFVfWkVSTygmbWFzayk7DQoJCUNQVV9TRVQo
+cGFyLT5jcHUsICZtYXNrKTsNCgkJaWYoc2NoZWRfc2V0YWZmaW5pdHkoMCwgc2l6ZW9mKG1hc2sp
+LCAmbWFzaykgPT0gLTEpDQoJCQlmcHJpbnRmKHN0ZGVyciwJIldBUk5JTkc6IENvdWxkIG5vdCBz
+ZXQgQ1BVIGFmZmluaXR5ICINCgkJCQkidG8gQ1BVICMlZFxuIiwgcGFyLT5jcHUpOw0KCX0gZWxz
+ZQ0KCQltdXN0Z2V0Y3B1ID0gMTsNCg0KCXBhci0+dGlkID0gZ2V0dGlkKCk7DQoNCglpZiAocGFy
+LT50aW1lb3V0ID4gMCkgew0KCQljbG9ja19nZXR0aW1lKENMT0NLX1JFQUxUSU1FLCAmdHMpOw0K
+CQl0cy50dl9zZWMgKz0gcGFyLT50aW1lb3V0Ow0KCX0NCg0KCXdoaWxlICghcGFyLT5zaHV0ZG93
+bikgew0KCQlpZiAocGFyLT5zZW5kZXIpIHsNCgkJCS8qIFNlbmQgbWVzc2FnZTogU3RhcnQgb2Yg
+bGF0ZW5jeSBtZWFzdXJlbWVudCAuLi4gKi8NCgkJCWdldHRpbWVvZmRheSgmcGFyLT5zZW50LCBO
+VUxMKTsNCgkJCWlmIChtcV9zZW5kKHBhci0+dGVzdG1xLCB0ZXN0bXNnLCBzdHJsZW4odGVzdG1z
+ZyksIDEpICE9IDApIHsNCgkJCQlmcHJpbnRmKHN0ZGVyciwgImNvdWxkIG5vdCBzZW5kIHRlc3Qg
+bWVzc2FnZVxuIik7DQoJCQkJcGFyLT5zaHV0ZG93biA9IDE7DQoJCQl9DQoJCQlwYXItPnNhbXBs
+ZXMrKzsNCgkJCWlmKHBhci0+bWF4X2N5Y2xlcyAmJiBwYXItPnNhbXBsZXMgPj0gcGFyLT5tYXhf
+Y3ljbGVzKQ0KCQkJCXBhci0+c2h1dGRvd24gPSAxOw0KCQkJaWYgKG11c3RnZXRjcHUpDQoJCQkJ
+cGFyLT5jcHUgPSBnZXRfY3B1KCk7DQoJCQkvKiBXYWl0IHVudGlsIHJlY2VpdmVyIHJlYWR5ICov
+DQoJCQlpZiAocGFyLT50aW1lb3V0ID4gMCkgew0KCQkJCWlmIChtcV90aW1lZHJlY2VpdmUocGFy
+LT5zeW5jbXEsIHBhci0+cmVjdnN5bmNtc2csIE1TR19TSVpFLCBOVUxMLCAmdHMpDQoJCQkJICAg
+ICE9IHN0cmxlbihzeW5jbXNnKSkgew0KCQkJCQlmcHJpbnRmKHN0ZGVyciwgImNvdWxkIG5vdCBy
+ZWNlaXZlIHN5bmMgbWVzc2FnZVxuIik7DQoJCQkJCXBhci0+c2h1dGRvd24gPSAxOw0KCQkJCX0N
+CgkJCX0gZWxzZSB7DQoJCQkJaWYgKG1xX3JlY2VpdmUocGFyLT5zeW5jbXEsIHBhci0+cmVjdnN5
+bmNtc2csIE1TR19TSVpFLCBOVUxMKSAhPQ0KCQkJCSAgICBzdHJsZW4oc3luY21zZykpIHsNCgkJ
+CQkJZnByaW50ZihzdGRlcnIsICJjb3VsZCBub3QgcmVjZWl2ZSBzeW5jIG1lc3NhZ2VcbiIpOw0K
+CQkJCQlwYXItPnNodXRkb3duID0gMTsNCgkJCQl9DQoJCQl9DQoJCQlpZiAoc3RyY21wKHN5bmNt
+c2csIHBhci0+cmVjdnN5bmNtc2cpKSB7DQoJCQkJZnByaW50ZihzdGRlcnIsICJFUlJPUjogU3lu
+YyBtZXNzYWdlIG1pc21hdGNoIGRldGVjdGVkXG4iKTsNCgkJCQlmcHJpbnRmKHN0ZGVyciwgIiAg
+JXMgIT0gJXNcbiIsIHN5bmNtc2csIHBhci0+cmVjdnN5bmNtc2cpOw0KCQkJCXBhci0+c2h1dGRv
+d24gPSAxOw0KCQkJfQ0KDQoJCX0gZWxzZSB7DQoJCQkvKiBSZWNlaXZlciAqLw0KCQkJaWYgKHBh
+ci0+dGltZW91dCA+IDApIHsNCgkJCQlpZiAobXFfdGltZWRyZWNlaXZlKHBhci0+dGVzdG1xLCBw
+YXItPnJlY3Z0ZXN0bXNnLCBNU0dfU0laRSwgTlVMTCwgJnRzKSAhPQ0KCQkJCSAgICBzdHJsZW4o
+dGVzdG1zZykpIHsNCgkJCQkJZnByaW50ZihzdGRlcnIsICJjb3VsZCBub3QgcmVjZWl2ZSB0ZXN0
+IG1lc3NhZ2VcbiIpOw0KCQkJCQlwYXItPnNodXRkb3duID0gMTsNCgkJCQl9DQoJCQl9IGVsc2Ug
+ew0KCQkJCWlmIChtcV9yZWNlaXZlKHBhci0+dGVzdG1xLCBwYXItPnJlY3Z0ZXN0bXNnLCBNU0df
+U0laRSwgTlVMTCkgIT0NCgkJCQkgICAgc3RybGVuKHRlc3Rtc2cpKSB7DQoJCQkJCWZwcmludGYo
+c3RkZXJyLCAiY291bGQgbm90IHJlY2VpdmUgdGVzdCBtZXNzYWdlXG4iKTsNCgkJCQkJcGFyLT5z
+aHV0ZG93biA9IDE7DQoJCQkJfQ0KCQkJfQ0KCQkJLyogLi4uIFJlY2VpdmVkIHRoZSBtZXNzYWdl
+OiBFbmQgb2YgbGF0ZW5jeSBtZWFzdXJlbWVudCAqLw0KCQkJZ2V0dGltZW9mZGF5KCZwYXItPnJl
+Y2VpdmVkLCBOVUxMKTsNCg0KCQkJaWYgKHN0cmNtcCh0ZXN0bXNnLCBwYXItPnJlY3Z0ZXN0bXNn
+KSkgew0KCQkJCWZwcmludGYoc3RkZXJyLCAiRVJST1I6IFRlc3QgbWVzc2FnZSBtaXNtYXRjaCBk
+ZXRlY3RlZFxuIik7DQoJCQkJZnByaW50ZihzdGRlcnIsICIgICVzICE9ICVzXG4iLCB0ZXN0bXNn
+LCBwYXItPnJlY3Z0ZXN0bXNnKTsNCgkJCQlwYXItPnNodXRkb3duID0gMTsNCgkJCX0NCgkJCXBh
+ci0+c2FtcGxlcysrOw0KCQkJdGltZXJzdWIoJnBhci0+cmVjZWl2ZWQsICZwYXItPm5laWdoYm9y
+LT5zZW50LA0KCQkJICAgICZwYXItPmRpZmYpOw0KDQoJCQlpZiAocGFyLT5kaWZmLnR2X3VzZWMg
+PCBwYXItPm1pbmRpZmYpDQoJCQkJcGFyLT5taW5kaWZmID0gcGFyLT5kaWZmLnR2X3VzZWM7DQoJ
+CQlpZiAocGFyLT5kaWZmLnR2X3VzZWMgPiBwYXItPm1heGRpZmYpDQoJCQkJcGFyLT5tYXhkaWZm
+ID0gcGFyLT5kaWZmLnR2X3VzZWM7DQoJCQlwYXItPnN1bWRpZmYgKz0gKGRvdWJsZSkgcGFyLT5k
+aWZmLnR2X3VzZWM7DQoJCQlpZiAocGFyLT50cmFjZWxpbWl0ICYmIHBhci0+bWF4ZGlmZiA+IHBh
+ci0+dHJhY2VsaW1pdCkgew0KCQkJCWNoYXIgdHJhY2luZ19lbmFibGVkX2ZpbGVbTUFYX1BBVEhd
+Ow0KDQoJCQkJc3RyY3B5KHRyYWNpbmdfZW5hYmxlZF9maWxlLCBnZXRfZGVidWdmaWxlcHJlZml4
+KCkpOw0KCQkJCXN0cmNhdCh0cmFjaW5nX2VuYWJsZWRfZmlsZSwgInRyYWNpbmdfZW5hYmxlZCIp
+Ow0KCQkJCWludCB0cmFjaW5nX2VuYWJsZWQgPQ0KCQkJCSAgICBvcGVuKHRyYWNpbmdfZW5hYmxl
+ZF9maWxlLCBPX1dST05MWSk7DQoJCQkJaWYgKHRyYWNpbmdfZW5hYmxlZCA+PSAwKSB7DQoJCQkJ
+CXdyaXRlKHRyYWNpbmdfZW5hYmxlZCwgIjAiLCAxKTsNCgkJCQkJY2xvc2UodHJhY2luZ19lbmFi
+bGVkKTsNCgkJCQl9IGVsc2UNCgkJCQkJc25wcmludGYocGFyLT5lcnJvciwgc2l6ZW9mKHBhci0+
+ZXJyb3IpLA0KCQkJCQkgICAgIkNvdWxkIG5vdCBhY2Nlc3MgJXNcbiIsDQoJCQkJCSAgICB0cmFj
+aW5nX2VuYWJsZWRfZmlsZSk7DQoJCQkJcGFyLT5zaHV0ZG93biA9IDE7DQoJCQkJcGFyLT5uZWln
+aGJvci0+c2h1dGRvd24gPSAxOw0KCQkJfQ0KDQoJCQlpZiAocGFyLT5tYXhfY3ljbGVzICYmIHBh
+ci0+c2FtcGxlcyA+PSBwYXItPm1heF9jeWNsZXMpDQoJCQkJcGFyLT5zaHV0ZG93biA9IDE7DQoJ
+CQlpZiAobXVzdGdldGNwdSkNCgkJCQlwYXItPmNwdSA9IGdldF9jcHUoKTsNCgkJCW5hbm9zbGVl
+cCgmcGFyLT5kZWxheSwgTlVMTCk7DQoNCgkJCS8qIFRlbGwgcmVjZWl2ZXIgdGhhdCB3ZSBhcmUg
+cmVhZHkgZm9yIHRoZSBuZXh0IG1lYXN1cmVtZW50ICovDQoJCQlpZiAobm9fc2VuZCA9PSAxKQ0K
+CQkJew0KCQkJCWlmIChtcV9zZW5kKHBhci0+c3luY21xLCBzeW5jbXNnLCBzdHJsZW4oc3luY21z
+ZyksIDEpICE9IDApIHsNCgkJCQkJZnByaW50ZihzdGRlcnIsICJjb3VsZCBub3Qgc2VuZCBzeW5j
+IG1lc3NhZ2VcbiIpOw0KCQkJCQlwYXItPnNodXRkb3duID0gMTsNCgkJCQl9DQoJCQl9DQoJCX0N
+Cgl9DQoJcGFyLT5zdG9wcGVkID0gMTsNCglyZXR1cm4gTlVMTDsNCn0NCg0KDQpzdGF0aWMgdm9p
+ZCBkaXNwbGF5X2hlbHAodm9pZCkNCnsNCglwcmludGYoInBtcXRlc3QgViAlMS4yZlxuIiwgVkVS
+U0lPTl9TVFJJTkcpOw0KCXB1dHMoIlVzYWdlOiBwbXF0ZXN0IDxvcHRpb25zPiIpOw0KCXB1dHMo
+IkZ1bmN0aW9uOiB0ZXN0IFBPU0lYIG1lc3NhZ2UgcXVldWUgbGF0ZW5jeSIpOw0KCXB1dHMoDQoJ
+Ik9wdGlvbnM6XG4iDQoJIi1hIFtOVU1dIC0tYWZmaW5pdHkgICAgICAgIHJ1biB0aHJlYWQgI04g
+b24gcHJvY2Vzc29yICNOLCBpZiBwb3NzaWJsZVxuIg0KCSIgICAgICAgICAgICAgICAgICAgICAg
+ICAgICB3aXRoIE5VTSBwaW4gYWxsIHRocmVhZHMgdG8gdGhlIHByb2Nlc3NvciBOVU1cbiINCgki
+LWIgVVNFQyAgLS1icmVha3RyYWNlPVVTRUMgc2VuZCBicmVhayB0cmFjZSBjb21tYW5kIHdoZW4g
+bGF0ZW5jeSA+IFVTRUNcbiINCgkiLWQgRElTVCAgLS1kaXN0YW5jZT1ESVNUICAgZGlzdGFuY2Ug
+b2YgdGhyZWFkIGludGVydmFscyBpbiB1cyBkZWZhdWx0PTUwMFxuIg0KCSItaSBJTlRWICAtLWlu
+dGVydmFsPUlOVFYgICBiYXNlIGludGVydmFsIG9mIHRocmVhZCBpbiB1cyBkZWZhdWx0PTEwMDBc
+biINCgkiLWwgTE9PUFMgLS1sb29wcz1MT09QUyAgICAgbnVtYmVyIG9mIGxvb3BzOiBkZWZhdWx0
+PTAoZW5kbGVzcylcbiINCgkiLXAgUFJJTyAgLS1wcmlvPVBSSU8gICAgICAgcHJpb3JpdHlcbiIN
+CgkiLVMgICAgICAgLS1zbXAgICAgICAgICAgICAgU01QIHRlc3Rpbmc6IG9wdGlvbnMgLWEgLXQg
+YW5kIHNhbWUgcHJpb3JpdHlcbiINCiAgICAgICAgIiAgICAgICAgICAgICAgICAgICAgICAgICAg
+IG9mIGFsbCB0aHJlYWRzXG4iDQoJIi10ICAgICAgIC0tdGhyZWFkcyAgICAgICAgIG9uZSB0aHJl
+YWQgcGVyIGF2YWlsYWJsZSBwcm9jZXNzb3JcbiINCgkiLXQgW05VTV0gLS10aHJlYWRzPU5VTSAg
+ICAgbnVtYmVyIG9mIHRocmVhZHM6XG4iDQoJIiAgICAgICAgICAgICAgICAgICAgICAgICAgIHdp
+dGhvdXQgTlVNLCB0aHJlYWRzID0gbWF4X2NwdXNcbiINCgkiICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgd2l0aG91dCAtdCBkZWZhdWx0ID0gMVxuIg0KCSItVCBUTyAgICAtLXRpbWVvdXQ9VE8g
+ICAgICB1c2UgbXFfdGltZWRyZWNlaXZlKCkgaW5zdGVhZCBvZiBtcV9yZWNlaXZlKClcbiINCgki
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgd2l0aCB0aW1lb3V0IFRPIGluIHNlY29uZHNcbiIp
+Ow0KCWV4aXQoMSk7DQp9DQoNCg0Kc3RhdGljIGludCBzZXRhZmZpbml0eSA9IEFGRklOSVRZX1VO
+U1BFQ0lGSUVEOw0Kc3RhdGljIGludCBhZmZpbml0eTsNCnN0YXRpYyBpbnQgdHJhY2VsaW1pdDsN
+CnN0YXRpYyBpbnQgcHJpb3JpdHk7DQpzdGF0aWMgaW50IG51bV90aHJlYWRzID0gMTsNCnN0YXRp
+YyBpbnQgbWF4X2N5Y2xlczsNCnN0YXRpYyBpbnQgaW50ZXJ2YWwgPSAxMDAwOw0Kc3RhdGljIGlu
+dCBkaXN0YW5jZSA9IDUwMDsNCnN0YXRpYyBpbnQgc21wOw0Kc3RhdGljIGludCBzYW1lcHJpbzsN
+CnN0YXRpYyBpbnQgdGltZW91dDsNCg0Kc3RhdGljIHZvaWQgcHJvY2Vzc19vcHRpb25zIChpbnQg
+YXJnYywgY2hhciAqYXJndltdKQ0Kew0KCWludCBlcnJvciA9IDA7DQoJaW50IG1heF9jcHVzID0g
+c3lzY29uZihfU0NfTlBST0NFU1NPUlNfQ09ORik7DQoNCglmb3IgKDs7KSB7DQoJCWludCBvcHRp
+b25faW5kZXggPSAwOw0KCQkvKiogT3B0aW9ucyBmb3IgZ2V0b3B0ICovDQoJCXN0YXRpYyBzdHJ1
+Y3Qgb3B0aW9uIGxvbmdfb3B0aW9uc1tdID0gew0KCQkJeyJhZmZpbml0eSIsIG9wdGlvbmFsX2Fy
+Z3VtZW50LCBOVUxMLCAnYSd9LA0KCQkJeyJicmVha3RyYWNlIiwgcmVxdWlyZWRfYXJndW1lbnQs
+IE5VTEwsICdiJ30sDQoJCQl7ImRpc3RhbmNlIiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdk
+J30sDQoJCQl7ImludGVydmFsIiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdpJ30sDQoJCQl7
+Imxvb3BzIiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdsJ30sDQoJCQl7InByaW9yaXR5Iiwg
+cmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdwJ30sDQoJCQl7InNtcCIsIG5vX2FyZ3VtZW50LCBO
+VUxMLCAnUyd9LA0KCQkJeyJ0aHJlYWRzIiwgb3B0aW9uYWxfYXJndW1lbnQsIE5VTEwsICd0J30s
+DQoJCQl7InRpbWVvdXQiLCByZXF1aXJlZF9hcmd1bWVudCwgTlVMTCwgJ1QnfSwNCgkJCXsiaGVs
+cCIsIG5vX2FyZ3VtZW50LCBOVUxMLCAnPyd9LA0KCQkJe05VTEwsIDAsIE5VTEwsIDB9DQoJCX07
+DQoJCWludCBjID0gZ2V0b3B0X2xvbmcgKGFyZ2MsIGFyZ3YsICJhOjpiOmQ6aTpsOnA6U3Q6OlQ6
+IiwNCgkJCWxvbmdfb3B0aW9ucywgJm9wdGlvbl9pbmRleCk7DQoJCWlmIChjID09IC0xKQ0KCQkJ
+YnJlYWs7DQoJCXN3aXRjaCAoYykgew0KCQljYXNlICdhJzoNCgkJCWlmIChzbXApIHsNCgkJCQl3
+YXJuKCItYSBpZ25vcmVkIGR1ZSB0byAtLXNtcFxuIik7DQoJCQkJYnJlYWs7DQoJCQl9DQoJCQlp
+ZiAob3B0YXJnICE9IE5VTEwpIHsNCgkJCQlhZmZpbml0eSA9IGF0b2kob3B0YXJnKTsNCgkJCQlz
+ZXRhZmZpbml0eSA9IEFGRklOSVRZX1NQRUNJRklFRDsNCgkJCX0gZWxzZSBpZiAob3B0aW5kPGFy
+Z2MgJiYgYXRvaShhcmd2W29wdGluZF0pKSB7DQoJCQkJYWZmaW5pdHkgPSBhdG9pKGFyZ3Zbb3B0
+aW5kXSk7DQoJCQkJc2V0YWZmaW5pdHkgPSBBRkZJTklUWV9TUEVDSUZJRUQ7DQoJCQl9IGVsc2Ug
+ew0KCQkJCXNldGFmZmluaXR5ID0gQUZGSU5JVFlfVVNFQUxMOw0KCQkJfQ0KCQkJYnJlYWs7DQoJ
+CWNhc2UgJ2InOiB0cmFjZWxpbWl0ID0gYXRvaShvcHRhcmcpOyBicmVhazsNCgkJY2FzZSAnZCc6
+IGRpc3RhbmNlID0gYXRvaShvcHRhcmcpOyBicmVhazsNCgkJY2FzZSAnaSc6IGludGVydmFsID0g
+YXRvaShvcHRhcmcpOyBicmVhazsNCgkJY2FzZSAnbCc6IG1heF9jeWNsZXMgPSBhdG9pKG9wdGFy
+Zyk7IGJyZWFrOw0KCQljYXNlICdwJzogcHJpb3JpdHkgPSBhdG9pKG9wdGFyZyk7IGJyZWFrOw0K
+CQljYXNlICdTJzoNCgkJCXNtcCA9IDE7DQoJCQludW1fdGhyZWFkcyA9IG1heF9jcHVzOw0KCQkJ
+c2V0YWZmaW5pdHkgPSBBRkZJTklUWV9VU0VBTEw7DQoJCQlicmVhazsNCgkJY2FzZSAndCc6DQoJ
+CQlpZiAoc21wKSB7DQoJCQkJd2FybigiLXQgaWdub3JlZCBkdWUgdG8gLS1zbXBcbiIpOw0KCQkJ
+CWJyZWFrOw0KCQkJfQ0KCQkJaWYgKG9wdGFyZyAhPSBOVUxMKQ0KCQkJCW51bV90aHJlYWRzID0g
+YXRvaShvcHRhcmcpOw0KCQkJZWxzZSBpZiAob3B0aW5kPGFyZ2MgJiYgYXRvaShhcmd2W29wdGlu
+ZF0pKQ0KCQkJCW51bV90aHJlYWRzID0gYXRvaShhcmd2W29wdGluZF0pOw0KCQkJZWxzZQ0KCQkJ
+CW51bV90aHJlYWRzID0gbWF4X2NwdXM7DQoJCQlicmVhazsNCgkJY2FzZSAnVCc6IHRpbWVvdXQg
+PSBhdG9pKG9wdGFyZyk7IGJyZWFrOw0KCQljYXNlICc/JzogZXJyb3IgPSAxOyBicmVhazsNCgkJ
+fQ0KCX0NCg0KCWlmIChzZXRhZmZpbml0eSA9PSBBRkZJTklUWV9TUEVDSUZJRUQpIHsNCgkJaWYg
+KGFmZmluaXR5IDwgMCkNCgkJCWVycm9yID0gMTsNCgkJaWYgKGFmZmluaXR5ID49IG1heF9jcHVz
+KSB7DQoJCQlmcHJpbnRmKHN0ZGVyciwgIkVSUk9SOiBDUFUgIyVkIG5vdCBmb3VuZCwgb25seSAl
+ZCBDUFVzIGF2YWlsYWJsZVxuIiwNCgkJCSAgICBhZmZpbml0eSwgbWF4X2NwdXMpOw0KCQkJZXJy
+b3IgPSAxOw0KCQl9DQoJfQ0KDQoJaWYgKG51bV90aHJlYWRzIDwgMCB8fCBudW1fdGhyZWFkcyA+
+IDI1NSkNCgkJZXJyb3IgPSAxOw0KDQoJaWYgKHByaW9yaXR5IDwgMCB8fCBwcmlvcml0eSA+IDk5
+KQ0KCQllcnJvciA9IDE7DQoNCglpZiAobnVtX3RocmVhZHMgPCAxKQ0KCQllcnJvciA9IDE7DQoN
+CglpZiAocHJpb3JpdHkgJiYgc21wKQ0KCQlzYW1lcHJpbyA9IDE7DQoNCglpZiAodGltZW91dCA8
+IDApDQoJCWVycm9yID0gMTsNCg0KCWlmIChlcnJvcikNCgkJZGlzcGxheV9oZWxwICgpOw0KfQ0K
+DQoNCnN0YXRpYyBpbnQgdm9sYXRpbGUgc2h1dGRvd247DQoNCnN0YXRpYyB2b2lkIHNpZ2hhbmQo
+aW50IHNpZykNCnsNCglzaHV0ZG93biA9IDE7DQp9DQoNCmludCBtYWluKGludCBhcmdjLCBjaGFy
+ICphcmd2W10pDQp7DQoJaW50IGk7DQoJaW50IG1heF9jcHVzID0gc3lzY29uZihfU0NfTlBST0NF
+U1NPUlNfQ09ORik7DQoJaW50IG9sZHNhbXBsZXMgPSAxOw0KCXN0cnVjdCBwYXJhbXMgKnJlY2Vp
+dmVyID0gTlVMTDsNCglzdHJ1Y3QgcGFyYW1zICpzZW5kZXIgPSBOVUxMOw0KCXNpZ3NldF90IHNp
+Z3NldDsNCglzdHJ1Y3QgdGltZXNwZWMgbWFpbmRlbGF5Ow0KCWludCBvZmxhZyA9IE9fQ1JFQVR8
+T19SRFdSOw0KCXN0cnVjdCBtcV9hdHRyIG1xc3RhdDsNCg0KCW1lbXNldCgmbXFzdGF0LCAwLCBz
+aXplb2YobXFzdGF0KSk7DQoJbXFzdGF0Lm1xX21heG1zZyA9IDE7DQoJbXFzdGF0Lm1xX21zZ3Np
+emUgPSA4Ow0KCW1xc3RhdC5tcV9mbGFncyA9IDA7DQoNCglwcm9jZXNzX29wdGlvbnMoYXJnYywg
+YXJndik7DQoNCglpZiAoY2hlY2tfcHJpdnMoKSkNCgkJcmV0dXJuIDE7DQoNCglpZiAobWxvY2th
+bGwoTUNMX0NVUlJFTlR8TUNMX0ZVVFVSRSkgPT0gLTEpIHsNCgkJcGVycm9yKCJtbG9ja2FsbCIp
+Ow0KCQlyZXR1cm4gMTsNCgl9DQoNCglzaWduYWwoU0lHSU5ULCBzaWdoYW5kKTsNCglzaWduYWwo
+U0lHVEVSTSwgc2lnaGFuZCk7DQoNCglyZWNlaXZlciA9IGNhbGxvYyhudW1fdGhyZWFkcywgc2l6
+ZW9mKHN0cnVjdCBwYXJhbXMpKTsNCglzZW5kZXIgPSBjYWxsb2MobnVtX3RocmVhZHMsIHNpemVv
+ZihzdHJ1Y3QgcGFyYW1zKSk7DQoJaWYgKHJlY2VpdmVyID09IE5VTEwgfHwgc2VuZGVyID09IE5V
+TEwpDQoJCWdvdG8gbm9tZW07DQoNCglmb3IgKGkgPSAwOyBpIDwgbnVtX3RocmVhZHM7IGkrKykg
+ew0KCQljaGFyIG1xbmFtZVsxNl07DQoNCgkJc3ByaW50ZihtcW5hbWUsIFNZTkNNUV9OQU1FLCBp
+KTsNCgkJcmVjZWl2ZXJbaV0uc3luY21xID0gbXFfb3BlbihtcW5hbWUsIG9mbGFnLCAwNzc3LCAm
+bXFzdGF0KTsNCgkJaWYgKHJlY2VpdmVyW2ldLnN5bmNtcSA9PSAobXFkX3QpIC0xKSB7DQoJCQlm
+cHJpbnRmKHN0ZGVyciwgImNvdWxkIG5vdCBvcGVuIFBPU0lYIG1lc3NhZ2UgcXVldWUgIzFcbiIp
+Ow0KCQkJcmV0dXJuIDE7DQoJCX0NCgkJc3ByaW50ZihtcW5hbWUsIFRFU1RNUV9OQU1FLCBpKTsN
+CgkJcmVjZWl2ZXJbaV0udGVzdG1xID0gbXFfb3BlbihtcW5hbWUsIG9mbGFnLCAwNzc3LCAmbXFz
+dGF0KTsNCgkJaWYgKHJlY2VpdmVyW2ldLnRlc3RtcSA9PSAobXFkX3QpIC0xKSB7DQoJCQlmcHJp
+bnRmKHN0ZGVyciwgImNvdWxkIG5vdCBvcGVuIFBPU0lYIG1lc3NhZ2UgcXVldWUgIzJcbiIpOw0K
+CQkJcmV0dXJuIDE7DQoJCX0NCg0KCQlyZWNlaXZlcltpXS5taW5kaWZmID0gVUlOVF9NQVg7DQoJ
+CXJlY2VpdmVyW2ldLm1heGRpZmYgPSAwOw0KCQlyZWNlaXZlcltpXS5zdW1kaWZmID0gMC4wOw0K
+DQoJCXJlY2VpdmVyW2ldLm51bSA9IGk7DQoJCXJlY2VpdmVyW2ldLmNwdSA9IGk7DQoJCXN3aXRj
+aCAoc2V0YWZmaW5pdHkpIHsNCgkJY2FzZSBBRkZJTklUWV9VTlNQRUNJRklFRDogcmVjZWl2ZXJb
+aV0uY3B1ID0gLTE7IGJyZWFrOw0KCQljYXNlIEFGRklOSVRZX1NQRUNJRklFRDogcmVjZWl2ZXJb
+aV0uY3B1ID0gYWZmaW5pdHk7IGJyZWFrOw0KCQljYXNlIEFGRklOSVRZX1VTRUFMTDogcmVjZWl2
+ZXJbaV0uY3B1ID0gaSAlIG1heF9jcHVzOyBicmVhazsNCgkJfQ0KCQlyZWNlaXZlcltpXS5wcmlv
+cml0eSA9IHByaW9yaXR5Ow0KCQlyZWNlaXZlcltpXS50cmFjZWxpbWl0ID0gdHJhY2VsaW1pdDsN
+CgkJaWYgKHByaW9yaXR5ID4gMSAmJiAhc2FtZXByaW8pDQoJCQlwcmlvcml0eS0tOw0KCQlyZWNl
+aXZlcltpXS5kZWxheS50dl9zZWMgPSBpbnRlcnZhbCAvIFVTRUNfUEVSX1NFQzsNCgkJcmVjZWl2
+ZXJbaV0uZGVsYXkudHZfbnNlYyA9IChpbnRlcnZhbCAlIFVTRUNfUEVSX1NFQykgKiAxMDAwOw0K
+CQlpbnRlcnZhbCArPSBkaXN0YW5jZTsNCgkJcmVjZWl2ZXJbaV0ubWF4X2N5Y2xlcyA9IG1heF9j
+eWNsZXM7DQoJCXJlY2VpdmVyW2ldLnNlbmRlciA9IDA7DQoJCXJlY2VpdmVyW2ldLm5laWdoYm9y
+ID0gJnNlbmRlcltpXTsNCgkJcmVjZWl2ZXJbaV0udGltZW91dCA9IHRpbWVvdXQ7DQoJCXB0aHJl
+YWRfY3JlYXRlKCZyZWNlaXZlcltpXS50aHJlYWRpZCwgTlVMTCwgcG1xdGhyZWFkLCAmcmVjZWl2
+ZXJbaV0pOw0KCQltZW1jcHkoJnNlbmRlcltpXSwgJnJlY2VpdmVyW2ldLCBzaXplb2YocmVjZWl2
+ZXJbMF0pKTsNCgkJc2VuZGVyW2ldLnNlbmRlciA9IDE7DQoJCXNlbmRlcltpXS5uZWlnaGJvciA9
+ICZyZWNlaXZlcltpXTsNCgkJcHRocmVhZF9jcmVhdGUoJnNlbmRlcltpXS50aHJlYWRpZCwgTlVM
+TCwgcG1xdGhyZWFkLCAmc2VuZGVyW2ldKTsNCgl9DQoNCgltYWluZGVsYXkudHZfc2VjID0gMDsN
+CgltYWluZGVsYXkudHZfbnNlYyA9IDUwMDAwMDAwOyAvKiA1MCBtcyAqLw0KDQoJd2hpbGUgKCFz
+aHV0ZG93bikgew0KCQlpbnQgcHJpbnRlZDsNCgkJaW50IGVycm9ybGluZXMgPSAwOw0KDQoJCWZv
+ciAoaSA9IDA7IGkgPCBudW1fdGhyZWFkczsgaSsrKQ0KCQkJc2h1dGRvd24gfD0gcmVjZWl2ZXJb
+aV0uc2h1dGRvd24gfCBzZW5kZXJbaV0uc2h1dGRvd247DQoNCgkJaWYgKHJlY2VpdmVyWzBdLnNh
+bXBsZXMgPiBvbGRzYW1wbGVzIHx8IHNodXRkb3duKSB7DQoJCQlmb3IgKGkgPSAwOyBpIDwgbnVt
+X3RocmVhZHM7IGkrKykgew0KCQkJCXByaW50ZigiIyUxZDogSUQlZCwgUCVkLCBDUFUlZCwgSSVs
+ZDsgIyUxZDogSUQlZCwgUCVkLCBDUFUlZCwgQ3ljbGVzICVkXG4iLA0KCQkJCSAgICBpKjIsIHJl
+Y2VpdmVyW2ldLnRpZCwgcmVjZWl2ZXJbaV0ucHJpb3JpdHksIHJlY2VpdmVyW2ldLmNwdSwNCgkJ
+CQkgICAgcmVjZWl2ZXJbaV0uZGVsYXkudHZfbnNlYyAvIDEwMDAsDQoJCQkJICAgIGkqMisxLCBz
+ZW5kZXJbaV0udGlkLCBzZW5kZXJbaV0ucHJpb3JpdHksIHNlbmRlcltpXS5jcHUsDQoJCQkJICAg
+IHNlbmRlcltpXS5zYW1wbGVzKTsNCgkJCX0NCgkJCWZvciAoaSA9IDA7IGkgPCBudW1fdGhyZWFk
+czsgaSsrKSB7DQoJCQkJcHJpbnRmKCIjJWQgLT4gIyVkLCBNaW4gJTRkLCBDdXIgJTRkLCBBdmcg
+JTRkLCBNYXggJTRkXG4iLA0KCQkJCQlpKjIrMSwgaSoyLA0KCQkJCQlyZWNlaXZlcltpXS5taW5k
+aWZmLCAoaW50KSByZWNlaXZlcltpXS5kaWZmLnR2X3VzZWMsDQoJCQkJCShpbnQpICgocmVjZWl2
+ZXJbaV0uc3VtZGlmZiAvIHJlY2VpdmVyW2ldLnNhbXBsZXMpICsgMC41KSwNCgkJCQkJcmVjZWl2
+ZXJbaV0ubWF4ZGlmZik7DQoJCQkJaWYgKHJlY2VpdmVyW2ldLmVycm9yWzBdICE9ICdcMCcpIHsN
+CgkJCQkJcHJpbnRmKHJlY2VpdmVyW2ldLmVycm9yKTsNCgkJCQkJZXJyb3JsaW5lcysrOw0KCQkJ
+CQlyZWNlaXZlcltpXS5lcnJvclswXSA9ICdcMCc7DQoJCQkJfQ0KCQkJCWlmIChzZW5kZXJbaV0u
+ZXJyb3JbMF0gIT0gJ1wwJykgew0KCQkJCQlwcmludGYoc2VuZGVyW2ldLmVycm9yKTsNCgkJCQkJ
+ZXJyb3JsaW5lcysrOw0KCQkJCQlyZWNlaXZlcltpXS5lcnJvclswXSA9ICdcMCc7DQoJCQkJfQ0K
+CQkJfQ0KCQkJcHJpbnRlZCA9IDE7DQoJCX0gZWxzZQ0KCQkJcHJpbnRlZCA9IDA7DQoNCgkJc2ln
+ZW1wdHlzZXQoJnNpZ3NldCk7DQoJCXNpZ2FkZHNldCgmc2lnc2V0LCBTSUdURVJNKTsNCgkJc2ln
+YWRkc2V0KCZzaWdzZXQsIFNJR0lOVCk7DQoJCXB0aHJlYWRfc2lnbWFzayhTSUdfU0VUTUFTSywg
+JnNpZ3NldCwgTlVMTCk7DQoNCgkJbmFub3NsZWVwKCZtYWluZGVsYXksIE5VTEwpOw0KDQoJCXNp
+Z2VtcHR5c2V0KCZzaWdzZXQpOw0KCQlwdGhyZWFkX3NpZ21hc2soU0lHX1NFVE1BU0ssICZzaWdz
+ZXQsIE5VTEwpOw0KDQoJCWlmIChwcmludGVkICYmICFzaHV0ZG93bikNCgkJCXByaW50ZigiXDAz
+M1slZEEiLCBudW1fdGhyZWFkcyoyICsgZXJyb3JsaW5lcyk7DQoJfQ0KDQoJZm9yIChpID0gMDsg
+aSA8IG51bV90aHJlYWRzOyBpKyspIHsNCgkJcmVjZWl2ZXJbaV0uc2h1dGRvd24gPSAxOw0KCQlz
+ZW5kZXJbaV0uc2h1dGRvd24gPSAxOw0KCX0NCgluYW5vc2xlZXAoJnJlY2VpdmVyWzBdLmRlbGF5
+LCBOVUxMKTsNCg0KCWZvciAoaSA9IDA7IGkgPCBudW1fdGhyZWFkczsgaSsrKSB7DQoJCW1xX2Ns
+b3NlKHJlY2VpdmVyW2ldLnN5bmNtcSk7DQoJCW1xX2Nsb3NlKHJlY2VpdmVyW2ldLnRlc3RtcSk7
+DQoJCWlmICghcmVjZWl2ZXJbaV0uc3RvcHBlZCkNCgkJCXB0aHJlYWRfa2lsbChyZWNlaXZlcltp
+XS50aHJlYWRpZCwgU0lHVEVSTSk7DQoJCWlmICghc2VuZGVyW2ldLnN0b3BwZWQpDQoJCQlwdGhy
+ZWFkX2tpbGwoc2VuZGVyW2ldLnRocmVhZGlkLCBTSUdURVJNKTsNCgl9DQoNCglub21lbToNCg0K
+CXJldHVybiAwOw0KfQ0KDQo=
+--0014852d24c0ace62b0482ffc34f--
