@@ -1,88 +1,87 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH v2] rt-tests: Add option to force timeout to pmqtest
-Date: Thu, 1 Apr 2010 12:41:40 -0500
-Message-ID: <20100401124140.49f4cfa1@torg>
-References: <4BB0C273.2040606@osadl.org>
-	<4BB209ED.80602@osadl.org>
+From: "Darcy L. Watkins" <dwatkins@tranzeo.com>
+Subject: Kernel 2.6.33.1-rt11 on PPC405 UIC spinlock and serial input
+ overruns
+Date: Thu, 01 Apr 2010 11:15:58 -0700
+Message-ID: <1270145758.27946.48.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/8c=1TweY0d+0l.B1gxKNtR/"; protocol="application/pgp-signature"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT-Users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <Carsten.Emde@osadl.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:53884 "EHLO mx1.redhat.com"
+Received: from isa.tranzeo.com ([64.114.87.10]:59520 "EHLO mail2.tranzeo.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754234Ab0DARlz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Apr 2010 13:41:55 -0400
-In-Reply-To: <4BB209ED.80602@osadl.org>
+	id S1754792Ab0DASbH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 1 Apr 2010 14:31:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/8c=1TweY0d+0l.B1gxKNtR/
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Hello,
 
-On Tue, 30 Mar 2010 16:25:49 +0200
-Carsten Emde <Carsten.Emde@osadl.org> wrote:
+I have kernel 2.6.33.1-rt11 running on a Powerpc 405EP based system and
+have seen the following in the dmesg...
 
-> On 03/29/2010 05:08 PM, Carsten Emde wrote:
-> > This patch adds the program pmqtest to the rt-tests suite.
-> > The test mechanism is the same as in ptsematest, svsematest
-> > and friends, but it uses message queues to synchronize the
-> > test threads. To test the - now hopefully fixed - kernel
-> > problem that occurred when a timeout was specified, the
-> > -T option is available.
-> This patch adds the option -f to force a timeout condition of
-> mq_timedreceive() to pmqtest - only meaningful along with -T.
->=20
-> The call
-> # pmqtest -Sp99 -i100 -d0 -T1 -f2
->=20
-> will display
->=20
-> #0: ID17791, P99, CPU0, I100; #1: ID17792, P99, CPU0, Cycles 8
-> #2: ID17793, P99, CPU1, I100; #3: ID17794, P99, CPU1, Cycles 8
-> #4: ID17795, P99, CPU2, I100; #5: ID17796, P99, CPU2, Cycles 8
-> #6: ID17797, P99, CPU3, I100; #7: ID17798, P99, CPU3, Cycles 8
-> #8: ID17799, P99, CPU4, I100; #9: ID17800, P99, CPU4, Cycles 8
-> #10: ID17801, P99, CPU5, I100; #11: ID17802, P99, CPU5, Cycles 8
-> #12: ID17803, P99, CPU6, I100; #13: ID17804, P99, CPU6, Cycles 8
-> #14: ID17805, P99, CPU7, I100; #15: ID17806, P99, CPU7, Cycles 8
-> #1 -> #0, Min   16, Cur   22, Avg   18, Max   24
-> #3 -> #2, Min   13, Cur   14, Avg   14, Max   16
-> #5 -> #4, Min   14, Cur   20, Avg   16, Max   20
-> #7 -> #6, Min   13, Cur   14, Avg   14, Max   15
-> #9 -> #8, Min   14, Cur   14, Avg   15, Max   19
-> #11 -> #10, Min   13, Cur   13, Avg   16, Max   20
-> #13 -> #12, Min   13, Cur   14, Avg   15, Max   19
-> #15 -> #14, Min   13, Cur   14, Avg   15, Max   19
-> etc.
->=20
-> but the next cycle will only continue when the timeout of 2 seconds is
-> elapsed.
->=20
-> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+[   11.908590] BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+[   11.908636] pcnt: 10002 0 in_atomic(): 1, irqs_disabled(): 1, pid: 0, name: swapper
+[   11.908661] Call Trace:
+[   11.908708] [c034de20] [c0007938] show_stack+0x40/0x15c (unreliable)
+[   11.908765] [c034de50] [c002cbc8] __might_sleep+0xfc/0x100
+[   11.908817] [c034de60] [c025ad44] rt_spin_lock+0xa0/0xa4
+[   11.908858] [c034de70] [c001a638] uic_mask_ack_irq+0x50/0xa0
+[   11.908908] [c034de90] [c006af68] handle_level_irq+0x3c/0x17c
+[   11.908948] [c034deb0] [c0005380] do_IRQ+0x98/0xb4
+[   11.908996] [c034ded0] [c00103f4] ret_from_except+0x0/0x18
+[   11.909038] [c034df90] [c0008ac0] cpu_idle+0x58/0x114
+[   11.909075] [c034dfb0] [c00029e4] rest_init+0x90/0xa4
+[   11.909124] [c034dfc0] [c03117c4] start_kernel+0x264/0x2ac
+[   11.909162] [c034dff0] [c0002254] start_here+0x44/0xb0
 
-Carsten,=20
+In arch/powerpc/sysdev/uic.c changing all the spinlock functions for
+&uic->lock to their raw_ equivalents appears to fix it.  Also since the
+invoking code appears to already have an rtmutex locked already whenever
+any of these paths are executed, I also tried simply commenting out the
+whole UIC spinlock altogether and that works too.
 
-Not ignoring you, just took a while for your task to get scheduled (I'm
-an old uni-processor :)).=20
+Perhaps someone more familiar with the powerpc kernel code can advise me
+as to whether or not the uic->lock spinlock in uic.c is redundant (i.e.
+correct to remove it) or the raw spinlock is still needed.
 
-I'll pull these in and spin a new rt-tests tonight.
+I have also observed the following type of errors in dmesg output...
 
-Clark
+[  145.583931] ttyS0: 1 input overrun(s)
 
---Sig_/8c=1TweY0d+0l.B1gxKNtR/
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+I observe these whether I have the earlier BUG present or either of my
+changes to get rid of the BUG error messages.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.13 (GNU/Linux)
+All of these conditions also appear when I build kernel 2.6.31.12-rt21
+for the same hardware.
 
-iEYEARECAAYFAku02tcACgkQHyuj/+TTEp2hKQCeIu3qB3xx++pG5VVA0tNzjHHX
-VjgAoKZRZo59cSCRGNTfKzCh/qJ3MEeF
-=KxSR
------END PGP SIGNATURE-----
+They do NOT appear when I build kernel 2.6.29.6-rt24 for the same
+hardware.  They also do NOT appear for kernel 2.6.30, 2.6.31 or 2.6.33
+when build without the RT-Preemption patches applied.  (I also don't see
+it in way older kernel versions with RT preemption patches applied,
+2.6.26, 2.6.25, 2.6.24, 2.6.23).
 
---Sig_/8c=1TweY0d+0l.B1gxKNtR/--
+The input overrun errors are quite reproducible when I up arrow (i.e.
+back up through history in the shell on the target).  I see "A" or "[A"
+echo back or sometimes the shell steps back in history (the normal
+expected result).  This is using 115200 bit rate on the serial port.
+When the "A" or "[A" is echoed, I see the overrun error messages.
+
+If someone can shed some light on this I'd appreciate your comments.  It
+might save me some time and of course helps to improve the RT support
+for PPC405 targets.
+
+----
+Other relevant info for type of linux build ...
+buildroot-2010.02 based cross build set up using:
+  gcc-4.3.4
+  binutils-2.20
+  uclibc-0.9.30.2
+  busybox-1.15.3
+
+
+Regards,
+
+Darcy
+
+
