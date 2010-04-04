@@ -1,186 +1,53 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: [PATCH 2/2] let-message-queue-timeout-use-hrtimer.patch
-Date: Fri, 02 Apr 2010 22:40:20 +0200
-Message-ID: <20100402204331.715783034@osadl.org>
-References: <20100402204018.575140584@osadl.org>
-Cc: Arjan van de Veen <arjan@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Pradyumna Sampath <pradysam@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>
-To: Andrew Morton <akpm@linux-foundation.org>
+From: Udo van den Heuvel <udovdh@xs4all.nl>
+Subject: 2.6.33.1-rt11 BUG: sleeping function called from invalid context
+ at kernel/rtmutex.c:684
+Date: Sun, 04 Apr 2010 11:14:39 +0200
+Message-ID: <4BB8587F.40307@xs4all.nl>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:44747 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754551Ab0DBUsf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Apr 2010 16:48:35 -0400
-Content-Disposition: inline; filename=let-message-queue-timeout-use-hrtimer.patch
+Received: from pindarots.xs4all.nl ([80.101.128.228]:39190 "EHLO
+	pindarots.xs4all.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752250Ab0DDJYV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 4 Apr 2010 05:24:21 -0400
+Received: from surfplank2.hierzo (localhost.localdomain [127.0.0.1])
+	by pindarots.xs4all.nl (8.14.3/8.14.3) with ESMTP id o349EdNd003347
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-CAMELLIA256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Sun, 4 Apr 2010 11:14:39 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The message queue functions mq_timedsend() and mq_timedreceive()
-have not yet been converted to use the hrtimer interface.
+Hello,
 
-This patch replaces the call to schedule_timeout() by a call to
-schedule_hrtimeout() and transforms the expiration time from
-timespec to ktime as required.
+I see a load of these after booting into 2.6.33.1-rt11:
 
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Arjan van de Veen <arjan@infradead.org>
-CC: Thomas Gleixner <tglx@linutronix.de>
-Tested-by: Pradyumna Sampath <pradysam@gmail.com>
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+pcnt: 1 0 in_atomic(): 1, irqs_disabled(): 0, pid: 1507, name: md1_raid5
+Pid: 1507, comm: md1_raid5 Not tainted 2.6.33.1-rt11 #1
+Call Trace:
+ [<ffffffff8138fb8c>] ? rt_spin_lock+0x2c/0x70
+ [<ffffffff812becc4>] ? __raid_run_ops+0x304/0xc60
+ [<ffffffff812c0ccd>] ? handle_stripe+0x6bd/0x1a70
+ [<ffffffff8104b460>] ? mod_timer+0x150/0x200
+ [<ffffffff812c23f6>] ? raid5d+0x376/0x4f0
+ [<ffffffff8138e5bd>] ? schedule_timeout+0x22d/0x2b0
+ [<ffffffff8138fb8c>] ? rt_spin_lock+0x2c/0x70
+ [<ffffffff812cd0f3>] ? md_thread+0x53/0x120
+ [<ffffffff810573a0>] ? autoremove_wake_function+0x0/0x30
+ [<ffffffff812cd0a0>] ? md_thread+0x0/0x120
+ [<ffffffff81057016>] ? kthread+0x96/0xa0
+ [<ffffffff81037908>] ? finish_task_switch+0x58/0xd0
+ [<ffffffff810032d4>] ? kernel_thread_helper+0x4/0x10
+ [<ffffffff81056f80>] ? kthread+0x0/0xa0
+ [<ffffffff810032d0>] ? kernel_thread_helper+0x0/0x10
 
----
- ipc/mqueue.c |   74 +++++++++++++++++++----------------------------------------
- 1 file changed, 25 insertions(+), 49 deletions(-)
+As these appear to be touching my raid array I am quite eager to learn
+how I can fix the BUGs.
 
-Index: head/ipc/mqueue.c
-===================================================================
---- head.orig/ipc/mqueue.c
-+++ head/ipc/mqueue.c
-@@ -428,7 +428,7 @@ static void wq_add(struct mqueue_inode_i
-  * sr: SEND or RECV
-  */
- static int wq_sleep(struct mqueue_inode_info *info, int sr,
--			long timeout, struct ext_wait_queue *ewp)
-+		    ktime_t *timeout, struct ext_wait_queue *ewp)
- {
- 	int retval;
- 	signed long time;
-@@ -439,7 +439,8 @@ static int wq_sleep(struct mqueue_inode_
- 		set_current_state(TASK_INTERRUPTIBLE);
- 
- 		spin_unlock(&info->lock);
--		time = schedule_timeout(timeout);
-+		time = schedule_hrtimeout_range_clock(timeout,
-+		    HRTIMER_MODE_ABS, 0, CLOCK_REALTIME);
- 
- 		while (ewp->state == STATE_PENDING)
- 			cpu_relax();
-@@ -551,31 +552,16 @@ static void __do_notify(struct mqueue_in
- 	wake_up(&info->wait_q);
- }
- 
--static long prepare_timeout(struct timespec *p)
-+static int prepare_timeout(const struct timespec __user *u_abs_timeout,
-+			   ktime_t *expires, struct timespec *ts)
- {
--	struct timespec nowts;
--	long timeout;
--
--	if (p) {
--		if (unlikely(p->tv_nsec < 0 || p->tv_sec < 0
--			|| p->tv_nsec >= NSEC_PER_SEC))
--			return -EINVAL;
--		nowts = CURRENT_TIME;
--		/* first subtract as jiffies can't be too big */
--		p->tv_sec -= nowts.tv_sec;
--		if (p->tv_nsec < nowts.tv_nsec) {
--			p->tv_nsec += NSEC_PER_SEC;
--			p->tv_sec--;
--		}
--		p->tv_nsec -= nowts.tv_nsec;
--		if (p->tv_sec < 0)
--			return 0;
--
--		timeout = timespec_to_jiffies(p) + 1;
--	} else
--		return MAX_SCHEDULE_TIMEOUT;
-+	if (copy_from_user(ts, u_abs_timeout, sizeof(struct timespec)))
-+		return -EFAULT;
-+	if (!timespec_valid(ts))
-+		return -EINVAL;
- 
--	return timeout;
-+	*expires = timespec_to_ktime(*ts);
-+	return 0;
- }
- 
- static void remove_notification(struct mqueue_inode_info *info)
-@@ -861,22 +847,21 @@ SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqd
- 	struct ext_wait_queue *receiver;
- 	struct msg_msg *msg_ptr;
- 	struct mqueue_inode_info *info;
--	struct timespec ts, *p = NULL;
--	long timeout;
-+ 	ktime_t expires, *timeout = NULL;
-+	struct timespec ts;
- 	int ret;
- 
- 	if (u_abs_timeout) {
--		if (copy_from_user(&ts, u_abs_timeout, 
--					sizeof(struct timespec)))
--			return -EFAULT;
--		p = &ts;
-+		int res = prepare_timeout(u_abs_timeout, &expires, &ts);
-+		if (res)
-+			return res;
-+		timeout = &expires;
- 	}
- 
- 	if (unlikely(msg_prio >= (unsigned long) MQ_PRIO_MAX))
- 		return -EINVAL;
- 
--	audit_mq_sendrecv(mqdes, msg_len, msg_prio, p);
--	timeout = prepare_timeout(p);
-+	audit_mq_sendrecv(mqdes, msg_len, msg_prio, timeout ? &ts : NULL);
- 
- 	filp = fget(mqdes);
- 	if (unlikely(!filp)) {
-@@ -918,9 +903,6 @@ SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqd
- 		if (filp->f_flags & O_NONBLOCK) {
- 			spin_unlock(&info->lock);
- 			ret = -EAGAIN;
--		} else if (unlikely(timeout < 0)) {
--			spin_unlock(&info->lock);
--			ret = timeout;
- 		} else {
- 			wait.task = current;
- 			wait.msg = (void *) msg_ptr;
-@@ -953,24 +935,23 @@ SYSCALL_DEFINE5(mq_timedreceive, mqd_t, 
- 		size_t, msg_len, unsigned int __user *, u_msg_prio,
- 		const struct timespec __user *, u_abs_timeout)
- {
--	long timeout;
- 	ssize_t ret;
- 	struct msg_msg *msg_ptr;
- 	struct file *filp;
- 	struct inode *inode;
- 	struct mqueue_inode_info *info;
- 	struct ext_wait_queue wait;
--	struct timespec ts, *p = NULL;
-+   	ktime_t expires, *timeout = NULL;
-+	struct timespec ts;
- 
- 	if (u_abs_timeout) {
--		if (copy_from_user(&ts, u_abs_timeout, 
--					sizeof(struct timespec)))
--			return -EFAULT;
--		p = &ts;
-+		int res = prepare_timeout(u_abs_timeout, &expires, &ts);
-+		if (res)
-+			return res;
-+		timeout = &expires;
- 	}
- 
--	audit_mq_sendrecv(mqdes, msg_len, 0, p);
--	timeout = prepare_timeout(p);
-+	audit_mq_sendrecv(mqdes, msg_len, 0, timeout ? &ts : NULL);
- 
- 	filp = fget(mqdes);
- 	if (unlikely(!filp)) {
-@@ -1002,11 +983,6 @@ SYSCALL_DEFINE5(mq_timedreceive, mqd_t, 
- 		if (filp->f_flags & O_NONBLOCK) {
- 			spin_unlock(&info->lock);
- 			ret = -EAGAIN;
--			msg_ptr = NULL;
--		} else if (unlikely(timeout < 0)) {
--			spin_unlock(&info->lock);
--			ret = timeout;
--			msg_ptr = NULL;
- 		} else {
- 			wait.task = current;
- 			wait.state = STATE_NONE;
+Please have a look and explain.
 
+Kind regards,
+Udo
