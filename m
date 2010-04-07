@@ -1,56 +1,68 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Kernel 2.6.33.1-rt11 on PPC405 UIC spinlock and serial input
- overruns
-Date: Wed, 7 Apr 2010 16:19:08 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1004071600030.32352@localhost.localdomain>
-References: <1270145758.27946.48.camel@localhost.localdomain>  <alpine.LFD.2.00.1004060946000.32352@localhost.localdomain> <1270562527.30658.40.camel@localhost.localdomain> <alpine.LFD.2.00.1004061645090.32352@localhost.localdomain>
- <D61182AC8012EA4EBC531B3AF23BE10992AE68@tranzeo-mail2.12stewart.tranzeo.com>
+Subject: [ANNOUNCE] 2.6.33.2-rt13
+Date: Wed, 7 Apr 2010 16:24:04 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Darcy Watkins <DWatkins@tranzeo.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>, nando@ccrma.Stanford.EDU,
+	Carsten Emde <ce@ceag.ch>, Wu Zhangjin <wuzhangjin@gmail.com>,
+	Nicholas Mc Guire <der.herr@hofr.at>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:51154 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:60881 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932283Ab0DGOTQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Apr 2010 10:19:16 -0400
-In-Reply-To: <D61182AC8012EA4EBC531B3AF23BE10992AE68@tranzeo-mail2.12stewart.tranzeo.com>
+	id S1753431Ab0DGOYr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 Apr 2010 10:24:47 -0400
+In-Reply-To: <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Darcy,
+B1;2005;0cWe are pleased to announce the next update to our new preempt-rt
+series.
 
-On Tue, 6 Apr 2010, Darcy Watkins wrote:
+I pushed out rt12 w/o a release mail, so here is the change log from
+rt11 to rt13
+ 
+Changes from rt11 to rt12
+  35b5256: x86: Fix irq off tracing for 32 bit
+  6e331ac: net: gianfar: Make RT aware
+  ac4d7f0: Merge 2.6.33.2 into -RT
 
-Please do not top post.
+Changes from rt12 to rt13
+  b2c877a: mqueue: Convert message queue timeout to use hrtimers
+  3c3016f: hrtimers: Provide schedule_hrtimeout for CLOCK_REALTIME
+  d980cb7: raid5: Make raid5_percpu handling RT aware
+  e86d615: powerpc: Convert uic->lock to raw_spinlock
 
-> Hi Thomas,
-> 
-> Thanks for the suggestion.
-> 
-> I tried boosting priority of [irq/16-serial] to 70 and then 95 with no
-> observable difference from before.  I still see the input overruns when
-> I up-arrow to backup through shell history (and the terminal sends
-> up-arrow escape sequences as small serial bursts at 115200).
-> 
-> /proc/interrupts also indicates that serial interrupts do count upwards
-> in good quantity.
+Download locations:
+   
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
 
-Ok. Can you try to fire up the function tracer to figure out what's
-happening ?
+Git development branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
 
-Unfortunately n_tty_receive_overrun() is an inline function. Can you
-make it a non inline so it gets covered by the function tracer ?
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
 
-Then you can magically stop the tracer with a filter:
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
 
-# echo 'n_tty_receive_overrun:traceoff' > DEBUGFSMOUNTPOINT/tracing/set_ftrace_filter
+Information on the RT patch can be found at:
 
-Further info about the tracer is here: http://lwn.net/Articles/370423/
+   http://rt.wiki.kernel.org/index.php/Main_Page
+ 
+To build the 2.6.33.2-rt13 tree, the following patches should be
+applied:
 
-If you have a trace please put it up to some ftp/http site or mail it
-to me privately.
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.2.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.2-rt13.bz2
 
-Thanks,
+Enjoy !
 
-	tglx
+      tglx
+
