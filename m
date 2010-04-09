@@ -1,23 +1,29 @@
-From: Michael Mueller <ss7box@gmail.com>
-Subject: Sangoma wanpipe driver
-Date: Wed, 7 Apr 2010 16:28:48 -0400
-Message-ID: <p2v615761851004071328n95641724w4f0695d3f0e38de1@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+From: "Ava Connelly" <poehfheju@gmail.com>
+Subject: Credit Inquiries Database - 1 million Full Data Records all with emails
+Date: 9 Apr 2010 03:16:20 +0100
+Message-ID: <GLNT272T0giSftNtzsG0000045f__16303.3599070788$1270779401$gmane$org@glnt272.glos.nhs.uk>
+Reply-To: pwetrjfvje@gmail.com
+To: linux-parport@lists.infradead.org, linux-pci@vger.kernel.org,
+	linux-pcmcia-owner@lists.infradead.org,
+	linux-pcmcia@lists.infradead.org,
+	linux-pm@lists.linux-foundation.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gw0-f46.google.com ([74.125.83.46]:33916 "EHLO
-	mail-gw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750966Ab0DGUfY (ORCPT
+Received: from [82.33.227.213] ([82.33.227.213]:46421 "EHLO
+	glnt272.glos.nhs.uk" rhost-flags-FAIL-FAIL-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751503Ab0DICQX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Apr 2010 16:35:24 -0400
-Received: by gwb19 with SMTP id 19so734080gwb.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 07 Apr 2010 13:35:22 -0700 (PDT)
+	Thu, 8 Apr 2010 22:16:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Anybody using RT Linux with the Sangoma Wanpipe driver?
+I have many good quality American Contact Lists at much lower prices than most sites. Contact me here:  Addie.Cho@optinlists.co.cc for a complete catalogue of what we have.
 
-thanks,
--- 
-Mike
+Best Regards
+
+
+Laurence Page
+ 
+  
+
+
+to adjust your subscription status email to rembox@optinlists.co.cc
