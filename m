@@ -1,55 +1,90 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: Re: 2.6.32 rt patch?
-Date: Mon, 12 Apr 2010 12:09:15 -0700
-Message-ID: <1271099355.19086.23.camel@sven.thebigcorporation.com>
-References: <201004110047.39514@blacky.localdomain>
-	 <alpine.LFD.2.00.1004120933100.18009@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: I attached a test module to reproduce this bug. Does I miss
+ something in my code or is there a bug?
+Date: Mon, 12 Apr 2010 22:32:11 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
+References: <20100412182325.161358ntday18s1o@limpopo.deheime.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Stefan Agner <stefan@agner.ch>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nat.nue.novell.com ([195.135.221.3]:41615 "EHLO
-	emea5-mh.id5.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753754Ab0DLT3X (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 12 Apr 2010 15:29:23 -0400
-In-Reply-To: <alpine.LFD.2.00.1004120933100.18009@localhost.localdomain>
+Received: from www.tglx.de ([62.245.132.106]:48751 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752982Ab0DLUcQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 12 Apr 2010 16:32:16 -0400
+In-Reply-To: <20100412182325.161358ntday18s1o@limpopo.deheime.ch>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-sOn Mon, 2010-04-12 at 09:43 +0200, Thomas Gleixner wrote:
-> On Sun, 11 Apr 2010, Nikita V. Youshchenko wrote:
+Stefan,
+
+please use short and descriptive subject lines. "I attached a test
+module to reproduce this bug ..." does not tell anything.
+
+On Mon, 12 Apr 2010, Stefan Agner wrote:
+
+> Unable to handle kernel paging request at kthread_should_stop
+
+That would have been the real subject line :)
+ 
+> I attached a test module to reproduce this bug.  Does I miss something in my
+> code or is there a bug?
+
+There are several bugs in your code :)
+
+> static int runloop(void *unused)
+> {
 > 
-> > > What's wrong with running a 2.6.NN-rt kernel instead of the distro .32
-> > > one ? 
-> > 
-> > No distro security updates.
-> > No distro-specific patches.
+> 	int ret;
 > 
-> While I can see the point of security updates, I consider the lack of
-> distro patches an achievement.
+> 	/* Daemonize */
+> 	daemonize(MODULE_NAME);
+
+ Do not call daemonize() for a kthread created with kthread_create().
+ That was necessary for kthreads created with kernel_thread.
+
+> 	/* Allow SIGTERM signal */
+> 	allow_signal(SIGTERM);
+
+ Why do you want signals here ?
+
+> 	/* Calculate first shot */
+> 	now = ktime_get();
+> 	thread_next = ktime_add_us(now, 500);
 > 
+> 	do {
+> 		set_current_state(TASK_UNINTERRUPTIBLE);
+> 		ret = schedule_hrtimeout(&thread_next, HRTIMER_MODE_ABS);
+> 		if(ret == -EINTR)
+> 		{
 
-Security fixes do end up in the stable-Kernel series for a while.
-
-After that you might have to look into farming out, or look into
-deploying current Kernels with updates.
-
-Regards,
-
-Sven
-
-
-> Thanks,
+  That EINTR can never happen. You set the task to
+  TASK_UNINTERRUPTIBLE state, so it cannot be woken up by a signal.
+	
+> int __init init_test_module(void)
+> {
+> 	struct sched_param param = { .sched_priority = THREAD_PRIORITY };
 > 
-> 	tglx
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 	/* Kernel Thread erzeugen */
+> 	if(thread == NULL)
+> 		thread = kthread_create((void *)&runloop, NULL, "testthread");
 
+ The init code is called once, so no need to check for thread == NULL
+ before calling kthread_create().
 
+ But you miss to check thread _after_ the call ....
+
+> 	// Realtime scheduler
+> 	sched_setscheduler(thread, THREAD_SCHEDULER, &param);
+
+ Scheduler settings should happen in the thread.
+
+> 	wake_up_process(thread);
+
+ Simply use kthread_run(....), which implies kthread_create() and
+ wake_up_process().
+
+Thanks,
+
+	tglx
