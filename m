@@ -1,90 +1,156 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Stefan Agner <stefan@agner.ch>
 Subject: Re: I attached a test module to reproduce this bug. Does I miss
- something in my code or is there a bug?
-Date: Mon, 12 Apr 2010 22:32:11 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
+	something in my code or is there a bug?
+Date: Tue, 13 Apr 2010 08:56:25 +0200
+Message-ID: <20100413085625.18523z9qoyil6zcw@limpopo.deheime.ch>
 References: <20100412182325.161358ntday18s1o@limpopo.deheime.ch>
+	<alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: multipart/mixed;
+	boundary="=_3yqw8j1z7ji8"
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Stefan Agner <stefan@agner.ch>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:48751 "EHLO www.tglx.de"
+Received: from mail.deheime.ch ([62.12.167.34]:54737 "EHLO limpopo.deheime.ch"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752982Ab0DLUcQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 12 Apr 2010 16:32:16 -0400
-In-Reply-To: <20100412182325.161358ntday18s1o@limpopo.deheime.ch>
+	id S1751247Ab0DMG41 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Apr 2010 02:56:27 -0400
+In-Reply-To: <alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Stefan,
+This message is in MIME format.
 
-please use short and descriptive subject lines. "I attached a test
-module to reproduce this bug ..." does not tell anything.
+--=_3yqw8j1z7ji8
+Content-Type: text/plain;
+	charset=ISO-8859-1;
+	DelSp="Yes";
+	format="flowed"
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-On Mon, 12 Apr 2010, Stefan Agner wrote:
+Hi Thomas,
 
-> Unable to handle kernel paging request at kthread_should_stop
+Quoting Thomas Gleixner <tglx@linutronix.de>:
+> please use short and descriptive subject lines. "I attached a test
+> module to reproduce this bug ..." does not tell anything.
+>
+> On Mon, 12 Apr 2010, Stefan Agner wrote:
+>
+>> Unable to handle kernel paging request at kthread_should_stop
+>
+> That would have been the real subject line :)
+In fact this was my intended Subject line... The current subject line was a
+copy and paste accident! Due to the fact that my online mailer eats mails
+sometimes before I can send them, I wrote it in an editor.
 
-That would have been the real subject line :)
- 
-> I attached a test module to reproduce this bug.  Does I miss something in my
-> code or is there a bug?
+>> I attached a test module to reproduce this bug.  Does I miss something in=
+ my
+>> code or is there a bug?
+>
+> There are several bugs in your code :)
+>
+>> static int runloop(void *unused)
+>> {
+>>
+>> =09int ret;
+>>
+>> =09/* Daemonize */
+>> =09daemonize(MODULE_NAME);
+>
+>  Do not call daemonize() for a kthread created with kthread_create().
+>  That was necessary for kthreads created with kernel_thread.
+Removing this already solved the bug message.
 
-There are several bugs in your code :)
+I fixed all other bugs as well and attached the updated file.
 
-> static int runloop(void *unused)
-> {
-> 
-> 	int ret;
-> 
-> 	/* Daemonize */
-> 	daemonize(MODULE_NAME);
+Thanks a lot
 
- Do not call daemonize() for a kthread created with kthread_create().
- That was necessary for kthreads created with kernel_thread.
+--=20
+Stefan Agner
 
-> 	/* Allow SIGTERM signal */
-> 	allow_signal(SIGTERM);
 
- Why do you want signals here ?
 
-> 	/* Calculate first shot */
-> 	now = ktime_get();
-> 	thread_next = ktime_add_us(now, 500);
-> 
-> 	do {
-> 		set_current_state(TASK_UNINTERRUPTIBLE);
-> 		ret = schedule_hrtimeout(&thread_next, HRTIMER_MODE_ABS);
-> 		if(ret == -EINTR)
-> 		{
+----------------------------------------------------------------
+This message was sent using IMP, the Internet Messaging Program.
 
-  That EINTR can never happen. You set the task to
-  TASK_UNINTERRUPTIBLE state, so it cannot be woken up by a signal.
-	
-> int __init init_test_module(void)
-> {
-> 	struct sched_param param = { .sched_priority = THREAD_PRIORITY };
-> 
-> 	/* Kernel Thread erzeugen */
-> 	if(thread == NULL)
-> 		thread = kthread_create((void *)&runloop, NULL, "testthread");
+--=_3yqw8j1z7ji8
+Content-Type: text/x-csrc;
+	charset=ISO-8859-1;
+	name="kthread-test.c"
+Content-Disposition: inline;
+	filename="kthread-test.c"
+Content-Transfer-Encoding: quoted-printable
 
- The init code is called once, so no need to check for thread == NULL
- before calling kthread_create().
+#include <linux/module.h>
+#include <linux/kthread.h>
+#include <linux/hrtimer.h>
 
- But you miss to check thread _after_ the call ....
+#define THREAD_PRIORITY (80)
+#define THREAD_SCHEDULER SCHED_FIFO
+#define MODULE_NAME "test-module"
+#define KLOG_PREFIX MODULE_NAME ": "
 
-> 	// Realtime scheduler
-> 	sched_setscheduler(thread, THREAD_SCHEDULER, &param);
+struct task_struct *thread;
+static ktime_t thread_next;
+static ktime_t now;
 
- Scheduler settings should happen in the thread.
+/*
+ * Threaded Runloop
+ */
+static int runloop(void *unused)
+{
 
-> 	wake_up_process(thread);
+=09struct sched_param param =3D { .sched_priority =3D THREAD_PRIORITY };
 
- Simply use kthread_run(....), which implies kthread_create() and
- wake_up_process().
+=09/* Set realtime priorty */
+=09sched_setscheduler(thread, THREAD_SCHEDULER, &param);
 
-Thanks,
+=09/* Allow SIGTERM signal */
+=09allow_signal(SIGTERM);
 
-	tglx
+=09/* Calculate first shot */
+=09now =3D ktime_get();
+=09thread_next =3D ktime_add_us(now, 500);
+
+=09do {
+=09=09set_current_state(TASK_UNINTERRUPTIBLE);
+=09=09schedule_hrtimeout(&thread_next, HRTIMER_MODE_ABS);
+
+=09=09thread_next =3D ktime_add_us(thread_next, 500);
+=09} while (!kthread_should_stop());
+
+=09printk(KERN_INFO KLOG_PREFIX "Thread exited\n");
+=09return 0;
+}
+
+int __init init_test_module(void)
+{
+=09/* Create kernel thread */
+=09thread =3D kthread_run((void *)&runloop, NULL, MODULE_NAME);
+        if (IS_ERR(thread))=20
+        {
+=09=09printk(KERN_INFO KLOG_PREFIX ": unable to start kernel thread\n");
+                return -ENOMEM;
+        }
+
+=09return 0;
+}
+
+void __exit cleanup_test_module(void)
+{
+        if(thread !=3D NULL)
+                kthread_stop(thread);
+        thread =3D NULL;
+}
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Stefan Agner <stefan@anger.ch");
+MODULE_DESCRIPTION("kthread test module");
+
+module_init(init_test_module);
+module_exit(cleanup_test_module);
+
+--=_3yqw8j1z7ji8--
+
