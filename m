@@ -1,156 +1,58 @@
-From: Stefan Agner <stefan@agner.ch>
-Subject: Re: I attached a test module to reproduce this bug. Does I miss
-	something in my code or is there a bug?
-Date: Tue, 13 Apr 2010 08:56:25 +0200
-Message-ID: <20100413085625.18523z9qoyil6zcw@limpopo.deheime.ch>
-References: <20100412182325.161358ntday18s1o@limpopo.deheime.ch>
-	<alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
+From: Martin Shepherd <mcs@astro.caltech.edu>
+Subject: Debugging a hard lockup with no symptoms
+Date: Wed, 14 Apr 2010 00:26:11 -0700 (PDT)
+Message-ID: <Pine.LNX.4.64.1004132345050.14952@haggis.caltech.edu>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="=_3yqw8j1z7ji8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.deheime.ch ([62.12.167.34]:54737 "EHLO limpopo.deheime.ch"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751247Ab0DMG41 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Apr 2010 02:56:27 -0400
-In-Reply-To: <alpine.LFD.2.00.1004122207300.18009@localhost.localdomain>
+Received: from phobos.caltech.edu ([131.215.193.100]:54008 "EHLO
+	phobos.caltech.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752258Ab0DNH4Y (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Apr 2010 03:56:24 -0400
+Received: from haggis.caltech.edu (haggis [131.215.193.40])
+	by phobos.caltech.edu (8.14.3/8.14.3) with ESMTP id o3E7QEGm014830
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Wed, 14 Apr 2010 00:26:14 -0700 (PDT)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by haggis.caltech.edu (8.13.8/8.12.8) with ESMTP id o3E7QBJQ017926
+	for <linux-rt-users@vger.kernel.org>; Wed, 14 Apr 2010 00:26:11 -0700
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This message is in MIME format.
+I have been experiencing hard lockups running a real-time application
+under preempt-rt. Having originally had this problem while running
+under 2.6.29.4-rt16, today I upgraded to 2.6.31.12-rt21, but the
+problem persisted. Under both kernels, the computer simply freezes,
+usually after a few hours of otherwise flawless operation. Nothing
+appears on the serial console or in the system log when the system
+freezes. Unfortunately, turning on the NMI watchdog stops the freezes
+from occurring at all, such that I can't force an Oops that way.
 
---=_3yqw8j1z7ji8
-Content-Type: text/plain;
-	charset=ISO-8859-1;
-	DelSp="Yes";
-	format="flowed"
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I have tried running memtest86 on the RAM, without detecting any
+memory errors, and I have verified that the same problem occurs on two
+different (but essentially identical) computers.
 
-Hi Thomas,
+I wonder whether there might be a clue in the fact that turning on the
+NMI watchdog stops the freezes from occuring. Turning on the watchdog
+unfortunately turns off tickless mode, which I need. According to the
+boot-time messages, tickless is turned off because the local APIC is
+non-functional (presumably because the NMI watchdog is using it). What
+kind of bugs would be more likely to be seen when running under
+tickless?
 
-Quoting Thomas Gleixner <tglx@linutronix.de>:
-> please use short and descriptive subject lines. "I attached a test
-> module to reproduce this bug ..." does not tell anything.
->
-> On Mon, 12 Apr 2010, Stefan Agner wrote:
->
->> Unable to handle kernel paging request at kthread_should_stop
->
-> That would have been the real subject line :)
-In fact this was my intended Subject line... The current subject line was a
-copy and paste accident! Due to the fact that my online mailer eats mails
-sometimes before I can send them, I wrote it in an editor.
+Could anybody give me any ideas on how to further debug this problem?
+I have been trying to figure this out for weeks, but I haven't found
+any clues.
 
->> I attached a test module to reproduce this bug.  Does I miss something in=
- my
->> code or is there a bug?
->
-> There are several bugs in your code :)
->
->> static int runloop(void *unused)
->> {
->>
->> =09int ret;
->>
->> =09/* Daemonize */
->> =09daemonize(MODULE_NAME);
->
->  Do not call daemonize() for a kthread created with kthread_create().
->  That was necessary for kthreads created with kernel_thread.
-Removing this already solved the bug message.
+In case it is important, the CPU is a 1.8GHz Intel Celeron, on a
+Foxconn motherboard with an Intel G31 chipset, and Intel GMA 3100
+onboard graphics. I am running the kernel (downloaded from kernel.org)
+under Unbuntu 9.10. The computer also hosts two commercial digital I/O
+boards, both generating interrupts, and one commercial analog I/O
+board.
 
-I fixed all other bugs as well and attached the updated file.
+Thank you,
 
-Thanks a lot
-
---=20
-Stefan Agner
-
-
-
-----------------------------------------------------------------
-This message was sent using IMP, the Internet Messaging Program.
-
---=_3yqw8j1z7ji8
-Content-Type: text/x-csrc;
-	charset=ISO-8859-1;
-	name="kthread-test.c"
-Content-Disposition: inline;
-	filename="kthread-test.c"
-Content-Transfer-Encoding: quoted-printable
-
-#include <linux/module.h>
-#include <linux/kthread.h>
-#include <linux/hrtimer.h>
-
-#define THREAD_PRIORITY (80)
-#define THREAD_SCHEDULER SCHED_FIFO
-#define MODULE_NAME "test-module"
-#define KLOG_PREFIX MODULE_NAME ": "
-
-struct task_struct *thread;
-static ktime_t thread_next;
-static ktime_t now;
-
-/*
- * Threaded Runloop
- */
-static int runloop(void *unused)
-{
-
-=09struct sched_param param =3D { .sched_priority =3D THREAD_PRIORITY };
-
-=09/* Set realtime priorty */
-=09sched_setscheduler(thread, THREAD_SCHEDULER, &param);
-
-=09/* Allow SIGTERM signal */
-=09allow_signal(SIGTERM);
-
-=09/* Calculate first shot */
-=09now =3D ktime_get();
-=09thread_next =3D ktime_add_us(now, 500);
-
-=09do {
-=09=09set_current_state(TASK_UNINTERRUPTIBLE);
-=09=09schedule_hrtimeout(&thread_next, HRTIMER_MODE_ABS);
-
-=09=09thread_next =3D ktime_add_us(thread_next, 500);
-=09} while (!kthread_should_stop());
-
-=09printk(KERN_INFO KLOG_PREFIX "Thread exited\n");
-=09return 0;
-}
-
-int __init init_test_module(void)
-{
-=09/* Create kernel thread */
-=09thread =3D kthread_run((void *)&runloop, NULL, MODULE_NAME);
-        if (IS_ERR(thread))=20
-        {
-=09=09printk(KERN_INFO KLOG_PREFIX ": unable to start kernel thread\n");
-                return -ENOMEM;
-        }
-
-=09return 0;
-}
-
-void __exit cleanup_test_module(void)
-{
-        if(thread !=3D NULL)
-                kthread_stop(thread);
-        thread =3D NULL;
-}
-
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Stefan Agner <stefan@anger.ch");
-MODULE_DESCRIPTION("kthread test module");
-
-module_init(init_test_module);
-module_exit(cleanup_test_module);
-
---=_3yqw8j1z7ji8--
-
+Martin
