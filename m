@@ -1,83 +1,248 @@
-From: "M. Koehrer" <mathias_koehrer@arcor.de>
-Subject: Looking for a real time IPC to be used with select
-Date: Fri, 16 Apr 2010 16:12:53 +0200 (CEST)
-Message-ID: <3215024.1271427173625.JavaMail.ngmail@webmail08.arcor-online.net>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [RFC: PATCH v2] lockdep: Make MAX_STACK_TRACE_ENTRIES
+ configurable.
+Date: Fri, 16 Apr 2010 17:29:05 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
+References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>
+To: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-in-16.arcor-online.net ([151.189.21.56]:55994 "EHLO
-	mail-in-16.arcor-online.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1758418Ab0DPOM4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Apr 2010 10:12:56 -0400
-Received: from mail-in-02-z2.arcor-online.net (mail-in-02-z2.arcor-online.net [151.189.8.14])
-	by mx.arcor.de (Postfix) with ESMTP id CA589256DD8
-	for <linux-rt-users@vger.kernel.org>; Fri, 16 Apr 2010 16:12:53 +0200 (CEST)
-Received: from mail-in-08.arcor-online.net (mail-in-08.arcor-online.net [151.189.21.48])
-	by mail-in-02-z2.arcor-online.net (Postfix) with ESMTP id B3A48115963
-	for <linux-rt-users@vger.kernel.org>; Fri, 16 Apr 2010 16:12:53 +0200 (CEST)
-Received: from webmail08.arcor-online.net (webmail08.arcor-online.net [151.189.8.44])
-	by mail-in-08.arcor-online.net (Postfix) with ESMTP id A366E2AEA83
-	for <linux-rt-users@vger.kernel.org>; Fri, 16 Apr 2010 16:12:53 +0200 (CEST)
+Received: from mx1.redhat.com ([209.132.183.28]:35690 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751710Ab0DPP3g (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Apr 2010 11:29:36 -0400
+In-Reply-To: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
-
-I have a real time application with a couple of threads.
-One thread is waiting on a select() call (with timeout)
-for data coming in from a UDP Ethernet socket.
-Once it gets data it does some computation and finally 
-leads to the writing of data on the UDP socket.
-
-The (simplified) code for this real time thread is:
-
-void *thread_func_A(void *arg)
-{
-  while (1)
-  {
-     rc = select(...); // Read socket with timeout_value);
-     if (rc > 0)
-     {
-        recv(.., data, .. ); // recv data from socket
-        compute(data, data2);       // Compute data and modify them to data2
-        send(..., data2, ...); // Send data2 to socket
-     }
-   }
-}
-
-This works fine.
-
-Now I have the need that another real time thread B should also be able
-to trigger the "select()" in the thread_func_A() above.
-This means, I should add a suitable inter-process-communication
-between thread A and B that can be used with select() as well.
-Having this, the thread A can be triggered by the socket or
-by the IPC from thread B by adding two file desciptors to the readfds
-of select().
-
-My question is now: What kind of IPC is preferred here?
-The only IPC I see is a local socket communication, however
-this looks like a huge overhead for triggering...
-
-Both, threads A and B are real time threads, thus any IPC in use
-should be supported by the RT_PREEMPT patch.
-
-Setup: PC (Core2Quad, kernel 2.6.31.2-rt13)
-
-Thanks for any feedback on this question.
-
-Regards
-
-Mathias
 
 
+On Fri, 16 Apr 2010, John Kacur wrote:
 
+> 
+> This patch was created against v2.6.33.2-rt13 but is also intended for 
+> mainline.
+> 
+> Certain debug configurations tend to go over the MAX_STACK_TRACE_ENTRIES
+> limit without there really being any problem.
+> 
+> This patch keeps the old default, but allows the user to configure a 
+> higher value if desired.
+> 
+> I tend to bump this value up for real-time debug configurations for 
+> example. This is preferrable to indiscriminately turning off the locking 
+> correctness validator.
+> 
+> There have been some attempts to increase the default value in the past, 
+> that were met with resistance by some, because of the legitimate concern 
+> that this was growing too large and that we need to understand why. By 
+> making it configurable, I hope to satisfy both sets of people - those who 
+> believe they need to set it larger under special circumstances, and those 
+> who want a reasonably small default.
+> 
+> From 57479e7620d312353f5f5b173742e011896a9c74 Mon Sep 17 00:00:00 2001
+> From: John Kacur <jkacur@redhat.com>
+> Date: Fri, 16 Apr 2010 13:24:02 +0200
+> Subject: [RFC: PATCH] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
+> 
+> Certain configurations that have LOCKDEP turned on, run into the limit
+> where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply
+> turning of the locking correctness validator let the user configure this
+> value to something reasonable for their system.
+> 
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  kernel/lockdep.c           |    8 ++++----
+>  kernel/lockdep_internals.h |    6 ------
+>  lib/Kconfig.debug          |    9 +++++++++
+>  3 files changed, 13 insertions(+), 10 deletions(-)
+> 
+> diff --git a/kernel/lockdep.c b/kernel/lockdep.c
+> index 1199bda..6030521 100644
+> --- a/kernel/lockdep.c
+> +++ b/kernel/lockdep.c
+> @@ -368,12 +368,12 @@ static int verbose(struct lock_class *class)
+>   * addresses. Protected by the graph_lock.
+>   */
+>  unsigned long nr_stack_trace_entries;
+> -static unsigned long stack_trace[MAX_STACK_TRACE_ENTRIES];
+> +static unsigned long stack_trace[CONFIG_MAX_STACK_TRACE_ENTRIES];
+>  
+>  static int save_trace(struct stack_trace *trace)
+>  {
+>  	trace->nr_entries = 0;
+> -	trace->max_entries = MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
+> +	trace->max_entries = CONFIG_MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
+>  	trace->entries = stack_trace + nr_stack_trace_entries;
+>  
+>  	trace->skip = 3;
+> @@ -395,11 +395,11 @@ static int save_trace(struct stack_trace *trace)
+>  
+>  	nr_stack_trace_entries += trace->nr_entries;
+>  
+> -	if (nr_stack_trace_entries >= MAX_STACK_TRACE_ENTRIES-1) {
+> +	if (nr_stack_trace_entries >= CONFIG_MAX_STACK_TRACE_ENTRIES-1) {
+>  		if (!debug_locks_off_graph_unlock())
+>  			return 0;
+>  
+> -		printk("BUG: MAX_STACK_TRACE_ENTRIES too low!\n");
+> +		printk("BUG: CONFIG_MAX_STACK_TRACE_ENTRIES = %d too low!\n", CONFIG_MAX_STACK_TRACE_ENTRIES);
+>  		printk("turning off the locking correctness validator.\n");
+>  		dump_stack();
+>  
+> diff --git a/kernel/lockdep_internals.h b/kernel/lockdep_internals.h
+> index a2ee95a..6887711 100644
+> --- a/kernel/lockdep_internals.h
+> +++ b/kernel/lockdep_internals.h
+> @@ -61,12 +61,6 @@ enum {
+>  
+>  #define MAX_LOCKDEP_CHAIN_HLOCKS (MAX_LOCKDEP_CHAINS*5)
+>  
+> -/*
+> - * Stack-trace: tightly packed array of stack backtrace
+> - * addresses. Protected by the hash_lock.
+> - */
+> -#define MAX_STACK_TRACE_ENTRIES	262144UL
+> -
+>  extern struct list_head all_lock_classes;
+>  extern struct lock_chain lock_chains[];
+>  
+> diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+> index cbf6e02..ad35402 100644
+> --- a/lib/Kconfig.debug
+> +++ b/lib/Kconfig.debug
+> @@ -509,6 +509,15 @@ config LOCKDEP
+>  	select KALLSYMS
+>  	select KALLSYMS_ALL
+>  
+> +config MAX_STACK_TRACE_ENTRIES
+> +	int "MAX_STACK_TRACE_ENTRIES for LOCKDEP"
+> +	depends on LOCKDEP
+> +	default 262144
+> +	help
+> +	   This option allows you to change the default MAX_STACK_TRACE_ENTRIES
+> +	   used for LOCKDEP. Warning, increasing this number will increase the
+> +	   size of the stack_trace array, and thus the kernel size too.
+> +
+>  config LOCK_STAT
+>  	bool "Lock usage statistics"
+>  	depends on DEBUG_KERNEL && TRACE_IRQFLAGS_SUPPORT && STACKTRACE_SUPPORT && LOCKDEP_SUPPORT
+> -- 
+> 1.6.6.1
+> 
+> 
+
+I missed the MAX_STACK_TRACE_ENTRIES in kernel/lockdep_proc.c
+This corrects that.
+
+>From 66b4fa66afefb9e22047ddc5a68c9886e1a59cf6 Mon Sep 17 00:00:00 2001
+From: John Kacur <jkacur@redhat.com>
+Date: Fri, 16 Apr 2010 13:24:02 +0200
+Subject: [PATCH] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
+
+Certain configurations that have LOCKDEP turned on, run into the limit
+where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply
+turning of the locking correctness validator let the user configure this
+value to something reasonable for their system.
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ kernel/lockdep.c           |    8 ++++----
+ kernel/lockdep_internals.h |    6 ------
+ kernel/lockdep_proc.c      |    2 +-
+ lib/Kconfig.debug          |    9 +++++++++
+ 4 files changed, 14 insertions(+), 11 deletions(-)
+
+diff --git a/kernel/lockdep.c b/kernel/lockdep.c
+index 1199bda..6030521 100644
+--- a/kernel/lockdep.c
++++ b/kernel/lockdep.c
+@@ -368,12 +368,12 @@ static int verbose(struct lock_class *class)
+  * addresses. Protected by the graph_lock.
+  */
+ unsigned long nr_stack_trace_entries;
+-static unsigned long stack_trace[MAX_STACK_TRACE_ENTRIES];
++static unsigned long stack_trace[CONFIG_MAX_STACK_TRACE_ENTRIES];
+ 
+ static int save_trace(struct stack_trace *trace)
+ {
+ 	trace->nr_entries = 0;
+-	trace->max_entries = MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
++	trace->max_entries = CONFIG_MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
+ 	trace->entries = stack_trace + nr_stack_trace_entries;
+ 
+ 	trace->skip = 3;
+@@ -395,11 +395,11 @@ static int save_trace(struct stack_trace *trace)
+ 
+ 	nr_stack_trace_entries += trace->nr_entries;
+ 
+-	if (nr_stack_trace_entries >= MAX_STACK_TRACE_ENTRIES-1) {
++	if (nr_stack_trace_entries >= CONFIG_MAX_STACK_TRACE_ENTRIES-1) {
+ 		if (!debug_locks_off_graph_unlock())
+ 			return 0;
+ 
+-		printk("BUG: MAX_STACK_TRACE_ENTRIES too low!\n");
++		printk("BUG: CONFIG_MAX_STACK_TRACE_ENTRIES = %d too low!\n", CONFIG_MAX_STACK_TRACE_ENTRIES);
+ 		printk("turning off the locking correctness validator.\n");
+ 		dump_stack();
+ 
+diff --git a/kernel/lockdep_internals.h b/kernel/lockdep_internals.h
+index a2ee95a..6887711 100644
+--- a/kernel/lockdep_internals.h
++++ b/kernel/lockdep_internals.h
+@@ -61,12 +61,6 @@ enum {
+ 
+ #define MAX_LOCKDEP_CHAIN_HLOCKS (MAX_LOCKDEP_CHAINS*5)
+ 
+-/*
+- * Stack-trace: tightly packed array of stack backtrace
+- * addresses. Protected by the hash_lock.
+- */
+-#define MAX_STACK_TRACE_ENTRIES	262144UL
+-
+ extern struct list_head all_lock_classes;
+ extern struct lock_chain lock_chains[];
+ 
+diff --git a/kernel/lockdep_proc.c b/kernel/lockdep_proc.c
+index d4aba4f..97fcb31 100644
+--- a/kernel/lockdep_proc.c
++++ b/kernel/lockdep_proc.c
+@@ -306,7 +306,7 @@ static int lockdep_stats_show(struct seq_file *m, void *v)
+ 	seq_printf(m, " in-process chains:             %11u\n",
+ 			nr_process_chains);
+ 	seq_printf(m, " stack-trace entries:           %11lu [max: %lu]\n",
+-			nr_stack_trace_entries, MAX_STACK_TRACE_ENTRIES);
++			nr_stack_trace_entries, CONFIG_MAX_STACK_TRACE_ENTRIES);
+ 	seq_printf(m, " combined max dependencies:     %11u\n",
+ 			(nr_hardirq_chains + 1) *
+ 			(nr_softirq_chains + 1) *
+diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
+index cbf6e02..ad35402 100644
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -509,6 +509,15 @@ config LOCKDEP
+ 	select KALLSYMS
+ 	select KALLSYMS_ALL
+ 
++config MAX_STACK_TRACE_ENTRIES
++	int "MAX_STACK_TRACE_ENTRIES for LOCKDEP"
++	depends on LOCKDEP
++	default 262144
++	help
++	   This option allows you to change the default MAX_STACK_TRACE_ENTRIES
++	   used for LOCKDEP. Warning, increasing this number will increase the
++	   size of the stack_trace array, and thus the kernel size too.
++
+ config LOCK_STAT
+ 	bool "Lock usage statistics"
+ 	depends on DEBUG_KERNEL && TRACE_IRQFLAGS_SUPPORT && STACKTRACE_SUPPORT && LOCKDEP_SUPPORT
 -- 
-Mathias Koehrer
-mathias_koehrer@arcor.de
+1.6.6.1
 
-
-Traumziele - von Beschreibung bis Buchung jetzt kompakt auf den Reise-Seiten von Arcor.de! http://www.arcor.de/rd/footer.reise
