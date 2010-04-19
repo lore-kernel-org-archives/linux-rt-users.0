@@ -1,146 +1,84 @@
-From: John Kacur <jkacur@gmail.com>
-Subject: Re: [RFC: PATCH v2] lockdep: Make MAX_STACK_TRACE_ENTRIES
- configurable.
-Date: Mon, 19 Apr 2010 18:51:57 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1004191841230.6259@localhost>
-References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain> <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
+From: Primiano Tucci <p.tucci@gmail.com>
+Subject: Re: Strange behavior of pthread_setaffinity_np
+Date: Mon, 19 Apr 2010 22:18:56 +0200
+Message-ID: <p2mc5b2c05b1004191318u59896234n3a7d5383fa67fe5a@mail.gmail.com>
+References: <z2hc5b2c05b1004190245od92c276n6933d75f9d4d2669@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f225.google.com ([209.85.218.225]:64926 "EHLO
-	mail-bw0-f225.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752988Ab0DSQwW (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:48371 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750752Ab0DSUS6 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Apr 2010 12:52:22 -0400
-In-Reply-To: <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
+	Mon, 19 Apr 2010 16:18:58 -0400
+Received: by wyb39 with SMTP id 39so2816435wyb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Apr 2010 13:18:56 -0700 (PDT)
+In-Reply-To: <z2hc5b2c05b1004190245od92c276n6933d75f9d4d2669@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Ingo, since nobody responded to my RFC, I am assuming that the change
-is not controversial, would you please consider pulling this into tip
-for 2.6.35?
+I think I solved the question:
+pthread_setaffinity_np is based on sched_setaffinity syscall.
+Actually sched_setaffinity performs a read_lock(&tasklist_lock);
+However, with the introduction of the PREEMPT_RT patch, the read_lock
+is preemptible, thats why the Thread T0 Yields in favor of T2.
 
-What followed is v2 of the patch regenerated against the latest
-tip/master
+I think the sched.c should be revised regarding the PREEMPT_RT patch,
+and the scheduling related syscalls should adopt non pre-emptible
+(e.g. raw_spinlock_t) spinlocks rather than preemptible one, in order
+to avoid unwilling behaviors like the one showed.
 
-Thanks
-John
+Regards,
+Primiano
 
->From b47fcc543e55b6d1a89c5cdf0f3f7501728bb8e1 Mon Sep 17 00:00:00 2001
-From: John Kacur <jkacur@redhat.com>
-Date: Fri, 16 Apr 2010 13:24:02 +0200
-Subject: [PATCH] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
-Cc: Ingo Molnar <mingo@elte.hu>,
-    Peter Zijlstra <a.p.zijlstra@chello.nl>,
-    Thomas Gleixner <tglx@linutronix.de>,
-    Clark Williams <williams@redhat.com>,
-    Luis Claudio R. Goncalves <lgoncalv@redhat.com>,
-    Andrew Morton <akpm@linux-foundation.org>
 
-Certain configurations that have LOCKDEP turned on, run into the limit
-where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply
-turning of the locking correctness validator let the user configure this
-value to something reasonable for their system.
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- kernel/lockdep.c           |    8 ++++----
- kernel/lockdep_internals.h |    6 ------
- kernel/lockdep_proc.c      |    2 +-
- lib/Kconfig.debug          |    9 +++++++++
- 4 files changed, 14 insertions(+), 11 deletions(-)
-
-diff --git a/kernel/lockdep.c b/kernel/lockdep.c
-index 78325f8..2acc25d 100644
---- a/kernel/lockdep.c
-+++ b/kernel/lockdep.c
-@@ -369,12 +369,12 @@ static int verbose(struct lock_class *class)
-  * addresses. Protected by the graph_lock.
-  */
- unsigned long nr_stack_trace_entries;
--static unsigned long stack_trace[MAX_STACK_TRACE_ENTRIES];
-+static unsigned long stack_trace[CONFIG_MAX_STACK_TRACE_ENTRIES];
- 
- static int save_trace(struct stack_trace *trace)
- {
- 	trace->nr_entries = 0;
--	trace->max_entries = MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
-+	trace->max_entries = CONFIG_MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries;
- 	trace->entries = stack_trace + nr_stack_trace_entries;
- 
- 	trace->skip = 3;
-@@ -396,11 +396,11 @@ static int save_trace(struct stack_trace *trace)
- 
- 	nr_stack_trace_entries += trace->nr_entries;
- 
--	if (nr_stack_trace_entries >= MAX_STACK_TRACE_ENTRIES-1) {
-+	if (nr_stack_trace_entries >= CONFIG_MAX_STACK_TRACE_ENTRIES-1) {
- 		if (!debug_locks_off_graph_unlock())
- 			return 0;
- 
--		printk("BUG: MAX_STACK_TRACE_ENTRIES too low!\n");
-+		printk("BUG: CONFIG_MAX_STACK_TRACE_ENTRIES = %d too low!\n", CONFIG_MAX_STACK_TRACE_ENTRIES);
- 		printk("turning off the locking correctness validator.\n");
- 		dump_stack();
- 
-diff --git a/kernel/lockdep_internals.h b/kernel/lockdep_internals.h
-index 8d7d4b6..e2585ff 100644
---- a/kernel/lockdep_internals.h
-+++ b/kernel/lockdep_internals.h
-@@ -61,12 +61,6 @@ enum {
- 
- #define MAX_LOCKDEP_CHAIN_HLOCKS (MAX_LOCKDEP_CHAINS*5)
- 
--/*
-- * Stack-trace: tightly packed array of stack backtrace
-- * addresses. Protected by the hash_lock.
-- */
--#define MAX_STACK_TRACE_ENTRIES	262144UL
--
- extern struct list_head all_lock_classes;
- extern struct lock_chain lock_chains[];
- 
-diff --git a/kernel/lockdep_proc.c b/kernel/lockdep_proc.c
-index 59b76c8..924e0e9 100644
---- a/kernel/lockdep_proc.c
-+++ b/kernel/lockdep_proc.c
-@@ -306,7 +306,7 @@ static int lockdep_stats_show(struct seq_file *m, void *v)
- 	seq_printf(m, " in-process chains:             %11u\n",
- 			nr_process_chains);
- 	seq_printf(m, " stack-trace entries:           %11lu [max: %lu]\n",
--			nr_stack_trace_entries, MAX_STACK_TRACE_ENTRIES);
-+			nr_stack_trace_entries, CONFIG_MAX_STACK_TRACE_ENTRIES);
- 	seq_printf(m, " combined max dependencies:     %11u\n",
- 			(nr_hardirq_chains + 1) *
- 			(nr_softirq_chains + 1) *
-diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 0bbd5c7..38d3bf3 100644
---- a/lib/Kconfig.debug
-+++ b/lib/Kconfig.debug
-@@ -533,6 +533,15 @@ config LOCKDEP
- 	select KALLSYMS
- 	select KALLSYMS_ALL
- 
-+config MAX_STACK_TRACE_ENTRIES
-+	int "MAX_STACK_TRACE_ENTRIES for LOCKDEP"
-+	depends on LOCKDEP
-+	default 262144
-+	help
-+	   This option allows you to change the default MAX_STACK_TRACE_ENTRIES
-+	   used for LOCKDEP. Warning, increasing this number will increase the
-+	   size of the stack_trace array, and thus the kernel size too.
-+
- config LOCK_STAT
- 	bool "Lock usage statistics"
- 	depends on DEBUG_KERNEL && TRACE_IRQFLAGS_SUPPORT && STACKTRACE_SUPPORT && LOCKDEP_SUPPORT
--- 
-1.6.6.1
-
+On Mon, Apr 19, 2010 at 11:45 AM, Primiano Tucci <p.tucci@gmail.com> wr=
+ote:
+> Hi all,
+> I am an Italian researcher and I am working on a Real Time scheduling
+> infrastructure. I am currently using Linux Kernel 2.6.29.6-rt24-smp
+> (PREEMPT-RT Patch) running on a Intel Q9550 CPU.
+> I am experiencing strange behaviors with the pthread_setaffinity_np A=
+PI.
+>
+> This is my scenario, I have 4 Real Time Threads (SCHED_FIFO)
+> distributed as follows:
+>
+> T0 : CPU 0, Priority 2 (HIGH)
+> T1 : CPU 1, Priority 2 (HIGH)
+> T3 : CPU 0, Priority 1 (LOW)
+> T4 : CPU 1, Priority 1 (LOW)
+>
+> So T0 and T1 are actually the "big bosses" on CPUs #0 and #1, T3 and
+> T4, instead, never execute (let's assume that each thread is a simple
+> busy wait that never sleeps/yields)
+> Now, at a certain point, from T0 code, I want to migrate T4 from CPU
+> #1 to #0, keeping its low priority.
+> Therefore I perform a pthread_setaffinity_np from T0 changing T4 mask
+> from CPU #1 to #0.
+>
+> In this scenario it happens that T3 (that should never execute since
+> there is T0 with higher priority currently running on the same CPU #0=
+)
+> "emerge" and executes for a bit.
+> It seems that the pthread_setaffinity_np syscall is somehow
+> "suspensive" for the time needed to migrate T4 and let the scheduler
+> to execute T3 for that bunch of time.
+>
+> Is this behavior expected (I did not find any documentation about
+> this)? How can avoid it?
+>
+> Thanks in advance,
+> Primiano
+>
+> --
+> =A0Primiano Tucci
+> =A0http://www.primianotucci.com
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
