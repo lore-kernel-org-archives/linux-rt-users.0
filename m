@@ -1,49 +1,56 @@
-From: "M. Koehrer" <mathias_koehrer@arcor.de>
-Subject: Re: Re: Looking for a real time IPC to be used with select
-Date: Mon, 19 Apr 2010 08:31:59 +0200 (CEST)
-Message-ID: <29168504.1271658719738.JavaMail.ngmail@webmail18.arcor-online.net>
-References: <r2r6d09081c1004170742ia4f0b1c5vfa51005c934617fd@mail.gmail.com> <3215024.1271427173625.JavaMail.ngmail@webmail08.arcor-online.net>
+From: Primiano Tucci <p.tucci@gmail.com>
+Subject: Strange behavior of pthread_setaffinity_np
+Date: Mon, 19 Apr 2010 11:45:12 +0200
+Message-ID: <z2hc5b2c05b1004190245od92c276n6933d75f9d4d2669@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: pradysam@gmail.com, mathias_koehrer@arcor.de
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-in-04.arcor-online.net ([151.189.21.44]:46947 "EHLO
-	mail-in-04.arcor-online.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751214Ab0DSGcB (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:43170 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751398Ab0DSJpP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Apr 2010 02:32:01 -0400
-In-Reply-To: <r2r6d09081c1004170742ia4f0b1c5vfa51005c934617fd@mail.gmail.com>
+	Mon, 19 Apr 2010 05:45:15 -0400
+Received: by wyb39 with SMTP id 39so2368215wyb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 19 Apr 2010 02:45:13 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Pradyumna,
+Hi all,
+I am an Italian researcher and I am working on a Real Time scheduling
+infrastructure. I am currently using Linux Kernel 2.6.29.6-rt24-smp
+(PREEMPT-RT Patch) running on a Intel Q9550 CPU.
+I am experiencing strange behaviors with the pthread_setaffinity_np API.
 
-thanks for this approach!
+This is my scenario, I have 4 Real Time Threads (SCHED_FIFO)
+distributed as follows:
 
-> > My question is now: What kind of IPC is preferred here?
-> > The only IPC I see is a local socket communication, however
-> > this looks like a huge overhead for triggering...
-> 
-> POSIX message queues in the kernel work fine for me. I had one problem
-> with the accuracy of the timeouts in mq_timedreceieve and mq_timedsend
-> which has been now fixed and is available as part of the latest -rt
-> patch.
-I read again the man page "mq_overview" and found that the message queue descriptor 
-could be used with select/poll! That's a point I have not realized so far.
-Thus, this allows to use this as another promising approach!
-BTW: When I use select() for the timeouts and mq_receive (instead of mq_timedreceive), 
-I hope to find no accuaracy issue... 
-I think select() is using high accuracy with the timeout in -rt.
+T0 : CPU 0, Priority 2 (HIGH)
+T1 : CPU 1, Priority 2 (HIGH)
+T3 : CPU 0, Priority 1 (LOW)
+T4 : CPU 1, Priority 1 (LOW)
 
-Regards
+So T0 and T1 are actually the "big bosses" on CPUs #0 and #1, T3 and
+T4, instead, never execute (let's assume that each thread is a simple
+busy wait that never sleeps/yields)
+Now, at a certain point, from T0 code, I want to migrate T4 from CPU
+#1 to #0, keeping its low priority.
+Therefore I perform a pthread_setaffinity_np from T0 changing T4 mask
+from CPU #1 to #0.
 
-Mathias
+In this scenario it happens that T3 (that should never execute since
+there is T0 with higher priority currently running on the same CPU #0)
+"emerge" and executes for a bit.
+It seems that the pthread_setaffinity_np syscall is somehow
+"suspensive" for the time needed to migrate T4 and let the scheduler
+to execute T3 for that bunch of time.
 
--- 
-Mathias Koehrer
-mathias_koehrer@arcor.de
+Is this behavior expected (I did not find any documentation about
+this)? How can avoid it?
 
+Thanks in advance,
+Primiano
 
-Traumziele - von Beschreibung bis Buchung jetzt kompakt auf den Reise-Seiten von Arcor.de! http://www.arcor.de/rd/footer.reise
+--
+ Primiano Tucci
+ http://www.primianotucci.com
