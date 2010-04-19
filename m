@@ -1,127 +1,68 @@
-From: Sujit K M <sjt.kar@gmail.com>
-Subject: Re: Looking for a real time IPC to be used with select
-Date: Sun, 18 Apr 2010 10:13:25 +0530
-Message-ID: <h2v921ca19c1004172143qbd48d15axe1ba6c2a9f6a35fd@mail.gmail.com>
-References: <3215024.1271427173625.JavaMail.ngmail@webmail08.arcor-online.net>
+From: Norval Watson <norv2001@yahoo.com.au>
+Subject: 2.6.33.2-rt13 make fails
+Date: Sun, 18 Apr 2010 18:29:21 -0700 (PDT)
+Message-ID: <225987.20129.qm@web111305.mail.gq1.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: "M. Koehrer" <mathias_koehrer@arcor.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f196.google.com ([209.85.221.196]:48817 "EHLO
-	mail-qy0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750978Ab0DREn1 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 18 Apr 2010 00:43:27 -0400
-Received: by qyk34 with SMTP id 34so4727161qyk.22
-        for <linux-rt-users@vger.kernel.org>; Sat, 17 Apr 2010 21:43:26 -0700 (PDT)
-In-Reply-To: <3215024.1271427173625.JavaMail.ngmail@webmail08.arcor-online.net>
+Received: from web111305.mail.gq1.yahoo.com ([67.195.15.155]:36314 "HELO
+	web111305.mail.gq1.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1754077Ab0DSBgE convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 18 Apr 2010 21:36:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> I have a real time application with a couple of threads.
-> One thread is waiting on a select() call (with timeout)
-> for data coming in from a UDP Ethernet socket.
-> Once it gets data it does some computation and finally
-> leads to the writing of data on the UDP socket.
->
-> The (simplified) code for this real time thread is:
->
-> void *thread_func_A(void *arg)
-> {
-> =A0while (1)
-> =A0{
-> =A0 =A0 rc =3D select(...); // Read socket with timeout_value);
-> =A0 =A0 if (rc > 0)
-> =A0 =A0 {
-> =A0 =A0 =A0 =A0recv(.., data, .. ); // recv data from socket
-> =A0 =A0 =A0 =A0compute(data, data2); =A0 =A0 =A0 // Compute data and =
-modify them to data2
-> =A0 =A0 =A0 =A0send(..., data2, ...); // Send data2 to socket
-> =A0 =A0 }
-> =A0 }
-> }
->
-> This works fine.
->
-> Now I have the need that another real time thread B should also be ab=
-le
-> to trigger the "select()" in the thread_func_A() above.
+Hi,
+I just tried to build 2.6.33.2-rt13 kernel on a debian sid 32-bit insta=
+ll.
+make failed thus:
 
-You mean you want to timeout the thread_func_A() Select.
+<snip>
+ CC [M]  drivers/staging/comedi/drivers/quatech_daqp_cs.o
+drivers/staging/comedi/drivers/quatech_daqp_cs.c:70: error: field =E2=80=
+=98eos=E2=80=99 has incomplete type
+drivers/staging/comedi/drivers/quatech_daqp_cs.c: In function =E2=80=98=
+daqp_interrupt=E2=80=99:
+drivers/staging/comedi/drivers/quatech_daqp_cs.c:291: error: implicit d=
+eclaration of function =E2=80=98up=E2=80=99
+drivers/staging/comedi/drivers/quatech_daqp_cs.c: In function =E2=80=98=
+daqp_ai_insn_read=E2=80=99:
+drivers/staging/comedi/drivers/quatech_daqp_cs.c:405: error: implicit d=
+eclaration of function =E2=80=98sema_init=E2=80=99
+drivers/staging/comedi/drivers/quatech_daqp_cs.c:418: error: implicit d=
+eclaration of function =E2=80=98down_interruptible=E2=80=99
+drivers/staging/comedi/drivers/quatech_daqp_cs.c: In function =E2=80=98=
+daqp_cs_attach=E2=80=99:
+drivers/staging/comedi/drivers/quatech_daqp_cs.c:1045: warning: assignm=
+ent from incompatible pointer type
+make[5]: *** [drivers/staging/comedi/drivers/quatech_daqp_cs.o] Error 1
+make[4]: *** [drivers/staging/comedi/drivers] Error 2
+make[3]: *** [drivers/staging/comedi] Error 2
+make[2]: *** [drivers/staging] Error 2
+make[2]: *** Waiting for unfinished jobs....
+  CC [M]  drivers/net/wireless/p54/fwio.o
+  CC [M]  drivers/net/wireless/rt2x00/rt2x00dev.o
 
-=46rom the Select Man Page as Quoted Below(http://linux.die.net/man/2/s=
-elect)
+<lots more wireless drivers here>
 
-(iii)
+  LD [M]  drivers/net/wireless/wl12xx/wl1271.o
+  LD [M]  drivers/net/wireless/wl12xx/wl1251.o
+  LD [M]  drivers/net/bnx2x.o
+make[1]: *** [drivers] Error 2
+make[1]: Leaving directory `/home/norv/KERNEL_2.6.33.2-rt13/linux-2.6.3=
+3.2-rt13'
+make: *** [debian/stamp/build/kernel] Error 2
 
-select() has no sigmask argument, and behaves as pselect() called with
-NULL sigmask.
-
-Three independent sets of file descriptors are watched. Those listed
-in readfds will be watched to see if characters become available for
-reading (more precisely, to see if a read will not block; in
-particular, a file descriptor is also ready on end-of-file), those in
-writefds will be watched to see if a write will not block, and those
-in exceptfds will be watched for exceptions. On exit, the sets are
-modified in place to indicate which file descriptors actually changed
-status. Each of the three file descriptor sets may be specified as
-NULL if no file descriptors are to be watched for the corresponding
-class of events.
-
-> This means, I should add a suitable inter-process-communication
-> between thread A and B that can be used with select() as well.
-> Having this, the thread A can be triggered by the socket or
-> by the IPC from thread B by adding two file desciptors to the readfds
-> of select().
-
-This might be helpfull as said above.
-
-> My question is now: What kind of IPC is preferred here?
-> The only IPC I see is a local socket communication, however
-> this looks like a huge overhead for triggering...
-
-I think it is quite possible to use the regular IPC Data structures on =
-Linux.
-
-> Both, threads A and B are real time threads, thus any IPC in use
-> should be supported by the RT_PREEMPT patch.
-
-Not quite sure what you mean by this. The RT_PREEMPT Patch Does change
-according to the IPC or the Related RT Functions.
-
->
-> Setup: PC (Core2Quad, kernel 2.6.31.2-rt13)
->
-> Thanks for any feedback on this question.
->
-> Regards
->
-> Mathias
->
->
->
-> --
-> Mathias Koehrer
-> mathias_koehrer@arcor.de
->
->
-> Traumziele - von Beschreibung bis Buchung jetzt kompakt auf den Reise=
--Seiten von Arcor.de! http://www.arcor.de/rd/footer.reise
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
+Does anybody have any ideas what I might be doing wrong?
+Thanks for all the rt development :)
+cya
+Norv
 
 
-
---=20
--- Sujit K M
-
-blog(http://kmsujit.blogspot.com/)
+     =20
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
