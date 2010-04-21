@@ -1,65 +1,62 @@
-From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
-Subject: 2.6.33.2-rt13: RFC: fix serial console
-Date: Wed, 21 Apr 2010 15:59:02 +0400
-Message-ID: <201004211559.03022@zigzag.lvk.cs.msu.su>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
+Date: Wed, 21 Apr 2010 14:03:00 +0200
+Message-ID: <1271851380.1776.96.camel@laptop>
+References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
+	 <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
+	 <alpine.LFD.2.00.1004191841230.6259@localhost>
+	 <20100420140941.d085007d.akpm@linux-foundation.org>
+	 <alpine.LFD.2.00.1004211309560.6646@localhost>
+	 <1271849823.1776.87.camel@laptop>
+	 <4BCEAD7B0200005A0006513E@soto.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Stas Bezzubtsev <stas@lvk.cs.msu.su>,
-	Alexander Gordeev <lasaine@lvk.cs.msu.su>
-To: linux-rt-users@vger.kernel.org
+Cc: John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Gregory Haskins <ghaskins@novell.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.lvk.cs.msu.su ([158.250.17.1]:37339 "EHLO
-	mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752467Ab0DUL7I (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:39388 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752940Ab0DUMDF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Apr 2010 07:59:08 -0400
-Content-Disposition: inline
+	Wed, 21 Apr 2010 08:03:05 -0400
+Received: from f199130.upc-f.chello.nl ([80.56.199.130] helo=dyad.programming.kicks-ass.net)
+	by bombadil.infradead.org with esmtpsa (Exim 4.69 #1 (Red Hat Linux))
+	id 1O4Ydz-0004Uh-76
+	for linux-rt-users@vger.kernel.org; Wed, 21 Apr 2010 12:03:03 +0000
+In-Reply-To: <4BCEAD7B0200005A0006513E@soto.provo.novell.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+On Wed, 2010-04-21 at 05:47 -0600, Gregory Haskins wrote:
+> 
+> I am not sure if Johns solution is the right/best one per se, but I can attest
+> that I used to hit this problem _all_ the time and it was somewhat annoying
+> to need to patch the kernel on all of my machines to fix it.  I realize that I
+> perhaps do not represent the average user, but it was a pain-point for me.
+> FWIW, John's patch would indeed make my life easier since I tend to share the
+> .config between builds. 
 
-We've found that serial console stops showing printk messages after system 
-boot completes. Kernel 2.6.33.2-rt13, 32-bit x86.
+Right, so all I'm wanting to know if its a symptom of some funny or an
+actual depletion, in the latter case I think the best solution is to
+simply increase the number. In the former case we should of course fix
+the real issue instead of making it disappear.
 
-After some analysis, I found that output is blocked by 
-console_atomic_safe() macro
+So one case I remember is where some code managed to create 1k classes
+where 1 would have sufficed, this resulted in at least 1k extra stack
+traces to be stored, consuming vast amounts of stack_entries.
 
-#ifdef CONFIG_PREEMPT_RT
-# define console_atomic_safe(con)		\
-	(((con)->flags & CON_ATOMIC) ||		\
-	 (!in_atomic() && !irqs_disabled()) ||	\
-	 (system_state != SYSTEM_RUNNING) ||	\
-	 oops_in_progress)
-#else
-# define console_atomic_safe(con) (1)
-#endif
+So please, if you can reproduce, look at where these entries are going,
+lots of classes with the same name are a good hint that something is
+fishy. Classes with more than 13 (4*nr_states + 1) stacks should also
+never happen, etc..
 
-
-After adding CON_ATOMIC flag to 8250 console, I got serial console working 
-again.
-
---- a/drivers/serial/8250.c
-+++ b/drivers/serial/8250.c
-@@ -2814,7 +2814,7 @@ static struct console serial8250_console = {
-        .device         = uart_console_device,
-        .setup          = serial8250_console_setup,
-        .early_setup    = serial8250_console_early_setup,
--       .flags          = CON_PRINTBUFFER,
-+       .flags          = CON_PRINTBUFFER | CON_ATOMIC,
-        .index          = -1,
-        .data           = &serial8250_reg,
- };
-
-Although I believe this patch is correct (serial8250_console_write() looks 
-safe against calls in atomic context), it is unclear for me why this 
-helped.
-console_atomic_safe() should return 1 if printk was called from non-atomic 
-context. However, no printk showed anything in serial - including printk() 
-from module init routine, which is definitly not in atomic context.
-So there is likely a bug elsewhere.
-
-Any comments?
+Is this specific to -RT, or do we see it without as well? If so, what in
+-RT grows this? Are we creating a class per rt_mutex spinlock or
+something silly like that?
 
