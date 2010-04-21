@@ -1,51 +1,81 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
-Date: Wed, 21 Apr 2010 14:24:31 +0200
-Message-ID: <1271852671.1776.101.camel@laptop>
-References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
-	 <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
-	 <alpine.LFD.2.00.1004191841230.6259@localhost>
-	 <20100420140941.d085007d.akpm@linux-foundation.org>
-	 <alpine.LFD.2.00.1004211309560.6646@localhost>
-	 <1271849823.1776.87.camel@laptop>
-	 <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
+From: "Gregory Haskins" <GHaskins@novell.com>
+Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES
+	 configurable.
+Date: Wed, 21 Apr 2010 06:37:02 -0600
+Message-ID: <4BCEB92E0200005A00065162@soto.provo.novell.com>
+References: <4BCEB92D0200005A0006515F@soto.provo.novell.com>
+ <4BCEB92E0200005A00065162@soto.provo.novell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Gregory Haskins <ghaskins@novell.com>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: <mingo@elte.hu>, <tglx@linutronix.de>, <akpm@linux-foundation.org>,
+	<jkacur@redhat.com>, <lgoncalv@redhat.com>, <williams@redhat.com>,
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+In-Reply-To: <4BCEB92E0200005A00065162@soto.provo.novell.com>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2010-04-21 at 14:12 +0200, John Kacur wrote:
-> 
->  lock-classes:                         1330 [max: 8191]
->  direct dependencies:                 12754 [max: 16384]
->  indirect dependencies:               33245
->  all direct dependencies:             49074
->  dependency chains:                   19641 [max: 32768]
+(Sorry for top post..mobile)
 
-Right, so each dependency also gets a stack trace, see
-add_lock_to_list().
+Ya, I totally see and understand your point.  "Fix the problem and not the symptom" and all.  That is probably the best idea.
 
->  dependency chain hlocks:             73246 [max: 163840]
->  in-hardirq chains:                      25
->  in-softirq chains:                       0
->  in-process chains:                   19616
->  stack-trace entries:                262144 [max: 262144]
+The only thing I can say is I think debug and/or -rt kernels exacerbate the issue, and it seemed like a growing problem.  (E.g. Iirc over the years, people periodically submitting patches to -rt making it larger and larger, yet leading edge dev still tended to require carrying a custom patch making it larger still).
+
+So any work that goes into quantifing the large (and growing) footprint of this structure is probably time well spent to at least understand why.  In the meantime, I would still personally endorse Johns approach as a stopgap.  Its a better solution than code patching, and the CONFIG can always go away when it no longer serves a purpose.  
+
+That said, the bottom line is that the structure size will probably always be specific to a multitude of factors such as hardware and workload and perhaps cannot ever be truely "one size fits all".  Therefore, this might ultimately be best left as tunable...its all relative even if the overall efficiency of the subsystem is improved as part of this investigation.
+
+My 2 cents ;)
+
+Kind regards,
+-Greg 
+-----Original Message-----
+From: Peter Zijlstra <peterz@infradead.org>
+To: Gregory Haskins <GHaskins@novell.com>
+Cc: Ingo Molnar <mingo@elte.hu>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+Cc: Clark Williams <williams@redhat.com>
+Cc:  <linux-kernel@vger.kernel.org>
+Cc:  <linux-rt-users@vger.kernel.org>
+
+Sent: 4/21/2010 8:03:00 AM
+Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
+
+On Wed, 2010-04-21 at 05:47 -0600, Gregory Haskins wrote:
 > 
-> 
-> I'm looking at more details in /proc/lockdep and friends to see if
-> I can find any more details, or something that looks amiss.
-> 
-It might be useful to add a counter that simply counts all save_trace()
-invocations, and maybe split them out according to new_bit in
-mark_lock().
+> I am not sure if Johns solution is the right/best one per se, but I can attest
+> that I used to hit this problem _all_ the time and it was somewhat annoying
+> to need to patch the kernel on all of my machines to fix it.  I realize that I
+> perhaps do not represent the average user, but it was a pain-point for me.
+> FWIW, John's patch would indeed make my life easier since I tend to share the
+> .config between builds. 
+
+Right, so all I'm wanting to know if its a symptom of some funny or an
+actual depletion, in the latter case I think the best solution is to
+simply increase the number. In the former case we should of course fix
+the real issue instead of making it disappear.
+
+So one case I remember is where some code managed to create 1k classes
+where 1 would have sufficed, this resulted in at least 1k extra stack
+traces to be stored, consuming vast amounts of stack_entries.
+
+So please, if you can reproduce, look at where these entries are going,
+lots of classes with the same name are a good hint that something is
+fishy. Classes with more than 13 (4*nr_states + 1) stacks should also
+never happen, etc..
+
+Is this specific to -RT, or do we see it without as well? If so, what in
+-RT grows this? Are we creating a class per rt_mutex spinlock or
+something silly like that?
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
