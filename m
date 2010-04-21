@@ -1,81 +1,75 @@
-From: "Gregory Haskins" <GHaskins@novell.com>
-Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES
-	 configurable.
-Date: Wed, 21 Apr 2010 06:37:02 -0600
-Message-ID: <4BCEB92E0200005A00065162@soto.provo.novell.com>
-References: <4BCEB92D0200005A0006515F@soto.provo.novell.com>
- <4BCEB92E0200005A00065162@soto.provo.novell.com>
+From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
+Date: Wed, 21 Apr 2010 07:53:01 -0700
+Message-ID: <1271861581.29617.13.camel@sven.thebigcorporation.com>
+References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
+	 <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
+	 <alpine.LFD.2.00.1004191841230.6259@localhost>
+	 <20100420140941.d085007d.akpm@linux-foundation.org>
+	 <alpine.LFD.2.00.1004211309560.6646@localhost>
+	 <1271849823.1776.87.camel@laptop>
+	 <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: <mingo@elte.hu>, <tglx@linutronix.de>, <akpm@linux-foundation.org>,
-	<jkacur@redhat.com>, <lgoncalv@redhat.com>, <williams@redhat.com>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <peterz@infradead.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Gregory Haskins <ghaskins@novell.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-In-Reply-To: <4BCEB92E0200005A00065162@soto.provo.novell.com>
-Content-Disposition: inline
+Received: from ey-out-2122.google.com ([74.125.78.26]:26341 "EHLO
+	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753800Ab0DUOxN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Apr 2010 10:53:13 -0400
+In-Reply-To: <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-(Sorry for top post..mobile)
-
-Ya, I totally see and understand your point.  "Fix the problem and not the symptom" and all.  That is probably the best idea.
-
-The only thing I can say is I think debug and/or -rt kernels exacerbate the issue, and it seemed like a growing problem.  (E.g. Iirc over the years, people periodically submitting patches to -rt making it larger and larger, yet leading edge dev still tended to require carrying a custom patch making it larger still).
-
-So any work that goes into quantifing the large (and growing) footprint of this structure is probably time well spent to at least understand why.  In the meantime, I would still personally endorse Johns approach as a stopgap.  Its a better solution than code patching, and the CONFIG can always go away when it no longer serves a purpose.  
-
-That said, the bottom line is that the structure size will probably always be specific to a multitude of factors such as hardware and workload and perhaps cannot ever be truely "one size fits all".  Therefore, this might ultimately be best left as tunable...its all relative even if the overall efficiency of the subsystem is improved as part of this investigation.
-
-My 2 cents ;)
-
-Kind regards,
--Greg 
------Original Message-----
-From: Peter Zijlstra <peterz@infradead.org>
-To: Gregory Haskins <GHaskins@novell.com>
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-Cc: Clark Williams <williams@redhat.com>
-Cc:  <linux-kernel@vger.kernel.org>
-Cc:  <linux-rt-users@vger.kernel.org>
-
-Sent: 4/21/2010 8:03:00 AM
-Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
-
-On Wed, 2010-04-21 at 05:47 -0600, Gregory Haskins wrote:
+On Wed, 2010-04-21 at 14:12 +0200, John Kacur wrote:
 > 
-> I am not sure if Johns solution is the right/best one per se, but I can attest
-> that I used to hit this problem _all_ the time and it was somewhat annoying
-> to need to patch the kernel on all of my machines to fix it.  I realize that I
-> perhaps do not represent the average user, but it was a pain-point for me.
-> FWIW, John's patch would indeed make my life easier since I tend to share the
-> .config between builds. 
+> On Wed, 21 Apr 2010, Peter Zijlstra wrote:
+> 
+> > On Wed, 2010-04-21 at 13:12 +0200, John Kacur wrote:
+> > > 
+> > > Certain configurations that have LOCKDEP turned on, run into the limit
+> > > where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply
+> > > turning of the locking correctness validator let the user configure this
+> > > value to something reasonable for their system.
+> > 
+> > I'm not sure its worth having a CONFIG_ value for this, that'll just be
+> > yet another random value nobody knows what to do with.
+> > 
+> > Do you actually have a machine that reproduces this? Can you see how
+> > many classes, avg stacktraces per class and the avg entries per
+> > stacktrace there are?
+> 
+> This triggers every single time when I boot my T500 laptop with 
+> 2.6.33.2-rt13 with lots of debug options enabled. The problem is not
+> specific to this kernel though.
+> 
 
-Right, so all I'm wanting to know if its a symptom of some funny or an
-actual depletion, in the latter case I think the best solution is to
-simply increase the number. In the former case we should of course fix
-the real issue instead of making it disappear.
+Working from ancient memory here:
 
-So one case I remember is where some code managed to create 1k classes
-where 1 would have sufficed, this resulted in at least 1k extra stack
-traces to be stored, consuming vast amounts of stack_entries.
+I think that this is seen more on the distro side - had the same problem
+with SLERT. 
 
-So please, if you can reproduce, look at where these entries are going,
-lots of classes with the same name are a good hint that something is
-fishy. Classes with more than 13 (4*nr_states + 1) stacks should also
-never happen, etc..
+And yes, it did show up more with additional debug options -- when
+structs with #ifdef DEBUG_XXX are populated.
 
-Is this specific to -RT, or do we see it without as well? If so, what in
--RT grows this? Are we creating a class per rt_mutex spinlock or
-something silly like that?
+IIRC there is another caveat, if MAX_STACK_TRACE_ENTRIES is too large,
+you run out of memory uncompressing the Kernel (on 32 bit only?) and it
+hangs.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+We put patches in place to manually increase to something workable, but
+I would ACK this change, allowing tinkering.
+
+Regards,
+
+Sven
 
