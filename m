@@ -1,75 +1,37 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
-Subject: Re: [PATCH v3] lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
-Date: Wed, 21 Apr 2010 07:53:01 -0700
-Message-ID: <1271861581.29617.13.camel@sven.thebigcorporation.com>
-References: <alpine.LFD.2.00.1004161329030.11320@localhost.localdomain>
-	 <alpine.LFD.2.00.1004161727000.11320@localhost.localdomain>
-	 <alpine.LFD.2.00.1004191841230.6259@localhost>
-	 <20100420140941.d085007d.akpm@linux-foundation.org>
-	 <alpine.LFD.2.00.1004211309560.6646@localhost>
-	 <1271849823.1776.87.camel@laptop>
-	 <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
+From: WEBMAIL ADMINISTRATOR <intserve@citechco.net>
+Subject: ****IMPORTANT NOTICE****
+Date: Thu, 22 Apr 2010 09:57:35 +0700 (BDST)
+Message-ID: <29806881.305161271905055422.JavaMail.root@pop3>
+Reply-To: WEBMAIL ADMINISTRATOR <web_administrator@mail2register.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	linux-kernel@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Gregory Haskins <ghaskins@novell.com>
-To: John Kacur <jkacur@redhat.com>
+To: undisclosed-recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ey-out-2122.google.com ([74.125.78.26]:26341 "EHLO
-	ey-out-2122.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753800Ab0DUOxN (ORCPT
+Received: from pop3.citechco.net ([203.191.33.110]:54852 "EHLO
+	pop3.citechco.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751103Ab0DVDJ2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Apr 2010 10:53:13 -0400
-In-Reply-To: <alpine.LFD.2.00.1004211407510.4506@localhost.localdomain>
+	Wed, 21 Apr 2010 23:09:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2010-04-21 at 14:12 +0200, John Kacur wrote:
-> 
-> On Wed, 21 Apr 2010, Peter Zijlstra wrote:
-> 
-> > On Wed, 2010-04-21 at 13:12 +0200, John Kacur wrote:
-> > > 
-> > > Certain configurations that have LOCKDEP turned on, run into the limit
-> > > where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply
-> > > turning of the locking correctness validator let the user configure this
-> > > value to something reasonable for their system.
-> > 
-> > I'm not sure its worth having a CONFIG_ value for this, that'll just be
-> > yet another random value nobody knows what to do with.
-> > 
-> > Do you actually have a machine that reproduces this? Can you see how
-> > many classes, avg stacktraces per class and the avg entries per
-> > stacktrace there are?
-> 
-> This triggers every single time when I boot my T500 laptop with 
-> 2.6.33.2-rt13 with lots of debug options enabled. The problem is not
-> specific to this kernel though.
-> 
+Dear subscriber,
 
-Working from ancient memory here:
+Important Note - We have temporarily limited access to
+sensitive account features you want to restore your account
+access, please reply to this email immediately and enter your
+password here (********) and check your new features and
+improvements to your new and improve your webmail account.
 
-I think that this is seen more on the distro side - had the same problem
-with SLERT. 
+You can also verify your email address by logging into your
+webmail account.
 
-And yes, it did show up more with additional debug options -- when
-structs with #ifdef DEBUG_XXX are populated.
+Enter the Below Details.
 
-IIRC there is another caveat, if MAX_STACK_TRACE_ENTRIES is too large,
-you run out of memory uncompressing the Kernel (on 32 bit only?) and it
-hangs.
+Webmail ID:......
+Password:.........
+D.O.B:....
 
-We put patches in place to manually increase to something workable, but
-I would ACK this change, allowing tinkering.
-
-Regards,
-
-Sven
-
+Thank you!
+The Webmail Team
