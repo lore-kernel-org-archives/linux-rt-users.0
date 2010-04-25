@@ -1,160 +1,92 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH] lockdep: reduce stack_trace usage
-Date: Fri, 23 Apr 2010 21:40:44 +0800
-Message-ID: <20100423134044.GA2777@zhy-desktop>
-References: <alpine.LFD.2.00.1004222208310.3155@localhost>
- <20100423025850.GA21328@windriver.com>
- <alpine.LFD.2.00.1004230907050.4151@localhost>
- <1272009915.1646.25.camel@laptop>
- <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: FC <prd.gtt@operamail.com>
+Subject: [BUG] 2.6.33.2-rt13 and iptables
+Date: Sun, 25 Apr 2010 19:55:11 +0200
+Message-ID: <hr1vm2$2tk$1@dough.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Yong Zhang <yong.zhang@windriver.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	"David S. Miller" <davem@davemloft.net>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pw0-f46.google.com ([209.85.160.46]:36593 "EHLO
-	mail-pw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754867Ab0DWNkx (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 23 Apr 2010 09:40:53 -0400
-Content-Disposition: inline
-In-Reply-To: <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
+Received: from lo.gmane.org ([80.91.229.12]:58654 "EHLO lo.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753450Ab0DYSAF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 25 Apr 2010 14:00:05 -0400
+Received: from list by lo.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1O667g-0005h5-4N
+	for linux-rt-users@vger.kernel.org; Sun, 25 Apr 2010 20:00:04 +0200
+Received: from dynamic-adsl-84-223-199-189.clienti.tiscali.it ([84.223.199.189])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 25 Apr 2010 20:00:04 +0200
+Received: from prd.gtt by dynamic-adsl-84-223-199-189.clienti.tiscali.it with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 25 Apr 2010 20:00:04 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Apr 23, 2010 at 10:31:16AM +0200, John Kacur wrote:
-> > Non of these numbers look strange..
-> >
-> 
-> As I told Peter privately the laptop that triggered the
-> MAX_STACK_TRACE_ENTRIES every time, has met an
-> unfortunate early demise. However, I think it was the config - not the
-> hardware. On this machine where the above
-> numbers come from, I believe I have less debug options configured -
-> but it is running the exact same kernel as
-> the laptop was. (2.6.33.2-rt13)
+- Updated Debian SID x86 32 bit
+- kernel 2.6.33.2-rt13
+- iptables v1.4.6
 
-Hi John,
+I've experimented some problems while displaying processed packets by 
+iptables ( iptables -L -n -v ). The output displays a large number of 
+processed packets with a very low network activity in my LAN ( max 1 
+hundred of packets delivered )
 
-(checking mail at home).
-I find some place which can be hacked. Below is the patch.
-But I don't even compile it. Can you test it to see if it can smooth
-your problem.
+A sample output obtained after loading iptables rules and quite 
+immediately running iptables -L -n -v
 
----cut here ---
->From 6b9d513b7c417c0805ef0acc1cb3227bddba0889 Mon Sep 17 00:00:00 2001
-From: Yong Zhang <yong.zhang0@gmail.com>
-Date: Fri, 23 Apr 2010 21:13:54 +0800
-Subject: [PATCH] lockdep: reduce stack_trace usage
 
-When calling check_prevs_add(), if all validations passed
-add_lock_to_list() will add new lock to dependency tree and
-alloc stack_trace for each list_entry. But at this time,
-we are always on the same stack, so stack_trace for each
-list_entry has the same value. This is redundant and eats up
-lots of memory which could lead to warning on low
-MAX_STACK_TRACE_ENTRIES.
-Using one copy of stack_trace instead.
+Chain bad_packets (1 references)
+  pkts bytes target     prot opt in     out     source destination
+8600M 15024815T LOG        all  --  *      *       0.0.0.0/0 0.0.0.0/0 
+        state INVALID LOG flags 0 level 4 prefix `fp=bad_packets:1 a=DROP '
+15024815T 15066474T DROP       all  --  *      *       0.0.0.0/0 
+0.0.0.0/0           state INVALID
+13777492T 15024815T bad_tcp_packets  tcp  --  *      *       0.0.0.0/0 
+        0.0.0.0/0
+1337099T 7793M RETURN     all  --  *      *       0.0.0.0/0 0.0.0.0/0
 
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: David S. Miller <davem@davemloft.net>
----
- kernel/lockdep.c |   20 ++++++++++++--------
- 1 files changed, 12 insertions(+), 8 deletions(-)
+Chain bad_tcp_packets (1 references)
+  pkts bytes target     prot opt in     out     source destination
+4295M     0 LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 tcp 
+flags:!0x17/0x02 state NEW LOG flags 0 level 4 prefix 
+`fp=bad_tcp_packets:1 a=DROP '
+41659T 288230T DROP       tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+     tcp flags:!0x17/0x02 state NEW
+41659T 257832T LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+     tcp flags:0x3F/0x00 LOG flags 0 level 4 prefix 
+`fp=bad_tcp_packets:2 a=DROP '
+41659T 144115T DROP       tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+     tcp flags:0x3F/0x00
+41659T 352428T LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+     tcp flags:0x3F/0x3F LOG flags 0 level 4 prefix 
+`fp=bad_tcp_packets:3 a=DROP '
+72059T 13835076T DROP       tcp  --  *      *       0.0.0.0/0  0.0.0.0/0 
+           tcp flags:0x3F/0x3F
+72059T 15024832T LOG        tcp  --  *      *       0.0.0.0/0  0.0.0.0/0 
+           tcp flags:0x3F/0x29 LOG flags 0 level 4 prefix 
+`fp=bad_tcp_packets:4 a=DROP '
+113717T 72074T DROP       tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+     tcp flags:0x3F/0x29
+72059T  155G LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+tcp flags:0x3F/0x37 LOG flags 0 level 4 prefix `fp=bad_tcp_packets:5 
+a=DROP '
+3498M     0 DROP       tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 tcp 
+flags:0x3F/0x37
+     0   15T LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+tcp flags:0x06/0x06 LOG flags 0 level 4 prefix `fp=bad_tcp_packets:6 
+a=DROP '
+72059T 4305M DROP       tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+tcp flags:0x06/0x06
+15024815T 8600M LOG        tcp  --  *      *       0.0.0.0/0 0.0.0.0/0 
+        tcp flags:0x03/0x03 LOG flags 0 level 4 prefix 
+`fp=bad_tcp_packets:7 a=DROP '
+15024815T 15024815T DROP       tcp  --  *      *       0.0.0.0/0 
+0.0.0.0/0           tcp flags:0x03/0x03
+15066474T 15782 RETURN     tcp  --  *      *       0.0.0.0/0 0.0.0.0/0
 
-diff --git a/kernel/lockdep.c b/kernel/lockdep.c
-index 2594e1c..097d5fb 100644
---- a/kernel/lockdep.c
-+++ b/kernel/lockdep.c
-@@ -818,7 +818,8 @@ static struct lock_list *alloc_list_entry(void)
-  * Add a new dependency to the head of the list:
-  */
- static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
--			    struct list_head *head, unsigned long ip, int distance)
-+			    struct list_head *head, unsigned long ip,
-+			    int distance, struct stack_trace *trace)
- {
- 	struct lock_list *entry;
- 	/*
-@@ -829,11 +830,9 @@ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
- 	if (!entry)
- 		return 0;
- 
--	if (!save_trace(&entry->trace))
--		return 0;
--
- 	entry->class = this;
- 	entry->distance = distance;
-+	entry->trace = *trace;
- 	/*
- 	 * Since we never remove from the dependency list, the list can
- 	 * be walked lockless by other CPUs, it's only allocation
-@@ -1635,7 +1634,7 @@ check_deadlock(struct task_struct *curr, struct held_lock *next,
-  */
- static int
- check_prev_add(struct task_struct *curr, struct held_lock *prev,
--	       struct held_lock *next, int distance)
-+	       struct held_lock *next, int distance, struct stack_trace *trace)
- {
- 	struct lock_list *entry;
- 	int ret;
-@@ -1694,14 +1693,14 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
- 	 */
- 	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
- 			       &hlock_class(prev)->locks_after,
--			       next->acquire_ip, distance);
-+			       next->acquire_ip, distance, trace);
- 
- 	if (!ret)
- 		return 0;
- 
- 	ret = add_lock_to_list(hlock_class(next), hlock_class(prev),
- 			       &hlock_class(next)->locks_before,
--			       next->acquire_ip, distance);
-+			       next->acquire_ip, distance, trace);
- 	if (!ret)
- 		return 0;
- 
-@@ -1732,6 +1731,7 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
- {
- 	int depth = curr->lockdep_depth;
- 	struct held_lock *hlock;
-+	struct stack_trace trace;
- 
- 	/*
- 	 * Debugging checks.
-@@ -1748,6 +1748,9 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
- 			curr->held_locks[depth-1].irq_context)
- 		goto out_bug;
- 
-+	if (!save_trace(&trace))
-+		return 0;
-+
- 	for (;;) {
- 		int distance = curr->lockdep_depth - depth + 1;
- 		hlock = curr->held_locks + depth-1;
-@@ -1756,7 +1759,8 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
- 		 * added:
- 		 */
- 		if (hlock->read != 2) {
--			if (!check_prev_add(curr, hlock, next, distance))
-+			if (!check_prev_add(curr, hlock, next,
-+						distance, &trace))
- 				return 0;
- 			/*
- 			 * Stop after the first non-trylock entry,
--- 
-1.6.3.3
+The problem doesn't occur with other kernels ( vanilla 2.6.33.2 , 
+2.6.33-zen1 ) and the number of processed packets is displayed correctly.
+
