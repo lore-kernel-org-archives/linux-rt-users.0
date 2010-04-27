@@ -1,111 +1,66 @@
-From: FC <prd.gtt@operamail.com>
-Subject: Re: [BUG] 2.6.33.2-rt13 and iptables
-Date: Tue, 27 Apr 2010 19:03:29 +0200
-Message-ID: <hr75d4$edc$1@dough.gmane.org>
-References: <hr1vm2$2tk$1@dough.gmane.org> <alpine.LFD.2.00.1004271012280.2951@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH:resend] rt: Remove CONFIG_STACK_TRACER from DEBUG_COUNT, and fix reminder block
+Date: Tue, 27 Apr 2010 21:25:42 +0200
+Message-ID: <1272396342-12504-1-git-send-email-jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lo.gmane.org ([80.91.229.12]:38333 "EHLO lo.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754003Ab0D0RDn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Apr 2010 13:03:43 -0400
-Received: from list by lo.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1O6oCC-0004SL-Oy
-	for linux-rt-users@vger.kernel.org; Tue, 27 Apr 2010 19:03:40 +0200
-Received: from dynamic-adsl-84-222-164-32.clienti.tiscali.it ([84.222.164.32])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 27 Apr 2010 19:03:40 +0200
-Received: from prd.gtt by dynamic-adsl-84-222-164-32.clienti.tiscali.it with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 27 Apr 2010 19:03:40 +0200
-In-Reply-To: <alpine.LFD.2.00.1004271012280.2951@localhost.localdomain>
+Received: from mail-qy0-f179.google.com ([209.85.221.179]:59614 "EHLO
+	mail-qy0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755931Ab0D0TZw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Apr 2010 15:25:52 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 27/04/2010 10:13, Thomas Gleixner wrote:
-> On Sun, 25 Apr 2010, FC wrote:
->
->> - Updated Debian SID x86 32 bit
->> - kernel 2.6.33.2-rt13
->> - iptables v1.4.6
->>
->> I've experimented some problems while displaying processed packets by
->> iptables ( iptables -L -n -v ). The output displays a large number of
->> processed packets with a very low network activity in my LAN ( max 1 hundred
->> of packets delivered )
->>
->> A sample output obtained after loading iptables rules and quite immediately
->> running iptables -L -n -v
->
-> Can you please test the patch below on top of -rt ?
->
-> Thanks,
->
-> 	tglx
->
+This fix does two things.
 
-The problem doesn't occur with kernel 2.6.33.3-rt14 which includes your 
-patch.
+1. It reverts commit 3e39399ef4a742d994570488994be93ef17d4ef5.
+- The above commit added back a warning about CONFIG_STACK_TRACER
+NOT because the warning was necessary but to fix-up a problem where you could
+get an empty REMINDER block in the demg.
 
-The same sample output displayed under the same conditions ( loading 
-rules , typing iptables -L -n -v )
+However, CONFIG_STACK_TRACER really should not be in the reminder block.
+Even when configured-in it is not enabled, and thus has neglible impact.
 
-Chain bad_packets (1 references)
-  pkts bytes target     prot opt in     out     source 
-destination
-     0     0 LOG        all  --  *      *       0.0.0.0/0 
-0.0.0.0/0           state INVALID LOG flags 0 level 4 prefix 
-`fp=bad_packets:1 a=DROP '
-     0     0 DROP       all  --  *      *       0.0.0.0/0 
-0.0.0.0/0           state INVALID
-   316 21488 bad_tcp_packets  tcp  --  *      *       0.0.0.0/0 
-    0.0.0.0/0
-   317 21635 RETURN     all  --  *      *       0.0.0.0/0 
-0.0.0.0/0
+2. It removes CONFIG_STACK_TRACER from DEBUG_COUNT which is the proper fix
+for the empty REMINDER block problem.
 
-Chain bad_tcp_packets (1 references)
-  pkts bytes target     prot opt in     out     source 
-destination
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:!0x17/0x02 state NEW LOG flags 0 level 4 
-prefix `fp=bad_tcp_packets:1 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:!0x17/0x02 state NEW
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x00 LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:2 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x00
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x3F LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:3 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x3F
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x29 LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:4 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x29
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x37 LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:5 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x3F/0x37
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x06/0x06 LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:6 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x06/0x06
-     0     0 LOG        tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x03/0x03 LOG flags 0 level 4 prefix 
-`fp=bad_tcp_packets:7 a=DROP '
-     0     0 DROP       tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0           tcp flags:0x03/0x03
-   316 21488 RETURN     tcp  --  *      *       0.0.0.0/0 
-0.0.0.0/0
+This patch is for rt only. (this code doesn't exist in mainline)
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ init/main.c |    5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
+
+diff --git a/init/main.c b/init/main.c
+index 592c16a..f26cb63 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -908,7 +908,7 @@ static int __init kernel_init(void * unused)
+ 	WARN_ON(irqs_disabled());
+ #endif
+ 
+-#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER) + defined(CONFIG_INTERRUPT_OFF_HIST) + defined(CONFIG_PREEMPT_OFF_HIST) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTRACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
++#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_INTERRUPT_OFF_HIST) + defined(CONFIG_PREEMPT_OFF_HIST) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTRACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
+ 
+ #if DEBUG_COUNT > 0
+ 	printk(KERN_ERR "*****************************************************************************\n");
+@@ -928,9 +928,6 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_PREEMPT_TRACER
+ 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                                              *\n");
+ #endif
+-#ifdef CONFIG_STACK_TRACER
+-	printk(KERN_ERR "*        CONFIG_STACK_TRACER                                                *\n");
+-#endif
+ #if defined(CONFIG_FTRACE) && !defined(CONFIG_FTRACE_MCOUNT_RECORD)
+ 	printk(KERN_ERR "*        CONFIG_FTRACE                                                      *\n");
+ #endif
+-- 
+1.6.6.1
 
