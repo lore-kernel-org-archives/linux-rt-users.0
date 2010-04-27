@@ -1,58 +1,100 @@
-From: Doug Niehaus <niehaus@ittc.ku.edu>
-Subject: Re: [Fwd: Re: RFC for a new Scheduling policy/class in the	Linux-kernel]
-Date: Mon, 26 Apr 2010 13:37:03 -0500
-Message-ID: <4BD5DD4F.5080906@ittc.ku.edu>
-References: <20100426115658.GA21346@cs.fsu.edu> <20100426182903.GA14542@8bytes.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [BUG] 2.6.33.2-rt13 and iptables
+Date: Tue, 27 Apr 2010 10:13:36 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004271012280.2951@localhost.localdomain>
+References: <hr1vm2$2tk$1@dough.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Ted Baker <baker@cs.fsu.edu>, raj@ece.cmu.edu,
-	jayhawk@soe.ucsc.edu, a.p.zijlstra@chello.nl, raistlin@linux.it,
-	henrik@austad.us, linux-kernel@vger.kernel.org, mingo@elte.hu,
-	billh@gnuppy.monkey.org, linux-rt-users@vger.kernel.org,
-	fabio@gandalf.sssup.it, anderson@cs.unc.edu, tglx@linutronix.de,
-	dhaval.giani@gmail.com, cucinotta@sssup.it, lipari@retis.sssup.it,
-	baker.tlh@comcast.net
-To: Joerg Roedel <joro@8bytes.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: FC <prd.gtt@operamail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stephens.ittc.ku.edu ([129.237.125.220]:53304 "EHLO
-	stephens.ittc.ku.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752785Ab0DZS7A (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Apr 2010 14:59:00 -0400
-In-Reply-To: <20100426182903.GA14542@8bytes.org>
+Received: from www.tglx.de ([62.245.132.106]:56095 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752838Ab0D0INq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Apr 2010 04:13:46 -0400
+In-Reply-To: <hr1vm2$2tk$1@dough.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-One limitation of SIGSTOP is that the last time I instrumented it in 
-detail, which admittedly was several years ago, every process you send 
-the message to has to run long enough to receive the message.
+On Sun, 25 Apr 2010, FC wrote:
 
-We were in the the position of sending it to fairly large groups of 
-processes, partly through laziness in code structure, but when I looked 
-at the time lines I was appalled to see a large number of context 
-switches for *very* short execution intervals. All were associated with 
-receiving the SIGSTOP and SIGCONT.
+> - Updated Debian SID x86 32 bit
+> - kernel 2.6.33.2-rt13
+> - iptables v1.4.6
+> 
+> I've experimented some problems while displaying processed packets by
+> iptables ( iptables -L -n -v ). The output displays a large number of
+> processed packets with a very low network activity in my LAN ( max 1 hundred
+> of packets delivered )
+> 
+> A sample output obtained after loading iptables rules and quite immediately
+> running iptables -L -n -v
 
-I found a rather painful humor in the fact that we were running 
-processes in order to keep them from running.
+Can you please test the patch below on top of -rt ?
 
-So, a way to change state of a process that does not cost a context 
-switch has some appeal.
+Thanks,
 
-Doug
+	tglx
 
-On 04/26/2010 01:29 PM, Joerg Roedel wrote:
-> On Mon, Apr 26, 2010 at 07:56:58AM -0400, Ted Baker wrote:
->    
->> I have not seen any more e-mail on this.  How is it going?  Is there any
->> chance of rolling in some corrections for the SCHED_SPORADIC treatment?  In
->> particular, could we have a DO_NOT_RUN priority, that is guaranteed to
->> prevent a task from running at all?
->>      
-> Sorry for asking a maybe stupid question, but what is this good for and
-> what is the benefit over SIGSTOP?
->
-> 	Joerg
->
->    
+---------->
+Subject: net-fix-iptables-fallout.patch
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Tue, 27 Apr 2010 10:05:28 +0200
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+ net/ipv4/netfilter/ip_tables.c  |    9 +++++----
+ net/ipv6/netfilter/ip6_tables.c |   10 +++++-----
+ 2 files changed, 10 insertions(+), 9 deletions(-)
+
+Index: linux-2.6-tip/net/ipv4/netfilter/ip_tables.c
+===================================================================
+--- linux-2.6-tip.orig/net/ipv4/netfilter/ip_tables.c
++++ linux-2.6-tip/net/ipv4/netfilter/ip_tables.c
+@@ -907,7 +907,7 @@ get_counters(const struct xt_table_info 
+ {
+ 	unsigned int cpu;
+ 	unsigned int i;
+-	unsigned int curcpu = NR_CPUS;
++	unsigned int curcpu;
+ 
+ 	/* Instead of clearing (by a previous call to memset())
+ 	 * the counters and using adds, we set the counters
+@@ -917,16 +917,17 @@ get_counters(const struct xt_table_info 
+ 	 * if new softirq were to run and call ipt_do_table
+ 	 */
+ 	local_bh_disable();
+-#ifndef CONFIG_PREEMPT_RT
+-	curcpu = smp_processor_id();
++	curcpu = raw_smp_processor_id();
+ 
+ 	i = 0;
++	xt_info_wrlock(curcpu);
+ 	IPT_ENTRY_ITERATE(t->entries[curcpu],
+ 			  t->size,
+ 			  set_entry_to_counter,
+ 			  counters,
+ 			  &i);
+-#endif
++	xt_info_wrunlock(curcpu);
++
+ 	for_each_possible_cpu(cpu) {
+ 		if (cpu == curcpu)
+ 			continue;
+Index: linux-2.6-tip/net/ipv6/netfilter/ip6_tables.c
+===================================================================
+--- linux-2.6-tip.orig/net/ipv6/netfilter/ip6_tables.c
++++ linux-2.6-tip/net/ipv6/netfilter/ip6_tables.c
+@@ -939,7 +939,7 @@ get_counters(const struct xt_table_info 
+ {
+ 	unsigned int cpu;
+ 	unsigned int i;
+-	unsigned int curcpu = NR_CPUS;
++	unsigned int curcpu;
+ 
+ 	/* Instead of clearing (by a previous call to memset())
+ 	 * the counters and using adds, we set the counters
+@@ -949,17 +949,17 @@ get_counters(const struct xt_table_info 
+ 	 * if new softirq were to run and call ipt_do_table
+ 	 */
+ 	local_bh_disable();
