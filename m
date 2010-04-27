@@ -1,67 +1,69 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH:resend] rt: Remove CONFIG_STACK_TRACER from DEBUG_COUNT,
- and fix reminder block
-Date: Tue, 27 Apr 2010 22:39:47 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1004272205380.2951@localhost.localdomain>
-References: <1272396342-12504-1-git-send-email-jkacur@redhat.com>
+Subject: Re: 2.6.33.3-rt16 compile failure in fs/ecryptfs/inode.o
+Date: Tue, 27 Apr 2010 22:50:46 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004272249400.2951@localhost.localdomain>
+References: <alpine.LFD.2.00.1004272202250.3318@localhost>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1968843256-1272401447=:2951"
+Cc: Nick Piggin <npiggin@suse.de>, jstultz@gmail.com,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: John Kacur <jkacur@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:33369 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:39623 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755029Ab0D0UkM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Apr 2010 16:40:12 -0400
-In-Reply-To: <1272396342-12504-1-git-send-email-jkacur@redhat.com>
+	id S1756493Ab0D0Uu5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Apr 2010 16:50:57 -0400
+In-Reply-To: <alpine.LFD.2.00.1004272202250.3318@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--8323328-1968843256-1272401447=:2951
+Content-Type: TEXT/PLAIN; charset=ISO-8859-7
+Content-Transfer-Encoding: 8BIT
+
 On Tue, 27 Apr 2010, John Kacur wrote:
+> make O=/bld/2.6.33.3-rt16/ fs/ecryptfs/inode.o
+>   Using /home/jkacur/jk-2.6 as source for kernel
+>   GEN     /bld/2.6.33.3-rt16/Makefile
+>   CHK     include/linux/version.h
+>   CHK     include/generated/utsrelease.h
+>   CALL    /home/jkacur/jk-2.6/scripts/checksyscalls.sh
+>   CC [M]  fs/ecryptfs/inode.o
+> /home/jkacur/jk-2.6/fs/ecryptfs/inode.c: In function 
+> ¡ecryptfs_lookup_and_interpose_lower¢:
+> /home/jkacur/jk-2.6/fs/ecryptfs/inode.c:266: error: wrong type argument to 
+> unary exclamation mark
+> make[2]: *** [fs/ecryptfs/inode.o] Error 1
+> make[1]: *** [fs/ecryptfs/inode.o] Error 2
+> make: *** [sub-make] Error 2
+> 
+> The above comes from: 
+> commit 5c0eb5cec064ce26ffcd0cdd684c9b6dd7c9074e
+> Author: Nick Piggin <npiggin@suse.de>
+> Date:   Fri Jan 29 15:38:21 2010 -0800
 
-> This fix does two things.
-
-This changelog does suck in more than two ways.
- 
-> 1. It reverts commit 3e39399ef4a742d994570488994be93ef17d4ef5.
-> - The above commit added back a warning about CONFIG_STACK_TRACER
-> NOT because the warning was necessary but to fix-up a problem where you could
-> get an empty REMINDER block in the demg.
-
-The CONFIG_STACK_TRACER printk has been there before and got dropped
-for whatever reason, but the DEBUG_COUNT accounting of
-CONFIG_STACK_TRACER still remained.
-
-So the conclusion that the printk needs to be added back is _NOT_
-completely unreasonable.
-
-> However, CONFIG_STACK_TRACER really should not be in the reminder block.
-> Even when configured-in it is not enabled, and thus has neglible impact.
-
-That argument is bogus as it applies to most of the tracing related
-config options. 
- 
-> 2. It removes CONFIG_STACK_TRACER from DEBUG_COUNT which is the proper fix
-> for the empty REMINDER block problem.
-
-It's the proper fix if the warning is not justified, which is not
-clear at all. At least not from your changelog.
-
-I do not mind the patch per se, but 
-
-1) the changelog should simply say:
-
-   rt: Remove CONFIG_STACK_TRACER from REMINDER block
-
-   Reason: It does not matter because ....
-
-2) the patch should cover _all_ tracing options which have no
-   considerable latency impact when just compiled in and not default
-   enabled.
+Half the truth :) It got not fixed up in a later patch which made
+d_count atomic_t again. Fix below.
 
 Thanks,
 
 	tglx
+---
+diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
+index 2fb8fd1..23dc2af 100644
+--- a/fs/ecryptfs/inode.c
++++ b/fs/ecryptfs/inode.c
+@@ -263,7 +263,7 @@ int ecryptfs_lookup_and_interpose_lower(struct dentry *ecryptfs_dentry,
+ 				   ecryptfs_dentry->d_parent));
+ 	lower_inode = lower_dentry->d_inode;
+ 	fsstack_copy_attr_atime(ecryptfs_dir_inode, lower_dir_dentry->d_inode);
+-	BUG_ON(!lower_dentry->d_count);
++	BUG_ON(!atomic_read(&lower_dentry->d_count));
+ 	ecryptfs_set_dentry_private(ecryptfs_dentry,
+ 				    kmem_cache_alloc(ecryptfs_dentry_info_cache,
+ 						     GFP_KERNEL));
+--8323328-1968843256-1272401447=:2951--
