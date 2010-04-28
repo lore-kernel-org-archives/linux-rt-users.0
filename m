@@ -1,89 +1,76 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH:resend] rt: Remove CONFIG_STACK_TRACER from DEBUG_COUNT,
-	and fix reminder block
-Date: Wed, 28 Apr 2010 21:22:02 +0200
-Message-ID: <z2o520f0cf11004281222h4c1cecb6mf41ab89d66ddfcbf@mail.gmail.com>
-References: <1272396342-12504-1-git-send-email-jkacur@redhat.com>
-	 <alpine.LFD.2.00.1004272205380.2951@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
+Subject: [PATCH] rt: Remove irrelevant CONFIGS from reminder block.
+Date: Wed, 28 Apr 2010 21:34:27 +0200
+Message-ID: <1272483267-10900-1-git-send-email-jkacur@redhat.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Clark Williams <williams@redhat.com>
+To: lkml <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:40007 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753827Ab0D1TWG convert rfc822-to-8bit (ORCPT
+Received: from mail-pv0-f174.google.com ([74.125.83.174]:61044 "EHLO
+	mail-pv0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751349Ab0D1Tej (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Apr 2010 15:22:06 -0400
-In-Reply-To: <alpine.LFD.2.00.1004272205380.2951@localhost.localdomain>
+	Wed, 28 Apr 2010 15:34:39 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Apr 27, 2010 at 10:39 PM, Thomas Gleixner <tglx@linutronix.de> =
-wrote:
-> On Tue, 27 Apr 2010, John Kacur wrote:
->
->> This fix does two things.
->
-> This changelog does suck in more than two ways.
->
->> 1. It reverts commit 3e39399ef4a742d994570488994be93ef17d4ef5.
->> - The above commit added back a warning about CONFIG_STACK_TRACER
->> NOT because the warning was necessary but to fix-up a problem where =
-you could
->> get an empty REMINDER block in the demg.
->
-> The CONFIG_STACK_TRACER printk has been there before and got dropped
-> for whatever reason, but the DEBUG_COUNT accounting of
-> CONFIG_STACK_TRACER still remained.
->
-> So the conclusion that the printk needs to be added back is _NOT_
-> completely unreasonable.
->
->> However, CONFIG_STACK_TRACER really should not be in the reminder bl=
-ock.
->> Even when configured-in it is not enabled, and thus has neglible imp=
-act.
->
-> That argument is bogus as it applies to most of the tracing related
-> config options.
+- remove CONFIGS that do not have an impact to -rt from the reminder block.
+- reformat DEBUG_COUNT so that it is more easily human readable.
+- correct CONFIG_FTRACE to CONFIG_FUNCTION_TRACER.
 
-Not quite. Some of the tracing options are believed to have an impact
-even when not enabled.
-In particular irqsoff and preemptoff still call a function. Not sure
-how minimal the impact is, but
-it isn't zero.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ init/main.c |   18 ++++++++++--------
+ 1 files changed, 10 insertions(+), 8 deletions(-)
 
->
->> 2. It removes CONFIG_STACK_TRACER from DEBUG_COUNT which is the prop=
-er fix
->> for the empty REMINDER block problem.
->
-> It's the proper fix if the warning is not justified, which is not
-> clear at all. At least not from your changelog.
->
-> I do not mind the patch per se, but
->
-> 1) the changelog should simply say:
->
-> =A0 rt: Remove CONFIG_STACK_TRACER from REMINDER block
->
-> =A0 Reason: It does not matter because ....
->
-> 2) the patch should cover _all_ tracing options which have no
-> =A0 considerable latency impact when just compiled in and not default
-> =A0 enabled.
->
+diff --git a/init/main.c b/init/main.c
+index 592c16a..622fe30 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -908,7 +908,15 @@ static int __init kernel_init(void * unused)
+ 	WARN_ON(irqs_disabled());
+ #endif
+ 
+-#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER) + defined(CONFIG_INTERRUPT_OFF_HIST) + defined(CONFIG_PREEMPT_OFF_HIST) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTRACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
++#define DEBUG_COUNT	(defined(CONFIG_DEBUG_RT_MUTEXES) +	\
++			defined(CONFIG_IRQSOFF_TRACER) +	\
++			defined(CONFIG_PREEMPT_TRACER) +	\
++			defined(CONFIG_FUNCTION_TRACER) +	\
++			defined(CONFIG_INTERRUPT_OFF_HIST) +	\
++			defined(CONFIG_PREEMPT_OFF_HIST) +	\
++			defined(CONFIG_DEBUG_SLAB) +		\
++			defined(CONFIG_PREEMPT_OFF_HIST) +	\
++			defined(CONFIG_LOCKDEP))
+ 
+ #if DEBUG_COUNT > 0
+ 	printk(KERN_ERR "*****************************************************************************\n");
+@@ -928,11 +936,8 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_PREEMPT_TRACER
+ 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                                              *\n");
+ #endif
+-#ifdef CONFIG_STACK_TRACER
+-	printk(KERN_ERR "*        CONFIG_STACK_TRACER                                                *\n");
+-#endif
+ #if defined(CONFIG_FTRACE) && !defined(CONFIG_FTRACE_MCOUNT_RECORD)
+-	printk(KERN_ERR "*        CONFIG_FTRACE                                                      *\n");
++	printk(KERN_ERR "*        CONFIG_FUNCTION_TRACER                                              *\n");
+ #endif
+ #ifdef CONFIG_INTERRUPT_OFF_HIST
+ 	printk(KERN_ERR "*        CONFIG_INTERRUPT_OFF_HIST                                          *\n");
+@@ -940,9 +945,6 @@ static int __init kernel_init(void * unused)
+ #ifdef CONFIG_PREEMPT_OFF_HIST
+ 	printk(KERN_ERR "*        CONFIG_PREEMPT_OFF_HIST                                            *\n");
+ #endif
+-#ifdef CONFIG_WAKEUP_LATENCY_HIST
+-	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                                         *\n");
+-#endif
+ #ifdef CONFIG_DEBUG_SLAB
+ 	printk(KERN_ERR "*        CONFIG_DEBUG_SLAB                                                  *\n");
+ #endif
+-- 
+1.6.6.1
 
-Okay, you make some good points, although I'm having a hard time
-finding other CONFIGS to safely cut.
-Respinning the patch. Thanks for your reply.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
