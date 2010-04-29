@@ -1,88 +1,25 @@
-From: John Kacur <jkacur@gmail.com>
-Subject: Re: [PATCH] rt: Remove irrelevant CONFIGS from reminder block.
-Date: Thu, 29 Apr 2010 20:39:22 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1004292037080.12420@localhost>
-References: <1272483267-10900-1-git-send-email-jkacur@redhat.com>
+From: Xianghua Xiao <xiaoxianghua@gmail.com>
+Subject: loadavgrt
+Date: Thu, 29 Apr 2010 16:37:04 -0500
+Message-ID: <q2me6bf505b1004291437uc5078c0as7e61a06cb8ee8cd@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1272483267-10900-1-git-send-email-jkacur@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-gw0-f46.google.com ([74.125.83.46]:39064 "EHLO
+	mail-gw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755887Ab0D3Tuf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 30 Apr 2010 15:50:35 -0400
+Received: by gwj19 with SMTP id 19so276680gwj.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Apr 2010 12:50:33 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas: this should fix the accounting for the FUNCTION_TRACER that was 
-incorrect in the previous version of the patch.
+I'm using kernel 2.6.33-rt15, in the old days there is /proc/loadavgrt
+to show rt loads, which is missing in new kernels. are newer kernels
+already including RT load to /proc/loadavg? I looked at kernel/sched.c
+and found out nothing was done to RT as far as load calculation is
+concerned.
 
-Thanks
-
->From 93805bbedd83bf34466e738a6addccb44735ed20 Mon Sep 17 00:00:00 2001
-From: John Kacur <jkacur@redhat.com>
-Date: Wed, 28 Apr 2010 21:25:14 +0200
-Subject: [PATCH] rt: Remove irrelevant CONFIGS from reminder block.
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-    Steven Rostedt <rostedt@goodmis.org>,
-    Clark Williams <williams@redhat.com>
-
-- remove CONFIGS that do not have an impact to -rt from the reminder block.
-- reformat DEBUG_COUNT so that it is more easily human readable.
-- correct CONFIG_FTRACE to CONFIG_FUNCTION_TRACER.
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- init/main.c |   22 +++++++++++++---------
- 1 files changed, 13 insertions(+), 9 deletions(-)
-
-diff --git a/init/main.c b/init/main.c
-index 592c16a..d4b3bf5 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -908,7 +908,17 @@ static int __init kernel_init(void * unused)
- 	WARN_ON(irqs_disabled());
- #endif
- 
--#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_IRQSOFF_TRACER) + defined(CONFIG_PREEMPT_TRACER) + defined(CONFIG_STACK_TRACER) + defined(CONFIG_INTERRUPT_OFF_HIST) + defined(CONFIG_PREEMPT_OFF_HIST) + defined(CONFIG_WAKEUP_LATENCY_HIST) + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC) + defined(CONFIG_LOCKDEP) + (defined(CONFIG_FTRACE) - defined(CONFIG_FTRACE_MCOUNT_RECORD)))
-+#define DEBUG_COUNT	(				\
-+		defined(CONFIG_DEBUG_RT_MUTEXES) +	\
-+		defined(CONFIG_IRQSOFF_TRACER) +	\
-+		defined(CONFIG_PREEMPT_TRACER) +	\
-+		defined(CONFIG_INTERRUPT_OFF_HIST) +	\
-+		defined(CONFIG_PREEMPT_OFF_HIST) +	\
-+		defined(CONFIG_DEBUG_SLAB) +		\
-+		defined(CONFIG_PREEMPT_OFF_HIST) +	\
-+		defined(CONFIG_LOCKDEP) +		\
-+		(defined(CONFIG_FUNCTION_TRACER) -	\
-+		 defined(CONFIG_FTRACE_MCOUNT_RECORD)))
- 
- #if DEBUG_COUNT > 0
- 	printk(KERN_ERR "*****************************************************************************\n");
-@@ -928,11 +938,8 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_PREEMPT_TRACER
- 	printk(KERN_ERR "*        CONFIG_PREEMPT_TRACER                                              *\n");
- #endif
--#ifdef CONFIG_STACK_TRACER
--	printk(KERN_ERR "*        CONFIG_STACK_TRACER                                                *\n");
--#endif
--#if defined(CONFIG_FTRACE) && !defined(CONFIG_FTRACE_MCOUNT_RECORD)
--	printk(KERN_ERR "*        CONFIG_FTRACE                                                      *\n");
-+#if defined(CONFIG_FUNCTION_TRACER) && !defined(CONFIG_FTRACE_MCOUNT_RECORD)
-+	printk(KERN_ERR "*        CONFIG_FUNCTION_TRACER                                              *\n");
- #endif
- #ifdef CONFIG_INTERRUPT_OFF_HIST
- 	printk(KERN_ERR "*        CONFIG_INTERRUPT_OFF_HIST                                          *\n");
-@@ -940,9 +947,6 @@ static int __init kernel_init(void * unused)
- #ifdef CONFIG_PREEMPT_OFF_HIST
- 	printk(KERN_ERR "*        CONFIG_PREEMPT_OFF_HIST                                            *\n");
- #endif
--#ifdef CONFIG_WAKEUP_LATENCY_HIST
--	printk(KERN_ERR "*        CONFIG_WAKEUP_LATENCY_HIST                                         *\n");
--#endif
- #ifdef CONFIG_DEBUG_SLAB
- 	printk(KERN_ERR "*        CONFIG_DEBUG_SLAB                                                  *\n");
- #endif
--- 
-1.6.6.1
+xianghua
