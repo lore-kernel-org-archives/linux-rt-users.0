@@ -1,20 +1,59 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: Re: 2.6.33.3-rt16: WARNING: at fs/namespace.c:1197
- umount_tree+0x127/0x175()
-Date: Wed, 28 Apr 2010 23:35:42 -0700
-Message-ID: <1272522942.1967.12.camel@work-vm>
-References: <20100427202750.GC2679@uudg.org>
-	 <alpine.LFD.2.00.1004272252270.2951@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.33.3-rt17
+Date: Fri, 30 Apr 2010 12:00:09 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+ <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	John Stultz <johnstul@us.ibm.com>,
 	Nick Piggin <npiggin@suse.de>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1004272252270.2951@localhost.localdomain>
+In-Reply-To: <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+We are pleased to announce the next update to our new preempt-rt
+series.
+
+Mostly fixups for the VFS scalability fallout.
+
+ 4c8acb4: rt: Fix the reminder block accounting for CONFIG_FUNCTION_TRACER
+ 4eba98c: fs: Use s_inodes not s_files for inode lists
+ 4329d1a: fs: Fix namespace related hangs
+ a0a5961: xfs: Make i_count access non-atomic
+ d3d17b8: fs: Fix d_count fallout
+ 5e022ed: fs: namespace: Fix MNT_MOUNTED handling for cloned rootfs
+ 4b44047: fs: namespace: Make put_mnt_ns rt aware
+ f008b2b: fs: namespace: Fix potential deadlock
+ f4c3013: rt: Remove irrelevant CONFIGS from reminder block.
+ 6994daf: hugetlb: fix infinite loop in get_futex_key() when backed by huge pages
+
+Download locations:
+   
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git development branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
+
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+
+Information on the RT patch can be found at:
+
+   http://rt.wiki.kernel.org/index.php/Main_Page
+
+To build the 2.6.33.3-rt17 tree, the following patches should be
+applied:
+
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.3.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.3-rt17.bz2
+
+Enjoy !
+
+      tglx
