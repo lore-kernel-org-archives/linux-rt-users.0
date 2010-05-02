@@ -1,30 +1,62 @@
-From: "Good incapacitate" <lisastevens@209-166-208-210.cust.walrus.com>
-Subject: consumer marketing lists
-Date: 29 Apr 2010 12:54:15 -0400
-Message-ID: <MNWEB1729IcVux1Zcn800000692@mnweb172>
-Reply-To: lisastevens@209-166-208-210.cust.walrus.com
-To: counsellor@lethbridgecollege.ab.ca, geistigheilen@web.de,
-	ccifv.hcm@ccifv.org, wsrecruit@customstaffing.com,
-	info@gottagomitts.com
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.33.3-rt19
+Date: Sun, 2 May 2010 21:18:43 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+ <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	John Stultz <johnstul@us.ibm.com>,
+	Nick Piggin <npiggin@suse.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 209-166-208-172.cust.walrus.com ([209.166.208.172]:2864 "EHLO
-	mnweb172" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1756384Ab0D3UTM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Apr 2010 16:19:12 -0400
+Received: from www.tglx.de ([62.245.132.106]:56767 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751516Ab0EBTSw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 2 May 2010 15:18:52 -0400
+In-Reply-To: <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Here's some of the healthcare lists we have:
+We are pleased to announce the next update to our new preempt-rt
+series.
 
-Hospitals - 23,747 Hospital Administrators in over 7,145 Hospitals (full contact info no emails)
-Nursing Homes - 31,589 Senior Administrators, 11,288 Nursing Directors in over 14,706 Nursing Homes 
-(full contact info no emails)
-Visiting Nurses & RN's - 91,386 total records with 2,788 emails and 2,390 fax numbers
+Changes from 2.6.33.3-rt17 to 2.6.33.3-rt18:
 
+ edf9d4b5: tclib: Default to tclib timer for RT
+ 917c377: Atmel TCLIB: Allow higher clock rates for clock events
+ b16bd4f: AT91: PIT: Remove irq handler when clock event is unused
+ 360c3e7: fs: Prevent dput race
+ 
+Changes from 2.6.33.3-rt18 to 2.6.33.3-rt19:
 
-Theres many more too, just send me an email here for additional info/samples: Philip.Bray@goodlists.co.cc
+ 4b40e94: sched: Warn on rt throttling
+ dc15be1: init: Fix config items in debug reminder finally
 
-  
+Download locations:
+   
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
 
+Git development branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
 
-Send us an email to disappear@goodlists.co.cc we will discontinue from the list
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+
+Information on the RT patch can be found at:
+
+   http://rt.wiki.kernel.org/index.php/Main_Page
+
+To build the 2.6.33.3-rt19 tree, the following patches should be
+applied:
+
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.3.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.3-rt19.bz2
+
+Enjoy !
+
+      tglx
