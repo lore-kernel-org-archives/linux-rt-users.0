@@ -1,62 +1,149 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.33.3-rt19
-Date: Sun, 2 May 2010 21:18:43 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
- <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH] lockdep: reduce stack_trace usage
+Date: Mon, 03 May 2010 14:11:29 +0200
+Message-ID: <1272888689.5605.3.camel@twins>
+References: <alpine.LFD.2.00.1004222208310.3155@localhost>
+	 <20100423025850.GA21328@windriver.com>
+	 <alpine.LFD.2.00.1004230907050.4151@localhost>
+	 <1272009915.1646.25.camel@laptop>
+	 <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
+	 <20100423134044.GA2777@zhy-desktop>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	John Stultz <johnstul@us.ibm.com>,
-	Nick Piggin <npiggin@suse.de>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Cc: John Kacur <jkacur@redhat.com>,
+	Yong Zhang <yong.zhang@windriver.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Gregory Haskins <ghaskins@novell.com>,
+	"David S. Miller" <davem@davemloft.net>
+To: Yong Zhang <yong.zhang0@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:56767 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751516Ab0EBTSw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 2 May 2010 15:18:52 -0400
-In-Reply-To: <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+Received: from casper.infradead.org ([85.118.1.10]:53047 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758181Ab0ECMLv convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 3 May 2010 08:11:51 -0400
+In-Reply-To: <20100423134044.GA2777@zhy-desktop>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
+On Fri, 2010-04-23 at 21:40 +0800, Yong Zhang wrote:
 
-Changes from 2.6.33.3-rt17 to 2.6.33.3-rt18:
+> From 6b9d513b7c417c0805ef0acc1cb3227bddba0889 Mon Sep 17 00:00:00 2001
+> From: Yong Zhang <yong.zhang0@gmail.com>
+> Date: Fri, 23 Apr 2010 21:13:54 +0800
+> Subject: [PATCH] lockdep: reduce stack_trace usage
+> 
+> When calling check_prevs_add(), if all validations passed
+> add_lock_to_list() will add new lock to dependency tree and
+> alloc stack_trace for each list_entry. But at this time,
+> we are always on the same stack, so stack_trace for each
+> list_entry has the same value. This is redundant and eats up
+> lots of memory which could lead to warning on low
+> MAX_STACK_TRACE_ENTRIES.
+> Using one copy of stack_trace instead.
 
- edf9d4b5: tclib: Default to tclib timer for RT
- 917c377: Atmel TCLIB: Allow higher clock rates for clock events
- b16bd4f: AT91: PIT: Remove irq handler when clock event is unused
- 360c3e7: fs: Prevent dput race
- 
-Changes from 2.6.33.3-rt18 to 2.6.33.3-rt19:
+OK, I like the idea, but I'm a little confused as to why you pull
+save_trace() up two functions, from what I can see we can now end up
+saving a trace where we previously would not have done one (the whole
+recursive lock mess.
 
- 4b40e94: sched: Warn on rt throttling
- dc15be1: init: Fix config items in debug reminder finally
+So please respin this with save_trace() in check_prev_add() right before
+the first add_lock_to_list().
 
-Download locations:
-   
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
+> Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: David S. Miller <davem@davemloft.net>
+> ---
+>  kernel/lockdep.c |   20 ++++++++++++--------
+>  1 files changed, 12 insertions(+), 8 deletions(-)
+> 
+> diff --git a/kernel/lockdep.c b/kernel/lockdep.c
+> index 2594e1c..097d5fb 100644
+> --- a/kernel/lockdep.c
+> +++ b/kernel/lockdep.c
+> @@ -818,7 +818,8 @@ static struct lock_list *alloc_list_entry(void)
+>   * Add a new dependency to the head of the list:
+>   */
+>  static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+> -			    struct list_head *head, unsigned long ip, int distance)
+> +			    struct list_head *head, unsigned long ip,
+> +			    int distance, struct stack_trace *trace)
+>  {
+>  	struct lock_list *entry;
+>  	/*
+> @@ -829,11 +830,9 @@ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+>  	if (!entry)
+>  		return 0;
+>  
+> -	if (!save_trace(&entry->trace))
+> -		return 0;
+> -
+>  	entry->class = this;
+>  	entry->distance = distance;
+> +	entry->trace = *trace;
+>  	/*
+>  	 * Since we never remove from the dependency list, the list can
+>  	 * be walked lockless by other CPUs, it's only allocation
+> @@ -1635,7 +1634,7 @@ check_deadlock(struct task_struct *curr, struct held_lock *next,
+>   */
+>  static int
+>  check_prev_add(struct task_struct *curr, struct held_lock *prev,
+> -	       struct held_lock *next, int distance)
+> +	       struct held_lock *next, int distance, struct stack_trace *trace)
+>  {
+>  	struct lock_list *entry;
+>  	int ret;
+> @@ -1694,14 +1693,14 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
+>  	 */
+>  	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
+>  			       &hlock_class(prev)->locks_after,
+> -			       next->acquire_ip, distance);
+> +			       next->acquire_ip, distance, trace);
+>  
+>  	if (!ret)
+>  		return 0;
+>  
+>  	ret = add_lock_to_list(hlock_class(next), hlock_class(prev),
+>  			       &hlock_class(next)->locks_before,
+> -			       next->acquire_ip, distance);
+> +			       next->acquire_ip, distance, trace);
+>  	if (!ret)
+>  		return 0;
+>  
+> @@ -1732,6 +1731,7 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+>  {
+>  	int depth = curr->lockdep_depth;
+>  	struct held_lock *hlock;
+> +	struct stack_trace trace;
+>  
+>  	/*
+>  	 * Debugging checks.
+> @@ -1748,6 +1748,9 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+>  			curr->held_locks[depth-1].irq_context)
+>  		goto out_bug;
+>  
+> +	if (!save_trace(&trace))
+> +		return 0;
+> +
+>  	for (;;) {
+>  		int distance = curr->lockdep_depth - depth + 1;
+>  		hlock = curr->held_locks + depth-1;
+> @@ -1756,7 +1759,8 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+>  		 * added:
+>  		 */
+>  		if (hlock->read != 2) {
+> -			if (!check_prev_add(curr, hlock, next, distance))
+> +			if (!check_prev_add(curr, hlock, next,
+> +						distance, &trace))
+>  				return 0;
+>  			/*
+>  			 * Stop after the first non-trylock entry,
 
-Git development branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/head
-
-Git release branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
-
-Gitweb:
-   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
-
-Information on the RT patch can be found at:
-
-   http://rt.wiki.kernel.org/index.php/Main_Page
-
-To build the 2.6.33.3-rt19 tree, the following patches should be
-applied:
-
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.3.tar.bz2
-   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.3-rt19.bz2
-
-Enjoy !
-
-      tglx
