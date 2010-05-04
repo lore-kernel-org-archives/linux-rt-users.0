@@ -1,72 +1,56 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH V2] lockdep: reduce stack_trace usage
-Date: Tue, 04 May 2010 14:56:51 +0200
-Message-ID: <1272977811.5605.183.camel@twins>
-References: <alpine.LFD.2.00.1004222208310.3155@localhost>
-	 <20100423025850.GA21328@windriver.com>
-	 <alpine.LFD.2.00.1004230907050.4151@localhost>
-	 <1272009915.1646.25.camel@laptop>
-	 <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
-	 <20100423134044.GA2777@zhy-desktop>  <20100504065711.GC10784@windriver.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: [RT] 2.6.33.3-rt19: WARNING: at fs/namespace.c:648
+ commit_tree+0xf1/0x10b()
+Date: Tue, 4 May 2010 11:04:44 -0300
+Message-ID: <20100504140443.GF4309@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: John Kacur <jkacur@redhat.com>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	Yong Zhang <yong.zhang0@gmail.com>
-To: Yong Zhang <yong.zhang@windriver.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100504065711.GC10784@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Nick Piggin <npiggin@suse.de>
+To: john stultz <johnstul@us.ibm.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-iw0-f202.google.com ([209.85.223.202]:64581 "EHLO
+	mail-iw0-f202.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932078Ab0EDOEx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 May 2010 10:04:53 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2010-05-04 at 14:57 +0800, Yong Zhang wrote:
-> From 04395389820e89c0bd4bb57b939ec1882e0bb5da Mon Sep 17 00:00:00 2001
-> From: Yong Zhang <yong.zhang@windriver.com>
-> Date: Tue, 4 May 2010 14:16:48 +0800
-> Subject: [PATCH] lockdep: Reduce stack_trace usage
-> 
-> When calling check_prevs_add(), if all validations passed
-> add_lock_to_list() will add new lock to dependency tree and
-> alloc stack_trace for each list_entry. But at this time,
-> we are always on the same stack, so stack_trace for each
-> list_entry has the same value. This is redundant and eats up
-> lots of memory which could lead to warning on low
-> MAX_STACK_TRACE_ENTRIES.
-> Using one copy of stack_trace instead.
+John,
 
-Right, this looks like it ought to do as intended.
+As the backtrace seems to be closely related to what has been discussed on
+the thread "2.6.33.3-rt16: WARNING: at fs/namespace.c:1197", I copied the
+same people on this message.
 
-I added the below snipped because I know I'll fail to remember and that
-'static' qualifier is fairly easy to miss.
+As a side note, this time I just see the warning, there is no system freeze
+involved.
 
-Thanks!
 
----
+------------[ cut here ]------------
+WARNING: at fs/namespace.c:648 commit_tree+0xf1/0x10b()
+Hardware name: KQ260AA-AC4 a6540br
+Modules linked in: nls_utf8 udf vfat fat usb_storage fuse i915 drm_kms_helper drm video output ipt_MASQUERADE iptable_nat nf_nat bridge stp llc sunrpc ipv6 xt_physdev ipt_REJECT xt_tcpudp nf_conntrack_ipv4 nf_defrag_ipv4 xt_state iptable_filter ip_tables x_tables dm_mirror dm_region_hash dm_log dm_multipath scsi_dh dm_mod kvm_intel kvm uinput tuner_simple tuner_types wm8775 tda9887 tda8290 snd_hda_codec_realtek tuner snd_hda_intel cx25840 snd_hda_codec ivtv snd_hwdep snd_seq i2c_algo_bit cx2341x v4l2_common videodev snd_seq_device v4l1_compat snd_pcm v4l2_compat_ioctl32 snd_timer ir_common snd ir_core sg r8169 tveeprom soundcore sr_mod i2c_i801 mii iTCO_wdt snd_page_alloc intel_agp firewire_ohci serio_raw cdrom i2c_core iTCO_vendor_support firewire_core pcspkr crc_itu_t button ahci libata 
+ sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd ohci_hcd ehci_hcd [last unloaded: microcode]
+Pid: 14002, comm: fusermount Not tainted 2.6.33.3-rt19 #32
+Call Trace:
+[<ffffffff81040e67>] warn_slowpath_common+0x7c/0x94
+[<ffffffff81040e93>] warn_slowpath_null+0x14/0x16
+[<ffffffff81115811>] commit_tree+0xf1/0x10b
+[<ffffffff8111661d>] attach_recursive_mnt+0xf2/0x188
+[<ffffffff811167b3>] graft_tree+0x100/0x102
+[<ffffffff8111765b>] do_mount+0x386/0x7ae
+[<ffffffff810d55f2>] ? strndup_user+0x5d/0x85
+[<ffffffff81117b0b>] sys_mount+0x88/0xc2
+[<ffffffff81002d32>] system_call_fastpath+0x16/0x1b
 
-Index: linux-2.6/kernel/lockdep.c
-===================================================================
---- linux-2.6.orig/kernel/lockdep.c
-+++ linux-2.6/kernel/lockdep.c
-@@ -1627,6 +1627,13 @@ check_prev_add(struct task_struct *curr,
- 	int ret;
- 	struct lock_list this;
- 	struct lock_list *uninitialized_var(target_entry);
-+	/*
-+	 * Static variable, serialized by the graph_lock().
-+	 *
-+	 * We use this static variable to save the stack trace in case
-+	 * we call into this function multiple times due to encountering
-+	 * trylocks in the held lock stack.
-+	 */
- 	static struct stack_trace trace;
- 
- 	/*
+
+Regards,
+Luis
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+
