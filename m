@@ -1,18 +1,17 @@
 From: Yong Zhang <yong.zhang@windriver.com>
-Subject: Re: [PATCH] lockdep: reduce stack_trace usage
-Date: Tue, 4 May 2010 14:37:05 +0800
-Message-ID: <20100504063705.GB10784@windriver.com>
+Subject: [PATCH V2] lockdep: reduce stack_trace usage
+Date: Tue, 4 May 2010 14:57:11 +0800
+Message-ID: <20100504065711.GC10784@windriver.com>
 References: <alpine.LFD.2.00.1004222208310.3155@localhost>
  <20100423025850.GA21328@windriver.com>
  <alpine.LFD.2.00.1004230907050.4151@localhost>
  <1272009915.1646.25.camel@laptop>
  <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
  <20100423134044.GA2777@zhy-desktop>
- <1272888689.5605.3.camel@twins>
 Reply-To: Yong Zhang <yong.zhang@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Yong Zhang <yong.zhang0@gmail.com>, John Kacur <jkacur@redhat.com>,
+Cc: John Kacur <jkacur@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
@@ -21,127 +20,140 @@ Cc: Yong Zhang <yong.zhang0@gmail.com>, John Kacur <jkacur@redhat.com>,
 	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Gregory Haskins <ghaskins@novell.com>,
-	"David S. Miller" <davem@davemloft.net>
+	"David S. Miller" <davem@davemloft.net>,
+	Yong Zhang <yong.zhang0@gmail.com>
 To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.windriver.com ([147.11.1.11]:54123 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753223Ab0EDG57 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 May 2010 02:57:59 -0400
 Content-Disposition: inline
-In-Reply-To: <1272888689.5605.3.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20100423134044.GA2777@zhy-desktop>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, May 03, 2010 at 02:11:29PM +0200, Peter Zijlstra wrote:
-> OK, I like the idea, but I'm a little confused as to why you pull
-> save_trace() up two functions,
+>From 04395389820e89c0bd4bb57b939ec1882e0bb5da Mon Sep 17 00:00:00 2001
+From: Yong Zhang <yong.zhang@windriver.com>
+Date: Tue, 4 May 2010 14:16:48 +0800
+Subject: [PATCH] lockdep: Reduce stack_trace usage
 
-I also want to avoid adding redundant trace in case of trylock.
-On my machine, I catched about 150 trylock dependences.
+When calling check_prevs_add(), if all validations passed
+add_lock_to_list() will add new lock to dependency tree and
+alloc stack_trace for each list_entry. But at this time,
+we are always on the same stack, so stack_trace for each
+list_entry has the same value. This is redundant and eats up
+lots of memory which could lead to warning on low
+MAX_STACK_TRACE_ENTRIES.
+Using one copy of stack_trace instead.
 
-> from what I can see we can now end up
-> saving a trace where we previously would not have done one (the whole
-> recursive lock mess.
+V2: As suggested by Peter Zijlstra, move save_trace() from
+    check_prevs_add() to check_prev_add().
+    Add tracking for trylock dependence which is also redundant.
 
-Oh, Yes, this patch will not give result as expected. Thank you for pointing
-it. I will respin it in V2.
+Signed-off-by: Yong Zhang <yong.zhang0@windriver.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: David S. Miller <davem@davemloft.net>
+---
+ kernel/lockdep.c |   22 ++++++++++++++--------
+ 1 files changed, 14 insertions(+), 8 deletions(-)
 
-> 
-> So please respin this with save_trace() in check_prev_add() right before
-> the first add_lock_to_list().
+diff --git a/kernel/lockdep.c b/kernel/lockdep.c
+index 2594e1c..56e0ff9 100644
+--- a/kernel/lockdep.c
++++ b/kernel/lockdep.c
+@@ -818,7 +818,8 @@ static struct lock_list *alloc_list_entry(void)
+  * Add a new dependency to the head of the list:
+  */
+ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+-			    struct list_head *head, unsigned long ip, int distance)
++			    struct list_head *head, unsigned long ip,
++			    int distance, struct stack_trace *trace)
+ {
+ 	struct lock_list *entry;
+ 	/*
+@@ -829,11 +830,9 @@ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+ 	if (!entry)
+ 		return 0;
+ 
+-	if (!save_trace(&entry->trace))
+-		return 0;
+-
+ 	entry->class = this;
+ 	entry->distance = distance;
++	entry->trace = *trace;
+ 	/*
+ 	 * Since we never remove from the dependency list, the list can
+ 	 * be walked lockless by other CPUs, it's only allocation
+@@ -1635,12 +1634,13 @@ check_deadlock(struct task_struct *curr, struct held_lock *next,
+  */
+ static int
+ check_prev_add(struct task_struct *curr, struct held_lock *prev,
+-	       struct held_lock *next, int distance)
++	       struct held_lock *next, int distance, int trylock_loop)
+ {
+ 	struct lock_list *entry;
+ 	int ret;
+ 	struct lock_list this;
+ 	struct lock_list *uninitialized_var(target_entry);
++	static struct stack_trace trace;
+ 
+ 	/*
+ 	 * Prove that the new <prev> -> <next> dependency would not
+@@ -1688,20 +1688,23 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
+ 		}
+ 	}
+ 
++	if (!trylock_loop && !save_trace(&trace))
++		return 0;
++
+ 	/*
+ 	 * Ok, all validations passed, add the new lock
+ 	 * to the previous lock's dependency list:
+ 	 */
+ 	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
+ 			       &hlock_class(prev)->locks_after,
+-			       next->acquire_ip, distance);
++			       next->acquire_ip, distance, &trace);
+ 
+ 	if (!ret)
+ 		return 0;
+ 
+ 	ret = add_lock_to_list(hlock_class(next), hlock_class(prev),
+ 			       &hlock_class(next)->locks_before,
+-			       next->acquire_ip, distance);
++			       next->acquire_ip, distance, &trace);
+ 	if (!ret)
+ 		return 0;
+ 
+@@ -1731,6 +1734,7 @@ static int
+ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+ {
+ 	int depth = curr->lockdep_depth;
++	int trylock_loop = 0;
+ 	struct held_lock *hlock;
+ 
+ 	/*
+@@ -1756,7 +1760,8 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+ 		 * added:
+ 		 */
+ 		if (hlock->read != 2) {
+-			if (!check_prev_add(curr, hlock, next, distance))
++			if (!check_prev_add(curr, hlock, next,
++						distance, trylock_loop))
+ 				return 0;
+ 			/*
+ 			 * Stop after the first non-trylock entry,
+@@ -1779,6 +1784,7 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+ 		if (curr->held_locks[depth].irq_context !=
+ 				curr->held_locks[depth-1].irq_context)
+ 			break;
++		trylock_loop = 1;
+ 	}
+ 	return 1;
+ out_bug:
+-- 
+1.6.3.3
 
-No problem. 
-BTW, in case of trylock dependence, I will let check_prevs_add() carry a flag
-to check_prev_add(). Thus, we can save more redundant trace. How do you
-think about it?
-
-Thanks,
-Yong
-
-> 
-> > Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-> > Cc: Peter Zijlstra <peterz@infradead.org>
-> > Cc: Ingo Molnar <mingo@redhat.com>
-> > Cc: David S. Miller <davem@davemloft.net>
-> > ---
-> >  kernel/lockdep.c |   20 ++++++++++++--------
-> >  1 files changed, 12 insertions(+), 8 deletions(-)
-> > 
-> > diff --git a/kernel/lockdep.c b/kernel/lockdep.c
-> > index 2594e1c..097d5fb 100644
-> > --- a/kernel/lockdep.c
-> > +++ b/kernel/lockdep.c
-> > @@ -818,7 +818,8 @@ static struct lock_list *alloc_list_entry(void)
-> >   * Add a new dependency to the head of the list:
-> >   */
-> >  static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
-> > -			    struct list_head *head, unsigned long ip, int distance)
-> > +			    struct list_head *head, unsigned long ip,
-> > +			    int distance, struct stack_trace *trace)
-> >  {
-> >  	struct lock_list *entry;
-> >  	/*
-> > @@ -829,11 +830,9 @@ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
-> >  	if (!entry)
-> >  		return 0;
-> >  
-> > -	if (!save_trace(&entry->trace))
-> > -		return 0;
-> > -
-> >  	entry->class = this;
-> >  	entry->distance = distance;
-> > +	entry->trace = *trace;
-> >  	/*
-> >  	 * Since we never remove from the dependency list, the list can
-> >  	 * be walked lockless by other CPUs, it's only allocation
-> > @@ -1635,7 +1634,7 @@ check_deadlock(struct task_struct *curr, struct held_lock *next,
-> >   */
-> >  static int
-> >  check_prev_add(struct task_struct *curr, struct held_lock *prev,
-> > -	       struct held_lock *next, int distance)
-> > +	       struct held_lock *next, int distance, struct stack_trace *trace)
-> >  {
-> >  	struct lock_list *entry;
-> >  	int ret;
-> > @@ -1694,14 +1693,14 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
-> >  	 */
-> >  	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
-> >  			       &hlock_class(prev)->locks_after,
-> > -			       next->acquire_ip, distance);
-> > +			       next->acquire_ip, distance, trace);
-> >  
-> >  	if (!ret)
-> >  		return 0;
-> >  
-> >  	ret = add_lock_to_list(hlock_class(next), hlock_class(prev),
-> >  			       &hlock_class(next)->locks_before,
-> > -			       next->acquire_ip, distance);
-> > +			       next->acquire_ip, distance, trace);
-> >  	if (!ret)
-> >  		return 0;
-> >  
-> > @@ -1732,6 +1731,7 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
-> >  {
-> >  	int depth = curr->lockdep_depth;
-> >  	struct held_lock *hlock;
-> > +	struct stack_trace trace;
-> >  
-> >  	/*
-> >  	 * Debugging checks.
-> > @@ -1748,6 +1748,9 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
-> >  			curr->held_locks[depth-1].irq_context)
-> >  		goto out_bug;
-> >  
-> > +	if (!save_trace(&trace))
-> > +		return 0;
-> > +
-> >  	for (;;) {
-> >  		int distance = curr->lockdep_depth - depth + 1;
-> >  		hlock = curr->held_locks + depth-1;
-> > @@ -1756,7 +1759,8 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
-> >  		 * added:
-> >  		 */
-> >  		if (hlock->read != 2) {
-> > -			if (!check_prev_add(curr, hlock, next, distance))
-> > +			if (!check_prev_add(curr, hlock, next,
-> > +						distance, &trace))
-> >  				return 0;
-> >  			/*
-> >  			 * Stop after the first non-trylock entry,
