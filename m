@@ -1,126 +1,147 @@
-From: Ted Baker <baker@cs.fsu.edu>
-Subject: Re: [Fwd: Re: RFC for a new Scheduling policy/class in the Linux-kernel]
-Date: Mon, 3 May 2010 11:54:38 -0400
-Message-ID: <20100503155438.GB11020@cs.fsu.edu>
-References: <20100426115658.GA21346@cs.fsu.edu> <1272897682.1642.124.camel@laptop>
+From: Yong Zhang <yong.zhang@windriver.com>
+Subject: Re: [PATCH] lockdep: reduce stack_trace usage
+Date: Tue, 4 May 2010 14:37:05 +0800
+Message-ID: <20100504063705.GB10784@windriver.com>
+References: <alpine.LFD.2.00.1004222208310.3155@localhost>
+ <20100423025850.GA21328@windriver.com>
+ <alpine.LFD.2.00.1004230907050.4151@localhost>
+ <1272009915.1646.25.camel@laptop>
+ <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
+ <20100423134044.GA2777@zhy-desktop>
+ <1272888689.5605.3.camel@twins>
+Reply-To: Yong Zhang <yong.zhang@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: raj@ece.cmu.edu, jayhawk@soe.ucsc.edu, raistlin@linux.it,
-	niehaus@ittc.ku.edu, henrik@austad.us,
-	linux-kernel@vger.kernel.org, mingo@elte.hu,
-	billh@gnuppy.monkey.org, linux-rt-users@vger.kernel.org,
-	fabio@gandalf.sssup.it, anderson@cs.unc.edu, tglx@linutronix.de,
-	dhaval.giani@gmail.com, cucinotta@sssup.it, lipari@retis.sssup.it,
-	baker.tlh@comcast.net
+Content-Type: text/plain; charset=utf-8
+Cc: Yong Zhang <yong.zhang0@gmail.com>, John Kacur <jkacur@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Gregory Haskins <ghaskins@novell.com>,
+	"David S. Miller" <davem@davemloft.net>
 To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpout.cs.fsu.edu ([128.186.122.75]:23304 "EHLO
-	mail.cs.fsu.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S933277Ab0ECQrL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 May 2010 12:47:11 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1272897682.1642.124.camel@laptop>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1272888689.5605.3.camel@twins>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Dear Peter,
+On Mon, May 03, 2010 at 02:11:29PM +0200, Peter Zijlstra wrote:
+> OK, I like the idea, but I'm a little confused as to why you pull
+> save_trace() up two functions,
 
-Thanks for the message.
+I also want to avoid adding redundant trace in case of trylock.
+On my machine, I catched about 150 trylock dependences.
 
-The reference to lkml is not very helpful, as it refers to 5
-months of e-mail, broken down by days, with no (apparent) search
-capability.  However, I did manage to find some references to the
-deadline scheduling work via the search capability on the
-marc.info site.
+> from what I can see we can now end up
+> saving a trace where we previously would not have done one (the whole
+> recursive lock mess.
 
-In any case, deadline scheduling and sporadic server scheduling
-are two quite different things. SCHED_SPORADIC belongs to the
-fixed priority scheduling domain.  So, the proposed SCHED_DEADLINE
-will not meet the same user requirement.
+Oh, Yes, this patch will not give result as expected. Thank you for pointing
+it. I will respin it in V2.
 
-SCHED_SPORADIC has a well-defined POSIX name and a well-defined
-API.  The semantics are not so badly broken that they can't be
-fixed by an "interpretation" of the existing standard.  I intend
-to submit a request for such an interpretation to the Austin
-Group, to get them to relax their specification for
-SCHED_SPORADIC, so that it can be implemented with reasonable
-semantics.  It would help to convince the Austin Group to do this
-if there were "existing practice" in Linux for this, though.
-
-While I appreciate the enthusiasm of the SSUP folks for deadline
-scheduling, the debates over the virtues of deadline-based vs.
-fixed-priority scheduling, as well as over partitioned versus
-global scheduling schemes, are likely to continue without a clear
-resolution for a long time.  In the mean time, existing
-applications use fixed priorities.  So, I'd hope that wherever
-Linux goes with respect to adding support for deadline scheduling
-it maintains the option for applications to use fixed-priority
-scheduling.
-
-BTW, I've found that deadline and fixed-priority scheduling can be
-implemented and used together in a reasonable way, using a mapping
-of all system priorities to values of a 128-bit time type.  The
-internal scheduler is entirely based on deadline values, but fixed
-priorities above and below normal dadlines are accomodated by
-mapping:
-
-a. The largest possible time value (2^128) is reserved for
-DO_NOT_RUN.  Each processor's idle task is given a priority
-level higher (earlier in time) than this.
-
-b. Fixed priority values that are intended to be lower in priority
-(later) than deadline-scheduled tasks are given "deadlines" in the
-unreachable future.  A range of very large time values, just
-short of DO_NOT_RUN can be reserved for this purpose.
-
-c. Most time values are treated as normal deadlines.
-
-d. The range of deadline values that would always be in the past
-either negative values or values very close to zero, are reserved
-for fixed priority scheduling of higher priority (earlier) than
-all deadline-scheduled tasks.
-
-In this fashion, it is easy for one scheduler, using one domain
-of priority values, with a consistent interpretations, to 
-implement.
-
-Ted
-
-On Mon, May 03, 2010 at 04:41:22PM +0200, Peter Zijlstra wrote:
-> Hi Ted,
 > 
-> On Mon, 2010-04-26 at 07:56 -0400, Ted Baker wrote:
-> > I have not seen any more e-mail on this.  How is it going?  Is there any
-> > chance of rolling in some corrections for the SCHED_SPORADIC treatment?  In
-> > particular, could we have a DO_NOT_RUN priority, that is guaranteed to
-> > prevent a task from running at all?
+> So please respin this with save_trace() in check_prev_add() right before
+> the first add_lock_to_list().
+
+No problem. 
+BTW, in case of trylock dependence, I will let check_prevs_add() carry a flag
+to check_prev_add(). Thus, we can save more redundant trace. How do you
+think about it?
+
+Thanks,
+Yong
+
 > 
-> Without having fully read the referenced paper, we're currently looking
-> to support the sporadic task model through SCHED_DEADLINE (by our SSSUP
-> friends):
-> 
->   http://lkml.org/lkml/2010/2/28/107
-> 
-> This work aims to implement a full sporadic task scheduler [initially
-> (g)EDF], SCHED_SPORADIC would have been a better name, but since POSIX
-> stole that from us we took SCHED_DEADLINE to indicate its a deadline
-> scheduler.
-> 
-> Along with this work comes the full Deadline-inheritance (which should
-> be but a small change from our current Priority-inheritance code), and
-> also Bandwidth-inheritance (more work). Esp. the latter would also be
-> required for your proposed SCHED_SPORADIC since it does aim to be a
-> 'strict' bandwidth enforcing scheduler.
-> 
-> [Does the proposed 'fixed' SCHED_SPORADIC deal with admission control?]
-> 
-> But as it stands, this work would provide much more complete sporadic
-> task support than the fixed SCHED_SPORADIC would.
-> 
-> 
-> 
-> -- 
-> This message has been scanned for viruses and
-> dangerous content by MailScanner, and is
-> believed to be clean.
+> > Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+> > Cc: Peter Zijlstra <peterz@infradead.org>
+> > Cc: Ingo Molnar <mingo@redhat.com>
+> > Cc: David S. Miller <davem@davemloft.net>
+> > ---
+> >  kernel/lockdep.c |   20 ++++++++++++--------
+> >  1 files changed, 12 insertions(+), 8 deletions(-)
+> > 
+> > diff --git a/kernel/lockdep.c b/kernel/lockdep.c
+> > index 2594e1c..097d5fb 100644
+> > --- a/kernel/lockdep.c
+> > +++ b/kernel/lockdep.c
+> > @@ -818,7 +818,8 @@ static struct lock_list *alloc_list_entry(void)
+> >   * Add a new dependency to the head of the list:
+> >   */
+> >  static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+> > -			    struct list_head *head, unsigned long ip, int distance)
+> > +			    struct list_head *head, unsigned long ip,
+> > +			    int distance, struct stack_trace *trace)
+> >  {
+> >  	struct lock_list *entry;
+> >  	/*
+> > @@ -829,11 +830,9 @@ static int add_lock_to_list(struct lock_class *class, struct lock_class *this,
+> >  	if (!entry)
+> >  		return 0;
+> >  
+> > -	if (!save_trace(&entry->trace))
+> > -		return 0;
+> > -
+> >  	entry->class = this;
+> >  	entry->distance = distance;
+> > +	entry->trace = *trace;
+> >  	/*
+> >  	 * Since we never remove from the dependency list, the list can
+> >  	 * be walked lockless by other CPUs, it's only allocation
+> > @@ -1635,7 +1634,7 @@ check_deadlock(struct task_struct *curr, struct held_lock *next,
+> >   */
+> >  static int
+> >  check_prev_add(struct task_struct *curr, struct held_lock *prev,
+> > -	       struct held_lock *next, int distance)
+> > +	       struct held_lock *next, int distance, struct stack_trace *trace)
+> >  {
+> >  	struct lock_list *entry;
+> >  	int ret;
+> > @@ -1694,14 +1693,14 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
+> >  	 */
+> >  	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
+> >  			       &hlock_class(prev)->locks_after,
+> > -			       next->acquire_ip, distance);
+> > +			       next->acquire_ip, distance, trace);
+> >  
+> >  	if (!ret)
+> >  		return 0;
+> >  
+> >  	ret = add_lock_to_list(hlock_class(next), hlock_class(prev),
+> >  			       &hlock_class(next)->locks_before,
+> > -			       next->acquire_ip, distance);
+> > +			       next->acquire_ip, distance, trace);
+> >  	if (!ret)
+> >  		return 0;
+> >  
+> > @@ -1732,6 +1731,7 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+> >  {
+> >  	int depth = curr->lockdep_depth;
+> >  	struct held_lock *hlock;
+> > +	struct stack_trace trace;
+> >  
+> >  	/*
+> >  	 * Debugging checks.
+> > @@ -1748,6 +1748,9 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+> >  			curr->held_locks[depth-1].irq_context)
+> >  		goto out_bug;
+> >  
+> > +	if (!save_trace(&trace))
+> > +		return 0;
+> > +
+> >  	for (;;) {
+> >  		int distance = curr->lockdep_depth - depth + 1;
+> >  		hlock = curr->held_locks + depth-1;
+> > @@ -1756,7 +1759,8 @@ check_prevs_add(struct task_struct *curr, struct held_lock *next)
+> >  		 * added:
+> >  		 */
+> >  		if (hlock->read != 2) {
+> > -			if (!check_prev_add(curr, hlock, next, distance))
+> > +			if (!check_prev_add(curr, hlock, next,
+> > +						distance, &trace))
+> >  				return 0;
+> >  			/*
+> >  			 * Stop after the first non-trylock entry,
