@@ -1,46 +1,67 @@
-From: Yong Zhang <yong.zhang@windriver.com>
-Subject: Re: [PATCH V2] lockdep: reduce stack_trace usage
-Date: Wed, 5 May 2010 17:18:40 +0800
-Message-ID: <20100505091840.GD20236@windriver.com>
-References: <alpine.LFD.2.00.1004222208310.3155@localhost>
- <20100423025850.GA21328@windriver.com>
- <alpine.LFD.2.00.1004230907050.4151@localhost>
- <1272009915.1646.25.camel@laptop>
- <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
- <20100423134044.GA2777@zhy-desktop>
- <20100504065711.GC10784@windriver.com>
- <1272977811.5605.183.camel@twins>
- <20100505013119.GA20236@windriver.com>
- <1273050566.1642.230.camel@laptop>
-Reply-To: Yong Zhang <yong.zhang@windriver.com>
+From: Raphael Hertzog <raphael@ouaza.com>
+Subject: Changing real time priority of interrupt handler thread
+Date: Wed, 5 May 2010 15:08:45 +0200
+Message-ID: <20100505130845.GA9118@rivendell>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Gregory Haskins <ghaskins@novell.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	Yong Zhang <yong.zhang0@gmail.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:61498 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934205Ab0EEJTm (ORCPT
+Received: from arrakeen.ouaza.com ([212.85.152.62]:51346 "EHLO
+	arrakeen.ouaza.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934725Ab0EENTE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 May 2010 05:19:42 -0400
+	Wed, 5 May 2010 09:19:04 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by arrakeen.ouaza.com (Postfix) with ESMTP id E337F332B7
+	for <linux-rt-users@vger.kernel.org>; Wed,  5 May 2010 15:09:10 +0200 (CEST)
+Received: from arrakeen.ouaza.com ([127.0.0.1])
+	by localhost (arrakeen.ouaza.com [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id imhJwtqrGCj1 for <linux-rt-users@vger.kernel.org>;
+	Wed,  5 May 2010 15:09:10 +0200 (CEST)
+Received: from soleymieux.ouaza.com (soleymieux.ouaza.com [78.225.60.32])
+	by arrakeen.ouaza.com (Postfix) with ESMTPA id B4817331A4
+	for <linux-rt-users@vger.kernel.org>; Wed,  5 May 2010 15:09:10 +0200 (CEST)
 Content-Disposition: inline
-In-Reply-To: <1273050566.1642.230.camel@laptop>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, May 05, 2010 at 11:09:26AM +0200, Peter Zijlstra wrote:
-> > BTW, do you need me resend the patch with your comments in?
-> 
-> No, I've got it.
+[ Please cc me on answer, I'm not subscribed to the list, I tried to as=
+k
+this question on the #linux-rt channel but got no answers so I try on t=
+he
+list ]
 
-That's great. Thank you. :)
+Hello,
+
+with 2.6.33.2-rt13 the IRQ handler thread for serial devices is
+no longer persistent after its creation. Up to now I had a startup
+script opening the serial device in order to create the IRQ handler
+thread that would run chrt on $(pidof IRQ-4) and the setting would be
+persistent until next reboot.
+
+This is no longer possible, I would have to run chrt every time that I
+open the serial port and I would like to avoid modifying all my
+applications to do this.
+
+Is there any other alternative like making the thread persistent with s=
+ome
+options (/sys or /proc tuning)?
+
+Or is there a kernel config option for this ?
+
+In case it was not clear, I want to run the IRQ handler of the serial
+ports at a higher priority than the other ones (like network, disk,
+etc.) to avoid buffer overruns.
+
+Cheers,
+--=20
+Rapha=EBl Hertzog -+- http://www.ouaza.com
+
+=46reexian : des d=E9veloppeurs Debian au service des entreprises
+http://www.freexian.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
