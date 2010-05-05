@@ -1,133 +1,43 @@
-From: Nick Piggin <npiggin@suse.de>
-Subject: Re: [RT] 2.6.33.3-rt19: WARNING: at fs/namespace.c:648
- commit_tree+0xf1/0x10b()
-Date: Wed, 5 May 2010 18:08:34 +1000
-Message-ID: <20100505080834.GA5378@laptop>
-References: <20100504140443.GF4309@uudg.org>
- <1273022060.3112.32.camel@localhost.localdomain>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH V2] lockdep: reduce stack_trace usage
+Date: Wed, 05 May 2010 11:09:26 +0200
+Message-ID: <1273050566.1642.230.camel@laptop>
+References: <alpine.LFD.2.00.1004222208310.3155@localhost>
+	 <20100423025850.GA21328@windriver.com>
+	 <alpine.LFD.2.00.1004230907050.4151@localhost>
+	 <1272009915.1646.25.camel@laptop>
+	 <w2v520f0cf11004230131i743c596emfd0e5b8870330a8b@mail.gmail.com>
+	 <20100423134044.GA2777@zhy-desktop> <20100504065711.GC10784@windriver.com>
+	 <1272977811.5605.183.camel@twins>  <20100505013119.GA20236@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: John Kacur <jkacur@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Ingo Molnar <mingo@elte.hu>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: john stultz <johnstul@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor.suse.de ([195.135.220.2]:39502 "EHLO mx1.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932155Ab0EEIYx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 May 2010 04:24:53 -0400
-Content-Disposition: inline
-In-Reply-To: <1273022060.3112.32.camel@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Gregory Haskins <ghaskins@novell.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	Yong Zhang <yong.zhang0@gmail.com>
+To: Yong Zhang <yong.zhang@windriver.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100505013119.GA20236@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, May 04, 2010 at 06:14:19PM -0700, John Stultz wrote:
-> On Tue, 2010-05-04 at 11:04 -0300, Luis Claudio R. Goncalves wrote:
-> > John,
+On Wed, 2010-05-05 at 09:31 +0800, Yong Zhang wrote:
+> On Tue, May 04, 2010 at 02:56:51PM +0200, Peter Zijlstra wrote:
+> > Right, this looks like it ought to do as intended.
 > > 
-> > As the backtrace seems to be closely related to what has been discussed on
-> > the thread "2.6.33.3-rt16: WARNING: at fs/namespace.c:1197", I copied the
-> > same people on this message.
-> > 
-> > As a side note, this time I just see the warning, there is no system freeze
-> > involved.
-> > 
-> > 
-> > ------------[ cut here ]------------
-> > WARNING: at fs/namespace.c:648 commit_tree+0xf1/0x10b()
-> > Hardware name: KQ260AA-AC4 a6540br
-> > Modules linked in: nls_utf8 udf vfat fat usb_storage fuse i915 drm_kms_helper drm video output ipt_MASQUERADE iptable_nat nf_nat bridge stp llc sunrpc ipv6 xt_physdev ipt_REJECT xt_tcpudp nf_conntrack_ipv4 nf_defrag_ipv4 xt_state iptable_filter ip_tables x_tables dm_mirror dm_region_hash dm_log dm_multipath scsi_dh dm_mod kvm_intel kvm uinput tuner_simple tuner_types wm8775 tda9887 tda8290 snd_hda_codec_realtek tuner snd_hda_intel cx25840 snd_hda_codec ivtv snd_hwdep snd_seq i2c_algo_bit cx2341x v4l2_common videodev snd_seq_device v4l1_compat snd_pcm v4l2_compat_ioctl32 snd_timer ir_common snd ir_core sg r8169 tveeprom soundcore sr_mod i2c_i801 mii iTCO_wdt snd_page_alloc intel_agp firewire_ohci serio_raw cdrom i2c_core iTCO_vendor_support firewire_core pcspkr crc_itu_t button ahci lib
- ata sd_mod scsi_mod crc_t10dif ext3 jbd mbcache uhci_hcd ohci_hcd ehci_hcd [last unloaded: microcode]
-> > Pid: 14002, comm: fusermount Not tainted 2.6.33.3-rt19 #32
-> > Call Trace:
-> > [<ffffffff81040e67>] warn_slowpath_common+0x7c/0x94
-> > [<ffffffff81040e93>] warn_slowpath_null+0x14/0x16
-> > [<ffffffff81115811>] commit_tree+0xf1/0x10b
-> > [<ffffffff8111661d>] attach_recursive_mnt+0xf2/0x188
-> > [<ffffffff811167b3>] graft_tree+0x100/0x102
-> > [<ffffffff8111765b>] do_mount+0x386/0x7ae
-> > [<ffffffff810d55f2>] ? strndup_user+0x5d/0x85
-> > [<ffffffff81117b0b>] sys_mount+0x88/0xc2
-> > [<ffffffff81002d32>] system_call_fastpath+0x16/0x1b
+> > I added the below snipped because I know I'll fail to remember and that
+> > 'static' qualifier is fairly easy to miss.
 > 
-> Yea. Looks like the fuse mounts are more interesting here and are
-> tripping up the MNT_MOUNTED logic.
+> OK. Thanks for your comments.
 > 
-> I have a patch that will likely resolve this, but I don't think its
-> right, because all the MNT_MOUNTED corner cases are starting to pile up
-> and I suspect a deeper fix is needed.
-> 
-> 
-> Nick, maybe you can help here?
-> 
-> Trivial cases:
-> MNT_MOUNTED gets set by:
-> 	attach_mnt
-> 	commit_tree
-> 
-> MNT_MOUNTED gets unset by:
-> 	detach_mnt
-> 	unmount_tree
-> 
-> So there's a nice symmetry there.
-> 
-> We also clear MNT_MOUNTED in clone_mnt(), since we're creating a
-> unmounted copy that we will latter call attach_mnt() upon.
-> 
-> 
-> Now, here's where things get messy:
-> copy_tree():
-> 	In your patches, we didn't set MNT_MOUNTED on the first clone on the
-> root of the mnt to be copied. This caused problems with new namespaces
-> since after it is copied, we don't call attach_mnt or commit_tree. So
-> when the namespace is removed, and we call unmount_tree, and hit a
-> WARN_ON. Similarly, if we bombed out in copy_tree due to a ENOMEM, we
-> call umount_tree on the mnt and will hit the WARN_ON as well. The same
-> issue hits us with collect_mounts and drop_collected_mounts, where we
-> copy_tree() and then unmount_tree() and hit the WARN_ON.
-> 
-> This seemed broken, so I set MNT_MOUNTED on the root cloned mnt in
-> copy_tree and it resolved the above asymmetries. 
-> 
-> However, do_loopback is more complicated, since it calls either
-> copy_tree or clone_mnt  (depending on the recursive flag) and then
-> grafts that mnt which calls commit_tree()/attach_mnt(). 
-> 
-> Leaving clone_mnt(), the mnt is not set as MNT_MOUNTED, but now with my
-> change to copy_tree(), it sets the root as MNT_MOUNTED. This then causes
-> a WARN_ON in the commit_tree() called by graft_tree().
-> 
-> The hacky fix below simply clears the recently set MNT_MOUNTED flag
-> after copy_tree() returns,  before calling graft_tree().
-> 
-> Now, I'm not very clear on the mnt rules here, so I'm probably wrong.
-> And it just seems so hacky there probably should be a better fix.
-> 
-> Ideas:
-> o Maybe the callers of copy_tree() should be setting the MNT_MOUNTED
-> flag? (and the ENOMEM case there would still need to be cleaned up). 
-> 
-> o Should we only call unmount_tree on the first sub mnt, instead of on
-> the non MNT_MOUNTED mnt?
-> 
-> o Or maybe the WARN_ONs are just overly cautious, and we should be cool
-> calling unmount on mnts not marked MNT_MOUNTED?
-> 
-> Do you have any thoughts here? 
+> BTW, do you need me resend the patch with your comments in?
 
-I guess keeping MNT_MOUNTED in sync with !list_empty(&mnt->mnt_hash)
-should work. I think it would just need fixing up there.
-
-I'm increasingly of the idea that MNT_MOUNTED is not such a good idea,
-though. I don't know how common it is to run with detached mount point
-(eg with a lazy umount), but in that case it would go much slower, which
-isn't nice.
-
-So I was looking at other ways to do scalable refcounting. It's tricky
-though. I'm thinking either account other long-lived refcounts similarly
-to MNT_MOUNTED (obviously needs to be a counter rather than a flag
-then), such as fs->root and fs->cwd; or using a lazy scheme which just
-periodically checks for 0 refcount. Either is going to be a bit tricky.
-
-
+No, I've got it.
