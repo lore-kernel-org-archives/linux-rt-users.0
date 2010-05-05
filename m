@@ -1,67 +1,41 @@
-From: Raphael Hertzog <raphael@ouaza.com>
-Subject: Changing real time priority of interrupt handler thread
-Date: Wed, 5 May 2010 15:08:45 +0200
-Message-ID: <20100505130845.GA9118@rivendell>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: Changing real time priority of interrupt handler thread
+Date: Wed, 05 May 2010 11:37:14 -0700
+Message-ID: <4BE1BADA.3040902@us.ibm.com>
+References: <20100505130845.GA9118@rivendell>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Raphael Hertzog <raphael@ouaza.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from arrakeen.ouaza.com ([212.85.152.62]:51346 "EHLO
-	arrakeen.ouaza.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934725Ab0EENTE (ORCPT
+Received: from e37.co.us.ibm.com ([32.97.110.158]:43170 "EHLO
+	e37.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753576Ab0EEShb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 May 2010 09:19:04 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by arrakeen.ouaza.com (Postfix) with ESMTP id E337F332B7
-	for <linux-rt-users@vger.kernel.org>; Wed,  5 May 2010 15:09:10 +0200 (CEST)
-Received: from arrakeen.ouaza.com ([127.0.0.1])
-	by localhost (arrakeen.ouaza.com [127.0.0.1]) (amavisd-new, port 10024)
-	with LMTP id imhJwtqrGCj1 for <linux-rt-users@vger.kernel.org>;
-	Wed,  5 May 2010 15:09:10 +0200 (CEST)
-Received: from soleymieux.ouaza.com (soleymieux.ouaza.com [78.225.60.32])
-	by arrakeen.ouaza.com (Postfix) with ESMTPA id B4817331A4
-	for <linux-rt-users@vger.kernel.org>; Wed,  5 May 2010 15:09:10 +0200 (CEST)
-Content-Disposition: inline
+	Wed, 5 May 2010 14:37:31 -0400
+Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
+	by e37.co.us.ibm.com (8.14.3/8.13.1) with ESMTP id o45IZqox015744
+	for <linux-rt-users@vger.kernel.org>; Wed, 5 May 2010 12:35:52 -0600
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v9.1) with ESMTP id o45IbJNS238876
+	for <linux-rt-users@vger.kernel.org>; Wed, 5 May 2010 12:37:22 -0600
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.14.3/8.13.1/NCO v10.0 AVout) with ESMTP id o45IbFwX022277
+	for <linux-rt-users@vger.kernel.org>; Wed, 5 May 2010 12:37:15 -0600
+In-Reply-To: <20100505130845.GA9118@rivendell>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[ Please cc me on answer, I'm not subscribed to the list, I tried to as=
-k
-this question on the #linux-rt channel but got no answers so I try on t=
-he
-list ]
+Raphael Hertzog wrote:
 
-Hello,
+> In case it was not clear, I want to run the IRQ handler of the serial
+> ports at a higher priority than the other ones (like network, disk,
+> etc.) to avoid buffer overruns.
 
-with 2.6.33.2-rt13 the IRQ handler thread for serial devices is
-no longer persistent after its creation. Up to now I had a startup
-script opening the serial device in order to create the IRQ handler
-thread that would run chrt on $(pidof IRQ-4) and the setting would be
-persistent until next reboot.
+Have you tried using the rtctl utility and the /etc/rtgroups file?
 
-This is no longer possible, I would have to run chrt every time that I
-open the serial port and I would like to avoid modifying all my
-applications to do this.
 
-Is there any other alternative like making the thread persistent with s=
-ome
-options (/sys or /proc tuning)?
+thanks,
+Nivedita
 
-Or is there a kernel config option for this ?
-
-In case it was not clear, I want to run the IRQ handler of the serial
-ports at a higher priority than the other ones (like network, disk,
-etc.) to avoid buffer overruns.
-
-Cheers,
---=20
-Rapha=EBl Hertzog -+- http://www.ouaza.com
-
-=46reexian : des d=E9veloppeurs Debian au service des entreprises
-http://www.freexian.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
