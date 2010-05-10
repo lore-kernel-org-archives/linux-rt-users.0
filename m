@@ -1,53 +1,50 @@
-From: Michal Schmidt <mschmidt@redhat.com>
-Subject: [PATCH] cyclictest: fix accumulating overruns in periodic timer mode
-Date: Mon, 10 May 2010 14:23:50 +0200
-Message-ID: <20100510122350.9777.54326.stgit@leela.lan>
+From: Western Union Department <cpeme@efn.uncor.edu>
+Subject: Call For Confirmation Tel: +(44) 702 4098910,
+Date: Mon, 10 May 2010 09:06:05 -0300
+Message-ID: <20100510090605.63321xpo4mx7zctc__2634.57225305519$1273496314$gmane$org@gtwing.efn.uncor.edu>
+Reply-To: westeruniondepartment@ws.tc
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain;
+ charset=ISO-8859-1;
+ DelSp="Yes";
+ format="flowed"
 Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
+To: undisclosed-recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:37793 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751492Ab0EJMXy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 May 2010 08:23:54 -0400
-Received: from int-mx03.intmail.prod.int.phx2.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.16])
-	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id o4ACNrj1019459
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
-	for <linux-rt-users@vger.kernel.org>; Mon, 10 May 2010 08:23:53 -0400
+Received: from host1.efn.uncor.edu ([200.16.19.1]:47637 "EHLO
+	gtwing.efn.uncor.edu" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S1754068Ab0EJM6F (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 May 2010 08:58:05 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-When using a POSIX interval timer and an overrun occurs, a signal is always
-lost. From then on cyclictest would report all measurements as increased by
-N*period (where N is the number of overruns).
 
-cyclictest can detect the overruns and adjust the expected time of the next
-tick accordingly.
 
-Reported-by: Marti Raudsepp <marti@juffo.org>
-Signed-off-by: Michal Schmidt <mschmidt@redhat.com>
----
+My associate has helped me to send your first payment of US$7,500 to you
+as instructed by Mr.James Gordon Brown the United Kingdom prime minister
+after the last G20 meeting that was held on April 2nd in United Kindom,
+making you one of the beneficaries. Here is the information below.
 
- src/cyclictest/cyclictest.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+MONEY TRANSFER CONTROL NUMBER: 8309124803
+SENDER NAME: Mr.Solomon Daniel.Q
+AMOUNT: US$7,500
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 3a7e752..6829d34 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -713,6 +713,11 @@ void *timerthread(void *param)
- 
- 		next.tv_sec += interval.tv_sec;
- 		next.tv_nsec += interval.tv_nsec;
-+		if (par->mode == MODE_CYCLIC) {
-+			int overrun_count = timer_getoverrun(timer);
-+			next.tv_sec += overrun_count * interval.tv_sec;
-+			next.tv_nsec += overrun_count * interval.tv_nsec;
-+		}
- 		tsnorm(&next);
- 
- 		if (par->max_cycles && par->max_cycles == stat->cycles)
+I told him to keep sending you US$7,500 twice a week until the FULL
+payment of (US $360,000.00 Dollars) is completed within 6 (six) Months.
+A certificate will be made to change the Reciever Name as stated by the
+British prime minister, send your Full Names and address via Email to:
+Mr Garry Moore
+
+The money will not reflect untill the clearance certificate is issue to
+you by the G20 commitee.
+
+E-mail: westeruniondepartment@ws.tc
+
+Tel: +(44) 702 4098910,
+
+----------------------------------------------------------------
+This message was sent using IMP, the Internet Messaging Program.
+
 
