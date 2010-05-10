@@ -1,77 +1,53 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: Re: 2.6.33.3-rt19 kernel BUG's
-Date: Fri, 07 May 2010 17:39:13 -0700
-Message-ID: <1273279153.2776.7.camel@localhost.localdomain>
-References: <1273197218.6768.10.camel@localhost.localdomain>
-	 <alpine.LFD.2.00.1005071240350.3401@localhost.localdomain>
-	 <1273275821.2776.3.camel@localhost.localdomain>
-	 <1273276725.17045.4.camel@localhost.localdomain>
+From: Michal Schmidt <mschmidt@redhat.com>
+Subject: [PATCH] cyclictest: fix accumulating overruns in periodic timer mode
+Date: Mon, 10 May 2010 14:23:50 +0200
+Message-ID: <20100510122350.9777.54326.stgit@leela.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Nick Piggin <npiggin@suse.de>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e7.ny.us.ibm.com ([32.97.182.137]:49012 "EHLO e7.ny.us.ibm.com"
+Received: from mx1.redhat.com ([209.132.183.28]:37793 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750956Ab0EHAjT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 May 2010 20:39:19 -0400
-In-Reply-To: <1273276725.17045.4.camel@localhost.localdomain>
+	id S1751492Ab0EJMXy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 May 2010 08:23:54 -0400
+Received: from int-mx03.intmail.prod.int.phx2.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id o4ACNrj1019459
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
+	for <linux-rt-users@vger.kernel.org>; Mon, 10 May 2010 08:23:53 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-05-07 at 23:58 +0000, Fernando Lopez-Lezcano wrote:
-> On Fri, 2010-05-07 at 16:43 -0700, john stultz wrote:
-> > On Fri, 2010-05-07 at 12:41 +0200, Thomas Gleixner wrote:
-> > > On Thu, 6 May 2010, Fernando Lopez-Lezcano wrote:
-> > > 
-> > > CC'ed John and Nick
-> > > 
-> > > > See below... just trying to boot (quad core desktop machine).
-> > 
-> > Ok. Got this to reproduce. Will hopefully have a fix for your soon.
-> > 
-> > Thanks for the bug report!
-> 
-> Thanks for looking at it! It had been a while since I had problems with
-> rt so I could not understand why I could not login :-) 
+When using a POSIX interval timer and an overrun occurs, a signal is always
+lost. From then on cyclictest would report all measurements as increased by
+N*period (where N is the number of overruns).
 
-Bah! I should have caught this faster. I kept thinking it had to be some
-missed unlock of the sbi->fs_lock, but it ends up its just the
-autofs4_lock.
+cyclictest can detect the overruns and adjust the expected time of the next
+tick accordingly.
 
-Apparently the conversion from using the dcache_lock -> autofs4_lock
-forgot that this function already grabs the autofs_lock for a small
-moment, so we end up grabbing the lock, then a moment later grab it
-again. Splat.
+Reported-by: Marti Raudsepp <marti@juffo.org>
+Signed-off-by: Michal Schmidt <mschmidt@redhat.com>
+---
 
-This patch should resolve it.
+ src/cyclictest/cyclictest.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-Signed-off-by: John Stultz <johnstul@us.ibm.com>
-
-diff --git a/fs/autofs4/root.c b/fs/autofs4/root.c
-index 5b26088..a7eaa32 100644
---- a/fs/autofs4/root.c
-+++ b/fs/autofs4/root.c
-@@ -438,12 +438,10 @@ static int autofs4_revalidate(struct dentry *dentry, struct nameidata *nd)
- 	}
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 3a7e752..6829d34 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -713,6 +713,11 @@ void *timerthread(void *param)
  
- 	/* Check for a non-mountpoint directory with no contents */
--	spin_lock(&autofs4_lock);
- 	if (S_ISDIR(dentry->d_inode->i_mode) &&
- 	    !d_mountpoint(dentry) && list_empty(&dentry->d_subdirs)) {
- 		DPRINTK("dentry=%p %.*s, emptydir",
- 			 dentry, dentry->d_name.len, dentry->d_name.name);
--		spin_unlock(&autofs4_lock);
+ 		next.tv_sec += interval.tv_sec;
+ 		next.tv_nsec += interval.tv_nsec;
++		if (par->mode == MODE_CYCLIC) {
++			int overrun_count = timer_getoverrun(timer);
++			next.tv_sec += overrun_count * interval.tv_sec;
++			next.tv_nsec += overrun_count * interval.tv_nsec;
++		}
+ 		tsnorm(&next);
  
- 		if (autofs4_need_mount(flags) || current->link_count) {
- 			int status;
-
-
-
-
+ 		if (par->max_cycles && par->max_cycles == stat->cycles)
 
