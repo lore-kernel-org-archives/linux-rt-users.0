@@ -1,97 +1,57 @@
-From: "Asier Tamayo" <asier.tamayo@ona-electroerosion.com>
-Subject: RE: PREEMPT_RT patch vs RTAI/Xenomai
-Date: Tue, 11 May 2010 17:30:33 +0200
-Message-ID: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com>
-References: <4BE975BF.1030305@us.ibm.com>
+From: <jpaul@gdrs.com>
+Subject: Re: lttctl locks up with RT Linux
+Date: Tue, 11 May 2010 16:15:15 -0400
+Message-ID: <A47866F933DF804684068A24BF04A9730862A7F0@gdrs-exchange.gdrs.com>
+References: <A47866F933DF804684068A24BF04A9730862A74C@gdrs-exchange.gdrs.com>
+	<20100422160601.GB28863@Krystal>
+	<A47866F933DF804684068A24BF04A97309116C93@gdrs-exchange.gdrs.com>
+	<20100511115939.GA17304@Krystal>
+	<A47866F933DF804684068A24BF04A9730862A7EB@gdrs-exchange.gdrs.com>
+	<20100511151120.GA5013@Krystal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: <linux-rt-users@vger.kernel.org>
-To: "Nivedita Singhvi" <niv@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.ona-electroerosion.com ([212.81.200.66]:48195 "EHLO
-	mail.ona-electroerosion.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753611Ab0EKPjG convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 May 2010 11:39:06 -0400
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: paulmck@linux.vnet.ibm.com, ltt-dev@lists.casi.polymtl.ca,
+        linux-rt-users@vger.kernel.org
+To: <compudj@krystal.dyndns.org>
+Return-path: <ltt-dev-bounces@lists.casi.polymtl.ca>
 Content-class: urn:content-classes:message
-In-Reply-To: <4BE975BF.1030305@us.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+List-Unsubscribe: <http://lists.casi.polymtl.ca/cgi-bin/mailman/options/ltt-dev>,
+	<mailto:ltt-dev-request@lists.casi.polymtl.ca?subject=unsubscribe>
+List-Archive: <http://lists.casi.polymtl.ca/pipermail/ltt-dev>
+List-Post: <mailto:ltt-dev@lists.casi.polymtl.ca>
+List-Help: <mailto:ltt-dev-request@lists.casi.polymtl.ca?subject=help>
+List-Subscribe: <http://lists.casi.polymtl.ca/cgi-bin/mailman/listinfo/ltt-dev>,
+	<mailto:ltt-dev-request@lists.casi.polymtl.ca?subject=subscribe>
+Errors-To: ltt-dev-bounces@lists.casi.polymtl.ca
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello Nivedita,
+Turning off CONFIG_RCU_CPU_STALL_DETECTOR does not solve the issue with starting up "lttctl -C" ... that call never returns. I'm no longer getting the stack dumps in /var/log/messages and I still have to hard reboot the system as soft reboot doesn't work.
 
-Thanks for your answer.
-
-> What are your criteria?  Do you care about anything other
-> than performance (availability, upgrades, cost, support,
-> compatibility, tools, ...)?
-> 
-> (...) you're best off testing the solutions that you can 
-> get hold of with your own workload, in your own environment.
-> 
-Performance is a must. Besides, costs and tools are very important. Support is also important, but I guess I'd find some good support for any of the solutions.
-
-My new CPU has an Intel Atom N270 @1.6 GHz processor. At the moment (during the porting it might be optimized), I have 5 drivers requering hard real-time (no loop can be skipped) and being called every 2 to 10 ms. In fact, at the beginning I was using 1 ms, but I had some problems with the hard real-time and changed the timing to 2 ms. I do not consider using a legacy OS emulation.
-
-I know my final decission will have to be made after some real tests on my own system, but at this moment I'm trying to gather as much information as I can, regarding the pros and cons of each solution.
-
-> Also, fwiw, there are 2 enterprise distros (Red Hat's MRG
-> and Novell's SLERT) providing real-time (both based on the
-> Linux RT patchset).
-> 
-Thank you very much. I'll have a look at them.
-
-Best regards,
-
-Asier.
+JP
 
 
+-----Original Message-----
+From: Mathieu Desnoyers [mailto:compudj@krystal.dyndns.org]
+Sent: Tue 5/11/2010 11:11 AM
+To: John P. Paul
+Cc: ltt-dev@lists.casi.polymtl.ca; Paul E. McKenney; linux-rt-users@vger.kernel.org
+Subject: Re: [ltt-dev] lttctl locks up with RT Linux
+ 
+* jpaul@gdrs.com (jpaul@gdrs.com) wrote:
+> Thanks Mathieu. I'm going to have to look at this a bit more. This may
+> have fixed one problem and cause another as "lttctl -C -w /tmp/trace
+> trace1" does not return and I'm getting a stack dump in the messages
+> file (see below). The last msg I see from that "lttctl -C" command is
+> "lttctl: Creating trace". The "lttctl: Forking lttd" is not displayed.
 
-> -----Original Message-----
-> From: Nivedita Singhvi [mailto:niv@us.ibm.com]
-> Sent: Tuesday, May 11, 2010 5:21 PM
-> To: Asier Tamayo
-> Cc: linux-rt-users@vger.kernel.org
-> Subject: Re: PREEMPT_RT patch vs RTAI/Xenomai
-> 
-> 
-> Asier Tamayo wrote:
-> > Hello all:
-> > 
-> > I'm just a newbie to this list, so just forgive me if my 
-> question is obvious or has been answered many times ;-)
-> > 
-> > I want to do a port from an old system running a 
-> proprietary RTOS to a new one based in Linux. My system runs 
-> many applications at the same time (GUI, parsers, ...), a few 
-> of which are hard real-time. 
-> > 
-> > I've searched the web, but am still unable to decide which 
-> system to use: RTAI, Xenomai or the PREEMPT_RT patch. Can 
-> anyone give me some clue in this issue? Are there any 
-> advantages in choosing the PREEMPT_RT patches over Xenomai or 
-> RTAI? Running the GUI, which demands a lot of CPU and RAM, 
-> can have any effect on the real-time behaviour?
-> > 
-> > I've seen many comparisons, but in this fast-changing 
-> world, most of them seem to me to be quite out of date.
-> > 
-> > Any hint will be really helpful,
-> 
-> What are your criteria?  Do you care about anything other
-> than performance (availability, upgrades, cost, support,
-> compatibility, tools, ...)?
-> 
-> If your most important criteria is how well your applications
-> perform (whatever that means for you), you're best off testing
-> the solutions that you can get hold of with your own workload,
-> in your own environment.
-> 
-> Also, fwiw, there are 2 enterprise distros (Red Hat's MRG
-> and Novell's SLERT) providing real-time (both based on the
-> Linux RT patchset).
-> 
-> thanks,
-> Nivedita
-> 
+If you disable RCU stalls detection, does it work ?
+
+[Context for Paul: it's on a -RT kernel, with the LTTng patchset]
+
+Thanks,
+
+Mathieu
+
+--
+This is an e-mail from General Dynamics Robotic Systems. It is for the intended recipient only and may contain confidential and privileged information. No one else may read, print, store, copy, forward or act in reliance on it or its attachments. If you are not the intended recipient, please return this message to the sender and delete the message and any attachments from your computer. Your cooperation is appreciated.
