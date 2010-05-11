@@ -1,56 +1,110 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
-Subject: Re: PREEMPT_RT patch vs RTAI/Xenomai
-Date: Tue, 11 May 2010 08:20:31 -0700
-Message-ID: <4BE975BF.1030305@us.ibm.com>
-References: <DFFBF4EB468A894AB1474ED220F05AF60134C0BF@srv-dc.ona-electroerosion.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Real-time projects that could use userspace RCU
+Date: Tue, 11 May 2010 08:21:29 -0700
+Message-ID: <20100511152129.GD2336@linux.vnet.ibm.com>
+References: <20100511122140.GA11000@Krystal>
+ <AANLkTikLHsvs1LKAnFInWLkZUjHAVlM0evDT18jkb-NU@mail.gmail.com>
+ <20100511131404.GC25418@Krystal>
+ <20100511143852.GA2336@linux.vnet.ibm.com>
+ <20100511144337.GB17656@Krystal>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Asier Tamayo <asier.tamayo@ona-electroerosion.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: John Kacur <jkacur@redhat.com>, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e2.ny.us.ibm.com ([32.97.182.142]:47178 "EHLO e2.ny.us.ibm.com"
+Received: from e6.ny.us.ibm.com ([32.97.182.146]:53020 "EHLO e6.ny.us.ibm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751135Ab0EKPUe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 May 2010 11:20:34 -0400
-Received: from d01relay01.pok.ibm.com (d01relay01.pok.ibm.com [9.56.227.233])
-	by e2.ny.us.ibm.com (8.14.3/8.13.1) with ESMTP id o4BF8eRk008739
-	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 11:08:40 -0400
-Received: from d01av03.pok.ibm.com (d01av03.pok.ibm.com [9.56.224.217])
-	by d01relay01.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o4BFKXrL154608
-	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 11:20:33 -0400
-Received: from d01av03.pok.ibm.com (loopback [127.0.0.1])
-	by d01av03.pok.ibm.com (8.14.3/8.13.1/NCO v10.0 AVout) with ESMTP id o4BFKWM3018280
-	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 12:20:33 -0300
-In-Reply-To: <DFFBF4EB468A894AB1474ED220F05AF60134C0BF@srv-dc.ona-electroerosion.com>
+	id S1751667Ab0EKPVd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 May 2010 11:21:33 -0400
+Received: from d01relay07.pok.ibm.com (d01relay07.pok.ibm.com [9.56.227.147])
+	by e6.ny.us.ibm.com (8.14.3/8.13.1) with ESMTP id o4BFJWs5001676
+	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 11:19:32 -0400
+Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
+	by d01relay07.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o4BFLVKu1998960
+	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 11:21:31 -0400
+Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
+	by d01av04.pok.ibm.com (8.14.3/8.13.1/NCO v10.0 AVout) with ESMTP id o4BFLUHk014299
+	for <linux-rt-users@vger.kernel.org>; Tue, 11 May 2010 11:21:30 -0400
+Content-Disposition: inline
+In-Reply-To: <20100511144337.GB17656@Krystal>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Asier Tamayo wrote:
-> Hello all:
+On Tue, May 11, 2010 at 10:43:37AM -0400, Mathieu Desnoyers wrote:
+> * Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
+> > On Tue, May 11, 2010 at 09:14:04AM -0400, Mathieu Desnoyers wrote:
+> > > * John Kacur (jkacur@redhat.com) wrote:
+> > > > On Tue, May 11, 2010 at 2:21 PM, Mathieu Desnoyers
+> > > > <mathieu.desnoyers@efficios.com> wrote:
+> > > > > Hi Thomas,
+> > > > >
+> > > > > Paul told me you were quite interested in the userspace RCU library when he told
+> > > > > you about it (http://lttng.org/urcu). Do you have some userspace applications or
+> > > > > libraries with real-time needs in mind that could use it ? We could help moving
+> > > > > them to liburcu. The wait-free read-side is, as you certainly know, a
+> > > > > characteristic of RCU that can be very useful to RT applications.
+> > > > >
+> > > > > [CCing linux-rt-users, as it seems appropriate to ask them too.]
+> > > > >
+> > > > > Thanks,
+> > > > 
+> > > > Do you have any kind of benchmarks? If you had something appropriate
+> > > > we could add it to the rt-tests suite (which includes cyclictest). Not
+> > > > only would this provide an objective measure, but it could also act as
+> > > > a reference implementation for userspace programmers.
+> > > 
+> > > Yes, the library already has its set of benchmark test programs. The results can
+> > > be found in http://lttng.org/pub/thesis/desnoyers-dissertation-2009-12.pdf
+> > > section 6.5. It shows that RCU read-side is a few orders of magnitude faster
+> > > than lock-based approaches and scales linearly with the number of cores.
+> > > 
+> > > The same PDF, sections 7.6.2 and 7.6.3, presents the architecture-level modeling
+> > > of the RCU mb algorithm in Promela, along with the formal proof by model
+> > > checking for both correctness and progress (the read-side is proven wait-free).
+> > > 
+> > > > 
+> > > > See here.
+> > > > git clone git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+> > > > 
+> > > > cyclictest is the original program written by Thomas, maintained by
+> > > > Clark Williams now. Most - but not all, of the additional tests are
+> > > > modelled after this program, so you might want to have a look at that
+> > > > if you're not already familiar with it.
+> > > 
+> > > Thanks for the pointer, I did know about cyclictest, but not the others. Since
+> > > the read-side does not involve the OS nor blocking, I wonder which of these
+> > > tests would be even a near-match though.
+> > 
+> > Why not add mutual-exclusion tests, including locking, per-thread locking,
+> > reader-writer locking, and RCU?  The figure of merit would be maximum
+> > latency rather than throughput, but the existing userspace-rcu tests should
+> > be pretty close.
+> > 
 > 
-> I'm just a newbie to this list, so just forgive me if my question is obvious or has been answered many times ;-)
+> Do you mean adding our RCU tests to the rt-tests.git tree or adding more
+> information in our own tests ? Also, the maximum latency is quite dependent on
+> the rest of the workload running on the system, so we might have to generate
+> such a workload while the test runs to give an interesting and accurate view of
+> the maximum latency.
 > 
-> I want to do a port from an old system running a proprietary RTOS to a new one based in Linux. My system runs many applications at the same time (GUI, parsers, ...), a few of which are hard real-time. 
+> Maybe running one (or many) of the already existing rt-tests in parallel would
+> do.
 > 
-> I've searched the web, but am still unable to decide which system to use: RTAI, Xenomai or the PREEMPT_RT patch. Can anyone give me some clue in this issue? Are there any advantages in choosing the PREEMPT_RT patches over Xenomai or RTAI? Running the GUI, which demands a lot of CPU and RAM, can have any effect on the real-time behaviour?
-> 
-> I've seen many comparisons, but in this fast-changing world, most of them seem to me to be quite out of date.
-> 
-> Any hint will be really helpful,
+> Thoughts ?
 
-What are your criteria?  Do you care about anything other
-than performance (availability, upgrades, cost, support,
-compatibility, tools, ...)?
+My thought was a variant of our existing RCU tests.  Something like:
 
-If your most important criteria is how well your applications
-perform (whatever that means for you), you're best off testing
-the solutions that you can get hold of with your own workload,
-in your own environment.
+	clock_gettime();
+	pthread_mutex_lock();
+	clock_gettime();
+	/* compute latency, accumulate average and maximum */
 
-Also, fwiw, there are 2 enterprise distros (Red Hat's MRG
-and Novell's SLERT) providing real-time (both based on the
-Linux RT patchset).
+The test thread would need to have real-time priority.  Then print the
+maximums for various mechanisms.
 
-thanks,
-Nivedita
+Does this seem like a reasonable approach?
+
+							Thanx, Paul
