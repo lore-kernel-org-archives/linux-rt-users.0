@@ -1,42 +1,81 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
-Subject: Re: PREEMPT_RT patch vs RTAI/Xenomai
-Date: Thu, 13 May 2010 19:58:42 +0200
-Message-ID: <20100513175842.GN6055@pengutronix.de>
-References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com> <1273680443.27703.33.camel@gandalf.stny.rr.com> <4BEBB1C8.90606@steinhoff.de>
+From: Mathieu Desnoyers <compudj@krystal.dyndns.org>
+Subject: Re: [ltt-dev] lttctl locks up with RT Linux
+Date: Thu, 13 May 2010 14:23:40 -0400
+Message-ID: <20100513182340.GA23811@Krystal>
+References: <A47866F933DF804684068A24BF04A9730862A74C@gdrs-exchange.gdrs.com> <20100422160601.GB28863@Krystal> <A47866F933DF804684068A24BF04A97309116C93@gdrs-exchange.gdrs.com> <20100511115939.GA17304@Krystal> <A47866F933DF804684068A24BF04A9730862A7EB@gdrs-exchange.gdrs.com> <20100511151120.GA5013@Krystal> <A47866F933DF804684068A24BF04A9730862A7F0@gdrs-exchange.gdrs.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Cc: linux-rt-users@vger.kernel.org
-To: Armin Steinhoff <armin@steinhoff.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: ltt-dev@lists.casi.polymtl.ca, paulmck@linux.vnet.ibm.com,
+	linux-rt-users@vger.kernel.org
+To: jpaul@gdrs.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:45941 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753372Ab0EMR6n (ORCPT
+Received: from tomts36-srv.bellnexxia.net ([209.226.175.93]:48198 "EHLO
+	tomts36-srv.bellnexxia.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754889Ab0EMSXy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 May 2010 13:58:43 -0400
+	Thu, 13 May 2010 14:23:54 -0400
+Received: from toip5.srvr.bell.ca ([209.226.175.88])
+          by tomts36-srv.bellnexxia.net
+          (InterMail vM.5.01.06.13 201-253-122-130-113-20050324) with ESMTP
+          id <20100513182351.KVWY19420.tomts36-srv.bellnexxia.net@toip5.srvr.bell.ca>
+          for <linux-rt-users@vger.kernel.org>;
+          Thu, 13 May 2010 14:23:51 -0400
 Content-Disposition: inline
-In-Reply-To: <4BEBB1C8.90606@steinhoff.de>
+In-Reply-To: <A47866F933DF804684068A24BF04A9730862A7F0@gdrs-exchange.gdrs.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 13, 2010 at 10:01:12AM +0200, Armin Steinhoff wrote:
-> I did a test with user space based CAN driver.
+Please double-check that you applied the last patch correctly. I tried
+building a lttng-enabled -rt tree here (x86 64 box), and it works (I can
+start/stop tracing and see the trace in lttv).
 
-The Linux CAN interface is SocketCAN. Do you see a usecase where this
-doesn't fit?
+Note that I simply discarded the conflicting instrumentation patches for
+this quick test.
 
-> Already the standard distribution of SUSE 11.2 (non RT) was able to
-> handle 1000 frames per seconds sent by a QNX6 machine !!
+I'm pretty sure an error could have been inserted in async_wakeup()
+within ltt-tracer.c. Can you paste the code you have ?
 
-Realtime != fast.
+Unbalanced rcu read lock/unlock could be causing this.
 
-> The latency test of PREEMPT_RT shows a latency of ~10us for a
-> dual-core box at 1.8GHz.
+Thanks,
 
-It depends on the load.
+Mathieu
 
-rsc
+* jpaul@gdrs.com (jpaul@gdrs.com) wrote:
+> Turning off CONFIG_RCU_CPU_STALL_DETECTOR does not solve the issue with starting up "lttctl -C" ... that call never returns. I'm no longer getting the stack dumps in /var/log/messages and I still have to hard reboot the system as soft reboot doesn't work.
+> 
+> JP
+> 
+> 
+> -----Original Message-----
+> From: Mathieu Desnoyers [mailto:compudj@krystal.dyndns.org]
+> Sent: Tue 5/11/2010 11:11 AM
+> To: John P. Paul
+> Cc: ltt-dev@lists.casi.polymtl.ca; Paul E. McKenney; linux-rt-users@vger.kernel.org
+> Subject: Re: [ltt-dev] lttctl locks up with RT Linux
+>  
+> * jpaul@gdrs.com (jpaul@gdrs.com) wrote:
+> > Thanks Mathieu. I'm going to have to look at this a bit more. This may
+> > have fixed one problem and cause another as "lttctl -C -w /tmp/trace
+> > trace1" does not return and I'm getting a stack dump in the messages
+> > file (see below). The last msg I see from that "lttctl -C" command is
+> > "lttctl: Creating trace". The "lttctl: Forking lttd" is not displayed.
+> 
+> If you disable RCU stalls detection, does it work ?
+> 
+> [Context for Paul: it's on a -RT kernel, with the LTTng patchset]
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> --
+> This is an e-mail from General Dynamics Robotic Systems. It is for the intended recipient only and may contain confidential and privileged information. No one else may read, print, store, copy, forward or act in reliance on it or its attachments. If you are not the intended recipient, please return this message to the sender and delete the message and any attachments from your computer. Your cooperation is appreciated.
+> 
+
 -- 
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+Mathieu Desnoyers
+Operating System Efficiency R&D Consultant
+EfficiOS Inc.
+http://www.efficios.com
