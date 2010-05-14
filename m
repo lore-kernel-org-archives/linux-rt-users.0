@@ -1,50 +1,95 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: WARNING: at fs/namespace.c:648 commit_tree+0xf1/0x10b()
-Date: Fri, 14 May 2010 09:35:12 -0300
-Message-ID: <20100514123512.GB31019@uudg.org>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: PREEMPT_RT patch vs RTAI/Xenomai
+Date: Fri, 14 May 2010 14:32:22 +0200
+Message-ID: <4BED42D6.3090303@steinhoff.de>
+References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com> <1273680443.27703.33.camel@gandalf.stny.rr.com> <4BEBB1C8.90606@steinhoff.de> <20100513175842.GN6055@pengutronix.de> <4BED1937.6080907@steinhoff.de> <20100514114625.GA6055@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Nick Piggin <npiggin@suse.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Robert Schwebel <r.schwebel@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f174.google.com ([209.85.212.174]:43521 "EHLO
-	mail-px0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755185Ab0ENMm7 (ORCPT
+Received: from moutng.kundenserver.de ([212.227.126.171]:64748 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757792Ab0ENNVU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 May 2010 08:42:59 -0400
-Content-Disposition: inline
+	Fri, 14 May 2010 09:21:20 -0400
+In-Reply-To: <20100514114625.GA6055@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-John,
+Robert Schwebel wrote:
+> On Fri, May 14, 2010 at 11:34:47AM +0200, Armin Steinhoff wrote:
+>   
+>>> The Linux CAN interface is SocketCAN. Do you see a usecase where
+>>> this doesn't fit?
+>>>       
+>> IMHO, the SocketCAN interface is simply an overkill for the handling
+>> of small CAN messages. I estimate that the amount of executed code
+>> for handling of a single CAN frame is much bigger as the frame itself
+>> :) Every read and write action creates context switches ...
+>>
+>> This is not the case with the user space based driver. Same story
+>> with our PROFIBUS-DP drivers ...
+>>     
+>
+> Do you see a use case which shows that a reasonably modern CPU has
+> performance problems with SocketCAN, while it works fine with your
+> userspace driver? My impression from previous projects is that, for all
+> real life scenarios, the advantage of having a standard hardware
+> abstraction in the kernel 
 
-This morning I boooted 2.6.33.4-rt19 (from rt/2.6.33) and, though this
-kernel has all of your fs/namespace.c patches, I saw the very same
-backtrace you and Nick fixed a while ago:
+How many "hardware abstractions" do you want in the kernel ?
 
-------------[ cut here ]------------
-WARNING: at fs/namespace.c:648 commit_tree+0xf1/0x10b()
-Hardware name: KQ260AA-AC4 a6540br
-Modules linked in: fuse i915 drm_kms_helper drm video output ipt_MASQUERADE iptable_nat nf_nat bridge stp llc sunrpc ipv6 xt_physdev ipt_REJECT xt_tcpudp nf_conntrack_ipv4 nf_defrag_ipv4 xt_state iptable_filter ip_tables x_tables dm_mirror dm_region_hash dm_log dm_multipath scsi_dh dm_mod kvm_intel kvm uinput tuner_simple tuner_types wm8775 tda9887 tda8290 tuner snd_hda_codec_realtek cx25840 ivtv snd_hda_intel snd_hda_codec snd_hwdep i2c_algo_bit snd_seq cx2341x v4l2_common snd_seq_device videodev v4l1_compat snd_pcm v4l2_compat_ioctl32 ir_common snd_timer ir_core snd tveeprom i2c_i801 firewire_ohci firewire_core i2c_core soundcore r8169 sr_mod sg iTCO_wdt snd_page_alloc pcspkr serio_raw mii intel_agp cdrom crc_itu_t iTCO_vendor_support button ahci libata sd_mod scsi_mod crc_t10dif ext3 jb
- d mbcache uhci_hcd ohci_hcd ehci_hcd [last unloaded: microcode]
-Pid: 5117, comm: fusermount Not tainted 2.6.33.4-rt19 #36
-Call Trace:
-[<ffffffff8103ff87>] warn_slowpath_common+0x7c/0x94
-[<ffffffff8103ffb3>] warn_slowpath_null+0x14/0x16
-[<ffffffff81114931>] commit_tree+0xf1/0x10b
-[<ffffffff8111573d>] attach_recursive_mnt+0xf2/0x188
-[<ffffffff811158d3>] graft_tree+0x100/0x102
-[<ffffffff811167b7>] do_mount+0x386/0x7ae
-[<ffffffff810d4712>] ? strndup_user+0x5d/0x85
-[<ffffffff81116c67>] sys_mount+0x88/0xc2
-[<ffffffff81002d32>] system_call_fastpath+0x16/0x1b
+>>> Realtime != fast.
+>>>       
+>> But a small response time is a technological requirement in order to
+>> meet deadlines. The standard kernel is a _good base_ in order to
+>> implement predictive behavior ... this would not the case if the
+>> response time would be in the range of 100us. OK ... you can have
+>> real-time behavior with a response time of 100us .. but this would be
+>> useless for most real-time applications.
+>>     
+>
+> Above you state that you send "1000 frames per second", but that has
+> nothing to do with response times. 
 
+The response time of the whole real-time application 
+(hardware/driver/application) is the point.
+If Linux wouldn't able to handle every 100us a CAN frame ... the whole 
+real-time application would be useless.
 
-Regards,
-Luis
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+> Sending lots of frames works also if
+> you have for example a CAN chip with a long FIFO, push the frames in and
+> wait forever.
+
+But every so called "long FIFO" is limited and can reach the overun state.
+
+>  "Repsonse time" does involve some kind of round trip,
+> which one do you mean? 
+
+Responses of an real-time application to external events ...
+
+> Can you elaborate where you see the need for us
+> response times?
+>
+> As the minimum reaction time is limited by hardware constraints on
+> modern cpus anyway, I think that for most applications which require sub
+> 100 us response times, a hardware solution (microcontroller, fpga) is a
+> better way to achive things.
+>   
+
+Why should we use FPGAs when a CPU has multiple cores ?
+Every fast fieldbus ( e.g. EtherCAT) needs a reaction time with less 
+than 100us.
+
+--Armin
+
+---
+Armin Steinhoff   <as@Steinhoff-Automation.com> 
+STEINHOFF Automation &  Fieldbus-Systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TEL +49-6431 -529366  or  -570 99 70
+FAX +49-6431 - 57454  or  -570 99 80
+http://www.steinhoff-automation.com
 
