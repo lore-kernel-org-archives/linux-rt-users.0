@@ -1,135 +1,100 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: [PATCH] Staging: pohmelfs: Fix a build error
-Date: Wed, 19 May 2010 16:57:35 +0200
-Message-ID: <1274281055-28812-1-git-send-email-abogani@texware.it>
-Cc: Linux RT users <linux-rt-users@vger.kernel.org>,
-	Alessio Igor Bogani <abogani@texware.it>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	john stultz <johnstul@us.ibm.com>
+From: John Kacur <jkacur@gmail.com>
+Subject: 2.6.33.4-rt20 inconsistent lock state
+Date: Wed, 19 May 2010 21:19:45 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1005192112030.14774@localhost>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f216.google.com ([209.85.219.216]:42169 "EHLO
-	mail-ew0-f216.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753195Ab0ESPDA (ORCPT
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:38530 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753487Ab0ESTUR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 May 2010 11:03:00 -0400
-Received: by ewy8 with SMTP id 8so2689359ewy.28
-        for <linux-rt-users@vger.kernel.org>; Wed, 19 May 2010 08:02:59 -0700 (PDT)
+	Wed, 19 May 2010 15:20:17 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Build tested only, sorry.
+=================================
+[ INFO: inconsistent lock state ]
+2.6.33.4-rt20-debug #1
+---------------------------------
+inconsistent {RECLAIM_FS-ON-W} -> {IN-RECLAIM_FS-W} usage.
+kswapd0/416 [HC0[0]:SC0[0]:HE1:SE1] takes:
+ (&(&ip->i_iolock)->mr_lock#2){++++?+}, at: [<ffffffffa0215cc3>] 
+xfs_ilock+0x42/
+0x15a [xfs]
+{RECLAIM_FS-ON-W} state was registered at:
+  [<ffffffff810a4dac>] mark_held_locks+0x52/0x70
+  [<ffffffff810a4e6e>] lockdep_trace_alloc+0xa4/0xc1
+  [<ffffffff81128e12>] __alloc_pages_nodemask+0xe8/0xc9e
+  [<ffffffff8116758f>] alloc_pages_current+0xc7/0xd0
+  [<ffffffff8111f08e>] __page_cache_alloc+0xd0/0xd9
+  [<ffffffff8111f3b3>] grab_cache_page_write_begin+0xb6/0x17c
+  [<ffffffff811b4a0c>] block_write_begin+0x54/0x180
+  [<ffffffffa023fe01>] xfs_vm_write_begin+0x2a/0x2c [xfs]
+  [<ffffffff8111dab2>] generic_file_buffered_write+0x147/0x3a8
+  [<ffffffffa024a766>] xfs_write+0x950/0xce3 [xfs]
+  [<ffffffffa0244aab>] xfs_file_aio_write+0xdb/0xe7 [xfs]
+  [<ffffffff81179a3e>] do_sync_write+0xd0/0x143
+  [<ffffffff8117aa5b>] vfs_write+0x161/0x1cf
+  [<ffffffff8117abe8>] sys_write+0x63/0x8a
+  [<ffffffff8100379b>] system_call_fastpath+0x16/0x1b
+irq event stamp: 3763347
+hardirqs last  enabled at (3763347): [<ffffffff81521b35>] 
+_raw_spin_unlock_irqre
+store+0x5b/0xab
+hardirqs last disabled at (3763346): [<ffffffff81521928>] 
+_raw_spin_lock_irqsave
++0x1e/0x9c
+softirqs last  enabled at (0): [<ffffffff8105ff2a>] 
+copy_process+0x827/0x1d66
+softirqs last disabled at (0): [<(null)>] (null)
 
-Signed-off-by: Alessio Igor Bogani <abogani@texware.it>
----
- drivers/staging/pohmelfs/inode.c |   72 +++++++++++++++++++++----------------
- 1 files changed, 41 insertions(+), 31 deletions(-)
+other info that might help us debug this:
+2 locks held by kswapd0/416:
+ #0:  (shrinker_rwsem){+.+...}, at: [<ffffffff81132cfb>] 
+shrink_slab+0x53/0x21b
+ #1:  (&xfs_mount_list_lock){++++.-}, at: [<ffffffff810b2327>] 
+rt_down_read+0x10
+/0x12
 
-diff --git a/drivers/staging/pohmelfs/inode.c b/drivers/staging/pohmelfs/inode.c
-index cd25811..82d238a 100644
---- a/drivers/staging/pohmelfs/inode.c
-+++ b/drivers/staging/pohmelfs/inode.c
-@@ -1275,7 +1275,8 @@ static void pohmelfs_put_super(struct super_block *sb)
- 	struct pohmelfs_inode *pi;
- 	unsigned int count;
- 	unsigned int in_drop_list = 0;
--	struct inode *inode, *tmp;
-+	struct inode *inode, *next_i;
-+	int i;
- 
- 	dprintk("%s.\n", __func__);
- 
-@@ -1290,11 +1291,11 @@ static void pohmelfs_put_super(struct super_block *sb)
- 		dprintk("%s: ino: %llu, pi: %p, inode: %p, count: %u.\n",
- 				__func__, pi->ino, pi, inode, count);
- 
--		if (atomic_read(&inode->i_count) != count) {
-+		if (inode->i_count != count) {
- 			printk("%s: ino: %llu, pi: %p, inode: %p, count: %u, i_count: %d.\n",
- 					__func__, pi->ino, pi, inode, count,
--					atomic_read(&inode->i_count));
--			count = atomic_read(&inode->i_count);
-+					inode->i_count);
-+			count = inode->i_count;
- 			in_drop_list++;
- 		}
- 
-@@ -1302,40 +1303,49 @@ static void pohmelfs_put_super(struct super_block *sb)
- 			iput(&pi->vfs_inode);
- 	}
- 
--	list_for_each_entry_safe(inode, tmp, &sb->s_inodes, i_sb_list) {
--		pi = POHMELFS_I(inode);
--
--		dprintk("%s: ino: %llu, pi: %p, inode: %p, i_count: %u.\n",
--				__func__, pi->ino, pi, inode, atomic_read(&inode->i_count));
-+	for_each_possible_cpu(i) {
-+		struct list_head *list;
-+#ifdef CONFIG_SMP
-+		list = per_cpu_ptr(sb->s_inodes, i);
-+#else
-+		list = &sb->s_inodes;
-+#endif
- 
--		/*
--		 * These are special inodes, they were created during
--		 * directory reading or lookup, and were not bound to dentry,
--		 * so they live here with reference counter being 1 and prevent
--		 * umount from succeed since it believes that they are busy.
--		 */
--		count = atomic_read(&inode->i_count);
--		if (count) {
--			list_del_init(&inode->i_sb_list);
--			while (count--)
--				iput(&pi->vfs_inode);
-+		list_for_each_entry_safe(inode, next_i, list, i_sb_list) {
-+			pi = POHMELFS_I(inode);
-+
-+			dprintk("%s: ino: %llu, pi: %p, inode: %p, i_count: %u.\n",
-+					__func__, pi->ino, pi, inode, atomic_read(&inode->i_count));
-+
-+			/*
-+			 * These are special inodes, they were created during
-+			 * directory reading or lookup, and were not bound to dentry,
-+			 * so they live here with reference counter being 1 and prevent
-+			 * umount from succeed since it believes that they are busy.
-+			 */
-+			count = inode->i_count;
-+			if (count) {
-+				list_del_init(&inode->i_sb_list);
-+				while (count--)
-+					iput(&pi->vfs_inode);
-+			}
- 		}
--	}
- 
--	psb->trans_scan_timeout = psb->drop_scan_timeout = 0;
--	cancel_rearming_delayed_work(&psb->dwork);
--	cancel_rearming_delayed_work(&psb->drop_dwork);
--	flush_scheduled_work();
-+		psb->trans_scan_timeout = psb->drop_scan_timeout = 0;
-+		cancel_rearming_delayed_work(&psb->dwork);
-+		cancel_rearming_delayed_work(&psb->drop_dwork);
-+		flush_scheduled_work();
- 
--	dprintk("%s: stopped workqueues.\n", __func__);
-+		dprintk("%s: stopped workqueues.\n", __func__);
- 
--	pohmelfs_crypto_exit(psb);
--	pohmelfs_state_exit(psb);
-+		pohmelfs_crypto_exit(psb);
-+		pohmelfs_state_exit(psb);
- 
--	bdi_destroy(&psb->bdi);
-+		bdi_destroy(&psb->bdi);
- 
--	kfree(psb);
--	sb->s_fs_info = NULL;
-+		kfree(psb);
-+		sb->s_fs_info = NULL;
-+	}
- }
- 
- static int pohmelfs_statfs(struct dentry *dentry, struct kstatfs *buf)
--- 
-1.7.0.4
+stack backtrace:
+Pid: 416, comm: kswapd0 Not tainted 2.6.33.4-rt20-debug #1
+Call Trace:
+ [<ffffffff810a4b18>] valid_state+0x178/0x18b
+ [<ffffffff81013713>] ? save_stack_trace+0x2f/0x62
+ [<ffffffff810a53be>] ? check_usage_forwards+0x0/0x8e
+ [<ffffffff810a4c3e>] mark_lock+0x113/0x22f
+ [<ffffffff810a5e73>] __lock_acquire+0x3a5/0xd32
+ [<ffffffff8151feb6>] ? rt_spin_lock_slowunlock+0x6a/0x94
+ [<ffffffff810a4b58>] ? mark_lock+0x2d/0x22f
+ [<ffffffffa0215cc3>] ? xfs_ilock+0x42/0x15a [xfs]
+ [<ffffffff810a723e>] lock_acquire+0xd4/0xf1
+ [<ffffffffa0215cc3>] ? xfs_ilock+0x42/0x15a [xfs]
+ [<ffffffff81093783>] anon_down_write_nested+0x4f/0x9d
+ [<ffffffffa0215cc3>] ? xfs_ilock+0x42/0x15a [xfs]
+ [<ffffffff810b0854>] ? rt_spin_lock_fastunlock.clone.0+0x71/0x7a
+ [<ffffffffa0215cc3>] xfs_ilock+0x42/0x15a [xfs]
+ [<ffffffffa0215fe4>] xfs_ireclaim+0xae/0xcc [xfs]
+ [<ffffffffa024e85c>] xfs_reclaim_inode+0x138/0x146 [xfs]
+ [<ffffffffa024f72d>] xfs_inode_ag_walk+0xf9/0x1c5 [xfs]
+ [<ffffffffa024e724>] ? xfs_reclaim_inode+0x0/0x146 [xfs]
+ [<ffffffffa024f8b1>] xfs_inode_ag_iterator+0xb8/0x178 [xfs]
+ [<ffffffffa024e724>] ? xfs_reclaim_inode+0x0/0x146 [xfs]
+ [<ffffffff810b2327>] ? rt_down_read+0x10/0x12
+ [<ffffffffa024fa0b>] xfs_reclaim_inode_shrink+0x9a/0x1a0 [xfs]
+ [<ffffffff81132df9>] shrink_slab+0x151/0x21b
+ [<ffffffff8113373d>] balance_pgdat+0x4a0/0x798
+ [<ffffffff8112fa10>] ? isolate_pages_global+0x0/0x337
+ [<ffffffff81133d14>] kswapd+0x2df/0x2f5
+ [<ffffffff8108cdd6>] ? autoremove_wake_function+0x0/0x4f
+ [<ffffffff810449cd>] ? need_resched+0x3f/0x45
+ [<ffffffff81133a35>] ? kswapd+0x0/0x2f5
+ [<ffffffff8108c8f6>] kthread+0xa4/0xac
+ [<ffffffff810045d4>] kernel_thread_helper+0x4/0x10
+ [<ffffffff81522100>] ? restore_args+0x0/0x30
+ [<ffffffff8108c852>] ? kthread+0x0/0xac
+ [<ffffffff810045d0>] ? kernel_thread_helper+0x0/0x10
 
