@@ -1,68 +1,60 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [RT] RCU splat on 2.6.33.4-rt20
-Date: Thu, 20 May 2010 08:59:27 -0500
-Message-ID: <20100520085927.480047d4@torg>
-References: <20100519211911.5450c1dd@torg>
-	<20100520032246.GB2708@linux.vnet.ibm.com>
+From: Raphael Hertzog <raphael@ouaza.com>
+Subject: Re: Changing real time priority of interrupt handler thread
+Date: Tue, 25 May 2010 15:02:54 +0200
+Message-ID: <20100525130254.GA1715@rivendell>
+References: <1273168487.22438.44.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/xDQV/D.S7bLxt2/RhB8/gcO"; protocol="application/pgp-signature"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Nivedita Singhvi <niv@us.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:54376 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753199Ab0ETN7l (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 May 2010 09:59:41 -0400
-In-Reply-To: <20100520032246.GB2708@linux.vnet.ibm.com>
+Received: from arrakeen.ouaza.com ([212.85.152.62]:35771 "EHLO
+	arrakeen.ouaza.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753610Ab0EYNDY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 25 May 2010 09:03:24 -0400
+Content-Disposition: inline
+In-Reply-To: <1273168487.22438.44.camel@gandalf.stny.rr.com>
+ <4BE1BADA.3040902@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/xDQV/D.S7bLxt2/RhB8/gcO
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-On Wed, 19 May 2010 20:22:46 -0700
-"Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
-
-> On Wed, May 19, 2010 at 09:19:11PM -0500, Clark Williams wrote:
-> > Thomas/Paul,
-> >=20
-> > Resumed my laptop (T60, 64-bit kernel) and after about five
-> > minutes of doing nothing but surfing with firefox, got the following
-> > RCU stall notification from a 2.6.33.4-rt20 kernel:
-> >=20
-> > INFO: RCU detected CPU 1 stall (t=3D0 jiffies)
+Le mercredi 05 mai 2010, Nivedita Singhvi a =E9crit :
+> Raphael Hertzog wrote:
 >=20
-> Hmmm...  "t=3D0 jiffies".  I wonder if the hibernation/resumption confused
-> the stall-warning code.  My first thought was that an RCU grace period
-> had spanned the hibernation, but that would not be consistent with it
-> waiting five minutes after resumption to splat.
+> >In case it was not clear, I want to run the IRQ handler of the seria=
+l
+> >ports at a higher priority than the other ones (like network, disk,
+> >etc.) to avoid buffer overruns.
 >=20
-> I will look into this.
+> Have you tried using the rtctl utility and the /etc/rtgroups file?
+
+Nope, not yet. I was not aware of it.
+
+Le jeudi 06 mai 2010, Steven Rostedt a =E9crit :
+> Also try out tuna. If you have fedora:
 >=20
+>  yum install tuna
 
-Don't take that "five minutes" as anything approaching some degree of
-accuracy. It could have been quicker; I was distracted and not even
-touching the keyboard when a loud beep sounded and I had to poke around
-a bit to realize that an NMI backtrace had triggered.
+I have Debian and none of the two tools quoted above seem to be package=
+d.
+But thanks for your answers, I will check them out.
 
-Depending on your timeout values, I think that it's quite reasonable to
-suspect that an RCU spanned the suspend/resume.
+BTW I can't find a "rtctl" project, are the SRPM the official upstream
+sources? For tuna there's a least a git repo.
 
-Clark
+Cheers,
+--=20
+Rapha=EBl Hertzog -+- http://www.ouaza.com
 
---Sig_/xDQV/D.S7bLxt2/RhB8/gcO
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.13 (GNU/Linux)
-
-iEYEARECAAYFAkv1QEMACgkQHyuj/+TTEp1AegCglbEOLVUggBdlCZsGqJDGzqAq
-2kEAn2IG/LXaxiKImNkb6ivkXR42kbyf
-=AoC0
------END PGP SIGNATURE-----
-
---Sig_/xDQV/D.S7bLxt2/RhB8/gcO--
+=46reexian : des d=E9veloppeurs Debian au service des entreprises
+http://www.freexian.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
