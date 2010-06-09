@@ -1,83 +1,125 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.33.5-rt23
-Date: Wed, 9 Jun 2010 18:44:01 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
- <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Subject: Re: At a loss: Kernel 2.6.19-rt15 with ixp425
+Date: Wed, 09 Jun 2010 10:02:44 -0700
+Message-ID: <1276102964.8203.7.camel@sven.thebigcorporation.com>
+References: <20100608181752.GA19521@colorado.edu>
+	 <1276022232.9420.17.camel@sven.thebigcorporation.com>
+	 <20100608193204.GA13883@colorado.edu>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	John Stultz <johnstul@us.ibm.com>,
-	Nick Piggin <npiggin@suse.de>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Eric W Anderson <Eric.Anderson@Colorado.EDU>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:34122 "EHLO www.tglx.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753016Ab0FIQoJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jun 2010 12:44:09 -0400
-In-Reply-To: <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+Received: from mail-pw0-f46.google.com ([209.85.160.46]:37811 "EHLO
+	mail-pw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758027Ab0FIRCx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Jun 2010 13:02:53 -0400
+Received: by pwj5 with SMTP id 5so1990902pwj.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jun 2010 10:02:52 -0700 (PDT)
+In-Reply-To: <20100608193204.GA13883@colorado.edu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
- 
-Changes from 2.6.33.3-rt19 to 2.6.33.4-rt20:
+On Tue, 2010-06-08 at 13:32 -0600, Eric W Anderson wrote:
+> Hi Sven,
+> 
+> The device manufacturer has made some kernel modifications to support their
+> board, and those are specific to 2.6.19.  (In fact, they're specific to
+> 2.6.19.2 OpenWRT patches).  There's also a large driver which is appropriate
+> for an old kernel but would need some re-engineering to deal with API changes
+> in 2.6.20 or 2.6.21, I believe.
+> 
+> So, if getting high-resolution timing with this kernel is going to be a
+> nightmare, I can try taking on a newer kernel.  But it'll be an ordeal.
+> 
 
-  5b6c7b0: net: Make [dis/en]able_irq_*_lockdep() RT safe
-  d6434af: fs: Resolve mntput_no_expire issues.
-  56e4c7f: fs: Fix mnt_count typo
-  1540c84: Merge branch '2.6.33.4' into rt/2.6.33
-  1a3a403: autofs4: Remove another autofs4_lock deadlock
-  6b568a0: autofs: Remove deadlock
-  c54c071: fs: Add missing parantheses
+Don't know really what to say.
 
-Changes from 2.6.33.4-rt20 to 2.6.33.4-rt21:
+With the device manufacturer not pushing / maintaining code upstream,
+that sounds like a non-starter already. 
 
-  cc4a826: sched: Fix wake_affine() vs RT tasks
-  ea17fed: printk: Fix missing klogd wakeup
-  9846da2: fix undefined references to kernel_sem
-  e868252: fs: namespace: Fix fuse mount fallout
-  44b341a: net: ehea: make rx irq handler non-threaded (IRQF_NODELAY)
+The ixp425 is supported by folks like MontaVista, maybe Wind River iirc.
 
-Changes from 2.6.33.4-rt21 to 2.6.33.5-rt22:
+The former has had some sort of HRT support for a long time, it might
+get you the functionality you need.
 
-  ef4afcc: Merge stable/linux-2.6.33.y into rt/2.6.33
+But in any case, I'd try and walk the drivers forward, rather than try
+to back-port HRT. 
 
-Changes from 2.6.33.5-rt22 to 2.6.33.5-rt23:
+You're unlikely to get much support for such an old Kernel if you run
+into other issues, so the more up to date you can get, the better.
 
-  ab774e8: drivers/hwmon/coretemp.c: get TjMax value from MSR
-  e8bfcca: drivers/hwmon/coretemp.c: detect the thermal sensors by CPUID
-  a06a867: dcache: Prevent d_genocide() from decrementing d_count more than once
-  bdeadaf: nfs: Avoid igrab deadlock.
-  6976846: dcache: Fix select_parent dentry traversal locking
-  1f0f6ec: powerpc: chrp/time.c fix preprocessor conditional
+Good luck.
 
-Bulk of changes comes from stable tree. The -rt related changes are
-mostly fixes for the vfs fallout the rest are fixlets all over the
-place and hardware enablement.
+Sven
 
-Download locations:
-   
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
+> -Eric
+> 
+> 
+> Thus spake Sven-Thorsten Dietrich (thebigcorporation@gmail.com):
+> 
+> > On Tue, 2010-06-08 at 12:17 -0600, Eric W Anderson wrote:
+> > > Hello All,
+> > 
+> > Hi Eric,
+> > 
+> > 2.6.19 is very very old.
+> > 
+> > What is preventing you from a Kernel upgrade?
+> > 
+> > Sven
+> > 
+> > 
+> > > 
+> > > I can't figure out (or haven't figured out) how to get actual high-resolution
+> > > timers on the above platform.  I'm kind of stuck with 2.6.19, unfortunately.
+> > > I've applied the -rt patch to stock 2.6.19, merged in some random patches to
+> > > support my hardware, and gotten it to boot. But, here's what confuses me:  I
+> > > have the hrtimer API, but my actual clock resolution is still shown as  10ms.
+> > > 
+> > >   root@patty:/# cat /proc/timer_list 
+> > >   Timer List Version: v0.1
+> > >   HRTIMER_MAX_CLOCK_BASES: 2
+> > >   now at 2766685920305 nsecs
+> > >   
+> > >   cpu: 0
+> > >    clock 0:
+> > >     .index:      0
+> > >     .resolution: 10000000 nsecs
+> > >     .get_time:   ktime_get_real
+> > >   active timers:
+> > >    clock 1:
+> > >     .index:      1
+> > >     .resolution: 10000000 nsecs
+> > >     .get_time:   ktime_get
+> > >   active timers:
+> > >    #0: <c4615ec8>, hrtimer_wakeup
+> > >    # expires at 2766802147358 nsecs [in 116227053 nsecs]
+> > >    #1: <c4615ec8>, it_real_fn
+> > >    # expires at 2767494816966 nsecs [in 808896661 nsecs]
+> > >    #2: <c4615ec8>, it_real_fn
+> > >    # expires at 3642163204498 nsecs [in 875477284193 nsecs]
+> > >    #3: <c4615ec8>, it_real_fn
+> > >    # expires at 3643403169278 nsecs [in 876717248973 nsecs]
+> > > 
+> > > Additionally, I don't see CONFIG_HIGH_RES_TIMERS anywhere in my kernel
+> > > menuconfig.  I've added a patch from Kevin Hilman and Milan Svoboda
+> > > (http://lkml.indiana.edu/hypermail/linux/kernel/0607.1/2343.html) which
+> > > purports to enable a high-resolution clock event source for this board, but
+> > > that doesn't seem to change anything. 
+> > > 
+> > > I think I don't properly understand the preempt_rt / hrtimers /
+> > > board-specific-bits ecosystem here.  What are the bits and pieces I need in
+> > > order to have high-resolution timers on this platform?
+> > > 
+> > > Many, many thanks,
+> > > Eric Anderson
+> > > 
+> > > 
+> > 
+> > 
+> 
 
-Git release branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
-
-Gitweb:
-   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
-
-Information on the RT patch can be found at:
-
-   http://rt.wiki.kernel.org/index.php/Main_Page
-
-To build the 2.6.33.5-rt23 tree, the following patches should be
-applied:
-
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.5.tar.bz2
-   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.5-rt23.bz2
-
-Enjoy !
-
-      tglx
 
