@@ -1,171 +1,144 @@
-From: Xianghua Xiao <xiaoxianghua@gmail.com>
-Subject: Re: At a loss: Kernel 2.6.19-rt15 with ixp425
-Date: Wed, 9 Jun 2010 13:50:50 -0500
-Message-ID: <AANLkTindPmnb9Ct6G36drF-FrV8OmU9T5WIjJTHOAo3a@mail.gmail.com>
-References: <20100608181752.GA19521@colorado.edu>
-	<1276022232.9420.17.camel@sven.thebigcorporation.com>
-	<20100608193204.GA13883@colorado.edu>
-	<1276102964.8203.7.camel@sven.thebigcorporation.com>
+From: Will Schmidt <will_schmidt@vnet.ibm.com>
+Subject: Re: [ANNOUNCE] 2.6.33.5-rt23
+Date: Wed, 09 Jun 2010 16:31:14 -0500
+Message-ID: <1276119074.15867.311.camel@lexx>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	 <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
+	 <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
+	 <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+	 <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
+	 <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
+	 <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+	 <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+	 <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
+Reply-To: will_schmidt@vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Eric W Anderson <Eric.Anderson@colorado.edu>,
-	linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Stultz <johnstul@us.ibm.com>,
+	Nick Piggin <npiggin@suse.de>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vw0-f46.google.com ([209.85.212.46]:64303 "EHLO
-	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758085Ab0FISuw convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jun 2010 14:50:52 -0400
-Received: by vws17 with SMTP id 17so2834965vws.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jun 2010 11:50:51 -0700 (PDT)
-In-Reply-To: <1276102964.8203.7.camel@sven.thebigcorporation.com>
+Received: from e1.ny.us.ibm.com ([32.97.182.141]:53154 "EHLO e1.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752125Ab0FIVbS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Jun 2010 17:31:18 -0400
+In-Reply-To: <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jun 9, 2010 at 12:02 PM, Sven-Thorsten Dietrich
-<thebigcorporation@gmail.com> wrote:
-> On Tue, 2010-06-08 at 13:32 -0600, Eric W Anderson wrote:
->> Hi Sven,
->>
->> The device manufacturer has made some kernel modifications to suppor=
-t their
->> board, and those are specific to 2.6.19. =C2=A0(In fact, they're spe=
-cific to
->> 2.6.19.2 OpenWRT patches). =C2=A0There's also a large driver which i=
-s appropriate
->> for an old kernel but would need some re-engineering to deal with AP=
-I changes
->> in 2.6.20 or 2.6.21, I believe.
->>
->> So, if getting high-resolution timing with this kernel is going to b=
-e a
->> nightmare, I can try taking on a newer kernel. =C2=A0But it'll be an=
- ordeal.
->>
->
-> Don't know really what to say.
->
-> With the device manufacturer not pushing / maintaining code upstream,
-> that sounds like a non-starter already.
->
-> The ixp425 is supported by folks like MontaVista, maybe Wind River ii=
-rc.
->
-> The former has had some sort of HRT support for a long time, it might
-> get you the functionality you need.
->
-> But in any case, I'd try and walk the drivers forward, rather than tr=
-y
-> to back-port HRT.
->
-> You're unlikely to get much support for such an old Kernel if you run
-> into other issues, so the more up to date you can get, the better.
->
-> Good luck.
->
-> Sven
->
->> -Eric
->>
->>
->> Thus spake Sven-Thorsten Dietrich (thebigcorporation@gmail.com):
->>
->> > On Tue, 2010-06-08 at 12:17 -0600, Eric W Anderson wrote:
->> > > Hello All,
->> >
->> > Hi Eric,
->> >
->> > 2.6.19 is very very old.
->> >
->> > What is preventing you from a Kernel upgrade?
->> >
->> > Sven
->> >
->> >
->> > >
->> > > I can't figure out (or haven't figured out) how to get actual hi=
-gh-resolution
->> > > timers on the above platform. =C2=A0I'm kind of stuck with 2.6.1=
-9, unfortunately.
->> > > I've applied the -rt patch to stock 2.6.19, merged in some rando=
-m patches to
->> > > support my hardware, and gotten it to boot. But, here's what con=
-fuses me: =C2=A0I
->> > > have the hrtimer API, but my actual clock resolution is still sh=
-own as =C2=A010ms.
->> > >
->> > > =C2=A0 root@patty:/# cat /proc/timer_list
->> > > =C2=A0 Timer List Version: v0.1
->> > > =C2=A0 HRTIMER_MAX_CLOCK_BASES: 2
->> > > =C2=A0 now at 2766685920305 nsecs
->> > >
->> > > =C2=A0 cpu: 0
->> > > =C2=A0 =C2=A0clock 0:
->> > > =C2=A0 =C2=A0 .index: =C2=A0 =C2=A0 =C2=A00
->> > > =C2=A0 =C2=A0 .resolution: 10000000 nsecs
->> > > =C2=A0 =C2=A0 .get_time: =C2=A0 ktime_get_real
->> > > =C2=A0 active timers:
->> > > =C2=A0 =C2=A0clock 1:
->> > > =C2=A0 =C2=A0 .index: =C2=A0 =C2=A0 =C2=A01
->> > > =C2=A0 =C2=A0 .resolution: 10000000 nsecs
->> > > =C2=A0 =C2=A0 .get_time: =C2=A0 ktime_get
->> > > =C2=A0 active timers:
->> > > =C2=A0 =C2=A0#0: <c4615ec8>, hrtimer_wakeup
->> > > =C2=A0 =C2=A0# expires at 2766802147358 nsecs [in 116227053 nsec=
-s]
->> > > =C2=A0 =C2=A0#1: <c4615ec8>, it_real_fn
->> > > =C2=A0 =C2=A0# expires at 2767494816966 nsecs [in 808896661 nsec=
-s]
->> > > =C2=A0 =C2=A0#2: <c4615ec8>, it_real_fn
->> > > =C2=A0 =C2=A0# expires at 3642163204498 nsecs [in 875477284193 n=
-secs]
->> > > =C2=A0 =C2=A0#3: <c4615ec8>, it_real_fn
->> > > =C2=A0 =C2=A0# expires at 3643403169278 nsecs [in 876717248973 n=
-secs]
->> > >
->> > > Additionally, I don't see CONFIG_HIGH_RES_TIMERS anywhere in my =
-kernel
->> > > menuconfig. =C2=A0I've added a patch from Kevin Hilman and Milan=
- Svoboda
->> > > (http://lkml.indiana.edu/hypermail/linux/kernel/0607.1/2343.html=
-) which
->> > > purports to enable a high-resolution clock event source for this=
- board, but
->> > > that doesn't seem to change anything.
->> > >
->> > > I think I don't properly understand the preempt_rt / hrtimers /
->> > > board-specific-bits ecosystem here. =C2=A0What are the bits and =
-pieces I need in
->> > > order to have high-resolution timers on this platform?
->> > >
->> > > Many, many thanks,
->> > > Eric Anderson
->> > >
->> > >
->> >
->> >
->>
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
->
-while upgrading to newer kernel sounds great, which I just did(from
-2.6.18rt to 2.6.33rt), the newer kernel sometimes does not perform as
-well as older ones(plus it's also bloated), esp in embedded products.
-In my case, we got a slower product with the newer kernel, the 'worse'
-performance happened immediately when CFS was added. Even after a long
-time debugging and tweaking, it's still there.
+On Wed, 2010-06-09 at 18:44 +0200, Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+> 
+<snip>
 
-xianghua
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Changes from 2.6.33.4-rt21 to 2.6.33.5-rt22:
+> 
+>   ef4afcc: Merge stable/linux-2.6.33.y into rt/2.6.33
+> 
+> Changes from 2.6.33.5-rt22 to 2.6.33.5-rt23:
+> 
+>   ab774e8: drivers/hwmon/coretemp.c: get TjMax value from MSR
+>   e8bfcca: drivers/hwmon/coretemp.c: detect the thermal sensors by CPUID
+>   a06a867: dcache: Prevent d_genocide() from decrementing d_count more than once
+>   bdeadaf: nfs: Avoid igrab deadlock.
+>   6976846: dcache: Fix select_parent dentry traversal locking
+>   1f0f6ec: powerpc: chrp/time.c fix preprocessor conditional
+
+I'm still on 2.6.33.5-rt22 on powerpc, and have run into a couple
+"sleeping function called from invalid context..." BUGs.   The first was
+during system boot, second during a 'make'.
+
+relevant code paths don't seem to have changed between -rt22 and -rt23,
+so I think still valid.. :-)  
+
+This is on a POWER7 system, which may have opened up some timing
+windows, wrt previous runs on POWER6 systems.
+
+
+BUG: sleeping function called from invalid context at
+kernel/rtmutex.c:684
+pcnt: 1 0 in_atomic(): 1, irqs_disabled(): 1, pid: 3209, name: ip
+Call Trace:
+[c000000078cf28e0] [c000000000015550] .show_stack+0xd8/0x218
+(unreliable)
+[c000000078cf29c0] [c0000000006a99c8] .dump_stack+0x28/0x3c
+[c000000078cf2a40] [c00000000006cea8] .__might_sleep+0x134/0x15c
+[c000000078cf2ae0] [c0000000006a2f78] .rt_spin_lock+0x4c/0x9c
+[c000000078cf2b70] [c0000000001799e8] ._slab_irq_disable+0x70/0xd8
+[c000000078cf2c20] [c00000000017d1b4] .kmem_cache_alloc_node_notrace
++0x78/0x234
+[c000000078cf2cf0] [c000000000131a04] .irq_to_desc_alloc_node+0xdc/0x2b8
+[c000000078cf2db0] [c00000000000f238] .irq_setup_virq+0x44/0xe4
+[c000000078cf2e50] [c00000000000f3f8] .irq_create_mapping+0x120/0x188
+[c000000078cf2ef0] [c00000000002edfc] .ibmebus_request_irq+0x50/0xac
+[c000000078cf2fa0] [c0000000004f3bd0] .ehea_up+0x314/0x69c
+[c000000078cf30b0] [c0000000004f3fc8] .ehea_open+0x70/0x128
+[c000000078cf3150] [c0000000005e504c] .dev_open+0x120/0x198
+[c000000078cf31f0] [c0000000005e3ee8] .dev_change_flags+0x11c/0x21c
+[c000000078cf32a0] [c0000000005f10ec] .do_setlink+0x2e0/0x400
+[c000000078cf3380] [c0000000005f23a0] .rtnl_newlink+0x380/0x5b8
+[c000000078cf3580] [c0000000005f1fd4] .rtnetlink_rcv_msg+0x258/0x2a4
+[c000000078cf3630] [c000000000604094] .netlink_rcv_skb+0x84/0x120
+[c000000078cf36d0] [c0000000005f1d58] .rtnetlink_rcv+0x38/0x5c
+[c000000078cf3760] [c000000000603ba0] .netlink_unicast+0x31c/0x3fc
+[c000000078cf3840] [c000000000604838] .netlink_sendmsg+0x2c8/0x30c
+[c000000078cf3930] [c0000000005c8bdc] .sock_sendmsg+0xbc/0xfc
+[c000000078cf3b10] [c0000000005c92fc] .SyS_sendmsg+0x20c/0x2a4
+[c000000078cf3d50] [c0000000005c7f6c] .SyS_socketcall+0x238/0x2b0
+[c000000078cf3e30] [c00000000000852c] syscall_exit+0x0/0x40
+
+
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
+pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 1, pid: 4760, name: make
+Call Trace:
+[c0000000792978b0] [c000000000015550] .show_stack+0xd8/0x218 (unreliable)
+[c000000079297990] [c0000000006a99c8] .dump_stack+0x28/0x3c
+[c000000079297a10] [c00000000006cea8] .__might_sleep+0x134/0x15c
+[c000000079297ab0] [c0000000006a2f78] .rt_spin_lock+0x4c/0x9c
+[c000000079297b40] [c0000000000a1ff0] .get_signal_to_deliver+0xcc/0x4ec
+[c000000079297c50] [c000000000018604] .do_signal_pending.clone.0+0x6c/0x2e0
+[c000000079297d90] [c0000000000188b0] .do_signal+0x38/0x74
+[c000000079297e30] [c000000000008b40] user_work+0x24/0x28
+
+
+
+
+> 
+> Bulk of changes comes from stable tree. The -rt related changes are
+> mostly fixes for the vfs fallout the rest are fixlets all over the
+> place and hardware enablement.
+> 
+> Download locations:
+>    
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+> 
+> Git release branch:
+>    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+> 
+> Gitweb:
+>    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+> 
+> Information on the RT patch can be found at:
+> 
+>    http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> To build the 2.6.33.5-rt23 tree, the following patches should be
+> applied:
+> 
+>    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.5.tar.bz2
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.5-rt23.bz2
+> 
+> Enjoy !
+> 
+>       tglx
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
