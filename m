@@ -1,136 +1,36 @@
-From: Eric W Anderson <Eric.Anderson@Colorado.EDU>
-Subject: Re: At a loss: Kernel 2.6.19-rt15 with ixp425
-Date: Tue, 8 Jun 2010 13:32:05 -0600
-Message-ID: <20100608193204.GA13883@colorado.edu>
-References: <20100608181752.GA19521@colorado.edu>
- <1276022232.9420.17.camel@sven.thebigcorporation.com>
+From: "Sarin, Suseelan" <suseelan@gmail.com>
+Subject: Calculating latency using high resolution timer
+Date: Wed, 9 Jun 2010 21:51:54 +0530
+Message-ID: <AANLkTinCc-TibWfphYTZtXhDh2flvrcXNW_bO3SUetyV@mail.gmail.com>
+References: <AANLkTikuWI08hHb2BdzicdEYKO4SdQlCL17gDQgqwrKz@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="n8g4imXOkfNTN/H1"
-Cc: linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ipmx2.colorado.edu ([128.138.128.232]:20525 "EHLO
-	ipmx2.colorado.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755361Ab0FHTcH (ORCPT
+Received: from mail-vw0-f46.google.com ([209.85.212.46]:37097 "EHLO
+	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752604Ab0FIQWA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jun 2010 15:32:07 -0400
-Content-Disposition: inline
-In-Reply-To: <1276022232.9420.17.camel@sven.thebigcorporation.com>
+	Wed, 9 Jun 2010 12:22:00 -0400
+Received: by vws17 with SMTP id 17so2692155vws.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jun 2010 09:21:59 -0700 (PDT)
+In-Reply-To: <AANLkTikuWI08hHb2BdzicdEYKO4SdQlCL17gDQgqwrKz@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi All,
 
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+My real-time program has a thread which needs to run at every 2ms. I
+want to calculate the latency of this thread and I am using
+clock_gettime for this. I am bit confused here that whether I can do
+this. My doubt is, if the system is loaded to the extend that an RT
+task can have considerable latency, can I trust the time read from the
+high resolution timer of the system?
 
-Hi Sven,
+Also, with these measurements, I am seeing a ~5msec latency. Is there
+a way I can exactly point out the reason for this latency?
 
-The device manufacturer has made some kernel modifications to support their
-board, and those are specific to 2.6.19.  (In fact, they're specific to
-2.6.19.2 OpenWRT patches).  There's also a large driver which is appropriate
-for an old kernel but would need some re-engineering to deal with API chang=
-es
-in 2.6.20 or 2.6.21, I believe.
+Thanks in advance.
 
-So, if getting high-resolution timing with this kernel is going to be a
-nightmare, I can try taking on a newer kernel.  But it'll be an ordeal.
-
--Eric
-
-
-Thus spake Sven-Thorsten Dietrich (thebigcorporation@gmail.com):
-
-> On Tue, 2010-06-08 at 12:17 -0600, Eric W Anderson wrote:
-> > Hello All,
->=20
-> Hi Eric,
->=20
-> 2.6.19 is very very old.
->=20
-> What is preventing you from a Kernel upgrade?
->=20
-> Sven
->=20
->=20
-> >=20
-> > I can't figure out (or haven't figured out) how to get actual high-reso=
-lution
-> > timers on the above platform.  I'm kind of stuck with 2.6.19, unfortuna=
-tely.
-> > I've applied the -rt patch to stock 2.6.19, merged in some random patch=
-es to
-> > support my hardware, and gotten it to boot. But, here's what confuses m=
-e:  I
-> > have the hrtimer API, but my actual clock resolution is still shown as =
- 10ms.
-> >=20
-> >   root@patty:/# cat /proc/timer_list=20
-> >   Timer List Version: v0.1
-> >   HRTIMER_MAX_CLOCK_BASES: 2
-> >   now at 2766685920305 nsecs
-> >  =20
-> >   cpu: 0
-> >    clock 0:
-> >     .index:      0
-> >     .resolution: 10000000 nsecs
-> >     .get_time:   ktime_get_real
-> >   active timers:
-> >    clock 1:
-> >     .index:      1
-> >     .resolution: 10000000 nsecs
-> >     .get_time:   ktime_get
-> >   active timers:
-> >    #0: <c4615ec8>, hrtimer_wakeup
-> >    # expires at 2766802147358 nsecs [in 116227053 nsecs]
-> >    #1: <c4615ec8>, it_real_fn
-> >    # expires at 2767494816966 nsecs [in 808896661 nsecs]
-> >    #2: <c4615ec8>, it_real_fn
-> >    # expires at 3642163204498 nsecs [in 875477284193 nsecs]
-> >    #3: <c4615ec8>, it_real_fn
-> >    # expires at 3643403169278 nsecs [in 876717248973 nsecs]
-> >=20
-> > Additionally, I don't see CONFIG_HIGH_RES_TIMERS anywhere in my kernel
-> > menuconfig.  I've added a patch from Kevin Hilman and Milan Svoboda
-> > (http://lkml.indiana.edu/hypermail/linux/kernel/0607.1/2343.html) which
-> > purports to enable a high-resolution clock event source for this board,=
- but
-> > that doesn't seem to change anything.=20
-> >=20
-> > I think I don't properly understand the preempt_rt / hrtimers /
-> > board-specific-bits ecosystem here.  What are the bits and pieces I nee=
-d in
-> > order to have high-resolution timers on this platform?
-> >=20
-> > Many, many thanks,
-> > Eric Anderson
-> >=20
-> >=20
->=20
->=20
-
---=20
-Eric W. Anderson                                   University of Colorado
-eric.anderson@colorado.edu                      Dept. of Computer Science
-phone: +1-720-984-8864                   Systems Research Lab - ECCR 1B54
-
-                         PGP key fingerprints:
-       personal: 1BD4 CFCE 8B59 8D6E EA3E  EBD5 4DC9 3E61 656C 462B
-       academic: D3C5 D6FF EDED 9F1F C36D  53A3 74B7 53A6 3C74 5F12
-
---n8g4imXOkfNTN/H1
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-
-iEYEARECAAYFAkwOmrQACgkQdLdTpjx0XxLRAACgs1xJg9gyJmHYNGZiL1d/u3tQ
-6VYAn04LclWltO7/xjChxoSjw27ll8nB
-=dF1X
------END PGP SIGNATURE-----
-
---n8g4imXOkfNTN/H1--
+Regards,
+Sarin
