@@ -1,36 +1,83 @@
-From: "Sarin, Suseelan" <suseelan@gmail.com>
-Subject: Calculating latency using high resolution timer
-Date: Wed, 9 Jun 2010 21:51:54 +0530
-Message-ID: <AANLkTinCc-TibWfphYTZtXhDh2flvrcXNW_bO3SUetyV@mail.gmail.com>
-References: <AANLkTikuWI08hHb2BdzicdEYKO4SdQlCL17gDQgqwrKz@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.33.5-rt23
+Date: Wed, 9 Jun 2010 18:44:01 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+ <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	John Stultz <johnstul@us.ibm.com>,
+	Nick Piggin <npiggin@suse.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vw0-f46.google.com ([209.85.212.46]:37097 "EHLO
-	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752604Ab0FIQWA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jun 2010 12:22:00 -0400
-Received: by vws17 with SMTP id 17so2692155vws.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Jun 2010 09:21:59 -0700 (PDT)
-In-Reply-To: <AANLkTikuWI08hHb2BdzicdEYKO4SdQlCL17gDQgqwrKz@mail.gmail.com>
+Received: from www.tglx.de ([62.245.132.106]:34122 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753016Ab0FIQoJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Jun 2010 12:44:09 -0400
+In-Reply-To: <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi All,
+We are pleased to announce the next update to our new preempt-rt
+series.
+ 
+Changes from 2.6.33.3-rt19 to 2.6.33.4-rt20:
 
-My real-time program has a thread which needs to run at every 2ms. I
-want to calculate the latency of this thread and I am using
-clock_gettime for this. I am bit confused here that whether I can do
-this. My doubt is, if the system is loaded to the extend that an RT
-task can have considerable latency, can I trust the time read from the
-high resolution timer of the system?
+  5b6c7b0: net: Make [dis/en]able_irq_*_lockdep() RT safe
+  d6434af: fs: Resolve mntput_no_expire issues.
+  56e4c7f: fs: Fix mnt_count typo
+  1540c84: Merge branch '2.6.33.4' into rt/2.6.33
+  1a3a403: autofs4: Remove another autofs4_lock deadlock
+  6b568a0: autofs: Remove deadlock
+  c54c071: fs: Add missing parantheses
 
-Also, with these measurements, I am seeing a ~5msec latency. Is there
-a way I can exactly point out the reason for this latency?
+Changes from 2.6.33.4-rt20 to 2.6.33.4-rt21:
 
-Thanks in advance.
+  cc4a826: sched: Fix wake_affine() vs RT tasks
+  ea17fed: printk: Fix missing klogd wakeup
+  9846da2: fix undefined references to kernel_sem
+  e868252: fs: namespace: Fix fuse mount fallout
+  44b341a: net: ehea: make rx irq handler non-threaded (IRQF_NODELAY)
 
-Regards,
-Sarin
+Changes from 2.6.33.4-rt21 to 2.6.33.5-rt22:
+
+  ef4afcc: Merge stable/linux-2.6.33.y into rt/2.6.33
+
+Changes from 2.6.33.5-rt22 to 2.6.33.5-rt23:
+
+  ab774e8: drivers/hwmon/coretemp.c: get TjMax value from MSR
+  e8bfcca: drivers/hwmon/coretemp.c: detect the thermal sensors by CPUID
+  a06a867: dcache: Prevent d_genocide() from decrementing d_count more than once
+  bdeadaf: nfs: Avoid igrab deadlock.
+  6976846: dcache: Fix select_parent dentry traversal locking
+  1f0f6ec: powerpc: chrp/time.c fix preprocessor conditional
+
+Bulk of changes comes from stable tree. The -rt related changes are
+mostly fixes for the vfs fallout the rest are fixlets all over the
+place and hardware enablement.
+
+Download locations:
+   
+   http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git release branch:
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+
+Gitweb:
+   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+
+Information on the RT patch can be found at:
+
+   http://rt.wiki.kernel.org/index.php/Main_Page
+
+To build the 2.6.33.5-rt23 tree, the following patches should be
+applied:
+
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.5.tar.bz2
+   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.5-rt23.bz2
+
+Enjoy !
+
+      tglx
+
