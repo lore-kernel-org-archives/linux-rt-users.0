@@ -1,50 +1,49 @@
-From: Kim Christensen <kingudk@gmail.com>
-Subject: Config_preempt_rt patch for 2.6.34 or newer kernels
-Date: Thu, 10 Jun 2010 22:19:30 +0200
-Message-ID: <AANLkTin4hTyfOLsdxZcT8GVFA4UvozJ9RaG4YSoddgEj@mail.gmail.com>
+From: Esben Haabendal <eha@dev.doredevelopment.dk>
+Subject: Stable gianfar driver for 2.6.33/RT_PREEMPT
+Date: Fri, 11 Jun 2010 10:51:05 +0200
+Message-ID: <1276246265.2854.8.camel@eha.doredevelopment.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gy0-f174.google.com ([209.85.160.174]:37216 "EHLO
-	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758297Ab0FJUmY (ORCPT
+Received: from 07723322604.hef.nianet.dk ([77.233.226.4]:54869 "EHLO
+	public.doredevelopment.dk" rhost-flags-OK-FAIL-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754328Ab0FKJBF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 10 Jun 2010 16:42:24 -0400
-Received: by gye5 with SMTP id 5so279728gye.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Jun 2010 13:42:24 -0700 (PDT)
+	Fri, 11 Jun 2010 05:01:05 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by public.doredevelopment.dk (Postfix) with ESMTP id 0F74C619
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jun 2010 10:51:09 +0200 (CEST)
+Received: from public.doredevelopment.dk ([127.0.0.1])
+	by localhost (public.doredevelopment.dk [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id VVFGqXxl87o2 for <linux-rt-users@vger.kernel.org>;
+	Fri, 11 Jun 2010 10:51:06 +0200 (CEST)
+Received: from [192.168.18.32] (eha.doredevelopment.dk [192.168.18.32])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by public.doredevelopment.dk (Postfix) with ESMTPS id 64270368
+	for <linux-rt-users@vger.kernel.org>; Fri, 11 Jun 2010 10:51:06 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi
 
-I'm attempting to get a CONFIG_PREEMPT_RT patched kernel to run with
-the Embest Devkit8000 board. It seems that the 2.6.34 kernel series
-(and later) vanilla kernels have support for the board and compiles
-quite fine.
-However the latest CONFIG_PREEMPT_RT patch available is for the 2.6.33 series.
+I had problems with an mpc8313 board using 2.6.33 RT_PREEMPT.
+The gianfar simply stalled.
 
-I have found a 2.6.33-rc8 kernel (
-http://gitorious.org/devkit8000/linux-omap-devkit8000/commits/4.3inch
-) which supports the hardware, the patch for 2.6.33-rc8-rt2 applies
-mostly without problems (patch complains about that it has already
-been applied to one file). The kernel however panics when it is
-configured with CONFIG_PREEMPT_RT=y, it boots fine otherwise.
-Before the kernel panics the kernel complains about a null pointer
-deref. And the kernel panics on a missing rootfilesystem, which seems
-to be caused because it falls back from booting from a MMC card to
-using NFS (if I'm not mistaken). Somehow I think that the deref and
-the changed device for the rootfs is related, I just don't know how to
-approach the issue.
+I found a patch from Anton Vorontsov [1], which solves exactly the same
+problems for SMP, and it fixes it for RT_PREEMPT also.
 
-So I was hoping that there would be a patch for the 2.6.34 series or
-perhaps one for the one of the early 2.6.35-rcX kernels.
+So if anyone has trouble with gianfar with RT_PREEMPT, you should
+definitely give it a try.
 
-Is anyone able to tell me when or if such patches is available?
-Alternatively is there anyone who is able to provide pointers to solve
-the problems with the 2.6.33-rc8 kernel?
+It has been accepted by David Miller, so it should end up in Linus tree
+at some point, but I would suggest applying it to the 2.6.33 RT_PREEMPT
+tree also.
 
-Any help will be greatly appreciated.
+[1] http://kerneltrap.org/mailarchive/linux-netdev/2010/3/3/6271188
 
-The best regards
-Kim Christensen
+Best regards,
+Esben Haabendal
+
