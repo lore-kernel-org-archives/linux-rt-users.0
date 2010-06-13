@@ -1,125 +1,123 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: 2.6.33.4-rt20, BUG + Ooops
-Date: Fri, 11 Jun 2010 15:26:42 -0700
-Message-ID: <1276295202.19803.11.camel@localhost.localdomain>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: Real-time projects that could use userspace RCU
+Date: Sun, 13 Jun 2010 16:51:19 -0400
+Message-ID: <20100613205119.GA5427@Krystal>
+References: <20100511122140.GA11000@Krystal> <AANLkTikLHsvs1LKAnFInWLkZUjHAVlM0evDT18jkb-NU@mail.gmail.com> <20100511131404.GC25418@Krystal> <20100511143852.GA2336@linux.vnet.ibm.com> <20100511144337.GB17656@Krystal> <20100511152129.GD2336@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>, nando@ccrma.Stanford.EDU
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Cc: John Kacur <jkacur@redhat.com>, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@elte.hu>,
+	Clark Williams <williams@redhat.com>
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.Stanford.EDU ([171.67.219.82]:42416 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S932608Ab0FKW1V (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Jun 2010 18:27:21 -0400
+Received: from mail.openrapids.net ([64.15.138.104]:50039 "EHLO
+	blackscsi.openrapids.net" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754506Ab0FMUvW convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 13 Jun 2010 16:51:22 -0400
+Content-Disposition: inline
+In-Reply-To: <20100511152129.GD2336@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Just happened a moment ago, 2.6.33.4 rt20 had been up since May 18th so
-whatever it is, it is really infrequent, after the Oops I rebooted into
-2.6.33.5 rt23 (maybe the problem is fixed in rt23). 
+* Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
+> On Tue, May 11, 2010 at 10:43:37AM -0400, Mathieu Desnoyers wrote:
+> > * Paul E. McKenney (paulmck@linux.vnet.ibm.com) wrote:
+> > > On Tue, May 11, 2010 at 09:14:04AM -0400, Mathieu Desnoyers wrote:
+> > > > * John Kacur (jkacur@redhat.com) wrote:
+> > > > > On Tue, May 11, 2010 at 2:21 PM, Mathieu Desnoyers
+> > > > > <mathieu.desnoyers@efficios.com> wrote:
+> > > > > > Hi Thomas,
+> > > > > >
+> > > > > > Paul told me you were quite interested in the userspace RCU library when he told
+> > > > > > you about it (http://lttng.org/urcu). Do you have some userspace applications or
+> > > > > > libraries with real-time needs in mind that could use it ? We could help moving
+> > > > > > them to liburcu. The wait-free read-side is, as you certainly know, a
+> > > > > > characteristic of RCU that can be very useful to RT applications.
+> > > > > >
+> > > > > > [CCing linux-rt-users, as it seems appropriate to ask them too.]
+> > > > > >
+> > > > > > Thanks,
+> > > > > 
+> > > > > Do you have any kind of benchmarks? If you had something appropriate
+> > > > > we could add it to the rt-tests suite (which includes cyclictest). Not
+> > > > > only would this provide an objective measure, but it could also act as
+> > > > > a reference implementation for userspace programmers.
+> > > > 
+> > > > Yes, the library already has its set of benchmark test programs. The results can
+> > > > be found in http://lttng.org/pub/thesis/desnoyers-dissertation-2009-12.pdf
+> > > > section 6.5. It shows that RCU read-side is a few orders of magnitude faster
+> > > > than lock-based approaches and scales linearly with the number of cores.
+> > > > 
+> > > > The same PDF, sections 7.6.2 and 7.6.3, presents the architecture-level modeling
+> > > > of the RCU mb algorithm in Promela, along with the formal proof by model
+> > > > checking for both correctness and progress (the read-side is proven wait-free).
+> > > > 
+> > > > > 
+> > > > > See here.
+> > > > > git clone git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+> > > > > 
+> > > > > cyclictest is the original program written by Thomas, maintained by
+> > > > > Clark Williams now. Most - but not all, of the additional tests are
+> > > > > modelled after this program, so you might want to have a look at that
+> > > > > if you're not already familiar with it.
+> > > > 
+> > > > Thanks for the pointer, I did know about cyclictest, but not the others. Since
+> > > > the read-side does not involve the OS nor blocking, I wonder which of these
+> > > > tests would be even a near-match though.
+> > > 
+> > > Why not add mutual-exclusion tests, including locking, per-thread locking,
+> > > reader-writer locking, and RCU?  The figure of merit would be maximum
+> > > latency rather than throughput, but the existing userspace-rcu tests should
+> > > be pretty close.
+> > > 
+> > 
+> > Do you mean adding our RCU tests to the rt-tests.git tree or adding more
+> > information in our own tests ? Also, the maximum latency is quite dependent on
+> > the rest of the workload running on the system, so we might have to generate
+> > such a workload while the test runs to give an interesting and accurate view of
+> > the maximum latency.
+> > 
+> > Maybe running one (or many) of the already existing rt-tests in parallel would
+> > do.
+> > 
+> > Thoughts ?
+> 
+> My thought was a variant of our existing RCU tests.  Something like:
+> 
+> 	clock_gettime();
+> 	pthread_mutex_lock();
+> 	clock_gettime();
+> 	/* compute latency, accumulate average and maximum */
+> 
+> The test thread would need to have real-time priority.  Then print the
+> maximums for various mechanisms.
+> 
+> Does this seem like a reasonable approach?
 
--- Fernando
+(sorry for delayed answer, I've been deeply focusing on ring buffer
+implementation lately)
 
+Hrm, the only thing I'm afraid of is that RT latency tests is quite different
+from throughput benchmarks. Basically, for RCU throughput benchmark, just
+creating a few simple tests is fine. However, in the case of RT behavior
+testing, creating this test thread is just one part of the equation. Quickly
+reproducing conditions that can lead to priority inversions in an automated way
+should also be part of the picture.
 
-Jun 11 15:04:56 localhost kernel: BUG: unable to handle kernel NULL
-pointer dereference at 0000008c
-Jun 11 15:04:56 localhost kernel: IP: [<c0464fb6>]
-rt_spin_lock_fastunlock.clone.2+0x6/0x3e
-Jun 11 15:04:56 localhost kernel: *pdpt = 00000000119b1001 *pde =
-0000000000000000 
-Jun 11 15:04:56 localhost kernel: Oops: 0000 [#1] PREEMPT SMP 
-Jun 11 15:04:56 localhost kernel: last sysfs
-file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
-Jun 11 15:04:56 localhost kernel: Modules linked in: vfat fat
-usb_storage vboxnetadp vboxnetflt vboxdrv snd_seq_dummy nls_utf8 fuse
-autofs4 xt_time xt_connlimit xt_realm iptable_raw xt_comment xt_policy
-ipt_ULOG ipt_REDIRECT ipt_NETMAP ipt_MASQUERADE ipt_LOG ipt_ECN ipt_ecn
-ipt_CLUSTERIP ipt_ah ipt_addrtype nf_nat_tftp nf_nat_snmp_basic
-nf_nat_sip nf_nat_pptp nf_nat_proto_gre nf_nat_irc nf_nat_h323
-nf_nat_ftp nf_nat_amanda ts_kmp nf_conntrack_amanda nf_conntrack_sane
-nf_conntrack_tftp nf_conntrack_sip nf_conntrack_proto_sctp
-nf_conntrack_pptp nf_conntrack_proto_gre nf_conntrack_netlink
-nf_conntrack_netbios_ns nf_conntrack_irc nf_conntrack_h323
-nf_conntrack_ftp xt_tcpmss xt_recent xt_pkttype xt_physdev xt_owner
-xt_NFQUEUE xt_NFLOG nfnetlink_log xt_multiport xt_MARK xt_mark xt_mac
-xt_limit xt_length xt_iprange xt_helper xt_hashlimit xt_DSCP xt_dscp
-xt_dccp xt_CONNMARK xt_connmark xt_CLASSIFY iptable_nat nf_nat
-iptable_mangle nfnetlink coretemp hwmon_vid nfs lockd fscache nfs_acl
-auth_rpcgss sunrpc ip6t_REJECT nf_conn
-Jun 11 15:04:56 localhost kernel: track_ipv6 ip6table_filter ip6_tables
-ipv6 cpufreq_ondemand acpi_cpufreq dm_multipath uinput
-snd_hda_codec_realtek snd_ice1712 snd_ice17xx_ak4xxx snd_ak4xxx_adda
-snd_hda_intel snd_cs8427 snd_hda_codec snd_ac97_codec snd_hwdep joydev
-snd_seq snd_pcm ac97_bus snd_i2c asus_atk0110 snd_mpu401_uart
-snd_rawmidi snd_seq_device sata_sil24 ohci1394 snd_timer snd soundcore
-iTCO_wdt i2c_i801 snd_page_alloc iTCO_vendor_support sky2 serio_raw
-ata_generic pata_acpi radeon ttm drm_kms_helper drm i2c_algo_bit
-i2c_core [last unloaded: microcode]
-Jun 11 15:04:56 localhost kernel:
-Jun 11 15:04:56 localhost kernel: Pid: 10579, comm: find Tainted: G
-W  2.6.33.4-96.rt20.1.fc11.ccrma.i686.rtPAE #1 P5K/EPU/P5K/EPU
-Jun 11 15:04:56 localhost kernel: EIP: 0060:[<c0464fb6>] EFLAGS:
-00210246 CPU: 1
-Jun 11 15:04:56 localhost kernel: EIP is at
-rt_spin_lock_fastunlock.clone.2+0x6/0x3e
-Jun 11 15:04:56 localhost kernel: EAX: 00000078 EBX: d022aa7c ECX:
-00000000 EDX: 00000078
-Jun 11 15:04:56 localhost kernel: ESI: d8faca1c EDI: 00000000 EBP:
-eebbbd24 ESP: eebbbd20
-Jun 11 15:04:56 localhost kernel: DS: 007b ES: 007b FS: 00d8 GS: 00e0
-SS: 0068 preempt:00000000
-Jun 11 15:04:56 localhost kernel: Process find (pid: 10579, ti=eebba000
-task=cc990370 task.ti=eebba000)
-Jun 11 15:04:56 localhost kernel: Stack:
-Jun 11 15:04:56 localhost kernel: d022aa7c eebbbd2c c07929fe eebbbd5c
-c04e1114 00000000 cdb3150c c07929fe
-Jun 11 15:04:56 localhost kernel: <0> 068d0298 cdb31494 00000000
-d8faca1c 068d0298 00000000 d022aa7c eebbbdb8
-Jun 11 15:04:56 localhost kernel: <0> fa41c578 00000073 eebbbda0
-da832030 c04ddc4c eebbbf90 00000000 e8b6de00
-Jun 11 15:04:56 localhost kernel: Call Trace:
-Jun 11 15:04:56 localhost kernel: [<c07929fe>] ? rt_spin_unlock+0x8/0xa
-Jun 11 15:04:56 localhost kernel: [<c04e1114>] ? d_materialise_unique
-+0x1fd/0x297
-Jun 11 15:04:56 localhost kernel: [<c07929fe>] ? rt_spin_unlock+0x8/0xa
-Jun 11 15:04:56 localhost kernel: [<fa41c578>] ? nfs_do_filldir
-+0x27b/0x3a9 [nfs]
-Jun 11 15:04:56 localhost kernel: [<c04ddc4c>] ? filldir64+0x0/0xcb
-Jun 11 15:04:56 localhost kernel: [<fa41cd2f>] ? nfs_readdir+0x689/0x707
-[nfs]
-Jun 11 15:04:56 localhost kernel: [<c04ddc4c>] ? filldir64+0x0/0xcb
-Jun 11 15:04:56 localhost kernel: [<fa32c786>] ?
-rpcauth_lookup_credcache+0x141/0x16f [sunrpc]
-Jun 11 15:04:56 localhost kernel: [<fa3341ed>] ? cache_release_procfs
-+0x8/0x10 [sunrpc]
-Jun 11 15:04:56 localhost kernel: [<fa41ffa5>] ? nfs_open+0x178/0x182
-[nfs]
-Jun 11 15:04:56 localhost kernel: [<c0575c68>] ? rcu_read_unlock+0x8/0xa
-Jun 11 15:04:56 localhost kernel: [<fa42d128>] ? nfs3_decode_dirent
-+0x0/0x110 [nfs]
-Jun 11 15:04:56 localhost kernel: [<c057768e>] ? inode_has_perm
-+0x66/0x81
-Jun 11 15:04:56 localhost kernel: [<c0792681>] ? rt_mutex_lock_killable
-+0x28/0x2c
-Jun 11 15:04:56 localhost kernel: [<c04ddf06>] ? vfs_readdir+0x66/0x92
-Jun 11 15:04:56 localhost kernel: [<c04ddc4c>] ? filldir64+0x0/0xcb
-Jun 11 15:04:56 localhost kernel: [<c04ddf95>] ? sys_getdents64
-+0x63/0xa5
-Jun 11 15:04:56 localhost kernel: [<c047de65>] ? audit_syscall_entry
-+0x113/0x135
-Jun 11 15:04:56 localhost kernel: [<c040895f>] ? sysenter_do_call
-+0x12/0x28
-Jun 11 15:04:56 localhost kernel: Code: 8d 74 26 00 f6 c4 02 74 19 64 8b
-15 2c f1 a5 c0 31 c0 f0 0f b1 53 14 85 c0 74 07 89 d8 e8 c3 d2 32 00 5b
-5d c3 55 89 c2 89 e5 53 <8b> 40 14 64 8b 0d 2c f1 a5 c0 83 e0 fc 39 c1
-74 09 83 b9 fc 0c 
-Jun 11 15:04:56 localhost kernel: EIP: [<c0464fb6>]
-rt_spin_lock_fastunlock.clone.2+0x6/0x3e SS:ESP 0068:eebbbd20
-Jun 11 15:04:56 localhost kernel: CR2: 000000000000008c
-Jun 11 15:04:56 localhost kernel: ---[ end trace 360087be0947ec45 ]---
+In addition, we might want to measure the overall time it takes to get the lock,
+execute the C.S. and release the lock, rather that just assuming that only the
+"lock" part matters. Some "clever" token-based fair locking scheme can have a
+more evolved unlock primitive for instance.
+
+Thanks,
+
+Mathieu
 
 
+-- 
+Mathieu Desnoyers
+Operating System Efficiency R&D Consultant
+EfficiOS Inc.
+http://www.efficios.com
