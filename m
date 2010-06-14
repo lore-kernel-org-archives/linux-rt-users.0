@@ -1,50 +1,69 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
-Subject: Re: beagleboard RT problem
-Date: Mon, 14 Jun 2010 04:27:30 -0700
-Message-ID: <1276514850.26993.4.camel@sven.thebigcorporation.com>
-References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
-	 <AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
-	 <alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 2.6.33.5-rt23
+Date: Mon, 14 Jun 2010 15:33:54 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1006141532210.3026@localhost.localdomain>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>  <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>  <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>  <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+ <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>  <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>  <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>  <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+ <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>  <1276119074.15867.311.camel@lexx>  <alpine.LFD.2.00.1006100800330.2933@localhost.localdomain>  <1276185406.15867.390.camel@lexx> <1276185942.31967.3.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sujit K M <sjt.kar@gmail.com>,
-	Maksym Parkachov <lazy.gopher@gmail.com>,
-	linux-rt-users@vger.kernel.org
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pv0-f174.google.com ([74.125.83.174]:35474 "EHLO
-	mail-pv0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751010Ab0FNL1p (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jun 2010 07:27:45 -0400
-Received: by pvg16 with SMTP id 16so2782939pvg.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Jun 2010 04:27:45 -0700 (PDT)
-In-Reply-To: <alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: will_schmidt@vnet.ibm.com, LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Stultz <johnstul@us.ibm.com>,
+	Nick Piggin <npiggin@suse.de>
+To: "Darcy L. Watkins" <dwatkins@tranzeo.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1276185942.31967.3.camel@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2010-06-14 at 13:05 +0200, John Kacur wrote:
+On Thu, 10 Jun 2010, Darcy L. Watkins wrote:
 > 
-> On Mon, 14 Jun 2010, Sujit K M wrote:
 > 
-> > > CONFIG_PREEMPT_RCU=y
-%<
-> His problem is not with the config.
-> --
+> On Thu, 2010-06-10 at 08:56 -0700, Will Schmidt wrote:
+> > On Thu, 2010-06-10 at 08:07 +0200, Thomas Gleixner wrote:
+> > > On Wed, 9 Jun 2010, Will Schmidt wrote:
+> > >
+> > > > On Wed, 2010-06-09 at 18:44 +0200, Thomas Gleixner wrote:
+> > > > I'm still on 2.6.33.5-rt22 on powerpc, and have run into a couple
+> > > > "sleeping function called from invalid context..." BUGs.   The
+> > first was
+> > > > during system boot, second during a 'make'.
+> > > >
+> > > > relevant code paths don't seem to have changed between -rt22 and
+> > -rt23,
+> > > > so I think still valid.. :-) 
+> > > >
+> > > > This is on a POWER7 system, which may have opened up some timing
+> > > > windows, wrt previous runs on POWER6 systems.
+> > > >
+> > > >
+> > > > BUG: sleeping function called from invalid context at
+> > > > kernel/rtmutex.c:684
+> > >
+> > > > [c000000078cf2cf0] [c000000000131a04] .irq_to_desc_alloc_node
+> > +0xdc/0x2b8
+> > >
+> > > Grr. I thought I had the SPARSE_IRQ stuff disabled on -rt, but seems
+> > > it came back somehow. Can you disable that, or does you machine
+> > depend
+> > > on it ?
+> > 
+> > I'm not sure whether it is required by the architecture.  I do see
+> > that
+> > SPARSE_IRQ is disabled in arch/x86/Kconfig with a !PREEMPT_RT, but I
+> > don't see an equivalent 'disable' in arch/powerpc/Kconfig. 
+> > 
+>
+> I see it as "y" in my .config for a powerpc 405 build.  This appears to
+> run on my system (although I haven't loaded up the rt23 build on the
+> target yet - last one loaded up was rt22).
+> 
+> What should I expect to see different if SPARSE_IRQ is turned off?
 
-Nope - the config is just fine.
+The difference is that you can trigger "scheduling while atomic". The
+warning Will has seen depends on debug options.
 
-Turn on the lock validator and
-recompile the Kernel.
+Thanks,
 
-Then repeat the test that produced the latency spike.
-
-If that doesn't produce any locking issues,
-turn on latency tracing and repeat.
-
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
+	tglx
