@@ -1,87 +1,56 @@
-From: Will Schmidt <will_schmidt@vnet.ibm.com>
-Subject: Re: [ANNOUNCE] 2.6.33.5-rt23
-Date: Mon, 14 Jun 2010 10:35:24 -0500
-Message-ID: <1276529724.15867.425.camel@lexx>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
-	 <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
-	 <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
-	 <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
-	 <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
-	 <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
-	 <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
-	 <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
-	 <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
-	 <1276119074.15867.311.camel@lexx>
-	 <alpine.LFD.2.00.1006100800330.2933@localhost.localdomain>
-	 <1276185406.15867.390.camel@lexx>
-	 <alpine.LFD.2.00.1006141534050.3026@localhost.localdomain>
-Reply-To: will_schmidt@vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 0/6] Potential rt patches for tip/rt/2.6.33
+Date: Tue, 15 Jun 2010 00:21:21 +0200
+Message-ID: <1276554087-3632-1-git-send-email-jkacur@redhat.com>
+Cc: lkml <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	John Stultz <johnstul@us.ibm.com>,
-	Nick Piggin <npiggin@suse.de>
+	Clark Williams <williams@redhat.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e6.ny.us.ibm.com ([32.97.182.146]:46917 "EHLO e6.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752754Ab0FNPfh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jun 2010 11:35:37 -0400
-In-Reply-To: <alpine.LFD.2.00.1006141534050.3026@localhost.localdomain>
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:55901 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752409Ab0FNWVd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jun 2010 18:21:33 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2010-06-14 at 15:34 +0200, Thomas Gleixner wrote:
-> On Thu, 10 Jun 2010, Will Schmidt wrote:
-> 
-> > On Thu, 2010-06-10 at 08:07 +0200, Thomas Gleixner wrote:
-> > > On Wed, 9 Jun 2010, Will Schmidt wrote:
-> > > 
-> > > > On Wed, 2010-06-09 at 18:44 +0200, Thomas Gleixner wrote:
-> > > > I'm still on 2.6.33.5-rt22 on powerpc, and have run into a couple
-> > > > "sleeping function called from invalid context..." BUGs.   The first was
-> > > > during system boot, second during a 'make'.
-> > > > 
-> > > > relevant code paths don't seem to have changed between -rt22 and -rt23,
-> > > > so I think still valid.. :-)  
-> > > > 
-> > > > This is on a POWER7 system, which may have opened up some timing
-> > > > windows, wrt previous runs on POWER6 systems.
-> > > > 
-> > > > 
-> > > > BUG: sleeping function called from invalid context at
-> > > > kernel/rtmutex.c:684
-> > > 
-> > > > [c000000078cf2cf0] [c000000000131a04] .irq_to_desc_alloc_node+0xdc/0x2b8
-> > > 
-> > > Grr. I thought I had the SPARSE_IRQ stuff disabled on -rt, but seems
-> > > it came back somehow. Can you disable that, or does you machine depend
-> > > on it ?
-> > 
-> > I'm not sure whether it is required by the architecture.  I do see that
-> > SPARSE_IRQ is disabled in arch/x86/Kconfig with a !PREEMPT_RT, but I
-> > don't see an equivalent 'disable' in arch/powerpc/Kconfig.  
-> 
-> Can you disable it ?
+Thomas:
 
-Yeah.  
+This is a small collection of patches that I have in my -rt tree on-top
+of 2.6.33.5-rt23
 
-[root@foo ~]# zcat /proc/config.gz | grep SPARSE
-# CONFIG_SPARSE_IRQ is not set
-...
+Please consider them for the next version of tip/rt/2.6.33
 
+They can be pulled from
+git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/jk-2.6.git tip-rt-2.6.33-jk
 
-Thats a sample size of one (POWER7) system, but seems to have worked.
+Amit Shah (1):
+  hvc_console: Fix race between hvc_close and hvc_remove
 
-Thanks, 
--Will
+Anton Blanchard (1):
+  hvc_console: Fix race between hvc_close and hvc_remove
 
+Arnaldo Carvalho de Melo (1):
+  tracing: Update the comm field in the right variable in update_max_tr
 
-> 
-> Thanks,
-> 
-> 	tglx
+John Kacur (1):
+  lockdep: Make MAX_STACK_TRACE_ENTRIES configurable.
 
+Stephane Eranian (1):
+  perf: Fix errors path in perf_output_begin()
+
+Toshiyuki Okajima (1):
+  KEYS: find_keyring_by_name() can gain access to a freed keyring
+
+ drivers/char/hvc_console.c |   27 +++++++++++++++++----------
+ kernel/lockdep_internals.h |    2 +-
+ kernel/perf_event.c        |    2 +-
+ kernel/trace/trace.c       |    4 ++--
+ lib/Kconfig.debug          |   10 ++++++++++
+ security/keys/keyring.c    |   18 +++++++++---------
+ 6 files changed, 40 insertions(+), 23 deletions(-)
 
