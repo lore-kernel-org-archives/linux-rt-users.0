@@ -1,58 +1,44 @@
-From: Maksym Parkachov <lazy.gopher@gmail.com>
-Subject: beagleboard RT problem
-Date: Mon, 14 Jun 2010 10:32:19 +0200
-Message-ID: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
+From: Sujit K M <sjt.kar@gmail.com>
+Subject: Re: beagleboard RT problem
+Date: Mon, 14 Jun 2010 15:14:46 +0530
+Message-ID: <AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
+References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org
+To: Maksym Parkachov <lazy.gopher@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:33421 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755484Ab0FNIcV (ORCPT
+Received: from mail-vw0-f46.google.com ([209.85.212.46]:54539 "EHLO
+	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755809Ab0FNJvd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jun 2010 04:32:21 -0400
-Received: by bwz7 with SMTP id 7so1901666bwz.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Jun 2010 01:32:19 -0700 (PDT)
+	Mon, 14 Jun 2010 05:51:33 -0400
+Received: by vws14 with SMTP id 14so443494vws.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Jun 2010 02:51:33 -0700 (PDT)
+In-Reply-To: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Everyone,
+> CONFIG_PREEMPT_RCU=y
+> # CONFIG_PREEMPT_RCU_TRACE is not set
 
-I'm trying to get PREEMPT RT kernel running on beagleboard (ARM).
-After resolving many issues with the patch on the Angstrom stable distribution,
-I've got the RT kernel running.
+Why is RCU being set to y?
 
-root@beagleboard:~/rt-tests# uname -a
-Linux beagleboard 2.6.29.6-rt24-omap1 #1 PREEMPT RT Sun Jun 13
-17:51:45 CEST 2010 armv7l unknown
+> # CONFIG_PREEMPT_NONE is not set
+> # CONFIG_PREEMPT_VOLUNTARY is not set
+> # CONFIG_PREEMPT_DESKTOP is not set
 
-So, it seems to be fine. But trying to run the Cyclictest tells me
-that RT is not working.
+Fine.
 
-0% - load
-root@beagleboard:~/rt-tests# ./cyclictest -t1 -p 80 -n -i 10000 -l 10000 -q
-T: 0 ( 2352) P:80 I:10000 C:  10000 Min:     15 Act:  203 Avg:  195 Max:     365
+> CONFIG_PREEMPT_RT=y
 
-100% - load
-root@beagleboard:~/rt-tests# ./cyclictest -t1 -p 80 -n -i 10000 -l 10000 -q
-T: 0 ( 2348) P:80 I:10000 C:  10000 Min:     39 Act:48697 Avg: 1584 Max:   48727
+This is correct.
 
-I'm bit lost in how to debug the problem. I checked the /proc/config.gz
+> CONFIG_PREEMPT=y
+> CONFIG_PREEMPT_SOFTIRQS=y
+> CONFIG_PREEMPT_HARDIRQS=y
 
-root@beagleboard:~/rt-tests# zcat /proc/config.gz | grep PREEMPT
-CONFIG_PREEMPT_RCU=y
-# CONFIG_PREEMPT_RCU_TRACE is not set
-# CONFIG_PREEMPT_NONE is not set
-# CONFIG_PREEMPT_VOLUNTARY is not set
-# CONFIG_PREEMPT_DESKTOP is not set
-CONFIG_PREEMPT_RT=y
-CONFIG_PREEMPT=y
-CONFIG_PREEMPT_SOFTIRQS=y
-CONFIG_PREEMPT_HARDIRQS=y
-CONFIG_DEBUG_PREEMPT=y
-# CONFIG_PREEMPT_TRACER is not set
+I think this part is susceptible.
 
-I would really appreciate some suggestions on how to identify the problem.
-
-Regards,
-Maksym Parkachov.
+Thanks,
+Sujit
