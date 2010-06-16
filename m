@@ -1,68 +1,39 @@
-From: Maksym Parkachov <lazy.gopher@gmail.com>
-Subject: Re: beagleboard RT problem
-Date: Tue, 15 Jun 2010 09:34:29 +0200
-Message-ID: <AANLkTimWSQfXQGedfHHLAbabPrRnUaWlPCMUEC3I9_G0@mail.gmail.com>
-References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
-	<AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
-	<alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
-	<1276514850.26993.4.camel@sven.thebigcorporation.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 2/6: v4] lockdep: Make MAX_STACK_TRACE_ENTRIES
+ configurable.
+Date: Wed, 16 Jun 2010 20:49:14 +0200
+Message-ID: <1276714154.1745.623.camel@laptop>
+References: <1276554087-3632-1-git-send-email-jkacur@redhat.com>
+	 <1276554087-3632-3-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	Ingo Molnar <mingo@elte.hu>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:46596 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754301Ab0FOHeb convert rfc822-to-8bit (ORCPT
+Received: from bombadil.infradead.org ([18.85.46.34]:55712 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932582Ab0FPSt0 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Jun 2010 03:34:31 -0400
-Received: by bwz7 with SMTP id 7so2489273bwz.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Jun 2010 00:34:29 -0700 (PDT)
-In-Reply-To: <1276514850.26993.4.camel@sven.thebigcorporation.com>
+	Wed, 16 Jun 2010 14:49:26 -0400
+In-Reply-To: <1276554087-3632-3-git-send-email-jkacur@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi folks,
+On Tue, 2010-06-15 at 00:21 +0200, John Kacur wrote:
+> Certain debug configurations that have LOCKDEP turned on, run into the limit
+> where the MAX_STACK_TRACE_ENTRIES are too small. Rather than simply turning
+> off the locking correctness validator, let the user configure this value
+> to something reasonable for their system.
+> 
+> This patch was generated against 2.6.33.5-rt23 but is also intended to be
+> picked-up for mainline.
 
-thanks for all suggestions.
-I'll try with lock validation and see if I could come with more details=
-=2E
+NACK
 
-Thanks,
-Maksym.
-
-On 14 June 2010 13:27, Sven-Thorsten Dietrich
-<thebigcorporation@gmail.com> wrote:
-> On Mon, 2010-06-14 at 13:05 +0200, John Kacur wrote:
->>
->> On Mon, 14 Jun 2010, Sujit K M wrote:
->>
->> > > CONFIG_PREEMPT_RCU=3Dy
-> %<
->> His problem is not with the config.
->> --
->
-> Nope - the config is just fine.
->
-> Turn on the lock validator and
-> recompile the Kernel.
->
-> Then repeat the test that produced the latency spike.
->
-> If that doesn't produce any locking issues,
-> turn on latency tracing and repeat.
->
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
-sers" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.h=
-tml
->
->
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+patches like 4726f2a617ebd868a4fdeb5679613b897e5f1676 are the way to go.
