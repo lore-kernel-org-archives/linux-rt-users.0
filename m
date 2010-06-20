@@ -1,85 +1,238 @@
-From: Sven-Thorsten Dietrich <sdietrich@novell.com>
-Subject: Re: [PATCH 2/6: v4] lockdep: Make MAX_STACK_TRACE_ENTRIES
- configurable.
-Date: Thu, 17 Jun 2010 20:56:11 -0700
-Message-ID: <1276833371.16751.9.camel@sven.thebigcorporation.com>
-References: <1276554087-3632-1-git-send-email-jkacur@redhat.com>
-	 <1276554087-3632-3-git-send-email-jkacur@redhat.com>
-	 <1276714154.1745.623.camel@laptop>
-	 <alpine.LFD.2.00.1006162213220.28756@localhost.localdomain>
-	 <1276723008.2077.9574.camel@twins>
-	 <1276723773.3556.65.camel@gandalf.stny.rr.com>
-	 <1276763719.27822.3.camel@twins>
-	 <alpine.LFD.2.00.1006171039050.22185@localhost.localdomain>
+From: Maksym Parkachov <lazy.gopher@gmail.com>
+Subject: Re: beagleboard RT problem
+Date: Sun, 20 Jun 2010 17:43:10 +0200
+Message-ID: <AANLkTikP0Z8NbhiCd9yJeNJrnJqJkoXkSSErR_9B6dYC@mail.gmail.com>
+References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
+	<AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
+	<alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
+	<1276514850.26993.4.camel@sven.thebigcorporation.com>
+	<AANLkTimWSQfXQGedfHHLAbabPrRnUaWlPCMUEC3I9_G0@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>, rostedt@goodmis.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	Ingo Molnar <mingo@elte.hu>, ghaskins@novell.com
-To: John Kacur <jkacur@redhat.com>, mgalbraith@suse.de
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1006171039050.22185@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/mixed; boundary=0016e6d7e90d9b70c60489780b03
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bw0-f46.google.com ([209.85.214.46]:62264 "EHLO
+	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750884Ab0FTPnM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 20 Jun 2010 11:43:12 -0400
+Received: by bwz7 with SMTP id 7so618532bwz.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 20 Jun 2010 08:43:10 -0700 (PDT)
+In-Reply-To: <AANLkTimWSQfXQGedfHHLAbabPrRnUaWlPCMUEC3I9_G0@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2010-06-17 at 10:46 +0200, John Kacur wrote:
->  Also as I pointed out, in Sven's case it sounds like they may 
-> have had a build where they even wanted to decrease it.
-> 
+--0016e6d7e90d9b70c60489780b03
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-I hacked the patch below for SLERT 10 a few years ago, and that's
-shipping still.
+Folks,
 
-As you can see from the comment in the patch header, I was aware that
-this wasn't a closed case, but rather a stop-gap.
+it's me again with beagleboard RT problem.
 
-I think if I had spent any more time on it, or run into the issue
-repeatedly, my first instinct would have been to do what John did, i.e.
-make it configurable.
+I recompiled the kernel and got some statistics on locks, but I'm not
+sure how to interpret it.  Searching on google didn't help, probably,
+not asking right question.
 
-However, I think that fundamentally, if nesting goes that deep, simply
-increasing this define would lead to masking real problems.
+Here are stats from /proc after running cyclictest.
 
-So while I hacked this up for a shipping product, with intention to
-debug this later, I'd probably favor a proper fix of the offending call
-chain upstream.
+If you could take a look at it, it would be great.
 
-I do not recall ever trying to decrease it, other than to reproduce the
-issue a few times. I never did have time to dig into it further, and we
-closed the bug as won't fix for this particular product.
+Thanks,
+Maksym.
 
-Regards,
+On 15 June 2010 09:34, Maksym Parkachov <lazy.gopher@gmail.com> wrote:
+> Hi folks,
+>
+> thanks for all suggestions.
+> I'll try with lock validation and see if I could come with more details.
+>
+> Thanks,
+> Maksym.
+>
+> On 14 June 2010 13:27, Sven-Thorsten Dietrich
+> <thebigcorporation@gmail.com> wrote:
+>> On Mon, 2010-06-14 at 13:05 +0200, John Kacur wrote:
+>>>
+>>> On Mon, 14 Jun 2010, Sujit K M wrote:
+>>>
+>>> > > CONFIG_PREEMPT_RCU=3Dy
+>> %<
+>>> His problem is not with the config.
+>>> --
+>>
+>> Nope - the config is just fine.
+>>
+>> Turn on the lock validator and
+>> recompile the Kernel.
+>>
+>> Then repeat the test that produced the latency spike.
+>>
+>> If that doesn't produce any locking issues,
+>> turn on latency tracing and repeat.
+>>
+>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+>>> the body of a message to majordomo@vger.kernel.org
+>>> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.html
+>>
+>>
+>>
+>
 
-Sven
+--0016e6d7e90d9b70c60489780b03
+Content-Type: application/x-gzip; name="lock_stat.gz"
+Content-Disposition: attachment; filename="lock_stat.gz"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gao1ppna0
 
+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
+--0016e6d7e90d9b70c60489780b03
+Content-Type: application/x-gzip; name="lockdep_stats.gz"
+Content-Disposition: attachment; filename="lockdep_stats.gz"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gao1q78v1
 
-Subject: Increase lockdep's MAX_STACK_TRACE_ENTRIES
-From: Sven-Thorsten Dietrich <sdietrich@suse.de>
+H4sICG9QbTgAA2xvY2tkZXBfc3RhdHMAjZRhboQgEIX/e4q5gIkgurhXaTYNi6ySurgFTNqevmC1
+2q4i/CTfezNvBoWu528p75gxwpxh9+DsBC939nEGiip0SaCWWnALtXgIVQvF5ba8wmTRYaeTKkaJ
+cIkSYF0XUQeXlCQL8Am8ZVLthKlQNvWDypySy7MQWj+SpyL5qVgFycYkacu06+89WBGAjKzpb/aY
+zUb2oXsujAknycoEjGVufVYzLkAoqze3gAtK5u3hEiPiY/P+fpVK1OCu96dLirxIYIqZGnYTsDWd
++dCFHVSQRsglnUZy7LtiY3yjPKd+Izx/fedsWrA6WOA/GypQLNlifP+wB75RnpNvlOfkOyjOrGh6
+Lb/cA9r3pdSzgwlCqx78U/SgVI1/krbdE9Af1v0ZBm1kr0J06T/x69C8HrfgevgGLMDmHBAFAAA=
+--0016e6d7e90d9b70c60489780b03
+Content-Type: application/x-gzip; name="lockdep.gz"
+Content-Disposition: attachment; filename="lockdep.gz"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gao1qctc2
 
-For large SMP systems, MAX_STACK_TRACE_ENTRIES was too low, and
-lockdep would complain. This change addresses the issue on systems
-we have tested.
-
-It remains to be determined whether other bugs (e.g. scheduler
-balancing issues led to unreasonably deep call chains)
-
-Signed-off-by: Sven-Thorsten Dietrich <sdietrich@suse.de>
-
-Index: linux-2.6.22/kernel/lockdep_internals.h
-===================================================================
---- linux-2.6.22.orig/kernel/lockdep_internals.h
-+++ linux-2.6.22/kernel/lockdep_internals.h
-@@ -27,7 +27,7 @@
-  * Stack-trace: tightly packed array of stack backtrace
-  * addresses. Protected by the hash_lock.
-  */
--#define MAX_STACK_TRACE_ENTRIES	262144UL
-+#define MAX_STACK_TRACE_ENTRIES	524288UL
- 
- extern struct list_head all_lock_classes;
- 
+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
+--0016e6d7e90d9b70c60489780b03--
