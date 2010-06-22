@@ -1,53 +1,48 @@
-From: luis.henrix@gmail.com
-Subject: Linux, RT and virtualisation
-Date: Tue, 22 Jun 2010 18:24:14 +0100
-Message-ID: <20100622172414.GA13372@hades>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: Linux, RT and virtualisation
+Date: Tue, 22 Jun 2010 11:07:05 -0700
+Message-ID: <4C20FBC9.8030309@am.sony.com>
+References: <20100622172414.GA13372@hades>
+Reply-To: frank.rowand@am.sony.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "luis.henrix@gmail.com" <luis.henrix@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:53165 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755116Ab0FVR1r (ORCPT
+Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:33475 "EHLO
+	TX2EHSOBE008.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752123Ab0FVSHP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Jun 2010 13:27:47 -0400
-Received: by bwz9 with SMTP id 9so116059bwz.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 Jun 2010 10:27:44 -0700 (PDT)
-Received: from miguel by hades with local (Exim 4.72)
-	(envelope-from <luis.henrix@gmail.com>)
-	id 1OR7Co-0006h6-Ky
-	for linux-rt-users@vger.kernel.org; Tue, 22 Jun 2010 18:24:14 +0100
-Content-Disposition: inline
+	Tue, 22 Jun 2010 14:07:15 -0400
+In-Reply-To: <20100622172414.GA13372@hades>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On 06/22/10 10:24, luis.henrix@gmail.com wrote:
+> Hi,
+> 
 
-I have the following scenario: a legacy application with RT constraints
-that needs to be replicated.  Basically, I need to run several instances
-of this application on a single multi-core box.  However, this is not as
-simple as it sounds because the application assumes several things such
-as exclusive access to HW, etc.
+< snip >
 
-So, instead of re-designing the application to co-exist with different
-instances, I was wondering whether this could be done using a lazy
-approach: running each instance within a virtual machine.
+> Any experiences/thoughts/links?  Would preemptrt+Xen be able to do this?
+> preemptrt+kvm? Other options?
 
-I have enough cores available so that I can actually dedicate 1 or more
-cores to each VM, but the problem is: will the application still be able
-to meet its RT requirements?  I guess that, if two VMs share the same
-core(s), meeting the deadlines will not be possible without having a
-special scheduler on the VMs manager.  But what about if all the VMs have
-their own cores?
+Some links:
 
-Of course there is still the issue with the shared access to the HW,
-but since this HW (Ethernet NICs) also have support for virtualisation,
-I could create virtual NICs for each of the VM instances.
+AlacrityVM hypervisor project
 
-Any experiences/thoughts/links?  Would preemptrt+Xen be able to do this?
-preemptrt+kvm? Other options?
+  http://developer.novell.com/wiki/index.php/AlacrityVM
+  http://lwn.net/Articles/345296/
 
-Thanks,
---
-Luis
+Towards Linux as a Real-Time Hypervisor
+Eleventh Real-Time Linux Workshop
+
+  http://www.osadl.org/Abstract-20-Towards-Linux-as-a-Real-Tim.rtlws11-abstract20.0.html
+
+
+If you do some experiments in this area, please share your results.
+
+-Frank Rowand
+Sony Corporation of America
 
