@@ -1,43 +1,195 @@
-From: Alessio Igor Bogani <abogani@texware.it>
-Subject: Re: Realtime linux kernel on multicore processor
-Date: Wed, 23 Jun 2010 10:36:16 +0200
-Message-ID: <AANLkTimZ43lDi5dZ469a7DeZY5kmDNIxpoBvf2HqgQSL@mail.gmail.com>
-References: <AANLkTilTcAaRj49CiPgWmPkhWkDkz1CR5sHZygsHRyNA@mail.gmail.com>
-	<4C1A82AC.1000804@us.ibm.com>
-	<AANLkTilzoBIjBM4sd4hjTcQhCmW4OUZpAD-oHqos7RPK@mail.gmail.com>
+From: "Chatterjee, Amit" <amit.chatterjee@ti.com>
+Subject: RE: beagleboard RT problem
+Date: Wed, 23 Jun 2010 14:21:04 +0530
+Message-ID: <2A3DCF3DA181AD40BDE86A3150B27B6B030DED2FC9@dbde02.ent.ti.com>
+References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
+	 <AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
+	 <alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
+	 <1276514850.26993.4.camel@sven.thebigcorporation.com>
+	 <AANLkTimWSQfXQGedfHHLAbabPrRnUaWlPCMUEC3I9_G0@mail.gmail.com>
+	 <AANLkTikP0Z8NbhiCd9yJeNJrnJqJkoXkSSErR_9B6dYC@mail.gmail.com>
+	 <AANLkTilakntJf43kOkuT0EVu6v3s17VNJR6S60lB2ls3@mail.gmail.com>
+	 <AANLkTinojaU-FL3K3C09hV9-qrr8ZdjA8fzDMWTeQh_k@mail.gmail.com>
+ <1277218015.10664.5.camel@sven.thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Nivedita Singhvi <niv@us.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Neel Mehta <neelmehta89@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
+	Maksym Parkachov <lazy.gopher@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:39114 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751766Ab0FWIgT (ORCPT
+Received: from devils.ext.ti.com ([198.47.26.153]:59575 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751478Ab0FWIvK convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Jun 2010 04:36:19 -0400
-Received: by fxm10 with SMTP id 10so2896656fxm.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Jun 2010 01:36:17 -0700 (PDT)
-In-Reply-To: <AANLkTilzoBIjBM4sd4hjTcQhCmW4OUZpAD-oHqos7RPK@mail.gmail.com>
+	Wed, 23 Jun 2010 04:51:10 -0400
+In-Reply-To: <1277218015.10664.5.camel@sven.thebigcorporation.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Please use the following config settings for RT tests. The following option enables the timer to work in high resolution mode.
 
-2010/6/23 Neel Mehta <neelmehta89@gmail.com>:
-[...]
-> the kernel 2.6.31-9-rt (It is an RT_PREEMPT kernel) in the ubuntu
-> repositories (for ubuntu 9.10). I installed the kernel, and booted
-[...]
+CONFIG_OMAP_MPU_TIMER=y
+# CONFIG_OMAP_32K_TIMER is not set
 
-I suggest you to update your Ubuntu installation or try with a more
-recent kernel.
-In Lucid 10.04 there is 2.6.31-11-rt and (at the moment) it is in
--proposed archive: https://launchpad.net/ubuntu/+source/linux-rt
-Otherwise you can install the latest kernel at my PPA:
-https://launchpad.net/~abogani/+archive/ppa
+Also increase the default timer resolution from 10 msec to 1 msec
+--- arch/arm/Kconfig.orig	2010-06-23 14:28:30.000000000 +0530
++++ arch/arm/Kconfig	2010-03-12 14:58:31.000000000 +0530
+@@ -1078,7 +1078,7 @@ config HZ
+ 	default 200 if ARCH_EBSA110 || ARCH_S3C2410
+ 	default OMAP_32K_TIMER_HZ if ARCH_OMAP && OMAP_32K_TIMER
+ 	default AT91_TIMER_HZ if ARCH_AT91
+-	default 100
++	default 1000
+ 
+ config THUMB2_KERNEL
+ 	bool "Compile the kernel in Thumb-2 mode"
 
-Hope this helps.
+Regards,
+Amit
 
-Ciao,
-Alessio
+-----Original Message-----
+From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Sven-Thorsten Dietrich
+Sent: Tuesday, June 22, 2010 8:17 PM
+To: Maksym Parkachov
+Cc: linux-rt-users@vger.kernel.org
+Subject: Re: beagleboard RT problem
+
+On Tue, 2010-06-22 at 09:50 +0200, Maksym Parkachov wrote:
+> Sujit,
+> 
+> thanks for the links, though they mostly have to do with application
+> performance. I don't have any problem with app performance as there is
+> no apps running yet :)
+
+cyclictest is an app, and that is what you started this thread with.
+
+you reported high latencies when running cyclictest, and you were asked
+to turn on lockdep (and its assumed you went back and re-ran cyclic
+test)
+
+
+> 
+> This is embedded system. There is no modules loaded, there is no
+> network, there is no processes running beside busybox. Clean, fast,
+> just real-time is not working :)
+> 
+
+> I did check the dmesg, and unfortunately there is nothing unusual. No
+> new messages after running cyclictest.
+> 
+it does appear from an earlier post, that lock dep triggered on
+something but you never reported any traces.
+
+
+> I'll try to enable all kernel debugging options, but I'm not sure if
+> it helps, I don't really know what to look for in the messages or in
+> statistics.
+> 
+
+
+So assuming, that the lockdependency checker and lock validator aren't
+in fact reporting locking problems, then you should be able to capture
+your latency using the latency tracer.
+
+This should report a nice stack dump for the path that is causing
+cyclictest delays.  Take a look over the cyclictest parameters, or
+forget about cyclictest altogether and run your app with latency
+tracing.
+
+Regards,
+
+Sven
+
+
+> Cheers,
+> Maksym.
+> 
+> On 21 June 2010 12:34, Sujit K M <sjt.kar@gmail.com> wrote:
+> > Searching for "kernel tuning in linux" I found some relevant but not
+> > upto date articles.
+> >
+> > http://www.linux.com/archive/feature/146599
+> > http://www.linuxforums.org/articles/linux-performance-tuning_107.html
+> >
+> > By the way I found something funny with your "lock_stat" gzip file. It
+> > had the following warning.
+> >
+> > "lock_stat version 0.3
+> > *WARNING* lock debugging disabled!! - possibly due to a lockdep warning"
+> >
+> > Also I think you could run dmesg to see the actvity for some clarity.
+> >
+> > On Sun, Jun 20, 2010 at 9:13 PM, Maksym Parkachov <lazy.gopher@gmail.com> wrote:
+> >> Folks,
+> >>
+> >> it's me again with beagleboard RT problem.
+> >>
+> >> I recompiled the kernel and got some statistics on locks, but I'm not
+> >> sure how to interpret it.  Searching on google didn't help, probably,
+> >> not asking right question.
+> >>
+> >> Here are stats from /proc after running cyclictest.
+> >>
+> >> If you could take a look at it, it would be great.
+> >>
+> >> Thanks,
+> >> Maksym.
+> >>
+> >> On 15 June 2010 09:34, Maksym Parkachov <lazy.gopher@gmail.com> wrote:
+> >>> Hi folks,
+> >>>
+> >>> thanks for all suggestions.
+> >>> I'll try with lock validation and see if I could come with more details.
+> >>>
+> >>> Thanks,
+> >>> Maksym.
+> >>>
+> >>> On 14 June 2010 13:27, Sven-Thorsten Dietrich
+> >>> <thebigcorporation@gmail.com> wrote:
+> >>>> On Mon, 2010-06-14 at 13:05 +0200, John Kacur wrote:
+> >>>>>
+> >>>>> On Mon, 14 Jun 2010, Sujit K M wrote:
+> >>>>>
+> >>>>> > > CONFIG_PREEMPT_RCU=y
+> >>>> %<
+> >>>>> His problem is not with the config.
+> >>>>> --
+> >>>>
+> >>>> Nope - the config is just fine.
+> >>>>
+> >>>> Turn on the lock validator and
+> >>>> recompile the Kernel.
+> >>>>
+> >>>> Then repeat the test that produced the latency spike.
+> >>>>
+> >>>> If that doesn't produce any locking issues,
+> >>>> turn on latency tracing and repeat.
+> >>>>
+> >>>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> >>>>> the body of a message to majordomo@vger.kernel.org
+> >>>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >>>>
+> >>>>
+> >>>>
+> >>>
+> >>
+> >
+> >
+> >
+> > --
+> > -- Sujit K M
+> >
+> > blog(http://kmsujit.blogspot.com/)
+> >
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
