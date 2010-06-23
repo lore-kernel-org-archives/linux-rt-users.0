@@ -1,64 +1,70 @@
-From: louis@museresearch.com
-Subject: Suspend: Mem leak and "sleeping function .. invalid context"
-Date: Tue, 22 Jun 2010 13:11:24 -0700
-Message-ID: <668e33c19aa7d25f3a95bc750068e2bb.squirrel@master.museresearch.com>
+From: Neel Mehta <neelmehta89@gmail.com>
+Subject: Re: Realtime linux kernel on multicore processor
+Date: Wed, 23 Jun 2010 10:22:29 +0200
+Message-ID: <AANLkTilzoBIjBM4sd4hjTcQhCmW4OUZpAD-oHqos7RPK@mail.gmail.com>
+References: <AANLkTilTcAaRj49CiPgWmPkhWkDkz1CR5sHZygsHRyNA@mail.gmail.com>
+	<4C1A82AC.1000804@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Nivedita Singhvi <niv@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from master.museresearch.com ([69.59.28.231]:41364 "EHLO
-	master.museresearch.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751668Ab0FVUsT (ORCPT
+Received: from mail-iw0-f174.google.com ([209.85.214.174]:61664 "EHLO
+	mail-iw0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751490Ab0FWIWu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Jun 2010 16:48:19 -0400
-Received: from localhost ([127.0.0.1] helo=master.museresearch.com)
-	by master.museresearch.com with esmtpa (Exim 4.69)
-	(envelope-from <louis@museresearch.com>)
-	id 1OR9oa-0007yi-7D
-	for linux-rt-users@vger.kernel.org; Tue, 22 Jun 2010 13:11:24 -0700
+	Wed, 23 Jun 2010 04:22:50 -0400
+Received: by iwn5 with SMTP id 5so484001iwn.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Jun 2010 01:22:49 -0700 (PDT)
+In-Reply-To: <4C1A82AC.1000804@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi, I've come across a bug when using the RT patch in Fedora 8 (CCRMA
-kernel derivative):  When I suspend, I get a "BUG: sleeping function
-called from invalid context pm-suspend" message.  After resuming, I see a
-memory leak that can rapidly eat memory just by doing this in BASH: 
-"while /bin/true; do continue; done".  The system will slow and then
-finally lock up with "free" reporting approx. 1 GB left (on a 2 GB
-system).
+Since, Ubuntu is being run on the kernel, the standard processes of
+Ubuntu are running in the background.
 
-This has been seen on both the Intel D510MO motherboard and the Intel
-DQ35JOE board.  I have tried the CCRMA kernel
-2.6.33.4-106.rt20.1.fc13.ccrma.i686.rtPAE  and a custom kernel based off
-the 2.6.24.3-1 CCRMA kernel.  Versions of the kernel without the rt patch
-do not fail (tried the stock FC8 kernel and stock FC11 kernel).
+Now, I was just checking out RT_PREEMPT yesterday, and I came across
+the kernel 2.6.31-9-rt (It is an RT_PREEMPT kernel) in the ubuntu
+repositories (for ubuntu 9.10). I installed the kernel, and booted
+into ubuntu using this kernel. Now, I see the results as I had
+expected - 2 out of the 4 cores running on full load. What could be
+the problem in my configuration as I am unable to see the same results
+with the kernel that I configured?
 
-Here is a snippit of the backtrace I get:
-
-kernel: BUG: sleeping function called from invalid context
-pm-suspend(14941) at kernel/rtmutex.c:638
-kernel: in_atomic():1 [00000001], irqs_disabled():1
-kernel: Pid: 14941, comm: pm-suspend Not tainted
-2.6.24.3-1.rec15.rt1.fc8rt #1
-kernel:  [<c0699de1>] __rt_spin_lock+0x21/0x5e
-kernel:  [<c04898ce>] kfree+0x29/0x88
-kernel:  [<c0427be5>] rq_attach_root+0x5b/0xac
-kernel:  [<c042a2df>] cpu_attach_domain+0x2af/0x2ef
-kernel:  [<c0489929>] kfree+0x84/0x88
-kernel:  [<c0489929>] kfree+0x84/0x88
-kernel:  [<c042a33f>] detach_destroy_domains+0x20/0x33
-
-The line number in question is:
-        /* Temporary HACK! */
-        if (!current->in_printk)
-                might_sleep();    <--- line 638
-
-I've found similar threads before, but did not see a resolution to this
-problem on the x86 architecture (it looks like a similar problem might
-have been solved on ARM..?).
-
-Thanks for your help,
-Louis
+Thanks and Regards,
+Neel Mehta
+Third year Undergraduate student,
+Electrical Engineering,
+IIT Bombay
 
 
+On Thu, Jun 17, 2010 at 10:16 PM, Nivedita Singhvi <niv@us.ibm.com> wrote:
+>
+> Neel Mehta wrote:
+>>
+>> Hi. I have 2 computers with ubuntu:
+>> 1. Core 2 Duo - Non realtime linux kernel
+>> 2. Quad core - Realtime linux kernel
+>>
+>> Both of them are using ubuntu. I am running a process that generates 2
+>> threads, both of which are continuously processing something.
+>> 1. On core 2 duo (normal kernel): both the cores are running above 90% load.
+>> 2. on quad core(realtime kernel): only one core runs above 90%, and
+>> the other cores are not at such a high load. The core which is on high
+>> load keeps on alternating among the 4 cores.
+>>
+>> So, my question is why doesnt 2 cores run on high load on quad core?
+>> Is there a problem in multiprocessing in realtime linux kernel? Can
+>> someone guide me where the source of problem could be?
+>
+> I'll start with the obvious - if the same amount of work is
+> being done, but now on a larger number of cores, the load on
+> each individual core could reduce (since you don't say what
+> else is contributing to the load on the system, etc).
+>
+> As an example of this class of behavior, look at your irq distribution.
+> The rotation of the load sounds a lot like it's being driven by
+> interrupt round-robining, for instance.
+>
+> thanks,
+> Nivedita
