@@ -1,58 +1,32 @@
-From: john stultz <johnstul@us.ibm.com>
-Subject: Re: lockdep "splat" on v2.6.33.5-rt23
-Date: Thu, 24 Jun 2010 10:03:41 -0700
-Message-ID: <1277399021.15264.10.camel@work-vm>
-References: <alpine.LFD.2.00.1006241725550.22940@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Nick Piggin <npiggin@suse.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1006241725550.22940@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: "Megan R Barlow" <miser@1122s.com>
+Subject: medical marketing mailing lists
+Date: Fri, 25 Jun 2010 01:58:43 +0200 (SAST)
+Message-ID: <20100624235844.083A6F2AA72@smtp1.icss.co.za>
+Content-Type: text/plain;
+Content-Transfer-Encoding: 7Bit
+To: linux-rt-users@vger.kernel.org, info@spirithotel.hu,
+	tim@bigbearvacations.com, 20ticklesly@aol.com,
+	rmartinez3@partners.org, lcompian@education.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp1.icss.co.za ([196.33.159.75]:52046 "EHLO smtp1.icss.co.za"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752441Ab0FYA4v (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Jun 2010 20:56:51 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2010-06-24 at 17:40 +0200, John Kacur wrote:
-> I believe this is related to the dcache scale discussion thread. I've 
-> shown this to Peter privately, but thought it would be useful to share it 
-> with everyone so we all have the same info.
-> The kernel is from tip/rt/2.6.33 up to commit 
-> faf35813f204901f85dd0c6b3c5092e0064c6c2f
-> It has a lot of debug options enabled, but is not modified.
-> The "splat" is very easy to reproduce, it simply occurs when I 
-> boot the kernel on my T500.
-> 
-> =============================================
-> [ INFO: possible recursive locking detected ]
-> 2.6.33.5-rt23-tip-debug #3
-> ---------------------------------------------
-> init/1 is trying to acquire lock:
->  (&dentry->d_lock/1){+.+...}, at: [<ffffffff811981be>] 
-> shrink_dcache_parent+0x10f/0x2eb
-> 
-> but task is already holding lock:
->  (&dentry->d_lock/1){+.+...}, at: [<ffffffff811981be>] 
-> shrink_dcache_parent+0x10f/0x2eb
+Here's some of the healthcare lists we have:
 
-This looks like the issue Peter brought up earlier this week. I think
-you were cc'ed (although it may have been your gmail account).
+Physicians (34 specialties) - 788k records, 17k emails, 200k fax numbers
+Chiropractors - 108,421 total records * 3,414 emails * 6,553 fax numbers
+US Surgery Centers - 85k records and 14k emails
 
-It seems my fix for the earlier dput/select_parent race is causing this.
-Lockdep doesn't allow us to lock sub-chains, so any time select_parent
-descends two directories down, this will trigger.
 
-Right off I'm not sure what to do about it. We can't just revert, since
-that will open the race up, and trying to serialize dput/select parent
-using something other then the parent/child dentry->d_locks will
-probably be akin to the dcache_lock, and will hurt scalability.
+Theres many more too, just send me an email here for additional info/samples: supremelists@gmx.com
 
-I need to read through Nick's new patchset and see how its changed and
-try to adapt any fixes to the -rt tree, but that's competing with some
-other critical issues I'm working at the moment.
+  
 
-thanks
--john
+
+to adjust your subscription status email to takemeoff@gmx.com
+
+
