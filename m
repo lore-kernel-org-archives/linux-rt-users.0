@@ -1,69 +1,86 @@
-From: Maksym Parkachov <lazy.gopher@gmail.com>
-Subject: Re: beagleboard RT problem
-Date: Wed, 23 Jun 2010 11:45:36 +0200
-Message-ID: <AANLkTileTAXkfHwhSruyWhZqpPkEr4KnEGyf1fUQqaPw@mail.gmail.com>
-References: <AANLkTik4gFjREMEwYqCyg24o6veBaEEa1oiEIkZl50kr@mail.gmail.com>
-	<AANLkTikWXBR-ZmsdMrPI3KyAgLV2G1yvuQrAYp07KFCN@mail.gmail.com>
-	<alpine.LFD.2.00.1006141301100.26248@localhost.localdomain>
-	<1276514850.26993.4.camel@sven.thebigcorporation.com>
-	<AANLkTimWSQfXQGedfHHLAbabPrRnUaWlPCMUEC3I9_G0@mail.gmail.com>
-	<AANLkTikP0Z8NbhiCd9yJeNJrnJqJkoXkSSErR_9B6dYC@mail.gmail.com>
-	<AANLkTilakntJf43kOkuT0EVu6v3s17VNJR6S60lB2ls3@mail.gmail.com>
-	<AANLkTinojaU-FL3K3C09hV9-qrr8ZdjA8fzDMWTeQh_k@mail.gmail.com>
-	<1277218015.10664.5.camel@sven.thebigcorporation.com>
-	<2A3DCF3DA181AD40BDE86A3150B27B6B030DED2FC9@dbde02.ent.ti.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: lockdep "splat" on v2.6.33.5-rt23
+Date: Thu, 24 Jun 2010 17:40:02 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1006241725550.22940@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: "Chatterjee, Amit" <amit.chatterjee@ti.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Nick Piggin <npiggin@suse.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	john stultz <johnstul@us.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:42002 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750967Ab0FWJpi convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Jun 2010 05:45:38 -0400
-Received: by fxm10 with SMTP id 10so2934806fxm.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Jun 2010 02:45:36 -0700 (PDT)
-In-Reply-To: <2A3DCF3DA181AD40BDE86A3150B27B6B030DED2FC9@dbde02.ent.ti.com>
+Received: from mx1.redhat.com ([209.132.183.28]:51899 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755891Ab0FXPkW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Jun 2010 11:40:22 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Amit,
+I believe this is related to the dcache scale discussion thread. I've 
+shown this to Peter privately, but thought it would be useful to share it 
+with everyone so we all have the same info.
+The kernel is from tip/rt/2.6.33 up to commit 
+faf35813f204901f85dd0c6b3c5092e0064c6c2f
+It has a lot of debug options enabled, but is not modified.
+The "splat" is very easy to reproduce, it simply occurs when I 
+boot the kernel on my T500.
 
-thanks for the tip. I'll try the setting and will get back with the
-results of my testing.
+=============================================
+[ INFO: possible recursive locking detected ]
+2.6.33.5-rt23-tip-debug #3
+---------------------------------------------
+init/1 is trying to acquire lock:
+ (&dentry->d_lock/1){+.+...}, at: [<ffffffff811981be>] 
+shrink_dcache_parent+0x10f/0x2eb
 
-Cheers,
-Maksym.
+but task is already holding lock:
+ (&dentry->d_lock/1){+.+...}, at: [<ffffffff811981be>] 
+shrink_dcache_parent+0x10f/0x2eb
 
-On 23 June 2010 10:51, Chatterjee, Amit <amit.chatterjee@ti.com> wrote:
-> Please use the following config settings for RT tests. The following =
-option enables the timer to work in high resolution mode.
->
-> CONFIG_OMAP_MPU_TIMER=3Dy
-> # CONFIG_OMAP_32K_TIMER is not set
->
-> Also increase the default timer resolution from 10 msec to 1 msec
-> --- arch/arm/Kconfig.orig =C2=A0 =C2=A0 =C2=A0 2010-06-23 14:28:30.00=
-0000000 +0530
-> +++ arch/arm/Kconfig =C2=A0 =C2=A02010-03-12 14:58:31.000000000 +0530
-> @@ -1078,7 +1078,7 @@ config HZ
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0default 200 if ARCH_EBSA110 || ARCH_S3C241=
-0
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0default OMAP_32K_TIMER_HZ if ARCH_OMAP && =
-OMAP_32K_TIMER
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0default AT91_TIMER_HZ if ARCH_AT91
-> - =C2=A0 =C2=A0 =C2=A0 default 100
-> + =C2=A0 =C2=A0 =C2=A0 default 1000
->
-> =C2=A0config THUMB2_KERNEL
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0bool "Compile the kernel in Thumb-2 mode"
->
-> Regards,
-> Amit
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+other info that might help us debug this:
+2 locks held by init/1:
+ #0:  (&dentry->d_lock){+.+...}, at: [<ffffffff8119818e>] 
+shrink_dcache_parent+0xdf/0x2eb
+ #1:  (&dentry->d_lock/1){+.+...}, at: [<ffffffff811981be>] 
+shrink_dcache_parent+0x10f/0x2eb
+
+stack backtrace:
+Pid: 1, comm: init Not tainted 2.6.33.5-rt23-tip-debug #3
+Call Trace:
+ [<ffffffff810a68e2>] __lock_acquire+0xcb9/0xd35
+ [<ffffffff811981be>] ? shrink_dcache_parent+0x10f/0x2eb
+ [<ffffffff810a701c>] lock_acquire+0xd4/0xf1
+ [<ffffffff811981be>] ? shrink_dcache_parent+0x10f/0x2eb
+ [<ffffffff81521006>] rt_spin_lock_nested+0x3d/0x44
+ [<ffffffff811981be>] ? shrink_dcache_parent+0x10f/0x2eb
+ [<ffffffff81193456>] ? dentry_lru_del_init+0x3e/0xa8
+ [<ffffffff8119818e>] ? shrink_dcache_parent+0xdf/0x2eb
+ [<ffffffff811981be>] shrink_dcache_parent+0x10f/0x2eb
+ [<ffffffff811f59a4>] proc_flush_task+0xd4/0x26f
+ [<ffffffff81065ea7>] release_task+0x47/0x650
+ [<ffffffff81066e6a>] wait_consider_task+0x9ba/0x10b4
+ [<ffffffff810676e1>] do_wait+0x17d/0x38b
+ [<ffffffff810679e5>] sys_wait4+0xf6/0x119
+ [<ffffffff810037cc>] ? sysret_check+0x27/0x62
+ [<ffffffff810652a4>] ? child_wait_callback+0x0/0xa5
+ [<ffffffff8100379b>] system_call_fastpath+0x16/0x1b
+
+[jkacur@tycho tip-rt-2.6.33]$ addr2line -e vmlinux ffffffff811981be
+/home/jkacur/rt.linux.git/fs/dcache.c:1033
+[jkacur@tycho tip-rt-2.6.33]$ addr2line -e vmlinux ffffffff8119818e
+/home/jkacur/rt.linux.git/fs/dcache.c:1023
+
+So that is function static int select_parent(struct dentry * parent)
+
+line 1023 is
+spin_lock(&this_parent->d_lock);
+
+and lines 1032 and 1033 are
+spin_lock_nested(&dentry->d_lock, DENTRY_D_LOCK_NESTED);
+dentry_lru_del_init(dentry);
+
+If there is any other info I can provide to help solve this, or testing 
+etc, pls let me know!
+
+John Kacur
