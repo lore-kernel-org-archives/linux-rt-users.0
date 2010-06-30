@@ -1,45 +1,30 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
-Subject: Re: Broken out patches for 2.6.31.12-rt21
-Date: Fri, 25 Jun 2010 08:40:07 -0700
-Message-ID: <1277480407.12664.12.camel@sven.oceanvoyage.org>
-References: <loom.20100625T142517-447@post.gmane.org>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: fast interprocess communication ?
+Date: Wed, 30 Jun 2010 13:33:52 +0200
+Message-ID: <4C2B2BA0.8080108@steinhoff.de>
+References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com> <1273680443.27703.33.camel@gandalf.stny.rr.com> <4BEBB1C8.90606@steinhoff.de> <20100513175842.GN6055@pengutronix.de> <4BED1937.6080907@steinhoff.de> <20100514114625.GA6055@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Andy Pont <andy.pont@sdcsystems.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f174.google.com ([209.85.212.174]:33980 "EHLO
-	mail-px0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750975Ab0FYPkL (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.10]:52539 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755030Ab0F3Lb0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 25 Jun 2010 11:40:11 -0400
-Received: by pxi8 with SMTP id 8so756087pxi.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jun 2010 08:40:10 -0700 (PDT)
-In-Reply-To: <loom.20100625T142517-447@post.gmane.org>
+	Wed, 30 Jun 2010 07:31:26 -0400
+In-Reply-To: <20100514114625.GA6055@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-06-25 at 12:58 +0000, Andy Pont wrote:
-> Hello!
-> 
-> Does anyone know if there is a broken out set of patches for the 2.6.31.12-
-> rt21 release?  I have looked on the download site and can only find the patch 
-> as a single 55K line file.
-> 
 
-No, but there is a git tree on Kernel.org.
+Hello,
 
-Sven
+what are you using if you need a "real fast"  interprocess communication ?
 
-> Thanks,
-> 
-> A.
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Is there a way to use the UIO approach for fast synchronous message 
+passing ?
 
-
+--Armin
+ 
+PS:   real-fast means not socket based ...
