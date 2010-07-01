@@ -1,73 +1,51 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
 	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH 0/2] Debian's rt-tests patches
-Date: Thu, 1 Jul 2010 07:24:30 +0200
-Message-ID: <20100701052430.GB28535@pengutronix.de>
+Subject: [PATCH 2/2] install backfire's Makefile
+Date: Thu,  1 Jul 2010 07:25:16 +0200
+Message-ID: <1277961916-2538-2-git-send-email-u.kleine-koenig@pengutronix.de>
+References: <20100701052430.GB28535@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:37112 "EHLO
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:37119 "EHLO
 	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751043Ab0GAFYc (ORCPT
+	with ESMTP id S1751043Ab0GAFZW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Jul 2010 01:24:32 -0400
-Content-Disposition: inline
+	Thu, 1 Jul 2010 01:25:22 -0400
+In-Reply-To: <20100701052430.GB28535@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Clark,
+Only installing backfire.c hardly makes sense.
 
-here come two patches I use for packaging rt-tests for Debian.  Actuall=
-y
-I have two more patches[*1*], but one of them is Debian specific
-and the other one installs hwlatdetect to /usr/sbin instead of
-/usr/lib/pythonX.Y/site-packages + a symlink as this confuses debhelper=
-=2E
-Maybe the right approach is to install a script to /usr/sbin that just
-does
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
+ Makefile |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-	exec python -m hwlatdetect
-
-?!  Another thing I do in the Debian packages is using dkms for buildin=
-g
-the backfire kernel module at install time.  I don't know how this
-works with Redhat's Linux distributions though.
-
-I'll send the two patches that I think are ready for you to include as =
-a
-reply to this mail.  Diffstat, shortlog and an URL to pull these two ar=
-e
-included below.
-
-Best regards
-Uwe
-
-[*1*] see http://patch-tracker.debian.org/package/rt-tests/0.71-1
-
-The following changes since commit 886d26833d637ab778023626a158061e4eb9=
-c5d0:
-
-  version bump to 0.72 (2010-06-25 16:16:46 -0500)
-
-are available in the git repository at:
-  git://git.pengutronix.de/git/ukl/rt-tests.git for-clark
-
-Uwe Kleine-K=F6nig (2):
-      modernize backfire's Makefile
-      install backfire's Makefile
-
- Makefile              |    1 +
- src/backfire/Makefile |   21 ++++++++++++---------
- 2 files changed, 13 insertions(+), 9 deletions(-)
-
+diff --git a/Makefile b/Makefile
+index b83614c..3554bec 100644
+--- a/Makefile
++++ b/Makefile
+@@ -120,6 +120,7 @@ install: all
+ 	fi
+ 	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
+ 	install -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/=
+backfire.c"
++	install -m 644 src/backfire/Makefile "$(DESTDIR)$(srcdir)/backfire/Ma=
+kefile"
+ 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4=
+=2Egz"
+ 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclic=
+test.8.gz"
+ 	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress=
+=2E8.gz"
 --=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
+1.7.1
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
