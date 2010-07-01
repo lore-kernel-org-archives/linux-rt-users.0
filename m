@@ -1,55 +1,73 @@
-From: Pradyumna Sampath <pradysam@gmail.com>
-Subject: Re: fast interprocess communication ?
-Date: Wed, 30 Jun 2010 13:39:14 +0200
-Message-ID: <AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
-References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com>
-	<1273680443.27703.33.camel@gandalf.stny.rr.com>
-	<4BEBB1C8.90606@steinhoff.de>
-	<20100513175842.GN6055@pengutronix.de>
-	<4BED1937.6080907@steinhoff.de>
-	<20100514114625.GA6055@pengutronix.de>
-	<4C2B2BA0.8080108@steinhoff.de>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH 0/2] Debian's rt-tests patches
+Date: Thu, 1 Jul 2010 07:24:30 +0200
+Message-ID: <20100701052430.GB28535@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: Armin Steinhoff <armin@steinhoff.de>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:63115 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752944Ab0F3LjS convert rfc822-to-8bit (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:37112 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751043Ab0GAFYc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Jun 2010 07:39:18 -0400
-Received: by bwz1 with SMTP id 1so315954bwz.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Jun 2010 04:39:16 -0700 (PDT)
-In-Reply-To: <4C2B2BA0.8080108@steinhoff.de>
+	Thu, 1 Jul 2010 01:24:32 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Armin,
+Hi Clark,
 
-On Wed, Jun 30, 2010 at 1:33 PM, Armin Steinhoff <armin@steinhoff.de> w=
-rote:
+here come two patches I use for packaging rt-tests for Debian.  Actuall=
+y
+I have two more patches[*1*], but one of them is Debian specific
+and the other one installs hwlatdetect to /usr/sbin instead of
+/usr/lib/pythonX.Y/site-packages + a symlink as this confuses debhelper=
+=2E
+Maybe the right approach is to install a script to /usr/sbin that just
+does
 
-> what are you using if you need a "real fast" =A0interprocess communic=
-ation ?
+	exec python -m hwlatdetect
 
-Does the posix mqueue's not fit your need ? Have you tried them ? Do
-have some kind of numbers about your definition of fast ?
+?!  Another thing I do in the Debian packages is using dkms for buildin=
+g
+the backfire kernel module at install time.  I don't know how this
+works with Redhat's Linux distributions though.
 
-=46or me, the POSIX mqueues seemed to work, though with some initial
-trouble which was fixed with a patch to the kernel follow this thread
-( http://lkml.org/lkml/2010/4/2/293 ) , this patch is now queued for
-mainline inclusion for 2.6.35.
+I'll send the two patches that I think are ready for you to include as =
+a
+reply to this mail.  Diffstat, shortlog and an URL to pull these two ar=
+e
+included below.
 
-There is also a new test suite to measure message queue perf in the
-rt-tests. Its called pmqtest.
+Best regards
+Uwe
 
-regards
-/prady
+[*1*] see http://patch-tracker.debian.org/package/rt-tests/0.71-1
+
+The following changes since commit 886d26833d637ab778023626a158061e4eb9=
+c5d0:
+
+  version bump to 0.72 (2010-06-25 16:16:46 -0500)
+
+are available in the git repository at:
+  git://git.pengutronix.de/git/ukl/rt-tests.git for-clark
+
+Uwe Kleine-K=F6nig (2):
+      modernize backfire's Makefile
+      install backfire's Makefile
+
+ Makefile              |    1 +
+ src/backfire/Makefile |   21 ++++++++++++---------
+ 2 files changed, 13 insertions(+), 9 deletions(-)
 
 --=20
-http://www.prady.in
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
