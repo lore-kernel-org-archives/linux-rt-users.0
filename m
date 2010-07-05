@@ -1,85 +1,64 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 0/2] Debian's rt-tests patches
-Date: Thu, 1 Jul 2010 10:57:11 -0500
-Message-ID: <20100701105711.1e22f6ce@riff>
-References: <20100701052430.GB28535@pengutronix.de>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: fast interprocess communication ?
+Date: Mon, 05 Jul 2010 18:48:49 +0200
+Message-ID: <4C320CF1.7080803@steinhoff.de>
+References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com>	<1273680443.27703.33.camel@gandalf.stny.rr.com>	<4BEBB1C8.90606@steinhoff.de>	<20100513175842.GN6055@pengutronix.de>	<4BED1937.6080907@steinhoff.de>	<20100514114625.GA6055@pengutronix.de>	<4C2B2BA0.8080108@steinhoff.de> <AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/CU_vezyc0cWI+AYpmQEZOPs"; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: Uwe =?ISO-8859-1?B?S2xlaW5lLUv2bmln?=
-	<u.kleine-koenig@pengutronix.de>
+To: Pradyumna Sampath <pradysam@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:25680 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756762Ab0GAP5b (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Jul 2010 11:57:31 -0400
-In-Reply-To: <20100701052430.GB28535@pengutronix.de>
+Received: from moutng.kundenserver.de ([212.227.126.186]:55091 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752860Ab0GEQpx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Jul 2010 12:45:53 -0400
+In-Reply-To: <AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/CU_vezyc0cWI+AYpmQEZOPs
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, 1 Jul 2010 07:24:30 +0200
-Uwe Kleine-K=F6nig  <u.kleine-koenig@pengutronix.de> wrote:
+Hi Prady,
 
-> Hi Clark,
->=20
-> here come two patches I use for packaging rt-tests for Debian.  Actually
-> I have two more patches[*1*], but one of them is Debian specific
-> and the other one installs hwlatdetect to /usr/sbin instead of
-> /usr/lib/pythonX.Y/site-packages + a symlink as this confuses debhelper.
-> Maybe the right approach is to install a script to /usr/sbin that just
-> does
->=20
-> 	exec python -m hwlatdetect
->=20
-> ?!  Another thing I do in the Debian packages is using dkms for building
-> the backfire kernel module at install time.  I don't know how this
-> works with Redhat's Linux distributions though.
->=20
-> I'll send the two patches that I think are ready for you to include as a
-> reply to this mail.  Diffstat, shortlog and an URL to pull these two are
-> included below.
->=20
-> Best regards
-> Uwe
->=20
-> [*1*] see http://patch-tracker.debian.org/package/rt-tests/0.71-1
->=20
-> The following changes since commit 886d26833d637ab778023626a158061e4eb9c5=
-d0:
->=20
->   version bump to 0.72 (2010-06-25 16:16:46 -0500)
->=20
-> are available in the git repository at:
->   git://git.pengutronix.de/git/ukl/rt-tests.git for-clark
->=20
-> Uwe Kleine-K=F6nig (2):
->       modernize backfire's Makefile
->       install backfire's Makefile
->=20
->  Makefile              |    1 +
->  src/backfire/Makefile |   21 ++++++++++++---------
->  2 files changed, 13 insertions(+), 9 deletions(-)
+Pradyumna Sampath wrote:
+> Hi Armin,
+>
+> On Wed, Jun 30, 2010 at 1:33 PM, Armin Steinhoff <armin@steinhoff.de> wrote:
+>
+>   
+>> what are you using if you need a "real fast"  interprocess communication ?
+>>     
+>
+> Does the posix mqueue's not fit your need ? 
 
-Thanks Uwe, I'll try and get these merged after the holiday this
-weekend.=20
+The mqueue system is based on the file system and isn't the fastest.
+The concept of mqueue is OK ...
 
-Clark
+> Have you tried them ? Do
+> have some kind of numbers about your definition of fast ?
+>   
 
---Sig_/CU_vezyc0cWI+AYpmQEZOPs
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+Local message exchange between lokal processes in less than 10us.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.14 (GNU/Linux)
+> For me, the POSIX mqueues seemed to work, though with some initial
+> trouble which was fixed with a patch to the kernel follow this thread
+> ( http://lkml.org/lkml/2010/4/2/293 ) , this patch is now queued for
+> mainline inclusion for 2.6.35.
+>
+> There is also a new test suite to measure message queue perf in the
+> rt-tests. Its called pmqtest.
+>   
 
-iEYEARECAAYFAkwsutsACgkQHyuj/+TTEp1fpACeP+k7fLdti1YpxQRj7dpaE/8/
-TSkAnRTA7WoHiew8eg2/jEKEHeDpeYs6
-=c0eP
------END PGP SIGNATURE-----
+Interesting ... I will give it a try.
 
---Sig_/CU_vezyc0cWI+AYpmQEZOPs--
+I plan do some conceptual work for a UIO based message passing solution.
+It should be possible to use read and write (triggering 
+uio_event_notify() ) and a UIO device memory to implement a non-copy 
+data exchange.
+
+Regards
+
+--Armin
+
+
