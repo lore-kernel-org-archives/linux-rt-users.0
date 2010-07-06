@@ -1,69 +1,79 @@
-From: Mark Knecht <markknecht@gmail.com>
+From: =?utf-8?q?Philipp_=C3=9Cberbacher?= <hollunder@lavabit.com>
 Subject: Re: future of -rt kernels for realtime audio
-Date: Tue, 6 Jul 2010 08:45:14 -0700
-Message-ID: <AANLkTinznqiQuo3g30kFuEViJwc3bnd4P3Xoar4TJw6y@mail.gmail.com>
+Date: Tue, 06 Jul 2010 21:53:37 +0200
+Message-ID: <1278444945-sup-9886@eris>
 References: <AANLkTikZNjYJnDM6iKgrT1230FP8DSMgHUrZz2lYL4ll@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org
-To: Pedro Ribeiro <pedrib@gmail.com>
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:47664 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752287Ab0GFPpP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Jul 2010 11:45:15 -0400
-Received: by pzk26 with SMTP id 26so914110pzk.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 06 Jul 2010 08:45:14 -0700 (PDT)
-In-Reply-To: <AANLkTikZNjYJnDM6iKgrT1230FP8DSMgHUrZz2lYL4ll@mail.gmail.com>
+Received: from karen.lavabit.com ([72.249.41.33]:47450 "EHLO karen.lavabit.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754628Ab0GFTxq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 6 Jul 2010 15:53:46 -0400
+Received: from b.earth.lavabit.com (b.earth.lavabit.com [192.168.111.11])
+	by karen.lavabit.com (Postfix) with ESMTP id 302FC157557
+	for <linux-rt-users@vger.kernel.org>; Tue,  6 Jul 2010 14:53:44 -0500 (CDT)
+Received: from localhost (eris.mozart.uni-klu.ac.at [143.205.216.185])
+	by lavabit.com with ESMTP id 9HSAS4NMC522
+	for <linux-rt-users@vger.kernel.org>; Tue, 06 Jul 2010 14:53:40 -0500
+In-reply-to: <AANLkTikZNjYJnDM6iKgrT1230FP8DSMgHUrZz2lYL4ll@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jul 6, 2010 at 4:19 AM, Pedro Ribeiro <pedrib@gmail.com> wrote:
+Excerpts from Pedro Ribeiro's message of 2010-07-06 13:19:31 +0200:
 > Hi,
->
+>=20
 > I've been using -rt kernels since 2.6.29 because I do realtime audio
 > on my laptop.
->
+>=20
 > The audio stability has been steadily improving since, and now I find
 > that I can use 2.6.34 without the -rt patch and achieve the same
 > stability as 2.6.33-rt - well, my latency requirements aren't that
 > high, I just need to maintain 8.9ms completely stable, however before
 > .34 it would be impossible without the -rt patch.
->
+>=20
 > So out of curiosity, what changed for .34? According to [1], on .33
 > Raw Spinlock Annotation was introduced in the mainline kernel.
 > However, as said above, I can't get the same performance than with
 > .34.
->
+>=20
 > I remember that I read somewhere that the one the biggest problems
 > with latency requirements was the use of the BKL. Do you think there
 > will be a significant improvement of latency (in specific cases of
 > course) with the scheduled removal of BKL for 2.6.36?
->
+>=20
 > Thanks for the help,
 > Pedro
->
-> [1] http://www.osadl.org/Realtime-Linux.projects-realtime-linux.0.html
+>=20
+> [1] http://www.osadl.org/Realtime-Linux.projects-realtime-linux.0.htm=
+l
 
-With my HDSP 9652 and a good quality desktop machine I've been able to
-achieve <2mS latency for over a couple of years with the standard
-kernel, but only under controlled setups. If I'm just doing audio and
-I run nothing else, doing my best to ensure the machine won't jump
-into some cron job that uses a lot of disk access, etc., then the main
-line kernel works fine and has for me for quite a long time.
+Ah, nice to hear that the BKL removal is scheduled. Pretty much all I
+know is that Linus set the BKL removal as precondition for preempt-rt t=
+o
+be merged with mainline.
+I guess this means that preempt-rt could disappear in some post-.36
+version. I won't hold my breath.
+Anyway, the stock kernel has been good for a while, but there are some
+cases where I still experience big differences. Some, mostly audio
+unrelated, actions or kinds of load cause lots of xruns with the stock
+kernel and none with -rt. Prime example for me is xrandr, enable an
+external monitor -> xruns, not so with -rt. There are a couple of other
+cases. It's mostly about this kind of stuff, the achievable latency is
+pretty much the same in my experience (which is only with an USB
+interface).
+--=20
+Regards,
+Philipp
 
-In my experience the value of rt-sources is that I don't have to be as
-careful. I can open a broswer, do a little email, etc., or even build
-some code and still not get xruns. I cannot do that today with the
-main line kernel.
+--
+"Wir stehen selbst entt=C3=A4uscht und sehn betroffen / Den Vorhang zu =
+und alle Fragen offen." Bertolt Brecht, Der gute Mensch von Sezuan
 
-So, I think it's not that the basic Linux kernel cannot do the job
-because it can. I suggest it's more about how much extra protection do
-you want or need? If you've got a machine that's fully dedicated to
-audio then possibly you could get away with it. If you are using this
-machine for additional tasks then being able to control real-time
-priorities will like win out every time.
-
-Cheers,
-Mark
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
