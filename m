@@ -1,64 +1,46 @@
-From: Armin Steinhoff <armin@steinhoff.de>
+From: Pradyumna Sampath <pradysam@gmail.com>
 Subject: Re: fast interprocess communication ?
-Date: Mon, 05 Jul 2010 18:48:49 +0200
-Message-ID: <4C320CF1.7080803@steinhoff.de>
-References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com>	<1273680443.27703.33.camel@gandalf.stny.rr.com>	<4BEBB1C8.90606@steinhoff.de>	<20100513175842.GN6055@pengutronix.de>	<4BED1937.6080907@steinhoff.de>	<20100514114625.GA6055@pengutronix.de>	<4C2B2BA0.8080108@steinhoff.de> <AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
+Date: Tue, 6 Jul 2010 12:29:38 +0200
+Message-ID: <AANLkTil7jag53q4on2xuxYOqISub3RRrNiSNkGCatKW1@mail.gmail.com>
+References: <DFFBF4EB468A894AB1474ED220F05AF60134C0C2@srv-dc.ona-electroerosion.com>
+	<1273680443.27703.33.camel@gandalf.stny.rr.com>
+	<4BEBB1C8.90606@steinhoff.de>
+	<20100513175842.GN6055@pengutronix.de>
+	<4BED1937.6080907@steinhoff.de>
+	<20100514114625.GA6055@pengutronix.de>
+	<4C2B2BA0.8080108@steinhoff.de>
+	<AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
+	<4C320CF1.7080803@steinhoff.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
 Cc: linux-rt-users@vger.kernel.org
-To: Pradyumna Sampath <pradysam@gmail.com>
+To: Armin Steinhoff <armin@steinhoff.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.186]:55091 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752860Ab0GEQpx (ORCPT
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:41155 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754791Ab0GFK3k (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Jul 2010 12:45:53 -0400
-In-Reply-To: <AANLkTikM-AhROT6GJULLhzNZUVfdFEGt6VoZHC-86wEf@mail.gmail.com>
+	Tue, 6 Jul 2010 06:29:40 -0400
+Received: by fxm14 with SMTP id 14so4602900fxm.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 06 Jul 2010 03:29:39 -0700 (PDT)
+In-Reply-To: <4C320CF1.7080803@steinhoff.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Armin,
 
-Hi Prady,
+On Mon, Jul 5, 2010 at 6:48 PM, Armin Steinhoff <armin@steinhoff.de> wrote:
 
-Pradyumna Sampath wrote:
-> Hi Armin,
->
-> On Wed, Jun 30, 2010 at 1:33 PM, Armin Steinhoff <armin@steinhoff.de> wrote:
->
->   
->> what are you using if you need a "real fast"  interprocess communication ?
->>     
->
-> Does the posix mqueue's not fit your need ? 
+> Local message exchange between lokal processes in less than 10us.
 
-The mqueue system is based on the file system and isn't the fastest.
-The concept of mqueue is OK ...
+As per my measurements, mqueue meets this criteria. It was compared
+with a test suite which ran against _a_popular_commercial_rtos_ and
+RT_PREEMPT linux and the performance was equally good on both. Like I
+said, the problem was the accuracy of the timeouts (mq_timedrecieve
+and mq_timedsend) which is now fixed and mainlined.
 
-> Have you tried them ? Do
-> have some kind of numbers about your definition of fast ?
->   
+regards
+/prady
 
-Local message exchange between lokal processes in less than 10us.
-
-> For me, the POSIX mqueues seemed to work, though with some initial
-> trouble which was fixed with a patch to the kernel follow this thread
-> ( http://lkml.org/lkml/2010/4/2/293 ) , this patch is now queued for
-> mainline inclusion for 2.6.35.
->
-> There is also a new test suite to measure message queue perf in the
-> rt-tests. Its called pmqtest.
->   
-
-Interesting ... I will give it a try.
-
-I plan do some conceptual work for a UIO based message passing solution.
-It should be possible to use read and write (triggering 
-uio_event_notify() ) and a UIO device memory to implement a non-copy 
-data exchange.
-
-Regards
-
---Armin
-
-
+--
+http://www.prady.in
