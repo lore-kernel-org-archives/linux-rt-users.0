@@ -1,192 +1,129 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: [patch] drivers/dca: convert dca_lock to a raw spinlock
-Date: Wed, 07 Jul 2010 10:29:01 +0200
-Message-ID: <1278491341.7926.4.camel@marge.simson.net>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in
+ wakeup_next_waiter()
+Date: Wed, 7 Jul 2010 13:57:12 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain>
+References: <1278478019.10245.77.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Darren Hart <dvhltc@us.ibm.com>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:45731 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1751027Ab0GGI3E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Jul 2010 04:29:04 -0400
+Received: from www.tglx.de ([62.245.132.106]:44562 "EHLO www.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754553Ab0GGL5u (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 Jul 2010 07:57:50 -0400
+In-Reply-To: <1278478019.10245.77.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Cc'ing Darren.
 
-drivers/dca: convert dca_lock to a raw spinlock
+On Wed, 7 Jul 2010, Mike Galbraith wrote:
 
-[   25.607517] igb 0000:01:00.0: DCA enabled
-[   25.607524] BUG: sleeping function called from invalid context at kernel/rtmutex.c:684
-[   25.607528] pcnt: 1 0 in_atomic(): 1, irqs_disabled(): 0, pid: 1805, name: modprobe
-[   25.607532] Pid: 1805, comm: modprobe Tainted: G   M    W N  2.6.33.5-rt23-rt_debug #2
-[   25.607536] Call Trace:
-[   25.607557]  [<ffffffff820078a1>] try_stack_unwind+0x151/0x1a0
-[   25.607566]  [<ffffffff820062c2>] dump_trace+0x92/0x370
-[   25.607573]  [<ffffffff8200731c>] show_trace_log_lvl+0x5c/0x80
-[   25.607578]  [<ffffffff82007355>] show_trace+0x15/0x20
-[   25.607587]  [<ffffffff823f4588>] dump_stack+0x77/0x8f
-[   25.607595]  [<ffffffff82043f2a>] __might_sleep+0x11a/0x130
-[   25.607602]  [<ffffffff823f7b93>] rt_spin_lock+0x83/0x90
-[   25.607611]  [<ffffffffa0209138>] dca_common_get_tag+0x28/0x80 [dca]
-[   25.607622]  [<ffffffffa02091c8>] dca3_get_tag+0x18/0x20 [dca]
-[   25.607634]  [<ffffffffa0244e71>] igb_update_dca+0xb1/0x1d0 [igb]
-[   25.607649]  [<ffffffffa0244ff5>] igb_setup_dca+0x65/0x80 [igb]
-[   25.607663]  [<ffffffffa02535a6>] igb_probe+0x946/0xe4d [igb]
-[   25.607678]  [<ffffffff82247517>] local_pci_probe+0x17/0x20
-[   25.607686]  [<ffffffff82248661>] pci_device_probe+0x121/0x130
-[   25.607699]  [<ffffffff822e4832>] driver_probe_device+0xd2/0x2e0
-[   25.607707]  [<ffffffff822e4adb>] __driver_attach+0x9b/0xa0
-[   25.607714]  [<ffffffff822e3d1b>] bus_for_each_dev+0x6b/0xa0
-[   25.607720]  [<ffffffff822e4591>] driver_attach+0x21/0x30
-[   25.607727]  [<ffffffff822e3425>] bus_add_driver+0x1e5/0x350
-[   25.607734]  [<ffffffff822e4e41>] driver_register+0x81/0x160
-[   25.607742]  [<ffffffff8224890f>] __pci_register_driver+0x6f/0xf0
-[   25.607752]  [<ffffffffa011505b>] igb_init_module+0x5b/0x5d [igb]
-[   25.607769]  [<ffffffff820001dd>] do_one_initcall+0x3d/0x1a0
-[   25.607778]  [<ffffffff820961f6>] sys_init_module+0xe6/0x270
-[   25.607786]  [<ffffffff82003232>] system_call_fastpath+0x16/0x1b
-[   25.607794]  [<00007f84d6783f4a>] 0x7f84d6783f4a
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-LKML-Reference: <new-submission>
-
----
- drivers/dca/dca-core.c |   36 ++++++++++++++++++------------------
- 1 file changed, 18 insertions(+), 18 deletions(-)
-
-Index: linux-2.6.33-rt/drivers/dca/dca-core.c
-===================================================================
---- linux-2.6.33-rt.orig/drivers/dca/dca-core.c
-+++ linux-2.6.33-rt/drivers/dca/dca-core.c
-@@ -34,7 +34,7 @@ MODULE_VERSION(DCA_VERSION);
- MODULE_LICENSE("GPL");
- MODULE_AUTHOR("Intel Corporation");
- 
--static DEFINE_SPINLOCK(dca_lock);
-+static DEFINE_RAW_SPINLOCK(dca_lock);
- 
- static LIST_HEAD(dca_domains);
- 
-@@ -139,19 +139,19 @@ int dca_add_requester(struct device *dev
- 	if (!dev)
- 		return -EFAULT;
- 
--	spin_lock_irqsave(&dca_lock, flags);
-+	raw_spin_lock_irqsave(&dca_lock, flags);
- 
- 	/* check if the requester has not been added already */
- 	dca = dca_find_provider_by_dev(dev);
- 	if (dca) {
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return -EEXIST;
- 	}
- 
- 	pci_rc = dca_pci_rc_from_dev(dev);
- 	domain = dca_find_domain(pci_rc);
- 	if (!domain) {
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return -ENODEV;
- 	}
- 
-@@ -161,17 +161,17 @@ int dca_add_requester(struct device *dev
- 			break;
- 	}
- 
--	spin_unlock_irqrestore(&dca_lock, flags);
-+	raw_spin_unlock_irqrestore(&dca_lock, flags);
- 
- 	if (slot < 0)
- 		return slot;
- 
- 	err = dca_sysfs_add_req(dca, dev, slot);
- 	if (err) {
--		spin_lock_irqsave(&dca_lock, flags);
-+		raw_spin_lock_irqsave(&dca_lock, flags);
- 		if (dca == dca_find_provider_by_dev(dev))
- 			dca->ops->remove_requester(dca, dev);
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return err;
- 	}
- 
-@@ -192,14 +192,14 @@ int dca_remove_requester(struct device *
- 	if (!dev)
- 		return -EFAULT;
- 
--	spin_lock_irqsave(&dca_lock, flags);
-+	raw_spin_lock_irqsave(&dca_lock, flags);
- 	dca = dca_find_provider_by_dev(dev);
- 	if (!dca) {
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return -ENODEV;
- 	}
- 	slot = dca->ops->remove_requester(dca, dev);
--	spin_unlock_irqrestore(&dca_lock, flags);
-+	raw_spin_unlock_irqrestore(&dca_lock, flags);
- 
- 	if (slot < 0)
- 		return slot;
-@@ -221,16 +221,16 @@ u8 dca_common_get_tag(struct device *dev
- 	u8 tag;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&dca_lock, flags);
-+	raw_spin_lock_irqsave(&dca_lock, flags);
- 
- 	dca = dca_find_provider_by_dev(dev);
- 	if (!dca) {
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return -ENODEV;
- 	}
- 	tag = dca->ops->get_tag(dca, dev, cpu);
- 
--	spin_unlock_irqrestore(&dca_lock, flags);
-+	raw_spin_unlock_irqrestore(&dca_lock, flags);
- 	return tag;
- }
- 
-@@ -309,14 +309,14 @@ int register_dca_provider(struct dca_pro
- 	if (err)
- 		return err;
- 
--	spin_lock_irqsave(&dca_lock, flags);
-+	raw_spin_lock_irqsave(&dca_lock, flags);
- 	domain = dca_get_domain(dev);
- 	if (!domain) {
--		spin_unlock_irqrestore(&dca_lock, flags);
-+		raw_spin_unlock_irqrestore(&dca_lock, flags);
- 		return -ENODEV;
- 	}
- 	list_add(&dca->node, &domain->dca_providers);
--	spin_unlock_irqrestore(&dca_lock, flags);
-+	raw_spin_unlock_irqrestore(&dca_lock, flags);
- 
- 	blocking_notifier_call_chain(&dca_provider_chain,
- 				     DCA_PROVIDER_ADD, NULL);
-@@ -337,7 +337,7 @@ void unregister_dca_provider(struct dca_
- 	blocking_notifier_call_chain(&dca_provider_chain,
- 				     DCA_PROVIDER_REMOVE, NULL);
- 
--	spin_lock_irqsave(&dca_lock, flags);
-+	raw_spin_lock_irqsave(&dca_lock, flags);
- 
- 	list_del(&dca->node);
- 
-@@ -346,7 +346,7 @@ void unregister_dca_provider(struct dca_
- 	if (list_empty(&domain->dca_providers))
- 		dca_free_domain(domain);
- 
--	spin_unlock_irqrestore(&dca_lock, flags);
-+	raw_spin_unlock_irqrestore(&dca_lock, flags);
- 
- 	dca_sysfs_remove_provider(dca);
- }
-
-
+> Greetings,
+> 
+> Stress testing, looking to trigger RCU stalls, I've managed to find a
+> way to repeatably create fireworks.  (got RCU stall, see attached)
+> 
+> 1. download ltp-full-20100630.  Needs to be this version because of
+> testcase bustage in earlier versions, and must be built with gcc > 4.3,
+> else testcases will segfault due to a gcc bug. 
+> 
+> 2. apply patchlet so you can run testcases/realtime/perf/latency/run.sh
+> at all.
+> 
+> --- pthread_cond_many.c.org	2010-07-05 09:05:59.000000000 +0200
+> +++ pthread_cond_many.c	2010-07-04 12:12:25.000000000 +0200
+> @@ -259,7 +259,7 @@ void usage(void)
+>  
+>  int parse_args(int c, char *v)
+>  {
+> -	int handled;
+> +	int handled = 1;
+>          switch (c) {
+>  		case 'h':
+>  			usage();
+> 
+> 3. add --realtime for no particular reason.
+> 
+> --- run.sh.org	2010-07-06 15:54:58.000000000 +0200
+> +++ run.sh	2010-07-06 16:37:34.000000000 +0200
+> @@ -22,7 +22,7 @@ make
+>  # process to run realtime.  The remainder of the processes (if any)
+>  # will run non-realtime in any case.
+>  
+> -nthread=5000
+> +nthread=500
+>  iter=400
+>  nproc=5
+>  
+> @@ -39,7 +39,7 @@ i=0
+>  i=1
+>  while test $i -lt $nproc
+>  do
+> -        ./pthread_cond_many --broadcast -i $iter -n $nthread > $nthread.$iter.$nproc.$i.out &
+> +        ./pthread_cond_many --realtime --broadcast -i $iter -n $nthread > $nthread.$iter.$nproc.$i.out &
+>          i=`expr $i + 1`
+>  done
+>  wait
+> 
+> 4. run it.
+> 
+> What happens here is we hit WARN_ON(pendowner->pi_blocked_on != waiter),
+> this does not make it to consoles (poking sysrq-foo doesn't either).
+> Next comes WARN_ON(!pendowner->pi_blocked_on), followed by the NULL
+> explosion, which does make it to consoles.
+> 
+> With explosion avoidance, I also see pendowner->pi_blocked_on->task ==
+> NULL at times, but that, as !pendowner->pi_blocked_on, seems to be
+> fallout.  The start of bad juju is always pi_blocked_on != waiter.
+> 
+> [  141.609268] BUG: unable to handle kernel NULL pointer dereference at 0000000000000058
+> [  141.609268] IP: [<ffffffff8106856d>] wakeup_next_waiter+0x12c/0x177
+> [  141.609268] PGD 20e174067 PUD 20e253067 PMD 0 
+> [  141.609268] Oops: 0000 [#1] PREEMPT SMP 
+> [  141.609268] last sysfs file: /sys/devices/system/cpu/cpu3/cache/index2/shared_cpu_map
+> [  141.609268] CPU 0 
+> [  141.609268] Pid: 8154, comm: pthread_cond_ma Tainted: G        W  2.6.33.6-rt23 #12 MS-7502/MS-7502
+> [  141.609268] RIP: 0010:[<ffffffff8106856d>]  [<ffffffff8106856d>] wakeup_next_waiter+0x12c/0x177
+> [  141.609268] RSP: 0018:ffff88020e3cdd78  EFLAGS: 00010097
+> [  141.609268] RAX: 0000000000000000 RBX: ffff8801e8eba5c0 RCX: 0000000000000000
+> [  141.609268] RDX: ffff880028200000 RSI: 0000000000000046 RDI: 0000000000000009
+> [  141.609268] RBP: ffff88020e3cdda8 R08: 0000000000000002 R09: 0000000000000000
+> [  141.609268] R10: 0000000000000005 R11: 0000000000000000 R12: ffffffff81659068
+> [  141.609268] R13: ffff8801e8ebdb58 R14: 0000000000000000 R15: ffff8801e8ebac08
+> [  141.609268] FS:  00007f664d539700(0000) GS:ffff880028200000(0000) knlGS:0000000000000000
+> [  141.609268] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> [  141.609268] CR2: 0000000000000058 CR3: 0000000214266000 CR4: 00000000000006f0
+> [  141.609268] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+> [  141.609268] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+> [  141.609268] Process pthread_cond_ma (pid: 8154, threadinfo ffff88020e3cc000, task ffff88020e2a4700)
+> [  141.609268] Stack:
+> [  141.609268]  0000000000000000 ffffffff81659068 0000000000000202 0000000000000000
+> [  141.609268] <0> 0000000000000000 0000000080001fda ffff88020e3cddc8 ffffffff812fec48
+> [  141.609268] <0> ffffffff81659068 0000000000606300 ffff88020e3cddd8 ffffffff812ff1b9
+> [  141.609268] Call Trace:
+> [  141.609268]  [<ffffffff812fec48>] rt_spin_lock_slowunlock+0x43/0x61
+> [  141.609268]  [<ffffffff812ff1b9>] rt_spin_unlock+0x46/0x48
+> [  141.609268]  [<ffffffff81067d7f>] do_futex+0x83c/0x935
+> [  141.609268]  [<ffffffff810c26ce>] ? handle_mm_fault+0x6de/0x6f1
+> [  141.609268]  [<ffffffff81067e36>] ? do_futex+0x8f3/0x935
+> [  141.609268]  [<ffffffff81067fba>] sys_futex+0x142/0x154
+> [  141.609268]  [<ffffffff81020eb0>] ? do_page_fault+0x23e/0x28e
+> [  141.609268]  [<ffffffff81004aa7>] ? math_state_restore+0x3d/0x3f
+> [  141.609268]  [<ffffffff81004b08>] ? do_device_not_available+0xe/0x12
+> [  141.609268]  [<ffffffff81002c5b>] system_call_fastpath+0x16/0x1b
+> [  141.609268] Code: c7 09 6d 41 81 e8 ac 34 fd ff 4c 39 ab 70 06 00 00 74 11 be 47 02 00 00 48 c7 c7 09 6d 41 81 e8 92 34 fd ff 48 8b 83 70 06 00 00 <4c> 39 60 58 74 11 be 48 02 00 00 48 c7 c7 09 6d 41 81 e8 74 34 
+> [  141.609268] RIP  [<ffffffff8106856d>] wakeup_next_waiter+0x12c/0x177
+> [  141.609268]  RSP <ffff88020e3cdd78>
+> [  141.609268] CR2: 0000000000000058
+> [  141.609268] ---[ end trace 58805b944e6f93ce ]---
+> [  141.609268] note: pthread_cond_ma[8154] exited with preempt_count 2
+> 
+> (5. eyeball locks.. -> zzzzt -> report -> eyeball..)
+> 
+> 	-Mike
+> 
