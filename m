@@ -1,36 +1,55 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in
- wakeup_next_waiter()
-Date: Wed, 07 Jul 2010 19:45:29 +0200
-Message-ID: <1278524729.7501.12.camel@marge.simson.net>
-References: <1278478019.10245.77.camel@marge.simson.net>
-	 <4C348B1D.5060008@linux.vnet.ibm.com>
-	 <1278513073.10564.12.camel@marge.simson.net>  <4C3497A0.8030807@us.ibm.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: 2.6.33.5 rt23: sleeping function called from invalid context
+Date: Wed, 07 Jul 2010 20:54:30 -0700
+Message-ID: <1278561270.5448.2.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Darren Hart <dvhltc@us.ibm.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Nick Piggin <npiggin@suse.de>,
+	John Stultz <johnstul@us.ibm.com>, nando@ccrma.Stanford.EDU
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:49397 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1753534Ab0GGRp2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Jul 2010 13:45:28 -0400
-In-Reply-To: <4C3497A0.8030807@us.ibm.com>
+Received: from smtp3.Stanford.EDU ([171.67.219.83]:47959 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751446Ab0GHDzG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 Jul 2010 23:55:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2010-07-07 at 08:05 -0700, Darren Hart wrote:
-> On 07/07/2010 07:31 AM, Mike Galbraith wrote:
+After a suspend/wake up cycle, just after upgrading to fc12 (I did not
+see this with the same basic kernel - that is, compiled from the same
+source + patches - under fc11). 
 
-> > Yup, all better.
-> 
-> So with this, the "volatile struct" patch isn't necessary?
+BUG: sleeping function called from invalid context at
+kernel/rtmutex.c:684
+pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 1, pid: 10582, name:
+pm-suspend
+Pid: 10582, comm: pm-suspend Not tainted
+2.6.33.5-120.rt23.1.fc11.ccrma.i686.rtPAE #1
+Call Trace:
+[<c042eced>] __might_sleep+0xcc/0xd4
+[<c0464f57>] rt_spin_lock_fastlock.clone.1+0x26/0x5f
+[<c0792862>] rt_spin_lock+0x8/0xa
+[<c040dddc>] read_persistent_clock+0x11/0x30
+[<c045d1de>] timekeeping_suspend+0xe/0x4e
+[<c0640c9e>] sysdev_suspend+0x15c/0x356
+[<c0792906>] ? _mutex_unlock+0x8/0xa
+[<c046afc1>] suspend_devices_and_enter+0xea/0x17f
+[<c046b11e>] enter_state+0xc8/0x114
+[<c046a9cf>] state_store+0x93/0xa7
+[<c046a93c>] ? state_store+0x0/0xa7
+[<c05a6505>] kobj_attr_store+0x16/0x22
+[<c0515afa>] sysfs_write_file+0xbf/0xea
+[<c0515a3b>] ? sysfs_write_file+0x0/0xea
+[<c04d26ba>] vfs_write+0x80/0xdf
+[<c0465134>] ? rt_up_read+0x13/0x15
+[<c04d27ad>] sys_write+0x3b/0x5d
+[<c040895f>] sysenter_do_call+0x12/0x28
 
-Definitely no longer necessary.. on my box ;-)
+-- Fernando
 
-	-Mike
 
