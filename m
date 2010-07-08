@@ -1,49 +1,74 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in wakeup_next_waiter()
-Date: Thu, 08 Jul 2010 07:12:15 -0700
-Message-ID: <4C35DCBF.9070109@us.ibm.com>
-References: <1278478019.10245.77.camel@marge.simson.net> <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain> <4C348940.9070805@us.ibm.com> <1278590730.10399.3.camel@marge.simson.net>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
+Date: Thu, 08 Jul 2010 10:19:50 -0700
+Message-ID: <1278609590.7527.11.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Mike Galbraith <efault@gmx.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Nick Piggin <npiggin@suse.de>,
+	John Stultz <johnstul@us.ibm.com>,
+	Fernando Pablo Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e36.co.us.ibm.com ([32.97.110.154]:53753 "EHLO
-	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755282Ab0GHOMv (ORCPT
+Received: from smtp1.Stanford.EDU ([171.67.219.81]:53920 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1758233Ab0GHR1n (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Jul 2010 10:12:51 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e36.co.us.ibm.com (8.14.4/8.13.1) with ESMTP id o68E9Ll6029392
-	for <linux-rt-users@vger.kernel.org>; Thu, 8 Jul 2010 08:09:21 -0600
-Received: from d03av02.boulder.ibm.com (d03av02.boulder.ibm.com [9.17.195.168])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o68ECYDl111308
-	for <linux-rt-users@vger.kernel.org>; Thu, 8 Jul 2010 08:12:35 -0600
-Received: from d03av02.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av02.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id o68ECKMn025430
-	for <linux-rt-users@vger.kernel.org>; Thu, 8 Jul 2010 08:12:21 -0600
-In-Reply-To: <1278590730.10399.3.camel@marge.simson.net>
+	Thu, 8 Jul 2010 13:27:43 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/08/2010 05:05 AM, Mike Galbraith wrote:
-> On Wed, 2010-07-07 at 07:03 -0700, Darren Hart wrote:
->
->> I see kernel version is: 2.6.33.6-rt23, have you reproduced this on
->> earlier kernel versions as well? Any 2.6.31 rt kernel would be a good
->> data point.
->
-> FUTEX_CMP/WAIT_REQUEUE_PI first appeared in 2.6.29-rt, as does the
-> explosion.
->
+We are having problems with 2.6.33.5+rt23, at least in our configuration
+while accessing an nfs automounted directory. This causes a complete
+machine lockup (press reset to exit as the only option). 
 
-Right. I haven't had a chance to look into this yet. I will have some 
-time today.
+I simply use the Nautilus file manager (in Fedora 12) to navigate to an
+autofs mounted directory and the process monitor goes to 100% on one
+core (or maybe two), the mouse jerks a bit and the whole thing goes
+catatonic almost immediately. 
 
--- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+I get this in any open terminal at the time of the crash:
+
+--------
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:------------[ cut here ]------------
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:invalid opcode: 0000 [#1] PREEMPT SMP 
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:last sysfs
+file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:Process nautilus (pid: 2874, ti=f0204000 task=f17dd1f0
+task.ti=f0204000)
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:Stack:
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:Call Trace:
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:Code: 7b 08 00 89 45 b8 75 12 8d 43 04 89 43 04 89 43 08 8d 43
+0c 89 43 0c 89 43 10 8b 43 14 64 8b 15 2c d1 a5 c0 83 e0 fc 39 c2 75 04
+<0f> 0b eb fe 8b 3a 81 ff 08 01 00 00 74 0a 83 ff 02 b8 04 00 00 
+
+Message from syslogd@localhost at Jul  8 10:13:54 ...
+ kernel:EIP: [<c0792c0f>] rt_spin_lock_slowlock+0x43/0x1bb SS:ESP
+0068:f0205cbc
+--------
+
+And that's it... nothing else in the logs. 
+
+For now we are booting into the normal Fedora kernel (this is on Fedora
+12) as this makes the rt kernel not usable in our setup. 
+
+Let me know if there is anything else I can do to help debug this...
+-- Fernando
+
+
