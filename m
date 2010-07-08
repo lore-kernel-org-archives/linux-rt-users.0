@@ -1,84 +1,101 @@
-From: john stultz <johnstul@us.ibm.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
-Date: Thu, 08 Jul 2010 15:33:06 -0700
-Message-ID: <1278628386.3008.11.camel@localhost.localdomain>
+Date: Thu, 08 Jul 2010 15:44:04 -0700
+Message-ID: <1278629044.12059.6.camel@localhost.localdomain>
 References: <1278609590.7527.11.camel@localhost.localdomain>
+	 <1278628386.3008.11.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Nick Piggin <npiggin@suse.de>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: john stultz <johnstul@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e35.co.us.ibm.com ([32.97.110.153]:60269 "EHLO
-	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755665Ab0GHWdQ (ORCPT
+Received: from smtp1.Stanford.EDU ([171.67.219.81]:58586 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1755966Ab0GHWoi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Jul 2010 18:33:16 -0400
-In-Reply-To: <1278609590.7527.11.camel@localhost.localdomain>
+	Thu, 8 Jul 2010 18:44:38 -0400
+In-Reply-To: <1278628386.3008.11.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2010-07-08 at 10:19 -0700, Fernando Lopez-Lezcano wrote:
-> We are having problems with 2.6.33.5+rt23, at least in our configuration
-> while accessing an nfs automounted directory. This causes a complete
-> machine lockup (press reset to exit as the only option). 
+On Thu, 2010-07-08 at 15:33 -0700, john stultz wrote:
+> On Thu, 2010-07-08 at 10:19 -0700, Fernando Lopez-Lezcano wrote:
+> > We are having problems with 2.6.33.5+rt23, at least in our configuration
+> > while accessing an nfs automounted directory. This causes a complete
+> > machine lockup (press reset to exit as the only option). 
+> > 
+> > I simply use the Nautilus file manager (in Fedora 12) to navigate to an
+> > autofs mounted directory and the process monitor goes to 100% on one
+> > core (or maybe two), the mouse jerks a bit and the whole thing goes
+> > catatonic almost immediately. 
+> > 
+> > I get this in any open terminal at the time of the crash:
+> > 
+> > --------
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:------------[ cut here ]------------
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:invalid opcode: 0000 [#1] PREEMPT SMP 
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:last sysfs
+> > file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:Process nautilus (pid: 2874, ti=f0204000 task=f17dd1f0
+> > task.ti=f0204000)
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:Stack:
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:Call Trace:
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:Code: 7b 08 00 89 45 b8 75 12 8d 43 04 89 43 04 89 43 08 8d 43
+> > 0c 89 43 0c 89 43 10 8b 43 14 64 8b 15 2c d1 a5 c0 83 e0 fc 39 c2 75 04
+> > <0f> 0b eb fe 8b 3a 81 ff 08 01 00 00 74 0a 83 ff 02 b8 04 00 00 
+> > 
+> > Message from syslogd@localhost at Jul  8 10:13:54 ...
+> >  kernel:EIP: [<c0792c0f>] rt_spin_lock_slowlock+0x43/0x1bb SS:ESP
+> > 0068:f0205cbc
+> > --------
+> > 
+> > And that's it... nothing else in the logs. 
 > 
-> I simply use the Nautilus file manager (in Fedora 12) to navigate to an
-> autofs mounted directory and the process monitor goes to 100% on one
-> core (or maybe two), the mouse jerks a bit and the whole thing goes
-> catatonic almost immediately. 
+> Hrm. Not too much to go on there, but thanks for the report.
 > 
-> I get this in any open terminal at the time of the crash:
 > 
-> --------
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:------------[ cut here ]------------
+> > For now we are booting into the normal Fedora kernel (this is on Fedora
+> > 12) as this makes the rt kernel not usable in our setup. 
+> > 
+> > Let me know if there is anything else I can do to help debug this...
 > 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:invalid opcode: 0000 [#1] PREEMPT SMP 
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:last sysfs
-> file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:Process nautilus (pid: 2874, ti=f0204000 task=f17dd1f0
-> task.ti=f0204000)
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:Stack:
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:Call Trace:
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:Code: 7b 08 00 89 45 b8 75 12 8d 43 04 89 43 04 89 43 08 8d 43
-> 0c 89 43 0c 89 43 10 8b 43 14 64 8b 15 2c d1 a5 c0 83 e0 fc 39 c2 75 04
-> <0f> 0b eb fe 8b 3a 81 ff 08 01 00 00 74 0a 83 ff 02 b8 04 00 00 
-> 
-> Message from syslogd@localhost at Jul  8 10:13:54 ...
->  kernel:EIP: [<c0792c0f>] rt_spin_lock_slowlock+0x43/0x1bb SS:ESP
-> 0068:f0205cbc
-> --------
-> 
-> And that's it... nothing else in the logs. 
+> Had you done any testing with earlier 2.6.33-rt kernels where this
+> didn't occur? If so what version?
 
-Hrm. Not too much to go on there, but thanks for the report.
+I have been working with the whole series but my main usage case does
+not use nfs/autofs (see next paragraphs). 
 
+I have noticed that the problem does not appear to happen when I cd into
+an nfs automounted directory directly. It appears to happen only when
+listing the contents of a mount point (ie: when "/whatever/" is an
+autofs mount point where several directories are mounted, not
+necessarily from the same server). 
 
-> For now we are booting into the normal Fedora kernel (this is on Fedora
-> 12) as this makes the rt kernel not usable in our setup. 
-> 
-> Let me know if there is anything else I can do to help debug this...
+Before switching to Fedora 12 users were normally running 2.6.29 rt and
+I had been running 2.6.31.x and 2.6.33.x rt, but I don't think it ever
+happened to me personally (I'm always using the command line - this is
+completely reproducible with nautilus). After the switch it started
+happening almost immediately to regular users (using nautilus mostly). 
 
-Had you done any testing with earlier 2.6.33-rt kernels where this
-didn't occur? If so what version?
-
-thanks
--john
+How could I try to get more debugging information?
+-- Fernando
 
 
