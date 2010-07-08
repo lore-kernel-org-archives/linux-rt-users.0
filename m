@@ -1,73 +1,84 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 2.6.33.5 rt23: sleeping function called from invalid context
-Date: Thu, 08 Jul 2010 10:49:56 -0700
-Message-ID: <1278611396.7527.14.camel@localhost.localdomain>
-References: <1278561270.5448.2.camel@localhost.localdomain>
-	 <1278610624.3008.2.camel@localhost.localdomain>
+From: john stultz <johnstul@us.ibm.com>
+Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
+Date: Thu, 08 Jul 2010 15:33:06 -0700
+Message-ID: <1278628386.3008.11.camel@localhost.localdomain>
+References: <1278609590.7527.11.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Nick Piggin <npiggin@suse.de>
-To: john stultz <johnstul@us.ibm.com>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:50946 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756636Ab0GHRub (ORCPT
+Received: from e35.co.us.ibm.com ([32.97.110.153]:60269 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755665Ab0GHWdQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Jul 2010 13:50:31 -0400
-In-Reply-To: <1278610624.3008.2.camel@localhost.localdomain>
+	Thu, 8 Jul 2010 18:33:16 -0400
+In-Reply-To: <1278609590.7527.11.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2010-07-08 at 10:37 -0700, john stultz wrote:
-> On Wed, 2010-07-07 at 20:54 -0700, Fernando Lopez-Lezcano wrote:
-> > After a suspend/wake up cycle, just after upgrading to fc12 (I did not
-> > see this with the same basic kernel - that is, compiled from the same
-> > source + patches - under fc11). 
-> > 
-> > BUG: sleeping function called from invalid context at
-> > kernel/rtmutex.c:684
-> > pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 1, pid: 10582, name:
-> > pm-suspend
-> > Pid: 10582, comm: pm-suspend Not tainted
-> > 2.6.33.5-120.rt23.1.fc11.ccrma.i686.rtPAE #1
-> > Call Trace:
-> > [<c042eced>] __might_sleep+0xcc/0xd4
-> > [<c0464f57>] rt_spin_lock_fastlock.clone.1+0x26/0x5f
-> > [<c0792862>] rt_spin_lock+0x8/0xa
-> > [<c040dddc>] read_persistent_clock+0x11/0x30
-> > [<c045d1de>] timekeeping_suspend+0xe/0x4e
-> > [<c0640c9e>] sysdev_suspend+0x15c/0x356
-> > [<c0792906>] ? _mutex_unlock+0x8/0xa
-> > [<c046afc1>] suspend_devices_and_enter+0xea/0x17f
-> > [<c046b11e>] enter_state+0xc8/0x114
-> > [<c046a9cf>] state_store+0x93/0xa7
-> > [<c046a93c>] ? state_store+0x0/0xa7
-> > [<c05a6505>] kobj_attr_store+0x16/0x22
-> > [<c0515afa>] sysfs_write_file+0xbf/0xea
-> > [<c0515a3b>] ? sysfs_write_file+0x0/0xea
-> > [<c04d26ba>] vfs_write+0x80/0xdf
-> > [<c0465134>] ? rt_up_read+0x13/0x15
-> > [<c04d27ad>] sys_write+0x3b/0x5d
-> > [<c040895f>] sysenter_do_call+0x12/0x28
+On Thu, 2010-07-08 at 10:19 -0700, Fernando Lopez-Lezcano wrote:
+> We are having problems with 2.6.33.5+rt23, at least in our configuration
+> while accessing an nfs automounted directory. This causes a complete
+> machine lockup (press reset to exit as the only option). 
 > 
-> Huh. Looks like the lock protecting the RTC/CMOS might need to be
-> converted to a raw spinlock, since suspend/resume is probably done with
-> irqs off.
+> I simply use the Nautilus file manager (in Fedora 12) to navigate to an
+> autofs mounted directory and the process monitor goes to 100% on one
+> core (or maybe two), the mouse jerks a bit and the whole thing goes
+> catatonic almost immediately. 
 > 
-> A little baffled why the same kernel didn't see this with fc11.
+> I get this in any open terminal at the time of the crash:
+> 
+> --------
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:------------[ cut here ]------------
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:invalid opcode: 0000 [#1] PREEMPT SMP 
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:last sysfs
+> file: /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:Process nautilus (pid: 2874, ti=f0204000 task=f17dd1f0
+> task.ti=f0204000)
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:Stack:
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:Call Trace:
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:Code: 7b 08 00 89 45 b8 75 12 8d 43 04 89 43 04 89 43 08 8d 43
+> 0c 89 43 0c 89 43 10 8b 43 14 64 8b 15 2c d1 a5 c0 83 e0 fc 39 c2 75 04
+> <0f> 0b eb fe 8b 3a 81 ff 08 01 00 00 74 0a 83 ff 02 b8 04 00 00 
+> 
+> Message from syslogd@localhost at Jul  8 10:13:54 ...
+>  kernel:EIP: [<c0792c0f>] rt_spin_lock_slowlock+0x43/0x1bb SS:ESP
+> 0068:f0205cbc
+> --------
+> 
+> And that's it... nothing else in the logs. 
 
-Same here, maybe I did not notice before?
+Hrm. Not too much to go on there, but thanks for the report.
 
-> Does this reproduce easily?
 
-Happens every time I suspend/resume (I think). No apparent side
-effects. 
+> For now we are booting into the normal Fedora kernel (this is on Fedora
+> 12) as this makes the rt kernel not usable in our setup. 
+> 
+> Let me know if there is anything else I can do to help debug this...
 
--- Fernando
+Had you done any testing with earlier 2.6.33-rt kernels where this
+didn't occur? If so what version?
+
+thanks
+-john
 
 
