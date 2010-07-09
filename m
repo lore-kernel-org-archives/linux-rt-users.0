@@ -1,8 +1,8 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in
  wakeup_next_waiter()
-Date: Fri, 09 Jul 2010 10:13:50 +0200
-Message-ID: <1278663230.10134.15.camel@marge.simson.net>
+Date: Fri, 09 Jul 2010 15:58:20 +0200
+Message-ID: <1278683900.10161.8.camel@marge.simson.net>
 References: <1278478019.10245.77.camel@marge.simson.net>
 	 <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain>
 	 <4C368565.3020806@us.ibm.com>  <4C36CD83.6070809@us.ibm.com>
@@ -16,39 +16,50 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
 To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:36743 "HELO mail.gmx.net"
+Received: from mail.gmx.net ([213.165.64.20]:33816 "HELO mail.gmx.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1754512Ab0GIINn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Jul 2010 04:13:43 -0400
+	id S1753054Ab0GIN6M (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 Jul 2010 09:58:12 -0400
 In-Reply-To: <4C36CD83.6070809@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Fri, 2010-07-09 at 00:19 -0700, Darren Hart wrote:
 
-> I'll keep on looking, but I wanted to share what I've learned in case anyone
-> in another timezone is hoping to continue debugging should I fall asleep at
-> the helm ;-)
+> Walking through it:
+> 
+> First the dumps:
+> ------------[ cut here ]------------
+> WARNING: at kernel/rtmutex.c:583 wakeup_next_waiter+0x1ad/0x220()
+> 
+> 
+> WARN_ON(pendowner->pi_blocked_on != waiter);
+> The pi_blocked_on is not NULL, but it isn't the expected waiter either.
+> This means that the top waiter selected at the beginning of
+> wakeup_next_waiter() is now blocked on a lock with a different waiter
+> structure, possibly on a different lock.
 
-Still making smoke here, no heat or light tho..
+pendowner->pi_blocked_on changes while we're in wakeup_next_waiter().
+The below fi^Wmade it not do that any more.  We hold the wait_lock for
+this lock, but if the wakee blocks on another, what's protecting us?
 
-Q: why is it ok to call rt_mutex_proxy_unlock() without the wait_lock
-held?  Every other path leading to rt_mutex_set_owner() seems to hold
-the lock.  Locking it did diddly spit other than shut up my WARN_ON().
+bandaid-by: /me
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index a6cec32..f4b76d9 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -407,7 +407,9 @@ static void free_pi_state(struct futex_pi_state *pi_state)
- 		list_del_init(&pi_state->list);
- 		raw_spin_unlock_irq(&pi_state->owner->pi_lock);
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 23dd443..dd91ede 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -525,6 +525,8 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 	pendowner = waiter->task;
+ 	waiter->task = NULL;
  
-+		raw_spin_lock(&pi_state->pi_mutex.wait_lock);
- 		rt_mutex_proxy_unlock(&pi_state->pi_mutex, pi_state->owner);
-+		raw_spin_unlock(&pi_state->pi_mutex.wait_lock);
- 	}
++	raw_spin_lock(&pendowner->pi_lock);
++
+ 	/*
+ 	 * Do the wakeup before the ownership change to give any spinning
+ 	 * waiter grantees a headstart over the other threads that will
+@@ -577,8 +579,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 	else
+ 		next = NULL;
  
- 	if (current->pi_state_cache)
-
-
+-	raw_spin_lock(&pendowner->pi_lock);
