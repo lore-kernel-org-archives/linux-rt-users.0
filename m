@@ -1,11 +1,11 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in
  wakeup_next_waiter()
-Date: Fri, 09 Jul 2010 06:32:22 +0200
-Message-ID: <1278649942.7207.23.camel@marge.simson.net>
+Date: Fri, 09 Jul 2010 10:13:50 +0200
+Message-ID: <1278663230.10134.15.camel@marge.simson.net>
 References: <1278478019.10245.77.camel@marge.simson.net>
 	 <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain>
-	 <4C368565.3020806@us.ibm.com>
+	 <4C368565.3020806@us.ibm.com>  <4C36CD83.6070809@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -16,34 +16,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
 To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:49011 "HELO mail.gmx.net"
+Received: from mail.gmx.net ([213.165.64.20]:36743 "HELO mail.gmx.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1750793Ab0GIEcQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Jul 2010 00:32:16 -0400
-In-Reply-To: <4C368565.3020806@us.ibm.com>
+	id S1754512Ab0GIINn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 Jul 2010 04:13:43 -0400
+In-Reply-To: <4C36CD83.6070809@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2010-07-08 at 19:11 -0700, Darren Hart wrote:
+On Fri, 2010-07-09 at 00:19 -0700, Darren Hart wrote:
 
-> So the WARN_ON sequence is obviously wrong, if it's critical it should
-> be a BUG(), if not we shouldn't dereference what we know to be null. The
-> following patch avoids the NULL pointer dereference in the WARN_ON. With
-> this patch the NULL WARN_ON makes it to the console, and test runs to
-> completion with no obvious negative side effects. I'm only posting for
-> reference at this point, as while this may be necessary, it isn't the
-> right "solution".
+> I'll keep on looking, but I wanted to share what I've learned in case anyone
+> in another timezone is hoping to continue debugging should I fall asleep at
+> the helm ;-)
 
-I've been slogging through the locking under the assumption that
-pi_blocked_on->task pointing to a stranger is very bad juju, but you're
-right, the only obviously evil consequence I see is tripping over the
-fallout in WARN_ON().
+Still making smoke here, no heat or light tho..
 
-> Tonight/Tomorrow I'll review the rtmutex and futex code to try and fully
-> understand (again) the usage of pi_blocked_on and if we need to avoid
-> this scenario, or if we need to handle it "gracefully".
+Q: why is it ok to call rt_mutex_proxy_unlock() without the wait_lock
+held?  Every other path leading to rt_mutex_set_owner() seems to hold
+the lock.  Locking it did diddly spit other than shut up my WARN_ON().
 
-I hope you find it, I'm going blind crawling in endless circles :)
+diff --git a/kernel/futex.c b/kernel/futex.c
+index a6cec32..f4b76d9 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -407,7 +407,9 @@ static void free_pi_state(struct futex_pi_state *pi_state)
+ 		list_del_init(&pi_state->list);
+ 		raw_spin_unlock_irq(&pi_state->owner->pi_lock);
+ 
++		raw_spin_lock(&pi_state->pi_mutex.wait_lock);
+ 		rt_mutex_proxy_unlock(&pi_state->pi_mutex, pi_state->owner);
++		raw_spin_unlock(&pi_state->pi_mutex.wait_lock);
+ 	}
+ 
+ 	if (current->pi_state_cache)
 
-	-Mike
 
