@@ -1,11 +1,12 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Mike Galbraith <mgalbraith@suse.de>
 Subject: Re: 2.6.33.[56]-rt23: howto create repeatable explosion in
  wakeup_next_waiter()
-Date: Fri, 09 Jul 2010 15:58:20 +0200
-Message-ID: <1278683900.10161.8.camel@marge.simson.net>
+Date: Fri, 09 Jul 2010 16:51:24 +0200
+Message-ID: <1278687084.10336.5.camel@marge.simson.net>
 References: <1278478019.10245.77.camel@marge.simson.net>
 	 <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain>
 	 <4C368565.3020806@us.ibm.com>  <4C36CD83.6070809@us.ibm.com>
+	 <1278683900.10161.8.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -16,49 +17,44 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
 To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:33816 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1753054Ab0GIN6M (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Jul 2010 09:58:12 -0400
-In-Reply-To: <4C36CD83.6070809@us.ibm.com>
+Received: from cantor2.suse.de ([195.135.220.15]:40311 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756911Ab0GIOvU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 Jul 2010 10:51:20 -0400
+In-Reply-To: <1278683900.10161.8.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-07-09 at 00:19 -0700, Darren Hart wrote:
+This would likely be better if holding over wakeup is ok.
 
-> Walking through it:
-> 
-> First the dumps:
-> ------------[ cut here ]------------
-> WARNING: at kernel/rtmutex.c:583 wakeup_next_waiter+0x1ad/0x220()
-> 
-> 
-> WARN_ON(pendowner->pi_blocked_on != waiter);
-> The pi_blocked_on is not NULL, but it isn't the expected waiter either.
-> This means that the top waiter selected at the beginning of
-> wakeup_next_waiter() is now blocked on a lock with a different waiter
-> structure, possibly on a different lock.
-
-pendowner->pi_blocked_on changes while we're in wakeup_next_waiter().
-The below fi^Wmade it not do that any more.  We hold the wait_lock for
-this lock, but if the wakee blocks on another, what's protecting us?
-
-bandaid-by: /me
+pi-tests still work, as does everything else I've tried.  Doesn't _seem_
+like a bad idea to keep pending owner on a leash until we're done
+fiddling with him, but dunno, I've never needed to tinker here. 
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 23dd443..dd91ede 100644
+index 23dd443..051f386 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -525,6 +525,8 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+@@ -525,6 +525,9 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
  	pendowner = waiter->task;
  	waiter->task = NULL;
  
++	raw_spin_unlock(&current->pi_lock);
 +	raw_spin_lock(&pendowner->pi_lock);
 +
  	/*
  	 * Do the wakeup before the ownership change to give any spinning
  	 * waiter grantees a headstart over the other threads that will
-@@ -577,8 +579,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+@@ -562,8 +565,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+ 
+ 	rt_mutex_set_owner(lock, pendowner, RT_MUTEX_OWNER_PENDING);
+ 
+-	raw_spin_unlock(&current->pi_lock);
+-
+ 	/*
+ 	 * Clear the pi_blocked_on variable and enqueue a possible
+ 	 * waiter into the pi_waiters list of the pending owner. This
+@@ -577,8 +578,6 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
  	else
  		next = NULL;
  
