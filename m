@@ -1,7 +1,7 @@
 From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
-Date: Fri, 09 Jul 2010 16:13:44 -0700
-Message-ID: <1278717224.7122.85.camel@localhost.localdomain>
+Date: Fri, 09 Jul 2010 16:24:29 -0700
+Message-ID: <1278717869.7122.97.camel@localhost.localdomain>
 References: <1278609590.7527.11.camel@localhost.localdomain>
 	 <1278628386.3008.11.camel@localhost.localdomain>
 	 <1278629044.12059.6.camel@localhost.localdomain>
@@ -9,7 +9,8 @@ References: <1278609590.7527.11.camel@localhost.localdomain>
 	 <1278702134.5102.9.camel@localhost.localdomain>
 	 <1278705254.2349.14.camel@localhost.localdomain>
 	 <1278713600.7122.22.camel@localhost.localdomain>
-	 <1278716222.2349.20.camel@localhost.localdomain>
+	 <1278714680.2349.15.camel@localhost.localdomain>
+	 <1278716860.7122.72.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -20,57 +21,46 @@ Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
 	Nick Piggin <npiggin@suse.de>
 To: john stultz <johnstul@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:57962 "EHLO
+Received: from smtp4.Stanford.EDU ([171.67.219.84]:53029 "EHLO
 	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751452Ab0GIXOO (ORCPT
+	with ESMTP id S1755612Ab0GIXZA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Jul 2010 19:14:14 -0400
-In-Reply-To: <1278716222.2349.20.camel@localhost.localdomain>
+	Fri, 9 Jul 2010 19:25:00 -0400
+In-Reply-To: <1278716860.7122.72.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-07-09 at 15:57 -0700, john stultz wrote:
-> On Fri, 2010-07-09 at 15:13 -0700, Fernando Lopez-Lezcano wrote:
-> > On Fri, 2010-07-09 at 12:54 -0700, john stultz wrote:
-> > > On Fri, 2010-07-09 at 12:02 -0700, Fernando Lopez-Lezcano wrote:
-> > > > Ok, I got one! (had to go buy a null modem cable, I thought I had one
-> > > > but it has disappeared since the last time I did this :-)
-> > > 
-> > > Great! Sorry to make you go shopping! But this points out the problem
-> > > nicely.
-> > 
-> > No problem at all, I was sure I had one... anyway, I still need it :-<
-> > 
-> > > > Find it below... it keeps spewing stuff every once in a while. Hopefully
-> > > > this will be enough. No response from the network or the keyboard or
-> > > > mouse at this point, reset is the only way out. 
+On Fri, 2010-07-09 at 16:07 -0700, Fernando Lopez-Lezcano wrote:
+> 	On Fri, 2010-07-09 at 15:31 -0700, john stultz wrote:
+> > On Fri, 2010-07-09 at 15:13 -0700, Fernando Lopez-Lezcano wrote:
+> > > On Fri, 2010-07-09 at 12:54 -0700, john stultz wrote:
+> > > > On Fri, 2010-07-09 at 12:02 -0700, Fernando Lopez-Lezcano wrote:
+> > > > > Ok, I got one! (had to go buy a null modem cable, I thought I had one
+> > > > > but it has disappeared since the last time I did this :-)
 > > > > 
-> > > > I can retest if somebody comes up with a patch...
+> > > > Great! Sorry to make you go shopping! But this points out the problem
+> > > > nicely.
+> > > 
+> > > No problem at all, I was sure I had one... anyway, I still need it :-<
+> > > 
+> > > > > Find it below... it keeps spewing stuff every once in a while. Hopefully
+> > > > > this will be enough. No response from the network or the keyboard or
+> > > > > mouse at this point, reset is the only way out. 
+> > > > > 
+> > > > > I can retest if somebody comes up with a patch...
+> > > 
+> > > Sorry, it looks like the patch patched correctly and this is the new
+> > > kernel, but I still get a hang as before. 
 > > 
-> > Sorry, it looks like the patch patched correctly and this is the new
-> > kernel, but I still get a hang as before. 
+> > Huh. Exact same backtrace? Maybe there's more then one issue with that
+> > function...
 > 
-> So looking over it, I'm not easily seeing what else could be off.
-> 
-> So Lets see if we can cut some of the guess work out of this...
-> 
-> >  [<c04e08e9>] ? d_materialise_unique+0xbf/0x29e
-> 
-> I'm curious exactly where that is in d_materialise_unique. To find out,
-> can you find the vmlinux image in the base of the directory you built
-> the kernel you triggered this in?
-> 
-> Then run:
-> # gdb ./vmlinux
-> 
-> Once gdb loads:
-> (gdb) list *0xc04e08e9
-> 
-> That should point to exactly where in the function we are trying to
-> acquire a previously locked lock.
+> Hmmm, most likely I made some mistake - I'll double check and report
+> back. 
 
-I'll have to rebuild. I'm doing full rpm package builds or a build
-server and the original build tree is gone. 
+Argh, something's wrong with what I did, I'm looking at the source in
+the build server and it appears to not be patched (but I saw it being
+patched in the logs with no error? go figure...). 
 
 -- Fernando
 
