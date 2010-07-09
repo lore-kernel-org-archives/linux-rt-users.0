@@ -1,7 +1,7 @@
 From: Darren Hart <dvhltc@us.ibm.com>
-Subject: [PATCH 2/4] rtmutex: add BUG_ON if a task attempts to block on two locks
-Date: Fri,  9 Jul 2010 15:32:58 -0700
-Message-ID: <1278714780-788-3-git-send-email-dvhltc@us.ibm.com>
+Subject: [PATCH 1/4] rtmutex: avoid null derefence in WARN_ON
+Date: Fri,  9 Jul 2010 15:32:57 -0700
+Message-ID: <1278714780-788-2-git-send-email-dvhltc@us.ibm.com>
 References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -12,15 +12,19 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Mike Galbraith <efault@gmx.de>, linux-rt-users@vger.kernel.org,
 	Darren Hart <dvhltc@us.ibm.com>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e38.co.us.ibm.com ([32.97.110.159]:53879 "EHLO
+	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755297Ab0GIWd2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 Jul 2010 18:33:28 -0400
 In-Reply-To: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-rtmutex proxy locking complicates the logic a bit and opens up
-the possibility for a task to wake and attempt to take another
-sleeping lock without knowing it has been enqueued on another
-lock already. Add a BUG_ON to catch this scenario early.
+If the pi_blocked_on variable is NULL, the subsequent WARN_ON's
+will cause an OOPS. Only perform the susequent checks if
+pi_blocked_on is valid.
 
 Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
@@ -31,22 +35,27 @@ Cc: John Kacur <jkacur@redhat.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Mike Galbraith <efault@gmx.de>
 ---
- kernel/rtmutex.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ kernel/rtmutex.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index baac7d9..22f9d18 100644
+index 23dd443..baac7d9 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -459,6 +459,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 		top_waiter = rt_mutex_top_waiter(lock);
- 	plist_add(&waiter->list_entry, &lock->wait_list);
+@@ -579,9 +579,10 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
  
-+	/* Tasks can only block on one lock at a time. */
-+	BUG_ON(task->pi_blocked_on != NULL);
-+
- 	task->pi_blocked_on = waiter;
+ 	raw_spin_lock(&pendowner->pi_lock);
  
- 	raw_spin_unlock(&task->pi_lock);
+-	WARN_ON(!pendowner->pi_blocked_on);
+-	WARN_ON(pendowner->pi_blocked_on != waiter);
+-	WARN_ON(pendowner->pi_blocked_on->lock != lock);
++	if (!WARN_ON(!pendowner->pi_blocked_on)) {
++		WARN_ON(pendowner->pi_blocked_on != waiter);
++		WARN_ON(pendowner->pi_blocked_on->lock != lock);
++	}
+ 
+ 	pendowner->pi_blocked_on = NULL;
+ 
 -- 
 1.7.0.4
+
