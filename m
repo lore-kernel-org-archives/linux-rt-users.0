@@ -1,104 +1,102 @@
-From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [PATCH 2/4 V2] rtmutex: add BUG_ON if a task attempts to block
- on two locks
-Date: Sat, 10 Jul 2010 10:30:46 -0700
-Message-ID: <4C38AE46.2090803@us.ibm.com>
-References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com> <1278714780-788-3-git-send-email-dvhltc@us.ibm.com> <1278721825.1537.171.camel@gandalf.stny.rr.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH 4/4] futex: convert hash_bucket locks to raw_spinlock_t
+Date: Sat, 10 Jul 2010 21:41:22 +0200
+Message-ID: <1278790882.7352.101.camel@marge.simson.net>
+References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com>
+	 <1278714780-788-5-git-send-email-dvhltc@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@elte.hu>,
 	Eric Dumazet <eric.dumazet@gmail.com>,
-	John Kacur <jkacur@redhat.com>, Mike Galbraith <efault@gmx.de>,
+	John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:51774 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750736Ab0GJRav (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 10 Jul 2010 13:30:51 -0400
-In-Reply-To: <1278721825.1537.171.camel@gandalf.stny.rr.com>
+Received: from mail.gmx.net ([213.165.64.20]:34006 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1752087Ab0GJTl0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 10 Jul 2010 15:41:26 -0400
+In-Reply-To: <1278714780-788-5-git-send-email-dvhltc@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/09/2010 05:30 PM, Steven Rostedt wrote:
-> On Fri, 2010-07-09 at 15:32 -0700, Darren Hart wrote:
->> rtmutex proxy locking complicates the logic a bit and opens up
->> the possibility for a task to wake and attempt to take another
->> sleeping lock without knowing it has been enqueued on another
->> lock already. Add a BUG_ON to catch this scenario early.
->>
->> Signed-off-by: Darren Hart<dvhltc@us.ibm.com>
->> Cc: Thomas Gleixner<tglx@linutronix.de>
->> Cc: Peter Zijlstra<peterz@infradead.org>
->> Cc: Ingo Molnar<mingo@elte.hu>
->> Cc: Eric Dumazet<eric.dumazet@gmail.com>
->> Cc: John Kacur<jkacur@redhat.com>
->> Cc: Steven Rostedt<rostedt@goodmis.org>
->> Cc: Mike Galbraith<efault@gmx.de>
->> ---
->>   kernel/rtmutex.c |    3 +++
->>   1 files changed, 3 insertions(+), 0 deletions(-)
->>
->> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
->> index baac7d9..22f9d18 100644
->> --- a/kernel/rtmutex.c
->> +++ b/kernel/rtmutex.c
->> @@ -459,6 +459,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
->>   		top_waiter = rt_mutex_top_waiter(lock);
->>   	plist_add(&waiter->list_entry,&lock->wait_list);
->>
->> +	/* Tasks can only block on one lock at a time. */
->> +	BUG_ON(task->pi_blocked_on != NULL);
+On Fri, 2010-07-09 at 15:33 -0700, Darren Hart wrote:
+> The requeue_pi mechanism introduced proxy locking of the rtmutex.  This creates
+> a scenario where a task can wake-up, not knowing it has been enqueued on an
+> rtmutex. In order to detect this, the task would have to be able to take either
+> task->pi_blocked_on->lock->wait_lock and/or the hb->lock.  Unfortunately,
+> without already holding one of these, the pi_blocked_on variable can change
+> from NULL to valid or from valid to NULL. Therefor, the task cannot be allowed
+> to take a sleeping lock after wakeup or it could end up trying to block on two
+> locks, the second overwriting a valid pi_blocked_on value. This obviously
+> breaks the pi mechanism.
+
+copy/paste offline query/reply at Darren's request..
+
+On Sat, 2010-07-10 at 10:26 -0700, Darren Hart wrote:
+On 07/09/2010 09:32 PM, Mike Galbraith wrote:
+> > On Fri, 2010-07-09 at 13:05 -0700, Darren Hart wrote:
+> >
+> >> The core of the problem is that the proxy_lock blocks a task on a lock
+> >> the task knows nothing about. So when it wakes up inside of
+> >> futex_wait_requeue_pi, it immediately tries to block on hb->lock to
+> >> check why it woke up. This has the potential to block the task on two
+> >> locks (thus overwriting the pi_blocked_on). Any attempt preventing this
+> >> involves a lock, and ultimiately the hb->lock. The only solution I see
+> >> is to make the hb->locks raw locks (thanks to Steven Rostedt for
+> >> original idea and batting this around with me in IRC).
+> >
+> > Hm, so wakee _was_ munging his own state after all.
+> >
+> > Out of curiosity, what's wrong with holding his pi_lock across the
+> > wakeup?  He can _try_ to block, but can't until pi state is stable.
+> >
+> > I presume there's a big fat gotcha that's just not obvious to futex
+> > locking newbie :)
 > 
-> WARN_ON may be better. Since it may not cause a system crash or other
-> huge bug if it is not true.
+> It'll take me more time that I have right now to positive, but:
 > 
+> 
+> 	rt_mutex_set_owner(lock, pendowner, RT_MUTEX_OWNER_PENDING);
+> 
+> 	raw_spin_unlock(&current->pi_lock);
+> 
+> Your patch moved the unlock before the set_owner. I _believe_ this can 
+> break the pi boosting logic - current is the owner until it calls 
+> set_owner to be pendowner. I haven't traced this entire path yet, but 
+> that's my gut feel.
 
-No objection.
-
-
->From 31c7b6c5657bcc897ddc79d7f9bb1942eb4c854a Mon Sep 17 00:00:00 2001
-From: Darren Hart <dvhltc@us.ibm.com>
-Date: Fri, 9 Jul 2010 17:46:05 -0400
-Subject: [PATCH 2/4] rtmutex: add WARN_ON if a task attempts to block on two locks
-
-rtmutex proxy locking complicates the logic a bit and opens up
-the possibility for a task to wake and attempt to take another
-sleeping lock without knowing it has been enqueued on another
-lock already. Add a WARN_ON to catch this scenario early.
-
-V2: use a WARN_ON instead of a BUG_ON per Steven's request.
-
-Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Mike Galbraith <efault@gmx.de>
----
- kernel/rtmutex.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index baac7d9..5262d0f 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -459,6 +459,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 		top_waiter = rt_mutex_top_waiter(lock);
- 	plist_add(&waiter->list_entry, &lock->wait_list);
+I _think_ it should be fine to do that.  Setting an owner seems to only
+require holding the wait_lock.  I could easily be missing subtleties
+though.  Looking around, I didn't see any reason not to unlock the
+owner's pi_lock after twiddling pi_waiters (and still don't, but...).
  
-+	/* Tasks can only block on one lock at a time. */
-+	WARN_ON(task->pi_blocked_on != NULL);
-+
- 	task->pi_blocked_on = waiter;
- 
- 	raw_spin_unlock(&task->pi_lock);
--- 
-1.7.0.4
+> However, you're idea has merit as we have to take our ->pi_lock before 
+> we can block on the hb->lock (inside task_blocks_on_rt_mutex()).
+> 
+> If we can't move the unlock above before set_owner, then we may need a:
+> 
+> retry:
+> cur->lock()
+> top_waiter = get_top_waiter()
+> cur->unlock()
+> 
+> double_lock(cur, topwaiter)
+> if top_waiter != get_top_waiter()
+> 	double_unlock(cur, topwaiter)
+> 	goto retry
+> 
+> Not ideal, but I think I prefer that to making all the hb locks raw.
+> 
+> You dropped the CC list for some reason, probably a good idea to send 
+> this back out in response to my raw lock patch (4/4) - your question and 
+> my reply. This is crazy stuff, no harm in putting the question out there.
+> 
+> I'll take a closer look at this when I can, if not tonight, Monday morning.
+
+	-Mike
 
