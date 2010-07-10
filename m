@@ -1,10 +1,11 @@
 From: Darren Hart <dvhltc@us.ibm.com>
-Subject: Re: [PATCH 1/4] rtmutex: avoid null derefence in WARN_ON
-Date: Sat, 10 Jul 2010 07:42:45 -0700
-Message-ID: <4C3886E5.8060506@us.ibm.com>
-References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com> <1278714780-788-2-git-send-email-dvhltc@us.ibm.com> <1278721788.1537.170.camel@gandalf.stny.rr.com>
+Subject: Re: [PATCH 2/4 V2] rtmutex: add BUG_ON if a task attempts to block
+ on two locks
+Date: Sat, 10 Jul 2010 10:30:46 -0700
+Message-ID: <4C38AE46.2090803@us.ibm.com>
+References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com> <1278714780-788-3-git-send-email-dvhltc@us.ibm.com> <1278721825.1537.171.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Type: text/plain; charset=ISO-8859-15
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -14,20 +15,21 @@ Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e38.co.us.ibm.com ([32.97.110.159]:46927 "EHLO
-	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753333Ab0GJOmu (ORCPT
+Received: from e31.co.us.ibm.com ([32.97.110.149]:51774 "EHLO
+	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750736Ab0GJRav (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 10 Jul 2010 10:42:50 -0400
-In-Reply-To: <1278721788.1537.170.camel@gandalf.stny.rr.com>
+	Sat, 10 Jul 2010 13:30:51 -0400
+In-Reply-To: <1278721825.1537.171.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/09/2010 05:29 PM, Steven Rostedt wrote:
+On 07/09/2010 05:30 PM, Steven Rostedt wrote:
 > On Fri, 2010-07-09 at 15:32 -0700, Darren Hart wrote:
->> If the pi_blocked_on variable is NULL, the subsequent WARN_ON's
->> will cause an OOPS. Only perform the susequent checks if
->> pi_blocked_on is valid.
+>> rtmutex proxy locking complicates the logic a bit and opens up
+>> the possibility for a task to wake and attempt to take another
+>> sleeping lock without knowing it has been enqueued on another
+>> lock already. Add a BUG_ON to catch this scenario early.
 >>
 >> Signed-off-by: Darren Hart<dvhltc@us.ibm.com>
 >> Cc: Thomas Gleixner<tglx@linutronix.de>
@@ -38,46 +40,65 @@ On 07/09/2010 05:29 PM, Steven Rostedt wrote:
 >> Cc: Steven Rostedt<rostedt@goodmis.org>
 >> Cc: Mike Galbraith<efault@gmx.de>
 >> ---
->>   kernel/rtmutex.c |    7 ++++---
->>   1 files changed, 4 insertions(+), 3 deletions(-)
+>>   kernel/rtmutex.c |    3 +++
+>>   1 files changed, 3 insertions(+), 0 deletions(-)
 >>
 >> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
->> index 23dd443..baac7d9 100644
+>> index baac7d9..22f9d18 100644
 >> --- a/kernel/rtmutex.c
 >> +++ b/kernel/rtmutex.c
->> @@ -579,9 +579,10 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+>> @@ -459,6 +459,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+>>   		top_waiter = rt_mutex_top_waiter(lock);
+>>   	plist_add(&waiter->list_entry,&lock->wait_list);
 >>
->>   	raw_spin_lock(&pendowner->pi_lock);
->>
->> -	WARN_ON(!pendowner->pi_blocked_on);
->> -	WARN_ON(pendowner->pi_blocked_on != waiter);
->> -	WARN_ON(pendowner->pi_blocked_on->lock != lock);
->> +	if (!WARN_ON(!pendowner->pi_blocked_on)) {
->> +		WARN_ON(pendowner->pi_blocked_on != waiter);
->
-> The above actually has no issue if the pi_blocked_on is NULL.
+>> +	/* Tasks can only block on one lock at a time. */
+>> +	BUG_ON(task->pi_blocked_on != NULL);
+> 
+> WARN_ON may be better. Since it may not cause a system crash or other
+> huge bug if it is not true.
+> 
 
-It doesn't, but it's also redundant and makes the console noisier for no 
-reason. Seemed worth while to drop it under the if in the same go.
-
---
-Darren
+No objection.
 
 
-> The below, well yeah.
->
-> -- Steve
->
->> +		WARN_ON(pendowner->pi_blocked_on->lock != lock);
->> +	}
->>
->>   	pendowner->pi_blocked_on = NULL;
->>
->
->
+>From 31c7b6c5657bcc897ddc79d7f9bb1942eb4c854a Mon Sep 17 00:00:00 2001
+From: Darren Hart <dvhltc@us.ibm.com>
+Date: Fri, 9 Jul 2010 17:46:05 -0400
+Subject: [PATCH 2/4] rtmutex: add WARN_ON if a task attempts to block on two locks
 
+rtmutex proxy locking complicates the logic a bit and opens up
+the possibility for a task to wake and attempt to take another
+sleeping lock without knowing it has been enqueued on another
+lock already. Add a WARN_ON to catch this scenario early.
 
+V2: use a WARN_ON instead of a BUG_ON per Steven's request.
+
+Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@elte.hu>
+Cc: Eric Dumazet <eric.dumazet@gmail.com>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Mike Galbraith <efault@gmx.de>
+---
+ kernel/rtmutex.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index baac7d9..5262d0f 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -459,6 +459,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 		top_waiter = rt_mutex_top_waiter(lock);
+ 	plist_add(&waiter->list_entry, &lock->wait_list);
+ 
++	/* Tasks can only block on one lock at a time. */
++	WARN_ON(task->pi_blocked_on != NULL);
++
+ 	task->pi_blocked_on = waiter;
+ 
+ 	raw_spin_unlock(&task->pi_lock);
 -- 
-Darren Hart
-IBM Linux Technology Center
-Real-Time Linux Team
+1.7.0.4
+
