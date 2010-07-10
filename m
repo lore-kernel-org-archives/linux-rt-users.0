@@ -1,67 +1,71 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
-Date: Fri, 09 Jul 2010 16:24:29 -0700
-Message-ID: <1278717869.7122.97.camel@localhost.localdomain>
-References: <1278609590.7527.11.camel@localhost.localdomain>
-	 <1278628386.3008.11.camel@localhost.localdomain>
-	 <1278629044.12059.6.camel@localhost.localdomain>
-	 <1278630050.3008.18.camel@localhost.localdomain>
-	 <1278702134.5102.9.camel@localhost.localdomain>
-	 <1278705254.2349.14.camel@localhost.localdomain>
-	 <1278713600.7122.22.camel@localhost.localdomain>
-	 <1278714680.2349.15.camel@localhost.localdomain>
-	 <1278716860.7122.72.camel@localhost.localdomain>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 1/4] rtmutex: avoid null derefence in WARN_ON
+Date: Fri, 09 Jul 2010 20:29:48 -0400
+Message-ID: <1278721788.1537.170.camel@gandalf.stny.rr.com>
+References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com>
+	 <1278714780-788-2-git-send-email-dvhltc@us.ibm.com>
+Reply-To: rostedt@goodmis.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Nick Piggin <npiggin@suse.de>
-To: john stultz <johnstul@us.ibm.com>
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	John Kacur <jkacur@redhat.com>, Mike Galbraith <efault@gmx.de>,
+	linux-rt-users@vger.kernel.org
+To: Darren Hart <dvhltc@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:53029 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755612Ab0GIXZA (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:37289 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752439Ab0GJA3u (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Jul 2010 19:25:00 -0400
-In-Reply-To: <1278716860.7122.72.camel@localhost.localdomain>
+	Fri, 9 Jul 2010 20:29:50 -0400
+In-Reply-To: <1278714780-788-2-git-send-email-dvhltc@us.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-07-09 at 16:07 -0700, Fernando Lopez-Lezcano wrote:
-> 	On Fri, 2010-07-09 at 15:31 -0700, john stultz wrote:
-> > On Fri, 2010-07-09 at 15:13 -0700, Fernando Lopez-Lezcano wrote:
-> > > On Fri, 2010-07-09 at 12:54 -0700, john stultz wrote:
-> > > > On Fri, 2010-07-09 at 12:02 -0700, Fernando Lopez-Lezcano wrote:
-> > > > > Ok, I got one! (had to go buy a null modem cable, I thought I had one
-> > > > > but it has disappeared since the last time I did this :-)
-> > > > 
-> > > > Great! Sorry to make you go shopping! But this points out the problem
-> > > > nicely.
-> > > 
-> > > No problem at all, I was sure I had one... anyway, I still need it :-<
-> > > 
-> > > > > Find it below... it keeps spewing stuff every once in a while. Hopefully
-> > > > > this will be enough. No response from the network or the keyboard or
-> > > > > mouse at this point, reset is the only way out. 
-> > > > > 
-> > > > > I can retest if somebody comes up with a patch...
-> > > 
-> > > Sorry, it looks like the patch patched correctly and this is the new
-> > > kernel, but I still get a hang as before. 
-> > 
-> > Huh. Exact same backtrace? Maybe there's more then one issue with that
-> > function...
+On Fri, 2010-07-09 at 15:32 -0700, Darren Hart wrote:
+> If the pi_blocked_on variable is NULL, the subsequent WARN_ON's
+> will cause an OOPS. Only perform the susequent checks if
+> pi_blocked_on is valid.
 > 
-> Hmmm, most likely I made some mistake - I'll double check and report
-> back. 
+> Signed-off-by: Darren Hart <dvhltc@us.ibm.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Ingo Molnar <mingo@elte.hu>
+> Cc: Eric Dumazet <eric.dumazet@gmail.com>
+> Cc: John Kacur <jkacur@redhat.com>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Mike Galbraith <efault@gmx.de>
+> ---
+>  kernel/rtmutex.c |    7 ++++---
+>  1 files changed, 4 insertions(+), 3 deletions(-)
+> 
+> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+> index 23dd443..baac7d9 100644
+> --- a/kernel/rtmutex.c
+> +++ b/kernel/rtmutex.c
+> @@ -579,9 +579,10 @@ static void wakeup_next_waiter(struct rt_mutex *lock, int savestate)
+>  
+>  	raw_spin_lock(&pendowner->pi_lock);
+>  
+> -	WARN_ON(!pendowner->pi_blocked_on);
+> -	WARN_ON(pendowner->pi_blocked_on != waiter);
+> -	WARN_ON(pendowner->pi_blocked_on->lock != lock);
+> +	if (!WARN_ON(!pendowner->pi_blocked_on)) {
+> +		WARN_ON(pendowner->pi_blocked_on != waiter);
 
-Argh, something's wrong with what I did, I'm looking at the source in
-the build server and it appears to not be patched (but I saw it being
-patched in the logs with no error? go figure...). 
+The above actually has no issue if the pi_blocked_on is NULL.
 
--- Fernando
+The below, well yeah.
+
+-- Steve
+
+> +		WARN_ON(pendowner->pi_blocked_on->lock != lock);
+> +	}
+>  
+>  	pendowner->pi_blocked_on = NULL;
+>  
 
 
