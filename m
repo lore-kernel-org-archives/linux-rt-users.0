@@ -1,102 +1,104 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH 4/4] futex: convert hash_bucket locks to raw_spinlock_t
-Date: Sat, 10 Jul 2010 21:41:22 +0200
-Message-ID: <1278790882.7352.101.camel@marge.simson.net>
-References: <1278714780-788-1-git-send-email-dvhltc@us.ibm.com>
-	 <1278714780-788-5-git-send-email-dvhltc@us.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	John Kacur <jkacur@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: Darren Hart <dvhltc@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.gmx.net ([213.165.64.20]:34006 "HELO mail.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1752087Ab0GJTl0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 10 Jul 2010 15:41:26 -0400
-In-Reply-To: <1278714780-788-5-git-send-email-dvhltc@us.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Milton Miller <miltonm@bga.com>
+Subject: Re: [RT,RFC] Hacks allowing -rt to run on POWER7 / Powerpc.
+Date: Sun, 11 Jul 2010 02:49:54 -0500
+Message-ID: <1278834594_17749@mail4.comsite.net>
+References: <1278701701.24737.19.camel@lexx>
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+	linuxppc-dev <linuxppc-dev@ozlabs.org>,
+	Darren Hart <dvhltc@us.ibm.com>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Will Schmidt <will_schmidt@vnet.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1278701701.24737.19.camel@lexx>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2010-07-09 at 15:33 -0700, Darren Hart wrote:
-> The requeue_pi mechanism introduced proxy locking of the rtmutex.  This creates
-> a scenario where a task can wake-up, not knowing it has been enqueued on an
-> rtmutex. In order to detect this, the task would have to be able to take either
-> task->pi_blocked_on->lock->wait_lock and/or the hb->lock.  Unfortunately,
-> without already holding one of these, the pi_blocked_on variable can change
-> from NULL to valid or from valid to NULL. Therefor, the task cannot be allowed
-> to take a sleeping lock after wakeup or it could end up trying to block on two
-> locks, the second overwriting a valid pi_blocked_on value. This obviously
-> breaks the pi mechanism.
 
-copy/paste offline query/reply at Darren's request..
+On Fri, 09 Jul 2010 about 08:55:01 -0000, Will Schmidt wrote:
+> We've been seeing some issues with userspace randomly SIGSEGV'ing while
+> running the -RT kernels on POWER7 based systems.   After lots of
+> debugging, head scratching, and experimental changes to the code, the
+> problem has been narrowed down such that we can avoid the problems by
+> disabling the TLB batching.
+> 
+> After some input from Ben and further debug, we've found that the
+> restoration of the batch->active value near the end of __switch_to()
+> seems to be the key.    ( The -RT related  changes within
+> arch/powerpc/kernel/processor.c __switch_to()  do the equivalent of a
+> arch_leave_lazy_mmu_mode() before calling _switch, use a hadbatch flag
+> to indicate if batching was active, and then restore that batch->active
+> value on the way out after the call to _switch_to.    That particular
+> code is in the -RT branch, and not found in mainline  )
+> 
+> Deferring to Ben (or others in the know) for whether this is the proper
+> solution or if there is something deeper, but.. 
 
-On Sat, 2010-07-10 at 10:26 -0700, Darren Hart wrote:
-On 07/09/2010 09:32 PM, Mike Galbraith wrote:
-> > On Fri, 2010-07-09 at 13:05 -0700, Darren Hart wrote:
-> >
-> >> The core of the problem is that the proxy_lock blocks a task on a lock
-> >> the task knows nothing about. So when it wakes up inside of
-> >> futex_wait_requeue_pi, it immediately tries to block on hb->lock to
-> >> check why it woke up. This has the potential to block the task on two
-> >> locks (thus overwriting the pi_blocked_on). Any attempt preventing this
-> >> involves a lock, and ultimiately the hb->lock. The only solution I see
-> >> is to make the hb->locks raw locks (thanks to Steven Rostedt for
-> >> original idea and batting this around with me in IRC).
-> >
-> > Hm, so wakee _was_ munging his own state after all.
-> >
-> > Out of curiosity, what's wrong with holding his pi_lock across the
-> > wakeup?  He can _try_ to block, but can't until pi state is stable.
-> >
-> > I presume there's a big fat gotcha that's just not obvious to futex
-> > locking newbie :)
-> 
-> It'll take me more time that I have right now to positive, but:
-> 
-> 
-> 	rt_mutex_set_owner(lock, pendowner, RT_MUTEX_OWNER_PENDING);
-> 
-> 	raw_spin_unlock(&current->pi_lock);
-> 
-> Your patch moved the unlock before the set_owner. I _believe_ this can 
-> break the pi boosting logic - current is the owner until it calls 
-> set_owner to be pendowner. I haven't traced this entire path yet, but 
-> that's my gut feel.
 
-I _think_ it should be fine to do that.  Setting an owner seems to only
-require holding the wait_lock.  I could easily be missing subtleties
-though.  Looking around, I didn't see any reason not to unlock the
-owner's pi_lock after twiddling pi_waiters (and still don't, but...).
- 
-> However, you're idea has merit as we have to take our ->pi_lock before 
-> we can block on the hb->lock (inside task_blocks_on_rt_mutex()).
-> 
-> If we can't move the unlock above before set_owner, then we may need a:
-> 
-> retry:
-> cur->lock()
-> top_waiter = get_top_waiter()
-> cur->unlock()
-> 
-> double_lock(cur, topwaiter)
-> if top_waiter != get_top_waiter()
-> 	double_unlock(cur, topwaiter)
-> 	goto retry
-> 
-> Not ideal, but I think I prefer that to making all the hb locks raw.
-> 
-> You dropped the CC list for some reason, probably a good idea to send 
-> this back out in response to my raw lock patch (4/4) - your question and 
-> my reply. This is crazy stuff, no harm in putting the question out there.
-> 
-> I'll take a closer look at this when I can, if not tonight, Monday morning.
+I looked at the patch and noticed 2 changes:
+	1) the batch is checked and cleared after local_irq_save
+	2) enabling the batch is skipped
 
-	-Mike
+I talked to Will and had him try moving the local_irq_save above the
+check for the active batch.  That alone did not seem to be enough.
+However, he confirmed that we are setting batch to active when it is
+already active in lazy_mmu_enter, meaning that batching is being turned
+on recursively.  I suggested debug to check that irqs are off after the
+restore when re-enabling when our debug session timed out.
 
+milton
+
+> 
+> diff -aurp linux-2.6.33.5-rt23.orig/arch/powerpc/kernel/process.c linux-2.6.33.5-rt23.exp/arch/powerpc/kernel/process.c
+> --- linux-2.6.33.5-rt23.orig/arch/powerpc/kernel/process.c	2010-06-21 11:41:34.402513904 -0500
+> +++ linux-2.6.33.5-rt23.exp/arch/powerpc/kernel/process.c	2010-07-09 13:15:13.533269904 -0500
+> @@ -304,10 +304,6 @@ struct task_struct *__switch_to(struct t
+>  	struct thread_struct *new_thread, *old_thread;
+>  	unsigned long flags;
+>  	struct task_struct *last;
+> -#if defined(CONFIG_PPC64) && defined (CONFIG_PREEMPT_RT)
+> -	struct ppc64_tlb_batch *batch;
+> -	int hadbatch;
+> -#endif
+>  
+>  #ifdef CONFIG_SMP
+>  	/* avoid complexity of lazy save/restore of fpu
+> @@ -401,16 +397,6 @@ struct task_struct *__switch_to(struct t
+>  		new_thread->start_tb = current_tb;
+>  	}
+>  
+> -#ifdef CONFIG_PREEMPT_RT
+> -	batch = &__get_cpu_var(ppc64_tlb_batch);
+> -	if (batch->active) {
+> -		hadbatch = 1;
+> -		if (batch->index) {
+> -			__flush_tlb_pending(batch);
+> -		}
+> -		batch->active = 0;
+> -	}
+> -#endif /* #ifdef CONFIG_PREEMPT_RT */
+>  #endif
+>  
+>  	local_irq_save(flags);
+> @@ -425,16 +411,13 @@ struct task_struct *__switch_to(struct t
+>  	 * of sync. Hard disable here.
+>  	 */
+>  	hard_irq_disable();
+> -	last = _switch(old_thread, new_thread);
+> -
+> -	local_irq_restore(flags);
+>  
+>  #if defined(CONFIG_PPC64) && defined(CONFIG_PREEMPT_RT)
+> -	if (hadbatch) {
+> -		batch = &__get_cpu_var(ppc64_tlb_batch);
+> -		batch->active = 1;
+> -	}
+> +	arch_leave_lazy_mmu_mode();
+>  #endif
+> +	last = _switch(old_thread, new_thread);
+> +
+> +	local_irq_restore(flags);
+>  
+>  	return last;
+>  }
