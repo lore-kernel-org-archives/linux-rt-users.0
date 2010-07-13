@@ -1,117 +1,90 @@
-From: =?utf-8?q?Philipp_=C3=9Cberbacher?= <hollunder@lavabit.com>
-Subject: Re: [ANNOUNCE] 2.6.33.6-rt26
-Date: Tue, 13 Jul 2010 20:04:29 +0200
-Message-ID: <1279042118-sup-7239@eris>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain> <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain> <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain> <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+From: Darren Hart <dvhltc@us.ibm.com>
+Subject: Re: [PATCH][RT] futex: protect against pi_blocked_on corruption during
+ requeue PI -V2
+Date: Tue, 13 Jul 2010 11:59:49 -0700
+Message-ID: <4C3CB7A5.7010406@us.ibm.com>
+References: <1278478019.10245.77.camel@marge.simson.net> <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain> <4C3C1DCF.9090509@us.ibm.com> <alpine.LFD.2.00.1007131041230.3321@localhost.localdomain> <alpine.LFD.2.00.1007131222430.3321@localhost.localdomain> <alpine.LFD.2.00.1007131348180.3321@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: "lkml, " <linux-kernel@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Mike Galbraith <efault@gmx.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from karen.lavabit.com ([72.249.41.33]:35604 "EHLO karen.lavabit.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752001Ab0GMSEh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Jul 2010 14:04:37 -0400
-Received: from b.earth.lavabit.com (b.earth.lavabit.com [192.168.111.11])
-	by karen.lavabit.com (Postfix) with ESMTP id 03C8C11B8F2
-	for <linux-rt-users@vger.kernel.org>; Tue, 13 Jul 2010 13:04:37 -0500 (CDT)
-Received: from localhost (eris.mozart.uni-klu.ac.at [143.205.216.185])
-	by lavabit.com with ESMTP id GE3D8FFTHGMR
-	for <linux-rt-users@vger.kernel.org>; Tue, 13 Jul 2010 13:04:33 -0500
-In-reply-to: <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+Received: from e38.co.us.ibm.com ([32.97.110.159]:34624 "EHLO
+	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751542Ab0GMTAN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Jul 2010 15:00:13 -0400
+In-Reply-To: <alpine.LFD.2.00.1007131348180.3321@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Excerpts from Thomas Gleixner's message of 2010-07-13 17:54:35 +0200:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
-> =20
-> Changes from 2.6.33.5-rt23 to 2.6.33.5-rt24:
->=20
->   42edbcb: gianfar: Fix TX ring processing on SMP machines
->   faf3581: timer_stats: Convert table_lock to raw_spin_lock
->   654e404: hvc_console: Fix race between hvc_close and hvc_remove
->   09fd768: hvc_console: Fix race between hvc_close and hvc_remove
->   ea2d2a0: perf: Fix errors path in perf_output_begin()
->   60bd946: KEYS: find_keyring_by_name() can gain access to a freed ke=
-yring
->   b5ac516: tracing: Update the comm field in the right variable in up=
-date_max_tr
->   77cb7c1: lockdep: Reduce stack_trace usage
->   cee9ee0: powerpc: Disable sparse irq for RT
->   c7dec16: powerpc: Enable interrupts in do_signal()
->=20
-> Changes from 2.6.33.5-rt24 to 2.6.33.5-rt25:
->=20
->   ec646ea: vfs: Revert the scalability patches
->=20
-> Changes from 2.6.33.5-rt26 to 2.6.33.6-rt26:
->=20
->   7e1af11: Merge git://git.kernel.org/pub/scm/linux/kernel/git/stable=
-/linux-2.6.33.y
->=20
-> Bulk of changes comes from the stable tree and from the big revert of
-> the VFS scalability patches. They looked promising, but the nasty
-> details bit us hard. We'll revisit them later.
->=20
-> There are some pending issues:
->       - rtc_lock suspend/resume (working on a patch)
->       - futex requeue_pi (patch available, needs testing/confirmation=
-)
->       - powerpc64 oddities (patch available, needs rework)
->=20
-> Download locations:
->   =20
->    http://www.kernel.org/pub/linux/kernel/projects/rt/
->=20
-> Git release branch:
->    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.gi=
-t rt/2.6.33
->=20
-> Gitweb:
->    http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git;=
-a=3Dshortlog;h=3Drt/2.6.33
->=20
-> Information on the RT patch can be found at:
->=20
->    http://rt.wiki.kernel.org/index.php/Main_Page
->=20
-> To build the 2.6.33.6-rt26 tree, the following patches should be
-> applied:
->=20
->    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.6.tar.bz2
->    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.6-=
-rt26.bz2
->=20
-> Enjoy !
->=20
->       tglx
+On 07/13/2010 04:52 AM, Thomas Gleixner wrote:
+> On Tue, 13 Jul 2010, Thomas Gleixner wrote:
+>>
+>> This code causes braindamage. I really wonder whether we need to
+>> remove it according to the "United Nations Convention against Torture
+>> and Other Cruel, Inhuman or Degrading Treatment or Punishment".
+>>
+>
+> Ok, finally managed to twist my brain around it. Mike, can you give it
+> a test ride ?
 
-Thanks Thomas,
-but I have a problem applying the patch.
-I get lots of ignored hunks and it ends and fails with:
+Since Mike is out I built this version and ran it a few times. I saw a 
+100% reproduction rate previously. I haven't seen any errors in a 
+handful of runs (~10) with this patch.
 
-2 out of 2 hunks ignored -- saving rejects to file sound/soc/codecs/wm8=
-990.c.rej
-patching file virt/kvm/kvm_main.c
+I do still see the hrtimer latency message on the first run, so this is 
+likely unrelated to the issue we're addressing:
 
-I tried to build with my usual script, which just does:
-patch -Np1 -i ../patch-2.6.33.6-rt26
+Jul 13 14:47:59 elm9m94 kernel: hrtimer: interrupt took 123924 ns
 
-Before that it applies the .6 patch, with the same command, without any=
- hickup.
-I don't know whether something is wrong with the patch or whether I did
-something wrong.
---=20
-Regards,
-Philipp
+As for Thomas's changes, only a couple nitpics below:
 
---
-"Wir stehen selbst entt=C3=A4uscht und sehn betroffen / Den Vorhang zu =
-und alle Fragen offen." Bertolt Brecht, Der gute Mensch von Sezuan
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> @@ -2255,18 +2265,51 @@ static int futex_wait_requeue_pi(u32 __u
+>   	/* Queue the futex_q, drop the hb lock, wait for wakeup. */
+>   	futex_wait_queue_me(hb,&q, to);
+>
+> -	spin_lock(&hb->lock);
+> -	ret = handle_early_requeue_pi_wakeup(hb,&q,&key2, to);
+> -	spin_unlock(&hb->lock);
+> -	if (ret)
+> -		goto out_put_keys;
+> +	/*
+> +	 * Avoid races with requeue and trying to block on two mutexes
+> +	 * (hb->lock and uaddr2's rtmutex) by serializing access to
+> +	 * pi_blocked_on with pi_lock.
+> +	 */
+> +	raw_spin_lock_irq(&current->pi_lock);
+> +	if (current->pi_blocked_on) {
+> +		/* Requeue happened already */
+
+This comment isn't quite accurate. The requeue may be in progress, which 
+means the q.lock_ptr is not trustworthy as noted below. Consider:
+
+		/*
+		 * We have been requeued, or are in the process
+		 * of being requeued.
+		 */
+
+> +		raw_spin_unlock_irq(&current->pi_lock);
+> +	} else {
+> +		/*
+> +		 * Setting pi_blocked_on to PI_WAKEUP_INPROGRESS
+> +		 * prevents a concurrent requeue from enqueuein us on
+
+s/enqueuein/enqueueing/  not that my dictionary thinks either one of 
+them are words ;-)
+
+-- 
+Darren Hart
+IBM Linux Technology Center
+Real-Time Linux Team
