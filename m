@@ -1,100 +1,117 @@
-From: Dhaval Giani <dhaval.giani@gmail.com>
+From: =?utf-8?q?Philipp_=C3=9Cberbacher?= <hollunder@lavabit.com>
 Subject: Re: [ANNOUNCE] 2.6.33.6-rt26
-Date: Tue, 13 Jul 2010 18:52:18 +0200
-Message-ID: <AANLkTin5dJXFZyfKxuM6p2aR30U1P5m0v2mDHGwygOR8@mail.gmail.com>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
-	<alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
-	<alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
-	<alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
-	<alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
-	<alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
-	<alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
-	<alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
-	<alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
-	<alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+Date: Tue, 13 Jul 2010 20:04:29 +0200
+Message-ID: <1279042118-sup-7239@eris>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain> <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain> <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain> <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Stultz <johnstul@us.ibm.com>,
-	Nick Piggin <npiggin@suse.de>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ww0-f44.google.com ([74.125.82.44]:34622 "EHLO
-	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752350Ab0GMQwY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Jul 2010 12:52:24 -0400
-In-Reply-To: <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+Received: from karen.lavabit.com ([72.249.41.33]:35604 "EHLO karen.lavabit.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752001Ab0GMSEh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Jul 2010 14:04:37 -0400
+Received: from b.earth.lavabit.com (b.earth.lavabit.com [192.168.111.11])
+	by karen.lavabit.com (Postfix) with ESMTP id 03C8C11B8F2
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Jul 2010 13:04:37 -0500 (CDT)
+Received: from localhost (eris.mozart.uni-klu.ac.at [143.205.216.185])
+	by lavabit.com with ESMTP id GE3D8FFTHGMR
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Jul 2010 13:04:33 -0500
+In-reply-to: <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-
+Excerpts from Thomas Gleixner's message of 2010-07-13 17:54:35 +0200:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+> =20
+> Changes from 2.6.33.5-rt23 to 2.6.33.5-rt24:
+>=20
+>   42edbcb: gianfar: Fix TX ring processing on SMP machines
+>   faf3581: timer_stats: Convert table_lock to raw_spin_lock
+>   654e404: hvc_console: Fix race between hvc_close and hvc_remove
+>   09fd768: hvc_console: Fix race between hvc_close and hvc_remove
+>   ea2d2a0: perf: Fix errors path in perf_output_begin()
+>   60bd946: KEYS: find_keyring_by_name() can gain access to a freed ke=
+yring
+>   b5ac516: tracing: Update the comm field in the right variable in up=
+date_max_tr
+>   77cb7c1: lockdep: Reduce stack_trace usage
+>   cee9ee0: powerpc: Disable sparse irq for RT
+>   c7dec16: powerpc: Enable interrupts in do_signal()
+>=20
+> Changes from 2.6.33.5-rt24 to 2.6.33.5-rt25:
+>=20
+>   ec646ea: vfs: Revert the scalability patches
+>=20
+> Changes from 2.6.33.5-rt26 to 2.6.33.6-rt26:
+>=20
+>   7e1af11: Merge git://git.kernel.org/pub/scm/linux/kernel/git/stable=
+/linux-2.6.33.y
+>=20
+> Bulk of changes comes from the stable tree and from the big revert of
+> the VFS scalability patches. They looked promising, but the nasty
+> details bit us hard. We'll revisit them later.
+>=20
+> There are some pending issues:
+>       - rtc_lock suspend/resume (working on a patch)
+>       - futex requeue_pi (patch available, needs testing/confirmation=
+)
+>       - powerpc64 oddities (patch available, needs rework)
+>=20
+> Download locations:
+>   =20
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/
+>=20
+> Git release branch:
+>    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.gi=
+t rt/2.6.33
+>=20
+> Gitweb:
+>    http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.git;=
+a=3Dshortlog;h=3Drt/2.6.33
+>=20
+> Information on the RT patch can be found at:
+>=20
+>    http://rt.wiki.kernel.org/index.php/Main_Page
+>=20
+> To build the 2.6.33.6-rt26 tree, the following patches should be
+> applied:
+>=20
+>    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.6.tar.bz2
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.6-=
+rt26.bz2
+>=20
 > Enjoy !
->
+>=20
+>       tglx
 
-I hit this with rt26. (Quite possible is on vanilla as well, will
-build a kernel soemtime soon and try)
+Thanks Thomas,
+but I have a problem applying the patch.
+I get lots of ignored hunks and it ends and fails with:
 
-=======================================================
-[ INFO: possible circular locking dependency detected ]
-2.6.33.6-rt26 #36
--------------------------------------------------------
-iperf/1629 is trying to acquire lock:
- (slock-AF_INET){+.+...}, at: [<ffffffff8135a4fa>] release_sock+0x30/0x108
+2 out of 2 hunks ignored -- saving rejects to file sound/soc/codecs/wm8=
+990.c.rej
+patching file virt/kvm/kvm_main.c
 
-but task is already holding lock:
- (&lock->lock){+.+...}, at: [<ffffffff813cd6cc>] ipt_do_table+0x118/0x650
+I tried to build with my usual script, which just does:
+patch -Np1 -i ../patch-2.6.33.6-rt26
 
-which lock already depends on the new lock.
+Before that it applies the .6 patch, with the same command, without any=
+ hickup.
+I don't know whether something is wrong with the patch or whether I did
+something wrong.
+--=20
+Regards,
+Philipp
 
+--
+"Wir stehen selbst entt=C3=A4uscht und sehn betroffen / Den Vorhang zu =
+und alle Fragen offen." Bertolt Brecht, Der gute Mensch von Sezuan
 
-the existing dependency chain (in reverse order) is:
-
--> #1 (&lock->lock){+.+...}:
-       [<ffffffff810697e7>] lock_acquire+0xd6/0xfa
-       [<ffffffff813fcfaa>] rt_spin_lock+0x31/0x38
-       [<ffffffffa00ba8ef>] nf_nat_get_offset+0x42/0x6b [nf_nat]
-       [<ffffffff8138b2ba>] tcp_packet+0x659/0xd5b
-       [<ffffffff81387eb9>] nf_conntrack_in+0x445/0x4fc
-       [<ffffffff813ca933>] ipv4_conntrack_local+0x3b/0x44
-       [<ffffffff81384c22>] nf_iterate+0x41/0x84
-       [<ffffffff81384cd8>] nf_hook_slow+0x73/0xdb
-       [<ffffffff813970b4>] nf_hook_thresh.clone.0+0x3c/0x45
-       [<ffffffff81397136>] __ip_local_out+0x79/0x7b
-       [<ffffffff81397149>] ip_local_out+0x11/0x22
-       [<ffffffff81397407>] ip_push_pending_frames+0x2ad/0x30b
-       [<ffffffff81398a41>] ip_send_reply+0x21a/0x259
-       [<ffffffff813acdf1>] tcp_v4_send_reset+0x1c8/0x1eb
-       [<ffffffff813b0367>] tcp_v4_rcv+0x500/0x661
-       [<ffffffff8139400a>] ip_local_deliver_finish+0x14d/0x1c3
-       [<ffffffff813940f2>] ip_local_deliver+0x72/0x7c
-       [<ffffffff81393ac3>] ip_rcv_finish+0x31a/0x346
-       [<ffffffff81393d29>] ip_rcv+0x23a/0x268
-       [<ffffffff81366862>] netif_receive_skb+0x3fa/0x424
-       [<ffffffffa023fb41>] br_handle_frame_finish+0x105/0x13d [bridge]
-       [<ffffffffa023fd08>] br_handle_frame+0x18f/0x1a7 [bridge]
-       [<ffffffff81366792>] netif_receive_skb+0x32a/0x424
-       [<ffffffff813669d4>] napi_skb_finish+0x24/0x3b
-       [<ffffffff81366e83>] napi_gro_receive+0x2a/0x2f
-       [<ffffffff812d03b9>] sky2_poll+0x86e/0xaef
-       [<ffffffff81366fcc>] net_rx_action+0xa3/0x1f1
-       [<ffffffff81044a02>] run_ksoftirqd+0x14e/0x254
-       [<ffffffff8105975f>] kthread+0x88/0x90
-       [<ffffffff81009844>] kernel_thread_helper+0x4/0x10
-
--> #0 (slock-AF_INET){+.+...}:
-       [<ffffffff8106941a>] __lock_acquire+0x9f1/0xce8
-       [<ffffffff810697e7>] lock_acquire+0xd6/0xfa
-       [<ffffffff813fcfaa>] rt_spin_lock+0x31/0x38
-       [<ffffffff8135a4fa>] release_sock+0x30/0x108
-       [<ffffffff813a012a>] tcp_recvmsg+0x8b8/0x9a3
-       [<ffffffff81359864>] sock_common_recvmsg+0x37/0x48
-       [<ffffffff81357178>] __sock_recvmsg+0x6d/0x78
-
-(Just run iperf as server and test it from another system)
-
-thanks,
-Dhaval
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
