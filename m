@@ -1,22 +1,10 @@
 From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
-Date: Wed, 14 Jul 2010 15:02:12 -0700
-Message-ID: <1279144932.2248.1.camel@localhost.localdomain>
-References: <1278609590.7527.11.camel@localhost.localdomain>
-	 <1278628386.3008.11.camel@localhost.localdomain>
-	 <1278629044.12059.6.camel@localhost.localdomain>
-	 <1278630050.3008.18.camel@localhost.localdomain>
-	 <1278702134.5102.9.camel@localhost.localdomain>
-	 <1278705254.2349.14.camel@localhost.localdomain>
-	 <1278713600.7122.22.camel@localhost.localdomain>
-	 <1278716222.2349.20.camel@localhost.localdomain>
-	 <1278977858.6489.52.camel@localhost.localdomain>
-	 <1278978834.2404.12.camel@localhost.localdomain>
-	 <1278983426.6489.57.camel@localhost.localdomain>
-	 <1278985231.2404.60.camel@localhost.localdomain>
-	 <1278990381.11165.3.camel@localhost.localdomain>
-	 <1279143129.29524.39.camel@localhost.localdomain>
-	 <1279143363.3372.2.camel@localhost>
+Subject: Re: 2.6.33.5 rt23: sleeping function called from invalid context
+Date: Wed, 14 Jul 2010 15:06:51 -0700
+Message-ID: <1279145211.3018.0.camel@localhost.localdomain>
+References: <1278561270.5448.2.camel@localhost.localdomain>
+	 <1278610624.3008.2.camel@localhost.localdomain>
+	 <1278639872.3008.36.camel@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -26,74 +14,47 @@ Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Nick Piggin <npiggin@suse.de>
 To: john stultz <johnstul@us.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.Stanford.EDU ([171.67.219.81]:40708 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1757227Ab0GNWCm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Jul 2010 18:02:42 -0400
-In-Reply-To: <1279143363.3372.2.camel@localhost>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1278639872.3008.36.camel@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2010-07-14 at 14:36 -0700, john stultz wrote:
-> On Wed, 2010-07-14 at 14:32 -0700, Fernando Lopez-Lezcano wrote:
-> > On Mon, 2010-07-12 at 20:06 -0700, Fernando Lopez-Lezcano wrote:
-> > > > > --------
-> > > > > BUG: unable to handle kernel NULL pointer dereference at 0000008c
-> > > > > IP: [<c045e50a>] rt_spin_lock_fastunlock.clone.2+0x6/0x3e
-> > > > ...
-> > > > > Pid: 2855, comm: nautilus Not tainted
-> > > > > 2.6.33.6-147.rt23.3.fc12.ccrma.i686.rt #3 P5K/EPU/P5K/EPU
-> > > > > EIP: 0060:[<c045e50a>] EFLAGS: 00210246 CPU: 0
-> > > > > EIP is at rt_spin_lock_fastunlock.clone.2+0x6/0x3e
-> > > > > EAX: 00000078 EBX: ef45393c ECX: 00000000 EDX: 00000078
-> > > > > ESI: ef716edc EDI: 00000000 EBP: f1977c8c ESP: f1977c88
-> > > > >  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068 preempt:00000000
-> > > > > Process nautilus (pid: 2855, ti=f1976000 task=f2347130 task.ti=f1976000)
-> > > > > Stack:
-> > > > >  ef45393c f1977c94 c0781206 f1977cc8 c04d842e 00000000 ef703e54 faadd5bc
-> > > > > <0> f1977cdc 126bc87a ef703ddc 00000000 ef45393c ef716edc ef6f5494
-> > > > > faafdc6c
-> > > > > <0> f1977df8 faad9041 c3604b5c faafdc6c ef452bfc 00007e7f f5eb41e8
-> > > > > 00000007
-> > > > > Call Trace:
-> > > > >  [<c0781206>] ? rt_spin_unlock+0x8/0xa
-> > > > >  [<c04d842e>] ? d_materialise_unique+0x210/0x2aa
-> > > > 
-> > > > Can you gdb list *0xc04d842e ?
+On Thu, 2010-07-08 at 18:44 -0700, john stultz wrote:
+> On Thu, 2010-07-08 at 10:37 -0700, john stultz wrote:
+> > On Wed, 2010-07-07 at 20:54 -0700, Fernando Lopez-Lezcano wrote:
+> > > After a suspend/wake up cycle, just after upgrading to fc12 (I did not
+> > > see this with the same basic kernel - that is, compiled from the same
+> > > source + patches - under fc11). 
 > > > 
-> > > (gdb) list *0xc04d842e
-> > > 0xc04d842e is in d_materialise_unique (fs/dcache.c:2073).
-> > > 2068	out_unalias:
-> > > 2069		d_move_locked(alias, dentry);
-> > > 2070		ret = alias;
-> > > 2071	out_err:
-> > > 2072		spin_unlock(&inode->i_lock);
-> > > 2073		if (m2)
-> > > 2074			mutex_unlock(m2);
-> > > 2075		if (m1)
-> > > 2076			mutex_unlock(m1);
-> > > 2077		return ret;
-> > > 
-> > > > Thanks again for all the testing here! Its really appreciated!
+> > > BUG: sleeping function called from invalid context at
+> > > kernel/rtmutex.c:684
+> > > pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 1, pid: 10582, name:
+> > > pm-suspend
+> > > Pid: 10582, comm: pm-suspend Not tainted
+> > > 2.6.33.5-120.rt23.1.fc11.ccrma.i686.rtPAE #1
+> > > Call Trace:
+> > > [<c042eced>] __might_sleep+0xcc/0xd4
+> > > [<c0464f57>] rt_spin_lock_fastlock.clone.1+0x26/0x5f
+> > > [<c0792862>] rt_spin_lock+0x8/0xa
+> > > [<c040dddc>] read_persistent_clock+0x11/0x30
+> > > [<c045d1de>] timekeeping_suspend+0xe/0x4e
+> > > [<c0640c9e>] sysdev_suspend+0x15c/0x356
+> > > [<c0792906>] ? _mutex_unlock+0x8/0xa
+> > > [<c046afc1>] suspend_devices_and_enter+0xea/0x17f
 > > 
-> > I just tried building 2.6.33.6 rt26 (saw it this morning on the site)
-> > and it does not exhibit this problem. Woohoo!
+> > Huh. Looks like the lock protecting the RTC/CMOS might need to be
+> > converted to a raw spinlock, since suspend/resume is probably done with
+> > irqs off.
 > 
-> Yea. The vfs-scalability patches were dropped. Sort of a bummer, but I'm
-> glad that fixes it for you.
+> Oof. The rtc_lock is used all over the place. Not sure if we really want
+> to convert it to a raw_spinlock. 
 > 
-> We may run into the issue again when the patches can get beaten back
-> into shape, but I'll try to hunt down the issue from your log output
-> prior to that.
+> However, sysdev_suspend() wants interrupts off on all the .suspend
+> calls. I'm surprised we haven't hit this issue with more drivers. Maybe
+> no one is testing suspend w/ -rt? Or am I just missing an obvious
+> solution?
+> 
+> Thomas, any thoughts on this? 
 
-Ok, let me know if you need me to test again. I have the serial cable
-now! :-)
-
-> Thanks again for the testing and great feedback!
-
-Sure.
+(BTW, this is still happening in rt26...)
 -- Fernando
-
-
