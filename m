@@ -1,43 +1,83 @@
-From: Andy Pont <andy.pont@sdcsystems.com>
-Subject: =?utf-8?b?dHNjX3N5bmMuYw==?=
-Date: Wed, 14 Jul 2010 14:40:52 +0000 (UTC)
-Message-ID: <loom.20100714T163347-616@post.gmane.org>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: 2.6.33.5 rt23: machine lockup (nfs/autofs related?)
+Date: Wed, 14 Jul 2010 14:32:09 -0700
+Message-ID: <1279143129.29524.39.camel@localhost.localdomain>
+References: <1278609590.7527.11.camel@localhost.localdomain>
+	 <1278628386.3008.11.camel@localhost.localdomain>
+	 <1278629044.12059.6.camel@localhost.localdomain>
+	 <1278630050.3008.18.camel@localhost.localdomain>
+	 <1278702134.5102.9.camel@localhost.localdomain>
+	 <1278705254.2349.14.camel@localhost.localdomain>
+	 <1278713600.7122.22.camel@localhost.localdomain>
+	 <1278716222.2349.20.camel@localhost.localdomain>
+	 <1278977858.6489.52.camel@localhost.localdomain>
+	 <1278978834.2404.12.camel@localhost.localdomain>
+	 <1278983426.6489.57.camel@localhost.localdomain>
+	 <1278985231.2404.60.camel@localhost.localdomain>
+	 <1278990381.11165.3.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: nando@ccrma.Stanford.EDU, Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Nick Piggin <npiggin@suse.de>
+To: john stultz <johnstul@us.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lo.gmane.org ([80.91.229.12]:58477 "EHLO lo.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751156Ab0GNOlI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Jul 2010 10:41:08 -0400
-Received: from list by lo.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1OZ38z-0001X0-MP
-	for linux-rt-users@vger.kernel.org; Wed, 14 Jul 2010 16:41:05 +0200
-Received: from 87.112.161.187 ([87.112.161.187])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 14 Jul 2010 16:41:05 +0200
-Received: from andy.pont by 87.112.161.187 with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 14 Jul 2010 16:41:05 +0200
+Received: from smtp1.Stanford.EDU ([171.67.219.81]:38904 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1754606Ab0GNVcl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Jul 2010 17:32:41 -0400
+In-Reply-To: <1278990381.11165.3.camel@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello!
+On Mon, 2010-07-12 at 20:06 -0700, Fernando Lopez-Lezcano wrote:
+> > > --------
+> > > BUG: unable to handle kernel NULL pointer dereference at 0000008c
+> > > IP: [<c045e50a>] rt_spin_lock_fastunlock.clone.2+0x6/0x3e
+> > ...
+> > > Pid: 2855, comm: nautilus Not tainted
+> > > 2.6.33.6-147.rt23.3.fc12.ccrma.i686.rt #3 P5K/EPU/P5K/EPU
+> > > EIP: 0060:[<c045e50a>] EFLAGS: 00210246 CPU: 0
+> > > EIP is at rt_spin_lock_fastunlock.clone.2+0x6/0x3e
+> > > EAX: 00000078 EBX: ef45393c ECX: 00000000 EDX: 00000078
+> > > ESI: ef716edc EDI: 00000000 EBP: f1977c8c ESP: f1977c88
+> > >  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068 preempt:00000000
+> > > Process nautilus (pid: 2855, ti=f1976000 task=f2347130 task.ti=f1976000)
+> > > Stack:
+> > >  ef45393c f1977c94 c0781206 f1977cc8 c04d842e 00000000 ef703e54 faadd5bc
+> > > <0> f1977cdc 126bc87a ef703ddc 00000000 ef45393c ef716edc ef6f5494
+> > > faafdc6c
+> > > <0> f1977df8 faad9041 c3604b5c faafdc6c ef452bfc 00007e7f f5eb41e8
+> > > 00000007
+> > > Call Trace:
+> > >  [<c0781206>] ? rt_spin_unlock+0x8/0xa
+> > >  [<c04d842e>] ? d_materialise_unique+0x210/0x2aa
+> > 
+> > Can you gdb list *0xc04d842e ?
+> 
+> (gdb) list *0xc04d842e
+> 0xc04d842e is in d_materialise_unique (fs/dcache.c:2073).
+> 2068	out_unalias:
+> 2069		d_move_locked(alias, dentry);
+> 2070		ret = alias;
+> 2071	out_err:
+> 2072		spin_unlock(&inode->i_lock);
+> 2073		if (m2)
+> 2074			mutex_unlock(m2);
+> 2075		if (m1)
+> 2076			mutex_unlock(m1);
+> 2077		return ret;
+> 
+> > Thanks again for all the testing here! Its really appreciated!
 
-I am trying to apply patch-2.6.31.12-rt21 to my kernel which is 2.6.31-12 but 
-has some other third party patches applied to it.  
+I just tried building 2.6.33.6 rt26 (saw it this morning on the site)
+and it does not exhibit this problem. Woohoo!
 
-Mostly the patch has applied OK, with a couple of minor tweaks however there 
-is one file that won't patch.  For some reason my kernel doesn't have a file 
-arch/x86/kernel/tsc_sync.c!
+Thanks again!
+-- Fernando
 
-What is this file used for and what risks am I opening myself up to if i just 
-skip past it?
-
-Thanks,
-
-A.
 
