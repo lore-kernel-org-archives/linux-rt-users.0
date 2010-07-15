@@ -1,71 +1,110 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 2.6.33.5 rt23: sleeping function called from invalid context
-Date: Thu, 15 Jul 2010 00:12:02 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1007150008170.3321@localhost.localdomain>
-References: <1278561270.5448.2.camel@localhost.localdomain>  <1278610624.3008.2.camel@localhost.localdomain>  <1278639872.3008.36.camel@localhost.localdomain> <1279145211.3018.0.camel@localhost.localdomain>
+From: Yang Jian <flyinwindy@gmail.com>
+Subject: Re: [ANNOUNCE] 2.6.33.6-rt26
+Date: Thu, 15 Jul 2010 13:25:24 +0800
+Message-ID: <AANLkTikp69CsCv2rIEidzFwW6nZc3K2ZEZn19yxVEkEY@mail.gmail.com>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
+	<alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
+	<alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
+	<alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
+	<alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
+	<alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
+	<alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
+	<alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
+	<alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
+	<alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+	<1279042118-sup-7239@eris>
+	<1279048394.20528.6.camel@localhost.localdomain>
+	<1279048823-sup-6465@eris>
+	<alpine.LFD.2.00.1007141543200.3321@localhost.localdomain>
+	<1279115870.30248.1.camel@localhost.localdomain>
+	<AANLkTikQSdyuFHVi787nkJ0GgfBlckQ6mMJ0p2QA3y4A@mail.gmail.com>
+	<AANLkTikRUp0IG8aMZ0eHxXcDmfUFTqW8HCSJcx8nQIZN@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: john stultz <johnstul@us.ibm.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Nick Piggin <npiggin@suse.de>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1279145211.3018.0.camel@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-gy0-f174.google.com ([209.85.160.174]:50880 "EHLO
+	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932420Ab0GOFZZ convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 15 Jul 2010 01:25:25 -0400
+Received: by gyh4 with SMTP id 4so404417gyh.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 14 Jul 2010 22:25:24 -0700 (PDT)
+In-Reply-To: <AANLkTikRUp0IG8aMZ0eHxXcDmfUFTqW8HCSJcx8nQIZN@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 14 Jul 2010, Fernando Lopez-Lezcano wrote:
-> On Thu, 2010-07-08 at 18:44 -0700, john stultz wrote:
-> > On Thu, 2010-07-08 at 10:37 -0700, john stultz wrote:
-> > > On Wed, 2010-07-07 at 20:54 -0700, Fernando Lopez-Lezcano wrote:
-> > > > After a suspend/wake up cycle, just after upgrading to fc12 (I did not
-> > > > see this with the same basic kernel - that is, compiled from the same
-> > > > source + patches - under fc11). 
-> > > > 
-> > > > BUG: sleeping function called from invalid context at
-> > > > kernel/rtmutex.c:684
-> > > > pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 1, pid: 10582, name:
-> > > > pm-suspend
-> > > > Pid: 10582, comm: pm-suspend Not tainted
-> > > > 2.6.33.5-120.rt23.1.fc11.ccrma.i686.rtPAE #1
-> > > > Call Trace:
-> > > > [<c042eced>] __might_sleep+0xcc/0xd4
-> > > > [<c0464f57>] rt_spin_lock_fastlock.clone.1+0x26/0x5f
-> > > > [<c0792862>] rt_spin_lock+0x8/0xa
-> > > > [<c040dddc>] read_persistent_clock+0x11/0x30
-> > > > [<c045d1de>] timekeeping_suspend+0xe/0x4e
-> > > > [<c0640c9e>] sysdev_suspend+0x15c/0x356
-> > > > [<c0792906>] ? _mutex_unlock+0x8/0xa
-> > > > [<c046afc1>] suspend_devices_and_enter+0xea/0x17f
-> > > 
-> > > Huh. Looks like the lock protecting the RTC/CMOS might need to be
-> > > converted to a raw spinlock, since suspend/resume is probably done with
-> > > irqs off.
-> > 
-> > Oof. The rtc_lock is used all over the place. Not sure if we really want
-> > to convert it to a raw_spinlock. 
-> > 
-> > However, sysdev_suspend() wants interrupts off on all the .suspend
-> > calls. I'm surprised we haven't hit this issue with more drivers. Maybe
-> > no one is testing suspend w/ -rt? Or am I just missing an obvious
-> > solution?
-> >
-> > Thomas, any thoughts on this? 
+Hi, guys
 
-Yep, it's basically the same scenario which we have during bootup
-where we know that we cannot run into lock contention, so we can apply
-the same rules. Still working on a sane solution for this.
- 
-> (BTW, this is still happening in rt26...)
+=A0=A0 =A0 =A0 =A0does 2.6.33.6-rt26 version support ARM EP9315 and pow=
+erpc
+mpc5121E series.
+I need the 2 boards in my real-time projects.
 
-See announce mail :)
 
-> There are some pending issues:
-> - rtc_lock suspend/resume (working on a patch)
-> ...
 
-Thanks,
+On Thu, Jul 15, 2010 at 10:41 AM, Yang Jian <flyinwindy@gmail.com> wrot=
+e:
+>
+>
+> thanks.
+> 2010/7/14 John Kacur <jkacur@redhat.com>
+>>
+>> 2010/7/14 Ng Oon-Ee <ngoonee@gmail.com>:
+>> > On Wed, 2010-07-14 at 15:47 +0200, Thomas Gleixner wrote:
+>> >> On Tue, 13 Jul 2010, Philipp =DCberbacher wrote:
+>> >> > Ah, thanks Darcy.
+>> >> > It's don't urgently need it, so I'll just wait for Thomas' resp=
+onse,
+>> >> > whether he'll upload a version against .6 or not. Either way is=
+ fine for
+>> >> > me.
+>> >>
+>> >> Duh, I fat fingered my release script params. New version is uplo=
+aded,
+>> >> will take a bit until it mirrors out to the public servers.
+>> >>
+>> >> Sorry for the inconveniance,
+>> >>
+>> >> =A0 =A0 =A0 tglx
+>> >
+>> > Sorry for the dumb question, but its not clear whether 'new versio=
+n'
+>> > means 2.6.33.6-rt26 has been changed or 2.6.33.6-rt27 has been upl=
+oaded.
+>> > Which is it?
+>> >
+>>
+>> If you look in the directory, you can tell. :)
+>> He regenerated patch-2.6.33.6-rt26
+>>
+>> John
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
+sers" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
+>
+>
+> --
+> Best Regards
+>
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 Yang.Jian
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 +86 138 1100 5774
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 flyinwindy@gmail.com
 
-	tglx
+
+
+--
+Best Regards
+
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 Yang.Jian
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 +86 138 1100 5774
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 flyinwindy@gmail.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
