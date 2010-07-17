@@ -1,56 +1,68 @@
-From: =?utf-8?q?Philipp_=C3=9Cberbacher?= <hollunder@lavabit.com>
-Subject: Re: [ANNOUNCE] 2.6.33.6-rt26
-Date: Thu, 15 Jul 2010 13:45:05 +0200
-Message-ID: <1279194273-sup-7066@eris>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain> <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain> <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain> <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain> <1279042118-sup-7239@eris> <1279048394.20528.6.camel@localhost.localdomain> <1279048823-sup-6465@eris> <alpine.LFD.2.00.1007141543200.3321@localhost.localdomain>
+From: Rahul Kumar <mailforgroup@gmail.com>
+Subject: Compilation Issues with patch
+Date: Sat, 17 Jul 2010 00:01:14 -0400
+Message-ID: <AANLkTimvT47mTnrAAZxUjQCKzj3IDP-dN2fwC2bCzl6g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from karen.lavabit.com ([72.249.41.33]:41709 "EHLO karen.lavabit.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757438Ab0GOLpN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Jul 2010 07:45:13 -0400
-Received: from b.earth.lavabit.com (b.earth.lavabit.com [192.168.111.11])
-	by karen.lavabit.com (Postfix) with ESMTP id C705118F5F0
-	for <linux-rt-users@vger.kernel.org>; Thu, 15 Jul 2010 06:45:08 -0500 (CDT)
-Received: from localhost (eris.mozart.uni-klu.ac.at [143.205.216.185])
-	by lavabit.com with ESMTP id I12MGRBVEGNA
-	for <linux-rt-users@vger.kernel.org>; Thu, 15 Jul 2010 06:45:08 -0500
-In-reply-to: <alpine.LFD.2.00.1007141543200.3321@localhost.localdomain>
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:48680 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750699Ab0GQEBR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 17 Jul 2010 00:01:17 -0400
+Received: by wyb42 with SMTP id 42so2513678wyb.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 16 Jul 2010 21:01:16 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Excerpts from Thomas Gleixner's message of 2010-07-14 15:47:11 +0200:
-> On Tue, 13 Jul 2010, Philipp =C3=9Cberbacher wrote:
-> > Ah, thanks Darcy.
-> > It's don't urgently need it, so I'll just wait for Thomas' response=
-,
-> > whether he'll upload a version against .6 or not. Either way is fin=
-e for
-> > me.
->=20
-> Duh, I fat fingered my release script params. New version is uploaded=
-,
-> will take a bit until it mirrors out to the public servers.
->=20
-> Sorry for the inconveniance,
->=20
->       tglx
+Hi,
 
-Thanks Thomas,
-the new patch applied fine.
---=20
-Regards,
-Philipp
+I have applied the patch patch-2.6.21-rt8 to linux-2.6.21
+with the command:patch < patch-2.6.21-rt8 -p1
 
---
-"Wir stehen selbst entt=C3=A4uscht und sehn betroffen / Den Vorhang zu =
-und alle Fragen offen." Bertolt Brecht, Der gute Mensch von Sezuan
+Does any one have any idea on how to resolve this issue.
+I have very limited knowledge on data structures that is used. So, I'm
+reluctant to change any code.
+Please let me know if i'm missing some thing.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+In file included from include/linux/spinlock.h:100,
+                 from include/linux/signal.h:9,
+                 from arch/powerpc/kernel/asm-offsets.c:16:
+include/linux/spinlock_types.h:38: error: expected
+specifier-qualifier-list before '__raw_spinlock_t'
+include/linux/spinlock_types.h:49: error: conflicting types for 'raw_spinlock_t'
+include/linux/spinlock_types_up.h:25: error: previous declaration of
+'raw_spinlock_t' was here
+include/linux/spinlock_types.h:54: error: expected
+specifier-qualifier-list before '__raw_rwlock_t'
+include/linux/spinlock_types.h:65: error: conflicting types for 'raw_rwlock_t'
+include/linux/spinlock_types_up.h:33: error: previous declaration of
+'raw_rwlock_t' was here
+In file included from include/linux/signal.h:9,
+                 from arch/powerpc/kernel/asm-offsets.c:16:
+include/linux/spinlock.h: In function 'double_spin_lock':
+include/linux/spinlock.h:291: warning: implicit declaration of
+function '_spin_lock'
+include/linux/spinlock.h: In function 'raw_double_spin_unlock':
+include/linux/spinlock.h:312: warning: implicit declaration of
+function '_spin_unlock'
+In file included from include/linux/time.h:7,
+                 from include/linux/timex.h:57,
+                 from include/linux/sched.h:52,
+                 from arch/powerpc/kernel/asm-offsets.c:17:
+include/linux/seqlock.h: In function '__write_tryseqlock':
+include/linux/seqlock.h:102: warning: implicit declaration of function
+'_spin_trylock'
+include/linux/seqlock.h: In function '__read_seqretry':
+include/linux/seqlock.h:139: warning: implicit declaration of function
+'_spin_lock_irqsave'
+include/linux/seqlock.h:140: warning: implicit declaration of function
+'_spin_unlock_irqrestore'
+In file included from include/linux/fs.h:279,
+                 from include/linux/mm.h:15,
+                 from include/linux/mman.h:14,
+                 from arch/powerpc/kernel/asm-offsets.c:22:
+include/linux/lock_list.h: In function 'INIT_LOCK_LIST_HEAD':
+include/linux/lock_list.h:35: warning: implicit declaration of
+function 'spin_lock_init'
