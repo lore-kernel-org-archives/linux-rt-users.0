@@ -1,68 +1,42 @@
-From: Rahul Kumar <mailforgroup@gmail.com>
-Subject: Compilation Issues with patch
-Date: Sat, 17 Jul 2010 00:01:14 -0400
-Message-ID: <AANLkTimvT47mTnrAAZxUjQCKzj3IDP-dN2fwC2bCzl6g@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH][RT] futex: protect against pi_blocked_on corruption
+ during requeue PI -V2
+Date: Sun, 18 Jul 2010 10:32:47 +0200
+Message-ID: <1279441967.8923.137.camel@marge.simson.net>
+References: <1278478019.10245.77.camel@marge.simson.net>
+	 <alpine.LFD.2.00.1007071356480.2604@localhost.localdomain>
+	 <4C3C1DCF.9090509@us.ibm.com>
+	 <alpine.LFD.2.00.1007131041230.3321@localhost.localdomain>
+	 <alpine.LFD.2.00.1007131222430.3321@localhost.localdomain>
+	 <alpine.LFD.2.00.1007131348180.3321@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Darren Hart <dvhltc@us.ibm.com>,
+	"lkml," <linux-kernel@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wy0-f174.google.com ([74.125.82.174]:48680 "EHLO
-	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750699Ab0GQEBR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 17 Jul 2010 00:01:17 -0400
-Received: by wyb42 with SMTP id 42so2513678wyb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 16 Jul 2010 21:01:16 -0700 (PDT)
+Received: from mail.gmx.net ([213.165.64.20]:47403 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1752532Ab0GRIcs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 18 Jul 2010 04:32:48 -0400
+In-Reply-To: <alpine.LFD.2.00.1007131348180.3321@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Tue, 2010-07-13 at 13:52 +0200, Thomas Gleixner wrote:
+> On Tue, 13 Jul 2010, Thomas Gleixner wrote:
 
-I have applied the patch patch-2.6.21-rt8 to linux-2.6.21
-with the command:patch < patch-2.6.21-rt8 -p1
+> Ok, finally managed to twist my brain around it. Mike, can you give it
+> a test ride ?
 
-Does any one have any idea on how to resolve this issue.
-I have very limited knowledge on data structures that is used. So, I'm
-reluctant to change any code.
-Please let me know if i'm missing some thing.
+It's a bit late, but I took it out for a spin, no problem noted.
 
-In file included from include/linux/spinlock.h:100,
-                 from include/linux/signal.h:9,
-                 from arch/powerpc/kernel/asm-offsets.c:16:
-include/linux/spinlock_types.h:38: error: expected
-specifier-qualifier-list before '__raw_spinlock_t'
-include/linux/spinlock_types.h:49: error: conflicting types for 'raw_spinlock_t'
-include/linux/spinlock_types_up.h:25: error: previous declaration of
-'raw_spinlock_t' was here
-include/linux/spinlock_types.h:54: error: expected
-specifier-qualifier-list before '__raw_rwlock_t'
-include/linux/spinlock_types.h:65: error: conflicting types for 'raw_rwlock_t'
-include/linux/spinlock_types_up.h:33: error: previous declaration of
-'raw_rwlock_t' was here
-In file included from include/linux/signal.h:9,
-                 from arch/powerpc/kernel/asm-offsets.c:16:
-include/linux/spinlock.h: In function 'double_spin_lock':
-include/linux/spinlock.h:291: warning: implicit declaration of
-function '_spin_lock'
-include/linux/spinlock.h: In function 'raw_double_spin_unlock':
-include/linux/spinlock.h:312: warning: implicit declaration of
-function '_spin_unlock'
-In file included from include/linux/time.h:7,
-                 from include/linux/timex.h:57,
-                 from include/linux/sched.h:52,
-                 from arch/powerpc/kernel/asm-offsets.c:17:
-include/linux/seqlock.h: In function '__write_tryseqlock':
-include/linux/seqlock.h:102: warning: implicit declaration of function
-'_spin_trylock'
-include/linux/seqlock.h: In function '__read_seqretry':
-include/linux/seqlock.h:139: warning: implicit declaration of function
-'_spin_lock_irqsave'
-include/linux/seqlock.h:140: warning: implicit declaration of function
-'_spin_unlock_irqrestore'
-In file included from include/linux/fs.h:279,
-                 from include/linux/mm.h:15,
-                 from include/linux/mman.h:14,
-                 from arch/powerpc/kernel/asm-offsets.c:22:
-include/linux/lock_list.h: In function 'INIT_LOCK_LIST_HEAD':
-include/linux/lock_list.h:35: warning: implicit declaration of
-function 'spin_lock_init'
+	-Mike
+
