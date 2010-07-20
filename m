@@ -1,118 +1,67 @@
-From: Barry Song <21cnbao@gmail.com>
-Subject: Re: [ANNOUNCE] 2.6.33.6-rt26
-Date: Mon, 19 Jul 2010 14:37:18 +0800
-Message-ID: <AANLkTikWbQQC5ubR3JrCx_PlFJWGsoxGmldswwatgwVQ@mail.gmail.com>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain>
-	<alpine.LFD.2.00.1002262041020.4245@localhost.localdomain>
-	<alpine.LFD.2.00.1003121124120.22855@localhost.localdomain>
-	<alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
-	<alpine.LFD.2.00.1004071619490.32352@localhost.localdomain>
-	<alpine.LFD.2.00.1004271744280.2951@localhost.localdomain>
-	<alpine.LFD.2.00.1004301156590.2951@localhost.localdomain>
-	<alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
-	<alpine.LFD.2.00.1006091837410.2933@localhost.localdomain>
-	<alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+From: Jeremy Brown <jhbrown@repinvariant.com>
+Subject: Trouble booting PREEMPT_RT kernel on ARM platform, 2.6.33
+Date: Tue, 20 Jul 2010 18:26:50 -0400
+Message-ID: <AANLkTilabvtaFnJKo8RKOfgP98F2rre4YQ8BF-o-uz92@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Stultz <johnstul@us.ibm.com>,
-	Nick Piggin <npiggin@suse.de>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gw0-f46.google.com ([74.125.83.46]:55632 "EHLO
-	mail-gw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752133Ab0GSGhj convert rfc822-to-8bit (ORCPT
+Received: from mail-qy0-f174.google.com ([209.85.216.174]:43585 "EHLO
+	mail-qy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932891Ab0GTW0v (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Jul 2010 02:37:39 -0400
-In-Reply-To: <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain>
+	Tue, 20 Jul 2010 18:26:51 -0400
+Received: by qyk35 with SMTP id 35so2491525qyk.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Jul 2010 15:26:50 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas,
-Just want to know when there will be released RT patch for 2.6.34? We
-have some tasks to patch RT to our local 2.6.34 tree.
-Thanks
-Barry
+We're trying to get a PREEMPT_RT kernel running on a BeagleBoard C4
+(OMAP3 Arm architecture).  We're using kernel version 2.6.33, with
+patches from
+patch-2.6.33.6-rt26.gz
 
-On Tue, Jul 13, 2010 at 11:54 PM, Thomas Gleixner <tglx@linutronix.de> =
-wrote:
-> We are pleased to announce the next update to our new preempt-rt
-> series.
->
-> Changes from 2.6.33.5-rt23 to 2.6.33.5-rt24:
->
-> =C2=A042edbcb: gianfar: Fix TX ring processing on SMP machines
-> =C2=A0faf3581: timer_stats: Convert table_lock to raw_spin_lock
-> =C2=A0654e404: hvc_console: Fix race between hvc_close and hvc_remove
-> =C2=A009fd768: hvc_console: Fix race between hvc_close and hvc_remove
-> =C2=A0ea2d2a0: perf: Fix errors path in perf_output_begin()
-> =C2=A060bd946: KEYS: find_keyring_by_name() can gain access to a free=
-d keyring
-> =C2=A0b5ac516: tracing: Update the comm field in the right variable i=
-n update_max_tr
-> =C2=A077cb7c1: lockdep: Reduce stack_trace usage
-> =C2=A0cee9ee0: powerpc: Disable sparse irq for RT
-> =C2=A0c7dec16: powerpc: Enable interrupts in do_signal()
->
-> Changes from 2.6.33.5-rt24 to 2.6.33.5-rt25:
->
-> =C2=A0ec646ea: vfs: Revert the scalability patches
->
-> Changes from 2.6.33.5-rt26 to 2.6.33.6-rt26:
->
-> =C2=A07e1af11: Merge git://git.kernel.org/pub/scm/linux/kernel/git/st=
-able/linux-2.6.33.y
->
-> Bulk of changes comes from the stable tree and from the big revert of
-> the VFS scalability patches. They looked promising, but the nasty
-> details bit us hard. We'll revisit them later.
->
-> There are some pending issues:
-> =C2=A0 =C2=A0 =C2=A0- rtc_lock suspend/resume (working on a patch)
-> =C2=A0 =C2=A0 =C2=A0- futex requeue_pi (patch available, needs testin=
-g/confirmation)
-> =C2=A0 =C2=A0 =C2=A0- powerpc64 oddities (patch available, needs rewo=
-rk)
->
-> Download locations:
->
-> =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/
->
-> Git release branch:
-> =C2=A0 git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-ti=
-p.git rt/2.6.33
->
-> Gitweb:
-> =C2=A0 http://git.kernel.org/?p=3Dlinux/kernel/git/tip/linux-2.6-tip.=
-git;a=3Dshortlog;h=3Drt/2.6.33
->
-> Information on the RT patch can be found at:
->
-> =C2=A0 http://rt.wiki.kernel.org/index.php/Main_Page
->
-> To build the 2.6.33.6-rt26 tree, the following patches should be
-> applied:
->
-> =C2=A0 http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.6.tar=
-=2Ebz2
-> =C2=A0 http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.3=
-3.6-rt26.bz2
->
-> Enjoy !
->
-> =C2=A0 =C2=A0 =C2=A0tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
-l" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
-> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On boot, we start seeing messages of this form:
+
+----
+[ 4528.227294] BUG: sleeping function called from invalid context at
+kernel/rtmutex.c:684
+[ 4528.227294] pcnt: 1 0 in_atomic(): 1, irqs_disabled(): 128, pid:
+223, name: modprobe
+[ 4528.227355] [<c0044490>] (unwind_backtrace+0x0/0xe8) from
+[<c04cb4e4>] (rt_spin_lock+0x30/0x5c)
+[ 4528.227386] [<c04cb4e4>] (rt_spin_lock+0x30/0x5c) from [<c032e3b0>]
+(twl4030_sih_set_type+0x3c/0xac)
+[ 4528.227416] [<c032e3b0>] (twl4030_sih_set_type+0x3c/0xac) from
+[<c00aa944>] (__irq_set_trigger+0x34/0x88)
+[ 4528.227447] [<c00aa944>] (__irq_set_trigger+0x34/0x88) from
+[<c00ab2ec>] (__setup_irq+0x34c/0x3c0)
+[ 4528.227478] [<c00ab2ec>] (__setup_irq+0x34c/0x3c0) from
+[<c00ab430>] (request_threaded_irq+0xd0/0x148)
+[ 4528.227508] [<c00ab430>] (request_threaded_irq+0xd0/0x148) from
+[<bf021770>] (twl_rtc_probe+0x104/0x1fc [rtc_twl])
+[ 4528.227539] [<bf021770>] (twl_rtc_probe+0x104/0x1fc [rtc_twl]) from
+[<c0324e2c>] (platform_drv_probe+0x18/0x1c)
+[ 4528.227569] [<c0324e2c>] (platform_drv_probe+0x18/0x1c) from
+[<c0323eec>] (driver_probe_device+0x98/0x194)
+[ 4528.227600] [<c0323eec>] (driver_probe_device+0x98/0x194) from
+[<c0324074>] (__driver_attach+0x8c/0x90)
+[ 4528.227600] [<c0324074>] (__driver_attach+0x8c/0x90) from
+[<c0323744>] (bus_for_each_dev+0x60/0x8c)
+[ 4528.227630] [<c0323744>] (bus_for_each_dev+0x60/0x8c) from
+[<c0323014>] (bus_add_driver+0xa0/0x240)
+[ 4528.227661] [<c0323014>] (bus_add_driver+0xa0/0x240) from
+[<c0324324>] (driver_register+0x78/0x13c)
+[ 4528.227661] [<c0324324>] (driver_register+0x78/0x13c) from
+[<c003e3c0>] (do_one_initcall+0x30/0x1c0)
+[ 4528.227691] [<c003e3c0>] (do_one_initcall+0x30/0x1c0) from
+[<c0097e40>] (sys_init_module+0xc4/0x1f8)
+[ 4528.227722] [<c0097e40>] (sys_init_module+0xc4/0x1f8) from
+[<c003ea60>] (ret_fast_syscall+0x0/0x2c)
+---
+
+I'm hoping that someone will recognize this problem and be able to
+suggest a simple fix.  Any help would be very much appreciated!
+
+Thanks,
+Jeremy
