@@ -1,41 +1,70 @@
-From: Roman Beslik <rabeslik@gmail.com>
-Subject: RT patch, error at boot and random freezes
-Date: Sat, 24 Jul 2010 08:11:41 +0300
-Message-ID: <4C4A760D.3010503@gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: 2.6.33.6-rt26: consoles not working properly
+Date: Sun, 25 Jul 2010 06:16:23 +0200
+Message-ID: <1280031383.7487.0.camel@marge.simson.net>
+References: <1279895985.9947.10.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:53955 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751114Ab0GXFKd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 24 Jul 2010 01:10:33 -0400
-Received: by bwz1 with SMTP id 1so1973623bwz.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jul 2010 22:10:31 -0700 (PDT)
+Received: from mail.gmx.net ([213.165.64.20]:60581 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1750716Ab0GYEPg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 25 Jul 2010 00:15:36 -0400
+In-Reply-To: <1279895985.9947.10.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  Hello.
+On Fri, 2010-07-23 at 16:39 +0200, Mike Galbraith wrote: 
+> Greetings,
+> 
+> Consoles (serial and vt) are going silent after.
+> 
+> [    1.100178] Freeing initrd memory: 9348k freed
+> [    1.453009] Freeing unused kernel memory: 1000k freed
+> [    1.464463] Freeing unused kernel memory: 512k freed
+> [    1.469724] Freeing unused kernel memory: 360k freed
+> 
+> If the kernel is configured PREEMPT_VOLUNTARY, consoles work fine again.
+> So far, I've only eyeballed the rt patch, and noticed nothing.  I'll be
+> poking around in (shudder) console code soon I suppose, but before I
+> start that.. adventure, is this a known issue?
 
-RT patch version: patch-2.6.33.6-rt26.bz2
-platform: x86_64
-original discussion: https://bbs.archlinux.org/viewtopic.php?pid=797214
+Hm, that was suspiciously easy.
 
-1. When booting, the kernel reports this error: (screenshot 220 kB 
-<http://www.beroal.in.ua/prg/linux/kernel26-rt-ice/kernel26-rt-ice-2.6.33-11-fail.jpg>)
-http://www.beroal.in.ua/prg/linux/kernel26-rt-ice/kernel26-rt-ice-2.6.33-11-fail.jpg
-I did not see this error with a previous version of RT patch. I use the 
-standard file "config*". Error is gone when "CONFIG_FTRACE=n" is set in 
-"config*".
+console: really enable interrupts in release_console_mutex()
 
-2. I experience random freezes. They occur approximately every day. OS 
-is not freezed completely: Ctrl+Alt+F* works and the cursor blinks, but 
-I can type nothing into "tty". Sometimes Ctrl+Alt+F* works only several 
-times than OS freezes completely. Sometimes temporary (1-10 seconds) 
-freezes occur and foreshadow an everlasting freeze. I run several 
-application with real time CPU and I/O priorities and "mlockall". I can 
-not associate any change in operation of those programs with freezes.
+vprintk()
+   raw_local_irq_save()
+   acquire_console_mutex_for_printk()
+   release_console_mutex()
+      raw_spin_unlock_save()
+      raw_spin_unlock_irqrestore()
+      call_console_drivers()
+         _call_console_drivers()
+            __call_console_drivers()
+               console_atomic_safe() "nope".
 
-Though I accustomed to these issues, it would be nice to solve them.
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+
+---
+ kernel/printk.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: tip-rt/kernel/printk.c
+===================================================================
+--- tip-rt.orig/kernel/printk.c
++++ tip-rt/kernel/printk.c
+@@ -1072,7 +1072,7 @@ void release_console_mutex(void)
+ 		 * with interrupts disabled):
+ 		 */
+ #ifdef CONFIG_PREEMPT_RT
+-		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
++		raw_spin_unlock_irq(&logbuf_lock);
+ #else
+ 		raw_spin_unlock(&logbuf_lock);
+ 		stop_critical_timings();	/* don't trace print latency */
+
+
