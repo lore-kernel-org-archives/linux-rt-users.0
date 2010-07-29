@@ -1,51 +1,64 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: Q6600 + low frequency periodic timer + CPU_IDLE = much jitter
-Date: Thu, 29 Jul 2010 12:35:04 +0200
-Message-ID: <4C515958.60301@osadl.org>
-References: <1280394320.9599.48.camel@marge.simson.net>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [patch] drivers/dca: convert dca_lock to a raw spinlock V2
+Date: Thu, 29 Jul 2010 20:44:52 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1007292043410.21570@localhost.localdomain>
+References: <1278491341.7926.4.camel@marge.simson.net> <1279880285.2791.42.camel@marge.simson.net> <AANLkTi=tp3NvXnEpko-9OHWePOMunCDUVFH7Nx_9yruG@mail.gmail.com> <1280377497.9275.9.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Len Brown <lenb@kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>
 To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:41681 "EHLO toro.web-alm.net"
+Received: from mx1.redhat.com ([209.132.183.28]:43683 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757188Ab0G2LsX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jul 2010 07:48:23 -0400
-In-Reply-To: <1280394320.9599.48.camel@marge.simson.net>
+	id S1753410Ab0G2SpE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Jul 2010 14:45:04 -0400
+In-Reply-To: <1280377497.9275.9.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Mike,
-
-> It's looking like my Q6600 is kinda slow at switching gears, and I'd
-> just like to verify that it is the hardware, not something odd going on
-> in cpuidle territory.
-Yes, it's the CPU. It is a known restriction of this processor and has
-been verified on a number of different systems. It appears that the
-processor is halted while the PLL is stabilizing. However, there is no
-formal confirmation from Intel AFAIK.
-
-It happens that one of the test systems that we regularly use in the
-quality assessment of the PREEMPT_RT patch is a Q6600:
-# grep CPU /proc/cpuinfo
-model name	: Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz
-model name	: Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz
-
-The recommendation is to add
--=--------------------------------------=-
-cd /sys/devices/system/cpu
-for i in cpu?/cpufreq/scaling_governor
-do
-  echo performance >$i
-done
-cd -
--=--------------------------------------=-
-to /etc/rc.d/rc.local and to abandon dynamic frequency scaling on such
-systems.
 
 
-Carsten.
+On Thu, 29 Jul 2010, Mike Galbraith wrote:
+
+> On Wed, 2010-07-28 at 23:29 +0200, John Kacur wrote:
+> 
+> > Since the above looks slightly cleaner, maybe you just need to spin a
+> > clean-up patch
+> > of what is in tip/rt/2.6.33
+> 
+> Ok, dinky delta below.
+> 
+> drivers/dca: minor cleanup of dca-core.c
+> 
+> Signed-off-by: Mike Galbraith <efault@gmx.de>
+> 
+> --- a/drivers/dca/dca-core.c	2010-07-29 05:43:34.000000000 +0200
+> +++ b/drivers/dca/dca-core.c	2010-07-28 05:00:05.000000000 +0200
+> @@ -297,17 +297,19 @@ int register_dca_provider(struct dca_pro
+>  	int err;
+>  	unsigned long flags;
+>  	struct dca_domain *domain, *newdomain = NULL;
+> +        struct pci_bus *rc;
+>  
+>  	err = dca_sysfs_add_provider(dca, dev);
+>  	if (err)
+>  		return err;
+>  
+>  	raw_spin_lock_irqsave(&dca_lock, flags);
+> +	rc = dca_pci_rc_from_dev(dev);
+>  	domain = dca_get_domain(dev);
+>  	if (!domain) {
+>  		raw_spin_unlock_irqrestore(&dca_lock, flags);
+>  
+> -		newdomain = dca_allocate_domain(dca_pci_rc_from_dev(dev));
+> +		newdomain = dca_allocate_domain(rc);
+>  		if (!newdomain)
+>  			return -ENODEV;
+>  
+> 
+> 
+> --
+
+Thanks Mike, I've applied this to my own tree for testing.
+Acked-by: John Kacur <jkacur@redhat.com>
