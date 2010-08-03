@@ -1,48 +1,27 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 2.6.33.7-rt29
-Date: Tue, 3 Aug 2010 11:23:11 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1008031118270.3225@localhost.localdomain>
-References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain>
- <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain>
- <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain> <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain> <alpine.LFD.2.00.1007311530510.2471@localhost.localdomain>
+From: Vivek Ayer <vivek.ayer@gmail.com>
+Subject: Run RTLinux in a VM?
+Date: Tue, 3 Aug 2010 07:35:02 -0700
+Message-ID: <AANLkTinOFkUU1DdyWdL+YhPCiYhfEA=+zV9fpLsq-J2_@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1007311530510.2471@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qw0-f46.google.com ([209.85.216.46]:47192 "EHLO
+	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753995Ab0HCOfD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Aug 2010 10:35:03 -0400
+Received: by qwh6 with SMTP id 6so2037375qwh.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Aug 2010 07:35:02 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We are pleased to announce the next update to our new preempt-rt
-series.
-  
-Changes from 2.6.33.6-rt28 to 2.6.33.7-rt29:
- c88417f: Merge stable update
+Hi all,
 
-Changes from 2.6.33.6-rt27 to 2.6.33.6-rt28:
- 8a990ab: printk: Restore irqs before calling release_console_mutex()
+I'm building an application that requires the use of a real-time
+kernel. I don't have money right now to purchase a physical machine to
+run rtlinux on, and was going to try a virtual solution. Can I install
+rtlinux in kvm, qemu, or uml?
 
-Download locations:
-   
-   http://www.kernel.org/pub/linux/kernel/projects/rt/
-
-Git release branch:
-   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
-
-Gitweb:
-   http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
-
-Information on the RT patch can be found at:
-
-   http://rt.wiki.kernel.org/index.php/Main_Page
-
-To build the 2.6.33.7-rt29 tree, the following patches should be
-applied:
-
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.7.tar.bz2
-   http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.7-rt29.bz2
-
-Enjoy !
-
-      tglx
+Thanks,
+Vivek
