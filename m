@@ -1,92 +1,117 @@
-From: "Simpson, John (UK) (Contractor)" <john.simpson@mbda-systems.com>
-Subject: 2.6.18-rt7 on HP Z800
-Date: Wed, 4 Aug 2010 09:29:53 +0100
-Message-ID: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B238@CARACALQ005.caracal01.greenstream.priv>
+From: jordan johnston <triplesquarednine@gmail.com>
+Subject: advanced tips for reducing latency?
+Date: Wed, 4 Aug 2010 07:03:39 -0400
+Message-ID: <AANLkTikqLyNuPgjDhLfVjrhUWzCxocPkM=dh6yAJKq7Z@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail189.messagelabs.com ([85.158.139.179]:12296 "EHLO
-	mail189.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755725Ab0HDI30 (ORCPT
+Received: from mail-ew0-f46.google.com ([209.85.215.46]:57685 "EHLO
+	mail-ew0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751351Ab0HDLDk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Aug 2010 04:29:26 -0400
-Received: from partner1.mbda.co.uk (partner1.mbda.co.uk [10.15.19.7])
-	by smtp2.mbda.co.uk (Switch-3.4.3/Switch-3.4.3) with ESMTP id o748OkYY004279
-	for <linux-rt-users@vger.kernel.org>; Wed, 4 Aug 2010 09:24:46 +0100
-Received: from caracals314.caracal01.greenstream.priv ([10.180.6.51])
-	by partner1.mbda.co.uk (Switch-3.4.3/Switch-3.4.3) with ESMTP id o748TPFj021970
-	for <linux-rt-users@vger.kernel.org>; Wed, 4 Aug 2010 09:29:25 +0100
-Content-class: urn:content-classes:message
+	Wed, 4 Aug 2010 07:03:40 -0400
+Received: by ewy23 with SMTP id 23so1939008ewy.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Aug 2010 04:03:39 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-As previously posted, I'm using 2.6.18 for compatibility with third
-party drivers for an FPGA card. This a scene-generation app using an
-Nvidia Quadro FX5800 requiring a high-frame rate with no dropped frames;
-hence the need for RT (we've had previous success using proprietary
-stuff but thought we'd give this a go).
- 
-It's working fine (with very occasional crashes, most of which seem to
-have been referred to in later RT kernel fixes, but we can put up with
-it).
- 
-Some notes for posterity:
- 
-    Turn off irqbalance service
-    Deselect power management stuff in kernel
-    Select SATA IDE emulation in BIOS (otherwise no SCSI/CD stuff)
-    Rebuilt Broadcom tg3 and set pci=nomsi for network drivers to
-function
-    isolcpus used on boot
-    App run on isolated cpus using 'taskset'
-        
-Like I said, it works fine, I haven't seen any dropped frames yet, but
-there's stuff I don't understand from using other RT OSs...
- 
-    All interrupts run on CPU0, all the time, there's no requirement to
-use smp_affinity, in fact if you do the whole thing grinds to a halt.  I
-guess this is fine.
-    The isolcpus option seems to work fine except for the following
-running on all eight CPUs:
-        migration
-        posix_cpu_timer
-        softirq-high
-        softirq-timer
-        softirq-net-tx
-        softirq-net-rx
-        softirq-block
-        softirq-tasklet
-        softirq-hrtimer
-        softirq-rcu
-        watchdog
-        desched
-        aio
-        cqueue
-        kblockd
-        events
- 
-    I guess this is preemptible stuff which must run per cpu, but
-there's a bit in a Red Hat page
-http://rt.et.redhat.com/wiki/index.php?title=RHEL-RT_AffinityHowto&print
-able=yes (starting "In MRG Realtime") which apparently refers to these
-elements in their RT kernel suggesting that these should be dealt with
-(but then doesn't seem to say how).  Do I need to do anything about
-these processes?
- 
-Thanks
- 
-John
- 
+hello,
 
-********************************************************************
-This email and any attachments are confidential to the intended recipient and may also be privileged. If you are not the intended recipient please delete it from your system and notify the sender. You should not copy it or use it for any purpose nor disclose or distribute its contents to any other person. 
+I am new to the list, but not new to using linux for pro-audio and
+thus the rt-patches...
+I'm looking for possibly some advanced tweaks to further reduce
+latency on my system.
+things i am already aware of;
 
-MBDA UK Limited, a company registered in England and Wales, registration number 3144919 whose registered office is at Six Hills Way, Stevenage, Hertfordshire, SG1 2DA, England.
-********************************************************************
+1. use a lighter WM
 
-______________________________________________________________________
-This email has been scanned by the MessageLabs Email Security System.
-For more information please visit http://www.messagelabs.com/email 
-______________________________________________________________________
+2. reduce disk writes / fine-tune using hdparm, etc.
+
+3. Custom kernel + rt-patch + rtirq(tuned)....
+
+made using Zen-kernel with additional patches, compiled with ICC with
+CFLAGS(optimized within reason). Also using a 'Kernel Seed' for lowest
+possible footprint i could get.
+
+4. CFQ tunables        ie:  /sys/block/sda/queue/iosched/slice_async
+                                      /sys/block/sda/queue/iosched/slice_sync
+
+/sys/block/sda/queue/iosched/quantum , etc....
+
+6. CFS tunables ----> ie:  /proc/sys/kernel/sched_latency_ns
+
+/proc/sys/kernel/sched_min_granularity_ns
+
+/proc/sys/kernel/sched_wakeup_granularity_ns , etc...
+
+(with these three alone, i cut latency in half....)
+
+7. other kernel tunables -----> ie:
+
+/proc/sys/vm/dirty_writeback_centisecs (increased to 15000 for better
+IO management)
+
+various controls in /etc/sysctl.conf as well as
+/etc/fstab <-----noatime, etc.
+
+also a decent partition scheme, not everything under " / "
+which seems to affect performance.
+
+8. Disable unwanted services
+
+9. minimize logging to almost nothing
+
+10. disable/inhibit polling udev (i don't use Hal at all)
+
+11. irq + cpu_affinity (i balance manually)
+
+12. diable hardware not being used including Wifi.
+
+13. removing all "bloat".
+
+Obviously i am aware that with new hardware, faster drive/ram/cpu i
+could further reduce latency. But what i am trying
+to do is compare several things. CFQ vs. BFQ . CFS vs. BFS, etc. As
+well as get the best performance even on crappy hardware.
+So for production, as in the setup i use to jam with live and record
+with, surprisingly i am not using the rt-patches. Instead i am using
+BFS scheduler and BFQ IO scheduler with 2.6.34-zen. I use 32bit Fedora
+13, Dell Inspiron 6400 CoreDuo 1.6ghz 1g RAM, 320g SATA... (just my
+testing ground, not what i plan to use in the future!)
+
+I am awaiting Planet CCRMA for Fedora 13, but have been testing the
+"not so ready" rt-kernel. With my production 2.6.34(BFS/BFQ) kernel. I
+am using 128 frames/2 period with no xruns running several VSTi, using
+my cheap internal STAC9200 intelHDA card. However, i would like to
+chop that number in half, using 64 instead. I believe this should be
+possible, as with the "not so ready CCRMA kernel" i was able to get it
+down to that, but that kernel isn't solid or reliable as of yet.
+(which doesn't have to do with me lowering the latency, it hasn't been
+debugged yet. dmesg is filled with errors/warnings). the sound was
+fine though.
+
+I also haven't heard of 2.6.34-rt being released. 2.6.34 is a much
+better kernel though, so i am hoping i will be able to test it out
+soon, and also maybe learn another trick or two along the way. I have
+also purchased a firewire audio card, that will arrive nextweek, so
+most of this stuff should apply there as well...
+
+anyway, if anyone has any ideas on how i can lower latencies, in a
+stable way, not already covered here, then drop me a line!
+The idea here is that i will be shortly migrating everything into a 2u
+rackmount VSTi/looper/DAW. So i am able to achieve as low of latencies
+as the Receptor2 (made by muse research) or say the V-machine, BUT to
+not only utilize Wine and VST. I plan to also integrate linux audio
+apps as well, such as sooperlooper, ardour and hopefully Loomer's
+VST's once i purchase them.
+
+This way i can re-create studio recorded sounds, off-the-floor improv
+and looping, but also be able to "switch modes"
+and use my rack as a standalone DAW solution.
+
+again, any tips/hacks/tricks are welcome
+
+thanks..
+
+jordan
