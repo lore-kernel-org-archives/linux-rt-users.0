@@ -1,183 +1,134 @@
-From: Will Schmidt <will_schmidt@vnet.ibm.com>
-Subject: Re: [RT,RFC] Hacks allowing -rt to run on POWER7 / Powerpc.
-Date: Wed, 04 Aug 2010 16:45:34 -0500
-Message-ID: <1280958334.4034.187.camel@lexx>
-References: <1278701701.24737.19.camel@lexx>
-	 <1278834594_17749@mail4.comsite.net>
-Reply-To: will_schmidt@vnet.ibm.com
+From: "Simpson, John (UK) (Contractor)" <john.simpson@mbda-systems.com>
+Subject: RE: 2.6.18-rt7 on HP Z800
+Date: Thu, 5 Aug 2010 09:09:00 +0100
+Message-ID: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B23C@CARACALQ005.caracal01.greenstream.priv>
+References: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B238@CARACALQ005.caracal01.greenstream.priv>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linuxppc-dev <linuxppc-dev@ozlabs.org>,
-	Darren Hart <dvhltc@us.ibm.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Milton Miller <miltonm@bga.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e39.co.us.ibm.com ([32.97.110.160]:59303 "EHLO
-	e39.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751235Ab0HDVps (ORCPT
+Received: from mail178.messagelabs.com ([85.158.139.19]:53196 "EHLO
+	mail178.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758296Ab0HEIIf convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Aug 2010 17:45:48 -0400
-In-Reply-To: <1278834594_17749@mail4.comsite.net>
+	Thu, 5 Aug 2010 04:08:35 -0400
+Received: from partner2.mbda.co.uk (partner2.mbda.co.uk [10.15.19.9])
+	by smtp1.mbda.co.uk (Switch-3.4.3/Switch-3.4.3) with ESMTP id o75803wY001238
+	for <linux-rt-users@vger.kernel.org>; Thu, 5 Aug 2010 09:00:04 +0100
+Received: from mbdexstv005.caracal01.greenstream.priv ([10.15.19.4])
+	by partner2.mbda.co.uk (Switch-3.4.3/Switch-3.4.3) with ESMTP id o75877uS015595
+	for <linux-rt-users@vger.kernel.org>; Thu, 5 Aug 2010 09:07:07 +0100
+Content-class: urn:content-classes:message
+In-Reply-To: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B238@CARACALQ005.caracal01.greenstream.priv>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2010-07-11 at 02:49 -0500, Milton Miller wrote:
-> On Fri, 09 Jul 2010 about 08:55:01 -0000, Will Schmidt wrote:
-> > We've been seeing some issues with userspace randomly SIGSEGV'ing while
-> > running the -RT kernels on POWER7 based systems.   After lots of
-> > debugging, head scratching, and experimental changes to the code, the
-> > problem has been narrowed down such that we can avoid the problems by
-> > disabling the TLB batching.
-> > 
-> > After some input from Ben and further debug, we've found that the
-> > restoration of the batch->active value near the end of __switch_to()
-> > seems to be the key.    ( The -RT related  changes within
-> > arch/powerpc/kernel/processor.c __switch_to()  do the equivalent of a
-> > arch_leave_lazy_mmu_mode() before calling _switch, use a hadbatch flag
-> > to indicate if batching was active, and then restore that batch->active
-> > value on the way out after the call to _switch_to.    That particular
-> > code is in the -RT branch, and not found in mainline  )
-> > 
-> > Deferring to Ben (or others in the know) for whether this is the proper
-> > solution or if there is something deeper, but.. 
+ 
+I've had no response to this question. Can anyone help? I'm also baffled
+as to why the smp_affinity stuff doesn't work.
 
-I believe this is still on Ben's list of things to look at.   Between
-then and now, I'll see if I can get Thomas to pick this up for the -RT
-tree to keep RT functional on P7 in the mean-time.  
-
-A bit more debug info below.
-
-> 
-> 
-> I looked at the patch and noticed 2 changes:
-> 	1) the batch is checked and cleared after local_irq_save
-> 	2) enabling the batch is skipped
-> 
-> I talked to Will and had him try moving the local_irq_save above the
-> check for the active batch.  That alone did not seem to be enough.
-> However, he confirmed that we are setting batch to active when it is
-> already active in lazy_mmu_enter, meaning that batching is being turned
-> on recursively.  I suggested debug to check that irqs are off after the
-> restore when re-enabling when our debug session timed out.
-
-Based on some of the debug suggestions from Milton:
+-----Original Message-----
+From: linux-rt-users-owner@vger.kernel.org
+[mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Simpson, John
+(UK) (Contractor)
+Sent: 04 August 2010 09:30
+To: linux-rt-users@vger.kernel.org
+Subject: 2.6.18-rt7 on HP Z800
 
 
-A WARN_ON for (!irqs_disabled) after local_irq_restore() did not show
-any hits.  (while otherwise continuing to suffer from the tlb batching
-troubles). 
+               *** WARNING ***
 
----><----
+This mail has originated outside your organization, either from an
+external partner or the Global Internet. 
+     Keep this in mind if you answer this message. 
 
-	hard_irq_disable();
-	last = _switch(old_thread, new_thread);
+As previously posted, I'm using 2.6.18 for compatibility with third
+party drivers for an FPGA card. This a scene-generation app using an
+Nvidia Quadro FX5800 requiring a high-frame rate with no dropped frames;
+hence the need for RT (we've had previous success using proprietary
+stuff but thought we'd give this a go).
+ 
+It's working fine (with very occasional crashes, most of which seem to
+have been referred to in later RT kernel fixes, but we can put up with
+it).
+ 
+Some notes for posterity:
+ 
+    Turn off irqbalance service
+    Deselect power management stuff in kernel
+    Select SATA IDE emulation in BIOS (otherwise no SCSI/CD stuff)
+    Rebuilt Broadcom tg3 and set pci=nomsi for network drivers to
+function
+    isolcpus used on boot
+    App run on isolated cpus using 'taskset'
+        
+Like I said, it works fine, I haven't seen any dropped frames yet, but
+there's stuff I don't understand from using other RT OSs...
+ 
+    All interrupts run on CPU0, all the time, there's no requirement to
+use smp_affinity, in fact if you do the whole thing grinds to a halt.  I
+guess this is fine.
+    The isolcpus option seems to work fine except for the following
+running on all eight CPUs:
+        migration
+        posix_cpu_timer
+        softirq-high
+        softirq-timer
+        softirq-net-tx
+        softirq-net-rx
+        softirq-block
+        softirq-tasklet
+        softirq-hrtimer
+        softirq-rcu
+        watchdog
+        desched
+        aio
+        cqueue
+        kblockd
+        events
+ 
+    I guess this is preemptible stuff which must run per cpu, but
+there's a bit in a Red Hat page
+http://rt.et.redhat.com/wiki/index.php?title=RHEL-RT_AffinityHowto&print
+able=yes (starting "In MRG Realtime") which apparently refers to these
+elements in their RT kernel suggesting that these should be dealt with
+(but then doesn't seem to say how).  Do I need to do anything about
+these processes?
+ 
+Thanks
+ 
+John
+ 
 
-	local_irq_restore(flags);
+********************************************************************
+This email and any attachments are confidential to the intended
+recipient and may also be privileged. If you are not the intended
+recipient please delete it from your system and notify the sender. You
+should not copy it or use it for any purpose nor disclose or distribute
+its contents to any other person. 
 
-	WARN_ON(!irqs_disabled());        <<<<----------
+MBDA UK Limited, a company registered in England and Wales, registration
+number 3144919 whose registered office is at Six Hills Way, Stevenage,
+Hertfordshire, SG1 2DA, England.
+********************************************************************
 
+______________________________________________________________________
+This email has been scanned by the MessageLabs Email Security System.
+For more information please visit http://www.messagelabs.com/email
+______________________________________________________________________
+--
+To unsubscribe from this list: send the line "unsubscribe
+linux-rt-users" in the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-#if defined(CONFIG_PPC64) && defined(CONFIG_PREEMPT_RT) && 1
-	if (hadbatch) {
-		batch = &__get_cpu_var(ppc64_tlb_batch);
-		batch->active = 1;
-	}
-#endif
+______________________________________________________________________
+This email has been scanned by the MessageLabs Email Security System.
+For more information please visit http://www.messagelabs.com/email
+______________________________________________________________________
 
-----><---- 
-
-
-Another assortment of WARN_ONs in the arch_{enter,leave}_lazy_mmu_mode
-functions.  As Milton stated above, the check for batch->active on the
-way into the arch_enter_* function did generate lots of hits, the other
-warn_ons did not.
-
------><-------
-static inline void arch_enter_lazy_mmu_mode(void)
-{
-	struct ppc64_tlb_batch *batch = &get_cpu_var(ppc64_tlb_batch);
-
-//|-----WARN_ON(batch->active);     /* lots of hits if enabled */
-|-------WARN_ON(irqs_disabled());     /* nothing.... */
-|-------batch->active = 1;
-
-....
-
-
-static inline void arch_leave_lazy_mmu_mode(void)
-{
-|-------struct ppc64_tlb_batch *batch = &get_cpu_var(ppc64_tlb_batch);
-
-|-------WARN_ON(!batch->active);    /* nothing.....*/
-|-------WARN_ON(irqs_disabled());    /* nothing.... */
-
-....
-
-
-
-> 
-> milton
-> 
-> > 
-> > diff -aurp linux-2.6.33.5-rt23.orig/arch/powerpc/kernel/process.c linux-2.6.33.5-rt23.exp/arch/powerpc/kernel/process.c
-> > --- linux-2.6.33.5-rt23.orig/arch/powerpc/kernel/process.c	2010-06-21 11:41:34.402513904 -0500
-> > +++ linux-2.6.33.5-rt23.exp/arch/powerpc/kernel/process.c	2010-07-09 13:15:13.533269904 -0500
-> > @@ -304,10 +304,6 @@ struct task_struct *__switch_to(struct t
-> >  	struct thread_struct *new_thread, *old_thread;
-> >  	unsigned long flags;
-> >  	struct task_struct *last;
-> > -#if defined(CONFIG_PPC64) && defined (CONFIG_PREEMPT_RT)
-> > -	struct ppc64_tlb_batch *batch;
-> > -	int hadbatch;
-> > -#endif
-> >  
-> >  #ifdef CONFIG_SMP
-> >  	/* avoid complexity of lazy save/restore of fpu
-> > @@ -401,16 +397,6 @@ struct task_struct *__switch_to(struct t
-> >  		new_thread->start_tb = current_tb;
-> >  	}
-> >  
-> > -#ifdef CONFIG_PREEMPT_RT
-> > -	batch = &__get_cpu_var(ppc64_tlb_batch);
-> > -	if (batch->active) {
-> > -		hadbatch = 1;
-> > -		if (batch->index) {
-> > -			__flush_tlb_pending(batch);
-> > -		}
-> > -		batch->active = 0;
-> > -	}
-> > -#endif /* #ifdef CONFIG_PREEMPT_RT */
-> >  #endif
-> >  
-> >  	local_irq_save(flags);
-> > @@ -425,16 +411,13 @@ struct task_struct *__switch_to(struct t
-> >  	 * of sync. Hard disable here.
-> >  	 */
-> >  	hard_irq_disable();
-> > -	last = _switch(old_thread, new_thread);
-> > -
-> > -	local_irq_restore(flags);
-> >  
-> >  #if defined(CONFIG_PPC64) && defined(CONFIG_PREEMPT_RT)
-> > -	if (hadbatch) {
-> > -		batch = &__get_cpu_var(ppc64_tlb_batch);
-> > -		batch->active = 1;
-> > -	}
-> > +	arch_leave_lazy_mmu_mode();
-> >  #endif
-> > +	last = _switch(old_thread, new_thread);
-> > +
-> > +	local_irq_restore(flags);
-> >  
-> >  	return last;
-> >  }
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
+______________________________________________________________________
+This email has been scanned by the MessageLabs Email Security System.
+For more information please visit http://www.messagelabs.com/email 
+______________________________________________________________________
