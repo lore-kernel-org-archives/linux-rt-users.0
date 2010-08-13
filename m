@@ -1,201 +1,110 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
-Subject: RE: 2.6.18-rt7 on HP Z800
-Date: Fri, 13 Aug 2010 00:32:06 -0700
-Message-ID: <1281684726.7225.6.camel@sven.oceanvoyage.org>
-References: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B238@CARACALQ005.caracal01.greenstream.priv>
-	 <3E7FA6409BDA204EA3CF733DE7E0B0E10326B23C@CARACALQ005.caracal01.greenstream.priv>
-	 <4C5A7B3B.5030506@gmail.com>
-	 <3E7FA6409BDA204EA3CF733DE7E0B0E10326B24D@CARACALQ005.caracal01.greenstream.priv>
+From: jordan johnston <triplesquarednine@gmail.com>
+Subject: Re: 2.6.35 RT support roadmap
+Date: Fri, 13 Aug 2010 05:32:53 -0400
+Message-ID: <AANLkTiksuyBCcUER3dHPegW7zO7sNzserSOPkUwFDNHE@mail.gmail.com>
+References: <CD8FEF6F82F55744AA1ED2BE5E7D8FD2015184EE0B@dnce01.ent.ti.com>
+	<AANLkTimmCqNz+ZhSCqMGhaiCmW38hnjfkLV0ZU+e2gkX@mail.gmail.com>
+	<1281638311.7093.4.camel@marge.simson.net>
+	<4C645567.2080308@gmail.com>
+	<AANLkTikoUbL4Q8PNia38AByEfTY56Bqr5uVnyyNxvS1W@mail.gmail.com>
+	<1281679536.7356.8.camel@baracus>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Simpson, John (UK) (Contractor)" <john.simpson@mbda-systems.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Mike Galbraith <efault@gmx.de>,
+	Xianghua Xiao <xiaoxianghua@gmail.com>,
+	"Walzer, Frank" <f-walzer@ti.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-px0-f174.google.com ([209.85.212.174]:50351 "EHLO
-	mail-px0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754130Ab0HMHcL (ORCPT
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:41201 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934042Ab0HMJcz convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Aug 2010 03:32:11 -0400
-Received: by pxi10 with SMTP id 10so714703pxi.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Aug 2010 00:32:10 -0700 (PDT)
-In-Reply-To: <3E7FA6409BDA204EA3CF733DE7E0B0E10326B24D@CARACALQ005.caracal01.greenstream.priv>
+	Fri, 13 Aug 2010 05:32:55 -0400
+Received: by eyg5 with SMTP id 5so41205eyg.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Aug 2010 02:32:54 -0700 (PDT)
+In-Reply-To: <1281679536.7356.8.camel@baracus>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2010-08-13 at 08:27 +0100, Simpson, John (UK) (Contractor)
-wrote:
-> For info. I can't get my HP Z800 to boot with 2.6.24-rt1
+On Fri, Aug 13, 2010 at 2:05 AM, Sven-Thorsten Dietrich
+<thebigcorporation@gmail.com> wrote:
+> On Thu, 2010-08-12 at 23:17 -0400, jordan johnston wrote:
+>> > Google did Android and even Palm woke up (just long enough to watc=
+h its own
+>> > demise).
+>> >
+>> > The rest is history.
+>> >
+>> > Except of course putting the RT Kernel in Android.
+>>
+>> As i understand it, many Android users are using the BFS patchset, a=
+nd
+>> have been for a while. BFS pretty much does what "the end result of
+>> using the rt-patches" accomplish, minus rtirq, spin-locks, etc. You
+>> will get the desired
+>> responsiveness that using RT would give you.
+>>
+>
+> I assume that it might well depend to some extent on whether I am
+> pumping market data feeds into a processing model using 512 CPUs or
+> playing a game on my Nexus-1, but I won't disagree agree with you on =
+the
+> importance of task-appropriate efficient scheduling, appropriate
+> workload partitioning, and all that jazz.
 
-try the last of the .24s not the first
+agreed, 100%. the "case in point" here is i was commenting on android.
+When talking on the scale of 512 CPUs,
+RT is the choice hands down. i should have said "You will get the
+desired responsiveness that using RT would give you ON ANDROID".
 
-Sven
+>> Im pretty sure that is why Zen-kernel has a git repository "very
+>> specifically" for android (BFS is the default kernel setting). I'm
+>> sure there are other goodies for android in there too.
+>>
+>> www.zen-kernel.org
+>>
+>> I don't know much about the Android repo's state (as it's fairly new=
+).
+>> but worth a
+>> look for your "rt-usage" (ie. performance/responsiveness) for androi=
+d.
+>> =A0As i do not own an Android, i have not tested it, but i have talk=
+ed
+>> with people who do..
+>>
+>> I'm waiting to see what 2.6.35 holds for RT.... but personally i am
+>> using BFS and 2.6.34 with a lot of performance tuning (a good deal o=
+f
+>> time spent analyzing/tuning) and i am yielding better results not
+>> using the upstream rt-patches.
+>> we will see what happens in 2.6.35/36....
+>>
+>
+> Sounds good. I know there has been some extensive discussion about th=
+e
+> interpretation and applicability of the various scheduler performance
+> metrics, including special examination of BFS vs. CFS - and I definit=
+ely
+> think that has been hashed out in gore and detail already.
+>
+> But if you have some pretty plots that characterize performance for y=
+our
+> platform, vs. Preempt-RT, I am always interested in looking at pictur=
+es
+> and numbers about what's happening on the other side of the fence.
 
->  or with a
-> vanilla 2.6.33.5. (kernel panic after various combinations of not
-> finding logical volumes etc.) It's running adequately with 2.6.18-rt7. I
-> suspect some weirdness with the LSI SAS1068E (PCI-Express Fusion-MPT
-> SAS) disk controller, but frankly I'm clueless and leaving this in case
-> it might be relevant to someone else's problems.
-> 
-> J  
-> 
-> -----Original Message-----
-> From: Sven-Thorsten Dietrich [mailto:sven@thebigcorporation.com] 
-> Sent: 05 August 2010 09:50
-> To: Simpson, John (UK) (Contractor)
-> Cc: linux-rt-users@vger.kernel.org
-> Subject: Re: 2.6.18-rt7 on HP Z800
-> 
-> On 08/05/2010 01:09 AM, Simpson, John (UK) (Contractor) wrote:
-> >  
-> > I've had no response to this question. Can anyone help? I'm also 
-> > baffled as to why the smp_affinity stuff doesn't work.
-> >
-> >   
-> 
-> 2.6.18. So that was as Pi was being merged, but HRT wasn't merged yet?
-> 
-> 
-> And NVIDIA didn't care about RT, that really didn't happen till MRG.
-> 
-> And there was also work being done on cpusets at the time.
-> 
-> To say the least, you have a lifetime's worth of back-porting to do.
-> 
-> I would suggest referencing a MontaVista 2.6.18 Kernel for your bug
-> fixes.
-> Deepak was still there and did a good job keeping up with the patches.
-> 
-> Next option, move to 2.6.24, that was VERY well tested, and by then the
-> cpu shielding business was getting mainstream, and all the things you
-> mention should work pretty well.
-> 
-> I for one spent 3 years of my life bogged on a 2.6.22RT Kernel, and am
-> sure glad to be done with that.
-> 
-> Cheers.
-> 
-> Sven
-> 
-> > -----Original Message-----
-> > From: linux-rt-users-owner@vger.kernel.org
-> > [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Simpson, 
-> > John
-> > (UK) (Contractor)
-> > Sent: 04 August 2010 09:30
-> > To: linux-rt-users@vger.kernel.org
-> > Subject: 2.6.18-rt7 on HP Z800
-> >
-> >
-> >                *** WARNING ***
-> >
-> > This mail has originated outside your organization, either from an 
-> > external partner or the Global Internet.
-> >      Keep this in mind if you answer this message. 
-> >
-> > As previously posted, I'm using 2.6.18 for compatibility with third 
-> > party drivers for an FPGA card. This a scene-generation app using an 
-> > Nvidia Quadro FX5800 requiring a high-frame rate with no dropped 
-> > frames; hence the need for RT (we've had previous success using 
-> > proprietary stuff but thought we'd give this a go).
-> >  
-> > It's working fine (with very occasional crashes, most of which seem to
-> 
-> > have been referred to in later RT kernel fixes, but we can put up with
-> 
-> > it).
-> >  
-> > Some notes for posterity:
-> >  
-> >     Turn off irqbalance service
-> >     Deselect power management stuff in kernel
-> >     Select SATA IDE emulation in BIOS (otherwise no SCSI/CD stuff)
-> >     Rebuilt Broadcom tg3 and set pci=nomsi for network drivers to 
-> > function
-> >     isolcpus used on boot
-> >     App run on isolated cpus using 'taskset'
-> >         
-> > Like I said, it works fine, I haven't seen any dropped frames yet, but
-> 
-> > there's stuff I don't understand from using other RT OSs...
-> >  
-> >     All interrupts run on CPU0, all the time, there's no requirement 
-> > to use smp_affinity, in fact if you do the whole thing grinds to a 
-> > halt.  I guess this is fine.
-> >     The isolcpus option seems to work fine except for the following 
-> > running on all eight CPUs:
-> >         migration
-> >         posix_cpu_timer
-> >         softirq-high
-> >         softirq-timer
-> >         softirq-net-tx
-> >         softirq-net-rx
-> >         softirq-block
-> >         softirq-tasklet
-> >         softirq-hrtimer
-> >         softirq-rcu
-> >         watchdog
-> >         desched
-> >         aio
-> >         cqueue
-> >         kblockd
-> >         events
-> >  
-> >     I guess this is preemptible stuff which must run per cpu, but 
-> > there's a bit in a Red Hat page 
-> > http://rt.et.redhat.com/wiki/index.php?title=RHEL-RT_AffinityHowto&pri
-> > nt able=yes (starting "In MRG Realtime") which apparently refers to 
-> > these elements in their RT kernel suggesting that these should be 
-> > dealt with (but then doesn't seem to say how).  Do I need to do 
-> > anything about these processes?
-> >  
-> > Thanks
-> >  
-> > John
-> >  
-> >
-> > ********************************************************************
-> > This email and any attachments are confidential to the intended 
-> > recipient and may also be privileged. If you are not the intended 
-> > recipient please delete it from your system and notify the sender. You
-> 
-> > should not copy it or use it for any purpose nor disclose or 
-> > distribute its contents to any other person.
-> >
-> > MBDA UK Limited, a company registered in England and Wales, 
-> > registration number 3144919 whose registered office is at Six Hills 
-> > Way, Stevenage, Hertfordshire, SG1 2DA, England.
-> > ********************************************************************
-> >
-> > ______________________________________________________________________
-> > This email has been scanned by the MessageLabs Email Security System.
-> > For more information please visit http://www.messagelabs.com/email 
-> > ______________________________________________________________________
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe 
-> > linux-rt-users" in the body of a message to majordomo@vger.kernel.org 
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >
-> > ______________________________________________________________________
-> > This email has been scanned by the MessageLabs Email Security System.
-> > For more information please visit http://www.messagelabs.com/email 
-> > ______________________________________________________________________
-> >
-> > ______________________________________________________________________
-> > This email has been scanned by the MessageLabs Email Security System.
-> > For more information please visit http://www.messagelabs.com/email 
-> > ______________________________________________________________________
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe 
-> > linux-rt-users" in the body of a message to majordomo@vger.kernel.org 
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >   
-> 
-> 
-> ______________________________________________________________________
-> This email has been scanned by the MessageLabs Email Security System.
-> For more information please visit http://www.messagelabs.com/email 
-> ______________________________________________________________________
+Of course, i wasn't interested in getting into the CFS/BFS war. they
+are both valid and useful.
+I also think the existence of both, is a good thing. if anything it's
+healthy for development.
+I do plan to document some of my testing/usage but not until i get my
+new 3u rack up and running.
 
-
+jordan
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
