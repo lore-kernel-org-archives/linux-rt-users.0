@@ -1,57 +1,96 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: "yum install ...." based instruction on building a RT kernel.
-Date: Sun, 19 Sep 2010 16:00:08 -0400
-Message-ID: <AANLkTikjdFvAn2QcYf6o+C4JNSvkqC=sB0z0dNmVWBfv@mail.gmail.com>
-References: <4C92A00C.6050401@atl.lmco.com>
-	<AANLkTi=eaPvCZmecBKT_d0C8YunJr7L6M8A7Y9pEiQK_@mail.gmail.com>
-	<AANLkTi=GbDU7fKh9LvCEpjhSSMFF0syCqJVuqUERVBEJ@mail.gmail.com>
-	<4C936152.5000505@64studio.com>
-	<AANLkTint6iHc6DPeEVpKd0ER0XsYMDK=0yiekHGkWtWF@mail.gmail.com>
-	<20100919104916.63967cc4@riff>
-	<AANLkTimgte_c6rC=okyH9Oo-NSOERqAPeOHyyd1BoWvG@mail.gmail.com>
-	<AANLkTi=VV+OMfbi1tvwET9DZcG7p_a=4R6kPWSfuqrMK@mail.gmail.com>
+From: Joakim Hernberg <jbh@alchemy.lu>
+Subject: rt patch for closed NVIDIA driver.
+Date: Mon, 16 Aug 2010 09:55:35 +0200
+Message-ID: <201008160955.35490.jbh@alchemy.lu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Clark Williams <williams@redhat.com>,
-	Daniel James <daniel@64studio.com>,
-	John Kacur <jkacur@redhat.com>,
-	Gautam Thaker <gautam.h.thaker@lmco.com>,
-	linux-rt-users@vger.kernel.org
-To: Bernardo Barros <bernardobarros2@gmail.com>
+Content-Type: Multipart/Mixed;
+  boundary="Boundary-00=_37OaMr5THcFgN+c"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ey0-f174.google.com ([209.85.215.174]:39735 "EHLO
-	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752207Ab0ISUAJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 19 Sep 2010 16:00:09 -0400
-Received: by eyb6 with SMTP id 6so1411278eyb.19
-        for <linux-rt-users@vger.kernel.org>; Sun, 19 Sep 2010 13:00:08 -0700 (PDT)
-In-Reply-To: <AANLkTi=VV+OMfbi1tvwET9DZcG7p_a=4R6kPWSfuqrMK@mail.gmail.com>
+Received: from apollo.athome.lu ([80.90.45.149]:55628 "EHLO apollo.valain.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751599Ab0IUXUx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 21 Sep 2010 19:20:53 -0400
+Received: from tor.localnet (vodsl-8828.vo.lu [85.93.201.124])
+	(authenticated bits=0)
+	by apollo.valain.com (8.13.1/8.13.1) with ESMTP id o7G7tZA0010719
+	for <linux-rt-users@vger.kernel.org>; Mon, 16 Aug 2010 09:55:36 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey Bernardo,
+--Boundary-00=_37OaMr5THcFgN+c
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-> Could you share your optimizations with us? I'm also runnins 2.6.34
-> here (2.6.34.6-54.fc13.x86_64),
-> I have problems with my rt-kernel, it freezes my system (thinkpad
-> w510). Maybe something with video card or whatever, but I don't have
-> the time to really investigate what is happening, so I must get the
-> best from the generic kernel for now :-)
+Thought i'd post this patch in case someone needs it.
 
-yes, i can do that.  I am however, heading off to band practice. I
-will also need to dig up some resources(web-links) that will help you.
-The only things i wont be able to help you that much with, is what
-CFLAG optimizations to use with x86_64. Although i do have a 64bit
-install on my deksotp. it is my 32bit platform that is highly-tuned,
-as 32bit is better for my Wine/VST usage. Most of the settings that i
-use will work fine though.
-Can i assume that you are fairly tech-savvy, or have a good linux
-knowledge base????
+---
 
-First, i will recommend checking out Zen-kernel (www.zen-kernel.org) -
-* if you do not want to have to patch the kernel several times over,
-this is a great option *
-these guys include all the non-upstream stuff, that will be required/useful...
+   Jack
 
-jordan
+--Boundary-00=_37OaMr5THcFgN+c
+Content-Type: text/x-patch;
+  charset="UTF-8";
+  name="0001-Patch-nvidia-for-rt-.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+	filename="0001-Patch-nvidia-for-rt-.patch"
+
+=46rom bff65cf087bae512ae9f485f4556e89d304f99a9 Mon Sep 17 00:00:00 2001
+=46rom: Joakim B Hernberg <jbh@alchemy.lu>
+Date: Sun, 8 Aug 2010 12:39:34 +0200
+Subject: [PATCH] Patch nvidia proprietary video driver 256.44 for rt patche=
+d kernel 2.6.33.7-rt29
+
+=2D--
+ kernel/nv-linux.h |   20 ++++++++++----------
+ 1 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/kernel/nv-linux.h b/kernel/nv-linux.h
+index 3ba43e7..e95460a 100644
+=2D-- a/kernel/nv-linux.h
++++ b/kernel/nv-linux.h
+@@ -218,16 +218,16 @@ extern int nv_pat_mode;
+ #endif
+=20
+ #if defined(CONFIG_PREEMPT_RT)
+=2Dtypedef atomic_spinlock_t         nv_spinlock_t;
+=2D#define NV_SPIN_LOCK_INIT(lock)   atomic_spin_lock_init(lock)
+=2D#define NV_SPIN_LOCK_IRQ(lock)    atomic_spin_lock_irq(lock)
+=2D#define NV_SPIN_UNLOCK_IRQ(lock)  atomic_spin_unlock_irq(lock)
+=2D#define NV_SPIN_LOCK_IRQSAVE(lock,flags) atomic_spin_lock_irqsave(lock,f=
+lags)
++typedef raw_spinlock_t         nv_spinlock_t;
++#define NV_SPIN_LOCK_INIT(lock)   raw_spin_lock_init(lock)
++#define NV_SPIN_LOCK_IRQ(lock)    raw_spin_lock_irq(lock)
++#define NV_SPIN_UNLOCK_IRQ(lock)  raw_spin_unlock_irq(lock)
++#define NV_SPIN_LOCK_IRQSAVE(lock,flags) raw_spin_lock_irqsave(lock,flags)
+ #define NV_SPIN_UNLOCK_IRQRESTORE(lock,flags) \
+=2D  atomic_spin_unlock_irqrestore(lock,flags)
+=2D#define NV_SPIN_LOCK(lock)        atomic_spin_lock(lock)
+=2D#define NV_SPIN_UNLOCK(lock)      atomic_spin_unlock(lock)
+=2D#define NV_SPIN_UNLOCK_WAIT(lock) atomic_spin_unlock_wait(lock)
++  raw_spin_unlock_irqrestore(lock,flags)
++#define NV_SPIN_LOCK(lock)        raw_spin_lock(lock)
++#define NV_SPIN_UNLOCK(lock)      raw_spin_unlock(lock)
++#define NV_SPIN_UNLOCK_WAIT(lock) raw_spin_unlock_wait(lock)
+ #else
+ typedef spinlock_t                nv_spinlock_t;
+ #define NV_SPIN_LOCK_INIT(lock)   spin_lock_init(lock)
+@@ -791,7 +791,7 @@ static inline int nv_execute_on_all_cpus(void (*func)(v=
+oid *info), void *info)
+ }
+=20
+ #if defined(CONFIG_PREEMPT_RT)
+=2D#define NV_INIT_MUTEX(mutex) semaphore_init(mutex)
++#define NV_INIT_MUTEX(mutex) sema_init(mutex,1)
+ #else
+ #if !defined(__SEMAPHORE_INITIALIZER) && defined(__COMPAT_SEMAPHORE_INITIA=
+LIZER)
+ #define __SEMAPHORE_INITIALIZER __COMPAT_SEMAPHORE_INITIALIZER
+=2D-=20
+1.7.2.1
+
+
+--Boundary-00=_37OaMr5THcFgN+c--
