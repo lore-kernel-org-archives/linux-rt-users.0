@@ -1,67 +1,79 @@
-From: Mark Knecht <markknecht@gmail.com>
-Subject: Re: Query regarding 2.6.335 RT and Non-RT performance
-Date: Tue, 17 Aug 2010 08:54:40 -0700
-Message-ID: <AANLkTimJUY3v47AxTC5MVA8outghpSYhXPDnnALE_Wqk@mail.gmail.com>
-References: <AANLkTik4U-ua1zi5r5n4uw8oA-cQOO0zev__OuCto7CP@mail.gmail.com>
-	<AANLkTimbQh3rTKnK5cri10_wLJ8BJfUnf54iZ1ENLyuN@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: 2.6.35 RT support roadmap
+Date: Tue, 17 Aug 2010 12:00:31 -0500
+Message-ID: <20100817120031.4b1f779f@riff>
+References: <CD8FEF6F82F55744AA1ED2BE5E7D8FD2015184EE0B@dnce01.ent.ti.com>
+	<AANLkTimmCqNz+ZhSCqMGhaiCmW38hnjfkLV0ZU+e2gkX@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Manikandan Ramachandran <crmanik@gmail.com>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/hjTy6UlirbyeS7+CEHgoecc"; protocol="application/pgp-signature"
+Cc: "Walzer, Frank" <f-walzer@ti.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Xianghua Xiao <xiaoxianghua@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ey0-f174.google.com ([209.85.215.174]:35647 "EHLO
-	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751974Ab0HQPyo convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Aug 2010 11:54:44 -0400
-Received: by eyg5 with SMTP id 5so2041356eyg.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Aug 2010 08:54:42 -0700 (PDT)
-In-Reply-To: <AANLkTimbQh3rTKnK5cri10_wLJ8BJfUnf54iZ1ENLyuN@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:51595 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757510Ab0HQRAo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Aug 2010 13:00:44 -0400
+In-Reply-To: <AANLkTimmCqNz+ZhSCqMGhaiCmW38hnjfkLV0ZU+e2gkX@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Aug 16, 2010 at 11:07 PM, Manikandan Ramachandran
-<crmanik@gmail.com> wrote:
-> :
->>
->> Hello All,
->>
->> =C2=A0=C2=A0=C2=A0 I=C2=A0created a very simple program which has hi=
-gher priority than normal tasks and runs a tight loop. Under same test =
-environment I ran this program=C2=A0on both non-rt and rt=C2=A02.6.33.5=
- kernel.=C2=A0=C2=A0To my suprise I see that performance of non-RT=C2=A0=
-kernel is better than RT. non-RT=C2=A0kernel took 3 sec and 366156 usec=
- while RT=C2=A0kernel took about 3 sec and 418011 usec.Can someone plea=
-se explain why the performance of non-rt kernel is better than rt kerne=
-l? From the face of the test result, I feel RT has more overhead,Is the=
-re=C2=A0any configuration that I could do to bring down the overhead?
->>
+--Sig_/hjTy6UlirbyeS7+CEHgoecc
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-I'm not a programmer so I'll leave it to someone else to comment on
-the code. (If at all.)
+On Thu, 12 Aug 2010 09:38:18 -0500
+Xianghua Xiao <xiaoxianghua@gmail.com> wrote:
 
-In my mind the purpose of the rt-kernel is not to 'go faster' but
-rather to manage the __latency__ on high priority events. I use
-rt-sources for my real-time audio system. I need low latency to my
-sound cards. With rt-sources I can set the priority of sound cards
-higher than other parts of the hardware system, and with the priority
-higher when they need to send or receive audio data it happens in a
-known amount of time. Without rt-sources they may want access to the
-system but a disk drive or the network can get in the way and cause
-delays.
-
-If your program is measuring time around a loop getting time of day
-then that's not likely a good measurement. If you measure how much the
-interrupt latency changes when a sound card interrupts and asks for
-service then that's probably more of where you'll see the value.
-
-Again, not a programmer.
-
-Cheers,
-Mark
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+> On Tue, Aug 10, 2010 at 2:43 AM, Walzer, Frank <f-walzer@ti.com> wrote:
+> > Hi Folks,
+> >
+> > What is the plan for kernel 2.6.35 support with the RT patch?
+> >
+> > I know this is a difficult (and unliked) question but I would like at l=
+east to get some idea. My management is pushing me for dates when we could =
+run some trials.
+> > If nobody is looking at that we have to come up with some other plan.
+> >
+> > Thanks a lot.
+> >
+> > Frank
+> >
+> >
+> > Texas Instruments Deutschland GmbH, Haggertystr. 1, D-85356 Freising. A=
+mtsgericht M=FCnchen HRB 40960. Gesch=E4ftsf=FChrer: Dr. Wolfram Tietscher.=
+ Vorsitzender des Aufsichtsrates: Edgar Frank
+> >
+> >
+> >
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+> >
+>=20
+> Yes it would be great if we can know which kernel release will have rt
+> patch for it. So far it seems to like a myth.
+
+When I last talked with Thomas (a bit over a week ago) the plan was to
+release an rt patch for the 2.6.35 tree. My guess is that when Thomas
+gets back (he's on vacation this week), he will forward port the current
+2.6.33.7-rt29 to 2.6.35 and we'll have a new -rt patch.
+
+Clark
+
+--Sig_/hjTy6UlirbyeS7+CEHgoecc
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.14 (GNU/Linux)
+
+iEYEARECAAYFAkxqwDcACgkQHyuj/+TTEp1bfACgtbrVPguLbVW44kLdItS42WsO
+XhgAnRp5FI1RYYkzIEU4Rz+5KbgRvQUK
+=VgvL
+-----END PGP SIGNATURE-----
+
+--Sig_/hjTy6UlirbyeS7+CEHgoecc--
