@@ -1,75 +1,100 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Query regarding 2.6.335 RT and Non-RT performance
-Date: Thu, 19 Aug 2010 12:14:55 -0700
-Message-ID: <4C6D82AF.7020806@gmail.com>
-References: <AANLkTik4U-ua1zi5r5n4uw8oA-cQOO0zev__OuCto7CP@mail.gmail.com>	<AANLkTimbQh3rTKnK5cri10_wLJ8BJfUnf54iZ1ENLyuN@mail.gmail.com>	<4C6AC4A6.4080407@redhat.com>	<AANLkTikM5sMtOmu959EZkXUxr=zX8L2HwK52L5JjAK59@mail.gmail.com>	<4C6AE6D7.2060006@us.ibm.com>	<AANLkTimzwSq_8A6vQftOUptpSkhY5nbc37ihx=r=Ff33@mail.gmail.com>	<4C6D46C7.5020209@us.ibm.com>	<1282233963.31855.10.camel@baracus> <AANLkTikFMnr=5=rgU5V7cny5j=ZNLVUJMEewvAOpbpEx@mail.gmail.com>
+From: Jeremy Brown <jhbrown@repinvariant.com>
+Subject: why does __setup_irq use a raw spinlock? (Was: Trouble booting
+ PREEMPT_RT kernel on ARM platform, 2.6.33)
+Date: Fri, 20 Aug 2010 17:14:38 -0700
+Message-ID: <AANLkTin7egyGVK_bVM3XsBhJt=P8cKoALGxaQAemL9sA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Nivedita Singhvi <niv@us.ibm.com>,
-	David Sommerseth <davids@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: Manikandan Ramachandran <crmanik@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:33350 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751475Ab0HSTPB (ORCPT
+Received: from mail-ww0-f44.google.com ([74.125.82.44]:44023 "EHLO
+	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750849Ab0HUAOk convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Aug 2010 15:15:01 -0400
-Received: by fxm13 with SMTP id 13so1333804fxm.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Aug 2010 12:15:00 -0700 (PDT)
-In-Reply-To: <AANLkTikFMnr=5=rgU5V7cny5j=ZNLVUJMEewvAOpbpEx@mail.gmail.com>
+	Fri, 20 Aug 2010 20:14:40 -0400
+Received: by wwi17 with SMTP id 17so4795854wwi.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Aug 2010 17:14:38 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  On 08/19/2010 11:15 AM, Manikandan Ramachandran wrote:
-> On Thu, Aug 19, 2010 at 9:06 AM, Sven-Thorsten Dietrich
-> <thebigcorporation@gmail.com>  wrote:
->> On Thu, 2010-08-19 at 07:59 -0700, Nivedita Singhvi wrote:
->>> On 08/17/2010 03:22 PM, Manikandan Ramachandran wrote:
->>>
->>>
->>>> I see a scenario where higher priority task is ready to run but lower
->>>> priority IRQ thread is hogging the cpu. Please see the timeline log
->>>> below:
->>>>
->>>> GIVE ffff0c1c [Comment: High priority IRQ thread wakes up high
->>>> priority process at jiffy 0xffff0c1c]
->>>> **ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c23**##ffff0c23##**ffff0c23**##ffff0c23##**ffff0c23**##ffff0c24##**ffff0c24**##ffff0c24##**ffff0c24**##ffff0c24##
->>>> [Comment: Low priority IDE[ide_intr] handler hogs CPU for almost 3 ms]
->>>> GOTffff0c26 [Comment: High priority task wakes up after 10 ms!!]
->>>>
->>>> I fail to understand why scheduler failed to schedule high priority
->>>> task 10 times in a row. FYI, I have put IDE thread to SCHED_NORMAL
->>>> while high priority thread and task to SCHED_FIFO.
->>> Not really sure from the above what's going on, what priorities
->>> you are running at, etc.
->>>
->>> You might want look at the output of "ps -eLo pid,rtprio,policy,comm"
->>> to see if you can confirm your scheduler attributes.
->>>
->> Also, use the tracing facilities, as its hard to understand your time
->> line and the source of it.
->>
->> I think if your priorities are right, your kernel config is right, and
->> your measurement tool doesn't interfere, 10 ms latency is incredibly
->> unlikely.
->>
->>
->>> thanks,
->>> Nivedita
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
->>
-> I see many tracing options. Any trace config in particular?
+We're using kernel 2.6.33.5 with corresponding 2.6.33.5-rt25 patches.
+__setup_irq in request_kernel/irq/manage.c contains a block guarded by
+a raw spinlock, with a preceding comment noting "The following block
+of code has to be executed atomically".   Why is this so?
+
+I ask because during RTC setup, this atomic region is causing calls to
+twl4030_sih_* functions to fail on my BeagleBoard platform (see stack
+trace below from a previous thread.).  As Gowrishankar noted in the
+previous thread, those routines use (non-raw) spinlocking.  As Thomas
+noted, they also call queue_work,  which in turn relies on non-raw
+spinlocking, so just patching up the twl4030_sih_* functions to use
+raw calls doesn't solve the problem.  I'm presently experimenting
+with:
+
+a) pulling the calls to__irq_set_trigger and desc->chip->startup to a
+spot after the call to raw_spin_unlock_irqrestore, or
+
+b) making the atomic region use non-raw locking.
+
+However, I'm not really sure what the consequences of either approach
+are likely to be.  I'd be grateful for any thoughts and/or guidance
+that will keep me from wasting time and/or breaking things in subtle
+and confusing ways.
+
+Thanks in advance,
+
+Jeremy
+
+
+On Tue, Jul 20, 2010 at 3:26 PM, Jeremy Brown <jhbrown@repinvariant.com=
+> wrote:
+> We're trying to get a PREEMPT_RT kernel running on a BeagleBoard C4
+> (OMAP3 Arm architecture). =A0We're using kernel version 2.6.33, with
+> patches from
+> patch-2.6.33.6-rt26.gz
 >
+> On boot, we start seeing messages of this form:
 >
-
-Steve's latency tracing can generate a time-stamped stack dump of the 
-Kernel code-path that blocks the RT task you are trying to run.
-
-
-
+> ----
+> [ 4528.227294] BUG: sleeping function called from invalid context at
+> kernel/rtmutex.c:684
+> [ 4528.227294] pcnt: 1 0 in_atomic(): 1, irqs_disabled(): 128, pid:
+> 223, name: modprobe
+> [ 4528.227355] [<c0044490>] (unwind_backtrace+0x0/0xe8) from
+> [<c04cb4e4>] (rt_spin_lock+0x30/0x5c)
+> [ 4528.227386] [<c04cb4e4>] (rt_spin_lock+0x30/0x5c) from [<c032e3b0>=
+]
+> (twl4030_sih_set_type+0x3c/0xac)
+> [ 4528.227416] [<c032e3b0>] (twl4030_sih_set_type+0x3c/0xac) from
+> [<c00aa944>] (__irq_set_trigger+0x34/0x88)
+> [ 4528.227447] [<c00aa944>] (__irq_set_trigger+0x34/0x88) from
+> [<c00ab2ec>] (__setup_irq+0x34c/0x3c0)
+> [ 4528.227478] [<c00ab2ec>] (__setup_irq+0x34c/0x3c0) from
+> [<c00ab430>] (request_threaded_irq+0xd0/0x148)
+> [ 4528.227508] [<c00ab430>] (request_threaded_irq+0xd0/0x148) from
+> [<bf021770>] (twl_rtc_probe+0x104/0x1fc [rtc_twl])
+> [ 4528.227539] [<bf021770>] (twl_rtc_probe+0x104/0x1fc [rtc_twl]) fro=
+m
+> [<c0324e2c>] (platform_drv_probe+0x18/0x1c)
+> [ 4528.227569] [<c0324e2c>] (platform_drv_probe+0x18/0x1c) from
+> [<c0323eec>] (driver_probe_device+0x98/0x194)
+> [ 4528.227600] [<c0323eec>] (driver_probe_device+0x98/0x194) from
+> [<c0324074>] (__driver_attach+0x8c/0x90)
+> [ 4528.227600] [<c0324074>] (__driver_attach+0x8c/0x90) from
+> [<c0323744>] (bus_for_each_dev+0x60/0x8c)
+> [ 4528.227630] [<c0323744>] (bus_for_each_dev+0x60/0x8c) from
+> [<c0323014>] (bus_add_driver+0xa0/0x240)
+> [ 4528.227661] [<c0323014>] (bus_add_driver+0xa0/0x240) from
+> [<c0324324>] (driver_register+0x78/0x13c)
+> [ 4528.227661] [<c0324324>] (driver_register+0x78/0x13c) from
+> [<c003e3c0>] (do_one_initcall+0x30/0x1c0)
+> [ 4528.227691] [<c003e3c0>] (do_one_initcall+0x30/0x1c0) from
+> [<c0097e40>] (sys_init_module+0xc4/0x1f8)
+> [ 4528.227722] [<c0097e40>] (sys_init_module+0xc4/0x1f8) from
+> [<c003ea60>] (ret_fast_syscall+0x0/0x2c)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
