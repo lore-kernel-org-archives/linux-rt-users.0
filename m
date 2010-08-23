@@ -1,55 +1,112 @@
-From: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
-Subject: Re: Query regarding 2.6.335 RT and Non-RT performance
-Date: Mon, 23 Aug 2010 19:56:32 +0530
-Message-ID: <4C728518.3030906@linux.vnet.ibm.com>
-References: <AANLkTik4U-ua1zi5r5n4uw8oA-cQOO0zev__OuCto7CP@mail.gmail.com> <AANLkTimbQh3rTKnK5cri10_wLJ8BJfUnf54iZ1ENLyuN@mail.gmail.com> <4C6AC4A6.4080407@redhat.com> <AANLkTikM5sMtOmu959EZkXUxr=zX8L2HwK52L5JjAK59@mail.gmail.com> <4C6AE6D7.2060006@us.ibm.com> <AANLkTimzwSq_8A6vQftOUptpSkhY5nbc37ihx=r=Ff33@mail.gmail.com>
+From: Agustin Ferrin Pozuelo <agustin.ferrin@cgglobal.com>
+Subject: 2.6.33.7-rt29 PREEMPT_RT worse latency than PREEMPT_DESKTOP on AT91?
+Date: Mon, 23 Aug 2010 17:39:20 +0100
+Message-ID: <4C72A438.2080301@cgglobal.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Nivedita Singhvi <niv@us.ibm.com>,
-	David Sommerseth <davids@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: Manikandan Ramachandran <crmanik@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e23smtp09.au.ibm.com ([202.81.31.142]:34394 "EHLO
-	e23smtp09.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751480Ab0HWO0l (ORCPT
+Received: from edge.cgglobal.com ([202.54.16.167]:51626 "EHLO
+	edge.cgglobal.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751579Ab0HWQjf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Aug 2010 10:26:41 -0400
-Received: from d23relay04.au.ibm.com (d23relay04.au.ibm.com [202.81.31.246])
-	by e23smtp09.au.ibm.com (8.14.4/8.13.1) with ESMTP id o7NEQeEs001431
-	for <linux-rt-users@vger.kernel.org>; Tue, 24 Aug 2010 00:26:40 +1000
-Received: from d23av02.au.ibm.com (d23av02.au.ibm.com [9.190.235.138])
-	by d23relay04.au.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o7NEQdIi1523956
-	for <linux-rt-users@vger.kernel.org>; Tue, 24 Aug 2010 00:26:39 +1000
-Received: from d23av02.au.ibm.com (loopback [127.0.0.1])
-	by d23av02.au.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id o7NEQcHS032129
-	for <linux-rt-users@vger.kernel.org>; Tue, 24 Aug 2010 00:26:39 +1000
-In-Reply-To: <AANLkTimzwSq_8A6vQftOUptpSkhY5nbc37ihx=r=Ff33@mail.gmail.com>
+	Mon, 23 Aug 2010 12:39:35 -0400
+Received: from cgglobal.com ([192.168.1.7])
+	by edge.cgglobal.com (8.14.1/8.14.1) with ESMTP id o7NGdVc6005311
+	for <linux-rt-users@vger.kernel.org>; Mon, 23 Aug 2010 22:09:31 +0530
+Received: from mail.microsol.ie by cgglobal.com (MDaemon PRO v9.6.6)
+	with ESMTP id md50026552261.msg
+	for <linux-rt-users@vger.kernel.org>; Mon, 23 Aug 2010 22:08:44 +0530
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wednesday 18 August 2010 03:52 AM, Manikandan Ramachandran wrote:
-> I see a scenario where higher priority task is ready to run but lower
-> priority IRQ thread is hogging the cpu. Please see the timeline log
-> below:
->
->    
-Can you try turning on RCU_CPU_STALL_DETECTION to get any trace
-which might have hogged the cpu too long. Also make sure that
-sirq-rcu is running at little more prio than your high prio task.
+Hello,
 
-Thanks,
-Gowri
-> GIVE ffff0c1c [Comment: High priority IRQ thread wakes up high
-> priority process at jiffy 0xffff0c1c]
-> **ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c21##**ffff0c21**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c22**##ffff0c22##**ffff0c23**##ffff0c23##**ffff0c23**##ffff0c23##**ffff0c23**##ffff0c24##**ffff0c24**##ffff0c24##**ffff0c24**##ffff0c24##
-> [Comment: Low priority IDE[ide_intr] handler hogs CPU for almost 3 ms]
-> GOTffff0c26 [Comment: High priority task wakes up after 10 ms!!]
->
-> I fail to understand why scheduler failed to schedule high priority
-> task 10 times in a row. FYI, I have put IDE thread to SCHED_NORMAL
-> while high priority thread and task to SCHED_FIFO.
->
->    
+I am fine tuning the configuration for an ARM system derived from=20
+AT91SAM9263-EK.
 
+My goal is to minimize latency, and I am using "cyclictest" from=20
+rt-tools v0.78 for measuring it.
+
+I get consistently better latency with PREEMPT_DESKTOP over what I get=20
+with PREEMPT_RT. This is an example for a very simple test run, which=20
+reflects the overall results I am getting:
+
+    ### PREEMPT-RT, HRT, no NO_HZ, no RTC, no USE_SLOW_CLOCK
+
+    root@at91sam9263cpc:~# time cyclictest -i 700000 -r -p 80 -l 33
+    Clock resolution: 0.000000001 (s.ns)
+    policy: fifo: loadavg: 0.11 0.10 0.04 1/49 884
+
+    T: 0 (  861) P:80 I:700000 C:     33 Min:    370 Act:  627 Avg:  43=
+7 Max:     627
+    real	0m 23.51s
+    user	0m 0.38s
+    sys	0m 2.20s
+
+    ### PREEMPT-DESKTOP (no RT), HRT, no NO_HZ, no USE_SLOW_CLOCK
+    root@at91sam9263cpc:~# time cyclictest -i 700000 -r -p 80 -l 33
+    Clock resolution: 0.000000001 (s.ns)
+    policy: fifo: loadavg: 0.24 0.08 0.03 1/46 600
+
+    T: 0 (  574) P:80 I:700000 C:     33 Min:    173 Act:  196 Avg:  22=
+2 Max:     378
+    real	0m 23.66s
+    user	0m 0.32s
+    sys	0m 1.29s
+      =20
+
+That is, I get much better min, avg, and max latency with=20
+"PREEMPT_DESKTOP". How can this be?
+
+Anyway, the results seem worse than the <150us worst case) obtained wit=
+h=20
+2.6.24.7-rt27 by Remy Bohmer=20
+<https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch#Platforms=
+_Tested_and_in_Use_with_CONFIG_PREEMPT_RT>,=20
+though he was apparently/ not using 'Tickless and HRT' /because of CPU=20
+usage issues... But without those I can't get cyclictest to run properl=
+y!
+
+My guess is that the RT patch adds code (checks, locks) to may critical=
+=20
+sections that happens to be specially slow on ARM9...
+
+Clues & comments welcome!
+--Agust=EDn.
+
+--=20
+[CG logo]
+
+Agust=EDn Ferr=EDn Pozuelo
+
+Embedded Systems Engineer
+
+CG Power Systems Ireland Limited
+
+Automation Systems Division
+
+Herbert House, Harmony Row, Dublin 2, Ireland.
+
+Phone: +353 1 4153700 Web: www.cgglobal.com <http://www.cgglobal.com>
+
+Save the environment. Please print only if essential.
+
+
+
+CG DISCLAIMER: This email contains confidential information. It is inte=
+nded exclusively for the addressees. If you are not an addressee, you m=
+ust not store, transmit or disclose its contents. Instead please notify=
+ the sender immediately; and permanently delete this e-mail from your c=
+omputer systems. We have taken reasonable precautions to ensure that no=
+ viruses are present. However, you must check this email and the attach=
+ments, for viruses. We accept no liability whatsoever, for any detrimen=
+t caused by any transmitted virus.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
