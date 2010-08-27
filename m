@@ -1,67 +1,33 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: why does __setup_irq use a raw spinlock? (Was: Trouble booting
- PREEMPT_RT kernel on ARM platform, 2.6.33)
-Date: Fri, 27 Aug 2010 11:01:20 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1008271047070.2768@localhost.localdomain>
-References: <AANLkTin7egyGVK_bVM3XsBhJt=P8cKoALGxaQAemL9sA@mail.gmail.com>
+Subject: Re: perf and oprofile causing kernel oops on 2.6.33.7-rt29 kernel
+Date: Fri, 27 Aug 2010 11:15:53 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1008271114450.2768@localhost.localdomain>
+References: <8EA2C2C4116BF44AB370468FBF85A777017965B296@orsmsx504.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Jeremy Brown <jhbrown@repinvariant.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Sydir, Jerry" <jerry.sydir@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.tglx.de ([62.245.132.106]:53410 "EHLO www.tglx.de"
+Received: from www.tglx.de ([62.245.132.106]:38813 "EHLO www.tglx.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751932Ab0H0JBZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Aug 2010 05:01:25 -0400
-In-Reply-To: <AANLkTin7egyGVK_bVM3XsBhJt=P8cKoALGxaQAemL9sA@mail.gmail.com>
-Content-ID: <alpine.LFD.2.00.1008271048041.2768@localhost.localdomain>
+	id S1750986Ab0H0JQE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 27 Aug 2010 05:16:04 -0400
+In-Reply-To: <8EA2C2C4116BF44AB370468FBF85A777017965B296@orsmsx504.amr.corp.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 20 Aug 2010, Jeremy Brown wrote:
+On Wed, 18 Aug 2010, Sydir, Jerry wrote:
 
-> We're using kernel 2.6.33.5 with corresponding 2.6.33.5-rt25 patches.
-> __setup_irq in request_kernel/irq/manage.c contains a block guarded by
-> a raw spinlock, with a preceding comment noting "The following block
-> of code has to be executed atomically".   Why is this so?
-
-Because this lock protects against an incoming interrupt.
- 
-> I ask because during RTC setup, this atomic region is causing calls to
-> twl4030_sih_* functions to fail on my BeagleBoard platform (see stack
-> trace below from a previous thread.).  As Gowrishankar noted in the
-> previous thread, those routines use (non-raw) spinlocking.  As Thomas
-> noted, they also call queue_work,  which in turn relies on non-raw
-> spinlocking, so just patching up the twl4030_sih_* functions to use
-> raw calls doesn't solve the problem.  I'm presently experimenting
-> with:
+> Hello,
 > 
-> a) pulling the calls to__irq_set_trigger and desc->chip->startup to a
-> spot after the call to raw_spin_unlock_irqrestore, or
+> I am having trouble running profiling tools on the 2.6.33.7 kernel
+> with the rt29 patch. I am running on an Intel Core 2 machine. When I
+> run perf record I get a kernel oops. Here is the relevant log info:
 >
-> b) making the atomic region use non-raw locking.
- 
-Neither of those approaches will work.
+> BUG: sleeping function called from invalid context at arch/x86/mm/highmem_32.c:9
 
-> However, I'm not really sure what the consequences of other approach
-> are likely to be.  I'd be grateful for any thoughts and/or guidance
-> that will keep me from wasting time and/or breaking things in subtle
-> and confusing ways.
-
-The right thing to do is to convert the driver to the chip_bus_lock()
-functionality. 
-
-See drivers/mfd/88pm860x-core.c
-    drivers/mfd/ab8500-core.c
-    drivers/mfd/max8925-core.c
-    drivers/mfd/stmpe.c
-    drivers/mfd/wm831x-irq.c
-    drivers/mfd/wm8350-irq.c
-    drivers/mfd/wm8994-irq.c
-
-for examples. That'd be a nice cleanup for that driver anyway.  See
-also commit 70aedd24d20e75198f5a0b11750faabbb56924e for documentation
-about the core infrastructure.
+Grrr, I really hate highmem. What happens if you disable
+CONFIG_HIGHMEM or just run a 64 bit kernel on that machine ?
 
 Thanks,
 
