@@ -1,63 +1,72 @@
-From: =?ISO-8859-15?Q?Martin_D=E4umler?= <mdae@cs.tu-chemnitz.de>
-Subject: Re: Priority Inheritance per se?
-Date: Tue, 14 Sep 2010 13:12:13 +0200
-Message-ID: <4C8F588D.2080308@cs.tu-chemnitz.de>
-References: <4C89D4DF.9060109@cs.tu-chemnitz.de> <4C8F46B1.1010804@disco.unimib.it>
+From: David Kastrup <dak@gnu.org>
+Subject: Re: preempt rt in commercial use
+Date: Tue, 14 Sep 2010 13:00:22 +0200
+Message-ID: <87tylslhdl.fsf@lola.goethe.zz>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
+	<201009141317.13439@zigzag.lvk.cs.msu.su>
+	<201009141206.32587.klaas.van.gend@mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from jack.hrz.tu-chemnitz.de ([134.109.132.46]:48472 "EHLO
-	jack.hrz.tu-chemnitz.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752062Ab0INLMP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Sep 2010 07:12:15 -0400
-Received: from adelaide.informatik.tu-chemnitz.de ([134.109.192.66])
-	by jack.hrz.tu-chemnitz.de with esmtpsa (TLSv1:AES256-SHA:256)
-	(Exim 4.72)
-	(envelope-from <mdae@informatik.tu-chemnitz.de>)
-	id 1OvTQs-0007kx-39
-	for linux-rt-users@vger.kernel.org; Tue, 14 Sep 2010 13:12:14 +0200
-In-Reply-To: <4C8F46B1.1010804@disco.unimib.it>
+Received: from lo.gmane.org ([80.91.229.12]:46452 "EHLO lo.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751499Ab0INLZF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Sep 2010 07:25:05 -0400
+Received: from list by lo.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1OvTdH-00020j-Vo
+	for linux-rt-users@vger.kernel.org; Tue, 14 Sep 2010 13:25:03 +0200
+Received: from p508edcbc.dip.t-dialin.net ([80.142.220.188])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 13:25:03 +0200
+Received: from dak by p508edcbc.dip.t-dialin.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 13:25:03 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sergio Ruocco wrote:
+Klaas van Gend <klaas.van.gend@mvista.com> writes:
 
-> before really deciding for the use of PI, you may want to read what
-> Victor Yodaiken had to say:
+> On Tuesday 14 September 2010 11:17:12 Nikita V. Youshchenko wrote:
+>> > Hello
+>> > some companies asked me to show that premmpt rt is comercially used.
+>> > are you using it ?
+>> 
+>> MontaVista has long supplied preempt-rt to lots of it's customers.
 >
-> http://www.yodaiken.com/papers-and-talks/
-> Against priority inheritance, Victor Yodaiken. September 23, 2004
-> http://www.yodaiken.com/papers/inherit.pdf
+> Let me elaborate on that a little.
 >
-> Here is a general Linux RT workshop report, with some comments on PI:
-> http://lwn.net/Articles/354690/
+> Yes, we have a *lot* of customers using PREEMPT_RT. 
+> In my experience they fall into a few different categories:
+>
+> 1) using it because "it is faster". Well, I've tried to squash that
+> idea at every customer I've been, but it's not easy to get out of
+> their heads.  In most cases, these customers have no clue why they
+> enabled it.
+>
+> 2) using it because Linux was too slow otherwise.
+> Unfortunately something I've run across a few times now - that the embedded 
+> boards are too slow to reliably grab all bytes from a serial port. 
+> Of course this has something to do with system load and bad design of serial 
+> data streams... In many cases, missing a byte can cause serious trouble, like 
+> having to do a whole sample analysis again (lab equipment).
 
+This is rather important for audio applications.  You can't afford a
+single missed sample in hour-long sessions.
 
-Hi Sergio,
+> 3) using it to work around system limitations, e.g. reducing priority on less 
+> relevant interrupts and/or threads.
+> This is the best use case. For example, if you design data acquisition or 
+> control loops, they better run reliably, with low jitter. So you want to 
+> reduce priority of everything not that relevant.
 
-thanks for that reading. I (hope to) know which drawbacks and
-shortcomings priority inheritance has. Before I can make a
-decision about using an RT_PREEMPT patched Linux, I want to
-know if the RT_PREEMPT-patch introduces priority inheritance
-automatically, that is, without using any locks?
+I don't call that "working around".  A computer is supposed to do what
+it is told to do.  When there are priorities, you need to tell them to
+the computer rather than expect that it should somehow figure them out
+itself.
 
-=46or example (from my opening post):
+-- 
+David Kastrup
 
-Imagine a hypothetical case: a high RT-priority (60) task
-triggers a blocking system call which triggers a device driver
-whose ISR is a kernel thread with RT-priority 49. So, a medium
-RT-priority (55) task is able block the high RT-priority task,
-isn't it?
-
-
-With kind regards,
-Martin D=E4umler
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
