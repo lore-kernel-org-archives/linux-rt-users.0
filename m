@@ -1,68 +1,56 @@
-From: Pradyumna Sampath <pradysam@gmail.com>
+From: Jeff Angielski <jeff@theptrgroup.com>
 Subject: Re: preempt rt in commercial use
-Date: Tue, 14 Sep 2010 16:44:43 +0200
-Message-ID: <AANLkTimq7RGABRJk=2YQasav_Xd8zC-Qzf63tJRCY12J@mail.gmail.com>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
-	<201009141317.13439@zigzag.lvk.cs.msu.su>
-	<AANLkTikCwVw9jsg+L_e-kHnhogSdgE+8rrO8O0gDMB5V@mail.gmail.com>
-	<20100914094411.GB10841@pengutronix.de>
-	<4C8F8500.5070002@theptrgroup.com>
+Date: Tue, 14 Sep 2010 10:49:29 -0400
+Message-ID: <4C8F8B79.1010300@theptrgroup.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <20100914094411.GB10841@pengutronix.de> <4C8F8500.5070002@theptrgroup.com> <201009141830.03206@zigzag.lvk.cs.msu.su>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: Robert Schwebel <r.schwebel@pengutronix.de>,
 	Raz <raziebe@gmail.com>,
-	"Nikita V. Youshchenko" <yoush@cs.msu.su>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Jeff Angielski <jeff@theptrgroup.com>
+To: "Nikita V. Youshchenko" <yoush@cs.msu.su>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:49183 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754298Ab0INOoo convert rfc822-to-8bit (ORCPT
+Received: from mail.theptrgroup.com ([71.178.251.9]:38427 "EHLO
+	mail.theptrgroup.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754483Ab0INOtd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Sep 2010 10:44:44 -0400
-Received: by bwz11 with SMTP id 11so5551973bwz.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 07:44:43 -0700 (PDT)
-In-Reply-To: <4C8F8500.5070002@theptrgroup.com>
+	Tue, 14 Sep 2010 10:49:33 -0400
+In-Reply-To: <201009141830.03206@zigzag.lvk.cs.msu.su>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-On Tue, Sep 14, 2010 at 4:21 PM, Jeff Angielski <jeff@theptrgroup.com> =
-wrote:
-> No. =A0Preempt rt it's not hard realtime.
+On 09/14/2010 10:30 AM, Nikita V. Youshchenko wrote:
+>>>> anyone can say preempt rt is hard real time?
+>>>
+>>> Hard realtime has something to do with how you define "missing the
+>>> deadline". If somebody cuts the cable of your roboter controller in
+>>> the factory hall, the system misses the deadline. So it is all about
+>>> probabilities: hard realtime systems have a very, very low probability
+>>> of missing the deadline. However, in real life systems, it is>   0%.
+>>>
+>>> So yes, if you talk about real world, it is hard realtime.
+>>
+>> No.  Preempt rt it's not hard realtime.
+>>
+>> But most people/companies who think they need hard realtime really
+>> don't.  They can live with soft realtime and have a really low
+>> probability of missing deadlines and having long latencies.  For these
+>> people, the preempt rt is adequate.
 >
-> But most people/companies who think they need hard realtime really do=
-n't.
-> =A0They can live with soft realtime and have a really low probability=
- of
-> missing deadlines and having long latencies. =A0For these people, the=
- preempt
-> rt is adequate.
+> Isn't any case where preempt-rt does not behave as hard reatlime a bug in
+> preempt-rt, that should be reported to this list and eventually fixed?
 
-I agree. Hard, soft ... far too qualitative for a discussion like
-this. Numbers, test cases and applications determine different
-meanings of these words.
+That is a philosophical question for the preempt-rt maintainers.
 
-Top copy a phrase from one of the presentations from dresden.
-Real-time need not always be real fast.
+I *believe* that the design goal for the preempt rt code is to minimize 
+kernel latency.  It's not to make the kernel deterministic to support 
+hard realtime.
 
-hard Real-time =3D Speed + Determinism
+So I don't know if I'd call it a bug, but rather on the wish list for 
+future enhancements.
 
-So hard real time is a moving target. Would I use RT_PREEMPT to run
-servo loops at 60 microseconds on a 160 Mhz powerpc ? Surely not ! Or
-not yet.
-
-my 2 cents.
-
-regards
-/prady
-
---=20
-http://www.prady.in
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Jeff Angielski
+The PTR Group
+www.theptrgroup.com
