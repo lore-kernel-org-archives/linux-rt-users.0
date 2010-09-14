@@ -1,72 +1,49 @@
-From: David Kastrup <dak@gnu.org>
+From: Armin Steinhoff <armin@steinhoff.de>
 Subject: Re: preempt rt in commercial use
-Date: Tue, 14 Sep 2010 13:00:22 +0200
-Message-ID: <87tylslhdl.fsf@lola.goethe.zz>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
-	<201009141317.13439@zigzag.lvk.cs.msu.su>
-	<201009141206.32587.klaas.van.gend@mvista.com>
+Date: Tue, 14 Sep 2010 14:16:38 +0200
+Message-ID: <4C8F67A6.1030409@steinhoff.de>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <201009141317.13439@zigzag.lvk.cs.msu.su> <AANLkTikCwVw9jsg+L_e-kHnhogSdgE+8rrO8O0gDMB5V@mail.gmail.com> <20100914094411.GB10841@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lo.gmane.org ([80.91.229.12]:46452 "EHLO lo.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751499Ab0INLZF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Sep 2010 07:25:05 -0400
-Received: from list by lo.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1OvTdH-00020j-Vo
-	for linux-rt-users@vger.kernel.org; Tue, 14 Sep 2010 13:25:03 +0200
-Received: from p508edcbc.dip.t-dialin.net ([80.142.220.188])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 13:25:03 +0200
-Received: from dak by p508edcbc.dip.t-dialin.net with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 13:25:03 +0200
+Received: from moutng.kundenserver.de ([212.227.17.8]:65140 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753208Ab0INMOo (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Sep 2010 08:14:44 -0400
+In-Reply-To: <20100914094411.GB10841@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Klaas van Gend <klaas.van.gend@mvista.com> writes:
-
-> On Tuesday 14 September 2010 11:17:12 Nikita V. Youshchenko wrote:
->> > Hello
->> > some companies asked me to show that premmpt rt is comercially used.
->> > are you using it ?
->> 
->> MontaVista has long supplied preempt-rt to lots of it's customers.
+  Robert Schwebel wrote:
+> On Tue, Sep 14, 2010 at 11:24:21AM +0200, Raz wrote:
+>> anyone can say preempt rt is hard real time?
+> Hard realtime has something to do with how you define "missing the
+> deadline". If somebody cuts the cable of your roboter controller in t=
+he
+> factory hall, the system misses the deadline. So it is all about
+> probabilities: hard realtime systems have a very, very low probabilit=
+y
+> of missing the deadline. However, in real life systems, it is>  0%.
 >
-> Let me elaborate on that a little.
+> So yes, if you talk about real world, it is hard realtime.
 >
-> Yes, we have a *lot* of customers using PREEMPT_RT. 
-> In my experience they fall into a few different categories:
->
-> 1) using it because "it is faster". Well, I've tried to squash that
-> idea at every customer I've been, but it's not easy to get out of
-> their heads.  In most cases, these customers have no clue why they
-> enabled it.
->
-> 2) using it because Linux was too slow otherwise.
-> Unfortunately something I've run across a few times now - that the embedded 
-> boards are too slow to reliably grab all bytes from a serial port. 
-> Of course this has something to do with system load and bad design of serial 
-> data streams... In many cases, missing a byte can cause serious trouble, like 
-> having to do a whole sample analysis again (lab equipment).
+Hm, and what do think about that statement from FSMLabs:
 
-This is rather important for audio applications.  You can't afford a
-single missed sample in hour-long sessions.
+"Linux =93PREEMPT=94 real-time is a continuing experiment aimed at audi=
+o
+and video playing with unreliable results and a detrimental affect on
+=93enterprise=94 performance"
 
-> 3) using it to work around system limitations, e.g. reducing priority on less 
-> relevant interrupts and/or threads.
-> This is the best use case. For example, if you design data acquisition or 
-> control loops, they better run reliably, with low jitter. So you want to 
-> reduce priority of everything not that relevant.
+--Armin
 
-I don't call that "working around".  A computer is supposed to do what
-it is told to do.  When there are priorities, you need to tell them to
-the computer rather than expect that it should somehow figure them out
-itself.
 
--- 
-David Kastrup
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
