@@ -1,110 +1,57 @@
-From: Mark Knecht <markknecht@gmail.com>
-Subject: Re: Intel i3 | i5 | i7 GPU and RT kernel
-Date: Tue, 14 Sep 2010 09:37:28 -0700
-Message-ID: <AANLkTin8ccsibz9gQ1pFO5Vp5n0zorTQ02kXQhAJEGvG@mail.gmail.com>
-References: <AANLkTin8j1A=N_ypaT3S0n4k+++EkpWjb1FZUWaZpcKh@mail.gmail.com>
-	<AANLkTi=6Yc7GJa6eJ_=o6=fKymA3za-xsbM+v8GuX71m@mail.gmail.com>
-	<AANLkTinBhPWLO3wjNC1fnwf-Uh3c5-KF2Nc0++hCRYnG@mail.gmail.com>
-	<AANLkTi=jvMzc4rErgPbwoCe8po5bUO4-YMfzGFbGtgPP@mail.gmail.com>
+From: "Gregory Haskins" <ghaskins@novell.com>
+Subject: Re: preempt rt in commercial use
+Date: Tue, 14 Sep 2010 11:38:01 -0600
+Message-ID: <4C8F7AB90200005A00071A8F@soto.provo.novell.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
+ <201009141317.13439@zigzag.lvk.cs.msu.su>
+ <AANLkTikCwVw9jsg+L_e-kHnhogSdgE+8rrO8O0gDMB5V@mail.gmail.com>
+ <20100914094411.GB10841@pengutronix.de> <4C8F8500.5070002@theptrgroup.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: rosea grammostola <rosea.grammostola@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: "Nikita V. Youshchenko" <yoush@cs.msu.su>,
+	"Raz" <raziebe@gmail.com>,
+	"linux-rt-users" <linux-rt-users@vger.kernel.org>
+To: "Robert Schwebel" <r.schwebel@pengutronix.de>,
+	"Jeff Angielski" <jeff@theptrgroup.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ww0-f42.google.com ([74.125.82.42]:40227 "EHLO
-	mail-ww0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752671Ab0INQh3 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Sep 2010 12:37:29 -0400
-Received: by wwb18 with SMTP id 18so149847wwb.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 09:37:28 -0700 (PDT)
-In-Reply-To: <AANLkTi=jvMzc4rErgPbwoCe8po5bUO4-YMfzGFbGtgPP@mail.gmail.com>
+In-Reply-To: <4C8F8500.5070002@theptrgroup.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Sep 14, 2010 at 9:28 AM, rosea grammostola
-<rosea.grammostola@gmail.com> wrote:
-> On Tue, Sep 14, 2010 at 6:27 PM, Mark Knecht <markknecht@gmail.com> w=
-rote:
->> On Wed, Sep 8, 2010 at 4:43 PM, Mark Knecht <markknecht@gmail.com> w=
-rote:
->>> On Wed, Sep 8, 2010 at 1:35 PM, rosea grammostola
->>> <rosea.grammostola@gmail.com> wrote:
->>>> Hi,
->>>>
->>>>
->>>> How well is the integrated gpu of intel, working with RT kernels?
->>>>
->>>>
->>>> \r
->>>> --
->>>> To unsubscribe from this list: send the line "unsubscribe linux-rt=
--users" in
->>>> the body of a message to majordomo@vger.kernel.org
->>>> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info=
-=2Ehtml
->>>>
->>>
->>> Hi Rosea,
->>> =C2=A0 I'm just now in the process of getting my Gentoo box updated=
- so
->>> that I can try the RT kernel on my i5-661/DH55HC machine. I'll try =
-to
->>> report back in the next day or two what my results are.
->>>
->>> =C2=A0 From Sven's report it sounds like the results should be good=
-=2E
->>>
->>> Cheers,
->>> Mark
->>>
->> Rosea,
->> =C2=A0 As reported elsewhere I'm having no problems with the real-ti=
-me
->> kernel on my i5-661. I am using the RME HDSP9652 at sub-1mS delays a=
-nd
->> seeing no xruns. I can certainly recommend the real-time kernel
->> running on the i5-661.
+>>> On 9/14/2010 at 10:21 AM, in message <4C8F8500.5070002@theptrgroup.com>, Jeff
+Angielski <jeff@theptrgroup.com> wrote: 
+> On 09/14/2010 05:44 AM, Robert Schwebel wrote:
+>> On Tue, Sep 14, 2010 at 11:24:21AM +0200, Raz wrote:
+>>> anyone can say preempt rt is hard real time?
 >>
->> =C2=A0 I am however having a HORRIBLE time with the Intel video driv=
-er on
->> both the real-time and standard kernel. I cannot recommend Intel
->> graphics at this time which is unfortunate because months ago with
->> earlier versions of the graphics driver things were fine but they se=
-em
->> to be in a less stable state at the time of this writing.
+>> Hard realtime has something to do with how you define "missing the
+>> deadline". If somebody cuts the cable of your roboter controller in the
+>> factory hall, the system misses the deadline. So it is all about
+>> probabilities: hard realtime systems have a very, very low probability
+>> of missing the deadline. However, in real life systems, it is>  0%.
 >>
-> Thanks a lot for testing!
-> At this point I consider a i5 750 without IGP.
->
-> \r
->
+>> So yes, if you talk about real world, it is hard realtime.
+> 
+> No.  Preempt rt it's not hard realtime.
 
-Check out this page for specs.
+This is not technically correct, but a common misconception. "Hard" vs "Soft" is a property of the _application_, not the os/platform itself, and it's based on how tolerant a given application is to missed deadlines.
 
-http://www.intel.com/consumer/products/processors/corei5-specs.htm
+"Hard" might be something like professional lossless audio, nuclear fuel-rod control, bomb-squad robotics, tele-medicine, etc, where the result of a missed deadline can have a serious/unacceptable negative impact (death, injury, SLA failure, etc).  "Soft" might be telecom audio, high-frequency financial trading, etc, where misses (crappy audio quality, missed market opportunity, etc) are certainly not desired, but can technically be gracefully recovered from.
 
-If you're considering the i5-750 then maybe as an alternative the
-i5-670 in a motherboard that doesn't use IGP and a good Nvidia
-graphics card would be a good alternative. The 670 has a higher clock
-rate and the turbo boost really moves you up. I only see lower cache
-which is typical of the hyperthreaded designs as you really get
-2MB/core.
+Any given platform (os and hardware combo) will have quantifiable performance/latency characteristics.  If those characteristics exceed the requirements of your application, they it would generally work to run a "hard rt" application on that platform.  If those characteristics <= your app, it probably will not meet your deadlines and therefore, a hard-rt app will fail.
 
-The 670 wasn't available when I bought my 661 or likely I would have
-gotten that one. The 661 price at NewEgg is about the same as the 750.
-The 670 is, unfortunately, $100 more. (Sorry!) ;-)
+Consider a fictious nuclear fuel rod control applications with requirements for a period of 20s, 500ms dutycycle, and with +- 1s jitter tolerance.  Failure means reactor meltdown (this is hard-realtime) yet preempt-rt could certainly handle this.  Heck, mainline linux could probably handle this.  On the other hand, if anyone out there plans on doing fuel-rod control with software, please tell me so I can leave the continent. ;)  But the point is, it's a hard-realtime application and it can be done even with preempt-rt.  As you scale the applicaiton's requirements tighter and tighter, you will eventually find the limits of the platform to which it is no longer acceptable to run the application.  On modern x86 desktops, these limits are in the order of 10us-150us.
 
-i5-750 =3D $195
-i5-670 =3D $299
-i5-661 =3D $209
+The biggest challenge is _proving_ that a given platform actually possesses the desired performance characteristics.  This is especially difficult with preempt-rt given that its based on a general purpose OS (linux) and a large one that that.  Smaller, more RT specific os designs may be easier to prove every path has a maximum latency of "X".  That said, there are very few products out there that could probably fit that description and most will have trouble proving beyond a shadow of doubt.  In addition, the preempt-rt community is very responsive and treats every latency source as a "bug" to be fixed/improved.
 
-Have fun and don't using Intel stock cooling! :-)
+So bottom line, if in doubt, I suggest you give preempt-rt a try.  Linux in general boasts probably the broadest support profile of any platform out there.  In addition, it's configuration is so finely grained that you can probably scale it back to a lean, mean, low-latency environment that will do what you need for perhaps all but the most stringent requirements.  Where it wouldn't work, perhaps only dedicated hardware may help anyway.
 
-- Mark
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> But most people/companies who think they need hard realtime really 
+> don't.
+
+I do agree with this statement.
+ 
+-Greg
