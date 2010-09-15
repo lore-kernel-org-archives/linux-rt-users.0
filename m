@@ -1,137 +1,70 @@
-From: Agustin Ferrin Pozuelo <agustin.ferrin@cgglobal.com>
-Subject: Re: 2.6.33.7-rt29 PREEMPT_RT worse latency than PREEMPT_DESKTOP on
- AT91?
-Date: Wed, 15 Sep 2010 16:42:17 +0100
-Message-ID: <4C90E959.80306@cgglobal.com>
-References: <4C72A438.2080301@cgglobal.com>
-    <alpine.LFD.2.00.1008271234300.2768@localhost.localdomain>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: preempt rt in commercial use
+Date: Wed, 15 Sep 2010 09:02:46 -0700
+Message-ID: <4C90EE26.8060003@us.ibm.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <20100914094411.GB10841@pengutronix.de>	<4C8F8500.5070002@theptrgroup.com> <201009141830.03206@zigzag.lvk.cs.msu.su>	<4C8F8B79.1010300@theptrgroup.com> <4C8FF52E.1030407@us.ibm.com>	<4C907A51.1050305@steinhoff.de> <4C90D392.8040808@us.ibm.com> <87k4mnhv9h.fsf@lola.goethe.zz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: David Kastrup <dak@gnu.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from edge.cgglobal.com ([202.54.16.167]:55006 "EHLO
-	edge.cgglobal.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753682Ab0IOPmZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Sep 2010 11:42:25 -0400
-Received: from cgglobal.com (webmail.cgl.co.in [192.168.1.7] (may be forged))
-    by edge.cgglobal.com (8.14.1/8.14.1) with ESMTP id o8FFc7ul032478 for
-    <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2010 21:08:07 +0530
-Received: from mail.microsol.ie by cgglobal.com (MDaemon PRO v9.6.6) with
-    ESMTP id md50027273624.msg for <linux-rt-users@vger.kernel.org>; Wed,
-    15 Sep 2010 21:11:48 +0530
-In-Reply-To: <alpine.LFD.2.00.1008271234300.2768@localhost.localdomain>
+Received: from e8.ny.us.ibm.com ([32.97.182.138]:50412 "EHLO e8.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754561Ab0IOQEd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 Sep 2010 12:04:33 -0400
+Received: from d01relay02.pok.ibm.com (d01relay02.pok.ibm.com [9.56.227.234])
+	by e8.ny.us.ibm.com (8.14.4/8.13.1) with ESMTP id o8FFjuYu017904
+	for <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2010 11:45:56 -0400
+Received: from d03av05.boulder.ibm.com (d03av05.boulder.ibm.com [9.17.195.85])
+	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o8FG4WhW470372
+	for <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2010 12:04:32 -0400
+Received: from d03av05.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av05.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id o8FG4VGK025154
+	for <linux-rt-users@vger.kernel.org>; Wed, 15 Sep 2010 10:04:31 -0600
+In-Reply-To: <87k4mnhv9h.fsf@lola.goethe.zz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  On 27/08/10 11:35, Thomas Gleixner wrote:
-> On Mon, 23 Aug 2010, Agustin Ferrin Pozuelo wrote:
->> Hello,
->>
->> I am fine tuning the configuration for an ARM system derived from
->> AT91SAM9263-EK.
->>
->> My goal is to minimize latency, and I am using "cyclictest" from rt-=
-tools
->> v0.78 for measuring it.
->>
->> I get consistently better latency with PREEMPT_DESKTOP over what I g=
-et with
->> PREEMPT_RT. This is an example for a very simple test run, which ref=
-lects the
->> overall results I am getting:
->>
->>     ### PREEMPT-RT, HRT, no NO_HZ, no RTC, no USE_SLOW_CLOCK
->>
->>     root@at91sam9263cpc:~# time cyclictest -i 700000 -r -p 80 -l 33
->>     Clock resolution: 0.000000001 (s.ns)
->>     policy: fifo: loadavg: 0.11 0.10 0.04 1/49 884
->>
->>     T: 0 (  861) P:80 I:700000 C:     33 Min:    370 Act:  627 Avg: =
- 437 Max:
->> 627
->>     real	0m 23.51s
->>     user	0m 0.38s
->>     sys	0m 2.20s
->>
->>     ### PREEMPT-DESKTOP (no RT), HRT, no NO_HZ, no USE_SLOW_CLOCK
->>     root@at91sam9263cpc:~# time cyclictest -i 700000 -r -p 80 -l 33
->>     Clock resolution: 0.000000001 (s.ns)
->>     policy: fifo: loadavg: 0.24 0.08 0.03 1/46 600
->>
->>     T: 0 (  574) P:80 I:700000 C:     33 Min:    173 Act:  196 Avg: =
- 222 Max:
->> 378
->>     real	0m 23.66s
->>     user	0m 0.32s
->>     sys	0m 1.29s
-> 33 loops are not really giving you any useful information. Also run
-> both tests with some background load and not on a fully idle system.
-Sorry, my test setup is not very comprehensive at the moment. I have=20
-some overnight/overweekend results at hand with millions of loops:
+David Kastrup wrote:
+> Nivedita Singhvi <niv@us.ibm.com> writes:
+> 
+>> At some stage this might have been a pretty good response time.  But
+>> HW improves by leaps and bounds, and what was considered "fast" or
+>> "real-time" 25 years ago might be your average vanilla desktop box
+>> speed of today.
+> 
+> I think you are confused.  "fast" and "realtime" are quite unrelated.
 
-     PREEMPT-DESKTOP:
-     root@at91sam9263cpc:~# time cyclictest -i 70000 -p 80 -h 700 -r
-     Clock resolution: 0.000000001 (s.ns)
-     policy: fifo: loadavg: 0.07 0.09 0.02 1/38 8770
-     T: 0 (  980) P:80 I:70000 C:1328241 Min:    135 Act:  218 Avg:  20=
-4=20
-Max:     720
+Sorry, yes, I know, but was sloppy. And because the whole point
+of this thread was to make exactly these things clear, I'll add to
+this already monstrously long thread. That was the point of the "or",
+that if you have a faster system by several orders of magnititude, you
+can effectively put together a box that will meet some application's
+"hard" deadlines (which would not have been possible before). As others
+commented before in this thread, failing the deadline becomes very,
+very, very low probability.
 
-     PREEMPT-RT:
-     root@at91sam9263cpc:~# time cyclictest -i 70000 -p 80 -h 700 -r
-     Clock resolution: 0.000000001 (s.ns)
-     policy: fifo: loadavg: 0.97 1.12 1.18 4/51 31290
-     T: 0 (  675) P:80 I:70000 C:3688312 Min:  244    Act:  358 Avg: =20
-395 Max:     732
+> The computers used aboard ancient space craft are abysmally slow
+> compared to today's desktop computers, but certainly operate in
+> realtime.
+> 
+> It does not matter whether one system can run circles around the other
+> one as long as any given circle can't be guaranteed to complete in a
+> specified amount of time.
 
-Min and avg latencies much worse in PREEMPT-RT on otherwise same setup.=
-=20
-Worst case similar though.
+Right -- but the point was, any HW system can fail, too (very, very
+low statistically speaking, but still not 0%). So no system is
+impervious to all sources of breakage.
 
-System is not loaded but many interrupts happen because it is running i=
-t=20
-interactively through ssh+ethernet. (Had to force ethernet to 10Mbit to=
-=20
-avoid frequent buffer underruns due to sam9263 bug).
+> Realtime recording systems, for example, can't actually be writing to
+> high performance file systems unless they can work with preallocation.
+> 
+> Hard realtime is not reasonably possible for a lot of tasks on a general
+> purpose computing device.  But there is often a lot you can do to help
+> it give a better shot at things.
 
-I am assuming context switching is more expensive on PREEMPT-RT under=20
-ARM9, where it seems already a bit expensive.
+Yep.
 
---Agust=EDn.
---=20
-[CG logo]
-
-Agust=EDn Ferr=EDn Pozuelo
-
-Embedded Systems Engineer
-
-CG Power Systems Ireland Limited
-
-Automation Systems Division
-
-Herbert House, Harmony Row, Dublin 2, Ireland.
-
-Phone: +353 1 4153700 Web: www.cgglobal.com <http://www.cgglobal.com>
-
-Save the environment. Please print only if essential.
-
-
-
-CG DISCLAIMER: This email contains confidential information. It is inte=
-nded exclusively for the addressees. If you are not an addressee, you m=
-ust not store, transmit or disclose its contents. Instead please notify=
- the sender immediately; and permanently delete this e-mail from your c=
-omputer systems. We have taken reasonable precautions to ensure that no=
- viruses are present. However, you must check this email and the attach=
-ments, for viruses. We accept no liability whatsoever, for any detrimen=
-t caused by any transmitted virus.
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+thanks,
+Nivedita
