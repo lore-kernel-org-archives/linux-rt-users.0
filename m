@@ -1,64 +1,59 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
+From: jordan <triplesquarednine@gmail.com>
 Subject: Re: preempt rt in commercial use
-Date: Tue, 14 Sep 2010 15:20:30 -0700
-Message-ID: <4C8FF52E.1030407@us.ibm.com>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <20100914094411.GB10841@pengutronix.de> <4C8F8500.5070002@theptrgroup.com> <201009141830.03206@zigzag.lvk.cs.msu.su> <4C8F8B79.1010300@theptrgroup.com>
+Date: Tue, 14 Sep 2010 23:38:49 -0400
+Message-ID: <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: "Nikita V. Youshchenko" <yoush@cs.msu.su>,
-	Robert Schwebel <r.schwebel@pengutronix.de>,
-	Raz <raziebe@gmail.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Jeff Angielski <jeff@theptrgroup.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Raz <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e38.co.us.ibm.com ([32.97.110.159]:55453 "EHLO
-	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752415Ab0INWTO (ORCPT
+Received: from mail-ew0-f46.google.com ([209.85.215.46]:55897 "EHLO
+	mail-ew0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752222Ab0IODiv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Sep 2010 18:19:14 -0400
-Received: from d03relay04.boulder.ibm.com (d03relay04.boulder.ibm.com [9.17.195.106])
-	by e38.co.us.ibm.com (8.14.4/8.13.1) with ESMTP id o8EMBbDD005831
-	for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 16:11:37 -0600
-Received: from d03av06.boulder.ibm.com (d03av06.boulder.ibm.com [9.17.195.245])
-	by d03relay04.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o8EMJEZJ111118
-	for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 16:19:14 -0600
-Received: from d03av06.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av06.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id o8EMMrNx006856
-	for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 16:22:53 -0600
-In-Reply-To: <4C8F8B79.1010300@theptrgroup.com>
+	Tue, 14 Sep 2010 23:38:51 -0400
+Received: by ewy23 with SMTP id 23so3417529ewy.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Sep 2010 20:38:50 -0700 (PDT)
+In-Reply-To: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 09/14/2010 07:49 AM, Jeff Angielski wrote:
+Hi Raz,
 
->> Isn't any case where preempt-rt does not behave as hard reatlime a bug in
->> preempt-rt, that should be reported to this list and eventually fixed?
->
-> That is a philosophical question for the preempt-rt maintainers.
->
-> I *believe* that the design goal for the preempt rt code is to minimize
-> kernel latency. It's not to make the kernel deterministic to support
-> hard realtime.
+> Hello
+> some companies asked me to show that premmpt rt is comercially used.
+> are you using it ?
 
-Er, sort of, not quite.
+A big one would be the TSE (Tokyo Stock Exchange).  "Arrowhead" is
+built on RedHat Enterprise, and is a "hard real-time" system.  I have
+a feeling that a lot of the financial sector (in the US/canada/europe)
+are using rt-linux.
 
-The design goal of the real-time kernel is most certainly to make the
-kernel more deterministic, to the extent we can in a general-purpose way.
+Next, in the Pro-audio sector, you have Muse Research who make the
+"Recepter".  Which is a hardware VST host. It was developed so Artists
+could use the same sounds/plugins produced in the studio live.
+All of the big names in the music industry use them live, and/or in
+the studio. as they are very robust, and reliable.
+(you can't have your sound skipping, when your playing in front of
+thousands of people).
 
-Determinism = capping max latencies.
+Then there is "CableCam", which is an Rt-linux based high-flying
+Camera. Used in Professional Sports heavily, and equally, if not more
+so, by the Film Industry...
 
-It's better to have all hundred iterations of an operation take
-45us each than to have 95 iterations take 30us and 5 iterations
-take 75us. You want to be able to say, "this operation will take
-at _most_ 50us" and have that be as true as possible.
+Which leads me to my last example. Most people are aware that since
+about 1999-2000, Linux has dominated the movie industry. Beginning
+with Titanic and even today with say, Avatar.
 
-We sacrifice overall throughput (ave latency) for determinism
-(low max latency).
+I would be willing to bet, that all of those wonderful rendering farms
+and production suites, are
+in fact using rt-linux.
 
-Not sure if that's what you intended to say, but hope that helps.
+Beyond that, IBM, Intel, Novell, FSMLabs, Oracle, RedHat.....
 
-thanks,
-Nivedita
+I hope that helps, there is a lot of info available around the
+interweb. Lots of papers, by companies on the subject. and lots of
+case examples of usage.
 
-
+Jordan
