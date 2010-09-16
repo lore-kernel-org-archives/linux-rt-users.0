@@ -1,47 +1,55 @@
-From: Daniel James <daniel@64studio.com>
-Subject: Re: preempt rt in commercial use
-Date: Thu, 16 Sep 2010 11:39:34 +0100
-Message-ID: <4C91F3E6.6000604@64studio.com>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com> <201009151059.23039.klaas.van.gend@mvista.com> <4C90D225.1080902@us.ibm.com> <4C91025C.6050503@gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: TinxCore and PREEMPT_RT
+Date: Thu, 16 Sep 2010 13:25:32 +0200
+Message-ID: <1284636332.9142.150.camel@marge.simson.net>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>
+	 <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
+	 <201009151059.23039.klaas.van.gend@mvista.com>
+	 <4C90A814.8020605@steinhoff.de> <4C91E59E.5010203@steinhoff.de>
+	 <8762y6dmat.fsf@lola.goethe.zz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Reagan Thomas <thomasraz@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+To: David Kastrup <dak@gnu.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rom012.server4you.de ([62.75.222.127]:52927 "EHLO
-	rom012.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753085Ab0IPKjv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Sep 2010 06:39:51 -0400
-In-Reply-To: <4C91025C.6050503@gmail.com>
+Received: from mailout-de.gmx.net ([213.165.64.22]:41950 "HELO mail.gmx.net"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
+	id S1751818Ab0IPLZd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Sep 2010 07:25:33 -0400
+In-Reply-To: <8762y6dmat.fsf@lola.goethe.zz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Reagan,
+On Thu, 2010-09-16 at 12:18 +0200, David Kastrup wrote:
+> Armin Steinhoff <armin@steinhoff.de> writes:
+> 
+> > Hi all,
+> >
+> > yes, it's running !
+> >
+> > TinyCore is very small (10MB) , works with the PREEMPT_RT patch (at
+> > least version 2.6.29.6), full SMP support and boots in few seconds!
+> > The MicroCore version needs only 6MB ...
+> 
+> Anybody else nostalgic about the times where it took around 10kB to host
+> a realtime multi-tasking operating system including self-hosting target
+> compiler?
+> 
+> And the challenge was to fit bootstrap loader and operating system on
+> one track of the floppy disk?
+> 
+> Heck, the first UNIXes I used regularly were quite workable with 4MB of
+> main memory.
 
-> It may be the case where
-> Linux or *BSD have been used in render farms because of license cost,
-> not for any particular technical merit!
+Heh, my first ram weighed ~160 lbs per 512KB, high speed/low drag 4 wire
+technology, 2 us cycle time, dual or quad ported for your SMP pleasure.
 
-No, the effects houses that adopted GNU/Linux en masse in the mid to
-late 1990's have plenty of budget for OS licences. If you can afford to
-build a scale model of the Titanic in an aircraft hangar, then the cost
-of Windows for 200 render farm nodes is hardly noticeable.
+(a real bargain at slightly under $1000/lb)
 
-The reason was that the studios were migrating from SGI Irix onto higher
-performance, lower cost x86 hardware. GNU/Linux was familiar to the Irix
-application developers and sysadmins, who did not want to migrate to
-Windows.
+> I'll go back hide under my rock again.  Thanks for listening.
 
-It was about the best tools for the job, not some bogus perception that
-Free Software is 'cheap' because it is given freely (which upsets the
-developers I know).
+Ditto :)
 
-There's an old interview here that provides some background:
+	-Mike
 
-http://tuxdeluxe.org/node/126
-
-Cheers!
-
-Daniel
