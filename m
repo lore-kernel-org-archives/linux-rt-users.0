@@ -1,53 +1,64 @@
-From: Armin Steinhoff <armin@steinhoff.de>
-Subject: Re: TinxCore and PREEMPT_RT
-Date: Thu, 16 Sep 2010 11:38:38 +0200
-Message-ID: <4C91E59E.5010203@steinhoff.de>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com> <201009151059.23039.klaas.van.gend@mvista.com> <4C90A814.8020605@steinhoff.de>
+From: Daniel James <daniel@64studio.com>
+Subject: Re: preempt rt in commercial use
+Date: Thu, 16 Sep 2010 11:07:22 +0100
+Message-ID: <4C91EC5A.7070105@64studio.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Raz <raziebe@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: jordan <triplesquarednine@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.8]:55301 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752170Ab0IPJgd (ORCPT
+Received: from rom012.server4you.de ([62.75.222.127]:37458 "EHLO
+	rom012.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750983Ab0IPKHl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Sep 2010 05:36:33 -0400
-In-Reply-To: <4C90A814.8020605@steinhoff.de>
+	Thu, 16 Sep 2010 06:07:41 -0400
+In-Reply-To: <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Jordan,
 
-Hi all,
+> Next, in the Pro-audio sector, you have Muse Research who make the
+> "Recepter".  Which is a hardware VST host.
 
-yes, it's running !
+That's just one example of many in the pro audio sector (that we know
+about, since the companies involved aren't required to disclose their
+use of GNU/Linux - it's a competitive advantage, so they have a
+disincentive to do so). Several flagship audio mixing and recording
+systems use the Linux kernel, including the Harrison Xrange:
 
-TinyCore is very small (10MB) , works with the PREEMPT_RT patch (at 
-least version 2.6.29.6), full SMP support and boots in few seconds!
-The MicroCore version needs only 6MB ...
+http://www.harrisonconsoles.com/joomla/index.php?option=com_content&task=view&id=26&Itemid=51
 
---Armin
+and the Midas XL8:
 
+http://www.midasconsoles.com/xl8.php
 
+If you have been to see a Hollywood movie, or attended a stadium gig on
+a rock band's world tour, you have almost certainly been listening to
+audio mixed on a Harrison or Midas console - these companies are at the
+top of their game.
 
+RT-Linux provides significant advantage for these companies over
+proprietary RTOS products because of time-to-market, not licence costs:
+there are many audio software components available for re-use, leaving
+the integrator to write the last parts of the code.
 
-Armin Steinhoff wrote:
->
-> Hi all,
->
-> are there any experiences in using the TinyCore distribution as a base 
-> for PREEMPT_RT Linux ?
->
-> Patching a PREEMPT_RT kernel (2.6.29.6) with the TinyCore patch 
-> 2.6.29.1 seems to work ... no error messages so far.
->
->
-> --Armin
->
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe 
-> linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+There's also knowledge transfer from the Linux HPC sector - for example,
+the Xrange uses up to 120 Opteron CPUs, so it's hardly a 'desktop'
+system. You don't get that combination of high performance and reliable,
+re-usable source code with any other platform, RT or otherwise.
 
+Licence fees for proprietary software aren't the big deal for companies
+selling a relatively small number of expensive products. I think people
+get confused with consumer products like mobile phones, where it's
+supposedly all about volume. Actually, I think the independence of OEM's
+from proprietary software vendors has more to do with it. Microsoft has
+significant lock-in with consumers, and yet it still can't persuade
+people to buy Windows phones :-)
+
+Cheers!
+
+Daniel
