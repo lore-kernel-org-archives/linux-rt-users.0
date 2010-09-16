@@ -1,63 +1,45 @@
 From: Daniel James <daniel@64studio.com>
 Subject: Re: preempt rt in commercial use
-Date: Thu, 16 Sep 2010 11:07:22 +0100
-Message-ID: <4C91EC5A.7070105@64studio.com>
-References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com> <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
+Date: Thu, 16 Sep 2010 11:17:51 +0100
+Message-ID: <4C91EECF.1090705@64studio.com>
+References: <AANLkTinUYXDM_pGoJTd3veNNfYzWVu3Obv8v4RAL0urq@mail.gmail.com>	<20100914094411.GB10841@pengutronix.de>	<4C8F8500.5070002@theptrgroup.com>	<201009141830.03206@zigzag.lvk.cs.msu.su>	<4C8F8B79.1010300@theptrgroup.com>	<4C8FF52E.1030407@us.ibm.com>	<4C907A51.1050305@steinhoff.de>	<4C90D392.8040808@us.ibm.com> <AANLkTin_LCyT-bp+wQ3uRZ2X8xiox6iBAk+XhfK8hxWv@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Raz <raziebe@gmail.com>,
+Cc: Nivedita Singhvi <niv@us.ibm.com>,
+	Armin Steinhoff <armin@steinhoff.de>,
+	Jeff Angielski <jeff@theptrgroup.com>,
+	"Nikita V. Youshchenko" <yoush@cs.msu.su>,
+	Robert Schwebel <r.schwebel@pengutronix.de>,
+	Raz <raziebe@gmail.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: jordan <triplesquarednine@gmail.com>
+To: Pradyumna Sampath <pradysam@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rom012.server4you.de ([62.75.222.127]:37458 "EHLO
+Received: from rom012.server4you.de ([62.75.222.127]:57847 "EHLO
 	rom012.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750983Ab0IPKHl (ORCPT
+	with ESMTP id S1750983Ab0IPKSJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Sep 2010 06:07:41 -0400
-In-Reply-To: <AANLkTi=v_vgk=QwCZPDZWVp+z57_jaPc5=CCnA0Wfmr_@mail.gmail.com>
+	Thu, 16 Sep 2010 06:18:09 -0400
+In-Reply-To: <AANLkTin_LCyT-bp+wQ3uRZ2X8xiox6iBAk+XhfK8hxWv@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Jordan,
+Hi Pradyumna,
 
-> Next, in the Pro-audio sector, you have Muse Research who make the
-> "Recepter".  Which is a hardware VST host.
+> I have created a wiki page on http://rt.wiki.kernel.org/ ,
+> https://rt.wiki.kernel.org/index.php/Systems_based_on_Real_time_preempt_Linux
+> . Please feel free to update it as and when you encounter / build /
+> read about interesting usage of RT_PREEMPT.
 
-That's just one example of many in the pro audio sector (that we know
-about, since the companies involved aren't required to disclose their
-use of GNU/Linux - it's a competitive advantage, so they have a
-disincentive to do so). Several flagship audio mixing and recording
-systems use the Linux kernel, including the Harrison Xrange:
+Here's a more unusual example we have worked on recently - a
+multi-microphone hearing aid research platform:
 
-http://www.harrisonconsoles.com/joomla/index.php?option=com_content&task=view&id=26&Itemid=51
+http://www.64studio.com/press_release_mahalia
 
-and the Midas XL8:
-
-http://www.midasconsoles.com/xl8.php
-
-If you have been to see a Hollywood movie, or attended a stadium gig on
-a rock band's world tour, you have almost certainly been listening to
-audio mixed on a Harrison or Midas console - these companies are at the
-top of their game.
-
-RT-Linux provides significant advantage for these companies over
-proprietary RTOS products because of time-to-market, not licence costs:
-there are many audio software components available for re-use, leaving
-the integrator to write the last parts of the code.
-
-There's also knowledge transfer from the Linux HPC sector - for example,
-the Xrange uses up to 120 Opteron CPUs, so it's hardly a 'desktop'
-system. You don't get that combination of high performance and reliable,
-re-usable source code with any other platform, RT or otherwise.
-
-Licence fees for proprietary software aren't the big deal for companies
-selling a relatively small number of expensive products. I think people
-get confused with consumer products like mobile phones, where it's
-supposedly all about volume. Actually, I think the independence of OEM's
-from proprietary software vendors has more to do with it. Microsoft has
-significant lock-in with consumers, and yet it still can't persuade
-people to buy Windows phones :-)
+With six microphones (three per side) you can start to do interesting
+things with software algorithms, like selective noise cancellation. A
+well-known electronics company is using this system for field trials, in
+collaboration with university researchers in Germany.
 
 Cheers!
 
