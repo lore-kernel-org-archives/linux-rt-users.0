@@ -1,104 +1,51 @@
-From: John Kacur <jkacur@redhat.com>
+From: Daniel James <daniel@64studio.com>
 Subject: Re: "yum install ...." based instruction on building a RT kernel.
-Date: Fri, 17 Sep 2010 09:08:56 +0200
-Message-ID: <AANLkTi=GbDU7fKh9LvCEpjhSSMFF0syCqJVuqUERVBEJ@mail.gmail.com>
-References: <4C92A00C.6050401@atl.lmco.com>
-	<AANLkTi=eaPvCZmecBKT_d0C8YunJr7L6M8A7Y9pEiQK_@mail.gmail.com>
+Date: Fri, 17 Sep 2010 13:38:42 +0100
+Message-ID: <4C936152.5000505@64studio.com>
+References: <4C92A00C.6050401@atl.lmco.com>	<AANLkTi=eaPvCZmecBKT_d0C8YunJr7L6M8A7Y9pEiQK_@mail.gmail.com> <AANLkTi=GbDU7fKh9LvCEpjhSSMFF0syCqJVuqUERVBEJ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Gautam Thaker <gautam.h.thaker@lmco.com>,
+Content-Transfer-Encoding: 7bit
+Cc: jordan <triplesquarednine@gmail.com>,
+	Gautam Thaker <gautam.h.thaker@lmco.com>,
 	linux-rt-users@vger.kernel.org
-To: jordan <triplesquarednine@gmail.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:32971 "EHLO
-	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751633Ab0IQHI5 convert rfc822-to-8bit (ORCPT
+Received: from rom012.server4you.de ([62.75.222.127]:60819 "EHLO
+	rom012.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753730Ab0IQMiy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Sep 2010 03:08:57 -0400
-Received: by qyk33 with SMTP id 33so2104337qyk.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 Sep 2010 00:08:56 -0700 (PDT)
-In-Reply-To: <AANLkTi=eaPvCZmecBKT_d0C8YunJr7L6M8A7Y9pEiQK_@mail.gmail.com>
+	Fri, 17 Sep 2010 08:38:54 -0400
+In-Reply-To: <AANLkTi=GbDU7fKh9LvCEpjhSSMFF0syCqJVuqUERVBEJ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Sep 17, 2010 at 8:08 AM, jordan <triplesquarednine@gmail.com> w=
-rote:
-> Hi Gautam,
->
->> The above page provides the instruction in =A0a step by step manner,=
- but I
->> distinctly recall that Ingo Molnar used to have some place a set of
->> instruction that were "yum" based and it seemed like it was just =A0=
-a couple
->> of commands to build a new RT kernel. Are these still available anyw=
-here?
->
-> Correct me if im wrong, but wouldn't you be required to either A: be
-> using a repository that has packaged rt-kernels,
-> or B: have the RPMs for the rt-kernel locally, on your machine....?
-> (to use the yum or rpm methods).
->
->> There is the link below, but it appears to be > 3 years old and itse=
-lf
->> points to some broken links.
->>
->> http://wiki.bestpractical.com/view/RPMInstall
->>
->> It would be nice to have something like "yum install rt ..." to get =
-the
->> latest version of RT kernel build.
->
-> Ubuntu does something like that. But, it wont give you the latest,
-> just what is available. IF you want the latest get the sources.....I
-> don't use Ubuntu, as i use Fedora. But when i did try ubuntu with a
-> "stock" rt-kernel from the repo, it wasn't all that great.
->
-> * =A0don't you think it is fairly simple task to just get kernel
-> sources, use the corresponding rt-patch for the given kernel, and the=
-n
-> just compile it? =A0 If you have never done this before, it is actual=
-ly
-> quite simple once you go through it, once or twice. =A0It also has so=
-me
-> advantages, i have always had better quality kernels when i tune and
-> compile them myself....
->
-> Then you could also strip away all of the modules, that your machine
-> wont need, that would be built into a more generic kernel, available
-> in a repo.
->
-> You could also optimize your kernel further, disable features that yo=
-u
-> dont need. maybe compile the kernel specifically for your cpu...
->
-> Patching the kernel is not hard, nor is compiling it, nor optimizing =
-it.
+Hi John,
 
-You think that optimizing it is easy?
+> There is something called Planet CCRMA, which is a set of
+> repositories for audio packages that run on RedHat, Fedora and CentOS.
+> They also package the real-time kernel in rpm form.
 
->
-> I know for myself, even if i could just install an rt-kernel using
-> yum, i probably wouldn't.
-> It wouldn't be as good as doing it myself.
->
-> just my opinions
->
+Ready-packaged RT kernels make sense for JACK users with generic PCs,
+who may not be all that interested in optimisation (at first). They just
+want to be able to install a program like Ardour and have it run
+glitch-free.
 
-There is something called Planet CCRMA, which is a set of
-repositories for audio packages that run on RedHat, Fedora and CentOS.
-They also package the real-time kernel in rpm form. However, it is rath=
-er
-out of date. If you can compile your own kernel that would be the
-preferred option, but if you don't know how and still want to try
-out the real-time kernel then you can fetch it from there.
+Being a release or two behind the bleeding edge is no bad thing for that
+type of user either - if (for instance) 2.6.31-rt works fine in a
+production audio system, there's no big hurry to change it and
+potentially break stuff. For that sort of user, high availability is
+much more important than squeezing every last drop of performance out of
+the hardware.
 
-Here is the link
-http://ccrma.stanford.edu/planetccrma/software/
+In audio recording, we're potentially capturing once-in-a-lifetime or
+one-time-ever events, particularly since the industry focus has shifted
+from the studio to the live stage - whether TV, stadium or festival,
+that's where the artists are making their living these days. Even
+festivals run to tight schedules, with only 15 minutes allowed to switch
+between acts, including moving all the gear and repatching it. You can't
+ask the band to go and get a beer while you recompile your kernel :-)
 
-Have fun.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Cheers!
+
+Daniel
