@@ -1,64 +1,96 @@
-From: Pradyumna Sampath <pradysam@gmail.com>
+From: gowrishankar <gowrishankar.m@linux.vnet.ibm.com>
 Subject: Re: Newbie question about profiling.
-Date: Thu, 23 Sep 2010 16:58:52 +0200
-Message-ID: <AANLkTi=mXtZHFdkJsMNEd6rzkTW1UXt_7SpXNH+=YO6s@mail.gmail.com>
+Date: Thu, 23 Sep 2010 22:45:05 +0530
+Message-ID: <4C9B8B19.5050205@linux.vnet.ibm.com>
 References: <AANLkTi=6NUEod+pFZPhyZL0v8C-v1iMvQDZnuKgWxj9E@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
 To: Lars Segerlund <lars.segerlund@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:50372 "EHLO
-	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753436Ab0IWO6x convert rfc822-to-8bit (ORCPT
+Received: from e28smtp03.in.ibm.com ([122.248.162.3]:44184 "EHLO
+	e28smtp03.in.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755945Ab0IWRPM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Sep 2010 10:58:53 -0400
-Received: by qwh6 with SMTP id 6so1187343qwh.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Sep 2010 07:58:52 -0700 (PDT)
+	Thu, 23 Sep 2010 13:15:12 -0400
+Received: from d28relay03.in.ibm.com (d28relay03.in.ibm.com [9.184.220.60])
+	by e28smtp03.in.ibm.com (8.14.4/8.13.1) with ESMTP id o8NHF8in013680
+	for <linux-rt-users@vger.kernel.org>; Thu, 23 Sep 2010 22:45:08 +0530
+Received: from d28av01.in.ibm.com (d28av01.in.ibm.com [9.184.220.63])
+	by d28relay03.in.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id o8NHF8cK4300924
+	for <linux-rt-users@vger.kernel.org>; Thu, 23 Sep 2010 22:45:08 +0530
+Received: from d28av01.in.ibm.com (loopback [127.0.0.1])
+	by d28av01.in.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id o8NHF7Ps002071
+	for <linux-rt-users@vger.kernel.org>; Thu, 23 Sep 2010 22:45:07 +0530
 In-Reply-To: <AANLkTi=6NUEod+pFZPhyZL0v8C-v1iMvQDZnuKgWxj9E@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Lars,
+On Thursday 23 September 2010 08:12 PM, Lars Segerlund wrote:
+>   Hello,
+>
+>   I am fairly new to RT Preempt, but now to realtime embedded systems=
+=2E
+> I am trying to get EMC2 running on RT Preempt, and I was given some
+> old patches on the mailing list which miracously worked.
+>
+>   From here I am trying to get a complete system built from scratch
+> with 'latest' RT Preempt and EMC2.
+>
+>   My question is how to go about finding out what causes latencies an=
+d
+> jitter, I have no problem to create some code to benchmark latencies
+> or jitter, but how do I find out where the kernel is spending it's
+> time ?
+>
+>   =20
+Hi,
+You can start with RT functional testcases which are already available
+in LTP (https://rt.wiki.kernel.org/index.php/LTP%28Realtime_Test_Tree%2=
+9)
 
-On Thu, Sep 23, 2010 at 4:42 PM, Lars Segerlund
-<lars.segerlund@gmail.com> wrote:
+If you find tests failing for some reason, then it can be good place to=
+=20
+start
+investigating with the help of kernel inbuilt tracing tool (ftrace) whe=
+re
+you have options to trace particular subsystem (irqoff, preemptoff,=20
+wakeup..)
+Check kernel Documentation/trace/ftrace.txt.
 
-> =A0I was thinking that if I could create a realtime task to test for =
-a
+Thanks,
+Gowrishankar
+>   Any hints would be much appreciated, since i really don't have a cl=
+ue
+> on how to go about this.
+>
+>   I was thinking that if I could create a realtime task to test for a
 > specific thing, I really would like a log of what the kernal was doin=
 g
 > right before this.
-> =A0The only way I can think of is creating a module with a ring buffe=
-r (
+>   The only way I can think of is creating a module with a ring buffer=
+ (
 > spill over ), and tracing the scheduler or interrupt handler .... ( b=
 y
 > hack=EDng some code to specifically do this ), this would only add a
 > small overhead AFAIK.
 >
-> =A0Any idea's anyone ? or hints ?
+>   Any idea's anyone ? or hints ?
 >
-> =A0It seem's like just the thing that already might have a solution i=
-n
+>   It seem's like just the thing that already might have a solution in
 > place, so I figured I should not reinvent the wheel.
+>
+>   / best regards, Lars Segerlund.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>   =20
 
-Yeah in the last couple of years a lot of tools have been developed to
-do exaclty this kind of thing. You could look for ..
-
-- FTrace https://rt.wiki.kernel.org/index.php/Ftrace
-- Tuna
-- LTTng
-=2E.
-
-Im sure there are a couple more but Ive used ftrace and LTTng and they
-are pretty cool.
-
-best regards
-/prady
-
---=20
-http://www.prady.in
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
