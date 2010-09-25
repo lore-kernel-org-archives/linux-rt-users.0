@@ -1,69 +1,61 @@
-From: Dave Hylands <dhylands@gmail.com>
+From: Michael Blizek <michi1@michaelblizek.twilightparadox.com>
 Subject: Re: regarding synchronization code
-Date: Fri, 24 Sep 2010 22:16:50 -0700
-Message-ID: <AANLkTi=Akj+pOSnh1AQDjY4UVQKquk6uOTKMWxOd=HCD@mail.gmail.com>
+Date: Sat, 25 Sep 2010 10:48:16 +0200
+Message-ID: <20100925084816.GA2946@michaelblizek.twilightparadox.com>
 References: <AANLkTikhWVuL18zRcPTu2TcEQrv8Bpr4O0eafNsPgNjt@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Cc: Kernel-newbies <kernelnewbies@nl.linux.org>,
 	Linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sri Ram Vemulpali <sri.ram.gmu06@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:56681 "EHLO
-	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752242Ab0IYFQy convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 25 Sep 2010 01:16:54 -0400
-Received: by qwh6 with SMTP id 6so2233711qwh.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Sep 2010 22:16:50 -0700 (PDT)
+Return-path: <kernelnewbies-bounce@nl.linux.org>
+Content-Disposition: inline
 In-Reply-To: <AANLkTikhWVuL18zRcPTu2TcEQrv8Bpr4O0eafNsPgNjt@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: kernelnewbies-bounce@nl.linux.org
+Errors-to: kernelnewbies-bounce@nl.linux.org
+List-help: <mailto:ecartis@nl.linux.org?Subject=help>
+List-unsubscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=unsubscribe>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=subscribe>
+List-owner: <mailto:ecartis-owner@nl.linux.org>
+List-post: <mailto:kernelnewbies@nl.linux.org>
+List-archive: <http://mail.nl.linux.org/kernelnewbies/>
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sri,
+Hi!
 
-On Fri, Sep 24, 2010 at 3:56 PM, Sri Ram Vemulpali wrote:
+On 18:56 Fri 24 Sep     , Sri Ram Vemulpali wrote:
 > Hi all,
->
-> =A0I am encountering alot macros in the code. I did not understand wh=
-at
+> 
+>   I am encountering alot macros in the code. I did not understand what
 > those macro means.
->
-> =A0Can anyone explain them and the use of them putting them like that=
-=2E
->
-> =A0 "unlikely"
+> 
+>   Can anyone explain them and the use of them putting them like that.
+> 
+>    "unlikely"
 
-This has to do with branch prediction. If the architecture that you're
-building for supports branch prediction then this provides a hint to
-say that the following test is unlikely to pass, so the branch
-prediction will be setup to take the likely path.
+likely() and unlikely() are wrappers around gcc extensions to give hints about
+whether a given branch will likely be taken or not. When done correctly, this
+can improve performance.
 
-> =A0 "always_inline" =A0-- defined at the signature of the function.
+>    "always_inline"  -- defined at the signature of the function.
 
-Exactly what it says - always make the function an inline function.
-The inline keyword is normally just a hint or suggestion to the
-compiler, whereas the always_inline says that the function should
-always be inlined, even if optimizations to perform function inlining
-is disabled.
-<http://gcc.gnu.org/onlinedocs/gcc-4.0.4/gcc/Function-Attributes.html>
+This can be used because "inline" is not always inlined. There should be a gcc
+option which causes all inline code to be not inlined.
 
-> =A0 "inline" -- I know inline keyword in compiler is used to place th=
-e
+>    "inline" -- I know inline keyword in compiler is used to place the
 > code in to the caller function at the time of compiler, but why
 > declared as macro
 
-There are some CONFIG options which allow inline behaviour to be tweake=
-d:
-<http://cateee.net/lkddb/web-lkddb/OPTIMIZE_INLINING.html>
+Where do you see inline declared as a macro?
 
---=20
-Dave Hylands
-Shuswap, BC, Canada
-http://www.DaveHylands.com/
+	-Michi
+-- 
+programing a layer 3+4 network protocol for mesh networks
+see http://michaelblizek.twilightparadox.com
+
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe from this list: send an email with
+"unsubscribe kernelnewbies" to ecartis@nl.linux.org
+Please read the FAQ at http://kernelnewbies.org/FAQ
