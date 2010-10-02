@@ -1,54 +1,48 @@
-From: Daniel Baluta <daniel.baluta@gmail.com>
+From: Raz <raziebe@gmail.com>
 Subject: Re: segmentation question
-Date: Sat, 2 Oct 2010 13:06:55 +0300
-Message-ID: <AANLkTikV_opDwuP=N6CzE1qQr9GXPznaJUY2R3GR7K--@mail.gmail.com>
+Date: Sat, 2 Oct 2010 12:15:04 +0200
+Message-ID: <AANLkTi=PbFW7wuk2U_Xs=RuzTBj17frYTyCbx_Tw6rXi@mail.gmail.com>
 References: <AANLkTinfuURBV9-4=OhgojKWpRZh8QdPSVkeay71wm=D@mail.gmail.com>
+	<AANLkTikV_opDwuP=N6CzE1qQr9GXPznaJUY2R3GR7K--@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Kernel-newbies <kernelnewbies@nl.linux.org>,
-	Linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: multipart/alternative; boundary=00151747b326bdfa6d04919f952f
+Cc: Linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Sri Ram Vemulpali <sri.ram.gmu06@gmail.com>, Kernel-newbies <kernelnewbies@nl.linux.org>,
 	Bond <jamesbond.2k.g@gmail.com>
-To: Sri Ram Vemulpali <sri.ram.gmu06@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:54412 "EHLO
-	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753850Ab0JBKG5 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 2 Oct 2010 06:06:57 -0400
-Received: by qyk9 with SMTP id 9so2131643qyk.19
-        for <linux-rt-users@vger.kernel.org>; Sat, 02 Oct 2010 03:06:56 -0700 (PDT)
-In-Reply-To: <AANLkTinfuURBV9-4=OhgojKWpRZh8QdPSVkeay71wm=D@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Daniel Baluta <daniel.baluta@gmail.com>
+Return-path: <kernelnewbies-bounce@nl.linux.org>
+In-Reply-To: <AANLkTikV_opDwuP=N6CzE1qQr9GXPznaJUY2R3GR7K--@mail.gmail.com>
+Sender: kernelnewbies-bounce@nl.linux.org
+Errors-to: kernelnewbies-bounce@nl.linux.org
+List-help: <mailto:ecartis@nl.linux.org?Subject=help>
+List-unsubscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=unsubscribe>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=subscribe>
+List-owner: <mailto:ecartis-owner@nl.linux.org>
+List-post: <mailto:kernelnewbies@nl.linux.org>
+List-archive: <http://mail.nl.linux.org/kernelnewbies/>
+List-Id: linux-rt-users.vger.kernel.org
+
+--00151747b326bdfa6d04919f952f
+Content-Type: text/plain; charset=ISO-8859-1
+
+Can you share the code?
+
+On 02/10/2010 12:10, "Daniel Baluta" <daniel.baluta@gmail.com> wrote:
 
 Hi,
 
 On Sat, Oct 2, 2010 at 12:38 AM, Sri Ram Vemulpali
+
 <sri.ram.gmu06@gmail.com> wrote:
+
 > Hi All,
 >
-> =A0 =A0 =A0I am developing segmentation for my kernel. In that proces=
-s I
-> choose to divide whole memory in to fixed size segments. So a 4GB
-> memory can be divided in to 8192 segments. So I initialize segment
-> descriptors in to the GTD withs segments base address and limit. Here
-> base address are 0,0x10000,0x20000,..... and limit is 64kb always for
-> every segment. For a task if I choose a segment to assign, I will
-> place the index of that segment descriptor in to CS, DS. Now when
-> process generates address to put on address bus, then it will do
-> computation from logical address to linear address.
-> After processor picks logical address, it chooses segment descriptor
-> and adds this 32-bit logical address to segment base address to
-> generate linear address. Now my question is, if my segment size is
-> 64kb, how is that 32-bit offset is added to segment base address,
-> which is not right. It should only consider 16-bit offset to add to
-> base to generate linear address. How can I tell to my processor to
-> choose only 16-bit offset. Does processor drives offset bit width
-> automatically based on limit defined in segment descriptor.
-
+>      I am developing segmentation for my kernel. In that process I
+> choose to divide ...
 You don't have to "tell" your processor to choose only 16-bit offset.
 If the offset is greater than segment limit an exception will occur.
+
 
 
 >
@@ -56,17 +50,52 @@ If the offset is greater than segment limit an exception will occur.
 > for you reply.
 
 > To unsubscribe from this list: send an email with
-> "unsubscribe kernelnewbies" to ecartis@nl.linux.org
-> Please read the FAQ at http://kernelnewbies.org/FAQ
->
->
-@Bond: GTD should be GDT.Also please have a look inside x86 reference m=
-anual.
+> "unsubscribe kernelnewbies" to ecartis@nl.linu...
+@Bond: GTD should be GDT.Also please have a look inside x86 reference
+manual.
 
 thanks,
 Daniel.
+
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe from this list: send an email with
+"unsubscribe kernelnewbies" to ecartis@nl.linu...
+
+--00151747b326bdfa6d04919f952f
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<p>Can you share the code?</p>
+<p><blockquote type=3D"cite">On 02/10/2010 12:10, &quot;Daniel Baluta&quot;=
+ &lt;<a href=3D"mailto:daniel.baluta@gmail.com">daniel.baluta@gmail.com</a>=
+&gt; wrote:<br><br>Hi,<br>
+<br>
+On Sat, Oct 2, 2010 at 12:38 AM, Sri Ram Vemulpali<br>
+<p><font color=3D"#500050">&lt;<a href=3D"mailto:sri.ram.gmu06@gmail.com">s=
+ri.ram.gmu06@gmail.com</a>&gt; wrote:</font></p><p><font color=3D"#500050">=
+&gt; Hi All,<br>&gt;<br>&gt; =A0 =A0 =A0I am developing segmentation for my=
+ kernel. In that process I<br>
+&gt; choose to divide ...</font></p>You don&#39;t have to &quot;tell&quot; =
+your processor to choose only 16-bit offset.<br>
+If the offset is greater than segment limit an exception will occur.<br>
+<p><font color=3D"#500050"><br><br>&gt;<br>&gt; Any insight in to this will=
+ help me. please clarify my doubt. Waiting<br>&gt; for you reply.<br></font=
+></p><p><font color=3D"#500050">&gt; To unsubscribe from this list: send an=
+ email with<br>
+&gt; &quot;unsubscribe kernelnewbies&quot; to ecartis@nl.linu...</font></p>=
+@Bond: GTD should be GDT.Also please have a look inside x86 reference manua=
+l.<br>
+<br>
+thanks,<br>
+<font color=3D"#888888">Daniel.<br>
+</font><p><font color=3D"#500050"><br>--<br>To unsubscribe from this list: =
+send an email with<br>&quot;unsubscribe kernelnewbies&quot; to ecartis@nl.l=
+inu...</font></p></blockquote></p>
+
+--00151747b326bdfa6d04919f952f--
+
+--
+To unsubscribe from this list: send an email with
+"unsubscribe kernelnewbies" to ecartis@nl.linux.org
+Please read the FAQ at http://kernelnewbies.org/FAQ
