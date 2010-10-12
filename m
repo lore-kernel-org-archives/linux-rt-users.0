@@ -1,30 +1,44 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: 2.6.35 + rt?
-Date: Mon, 11 Oct 2010 17:00:32 -0700
-Message-ID: <4CB3A520.9040300@ccrma.stanford.edu>
+From: "Madovsky" <infos@madovsky.org>
+Subject: Re: 2.6.35 + rt?
+Date: Mon, 11 Oct 2010 22:00:50 -0400
+Message-ID: <E7507692C8904AC8AA1E8863A6572B97@e1705>
+References: <4CB3A520.9040300@ccrma.stanford.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+	format=flowed;
+	charset="iso-8859-1";
+	reply-type=response
 Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU
-To: linux-rt-users@vger.kernel.org
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:34479 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751665Ab0JLAJr (ORCPT
+Received: from ip-67-205-80-138.static.privatedns.com ([67.205.80.138]:63833
+	"EHLO node250.e-blokos.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756027Ab0JLCBF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Oct 2010 20:09:47 -0400
-Received: from smtp.stanford.edu (localhost.localdomain [127.0.0.1])
-	by localhost (Postfix) with SMTP id 63E40D30C
-	for <linux-rt-users@vger.kernel.org>; Mon, 11 Oct 2010 17:00:35 -0700 (PDT)
-Received: from cm-mail.stanford.edu (cm-mail.Stanford.EDU [171.64.197.135])
-	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
-	(No client certificate requested)
-	by smtp.stanford.edu (Postfix) with ESMTPS id C447ECDEF
-	for <linux-rt-users@vger.kernel.org>; Mon, 11 Oct 2010 17:00:32 -0700 (PDT)
+	Mon, 11 Oct 2010 22:01:05 -0400
+Received: from e1705 (localhost.localdomain [127.0.0.1])
+	by node250.e-blokos.com (8.14.3/8.14.3) with SMTP id o9C213W8026860
+	for <linux-rt-users@vger.kernel.org>; Mon, 11 Oct 2010 22:01:03 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Any news on the above combination? I can test if there is something 
-available...
+me too ! 8D
 
--- Fernando
+----- Original Message ----- 
+From: "Fernando Lopez-Lezcano" <nando@ccrma.Stanford.EDU>
+To: <linux-rt-users@vger.kernel.org>
+Cc: <nando@ccrma.Stanford.EDU>
+Sent: Monday, October 11, 2010 8:00 PM
+Subject: 2.6.35 + rt?
+
+
+> Any news on the above combination? I can test if there is something 
+> available...
+>
+> -- Fernando
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" 
+> in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html 
+
