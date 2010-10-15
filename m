@@ -1,44 +1,42 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 2.6.35 + rt?
-Date: Thu, 14 Oct 2010 15:12:55 -0700
-Message-ID: <4CB78067.801@localhost>
-References: <4CB3A520.9040300@ccrma.stanford.edu> <4CB5EDED.10100@localhost> <4CB76916.5000902@am.sony.com> <4CB77122.40408@localhost> <4CB77DE3.40904@am.sony.com>
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Subject: Re: kernel 2.6.33.7-rt29 problem
+Date: Fri, 15 Oct 2010 11:24:46 +0400
+Message-ID: <201010151124.47930@zigzag.lvk.cs.msu.su>
+References: <594976.7463.qm@web114205.mail.gq1.yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: frank.rowand@am.sony.com
+Cc: linux-rt-users linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Primus Mutasingwa <pmutasingwa@yahoo.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.Stanford.EDU ([171.67.219.81]:43013 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1756130Ab0JNWM6 (ORCPT
+Received: from gate.lvk.cs.msu.su ([158.250.17.1]:45960 "EHLO
+	mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756163Ab0JOHYw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Oct 2010 18:12:58 -0400
-In-Reply-To: <4CB77DE3.40904@am.sony.com>
+	Fri, 15 Oct 2010 03:24:52 -0400
+In-Reply-To: <594976.7463.qm@web114205.mail.gq1.yahoo.com>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  On 10/14/2010 03:02 PM, Frank Rowand wrote:
-> On 10/14/10 14:07, Fernando Lopez-Lezcano wrote:
->>    On 10/14/2010 01:33 PM, Frank Rowand wrote:
->>> On 10/13/10 10:35, Fernando Lopez-Lezcano wrote:
->>>> On 10/11/2010 05:00 PM, Fernando Lopez-Lezcano wrote:
->>>>> Any news on the above combination? I can test if there is something
->>>>> available...
->>>> Hmmm, looks like the git repo is tracking 2.6.36 up to rc7. I presume
->>> Which branch of which repo is that?
->>    From here:
->> https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch#Download
->>
->> I go to:
->> http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=summary
-> OK, branch master is 2.6.37-rc7 (according to Makefile), but the various
-> rt branches that I looked at are not.  Branch master does not appear to
-> contain the RT patches.
+> I am looking for suggestions on how to resolve this problem. Why doesnt
+> the thread run ?
+> Why is the system locked up ?
+> Is there any tools included in the kernel that can allow me to debug
+> this ?
 
-Argh, yes, of course... Anyway, still waiting for some reply from the rt 
-master gurus...
+I guess the system locked up because some of your code (user-space or 
+kernel-space) runs at too high priority, and consumes too much CPU.
 
--- Fernando
+For debugging, I suggest to temporary drop priorities of all your 
+components to something below 80, and increase priority of your debugging 
+environment to something above 80. If you access the board over serial, 
+then 'debugging environment' likely includes serial interrupt and your 
+shell process, maybe something more - need to check.
 
+After that, you should still be able to communicate with the system when 
+your failure event happens. Then use e.g. strace or gdb to find out what 
+is going on.
+
+Nikita
