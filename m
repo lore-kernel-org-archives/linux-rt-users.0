@@ -1,49 +1,42 @@
-From: Armin Steinhoff <armin@steinhoff.de>
-Subject: Re: RT scheduling / scheduling of RT groups
-Date: Sun, 24 Oct 2010 12:12:42 +0200
-Message-ID: <4CC4069A.5040404@steinhoff.de>
-References: <AANLkTim5r_GoCDp0oKmEjWbf+64UL1r35_3GmCow1ETD@mail.gmail.com> <4CC2E09B.7020704@steinhoff.de>
+From: "B, Ravi" <ravibabu@ti.com>
+Subject: RE: OHCI issue with RT patch
+Date: Mon, 25 Oct 2010 17:00:34 +0530
+Message-ID: <B85A65D85D7EB246BE421B3FB0FBB593023461B02B@dbde02.ent.ti.com>
+References: <S1756980Ab0JVN4w/20101022135653Z+208@vger.kernel.org>
+	<B85A65D85D7EB246BE421B3FB0FBB593023461A852@dbde02.ent.ti.com>
+ <AANLkTi=OFXjCagmj4RgoLV6jNbq4-MCmZ0J+RAzQmXoi@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.187]:61516 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932331Ab0JXKIz (ORCPT
+Received: from bear.ext.ti.com ([192.94.94.41]:58043 "EHLO bear.ext.ti.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754893Ab0JYLb1 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 24 Oct 2010 06:08:55 -0400
-In-Reply-To: <4CC2E09B.7020704@steinhoff.de>
+	Mon, 25 Oct 2010 07:31:27 -0400
+In-Reply-To: <AANLkTi=OFXjCagmj4RgoLV6jNbq4-MCmZ0J+RAzQmXoi@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
-is KUPS the answer ??
+> > I am using Linux 2.6.33.7 stable kernel + 
+> patch-2.6.33.7-rt29 to test OHCI interface on TI OMAPL138 platform.
+> > We observed that during bootup and OHCI init sequence the kernel 
+> > hangs. If we use plane Linux 2.6.33.7 stable kernel Without 
+> RT patch then OHCI works fine.
+> 
+> Just a guess: Are you using the SLAB or SLOB allocator?
+> We have seen that SLOB gives all kinds of weird problems in 
+> OHCI. SLAB works fine here.
 
+Thanks for the reply. I am using the SLAB allocator. 
 
-Armin Steinhoff wrote:
-> Hi all,
->
-> AFAIK,  the RT scheduler (sched_rt.c) is part of the CFS.
->  Is there a way to handle task running with SCHED_NORMAL and 
-> SCHED_OTHER also with the RT scheduler ?
-> ( CFS deactivated )
->
-> There are scheduling groups. In which way (priorities? other 
-> attributes?)  are these groups defined ?
->  How can sched_rt_period and sched_rt_runtime be set or read?
->
-> Cheers
->
-> --Armin
->
->
->
->
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe 
-> linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-
+> 
+> Kind regards,
+> 
+> Remy
+> 
