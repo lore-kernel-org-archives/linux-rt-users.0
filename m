@@ -1,100 +1,59 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: [PATCH]: Atmel Serial Console interrupt handler splitup
-Date: Fri, 29 Oct 2010 15:52:46 +0200
-Message-ID: <AANLkTim1aj1Pc33qJ66AbnAf+SQQxoSVk--a1d=hpgNn@mail.gmail.com>
-References: <AANLkTi=TyvXEtoZGatP5pxymLSna9g6ULV46i72bYgc4@mail.gmail.com>
+From: Nicholas Kinar <n.kinar@usask.ca>
+Subject: Implementing real-time embedded system to sample from five SPI ADCs
+Date: Wed, 03 Nov 2010 17:06:24 -0600
+Message-ID: <4CD1EAF0.6030709@usask.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: David Brownell <david-b@pacbell.net>,
-	ARM Linux Mailing List
-	<linux-arm-kernel@lists.arm.linux.org.uk>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Aras Vaichas <arasv@magellan-technology.com>
+Content-Type: text/plain; format=flowed; charset=ISO-8859-1
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f174.google.com ([209.85.161.174]:65188 "EHLO
-	mail-gx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757377Ab0J2Nwr convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Oct 2010 09:52:47 -0400
-Received: by gxk23 with SMTP id 23so1968830gxk.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Oct 2010 06:52:47 -0700 (PDT)
-In-Reply-To: <AANLkTi=TyvXEtoZGatP5pxymLSna9g6ULV46i72bYgc4@mail.gmail.com>
+Received: from smtp.usask.ca ([128.233.192.40]:38059 "EHLO smtp.usask.ca"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753079Ab0KDAGe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Nov 2010 20:06:34 -0400
+Received: from conversion-daemon.usask.ca by usask.ca
+ (Sun Java(tm) System Messaging Server 7.3-11.01 64bit (built Sep  1 2009))
+ id <0LBC0000005GP200@usask.ca> for linux-rt-users@vger.kernel.org; Wed,
+ 03 Nov 2010 17:06:33 -0600 (CST)
+Received: from [70.64.74.128]
+ (S010600254bbb9ab0.ss.shawcable.net [70.64.74.128])
+ by usask.ca (Sun Java(tm) System Messaging Server 7.3-11.01 64bit (built Sep 1
+ 2009)) with ESMTPSA id <0LBC0018G06WKE20@usask.ca> for
+ linux-rt-users@vger.kernel.org; Wed, 03 Nov 2010 17:06:33 -0600 (CST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello,
 
-2010/10/29 Aras Vaichas <arasv@magellan-technology.com>:
->> > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0On AT91 David Brownell noticed seve=
-ral months
->> > ago that the DBGU can miss some characters on NO_HZ. I would expec=
-t
->> > that this would be better now due to the shorter interrupt handler=
-,
->> > although it was not my goal to solve it with these patches.
->> The current (kernel.org git) AT91 timer handler incorporates a bugfi=
-x
->> in that area, which seemed to resolve most of those problems.
->> - Dave
->
-> Hello,
->
-> I'm sorry to bother you two off-list, but I'm trying to avoid too muc=
-h
-> noise on the lists.
+I would like to implement a real-time embedded Linux system on an 
+AT91SAM ARM processor.  Attached to the SPI bus of this processor are 5 
+Analog-to-Digital converters (ADCs) that can be read using the Linux SPI 
+bus subsystem.
 
-Please, always at least CC to the mailinglist as well.
+The ADCs are sampled by having the  AT91SAM ARM processor toggle a GPIO 
+at a rate of at least 1 KHz.  The GPIO is attached to a pin on the ADC.  
+A high voltage level on this pin instructs all of the ADCs to take a 
+sample.  The sample is then read over the SPI bus by the embedded system 
+master.  This implies that data will be read from each SPI slave device 
+every (1 / 1000 Hz) = 1.0e-3 seconds.
 
-> My issue is related to these two posts (and the re: above):
->
-> http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg02115.h=
-tml
-> http://permalink.gmane.org/gmane.linux.ports.arm.kernel/94652
->
-> If I change the Atmel serial interrupt to IRQF_NODELAY, then *most* o=
-f
-> the overruns go away and DBGU works as it should.
->
-> --- A/drivers/serial/atmel_serial.c =A0 2010-08-03 03:27:18.000000000=
- +1000
-> +++ B/drivers/serial/atmel_serial.c 2010-10-29 10:24:54.000000000 +11=
-00
-> @@ -808,7 +818,7 @@
-> =A0 =A0 =A0 =A0/*
-> =A0 =A0 =A0 =A0 * Allocate the IRQ
-> =A0 =A0 =A0 =A0 */
-> - =A0 =A0 =A0 retval =3D request_irq(port->irq, atmel_interrupt, IRQF=
-_SHARED,
-> + =A0 =A0 =A0 retval =3D request_irq(port->irq, atmel_interrupt, IRQF=
-_NODELAY,
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0tty ? tty->name : "atm=
-el_serial", port);
-> =A0 =A0 =A0 =A0if (retval) {
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0printk("atmel_serial: atmel_startup - =
-Can't get irq\n");
->
->
-> But shouldn't the DBGU interrupt already be running in NODELAY contex=
-t
-> according to Remy's post? =A0I understand that NODELAY has many other
-> complications, this is just a test to get an idea of which direction
-> to move in.
+I am wondering if the following could be done with real-time Linux:
 
-On preempt-RT this driver always has NODELAY set by default. AFAIK, it
-is not in mainline.
+(1) I would have to write a Linux kernel module to toggle the GPIO pin.  
+The rate of toggling would be controlled by a high-resolution timer, and 
+would occur with a period of at least 1 kHz.
+(2) After the GPIO is brought to a high voltage level, the master must 
+wait for at least 3.7 microseconds before reading from the SPI bus.
+(3) Each ADC would be read in sequential order.
 
-Notice that on recent kernels also the request_threaded_irq()
-mechanism can be used, which is much cleaner compared to the NODELAY
-change.
-So, I guess the NODELAY change will never hit mainline since this
-better solution exist.
+The ADC being used is the AD7691 from Analog Devices 
+(http://www.analog.com/static/imported-files/data_sheets/AD7691.pdf).
 
-Kind regards,
+The data from the ADCs could be used in a real-time control system 
+loop.  Can this be done with real-time Linux, or is the latency too 
+high?  What is the maximum rate at which I could read data from these 
+ADCs?  Could it be 10 kHz or even 100 kHz?
 
-Remy
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Nicholas
+
+
