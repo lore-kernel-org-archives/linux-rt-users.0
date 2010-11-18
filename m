@@ -1,42 +1,35 @@
-From: Nathan Grennan <ngrennan@willowgarage.com>
-Subject: Soft lock issue with 2.6.33.7-rt29
-Date: Wed, 17 Nov 2010 11:11:07 -0800
-Message-ID: <4CE428CB.20808@willowgarage.com>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: Slub support with PREEMPT_RT ?
+Date: Wed, 17 Nov 2010 17:23:57 -0800
+Message-ID: <4CE4802D.6070903@linux.intel.com>
+References: <AANLkTimUb7rfRKCwhnf3s=Qw+J79_PqL_1Zk=fz5B99q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org,
+	Peter Zijlstra <peterz@infradead.org>
+To: Jean-Michel Hautbois <jhautbois@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f174.google.com ([209.85.161.174]:42474 "EHLO
-	mail-gx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935196Ab0KQTLM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Nov 2010 14:11:12 -0500
-Received: by gxk23 with SMTP id 23so1345154gxk.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 Nov 2010 11:11:11 -0800 (PST)
+Received: from mga14.intel.com ([143.182.124.37]:11057 "EHLO mga14.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751210Ab0KRBX6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 17 Nov 2010 20:23:58 -0500
+In-Reply-To: <AANLkTimUb7rfRKCwhnf3s=Qw+J79_PqL_1Zk=fz5B99q@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-    I have been working for weeks to get a stable rt kernel. I had been 
-focusing on 2.6.31.6-rt19. It is stable for about four days under stress 
-testing before it soft locks. I am using rt19 instead of rt21, because 
-rt19 seems to be more stable. The rtmutex issue that seems to still be 
-in rt29 is in rt21. I also had to backport the iptables fix to rt19.
+On 11/17/2010 08:18 AM, Jean-Michel Hautbois wrote:
+> Hi !
+>
+> I am wondering why SLUB isn't supported with PREEMPT_RT ?
+> I cannot find any info on that except the fact it is not working yet.
+> What do we have to do in order to support it ?
 
-   I just started looking at 2.6.33.7-rt29 again, since I can reproduce 
-a soft lock with it in 10-15 minutes. I have yet to get sysrq output for 
-rt19, since it takes four days. The soft lock with rt29 as far as I can 
-tell seems to relate to disk i/o.
-
-    There are links to two logs of rt29 from a serial console below. 
-They include sysrq output like "Show Blocked State" and "Show State". 
-The level7 file is with nfsd enable, and level9 is with it disable. So 
-nfsd doesn't seem to be the issue.
-
-   If any other debugging information is useful or needed, just say the 
-word.
+Peter can answer this better than I can, but it has something to do with 
+all the local_bh_disable() calls not being compatible with the goals of 
+PREEMPT_RT - if I remember correctly.
 
 
-http://proton.cygnusx-1.org/~edgan/kernel-logs/kernel-2.6.33-rt29.level7.log
-
-http://proton.cygnusx-1.org/~edgan/kernel-logs/kernel-2.6.33-rt29.level9.log
+-- 
+Darren Hart
+Yocto Linux Kernel
