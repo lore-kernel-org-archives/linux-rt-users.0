@@ -1,87 +1,64 @@
-From: "Husak, Jan" <jan.husak@siemens.com>
-Subject: RE: Locating processes impacting my rt application
-Date: Fri, 19 Nov 2010 16:11:35 +0100
-Message-ID: <3E4278088AD82C48B4663DDFE762CEF3084CD74A@prga004a.ww300.siemens.net>
-References: <4CE428CB.20808@willowgarage.com> <4CE480BF.7050603@linux.intel.com> <4CE5A4A3.4040202@cygnusx-1.org> <B5339992F194184BABF87ECF0296990D034E5F0F@GLKMS2105.GREENLNK.NET>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: Soft lock issue with 2.6.33.7-rt29
+Date: Fri, 19 Nov 2010 10:46:51 -0800
+Message-ID: <4CE6C61B.6090608@linux.intel.com>
+References: <4CE428CB.20808@willowgarage.com> <4CE480BF.7050603@linux.intel.com> <4CE5A4A3.4040202@cygnusx-1.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Nathan Grennan <linux-rt-users@cygnusx-1.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mxs2.siemens.at ([194.138.12.133]:55873 "EHLO mxs2.siemens.at"
+Received: from mga02.intel.com ([134.134.136.20]:49522 "EHLO mga02.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754778Ab0KSPWQ convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Nov 2010 10:22:16 -0500
-Received: from vies1k7x.sie.siemens.at ([158.226.129.83])
-	by mxs2.siemens.at  with ESMTP id oAJFBbJ1014148
-	for <linux-rt-users@vger.kernel.org>; Fri, 19 Nov 2010 16:11:37 +0100
-Received: from nets139a.ww300.siemens.net ([192.168.217.3])
-	by vies1k7x.sie.siemens.at (8.12.11.20060308/8.12.1) with ESMTP id oAJFBaCq023844
-	for <linux-rt-users@vger.kernel.org>; Fri, 19 Nov 2010 16:11:36 +0100
-Content-class: urn:content-classes:message
-In-Reply-To: <B5339992F194184BABF87ECF0296990D034E5F0F@GLKMS2105.GREENLNK.NET>
+	id S1756311Ab0KSSqx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Nov 2010 13:46:53 -0500
+In-Reply-To: <4CE5A4A3.4040202@cygnusx-1.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Try ftrace, with sched_switch tracer, to see threads switching.
+On 11/18/2010 02:11 PM, Nathan Grennan wrote:
+> On 11/17/2010 05:26 PM, Darren Hart wrote:
+>> On 11/17/2010 11:11 AM, Nathan Grennan wrote:
+>>> I have been working for weeks to get a stable rt kernel. I had been
+>>> focusing on 2.6.31.6-rt19. It is stable for about four days under stress
+>>> testing before it soft locks. I am using rt19 instead of rt21, because
+>>> rt19 seems to be more stable. The rtmutex issue that seems to still be
+>>> in rt29 is in rt21. I also had to backport the iptables fix to rt19.
+>>>
+>>> I just started looking at 2.6.33.7-rt29 again, since I can reproduce a
+>>> soft lock with it in 10-15 minutes. I have yet to get sysrq output for
+>>> rt19, since it takes four days. The soft lock with rt29 as far as I can
+>>> tell seems to relate to disk i/o.
+>>>
+>>> There are links to two logs of rt29 from a serial console below. They
+>>> include sysrq output like "Show Blocked State" and "Show State". The
+>>> level7 file is with nfsd enable, and level9 is with it disable. So nfsd
+>>> doesn't seem to be the issue.
+>>>
+>>> If any other debugging information is useful or needed, just say the
+>>> word.
+>>
+>> A reproducible test-case is always the first thing we ask for :-) What
+>> is your stress test?
+>
+> I have been able to boil it down the script below. If I just run yes it
+> is fine, if I just run dd, it is fine. If you just run octave, it is
+> fine. Run yes+dd, gets it most of the way there, but will wake up
+> sometimes, off and on. Do all three together and it soft locks. It takes
+> 5-15 minutes. I did it on our main example hardware, which is a server.
+> I have also reproduced it on a desktop. Sometimes sysrq-n, to renice
+> realtime processes, brings it out of it enough you can kill processes off.
 
-Jan 
 
------Original Message-----
-From: linux-rt-users-owner@vger.kernel.org
-[mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Leggo, Adam
-(UK)
-Sent: 19. listopadu 2010 13:05
-To: linux-rt-users@vger.kernel.org
-Subject: Locating processes impacting my rt application
+Interesting, so you're locking up a preempt-rt kernel with SCHED_OTHER 
+tasks running at the least favorable priority.
 
-Hello, 
+Note: nice -n 19 is actually the valid nice value (20 and higher seem to 
+be accepted, but have the same effect as 19). NICE(1)
 
-I have been working on a simulator that sends large amount of data to
-another system. I am having a problem where something in the system is
-interupting my processing loops for an extended period. I would like
-some suggestions on how to find the offending process and prevent it
-from impacting my applications while it is running.
+How many CPUs on your test machine?
 
-The purpose of the simulator is to receive an instruction every 4ms and
-then responses by sending 400KB chunks of data on each of 8 sFPDP fibre
-channels to the system under test before the next instruction. The
-current simulator can match the 4ms frequency most of the time, but
-every 300 or so instructions a delay occurs of up to 15ms that impacts
-the system under test.
-
-The simulator is running on an 8 core HP server running openSUSE 11.3
-with real time kernel 2.6.33.1-rt11. The instruction processing thread
-is locked to cpu 4 and the four data sending threads are locked to cpu's
-5-8. 
-
-How do you either find the offending processes or prevent other
-processes using the real time CPU cores? I have tried oprofile to
-profile the system and haven't found anything. I may not be interpreting
-the results correctly.
-
-I tried the suggestions in the following website, but I may not have set
-it up correctly.
-https://rt.wiki.kernel.org/index.php/CPU_shielding_using_/proc_and_/dev/
-cpuset
-
-Any suggestion would be helpful.
-
-Regards
-Adam Leggo
-
-********************************************************************
-This email and any attachments are confidential to the intended
-recipient and may also be privileged. If you are not the intended
-recipient please delete it from your system and notify the sender.
-You should not copy it or use it for any purpose nor disclose or
-distribute its contents to any other person.
-********************************************************************
-
---
-To unsubscribe from this list: send the line "unsubscribe
-linux-rt-users" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Darren Hart
+Yocto Linux Kernel
