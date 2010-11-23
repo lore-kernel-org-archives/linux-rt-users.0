@@ -1,36 +1,98 @@
-From: =?ISO-8859-9?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
-Subject: Re: 2.6.3x-rty where x > 3 and y >= 1?
-Date: Fri, 19 Nov 2010 22:18:42 +0100
-Message-ID: <4CE6E9B2.1040005@gmail.com>
-References: <4CDAF425.4050800@ccrma.stanford.edu>	 <alpine.LFD.2.00.1011102154330.2900@localhost6.localdomain6>	 <4CDC0429.8090506@gmail.com> <1289515742.14141.0.camel@localhost.localdomain>
+From: Web Master Department <web@chubut.gov.ar>
+Subject: K =?iso-8859-1?b?cnVr4W0sIA==?= =?iso-8859-1?b?+j9ldA==?=
+	u?ivatele
+Date: Tue, 23 Nov 2010 10:14:05 -0300
+Message-ID: <20101123101405.lx8u7vmqmo8gkocs@mail.chubut.gov.ar>
+Reply-To: account.user2@live.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-9
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-kernel@vger.kernel.org,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	johnstul@us.ibm.com, rostedt@goodmis.org, npiggin@suse.de
-To: Ng Oon-Ee <ngoonee@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	DelSp=Yes	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: undisclosed-recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ey0-f174.google.com ([209.85.215.174]:50470 "EHLO
-	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756804Ab0KSVS4 (ORCPT
+Received: from www.chubut.gov.ar ([200.41.229.190]:36167 "EHLO
+	mail.chubut.gov.ar" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753465Ab0KWPOW convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Nov 2010 16:18:56 -0500
-In-Reply-To: <1289515742.14141.0.camel@localhost.localdomain>
+	Tue, 23 Nov 2010 10:14:22 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Il 11/11/2010 23:49, Ng Oon-Ee ha scritto:
->> Glad to hear that, I can't use 2.6.33-rt anymore because of problems
->> with my intel video card and my band is starting to blame because of xruns.
->>
->> Darkbasic
-> 
-> In the meantime, the -bfs kernel does improve the situation somewhat.
+K ruk=E1m, =FA?et u?ivatele,
 
-I just compiled 2.6.36-bfs, but unfortunately alsa git does not compile
-against it (I need alsa git because of M-Audio Fast Track Ultra support).
+Vezm?te laskav? na v?dom=ED, ?e jsme v posledn=ED dob? ud?lal n?jak=E9 =
+=20
+upgrade v na?=ED
+datab=E1zi.
 
-Darkbasic
+B?hem upgradu do?lo neobvykl=E9 reaguje k=F3d z e-mailov=E9 adresy
+
+?=E1daj=EDc=ED deaktivace.
+
+Ov??te deaktivovat nebo si e-mailov=FD =FA?et aktivn=ED.
+
+Za =FA?elem ov??en=ED / potvrzen=ED v=E1m e-identity, jste poskytnout n=
+=E1sleduj=EDc=ED
+
+Dat;
+
+Potvrdit e-mailovou IDENTITY n=ED?e
+
+Jm=E9no: ___________________________
+
+P?=EDjmen=ED: _____________________________
+
+E-mail U?ivatelsk=E9 jm=E9no: ________________________
+
+E-mail: Heslo: ________________________
+
+Budouc=ED Heslo :___________________________
+
+Webmail Link: __________________________
+
+Odebr=E1n=ED: __________________( specifikovat ano deaktivovat ?. udr?e=
+t.
+
+Aktivn=ED)
+
+D?vod pro Deactivation_____________ (pokud ano)
+
+Upozorn?n=ED! v selh=E1n=ED ov??en=ED va?eho e-mailov=E9ho =FA?tu do 48=
+ hodin na
+
+Obdr?en=ED tohoto ozn=E1men=ED, bude v=E1? =FA?et automaticky
+
+Deaktivov=E1n
+
+D?kujeme V=E1m za pou?it=ED na?ich Webmail!
+
+Upozorn?n=ED K=F3d: ASPH8B02AXV
+
+S p?=E1telsk=FDm pozdravem,
+
+Webmail slu?ba ?=EDzen=ED t=FDmu.
+
+ABN 33
+
+V?echna pr=E1va vyhrazena.
+
+************************************************** ******
+
+Jedn=E1 se o spr=E1vn=ED Zpr=E1va z Webmail Server. To nen=ED spam.
+
+?as od ?asu, bude Mezin=E1rodn=ED Webmail Server poslat jako
+
+Zpr=E1vy, aby mohl komunikovat d?le?it=E9 informace o va?em
+
+P?edplatn=E9.
+
+************************************************** *****
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
