@@ -1,44 +1,47 @@
-From: =?ISO-8859-9?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
-Subject: Re: 2.6.3x-rty where x > 3 and y >= 1?
-Date: Sat, 27 Nov 2010 18:20:00 +0100
-Message-ID: <4CF13DC0.8080109@gmail.com>
-References: <4CDAF425.4050800@ccrma.stanford.edu>	 <alpine.LFD.2.00.1011102154330.2900@localhost6.localdomain6>	 <4CDC0429.8090506@gmail.com> <1289515742.14141.0.camel@localhost.localdomain> <4CE6E9B2.1040005@gmail.com> <4CEDAE00.1050800@gareus.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-9
-Content-Transfer-Encoding: 7bit
-Cc: Ng Oon-Ee <ngoonee@gmail.com>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Daniel James <daniel@64studio.com>,
-	Free Ekanayaka <free.ekanayaka@canonical.com>
-To: Robin Gareus <robin@gareus.org>
+From: Wolfram Sang <w.sang@pengutronix.de>
+Subject: [PATCH 2/2] rt-tests: Simplify makefile a bit
+Date: Mon, 29 Nov 2010 16:38:55 +0100
+Message-ID: <1291045135-15541-3-git-send-email-w.sang@pengutronix.de>
+References: <1291045135-15541-1-git-send-email-w.sang@pengutronix.de>
+Cc: Clark Williams <williams@redhat.com>,
+	Wolfram Sang <w.sang@pengutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wy0-f174.google.com ([74.125.82.174]:33028 "EHLO
-	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751499Ab0K0RUI (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:52827 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752315Ab0K2PjR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Nov 2010 12:20:08 -0500
-Received: by wyb28 with SMTP id 28so2976065wyb.19
-        for <linux-rt-users@vger.kernel.org>; Sat, 27 Nov 2010 09:20:07 -0800 (PST)
-In-Reply-To: <4CEDAE00.1050800@gareus.org>
+	Mon, 29 Nov 2010 10:39:17 -0500
+In-Reply-To: <1291045135-15541-1-git-send-email-w.sang@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Il 25/11/2010 01:29, Robin Gareus ha scritto:
-> Don't worry. It's not worth the hype it generated. I'm just back from
-> rolling a new kernel for 64studio. I tried a couple of candidates
-> including -bfs.
-> 
-> 2.6.33.7-rt29 is _by far_ the best option for low-latency audio.
-> Well, actually it's the only option (not counting older rt-linux
-> releases) which provides reliable <=4 ms latency (16 or 32 audio-frames
-> per period) without any x-runs!
+install can also create directories with -D.
 
-I agree: I patched alsa git to make it compile but I didn't notice any
-major improvement with -bfs :-(
+Signed-off-by: Wolfram Sang <w.sang@pengutronix.de>
+---
+ Makefile |    6 ++----
+ 1 files changed, 2 insertions(+), 4 deletions(-)
 
-I hope the next -rt kernel will be released soon, otherwise I fear I
-will crash my laptop next time I hear "what about buying a Mac?" .-.
+diff --git a/Makefile b/Makefile
+index b83614c..c11e43a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -114,12 +114,10 @@ install: all
+ 	mkdir -p "$(DESTDIR)$(srcdir)" "$(DESTDIR)$(mandir)/man8"
+ 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
+ 	if test -n "$(PYLIB)" ; then \
+-		mkdir -p "$(DESTDIR)$(PYLIB)" ; \
+-		install -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwlatdetect.py ; \
++		install -D -m 755 src/hwlatdetect/hwlatdetect.py $(DESTDIR)$(PYLIB)/hwlatdetect.py ; \
+ 		ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect" ; \
+ 	fi
+-	mkdir -p "$(DESTDIR)$(srcdir)/backfire"
+-	install -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/backfire.c"
++	install -D -m 644 src/backfire/backfire.c "$(DESTDIR)$(srcdir)/backfire/backfire.c"
+ 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4.gz"
+ 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclictest.8.gz"
+ 	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress.8.gz"
+-- 
+1.7.2.3
 
-Darkbasic
