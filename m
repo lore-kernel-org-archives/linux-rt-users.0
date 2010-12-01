@@ -1,29 +1,50 @@
-From: Wolfram Sang <w.sang@pengutronix.de>
-Subject: [PATCH 0/2] minor patches for rt-tests
-Date: Mon, 29 Nov 2010 16:38:53 +0100
-Message-ID: <1291045135-15541-1-git-send-email-w.sang@pengutronix.de>
-Cc: Clark Williams <williams@redhat.com>,
-	Wolfram Sang <w.sang@pengutronix.de>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:52825 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752107Ab0K2PjR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Nov 2010 10:39:17 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Jean-Michel Hautbois <jhautbois@gmail.com>
+Subject: [MPC52xx]Latency issue with DMA on FEC
+Date: Wed, 1 Dec 2010 09:16:41 +0100
+Message-ID: <AANLkTi=vAEcPKLqJ_yJt7NLz5JoYvEnt8S8QB99ZBNSX@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Eric Dumazet <eric.dumazet@gmail.com>, Steven Rostedt <rostedt@goodmis.org>
+To: linuxppc-dev <linuxppc-dev@ozlabs.org>, linux-rt-users@vger.kernel.org
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Sender: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Here are two minor patches taken from ptxdist. Easy stuff :)
-
-Wolfram Sang (2):
-  cyclictest: fix wakeup_latency name for tracing
-  rt-tests: Simplify makefile a bit
-
- Makefile                    |    6 ++----
- src/cyclictest/cyclictest.c |    2 +-
- 2 files changed, 3 insertions(+), 5 deletions(-)
-
--- 
-1.7.2.3
-
+SGkgbGlzdHMgIQoKSSBtZWFzdXJlZCB0aGUgbGF0ZW5jeSBhbmQgdGhlIGppdHRlciBvZiB0aGUg
+UlggYW5kIFRYIGV0aGVybmV0IHBhdGhzCm9uIG15IE1QQzUyMDAgYm9hcmQuClRoZSBSWCBwYXRo
+IGlzIHF1aXRlIGdvb2QsIGJ1dCB0aGUgVFggcGF0aCBjYW4gYmUgc2xvdy4KClsgMTIxOC45NzY3
+NjJdIFttcGM1Mnh4X2ZlY19zdGFydF94bWl0XURlbGF5ID4zMHVzIGZvciBkbWFfbWFwX3Npbmds
+ZQo9PiA3NjM2NCBucwpbIDEyMTkuMTg4NDA1XSBbbXBjNTJ4eF9mZWNfdHhfaW50ZXJydXB0XURl
+bGF5ID4zMHVzIGZvcgpkbWFfdW5tYXBfc2luZ2xlID0+IDM0NTE1IG5zClsgMTIyMC42Mjg3ODVd
+IFttcGM1Mnh4X2ZlY19zdGFydF94bWl0XURlbGF5ID4zMHVzIGZvcgpiY29tX3N1Ym1pdF9uZXh0
+X2J1ZmZlciA9PiA5NzI3MyBucwpbIDEyMjUuNzc2Nzg0XSBbbXBjNTJ4eF9mZWNfdHhfaW50ZXJy
+dXB0XURlbGF5ID4zMHVzIGZvcgpkbWFfdW5tYXBfc2luZ2xlID0+IDk1MjczIG5zCgpBcyBvbmUg
+Y2FuIHNlZSwgdGhpcyBpcyBvYnZpb3VzbHkgcHJvYmxlbWF0aWMuClRoZSBmaXJzdCBmdW5jdGlv
+biBJIGFuYWx5emVkIGlzIGJjb21fc3VibWl0X25leHRfYnVmZmVyKCkgPT4gVGhpcwpmdW5jdGlv
+biBkb2Vzbid0IGRvIGxvdHMgb2YgdGhpbmdzLCBleGNlcHQgYSBjYWxsIHRvIG1iKCkuCgpJIGhh
+dmUgYmVlbiBsb29raW5nIHRvIHRoZSAiTVBDNjAzZSBSSVNDIE1pY3JvcHJvY2Vzc29yIFVzZXIn
+cyBNYW51YWwiCmFuZCBlc3BlY2lhbGx5IHRoZSBjaGFwdGVyIG5hbWVkICIyLjMuNC43IE1lbW9y
+eSBTeW5jaHJvbml6YXRpb24KSW5zdHJ1Y3Rpb25z4oCUVUlTQSIuCgpIZXJlIGlzIGEgcGFyYWdy
+YXBoIHdoaWNoIGV4cGxhaW5zIGEgbG90IDoKCiJUaGUgZnVuY3Rpb25zIHBlcmZvcm1lZCBieSB0
+aGUgc3luYyBpbnN0cnVjdGlvbiBub3JtYWxseSB0YWtlIGEKc2lnbmnvrIFjYW50IGFtb3VudCBv
+ZiB0aW1lCnRvIGNvbXBsZXRlOyBhcyBhIHJlc3VsdCwgZnJlcXVlbnQgdXNlIG9mIHRoaXMgaW5z
+dHJ1Y3Rpb24gbWF5CmFkdmVyc2VseSBhZmZlY3QgcGVyZm9ybWFuY2UuCkluIGFkZGl0aW9uLCB0
+aGUgbnVtYmVyIG9mIGN5Y2xlcyByZXF1aXJlZCB0byBjb21wbGV0ZSBhIHN5bmMKaW5zdHJ1Y3Rp
+b24gZGVwZW5kcyBvbiBzeXN0ZW0KcGFyYW1ldGVycyBhbmQgb24gdGhlIHByb2Nlc3NvcidzIHN0
+YXRlIHdoZW4gdGhlIGluc3RydWN0aW9uIGlzIGlzc3VlZC4iCgpJIGFtIHVzaW5nIGEgcmVhbCB0
+aW1lIGtlcm5lbCwgYW5kIHRoaXMgaXMgYSBwcm9ibGVtLCBhcyBpdCBpcyBub3QKZGV0ZXJtaW5p
+c3RpYyB0byB1c2UgdGhpcyBpbnN0cnVjdGlvbi4KSXMgdGhlcmUgYSB3YXkgdG8gYXZvaWQgdGhp
+cyA/CgpJIHdpbGwgbm93IGZvY3VzIG9uIHRoZSBkbWFfbWFwX3NpbmdsZSgpIGFuZCBkbWFfdW5t
+YXBfc2luZ2xlIGZ1bmN0aW9ucy4uLgoKVGhhbmtzIGluIGFkdmFuY2UgZm9yIHlvdXIgaGVscCwK
+QmVzdCBSZWdhcmRzLAoKSk0KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18KTGludXhwcGMtZGV2IG1haWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMub3ps
+YWJzLm9yZwpodHRwczovL2xpc3RzLm96bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
