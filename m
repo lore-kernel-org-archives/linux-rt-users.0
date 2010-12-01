@@ -1,50 +1,48 @@
-From: Jean-Michel Hautbois <jhautbois@gmail.com>
-Subject: [MPC52xx]Latency issue with DMA on FEC
-Date: Wed, 1 Dec 2010 09:16:41 +0100
-Message-ID: <AANLkTi=vAEcPKLqJ_yJt7NLz5JoYvEnt8S8QB99ZBNSX@mail.gmail.com>
+From: Andre Puschmann <andre.puschmann@tu-ilmenau.de>
+Subject: Re: Networking latency issue on 2.6.33.7-rt29 kernel
+Date: Wed, 01 Dec 2010 09:27:24 +0100
+Message-ID: <id50tc$lju$1@dough.gmane.org>
+References: <AANLkTi=7_zBakGaCys6FpLO8BbZKKX0sYb7Y6RBU8_bB@mail.gmail.com>	<0016e65a0784be92790495bd73d5@google.com>	<AANLkTimzu3fM4_PaxSqrmUuYoZheDNjf5yVPmhJh=Yzz@mail.gmail.com> <AANLkTin6nJxLa_U61yj=a=BQapHxMoc6FFtLfwP_yma_@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: Eric Dumazet <eric.dumazet@gmail.com>, Steven Rostedt <rostedt@goodmis.org>
-To: linuxppc-dev <linuxppc-dev@ozlabs.org>, linux-rt-users@vger.kernel.org
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
-	<mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Sender: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lo.gmane.org ([80.91.229.12]:51492 "EHLO lo.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752716Ab0LAI1p (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 Dec 2010 03:27:45 -0500
+Received: from list by lo.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1PNi2M-0001an-Ry
+	for linux-rt-users@vger.kernel.org; Wed, 01 Dec 2010 09:27:38 +0100
+Received: from ih5.theoinf.tu-ilmenau.de ([141.24.203.5])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Dec 2010 09:27:38 +0100
+Received: from andre.puschmann by ih5.theoinf.tu-ilmenau.de with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Dec 2010 09:27:38 +0100
+In-Reply-To: <AANLkTin6nJxLa_U61yj=a=BQapHxMoc6FFtLfwP_yma_@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-SGkgbGlzdHMgIQoKSSBtZWFzdXJlZCB0aGUgbGF0ZW5jeSBhbmQgdGhlIGppdHRlciBvZiB0aGUg
-UlggYW5kIFRYIGV0aGVybmV0IHBhdGhzCm9uIG15IE1QQzUyMDAgYm9hcmQuClRoZSBSWCBwYXRo
-IGlzIHF1aXRlIGdvb2QsIGJ1dCB0aGUgVFggcGF0aCBjYW4gYmUgc2xvdy4KClsgMTIxOC45NzY3
-NjJdIFttcGM1Mnh4X2ZlY19zdGFydF94bWl0XURlbGF5ID4zMHVzIGZvciBkbWFfbWFwX3Npbmds
-ZQo9PiA3NjM2NCBucwpbIDEyMTkuMTg4NDA1XSBbbXBjNTJ4eF9mZWNfdHhfaW50ZXJydXB0XURl
-bGF5ID4zMHVzIGZvcgpkbWFfdW5tYXBfc2luZ2xlID0+IDM0NTE1IG5zClsgMTIyMC42Mjg3ODVd
-IFttcGM1Mnh4X2ZlY19zdGFydF94bWl0XURlbGF5ID4zMHVzIGZvcgpiY29tX3N1Ym1pdF9uZXh0
-X2J1ZmZlciA9PiA5NzI3MyBucwpbIDEyMjUuNzc2Nzg0XSBbbXBjNTJ4eF9mZWNfdHhfaW50ZXJy
-dXB0XURlbGF5ID4zMHVzIGZvcgpkbWFfdW5tYXBfc2luZ2xlID0+IDk1MjczIG5zCgpBcyBvbmUg
-Y2FuIHNlZSwgdGhpcyBpcyBvYnZpb3VzbHkgcHJvYmxlbWF0aWMuClRoZSBmaXJzdCBmdW5jdGlv
-biBJIGFuYWx5emVkIGlzIGJjb21fc3VibWl0X25leHRfYnVmZmVyKCkgPT4gVGhpcwpmdW5jdGlv
-biBkb2Vzbid0IGRvIGxvdHMgb2YgdGhpbmdzLCBleGNlcHQgYSBjYWxsIHRvIG1iKCkuCgpJIGhh
-dmUgYmVlbiBsb29raW5nIHRvIHRoZSAiTVBDNjAzZSBSSVNDIE1pY3JvcHJvY2Vzc29yIFVzZXIn
-cyBNYW51YWwiCmFuZCBlc3BlY2lhbGx5IHRoZSBjaGFwdGVyIG5hbWVkICIyLjMuNC43IE1lbW9y
-eSBTeW5jaHJvbml6YXRpb24KSW5zdHJ1Y3Rpb25z4oCUVUlTQSIuCgpIZXJlIGlzIGEgcGFyYWdy
-YXBoIHdoaWNoIGV4cGxhaW5zIGEgbG90IDoKCiJUaGUgZnVuY3Rpb25zIHBlcmZvcm1lZCBieSB0
-aGUgc3luYyBpbnN0cnVjdGlvbiBub3JtYWxseSB0YWtlIGEKc2lnbmnvrIFjYW50IGFtb3VudCBv
-ZiB0aW1lCnRvIGNvbXBsZXRlOyBhcyBhIHJlc3VsdCwgZnJlcXVlbnQgdXNlIG9mIHRoaXMgaW5z
-dHJ1Y3Rpb24gbWF5CmFkdmVyc2VseSBhZmZlY3QgcGVyZm9ybWFuY2UuCkluIGFkZGl0aW9uLCB0
-aGUgbnVtYmVyIG9mIGN5Y2xlcyByZXF1aXJlZCB0byBjb21wbGV0ZSBhIHN5bmMKaW5zdHJ1Y3Rp
-b24gZGVwZW5kcyBvbiBzeXN0ZW0KcGFyYW1ldGVycyBhbmQgb24gdGhlIHByb2Nlc3NvcidzIHN0
-YXRlIHdoZW4gdGhlIGluc3RydWN0aW9uIGlzIGlzc3VlZC4iCgpJIGFtIHVzaW5nIGEgcmVhbCB0
-aW1lIGtlcm5lbCwgYW5kIHRoaXMgaXMgYSBwcm9ibGVtLCBhcyBpdCBpcyBub3QKZGV0ZXJtaW5p
-c3RpYyB0byB1c2UgdGhpcyBpbnN0cnVjdGlvbi4KSXMgdGhlcmUgYSB3YXkgdG8gYXZvaWQgdGhp
-cyA/CgpJIHdpbGwgbm93IGZvY3VzIG9uIHRoZSBkbWFfbWFwX3NpbmdsZSgpIGFuZCBkbWFfdW5t
-YXBfc2luZ2xlIGZ1bmN0aW9ucy4uLgoKVGhhbmtzIGluIGFkdmFuY2UgZm9yIHlvdXIgaGVscCwK
-QmVzdCBSZWdhcmRzLAoKSk0KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX18KTGludXhwcGMtZGV2IG1haWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMub3ps
-YWJzLm9yZwpodHRwczovL2xpc3RzLm96bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
+Hi,
+
+On 11/24/2010 02:35 PM, Jean-Michel Hautbois wrote:
+
+> For those who may be interested, CONFIG_TINY_RCU changes the behaviour
+> (it was CONFIG_TREE_PREEMPT_RCU) :
+> http://picasaweb.google.com/lh/photo/DmKJyIv04fvnN_y0wR0_9ZMU3g7ObZTPqzWaaCIpUqI?feat=directlink
+
+In init/Kconfig, CONFIG_TINY_RCU is configured to depend on "!SMP && 
+!PREEMPT_RT".
+
+Did you just remove the !PREEMPT_RT dependency then?
+
+If so, I am afraid this may cause side effects.
+
+
+Regards,
+Andre
+
