@@ -1,70 +1,39 @@
-From: Jean-Michel Hautbois <jhautbois@gmail.com>
+From: Micha Nelissen <micha@neli.hopto.org>
 Subject: Re: [MPC52xx]Latency issue with DMA on FEC
-Date: Wed, 1 Dec 2010 16:15:18 +0100
-Message-ID: <AANLkTik3LFf3qVv7STm+z-ahd+uqxeyA1+b5-D6Zj+tT@mail.gmail.com>
-References: <1291215130.4881.55.camel@gandalf.stny.rr.com>
-	<AE90C24D6B3A694183C094C60CF0A2F6D8ABDB@saturn3.aculab.com>
+Date: Wed, 01 Dec 2010 21:34:25 +0100
+Message-ID: <4CF6B151.9020503@neli.hopto.org>
+References: <AE90C24D6B3A694183C094C60CF0A2F6D8ABDB@saturn3.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Jean-Michel Hautbois <jhautbois@gmail.com>,
 	linuxppc-dev <linuxppc-dev@ozlabs.org>,
 	linux-rt-users@vger.kernel.org,
 	Eric Dumazet <eric.dumazet@gmail.com>
-To: David Laight <David.Laight@aculab.com>
+To: David Laight <David.Laight@ACULAB.COM>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ww0-f44.google.com ([74.125.82.44]:44011 "EHLO
-	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753385Ab0LAPPT convert rfc822-to-8bit (ORCPT
+Received: from edu-smtp-02.edutel.nl ([88.159.1.176]:53409 "EHLO
+	edu-smtp-02.edutel.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756804Ab0LAUnl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Dec 2010 10:15:19 -0500
-Received: by wwa36 with SMTP id 36so7498249wwa.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Dec 2010 07:15:18 -0800 (PST)
+	Wed, 1 Dec 2010 15:43:41 -0500
 In-Reply-To: <AE90C24D6B3A694183C094C60CF0A2F6D8ABDB@saturn3.aculab.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2010/12/1 David Laight <David.Laight@aculab.com>:
->
->> A mb() is usually used if you do a write to device and read from it.
->> With out it, the CPU could perform the read before the write, which
->> would give you an incorrect result. There's no other way around that=
-=2E
->
-> Possibly the synchronisation functions are doing significantly
-> more work than is required.
->
-> I was looking at the in_le32() and out_le32() functions for the
-> ppc e300 (and maybe others).
->
-> The out_le32() contains a 'sync' instruction - this may only
-> be needed after a series of writes (eg just before a command).
->
-> The iosync() function just adds a 'sync' and can be used as needed.
->
+David Laight wrote:
 > The in_le32() not only contains the unwanted 'sync', but also
 > a 'twi' (trap immediate - NFI exactly what this does) and 'isync'.
 > The 'isync' is particularly horrid and unnecessary (aborts
 > the instruction queue and refeches the opcode bytes).
->
-> The very slow in_le32() might be there to give semi-synchronous
-> traps on address fault - but unless the hardware is being probed
-> that really isn't necessary.
->
-> I did find st_le32() and ld_le32() in arch/powerpc/include/asm/swab.h
-> but had difficulty #including that version of swab.h!
-> =C2=A0 =C2=A0#include <../arch/powerpc/include/asm/swab.h>
-> worked - but isn't that nice.
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0David
 
-Yes, I was also looking at in_be16 and out_be16, and my thoughts were
-exactly the same.
-I think the HW I am using is not a good one, but this is not
-sufficient to explain the behaviour.
-These instructions are called, for instance, from bcom_enable_task().
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I've also wondered why some time ago, and this is what I could find: 
+it's a special sequence that is detected by the bus error handler 
+(machine check exception happens on I/O error i.e. aborted pci 
+transaction or some such), so that it can 'recover' by continuing at the 
+next instruction (and setting an error variable).
+
+Perhaps there is no other way to recover reliably from bus errors?
+
+Micha
