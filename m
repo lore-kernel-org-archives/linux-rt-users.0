@@ -1,52 +1,44 @@
-From: Dennis Borgmann <dennis.borgmann@googlemail.com>
-Subject: [Linux-RT]High CPU-load due to IRQ servicing
-Date: Thu, 23 Dec 2010 15:28:48 +0100
-Message-ID: <4D135CA0.9020900@googlemail.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 2.6.33.7-rt29
+Date: Fri, 24 Dec 2010 14:36:54 -0800
+Message-ID: <4D152086.1070909@localhost>
+References: <alpine.LFD.2.00.1002241740410.4245@localhost.localdomain> <alpine.LFD.2.00.1002262041020.4245@localhost.localdomain> <alpine.LFD.2.00.1003121124120.22855@localhost.localdomain> <alpine.LFD.2.00.1003211158130.3147@localhost.localdomain> <alpine.LFD.2.00.1004071619490.32352@localhost.localdomain> <alpine.LFD.2.00.1004271744280.2951@localhost.localdomain> <alpine.LFD.2.00.1004301156590.2951@localhost.localdomain> <alpine.LFD.2.00.1005022109150.25342@localhost.localdomain> <alpine.LFD.2.00.1006091837410.2933@localhost.localdomain> <alpine.LFD.2.00.1007131745230.3321@localhost.localdomain> <alpine.LFD.2.00.1007311530510.2471@localhost.localdomain> <alpine.LFD.2.00.1008031118270.3225@localhost.localdomain> <alpine.LFD.2.00.1012211437120.12146@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:48527 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752829Ab0LWO2x (ORCPT
+Received: from smtp4.Stanford.EDU ([171.67.219.84]:51786 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752848Ab0LXWou (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Dec 2010 09:28:53 -0500
-Received: by bwz15 with SMTP id 15so7447926bwz.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Dec 2010 06:28:52 -0800 (PST)
+	Fri, 24 Dec 2010 17:44:50 -0500
+In-Reply-To: <alpine.LFD.2.00.1012211437120.12146@localhost6.localdomain6>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello linux-rt list!
+On 12/21/2010 05:52 AM, Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series.
+> ...
+> Information on the RT patch can be found at:
+>
+>     http://rt.wiki.kernel.org/index.php/Main_Page
+>
+> To build the 2.6.33.7.2-rt30 tree, the following patches should be
+> applied:
+>
+>     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.7.tar.bz2
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.7.2-rt30.bz2
+>
+> Enjoy !
 
-I am using the RT-patchset with a 2.6.33.7-Kernel on a PCEngines
-ALIX-Board (AMD Geode 500MHz). In several prior projects, everything
-worked fine.
+I'm testing it right now and it does seem to have fixed some stuff, for 
+example I don't see any more errors when waking up from a sleep state. 
+Anyway, I'll let you know of any problems...
 
-Right now, I am reading four virtual USB ports in parallel
-(/dev/ttyUSB0-3) using an own single-threaded program for this. Data is
-coming in on each port in intervals as fast as 40ms, each ~550 bytes, at
-250.000 BAUD.
+Thanks a lot! (and also good to know about the plans for 2.6.37.x rt!)
+-- Fernando
 
-The problem I can observe is, that sometimes the CPU load goes up to
-100% regarding the servicing of hardware IRQs.
-
-I know, since I observed this via top(1). There is 100% on "hi" for a
-some amount of time(<0.5s). Using a program called "itop", I was able to
-check the interrupts per second and each time, the CPU gets this high
-load, I observe about 1500 interrupts per second on IRQ 0 ("timer").
-
-The result of this is, that my program is frozen for about 300ms, which
-destroys the purpose of my software. In addition, the program stops
-receiving data from all the four virtual USB ports, but only gets data
-from one or two of the ports. So from this point on my program is broken
-due to failure within the linux system.
-
-First of all: What could I be doing wrong?
-Second: Could this be a real-time bug? Or a bug within the driver I am
-using (ftdi.c on FT4232H)?
-Third: Could anyone image an improvement by making the software multi
-threaded? One thread for each USB-port?
-
-Kind regards for every hint about my problem.
-Dennis
