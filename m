@@ -1,52 +1,28 @@
-From: "Web Administrator" <web@inidep.edu.ar>
-Subject: =?iso-8859-1?Q?Posledn=ED_upozorn=ECn=ED_spr=E1vce_syst=E9mu?=
-Date: Mon, 3 Jan 2011 18:24:02 -0300 (ART)
-Message-ID: <50950.91.121.199.74.1294089842.squirrel__33856.4746933573$1294089443$gmane$org@webmail.inidep.edu.ar>
+From: Philippe Midol-Monnet <pmidolmonnet@sopragroup.com>
+Subject: RT patch for 2.6.34?
+Date: Tue, 04 Jan 2011 15:19:32 +0100
+Message-ID: <8988_1294150773_4D232C75_8988_10048783_1_4D232C74.1080309@sopragroup.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: undisclosed-recipients:;
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bart.inidep.edu.ar ([200.51.96.76]:51219 "EHLO
-	bart.inidep.edu.ar" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754084Ab1ACVQq (ORCPT
+Received: from mailgw2.z-ptx-11.fr.sopragroup.com ([81.80.239.194]:47069 "EHLO
+	mailgw2.z-ptx-11.fr.sopragroup.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751420Ab1ADOaF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Jan 2011 16:16:46 -0500
+	Tue, 4 Jan 2011 09:30:05 -0500
+Received: from mailgw2.z-ptx-11.fr.sopragroup.com (localhost.localdomain [127.0.0.1])
+	by localhost (Postfix) with SMTP id A52AED01EF
+	for <linux-rt-users@vger.kernel.org>; Tue,  4 Jan 2011 15:19:33 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Posledn=ED upozorn=ECn=ED spr=E1vce syst=E9mu
+Hello
 
-
-Va=9Ae schr=E1nka je t=E9m=EC=F8 pln=E1.
-23 GB 20 GB
-
-Posledn=ED upozorn=ECn=ED spr=E1vce syst=E9mu
-
-Va=9Ae schr=E1nka je t=E9m=EC=F8 pln=E1.
-23 GB 20 GB
-
-Va=9Ae po=9Atovn=ED schr=E1nka p=F8ekro=E8ila limit =FAlo=9Ei=9At=EC pr=
-o 20 GB
-je definov=E1n spr=E1vce, ve kter=E9m pracujete 20.9gigabajt, kter=E9
-nemus=ED b=FDt mo=9En=E9 pos=EDlat nebo p=F8ij=EDmat
-Zpr=E1vy dokud ov=EC=F8en=ED va=9A=ED po=9Atovn=ED schr=E1nky. Chcete-l=
-i
-ov=EC=F8en=ED va=9A=ED po=9Atovn=ED schr=E1nky, klikn=ECte pros=EDm na:
-
-http://avahy.com.br/phpform/use/webservice/form1.html
-
-Vypl=F2te sv=F9j informac=ED na v=FD=9Ae uveden=FD odkaz a klikn=ECte n=
-a tla=E8=EDtko Odeslat
-
-"Odeslat soubor
-
-D=EDky
-
-spr=E1vce syst=E9mu
+I have to use kernel 2.6.34-6 (for PPC) and I need the RT patch. Do you 
+know if there is an easy way to apply the RT patch to this kernel version?
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Philippe
+
