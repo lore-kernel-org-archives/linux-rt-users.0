@@ -1,36 +1,41 @@
-From: Darren Hart <dvhart@linux.intel.com>
-Subject: Re: RT patch for 2.6.34?
-Date: Tue, 11 Jan 2011 17:33:41 -0800
-Message-ID: <4D2D04F5.40200@linux.intel.com>
-References: <8988_1294150773_4D232C75_8988_10048783_1_4D232C74.1080309@sopragroup.com>
+From: "Nori, Sekhar" <nsekhar@ti.com>
+Subject: RT Linux support on 2.6.37
+Date: Wed, 19 Jan 2011 22:33:34 +0530
+Message-ID: <B85A65D85D7EB246BE421B3FB0FBB59302484742DF@dbde02.ent.ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Philippe Midol-Monnet <pmidolmonnet@sopragroup.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga11.intel.com ([192.55.52.93]:62303 "EHLO mga11.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752316Ab1ALBdn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Jan 2011 20:33:43 -0500
-In-Reply-To: <8988_1294150773_4D232C75_8988_10048783_1_4D232C74.1080309@sopragroup.com>
+Received: from devils.ext.ti.com ([198.47.26.153]:34038 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754509Ab1ASRDk convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Jan 2011 12:03:40 -0500
+Received: from dbdp20.itg.ti.com ([172.24.170.38])
+	by devils.ext.ti.com (8.13.7/8.13.7) with ESMTP id p0JH3bFR003633
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Wed, 19 Jan 2011 11:03:39 -0600
+Received: from dbde71.ent.ti.com (localhost [127.0.0.1])
+	by dbdp20.itg.ti.com (8.13.8/8.13.8) with ESMTP id p0JH3aRS006882
+	for <linux-rt-users@vger.kernel.org>; Wed, 19 Jan 2011 22:33:36 +0530 (IST)
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/04/2011 06:19 AM, Philippe Midol-Monnet wrote:
-> Hello
->
-> I have to use kernel 2.6.34-6 (for PPC) and I need the RT patch. Do you
-> know if there is an easy way to apply the RT patch to this kernel version?
+Hello RT developers,
 
-There is a version floating around, but it hasn't received the stamp of 
-approval from tglx, mingo, or rostedt. A review is pending, and others 
-are working to polish it up.
+Can anyone confirm if the next realtime kernel will
+indeed be based on 2.6.37 as mentioned here:
 
-I'm working on integrating this into the Yocto Project. I'll post here 
-when that is all available.
+https://www.osadl.org/Single-View.111+M528d085a4d0.0.html
 
+We are planning to use RT on an ARM Cortex-A8 based SoC
+and would like to use a RT kernel as close as possible
+to the mainline so we can work on getting the SoC supported
+in the mainline as well without too much rework.
 
--- 
-Darren Hart
-Yocto Linux Kernel
+Will be happy to help test whatever development is ongoing.
+
+Thanks,
+Sekhar
