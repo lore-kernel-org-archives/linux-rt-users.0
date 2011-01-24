@@ -1,85 +1,69 @@
-From: Bruce Ashfield <bruce.ashfield@gmail.com>
-Subject: Re: RT on 2.6.34
-Date: Fri, 21 Jan 2011 16:46:22 -0500
-Message-ID: <AANLkTi=Zn+7xm2AH7uU0SoUkUoAbfNE86hmogu=WfyG9@mail.gmail.com>
-References: <4CAC19EE.1010208@gmail.com>
-	<20101008020925.GB14157@ubuntu.mshome.net>
-	<87aampt8e0.fsf@eha.doredevelopment.dk>
-	<20101008083700.GC14157@ubuntu.mshome.net>
-	<AANLkTimC+5r9vz3pQrfn3fNfkhsrcjpMJ8g63weoGj_c@mail.gmail.com>
-	<4D376720.1030900@am.sony.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Linearized 2.6.33.7-rt30 patch set available (with free coffee!)
+Date: Mon, 24 Jan 2011 12:00:21 -0500
+Message-ID: <4D3DB025.9090502@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: walimis <walimisdev@gmail.com>,
-	Esben Haabendal <eha@doredevelopment.dk>,
-	Sven-Thorsten Dietrich <thebigcorporation@gmail.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: frank.rowand@am.sony.com
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-iw0-f174.google.com ([209.85.214.174]:52426 "EHLO
-	mail-iw0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752433Ab1AUVqW (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:45711 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753772Ab1AXRAf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Jan 2011 16:46:22 -0500
-Received: by mail-iw0-f174.google.com with SMTP id 9so2136676iwn.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 Jan 2011 13:46:22 -0800 (PST)
-In-Reply-To: <4D376720.1030900@am.sony.com>
+	Mon, 24 Jan 2011 12:00:35 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jan 19, 2011 at 5:35 PM, Frank Rowand <frank.rowand@am.sony.com> wrote:
-> On 10/08/10 10:47, Bruce Ashfield wrote:
->> On Fri, Oct 8, 2010 at 5:37 AM, walimis <walimisdev@gmail.com> wrote:
->>> On Fri, Oct 08, 2010 at 10:07:35AM +0200, Esben Haabendal wrote:
->>>> walimis <walimisdev@gmail.com> writes:
->>>>
->>>>> On Tue, Oct 05, 2010 at 11:40:46PM -0700, Sven-Thorsten Dietrich wrote:
->>>>>> If I read this correctly, WR ported RT to 2.6.34.
->>>>>>
->>>>>> Anyone out there to confirm?
->>>>> Yes, it's true.
->>>>
->>>> Ok, where do I download this from?
->>> there is a open source version of windriver kernel:
->>> git://git.pokylinux.org/linux-2.6-windriver
->>> please try "preempt_rt" branch.
->>
->> Please do NOT try this branch. It is only being updated now and
->> is not up to date.
->
-> Bruce,
->
-> Is there now an up to date version of the 2.6.34 windriver RT patches
-> that we can access?
+Some of you may be asking just what that means.
 
-Hi Frank,
+The RT changes are like the milk added to a cup of coffee.  You add a
+small amount and it changes the flavour of the normal coffee (kernel.)
 
-There will be one shortly, this is being worked on several fronts. I have
-an update to the yocto branches that brings it up to date with to capture
-some stability fixes from -tip and other sources. There are also other
-efforts to fixup the series to work with a stock 2.6.34 that should be ready
-in the not to distant future. We are trying to hit the middle ground of
-cleaning up the presentation of this, but not waste effort by working through
-changes that are already being done as the -rt patch is updated to
-newer kernels.
+Now imagine the nice waitress keeps adding more coffee to your cup,
+(merges) and you keep adding in a small splash of milk as well (new
+RT commits).  As time goes on, you kind of know what is in your coffee,
+but you'd have a hard time recreating an identical one from scratch,
+and you sure as heck can't take the milk *out* of your old coffee and
+move it to a new fresh cup of coffee.
 
-What currently is in the yocto preempt_rt branch will boot, but still has a
-few things I need to change (I'm held up deciding if doing a non-fastforward
-merge is acceptable:)
+For most people, this is fine - they just want to drink the coffee,
+(i.e. RT users) and have no interest in the finer details of exactly
+how it was made.  But there are some people who do care, and for us,
+what this provides is the identical (line for line) v2.6.33.7.2-rt30
+source code, but with a clearer recipe of how it was created.
 
-Cheers,
+Speaking more technically, the RT content in the tip git repo was
+originally based on 2.6.31, and then the newer kernel.org content
+was merged in.  Merge commits are not easy to review/digest, and if
+a functional change/addition was embedded in a merge commit, then
+you'll have a hard time seeing it at all, unless you explicitly go
+looking for it.
 
-Bruce
+So the goal was to have a linear, merge-free set of commits that are
+historically faithful to the original changes, but that stack on top
+of the current 2.6.33.7 baseline to give you the *exact* same source.
 
->
-> Thanks,
->
-> Frank Rowand
->
->
+Changes that were "hidden" in merge commits were either re-parented
+to an existing changeset, or extracted to be visible stand alone
+changesets in their own right -- depending on which made more sense.
+
+The result will be familiar with long time RT users, in that you get
+a series file, and a list of patches it applies, and you can use your
+tool of choice to apply them (git-am, quilt, git-quiltimport, etc.)
+
+Patches are in a git repo themselves, and you can find them here:
+
+  http://git.kernel.org/?p=linux/kernel/git/paulg/rt-patches.git
+
+If you scan backwards in the repo, you can get a sense of scale of
+what it took to (a) extract the original commits, then (b) make those
+apply, and then (c) resolve all the deltas between the new tree and
+the tip merge based tree. [I think (c) took more then (a)+(b) did!]
+
+Paul.
 
 
 
--- 
-"Thou shalt not follow the NULL pointer, for chaos and madness await
-thee at its end"
+
