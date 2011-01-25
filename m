@@ -1,206 +1,152 @@
-From: Sri Ram Vemulpali <sri.ram.gmu06@gmail.com>
-Subject: Re: Messaging
-Date: Mon, 24 Jan 2011 14:32:45 -0500
-Message-ID: <AANLkTikaJKhvjVg0wHqrdmj_gQ2BEB9=wcFb_tQMTu5k@mail.gmail.com>
-References: <AANLkTikVO43T7NS4W4sFtZLcFKzTK1N26NHGmtcDViD+@mail.gmail.com>
-	<AANLkTin-jpDKfSAEJFgMG5dYE0H5kSP3v53T3t92Erq=@mail.gmail.com>
-	<AANLkTi=--R3Qjrb7iKLZa6KWZ1b19o9ZOeK2Bhd=ziZN@mail.gmail.com>
-	<AANLkTi=hJh58BbMQcv3_4fzNzP49v2am2VYNFM4eHETC@mail.gmail.com>
+From: Vikram <vikram186@gmail.com>
+Subject: Kernel module crashed in 2.6.33.7-rt30
+Date: Tue, 25 Jan 2011 13:09:20 +0530
+Message-ID: <1295941160.4853.0.camel@vikram-pc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-newbie@vger.kernel.org,
-	Linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-kernel-mail <linux-kernel@vger.kernel.org>
-To: anil joshi <anilsjoshi123@gmail.com>
-Return-path: <linux-newbie-owner@vger.kernel.org>
-In-Reply-To: <AANLkTi=hJh58BbMQcv3_4fzNzP49v2am2VYNFM4eHETC@mail.gmail.com>
-Sender: linux-newbie-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-yi0-f46.google.com ([209.85.218.46]:43949 "EHLO
+	mail-yi0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751768Ab1AYHjq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 25 Jan 2011 02:39:46 -0500
+Received: by yib18 with SMTP id 18so1594540yib.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 24 Jan 2011 23:39:45 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Anil,
+Hi all,
+I am using linux 2.6.33.7.2-rt30 for running my kernel module.
+The kernel module is an Ethernet based protocol stack. 
+I am setting the following priorities before loading the module
 
-    Thanks for your response. There are many implementation of
-messaging in kernel. I am looking for specific implementation of Linux
-kernel.
-So, If I am not wrong, from your structures you posted, it seems Linux
-is implementing using file system. Lets make this an assumption and
-post it to groups.
+81 for sirq-hrtimer/1
+81 for sirq-hrtimer/1
+80 for the Ethernet Interrupt
+using the command 'chrt -f -p 81'
 
-Please if anyone has idea of messaging implementation, please let us kn=
-ow.
+The module runs fine for some time, but stops after an hour or so.
+This is what I got from the dmesg
 
-Thanks,
-Sri.
+START TRACE 
 
-On Sun, Jan 23, 2011 at 3:48 PM, anil joshi <anilsjoshi123@gmail.com> w=
-rote:
-> I would like to share my knowledge with you =C2=A0if any technical er=
-ror
-> please suggest me
->
-> As in Process management
->
-> struct thread_info {
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct task_struct =C2=A0 =C2=A0 =C2=A0*t=
-ask; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* main task structure */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct exec_domain =C2=A0 =C2=A0 =C2=A0*e=
-xec_domain; =C2=A0 /* execution domain */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 __u32 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 flags; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/*=
- low level flags */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 __u32 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 status; =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* thre=
-ad synchronous flags */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 __u32 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 cpu; =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0/* current CPU */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 int =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 preempt_count; =C2=A0/* 0 =3D> preempta=
-ble,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 <0 =3D> BUG */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 mm_segment_t =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0addr_limit;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct restart_block =C2=A0 =C2=A0restart=
-_block;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 void __user =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 *sysenter_return;
-> =C2=A0#ifdef CONFIG_X86_32
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned long =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 previous_esp; =C2=A0 /* ESP of the previous stack in
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0case of nested (IRQ) stacks
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 __u8 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0supervisor_stack[0];
-> =C2=A0#endif
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 int =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uaccess_err;
-> =C2=A0};
->
->
->
->
-> struct task_struct =C2=A0{
->
-> -----
-> --
-> -
-> ----
-> -----
-> }
->
->
-> in a similar fashion =C2=A0File System Management in that VFS
-> the four Primary object of VFS are
-> (courtesy =C2=A0by Robert =C2=A0Love Linux kernel Dev elopement)
-> super block object =C2=A0-> represent mounted file system (contained =
-in
-> struct vfsmount)
-> i node object -> represent a specific =C2=A0file
->
-> d entry object -> represent directory entry, a single component of a =
-path
-> fiie object -> open file as associated with process
->
-> Layered approach
-> Object of struct mqueue_inode_info layered =C2=A0on Object of struct =
-inode
-> (vfs_inode)
->
-> or
->
-> Object of struct inode (vfs_inode) =C2=A0contained in struct mqueue_i=
-node_info
->
->
->
-> it contain particular message specific information like
->
-> $ ls /dev/mqueue/mymq
-> QSIZE:129 =C2=A0 =C2=A0 NOTIFY:2 =C2=A0 =C2=A0SIGNO:0 =C2=A0 =C2=A0NO=
-TIFY_PID:8260
->
->
->
-> struct mqueue_inode_info {
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0spinlock_t lock;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct inode vfs_inode;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0wait_queue_head_t wait_q;
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct msg_msg **messages;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct mq_attr attr;
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct sigevent notify;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct pid* notify_owner;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct user_struct *user; =C2=A0 =C2=A0 =C2=
-=A0 /* user who created, for accounting */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct sock *notify_sock;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct sk_buff *notify_cookie;
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0/* for tasks waiting for free space and me=
-ssages, respectively */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct ext_wait_queue e_wait_q[2];
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned long qsize; /* size of queue in =
-memory (sum of all msgs) */
-> =C2=A0};
->
-> struct inode =C2=A0{
-> =C2=A0----
-> ----
-> ----
-> }
->
->
-> we used the generic inode structure as the inode layer does not need
-> to know about the =C2=A0/dev/mqueue/mymq stucture(mqueue_inode_info)
->
-> flush
-> unlnk
-> look up
-> mqueue_poll_file,
-> mqueue_read_file
-> are specific to mqueue inode
-> static const struct inode_operations mqueue_dir_inode_operations =3D =
-{
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.lookup =3D simple_lookup,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.create =3D mqueue_create,
-> =C2=A0 =C2=A0 =C2=A0 .unlink =3D mqueue_unlink,
-> =C2=A0};
->
-> static const struct file_operations mqueue_file_operations =3D {
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.flush =3D mqueue_flush_file,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.poll =3D mqueue_poll_file,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0.read =3D mqueue_read_file,
-> =C2=A0};
->
-> inode->i_fop =3D &mqueue_file_operations;
-> inode->i_op =3D &mqueue_dir_inode_operations;
->
->
-> refer http://bec-systems.com/web/content/view/94/9/
-> http://www.kroah.com/log/linux/container_of.html
->
-> if u know more regarding mqueue share it
->
-> Regards
-> Anil.S.Joshi
->
+[ 3353.564157] BUG: unable to handle kernel NULL pointer dereference at
+(null)
+[ 3353.564167] IP: [<c015d6dc>] exit_creds+0xc/0x80
+[ 3353.564178] *pde = 00000000 
+[ 3353.564183] Oops: 0000 [#1] PREEMPT SMP 
+[ 3353.564190] last sysfs
+file: /sys/devices/pci0000:00/0000:00:1f.2/host3/target3:0:1/3:0:1:0/block/sda/sda5/uevent
+[ 3353.564195] Modules linked in: binfmt_misc snd_hda_codec_idt
+snd_hda_intel snd_hda_codec snd_hwdep snd_pcm_oss snd_mixer_oss fbcon
+tileblit font bitblit softcursor snd_pcm snd_seq_dummy snd_seq_oss
+snd_seq_midi snd_rawmidi snd_seq_midi_event snd_seq i915 snd_timer
+snd_seq_device drm_kms_helper ppdev snd intel_agp drm i2c_algo_bit lp
+soundcore video parport_pc snd_page_alloc agpgart output parport usbhid
+8139too 8139cp mii [last unloaded: epl]
+[ 3353.564251] 
+[ 3353.564256] Pid: 28, comm: sirq-rcu/1 Not tainted 2.6.33.7.2-rt30 #1
+D945GCL/        
+[ 3353.564261] EIP: 0060:[<c015d6dc>] EFLAGS: 00010287 CPU: 1
+[ 3353.564266] EIP is at exit_creds+0xc/0x80
+[ 3353.564269] EAX: 00000000 EBX: f321e030 ECX: f70b8370 EDX: f321e558
+[ 3353.564273] ESI: 00000000 EDI: 00000003 EBP: f70bff24 ESP: f70bff20
+[ 3353.564278]  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
+preempt:00000000
+[ 3353.564283] Process sirq-rcu/1 (pid: 28, ti=f70be000 task=f70b8370
+task.ti=f70be000)
+[ 3353.564286] Stack:
+[ 3353.564289]  f321e030 f70bff30 c013f088 c45038a0 f70bff38 c013f0dd
+f70bff5c c019067c
+[ 3353.564300] <0> 00000292 c0701d40 c45038b8 f321e558 c45034f0 00000001
+00000200 f70bff64
+[ 3353.564311] <0> c01908a0 f70bffa4 c0146e90 0000001c 00000001 f70bff94
+f70b8370 f70b8370
+[ 3353.564324] Call Trace:
+[ 3353.564331]  [<c013f088>] ? __put_task_struct+0x28/0x70
+[ 3353.564337]  [<c013f0dd>] ? __put_task_struct_cb+0xd/0x10
+[ 3353.564343]  [<c019067c>] ? __rcu_process_callbacks+0xfc/0x2d0
+[ 3353.564349]  [<c01908a0>] ? rcu_process_callbacks+0x50/0x60
+[ 3353.564355]  [<c0146e90>] ? run_ksoftirqd+0x160/0x2b0
+[ 3353.564361]  [<c0146d30>] ? run_ksoftirqd+0x0/0x2b0
+[ 3353.564367]  [<c01566dc>] ? kthread+0x6c/0x80
+[ 3353.564373]  [<c0156670>] ? kthread+0x0/0x80
+[ 3353.564379]  [<c0103586>] ? kernel_thread_helper+0x6/0x10
+[ 3353.564382] Code: ff 89 c8 f7 d0 85 d0 0f 84 04 ff ff ff e9 c2 fe ff
+ff 0f 0b eb fe 0f 0b eb fe 90 8d 74 26 00 55 89 e5 53 89 c3 8b 80 04 03
+00 00 <8b> 00 8b 83 00 03 00 00 c7 83 00 03 00 00 00 00 00 00 f0 ff 08 
+[ 3353.564449] EIP: [<c015d6dc>] exit_creds+0xc/0x80 SS:ESP
+0068:f70bff20
+[ 3353.564457] CR2: 0000000000000000
+[ 3353.564461] ---[ end trace d828fbbe13057d5e ]---
+[ 3353.565145] NOHZ: local_softirq_pending 200
+[ 3353.566142] NOHZ: local_softirq_pending 200
+[ 3353.567141] NOHZ: local_softirq_pending 200
+[ 3353.568452] NOHZ: local_softirq_pending 200
+[ 3353.568600] NOHZ: local_softirq_pending 200
+[ 3353.568713] NOHZ: local_softirq_pending 200
+[ 3353.568967] NOHZ: local_softirq_pending 200
+[ 3353.571204] NOHZ: local_softirq_pending 200
+[ 3353.572146] NOHZ: local_softirq_pending 200
+[ 3353.573142] NOHZ: local_softirq_pending 200
+[ 3354.060112] BUG: unable to handle kernel paging request at fff2f2f8
+[ 3354.060121] IP: [<c0523e80>] rt_spin_lock_slowlock+0xc0/0x250
+[ 3354.060126] *pde = 007c6067 *pte = 00000000 
+[ 3354.060126] Oops: 0002 [#2] PREEMPT SMP 
+[ 3354.060126] last sysfs
+file: /sys/devices/pci0000:00/0000:00:1f.2/host3/target3:0:1/3:0:1:0/block/sda/sda5/uevent
+[ 3354.060126] Modules linked in: binfmt_misc snd_hda_codec_idt
+snd_hda_intel snd_hda_codec snd_hwdep snd_pcm_oss snd_mixer_oss fbcon
+tileblit font bitblit softcursor snd_pcm snd_seq_dummy snd_seq_oss
+snd_seq_midi snd_rawmidi snd_seq_midi_event snd_seq i915 snd_timer
+snd_seq_device drm_kms_helper ppdev snd intel_agp drm i2c_algo_bit lp
+soundcore video parport_pc snd_page_alloc agpgart output parport usbhid
+8139too 8139cp mii [last unloaded: epl]
+[ 3354.060126] 
+[ 3354.060126] Pid: 27, comm: sirq-hrtimer/1 Tainted: G      D
+2.6.33.7.2-rt30 #1 D945GCL/        
+[ 3354.060126] EIP: 0060:[<c0523e80>] EFLAGS: 00010086 CPU: 1
+[ 3354.060126] EIP is at rt_spin_lock_slowlock+0xc0/0x250
+[ 3354.060126] EAX: f70b9060 EBX: f95fb500 ECX: f70b9060 EDX: 00000000
+[ 3354.060126] ESI: fff2f2f0 EDI: 00000000 EBP: f70bbed8 ESP: f70bbe74
+[ 3354.060126]  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
+preempt:00000001
+[ 3354.060126] Process sirq-hrtimer/1 (pid: 27, ti=f70ba000
+task=f70b9060 task.ti=f70ba000)
+[ 3354.060126] Stack:
+[ 3354.060126]  00000000 00000286 f95fb50c f70b9060 f70b9060 f70b9060
+f70b9060 ffffffff
+[ 3354.060126] <0> 00000286 00000012 f95fb504 f95fb504 f95fb50c f95fb50c
+00000012 f321e488
+[ 3354.060126] <0> f321e488 f321e490 f321e490 f70b9060 f95fb500 00000000
+f95ff578 fffffff4
+[ 3354.060126] Call Trace:
+[ 3354.060126]  [<c0524820>] ? rt_spin_lock+0x30/0x50
+[ 3354.060126]  [<c0130c3a>] ? __wake_up+0x3a/0x50
+[ 3354.060126]  [<c015a64c>] ? run_hrtimer_softirq+0x8c/0x190
+[ 3354.060126]  [<c0146e90>] ? run_ksoftirqd+0x160/0x2b0
+[ 3354.060126]  [<c0146d30>] ? run_ksoftirqd+0x0/0x2b0
+[ 3354.060126]  [<c01566dc>] ? kthread+0x6c/0x80
+[ 3354.060126]  [<c0156670>] ? kthread+0x0/0x80
+[ 3354.060126]  [<c0103586>] ? kernel_thread_helper+0x6/0x10
+[ 3354.060126] Code: b8 89 d8 e8 33 6a c4 ff 85 c0 0f 85 3b 01 00 00 8b
+4d e8 85 c9 0f 84 00 01 00 00 8b 45 b0 c7 40 18 ff ff ff ff 8b 73 14 83
+e6 fc <f0> ff 46 08 8b 55 bc 89 d8 e8 72 0c 00 00 8b 45 e8 85 c0 74 38 
+[ 3354.060126] EIP: [<c0523e80>] rt_spin_lock_slowlock+0xc0/0x250 SS:ESP
+0068:f70bbe74
+[ 3354.060126] CR2: 00000000fff2f2f8
+[ 3354.060126] ---[ end trace d828fbbe13057d5f ]---
+[ 3354.060126] note: sirq-hrtimer/1[27] exited with preempt_count 1
 
+END TRACE
 
+I would like to know 
+i) What is wrong ?
+ii) Is there something to do with my priority setting?
+iii) How to solve this bug?
 
---=20
-Regards,
-Sri.
---
-To unsubscribe from this list: send the line "unsubscribe linux-newbie"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at http://www.linux-learn.org/faqs
+Regards
+Vikram
+
