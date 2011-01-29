@@ -1,62 +1,69 @@
-From: "Madovsky" <infos@madovsky.org>
-Subject: Re: [solved] Kernel module crashed in 2.6.33.7-rt30
-Date: Fri, 28 Jan 2011 12:07:02 -0500
-Message-ID: <BFED3D3EBB8D49D2917ACB9D3714378D@e1705>
-References: <1295941160.4853.0.camel@vikram-pc> <20110125162136.GD22005@pengutronix.de> <AANLkTikQW6mkV_a6umKY0NnoinD-UnJQK4Gm+kxuKfCa@mail.gmail.com> <20110127075904.GJ1147@pengutronix.de> <AANLkTinW4koreUTXS_ieXb9wGVUKhebTgLvkfEMP4O6y@mail.gmail.com> <AANLkTikceiY2yZHBkHbuhUs+mvRhAfHY2hMLmaXMmy=u@mail.gmail.com> <20110127092039.GK1147@pengutronix.de> <AANLkTimYnhQ_4+=PJogMts65iLsoNcE60NTdnfDwVtJx@mail.gmail.com> <20110128075725.GQ1147@pengutronix.de>
+From: Victor henri <nadaeck@hotmail.com>
+Subject: disk thread problem when using RT-kernel
+Date: Sat, 29 Jan 2011 22:41:47 +0100
+Message-ID: <SNT110-W222DEC20897CB3D9F79E20A8E00@phx.gbl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1;
-	format=flowed	reply-type=original
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: "linux-rt-users" <linux-rt-users@vger.kernel.org>
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ip-67-205-80-138.static.privatedns.com ([67.205.80.138]:46714
-	"EHLO node250.e-blokos.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752793Ab1A1RHF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Jan 2011 12:07:05 -0500
-Received: from e1705 (localhost.localdomain [127.0.0.1])
-	by node250.e-blokos.com (8.14.3/8.14.3) with SMTP id p0SH7212015504
-	for <linux-rt-users@vger.kernel.org>; Fri, 28 Jan 2011 12:07:03 -0500
+Received: from snt0-omc1-s7.snt0.hotmail.com ([65.55.90.18]:2036 "EHLO
+	snt0-omc1-s7.snt0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751350Ab1A2Vls convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 29 Jan 2011 16:41:48 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-are these options
-	CONFIG_PROVE_LOCKING
-	CONFIG_PROVE_RCU
-	CONFIG_DEBUG_RT_MUTEXES:
-useful on 64 bits ?I can't see these on my config kernelThanks----- Ori=
-ginal=20
-Message -----=20
-=46rom: "Uwe Kleine-K=F6nig" <u.kleine-koenig@pengutronix.de>
-To: "Vikram Narayanan" <vikram186@gmail.com>
-Cc: <linux-rt-users@vger.kernel.org>
-Sent: Friday, January 28, 2011 2:57 AM
-Subject: [solved] Kernel module crashed in 2.6.33.7-rt30
+
+Hello:=20
+
+I have a problem since almost one year now. I'm using linuxsampler, tha=
+t allows that load very big sample files (one of my .gig file is 1.6 G =
+for only one piano sound); this use disk streaming.
+
+I always have such problem only when i use the RT kernel :=20
+
+0x7f6eef1ee860 Disk stream not available in time!=20
+
+After several message slike that, i get :
+
+DiskThread: there was no free slot
+Disk stream order failed!
+
+Then the sounds clicks, then stops for 10 to 20 seconds, then i can pla=
+y again, then it'll come again...
+
+This arrives on both Gentoo and Ubuntu 10.10 64 bits; BUT there is one =
+thing however : there is ONE kernel with wich it doesn't arrive : the 2=
+=2E6.31.11-rt from Ubuntu lucid (RT kernel was in the repositories in U=
+buntu untill 10.04 Lucid, then now i have to either take it=A0 from Abo=
+gani's ppa (for lucid or natty) or compile it myself with the rt-patch =
+from kernel.org; i've tried all of that, and nothings works, except for=
+ the 2.6.31.11-rt from in the repositories of Ubuntu Lucid-updates)
+
+Here are some technical details:
+=A0=A0=A0 - I have laptop Asus Core i7 for gamers (supposed to be very =
+fast);to be noted : it also happens on another Asus Core I7, but NOT on=
+ an another Asus Core i3; 4Go RAM;
+=A0=A0=A0 - when i compile myself i choose : real-time preemption (of c=
+ourse) and Timer frequency 1000 Hz, either on Gentoo or on Ubuntu with =
+kernel from kernel.org; nothing else is changed in Ubuntu.
+=A0=A0=A0 - i've tried with the no-op cfq scheduler also; i use ext3 on=
+ Gentoo and ext4 on Ubuntu;
+=A0=A0=A0 - have a nvidia garphic card, but no proprietary driver insta=
+lled....
+
+Could please someone help me? i LOVE RT-kernel and its capabilities....
 
 
-> Hello,
->
-> [just informing the ml about your issue being solved.]
->
-> On Fri, Jan 28, 2011 at 12:08:46PM +0530, Vikram Narayanan wrote:
->> Thanks a lot, I enabled this option. The problem was on having an=20
->> unbalanced
->> spin lock. Now it is resolved. :)
->> Thanks you so much.
->
-> --=20
-> Pengutronix e.K.                           | Uwe Kleine-K=F6nig      =
-      |
-> Industrial Linux Solutions                 | http://www.pengutronix.d=
-e/  |
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers"=20
-> in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html=20
+i have posted that to several lists, including linuxsampler's without s=
+ucces....
 
---
+Victor
+
+
+ 		 	   		  --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
 the body of a message to majordomo@vger.kernel.org
