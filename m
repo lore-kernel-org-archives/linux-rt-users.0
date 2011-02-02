@@ -1,81 +1,114 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: Linearized 2.6.33.7-rt30 patch set available (with free coffee!)
-Date: Mon, 31 Jan 2011 18:15:26 -0800
-Message-ID: <4D476CBE.4000407@am.sony.com>
-References: <4D47242E.1000508@am.sony.com> <4D4725CF.6060008@windriver.com> <4D473046.8090009@am.sony.com> <4D474736.40703@windriver.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Miklos Aubert <miklos.aubert@gmail.com>
+Subject: Nouveau driver and Linux 2.6.33 RT
+Date: Wed, 2 Feb 2011 22:12:25 +0100
+Message-ID: <AANLkTikBXGnERNMCv5nJt01j6UpTCEwdjSz+rFZRofsN@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from am1ehsobe006.messaging.microsoft.com ([213.199.154.209]:8120
-	"EHLO AM1EHSOBE006.bigfish.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754069Ab1BACP5 (ORCPT
+Received: from mail-ww0-f44.google.com ([74.125.82.44]:59300 "EHLO
+	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752660Ab1BBVM1 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Jan 2011 21:15:57 -0500
-In-Reply-To: <4D474736.40703@windriver.com>
+	Wed, 2 Feb 2011 16:12:27 -0500
+Received: by wwa36 with SMTP id 36so457231wwa.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 02 Feb 2011 13:12:26 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/31/11 15:35, Paul Gortmaker wrote:
+Hello fellow RT users,
 
-< snip >
+I've built a 2.6.33.7 kernel with the RT patch and the Nouveau driver
+enabled, but Xorg doesn't start.
 
-> OK, so it is simply a matter of quilt dying while git am is capable
-> of doing the right thing (see below for evidence).
+Using the _same_ configuration and removing the RT patch (vanilla
+kernel from kernel.org), Xorg works.
 
-< snip >
+Booting with drm.debug=3D1, and comparing the kernel logs, I find that
+the RT kernel seems to be having trouble here :
 
-Yes, when I use git am I get the same result that you show here:
+[   31.651720] [drm:drm_ioctl], pid=3D1904, cmd=3D0x6440, nr=3D0x40, de=
+v
+0xe200, auth=3D1
+[   31.651724] [drm:drm_ioctl], no function
+[   31.651726] [drm:drm_ioctl], ret =3D ffffffea
 
-> tip-debare$git checkout quilt-junk 
-> Switched to branch 'quilt-junk'
-> tip-debare$git am patches/genirq-support-forced-threading-of-interrupts.patch
-> Applying: genirq: support forced threading of interrupts
-> 
-> (git am is happy, 
+These messages come from the drm_ioctl() function in
+drivers/gpu/drm/drm_drv.c. But which ioctl are we calling here ? I
+guess one can find it from the cmd=3D0x6440 code. Not me though, I trie=
+d
+to make sense of the source code, but my C is very rusty and it's
+macros and includes all the way down...
 
-Yes, git am somehow managed to apply the patch cleanly.
+Anyway, to me this problem seems to come from the modifications that
+the RT=A0patch does on drivers/gpu/drm/nouveau/nouveau_channel.c. It
+changes the definition macro from DRM_IOCTL_DEF to DRM_IOCTL_DEF_DRV,
+but also removes some lines. Why ?
 
-If at this point you do
 
-  git show >junk
-  diff junk patches/genirq-support-forced-threading-of-interrupts.patch
-
-you will see that the patch as applied by git am has cleaned up the
-problem with the original patch.  Pretty cool magic...
-
-> now rewind/pop that commit and retry with quilt)
-> 
-> tip-debare$git reset --hard HEAD^
-> HEAD is now at fd659fd7 quilt-junk
-> tip-debare$quilt push
-> Applying patch genirq-support-forced-threading-of-interrupts.patch
-> patching file include/linux/interrupt.h
-> patching file include/linux/irq.h
-> patching file include/linux/sched.h
-> patching file kernel/irq/chip.c
-> patching file kernel/irq/handle.c
-> patching file kernel/irq/manage.c
-> Hunk #2 succeeded at 465 (offset 3 lines).
-> Hunk #3 succeeded at 633 (offset 3 lines).
-> Hunk #4 succeeded at 706 (offset 3 lines).
-> Hunk #5 succeeded at 736 (offset 3 lines).
-> Hunk #6 succeeded at 804 (offset 3 lines).
-> Hunk #7 FAILED at 829.
-> 1 out of 7 hunks FAILED -- rejects in file kernel/irq/manage.c
-> patching file kernel/irq/migration.c
-> patching file kernel/sched.c
-> Hunk #1 succeeded at 5147 (offset 3 lines).
-> Patch genirq-support-forced-threading-of-interrupts.patch does not apply (enforce with -f)
-> tip-debare$
-
-Again, I get the same result.  And I get the same "Hunk #7 FAILED" with
-
-  patch --dry-run -p1 < patches/genirq-support-forced-threading-of-interrupts.patch
-
--Frank
-
+ struct drm_ioctl_desc nouveau_ioctls[] =3D {
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_CARD_INIT, nouveau_ioctl_card_init, DRM_A=
+UTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GETPARAM, nouveau_ioctl_getparam, DRM_AUT=
+H),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_SETPARAM, nouveau_ioctl_setparam,
+DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_CHANNEL_ALLOC, nouveau_ioctl_fifo_alloc,
+DRM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_CHANNEL_FREE, nouveau_ioctl_fifo_free, DR=
+M_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GROBJ_ALLOC, nouveau_ioctl_grobj_alloc, D=
+RM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,
+nouveau_ioctl_notifier_alloc, DRM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GPUOBJ_FREE, nouveau_ioctl_gpuobj_free, D=
+RM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_NEW, nouveau_gem_ioctl_new, DRM_AUTH)=
+,
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_PUSHBUF, nouveau_gem_ioctl_pushbuf, D=
+RM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_PUSHBUF_CALL,
+nouveau_gem_ioctl_pushbuf_call, DRM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_PIN, nouveau_gem_ioctl_pin, DRM_AUTH)=
+,
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_UNPIN, nouveau_gem_ioctl_unpin, DRM_A=
+UTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_CPU_PREP,
+nouveau_gem_ioctl_cpu_prep, DRM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_CPU_FINI,
+nouveau_gem_ioctl_cpu_fini, DRM_AUTH),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_INFO, nouveau_gem_ioctl_info, DRM_AUT=
+H),
+-   DRM_IOCTL_DEF(DRM_NOUVEAU_GEM_PUSHBUF_CALL2,
+nouveau_gem_ioctl_pushbuf_call2, DRM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GETPARAM, nouveau_ioctl_getparam, DRM_AUT=
+H),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_SETPARAM, nouveau_ioctl_setparam,
+DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_CHANNEL_ALLOC, nouveau_ioctl_fifo_alloc,
+DRM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_CHANNEL_FREE, nouveau_ioctl_fifo_free, DR=
+M_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GROBJ_ALLOC, nouveau_ioctl_grobj_alloc, D=
+RM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_NOTIFIEROBJ_ALLOC,
+nouveau_ioctl_notifier_alloc, DRM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GPUOBJ_FREE, nouveau_ioctl_gpuobj_free, D=
+RM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_NEW, nouveau_gem_ioctl_new, DRM_AUTH)=
+,
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_PUSHBUF, nouveau_gem_ioctl_pushbuf, D=
+RM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_CPU_PREP,
+nouveau_gem_ioctl_cpu_prep, DRM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_CPU_FINI,
+nouveau_gem_ioctl_cpu_fini, DRM_AUTH),
++   DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_INFO, nouveau_gem_ioctl_info, DRM_AUT=
+H),
+ };
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
