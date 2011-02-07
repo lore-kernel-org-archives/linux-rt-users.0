@@ -1,67 +1,79 @@
-From: Victor henri <nadaeck@hotmail.com>
-Subject: RE: disk thread problem when using RT kernel
-Date: Fri, 4 Feb 2011 20:18:08 +0100
-Message-ID: <SNT110-W188DD31DA3E18CF9E5F4D1A8E60@phx.gbl>
-References: <SNT110-W34A9D54FBCD3910233EA5A8E60@phx.gbl>,<4D4C47FC.2080100@osadl.org>
+From: Peter LaDow <petela@gocougs.wsu.edu>
+Subject: Jitter Due to Large Number of Timers
+Date: Mon, 7 Feb 2011 10:48:27 -0800
+Message-ID: <AANLkTimujobcDdW6oX2U2Bnn5kOU_aSDTpHhMiAOv0V1@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from snt0-omc1-s25.snt0.hotmail.com ([65.55.90.36]:55686 "EHLO
-	snt0-omc1-s25.snt0.hotmail.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751802Ab1BDTSJ convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Feb 2011 14:18:09 -0500
-In-Reply-To: <4D4C47FC.2080100@osadl.org>
+Received: from mail-iw0-f174.google.com ([209.85.214.174]:51510 "EHLO
+	mail-iw0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754335Ab1BGSs2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 Feb 2011 13:48:28 -0500
+Received: by iwn9 with SMTP id 9so4883447iwn.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Feb 2011 10:48:28 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+We are measure large amounts of jitter on our PPC platform when there
+are a large number of hrtimers.  This jitter is present regardless of
+the priority of the tasks that depend upon those timers, and higher
+(indeed the highest) priority tasks exhibit large jitter.  We've
+created some test code for measuring this jitter and could really use
+some insight from the RT experts here.  Here's our test setup.
 
+We have a small C program that has a calibrated while loop that takes
+approximately 4ms to execute.  For example, on our platform, it takes
+just about 4ms to execute (call this 'test1'):
 
-Hello Carsten
+  float val = 1.234;
 
+  for(i=0; i < 100000; i++)
+  {
+    val *= 12.354;
+  }
 
-> Date: Fri, 4 Feb 2011 19:39:56 +0100
-> From: C.Emde@osadl.org
-> To: nadaeck@hotmail.com
-> Subject: Re: disk thread problem when using RT kernel
->
-> Victor,
->
-> > [..] When I got soft lock (it happen very quickly), I typed
-> > AltGr/PrintScr/L, */M and */T, but only */L gave me something on the
-> > screen; so i got a file called /var/log/messages; i'll allow myself
-> > to send it to your mail directly
-> Yes, this would have been ok.
->
-> I had a quick look at your kernel messages. Are you sure that you are
-> using a real-time kernel?
+We call clock_gettime() before and after this loop, then measure the
+difference.  When running on a system with few hrtimers (about 6), we
+get just about 4ms.  The problem appears when we add other
+processes/threads that make use of hrtimers.  To test this, we created
+another test program (call this 'test100') that creates 100 threads,
+and each call clock_nanosleep() with a 4ms timeout.  When the number
+of hrtimers spike, all with close expiration, the jitter on 'test1'
+exceeds 400us, about 10%.  We run 'test1' with SCHED_FIFO at priority
+99, and 'test100' under the default scheduler.  Here's some results:
 
-Yew I've I have booted on on the rt kernel; when I type : uname -r, i get :  2.6.33.7.2-rt30 (on the tested laptop)
+Baseline:
+  test100 not running
+  /proc/timer_list showing 9 timers
+  test1 run as 'chrt -f 99 ./test'
 
->
-> I did a
-> # grep "Linux version" messages.txt
-> and all I could see was the SMP flag but no PREEMPT and no RT flag. So
-> your problem is likely not RT-related.
->
-> In addition, I found
-> # grep Tainted messages.txt
-> which gave a lot of "Tainted: P".
->
-> Please refer to Documentation/oops-tracing.txt in the kernel tree
-> (towards the end of the file). As you can see, "P" means that a
-> proprietary module was loaded. Please understand that the community
-> cannot assist you. You may try to contact the vendor for support or use
-> a community driver and check whether the problem persists.
+  Average: 3.817ms, Maximum: 3.859ms, Minimum: 3.809ms
 
-I've checked : indeed  only the 2.6.35-generic appears, whichis the kernel of the pc that i'm using to watch the laptop under testing (and yes i have proprietary driver on it); in other terms, i didn't manage to have a working connection with the pc under testing; i'll  search to have it working and then post it the log message , after i have verified that the right kernel appears in the file, if you agree of course; i'm sorry for the trouble; all of this is brand new to me.
+Under load:
+  test100 running as './test100'
+  test1 run as 'chrt -f 99 ./test'
 
->
-> -Carsten.
+  Average: 4.168ms, Maximum: 4.204ms, Minimum: 3.585ms
 
-thank you for your kind help
+We see a spike of 387us from the average (3.817ms baseline to 4.204ms
+maximum).  And it is worse in our real system, since these other tasks
+are also running as SCHED_FIFO.  This is problematic for our system,
+because our highest priority task must complete in a fixed minimum
+time.  But when these other tasks (all of which use clock_nanosleep()
+or nanosleep()) are running, the excessive jitter breaks things.
 
-Victor
- 		 	   		  
+Now, we supposed our highest priority task would not be interrupted by
+lower priority tasks.  And indeed, they don't seem to be.  However, it
+seems that the processing of a large number of hrtimers by the kernel
+is starving our task of time.  How the hrtimers are implemented, and
+how the kernel reacts to multiple timers expiring (or have expired)
+isn't clear to us.
+
+Any insight on the source of this jitter, and how to solve it would be
+greatly appreciated.  We are running 2.6.29.3-rt13, but we have tried
+it on 2.6.33.7.2-rt30.  Or platform is a MPC8349 at 533MHz.
+
+Thanks,
+Pete LaDow
