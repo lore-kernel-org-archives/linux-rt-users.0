@@ -1,48 +1,27 @@
-From: Friedrich Schick <Friedrich.Schick@web.de>
-Subject: Re: General question, sem_post does not result in preempt?
-Date: Sat, 12 Feb 2011 13:52:02 +0100
-Message-ID: <AANLkTi=jJZPDtz4bVNE3eTUOPJ0KdS0QnMrfG5WaA9h5@mail.gmail.com>
-References: <AANLkTi=wk7kWShHWRrmgZb2SugwEsp4rxCPk7WBNOtgE@mail.gmail.com>
+From: Peter LaDow <petela@gocougs.wsu.edu>
+Subject: Interrupt Bottom Half Scheduling
+Date: Mon, 14 Feb 2011 14:31:43 -0800
+Message-ID: <AANLkTimGobdGMgnc8bVJTvYtH4Tjn2ZVmroeFA2s06WD@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:46620 "EHLO
-	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751469Ab1BLMwC (ORCPT
+Received: from mail-yx0-f174.google.com ([209.85.213.174]:37058 "EHLO
+	mail-yx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750948Ab1BNWbo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 12 Feb 2011 07:52:02 -0500
-Received: by qwa26 with SMTP id 26so2160945qwa.19
-        for <linux-rt-users@vger.kernel.org>; Sat, 12 Feb 2011 04:52:02 -0800 (PST)
-In-Reply-To: <AANLkTi=wk7kWShHWRrmgZb2SugwEsp4rxCPk7WBNOtgE@mail.gmail.com>
+	Mon, 14 Feb 2011 17:31:44 -0500
+Received: by yxt3 with SMTP id 3so2284898yxt.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2011 14:31:43 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello again,
+How is the scheduling of the hrtimers softirq thread handled?
 
-I missed a call to "pthread_attr_setinheritsched(&attr,
-PTHREAD_EXPLICIT_SCHED)".
+When querying the RT priority of the hrtimer softirq, I get a priority
+of 50.  But when running a priority 99 thread, we still seem to be
+getting interrupted.  Shouldn't the hrtimer softirq be put off until
+the CPU is idle or a lower priority task is running?
 
-Best regards,
-
-Friedrich Schick
-
-> Hello,
->
-> does sem_post wake up another thread and preempt the current thread if
-> the other thread has a higher priority than the current one?
->
-> thread A : prio 10
-> thread B : prio 20
->
-> thread B : wait (sem)
-> thread A : running
-> thread A : post (sem)
-> thread B : now running?
->
-> I have written an example and it seems, that thread B will not preempt thread A.
->
-> Best regards
->
-> Friedrich Schick
->
+Thanks,
+Pete
