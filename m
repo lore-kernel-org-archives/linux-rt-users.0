@@ -1,89 +1,73 @@
-From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+From: Peter LaDow <petela@gocougs.wsu.edu>
 Subject: Re: Interrupt Bottom Half Scheduling
-Date: Mon, 14 Feb 2011 16:50:18 -0800
-Message-ID: <4D59CDCA.6080102@gmail.com>
-References: <AANLkTimGobdGMgnc8bVJTvYtH4Tjn2ZVmroeFA2s06WD@mail.gmail.com> <1297724643.10271.16.camel@quadrophenia> <AANLkTi=V0Uth=30v4M2g=eJ6utLWFPO4XCeqTJWBSMLL@mail.gmail.com> <1297726555.10271.21.camel@quadrophenia> <15BCBB0C-5307-4AEC-8B48-7D8F4D16FB3B@gmail.com>
+Date: Mon, 14 Feb 2011 17:10:05 -0800
+Message-ID: <AANLkTinpxPMVPCw0ND_1t1orEHaYBRfEfruv1v0rws-b@mail.gmail.com>
+References: <AANLkTimGobdGMgnc8bVJTvYtH4Tjn2ZVmroeFA2s06WD@mail.gmail.com>
+	<AANLkTimGvJWgeEXHFdVBJCidL8ctbAxKJZ8V9KeMxRUX@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Peter LaDow <petela@gocougs.wsu.edu>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Peter LaDow <pladow@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Frank Rowand <frank.rowand@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f46.google.com ([209.85.215.46]:64605 "EHLO
-	mail-ew0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753283Ab1BOAu1 (ORCPT
+Received: from mail-gy0-f174.google.com ([209.85.160.174]:48951 "EHLO
+	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751082Ab1BOBKH convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Feb 2011 19:50:27 -0500
-Received: by ewy5 with SMTP id 5so2622982ewy.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2011 16:50:25 -0800 (PST)
-In-Reply-To: <15BCBB0C-5307-4AEC-8B48-7D8F4D16FB3B@gmail.com>
+	Mon, 14 Feb 2011 20:10:07 -0500
+Received: by gyb11 with SMTP id 11so2337772gyb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Feb 2011 17:10:06 -0800 (PST)
+In-Reply-To: <AANLkTimGvJWgeEXHFdVBJCidL8ctbAxKJZ8V9KeMxRUX@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 02/14/2011 03:42 PM, Peter LaDow wrote:
-> Pseudo-code. I can post the full code if it helps.
+On Mon, Feb 14, 2011 at 3:30 PM, Frank Rowand <frank.rowand@gmail.com> =
+wrote:
+> On Mon, Feb 14, 2011 at 2:31 PM, Peter LaDow <petela@gocougs.wsu.edu>=
+ wrote:
+>> How is the scheduling of the hrtimers softirq thread handled?
+>>
+>> When querying the RT priority of the hrtimer softirq, I get a priori=
+ty
+>> of 50. =A0But when running a priority 99 thread, we still seem to be
+>> getting interrupted. =A0Shouldn't the hrtimer softirq be put off unt=
+il
+>> the CPU is idle or a lower priority task is running?
 >
+> Is the hrtimer softirq executing when the priority 99 thread is spinn=
+ing
+> in it's for loop? =A0Your "jitter Due to Large Number of Timers" emai=
+l
+> said that the lower priority tasks don't seem to be interrupting the
+> priority 99 thread.
 
-My first thought was whether the compiler optimizes away the for loop.
+Did I?  Hmm, well I mean the lower priority task with 100 threads.  At
+least I think so.  It is hard to tell.
 
-Either way you would be hammering on the clock_gettime in a narly way, 
-it might be better just to hand-code a register read, if this is just 
-some kind of benchmark.
+It seems to me that the softirq thread is the source of the problem.
+Since the tight loop is getting such a variety of times (400us of
+jitter only while the other process is running) that it does seem that
+the loop is getting interrupt.
 
-It would be good to know the time source chipset and its resolution.
+> The hardware timer interupts will interrupt the priority 99 thread. =A0=
+The
+> cost of these interrupts and the resultant calls to try_to_wake_up()
+> of the hrtimer softirq might be quite large considering the rate of
+> timer expires you mentioned in your first email.
 
-what is the distribution for t2 - t1 btw?
+Sure, we expect the timer interrupt to interfere.  But as we
+understand it, the softirq is what schedules the task switch.  The top
+half only schedules the bottom half.  But since the bottom half is
+priority 50, there shouldn't be any interruption of the priority 99
+expect to handle the low level IRQ.
 
-for starters ;)
+> Out of curiosity, is the system UP or SMP?
 
+UP.  Just a single MPC5349.
 
-On Feb 14, 2011, at 3:35 PM, Sven-Thorsten Dietrich 
-<thebigcorporation@gmail.com> wrote:
->> On Mon, 2011-02-14 at 15:08 -0800, Peter LaDow wrote:
->>> Note sure how that is possible.  This is related to my earlier posting
->>> about timing jitter.  Our code is basically this:
->>>
->> Where is the semicolon ending the for loop?
->>
->>
->>> while(1)
->>> {
->>>   t1 = clock_gettime()
->>>   for(i=0; i<  10000; i++)
->>>   t2 = clock_gettime()
->>>
->>>   diff = t2 - 1
->>> }
->>>
->>> This task is pending on nothing.  Unless clock_gettime() causes some
->>> sort of priority inversion, I don't see the problem.  We see
->>> significant jitter on the for-loop when there are a significant number
->>> of other kernel timers.  Now, as we understand it, the hrtimers run in
->>> the softirq.  But if the softirq is priority 50, and this for-loop is
->>> priority 99, it shouldn't be affected by the softirq thread.
->>>
->>> Pete
->>>
->>> On Mon, Feb 14, 2011 at 3:04 PM, Sven-Thorsten Dietrich
->>> <thebigcorporation@gmail.com>  wrote:
->>>> On Mon, 2011-02-14 at 14:31 -0800, Peter LaDow wrote:
->>>>> How is the scheduling of the hrtimers softirq thread handled?
->>>>>
->>>>> When querying the RT priority of the hrtimer softirq, I get a priority
->>>>> of 50.  But when running a priority 99 thread, we still seem to be
->>>>> getting interrupted.  Shouldn't the hrtimer softirq be put off until
->>>>> the CPU is idle or a lower priority task is running?
->>>> Does your prio 99 thread perhaps encounter a prio inversion dependency
->>>> on one of the softriq threads?
->>>>
->>>>> Thanks,
->>>>> Pete
->>>>> --
->>>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>>>> the body of a message to majordomo@vger.kernel.org
->>>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>>>
->>>>
->>
-
+pete
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
