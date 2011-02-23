@@ -1,34 +1,53 @@
-From: "Orbit Loans" <admin@uk.org>
-Subject: Loan
-Date: Fri, 18 Feb 2011 20:38:05 +0700 (WIT)
-Message-ID: <c927b5e23e4e86fde1b6ee32ca054303.squirrel__31677.2220809527$1298046288$gmane$org@webmail.powertel.co.id>
-Reply-To: orbitfinancefirmltd@mail2uk.com
+From: Dennis Borgmann <dennis.borgmann@googlemail.com>
+Subject: ARM AT91SAM9260 - RT patched system not running
+Date: Wed, 23 Feb 2011 12:37:15 +0100
+Message-ID: <4D64F16B.3000009@googlemail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-To: undisclosed-recipients:;
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [203.190.55.249] ([203.190.55.249]:51219 "EHLO
-	core-tomang.power.net.id" rhost-flags-FAIL-FAIL-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752662Ab1BRQYP (ORCPT
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:51701 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753025Ab1BWLh2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Feb 2011 11:24:15 -0500
+	Wed, 23 Feb 2011 06:37:28 -0500
+Received: by fxm17 with SMTP id 17so3822866fxm.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Feb 2011 03:37:27 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Good day,
+Hello rt-list!
 
-Do you have bad credit?
-Do you want to upgrade your business?
+I have compiled Kernel 2.6.33.7 with rt-patches and arm-patches
+(http://maxim.org.za/AT91RM9200/2.6/2.6.33-at91.patch.gz) for an ARM
+AT91SAM9260. The system stops running at
 
-I give loans to both private and public organizations at
-very low and considerable interest rates.
+Freeing init memory
 
-For more information you could contact me at my email
-address below:orbitfinanceltduk@mail2uk.com
+I traced this down to the file linux-2.6.33.7/arch/arm/kernel/sys_arm.c
+, where an assembler command does not return. Check this code snippet:
 
+printk("HELLO 1\n");
+    asm(    "add    r0, %0, %1\n\t"
+        "mov    r1, %2\n\t"
+        "mov    r2, %3\n\t"
+        "bl    memmove\n\t"    /* copy regs to top of stack */
+        "mov    r8, #0\n\t"    /* not a syscall */
+        "mov    r9, %0\n\t"    /* thread structure */
+        "mov    sp, r0\n\t"    /* reposition stack pointer */
+        "b    ret_to_user"
+        :
+        : "r" (current_thread_info()),
+          "Ir" (THREAD_START_SP - sizeof(regs)),
+          "r" (&regs),
+          "Ir" (sizeof(regs))
+        : "r0", "r1", "r2", "r3", "ip", "lr", "memory");
+printk("HELLO 2\n");
 
-Regards
-Hill Colin Neil Esq.
+"HELLO 1" can still be read, "HELLO 2" never appears.
 
+Any idea, what could be the problem?
 
+Kind regards,
+Dennis
