@@ -1,91 +1,117 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] net: iptables: rework the fix of xt_info locking
-Date: Wed, 2 Mar 2011 21:58:53 +0100
-Message-ID: <20110302205853.GJ22310@pengutronix.de>
-References: <20110302201414.GE8384@uudg.org>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [ANNOUNCE] RT for v2.6.34.8 now available.
+Date: Fri, 04 Mar 2011 17:24:15 -0500
+Message-ID: <4D71668F.9050201@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>,
-	Clark Williams <williams@redhat.com>
-To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, lwn@lwn.net
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:54387 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754587Ab1CBU65 (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:34211 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932278Ab1CDWYV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2011 15:58:57 -0500
-Content-Disposition: inline
-In-Reply-To: <20110302201414.GE8384@uudg.org>
+	Fri, 4 Mar 2011 17:24:21 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 02, 2011 at 05:14:14PM -0300, Luis Claudio R. Goncalves wro=
-te:
-> Thomas,
->=20
-> Maybe PREEMPT_NONE is not really what we want to check against, maybe=
- it is=20
-> RT_MUTEXES... anyway, this patch works fine as is in kernels with
-> PREEMPT_NONE, PREEMPT_DESKTOP, PREEMPT_VOLUNTARY and PREEMPT_RT set.
->=20
-> ---
->=20
-> net: iptables: rework the fix of xt_info locking
->=20
-> Commit 5bbbedc from tip/rt/2.6.33 fixed an annoying locking issue on
-> PREEMPT_RT enabled kernels. I have observed a similar issue when test=
-ing a
-> kernel with PREEMPT_DESKTOP enabled. My test kernels would boot fine =
-and as
-> soon as I tried to ssh into the test box I would see messages like th=
-is one:
->=20
-> 	BUG: %Ps exited with wrong preemption count!
-> 	=3D> enter: 00000101, exit: 00000100.
-> 	BUG: %Ps exited with wrong preemption count!
-> 	=3D> enter: 00000101, exit: 00000100.
-> 	BUG: %Ps exited with wrong preemption count!
-> 	=3D> enter: 00000102, exit: 00000101.
+As a value add to the 2.6.34 long term release, I'm happy to also
+announce the availability of 2.6.34-RT.  
 
-This error message would be a bit more usful after this patch:
+You can find it in the v2.6.34-rt branch at:
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index c35f72b..b3b20b0 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -335,8 +335,8 @@ debug_check_preempt_count_stop(__u32 *preempt_count=
-, struct softirq_action *h)
- 	if (*preempt_count =3D=3D preempt_count())
- 		return;
-=20
--	print_symbol("BUG: %Ps exited with wrong preemption count!\n",
--		     (unsigned long)h->action);
-+	printk("BUG: %ps exited with wrong preemption count!\n",
-+			h->action);
- 	printk("=3D> enter: %08x, exit: %08x.\n", *preempt_count, preempt_cou=
-nt());
- 	preempt_count() =3D *preempt_count;
- #endif
+  git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
 
-Note this is completely untested and applies on top of v2.6.33.7.2-rt30=
-=2E
+as a repository of patches.  The v2.6.34-rt branch contains the latest
+RT patches against the latest v2.6.34.8 kernel release. (The master
+branch currently stops at v2.6.34 flat, i.e. 2.6.34.0 so to speak.)
 
-Thomas: should I send a proper patch or isn't it worth the effort?
+I've also created over 400 known working RT enabled bisection points
+between 33 and 34 that you can make use of for testing.  The details
+on how/why those exist follows - read on if it is of interest to you.
 
-Best regards
-Uwe
+Note that all credit of the thinking and engineering of the RT stuff
+lies with the original patch authors -- to be clear, I'm just doing
+the grunt work of a carry forward here.
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
+Have fun with it, maybe drop me a note if you find it useful etc.
+
+Paul.
+
+
+The carry forward process:
+---------------------------
+
+This warrants some notes, since (a) it has strong consequence on how
+you can diagnose/bisect problems that were not in 33-rt but may exist
+in 34-rt and (b) we've recently seen people who wonder how to do a
+similar task and I think they *really* underestimate the complexities
+and sheer effort of trying to do any sort of RT carry-forward.
+
+For those who track these things, you will know that the most recent
+release of RT was based on v2.6.33, and in turn, it was created by
+merging forward the mainline kernel.org v2.6.33 content into the older
+v2.6.31 RT tree.  There was no rebase.
+
+With that detail, some of you are probably now going "Aha, now I know
+why he created that merge-free v2.6.33 based RT tree some weeks ago."
+(see: http://www.spinics.net/lists/linux-rt-users/msg06310.html )
+
+Step one was that I needed the RT commits rebased against 33 (and not 31)
+as my starting point for rebasing RT onto v2.6.34 -- see the above
+link for details on the significant work involved with that.
+
+There are roughly 500 RT patches, and literally 10,000+ commits between
+v2.6.33 and v2.6.34.  So if one was to move things ahead all in one go,
+there can be roughly 5 million things that can go wrong.  Maybe some sharp
+person can move those ahead all in one shot, and then figure out the
+resulting inevitable runtime breakage, but that isn't me.  After all, a
+man has to know his limitations, and I'm pretty much just a patch monkey. 
+
+Knowing that the RT patches applied (and worked) on base X, but fail to
+apply or fail to work on X+N (where N is small) can be very empowering
+to a dumb person like me.  It reduces the problem space *immensely* and
+it lets you focus on what changed and caused the problem/conflict.  With
+that in mind, I saw no choice but to undertake what would have been the
+equivalent of recreating history, had a continuous integration between
+the two streams taken place during the 33 --> 34 dev cycle.
+
+What this means in concrete terms, is incrementally applying, updating,
+and testing the 500-odd RT patches at successive points along the 10000
+commits found in the 33 --> 34 development cycle.  But assuming you
+agree with that logic, what does a person choose/use as increments?
+
+At a 1st guess, a person might suggest choosing the rcN tags (where we
+have N=1,2,... 7) as places for these incremental tests.  The problem
+is that the granularity is too coarse -- just for N=1 means you have
+already jumped over 6000 commits ahead, and so you are still facing
+being lost for the same reason 10000 commits left you lost before.
+
+At the opposite end of the scale is a brute force approach, where a
+person tries applying/updating/testing the RT patch on *each* of the
+10,000 development commits. Sounds like it might work, but no.  The
+problem here is that the kernel development history is non-linear
+in time.  See the git FAQ on why bisects can drag you back in time, if
+you've never personally encountered this yourself.  A lot of people
+are surprised by this when they first encounter it.
+
+My approach was to adopt a semi-brute force approach.  During the dev
+cycle of any kernel, Linus merges the content from various subsystem
+maintainers.  Each of these merge points represents a point where
+you are guaranteed to not be "rewound in time", should you choose it
+as a bisect point.  Using git, these points can easily be identified.
+
+There happens to be ~400 of them, so the 10,000 development commits get
+"digested" at an average rate of a humanly manageable number of about 25
+commits each -- something that a stupid person like me has a chance to
+be able to diagnose/debug without going insane.  You will find that there
+is an un-annotated tag for each of these merges in the patch repository.
+You really should use these for bisecting your own problems/issues.
+
+On each of these, I've done a patch test, a compile test (x86, x86-64,
+ppc, arm) and a boot test (x86, x86-64, ppc-SMP) to ensure that I've not
+done a colossal screw-up.  I've probably still screwed *something* up,
+but at least I've ensured some level of continuing sanity with these tests
+being done across these integration points.
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
