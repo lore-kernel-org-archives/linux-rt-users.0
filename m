@@ -1,34 +1,52 @@
-From: Nathan Grennan <linux-rt-users@cygnusx-1.org>
+From: "Madovsky" <infos@madovsky.org>
 Subject: Re: [ANNOUNCE] RT for v2.6.34.8 now available.
-Date: Fri, 04 Mar 2011 19:05:50 -0800
-Message-ID: <4D71A88E.2060608@cygnusx-1.org>
+Date: Fri, 4 Mar 2011 22:24:32 -0500
+Message-ID: <4686DA7B617744DD85D790A2B2B0D039@e1705>
 References: <4D71668F.9050201@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	linux-kernel@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain;
+	format=flowed;
+	charset="iso-8859-1";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from okcforum.org ([173.8.189.10]:34654 "EHLO mail.okcforum.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752049Ab1CEDFw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Mar 2011 22:05:52 -0500
-In-Reply-To: <4D71668F.9050201@windriver.com>
+Received: from ip-67-205-80-138.static.privatedns.com ([67.205.80.138]:36646
+	"EHLO node250.e-blokos.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752089Ab1CEDYe (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Mar 2011 22:24:34 -0500
+Received: from e1705 (localhost.localdomain [127.0.0.1])
+	by node250.e-blokos.com (8.14.3/8.14.3) with SMTP id p253OWRf009658
+	for <linux-rt-users@vger.kernel.org>; Fri, 4 Mar 2011 22:24:32 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 03/04/2011 02:24 PM, Paul Gortmaker wrote:
+Paul,
+
+is there any link of how to patch the kernel ?
+seems like it's not the same as 2.6.33-7..
+
+thank you
+
+Franck
+
+----- Original Message ----- 
+From: "Paul Gortmaker" <paul.gortmaker@windriver.com>
+To: <linux-rt-users@vger.kernel.org>
+Cc: <linux-kernel@vger.kernel.org>; <lwn@lwn.net>
+Sent: Friday, March 04, 2011 5:24 PM
+Subject: [ANNOUNCE] RT for v2.6.34.8 now available.
+
+
 > As a value add to the 2.6.34 long term release, I'm happy to also
 > announce the availability of 2.6.34-RT.
 >
 > You can find it in the v2.6.34-rt branch at:
 >
->    git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
+>  git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
 >
-> as a repository of patches.  The v2.6.34-rt branch contains the lates=
-t
+> as a repository of patches.  The v2.6.34-rt branch contains the latest
 > RT patches against the latest v2.6.34.8 kernel release. (The master
 > branch currently stops at v2.6.34 flat, i.e. 2.6.34.0 so to speak.)
 >
@@ -41,85 +59,88 @@ t
 > the grunt work of a carry forward here.
 >
 > Have fun with it, maybe drop me a note if you find it useful etc.
+>
+> Paul.
+>
+>
+> The carry forward process:
+> ---------------------------
+>
+> This warrants some notes, since (a) it has strong consequence on how
+> you can diagnose/bisect problems that were not in 33-rt but may exist
+> in 34-rt and (b) we've recently seen people who wonder how to do a
+> similar task and I think they *really* underestimate the complexities
+> and sheer effort of trying to do any sort of RT carry-forward.
+>
+> For those who track these things, you will know that the most recent
+> release of RT was based on v2.6.33, and in turn, it was created by
+> merging forward the mainline kernel.org v2.6.33 content into the older
+> v2.6.31 RT tree.  There was no rebase.
+>
+> With that detail, some of you are probably now going "Aha, now I know
+> why he created that merge-free v2.6.33 based RT tree some weeks ago."
+> (see: http://www.spinics.net/lists/linux-rt-users/msg06310.html )
+>
+> Step one was that I needed the RT commits rebased against 33 (and not 31)
+> as my starting point for rebasing RT onto v2.6.34 -- see the above
+> link for details on the significant work involved with that.
+>
+> There are roughly 500 RT patches, and literally 10,000+ commits between
+> v2.6.33 and v2.6.34.  So if one was to move things ahead all in one go,
+> there can be roughly 5 million things that can go wrong.  Maybe some sharp
+> person can move those ahead all in one shot, and then figure out the
+> resulting inevitable runtime breakage, but that isn't me.  After all, a
+> man has to know his limitations, and I'm pretty much just a patch monkey.
+>
+> Knowing that the RT patches applied (and worked) on base X, but fail to
+> apply or fail to work on X+N (where N is small) can be very empowering
+> to a dumb person like me.  It reduces the problem space *immensely* and
+> it lets you focus on what changed and caused the problem/conflict.  With
+> that in mind, I saw no choice but to undertake what would have been the
+> equivalent of recreating history, had a continuous integration between
+> the two streams taken place during the 33 --> 34 dev cycle.
+>
+> What this means in concrete terms, is incrementally applying, updating,
+> and testing the 500-odd RT patches at successive points along the 10000
+> commits found in the 33 --> 34 development cycle.  But assuming you
+> agree with that logic, what does a person choose/use as increments?
+>
+> At a 1st guess, a person might suggest choosing the rcN tags (where we
+> have N=1,2,... 7) as places for these incremental tests.  The problem
+> is that the granularity is too coarse -- just for N=1 means you have
+> already jumped over 6000 commits ahead, and so you are still facing
+> being lost for the same reason 10000 commits left you lost before.
+>
+> At the opposite end of the scale is a brute force approach, where a
+> person tries applying/updating/testing the RT patch on *each* of the
+> 10,000 development commits. Sounds like it might work, but no.  The
+> problem here is that the kernel development history is non-linear
+> in time.  See the git FAQ on why bisects can drag you back in time, if
+> you've never personally encountered this yourself.  A lot of people
+> are surprised by this when they first encounter it.
+>
+> My approach was to adopt a semi-brute force approach.  During the dev
+> cycle of any kernel, Linus merges the content from various subsystem
+> maintainers.  Each of these merge points represents a point where
+> you are guaranteed to not be "rewound in time", should you choose it
+> as a bisect point.  Using git, these points can easily be identified.
+>
+> There happens to be ~400 of them, so the 10,000 development commits get
+> "digested" at an average rate of a humanly manageable number of about 25
+> commits each -- something that a stupid person like me has a chance to
+> be able to diagnose/debug without going insane.  You will find that there
+> is an un-annotated tag for each of these merges in the patch repository.
+> You really should use these for bisecting your own problems/issues.
+>
+> On each of these, I've done a patch test, a compile test (x86, x86-64,
+> ppc, arm) and a boot test (x86, x86-64, ppc-SMP) to ensure that I've not
+> done a colossal screw-up.  I've probably still screwed *something* up,
+> but at least I've ensured some level of continuing sanity with these tests
+> being done across these integration points.
+> --
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" 
+> in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html 
 
-I tried compiling this, and it quickly failed. Ideas?
-
-I did this on a Fedora 14 x86_64 system with gcc-4.5.1-4.fc14.x86_64.
-
-
-Here is what I did:
-
-1. Downloaded 2.6.34.8 tarball and extracted it
-2. git clone -b v2.6.34-rt=20
-git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
-3. cat ../rt-patches/series | xargs -i cat ../rt-patches/{} | patch -p1=
-=20
-(Applied just fine)
-4. Copied an 2.6.31-rt configuration to .config
-5. Ran make oldconfig
-6. make bzImage
-
-
-CHK include/linux/version.h
-CHK include/generated/utsrelease.h
-HOSTCC scripts/basic/fixdep
-HOSTCC scripts/basic/docproc
-HOSTCC scripts/basic/hash
-CC kernel/bounds.s
-GEN include/generated/bounds.h
-CC arch/x86/kernel/asm-offsets.s
-GEN include/generated/asm-offsets.h
-CALL scripts/checksyscalls.sh
-HOSTCC scripts/genksyms/genksyms.o
-HOSTCC scripts/genksyms/lex.o
-HOSTCC scripts/genksyms/parse.o
-HOSTLD scripts/genksyms/genksyms
-CC scripts/mod/empty.o
-HOSTCC scripts/mod/mk_elfconfig
-MKELF scripts/mod/elfconfig.h
-HOSTCC scripts/mod/file2alias.o
-HOSTCC scripts/mod/modpost.o
-HOSTCC scripts/mod/sumversion.o
-HOSTLD scripts/mod/modpost
-HOSTCC scripts/selinux/genheaders/genheaders
-HOSTCC scripts/selinux/mdp/mdp
-HOSTCC scripts/kallsyms
-HOSTCC scripts/conmakehash
-CC init/main.o
-init/main.c: In function =91do_one_initcall=92:
-init/main.c:740:10: warning: =91calltime.tv64=92 may be used uninitiali=
-zed=20
-in this function
-CHK include/generated/compile.h
-CC init/version.o
-CC init/do_mounts.o
-In file included from include/linux/suspend.h:8:0,
-from init/do_mounts.c:6:
-include/linux/mm.h: In function =91pte_lock_init=92:
-include/linux/mm.h:1125:2: error: implicit declaration of function =91k=
-malloc=92
-include/linux/mm.h:1125:12: warning: assignment makes pointer from=20
-integer without a cast
-include/linux/mm.h: In function =91pte_lock_deinit=92:
-include/linux/mm.h:1137:2: error: implicit declaration of function =91k=
-free=92
-In file included from include/linux/security.h:36:0,
-from init/do_mounts.c:8:
-include/linux/slab.h: At top level:
-include/linux/slab.h:144:6: warning: conflicting types for =91kfree=92
-include/linux/mm.h:1137:2: note: previous implicit declaration of=20
-=91kfree=92 was here
-In file included from include/linux/slab.h:172:0,
-from include/linux/security.h:36,
-from init/do_mounts.c:8:
-include/linux/slab_def.h:128:52: error: conflicting types for =91kmallo=
-c=92
-include/linux/mm.h:1125:14: note: previous implicit declaration of=20
-=91kmalloc=92 was here
-make[1]: *** [init/do_mounts.o] Error 1
-make: *** [init] Error 2
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
