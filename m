@@ -1,27 +1,27 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Paul Gortmaker <paul.gortmaker@gmail.com>
 Subject: Re: [ANNOUNCE] RT for v2.6.34.8 now available.
-Date: Mon, 7 Mar 2011 09:36:47 -0500
-Message-ID: <AANLkTim3Bwhp4W2zOcAnNxBzz1hmgvPMjtewt1cW8V0s@mail.gmail.com>
+Date: Mon, 7 Mar 2011 09:44:25 -0500
+Message-ID: <AANLkTikkGA6MUUm6yzHPcc7xktsyJzGmimQ0mbNQJ9vK@mail.gmail.com>
 References: <4D71668F.9050201@windriver.com>
-	<4D71A88E.2060608@cygnusx-1.org>
+	<4D748070.1030502@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	linux-kernel@vger.kernel.org
-To: Nathan Grennan <linux-rt-users@cygnusx-1.org>
+	linux-kernel@vger.kernel.org, lwn@lwn.net
+To: Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:41817 "EHLO
+Received: from mail-qy0-f181.google.com ([209.85.216.181]:39450 "EHLO
 	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750814Ab1CGOgs convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1753451Ab1CGOo0 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Mar 2011 09:36:48 -0500
-In-Reply-To: <4D71A88E.2060608@cygnusx-1.org>
+	Mon, 7 Mar 2011 09:44:26 -0500
+In-Reply-To: <4D748070.1030502@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Mar 4, 2011 at 10:05 PM, Nathan Grennan
-<linux-rt-users@cygnusx-1.org> wrote:
+On Mon, Mar 7, 2011 at 1:51 AM, Fernando Lopez-Lezcano
+<nando@ccrma.stanford.edu> wrote:
 > On 03/04/2011 02:24 PM, Paul Gortmaker wrote:
 >>
 >> As a value add to the 2.6.34 long term release, I'm happy to also
@@ -31,125 +31,115 @@ On Fri, Mar 4, 2011 at 10:05 PM, Nathan Grennan
 >>
 >> =A0 git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.g=
 it
->>
->> as a repository of patches. =A0The v2.6.34-rt branch contains the la=
-test
->> RT patches against the latest v2.6.34.8 kernel release. (The master
->> branch currently stops at v2.6.34 flat, i.e. 2.6.34.0 so to speak.)
->>
->> I've also created over 400 known working RT enabled bisection points
->> between 33 and 34 that you can make use of for testing. =A0The detai=
-ls
->> on how/why those exist follows - read on if it is of interest to you=
-=2E
->>
->> Note that all credit of the thinking and engineering of the RT stuff
->> lies with the original patch authors -- to be clear, I'm just doing
->> the grunt work of a carry forward here.
->>
->> Have fun with it, maybe drop me a note if you find it useful etc.
 >
-> I tried compiling this, and it quickly failed. Ideas?
+> Great! Many thanks... Actually, impressive work.
+>
+> I'm trying to integrate/build it into my Fedora based rt packages for=
+ Planet
+> CCRMA. Warning: I'm doing this on top of the 2.6.34.8-68 fc13 koji bu=
+ild, so
+> rt is patched on top of the additional Fedora patches for that build =
+(with a
+> few trivial tweaks to patch cleanly). So I don't know if the followin=
+g
+> issues are due to that - I will investigate:
 
-Yes, it is the header cleanup done in the 33-->34 dev cycle, seen
-between the rev list ^9e74e7c b66696e that changes slab.h use.
+Thanks - I'm not surprised to see some fallout in new/updated drivers,
+since they change so much per release and I didn't attempt to build eve=
+ry
+driver under the sun - my core focus was on getting it stable with the =
+main
+defconfigs I could easily test.   I'll have a look and integrate accord=
+ingly.
 
-If you look at 8a2032dba45e24 *in the patch repo* you will see where
-I fixed it for the baseline RT-enabled defconfig.  (Meaning I did a
-make defconfig, then enabled the RT options).  Your config must be
-setting something different/extra.
-
-If you do a git show on the above rev list and on the fix in the patch
-repo, you will probably be able to tell what is going on.  Also please
-send me your config (off list) so I can ensure it compiles properly mys=
-elf.
-
-Thanks,
-Paul.
+P.
 
 >
-> I did this on a Fedora 14 x86_64 system with gcc-4.5.1-4.fc14.x86_64.
+> I found a couple of extra argument cases for __netif_tx_lock:
 >
+> --- a/drivers/net/qlcnic/qlcnic_main.c =A02010-05-16 17:17:36.0000000=
+00 -0400
+> +++ b/drivers/net/qlcnic/qlcnic_main.c =A02011-03-06 20:08:16.0000000=
+00 -0500
+> @@ -1881,7 +1881,7 @@
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0smp_mb();
 >
-> Here is what I did:
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (netif_queue_stopped(netdev) && net=
+if_carrier_ok(netdev))
+> {
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 __netif_tx_lock(tx_ring=
+->txq, smp_processor_id());
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 __netif_tx_lock(tx_ring=
+->txq);
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (qlcnic_tx_avail(tx=
+_ring) > TX_STOP_THRESH) {
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0netif_=
+wake_queue(netdev);
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0adapte=
+r->tx_timeo_cnt =3D 0;
+> --- a/drivers/net/bnx2x_main.c =A02010-05-16 17:17:36.000000000 -0400
+> +++ b/drivers/net/bnx2x_main.c =A02011-03-06 19:58:45.000000000 -0500
+> @@ -976,7 +976,7 @@
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 * stops the queue
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 */
 >
-> 1. Downloaded 2.6.34.8 tarball and extracted it
-> 2. git clone -b v2.6.34-rt
-> git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
-> 3. cat ../rt-patches/series | xargs -i cat ../rt-patches/{} | patch -=
-p1
-> (Applied just fine)
-> 4. Copied an 2.6.31-rt configuration to .config
-> 5. Ran make oldconfig
-> 6. make bzImage
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 __netif_tx_lock(txq, smp_processor_id()=
+);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 __netif_tx_lock(txq);
 >
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if ((netif_tx_queue_stopped(txq)) &&
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0(bp->state =3D=3D BNX2X_STATE_=
+OPEN) &&
+> ----
 >
-> CHK include/linux/version.h
-> CHK include/generated/utsrelease.h
-> HOSTCC scripts/basic/fixdep
-> HOSTCC scripts/basic/docproc
-> HOSTCC scripts/basic/hash
-> CC kernel/bounds.s
-> GEN include/generated/bounds.h
-> CC arch/x86/kernel/asm-offsets.s
-> GEN include/generated/asm-offsets.h
-> CALL scripts/checksyscalls.sh
-> HOSTCC scripts/genksyms/genksyms.o
-> HOSTCC scripts/genksyms/lex.o
-> HOSTCC scripts/genksyms/parse.o
-> HOSTLD scripts/genksyms/genksyms
-> CC scripts/mod/empty.o
-> HOSTCC scripts/mod/mk_elfconfig
-> MKELF scripts/mod/elfconfig.h
-> HOSTCC scripts/mod/file2alias.o
-> HOSTCC scripts/mod/modpost.o
-> HOSTCC scripts/mod/sumversion.o
-> HOSTLD scripts/mod/modpost
-> HOSTCC scripts/selinux/genheaders/genheaders
-> HOSTCC scripts/selinux/mdp/mdp
-> HOSTCC scripts/kallsyms
-> HOSTCC scripts/conmakehash
-> CC init/main.o
-> init/main.c: In function =91do_one_initcall=92:
-> init/main.c:740:10: warning: =91calltime.tv64=92 may be used uninitia=
-lized in
-> this function
-> CHK include/generated/compile.h
-> CC init/version.o
-> CC init/do_mounts.o
-> In file included from include/linux/suspend.h:8:0,
-> from init/do_mounts.c:6:
-> include/linux/mm.h: In function =91pte_lock_init=92:
-> include/linux/mm.h:1125:2: error: implicit declaration of function =91=
-kmalloc=92
-> include/linux/mm.h:1125:12: warning: assignment makes pointer from in=
-teger
-> without a cast
-> include/linux/mm.h: In function =91pte_lock_deinit=92:
-> include/linux/mm.h:1137:2: error: implicit declaration of function =91=
-kfree=92
-> In file included from include/linux/security.h:36:0,
-> from init/do_mounts.c:8:
-> include/linux/slab.h: At top level:
-> include/linux/slab.h:144:6: warning: conflicting types for =91kfree=92
-> include/linux/mm.h:1137:2: note: previous implicit declaration of =91=
-kfree=92
-> was here
-> In file included from include/linux/slab.h:172:0,
-> from include/linux/security.h:36,
-> from init/do_mounts.c:8:
-> include/linux/slab_def.h:128:52: error: conflicting types for =91kmal=
-loc=92
-> include/linux/mm.h:1125:14: note: previous implicit declaration of =91=
-kmalloc=92
-> was here
-> make[1]: *** [init/do_mounts.o] Error 1
-> make: *** [init] Error 2
+> a missing include (incomplete type errors for semaphores):
+>
+> --- a/drivers/net/mlx4/mlx4.h =A0 2010-05-16 17:17:36.000000000 -0400
+> +++ b/drivers/net/mlx4/mlx4.h =A0 2011-03-06 20:07:05.000000000 -0500
+> @@ -37,6 +37,7 @@
+> =A0#ifndef MLX4_H
+> =A0#define MLX4_H
+>
+> +#include <linux/semaphore.h>
+> =A0#include <linux/mutex.h>
+> =A0#include <linux/radix-tree.h>
+> =A0#include <linux/timer.h>
+> ----
+>
+> and this (found compilation fix here:
+> http://groups.google.com/group/linux.kernel/browse_thread/thread/c4f0=
+fd1ca9298c45/18316184209e6e84?show_docid=3D18316184209e6e84&fwc=3D1):
+>
+> --- a/drivers/net/wireless/ath/ar9170/usb.c =A0 =A0 2011-03-06
+> 19:13:12.000000000 -0500
+> +++ b/drivers/net/wireless/ath/ar9170/usb.c =A0 =A0 2011-03-06
+> 20:13:06.000000000 -0500
+> @@ -741,10 +741,10 @@
+>
+> =A0 =A0 =A0 =A0/* unbind anything failed */
+> =A0 =A0 =A0 =A0if (parent)
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 down(&parent->sem);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 device_lock(parent);
+> =A0 =A0 =A0 =A0device_release_driver(&aru->udev->dev);
+> =A0 =A0 =A0 =A0if (parent)
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 up(&parent->sem);
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 device_unlock(parent);
+>
+> =A0 =A0 =A0 =A0usb_put_dev(aru->udev);
+> =A0}
+> ----
+>
+> I'll let you know how it goes (light testing probably tomorrow, still
+> building).
+>
+> -- Fernando "patiently waiting for 2.6.37-rtx"
+> :-)
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
 > the body of a message to majordomo@vger.kernel.org
 > More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at =A0http://www.tux.org/lkml/
 >
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
