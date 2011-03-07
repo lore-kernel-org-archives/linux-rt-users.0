@@ -1,45 +1,158 @@
-From: Jeremy Jongepier <jeremy@autostatic.com>
-Subject: Regression nouveau driver on 2.6.33.7.2-rt30
-Date: Mon, 07 Mar 2011 13:39:40 +0100
-Message-ID: <4D74D20C.9060800@autostatic.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [ANNOUNCE] RT for v2.6.34.8 now available.
+Date: Mon, 7 Mar 2011 09:36:47 -0500
+Message-ID: <AANLkTim3Bwhp4W2zOcAnNxBzz1hmgvPMjtewt1cW8V0s@mail.gmail.com>
+References: <4D71668F.9050201@windriver.com>
+	<4D71A88E.2060608@cygnusx-1.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	linux-kernel@vger.kernel.org
+To: Nathan Grennan <linux-rt-users@cygnusx-1.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pony.ic.uva.nl ([145.18.40.181]:49907 "EHLO pony.ic.uva.nl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753962Ab1CGNIe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Mar 2011 08:08:34 -0500
-Received: from [146.50.80.232] (pch080232.hum.uva.nl [146.50.80.232])
-	by pony.ic.uva.nl (8.13.1/8.13.1) with ESMTP id p27CdebP015713
-	for <linux-rt-users@vger.kernel.org>; Mon, 7 Mar 2011 13:39:40 +0100
+Received: from mail-qy0-f181.google.com ([209.85.216.181]:41817 "EHLO
+	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750814Ab1CGOgs convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 Mar 2011 09:36:48 -0500
+In-Reply-To: <4D71A88E.2060608@cygnusx-1.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear list,
+On Fri, Mar 4, 2011 at 10:05 PM, Nathan Grennan
+<linux-rt-users@cygnusx-1.org> wrote:
+> On 03/04/2011 02:24 PM, Paul Gortmaker wrote:
+>>
+>> As a value add to the 2.6.34 long term release, I'm happy to also
+>> announce the availability of 2.6.34-RT.
+>>
+>> You can find it in the v2.6.34-rt branch at:
+>>
+>> =A0 git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.g=
+it
+>>
+>> as a repository of patches. =A0The v2.6.34-rt branch contains the la=
+test
+>> RT patches against the latest v2.6.34.8 kernel release. (The master
+>> branch currently stops at v2.6.34 flat, i.e. 2.6.34.0 so to speak.)
+>>
+>> I've also created over 400 known working RT enabled bisection points
+>> between 33 and 34 that you can make use of for testing. =A0The detai=
+ls
+>> on how/why those exist follows - read on if it is of interest to you=
+=2E
+>>
+>> Note that all credit of the thinking and engineering of the RT stuff
+>> lies with the original patch authors -- to be clear, I'm just doing
+>> the grunt work of a carry forward here.
+>>
+>> Have fun with it, maybe drop me a note if you find it useful etc.
+>
+> I tried compiling this, and it quickly failed. Ideas?
 
-With 2.6.33.7.2-rt29 I could use my dual screen set-up fine with nouveau
-to span my desktop over the two screens but 2.6.33.7.2-rt30 only allows
-me to mirror screens. xrandr only recognizes one screen also.
+Yes, it is the header cleanup done in the 33-->34 dev cycle, seen
+between the rev list ^9e74e7c b66696e that changes slab.h use.
 
-lspci | grep -i vga
-01:00.0 VGA compatible controller: nVidia Corporation G86 [Quadro NVS
-290] (rev a1)
+If you look at 8a2032dba45e24 *in the patch repo* you will see where
+I fixed it for the baseline RT-enabled defconfig.  (Meaning I did a
+make defconfig, then enabled the RT options).  Your config must be
+setting something different/extra.
 
-Monitors: 2x Dell ST2410
+If you do a git show on the above rev list and on the fix in the patch
+repo, you will probably be able to tell what is going on.  Also please
+send me your config (off list) so I can ensure it compiles properly mys=
+elf.
 
-I use kernels from the Tango Studio project:
-http://tangostudio.tuxfamily.org/en
-And have talked about it with the maintainer of that repository/distro
-too and he actually found out about the regression and apparently he
-also found a fix (patched 2.6.33.7.2-rt30 kernel packages are being
-build and uploaded today so haven't tested those yet). I'm using Ubuntu
-10.04 64bit.
+Thanks,
+Paul.
 
-Similar issue described here with possible fix:
-http://forums.debian.net/viewtopic.php?f=6&t=59599
-
-Best,
-
-Jeremy
+>
+> I did this on a Fedora 14 x86_64 system with gcc-4.5.1-4.fc14.x86_64.
+>
+>
+> Here is what I did:
+>
+> 1. Downloaded 2.6.34.8 tarball and extracted it
+> 2. git clone -b v2.6.34-rt
+> git://git.kernel.org/pub/scm/linux/kernel/git/paulg/rt-patches.git
+> 3. cat ../rt-patches/series | xargs -i cat ../rt-patches/{} | patch -=
+p1
+> (Applied just fine)
+> 4. Copied an 2.6.31-rt configuration to .config
+> 5. Ran make oldconfig
+> 6. make bzImage
+>
+>
+> CHK include/linux/version.h
+> CHK include/generated/utsrelease.h
+> HOSTCC scripts/basic/fixdep
+> HOSTCC scripts/basic/docproc
+> HOSTCC scripts/basic/hash
+> CC kernel/bounds.s
+> GEN include/generated/bounds.h
+> CC arch/x86/kernel/asm-offsets.s
+> GEN include/generated/asm-offsets.h
+> CALL scripts/checksyscalls.sh
+> HOSTCC scripts/genksyms/genksyms.o
+> HOSTCC scripts/genksyms/lex.o
+> HOSTCC scripts/genksyms/parse.o
+> HOSTLD scripts/genksyms/genksyms
+> CC scripts/mod/empty.o
+> HOSTCC scripts/mod/mk_elfconfig
+> MKELF scripts/mod/elfconfig.h
+> HOSTCC scripts/mod/file2alias.o
+> HOSTCC scripts/mod/modpost.o
+> HOSTCC scripts/mod/sumversion.o
+> HOSTLD scripts/mod/modpost
+> HOSTCC scripts/selinux/genheaders/genheaders
+> HOSTCC scripts/selinux/mdp/mdp
+> HOSTCC scripts/kallsyms
+> HOSTCC scripts/conmakehash
+> CC init/main.o
+> init/main.c: In function =91do_one_initcall=92:
+> init/main.c:740:10: warning: =91calltime.tv64=92 may be used uninitia=
+lized in
+> this function
+> CHK include/generated/compile.h
+> CC init/version.o
+> CC init/do_mounts.o
+> In file included from include/linux/suspend.h:8:0,
+> from init/do_mounts.c:6:
+> include/linux/mm.h: In function =91pte_lock_init=92:
+> include/linux/mm.h:1125:2: error: implicit declaration of function =91=
+kmalloc=92
+> include/linux/mm.h:1125:12: warning: assignment makes pointer from in=
+teger
+> without a cast
+> include/linux/mm.h: In function =91pte_lock_deinit=92:
+> include/linux/mm.h:1137:2: error: implicit declaration of function =91=
+kfree=92
+> In file included from include/linux/security.h:36:0,
+> from init/do_mounts.c:8:
+> include/linux/slab.h: At top level:
+> include/linux/slab.h:144:6: warning: conflicting types for =91kfree=92
+> include/linux/mm.h:1137:2: note: previous implicit declaration of =91=
+kfree=92
+> was here
+> In file included from include/linux/slab.h:172:0,
+> from include/linux/security.h:36,
+> from init/do_mounts.c:8:
+> include/linux/slab_def.h:128:52: error: conflicting types for =91kmal=
+loc=92
+> include/linux/mm.h:1125:14: note: previous implicit declaration of =91=
+kmalloc=92
+> was here
+> make[1]: *** [init/do_mounts.o] Error 1
+> make: *** [init] Error 2
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
