@@ -1,41 +1,45 @@
-From: =?ISO-8859-1?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
-Subject: Re: [000/474] 2.6.33.8-longterm review
-Date: Sun, 20 Mar 2011 15:06:44 +0100
-Message-ID: <4D8609F4.4040700@gmail.com>
-References: <20110317213822.GA27980@kroah.com> <alpine.LFD.2.00.1103180942531.2787@localhost6.localdomain6> <AANLkTi=q-HEBKFe=DLXC36Acxd_LqgfYs=66wxs013Ac@mail.gmail.com> <alpine.LFD.2.00.1103201351570.2787@localhost6.localdomain6>
+From: Victor henri <nadaeck@hotmail.com>
+Subject: RE: kernel patch that does wonders
+Date: Sun, 20 Mar 2011 18:18:04 +0100
+Message-ID: <SNT110-W211BD9DBA57A584FADCEC8A8B20@phx.gbl>
+References: <196DF2FD54364145BB52EDC723887406@e1705>,<1300598099.10171.8.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Remy Bohmer <linux@bohmer.net>, Greg KH <gregkh@suse.de>,
-	linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wy0-f174.google.com ([74.125.82.174]:52863 "EHLO
-	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750956Ab1CTOGq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 Mar 2011 10:06:46 -0400
-In-Reply-To: <alpine.LFD.2.00.1103201351570.2787@localhost6.localdomain6>
+Received: from snt0-omc1-s27.snt0.hotmail.com ([65.55.90.38]:28795 "EHLO
+	snt0-omc1-s27.snt0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751623Ab1CTRSG convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 20 Mar 2011 13:18:06 -0400
+In-Reply-To: <1300598099.10171.8.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Il 20/03/2011 13:52, Thomas Gleixner ha scritto:
-> On Sat, 19 Mar 2011, Remy Bohmer wrote:
->> Can you please elaborate somewhat on the status of the RT-patchset
->> development for 2.6.38 and on?
-> 
-> Working on it.
-> 
->> It is silent about it for quite a while now, and actually the gap
->> between mainstream and the latest RT has never been this big before...
->> Are there major complications, lack on time or hands? Can I help ?
-> 
-> I concentrated on getting stuff upstream and reworking to make it more
-> palatable and maintainable.
 
-Is there a working (where working means working for testing purposes)
-snapshot somewhere?
+Hello Mike
 
-Thanks,
-Darkbasic
+>
+> On Sat, 2011-03-19 at 04:44 -0400, Madovsky wrote:
+> > www.phoronix.com/scan.php?page=article&item=linux_2637_video&num=2
+> >
+> > does anybody know this ?
+>
+> Ancient history ;-)
+>
+> > sched_autogroup_enabled=1 gives some miracles apparently
+>
+> No miracles there, it's just group scheduling showing it's good side.
+> It's in 2.6.38 if you want to give it a try.
+
+I just checked the 2.6.38 kernel; the option is not activated by default; Is it worth a try?
+Will it help in any way? Will it lessen latency of a preemt kernel? or at least make it more solid?
+
+>
+> -Mike
+
+Thank you
+
+Victor
+ 		 	   		  
