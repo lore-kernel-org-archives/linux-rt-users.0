@@ -1,52 +1,45 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: RE: kernel patch that does wonders
-Date: Mon, 21 Mar 2011 03:50:25 +0100
-Message-ID: <1300675825.10813.9.camel@marge.simson.net>
-References: <196DF2FD54364145BB52EDC723887406@e1705>
-	 ,<1300598099.10171.8.camel@marge.simson.net>
-	 <SNT110-W211BD9DBA57A584FADCEC8A8B20@phx.gbl>
+From: =?ISO-8859-15?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
+Subject: My first recording session with a Focusrite Saffire PRO 40
+Date: Sun, 27 Mar 2011 13:20:46 +0200
+Message-ID: <4D8F1D8E.4010802@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-15
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Victor henri <nadaeck@hotmail.com>
+To: ffado-user@lists.sourceforge.net,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:58088 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752617Ab1CUCub (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:49732 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753263Ab1C0LU4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 Mar 2011 22:50:31 -0400
-In-Reply-To: <SNT110-W211BD9DBA57A584FADCEC8A8B20@phx.gbl>
+	Sun, 27 Mar 2011 07:20:56 -0400
+Received: by wya21 with SMTP id 21so2154771wya.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Mar 2011 04:20:55 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2011-03-20 at 18:18 +0100, Victor henri wrote:
-> Hello Mike
-> 
-> >
-> > On Sat, 2011-03-19 at 04:44 -0400, Madovsky wrote:
-> > > www.phoronix.com/scan.php?page=article&item=linux_2637_video&num=2
-> > >
-> > > does anybody know this ?
-> >
-> > Ancient history ;-)
-> >
-> > > sched_autogroup_enabled=1 gives some miracles apparently
-> >
-> > No miracles there, it's just group scheduling showing it's good side.
-> > It's in 2.6.38 if you want to give it a try.
-> 
-> I just checked the 2.6.38 kernel; the option is not activated by default; Is it worth a try?
-> Will it help in any way? Will it lessen latency of a preemt kernel? or at least make it more solid?
+Yesterday I did my first session with my Saffire PRO 40, I initially
+tried with kernel 2.6.33.7-rt30 and the old firewire stack, but I get
+xruns even for a simple playback of a previously recorded session. I
+also experienced lots of graphical problems because of the intel drivers
+not playing well with old kernels. When I realized it was impossible to
+record such a way I booted to a 2.6.38.1-bfq-ck1 I compiled for
+recording purposes (Budget Fair Queueing I/O Scheduler, Brain Fuck
+Scheduler and the whole Con Kolivas patchset with a 10.000 Hz timer
+frequency). I obviously used the new firewire stack. This time it was
+much better and I had no problems while playing a previously recorded
+session. So I attached 8 analog inputs (two of them with inserts to
+guitarix_head), another two inputs from Pianoteq and 10 outputs to
+headphones for monitoring for a total of 10 inputs and 10 outputs.
+I used hardware monitoring, with the only exceptions of the piano, the
+guitar and the bass. Unfortunately even with a 17.4ms latency
+(256/44100/3) I still got xruns and I had to restart the whole recording
+lots of time because of that. My hardware isn't very powerful (a 1.4GHz
+Core2 Duo ULV, 5400rpm serpent256 encrypted hard disk, 4GB ram) but I
+think it can do much better, because I previously recorded without
+problems with a Fast Track Ultra (USB) and 2.6.33-rt (when it wasn't a
+useless, ancient kernel). Next time I will use a 3,3GHz quad core Sandy
+Bridge 2500K with 8GB ram, I hope it will be enough :/
 
-It has both positive and negative sides, just like every other option.
-There's only one way to find out what it will do for or to you.  Turn it
-on and find out.  I use it daily.. but I turn it off when measuring max
-performance, because group scheduling is not free.
-
-If your box is always lightly loaded, you needn't bother.  You'll see no
-benefit, but will pay the overhead price.  If you do interactive stuff
-while box is chewing on a hefty load otoh, you may like it quite a lot.
-
-	-Mike
-
+Cheers,
+Darkbasic
