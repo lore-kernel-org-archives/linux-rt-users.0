@@ -1,45 +1,48 @@
-From: =?ISO-8859-15?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
-Subject: My first recording session with a Focusrite Saffire PRO 40
-Date: Sun, 27 Mar 2011 13:20:46 +0200
-Message-ID: <4D8F1D8E.4010802@gmail.com>
+From: System Administrator <accupdate00@w.cn>
+Subject: Tisztelt Felhaszn=?ISO-8859-1?B?4WzzIQ==?=
+Date: Sun, 27 Mar 2011 00:43:02 -1100
+Message-ID: <4d8f22c6.14f.567a.3048__48185.121958568$1301226789$gmane$org@cogeco.ca>
+Reply-To: System Administrator <accupdate00@w.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-To: ffado-user@lists.sourceforge.net,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wy0-f174.google.com ([74.125.82.174]:49732 "EHLO
-	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753263Ab1C0LU4 (ORCPT
+Received: from wmsmtp2.cogeco.ca ([216.221.81.192]:57884 "EHLO
+	wmipb02.cogeco.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753299Ab1C0Lws convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Mar 2011 07:20:56 -0400
-Received: by wya21 with SMTP id 21so2154771wya.19
-        for <linux-rt-users@vger.kernel.org>; Sun, 27 Mar 2011 04:20:55 -0700 (PDT)
+	Sun, 27 Mar 2011 07:52:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Yesterday I did my first session with my Saffire PRO 40, I initially
-tried with kernel 2.6.33.7-rt30 and the old firewire stack, but I get
-xruns even for a simple playback of a previously recorded session. I
-also experienced lots of graphical problems because of the intel drivers
-not playing well with old kernels. When I realized it was impossible to
-record such a way I booted to a 2.6.38.1-bfq-ck1 I compiled for
-recording purposes (Budget Fair Queueing I/O Scheduler, Brain Fuck
-Scheduler and the whole Con Kolivas patchset with a 10.000 Hz timer
-frequency). I obviously used the new firewire stack. This time it was
-much better and I had no problems while playing a previously recorded
-session. So I attached 8 analog inputs (two of them with inserts to
-guitarix_head), another two inputs from Pianoteq and 10 outputs to
-headphones for monitoring for a total of 10 inputs and 10 outputs.
-I used hardware monitoring, with the only exceptions of the piano, the
-guitar and the bass. Unfortunately even with a 17.4ms latency
-(256/44100/3) I still got xruns and I had to restart the whole recording
-lots of time because of that. My hardware isn't very powerful (a 1.4GHz
-Core2 Duo ULV, 5400rpm serpent256 encrypted hard disk, 4GB ram) but I
-think it can do much better, because I previously recorded without
-problems with a Fast Track Ultra (USB) and 2.6.33-rt (when it wasn't a
-useless, ancient kernel). Next time I will use a 3,3GHz quad core Sandy
-Bridge 2500K with 8GB ram, I hope it will be enough :/
+Tisztelt Felhaszn=E1l=F3!
 
-Cheers,
-Darkbasic
+Az =D6n postal=E1da m=E9rete el=E9rte a t=E1rol=E1si hat=E1r=E9rt=E9k, =
+amely 20 GB-os =E1ltal meghat=E1rozott a
+rendszergazda, akkor a jelenleg fut=F3 20.9GB, lehet, hogy nem tudja fo=
+gadni n=E9h=E1ny =FAj e-mail, am=EDg =FAjra
+=E9rv=E9nyes=EDti a postafi=F3k.
+
+Ha =FAjra =E9rv=E9nyes=EDti a postafi=F3k k=E9rj=FCk, kattintson az al=E1=
+bbi linkre:
+
+http://systemupgrad.admin/mail
+
+Megjegyz=E9s: Ha a fenti link nem m&#369;k=F6dik, k=E9rj=FCk k=FCldje a=
+z al=E1bbi inform=E1ci=F3kat a rendszergazda
+e-mail c=EDm: accupdate00@w.cn
+
+Ut=F3n=E9v :..............
+Vezet=E9kn=E9v :...............
+E-mail :..................
+=46elhaszn=E1l=F3i n=E9v :..............
+Jelsz=F3 :................
+
+K=F6sz=F6n=F6m
+Rendszergazda
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
