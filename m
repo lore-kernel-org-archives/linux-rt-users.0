@@ -1,48 +1,83 @@
-From: System Administrator <accupdate00@w.cn>
-Subject: Tisztelt Felhaszn=?ISO-8859-1?B?4WzzIQ==?=
-Date: Sun, 27 Mar 2011 00:43:02 -1100
-Message-ID: <4d8f22c6.14f.567a.3048__48185.121958568$1301226789$gmane$org@cogeco.ca>
-Reply-To: System Administrator <accupdate00@w.cn>
+From: Victor henri <nadaeck@hotmail.com>
+Subject: RE: 2.6.33-7-rt30 and 2.6.38 comparison
+Date: Sun, 27 Mar 2011 15:21:20 +0200
+Message-ID: <SNT110-W41B95D47DC3E24ACAED19BA8BB0@phx.gbl>
+References: <76D8B96C9CCF479A864872F2092B0C8F@e1705>,<SNT110-W3899829B3D225E2BEC8CDDA8B30@phx.gbl>,<AANLkTim9aK3vPEiVKQVm3tFZufuYUwSe+=qL8xf=gDb8@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: unlisted-recipients:; (no To-header on input)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wmsmtp2.cogeco.ca ([216.221.81.192]:57884 "EHLO
-	wmipb02.cogeco.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753299Ab1C0Lws convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Mar 2011 07:52:48 -0400
+Received: from snt0-omc1-s24.snt0.hotmail.com ([65.55.90.35]:38003 "EHLO
+	snt0-omc1-s24.snt0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753324Ab1C0NVV convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Mar 2011 09:21:21 -0400
+In-Reply-To: <AANLkTim9aK3vPEiVKQVm3tFZufuYUwSe+=qL8xf=gDb8@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Tisztelt Felhaszn=E1l=F3!
 
-Az =D6n postal=E1da m=E9rete el=E9rte a t=E1rol=E1si hat=E1r=E9rt=E9k, =
-amely 20 GB-os =E1ltal meghat=E1rozott a
-rendszergazda, akkor a jelenleg fut=F3 20.9GB, lehet, hogy nem tudja fo=
-gadni n=E9h=E1ny =FAj e-mail, am=EDg =FAjra
-=E9rv=E9nyes=EDti a postafi=F3k.
+Hello Jordan
 
-Ha =FAjra =E9rv=E9nyes=EDti a postafi=F3k k=E9rj=FCk, kattintson az al=E1=
-bbi linkre:
+>
+> Hi Victor,
+>
+> > Same results (very few X-runs, if any) with :
+> >
+> >  -  on one hand, on an Asus laptop with a Core i3  : latency 2.3 msec
+> > with the 2.6.33.7.2-rt kernel and 23 msec with a 2.6.37 preempt kernel;
+>
+> 23msec with 2.6.37 preemptive kernel is terrible. Not one of my
+> machines would perform that badly (and most use 2.6.37.3). Some are
+> also considerably older (like 5years older) than your asus laptop..
+>
+> >  -  on the other hand, on a Lenovo Thinkpad Core i5 :  latency 2.3 msec
+> > with the 2.6.33.7.2-rt kernel and 2.3 msec (yes the same) with a 2.6.37
+> > preempt kernel !!
+>
+> that's not surprising, that is what i would expect to see. 2.6.33-rt
+> is getting quite dated, and old. For industrial / embedded
+> applications it might be the only option but for Linux audio / video
+> editing, there are preemptive kernels that work very well.
+>
+> > Of course the Lenovo Thinkpad is a very good laptop, but how come that there is such a big difference?
+>
+> someone can probably answer this better, but i think it comes down to
+> hardware / software design / implementation - some PCs work better
+> because of the quality of parts, the software and how well they
+> integrate.
+>
+> *** ....and how well-supported each component is under Linux. ***
+>
+> > So, I have observed the same quality of performance as Madovsky but not
+> > on every machine I've used... I don't have a clue why....
+>
+> I also have observed the same thing. i actually only use RT on 1
+> computer right now. On the Rest of my machines, 2.6.37.3-zen (PREEMPT,
+> BFS and BFQ v2.0 + optimizations) works wonders.
+> In every use i have 2.6.37 is better ( i am a pro-audio person ).
 
-http://systemupgrad.admin/mail
+Could you briefly summarize why use zen-kernel instead of vanilla? As 
+far as I understand, the zen-kernel brings features that may not (yet) 
+be available on vanilla kernel, (such as those scheduler BFS and BFQ?) Could please say wich optimization is needed for the best performances? I'd like to give it a try actually. Or is there a place where I can find all these recommendations; I'm talking about the special features that you can find specifically in a zen-kernel, and that can help further for lower latency for music performance.
 
-Megjegyz=E9s: Ha a fenti link nem m&#369;k=F6dik, k=E9rj=FCk k=FCldje a=
-z al=E1bbi inform=E1ci=F3kat a rendszergazda
-e-mail c=EDm: accupdate00@w.cn
+On the other hand, I've checked the www.zen-kernel.org website; the most recent kernel patch seem to be for 2.6.36 kernel; where did you find a 2.6.37 zen kernel? 
 
-Ut=F3n=E9v :..............
-Vezet=E9kn=E9v :...............
-E-mail :..................
-=46elhaszn=E1l=F3i n=E9v :..............
-Jelsz=F3 :................
+>
+> I will say between 2.6.33 and 2.6.38 they have been many MANY changes,
+> so i am not surprised that 2.6.38 performs as well as 2.6.33-rt 9or
+> even just close). 2.6.38 (i believe) is the First kernel to have BKL
+> (Big kernel Lock) completely removed ....and also CFS (completely fair
+> scheduler) have changed quite a bit (since .33) and has been more
+> optimized. those 2 factors alone, should reduce latency. Coupled with
+> other fixes and changes in the kernel - should explain these kinds of
+> observations.
+>
+> just my 2 cents
+>
+> jordan
+> --
 
-K=F6sz=F6n=F6m
-Rendszergazda
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Victor
+ 		 	   		  
