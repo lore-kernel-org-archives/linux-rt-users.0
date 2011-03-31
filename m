@@ -1,84 +1,42 @@
-From: Geunsik Lim <leemgs1@gmail.com>
-Subject: Re: cyclictest: fix warning about printf format for u64
-Date: Wed, 30 Mar 2011 23:51:41 +0900
-Message-ID: <AANLkTin1Zv-M5SDv7NFfpHGm=yWj5JzEK=ktx=BuBwjf@mail.gmail.com>
-References: <1301490764-15063-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: "Stephane Johnson" <spcjt02@att.net>
+Subject: Investment Co-operation
+Date: Thu, 31 Mar 2011 20:58:54 +0800
+Message-ID: <USERPC8b0ca9c314ab4293b09e95abf1f14e2d@UserPC>
+Reply-To: stephanejohnson24@yahoo.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f46.google.com ([209.85.213.46]:45864 "EHLO
-	mail-yw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755269Ab1C3Ovm convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Mar 2011 10:51:42 -0400
-Received: by ywj3 with SMTP id 3so540820ywj.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Mar 2011 07:51:41 -0700 (PDT)
-In-Reply-To: <1301490764-15063-1-git-send-email-u.kleine-koenig@pengutronix.de>
+Received: from nm6.bullet.mail.sp2.yahoo.com ([98.139.91.76]:28156 "HELO
+	nm6.bullet.mail.sp2.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1757574Ab1CaNeh convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 31 Mar 2011 09:34:37 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sounds good to me.
-Reviewed-by: Geunsik Lim <geunsik.lim@samsung.com>
-
-2011/3/30 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>:
-> This fixes
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0src/cyclictest/cyclictest.c: In function =E2=
-=80=98print_hist=E2=80=99:
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0src/cyclictest/cyclictest.c:1168: warning:=
- format =E2=80=98%09llu=E2=80=99 expects type =E2=80=98long long unsign=
-ed int=E2=80=99, but argument 2 has type =E2=80=98uint64_t=E2=80=99
->
-> on amd64.
->
-> Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
-> ---
-> =C2=A0src/cyclictest/cyclictest.c | =C2=A0 =C2=A02 +-
-> =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
->
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1165,7 +1165,7 @@
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0printf("# Total:");
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0for (j =3D 0; j < nthreads; j++)
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 printf(" %09llu", =
-log_entries[j]);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 printf(" %09llu", =
-(unsigned long long)log_entries[j]);
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0printf("\n");
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0printf("# Max Latencys:");
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0for (j =3D 0; j < nthreads; j++)
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
->
+Mutual aid,
 
 
 
---=20
-Regards,
-Geunsik Lim ( Samsung Electronics )
-Blog : http://blog.naver.com/invain/
-e-Mail: geunsik.lim@samsung.com
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 leemgs@gmail.com , leemgs1@gma=
-il.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at=C2=A0 http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at=C2=A0 http://www.tux.org/lkml/
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I write to request your co-operation in my desire to find a foreign partner who will assist me in the relocation and Transfer of US$14,000,000.00 (Fourteen Million United State Dollars) which is presently available for investment purpose. I will like you to state firmly any business that will worth investing in your home country will be welcome by me, after looking at the income rate and also percentage for investing through you.
+
+
+
+Please state terms and state of affairs for me and also laws biding for a foreigner to invest in your country, i shall let you know the entire plan of investment as soon as i receive your positive response.
+
+
+
+Kind Regards, 
+
+
+
+Mr. Stephane Johnson. 
+
+
+
+  
+
+
+
