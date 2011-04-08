@@ -1,26 +1,323 @@
-From: Patrice Kadionik <kadionik@enseirb-matmeca.fr>
+From: Johannes Bauer <hannes_bauer@aon.at>
 Subject: Re: clocksource and clockevent confusion
-Date: Thu, 07 Apr 2011 20:37:37 +0200
-Message-ID: <4D9E0471.8080908@enseirb-matmeca.fr>
-References: <1302194932.4d9deaf4033b9@webmail.aon.at>
+Date: Fri, 08 Apr 2011 15:01:20 +0200 (CEST)
+Message-ID: <1302267680.4d9f072045590@webmail.aon.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp3-g21.free.fr ([212.27.42.3]:52450 "EHLO smtp3-g21.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754355Ab1DGShq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Apr 2011 14:37:46 -0400
-Received: from [192.168.0.1] (unknown [82.64.251.87])
-	by smtp3-g21.free.fr (Postfix) with ESMTP id 835FCA6730
-	for <linux-rt-users@vger.kernel.org>; Thu,  7 Apr 2011 20:37:39 +0200 (CEST)
-In-Reply-To: <1302194932.4d9deaf4033b9@webmail.aon.at>
+Received: from smtpout01.highway.telekom.at ([195.3.96.112]:6088 "EHLO
+	email.aon.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1756419Ab1DHNB1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Apr 2011 09:01:27 -0400
+Received: from warsbl214-nfs.highway.telekom.at (HELO WARSBL214.highway.telekom.at) ([172.18.96.93])
+          (envelope-sender <hannes_bauer@aon.at>)
+          by smarthub96.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 8 Apr 2011 13:01:23 -0000
+Received: from webmail.aon.at (localhost.localdomain [127.0.0.1])
+	by WARSBL214.highway.telekom.at (8.13.1/8.13.1) with SMTP id p38D1K2k005768
+	for <linux-rt-users@vger.kernel.org>; Fri, 8 Apr 2011 15:01:21 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Le 07/04/2011 18:48, Johannes Bauer a =E9crit :
+Hi Pat!
+Again thank you for your fast help!
+
+I tried to implement the oneshot functionality.
+However the system does not boot properly, and seems to be stuck in the=
+ same while loop in process.c. I disabled the dynamic tick configuratio=
+n and tried with PREEMPT_NONE and PREEMPT_VOLUNTARY and PREEMPT_RT, but=
+ it seems not to change a thing. The boot messages seem to tell that fi=
+rst the periodic timer is used and then it is switched to oneshot mode =
+and stops.
+
+
+<6>Calibrating delay loop... <c>23.24 BogoMIPS (lpj=3D116224)
+
+Mount-cache hash table entries: 512
+
+<6>NET: Registered protocol family 16
+
+bio: create slab <bio-0> at 0
+
+<5>SCSI subsystem initialized
+
+<6>usbcore: registered new interface driver usbfs
+
+<6>usbcore: registered new interface driver hub
+
+<6>usbcore: registered new device driver usb
+
+<6>Switching to clocksource pit
+
+oneshot
+
+NEXT_EVENT: 510789
+
+NEXT_EVENT: 1061342
+
+<6>NET: Registered protocol family 2
+
+<6>IP route cache hash table entries: 1024 (order: 0, 4096 bytes)
+
+<6>TCP established hash table entries: 1024 (order: 1, 8192 bytes)
+
+<6>TCP bind hash table entries: 1024 (order: 0, 4096 bytes)
+
+<6>TCP: Hash tables configured (established 1024 bind 1024)
+
+<6>TCP reno registered
+
+<6>UDP hash table entries: 256 (order: 0, 4096 bytes)
+
+<6>UDP-Lite hash table entries: 256 (order: 0, 4096 bytes)
+
+<6>NET: Registered protocol family 1
+
+<6>RPC: Registered udp transport module.
+
+<6>RPC: Registered tcp transport module.
+
+<6>RPC: Registered tcp NFSv4.1 backchannel transport module.
+
+<6>Trying to unpack rootfs image as initramfs...
+
+<6>rootfs image is not initramfs (junk in compressed archive); looks li=
+ke an initrd
+
+<6>Freeing initrd memory: 4000K
+
+<4>NetWinder Floating Point Emulator V0.97 (double precision)
+
+<6>JFFS2 version 2.2. (NAND) (SUMMARY)  =C2=A9 2001-2006 Red Hat, Inc.
+
+<6>ROMFS MTD (C) 2007 Red Hat, Inc.
+
+<6>Block layer SCSI generic (bsg) driver version 0.4 loaded (major 253)
+
+<6>io scheduler noop registered (default)
+
+lpc2478fb: smem_len =3D 153600
+
+lpc2478fb: line_length =3D 480
+
+
+
+With periodic timer it runs a little bit further and lets me do some in=
+put.
+
+Is it possible that thats a problem due to the fact im running uClinux =
+(NOMMU CPU) with uClibc, which seems to have no support for PI mutexes?
+
+Do you have any ideas on getting PREEMPT RT running for NOMMU systems?
+
+The timer code with oneshot looks the following way, for debugging purp=
+ose i entered some printks:
+
+static int lpc22xx_next_event(unsigned long delta,
+					struct clock_event_device *dev)
+{
+//	pr_debug(\"%s: next event, delta %x\\n\", __func__, (u32)delta);
+	printk(\"NEXT_EVENT: %u\\n\",delta);
+	T0MR0 =3D delta;
+	T0PR =3D 0;
+	T0MCR |=3D 0x03;
+	T0TCR |=3D 0x02;	//reset counter
+	return 0;
+}
+
+static cycle_t read_pit_clk(struct clocksource *cs)
+{
+
+	return (cycle_t) T0TC;	// returns the actual timer count=20
+}
+
+static struct clocksource pit_clk =3D {
+	.name		=3D \"pit\",
+	.rating		=3D 175,
+	.read		=3D read_pit_clk,
+	.shift		=3D 28,	//is changed by init code
+	.flags		=3D CLOCK_SOURCE_IS_CONTINUOUS,
+};
+
+/*
+ * Clockevent device:  interrupts every 1/HZ (=3D=3D pit_cycles * MCK/1=
+6)
+ */
+static void
+pit_clkevt_mode(enum clock_event_mode mode, struct clock_event_device *=
+dev)
+{
+	switch (mode) {
+	case CLOCK_EVT_MODE_PERIODIC:
+		/* update clocksource counter */
+		printk(\"periodic\\n\");
+		T0MR0 =3D 720000;
+		T0PR =3D 0;
+		T0MCR &=3D ~0x04;	//be sure timer does not stop on compare match
+		T0MCR |=3D 0x03;
+		break;
+	case CLOCK_EVT_MODE_ONESHOT:
+//		T0MR0 =3D 720000;
+//		T0PR =3D 0;
+	=09
+//		T0MCR |=3D 0x07;
+=09
+		printk(\"oneshot\\n\");
+
+		break;
+		/* FALLTHROUGH */
+	case CLOCK_EVT_MODE_SHUTDOWN:
+		printk(\"shutdown\\n\");
+		T0TCR &=3D ~0x01;
+		break;
+	case CLOCK_EVT_MODE_UNUSED:
+		printk(\"unused\\n\");
+		/* disable irq, leaving the clocksource active */
+		T0MCR &=3D ~0x01;
+		break;
+	case CLOCK_EVT_MODE_RESUME:
+		printk(\"resume\\n\");
+		break;
+	}
+}
+
+static struct clock_event_device pit_clkevt =3D {
+	.name		=3D \"pit\",
+	.features	=3D CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_PERIODIC,
+	.shift		=3D 32,	//is changed by init function
+	.rating		=3D 100,	//dont know yet
+	.set_mode	=3D pit_clkevt_mode,
+	.set_next_event =3D lpc22xx_next_event,
+};
+
+
+unsigned long lpc2xxx_gettimeoffset (void)
+{
+	//CLOCKS_PER_USEC =3D LPC2xxx_Fpclk / 1000000;
+	return (T0TC/(lpc2xxx_fcclk / 1000000));
+}
+
+static irqreturn_t
+lpc2xxx_timer_interrupt(int irq, void *dev_id)
+{
+    if (!(T0IR & 0x01)) return IRQ_NONE;
+/*    do_timer(regs);
+    do_profile(regs);
+*/ //timer_tick();=20
+/* modified 20050608 for new version */
+
+	pit_clkevt.event_handler(&pit_clkevt);	//handle_event
+	printk(\"Interrupt\\n\");
+=09
+    T0IR |=3D 0x01;	/* reset interrupt */
+    return IRQ_HANDLED;
+}
+
+static struct irqaction lpc2xxx_timer_irq =3D {
+        .name           =3D \"lpc2xxx-tick\",
+	.flags		=3D IRQF_DISABLED | IRQF_TIMER,
+        .handler        =3D lpc2xxx_timer_interrupt
+};
+
+/*
+ * Set up timer interrupt, and return the current time in seconds.
+ */
+/*
+ Setup PCLK_TIMER0 =3D Fcclk (01)
+ Setup T0MR0 =3D 10 (ms)
+ Setup T0PR0 =3D 0
+*/
+void __init  lpc2xxx_time_init (void)
+{
+	unsigned char clkSel =3D 0;
+	unsigned long stat =3D PLLSTAT;
+	unsigned long M =3D stat & 0x7FFFF;
+	unsigned long N =3D (stat>>16) & 0xFF;
+	unsigned long Fcco =3D (2 * (M+1) *CONFIG_LPC22xx_Fosc) / (N+1);
+	unsigned long Fcclk =3D Fcco / ((CCLKCFG&0xFF)+1);
+	lpc2xxx_fcclk =3D Fcclk;
+	lpc2xxx_fpclk =3D Fcclk;
+
+	/*=20
+  	 * Here we assume that the clock is the same for all peripherals
+ 	 * which of course doesn\'t have to be the case.
+	 * We should be using the clk.h interface instead.
+	 */
+=09
+	clkSel =3D (unsigned char)(PCLKSEL0 & 0xff);
+	if (clkSel =3D=3D 0x00)
+		lpc2xxx_fpclk =3D lpc2xxx_fcclk / 4;
+	else if (clkSel =3D=3D 0x55)
+		lpc2xxx_fpclk =3D lpc2xxx_fcclk;
+	else if (clkSel =3D=3D 0xAA)
+		lpc2xxx_fpclk =3D lpc2xxx_fcclk / 2;
+	else if (clkSel =3D=3D 0xFF)
+		lpc2xxx_fpclk =3D lpc2xxx_fcclk / 8;
+
+	printk(\"LPC2XXX Clocking Fin=3D%dHz Fcco=3D%ldHz M=3D%ld N=3D%ld\\n\"=
+,
+		CONFIG_LPC22xx_Fosc,
+		Fcco,
+		M,
+		N);
+	PCLKSEL0 &=3D ~(3<<2);
+	PCLKSEL0 |=3D  (1<<2);
+	printk(\"Fcclk=3D%ld PCLKSEL=3D%08lx %08lx\\n\",
+		Fcclk, PCLKSEL0, PCLKSEL1);
+	/*
+	 * disable and clear timer 0, set to
+	 */
+	T0TCR &=3D ~0x01;
+	/* initialize the timer period and prescaler */
+
+	//counts with 72MHz so compare interrupt every 10ms
+//	T0MR0 =3D 720000;
+//	T0PR =3D 0;	// prescaler =3D 0
+//	T0MCR |=3D 0x03;			/* generate interrupt when T0MR0 match T0TC and R=
+eset Timer Count*/
+
+	lpc2xxx_timer_irq.handler =3D lpc2xxx_timer_interrupt;
+
+	/* set up the interrupt vevtor for timer 0 match */
+	setup_irq(LPC2xxx_INTERRUPT_TIMER0, &lpc2xxx_timer_irq);
+=09
+	/* enable the timer IRQ */
+	lpc22xx_unmask_irq(LPC2xxx_INTERRUPT_TIMER0);
+
+	clocksource_calc_mult_shift(&pit_clk,Fcclk,4);	// minsecvalue =3D4 no =
+idea why (seen in other codes)
+
+	pit_clk.mask =3D CLOCKSOURCE_MASK(32);				// mask is 71999 so the clk =
+subsystem knows where it overruns (is that correct??)
+	clocksource_register(&pit_clk);
+
+	clockevents_calc_mult_shift(&pit_clkevt,Fcclk,4);	// minsecvalue =3D4 =
+no idea why (seen in other codes)
+	pit_clkevt.max_delta_ns =3D
+		clockevent_delta2ns((u32)~0, &pit_clkevt);
+	pit_clkevt.min_delta_ns =3D
+		clockevent_delta2ns(1, &pit_clkevt);
+	pit_clkevt.cpumask =3D cpumask_of(0);		// uniprocessro system
+	clockevents_register_device(&pit_clkevt);
+
+	/* let timer 0 run... */
+	T0IR =3D 0x01; /* reset MR0 interrupt*/
+	T0TCR =3D 0x02;	/* Reset timer count and prescale counter */
+	T0TCR =3D 0x01;	/* enable timer counter and prescale counter */
+}
+
+struct sys_timer lpc22xx_timer =3D {
+	.init		=3D lpc2xxx_time_init,
+};
+
+
+
+
+----- Original von:  Patrice Kadionik
+
+> Le 07/04/2011 18:48, Johannes Bauer a =E9crit :
 Hi again,
 
 > Thank you for your help Pat!
@@ -34,7 +331,7 @@ Hi again,
 > }
 >
 > static struct clocksource pit_clk =3D {
-> 	.name		=3D \"pit\",
+> 	.name		=3D \\\"pit\\\",
 > 	.rating		=3D 175,
 > 	.read		=3D read_pit_clk,
 > 	.shift		=3D 28,	//is changed by init code
@@ -55,7 +352,7 @@ Hi again,
 >
 > 	/*
 >    	 * Here we assume that the clock is the same for all peripherals
->   	 * which of course doesn\'t have to be the case.
+>   	 * which of course doesn\\\'t have to be the case.
 > 	 * We should be using the clk.h interface instead.
 > 	 */
 > =09
@@ -69,23 +366,23 @@ Hi again,
 > 	else if (clkSel =3D=3D 0xFF)
 > 		lpc2xxx_fpclk =3D lpc2xxx_fcclk / 8;
 >
-> 	printk(\"LPC2XXX Clocking Fin=3D%dHz Fcco=3D%ldHz M=3D%ld N=3D%ld\\n=
-\",
+> 	printk(\\\"LPC2XXX Clocking Fin=3D%dHz Fcco=3D%ldHz M=3D%ld N=3D%ld\=
+\\\n\\\",
 > 		CONFIG_LPC22xx_Fosc,
 > 		Fcco,
 > 		M,
 > 		N);
 > 	PCLKSEL0&=3D ~(3<<2);
 > 	PCLKSEL0 |=3D  (1<<2);
-> 	printk(\"Fcclk=3D%ld PCLKSEL=3D%08lx %08lx\\n\",
+> 	printk(\\\"Fcclk=3D%ld PCLKSEL=3D%08lx %08lx\\\\n\\\",
 > 		Fcclk, PCLKSEL0, PCLKSEL1);
 > 	/*
 > 	 * disable and clear timer 0, set to
 > 	 */
 > 	T0TCR&=3D ~0x01;
 > 	/* initialize the timer period and prescaler */
-With hrtimer implementation, you don't ahve to implement the traditiona=
-l=20
+With hrtimer implementation, you don\'t ahve to implement the tradition=
+al=20
 titck timer. Once you have a clock event, the hrtimer use it. It tries=20
 to program the clock event in one shot shot mode (case=20
 CLOCK_EVT_MODE_ONESHOT) and you have the hrtimer support enabled. If it=
@@ -167,7 +464,7 @@ ws where it overruns (is that correct??)
 > i dont know what exactly the problem is...
 > Do i have to implement a sched_clock routine myself as is saw it in a=
  few implemetations.
-> When i do a cat \"/proc/timer_list\" i can see folowing:
+> When i do a cat \\\"/proc/timer_list\\\" i can see folowing:
 >
 > cat timer_list
 > Timer List Version: v0.5
@@ -236,7 +533,7 @@ secs]
 > I enabled some tracing and debuging in the kernel and then the follow=
 ing message was printed when the processor froze:
 >
-> \"sched: RT throttling activated\"
+> \\\"sched: RT throttling activated\\\"
 >
 > What does it mean? IS it a problem of my timer implementation or is s=
 omething else wrong with the system?
@@ -247,8 +544,8 @@ omething else wrong with the system?
 > Johannes Bauer
 >
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
+> To unsubscribe from this list: send the line \"unsubscribe linux-rt-u=
+sers\" in
 > the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >
@@ -260,8 +557,8 @@ Patrice Kadionik. F6KQH / F4CUQ
 
 +----------------------------------------------------------------------=
 +
-+"Tout doit etre aussi simple que possible, pas seulement plus simple" =
-+
++\"Tout doit etre aussi simple que possible, pas seulement plus simple\=
+" +
 +----------------------------------------------------------------------=
 +
 + Patrice Kadionik             http://www.enseirb-matmeca.fr/~kadionik =
@@ -278,6 +575,13 @@ Patrice Kadionik. F6KQH / F4CUQ
 +
 +----------------------------------------------------------------------=
 +
+
+--
+To unsubscribe from this list: send the line \"unsubscribe linux-rt-use=
+rs\" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
