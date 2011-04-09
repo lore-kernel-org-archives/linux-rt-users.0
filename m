@@ -1,41 +1,34 @@
-From: Carsten Emde <C.Emde@osadl.org>
+From: =?ISO-8859-1?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
 Subject: Re: Preferred way for rt-linux using git
-Date: Sat, 09 Apr 2011 15:09:29 +0200
-Message-ID: <4DA05A89.9080008@osadl.org>
-References: <BANLkTi=3s8bZLibMZX7y6_NGhHivErwS_Q@mail.gmail.com>	<BANLkTikP3ZEndzdOxA8aX29125h9MXG6xQ@mail.gmail.com>	<4D9F5F0F.1010600@osadl.org>	<4D9F86B9.1040003@gmail.com>	<4D9FA093.3080109@osadl.org> <BANLkTik1zrmp_dDBD===t2p+jAFfm1ou6Q@mail.gmail.com> <4DA0561E.3020306@gmail.com>
+Date: Sat, 09 Apr 2011 16:56:52 +0200
+Message-ID: <4DA073B4.5070006@gmail.com>
+References: <BANLkTi=3s8bZLibMZX7y6_NGhHivErwS_Q@mail.gmail.com>	<BANLkTikP3ZEndzdOxA8aX29125h9MXG6xQ@mail.gmail.com>	<4D9F5F0F.1010600@osadl.org>	<4D9F86B9.1040003@gmail.com>	<4D9FA093.3080109@osadl.org> <BANLkTik1zrmp_dDBD===t2p+jAFfm1ou6Q@mail.gmail.com> <4DA0561E.3020306@gmail.com> <4DA05A89.9080008@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: =?ISO-8859-1?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:58133 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752176Ab1DINKI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 9 Apr 2011 09:10:08 -0400
-In-Reply-To: <4DA0561E.3020306@gmail.com>
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:50109 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754634Ab1DIO4v (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 9 Apr 2011 10:56:51 -0400
+Received: by wya21 with SMTP id 21so3786689wya.19
+        for <linux-rt-users@vger.kernel.org>; Sat, 09 Apr 2011 07:56:49 -0700 (PDT)
+In-Reply-To: <4DA05A89.9080008@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/09/2011 02:50 PM, Niccol=F2 Belli wrote:
-> Il 09/04/2011 03:05, Oon-Ee Ng ha scritto:
-> It may not be fair, but on the desktop (a sandy bridge one) it doesn'=
-t
-> even boot because of lack of drivers and on my laptop it crashs every=
- 5
-> minutes because of the buggy intel drivers.
-> For _me_ it's 'useless and ancient' because it's too old to run on th=
-e
-> desktop and too buggy (it's a 2.6.33 vanilla fault, not an rt one) to
-> run on my laptop. I have nothing against rt.
-Have you ever tried to backport the required drivers to 2.6.33? We did=20
-it with a number of recent kernel components; was not too difficult.=20
-Which drivers do you need?
+Il 09/04/2011 15:09, Carsten Emde ha scritto:
+> Have you ever tried to backport the required drivers to 2.6.33? We did
+> it with a number of recent kernel components; was not too difficult.
+> Which drivers do you need?
 
-	-Carsten.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Uhm... I fear it will not be simple, among other things I will have to
+backport i2c, sata3, maybe ethernet and above all the whole intel
+graphic stack from 2.6.40 aka intel drm git branch (hoping it will solve
+the graphic corruption problems I have with 2.6.38 and 2.6.39-rc1). I
+really hope rt will find its way into mainline, everything will be much
+more simple.
+
+Darkbasic
