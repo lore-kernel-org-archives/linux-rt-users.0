@@ -1,41 +1,37 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Mark Knecht <markknecht@gmail.com>
 Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
-Date: Mon, 11 Apr 2011 18:46:42 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1104111846140.6190@localhost6.localdomain6>
-References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6> <497D1168CB2F407F9005845B39FEF144@e1705> <alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6> <BANLkTi=6UnfiOwwdwgJvW0kZyJ7OoE0dpg@mail.gmail.com> <4DA32E16.8090807@osadl.org>
+Date: Mon, 11 Apr 2011 09:59:39 -0700
+Message-ID: <BANLkTinAuGJxScO5nO1+gB_OmK43xTtEbg@mail.gmail.com>
+References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Oon-Ee Ng <ngoonee.talk@gmail.com>, Madovsky <infos@madovsky.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47441 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751955Ab1DKQqs (ORCPT
+Received: from mail-iy0-f174.google.com ([209.85.210.174]:55482 "EHLO
+	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754319Ab1DKQ7j (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Apr 2011 12:46:48 -0400
-In-Reply-To: <4DA32E16.8090807@osadl.org>
+	Mon, 11 Apr 2011 12:59:39 -0400
+Received: by iyb14 with SMTP id 14so5789135iyb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Apr 2011 09:59:39 -0700 (PDT)
+In-Reply-To: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 11 Apr 2011, Carsten Emde wrote:
+On Mon, Apr 11, 2011 at 8:35 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series which is mostly a forward to 2.6.33.9. Thanks Greg !
+>
+> RT specific patches since 2.6.33.7.2-rt30
 
-> On 04/11/2011 06:19 PM, Oon-Ee Ng wrote:
-> > On Tue, Apr 12, 2011 at 12:06 AM, Thomas Gleixner<tglx@linutronix.de>
-> > wrote:
-> > > On Mon, 11 Apr 2011, Madovsky wrote:
-> > > > the links below don't show any new kernels or
-> > > > not found pages
-> > > Mirroring from the master machine to the public ones is taking some
-> > > time, but it's there now.
-> > I think he was referring to this link, which is still empty for me:-
-> > http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.9.tar.bz2
-> > Will check again in a couple of hours, but was 2.6.33.8 just skipped
-> > entirely? Cos that's not there either.
-> Longterm Linux files are sitting in
-> http://www.kernel.org/pub/linux/kernel/v2.6/longterm, e.g.
-> 
-> http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v2.6.33/linux-2.6.33.9.tar.bz2
+As always, thanks for the work you all do on this kernel.
 
-Ooops, yes. -ENOTENOUGHCOFFEE
+I have a machine that requires drivers circa 2.6.37 or later, which
+happened to be what was announced as the next future preempt-rt
+kernel. At this point I'm using a standard 2.6.38 kernel and getting
+pretty good results, and with more and more of the preempt-rt stuff
+going mainline all the time, what's the roadmap for preempt-rt going
+forward?
+
+Thanks,
+Mark
