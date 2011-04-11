@@ -1,34 +1,62 @@
-From: =?ISO-8859-1?Q?Niccol=F2_Belli?= <darkbasic4@gmail.com>
-Subject: Re: Preferred way for rt-linux using git
-Date: Sat, 09 Apr 2011 16:56:52 +0200
-Message-ID: <4DA073B4.5070006@gmail.com>
-References: <BANLkTi=3s8bZLibMZX7y6_NGhHivErwS_Q@mail.gmail.com>	<BANLkTikP3ZEndzdOxA8aX29125h9MXG6xQ@mail.gmail.com>	<4D9F5F0F.1010600@osadl.org>	<4D9F86B9.1040003@gmail.com>	<4D9FA093.3080109@osadl.org> <BANLkTik1zrmp_dDBD===t2p+jAFfm1ou6Q@mail.gmail.com> <4DA0561E.3020306@gmail.com> <4DA05A89.9080008@osadl.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 2.6.33.9-rt31
+Date: Mon, 11 Apr 2011 17:35:45 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wy0-f174.google.com ([74.125.82.174]:50109 "EHLO
-	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754634Ab1DIO4v (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:44188 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752006Ab1DKPfs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 9 Apr 2011 10:56:51 -0400
-Received: by wya21 with SMTP id 21so3786689wya.19
-        for <linux-rt-users@vger.kernel.org>; Sat, 09 Apr 2011 07:56:49 -0700 (PDT)
-In-Reply-To: <4DA05A89.9080008@osadl.org>
+	Mon, 11 Apr 2011 11:35:48 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Il 09/04/2011 15:09, Carsten Emde ha scritto:
-> Have you ever tried to backport the required drivers to 2.6.33? We did
-> it with a number of recent kernel components; was not too difficult.
-> Which drivers do you need?
+We are pleased to announce the next update to our new preempt-rt
+series which is mostly a forward to 2.6.33.9. Thanks Greg !
 
-Uhm... I fear it will not be simple, among other things I will have to
-backport i2c, sata3, maybe ethernet and above all the whole intel
-graphic stack from 2.6.40 aka intel drm git branch (hoping it will solve
-the graphic corruption problems I have with 2.6.38 and 2.6.39-rc1). I
-really hope rt will find its way into mainline, everything will be much
-more simple.
+RT specific patches since 2.6.33.7.2-rt30
 
-Darkbasic
+8a97f01: arm: mxc: Add sched_clock to mxc-platform
+a5a2b75: arm: mxc: Add add dummy_get_cycles()
+c1d6834: trace: Add timestamp to maxlatproc data
+cfe9ed2: trace: Add current task to maxlatproc data
+70fdd17: trace: Add timeroffset to maxlatproc data
+db2aacd: trace: timer offsets histogram consider smp same prio
+3115eb2: x86, hotplug: Revert 74a6e0fd8 (x86, hotplug: Use mwait to ...)
+250bf15: ARM: sched_clock: make minsec argument to clocks_calc_mult_shift() zero
+c04f3a8: ARM: sched_clock: allow init_sched_clock() to be called early
+4d79f92: ARM: sched_clock: provide common infrastructure for sched_clock()
+7443ac2: asm-generic/percpu: fixup RT mismerge
+7e1c4f9: rtmutex: Ensure only the top waiter or higher priority task can take the lock
+47b3309: rtmutex: Fix comment about why new_owner can be NULL in wake_futex_pi()
+2ce1161: rtmutex: Revert Optimize rt lock wakeup
+9704792: rtmutex: Try to take lock early in rt_spin_lock_slowlock()
+5995a44: rtmutex: Only save lock depth once in spin_slowlock
+
+Download locations:
+   
+    http://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Git release branch:
+    git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+  
+Gitweb:
+    http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+  
+Information on the RT patch can be found at:
+
+    http://rt.wiki.kernel.org/index.php/Main_Page
+
+to build the 2.6.33.9-rt31 tree, the following patches should be
+applied:
+
+    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.9.tar.bz2
+    http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.9-rt31.bz2
+
+Enjoy !
+
+      tglx
