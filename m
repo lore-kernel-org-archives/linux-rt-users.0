@@ -1,64 +1,74 @@
-From: Mark Knecht <markknecht@gmail.com>
+From: Jeremy Jongepier <jeremy@autostatic.com>
 Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
-Date: Mon, 11 Apr 2011 15:57:44 -0700
-Message-ID: <BANLkTikmpThQWjpuzNR5hEyTh9dKFqCaHw@mail.gmail.com>
+Date: Wed, 13 Apr 2011 13:02:06 +0200
+Message-ID: <4DA582AE.9020706@autostatic.com>
 References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
-	<BANLkTinAuGJxScO5nO1+gB_OmK43xTtEbg@mail.gmail.com>
-	<20110411192339.GB7771@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: =?UTF-8?Q?Uwe_Kleine=2DK=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-iy0-f174.google.com ([209.85.210.174]:53799 "EHLO
-	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751917Ab1DKW5p convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Apr 2011 18:57:45 -0400
-Received: by iyb14 with SMTP id 14so6074949iyb.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Apr 2011 15:57:44 -0700 (PDT)
-In-Reply-To: <20110411192339.GB7771@pengutronix.de>
+Received: from paard.ic.uva.nl ([145.18.40.182]:40543 "EHLO paard.ic.uva.nl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753556Ab1DMLwl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Apr 2011 07:52:41 -0400
+Received: from [146.50.80.232] (pch080232.hum.uva.nl [146.50.80.232])
+	by paard.ic.uva.nl (8.13.1/8.13.1) with ESMTP id p3DB26p1012894
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 Apr 2011 13:02:06 +0200
+In-Reply-To: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2011/4/11 Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>:
-> Hello Mark,
->
-> On Mon, Apr 11, 2011 at 09:59:39AM -0700, Mark Knecht wrote:
->> On Mon, Apr 11, 2011 at 8:35 AM, Thomas Gleixner <tglx@linutronix.de=
-> wrote:
->> > We are pleased to announce the next update to our new preempt-rt
->> > series which is mostly a forward to 2.6.33.9. Thanks Greg !
->> >
->> > RT specific patches since 2.6.33.7.2-rt30
->>
->> As always, thanks for the work you all do on this kernel.
->>
->> I have a machine that requires drivers circa 2.6.37 or later, which
->> happened to be what was announced as the next future preempt-rt
->> kernel. At this point I'm using a standard 2.6.38 kernel and getting
->> pretty good results, and with more and more of the preempt-rt stuff
->> going mainline all the time, what's the roadmap for preempt-rt going
->> forward?
-> http://events.linuxfoundation.org/events/embedded-linux-conference/gl=
-eixner
->
-> :-)
->
-> Best regards
-> Uwe
+On 04/11/2011 05:35 PM, Thomas Gleixner wrote:
+> We are pleased to announce the next update to our new preempt-rt
+> series which is mostly a forward to 2.6.33.9. Thanks Greg !
+> 
+> RT specific patches since 2.6.33.7.2-rt30
+> 
+> 8a97f01: arm: mxc: Add sched_clock to mxc-platform
+> a5a2b75: arm: mxc: Add add dummy_get_cycles()
+> c1d6834: trace: Add timestamp to maxlatproc data
+> cfe9ed2: trace: Add current task to maxlatproc data
+> 70fdd17: trace: Add timeroffset to maxlatproc data
+> db2aacd: trace: timer offsets histogram consider smp same prio
+> 3115eb2: x86, hotplug: Revert 74a6e0fd8 (x86, hotplug: Use mwait to ...)
+> 250bf15: ARM: sched_clock: make minsec argument to clocks_calc_mult_shift() zero
+> c04f3a8: ARM: sched_clock: allow init_sched_clock() to be called early
+> 4d79f92: ARM: sched_clock: provide common infrastructure for sched_clock()
+> 7443ac2: asm-generic/percpu: fixup RT mismerge
+> 7e1c4f9: rtmutex: Ensure only the top waiter or higher priority task can take the lock
+> 47b3309: rtmutex: Fix comment about why new_owner can be NULL in wake_futex_pi()
+> 2ce1161: rtmutex: Revert Optimize rt lock wakeup
+> 9704792: rtmutex: Try to take lock early in rt_spin_lock_slowlock()
+> 5995a44: rtmutex: Only save lock depth once in spin_slowlock
+> 
+> Download locations:
+>    
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/
+> 
+> Git release branch:
+>     git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git rt/2.6.33
+>   
+> Gitweb:
+>     http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git;a=shortlog;h=rt/2.6.33
+>   
+> Information on the RT patch can be found at:
+> 
+>     http://rt.wiki.kernel.org/index.php/Main_Page
+> 
+> to build the 2.6.33.9-rt31 tree, the following patches should be
+> applied:
+> 
+>     http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.33.9.tar.bz2
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/patch-2.6.33.9-rt31.bz2
+> 
+> Enjoy !
+> 
+>       tglx
 
-How timely. (Or untimely!) ;-) I'm 50 miles away and the talk happens
-in 45 minutes!
+Thanks for this! Still can't use my two displays with the nouveau kernel
+module though :(
 
-Guess I'll have to wait for the slides to be made available.
+Best,
 
-Thanks,
-Mark
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Jeremy
