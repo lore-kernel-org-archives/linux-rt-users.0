@@ -1,42 +1,55 @@
-From: Tracey Hytry <shakti@bayarea.net>
+From: dashesy <dashesy@gmail.com>
 Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
-Date: Fri, 15 Apr 2011 01:22:05 -0700
-Message-ID: <20110415012205.d9110367.shakti@bayarea.net>
+Date: Fri, 15 Apr 2011 09:02:26 -0600
+Message-ID: <BANLkTin594W7qFUhmBAAGwSfwaCEqCX+hA@mail.gmail.com>
 References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
 	<497D1168CB2F407F9005845B39FEF144@e1705>
 	<alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6>
-	<BANLkTi=6UnfiOwwdwgJvW0kZyJ7OoE0dpg@mail.gmail.com>
-	<4DA32E16.8090807@osadl.org>
-	<alpine.LFD.2.00.1104111846140.6190@localhost6.localdomain6>
-	<369290E6B58D4A3BAC211B6A4BB73E0B@e1705>
-	<BANLkTinKyw0d56USqVwJgVCsehpyVdMHVw@mail.gmail.com>
-	<4DA5F178.4080705@autostatic.com>
-	<4DA633DC.8060800@gmail.com>
-	<4DA69C1F.8010908@autostatic.com>
-	<BANLkTi=OpNAnBhc5zxjsk6ehuv9TMxVbPA@mail.gmail.com>
-	<DA0DD8D5A6A24EB18D6507114F539115@e1705>
-	<BANLkTikb3cZZFACUsfF8vo0UWy1v4tO5HA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bayarea.net ([209.128.87.230]:53301 "EHLO mail.bayarea.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751910Ab1DOIeZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Apr 2011 04:34:25 -0400
-In-Reply-To: <BANLkTikb3cZZFACUsfF8vo0UWy1v4tO5HA@mail.gmail.com>
+Received: from mail-bw0-f46.google.com ([209.85.214.46]:43973 "EHLO
+	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751773Ab1DOPDk convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Apr 2011 11:03:40 -0400
+Received: by bwz15 with SMTP id 15so2256345bwz.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Apr 2011 08:03:39 -0700 (PDT)
+In-Reply-To: <alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+> On Mon, 11 Apr 2011, Madovsky wrote:
+>
+>> Hi Thomas,
+>>
+>> the links below don't show any new kernels or
+>> not found pages
+>
+> Mirroring from the master machine to the public ones is taking some
+> time, but it's there now.
+>
+> Thanks,
+>
+> =A0 =A0 =A0 =A0tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
 
-Using Fernando's latest build for fedora14,  this one seems to work quite well.
+Thanks, works great on 64-bit Ubuntu (Selected SMP and Core i7 and
+minimal ACPI), the only problem I have is with two displays and
+nouveau driver.
+My first experience with -rt was very enjoyable, now time to do some
+heavy tests on it before going to production.
 
-I threw a lot at it while testing the audio, it's a very good low latency kernel.
-
-The only problem is after waking up after a suspend to ram, the sound is hosed.
-But that's not something new here because I'm using a m-audio audiophile 24/96,
-and this happens on any kernel.
-
-Tracey.
+dashesy
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
