@@ -1,54 +1,40 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: preempt-rt amd uClibc
-Date: Fri, 15 Apr 2011 21:59:42 +0200
-Message-ID: <BANLkTimpnyLHDOnFBp=H2YNqEeMnST9WPg@mail.gmail.com>
-References: <1302885584.4da874d08c74a@webmail.aon.at>
+From: Jeremy Jongepier <jeremy@autostatic.com>
+Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
+Date: Sat, 16 Apr 2011 10:35:42 +0200
+Message-ID: <4DA954DE.4060907@autostatic.com>
+References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>	<497D1168CB2F407F9005845B39FEF144@e1705>	<alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6> <BANLkTin594W7qFUhmBAAGwSfwaCEqCX+hA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org
-To: Johannes Bauer <hannes_bauer@aon.at>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gw0-f46.google.com ([74.125.83.46]:45786 "EHLO
-	mail-gw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750776Ab1DOT7n (ORCPT
+Received: from smtpq2.tb.mail.iss.as9143.net ([212.54.42.165]:54147 "EHLO
+	smtpq2.tb.mail.iss.as9143.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751854Ab1DPIft (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Apr 2011 15:59:43 -0400
-Received: by gwaa18 with SMTP id a18so1227508gwa.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Apr 2011 12:59:42 -0700 (PDT)
-In-Reply-To: <1302885584.4da874d08c74a@webmail.aon.at>
+	Sat, 16 Apr 2011 04:35:49 -0400
+Received: from [212.54.42.137] (helo=smtp6.tb.mail.iss.as9143.net)
+	by smtpq2.tb.mail.iss.as9143.net with esmtp (Exim 4.71)
+	(envelope-from <jeremy@autostatic.com>)
+	id 1QB0yp-0001dz-JL
+	for linux-rt-users@vger.kernel.org; Sat, 16 Apr 2011 10:35:47 +0200
+Received: from 5ed1002c.cm-7-2a.dynamic.ziggo.nl ([94.209.0.44] helo=[192.168.1.36])
+	by smtp6.tb.mail.iss.as9143.net with esmtp (Exim 4.71)
+	(envelope-from <jeremy@autostatic.com>)
+	id 1QB0yk-00068V-Te
+	for linux-rt-users@vger.kernel.org; Sat, 16 Apr 2011 10:35:42 +0200
+In-Reply-To: <BANLkTin594W7qFUhmBAAGwSfwaCEqCX+hA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On 04/15/2011 05:02 PM, dashesy wrote:
+> Thanks, works great on 64-bit Ubuntu (Selected SMP and Core i7 and
+> minimal ACPI), the only problem I have is with two displays and
+> nouveau driver.
 
-2011/4/15 Johannes Bauer <hannes_bauer@aon.at>:
-> Hi everybody!
->
-> I downloaded the newest uClinux dist a while ago and compiled it with 2.6.33 kernel and the 2.6.33.7.2-rt30 patch applied.
-> Then i by hand implemeted an old patch for arm lpc22xx machine (ARMv4T), since i am running a lpc2478 board from embedded artists.
-> I had to implement a clockevent/source timer to add hrtimer support. I compiled it all with uClibc since it as a NOMMU system.
->
-> Now i have some questions:
-> Is it possible to run the preempt-rt patch with the uClinux distribution and uClibc?
+Which is exactly the same issue I am having. This is because the nouveau 
+driver is crippled since rt29.
 
-The preempt-RT patch runs just fine with a uClibc userspace, I have no
-idea what it will do in a NOMMU system (never tried it)
+Best,
 
-> I read a few times that if doesnt support PI mutexes, but arent those RT mutexes part of the kernel?
-
-The kernel itself has PI-mutexes support, _internally_within_ the
-kernel; regardless what type of userspace C-library is being used.
-However, for _userspace_ PI-mutexes, you will need a C-library that
-supports it (search for example for PTHREAD_PRIO_INHERIT in the
-library code). 2 options:
-* Glibc since version 2.5 (actually 2.4.90 and higher)
-* uClibc master. You might have some luck since there is now NPTL
-support in uClibc master. So, get the master tree of uClibc and see if
-it works for you.
-(http://git.uclibc.org/uClibc/snapshot/uClibc-master.tar.gz)
-I have not tested it myself though, but if it works, please share the
-good news.
-
-Have Fun!
-
-Remy
+Jeremy
