@@ -1,168 +1,123 @@
-From: Patrice Kadionik <kadionik@enseirb-matmeca.fr>
-Subject: Re: Fwd: Re: preempt-rt amd uClibc
-Date: Wed, 20 Apr 2011 14:00:46 +0200
-Message-ID: <4DAECAEE.4020503@enseirb-matmeca.fr>
-References: <1303296464.4daeb9d04a026@webmail.aon.at>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+From: Geunsik Lim <leemgs1@gmail.com>
+Subject: [PATCH 0/4] munmap: Flexible mem unmap operation interface for scheduling latency
+Date: Mon, 25 Apr 2011 19:44:28 +0900
+Message-ID: <1303728272-11408-1-git-send-email-leemgs1@gmail.com>
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"H. Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Darren Hart <dvhart@linux.intel.com>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4-g21.free.fr ([212.27.42.4]:44169 "EHLO smtp4-g21.free.fr"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752508Ab1DTMA4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Apr 2011 08:00:56 -0400
-Received: from [192.168.0.1] (unknown [82.249.57.233])
-	by smtp4-g21.free.fr (Postfix) with ESMTP id 45C584C818A
-	for <linux-rt-users@vger.kernel.org>; Wed, 20 Apr 2011 14:00:48 +0200 (CEST)
-In-Reply-To: <1303296464.4daeb9d04a026@webmail.aon.at>
+Received: from mail-px0-f179.google.com ([209.85.212.179]:54333 "EHLO
+	mail-px0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758275Ab1DYKov (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Apr 2011 06:44:51 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Le 20/04/2011 12:47, Johannes Bauer a =C3=A9crit :
-> Thats good news, thank you Remy!
-Hi Johannes,
+From: Geunsik Lim <geunsik.lim@samsung.com>
 
-> I was able to run cyclictest
-Great news!
-Can you post your latest hrtimer port for your HW? It could be useful=20
-for anyone who will want to do the same thing in the future...
-> \\\"cyclictest -t1 -p 80 -n -i 10000 -l 1000\\\" an thw maximum laten=
-cies were about
-> 650us. However the intervall timers \\\"cyclictest -t1 -p 80 -i 10000=
- -l 1000\\\"
-> result in abou 3000us maximum latencies.
-> Is it common that interval timers have higher latencies and could thi=
-s values be
-> reasonable for a 72MHz arm7tdmi (ARMv4T).
-You may read this paper (page 2) from OSADL:=20
-https://www.osadl.org/fileadmin/dam/press/Industrial-Ethernet-Book-2009=
--05.pdf
-It gives an empirical law for max latency under PREEMPT-RT:
-"A number of commercially available Linux distributions (e.g. Red Hat=E2=
-=80=99s=20
-MRG) already contain the PREEMPT_RT patches in production quality. The=20
-worst-case rule-of-thumb latency is in the range of 10^5 multiplied by=20
-the CPU cycle duration with these systems without special optimisation.=
-=20
-=46or example, a 1GHz processor has a cycle duration of one nanosecond=20
-which results in a worst-case latency of about 100=CE=BCs. This is cons=
-idered=20
-sufficient for the vast majority of real-time projects. Using latency=20
-optimisation, however, the worst-case latency can be reduced by up to=20
-three times."
+    As we all know, the specification of H/W(cpu, memory, i/o bandwidth, etc) is
+    different according to their SOC. We can earn a suitable performance(or latency) after
+    adjust memory unmap size by selecting an optimal value to consider specified system
+    environment in real world.
+    In other words, We can get real-fast or real-time using the Linux kernel tunable
+    parameter choosingly for flexible memory unmap operation unit.
 
-=46or a 72 MHz CPU clock, it gives: 1388 =C2=B5s
-I've done a PREEMPT-RT port for NIOS 2 with MMU (with hrtimer port too)=
-=2E=20
-With cyclictest, I've measured for a low performance design with 50 MHz=
-=20
-NIOS 2 HW a latency up to 1400 =C2=B5s and for another more powerful de=
-sign=20
-with 125 MHz NIOS 2 HW a latency up to 650 =C2=B5s.
+    For example, we can get the below effectiveness using this patch 
+    . Reduce a temporal cpu intension(highest cpu usage) when accessing mass files
+    . Improvement of user responsiveness at embedded products like mobile phone, camcorder, dica
+    . Get a effective real-time or real-fast at the real world that depend on the physical h/w
+    . Support sysctl interface(tunalbe parameter) to find a suitable munmap operation unit 
+      at runtime favoringly
 
-Your 650 =C2=B5s value sounds reasonable.
+    unmap_vmas(=unmap a range of memory covered by a list of vma) is treading
+    a delicate and uncomfortable line between hi-performance and lo-latency.
+    We have often chosen to improve performance at the expense of latency.
 
-Cheers;
+    So although there may be no need to reschedule right now,
+    if we keep on gathering more and more without flushing,
+    we'll be very unresponsive when a resched is needed later on.
 
-Pat.
-> Anyone has any values to compare or can tell me if those values are r=
-easonable?
->
-> Kind Regards
-> Johannes Bauer
->
-> ----- Original von:  Remy Bohmer
->
->> Hi,
-> 2011/4/15 Johannes Bauer<hannes_bauer@aon.at>:
->> Hi everybody!
->>
->> I downloaded the newest uClinux dist a while ago and compiled it wit=
-h 2.6.33
-> kernel and the 2.6.33.7.2-rt30 patch applied.
->> Then i by hand implemeted an old patch for arm lpc22xx machine (ARMv=
-4T), since
-> i am running a lpc2478 board from embedded artists.
->> I had to implement a clockevent/source timer to add hrtimer support.=
- I
-> compiled it all with uClibc since it as a NOMMU system.
->> Now i have some questions:
->> Is it possible to run the preempt-rt patch with the uClinux distribu=
-tion and
-> uClibc?
->
-> The preempt-RT patch runs just fine with a uClibc userspace, I have n=
-o
-> idea what it will do in a NOMMU system (never tried it)
->
->> I read a few times that if doesnt support PI mutexes, but arent thos=
-e RT
-> mutexes part of the kernel?
->
-> The kernel itself has PI-mutexes support, _internally_within_ the
-> kernel; regardless what type of userspace C-library is being used.
-> However, for _userspace_ PI-mutexes, you will need a C-library that
-> supports it (search for example for PTHREAD_PRIO_INHERIT in the
-> library code). 2 options:
-> * Glibc since version 2.5 (actually 2.4.90 and higher)
-> * uClibc master. You might have some luck since there is now NPTL
-> support in uClibc master. So, get the master tree of uClibc and see i=
-f
-> it works for you.
-> (http://git.uclibc.org/uClibc/snapshot/uClibc-master.tar.gz)
-> I have not tested it myself though, but if it works, please share the
-> good news.
->
-> Have Fun!
->
-> Remy
-> --
-> To unsubscribe from this list: send the line \\\"unsubscribe linux-rt=
--users\\\" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
->
->
-> ----- Ende der weitergeleiteten Nachricht -----
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+    resched is a routine that is called by the current process when rescheduling is to
+    take place. It is called not only when the time quantum of the current process expires
+    but also when a blocking(waiting) call such as wait is invoked by the current process
+    or when a new process of potentially higher priority becomes eligible for execution.
 
+    Here are some history about ZAP_BLOCK_SIZE content discussed for scheduling latencies
+    a long time ago. Hence Ingo's ZAP_BLOCK_SIZE to split it up, small when CONFIG_PREEMPT,
+    more reasonable but still limited when not.
+    . Patch subject - [patch] sched, mm: fix scheduling latencies in unmap_vmas()
+    . LKML archive - http://lkml.org/lkml/2004/9/14/101
 
---=20
-Patrice Kadionik. F6KQH / F4CUQ
------------
+    Robert Love submitted to get the better latencies by creating a preemption point
+    at Linux 2.5.28 (development version).
+    . Patch subject - [PATCH] updated low-latency zap_page_range
+    . LKML archive - http://lkml.org/lkml/2002/7/24/273
 
-+----------------------------------------------------------------------=
-+
-+"Tout doit etre aussi simple que possible, pas seulement plus simple" =
-+
-+----------------------------------------------------------------------=
-+
-+ Patrice Kadionik             http://www.enseirb-matmeca.fr/~kadionik =
-+
-+ IMS Laboratory               http://www.ims-bordeaux.fr/             =
-+
-+ ENSEIRB-MATMECA              http://www.enseirb-matmeca.fr           =
-+
-+ PO BOX 99                    fax   : +33 5.56.37.20.23               =
-+
-+ 33402 TALENCE Cedex          voice : +33 5.56.84.23.47               =
-+
-+ FRANCE                       mailto:patrice.kadionik@ims-bordeaux.fr =
-+
-+----------------------------------------------------------------------=
-+
+    Originally, We aim to not hold locks for too long (for scheduling latency reasons).
+    So zap pages in ZAP_BLOCK_SIZE byte counts.
+    This means we need to return the ending mmu_gather to the caller.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+    In general, This is not a critical latency-path on preemption mode
+    (PREEMPT_VOLUNTARY / PREEMPT_DESKTOP / PREEMPT_RT)
+
+    . Vanilla's preemption mode (mainline kernel tree)
+      - http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git v2.6.38
+        1) CONFIG_PREEMPT_NONE: No Forced Preemption (Server)
+        2) CONFIG_PREEMPT_VOLUNTARY: Voluntary Kernel Preemption (Desktop)
+        3) CONFIG_PREEMPT: Preemptible Kernel (Low-Latency Desktop)
+
+    . Ingo rt patch's preemption mode (-tip kernel tree)
+      - http://git.kernel.org/?p=linux/kernel/git/tip/linux-2.6-tip.git v2.6.33.9-rt31
+        1) CONFIG_PREEMPT_NONE
+        2) CONFIG_PREEMPT_VOLUNTARY
+        3) CONFIG_PREEMPT + CONFIG_PREEMPT_DESKTOP
+        4) CONFIG_PREEMPT + CONFIG_PREEMPT_RT + CONFIG_PREEMPT_{SOFTIRQS|HARDIRQS}
+
+    This value can be changed at runtime using the
+    '/proc/sys/vm/munmap_unit_size' as Linux kernel tunable parameter after boot.
+
+	* Examples: The size of one page is 4,096bytes.
+                  2048 => 8,388,608bytes : for straight-line efficiency (performance)
+                  1024 => 4,194,304bytes
+                   512 => 2,097,152bytes
+                   256 => 1,048,576bytes
+                   128 =>   524,288bytes
+                    64 =>   262,144bytes
+                    32 =>   131,072bytes
+                    16 =>    65,536bytes
+                     8 =>    32,768bytes : for low-latency
+
+    p.s: I checked parsing of this patch file with './linux-2.6/script/checkpatch.pl' script.
+         and, I uploaded demo video using youtube about the evaluation result according  
+	 to munmap operation unit interface. (http://www.youtube.com/watch?v=PxcgvDTY5F0)
+
+    Thanks for reading.
+
+Geunsik Lim (4):
+  munmap operation size handling
+  sysctl extension for tunable parameter
+  kbuild menu for munmap interface
+  documentation of munmap operation interface
+
+ Documentation/sysctl/vm.txt      |   36 +++++++++++++++++++
+ MAINTAINERS                      |    7 ++++
+ include/linux/munmap_unit_size.h |   24 +++++++++++++
+ init/Kconfig                     |   70 ++++++++++++++++++++++++++++++++++++++
+ kernel/sysctl.c                  |   10 +++++
+ mm/Makefile                      |    4 ++-
+ mm/memory.c                      |   21 +++++++----
+ mm/munmap_unit_size.c            |   57 +++++++++++++++++++++++++++++++
+ 8 files changed, 221 insertions(+), 8 deletions(-)
+ create mode 100644 include/linux/munmap_unit_size.h
+ create mode 100644 mm/munmap_unit_size.c
+
+-- 
+1.7.3.4
+
