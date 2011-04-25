@@ -1,7 +1,7 @@
 From: Geunsik Lim <leemgs1@gmail.com>
-Subject: [PATCH 2/4] munmap: sysctl extension for tunable parameter
-Date: Mon, 25 Apr 2011 19:44:30 +0900
-Message-ID: <1303728272-11408-3-git-send-email-leemgs1@gmail.com>
+Subject: [PATCH 4/4] munmap: documentation of munmap operation interface
+Date: Mon, 25 Apr 2011 19:44:32 +0900
+Message-ID: <1303728272-11408-5-git-send-email-leemgs1@gmail.com>
 References: <1303728272-11408-1-git-send-email-leemgs1@gmail.com>
 Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -19,47 +19,87 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Geunsik Lim <geunsik.lim@samsung.com>
 
-Support sysctl interface(tunalbe parameter) to find a suitable munmap
-operation unit at runtime favoringly
-
-* sysctl: An interface for examining and dynamically changing munmap opearon
-          size parameters in Linux. In Linux, the sysctl is implemented as
-	  a wrapper around file system routines that access contents of files
-	  in the /proc
+kernel documentation to utilize flexible memory unmap operation
+interface for the ideal scheduler latency.
 
 Signed-off-by: Geunsik Lim <geunsik.lim@samsung.com>
 Acked-by: Hyunjin Choi <hj89.choi@samsung.com>
 ---
- kernel/sysctl.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ Documentation/sysctl/vm.txt |   36 ++++++++++++++++++++++++++++++++++++
+ MAINTAINERS                 |    7 +++++++
+ 2 files changed, 43 insertions(+), 0 deletions(-)
 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index c0bb324..9b85041 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -56,6 +56,7 @@
- #include <linux/kprobes.h>
- #include <linux/pipe_fs_i.h>
- #include <linux/oom.h>
-+#include <linux/munmap_unit_size.h>
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index 30289fa..9dc4c0a 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -40,6 +40,7 @@ Currently, these files are in /proc/sys/vm:
+ - min_slab_ratio
+ - min_unmapped_ratio
+ - mmap_min_addr
++- munmap_unit_size
+ - nr_hugepages
+ - nr_overcommit_hugepages
+ - nr_pdflush_threads
+@@ -409,6 +410,41 @@ against future potential kernel bugs.
  
- #include <asm/uaccess.h>
- #include <asm/processor.h>
-@@ -1278,6 +1279,15 @@ static struct ctl_table vm_table[] = {
- 		.proc_handler	= mmap_min_addr_handler,
- 	},
- #endif
-+#ifdef CONFIG_MMU
-+	{
-+		.procname	= "munmap_unit_size",
-+		.data		= &sysctl_munmap_unit_size,
-+		.maxlen		= sizeof(unsigned long),
-+		.mode		= 0644,
-+		.proc_handler	= munmap_unit_size_handler,
-+	},
-+#endif
- #ifdef CONFIG_NUMA
- 	{
- 		.procname	= "numa_zonelist_order",
+ ==============================================================
+ 
++munmap_unit_size
++
++unmap_vmas(=unmap a range of memory covered by a list of vma) is treading
++a delicate and uncomfortable line between hi-performance and low-latency.
++We've chosen to improve performance at the expense of latency.
++
++So although there may be no need to resched right now,
++if we keep on gathering more and more without flushing,
++we'll be very unresponsive when a resched is needed later on.
++
++Consider the best suitable result between high performance and low latency
++on preemption mode.
++Select optimal munmap size to return memory space that is allocated by mmap system call.
++
++For example, For recording mass files, if we try to unmap memory that we allocated
++with 100MB for recording in embedded devices, we have to wait for more than 3seconds to
++change mode from play mode to recording mode. This results from the unit of memory
++unmapped size when we are recording mass files like camcorder particularly.
++
++This value can be changed after boot using the
++/proc/sys/vm/munmap_unit_size tunable.
++
++Examples:
++         2048 => 8,388,608bytes : for straight-line efficiency
++         1024 => 4,194,304bytes
++          512 => 2,097,152bytes
++          256 => 1,048,576bytes
++          128 =>   524,288bytes
++           64 =>   262,144bytes
++           32 =>   131,072bytes
++           16 =>    65,536bytes
++            8 =>    32,768bytes : for low-latency
++
++==============================================================
++
+ nr_hugepages
+ 
+ Change the minimum size of the hugepage pool.
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 1380312..07f4123 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -4128,6 +4128,13 @@ L:	linux-mm@kvack.org
+ S:	Maintained
+ F:	mm/memcontrol.c
+ 
++MEMORY UNMAP OPERATION UNIT INTERFACE
++M:      Geunsik Lim <geunsik.lim@samsung.com>
++L:	linux-rt-users@vger.kernel.org
++S:      Maintained
++F:      mm/munmap_unit_size.c
++F:      include/linux/munmap_unit_size.h
++
+ MEMORY TECHNOLOGY DEVICES (MTD)
+ M:	David Woodhouse <dwmw2@infradead.org>
+ L:	linux-mtd@lists.infradead.org
 -- 
 1.7.3.4
