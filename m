@@ -1,46 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/4] munmap: Flexible mem unmap operation interface for
- scheduling latency
-Date: Tue, 26 Apr 2011 08:30:49 -0400
-Message-ID: <1303821049.18763.20.camel@gandalf.stny.rr.com>
+From: Hugh Dickins <hughd@google.com>
+Subject: Re: [PATCH 3/4] munmap: kbuild menu for munmap interface
+Date: Tue, 26 Apr 2011 15:51:22 -0700
+Message-ID: <BANLkTikVLj3W6dSNRERntjOcX0kh-wrJYg@mail.gmail.com>
 References: <1303728272-11408-1-git-send-email-leemgs1@gmail.com>
-	 <1303760837.4865.22.camel@laptop>
-	 <1303763393.18763.16.camel@gandalf.stny.rr.com>
-	 <1303802720.20212.7.camel@twins>
+	<1303728272-11408-4-git-send-email-leemgs1@gmail.com>
+	<20110425084508.dda5ec8f.randy.dunlap@oracle.com>
+	<BANLkTi=psQRm9W9uXBgCEyYp-oEA0d0GVA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Geunsik Lim <leemgs1@gmail.com>, Ingo Molnar <mingo@elte.hu>,
+Content-Type: text/plain; charset=UTF-8
+Cc: Randy Dunlap <randy.dunlap@oracle.com>,
+	Ingo Molnar <mingo@elte.hu>,
 	Andrew Morton <akpm@linux-foundation.org>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	"H. Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	Darren Hart <dvhart@linux.intel.com>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1303802720.20212.7.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Geunsik Lim <leemgs1@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp-out.google.com ([74.125.121.67]:48493 "EHLO
+	smtp-out.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758991Ab1DZWv0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Apr 2011 18:51:26 -0400
+Received: from wpaz1.hot.corp.google.com (wpaz1.hot.corp.google.com [172.24.198.65])
+	by smtp-out.google.com with ESMTP id p3QMpO9Z020526
+	for <linux-rt-users@vger.kernel.org>; Tue, 26 Apr 2011 15:51:24 -0700
+Received: from yib19 (yib19.prod.google.com [10.243.65.83])
+	by wpaz1.hot.corp.google.com with ESMTP id p3QMp5uh028842
+	(version=TLSv1/SSLv3 cipher=RC4-SHA bits=128 verify=NOT)
+	for <linux-rt-users@vger.kernel.org>; Tue, 26 Apr 2011 15:51:22 -0700
+Received: by yib19 with SMTP id 19so535602yib.18
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Apr 2011 15:51:22 -0700 (PDT)
+In-Reply-To: <BANLkTi=psQRm9W9uXBgCEyYp-oEA0d0GVA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2011-04-26 at 09:25 +0200, Peter Zijlstra wrote:
-> On Mon, 2011-04-25 at 16:29 -0400, Steven Rostedt wrote:
-> > On Mon, 2011-04-25 at 21:47 +0200, Peter Zijlstra wrote:
-> > 
-> > > Also, -rt doesn't care since it already has preemptible mmu_gather.
-> > 
-> > To be fair, he did state:
-> > 
-> > >     In general, This is not a critical latency-path on preemption mode
-> > >     (PREEMPT_VOLUNTARY / PREEMPT_DESKTOP / PREEMPT_RT)
-> 
-> That doesn't parse for me... what does it say? The only one not listed
-> is the non-preempt option, that wouldn't reschedule no matter what
-> ZAP_BLOCK_SIZE.
+On Mon, Apr 25, 2011 at 5:42 PM, Geunsik Lim <leemgs1@gmail.com> wrote:
+> I will modify contents that you commented.
 
-Heh, it didn't parse for me, as I took PREEMPT_DESKTOP and thought it
-said PREEMPT_NONE.
+Thank you for making the effort, but we would much prefer to eliminate
+ZAP_BLOCK_SIZE than have a configurable ZAP_BLOCK_SIZE.  So I don't
+think you need update the contents here.
 
-Oh well.
+Peter's preemptible mmu_gather work is expected to be included in the
+next mmotm.  Please test on that, and if it does not meet your needs,
+do let us know.
 
--- Steve
+Thanks,
+Hugh
