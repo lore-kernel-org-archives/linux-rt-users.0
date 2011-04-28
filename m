@@ -1,85 +1,47 @@
-From: Victor henri <nadaeck@hotmail.com>
-Subject: How to grant real time to all important threads of an application?
-Date: Thu, 28 Apr 2011 04:54:08 +0200
-Message-ID: <SNT110-W396E80932BF68003899C93A89B0@phx.gbl>
+From: Johannes Bauer <hannes_bauer@aon.at>
+Subject: sched_clock for arm
+Date: Thu, 28 Apr 2011 17:08:38 +0200 (CEST)
+Message-ID: <1304003318.4db982f68a671@webmail.aon.at>
+References: <1303296464.4daeb9d04a026@webmail.aon.at> <4DAECAEE.4020503@enseirb-matmeca.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from snt0-omc1-s15.snt0.hotmail.com ([65.55.90.26]:14460 "EHLO
-	snt0-omc1-s15.snt0.hotmail.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752962Ab1D1CyL convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Apr 2011 22:54:11 -0400
+Received: from smtpout04.highway.telekom.at ([195.3.96.117]:19687 "EHLO
+	email.aon.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S933055Ab1D1PIn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Apr 2011 11:08:43 -0400
+Received: from warsbl214-nfs.highway.telekom.at (HELO WARSBL214.highway.telekom.at) ([172.18.96.93])
+          (envelope-sender <hannes_bauer@aon.at>)
+          by smarthub95.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 28 Apr 2011 15:08:39 -0000
+Received: from webmail.aon.at (localhost.localdomain [127.0.0.1])
+	by WARSBL214.highway.telekom.at (8.13.1/8.13.1) with SMTP id p3SF8cGE007661
+	for <linux-rt-users@vger.kernel.org>; Thu, 28 Apr 2011 17:08:38 +0200
+In-Reply-To: <4DAECAEE.4020503@enseirb-matmeca.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello everybody!
 
-Hello
+Again i am a little bit confused - sorry!
 
-I hope this is the good place to post this, since the subject is real-t=
-ime capacity of a multi-thread application.
+For the lpc2478 board (arm7tdmi-s), with Patrice Kadionik\'s help, I implemented a clocksource and clock event source to achieve hrtimer resolution. I realised i have to implement a sched_clock function too, in order to achieve better scheduling resolution. I took some examples from the arch/arm directory, where totally different solution exist. Very few using a cnt32_to_63() functions, others only clocksource_cyc2ns().
+Is it ok to implement a sched_clock with only clocksource_cyc2ns() with a 72MHz 32bit counter, since it wraps somehow often?
+It seems the newest preempt-release announced by Thomas Gleixner a few weeks ago has a new arm sched_clock support provided by Russel King, but I am using 2.6.33.7.2-rt30, where those features are not built in and i cannot update the kernel yet
+I found a conversation initiated by Johannes Stezenbach (http://ns.spinics.net/lists/arm-kernel/msg86383.html) having the same toopic, but actually no specific answer to that question was posted.
 
-I have made an app that displays the harmonics in 3d, and I want to be =
-able to run it in real-time;=20
+So is it enough to use clocksource_cyc2ns(), or do I have use something else, and if yould you please point out some code that does exactly what needs to be done for arm architecture.
 
-Audio is played with Gstreamer. I have tried to use the 'set_schedparam=
-' code, but I got the=20
+At the moment my implemetations looks as following:
 
-'Invalid argument' during 'pthread_attr_setschedparam (&attr, &sched)'=20
+   unsigned long long notrace sched_clock(void)
+   {
+   return clocksource_cyc2ns(pit_clk.read(&pit_clk),pit_clk.mult,pit_clk.shift);
+   }
 
-error... (as well as starting the app with 'chrt -r -p my-pid').=A0 So =
-I have used the 'rtpool-test'=20
-code from the Gstreamer core examples ( http://cgit.freedesktop.org/gst=
-reamer/gstreamer/tree/tests/examples/streams=A0 ) and it
- works.=20
+I would post the code as example here in order to give people a better 
 
-=A0When I run the app, then when I run 'ps -cLe in a terminal, to see a=
-ll runing threads of the app,=A0 I see this (the app name is "spectrum3=
-d":
-
-=A05265=A0 5265 TS=A0=A0 19 pts/0=A0=A0=A0 00:00:01 spectrum3d
-=A05265=A0 5267 TS=A0=A0 19 pts/0=A0=A0=A0 00:00:00 threaded-ml
-=A05265=A0 5268 TS=A0=A0 19 pts/0=A0=A0=A0 00:00:00 threaded-ml
-=A05265=A0 5270 TS=A0=A0 19 pts/0=A0=A0=A0 00:00:00 task0
-=A05265=A0 5271 TS=A0=A0 19 pts/0=A0=A0=A0 00:00:00 spectrum3d
-=A05265=A0 5272 RR=A0=A0 90 pts/0=A0=A0=A0 00:00:01 alsasrc:src
-
-The 1st pid is the GTK GUI; the last one must be the gstreamer sound=20
-playing, since its policy is RR with a priority of 90; for the record, =
-I'd like to run it with the FIFO policy and I have asked Gstreamer how =
-to manage that.
-
-but I don't know what the other pid represent... and my question is thi=
-s :
-
-The app is written like this :=20
-1) GTK GUI with a 'Play" button, that starts playing the sound, with Gs=
-treamer, and the 'spectrum' element send messages to the bus that watch=
-es gstreamer 'pipeline';=20
-2) everytime the "message handler" function of Gstreamer retrives the v=
-alues of the spectrum, there is a call to a function that display the v=
-alues of the=20
-spectrum in a SDL/OpenGL window.=20
-
-So the question is : is the display in the SDL/OpenGL window done also =
-with the RR policy or back with TS policy? How can I give real-time to =
-the OpenGL process (since it is the most CPU consuming (I'm aware that =
-real-time won't change the CPU load, but only change the priorities of =
-the scheduler).
-
-Since it is very demanding, I'd like every 'real-time' part of the app =
-has real-time policy (not the GTK GUI, I'm aware of that); furhermore, =
-keyboard and mouse events are managed with SDL, and touch gestures are =
-managed with the libutouch-geis API (multitouch input).
-
-thank u for your help
-
-Victor
-
-Victor 		 	   		  --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thank you again and kind regards
+Johannes Bauer
