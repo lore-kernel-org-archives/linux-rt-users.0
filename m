@@ -1,74 +1,55 @@
-From: Armin Steinhoff <armin@steinhoff.de>
-Subject: Re: Recommended motherboard
-Date: Tue, 03 May 2011 22:13:09 +0200
-Message-ID: <4DC061D5.30905@steinhoff.de>
-References: <BANLkTinrbbV=8U8XDA1r+wNpbccVE7MsDQ@mail.gmail.com>
+From: dashesy <dashesy@gmail.com>
+Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
+Date: Tue, 3 May 2011 17:16:41 -0600
+Message-ID: <BANLkTi=OKcO=ouVD3kOzFK4_acK9-kk1Eg@mail.gmail.com>
+References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
+	<497D1168CB2F407F9005845B39FEF144@e1705>
+	<alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6>
+	<BANLkTin594W7qFUhmBAAGwSfwaCEqCX+hA@mail.gmail.com>
+	<4DA954DE.4060907@autostatic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: dashesy <dashesy@gmail.com>
+To: Jeremy Jongepier <jeremy@autostatic.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.171]:54870 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754876Ab1ECUHH (ORCPT
+Received: from mail-bw0-f46.google.com ([209.85.214.46]:42064 "EHLO
+	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753171Ab1ECXQn convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 May 2011 16:07:07 -0400
-In-Reply-To: <BANLkTinrbbV=8U8XDA1r+wNpbccVE7MsDQ@mail.gmail.com>
+	Tue, 3 May 2011 19:16:43 -0400
+Received: by bwz15 with SMTP id 15so535164bwz.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 May 2011 16:16:41 -0700 (PDT)
+In-Reply-To: <4DA954DE.4060907@autostatic.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-Hello Dashesy,
-
-very good information are available at:
-
-https://www.osadl.org/Individual-system-data.qa-farm-data.0.html#c4630
-
-Check out the latency plots and make your own conclusion.
-
---Armin
-
-
-
-
-dashesy wrote:
-> I have tested the rt31 patch and everything seems great on my
-> off-the-shelf high-end Xeon desktop so far. I will continue testing
-> and let you know if I find any oopses or panics :)
+On Sat, Apr 16, 2011 at 2:35 AM, Jeremy Jongepier <jeremy@autostatic.co=
+m> wrote:
+> On 04/15/2011 05:02 PM, dashesy wrote:
+>>
+>> Thanks, works great on 64-bit Ubuntu (Selected SMP and Core i7 and
+>> minimal ACPI), the only problem I have is with two displays and
+>> nouveau driver.
 >
-> We are in the process of upgrading our embedded system, now based on
-> an old ADEOS patch.
-> In the first step we need to substitute our soon to be obsolete
-> motherboard with a new long life industrial motherboard that works
-> with -rt (as we all hope it will be all in the mainline).
-> I know I will be going to a lengthy validation and testing phase to
-> choose the right motherboard, one that is reliable (for a medical
-> device), state-of-the-art (at least two cores) and of course -rt
-> compliant (some indication about thing like SMI or hrtimer issues for
-> example).
+> Which is exactly the same issue I am having. This is because the nouv=
+eau
+> driver is crippled since rt29.
+I applied this patch and now nouveau driver works fine with two monitor=
+s:
+http://forums.debian.net/viewtopic.php?f=3D6&t=3D59599#p348758
 >
-> There are few book and plenty of resources out there. "Building
-> Embedded Linux Systems by Karim Yaghmour, et al" is a nice book, and
-> linux-rt archives, LWN and LKML have been the ultimate source to keep
-> up with the past (as much as I could) an learn the new. To find out
-> what might cause problem or what to avoid when designing the system.
+> Best,
 >
-> It seems the manufacturers section of the OSADL Realtime QA Farm is a
-> good starting point to look for motherboards if one is concerned about
-> the latency plots, however,
-> That would be great if there was some sort of -rt compliance
-> certificate or tag, issued by OSADL (one organization that I can think
-> of). I believe, this might generate some revenue for the project, and
-> some ease of mind for developers who want to start a fresh design.
->
-> I appreciate any comments or suggestion about the motherboard.
->
-> Thanks
-> dashesy
+> Jeremy
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
 >
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
