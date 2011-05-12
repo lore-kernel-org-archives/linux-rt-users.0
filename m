@@ -1,55 +1,42 @@
-From: dashesy <dashesy@gmail.com>
-Subject: Re: [ANNOUNCE] 2.6.33.9-rt31
-Date: Tue, 3 May 2011 17:16:41 -0600
-Message-ID: <BANLkTi=OKcO=ouVD3kOzFK4_acK9-kk1Eg@mail.gmail.com>
-References: <alpine.LFD.2.00.1104111723020.4501@localhost6.localdomain6>
-	<497D1168CB2F407F9005845B39FEF144@e1705>
-	<alpine.LFD.2.00.1104111806021.4501@localhost6.localdomain6>
-	<BANLkTin594W7qFUhmBAAGwSfwaCEqCX+hA@mail.gmail.com>
-	<4DA954DE.4060907@autostatic.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests - minor clean-ups
+Date: Thu, 12 May 2011 12:55:17 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1105121251220.21611@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Jeremy Jongepier <jeremy@autostatic.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:42064 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753171Ab1ECXQn convert rfc822-to-8bit (ORCPT
+Received: from mail-qy0-f181.google.com ([209.85.216.181]:52866 "EHLO
+	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755761Ab1ELKz2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 May 2011 19:16:43 -0400
-Received: by bwz15 with SMTP id 15so535164bwz.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 May 2011 16:16:41 -0700 (PDT)
-In-Reply-To: <4DA954DE.4060907@autostatic.com>
+	Thu, 12 May 2011 06:55:28 -0400
+Received: by qyg14 with SMTP id 14so806116qyg.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 May 2011 03:55:27 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Apr 16, 2011 at 2:35 AM, Jeremy Jongepier <jeremy@autostatic.co=
-m> wrote:
-> On 04/15/2011 05:02 PM, dashesy wrote:
->>
->> Thanks, works great on 64-bit Ubuntu (Selected SMP and Core i7 and
->> minimal ACPI), the only problem I have is with two displays and
->> nouveau driver.
->
-> Which is exactly the same issue I am having. This is because the nouv=
-eau
-> driver is crippled since rt29.
-I applied this patch and now nouveau driver works fine with two monitor=
-s:
-http://forums.debian.net/viewtopic.php?f=3D6&t=3D59599#p348758
->
-> Best,
->
-> Jeremy
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Hi Clark
+
+Please pull from
+git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
+branch: rt-tests-dev
+
+I have a few clean-ups in my repo that aren't in yours.
+1. Spelling clean-ups - makes it look more professional
+2. A function header style clean-up, and spacing.
+
+The diff between our trees is shown below.
+
+Thanks
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 29d0fe5..d13669b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -313,9 +313,7 @@ void traceopt(char *option)
+ 	traceptr[traceopt_count++] = ptr;
+ }
+ 
