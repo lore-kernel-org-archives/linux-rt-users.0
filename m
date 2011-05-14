@@ -1,140 +1,80 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rt-tests - minor clean-ups
-Date: Fri, 13 May 2011 13:08:52 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1105131304490.21159@localhost6.localdomain6>
-References: <alpine.LFD.2.00.1105121251220.21611@localhost6.localdomain6>
+Subject: [stable] Patch for 2.6.33
+Date: Sat, 14 May 2011 17:47:25 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1105141740040.29326@localhost6.localdomain6>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
+Cc: stable@kernel.org, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: gregkh@suse.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:33332 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:6362 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758339Ab1EMLIz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 May 2011 07:08:55 -0400
-Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-	by mx1.redhat.com (8.14.4/8.14.4) with ESMTP id p4DB8tmJ005342
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
-	for <linux-rt-users@vger.kernel.org>; Fri, 13 May 2011 07:08:55 -0400
-In-Reply-To: <alpine.LFD.2.00.1105121251220.21611@localhost6.localdomain6>
+	id S1757560Ab1ENPsL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 14 May 2011 11:48:11 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
+I merging the latest 2.6.33.13 stable branch into the real-time kernel and 
+using a distro with a make 3.82, and needed to cherry-pick the following 
+commit in order to compile. Please consider picking it up for 2.6.33.y 
+stable.
 
-On Thu, 12 May 2011, John Kacur wrote:
+Thanks
+John
 
-> 
-> Hi Clark
-> 
-> Please pull from
-> git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
-> branch: rt-tests-dev
-> 
-> I have a few clean-ups in my repo that aren't in yours.
-> 1. Spelling clean-ups - makes it look more professional
-> 2. A function header style clean-up, and spacing.
-> 
-> The diff between our trees is shown below.
-> 
-> Thanks
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 29d0fe5..d13669b 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -313,9 +313,7 @@ void traceopt(char *option)
->  	traceptr[traceopt_count++] = ptr;
->  }
->  
-> -
-> -static int
-> -trace_file_exists(char *name)
-> +static int trace_file_exists(char *name)
->  {
->  	struct stat sbuf;
->  	char *tracing_prefix = get_debugfileprefix();
-> @@ -1030,7 +1028,7 @@ static void process_options (int argc, char *argv[])
->  			setaffinity = AFFINITY_USEALL;
->  			use_nanosleep = MODE_CLOCK_NANOSLEEP;
->  #else
-> -			warn("cyclicteset was not built with the numa option\n");
-> +			warn("cyclictest was not built with the numa option\n");
->  			warn("ignoring --numa or -U\n");
->  #endif
->  			break;
-> @@ -1187,7 +1185,7 @@ static void print_hist(struct thread_param *par[], int nthreads)
->  	if (histofall && nthreads > 1)
->  		printf(" %09llu", log_entries[nthreads]);
->  	printf("\n");
-> -	printf("# Min Latencys:");
-> +	printf("# Max Latencies:");
->  	for (j = 0; j < nthreads; j++)
->  		printf(" %05lu", par[j]->stats->min);
->  	printf("\n");
-> 
+>From cbbe989bf5f3c8d4671b0c008022a8b718a3c082 Mon Sep 17 00:00:00 2001
+From: Jan Beulich <JBeulich@novell.com>
+Date: Mon, 16 Aug 2010 11:58:58 +0100
+Subject: [PATCH] fixes for using make 3.82
 
-I'm not sure why the git diff was bogus, probably I did something wrong. 
-However, my patch is in my repo is correct even if the above hunk as 
-reported by git diff is obviously bogus. However, I see I missed the same 
-spelling mistake elsewhere. Just to make things easy I am respinning this patch
+commit 3c955b407a084810f57260d61548cc92c14bc627 upstream
 
-You can either pull this new branch
-repo: pub/scm/linux/kernel/git/jkacur/rt-tests.git
-branch rt-tests-dev-new
+It doesn't like pattern and explicit rules to be on the same line,
+and it seems to be more picky when matching file (or really directory)
+names with different numbers of trailing slashes.
 
-Or use the respun patch below, thanks.
-
->From f26dbd8adcc7f9888d06a4963e8fe9e1ca497a15 Mon Sep 17 00:00:00 2001
-From: John Kacur <jkacur@redhat.com>
-Date: Fri, 13 May 2011 12:52:48 +0200
-Subject: [PATCH] Minor Fix-ups
- 1. Make the function header style consistent with the rest of cyclictest.
- 2. Spelling clean-ups.
-
+Signed-off-by: Jan Beulich <jbeulich@novell.com>
+Acked-by: Sam Ravnborg <sam@ravnborg.org>
+Andrew Benton <b3nton@gmail.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Michal Marek <mmarek@suse.cz>
+Cherry-picked-for: rt/2.6.33
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.c |   10 ++++------
- 1 files changed, 4 insertions(+), 6 deletions(-)
+ firmware/Makefile  |    2 +-
+ scripts/mkmakefile |    4 +++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 29d0fe5..3227acd 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -313,9 +313,7 @@ void traceopt(char *option)
- 	traceptr[traceopt_count++] = ptr;
- }
+diff --git a/firmware/Makefile b/firmware/Makefile
+index 1c00d05..087e45b 100644
+--- a/firmware/Makefile
++++ b/firmware/Makefile
+@@ -141,7 +141,7 @@ fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
+ fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
  
--
--static int
--trace_file_exists(char *name)
-+static int trace_file_exists(char *name)
- {
- 	struct stat sbuf;
- 	char *tracing_prefix = get_debugfileprefix();
-@@ -1030,7 +1028,7 @@ static void process_options (int argc, char *argv[])
- 			setaffinity = AFFINITY_USEALL;
- 			use_nanosleep = MODE_CLOCK_NANOSLEEP;
- #else
--			warn("cyclicteset was not built with the numa option\n");
-+			warn("cyclictest was not built with the numa option\n");
- 			warn("ignoring --numa or -U\n");
- #endif
- 			break;
-@@ -1187,11 +1185,11 @@ static void print_hist(struct thread_param *par[], int nthreads)
- 	if (histofall && nthreads > 1)
- 		printf(" %09llu", log_entries[nthreads]);
- 	printf("\n");
--	printf("# Min Latencys:");
-+	printf("# Min Latencies:");
- 	for (j = 0; j < nthreads; j++)
- 		printf(" %05lu", par[j]->stats->min);
- 	printf("\n");
--	printf("# Avg Latencys:");
-+	printf("# Avg Latencies:");
- 	for (j = 0; j < nthreads; j++)
- 		printf(" %05lu", par[j]->stats->cycles ?
- 		       (long)(par[j]->stats->avg/par[j]->stats->cycles) : 0);
+ # Directories which we _might_ need to create, so we have a rule for them.
+-firmware-dirs := $(sort $(patsubst %,$(objtree)/$(obj)/%/,$(dir $(fw-external-y) $(fw-shipped-all))))
++firmware-dirs := $(sort $(addprefix $(objtree)/$(obj)/,$(dir $(fw-external-y) $(fw-shipped-all))))
+ 
+ quiet_cmd_mkdir = MKDIR   $(patsubst $(objtree)/%,%,$@)
+       cmd_mkdir = mkdir -p $@
+diff --git a/scripts/mkmakefile b/scripts/mkmakefile
+index 67d59c7..5325423 100644
+--- a/scripts/mkmakefile
++++ b/scripts/mkmakefile
+@@ -44,7 +44,9 @@ all:
+ 
+ Makefile:;
+ 
+-\$(all) %/: all
++\$(all): all
+ 	@:
+ 
++%/: all
++	@:
+ EOF
 -- 
 1.7.2.3
 
