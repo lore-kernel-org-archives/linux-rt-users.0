@@ -1,90 +1,74 @@
-From: Lukasz Majewski <majess1982@gmail.com>
-Subject: [RFC][Vortex86] high resolution timer
-Date: Sun, 15 May 2011 23:57:24 +0200
-Message-ID: <20110515235724.0b4f5216@mig>
-References: <4DCD3B43.3060806@greenseainc.com>
+From: Monica Puig-Pey <puigpeym@unican.es>
+Subject: How to establish a priority to an interrupt handler
+Date: Mon, 16 May 2011 12:26:09 +0200
+Message-ID: <4DD0FBC1.9050708@unican.es>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Lukasz Majewski <majess1982@gmail.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Andy O'Brien <aobrien@greenseainc.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ey0-f174.google.com ([209.85.215.174]:42234 "EHLO
-	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751721Ab1EOV53 (ORCPT
+Received: from ccserver1.unican.es ([130.206.5.100]:42318 "EHLO
+	ccserver1.unican.es" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754467Ab1EPKZ4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 May 2011 17:57:29 -0400
-Received: by eyx24 with SMTP id 24so1106293eyx.19
-        for <linux-rt-users@vger.kernel.org>; Sun, 15 May 2011 14:57:28 -0700 (PDT)
-In-Reply-To: <4DCD3B43.3060806@greenseainc.com>
+	Mon, 16 May 2011 06:25:56 -0400
+Received: from ccserver1.unican.es (ccserver1.unican.es [127.0.0.1])
+	by ccserver1.unican.es (Postfix) with ESMTP id 255EA40AF8
+	for <linux-rt-users@vger.kernel.org>; Mon, 16 May 2011 12:26:10 +0200 (CEST)
+Received: from correouc.unican.es (cas02.unican.es [193.144.193.214])by
+	ccserver1.unican.es (Postfix) with ESMTP id 1A2E240AF6for
+	<linux-rt-users@vger.kernel.org>; Mon, 16 May 2011 12:26:10 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 13 May 2011 10:08:03 -0400
-Andy O'Brien <aobrien@greenseainc.com> wrote:
+Hi,
 
-> Lukasz,
-> 
-> Have you made any headway on supporting the Vortex86's high
-> resolution timer?  I'm in the same boat and would very much like to
-> support it.
-> 
-> Are you still planning on implementing support for the other counter? 
-> Perhaps we could work together?
-> 
-> Best,
-> Andy
-> 
+I'm using Ubuntu 10.04 with the 2.6.31-11-rt patch installed. I'm=20
+developing a PCI device driver using hardware interrupts.
+As I read at the RT wiki=20
+(https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch )=20
+interrupts are moved to kernel threads called Threaded Interrupts in th=
+e=20
+RT patch.
 
-Hi Andy,
+I would like to give a priority chosen by me to my IRQ handler, but I=20
+don't know how to do it, or if it is possible (it seems it is).
 
-The support for the High Resolution Timers on the Vortex86DX shall be
-considered as work in progress.
+I've found (http://lwn.net/Articles/302043/ ) that what I had to use in=
+=20
+order to get Threaded Interrupt is:
 
-Firstly, I've looked into the "struct clocksource" and try to understand
-Vortex's internals:
+int request_threaded_irq(unsigned int irq, irq_handler_t handler,
+                      irq_handler_t quick_check_handler,
+                      unsigned long flags, const char *name, void *dev)
 
-1. One i8254 timer (0x40 - 0x43) is used by PIT. It has a hardcoded
-frequency of 1.19MHz. It is NOT suitable for any "real-time" control
-control application (rounding problem and relatively low frequency).
+But there is not priority there!
 
-2. Another i8254 timer is the PWM timer (0x44 - 0x48). A programmer
-can change the frequency of this timer (IO pins are muxed with COM2). 
-So it is possible to connect e.g. 20MHz external oscillator and
-provide very stable clock source.
+Using ps -eo pid,pri,rtprio,cmd I've seen my handler runs with priority=
+ 50.
 
-3. TSC - Time Stamp Counter (one of vortex86 features - as seen on
-the cat /proc/cpuinfo) allows for reading the internal chip counter
-via an assembler instruction - RDTSC (rdtscll). It works on
-vortex86DX and it seems, that this timer value is incremented with
-each clock tick provided to CPU (e.g. 500MHz). Therefore it is a
-preferred clock source for Vortex86 board.
+I also used :
 
-It would be desirable to use this as clocksource with the "struct
-hrtimer_cpu_base.clock_base".
+int request_irq (unsigned int irq, void (*handler) (int, void *, struct=
+=20
+pt_regs *), unsigned long irqflags, const char *devname, void *dev_id);
 
-I was studying the presentation:
-http://www.kernel.org/pub/linux/kernel/people/tglx/hrtimers/ols2006-hrtimers.pdf
+and using ps command here my handler still runs with priority 50.=20
+Shouldn't it work as a non threaded interrupt then? Why 50 instead 99 o=
+r=20
+the highest priority one?
 
-And try to "link" the slide 22 with the kernel source (I'm using
-2.6.33.7.2-rt30).
+Which function should I use to chose the priority for the IRQ thread?
 
-In my opinion it is better to use the TSC counter as a clock base
-(kernel/hrtimer.c).
+Is there any other function to call from this context where my handler=20
+could know its priority?
 
-To do that I guess, that I need to:
-1. Define my own hrtimer_cpu_base with TSC .get_time =get_time()
-function, .resolution=1.25 ns and .index = CLOCK_MONOTONIC
-2. Define hrtimer struct (with .restart callback function) and use
-hrtimer_init function for initialization.
+Thank you
 
-3. .... I don't know if it is sufficient. Hints? Ideas?
-
-Anyway I will investigate this issue in the following days (since
-HRtimer subsystem is quite large) and poke for solution at other
-architectures. 
-
-Best regards,
-Lukasz
+M=F3nica
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
