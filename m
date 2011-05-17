@@ -1,111 +1,197 @@
 From: Johannes Bauer <hannes_bauer@aon.at>
-Subject: Re:How to establish a priority to an interrupt handler
-Date: Mon, 16 May 2011 16:50:57 +0200 (CEST)
-Message-ID: <9385970.13897.1305557457392.JavaMail.root@WARSBL113.highway.telekom.at>
+Subject: 2.6.33 preempt-rt worse irq latency then 2.6.21
+Date: Tue, 17 May 2011 19:41:29 +0200 (CEST)
+Message-ID: <2833138.16881.1305654089043.JavaMail.root@WARSBL213.highway.telekom.at>
 Reply-To: hannes_bauer@aon.at
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpout06.highway.telekom.at ([195.3.96.89]:56723 "EHLO
+Received: from smtpout05.highway.telekom.at ([195.3.96.77]:18738 "EHLO
 	email.aon.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1756056Ab1EPOvA convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 May 2011 10:51:00 -0400
-Received: from warsbl113-nfs.highway.telekom.at (HELO WARSBL113.highway.telekom.at) ([172.18.96.90])
+	id S1754976Ab1EQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 May 2011 13:41:31 -0400
+Received: from warsbl213-nfs.highway.telekom.at (HELO WARSBL213.highway.telekom.at) ([172.18.96.92])
           (envelope-sender <hannes_bauer@aon.at>)
-          by smarthub97.highway.telekom.at (qmail-ldap-1.03) with SMTP
-          for <linux-rt-users@vger.kernel.org>; 16 May 2011 14:50:57 -0000
-Received: from WARSBL113.highway.telekom.at (localhost.localdomain [127.0.0.1])
-	by WARSBL113.highway.telekom.at (8.13.1/8.13.1) with ESMTP id p4GEovQY027445
-	for <linux-rt-users@vger.kernel.org>; Mon, 16 May 2011 16:50:57 +0200
+          by smarthub91.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 17 May 2011 17:41:29 -0000
+Received: from WARSBL213.highway.telekom.at (localhost.localdomain [127.0.0.1])
+	by WARSBL213.highway.telekom.at (8.13.1/8.13.1) with ESMTP id p4HHfTp2004280
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 May 2011 19:41:29 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Monica!
 
-You can change the priority of the irq thread with the _chrt_ tool from=
- user space.
+Hello everybody!
 
-With preempt-rt all your interrupts are forced threaded ones (excluding=
- timer interrupt and may some others). If you realy want it to be execu=
-ted in hard interrupt context u have to use the IRQF_NODELAY as irqflag=
- when requesting the interrupt with request_irq().
+I was doing some testing on my ARM lpc2478 board regarding the interrupt latency.
+I did it for the preempt-rt 2.6.33-rt30 patch. I installed an interrupt for a external port pin with _and_ without IRQF_NODELAY and applied a squarewave to the pin.
+In the edge triggered interrupt handler i set another IO pin accordingly to the square wave level, so i could measure the irq latency + jitter with an oscilloscope.
 
-This could however lead to larger latencies for the system, especially =
-when your interrupt handler is long, since all irqs are disabled in tha=
-t context. On the other hand your interrupt latency will be much shorte=
-r since no schedule() has to be done to schedule the irq_thread.
+I did the test with CONFIG_PREEMPT_RT, CONFIG_PREEMPT_NONE and CONFIG_PREEMPT_VOLUNTARY, and the results did not change for the irq latency. (cyclictest results are much better for CONFIG_PREEMPT_RT however)
 
-If you need to change the priority from within the driver code this thr=
-ead (http://www.mail-archive.com/linux-rt-users@vger.kernel.org/msg0102=
-2.html) my be interesting for you.
+Then i comapred the results to a 2.6.21 kernel without rt-patch and the worst case latency and jitter were much better then with the preempt-rt patch with IRQF_NODELAY (much better then without IRQF_NODELAY).
 
-I hope this is helping you.
+(I dont know if thats important, but 2.6.21 does not use clocksource and clock event managemnet, just timer_tick() with 100Hz timer.)
+
+As the patch replaces spinlocks with mutexes that made no sense to me, so i instrumented the /arch/arm/include/asm/irqflags.h the following way
+
+#ifndef __ASM_ARM_IRQFLAGS_H
+#define __ASM_ARM_IRQFLAGS_H
+
+#ifdef __KERNEL__
+
+#include <asm/ptrace.h>
+
++ #define FIO_BASE_ADDR		0x3FFFC000
++ #define FIO0SET        (*(volatile unsigned long *)(FIO_BASE_ADDR + 0x18))
++ #define FIO0CLR        (*(volatile unsigned long *)(FIO_BASE_ADDR + 0x1C))
+/*
+ * CPU interrupt mask handling.
+ */
+#if __LINUX_ARM_ARCH__ >= 6
+
+#define raw_local_irq_save(x)					\
+	({							\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ local_irq_save\n"	\
+	"cpsid	i"						\
+	: "=r" (x) : : "memory", "cc");				\
+	})
+
+#define raw_local_irq_enable()  __asm__("cpsie i	@ __sti" : : : "memory", "cc")
+#define raw_local_irq_disable() __asm__("cpsid i	@ __cli" : : : "memory", "cc")
+#define local_fiq_enable()  __asm__("cpsie f	@ __stf" : : : "memory", "cc")
+#define local_fiq_disable() __asm__("cpsid f	@ __clf" : : : "memory", "cc")
+
+#else
+
+/*
+ * Save the current interrupt enable state & disable IRQs
+ */
+#define raw_local_irq_save(x)					\
+	({							\
+		unsigned long temp;				\
+		(void) (&temp == &x);				\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ local_irq_save\n"	\
+"	orr	%1, %0, #128\n"					\
+"	msr	cpsr_c, %1"					\
+	: "=r" (x), "=r" (temp)					\
+	:							\
+	: "memory", "cc");					\
++	FIO0SET = 0x00010000;					\
+	})
+	
+/*
+ * Enable IRQs
+ */
+#define raw_local_irq_enable()					\
+	({							\
+		unsigned long temp;				\
+	FIO0CLR = 0x00010000;					\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ local_irq_enable\n"	\
+"	bic	%0, %0, #128\n"					\
+"	msr	cpsr_c, %0"					\
+	: "=r" (temp)						\
+	:							\
+	: "memory", "cc");					\
+	})
+
+/*
+ * Disable IRQs
+ */
+#define raw_local_irq_disable()					\
+	({							\
+		unsigned long temp;				\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ local_irq_disable\n"	\
+"	orr	%0, %0, #128\n"					\
+"	msr	cpsr_c, %0"					\
+	: "=r" (temp)						\
+	:							\
+	: "memory", "cc");					\
++	FIO0SET = 0x00010000;					\
+	})
+
+/*
+ * Enable FIQs
+ */
+#define local_fiq_enable()					\
+	({							\
+		unsigned long temp;				\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ stf\n"		\
+"	bic	%0, %0, #64\n"					\
+"	msr	cpsr_c, %0"					\
+	: "=r" (temp)						\
+	:							\
+	: "memory", "cc");					\
+	})
+
+/*
+ * Disable FIQs
+ */
+#define local_fiq_disable()					\
+	({							\
+		unsigned long temp;				\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ clf\n"		\
+"	orr	%0, %0, #64\n"					\
+"	msr	cpsr_c, %0"					\
+	: "=r" (temp)						\
+	:							\
+	: "memory", "cc");					\
+	})
+
+#endif
+
+/*
+ * Save the current interrupt enable state.
+ */
+#define raw_local_save_flags(x)					\
+	({							\
+	__asm__ __volatile__(					\
+	"mrs	%0, cpsr		@ local_save_flags"	\
+	: "=r" (x) : : "memory", "cc");				\
+	})
+
+/*
+ * restore saved IRQ & FIQ state
+ */
+#define raw_local_irq_restore(x)				\
+	({							\
++	if(x&128)						\
++		FIO0SET = 0x00010000;				\
+	__asm__ __volatile__(					\
+	"msr	cpsr_c, %0		@ local_irq_restore\n"	\
+	:							\
+	: "r" (x)						\
+	: "memory", "cc");					\
++	if(!(x&128))						\
++		FIO0CLR = 0x00010000;				\
+	})
+		
+
+#define raw_irqs_disabled_flags(flags)	\
+({					\
+	(int)((flags) & PSR_I_BIT);	\
+})
+
+#endif
+#endif
+
+
+Actually just to set a pin high when irqs are disabled and low when they are enabled.
+
+The results were confusing to me, as the irqs where disabled about 50% (2us off/2us on) of the time for the 2.6.33-rt30 and only 25%(1us off/3us on) for 2.6.21 without preempt.
+Does anyone have some hints, why this could be the case and where i could investigate any further.
+I could only do tracing on 2.6.33 because its not avialable for 2.6.21. My irqsoff tracing showed that the sirq-rcu was disabling the interrupts somehow often. However the timing did not match the scope result, as my CPU only has 72Mhz and tracing totally breaks it.
+
+Please help me out here...
 
 Kind regards
 
 Johannes Bauer
-
-
------ Urspr=C3=BCngliche Nachricht -----
-Von: "Monica Puig-Pey"
-Erhalten: 16.05.2011 12:26
-An: linux-rt-users@vger.kernel.org
-
-Hi,
-
-I'm using Ubuntu 10.04 with the 2.6.31-11-rt patch installed. I'm=20
-developing a PCI device driver using hardware interrupts.
-As I read at the RT wiki=20
-(https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch )=20
-interrupts are moved to kernel threads called Threaded Interrupts in th=
-e=20
-RT patch.
-
-I would like to give a priority chosen by me to my IRQ handler, but I=20
-don't know how to do it, or if it is possible (it seems it is).
-
-I've found (http://lwn.net/Articles/302043/ ) that what I had to use in=
-=20
-order to get Threaded Interrupt is:
-
-int request_threaded_irq(unsigned int irq, irq_handler_t handler,
-irq_handler_t quick_check_handler,
-unsigned long flags, const char *name, void *dev)
-
-But there is not priority there!
-
-Using ps -eo pid,pri,rtprio,cmd I've seen my handler runs with priority=
- 50.
-
-I also used :
-
-int request_irq (unsigned int irq, void (*handler) (int, void *, struct=
-=20
-pt_regs *), unsigned long irqflags, const char *devname, void *dev_id);
-
-and using ps command here my handler still runs with priority 50.=20
-Shouldn't it work as a non threaded interrupt then? Why 50 instead 99 o=
-r=20
-the highest priority one?
-
-Which function should I use to chose the priority for the IRQ thread?
-
-Is there any other function to call from this context where my handler=20
-could know its priority?
-
-Thank you
-
-M=C3=B3nica
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
