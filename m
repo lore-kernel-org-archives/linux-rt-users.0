@@ -1,86 +1,61 @@
-From: Armin Steinhoff <armin@steinhoff.de>
-Subject: Re: Question regarding pthread_cond_wait/pthread_cond_signal latencies
-Date: Sun, 22 May 2011 17:18:33 +0200
-Message-ID: <4DD92949.4010401@steinhoff.de>
-References: <1305890110.10494.32.camel@laika> <4DD9235D.50900@steinhoff.de>
+From: jordan <triplesquarednine@gmail.com>
+Subject: Re: kernel 2.6.39
+Date: Sun, 22 May 2011 14:09:11 -0400
+Message-ID: <BANLkTinAFwEoCkPUV5m1Kf=F1i5AXyi85w@mail.gmail.com>
+References: <450FBA9CC12245C59BAF518CF94AC500@e1705>
+	<BANLkTi=exhwVt=_uNS8rSsaVx+A8opgUTA@mail.gmail.com>
+	<BANLkTi=7HuChAsv2OrsaBsRx2Rtnc4Sn+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Pedro Gonnet <gonnet@maths.ox.ac.uk>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: E-Blokos <infos@e-blokos.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Mugunth <mugunthanvnm@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.8]:52379 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750774Ab1EVPKi (ORCPT
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:34832 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751768Ab1EVSJN convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 22 May 2011 11:10:38 -0400
-In-Reply-To: <4DD9235D.50900@steinhoff.de>
+	Sun, 22 May 2011 14:09:13 -0400
+Received: by eyx24 with SMTP id 24so1613270eyx.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 22 May 2011 11:09:11 -0700 (PDT)
+In-Reply-To: <BANLkTi=7HuChAsv2OrsaBsRx2Rtnc4Sn+g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Armin Steinhoff wrote:
-> Pedro Gonnet wrote:
->> Hi guys,
->>
->> I'm currently working on a shared-memory parallel Molecular Dynamics
->> simulation library (http://mdcore.sourceforge.net/) geared towards
->> multi-core systems.
->>
->> The library uses pthreads (plus some OpenMP for some simple loops) and
->> uses pthread_cond_wait and pthread_cond_signal to coordinate a group of
->> worker threads.
->>
->> I've been profiling the library on different machines and kernels and
->> have noticed that in many cases there are significant (several ms,
->> measured with Intel's Vtune-thing) lags between calls to
->> pthread_cond_signal and the waiting thread actually getting back to
->> work.
->
-> At what priority are the worker threads running ?
->
-> In order to schedule these threads by the real-time part of the CFS 
-> scheduler they should run at lest at a priority of 20 (rt_sched_class)
+> Hi Jordan,
 
+hi,
 
-     ... and you have to use SCHED_RR or SCHED_FIFO for the scheduling 
-method
+> I am new to RT kernel. I am trying to use 2.6.37 kernel with RT. I am=
+ unable
+> to succeed.
 
---Armin
+you are unable to succeed, because there is no 2.6.37-rt available.
+last i heard the patchset was being worked on, not actually available
+-  you must use 2.6.33-rt. that is the last stable release of RT.
 
->
-> Regards
->
-> --Armin
->
->
->> I've tried the Ubuntu -rt and -preempt kernels, and the whole simulation
->> runs twice as slowly, despite following the advice given here:
->>
->>          
->> https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
->>
->> My question is the following: which kernel (or set of configuration
->> options) will minimize these latencies? And if linux-rt is the answer,
->> in what ways do I have to be careful when porting the simulation for
->> this kernel?
->>
->> Cheers and thanks,
->> Pedro
->>
->>
->>
->>
->> -- 
->> To unsubscribe from this list: send the line "unsubscribe 
->> linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>
->
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe 
-> linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+> Since you are using 2.6.39 with RT.=A0Are you using any patches which=
+ are not
+> mainlined in kernel, so that I can also contribute in testing your pa=
+tches.
 
+AFAIK, I am not using 2.6.39 with RT - i am using 2.6.39 which
+includes one of the main features that RT provided. I have the
+forced-interrupt-threading - enabled in my kernel  (using nconfig
+before compiling 2.6.39, to customize my kernel how i wanted it).
+
+I am not an RT maintainer, or even contributor. I do not write patches
+and am an end-user. (i use RT, specifically for proaudio on the Linux
+platform).
+
+I was just answering E-BLOKOS' question, because it seemed as if he
+wasn't aware as to why those commits in 2.6.39 would show bits of code
+related to and specific to RT.
+
+jordan
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
