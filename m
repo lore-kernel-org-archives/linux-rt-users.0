@@ -1,87 +1,56 @@
-From: "Peter W. Morreale" <pmorreale@novell.com>
+From: Pedro Gonnet <gonnet@maths.ox.ac.uk>
 Subject: Re: Question regarding pthread_cond_wait/pthread_cond_signal
  latencies
-Date: Sat, 21 May 2011 18:44:19 -0600
-Message-ID: <1306025059.2169.16.camel@hermosa.morreale.net>
+Date: Sun, 22 May 2011 12:34:22 +0100
+Message-ID: <1306064062.10494.42.camel@laika>
 References: <1305886116.10494.30.camel@laika>  <4DD82514.3070407@cfl.rr.com>
 	 <1306011102.10494.34.camel@laika>
-Reply-To: pmorreale@novell.com
+	 <1306025059.2169.16.camel@hermosa.morreale.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: dmarkh@cfl.rr.com, linux-rt-users@vger.kernel.org
-To: Pedro Gonnet <gonnet@maths.ox.ac.uk>
+To: pmorreale@novell.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from charybdis-ext.suse.de ([195.135.221.2]:48728 "EHLO
-	nat.nue.novell.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752483Ab1EVBE1 (ORCPT
+Received: from relay8.mail.ox.ac.uk ([129.67.1.171]:50230 "EHLO
+	relay8.mail.ox.ac.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754503Ab1EVLe3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 21 May 2011 21:04:27 -0400
-In-Reply-To: <1306011102.10494.34.camel@laika>
+	Sun, 22 May 2011 07:34:29 -0400
+In-Reply-To: <1306025059.2169.16.camel@hermosa.morreale.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2011-05-21 at 21:51 +0100, Pedro Gonnet wrote:
-> On Sat, 2011-05-21 at 16:48 -0400, Mark Hounschell wrote:
-> > On 05/20/2011 06:08 AM, Pedro Gonnet wrote:
-> > >
-> > > Hi guys,
-> > >
-> > > I'm currently working on a shared-memory parallel Molecular Dynamics
-> > > simulation library (http://mdcore.sourceforge.net/) geared towards
-> > > multi-core systems.
-> > >
-> > > The library uses pthreads (plus some OpenMP for some simple loops) and
-> > > uses pthread_cond_wait and pthread_cond_signal to coordinate a group of
-> > > worker threads.
-> > >
-> > > I've been profiling the library on different machines and kernels and
-> > > have noticed that in many cases there are significant (several ms,
-> > > measured with Intel's Vtune-thing) lags between calls to
-> > > pthread_cond_signal and the waiting thread actually getting back to
-> > > work.
-> > >
-> > > I've tried the Ubuntu -rt and -preempt kernels, and the whole simulation
-> > > runs twice as slowly, despite following the advice given here:
-> > >
-> > >          https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
-> > >
-> > > My question is the following: which kernel (or set of configuration
-> > > options) will minimize these latencies? And if linux-rt is the answer,
-> > > in what ways do I have to be careful when porting the simulation for
-> > > this kernel?
-> > >
-> > 
-> > Are you saying several ms latency from pthread_cond_signal to waking up a 
-> > thread in pthread_cond_wait?
-> > 
-> 
-> Yes. Or at least, this is what Vtune says. It could also be a fluke in
-> Vtune, but I would still be interested in knowing what kernel or what
-> kernel options can make these operations as fast as possible.
-> 
-> Cheers, Pedro
+On Sat, 2011-05-21 at 18:44 -0600, Peter W. Morreale wrote:
+> Do you use any pthread* primitives involving scheduling?  
 
-Do you use any pthread* primitives involving scheduling?  
+I'm not quite sure what you mean by scheduling functions... I only use
+the basic pthread_mutex_* and pthread_cond_* functions.
 
-How do you start your process?  How many threads?  What else is on the
-machine? 
+> How do you start your process?  How many threads?  What else is on the
+> machine? 
 
-IOW, can you describe your environment more completely.
+The main thread starts several threads with pthread_create. I have a
+barrier which uses pthread_mutex's and pthead_cond's to synchronize the
+threads. This is where the delays happen.
 
+I observed these latencies both on my own laptop (loads of stuff running
+in the background) and on multi-core servers on which I was alone. 
 
-Best
--PWM
+I should probably note that I also use OpenMP for some simple
+parallelization as well. Eg. after releasing the threads and waiting for
+them all to return to the barrier, some things are computed with OpenMP
+(OMP_WAIT_POLICY=PASSIVE).
 
+The kernels on which I have seen this are the Ubuntu -generic kernels
+2.6.31--2.3.35. I have also tried running the simulations on a Ubuntu
+2.6.31-11-rt kernel. This, however, caused the whole simulation to run
+twice as slow, even when only using one single thread (on a 6-core
+machine).
 
+Please do let me know if you need any more specific information!
 
-> 
-> 
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Cheers, Pedro
+
 
 
