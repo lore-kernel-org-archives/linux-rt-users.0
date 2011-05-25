@@ -1,127 +1,67 @@
-From: Emmanuel Deloget <emmanuel.deloget@efixo.com>
-Subject: Re: How do I get rid of these "BUG: sleeping function called from
- ... kernel/rtmutex.c:707"?
-Date: Tue, 24 May 2011 15:05:42 +0200
-Message-ID: <4DDBAD26.2040708@efixo.com>
-References: <4DD67AFD.2080709@efixo.com>
-Reply-To: emmanuel.deloget@efixo.com
+From: John Kacur <jkacur@redhat.com>
+Subject: merge of v2.6.33.14 with tip/rt/2.6.33
+Date: Wed, 25 May 2011 17:20:29 +0200
+Message-ID: <BANLkTin+PPqSSqwHgo0kE0T2m3k9EKasnA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Carsten Emde <Carsten.Emde@osadl.org>, stable@kernel.org,
+	Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp23.services.sfr.fr ([93.17.128.19]:34230 "EHLO
-	smtp23.services.sfr.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755767Ab1EXM5E (ORCPT
+Received: from mail-qy0-f181.google.com ([209.85.216.181]:43753 "EHLO
+	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757794Ab1EYPUa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 May 2011 08:57:04 -0400
-In-Reply-To: <4DD67AFD.2080709@efixo.com>
+	Wed, 25 May 2011 11:20:30 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello again,
+Hi Thomas
 
-Although I am unvoluntary disrupting the netiquete, I have to answer my 
-own mail.
+I'm still doing some testing but I have merged v2.6.33.14 with my own
+v2.6.33.13-rt31 which ultimately comes from tip/rt/2.6.33
+I see that Carsten has also already done the same thing.
 
-I've gone through multiple passes of investigation, and I have to temper 
-my words a bit. Now, I'm no longer working to find a solution to this 
-issue, as there is no obvious solution. Here is my analysis.
+This can be fetched from
 
-On 05/20/2011 04:30 PM, Emmanuel Deloget wrote:
-> Hello,
->
-> I hope this message will find its way to the linux-rt mailing list. I 
-> subscribed but for reasons that are unknown to me I cannot receive 
-> anything from this list (I contacted the owner to sort out the 
-> problem). As I side note, for this very reason, I'll appreciate if you 
-> CC me whenever you answer to this mail, otherwise I might miss it. 
-> Thanks in advance.
->
-> I am using 2.6.33.7-rt30 (platform in arm/mach-ixp4xx ; distro is 
-> OpenWRT with 2.6.33.7 re-imported (it has been removed from OpenWRT)).
->
-> When I up a network interface with ifconfig, I systematically get the 
-> following error message in dmesg :
->
-> [   64.205417] BUG: sleeping function called from invalid context at 
-> kernel/rtmutex.c:707
-> [   64.205453] pcnt: 0 0 in_atomic(): 0, irqs_disabled(): 128, pid: 
-> 1047, name: ifconfig
-> [   64.205472] Backtrace:
-<snip>
+git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/jk-2.6.git    rt/2.6.33
 
-irqs_disabled() is the problem here. The RT kernel rightfully warn me 
-that I'm trying to sleep in a context where some interrupts are blocked.
+What follows is the commit-log
 
-> [   64.205689] [<c02de434>] (rt_spin_lock+0x0/0x64) from [<c0095908>] 
-> (kmem_cache_alloc+0x40/0x15c)
-> [   64.205711]  r4:c5bd1df0
-> [   64.205866] [<c01c811c>] (dev_alloc_skb+0x0/0x44) from [<bf0d9a88>] 
-> (do_dev_stop+0x11c/0x2e4 [ixp400_eth])
-> [   64.205909] [<bf0d9a60>] (do_dev_stop+0xf4/0x2e4 [ixp400_eth]) from 
-> [<bf0d9ba8>] (do_dev_stop+0x23c/0x2e4 [ixp400_eth])
-<snip>
+commit aac9a6b18a38b03f0d61a1b64c0a8762b6ad6a5f
+Merge: cbbe989 0413500
+Author: John Kacur <jkacur@redhat.com>
+Date:   Wed May 25 15:35:54 2011 +0200
 
-And the problem comes from the ixp400 ethernet driver (from intel ; 
-GPLv2, as clearly stated in the different code files, although the 
-module does not declare MODULE_LICENSE. I'm going to file a bug wrt 
-this, if I can find an Intel representative.
+    Merge commit 'v2.6.33.14' into rt/2.6.33
 
-The issue really lies in intel's driver architecture, which is not 
-PREEMPT-RT friendly. The driver maintains a list of skb, and this list 
-is used by an ISR. When maintenance tasks are run, the driver disable 
-IRQs to avoid concurrency issues. But then, it allocates memory using 
-dev_alloc_skb().
+    * commit 'v2.6.33.14': (23 commits)
+      Linux 2.6.33.14
+      vmxnet3: Fix inconsistent LRO state after initialization
+      megaraid_sas: Sanity check user supplied length before passing it to dma_a
+      x86, mce, AMD: Fix leaving freed data in a list
+      x86, apic: Fix spurious error interrupts triggering on all non-boot APs
+      tick: Clear broadcast active bit when switching to oneshot
+      clocksource: Install completely before selecting
+      x86, AMD: Fix ARAT feature setting again
+      Revert "x86, AMD: Fix APIC timer erratum 400 affecting K8 Rev.A-E processo
+      cifs: add fallback in is_path_accessible for old servers
+      fixes for using make 3.82
+      zorro8390: Fix regression caused during net_device_ops conversion
+      libertas: fix cmdpendingq locking
+      hydra: Fix regression caused during net_device_ops conversion
+      ne-h8300: Fix regression caused during net_device_ops conversion
+      NET: slip, fix ldisc->open retval
+      ehea: fix wrongly reported speed and port
+      CIFS: Fix memory over bound bug in cifs_parse_mount_options
+      dccp: handle invalid feature options length
+      ptrace: Prepare to fix racy accesses on task breakpoints
+      ...
 
-Since I'm not willing to modify intel's driver architecture, and I'm not 
-willing to modify the PREMPT-RT patch (as I will not have enough cycles 
-to test even the simplest change), my only solution is to let this 
-problem as it is. Not only the ixp400_eth driver has not been coded with 
-the RT patch in mind, but this BUG message does not prevent the system 
-to work correctly.
+    Conflicts:
+        Makefile
+        include/linux/sched.h
 
-Still, there is question for which I'd like to get an answer, and this 
-question is directly related to the code of __might_sleep() in 
-kernel/sched.c (when CONFIG_DEBUG_PREEMPT is defined):
-
-/* 10115 */ void __might_sleep(char *file, int line, int preempt_offset)
-/* 10116 */ {
-/* 10117 */ #ifdef in_atomic
-/* 10118 */     static unsigned long prev_jiffy;    /* ratelimiting */
-/* 10119 */
-/* 10120 */     if ((preempt_count_equals(preempt_offset) && 
-!irqs_disabled()) ||
-/* 10121 */         system_state != SYSTEM_RUNNING || oops_in_progress)
-/* 10122 */         return;
-/* 10123 */     if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
-/* 10124 */         return;
-/* 10125 */     prev_jiffy = jiffies;
-/* 10126 */
-/* 10127 */     printk(KERN_ERR
-/* 10128 */         "BUG: sleeping function called from invalid context 
-at %s:%d\n",
-<...snip...>
-/* 10139 */     dump_stack();
-/* 10140 */ #endif
-/* 10141 */ }
-/* 10142 */ EXPORT_SYMBOL(__might_sleep);
-
-(keep in mind that this is an OpenWRT version ; some patches (other than 
-the prempt-rt patch) might have been applied on this file, and the line 
-numbers might vary).
-
-My question is related to line 10120, and more precisely to the 
-!irqs_disabled() test. I understand that when IRQs are disabled, it's a 
-good idea to never sleep. But then, not all IRQs are equal - some arise 
-quite rarely, or might be OK with seeing themselves postponned. In other 
-words, only a limited set of interrupts are important enough to justify 
-such a behavior.
-
-Wouldn't it be better to check for these interrupts instead of checking 
-for *all* interrupts, as irqs_disabled() does ?
-
-Best regards,
-
--- Emmanuel Deloget
-
+    Signed-off-by: John Kacur <jkacur@redhat.com>
