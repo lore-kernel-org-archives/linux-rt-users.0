@@ -1,67 +1,46 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: merge of v2.6.33.14 with tip/rt/2.6.33
-Date: Wed, 25 May 2011 17:20:29 +0200
-Message-ID: <BANLkTin+PPqSSqwHgo0kE0T2m3k9EKasnA@mail.gmail.com>
+From: Johannes Bauer <hannes_bauer@aon.at>
+Subject: Interrupt latency!
+Date: Wed, 25 May 2011 22:47:32 +0200 (CEST)
+Message-ID: <23866677.16785.1306356452677.JavaMail.root@WARSBL213.highway.telekom.at>
+Reply-To: hannes_bauer@aon.at
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Carsten Emde <Carsten.Emde@osadl.org>, stable@kernel.org,
-	Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:43753 "EHLO
-	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757794Ab1EYPUa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 May 2011 11:20:30 -0400
+Received: from smtpout06.highway.telekom.at ([195.3.96.89]:65514 "EHLO
+	email.aon.at" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1754904Ab1EYUrg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 May 2011 16:47:36 -0400
+Received: from warsbl213-nfs.highway.telekom.at (HELO WARSBL213.highway.telekom.at) ([172.18.96.92])
+          (envelope-sender <hannes_bauer@aon.at>)
+          by smarthub97.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <linux-rt-users@vger.kernel.org>; 25 May 2011 20:47:33 -0000
+Received: from WARSBL213.highway.telekom.at (localhost.localdomain [127.0.0.1])
+	by WARSBL213.highway.telekom.at (8.13.1/8.13.1) with ESMTP id p4PKlW4H006157
+	for <linux-rt-users@vger.kernel.org>; Wed, 25 May 2011 22:47:32 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas
 
-I'm still doing some testing but I have merged v2.6.33.14 with my own
-v2.6.33.13-rt31 which ultimately comes from tip/rt/2.6.33
-I see that Carsten has also already done the same thing.
+Hello its me again!
 
-This can be fetched from
+yeah i am not sopping to ask question ;).
 
-git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/jk-2.6.git    rt/2.6.33
+I have read through a few papers regarding interrupt latency of the preempt-patch as this one
+http://lwn.net/images/conf/rtlws11/papers/proc/p19.pdf
 
-What follows is the commit-log
+The implementation seems to suggest that interrupt latencies of hard irqs (IRQF_NODELAY) should be better for preempt-rt.
 
-commit aac9a6b18a38b03f0d61a1b64c0a8762b6ad6a5f
-Merge: cbbe989 0413500
-Author: John Kacur <jkacur@redhat.com>
-Date:   Wed May 25 15:35:54 2011 +0200
+On my machine however it is worse than for CONFIG_PREEMPT_NONE.
 
-    Merge commit 'v2.6.33.14' into rt/2.6.33
+The userspace latency measured with cyclictest is much better for CONFIG_PREEMPT_RT then for CONFIG_PREEMPT_NONE.
 
-    * commit 'v2.6.33.14': (23 commits)
-      Linux 2.6.33.14
-      vmxnet3: Fix inconsistent LRO state after initialization
-      megaraid_sas: Sanity check user supplied length before passing it to dma_a
-      x86, mce, AMD: Fix leaving freed data in a list
-      x86, apic: Fix spurious error interrupts triggering on all non-boot APs
-      tick: Clear broadcast active bit when switching to oneshot
-      clocksource: Install completely before selecting
-      x86, AMD: Fix ARAT feature setting again
-      Revert "x86, AMD: Fix APIC timer erratum 400 affecting K8 Rev.A-E processo
-      cifs: add fallback in is_path_accessible for old servers
-      fixes for using make 3.82
-      zorro8390: Fix regression caused during net_device_ops conversion
-      libertas: fix cmdpendingq locking
-      hydra: Fix regression caused during net_device_ops conversion
-      ne-h8300: Fix regression caused during net_device_ops conversion
-      NET: slip, fix ldisc->open retval
-      ehea: fix wrongly reported speed and port
-      CIFS: Fix memory over bound bug in cifs_parse_mount_options
-      dccp: handle invalid feature options length
-      ptrace: Prepare to fix racy accesses on task breakpoints
-      ...
+The interrupt latency however (with IRQF_NODELAY) is worse than for  CONFIG_PREEMPT_NONE and the worst case is about 700us.
+This makes no sense to me, because the max user space latency is about 650us.
+How can it be possible that the irq latency is worse then userspace latency?
 
-    Conflicts:
-        Makefile
-        include/linux/sched.h
+I am on the loss here, and would highly appreciate any ideas, hints or ANYTHING.
 
-    Signed-off-by: John Kacur <jkacur@redhat.com>
+Thank you
+JB
