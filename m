@@ -1,65 +1,136 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Mark Hounschell <dmarkh@cfl.rr.com>
 Subject: Re: Changing Kernel thread priorities
-Date: Tue, 7 Jun 2011 10:43:43 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1106071041550.11814@ionos>
-References: <17185480.5304.1307435255996.JavaMail.root@WARSBL214.highway.tel ekom.at> <4DEDE232.4090007@unican.es>
+Date: Tue, 07 Jun 2011 05:14:39 -0400
+Message-ID: <4DEDEBFF.10907@cfl.rr.com>
+References: <4DEA1BA9.7020303@unican.es><4DEA1F22.6000603@unican.es><4DEA255				B.2050503@unican.es><4DECBE44.2070803@unican.es> 			<BANLkTi=xSJOgY735PE44YtkQmrdhgetGdQ@mail.gmail.com> 		<4DECC0DF.8070209@unican.es> <4DED051A.6020702@compro.net> <4DEDE411.6010807@unican.es>
+Reply-To: dmarkh@cfl.rr.com
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1939963718-1307436224=:11814"
-Cc: hannes_bauer@aon.at, Peter Zijlstra <peterz@infradead.org>,
-	Rolando Martins <rolando.martins@gmail.com>,
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: markh@compro.net, Rolando Martins <rolando.martins@gmail.com>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: Monica Puig-Pey <puigpeym@unican.es>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39258 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751368Ab1FGInr (ORCPT
+Received: from cdptpa-omtalb.mail.rr.com ([75.180.132.122]:59014 "EHLO
+	cdptpa-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752331Ab1FGJOm convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Jun 2011 04:43:47 -0400
-In-Reply-To: <4DEDE232.4090007@unican.es>
+	Tue, 7 Jun 2011 05:14:42 -0400
+In-Reply-To: <4DEDE411.6010807@unican.es>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On 06/07/2011 04:40 AM, Monica Puig-Pey wrote:
+> El 06/06/11 18:49, Mark Hounschell escribi=F3:
+>> On 06/06/2011 07:58 AM, Monica Puig-Pey wrote:
+>>> El 06/06/11 13:54, Rolando Martins escribi=F3:
+>>>> Hi,
+>>>> I use the following:
+>>>>
+>>>> PIDs=3D$(ps -eLo pid,cls,rtprio,pri,nice,cmd | grep -i "irq" | awk=
+ '{
+>>>> print $1; }' | xargs echo)
+>>>> for i in $PIDs
+>>>> do
+>>>> ret=3D$(chrt -f -p 99 $i)
+>>>> done
+>>>>
+>>>> This will change the kernel thread associated with an irq handler =
+to
+>>>> RT FIFO prio 99.
+>>>> Just change the script to your specific interrupt.
+>>>>
+>>>> Hope it helps,
+>>>> Rolando
+>>>>
+>>>> On Mon, Jun 6, 2011 at 12:47 PM, Monica Puig-Pey<puigpeym@unican.e=
+s>
+>>>> wrote:
+>>>>> I am writing a driver which has one kernel thread associated with=
+ it.
+>>>>> I want to change the priority of this thread, so that I can speci=
+fy the
+>>>>> order in which it is scheduled following an interrupt.
+>>>>> I'm using:
+>>>>>
+>>>>> sched_setscheduler(struct task_struct *, int, struct sched_param =
+*);
+>>>>>
+>>>>> but it doesn't work. I tried to change the priority from the
+>>>>> init_module,
+>>>>> and also from the Kernel Thread, but there is no way.
+>>>>>
+>>>>> Kernel version is 2.6.31-11-rt
+>>>>>
+>>>>> What do I call to change a kernel thread priority?
+>>>>>
+>>>>> Thanks you very much
+>>>>>
+>>>>> M=F3nica
+>>>>>
+>>>>> --
+>>>>> To unsubscribe from this list: send the line "unsubscribe
+>>>>> linux-rt-users" in
+>>>>> the body of a message to majordomo@vger.kernel.org
+>>>>> More majordomo info at http://vger.kernel.org/majordomo-info.html
+>>>>>
+>>>
+>>> I need to change the priority from inside the driver, when creating=
+ the
+>>> kernel thread.
+>>> Your script is useful but it is done in user context,
+>>> Any other help please?
+>>
+>> What I do is record the PID of the thread in the driver, then create=
+ an
+>> IOCTL for your driver that user land can call that either returns th=
+e
+>> PID so you can do it in user land, or cause the IOCTL code to do it =
+in
+>> the driver.
+>>
+>> The same can be done with the affinity of the IRQ if you record the =
+IRQ
+>> number.
+>>
+>> Mark
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe
+>> linux-rt-users" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at http://vger.kernel.org/majordomo-info.html
+>
+> But I don't have de PID of my Kthread, I only have the task_struc * t=
+hat
+> gives me the function:
+>
+> struct task_struct *kthread_create(int (*threadfn)(void *data),
+> void *data,
+> const char namefmt[], ...)
+>
+> How could I get the PID, and which function should I use in the IOCTL
+> (kernel context) for changing its priority?
+>
 
---8323328-1939963718-1307436224=:11814
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+The PID can be obtained from within the interrupt handler its self via=20
+current->pid.
+Obviously an interrupt has to occur first but after one interrupt you h=
+ave it.
 
-On Tue, 7 Jun 2011, Monica Puig-Pey wrote:
-> El 07/06/11 10:27, Johannes Bauer escribió:
-> > There's a reason all RT irq threads are started at 50, its plain
-> > impossible to do better.
-> > 
-> 
-> That's it!
-> If I work with embedded system where I know all my tasks running and there is
-> not a user how could I do it?
+Actually I had forgot how I handled this. Where I change the RT priorit=
+y=20
+and cpu affinity is in what used to be called the Bottom Half and the I=
+OCTL=20
+referred to above simply tells the BH to do it and with what values.
 
-init scripts run from user space and you can adjust the priority there.
- 
-> What I tried is create the kernel thread in my init_module using:
-> 
-> 	#include <linux/kthread.h>
-> 
-> 	struct task_struct *kthread_create(int (*threadfn)(void *data),
-> 				   void *data,
-> 				   const char namefmt[], ...)
-> and then running it with:
-> 
-> 	#include <linux/sched.h>
-> 	
-> 	extern int wake_up_process(struct task_struct *tsk);
-> 
-> These functions stars a Kthread which has a NON RT priority. I can see this
-> using the ps command from user space.
-> Because it's not a real time thread is why I want, better need, to change its
-> priority, to have only real time threads running in my driver. I want to use
-> the Kthread as a bottom half for the interrupts.
+Regards
+Mark
 
-Use threaded interrupt handlers. That's what they are made for.
 
-Thanks,
 
-	tglx
---8323328-1939963718-1307436224=:11814--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
