@@ -1,105 +1,79 @@
-From: Remy Bohmer <linux@bohmer.net>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: Changing Kernel thread priorities
-Date: Wed, 8 Jun 2011 19:50:24 +0200
-Message-ID: <BANLkTimYSEo4_3ecdEVaJxdME7n9=2Km8Q@mail.gmail.com>
-References: <17185480.5304.1307435255996.JavaMail.root@WARSBL214.highway.telekom.at>
-	<alpine.LFD.2.02.1106071033350.11814@ionos>
-	<4DEDF1F2.2080204@steinhoff.de>
-	<1307439469.2322.235.camel@twins>
-	<BANLkTi=KPyds_BWYpXHeUkAg000FGSuJOQ@mail.gmail.com>
-	<20110607233517.GA31794@opentech.at>
+Date: Wed, 8 Jun 2011 21:49:53 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1106082044040.11814@ionos>
+References: <17185480.5304.1307435255996.JavaMail.root@WARSBL214.highway.telekom.at> <alpine.LFD.2.02.1106071033350.11814@ionos> <4DEDF1F2.2080204@steinhoff.de> <1307439469.2322.235.camel@twins> <BANLkTi=KPyds_BWYpXHeUkAg000FGSuJOQ@mail.gmail.com>
+ <20110607233517.GA31794@opentech.at> <BANLkTimYSEo4_3ecdEVaJxdME7n9=2Km8Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Peter Zijlstra <peterz@infradead.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Armin Steinhoff <armin@steinhoff.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Johannes Bauer <hannes_bauer@aon.at>,
 	Monica Puig-Pey <puigpeym@unican.es>,
 	Rolando Martins <rolando.martins@gmail.com>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Nicholas Mc Guire <der.herr@hofr.at>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:56191 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755008Ab1FHRu0 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:49485 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752161Ab1FHTuH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Jun 2011 13:50:26 -0400
-In-Reply-To: <20110607233517.GA31794@opentech.at>
+	Wed, 8 Jun 2011 15:50:07 -0400
+In-Reply-To: <BANLkTimYSEo4_3ecdEVaJxdME7n9=2Km8Q@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, 8 Jun 2011, Remy Bohmer wrote:
+> In real life you may want, for EXAMPLE, this setup:
+> * prio 70: high priority motor control loop
+> * prio 60: network device irq
+> * prio 59: network softirqs
+> * prio 55: some realtime task depending on networkingstack
+> * prio 54: mass storage irq
+> * prio 53: block device softirq
+> * prio 52: some realtime task depending on mass-storage
+> * prio 50: all remaining irq threads
+> * prio 49: all remaining softirqs
+> 
+> Assume here you do a ifconfig down and ifconfig up, in the current
+> kernel behaviour you will see that the irq thread switches from prio
+> 60 to 50.
+> The irq-thread will become of a lower priority compared to its related
+> softirqs due to this reason, which can result in a complete die of
+> this network interface... even before it ever came back up again...
 
->> So, in that case and in many other hotplug cases, you ruin the RT
->> behaviour of the system just by the
->> default-50-is-probably-right-assumption of the kernel.
->> For systems where you have everything under control as a user/system
->> designer, hotplug can also be under control as well.
->>
->
-> I dont't quite see that - the 50 default is well dokumented so you can
-> plan it into the rt design at system level. It simply means that you
-> would need to put your hard-rt tasks in the range of 50<prio<99.
+Not really. If that's the case it needs to be investigated and
+fixed.
 
-This is another assumption as well. You assume here that any task
-bound to certain latencies must be above _all_ interrupt handlers, and
-tasks not bound to certain latencies must be set below _all_ interrupt
-handlers.
-In fact, in real life,  the prioritisation will be much more fine
-grained during runtime. One can have a RT task that depends on the
-networking stack, but not on mass-storage. In that case you want to
-move them out of the range of 50.
-The whole idea about threaded interrupts is, is that you can give them
-priorities such that they suit your specific application. It is
-therefore common practice that priorities does not stay at 49/50.
+> As mentioned before by Thomas, the configuration is a policy issue and
+> must be set from user-context. I understand what he means by that and
+> I agree, but there still has to be a mechanism to make the kernel
+> remember the configuration set by the user to prevent all kinds of
+> race conditions. You cannot demand from the user to run after
 
-In real life you may want, for EXAMPLE, this setup:
-* prio 70: high priority motor control loop
-* prio 60: network device irq
-* prio 59: network softirqs
-* prio 55: some realtime task depending on networkingstack
-* prio 54: mass storage irq
-* prio 53: block device softirq
-* prio 52: some realtime task depending on mass-storage
-* prio 50: all remaining irq threads
-* prio 49: all remaining softirqs
+Which race conditions?
 
-Assume here you do a ifconfig down and ifconfig up, in the current
-kernel behaviour you will see that the irq thread switches from prio
-60 to 50.
-The irq-thread will become of a lower priority compared to its related
-softirqs due to this reason, which can result in a complete die of
-this network interface... even before it ever came back up again...
+> executing a shell command like ifconfig or modprobe to run some sort
+> of init-script that repairs what the kernel assumed wrong. The wrong
+> assumptions the kernel does results in: deadlocks, priority inversion
+> issues between irq-threads and softirqs and realtime behaviour impact.
 
-As mentioned before by Thomas, the configuration is a policy issue and
-must be set from user-context. I understand what he means by that and
-I agree, but there still has to be a mechanism to make the kernel
-remember the configuration set by the user to prevent all kinds of
-race conditions. You cannot demand from the user to run after
-executing a shell command like ifconfig or modprobe to run some sort
-of init-script that repairs what the kernel assumed wrong. The wrong
-assumptions the kernel does results in: deadlocks, priority inversion
-issues between irq-threads and softirqs and realtime behaviour impact.
-Even UDEV cannot_fix_this_problem_ since it runs _after_ the kernel
-has set the wrong priorities of the irq threads and the problem it
-imposes already may have occurred.
+If you do an ifdown/up then your prio 55 task is totally irrelevant
+until the interface is back to full operation again, which includes
+setting the priority right.
 
-Setting the priorities right once is already complicated enough, it
-makes it far more complex if all kinds of race conditions and
-limitations need to be taken into account due to this mentioned
-auto-reset-to-50(-or-1)-assumptions of the kernel...
-True, there must be a safe default for booting, and 49/50 is good
-enough for that.
+There is another gotcha with your approach. It only ever works when
+the interrupt descriptors are static and not dynamically
+allocated/freed. If they are fully dynamic then you have no
+possibility to store the prio information after a full teardown of a
+device.
 
-So, you might disagree the way our patches to solve this problem are
-implemented, I can buy that, it is just at the level of 'works-for-me'
-. Since this discussion frequently appears back on the mailinglist
-makes clear that this _is_ an issue that is relevant. Instead of
-ignoring or denying this issue, we should figure out what is the
-_best_way_ to solve it.
-I hope to see great and constructive suggestions soon on this list, I
-am very willing to implement it :-)
+So moving the base priority down to 1 or 2 is probably the most
+sensible solution to avoid that a newly brought up interrupt thread
+interferes with anything in the rt domain and it's not rocket science
+to adjust the priority in a ifup.post or with an udev rule.
 
-Kind regards,
+Thanks,
 
-Remy
+	tglx
