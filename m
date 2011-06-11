@@ -1,66 +1,40 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: Changing Kernel thread priorities
-Date: Sat, 11 Jun 2011 19:16:51 +0200
-Message-ID: <BANLkTimCwRYi0YTcu1jyZO=6=yqHnBF3iA@mail.gmail.com>
-References: <17185480.5304.1307435255996.JavaMail.root@WARSBL214.highway.telekom.at>
-	<alpine.LFD.2.02.1106071033350.11814@ionos>
-	<4DEDF1F2.2080204@steinhoff.de>
-	<1307439469.2322.235.camel@twins>
-	<BANLkTi=KPyds_BWYpXHeUkAg000FGSuJOQ@mail.gmail.com>
-	<20110607233517.GA31794@opentech.at>
-	<BANLkTimYSEo4_3ecdEVaJxdME7n9=2Km8Q@mail.gmail.com>
-	<alpine.LFD.2.02.1106082044040.11814@ionos>
-	<BANLkTingXiRohBsaFbX9Jwr=Ba-ATqH4ag@mail.gmail.com>
-	<alpine.LFD.2.02.1106101728040.11814@ionos>
+From: Mark Knecht <markknecht@gmail.com>
+Subject: Re: newer rt-kernel?
+Date: Sat, 11 Jun 2011 11:00:39 -0700
+Message-ID: <BANLkTinbjh4SuODRqR0sQtE1y-G-sNmQiQ@mail.gmail.com>
+References: <4DF343B1.5030303@xs4all.nl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Armin Steinhoff <armin@steinhoff.de>,
-	Johannes Bauer <hannes_bauer@aon.at>,
-	Monica Puig-Pey <puigpeym@unican.es>,
-	Rolando Martins <rolando.martins@gmail.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Udo van den Heuvel <udovdh@xs4all.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:43032 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752506Ab1FKRjb (ORCPT
+Received: from mail-qw0-f46.google.com ([209.85.216.46]:43337 "EHLO
+	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751213Ab1FKSAk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 11 Jun 2011 13:39:31 -0400
-In-Reply-To: <alpine.LFD.2.02.1106101728040.11814@ionos>
+	Sat, 11 Jun 2011 14:00:40 -0400
+Received: by qwk3 with SMTP id 3so1722286qwk.19
+        for <linux-rt-users@vger.kernel.org>; Sat, 11 Jun 2011 11:00:39 -0700 (PDT)
+In-Reply-To: <4DF343B1.5030303@xs4all.nl>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-> No, it's not. The root cause was a problem with the network softirq
-> and a network driver, the softirq ->49 was a temporary workaround
-> until we had enough information to find the real root cause. I wish
-> I'd never committed that change at all.
-
-Clear. Did not know it was already solved. I thought it was still an
-issue. This changes things :-)
-
->> Race conditions that occur when a softirq preempts a related hardirq
->> what the driver did not expect or was designed for.
+On Sat, Jun 11, 2011 at 3:30 AM, Udo van den Heuvel <udovdh@xs4all.nl> wrote:
+> Hello,
 >
-> And making it the other way round hides the problem, which is even
-> worse. We want stuff to explode right away.
+> Where could I find newer rt-enabled kernels?
+>
+> Since upgrading to Fedora 15 I am confronted with systemd which doesn't
+> run well on the 2.6.33.9-rt31 kernel, or even the latest ccrma
+> rt-enabled kernel.
+> So how can we fix or at least circumvent this?
+>
+> Kind regards,
+> Udo
 
-100% Agreed
+There is, unfortunately, nothing newer.
 
-> You can run into the same
-> problem when the softirq holds a lock and the high prio irq thread
-> boosts it.
+Use  2.6.33.9-rt31 or try a newer, non-rt kernel and hope for good results.
 
-OK.
-
-Thanks for the explanation. I see no reason any more why setting the
-prios default to 1 would be a bad thing.
-The rest of the configuration in that case can then indeed done be
-done by udev and other userland friends.
-
-Kind regards,
-
-Remy
+HTH,
+Mark
