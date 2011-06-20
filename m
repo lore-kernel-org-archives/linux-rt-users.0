@@ -1,53 +1,49 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 2.6.33.9-rt31 boot problem
-Date: Wed, 15 Jun 2011 12:28:17 -0700
-Message-ID: <4DF907D1.1040008@localhost>
-References: <BANLkTiknsZhD2XHYoW4x2M8RfDku8righg@mail.gmail.com>	<4DF8F05A.6050203@localhost> <BANLkTikywL79BpXj44Ve24SbmwB1Wr1Ckg@mail.gmail.com>
+From: Monica Puig-Pey <puigpeym@unican.es>
+Subject: synchronization mechanisms
+Date: Mon, 20 Jun 2011 16:27:41 +0200
+Message-ID: <4DFF58DD.3040801@unican.es>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: dashesy <dashesy@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp3.Stanford.EDU ([171.67.219.83]:44474 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1752383Ab1FOT2Y (ORCPT
+Received: from ccserver2.unican.es ([130.206.5.101]:57984 "EHLO
+	ccserver2.unican.es" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753927Ab1FTO1q (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Jun 2011 15:28:24 -0400
-In-Reply-To: <BANLkTikywL79BpXj44Ve24SbmwB1Wr1Ckg@mail.gmail.com>
+	Mon, 20 Jun 2011 10:27:46 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/15/2011 12:18 PM, dashesy wrote:
-> On Wed, Jun 15, 2011 at 11:48 AM, Fernando Lopez-Lezcano
-> <nando@ccrma.stanford.edu>  wrote:
->> On 06/12/2011 09:21 AM, dashesy wrote:
->>>
->>> First, sorry for double post, I did not know if my email went through
->>> first time (maybe for large config file attached)
->>>
->>> Same machine 2.6.33.7.2-rt30 boots fine with Ubuntu and no problem at
->>> all, today I tried the new version with Fedora 15 but it crashes early
->>> in the boot process.
->>
->> A workaround in Fedora 15 (posted in another message to another list so you
->> may not have seen it) is to use upstart instead of systemd for startup
->> (systemd requires features only found on newer kernels).
->>
->> In the kernel boot line add "init=/sbin/upstart" and of course make sure you
->> have the upstart package installed.
->
-> Thanks for the reply,
-> Actually oops is much earlier than init, as you can see in the
-> attached boot.log I have "init=/bin/sh"
-> [    0.000000] Linux version 2.6.33.9-rt31 (ehsan@ehsan) (gcc version
-> 4.6.0 20110530 (Red Hat 4.6.0-9) (GCC) ) #3 SMP PREEMPT RT Wed Jun 8
-> 16:16:46 MDT 2011
->
-> [    0.000000] Command line: console=ttyS0 root=/dev/sda rw init=/bin/sh
 
-I see, yes (sorry I did not look at the log before), very very early... 
-don't know what to make of it, sorry...
+Hello!
+As I told you in previous questions I'm developing drivers using the=20
+2.6.31-11-rt patch under ubuntu 10.04.
+It is very important for me to know about which real time=20
+synchronization mechanisms do I have.
+I found the RT-mutexes, with priority inherintance, the plists (priorit=
+y=20
+lists) and now I'm looking for more information about semaphores. I=20
+haven't found anything relevant in the code that I could know that they=
+=20
+work well under real time, having a priority queue of tasks waiting on=20
+it. So I've made an easy example where I have 3 kernel threads with=20
+different priorities each (60,70,80) in the semaphore queue. Then I see=
+=20
+is always the most priority kthread who wakes up the first. Good! It=20
+seems to work as a RT semaphore!
+In my code I have an error. I can use down_interruptible but I can't us=
+e=20
+down_killable. Why is it?
+Could anybody give me some help about semaphores in the rt-patch and=20
+about any other synchronization mechanism thought for real time?
 
--- Fernando
+Thanks a lot
+
+M=F3nica
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
