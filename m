@@ -1,73 +1,102 @@
-From: "Mr Agabimr Opong " <roland.johnson29@ymail.com>
-Subject: VERY URGENY
-Date: Tue, 21 Jun 2011 4:21:05 -0000
-Message-ID: <20110621022105.D33F787481@osi.pl>
-Reply-To: "Mr Agabimr Opong " <roland.johnson29@ymail.com>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH] man page for pip_stress
+Date: Mon, 27 Jun 2011 14:41:48 +0200
+Message-ID: <1309178508-7392-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: undisclosed-recipients:;
+Cc: linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from osi.bmj.net.pl ([84.205.160.20]:60315 "EHLO osi.pl"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750702Ab1FUEAX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Jun 2011 00:00:23 -0400
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:37068 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753739Ab1F0Ml7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Jun 2011 08:41:59 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---
-Hello,
-
-
-
-I have received the cheque from bank three days a go and kept the chequ=
+The Debian package checker lintian criticizes that pip_stress doesn't h=
+ave a
+man page. So put a short version of the description from the source fil=
 e
-with Mr Franklin Owusu as we discussed.Please mail him immediately to s=
-end
-the cheque to you. I am in Coloumbia now. I kept USD100.000.00 cashier
-cheque and will send you the rest of money after my business trip here.=
- I
-send you so many mails but all bounced back.
+into a man page to make lintian happy.
 
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
+Hello Clark,
 
+you can pull this branch and the buffer overflow fix from
 
-So mail Mr Franklin Owusu with below email for him to send the cheque t=
-o
-you:(franklinowusu2010@hotmail.fr) Thanks and do let me know when  you
-receive it.
+	git://git.pengutronix.de/git/ukl/rt-tests.git for-clark
 
+Best regards
+Uwe
 
-1.FULL NAMES:______________________
-2.ADDRESS:____________ __________
-3.E-MAILADDRESS:_______________
-4.TELEPHONE NUMBER:___________________
+ Makefile                  |    1 +
+ src/pi_tests/pip_stress.8 |   25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+), 0 deletions(-)
+ create mode 100644 src/pi_tests/pip_stress.8
 
-
-Hoping to hear from you.
-Thanks and God bless you and your family.
-Mr Agabimr Opong
-
-
-
-
-
-
-
-_______________________________________________________________________=
-_
-
-Wiadomo=B6=E6 wya=B3ana za po=B6rednictwem serwisu osi.pl
-(OSI) BMJ Gliwice tel. 32 727-00-00, 32 727-02-65
-_______________________________________________________________________=
-_
-
-(Internet) Szybki i niezawodny -> http://bmj.pl/internet.html
-(Telefon) Tani telefon -> http://bmj.pl/telefon.html
-(Telewizja) Wszechstronna kompozycja -> http://bmj.pl/tv.html
-
-(Nowo=B6ci i promocje) -> http://bmj.pl/nowosci.html
-_______________________________________________________________________=
-_
+diff --git a/Makefile b/Makefile
+index 48bef8a..2dd065f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -122,6 +122,7 @@ install: all
+ 	gzip src/backfire/backfire.4 -c >"$(DESTDIR)$(mandir)/man4/backfire.4=
+=2Egz"
+ 	gzip src/cyclictest/cyclictest.8 -c >"$(DESTDIR)$(mandir)/man8/cyclic=
+test.8.gz"
+ 	gzip src/pi_tests/pi_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pi_stress=
+=2E8.gz"
++	gzip src/pi_tests/pip_stress.8 -c >"$(DESTDIR)$(mandir)/man8/pip_stre=
+ss.8.gz"
+ 	gzip src/hwlatdetect/hwlatdetect.8 -c >"$(DESTDIR)$(mandir)/man8/hwla=
+tdetect.8.gz"
+ 	gzip src/ptsematest/ptsematest.8 -c >"$(DESTDIR)$(mandir)/man8/ptsema=
+test.8.gz"
+ 	gzip src/sigwaittest/sigwaittest.8 -c >"$(DESTDIR)$(mandir)/man8/sigw=
+aittest.8.gz"
+diff --git a/src/pi_tests/pip_stress.8 b/src/pi_tests/pip_stress.8
+new file mode 100644
+index 0000000..b733335
+--- /dev/null
++++ b/src/pi_tests/pip_stress.8
+@@ -0,0 +1,25 @@
++.TH pip_stress 8 2011-06-24
++.SH NAME
++pip_stress \- test priority inheritance between processes
++.SH SYNOPSIS
++.B pip_stress
++.SH DESCRIPTION
++.B pip_stress
++creates a priority inversion using three processes and a priority inhe=
+ritance
++mutex shared via shared memory.
++All three processes are bound to run on the same cpu.
++The process with the lowest priority holds a mutex and is prempted by =
+the
++medium priority process that just runs an infinite loop.
++The third process with the highest priority tries to grab the mutex th=
+at is
++hold by the low prio process.
++As a priority inheritance mutex is used the low priority process lends=
+ the high
++priority process' priority to unlock the mutex and so stops the medium=
+ priority
++process blocking the high priority one.
++
++.B pip_stress
++doesn't take any options and quits as soon as the priority inversion i=
+s
++resolved which should happen instantly.
++
++.SH AUTHOR
++.B pip_stress
++was written by John Kacur <jkacur@redhat.com>.
+--=20
+1.7.5.4
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
