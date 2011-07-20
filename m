@@ -1,44 +1,53 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: David Kastrup <dak@gnu.org>
 Subject: Re: [ANNOUNCE] 3.0-rc7-rt0
-Date: Tue, 19 Jul 2011 22:03:15 -0700
-Message-ID: <20110720050315.GD2400@linux.vnet.ibm.com>
+Date: Wed, 20 Jul 2011 11:02:40 +0200
+Message-ID: <87hb6hpbnz.fsf@fencepost.gnu.org>
 References: <alpine.LFD.2.02.1107200153070.2702@ionos>
-Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Kumar Gala <galak@gate.crashing.org>,
-	Ralf Baechle <ralf@linux-mips.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e9.ny.us.ibm.com ([32.97.182.139]:44431 "EHLO e9.ny.us.ibm.com"
+Received: from lo.gmane.org ([80.91.229.12]:41446 "EHLO lo.gmane.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751296Ab1GTFDY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Jul 2011 01:03:24 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1107200153070.2702@ionos>
+	id S1751269Ab1GTJC5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Jul 2011 05:02:57 -0400
+Received: from list by lo.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1QjSgB-0006Dv-Dp
+	for linux-rt-users@vger.kernel.org; Wed, 20 Jul 2011 11:02:55 +0200
+Received: from p508e97c0.dip.t-dialin.net ([80.142.151.192])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 20 Jul 2011 11:02:55 +0200
+Received: from dak by p508e97c0.dip.t-dialin.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 20 Jul 2011 11:02:55 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jul 20, 2011 at 02:37:17AM +0200, Thomas Gleixner wrote:
-> Dear RT Folks,
-> 
-> I'm pleased to announce the first drop of the 3.0-rc7 based RT
-> patch.
+Thomas Gleixner <tglx@linutronix.de> writes:
 
-Very cool!!!
+> The overall patch size has shrunk significantly and the readability
+> (except for the missing changelogs in various patches) is at an
+> acceptable level.
 
-[ . . . ]
+Well, thanks for all the work.  I am actually already using per-irq
+threads and priorities on a 3.0-rc kernel (there is some boot option to
+enable them), and that helps for audio operation.
 
->    - Help with the RCU modifications
-> 
->      That's an easy one. We have a volunteer signed up for this
->      involuntarily already. Thanks Paul!
+It would be really great if realtime can move upstream completely
+eventually, and it looks like the current approach is a better match to
+the existing kernel, partly due to upstream improvements, partly through
+rewritten realtime code.
 
-As soon as I clean up the remaining v3.0 RCU wreckage.  ;-)
+The ongoing work seems very promising and seems to involve fewer
+compromises, boding well not just for the chances of getting merged
+upstream, but also of minimizing regressions compared to the
+non-realtime kernel.
 
-							Thanx, Paul
+Thanks!
+
+-- 
+David Kastrup
+
