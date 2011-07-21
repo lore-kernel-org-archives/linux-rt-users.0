@@ -1,122 +1,44 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.0-rc7-rt0
-Date: Thu, 21 Jul 2011 19:35:54 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1107211932440.2702@ionos>
-References: <1311265361.2323.6.camel@box>
+Date: Thu, 21 Jul 2011 19:43:28 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1107211942420.2702@ionos>
+References: <1311265361.2323.6.camel@box> <alpine.LFD.2.02.1107211932440.2702@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org
 To: hermann <brummer-@web.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:58984 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:60233 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752322Ab1GURf4 (ORCPT
+	with ESMTP id S1751678Ab1GURna (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Jul 2011 13:35:56 -0400
-In-Reply-To: <1311265361.2323.6.camel@box>
+	Thu, 21 Jul 2011 13:43:30 -0400
+In-Reply-To: <alpine.LFD.2.02.1107211932440.2702@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 21 Jul 2011, hermann wrote:
-> I try to build the 3.0-rc7-rt0 but fail with the following message:
->  CC [M]  fs/ext3/balloc.o
-> In file included from include/linux/jbd.h:247:0,
->                  from fs/ext3/balloc.c:18:
+On Thu, 21 Jul 2011, Thomas Gleixner wrote:
+> On Thu, 21 Jul 2011, hermann wrote:
+> > I try to build the 3.0-rc7-rt0 but fail with the following message:
+> >  CC [M]  fs/ext3/balloc.o
+> > In file included from include/linux/jbd.h:247:0,
+> >                  from fs/ext3/balloc.c:18:
+> 
+> Find below a patch on top of rt0 which fixes this build failure and
+> some other stuff.
 
-Find below a patch on top of rt0 which fixes this build failure and
-some other stuff.
+Bah, that's when you trust other peoples patches. It needs the
+following fix as well:
 
-Thanks,
-
-	tglx
-
------------
-
-Index: linux-2.6/kernel/timer.c
-===================================================================
---- linux-2.6.orig/kernel/timer.c
-+++ linux-2.6/kernel/timer.c
-@@ -654,6 +654,36 @@ static struct tvec_base *lock_timer_base
- 	}
- }
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+static inline struct tvec_base *switch_timer_base(struct timer_list *timer,
-+						  struct tvec_base *old,
-+						  struct tvec_base *new)
-+{
-+	/* See the comment in lock_timer_base() */
-+	timer_set_base(timer, NULL);
-+	spin_unlock(&old->lock);
-+	spin_lock(&new->lock);
-+	timer_set_base(timer, new);
-+	return new;
-+}
-+#else
-+static inline struct tvec_base *switch_timer_base(struct timer_list *timer,
-+						  struct tvec_base *old,
-+						  struct tvec_base *new)
-+{
-+	/*
-+	 * We cannot do the above because we might be preempted and
-+	 * then the preempter would see NULL and loop forever.
-+	 */
-+	if (spin_trylock(&new->lock)) {
-+		timer_set_base(timer, new);
-+		spin_unlock(&old->lock);
-+		return new;
-+	}
-+	return old;
-+}
-+#endif
-+
- static inline int
- __mod_timer(struct timer_list *timer, unsigned long expires,
- 						bool pending_only, int pinned)
-@@ -699,14 +729,8 @@ __mod_timer(struct timer_list *timer, un
- 		 * handler yet has not finished. This also guarantees that
- 		 * the timer is serialized wrt itself.
- 		 */
--		if (likely(base->running_timer != timer)) {
--			/* See the comment in lock_timer_base() */
--			timer_set_base(timer, NULL);
--			spin_unlock(&base->lock);
--			base = new_base;
--			spin_lock(&base->lock);
--			timer_set_base(timer, base);
--		}
-+		if (likely(base->running_timer != timer))
-+			base = switch_timer_base(timer, base, new_base);
- 	}
- 
- 	timer->expires = expires;
-Index: linux-2.6/mm/page_alloc.c
-===================================================================
---- linux-2.6.orig/mm/page_alloc.c
-+++ linux-2.6/mm/page_alloc.c
-@@ -1943,8 +1943,8 @@ __alloc_pages_direct_compact(gfp_t gfp_m
- 	if (*did_some_progress != COMPACT_SKIPPED) {
- 
- 		/* Page migration frees to the PCP lists but we want merging */
--		drain_pages(get_cpu());
--		put_cpu();
-+		drain_pages(get_cpu_light());
-+		put_cpu_light();
- 
- 		page = get_page_from_freelist(gfp_mask, nodemask,
- 				order, zonelist, high_zoneidx,
-Index: linux-2.6/include/linux/buffer_head.h
-===================================================================
 --- linux-2.6.orig/include/linux/buffer_head.h
 +++ linux-2.6/include/linux/buffer_head.h
-@@ -74,7 +74,9 @@ struct buffer_head {
- 	atomic_t b_count;		/* users using this buffer_head */
+@@ -109,7 +111,8 @@ static inline void buffer_head_init_lock
+ {
  #ifdef CONFIG_PREEMPT_RT_BASE
- 	spinlock_t b_uptodate_lock;
+ 	spin_lock_init(&bh->b_uptodate_lock);
 -#if defined(CONFIG_JBD) || defined(CONFIG_JBD2)
 +#if defined(CONFIG_JBD) || defined(CONFIG_JBD_MODULE) || \
 +    defined(CONFIG_JBD2) || defined(CONFIG_JBD2_MODULE)
-+	spinlock_t b_state_lock;
- 	spinlock_t b_state_lock;
- 	spinlock_t b_journal_head_lock;
+ 	spin_lock_init(&bh->b_state_lock);
+ 	spin_lock_init(&bh->b_journal_head_lock);
  #endif
