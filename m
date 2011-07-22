@@ -1,69 +1,60 @@
-From: Rolando Martins <rolando.martins@gmail.com>
-Subject: Re: [ANNOUNCE] 3.0-rt1
-Date: Fri, 22 Jul 2011 23:51:21 +0100
-Message-ID: <CABcS5h01jpOSKcKtrJ65AqNNQDCAOutQADAE_pcRp-MPBoO-VA@mail.gmail.com>
-References: <alpine.LFD.2.02.1107222203400.2702@ionos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1107222203400.2702@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Subject: Re: [PATCH] rtc-tegra: properly initialize spinlock
+Date: Fri, 22 Jul 2011 16:19:19 -0700
+Message-ID: <58E25CAF-EAC4-4613-81B2-D713F5DC8CEF@gmail.com>
+References: <1311323756-18013-1-git-send-email-u.kleine-koenig@pengutronix.de> <20110722151338.9b1e9594.akpm@linux-foundation.org>
+Mime-Version: 1.0 (Apple Message framework v1244.3)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Cc: =?iso-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>, Andrew Chew <achew@nvidia.com>,
+	linux-rt-users@vger.kernel.org,
+	Alessandro Zummo <a.zummo@towertech.it>,
+	linux-kernel@vger.kernel.org, jkastner@redhat.com
+To: Andrew Morton <akpm@linux-foundation.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pz0-f42.google.com ([209.85.210.42]:34784 "EHLO
+	mail-pz0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750780Ab1GVXT1 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jul 2011 19:19:27 -0400
+In-Reply-To: <20110722151338.9b1e9594.akpm@linux-foundation.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Thanks for the great work!
 
-Is it possible to have RT_GROUP_SCHED and PREEMPT_RT_FULL?
+On Jul 22, 2011, at 3:13 PM, Andrew Morton wrote:
 
-Thanks.
-Rolando Martins
+> On Fri, 22 Jul 2011 10:35:56 +0200
+> Uwe Kleine-K__nig <u.kleine-koenig@pengutronix.de> wrote:
+> 
+>> Using __SPIN_LOCK_UNLOCKED for a dynamically allocated lock is wrong and
+>> breaks with PREEMPT_RT_FULL.
+> 
+> Please define "breaks".  Lockdep warnings?  Deadlocks?
 
+Narrr, I think its a compile-time problem with the static initializer.
 
-On Fri, Jul 22, 2011 at 9:37 PM, Thomas Gleixner <tglx@linutronix.de> w=
-rote:
-> Dear RT Folks,
->
-> I'm pleased to announce the 3.0-rt1 release.
->
-> Changes versus 3.0-rc7-rt0:
->
-> =A0* Update to Linus final 3.0 release
->
-> =A0* RTC bugfixes (scheduled for mainline/stable)
->
-> =A0* Long standing (rt only) timer_list bug (see
-> =A0 =A0timers-avoid-the-base-null-otptimization-on-rt.patch in the sp=
-lit
-> =A0 =A0out quilt queue)
->
-> =A0* Minor non exciting fixes all over the place
->
-> Known issues:
->
-> =A0* Some weird "console=3D..." commandline + config dependent
-> =A0 =A0interactions which have been not yet investigated down to thei=
-r
-> =A0 =A0root cause. Result in a boot hang. YMMV
->
-> Patch against 3.0 can be found here:
->
-> =A0http://www.kernel.org/pub/linux/kernel/projects/rt/patch-3.0-rt1.p=
-atch.bz2
->
-> The split quilt queue is available at:
->
-> =A0http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0-rt1=
-=2Etar.bz2
->
-> Thanks,
->
-> =A0 =A0 =A0 =A0tglx
+Sven
+
+> 
+>> diff --git a/drivers/rtc/rtc-tegra.c b/drivers/rtc/rtc-tegra.c
+>> index 2fc31aa..75259fe 100644
+>> --- a/drivers/rtc/rtc-tegra.c
+>> +++ b/drivers/rtc/rtc-tegra.c
+>> @@ -343,7 +343,7 @@ static int __devinit tegra_rtc_probe(struct platform_device *pdev)
+>> 
+>> 	/* set context info. */
+>> 	info->pdev = pdev;
+>> -	info->tegra_rtc_lock = __SPIN_LOCK_UNLOCKED(info->tegra_rtc_lock);
+>> +	spin_lock_init(&info->tegra_rtc_lock);
+>> 
+>> 	platform_set_drvdata(pdev, info);
+>> 
+>> -- 
+>> 1.7.5.4
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
