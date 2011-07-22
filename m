@@ -1,71 +1,60 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: On migrate_disable() and latencies
-Date: Fri, 22 Jul 2011 12:49:58 +0200
-Message-ID: <1311331798.27400.28.camel@twins>
-References: <1311329992.27400.23.camel@twins>
+From: Rusty Russell <rusty@rustcorp.com.au>
+Subject: Re: [PATCH] Various fixups from first bug reports
+Date: Fri, 22 Jul 2011 20:34:59 +0930
+Message-ID: <87y5zqzick.fsf@rustcorp.com.au>
+References: <alpine.LFD.2.02.1107211932440.2702@ionos> <1311278277-8222-1-git-send-email-u.kleine-koenig@pengutronix.de> <1311313414.2940.8.camel@box> <20110722065711.GD16561@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Kumar Gala <galak@gate.crashing.org>,
-	Ralf Baechle <ralf@linux-mips.org>,
-	rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1311329992.27400.23.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Grant Likely <grant.likely@secretlab.ca>,
+	devicetree-discuss@lists.ozlabs.org, lguest@lists.ozlabs.org
+To: Uwe =?utf-8?Q?Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>, hermann <brummer-@web.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ozlabs.org ([203.10.76.45]:56353 "EHLO ozlabs.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753637Ab1GVLno convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jul 2011 07:43:44 -0400
+In-Reply-To: <20110722065711.GD16561@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-07-22 at 12:19 +0200, Peter Zijlstra wrote:
-> On Wed, 2011-07-20 at 02:37 +0200, Thomas Gleixner wrote:
-> >    - Twist your brain around the schedulability impact of the
-> >      migrate_disable() approach.
-> > 
-> >      A really interesting research topic for our friends from the
-> >      academic universe. Relevant and conclusive (even short notice)
-> >      papers and/or talks on that topic have a reserved slot in the
-> >      Kernel developers track at the Realtime Linux Workshop in Prague
-> >      in October this year. 
-> 
-> From what I can tell it can induce a latency in the order of
-> max-migrate-disable-period * nr-cpus.
-> 
-> The scenario is on where you stack N migrate-disable tasks on a run
-> queue (necessarily of increasing priority). Doing this requires all cpus
-> in the system to be as busy, for otherwise the task would simply be
-> moved to another cpu.
+On Fri, 22 Jul 2011 08:57:11 +0200, Uwe Kleine-K=C3=B6nig <u.kleine-koe=
+nig@pengutronix.de> wrote:
+> Hello,
+>=20
+> (These two issues occured on 3.0-rc7-rt0, I think they apply to
+> mainline, too.)
+>=20
+> On Fri, Jul 22, 2011 at 07:43:34AM +0200, hermann wrote:
+> > well, I run into 2 ops, witch, I guess not related to the rt patch.
+> >=20
+> > first one was with CONFIG_SENSORS_LTC4245, module build stage 2 fai=
+led
+> > with undefined reference to of_find_property
+> of_find_property isn't exported to modules. Maybe of_get_property sho=
+uld
+> be used? Should of_find_property be static then? Alternatively export
+> of_find_property, too. Grant?
+>=20
+> > second was with CONFIG_LGUEST_GUEST enabled, module build stage 2 f=
+ailed
+> > with Documentation/lguest not found
+> Hmm, there is Documentation/virtual/lguest. Didn't find where
+> Documentation/lguest is used from a quick look. Rusty?
 
-This implies it requires at least nr-cpus^2 tasks to pull this off. So
-if you want to add the nr-tasks constraint the actual limit is something
-like:
+No, it's not compiled from the kernel build, at least in mainline...
 
-   max-migrate-disable-period * min(nr-cpus, nr-tasks / nr_cpus);
+If it is in the -r tree, you need to
+s,Documentation/lguest,Documentation/virtual/lguest, as it has moved.
 
-> Anyway, once you manage to stack these migrate-disable tasks, all other
-> tasks go to sleep, leaving a vacuum. Normally we would migrate tasks to
-> fill the vacuum left by the tasks going to sleep, but clearly
-> migrate-disable prohibits this.
-> 
-> So we have this stack of migrate-disable tasks and M-1 idle cpus (loss
-> of utilization). Now it takes the length of the migrate-disable region
-> of the highest priority task on the stack (the one running) to complete
-> and enable migration again. This will instantly move the task away to an
-> idle cpu. This will then need to happen min(N-1, M-1) times before the
-> lowest priority migrate_disable task can run again or all cpus are busy.
-> 
-> Therefore the worst case latency is in the order of
-> max-migrate-disable-period * nr-cpus.
-> 
-> Currently we have no means of measuring these latencies, this is
-> something we need to grow, I think Steven can fairly easy craft a
-> migrate_disable runtime tracer -- it needs to use t->se.sum_exec_runtime
-> for measure so as to only count the actual time spend on the task and
-> ignore any time it was blocked.
-> 
-> Once we have this, its back to the old game of 'lock'-breaking.
-> 
-> 
+Cheers,
+Rusty.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
