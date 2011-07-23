@@ -1,60 +1,51 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] Various fixups from first bug reports
-Date: Sat, 23 Jul 2011 20:53:04 +0200
-Message-ID: <20110723185304.GJ16561@pengutronix.de>
-References: <alpine.LFD.2.02.1107211932440.2702@ionos>
- <1311278277-8222-1-git-send-email-u.kleine-koenig@pengutronix.de>
- <1311313414.2940.8.camel@box>
- <20110722065711.GD16561@pengutronix.de>
- <87y5zqzick.fsf@rustcorp.com.au>
- <20110722192051.GH16561@pengutronix.de>
- <1311391059.2343.8.camel@box>
- <4E2A9B18.6030000@gareus.org>
- <1311430753.2223.5.camel@box>
+From: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Subject: Re: [ANNOUNCE] 3.0-rt1
+Date: Sat, 23 Jul 2011 22:02:14 +0200
+Message-ID: <4E2B28C6.2050806@gmail.com>
+References: <alpine.LFD.2.02.1107222203400.2702@ionos> <4E2A1E75.4070709@gmail.com> <3E6C10F4-B619-4DBF-9EF3-F7B3EDF53608@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Robin Gareus <robin@gareus.org>,
-	Rusty Russell <rusty@rustcorp.com.au>,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Grant Likely <grant.likely@secretlab.ca>,
-	devicetree-discuss@lists.ozlabs.org, lguest@lists.ozlabs.org
-To: hermann <brummer-@web.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:51205 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753265Ab1GWSxJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Jul 2011 14:53:09 -0400
-Content-Disposition: inline
-In-Reply-To: <1311430753.2223.5.camel@box>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3E6C10F4-B619-4DBF-9EF3-F7B3EDF53608@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+Hi Dietrich,
 
-On Sat, Jul 23, 2011 at 04:19:13PM +0200, hermann wrote:
-> Am Samstag, den 23.07.2011, 11:57 +0200 schrieb Robin Gareus:
-> Yes, using make-kpkg. I changed line 61 from=20
-there is an alternative,
+On 07/23/2011 08:57 PM, Sven-Thorsten Dietrich wrote:
+> On Jul 22, 2011, at 6:05 PM, Maarten Lankhorst wrote:
+>
+>> On 07/22/2011 10:37 PM, Thomas Gleixner wrote:
+>>> Dear RT Folks,
+>>>
+>>> I'm pleased to announce the 3.0-rt1 release.
+>>>
+>>> Changes versus 3.0-rc7-rt0:
+>>>
+>>>  * Update to Linus final 3.0 release
+>>>
+>>>  * RTC bugfixes (scheduled for mainline/stable)
+>>>
+>>>  * Long standing (rt only) timer_list bug (see
+>>>    timers-avoid-the-base-null-otptimization-on-rt.patch in the split
+>>>    out quilt queue)
+>>>
+>>>  * Minor non exciting fixes all over the place
+>>>
+>>> Known issues:
+>>>
+>>>  * Some weird "console=..." commandline + config dependent
+>>>    interactions which have been not yet investigated down to their
+>>>    root cause. Result in a boot hang. YMMV
+>> Sweet, works here :)
+>>
+>> Only the nvidia driver fails to build because of rtmutex and migrate enable/disable being GPL only, you might want to reconsider the GPL only status of them.
+> Can you reconsider using nVidia ?
+You see, I've been living two lives. In one life, I'm Maarten B Lankhorst. I work on wine, and since a week or so I've been working on nouveau. And I... help fix kernel bugs that I'm affected by. My other life is in computers, where I go by the hacker alias ROFLGAMER, participating actively in computer simulated environments and am playing graphic intensive games using wine. Unfortunately when I do that I just want things to work, nouveau keeps getting better all the time, but wine's d3d is a lot more tested with the nvidia blob. ;)
 
-	make deb-pkg
-
-in the vanilla kernel. Depending on why you use make-kpkg it might be
-worth a try.
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+~Maarten
