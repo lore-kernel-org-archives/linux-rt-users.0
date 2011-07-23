@@ -1,57 +1,60 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.0-rt2
-Date: Sat, 23 Jul 2011 19:41:53 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1107231936400.2702@ionos>
-References: <alpine.LFD.2.02.1107231706380.2702@ionos> <201107231317.05234.edt@aei.ca> <201107231334.23216.edt@aei.ca>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [PATCH] Various fixups from first bug reports
+Date: Sat, 23 Jul 2011 20:53:04 +0200
+Message-ID: <20110723185304.GJ16561@pengutronix.de>
+References: <alpine.LFD.2.02.1107211932440.2702@ionos>
+ <1311278277-8222-1-git-send-email-u.kleine-koenig@pengutronix.de>
+ <1311313414.2940.8.camel@box>
+ <20110722065711.GD16561@pengutronix.de>
+ <87y5zqzick.fsf@rustcorp.com.au>
+ <20110722192051.GH16561@pengutronix.de>
+ <1311391059.2343.8.camel@box>
+ <4E2A9B18.6030000@gareus.org>
+ <1311430753.2223.5.camel@box>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ed Tomlinson <edt@aei.ca>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Robin Gareus <robin@gareus.org>,
+	Rusty Russell <rusty@rustcorp.com.au>,
+	linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Grant Likely <grant.likely@secretlab.ca>,
+	devicetree-discuss@lists.ozlabs.org, lguest@lists.ozlabs.org
+To: hermann <brummer-@web.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:41915 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753100Ab1GWRlz (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:51205 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753265Ab1GWSxJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Jul 2011 13:41:55 -0400
-In-Reply-To: <201107231334.23216.edt@aei.ca>
+	Sat, 23 Jul 2011 14:53:09 -0400
+Content-Disposition: inline
+In-Reply-To: <1311430753.2223.5.camel@box>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 23 Jul 2011, Ed Tomlinson wrote:
+Hello,
 
-> On Saturday 23 July 2011 13:17:04 Ed Tomlinson wrote:
-> > On Saturday 23 July 2011 11:13:30 Thomas Gleixner wrote:
-> > > I'm pleased to announce the 3.0-rt2 release.
-> > > 
-> > > Changes versus 3.0-rt1:
-> > > 
-> > >   * mqueue fix (Yoshitake Kobayashi)
-> > > 
-> > >   * dca locking fix (Mike Galbraith)
-> > > 
-> > >   * trace updates (Carsten Emde)
-> > > 
-> > >   * Fixed vprintk wreckage and rcutorture (tglx)
-> > > 
-> > > Known issues:
-> > > 
-> > >   * Some weird "console=..." commandline + config dependent
-> > >     interactions which have been not yet investigated down to their
-> > >     root cause. Result in a boot hang. YMMV
-> 
-> Got this warning too.  Was a change was missed?
-> 
-> [  364.392603] NOHZ: local_softirq_pending 08
+On Sat, Jul 23, 2011 at 04:19:13PM +0200, hermann wrote:
+> Am Samstag, den 23.07.2011, 11:57 +0200 schrieb Robin Gareus:
+> Yes, using make-kpkg. I changed line 61 from=20
+there is an alternative,
 
-Forgot to disable NOHZ for now, have not yet had time to investigate
-that local_softirq_pending warning.
+	make deb-pkg
 
-> [  905.155441] WARNING: at kernel/trace/trace.c:2729 tracing_ctrl_write+0x203/0x220()
-> [  905.155447] Hardware name: System Product Name
-> [  905.155452] tracing_enabled is deprecated. Use tracing_on
+in the vanilla kernel. Depending on why you use make-kpkg it might be
+worth a try.
 
-     		 ^^^^
-Thanks,
+Best regards
+Uwe
 
-	tglx
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
