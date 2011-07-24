@@ -1,42 +1,36 @@
-From: hermann <brummer-@web.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.0-rt3
-Date: Sun, 24 Jul 2011 18:42:36 +0200
-Message-ID: <1311525756.2276.6.camel@box>
-References: <alpine.LFD.2.02.1107241223560.2702@ionos>
-	 <4E2C2ED6.4040904@gmail.com>  <alpine.LFD.2.02.1107241807390.3136@ionos>
+Date: Sun, 24 Jul 2011 18:44:11 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1107241843180.3136@ionos>
+References: <alpine.LFD.2.02.1107241223560.2702@ionos>  <4E2C2ED6.4040904@gmail.com>  <alpine.LFD.2.02.1107241807390.3136@ionos> <1311525756.2276.6.camel@box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Maarten Lankhorst <m.b.lankhorst@gmail.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Darren Hart <dvhart@linux.intel.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1107241807390.3136@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: hermann <brummer-@web.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:35833 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751116Ab1GXQoN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 24 Jul 2011 12:44:13 -0400
+In-Reply-To: <1311525756.2276.6.camel@box>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
- schrieb Thomas Gleixner:
+On Sun, 24 Jul 2011, hermann wrote:
+> I still have some trouble with rt1 - rt3. 
+> During boot, the kernel is absolutely silent, sometimes it hangs on boot,
+> sometimes it hangs on login, sometimes it freeze without any known reason 
+> during session (no heavy load or some thing like that).
+> I cant find any meaningful log, so I just can report it as it is here.
+> rc7-rt0 works very well here, I build 3.0-rt1 - rt3 with the same config 
+> then rt0.
 
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.0-rt3 release.
-> 
-> Changes versus 3.0-rt2:
-> 
->   * Fix earlyprintk really
-> 
+Hmm, can you please provide your .config and a demsg from a rc7-rt0 boot?
 
-Hi
+Thanks,
 
-I still have some trouble with rt1 - rt3. 
-During boot, the kernel is absolutely silent, sometimes it hangs on boot,
-sometimes it hangs on login, sometimes it freeze without any known reason 
-during session (no heavy load or some thing like that).
-I cant find any meaningful log, so I just can report it as it is here.
-rc7-rt0 works very well here, I build 3.0-rt1 - rt3 with the same config 
-then rt0.
-
-regards
-hermann
+	tglx
