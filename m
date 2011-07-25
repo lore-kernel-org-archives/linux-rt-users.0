@@ -1,121 +1,61 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: On migrate_disable() and latencies
-Date: Mon, 25 Jul 2011 14:17:06 -0700
-Message-ID: <20110725211706.GT2327@linux.vnet.ibm.com>
-References: <1311329992.27400.23.camel@twins>
- <20110723003934.GP2382@linux.vnet.ibm.com>
- <1311582653.2617.49.camel@laptop>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: [ANNOUNCE] 3.0-rt3
+Date: Mon, 25 Jul 2011 15:20:10 -0700
+Message-ID: <4E2DEC1A.5070109@linux.intel.com>
+References: <alpine.LFD.2.02.1107241223560.2702@ionos> <4E2C2ED6.4040904@gmail.com> <alpine.LFD.2.02.1107241807390.3136@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Maarten Lankhorst <m.b.lankhorst@gmail.com>,
 	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Kumar Gala <galak@gate.crashing.org>,
-	Ralf Baechle <ralf@linux-mips.org>,
-	rostedt <rostedt@goodmis.org>
-To: Peter Zijlstra <peterz@infradead.org>
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e8.ny.us.ibm.com ([32.97.182.138]:33072 "EHLO e8.ny.us.ibm.com"
+Received: from mga09.intel.com ([134.134.136.24]:54963 "EHLO mga09.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751772Ab1GYVRL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jul 2011 17:17:11 -0400
-Content-Disposition: inline
-In-Reply-To: <1311582653.2617.49.camel@laptop>
+	id S1751214Ab1GYWTz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jul 2011 18:19:55 -0400
+In-Reply-To: <alpine.LFD.2.02.1107241807390.3136@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Jul 25, 2011 at 10:30:53AM +0200, Peter Zijlstra wrote:
-> On Fri, 2011-07-22 at 17:39 -0700, Paul E. McKenney wrote:
-> > > Therefore the worst case latency is in the order of
-> > > max-migrate-disable-period * nr-cpus.
-> > 
-> > OK, but wouldn't that be the latency as seen be the lowest-priority
-> > task?  
+
+
+On 07/24/2011 09:12 AM, Thomas Gleixner wrote:
+> On Sun, 24 Jul 2011, Maarten Lankhorst wrote:
+
+...
+
+>> Also not sure where this one came from:
+>> [   37.456688] BUG: spinlock bad magic on CPU#3, threaded-ml/1619
+>> [   37.456690]  lock: ffff8801fdc74d50, .magic: 00000000, .owner: <none>/-1, .owner_cpu: 0
+>> [   37.456692] Pid: 1619, comm: threaded-ml Tainted: G         C  3.0.0-rt3-patser+ #39
+>> [   37.456693] Call Trace:
+>> [   37.456697]  [<ffffffff81607a78>] spin_bug+0xa0/0xa8
+>> [   37.456699]  [<ffffffff8132b412>] do_raw_spin_lock+0xa2/0x170
+>> [   37.456702]  [<ffffffff8104a201>] ? get_parent_ip+0x11/0x50
+>> [   37.456704]  [<ffffffff8160d783>] _raw_spin_lock+0x23/0x30
+>> [   37.456706]  [<ffffffff810931ce>] rt_mutex_start_proxy_lock+0x2e/0xd0
+>> [   37.456708]  [<ffffffff8109093a>] futex_requeue+0x47a/0x850
+>> [   37.456710]  [<ffffffff8109138e>] do_futex+0xae/0xb00
+>> [   37.456712]  [<ffffffff81157dcd>] ? fget_light+0x6d/0x110
+>> [   37.456714]  [<ffffffff810b77b7>] ? audit_syscall_entry+0x2e7/0x310
+>> [   37.456715]  [<ffffffff814c9375>] ? sys_recvmsg+0x75/0x90
+>> [   37.456717]  [<ffffffff810923e6>] compat_sys_futex+0xf6/0x190
+>> [   37.456719]  [<ffffffff8100e864>] ? syscall_trace_enter+0x184/0x210
+>> [   37.456721]  [<ffffffff816158b3>] ia32_do_call+0x13/0x13
 > 
-> It would indeed, the utility loss is added to the preemption cost of the
-> lower priority tasks.
-
-OK.
-
-> > Or are migrate-disable tasks given preferential treatment?
-> > If not, a prio-99 task would get the same latency either way, right?
+> Urrgh, that's not a good one. Darren, can you please have a look at that?
 > 
-> Right.
-> 
-> > Migration-disable can magnify the latency seen by low-priority tasks, if
-> > I understand correctly.  If you disabled preemption, when a low-priority
-> > task became runnable, it would find an idle CPU.  But with migration
-> > disable, the lowest-priority task might enter a migration-disable region,
-> > then be preempted by a marginally higher-priority task that also enters
-> > a migration-diable region, and is also preempted, and so on.  The
-> > lowest-priority task cannot run on the current CPU because of all
-> > the higher-priority tasks, and cannot migrate due to being in a
-> > migration-disable section.
-> 
-> Exactly so.
-> 
-> > In other words, as is often the case, better worst-case service to
-> > the high-priority tasks can multiply the latency seen by the
-> > low-priority tasks.
-> > 
-> > So is the topic to quantify this?  
-> 
-> I suppose it is indeed. Even for the SoftRT case we need to make sure
-> the total utilization loss is indeed acceptable.
 
-OK.  If you are doing strict priority, then everything below the highest
-priority is workload dependent.  OK, OK, given Linux's throttling,
-everything below the two highest priorities is workload dependent
-(assuming I understand the throttling correctly).  The higher-priority
-tasks can absolutely starve the lower-priority ones, with or without
-the migrate-disable capability.
+Will do.
 
-Another way of looking at it is from the viewpoint of the additional
-priority-boost events.  If preemption is disabled, the low-priority task
-will execute through the preempt-disable region without context switching.
-In contrast, given a migration-disable region, the low-priority task
-might be preempted and then boosted.  (If I understand correctly, if some
-higher-priority task tries to enter the same type of migration-disable
-region, it will acquire the associated lock, thus priority-boosting the
-task that is already in that region.)
+Maarten, what are you running when you hit this?
+rt_mutex_start_proxy_lock() is only called by the requeue_pi code and
+there is no libc support for that yet, so I'm surprised to see that in
+the stack trace (unless you're running my futextest suite).
 
-One stupid-but-tractable way to model this is to have an interarrival
-rate for the various process priorities, and then calculate the odds of
-(1) a higher priority process arriving while the low-priority one is
-in a *-disable region and (2) that higher priority process needing to
-enter a conflicting *-disable region.  This would give you some measure
-of the added boosting load due to migration-disable as compared to
-preemption-disable.
-
-Would this sort of result be useful?
-
-> > If so, my take is that the latency
-> > to the highest-priority task decreases by an amount roughly equal to
-> > the duration of the longest preempt_disable() region that turned into a
-> > migration-disable region, while that to the lowest-priority task increases
-> > by N-1 times the CPU overhead of the longest migration-disable region,
-> > plus context switches.  (Yes, this is a very crude rule-of-thumb model.
-> > A real model would have much higher mathematics and might use a more
-> > detailed understanding of the workload.)
-> > 
-> > Or am I misunderstanding how all this works? 
-> 
-> No, I think you're gettin' it.
-
-I was afraid of that.  ;-)
-
-> My main worry with all this is that we have these insane long !preempt
-> regions in mainline that are now !migrate regions, and thus per all the
-> above we could be looking at a substantial utilization loss.
-> 
-> Alternatively we could all be missing something far more horrid, but
-> that might just be my paranoia talking.
-
-Ah, good point -- if each migration-disable region is associated with
-a lock, then you -could- allow migration and gain better utilization
-at the expense of worse caching behavior.  Is that the concern?
-
-							Thanx, Paul
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
