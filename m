@@ -1,9 +1,9 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: On migrate_disable() and latencies
-Date: Mon, 25 Jul 2011 10:21:50 +0200
-Message-ID: <1311582110.2617.40.camel@laptop>
+Date: Mon, 25 Jul 2011 10:30:53 +0200
+Message-ID: <1311582653.2617.49.camel@laptop>
 References: <1311329992.27400.23.camel@twins>
-	 <20110722174500.GB32014@opentech.at>
+	 <20110723003934.GP2382@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,64 +12,81 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
 	Clark Williams <williams@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Kumar Gala <galak@gate.crashing.org>,
 	Ralf Baechle <ralf@linux-mips.org>,
 	rostedt <rostedt@goodmis.org>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:34573 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751145Ab1GYIRU (ORCPT
+Received: from merlin.infradead.org ([205.233.59.134]:41764 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751337Ab1GYI0V (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jul 2011 04:17:20 -0400
+	Mon, 25 Jul 2011 04:26:21 -0400
+Received: from canuck.infradead.org ([2001:4978:20e::1])
+	by merlin.infradead.org with esmtps (Exim 4.76 #1 (Red Hat Linux))
+	id 1QlGUX-0005c4-6v
+	for linux-rt-users@vger.kernel.org; Mon, 25 Jul 2011 08:26:21 +0000
 Received: from j77219.upc-j.chello.nl ([24.132.77.219] helo=dyad.programming.kicks-ass.net)
-	by casper.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
-	id 1QlGLn-0003Xo-QZ
-	for linux-rt-users@vger.kernel.org; Mon, 25 Jul 2011 08:17:19 +0000
-In-Reply-To: <20110722174500.GB32014@opentech.at>
+	by canuck.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
+	id 1QlGUW-0002Vl-P1
+	for linux-rt-users@vger.kernel.org; Mon, 25 Jul 2011 08:26:20 +0000
+In-Reply-To: <20110723003934.GP2382@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-07-22 at 19:45 +0200, Nicholas Mc Guire wrote:
-
+On Fri, 2011-07-22 at 17:39 -0700, Paul E. McKenney wrote:
 > > Therefore the worst case latency is in the order of
 > > max-migrate-disable-period * nr-cpus.
 > 
-> + something like sum of (interrupt rate [n] /
-> max-migrate-disable-period * nr-cpus) * top-half handler [n]. if you
-> go on with theoretical WCET analysis on multicore systems you will
-> always end up at the conclusion that only UP is suitable for RT....
+> OK, but wouldn't that be the latency as seen be the lowest-priority
+> task?  
 
-+ preemption cost + migration costs etc.. :-)
+It would indeed, the utility loss is added to the preemption cost of the
+lower priority tasks.
 
-> > Currently we have no means of measuring these latencies, this is
-> > something we need to grow, I think Steven can fairly easy craft a
-> > migrate_disable runtime tracer -- it needs to use t->se.sum_exec_runtime
-> > for measure so as to only count the actual time spend on the task and
-> > ignore any time it was blocked.
->  
-> well this is a similar problem as with the WCET "calculations" - you can
-> calculate theoretical worst cases - but the question is what the actual
-> distribution of "stacking" is and thus what the probability is that you
-> manage to stack tasks in this way.
+> Or are migrate-disable tasks given preferential treatment?
+> If not, a prio-99 task would get the same latency either way, right?
 
-Sure, and yes those are thing to look at.
+Right.
 
-> One could I guess put some relatively simple instrumentation in to monitor
-> this stacking problem - quit independant of actually measuring the times 
+> Migration-disable can magnify the latency seen by low-priority tasks, if
+> I understand correctly.  If you disabled preemption, when a low-priority
+> task became runnable, it would find an idle CPU.  But with migration
+> disable, the lowest-priority task might enter a migration-disable region,
+> then be preempted by a marginally higher-priority task that also enters
+> a migration-diable region, and is also preempted, and so on.  The
+> lowest-priority task cannot run on the current CPU because of all
+> the higher-priority tasks, and cannot migrate due to being in a
+> migration-disable section.
 
-Yes, that would be very easy to do.
+Exactly so.
 
-> > Once we have this, its back to the old game of 'lock'-breaking.
-> >
-> if the stacking problem does not practically exist then it might not be worth
-> the effort to resolve it with elaborate lock breaking.
+> In other words, as is often the case, better worst-case service to
+> the high-priority tasks can multiply the latency seen by the
+> low-priority tasks.
+> 
+> So is the topic to quantify this?  
 
-Fully agreed, its just that I wanted to share my understanding of the
-problem space (both Thomas and I thought on-list email was a better
-location that private IRC logs ;-), and we need to get the know the
-problem before we can decide to ignore it ;-)
+I suppose it is indeed. Even for the SoftRT case we need to make sure
+the total utilization loss is indeed acceptable.
 
-Ignoring unknowns always leads to surprises.
+> If so, my take is that the latency
+> to the highest-priority task decreases by an amount roughly equal to
+> the duration of the longest preempt_disable() region that turned into a
+> migration-disable region, while that to the lowest-priority task increases
+> by N-1 times the CPU overhead of the longest migration-disable region,
+> plus context switches.  (Yes, this is a very crude rule-of-thumb model.
+> A real model would have much higher mathematics and might use a more
+> detailed understanding of the workload.)
+> 
+> Or am I misunderstanding how all this works? 
+
+No, I think you're gettin' it.
+
+My main worry with all this is that we have these insane long !preempt
+regions in mainline that are now !migrate regions, and thus per all the
+above we could be looking at a substantial utilization loss.
+
+Alternatively we could all be missing something far more horrid, but
+that might just be my paranoia talking.
 
