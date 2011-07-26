@@ -1,60 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Subject: Re: [ANNOUNCE] 3.0-rt3
-Date: Tue, 26 Jul 2011 11:01:40 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1107261100480.2848@ionos>
-References: <alpine.LFD.2.02.1107241223560.2702@ionos> <4E2C2ED6.4040904@gmail.com> <alpine.LFD.2.02.1107241807390.3136@ionos> <4E2DEC1A.5070109@linux.intel.com>
+Date: Tue, 26 Jul 2011 11:13:10 +0200
+Message-ID: <20110726091310.GP16561@pengutronix.de>
+References: <alpine.LFD.2.02.1107241223560.2702@ionos>
+ <4E2DF459.3030509@localhost>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Maarten Lankhorst <m.b.lankhorst@gmail.com>,
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Darren Hart <dvhart@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38067 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751254Ab1GZJBo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Jul 2011 05:01:44 -0400
-In-Reply-To: <4E2DEC1A.5070109@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4E2DF459.3030509@localhost>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 25 Jul 2011, Darren Hart wrote:
-> 
-> 
-> On 07/24/2011 09:12 AM, Thomas Gleixner wrote:
-> > On Sun, 24 Jul 2011, Maarten Lankhorst wrote:
-> 
-> ...
-> 
-> >> Also not sure where this one came from:
-> >> [   37.456688] BUG: spinlock bad magic on CPU#3, threaded-ml/1619
-> >> [   37.456690]  lock: ffff8801fdc74d50, .magic: 00000000, .owner: <none>/-1, .owner_cpu: 0
-> >> [   37.456692] Pid: 1619, comm: threaded-ml Tainted: G         C  3.0.0-rt3-patser+ #39
-> >> [   37.456693] Call Trace:
-> >> [   37.456697]  [<ffffffff81607a78>] spin_bug+0xa0/0xa8
-> >> [   37.456699]  [<ffffffff8132b412>] do_raw_spin_lock+0xa2/0x170
-> >> [   37.456702]  [<ffffffff8104a201>] ? get_parent_ip+0x11/0x50
-> >> [   37.456704]  [<ffffffff8160d783>] _raw_spin_lock+0x23/0x30
-> >> [   37.456706]  [<ffffffff810931ce>] rt_mutex_start_proxy_lock+0x2e/0xd0
-> >> [   37.456708]  [<ffffffff8109093a>] futex_requeue+0x47a/0x850
-> >> [   37.456710]  [<ffffffff8109138e>] do_futex+0xae/0xb00
-> >> [   37.456712]  [<ffffffff81157dcd>] ? fget_light+0x6d/0x110
-> >> [   37.456714]  [<ffffffff810b77b7>] ? audit_syscall_entry+0x2e7/0x310
-> >> [   37.456715]  [<ffffffff814c9375>] ? sys_recvmsg+0x75/0x90
-> >> [   37.456717]  [<ffffffff810923e6>] compat_sys_futex+0xf6/0x190
-> >> [   37.456719]  [<ffffffff8100e864>] ? syscall_trace_enter+0x184/0x210
-> >> [   37.456721]  [<ffffffff816158b3>] ia32_do_call+0x13/0x13
-> > 
-> > Urrgh, that's not a good one. Darren, can you please have a look at that?
-> > 
-> 
-> Will do.
-> 
-> Maarten, what are you running when you hit this?
-> rt_mutex_start_proxy_lock() is only called by the requeue_pi code and
-> there is no libc support for that yet, so I'm surprised to see that in
-> the stack trace (unless you're running my futextest suite).
+On Mon, Jul 25, 2011 at 03:55:21PM -0700, Fernando Lopez-Lezcano wrote:
+> On 07/24/2011 03:33 AM, Thomas Gleixner wrote:
+> >Dear RT Folks,
+> >
+> >I'm pleased to announce the 3.0-rt3 release.
+>=20
+> Thanks!!... testing on a dual core laptop, fedora 15, 32 bit:
+>=20
+> [   32.169727] BUG: MAX_LOCKDEP_ENTRIES too low!
+> [   32.169730] turning off the locking correctness validator.
+>=20
+> (where do I change this?)
+I'd guess you need to increase MAX_LOCKDEP_ENTRIES which is defined in
+kernel/lockdep_internals.h.
 
-threaded-ml, whatever that is. I suspect that the changes to the futex
-code, which I ported forward from 33-rt have some wreckage in it.
+BTW, I hit that, too.
+
+Best regards
+Uwe
+
+
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
