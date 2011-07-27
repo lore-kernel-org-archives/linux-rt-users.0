@@ -1,110 +1,53 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: On migrate_disable() and latencies
-Date: Wed, 27 Jul 2011 13:13:18 +0200
-Message-ID: <1311765198.24752.437.camel@twins>
-References: <1311329992.27400.23.camel@twins>
-	 <20110723003934.GP2382@linux.vnet.ibm.com>
-	 <1311582653.2617.49.camel@laptop>
-	 <20110725211706.GT2327@linux.vnet.ibm.com>
+From: Sebastian Ohl <sebastian+ml.linux-rt@ohl.name>
+Subject: Re: [ANNOUNCE] 3.0-rt3
+Date: Wed, 27 Jul 2011 18:52:56 +0200
+Message-ID: <4E304268.7080509@ohl.name>
+References: <alpine.LFD.2.02.1107241223560.2702@ionos>
+Reply-To: sebastian@ohl.name
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Kumar Gala <galak@gate.crashing.org>,
-	Ralf Baechle <ralf@linux-mips.org>,
-	rostedt <rostedt@goodmis.org>,
-	Nicholas Mc Guire <der.herr@hofr.at>
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:34273 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754582Ab1G0LN4 convert rfc822-to-8bit (ORCPT
+Received: from ns.vrs51476.i4e-server.de ([87.118.88.254]:47942 "EHLO
+	failure.foobarquux.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754910Ab1G0RAv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jul 2011 07:13:56 -0400
-In-Reply-To: <20110725211706.GT2327@linux.vnet.ibm.com>
+	Wed, 27 Jul 2011 13:00:51 -0400
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by failure.foobarquux.de (Postfix) with ESMTP id 569D3DCA49
+	for <linux-rt-users@vger.kernel.org>; Wed, 27 Jul 2011 18:52:57 +0200 (CEST)
+Received: from failure.foobarquux.de ([127.0.0.1])
+	by localhost (failure.foobarquux.de [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id Jzf3zl35wcUD for <linux-rt-users@vger.kernel.org>;
+	Wed, 27 Jul 2011 18:52:56 +0200 (CEST)
+Received: from [134.169.48.150] (irt20.ifr.ing.tu-bs.de [134.169.48.150])
+	by failure.foobarquux.de (Postfix) with ESMTPSA id 75A43DCA48
+	for <linux-rt-users@vger.kernel.org>; Wed, 27 Jul 2011 18:52:56 +0200 (CEST)
+In-Reply-To: <alpine.LFD.2.02.1107241223560.2702@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-07-25 at 14:17 -0700, Paul E. McKenney wrote:
+Hey folks,
 
-> > I suppose it is indeed. Even for the SoftRT case we need to make sure
-> > the total utilization loss is indeed acceptable.
-> 
-> OK.  If you are doing strict priority, then everything below the highest
-> priority is workload dependent. 
+i just tried to compile the new rt patch and i was wondering why i
+cannot select 4GB or 64GB of memory if i am selecting full preemption?
+in my old rt kernel (2.6.33.1) this hasn't been a problem.
 
-<snip throttling, that's a whole different thing>
+what are the implications if i am using only the basic RT option?
 
->  The higher-priority
-> tasks can absolutely starve the lower-priority ones, with or without
-> the migrate-disable capability.
+Regards
+ Sebastian Ohl
 
-Sure, that's how FIFO works, but it also relies on the fact that once
-your high priority task completes the lower priority task resumes.
+--=20
+Dipl.-Inform. Sebastian Ohl
+Institut f=FCr Regelungstechnik     | Tel.(BS): (0531) 391-3824
+Lehrstuhl f=FCr el. Fahrzeugsysteme | Tel.(WOB): (0531) 391-63057
+TU Braunschweig                   | Fax: (0531) 391-5194
+http://www.ifr.ing.tu-bs.de       | Email: ohl@ifr.ing.tu-bs.de
 
-The extension to SMP is that we run the m highest priority tasks on n
-cpus ; where m <= n. Any loss in utilization (idle time in this
-particular case, but irq/preemption/migration and cache overhead are
-also time not spend on the actual workload.
-
-Now the WCET folks are all about quantifying the needs of applications
-and the utilization limits of the OS etc. And while for SoftRT you can
-relax quite a few of the various bounds you still need to know them in
-order relax them (der Hofrat likes to move from worst case to avg case
-IIRC).
-
-> Another way of looking at it is from the viewpoint of the additional
-> priority-boost events.  If preemption is disabled, the low-priority task
-> will execute through the preempt-disable region without context switching.
-> In contrast, given a migration-disable region, the low-priority task
-> might be preempted and then boosted.  (If I understand correctly, if some
-> higher-priority task tries to enter the same type of migration-disable
-> region, it will acquire the associated lock, thus priority-boosting the
-> task that is already in that region.)
-
-No, there is no boosting involved, migrate_disable() isn't intrinsically
-tied to a lock or other PI construct. We might needs locks to keep some
-of the per-cpu crap correct, but that again, is a whole different ball
-game.
-
-But even if it was, I don't think PI will help any for this, we still
-need to complete the various migrate_disable() sections, see below.
-
-> One stupid-but-tractable way to model this is to have an interarrival
-> rate for the various process priorities, and then calculate the odds of
-> (1) a higher priority process arriving while the low-priority one is
-> in a *-disable region and (2) that higher priority process needing to
-> enter a conflicting *-disable region.  This would give you some measure
-> of the added boosting load due to migration-disable as compared to
-> preemption-disable.
-> 
-> Would this sort of result be useful?
-
-Yes, such type of analysis can be used, and I guess we can measure
-various variables related to that.
-
-> > My main worry with all this is that we have these insane long !preempt
-> > regions in mainline that are now !migrate regions, and thus per all the
-> > above we could be looking at a substantial utilization loss.
-> > 
-> > Alternatively we could all be missing something far more horrid, but
-> > that might just be my paranoia talking.
-> 
-> Ah, good point -- if each migration-disable region is associated with
-> a lock, then you -could- allow migration and gain better utilization
-> at the expense of worse caching behavior.  Is that the concern?
-
-I'm not seeing how that would be true, suppose you have this stack of 4
-migrate_disable() sections and 3 idle cpus, no amount of boosting will
-make the already running task at the top of the stack go any faster, and
-it needs to complete the migrate_disable section before it can be
-migrated, equally so for the rest, so you still need
-3*migrate-disable-period of time before all your cpus are busy again.
-
-You can move another task to the top of the stack by boosting, but
-you'll need 3 tasks to complete their resp migrate-disable section, it
-doesn't matter which task, so boosting doesn't change anything.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
