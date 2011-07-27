@@ -1,66 +1,97 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.0-rt3
-Date: Tue, 26 Jul 2011 16:57:58 -0700
-Message-ID: <4E2F5486.1080007@localhost>
-References: <alpine.LFD.2.02.1107241223560.2702@ionos> <4E2DF459.3030509@localhost> <20110726091310.GP16561@pengutronix.de> <4E2F5344.3030103@localhost>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: [ANNOUNCE] 3.0-rt3 (futex_requeue bad spinlock magic)
+Date: Tue, 26 Jul 2011 18:57:58 -0700
+Message-ID: <4E2F70A6.6070008@linux.intel.com>
+References: <alpine.LFD.2.02.1107241223560.2702@ionos> <4E2C2ED6.4040904@gmail.com> <alpine.LFD.2.02.1107241807390.3136@ionos> <4E2DEC1A.5070109@linux.intel.com> <4E2E57FF.7030206@linux.intel.com> <4E2EA89A.2020007@gmail.com> <4E2EF304.30601@linux.intel.com> <4E2EF532.20407@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: Maarten Lankhorst <m.b.lankhorst@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.Stanford.EDU ([171.67.219.82]:33378 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751064Ab1GZX6C (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Jul 2011 19:58:02 -0400
-In-Reply-To: <4E2F5344.3030103@localhost>
+Received: from mga09.intel.com ([134.134.136.24]:35175 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751727Ab1G0B5z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Jul 2011 21:57:55 -0400
+In-Reply-To: <4E2EF532.20407@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/26/2011 04:52 PM, Fernando Lopez-Lezcano wrote:
-> On 07/26/2011 02:13 AM, Uwe Kleine-K=F6nig wrote:
->> On Mon, Jul 25, 2011 at 03:55:21PM -0700, Fernando Lopez-Lezcano wro=
-te:
->>> On 07/24/2011 03:33 AM, Thomas Gleixner wrote:
->>>> Dear RT Folks,
->>>>
->>>> I'm pleased to announce the 3.0-rt3 release.
->>>
->>> Thanks!!... testing on a dual core laptop, fedora 15, 32 bit:
->>>
->>> [ 32.169727] BUG: MAX_LOCKDEP_ENTRIES too low!
->>> [ 32.169730] turning off the locking correctness validator.
->>>
->>> (where do I change this?)
->> I'd guess you need to increase MAX_LOCKDEP_ENTRIES which is defined =
-in
->> kernel/lockdep_internals.h.
+
+
+On 07/26/2011 10:11 AM, Maarten Lankhorst wrote:
+> On 07/26/2011 07:01 PM, Darren Hart wrote:
 >>
->> BTW, I hit that, too.
->
-> Thanks, I upped that to 32768 (16384) but on boot I got another
-> complaint about MAX_LOCKDEP_CHAINS so I changed MAX_LOCKDEP_CHAIN_BIT=
-S
-> from 15 to 31 and, well, the kernel build complains about "size of ar=
-ray
-> 'local_chains' is too large" (chain_hlocks as well) and does not buil=
-d...
->
-> Oh well...
+>> On 07/26/2011 04:44 AM, Maarten Lankhorst wrote:
+>>> On 07/26/2011 08:00 AM, Darren Hart wrote:
+>>>> On 07/25/2011 03:20 PM, Darren Hart wrote:
+>>>>> On 07/24/2011 09:12 AM, Thomas Gleixner wrote:
+>>>>>> On Sun, 24 Jul 2011, Maarten Lankhorst wrote:
+>>>>> ...
+>>>>>
+>>>>>>> Also not sure where this one came from:
+>>>>>>> [   37.456688] BUG: spinlock bad magic on CPU#3, threaded-ml/1619
+>>>>>>> [   37.456690]  lock: ffff8801fdc74d50, .magic: 00000000, .owner: <none>/-1, .owner_cpu: 0
+>>>>>>> [   37.456692] Pid: 1619, comm: threaded-ml Tainted: G         C  3.0.0-rt3-patser+ #39
+>> Maarten, I'm finding fairly little out there on what threaded-ml might
+>> be. What I do find suggests 3D visualization and real-time audio
+>> playback. Are you working with something like this? If so, which
+>> libraries are you using? If not, any idea what this is?
+> threaded ml = from pulseaudio,
+> src/pulse/thread-mainloop.c to be exact. But like I said it occurs with the functional broadcast test too, on the waker thread.
+>>>>>>> [   37.456693] Call Trace:
+>>>>>>> [   37.456697]  [<ffffffff81607a78>] spin_bug+0xa0/0xa8
+>>>>>>> [   37.456699]  [<ffffffff8132b412>] do_raw_spin_lock+0xa2/0x170
+>>>>>>> [   37.456702]  [<ffffffff8104a201>] ? get_parent_ip+0x11/0x50
+>>>>>>> [   37.456704]  [<ffffffff8160d783>] _raw_spin_lock+0x23/0x30
+>>>>>>> [   37.456706]  [<ffffffff810931ce>] rt_mutex_start_proxy_lock+0x2e/0xd0
+>>>>>>> [   37.456708]  [<ffffffff8109093a>] futex_requeue+0x47a/0x850
+>>>>>>> [   37.456710]  [<ffffffff8109138e>] do_futex+0xae/0xb00
+>> Maarten, could you provide the addr2line of the addresses from do_futex
+>> to spin_bug ? This will help me trace the path.
+> decodes to:
+> linux/lib/spinlock_debug.c:72
+> linux/lib/spinlock_debug.c:79
+> linux/kernel/sched.c:4114
+> linux/kernel/spinlock.c:141
+> linux/kernel/rtmutex.c:100
+> linux/kernel/futex.c:1378
+> linux/kernel/futex.c:2662
 
-(I meant to myself - of COURSE, _think_ before changing things and=20
-meditate about the implications of power mathematical operations).
 
-:-)
--- Fernando
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+OK, so we're entering with a FUTEX_CMP_REQUEUE op (not FUTEX_CMP_REQUEUE_PI),
+and land inside an "if (requeue_pi)" block in the futex_requeue() function -
+that should never happen. The interesting thing about this is pulse is only
+using the non PI pthread_cond calls, and thus FUTEX_CMP_REQUEUE,
+(http://gitorious.org/~elmarco/pulseaudio/pa-work/blobs/1ca76031092ab07682843fd70607696f6af7216f/src/pulsecore/mutex-posix.c). I have not been able reproduce this path.
+
+My best guess at the moment is that we are somehow stomping on the requeue_pi
+value causing the waker to enter the wrong code paths. A simple test would be to
+print the value of requeue_pi throughout futex_requeue() and see if it changes
+(it shouldn't) and if it is something other than 0 or 1 (which it should never
+be). Are you able to reliably reproduce the pulse audio failure?
+
+The futex_requeue_pi test is of course using FUTEX_CMP_REQUEUE_PI, and it will
+reproduce a similar path (except via the FUTEX_CMP_REQUEUE_PI demux path as it
+should be) on the first time run, as Maarten observed. I have seen this with
+and without the -b (broadcast) option to the test.
+
+I was able to reproduce this on my system by adding the following to my config:
++CONFIG_DEBUG_RT_MUTEXES=y
++CONFIG_DEBUG_PI_LIST=y
++CONFIG_DEBUG_SPINLOCK=y
+
+With a similar config, this does not occur on 2.6.33.9-rt31. Nothing jumps out
+as obviously wrong in the futex delta from 33-rt to now.
+
+I tried with 3.0.0 (non rt) with a similar .config and the problem is not
+reproducible. I'll continue to try and isolate the problem, focusing mainly on
+the futex delta from 3.0.0. Right after I get the kids to bed...
+
+
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
