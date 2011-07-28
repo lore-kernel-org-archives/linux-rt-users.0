@@ -1,68 +1,39 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: Re: On migrate_disable() and latencies
-Date: Thu, 28 Jul 2011 15:10:15 +0800
-Message-ID: <20110728071015.GA2077@windriver.com>
-References: <1311329992.27400.23.camel@twins>
- <20110723003934.GP2382@linux.vnet.ibm.com>
- <1311582653.2617.49.camel@laptop>
- <20110725211706.GT2327@linux.vnet.ibm.com>
- <1311765198.24752.437.camel@twins>
- <20110727183008.GA2407@linux.vnet.ibm.com>
- <20110728055043.GA570@windriver.com>
- <alpine.LFD.2.02.1107280855220.2660@ionos>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+Subject: Re: [ANNOUNCE] 3.0-rt4
+Date: Thu, 28 Jul 2011 11:33:06 +0400
+Message-ID: <201107281133.09107@zigzag.lvk.cs.msu.su>
+References: <alpine.LFD.2.02.1107272222420.2660@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>, Carsten Emde <ce@ceag.ch>,
-	Clark Williams <williams@redhat.com>,
-	Kumar Gala <galak@gate.crashing.org>,
-	Ralf Baechle <ralf@linux-mips.org>,
-	rostedt <rostedt@goodmis.org>,
-	Nicholas Mc Guire <der.herr@hofr.at>
+	Peter Zijlstra <peterz@infradead.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Jason Wessel <jason.wessel@windriver.com>,
+	lasaine@lvk.cs.msu.su
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vw0-f52.google.com ([209.85.212.52]:55754 "EHLO
-	mail-vw0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752732Ab1G1HKX (ORCPT
+Received: from lvk-gate.cmc.msu.ru ([212.192.248.233]:59130 "EHLO
+	mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753384Ab1G1HlG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 03:10:23 -0400
+	Thu, 28 Jul 2011 03:41:06 -0400
+In-Reply-To: <alpine.LFD.2.02.1107272222420.2660@ionos>
 Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1107280855220.2660@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 28, 2011 at 09:01:23AM +0200, Thomas Gleixner wrote:
-> We do. Just RT is the only sched class which has a set_cpus_allowed()
-> callback implemented and want's an update to its rt.nr_cpus_allowed
-> field.
-> 
->        if (!p->migrate_disable) {
->                 if (p->sched_class && p->sched_class->set_cpus_allowed)
->                         p->sched_class->set_cpus_allowed(p, new_mask);
->                 p->rt.nr_cpus_allowed = cpumask_weight(new_mask);
->         }
-> 
-> The general part is here:
-> 
->        cpumask_copy(&p->cpus_allowed, new_mask);
-> 
-> And tsk_cpus_allowed() does:
-> {
->         if (p->migrate_disable)
->                 return cpumask_of(task_cpu(p));
-> 
->         return &p->cpus_allowed;
-> }
+> The list of disabled config option is now:
+>
+>  - CONFIG_HIGHMEM [ see the mess it created in 33-rt ]
 
-Hmmm, sched-use-task-allowed-accessor.patch is the preparation :)
+Could someone please point me to information on this?
 
-Clear now, thanks Thomas.
+In our setup, we do use PREEMPT_RT + HIGHMEM, on .33 for now (but want to 
+upgrade because of new hardware support issues with .33).  Up to now, we 
+did not face any issues related to PREEMPT_RT + HIGHMEM combination.
 
--Yong
-
--- 
-Only stand for myself
+Nikita
