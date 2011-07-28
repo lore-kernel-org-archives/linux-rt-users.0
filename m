@@ -1,31 +1,69 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: rt5, sleeping function called from invalid context
-Date: Thu, 28 Jul 2011 12:30:03 -0700
-Message-ID: <4E31B8BB.5030300@am.sony.com>
-References: <4E31B6F3.80602@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [ANNOUNCE] 3.0-rt4
+Date: Thu, 28 Jul 2011 12:34:22 -0700
+Message-ID: <20110728193422.GT2403@linux.vnet.ibm.com>
+References: <alpine.LFD.2.02.1107272222420.2660@ionos>
+ <20110728174123.GA10751@linux.vnet.ibm.com>
+ <alpine.LFD.2.02.1107281942580.2660@ionos>
+ <20110728183207.GR2403@linux.vnet.ibm.com>
+ <alpine.LFD.2.02.1107282104360.2660@ionos>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Rowand, Frank" <Frank_Rowand@sonyusa.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Jason Wessel <jason.wessel@windriver.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe003.messaging.microsoft.com ([65.55.88.13]:42770 "EHLO
-	TX2EHSOBE006.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754606Ab1G1TaZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 15:30:25 -0400
-In-Reply-To: <4E31B6F3.80602@am.sony.com>
+Received: from e9.ny.us.ibm.com ([32.97.182.139]:50474 "EHLO e9.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752508Ab1G1Tfl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jul 2011 15:35:41 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1107282104360.2660@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/28/11 12:22, Frank Rowand wrote:
-> Thomas,
+On Thu, Jul 28, 2011 at 09:05:14PM +0200, Thomas Gleixner wrote:
+> On Thu, 28 Jul 2011, Paul E. McKenney wrote:
 > 
-> Here is one of my current BUGs, from rt5 (same panda board, same config):
+> > On Thu, Jul 28, 2011 at 07:43:43PM +0200, Thomas Gleixner wrote:
+> > > 
+> > > On Thu, 28 Jul 2011, Paul E. McKenney wrote:
+> > > 
+> > > > On Wed, Jul 27, 2011 at 11:37:09PM +0200, Thomas Gleixner wrote:
+> > > > > Dear RT Folks,
+> > > > > 
+> > > > > I'm pleased to announce the 3.0-rt4 release.
+> > > > 
+> > > > 3.0-rt5 boots single-CPU under KVM on a 32-bit laptop.  Also with "-smp
+> > > > 2".  It even survived a minute or so of rcutorture in both cases.  ;-)
+> > > > 
+> > > > Some weirdness with interactivity -- if the system is idle aside from
+> > > > rcutorture, the rcutorture.stat_interval console messages don't come
+> > > > out unless I hit "enter" on the console.  But if I run "top", they do
+> > > > come out regularly.  Might well be KVM's fault, except that running
+> > > > rcutorture on non-rt kernels doesn't exhibit this behavior.
+> > > 
+> > > Nah, that's my lazy "avoid printing from atomic context" hack :)
+> > 
+> > Well, then, that does seem to be working...  ;-)
+> > 
+> > Except that these printk()s are from process level -- rcu_torture_stats()
+> > in kernel/rcutorture.c.
+> > 
+> > > > I guess I should try RCU_BOOST=y, then...
+> > > 
+> > > Good luck :)
+> > 
+> > Compiled without error and has been running rcutorture smp=2 for
+> > about 30 minutes now.
+> 
+> Hmm, perhaps it was some weird interaction with NOHZ which is a
+> separate issue.
 
-Oops, that was rt4, plus the compile fix patch for arch/arm/include/asm/mmu.h
+OK, I guess I have no alternative but to try enabling NOHZ...
 
--Frank
-
+							Thanx, Paul
