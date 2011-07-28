@@ -1,67 +1,87 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [ANNOUNCE] 3.0-rt4
-Date: Wed, 27 Jul 2011 15:27:47 -0700
-Message-ID: <4E3090E3.7000100@am.sony.com>
-References: <alpine.LFD.2.02.1107272222420.2660@ionos> <4E3089BC.1080001@am.sony.com> <alpine.LFD.2.02.1107280004410.2660@ionos>
-Reply-To: <frank.rowand@am.sony.com>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: migrate_disable() race with cpu hotplug?
+Date: Thu, 28 Jul 2011 11:16:00 +0800
+Message-ID: <20110728031600.GA338@windriver.com>
+References: <CAM2zO=AxRYEG=iJqrefOL34GW5ukoQKxYQdJ02mez=s5UZPoJg@mail.gmail.com>
+ <alpine.LFD.2.02.1107272350560.2660@ionos>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Jason Wessel <jason.wessel@windriver.com>
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Ingo Molnar <mingo@elte.hu>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from am1ehsobe002.messaging.microsoft.com ([213.199.154.205]:38849
-	"EHLO AM1EHSOBE002.bigfish.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753031Ab1G0W2O (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jul 2011 18:28:14 -0400
-In-Reply-To: <alpine.LFD.2.02.1107280004410.2660@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1107272350560.2660@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 07/27/11 15:05, Thomas Gleixner wrote:
-> On Wed, 27 Jul 2011, Frank Rowand wrote:
+On Wed, Jul 27, 2011 at 11:52:18PM +0200, Thomas Gleixner wrote:
+> On Tue, 26 Jul 2011, Yong Zhang wrote:
 > 
->> On 07/27/11 14:37, Thomas Gleixner wrote:
->>> Dear RT Folks,
->>>
->>> I'm pleased to announce the 3.0-rt4 release.
->>
->> ARM panda board, PREEMPT_RT_FULL
->>
->> -rt3 compiled OK.  -rt4 compile fails:
->>
->>
->> mm/init-mm.c:24: error: unknown field 'lock' specified in initializer
->> mm/init-mm.c:24: error: unknown field 'wait_lock' specified in initializer
->> mm/init-mm.c:24: error: incompatible types in initialization
->> mm/init-mm.c:24: error: unknown field 'save_state' specified in initializer
->> mm/init-mm.c:24: warning: excess elements in struct initializer
->> mm/init-mm.c:24: warning: (near initialization for 'init_mm.context.id_lock.raw_lock')
+> > When reading the code, I'm afraid there is a race between migrate_disable()
+> > and cpu hotplug. A scenario will like below:
+> > 
+> > 	CPU0			CPU1
+> > _cpu_down();
+> >   cpu_unplug_begin();
+> >     wait_for_completion()
+> >   			sync_unplug_thread();
+> > 			  complete();
+> > 			race_window? /*
+> > 				      * migrate_disable() will
+> > 				      * not take effect since
+> > 				      * hotplug is in progress
+> > 				      */
 > 
-> Bah, that's what I get for trying to vanish. Fix below.
-> 
-> --- linux-2.6.orig/arch/arm/include/asm/mmu.h
-> +++ linux-2.6/arch/arm/include/asm/mmu.h
-> @@ -16,7 +16,7 @@ typedef struct {
->  
->  /* init_mm.context.id_lock should be initialized. */
->  #define INIT_MM_CONTEXT(name)                                                 \
-> -	.context.id_lock    = __SPIN_LOCK_UNLOCKED(name.context.id_lock),
-> +	.context.id_lock    = __RAW_SPIN_LOCK_UNLOCKED(name.context.id_lock),
->  #else
->  #define ASID(mm)	(0)
->  #endif
+> Rightfully so. The caller will just block on the cpu_hotplug.lock
+> mutex until the unplug operation will be done.
 
-Thanks!
+Yup, just notice the mutex_lock/mutex_unlock in pin_current_cpu().
 
-Compiles and boots.
+But if the caller block on mutex_lock() then waked up, it's possible
+that it's been migrated to another cpu. So in the 'retry' loop, we
+should reget hotplug_pcp.
 
--Frank
+Code like below?
 
+Thanks,
+Yong
+
+---
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH] kernel/cpu.c: re-acquire hotplug_pcp when pin_current_cpu() retry
+
+When 'retry' happen, it's possible that the task has been
+migrated to other cpu, and 'hotplug_pcp' is still pointing to
+the stale one.
+
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+---
+ kernel/cpu.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 53dd7ad..5f2382a 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -75,9 +75,11 @@ static DEFINE_PER_CPU(struct hotplug_pcp, hotplug_pcp);
+  */
+ void pin_current_cpu(void)
+ {
+-	struct hotplug_pcp *hp = &__get_cpu_var(hotplug_pcp);
++	struct hotplug_pcp *hp;
+ 
+ retry:
++	hp = &__get_cpu_var(hotplug_pcp);
++
+ 	if (!hp->unplug || hp->refcount || preempt_count() > 1 ||
+ 	    hp->unplug == current || (current->flags & PF_STOMPER)) {
+ 		hp->refcount++;
+-- 
+1.7.4.1
+
+-- 
+Only stand for myself
