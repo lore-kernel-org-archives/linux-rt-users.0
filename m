@@ -1,77 +1,122 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [ANNOUNCE] 3.0-rt4
-Date: Thu, 28 Jul 2011 13:29:23 -0700
-Message-ID: <20110728202923.GA14512@linux.vnet.ibm.com>
+Date: Thu, 28 Jul 2011 23:22:56 +0200
+Message-ID: <1311888176.2617.379.camel@laptop>
 References: <alpine.LFD.2.02.1107272222420.2660@ionos>
- <20110728174123.GA10751@linux.vnet.ibm.com>
- <alpine.LFD.2.02.1107281942580.2660@ionos>
- <20110728183207.GR2403@linux.vnet.ibm.com>
- <alpine.LFD.2.02.1107282104360.2660@ionos>
- <20110728193422.GT2403@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+	 <4E31B59F.1000607@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Jason Wessel <jason.wessel@windriver.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Jason Wessel <jason.wessel@windriver.com>,
+	Pekka Enberg <penberg@kernel.org>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e3.ny.us.ibm.com ([32.97.182.143]:33097 "EHLO e3.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755829Ab1G1U3Z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 16:29:25 -0400
-Content-Disposition: inline
-In-Reply-To: <20110728193422.GT2403@linux.vnet.ibm.com>
+Received: from casper.infradead.org ([85.118.1.10]:39892 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755080Ab1G1VSV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jul 2011 17:18:21 -0400
+Received: from j77219.upc-j.chello.nl ([24.132.77.219] helo=dyad.programming.kicks-ass.net)
+	by casper.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
+	id 1QmXyG-0004AK-Gb
+	for linux-rt-users@vger.kernel.org; Thu, 28 Jul 2011 21:18:20 +0000
+In-Reply-To: <4E31B59F.1000607@localhost>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 28, 2011 at 12:34:22PM -0700, Paul E. McKenney wrote:
-> On Thu, Jul 28, 2011 at 09:05:14PM +0200, Thomas Gleixner wrote:
-> > On Thu, 28 Jul 2011, Paul E. McKenney wrote:
-> > 
-> > > On Thu, Jul 28, 2011 at 07:43:43PM +0200, Thomas Gleixner wrote:
-> > > > 
-> > > > On Thu, 28 Jul 2011, Paul E. McKenney wrote:
-> > > > 
-> > > > > On Wed, Jul 27, 2011 at 11:37:09PM +0200, Thomas Gleixner wrote:
-> > > > > > Dear RT Folks,
-> > > > > > 
-> > > > > > I'm pleased to announce the 3.0-rt4 release.
-> > > > > 
-> > > > > 3.0-rt5 boots single-CPU under KVM on a 32-bit laptop.  Also with "-smp
-> > > > > 2".  It even survived a minute or so of rcutorture in both cases.  ;-)
-> > > > > 
-> > > > > Some weirdness with interactivity -- if the system is idle aside from
-> > > > > rcutorture, the rcutorture.stat_interval console messages don't come
-> > > > > out unless I hit "enter" on the console.  But if I run "top", they do
-> > > > > come out regularly.  Might well be KVM's fault, except that running
-> > > > > rcutorture on non-rt kernels doesn't exhibit this behavior.
-> > > > 
-> > > > Nah, that's my lazy "avoid printing from atomic context" hack :)
-> > > 
-> > > Well, then, that does seem to be working...  ;-)
-> > > 
-> > > Except that these printk()s are from process level -- rcu_torture_stats()
-> > > in kernel/rcutorture.c.
-> > > 
-> > > > > I guess I should try RCU_BOOST=y, then...
-> > > > 
-> > > > Good luck :)
-> > > 
-> > > Compiled without error and has been running rcutorture smp=2 for
-> > > about 30 minutes now.
-> > 
-> > Hmm, perhaps it was some weird interaction with NOHZ which is a
-> > separate issue.
-> 
-> OK, I guess I have no alternative but to try enabling NOHZ...
+On Thu, 2011-07-28 at 12:16 -0700, Fernando Lopez-Lezcano wrote:
+> [    0.000000] =============================================
+> [    0.000000] [ INFO: possible recursive locking detected ]
+> [    0.000000] 3.0.0-1.rt5.1.fc15.ccrma.i686.rtPAE #1
+> [    0.000000] ---------------------------------------------
+> [    0.000000] swapper/0 is trying to acquire lock:
+> [    0.000000]  (&parent->list_lock){+.+...}, at: [<c04fb406>] __cache_free+0x43/0xc3
+> [    0.000000]
+> [    0.000000] but task is already holding lock:
+> [    0.000000]  (&parent->list_lock){+.+...}, at: [<c04fc538>] do_tune_cpucache+0xf2/0x2bb
+> [    0.000000]
+> [    0.000000] other info that might help us debug this:
+> [    0.000000]  Possible unsafe locking scenario:
+> [    0.000000]
+> [    0.000000]        CPU0
+> [    0.000000]        ----
+> [    0.000000]   lock(&parent->list_lock);
+> [    0.000000]   lock(&parent->list_lock);
+> [    0.000000]
+> [    0.000000]  *** DEADLOCK ***
+> [    0.000000]
+> [    0.000000]  May be due to missing lock nesting notation
+> [    0.000000]
+> [    0.000000] 3 locks held by swapper/0:
+> [    0.000000]  #0:  (cache_chain_mutex){+.+...}, at: [<c0bd9d2b>] kmem_cache_init_late+0xe/0x61
+> [    0.000000]  #1:  (&per_cpu(slab_lock, __cpu).lock){+.+...}, at: [<c04faa65>] __local_lock_irq+0x1e/0x5b
+> [    0.000000]  #2:  (&parent->list_lock){+.+...}, at: [<c04fc538>] do_tune_cpucache+0xf2/0x2bb
+> [    0.000000]
+> [    0.000000] stack backtrace:
+> [    0.000000] Pid: 0, comm: swapper Not tainted 3.0.0-1.rt5.1.fc15.ccrma.i686.rtPAE #1
+> [    0.000000] Call Trace:
+> [    0.000000]  [<c0856355>] ? printk+0x2d/0x2f
+> [    0.000000]  [<c0474a4b>] __lock_acquire+0x805/0xb57
+> [    0.000000]  [<c0472604>] ? lock_release_holdtime.part.10+0x4b/0x51
+> [    0.000000]  [<c085ecb4>] ? _raw_spin_unlock+0x31/0x3d
+> [    0.000000]  [<c085dbc5>] ? rt_spin_lock_slowlock+0x75/0x190
+> [    0.000000]  [<c04720c3>] ? trace_hardirqs_off+0xb/0xd
+> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
+> [    0.000000]  [<c0475215>] lock_acquire+0xde/0x11d
+> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
+> [    0.000000]  [<c085e24f>] rt_spin_lock+0x50/0x56
+> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
+> [    0.000000]  [<c04fb406>] __cache_free+0x43/0xc3
+> [    0.000000]  [<c043646d>] ? test_ti_thread_flag+0x8/0x10
+> [    0.000000]  [<c04fb23f>] kmem_cache_free+0x6c/0xdc
+> [    0.000000]  [<c04fb2fe>] slab_destroy+0x4f/0x53
+> [    0.000000]  [<c04fb396>] free_block+0x94/0xc1
+> [    0.000000]  [<c04fc551>] do_tune_cpucache+0x10b/0x2bb
+> [    0.000000]  [<c04fc8dc>] enable_cpucache+0x7b/0xa7
+> [    0.000000]  [<c0bd9d3c>] kmem_cache_init_late+0x1f/0x61
+> [    0.000000]  [<c0bba687>] start_kernel+0x24c/0x363
+> [    0.000000]  [<c0bba1c4>] ? loglevel+0x18/0x18
+> [    0.000000]  [<c0bba0ba>] i386_start_kernel+0xa9/0xaf 
 
-And the combination of RCU_BOOST and NO_HZ runs fine as well.  30 minutes
-of rcutorture and no complaints.
+Ooh, fun.. one does wonder why mainline doesn't show this..
 
-I only enabled CONFIG_PREEMPT_RT_FULL.  Are there other related config
-variables I should be setting?
+This is the normal OFF_SLAB recursion, and the reason this shows up is
+because this is ran before we do the lockdep fixup.
 
-							Thanx, Paul
+Fernando, does something like the below (not actually against -rt, but
+it shouldn't matter much) fix things?
+
+---
+Subject: slab, lockdep: Annotate the locks before using
+
+Fernando found we hit the regular OFF_SLAB 'recursion' before we
+annotate the locks, cure this.
+
+Reported-by: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+---
+Index: linux-2.6/mm/slab.c
+===================================================================
+--- linux-2.6.orig/mm/slab.c
++++ linux-2.6/mm/slab.c
+@@ -1665,6 +1665,9 @@ void __init kmem_cache_init_late(void)
+ {
+ 	struct kmem_cache *cachep;
+ 
++	/* Annotate slab for lockdep -- annotate the malloc caches */
++	init_lock_keys();
++
+ 	/* 6) resize the head arrays to their final sizes */
+ 	mutex_lock(&cache_chain_mutex);
+ 	list_for_each_entry(cachep, &cache_chain, next)
+@@ -1675,9 +1678,6 @@ void __init kmem_cache_init_late(void)
+ 	/* Done! */
+ 	g_cpucache_up = FULL;
+ 
+-	/* Annotate slab for lockdep -- annotate the malloc caches */
+-	init_lock_keys();
