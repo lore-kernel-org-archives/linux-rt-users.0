@@ -1,122 +1,367 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [ANNOUNCE] 3.0-rt4
-Date: Thu, 28 Jul 2011 23:22:56 +0200
-Message-ID: <1311888176.2617.379.camel@laptop>
-References: <alpine.LFD.2.02.1107272222420.2660@ionos>
-	 <4E31B59F.1000607@localhost>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.0-rt6
+Date: Thu, 28 Jul 2011 23:43:16 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1107282213000.31246@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Jason Wessel <jason.wessel@windriver.com>,
-	Pekka Enberg <penberg@kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:39892 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755080Ab1G1VSV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 17:18:21 -0400
-Received: from j77219.upc-j.chello.nl ([24.132.77.219] helo=dyad.programming.kicks-ass.net)
-	by casper.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
-	id 1QmXyG-0004AK-Gb
-	for linux-rt-users@vger.kernel.org; Thu, 28 Jul 2011 21:18:20 +0000
-In-Reply-To: <4E31B59F.1000607@localhost>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2011-07-28 at 12:16 -0700, Fernando Lopez-Lezcano wrote:
-> [    0.000000] =============================================
-> [    0.000000] [ INFO: possible recursive locking detected ]
-> [    0.000000] 3.0.0-1.rt5.1.fc15.ccrma.i686.rtPAE #1
-> [    0.000000] ---------------------------------------------
-> [    0.000000] swapper/0 is trying to acquire lock:
-> [    0.000000]  (&parent->list_lock){+.+...}, at: [<c04fb406>] __cache_free+0x43/0xc3
-> [    0.000000]
-> [    0.000000] but task is already holding lock:
-> [    0.000000]  (&parent->list_lock){+.+...}, at: [<c04fc538>] do_tune_cpucache+0xf2/0x2bb
-> [    0.000000]
-> [    0.000000] other info that might help us debug this:
-> [    0.000000]  Possible unsafe locking scenario:
-> [    0.000000]
-> [    0.000000]        CPU0
-> [    0.000000]        ----
-> [    0.000000]   lock(&parent->list_lock);
-> [    0.000000]   lock(&parent->list_lock);
-> [    0.000000]
-> [    0.000000]  *** DEADLOCK ***
-> [    0.000000]
-> [    0.000000]  May be due to missing lock nesting notation
-> [    0.000000]
-> [    0.000000] 3 locks held by swapper/0:
-> [    0.000000]  #0:  (cache_chain_mutex){+.+...}, at: [<c0bd9d2b>] kmem_cache_init_late+0xe/0x61
-> [    0.000000]  #1:  (&per_cpu(slab_lock, __cpu).lock){+.+...}, at: [<c04faa65>] __local_lock_irq+0x1e/0x5b
-> [    0.000000]  #2:  (&parent->list_lock){+.+...}, at: [<c04fc538>] do_tune_cpucache+0xf2/0x2bb
-> [    0.000000]
-> [    0.000000] stack backtrace:
-> [    0.000000] Pid: 0, comm: swapper Not tainted 3.0.0-1.rt5.1.fc15.ccrma.i686.rtPAE #1
-> [    0.000000] Call Trace:
-> [    0.000000]  [<c0856355>] ? printk+0x2d/0x2f
-> [    0.000000]  [<c0474a4b>] __lock_acquire+0x805/0xb57
-> [    0.000000]  [<c0472604>] ? lock_release_holdtime.part.10+0x4b/0x51
-> [    0.000000]  [<c085ecb4>] ? _raw_spin_unlock+0x31/0x3d
-> [    0.000000]  [<c085dbc5>] ? rt_spin_lock_slowlock+0x75/0x190
-> [    0.000000]  [<c04720c3>] ? trace_hardirqs_off+0xb/0xd
-> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
-> [    0.000000]  [<c0475215>] lock_acquire+0xde/0x11d
-> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
-> [    0.000000]  [<c085e24f>] rt_spin_lock+0x50/0x56
-> [    0.000000]  [<c04fb406>] ? __cache_free+0x43/0xc3
-> [    0.000000]  [<c04fb406>] __cache_free+0x43/0xc3
-> [    0.000000]  [<c043646d>] ? test_ti_thread_flag+0x8/0x10
-> [    0.000000]  [<c04fb23f>] kmem_cache_free+0x6c/0xdc
-> [    0.000000]  [<c04fb2fe>] slab_destroy+0x4f/0x53
-> [    0.000000]  [<c04fb396>] free_block+0x94/0xc1
-> [    0.000000]  [<c04fc551>] do_tune_cpucache+0x10b/0x2bb
-> [    0.000000]  [<c04fc8dc>] enable_cpucache+0x7b/0xa7
-> [    0.000000]  [<c0bd9d3c>] kmem_cache_init_late+0x1f/0x61
-> [    0.000000]  [<c0bba687>] start_kernel+0x24c/0x363
-> [    0.000000]  [<c0bba1c4>] ? loglevel+0x18/0x18
-> [    0.000000]  [<c0bba0ba>] i386_start_kernel+0xa9/0xaf 
+Dear RT Folks,
 
-Ooh, fun.. one does wonder why mainline doesn't show this..
+I'm pleased to announce the 3.0-rt6 release.
 
-This is the normal OFF_SLAB recursion, and the reason this shows up is
-because this is ran before we do the lockdep fixup.
+Changes versus 3.0-rt4 (I pushed out a rt5 w/o announce)
 
-Fernando, does something like the below (not actually against -rt, but
-it shouldn't matter much) fix things?
+  * pin_cpu fix (Yong Zhang)
 
----
-Subject: slab, lockdep: Annotate the locks before using
+  * Various compile fixes (Yong Zhang & myself)
 
-Fernando found we hit the regular OFF_SLAB 'recursion' before we
-annotate the locks, cure this.
+  * Serial fix for omap
 
-Reported-by: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
----
-Index: linux-2.6/mm/slab.c
+  * Clocksource lockless watchdog reset
+
+  * Reenabled CONFIG_RCU_BOOST (problem is unreproducible and maybe
+    related to NO_HZ, which is still disabled. Paul is working on it!)
+
+  * KGDB work^Whackaround (Jason Wessel)
+
+    The kgdb workaround is really a hack and wants to be replaced by a
+    proper overhaul for the console/tty maze.
+    See: kgb-serial-hackaround.patch
+
+As I said yesterday, I'm preparing for vanishing from the net. 
+
+Please keep on testing and sending patches. Peter Zijlstra kindly
+volunteered to cover for me. He'll pick up stuff and eventually push
+out releases when a reasonable number of sane patches hits his inbox.
+
+If you reply to that mail, please keep the Cc list intact to make sure
+that all interested folks see it. It does not matter whether you are
+subscribed to a particular mailing list or not. Just keep your fingers
+away from the Cc list unless you have a very good reason to do
+so. Hint for GUI mail "client" users: Hit "Reply to all" ....
+
+For all those who are addicted to roadmaps, here is the roadmap I'm
+caring about for the next two weeks:
+
+  http://maps.google.com/maps?q=Fuchsenloch,+Schlier&hl=en&z=16
+
+For the curious: Fuchsenloch == Fox hole. IOW: The place where fox and
+rabbit say Good Night to each other.
+
+And for those who care about estimates, here are my momentary
+favourite Dilberts on this topic:
+
+   http://dilbert.com/strips/comic/1995-11-10/
+   http://dilbert.com/strips/comic/2010-05-05/
+
+Patch against 3.0 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-3.0-rt6.patch.bz2
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0-rt6.tar.bz2
+
+Delta patch against 3.0-rt4 below.
+
+Thanks,
+
+	tglx
+----
+ arch/arm/include/asm/mmu.h       |    2 +-
+ drivers/tty/serial/8250.c        |   13 +++++++++----
+ drivers/tty/serial/omap-serial.c |    8 +++-----
+ include/linux/kdb.h              |    2 ++
+ init/Kconfig                     |    2 +-
+ kernel/cpu.c                     |    4 +++-
+ kernel/debug/kdb/kdb_io.c        |    6 ++----
+ kernel/hrtimer.c                 |    4 +---
+ kernel/time/clocksource.c        |   38 ++++++++++++++++++--------------------
+ localversion-rt                  |    2 +-
+ 10 files changed, 41 insertions(+), 40 deletions(-)
+
+Index: linux-2.6/arch/arm/include/asm/mmu.h
 ===================================================================
---- linux-2.6.orig/mm/slab.c
-+++ linux-2.6/mm/slab.c
-@@ -1665,6 +1665,9 @@ void __init kmem_cache_init_late(void)
+--- linux-2.6.orig/arch/arm/include/asm/mmu.h
++++ linux-2.6/arch/arm/include/asm/mmu.h
+@@ -16,7 +16,7 @@ typedef struct {
+ 
+ /* init_mm.context.id_lock should be initialized. */
+ #define INIT_MM_CONTEXT(name)                                                 \
+-	.context.id_lock    = __SPIN_LOCK_UNLOCKED(name.context.id_lock),
++	.context.id_lock    = __RAW_SPIN_LOCK_UNLOCKED(name.context.id_lock),
+ #else
+ #define ASID(mm)	(0)
+ #endif
+Index: linux-2.6/drivers/tty/serial/8250.c
+===================================================================
+--- linux-2.6.orig/drivers/tty/serial/8250.c
++++ linux-2.6/drivers/tty/serial/8250.c
+@@ -38,6 +38,7 @@
+ #include <linux/nmi.h>
+ #include <linux/mutex.h>
+ #include <linux/slab.h>
++#include <linux/kdb.h>
+ 
+ #include <asm/io.h>
+ #include <asm/irq.h>
+@@ -2894,10 +2895,14 @@ serial8250_console_write(struct console 
+ 
+ 	touch_nmi_watchdog();
+ 
+-	if (up->port.sysrq || oops_in_progress)
+-		locked = spin_trylock_irqsave(&up->port.lock, flags);
+-	else
+-		spin_lock_irqsave(&up->port.lock, flags);
++	if (unlikely(in_kdb_printk())) {
++		locked = 0;
++	} else {
++		if (up->port.sysrq || oops_in_progress)
++			locked = spin_trylock_irqsave(&up->port.lock, flags);
++		else
++			spin_lock_irqsave(&up->port.lock, flags);
++	}
+ 
+ 	/*
+ 	 *	First save the IER then disable the interrupts
+Index: linux-2.6/init/Kconfig
+===================================================================
+--- linux-2.6.orig/init/Kconfig
++++ linux-2.6/init/Kconfig
+@@ -493,7 +493,7 @@ config TREE_RCU_TRACE
+ 
+ config RCU_BOOST
+ 	bool "Enable RCU priority boosting"
+-	depends on RT_MUTEXES && PREEMPT_RCU && !RT_PREEMPT_FULL
++	depends on RT_MUTEXES && PREEMPT_RCU
+ 	default n
+ 	help
+ 	  This option boosts the priority of preempted RCU readers that
+Index: linux-2.6/kernel/cpu.c
+===================================================================
+--- linux-2.6.orig/kernel/cpu.c
++++ linux-2.6/kernel/cpu.c
+@@ -75,9 +75,11 @@ static DEFINE_PER_CPU(struct hotplug_pcp
+  */
+ void pin_current_cpu(void)
  {
- 	struct kmem_cache *cachep;
+-	struct hotplug_pcp *hp = &__get_cpu_var(hotplug_pcp);
++	struct hotplug_pcp *hp;
  
-+	/* Annotate slab for lockdep -- annotate the malloc caches */
-+	init_lock_keys();
+ retry:
++	hp = &__get_cpu_var(hotplug_pcp);
 +
- 	/* 6) resize the head arrays to their final sizes */
- 	mutex_lock(&cache_chain_mutex);
- 	list_for_each_entry(cachep, &cache_chain, next)
-@@ -1675,9 +1678,6 @@ void __init kmem_cache_init_late(void)
- 	/* Done! */
- 	g_cpucache_up = FULL;
+ 	if (!hp->unplug || hp->refcount || preempt_count() > 1 ||
+ 	    hp->unplug == current || (current->flags & PF_STOMPER)) {
+ 		hp->refcount++;
+Index: linux-2.6/kernel/hrtimer.c
+===================================================================
+--- linux-2.6.orig/kernel/hrtimer.c
++++ linux-2.6/kernel/hrtimer.c
+@@ -1294,11 +1294,9 @@ static void __run_hrtimer(struct hrtimer
+ 	timer->state &= ~HRTIMER_STATE_CALLBACK;
+ }
  
--	/* Annotate slab for lockdep -- annotate the malloc caches */
--	init_lock_keys();
+-
+-#ifdef CONFIG_PREEMPT_RT_BASE
+-
+ static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer);
+ 
++#ifdef CONFIG_PREEMPT_RT_BASE
+ static void hrtimer_rt_reprogram(int restart, struct hrtimer *timer,
+ 				 struct hrtimer_clock_base *base)
+ {
+Index: linux-2.6/localversion-rt
+===================================================================
+--- linux-2.6.orig/localversion-rt
++++ linux-2.6/localversion-rt
+@@ -1 +1 @@
+--rt4
++-rt6
+Index: linux-2.6/kernel/time/clocksource.c
+===================================================================
+--- linux-2.6.orig/kernel/time/clocksource.c
++++ linux-2.6/kernel/time/clocksource.c
+@@ -186,6 +186,7 @@ static struct timer_list watchdog_timer;
+ static DECLARE_WORK(watchdog_work, clocksource_watchdog_work);
+ static DEFINE_SPINLOCK(watchdog_lock);
+ static int watchdog_running;
++static atomic_t watchdog_reset_pending;
+ 
+ static int clocksource_watchdog_kthread(void *data);
+ static void __clocksource_change_rating(struct clocksource *cs, int rating);
+@@ -247,12 +248,14 @@ static void clocksource_watchdog(unsigne
+ 	struct clocksource *cs;
+ 	cycle_t csnow, wdnow;
+ 	int64_t wd_nsec, cs_nsec;
+-	int next_cpu;
++	int next_cpu, reset_pending;
+ 
+ 	spin_lock(&watchdog_lock);
+ 	if (!watchdog_running)
+ 		goto out;
+ 
++	reset_pending = atomic_read(&watchdog_reset_pending);
++
+ 	list_for_each_entry(cs, &watchdog_list, wd_list) {
+ 
+ 		/* Clocksource already marked unstable? */
+@@ -268,7 +271,8 @@ static void clocksource_watchdog(unsigne
+ 		local_irq_enable();
+ 
+ 		/* Clocksource initialized ? */
+-		if (!(cs->flags & CLOCK_SOURCE_WATCHDOG)) {
++		if (!(cs->flags & CLOCK_SOURCE_WATCHDOG) ||
++		    atomic_read(&watchdog_reset_pending)) {
+ 			cs->flags |= CLOCK_SOURCE_WATCHDOG;
+ 			cs->wd_last = wdnow;
+ 			cs->cs_last = csnow;
+@@ -283,8 +287,11 @@ static void clocksource_watchdog(unsigne
+ 		cs->cs_last = csnow;
+ 		cs->wd_last = wdnow;
+ 
++		if (atomic_read(&watchdog_reset_pending))
++			continue;
++
+ 		/* Check the deviation from the watchdog clocksource. */
+-		if (abs(cs_nsec - wd_nsec) > WATCHDOG_THRESHOLD) {
++		if ((abs(cs_nsec - wd_nsec) > WATCHDOG_THRESHOLD)) {
+ 			clocksource_unstable(cs, cs_nsec - wd_nsec);
+ 			continue;
+ 		}
+@@ -303,6 +310,13 @@ static void clocksource_watchdog(unsigne
+ 	}
+ 
+ 	/*
++	 * We only clear the watchdog_reset_pending, when we did a
++	 * full cycle through all clocksources.
++	 */
++	if (reset_pending)
++		atomic_dec(&watchdog_reset_pending);
++
++	/*
+ 	 * Cycle through CPUs to check if the CPUs stay synchronized
+ 	 * to each other.
+ 	 */
+@@ -344,23 +358,7 @@ static inline void clocksource_reset_wat
+ 
+ static void clocksource_resume_watchdog(void)
+ {
+-	unsigned long flags;
+-
+-	/*
+-	 * We use trylock here to avoid a potential dead lock when
+-	 * kgdb calls this code after the kernel has been stopped with
+-	 * watchdog_lock held. When watchdog_lock is held we just
+-	 * return and accept, that the watchdog might trigger and mark
+-	 * the monitored clock source (usually TSC) unstable.
+-	 *
+-	 * This does not affect the other caller clocksource_resume()
+-	 * because at this point the kernel is UP, interrupts are
+-	 * disabled and nothing can hold watchdog_lock.
+-	 */
+-	if (!spin_trylock_irqsave(&watchdog_lock, flags))
+-		return;
+-	clocksource_reset_watchdog();
+-	spin_unlock_irqrestore(&watchdog_lock, flags);
++	atomic_inc(&watchdog_reset_pending);
+ }
+ 
+ static void clocksource_enqueue_watchdog(struct clocksource *cs)
+Index: linux-2.6/drivers/tty/serial/omap-serial.c
+===================================================================
+--- linux-2.6.orig/drivers/tty/serial/omap-serial.c
++++ linux-2.6/drivers/tty/serial/omap-serial.c
+@@ -947,13 +947,12 @@ serial_omap_console_write(struct console
+ 	unsigned int ier;
+ 	int locked = 1;
+ 
+-	local_irq_save(flags);
+ 	if (up->port.sysrq)
+ 		locked = 0;
+ 	else if (oops_in_progress)
+-		locked = spin_trylock(&up->port.lock);
++		locked = spin_trylock_irqsave(&up->port.lock, flags);
+ 	else
+-		spin_lock(&up->port.lock);
++		spin_lock_irqsave(&up->port.lock, flags);
+ 
+ 	/*
+ 	 * First save the IER then disable the interrupts
+@@ -980,8 +979,7 @@ serial_omap_console_write(struct console
+ 		check_modem_status(up);
+ 
+ 	if (locked)
+-		spin_unlock(&up->port.lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&up->port.lock, flags);
+ }
+ 
+ static int __init
+Index: linux-2.6/include/linux/kdb.h
+===================================================================
+--- linux-2.6.orig/include/linux/kdb.h
++++ linux-2.6/include/linux/kdb.h
+@@ -153,12 +153,14 @@ extern int kdb_register(char *, kdb_func
+ extern int kdb_register_repeat(char *, kdb_func_t, char *, char *,
+ 			       short, kdb_repeat_t);
+ extern int kdb_unregister(char *);
++#define in_kdb_printk() (kdb_trap_printk)
+ #else /* ! CONFIG_KGDB_KDB */
+ #define kdb_printf(...)
+ #define kdb_init(x)
+ #define kdb_register(...)
+ #define kdb_register_repeat(...)
+ #define kdb_uregister(x)
++#define in_kdb_printk() (0)
+ #endif	/* CONFIG_KGDB_KDB */
+ enum {
+ 	KDB_NOT_INITIALIZED,
+Index: linux-2.6/kernel/debug/kdb/kdb_io.c
+===================================================================
+--- linux-2.6.orig/kernel/debug/kdb/kdb_io.c
++++ linux-2.6/kernel/debug/kdb/kdb_io.c
+@@ -539,7 +539,6 @@ int vkdb_printf(const char *fmt, va_list
+ 	int diag;
+ 	int linecount;
+ 	int logging, saved_loglevel = 0;
+-	int saved_trap_printk;
+ 	int got_printf_lock = 0;
+ 	int retlen = 0;
+ 	int fnd, len;
+@@ -550,8 +549,6 @@ int vkdb_printf(const char *fmt, va_list
+ 	unsigned long uninitialized_var(flags);
+ 
+ 	preempt_disable();
+-	saved_trap_printk = kdb_trap_printk;
+-	kdb_trap_printk = 0;
+ 
+ 	/* Serialize kdb_printf if multiple cpus try to write at once.
+ 	 * But if any cpu goes recursive in kdb, just print the output,
+@@ -807,7 +804,6 @@ kdb_print_out:
+ 	} else {
+ 		__release(kdb_printf_lock);
+ 	}
+-	kdb_trap_printk = saved_trap_printk;
+ 	preempt_enable();
+ 	return retlen;
+ }
+@@ -817,9 +813,11 @@ int kdb_printf(const char *fmt, ...)
+ 	va_list ap;
+ 	int r;
+ 
++	kdb_trap_printk++;
+ 	va_start(ap, fmt);
+ 	r = vkdb_printf(fmt, ap);
+ 	va_end(ap);
++	kdb_trap_printk--;
+ 
+ 	return r;
+ }
