@@ -1,44 +1,41 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.0-rt4 , Follow up question
-Date: Thu, 28 Jul 2011 18:27:27 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1107281253451.2660@ionos>
-References: <CAF-VNapwgfr66ib9OPcpJO-4K+6F-0VZA2Tc=4Fp==TDPKwkRQ@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [ANNOUNCE] 3.0-rt4
+Date: Thu, 28 Jul 2011 10:41:23 -0700
+Message-ID: <20110728174123.GA10751@linux.vnet.ibm.com>
+References: <alpine.LFD.2.02.1107272222420.2660@ionos>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Lars Segerlund <lars.segerlund@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Jason Wessel <jason.wessel@windriver.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49774 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754882Ab1G1Q13 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 12:27:29 -0400
-In-Reply-To: <CAF-VNapwgfr66ib9OPcpJO-4K+6F-0VZA2Tc=4Fp==TDPKwkRQ@mail.gmail.com>
+Received: from e6.ny.us.ibm.com ([32.97.182.146]:43774 "EHLO e6.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755820Ab1G1Rl1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jul 2011 13:41:27 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1107272222420.2660@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 28 Jul 2011, Lars Segerlund wrote:
-> How much is there left to do for mainline inclusion ?
+On Wed, Jul 27, 2011 at 11:37:09PM +0200, Thomas Gleixner wrote:
+> Dear RT Folks,
 > 
-> A rough guess would be nice, just to assess the amount of work and severity.
+> I'm pleased to announce the 3.0-rt4 release.
 
-  http://dilbert.com/strips/comic/2010-06-26/
+3.0-rt5 boots single-CPU under KVM on a 32-bit laptop.  Also with "-smp
+2".  It even survived a minute or so of rcutorture in both cases.  ;-)
 
-If that doesn't answer your question, then you might try:
+Some weirdness with interactivity -- if the system is idle aside from
+rcutorture, the rcutorture.stat_interval console messages don't come
+out unless I hit "enter" on the console.  But if I run "top", they do
+come out regularly.  Might well be KVM's fault, except that running
+rcutorture on non-rt kernels doesn't exhibit this behavior.
 
-   # tar -xjf patches-3.0-rtx.tar.bz2
-   # ls patches/*.patch
-   # wc -l patches/*.patch
-   # for each patch in patches; do read $patch; done
+I guess I should try RCU_BOOST=y, then...
 
-> As I understand it , a lot of subsystes are trying to go lockless, so
-> things should become easier.
-
-Not really, they just use different mechanisms. Serialization and
-synchronization are not restricted to locks and some of these
-mechanisms are even more evil than a plain old lock.
-
-Thanks,
-
-	tglx
+							Thanx, Paul
