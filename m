@@ -1,47 +1,61 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Yong Zhang <yong.zhang0@gmail.com>
 Subject: Re: [ANNOUNCE] 3.0-rt4
-Date: Thu, 28 Jul 2011 11:37:46 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1107281134310.2660@ionos>
-References: <alpine.LFD.2.02.1107272222420.2660@ionos> <201107281224.44323@zigzag.lvk.cs.msu.su> <1311842677.5890.209.camel@twins> <201107281251.16892@zigzag.lvk.cs.msu.su>
+Date: Thu, 28 Jul 2011 17:41:59 +0800
+Message-ID: <20110728094159.GA24590@windriver.com>
+References: <alpine.LFD.2.02.1107272222420.2660@ionos>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Jason Wessel <jason.wessel@windriver.com>,
-	lasaine@lvk.cs.msu.su
-To: "Nikita V. Youshchenko" <yoush@cs.msu.su>
+	Jason Wessel <jason.wessel@windriver.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57801 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754797Ab1G1Jhx (ORCPT
+Received: from mail-vx0-f174.google.com ([209.85.220.174]:49894 "EHLO
+	mail-vx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754457Ab1G1JmH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 05:37:53 -0400
-In-Reply-To: <201107281251.16892@zigzag.lvk.cs.msu.su>
+	Thu, 28 Jul 2011 05:42:07 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1107272222420.2660@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 28 Jul 2011, Nikita V. Youshchenko wrote:
+On Wed, Jul 27, 2011 at 11:37:09PM +0200, Thomas Gleixner wrote:
+> Dear RT Folks,
+>=20
+> I'm pleased to announce the 3.0-rt4 release.
+>=20
 
-> > On Thu, 2011-07-28 at 12:24 +0400, Nikita V. Youshchenko wrote:
-> > > (*) we need >1G of memory for data buffers, and have too much legacy
-> > > software components so moving to 64bit system is not practical within
-> > > available resource
-> >
-> > You can run a complete 32bit userspace on a 64bit kernel without any
-> > problems.
-> 
-> ... expect shared data between kernel and userspace (structures passed over 
-> ioctl()s, structures in mmapped buffers). Unfortunately, in scope of our 
-> project (that lasts since 2001 or so), we do have such issues :(.
+Building error if !PREEMPT_RT:
 
-Aside of that being horrid, it's trivial to solve with proper data
-types. u32 and friends are there for a reason. But feel free to get
-the highmem thing working again :)
+  CC      kernel/hrtimer.o
+kernel/hrtimer.c: In function =E2=80=98hrtimer_interrupt=E2=80=99:
+kernel/hrtimer.c:1459:27: error: =E2=80=98hrtimer_wakeup=E2=80=99 undec=
+lared (first use in this function)
+kernel/hrtimer.c:1459:27: note: each undeclared identifier is reported =
+only
+  once for each function it appears in
+make[1]: *** [kernel/hrtimer.o] Error 1
+
+Patch is here and seems it could be scrolled into
+hrtimer-fixup-hrtimer-callback-changes-for-preempt-r.patch :)
 
 Thanks,
+Yong
 
-	tglx
-
+---
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 38343f8..a7ec41a 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1295,10 +1295,10 @@ static void __run_hrtimer(struct hrtimer *timer=
+, ktime_t *now)
+ }
+=20
+=20
+-#ifdef CONFIG_PREEMPT_RT_BASE
