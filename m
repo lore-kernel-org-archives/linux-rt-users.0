@@ -1,42 +1,44 @@
-From: hermann <brummer-@web.de>
-Subject: Re: [ANNOUNCE] 3.0-rt4
-Date: Thu, 28 Jul 2011 17:59:50 +0200
-Message-ID: <1311868790.2213.4.camel@box>
-References: <alpine.LFD.2.02.1107272222420.2660@ionos>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.0-rt4 , Follow up question
+Date: Thu, 28 Jul 2011 18:27:27 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1107281253451.2660@ionos>
+References: <CAF-VNapwgfr66ib9OPcpJO-4K+6F-0VZA2Tc=4Fp==TDPKwkRQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Jason Wessel <jason.wessel@windriver.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Lars Segerlund <lars.segerlund@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fmmailgate01.web.de ([217.72.192.221]:51370 "EHLO
-	fmmailgate01.web.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754911Ab1G1P7y (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:49774 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754882Ab1G1Q13 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jul 2011 11:59:54 -0400
-In-Reply-To: <alpine.LFD.2.02.1107272222420.2660@ionos>
+	Thu, 28 Jul 2011 12:27:29 -0400
+In-Reply-To: <CAF-VNapwgfr66ib9OPcpJO-4K+6F-0VZA2Tc=4Fp==TDPKwkRQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Mittwoch, den 27.07.2011, 23:37 +0200 schrieb Thomas Gleixner:
-> Dear RT Folks,
+On Thu, 28 Jul 2011, Lars Segerlund wrote:
+> How much is there left to do for mainline inclusion ?
 > 
-> I'm pleased to announce the 3.0-rt4 release.
-> 
-> Changes versus 3.0-rt3:
->  . . . . 
+> A rough guess would be nice, just to assess the amount of work and severity.
 
-Great work, just booted into -rt5 and thinks work normal again, I mean
-the log messages from kernel appears on screen.
-I will see now if I fail into freeze again, but it looks good so far. 
+  http://dilbert.com/strips/comic/2010-06-26/
 
-greats
-hermann 
+If that doesn't answer your question, then you might try:
 
+   # tar -xjf patches-3.0-rtx.tar.bz2
+   # ls patches/*.patch
+   # wc -l patches/*.patch
+   # for each patch in patches; do read $patch; done
 
+> As I understand it , a lot of subsystes are trying to go lockless, so
+> things should become easier.
 
+Not really, they just use different mechanisms. Serialization and
+synchronization are not restricted to locks and some of these
+mechanisms are even more evil than a plain old lock.
+
+Thanks,
+
+	tglx
