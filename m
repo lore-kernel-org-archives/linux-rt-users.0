@@ -1,38 +1,108 @@
-From: Mike Galbraith <mgalbraith@suse.de>
-Subject: Re: jitter test scalability problem - my theory
-Date: Fri, 29 Jul 2011 16:47:19 +0200
-Message-ID: <1311950839.30862.54.camel@marge.simson.net>
-References: <1311949869.30862.45.camel@marge.simson.net>
-	 <1311950140.5890.365.camel@twins>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>, rostedt <rostedt@goodmis.org>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH 2/3] cpupri: Remove vector locks and read entire loop
+Date: Fri, 29 Jul 2011 11:13:42 -0400
+Message-ID: <20110729151954.908564429@goodmis.org>
+References: <20110729151340.419467771@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <mgalbraith@suse.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:40086 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751145Ab1G2OrW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2011 10:47:22 -0400
-In-Reply-To: <1311950140.5890.365.camel@twins>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:32807 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751785Ab1G2PT5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Jul 2011 11:19:57 -0400
+Content-Disposition: inline; filename=sched-cpupri-nolock.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-07-29 at 16:35 +0200, Peter Zijlstra wrote:
-> On Fri, 2011-07-29 at 16:31 +0200, Mike Galbraith wrote:
-> > So it seems push/pull logic _may_ be my scalability problem.  Even
-> > though there's nothing that can be pushed/pulled, it's hammering a few
-> > locks from many cores, so cores perturb each other enough despite
-> > isolation, to fail once enough cores are active.
-> > 
-> > Does that look like a reasonable explanation for my jitter increase? 
-> 
-> It is, Steve actually had patches for that..
-
-Thanks for confirming. 
-
-I know a guy (me) who would _love_ to test them :)  Diagnosing is one
-thing, figuring out how to fix such an issue is quite another matter.
-
-	-Mike
+Index: linux-rt.git/kernel/sched_cpupri.c
+===================================================================
+--- linux-rt.git.orig/kernel/sched_cpupri.c
++++ linux-rt.git/kernel/sched_cpupri.c
+@@ -122,8 +122,8 @@ static int convert_prio(int prio)
+ 	return cpupri;
+ }
+ 
+-#define for_each_cpupri_active(array, idx)                    \
+-	for_each_set_bit(idx, array, CPUPRI_NR_PRIORITIES)
++#define for_each_cpupri_active(array, idx)		\
++	for(idx = 0; (idx) < MAX_RT_PRIO; (idx)++)
+ 
+ /**
+  * cpupri_find - find the best (lowest-pri) CPU in the system
+@@ -153,6 +153,13 @@ int cpupri_find(struct cpupri *cp, struc
+ 		if (idx >= task_pri)
+ 			break;
+ 
++		/*
++		 * When a mask is updated, the new prio is set before
++		 * the old prio is cleared. This makes sure that we
++		 * don't miss this run queue.
++		 */
++		smp_rmb();
++
+ 		if (cpumask_any_and(&p->cpus_allowed, vec->mask) >= nr_cpu_ids)
+ 			continue;
+ 
+@@ -193,7 +200,6 @@ void cpupri_set(struct cpupri *cp, int c
+ {
+ 	int                 *currpri = &cp->cpu_to_pri[cpu];
+ 	int                  oldpri  = *currpri;
+-	unsigned long        flags;
+ 
+ 	newpri = convert_prio(newpri);
+ 
+@@ -213,26 +219,17 @@ void cpupri_set(struct cpupri *cp, int c
+ 	if (likely(newpri != CPUPRI_INVALID)) {
+ 		struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
+ 
+-		raw_spin_lock_irqsave(&vec->lock, flags);
+-
+ 		cpumask_set_cpu(cpu, vec->mask);
+-		vec->count++;
+-		if (vec->count == 1)
+-			set_bit(newpri, cp->pri_active);
+-
+-		raw_spin_unlock_irqrestore(&vec->lock, flags);
+ 	}
++	/*
++	 * Set the new prio before clearing the old prio so we
++	 * don't miss this run queue during the loop.
++	 */
++	smp_wmb();
+ 	if (likely(oldpri != CPUPRI_INVALID)) {
+ 		struct cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
+ 
+-		raw_spin_lock_irqsave(&vec->lock, flags);
+-
+-		vec->count--;
+-		if (!vec->count)
+-			clear_bit(oldpri, cp->pri_active);
+ 		cpumask_clear_cpu(cpu, vec->mask);
+-
+-		raw_spin_unlock_irqrestore(&vec->lock, flags);
+ 	}
+ 	cpupri_stop_vec();
+ 
+@@ -255,7 +252,6 @@ int cpupri_init(struct cpupri *cp)
+ 	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
+ 		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
+ 
+-		raw_spin_lock_init(&vec->lock);
+ 		vec->count = 0;
+ 		if (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL))
+ 			goto cleanup;
+Index: linux-rt.git/kernel/sched_cpupri.h
+===================================================================
+--- linux-rt.git.orig/kernel/sched_cpupri.h
++++ linux-rt.git/kernel/sched_cpupri.h
+@@ -12,7 +12,6 @@
+ /* values 2-101 are RT priorities 0-99 */
+ 
+ struct cpupri_vec {
+-	raw_spinlock_t lock;
+ 	int        count;
+ 	cpumask_var_t mask;
+ };
 
