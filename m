@@ -1,52 +1,58 @@
-From: Mike Galbraith <mgalbraith@suse.de>
-Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
-Date: Fri, 29 Jul 2011 17:38:47 +0200
-Message-ID: <1311953927.30862.64.camel@marge.simson.net>
-References: <20110729151340.419467771@goodmis.org>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: [ANNOUNCE] 3.0-rt6 (kgdb working)
+Date: Fri, 29 Jul 2011 08:57:31 -0700
+Message-ID: <4E32D86B.70301@linux.intel.com>
+References: <alpine.LFD.2.02.1107282213000.31246@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Jason Wessel <jason.wessel@windriver.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:43366 "EHLO mx2.suse.de"
+Received: from mga14.intel.com ([143.182.124.37]:62613 "EHLO mga14.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751470Ab1G2Pit (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2011 11:38:49 -0400
-In-Reply-To: <20110729151340.419467771@goodmis.org>
+	id S1752108Ab1G2P6i (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Jul 2011 11:58:38 -0400
+In-Reply-To: <alpine.LFD.2.02.1107282213000.31246@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
-> Hi Mike,
-> 
-> Could you try this patch set out. Add the first patch and then
-> run your tests. The first patch only adds benchmarking, and does not
-> modify the scheduler algorithm.
 
-I will happily do all of the below.
 
-> Do this:
+On 07/28/2011 02:43 PM, Thomas Gleixner wrote:
+> Dear RT Folks,
 > 
-> 1. apply first patch, build and boot
-> 2. # mount -t debugfs nodev /sys/kernel/debug
-> 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
+> I'm pleased to announce the 3.0-rt6 release.
 > 
-> The output will give you the contention of the vector locks in the
-> cpupri algorithm.
+> Changes versus 3.0-rt4 (I pushed out a rt5 w/o announce)
 > 
-> Then apply the second patch and do the same thing.
+>   * pin_cpu fix (Yong Zhang)
 > 
-> Then apply the third patch and do the same thing.
+>   * Various compile fixes (Yong Zhang & myself)
 > 
-> After that, could you send me the results of the output file for all
-> three runs?  The final patch should probably be the best overall
-> results.
+>   * Serial fix for omap
 > 
-> Thanks!
+>   * Clocksource lockless watchdog reset
+> 
+>   * Reenabled CONFIG_RCU_BOOST (problem is unreproducible and maybe
+>     related to NO_HZ, which is still disabled. Paul is working on it!)
+> 
+>   * KGDB work^Whackaround (Jason Wessel)
+> 
+>     The kgdb workaround is really a hack and wants to be replaced by a
+>     proper overhaul for the console/tty maze.
+>     See: kgb-serial-hackaround.patch
 
-Thank you.
+I just confirmed that this resolves the issue I was seeing while trying
+to single step through futex_requeue() on a 2 socket E5680.
 
-	-Mike
+Thanks Thomas and Jason,
 
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
