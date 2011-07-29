@@ -1,91 +1,66 @@
-From: Mike Galbraith <mgalbraith@suse.de>
-Subject: jitter test scalability problem - my theory
-Date: Fri, 29 Jul 2011 16:31:09 +0200
-Message-ID: <1311949869.30862.45.camel@marge.simson.net>
+From: Hinko Kocevar <hinko.kocevar@i-tech.si>
+Subject: Re: Poor cycletest results for rt6
+Date: Fri, 29 Jul 2011 16:33:22 +0200
+Message-ID: <4E32C4B2.2000705@i-tech.si>
+References: <4E329515.7080803@i-tech.si>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: RT <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:39321 "EHLO mx2.suse.de"
+Received: from mail.i-tech.si ([89.212.78.105]:32181 "EHLO mail.i-tech.si"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750946Ab1G2ObM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2011 10:31:12 -0400
+	id S1751187Ab1G2OdY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Jul 2011 10:33:24 -0400
+In-Reply-To: <4E329515.7080803@i-tech.si>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Greetings,
+On 07/29/2011 01:10 PM, Hinko Kocevar wrote:
+> Hi,
+>
+> I've build linux-3.0-rt6 for my ARM platform (XCEP). Running cycletest
+> on vanilla, preempt and rt6 kernel build reviles the following results.
+> I would expect better rt6 performance.
+>
+> Note that last test actually looks quite promising, but it happened once
+> in 5 test runs :(
 
-2.6.33.15-rt31 on a 64 core DL980, running a jitter test proggy that
-fires up an executive (a model thereof actually) on 56 isolated cores,
-which in turn fires up 3 or 4 workers in descending priority.  All tasks
-are pinned. Box booted isolcpus=8-63.  Jitter test runs on these, 0-7
-handle everything else, including interrupts.
+Mike Galbraith pointed me into the right direction with the heads up 
+about the ksoftirqd/0 process that hogged the CPU for a short moment, 
+enough to make cycletest 'Max' column numbers high.
 
-Test proggy is looking to achieve a max jitter of +-30us, and that goal
-is met.. until I increase the load to > 32 isolated cores.
+Reading some googled results about the ksoftirqd made me suspicious 
+about the network traffic 
+-http://www.gossamer-threads.com/lists/quagga/dev/17725
 
-Profiling, my kernel overhead is mostly (surprise) locks, but it seems
-my scalability issue may be coming from...
+Since I'm running my board of the NFS rootfs I opted for using -q switch 
+with the cycletest. The result was 5/5 test runs with best 'Max' column :)
 
-static void 
-inc_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio)
-{
-...
-                if (rq->online)
-                        cpupri_set(&rq->rd->cpupri, rq->cpu, prio);
-      
-void cpupri_set(struct cpupri *cp, int cpu, int newpri)
-{
-... 
-        if (likely(newpri != CPUPRI_INVALID)) {
-                struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
-
-                raw_spin_lock_irqsave(&vec->lock, flags);  <== here
-
-So it seems push/pull logic _may_ be my scalability problem.  Even
-though there's nothing that can be pushed/pulled, it's hammering a few
-locks from many cores, so cores perturb each other enough despite
-isolation, to fail once enough cores are active.
-
-Does that look like a reasonable explanation for my jitter increase?
-
-I'm going to hack up a test for my wild theory, but since I don't have a
-lot of experience hunting jitter sources, looking for a few lousy usecs,
-it couldn't hurt to ask whether I'm barking up the wrong tree or not :)
-
-
-(in previous run,  _raw_spin_lock_irqsave() was > 60% of kernel
-overhead, this is just the last run I did)
-
-# dso: [kernel.kallsyms]
-# Events: 214K cycles
-#
-# Overhead                               Symbol
-# ........  ...................................
-#
-    29.53%  [k] _raw_spin_lock_irqsave
-            |
-            |--61.57%-- cpupri_set
-            |          |
-            |          |--81.55%-- dequeue_rt_stack
-            |          |          dequeue_task_rt
-            |          |          dequeue_task
-            |          |          |
-            |          |          |--100.00%-- deactivate_task
-            |          |          |          __schedule
-            |          |          |          schedule
-            |          |          |          |
-            |          |          |          |--69.94%-- run_ksoftirqd
-            |          |          |          |          kthread
-            |          |          |          |          kernel_thread_helper
-            |          |          |          |
-            |          |          |          |--15.23%-- sys_semtimedop
-            |          |          |          |          sys_semop
-            |          |          |          |          system_call_fastpath
-            |          |          |          |          |
-            |          |          |          |          |--4.11%-- 0x7f54c025ae37
-            |          |          |          |          |          __semop
+$ ssh root@192.168.11.132 /shared/utils/cyclictest -t 10 -p 80 -n -D 30 -q
+WARNING: Most functions require kernel 2.6
+T: 0 (  707) P:80 I:1000 C:  29001 Min:     16 Act:  129 Avg:  203 Max: 
+     504
+T: 1 (  708) P:79 I:1500 C:  19333 Min:     16 Act:  217 Avg:  204 Max: 
+     602
+T: 2 (  709) P:78 I:2000 C:  14500 Min:     16 Act:   89 Avg:  163 Max: 
+     575
+T: 3 (  710) P:77 I:2500 C:  11600 Min:     16 Act:  195 Avg:  222 Max: 
+     590
+T: 4 (  711) P:76 I:3000 C:   9666 Min:     16 Act:  395 Avg:  358 Max: 
+     697
+T: 5 (  712) P:75 I:3500 C:   8285 Min:     16 Act:  115 Avg:  263 Max: 
+     767
+T: 6 (  713) P:74 I:4000 C:   7249 Min:     16 Act:  265 Avg:  262 Max: 
+     637
+T: 7 (  714) P:73 I:4500 C:   6443 Min:     17 Act:   74 Avg:  220 Max: 
+     734
+T: 8 (  715) P:72 I:5000 C:   5797 Min:     17 Act:  353 Avg:  294 Max: 
+     730
+T: 9 (  716) P:71 I:5500 C:   5264 Min:     18 Act:  207 Avg:  264 Max: 
+     696
 
 
+
+-- 
+Hinko Kocevar
