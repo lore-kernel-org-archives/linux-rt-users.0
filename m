@@ -1,10 +1,8 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Mike Galbraith <mgalbraith@suse.de>
 Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
-Date: Sat, 30 Jul 2011 10:16:36 +0200
-Message-ID: <1312013796.8752.63.camel@marge.simson.net>
+Date: Sat, 30 Jul 2011 11:19:56 +0200
+Message-ID: <1312017596.8752.78.camel@marge.simson.net>
 References: <20110729151340.419467771@goodmis.org>
-	 <1311963874.2314.15.camel@marge.simson.net>
-	 <1312009931.8752.53.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,109 +10,123 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:39548 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1750875Ab1G3IQl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 Jul 2011 04:16:41 -0400
-In-Reply-To: <1312009931.8752.53.camel@marge.simson.net>
+Received: from cantor2.suse.de ([195.135.220.15]:45659 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751015Ab1G3JUD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 Jul 2011 05:20:03 -0400
+In-Reply-To: <20110729151340.419467771@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2011-07-30 at 09:12 +0200, Mike Galbraith wrote:
-> y profile looks much better, but jitter proggy using posix-timers on 56
-> cores warms up a spot you know all about.  Lucky me, I know where fixes
-> for that bugger live.
+On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
+> Hi Mike,
+> 
+> Could you try this patch set out. Add the first patch and then
+> run your tests. The first patch only adds benchmarking, and does not
+> modify the scheduler algorithm.
+> 
+> Do this:
+> 
+> 1. apply first patch, build and boot
+> 2. # mount -t debugfs nodev /sys/kernel/debug
+> 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
+> 
+> The output will give you the contention of the vector locks in the
+> cpupri algorithm.
+> 
+> Then apply the second patch and do the same thing.
+> 
+> Then apply the third patch and do the same thing.
+> 
+> After that, could you send me the results of the output file for all
+> three runs?  The final patch should probably be the best overall
+> results.
 
-JiitterChasing::TheEnd() doesn't exist does it?  Aw poo.
+These patches are RFC, so here's my Comment.  Steven rocks.
 
-30999      0.05%  [k] lock_timer
-31000             |
-31001             --- do_schedule_next_timer
-31002                 dequeue_signal
-31003                |
-31004                |--87.94%-- sys_rt_sigtimedwait
-31005                |          system_call_fastpath
-31006                |          |
-31007                |          |--20.24%-- 0x7f0935011f27
-31008                |          |          do_sigwait
+Below is what cyclictest has to say with the patches listed below
+applied, and simulation model running on 56 isolated cores.
 
-# dso: [kernel.kallsyms]
-# Events: 118K cycles
-#
-# Overhead                               Symbol
-# ........  ...................................
-#
-    22.82%  [k] _raw_spin_lock_irqsave
-            |          
-            |--32.46%-- rt_mutex_trylock
-            |          tty_write_lock
-            |          tty_write
-            |          vfs_write
-            |          sys_write
-            |          system_call_fastpath
-            |          |          
-            |          |--4.38%-- 0x7f46672a30f0
-            |          |          __GI___libc_write
-...
-            |          
-            |--32.20%-- rt_mutex_slowlock
-            |          tty_write_lock
-            |          tty_write
-            |          vfs_write
-            |          sys_write
-            |          system_call_fastpath
-            |          |          
-            |          |--4.71%-- 0x7f46672a30f0
-            |          |          __GI___libc_write
-...
-            |--25.36%-- rcu_sched_qs
-            |          __schedule
-            |          |          
-            |          |--52.52%-- preempt_schedule
-            |          |          try_to_wake_up
-            |          |          signal_wake_up
-            |          |          send_sigqueue
-            |          |          posix_timer_event
-            |          |          posix_timer_fn
-            |          |          run_hrtimer_softirq
-            |          |          run_ksoftirqd
-            |          |          kthread
-            |          |          kernel_thread_helper
-            |          |          
-            |           --47.48%-- schedule
-            |                     rt_spin_lock_slowlock
-            |                     lock_timer
-            |                     do_schedule_next_timer
-            |                     dequeue_signal
-            |                     |          
-            |                     |--63.61%-- sys_rt_sigtimedwait
-            |                     |          system_call_fastpath
-            |                     |          |          
-            |                     |          |--9.26%-- 0x7f3c840acf27
-            |                     |          |          do_sigwait
-...
-            |                     |          |          do_sigwait
-            |                     |           --5.58%-- [...]
-            |                     |          
-            |                      --36.39%-- get_signal_to_deliver
-            |                                do_signal
-            |                                do_notify_resume
-            |                                int_signal
-            |                                |          
-            |                                |--6.17%-- 0x7f1dd90610f0
-            |                                |          __GI___libc_write
-...
-            |          
-            |--6.54%-- rt_mutex_slowunlock
-            |          tty_write_unlock
-            |          tty_write
-            |          vfs_write
-            |          sys_write
-            |          system_call_fastpath
-            |          |          
-            |          |--6.06%-- 0x7f11267610f0
-            |          |          __GI___libc_write
+The model squeaks once in a while with jitter ever so slightly over the
+30us squeak threshold, so I have yet more perturbation sources, but wrt
+your patches, they are mana from heaven for largish boxen ;-)
 
+patches/ipc-sem-Optimize-update_queue-for-bulk-wakeup-calls
+patches/ipc-sem-Move-wake_up_process-out-of-the-spinlock-section
+patches/ipc-sem-Cacheline-align-the-ipc-spinlock-for-semaphores
+patches/ipc-sem-Update-description-of-the-implementation
+patches/ipc-sem-Use-ERR_CAST
+patches/ipc-sem-Bugfix-for-semop-not-reporting-successful-operation
+patches/ipc-sys_semctl-Fix-kernel-stack-leakage
+patches/cpupri-2-3-nolock.patch
+patches/cpupri-3-3-atomic.patch
+patches/posix-timers-RCU-conversion
+
+cyclictest -Smqp 99 -D 30m; ./killit.sh
+
+T: 0 ( 7362) P:99 I:1000 C:1799001 Min:      1 Act:    2 Avg:    1 Max:      19
+T: 1 ( 7363) P:99 I:1500 C:1199333 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 2 ( 7364) P:99 I:2000 C: 899498 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 3 ( 7365) P:99 I:2500 C: 719597 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 4 ( 7366) P:99 I:3000 C: 599664 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 5 ( 7367) P:99 I:3500 C: 513997 Min:      1 Act:    2 Avg:    1 Max:       5
+T: 6 ( 7368) P:99 I:4000 C: 449746 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 7 ( 7369) P:99 I:4500 C: 399774 Min:      1 Act:    2 Avg:    1 Max:       4
+T: 8 ( 7370) P:99 I:5000 C: 359796 Min:      1 Act:    3 Avg:    2 Max:       5
+T: 9 ( 7371) P:99 I:5500 C: 327087 Min:      1 Act:    3 Avg:    2 Max:       7
+T:10 ( 7372) P:99 I:6000 C: 299829 Min:      1 Act:    3 Avg:    2 Max:       7
+T:11 ( 7373) P:99 I:6500 C: 276765 Min:      1 Act:    3 Avg:    2 Max:      13
+T:12 ( 7374) P:99 I:7000 C: 256995 Min:      1 Act:    3 Avg:    2 Max:       6
+T:13 ( 7375) P:99 I:7500 C: 239862 Min:      1 Act:    3 Avg:    2 Max:      10
+T:14 ( 7376) P:99 I:8000 C: 224870 Min:      1 Act:    2 Avg:    2 Max:       6
+T:15 ( 7377) P:99 I:8500 C: 211642 Min:      1 Act:    4 Avg:    2 Max:       7
+T:16 ( 7378) P:99 I:9000 C: 199884 Min:      1 Act:    3 Avg:    2 Max:      13
+T:17 ( 7379) P:99 I:9500 C: 189364 Min:      1 Act:    4 Avg:    2 Max:       6
+T:18 ( 7380) P:99 I:10000 C: 179895 Min:      1 Act:    3 Avg:    2 Max:       5
+T:19 ( 7381) P:99 I:10500 C: 171328 Min:      1 Act:    3 Avg:    2 Max:       9
+T:20 ( 7382) P:99 I:11000 C: 163540 Min:      1 Act:    4 Avg:    2 Max:       8
+T:21 ( 7383) P:99 I:11500 C: 156430 Min:      2 Act:    3 Avg:    2 Max:       7
+T:22 ( 7384) P:99 I:12000 C: 149912 Min:      2 Act:    3 Avg:    2 Max:      10
+T:23 ( 7385) P:99 I:12500 C: 143915 Min:      2 Act:    3 Avg:    3 Max:       8
+T:24 ( 7386) P:99 I:13000 C: 138380 Min:      2 Act:    4 Avg:    3 Max:       7
+T:25 ( 7387) P:99 I:13500 C: 133254 Min:      2 Act:    2 Avg:    3 Max:       7
+T:26 ( 7388) P:99 I:14000 C: 128495 Min:      1 Act:    3 Avg:    3 Max:       6
+T:27 ( 7389) P:99 I:14500 C: 124064 Min:      1 Act:    4 Avg:    3 Max:      10
+T:28 ( 7390) P:99 I:15000 C: 119928 Min:      2 Act:    4 Avg:    3 Max:       7
+T:29 ( 7391) P:99 I:15500 C: 116059 Min:      2 Act:    3 Avg:    2 Max:       6
+T:30 ( 7392) P:99 I:16000 C: 112432 Min:      2 Act:    4 Avg:    3 Max:       6
+T:31 ( 7393) P:99 I:16500 C: 109025 Min:      1 Act:    3 Avg:    3 Max:       6
+T:32 ( 7394) P:99 I:17000 C: 105818 Min:      2 Act:    4 Avg:    3 Max:       7
+T:33 ( 7395) P:99 I:17500 C: 102795 Min:      2 Act:    4 Avg:    3 Max:       7
+T:34 ( 7396) P:99 I:18000 C:  99939 Min:      1 Act:    3 Avg:    3 Max:       7
+T:35 ( 7397) P:99 I:18500 C:  97238 Min:      2 Act:    4 Avg:    3 Max:       8
+T:36 ( 7398) P:99 I:19000 C:  94679 Min:      2 Act:    3 Avg:    3 Max:       7
+T:37 ( 7399) P:99 I:19500 C:  92251 Min:      1 Act:    3 Avg:    3 Max:       8
+T:38 ( 7400) P:99 I:20000 C:  89945 Min:      2 Act:    4 Avg:    3 Max:       8
+T:39 ( 7401) P:99 I:20500 C:  87751 Min:      2 Act:    4 Avg:    3 Max:      13
+T:40 ( 7402) P:99 I:21000 C:  85661 Min:      2 Act:    3 Avg:    3 Max:      10
+T:41 ( 7403) P:99 I:21500 C:  83669 Min:      1 Act:    3 Avg:    3 Max:       7
+T:42 ( 7404) P:99 I:22000 C:  81767 Min:      2 Act:    3 Avg:    3 Max:      10
+T:43 ( 7405) P:99 I:22500 C:  79950 Min:      2 Act:    4 Avg:    3 Max:       9
+T:44 ( 7406) P:99 I:23000 C:  78212 Min:      1 Act:    2 Avg:    3 Max:       8
+T:45 ( 7407) P:99 I:23500 C:  76548 Min:      1 Act:    3 Avg:    3 Max:       7
+T:46 ( 7408) P:99 I:24000 C:  74953 Min:      1 Act:    3 Avg:    3 Max:       6
+T:47 ( 7409) P:99 I:24500 C:  73423 Min:      1 Act:    3 Avg:    3 Max:       6
+T:48 ( 7410) P:99 I:25000 C:  71955 Min:      2 Act:    4 Avg:    3 Max:       7
+T:49 ( 7411) P:99 I:25500 C:  70544 Min:      1 Act:    3 Avg:    3 Max:       6
+T:50 ( 7412) P:99 I:26000 C:  69187 Min:      2 Act:    4 Avg:    3 Max:      11
+T:51 ( 7413) P:99 I:26500 C:  67881 Min:      1 Act:    3 Avg:    3 Max:       6
+T:52 ( 7414) P:99 I:27000 C:  66624 Min:      2 Act:    3 Avg:    3 Max:       7
+T:53 ( 7415) P:99 I:27500 C:  65413 Min:      1 Act:    4 Avg:    3 Max:       6
+T:54 ( 7416) P:99 I:28000 C:  64245 Min:      2 Act:    4 Avg:    3 Max:       6
+T:55 ( 7417) P:99 I:28500 C:  63118 Min:      2 Act:    3 Avg:    3 Max:       6
+T:56 ( 7418) P:99 I:29000 C:  62029 Min:      2 Act:    3 Avg:    3 Max:       8
+T:57 ( 7419) P:99 I:29500 C:  60978 Min:      2 Act:    3 Avg:    2 Max:       5
+T:58 ( 7420) P:99 I:30000 C:  59961 Min:      2 Act:    3 Avg:    2 Max:       5
+T:59 ( 7421) P:99 I:30500 C:  58978 Min:      2 Act:    3 Avg:    2 Max:       5
+T:60 ( 7422) P:99 I:31000 C:  58027 Min:      2 Act:    3 Avg:    3 Max:      10
+T:61 ( 7423) P:99 I:31500 C:  57106 Min:      2 Act:    3 Avg:    3 Max:       9
+T:62 ( 7424) P:99 I:32000 C:  56213 Min:      2 Act:    2 Avg:    2 Max:       5
+T:63 ( 7425) P:99 I:32500 C:  55349 Min:      2 Act:    5 Avg:    3 Max:       6
 
 
