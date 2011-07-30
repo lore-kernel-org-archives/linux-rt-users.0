@@ -1,488 +1,114 @@
-From: Mike Galbraith <mgalbraith@suse.de>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
-Date: Fri, 29 Jul 2011 20:24:34 +0200
-Message-ID: <1311963874.2314.15.camel@marge.simson.net>
+Date: Sat, 30 Jul 2011 09:12:11 +0200
+Message-ID: <1312009931.8752.53.camel@marge.simson.net>
 References: <20110729151340.419467771@goodmis.org>
+	 <1311963874.2314.15.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-tX8NcRlxyemMR9Q/MYN2"
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: Peter Zijlstra <peterz@infradead.org>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:50597 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751292Ab1G2SYj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2011 14:24:39 -0400
-In-Reply-To: <20110729151340.419467771@goodmis.org>
+Received: from mailout-de.gmx.net ([213.165.64.23]:51349 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1752715Ab1G3HMP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 Jul 2011 03:12:15 -0400
+In-Reply-To: <1311963874.2314.15.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
---=-tX8NcRlxyemMR9Q/MYN2
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-
-On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
-> Hi Mike,
+On Fri, 2011-07-29 at 20:24 +0200, Mike Galbraith wrote:
+> On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
+> > Hi Mike,
+> > 
+> > Could you try this patch set out. Add the first patch and then
+> > run your tests. The first patch only adds benchmarking, and does not
+> > modify the scheduler algorithm.
+> > 
+> > Do this:
+> > 
+> > 1. apply first patch, build and boot
+> > 2. # mount -t debugfs nodev /sys/kernel/debug
+> > 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
+> > 
+> > The output will give you the contention of the vector locks in the
+> > cpupri algorithm.
+> > 
+> > Then apply the second patch and do the same thing.
+> > 
+> > Then apply the third patch and do the same thing.
+> > 
+> > After that, could you send me the results of the output file for all
+> > three runs?  The final patch should probably be the best overall
+> > results.
 > 
-> Could you try this patch set out. Add the first patch and then
-> run your tests. The first patch only adds benchmarking, and does not
-> modify the scheduler algorithm.
+> Wow.
 > 
-> Do this:
-> 
-> 1. apply first patch, build and boot
-> 2. # mount -t debugfs nodev /sys/kernel/debug
-> 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
-> 
-> The output will give you the contention of the vector locks in the
-> cpupri algorithm.
-> 
-> Then apply the second patch and do the same thing.
-> 
-> Then apply the third patch and do the same thing.
-> 
-> After that, could you send me the results of the output file for all
-> three runs?  The final patch should probably be the best overall
-> results.
+> CPU:    Name    Count   Max     Min     Average Total
+> ----    ----    -----   ---     ---     ------- -----
+> cpu 60: loop    0       0       0       0       0
+>         vec     5410840 277.954 0.084   0.782   4232895.727
+> cpu 61: loop    0       0       0       0       0
+>         vec     4915648 188.399 0.084   0.570   2803220.301
+> cpu 62: loop    0       0       0       0       0
+>         vec     5356076 276.417 0.085   0.786   4214544.548
+> cpu 63: loop    0       0       0       0       0
+>         vec     4891837 170.531 0.085   0.799   3910948.833
 
-Wow.
+BTW, that's a _lot_ more usecs than I'm looking for.  Neither cyclictest
+not jitter test proggy's main thread hit that for some reason, must be
+worker threads getting nailed or something.
 
-CPU:    Name    Count   Max     Min     Average Total
-----    ----    -----   ---     ---     ------- -----
-cpu 60: loop    0       0       0       0       0
-        vec     5410840 277.954 0.084   0.782   4232895.727
-cpu 61: loop    0       0       0       0       0
-        vec     4915648 188.399 0.084   0.570   2803220.301
-cpu 62: loop    0       0       0       0       0
-        vec     5356076 276.417 0.085   0.786   4214544.548
-cpu 63: loop    0       0       0       0       0
-        vec     4891837 170.531 0.085   0.799   3910948.833
+Your patches did improve jitter (of course), but +-30 usecs with a ~full
+box isn't achievable yet (oh darn).  Cyclictest shows max latency well
+within the goal, but jitter still goes over.
 
-vs
+My profile looks much better, but jitter proggy using posix-timers on 56
+cores warms up a spot you know all about.  Lucky me, I know where fixes
+for that bugger live.
 
-cpu 60: loop    0       0       0       0       0
-        vec     5365118 5.080   0.021   0.063   340490.267
-cpu 61: loop    0       0       0       0       0
-        vec     4898590 1.757   0.019   0.071   347903.615
-cpu 62: loop    0       0       0       0       0
-        vec     5737130 3.067   0.021   0.119   687108.734
-cpu 63: loop    0       0       0       0       0
-        vec     4903228 1.822   0.021   0.071   348506.477
+With your fixes, looks like 3.0.0-rtN should be much better on hefty HW.
 
-> Thanks!
+    1 # dso: [kernel.kallsyms]
+    2 # Events: 272K cycles
+    3 #
+    4 # Overhead                             Symbol
+    5 # ........  .................................
+    6 #
+    7     11.58%  [k] cpupri_set
+    8             |
+    9             |--71.03%-- dequeue_rt_stack
+   10             |          dequeue_task_rt
+   11             |          dequeue_task
+   12             |          |
+   13             |          |--99.98%-- deactivate_task
+   14             |          |          __schedule
+   15             |          |          schedule
+   16             |          |          |
+   17             |          |          |--35.07%-- run_ksoftirqd
+   18             |          |          |          kthread
+   19             |          |          |          kernel_thread_helper
+   20             |          |          |
+   21             |          |          |--32.23%-- sys_semtimedop
+   22             |          |          |          system_call_fastpath
+   23             |          |          |          |
+   24             |          |          |          |--2.96%-- 0x7fe09af86e37
+   25             |          |          |          |          __semop
+...
+  713      9.67%  [k] _raw_spin_lock_irqsave
+  714             |
+  715             |--61.75%-- rt_spin_lock_slowlock
+  716             |          |
+  717             |          |--97.54%-- lock_timer  (Hi idr_lock, you haven't met Eric yet.  Clever fellow, you'll like him)
+  718             |          |          do_schedule_next_timer
+  719             |          |          dequeue_signal
+  720             |          |          sys_rt_sigtimedwait
+  721             |          |          system_call_fastpath
+  722             |          |          |
+  723             |          |          |--6.42%-- 0x7fb4c2ebbf27
+  724             |          |          |          do_sigwait
 
-Thank you.  Now to build 2+3, and see how jitter looks with a full box.
-
-	-Mike
-
---=-tX8NcRlxyemMR9Q/MYN2
-Content-Disposition: attachment; filename="output1"
-Content-Type: text/plain; name="output1"; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-
-CPU:	Name	Count	Max	Min	Average	Total
-----	----	-----	---	---	-------	-----
-cpu 0:	loop	6	0.297	0.171	0.231	1.390
-	vec	1216234	1.026	0.086	0.245	298106.414
-cpu 1:	loop	0	0	0	0	0
-	vec	1208702	1.001	0.084	0.247	299580.984
-cpu 2:	loop	9	0.136	0.072	0.110	0.991
-	vec	1207543	2.848	0.084	0.172	208588.583
-cpu 3:	loop	0	0	0	0	0
-	vec	1207745	5.459	0.084	0.171	207572.796
-cpu 4:	loop	0	0	0	0	0
-	vec	1207645	0.930	0.084	0.169	204822.965
-cpu 5:	loop	0	0	0	0	0
-	vec	1207636	0.748	0.086	0.172	208310.916
-cpu 6:	loop	0	0	0	0	0
-	vec	1207636	0.644	0.085	0.168	203043.884
-cpu 7:	loop	0	0	0	0	0
-	vec	1207656	0.694	0.086	0.169	205146.436
-cpu 8:	loop	0	0	0	0	0
-	vec	6365438	72.036	0.086	0.948	6035188.484
-cpu 9:	loop	0	0	0	0	0
-	vec	5004456	23.303	0.086	0.629	3148822.497
-cpu 10:	loop	0	0	0	0	0
-	vec	5365920	84.892	0.085	0.856	4595202.057
-cpu 11:	loop	0	0	0	0	0
-	vec	4891949	26.536	0.085	0.715	3500040.991
-cpu 12:	loop	0	0	0	0	0
-	vec	5907752	93.405	0.083	0.929	5490015.474
-cpu 13:	loop	0	0	0	0	0
-	vec	4899184	87.840	0.084	0.794	3892404.964
-cpu 14:	loop	0	0	0	0	0
-	vec	5650357	87.713	0.084	0.817	4617404.711
-cpu 15:	loop	0	0	0	0	0
-	vec	4900028	101.476	0.085	0.731	3583363.670
-cpu 16:	loop	0	0	0	0	0
-	vec	6435043	143.890	0.084	0.821	5286236.674
-cpu 17:	loop	0	0	0	0	0
-	vec	5147105	261.153	0.085	0.854	4399617.996
-cpu 18:	loop	0	0	0	0	0
-	vec	5372953	170.471	0.084	0.907	4873847.662
-cpu 19:	loop	0	0	0	0	0
-	vec	5852034	109.101	0.084	0.598	3499834.934
-cpu 20:	loop	0	0	0	0	0
-	vec	5361700	263.053	0.084	0.618	3315747.110
-cpu 21:	loop	0	0	0	0	0
-	vec	5992335	104.342	0.084	0.663	3975064.702
-cpu 22:	loop	0	0	0	0	0
-	vec	5359525	132.146	0.084	0.756	4053313.648
-cpu 23:	loop	0	0	0	0	0
-	vec	5140867	131.715	0.084	0.914	4699033.422
-cpu 24:	loop	0	0	0	0	0
-	vec	5357723	151.214	0.084	0.991	5309786.543
-cpu 25:	loop	0	0	0	0	0
-	vec	5334728	120.224	0.085	0.707	3773747.739
-cpu 26:	loop	0	0	0	0	0
-	vec	5380285	123.677	0.085	0.990	5327517.609
-cpu 27:	loop	0	0	0	0	0
-	vec	5397056	121.749	0.084	0.818	4419395.819
-cpu 28:	loop	0	0	0	0	0
-	vec	5360682	260.914	0.084	0.707	3792383.788
-cpu 29:	loop	0	0	0	0	0
-	vec	4894980	185.310	0.085	0.959	4698950.783
-cpu 30:	loop	0	0	0	0	0
-	vec	5359452	170.017	0.085	0.783	4198239.431
-cpu 31:	loop	0	0	0	0	0
-	vec	4895734	110.157	0.084	1.015	4973835.751
-cpu 32:	loop	0	0	0	0	0
-	vec	5369681	121.182	0.085	1.056	5673959.285
-cpu 33:	loop	0	0	0	0	0
-	vec	4895350	176.805	0.085	0.849	4156392.392
-cpu 34:	loop	0	0	0	0	0
-	vec	5359142	203.700	0.086	0.899	4822371.587
-cpu 35:	loop	0	0	0	0	0
-	vec	4896565	208.669	0.084	0.987	4835912.225
-cpu 36:	loop	0	0	0	0	0
-	vec	5356818	209.414	0.085	0.883	4734419.876
-cpu 37:	loop	0	0	0	0	0
-	vec	5564435	279.977	0.084	0.776	4323291.950
-cpu 38:	loop	0	0	0	0	0
-	vec	5914929	213.197	0.086	0.980	5800294.365
-cpu 39:	loop	0	0	0	0	0
-	vec	5747543	278.316	0.085	0.829	4766005.372
-cpu 40:	loop	0	0	0	0	0
-	vec	5358126	286.313	0.084	0.906	4856216.257
-cpu 41:	loop	0	0	0	0	0
-	vec	4896543	282.441	0.085	0.961	4707080.279
-cpu 42:	loop	0	0	0	0	0
-	vec	5357430	265.380	0.085	0.750	4021311.594
-cpu 43:	loop	0	0	0	0	0
-	vec	4897014	267.822	0.084	0.846	4147465.000
-cpu 44:	loop	0	0	0	0	0
-	vec	5358063	243.259	0.084	0.688	3688890.283
-cpu 45:	loop	0	0	0	0	0
-	vec	4896910	206.264	0.084	0.756	3705720.419
-cpu 46:	loop	0	0	0	0	0
-	vec	6040919	220.062	0.086	0.852	5147378.527
-cpu 47:	loop	0	0	0	0	0
-	vec	4894549	185.927	0.086	1.081	5295612.421
-cpu 48:	loop	0	0	0	0	0
-	vec	5477229	148.390	0.085	1.006	5514794.941
-cpu 49:	loop	0	0	0	0	0
-	vec	4918826	196.105	0.085	0.789	3881630.724
-cpu 50:	loop	0	0	0	0	0
-	vec	5539279	178.413	0.084	0.831	4605915.301
-cpu 51:	loop	0	0	0	0	0
-	vec	4896003	199.641	0.085	0.926	4537025.049
-cpu 52:	loop	0	0	0	0	0
-	vec	5392644	232.768	0.086	0.790	4262858.944
-cpu 53:	loop	0	0	0	0	0
-	vec	4906013	203.663	0.085	0.907	4454027.337
-cpu 54:	loop	0	0	0	0	0
-	vec	5356244	209.303	0.085	1.052	5639365.955
-cpu 55:	loop	0	0	0	0	0
-	vec	5865460	215.064	0.084	0.981	5755785.977
-cpu 56:	loop	0	0	0	0	0
-	vec	6137175	262.377	0.085	0.780	4787490.596
-cpu 57:	loop	0	0	0	0	0
-	vec	4898080	270.038	0.086	0.759	3721254.507
-cpu 58:	loop	0	0	0	0	0
-	vec	5358704	273.974	0.084	0.862	4621092.667
-cpu 59:	loop	0	0	0	0	0
-	vec	4898487	187.645	0.085	0.632	3100122.586
-cpu 60:	loop	0	0	0	0	0
-	vec	5410840	277.954	0.084	0.782	4232895.727
-cpu 61:	loop	0	0	0	0	0
-	vec	4915648	188.399	0.084	0.570	2803220.301
-cpu 62:	loop	0	0	0	0	0
-	vec	5356076	276.417	0.085	0.786	4214544.548
-cpu 63:	loop	0	0	0	0	0
-	vec	4891837	170.531	0.085	0.799	3910948.833
-
---=-tX8NcRlxyemMR9Q/MYN2
-Content-Disposition: attachment; filename="output2"
-Content-Type: text/plain; name="output2"; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-
-CPU:	Name	Count	Max	Min	Average	Total
-----	----	-----	---	---	-------	-----
-cpu 0:	loop	3	1.287	0.291	0.630	1.890
-	vec	1216936	0.298	0.017	0.050	61252.865
-cpu 1:	loop	0	0	0	0	0
-	vec	1209075	0.463	0.017	0.046	56631.941
-cpu 2:	loop	3	1.621	1.289	1.429	4.289
-	vec	1207927	0.780	0.017	0.042	51633.737
-cpu 3:	loop	0	0	0	0	0
-	vec	1208196	0.565	0.017	0.040	49244.733
-cpu 4:	loop	0	0	0	0	0
-	vec	1208043	0.319	0.017	0.044	53534.834
-cpu 5:	loop	0	0	0	0	0
-	vec	1208053	0.309	0.017	0.044	54289.485
-cpu 6:	loop	0	0	0	0	0
-	vec	1208044	0.279	0.017	0.047	56926.443
-cpu 7:	loop	0	0	0	0	0
-	vec	1208062	0.142	0.017	0.044	53551.388
-cpu 8:	loop	0	0	0	0	0
-	vec	5525752	1.826	0.016	0.131	728502.607
-cpu 9:	loop	0	0	0	0	0
-	vec	4906031	2.616	0.016	0.146	719169.712
-cpu 10:	loop	0	0	0	0	0
-	vec	5360108	1.775	0.015	0.094	506942.177
-cpu 11:	loop	0	0	0	0	0
-	vec	4986367	1.995	0.015	0.148	742125.726
-cpu 12:	loop	0	0	0	0	0
-	vec	5585942	2.366	0.015	0.148	827584.999
-cpu 13:	loop	0	0	0	0	0
-	vec	4903611	2.500	0.014	0.122	599644.398
-cpu 14:	loop	0	0	0	0	0
-	vec	5360667	2.512	0.017	0.142	764770.776
-cpu 15:	loop	0	0	0	0	0
-	vec	5032095	2.335	0.015	0.153	770341.226
-cpu 16:	loop	0	0	0	0	0
-	vec	5364481	1.960	0.015	0.144	775150.778
-cpu 17:	loop	0	0	0	0	0
-	vec	4902803	2.280	0.015	0.093	456265.973
-cpu 18:	loop	0	0	0	0	0
-	vec	5398251	2.166	0.016	0.143	776982.539
-cpu 19:	loop	0	0	0	0	0
-	vec	4901793	2.054	0.017	0.123	603270.142
-cpu 20:	loop	0	0	0	0	0
-	vec	5362554	3.401	0.016	0.106	571069.572
-cpu 21:	loop	0	0	0	0	0
-	vec	5472390	2.345	0.015	0.115	634281.717
-cpu 22:	loop	0	0	0	0	0
-	vec	5361382	2.020	0.015	0.150	809240.717
-cpu 23:	loop	0	0	0	0	0
-	vec	5269458	2.036	0.015	0.150	790750.609
-cpu 24:	loop	0	0	0	0	0
-	vec	5917353	6.401	0.016	0.216	1279866.035
-cpu 25:	loop	0	0	0	0	0
-	vec	5055842	2.412	0.015	0.187	947468.333
-cpu 26:	loop	0	0	0	0	0
-	vec	5399171	2.779	0.016	0.188	1019882.235
-cpu 27:	loop	0	0	0	0	0
-	vec	5133356	2.239	0.015	0.134	690775.919
-cpu 28:	loop	0	0	0	0	0
-	vec	5361222	2.620	0.015	0.189	1016805.262
-cpu 29:	loop	0	0	0	0	0
-	vec	5064672	2.149	0.015	0.167	847190.872
-cpu 30:	loop	0	0	0	0	0
-	vec	5368321	1.993	0.014	0.161	869035.667
-cpu 31:	loop	0	0	0	0	0
-	vec	4906487	2.897	0.015	0.138	677603.671
-cpu 32:	loop	0	0	0	0	0
-	vec	5361503	7.795	0.016	0.134	722242.563
-cpu 33:	loop	0	0	0	0	0
-	vec	5191242	8.402	0.015	0.172	896969.628
-cpu 34:	loop	0	0	0	0	0
-	vec	5392429	8.528	0.016	0.181	976546.295
-cpu 35:	loop	0	0	0	0	0
-	vec	5446240	9.070	0.015	0.192	1047569.644
-cpu 36:	loop	0	0	0	0	0
-	vec	5388077	2.454	0.015	0.168	906697.065
-cpu 37:	loop	0	0	0	0	0
-	vec	4905785	7.504	0.016	0.145	712048.383
-cpu 38:	loop	0	0	0	0	0
-	vec	5425469	8.175	0.016	0.140	761210.354
-cpu 39:	loop	0	0	0	0	0
-	vec	5475228	12.966	0.016	0.177	970298.257
-cpu 40:	loop	0	0	0	0	0
-	vec	5368469	8.849	0.016	0.201	1083277.884
-cpu 41:	loop	0	0	0	0	0
-	vec	4933841	4.991	0.015	0.162	801858.047
-cpu 42:	loop	0	0	0	0	0
-	vec	5370134	10.376	0.015	0.137	737222.176
-cpu 43:	loop	0	0	0	0	0
-	vec	4965883	4.149	0.015	0.186	925370.213
-cpu 44:	loop	0	0	0	0	0
-	vec	5455523	5.794	0.014	0.151	825708.835
-cpu 45:	loop	0	0	0	0	0
-	vec	5617715	7.539	0.015	0.156	878782.079
-cpu 46:	loop	0	0	0	0	0
-	vec	5365957	7.481	0.015	0.184	988597.601
-cpu 47:	loop	0	0	0	0	0
-	vec	5217591	3.775	0.015	0.174	910379.784
-cpu 48:	loop	0	0	0	0	0
-	vec	5366578	6.633	0.016	0.187	1006970.047
-cpu 49:	loop	0	0	0	0	0
-	vec	4905769	6.678	0.015	0.193	951691.722
-cpu 50:	loop	0	0	0	0	0
-	vec	5367344	2.737	0.016	0.113	608111.203
-cpu 51:	loop	0	0	0	0	0
-	vec	6037981	4.473	0.014	0.201	1219438.780
-cpu 52:	loop	0	0	0	0	0
-	vec	5368694	7.075	0.015	0.192	1034306.592
-cpu 53:	loop	0	0	0	0	0
-	vec	4904642	8.612	0.016	0.168	824120.350
-cpu 54:	loop	0	0	0	0	0
-	vec	5368770	4.945	0.015	0.190	1024225.428
-cpu 55:	loop	0	0	0	0	0
-	vec	4908197	2.023	0.016	0.204	1003857.550
-cpu 56:	loop	0	0	0	0	0
-	vec	5388485	11.392	0.016	0.064	348511.438
-cpu 57:	loop	0	0	0	0	0
-	vec	5448720	11.463	0.016	0.092	501426.885
-cpu 58:	loop	0	0	0	0	0
-	vec	5414077	11.893	0.016	0.053	289594.054
-cpu 59:	loop	0	0	0	0	0
-	vec	4909051	13.002	0.016	0.047	235061.419
-cpu 60:	loop	0	0	0	0	0
-	vec	5481077	11.948	0.015	0.075	415695.026
-cpu 61:	loop	0	0	0	0	0
-	vec	4909176	11.604	0.016	0.045	225017.178
-cpu 62:	loop	0	0	0	0	0
-	vec	5368471	12.257	0.015	0.060	324502.009
-cpu 63:	loop	0	0	0	0	0
-	vec	5046229	12.114	0.017	0.082	416591.940
-
---=-tX8NcRlxyemMR9Q/MYN2
-Content-Disposition: attachment; filename="output3"
-Content-Type: text/plain; name="output3"; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-
-CPU:	Name	Count	Max	Min	Average	Total
-----	----	-----	---	---	-------	-----
-cpu 0:	loop	7	0.386	0.164	0.272	1.909
-	vec	1216797	0.602	0.021	0.039	47651.736
-cpu 1:	loop	0	0	0	0	0
-	vec	1208629	0.424	0.022	0.041	50264.545
-cpu 2:	loop	1	0.298	0.298	0.298	0.298
-	vec	1207764	0.334	0.022	0.041	49928.832
-cpu 3:	loop	0	0	0	0	0
-	vec	1207935	0.814	0.021	0.043	52042.976
-cpu 4:	loop	0	0	0	0	0
-	vec	1207943	1.000	0.021	0.050	60940.628
-cpu 5:	loop	0	0	0	0	0
-	vec	1207849	0.135	0.021	0.049	59245.776
-cpu 6:	loop	0	0	0	0	0
-	vec	1207850	0.277	0.022	0.050	61204.400
-cpu 7:	loop	0	0	0	0	0
-	vec	1207861	0.171	0.021	0.048	59181.777
-cpu 8:	loop	0	0	0	0	0
-	vec	5360664	2.117	0.021	0.180	968644.359
-cpu 9:	loop	0	0	0	0	0
-	vec	5020352	2.246	0.021	0.142	717185.281
-cpu 10:	loop	0	0	0	0	0
-	vec	5363341	1.621	0.021	0.100	538185.720
-cpu 11:	loop	0	0	0	0	0
-	vec	5438058	1.826	0.021	0.120	657667.134
-cpu 12:	loop	0	0	0	0	0
-	vec	5368919	2.083	0.021	0.122	658317.239
-cpu 13:	loop	0	0	0	0	0
-	vec	5105994	2.017	0.021	0.154	789376.417
-cpu 14:	loop	0	0	0	0	0
-	vec	5499093	2.172	0.021	0.130	719157.486
-cpu 15:	loop	0	0	0	0	0
-	vec	5339232	2.369	0.019	0.174	931028.799
-cpu 16:	loop	0	0	0	0	0
-	vec	5770606	1.649	0.021	0.172	992698.127
-cpu 17:	loop	0	0	0	0	0
-	vec	5471560	1.895	0.021	0.180	986788.267
-cpu 18:	loop	0	0	0	0	0
-	vec	5649186	1.847	0.021	0.155	877754.176
-cpu 19:	loop	0	0	0	0	0
-	vec	4903278	1.735	0.019	0.114	561407.976
-cpu 20:	loop	0	0	0	0	0
-	vec	5798082	1.794	0.021	0.187	1089769.811
-cpu 21:	loop	0	0	0	0	0
-	vec	4906094	1.838	0.021	0.101	497368.020
-cpu 22:	loop	0	0	0	0	0
-	vec	5363804	1.688	0.021	0.128	690648.710
-cpu 23:	loop	0	0	0	0	0
-	vec	5428115	2.841	0.021	0.162	880842.616
-cpu 24:	loop	0	0	0	0	0
-	vec	5362856	1.822	0.021	0.245	1314292.486
-cpu 25:	loop	0	0	0	0	0
-	vec	5423925	2.272	0.021	0.228	1237734.704
-cpu 26:	loop	0	0	0	0	0
-	vec	5564428	2.214	0.021	0.123	684849.158
-cpu 27:	loop	0	0	0	0	0
-	vec	4903295	1.972	0.019	0.174	856156.422
-cpu 28:	loop	0	0	0	0	0
-	vec	5365711	2.158	0.021	0.153	825078.390
-cpu 29:	loop	0	0	0	0	0
-	vec	5320397	2.052	0.021	0.236	1259236.014
-cpu 30:	loop	0	0	0	0	0
-	vec	5909975	1.628	0.021	0.138	819134.828
-cpu 31:	loop	0	0	0	0	0
-	vec	4933454	1.806	0.021	0.217	1074360.020
-cpu 32:	loop	0	0	0	0	0
-	vec	5363456	2.803	0.021	0.175	940610.241
-cpu 33:	loop	0	0	0	0	0
-	vec	5252733	2.619	0.021	0.120	633890.344
-cpu 34:	loop	0	0	0	0	0
-	vec	5363614	2.601	0.021	0.168	901835.513
-cpu 35:	loop	0	0	0	0	0
-	vec	4936869	3.680	0.019	0.127	631751.582
-cpu 36:	loop	0	0	0	0	0
-	vec	5922339	2.832	0.021	0.211	1255204.987
-cpu 37:	loop	0	0	0	0	0
-	vec	4910052	8.747	0.021	0.156	768758.380
-cpu 38:	loop	0	0	0	0	0
-	vec	5811067	3.098	0.019	0.130	759899.100
-cpu 39:	loop	0	0	0	0	0
-	vec	4903135	3.353	0.021	0.227	1113971.435
-cpu 40:	loop	0	0	0	0	0
-	vec	5371182	5.330	0.021	0.186	1000114.521
-cpu 41:	loop	0	0	0	0	0
-	vec	4906195	5.382	0.020	0.158	777099.361
-cpu 42:	loop	0	0	0	0	0
-	vec	5404715	3.548	0.021	0.137	743475.307
-cpu 43:	loop	0	0	0	0	0
-	vec	4901640	2.489	0.021	0.151	744220.605
-cpu 44:	loop	0	0	0	0	0
-	vec	5363571	3.523	0.021	0.202	1084684.998
-cpu 45:	loop	0	0	0	0	0
-	vec	5319646	2.274	0.021	0.196	1044613.152
-cpu 46:	loop	0	0	0	0	0
-	vec	5498500	2.777	0.021	0.205	1128627.536
-cpu 47:	loop	0	0	0	0	0
-	vec	4903761	2.528	0.021	0.143	702722.969
-cpu 48:	loop	0	0	0	0	0
-	vec	5800814	2.792	0.020	0.226	1312258.287
-cpu 49:	loop	0	0	0	0	0
-	vec	5335192	3.189	0.021	0.182	971787.892
-cpu 50:	loop	0	0	0	0	0
-	vec	5361204	2.404	0.021	0.204	1098507.789
-cpu 51:	loop	0	0	0	0	0
-	vec	4900869	1.833	0.021	0.228	1121984.786
-cpu 52:	loop	0	0	0	0	0
-	vec	6116938	4.508	0.019	0.196	1202757.006
-cpu 53:	loop	0	0	0	0	0
-	vec	4958737	2.507	0.021	0.175	871568.644
-cpu 54:	loop	0	0	0	0	0
-	vec	5393101	1.852	0.021	0.156	845557.350
-cpu 55:	loop	0	0	0	0	0
-	vec	5274061	2.021	0.020	0.224	1183107.607
-cpu 56:	loop	0	0	0	0	0
-	vec	5394135	5.041	0.021	0.056	305725.022
-cpu 57:	loop	0	0	0	0	0
-	vec	4901849	4.027	0.019	0.068	334411.917
-cpu 58:	loop	0	0	0	0	0
-	vec	5361518	1.907	0.021	0.051	273485.193
-cpu 59:	loop	0	0	0	0	0
-	vec	4899290	5.408	0.021	0.069	341790.762
-cpu 60:	loop	0	0	0	0	0
-	vec	5365118	5.080	0.021	0.063	340490.267
-cpu 61:	loop	0	0	0	0	0
-	vec	4898590	1.757	0.019	0.071	347903.615
-cpu 62:	loop	0	0	0	0	0
-	vec	5737130	3.067	0.021	0.119	687108.734
-cpu 63:	loop	0	0	0	0	0
-	vec	4903228	1.822	0.021	0.071	348506.477
-
---=-tX8NcRlxyemMR9Q/MYN2--
 
