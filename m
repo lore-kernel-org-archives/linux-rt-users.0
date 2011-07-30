@@ -1,9 +1,10 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
-Date: Sat, 30 Jul 2011 09:12:11 +0200
-Message-ID: <1312009931.8752.53.camel@marge.simson.net>
+Date: Sat, 30 Jul 2011 10:16:36 +0200
+Message-ID: <1312013796.8752.63.camel@marge.simson.net>
 References: <20110729151340.419467771@goodmis.org>
 	 <1311963874.2314.15.camel@marge.simson.net>
+	 <1312009931.8752.53.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -11,104 +12,109 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:51349 "HELO
+Received: from mailout-de.gmx.net ([213.165.64.23]:39548 "HELO
 	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752715Ab1G3HMP (ORCPT
+	with SMTP id S1750875Ab1G3IQl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 Jul 2011 03:12:15 -0400
-In-Reply-To: <1311963874.2314.15.camel@marge.simson.net>
+	Sat, 30 Jul 2011 04:16:41 -0400
+In-Reply-To: <1312009931.8752.53.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-07-29 at 20:24 +0200, Mike Galbraith wrote:
-> On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
-> > Hi Mike,
-> > 
-> > Could you try this patch set out. Add the first patch and then
-> > run your tests. The first patch only adds benchmarking, and does not
-> > modify the scheduler algorithm.
-> > 
-> > Do this:
-> > 
-> > 1. apply first patch, build and boot
-> > 2. # mount -t debugfs nodev /sys/kernel/debug
-> > 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
-> > 
-> > The output will give you the contention of the vector locks in the
-> > cpupri algorithm.
-> > 
-> > Then apply the second patch and do the same thing.
-> > 
-> > Then apply the third patch and do the same thing.
-> > 
-> > After that, could you send me the results of the output file for all
-> > three runs?  The final patch should probably be the best overall
-> > results.
-> 
-> Wow.
-> 
-> CPU:    Name    Count   Max     Min     Average Total
-> ----    ----    -----   ---     ---     ------- -----
-> cpu 60: loop    0       0       0       0       0
->         vec     5410840 277.954 0.084   0.782   4232895.727
-> cpu 61: loop    0       0       0       0       0
->         vec     4915648 188.399 0.084   0.570   2803220.301
-> cpu 62: loop    0       0       0       0       0
->         vec     5356076 276.417 0.085   0.786   4214544.548
-> cpu 63: loop    0       0       0       0       0
->         vec     4891837 170.531 0.085   0.799   3910948.833
+On Sat, 2011-07-30 at 09:12 +0200, Mike Galbraith wrote:
+> y profile looks much better, but jitter proggy using posix-timers on 56
+> cores warms up a spot you know all about.  Lucky me, I know where fixes
+> for that bugger live.
 
-BTW, that's a _lot_ more usecs than I'm looking for.  Neither cyclictest
-not jitter test proggy's main thread hit that for some reason, must be
-worker threads getting nailed or something.
+JiitterChasing::TheEnd() doesn't exist does it?  Aw poo.
 
-Your patches did improve jitter (of course), but +-30 usecs with a ~full
-box isn't achievable yet (oh darn).  Cyclictest shows max latency well
-within the goal, but jitter still goes over.
+30999      0.05%  [k] lock_timer
+31000             |
+31001             --- do_schedule_next_timer
+31002                 dequeue_signal
+31003                |
+31004                |--87.94%-- sys_rt_sigtimedwait
+31005                |          system_call_fastpath
+31006                |          |
+31007                |          |--20.24%-- 0x7f0935011f27
+31008                |          |          do_sigwait
 
-My profile looks much better, but jitter proggy using posix-timers on 56
-cores warms up a spot you know all about.  Lucky me, I know where fixes
-for that bugger live.
-
-With your fixes, looks like 3.0.0-rtN should be much better on hefty HW.
-
-    1 # dso: [kernel.kallsyms]
-    2 # Events: 272K cycles
-    3 #
-    4 # Overhead                             Symbol
-    5 # ........  .................................
-    6 #
-    7     11.58%  [k] cpupri_set
-    8             |
-    9             |--71.03%-- dequeue_rt_stack
-   10             |          dequeue_task_rt
-   11             |          dequeue_task
-   12             |          |
-   13             |          |--99.98%-- deactivate_task
-   14             |          |          __schedule
-   15             |          |          schedule
-   16             |          |          |
-   17             |          |          |--35.07%-- run_ksoftirqd
-   18             |          |          |          kthread
-   19             |          |          |          kernel_thread_helper
-   20             |          |          |
-   21             |          |          |--32.23%-- sys_semtimedop
-   22             |          |          |          system_call_fastpath
-   23             |          |          |          |
-   24             |          |          |          |--2.96%-- 0x7fe09af86e37
-   25             |          |          |          |          __semop
+# dso: [kernel.kallsyms]
+# Events: 118K cycles
+#
+# Overhead                               Symbol
+# ........  ...................................
+#
+    22.82%  [k] _raw_spin_lock_irqsave
+            |          
+            |--32.46%-- rt_mutex_trylock
+            |          tty_write_lock
+            |          tty_write
+            |          vfs_write
+            |          sys_write
+            |          system_call_fastpath
+            |          |          
+            |          |--4.38%-- 0x7f46672a30f0
+            |          |          __GI___libc_write
 ...
-  713      9.67%  [k] _raw_spin_lock_irqsave
-  714             |
-  715             |--61.75%-- rt_spin_lock_slowlock
-  716             |          |
-  717             |          |--97.54%-- lock_timer  (Hi idr_lock, you haven't met Eric yet.  Clever fellow, you'll like him)
-  718             |          |          do_schedule_next_timer
-  719             |          |          dequeue_signal
-  720             |          |          sys_rt_sigtimedwait
-  721             |          |          system_call_fastpath
-  722             |          |          |
-  723             |          |          |--6.42%-- 0x7fb4c2ebbf27
-  724             |          |          |          do_sigwait
+            |          
+            |--32.20%-- rt_mutex_slowlock
+            |          tty_write_lock
+            |          tty_write
+            |          vfs_write
+            |          sys_write
+            |          system_call_fastpath
+            |          |          
+            |          |--4.71%-- 0x7f46672a30f0
+            |          |          __GI___libc_write
+...
+            |--25.36%-- rcu_sched_qs
+            |          __schedule
+            |          |          
+            |          |--52.52%-- preempt_schedule
+            |          |          try_to_wake_up
+            |          |          signal_wake_up
+            |          |          send_sigqueue
+            |          |          posix_timer_event
+            |          |          posix_timer_fn
+            |          |          run_hrtimer_softirq
+            |          |          run_ksoftirqd
+            |          |          kthread
+            |          |          kernel_thread_helper
+            |          |          
+            |           --47.48%-- schedule
+            |                     rt_spin_lock_slowlock
+            |                     lock_timer
+            |                     do_schedule_next_timer
+            |                     dequeue_signal
+            |                     |          
+            |                     |--63.61%-- sys_rt_sigtimedwait
+            |                     |          system_call_fastpath
+            |                     |          |          
+            |                     |          |--9.26%-- 0x7f3c840acf27
+            |                     |          |          do_sigwait
+...
+            |                     |          |          do_sigwait
+            |                     |           --5.58%-- [...]
+            |                     |          
+            |                      --36.39%-- get_signal_to_deliver
+            |                                do_signal
+            |                                do_notify_resume
+            |                                int_signal
+            |                                |          
+            |                                |--6.17%-- 0x7f1dd90610f0
+            |                                |          __GI___libc_write
+...
+            |          
+            |--6.54%-- rt_mutex_slowunlock
+            |          tty_write_unlock
+            |          tty_write
+            |          vfs_write
+            |          sys_write
+            |          system_call_fastpath
+            |          |          
+            |          |--6.06%-- 0x7f11267610f0
+            |          |          __GI___libc_write
+
 
 
