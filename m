@@ -1,59 +1,47 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: threaded interrupt handlers: what if hardirq part not disables device interrupt?
-Date: Sun, 31 Jul 2011 16:15:01 +0200
-Message-ID: <CANqCtQ+9ab1qt0WzuC6n6gX9Y8XNcDxaTosUBc94eecj0umuiQ@mail.gmail.com>
+From: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Subject: bug with debug registers and 3.0rt6
+Date: Sun, 31 Jul 2011 17:41:15 +0200
+Message-ID: <4E35779B.7020908@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
+Content-Transfer-Encoding: 7bit
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:41108 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751330Ab1GaOPC (ORCPT
+Received: from mail-ew0-f46.google.com ([209.85.215.46]:46781 "EHLO
+	mail-ew0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751949Ab1GaPlT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 31 Jul 2011 10:15:02 -0400
+	Sun, 31 Jul 2011 11:41:19 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Thomas, Peter,
+Portal 2's anti debugger checks hangs on rt6:
 
-While getting the new RT6-patch working properly on a Atmel AT91
-board, I ran into the problem that the atmel-serial driver misses
-characters since its interrupt hander runs in thread context and it
-cannot keep up with the 1-byte RX 'FIFO' of the DBGU port.
-It makes the terminal slow and broken.
+[21940.633370] BUG: sleeping function called from invalid context at kernel/rtmutex.c:645
+[21940.633371] in_atomic(): 1, irqs_disabled(): 0, pid: 4235, name: portal2.exe
+[21940.633372] Pid: 4235, comm: portal2.exe Tainted: P        WC  3.0.0-rt6-patser+ #3
+[21940.633377] Call Trace:
+[21940.633381]  [<ffffffff8103fc0a>] __might_sleep+0xca/0xf0
+[21940.633383]  [<ffffffff8160d344>] rt_spin_lock+0x24/0x40
+[21940.633385]  [<ffffffff8106b879>] force_sig_info+0x49/0x100
+[21940.633387]  [<ffffffff8100e6d8>] send_sigtrap+0x68/0x70
+[21940.633389]  [<ffffffff8160e6f0>] do_debug+0x150/0x160
+[21940.633390]  [<ffffffff8160dbf2>] debug+0x22/0x40
 
-To solve this issue, I thought to make proper use of the threaded
-interrupt mechanism and make:
-* 1 part run in hard-irq context, only handling the RX-fifo, push it
-in a queue and
-*  wake the irq-thread to process the data from the queue.
+and int3:
+[15945.341955] BUG: sleeping function called from invalid context at kernel/rtmutex.c:645
+[15945.341957] in_atomic(): 1, irqs_disabled(): 0, pid: 3166, name: portal2.exe
+[15945.341958] Pid: 3166, comm: portal2.exe Tainted: P        WC  3.0.0-rt6-patser+ #3
+[15945.341959] Call Trace:
+[15945.341963]  [<ffffffff8103fc0a>] __might_sleep+0xca/0xf0
+[15945.341965]  [<ffffffff8160d344>] rt_spin_lock+0x24/0x40
+[15945.341968]  [<ffffffff8106b879>] force_sig_info+0x49/0x100
+[15945.341969]  [<ffffffff8106b946>] force_sig+0x16/0x20
+[15945.341970]  [<ffffffff8160e0ab>] do_trap+0x16b/0x170
+[15945.341972]  [<ffffffff8160e509>] do_int3+0x99/0xc0
+[15945.341973]  [<ffffffff8160dc32>] int3+0x22/0x40
 
-Digging through the interrupt code I read that the hard-irq part
-should disable the device interrupt, while the irq-thread needs to
-reenable it after it has handled it completely.
-If I am going to use the queue idea as depicted above, the hard-irq
-should keep on being enabled forever, and just wake up the irq-thread
-once it has pushed data in the queue, on which the irq-thread could
-process it on its own.
-This seem to be against the principles as on which the current
-interrupt handling code is based. It does not even work properly if I
-do it this way.
-Disabling the device interrupt in the hard-irq until the irq-thread
-reenables it again, does not solve the problem since characters will
-be missed.
+Is there a better solution than converting the siglock to a raw spinlock?
 
-As alternative solution I can do the following as well:
-The driver now has a tasklet used for processing the queue. If I add
-IRQF_NO_THREAD as irq-flag, the thread is not created and the handler
-runs completely in hard-irq context. This seems to work okay, but it
-does not feel as the right solution.
-
-How is this supposed to work? Do you have better ideas how to solve
-situations like this?
-
-Kind regards,
-
-Remy
+~Maarten
