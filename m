@@ -1,49 +1,48 @@
-From: Rolando Martins <rolando.martins@gmail.com>
-Subject: Re: [ANNOUNCE] 3.0-rt6
-Date: Mon, 1 Aug 2011 12:10:01 +0100
-Message-ID: <CABcS5h3rrWVf37nQHqVQEcbtkwX418ckqee74Qc9Oxts+U+qEg@mail.gmail.com>
-References: <alpine.LFD.2.02.1107282213000.31246@ionos>
-	<CABcS5h0m10aWDuK5fK4C-mzMMwLyXJ_cehoTgWFutvPPrv30HQ@mail.gmail.com>
-	<1312196789.2617.447.camel@laptop>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: threaded interrupt handlers: what if hardirq part not disables
+ device interrupt?
+Date: Mon, 01 Aug 2011 14:44:38 +0200
+Message-ID: <1312202678.2617.460.camel@laptop>
+References: <CANqCtQ+9ab1qt0WzuC6n6gX9Y8XNcDxaTosUBc94eecj0umuiQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
+	LKML <linux-kernel@vger.kernel.org>,
+	Jason Wessel <jason.wessel@windriver.com>
+To: Remy Bohmer <linux@bohmer.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-fx0-f46.google.com ([209.85.161.46]:49268 "EHLO
-	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752529Ab1HALKD (ORCPT
+Received: from merlin.infradead.org ([205.233.59.134]:56055 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752687Ab1HAMj5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Aug 2011 07:10:03 -0400
-In-Reply-To: <1312196789.2617.447.camel@laptop>
+	Mon, 1 Aug 2011 08:39:57 -0400
+Received: from canuck.infradead.org ([2001:4978:20e::1])
+	by merlin.infradead.org with esmtps (Exim 4.76 #1 (Red Hat Linux))
+	id 1Qnrmm-0007iR-RK
+	for linux-rt-users@vger.kernel.org; Mon, 01 Aug 2011 12:39:56 +0000
+Received: from j77219.upc-j.chello.nl ([24.132.77.219] helo=dyad.programming.kicks-ass.net)
+	by canuck.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
+	id 1Qnrmm-00030f-4y
+	for linux-rt-users@vger.kernel.org; Mon, 01 Aug 2011 12:39:56 +0000
+In-Reply-To: <CANqCtQ+9ab1qt0WzuC6n6gX9Y8XNcDxaTosUBc94eecj0umuiQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Aug 1, 2011 at 12:06 PM, Peter Zijlstra <peterz@infradead.org> wrote:
-> On Mon, 2011-08-01 at 09:42 +0100, Rolando Martins wrote:
->> Hi Peter,
->> is there any progress on the CONFIG_RT_GROUP_SCHED front?
->> I don't know if this is related, but in 33-rt if I used a low (=100)
->> cpu_runtime_us and cpu_period_us then I would get some freezes
->> (something that does not happen in 2.6.39).
->>
->>
-Hi Peter,
+On Sun, 2011-07-31 at 16:15 +0200, Remy Bohmer wrote:
+> As alternative solution I can do the following as well:
+> The driver now has a tasklet used for processing the queue. If I add
+> IRQF_NO_THREAD as irq-flag, the thread is not created and the handler
+> runs completely in hard-irq context. This seems to work okay, but it
+> does not feel as the right solution.
+> 
+> How is this supposed to work? Do you have better ideas how to solve
+> situations like this? 
 
-> No, I've been busy mopping up other things.. Ideally I'd rip out all the
-> current rt group code and put int the stuff Dario and Fabio are working
-> on, sadly they too are otherwise engaged atm.
-So, we would have sched_deadline support in rt? That would be amazing!
+This sounds like the total trainwreck known as tty/console, I believe
+jwessel and tglx had some ideas on that. Maybe Jason can share what he
+knows, I'm not up to speed on that issue.
 
->
-> I'll see if I can find a bit of time this week to stare at this mess.
-Ok! I hope to contribute to the effort at least by providing some testing...
 
-Thanks,
-Rolando
 
->
->
