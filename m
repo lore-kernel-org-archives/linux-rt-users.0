@@ -1,47 +1,83 @@
-From: Jason Wessel <jason.wessel@windriver.com>
-Subject: Re: threaded interrupt handlers: what if hardirq part not disables
- device interrupt?
-Date: Mon, 1 Aug 2011 12:25:47 -0500
-Message-ID: <4E36E19B.20207@windriver.com>
-References: <CANqCtQ+9ab1qt0WzuC6n6gX9Y8XNcDxaTosUBc94eecj0umuiQ@mail.gmail.com> <1312202678.2617.460.camel@laptop>
+From: Mike Galbraith <mgalbraith@suse.de>
+Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
+Date: Mon, 01 Aug 2011 20:41:35 +0200
+Message-ID: <1312224095.8151.78.camel@marge.simson.net>
+References: <20110729151340.419467771@goodmis.org>
+	 <1312017596.8752.78.camel@marge.simson.net>
+	 <1312208313.18583.28.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
+	RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:63321 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753653Ab1HAR05 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Aug 2011 13:26:57 -0400
-In-Reply-To: <1312202678.2617.460.camel@laptop>
+Received: from cantor2.suse.de ([195.135.220.15]:54419 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752815Ab1HASlj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 1 Aug 2011 14:41:39 -0400
+In-Reply-To: <1312208313.18583.28.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/01/2011 07:44 AM, Peter Zijlstra wrote:
-> On Sun, 2011-07-31 at 16:15 +0200, Remy Bohmer wrote:
->> As alternative solution I can do the following as well:
->> The driver now has a tasklet used for processing the queue. If I add
->> IRQF_NO_THREAD as irq-flag, the thread is not created and the handler
->> runs completely in hard-irq context. This seems to work okay, but it
->> does not feel as the right solution.
->>
->> How is this supposed to work? Do you have better ideas how to solve
->> situations like this? 
-> This sounds like the total trainwreck known as tty/console, I believe
-> jwessel and tglx had some ideas on that. Maybe Jason can share what he
-> knows, I'm not up to speed on that issue.
->
->
+On Mon, 2011-08-01 at 10:18 -0400, Steven Rostedt wrote:
+> On Sat, 2011-07-30 at 11:19 +0200, Mike Galbraith wrote:
+> > On Fri, 2011-07-29 at 11:13 -0400, Steven Rostedt wrote:
+> > > Hi Mike,
+> > > 
+> > > Could you try this patch set out. Add the first patch and then
+> > > run your tests. The first patch only adds benchmarking, and does not
+> > > modify the scheduler algorithm.
+> > > 
+> > > Do this:
+> > > 
+> > > 1. apply first patch, build and boot
+> > > 2. # mount -t debugfs nodev /sys/kernel/debug
+> > > 3. # echo 0 > /sys/kernel/debug/cpupri; ./runtest; cat /sys/kernel/debug/cpupri > output
+> > > 
+> > > The output will give you the contention of the vector locks in the
+> > > cpupri algorithm.
+> > > 
+> > > Then apply the second patch and do the same thing.
+> > > 
+> > > Then apply the third patch and do the same thing.
+> > > 
+> > > After that, could you send me the results of the output file for all
+> > > three runs?  The final patch should probably be the best overall
+> > > results.
+> > 
+> > These patches are RFC, so here's my Comment.  Steven rocks.
+> 
+> /me blushes!
 
-I talked with Thomas a bit about this last week.  While we did not talk specifically about implementation details we agree on the top level problem.  Talking to the serial hardware for any reason in an atomic context (as you often might do with printk) is simply forbidden, and yet we really want any kind critical messages, when taking an oops or using the kernel debugger to be able to be emitted from the serial port.  Design wise these goals couldn't be further apart.
+Don't, they're excellent.  /me was having one _hell_ of a hard time
+trying to convince box that somewhat tight constraint realtime really
+really should be possible on isolated CPUs.
 
-The infrastructure we have in the kernel today for the serial console and tty plumbing simply does not meet both needs.  The discussion went on to conclude that for the normal mode of operation a serial HW driver should be structured to put everything into a queue for deferred work using a worker thread.  The hard IRQ context would make use of a kfifo if needed.   In terms of the oops / kernel debug path we already have some plumbing for the CONSOLE_POLL interface where we can directly read/write to the serial hardware and effectively don't care how much latency or time is lost in between.   The general idea would be to make this interface a required part of the change so we could have low latency operation as well as "don't care about latency" operation.
+> Thanks for testing! I'll redo the patches to remove the logging, and
+> send them to you again. Could you return back a 'Tested-by' tag
+> afterward.
 
-All that being said, I am not sure it actually answers the original problem of the atmel driver.  It seems to me that the driver needs to change just a bit with the same sort of principle in mind.  We have a kfifo implementation in the kernel that is generic and employed by many of the USB serial devices today.  It would seem that the logical approach to your immediate problem would be to use the kfifo and schedule the work without a tasklet and instead use the workqueue interface to either stick work on the default queue or make use of a separate queue specific to the atmel HW.  This approach should allow for the maximum preemption and in theory the lowest latency at the expense of some scheduling overhead as is to be expected for the price of using the RT kernel.
+(I did the logging removal, the posted numbers were that, but..)
 
-Jason.
+Sure.  I've been beating on them (heftily), there are there have been no
+ill effects detected.  You can have my..
+	Tested-by: Mike Galbraith <mgalbraith@suse.de> ||
+	Tested-by: Mike Galbraith <efault@gmx.de> (the real /me)
+..now fwiw, they were the deciding factor here.
+
+> Could you also post the results without the two cpupri patches?
+
+Sure, will do.  As noted, the cyclictest numbers were never as nasty as
+the benchmark indicated they could (did) get.  With this particular test
+app, there's there's a nasty feedback perturbation source, tty.  It can
+feed on itself if several threads start griping.
+
+While testing your patches, I just let it do it's thing with a ~full up
+load it never could handle, and let the chips fall where they may.  The
+cyclictest numbers I post will be 1:1 with the results posted, ie taking
+tty out of the picture, so the difference won't be as huge as the lock
+benchmark showed it can (did) get.
+
+	-Mike
+
