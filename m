@@ -1,170 +1,341 @@
 From: Mike Galbraith <mgalbraith@suse.de>
 Subject: Re: [RFC][PATCH 0/3] update to cpupri algorithm
-Date: Tue, 02 Aug 2011 10:46:07 +0200
-Message-ID: <1312274767.15085.17.camel@marge.simson.net>
+Date: Tue, 02 Aug 2011 10:59:23 +0200
+Message-ID: <1312275563.15085.28.camel@marge.simson.net>
 References: <20110729151340.419467771@goodmis.org>
 	 <1312017596.8752.78.camel@marge.simson.net>
 	 <1312208313.18583.28.camel@gandalf.stny.rr.com>
+	 <1312224095.8151.78.camel@marge.simson.net>
+	 <1312224871.18583.72.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-yh7LOb3DbNhwHUA8tsB/"
 Cc: Peter Zijlstra <peterz@infradead.org>,
 	RT <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:33017 "EHLO mx2.suse.de"
+Received: from cantor2.suse.de ([195.135.220.15]:33031 "EHLO mx2.suse.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752269Ab1HBJAg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Aug 2011 05:00:36 -0400
-In-Reply-To: <1312208313.18583.28.camel@gandalf.stny.rr.com>
+	id S1752314Ab1HBJAj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 2 Aug 2011 05:00:39 -0400
+In-Reply-To: <1312224871.18583.72.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-08-01 at 10:18 -0400, Steven Rostedt wrote:
 
-> Could you also post the results without the two cpupri patches?
+--=-yh7LOb3DbNhwHUA8tsB/
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 
-ipc/timer patches still applied, cpupri patches popped.
+On Mon, 2011-08-01 at 14:54 -0400, Steven Rostedt wrote:
+> On Mon, 2011-08-01 at 20:41 +0200, Mike Galbraith wrote:
+> 
+> > > Thanks for testing! I'll redo the patches to remove the logging, and
+> > > send them to you again. Could you return back a 'Tested-by' tag
+> > > afterward.
+> > 
+> > (I did the logging removal, the posted numbers were that, but..)
+> 
+> Could you merge the two patches and diff them against the one I posted
+> privately. Just to make sure that you really tested the one I plan on
+> giving to Mainline.
 
-During this 10 minute, 56 CPUs run, there were 230 events > 30us, max
-+49.337, min -41.739.
-
-T: 0 ( 8149) P:99 I:1000 C: 599001 Min:      1 Act:    2 Avg:    1 Max:      12
-T: 1 ( 8150) P:99 I:1500 C: 399333 Min:      1 Act:    2 Avg:    1 Max:       5
-T: 2 ( 8151) P:99 I:2000 C: 299498 Min:      1 Act:    2 Avg:    1 Max:       7
-T: 3 ( 8152) P:99 I:2500 C: 239598 Min:      1 Act:    2 Avg:    1 Max:       4
-T: 4 ( 8153) P:99 I:3000 C: 199664 Min:      1 Act:    1 Avg:    1 Max:       4
-T: 5 ( 8154) P:99 I:3500 C: 171139 Min:      1 Act:    1 Avg:    1 Max:       5
-T: 6 ( 8155) P:99 I:4000 C: 149746 Min:      1 Act:    1 Avg:    1 Max:       4
-T: 7 ( 8156) P:99 I:4500 C: 133107 Min:      1 Act:    2 Avg:    1 Max:       4
-T: 8 ( 8157) P:99 I:5000 C: 119796 Min:      2 Act:    3 Avg:    3 Max:      11
-T: 9 ( 8158) P:99 I:5500 C: 108905 Min:      1 Act:    3 Avg:    2 Max:      14
-T:10 ( 8159) P:99 I:6000 C:  99829 Min:      1 Act:    5 Avg:    2 Max:      13
-T:11 ( 8160) P:99 I:6500 C:  92149 Min:      1 Act:    3 Avg:    2 Max:      10
-T:12 ( 8161) P:99 I:7000 C:  85567 Min:      2 Act:    2 Avg:    2 Max:      11
-T:13 ( 8162) P:99 I:7500 C:  79862 Min:      1 Act:    3 Avg:    2 Max:      12
-T:14 ( 8163) P:99 I:8000 C:  74870 Min:      1 Act:    2 Avg:    2 Max:      11
-T:15 ( 8164) P:99 I:8500 C:  70466 Min:      1 Act:    4 Avg:    2 Max:      15
-T:16 ( 8165) P:99 I:9000 C:  66551 Min:      2 Act:    3 Avg:    3 Max:      16
-T:17 ( 8166) P:99 I:9500 C:  63048 Min:      2 Act:    5 Avg:    3 Max:      15
-T:18 ( 8167) P:99 I:10000 C:  59895 Min:      2 Act:    3 Avg:    3 Max:      12
-T:19 ( 8168) P:99 I:10500 C:  57043 Min:      1 Act:    3 Avg:    3 Max:      10
-T:20 ( 8169) P:99 I:11000 C:  54450 Min:      1 Act:    5 Avg:    3 Max:      15
-T:21 ( 8170) P:99 I:11500 C:  52082 Min:      1 Act:    3 Avg:    3 Max:      10
-T:22 ( 8171) P:99 I:12000 C:  49912 Min:      2 Act:    2 Avg:    3 Max:      11
-T:23 ( 8172) P:99 I:12500 C:  47915 Min:      2 Act:    3 Avg:    3 Max:      10
-T:24 ( 8173) P:99 I:13000 C:  46072 Min:      2 Act:    2 Avg:    3 Max:      11
-T:25 ( 8174) P:99 I:13500 C:  44365 Min:      2 Act:    3 Avg:    3 Max:      12
-T:26 ( 8175) P:99 I:14000 C:  42781 Min:      2 Act:    5 Avg:    4 Max:      12
-T:27 ( 8176) P:99 I:14500 C:  41305 Min:      2 Act:    3 Avg:    3 Max:      11
-T:28 ( 8177) P:99 I:15000 C:  39928 Min:      2 Act:    3 Avg:    3 Max:      11
-T:29 ( 8178) P:99 I:15500 C:  38640 Min:      2 Act:    7 Avg:    3 Max:      12
-T:30 ( 8179) P:99 I:16000 C:  37432 Min:      2 Act:    4 Avg:    4 Max:      14
-T:31 ( 8180) P:99 I:16500 C:  36298 Min:      2 Act:    4 Avg:    3 Max:      14
-T:32 ( 8181) P:99 I:17000 C:  35230 Min:      2 Act:    4 Avg:    3 Max:      10
-T:33 ( 8182) P:99 I:17500 C:  34223 Min:      2 Act:    3 Avg:    3 Max:      11
-T:34 ( 8183) P:99 I:18000 C:  33273 Min:      2 Act:    4 Avg:    3 Max:      10
-T:35 ( 8184) P:99 I:18500 C:  32373 Min:      2 Act:    3 Avg:    3 Max:      10
-T:36 ( 8185) P:99 I:19000 C:  31521 Min:      1 Act:    4 Avg:    3 Max:      10
-T:37 ( 8186) P:99 I:19500 C:  30713 Min:      2 Act:    7 Avg:    3 Max:      12
-T:38 ( 8187) P:99 I:20000 C:  29945 Min:      1 Act:    7 Avg:    6 Max:      11
-T:39 ( 8188) P:99 I:20500 C:  29214 Min:      2 Act:    5 Avg:    3 Max:      11
-T:40 ( 8189) P:99 I:21000 C:  28519 Min:      2 Act:    5 Avg:    4 Max:      14
-T:41 ( 8190) P:99 I:21500 C:  27855 Min:      2 Act:    4 Avg:    3 Max:       9
-T:42 ( 8191) P:99 I:22000 C:  27222 Min:      2 Act:    3 Avg:    3 Max:      10
-T:43 ( 8192) P:99 I:22500 C:  26617 Min:      2 Act:    3 Avg:    3 Max:      15
-T:44 ( 8193) P:99 I:23000 C:  26038 Min:      2 Act:    3 Avg:    3 Max:      11
-T:45 ( 8194) P:99 I:23500 C:  25484 Min:      2 Act:    3 Avg:    3 Max:      13
-T:46 ( 8195) P:99 I:24000 C:  24953 Min:      2 Act:    4 Avg:    3 Max:      10
-T:47 ( 8196) P:99 I:24500 C:  24444 Min:      2 Act:    5 Avg:    3 Max:      11
-T:48 ( 8197) P:99 I:25000 C:  23955 Min:      2 Act:    3 Avg:    3 Max:      11
-T:49 ( 8198) P:99 I:25500 C:  23485 Min:      3 Act:    5 Avg:    5 Max:      15
-T:50 ( 8199) P:99 I:26000 C:  23033 Min:      2 Act:    5 Avg:    3 Max:      12
-T:51 ( 8200) P:99 I:26500 C:  22599 Min:      2 Act:    4 Avg:    3 Max:      12
-T:52 ( 8201) P:99 I:27000 C:  22180 Min:      2 Act:    4 Avg:    3 Max:      10
-T:53 ( 8202) P:99 I:27500 C:  21777 Min:      2 Act:    4 Avg:    3 Max:      11
-T:54 ( 8203) P:99 I:28000 C:  21388 Min:      2 Act:    3 Avg:    3 Max:      11
-T:55 ( 8204) P:99 I:28500 C:  21012 Min:      2 Act:    4 Avg:    3 Max:      11
-T:56 ( 8205) P:99 I:29000 C:  20650 Min:      2 Act:    4 Avg:    3 Max:      10
-T:57 ( 8206) P:99 I:29500 C:  20300 Min:      2 Act:    4 Avg:    3 Max:      11
-T:58 ( 8207) P:99 I:30000 C:  19961 Min:      2 Act:    2 Avg:    3 Max:      10
-T:59 ( 8208) P:99 I:30500 C:  19634 Min:      2 Act:    4 Avg:    3 Max:      11
-T:60 ( 8209) P:99 I:31000 C:  19317 Min:      2 Act:    4 Avg:    3 Max:      15
-T:61 ( 8210) P:99 I:31500 C:  19011 Min:      2 Act:    4 Avg:    3 Max:      10
-T:62 ( 8211) P:99 I:32000 C:  18713 Min:      2 Act:    2 Avg:    2 Max:      10
-T:63 ( 8212) P:99 I:32500 C:  18425 Min:      2 Act:    3 Avg:    2 Max:      12
-
-Hrmph, hiccups don't show up in cyclictest numbers.
-
-Repeating same exact test with folded patch re-applied..
-
-T: 0 (12130) P:99 I:1000 C: 599001 Min:      1 Act:    2 Avg:    1 Max:       6
-T: 1 (12131) P:99 I:1500 C: 399333 Min:      1 Act:    1 Avg:    1 Max:       5
-T: 2 (12132) P:99 I:2000 C: 299498 Min:      1 Act:    1 Avg:    1 Max:       4
-T: 3 (12133) P:99 I:2500 C: 239598 Min:      1 Act:    2 Avg:    1 Max:       4
-T: 4 (12134) P:99 I:3000 C: 199664 Min:      1 Act:    1 Avg:    1 Max:       4
-T: 5 (12135) P:99 I:3500 C: 171139 Min:      1 Act:    1 Avg:    1 Max:       4
-T: 6 (12136) P:99 I:4000 C: 149746 Min:      1 Act:    2 Avg:    1 Max:       4
-T: 7 (12137) P:99 I:4500 C: 133107 Min:      1 Act:    1 Avg:    1 Max:       5
-T: 8 (12138) P:99 I:5000 C: 119796 Min:      1 Act:    4 Avg:    2 Max:       6
-T: 9 (12139) P:99 I:5500 C: 108905 Min:      1 Act:    3 Avg:    2 Max:       6
-T:10 (12140) P:99 I:6000 C:  99829 Min:      1 Act:    2 Avg:    2 Max:       6
-T:11 (12141) P:99 I:6500 C:  92149 Min:      1 Act:    2 Avg:    2 Max:       7
-T:12 (12142) P:99 I:7000 C:  85567 Min:      1 Act:    3 Avg:    2 Max:       5
-T:13 (12143) P:99 I:7500 C:  79862 Min:      1 Act:    3 Avg:    2 Max:       8
-T:14 (12144) P:99 I:8000 C:  74870 Min:      1 Act:    2 Avg:    2 Max:       5
-T:15 (12145) P:99 I:8500 C:  70466 Min:      1 Act:    2 Avg:    2 Max:      11
-T:16 (12146) P:99 I:9000 C:  66551 Min:      1 Act:    3 Avg:    2 Max:       6
-T:17 (12147) P:99 I:9500 C:  63048 Min:      1 Act:    2 Avg:    2 Max:       6
-T:18 (12148) P:99 I:10000 C:  59895 Min:      2 Act:    4 Avg:    3 Max:       7
-T:19 (12149) P:99 I:10500 C:  57043 Min:      1 Act:    3 Avg:    2 Max:       5
-T:20 (12150) P:99 I:11000 C:  54450 Min:      1 Act:    3 Avg:    2 Max:       5
-T:21 (12151) P:99 I:11500 C:  52082 Min:      1 Act:    3 Avg:    2 Max:       5
-T:22 (12152) P:99 I:12000 C:  49912 Min:      1 Act:    3 Avg:    2 Max:       6
-T:23 (12153) P:99 I:12500 C:  47915 Min:      1 Act:    2 Avg:    2 Max:       5
-T:24 (12154) P:99 I:13000 C:  46072 Min:      2 Act:    4 Avg:    3 Max:       8
-T:25 (12155) P:99 I:13500 C:  44365 Min:      1 Act:    3 Avg:    3 Max:       5
-T:26 (12156) P:99 I:14000 C:  42781 Min:      2 Act:    3 Avg:    2 Max:       6
-T:27 (12157) P:99 I:14500 C:  41305 Min:      2 Act:    3 Avg:    3 Max:       6
-T:28 (12158) P:99 I:15000 C:  39928 Min:      1 Act:    3 Avg:    2 Max:       6
-T:29 (12159) P:99 I:15500 C:  38640 Min:      2 Act:    3 Avg:    3 Max:       6
-T:30 (12160) P:99 I:16000 C:  37432 Min:      1 Act:    3 Avg:    2 Max:       5
-T:31 (12161) P:99 I:16500 C:  36298 Min:      1 Act:    3 Avg:    3 Max:       7
-T:32 (12162) P:99 I:17000 C:  35230 Min:      2 Act:    4 Avg:    3 Max:       8
-T:33 (12163) P:99 I:17500 C:  34223 Min:      2 Act:    4 Avg:    3 Max:       8
-T:34 (12164) P:99 I:18000 C:  33273 Min:      2 Act:    4 Avg:    3 Max:       8
-T:35 (12165) P:99 I:18500 C:  32373 Min:      1 Act:    3 Avg:    3 Max:       9
-T:36 (12166) P:99 I:19000 C:  31521 Min:      2 Act:    3 Avg:    3 Max:       7
-T:37 (12167) P:99 I:19500 C:  30713 Min:      1 Act:    3 Avg:    2 Max:       6
-T:38 (12168) P:99 I:20000 C:  29945 Min:      1 Act:    3 Avg:    2 Max:       6
-T:39 (12169) P:99 I:20500 C:  29214 Min:      1 Act:    4 Avg:    2 Max:       8
-T:40 (12170) P:99 I:21000 C:  28519 Min:      1 Act:    3 Avg:    2 Max:       7
-T:41 (12171) P:99 I:21500 C:  27855 Min:      1 Act:    3 Avg:    2 Max:       6
-T:42 (12172) P:99 I:22000 C:  27222 Min:      1 Act:    3 Avg:    2 Max:       9
-T:43 (12173) P:99 I:22500 C:  26617 Min:      1 Act:    4 Avg:    2 Max:       5
-T:44 (12174) P:99 I:23000 C:  26038 Min:      1 Act:    3 Avg:    2 Max:       7
-T:45 (12175) P:99 I:23500 C:  25484 Min:      1 Act:    3 Avg:    2 Max:       8
-T:46 (12176) P:99 I:24000 C:  24953 Min:      1 Act:    3 Avg:    2 Max:       7
-T:47 (12177) P:99 I:24500 C:  24444 Min:      1 Act:    2 Avg:    3 Max:       5
-T:48 (12178) P:99 I:25000 C:  23955 Min:      1 Act:    3 Avg:    2 Max:       6
-T:49 (12179) P:99 I:25500 C:  23485 Min:      2 Act:    3 Avg:    2 Max:       7
-T:50 (12180) P:99 I:26000 C:  23033 Min:      1 Act:    2 Avg:    2 Max:       5
-T:51 (12181) P:99 I:26500 C:  22599 Min:      1 Act:    3 Avg:    2 Max:       5
-T:52 (12182) P:99 I:27000 C:  22180 Min:      1 Act:    3 Avg:    2 Max:       6
-T:53 (12183) P:99 I:27500 C:  21777 Min:      1 Act:    3 Avg:    2 Max:       5
-T:54 (12184) P:99 I:28000 C:  21388 Min:      1 Act:    3 Avg:    2 Max:       6
-T:55 (12185) P:99 I:28500 C:  21012 Min:      1 Act:    4 Avg:    2 Max:       8
-T:56 (12186) P:99 I:29000 C:  20650 Min:      1 Act:    3 Avg:    2 Max:       6
-T:57 (12187) P:99 I:29500 C:  20300 Min:      2 Act:    3 Avg:    2 Max:       6
-T:58 (12188) P:99 I:30000 C:  19961 Min:      1 Act:    3 Avg:    2 Max:       6
-T:59 (12189) P:99 I:30500 C:  19634 Min:      1 Act:    3 Avg:    3 Max:       7
-T:60 (12190) P:99 I:31000 C:  19317 Min:      2 Act:    3 Avg:    2 Max:       7
-T:61 (12191) P:99 I:31500 C:  19011 Min:      2 Act:    3 Avg:    2 Max:       7
-T:62 (12192) P:99 I:32000 C:  18713 Min:      2 Act:    3 Avg:    2 Max:       5
-T:63 (12193) P:99 I:32500 C:  18425 Min:      1 Act:    3 Avg:    2 Max:       5
-
-No hiccups after startup, zero, nada.  Whatever.  Cyclictest is happier,
-jitter test is finally a happy camper, so I'm a happy camper too.
+Zero difference, but then it's the same guy wedging patches.  Attached
+is the result of merging your folded patch, then applying it to virgin
+33-rt git repo to generate a pretty=email diff.
 
 	-Mike
+
+--=-yh7LOb3DbNhwHUA8tsB/
+Content-Type: application/mbox; name="sched-cpupri-Remove-the-vec-lock-2.6.33.9-rt31"
+Content-Disposition: attachment; filename="sched-cpupri-Remove-the-vec-lock-2.6.33.9-rt31"
+Content-Transfer-Encoding: 7bit
+
+>From fd0a8dca9dd0a1956087fab74d000c1c3da5e145 Mon Sep 17 00:00:00 2001
+From: Steven Rostedt <srostedt@redhat.com>
+Date: Mon, 1 Aug 2011 13:20:05 -0400
+Subject: [PATCH] sched/cpupri: Remove the vec->lock
+
+The cpupri vec->lock has been showing up as a top contention
+lately. This is because of the RT push/pull logic takes an
+agressive approach for migrating RT tasks. The cpupri logic is
+in place to improve the performance of the push/pull when dealing
+with large number CPU machines.
+
+The problem though is a vec->lock is required, where a vec is a
+global per RT priority structure. That is, if there are lots of
+RT tasks at the same priority, every time they are added or removed
+from the RT queue, this global vec->lock is taken. Now that more
+kernel threads are becoming RT (RCU boost and threaded interrupts)
+this is becoming much more of an issue.
+
+There are two variables that are being synced by the vec->lock.
+The cpupri bitmask, and the vec->counter. The cpupri bitmask
+is one bit per priority. If a RT priority vec has a process queued,
+then the vec->count is > 0 and the cpupri bitmask is set for that
+RT priority.
+
+If the cpupri bitmask gets out of sync with the vec->counter, we could
+end up pushing to low proirity RT task to a high priority queue.
+That RT task that could have run immediately could be queued on a
+run queue with a higher proirity task indefinitely.
+
+The solution is not to use the cpupri bitmask and just look at the
+vec->count directly when doing a pull. The cpupri bitmask is just
+a fast way to scan the RT priorities when a pull is made. Instead
+of using the bitmask, and just examine all RT priorities, and
+look at the vec->counts, we could eliminate the vec->lock. The
+scan of RT tasks is to find a run queue that we can push an RT task
+to, and we do not push to a high priority queue, thus the scan only
+needs to go from 1 to RT task->prio, and not all 100 RT priorities.
+
+The push algorithim, which does the scan of RT priorities (and
+scan of the bitmask) only happens when we have an overloaded RT run
+queue (more than one RT task queued). The grabbing of the vec->lock
+happens every time any RT task is queued and dequeued on the run
+queue for that priority. The slowing down of the scan by not using
+a bitmask is negligable by the speed up of removing the vec->lock
+contention, and replacing it with an atomic counter and memory barrier.
+
+To prove this, I wrote a patch that times both the loop and the code
+that grabs the vec->locks. I passed the patches to various people
+(and companies) to test and show the results. I let everyone choose
+there own load to test, giving different loads on the system,
+for various different setups.
+
+Here's some of the results: (snipping to a few CPUs to not make
+this change log huge, but the results were consistent across
+the entire system).
+
+System 1 (24 CPUs)
+
+Before patch:
+CPU:    Name    Count   Max     Min     Average Total
+----    ----    -----   ---     ---     ------- -----
+[...]
+cpu 20: loop    3057    1.766   0.061   0.642   1963.170
+        vec     6782949 90.469  0.089   0.414   2811760.503
+cpu 21: loop    2617    1.723   0.062   0.641   1679.074
+        vec     6782810 90.499  0.089   0.291   1978499.900
+cpu 22: loop    2212    1.863   0.063   0.699   1547.160
+        vec     6767244 85.685  0.089   0.435   2949676.898
+cpu 23: loop    2320    2.013   0.062   0.594   1380.265
+        vec     6781694 87.923  0.088   0.431   2928538.224
+
+After patch:
+cpu 20: loop    2078    1.579   0.061   0.533   1108.006
+        vec     6164555 5.704   0.060   0.143   885185.809
+cpu 21: loop    2268    1.712   0.065   0.575   1305.248
+        vec     6153376 5.558   0.060   0.187   1154960.469
+cpu 22: loop    1542    1.639   0.095   0.533   823.249
+        vec     6156510 5.720   0.060   0.190   1172727.232
+cpu 23: loop    1650    1.733   0.068   0.545   900.781
+        vec     6170784 5.533   0.060   0.167   1034287.953
+
+All times are in microseconds. The 'loop' is the amount of time spent
+doing the loop across the priorties (before patch uses bitmask).
+the 'vec' is the amount of time in the code that requires grabbing
+the vec->lock. The second patch just does not have the vec lock, but
+encompases the same code.
+
+Amazingly the loop code even went down on average. The vec code went
+from .5 down to .18, that's more than half the time spent!
+
+Note, more than one test was run, but they all had the same results.
+
+System 2 (64 CPUs)
+
+Before patch:
+CPU:    Name    Count   Max     Min     Average Total
+----    ----    -----   ---     ---     ------- -----
+cpu 60: loop    0       0       0       0       0
+        vec     5410840 277.954 0.084   0.782   4232895.727
+cpu 61: loop    0       0       0       0       0
+        vec     4915648 188.399 0.084   0.570   2803220.301
+cpu 62: loop    0       0       0       0       0
+        vec     5356076 276.417 0.085   0.786   4214544.548
+cpu 63: loop    0       0       0       0       0
+        vec     4891837 170.531 0.085   0.799   3910948.833
+
+After patch:
+cpu 60: loop    0       0       0       0       0
+        vec     5365118 5.080   0.021   0.063   340490.267
+cpu 61: loop    0       0       0       0       0
+        vec     4898590 1.757   0.019   0.071   347903.615
+cpu 62: loop    0       0       0       0       0
+        vec     5737130 3.067   0.021   0.119   687108.734
+cpu 63: loop    0       0       0       0       0
+        vec     4903228 1.822   0.021   0.071   348506.477
+
+The test run during the measurement did not have any (very few,
+from other CPUs) RT tasks pushing. But this shows that it helped
+out tremendously with the contention, as the contention happens
+because the vec->lock is taken only on queing at an RT priority,
+and different CPUs that queue tasks at the same priority will
+have contention.
+
+I tested on my own 4 CPU machine with the following results:
+
+Before patch:
+CPU:    Name    Count   Max     Min     Average Total
+----    ----    -----   ---     ---     ------- -----
+cpu 0:  loop    2377    1.489   0.158   0.588   1398.395
+        vec     4484    770.146 2.301   4.396   19711.755
+cpu 1:  loop    2169    1.962   0.160   0.576   1250.110
+        vec     4425    152.769 2.297   4.030   17834.228
+cpu 2:  loop    2324    1.749   0.155   0.559   1299.799
+        vec     4368    779.632 2.325   4.665   20379.268
+cpu 3:  loop    2325    1.629   0.157   0.561   1306.113
+        vec     4650    408.782 2.394   4.348   20222.577
+
+After patch:
+CPU:    Name    Count   Max     Min     Average Total
+----    ----    -----   ---     ---     ------- -----
+cpu 0:  loop    2121    1.616   0.113   0.636   1349.189
+        vec     4303    1.151   0.225   0.421   1811.966
+cpu 1:  loop    2130    1.638   0.178   0.644   1372.927
+        vec     4627    1.379   0.235   0.428   1983.648
+cpu 2:  loop    2056    1.464   0.165   0.637   1310.141
+        vec     4471    1.311   0.217   0.433   1937.927
+cpu 3:  loop    2154    1.481   0.162   0.601   1295.083
+        vec     4236    1.253   0.230   0.425   1803.008
+
+This was running my migrate.c code that can be found at:
+http://lwn.net/Articles/425763/
+
+The migrate code does stress the RT tasks a bit. This shows that
+the loop did increase a little after the patch, but not by much.
+The vec code dropped dramatically. From 4.3us down to .42us.
+That's a 10x improvement!
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/kernel/sched_cpupri.c b/kernel/sched_cpupri.c
+index 597b330..2756d86 100644
+--- a/kernel/sched_cpupri.c
++++ b/kernel/sched_cpupri.c
+@@ -46,11 +46,6 @@ static int convert_prio(int prio)
+ 	return cpupri;
+ }
+ 
+-#define for_each_cpupri_active(array, idx)                    \
+-  for (idx = find_first_bit(array, CPUPRI_NR_PRIORITIES);     \
+-       idx < CPUPRI_NR_PRIORITIES;                            \
+-       idx = find_next_bit(array, CPUPRI_NR_PRIORITIES, idx+1))
+-
+ /**
+  * cpupri_find - find the best (lowest-pri) CPU in the system
+  * @cp: The cpupri context
+@@ -72,11 +67,33 @@ int cpupri_find(struct cpupri *cp, struct task_struct *p,
+ 	int                  idx      = 0;
+ 	int                  task_pri = convert_prio(p->prio);
+ 
+-	for_each_cpupri_active(cp->pri_active, idx) {
++	if (task_pri >= MAX_RT_PRIO)
++		return 0;
++
++	for (idx = 0; idx < task_pri; idx++) {
+ 		struct cpupri_vec *vec  = &cp->pri_to_cpu[idx];
+ 
+-		if (idx >= task_pri)
+-			break;
++		if (!atomic_read(&(vec)->count))
++			continue;
++		/*
++		 * When looking at the vector, we need to read the counter,
++		 * do a memory barrier, then read the mask.
++		 *
++		 * Note: This is still all racey, but we can deal with it.
++		 *  Ideally, we only want to look at masks that are set.
++		 *
++		 *  If a mask is not set, then the only thing wrong is that we
++		 *  did a little more work than necessary.
++		 *
++		 *  If we read a zero count but the mask is set, because of the
++		 *  memory barriers, that can only happen when the highest prio
++		 *  task for a run queue has left the run queue, in which case,
++		 *  it will be followed by a pull. If the task we are processing
++		 *  fails to find a proper place to go, that pull request will
++		 *  pull this task if the run queue is running at a lower
++		 *  priority.
++		 */
++		smp_rmb();
+ 
+ 		if (cpumask_any_and(&p->cpus_allowed, vec->mask) >= nr_cpu_ids)
+ 			continue;
+@@ -116,7 +133,6 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
+ {
+ 	int                 *currpri = &cp->cpu_to_pri[cpu];
+ 	int                  oldpri  = *currpri;
+-	unsigned long        flags;
+ 
+ 	newpri = convert_prio(newpri);
+ 
+@@ -135,26 +151,25 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
+ 	if (likely(newpri != CPUPRI_INVALID)) {
+ 		struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
+ 
+-		raw_spin_lock_irqsave(&vec->lock, flags);
+-
+ 		cpumask_set_cpu(cpu, vec->mask);
+-		vec->count++;
+-		if (vec->count == 1)
+-			set_bit(newpri, cp->pri_active);
+-
+-		raw_spin_unlock_irqrestore(&vec->lock, flags);
++		/*
++		 * When adding a new vector, we update the mask first,
++		 * do a write memory barrier, and then update the count, to
++		 * make sure the vector is visible when count is set.
++		 */
++		smp_wmb();
++		atomic_inc(&(vec)->count);
+ 	}
+ 	if (likely(oldpri != CPUPRI_INVALID)) {
+ 		struct cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
+ 
+-		raw_spin_lock_irqsave(&vec->lock, flags);
+-
+-		vec->count--;
+-		if (!vec->count)
+-			clear_bit(oldpri, cp->pri_active);
++		/*
++		 * When removing from the vector, we decrement the counter first
++		 * do a memory barrier and then clear the mask.
++		 */
++		atomic_dec(&(vec)->count);
++		smp_wmb();
+ 		cpumask_clear_cpu(cpu, vec->mask);
+-
+-		raw_spin_unlock_irqrestore(&vec->lock, flags);
+ 	}
+ 
+ 	*currpri = newpri;
+@@ -180,8 +195,7 @@ int cpupri_init(struct cpupri *cp, bool bootmem)
+ 	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
+ 		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
+ 
+-		raw_spin_lock_init(&vec->lock);
+-		vec->count = 0;
++		atomic_set(&vec->count, 0);
+ 		if (!zalloc_cpumask_var(&vec->mask, gfp))
+ 			goto cleanup;
+ 	}
+diff --git a/kernel/sched_cpupri.h b/kernel/sched_cpupri.h
+index 7cb5bb6..21f4663 100644
+--- a/kernel/sched_cpupri.h
++++ b/kernel/sched_cpupri.h
+@@ -12,9 +12,8 @@
+ /* values 2-101 are RT priorities 0-99 */
+ 
+ struct cpupri_vec {
+-	raw_spinlock_t lock;
+-	int        count;
+-	cpumask_var_t mask;
++	atomic_t	count;
++	cpumask_var_t	mask;
+ };
+ 
+ struct cpupri {
+
+--=-yh7LOb3DbNhwHUA8tsB/--
 
