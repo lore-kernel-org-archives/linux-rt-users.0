@@ -1,63 +1,60 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [ANNOUNCE] 3.0-rt6 : BUG at kernel/trmutex.c:724!
-Date: Thu, 4 Aug 2011 19:04:53 +0200
-Message-ID: <201108041904.53780.tim.sander@hbm.com>
-References: <alpine.LFD.2.02.1107282213000.31246@ionos> <201108041834.20575.tim.sander@hbm.com> <1312475829.16729.45.camel@twins>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 3.0-rt6
+Date: Thu, 04 Aug 2011 12:05:12 -0700
+Message-ID: <4E3AED68.5060506@ccrma.stanford.edu>
+References: <alpine.LFD.2.02.1107282213000.31246@ionos>	 <4E3A3D7C.6050403@localhost> <1312450965.16729.7.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Thomas Gleixner" <tglx@linutronix.de>,
-	"LKML" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: "Peter Zijlstra" <peterz@infradead.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway.hbm.com ([213.157.30.2]:10901 "EHLO hbmntx5.hbm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751766Ab1HDRFH convert rfc822-to-8bit (ORCPT
+Received: from smtp4.Stanford.EDU ([171.67.219.84]:58054 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1754540Ab1HDTFP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Aug 2011 13:05:07 -0400
-Content-class: urn:content-classes:message
-In-Reply-To: <1312475829.16729.45.camel@twins>
+	Thu, 4 Aug 2011 15:05:15 -0400
+In-Reply-To: <1312450965.16729.7.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Donnerstag, 4. August 2011, 18:37:09 schrieb Peter Zijlstra:
-> looks like it tries to use waitqueues from hardirq context, that's a
-> no-no for -rt. That interrupt should be a threaded interrupt.
-Ah, right: i enabled hardirq in tring to fight latency without preempt-=
-rt and=20
-then forgot.
+Was going to try this but it appears it is in rt7, trying to build rt7 
+fails with:
 
-Its working now with 3.0-rt7.
+ERROR: "of_find_property" [drivers/tty/serial/of_serial.ko] undefined!
+ERROR: "of_find_property" [drivers/hwmon/ltc4245.ko] undefined!
 
-Thanks=20
-Tim
+-- Fernando
 
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
-Germany | www.hbm.com=20
-
-Registered as GmbH (German limited liability corporation) in the commer=
-cial register at the local court of Darmstadt, HRB 1147 =20
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
-the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
-er des Amtsgerichts Darmstadt unter HRB 1147=20
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
-st | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely fo=
-r the addressee. If you are not the intended recipient, please let me k=
-now and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=C3=BCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche =
-Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-M=
-ail.
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On 08/04/2011 02:42 AM, Peter Zijlstra wrote:
+> On Wed, 2011-08-03 at 23:34 -0700, Fernando Lopez-Lezcano wrote:
+>> [  117.026009]  [<ffffffff814ef322>] _raw_spin_lock+0x45/0x79
+>> [  117.026009]  [<ffffffff8107b6f1>] ? __run_posix_cpu_timers+0x8f/0x353
+>> [  117.026009]  [<ffffffff8107b6f1>] __run_posix_cpu_timers+0x8f/0x353
+>
+> I think its this one, could you confirm?
+>
+> ---
+> Index: linux-2.6/kernel/posix-cpu-timers.c
+> ===================================================================
+> --- linux-2.6.orig/kernel/posix-cpu-timers.c
+> +++ linux-2.6/kernel/posix-cpu-timers.c
+> @@ -1288,10 +1288,11 @@ static inline int fastpath_timer_check(s
+>   	sig = tsk->signal;
+>   	if (sig->cputimer.running) {
+>   		struct task_cputime group_sample;
+> +		unsigned long flags;
+>
+> -		raw_spin_lock(&sig->cputimer.lock);
+> +		raw_spin_lock_irqsave(&sig->cputimer.lock, flags);
+>   		group_sample = sig->cputimer.cputime;
+> -		raw_spin_unlock(&sig->cputimer.lock);
+> +		raw_spin_unlock_irqrestore(&sig->cputimer.lock, flags);
+>
+>   		if (task_cputime_expired(&group_sample,&sig->cputime_expires))
+>   			return 1;
+>
