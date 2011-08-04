@@ -1,60 +1,45 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Subject: Re: [ANNOUNCE] 3.0-rt6
-Date: Thu, 04 Aug 2011 12:05:12 -0700
-Message-ID: <4E3AED68.5060506@ccrma.stanford.edu>
-References: <alpine.LFD.2.02.1107282213000.31246@ionos>	 <4E3A3D7C.6050403@localhost> <1312450965.16729.7.camel@twins>
+Date: Thu, 4 Aug 2011 22:15:00 +0200
+Message-ID: <20110804201500.GL31521@pengutronix.de>
+References: <alpine.LFD.2.02.1107282213000.31246@ionos>
+ <4E3A3D7C.6050403@localhost>
+ <1312450965.16729.7.camel@twins>
+ <4E3AED68.5060506@ccrma.stanford.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:58054 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754540Ab1HDTFP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Aug 2011 15:05:15 -0400
-In-Reply-To: <1312450965.16729.7.camel@twins>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4E3AED68.5060506@ccrma.stanford.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Was going to try this but it appears it is in rt7, trying to build rt7 
-fails with:
+On Thu, Aug 04, 2011 at 12:05:12PM -0700, Fernando Lopez-Lezcano wrote:
+> Was going to try this but it appears it is in rt7, trying to build
+> rt7 fails with:
+>=20
+> ERROR: "of_find_property" [drivers/tty/serial/of_serial.ko] undefined=
+!
+> ERROR: "of_find_property" [drivers/hwmon/ltc4245.ko] undefined!
+This is known but unfixed, see
+http://mid.gmane.org/20110722065711.GD16561@pengutronix.de
 
-ERROR: "of_find_property" [drivers/tty/serial/of_serial.ko] undefined!
-ERROR: "of_find_property" [drivers/hwmon/ltc4245.ko] undefined!
+You should be able to workaround that by jugling with the .config. I.e.
+disable OF or something like that.
 
--- Fernando
+Best regards
+Uwe
 
-On 08/04/2011 02:42 AM, Peter Zijlstra wrote:
-> On Wed, 2011-08-03 at 23:34 -0700, Fernando Lopez-Lezcano wrote:
->> [  117.026009]  [<ffffffff814ef322>] _raw_spin_lock+0x45/0x79
->> [  117.026009]  [<ffffffff8107b6f1>] ? __run_posix_cpu_timers+0x8f/0x353
->> [  117.026009]  [<ffffffff8107b6f1>] __run_posix_cpu_timers+0x8f/0x353
->
-> I think its this one, could you confirm?
->
-> ---
-> Index: linux-2.6/kernel/posix-cpu-timers.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/posix-cpu-timers.c
-> +++ linux-2.6/kernel/posix-cpu-timers.c
-> @@ -1288,10 +1288,11 @@ static inline int fastpath_timer_check(s
->   	sig = tsk->signal;
->   	if (sig->cputimer.running) {
->   		struct task_cputime group_sample;
-> +		unsigned long flags;
->
-> -		raw_spin_lock(&sig->cputimer.lock);
-> +		raw_spin_lock_irqsave(&sig->cputimer.lock, flags);
->   		group_sample = sig->cputimer.cputime;
-> -		raw_spin_unlock(&sig->cputimer.lock);
-> +		raw_spin_unlock_irqrestore(&sig->cputimer.lock, flags);
->
->   		if (task_cputime_expired(&group_sample,&sig->cputime_expires))
->   			return 1;
->
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
