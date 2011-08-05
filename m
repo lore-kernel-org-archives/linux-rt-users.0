@@ -1,36 +1,43 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: Unlucky 3.0-rt7
-Date: Fri, 05 Aug 2011 19:29:02 +0200
-Message-ID: <1312565342.28695.30.camel@twins>
-References: <20110805054017.472bef0d.shakti@bayarea.net>
-	 <4E3C1475.7040908@ccrma.stanford.edu> <4E3C224D.4050609@ccrma.stanford.edu>
+Subject: [ANNOUNCE] 3.0.1-rt8
+Date: Fri, 05 Aug 2011 23:44:41 +0200
+Message-ID: <1312580681.28695.44.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org, Tracey Hytry <shakti@bayarea.net>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:32995 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751190Ab1HER3M convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Aug 2011 13:29:12 -0400
-In-Reply-To: <4E3C224D.4050609@ccrma.stanford.edu>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@us.ibm.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: linux-kernel <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2011-08-05 at 10:03 -0700, Fernando Lopez-Lezcano wrote:
-> [    0.000000]  [<c04fc9e1>] kmem_cache_free+0x6c/0xdc
-> [    0.000000]  [<c04fcaa0>] slab_destroy+0x4f/0x53
-> [    0.000000]  [<c04fcb38>] free_block+0x94/0xc1
-> [    0.000000]  [<c04fdcea>] do_tune_cpucache+0x10b/0x2bb
-> [    0.000000]  [<c04fe075>] enable_cpucache+0x7b/0xa7
-> [    0.000000]  [<c0bdd355>] kmem_cache_init_late+0x2f/0x6a
-> [    0.000000]  [<c0bbd68c>] start_kernel+0x251/0x368
-> [    0.000000]  [<c0bbd1c4>] ? loglevel+0x18/0x18
-> [    0.000000]  [<c0bbd0ba>] i386_start_kernel+0xa9/0xaf 
+Hi,
 
-Ah, I actually have a patch for that but didn't include it in -rt, only
-pushed it upstream.. silly me. Let me include all those lockdep fixes.
+Since yesterday is old, and yesterday's kernels aren't interesting,
+here's a fresh one: 3.0.1-rt8.
+
+Aside from the obvious rebase to 3.0.1 changes include:
+
+ - a fix from Rostedt for his cpupri rework involving memory ordering
+ - a fix from me regarding this highmem muck, seeing as I mostly
+   wrecked things last time around :-)
+ - some lockdep annotations from upstream for things people were
+   seeing here as well
+ - a patch from Clark adding a sysfs file to recognize a PREEMP_RT
+   kernel for udev -- is there really no saner solution !?
+ - and a fresh raw_spinlock_t conversion of cpufreq_driver_lock, done
+   just minutes before releasing this, to keep life interesting.
+
+Still working on the known issues from last time..
+
+The patch is at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-3.0.1-rt8.patch.bz2
+
+The quilt series can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0.1-rt8.tar.bz2
+
+Once kernel.org mirrors catch up that is..
