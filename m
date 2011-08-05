@@ -1,54 +1,50 @@
-From: hermann <brummer-@web.de>
-Subject: Re: [ANNOUNCE] 3.0-rt7
-Date: Fri, 05 Aug 2011 11:12:22 +0200
-Message-ID: <1312535543.2653.5.camel@box>
-References: <1312465990.16729.22.camel@twins>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [ANNOUNCE] 3.0-rt6
+Date: Fri, 5 Aug 2011 11:28:45 +0200
+Message-ID: <20110805092845.GP31521@pengutronix.de>
+References: <alpine.LFD.2.02.1107282213000.31246@ionos>
+ <4E3A3D7C.6050403@localhost>
+ <1312450965.16729.7.camel@twins>
+ <4E3AED68.5060506@ccrma.stanford.edu>
+ <20110804201500.GL31521@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Peter Zijlstra <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fmmailgate03.web.de ([217.72.192.234]:55118 "EHLO
-	fmmailgate03.web.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756436Ab1HEJMi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Aug 2011 05:12:38 -0400
-In-Reply-To: <1312465990.16729.22.camel@twins>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110804201500.GL31521@pengutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Am Donnerstag, den 04.08.2011, 15:53 +0200 schrieb Peter Zijlstra:
-> Hi,
-> 
-> With Thomas enjoying his well earned holidays, I hereby present you with
-> 3.0-rt7.
-> 
-> Goodies included since last time:
-> 
->  - some raw_spinlock patch from Uwe.
->  - cpupri rework from Rostedt, something which should greatly benefit
->    everybody with smp hardware, the more cpus the more benefit.
->  - a possible fix for some posix timer splat reported by Fernando.
->  - i386-highmem support because I'd already written the code anyway
->    so I thought I might as well make it work.
-> 
-> I'll take patches implementing similar highmem muck on other arches, if
-> there's any code to be shared between the arches, do so.
+On Thu, Aug 04, 2011 at 10:15:00PM +0200, Uwe Kleine-K=F6nig wrote:
+> On Thu, Aug 04, 2011 at 12:05:12PM -0700, Fernando Lopez-Lezcano wrot=
+e:
+> > Was going to try this but it appears it is in rt7, trying to build
+> > rt7 fails with:
+> >=20
+> > ERROR: "of_find_property" [drivers/tty/serial/of_serial.ko] undefin=
+ed!
+> > ERROR: "of_find_property" [drivers/hwmon/ltc4245.ko] undefined!
+> This is known but unfixed, see
+> http://mid.gmane.org/20110722065711.GD16561@pengutronix.de
+>=20
+> You should be able to workaround that by jugling with the .config. I.=
+e.
+> disable OF or something like that.
+Can you send me a .config, then I'd look into that.
 
-Hi
+Best regards
+Uwe
 
-Many thanks for enable i386-highmem support, the missing highmem was the
-biggest issue I've with the latest 3.0-rt patch. Indeed I run into swap
-and therewith receive Xruns from jack. 
-I've just switch back to 2.6.39 some hours before you announce -rt7, now
-I'm back on 3.0-rt
-lucky I'm 
-
-regards
-hermann
-  
-
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
