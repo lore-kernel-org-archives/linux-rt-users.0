@@ -1,65 +1,74 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.0-rt6
-Date: Mon, 08 Aug 2011 10:25:25 -0700
-Message-ID: <4E401C05.7000803@localhost>
-References: <alpine.LFD.2.02.1107282213000.31246@ionos>	 <4E3A3D7C.6050403@localhost> <1312450965.16729.7.camel@twins>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: hardirq ->tasklet ->usermode vs softirq -> usermode
+Date: Mon, 8 Aug 2011 20:46:03 +0200
+Message-ID: <CANqCtQJSt5beA369e_H+ZiC_K6AKv2o8_aLJHV2XZNUq+e_wdA@mail.gmail.com>
+References: <201108081809.38521.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp4.Stanford.EDU ([171.67.219.84]:52739 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751748Ab1HHRZ2 (ORCPT
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:54773 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754151Ab1HHSqF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Aug 2011 13:25:28 -0400
-In-Reply-To: <1312450965.16729.7.camel@twins>
+	Mon, 8 Aug 2011 14:46:05 -0400
+Received: by fxh19 with SMTP id 19so5641997fxh.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Aug 2011 11:46:04 -0700 (PDT)
+In-Reply-To: <201108081809.38521.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/04/2011 02:42 AM, Peter Zijlstra wrote:
-> On Wed, 2011-08-03 at 23:34 -0700, Fernando Lopez-Lezcano wrote:
->> [  117.026009]  [<ffffffff814ef322>] _raw_spin_lock+0x45/0x79
->> [  117.026009]  [<ffffffff8107b6f1>] ? __run_posix_cpu_timers+0x8f/0x353
->> [  117.026009]  [<ffffffff8107b6f1>] __run_posix_cpu_timers+0x8f/0x353
->
-> I think its this one, could you confirm?
+Hi,
 
-If this was later part of rt8 then yes, Tracey was able to boot on 
-fc15/x86_64 with no further problems (3.0.1 + rt8). I was also able to 
-boot rt8 this morning in my fc15 test laptop with no bugs or oops so 
-far... still testing but looks promising.
-
-Thanks again!
--- Fernando
-
-
-> ---
-> Index: linux-2.6/kernel/posix-cpu-timers.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/posix-cpu-timers.c
-> +++ linux-2.6/kernel/posix-cpu-timers.c
-> @@ -1288,10 +1288,11 @@ static inline int fastpath_timer_check(s
->   	sig = tsk->signal;
->   	if (sig->cputimer.running) {
->   		struct task_cputime group_sample;
-> +		unsigned long flags;
+2011/8/8 Tim Sander <tim.sander@hbm.com>:
+> Hi
 >
-> -		raw_spin_lock(&sig->cputimer.lock);
-> +		raw_spin_lock_irqsave(&sig->cputimer.lock, flags);
->   		group_sample = sig->cputimer.cputime;
-> -		raw_spin_unlock(&sig->cputimer.lock);
-> +		raw_spin_unlock_irqrestore(&sig->cputimer.lock, flags);
+> I am currently evaluating the RT Kernel. We are running a interrupt with
+> 9.6khz on an arm1136jfs (pcm043) with 533Mhz. When using an softirq
+> we are missing interrupts since the scheduler fails to schedule the softirq in
+> time :-(.
 >
->   		if (task_cputime_expired(&group_sample,&sig->cputime_expires))
->   			return 1;
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> So i implemented an hardiq which then schedules an tasklet and then triggers
+> usermode with an adjustable wakeup divider. The solution with the tasklet
+> seems to be even slower than the softirqs from the kernel and the load makes
+> the system so slow that it's a pain working on it.
+
+Not surprised ;-)
+
+> So my question is: is there a more efficient way than a tasklet?
+
+Waking up the thread directly from the hardirq could be an option.
+
+Globally you can declare:
+struct task_struct      *wake_me_up;
+
+In the thread, you can do this:
+1.  set_current_state(TASK_INTERRUPTIBLE);
+2. wake_me_up = current;
+3. schedule();
+4. wake_me_up = NULL;
+
+In the hardirq you can do something like:
+if (wake_me_up)
+      wake_up_process(wake_me_up);
+
+Of course with the proper locking where needed. (Just meant as pseudo
+code, lots of examples can be found in the kernel.
+
+> When comparing the 3.0 vs 3.0-rt7 i can make the general observations:
+> * the load seems to be at least twice as high.
+> * usermode seems to be scheduled at 2.4khz which is nice.
+> * the softirq looses some interrupts at a rate of 9.6khz.
+
+9.6 kHz sounds a lot.
+This means about every 100usec an interrupt, the interrupt handler
+takes some time and scheduling as well. (I have seen that it can take
+up to 50usec to handle an interrupt on some cores.), schedule a thread
+and even do some work in userspace...
+You should measure (scope or ETM) what time it takes to wake up a
+thread from hardirq context on your core.
+
+Kind regards,
+
+Remy
