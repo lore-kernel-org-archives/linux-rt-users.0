@@ -1,46 +1,56 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: rcu  stalls running 3.0.1-rt8
-Date: Tue, 09 Aug 2011 03:14:28 +0200
-Message-ID: <1312852468.5977.10.camel@marge.simson.net>
-References: <1312580681.28695.44.camel@twins>
-	 <1312811718.5896.29.camel@marge.simson.net>
-	 <20110808231039.GP4435@linux.vnet.ibm.com>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: [PATCH][RT] fix KM_TYPE_NR undeclared in sched.h on 32 bit x86
+Date: Mon, 08 Aug 2011 21:08:31 -0700
+Message-ID: <4E40B2BF.3030608@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: paulmck@linux.vnet.ibm.com
+	Peter Zijlstra <peterz@infradead.org>,
+	"Ashfield, Bruce" <Bruce.Ashfield@windriver.com>
+To: lkml <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:43405 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1750828Ab1HIBPH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Aug 2011 21:15:07 -0400
-In-Reply-To: <20110808231039.GP4435@linux.vnet.ibm.com>
+Received: from mga14.intel.com ([143.182.124.37]:36643 "EHLO mga14.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750779Ab1HIEIe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Aug 2011 00:08:34 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-08-08 at 16:10 -0700, Paul E. McKenney wrote:
-> On Mon, Aug 08, 2011 at 03:55:18PM +0200, Mike Galbraith wrote:
-> > Greetings,
-> > 
-> > I've had no time to tinker with this but though I should get it posted,
-> > so build latest/greatest to make sure it's still there.  It is.
-> > 
-> > Box can be idling along, and pow.  If RCU_BOOST is enabled, I get a hung
-> > task panic after the stall.  If RCU_BOOST is off, and debugging options
-> > are cut to the bone, box will stay up despite periodic gripes.
-> 
-> Yow!
-> 
-> Is this new in -rt8?  I wasn't seeing it in earlier versions.  Then
-> again, I was running 32 bits.
+Patch peter_zijlstra-re-_3_0-rt4.patch causes 32 bit compilations to fa=
+il with:
+sched.h:1592:17: error: =91KM_TYPE_NR=92 undeclared here (not in a func=
+tion)
 
-No, I saw it in earlier releases too.  The only thing I've done since
-first seeing it is a quick build to see if it was still alive, or had
-died of boredom while waiting for me to come out and play ;-)
+Including asm/kmap_types in sched.h resolves the issue.
 
-	-Mike
+Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Bruce Ashfield <bruce.ashfield@windriver.com>
+---
+ include/linux/sched.h |    1 +
+ 1 file changed, 1 insertion(+)
 
+Index: linux-3.0-rt/include/linux/sched.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-3.0-rt.orig/include/linux/sched.h
++++ linux-3.0-rt/include/linux/sched.h
+@@ -63,6 +63,7 @@ struct sched_param {
+ #include <linux/nodemask.h>
+ #include <linux/mm_types.h>
+=20
++#include <asm/kmap_types.h>
+ #include <asm/system.h>
+ #include <asm/page.h>
+ #include <asm/ptrace.h>
+--=20
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
