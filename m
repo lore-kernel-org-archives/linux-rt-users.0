@@ -1,54 +1,39 @@
-From: Darren Hart <dvhart@linux.intel.com>
-Subject: [PATCH][RT] fix KM_TYPE_NR undeclared in sched.h on 32 bit x86
-Date: Mon, 08 Aug 2011 21:08:31 -0700
-Message-ID: <4E40B2BF.3030608@linux.intel.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH][RT] fix KM_TYPE_NR undeclared in sched.h on 32 bit x86
+Date: Tue, 09 Aug 2011 10:31:29 +0200
+Message-ID: <1312878690.22367.48.camel@twins>
+References: <4E40B2BF.3030608@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	"Ashfield, Bruce" <Bruce.Ashfield@windriver.com>
-To: lkml <linux-kernel@vger.kernel.org>
+To: Darren Hart <dvhart@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga14.intel.com ([143.182.124.37]:36643 "EHLO mga14.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750779Ab1HIEIe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Aug 2011 00:08:34 -0400
+Received: from casper.infradead.org ([85.118.1.10]:45513 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752192Ab1HIIbp convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Aug 2011 04:31:45 -0400
+In-Reply-To: <4E40B2BF.3030608@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Patch peter_zijlstra-re-_3_0-rt4.patch causes 32 bit compilations to fa=
-il with:
-sched.h:1592:17: error: =91KM_TYPE_NR=92 undeclared here (not in a func=
-tion)
+On Mon, 2011-08-08 at 21:08 -0700, Darren Hart wrote:
+> Patch peter_zijlstra-re-_3_0-rt4.patch causes 32 bit compilations to =
+fail with:
+> sched.h:1592:17: error: =E2=80=98KM_TYPE_NR=E2=80=99 undeclared here =
+(not in a function)
+>=20
+> Including asm/kmap_types in sched.h resolves the issue.
+>=20
+> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
 
-Including asm/kmap_types in sched.h resolves the issue.
+Yep indeed, I wonder why my i386-defconfig build.. header deps magic or
+so.
 
-Signed-off-by: Darren Hart <dvhart@linux.intel.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Bruce Ashfield <bruce.ashfield@windriver.com>
----
- include/linux/sched.h |    1 +
- 1 file changed, 1 insertion(+)
-
-Index: linux-3.0-rt/include/linux/sched.h
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- linux-3.0-rt.orig/include/linux/sched.h
-+++ linux-3.0-rt/include/linux/sched.h
-@@ -63,6 +63,7 @@ struct sched_param {
- #include <linux/nodemask.h>
- #include <linux/mm_types.h>
-=20
-+#include <asm/kmap_types.h>
- #include <asm/system.h>
- #include <asm/page.h>
- #include <asm/ptrace.h>
---=20
-Darren Hart
-Intel Open Source Technology Center
-Yocto Project - Linux Kernel
+I've updated the patch in question, thanks!
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
