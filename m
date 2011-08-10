@@ -1,42 +1,41 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: 3.0.1-rt8 + Nvidia
-Date: Wed, 10 Aug 2011 00:23:33 -0400
-Message-ID: <CAOcfFMzB0Wz_h8y+L_YKC3vVFz98VtRjFb87T3GV0V02tHy2yA@mail.gmail.com>
-References: <CAOcfFMyObtC2qeqRBxo-cDGaDLHrPdHXmfQc=fujY64dRVBHPw@mail.gmail.com>
-	<CAGQ70etT_LO4GV9wvcPyMJfeYiV-m-_y7dAbG-qfgceTcbPQFQ@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [ANNOUNCE] 3.0-rt1
+Date: Wed, 10 Aug 2011 07:14:50 +0200
+Message-ID: <1312953290.5395.39.camel@marge.simson.net>
+References: <alpine.LFD.2.02.1107222203400.2702@ionos>
+	 <4E2A1E75.4070709@gmail.com> <1311428078.2502.0.camel@hermosa.morreale.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org
-To: Oon-Ee Ng <ngoonee.talk@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Maarten Lankhorst <m.b.lankhorst@gmail.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: pmorreale@novell.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-iy0-f170.google.com ([209.85.210.170]:57827 "EHLO
-	mail-iy0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750737Ab1HJEXe (ORCPT
+Received: from mailout-de.gmx.net ([213.165.64.23]:56923 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1750836Ab1HJFOy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Aug 2011 00:23:34 -0400
-Received: by iye16 with SMTP id 16so401350iye.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 09 Aug 2011 21:23:34 -0700 (PDT)
-In-Reply-To: <CAGQ70etT_LO4GV9wvcPyMJfeYiV-m-_y7dAbG-qfgceTcbPQFQ@mail.gmail.com>
+	Wed, 10 Aug 2011 01:14:54 -0400
+In-Reply-To: <1311428078.2502.0.camel@hermosa.morreale.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey ngoonee,
+On Sat, 2011-07-23 at 07:34 -0600, Peter W. Morreale wrote:
+> On Sat, 2011-07-23 at 03:05 +0200, Maarten Lankhorst wrote:
 
-ya, we've chatted in the Arch forums, before. and i also saw your pkgbuild.
+> > Only the nvidia driver fails to build because of rtmutex and migrate enable/disable being GPL only, you might want to reconsider the GPL only status of them.
+> > 
+> > ~Maarten
+> 
+> Or, alternatively, please ask Nvidia to GPL their driver.
 
-> This is covered on another thread on this list. You need to 'patch'
-> the kernel, not the driver, some symbols are exported as GPL which
-> prevents the driver from being used.
+I know a couple folks for whom this will eventually become a problem.
 
-must have missed it, i will have a look back.
+One is doing (very) high performance aircraft simulation, where
+rendering performance highly important.  AFAIK there is currently no
+viable alternative to "the blob"
 
-> This is a licensing issue though, so I've held off implementing that
-> patch in my own kernel PKGBUILD in Arch (linux-rt-ice). I think it is
-> illegal to distribute such a patch, though using it on your own
-> machine may be fine (those who are more knowledgable should correct me
-> on this).
+	-Mike
 
-lame, that it isn't distributable. Well, assuming i can have a look at
-the patch, then i'll just patch it on my end. thanks for the info,
-
-jordan
