@@ -1,7 +1,7 @@
 From: "Tim Sander" <tim.sander@hbm.com>
 Subject: Re: [ANNOUNCE] 3.0.1-rt8 - Regression to 3.0-rt7
-Date: Thu, 11 Aug 2011 14:52:28 +0200
-Message-ID: <201108111452.29075.tim.sander@hbm.com>
+Date: Thu, 11 Aug 2011 17:28:29 +0200
+Message-ID: <201108111728.29405.tim.sander@hbm.com>
 References: <1312580681.28695.44.camel@twins> <201108111330.28168.tim.sander@hbm.com> <1313064142.7144.1.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/Plain; charset=UTF-8
@@ -12,53 +12,59 @@ Cc: "linux-kernel" <linux-kernel@vger.kernel.org>,
 	"linux-rt-users" <linux-rt-users@vger.kernel.org>
 To: "Peter Zijlstra" <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gateway.hbm.com ([213.157.30.2]:54387 "EHLO hbmntx5.hbm.com"
+Received: from gateway.hbm.com ([213.157.30.2]:8858 "EHLO hbmntx5.hbm.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755153Ab1HKMwp convert rfc822-to-8bit (ORCPT
+	id S1751096Ab1HKP2p convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Aug 2011 08:52:45 -0400
+	Thu, 11 Aug 2011 11:28:45 -0400
 Content-class: urn:content-classes:message
 In-Reply-To: <1313064142.7144.1.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi Peter
-
-Am Donnerstag, 11. August 2011, 14:02:22 schrieb Peter Zijlstra:
-> On Thu, 2011-08-11 at 13:30 +0200, Tim Sander wrote:
-> > The error does not occur  when configured with
-> > CONFIG_PREEMPT_RT_FULL=3Dy
-> > but with
-> > CONFIG_PREEMPT_RTB=3Dy.
-> > The same error also happens with
-> > CONFIG_PREEMPT_LL=3Dy. (A log is appended after the other log just
-> > search for CONFIG_PREEMPT_LL
-> > for starting point).
->=20
 > Does the below (on top of -rt8) cure things for you? Shouldn't make a
 > difference for PREEMPT_LL though, so maybe there's something else bus=
 ted
 > as well. But from what I can tell PREEMPT_BASE should be fine with su=
 ch
 > things disabling preemption..
-I havent tested but i tested appling rt8 to 3.0 and then git diffstat.
-Kind of a manual bisecting. Since you still seem to be currently lookin=
-g at=20
-this:=20
-The current remaining offenders on the list from 3.0-rt7 are:
- git diff --stat rt8-test
- kernel/ksysfs.c       |   12 ------
- kernel/lockdep.c      |    5 ++-
- kernel/sched_cpupri.c |   28 ++-------------
- localversion-rt       |    2 +-
- mm/memory.c           |    2 -
- mm/slab.c             |   92 +++++++++++------------------------------=
--------
- 6 files changed, 29 insertions(+), 112 deletions(-)
+>=20
+> ---
+> Index: linux-2.6/include/linux/uaccess.h
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/include/linux/uaccess.h
+> +++ linux-2.6/include/linux/uaccess.h
+> @@ -22,7 +22,7 @@ static inline void raw_pagefault_enable(
+>  	preempt_check_resched();
+>  }
+>=20
+> -#ifndef CONFIG_PREEMPT_RT_FULL
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  static inline void pagefault_disable(void)
+>  {
+>  	raw_pagefault_disable();
+> Index: linux-2.6/mm/memory.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/mm/memory.c
+> +++ linux-2.6/mm/memory.c
+> @@ -3438,7 +3438,7 @@ int handle_pte_fault(struct mm_struct *m
+>  	return 0;
+>  }
+>=20
+> -#ifdef CONFIG_PREEMPT_RT_FULL
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+>  void pagefault_disable(void)
+>  {
+>  	migrate_disable();
+The patch fixes the problem for CONFIG_PREEMPT_RTB but not for=20
+CONFIG_PREEMPT_LL. With the latter the error is still there.
 
-Will test the patch later on.
-
-Best regards
+Thanks
 Tim
 
 Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
