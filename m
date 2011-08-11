@@ -1,185 +1,90 @@
-From: =?UTF-8?B?VG9iaWFzIFJpbmdzdHLDtm0=?= <tobias@ringis.se>
-Subject: 3.0.1-rt8 BUG at kernel/rtmutex_common.h:75
-Date: Thu, 11 Aug 2011 10:10:51 +0200
-Message-ID: <4E438E8B.3020405@ringis.se>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [ANNOUNCE] 3.0.1-rt8 - Regression to 3.0-rt7
+Date: Thu, 11 Aug 2011 11:43:10 +0200
+Message-ID: <1313055790.23660.70.camel@twins>
+References: <1312580681.28695.44.camel@twins>
+	 <201108091713.19292.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Cc: linux-kernel <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@us.ibm.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay-b11.telenor.se ([62.127.194.20]:32892 "EHLO
-	smtprelay-b11.telenor.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751253Ab1HKInv (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:49511 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754477Ab1HKJng convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Aug 2011 04:43:51 -0400
-Received: from ipb2.telenor.se (ipb2.telenor.se [195.54.127.165])
-	by smtprelay-b11.telenor.se (Postfix) with ESMTP id 61040EB1B7
-	for <linux-rt-users@vger.kernel.org>; Thu, 11 Aug 2011 10:10:56 +0200 (CEST)
-Received: from h109-225-111-194.static.se.alltele.net ([109.225.111.194] helo=tobiaspc.swedot.local)
-	by ringis.se with esmtpsa (TLSv1:AES256-SHA:256)
-	(Exim 4.76)
-	(envelope-from <tobias@ringis.se>)
-	id 1QrQLr-0002qM-P9
-	for linux-rt-users@vger.kernel.org; Thu, 11 Aug 2011 10:10:55 +0200
+	Thu, 11 Aug 2011 05:43:36 -0400
+In-Reply-To: <201108091713.19292.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm hitting the following BUG after a few minutes of application 
-execution.  Is there anything I can do to help track this down?
+Please ensure your mailer doesn't wrap splats, ARM splats are aren't my
+strong point to begin with and having them look all messed up doesn't
+help.
 
-/Tobias
+On Tue, 2011-08-09 at 17:13 +0200, Tim Sander wrote:
+> kernel BUG at mm/filemap.c:2043!
+> Unable to handle kernel NULL pointer dereference at virtual address 00000000
+> pgd = c7a44000
+> [00000000] *pgd=87a3e831, *pte=00000000, *ppte=00000000
+> Internal error: Oops: 817 [#1] PREEMPT
+> Modules linked in:
+> CPU: 0    Not tainted  (3.0.1-pmx-rt8 #1)
+> PC is at __bug+0x24/0x30
+> LR is at vprintk+0x3b4/0x404
+> pc : [<c002cbd0>]    lr : [<c003e29c>]    psr: 20000013
+> sp : c7a37ce8  ip : c7a37c30  fp : c7a37cf4
+> r10: c7a62c60  r9 : 00000000  r8 : 00000000
+> r7 : 00000000  r6 : 00000008  r5 : c0428aa0  r4 : c7a37d78
+> r3 : 00000000  r2 : 00000002  r1 : 00000000  r0 : 00000027
+> Flags: nzCv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment user
+> Control: 00c5387d  Table: 87a44008  DAC: 00000015
+> Process udevd (pid: 216, stack limit = 0xc7a36268)
+> Stack: (0xc7a37ce8 to 0xc7a38000)
+> 7ce0:                   c7a37d14 c7a37cf8 c0076a30 c002cbb8 c7a37d78 c7a3d7a0
+> 7d00: 00000008 c0253020 c7a37d74 c7a37d18 c0076bb0 c00769f8 00000008 00000000
+> 7d20: c7a37d44 c7a37d40 c7a36000 00000000 00001000 00000000 00000000 00000000
+> 7d40: c7a37d74 c0428aa0 c0041c64 00000000 00000000 00000000 c7a62c60 c7a37d78
+> 7d60: 00000000 00000000 c7a37dac c7a37d78 c0076ce8 c0076ad4 c7a37f10 00000001
+> 7d80: 00000000 00000008 00000000 00000000 00000000 c7a62c60 c7a3d6f0 00000008
+> 7da0: c7a37e3c c7a37db0 c0078ee4 c0076c98 00000000 00000000 c7a37ed0 00000008
+> 7dc0: 00000000 c0035098 c7a37dec c7a37dd8 c0035098 c002b600 c7a3d7a0 c7a37ed0
+> 7de0: c7a37f10 c7a37e98 c008ec84 c0034fe8 00000000 00000001 c7a37e24 c7a3fa18
+> 7e00: 400d3000 00000000 c7a45000 00000008 c7a09860 00000000 c7a62c60 c7a3d70c
+> 7e20: 00000000 c7a37e98 c7a37f10 00000001 c7a37e8c c7a37e40 c0078fa8 c0078a88
+> 7e40: c002b5f4 00000001 91827364 c7a37e4c c7a37e4c c7a37e54 c7a37e54 00000000
+> 7e60: c7a37eb4 c7a62c60 c7a37e98 c7a37f70 c7a37f10 fffffdee c7a36000 00000000
+> 7e80: c7a37f3c c7a37e90 c00a18a0 c0078f3c 00000000 00000000 c014e08c c0034fe8
+> 7ea0: 00000000 00000001 ffffffff c7a62c60 00000000 00000000 00000000 00000000
+> 7ec0: c7860960 c005c35c 00000000 00000000 00000000 00000000 00000007 400d3000
+> 7ee0: 00000008 c7a37fb0 00000008 be9ba378 c7a37fac c7a37f00 c002420c c002f0f4
+> 7f00: c00242b0 c002f0f4 c7a37f2c c7a37f18 400d3000 00000008 c7a09898 00000008
+> 7f20: c7a62c60 400d3000 c7a37f70 00000008 c7a37f6c c7a37f40 c00a1ff4 c00a1804
+> 7f40: c7a36000 400d3000 00001000 c7a62c60 400d3000 00000000 00000000 00000008
+> 7f60: c7a37fa4 c7a37f70 c00a2278 c00a1f44 00000000 00000000 00000022 00000000
+> 7f80: ffffffff 00000008 000233d8 400d3000 00000004 c0029c04 00000000 c7a37fa8
+> 7fa0: c0029a80 c00a2240 00000008 000233d8 0000000a 400d3000 00000008 00000000
+> 7fc0: 00000008 000233d8 400d3000 00000004 00000008 00022344 000c42e8 00000001
+> 7fe0: 00000000 be9b96e8 4017fe0c 401d321c 60000010 0000000a d4cc6578 c2888810
+> Backtrace: 
+> [<c002cbac>] (__bug+0x0/0x30) from [<c0076a30>] (iov_iter_copy_from_user_atomic+0x44/0xdc)
+> [<c00769ec>] (iov_iter_copy_from_user_atomic+0x0/0xdc) from [<c0076bb0>] (generic_perform_write+0xe8/0x1c4) r7:c0253020 r6:00000008 r5:c7a3d7a0 r4:c7a37d78
+> [<c0076ac8>] (generic_perform_write+0x0/0x1c4) from [<c0076ce8>] (generic_file_buffered_write+0x5c/0x88)
+> [<c0076c8c>] (generic_file_buffered_write+0x0/0x88) from [<c0078ee4>] (__generic_file_aio_write+0x468/0x4b4) r8:00000008 r7:c7a3d6f0 r6:c7a62c60 r5:00000000 r4:00000000
+> [<c0078a7c>] (__generic_file_aio_write+0x0/0x4b4) from [<c0078fa8>] (generic_file_aio_write+0x78/0xe8)
+> [<c0078f30>] (generic_file_aio_write+0x0/0xe8) from [<c00a18a0>] (do_sync_write+0xa8/0xe4)
+> [<c00a17f8>] (do_sync_write+0x0/0xe4) from [<c00a1ff4>] (vfs_write+0xbc/0x148) r8:00000008 r7:c7a37f70 r6:400d3000 r5:c7a62c60 r4:00000008
+> [<c00a1f38>] (vfs_write+0x0/0x148) from [<c00a2278>] (sys_write+0x44/0x70) r8:00000008 r7:00000000 r6:00000000 r5:400d3000 r4:c7a62c60
+> [<c00a2234>] (sys_write+0x0/0x70) from [<c0029a80>] (ret_fast_syscall+0x0/0x30) r8:c0029c04 r7:00000004 r6:400d3000 r5:000233d8 r4:00000008
+> Code: e59f0010 e1a01003 eb087524 e3a03000 (e5833000) 
+> ---[ end trace 8dc2e804e8379a4c ]--- 
 
-> [ 1148.792450] ------------[ cut here ]------------
-> [ 1148.792458] kernel BUG at kernel/rtmutex_common.h:75!
-> [ 1148.792464] invalid opcode: 0000 [#1] PREEMPT SMP
-> [ 1148.792469] Modules linked in:
-> [ 1148.792474]
-> [ 1148.792480] Pid: 2074, comm: fb-lbgui Not tainted 3.0.1-rt8 #17 ICP / iEi H570/E218
-> [ 1148.792489] EIP: 0060:[<c106ff5c>] EFLAGS: 00010292 CPU: 1
-> [ 1148.792501] EIP is at remove_waiter+0x14c/0x150
-> [ 1148.792506] EAX: f5efc1c0 EBX: f5efc1c8 ECX: f5c65a90 EDX: f55afe8c
-> [ 1148.792511] ESI: f55afe8c EDI: f55afe8c EBP: f60dde5c ESP: f60dde30
-> [ 1148.792516]  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-> [ 1148.792523] Process fb-lbgui (pid: 2074, ti=f60dc000 task=f6046030 task.ti=f60dc000)
-> [ 1148.792527] Stack:
-> [ 1148.792530]  c106dd37 f6046440 f60dde44 c103478b 00000001 f5efc1cc f5efc1c0 f6046031
-> [ 1148.792540]  f5efc1c8 fffffff5 f55afe8c f60dde74 c1070349 00000001 f55afe54 c197a4ac
-> [ 1148.792550]  00000001 f60ddedc c106e602 00000001 f5c65a90 00000000 00000000 00000000
-> [ 1148.792559] Call Trace:
-> [ 1148.792567]  [<c106dd37>] ? lookup_pi_state+0x177/0x240
-> [ 1148.792576]  [<c103478b>] ? get_parent_ip+0xb/0x40
-> [ 1148.792583]  [<c1070349>] rt_mutex_start_proxy_lock+0x59/0xa0
-> [ 1148.792591]  [<c106e602>] futex_requeue+0x422/0x740
-> [ 1148.792600]  [<c106edd8>] do_futex+0x78/0x910
-> [ 1148.792607]  [<c10e9805>] ? fget_light+0x55/0xd0
-> [ 1148.792616]  [<c14d0444>] ? sockfd_lookup_light+0x24/0x80
-> [ 1148.792624]  [<c106f6d9>] sys_futex+0x69/0x120
-> [ 1148.792632]  [<c123df1e>] ? copy_to_user+0x2e/0x50
-> [ 1148.792639]  [<c105aad4>] ? sys_clock_gettime+0x54/0x90
-> [ 1148.792648]  [<c1639d01>] syscall_call+0x7/0xb
-> [ 1148.792656]  [<c1630000>] ? cache_add_dev+0x9e/0x2fb
-> [ 1148.792660] Code: c1 89 4d dc e8 76 9a 5c 00 8b 4d dc e9 49 ff ff ff ba 56 02 00 00 b8 6b f9 79 c1 89 4d dc e8 cc d5 fc ff 8b 4d dc e9 3b ff ff ff <0f> 0b 66 90 55 89 e5 57 89 c7 56 89 ce 53 89 d3 83 ec 20 8b 40
-> [ 1148.792708] EIP: [<c106ff5c>] remove_waiter+0x14c/0x150 SS:ESP 0068:f60dde30
-> [ 1148.796388] ---[ end trace 0000000000000002 ]---
-> [ 1148.796396] note: fb-lbgui[2074] exited with preempt_count 1
-> [ 1148.796414] ------------[ cut here ]------------
-> [ 1148.796419] kernel BUG at kernel/rtmutex.c:724!
-> [ 1148.796423] invalid opcode: 0000 [#2] PREEMPT SMP
-> [ 1148.796428] Modules linked in:
-> [ 1148.796432]
-> [ 1148.796437] Pid: 2074, comm: fb-lbgui Tainted: G      D     3.0.1-rt8 #17 ICP / iEi H570/E218
-> [ 1148.796445] EIP: 0060:[<c16394e0>] EFLAGS: 00010246 CPU: 1
-> [ 1148.796452] EIP is at rt_spin_lock_slowlock+0x150/0x170
-> [ 1148.796457] EAX: f6046030 EBX: c19798e0 ECX: c19798ec EDX: f6046030
-> [ 1148.796462] ESI: f6046030 EDI: f6046030 EBP: f60ddc3c ESP: f60ddbf0
-> [ 1148.796468]  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-> [ 1148.796474] Process fb-lbgui (pid: 2074, ti=f60dc000 task=f6046030 task.ti=f60dc000)
-> [ 1148.796478] Stack:
-> [ 1148.796480]  00000001 c1790006 00000006 f6046030 f6046030 f60ddc18 c1037c09 f6c40bc0
-> [ 1148.796490]  f6c40bc8 00000005 f60ddc68 c10e4c64 00000003 00000000 f6046030 f60ddc01
-> [ 1148.796500]  f5efc1c0 f6046030 c19798e0 f60ddc44 c16397a0 f60ddc6c c106e9a9 f60464e0
-> [ 1148.796509] Call Trace:
-> [ 1148.796518]  [<c1037c09>] ? migrate_enable+0xe9/0x120
-> [ 1148.796526]  [<c10e4c64>] ? cache_alloc_refill+0x1c4/0x590
-> [ 1148.796534]  [<c16397a0>] rt_spin_lock+0x20/0x30
-> [ 1148.796541]  [<c106e9a9>] exit_pi_state_list+0x89/0x130
-> [ 1148.796549]  [<c103b1b1>] mm_release+0xc1/0xe0
-> [ 1148.796556]  [<c1037c09>] ? migrate_enable+0xe9/0x120
-> [ 1148.796563]  [<c103f2d8>] exit_mm+0x18/0x120
-> [ 1148.796570]  [<c1040caf>] do_exit+0x12f/0x840
-> [ 1148.796578]  [<c103ed58>] ? kmsg_dump+0x98/0xc0
-> [ 1148.796584]  [<c163753c>] ? printk+0x18/0x1a
-> [ 1148.796592]  [<c1005c36>] oops_end+0x86/0xc0
-> [ 1148.796599]  [<c1005dcf>] die+0x4f/0x70
-> [ 1148.796605]  [<c1002d16>] do_trap+0x96/0xd0
-> [ 1148.796611]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.796617]  [<c1003036>] do_invalid_op+0x86/0xa0
-> [ 1148.796625]  [<c106ff5c>] ? remove_waiter+0x14c/0x150
-> [ 1148.796632]  [<c1239d58>] ? timerqueue_del+0x28/0x70
-> [ 1148.796639]  [<c103478b>] ? get_parent_ip+0xb/0x40
-> [ 1148.796645]  [<c1034833>] ? sub_preempt_count+0x73/0xb0
-> [ 1148.796652]  [<c16399c1>] ? _raw_spin_unlock_irqrestore+0x11/0x30
-> [ 1148.796659]  [<c105f657>] ? hrtimer_try_to_cancel+0x37/0xe0
-> [ 1148.796666]  [<c105fde6>] ? hrtimer_cancel+0x16/0x20
-> [ 1148.796673]  [<c106d88d>] ? futex_wait_requeue_pi+0x24d/0x410
-> [ 1148.796681]  [<c163a302>] error_code+0x5a/0x60
-> [ 1148.796689]  [<c103007b>] ? select_task_rq_fair+0x5b/0x990
-> [ 1148.796696]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.796702]  [<c106ff5c>] ? remove_waiter+0x14c/0x150
-> [ 1148.796709]  [<c106dd37>] ? lookup_pi_state+0x177/0x240
-> [ 1148.796715]  [<c103478b>] ? get_parent_ip+0xb/0x40
-> [ 1148.796723]  [<c1070349>] rt_mutex_start_proxy_lock+0x59/0xa0
-> [ 1148.796730]  [<c106e602>] futex_requeue+0x422/0x740
-> [ 1148.796739]  [<c106edd8>] do_futex+0x78/0x910
-> [ 1148.796746]  [<c10e9805>] ? fget_light+0x55/0xd0
-> [ 1148.796754]  [<c14d0444>] ? sockfd_lookup_light+0x24/0x80
-> [ 1148.796762]  [<c106f6d9>] sys_futex+0x69/0x120
-> [ 1148.796769]  [<c123df1e>] ? copy_to_user+0x2e/0x50
-> [ 1148.796776]  [<c105aad4>] ? sys_clock_gettime+0x54/0x90
-> [ 1148.796783]  [<c1639d01>] syscall_call+0x7/0xb
-> [ 1148.796791]  [<c1630000>] ? cache_add_dev+0x9e/0x2fb
-> [ 1148.796795] Code: 45 cc 39 45 cc 75 34 89 d8 e8 1d 05 00 00 83 c4 40 5b 5e 5f 5d c3 90 8d 74 26 00 83 63 0c fe 8d 45 cc 39 45 cc 74 e0 eb 12 0f 0b <0f> 0b 8d 43 04 89 43 04 89 43 08 e9 cd fe ff ff 0f 0b 0f 0b 0f
-> [ 1148.796844] EIP: [<c16394e0>] rt_spin_lock_slowlock+0x150/0x170 SS:ESP 0068:f60ddbf0
-> [ 1148.978804] ---[ end trace 0000000000000003 ]---
-> [ 1148.978809] Fixing recursive fault but reboot is needed!
-> [ 1148.978815] BUG: scheduling while atomic: fb-lbgui/2074/0x00000003
-> [ 1148.978819] Modules linked in:
-> [ 1148.978825] Pid: 2074, comm: fb-lbgui Tainted: G      D     3.0.1-rt8 #17
-> [ 1148.978830] Call Trace:
-> [ 1148.978839]  [<c102e9f9>] __schedule_bug+0x59/0x60
-> [ 1148.978847]  [<c1637c67>] __schedule+0x657/0x790
-> [ 1148.978857]  [<c1037a90>] schedule+0x20/0x80
-> [ 1148.978864]  [<c104138c>] do_exit+0x80c/0x840
-> [ 1148.978871]  [<c103ed58>] ? kmsg_dump+0x98/0xc0
-> [ 1148.978878]  [<c163753c>] ? printk+0x18/0x1a
-> [ 1148.978885]  [<c1005c36>] oops_end+0x86/0xc0
-> [ 1148.978891]  [<c1005dcf>] die+0x4f/0x70
-> [ 1148.978898]  [<c1002d16>] do_trap+0x96/0xd0
-> [ 1148.978904]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.978910]  [<c1003036>] do_invalid_op+0x86/0xa0
-> [ 1148.978917]  [<c16394e0>] ? rt_spin_lock_slowlock+0x150/0x170
-> [ 1148.978925]  [<c123a294>] ? put_dec+0x94/0xa0
-> [ 1148.978932]  [<c123b3f6>] ? number.clone.1+0x2d6/0x2f0
-> [ 1148.978941]  [<c1062083>] ? sched_clock_local+0xd3/0x1c0
-> [ 1148.978949]  [<c163a302>] error_code+0x5a/0x60
-> [ 1148.978956]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.978962]  [<c16394e0>] ? rt_spin_lock_slowlock+0x150/0x170
-> [ 1148.978970]  [<c1037c09>] ? migrate_enable+0xe9/0x120
-> [ 1148.978978]  [<c10e4c64>] ? cache_alloc_refill+0x1c4/0x590
-> [ 1148.978985]  [<c16397a0>] rt_spin_lock+0x20/0x30
-> [ 1148.978992]  [<c106e9a9>] exit_pi_state_list+0x89/0x130
-> [ 1148.979000]  [<c103b1b1>] mm_release+0xc1/0xe0
-> [ 1148.979025]  [<c1037c09>] ? migrate_enable+0xe9/0x120
-> [ 1148.979036]  [<c103f2d8>] exit_mm+0x18/0x120
-> [ 1148.979047]  [<c1040caf>] do_exit+0x12f/0x840
-> [ 1148.979056]  [<c103ed58>] ? kmsg_dump+0x98/0xc0
-> [ 1148.979062]  [<c163753c>] ? printk+0x18/0x1a
-> [ 1148.979070]  [<c1005c36>] oops_end+0x86/0xc0
-> [ 1148.979076]  [<c1005dcf>] die+0x4f/0x70
-> [ 1148.979082]  [<c1002d16>] do_trap+0x96/0xd0
-> [ 1148.979088]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.979094]  [<c1003036>] do_invalid_op+0x86/0xa0
-> [ 1148.979102]  [<c106ff5c>] ? remove_waiter+0x14c/0x150
-> [ 1148.979109]  [<c1239d58>] ? timerqueue_del+0x28/0x70
-> [ 1148.979115]  [<c103478b>] ? get_parent_ip+0xb/0x40
-> [ 1148.979121]  [<c1034833>] ? sub_preempt_count+0x73/0xb0
-> [ 1148.979128]  [<c16399c1>] ? _raw_spin_unlock_irqrestore+0x11/0x30
-> [ 1148.979135]  [<c105f657>] ? hrtimer_try_to_cancel+0x37/0xe0
-> [ 1148.979142]  [<c105fde6>] ? hrtimer_cancel+0x16/0x20
-> [ 1148.979149]  [<c106d88d>] ? futex_wait_requeue_pi+0x24d/0x410
-> [ 1148.979156]  [<c163a302>] error_code+0x5a/0x60
-> [ 1148.979163]  [<c103007b>] ? select_task_rq_fair+0x5b/0x990
-> [ 1148.979170]  [<c1002fb0>] ? do_bounds+0x80/0x80
-> [ 1148.979176]  [<c106ff5c>] ? remove_waiter+0x14c/0x150
-> [ 1148.979183]  [<c106dd37>] ? lookup_pi_state+0x177/0x240
-> [ 1148.979189]  [<c103478b>] ? get_parent_ip+0xb/0x40
-> [ 1148.979197]  [<c1070349>] rt_mutex_start_proxy_lock+0x59/0xa0
-> [ 1148.979204]  [<c106e602>] futex_requeue+0x422/0x740
-> [ 1148.979213]  [<c106edd8>] do_futex+0x78/0x910
-> [ 1148.979220]  [<c10e9805>] ? fget_light+0x55/0xd0
-> [ 1148.979227]  [<c14d0444>] ? sockfd_lookup_light+0x24/0x80
-> [ 1148.979236]  [<c106f6d9>] sys_futex+0x69/0x120
-> [ 1148.979242]  [<c123df1e>] ? copy_to_user+0x2e/0x50
-> [ 1148.979250]  [<c105aad4>] ? sys_clock_gettime+0x54/0x90
-> [ 1148.979257]  [<c1639d01>] syscall_call+0x7/0xb
-> [ 1148.979265]  [<c1630000>] ? cache_add_dev+0x9e/0x2fb
+Right, so I wouldn't know where to start looking on this one. That's
+generic code exploding for some reason. How is that related to RTB and
+what is RTB to begin with?
+
+
