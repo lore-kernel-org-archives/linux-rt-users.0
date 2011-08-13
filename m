@@ -1,34 +1,43 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: 3.0.1-rt9 regression: Build is now broken on
- migrate_[dis|en]able (on ARM)
-Date: Sat, 13 Aug 2011 12:48:55 +0200
-Message-ID: <1313232535.25267.3.camel@twins>
-References: <CANqCtQJ11VjF0S8phC5NOZMuuu5mjdsHHXAj_xUeos+NSjPFCg@mail.gmail.com>
+Subject: [ANNOUNCE] 3.0.1-rt11
+Date: Sat, 13 Aug 2011 12:53:10 +0200
+Message-ID: <1313232790.25267.7.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
-Cc: linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	"Paul E. McKenney" <paulmck@us.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Remy Bohmer <linux@bohmer.net>
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <efault@gmx.de>
+To: linux-kernel <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:60483 "EHLO
+Received: from merlin.infradead.org ([205.233.59.134]:45257 "EHLO
 	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751270Ab1HMKtZ convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1751287Ab1HMKxf convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 13 Aug 2011 06:49:25 -0400
-In-Reply-To: <CANqCtQJ11VjF0S8phC5NOZMuuu5mjdsHHXAj_xUeos+NSjPFCg@mail.gmail.com>
+	Sat, 13 Aug 2011 06:53:35 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2011-08-13 at 12:14 +0200, Remy Bohmer wrote:
-> FYI: These patches probably are the reason that RT9 broke our build,
-> that worked on RT8, please find attached my .config
-> Maybe I can come up with a fix tomorrow if I can find some time to
-> look into.
-> 
-> 
-Wheee, SMP=n builds are what I ever forget ;-)
 
-Should be fixed in -rt11
+Whee, I can skip release announcements too!
+
+So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
+grabs.
+
+Changes include (including the missing -rt10):
+
+  - hrtimer fix that should make RT_GROUP work again
+  - RCU fixes that should make the RCU stalls go away
+  - fixes SMP=n builds after breaking them in -rt9
+
+
+The patch should be at (once the mirrors catch up):
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patch-3.0.1-rt11.patch.bz2
+
+The quilt series can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0.1-rt11.tar.bz2
+
+
