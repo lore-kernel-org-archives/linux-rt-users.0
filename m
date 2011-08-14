@@ -1,86 +1,50 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [ANNOUNCE] 3.0.1-rt11
-Date: Sat, 13 Aug 2011 09:27:35 -0700
-Message-ID: <20110813162735.GA2650@linux.vnet.ibm.com>
+Date: Sun, 14 Aug 2011 06:23:41 +0200
+Message-ID: <1313295821.6334.5.camel@marge.simson.net>
 References: <1313232790.25267.7.camel@twins>
- <1313236135.4486.10.camel@marge.simson.net>
- <1313236713.25267.10.camel@twins>
- <1313243965.4486.36.camel@marge.simson.net>
-Reply-To: paulmck@linux.vnet.ibm.com
+	 <1313236135.4486.10.camel@marge.simson.net>
+	 <1313236713.25267.10.camel@twins>
+	 <1313243965.4486.36.camel@marge.simson.net>
+	 <20110813162735.GA2650@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: Peter Zijlstra <peterz@infradead.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <efault@gmx.de>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e5.ny.us.ibm.com ([32.97.182.145]:56678 "EHLO e5.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751241Ab1HMQ2y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 13 Aug 2011 12:28:54 -0400
-Content-Disposition: inline
-In-Reply-To: <1313243965.4486.36.camel@marge.simson.net>
+Received: from mailout-de.gmx.net ([213.165.64.22]:33473 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1750736Ab1HNEXx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 14 Aug 2011 00:23:53 -0400
+In-Reply-To: <20110813162735.GA2650@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Aug 13, 2011 at 03:59:25PM +0200, Mike Galbraith wrote:
-> On Sat, 2011-08-13 at 13:58 +0200, Peter Zijlstra wrote:
-> > On Sat, 2011-08-13 at 13:48 +0200, Mike Galbraith wrote:
-> > > On Sat, 2011-08-13 at 12:53 +0200, Peter Zijlstra wrote:
-> > > > Whee, I can skip release announcements too!
-> > > > 
-> > > > So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
-> > > > grabs.
-> > > > 
-> > > > Changes include (including the missing -rt10):
-> > > > 
-> > > >   - hrtimer fix that should make RT_GROUP work again
-> > > >   - RCU fixes that should make the RCU stalls go away
-> > > 
-> > > Oh goodie, I was just looking at some of those.
-> > > 
-> > > coverdale:/abuild/mike/linux-3.0-rt/:[1]# wget http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0.1-rt11.tar.bz2
-> > > --2011-08-13 13:38:13--  http://www.kernel.org/pub/linux/kernel/projects/rt/patches-3.0.1-rt11.tar.bz2
-> > > Resolving www.kernel.org... 130.239.17.5, 199.6.1.165, 2001:6b0:e:4017:1994:313:1:0, ...
-> > > Connecting to www.kernel.org|130.239.17.5|:80... connected.
-> > > HTTP request sent, awaiting response... 404 Not Found
-> > > 2011-08-13 13:38:13 ERROR 404: Not Found.
-> > > 
-> > > Aw poo.  Darn mirrors. 
-> > 
-> > Try -rt10, except for an SMP=n build fix its identical.. kernel.org
-> > seems to experience some trouble atm..
+On Sat, 2011-08-13 at 09:27 -0700, Paul E. McKenney wrote:
+
+> Strange.  By the time it got around to printing the stall, no one was
+> stalling:
 > 
-> Hohum.  rt10 did change the symptom.  Box no longer gripes at some
-> random point while just idling along, now it gripes (and dies as well)
-> during boot.
-> 
-> First boot, it choked on sr0 a wee bit later, second boot here.
-> 
-> [   40.582256] igb 0000:01:00.1: Intel(R) Gigabit Ethernet Network Connection
-> [   40.582260] igb 0000:01:00.1: eth1: (PCIe:2.5Gb/s:Width x4) 08:00:69:15:c1:d5
-> [   40.582335] igb 0000:01:00.1: eth1: PBA No: FFFFFF-0FF
-> [   40.582338] igb 0000:01:00.1: Using MSI-X interrupts. 8 rx queue(s), 8 tx queue(s)
 > [  100.409012] INFO: rcu_preempt_state detected stalls on CPUs/tasks: {} (detected by 21, t=60002 jiffies)
 > 
-> Guess I should try x3550 M3 or Q6600.  They were griping the same way UV
-> box did earlier this morning (with an earlier -rt though), and they make
-> much smaller gripes.
+> Now it -is- possible for the stall to end just as we get ready to detect
+> it, but that window is really really small.  The most recent occurrence
+> of this sort of thing was due misconfigured timekeeping, but I don't see
+> any sign of that in the trace.
 > 
-> Gripe attached.  Looks a lot like the old gripes to me, just earlier and
-> deadlier.  But I don't speak rcu.
+> This happens repeatedly?
 
-Strange.  By the time it got around to printing the stall, no one was
-stalling:
+Yeah.  When I put -rt9 on the UV box, it was doing the just idling, and
+boom thing I saw with earlier releases on both my Q6600 and x3550 M3
+boxes.  -rt10 seems to have just changed the timing.
 
-[  100.409012] INFO: rcu_preempt_state detected stalls on CPUs/tasks: {} (detected by 21, t=60002 jiffies)
+I'll update the x3550 M3, and see if it still gripes.  UV isn't virgin
+source, has to be twiddled a little. (symptom was identical though)
 
-Now it -is- possible for the stall to end just as we get ready to detect
-it, but that window is really really small.  The most recent occurrence
-of this sort of thing was due misconfigured timekeeping, but I don't see
-any sign of that in the trace.
+	-Mike
 
-This happens repeatedly?
-
-							Thanx, Paul
