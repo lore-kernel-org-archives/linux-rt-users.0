@@ -1,52 +1,51 @@
-From: Jaccon Bastiaansen <jaccon.bastiaansen@gmail.com>
-Subject: Threaded interrupt handling question in RT kernel
-Date: Tue, 16 Aug 2011 16:28:04 +0200
-Message-ID: <CAGzjT4eGV-KLFNuE2F8ehYCEdi7DT8wo_tYbkUQHPxjuArHc2Q@mail.gmail.com>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: [ANNOUNCE] 3.0.1-rt11
+Date: Tue, 16 Aug 2011 07:17:07 -0700
+Message-ID: <4E4A7BE3.5090902@us.ibm.com>
+References: <1313232790.25267.7.camel@twins> <1313236135.4486.10.camel@marge.simson.net> <1313236713.25267.10.camel@twins> <1313243965.4486.36.camel@marge.simson.net> <20110813162735.GA2650@linux.vnet.ibm.com> <1313295821.6334.5.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: paulmck@linux.vnet.ibm.com, Peter Zijlstra <peterz@infradead.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yx0-f174.google.com ([209.85.213.174]:56660 "EHLO
-	mail-yx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752842Ab1HPO2G (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Aug 2011 10:28:06 -0400
+Received: from e4.ny.us.ibm.com ([32.97.182.144]:48571 "EHLO e4.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751472Ab1HPOpX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 16 Aug 2011 10:45:23 -0400
+In-Reply-To: <1313295821.6334.5.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Thomas, Peter
+Mike Galbraith wrote:
+> On Sat, 2011-08-13 at 09:27 -0700, Paul E. McKenney wrote:
+> 
+>> Strange.  By the time it got around to printing the stall, no one was
+>> stalling:
+>>
+>> [  100.409012] INFO: rcu_preempt_state detected stalls on CPUs/tasks: {} (detected by 21, t=60002 jiffies)
+>>
+>> Now it -is- possible for the stall to end just as we get ready to detect
+>> it, but that window is really really small.  The most recent occurrence
+>> of this sort of thing was due misconfigured timekeeping, but I don't see
+>> any sign of that in the trace.
+>>
+>> This happens repeatedly?
+> 
+> Yeah.  When I put -rt9 on the UV box, it was doing the just idling, and
+> boom thing I saw with earlier releases on both my Q6600 and x3550 M3
+> boxes.  -rt10 seems to have just changed the timing.
+> 
+> I'll update the x3550 M3, and see if it still gripes.  UV isn't virgin
+> source, has to be twiddled a little. (symptom was identical though)
 
-We have a question about threaded interrupt handling:
+Mike,
 
-By default, when using threaded interrupt handlers, the IRQ is
-disabled in hard IRQ context and enabled again after all threaded
-interrupt handlers connected to that IRQ have run. In this way, high
-priority interrupt handlers can be delayed until the lowest priority
-interrupt handler thread has run. Therefore it seems that it's not
-useful to have a separate thread for each interrupt handler (what's
-the use of being able to set interrupt handler thread priorities when
-you still have to wait for the one with the lowest priority).
+Which test were you running? Because I'm not seeing it
+on our x3550 M3..
 
-So we think that we should use the request_threaded_irq() function.
-The task of the handler that is executed in hard IRQ context is to
-check whether the device that it controls is generating an interrupt
-and if it does, deactivate the IRQ output of the device and wakeup the
-interrupt handler thread by returning IRQ_WAKE_THREAD. By deactivating
-the IRQ output, another device connected to the same IRQ can activate
-the IRQ again before the interrupt handler thread of the first device
-has run. This guarantees that a high priority threaded interrupt
-handler of a device on a shared IRQ can run before a low priority
-threaded interrupt handler of a device on the same IRQ has run. So
-when using threaded interrupt handlers for devices on a shared IRQ,
-make sure that all drivers have used request_threaded_irq().
-Otherwise, high priority threaded interrupt handlers can be delayed by
-low priority threaded interrupt handlers.
-
-Is all this correct or do we miss something?
-
-
-Regards,
-  Jaccon Bastiaansen
+thanks,
+Nivedita
