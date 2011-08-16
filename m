@@ -1,43 +1,52 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: CONFIG_PEEMPT_RT_FULL vs. CONFIG_PREEMPT_RTB
-Date: Mon, 15 Aug 2011 22:44:36 +0200
-Message-ID: <CANqCtQJ-f4iWhLb3dPMVtt9sOm6+KBnS3ijEPfxOiE2_11BZDg@mail.gmail.com>
-References: <201108151604.54251.tim.sander@hbm.com>
+From: Jaccon Bastiaansen <jaccon.bastiaansen@gmail.com>
+Subject: Threaded interrupt handling question in RT kernel
+Date: Tue, 16 Aug 2011 16:28:04 +0200
+Message-ID: <CAGzjT4eGV-KLFNuE2F8ehYCEdi7DT8wo_tYbkUQHPxjuArHc2Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>,
-	linux-kernel <linux-kernel@vger.kernel.org>
-To: Tim Sander <tim.sander@hbm.com>
+Cc: linux-kernel@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:60327 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751113Ab1HOUoi (ORCPT
+Received: from mail-yx0-f174.google.com ([209.85.213.174]:56660 "EHLO
+	mail-yx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752842Ab1HPO2G (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Aug 2011 16:44:38 -0400
-In-Reply-To: <201108151604.54251.tim.sander@hbm.com>
+	Tue, 16 Aug 2011 10:28:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello Thomas, Peter
 
-> Besides of the cpu load i also found out that with rt11 i can again wake up
-> usermode from a IRQF_NO_THREAD waiting on a waitqueue. So the steps outlined
-> in this mail http://www.spinics.net/lists/linux-rt-users/msg06834.html do not
-> seem to be neccessary anymore? Or does this create an error and than some high
-> load?
+We have a question about threaded interrupt handling:
 
-Try running with CONFIG_DEBUG_SPINLOCK_SLEEP and you would probably
-see some errors...
+By default, when using threaded interrupt handlers, the IRQ is
+disabled in hard IRQ context and enabled again after all threaded
+interrupt handlers connected to that IRQ have run. In this way, high
+priority interrupt handlers can be delayed until the lowest priority
+interrupt handler thread has run. Therefore it seems that it's not
+useful to have a separate thread for each interrupt handler (what's
+the use of being able to set interrupt handler thread priorities when
+you still have to wait for the one with the lowest priority).
 
-If you have CONFIG_PREEMPT_RT_FULL set, then the __wake_up function of
-the waitqueue runs into a spinlock. This spinlock will be converted to
-a mutex since it is a regular spinlock, not a raw_spinlock. A
-mutex-lock might sleep. Calling sleeping functions from hard-irq
-context is illegal.
+So we think that we should use the request_threaded_irq() function.
+The task of the handler that is executed in hard IRQ context is to
+check whether the device that it controls is generating an interrupt
+and if it does, deactivate the IRQ output of the device and wakeup the
+interrupt handler thread by returning IRQ_WAKE_THREAD. By deactivating
+the IRQ output, another device connected to the same IRQ can activate
+the IRQ again before the interrupt handler thread of the first device
+has run. This guarantees that a high priority threaded interrupt
+handler of a device on a shared IRQ can run before a low priority
+threaded interrupt handler of a device on the same IRQ has run. So
+when using threaded interrupt handlers for devices on a shared IRQ,
+make sure that all drivers have used request_threaded_irq().
+Otherwise, high priority threaded interrupt handlers can be delayed by
+low priority threaded interrupt handlers.
 
-Kind regards,
+Is all this correct or do we miss something?
 
-Remy
+
+Regards,
+  Jaccon Bastiaansen
