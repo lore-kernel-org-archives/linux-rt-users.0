@@ -1,66 +1,81 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: Linux RT patch works on single core - but not booting SMP ARM
- OMAP4 PandaBoard
-Date: Wed, 17 Aug 2011 12:46:07 -0700
-Message-ID: <4E4C1A7F.4080106@am.sony.com>
-References: <CAFQPvXfMgXWHhRsBRbj_CAcymHbbB9UYjU+yM_L+Fp2cEGMbUg@mail.gmail.com>	<CAFQPvXfAhvw+TGmHC910ObkAmt2ZE_QsyGxWWAByzvVYf3+R+g@mail.gmail.com>	<4E4AB90E.10805@am.sony.com>	<4E4ACD2D.80802@am.sony.com> <CAFQPvXcAM4B2_JN7XbqkXdnf-vJ4G_1z2iobv9tCyfd6LQq_WA@mail.gmail.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Rosh shah <trinityrosh@gmail.com>
+Subject: BUG: sleeping function called from invalid context at kernel/rtmutex.c:644
+Date: Wed, 17 Aug 2011 18:09:36 -0400
+Message-ID: <CANFJ_uhSJofc9uc0vMGbc_WpupNAtqP2xx=j1qmnzJmqDp-nEg@mail.gmail.com>
+References: <CANFJ_uhVEU+iGMnqA-Kbk=VEx84Y750fyQPnKvB8Qh2t8Qz_pA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sankara Muthukrishnan <sankara.m@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe002.messaging.microsoft.com ([216.32.181.182]:38253
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752974Ab1HQTqg (ORCPT
+Received: from mail-pz0-f42.google.com ([209.85.210.42]:40953 "EHLO
+	mail-pz0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751956Ab1HQWJg convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Aug 2011 15:46:36 -0400
-In-Reply-To: <CAFQPvXcAM4B2_JN7XbqkXdnf-vJ4G_1z2iobv9tCyfd6LQq_WA@mail.gmail.com>
+	Wed, 17 Aug 2011 18:09:36 -0400
+Received: by pzk37 with SMTP id 37so1811034pzk.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Aug 2011 15:09:36 -0700 (PDT)
+In-Reply-To: <CANFJ_uhVEU+iGMnqA-Kbk=VEx84Y750fyQPnKvB8Qh2t8Qz_pA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/17/11 09:54, Sankara Muthukrishnan wrote:
+Hi,
 
-< snip >
+I have ported Davinci DM6467T support to the 2.6.33.9-rt for a
+project. I am running into the following issue every time I run the
+encode application gets a DMA interrupt. I have referred to the
+various other instances of the same issue on older RT kernels, but
+haven't gathered a solution for the same. Kindly help me understand
+the issue / throw some light on how I can approach the solution.
+Any thoughts are greatly appreciated.
 
-> posted in this thread and the SMP kernel is booting fine now. I have
-> applied the following high-resolution timer patch that is posted in
-> the OMAP mailing list:
-> 
-> ************ PATCH START **************
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: dma complete=A0 <INSERTE=
+D
+BY B.J this is when the DMA ISR is called>
+Aug 16 14:44:01 dm6467t-evm user.err kernel: BUG: sleeping function
+called from invalid context at kernel/rtmutex.c:644
+Aug 16 14:44:01 dm6467t-evm user.err kernel: pcnt: 0 0 in_atomic(): 0,
+irqs_disabled(): 128, pid: 46, name: irq/16-edma
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: Backtrace:
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c002f60c>]
+(dump_backtrace+0x0/0x114) from [<c02feb38>] (dump_stack+0x18/0x1c)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r7:00002068
+r6:00002050 r5:00000000 r4:00000284
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c02feb20>]
+(dump_stack+0x0/0x1c) from [<c0039ae4>] (__might_sleep+0xfc/0x11c)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c00399e8>]
+(__might_sleep+0x0/0x11c) from [<c03012e4>] (rt_spin_lock+0x38/0x64)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r5:c20e6888 r4:c20e68=
+88
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c03012ac>]
+(rt_spin_lock+0x0/0x64) from [<c0039378>] (complete+0x20/0x58)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r5:c20e6888 r4:c20e68=
+84
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c0039358>]
+(complete+0x0/0x58) from [<bf02f42c>] (dmaIsr+0x4c/0x70 [logos_tsif])
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r5:bf030930 r4:a00000=
+13
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<bf02f3e0>]
+(dmaIsr+0x0/0x70 [logos_tsif]) from [<c0035958>]
+(dma_irq_handler+0x114/0x158)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r5:00000005 r4:000000=
+05
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c0035844>]
+(dma_irq_handler+0x0/0x158) from [<c006fd34>] (irq_thread+0xd4/0x238)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c006fc60>]
+(irq_thread+0x0/0x238) from [<c005725c>] (kthread+0x88/0x90)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel: [<c00571d4>]
+(kthread+0x0/0x90) from [<c0044990>] (do_exit+0x0/0x604)
+Aug 16 14:44:01 dm6467t-evm user.debug kernel:=A0 r7:00000000
+r6:00000000 r5:00000000 r4:00000000
 
-Thanks for the pointer to the patch!
+Please let me know if you need any other information regarding the
+issue. Thanks a lot.
 
-< snip >
-
-> The cyclic test results are not acceptable (attached the output of
-> cyclictest). I am seeing maximum latency of 757 us on core-0 and 1905
-> us on core-1. Are you (Is anyone) seeing better results on latency
-> with SMP kernel with RT patch on ARM (OMAP4 processors)? I have seen
-> ~25 us of latency with single core kernel (though I have used a
-> different kernel configuration).
-
-I haven't done any performance testing yet.
-
-> 
-> PS: The kernels that I build especially with RT patch don't boot the
-> first time on the panda board. Sometimes, it takes 2 or 3 resets and
-> sometimes 10 to 15 times. When it hangs, it always hangs right after
-> "Uncompressing Linux... done, booting the kernel." It looks like it is
-> probably due to some race conditions in kernel during initial boot. I
-> am hoping it is not a hardware issue. Has anyone else been
-> experiencing flakiness and early hangs on panda board?
-
-The panda has been booting consistently for me.
-
-But I'm having problems getting SMP to boot on other ARM boards (a
-silent fail, like your panda).  My realview SMP fails with plain
-3.0.0 (I have not tried with the RT patches added).  I ported support
-for the NaviEngine (out of tree, yuchh) forward, and am debugging
-SMP boot failure on that now.  I don't know if the problem is due
-to my quick and dirty porting method, or something else.
-
--Frank
-
+Best Regards,
+Roshni
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
