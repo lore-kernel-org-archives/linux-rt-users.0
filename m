@@ -1,56 +1,63 @@
-From: Remy Bohmer <linux@bohmer.net>
-Subject: Re: BUG: sleeping function called from invalid context at kernel/rtmutex.c:644
-Date: Thu, 18 Aug 2011 20:15:16 +0200
-Message-ID: <CANqCtQLV4x86kU6eWoA+DFmcxqrp3_BuxdG2ZKvGrPVf7p6Y5w@mail.gmail.com>
-References: <CANFJ_uhVEU+iGMnqA-Kbk=VEx84Y750fyQPnKvB8Qh2t8Qz_pA@mail.gmail.com>
-	<CANFJ_uhSJofc9uc0vMGbc_WpupNAtqP2xx=j1qmnzJmqDp-nEg@mail.gmail.com>
+From: Nivedita Singhvi <niv@us.ibm.com>
+Subject: Re: proposed change to cyclictest -b <n> behavior
+Date: Thu, 18 Aug 2011 11:37:19 -0700
+Message-ID: <4E4D5BDF.2040605@us.ibm.com>
+References: <20110818123717.2ff10c06@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Rosh shah <trinityrosh@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <srostedt@redhat.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ew0-f46.google.com ([209.85.215.46]:60368 "EHLO
-	mail-ew0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750764Ab1HRSPS convert rfc822-to-8bit (ORCPT
+Received: from e33.co.us.ibm.com ([32.97.110.151]:58152 "EHLO
+	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750950Ab1HRSh3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Aug 2011 14:15:18 -0400
-Received: by ewy4 with SMTP id 4so872755ewy.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 11:15:17 -0700 (PDT)
-In-Reply-To: <CANFJ_uhSJofc9uc0vMGbc_WpupNAtqP2xx=j1qmnzJmqDp-nEg@mail.gmail.com>
+	Thu, 18 Aug 2011 14:37:29 -0400
+Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
+	by e33.co.us.ibm.com (8.14.4/8.13.1) with ESMTP id p7IITV1l006040
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 12:29:31 -0600
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v9.1) with ESMTP id p7IIbLEt152222
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 12:37:24 -0600
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id p7ICbLNB022556
+	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 06:37:21 -0600
+In-Reply-To: <20110818123717.2ff10c06@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Roshni,
+Clark Williams wrote:
+> All,
+> 
+> I was updating cyclictest in the rt-tests package to handle the 3.0-rt
+> kernel changes and was talking to Steven Rostedt about ftrace options
+> and he suggested this change to the -b (breaktrace) option: use event
+> tracing rather than function tracing by default. 
+> 
+> The default for -b is to enable the function tracer. What Steven is
+> suggesting is to trace using the already installed tracepoints to get
+> an idea of where a latency occurs, rather than incurring the function
+> tracer (mcount) overhead by default. This is equivalent to doing:
+> 
+> # cyclictest -b 1000 --event --tracer=nop
+> 
+> I like the idea, but wanted to ask the cyclictest users if this would
+> break anything. I actually think that the whole ftrace interface for
+> cyclictest needs to be overhauled, since it was done very ad hoc and is
+> not all that well thought out, but I'm not quite ready to take that on
+> now. 
+> 
+> So, anyone object to me making this change?
 
-2011/8/18 Rosh shah <trinityrosh@gmail.com>:
-> Hi,
->
-> I have ported Davinci DM6467T support to the 2.6.33.9-rt for a
-> project. I am running into the following issue every time I run the
-> encode application gets a DMA interrupt. I have referred to the
-> various other instances of the same issue on older RT kernels, but
-> haven't gathered a solution for the same. Kindly help me understand
-> the issue / throw some light on how I can approach the solution.
-> Any thoughts are greatly appreciated.
->
-> Aug 16 14:44:01 dm6467t-evm user.debug kernel: dma complete=A0 <INSER=
-TED
-> BY B.J this is when the DMA ISR is called>
-> Aug 16 14:44:01 dm6467t-evm user.err kernel: BUG: sleeping function
-> called from invalid context at kernel/rtmutex.c:644
 
-Looking at the backtrace, first guess: the dmaIsr() function tries to
-call complete() with preemption and/or interrupts disabled.
-In that case it runs into a regular spinlock that is converted to a
-rt_mutex which, due to its nature, might sleep, which on its turn is
-illegal in that context.
+This sounds good to me. I'd prefer not to incur the extra
+unnecessary overhead, too.
 
-Kind regards,
+thanks,
+Nivedita
 
-Remy
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
