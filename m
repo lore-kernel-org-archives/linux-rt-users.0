@@ -1,63 +1,61 @@
-From: Nivedita Singhvi <niv@us.ibm.com>
-Subject: Re: proposed change to cyclictest -b <n> behavior
-Date: Thu, 18 Aug 2011 11:37:19 -0700
-Message-ID: <4E4D5BDF.2040605@us.ibm.com>
-References: <20110818123717.2ff10c06@redhat.com>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH] backfire: fix build failure for modern kernels
+Date: Sat, 20 Aug 2011 14:54:03 +0200
+Message-ID: <1313844843-6405-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <srostedt@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:58152 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750950Ab1HRSh3 (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:49727 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751697Ab1HTMyM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Aug 2011 14:37:29 -0400
-Received: from d03relay02.boulder.ibm.com (d03relay02.boulder.ibm.com [9.17.195.227])
-	by e33.co.us.ibm.com (8.14.4/8.13.1) with ESMTP id p7IITV1l006040
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 12:29:31 -0600
-Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
-	by d03relay02.boulder.ibm.com (8.13.8/8.13.8/NCO v9.1) with ESMTP id p7IIbLEt152222
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 12:37:24 -0600
-Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av04.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id p7ICbLNB022556
-	for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2011 06:37:21 -0600
-In-Reply-To: <20110818123717.2ff10c06@redhat.com>
+	Sat, 20 Aug 2011 08:54:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Clark Williams wrote:
-> All,
-> 
-> I was updating cyclictest in the rt-tests package to handle the 3.0-rt
-> kernel changes and was talking to Steven Rostedt about ftrace options
-> and he suggested this change to the -b (breaktrace) option: use event
-> tracing rather than function tracing by default. 
-> 
-> The default for -b is to enable the function tracer. What Steven is
-> suggesting is to trace using the already installed tracepoints to get
-> an idea of where a latency occurs, rather than incurring the function
-> tracer (mcount) overhead by default. This is equivalent to doing:
-> 
-> # cyclictest -b 1000 --event --tracer=nop
-> 
-> I like the idea, but wanted to ask the cyclictest users if this would
-> break anything. I actually think that the whole ftrace interface for
-> cyclictest needs to be overhauled, since it was done very ad hoc and is
-> not all that well thought out, but I'm not quite ready to take that on
-> now. 
-> 
-> So, anyone object to me making this change?
+SPIN_LOCK_UNLOCKED doesn't work any more since v2.6.39-rc1~511^2~11
+(locking: Remove deprecated lock initializers). DEFINE_SPINLOCK is
+available since v2.6.14-rc1~223, so it should be ok to depend on that.
+<linux/smp_lock.h> is gone since v2.6.39-rc1~467^2.
 
+The module builds fine for Debian's 2.6.32 kernel with this change.
 
-This sounds good to me. I'd prefer not to incur the extra
-unnecessary overhead, too.
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
+ src/backfire/backfire.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
 
-thanks,
-Nivedita
+diff --git a/src/backfire/backfire.c b/src/backfire/backfire.c
+index aaf9c4a..0e9a0df 100644
+--- a/src/backfire/backfire.c
++++ b/src/backfire/backfire.c
+@@ -24,7 +24,6 @@
+ #include <linux/sched.h>
+ #include <linux/cpumask.h>
+ #include <linux/time.h>
+-#include <linux/smp_lock.h>
+ #include <linux/types.h>
+ #include <linux/errno.h>
+ #include <linux/miscdevice.h>
+@@ -36,7 +35,7 @@
+=20
+ #define BACKFIRE_MINOR MISC_DYNAMIC_MINOR
+=20
+-static spinlock_t backfire_state_lock =3D SPIN_LOCK_UNLOCKED;
++static DEFINE_SPINLOCK(backfire_state_lock);
+ static int backfire_open_cnt; /* #times opened */
+ static int backfire_open_mode; /* special open modes */
+ static struct timeval sendtime; /* when the most recent signal was sen=
+t */
+--=20
+1.7.5.4
 
-
-
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
