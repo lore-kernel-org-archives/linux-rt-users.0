@@ -1,31 +1,79 @@
 From: Mike Galbraith <efault@gmx.de>
-Subject: patches/mm-memory-rt.patch can go away
-Date: Sun, 21 Aug 2011 10:30:18 +0200
-Message-ID: <1313915418.12970.2.camel@marge.simson.net>
+Subject: [patch] sched, rt: fix migrate_enable() thinko
+Date: Tue, 23 Aug 2011 16:12:43 +0200
+Message-ID: <1314108763.6689.4.camel@marge.simson.net>
 References: <1313232790.25267.7.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: linux-kernel <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	"Paul E. McKenney" <paulmck@us.ibm.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:37284 "HELO
+Received: from mailout-de.gmx.net ([213.165.64.23]:51318 "HELO
 	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1751135Ab1HUIaW (ORCPT
+	with SMTP id S1753460Ab1HWOMw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 21 Aug 2011 04:30:22 -0400
+	Tue, 23 Aug 2011 10:12:52 -0400
 In-Reply-To: <1313232790.25267.7.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-marge:/usr/local/src/kernel/linux-3.0 # git grep ZAP_BLOCK_SIZE
 
-mm/memory.c:# define ZAP_BLOCK_SIZE     (8 * PAGE_SIZE)
-mm/memory.c:# define ZAP_BLOCK_SIZE     (1024 * PAGE_SIZE)
-mm/memory.c: * So zap pages in ZAP_BLOCK_SIZE bytecounts.  This means we need to
-lines 1-3/3 (END)
+Assigning mask = tsk_cpus_allowed(p) after p->migrate_disable = 0 ensures
+that we won't see a mask change.. no push/pull, we stack tasks on one CPU.
 
-	-Mike
+Also add a couple fields to sched_debug for the next guy.
+
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+
+---
+ kernel/sched.c       |    4 +++-
+ kernel/sched_debug.c |    3 +++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+Index: linux-2.6/kernel/sched.c
+===================================================================
+--- linux-2.6.orig/kernel/sched.c
++++ linux-2.6/kernel/sched.c
+@@ -6375,12 +6375,14 @@ void migrate_enable(void)
+ 	 */
+ 	rq = this_rq();
+ 	raw_spin_lock_irqsave(&rq->lock, flags);
+-	p->migrate_disable = 0;
+ 	mask = tsk_cpus_allowed(p);
++	p->migrate_disable = 0;
+ 
+ 	WARN_ON(!cpumask_test_cpu(smp_processor_id(), mask));
+ 
+ 	if (!cpumask_equal(&p->cpus_allowed, mask)) {
++		/* Get the mask now that migration is enabled */
++		mask = tsk_cpus_allowed(p);
+ 		if (p->sched_class->set_cpus_allowed)
+ 			p->sched_class->set_cpus_allowed(p, mask);
+ 		p->rt.nr_cpus_allowed = cpumask_weight(mask);
+Index: linux-2.6/kernel/sched_debug.c
+===================================================================
+--- linux-2.6.orig/kernel/sched_debug.c
++++ linux-2.6/kernel/sched_debug.c
+@@ -235,6 +235,7 @@ void print_rt_rq(struct seq_file *m, int
+ 	P(rt_throttled);
+ 	PN(rt_time);
+ 	PN(rt_runtime);
++	P(rt_nr_migratory);
+ 
+ #undef PN
+ #undef P
+@@ -484,6 +485,8 @@ void proc_sched_show_task(struct task_st
+ 	P(se.load.weight);
+ 	P(policy);
+ 	P(prio);
++	P(migrate_disable);
++	P(rt.nr_cpus_allowed);
+ #undef PN
+ #undef __PN
+ #undef P
+
 
