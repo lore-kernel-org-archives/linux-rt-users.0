@@ -1,53 +1,51 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] PREEMPT_RT_FULL Build error fix
-Date: Fri, 26 Aug 2011 14:06:33 +0200
-Message-ID: <1314360393-13605-1-git-send-email-jkacur@redhat.com>
+From: Liming Wang <liming.wang@windriver.com>
+Subject: [PATCH] mips/rt: convert cascade interrupt non threaded
+Date: Fri, 26 Aug 2011 23:00:04 +0800
+Message-ID: <1314370804-21266-1-git-send-email-liming.wang@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain
 Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	lkml <linux-kernel@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
+	lkml <linux-kernel@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.windriver.com ([147.11.1.11]:41772 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752620Ab1HZPQv (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Aug 2011 11:16:51 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Problem:
-make O=3D/bld/3.0.3-rt11/ kernel/fork.o
-/home/jkacur/jk-2.6/kernel/fork.c:91: error: section of =E2=80=98name=E2=
-=80=99 conflicts with previous declaration
+The preempt_rt kernel forces all irq interrupts to be threaded,
+but special interrupts can be excluded from this conversion.
+The cascade interrupt should be part of these exceptions.
 
-__cacheline_aligned is already part of the definition of DEFINE_RWLOCK
-for -rt
+In this case, irq2 is initialized before "kthreadd" task, which
+converts irq interrupt to threaded.
 
-However it is not always used for the tasklist_lock in non-rt, so it ca=
-n't
-simply be added to the definition of DEFINE_RWLOCK in non-rt, so I modi=
-fied
-the definition in fork.c
+If this irq is threaded, the kernel calls "try_to_wake_up" function
+to wake up "kthreadd" task, but at that moment, "kthreadd" task
+has not been initialized and try_to_wake_up wakes up a NULL task.
 
-Signed-off-by: John Kacur
+Signed-off-by: Liming Wang <liming.wang@windriver.com>
+Signed-off-by: Bruce Ashfield <bruce.ashfield@windriver.com>
 ---
- kernel/fork.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ arch/mips/kernel/i8259.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index aa5fe26..0d264ec 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -87,7 +87,11 @@ int max_threads;		/* tunable limit on nr_threads */
-=20
- DEFINE_PER_CPU(unsigned long, process_counts) =3D 0;
-=20
-+#ifndef CONFIG_PREEMPT_RT_FULL
- __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
-+#else
-+DEFINE_RWLOCK(tasklist_lock);  /* outer */
-+#endif
-=20
- #ifdef CONFIG_PROVE_RCU
- int lockdep_tasklist_lock_is_held(void)
---=20
-1.7.2.3
+diff --git a/arch/mips/kernel/i8259.c b/arch/mips/kernel/i8259.c
+index 5c74eb7..fb338db 100644
+--- a/arch/mips/kernel/i8259.c
++++ b/arch/mips/kernel/i8259.c
+@@ -295,6 +295,7 @@ static void init_8259A(int auto_eoi)
+ static struct irqaction irq2 = {
+ 	.handler = no_action,
+ 	.name = "cascade",
++	.flags = IRQF_NO_THREAD,
+ };
+ 
+ static struct resource pic1_io_resource = {
+-- 
+1.7.0.4
+
