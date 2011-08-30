@@ -1,80 +1,44 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [ANNOUNCE] 3.0.1-rt11
-Date: Mon, 29 Aug 2011 20:17:20 -0700
-Message-ID: <20110830031720.GC2218@linux.vnet.ibm.com>
-References: <1313232790.25267.7.camel@twins>
- <4E559039.8060209@am.sony.com>
- <20110826235507.GJ2342@linux.vnet.ibm.com>
- <4E5BEF21.6040908@am.sony.com>
-Reply-To: paulmck@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <efault@gmx.de>
-To: Frank Rowand <frank.rowand@am.sony.com>
+From: psomas@gentoo.org
+Subject: [PATCH] Fix build error in kernel/sched_debug.c when CONFIG_PREEMPT_RT_FULL is not set
+Date: Tue, 30 Aug 2011 12:48:22 +0300
+Message-ID: <1314697702-19946-1-git-send-email-psomas@gentoo.org>
+Cc: peterz@infradead.org, Stratos Psomadakis <psomas@gentoo.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:45640 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751036Ab1H3DR0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Aug 2011 23:17:26 -0400
-Content-Disposition: inline
-In-Reply-To: <4E5BEF21.6040908@am.sony.com>
+Received: from ulysses.noc.ntua.gr ([147.102.222.230]:55957 "EHLO
+	ulysses.noc.ntua.gr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752760Ab1H3Jsc (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Aug 2011 05:48:32 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Aug 29, 2011 at 12:57:21PM -0700, Frank Rowand wrote:
-> On 08/26/11 16:55, Paul E. McKenney wrote:
-> > On Wed, Aug 24, 2011 at 04:58:49PM -0700, Frank Rowand wrote:
-> >> On 08/13/11 03:53, Peter Zijlstra wrote:
-> >>>
-> >>> Whee, I can skip release announcements too!
-> >>>
-> >>> So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
-> >>> grabs.
-> >>>
-> >>> Changes include (including the missing -rt10):
-> >>>
-> >>>   - hrtimer fix that should make RT_GROUP work again
-> >>>   - RCU fixes that should make the RCU stalls go away
-> >>>   - fixes SMP=n builds after breaking them in -rt9
-> >>
-> >> I have a consistent (every boot) hang on boot.  With a few
-> >> hacks to get console output, I get the
-> >>
-> >>   rcu_preempt_state detected stalls on CPUs/tasks
-> >>
-> >> messages in the attached console log.
-> 
-> < snip >
-> 
-> > 
-> > Hmmm...  The last few that I have seen that looked like this were
-> > due to my messing up rcutorture so that the RCU-boost testing kthreads
-> > ran CPU-bound at real-time priority.
-> > 
-> > Is it possible that something similar is happening on your system?
-> > 
-> >                                                         Thanx, Paul
-> 
-> I don't think so.  That would require CONFIG_RCU_TORTURE_TEST, correct?
-> And that is not set:
-> 
-> < way big snip >
-> 
-> >> # CONFIG_RCU_TORTURE_TEST is not set
-> >> CONFIG_RCU_CPU_STALL_TIMEOUT=60
-> >> CONFIG_RCU_CPU_STALL_VERBOSE=y
-> 
-> I'm finally getting back to this today, so I'm starting to learn about
-> the RCU stall detector, so maybe I can make some more sense of this.
+From: Stratos Psomadakis <psomas@gentoo.org>
 
-This condition does not require CONFIG_RCU_TORTURE_TEST, rather, my
-bug in CONFIG_RCU_TORTURE_TEST was one way to make this happen.  Any
-condition that prevents RCU_SOFTIRQ from ever executing can cause these
-symptoms.
+When CONFIG_PREEMPT_RT_FULL is not set, a build error occurs due to
+migrate_disable task_struct member not existing. 
 
-							Thanx, Paul
+Trivial fix, enclose it inside an #ifdef
+
+Signed-off-by: Stratos Psomadakis <psomas@gentoo.org>
+---
+ kernel/sched_debug.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/sched_debug.c b/kernel/sched_debug.c
+index dba9e40..e68cf7f 100644
+--- a/kernel/sched_debug.c
++++ b/kernel/sched_debug.c
+@@ -485,7 +485,9 @@ void proc_sched_show_task(struct task_struct *p, struct seq_file *m)
+ 	P(se.load.weight);
+ 	P(policy);
+ 	P(prio);
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 	P(migrate_disable);
++#endif
+ 	P(rt.nr_cpus_allowed);
+ #undef PN
+ #undef __PN
+-- 
+1.7.6
+
