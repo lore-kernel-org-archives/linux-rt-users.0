@@ -1,44 +1,26 @@
-From: psomas@gentoo.org
-Subject: [PATCH] Fix build error in kernel/sched_debug.c when CONFIG_PREEMPT_RT_FULL is not set
-Date: Tue, 30 Aug 2011 12:48:22 +0300
-Message-ID: <1314697702-19946-1-git-send-email-psomas@gentoo.org>
-Cc: peterz@infradead.org, Stratos Psomadakis <psomas@gentoo.org>
-To: linux-rt-users@vger.kernel.org
+From: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Subject: does nohz still need to be disabled?
+Date: Wed, 31 Aug 2011 13:50:21 +0200
+Message-ID: <4E5E1FFD.4070604@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ulysses.noc.ntua.gr ([147.102.222.230]:55957 "EHLO
-	ulysses.noc.ntua.gr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752760Ab1H3Jsc (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:59406 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755001Ab1HaLuY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Aug 2011 05:48:32 -0400
+	Wed, 31 Aug 2011 07:50:24 -0400
+Received: by wyh22 with SMTP id 22so63016wyh.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 31 Aug 2011 04:50:23 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Stratos Psomadakis <psomas@gentoo.org>
+Hey all,
 
-When CONFIG_PREEMPT_RT_FULL is not set, a build error occurs due to
-migrate_disable task_struct member not existing. 
+I've been running 3.0.4-rt12 forsome time now without issues and nohz enabled,
+with RCU_BOOST is set to 80 (same level as my emergency serial console),
+is there still a reason why nohz needs to be disabled?
 
-Trivial fix, enclose it inside an #ifdef
-
-Signed-off-by: Stratos Psomadakis <psomas@gentoo.org>
----
- kernel/sched_debug.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/sched_debug.c b/kernel/sched_debug.c
-index dba9e40..e68cf7f 100644
---- a/kernel/sched_debug.c
-+++ b/kernel/sched_debug.c
-@@ -485,7 +485,9 @@ void proc_sched_show_task(struct task_struct *p, struct seq_file *m)
- 	P(se.load.weight);
- 	P(policy);
- 	P(prio);
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	P(migrate_disable);
-+#endif
- 	P(rt.nr_cpus_allowed);
- #undef PN
- #undef __PN
--- 
-1.7.6
-
+~Maarten
