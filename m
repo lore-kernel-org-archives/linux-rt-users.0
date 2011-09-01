@@ -1,73 +1,70 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] mips/rt: convert cascade interrupt non threaded
-Date: Thu, 1 Sep 2011 21:20:01 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1109012115000.2723@ionos>
-References: <1314370804-21266-1-git-send-email-liming.wang@windriver.com>
+Subject: Re: Issue (NOT RELATED TO RT-PATCH) with clock_gettime / clock_nanosleep
+ APIs with high resolution timer on panda board
+Date: Thu, 1 Sep 2011 21:33:30 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1109012121580.2723@ionos>
+References: <CAFQPvXfaisNL9YN+pUp_cYCRp4YZFCEPt33ZUAZ-Sa6VieAing@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	lkml <linux-kernel@vger.kernel.org>
-To: Liming Wang <liming.wang@windriver.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-71868405-1314905611=:2723"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sankara Muthukrishnan <sankara.m@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35910 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:55134 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757575Ab1IATUG (ORCPT
+	with ESMTP id S1756087Ab1IATdd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Sep 2011 15:20:06 -0400
-In-Reply-To: <1314370804-21266-1-git-send-email-liming.wang@windriver.com>
+	Thu, 1 Sep 2011 15:33:33 -0400
+In-Reply-To: <CAFQPvXfaisNL9YN+pUp_cYCRp4YZFCEPt33ZUAZ-Sa6VieAing@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 26 Aug 2011, Liming Wang wrote:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> The preempt_rt kernel forces all irq interrupts to be threaded,
-> but special interrupts can be excluded from this conversion.
-> The cascade interrupt should be part of these exceptions.
-> 
-> In this case, irq2 is initialized before "kthreadd" task, which
-> converts irq interrupt to threaded.
-> 
-> If this irq is threaded, the kernel calls "try_to_wake_up" function
-> to wake up "kthreadd" task, but at that moment, "kthreadd" task
-> has not been initialized and try_to_wake_up wakes up a NULL task.
+--8323328-71868405-1314905611=:2723
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
 
-That's not a reason to mark an interrupt NO_THREAD. The interrupt
-handler could be non hardirq safe on RT. You'd run into other
-problems.
+On Mon, 29 Aug 2011, Sankara Muthukrishnan wrote:
+> On panda baord, I ran the v0.74 of cyclictest
+> (git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git)
+> to measure the latency (./cyclictest -l4000000000 -m -S -p99 -i70 -h60
 
-In the case at hand it's the no_action handler which is hardirq safe
-on RT and being no_action which means it simply returns IRQ_NONE.
-I'll queue it for the next rt release and fixup the changelog myself.
- 
+ -i 70 ??? That's a 70us interval. Pretty damned close to what that CPU
+ can handle. :)
+
+> -q -n). These arguments make the test to use TIMER_ABSTIME for
+> clock_nanosleep and CPU affinity (using sched_setaffinity) for the 2
+> threads to be set to each CPU.  It is expected to see large latencies
+> without the RT patch. However, when I ran the tests overnight, I
+> observed maximum latency of 4294967103 us (weird but it is close to
+> unsigned int max). So, I instrumented the test to print some
+> additional information and exit as soon as it finds such a weird
+> latency. I was also trying to stress ethernet/network/interrupts of
+> the system with SFTP but I think (not very sure) I could reproduce the
+> issue without that. clock_nanosleep was called to sleep until
+> 27608:739311172 (sec:nsec), but after clock_nanosleep returned,
+> clock_gettime returned the time as 27608:739117429 (sec:nsec) which is
+> roughly 193 usec earlier than the value passed to clock_nanosleep and
+> that is the bug. I ran the test with just one thread ( remove "-S" and
+> add "-t1 -a1 -n" ) and saw the weird latency of 4294967294 usec.
+
+That looks like a problem in the clocksource. i.e. time is going
+backward or having weird momentary jumps. You could verify that by
+running one ore more tight loops which do
+
+	clock_gettime(CLOCK_MONOTONIC, &prev);
+	while (1) {
+	      clock_gettime(CLOCK_MONOTONIC, &curr);
+	      if (curr < prev) /* Use a proper compare function for timespec! */
+	      	       printf(.....);
+	      prev = curr;
+	}
+
+If that triggers on RT or on a vanilla kernel, then the problem is
+definitely somewhere in the timekeeping/clocksource area.
+
 Thanks,
 
 	tglx
-
-
-> Signed-off-by: Liming Wang <liming.wang@windriver.com>
-> Signed-off-by: Bruce Ashfield <bruce.ashfield@windriver.com>
-> ---
->  arch/mips/kernel/i8259.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> 
-> diff --git a/arch/mips/kernel/i8259.c b/arch/mips/kernel/i8259.c
-> index 5c74eb7..fb338db 100644
-> --- a/arch/mips/kernel/i8259.c
-> +++ b/arch/mips/kernel/i8259.c
-> @@ -295,6 +295,7 @@ static void init_8259A(int auto_eoi)
->  static struct irqaction irq2 = {
->  	.handler = no_action,
->  	.name = "cascade",
-> +	.flags = IRQF_NO_THREAD,
->  };
->  
->  static struct resource pic1_io_resource = {
-> -- 
-> 1.7.0.4
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+--8323328-71868405-1314905611=:2723--
