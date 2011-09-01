@@ -1,43 +1,55 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH V2 1/1] lib/atomic64 using raw_spin_lock_irq[save|resotre]
- for atomicity
-Date: Thu, 1 Sep 2011 12:11:03 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1109011209000.2723@ionos>
-References: <1314847923-26428-1-git-send-email-haishan.bai@gmail.com> <1314847923-26428-2-git-send-email-haishan.bai@gmail.com> <alpine.LFD.2.02.1109011158500.2723@ionos>
+Subject: Re: Interrupt Latency 2.6.33.7 rt30
+Date: Thu, 1 Sep 2011 21:11:10 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1109012109590.2723@ionos>
+References: <4E56B8A5.6080306@gmx.de> <20110826074836.GO16557@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: akpm@linux-foundation.org, eric.dumazet@gmail.com,
-	vapier@gentoo.org, asharma@fb.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Shan Hai <haishan.bai@gmail.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-413182136-1314904271=:2723"
+Cc: Christian Kraus <chk.dax@gmx.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:36255 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:51236 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750787Ab1IAKLL (ORCPT
+	with ESMTP id S1755404Ab1IATLO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Sep 2011 06:11:11 -0400
-In-Reply-To: <alpine.LFD.2.02.1109011158500.2723@ionos>
+	Thu, 1 Sep 2011 15:11:14 -0400
+In-Reply-To: <20110826074836.GO16557@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 1 Sep 2011, Thomas Gleixner wrote:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> On Thu, 1 Sep 2011, Shan Hai wrote:
+--8323328-413182136-1314904271=:2723
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
+
+On Fri, 26 Aug 2011, Uwe Kleine-König wrote:
+
+> On Thu, Aug 25, 2011 at 11:03:33PM +0200, Christian Kraus wrote:
+> > Hello
+> > I have wrote a GPIO-driver, that toggle the value of a GPIO when a
+> > interrupt is comming from an another GPIO.
+> > When I measure the latency between the interrupt and the toggled Pin
+> > it's about ten times higher than without the rt-patch.
+> > (without Patch = 8-11 us
+> >  with Patch = 30-110 us)
+> It's expected and known that an rt kernel has a worse average latency.
+
+Nonsense.
+
+> Having said that I cannot say if the increase you see is "too much".
 > 
-> > The spin_lock_irq[save|restore] could break the atomicity of the
-> > atomic64_* operations in the PREEMPT-RT configuration, because
-> > the spin_lock_irq[save|restore] themselves are preemptable in the
-> > PREEMPT-RT, using raw variant of the spin lock could provide the
-> > atomicity that atomic64_* need.
-> 
-> Good catch. Queued for the next release.
+> The best option you have is asking ftrace what happens in these 30-110
+> us after making sure you have a decent sched_clock implementation.
 
-Though the changelog is misleading. The reason is not that they are
-preemtible. 
-
-The reason for your OOPs is that the sleeping locks are not IRQ
-safe. And your system simply deadlocked due to that.
+The problem is simply that the interrupt is forced threaded, so it
+depends on the scheduler when it goes on the CPU, while on !RT the
+code runs in hard interrupt context.
 
 Thanks,
 
 	tglx
+--8323328-413182136-1314904271=:2723--
