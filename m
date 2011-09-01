@@ -1,55 +1,46 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Interrupt Latency 2.6.33.7 rt30
-Date: Thu, 1 Sep 2011 21:11:10 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1109012109590.2723@ionos>
-References: <4E56B8A5.6080306@gmx.de> <20110826074836.GO16557@pengutronix.de>
+Subject: Re: [PATCH] PREEMPT_RT_FULL Build error fix
+Date: Thu, 1 Sep 2011 21:14:42 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1109012112100.2723@ionos>
+References: <1314360393-13605-1-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-413182136-1314904271=:2723"
-Cc: Christian Kraus <chk.dax@gmx.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:51236 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755404Ab1IATLO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Sep 2011 15:11:14 -0400
-In-Reply-To: <20110826074836.GO16557@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-222593702-1314904483=:2723"
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	lkml <linux-kernel@vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1314360393-13605-1-git-send-email-jkacur@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
 
---8323328-413182136-1314904271=:2723
-Content-Type: TEXT/PLAIN; charset=iso-8859-1
+--8323328-222593702-1314904483=:2723
+Content-Type: TEXT/PLAIN; charset=UTF-8
 Content-Transfer-Encoding: 8BIT
 
-On Fri, 26 Aug 2011, Uwe Kleine-K�nig wrote:
+On Fri, 26 Aug 2011, John Kacur wrote:
 
-> On Thu, Aug 25, 2011 at 11:03:33PM +0200, Christian Kraus wrote:
-> > Hello
-> > I have wrote a GPIO-driver, that toggle the value of a GPIO when a
-> > interrupt is comming from an another GPIO.
-> > When I measure the latency between the interrupt and the toggled Pin
-> > it's about ten times higher than without the rt-patch.
-> > (without Patch = 8-11 us
-> >  with Patch = 30-110 us)
-> It's expected and known that an rt kernel has a worse average latency.
-
-Nonsense.
-
-> Having said that I cannot say if the increase you see is "too much".
+> Problem:
+> make O=/bld/3.0.3-rt11/ kernel/fork.o
+> /home/jkacur/jk-2.6/kernel/fork.c:91: error: section of ‘name’ conflicts with previous declaration
 > 
-> The best option you have is asking ftrace what happens in these 30-110
-> us after making sure you have a decent sched_clock implementation.
+> __cacheline_aligned is already part of the definition of DEFINE_RWLOCK
+> for -rt
+> 
+> However it is not always used for the tasklist_lock in non-rt, so it can't
+> simply be added to the definition of DEFINE_RWLOCK in non-rt, so I modified
+> the definition in fork.c
 
-The problem is simply that the interrupt is forced threaded, so it
-depends on the scheduler when it goes on the CPU, while on !RT the
-code runs in hard interrupt context.
+-ENOPARSE
+
+The real question is whether RWLOCKS should be cacheline aligned in
+general or the RT addon is just overkill. Slapping an ifdef around
+does not answer that.
 
 Thanks,
 
 	tglx
---8323328-413182136-1314904271=:2723--
+--8323328-222593702-1314904483=:2723--
