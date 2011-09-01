@@ -1,200 +1,75 @@
 From: Shan Hai <haishan.bai@gmail.com>
-Subject: Re: [PATCH 1/1 -rt] lib:atomic64 using raw_spin_lock_irq[save|resotre]
- for atomicity
-Date: Thu, 01 Sep 2011 11:02:48 +0800
-Message-ID: <4E5EF5D8.3080907@gmail.com>
-References: <1314840480-25182-1-git-send-email-haishan.bai@gmail.com> <1314840480-25182-2-git-send-email-haishan.bai@gmail.com> <20110901023744.GB9096@zhy>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: akpm@linux-foundation.org, eric.dumazet@gmail.com,
-	vapier@gentoo.org, asharma@fb.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH V2 0/1] lib/atomic64 using raw_spin_lock_irq[save|resotre] for atomicity
+Date: Thu,  1 Sep 2011 11:32:02 +0800
+Message-ID: <1314847923-26428-1-git-send-email-haishan.bai@gmail.com>
+Cc: eric.dumazet@gmail.com, vapier@gentoo.org, asharma@fb.com,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: akpm@linux-foundation.org, tglx@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ww0-f42.google.com ([74.125.82.42]:43235 "EHLO
-	mail-ww0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757379Ab1IADCq (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:57046 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757503Ab1IADcG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 31 Aug 2011 23:02:46 -0400
-In-Reply-To: <20110901023744.GB9096@zhy>
+	Wed, 31 Aug 2011 23:32:06 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 09/01/2011 10:37 AM, Yong Zhang wrote:
-> On Thu, Sep 01, 2011 at 09:28:00AM +0800, Shan Hai wrote:
->> The spin_lock_irq[save|restore] could break the atomicity of the
->> atomic64_* operations in the PREEMPT-RT configuration, because
->> the spin_lock_irq[save|restore] themselves are preemptable in the
->> PREEMPT-RT, using raw variant of the spin lock could provide the
->> atomicity that atomic64_* need.
->>
->> Signed-off-by: Shan Hai<haishan.bai@gmail.com>
-> I think you could show your panic info also in the header.
->
-> And this should be routed to tglx(Cc'ing), and also to
-> linux-rt-users.
->
 
-Got it.
+The command 'perf top -e L1-dcache-loads' causes OOPS and hang up in the
+following configuration.
 
-comments below:
->> ---
->>   lib/atomic64.c |   40 ++++++++++++++++++++--------------------
->>   1 files changed, 20 insertions(+), 20 deletions(-)
->>
->> diff --git a/lib/atomic64.c b/lib/atomic64.c
->> index e12ae0d..26f524a 100644
->> --- a/lib/atomic64.c
->> +++ b/lib/atomic64.c
->> @@ -48,9 +48,9 @@ long long atomic64_read(const atomic64_t *v)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
-> I think this is indeed a problem;
-> but I don't see you touch the declaration and initialising of the lock,
-> why?
->
+Powerpc e500 core
+OOPS on: 		2.6.34.9 PREEMPT-RT
+Whole system hangs up:	3.0.3 PREEMPT-RT
 
-My fault, should replace the lock type too, thanks for the suggestion.
+Listed the panic info. below. 
 
-Best regards
-Shan Hai
+Cause of the problem is that the atomic64_add_return is interrupted by the 
+performence counter interrupt, the interrupt handler calls atomic64_read,
+failed at /build/linux/kernel/rtmutex.c:832! for the reason trying to hold the
+same lock twice in the same context. 
 
-> Thanks,
-> Yong
->
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_read);
->> @@ -60,9 +60,9 @@ void atomic64_set(atomic64_t *v, long long i)
->>   	unsigned long flags;
->>   	spinlock_t *lock = lock_addr(v);
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	v->counter = i;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   }
->>   EXPORT_SYMBOL(atomic64_set);
->>
->> @@ -71,9 +71,9 @@ void atomic64_add(long long a, atomic64_t *v)
->>   	unsigned long flags;
->>   	spinlock_t *lock = lock_addr(v);
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	v->counter += a;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   }
->>   EXPORT_SYMBOL(atomic64_add);
->>
->> @@ -83,9 +83,9 @@ long long atomic64_add_return(long long a, atomic64_t *v)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter += a;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_add_return);
->> @@ -95,9 +95,9 @@ void atomic64_sub(long long a, atomic64_t *v)
->>   	unsigned long flags;
->>   	spinlock_t *lock = lock_addr(v);
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	v->counter -= a;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   }
->>   EXPORT_SYMBOL(atomic64_sub);
->>
->> @@ -107,9 +107,9 @@ long long atomic64_sub_return(long long a, atomic64_t *v)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter -= a;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_sub_return);
->> @@ -120,11 +120,11 @@ long long atomic64_dec_if_positive(atomic64_t *v)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter - 1;
->>   	if (val>= 0)
->>   		v->counter = val;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_dec_if_positive);
->> @@ -135,11 +135,11 @@ long long atomic64_cmpxchg(atomic64_t *v, long long o, long long n)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter;
->>   	if (val == o)
->>   		v->counter = n;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_cmpxchg);
->> @@ -150,10 +150,10 @@ long long atomic64_xchg(atomic64_t *v, long long new)
->>   	spinlock_t *lock = lock_addr(v);
->>   	long long val;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	val = v->counter;
->>   	v->counter = new;
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return val;
->>   }
->>   EXPORT_SYMBOL(atomic64_xchg);
->> @@ -164,12 +164,12 @@ int atomic64_add_unless(atomic64_t *v, long long a, long long u)
->>   	spinlock_t *lock = lock_addr(v);
->>   	int ret = 0;
->>
->> -	spin_lock_irqsave(lock, flags);
->> +	raw_spin_lock_irqsave(lock, flags);
->>   	if (v->counter != u) {
->>   		v->counter += a;
->>   		ret = 1;
->>   	}
->> -	spin_unlock_irqrestore(lock, flags);
->> +	raw_spin_unlock_irqrestore(lock, flags);
->>   	return ret;
->>   }
->>   EXPORT_SYMBOL(atomic64_add_unless);
->> -- 
->> 1.7.4.1
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->> Please read the FAQ at  http://www.tux.org/lkml/
+Replace the spin_lock_irq[save|restore] with raw_spin_lock_irq[save|restore] 
+could guarantee the atomicity of atomic64_* because the raw variant of the spin
+lock disables interrupts during atomic64_* operations.
+
+---
+ lib/atomic64.c |   40 ++++++++++++++++++++--------------------
+ 1 files changed, 20 insertions(+), 20 deletions(-)
+---
+
+OOPS on 2.6.34.9+PREEMPT-RT:
+------------[ cut here ]------------
+kernel BUG at /build/linux/kernel/rtmutex.c:832!
+Oops: Exception in kernel mode, sig: 5 [#2]
+PREEMPT SMP NR_CPUS=8 LTT NESTING LEVEL : 0
+P4080 DS
+last sysfs file: /sys/devices/system/cpu/online
+Modules linked in: ipv6(+) [last unloaded: scsi_wait_scan]
+NIP: c068b218 LR: c068b1e0 CTR: 00000000
+REGS: eb459ae0 TRAP: 0700   Tainted: G      D     (2.6.34.9-rt)
+MSR: 00021002 <ME,CE>  CR: 28000488  XER: 00000000
+TASK = ea43d3b0[968] 'perf' THREAD: eb458000 CPU: 0
+GPR00: 00000001 eb459b90 ea43d3b0 00021002 00000000 00000000 00000000 00000001
+GPR08: 00000001 ea43d3b0 c068b1e0 00000000 28000482 10092c4c 7fffffff 80000000
+GPR16: eb459d40 eb459c68 00000001 c2fa2098 eb459ec0 eac5a8e8 eac5a900 c0906308
+GPR24: c0906334 00000000 eb459b9c c090d0ec 00021002 c09062e0 c09062e0 eb459b90
+NIP [c068b218] rt_spin_lock_slowlock+0x78/0x3a8
+LR [c068b1e0] rt_spin_lock_slowlock+0x40/0x3a8
+Call Trace:
+[eb459b90] [c068b1e0] rt_spin_lock_slowlock+0x40/0x3a8 (unreliable)
+[eb459c20] [c068bdb0] rt_spin_lock+0x40/0x98
+[eb459c40] [c03d2a14] atomic64_read+0x48/0x84
+[eb459c60] [c001aaf4] perf_event_interrupt+0xec/0x28c
+[eb459d10] [c0010138] performance_monitor_exception+0x7c/0x150
+[eb459d30] [c0014170] ret_from_except_full+0x0/0x4c
+--- Exception: 2060 at lock_acquire+0x94/0x130
+    LR = lock_acquire+0x8c/0x130
+[eb459e30] [c068bdf0] rt_spin_lock+0x80/0x98
+[eb459e50] [c03d2884] atomic64_add_return+0x50/0x98
+[eb459e70] [c00ff888] T.902+0x150/0x4f8
+[eb459eb0] [c00ffedc] sys_perf_event_open+0x2ac/0x508
+[eb459f40] [c0013b6c] ret_from_syscall+0x0/0x4
+--- Exception: c00 at 0xfa8abe4
+    LR = 0x10016034
 
