@@ -1,129 +1,103 @@
-From: Raz <raziebe@gmail.com>
-Subject: Re: From vxworks to linux
-Date: Fri, 2 Sep 2011 22:48:43 +0300
-Message-ID: <CAPB=Z-qrcnvAf7Y3N42PnmiN6ATusQ6TkAwFQ9HwHZUMuV-p8Q@mail.gmail.com>
-References: <CAPB=Z-oZNZxKg4qKJMmPy_TPBVAy4vXc4fAwnRfUvG4jPnazFQ@mail.gmail.com>
- <CADr7Lg=3a_1BDF5H2GUMDmTVHuAR5jm8befXbu+bOivbC4ThbA@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH V3 1/1] lib/atomic64 using
+ raw_spin_lock_irq[save|resotre] for atomicity
+Date: Fri, 2 Sep 2011 15:57:48 -0700
+Message-ID: <20110902155748.55b0dd1a.akpm@linux-foundation.org>
+References: <1314925851-28163-1-git-send-email-haishan.bai@gmail.com>
+	<1314925851-28163-2-git-send-email-haishan.bai@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	rasty <rasty@axy-systems.com>, lbrafman@manz.com,
-	Torsten Scherer <TScherer@manz.com>
-To: YOSHIDA Shigeru <yshigeru@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:43575 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755032Ab1IBTtF convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Sep 2011 15:49:05 -0400
-Received: by bke11 with SMTP id 11so2938012bke.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 Sep 2011 12:49:03 -0700 (PDT)
-In-Reply-To: <CADr7Lg=3a_1BDF5H2GUMDmTVHuAR5jm8befXbu+bOivbC4ThbA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: tglx@linutronix.de, eric.dumazet@gmail.com, vapier@gentoo.org,
+	asharma@fb.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Shan Hai <haishan.bai@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1314925851-28163-2-git-send-email-haishan.bai@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Sep 2, 2011 at 7:05 PM, YOSHIDA Shigeru <yshigeru@gmail.com> wr=
-ote:
-> Hi,
->
-> I'm also developing VxWorks and Linux application in my job.
-> To port VxWorks application to Linux, our approach is to map
-> individual VxWorks tasks to POSIX threads.
->
-> I consider entire VxWorks address space as one Linux process
-> address space.
->
-> 2011/9/2 Raz <raziebe@gmail.com>:
->> 1. vxworks rt priority range scales up to 255 and not 100 which is n=
-ot enough.
->>
->> =A0=A0=A0=A0=A0=A0=A0 Compiling kernel with RT_MAX_PRIO set to 255 (=
- 3.0 even
->> without preemprt rt ) and executing cyclictest crashes kernel
->> =A0=A0=A0=A0=A0=A0=A0 ( NULL pointer in pick_next_task_rt +0x88 ).=A0=
- So naive
->> approach doesn't work.
->>
->> =A0=A0=A0=A0=A0=A0=A0 How do i increase MAX_RT_PRIO to higher value,=
- even in the
->> cost of recompiling an entire system ( all os user space
->> =A0=A0=A0=A0=A0=A0 code is recompiled with a sanitized kernel header=
-s ).
->
-> Do you really use all 255 VxWorks priority range?
-> If your application's priority range can map to Linux's 100 priority =
-range,
-> I recommend to do so.
-i wish to estimate the efforts, fixing and a 15-years old application
-versus fixing linux OS. I am not so sure
-the latter is such a bad idea.
->
->> 2. global critical section
->>
->> =A0=A0=A0=A0=A0=A0=A0 vxworks does not have the notion of a virtual =
-address space.
->> so code that is "user space"
->> =A0=A0=A0=A0=A0=A0=A0 oriented is executing side by side to an inter=
-rupt , this
->> leads to "cli"-like global locks
->> =A0=A0=A0=A0=A0=A0=A0 in a vxworks world.
->>
->> =A0=A0=A0=A0=A0=A0=A0 so in linux..
->> =A0=A0=A0=A0=A0=A0=A0 one solution is to "iopl(3)" and then "sti/cli=
-" in user space
->> , this is good for UNI processors machines,
->> =A0=A0=A0=A0=A0=A0=A0 but assuming preempt-rt will run smp machines =
-it is not good.
->> also, disabling interrupts is considered bad
->> =A0=A0=A0=A0=A0=A0=A0 practice in preempt-rt.
->> =A0=A0=A0=A0=A0=A0=A0 another solution is to increase the executing =
-thread priority
->> to the highest value possible, i believe it is
->> =A0=A0=A0=A0=A0=A0=A0 theoretically correct assuming i have full con=
-trol over the
->> entire operating system.
->>
->> =A0=A0=A0=A0=A0=A0=A0 anyone experienced with sort of problems ? or =
-tried any of the
->> above with success ?
->
-> In our task-to-pthread mapping, we use pthread mutex to mutual
-> execution.
-mutual exclusion is not the case here. i do not have a sync object
-like mutex,spin lock .
->> 3. vxworks target shell.
->>
->> =A0=A0=A0=A0=A0=A0=A0 vxworks provides a shell-like access to its sy=
-stem, and since
->> all tasks share address space it is possible
->> =A0=A0=A0=A0=A0=A0=A0 to access all globals in the c code just like =
-in gdb, examine
->> stacks and so on without disturbing the
->> =A0=A0=A0=A0=A0=A0=A0 rt task=A0 whatsoever.
->>
->> =A0=A0=A0=A0=A0=A0=A0 I need this feature in linux per-process.
->> =A0=A0=A0=A0=A0=A0=A0 At the moment i did not find anything like vx-=
-target shell in
->> linux. gdb/ptrace is out of the question as
->> =A0=A0=A0=A0=A0=A0=A0 they influence the rt task behavior.
->> =A0=A0=A0=A0=A0=A0=A0 Currently I think to create a thread that is p=
-art of to the
->> process address space. this thread is based on libcli,
->> =A0=A0=A0=A0=A0=A0=A0 and it it means should integrate it with pstac=
-k code and nm code.
->>
->> =A0=A0=A0=A0=A0=A0=A0 so before i start writing piles of code, any o=
-ther ideas ?
->
-> In our task-to-pthread mapping, we can use gdb, and can do
-> something like VxWorks shell.
-when gdb attaches a task is suspends all threads . ptrace affects
-incoming signals to traced task. i need to have something else.
-> thanks.
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Fri,  2 Sep 2011 09:10:51 +0800
+Shan Hai <haishan.bai@gmail.com> wrote:
+
+> Use non sleeping raw_spin_lock_irq in atomic64 implementation, because its IRQ
+> safe, the sleeping spin_lock_irq is IRQ unsafe and causes deadlock shown below.
+> 
+> spin_lock_irq[save|restore] would cause the following OOPS on 2.6.34.9+rt
+
+This changelog makes no sense.  I used this instead:
+
+: The command 'perf top -e L1-dcache-loads' causes OOPS and hang up in the
+: following configuration.
+: 
+: Powerpc e500 core
+: OOPS on: 		2.6.34.9 PREEMPT-RT
+: Whole system hangs up:	3.0.3 PREEMPT-RT
+: 
+: Listed the panic info. below. 
+: 
+: The cause of the problem is that the atomic64_add_return is interrupted by
+: the performence counter interrupt, the interrupt handler calls
+: atomic64_read, failed at /build/linux/kernel/rtmutex.c:832!  for the
+: reason trying to hold the same lock twice in the same context.  
+: 
+: Replace the spin_lock_irq[save|restore] with
+: raw_spin_lock_irq[save|restore] could guarantee the atomicity of
+: atomic64_* because the raw variant of the spin lock disables interrupts
+: during atomic64_* operations.
+: 
+: OOPS on 2.6.34.9+PREEMPT-RT:
+: 
+: kernel BUG at /build/linux/kernel/rtmutex.c:832!
+: Oops: Exception in kernel mode, sig: 5 [#2]
+: PREEMPT SMP NR_CPUS=8 LTT NESTING LEVEL : 0
+: P4080 DS
+: last sysfs file: /sys/devices/system/cpu/online
+: Modules linked in: ipv6(+) [last unloaded: scsi_wait_scan]
+: NIP: c068b218 LR: c068b1e0 CTR: 00000000
+: REGS: eb459ae0 TRAP: 0700   Tainted: G      D     (2.6.34.9-rt)
+: MSR: 00021002 <ME,CE>  CR: 28000488  XER: 00000000
+: TASK = ea43d3b0[968] 'perf' THREAD: eb458000 CPU: 0
+: GPR00: 00000001 eb459b90 ea43d3b0 00021002 00000000 00000000 00000000 00000001
+: GPR08: 00000001 ea43d3b0 c068b1e0 00000000 28000482 10092c4c 7fffffff 80000000
+: GPR16: eb459d40 eb459c68 00000001 c2fa2098 eb459ec0 eac5a8e8 eac5a900 c0906308
+: GPR24: c0906334 00000000 eb459b9c c090d0ec 00021002 c09062e0 c09062e0 eb459b90
+: NIP [c068b218] rt_spin_lock_slowlock+0x78/0x3a8
+: LR [c068b1e0] rt_spin_lock_slowlock+0x40/0x3a8
+: Call Trace:
+: [eb459b90] [c068b1e0] rt_spin_lock_slowlock+0x40/0x3a8 (unreliable)
+: [eb459c20] [c068bdb0] rt_spin_lock+0x40/0x98
+: [eb459c40] [c03d2a14] atomic64_read+0x48/0x84
+: [eb459c60] [c001aaf4] perf_event_interrupt+0xec/0x28c
+: [eb459d10] [c0010138] performance_monitor_exception+0x7c/0x150
+: [eb459d30] [c0014170] ret_from_except_full+0x0/0x4c
+
+But I don't think the patch is applicable to mainline anyway, is it?
+
+
+What's actually going on here?  A spin_lock_irq() which doesn't disable
+interrupts sounds fairly moronic.  Is it the case that preempt-rt
+converts interrupt code to thread context, so spin_lock_irq() only
+needs to lock against other thread-context code?
+
+If so, what's special about the ppc performance counter interrupt? 
+Shouldn't that be covnerted to thread context as well?
+
+If that isn't possible, does this mean that all locking/atomic code
+which runs in the perf counter interrupt needs to be converted to use
+raw_irq_foo()?
+
+> @@ -29,7 +29,7 @@
+>  * Ensure each lock is in a separate cacheline.
+>  */
+> static union {
+> -	spinlock_t lock;
+> +	raw_spinlock_t lock;
+>  	char pad[L1_CACHE_BYTES];
+>  } atomic64_lock[NR_LOCKS] __cacheline_aligned_in_smp;
+
+There is no way on this little green earth that a reader of this code
+will be able to work out that a raw_spinlock_t was used because of
+something to do with ppc performance counter interrupts!
+
+Therefore a code comment is needed.
