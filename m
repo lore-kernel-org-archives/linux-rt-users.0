@@ -1,72 +1,55 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: 3.0.4 + rt12: deadlock
-Date: Thu, 01 Sep 2011 22:52:12 +0200
-Message-ID: <1314910332.1485.14.camel@twins>
-References: <4E5E6A75.5030404@localhost>
-	 <alpine.LFD.2.02.1109012136300.2723@ionos>
+From: Shan Hai <haishan.bai@gmail.com>
+Subject: Re: [PATCH V2 1/1] lib/atomic64 using raw_spin_lock_irq[save|resotre]
+ for atomicity
+Date: Fri, 02 Sep 2011 08:48:33 +0800
+Message-ID: <4E6027E1.1090905@gmail.com>
+References: <1314847923-26428-1-git-send-email-haishan.bai@gmail.com> <1314847923-26428-2-git-send-email-haishan.bai@gmail.com> <alpine.LFD.2.02.1109011158500.2723@ionos> <alpine.LFD.2.02.1109011209000.2723@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>, efault@gmx.de
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: akpm@linux-foundation.org, eric.dumazet@gmail.com,
+	vapier@gentoo.org, asharma@fb.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:36774 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757887Ab1IAUwZ convert rfc822-to-8bit (ORCPT
+Received: from mail-wy0-f174.google.com ([74.125.82.174]:50736 "EHLO
+	mail-wy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932747Ab1IBAsZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Sep 2011 16:52:25 -0400
-In-Reply-To: <alpine.LFD.2.02.1109012136300.2723@ionos>
+	Thu, 1 Sep 2011 20:48:25 -0400
+In-Reply-To: <alpine.LFD.2.02.1109011209000.2723@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2011-09-01 at 21:38 +0200, Thomas Gleixner wrote:
-> > =============================================
-> > [ INFO: possible recursive locking detected ]
-> > 3.0.4-1.rt12.1.fc14.ccrma.i686.rtPAE #1
-> > ---------------------------------------------
-> > swapper/0 is trying to acquire lock:
-> >  (&parent->list_lock){+.+...}, at: [<c05054ce>]
-> > __cache_free.clone.27+0x45/0xc4
-> > 
-> > but task is already holding lock:
-> >  (&parent->list_lock){+.+...}, at: [<c050662c>] do_tune_cpucache
-> +0xf0/0x2b0
-> > 
-> > other info that might help us debug this:
-> >  Possible unsafe locking scenario:
-> > 
-> >        CPU0
-> >        ----
-> >   lock(&parent->list_lock);
-> >   lock(&parent->list_lock);
-> 
+On 09/01/2011 06:11 PM, Thomas Gleixner wrote:
+> On Thu, 1 Sep 2011, Thomas Gleixner wrote:
+>
+>> On Thu, 1 Sep 2011, Shan Hai wrote:
+>>
+>>> The spin_lock_irq[save|restore] could break the atomicity of the
+>>> atomic64_* operations in the PREEMPT-RT configuration, because
+>>> the spin_lock_irq[save|restore] themselves are preemptable in the
+>>> PREEMPT-RT, using raw variant of the spin lock could provide the
+>>> atomicity that atomic64_* need.
+>> Good catch. Queued for the next release.
+> Though the changelog is misleading. The reason is not that they are
+> preemtible.
+>
+> The reason for your OOPs is that the sleeping locks are not IRQ
+> safe. And your system simply deadlocked due to that.
+>
 
-> 
->  
-> >  *** DEADLOCK ***
-> > 
-> >  May be due to missing lock nesting notation
-> > 
-> > 3 locks held by swapper/0:
-> >  #0:  (cache_chain_mutex){+.+...}, at: [<c0bedb96>]
-> > kmem_cache_init_late+0x15/0x61
-> >  #1:  (&per_cpu(slab_lock, __cpu).lock){+.+...}, at: [<c0504a53>]
-> > __local_lock_irq+0x1e/0x5b
-> >  #2:  (&parent->list_lock){+.+...}, at: [<c050662c>]
-> > do_tune_cpucache+0xf0/0x2b0 
+Will correct it in the V3 patch, thanks for the advice.
 
-> That's something which has to do with debugging options (debugobjects
-> IIRC). There was some attempt to fix that, but that might have gone
-> lost in my vacation and the following futile attempt to take care of
-> the resulting backlog. Peter ???
+Cheers
+Shan Hai
 
-Looks like the one supposedly cured by:
+> Thanks,
+>
+> 	tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-patches/peter_zijlstra-slab_lockdep-annotate_the_locks_before_using.patch
-
-which should be in -rt12
-
-will have a peek, never reproduced for me though..
