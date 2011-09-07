@@ -1,150 +1,51 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [ANNOUNCE] 3.0.1-rt11
-Date: Tue, 6 Sep 2011 19:53:31 -0700
-Message-ID: <4E66DCAB.8090801@am.sony.com>
-References: <1313232790.25267.7.camel@twins> <4E559039.8060209@am.sony.com> <20110826235507.GJ2342@linux.vnet.ibm.com>
+Subject: Re: Linux RT patch works on single core - but not booting SMP ARM
+ OMAP4 PandaBoard
+Date: Tue, 6 Sep 2011 20:01:59 -0700
+Message-ID: <4E66DEA7.5020605@am.sony.com>
+References: <CAFQPvXfMgXWHhRsBRbj_CAcymHbbB9UYjU+yM_L+Fp2cEGMbUg@mail.gmail.com>	<CAFQPvXfAhvw+TGmHC910ObkAmt2ZE_QsyGxWWAByzvVYf3+R+g@mail.gmail.com>	<4E4AB90E.10805@am.sony.com>	<4E4ACD2D.80802@am.sony.com>	<CAFQPvXcAM4B2_JN7XbqkXdnf-vJ4G_1z2iobv9tCyfd6LQq_WA@mail.gmail.com> <CAFQPvXe2hgjsW=gYVi1VQx-EgC0fDesQLBc7vQxkc0XrCz6O7A@mail.gmail.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
 Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <efault@gmx.de>, <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@elte.hu>,
-	Venkatesh Pallipadi <venki@google.com>
-To: "paulmck@linux.vnet.ibm.com" <paulmck@linux.vnet.ibm.com>
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sankara Muthukrishnan <sankara.m@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:33704 "EHLO
-	TX2EHSOBE009.bigfish.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751093Ab1IGCyD (ORCPT
+Received: from tx2ehsobe002.messaging.microsoft.com ([65.55.88.12]:19774 "EHLO
+	TX2EHSOBE003.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755059Ab1IGDC4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Sep 2011 22:54:03 -0400
-In-Reply-To: <20110826235507.GJ2342@linux.vnet.ibm.com>
+	Tue, 6 Sep 2011 23:02:56 -0400
+In-Reply-To: <CAFQPvXe2hgjsW=gYVi1VQx-EgC0fDesQLBc7vQxkc0XrCz6O7A@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/26/11 16:55, Paul E. McKenney wrote:
-> On Wed, Aug 24, 2011 at 04:58:49PM -0700, Frank Rowand wrote:
->> On 08/13/11 03:53, Peter Zijlstra wrote:
->>>
->>> Whee, I can skip release announcements too!
->>>
->>> So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
->>> grabs.
-
-< snip >
-
->> I have a consistent (every boot) hang on boot.  With a few
->> hacks to get console output, I get the
+On 08/17/11 12:10, Sankara Muthukrishnan wrote:
+> On Wed, Aug 17, 2011 at 11:54 AM, Sankara Muthukrishnan
+> <sankara.m@gmail.com> wrote:
+>> The cyclic test results are not acceptable (attached the output of
+>> cyclictest). I am seeing maximum latency of 757 us on core-0 and 1905
+>> us on core-1. Are you (Is anyone) seeing better results on latency
+>> with SMP kernel with RT patch on ARM (OMAP4 processors)? I have seen
+>> ~25 us of latency with single core kernel (though I have used a
+>> different kernel configuration).
 >>
->>   rcu_preempt_state detected stalls on CPUs/tasks
-
-< snip >
-
->> This is an ARM NaviEngine (out of tree, so I also have applied
->> a series of pages for platform support).
->>
->> CONFIG_PREEMPT_RT_FULL is set.  Full config is attached.
-
-I have also replicated the problem on the ARM RealView (in tree) and
-without the RT patches.
-
 > 
-> Hmmm...  The last few that I have seen that looked like this were
-> due to my messing up rcutorture so that the RCU-boost testing kthreads
-> ran CPU-bound at real-time priority.
+> Never ever mind and sorry for the confusion. I did not realize that
+> "Kernel debugging" was enabled in the config Frank had attached. With
+> kernel debugging disabled, I see max latencies less than 20 us on both
+> cores on panda board with cyclictest (cyclictest -l1000000 -m -Sp99
+> -i200 -h60 -q -n) in my quick run and it is exciting to see these
+> numbers. Thanks Frank.
 > 
-> Is it possible that something similar is happening on your system?
-> 
->                                                         Thanx, Paul
+> The only other outstanding problem as of now is that the RT kernel
+> hanging during boot on panda board (boots sometimes after several
+> resets and/or power-cycles).
 
-The problem ended up being caused by the allowed cpus mask being set
-to all possible cpus for the ksoftirqd on the secondary processors.
-So the RCU softirq was never executing on cpu 2.
+I just sent a couple of patches in reply to "[ANNOUNCE] 3.0.1-rt11".  They
+might help resolve your panda board hang on boot.
 
-I'll test the following patch on 3.1 tomorrow.
+-Frank
 
--Frank Rowand
-
-
-Symptom: rcu stall
-
-The problem was that ksoftirqd was woken on the secondary processors before
-the secondary processors were online.  This led to allowed cpus being set
-to all cpus.
-
-   wake_up_process()
-      try_to_wake_up()
-         select_task_rq()
-            if (... || !cpu_online(cpu))
-               select_fallback_rq(task_cpu(p), p)
-                  ...
-                  /* No more Mr. Nice Guy. */
-                  dest_cpu = cpuset_cpus_allowed_fallback(p)
-                     do_set_cpus_allowed(p, cpu_possible_mask)
-                        #  Thus ksoftirqd can now run on any cpu...
-
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
----
- kernel/softirq.c |   19 	14 +	5 -	0 !
- 1 file changed, 14 insertions(+), 5 deletions(-)
-
-Index: b/kernel/softirq.c
-===================================================================
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -55,6 +55,7 @@ EXPORT_SYMBOL(irq_stat);
- static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
- 
- DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
-+DEFINE_PER_CPU(struct task_struct *, ksoftirqd_pending_online);
- 
- char *softirq_to_name[NR_SOFTIRQS] = {
- 	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
-@@ -862,28 +863,36 @@ static int __cpuinit cpu_callback(struct
- 			return notifier_from_errno(PTR_ERR(p));
- 		}
- 		kthread_bind(p, hotcpu);
--  		per_cpu(ksoftirqd, hotcpu) = p;
-+		per_cpu(ksoftirqd_pending_online, hotcpu) = p;
-  		break;
- 	case CPU_ONLINE:
- 	case CPU_ONLINE_FROZEN:
-+		per_cpu(ksoftirqd, hotcpu) =
-+			per_cpu(ksoftirqd_pending_online, hotcpu);
-+		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
- 		wake_up_process(per_cpu(ksoftirqd, hotcpu));
- 		break;
- #ifdef CONFIG_HOTPLUG_CPU
- 	case CPU_UP_CANCELED:
- 	case CPU_UP_CANCELED_FROZEN:
--		if (!per_cpu(ksoftirqd, hotcpu))
-+		p = per_cpu(ksoftirqd_pending_online, hotcpu);
-+		if (!p)
-+			p = per_cpu(ksoftirqd, hotcpu);
-+		if (!p)
- 			break;
- 		/* Unbind so it can run.  Fall thru. */
--		kthread_bind(per_cpu(ksoftirqd, hotcpu),
--			     cpumask_any(cpu_online_mask));
-+		kthread_bind(p, cpumask_any(cpu_online_mask));
- 	case CPU_DEAD:
- 	case CPU_DEAD_FROZEN: {
- 		static const struct sched_param param = {
- 			.sched_priority = MAX_RT_PRIO-1
- 		};
- 
--		p = per_cpu(ksoftirqd, hotcpu);
-+		p = per_cpu(ksoftirqd_pending_online, hotcpu);
-+		if (!p)
-+			p = per_cpu(ksoftirqd, hotcpu);
- 		per_cpu(ksoftirqd, hotcpu) = NULL;
-+		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
- 		sched_setscheduler_nocheck(p, SCHED_FIFO, &param);
- 		kthread_stop(p);
- 		takeover_tasklets(hotcpu);
 
