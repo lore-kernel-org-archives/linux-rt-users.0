@@ -1,79 +1,150 @@
-From: "Fernando Gomes" <fernando.gomes@efacec.com>
-Subject: RE: Issue (NOT RELATED TO RT-PATCH) with clock_gettime / clock_nanosleep APIs with high resolution timer on panda board
-Date: Wed, 7 Sep 2011 00:00:43 +0100
-Message-ID: <BA0FD0EA8282D74CAE2088A5DCB4474B0F7B7438@S005.maia.efacec.pt>
-References: <CAFQPvXfaisNL9YN+pUp_cYCRp4YZFCEPt33ZUAZ-Sa6VieAing@mail.gmail.com><alpine.LFD.2.02.1109012121580.2723@ionos><CA+zZMHFhJ81EjM09jRkfyGXtucASf3Ac1KS65TuYw4VDaJ5jFQ@mail.gmail.com><alpine.LFD.2.02.1109020937190.2723@ionos><CA+zZMHGg=Q3rxW9j5iW0CqNNjKbrbSyi6OxQjRe9i1cO5mFRuA@mail.gmail.com><CA+zZMHGndWUm09CT+ogoAPMM61FYcYG453KcAjtxOtjNoSB17A@mail.gmail.com> <CAFQPvXfiyCNwn9Z3ZmVFt5nc1qB-pAP+atPOkOjMqGq=dPPKTA@mail.gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [ANNOUNCE] 3.0.1-rt11
+Date: Tue, 6 Sep 2011 19:53:31 -0700
+Message-ID: <4E66DCAB.8090801@am.sony.com>
+References: <1313232790.25267.7.camel@twins> <4E559039.8060209@am.sony.com> <20110826235507.GJ2342@linux.vnet.ibm.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Thomas Gleixner" <tglx@linutronix.de>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>
-To: "Sankara Muthukrishnan" <sankara.m@gmail.com>,
-	"Michael Mueller" <ss7box@gmail.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <efault@gmx.de>, <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@elte.hu>,
+	Venkatesh Pallipadi <venki@google.com>
+To: "paulmck@linux.vnet.ibm.com" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail2.efacec.com ([62.28.144.243]:23299 "HELO mail2.efacec.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1755295Ab1IFXOK convert rfc822-to-8bit (ORCPT
+Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:33704 "EHLO
+	TX2EHSOBE009.bigfish.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751093Ab1IGCyD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Sep 2011 19:14:10 -0400
-Content-class: urn:content-classes:message
-In-Reply-To: <CAFQPvXfiyCNwn9Z3ZmVFt5nc1qB-pAP+atPOkOjMqGq=dPPKTA@mail.gmail.com>
+	Tue, 6 Sep 2011 22:54:03 -0400
+In-Reply-To: <20110826235507.GJ2342@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We made the test today on our custom board based on a OMAP L138 (ARM9) =
-using Linux 3.0 with high resolution timers enabled in the kernel (with=
-out RT patch). Our test ran for more than 4 hours without any issue. So=
- it seems that this issue doesn't appear on all the ARM platforms.
+On 08/26/11 16:55, Paul E. McKenney wrote:
+> On Wed, Aug 24, 2011 at 04:58:49PM -0700, Frank Rowand wrote:
+>> On 08/13/11 03:53, Peter Zijlstra wrote:
+>>>
+>>> Whee, I can skip release announcements too!
+>>>
+>>> So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
+>>> grabs.
 
-Best regards
+< snip >
 
-=46ernando
+>> I have a consistent (every boot) hang on boot.  With a few
+>> hacks to get console output, I get the
+>>
+>>   rcu_preempt_state detected stalls on CPUs/tasks
 
------Original Message-----
-=46rom: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-own=
-er@vger.kernel.org] On Behalf Of Sankara Muthukrishnan
-Sent: ter=E7a-feira, 6 de Setembro de 2011 05:08
-To: Michael Mueller
-Cc: Thomas Gleixner; linux-rt-users
-Subject: Re: Issue (NOT RELATED TO RT-PATCH) with clock_gettime / clock=
-_nanosleep APIs with high resolution timer on panda board
+< snip >
 
->On Fri, Sep 2, 2011 at 6:29 AM, Michael Mueller <ss7box@gmail.com> wro=
-te:
->
-> >> > >
-> >> > > =A0 =A0 =A0 =A0clock_gettime(CLOCK_MONOTONIC, &prev);
-> >> > > =A0 =A0 =A0 =A0while (1) {
-> >> > > =A0 =A0 =A0 =A0 =A0 =A0 =A0clock_gettime(CLOCK_MONOTONIC, &cur=
-r);
-> >> > > =A0 =A0 =A0 =A0 =A0 =A0 =A0if (curr < prev) /* Use a proper co=
-mpare function for
-> >> > > timespec! */
-> >> > > =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 printf(.....);
-> >> > > =A0 =A0 =A0 =A0 =A0 =A0 =A0prev =3D curr;
-> >> > > =A0 =A0 =A0 =A0}
+>> This is an ARM NaviEngine (out of tree, so I also have applied
+>> a series of pages for platform support).
+>>
+>> CONFIG_PREEMPT_RT_FULL is set.  Full config is attached.
 
-I have tried this on 2 panda boards. Both of them fail this simple
-test with vanilla (both single core and SMP) kernels (2.6.39-rc4
-mainline with high-resolution timer patch, 3.0.1 mainline with
-high-resolution timer patch, 3.1-rc2 OMAP git tree without any patch
-but with high-resolution timer enabled) within a few seconds to an
-hour. Time goes backwards from as low as 234 nsec to 53 usec. The
-problem does not reproduce without high resolution timer (i.e by
-enabling 32 KHz timer in kernel config) for several hours of testing.
+I have also replicated the problem on the ARM RealView (in tree) and
+without the RT patches.
 
-Everyone, could you please try this test on any other ARM boards (and
-x86 machines?) with high resolution timer support?
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> Hmmm...  The last few that I have seen that looked like this were
+> due to my messing up rcutorture so that the RCU-boost testing kthreads
+> ran CPU-bound at real-time priority.
+> 
+> Is it possible that something similar is happening on your system?
+> 
+>                                                         Thanx, Paul
+
+The problem ended up being caused by the allowed cpus mask being set
+to all possible cpus for the ksoftirqd on the secondary processors.
+So the RCU softirq was never executing on cpu 2.
+
+I'll test the following patch on 3.1 tomorrow.
+
+-Frank Rowand
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Symptom: rcu stall
+
+The problem was that ksoftirqd was woken on the secondary processors before
+the secondary processors were online.  This led to allowed cpus being set
+to all cpus.
+
+   wake_up_process()
+      try_to_wake_up()
+         select_task_rq()
+            if (... || !cpu_online(cpu))
+               select_fallback_rq(task_cpu(p), p)
+                  ...
+                  /* No more Mr. Nice Guy. */
+                  dest_cpu = cpuset_cpus_allowed_fallback(p)
+                     do_set_cpus_allowed(p, cpu_possible_mask)
+                        #  Thus ksoftirqd can now run on any cpu...
+
+
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ kernel/softirq.c |   19 	14 +	5 -	0 !
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+
+Index: b/kernel/softirq.c
+===================================================================
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -55,6 +55,7 @@ EXPORT_SYMBOL(irq_stat);
+ static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
+ 
+ DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
++DEFINE_PER_CPU(struct task_struct *, ksoftirqd_pending_online);
+ 
+ char *softirq_to_name[NR_SOFTIRQS] = {
+ 	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
+@@ -862,28 +863,36 @@ static int __cpuinit cpu_callback(struct
+ 			return notifier_from_errno(PTR_ERR(p));
+ 		}
+ 		kthread_bind(p, hotcpu);
+-  		per_cpu(ksoftirqd, hotcpu) = p;
++		per_cpu(ksoftirqd_pending_online, hotcpu) = p;
+  		break;
+ 	case CPU_ONLINE:
+ 	case CPU_ONLINE_FROZEN:
++		per_cpu(ksoftirqd, hotcpu) =
++			per_cpu(ksoftirqd_pending_online, hotcpu);
++		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
+ 		wake_up_process(per_cpu(ksoftirqd, hotcpu));
+ 		break;
+ #ifdef CONFIG_HOTPLUG_CPU
+ 	case CPU_UP_CANCELED:
+ 	case CPU_UP_CANCELED_FROZEN:
+-		if (!per_cpu(ksoftirqd, hotcpu))
++		p = per_cpu(ksoftirqd_pending_online, hotcpu);
++		if (!p)
++			p = per_cpu(ksoftirqd, hotcpu);
++		if (!p)
+ 			break;
+ 		/* Unbind so it can run.  Fall thru. */
+-		kthread_bind(per_cpu(ksoftirqd, hotcpu),
+-			     cpumask_any(cpu_online_mask));
++		kthread_bind(p, cpumask_any(cpu_online_mask));
+ 	case CPU_DEAD:
+ 	case CPU_DEAD_FROZEN: {
+ 		static const struct sched_param param = {
+ 			.sched_priority = MAX_RT_PRIO-1
+ 		};
+ 
+-		p = per_cpu(ksoftirqd, hotcpu);
++		p = per_cpu(ksoftirqd_pending_online, hotcpu);
++		if (!p)
++			p = per_cpu(ksoftirqd, hotcpu);
+ 		per_cpu(ksoftirqd, hotcpu) = NULL;
++		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
+ 		sched_setscheduler_nocheck(p, SCHED_FIFO, &param);
+ 		kthread_stop(p);
+ 		takeover_tasklets(hotcpu);
+
