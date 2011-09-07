@@ -1,154 +1,31 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
 Subject: Re: [ANNOUNCE] 3.0.1-rt11
-Date: Tue, 6 Sep 2011 23:42:35 -0700
-Message-ID: <20110907064235.GD3610@linux.vnet.ibm.com>
-References: <1313232790.25267.7.camel@twins>
- <4E559039.8060209@am.sony.com>
- <20110826235507.GJ2342@linux.vnet.ibm.com>
- <4E66DCAB.8090801@am.sony.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+Date: Wed, 7 Sep 2011 11:47:47 +0100
+Message-ID: <20110907104747.GA29282@n2100.arm.linux.org.uk>
+References: <1313232790.25267.7.camel@twins> <4E559039.8060209@am.sony.com> <20110826235507.GJ2342@linux.vnet.ibm.com> <4E66DCAB.8090801@am.sony.com> <alpine.LFD.2.02.1109071115410.2723@ionos> <20110907104633.GR6619@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
+Cc: Frank Rowand <frank.rowand@am.sony.com>,
+	"paulmck@linux.vnet.ibm.com" <paulmck@linux.vnet.ibm.com>,
+	"Rowand, Frank" <Frank_Rowand@sonyusa.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@elte.hu>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@tglx.de>,
 	Venkatesh Pallipadi <venki@google.com>
-To: Frank Rowand <frank.rowand@am.sony.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4E66DCAB.8090801@am.sony.com>
+In-Reply-To: <20110907104633.GR6619@n2100.arm.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Sep 06, 2011 at 07:53:31PM -0700, Frank Rowand wrote:
-> On 08/26/11 16:55, Paul E. McKenney wrote:
-> > On Wed, Aug 24, 2011 at 04:58:49PM -0700, Frank Rowand wrote:
-> >> On 08/13/11 03:53, Peter Zijlstra wrote:
-> >>>
-> >>> Whee, I can skip release announcements too!
-> >>>
-> >>> So no the subject ain't no mistake its not, 3.0.1-rt11 is there for the
-> >>> grabs.
-> 
-> < snip >
-> 
-> >> I have a consistent (every boot) hang on boot.  With a few
-> >> hacks to get console output, I get the
-> >>
-> >>   rcu_preempt_state detected stalls on CPUs/tasks
-> 
-> < snip >
-> 
-> >> This is an ARM NaviEngine (out of tree, so I also have applied
-> >> a series of pages for platform support).
-> >>
-> >> CONFIG_PREEMPT_RT_FULL is set.  Full config is attached.
-> 
-> I have also replicated the problem on the ARM RealView (in tree) and
-> without the RT patches.
-> 
-> > 
-> > Hmmm...  The last few that I have seen that looked like this were
-> > due to my messing up rcutorture so that the RCU-boost testing kthreads
-> > ran CPU-bound at real-time priority.
-> > 
-> > Is it possible that something similar is happening on your system?
-> > 
-> >                                                         Thanx, Paul
-> 
-> The problem ended up being caused by the allowed cpus mask being set
-> to all possible cpus for the ksoftirqd on the secondary processors.
-> So the RCU softirq was never executing on cpu 2.
+On Wed, Sep 07, 2011 at 11:46:33AM +0100, Russell King - ARM Linux wrote:
+> I think we had this reported before and I got to the bottom of it - the
+> platform was doing something it shouldn't.  I don't remember the details,
+> maybe when all the emails come through I can see the original bug report
+> I'll remember.
 
-That would be bad!  ;-)
-
-Thank you for tracking this down!
-
-							Thanx, Paul
-
-> I'll test the following patch on 3.1 tomorrow.
-> 
-> -Frank Rowand
-> 
-> 
-> Symptom: rcu stall
-> 
-> The problem was that ksoftirqd was woken on the secondary processors before
-> the secondary processors were online.  This led to allowed cpus being set
-> to all cpus.
-> 
->    wake_up_process()
->       try_to_wake_up()
->          select_task_rq()
->             if (... || !cpu_online(cpu))
->                select_fallback_rq(task_cpu(p), p)
->                   ...
->                   /* No more Mr. Nice Guy. */
->                   dest_cpu = cpuset_cpus_allowed_fallback(p)
->                      do_set_cpus_allowed(p, cpu_possible_mask)
->                         #  Thus ksoftirqd can now run on any cpu...
-> 
-> 
-> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-> ---
->  kernel/softirq.c |   19 	14 +	5 -	0 !
->  1 file changed, 14 insertions(+), 5 deletions(-)
-> 
-> Index: b/kernel/softirq.c
-> ===================================================================
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -55,6 +55,7 @@ EXPORT_SYMBOL(irq_stat);
->  static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
-> 
->  DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
-> +DEFINE_PER_CPU(struct task_struct *, ksoftirqd_pending_online);
-> 
->  char *softirq_to_name[NR_SOFTIRQS] = {
->  	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
-> @@ -862,28 +863,36 @@ static int __cpuinit cpu_callback(struct
->  			return notifier_from_errno(PTR_ERR(p));
->  		}
->  		kthread_bind(p, hotcpu);
-> -  		per_cpu(ksoftirqd, hotcpu) = p;
-> +		per_cpu(ksoftirqd_pending_online, hotcpu) = p;
->   		break;
->  	case CPU_ONLINE:
->  	case CPU_ONLINE_FROZEN:
-> +		per_cpu(ksoftirqd, hotcpu) =
-> +			per_cpu(ksoftirqd_pending_online, hotcpu);
-> +		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
->  		wake_up_process(per_cpu(ksoftirqd, hotcpu));
->  		break;
->  #ifdef CONFIG_HOTPLUG_CPU
->  	case CPU_UP_CANCELED:
->  	case CPU_UP_CANCELED_FROZEN:
-> -		if (!per_cpu(ksoftirqd, hotcpu))
-> +		p = per_cpu(ksoftirqd_pending_online, hotcpu);
-> +		if (!p)
-> +			p = per_cpu(ksoftirqd, hotcpu);
-> +		if (!p)
->  			break;
->  		/* Unbind so it can run.  Fall thru. */
-> -		kthread_bind(per_cpu(ksoftirqd, hotcpu),
-> -			     cpumask_any(cpu_online_mask));
-> +		kthread_bind(p, cpumask_any(cpu_online_mask));
->  	case CPU_DEAD:
->  	case CPU_DEAD_FROZEN: {
->  		static const struct sched_param param = {
->  			.sched_priority = MAX_RT_PRIO-1
->  		};
-> 
-> -		p = per_cpu(ksoftirqd, hotcpu);
-> +		p = per_cpu(ksoftirqd_pending_online, hotcpu);
-> +		if (!p)
-> +			p = per_cpu(ksoftirqd, hotcpu);
->  		per_cpu(ksoftirqd, hotcpu) = NULL;
-> +		per_cpu(ksoftirqd_pending_online, hotcpu) = NULL;
->  		sched_setscheduler_nocheck(p, SCHED_FIFO, &param);
->  		kthread_stop(p);
->  		takeover_tasklets(hotcpu);
-> 
+Or maybe I won't because it was never posted to an ARM mailing list.
+So I've no idea what the real bug report is about or what has already
+been discussed.
