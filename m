@@ -1,48 +1,48 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [patch] sched, rt: fix migrate_enable() thinko
-Date: Thu, 08 Sep 2011 06:58:45 +0200
-Message-ID: <1315457925.10591.3.camel@marge.simson.net>
-References: <1313232790.25267.7.camel@twins>
-	 <1314108763.6689.4.camel@marge.simson.net>  <4E68243C.7000404@am.sony.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.0.4-rt13
+Date: Sat, 10 Sep 2011 11:12:56 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1109101052340.2723@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@us.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: frank.rowand@am.sony.com
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4E68243C.7000404@am.sony.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:54549 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751687Ab1IJJM6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 10 Sep 2011 05:12:58 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-09-07 at 19:11 -0700, Frank Rowand wrote:
+Dear RT Folks,
 
-> Fix compile error for CONFIG_SMP=n
+I'm pleased to announce the 3.0.4-rt13 release.
 
-Guilty as charged you honor.
+Changes versus 3.0.2-rt11
 
-Acked-by: Mike Galbraith <efault@gmx.de>
+  * Migrate disable cure (Mike, Peter)
 
-> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-> ---
->  kernel/sched_debug.c |    2 	2 +	0 -	0 !
->  1 file changed, 2 insertions(+)
-> 
-> Index: b/kernel/sched_debug.c
-> ===================================================================
-> --- a/kernel/sched_debug.c
-> +++ b/kernel/sched_debug.c
-> @@ -235,7 +235,9 @@ void print_rt_rq(struct seq_file *m, int
->  	P(rt_throttled);
->  	PN(rt_time);
->  	PN(rt_runtime);
-> +#ifdef CONFIG_SMP
->  	P(rt_nr_migratory);
-> +#endif
->  
->  #undef PN
->  #undef P
-> 
+  * ARM smpboot fix
+  
+  * Printk debug (Peter)
+
+  * Ftrace: workaround the waitqueue issue
+
+Patch against 3.0.4 can be found here:
+
+  https://tglx.de/~tglx/rt/patch-3.0.4-rt13.patch.gz
+
+The split quilt queue is available at:
+
+  https://tglx.de/~tglx/rt/patches-3.0.4-rt13.tar.gz
+
+For those who don't have 3.0.4 around:
+
+  git://tesla.tglx.de/git/linux-2.6-tip rt/3.0
+  
+  https://tglx.de/~tglx/rt/patch-3.0.4.gz
+
+Thanks,
+
+	tglx
