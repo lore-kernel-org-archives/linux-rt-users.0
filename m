@@ -1,67 +1,47 @@
-From: Rolando Martins <rolando.martins@gmail.com>
-Subject: Re: [ANNOUNCE] 3.0.4-rt13
-Date: Sat, 10 Sep 2011 18:27:34 +0100
-Message-ID: <CABcS5h3+4br6aBfvRRPNhEkmSinbVNo3VoKJmRfW-cbeuj3Ksg@mail.gmail.com>
-References: <alpine.LFD.2.02.1109101052340.2723@ionos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1109101052340.2723@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Remy Bohmer <linux@bohmer.net>
+Subject: [PATCH 3.0.4-rt13] Fix build on UP ARM core
+Date: Sun, 11 Sep 2011 11:12:57 +0200
+Message-ID: <1315732377-30568-1-git-send-email-linux@bohmer.net>
+Cc: Remy Bohmer <linux@bohmer.net>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:37553 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753319Ab1IKJNN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 11 Sep 2011 05:13:13 -0400
+Received: by eyx24 with SMTP id 24so1980757eyx.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 11 Sep 2011 02:13:11 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-recent work from Peter fixed the crashes caused by sched_rt_group (cgro=
-ups).
-Nevertheless, its use still makes the system sluggish.
-To test this, it's just a matter of mounting the "cpu" cgroup and then:
-echo 100 > cpu.rt_period_us
-echo 100 > cpu.rt_runtime_us
+It fixes this error:
+In file included from kernel/sched.c:2041:0:
+kernel/sched_debug.c: In function 'print_rt_rq':
+kernel/sched_debug.c:238:83: error: 'struct rt_rq' has no member named 'rt_nr_migratory'
+kernel/sched_debug.c:238:171: error: 'struct rt_rq' has no member named 'rt_nr_migratory'
+make[2]: *** [kernel/sched.o] Error 1
 
-Thanks,
-Rolando
+Signed-off-by: Remy Bohmer <linux@bohmer.net>
+---
+ kernel/sched_debug.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On Sat, Sep 10, 2011 at 10:12 AM, Thomas Gleixner <tglx@linutronix.de> =
-wrote:
-> Dear RT Folks,
->
-> I'm pleased to announce the 3.0.4-rt13 release.
->
-> Changes versus 3.0.2-rt11
->
-> =A0* Migrate disable cure (Mike, Peter)
->
-> =A0* ARM smpboot fix
->
-> =A0* Printk debug (Peter)
->
-> =A0* Ftrace: workaround the waitqueue issue
->
-> Patch against 3.0.4 can be found here:
->
-> =A0https://tglx.de/~tglx/rt/patch-3.0.4-rt13.patch.gz
->
-> The split quilt queue is available at:
->
-> =A0https://tglx.de/~tglx/rt/patches-3.0.4-rt13.tar.gz
->
-> For those who don't have 3.0.4 around:
->
-> =A0git://tesla.tglx.de/git/linux-2.6-tip rt/3.0
->
-> =A0https://tglx.de/~tglx/rt/patch-3.0.4.gz
->
-> Thanks,
->
-> =A0 =A0 =A0 =A0tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
->
+diff --git a/kernel/sched_debug.c b/kernel/sched_debug.c
+index e68cf7f..528032b 100644
+--- a/kernel/sched_debug.c
++++ b/kernel/sched_debug.c
+@@ -235,7 +235,9 @@ void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq)
+ 	P(rt_throttled);
+ 	PN(rt_time);
+ 	PN(rt_runtime);
++#ifdef CONFIG_SMP
+ 	P(rt_nr_migratory);
++#endif
+ 
+ #undef PN
+ #undef P
+-- 
+1.7.4.1
+
