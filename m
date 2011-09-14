@@ -1,43 +1,48 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [ANNOUNCE] 3.0.4-rt13
-Date: Tue, 13 Sep 2011 18:13:50 +0200
-Message-ID: <1315930430.5977.21.camel@twins>
-References: <alpine.LFD.2.02.1109101052340.2723@ionos>
-	 <1315737307.6544.1.camel@marge.simson.net>
-	 <1315817948.26517.16.camel@twins>
-	 <1315835562.6758.3.camel@marge.simson.net>
-	 <1315839187.6758.8.camel@marge.simson.net> <1315926499.5977.19.camel@twins>
-	 <1315927699.6445.6.camel@marge.simson.net>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: ARM pad issue with 3.0.[0-4]
+Date: Wed, 14 Sep 2011 09:21:07 +0200
+Message-ID: <20110914072107.GS28624@pengutronix.de>
+References: <87fwk0tu7o.fsf@vostro.fn.ogness.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <efault@gmx.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: John Ogness <john.ogness@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:39234 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755159Ab1IMQOM convert rfc822-to-8bit (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:38187 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755497Ab1INHVI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Sep 2011 12:14:12 -0400
-In-Reply-To: <1315927699.6445.6.camel@marge.simson.net>
+	Wed, 14 Sep 2011 03:21:08 -0400
+Content-Disposition: inline
+In-Reply-To: <87fwk0tu7o.fsf@vostro.fn.ogness.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2011-09-13 at 17:28 +0200, Mike Galbraith wrote:
-> On Tue, 2011-09-13 at 17:08 +0200, Peter Zijlstra wrote:
-> > On Tue, 2011-09-13 at 15:36 +0200, Peter Zijlstra wrote:
-> > > Does the below cure things? It breaks !rt builds, but we can cure that
-> > > if it works..
-> > 
-> > n/m its broken like hell..
-> 
-> Since this seems to be a legitimate need for a non-preemptive wakeup,
-> how about we [re]create one to get rid of abuse?  (otoh, that would add
-> a branch everywhere.. btdt a couple times, always ended up tossing it)
+Hello,
+On Tue, Sep 13, 2011 at 04:03:55PM +0200, John Ogness wrote:
+> There is currently a bug in Linux 3.0 where the ARM pad control value=
+s
+> will be set to 0 instead of being left as they were when NO_PAD_CTRL =
+is
+> used. This bug was fixed with commit:
+>=20
+> 425933b30b0ccfac58065bca6c853ea627443cdf
+Just a small addition: This doesn't affect ARM in general, only
+the following Freescale SoCs: i.MX25, i.MX35, i.MX50, i.MX51 and i.MX53=
+=2E
 
-Nah, we absolutely need to kill that preempt_disable/enable stuff in
-there, it covers an O(n^2) loop, its complete crap.
+Best regards
+Uwe
 
-Just need to wrap my head around that code..
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
