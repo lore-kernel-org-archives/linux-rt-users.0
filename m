@@ -1,81 +1,358 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH -rt] ipc/sem: Rework semaphore wakeups
-Date: Wed, 14 Sep 2011 21:23:33 +0200
-Message-ID: <1316028213.5040.41.camel@twins>
-References: <alpine.LFD.2.02.1109101052340.2723@ionos>
-	 <1315737307.6544.1.camel@marge.simson.net>
-	 <1315817948.26517.16.camel@twins>
-	 <1315835562.6758.3.camel@marge.simson.net>
-	 <1315839187.6758.8.camel@marge.simson.net> <1315926499.5977.19.camel@twins>
-	 <1315927699.6445.6.camel@marge.simson.net> <1315994224.5040.1.camel@twins>
-	 <4E70F6FD.2060709@colorfullife.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.0.4-rt14
+Date: Thu, 15 Sep 2011 01:30:24 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1109150047290.2723@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Mike Galbraith <efault@gmx.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Manfred Spraul <manfred@colorfullife.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:55510 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757457Ab1INTXk convert rfc822-to-8bit (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:43241 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751348Ab1INXa0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Sep 2011 15:23:40 -0400
-In-Reply-To: <4E70F6FD.2060709@colorfullife.com>
+	Wed, 14 Sep 2011 19:30:26 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-09-14 at 20:48 +0200, Manfred Spraul wrote:
-> On 09/14/2011 11:57 AM, Peter Zijlstra wrote:
-> > Subject: ipc/sem: Rework semaphore wakeups
-> > From: Peter Zijlstra<a.p.zijlstra@chello.nl>
-> > Date: Tue Sep 13 15:09:40 CEST 2011
-> >
-> > Current sysv sems have a weird ass wakeup scheme that involves keeping
-> > preemption disabled over a potential O(n^2) loop and busy waiting on
-> > that on other CPUs.
-> Have you checked that the patch improves the latency?
-> Note that  the busy wait only happens if there is a simultaneous timeout 
-> of a semtimedop() and a true wakeup.
-> 
-> The code does:
-> 
->      spin_lock()
->      preempt_disable();
->      usually_very_simple_but_worstcase_O_2
->      spin_unlock()
->      usually_very_simple_but_worstcase_O_1
->      preempt_enable();
-> 
-> with your change, it becomes:
-> 
->      spin_lock()
->      usually_very_simple_but_worstcase_O_2
->      usually_very_simple_but_worstcase_O_1
->      spin_unlock()
-> 
-> The complex ops remain unchanged, they are still under a lock.
+Dear RT Folks,
 
-preemptible lock (aka pi-mutex) on -rt, so no weird latencies.
+I'm pleased to announce the 3.0.4-rt14 release.
 
-> What about removing the preempt_disable?
-> It's only there to cover a rare race on uniprocessor preempt systems.
-> (a task is woken up simultaneously due to timeout of semtimedop() and a 
-> true wakeup)
-> 
-> Then fix the that race - something like the attached patch [obviously 
-> buggy - see the fixme]
+Changes versus 3.0.4-rt13
 
-sched_yield() is always a bug, as is it here. Its an life-lock if the
-woken task is of higher priority than the waking task. A higher prio
-FIFO task calling sched_yield() in a loop is just that, a loop, starving
-the lower prio waker.
+  * Cherrypicks from the going to be 3.0.5 release
 
-If you've got enough medium prio tasks around to occupy all other cpus,
-you're got indefinite priority inversion, so even on smp its a problem.
+  * ipc/sem workaround (Peter)
+  
+  * scheduler oddities (Peter/myself)
 
-But yeah its not the prettiest of solutions but it works.. see that
-other patch with the wake-list stuff for something that ought to work
-for both rt and mainline (except of course it doesn't actually work).
+  * hrtimer reprogramming RT only bug
+
+  * lib/atomic64 fixup (Yong)
+
+  * various compile fixes (several submitters [simply folded back])
+
+
+Patch against 3.0.4 can be found here:
+
+  https://tglx.de/~tglx/rt/patch-3.0.4-rt14.patch.gz
+
+
+The split quilt queue is available at:
+
+  https://tglx.de/~tglx/rt/patches-3.0.4-rt14.tar.gz
+
+
+For those who don't have 3.0.4 around:
+
+  git://tesla.tglx.de/git/linux-2.6-tip rt/3.0
+  
+  https://tglx.de/~tglx/rt/patch-3.0.4.gz
+
+
+Delta patch against 3.0.4-rt13
+
+  https://tglx.de/~tglx/rt/patch-3.0.4-rt13-rt14.patch.gz
+
+also included below.
+
+
+Enjoy,
+
+	tglx
+
+--------------->
+
+Index: linux-2.6/arch/arm/kernel/perf_event.c
+===================================================================
+--- linux-2.6.orig/arch/arm/kernel/perf_event.c
++++ linux-2.6/arch/arm/kernel/perf_event.c
+@@ -420,7 +420,7 @@ armpmu_reserve_hardware(void)
+ 			continue;
+ 
+ 		err = request_irq(irq, handle_irq,
+-				  IRQF_DISABLED | IRQF_NOBALANCING | IRQF_NO_THREAD,
++				  IRQF_NOBALANCING | IRQF_NO_THREAD,
+ 				  "armpmu", NULL);
+ 		if (err) {
+ 			pr_warning("unable to request IRQ%d for ARM perf "
+Index: linux-2.6/kernel/hrtimer.c
+===================================================================
+--- linux-2.6.orig/kernel/hrtimer.c
++++ linux-2.6/kernel/hrtimer.c
+@@ -1314,7 +1314,11 @@ static void hrtimer_rt_reprogram(int res
+ 		if (!enqueue_hrtimer(timer, base))
+ 			return;
+ 
+-		if (hrtimer_reprogram(timer, base))
++#ifndef CONFIG_HIGH_RES_TIMERS
++	}
++#else
++		if (base->cpu_base->hres_active &&
++		    hrtimer_reprogram(timer, base))
+ 			goto requeue;
+ 
+ 	} else if (hrtimer_active(timer)) {
+@@ -1323,6 +1327,7 @@ static void hrtimer_rt_reprogram(int res
+ 		 * the event device.
+ 		 */
+ 		if (&timer->node == base->active.next &&
++		    base->cpu_base->hres_active &&
+ 		    hrtimer_reprogram(timer, base))
+ 			goto requeue;
+ 	}
+@@ -1335,6 +1340,7 @@ requeue:
+ 	 */
+ 	__remove_hrtimer(timer, base, timer->state, 0);
+ 	list_add_tail(&timer->cb_entry, &base->expired);
++#endif
+ }
+ 
+ /*
+Index: linux-2.6/kernel/sched.c
+===================================================================
+--- linux-2.6.orig/kernel/sched.c
++++ linux-2.6/kernel/sched.c
+@@ -5054,7 +5054,13 @@ EXPORT_SYMBOL(task_nice);
+  */
+ int idle_cpu(int cpu)
+ {
+-	return cpu_curr(cpu) == cpu_rq(cpu)->idle;
++	struct rq *rq = cpu_rq(cpu);
++
++#ifdef CONFIG_SMP
++	return rq->curr == rq->idle && !rq->nr_running && !rq->wake_list;
++#else
++	return rq->curr == rq->idle && !rq->nr_running;
++#endif
+ }
+ 
+ /**
+Index: linux-2.6/kernel/sched_debug.c
+===================================================================
+--- linux-2.6.orig/kernel/sched_debug.c
++++ linux-2.6/kernel/sched_debug.c
+@@ -235,7 +235,9 @@ void print_rt_rq(struct seq_file *m, int
+ 	P(rt_throttled);
+ 	PN(rt_time);
+ 	PN(rt_runtime);
++#ifdef CONFIG_SMP
+ 	P(rt_nr_migratory);
++#endif
+ 
+ #undef PN
+ #undef P
+Index: linux-2.6/kernel/sched_rt.c
+===================================================================
+--- linux-2.6.orig/kernel/sched_rt.c
++++ linux-2.6/kernel/sched_rt.c
+@@ -1039,7 +1039,7 @@ select_task_rq_rt(struct task_struct *p,
+ 	 */
+ 	if (curr && unlikely(rt_task(curr)) &&
+ 	    (curr->rt.nr_cpus_allowed < 2 ||
+-	     curr->prio < p->prio) &&
++	     curr->prio <= p->prio) &&
+ 	    (p->rt.nr_cpus_allowed > 1)) {
+ 		int target = find_lowest_rq(p);
+ 
+@@ -1570,7 +1570,7 @@ static void task_woken_rt(struct rq *rq,
+ 	    p->rt.nr_cpus_allowed > 1 &&
+ 	    rt_task(rq->curr) &&
+ 	    (rq->curr->rt.nr_cpus_allowed < 2 ||
+-	     rq->curr->prio < p->prio))
++	     rq->curr->prio <= p->prio))
+ 		push_rt_tasks(rq);
+ }
+ 
+Index: linux-2.6/lib/atomic64.c
+===================================================================
+--- linux-2.6.orig/lib/atomic64.c
++++ linux-2.6/lib/atomic64.c
+@@ -33,7 +33,7 @@ static union {
+ 	char pad[L1_CACHE_BYTES];
+ } atomic64_lock[NR_LOCKS] __cacheline_aligned_in_smp;
+ 
+-static inline spinlock_t *lock_addr(const atomic64_t *v)
++static inline raw_spinlock_t *lock_addr(const atomic64_t *v)
+ {
+ 	unsigned long addr = (unsigned long) v;
+ 
+@@ -45,7 +45,7 @@ static inline spinlock_t *lock_addr(cons
+ long long atomic64_read(const atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -58,7 +58,7 @@ EXPORT_SYMBOL(atomic64_read);
+ void atomic64_set(atomic64_t *v, long long i)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+ 	v->counter = i;
+@@ -69,7 +69,7 @@ EXPORT_SYMBOL(atomic64_set);
+ void atomic64_add(long long a, atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+ 	v->counter += a;
+@@ -80,7 +80,7 @@ EXPORT_SYMBOL(atomic64_add);
+ long long atomic64_add_return(long long a, atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -93,7 +93,7 @@ EXPORT_SYMBOL(atomic64_add_return);
+ void atomic64_sub(long long a, atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+ 	v->counter -= a;
+@@ -104,7 +104,7 @@ EXPORT_SYMBOL(atomic64_sub);
+ long long atomic64_sub_return(long long a, atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -117,7 +117,7 @@ EXPORT_SYMBOL(atomic64_sub_return);
+ long long atomic64_dec_if_positive(atomic64_t *v)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -132,7 +132,7 @@ EXPORT_SYMBOL(atomic64_dec_if_positive);
+ long long atomic64_cmpxchg(atomic64_t *v, long long o, long long n)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -147,7 +147,7 @@ EXPORT_SYMBOL(atomic64_cmpxchg);
+ long long atomic64_xchg(atomic64_t *v, long long new)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	long long val;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+@@ -161,7 +161,7 @@ EXPORT_SYMBOL(atomic64_xchg);
+ int atomic64_add_unless(atomic64_t *v, long long a, long long u)
+ {
+ 	unsigned long flags;
+-	spinlock_t *lock = lock_addr(v);
++	raw_spinlock_t *lock = lock_addr(v);
+ 	int ret = 0;
+ 
+ 	raw_spin_lock_irqsave(lock, flags);
+Index: linux-2.6/localversion-rt
+===================================================================
+--- linux-2.6.orig/localversion-rt
++++ linux-2.6/localversion-rt
+@@ -1 +1 @@
+--rt13
++-rt14
+Index: linux-2.6/arch/arm/plat-mxc/include/mach/iomux-v3.h
+===================================================================
+--- linux-2.6.orig/arch/arm/plat-mxc/include/mach/iomux-v3.h
++++ linux-2.6/arch/arm/plat-mxc/include/mach/iomux-v3.h
+@@ -66,7 +66,6 @@ typedef u64 iomux_v3_cfg_t;
+ #define MUX_MODE_MASK		((iomux_v3_cfg_t)0x1f << MUX_MODE_SHIFT)
+ #define MUX_PAD_CTRL_SHIFT	41
+ #define MUX_PAD_CTRL_MASK	((iomux_v3_cfg_t)0x1ffff << MUX_PAD_CTRL_SHIFT)
+-#define NO_PAD_CTRL		((iomux_v3_cfg_t)1 << (MUX_PAD_CTRL_SHIFT + 16))
+ #define MUX_SEL_INPUT_SHIFT	58
+ #define MUX_SEL_INPUT_MASK	((iomux_v3_cfg_t)0xf << MUX_SEL_INPUT_SHIFT)
+ 
+@@ -85,6 +84,7 @@ typedef u64 iomux_v3_cfg_t;
+  * Use to set PAD control
+  */
+ 
++#define NO_PAD_CTRL			(1 << 16)
+ #define PAD_CTL_DVS			(1 << 13)
+ #define PAD_CTL_HYS			(1 << 8)
+ 
+Index: linux-2.6/kernel/sched_features.h
+===================================================================
+--- linux-2.6.orig/kernel/sched_features.h
++++ linux-2.6/kernel/sched_features.h
+@@ -65,10 +65,14 @@ SCHED_FEAT(OWNER_SPIN, 1)
+  */
+ SCHED_FEAT(NONIRQ_POWER, 1)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Queue remote wakeups on the target CPU and process them
+  * using the scheduler IPI. Reduces rq->lock contention/bounces.
+  */
+ SCHED_FEAT(TTWU_QUEUE, 1)
++#else
++SCHED_FEAT(TTWU_QUEUE, 0)
++#endif
+ 
+ SCHED_FEAT(FORCE_SD_OVERLAP, 0)
+Index: linux-2.6/ipc/sem.c
+===================================================================
+--- linux-2.6.orig/ipc/sem.c
++++ linux-2.6/ipc/sem.c
+@@ -415,6 +415,13 @@ undo:
+ static void wake_up_sem_queue_prepare(struct list_head *pt,
+ 				struct sem_queue *q, int error)
+ {
++#ifdef CONFIG_PREEMPT_RT_BASE
++	struct task_struct *p = q->sleeper;
++	get_task_struct(p);
++	q->status = error;
++	wake_up_process(p);
++	put_task_struct(p);
++#else
+ 	if (list_empty(pt)) {
+ 		/*
+ 		 * Hold preempt off so that we don't get preempted and have the
+@@ -426,6 +433,7 @@ static void wake_up_sem_queue_prepare(st
+ 	q->pid = error;
+ 
+ 	list_add_tail(&q->simple_list, pt);
++#endif
+ }
+ 
+ /**
+@@ -439,6 +447,7 @@ static void wake_up_sem_queue_prepare(st
+  */
+ static void wake_up_sem_queue_do(struct list_head *pt)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	struct sem_queue *q, *t;
+ 	int did_something;
+ 
+@@ -451,6 +460,7 @@ static void wake_up_sem_queue_do(struct 
+ 	}
+ 	if (did_something)
+ 		preempt_enable();
++#endif
+ }
+ 
+ static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
