@@ -1,48 +1,97 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: ARM pad issue with 3.0.[0-4]
-Date: Wed, 14 Sep 2011 09:21:07 +0200
-Message-ID: <20110914072107.GS28624@pengutronix.de>
-References: <87fwk0tu7o.fsf@vostro.fn.ogness.net>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: [PATCH -rt] ipc/sem: Rework semaphore wakeups
+Date: Wed, 14 Sep 2011 11:57:04 +0200
+Message-ID: <1315994224.5040.1.camel@twins>
+References: <alpine.LFD.2.02.1109101052340.2723@ionos>
+	 <1315737307.6544.1.camel@marge.simson.net>
+	 <1315817948.26517.16.camel@twins>
+	 <1315835562.6758.3.camel@marge.simson.net>
+	 <1315839187.6758.8.camel@marge.simson.net> <1315926499.5977.19.camel@twins>
+	 <1315927699.6445.6.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: John Ogness <john.ogness@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Manfred Spraul <manfred@colorfullife.com>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:38187 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755497Ab1INHVI (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:50381 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756057Ab1INJ5L convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Sep 2011 03:21:08 -0400
-Content-Disposition: inline
-In-Reply-To: <87fwk0tu7o.fsf@vostro.fn.ogness.net>
+	Wed, 14 Sep 2011 05:57:11 -0400
+In-Reply-To: <1315927699.6445.6.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
-On Tue, Sep 13, 2011 at 04:03:55PM +0200, John Ogness wrote:
-> There is currently a bug in Linux 3.0 where the ARM pad control value=
-s
-> will be set to 0 instead of being left as they were when NO_PAD_CTRL =
-is
-> used. This bug was fixed with commit:
->=20
-> 425933b30b0ccfac58065bca6c853ea627443cdf
-Just a small addition: This doesn't affect ARM in general, only
-the following Freescale SoCs: i.MX25, i.MX35, i.MX50, i.MX51 and i.MX53=
-=2E
+Subject: ipc/sem: Rework semaphore wakeups
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Date: Tue Sep 13 15:09:40 CEST 2011
 
-Best regards
-Uwe
+Current sysv sems have a weird ass wakeup scheme that involves keeping
+preemption disabled over a potential O(n^2) loop and busy waiting on
+that on other CPUs.
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Kill this and simply wake the task directly from under the sem_lock.
+
+This was discovered by a migrate_disable() debug feature that
+disallows:
+
+  spin_lock();
+  preempt_disable();
+  spin_unlock()
+  preempt_enable();
+
+Cc: Manfred Spraul <manfred@colorfullife.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+---
+ ipc/sem.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+Index: linux-rt/ipc/sem.c
+===================================================================
+--- linux-rt.orig/ipc/sem.c
++++ linux-rt/ipc/sem.c
+@@ -415,6 +415,13 @@ static int try_atomic_semop (struct sem_
+ static void wake_up_sem_queue_prepare(struct list_head *pt,
+ 				struct sem_queue *q, int error)
+ {
++#ifdef CONFIG_PREEMPT_RT_BASE
++	struct task_struct *p = q->sleeper;
++	get_task_struct(p);
++	q->status = error;
++	wake_up_process(p);
++	put_task_struct(p);
++#else
+ 	if (list_empty(pt)) {
+ 		/*
+ 		 * Hold preempt off so that we don't get preempted and have the
+@@ -426,6 +433,7 @@ static void wake_up_sem_queue_prepare(st
+ 	q->pid = error;
+ 
+ 	list_add_tail(&q->simple_list, pt);
++#endif
+ }
+ 
+ /**
+@@ -439,6 +447,7 @@ static void wake_up_sem_queue_prepare(st
+  */
+ static void wake_up_sem_queue_do(struct list_head *pt)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	struct sem_queue *q, *t;
+ 	int did_something;
+ 
+@@ -451,6 +460,7 @@ static void wake_up_sem_queue_do(struct
+ 	}
+ 	if (did_something)
+ 		preempt_enable();
++#endif
+ }
+ 
+ static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
+
