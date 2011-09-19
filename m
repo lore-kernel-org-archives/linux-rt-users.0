@@ -1,64 +1,296 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [ANNOUNCE] 3.0.4-rt14
-Date: Mon, 19 Sep 2011 11:03:52 +0200
-Message-ID: <201109191103.52843.tim.sander@hbm.com>
-References: <alpine.LFD.2.02.1109150047290.2723@ionos>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH] preempt-rt: convert arm boot_lock to raw
+Date: Mon, 19 Sep 2011 14:51:14 -0700
+Message-ID: <4E77B952.3010606@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "LKML" <linux-kernel@vger.kernel.org>
-To: "Thomas Gleixner" <tglx@linutronix.de>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-kernel@vger.kernel.org>
+To: <tglx@linutronix.de>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:18223 "HELO
-	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1753550Ab1ISJKj convert rfc822-to-8bit (ORCPT
+Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:11432 "EHLO
+	TX2EHSOBE001.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753988Ab1ISVyP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Sep 2011 05:10:39 -0400
-Content-Class: urn:content-classes:message
-In-Reply-To: <alpine.LFD.2.02.1109150047290.2723@ionos>
+	Mon, 19 Sep 2011 17:54:15 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas
 
-Thanks for the new release. We've been testing your release here. We fo=
-und=20
-that the minimum timer resolution on a vanilla 3.0.4-rt14 is about 16ms=
-=2E I=20
-tried switching on hr timers but even with them the timer behaviour was=
- the=20
-same. So i suspect that there is something strange going on concerning =
-the=20
-timers. The tests done where on the pcm04 arm11 platform.
+The arm boot_lock is used by the secondary processor startup code.  The locking
+task is the idle thread, which has idle->sched_class == &idle_sched_class.
+idle_sched_class->enqueue_task == NULL, so if the idle task blocks on the
+lock, the attempt to wake it when the lock becomes available will fail:
 
-Best regards
-Tim
+try_to_wake_up()
+   ...
+      activate_task()
+         enqueue_task()
+            p->sched_class->enqueue_task(rq, p, flags)
 
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
-Germany | www.hbm.com=20
+Fix by converting boot_lock to a raw spin lock.
 
-Registered as GmbH (German limited liability corporation) in the commer=
-cial register at the local court of Darmstadt, HRB 1147 =20
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
-the board: James Charles Webster
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ arch/arm/mach-exynos4/platsmp.c   |   10 	5 +	5 -	0 !
+ arch/arm/mach-msm/platsmp.c       |   10 	5 +	5 -	0 !
+ arch/arm/mach-omap2/omap-smp.c    |   10 	5 +	5 -	0 !
+ arch/arm/mach-tegra/platsmp.c     |   10 	5 +	5 -	0 !
+ arch/arm/mach-ux500/platsmp.c     |   10 	5 +	5 -	0 !
+ arch/arm/plat-versatile/platsmp.c |   10 	5 +	5 -	0 !
+ 6 files changed, 30 insertions(+), 30 deletions(-)
 
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
-er des Amtsgerichts Darmstadt unter HRB 1147=20
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
-st | Aufsichtsratsvorsitzender: James Charles Webster
+Index: b/arch/arm/plat-versatile/platsmp.c
+===================================================================
+--- a/arch/arm/plat-versatile/platsmp.c
++++ b/arch/arm/plat-versatile/platsmp.c
+@@ -37,7 +37,7 @@ static void __cpuinit write_pen_release(
+ 	outer_clean_range(__pa(&pen_release), __pa(&pen_release + 1));
+ }
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ 
+ void __cpuinit platform_secondary_init(unsigned int cpu)
+ {
+@@ -57,8 +57,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -69,7 +69,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * Set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 	/*
+ 	 * This is really belt and braces; we hold unintended secondary
+@@ -99,7 +99,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return pen_release != -1 ? -ENOSYS : 0;
+ }
+Index: b/arch/arm/mach-exynos4/platsmp.c
+===================================================================
+--- a/arch/arm/mach-exynos4/platsmp.c
++++ b/arch/arm/mach-exynos4/platsmp.c
+@@ -56,7 +56,7 @@ static void __iomem *scu_base_addr(void)
+ 	return (void __iomem *)(S5P_VA_SCU);
+ }
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ 
+ void __cpuinit platform_secondary_init(unsigned int cpu)
+ {
+@@ -76,8 +76,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -88,7 +88,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * Set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 	/*
+ 	 * The secondary processor is waiting to be released from
+@@ -120,7 +120,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return pen_release != -1 ? -ENOSYS : 0;
+ }
+Index: b/arch/arm/mach-msm/platsmp.c
+===================================================================
+--- a/arch/arm/mach-msm/platsmp.c
++++ b/arch/arm/mach-msm/platsmp.c
+@@ -38,7 +38,7 @@ extern void msm_secondary_startup(void);
+  */
+ volatile int pen_release = -1;
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ 
+ void __cpuinit platform_secondary_init(unsigned int cpu)
+ {
+@@ -62,8 +62,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ static __cpuinit void prepare_cold_cpu(unsigned int cpu)
+@@ -100,7 +100,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 	/*
+ 	 * The secondary processor is waiting to be released from
+@@ -134,7 +134,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return pen_release != -1 ? -ENOSYS : 0;
+ }
+Index: b/arch/arm/mach-omap2/omap-smp.c
+===================================================================
+--- a/arch/arm/mach-omap2/omap-smp.c
++++ b/arch/arm/mach-omap2/omap-smp.c
+@@ -29,7 +29,7 @@
+ /* SCU base address */
+ static void __iomem *scu_base;
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ 
+ void __cpuinit platform_secondary_init(unsigned int cpu)
+ {
+@@ -43,8 +43,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -53,7 +53,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * Set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 	/*
+ 	 * Update the AuxCoreBoot0 with boot state for secondary core.
+@@ -70,7 +70,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * Now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return 0;
+ }
+Index: b/arch/arm/mach-tegra/platsmp.c
+===================================================================
+--- a/arch/arm/mach-tegra/platsmp.c
++++ b/arch/arm/mach-tegra/platsmp.c
+@@ -29,7 +29,7 @@
+ 
+ extern void tegra_secondary_startup(void);
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ static void __iomem *scu_base = IO_ADDRESS(TEGRA_ARM_PERIF_BASE);
+ 
+ #define EVP_CPU_RESET_VECTOR \
+@@ -51,8 +51,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -66,7 +66,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 
+ 	/* set the reset vector to point to the secondary_startup routine */
+@@ -102,7 +102,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return 0;
+ }
+Index: b/arch/arm/mach-ux500/platsmp.c
+===================================================================
+--- a/arch/arm/mach-ux500/platsmp.c
++++ b/arch/arm/mach-ux500/platsmp.c
+@@ -57,7 +57,7 @@ static void __iomem *scu_base_addr(void)
+ 	return NULL;
+ }
+ 
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+ 
+ void __cpuinit platform_secondary_init(unsigned int cpu)
+ {
+@@ -77,8 +77,8 @@ void __cpuinit platform_secondary_init(u
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+ 
+ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -89,7 +89,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+ 
+ 	/*
+ 	 * The secondary processor is waiting to be released from
+@@ -110,7 +110,7 @@ int __cpuinit boot_secondary(unsigned in
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ 
+ 	return pen_release != -1 ? -ENOSYS : 0;
+ }
 
-The information in this email is confidential. It is intended solely fo=
-r the addressee. If you are not the intended recipient, please let me k=
-now and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
-faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
-=2E
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
