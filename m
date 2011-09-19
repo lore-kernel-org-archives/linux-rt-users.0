@@ -1,25 +1,21 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH] preempt-rt: convert arm boot_lock to raw
-Date: Mon, 19 Sep 2011 14:51:14 -0700
-Message-ID: <4E77B952.3010606@am.sony.com>
+Subject: [PATCH] preempt-rt: convert blackfin boot_lock to raw
+Date: Mon, 19 Sep 2011 14:51:41 -0700
+Message-ID: <4E77B96D.40101@am.sony.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: <linux-kernel@vger.kernel.org>
-To: <tglx@linutronix.de>, <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:11432 "EHLO
-	TX2EHSOBE001.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753988Ab1ISVyP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 Sep 2011 17:54:15 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: <tglx@linutronix.de>, <linux-rt-users@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-The arm boot_lock is used by the secondary processor startup code.  The locking
-task is the idle thread, which has idle->sched_class == &idle_sched_class.
+The blackfin boot_lock is used by the secondary processor startup code.
+The locking task is the idle thread, which has
+idle->sched_class == &idle_sched_class.
 idle_sched_class->enqueue_task == NULL, so if the idle task blocks on the
 lock, the attempt to wake it when the lock becomes available will fail:
 
@@ -31,266 +27,53 @@ try_to_wake_up()
 
 Fix by converting boot_lock to a raw spin lock.
 
+This has not been compile or boot tested.  The fix was needed by arm, this
+patch is for all other instances of "boot_lock" in other architectures.
+
 Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
 ---
- arch/arm/mach-exynos4/platsmp.c   |   10 	5 +	5 -	0 !
- arch/arm/mach-msm/platsmp.c       |   10 	5 +	5 -	0 !
- arch/arm/mach-omap2/omap-smp.c    |   10 	5 +	5 -	0 !
- arch/arm/mach-tegra/platsmp.c     |   10 	5 +	5 -	0 !
- arch/arm/mach-ux500/platsmp.c     |   10 	5 +	5 -	0 !
- arch/arm/plat-versatile/platsmp.c |   10 	5 +	5 -	0 !
- 6 files changed, 30 insertions(+), 30 deletions(-)
+ arch/blackfin/mach-bf561/smp.c |   10 	5 +	5 -	0 !
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-Index: b/arch/arm/plat-versatile/platsmp.c
+Index: b/arch/blackfin/mach-bf561/smp.c
 ===================================================================
---- a/arch/arm/plat-versatile/platsmp.c
-+++ b/arch/arm/plat-versatile/platsmp.c
-@@ -37,7 +37,7 @@ static void __cpuinit write_pen_release(
- 	outer_clean_range(__pa(&pen_release), __pa(&pen_release + 1));
- }
+--- a/arch/blackfin/mach-bf561/smp.c
++++ b/arch/blackfin/mach-bf561/smp.c
+@@ -13,7 +13,7 @@
+ #include <asm/dma.h>
+ #include <asm/time.h>
  
 -static DEFINE_SPINLOCK(boot_lock);
 +static DEFINE_RAW_SPINLOCK(boot_lock);
  
- void __cpuinit platform_secondary_init(unsigned int cpu)
- {
-@@ -57,8 +57,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
+ /*
+  * platform_init_cpus() - Tell the world about how many cores we
+@@ -70,8 +70,8 @@ void __cpuinit platform_secondary_init(u
+ 
+ 	/* We are done with local CPU inits, unblock the boot CPU. */
+ 	set_cpu_online(cpu, true);
 -	spin_lock(&boot_lock);
 -	spin_unlock(&boot_lock);
 +	raw_spin_lock(&boot_lock);
 +	raw_spin_unlock(&boot_lock);
  }
  
- int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -69,7 +69,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * Set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
+ int __cpuinit platform_boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -80,7 +80,7 @@ int __cpuinit platform_boot_secondary(un
+ 
+ 	printk(KERN_INFO "Booting Core B.\n");
+ 
 -	spin_lock(&boot_lock);
 +	raw_spin_lock(&boot_lock);
  
- 	/*
- 	 * This is really belt and braces; we hold unintended secondary
-@@ -99,7 +99,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
+ 	if ((bfin_read_SYSCR() & COREB_SRAM_INIT) == 0) {
+ 		/* CoreB already running, sending ipi to wakeup it */
+@@ -101,7 +101,7 @@ int __cpuinit platform_boot_secondary(un
  
- 	return pen_release != -1 ? -ENOSYS : 0;
- }
-Index: b/arch/arm/mach-exynos4/platsmp.c
-===================================================================
---- a/arch/arm/mach-exynos4/platsmp.c
-+++ b/arch/arm/mach-exynos4/platsmp.c
-@@ -56,7 +56,7 @@ static void __iomem *scu_base_addr(void)
- 	return (void __iomem *)(S5P_VA_SCU);
- }
- 
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
- 
- void __cpuinit platform_secondary_init(unsigned int cpu)
- {
-@@ -76,8 +76,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
- 
- int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -88,7 +88,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * Set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
- 
- 	/*
- 	 * The secondary processor is waiting to be released from
-@@ -120,7 +120,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- 
- 	return pen_release != -1 ? -ENOSYS : 0;
- }
-Index: b/arch/arm/mach-msm/platsmp.c
-===================================================================
---- a/arch/arm/mach-msm/platsmp.c
-+++ b/arch/arm/mach-msm/platsmp.c
-@@ -38,7 +38,7 @@ extern void msm_secondary_startup(void);
-  */
- volatile int pen_release = -1;
- 
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
- 
- void __cpuinit platform_secondary_init(unsigned int cpu)
- {
-@@ -62,8 +62,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
- 
- static __cpuinit void prepare_cold_cpu(unsigned int cpu)
-@@ -100,7 +100,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
- 
- 	/*
- 	 * The secondary processor is waiting to be released from
-@@ -134,7 +134,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- 
- 	return pen_release != -1 ? -ENOSYS : 0;
- }
-Index: b/arch/arm/mach-omap2/omap-smp.c
-===================================================================
---- a/arch/arm/mach-omap2/omap-smp.c
-+++ b/arch/arm/mach-omap2/omap-smp.c
-@@ -29,7 +29,7 @@
- /* SCU base address */
- static void __iomem *scu_base;
- 
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
- 
- void __cpuinit platform_secondary_init(unsigned int cpu)
- {
-@@ -43,8 +43,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
- 
- int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -53,7 +53,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * Set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
- 
- 	/*
- 	 * Update the AuxCoreBoot0 with boot state for secondary core.
-@@ -70,7 +70,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * Now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- 
- 	return 0;
- }
-Index: b/arch/arm/mach-tegra/platsmp.c
-===================================================================
---- a/arch/arm/mach-tegra/platsmp.c
-+++ b/arch/arm/mach-tegra/platsmp.c
-@@ -29,7 +29,7 @@
- 
- extern void tegra_secondary_startup(void);
- 
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
- static void __iomem *scu_base = IO_ADDRESS(TEGRA_ARM_PERIF_BASE);
- 
- #define EVP_CPU_RESET_VECTOR \
-@@ -51,8 +51,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
- 
- int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -66,7 +66,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
- 
- 
- 	/* set the reset vector to point to the secondary_startup routine */
-@@ -102,7 +102,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- 
- 	return 0;
- }
-Index: b/arch/arm/mach-ux500/platsmp.c
-===================================================================
---- a/arch/arm/mach-ux500/platsmp.c
-+++ b/arch/arm/mach-ux500/platsmp.c
-@@ -57,7 +57,7 @@ static void __iomem *scu_base_addr(void)
- 	return NULL;
- }
- 
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
- 
- void __cpuinit platform_secondary_init(unsigned int cpu)
- {
-@@ -77,8 +77,8 @@ void __cpuinit platform_secondary_init(u
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
- 
- int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -89,7 +89,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
- 
- 	/*
- 	 * The secondary processor is waiting to be released from
-@@ -110,7 +110,7 @@ int __cpuinit boot_secondary(unsigned in
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- 
- 	return pen_release != -1 ? -ENOSYS : 0;
- }
-
+ 	if (cpu_online(cpu)) {
+ 		/* release the lock and let coreb run */
+-		spin_unlock(&boot_lock);
++		raw_spin_unlock(&boot_lock);
+ 		return 0;
+ 	} else
+ 		panic("CPU%u: processor failed to boot\n", cpu);
