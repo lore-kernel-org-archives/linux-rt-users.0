@@ -1,54 +1,64 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: 3.04-rt14 patch applies against which version?
-Date: Wed, 21 Sep 2011 08:55:38 +0200
-Message-ID: <20110921065538.GB27103@pengutronix.de>
-References: <4E791F5D.8000105@caviumnetworks.com>
- <CAFQPvXcEjWod1k-UWjJ1AKwUtD+oGfXtqDd7xOVRGvKtfVpUrQ@mail.gmail.com>
- <4E792D0A.5070209@caviumnetworks.com>
- <4E793292.9050801@am.sony.com>
- <4E7937D1.4090203@caviumnetworks.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: rt14: strace ->  migrate_disable_atomic imbalance
+Date: Wed, 21 Sep 2011 12:17:10 +0200
+Message-ID: <1316600230.6628.6.camel@marge.simson.net>
+References: <alpine.LFD.2.02.1109101052340.2723@ionos>
+	 <1315737307.6544.1.camel@marge.simson.net>
+	 <1315817948.26517.16.camel@twins>
+	 <1315835562.6758.3.camel@marge.simson.net>
+	 <1315839187.6758.8.camel@marge.simson.net> <1315926499.5977.19.camel@twins>
+	 <1315927699.6445.6.camel@marge.simson.net> <1315930430.5977.21.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: frank.rowand@am.sony.com,
-	Sankara Muthukrishnan <sankara.m@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Venkat Subbiah <vsubbiah@caviumnetworks.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:55171 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751094Ab1IUGzn (ORCPT
+Received: from mailout-de.gmx.net ([213.165.64.22]:54283 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1752508Ab1IUKRO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Sep 2011 02:55:43 -0400
-Content-Disposition: inline
-In-Reply-To: <4E7937D1.4090203@caviumnetworks.com>
+	Wed, 21 Sep 2011 06:17:14 -0400
+In-Reply-To: <1315930430.5977.21.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
 
-On Tue, Sep 20, 2011 at 06:03:13PM -0700, Venkat Subbiah wrote:
-> Thanks for the info. I did see the kernel but didn't want to get the
-> whole repo and I assumed it will probably apply against the repo
-> from mainline. I did aplly now against v3.0 from mainline and it did
-> apply pretty clean. There was one reject which is below and a few
-> hunks which succeeded with offsets.
-3.0.4 is a stable update to 3.0 that is not maintained in Linus'
-repository. If kernel.org were available you could find it at
+[  144.212272] ------------[ cut here ]------------
+[  144.212280] WARNING: at kernel/sched.c:6152 migrate_disable+0x1b6/0x200()
+[  144.212282] Hardware name: MS-7502
+[  144.212283] Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device edd nfsd lockd parport_pc parport nfs_acl auth_rpcgss sunrpc bridge ipv6 stp cpufreq_conservative microcode cpufreq_ondemand cpufreq_userspace cpufreq_powersave acpi_cpufreq mperf nls_iso8859_1 nls_cp437 vfat fat fuse ext3 jbd dm_mod usbmouse usb_storage usbhid snd_hda_codec_realtek usb_libusual uas sr_mod cdrom hid snd_hda_intel e1000e snd_hda_codec kvm_intel snd_hwdep sg snd_pcm kvm i2c_i801 snd_timer snd firewire_ohci firewire_core soundcore snd_page_alloc crc_itu_t button ext4 mbcache jbd2 crc16 uhci_hcd sd_mod ehci_hcd usbcore rtc_cmos ahci libahci libata scsi_mod fan processor thermal
+[  144.212317] Pid: 6215, comm: strace Not tainted 3.0.4-rt14 #2052
+[  144.212319] Call Trace:
+[  144.212323]  [<ffffffff8104662f>] warn_slowpath_common+0x7f/0xc0
+[  144.212326]  [<ffffffff8104668a>] warn_slowpath_null+0x1a/0x20
+[  144.212328]  [<ffffffff8103f606>] migrate_disable+0x1b6/0x200
+[  144.212331]  [<ffffffff8105a2a8>] ptrace_stop+0x128/0x240
+[  144.212334]  [<ffffffff81057b9b>] ? recalc_sigpending+0x1b/0x50
+[  144.212337]  [<ffffffff8105b6f1>] get_signal_to_deliver+0x211/0x530
+[  144.212340]  [<ffffffff81001835>] do_signal+0x75/0x7a0
+[  144.212342]  [<ffffffff8105ae68>] ? kill_pid_info+0x58/0x80
+[  144.212344]  [<ffffffff8105c34c>] ? sys_kill+0xac/0x1e0
+[  144.212347]  [<ffffffff81001fe5>] do_notify_resume+0x65/0x80
+[  144.212350]  [<ffffffff8135978b>] int_signal+0x12/0x17
+[  144.212352] ---[ end trace 0000000000000002 ]---
+[  144.212354] ------------[ cut here ]------------
+[  144.212356] WARNING: at kernel/sched.c:6211 migrate_enable+0x1f8/0x270()
+[  144.212357] Hardware name: MS-7502
+[  144.212358] Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device edd nfsd lockd parport_pc parport nfs_acl auth_rpcgss sunrpc bridge ipv6 stp cpufreq_conservative microcode cpufreq_ondemand cpufreq_userspace cpufreq_powersave acpi_cpufreq mperf nls_iso8859_1 nls_cp437 vfat fat fuse ext3 jbd dm_mod usbmouse usb_storage usbhid snd_hda_codec_realtek usb_libusual uas sr_mod cdrom hid snd_hda_intel e1000e snd_hda_codec kvm_intel snd_hwdep sg snd_pcm kvm i2c_i801 snd_timer snd firewire_ohci firewire_core soundcore snd_page_alloc crc_itu_t button ext4 mbcache jbd2 crc16 uhci_hcd sd_mod ehci_hcd usbcore rtc_cmos ahci libahci libata scsi_mod fan processor thermal
+[  144.212381] Pid: 6215, comm: strace Tainted: G        W   3.0.4-rt14 #2052
+[  144.212382] Call Trace:
+[  144.212384]  [<ffffffff8104662f>] warn_slowpath_common+0x7f/0xc0
+[  144.212387]  [<ffffffff8104668a>] warn_slowpath_null+0x1a/0x20
+[  144.212389]  [<ffffffff8103f3d8>] migrate_enable+0x1f8/0x270
+[  144.212391]  [<ffffffff8105b856>] get_signal_to_deliver+0x376/0x530
+[  144.212394]  [<ffffffff81001835>] do_signal+0x75/0x7a0
+[  144.212396]  [<ffffffff8105ae68>] ? kill_pid_info+0x58/0x80
+[  144.212398]  [<ffffffff8105c34c>] ? sys_kill+0xac/0x1e0
+[  144.212401]  [<ffffffff81001fe5>] do_notify_resume+0x65/0x80
+[  144.212403]  [<ffffffff8135978b>] int_signal+0x12/0x17
+[  144.212405] ---[ end trace 0000000000000003 ]---
 
-	git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-3.0.y.git
 
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
