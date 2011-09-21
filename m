@@ -1,64 +1,148 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: rt14: strace ->  migrate_disable_atomic imbalance
-Date: Wed, 21 Sep 2011 12:17:10 +0200
-Message-ID: <1316600230.6628.6.camel@marge.simson.net>
-References: <alpine.LFD.2.02.1109101052340.2723@ionos>
-	 <1315737307.6544.1.camel@marge.simson.net>
-	 <1315817948.26517.16.camel@twins>
-	 <1315835562.6758.3.camel@marge.simson.net>
-	 <1315839187.6758.8.camel@marge.simson.net> <1315926499.5977.19.camel@twins>
-	 <1315927699.6445.6.camel@marge.simson.net> <1315930430.5977.21.camel@twins>
+From: =?ISO-8859-15?Q?Martin_D=E4umler?= <mdae@cs.tu-chemnitz.de>
+Subject: Linux 2.6.31.12-rt21 hangs on AT91 based board
+Date: Wed, 21 Sep 2011 11:48:06 +0200
+Message-ID: <4E79B2D6.7040503@cs.tu-chemnitz.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-15;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:54283 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752508Ab1IUKRO (ORCPT
+Received: from nick.hrz.tu-chemnitz.de ([134.109.228.11]:41598 "EHLO
+	nick.hrz.tu-chemnitz.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752508Ab1IUKTE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Sep 2011 06:17:14 -0400
-In-Reply-To: <1315930430.5977.21.camel@twins>
+	Wed, 21 Sep 2011 06:19:04 -0400
+Received: from postman.hrz.tu-chemnitz.de ([134.109.133.5] helo=mailbox.hrz.tu-chemnitz.de)
+	by nick.hrz.tu-chemnitz.de with esmtps (TLSv1:AES256-SHA:256)
+	(Exim 4.76)
+	(envelope-from <martin.daeumler@informatik.tu-chemnitz.de>)
+	id 1R6JPZ-0006Dm-Aq
+	for linux-rt-users@vger.kernel.org; Wed, 21 Sep 2011 11:48:13 +0200
+Received: from camo159-153.hrz.tu-chemnitz.de ([134.109.159.153])
+	by mailbox.hrz.tu-chemnitz.de with esmtpsa (TLSv1:CAMELLIA256-SHA:256)
+	(Exim 4.76)
+	(envelope-from <mdae@mailbox.hrz.tu-chemnitz.de>)
+	id 1R6JPZ-0004tm-7O
+	for linux-rt-users@vger.kernel.org; Wed, 21 Sep 2011 11:48:13 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello,
 
-[  144.212272] ------------[ cut here ]------------
-[  144.212280] WARNING: at kernel/sched.c:6152 migrate_disable+0x1b6/0x200()
-[  144.212282] Hardware name: MS-7502
-[  144.212283] Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device edd nfsd lockd parport_pc parport nfs_acl auth_rpcgss sunrpc bridge ipv6 stp cpufreq_conservative microcode cpufreq_ondemand cpufreq_userspace cpufreq_powersave acpi_cpufreq mperf nls_iso8859_1 nls_cp437 vfat fat fuse ext3 jbd dm_mod usbmouse usb_storage usbhid snd_hda_codec_realtek usb_libusual uas sr_mod cdrom hid snd_hda_intel e1000e snd_hda_codec kvm_intel snd_hwdep sg snd_pcm kvm i2c_i801 snd_timer snd firewire_ohci firewire_core soundcore snd_page_alloc crc_itu_t button ext4 mbcache jbd2 crc16 uhci_hcd sd_mod ehci_hcd usbcore rtc_cmos ahci libahci libata scsi_mod fan processor thermal
-[  144.212317] Pid: 6215, comm: strace Not tainted 3.0.4-rt14 #2052
-[  144.212319] Call Trace:
-[  144.212323]  [<ffffffff8104662f>] warn_slowpath_common+0x7f/0xc0
-[  144.212326]  [<ffffffff8104668a>] warn_slowpath_null+0x1a/0x20
-[  144.212328]  [<ffffffff8103f606>] migrate_disable+0x1b6/0x200
-[  144.212331]  [<ffffffff8105a2a8>] ptrace_stop+0x128/0x240
-[  144.212334]  [<ffffffff81057b9b>] ? recalc_sigpending+0x1b/0x50
-[  144.212337]  [<ffffffff8105b6f1>] get_signal_to_deliver+0x211/0x530
-[  144.212340]  [<ffffffff81001835>] do_signal+0x75/0x7a0
-[  144.212342]  [<ffffffff8105ae68>] ? kill_pid_info+0x58/0x80
-[  144.212344]  [<ffffffff8105c34c>] ? sys_kill+0xac/0x1e0
-[  144.212347]  [<ffffffff81001fe5>] do_notify_resume+0x65/0x80
-[  144.212350]  [<ffffffff8135978b>] int_signal+0x12/0x17
-[  144.212352] ---[ end trace 0000000000000002 ]---
-[  144.212354] ------------[ cut here ]------------
-[  144.212356] WARNING: at kernel/sched.c:6211 migrate_enable+0x1f8/0x270()
-[  144.212357] Hardware name: MS-7502
-[  144.212358] Modules linked in: snd_pcm_oss snd_mixer_oss snd_seq snd_seq_device edd nfsd lockd parport_pc parport nfs_acl auth_rpcgss sunrpc bridge ipv6 stp cpufreq_conservative microcode cpufreq_ondemand cpufreq_userspace cpufreq_powersave acpi_cpufreq mperf nls_iso8859_1 nls_cp437 vfat fat fuse ext3 jbd dm_mod usbmouse usb_storage usbhid snd_hda_codec_realtek usb_libusual uas sr_mod cdrom hid snd_hda_intel e1000e snd_hda_codec kvm_intel snd_hwdep sg snd_pcm kvm i2c_i801 snd_timer snd firewire_ohci firewire_core soundcore snd_page_alloc crc_itu_t button ext4 mbcache jbd2 crc16 uhci_hcd sd_mod ehci_hcd usbcore rtc_cmos ahci libahci libata scsi_mod fan processor thermal
-[  144.212381] Pid: 6215, comm: strace Tainted: G        W   3.0.4-rt14 #2052
-[  144.212382] Call Trace:
-[  144.212384]  [<ffffffff8104662f>] warn_slowpath_common+0x7f/0xc0
-[  144.212387]  [<ffffffff8104668a>] warn_slowpath_null+0x1a/0x20
-[  144.212389]  [<ffffffff8103f3d8>] migrate_enable+0x1f8/0x270
-[  144.212391]  [<ffffffff8105b856>] get_signal_to_deliver+0x376/0x530
-[  144.212394]  [<ffffffff81001835>] do_signal+0x75/0x7a0
-[  144.212396]  [<ffffffff8105ae68>] ? kill_pid_info+0x58/0x80
-[  144.212398]  [<ffffffff8105c34c>] ? sys_kill+0xac/0x1e0
-[  144.212401]  [<ffffffff81001fe5>] do_notify_resume+0x65/0x80
-[  144.212403]  [<ffffffff8135978b>] int_signal+0x12/0x17
-[  144.212405] ---[ end trace 0000000000000003 ]---
+I want to use Linux 2.6.31.12-rt21 with a AT91SAM9G20 based board.
+I followed the instructions described in [1] and set the kernel options
+that are mentioned there (AEABI=3Dy, OABI_COMPAT=3Dn). Unfortunately,
+Linux hangs after mounting the root file system:
+
+#:rtc-pcf8563 0-0051: low voltage detected, date/time is not reliable.
+#:rtc-pcf8563 0-0051: retrieved date/time is not valid.
+#:rtc-pcf8563 0-0051: hctosys: invalid date/time
+#:VFS: Mounted root (jffs2 filesystem) on device 31:3.
+#:*********************************************************************=
+********
+#:*                                                                    =
+      =20
+*
+#:*  REMINDER, the following debugging options are turned on in your=20
+=2Econfig: *
+#:*                                                                    =
+      =20
+*
+#:*       =20
+CONFIG_DEBUG_RT_MUTEXES                                            *
+#:*       =20
+CONFIG_LOCKDEP                                                     *
+#:*                                                                    =
+      =20
+*
+#:*  they may increase runtime overhead and=20
+latencies.                        *
+#:*                                                                    =
+      =20
+*
+#:*********************************************************************=
+********
+#:Freeing init memory: 124K
+
+Setting OABI_COMPAT=3Dy leads to the same output. Setting AEABI=3Dn lea=
+ds to:
+
+#:rtc-pcf8563 0-0051: low voltage detected, date/time is not reliable.
+#:rtc-pcf8563 0-0051: retrieved date/time is not valid.
+#:rtc-pcf8563 0-0051: hctosys: invalid date/time
+#:VFS: Mounted root (jffs2 filesystem) on device 31:3.
+#:*********************************************************************=
+********
+#:*                                                                    =
+      =20
+*
+#:*  REMINDER, the following debugging options are turned on in your=20
+=2Econfig: *
+#:*                                                                    =
+      =20
+*
+#:*       =20
+CONFIG_DEBUG_RT_MUTEXES                                            *
+#:*       =20
+CONFIG_LOCKDEP                                                     *
+#:*                                                                    =
+      =20
+*
+#:*  they may increase runtime overhead and=20
+latencies.                        *
+#:*                                                                    =
+      =20
+*
+#:*********************************************************************=
+********
+#:Freeing init memory: 132K
+#:Kernel panic - not syncing: Attempted to kill init!
+#:Backtrace:
+#:[<c002dd60>] (dump_backtrace+0x0/0xfc) from [<c026a308>]=20
+(dump_stack+0x18/0x1c)
+#: r6:00000001 r5:c1c1b020 r4:c0352edc
+#:[<c026a2f0>] (dump_stack+0x0/0x1c) from [<c026a360>] (panic+0x54/0x12=
+c)
+#:[<c026a30c>] (panic+0x0/0x12c) from [<c003e2c4>]=20
+(find_new_reaper+0x74/0x90)
+#: r3:c032d690 r2:c1c1fdc8 r1:00000000 r0:c02e0f22
+#:[<c003e250>] (find_new_reaper+0x0/0x90) from [<c003f664>]=20
+(forget_original_parent+0x34/0x114)
+#: r5:00000001 r4:c1c1b020
+#:[<c003f630>] (forget_original_parent+0x0/0x114) from [<c003f75c>]=20
+(exit_notify+0x18/0x150)
+#: r7:c1c1fee8 r6:00000001 r5:00000001 r4:c1c1b020
+#:[<c003f744>] (exit_notify+0x0/0x150) from [<c003fa64>]=20
+(do_exit+0x1d0/0x2a8)
+#: r5:00000004 r4:c1c1b020
+#:[<c003f894>] (do_exit+0x0/0x2a8) from [<c003fbd4>]=20
+(do_group_exit+0x98/0xcc)
+#:[<c003fb3c>] (do_group_exit+0x0/0xcc) from [<c004ac18>]=20
+(get_signal_to_deliver+0x268/0x29c)
+#: r7:c1c1fee8 r6:c1c1e000 r5:c1d4d824 r4:0830009f
+#:[<c004a9b0>] (get_signal_to_deliver+0x0/0x29c) from [<c002c6e0>]=20
+(do_signal+0xa4/0x1d8)
+#:[<c002c63c>] (do_signal+0x0/0x1d8) from [<c002c844>]=20
+(do_notify_resume+0x30/0x34)
+#: r8:00000000 r7:00900000 r6:00000000 r5:40026000 r4:00000000
+#:[<c002c814>] (do_notify_resume+0x0/0x34) from [<c0029e4c>]=20
+(work_pending+0x1c/0x20)
+
+Do you have a hint how to solve this problem? Is this problem solved in=
+=20
+later versions, e.g. 2.6.33.7.2-rt30?
 
 
+With kind regards,
+Martin D=E4umler
+
+
+[1]=20
+http://www.at91.com/linux4sam/bin/view/Linux4SAM/BuildRootFAQ#Failed_to=
+_mount_rootfs_system_ha
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
