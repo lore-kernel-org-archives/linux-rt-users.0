@@ -1,7 +1,7 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: rt14: strace ->  migrate_disable_atomic imbalance
-Date: Thu, 22 Sep 2011 16:05:27 +0200
-Message-ID: <1316700327.4831.2.camel@marge.simson.net>
+Date: Thu, 22 Sep 2011 16:34:40 +0200
+Message-ID: <1316702080.31429.13.camel@twins>
 References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1315737307.6544.1.camel@marge.simson.net>
 	 <1315817948.26517.16.camel@twins>
@@ -14,58 +14,24 @@ References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1316698943.6348.8.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Oleg Nesterov <oleg@redhat.com>,
 	Miklos Szeredi <miklos@szeredi.hu>, mingo <mingo@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:58615 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752504Ab1IVOFd (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:44628 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752811Ab1IVOfE convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Sep 2011 10:05:33 -0400
+	Thu, 22 Sep 2011 10:35:04 -0400
 In-Reply-To: <1316698943.6348.8.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Thu, 2011-09-22 at 15:42 +0200, Mike Galbraith wrote:
-> On Thu, 2011-09-22 at 14:09 +0200, Peter Zijlstra wrote:
-> > On Thu, 2011-09-22 at 13:55 +0200, Mike Galbraith wrote:
-> > > On Thu, 2011-09-22 at 12:00 +0200, Peter Zijlstra wrote:
-> > > 
-> > > > OK, this one seems to be better.. But its quite vile, not sure I
-> > > > actually like it anymore.
-> > > 
-> > > Well, seemed to work, but I see there's a v3 now.
-> > 
-> > Yeah, just posted it for completeness, not sure its actually going
-> > anywhere since its slower than the current code (although its hard to
-> > say with the results changing from reboot to reboot), and its still
-> > quite ugly..
-> 
-> Hm. Stracing this proglet will soon leave it stuck forever unless the
-> timer is left running.  Virgin rt14 does the same though...
-> 
-> strace ./jitter -c 3 -p 99 -f 1000 -t 10 -r
-> 
-> rt_sigtimedwait([], NULL, NULL, 8)      = 64
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={0, 0}}, NULL) = 0
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={1316698141, 166759038}}, NULL) = 0
-> rt_sigtimedwait([], NULL, NULL, 8)      = 64
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={0, 0}}, NULL) = 0
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={1316698141, 167822701}}, NULL) = 0
-> rt_sigtimedwait([], NULL, NULL, 8)      = 64
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={0, 0}}, NULL) = 0
-> timer_settime(0x1, TIMER_ABSTIME, {it_interval={0, 0}, it_value={1316698141, 168887375}}, NULL) = 0
-> --- SIGRT_32 (Real-time signal 30) @ 0 (0) ---
-> rt_sigreturn(0x40)                      = 0
-> rt_sigtimedwait([], NULL, NULL, 8^C <unfinished ...>
+> #include <cpuset.h>
 
-I thought it was RT specific, but it's not after all, a 3.0.4 distro
-desktop (preempt) kernel did the same after a bit.
-
-	-Mike
-
+I don't seem to have that, where does that come from?
