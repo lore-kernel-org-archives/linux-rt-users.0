@@ -1,7 +1,7 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: rt14: strace ->  migrate_disable_atomic imbalance
-Date: Thu, 22 Sep 2011 16:38:17 +0200
-Message-ID: <1316702297.5455.1.camel@marge.simson.net>
+Date: Thu, 22 Sep 2011 16:41:29 +0200
+Message-ID: <1316702489.5455.3.camel@marge.simson.net>
 References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1315737307.6544.1.camel@marge.simson.net>
 	 <1315817948.26517.16.camel@twins>
@@ -13,6 +13,7 @@ References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1316693391.31429.12.camel@twins>
 	 <1316698943.6348.8.camel@marge.simson.net>
 	 <1316702080.31429.13.camel@twins>
+	 <1316702297.5455.1.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -23,22 +24,26 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Miklos Szeredi <miklos@szeredi.hu>, mingo <mingo@redhat.com>
 To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:51204 "HELO
+Received: from mailout-de.gmx.net ([213.165.64.22]:58321 "HELO
 	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752161Ab1IVOiV (ORCPT
+	with SMTP id S1752650Ab1IVOld (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Sep 2011 10:38:21 -0400
-In-Reply-To: <1316702080.31429.13.camel@twins>
+	Thu, 22 Sep 2011 10:41:33 -0400
+In-Reply-To: <1316702297.5455.1.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2011-09-22 at 16:34 +0200, Peter Zijlstra wrote:
-> On Thu, 2011-09-22 at 15:42 +0200, Mike Galbraith wrote:
-> > #include <cpuset.h>
+On Thu, 2011-09-22 at 16:38 +0200, Mike Galbraith wrote:
+> On Thu, 2011-09-22 at 16:34 +0200, Peter Zijlstra wrote:
+> > On Thu, 2011-09-22 at 15:42 +0200, Mike Galbraith wrote:
+> > > #include <cpuset.h>
+> > 
+> > I don't seem to have that, where does that come from?
 > 
-> I don't seem to have that, where does that come from?
+> libcpuset-devel.
 
-libcpuset-devel.
+But you don't need it.  That's a leftover from a version that could move
+itself into a shielded cpuset.
 
 	-Mike
 
