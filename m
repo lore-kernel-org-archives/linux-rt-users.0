@@ -1,7 +1,7 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: rt14: strace ->  migrate_disable_atomic imbalance
-Date: Thu, 22 Sep 2011 16:41:29 +0200
-Message-ID: <1316702489.5455.3.camel@marge.simson.net>
+Date: Thu, 22 Sep 2011 16:41:54 +0200
+Message-ID: <1316702515.31429.15.camel@twins>
 References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1315737307.6544.1.camel@marge.simson.net>
 	 <1315817948.26517.16.camel@twins>
@@ -16,19 +16,19 @@ References: <alpine.LFD.2.02.1109101052340.2723@ionos>
 	 <1316702297.5455.1.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Oleg Nesterov <oleg@redhat.com>,
 	Miklos Szeredi <miklos@szeredi.hu>, mingo <mingo@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:58321 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752650Ab1IVOld (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:44785 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752811Ab1IVOmO convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Sep 2011 10:41:33 -0400
+	Thu, 22 Sep 2011 10:42:14 -0400
 In-Reply-To: <1316702297.5455.1.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -42,8 +42,6 @@ On Thu, 2011-09-22 at 16:38 +0200, Mike Galbraith wrote:
 > 
 > libcpuset-devel.
 
-But you don't need it.  That's a leftover from a version that could move
-itself into a shielded cpuset.
+Not in any distro near me. I'm assuming its this stuff:
 
-	-Mike
-
+  ftp://oss.sgi.com/projects/cpusets/download/libcpuset.html
