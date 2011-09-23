@@ -1,65 +1,42 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: [PATCH V2] preempt-rt: allow immediate Magic SysRq output for PREEMPT_RT_FULL
-Date: Fri, 23 Sep 2011 13:36:17 -0400
-Message-ID: <7186.1316799377@turing-police.cc.vt.edu>
-References: <4E7BA334.2050003@am.sony.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH] rt-tests - allow build without NUMA
+Date: Fri, 23 Sep 2011 12:26:03 -0700
+Message-ID: <4E7CDD4B.2070202@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1316799377_4577P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: frank.rowand@am.sony.com
+To: Clark Williams <williams@redhat.com>,
+	<linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lennier.cc.vt.edu ([198.82.162.213]:57316 "EHLO
-	lennier.cc.vt.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750762Ab1IWRhA (ORCPT
+Received: from am1ehsobe005.messaging.microsoft.com ([213.199.154.208]:34998
+	"EHLO AM1EHSOBE005.bigfish.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751286Ab1IWT1F (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 23 Sep 2011 13:37:00 -0400
-In-Reply-To: Your message of "Thu, 22 Sep 2011 14:05:56 PDT."
-             <4E7BA334.2050003@am.sony.com>
+	Fri, 23 Sep 2011 15:27:05 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---==_Exmh_1316799377_4577P
-Content-Type: text/plain; charset=us-ascii
 
-On Thu, 22 Sep 2011 14:05:56 PDT, Frank Rowand said:
-> Change from V1 to V2:  add drivers/tty/serial/8250.c
 
->  drivers/tty/serial/cpm_uart/cpm_uart_core.c |    2 	1 +	1 -	0 !
->  drivers/tty/serial/mfd.c                    |    2 	1 +	1 -	0 !
->  drivers/tty/serial/nwpserial.c              |    2 	1 +	1 -	0 !
->  drivers/tty/serial/omap-serial.c            |    2 	1 +	1 -	0 !
->  drivers/tty/serial/sunhv.c                  |    4 	2 +	2 -	0 !
->  drivers/tty/serial/sunsab.c                 |    2 	1 +	1 -	0 !
->  drivers/tty/serial/sunsu.c                  |    2 	1 +	1 -	0 !
->  drivers/tty/serial/sunzilog.c               |    2 	1 +	1 -	0 !
->  drivers/tty/serial/uartlite.c               |    2 	1 +	1 -	0 !
->  drivers/tty/serial/xilinx_uartps.c          |    2 	1 +	1 -	0 !
+"NUMA=0 make" does not remove numa from the build.  Fix.
 
->  	if (up->port.sysrq)
->  		locked = 0;
-> -	else if (oops_in_progress) {
-> +	else if (oops_in_progress || sysrq_in_progress) {
->  		locked = spin_trylock(&up->port.lock);
->  	} else
->  		spin_lock(&up->port.lock);
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ Makefile |    2 	1 +	1 -	0 !
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Is it time to create a helper function for this chunk of code that appears
-in almost identical form in a dozen drivers?
-
---==_Exmh_1316799377_4577P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFOfMORcC3lWbTT17ARAk7NAJ4wqIbhIfDMRACv1Orkhp6dZedVjwCbBJ9t
-EiyvDJoaO2ICQ9s/u/IFZlw=
-=ToPM
------END PGP SIGNATURE-----
-
---==_Exmh_1316799377_4577P--
+Index: b/Makefile
+===================================================================
+--- a/Makefile
++++ b/Makefile
+@@ -26,7 +26,7 @@ else
+ 	CFLAGS	+= -O0 -g
+ endif
+ 
+-ifdef NUMA
++ifeq ($(NUMA),"1")
+ 	CFLAGS += -DNUMA
+ 	NUMA_LIBS = -lnuma
+ endif
 
