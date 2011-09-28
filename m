@@ -1,30 +1,50 @@
-From: David Peverley <pev@sketchymonkey.com>
-Subject: Re: RT Wiki
-Date: Tue, 27 Sep 2011 17:12:45 +0100
-Message-ID: <CALGOZk3QK8SzMmbsNLtmyh-SBPNTamWMskq+Tt0jD-QQ0xUnPg@mail.gmail.com>
-References: <4E81F37D.2010706@gmx.de>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH] rt-tests, cyclictest - fix printf format for 32 bit systems
+Date: Wed, 28 Sep 2011 15:18:16 -0700
+Message-ID: <4E839D28.5020603@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+To: Clark Williams <williams@redhat.com>,
+	<linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:61041 "EHLO
-	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751230Ab1I0QMs (ORCPT
+Received: from db3ehsobe004.messaging.microsoft.com ([213.199.154.142]:22773
+	"EHLO DB3EHSOBE004.bigfish.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751485Ab1I1WSd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Sep 2011 12:12:48 -0400
-Received: by qyk7 with SMTP id 7so8069144qyk.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 27 Sep 2011 09:12:47 -0700 (PDT)
-In-Reply-To: <4E81F37D.2010706@gmx.de>
+	Wed, 28 Sep 2011 18:18:33 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 27 September 2011 17:02, Christian Kraus <chk.dax@gmx.de> wrote:
 
-> Anybody know where i can find the RT-Wiki?
-> https://rt.wiki.kernel.org/index.php/Main_Page is temporarily down
+The printf() format for a uint64_t is %l on a 64 bit system and %ll on
+a 32 bit system.  Use the ugly but portable format descriptor.
 
-It's been a long temporary :-(  Anyway, try :
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ src/cyclictest/cyclictest.c |    3 	2 +	1 -	0 !
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-http://web.archive.org/web/20110722121248/https://rt.wiki.kernel.org/index.php/Main_Page
+Index: b/src/cyclictest/cyclictest.c
+===================================================================
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -24,6 +24,7 @@
+ #include <time.h>
+ #include <errno.h>
+ #include <limits.h>
++#include <inttypes.h>
+ #include <linux/unistd.h>
+ 
+ #include <sys/prctl.h>
+@@ -1561,7 +1562,7 @@ int main(int argc, char **argv)
+ 		print_tids(parameters, num_threads);
+ 		if (break_thread_id) {
+ 			printf("# Break thread: %d\n", break_thread_id);
+-			printf("# Break value: %lu\n", break_thread_value);
++			printf("# Break value: %" PRIu64 "\n", break_thread_value);
+ 		}
+ 	}
+ 	
 
-~Pev
