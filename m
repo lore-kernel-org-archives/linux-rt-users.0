@@ -1,73 +1,60 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] rt-tests, cyclictest - fix printf format for 32 bit
- systems
-Date: Thu, 29 Sep 2011 09:35:36 +0200
-Message-ID: <20110929073536.GE6949@pengutronix.de>
-References: <4E839D28.5020603@am.sony.com>
+From: Dennis Borgmann <dennis.borgmann@googlemail.com>
+Subject: [RT]adjtimex gives wrong number of ticks
+Date: Thu, 29 Sep 2011 14:42:45 +0200
+Message-ID: <4E8467C5.9060704@googlemail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: Frank Rowand <frank.rowand@am.sony.com>
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:49842 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753532Ab1I2Hfj (ORCPT
+Received: from mail-fx0-f46.google.com ([209.85.161.46]:57733 "EHLO
+	mail-fx0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756042Ab1I2MoF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Sep 2011 03:35:39 -0400
-Content-Disposition: inline
-In-Reply-To: <4E839D28.5020603@am.sony.com>
+	Thu, 29 Sep 2011 08:44:05 -0400
+Received: by fxe4 with SMTP id 4so1666376fxe.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Sep 2011 05:44:03 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Sep 28, 2011 at 03:18:16PM -0700, Frank Rowand wrote:
->=20
-> The printf() format for a uint64_t is %l on a 64 bit system and %ll o=
-n
-> a 32 bit system.  Use the ugly but portable format descriptor.
->=20
-> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-> ---
->  src/cyclictest/cyclictest.c |    3 	2 +	1 -	0 !
->  1 file changed, 2 insertions(+), 1 deletion(-)
->=20
-> Index: b/src/cyclictest/cyclictest.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -24,6 +24,7 @@
->  #include <time.h>
->  #include <errno.h>
->  #include <limits.h>
-> +#include <inttypes.h>
->  #include <linux/unistd.h>
-> =20
->  #include <sys/prctl.h>
-> @@ -1561,7 +1562,7 @@ int main(int argc, char **argv)
->  		print_tids(parameters, num_threads);
->  		if (break_thread_id) {
->  			printf("# Break thread: %d\n", break_thread_id);
-> -			printf("# Break value: %lu\n", break_thread_value);
-> +			printf("# Break value: %" PRIu64 "\n", break_thread_value);
-If you consider this ugly, you might prefer
+Hello RT-users!
 
-	printf("# Break value: %llu\n", (unsigned long long)break_thread_value=
-);
+I am observing strange behaviour regarding CONFIG_HZ on various 
+machines, while trying to adjust the tickrate of some systems. I found, 
+that adjtimex(2) is not behaving the way it should. If I write a simple 
+program like this:
 
-Best regards
-Uwe
+#include <stdio.h>
+#include <sys/timex.h>
+int main() {
+     struct timex t;
+     adjtimex(&t);
+     printf("%ld\n",t.tick);
+}
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+, which simply is to print the time in usec between two kernel ticks, 
+the output makes no sense. On a RT-System with CONFIG_HZ=1000, the 
+output is "10000" and on a non-RT system with CONFIG_HZ=250 (my 
+desktop-laptop), the output is "9999" - almost the same.
+
+If I calculate correctly, it should be 1000 with CONFIG_HZ and 4000 with 
+CONFIG_HZ=250.
+
+Am i wrong, or is this an error?
+
+Btw: adjtimex with a tick of of 1000 gives me this:
+
+root@ap:/tmp# adjtimex --tick 1000
+adjtimex: Invalid argument
+for this kernel:
+    USER_HZ = 100 (nominally 100 ticks per second)
+    9000 <= tick <= 11000
+    -32768000 <= frequency <= 32768000
+
+on the RT-system with CONFIG_HZ=1000. This is also odd - it should print 
+"USER_HZ=1000" and not "USER_HZ=100".
+
+Strange... Any ideas?
+
+Best regards,
+Dennis
