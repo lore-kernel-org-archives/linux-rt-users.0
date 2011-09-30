@@ -1,98 +1,91 @@
-From: Jonathan Nieder <jrnieder@gmail.com>
-Subject: Re: 3.0.0-1-rt-amd64: Suspend hangs
-Date: Fri, 30 Sep 2011 04:48:23 -0500
-Message-ID: <20110930094823.GA13652@elie>
-References: <20110930010128.ede515e66ed1a331ad625a2a@johnohagan.com>
+From: john stultz <johnstul@us.ibm.com>
+Subject: Re: [RT]adjtimex gives wrong number of ticks (fwd)
+Date: Fri, 30 Sep 2011 14:04:13 -0700
+Message-ID: <1317416653.3112.898.camel@work-vm>
+References: <alpine.LFD.2.02.1109302241560.2711@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
-	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-To: johnohagan <mail@johnohagan.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Dennis Borgmann <dennis.borgmann@googlemail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f46.google.com ([209.85.213.46]:37036 "EHLO
-	mail-yw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751813Ab1I3Jsc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 30 Sep 2011 05:48:32 -0400
-Received: by ywb5 with SMTP id 5so1336066ywb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2011 02:48:31 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20110930010128.ede515e66ed1a331ad625a2a@johnohagan.com>
+Received: from e5.ny.us.ibm.com ([32.97.182.145]:55468 "EHLO e5.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751330Ab1I3VF0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 30 Sep 2011 17:05:26 -0400
+Received: from d01relay04.pok.ibm.com (d01relay04.pok.ibm.com [9.56.227.236])
+	by e5.ny.us.ibm.com (8.14.4/8.13.1) with ESMTP id p8UKYKvh025364
+	for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2011 16:34:20 -0400
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by d01relay04.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id p8UL5OPB266288
+	for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2011 17:05:25 -0400
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id p8UL5NbE009329
+	for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2011 15:05:23 -0600
+In-Reply-To: <alpine.LFD.2.02.1109302241560.2711@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-johnohagan wrote:
+> ---------- Forwarded message ----------
+> Date: Thu, 29 Sep 2011 14:42:45 +0200
+> From: Dennis Borgmann <dennis.borgmann@googlemail.com>
+> To: linux-rt-users@vger.kernel.org
+> Subject: [RT]adjtimex gives wrong number of ticks
+> 
+> Hello RT-users!
+> 
+> I am observing strange behaviour regarding CONFIG_HZ on various machines, while
+> trying to adjust the tickrate of some systems. I found, that adjtimex(2) is not
+> behaving the way it should. If I write a simple program like this:
+> 
+> #include <stdio.h>
+> #include <sys/timex.h>
+> int main() {
+>     struct timex t;
+>     adjtimex(&t);
+>     printf("%ld\n",t.tick);
+> }
+> 
+> , which simply is to print the time in usec between two kernel ticks, the output
+> makes no sense. On a RT-System with CONFIG_HZ=1000, the output is "10000" and on
+> a non-RT system with CONFIG_HZ=250 (my desktop-laptop), the output is "9999" -
+> almost the same.
+> 
+> If I calculate correctly, it should be 1000 with CONFIG_HZ and 4000 with
+> CONFIG_HZ=250.
+> 
+> Am i wrong, or is this an error?
+> 
+> Btw: adjtimex with a tick of of 1000 gives me this:
+> 
+> root@ap:/tmp# adjtimex --tick 1000
+> adjtimex: Invalid argument
+> for this kernel:
+>    USER_HZ = 100 (nominally 100 ticks per second)
+>    9000 <= tick <= 11000
+>    -32768000 <= frequency <= 32768000
+> 
+> on the RT-system with CONFIG_HZ=1000. This is also odd - it should print
+> "USER_HZ=1000" and not "USER_HZ=100".
+> 
+> Strange... Any ideas?
 
-> The freeze occurs with pm_test set to "processors", but not with
-> "platform". 
->
-> With "single no_console_suspend" on the kernel command-line and
-> trying STD, the screen messages are normal up to the point of saving
-> the image, and remain there after the freeze.
+So USER_HZ is always 100 (atleast on x86 and X86_64 systems).
 
-A natural next step would be to use some printks to find when exactly
-it is freezing (as illustrated in the patch below)[2].  If it's still
-not clear after that what's causing it to hang, then bisecting[1]
-through the -rt patch stack can isolate the specific change that
-causes it (I can walk you through that).
+Its a architecture specific constant that allows the kernel to keep a
+consistent ABI to userspace regardless of what the internal
+configuration of the kernel is.
 
-Good luck,
-Jonathan
+So the kernel will take adjustments to the tick value via adjtimex and
+scale them appropriately to the internal HZ value before applying it.
 
-[1] https://git-core.googlecode.com/git-history/html/git-bisect-lk2009.html
-[2] http://kernel-handbook.alioth.debian.org/ch-common-tasks.html#s4.2.3
-explains how to build a tweaked Debian kernel package.
+So while you may be running with HZ=250 or HZ=1000, the kernel
+interfaces that expose "ticks" will always use USER_HZ (100) based
+ticks.
 
-diff --git i/kernel/power/hibernate.c w/kernel/power/hibernate.c
-index 2b0c52ff8703..fb8aecc4f11d 100644
---- i/kernel/power/hibernate.c
-+++ w/kernel/power/hibernate.c
-@@ -260,6 +260,8 @@ static int create_image(int platform_mode)
- {
- 	int error;
- 
-+	printk("PM debug: creating hibernation image\n");
-+
- 	error = dpm_suspend_noirq(PMSG_FREEZE);
- 	if (error) {
- 		printk(KERN_ERR "PM: Some devices failed to power down, "
-@@ -267,15 +269,19 @@ static int create_image(int platform_mode)
- 		return error;
- 	}
- 
-+	printk("PM debug: create_image(): pre-snapshot:\n");
- 	error = platform_pre_snapshot(platform_mode);
- 	if (error || hibernation_test(TEST_PLATFORM))
- 		goto Platform_finish;
- 
-+	printk("PM debug: create_image(): disable nonboot CPUs:\n");
- 	error = disable_nonboot_cpus();
-+	printk("PM debug: finished disabling nonboot CPUs\n");
- 	if (error || hibernation_test(TEST_CPUS)
- 	    || hibernation_testmode(HIBERNATION_TEST))
- 		goto Enable_cpus;
- 
-+	printk("PM debug: a 'processors' test shouldn't get this far\n");
- 	local_irq_disable();
- 
- 	system_state = SYSTEM_SUSPEND;
-@@ -311,14 +317,18 @@ static int create_image(int platform_mode)
- 	local_irq_enable();
- 
-  Enable_cpus:
-+	printk("PM debug: enabling nonboot CPUs\n");
- 	enable_nonboot_cpus();
- 
-  Platform_finish:
-+	printk("PM debug: finishing\n");
- 	platform_finish(platform_mode);
- 
-+	printk("PM debug: resume\n");
- 	dpm_resume_noirq(in_suspend ?
- 		(error ? PMSG_RECOVER : PMSG_THAW) : PMSG_RESTORE);
- 
-+	printk("PM debug: create_image finished\n");
- 	return error;
- }
- 
+thanks
+-john
+
+
+
+
