@@ -1,24 +1,44 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: Quick review of -rt RCU-related patches
-Date: Wed, 05 Oct 2011 00:13:18 +0200
-Message-ID: <1317766398.32543.39.camel@twins>
-References: <20111004174755.GA4762@linux.vnet.ibm.com>
-	 <alpine.LFD.2.02.1110042322450.18778@ionos>
+From: Aaron Lindsay <aaron@aclindsay.com>
+Subject: Re: 3.0.4-rt14 "shutdown -h now" hangs on x86 32b
+Date: Tue, 4 Oct 2011 18:09:57 -0400
+Message-ID: <20111004220957.GC14626@noughth.members.linode.com>
+References: <4E89FBDE.7080406@linux.intel.com>
+ <4E8ABB4B.6000204@iis.fraunhofer.de>
+ <1317720489.6260.9.camel@marge.simson.net>
+ <alpine.LFD.2.02.1110042319060.18778@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Mike Galbraith <efault@gmx.de>,
+	Simon Sudler <Simon.Sudler@iis.fraunhofer.de>,
+	Darren Hart <dvhart@linux.intel.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1110042322450.18778@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from li361-190.members.linode.com ([96.126.104.190]:35086 "EHLO
+	mail.noughth.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933265Ab1JDWRa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Oct 2011 18:17:30 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1110042319060.18778@ionos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-10-05 at 00:05 +0200, Thomas Gleixner wrote:
-> I consider rcu_bh a bandaid for the nasty implict semantics of BH
-> processing and I'm looking really forward to Peters analysis of the
-> modern cpu local BKL constructs at RTLWS. 
+On Oct 04 23:20, Thomas Gleixner wrote:
+> On Tue, 4 Oct 2011, Mike Galbraith wrote:
+> 
+> > On Tue, 2011-10-04 at 09:52 +0200, Simon Sudler wrote: 
+> > > Hi Darren,
+> > > 
+> > > i had the same problem on a Z530 with all RT kernels 3.0. I didn't 
+> > > search for the reason, however the problem went away when i used the 
+> > > "Intel Atom" at the "Processor family" option.
+> > 
+> > I see something similar at least on my Q6600 and E5620 boxen.
+> 
+> That should be solved by a CPU hotplug fix in rt16. Could you please
+> verify?
 
-You and me both! Oh wait.. :-)
+I was also seeing this issue, and 3.0.6-rt16 fixes it for me. Thanks!
+
+-Aaron
