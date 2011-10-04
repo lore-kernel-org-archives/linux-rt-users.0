@@ -1,7 +1,7 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: Quick review of -rt RCU-related patches
-Date: Wed, 05 Oct 2011 00:12:35 +0200
-Message-ID: <1317766355.32543.38.camel@twins>
+Date: Wed, 05 Oct 2011 00:13:18 +0200
+Message-ID: <1317766398.32543.39.camel@twins>
 References: <20111004174755.GA4762@linux.vnet.ibm.com>
 	 <alpine.LFD.2.02.1110042322450.18778@ionos>
 Mime-Version: 1.0
@@ -11,42 +11,14 @@ Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:44144 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932820Ab1JDWN2 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Oct 2011 18:13:28 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <alpine.LFD.2.02.1110042322450.18778@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 On Wed, 2011-10-05 at 00:05 +0200, Thomas Gleixner wrote:
-> > peter_zijlstra-frob-rcu.patch
-> > 
-> >       Looks OK.  Hmmm...  Should this one go to mainline?
-> >       Oh, looks equivalent, actually.  So why the change?
-> 
-> Peter ? 
+> I consider rcu_bh a bandaid for the nasty implict semantics of BH
+> processing and I'm looking really forward to Peters analysis of the
+> modern cpu local BKL constructs at RTLWS. 
 
--       if (in_irq() || in_serving_softirq()) {
-+       if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
-
-
-For !rt its equivalent yes, for rt otoh its not:
-
-int in_serving_softirq(void)
-{
-        int res;
-
-        preempt_disable();
-        res = __get_cpu_var(local_softirq_runner) == current;
-        preempt_enable();
-        return res;
-}
-
-However invoke_softirq() will still add SOFTIRQ_OFFSET so we need to
-look at that to avoid recursion issues.
-
-The changelog describes this. So this change is a direct consequence of
--rt frobbing the softirq stuff and thus isn't needed upstream. 
+You and me both! Oh wait.. :-)
