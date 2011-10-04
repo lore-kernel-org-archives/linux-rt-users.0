@@ -1,58 +1,81 @@
-From: Venkat Subbiah <venkat.subbiah@cavium.com>
-Subject: Re: [PATCH] MIPS: Octeon: Mark octeon_wdt interrupt as IRQF_NO_THREAD
-Date: Mon, 03 Oct 2011 17:22:04 -0700
-Message-ID: <4E8A51AC.8060905@cavium.com>
-References: <1317684628-17488-1-git-send-email-venkat.subbiah@cavium.com>
+From: Simon Sudler <Simon.Sudler@iis.fraunhofer.de>
+Subject: Re: 3.0.4-rt14 "shutdown -h now" hangs on x86 32b
+Date: Tue, 04 Oct 2011 09:52:43 +0200
+Message-ID: <4E8ABB4B.6000204@iis.fraunhofer.de>
+References: <4E89FBDE.7080406@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, david.daney@cavium.com
-To: linux-mips@linux-mips.org, ralf@linux-mips.org,
-	linux-watchdog@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Wim Van Sebroeck <wim@iguana.be>
+Content-Type: multipart/mixed;
+ boundary="------------070706090608010308030506"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Darren Hart <dvhart@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail3.caviumnetworks.com ([12.108.191.235]:14439 "EHLO
-	mail3.caviumnetworks.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752379Ab1JDAXA (ORCPT
+Received: from relay04-haj2.antispameurope.com ([83.246.65.54]:52154 "EHLO
+	relay04-haj2.antispameurope.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754184Ab1JDIAU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Oct 2011 20:23:00 -0400
-In-Reply-To: <1317684628-17488-1-git-send-email-venkat.subbiah@cavium.com>
+	Tue, 4 Oct 2011 04:00:20 -0400
+In-Reply-To: <4E89FBDE.7080406@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/03/2011 04:30 PM, Venkat Subbiah wrote:
-> This is to exclude it from force threading to allow RT patch set to work.
->
-> The watchdog timers are per-CPU and the addresses of register that reset
-> the timer are calculated based on the current CPU.  Therefore we cannot
-> allow it to run on a thread on a different CPU.  Also we only do a
-> single register write, which is much faster than scheduling a handler
-> thread.
->
-> And while on this line remove IRQF_DISABLED as this flag is a NOP.
->
->
-> Signed-off-by: Venkat Subbiah<venkat.subbiah@cavium.com>
-> Acked-by: David Daney<david.daney@cavium.com>
-> ---
->   drivers/watchdog/octeon-wdt-main.c |    2 +-
->   1 files changed, 1 insertions(+), 1 deletions(-)
->
-> diff --git a/drivers/watchdog/octeon-wdt-main.c b/drivers/watchdog/octeon-wdt-main.c
-> index 945ee83..7c0d863 100644
-> --- a/drivers/watchdog/octeon-wdt-main.c
-> +++ b/drivers/watchdog/octeon-wdt-main.c
-> @@ -402,7 +402,7 @@ static void octeon_wdt_setup_interrupt(int cpu)
->   	irq = OCTEON_IRQ_WDOG0 + core;
->
->   	if (request_irq(irq, octeon_wdt_poke_irq,
-> -			IRQF_DISABLED, "octeon_wdt", octeon_wdt_poke_irq))
-> +			IRQF_NO_THREAD, "octeon_wdt", octeon_wdt_poke_irq))
->   		panic("octeon_wdt: Couldn't obtain irq %d", irq);
->
->   	cpumask_set_cpu(cpu,&irq_enabled_cpus);
-Sending it to kernel watchdog maintainers. Forgot to include them in the prior email.
+This is a multi-part message in MIME format.
+--------------070706090608010308030506
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-Thanks,
-Venkat
+Hi Darren,
 
+i had the same problem on a Z530 with all RT kernels 3.0. I didn't=20
+search for the reason, however the problem went away when i used the=20
+"Intel Atom" at the "Processor family" option.
+
+Best regards,
+Simon
+
+On 03.10.2011 20:15, Darren Hart wrote:
+> I have a couple of platforms (including the n450 dev board from kernel
+> summit) where an x86 32b build of 3.0.4-rt14 fails to shutdown with
+> "shutdown -h now". reboot works properly, and shutdown works with
+> maxcpus=3D1 (otherwise the n450 has 2 hardware threads).
+>
+> The last messages to hit the console are:
+>
+> e1000e 0000:04:00.0: PCI INT A disabled
+> ehci_hcd 0000:00:1d.7: PCI INT A disabled
+> ehci_hcd 0000:00:1a.7: PCI INT C disabled
+>
+> I am booting from a USB stick. If I install to a SATA connected SSD, th=
+e
+> shutdown still fails, but I don't see the "INT X disabled" messages.
+>
+> Has anyone run into this with a known workaround? Any thoughts on where=
+
+> to start digging?
+>
+> .config attached.
+
+
+--------------070706090608010308030506
+Content-Type: text/x-vcard; charset=utf-8;
+ name="Simon_Sudler.vcf"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+ filename="Simon_Sudler.vcf"
+
+begin:vcard
+fn:Simon Sudler
+n:Sudler;Simon
+org;quoted-printable:Fraunhofer IIS;Nachrichten=3DC3=3DBCbertragung - Com=
+munications Department
+adr:;;Am Wolfsmantel 33;Erlangen;;91058;Deutschland
+email;internet:Simon.Sudler@iis.fraunhofer.de
+title:Dipl.-Ing.
+tel;work:+49 9131 776-6309
+tel;fax:+49 9131 776-6399
+tel;cell:+49 160 5323753
+url:www.iis.fraunhofer.de
+version:2.1
+end:vcard
+
+
+--------------070706090608010308030506--
