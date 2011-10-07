@@ -1,55 +1,71 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.0.6-rt17
-Date: Fri, 07 Oct 2011 16:05:42 -0700
-Message-ID: <4E8F85C6.6010309@ccrma.stanford.edu>
-References: <alpine.LFD.2.02.1110070046270.3240@ionos> <4E8F3605.6060104@localhost> <4E8F58ED.9060702@localhost> <alpine.LFD.2.02.1110080000400.3240@ionos>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: PEBTAO [ was Re: [ANNOUNCE] 3.0.6-rt17 ]
+Date: Sat, 8 Oct 2011 01:14:11 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1110080010000.3240@ionos>
+References: <alpine.LFD.2.02.1110070046270.3240@ionos> <b11eac52-79af-40ea-a53b-6f77581be035@email.android.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-To: Thomas Gleixner <tglx@linutronix.de>
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2.Stanford.EDU ([171.67.219.82]:44747 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754769Ab1JGXFp (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:44909 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754028Ab1JGXON (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Oct 2011 19:05:45 -0400
-In-Reply-To: <alpine.LFD.2.02.1110080000400.3240@ionos>
+	Fri, 7 Oct 2011 19:14:13 -0400
+In-Reply-To: <b11eac52-79af-40ea-a53b-6f77581be035@email.android.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/07/2011 03:02 PM, Thomas Gleixner wrote:
-> On Fri, 7 Oct 2011, Fernando Lopez-Lezcano wrote:
->> On 10/07/2011 10:25 AM, Fernando Lopez-Lezcano wrote:
->>> On 10/06/2011 06:15 PM, Thomas Gleixner wrote:
->>>> I'm pleased to announce the 3.0.6-rt17 release.
->>>
->>> Hi and thanks again. So far this one is not hanging which is very good
->>> news. But I still see the hrtimer_fixup_activate warnings I reported for
->>> rt16...
->>
->> I tried rt17 on my workstation and it froze after a few minutes (quad core
->> intel based desktop). Reset button freeze. Then I set up my serial console and
->> tried it out. I could not get it to freeze permanently but I got _many_
->> hrtimer_fixup_activate warnings and while the console is sending those the
->> gnome interface freezes (this is on fc14). So it is not very usable for
->> debugging...
->>
->> Just tried again after another reboot (@ 115200 baud) and it worked for a
->> while. Then it started spewing messages again and it is again unusable. I'm
->> attaching a trace of what was sent to the serial console while the machine
->> froze temporarily.
->
-> Does adding nohz=off to the kernel commandline solve it?
->
-> You probably posted your .config before, but could you please send it
-> again (private mail is fine).
+On Fri, 7 Oct 2011, Steven Rostedt wrote:
+> More majordomo info at http://vger.kernel.org/majordomo-info.html
+> 
+> Nice work Thomas!
+> 
+> -- Steve 
+> -- 
+> Sent from my Android phone with K-9 Mail. Please excuse my brevity.
 
-(config sent privately)
+This sig is obviously a total failure. Brevity would have been a
+mail with a single line saying: "Nice work Thomas!"
 
-"nohz=off" makes the warnings disappear! It appears to work normally but 
-it has not been long :-)
+If you insist on having a sig, then please change it to something
+sensible like:
 
--- Fernando
+ "This affront against netiquette is caused by PEBTAO"
+
+PEBTAO is the Web 2.0 advancement of PEBKAC:
+
+  Problem Exists Between Touchscreen and Occiput
+
+I know that you just wanted to taunt me after our IRC conversation,
+but seriously the amount of horribly formatted mails on LKML starts to
+be annoying.
+
+If it would be only the "Sent from my .* phone" mails, it would be
+easy to filter out in .procmailrc. The bad news is that this habit of
+top posting and miserable quoting spreads like cancer and I have no
+intention to cope with that anymore. Having to scroll down several
+pages to find the content (if any) of a reply is equally annoying as
+reading a top post with no context.
+
+Darn, email is our main communication medium even if some people
+think, that discussions on farcebook or gurgle+ are way better.
+
+I don't care whether this new, hip form of communication is considered
+cool and used in private or corporate context, but I care very much
+about the sanity of my personal workflow and the efficiency of the
+proven model.
+
+A well considered N days delayed reply is way more worth than some
+hastily cobbled together .*phone message which just proves that the
+person owns such a thing and is permanentely "available".
+
+Can we please go back to the established working model of keeping
+stuff on mailing lists and follow the well established netiquette
+instead of spreading those absurdities?
+
+Thanks,
+
+	tglx
