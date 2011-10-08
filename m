@@ -1,88 +1,44 @@
-From: Thomas Abraham <thomas.abraham@linaro.org>
-Subject: Re: Serieal console on Samsung S3C6410 ARM11 CPU (Was [ANNOUNCE] 3.0.6-rt17)
-Date: Sun, 9 Oct 2011 00:31:55 +0530
-Message-ID: <CAJuYYwSB7CT=gyJTBcp4hrAR=Qwon=TzudR7ptA0kr+6RwCMFQ@mail.gmail.com>
+From: Maarten Lankhorst <m.b.lankhorst@gmail.com>
+Subject: Re: [ANNOUNCE] 3.0.6-rt17
+Date: Sat, 08 Oct 2011 22:56:24 +0200
+Message-ID: <4E90B8F8.3070507@gmail.com>
 References: <alpine.LFD.2.02.1110070046270.3240@ionos>
-	<201110081326.58731.jbe@pengutronix.de>
-	<CAJuYYwSEvA+EHwyhgeZkBX+bB_e1cmFnC6YdEx-CdHzk8peyEw@mail.gmail.com>
-	<201110082015.17128.jbe@pengutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-arm-kernel@lists.infradead.org
-To: Juergen Beisert <jbe@pengutronix.de>
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f46.google.com ([209.85.213.46]:42208 "EHLO
-	mail-yw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753362Ab1JHTBz convert rfc822-to-8bit (ORCPT
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:55063 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753153Ab1JHU42 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 8 Oct 2011 15:01:55 -0400
-In-Reply-To: <201110082015.17128.jbe@pengutronix.de>
+	Sat, 8 Oct 2011 16:56:28 -0400
+In-Reply-To: <alpine.LFD.2.02.1110070046270.3240@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 8 October 2011 23:45, Juergen Beisert <jbe@pengutronix.de> wrote:
-> Hi Thomas,
+On 10/07/2011 03:15 AM, Thomas Gleixner wrote:
+> Dear RT Folks,
 >
-> Thomas Abraham wrote:
->> On 8 October 2011 16:56, Juergen Beisert <jbe@pengutronix.de> wrote:
->> > Thomas Gleixner wrote:
->> >> I'm pleased to announce the 3.0.6-rt17 release.
->> >
->> > I have no idea where to search, but when I'm using the 3.0.6-rt17 =
-on my
->> > Samsung S3C6410 ARM based system, the UART (serial console) does n=
-ot work
->> > as expected. Typing only one char at a time is okay. Typing two ch=
-ars
->> > immediately makes the system using 100 % CPU load and takes about =
-2
->> > seconds to respond. It seems the interrupt handling is broken in t=
-he UART
->> > driver, but I don't know how to fix it.
->> >
->> > This with a simple cursor up (one char to get the last command) an=
-d a
->> > small pause to the next "ENTER" char:
->> >
->> > root@mini6410:~ cat /proc/interrupts | grep 18:
->> > =A018: =A0 =A05739107 =A0s3c-uart =A0s3c6400-uart
->> >
->> > Same again:
->> >
->> > root@mini6410:~ cat /proc/interrupts | grep 18:
->> > =A018: =A0 =A05739113 =A0s3c-uart =A0s3c6400-uart
->> >
->> > 6 interrupts seems reasonable.
->> >
->> > Now with cursor up and SPACE immediately, then a pause for ENTER:
->> >
->> > root@mini6410:~ cat /proc/interrupts | grep 18:
->> > =A018: =A0 =A05923815 =A0s3c-uart =A0s3c6400-uart
->> >
->> > 184702 interrupts looks strange.
->>
->> Just curious, do you have the following two commits?
->>
->> serial: samsung: Add unified interrupt handler for s3c64xx and later=
- SoC's
->> ARM: SAMSUNG: Remove uart irq handling from platform code
+> I'm pleased to announce the 3.0.6-rt17 release.
 >
-> Are they part of the current 3.0.6 vanilla kernel? I'm only using the=
- vanilla
-> 3.0.6 with rt17 on my target.
+> After chasing weird RCU stalls and hung task messages for quite some
+> time a massive collaborative effort was able to track down and fix
+> this showstopper. Explanation from the changelog:
+snip.
 
-No. I don't think they are part of 3.0.6 kernel. I am not sure of the
-issue you have with serial console, but if you do not have these
-patches already applied, you could try with them.
++static int __init dmi_disable_hpet_msi(const struct dmi_system_id *d)
++{
++	hpet_msi_disable = 1;
++}
 
-Thanks,
-Thomas.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+I just noticed this from watching build output after upgrading from rt14, shouldn't it return a value?
+
+Also, I sent something about memory cgroups to linux-rt-users, but never received a reply, is that ml still used?
+
+Cheers,
+Maarten
+
