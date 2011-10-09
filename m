@@ -1,18 +1,18 @@
 From: Friedrich Schick <friedrich.schick@googlemail.com>
 Subject: Set UIO priority on 3.0.X
-Date: Sun, 9 Oct 2011 09:33:33 +0200
-Message-ID: <CANoBzaOntUyBmyXvSO=3VfWyQgeHVUewL483178U8FYtkwHHLw@mail.gmail.com>
+Date: Sun, 9 Oct 2011 10:28:26 +0200
+Message-ID: <CANoBzaND6CJzuh=N=oqwZEkv--bwdaSmG070QoO-KFJhjM8M7g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:44132 "EHLO
+Received: from mail-qw0-f46.google.com ([209.85.216.46]:44391 "EHLO
 	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750893Ab1JIHde (ORCPT
+	with ESMTP id S1751731Ab1JII21 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 9 Oct 2011 03:33:34 -0400
-Received: by qadb15 with SMTP id b15so3418679qad.19
-        for <linux-rt-users@vger.kernel.org>; Sun, 09 Oct 2011 00:33:33 -0700 (PDT)
+	Sun, 9 Oct 2011 04:28:27 -0400
+Received: by qadb15 with SMTP id b15so3425670qad.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 09 Oct 2011 01:28:26 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -54,7 +54,7 @@ Call Trace:
 [c90c1980] [c000360c] do_IRQ+0xf0/0x14c
 [c90c19b0] [c000caf8] ret_from_except+0x0/0x18
 --- Exception: 501 at rt_spin_lock+0x20/0x28
-  LR = add_wait_queue+0x28/0x60
+ LR = add_wait_queue+0x28/0x60
 [c90c1a70] [20000005] 0x20000005 (unreliable)
 [c90c1a80] [c00b6df4] __pollwait+0x8c/0x108
 [c90c1aa0] [c0253df4] uio_poll+0x4c/0x80
@@ -63,7 +63,7 @@ Call Trace:
 [c90c1f00] [c00b7928] sys_select+0x3c/0x14c
 [c90c1f40] [c000c498] ret_from_syscall+0x0/0x3c
 --- Exception: c01 at 0xfc61ac4
-  LR = 0xfc61aa4
+ LR = 0xfc61aa4
 Instruction dump:
 70090004 408201a8 80010064 bb61004c 38210060 7c0803a6 4e800020 801f0008
 5400003c 7fa00278 7c000034 5400d97e <0f000000> 7c000146 38600001 4bd37b75
@@ -75,7 +75,7 @@ Call Trace:
 [c9ff3d40] [c0008f58] _exception+0xa4/0x11c
 [c9ff3e30] [c000caac] ret_from_except_full+0x0/0x4c
 --- Exception: 700 at rt_spin_lock_slowlock+0x98/0x260
-  LR = rt_spin_lock_slowlock+0x50/0x260
+ LR = rt_spin_lock_slowlock+0x50/0x260
 [c9ff3f50] [c0029a70] __wake_up+0x24/0x58
 [c9ff3f70] [c02548f8] uio_event_notify+0x3c/0x64
 [c9ff3f80] [c0254970] uio_interrupt+0x50/0x68
@@ -86,7 +86,7 @@ Call Trace:
 [c90c1980] [c000360c] do_IRQ+0xf0/0x14c
 [c90c19b0] [c000caf8] ret_from_except+0x0/0x18
 --- Exception: 501 at rt_spin_lock+0x20/0x28
-  LR = add_wait_queue+0x28/0x60
+ LR = add_wait_queue+0x28/0x60
 [c90c1a70] [20000005] 0x20000005 (unreliable)
 [c90c1a80] [c00b6df4] __pollwait+0x8c/0x108
 [c90c1aa0] [c0253df4] uio_poll+0x4c/0x80
@@ -95,6 +95,6 @@ Call Trace:
 [c90c1f00] [c00b7928] sys_select+0x3c/0x14c
 [c90c1f40] [c000c498] ret_from_syscall+0x0/0x3c
 --- Exception: c01 at 0xfc61ac4
-  LR = 0xfc61aa4
+ LR = 0xfc61aa4
 
 -- snip
