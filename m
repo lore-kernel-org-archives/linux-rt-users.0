@@ -1,7 +1,7 @@
 From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH -rt 2/5] hotplug: Call cpu_unplug_begin() a little early
-Date: Sun, 16 Oct 2011 18:56:44 +0800
-Message-ID: <1318762607-2261-3-git-send-email-yong.zhang0@gmail.com>
+Subject: [PATCH -rt 4/5] workqueue: hotplug fix
+Date: Sun, 16 Oct 2011 18:56:46 +0800
+Message-ID: <1318762607-2261-5-git-send-email-yong.zhang0@gmail.com>
 References: <1318762607-2261-1-git-send-email-yong.zhang0@gmail.com>
 Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de
 To: linux-kernel@vger.kernel.org
@@ -10,57 +10,117 @@ In-Reply-To: <1318762607-2261-1-git-send-email-yong.zhang0@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-cpu_unplug_begin() should be called before CPU_DOWN_PREPARE,
-because at CPU_DOWN_PREPARE cpu_active is cleared and sched_domain
-is rebuilt, it will finally lead to thread 'sync_unplug' will
-be running on the cpu on which it's created.
-
-I found by an incorrect warning on smp_processor_id() called by
-sync_unplug/1, and trace shows below:
-(echo 1 > /sys/device/system/cpu/cpu1/online)
-  bash-1664  [000]    83.136620: _cpu_down: Bind sync_unplug to cpu 1
-  bash-1664  [000]    83.136623: sched_wait_task: comm=sync_unplug/1 pid=1724 prio=120
-  bash-1664  [000]    83.136624: _cpu_down: Wake sync_unplug
-  bash-1664  [000]    83.136629: sched_wakeup: comm=sync_unplug/1 pid=1724 prio=120 success=1 target_cpu=000
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:645
+in_atomic(): 1, irqs_disabled(): 0, pid: 1739, name: bash
+Pid: 1739, comm: bash Not tainted 3.0.6-rt17-00284-gb76d419 #3
+Call Trace:
+ [<c06e3b5d>] ? printk+0x1d/0x20
+ [<c01390b6>] __might_sleep+0xe6/0x110
+ [<c06e633c>] rt_spin_lock+0x1c/0x30
+ [<c01655a6>] flush_gcwq+0x236/0x320
+ [<c021c651>] ? kfree+0xe1/0x1a0
+ [<c05b7178>] ? __cpufreq_remove_dev+0xf8/0x260
+ [<c0183fad>] ? rt_down_write+0xd/0x10
+ [<c06cd91e>] workqueue_cpu_down_callback+0x26/0x2d
+ [<c06e9d65>] notifier_call_chain+0x45/0x60
+ [<c0171cfe>] __raw_notifier_call_chain+0x1e/0x30
+ [<c014c9b4>] __cpu_notify+0x24/0x40
+ [<c06cbc6f>] _cpu_down+0xdf/0x330
+ [<c06cbef0>] cpu_down+0x30/0x50
+ [<c06cd6b0>] store_online+0x50/0xa7
+ [<c06cd660>] ? acpi_os_map_memory+0xec/0xec
+ [<c04f2faa>] sysdev_store+0x2a/0x40
+ [<c02887a4>] sysfs_write_file+0xa4/0x100
+ [<c0229ab2>] vfs_write+0xa2/0x170
+ [<c0288700>] ? sysfs_poll+0x90/0x90
+ [<c0229d92>] sys_write+0x42/0x70
+ [<c06ecedf>] sysenter_do_call+0x12/0x2d
+CPU 1 is now offline
+SMP alternatives: switching to UP code
+SMP alternatives: switching to SMP code
+Booting Node 0 Processor 1 APIC 0x1
+smpboot cpu 1: start_ip = 9b000
+Initializing CPU#1
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:645
+in_atomic(): 1, irqs_disabled(): 1, pid: 0, name: kworker/0:0
+Pid: 0, comm: kworker/0:0 Not tainted 3.0.6-rt17-00284-gb76d419 #3
+Call Trace:
+ [<c06e3b5d>] ? printk+0x1d/0x20
+ [<c01390b6>] __might_sleep+0xe6/0x110
+ [<c06e633c>] rt_spin_lock+0x1c/0x30
+ [<c06cd85b>] workqueue_cpu_up_callback+0x56/0xf3
+ [<c06e9d65>] notifier_call_chain+0x45/0x60
+ [<c0171cfe>] __raw_notifier_call_chain+0x1e/0x30
+ [<c014c9b4>] __cpu_notify+0x24/0x40
+ [<c014c9ec>] cpu_notify+0x1c/0x20
+ [<c06e1d43>] notify_cpu_starting+0x1e/0x20
+ [<c06e0aad>] smp_callin+0xfb/0x10e
+ [<c06e0ad9>] start_secondary+0x19/0xd7
+NMI watchdog enabled, takes one hw-pmu counter.
+Switched to NOHz mode on CPU #1
 
 Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
 ---
- kernel/cpu.c |   16 +++++++---------
- 1 files changed, 7 insertions(+), 9 deletions(-)
+ kernel/workqueue.c |   12 ++++++++----
+ 1 files changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 83fb084..13066a3 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -337,22 +337,20 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		return -EBUSY;
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index e262f6b..ddbf89c 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -3195,30 +3195,34 @@ static int __devinit workqueue_cpu_up_callback(struct notifier_block *nfb,
  	}
  
--	err = __cpu_notify(CPU_DOWN_PREPARE | mod, hcpu, -1, &nr_calls);
-+	cpu_hotplug_begin();
-+	err = cpu_unplug_begin(cpu);
- 	if (err) {
--		nr_calls--;
--		__cpu_notify(CPU_DOWN_FAILED | mod, hcpu, nr_calls, NULL);
--		printk("%s: attempt to take down CPU %u failed\n",
--				__func__, cpu);
-+		printk("cpu_unplug_begin(%d) failed\n", cpu);
- 		goto out_cancel;
+ 	/* some are called w/ irq disabled, don't disturb irq status */
+-	spin_lock_irqsave(&gcwq->lock, flags);
+ 
+ 	switch (action) {
+ 	case CPU_UP_PREPARE:
++		spin_lock_irqsave(&gcwq->lock, flags);
+ 		BUG_ON(gcwq->first_idle);
+ 		gcwq->first_idle = new_worker;
++		spin_unlock_irqrestore(&gcwq->lock, flags);
+ 		break;
+ 
+ 	case CPU_UP_CANCELED:
++		spin_lock_irqsave(&gcwq->lock, flags);
+ 		destroy_worker(gcwq->first_idle);
+ 		gcwq->first_idle = NULL;
++		spin_unlock_irqrestore(&gcwq->lock, flags);
+ 		break;
+ 
+ 	case CPU_ONLINE:
++		spin_lock_irqsave(&gcwq->lock, flags);
+ 		spin_unlock_irq(&gcwq->lock);
+ 		kthread_bind(gcwq->first_idle->task, cpu);
+ 		spin_lock_irq(&gcwq->lock);
+ 		gcwq->flags |= GCWQ_MANAGE_WORKERS;
+ 		start_worker(gcwq->first_idle);
+ 		gcwq->first_idle = NULL;
++		spin_unlock_irqrestore(&gcwq->lock, flags);
+ 		break;
  	}
  
--	cpu_hotplug_begin();
--	err = cpu_unplug_begin(cpu);
-+	err = __cpu_notify(CPU_DOWN_PREPARE | mod, hcpu, -1, &nr_calls);
- 	if (err) {
- 		nr_calls--;
- 		__cpu_notify(CPU_DOWN_FAILED | mod, hcpu, nr_calls, NULL);
--		printk("cpu_unplug_begin(%d) failed\n", cpu);
--		goto out_cancel;
-+		printk("%s: attempt to take down CPU %u failed\n",
-+				__func__, cpu);
-+		goto out_release;
- 	}
+-	spin_unlock_irqrestore(&gcwq->lock, flags);
  
- 	err = __stop_machine(take_cpu_down, &tcd_param, cpumask_of(cpu));
+ 	return notifier_from_errno(0);
+ }
+@@ -3274,14 +3278,14 @@ static void flush_gcwq(struct global_cwq *gcwq)
+ 
+ 	spin_unlock_irq(&gcwq->lock);
+ 
+-	gcwq = get_gcwq(get_cpu());
++	gcwq = get_gcwq(get_cpu_light());
+ 	spin_lock_irq(&gcwq->lock);
+ 	list_for_each_entry_safe(work, nw, &non_affine_works, entry) {
+ 		list_del_init(&work->entry);
+ 		___queue_work(get_work_cwq(work)->wq, gcwq, work);
+ 	}
+ 	spin_unlock_irq(&gcwq->lock);
+-	put_cpu();
++	put_cpu_light();
+ }
+ 
+ static int __devinit workqueue_cpu_down_callback(struct notifier_block *nfb,
 -- 
 1.7.1
