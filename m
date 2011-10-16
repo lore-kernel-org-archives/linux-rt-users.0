@@ -1,244 +1,41 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [ANNOUNCE] 3.0.6-rt18
-Date: Thu, 13 Oct 2011 14:44:32 -0700
-Message-ID: <20111013214432.GC2350@linux.vnet.ibm.com>
-References: <alpine.LFD.2.02.1110131146370.3240@ionos>
-Reply-To: paulmck@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e8.ny.us.ibm.com ([32.97.182.138]:53626 "EHLO e8.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754618Ab1JMVpu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Oct 2011 17:45:50 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1110131146370.3240@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [RFC] [PATCH -rt 0/5] patchset focusing on cpu hotplug
+Date: Sun, 16 Oct 2011 18:56:42 +0800
+Message-ID: <1318762607-2261-1-git-send-email-yong.zhang0@gmail.com>
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Oct 13, 2011 at 11:52:18AM +0200, Thomas Gleixner wrote:
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.0.6-rt18 release.
-> 
-> Changes from 3.0.6-rt17 to 3.0.6-rt18
-> 
->   * Fix a long standing slab thinko (Steven Rostedt)
-> 
->   * Add missing debugobjects call to hrtimers (Yong Zhang)
-> 
->   * Tracing updates (Steven Rostedt)
-> 
->   * Minor fixes (Yong, myself)
-> 
-> Delta patch against 3.0.6-rt17
-> 
->   https://tglx.de/~tglx/rt/patch-3.0.6-rt17-rt18.patch.gz
+When tring cpu hotplug, I get some warning. And these patches
+are tring to fix them up.
 
-And rcutorture is quite happy with this release under 2-CPU KVM on x86.
+BTW, I have marked some of them as RFC:
+  patch#3: printk: don't call printk_tick in printk_needs_cpu()
+    I don't think we need to call printk_tick() even in mainline
+    kernel, fix me if I'm wrong.
+  patch#5: cpufreq: get rid of get_online_cpus()/put_online_cpus
+    IMHO, it's about lockdep false positive, but it's a little
+    annoying. Maybe there is other way to fix it up.
+    And the side effect is we introduce more latency than before
+    though it's rare path.
 
-							Thanx, Paul
+More details in eatch patch :)
 
-> also appended below.
-> 
-> 
-> Patch against 3.0.6 can be found here:
-> 
->   https://tglx.de/~tglx/rt/patch-3.0.6-rt18.patch.gz
-> 
-> 
-> The split quilt queue is available at:
-> 
->   https://tglx.de/~tglx/rt/patches-3.0.6-rt18.tar.gz
-> 
-> Enjoy,
-> 
-> 	tglx
-> 
-> --------------->
-> Index: linux-2.6/arch/x86/kernel/hpet.c
-> ===================================================================
-> --- linux-2.6.orig/arch/x86/kernel/hpet.c
-> +++ linux-2.6/arch/x86/kernel/hpet.c
-> @@ -570,6 +570,7 @@ static void init_one_hpet_msi_clockevent
->  static int __init dmi_disable_hpet_msi(const struct dmi_system_id *d)
->  {
->  	hpet_msi_disable = 1;
-> +	return 0;
->  }
-> 
->  static struct dmi_system_id __initdata dmi_hpet_table[] = {
-> Index: linux-2.6/include/linux/hardirq.h
-> ===================================================================
-> --- linux-2.6.orig/include/linux/hardirq.h
-> +++ linux-2.6/include/linux/hardirq.h
-> @@ -84,7 +84,7 @@
->  # define softirq_count()	(preempt_count() & SOFTIRQ_MASK)
->  # define in_serving_softirq()	(softirq_count() & SOFTIRQ_OFFSET)
->  #else
-> -# define softirq_count()	(0U)
-> +# define softirq_count()	(0UL)
->  extern int in_serving_softirq(void);
->  #endif
-> 
-> Index: linux-2.6/kernel/hrtimer.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/hrtimer.c
-> +++ linux-2.6/kernel/hrtimer.c
-> @@ -1040,6 +1040,7 @@ int __hrtimer_start_range_ns(struct hrti
->  			 * remove it again and report a failure. This avoids
->  			 * stale base->first entries.
->  			 */
-> +			debug_deactivate(timer);
->  			__remove_hrtimer(timer, new_base,
->  					timer->state & HRTIMER_STATE_CALLBACK, 0);
->  		}
-> Index: linux-2.6/kernel/trace/ftrace.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/trace/ftrace.c
-> +++ linux-2.6/kernel/trace/ftrace.c
-> @@ -1767,10 +1767,36 @@ static cycle_t		ftrace_update_time;
->  static unsigned long	ftrace_update_cnt;
->  unsigned long		ftrace_update_tot_cnt;
-> 
-> +static int ops_traces_mod(struct ftrace_ops *ops)
-> +{
-> +	struct ftrace_hash *hash;
-> +
-> +	hash = ops->filter_hash;
-> +	return !!(!hash || !hash->count);
-> +}
-> +
->  static int ftrace_update_code(struct module *mod)
->  {
->  	struct dyn_ftrace *p;
->  	cycle_t start, stop;
-> +	unsigned long ref = 0;
-> +
-> +	/*
-> +	 * When adding a module, we need to check if tracers are
-> +	 * currently enabled and if they are set to trace all functions.
-> +	 * If they are, we need to enable the module functions as well
-> +	 * as update the reference counts for those function records.
-> +	 */
-> +	if (mod) {
-> +		struct ftrace_ops *ops;
-> +
-> +		for (ops = ftrace_ops_list;
-> +		     ops != &ftrace_list_end; ops = ops->next) {
-> +			if (ops->flags & FTRACE_OPS_FL_ENABLED &&
-> +			    ops_traces_mod(ops))
-> +				ref++;
-> +		}
-> +	}
-> 
->  	start = ftrace_now(raw_smp_processor_id());
->  	ftrace_update_cnt = 0;
-> @@ -1783,7 +1809,7 @@ static int ftrace_update_code(struct mod
-> 
->  		p = ftrace_new_addrs;
->  		ftrace_new_addrs = p->newlist;
-> -		p->flags = 0L;
-> +		p->flags = ref;
-> 
->  		/*
->  		 * Do the initial record conversion from mcount jump
-> @@ -1806,7 +1832,7 @@ static int ftrace_update_code(struct mod
->  		 * conversion puts the module to the correct state, thus
->  		 * passing the ftrace_make_call check.
->  		 */
-> -		if (ftrace_start_up) {
-> +		if (ftrace_start_up && ref) {
->  			int failed = __ftrace_replace_code(p, 1);
->  			if (failed) {
->  				ftrace_bug(failed, p->ip);
-> @@ -2430,10 +2456,9 @@ ftrace_match_module_records(struct ftrac
->   */
-> 
->  static int
-> -ftrace_mod_callback(char *func, char *cmd, char *param, int enable)
-> +ftrace_mod_callback(struct ftrace_hash *hash,
-> +		    char *func, char *cmd, char *param, int enable)
->  {
-> -	struct ftrace_ops *ops = &global_ops;
-> -	struct ftrace_hash *hash;
->  	char *mod;
->  	int ret = -EINVAL;
-> 
-> @@ -2453,11 +2478,6 @@ ftrace_mod_callback(char *func, char *cm
->  	if (!strlen(mod))
->  		return ret;
-> 
-> -	if (enable)
-> -		hash = ops->filter_hash;
-> -	else
-> -		hash = ops->notrace_hash;
-> -
->  	ret = ftrace_match_module_records(hash, func, mod);
->  	if (!ret)
->  		ret = -EINVAL;
-> @@ -2783,7 +2803,7 @@ static int ftrace_process_regex(struct f
->  	mutex_lock(&ftrace_cmd_mutex);
->  	list_for_each_entry(p, &ftrace_commands, list) {
->  		if (strcmp(p->name, command) == 0) {
-> -			ret = p->func(func, command, next, enable);
-> +			ret = p->func(hash, func, command, next, enable);
->  			goto out_unlock;
->  		}
->  	}
-> Index: linux-2.6/localversion-rt
-> ===================================================================
-> --- linux-2.6.orig/localversion-rt
-> +++ linux-2.6/localversion-rt
-> @@ -1 +1 @@
-> --rt17
-> +-rt18
-> Index: linux-2.6/mm/slab.c
-> ===================================================================
-> --- linux-2.6.orig/mm/slab.c
-> +++ linux-2.6/mm/slab.c
-> @@ -2601,7 +2601,7 @@ static void __do_drain(void *arg, unsign
->  	struct array_cache *ac;
->  	int node = cpu_to_mem(cpu);
-> 
-> -	ac = cpu_cache_get(cachep);
-> +	ac = cpu_cache_get_on_cpu(cachep, cpu);
->  	spin_lock(&cachep->nodelists[node]->list_lock);
->  	free_block(cachep, ac->entry, ac->avail, node);
->  	spin_unlock(&cachep->nodelists[node]->list_lock);
-> Index: linux-2.6/include/linux/ftrace.h
-> ===================================================================
-> --- linux-2.6.orig/include/linux/ftrace.h
-> +++ linux-2.6/include/linux/ftrace.h
-> @@ -123,7 +123,8 @@ stack_trace_sysctl(struct ctl_table *tab
->  struct ftrace_func_command {
->  	struct list_head	list;
->  	char			*name;
-> -	int			(*func)(char *func, char *cmd,
-> +	int			(*func)(struct ftrace_hash *hash,
-> +					char *func, char *cmd,
->  					char *params, int enable);
->  };
-> 
-> Index: linux-2.6/kernel/trace/trace_functions.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/trace/trace_functions.c
-> +++ linux-2.6/kernel/trace/trace_functions.c
-> @@ -324,7 +324,8 @@ ftrace_trace_onoff_unreg(char *glob, cha
->  }
-> 
->  static int
-> -ftrace_trace_onoff_callback(char *glob, char *cmd, char *param, int enable)
-> +ftrace_trace_onoff_callback(struct ftrace_hash *hash,
-> +			    char *glob, char *cmd, char *param, int enable)
->  {
->  	struct ftrace_probe_ops *ops;
->  	void *count = (void *)-1;
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+Thanks,
+Yong
+
+---
+Yong Zhang (5):
+  hotplug: sync_unplug: No '\n' in task name
+  hotplug: Call cpu_unplug_begin() a little early
+  printk: don't call printk_tick in printk_needs_cpu()
+  workqueue: hotplug fix
+  cpufreq: get rid of get_online_cpus()/put_online_cpus
+
+ drivers/cpufreq/cpufreq.c |   20 +++++++-------------
+ kernel/cpu.c              |   18 ++++++++----------
+ kernel/printk.c           |    4 ++--
+ kernel/workqueue.c        |   12 ++++++++----
+ 4 files changed, 25 insertions(+), 29 deletions(-)
