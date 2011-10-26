@@ -1,81 +1,104 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: [PATCH 1/1] Set the command name of the idle tasks in SMP kernels v3
-Date: Wed, 26 Oct 2011 23:14:16 +0200
-Message-ID: <20111026211708.768925506@osadl.org>
-References: <20111026211415.787299186@osadl.org>
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT-users <linux-rt-users@vger.kernel.org>
-To: Ingo Molnar <mingo@elte.hu>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=kernel-sched-smp-set-idletask-comm.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: HUNG BUI <buihung@gmail.com>
+Subject: Linux RT patch for Pandaboard Omap 4 kernel 3.0.0-1205 error when compiling
+Date: Thu, 27 Oct 2011 01:25:30 +0200
+Message-ID: <CAF7pde80C8C=vfN34uR4rS2HZ2-pY0BBJ0EsWm612BgHgtfETw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qy0-f181.google.com ([209.85.216.181]:58142 "EHLO
+	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753317Ab1JZXZc convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Oct 2011 19:25:32 -0400
+Received: by qyk27 with SMTP id 27so2439354qyk.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 26 Oct 2011 16:25:31 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-In UP systems, the idle task is initialized using the init_task
-structure from which the command name is taken (currently "swapper").
+Hi everybody,
 
-In SMP systems, one idle task per CPU is forked by the worker thread
-from which the task structure is copied. The command name is, therefore,
-"kworker/0:0" or "kworker/0:1", if not updated. Since such update was
-lacking, all idle tasks in SMP systems were incorrectly named. This
-longtime bug was not discovered immediately, because there is no /proc/0
-entry - the bug only becomes apparent when tracing is enabled.
+I am trying to patch and compile realtime patch for kernel 3.0.0-1205
+(TI-OMAP4) on Pandaboard. However I faced lots of error, and couldn't
+finish the compiling process yet.
 
-This patch sets the command name of the idle tasks in SMP systems to the
-name that is used in the INIT_TASK structure suffixed by a slash and the
-number of the CPU.
+I followed the instruction of compiling Pandaboard kernel from here
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+http://adventuresinsilicon.blogspot.com/2011/02/pandaboard-ubuntu-how-t=
+o-recompile.html
+http://www.omappedia.com/wiki/Ubuntu_kernel_for_OMAP4
 
----
- include/linux/init_task.h |    3 ++-
- kernel/sched.c            |    4 ++++
- 2 files changed, 6 insertions(+), 1 deletion(-)
+My kernel was downloaded with the command :
 
-Index: linux-3.0.7-rt20/include/linux/init_task.h
-===================================================================
---- linux-3.0.7-rt20.orig/include/linux/init_task.h
-+++ linux-3.0.7-rt20/include/linux/init_task.h
-@@ -132,6 +132,7 @@ extern struct cred init_cred;
- # define INIT_TIMER_LIST
- #endif
- 
-+#define INIT_TASK_COMM "swapper"
- /*
-  *  INIT_TASK is used to set up the first task table, touch at
-  * your own risk!. Base=0, limit=0x1fffff (=2MB)
-@@ -168,7 +169,7 @@ extern struct cred init_cred;
- 	.group_leader	= &tsk,						\
- 	RCU_INIT_POINTER(.real_cred, &init_cred),			\
- 	RCU_INIT_POINTER(.cred, &init_cred),				\
--	.comm		= "swapper",					\
-+	.comm		= INIT_TASK_COMM,				\
- 	.thread		= INIT_THREAD,					\
- 	.fs		= &init_fs,					\
- 	.files		= &init_files,					\
-Index: linux-3.0.7-rt20/kernel/sched.c
-===================================================================
---- linux-3.0.7-rt20.orig/kernel/sched.c
-+++ linux-3.0.7-rt20/kernel/sched.c
-@@ -71,6 +71,7 @@
- #include <linux/ctype.h>
- #include <linux/ftrace.h>
- #include <linux/slab.h>
-+#include <linux/init_task.h>
- 
- #include <asm/tlb.h>
- #include <asm/irq_regs.h>
-@@ -6104,6 +6105,9 @@ void __cpuinit init_idle(struct task_str
- 	 */
- 	idle->sched_class = &idle_sched_class;
- 	ftrace_graph_init_idle_task(idle, cpu);
-+#if defined(CONFIG_SMP)
-+	sprintf(idle->comm, "%s/%d", INIT_TASK_COMM, cpu);
-+#endif
- }
- 
- /*
+sudo apt-get build-dep linux-image-$(uname -r)
+
+which is arm-linux-3.0.0-1205-omap4 or linux-ti-omap4
+tar file : linux-ti-omap4_3.0.0-1205.10.tar.gz
+The patch I used is :=A0patch-3.0-rt6.patch.bz2
+
+Pandaboard running on Ubuntu=A0Oneiric Desktop. GCC 4.6
+
+I tried the following commands :
+
+patch -p1 < ../patch-3.0-rt6.patch
+fakeroot debian/rules editconfigs
+(#=A0Kernel Features -> Preemption Model -> Fully Preemptible Kernel (R=
+T) )
+fakeroot debian/rules clean
+dpkg-buildpackage -B -uc -us
+
+=46irst the patch showed that there are some :
+
+Reversed (or previously applied) patch detected! Assume - R =A0Apply
+anyway n] with 2 files :
+drivers/rtc/interface.c
+drivers/rtc/rtc-tegra.c
+
+(Don't have this problem if i apply rt8 or latter However they are for
+kernel 3.0.1 which I don;t know how to get)
+
+I answer No for both assume =A0-r and Apply anyway , I am not sure it's
+correct or not
+
+Also the patch showed that there are some hunk failed with 3 files :
+
+arch/arm/mm/cache-l2x0.c
+init/main.c
+kernel/stop_machine.c
+I tried to fix this manually with the .rej files (otherwise it will
+cause this error when compile:
+
+kernel/stop_machine.c:176:2: note: each undeclared identifier is
+reported only once for each function it appears in
+kernel/stop_machine.c: In function =91cpu_stopper_thread=92:
+kernel/stop_machine.c:290:3: error: =91stopper_lock=92 undeclared (firs=
+t
+use in this function)
+
+
+Then when I compile the kernel, i got some more errors which i can
+search and find the way to fix them however when it come to the
+following error, I couldn't find the solution for it=A0:
+
+drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: error: request
+for member =91lock=92 in something not a structure or union
+drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: warning:
+dereferencing =91void *=92 pointer [enabled by default]
+drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: error: request
+for member =91lock=92 in something not a structure or union
+make[2]: *** [drivers/dsp/syslink/multicore_ipc/transportshm.o] Error 1
+
+I am not sure if the patch (3.0 rt6), kernel(linux-ti-omap4 3.0.0) ,
+gcc (4.6), and the commands i am using is correct, or there is some
+mismatches between them that make more and more errors happened when
+compiling.
+
+Thanks in advance,
+
+Hung Bui
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
