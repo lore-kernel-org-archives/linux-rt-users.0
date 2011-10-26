@@ -1,104 +1,61 @@
-From: HUNG BUI <buihung@gmail.com>
-Subject: Linux RT patch for Pandaboard Omap 4 kernel 3.0.0-1205 error when compiling
-Date: Thu, 27 Oct 2011 01:25:30 +0200
-Message-ID: <CAF7pde80C8C=vfN34uR4rS2HZ2-pY0BBJ0EsWm612BgHgtfETw@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Load-balancing at migrate-enable time?
+Date: Wed, 26 Oct 2011 11:30:36 -0700
+Message-ID: <20111026183036.GA3608@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org, peterz@infradead.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qy0-f181.google.com ([209.85.216.181]:58142 "EHLO
-	mail-qy0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753317Ab1JZXZc convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Oct 2011 19:25:32 -0400
-Received: by qyk27 with SMTP id 27so2439354qyk.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 26 Oct 2011 16:25:31 -0700 (PDT)
+Received: from e7.ny.us.ibm.com ([32.97.182.137]:53394 "EHLO e7.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753601Ab1J0HqB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Oct 2011 03:46:01 -0400
+Received: from /spool/local
+	by e7.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Thu, 27 Oct 2011 03:45:50 -0400
+Received: from d01av04.pok.ibm.com (d01av04.pok.ibm.com [9.56.224.64])
+	by d01relay02.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id p9R7jkNK457768
+	for <linux-rt-users@vger.kernel.org>; Thu, 27 Oct 2011 03:45:46 -0400
+Received: from d01av04.pok.ibm.com (loopback [127.0.0.1])
+	by d01av04.pok.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id p9R7jjRC020112
+	for <linux-rt-users@vger.kernel.org>; Thu, 27 Oct 2011 03:45:45 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everybody,
+Hello!
 
-I am trying to patch and compile realtime patch for kernel 3.0.0-1205
-(TI-OMAP4) on Pandaboard. However I faced lots of error, and couldn't
-finish the compiling process yet.
+So I am getting the second round of the model beaten into shape, but
+have a question...
 
-I followed the instruction of compiling Pandaboard kernel from here
+Assume the following state:
 
-http://adventuresinsilicon.blogspot.com/2011/02/pandaboard-ubuntu-how-t=
-o-recompile.html
-http://www.omappedia.com/wiki/Ubuntu_kernel_for_OMAP4
+1.	Task 0 preempted in a migrate-disable region on CPU 0.
 
-My kernel was downloaded with the command :
+2.	Task 1 preempted, but not in a migrate-disable region,
+	also on CPU 0.
 
-sudo apt-get build-dep linux-image-$(uname -r)
+3.	Task 2 running in a migrate-disable region also on CPU 0
 
-which is arm-linux-3.0.0-1205-omap4 or linux-ti-omap4
-tar file : linux-ti-omap4_3.0.0-1205.10.tar.gz
-The patch I used is :=A0patch-3.0-rt6.patch.bz2
+Suppose that Task 2 enables migration.  Will it actually migrate
+in order to allow Task 1 to run?  (My guess is "no", but...)
 
-Pandaboard running on Ubuntu=A0Oneiric Desktop. GCC 4.6
+						Thanx, Paul
 
-I tried the following commands :
+------------------------------------------------------------------------
 
-patch -p1 < ../patch-3.0-rt6.patch
-fakeroot debian/rules editconfigs
-(#=A0Kernel Features -> Preemption Model -> Fully Preemptible Kernel (R=
-T) )
-fakeroot debian/rules clean
-dpkg-buildpackage -B -uc -us
+PS.  We get to the above state by starting as follows:
 
-=46irst the patch showed that there are some :
+1.	Task 0 blocked in a migrate-disable region on CPU 0.
 
-Reversed (or previously applied) patch detected! Assume - R =A0Apply
-anyway n] with 2 files :
-drivers/rtc/interface.c
-drivers/rtc/rtc-tegra.c
+2.	Task 1 running on CPU 0 without migration disabled.
 
-(Don't have this problem if i apply rt8 or latter However they are for
-kernel 3.0.1 which I don;t know how to get)
+3.	Task 2 blocked in a migrate-disable region also on CPU 0
 
-I answer No for both assume =A0-r and Apply anyway , I am not sure it's
-correct or not
+Then Task 2 awakens, preempting Task 1.  (In the more-aggressive
+model, this would trigger migration of Task 1, but I am trying to
+match what the load balancer actually does.)
 
-Also the patch showed that there are some hunk failed with 3 files :
-
-arch/arm/mm/cache-l2x0.c
-init/main.c
-kernel/stop_machine.c
-I tried to fix this manually with the .rej files (otherwise it will
-cause this error when compile:
-
-kernel/stop_machine.c:176:2: note: each undeclared identifier is
-reported only once for each function it appears in
-kernel/stop_machine.c: In function =91cpu_stopper_thread=92:
-kernel/stop_machine.c:290:3: error: =91stopper_lock=92 undeclared (firs=
-t
-use in this function)
-
-
-Then when I compile the kernel, i got some more errors which i can
-search and find the way to fix them however when it come to the
-following error, I couldn't find the solution for it=A0:
-
-drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: error: request
-for member =91lock=92 in something not a structure or union
-drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: warning:
-dereferencing =91void *=92 pointer [enabled by default]
-drivers/dsp/syslink/multicore_ipc/transportshm.c:261:2: error: request
-for member =91lock=92 in something not a structure or union
-make[2]: *** [drivers/dsp/syslink/multicore_ipc/transportshm.o] Error 1
-
-I am not sure if the patch (3.0 rt6), kernel(linux-ti-omap4 3.0.0) ,
-gcc (4.6), and the commands i am using is correct, or there is some
-mismatches between them that make more and more errors happened when
-compiling.
-
-Thanks in advance,
-
-Hung Bui
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
