@@ -1,55 +1,79 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: rt for newbie
-Date: Thu, 27 Oct 2011 16:47:14 -0400
-Message-ID: <CAOcfFMx2akKGygxUVAX85+AntwJOM0o8NY=gdnGeWL2da1jhTg@mail.gmail.com>
-References: <CADZpk3tRdH2uPw-Kq_qiowThtBicqP=0S-=knvgYCSNfUrY+kw@mail.gmail.com>
-	<CAOcfFMyOZ5zu9NgS4tdw8eVm0fU88R6rtOmODNN5mRAAwuAHew@mail.gmail.com>
-	<CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
+From: Carsten Emde <Carsten.Emde@osadl.org>
+Subject: Re: Latency problem
+Date: Thu, 27 Oct 2011 23:15:35 +0200
+Message-ID: <4EA9C9F7.9090902@osadl.org>
+References: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: sashka@mail.ru
+To: =?ISO-8859-1?Q?Rapha=EBl_Beamonte?= <raphael.beamonte@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-iy0-f174.google.com ([209.85.210.174]:43367 "EHLO
-	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752929Ab1J0UrO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Oct 2011 16:47:14 -0400
-Received: by iaby12 with SMTP id y12so3310483iab.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 27 Oct 2011 13:47:14 -0700 (PDT)
-In-Reply-To: <CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
+Received: from toro.web-alm.net ([62.245.132.31]:36101 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751917Ab1J0Vjc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Oct 2011 17:39:32 -0400
+In-Reply-To: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Oct 27, 2011 at 3:47 PM, Sashka <sashka@mail.ru> wrote:
-> Hi,
+Rapha=EBl,
+
+> [..]
+>> root@USBnux:/home/xaf/RT/rt-tests# ./hwlatdetect --threshold=3D1 --r=
+eport=3D/home/xaf/hwlat_report
+>> hwlatdetect:  test duration 120 seconds
+>>    parameters:
+>>         Latency threshold: 1us
+>>
+>>         Sample window:     1000000us
+>>         Sample width:      500000us
+>>      Non-sampling period:  500000us
+>>         Output File:       /home/xaf/hwlat_report
+>> Starting test
+>> test finished
+>> Max Latency: 38136us
+>> Samples recorded: 45
+>> Samples exceeding threshold: 45
+>> sample data written to /home/xaf/hwlat_report
 >
->> What Linux distribution are you using?
-> I should have mentioned that. I've got Centos 6.
+> and the content of the hwlat_report file :
+>
+>> 1319575592.0802426354	19061
+>> 1319575707.0402420761	19036
+> [..]
+> I really have no idea from where the problem could be. And I need you=
+r
+> lights to help me.
+The hwlatdetect application detects system management interrupts (SMIs)=
+=2E=20
+Such interrupts are installed by the BIOS and are used to manage variou=
+s=20
+things such as battery management, overheat protection and emulation of=
+=20
+legacy devices (e.g. IDE, PS/2 etc.). You may try to check your BIOS=20
+settings and disable all these or similar features. Then run hwlatdetec=
+t=20
+again. If it still reports SMIs, the next thing to do depends on the=20
+promises that you got when you bought the board:
 
-Ah, now i see. You alsmot definitely have to compile it yourself. ;)
+1. It was advertised as an industrial PC to be used in a control system=
+s=20
+and to run a real-time operating system:
+Return the board to the manufacturer along with the printed output of=20
+hwlatdetect and ask for a fix or your money back.
 
->> https://aur.archlinux.org/packages.php?ID=51360
-> thanks
+2. It is a standard server PC board without any promises as to its=20
+suitability in a real-time system:
+There probably is nothing you can do. Try to send the output of=20
+hwlatdetect to the BIOS manufacturer and nicely ask for a fixed BIOS,=20
+but I am not very optimistic that you will get one.
 
-No, problem.
-
-> I've got it build several time. I'm confused with all those different
-> guides telling me what to enable and disable. Most of them are
-> outdated, as I can see.
-> rtwiki is down for some time, so I can't see if there is anything
-> updated to 3.0-rt.
-
-Yeah, that is the unfortunate way of the internet, and also the lack
-of good documentation available in some situations relating to linux.
-
-That being said, you could actually look inside the PKGBUILD for
-linux-rt, and see from the commandline how various things were
-applied. ie: the patching, etc. it's just that obviously, because Arch
-isn't CentOS - not everything applies.
-
-but it might be helpful anyways, you can check that, and consult
-CentOS/RHEL documentation for the rest (which it sounds like you
-already know anyway).
-
-cheerz
+Hope this helps,
+	-Carsten.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
