@@ -1,79 +1,50 @@
 From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: Latency problem
-Date: Thu, 27 Oct 2011 23:15:35 +0200
-Message-ID: <4EA9C9F7.9090902@osadl.org>
-References: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
+Subject: Re: rt for newbie
+Date: Fri, 28 Oct 2011 00:21:52 +0200
+Message-ID: <4EA9D980.5080903@osadl.org>
+References: <CADZpk3tRdH2uPw-Kq_qiowThtBicqP=0S-=knvgYCSNfUrY+kw@mail.gmail.com> <CAOcfFMyOZ5zu9NgS4tdw8eVm0fU88R6rtOmODNN5mRAAwuAHew@mail.gmail.com> <CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: =?ISO-8859-1?Q?Rapha=EBl_Beamonte?= <raphael.beamonte@gmail.com>
+To: sashka@mail.ru
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:36101 "EHLO toro.web-alm.net"
+Received: from toro.web-alm.net ([62.245.132.31]:36180 "EHLO toro.web-alm.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751917Ab1J0Vjc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Oct 2011 17:39:32 -0400
-In-Reply-To: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
+	id S1755072Ab1J0WdK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Oct 2011 18:33:10 -0400
+In-Reply-To: <CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Rapha=EBl,
+Sashka,
 
 > [..]
->> root@USBnux:/home/xaf/RT/rt-tests# ./hwlatdetect --threshold=3D1 --r=
-eport=3D/home/xaf/hwlat_report
->> hwlatdetect:  test duration 120 seconds
->>    parameters:
->>         Latency threshold: 1us
->>
->>         Sample window:     1000000us
->>         Sample width:      500000us
->>      Non-sampling period:  500000us
->>         Output File:       /home/xaf/hwlat_report
->> Starting test
->> test finished
->> Max Latency: 38136us
->> Samples recorded: 45
->> Samples exceeding threshold: 45
->> sample data written to /home/xaf/hwlat_report
->
-> and the content of the hwlat_report file :
->
->> 1319575592.0802426354	19061
->> 1319575707.0402420761	19036
-> [..]
-> I really have no idea from where the problem could be. And I need you=
-r
-> lights to help me.
-The hwlatdetect application detects system management interrupts (SMIs)=
-=2E=20
-Such interrupts are installed by the BIOS and are used to manage variou=
-s=20
-things such as battery management, overheat protection and emulation of=
-=20
-legacy devices (e.g. IDE, PS/2 etc.). You may try to check your BIOS=20
-settings and disable all these or similar features. Then run hwlatdetec=
-t=20
-again. If it still reports SMIs, the next thing to do depends on the=20
-promises that you got when you bought the board:
+> I've got it build several time. I'm confused with all those different
+> guides telling me what to enable and disable. Most of them are
+> outdated, as I can see.
+The usual recommendation is:
 
-1. It was advertised as an industrial PC to be used in a control system=
-s=20
-and to run a real-time operating system:
-Return the board to the manufacturer along with the printed output of=20
-hwlatdetect and ask for a fix or your money back.
+1. Get the config of your distro
+# cd /usr/src/kernels/linux-3.0.7-rt20
+# cp /boot/config-`uname -r` .config
 
-2. It is a standard server PC board without any promises as to its=20
-suitability in a real-time system:
-There probably is nothing you can do. Try to send the output of=20
-hwlatdetect to the BIOS manufacturer and nicely ask for a fixed BIOS,=20
-but I am not very optimistic that you will get one.
+2. Configure the kernel for RT
+# make menuconfig
+Processor type and features  --->
+       [ ] Tickless System (Dynamic Ticks)
+       Preemption Model (Fully Preemptible Kernel (RT))  --->
+Kernel hacking  --->
+       [ ] Check for stack overflows
 
-Hope this helps,
+To check out the new kernel for its RT capabilities:
+# cd /usr/src
+# git clone https://github.com/clrkwllms/rt-tests
+# cd rt-tests
+# make rpm
+# rpm -ivh RPMS/*/rt-tests*.rpm
+# cyclictest -m -Sp99 -i100 -d0
+
+Let us know what worst-case latency you got.
+
 	-Carsten.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
