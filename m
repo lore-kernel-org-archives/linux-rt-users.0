@@ -1,50 +1,37 @@
-From: Carsten Emde <Carsten.Emde@osadl.org>
-Subject: Re: rt for newbie
-Date: Fri, 28 Oct 2011 00:21:52 +0200
-Message-ID: <4EA9D980.5080903@osadl.org>
-References: <CADZpk3tRdH2uPw-Kq_qiowThtBicqP=0S-=knvgYCSNfUrY+kw@mail.gmail.com> <CAOcfFMyOZ5zu9NgS4tdw8eVm0fU88R6rtOmODNN5mRAAwuAHew@mail.gmail.com> <CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: Latency problem
+Date: Fri, 28 Oct 2011 06:54:03 +0200
+Message-ID: <1319777643.6150.7.camel@marge.simson.net>
+References: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
+	 <1319741477.6197.26.camel@marge.simson.net>
+	 <CAE_Gge3nBE4_Jm39qnVz_6ieBpJL6b9qNd41snW=6bi9cggm3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: sashka@mail.ru
+To: =?ISO-8859-1?Q?Rapha=EBl?= Beamonte <raphael.beamonte@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:36180 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755072Ab1J0WdK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Oct 2011 18:33:10 -0400
-In-Reply-To: <CADZpk3sbagk7nTfjuXpvwtoDd6U+4sY_W=eH9+jowuUqpjFvfQ@mail.gmail.com>
+Received: from mailout-de.gmx.net ([213.165.64.23]:44290 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1751595Ab1J1EyH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Oct 2011 00:54:07 -0400
+In-Reply-To: <CAE_Gge3nBE4_Jm39qnVz_6ieBpJL6b9qNd41snW=6bi9cggm3g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sashka,
+On Thu, 2011-10-27 at 15:03 -0400, Rapha=C3=ABl Beamonte wrote:
 
-> [..]
-> I've got it build several time. I'm confused with all those different
-> guides telling me what to enable and disable. Most of them are
-> outdated, as I can see.
-The usual recommendation is:
+> Moreover, the use of hwlatdetect seems to confirm that the problem is
+> from hardware.
 
-1. Get the config of your distro
-# cd /usr/src/kernels/linux-3.0.7-rt20
-# cp /boot/config-`uname -r` .config
+Yeah, skimmed over your message too quick, thinking nsecs instead of
+usecs.  Probably SMIs.
 
-2. Configure the kernel for RT
-# make menuconfig
-Processor type and features  --->
-       [ ] Tickless System (Dynamic Ticks)
-       Preemption Model (Fully Preemptible Kernel (RT))  --->
-Kernel hacking  --->
-       [ ] Check for stack overflows
+	-Mike=20
 
-To check out the new kernel for its RT capabilities:
-# cd /usr/src
-# git clone https://github.com/clrkwllms/rt-tests
-# cd rt-tests
-# make rpm
-# rpm -ivh RPMS/*/rt-tests*.rpm
-# cyclictest -m -Sp99 -i100 -d0
-
-Let us know what worst-case latency you got.
-
-	-Carsten.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
