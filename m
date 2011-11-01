@@ -1,54 +1,59 @@
-From: Andrey Gursky <andrey.gursky@e-mail.ua>
-Subject: Re: Where to get the preempt-rt patches?
-Date: Tue, 1 Nov 2011 11:54:04 +0000 (UTC)
-Message-ID: <loom.20111101T125235-699@post.gmane.org>
-References: <CAM8FrKLP_7HVx9bB+w+NGx=LRScRfKn1d=z-gvrz7eHOCXcNmw@mail.gmail.com>
+From: Sankara Muthukrishnan <sankara.m@gmail.com>
+Subject: Re: Latency problem
+Date: Tue, 1 Nov 2011 16:24:20 -0500
+Message-ID: <CAFQPvXch7YqaRdhtzhf5j1vLsGEGFhZc7idA0aWrcfCdotz3kg@mail.gmail.com>
+References: <CAE_Gge02PZyZ93wSyH8uSJAQ6wdZRqG-L-qumV23g4Tam7BUmQ@mail.gmail.com>
+	<1319741477.6197.26.camel@marge.simson.net>
+	<CAE_Gge3nBE4_Jm39qnVz_6ieBpJL6b9qNd41snW=6bi9cggm3g@mail.gmail.com>
+	<1319777643.6150.7.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Cc: =?ISO-8859-1?Q?Rapha=EBl_Beamonte?= <raphael.beamonte@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lo.gmane.org ([80.91.229.12]:38396 "EHLO lo.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753947Ab1KALyT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Nov 2011 07:54:19 -0400
-Received: from list by lo.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1RLCv2-0006pN-8T
-	for linux-rt-users@vger.kernel.org; Tue, 01 Nov 2011 12:54:16 +0100
-Received: from 1Cust78.tnt3.hdn1.deu.da.uu.net ([149.225.64.78])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 01 Nov 2011 12:54:16 +0100
-Received: from andrey.gursky by 1Cust78.tnt3.hdn1.deu.da.uu.net with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 01 Nov 2011 12:54:16 +0100
+Received: from mail-vw0-f46.google.com ([209.85.212.46]:38897 "EHLO
+	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753292Ab1KAVYW convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 1 Nov 2011 17:24:22 -0400
+Received: by vws1 with SMTP id 1so414491vws.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 01 Nov 2011 14:24:21 -0700 (PDT)
+In-Reply-To: <1319777643.6150.7.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Marcus Folkesson <marcus.folkesson <at> gmail.com> writes:
+2011/10/27 Mike Galbraith <efault@gmx.de>:
+> On Thu, 2011-10-27 at 15:03 -0400, Rapha=EBl Beamonte wrote:
+>
+>> Moreover, the use of hwlatdetect seems to confirm that the problem i=
+s
+>> from hardware.
+>
+> Yeah, skimmed over your message too quick, thinking nsecs instead of
+> usecs. =A0Probably SMIs.
+>
+> =A0 =A0 =A0 =A0-Mike
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>
 
->=20
-> Hello there,
-> Where can I download the preempt-rt patches for linux3.x kernels?I
-> cannot find them on korg, maybe they are not uploaded since the the
-> hack?It was a while since I used the patch and the wiki is
-> unfortunately down..
-> Thanks in advance
-> Med v=C3=A4nliga h=C3=A4lsningar / Best regards
-> Marcus Folkesson
-
-Marcus,
-
-just open the last ANNOUNCE message on the list
-(http://article.gmane.org/gmane.linux.rt.user/7390) and you find there =
-the link:
-https://tglx.de/~tglx/rt/
-
-Best regards,
-Andrey
-
-
+One way to find out whether the spikes in the latency are due to
+SMI(System Management Interrupt) is to read the MSR register that
+keeps the count of SMIs. So, read the MSR in the start of the test
+program and the end of the test and see whether the count has
+increased. Unfortunately, it is model-specific-register and I am not
+sure whether AMD supports it. I don't think all Intel processors
+support it either. I know that Nehalem based Intel Core-i7 arrandale
+processor supports counting SMI thru MSR 0x34 and I have not found it
+documented in any Intel documentation but found in some reference BIOS
+source. I have tested it with legacy USB interrupts and found it to
+work. RDMSR is a privilege-0 instruction though.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
