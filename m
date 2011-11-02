@@ -1,224 +1,223 @@
-From: HUNG BUI <buihung@gmail.com>
+From: Sankara Muthukrishnan <sankara.m@gmail.com>
 Subject: Re: Linux RT patch for Pandaboard Omap 4 kernel 3.0.0-1205 error when compiling
-Date: Wed, 2 Nov 2011 23:15:20 +0100
-Message-ID: <CAF7pde9uc0sKQR4R36VN+YGa6FJ=CyzcSVqJJAoOJFUeEetXuQ@mail.gmail.com>
+Date: Wed, 2 Nov 2011 18:34:20 -0500
+Message-ID: <CAFQPvXdB9uPEg91PAPnxZmLDAZ-U7jeitRyY0qRwso_4TSEfUw@mail.gmail.com>
 References: <CAF7pde80C8C=vfN34uR4rS2HZ2-pY0BBJ0EsWm612BgHgtfETw@mail.gmail.com>
 	<CAFQPvXewJqhaAa-qE+MHLbe-9LWH-s8GshTXJV9YW1d0JhjTaQ@mail.gmail.com>
+	<CAF7pde9uc0sKQR4R36VN+YGa6FJ=CyzcSVqJJAoOJFUeEetXuQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=bcaec5215c55bace2404b0c7cec1
+Content-Type: multipart/mixed; boundary=20cf307d031046a28204b0c8e90e
 Cc: linux-rt-users@vger.kernel.org
-To: Sankara Muthukrishnan <sankara.m@gmail.com>
+To: HUNG BUI <buihung@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:58198 "EHLO
-	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751829Ab1KBWPV (ORCPT
+Received: from mail-vw0-f46.google.com ([209.85.212.46]:34947 "EHLO
+	mail-vw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752485Ab1KBXeV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Nov 2011 18:15:21 -0400
-Received: by qabj40 with SMTP id j40so616748qab.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 02 Nov 2011 15:15:20 -0700 (PDT)
-In-Reply-To: <CAFQPvXewJqhaAa-qE+MHLbe-9LWH-s8GshTXJV9YW1d0JhjTaQ@mail.gmail.com>
+	Wed, 2 Nov 2011 19:34:21 -0400
+Received: by vws1 with SMTP id 1so412960vws.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 02 Nov 2011 16:34:20 -0700 (PDT)
+In-Reply-To: <CAF7pde9uc0sKQR4R36VN+YGa6FJ=CyzcSVqJJAoOJFUeEetXuQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---bcaec5215c55bace2404b0c7cec1
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+--20cf307d031046a28204b0c8e90e
+Content-Type: text/plain; charset=ISO-8859-1
 
-Thank you Jiri and Sankara.
+On Wed, Nov 2, 2011 at 5:15 PM, HUNG BUI <buihung@gmail.com> wrote:
+> Thank you Jiri and Sankara.
+>
+> With your help I have successful compiled rt patch for Ubuntu on Pandaboard.
 
-With your help I have successful compiled rt patch for Ubuntu on Pandaboard=
-.
+Glad to have been of help.
 
-I found that the ti omap kernel I downloaded with the command:
- sudo apt-get source linux-image-$(uname -r)
+> After reboot, i have the realtime 3.0.1 omap4 running. The cyclictest
+> shows an acceptable result, with no load the maximum latency is around
+> 30usec, with load it is ~150usec.
 
-( tar file : linux-ti-omap4_3.0.0-1205.10.tar.gz )
-is kernel version 3.0.4 despite it numbered: 3.0.0-1205.
+Could you tell me what kind of load did you apply? How long did you
+run the tests?
 
-And it is the main reason why so many errors occurred when I try to
-patch patch-3.0-rt6 with this kernel.
+Have you tried running the tests for long time (8+ hours) and observed
+weird latencies (way too high) due to the fact that the time jumping
+backwards? Also, you could run the test program (attached in
+testTimerRes.c file) (Use the following options to compile :
+COMPILER_or_CROSS-COMPILER -D_GNU_SOURCE -Wall -Wno-nonnull -std=c99
+-O2 -lrt -lpthread -o testTimerRes testTimerRes.c ). If you run
+without any arguments, it will display 10 time-stamps and that will
+tell you whether you have enabled high-resolution timer or not. If
+they are less than a usec apart, you have got high-res timer to work.
+If you run it as "./testTimerRes -x <num>", it tries to get the
+time-stamps in a loop and if the time-stamp goes backwards by more
+than "num" naonsec's, it prints an error and exits the program and
+prints by how many nanosec's the time-stamps went backwards and how
+many iterations it took before this error happened. You can ignore the
+argument <num> and simply run "./testTimerRes -x" and it will exit, if
+the time-stamp goes backwards at all. I am really curious whether this
+issue happens with the OMAP kernel that you have tried.
 
-So I downloaded an earlier package :3.0.0-1201.5 at
-https://launchpad.net/ubuntu/+source/linux-ti-omap4/3.0.0-1201.5 and
-patch with patch-3.0.1-rt11 .
+> I have a question about the minimal systems, it may be ridiculous but
+> i don;t know how to get and run cyclictest, since I don;t have apt-get
+> package, also no git. As I understand, I will have to compile it on
+> pandaboard, but I found it hard to do it on the minimal fs.
 
-Then I only have to patch 03 errors to finish compiling.
-My process (compiling on Panaboard running Ubuntu 11.10) is a little
-bit different from yours, since i compile to generate .deb files.
-Basically it is :
+You could cross-compile cyclictest on a different Linux system also
+(x86 Linux or Linux VM on a x86 Windows, something like that).
 
-(1) tar xfv  linux-ti-omap4_3.0.0-1205.10.tar.gz
-(2) cd to the folder extracted.
+> And second question, when you cross compile with make ARCH=arm
+> CROSS_COMPILE=arm-angstrom-linux-gnueabi- uImage and get the uImage,
+> your pandaboard is running Ubuntu or minimal fs ?
+> Hung Bui
 
-(3) Edit file patch-3.0.1-rt11.patch to delete this part :
+I am using a angstrom-based root file system (with quite a few tools
+that we need) on panda board that my co-worker has put together for
+our development.
+Thanks, Sankara
 
-Index: linux-2.6/localversion-rt
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- /dev/null
-+++ linux-2.6/localversion-rt
-@@ -0,0 +1 @@
-+-rt11
-
-
-because it will make the compiler confuses between the local version
-omap4 and omap4-rt11 ( I am not sure this patch is correct or not,
-but without it I will have this error :
-
-"run-parts: executing debian/tests/check-aliases
-
-Checking for dupe aliases in omap4...
-Could not open /usr/src/ubuntu-oneiric/debian/linux-image-3.0.0-1201-omap4/=
-lib/modules/3.0.0-1201-omap4/modules.alias
-at debian/tests/check-aliases line 10."
-
-
-(4) patch -p1 < ./patch-3.0.1-rt11.patch
-At this step, I have 1 unsuccessful patch with file /init/main.c
-I follow the .rej file and patch it manually. I think it is because of
-the omap4 kernel has some changes in main.c makes the patch does not
-match.
-
-(5) Edit file ubuntu-oneiric/ubuntu/aufs/mtx.h : change: lock->owner
-to: lock->lock.owner
-according to this patch :
-http://aufs.git.sourceforge.net/git/gitweb.cgi?p=3Daufs/aufs2-standalone.gi=
-t;a=3Dpatch;h=3D624d0435b28be8bce48ea30cf00c52f4e5623621
-
-
-(6) Add  #include <linux/cache.h> to file
-ubuntu-oneiric/security/apparmor/sid.c because of this error :
-
-usr/src/linux-ti-omap4-3.0.0/security/apparmor/sid.c: In function
-=91aa_alloc_sid=92:
-/usr/src/linux-ti-omap4-3.0.0/security/apparmor/sid.c:42:2: error:
-=91sid_lock=92 undeclared (first use in this function)
-
-(7) fakeroot debian/rules editconfigs
-
-I left everything default except:
-# Kernel Features -> Preemption Model -> Fully Preemptible Kernel (RT)
-# Kernel hacking -> Kernel Debugging =3D n
-# System type -> TI Omap Common Feature -> Use 32KHz timer =3Dn
-
-(8) I apply your patch you provided for high resolution timer and also
-applied this patch from
-
-http://www.mail-archive.com/linux-omap@vger.kernel.org/msg49148.html
-
-( i am not sure the above patch needed or not, I attached the patch here)
-
-(9) fakeroot debian/rules clean
-skipabi=3Dtrue skipmodule=3Dtrue dpkg-buildpackage -B -uc -us
-
-(wait 2 hours)
-
-(10)
-sudo dpkg -i linux-headers-3.0.0-1201_3.0.0-1201.5_armel.deb
-sudo dpkg -i linux-headers-3.0.0-1201-omap4_3.0.0-1201.5_armel.deb
-sudo dpkg -i linux-image-3.0.0-1201-omap4_3.0.0-1201.5_armel.deb
-
-sudo flash-kernel 3.0.1-1201-omap4
-
-After reboot, i have the realtime 3.0.1 omap4 running. The cyclictest
-shows an acceptable result, with no load the maximum latency is around
-30usec, with load it is ~150usec.
-
-One good thing is I don;t have any problem when booting the new kernel.
-
-However, I have that problem when compile generic kernel and applied
-on minimal fs linux, instead of ubuntu, the same as you described, it
-only boots after 5-10 resets.
-
-The ubuntu kernel boots normally, but sometimes it hangs after boot,
-when i try to do run tasks, Firefox for example.
-
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D
-
-I have a question about the minimal systems, it may be ridiculous but
-i don;t know how to get and run cyclictest, since I don;t have apt-get
-package, also no git. As I understand, I will have to compile it on
-pandaboard, but I found it hard to do it on the minimal fs.
-
-And second question, when you cross compile with make ARCH=3Darm
-CROSS_COMPILE=3Darm-angstrom-linux-gnueabi- uImage and get the uImage,
-your pandaboard is running Ubuntu or minimal fs ?
-
-Thank you very much for your support, it really helps me after 2 weeks
-of compilation again and again.
-
-Hung Bui
-
---bcaec5215c55bace2404b0c7cec1
-Content-Type: application/octet-stream; name="sankara.patch"
-Content-Disposition: attachment; filename="sankara.patch"
+--20cf307d031046a28204b0c8e90e
+Content-Type: text/x-csrc; charset=US-ASCII; name="testTimerRes.c"
+Content-Disposition: attachment; filename="testTimerRes.c"
 Content-Transfer-Encoding: base64
-X-Attachment-Id: f_guikyvff0
+X-Attachment-Id: f_guiydu8m1
 
-KioqKioqKioqKioqIFBBVENIIFNUQVJUICoqKioqKioqKioqKioqCmRpZmYgLXJ1cE4gYS9hcmNo
-L2FybS9tYWNoLW9tYXAyL3RpbWVyLWdwLmMgYi9hcmNoL2FybS9tYWNoLW9tYXAyL3RpbWVyLWdw
-LmMKLS0tIGEvYXJjaC9hcm0vbWFjaC1vbWFwMi90aW1lci1ncC5jCTIwMTEtMDYtMDYgMTA6NDI6
-NDUuOTY0OTI0NjAzIC0wNTAwCisrKyBiL2FyY2gvYXJtL21hY2gtb21hcDIvdGltZXItZ3AuYwky
-MDExLTA2LTA2IDEwOjQ0OjAzLjcyNTQyMjA3NyAtMDUwMApAQCAtMjMwLDYgKzIzMCwxMiBAQCBz
-dGF0aWMgdm9pZCBfX2luaXQgb21hcDJfZ3BfY2xvY2tzb3VyY2VfCiAJc3RhdGljIGNoYXIgZXJy
-MltdIF9faW5pdGRhdGEgPSBLRVJOX0VSUgogCQkiJXM6IGNhbid0IHJlZ2lzdGVyIGNsb2Nrc291
-cmNlIVxuIjsKCisJY2hhciBjbG9ja3NvdXJjZV9od21vZF9uYW1lWzhdOyAvKiA4ID0gc2l6ZW9m
-KCJ0aW1lclhYMCIpICovCisKKwkvKiBYWFg6IFRoaXMgbWF5IG5vdCBiZSBhbHdheXMgdHJ1ZSwg
-d2UgbWlnaHQgZ2V0IGRpZmZlcmVudCB0aW1lciAqLworCXNwcmludGYoY2xvY2tzb3VyY2VfaHdt
-b2RfbmFtZSwgInRpbWVyJWQiLCBncHRpbWVyX2lkICsgMSk7CisJb21hcF9od21vZF9zZXR1cF9v
-bmUoY2xvY2tzb3VyY2VfaHdtb2RfbmFtZSk7CisKIAlncHQgPSBvbWFwX2RtX3RpbWVyX3JlcXVl
-c3QoKTsKIAlpZiAoIWdwdCkKIAkJcHJpbnRrKGVycjEsIGNsb2Nrc291cmNlX2dwdC5uYW1lKTsK
-CgpkaWZmIC0tZ2l0IGEvYXJjaC9hcm0vbWFjaC1vbWFwMi90aW1lci1ncC5jIGIvYXJjaC9hcm0v
-bWFjaC1vbWFwMi90aW1lci1ncC5jCmluZGV4IDNiOWNmODUuLmU3ODNiZmUgMTAwNjQ0Ci0tLSBh
-L2FyY2gvYXJtL21hY2gtb21hcDIvdGltZXItZ3AuYworKysgYi9hcmNoL2FybS9tYWNoLW9tYXAy
-L3RpbWVyLWdwLmMKQEAgLTE5OCwxNSArMTk4LDIwIEBAIHN0YXRpYyB2b2lkIF9faW5pdCBvbWFw
-Ml9ncF9jbG9ja3NvdXJjZV9pbml0KHZvaWQpCiAgKi8KIHN0YXRpYyBERUZJTkVfQ0xPQ0tfREFU
-QShjZCk7CiBzdGF0aWMgc3RydWN0IG9tYXBfZG1fdGltZXIgKmdwdF9jbG9ja3NvdXJjZTsKLXN0
-YXRpYyBjeWNsZV90IGNsb2Nrc291cmNlX3JlYWRfY3ljbGVzKHN0cnVjdCBjbG9ja3NvdXJjZSAq
-Y3MpCitzdGF0aWMgY3ljbGVfdCBub3RyYWNlIGNsb2Nrc291cmNlX3JlYWRfY3ljbGVzKHN0cnVj
-dCBjbG9ja3NvdXJjZSAqY3MpCiB7CiAJcmV0dXJuIChjeWNsZV90KW9tYXBfZG1fdGltZXJfcmVh
-ZF9jb3VudGVyKGdwdF9jbG9ja3NvdXJjZSk7CiB9Cgorc3RhdGljIGN5Y2xlX3Qgbm90cmFjZSBj
-bG9ja3NvdXJjZV9ncHRfcmVhZF9kdW1teShzdHJ1Y3QgY2xvY2tzb3VyY2UgKmNzKQoreworCXJl
-dHVybiAwOworfQorCiBzdGF0aWMgc3RydWN0IGNsb2Nrc291cmNlIGNsb2Nrc291cmNlX2dwdCA9
-IHsKIAkubmFtZQkJPSAiZ3AgdGltZXIiLAogCS5yYXRpbmcJCT0gMzAwLAotCS5yZWFkCQk9IGNs
-b2Nrc291cmNlX3JlYWRfY3ljbGVzLAorCS5yZWFkCQk9IGNsb2Nrc291cmNlX2dwdF9yZWFkX2R1
-bW15LAogCS5tYXNrCQk9IENMT0NLU09VUkNFX01BU0soMzIpLAogCS5mbGFncwkJPSBDTE9DS19T
-T1VSQ0VfSVNfQ09OVElOVU9VUywKIH07CkBAIC0yMjAsNiArMjI1LDEyIEBAIHN0YXRpYyB2b2lk
-IG5vdHJhY2UgZG10aW1lcl91cGRhdGVfc2NoZWRfY2xvY2sodm9pZCkKIAl1cGRhdGVfc2NoZWRf
-Y2xvY2soJmNkLCBjeWMsICh1MzIpfjApOwogfQoKK3Vuc2lnbmVkIGxvbmcgbG9uZyBub3RyYWNl
-IHNjaGVkX2Nsb2NrKHZvaWQpCit7CisJdTMyIGN5YyA9IGNsb2Nrc291cmNlX2dwdC5yZWFkKCZj
-bG9ja3NvdXJjZV9ncHQpOworCXJldHVybiBjeWNfdG9fc2NoZWRfY2xvY2soJmNkLCBjeWMsICh1
-MzIpfjApOworfQorCiAvKiBTZXR1cCBmcmVlLXJ1bm5pbmcgY291bnRlciBmb3IgY2xvY2tzb3Vy
-Y2UgKi8KIHN0YXRpYyB2b2lkIF9faW5pdCBvbWFwMl9ncF9jbG9ja3NvdXJjZV9pbml0KHZvaWQp
-CiB7CkBAIC0yNDAsNiArMjUxLDcgQEAgc3RhdGljIHZvaWQgX19pbml0IG9tYXAyX2dwX2Nsb2Nr
-c291cmNlX2luaXQodm9pZCkKCiAJb21hcF9kbV90aW1lcl9zZXRfbG9hZF9zdGFydChncHQsIDEs
-IDApOwoKKwljbG9ja3NvdXJjZV9ncHQucmVhZCA9IGNsb2Nrc291cmNlX3JlYWRfY3ljbGVzOwog
-CWluaXRfc2NoZWRfY2xvY2soJmNkLCBkbXRpbWVyX3VwZGF0ZV9zY2hlZF9jbG9jaywgMzIsIHRp
-Y2tfcmF0ZSk7CgogCWlmIChjbG9ja3NvdXJjZV9yZWdpc3Rlcl9oeigmY2xvY2tzb3VyY2VfZ3B0
-LCB0aWNrX3JhdGUpKQpkaWZmIC0tZ2l0IGEvYXJjaC9hcm0vcGxhdC1vbWFwL2NvdW50ZXJfMzJr
-LmMgYi9hcmNoL2FybS9wbGF0LW9tYXAvY291bnRlcl8zMmsuYwppbmRleCBmN2ZlZDYwLi45MjMx
-NDk5IDEwMDY0NAotLS0gYS9hcmNoL2FybS9wbGF0LW9tYXAvY291bnRlcl8zMmsuYworKysgYi9h
-cmNoL2FybS9wbGF0LW9tYXAvY291bnRlcl8zMmsuYwpAQCAtMTI2LDEzICsxMjYsMTMgQEAgc3Rh
-dGljIGlubGluZSB1bnNpZ25lZCBsb25nIGxvbmcgbm90cmFjZSBfb21hcF8zMmtfc2NoZWRfY2xv
-Y2sodm9pZCkKIAlyZXR1cm4gY3ljX3RvX2ZpeGVkX3NjaGVkX2Nsb2NrKCZjZCwgY3ljLCAodTMy
-KX4wLCBTQ19NVUxULCBTQ19TSElGVCk7CiB9CgotI2lmbmRlZiBDT05GSUdfT01BUF9NUFVfVElN
-RVIKLXVuc2lnbmVkIGxvbmcgbG9uZyBub3RyYWNlIHNjaGVkX2Nsb2NrKHZvaWQpCisjaWZkZWYg
-Q09ORklHX09NQVBfTVBVX1RJTUVSCit1bnNpZ25lZCBsb25nIGxvbmcgbm90cmFjZSBvbWFwXzMy
-a19zY2hlZF9jbG9jayh2b2lkKQogewogCXJldHVybiBfb21hcF8zMmtfc2NoZWRfY2xvY2soKTsK
-IH0KLSNlbHNlCi11bnNpZ25lZCBsb25nIGxvbmcgbm90cmFjZSBvbWFwXzMya19zY2hlZF9jbG9j
-ayh2b2lkKQorI2VsaWYgZGVmaW5lZChDT05GSUdfT01BUF8zMktfVElNRVIpCit1bnNpZ25lZCBs
-b25nIGxvbmcgbm90cmFjZSBzY2hlZF9jbG9jayh2b2lkKQogewogCXJldHVybiBfb21hcF8zMmtf
-c2NoZWRfY2xvY2soKTsKIH0KZGlmZiAtLWdpdCBhL2FyY2gvYXJtL3BsYXQtb21hcC9kbXRpbWVy
-LmMgYi9hcmNoL2FybS9wbGF0LW9tYXAvZG10aW1lci5jCmluZGV4IGVlOWY2ZWIuLjA2NDhkNjMg
-MTAwNjQ0Ci0tLSBhL2FyY2gvYXJtL3BsYXQtb21hcC9kbXRpbWVyLmMKKysrIGIvYXJjaC9hcm0v
-cGxhdC1vbWFwL2RtdGltZXIuYwpAQCAtNzAwLDcgKzcwMCw3IEBAIHZvaWQgb21hcF9kbV90aW1l
-cl93cml0ZV9zdGF0dXMoc3RydWN0IG9tYXBfZG1fdGltZXIgKnRpbWVyLCB1bnNpZ25lZCBpbnQg
-dmFsdWUpCiB9CiBFWFBPUlRfU1lNQk9MX0dQTChvbWFwX2RtX3RpbWVyX3dyaXRlX3N0YXR1cyk7
-CgotdW5zaWduZWQgaW50IG9tYXBfZG1fdGltZXJfcmVhZF9jb3VudGVyKHN0cnVjdCBvbWFwX2Rt
-X3RpbWVyICp0aW1lcikKK3Vuc2lnbmVkIGludCBub3RyYWNlIG9tYXBfZG1fdGltZXJfcmVhZF9j
-b3VudGVyKHN0cnVjdCBvbWFwX2RtX3RpbWVyICp0aW1lcikKIHsKIAl1bnNpZ25lZCBpbnQgbDsK
-CgoqKioqKioqKioqKiogUEFUQ0ggRU5EICoqKioqKioqKioqKioqCgo=
---bcaec5215c55bace2404b0c7cec1--
+LyoKICogQ29weXJpZ2h0IChDKSAyMDExIFNhbmthcmEgTXV0aHVrcmlzaG5hbiA8c2Fua2FyYS5t
+QG5pLmNvbT4KICoKICogYmFzZWQgb24gZnVuY3Rpb25zL2NvZGUtc25pcHBldHMgZnJvbSBjeWNs
+aWN0ZXN0IChpbiBydF90ZXN0cyBzdWl0ZSkgdGhhdCBoYXMKICogdGhlIGZvbGxvd2luZyBjb3B5
+cmlnaHQgbm90aWNlczoKICoKICogQ2hlY2sgdGhlIHJlc29sdXRpb24gb2YgdGltZXIgCiAqCiAq
+IChDKSAyMDA4LTIwMTEgQ2xhcmsgV2lsbGlhbXMgPHdpbGxpYW1zQHJlZGhhdC5jb20+CiAqIChD
+KSAyMDA1LTIwMDcgVGhvbWFzIEdsZWl4bmVyIDx0Z2x4QGxpbnV0cm9uaXguZGU+CiAqCiAqIFRo
+aXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQv
+b3IKICogbW9kaWZ5IGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGlj
+IExpY2Vuc2UgVmVyc2lvbgogKiAyIGFzIHB1Ymxpc2hlZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBG
+b3VuZGF0aW9uLgogKiAKICovCgojaW5jbHVkZSA8c3RkaW8uaD4KI2luY2x1ZGUgPHN0ZGxpYi5o
+PgojaW5jbHVkZSA8c3RkaW50Lmg+CiNpbmNsdWRlIDxzdGRhcmcuaD4KI2luY2x1ZGUgPHN0ZGJv
+b2wuaD4KI2luY2x1ZGUgPHVuaXN0ZC5oPgojaW5jbHVkZSA8ZmNudGwuaD4KI2luY2x1ZGUgPGdl
+dG9wdC5oPgojaW5jbHVkZSA8cHRocmVhZC5oPgojaW5jbHVkZSA8c2lnbmFsLmg+CiNpbmNsdWRl
+IDxzY2hlZC5oPgojaW5jbHVkZSA8c3RyaW5nLmg+CiNpbmNsdWRlIDx0aW1lLmg+CiNpbmNsdWRl
+IDxlcnJuby5oPgojaW5jbHVkZSA8bGltaXRzLmg+CiNpbmNsdWRlIDxsaW51eC91bmlzdGQuaD4K
+CiNpbmNsdWRlIDxzeXMvcHJjdGwuaD4KI2luY2x1ZGUgPHN5cy9zdGF0Lmg+CiNpbmNsdWRlIDxz
+eXMvc3lzaW5mby5oPgojaW5jbHVkZSA8c3lzL3R5cGVzLmg+CiNpbmNsdWRlIDxzeXMvdGltZS5o
+PgojaW5jbHVkZSA8c3lzL3V0c25hbWUuaD4KI2luY2x1ZGUgPHN5cy9tbWFuLmg+CgojZGVmaW5l
+IFVTRUNfUEVSX1NFQwkJMTAwMDAwMAojZGVmaW5lIE5TRUNfUEVSX1NFQwkJMTAwMDAwMDAwMAoK
+I2RlZmluZSBnZXR0aWQoKSBzeXNjYWxsKF9fTlJfZ2V0dGlkKQoKI2RlZmluZSBQUklOVEZMIHBy
+aW50ZigiJXM6JWRcbiIsIF9fRklMRV9fLCBfX0xJTkVfXyk7CiNkZWZpbmUgUFJJTlRMIHByaW50
+ZigiJWRcbiIsIF9fTElORV9fKTsKCi8vIHR5cGVkZWYgdW5zaWduZWQgaW50IGJvb2w7CQovLwpz
+dHJ1Y3QgdGhyZWFkX3BhcmFtIHsKCWludCBwcmlvOwoJaW50IHBvbGljeTsKCWludCBtb2RlOwoJ
+aW50IHRpbWVybW9kZTsKCWludCBzaWduYWw7CglpbnQgY2xvY2s7Cgl1bnNpZ25lZCBsb25nIG1h
+eF9jeWNsZXM7CglzdHJ1Y3QgdGhyZWFkX3N0YXQgKnN0YXRzOwoJaW50IGJ1Zm1zazsKCXVuc2ln
+bmVkIGxvbmcgaW50ZXJ2YWw7CglpbnQgY3B1OwoJaW50IG5vZGU7Cn07CgplbnVtIHsKCUFGRklO
+SVRZX1VOU1BFQ0lGSUVELAoJQUZGSU5JVFlfU1BFQ0lGSUVELAoJQUZGSU5JVFlfVVNFQUxMCn07
+CnN0YXRpYyBpbnQgc2V0YWZmaW5pdHkgPSBBRkZJTklUWV9VTlNQRUNJRklFRDsKCnN0YXRpYyBp
+bnQgYWZmaW5pdHkgPSAwOwoKc3RhdGljIGJvb2wgdGVzdENTID0gZmFsc2U7CnN0YXRpYyB1aW50
+MzJfdCB0ZXN0Q1NsYXQgPSAwOwoKdm9pZCB3YXJuKGNoYXIgKmZtdCwgLi4uKQp7Cgl2YV9saXN0
+IGFwOwoKCXZhX3N0YXJ0KGFwLCBmbXQpOwoJZnB1dHMoIldBUk5JTkc6ICIsIHN0ZGVycik7Cgl2
+ZnByaW50ZihzdGRlcnIsIGZtdCwgYXApOwoJdmFfZW5kKGFwKTsKfQoKdm9pZCBmYXRhbChjaGFy
+ICpmbXQsIC4uLikKewoJdmFfbGlzdCBhcDsKCgl2YV9zdGFydChhcCwgZm10KTsKCWZwdXRzKCJG
+QVRBTDogIiwgc3RkZXJyKTsKCXZmcHJpbnRmKHN0ZGVyciwgZm10LCBhcCk7Cgl2YV9lbmQoYXAp
+OwoJZXhpdChFWElUX0ZBSUxVUkUpOwp9CgpzdGF0aWMgaW50IGNoZWNrX2hpZ2hyZXNfdGltZXIo
+dm9pZCkKewoJc3RydWN0IHRpbWVzcGVjIHRzOwoKCWlmIChjbG9ja19nZXRyZXMoQ0xPQ0tfTU9O
+T1RPTklDLCAmdHMpKQoJCXJldHVybiAxOwoKCXJldHVybiAodHMudHZfc2VjICE9IDAgfHwgdHMu
+dHZfbnNlYyAhPSAxKTsKfQoKc3RhdGljIGlubGluZSBpbnQ2NF90IGNhbGNkaWZmX25zKHN0cnVj
+dCB0aW1lc3BlYyAqdDEsIHN0cnVjdCB0aW1lc3BlYyAqdDIpCnsKCWludDY0X3QgZGlmZjsKCWRp
+ZmYgPSBOU0VDX1BFUl9TRUMgKiAoaW50NjRfdCkoKGludCkgdDEtPnR2X3NlYyAtIChpbnQpIHQy
+LT50dl9zZWMpOwoJZGlmZiArPSAoKGludCkgdDEtPnR2X25zZWMgLSAoaW50KSB0Mi0+dHZfbnNl
+Yyk7CglyZXR1cm4gZGlmZjsKfQoKc3RhdGljIGlubGluZSB2b2lkIG15X2dldHRpbWUoc3RydWN0
+IHRpbWVzcGVjICp0LCBpbnQgKnJldF9hcGksIGludCAqZXJybm9fYXBpLCBib29sIHF1aXRfb25f
+ZXJyKQp7CgkqcmV0X2FwaSA9IGNsb2NrX2dldHRpbWUoQ0xPQ0tfTU9OT1RPTklDLCB0KTsgCglp
+ZiAoKnJldF9hcGkgIT0gMCkgewoJCWlmIChxdWl0X29uX2VycikKCQkJZmF0YWwoImNsb2NrX2dl
+dHRpbWUgZmFpbGVkXG4iKTsKCQllbHNlCgkJCSplcnJub19hcGkgPSBlcnJubzsKCX0KfQoKc3Rh
+dGljIHZvaWQgKmNoZWNrX2Nsb2NrX3NvdXJjZSh2b2lkICpwYXJhbSkKewoJI2RlZmluZSBOVU1f
+TE9PUFMgMTEKCglzdHJ1Y3QgdGltZXNwZWMgcHJldiwgY3VyOwoJaW50IHJldF9nZXR0aW1lID0g
+MCwgZXJybm9fZ2V0dGltZSA9IDA7CglpbnQ2NF90IGRpZmZfbnMgPSAwOwoJYm9vbCBxdWl0X29u
+X2VyciA9IHRydWU7CglzdHJ1Y3Qgc2NoZWRfcGFyYW0gc2NoZWRwOwoJc3RydWN0IHRocmVhZF9w
+YXJhbSAqcGFyID0gcGFyYW07CgljcHVfc2V0X3QgbWFzazsKCWludDY0X3QgdGltZV9zdGFtcF9k
+aWZmW05VTV9MT09QU10gPSB7MH07Cgl1bnNpZ25lZCBpbnQgc2FtZV92YWxfaXRlcnNbTlVNX0xP
+T1BTXSA9IHswfTsKCWludCBpID0gMDsKCWludDY0X3QgdGVzdENTaXRlcnMgPSAwOwoKI2lmIDAJ
+CgltZW1zZXQoJnByZXYsIDAsIHNpemVvZihwcmV2KSk7CgltZW1zZXQoJmN1ciwgMCwgc2l6ZW9m
+KGN1cikpOwojZW5kaWYJCgltZW1zZXQoJnNjaGVkcCwgMCwgc2l6ZW9mKHNjaGVkcCkpOwoKCXNj
+aGVkcC5zY2hlZF9wcmlvcml0eSA9IHNjaGVkX2dldF9wcmlvcml0eV9tYXgoU0NIRURfRklGTyk7
+CglpZiAoMCAhPSBzY2hlZF9zZXRzY2hlZHVsZXIoMCwgU0NIRURfRklGTywgJnNjaGVkcCkpCgkJ
+d2Fybigic2NoZWRfc2V0c2NoZWR1bGVyIGZhaWxlZFxuIik7CgoJaWYgKHBhci0+Y3B1ICE9IC0x
+KSB7CgkJQ1BVX1pFUk8oJm1hc2spOwoJCUNQVV9TRVQocGFyLT5jcHUsICZtYXNrKTsKCQlpZihz
+Y2hlZF9zZXRhZmZpbml0eSgwLCBzaXplb2YobWFzayksICZtYXNrKSA9PSAtMSkKCQkJd2Fybigi
+Q291bGQgbm90IHNldCBDUFUgYWZmaW5pdHkgdG8gQ1BVICMlZFxuIiwgcGFyLT5jcHUpOwoJfQoK
+CUNQVV9aRVJPKCZtYXNrKTsKCWlmIChzY2hlZF9nZXRhZmZpbml0eSgwLCBzaXplb2YobWFzayks
+ICZtYXNrKSA9PSAtMSkKCQl3YXJuKCJDb3VsZCBub3QgZ2V0IENQVSBhZmZpbml0eSB0byBDUFUg
+IyVkXG4iLCBwYXItPmNwdSk7CgllbHNlIHsKI2lmIERFQlVHCgkJIAlwcmludGYoIkNQVT0lZCwg
+dGlkPSVkLCBwaWQ9JWQsIHBwaWQ9JWQsIG1hc2s9MHglMDhYXG4iLCAKCQkJcGFyLT5jcHUsIGdl
+dHRpZCgpLCBnZXRwaWQoKSwgZ2V0cHBpZCgpLCAodW5zaWduZWQgaW50KSAqKGludCAqKSZtYXNr
+KTsgCgkJCS8qIEBzYW5UT0RPIGhhY2s6IHR5cGVjYXN0aW5nIG1hc2sgaXMgZXZpbC4gZml4IGl0
+ICovCiNlbmRpZgoJfQoKI2lmIERFQlVHCQoJcHJpbnRmKCJ0ZXN0Q2xvY2tTb3VyY2U9JWQsIHRl
+c3RDbG9ja1NvdXJjZU1pbmltdW1MYXRlbmN5PSV1XG4iLCB0ZXN0Q1MsIHRlc3RDU2xhdCk7CiNl
+bmRpZgoKCWkgPSAwOwoJbXlfZ2V0dGltZSgmcHJldiwgJnJldF9nZXR0aW1lLCAmZXJybm9fZ2V0
+dGltZSwgcXVpdF9vbl9lcnIpOwoJd2hpbGUgKHRydWUpIHsKCQlteV9nZXR0aW1lKCZjdXIsICZy
+ZXRfZ2V0dGltZSwgJmVycm5vX2dldHRpbWUsIHF1aXRfb25fZXJyKTsKCQlpZiAocmV0X2dldHRp
+bWUgIT0gMCkgewoJCQllcnJub19nZXR0aW1lID0gZXJybm87CgkJCXByaW50ZigiRmF0YWwgZXJy
+b3I6IGNsb2NrX2dldHRpbWUgZmFpbGVkXG4iKTsKCQkJYnJlYWs7CgkJfQoJCWRpZmZfbnMgPSBj
+YWxjZGlmZl9ucygmY3VyLCAmcHJldik7CgkJaWYgKGRpZmZfbnMgPCAwICYmIGFicyhkaWZmX25z
+KSA+IHRlc3RDU2xhdCkgeyAKCQkJcHJpbnRmKCJGYXRhbCBlcnJvcjogdGltZS1zdGFtcHMgZ29p
+bmcgYmFja3dhcmRzXG4iKTsKCQkJYnJlYWs7CgkJfQoJCWlmICghdGVzdENTKSB7CgkJCWlmIChk
+aWZmX25zID09IDApIAoJCQkJc2FtZV92YWxfaXRlcnNbaV0rKzsKCQkJZWxzZSB7CgkJCQl0aW1l
+X3N0YW1wX2RpZmZbaV0gPSBkaWZmX25zOwoJCQkJaSsrOwoJCQl9CgkJfQoJCWVsc2UgCgkJCXRl
+c3RDU2l0ZXJzKys7CgkJcHJldiA9IGN1cjsKCQlpZiAoIXRlc3RDUyAmJiBpID09IE5VTV9MT09Q
+UykKCQkJYnJlYWs7Cgl9CglpZiAoZGlmZl9ucyA8IDApIAoJCXByaW50ZigiZGlmZl90aW1lc3Rh
+bXBfbnNlYz0lbGxkLCBjdXJyZW50X3RpbWVfc3RhbXA9JXU6JXUsIHByZXZfdGltZV9zdGFtcD0l
+dToldVxuIiwgCgkJCWRpZmZfbnMsICh1aW50MzJfdCljdXIudHZfc2VjLCAodWludDMyX3QpY3Vy
+LnR2X25zZWMsIAoJCQkodWludDMyX3QpcHJldi50dl9zZWMsICh1aW50MzJfdClwcmV2LnR2X25z
+ZWMpOwoJaWYgKHRlc3RDUykKCQlwcmludGYoInRlc3RDU2l0ZXJzPSVsbHVcbiIsIHRlc3RDU2l0
+ZXJzKTsKCWlmICghcXVpdF9vbl9lcnIpCgkJcHJpbnRmKCJyZXRfZ2V0dGltZT0lZCwgZXJybm9f
+Z2V0dGltZT0lZFxuIiwgcmV0X2dldHRpbWUsIGVycm5vX2dldHRpbWUpOwoKCWlmICghdGVzdENT
+ICYmIGkgPT0gTlVNX0xPT1BTKSB7CgkJcHJpbnRmKCJObyBvZiBpdGVyYXRpb25zIHdpdGggc2Ft
+ZSB0aW1lLXN0YW1wLCBkaWZmZXJlbmNlIGluIHRpbWUtc3RhbXBzIGluIG5hbm9zZWMgd2hlbiB0
+aW1lLXN0YW1wIGNoYW5nZXNcbiIpOwoJCWZvciAoaSA9IDE7IGkgPCBOVU1fTE9PUFM7IGkrKykg
+ewoJCS8vIGkgPSAwIGlzIGlnbm9yZWQsIHNpbmNlIGl0IHdvdWxkIHZhcnkgZm9yIGVhY2ggcnVu
+CgkJCXByaW50ZigiaXRlcmF0aW9ucyA9ICV1LCB0aW1lLXN0YW1wIGRpZmZlcmVuY2UgPSAlbGxk
+IG5hbm9zZWNcbiIsCgkJCQlzYW1lX3ZhbF9pdGVyc1tpXSwgdGltZV9zdGFtcF9kaWZmW2ldKTsK
+CQl9Cgl9CglyZXR1cm4gTlVMTDsKfQoKc3RhdGljIHZvaWQgZGlzcGxheV9oZWxwKGludCBlcnJv
+cikKewoKCXByaW50ZigiVXNhZ2U6XG4iCgkgICAgICAgInRlc3RDbG9ja1NyYyA8b3B0aW9ucz5c
+blxuIgoJICAgICAgICItYSBbTlVNXSAtLWFmZmluaXR5ICAgICAgICBydW4gdGhlIHRlc3QgdGhy
+ZWFkIG9uIHByb2Nlc3NvciAjTlVNXG4iCgkgICAgICAgIiAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIGRlZmF1bHQgZm9yIE5VTSBpcyAwXG4iCgkgICAgICAgIi14IFtOU10gIC0tdGVzdENTPU5T
+ICAgICAgIHRlc3QgdGhlIGNsb2NrIHNvdXJjZSB1c2VkIGJ5IGNsb2NrX2dldHRpbWUgZnVuY3Rp
+b25cbiIKCSAgICAgICAiICAgICAgICAgICAgICAgICAgICAgICAgICAgdG8gc2VlIGlmIHRoZSB0
+aW1lLXN0YW1wcyBqdW1wIGJhY2t3YXJkcyBieSBtb3JlIHRoYW5cbiIKCSAgICAgICAiICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgTlMgbmFub3NlY29uZHMuXG4iCgkgICAgICAgIiAgICAgICAg
+ICAgICAgICAgICAgICAgICAgIGRlZmF1bHQgZm9yIE5TIGlzIDAuXG5cbiIKCQkJICk7CgoJZXhp
+dChlcnJvcik7Cn0KCi8qIFByb2Nlc3MgY29tbWFuZGxpbmUgb3B0aW9ucyAqLwpzdGF0aWMgdm9p
+ZCBwcm9jZXNzX29wdGlvbnMgKGludCBhcmdjLCBjaGFyICphcmd2W10pCnsKCWludCBlcnJvciA9
+IDA7CglpbnQgbWF4X2NwdXMgPSBzeXNjb25mKF9TQ19OUFJPQ0VTU09SU19DT05GKTsKCglmb3Ig
+KDs7KSB7CgkJaW50IG9wdGlvbl9pbmRleCA9IDA7CgkJLyoqIE9wdGlvbnMgZm9yIGdldG9wdCAq
+LwoJCXN0YXRpYyBzdHJ1Y3Qgb3B0aW9uIGxvbmdfb3B0aW9uc1tdID0gewoJCQl7ImFmZmluaXR5
+IiwgcmVxdWlyZWRfYXJndW1lbnQsIE5VTEwsICdhJ30sCgkJCXsidGVzdENTIiwgb3B0aW9uYWxf
+YXJndW1lbnQsIE5VTEwsICd4J30sCgkJCXsiaGVscCIsIG5vX2FyZ3VtZW50LCBOVUxMLCAnaCd9
+LAoJCQl7TlVMTCwgMCwgTlVMTCwgMH0KCQl9OyAKCQlpbnQgYyA9IGdldG9wdF9sb25nKGFyZ2Ms
+IGFyZ3YsICJhOjpoeDo6IiwKCQkJCSAgICBsb25nX29wdGlvbnMsICZvcHRpb25faW5kZXgpOwoJ
+CWlmIChjID09IC0xKQoJCQlicmVhazsKCQlzd2l0Y2ggKGMpIHsKCQljYXNlICdhJzoKCQkJaWYg
+KG9wdGFyZyAhPSBOVUxMKSB7CgkJCQlhZmZpbml0eSA9IGF0b2kob3B0YXJnKTsKCQkJCXNldGFm
+ZmluaXR5ID0gQUZGSU5JVFlfU1BFQ0lGSUVEOwoJCQl9IGVsc2UgaWYgKG9wdGluZDxhcmdjICYm
+IGF0b2koYXJndltvcHRpbmRdKSkgewoJCQkJYWZmaW5pdHkgPSBhdG9pKGFyZ3Zbb3B0aW5kXSk7
+CgkJCQlzZXRhZmZpbml0eSA9IEFGRklOSVRZX1NQRUNJRklFRDsKCQkJfSBlbHNlIHsKCQkJCXNl
+dGFmZmluaXR5ID0gQUZGSU5JVFlfVVNFQUxMOwoJCQl9CgkJCWJyZWFrOwoJCWNhc2UgJ3gnOgoJ
+CQl0ZXN0Q1MgPSB0cnVlOwoJCQlpZiAob3B0YXJnICE9IE5VTEwpIAoJCQkJdGVzdENTbGF0ID0g
+YXRvaShvcHRhcmcpOwkKCQkJYnJlYWs7CgoJCWNhc2UgJ2gnOiBkaXNwbGF5X2hlbHAoMCk7IGJy
+ZWFrOwoJCWNhc2UgJz8nOiBkaXNwbGF5X2hlbHAoMCk7IGJyZWFrOwoJCX0KCX0KCglpZiAoc2V0
+YWZmaW5pdHkgPT0gQUZGSU5JVFlfU1BFQ0lGSUVEKSB7CgkJaWYgKGFmZmluaXR5IDwgMCkKCQkJ
+ZXJyb3IgPSAxOwoJCWlmIChhZmZpbml0eSA+PSBtYXhfY3B1cykgewoJCQl3YXJuKCJDUFUgIyVk
+IG5vdCBmb3VuZCwgb25seSAlZCBDUFVzIGF2YWlsYWJsZVxuIiwKCQkJICAgIGFmZmluaXR5LCBt
+YXhfY3B1cyk7CgkJCWVycm9yID0gMTsKCQl9Cgl9IAkKfQoKaW50IG1haW4oaW50IGFyZ2MsIGNo
+YXIgKmFyZ3ZbXSkKewoJcHRocmVhZF90IHRocmVhZDsKCWludCBzdGF0dXMsIGkgPSAwOwoJc3Ry
+dWN0IHRocmVhZF9wYXJhbSAqcGFyID0gTlVMTDsKCWludCBtYXhfY3B1cyA9IHN5c2NvbmYoX1ND
+X05QUk9DRVNTT1JTX0NPTkYpOwoKCXByb2Nlc3Nfb3B0aW9ucyhhcmdjLCBhcmd2KTsKCglpZiAo
+Y2hlY2tfaGlnaHJlc190aW1lcigpKQoJCXdhcm4oIkhpZ2ggcmVzb2x1dGlvbiB0aW1lcnMgbm90
+IGF2YWlsYWJsZVxuIik7CgoJcGFyID0gKHN0cnVjdCB0aHJlYWRfcGFyYW0gKikgbWFsbG9jKHNp
+emVvZihzdHJ1Y3QgdGhyZWFkX3BhcmFtKSk7CglpZiAocGFyID09IE5VTEwpCgkJZmF0YWwoImVy
+cm9yIGFsbG9jYXRpbmcgdGhyZWFkX3BhcmFtIHN0cnVjdCBmb3IgdGhyZWFkICVkXG4iLCBpKTsK
+CW1lbXNldChwYXIsIDAsIHNpemVvZihzdHJ1Y3QgdGhyZWFkX3BhcmFtKSk7CgoJc3dpdGNoIChz
+ZXRhZmZpbml0eSkgewoJY2FzZSBBRkZJTklUWV9VTlNQRUNJRklFRDogcGFyLT5jcHUgPSAtMTsg
+YnJlYWs7CgljYXNlIEFGRklOSVRZX1NQRUNJRklFRDogcGFyLT5jcHUgPSBhZmZpbml0eTsgYnJl
+YWs7CgljYXNlIEFGRklOSVRZX1VTRUFMTDogcGFyLT5jcHUgPSBpICUgbWF4X2NwdXM7IGJyZWFr
+OwoJfQoKCXN0YXR1cyA9IHB0aHJlYWRfY3JlYXRlKCZ0aHJlYWQsIE5VTEwsIGNoZWNrX2Nsb2Nr
+X3NvdXJjZSwgcGFyKTsgCglpZiAoc3RhdHVzKQoJCWZhdGFsKCJmYWlsZWQgdG8gY3JlYXRlIHRo
+cmVhZCAlZDogJXNcbiIsIGksIHN0cmVycm9yKHN0YXR1cykpOwoJcHRocmVhZF9qb2luKHRocmVh
+ZCwgTlVMTCk7IAoJcmV0dXJuIDA7Cn0K
+--20cf307d031046a28204b0c8e90e--
