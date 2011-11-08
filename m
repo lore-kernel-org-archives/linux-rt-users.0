@@ -1,154 +1,79 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.0.8-rt23
-Date: Tue, 8 Nov 2011 23:23:50 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111082318130.2694@ionos>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [ANNOUNCE] 3.0.8-rt22
+Date: Tue, 8 Nov 2011 17:44:52 -0600
+Message-ID: <20111108174452.497da95f@redhat.com>
+References: <alpine.LFD.2.02.1111072225340.2694@ionos>
+	<20111108105019.794045fa@redhat.com>
+	<alpine.LFD.2.02.1111082150490.2694@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/Jr+9lwRJKc5COU_yOeJpTU/"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Ted Ts'o" <tytso@mit.edu>, Greg KH <greg@kroah.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49050 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750899Ab1KHWXv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Nov 2011 17:23:51 -0500
+Received: from mx1.redhat.com ([209.132.183.28]:59572 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753912Ab1KHXpP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 8 Nov 2011 18:45:15 -0500
+In-Reply-To: <alpine.LFD.2.02.1111082150490.2694@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+--Sig_/Jr+9lwRJKc5COU_yOeJpTU/
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-I'm pleased to announce the 3.0.8-rt23 release.
+On Tue, 8 Nov 2011 22:02:32 +0100 (CET)
+Thomas Gleixner <tglx@linutronix.de> wrote:
 
-Changes from 3.0.8-rt22 to 3.0.8-rt23
+> On Tue, 8 Nov 2011, Clark Williams wrote:
+> > Got the following splat on boot (f15 64-bit laptop, quad-core i7):
+> >=20
+> > [  146.609030]=20
+> > [  146.609031] =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> > [  146.609033] [ INFO: possible circular locking dependency detected ]
+> > [  146.609035] 3.0.8-rt22+ #27
+> > [  146.609036] -------------------------------------------------------
+> > [  146.609038] dconf-service/9046 is trying to acquire lock:
+> > [  146.609040]  (&sb->s_type->i_mutex_key#13){+.+.+.}, at: [<ffffffff81=
+1adcc4>] ext4_evict_inode+0x44/0x26f
+> > [  146.609047]=20
+> > [  146.609048] but task is already holding lock:
+> > [  146.609049]  (&mm->mmap_sem){++++++}, at: [<ffffffff81108ee6>] sys_m=
+unmap+0x36/0x5b
+> > [  146.609053]=20
+>=20
+> That's an upstream problem which got pulled into 3.0 stable via commit
+> 2526f36894 (upstream 2581fdc810) but lacks the followup upstream fix
+>  .  The latter unfortunately has no Cc: stable tag ....
+>=20
+> Ted?
+>=20
+> Thanks,
+>=20
+> 	tglx
 
-  * Cherrypick an ext4 fix which was not sent to stable
 
-  * Add missing idle task comm update (Carsten)
+Thanks Thomas. I cherry-picked 8c0bec2, rebuilt with the same config
+and have booted the resulting kernel with no lockdep splats.
 
-Delta patch against 3.0.8-rt22
+Clark
 
-  https://tglx.de/~tglx/rt/incr/patch-3.0.8-rt22-rt23.patch.gz
+--Sig_/Jr+9lwRJKc5COU_yOeJpTU/
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-also appended below.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
 
+iEYEARECAAYFAk65vvQACgkQHyuj/+TTEp2brwCg0tHi/k5Tb0aBtGOVud857iPV
+PrQAn3ReXAaztY/7hQpJdy+qtZPx2zrv
+=G+kg
+-----END PGP SIGNATURE-----
 
-Patch against 3.0.8 can be found here:
-
-  https://tglx.de/~tglx/rt/patch-3.0.8-rt23.patch.gz
-
-
-The split quilt queue is available at:
-
-  https://tglx.de/~tglx/rt/patches-3.0.8-rt23.tar.gz
-
-Enjoy,
-
-	tglx
-
---------------->
-Index: linux-2.6/fs/ext4/inode.c
-===================================================================
---- linux-2.6.orig/fs/ext4/inode.c
-+++ linux-2.6/fs/ext4/inode.c
-@@ -190,9 +190,6 @@ void ext4_evict_inode(struct inode *inod
- 
- 	trace_ext4_evict_inode(inode);
- 
--	mutex_lock(&inode->i_mutex);
--	ext4_flush_completed_IO(inode);
--	mutex_unlock(&inode->i_mutex);
- 	ext4_ioend_wait(inode);
- 
- 	if (inode->i_nlink) {
-Index: linux-2.6/include/linux/init_task.h
-===================================================================
---- linux-2.6.orig/include/linux/init_task.h
-+++ linux-2.6/include/linux/init_task.h
-@@ -132,6 +132,8 @@ extern struct cred init_cred;
- # define INIT_TIMER_LIST
- #endif
- 
-+#define INIT_TASK_COMM "swapper"
-+
- /*
-  *  INIT_TASK is used to set up the first task table, touch at
-  * your own risk!. Base=0, limit=0x1fffff (=2MB)
-@@ -168,7 +170,7 @@ extern struct cred init_cred;
- 	.group_leader	= &tsk,						\
- 	RCU_INIT_POINTER(.real_cred, &init_cred),			\
- 	RCU_INIT_POINTER(.cred, &init_cred),				\
--	.comm		= "swapper",					\
-+	.comm		= INIT_TASK_COMM,				\
- 	.thread		= INIT_THREAD,					\
- 	.fs		= &init_fs,					\
- 	.files		= &init_files,					\
-Index: linux-2.6/kernel/sched.c
-===================================================================
---- linux-2.6.orig/kernel/sched.c
-+++ linux-2.6/kernel/sched.c
-@@ -71,6 +71,7 @@
- #include <linux/ctype.h>
- #include <linux/ftrace.h>
- #include <linux/slab.h>
-+#include <linux/init_task.h>
- 
- #include <asm/tlb.h>
- #include <asm/irq_regs.h>
-@@ -6109,6 +6110,9 @@ void __cpuinit init_idle(struct task_str
- 	 */
- 	idle->sched_class = &idle_sched_class;
- 	ftrace_graph_init_idle_task(idle, cpu);
-+#if defined(CONFIG_SMP)
-+	sprintf(idle->comm, "%s/%d", INIT_TASK_COMM, cpu);
-+#endif
- }
- 
- /*
-Index: linux-2.6/localversion-rt
-===================================================================
---- linux-2.6.orig/localversion-rt
-+++ linux-2.6/localversion-rt
-@@ -1 +1 @@
---rt22
-+-rt23
-Index: linux-2.6/fs/ext4/ext4.h
-===================================================================
---- linux-2.6.orig/fs/ext4/ext4.h
-+++ linux-2.6/fs/ext4/ext4.h
-@@ -175,6 +175,7 @@ struct mpage_da_data {
-  */
- #define	EXT4_IO_END_UNWRITTEN	0x0001
- #define EXT4_IO_END_ERROR	0x0002
-+#define EXT4_IO_END_QUEUED	0x0004
- 
- struct ext4_io_page {
- 	struct page	*p_page;
-Index: linux-2.6/fs/ext4/page-io.c
-===================================================================
---- linux-2.6.orig/fs/ext4/page-io.c
-+++ linux-2.6/fs/ext4/page-io.c
-@@ -142,7 +142,23 @@ static void ext4_end_io_work(struct work
- 	unsigned long		flags;
- 	int			ret;
- 
--	mutex_lock(&inode->i_mutex);
-+	if (!mutex_trylock(&inode->i_mutex)) {
-+		/*
-+		 * Requeue the work instead of waiting so that the work
-+		 * items queued after this can be processed.
-+		 */
-+		queue_work(EXT4_SB(inode->i_sb)->dio_unwritten_wq, &io->work);
-+		/*
-+		 * To prevent the ext4-dio-unwritten thread from keeping
-+		 * requeueing end_io requests and occupying cpu for too long,
-+		 * yield the cpu if it sees an end_io request that has already
-+		 * been requeued.
-+		 */
-+		if (io->flag & EXT4_IO_END_QUEUED)
-+			yield();
-+		io->flag |= EXT4_IO_END_QUEUED;
-+		return;
-+	}
- 	ret = ext4_end_io_nolock(io);
- 	if (ret < 0) {
- 		mutex_unlock(&inode->i_mutex);
+--Sig_/Jr+9lwRJKc5COU_yOeJpTU/--
