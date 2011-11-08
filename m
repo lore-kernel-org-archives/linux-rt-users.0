@@ -1,102 +1,56 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.0.8-rt22
-Date: Tue, 8 Nov 2011 22:02:32 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111082150490.2694@ionos>
-References: <alpine.LFD.2.02.1111072225340.2694@ionos> <20111108105019.794045fa@redhat.com>
+Subject: [ANNOUNCE] 3.0.8-rt23
+Date: Tue, 8 Nov 2011 23:23:50 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1111082318130.2694@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ted Ts'o <tytso@mit.edu>, Greg KH <greg@kroah.com>
-To: Clark Williams <williams@redhat.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:48851 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:49050 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751286Ab1KHVCg (ORCPT
+	with ESMTP id S1750899Ab1KHWXv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Nov 2011 16:02:36 -0500
-In-Reply-To: <20111108105019.794045fa@redhat.com>
+	Tue, 8 Nov 2011 17:23:51 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 8 Nov 2011, Clark Williams wrote:
-> Got the following splat on boot (f15 64-bit laptop, quad-core i7):
-> 
-> [  146.609030] 
-> [  146.609031] =======================================================
-> [  146.609033] [ INFO: possible circular locking dependency detected ]
-> [  146.609035] 3.0.8-rt22+ #27
-> [  146.609036] -------------------------------------------------------
-> [  146.609038] dconf-service/9046 is trying to acquire lock:
-> [  146.609040]  (&sb->s_type->i_mutex_key#13){+.+.+.}, at: [<ffffffff811adcc4>] ext4_evict_inode+0x44/0x26f
-> [  146.609047] 
-> [  146.609048] but task is already holding lock:
-> [  146.609049]  (&mm->mmap_sem){++++++}, at: [<ffffffff81108ee6>] sys_munmap+0x36/0x5b
-> [  146.609053] 
+Dear RT Folks,
 
-That's an upstream problem which got pulled into 3.0 stable via commit
-2526f36894 (upstream 2581fdc810) but lacks the followup upstream fix
-8c0bec2.  The latter unfortunately has no Cc: stable tag ....
+I'm pleased to announce the 3.0.8-rt23 release.
 
-Ted?
+Changes from 3.0.8-rt22 to 3.0.8-rt23
 
-Thanks,
+  * Cherrypick an ext4 fix which was not sent to stable
+
+  * Add missing idle task comm update (Carsten)
+
+Delta patch against 3.0.8-rt22
+
+  https://tglx.de/~tglx/rt/incr/patch-3.0.8-rt22-rt23.patch.gz
+
+also appended below.
+
+
+Patch against 3.0.8 can be found here:
+
+  https://tglx.de/~tglx/rt/patch-3.0.8-rt23.patch.gz
+
+
+The split quilt queue is available at:
+
+  https://tglx.de/~tglx/rt/patches-3.0.8-rt23.tar.gz
+
+Enjoy,
 
 	tglx
----------->
-commit 8c0bec2151a47906bf779c6715a10ce04453ab77
-Author: Jiaying Zhang <jiayingz@google.com>
-Date:   Wed Aug 31 11:50:51 2011 -0400
 
-    ext4: remove i_mutex lock in ext4_evict_inode to fix lockdep complaining
-    
-    The i_mutex lock and flush_completed_IO() added by commit 2581fdc810
-    in ext4_evict_inode() causes lockdep complaining about potential
-    deadlock in several places.  In most/all of these LOCKDEP complaints
-    it looks like it's a false positive, since many of the potential
-    circular locking cases can't take place by the time the
-    ext4_evict_inode() is called; but since at the very least it may mask
-    real problems, we need to address this.
-    
-    This change removes the flush_completed_IO() and i_mutex lock in
-    ext4_evict_inode().  Instead, we take a different approach to resolve
-    the software lockup that commit 2581fdc810 intends to fix.  Rather
-    than having ext4-dio-unwritten thread wait for grabing the i_mutex
-    lock of an inode, we use mutex_trylock() instead, and simply requeue
-    the work item if we fail to grab the inode's i_mutex lock.
-    
-    This should speed up work queue processing in general and also
-    prevents the following deadlock scenario: During page fault,
-    shrink_icache_memory is called that in turn evicts another inode B.
-    Inode B has some pending io_end work so it calls ext4_ioend_wait()
-    that waits for inode B's i_ioend_count to become zero.  However, inode
-    B's ioend work was queued behind some of inode A's ioend work on the
-    same cpu's ext4-dio-unwritten workqueue.  As the ext4-dio-unwritten
-    thread on that cpu is processing inode A's ioend work, it tries to
-    grab inode A's i_mutex lock.  Since the i_mutex lock of inode A is
-    still hold before the page fault happened, we enter a deadlock.
-    
-    Signed-off-by: Jiaying Zhang <jiayingz@google.com>
-    Signed-off-by: "Theodore Ts'o" <tytso@mit.edu>
-
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index e717dfd..b7d7bd0 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -175,6 +175,7 @@ struct mpage_da_data {
-  */
- #define	EXT4_IO_END_UNWRITTEN	0x0001
- #define EXT4_IO_END_ERROR	0x0002
-+#define EXT4_IO_END_QUEUED	0x0004
- 
- struct ext4_io_page {
- 	struct page	*p_page;
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index c4da98a..18d2558 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -121,9 +121,6 @@ void ext4_evict_inode(struct inode *inode)
+--------------->
+Index: linux-2.6/fs/ext4/inode.c
+===================================================================
+--- linux-2.6.orig/fs/ext4/inode.c
++++ linux-2.6/fs/ext4/inode.c
+@@ -190,9 +190,6 @@ void ext4_evict_inode(struct inode *inod
  
  	trace_ext4_evict_inode(inode);
  
@@ -106,11 +60,74 @@ index c4da98a..18d2558 100644
  	ext4_ioend_wait(inode);
  
  	if (inode->i_nlink) {
-diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
-index 78839af..92f38ee 100644
---- a/fs/ext4/page-io.c
-+++ b/fs/ext4/page-io.c
-@@ -142,7 +142,23 @@ static void ext4_end_io_work(struct work_struct *work)
+Index: linux-2.6/include/linux/init_task.h
+===================================================================
+--- linux-2.6.orig/include/linux/init_task.h
++++ linux-2.6/include/linux/init_task.h
+@@ -132,6 +132,8 @@ extern struct cred init_cred;
+ # define INIT_TIMER_LIST
+ #endif
+ 
++#define INIT_TASK_COMM "swapper"
++
+ /*
+  *  INIT_TASK is used to set up the first task table, touch at
+  * your own risk!. Base=0, limit=0x1fffff (=2MB)
+@@ -168,7 +170,7 @@ extern struct cred init_cred;
+ 	.group_leader	= &tsk,						\
+ 	RCU_INIT_POINTER(.real_cred, &init_cred),			\
+ 	RCU_INIT_POINTER(.cred, &init_cred),				\
+-	.comm		= "swapper",					\
++	.comm		= INIT_TASK_COMM,				\
+ 	.thread		= INIT_THREAD,					\
+ 	.fs		= &init_fs,					\
+ 	.files		= &init_files,					\
+Index: linux-2.6/kernel/sched.c
+===================================================================
+--- linux-2.6.orig/kernel/sched.c
++++ linux-2.6/kernel/sched.c
+@@ -71,6 +71,7 @@
+ #include <linux/ctype.h>
+ #include <linux/ftrace.h>
+ #include <linux/slab.h>
++#include <linux/init_task.h>
+ 
+ #include <asm/tlb.h>
+ #include <asm/irq_regs.h>
+@@ -6109,6 +6110,9 @@ void __cpuinit init_idle(struct task_str
+ 	 */
+ 	idle->sched_class = &idle_sched_class;
+ 	ftrace_graph_init_idle_task(idle, cpu);
++#if defined(CONFIG_SMP)
++	sprintf(idle->comm, "%s/%d", INIT_TASK_COMM, cpu);
++#endif
+ }
+ 
+ /*
+Index: linux-2.6/localversion-rt
+===================================================================
+--- linux-2.6.orig/localversion-rt
++++ linux-2.6/localversion-rt
+@@ -1 +1 @@
+--rt22
++-rt23
+Index: linux-2.6/fs/ext4/ext4.h
+===================================================================
+--- linux-2.6.orig/fs/ext4/ext4.h
++++ linux-2.6/fs/ext4/ext4.h
+@@ -175,6 +175,7 @@ struct mpage_da_data {
+  */
+ #define	EXT4_IO_END_UNWRITTEN	0x0001
+ #define EXT4_IO_END_ERROR	0x0002
++#define EXT4_IO_END_QUEUED	0x0004
+ 
+ struct ext4_io_page {
+ 	struct page	*p_page;
+Index: linux-2.6/fs/ext4/page-io.c
+===================================================================
+--- linux-2.6.orig/fs/ext4/page-io.c
++++ linux-2.6/fs/ext4/page-io.c
+@@ -142,7 +142,23 @@ static void ext4_end_io_work(struct work
  	unsigned long		flags;
  	int			ret;
  
