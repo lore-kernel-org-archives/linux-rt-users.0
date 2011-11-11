@@ -1,57 +1,42 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [ANNOUNCE] 3.0.8-rt22
-Date: Tue, 8 Nov 2011 16:07:10 -0800
-Message-ID: <20111109000710.GC25933@kroah.com>
-References: <alpine.LFD.2.02.1111072225340.2694@ionos>
- <20111108105019.794045fa@redhat.com>
- <alpine.LFD.2.02.1111082150490.2694@ionos>
- <20111108174452.497da95f@redhat.com>
+From: "Tim Sander" <tim.sander@hbm.com>
+Subject: RT Throtteling with PREEMT-RT on UBIFS root fs update
+Date: Fri, 11 Nov 2011 10:56:53 +0100
+Message-ID: <201111111056.53803.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>, Ted Ts'o <tytso@mit.edu>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "LKML" <linux-kernel@vger.kernel.org>
+To: "linux-rt-users" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20111108174452.497da95f@redhat.com>
+Content-Class: urn:content-classes:message
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Nov 08, 2011 at 05:44:52PM -0600, Clark Williams wrote:
-> On Tue, 8 Nov 2011 22:02:32 +0100 (CET)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> 
-> > On Tue, 8 Nov 2011, Clark Williams wrote:
-> > > Got the following splat on boot (f15 64-bit laptop, quad-core i7):
-> > > 
-> > > [  146.609030] 
-> > > [  146.609031] =======================================================
-> > > [  146.609033] [ INFO: possible circular locking dependency detected ]
-> > > [  146.609035] 3.0.8-rt22+ #27
-> > > [  146.609036] -------------------------------------------------------
-> > > [  146.609038] dconf-service/9046 is trying to acquire lock:
-> > > [  146.609040]  (&sb->s_type->i_mutex_key#13){+.+.+.}, at: [<ffffffff811adcc4>] ext4_evict_inode+0x44/0x26f
-> > > [  146.609047] 
-> > > [  146.609048] but task is already holding lock:
-> > > [  146.609049]  (&mm->mmap_sem){++++++}, at: [<ffffffff81108ee6>] sys_munmap+0x36/0x5b
-> > > [  146.609053] 
-> > 
-> > That's an upstream problem which got pulled into 3.0 stable via commit
-> > 2526f36894 (upstream 2581fdc810) but lacks the followup upstream fix
-> >  .  The latter unfortunately has no Cc: stable tag ....
-> > 
-> > Ted?
-> > 
-> > Thanks,
-> > 
-> > 	tglx
-> 
-> 
-> Thanks Thomas. I cherry-picked 8c0bec2, rebuilt with the same config
-> and have booted the resulting kernel with no lockdep splats.
+Hi
 
-Great, I've queued it up for the next 3.0-stable release.
+We are having a problem with a slightly patched (some platform patches,
+newest stable ubifs patches) 3.0.7-rt20 kernel after updating the firmware on 
+the first boot we get a message:
+sched: RT throttling activated
+and ksoftirqd/0 taking 95% of the cpu time.
 
-greg k-h
+Interestingly this only happens after the ubifs root has been updated on the 
+first boot (and not allways). Subsequent boot problems have not been seen.
+
+Any ideas whats causing this?
+Tim
+
+Sorry for noise below, please ignore:
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
+
+Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
