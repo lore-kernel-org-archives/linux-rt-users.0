@@ -1,42 +1,62 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] Compile error with allmodconfig and CONFIG_PREEMPT_RT_FULL=y
-Date: Sun, 13 Nov 2011 01:30:29 +0100
-Message-ID: <1321144229-6108-1-git-send-email-jkacur@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: lkml <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.2-rc1-rt1
+Date: Sun, 13 Nov 2011 23:57:50 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1111132213220.2694@ionos>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ww0-f44.google.com ([74.125.82.44]:62978 "EHLO
-	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751542Ab1KMAak (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:45086 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752646Ab1KMW5w (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 12 Nov 2011 19:30:40 -0500
+	Sun, 13 Nov 2011 17:57:52 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
+Dear RT Folks,
 
-The above can be fixed by exporting in_serving_softirq
+I'm pleased to announce the 3.2-rc1-rt1 release.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- kernel/softirq.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+It's a straight forward port of the 3.0-rt patch queue, which reduced
+the patch size by more than 25% from 807k to 580k. The diffstat change
+is:
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index e8756aa..026a283 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -447,6 +447,7 @@ int in_serving_softirq(void)
- 	preempt_enable();
- 	return res;
- }
-+EXPORT_SYMBOL(in_serving_softirq);
- 
- /*
-  * Called with bh and local interrupts disabled. For full RT cpu must
--- 
-1.7.2.3
+ 429 files changed, 10118 insertions(+), 3000 deletions(-)
+ 318 files changed,  8871 insertions(+), 1858 deletions(-)
 
+Thanks to all who helped polishing patches and bringing them mainline!
+
+
+The test results on my reference machine are in the 3.0-rt ballpark
+and I have not seen any frightening explosions so far.
+
+
+3.2-rc1-rt is not against 3.2-rc1 - it's against the post rc1
+commit 52e4c2a05256cb83cda12f3c2137ab1533344edb.
+
+   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=52e4c2a05256cb83cda12f3c2137ab1533344edb
+
+
+For non git users conveniance I uploaded a delta patch against
+3.2-rc1:
+
+   https://tglx.de/~tglx/rt/3.2/base/patch-3.2-rc1-52e4c2a05-rt1.patch.gz
+
+to get the base kernel on which the RT patch applies.
+
+
+The RT patch against 3.2-rc1-52e4c2a05 can be found here:
+
+   https://tglx.de/~tglx/rt/3.2/patch-3.2-rc1-52e4c2a05-rt1.patch.gz
+
+
+The split quilt queue is available at:
+
+   https://tglx.de/~tglx/rt/3.2/patches-3.2-rc1-52e4c2a05-rt1.tar.gz
+
+
+Enjoy,
+
+	tglx
