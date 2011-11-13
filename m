@@ -1,217 +1,42 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.0.9-rt25
-Date: Sat, 12 Nov 2011 19:41:02 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111121409500.2694@ionos>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] Compile error with allmodconfig and CONFIG_PREEMPT_RT_FULL=y
+Date: Sun, 13 Nov 2011 01:30:29 +0100
+Message-ID: <1321144229-6108-1-git-send-email-jkacur@redhat.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>
+To: lkml <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ww0-f44.google.com ([74.125.82.44]:62978 "EHLO
+	mail-ww0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751542Ab1KMAak (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 12 Nov 2011 19:30:40 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
 
-I'm pleased to announce the 3.0.9-rt25 release.
+The above can be fixed by exporting in_serving_softirq
 
-3.0.9-rt24 is a not announced intermediate release, which only
-updates to 3.0.9. No rt changes except dropping patches which made it
-into 3.0.9.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ kernel/softirq.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Changes from 3.0.9-rt24 to 3.0.9-rt25
-
-  * Lock unsymmetry fix in softirq.c (reported by Yong)
-
-  * Correct RT substituion for spin_trylock_irq()
-
-  * Make SCSI/FCoE RT aware
-
-
-Delta patch against 3.0.9-rt25
-
-  https://tglx.de/~tglx/rt/3.0/incr/patch-3.0.9-rt24-rt25.patch.gz
-
-also appended below.
-
-
-Patch against 3.0.9 can be found here:
-
-  https://tglx.de/~tglx/rt/3.0/patch-3.0.9-rt25.patch.gz
-
-
-The split quilt queue is available at:
-
-  https://tglx.de/~tglx/rt/3.0/patches-3.0.9-rt25.tar.gz
-
-
-The 3.0 RT series has reached the production stability point. As
-always there might be not yet discovered minor issues left, so please
-give it a proper testing.
-
-With this release I'm handing off 3.0-rt to Steven Rostedt. 3.0-rt is
-now in maintenance mode, so it will only get bug fixes and updates to
-future 3.0.y stable releases.
-
-Steven plans to set up a git tree which imports the current quilt
-queue and he will add bug fixes and stable updates incrementaly on top
-of that. Releases will be available as patch against the stable base
-version as well. Thanks Steven for stepping up!
-
-I also want to say thanks to everyone who helped with review, patches,
-testing and bugreports!
-
-3.0-rt was a huge step and it went surprisingly well given the fact,
-that it has been a major rewrite of large parts of the RT core
-technology. Thanks again to all who helped to make this possible.
-
-I'm moving on to 3.2-rt which will be available soon.
-
-Enjoy,
-
-	tglx
-
---------------->
-Index: linux-3.0/include/linux/spinlock_rt.h
-===================================================================
---- linux-3.0.orig/include/linux/spinlock_rt.h
-+++ linux-3.0/include/linux/spinlock_rt.h
-@@ -132,7 +132,7 @@ static inline unsigned long spin_lock_tr
- 	} while (0)
- 
- #define spin_trylock_bh(lock)	__cond_lock(lock, rt_spin_trylock_bh(lock))
--#define spin_trylock_irq(lock)	__cond_lock(lock, rt_spin_trylock(lock))
-+#define spin_trylock_irq(lock)	spin_trylock(lock)
- 
- #define spin_trylock_irqsave(lock, flags)	\
- 	rt_spin_trylock_irqsave(lock, &(flags))
-Index: linux-3.0/kernel/softirq.c
-===================================================================
---- linux-3.0.orig/kernel/softirq.c
-+++ linux-3.0/kernel/softirq.c
-@@ -415,8 +415,8 @@ void local_bh_enable(void)
- 		local_irq_disable();
- 		if (local_softirq_pending())
- 			__do_softirq();
--		local_unlock(local_softirq_lock);
- 		local_irq_enable();
-+		local_unlock(local_softirq_lock);
- 		WARN_ON(current->softirq_nestcnt != 1);
- 	}
- 	current->softirq_nestcnt--;
-Index: linux-3.0/localversion-rt
-===================================================================
---- linux-3.0.orig/localversion-rt
-+++ linux-3.0/localversion-rt
-@@ -1 +1 @@
---rt24
-+-rt25
-Index: linux-3.0/drivers/scsi/fcoe/fcoe.c
-===================================================================
---- linux-3.0.orig/drivers/scsi/fcoe/fcoe.c
-+++ linux-3.0/drivers/scsi/fcoe/fcoe.c
-@@ -1113,7 +1113,7 @@ static void fcoe_percpu_thread_destroy(u
- 	struct sk_buff *skb;
- #ifdef CONFIG_SMP
- 	struct fcoe_percpu_s *p0;
--	unsigned targ_cpu = get_cpu();
-+	unsigned targ_cpu = get_cpu_light();
- #endif /* CONFIG_SMP */
- 
- 	FCOE_DBG("Destroying receive thread for CPU %d\n", cpu);
-@@ -1169,7 +1169,7 @@ static void fcoe_percpu_thread_destroy(u
- 			kfree_skb(skb);
- 		spin_unlock_bh(&p->fcoe_rx_list.lock);
- 	}
--	put_cpu();
-+	put_cpu_light();
- #else
- 	/*
- 	 * This a non-SMP scenario where the singular Rx thread is
-@@ -1365,11 +1365,11 @@ err2:
- static int fcoe_alloc_paged_crc_eof(struct sk_buff *skb, int tlen)
- {
- 	struct fcoe_percpu_s *fps;
--	int rc;
-+	int rc, cpu = get_cpu_light();
- 
--	fps = &get_cpu_var(fcoe_percpu);
-+	fps = &per_cpu(fcoe_percpu, cpu);
- 	rc = fcoe_get_paged_crc_eof(skb, tlen, fps);
--	put_cpu_var(fcoe_percpu);
-+	put_cpu_light();
- 
- 	return rc;
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index e8756aa..026a283 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -447,6 +447,7 @@ int in_serving_softirq(void)
+ 	preempt_enable();
+ 	return res;
  }
-@@ -1561,6 +1561,7 @@ static inline int fcoe_filter_frames(str
- 	stats->InvalidCRCCount++;
- 	if (stats->InvalidCRCCount < 5)
- 		printk(KERN_WARNING "fcoe: dropping frame with CRC error\n");
-+	put_cpu();
- 	return -EINVAL;
- }
++EXPORT_SYMBOL(in_serving_softirq);
  
-@@ -1605,7 +1606,7 @@ static void fcoe_recv_frame(struct sk_bu
- 	 */
- 	hp = (struct fcoe_hdr *) skb_network_header(skb);
- 
--	stats = per_cpu_ptr(lport->dev_stats, get_cpu());
-+	stats = per_cpu_ptr(lport->dev_stats, get_cpu_light());
- 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
- 		if (stats->ErrorFrames < 5)
- 			printk(KERN_WARNING "fcoe: FCoE version "
-@@ -1637,13 +1638,13 @@ static void fcoe_recv_frame(struct sk_bu
- 		goto drop;
- 
- 	if (!fcoe_filter_frames(lport, fp)) {
--		put_cpu();
-+		put_cpu_light();
- 		fc_exch_recv(lport, fp);
- 		return;
- 	}
- drop:
- 	stats->ErrorFrames++;
--	put_cpu();
-+	put_cpu_light();
- 	kfree_skb(skb);
- }
- 
-Index: linux-3.0/drivers/scsi/fcoe/fcoe_ctlr.c
-===================================================================
---- linux-3.0.orig/drivers/scsi/fcoe/fcoe_ctlr.c
-+++ linux-3.0/drivers/scsi/fcoe/fcoe_ctlr.c
-@@ -716,7 +716,7 @@ static unsigned long fcoe_ctlr_age_fcfs(
- 	unsigned long sel_time = 0;
- 	struct fcoe_dev_stats *stats;
- 
--	stats = per_cpu_ptr(fip->lp->dev_stats, get_cpu());
-+	stats = per_cpu_ptr(fip->lp->dev_stats, get_cpu_light());
- 
- 	list_for_each_entry_safe(fcf, next, &fip->fcfs, list) {
- 		deadline = fcf->time + fcf->fka_period + fcf->fka_period / 2;
-@@ -749,7 +749,7 @@ static unsigned long fcoe_ctlr_age_fcfs(
- 				sel_time = fcf->time;
- 		}
- 	}
--	put_cpu();
-+	put_cpu_light();
- 	if (sel_time && !fip->sel_fcf && !fip->sel_time) {
- 		sel_time += msecs_to_jiffies(FCOE_CTLR_START_DELAY);
- 		fip->sel_time = sel_time;
-Index: linux-3.0/drivers/scsi/libfc/fc_exch.c
-===================================================================
---- linux-3.0.orig/drivers/scsi/libfc/fc_exch.c
-+++ linux-3.0/drivers/scsi/libfc/fc_exch.c
-@@ -705,10 +705,10 @@ static struct fc_exch *fc_exch_em_alloc(
- 	}
- 	memset(ep, 0, sizeof(*ep));
- 
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = per_cpu_ptr(mp->pool, cpu);
- 	spin_lock_bh(&pool->lock);
--	put_cpu();
-+	put_cpu_light();
- 
- 	/* peek cache of free slot */
- 	if (pool->left != FC_XID_UNKNOWN) {
+ /*
+  * Called with bh and local interrupts disabled. For full RT cpu must
+-- 
+1.7.2.3
+
