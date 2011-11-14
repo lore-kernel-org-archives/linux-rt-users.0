@@ -1,62 +1,56 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.2-rc1-rt1
-Date: Sun, 13 Nov 2011 23:57:50 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111132213220.2694@ionos>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] v3.2-rc1-52e4c2a05-rt1 fix for compile break
+Date: Mon, 14 Nov 2011 02:44:42 +0100
+Message-ID: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Paul McKenney <paulmck@linux.vnet.ibm.com>,
+	John Kacur <jkacur@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45086 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752646Ab1KMW5w (ORCPT
+Received: from mail-bw0-f46.google.com ([209.85.214.46]:43489 "EHLO
+	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751717Ab1KNBpA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Nov 2011 17:57:52 -0500
+	Sun, 13 Nov 2011 20:45:00 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+kernel/rcutorture.c:492: error: =E2=80=98synchronize_rcu_bh=E2=80=99 un=
+declared here (not in a function)
 
-I'm pleased to announce the 3.2-rc1-rt1 release.
+In CONFIG_PREEMPT_RT_FULL
+doesn't cover function pointer assignment unless we remove the brackets=
+=2E
 
-It's a straight forward port of the 3.0-rt patch queue, which reduced
-the patch size by more than 25% from 807k to 580k. The diffstat change
-is:
+Compile-tested.
 
- 429 files changed, 10118 insertions(+), 3000 deletions(-)
- 318 files changed,  8871 insertions(+), 1858 deletions(-)
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ include/linux/rcutree.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Thanks to all who helped polishing patches and bringing them mainline!
+diff --git a/include/linux/rcutree.h b/include/linux/rcutree.h
+index 800b840..6e503a3 100644
+--- a/include/linux/rcutree.h
++++ b/include/linux/rcutree.h
+@@ -60,7 +60,7 @@ static inline void exit_rcu(void)
+ #ifndef CONFIG_PREEMPT_RT_FULL
+ extern void synchronize_rcu_bh(void);
+ #else
+-# define synchronize_rcu_bh()	synchronize_rcu()
++# define synchronize_rcu_bh	synchronize_rcu
+ #endif
+ extern void synchronize_sched_expedited(void);
+ extern void synchronize_rcu_expedited(void);
+--=20
+1.7.2.3
 
-
-The test results on my reference machine are in the 3.0-rt ballpark
-and I have not seen any frightening explosions so far.
-
-
-3.2-rc1-rt is not against 3.2-rc1 - it's against the post rc1
-commit 52e4c2a05256cb83cda12f3c2137ab1533344edb.
-
-   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=52e4c2a05256cb83cda12f3c2137ab1533344edb
-
-
-For non git users conveniance I uploaded a delta patch against
-3.2-rc1:
-
-   https://tglx.de/~tglx/rt/3.2/base/patch-3.2-rc1-52e4c2a05-rt1.patch.gz
-
-to get the base kernel on which the RT patch applies.
-
-
-The RT patch against 3.2-rc1-52e4c2a05 can be found here:
-
-   https://tglx.de/~tglx/rt/3.2/patch-3.2-rc1-52e4c2a05-rt1.patch.gz
-
-
-The split quilt queue is available at:
-
-   https://tglx.de/~tglx/rt/3.2/patches-3.2-rc1-52e4c2a05-rt1.tar.gz
-
-
-Enjoy,
-
-	tglx
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
