@@ -1,41 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.2-rc1-rt1 - Compile errors also for rc1 vanilla
-Date: Mon, 14 Nov 2011 11:57:24 -0500
-Message-ID: <1321289844.11360.1.camel@frodo>
-References: <alpine.LFD.2.02.1111132213220.2694@ionos>
-	 <201111141014.06906.tim.sander@hbm.com>
-	 <alpine.LFD.2.02.1111141049420.4902@ionos>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH 1/2] v3.2-rc1-52e4c2a05-rt1 fix for compile break
+Date: Mon, 14 Nov 2011 08:50:39 -0800
+Message-ID: <20111114165039.GA2372@linux.vnet.ibm.com>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Tim Sander <tim.sander@hbm.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:44248 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752463Ab1KNQ51 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Nov 2011 11:57:27 -0500
-In-Reply-To: <alpine.LFD.2.02.1111141049420.4902@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2011-11-14 at 11:00 +0100, Thomas Gleixner wrote:
+On Mon, Nov 14, 2011 at 02:44:42AM +0100, John Kacur wrote:
+> kernel/rcutorture.c:492: error: =E2=80=98synchronize_rcu_bh=E2=80=99 =
+undeclared here (not in a function)
+>=20
+> In CONFIG_PREEMPT_RT_FULL
+> doesn't cover function pointer assignment unless we remove the bracke=
+ts.
+>=20
+> Compile-tested.
 
-> As I said in the 3.0.9-rt25 release mail, 3.0-rt will be now
-> maintained by Steven Rostedt and will get bugfixes and stable updates.
+Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
-Yep, I'm currently setting up an environment similar to how the vanilla
-stable branch is being done. Hopefully today or tomorrow I'll have
-something running.
+I have not yet queued this because mainline does not yet fold RCU and
+RCU-bh together.
 
-I've just came back from surgery, and I'm still not 100%, so please bare
-with me for the time being.
+							Thanx, Paul
 
-Thanks,
-
--- Steve
-
-
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  include/linux/rcutree.h |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+>=20
+> diff --git a/include/linux/rcutree.h b/include/linux/rcutree.h
+> index 800b840..6e503a3 100644
+> --- a/include/linux/rcutree.h
+> +++ b/include/linux/rcutree.h
+> @@ -60,7 +60,7 @@ static inline void exit_rcu(void)
+>  #ifndef CONFIG_PREEMPT_RT_FULL
+>  extern void synchronize_rcu_bh(void);
+>  #else
+> -# define synchronize_rcu_bh()	synchronize_rcu()
+> +# define synchronize_rcu_bh	synchronize_rcu
+>  #endif
+>  extern void synchronize_sched_expedited(void);
+>  extern void synchronize_rcu_expedited(void);
+> --=20
+> 1.7.2.3
+>=20
