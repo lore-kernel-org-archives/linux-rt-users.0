@@ -1,33 +1,59 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: [ANNOUNCE] 3.2-rc1-rt1 - Compile errors also for rc1 vanilla
-Date: Mon, 14 Nov 2011 07:58:20 -0500
-Message-ID: <CAOcfFMxGPSXOxeAii+E_owK_1Dpx_JB1Lepmh1c9DoviThArUg@mail.gmail.com>
-References: <alpine.LFD.2.02.1111132213220.2694@ionos>
-	<201111141014.06906.tim.sander@hbm.com>
-	<alpine.LFD.2.02.1111141049420.4902@ionos>
-	<20111114114638.GA1838@fancy-poultry.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
+ CONFIG_PREEMPT_RT_FULL=y
+Date: Mon, 14 Nov 2011 08:51:48 -0800
+Message-ID: <20111114165148.GB2372@linux.vnet.ibm.com>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+ <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-kernel@vger.kernel.org, Tim Sander <tim.sander@hbm.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Heinz Diehl <htd@fancy-poultry.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f174.google.com ([209.85.161.174]:43439 "EHLO
-	mail-gx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752349Ab1KNM6V (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Nov 2011 07:58:21 -0500
-In-Reply-To: <20111114114638.GA1838@fancy-poultry.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> Is there, or will there be a patch against 3.1.1?
+On Mon, Nov 14, 2011 at 02:44:43AM +0100, John Kacur wrote:
+> ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
+> 
+> The above can be fixed by exporting in_serving_softirq
+> 
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> 
+> The above patch was originally for 3.0.9-rt25
+> But I also needed to cherry-pick it for 3.2-rc1-rt1
+> ---
+>  kernel/softirq.c |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> 
+> diff --git a/kernel/softirq.c b/kernel/softirq.c
+> index 3db1d6f..5452432 100644
+> --- a/kernel/softirq.c
+> +++ b/kernel/softirq.c
+> @@ -447,6 +447,7 @@ int in_serving_softirq(void)
+>  	preempt_enable();
+>  	return res;
+>  }
+> +EXPORT_SYMBOL(in_serving_softirq);
 
-thomas announced on the rt-user-list about a week or so back, that we
-will NOT be seeing RT for the 3.1 kernel, and that 3.0 would continue
-to be maintained, but that RT would move directly onto 3.2, skipping
-3.1 completely.
+Why not EXPORT_SYMBOL_GPL?
 
-cheerz
+With that change,
 
-Jordan
+Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+
+Not yet ready for mainline, because mainline does not yet have
+in_serving_softirq().  Therefore not queued for -rcu.
+
+							Thanx, Paul
+
+>  /*
+>   * Called with bh and local interrupts disabled. For full RT cpu must
+> -- 
+> 1.7.2.3
+> 
