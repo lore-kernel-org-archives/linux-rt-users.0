@@ -1,27 +1,31 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
  CONFIG_PREEMPT_RT_FULL=y
-Date: Mon, 14 Nov 2011 09:57:18 -0800
-Message-ID: <20111114175718.GF2372@linux.vnet.ibm.com>
+Date: Mon, 14 Nov 2011 15:51:11 -0500
+Message-ID: <1321303871.5011.6.camel@frodo>
 References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
- <1321235083-21756-2-git-send-email-jkacur@redhat.com>
- <20111114165148.GB2372@linux.vnet.ibm.com>
- <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
-Reply-To: paulmck@linux.vnet.ibm.com
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	lkml <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>
 To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:59167 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753953Ab1KNUvN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Nov 2011 15:51:13 -0500
 In-Reply-To: <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Nov 14, 2011 at 06:39:47PM +0100, John Kacur wrote:
-> 
+On Mon, 2011-11-14 at 18:39 +0100, John Kacur wrote:
 > 
 > On Mon, 14 Nov 2011, Paul E. McKenney wrote:
 > 
@@ -65,21 +69,28 @@ On Mon, Nov 14, 2011 at 06:39:47PM +0100, John Kacur wrote:
 > EXPORT_SYMBOL(__send_remote_softirq);
 > EXPORT_SYMBOL(send_remote_softirq);
 > 
-> Any reason we can't change all of those to EXPORT_SYMBOL_GPL?
+> Any reason we can't change all of those to EXPORT_SYMBOL_GPL?\\
 
-No idea.  But I do suggest making new ones EXPORT_SYMBOL_GPL.
+IIRC, the point behind EXPORT_SYMBOL_GPL() is that, by using the call
+you are using something that is a derivative of the code. Basically all
+new functionality of the kernel is Linux specific and symbols exported
+should be EXPORT_SYMBOL_GPL().
 
-							Thanx, Paul
+But, I also recall that we did not want to make things that are normal
+OS operations under the EXPORT_SYMBOL_GPL(). This would include the
+local_bh_enable/disable(), or anything that is called by generic
+operations. For example, spin_lock() is not a GPL symbol, and if we add
+some new functionality that causes all spin_locks() to call foo_bar(),
+we must also make sure foo_bar() is also under just EXPORT_SYMBOL(),
+otherwise, we just forced EXPORT_SYMBOL_GPL() on spin_lock().
 
-> > With that change,
-> > 
-> > Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> > 
-> > Not yet ready for mainline, because mainline does not yet have
-> > in_serving_softirq().  Therefore not queued for -rcu.
-> > 
-> > 							Thanx, Paul
-> > 
-> > >  /*
-> > >   * Called with bh and local interrupts disabled. For full RT cpu must
-> 
+Some of the above is probably just simple OS operations or are called by
+static OS operation functions.
+
+If we go that route, we might as well make everything
+EXPORT_SYMBOL_GPL(), and be damn to those that use nVidia.
+
+-- Steve
+
+
+
