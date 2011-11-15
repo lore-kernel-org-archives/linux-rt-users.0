@@ -1,41 +1,56 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
- CONFIG_PREEMPT_RT_FULL=y
-Date: Tue, 15 Nov 2011 14:45:20 +0100
-Message-ID: <1321364720.9105.17.camel@marge.simson.net>
-References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
-	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
-	 <20111114165148.GB2372@linux.vnet.ibm.com>
-	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
-	 <1321303871.5011.6.camel@frodo> <1321334539.6347.43.camel@marge.simson.net>
-	 <1321359802.4181.1.camel@frodo> <1321363643.9105.13.camel@marge.simson.net>
+From: Luis Henriques <henrix@camandro.org>
+Subject: Re: [ANNOUNCE] 3.2-rc1-rt2
+Date: Tue, 15 Nov 2011 13:52:38 +0000
+Message-ID: <20111115135238.GA2434@hades>
+References: <alpine.LFD.2.02.1111150050590.4902@ionos>
+ <20111115084059.GA23250@zhy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:60103 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1755591Ab1KONpY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Nov 2011 08:45:24 -0500
-In-Reply-To: <1321363643.9105.13.camel@marge.simson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Yong Zhang <yong.zhang0@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20111115084059.GA23250@zhy>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2011-11-15 at 14:27 +0100, Mike Galbraith wrote:
+On Tue, Nov 15, 2011 at 04:40:59PM +0800, Yong Zhang wrote:
+> Got below warning:
+> 
+> [    8.459702] BUG: sleeping function called from invalid context at linux/kernel/rtmutex.c:645
+> [    8.459705] in_atomic(): 1, irqs_disabled(): 0, pid: 1, name: swapper/0
+> [    8.459707] 1 lock held by swapper/0/1:
+> [    8.459708]  #0:  (&sig->cred_guard_mutex){+.+.+.}, at: [<ffffffff81154c45>] prepare_bprm_creds+0x35/0x80
+> [    8.459717] Pid: 1, comm: swapper/0 Not tainted 3.2.0-rc1-rt2-11311-g3c4c0e7-dirty #10
+> [    8.459718] Call Trace:
 
-> With that exported, the thing builds and runs, but rt_mutex_foo exports
-> appear to be intentionally GPL only, so it's "go fish" for nVidia.
+I'm hitting the same issue.  Here's the trace:
 
-BTW, if you poke that nVidia beast right, it'll keep you locked in
-kernel IPI-ing every CPU as fast as we can do that for up to a full
-second :>  The only thing I ever found that can match that is ext4.
+[    0.915638] BUG: sleeping function called from invalid context at /home/luis.henriques/git-trees/linux-2.6/kernel/rtmutex.c:645
+[    0.915641] in_atomic(): 1, irqs_disabled(): 0, pid: 33, name: busybox
+[    0.915642] 1 lock held by busybox/33:
+[    0.915643]  #0:  (&mm->page_table_lock){+.+...}, at: [<ffffffff81119ec3>] unmap_vmas+0x333/0x6d0
+[    0.915664] Pid: 33, comm: busybox Not tainted 3.2.0-rc1-rt2+ #1
+[    0.915665] Call Trace:
+[    0.915674]  [<ffffffff810497ba>] __might_sleep+0x12a/0x1e0
+[    0.915687]  [<ffffffff81300f74>] rt_spin_lock+0x24/0x60
+[    0.915692]  [<ffffffff8113efcd>] memcg_check_events.clone.33+0x14d/0x250
+[    0.915696]  [<ffffffff8113f1bf>] __mem_cgroup_uncharge_common+0xef/0x270
+[    0.915698]  [<ffffffff8114311f>] mem_cgroup_uncharge_page+0x2f/0x40
+[    0.915701]  [<ffffffff81125410>] page_remove_rmap+0x70/0x90
+[    0.915703]  [<ffffffff81119fbf>] unmap_vmas+0x42f/0x6d0
+[    0.915705]  [<ffffffff811229d9>] exit_mmap+0xa9/0x120
+[    0.915710]  [<ffffffff8104b9e0>] mmput+0x50/0x100
+[    0.915713]  [<ffffffff81052c5b>] exit_mm+0x11b/0x140
+[    0.915718]  [<ffffffff8109cb6d>] ? acct_collect+0x17d/0x1c0
+[    0.915720]  [<ffffffff81053518>] do_exit+0x678/0x930
+[    0.915722]  [<ffffffff8130224e>] ? retint_swapgs+0xe/0x13
+[    0.915724]  [<ffffffff81053881>] do_group_exit+0x61/0xe0
+[    0.915726]  [<ffffffff81053917>] sys_exit_group+0x17/0x20
+[    0.915728]  [<ffffffff81302aeb>] system_call_fastpath+0x16/0x1b
 
-	-Mike
-
+Cheers,
+--
+Luis Henriques
