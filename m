@@ -1,298 +1,103 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.2-rc1-rt2
-Date: Tue, 15 Nov 2011 02:15:52 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111150050590.4902@ionos>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
+ CONFIG_PREEMPT_RT_FULL=y
+Date: Tue, 15 Nov 2011 06:22:19 +0100
+Message-ID: <1321334539.6347.43.camel@marge.simson.net>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
+	 <1321303871.5011.6.camel@frodo>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: John Kacur <jkacur@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49896 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752420Ab1KOBPy (ORCPT
+Received: from mailout-de.gmx.net ([213.165.64.23]:38821 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1750834Ab1KOFWZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Nov 2011 20:15:54 -0500
+	Tue, 15 Nov 2011 00:22:25 -0500
+In-Reply-To: <1321303871.5011.6.camel@frodo>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+On Mon, 2011-11-14 at 15:51 -0500, Steven Rostedt wrote:
+> On Mon, 2011-11-14 at 18:39 +0100, John Kacur wrote:
+> > 
+> > On Mon, 14 Nov 2011, Paul E. McKenney wrote:
+> > 
+> > > On Mon, Nov 14, 2011 at 02:44:43AM +0100, John Kacur wrote:
+> > > > ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
+> > > > 
+> > > > The above can be fixed by exporting in_serving_softirq
+> > > > 
+> > > > Signed-off-by: John Kacur <jkacur@redhat.com>
+> > > > 
+> > > > The above patch was originally for 3.0.9-rt25
+> > > > But I also needed to cherry-pick it for 3.2-rc1-rt1
+> > > > ---
+> > > >  kernel/softirq.c |    1 +
+> > > >  1 files changed, 1 insertions(+), 0 deletions(-)
+> > > > 
+> > > > diff --git a/kernel/softirq.c b/kernel/softirq.c
+> > > > index 3db1d6f..5452432 100644
+> > > > --- a/kernel/softirq.c
+> > > > +++ b/kernel/softirq.c
+> > > > @@ -447,6 +447,7 @@ int in_serving_softirq(void)
+> > > >  	preempt_enable();
+> > > >  	return res;
+> > > >  }
+> > > > +EXPORT_SYMBOL(in_serving_softirq);
+> > > 
+> > > Why not EXPORT_SYMBOL_GPL?
+> > 
+> > I have no problem with that, note however that the upstream file has
+> > 
+> > EXPORT_SYMBOL(irq_stat);
+> > EXPORT_SYMBOL(local_bh_disable);
+> > EXPORT_SYMBOL(_local_bh_enable);
+> > EXPORT_SYMBOL(local_bh_enable);
+> > EXPORT_SYMBOL(local_bh_enable_ip);
+> > EXPORT_SYMBOL(__tasklet_schedule);
+> > EXPORT_SYMBOL(__tasklet_hi_schedule);
+> > EXPORT_SYMBOL(__tasklet_hi_schedule_first);
+> > EXPORT_SYMBOL(tasklet_init);
+> > EXPORT_SYMBOL(tasklet_kill);
+> > EXPORT_SYMBOL(__send_remote_softirq);
+> > EXPORT_SYMBOL(send_remote_softirq);
+> > 
+> > Any reason we can't change all of those to EXPORT_SYMBOL_GPL?\\
+> 
+> IIRC, the point behind EXPORT_SYMBOL_GPL() is that, by using the call
+> you are using something that is a derivative of the code. Basically all
+> new functionality of the kernel is Linux specific and symbols exported
+> should be EXPORT_SYMBOL_GPL().
+> 
+> But, I also recall that we did not want to make things that are normal
+> OS operations under the EXPORT_SYMBOL_GPL(). This would include the
+> local_bh_enable/disable(), or anything that is called by generic
+> operations. For example, spin_lock() is not a GPL symbol, and if we add
+> some new functionality that causes all spin_locks() to call foo_bar(),
+> we must also make sure foo_bar() is also under just EXPORT_SYMBOL(),
+> otherwise, we just forced EXPORT_SYMBOL_GPL() on spin_lock().
+> 
+> Some of the above is probably just simple OS operations or are called by
+> static OS operation functions.
+> 
+> If we go that route, we might as well make everything
+> EXPORT_SYMBOL_GPL(), and be damn to those that use nVidia.
 
-I'm pleased to announce the 3.2-rc1-rt2 release.
+EXPORT_SYMBOL_GPL(migrate_disable) alone screws nVidia users, no?
 
-Changes vs. 3.2-rc1-rt2:
+I have an RT user who has no other viable choice than nVidia.  If the
+above is true, that user will end up stuck at 2.6.33-rt until we get a
+driver that actually works... or they deem linux to be a non-solution.
 
-  * Add missing softirq export (John Kacur)
+	-Mike
 
-  * Fix rcu macro substitution (John Kacur)
-
-  * Fix device mapper BUG_ON (Reported by Luis Claudio)
-
-  * Fix x86 aesni (crypto) preemption problem (Peter Zijlstra,
-    reported by Carsten Emde)
-
-  * Fix UP (tiny) RCU build issues (Reported by Tim Sanders)
-
-
-3.2-rc1-rt2 is not against 3.2-rc1 - it's against the post rc1
-commit 52e4c2a05256cb83cda12f3c2137ab1533344edb.
-
-   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=52e4c2a05256cb83cda12f3c2137ab1533344edb
-
-
-For non git users conveniance I uploaded a delta patch against
-3.2-rc1:
-
-   https://tglx.de/~tglx/rt/3.2/base/patch-3.2-rc1-52e4c2a05.patch.gz
-
-to get the base kernel on which the RT patch applies.
-
-
-The incremental patch against 3.2-rc1-rt1 can be found here:
-
-    https://tglx.de/~tglx/rt/3.2/incr/patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.gz
-
-and is also appended below.
-
-
-The RT patch against 3.2-rc1-52e4c2a05 can be found here:
-
-   https://tglx.de/~tglx/rt/3.2/patch-3.2-rc1-52e4c2a05-rt2.patch.gz
-
-
-The split quilt queue is available at:
-
-   https://tglx.de/~tglx/rt/3.2/patches-3.2-rc1-52e4c2a05-rt2.tar.gz
-
-
-I got several private (sigh) questions about the signature files which
-can be found beside the release files.
-
- The signature file is a gpg detached signature signed with my signing
- key against the _uncompressed_ file.
-
- In order to verify the signature, download both the release file and
- the signature file (which has ".sig" appended to the release file),
- e.g.:
-
-  wget https://tglx.de/~tglx/rt/3.2/incr/patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.gz
-  wget https://tglx.de/~tglx/rt/3.2/incr/patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.sign
-
- Now decompress the release file:
-
-  gunzip patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.gz
-
- Make sure that you have my gpg key in your gpg keyring
-
-  gpg --recv-keys 06FF0B14
-
- Now verify against the signature:
-
-  gpg --verify patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.sign patch-3.2-rc1-52e4c2a05-rt1-rt2.patch.gz
-
- That should give you something like
-
-  gpg: Signature made Tue 15 Nov 2011 12:47:24 AM CET using RSA key ID 0D7498A1
-  gpg: Good signature from "Thomas Gleixner <tglx@linutronix.de>"
-  gpg:                 aka "Thomas Gleixner <tglx@glx-um.de>"
-  gpg:                 aka "Thomas Gleixner <tglx@tglx.de>"
-  gpg: WARNING: This key is not certified with a trusted signature!
-  gpg:          There is no indication that the signature belongs to the owner.
-
- The last two lines are because you do not trust my key when you
- downloaded it, but that's your decision to make :)
-
-Enjoy,
-
-	tglx
----
-Index: linux-3.2/include/linux/rcutree.h
-===================================================================
---- linux-3.2.orig/include/linux/rcutree.h
-+++ linux-3.2/include/linux/rcutree.h
-@@ -60,7 +60,7 @@ static inline void exit_rcu(void)
- #ifndef CONFIG_PREEMPT_RT_FULL
- extern void synchronize_rcu_bh(void);
- #else
--# define synchronize_rcu_bh()	synchronize_rcu()
-+# define synchronize_rcu_bh	synchronize_rcu
- #endif
- extern void synchronize_sched_expedited(void);
- extern void synchronize_rcu_expedited(void);
-Index: linux-3.2/init/Kconfig
-===================================================================
---- linux-3.2.orig/init/Kconfig
-+++ linux-3.2/init/Kconfig
-@@ -410,7 +410,7 @@ config TINY_RCU
- 
- config TINY_PREEMPT_RCU
- 	bool "Preemptible UP-only small-memory-footprint RCU"
--	depends on PREEMPT && !SMP && !PREEMPT_RT_FULL
-+	depends on PREEMPT && !SMP
- 	help
- 	  This option selects the RCU implementation that is designed
- 	  for real-time UP systems.  This option greatly reduces the
-Index: linux-3.2/kernel/softirq.c
-===================================================================
---- linux-3.2.orig/kernel/softirq.c
-+++ linux-3.2/kernel/softirq.c
-@@ -447,6 +447,7 @@ int in_serving_softirq(void)
- 	preempt_enable();
- 	return res;
- }
-+EXPORT_SYMBOL(in_serving_softirq);
- 
- /*
-  * Called with bh and local interrupts disabled. For full RT cpu must
-Index: linux-3.2/localversion-rt
-===================================================================
---- linux-3.2.orig/localversion-rt
-+++ linux-3.2/localversion-rt
-@@ -1 +1 @@
---rt1
-+-rt2
-Index: linux-3.2/include/linux/sysctl.h
-===================================================================
---- linux-3.2.orig/include/linux/sysctl.h
-+++ linux-3.2/include/linux/sysctl.h
-@@ -932,6 +932,7 @@ enum
- #include <linux/list.h>
- #include <linux/rcupdate.h>
- #include <linux/wait.h>
-+#include <linux/atomic.h>
- 
- /* For the /proc/sys support */
- struct ctl_table;
-Index: linux-3.2/kernel/rcutiny.c
-===================================================================
---- linux-3.2.orig/kernel/rcutiny.c
-+++ linux-3.2/kernel/rcutiny.c
-@@ -243,6 +243,7 @@ void call_rcu_sched(struct rcu_head *hea
- }
- EXPORT_SYMBOL_GPL(call_rcu_sched);
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Post an RCU bottom-half callback to be invoked after any subsequent
-  * quiescent state.
-@@ -252,3 +253,4 @@ void call_rcu_bh(struct rcu_head *head, 
- 	__call_rcu(head, func, &rcu_bh_ctrlblk);
- }
- EXPORT_SYMBOL_GPL(call_rcu_bh);
-+#endif
-Index: linux-3.2/arch/x86/crypto/aesni-intel_glue.c
-===================================================================
---- linux-3.2.orig/arch/x86/crypto/aesni-intel_glue.c
-+++ linux-3.2/arch/x86/crypto/aesni-intel_glue.c
-@@ -289,14 +289,14 @@ static int ecb_encrypt(struct blkcipher_
- 	err = blkcipher_walk_virt(desc, &walk);
- 	desc->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	kernel_fpu_begin();
- 	while ((nbytes = walk.nbytes)) {
-+		kernel_fpu_begin();
- 		aesni_ecb_enc(ctx, walk.dst.virt.addr, walk.src.virt.addr,
--			      nbytes & AES_BLOCK_MASK);
-+				nbytes & AES_BLOCK_MASK);
-+		kernel_fpu_end();
- 		nbytes &= AES_BLOCK_SIZE - 1;
- 		err = blkcipher_walk_done(desc, &walk, nbytes);
- 	}
--	kernel_fpu_end();
- 
- 	return err;
- }
-@@ -313,14 +313,14 @@ static int ecb_decrypt(struct blkcipher_
- 	err = blkcipher_walk_virt(desc, &walk);
- 	desc->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	kernel_fpu_begin();
- 	while ((nbytes = walk.nbytes)) {
-+		kernel_fpu_begin();
- 		aesni_ecb_dec(ctx, walk.dst.virt.addr, walk.src.virt.addr,
- 			      nbytes & AES_BLOCK_MASK);
-+		kernel_fpu_end();
- 		nbytes &= AES_BLOCK_SIZE - 1;
- 		err = blkcipher_walk_done(desc, &walk, nbytes);
- 	}
--	kernel_fpu_end();
- 
- 	return err;
- }
-@@ -359,14 +359,14 @@ static int cbc_encrypt(struct blkcipher_
- 	err = blkcipher_walk_virt(desc, &walk);
- 	desc->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	kernel_fpu_begin();
- 	while ((nbytes = walk.nbytes)) {
-+		kernel_fpu_begin();
- 		aesni_cbc_enc(ctx, walk.dst.virt.addr, walk.src.virt.addr,
- 			      nbytes & AES_BLOCK_MASK, walk.iv);
-+		kernel_fpu_end();
- 		nbytes &= AES_BLOCK_SIZE - 1;
- 		err = blkcipher_walk_done(desc, &walk, nbytes);
- 	}
--	kernel_fpu_end();
- 
- 	return err;
- }
-@@ -383,14 +383,14 @@ static int cbc_decrypt(struct blkcipher_
- 	err = blkcipher_walk_virt(desc, &walk);
- 	desc->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	kernel_fpu_begin();
- 	while ((nbytes = walk.nbytes)) {
-+		kernel_fpu_begin();
- 		aesni_cbc_dec(ctx, walk.dst.virt.addr, walk.src.virt.addr,
- 			      nbytes & AES_BLOCK_MASK, walk.iv);
-+		kernel_fpu_end();
- 		nbytes &= AES_BLOCK_SIZE - 1;
- 		err = blkcipher_walk_done(desc, &walk, nbytes);
- 	}
--	kernel_fpu_end();
- 
- 	return err;
- }
-@@ -445,18 +445,20 @@ static int ctr_crypt(struct blkcipher_de
- 	err = blkcipher_walk_virt_block(desc, &walk, AES_BLOCK_SIZE);
- 	desc->flags &= ~CRYPTO_TFM_REQ_MAY_SLEEP;
- 
--	kernel_fpu_begin();
- 	while ((nbytes = walk.nbytes) >= AES_BLOCK_SIZE) {
-+		kernel_fpu_begin();
- 		aesni_ctr_enc(ctx, walk.dst.virt.addr, walk.src.virt.addr,
- 			      nbytes & AES_BLOCK_MASK, walk.iv);
-+		kernel_fpu_end();
- 		nbytes &= AES_BLOCK_SIZE - 1;
- 		err = blkcipher_walk_done(desc, &walk, nbytes);
- 	}
- 	if (walk.nbytes) {
-+		kernel_fpu_begin();
- 		ctr_crypt_final(ctx, &walk);
-+		kernel_fpu_end();
- 		err = blkcipher_walk_done(desc, &walk, 0);
- 	}
--	kernel_fpu_end();
- 
- 	return err;
- }
-Index: linux-3.2/drivers/md/dm.c
-===================================================================
---- linux-3.2.orig/drivers/md/dm.c
-+++ linux-3.2/drivers/md/dm.c
-@@ -1648,14 +1648,14 @@ static void dm_request_fn(struct request
- 		if (map_request(ti, clone, md))
- 			goto requeued;
- 
--		BUG_ON(!irqs_disabled());
-+		BUG_ON_NORT(!irqs_disabled());
- 		spin_lock(q->queue_lock);
- 	}
- 
- 	goto out;
- 
- requeued:
--	BUG_ON(!irqs_disabled());
-+	BUG_ON_NORT(!irqs_disabled());
- 	spin_lock(q->queue_lock);
- 
- delay_and_out:
