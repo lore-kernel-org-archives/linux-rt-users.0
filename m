@@ -1,43 +1,40 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] Fix typo in use of BUG_ON_NONRT macro for RT
-Date: Tue, 15 Nov 2011 13:58:07 +0100
-Message-ID: <1321361887-544-1-git-send-email-jkacur@redhat.com>
-Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
+ CONFIG_PREEMPT_RT_FULL=y
+Date: Tue, 15 Nov 2011 14:27:23 +0100
+Message-ID: <1321363643.9105.13.camel@marge.simson.net>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
+	 <1321303871.5011.6.camel@frodo> <1321334539.6347.43.camel@marge.simson.net>
+	 <1321359802.4181.1.camel@frodo>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: John Kacur <jkacur@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1321359802.4181.1.camel@frodo>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In drivers/md/dm.c BUG_ON_NORT should be BUG_ON_NONRT
+On Tue, 2011-11-15 at 07:23 -0500, Steven Rostedt wrote:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- drivers/md/dm.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+> Right, migrate_disable() should not have been an EXPORT_SYMBOL_GPL(), as
+> it is a helper functions that is also exported as EXPORT_SYMBOL(). It
+> shouldn't be called directly anyway, even by code in the kernel proper.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e917b7f..b1eff42 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1648,14 +1648,14 @@ static void dm_request_fn(struct request_queue *q)
- 		if (map_request(ti, clone, md))
- 			goto requeued;
- 
--		BUG_ON_NORT(!irqs_disabled());
-+		BUG_ON_NONRT(!irqs_disabled());
- 		spin_lock(q->queue_lock);
- 	}
- 
- 	goto out;
- 
- requeued:
--	BUG_ON_NORT(!irqs_disabled());
-+	BUG_ON_NONRT(!irqs_disabled());
- 	spin_lock(q->queue_lock);
- 
- delay_and_out:
--- 
-1.7.2.3
+Ah.  Doesn't matter though.  I downloaded their latest, tried to build
+it with EXPORT_SYMBOL(migrate_enable/disable) ..
+
+FATAL: modpost: GPL-incompatible module nvidia.ko uses GPL-only symbol '__rt_mutex_init'
+
+With that exported, the thing builds and runs, but rt_mutex_foo exports
+appear to be intentionally GPL only, so it's "go fish" for nVidia.
+
+	-Mike
