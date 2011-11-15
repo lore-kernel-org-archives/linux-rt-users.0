@@ -1,103 +1,95 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
- CONFIG_PREEMPT_RT_FULL=y
-Date: Tue, 15 Nov 2011 06:22:19 +0100
-Message-ID: <1321334539.6347.43.camel@marge.simson.net>
-References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
-	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
-	 <20111114165148.GB2372@linux.vnet.ibm.com>
-	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
-	 <1321303871.5011.6.camel@frodo>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: [ANNOUNCE] 3.2-rc1-rt2
+Date: Tue, 15 Nov 2011 16:40:59 +0800
+Message-ID: <20111115084059.GA23250@zhy>
+References: <alpine.LFD.2.02.1111150050590.4902@ionos>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:38821 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1750834Ab1KOFWZ (ORCPT
+Received: from mail-iy0-f174.google.com ([209.85.210.174]:37635 "EHLO
+	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753578Ab1KOIlK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Nov 2011 00:22:25 -0500
-In-Reply-To: <1321303871.5011.6.camel@frodo>
+	Tue, 15 Nov 2011 03:41:10 -0500
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1111150050590.4902@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-11-14 at 15:51 -0500, Steven Rostedt wrote:
-> On Mon, 2011-11-14 at 18:39 +0100, John Kacur wrote:
-> > 
-> > On Mon, 14 Nov 2011, Paul E. McKenney wrote:
-> > 
-> > > On Mon, Nov 14, 2011 at 02:44:43AM +0100, John Kacur wrote:
-> > > > ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
-> > > > 
-> > > > The above can be fixed by exporting in_serving_softirq
-> > > > 
-> > > > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > > > 
-> > > > The above patch was originally for 3.0.9-rt25
-> > > > But I also needed to cherry-pick it for 3.2-rc1-rt1
-> > > > ---
-> > > >  kernel/softirq.c |    1 +
-> > > >  1 files changed, 1 insertions(+), 0 deletions(-)
-> > > > 
-> > > > diff --git a/kernel/softirq.c b/kernel/softirq.c
-> > > > index 3db1d6f..5452432 100644
-> > > > --- a/kernel/softirq.c
-> > > > +++ b/kernel/softirq.c
-> > > > @@ -447,6 +447,7 @@ int in_serving_softirq(void)
-> > > >  	preempt_enable();
-> > > >  	return res;
-> > > >  }
-> > > > +EXPORT_SYMBOL(in_serving_softirq);
-> > > 
-> > > Why not EXPORT_SYMBOL_GPL?
-> > 
-> > I have no problem with that, note however that the upstream file has
-> > 
-> > EXPORT_SYMBOL(irq_stat);
-> > EXPORT_SYMBOL(local_bh_disable);
-> > EXPORT_SYMBOL(_local_bh_enable);
-> > EXPORT_SYMBOL(local_bh_enable);
-> > EXPORT_SYMBOL(local_bh_enable_ip);
-> > EXPORT_SYMBOL(__tasklet_schedule);
-> > EXPORT_SYMBOL(__tasklet_hi_schedule);
-> > EXPORT_SYMBOL(__tasklet_hi_schedule_first);
-> > EXPORT_SYMBOL(tasklet_init);
-> > EXPORT_SYMBOL(tasklet_kill);
-> > EXPORT_SYMBOL(__send_remote_softirq);
-> > EXPORT_SYMBOL(send_remote_softirq);
-> > 
-> > Any reason we can't change all of those to EXPORT_SYMBOL_GPL?\\
+On Tue, Nov 15, 2011 at 02:15:52AM +0100, Thomas Gleixner wrote:
+> Dear RT Folks,
 > 
-> IIRC, the point behind EXPORT_SYMBOL_GPL() is that, by using the call
-> you are using something that is a derivative of the code. Basically all
-> new functionality of the kernel is Linux specific and symbols exported
-> should be EXPORT_SYMBOL_GPL().
+> I'm pleased to announce the 3.2-rc1-rt2 release.
 > 
-> But, I also recall that we did not want to make things that are normal
-> OS operations under the EXPORT_SYMBOL_GPL(). This would include the
-> local_bh_enable/disable(), or anything that is called by generic
-> operations. For example, spin_lock() is not a GPL symbol, and if we add
-> some new functionality that causes all spin_locks() to call foo_bar(),
-> we must also make sure foo_bar() is also under just EXPORT_SYMBOL(),
-> otherwise, we just forced EXPORT_SYMBOL_GPL() on spin_lock().
+> Changes vs. 3.2-rc1-rt2:
 > 
-> Some of the above is probably just simple OS operations or are called by
-> static OS operation functions.
+>   * Add missing softirq export (John Kacur)
 > 
-> If we go that route, we might as well make everything
-> EXPORT_SYMBOL_GPL(), and be damn to those that use nVidia.
+>   * Fix rcu macro substitution (John Kacur)
+> 
+>   * Fix device mapper BUG_ON (Reported by Luis Claudio)
+> 
+>   * Fix x86 aesni (crypto) preemption problem (Peter Zijlstra,
+>     reported by Carsten Emde)
+> 
+>   * Fix UP (tiny) RCU build issues (Reported by Tim Sanders)
 
-EXPORT_SYMBOL_GPL(migrate_disable) alone screws nVidia users, no?
+Got below warning:
 
-I have an RT user who has no other viable choice than nVidia.  If the
-above is true, that user will end up stuck at 2.6.33-rt until we get a
-driver that actually works... or they deem linux to be a non-solution.
+[    8.459702] BUG: sleeping function called from invalid context at linux/kernel/rtmutex.c:645
+[    8.459705] in_atomic(): 1, irqs_disabled(): 0, pid: 1, name: swapper/0
+[    8.459707] 1 lock held by swapper/0/1:
+[    8.459708]  #0:  (&sig->cred_guard_mutex){+.+.+.}, at: [<ffffffff81154c45>] prepare_bprm_creds+0x35/0x80
+[    8.459717] Pid: 1, comm: swapper/0 Not tainted 3.2.0-rc1-rt2-11311-g3c4c0e7-dirty #10
+[    8.459718] Call Trace:
+[    8.459724]  [<ffffffff81040c4e>] __might_sleep+0x12e/0x1e0
+[    8.459730]  [<ffffffff815f4d74>] rt_spin_lock+0x24/0x60
+[    8.459735]  [<ffffffff8114506e>] memcg_check_events+0x11e/0x230
+[    8.459739]  [<ffffffff81146c5a>] T.1144+0x8a/0xf0
+[    8.459743]  [<ffffffff81146d16>] __mem_cgroup_commit_charge_lrucare+0x56/0x180
+[    8.459747]  [<ffffffff810430c9>] ? sub_preempt_count+0xa9/0xe0
+[    8.459751]  [<ffffffff81147d08>] mem_cgroup_cache_charge+0xd8/0xe0
+[    8.459756]  [<ffffffff81103a49>] add_to_page_cache_locked+0x49/0x100
+[    8.459760]  [<ffffffff8110344f>] ? find_get_page+0xdf/0x1a0
+[    8.459764]  [<ffffffff81103b22>] add_to_page_cache_lru+0x22/0x50
+[    8.459767]  [<ffffffff81103ca5>] do_read_cache_page+0x75/0x1a0
+[    8.459774]  [<ffffffff812695f0>] ? nfs_follow_link+0xc0/0xc0
+[    8.459777]  [<ffffffff81103e1c>] read_cache_page_async+0x1c/0x20
+[    8.459781]  [<ffffffff81103e2e>] read_cache_page+0xe/0x20
+[    8.459785]  [<ffffffff81269589>] nfs_follow_link+0x59/0xc0
+[    8.459789]  [<ffffffff8115de07>] path_openat+0x2a7/0x470
+[    8.459793]  [<ffffffff8115e0e9>] do_filp_open+0x49/0xa0
+[    8.459798]  [<ffffffff81155b22>] open_exec+0x32/0xf0
+[    8.459803]  [<ffffffff811a3e0b>] load_elf_binary+0x85b/0x1d30
+[    8.459810]  [<ffffffff81096d55>] ? __lock_acquire+0x4f5/0xbf0
+[    8.459816]  [<ffffffff8100a819>] ? native_sched_clock+0x29/0x80
+[    8.459821]  [<ffffffff8108429f>] ? local_clock+0x4f/0x60
+[    8.459824]  [<ffffffff815f4658>] ? rt_spin_lock_slowunlock+0x78/0x80
+[    8.459828]  [<ffffffff81091a39>] ? trace_hardirqs_off_caller+0x29/0x120
+[    8.459832]  [<ffffffff8109119e>] ? put_lock_stats+0xe/0x40
+[    8.459836]  [<ffffffff815f4658>] ? rt_spin_lock_slowunlock+0x78/0x80
+[    8.459840]  [<ffffffff811a35b0>] ? elf_map+0x1d0/0x1d0
+[    8.459843]  [<ffffffff810430c9>] ? sub_preempt_count+0xa9/0xe0
+[    8.459847]  [<ffffffff811a35b0>] ? elf_map+0x1d0/0x1d0
+[    8.459850]  [<ffffffff81154748>] search_binary_handler+0x1c8/0x4b0
+[    8.459854]  [<ffffffff811545d7>] ? search_binary_handler+0x57/0x4b0
+[    8.459858]  [<ffffffff81156876>] do_execve_common+0x276/0x330
+[    8.459862]  [<ffffffff811569ba>] do_execve+0x3a/0x40
+[    8.459866]  [<ffffffff8100bdca>] sys_execve+0x4a/0x80
+[    8.459871]  [<ffffffff815f85e8>] kernel_execve+0x68/0xd0
+[    8.459877]  [<ffffffff81000333>] ? run_init_process+0x23/0x30
+[    8.459881]  [<ffffffff81000398>] init_post+0x58/0xd0
+[    8.459888]  [<ffffffff81b5e6bd>] kernel_init+0x156/0x160
+[    8.459892]  [<ffffffff815f8574>] kernel_thread_helper+0x4/0x10
+[    8.459896]  [<ffffffff810423bc>] ? finish_task_switch+0x8c/0x110
+[    8.459900]  [<ffffffff815f5bab>] ? _raw_spin_unlock_irq+0x3b/0x70
+[    8.459903]  [<ffffffff815f5f61>] ? retint_restore_args+0xe/0xe
+[    8.459907]  [<ffffffff81b5e567>] ? parse_early_options+0x20/0x20
+[    8.459911]  [<ffffffff815f8570>] ? gs_change+0xb/0xb
 
-	-Mike
-
+Thanks,
+Yong
