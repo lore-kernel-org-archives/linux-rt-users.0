@@ -1,63 +1,47 @@
-From: Rolando Martins <rolando.martins@gmail.com>
-Subject: Re: EDF integration?
-Date: Tue, 15 Nov 2011 10:37:12 +0000
-Message-ID: <CABcS5h2qZxa8FYqw-LZ_uMpgObf2EFZUgdSvGSHH8j582E4sbA@mail.gmail.com>
-References: <CABcS5h0gwKKVwLY-+OM5Kcq7Fv2WAB0x+ui5URuztKdiOFfq8g@mail.gmail.com>
-	<4EC237F8.5050403@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 2/2] Compile error with allmodconfig and
+ CONFIG_PREEMPT_RT_FULL=y
+Date: Tue, 15 Nov 2011 07:23:22 -0500
+Message-ID: <1321359802.4181.1.camel@frodo>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
+	 <1321303871.5011.6.camel@frodo> <1321334539.6347.43.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Juri Lelli <juri.lelli@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: John Kacur <jkacur@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bw0-f46.google.com ([209.85.214.46]:36283 "EHLO
-	mail-bw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754545Ab1KOKhN convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:36688 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751784Ab1KOMX1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Nov 2011 05:37:13 -0500
-Received: by bke11 with SMTP id 11so6976440bke.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Nov 2011 02:37:12 -0800 (PST)
-In-Reply-To: <4EC237F8.5050403@gmail.com>
+	Tue, 15 Nov 2011 07:23:27 -0500
+In-Reply-To: <1321334539.6347.43.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-that is great news!
-I really looking forward to post. ;)
+On Tue, 2011-11-15 at 06:22 +0100, Mike Galbraith wrote:
 
-Great work! (I glad Dario still remains tied to the process)
-Rolando
+> > If we go that route, we might as well make everything
+> > EXPORT_SYMBOL_GPL(), and be damn to those that use nVidia.
+> 
+> EXPORT_SYMBOL_GPL(migrate_disable) alone screws nVidia users, no?
+> 
+> I have an RT user who has no other viable choice than nVidia.  If the
+> above is true, that user will end up stuck at 2.6.33-rt until we get a
+> driver that actually works... or they deem linux to be a non-solution.
+
+Right, migrate_disable() should not have been an EXPORT_SYMBOL_GPL(), as
+it is a helper functions that is also exported as EXPORT_SYMBOL(). It
+shouldn't be called directly anyway, even by code in the kernel proper.
+
+-- Steve
 
 
-
-On Tue, Nov 15, 2011 at 9:59 AM, Juri Lelli <juri.lelli@gmail.com> wrot=
-e:
-> Hi,
->
-> On 11/15/2011 10:41 AM, Rolando Martins wrote:
->>
->> Hi,
->> Is there any news on the possible integration of the EDF scheduling
->> class (SCHED_DEADLINE) in the RT branch?
->>
->
-> Cannot speak about "the integration" :-P, but I can tell you that I'm
-> currently taking over Dario's work (he has a new job now, and I start=
-ed
-> working at his previous lab), even if he remains behind the scenes.
->
-> We focused on the RT branch (3.2-rc1-rtx) for the next release and I'=
-m quite
-> close to post it (hope before the end of November).
->
-> Nice to hear you are interested on it!
->
-> Thanks,
->
-> =A0 =A0 =A0 =A0Juri
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
