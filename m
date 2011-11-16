@@ -1,63 +1,34 @@
-From: Darcy Watkins <dwatkins@tranzeo.com>
-Subject: Re: rtmutex grabbed twice by same context in network code
-Date: Tue, 15 Nov 2011 09:01:08 -0800
-Message-ID: <1321376468.27762.47.camel@tr-pentomino>
-References: <1321310484.10018.74.camel@tr-pentomino>
-	 <alpine.LFD.2.02.1111150010200.4902@ionos>
+From: Javier Sanz <jsanza@gmail.com>
+Subject: 3.2-rc1 and nvidia drivers
+Date: Wed, 16 Nov 2011 10:10:17 +0100
+Message-ID: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from testserv.tranzeo.com ([64.114.87.10]:28019 "EHLO
-	mail2.tranzeo.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755643Ab1KORBJ (ORCPT
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:42901 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753478Ab1KPJKT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Nov 2011 12:01:09 -0500
-In-Reply-To: <alpine.LFD.2.02.1111150010200.4902@ionos>
+	Wed, 16 Nov 2011 04:10:19 -0500
+Received: by eye27 with SMTP id 27so178193eye.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Nov 2011 01:10:17 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-11-14 at 15:12 -0800, Thomas Gleixner wrote:
-> On Mon, 14 Nov 2011, Darcy Watkins wrote:
-> 
-> > Hi,
-> >
-> > Anyone have insight into the kernel crash below?
-> 
-> Can you please enable CONFIG_PROVE_LOCKING ? That should tell us all
-> the details.
+Hello,
 
-Hi Thomas,
+Congratulations all people involved in 3.2-rc1-rt2 release, great job !
 
-I tried that but couldn't fit the resulting system into the memory on
-the device.  oops!   But I think I determined the cause.
+So, can i ask a favor ..
 
-The function header comments for netif_receive_skb() mentions it should
-only be used under softirqd context.  I guess earlier kernel versions I
-used didn't really care.  But the newest ones do.
+Can anyone publish a patch for nvidia drivers and rt series ...
+"resolving" the "GPL" string issue?
 
-To invoke it under the thread context, I used the technique described
-in...
+Really, i tried to get it run , but, it doen't work .. and i think
+there are a lot of people that need it , but ,..
+why you don't ask ?
 
-http://kerneltrap.org/mailarchive/linux-netdev/2010/5/19/6277601
+So, if some has running it .,. please, 3 minutes ... publish it
 
-...and it seems to avoid the crash.  Essentially the trick is to suspend
-bottom half, then invoke netif_receive_skb(), then allow it.
-
-When I looked at dev.c in netif_rx_ni() I notice functions like
-migate_disable/enable(), are those related to SMP support?
-
-
-Thanks,
-
-Darcy
-> 
-> Thanks,
-> 
->         tglx
-> 
-> 
-
-
+thank you
