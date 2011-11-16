@@ -1,45 +1,58 @@
-From: Luis Henriques <henrix@camandro.org>
-Subject: Re: [PATCH -rt] memcg: use migrate_disable()/migrate_enable( ) in
- memcg_check_events()
-Date: Wed, 16 Nov 2011 17:18:09 +0000
-Message-ID: <20111116171809.GA1999@hades>
-References: <alpine.LFD.2.02.1111150050590.4902@ionos>
- <20111115084059.GA23250@zhy>
- <20111116091653.GA8692@zhy>
- <1321452758.4181.18.camel@frodo>
- <alpine.LFD.2.02.1111161801270.4902@ionos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH][RT] tracing: Show padding as unsigned short
+Date: Wed, 16 Nov 2011 13:19:35 -0500
+Message-ID: <1321467575.4181.36.camel@frodo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Yong Zhang <yong.zhang0@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1111161801270.4902@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:45480 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752271Ab1KPSTi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 Nov 2011 13:19:38 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Nov 16, 2011 at 06:02:42PM +0100, Thomas Gleixner wrote:
-> On Wed, 16 Nov 2011, Steven Rostedt wrote:
-> > On Wed, 2011-11-16 at 17:16 +0800, Yong Zhang wrote:
-> > > Looking at commit 4799401f [memcg: Fix race condition in
-> > > memcg_check_events() with this_cpu usage], we just want
-> > > to disable migration. So use the right API in -rt. This
-> > > will cure below warning.
-> > No this won't work. Not even for -rt. If we disable migration but not
-> > preemption, then two tasks can take this path. And the checks in
-> > __memcg_event_check() will be corrupted because nothing is protecting
-> > the updates from two tasks going into the same path.
-> > 
-> > Perhaps a local_lock would work.
-> 
-> Yes, that's the only sensible option for now. Untested patch below.
+RT added two bytes to trace migrate disable counting to the trace events
+and used two bytes of the padding to make the change. The structures and
+all were updated correctly, but the display in the event formats was
+not:
 
-I run a quick test and it looks like the problem is gone.
+cat /debug/tracing/events/sched/sched_switch/format
 
-Cheers,
---
-Luis Henriques
+name: sched_switch
+ID: 51
+format:
+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+	field:int common_pid;	offset:4;	size:4;	signed:1;
+	field:unsigned short common_migrate_disable;	offset:8;	size:2;	signed:0;
+	field:int common_padding;	offset:10;	size:2;	signed:0;
+
+
+The field for common_padding has the correct size and offset, but the
+use of "int" might confuse some parsers (and people that are reading
+it). This needs to be changed to "unsigned short".
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 37d3ffb..c71844c 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -117,7 +117,7 @@ static int trace_define_common_fields(void)
+ 	__common_field(unsigned char, preempt_count);
+ 	__common_field(int, pid);
+ 	__common_field(unsigned short, migrate_disable);
+-	__common_field(int, padding);
++	__common_field(unsigned short, padding);
+ 
+ 	return ret;
+ }
+
+
