@@ -1,195 +1,199 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: Re: [PATCH -rt] memcg: use migrate_disable()/migrate_enable( ) in
- memcg_check_events()
-Date: Fri, 18 Nov 2011 15:08:35 +0800
-Message-ID: <20111118070835.GA24650@zhy>
-References: <alpine.LFD.2.02.1111150050590.4902@ionos>
- <20111115084059.GA23250@zhy>
- <20111116091653.GA8692@zhy>
- <1321452758.4181.18.camel@frodo>
- <alpine.LFD.2.02.1111161801270.4902@ionos>
- <20111117030332.GA14492@zhy>
- <alpine.LFD.2.02.1111171125020.4902@ionos>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.2-rc2-rt3
+Date: Fri, 18 Nov 2011 20:57:01 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1111182047371.4902@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-iy0-f174.google.com ([209.85.210.174]:41411 "EHLO
-	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752194Ab1KRHIq (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:42120 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751156Ab1KRT5D (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Nov 2011 02:08:46 -0500
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1111171125020.4902@ionos>
+	Fri, 18 Nov 2011 14:57:03 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Nov 17, 2011 at 11:25:56AM +0100, Thomas Gleixner wrote:
-> On Thu, 17 Nov 2011, Yong Zhang wrote:
-> 
-> > On Wed, Nov 16, 2011 at 06:02:42PM +0100, Thomas Gleixner wrote:
-> > > On Wed, 16 Nov 2011, Steven Rostedt wrote:
-> > > > On Wed, 2011-11-16 at 17:16 +0800, Yong Zhang wrote:
-> > > > > Looking at commit 4799401f [memcg: Fix race condition in
-> > > > > memcg_check_events() with this_cpu usage], we just want
-> > > > > to disable migration. So use the right API in -rt. This
-> > > > > will cure below warning.
-> > > > No this won't work. Not even for -rt. If we disable migration but not
-> > > > preemption, then two tasks can take this path. And the checks in
-> > > > __memcg_event_check() will be corrupted because nothing is protecting
-> > > > the updates from two tasks going into the same path.
-> > > > 
-> > > > Perhaps a local_lock would work.
-> > > 
-> > > Yes, that's the only sensible option for now. Untested patch below.
-> > 
-> > Works for me.
-> 
-> Johannes came up with a different solution. Could you please give it a try?
+Dear RT Folks,
 
-Works too :)
+I'm pleased to announce the 3.2-rc2-rt3 release. There is no
+intermediate release as the rc1-rt2 patch applies cleanly to rc2.
 
-Thanks,
-Yong
+NOTE: Releases are back to www.kernel.org - the intermediate tglx.de
+      release URL is history!
 
-> 
-> Thanks,
-> 
-> 	tglx
-> 
-> ------------->
-> Subject: [patch] mm: memcg: shorten preempt-disabled section around event checks
-> 
-> Only the ratelimit checks themselves have to run with preemption
-> disabled, the resulting actions - checking for usage thresholds,
-> updating the soft limit tree - can and should run with preemption
-> enabled.
-> 
-> Signed-off-by: Johannes Weiner <jweiner@redhat.com>
-> ---
->  mm/memcontrol.c |   73 ++++++++++++++++++++++++++----------------------------
->  1 files changed, 35 insertions(+), 38 deletions(-)
-> 
-> Thomas, HTH and it is probably interesting for upstream as well.
-> Unfortunately, I'm in the middle of moving right now, so this is
-> untested except for compiling.
-> 
-> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-> index 6aff93c..8e62d3e 100644
-> --- a/mm/memcontrol.c
-> +++ b/mm/memcontrol.c
-> @@ -683,37 +683,32 @@ static unsigned long mem_cgroup_nr_lru_pages(struct mem_cgroup *memcg,
->  	return total;
->  }
->  
-> -static bool __memcg_event_check(struct mem_cgroup *memcg, int target)
-> +static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
-> +				       enum mem_cgroup_events_target target)
->  {
->  	unsigned long val, next;
->  
->  	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
->  	next = __this_cpu_read(memcg->stat->targets[target]);
->  	/* from time_after() in jiffies.h */
-> -	return ((long)next - (long)val < 0);
-> -}
-> -
-> -static void __mem_cgroup_target_update(struct mem_cgroup *memcg, int target)
-> -{
-> -	unsigned long val, next;
-> -
-> -	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
-> -
-> -	switch (target) {
-> -	case MEM_CGROUP_TARGET_THRESH:
-> -		next = val + THRESHOLDS_EVENTS_TARGET;
-> -		break;
-> -	case MEM_CGROUP_TARGET_SOFTLIMIT:
-> -		next = val + SOFTLIMIT_EVENTS_TARGET;
-> -		break;
-> -	case MEM_CGROUP_TARGET_NUMAINFO:
-> -		next = val + NUMAINFO_EVENTS_TARGET;
-> -		break;
-> -	default:
-> -		return;
-> +	if ((long)next - (long)val < 0) {
-> +		switch (target) {
-> +		case MEM_CGROUP_TARGET_THRESH:
-> +			next = val + THRESHOLDS_EVENTS_TARGET;
-> +			break;
-> +		case MEM_CGROUP_TARGET_SOFTLIMIT:
-> +			next = val + SOFTLIMIT_EVENTS_TARGET;
-> +			break;
-> +		case MEM_CGROUP_TARGET_NUMAINFO:
-> +			next = val + NUMAINFO_EVENTS_TARGET;
-> +			break;
-> +		default:
-> +			break;
-> +		}
-> +		__this_cpu_write(memcg->stat->targets[target], next);
-> +		return true;
->  	}
-> -
-> -	__this_cpu_write(memcg->stat->targets[target], next);
-> +	return false;
->  }
->  
->  /*
-> @@ -724,25 +719,27 @@ static void memcg_check_events(struct mem_cgroup *memcg, struct page *page)
->  {
->  	preempt_disable();
->  	/* threshold event is triggered in finer grain than soft limit */
-> -	if (unlikely(__memcg_event_check(memcg, MEM_CGROUP_TARGET_THRESH))) {
-> +	if (unlikely(mem_cgroup_event_ratelimit(memcg,
-> +						MEM_CGROUP_TARGET_THRESH))) {
-> +		bool do_softlimit, do_numainfo;
-> +
-> +		do_softlimit = mem_cgroup_event_ratelimit(memcg,
-> +						MEM_CGROUP_TARGET_SOFTLIMIT);
-> +#if MAX_NUMNODES > 1
-> +		do_numainfo = mem_cgroup_event_ratelimit(memcg,
-> +						MEM_CGROUP_TARGET_NUMAINFO);
-> +#endif
-> +		preempt_enable();
-> +
->  		mem_cgroup_threshold(memcg);
-> -		__mem_cgroup_target_update(memcg, MEM_CGROUP_TARGET_THRESH);
-> -		if (unlikely(__memcg_event_check(memcg,
-> -			     MEM_CGROUP_TARGET_SOFTLIMIT))) {
-> +		if (unlikely(do_softlimit))
->  			mem_cgroup_update_tree(memcg, page);
-> -			__mem_cgroup_target_update(memcg,
-> -						   MEM_CGROUP_TARGET_SOFTLIMIT);
-> -		}
->  #if MAX_NUMNODES > 1
-> -		if (unlikely(__memcg_event_check(memcg,
-> -			MEM_CGROUP_TARGET_NUMAINFO))) {
-> +		if (unlikely(do_numainfo))
->  			atomic_inc(&memcg->numainfo_events);
-> -			__mem_cgroup_target_update(memcg,
-> -				MEM_CGROUP_TARGET_NUMAINFO);
-> -		}
->  #endif
-> -	}
-> -	preempt_enable();
-> +	} else
-> +		preempt_enable();
->  }
->  
->  static struct mem_cgroup *mem_cgroup_from_cont(struct cgroup *cont)
-> -- 
-> 1.7.6.4
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Changes vs. 3.2-rc1-rt2:
 
--- 
-Only stand for myself
+  * Refreshed the device mapper patch (fixes the NORT typo)
+
+  * Trace padding fix (Steven Rostedt)
+
+  * memcg preemptability fix (Johannes Weimer)
+
+
+The incremental patch against 3.2-rc1-rt2 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2-rc2-rt2-rt3.patch.bz2    
+
+and is also appended below.
+
+
+The RT patch against 3.2-rc2 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2-rc2-rt3.patch.bz2 
+
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patches-3.2-rc2-rt3.tar.bz2 
+
+
+Enjoy,
+
+	tglx
+---
+Index: linux-3.2/drivers/md/dm.c
+===================================================================
+--- linux-3.2.orig/drivers/md/dm.c
++++ linux-3.2/drivers/md/dm.c
+@@ -1648,14 +1648,14 @@ static void dm_request_fn(struct request
+ 		if (map_request(ti, clone, md))
+ 			goto requeued;
+ 
+-		BUG_ON_NORT(!irqs_disabled());
++		BUG_ON_NONRT(!irqs_disabled());
+ 		spin_lock(q->queue_lock);
+ 	}
+ 
+ 	goto out;
+ 
+ requeued:
+-	BUG_ON_NORT(!irqs_disabled());
++	BUG_ON_NONRT(!irqs_disabled());
+ 	spin_lock(q->queue_lock);
+ 
+ delay_and_out:
+Index: linux-3.2/kernel/trace/trace_events.c
+===================================================================
+--- linux-3.2.orig/kernel/trace/trace_events.c
++++ linux-3.2/kernel/trace/trace_events.c
+@@ -117,7 +117,7 @@ static int trace_define_common_fields(vo
+ 	__common_field(unsigned char, preempt_count);
+ 	__common_field(int, pid);
+ 	__common_field(unsigned short, migrate_disable);
+-	__common_field(int, padding);
++	__common_field(unsigned short, padding);
+ 
+ 	return ret;
+ }
+Index: linux-3.2/localversion-rt
+===================================================================
+--- linux-3.2.orig/localversion-rt
++++ linux-3.2/localversion-rt
+@@ -1 +1 @@
+--rt2
++-rt3
+Index: linux-3.2/mm/memcontrol.c
+===================================================================
+--- linux-3.2.orig/mm/memcontrol.c
++++ linux-3.2/mm/memcontrol.c
+@@ -683,37 +683,32 @@ static unsigned long mem_cgroup_nr_lru_p
+ 	return total;
+ }
+ 
+-static bool __memcg_event_check(struct mem_cgroup *memcg, int target)
++static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
++				       enum mem_cgroup_events_target target)
+ {
+ 	unsigned long val, next;
+ 
+ 	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
+ 	next = __this_cpu_read(memcg->stat->targets[target]);
+ 	/* from time_after() in jiffies.h */
+-	return ((long)next - (long)val < 0);
+-}
+-
+-static void __mem_cgroup_target_update(struct mem_cgroup *memcg, int target)
+-{
+-	unsigned long val, next;
+-
+-	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
+-
+-	switch (target) {
+-	case MEM_CGROUP_TARGET_THRESH:
+-		next = val + THRESHOLDS_EVENTS_TARGET;
+-		break;
+-	case MEM_CGROUP_TARGET_SOFTLIMIT:
+-		next = val + SOFTLIMIT_EVENTS_TARGET;
+-		break;
+-	case MEM_CGROUP_TARGET_NUMAINFO:
+-		next = val + NUMAINFO_EVENTS_TARGET;
+-		break;
+-	default:
+-		return;
++	if ((long)next - (long)val < 0) {
++		switch (target) {
++		case MEM_CGROUP_TARGET_THRESH:
++			next = val + THRESHOLDS_EVENTS_TARGET;
++			break;
++		case MEM_CGROUP_TARGET_SOFTLIMIT:
++			next = val + SOFTLIMIT_EVENTS_TARGET;
++			break;
++		case MEM_CGROUP_TARGET_NUMAINFO:
++			next = val + NUMAINFO_EVENTS_TARGET;
++			break;
++		default:
++			break;
++		}
++		__this_cpu_write(memcg->stat->targets[target], next);
++		return true;
+ 	}
+-
+-	__this_cpu_write(memcg->stat->targets[target], next);
++	return false;
+ }
+ 
+ /*
+@@ -724,25 +719,27 @@ static void memcg_check_events(struct me
+ {
+ 	preempt_disable();
+ 	/* threshold event is triggered in finer grain than soft limit */
+-	if (unlikely(__memcg_event_check(memcg, MEM_CGROUP_TARGET_THRESH))) {
++	if (unlikely(mem_cgroup_event_ratelimit(memcg,
++						MEM_CGROUP_TARGET_THRESH))) {
++		bool do_softlimit, do_numainfo;
++
++		do_softlimit = mem_cgroup_event_ratelimit(memcg,
++						MEM_CGROUP_TARGET_SOFTLIMIT);
++#if MAX_NUMNODES > 1
++		do_numainfo = mem_cgroup_event_ratelimit(memcg,
++						MEM_CGROUP_TARGET_NUMAINFO);
++#endif
++		preempt_enable();
++
+ 		mem_cgroup_threshold(memcg);
+-		__mem_cgroup_target_update(memcg, MEM_CGROUP_TARGET_THRESH);
+-		if (unlikely(__memcg_event_check(memcg,
+-			     MEM_CGROUP_TARGET_SOFTLIMIT))) {
++		if (unlikely(do_softlimit))
+ 			mem_cgroup_update_tree(memcg, page);
+-			__mem_cgroup_target_update(memcg,
+-						   MEM_CGROUP_TARGET_SOFTLIMIT);
+-		}
+ #if MAX_NUMNODES > 1
+-		if (unlikely(__memcg_event_check(memcg,
+-			MEM_CGROUP_TARGET_NUMAINFO))) {
++		if (unlikely(do_numainfo))
+ 			atomic_inc(&memcg->numainfo_events);
+-			__mem_cgroup_target_update(memcg,
+-				MEM_CGROUP_TARGET_NUMAINFO);
+-		}
+ #endif
+-	}
+-	preempt_enable();
++	} else
++		preempt_enable();
+ }
+ 
+ static struct mem_cgroup *mem_cgroup_from_cont(struct cgroup *cont)
