@@ -1,46 +1,41 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/3] rcu-more-fallout.patch
-Date: Sat, 19 Nov 2011 13:50:26 +0100
-Message-ID: <1321707028-12487-2-git-send-email-jkacur@redhat.com>
-References: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
+Subject: [PATCH 0/3] Suggested patches for v3.0.9-rt26
+Date: Sat, 19 Nov 2011 13:50:25 +0100
+Message-ID: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
 Cc: lkml <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+Hello Steve Rostedt and rt-folks
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cherry-picked for v3.0-rt and fixed minor merge conflict
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- kernel/rcutiny.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+I would also suggest the following three patches for v3.0.9-rt26 in addition
+to the ones you already posted.
 
-diff --git a/kernel/rcutiny.c b/kernel/rcutiny.c
-index 7bbac7d..f1e4bee 100644
---- a/kernel/rcutiny.c
-+++ b/kernel/rcutiny.c
-@@ -271,6 +271,7 @@ void call_rcu_sched(struct rcu_head *head, void (*func)(struct rcu_head *rcu))
- }
- EXPORT_SYMBOL_GPL(call_rcu_sched);
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Post an RCU bottom-half callback to be invoked after any subsequent
-  * quiescent state.
-@@ -280,6 +281,7 @@ void call_rcu_bh(struct rcu_head *head, void (*func)(struct rcu_head *rcu))
- 	__call_rcu(head, func, &rcu_bh_ctrlblk);
- }
- EXPORT_SYMBOL_GPL(call_rcu_bh);
-+#endif
- 
- void rcu_barrier_bh(void)
- {
+The two patches from Thomas Gleixner are in v3.2-rc2-rt3
+and the patch from Paul McKenney is upstream. (non-rt)
+
+You can pull them from my tree.
+git://git.kernel.org:/pub/scm/linux/kernel/git/jkacur/linux-rt.git
+branch: v3.0-rt-fixes
+
+Thank You
+John Kacur
+
+Paul E. McKenney (1):
+  rcu: Drive configuration directly from SMP and PREEMPT
+
+Thomas Gleixner (2):
+  rcu-more-fallout.patch
+  sysctl-include-fix.patch
+
+ include/linux/sysctl.h |    1 +
+ init/Kconfig           |    6 +++---
+ kernel/rcutiny.c       |    2 ++
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+
 -- 
 1.7.2.3
