@@ -1,84 +1,70 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 1/5] softirq: Export in_serving_softirq()
-Date: Fri, 18 Nov 2011 23:45:11 -0500
-Message-ID: <20111119044829.193255499@goodmis.org>
-References: <20111119044510.811163517@goodmis.org>
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Paul McKenney <paulmck@linux.vnet.ibm.com>,
-	stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:58339 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753589Ab1KSEsc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Nov 2011 23:48:32 -0500
-Content-Disposition: inline; filename=0001-softirq-Export-in_serving_softirq.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
---00GvhwF7k39YY
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
 From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 3/3] rcu: Drive configuration directly from SMP and PREEMPT
+Date: Sat, 19 Nov 2011 13:50:28 +0100
+Message-ID: <1321707028-12487-4-git-send-email-jkacur@redhat.com>
+References: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
+From: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
-The above can be fixed by exporting in_serving_softirq
+This commit eliminates the possibility of running TREE_PREEMPT_RCU
+when SMP=n and of running TINY_RCU when PREEMPT=y.  People who really
+want these combinations can hand-edit init/Kconfig, but eliminating
+them as choices for production systems reduces the amount of testing
+required.  It will also allow cutting out a few #ifdefs.
 
+Note that running TREE_RCU and TINY_RCU on single-CPU systems using
+SMP-built kernels is still supported.
+
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+
+commit 8008e129dc90ff4f7a56cb033d6bd042afe3ed52 upstream
+Cherry-picked for v3.0-rt and fixed-up merge conflicts
+Note: This makes the depends lines for these options in init/Kconfig for v3.0-rt
+match those for v3.2-rc2-rt3
 Signed-off-by: John Kacur <jkacur@redhat.com>
-Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>
-Cc: stable-rt@vger.kernel.org
-Link: http://lkml.kernel.org/r/1321235083-21756-2-git-send-email-jkacur@red=
-hat.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/softirq.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ init/Kconfig |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index e8756aa..026a283 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -447,6 +447,7 @@ int in_serving_softirq(void)
- 	preempt_enable();
- 	return res;
- }
-+EXPORT_SYMBOL(in_serving_softirq);
-=20
- /*
-  * Called with bh and local interrupts disabled. For full RT cpu must
---=20
-1.7.7.1
-
-
-
---00GvhwF7k39YY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAABAgAGBQJOxzUdAAoJEIy3vGnGbaoA5hkP/RXE8dvtcVBBpJyu4QkXQfvM
-XkWkzrLe7TgSkllTNgwYGjn2B/No70zEVe7q8Nwl5ng14dfUoBZAmMj3YJ1ILw5Y
-k3+C2WOsJ018ZYdNdTm1GAEyvrXU86RV+KNl0TQnWhLbBK8rMVTXmkAOzoP6syAc
-wMWqDUw0vGNZ0uCssbmzvu/QJD724Q/+hHKCP1ueW/Y3JNxTAPgJr+X9u+3YzlwV
-Q2QeRDPR2H2XKjkKRBVag2Pk4Sz7/RYeM0XNEnIoDZZHK+/9F7jvhWajnQHgGq3+
-c5/5cglFbwaWiixSpTsoALQB+d/ThfABO2FJ/KnV2nbV5nBnDxQ9GFrf5HdVr1L5
-kJ/UFVz6pW+UoVplLAZNeVPdtRlDxhwNVjPKzHcuwKKexYCD+ztqhvJdLENIi5Wi
-BEekFm+MOazanJzGJBQwaVWY36rYEVYLNqXgrWGfe039j/KibJgPJxvOqy91ROaU
-GWIyiI2XmkwCm0jgM5U9xesOf5LKpyh3c5QyGDVi1usPsWY0IqB6CkyeKg8H8Viw
-4UG26oXhz2EC3ZoxpHZ/1tWf+fz2NC+BQ6nASvNK5jrdEurK5eu1ajgLxyOgPaaE
-5FWUqM+yDKsBLj1clkOhBFQ/7WrkZpJWkEBs2OJTTVLhtSMB1gnBQm/sI058t8yO
-nPvl65E/lLKY8kT1yzmh
-=xs32
------END PGP SIGNATURE-----
-
---00GvhwF7k39YY--
+diff --git a/init/Kconfig b/init/Kconfig
+index 89e40a4..5c1147e 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -391,7 +391,7 @@ config TREE_RCU
+ 
+ config TREE_PREEMPT_RCU
+ 	bool "Preemptible tree-based hierarchical RCU"
+-	depends on PREEMPT
++	depends on PREEMPT && SMP
+ 	help
+ 	  This option selects the RCU implementation that is
+ 	  designed for very large SMP systems with hundreds or
+@@ -401,7 +401,7 @@ config TREE_PREEMPT_RCU
+ 
+ config TINY_RCU
+ 	bool "UP-only small-memory-footprint RCU"
+-	depends on !SMP && !PREEMPT_RT_FULL
++	depends on !PREEMPT && !SMP
+ 	help
+ 	  This option selects the RCU implementation that is
+ 	  designed for UP systems from which real-time response
+@@ -410,7 +410,7 @@ config TINY_RCU
+ 
+ config TINY_PREEMPT_RCU
+ 	bool "Preemptible UP-only small-memory-footprint RCU"
+-	depends on !SMP && PREEMPT && !PREEMPT_RT_FULL
++	depends on PREEMPT && !SMP
+ 	help
+ 	  This option selects the RCU implementation that is designed
+ 	  for real-time UP systems.  This option greatly reduces the
+-- 
+1.7.2.3
