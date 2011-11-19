@@ -1,41 +1,38 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 0/3] Suggested patches for v3.0.9-rt26
-Date: Sat, 19 Nov 2011 13:50:25 +0100
-Message-ID: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
+Subject: [PATCH 2/3] sysctl-include-fix.patch
+Date: Sat, 19 Nov 2011 13:50:27 +0100
+Message-ID: <1321707028-12487-3-git-send-email-jkacur@redhat.com>
+References: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
 Cc: lkml <linux-kernel@vger.kernel.org>,
 	rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Steve Rostedt and rt-folks
+From: Thomas Gleixner <tglx@linutronix.de>
 
-I would also suggest the following three patches for v3.0.9-rt26 in addition
-to the ones you already posted.
-
-The two patches from Thomas Gleixner are in v3.2-rc2-rt3
-and the patch from Paul McKenney is upstream. (non-rt)
-
-You can pull them from my tree.
-git://git.kernel.org:/pub/scm/linux/kernel/git/jkacur/linux-rt.git
-branch: v3.0-rt-fixes
-
-Thank You
-John Kacur
-
-Paul E. McKenney (1):
-  rcu: Drive configuration directly from SMP and PREEMPT
-
-Thomas Gleixner (2):
-  rcu-more-fallout.patch
-  sysctl-include-fix.patch
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cherry-picked for v3.0-rt and fixed minor merge conflict
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
  include/linux/sysctl.h |    1 +
- init/Kconfig           |    6 +++---
- kernel/rcutiny.c       |    2 ++
- 3 files changed, 6 insertions(+), 3 deletions(-)
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
+diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
+index 11684d9..92b99dd 100644
+--- a/include/linux/sysctl.h
++++ b/include/linux/sysctl.h
+@@ -931,6 +931,7 @@ enum
+ #ifdef __KERNEL__
+ #include <linux/list.h>
+ #include <linux/rcupdate.h>
++#include <linux/atomic.h>
+ 
+ /* For the /proc/sys support */
+ struct ctl_table;
 -- 
 1.7.2.3
