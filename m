@@ -1,199 +1,96 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.2-rc2-rt3
-Date: Fri, 18 Nov 2011 20:57:01 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1111182047371.4902@ionos>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:42120 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751156Ab1KRT5D (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Nov 2011 14:57:03 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH 0/5] [ANNOUNCE] v3.0.9-rt26-rc1
+Date: Fri, 18 Nov 2011 23:45:10 -0500
+Message-ID: <20111119044510.811163517@goodmis.org>
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+--00GvhwF7k39YY
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2-rc2-rt3 release. There is no
-intermediate release as the rc1-rt2 patch applies cleanly to rc2.
+This is the RT stable review cycle. As I am just starting to manage the
+3.0-rt stable tree, I'm in the process of creating scripts and such to
+send out patches. I will always send out a -rc1 to give people a chance
+to yell at me for something stupid I did. It will also allow others
+to run this under their own tests as I have a limited testing that I do.
 
-NOTE: Releases are back to www.kernel.org - the intermediate tglx.de
-      release URL is history!
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candida=
+te).
 
-Changes vs. 3.2-rc1-rt2:
+I will also be updating the git tree on kernel.org with the final release
+but the pre releases will not be in the public tree. The final release
+will also include the full broken out patches.
 
-  * Refreshed the device mapper patch (fixes the NORT typo)
+to build a 3.0.9-rt26-rc1 tree, the following patches should be applied:
 
-  * Trace padding fix (Steven Rostedt)
+http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  * memcg preemptability fix (Johannes Weimer)
+http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.9.xz
 
-
-The incremental patch against 3.2-rc1-rt2 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2-rc2-rt2-rt3.patch.bz2    
-
-and is also appended below.
-
-
-The RT patch against 3.2-rc2 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2-rc2-rt3.patch.bz2 
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.9-rt26-rc1=
+.patch.xz
 
 
-The split quilt queue is available at:
+You can also build from 3.0.9-rt25 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patches-3.2-rc2-rt3.tar.bz2 
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.9-rt2=
+5-rt26-rc1.patch.xz
 
+If all goes well, this patch will be converted to the main release
+next Tuesday: 11/22/2011
 
 Enjoy,
 
-	tglx
----
-Index: linux-3.2/drivers/md/dm.c
-===================================================================
---- linux-3.2.orig/drivers/md/dm.c
-+++ linux-3.2/drivers/md/dm.c
-@@ -1648,14 +1648,14 @@ static void dm_request_fn(struct request
- 		if (map_request(ti, clone, md))
- 			goto requeued;
- 
--		BUG_ON_NORT(!irqs_disabled());
-+		BUG_ON_NONRT(!irqs_disabled());
- 		spin_lock(q->queue_lock);
- 	}
- 
- 	goto out;
- 
- requeued:
--	BUG_ON_NORT(!irqs_disabled());
-+	BUG_ON_NONRT(!irqs_disabled());
- 	spin_lock(q->queue_lock);
- 
- delay_and_out:
-Index: linux-3.2/kernel/trace/trace_events.c
-===================================================================
---- linux-3.2.orig/kernel/trace/trace_events.c
-+++ linux-3.2/kernel/trace/trace_events.c
-@@ -117,7 +117,7 @@ static int trace_define_common_fields(vo
- 	__common_field(unsigned char, preempt_count);
- 	__common_field(int, pid);
- 	__common_field(unsigned short, migrate_disable);
--	__common_field(int, padding);
-+	__common_field(unsigned short, padding);
- 
- 	return ret;
- }
-Index: linux-3.2/localversion-rt
-===================================================================
---- linux-3.2.orig/localversion-rt
-+++ linux-3.2/localversion-rt
-@@ -1 +1 @@
---rt2
-+-rt3
-Index: linux-3.2/mm/memcontrol.c
-===================================================================
---- linux-3.2.orig/mm/memcontrol.c
-+++ linux-3.2/mm/memcontrol.c
-@@ -683,37 +683,32 @@ static unsigned long mem_cgroup_nr_lru_p
- 	return total;
- }
- 
--static bool __memcg_event_check(struct mem_cgroup *memcg, int target)
-+static bool mem_cgroup_event_ratelimit(struct mem_cgroup *memcg,
-+				       enum mem_cgroup_events_target target)
- {
- 	unsigned long val, next;
- 
- 	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
- 	next = __this_cpu_read(memcg->stat->targets[target]);
- 	/* from time_after() in jiffies.h */
--	return ((long)next - (long)val < 0);
--}
--
--static void __mem_cgroup_target_update(struct mem_cgroup *memcg, int target)
--{
--	unsigned long val, next;
--
--	val = __this_cpu_read(memcg->stat->events[MEM_CGROUP_EVENTS_COUNT]);
--
--	switch (target) {
--	case MEM_CGROUP_TARGET_THRESH:
--		next = val + THRESHOLDS_EVENTS_TARGET;
--		break;
--	case MEM_CGROUP_TARGET_SOFTLIMIT:
--		next = val + SOFTLIMIT_EVENTS_TARGET;
--		break;
--	case MEM_CGROUP_TARGET_NUMAINFO:
--		next = val + NUMAINFO_EVENTS_TARGET;
--		break;
--	default:
--		return;
-+	if ((long)next - (long)val < 0) {
-+		switch (target) {
-+		case MEM_CGROUP_TARGET_THRESH:
-+			next = val + THRESHOLDS_EVENTS_TARGET;
-+			break;
-+		case MEM_CGROUP_TARGET_SOFTLIMIT:
-+			next = val + SOFTLIMIT_EVENTS_TARGET;
-+			break;
-+		case MEM_CGROUP_TARGET_NUMAINFO:
-+			next = val + NUMAINFO_EVENTS_TARGET;
-+			break;
-+		default:
-+			break;
-+		}
-+		__this_cpu_write(memcg->stat->targets[target], next);
-+		return true;
- 	}
--
--	__this_cpu_write(memcg->stat->targets[target], next);
-+	return false;
- }
- 
- /*
-@@ -724,25 +719,27 @@ static void memcg_check_events(struct me
- {
- 	preempt_disable();
- 	/* threshold event is triggered in finer grain than soft limit */
--	if (unlikely(__memcg_event_check(memcg, MEM_CGROUP_TARGET_THRESH))) {
-+	if (unlikely(mem_cgroup_event_ratelimit(memcg,
-+						MEM_CGROUP_TARGET_THRESH))) {
-+		bool do_softlimit, do_numainfo;
-+
-+		do_softlimit = mem_cgroup_event_ratelimit(memcg,
-+						MEM_CGROUP_TARGET_SOFTLIMIT);
-+#if MAX_NUMNODES > 1
-+		do_numainfo = mem_cgroup_event_ratelimit(memcg,
-+						MEM_CGROUP_TARGET_NUMAINFO);
-+#endif
-+		preempt_enable();
-+
- 		mem_cgroup_threshold(memcg);
--		__mem_cgroup_target_update(memcg, MEM_CGROUP_TARGET_THRESH);
--		if (unlikely(__memcg_event_check(memcg,
--			     MEM_CGROUP_TARGET_SOFTLIMIT))) {
-+		if (unlikely(do_softlimit))
- 			mem_cgroup_update_tree(memcg, page);
--			__mem_cgroup_target_update(memcg,
--						   MEM_CGROUP_TARGET_SOFTLIMIT);
--		}
- #if MAX_NUMNODES > 1
--		if (unlikely(__memcg_event_check(memcg,
--			MEM_CGROUP_TARGET_NUMAINFO))) {
-+		if (unlikely(do_numainfo))
- 			atomic_inc(&memcg->numainfo_events);
--			__mem_cgroup_target_update(memcg,
--				MEM_CGROUP_TARGET_NUMAINFO);
--		}
- #endif
--	}
--	preempt_enable();
-+	} else
-+		preempt_enable();
- }
- 
- static struct mem_cgroup *mem_cgroup_from_cont(struct cgroup *cont)
+-- Steve
+
+
+John Kacur (2):
+      softirq: Export in_serving_softirq()
+      rcu: Fix macro substitution for synchronize_rcu_bh() on RT
+
+Peter Zijlstra (1):
+      x86: crypto: Reduce preempt disabled regions
+
+Thomas Gleixner (1):
+      dm: Make rt aware
+
+----
+ arch/x86/crypto/aesni-intel_glue.c |   24 +++++++++++++-----------
+ drivers/md/dm.c                    |    4 ++--
+ include/linux/rcutree.h            |    2 +-
+ kernel/softirq.c                   |    1 +
+ 4 files changed, 17 insertions(+), 14 deletions(-)
+
+--00GvhwF7k39YY
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iQIcBAABAgAGBQJOxzUUAAoJEIy3vGnGbaoAG/MP/RVtai5EO8gWD7BYsXt66tHI
+Y8bvyx+L+izp5FkwSRF8urWoe40hqE+Suc0iJ3FvBhb/ZyLeOuhSv7oAHnsmkPCc
+AO1QdIOTHR//HWEpiCmF+8jwR32hA/8CUEwsPNcLHP9drAJGVUPsKXs+y8F/2ZlG
+JwOjO/q+sEEFYqY58BgTWb0EpfGZTzdfqYfAIlqNmm1ZqOuPANbKtCrWbHIPCYDR
+aNgfKd0SMerPnEGuArdLbDKU6OGiF7iTHNPmy1EUFVkbPPMGLRoME3kgfuWPrqes
+R6IU2n/Qh5RGyBA7CO0GtpIFxKyPhma0NQaBCb21UCjCmbr6FHpLAhha2yc+OczV
+Jr8sMoa0FCMiB7jZgiEXVsUDoUvCaQrg7PkmmtzrJnObn1zQ3wzXRkTMCp0ue3R3
+Mh6ZezwAv6eVmLgQsPgjEyPI/gkl/09pDVeRaN38N0ZfeLXDuQVEynnxHtI4g5F+
+urnJt1z9+oq/ivfHYH5WLUo+h7P7Zp7JBU22P4b8ICQ3c9De8KtAQ+ksEhTSvgaW
+/DneDiObyRD7zW/Lwyh6Dvsw+MVHsHuWMLmAjWu962/8HPXPrfrlFSvu9v1un8Zl
+XtQu7YzXFk2OzsF/W0kjvfNen/ipa1bsv+ZkZSyz0rgVzuSEJ11l6lxfyFkQRgk1
+2BNa2bBIebzw+BRAZEI3
+=ZiNk
+-----END PGP SIGNATURE-----
+
+--00GvhwF7k39YY--
