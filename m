@@ -1,85 +1,128 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 2/6] rcu: Fix macro substitution for synchronize_rcu_bh() on RT
-Date: Mon, 21 Nov 2011 16:44:22 -0500
-Message-ID: <20111121214752.916778529@goodmis.org>
-References: <20111121214420.124907956@goodmis.org>
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-rcu-Fix-macro-substitution-for-synchronize_rcu_bh-on.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
-
---00GvhwF7k39YY
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
 From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 3/3] rcu: Drive configuration directly from SMP and PREEMPT
+Date: Tue, 22 Nov 2011 00:18:59 +0100
+Message-ID: <CAONaPpGz3NoKs9TfDHgNR5YcnfX-j0AT_bVttxPYXLRq5Y=SSg@mail.gmail.com>
+References: <1321707028-12487-1-git-send-email-jkacur@redhat.com>
+	<1321707028-12487-4-git-send-email-jkacur@redhat.com>
+	<1321891800.20742.11.camel@frodo>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qw0-f46.google.com ([209.85.216.46]:55184 "EHLO
+	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753184Ab1KUXZp convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 Nov 2011 18:25:45 -0500
+In-Reply-To: <1321891800.20742.11.camel@frodo>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-kernel/rcutorture.c:492: error: =E2=80=98synchronize_rcu_bh=E2=80=99 undecl=
-ared here (not in a function)
+On Mon, Nov 21, 2011 at 5:10 PM, Steven Rostedt <rostedt@goodmis.org> w=
+rote:
+> On Sat, 2011-11-19 at 13:50 +0100, John Kacur wrote:
+>> From: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+>>
+>> This commit eliminates the possibility of running TREE_PREEMPT_RCU
+>> when SMP=3Dn and of running TINY_RCU when PREEMPT=3Dy. =A0People who=
+ really
+>> want these combinations can hand-edit init/Kconfig, but eliminating
+>> them as choices for production systems reduces the amount of testing
+>> required. =A0It will also allow cutting out a few #ifdefs.
+>>
+>> Note that running TREE_RCU and TINY_RCU on single-CPU systems using
+>> SMP-built kernels is still supported.
+>
+> With this patch, I can see the need for the first patch (although
+> there's things broken even for that), but is this really a stable fix=
+?
+>
+> This looks more of an added feature than a bug fix. It's a bug fix if=
+ we
+> consider running tree_rcu on UP a bug. Or better stated, will it brea=
+k
+> anything if we do that?
+>
+> -- Steve
+>
+>>
+>> Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+>>
+>> commit 8008e129dc90ff4f7a56cb033d6bd042afe3ed52 upstream
+>> Cherry-picked for v3.0-rt and fixed-up merge conflicts
+>> Note: This makes the depends lines for these options in init/Kconfig=
+ for v3.0-rt
+>> match those for v3.2-rc2-rt3
+>> Signed-off-by: John Kacur <jkacur@redhat.com>
+>> ---
+>> =A0init/Kconfig | =A0 =A06 +++---
+>> =A01 files changed, 3 insertions(+), 3 deletions(-)
+>>
+>> diff --git a/init/Kconfig b/init/Kconfig
+>> index 89e40a4..5c1147e 100644
+>> --- a/init/Kconfig
+>> +++ b/init/Kconfig
+>> @@ -391,7 +391,7 @@ config TREE_RCU
+>>
+>> =A0config TREE_PREEMPT_RCU
+>> =A0 =A0 =A0 bool "Preemptible tree-based hierarchical RCU"
+>> - =A0 =A0 depends on PREEMPT
+>> + =A0 =A0 depends on PREEMPT && SMP
+>> =A0 =A0 =A0 help
+>> =A0 =A0 =A0 =A0 This option selects the RCU implementation that is
+>> =A0 =A0 =A0 =A0 designed for very large SMP systems with hundreds or
+>> @@ -401,7 +401,7 @@ config TREE_PREEMPT_RCU
+>>
+>> =A0config TINY_RCU
+>> =A0 =A0 =A0 bool "UP-only small-memory-footprint RCU"
+>> - =A0 =A0 depends on !SMP && !PREEMPT_RT_FULL
+>> + =A0 =A0 depends on !PREEMPT && !SMP
+>> =A0 =A0 =A0 help
+>> =A0 =A0 =A0 =A0 This option selects the RCU implementation that is
+>> =A0 =A0 =A0 =A0 designed for UP systems from which real-time respons=
+e
+>> @@ -410,7 +410,7 @@ config TINY_RCU
+>>
+>> =A0config TINY_PREEMPT_RCU
+>> =A0 =A0 =A0 bool "Preemptible UP-only small-memory-footprint RCU"
+>> - =A0 =A0 depends on !SMP && PREEMPT && !PREEMPT_RT_FULL
+>> + =A0 =A0 depends on PREEMPT && !SMP
+>> =A0 =A0 =A0 help
+>> =A0 =A0 =A0 =A0 This option selects the RCU implementation that is d=
+esigned
+>> =A0 =A0 =A0 =A0 for real-time UP systems. =A0This option greatly red=
+uces the
+>
 
-synchronize_rcu_bh() is not just called as a normal function, but can
-also be referenced as a function pointer. When CONFIG_PREEMPT_RT_FULL
-is enabled, synchronize_rcu_bh() is defined as synchronize_rcu(), but
-needs to be defined without the parenthesis because the compiler will
-complain when synchronize_rcu_bh is referenced as a function pointer
-and not a function.
+Imagine you have a uni-processor system and want to do real-time.
+According to the descriptions in init/Kconfig, you would want to
+select TINY_PREEMPT_RCU. The description is
 
-Link: http://lkml.kernel.org/r/1321235083-21756-1-git-send-email-jkacur@red=
-hat.com
+	  This option selects the RCU implementation that is designed
+	  for real-time UP systems.  This option greatly reduces the
+	  memory footprint of RCU.
 
-Cc: stable-rt@vger.kernel.org
-Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- include/linux/rcutree.h |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Without this patch, you cannot choose this option because of the &&
+!PREEMPT_RT_FULL
+So, that is a bug, and makes this patch appropriate for stable.
 
-diff --git a/include/linux/rcutree.h b/include/linux/rcutree.h
-index 7a25aea..3bf47dc 100644
---- a/include/linux/rcutree.h
-+++ b/include/linux/rcutree.h
-@@ -60,7 +60,7 @@ static inline void exit_rcu(void)
- #ifndef CONFIG_PREEMPT_RT_FULL
- extern void synchronize_rcu_bh(void);
- #else
--# define synchronize_rcu_bh()	synchronize_rcu()
-+# define synchronize_rcu_bh	synchronize_rcu
- #endif
- extern void synchronize_sched_expedited(void);
- extern void synchronize_rcu_expedited(void);
---=20
-1.7.7.1
+I suppose if you want to be really conservative, you can say we only
+need that third hunk.
+However, this upstream patch, makes these options in v3.0-rt match the
+options in v3.2-rc2-rt3.
 
+=46urthermore, it doesn't seem like a good idea to me to support
+configurations in a stable branch that are not supported upstream.
 
+Thanks
 
---00GvhwF7k39YY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAABAgAGBQJOyscJAAoJEIy3vGnGbaoAl7AP/3IdHRkPQfwow35ViDmFSdv1
-UqJE6HEEN2K4IjJNlwwdYkTc4l/16m3Yqd7C2m2+ahXc4A+6SFhI0Kxjcr6PEgxc
-Ena7oGItiALeW5QP7uH/EmDtlhaO6f89W3HnGii3+DTzSPdS0gcs94lR+08l5hFj
-qHXzcPytsWSA4P1ZHdWEa6A3WMqZaeQlHmr5x9p+LKvdSNKtuPSCgeomaEIu7fGe
-lerUxipSOcQnaWc/0bbB/a54nqdR2mWXMkGQcxCy8EKWZyi/djbJBtPGcbkuz/LO
-b72tqVFc5kdqBDhZE6hyeJU0x85HwHcMju9lHqxIrYd6Js7jk6tFIDRdqj/MpCv1
-XdLoAXMq7kAkDBLckEs8rY4mxJgzaTph49hP4nNz1daFDojAUHVE4g44IxG7cdiF
-N/PrwPEf2Tr6pxB5/CylJ29qBcEdrl3i0X/ER39X+d1fM2JXGR1WOlPG8H+B9CWY
-rNS3OUysvnfJXf9O2uWYd9ADlzVwRpQQzlbKjPYtF3ycOo8iENCN4xJOkifLueWS
-QpZhBVdp8ERIBuyGZZ3MPYL1B7H++tTOE57yzbz522Dqk7e81jVHqBY3HSugoAST
-HYoNVMMMnQgjqD4m7jAtxpV1oW02KQfD1n2NVUOQ8U5Zo46FnFqjRqzjke9ErVB/
-iZyIAV+Fb0nQ5rQgZfop
-=bil1
------END PGP SIGNATURE-----
-
---00GvhwF7k39YY--
+John
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
