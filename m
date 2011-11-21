@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 4/6] dm: Make rt aware
-Date: Mon, 21 Nov 2011 16:44:24 -0500
-Message-ID: <20111121214757.011122160@goodmis.org>
+Subject: [PATCH 2/6] rcu: Fix macro substitution for synchronize_rcu_bh() on RT
+Date: Mon, 21 Nov 2011 16:44:22 -0500
+Message-ID: <20111121214752.916778529@goodmis.org>
 References: <20111121214420.124907956@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,7 +10,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-dm-Make-rt-aware.patch
+Content-Disposition: inline; filename=0002-rcu-Fix-macro-substitution-for-synchronize_rcu_bh-on.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -18,41 +18,43 @@ List-Id: linux-rt-users.vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: John Kacur <jkacur@redhat.com>
 
-Use the BUG_ON_NONRT variant for the irq_disabled() checks. RT has
-interrupts legitimately enabled here as we cant deadlock against the
-irq thread due to the "sleeping spinlocks" conversion.
+kernel/rcutorture.c:492: error: =E2=80=98synchronize_rcu_bh=E2=80=99 undecl=
+ared here (not in a function)
 
-Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+synchronize_rcu_bh() is not just called as a normal function, but can
+also be referenced as a function pointer. When CONFIG_PREEMPT_RT_FULL
+is enabled, synchronize_rcu_bh() is defined as synchronize_rcu(), but
+needs to be defined without the parenthesis because the compiler will
+complain when synchronize_rcu_bh is referenced as a function pointer
+and not a function.
+
+Link: http://lkml.kernel.org/r/1321235083-21756-1-git-send-email-jkacur@red=
+hat.com
+
 Cc: stable-rt@vger.kernel.org
+Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/md/dm.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ include/linux/rcutree.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 41abc6d..67207d6 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1644,14 +1644,14 @@ static void dm_request_fn(struct request_queue *q)
- 		if (map_request(ti, clone, md))
- 			goto requeued;
-=20
--		BUG_ON(!irqs_disabled());
-+		BUG_ON_NONRT(!irqs_disabled());
- 		spin_lock(q->queue_lock);
- 	}
-=20
- 	goto out;
-=20
- requeued:
--	BUG_ON(!irqs_disabled());
-+	BUG_ON_NONRT(!irqs_disabled());
- 	spin_lock(q->queue_lock);
-=20
- delay_and_out:
+diff --git a/include/linux/rcutree.h b/include/linux/rcutree.h
+index 7a25aea..3bf47dc 100644
+--- a/include/linux/rcutree.h
++++ b/include/linux/rcutree.h
+@@ -60,7 +60,7 @@ static inline void exit_rcu(void)
+ #ifndef CONFIG_PREEMPT_RT_FULL
+ extern void synchronize_rcu_bh(void);
+ #else
+-# define synchronize_rcu_bh()	synchronize_rcu()
++# define synchronize_rcu_bh	synchronize_rcu
+ #endif
+ extern void synchronize_sched_expedited(void);
+ extern void synchronize_rcu_expedited(void);
 --=20
 1.7.7.1
 
@@ -65,19 +67,19 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJOyscNAAoJEIy3vGnGbaoArT0QAMCOfUGTII7e/zGSTAlJU39H
-IJEBnrMoa3+vwQLf6q9nImKKXG0JKNd9sRq5a95BQGFze/gvADy90XxULyIMVSWs
-7BG9djvT7eI57IWrmfwF1SioSzhblmdBZWt+embm7lkuvU7EkQbWUR+mQrtgpxhS
-ZeHgJOrZv6giymRjCi7jq4JqMy3Rbozqa7iiSyK+YbIJx/C7DNfN4exjvsOYMLmQ
-GLy6SyfJxawZHSeIWSA5Yl8czHV9Xzfr/UDk3o2PuMwjdFpjN5TKbl3WB7ioxzil
-Tpjg/amOjx3IPROh3qwexiXEZ2O0JXNhxq+xRmMYCaDNGwXxmBSSlqIducm46xUN
-eKMr02UlrdwxivxbBXuEIPCyXDFXrdbdNBCsgw8phb0MHpiRNipeSSpXs9O0bmWV
-Z2xPj2wIEnaIu41yf/D8g8gCJqeUkhn2wOE4G7r5djPU1FIU5tGg3UkWSjWdqtLX
-clwmghPmzVY3ouOr99n1zwfzqjD/P5E0eVYKnrXufOmJ6ENEn8w+KrlnoJen+A/l
-K7E58B3R53q/0tY/OfMSwwBKkrjqcKjDMQmmy4zARBUTP33hRWDkJ6wgV6yJH5Zm
-9p3NxA5GcgZt6ZIfkORGEGXpwwllhznJ/fhZwQSZfYC8urekdIFSdaoxb4GbH2C8
-lasMS9ljWpLhWibFGbYt
-=eyKO
+iQIcBAABAgAGBQJOyscJAAoJEIy3vGnGbaoAl7AP/3IdHRkPQfwow35ViDmFSdv1
+UqJE6HEEN2K4IjJNlwwdYkTc4l/16m3Yqd7C2m2+ahXc4A+6SFhI0Kxjcr6PEgxc
+Ena7oGItiALeW5QP7uH/EmDtlhaO6f89W3HnGii3+DTzSPdS0gcs94lR+08l5hFj
+qHXzcPytsWSA4P1ZHdWEa6A3WMqZaeQlHmr5x9p+LKvdSNKtuPSCgeomaEIu7fGe
+lerUxipSOcQnaWc/0bbB/a54nqdR2mWXMkGQcxCy8EKWZyi/djbJBtPGcbkuz/LO
+b72tqVFc5kdqBDhZE6hyeJU0x85HwHcMju9lHqxIrYd6Js7jk6tFIDRdqj/MpCv1
+XdLoAXMq7kAkDBLckEs8rY4mxJgzaTph49hP4nNz1daFDojAUHVE4g44IxG7cdiF
+N/PrwPEf2Tr6pxB5/CylJ29qBcEdrl3i0X/ER39X+d1fM2JXGR1WOlPG8H+B9CWY
+rNS3OUysvnfJXf9O2uWYd9ADlzVwRpQQzlbKjPYtF3ycOo8iENCN4xJOkifLueWS
+QpZhBVdp8ERIBuyGZZ3MPYL1B7H++tTOE57yzbz522Dqk7e81jVHqBY3HSugoAST
+HYoNVMMMnQgjqD4m7jAtxpV1oW02KQfD1n2NVUOQ8U5Zo46FnFqjRqzjke9ErVB/
+iZyIAV+Fb0nQ5rQgZfop
+=bil1
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
