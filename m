@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 1/6] softirq: Export in_serving_softirq()
-Date: Mon, 21 Nov 2011 16:44:21 -0500
-Message-ID: <20111121214750.578132339@goodmis.org>
+Subject: [PATCH 5/6] tracing: Show padding as unsigned short
+Date: Mon, 21 Nov 2011 16:44:25 -0500
+Message-ID: <20111121214759.091594621@goodmis.org>
 References: <20111121214420.124907956@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,7 +10,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-softirq-Export-in_serving_softirq.patch
+Content-Disposition: inline; filename=0005-tracing-Show-padding-as-unsigned-short.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -18,36 +18,50 @@ List-Id: linux-rt-users.vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-From: John Kacur <jkacur@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-ERROR: "in_serving_softirq" [net/sched/cls_cgroup.ko] undefined!
+RT added two bytes to trace migrate disable counting to the trace events
+and used two bytes of the padding to make the change. The structures and
+all were updated correctly, but the display in the event formats was
+not:
 
-The above can be fixed by exporting in_serving_softirq
+cat /debug/tracing/events/sched/sched_switch/format
 
-Link: http://lkml.kernel.org/r/1321235083-21756-2-git-send-email-jkacur@red=
-hat.com
+name: sched_switch
+ID: 51
+format:
+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+	field:int common_pid;	offset:4;	size:4;	signed:1;
+	field:unsigned short common_migrate_disable;	offset:8;	size:2;	signed:0;
+	field:int common_padding;	offset:10;	size:2;	signed:0;
 
-Cc: stable-rt@vger.kernel.org
-Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Signed-off-by: John Kacur <jkacur@redhat.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+The field for common_padding has the correct size and offset, but the
+use of "int" might confuse some parsers (and people that are reading
+it). This needs to be changed to "unsigned short".
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Link: http://lkml.kernel.org/r/1321467575.4181.36.camel@frodo
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/softirq.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ kernel/trace/trace_events.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index e8756aa..026a283 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -447,6 +447,7 @@ int in_serving_softirq(void)
- 	preempt_enable();
- 	return res;
- }
-+EXPORT_SYMBOL(in_serving_softirq);
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 37d3ffb..c71844c 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -117,7 +117,7 @@ static int trace_define_common_fields(void)
+ 	__common_field(unsigned char, preempt_count);
+ 	__common_field(int, pid);
+ 	__common_field(unsigned short, migrate_disable);
+-	__common_field(int, padding);
++	__common_field(unsigned short, padding);
 =20
- /*
-  * Called with bh and local interrupts disabled. For full RT cpu must
+ 	return ret;
+ }
 --=20
 1.7.7.1
 
@@ -60,19 +74,19 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJOyscGAAoJEIy3vGnGbaoAqxYP/1oCb+5ITLrCBpwzH6/o38yl
-CZQ6IK/FB4dHxaDVGgbe+jlyJaMb6E5BRrd/z113DOtMBcTvgiOXMkXFWCPqOMRX
-pLw4lKWkh2d84RVebl71WA76GDuLOpwDw6vhMOUwpssDR/rJHuztBbR4WGygCFUM
-J9b29tad4jv96SQz6xlIlcvkKg7v4NaT6ZLQvEhIBHmy5CrGjVPlh5Wmuw3zOPe0
-My4DzQjl6XmISlFFWzZ0lmWiURRWRNlpkxj7lMtZgF1ytZH0gWhDGBrf4XxS8Ch2
-GU9T2fzbNzKnV+SOnfth44M56JlnEn7yy0YD9/ed8V9fXTIOIdihTTOb7kJyJeXX
-I/JjMAgVrAZBWkM133yNRhfmYjyLvbjDuRhJsRXxmnuC60HoeWdFcLhaNoNWfIxB
-FvOiElDAoeR8SZq0BP9L/MvvQ56QUpMUO6ASi2e6mJJ8vW7tPgkuhpo+ryi3kd78
-X5dmzHnPHCV97hq8h1vYaknP0wwAWkHLivmP+A0+21OPvNhygFh5gkW3avNC/fN3
-1AHghbUVXjqEEOKCbzlEyKNhdxaW6frGzc+F6JLC1Z2P/BwvT4j+xzAMIo/uOKMX
-5XOAXG3RARkAhls5U2A9HYPMlvEorIZJSbnFNN510J7CSKJPzUtnE8Dpju10mAYO
-/5UQWR4eMXrzmXuyc6HE
-=57Al
+iQIcBAABAgAGBQJOyscPAAoJEIy3vGnGbaoAGdoP/R/+bOBV5TZbkoz8ssYwSwin
+rGUuhw9IyoxlQt7hHj7neRB8olC2cOa3rAIJV4q7/xXLVI+rihPNshX+hNCyPuEC
+b32z6kcRM8ckJRdUAkrzA0Li2dOIDhkYeC22CGFw4jxQQBHfwYvwSCILCWztdu/e
+rEG8g1P8457OL0OHPZj6uUIDB3NvfTPdFWmIlnWFnWMzfbMYd/Gcse31ey5+VHgR
+mprZz3fhsIyynAQG4g0ae7+uh5LgaucSd2wPTMCrnmzJR0MM45poYbwDm5O114Pp
+P49esggg9mXLYSPo4B6RfIMCcua6DqMX6TndShdgg9Yrt0y3okUIDXRWGTW2ra6s
+p4OjcKBVBfki5qIdgMNhtxfpo7Ysm8W+ehA6d5yLFNaNu3FaSMQSN6iiw8nR5oYN
+HFnwEZIlk1gPaLcQfKItirKdcGJk38NPfvx4FKslNeON5cP+SsPrlFutdzLMyWvb
+qKZTGvEThjGnp1+W/gv9zgLOCqXwy6Lwl1yS02yRSsF20BkSRiD0wLOP03dnqyaz
+xZrMo1x2ttoZY+57vDbOQaE1odHKh+OW9y6n2T5PjTod+OpId6L9mPO4dDnToJo0
+AlZnygMy1EOvnA7C2Rhy88iXcQ+mLQnWFpkaOy4nbS02LdUrQ2A0Cxdl3xzB/Mm4
+eUwHM3D4kgvLHL09RLmL
+=fwsX
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
