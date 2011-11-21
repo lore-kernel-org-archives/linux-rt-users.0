@@ -1,40 +1,58 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 6/6] Linux 3.0.9-rt26-rc2
-Date: Mon, 21 Nov 2011 16:44:26 -0500
-Message-ID: <20111121214801.301390969@goodmis.org>
+Subject: [PATCH 4/6] dm: Make rt aware
+Date: Mon, 21 Nov 2011 16:44:24 -0500
+Message-ID: <20111121214757.011122160@goodmis.org>
 References: <20111121214420.124907956@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:57114 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757216Ab1KUVsE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Nov 2011 16:48:04 -0500
-Content-Disposition: inline; filename=0006-Linux-3.0.9-rt26-rc2.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-dm-Make-rt-aware.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 --00GvhwF7k39YY
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-From: Steven Rostedt <srostedt@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
+Use the BUG_ON_NONRT variant for the irq_disabled() checks. RT has
+interrupts legitimately enabled here as we cant deadlock against the
+irq thread due to the "sleeping spinlocks" conversion.
+
+Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- localversion-rt |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/md/dm.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index c5b71f9..1c7ebb3 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt25
-+-rt26-rc2
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 41abc6d..67207d6 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1644,14 +1644,14 @@ static void dm_request_fn(struct request_queue *q)
+ 		if (map_request(ti, clone, md))
+ 			goto requeued;
+=20
+-		BUG_ON(!irqs_disabled());
++		BUG_ON_NONRT(!irqs_disabled());
+ 		spin_lock(q->queue_lock);
+ 	}
+=20
+ 	goto out;
+=20
+ requeued:
+-	BUG_ON(!irqs_disabled());
++	BUG_ON_NONRT(!irqs_disabled());
+ 	spin_lock(q->queue_lock);
+=20
+ delay_and_out:
 --=20
 1.7.7.1
 
@@ -47,19 +65,19 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJOyscRAAoJEIy3vGnGbaoAw50QAMBrkpPxCCcfOQNmguaeLMPN
-nF0ffx3pq5n8UDG7BB+UO+bArySPRM75hutVq0B4ACjaz+jriLcmrrWhhvv2Mbtj
-HxtLTrOELjaHmOm3Xx2oKXsD0FAcqhYYeyMOSEIgPAVZSiRWbtfKrU6httxicx9Y
-zCMp8t0xM4DMkv5+RvPZR5ZoatwGkwVZCPs+b32lm7P6zk1Bpq/iutgklxAYETzc
-CidwHrhnNqs2mrH0sgRi4gOlVIyEYwH9iDvxaCrJrmBYZG2TIZU1gVFDIAJfDIJg
-6hx/U+HZdJJn8DjUZEyk3i9cxm9cnV0SlI8knVvBQUfVLLp+n9Sy4jyLIn7hjU3E
-Z9lPhB8BSQuRenVIfxxuwKbUL+SV7Ws9CPd+Uyrc94E7rKnYqfY7zB2D+ELOKGNs
-uD9VReodaLcDVAnIz7VbBCn8SiB2rLRkFyDb6LyYmsEV4VIkkqFEyDnD4M094liw
-lMxr7K8TX43exLj3NjCCQdq9so0hmrVswZwN2d6KcyWYnhYe4nBYmn0XPclSpOa+
-HpKVz9Ky76f+ioJR0NDqCwxYJvg8w2rOs5n8DBloK4Y+gqKCyXQHLqVzGX/t6/I9
-edVxV00HOhYigfTOGxL9R9B0qBlkcq4OX4Bgz1pM13f1rYESgIPCVhw/lP4lrD/+
-kPOHot8qHyBEMTL4Q+og
-=LDNK
+iQIcBAABAgAGBQJOyscNAAoJEIy3vGnGbaoArT0QAMCOfUGTII7e/zGSTAlJU39H
+IJEBnrMoa3+vwQLf6q9nImKKXG0JKNd9sRq5a95BQGFze/gvADy90XxULyIMVSWs
+7BG9djvT7eI57IWrmfwF1SioSzhblmdBZWt+embm7lkuvU7EkQbWUR+mQrtgpxhS
+ZeHgJOrZv6giymRjCi7jq4JqMy3Rbozqa7iiSyK+YbIJx/C7DNfN4exjvsOYMLmQ
+GLy6SyfJxawZHSeIWSA5Yl8czHV9Xzfr/UDk3o2PuMwjdFpjN5TKbl3WB7ioxzil
+Tpjg/amOjx3IPROh3qwexiXEZ2O0JXNhxq+xRmMYCaDNGwXxmBSSlqIducm46xUN
+eKMr02UlrdwxivxbBXuEIPCyXDFXrdbdNBCsgw8phb0MHpiRNipeSSpXs9O0bmWV
+Z2xPj2wIEnaIu41yf/D8g8gCJqeUkhn2wOE4G7r5djPU1FIU5tGg3UkWSjWdqtLX
+clwmghPmzVY3ouOr99n1zwfzqjD/P5E0eVYKnrXufOmJ6ENEn8w+KrlnoJen+A/l
+K7E58B3R53q/0tY/OfMSwwBKkrjqcKjDMQmmy4zARBUTP33hRWDkJ6wgV6yJH5Zm
+9p3NxA5GcgZt6ZIfkORGEGXpwwllhznJ/fhZwQSZfYC8urekdIFSdaoxb4GbH2C8
+lasMS9ljWpLhWibFGbYt
+=eyKO
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
