@@ -1,35 +1,38 @@
 From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [PATCH 0/6] [ANNOUNCE] v3.0.9-rt26-rc2
-Date: Tue, 22 Nov 2011 09:36:03 +0100
-Message-ID: <201111220936.03393.tim.sander@hbm.com>
-References: <20111121214420.124907956@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.2-rc1-rt1 - Compile errors also for rc1 vanilla
+Date: Tue, 22 Nov 2011 10:34:15 +0100
+Message-ID: <201111221034.16018.tim.sander@hbm.com>
+References: <alpine.LFD.2.02.1111132213220.2694@ionos> <201111141014.06906.tim.sander@hbm.com> <1321896657.20742.16.camel@frodo>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=iso-8859-15
+Content-Type: text/Plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: <linux-kernel@vger.kernel.org>,
+Cc: "Thomas Gleixner" <tglx@linutronix.de>,
+	"LKML" <linux-kernel@vger.kernel.org>,
 	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
+	"John Kacur" <jkacur@redhat.com>
 To: "Steven Rostedt" <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-class: urn:content-classes:message
-In-Reply-To: <20111121214420.124907956@goodmis.org>
+In-Reply-To: <1321896657.20742.16.camel@frodo>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven
+Hi Steve
+> arch/arm/mach-imx/built-in.o: In function `imx31_soc_init':
+> /work/rt/rt.git/arch/arm/mach-imx/mm-imx3.c:186: undefined reference =
+to
+> `mx31_revision' make[1]: *** [.tmp_vmlinux1] Error 1
+> make: *** [sub-make] Error 2
+>=20
+> Which is not the error you saw. I'm curious to what I did wrong.
+As i wrote i had some platform modifications which i took from my 3.0 k=
+ernel.
+When compiling vanilla 3.2-rc2 i have the same error as you above.
 
-Thanks for your release.
-
-I just have build and tested the release on an i.mx35 arm platform.
-The only thing to report is that i have nothing to report, which is a g=
-ood=20
-thing :-).
+I've just send an error report to the arm kernel mailing list.
 
 Best regards
 Tim
-
-Please ignore this noise:
 
 Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
 Germany | www.hbm.com=20
@@ -49,6 +52,6 @@ r the addressee. If you are not the intended recipient, please let me k=
 now and delete this email.
 
 Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
-faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
-=2E
+ch f=C3=BCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche =
+Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-M=
+ail.
