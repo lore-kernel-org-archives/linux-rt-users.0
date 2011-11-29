@@ -1,244 +1,226 @@
-From: Chris Edwards <cedwards@ripples.dyndns.org>
-Subject: Re: IRQ "nobody cared...Disabling" errors on linux-3.0.10-rt27 on
- SMP AMD64 system
-Date: Tue, 29 Nov 2011 15:25:05 +1300
-Message-ID: <4ED44281.6010500@ripples.dyndns.org>
-References: <4ECCE979.5080109@cedwards.geek.nz> <1322056363.20742.45.camel@frodo> <4ECD7DCC.3000505@ripples.dyndns.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: 3.2-rc1 and nvidia drivers
+Date: Tue, 29 Nov 2011 15:31:04 +0100 (CET)
+Message-ID: <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
+References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com> <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos> <4ED35D9A.7090401@tum.de> <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="-1463804414-1373544548-1322577074=:5855"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Thomas Schauss <schauss@tum.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.kinect.co.nz ([202.74.33.69]:52675 "EHLO kinect.co.nz"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751150Ab1K2CZ0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 28 Nov 2011 21:25:26 -0500
-Received: from mail01.kinect.co.nz (mail01.kinect.co.nz [202.74.33.70])
-	by mx1.kinect.co.nz  with ESMTP id pAT2PLs7027827-pAT2PLs9027827
-	(version=TLSv1 cipher=DHE-RSA-AES256-SHA bits=256 verify=CAFAIL)
-	for <linux-rt-users@vger.kernel.org>; Tue, 29 Nov 2011 15:25:22 +1300
-Received: from [116.251.188.53] (helo=[192.168.5.64])
-	by mail01.kinect.co.nz with esmtpsa (TLSv1:AES256-SHA:256)
-	(Exim 4.76)
-	(envelope-from <cedwards@ripples.dyndns.org>)
-	id 1RVDNp-0002Kk-HH
-	for linux-rt-users@vger.kernel.org; Tue, 29 Nov 2011 15:25:21 +1300
-In-Reply-To: <4ECD7DCC.3000505@ripples.dyndns.org>
+Received: from mx1.redhat.com ([209.132.183.28]:42968 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755343Ab1K2Ob1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Nov 2011 09:31:27 -0500
+In-Reply-To: <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Further to my previous posts...
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-I don't know much about ACPI and how interrupt routing is supposed to 
-work (especially on more complex systems such as this).  AFAICT, this 
-board has three PCI expansion buses (not including the AGP port), 
-arranged like so (ASCII art at left is supposed to be the physical 
-layout of the slots on the board):
-
-   ====|==|==    AGP
-=======|==      PCI 32-bit 33 MHz, PCI bus 01 (on nForce3),  BIOS slot # 1
-==|=======|===  PCI-X,             PCI bus 04 (on AMD 8131), BIOS slot # 4
-==|=======|===  PCI-X,             PCI bus 04 (on AMD 8131), BIOS slot # 5
-==|=======|===  PCI 64-bit 66 MHz, PCI bus 05 (on AMD 8131), BIOS slot # 2
-==|=======|===  PCI 64-bit 66 MHz, PCI bus 05 (on AMD 8131), BIOS slot # 3
-
-Onboard Firewire/IEEE 1394 controller is also on PCI bus 01.
-Onboard SiI 3114 SATA controller is also on PCI bus 06.
-
-(This is based on what `biosdecode` and `lspci` report.  Actually, the 
-bus numbering changes depending on what cards are installed: I have a 
-RAID card with a PCI bridge on it that bumps the higher bus numbers around.)
+---1463804414-1373544548-1322577074=:5855
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
 
 
-# biosdecode
-# biosdecode 2.9
-BIOS32 Service Directory present.
-     Revision: 0
-     Calling Interface Address: 0x000F0010
-PCI Interrupt Routing 1.0 present.
-     Router ID: 00:01.0
-     Exclusive IRQs: None
-     Compatible Router: 10de:00e0
-     Slot Entry 1: ID 00:01, on-board
-     Slot Entry 2: ID 00:02, on-board
-     Slot Entry 3: ID 00:05, on-board
-     Slot Entry 4: ID 00:06, on-board
-     Slot Entry 5: ID 00:0b, on-board
-     Slot Entry 6: ID 00:09, on-board
-     Slot Entry 7: ID 00:0a, on-board
-     Slot Entry 8: ID 01:07, slot number 1
-     Slot Entry 9: ID 01:06, on-board
-     Slot Entry 10: ID 05:01, slot number 2
-     Slot Entry 11: ID 05:02, slot number 3
-     Slot Entry 12: ID 04:01, slot number 4
-     Slot Entry 13: ID 04:02, slot number 5
-     Slot Entry 14: ID 05:03, on-board
-PNP BIOS 1.0 present.
-     Event Notification: Not Supported
-     Real Mode 16-bit Code Address: F000:57D2
-     Real Mode 16-bit Data Address: F000:0000
-     16-bit Protected Mode Code Address: 0x000F57FA
-     16-bit Protected Mode Data Address: 0x000F0000
-ACPI 2.0 present.
-     OEM Identifier: ACPIAM
-     RSD Table 32-bit Address: 0xBFF40000
-     XSD Table 64-bit Address: 0x00000000BFF40100
-SMBIOS 2.3 present.
-     Structure Table Length: 1933 bytes
-     Structure Table Address: 0x000FA2F0
-     Number Of Structures: 47
-     Maximum Structure Size: 182 bytes
+On Mon, 28 Nov 2011, John Kacur wrote:
 
+> On Mon, Nov 28, 2011 at 11:08 AM, Thomas Schauss <schauss@tum.de> wrote:
+> > On 11/16/2011 04:06 PM, Thomas Gleixner wrote:
+> >>
+> >> On Wed, 16 Nov 2011, Thomas Schauss wrote:
+> >>>
+> >>> Unfortunately, with 3.0-rt and the nvidia-driver we get complete system
+> >>> freezes when starting X on several different hardware setups (a few
+> >>> systems
+> >>> work fine). This is certainly caused by this combination. When using the
+> >>> nouveau-driver everything works fine.
+> >>
+> >> Have you ever tried to run with CONFIG_PROVE_LOCKING=y ?
+> >>
+> >
+> > Hello,
+> >
+> > thank you for that tip. I have tried this now and have not found any
+> > warnings which seem related to the nvidia-driver. Further testing revealed,
+> > that the driver works fine with CONFIG_PREEMPT_RTB and the freezes when
+> > running startx occur as soon as we switch to CONFIG_PREEMPT_RT_FULL.
+> >
+> > Regarding lockdep, we do get some warnings in slab.c -> cache_flusharray
+> > that however seem unrelated to nvidia. As we could not find any other bugs
+> > with the same locking warning I attached one example below. You can find
+> > some complete bootlogs (all with deadlock-warnings, all with slightly
+> > different call-stack) and my kernel-config at
+> >
+> > http://www.lsr.ei.tum.de/team/schauss/lockdep/
+> >
+> > On rt-base I also get a lockdep-warning which however seems unrelated to the
+> > rt-full one (not in cache_flusharray). You can find that log on the same
+> > page.
+> >
+> > Best Regards,
+> > Thomas
+> >
+> >
+> >
+> > Nov 17 17:34:49 fix kernel: [   30.750925]
+> > =============================================
+> > Nov 17 17:34:49 fix kernel: [   30.750927] [ INFO: possible recursive
+> > locking detected ]
+> > Nov 17 17:34:49 fix kernel: [   30.750930] 3.0.9-25-rt #0
+> > Nov 17 17:34:49 fix kernel: [   30.750931]
+> > ---------------------------------------------
+> > Nov 17 17:34:49 fix kernel: [   30.750933] udevd/517 is trying to acquire
+> > lock:
+> > Nov 17 17:34:49 fix kernel: [   30.750935] (&parent->list_lock){+.+...}, at:
+> > [<ffffffff81613e63>] cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.750944]
+> > Nov 17 17:34:49 fix kernel: [   30.750945] but task is already holding lock:
+> > Nov 17 17:34:49 fix kernel: [   30.750946] (&parent->list_lock){+.+...}, at:
+> > [<ffffffff81613e63>] cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.750950]
+> > Nov 17 17:34:49 fix kernel: [   30.750951] other info that might help us
+> > debug this:
+> > Nov 17 17:34:49 fix kernel: [   30.750952]  Possible unsafe locking
+> > scenario:
+> > Nov 17 17:34:49 fix kernel: [   30.750953]
+> > Nov 17 17:34:49 fix kernel: [   30.750954]        CPU0
+> > Nov 17 17:34:49 fix kernel: [   30.750955]        ----
+> > Nov 17 17:34:49 fix kernel: [   30.750956]   lock(&parent->list_lock);
+> > Nov 17 17:34:49 fix kernel: [   30.750958]   lock(&parent->list_lock);
+> > Nov 17 17:34:49 fix kernel: [   30.750959]
+> > Nov 17 17:34:49 fix kernel: [   30.750960]  *** DEADLOCK ***
+> > Nov 17 17:34:49 fix kernel: [   30.750961]
+> > Nov 17 17:34:49 fix kernel: [   30.750962]  May be due to missing lock
+> > nesting notation
+> > Nov 17 17:34:49 fix kernel: [   30.750963]
+> > Nov 17 17:34:49 fix kernel: [   30.750964] 2 locks held by udevd/517:
+> > Nov 17 17:34:49 fix kernel: [   30.750966]  #0:  (&per_cpu(slab_lock,
+> > __cpu).lock){+.+...}, at: [<ffffffff8116a5c6>] kfree+0xd6/0x380
+> > Nov 17 17:34:49 fix kernel: [   30.750973]  #1:
+> > (&parent->list_lock){+.+...}, at: [<ffffffff81613e63>]
+> > cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.750977]
+> > Nov 17 17:34:49 fix kernel: [   30.750977] stack backtrace:
+> > Nov 17 17:34:49 fix kernel: [   30.750980] Pid: 517, comm: udevd Not tainted
+> > 3.0.9-25-rt #0
+> > Nov 17 17:34:49 fix kernel: [   30.750982] Call Trace:
+> > Nov 17 17:34:49 fix kernel: [   30.750987]  [<ffffffff810a0097>]
+> > print_deadlock_bug+0xf7/0x100
+> > Nov 17 17:34:49 fix kernel: [   30.750991]  [<ffffffff810a1add>]
+> > validate_chain.isra.37+0x67d/0x720
+> > Nov 17 17:34:49 fix kernel: [   30.750995]  [<ffffffff810a2478>]
+> > __lock_acquire+0x478/0x9c0
+> > Nov 17 17:34:49 fix kernel: [   30.750999]  [<ffffffff8162ae19>] ?
+> > sub_preempt_count+0x29/0x60
+> > Nov 17 17:34:49 fix kernel: [   30.751003]  [<ffffffff81627475>] ?
+> > _raw_spin_unlock+0x35/0x60
+> > Nov 17 17:34:49 fix kernel: [   30.751007]  [<ffffffff81625f0b>] ?
+> > rt_spin_lock_slowlock+0x2eb/0x340
+> > Nov 17 17:34:49 fix kernel: [   30.751011]  [<ffffffff81056be1>] ?
+> > get_parent_ip+0x11/0x50
+> > Nov 17 17:34:49 fix kernel: [   30.751014]  [<ffffffff81613e63>] ?
+> > cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff810a2f64>]
+> > lock_acquire+0x94/0x160
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81613e63>] ?
+> > cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81626999>]
+> > rt_spin_lock+0x39/0x40
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81613e63>] ?
+> > cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8105a90b>] ?
+> > migrate_disable+0x6b/0xe0
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81613e63>]
+> > cache_flusharray+0x47/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81167a41>]
+> > kmem_cache_free+0x221/0x300
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81167b8f>]
+> > slab_destroy+0x6f/0xa0
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81167d32>]
+> > free_block+0x172/0x190
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81613eb4>]
+> > cache_flusharray+0x98/0xd6
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814f1110>] ?
+> > __sk_free+0x130/0x160
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814f1110>] ?
+> > __sk_free+0x130/0x160
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8116a806>]
+> > kfree+0x316/0x380
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814f5328>] ?
+> > skb_queue_purge+0x28/0x40
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814f1110>]
+> > __sk_free+0x130/0x160
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814f11d5>]
+> > sk_free+0x25/0x30
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8152d908>]
+> > netlink_release+0x128/0x200
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814ea388>]
+> > sock_release+0x28/0x90
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff814eaa57>]
+> > sock_close+0x17/0x30
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8117b914>]
+> > __fput+0xb4/0x200
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8117ba85>]
+> > fput+0x25/0x30
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81177d0c>]
+> > filp_close+0x6c/0x90
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff81177df0>]
+> > sys_close+0xc0/0x130
+> > Nov 17 17:34:49 fix kernel: [   30.751015]  [<ffffffff8162ed02>]
+> > system_call_fastpath+0x16/0x1b
+> >
+> 
+> Hmm, I think I see how this can happen.
+> 
+> cache_flusharray()
+> spin_lock(&l3->list_lock);
+> free_block(cachep, ac->entry, batchcount, node);
+>         slab_destroy()
+>         kmem_cache_free()
+>                 __cache_free()
+>                 cache_flusharray()
+> 
 
-# lspci
-00:00.0 Host bridge: nVidia Corporation nForce3 250Gb Host Bridge (rev a1)
-00:01.0 ISA bridge: nVidia Corporation nForce3 250Gb LPC Bridge (rev a2)
-00:01.1 SMBus: nVidia Corporation nForce 250Gb PCI System Management 
-(rev a1)
-00:02.0 USB Controller: nVidia Corporation CK8S USB Controller (rev a1)
-00:02.1 USB Controller: nVidia Corporation CK8S USB Controller (rev a1)
-00:02.2 USB Controller: nVidia Corporation nForce3 EHCI USB 2.0 
-Controller (rev a2)
-00:05.0 Ethernet controller: nVidia Corporation CK8S Ethernet Controller 
-(rev a2)
-00:08.0 IDE interface: nVidia Corporation CK8S Parallel ATA Controller 
-(v2.5) (rev a2)
-00:0a.0 IDE interface: nVidia Corporation nForce3 Serial ATA Controller 
-(rev a2)
-00:0b.0 PCI bridge: nVidia Corporation nForce3 250Gb AGP Host to PCI 
-Bridge (rev a2)
-00:0e.0 PCI bridge: nVidia Corporation nForce3 250Gb PCI-to-PCI Bridge 
-(rev a2)
-00:17.0 Communication controller: nVidia Corporation Device 00ec (rev a1)
-00:18.0 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-HyperTransport Technology Configuration
-00:18.1 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-Address Map
-00:18.2 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-DRAM Controller
-00:18.3 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-Miscellaneous Control
-00:19.0 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-HyperTransport Technology Configuration
-00:19.1 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-Address Map
-00:19.2 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-DRAM Controller
-00:19.3 Host bridge: Advanced Micro Devices [AMD] K8 [Athlon64/Opteron] 
-Miscellaneous Control
-01:06.0 FireWire (IEEE 1394): Texas Instruments TSB43AB22/A 
-IEEE-1394a-2000 Controller (PHY/Link)
-01:07.0 Multimedia controller: Motorola DSP56361 Digital Signal Processor
-02:00.0 VGA compatible controller: ATI Technologies Inc R420 JP [Radeon 
-X800XT]
-02:00.1 Display controller: ATI Technologies Inc R420 [X800XT-PE] 
-(Secondary)
-03:01.0 PCI bridge: Advanced Micro Devices [AMD] AMD-8131 PCI-X Bridge 
-(rev 12)
-03:01.1 PIC: Advanced Micro Devices [AMD] AMD-8131 PCI-X IOAPIC (rev 01)
-03:02.0 PCI bridge: Advanced Micro Devices [AMD] AMD-8131 PCI-X Bridge 
-(rev 12)
-03:02.1 PIC: Advanced Micro Devices [AMD] AMD-8131 PCI-X IOAPIC (rev 01)
-05:02.0 Ethernet controller: Intel Corporation 82545GM Gigabit Ethernet 
-Controller (rev 04)
-05:03.0 Mass storage controller: Silicon Image, Inc. SiI 3114 
-[SATALink/SATARaid] Serial ATA Controller (rev 02)
+Could you try the following patch to see if it gets rid of your lockdep 
+splat? (plan to neaten it up and send it to lkml if it works for you.)
 
+>From 29bf37fc62098bc87960e78f365083d9f52cf36a Mon Sep 17 00:00:00 2001
+From: John Kacur <jkacur@redhat.com>
+Date: Tue, 29 Nov 2011 15:17:54 +0100
+Subject: [PATCH] Drop lock in free_block before calling slab_destroy to prevent lockdep splats
 
-There seem to be 3 IOAPICs: one on the nForce3, I presume, and two on 
-the AMD 8131.
+This prevents lockdep splats due to this call chain
+cache_flusharray()
+spin_lock(&l3->list_lock);
+free_block(cachep, ac->entry, batchcount, node);
+       slab_destroy()
+       kmem_cache_free()
+               __cache_free()
+               cache_flusharray()
 
-# dmesg | grep -i ioapic
-[    0.000000] ACPI: IOAPIC (id[0x02] address[0xfec00000] gsi_base[0])
-[    0.000000] IOAPIC[0]: apic_id 2, version 17, address 0xfec00000, GSI 
-0-23
-[    0.000000] ACPI: IOAPIC (id[0x03] address[0xfebfe000] gsi_base[24])
-[    0.000000] IOAPIC[1]: apic_id 3, version 17, address 0xfebfe000, GSI 
-24-27
-[    0.000000] ACPI: IOAPIC (id[0x04] address[0xfebff000] gsi_base[28])
-[    0.000000] IOAPIC[2]: apic_id 4, version 17, address 0xfebff000, GSI 
-28-31
-[    0.143685] ACPI: Using IOAPIC for interrupt routing
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ mm/slab.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-So it seems the problematic IRQs are both on the nForce3: the onboard 
-Firewire controller and the Gina24 sound card (IRQs 17 and 18) are both 
-on the nForce3's 32-bit 33 MHz PCI bus, and both experience those "irq 
-... nobody cared" errors.  I can't move the Gina24 sound card, as the 
-other slots are keyed for a different voltage, and moving the on-board 
-Firewire controller is obviously not an option either. :)
+diff --git a/mm/slab.c b/mm/slab.c
+index b615658..635e16a 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -3667,7 +3667,9 @@ static void free_block(struct kmem_cache *cachep, void **objpp, int nr_objects,
+ 				 * a different cache, refer to comments before
+ 				 * alloc_slabmgmt.
+ 				 */
++				spin_unlock(&l3->list_lock);
+ 				slab_destroy(cachep, slabp, true);
++				spin_lock(&l3->list_lock);
+ 			} else {
+ 				list_add(&slabp->list, &l3->slabs_free);
+ 			}
+-- 
+1.7.2.3
 
-I also noticed the following groups of kernel messages, which might be 
-of use to someone:
-
-[    0.165850] ACPI: PCI Interrupt Routing Table [\_SB_.PCI0._PRT]
-[    0.166337] ACPI: PCI Interrupt Routing Table [\_SB_.PCI0.P0P1._PRT]
-[    0.184280] ACPI: PCI Interrupt Routing Table [\_SB_.PCIB.GOLA._PRT]
-[    0.184550] ACPI: PCI Interrupt Routing Table [\_SB_.PCIB.GOLB._PRT]
-
-[    0.185842] ACPI: PCI Interrupt Link [LNKA] (IRQs 16 17 18 19) *0, 
-disabled.
-[    0.186111] ACPI: PCI Interrupt Link [LNKB] (IRQs 16 17 18 19) *0, 
-disabled.
-[    0.186366] ACPI: PCI Interrupt Link [LNKC] (IRQs 16 17 18 19) *11
-[    0.186621] ACPI: PCI Interrupt Link [LNKD] (IRQs 16 17 18 19) *9
-[    0.186876] ACPI: PCI Interrupt Link [LNKE] (IRQs 16 17 18 19) *11
-[    0.187127] ACPI: PCI Interrupt Link [LUS0] (IRQs 20 21 22) *11
-[    0.187364] ACPI: PCI Interrupt Link [LUS1] (IRQs 20 21 22) *7
-[    0.187601] ACPI: PCI Interrupt Link [LUS2] (IRQs 20 21 22) *5
-[    0.187844] ACPI: PCI Interrupt Link [LKLN] (IRQs 20 21 22) *9
-[    0.188099] ACPI: PCI Interrupt Link [LAUI] (IRQs 20 21 22) *0, disabled.
-[    0.188338] ACPI: PCI Interrupt Link [LKMO] (IRQs 20 21 22) *0, disabled.
-[    0.188578] ACPI: PCI Interrupt Link [LKSM] (IRQs 20 21 22) *9
-[    0.188819] ACPI: PCI Interrupt Link [LTID] (IRQs 20 21 22) *0
-[    0.189084] ACPI: PCI Interrupt Link [LTIE] (IRQs 20 21 22) *0, disabled.
-[    0.189385] ACPI: PCI Interrupt Link [LATA] (IRQs 20 21 22) *14
-
-[    3.076267] ACPI: PCI Interrupt Link [LTID] BIOS reported IRQ 0, 
-using IRQ 22
-[    3.076270] ACPI: PCI Interrupt Link [LTID] enabled at IRQ 22
-[    3.087843] ACPI: PCI Interrupt Link [LUS2] enabled at IRQ 21
-[    3.095754] ACPI: PCI Interrupt Link [LUS0] enabled at IRQ 20
-[    3.149622] ACPI: PCI Interrupt Link [LUS1] enabled at IRQ 22
-[    5.116414] ACPI: PCI Interrupt Link [LKLN] enabled at IRQ 21
-[    6.803745] ACPI: PCI Interrupt Link [LNKE] enabled at IRQ 19
-[    7.073385] ACPI: PCI Interrupt Link [LNKD] enabled at IRQ 18
-[    7.433420] ACPI: PCI Interrupt Link [LNKC] enabled at IRQ 17
-
-[    3.076289] sata_nv 0000:00:0a.0: PCI INT A -> Link[LTID] -> GSI 22 
-(level, low) -> IRQ 22
-[    3.078327] sata_sil 0000:05:03.0: PCI INT A -> GSI 27 (level, low) 
--> IRQ 27
-[    3.087859] ehci_hcd 0000:00:02.2: PCI INT C -> Link[LUS2] -> GSI 21 
-(level, low) -> IRQ 21
-[    3.095766] ohci_hcd 0000:00:02.0: PCI INT A -> Link[LUS0] -> GSI 20 
-(level, low) -> IRQ 20
-[    3.149626] ohci_hcd 0000:00:02.1: PCI INT B -> Link[LUS1] -> GSI 22 
-(level, low) -> IRQ 22
-[    5.116423] forcedeth 0000:00:05.0: PCI INT A -> Link[LKLN] -> GSI 21 
-(level, low) -> IRQ 21
-[    5.167149] e1000 0000:05:02.0: PCI INT A -> GSI 26 (level, low) -> 
-IRQ 26
-[    6.803787] pci 0000:02:00.0: PCI INT A -> Link[LNKE] -> GSI 19 
-(level, low) -> IRQ 19
-[    7.073410] Echoaudio Gina24 0000:01:07.0: PCI INT A -> Link[LNKD] -> 
-GSI 18 (level, low) -> IRQ 18
-[    7.433444] firewire_ohci 0000:01:06.0: PCI INT A -> Link[LNKC] -> 
-GSI 17 (level, low) -> IRQ 17
-
-
-Is the kernel "pirq" command-line parameter worth trying?  I'm not 
-exactly sure how it works - it seems you specify sequences of numbers in 
-groups of 4 corresponding to the IRQs that you want the kernel to use 
-for each PCI IRQ (PIRQ).  Does the ordering of these quads correspond to 
-the PCI bus numbering?  (In my case, I have PCI buses 00, 01, 02, 03, 04 
-and 05, but would bus 00 (nForce3 host bridge), 02 (AGP) and 03 (AMD 
-8131 bridges) be excluded?)  And how would I know what system IRQ number 
-to specify at each position?  Should they be chosen to match the BIOS 
-IRQ numbers reported at POST?
-
-Also, are there any disadvantages to running with "noapic" as a 
-permanent fix?  Performance? Increased IRQ sharing?
-
-Thanks again,
-Chris
-
+---1463804414-1373544548-1322577074=:5855--
