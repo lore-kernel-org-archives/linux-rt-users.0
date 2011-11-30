@@ -1,190 +1,181 @@
-From: Thomas Schauss <schauss@tum.de>
-Subject: Re: 3.2-rc1 and nvidia drivers
-Date: Wed, 30 Nov 2011 10:06:52 +0100
-Message-ID: <4ED5F22C.5010104@tum.de>
-References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com> <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos> <4ED35D9A.7090401@tum.de> <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com> <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH RT] tasklet/rt: Prevent tasklets from going into infinite
+ spin in RT
+Date: Wed, 30 Nov 2011 11:24:46 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1111301117240.2735@ionos>
+References: <1322618120.17003.104.camel@frodo> <1322627551.17283.11.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Clark Williams <williams@redhat.com>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailrelay1.lrz-muenchen.de ([129.187.254.106]:33784 "EHLO
-	mailrelay1.lrz-muenchen.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1757206Ab1K3JHF (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:37070 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753592Ab1K3KYt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Nov 2011 04:07:05 -0500
-In-Reply-To: <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
+	Wed, 30 Nov 2011 05:24:49 -0500
+In-Reply-To: <1322627551.17283.11.camel@marge.simson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/29/2011 03:31 PM, John Kacur wrote:
->
-> On Mon, 28 Nov 2011, John Kacur wrote:
->
-> Could you try the following patch to see if it gets rid of your lockdep
-> splat? (plan to neaten it up and send it to lkml if it works for you.)
->
->  From 29bf37fc62098bc87960e78f365083d9f52cf36a Mon Sep 17 00:00:00 2001
-> From: John Kacur<jkacur@redhat.com>
-> Date: Tue, 29 Nov 2011 15:17:54 +0100
-> Subject: [PATCH] Drop lock in free_block before calling slab_destroy to prevent lockdep splats
->
-> This prevents lockdep splats due to this call chain
-> cache_flusharray()
-> spin_lock(&l3->list_lock);
-> free_block(cachep, ac->entry, batchcount, node);
->         slab_destroy()
->         kmem_cache_free()
->                 __cache_free()
->                 cache_flusharray()
->
-> Signed-off-by: John Kacur<jkacur@redhat.com>
+On Wed, 30 Nov 2011, Mike Galbraith wrote:
+
+> On Tue, 2011-11-29 at 20:55 -0500, Steven Rostedt wrote:
+> > Ingo,
+> > 
+> > I forward ported this code from 2.6.33.9-rt31, but I think you were the
+> > original author, as I found most of this code in the
+> > "tasklet-redesign.patch" from my broken out 2.6.24-rt patches. I
+> > committed it into my git tree (stable-rt) under your name, and added the
+> > Signed-off-by that you had in that patch, if you have and objections,
+> > please let me know. This patch should never see mainline, but it will
+> > probably be going into the -rt branch. I wrote up this change log, if
+> > there's something you don't like in it, let me know and I'll fix it.
+> 
+> I'm oh so happy to see this.  I've been going nuts trying to figure out
+> why the heck 33-rt doesn't go bonkers, but 30+ rt does.
+> 
+> > Luis and Clark (I love saying that),
+> > 
+> > I booted this patch against 3.0-rt stable, and it didn't crash ;)
+> > Could you apply it and see if it fixes the hang that you've been seeing.
+> 
+> I'll most certainly be testing it too.  With the below, and the
+> conditional yield thingy disabled, all I have to do is boot x3550 M3
+> box, and it'll hang very frequently, but not always, with sirq-tasklet
+> going stark raving mad.  Yielding fix^Wmakes it not do the bad thing.
+> 
+> (somewhat less disgusting version of sirq threads patch;)
+> 
+> sched, rt: resurrect softirq threads for RT_FULL
+> 
+> Signed-off-by: Mike Galbraith <efault@gmx.de>
 > ---
->   mm/slab.c |    2 ++
->   1 files changed, 2 insertions(+), 0 deletions(-)
->
-> diff --git a/mm/slab.c b/mm/slab.c
-> index b615658..635e16a 100644
-> --- a/mm/slab.c
-> +++ b/mm/slab.c
-> @@ -3667,7 +3667,9 @@ static void free_block(struct kmem_cache *cachep, void **objpp, int nr_objects,
->   				 * a different cache, refer to comments before
->   				 * alloc_slabmgmt.
->   				 */
-> +				spin_unlock(&l3->list_lock);
->   				slab_destroy(cachep, slabp, true);
-> +				spin_lock(&l3->list_lock);
->   			} else {
->   				list_add(&slabp->list,&l3->slabs_free);
->   			}
+>  include/linux/interrupt.h |   46 ++++++++++
+>  kernel/irq/Kconfig        |    7 +
+>  kernel/sched.c            |    4 
+>  kernel/softirq.c          |  194 ++++++++++++++++++++++++++++++++--------------
+>  4 files changed, 191 insertions(+), 60 deletions(-)
+> 
+> Index: linux-3.2-rt/kernel/irq/Kconfig
+> ===================================================================
+> --- linux-3.2-rt.orig/kernel/irq/Kconfig
+> +++ linux-3.2-rt/kernel/irq/Kconfig
+> @@ -60,6 +60,13 @@ config IRQ_DOMAIN
+>  config IRQ_FORCED_THREADING
+>         bool
+>  
+> +# Support forced sirq threading
+> +config SIRQ_FORCED_THREADING
+> +       bool "Forced Soft IRQ threading"
+> +       depends on PREEMPT_RT_FULL
+> +	help
+> +	  Split ksoftirqd into per SOFTIRQ threads
+> +
+>  config SPARSE_IRQ
+>  	bool "Support sparse irq numbering"
+>  	depends on HAVE_SPARSE_IRQ
+> Index: linux-3.2-rt/include/linux/interrupt.h
+> ===================================================================
+> --- linux-3.2-rt.orig/include/linux/interrupt.h
+> +++ linux-3.2-rt/include/linux/interrupt.h
+> @@ -442,6 +442,9 @@ enum
+>  	NR_SOFTIRQS
+>  };
+>  
+> +/* Update when adding new softirqs. */
+> +#define SOFTIRQ_MASK_ALL 0x3ff
+> +
+>  /* map softirq index to softirq name. update 'softirq_to_name' in
+>   * kernel/softirq.c when adding a new softirq.
+>   */
+> @@ -457,10 +460,16 @@ struct softirq_action
+>  };
+>  
+>  #ifndef CONFIG_PREEMPT_RT_FULL
+> +#define NR_SOFTIRQ_THREADS 1
+>  asmlinkage void do_softirq(void);
+>  asmlinkage void __do_softirq(void);
+>  static inline void thread_do_softirq(void) { do_softirq(); }
+>  #else
+> +#ifdef CONFIG_SIRQ_FORCED_THREADING
+> +#define NR_SOFTIRQ_THREADS NR_SOFTIRQS
+> +#else
+> +#define NR_SOFTIRQ_THREADS 1
+> +#endif
+>  extern void thread_do_softirq(void);
+>  #endif
+>  
+> @@ -486,12 +495,43 @@ extern void softirq_check_pending_idle(v
+>   */
+>  DECLARE_PER_CPU(struct list_head [NR_SOFTIRQS], softirq_work_list);
+>  
+> -DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
+> +struct softirqdata {
+> +	int			mask;
+> +	struct task_struct	*tsk;
+> +};
+> +
+> +DECLARE_PER_CPU(struct softirqdata [NR_SOFTIRQ_THREADS], ksoftirqd);
+> +
+> +static inline bool this_cpu_ksoftirqd(struct task_struct *p)
+> +{
+> +	int i;
+> +
+> +	for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
+> +		if (p == __get_cpu_var(ksoftirqd)[i].tsk)
+> +			return true;
 
-Yes, that seems like the path that causes the warning. I can test this 
-on friday if no other patch was proposed by then.
+You are not serious about that loop, are you ?
 
-It should also solve a slightly different situation where I get the same 
-warning, see below.
+> +	}
+>  
+> -static inline struct task_struct *this_cpu_ksoftirqd(void)
+> +	return false;
+> +}
+> +
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +static inline int task_sirq_mask(struct task_struct *p)
+> +{
+> +	int i;
+> +
+> +	for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
+> +		if (p == __get_cpu_var(ksoftirqd)[i].tsk)
+> +			return __get_cpu_var(ksoftirqd)[i].mask;
 
-Btw., the subject of this thread is very misleading, sorry for that. 
-Should be something like "Lockdep-warning in slab.c on 3.0.9-rt25".
+Looks you are
 
-I guess it is a bad idea to change the subject of an existing thread?
+> @@ -131,11 +155,18 @@ void softirq_check_pending_idle(void)
+>   */
+>  static void wakeup_softirqd(void)
+>  {
+> -	/* Interrupts are disabled: no need to stop preemption */
+> -	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
+> +	struct task_struct *tsk;
+> +	u32 pending = local_softirq_pending(), mask, i;
+>  
+> -	if (tsk && tsk->state != TASK_RUNNING)
+> -		wake_up_process(tsk);
+> +	/* Interrupts are disabled: no need to stop preemption */
+> +	for (i = 0; pending && i < NR_SOFTIRQ_THREADS; i++) {
+> +		mask = __get_cpu_var(ksoftirqd)[i].mask;
+> +		if (!(pending & mask))
+> +			continue;
+> +		tsk = __get_cpu_var(ksoftirqd)[i].tsk;
+> +		if (tsk && tsk->state != TASK_RUNNING)
+> +			wake_up_process(tsk);
+> +	}
+>  }
 
-Nov 17 17:18:17 fix kernel: [   11.170313] 
-=============================================
-Nov 17 17:18:17 fix kernel: [   11.170315] [ INFO: possible recursive 
-locking detected ]
-Nov 17 17:18:17 fix kernel: [   11.170317] 3.0.9-25-rt #0
-Nov 17 17:18:17 fix kernel: [   11.170319] 
----------------------------------------------
-Nov 17 17:18:17 fix kernel: [   11.170321] kworker/0:1/20 is trying to 
-acquire lock:
-Nov 17 17:18:17 fix kernel: [   11.170323] 
-(&parent->list_lock){+.+...}, at: [<ffffffff81613e63>] 
-cache_flusharray+0x47/0xd6
-Nov 17 17:18:17 fix kernel: [   11.170331]
-Nov 17 17:18:17 fix kernel: [   11.170332] but task is already holding lock:
-Nov 17 17:18:17 fix kernel: [   11.170333] 
-(&parent->list_lock){+.+...}, at: [<ffffffff811682c2>] 
-drain_array.part.43+0xc2/0x220
-Nov 17 17:18:17 fix kernel: [   11.170339]
-Nov 17 17:18:17 fix kernel: [   11.170340] other info that might help us 
-debug this:
-Nov 17 17:18:17 fix kernel: [   11.170342]  Possible unsafe locking 
-scenario:
-Nov 17 17:18:17 fix kernel: [   11.170342]
-Nov 17 17:18:17 fix kernel: [   11.170343]        CPU0
-Nov 17 17:18:17 fix kernel: [   11.170344]        ----
-Nov 17 17:18:17 fix kernel: [   11.170345]   lock(&parent->list_lock);
-Nov 17 17:18:17 fix kernel: [   11.170347]   lock(&parent->list_lock);
-Nov 17 17:18:17 fix kernel: [   11.170349]
-Nov 17 17:18:17 fix kernel: [   11.170349]  *** DEADLOCK ***
-Nov 17 17:18:17 fix kernel: [   11.170350]
-Nov 17 17:18:17 fix kernel: [   11.170351]  May be due to missing lock 
-nesting notation
-Nov 17 17:18:17 fix kernel: [   11.170352]
-Nov 17 17:18:17 fix kernel: [   11.170354] 5 locks held by kworker/0:1/20:
-Nov 17 17:18:17 fix kernel: [   11.170355]  #0:  (events){.+.+.+}, at: 
-[<ffffffff810834ec>] process_one_work+0x12c/0x5a0
-Nov 17 17:18:17 fix kernel: [   11.170360]  #1: 
-((&(reap_work)->work)){+.+...}, at: [<ffffffff810834ec>] 
-process_one_work+0x12c/0x5a0
-Nov 17 17:18:17 fix kernel: [   11.170364]  #2: 
-(cache_chain_mutex){+.+.+.}, at: [<ffffffff811689ae>] cache_reap+0x2e/0x1b0
-Nov 17 17:18:17 fix kernel: [   11.170369]  #3:  (&per_cpu(slab_lock, 
-__cpu).lock){+.+...}, at: [<ffffffff81168277>] 
-drain_array.part.43+0x77/0x220
-Nov 17 17:18:17 fix kernel: [   11.170374]  #4: 
-(&parent->list_lock){+.+...}, at: [<ffffffff811682c2>] 
-drain_array.part.43+0xc2/0x220
-Nov 17 17:18:17 fix kernel: [   11.170378]
-Nov 17 17:18:17 fix kernel: [   11.170379] stack backtrace:
-Nov 17 17:18:17 fix kernel: [   11.170381] Pid: 20, comm: kworker/0:1 
-Not tainted 3.0.9-25-rt #0
-Nov 17 17:18:17 fix kernel: [   11.170383] Call Trace:
-Nov 17 17:18:17 fix kernel: [   11.170388]  [<ffffffff810a0097>] 
-print_deadlock_bug+0xf7/0x100
-Nov 17 17:18:17 fix kernel: [   11.170392]  [<ffffffff810a1add>] 
-validate_chain.isra.37+0x67d/0x720
-Nov 17 17:18:17 fix kernel: [   11.170396]  [<ffffffff810a2478>] 
-__lock_acquire+0x478/0x9c0
-Nov 17 17:18:17 fix kernel: [   11.170399]  [<ffffffff8162ae19>] ? 
-sub_preempt_count+0x29/0x60
-Nov 17 17:18:17 fix kernel: [   11.170404]  [<ffffffff81627475>] ? 
-_raw_spin_unlock+0x35/0x60
-Nov 17 17:18:17 fix kernel: [   11.170407]  [<ffffffff81625f0b>] ? 
-rt_spin_lock_slowlock+0x2eb/0x340
-Nov 17 17:18:17 fix kernel: [   11.170410]  [<ffffffff8162ae19>] ? 
-sub_preempt_count+0x29/0x60
-Nov 17 17:18:17 fix kernel: [   11.170413]  [<ffffffff81613e63>] ? 
-cache_flusharray+0x47/0xd6
-Nov 17 17:18:17 fix kernel: [   11.170416]  [<ffffffff810a2f64>] 
-lock_acquire+0x94/0x160
-Nov 17 17:18:17 fix kernel: [   11.170419]  [<ffffffff81613e63>] ? 
-cache_flusharray+0x47/0xd6
-Nov 17 17:18:17 fix kernel: [   11.170422]  [<ffffffff81626999>] 
-rt_spin_lock+0x39/0x40
-Nov 17 17:18:17 fix kernel: [   11.170425]  [<ffffffff81613e63>] ? 
-cache_flusharray+0x47/0xd6
-Nov 17 17:18:17 fix kernel: [   11.170428]  [<ffffffff810a3a4d>] ? 
-trace_hardirqs_on_caller+0x13d/0x180
-Nov 17 17:18:17 fix kernel: [   11.170431]  [<ffffffff81613e63>] 
-cache_flusharray+0x47/0xd6
-Nov 17 17:18:17 fix kernel: [   11.170435]  [<ffffffff81167a41>] 
-kmem_cache_free+0x221/0x300
-Nov 17 17:18:17 fix kernel: [   11.170438]  [<ffffffff81167b8f>] 
-slab_destroy+0x6f/0xa0
-Nov 17 17:18:17 fix kernel: [   11.170441]  [<ffffffff81167d32>] 
-free_block+0x172/0x190
-Nov 17 17:18:17 fix kernel: [   11.170444]  [<ffffffff81168313>] 
-drain_array.part.43+0x113/0x220
-Nov 17 17:18:17 fix kernel: [   11.170448]  [<ffffffff81168455>] 
-drain_array+0x35/0x40
-Nov 17 17:18:17 fix kernel: [   11.170451]  [<ffffffff81168a36>] 
-cache_reap+0xb6/0x1b0
-Nov 17 17:18:17 fix kernel: [   11.170454]  [<ffffffff81168980>] ? 
-drain_freelist+0x2c0/0x2c0
-Nov 17 17:18:17 fix kernel: [   11.170457]  [<ffffffff81083554>] 
-process_one_work+0x194/0x5a0
-Nov 17 17:18:17 fix kernel: [   11.170459]  [<ffffffff810834ec>] ? 
-process_one_work+0x12c/0x5a0
-Nov 17 17:18:17 fix kernel: [   11.170462]  [<ffffffff81083d72>] 
-worker_thread+0x182/0x380
-Nov 17 17:18:17 fix kernel: [   11.170465]  [<ffffffff81083bf0>] ? 
-rescuer_thread+0x250/0x250
-Nov 17 17:18:17 fix kernel: [   11.170469]  [<ffffffff81088b81>] 
-kthread+0xa1/0xb0
-Nov 17 17:18:17 fix kernel: [   11.170472]  [<ffffffff81627411>] ? 
-_raw_spin_unlock_irq+0x41/0x70
-Nov 17 17:18:17 fix kernel: [   11.170476]  [<ffffffff8104adec>] ? 
-finish_task_switch+0x7c/0x130
-Nov 17 17:18:17 fix kernel: [   11.170480]  [<ffffffff8162fea4>] 
-kernel_thread_helper+0x4/0x10
-Nov 17 17:18:17 fix kernel: [   11.170483]  [<ffffffff81627411>] ? 
-_raw_spin_unlock_irq+0x41/0x70
-Nov 17 17:18:17 fix kernel: [   11.170486]  [<ffffffff81627898>] ? 
-retint_restore_args+0x13/0x13
-Nov 17 17:18:17 fix kernel: [   11.170490]  [<ffffffff81088ae0>] ? 
-__init_kthread_worker+0xa0/0xa0
-Nov 17 17:18:17 fix kernel: [   11.170492]  [<ffffffff8162fea0>] ? 
-gs_change+0x13/0x13
+Dammned serious is seems. :)
+
+I was looking into that as well, though I did not want to inflict it
+on 3.0 at this point.
+
+Thanks,
+
+	tglx
