@@ -1,98 +1,70 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 3.2-rc1 and nvidia drivers
-Date: Tue, 29 Nov 2011 21:36:53 -0500
-Message-ID: <1322620613.17003.110.camel@frodo>
-References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com>
-	 <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos>
-	 <4ED35D9A.7090401@tum.de>
-	 <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>
-	 <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RT] tasklet/rt: Prevent tasklets from going into
+ infinite spin in RT
+Date: Tue, 29 Nov 2011 21:50:39 -0600
+Message-ID: <20111129215039.344b5109@redhat.com>
+References: <1322618120.17003.104.camel@frodo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Schauss <schauss@tum.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/GkQ.xRZjKTIuMwDgmCZ./Am"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: John Kacur <jkacur@redhat.com>
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:35059 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755134Ab1K3Cgz (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Nov 2011 21:36:55 -0500
-In-Reply-To: <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
+Received: from mx1.redhat.com ([209.132.183.28]:64923 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751139Ab1K3DvH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Nov 2011 22:51:07 -0500
+In-Reply-To: <1322618120.17003.104.camel@frodo>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2011-11-29 at 15:31 +0100, John Kacur wrote:
-> On Mon, 28 Nov 2011, John Kacur wrote:
+--Sig_/GkQ.xRZjKTIuMwDgmCZ./Am
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> > Hmm, I think I see how this can happen.
-> > 
-> > cache_flusharray()
-> > spin_lock(&l3->list_lock);
-> > free_block(cachep, ac->entry, batchcount, node);
-> >         slab_destroy()
-> >         kmem_cache_free()
-> >                 __cache_free()
-> >                 cache_flusharray()
-> > 
-> 
-> Could you try the following patch to see if it gets rid of your lockdep 
-> splat? (plan to neaten it up and send it to lkml if it works for you.)
-> 
-> >From 29bf37fc62098bc87960e78f365083d9f52cf36a Mon Sep 17 00:00:00 2001
-> From: John Kacur <jkacur@redhat.com>
-> Date: Tue, 29 Nov 2011 15:17:54 +0100
-> Subject: [PATCH] Drop lock in free_block before calling slab_destroy to prevent lockdep splats
-> 
-> This prevents lockdep splats due to this call chain
-> cache_flusharray()
-> spin_lock(&l3->list_lock);
-> free_block(cachep, ac->entry, batchcount, node);
->        slab_destroy()
->        kmem_cache_free()
->                __cache_free()
->                cache_flusharray()
+On Tue, 29 Nov 2011 20:55:20 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-John,
+> Ingo,
+>=20
+> I forward ported this code from 2.6.33.9-rt31, but I think you were the
+> original author, as I found most of this code in the
+> "tasklet-redesign.patch" from my broken out 2.6.24-rt patches. I
+> committed it into my git tree (stable-rt) under your name, and added the
+> Signed-off-by that you had in that patch, if you have and objections,
+> please let me know. This patch should never see mainline, but it will
+> probably be going into the -rt branch. I wrote up this change log, if
+> there's something you don't like in it, let me know and I'll fix it.
+>=20
+> Luis and Clark (I love saying that),
 
-No, this is a false positive, and the code is correct, lockdep just
-needs to be tweaked. If this was a real bug, then it would have locked
-up here and not have continued, as spinlocks are not recursive.
+No matter how many times you say it, I'm still not treking across the
+USA with Luis. :)
 
-This was complained about in mainline too:
+>=20
+> I booted this patch against 3.0-rt stable, and it didn't crash ;)
+> Could you apply it and see if it fixes the hang that you've been seeing.
+>=20
 
-  https://lkml.org/lkml/2011/10/3/364
+Yeah, since Luis is a couple of time zones ahead of us, maybe it'll all
+be fixed when we get up in the morning.
 
-There was a fix to a similar bug that Peter pointed out, but this bug
-doesn't look like it was fixed.
+Clark
 
-Peter?
+--Sig_/GkQ.xRZjKTIuMwDgmCZ./Am
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
--- Steve
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
 
+iEYEARECAAYFAk7VqA8ACgkQHyuj/+TTEp1fpgCgmxNaB31+PGjxmXsv5LkZbJhf
+JuQAnAt90daKylpX3EWzUn/WRnp4UX7T
+=3wM1
+-----END PGP SIGNATURE-----
 
-> 
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  mm/slab.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
-> 
-> diff --git a/mm/slab.c b/mm/slab.c
-> index b615658..635e16a 100644
-> --- a/mm/slab.c
-> +++ b/mm/slab.c
-> @@ -3667,7 +3667,9 @@ static void free_block(struct kmem_cache *cachep, void **objpp, int nr_objects,
->  				 * a different cache, refer to comments before
->  				 * alloc_slabmgmt.
->  				 */
-> +				spin_unlock(&l3->list_lock);
->  				slab_destroy(cachep, slabp, true);
-> +				spin_lock(&l3->list_lock);
->  			} else {
->  				list_add(&slabp->list, &l3->slabs_free);
->  			}
-
-
+--Sig_/GkQ.xRZjKTIuMwDgmCZ./Am--
