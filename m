@@ -1,68 +1,84 @@
-From: Mike Kravetz <kravetz@us.ibm.com>
-Subject: Re: [PATCH RT] tasklet/rt: Prevent tasklets from going into infinite
- spin in RT
-Date: Wed, 30 Nov 2011 07:56:54 -0800
-Message-ID: <20111130155654.GA2213@monkey.beaverton.ibm.com>
-References: <1322618120.17003.104.camel@frodo>
- <20111129215039.344b5109@redhat.com>
- <20111130062431.GA2185@monkey.beaverton.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: IRQ "nobody cared...Disabling" errors on linux-3.0.10-rt27 on
+ SMP AMD64 system
+Date: Wed, 30 Nov 2011 17:10:17 -0500
+Message-ID: <1322691017.24563.9.camel@frodo>
+References: <4ECCE979.5080109@cedwards.geek.nz>
+	 <1322056363.20742.45.camel@frodo>  <4ECD7DCC.3000505@ripples.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Chris Edwards <cedwards@ripples.dyndns.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e4.ny.us.ibm.com ([32.97.182.144]:54813 "EHLO e4.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756665Ab1K3P5S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Nov 2011 10:57:18 -0500
-Received: from /spool/local
-	by e4.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <mkravetz@us.ibm.com>;
-	Wed, 30 Nov 2011 10:57:16 -0500
-Content-Disposition: inline
-In-Reply-To: <20111130062431.GA2185@monkey.beaverton.ibm.com>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:34815 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751569Ab1K3WKU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 30 Nov 2011 17:10:20 -0500
+In-Reply-To: <4ECD7DCC.3000505@ripples.dyndns.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Nov 29, 2011 at 10:24:31PM -0800, Mike Kravetz wrote:
-> On Tue, Nov 29, 2011 at 09:50:39PM -0600, Clark Williams wrote:
-> > On Tue, 29 Nov 2011 20:55:20 -0500
-> > Steven Rostedt <rostedt@goodmis.org> wrote:
-> > 
-> > > Ingo,
-> > > 
-> > > I forward ported this code from 2.6.33.9-rt31, but I think you were the
-> > > original author, as I found most of this code in the
-> > > "tasklet-redesign.patch" from my broken out 2.6.24-rt patches. I
-> > > committed it into my git tree (stable-rt) under your name, and added the
-> > > Signed-off-by that you had in that patch, if you have and objections,
-> > > please let me know. This patch should never see mainline, but it will
-> > > probably be going into the -rt branch. I wrote up this change log, if
-> > > there's something you don't like in it, let me know and I'll fix it.
-> > > 
-> > > Luis and Clark (I love saying that),
-> > 
-> > No matter how many times you say it, I'm still not treking across the
-> > USA with Luis. :)
-> > 
-> > > I booted this patch against 3.0-rt stable, and it didn't crash ;)
-> > > Could you apply it and see if it fixes the hang that you've been seeing.
-> > 
-> > Yeah, since Luis is a couple of time zones ahead of us, maybe it'll all
-> > be fixed when we get up in the morning.
+On Thu, 2011-11-24 at 12:12 +1300, Chris Edwards wrote:
+> On 24/11/11 02:52, Steven Rostedt wrote:
+> > On Thu, 2011-11-24 at 01:39 +1300, Chris Edwards wrote:
+> >> Hi all,
+> >>
+> >> Problem:
+> >> IRQ-related "nobody cared" kernel call traces not long after bootup on
+> >> Linux 3.0.10-rt27.  I thought I'd try a -rt kernel to see if it would
+> >> resolve the audio drop-outs on my new Firewire audio interface.
+> > I wonder if this is another bad irq chipset. Does it go away if you boot
+> > with noapic in the kernel command line?
+> >
 > 
-> I've got it running on a system here that frequently encountered the
-> condition.  I will let it perform some automated testing while I sleep.
-> Should have results by morning (west coast US).
+> Thanks for the quick reply, Steven.  Booting with "noapic" does seem to 
+> avoid the problem with IRQs 17 and 18, and the Firewire audio now works, 
+> but the "nobody cared" error now appears for IRQ 7:
 
-133 successful test executions (just normal reboot/restart of system).  Without
-patch, system would hang/stall during restart more than 50% of the time.
+A couple of things:
 
--- 
-Mike
+Could you also try mainline, with "threadirqs" on the command line and
+see if it gives you the same issue. It should also tell you if it is a
+chipset problem or not. Try v3.0, and then v3.2.
+
+Could you also apply the below patch to 3.0-rt. Thomas pointed me to the
+following commits. The patch below is a back port of them.
+
+ commit 52553ddff
+ commit c75d720f
+
+Oh, and remove the noapic from the command line when you do all of this.
+
+Thanks,
+
+-- Steve
+
+diff --git a/kernel/irq/spurious.c b/kernel/irq/spurious.c
+index e57f1b3..d09e0f5 100644
+--- a/kernel/irq/spurious.c
++++ b/kernel/irq/spurious.c
+@@ -84,7 +84,9 @@ static int try_one_irq(int irq, struct irq_desc *desc, bool force)
+ 	 */
+ 	action = desc->action;
+ 	if (!action || !(action->flags & IRQF_SHARED) ||
+-	    (action->flags & __IRQF_TIMER) || !action->next)
++	    (action->flags & __IRQF_TIMER) ||
++	    (action->handler(irq, action->dev_id) == IRQ_HANDLED) ||
++	    !action->next)
+ 		goto out;
+ 
+ 	/* Already running on another processor */
+@@ -115,7 +117,7 @@ static int misrouted_irq(int irq)
+ 	struct irq_desc *desc;
+ 	int i, ok = 0;
+ 
+-	if (atomic_inc_return(&irq_poll_active) == 1)
++	if (atomic_inc_return(&irq_poll_active) != 1)
+ 		goto out;
+ 
+ 	irq_poll_cpu = smp_processor_id();
+
 
