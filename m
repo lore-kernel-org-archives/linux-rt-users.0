@@ -1,54 +1,68 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 3.2-rc1 and nvidia drivers
-Date: Wed, 30 Nov 2011 10:20:31 -0500
-Message-ID: <1322666431.24563.2.camel@frodo>
-References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com>
-	 <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos>
-	 <4ED35D9A.7090401@tum.de>
-	 <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>
-	 <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
-	 <1322620613.17003.110.camel@frodo>
-	 <CAONaPpEp=bBJWZ4DzAem0TE+_2q5t+G=99_jdJxVsCwXZ4Mk9g@mail.gmail.com>
-	 <1322651681.2921.247.camel@twins> <1322662465.17003.117.camel@frodo>
-	 <1322662578.2921.275.camel@twins> <1322663502.17003.121.camel@frodo>
-	 <4ED646B1.4020508@tum.de>
+From: Mike Kravetz <kravetz@us.ibm.com>
+Subject: Re: [PATCH RT] tasklet/rt: Prevent tasklets from going into infinite
+ spin in RT
+Date: Wed, 30 Nov 2011 07:56:54 -0800
+Message-ID: <20111130155654.GA2213@monkey.beaverton.ibm.com>
+References: <1322618120.17003.104.camel@frodo>
+ <20111129215039.344b5109@redhat.com>
+ <20111130062431.GA2185@monkey.beaverton.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	John Kacur <jkacur@redhat.com>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Thomas Schauss <schauss@tum.de>
+	Ingo Molnar <mingo@elte.hu>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:36277 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753042Ab1K3PUe (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Nov 2011 10:20:34 -0500
-In-Reply-To: <4ED646B1.4020508@tum.de>
+Received: from e4.ny.us.ibm.com ([32.97.182.144]:54813 "EHLO e4.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756665Ab1K3P5S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 30 Nov 2011 10:57:18 -0500
+Received: from /spool/local
+	by e4.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <mkravetz@us.ibm.com>;
+	Wed, 30 Nov 2011 10:57:16 -0500
+Content-Disposition: inline
+In-Reply-To: <20111130062431.GA2185@monkey.beaverton.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-11-30 at 16:07 +0100, Thomas Schauss wrote:
-
-> On 3.0.9-rt25 (which I have been using here) patch 30765b92 is already 
-> applied. And it is also present in patch-3.0.10-rt27.patch.
-
-I'm such a fscking idiot!
-
-I've been working on a port of a patch in 2.6.33-rt, and I didn't
-realize that I was still in that kernel, applying these patches. As I
-said, I thought the one Peter had was already applied. It was, I'm the
-idiot that didn't realize I was in the wrong kernel!
-
+On Tue, Nov 29, 2011 at 10:24:31PM -0800, Mike Kravetz wrote:
+> On Tue, Nov 29, 2011 at 09:50:39PM -0600, Clark Williams wrote:
+> > On Tue, 29 Nov 2011 20:55:20 -0500
+> > Steven Rostedt <rostedt@goodmis.org> wrote:
+> > 
+> > > Ingo,
+> > > 
+> > > I forward ported this code from 2.6.33.9-rt31, but I think you were the
+> > > original author, as I found most of this code in the
+> > > "tasklet-redesign.patch" from my broken out 2.6.24-rt patches. I
+> > > committed it into my git tree (stable-rt) under your name, and added the
+> > > Signed-off-by that you had in that patch, if you have and objections,
+> > > please let me know. This patch should never see mainline, but it will
+> > > probably be going into the -rt branch. I wrote up this change log, if
+> > > there's something you don't like in it, let me know and I'll fix it.
+> > > 
+> > > Luis and Clark (I love saying that),
+> > 
+> > No matter how many times you say it, I'm still not treking across the
+> > USA with Luis. :)
+> > 
+> > > I booted this patch against 3.0-rt stable, and it didn't crash ;)
+> > > Could you apply it and see if it fixes the hang that you've been seeing.
+> > 
+> > Yeah, since Luis is a couple of time zones ahead of us, maybe it'll all
+> > be fixed when we get up in the morning.
 > 
-> So the original patch from Peter 
-> (http://article.gmane.org/gmane.linux.kernel.mm/70863/match=) applies 
-> cleanly here.
+> I've got it running on a system here that frequently encountered the
+> condition.  I will let it perform some automated testing while I sleep.
+> Should have results by morning (west coast US).
 
-Yeah, thanks. That's the patch you want.
+133 successful test executions (just normal reboot/restart of system).  Without
+patch, system would hang/stall during restart more than 50% of the time.
 
--- Steve
-
+-- 
+Mike
 
