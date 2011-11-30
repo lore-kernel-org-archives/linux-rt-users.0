@@ -1,45 +1,83 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: 3.2-rc1 and nvidia drivers
-Date: Wed, 30 Nov 2011 12:14:41 +0100
-Message-ID: <1322651681.2921.247.camel@twins>
-References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com>
-	 <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos>
-	 <4ED35D9A.7090401@tum.de>
-	 <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>
-	 <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>
-	 <1322620613.17003.110.camel@frodo>
-	 <CAONaPpEp=bBJWZ4DzAem0TE+_2q5t+G=99_jdJxVsCwXZ4Mk9g@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH RT] tasklet/rt: Prevent tasklets from going into
+ infinite spin in RT
+Date: Wed, 30 Nov 2011 13:45:30 +0100
+Message-ID: <1322657130.5297.12.camel@marge.simson.net>
+References: <1322618120.17003.104.camel@frodo>
+	 <1322627551.17283.11.camel@marge.simson.net>
+	 <alpine.LFD.2.02.1111301117240.2735@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7bit
 Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Schauss <schauss@tum.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:57110 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752807Ab1K3LPD convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Nov 2011 06:15:03 -0500
-In-Reply-To: <CAONaPpEp=bBJWZ4DzAem0TE+_2q5t+G=99_jdJxVsCwXZ4Mk9g@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.02.1111301117240.2735@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2011-11-30 at 09:23 +0100, John Kacur wrote:
-> > This was complained about in mainline too:
-> >
-> >  https://lkml.org/lkml/2011/10/3/364
-> >
-> > There was a fix to a similar bug that Peter pointed out, but this bug
-> > doesn't look like it was fixed.
-> >
-> > Peter? 
+On Wed, 2011-11-30 at 11:24 +0100, Thomas Gleixner wrote:
+> On Wed, 30 Nov 2011, Mike Galbraith wrote:
 
-Re to the subject, every borkage of the nvidiot binary driver is a
-personal victory, I try as hard as possible to increase their pain.
+> > @@ -486,12 +495,43 @@ extern void softirq_check_pending_idle(v
+> >   */
+> >  DECLARE_PER_CPU(struct list_head [NR_SOFTIRQS], softirq_work_list);
+> >  
+> > -DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
+> > +struct softirqdata {
+> > +	int			mask;
+> > +	struct task_struct	*tsk;
+> > +};
+> > +
+> > +DECLARE_PER_CPU(struct softirqdata [NR_SOFTIRQ_THREADS], ksoftirqd);
+> > +
+> > +static inline bool this_cpu_ksoftirqd(struct task_struct *p)
+> > +{
+> > +	int i;
+> > +
+> > +	for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
+> > +		if (p == __get_cpu_var(ksoftirqd)[i].tsk)
+> > +			return true;
+> 
+> You are not serious about that loop, are you ?
 
-As to the actual subject of the email, see:
+Well, it's a short loop, especially when NR_SOFTIRQ_THREADS = 1 (poof).
 
-http://article.gmane.org/gmane.linux.kernel.mm/70863/match=
+> > @@ -131,11 +155,18 @@ void softirq_check_pending_idle(void)
+> >   */
+> >  static void wakeup_softirqd(void)
+> >  {
+> > -	/* Interrupts are disabled: no need to stop preemption */
+> > -	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
+> > +	struct task_struct *tsk;
+> > +	u32 pending = local_softirq_pending(), mask, i;
+> >  
+> > -	if (tsk && tsk->state != TASK_RUNNING)
+> > -		wake_up_process(tsk);
+> > +	/* Interrupts are disabled: no need to stop preemption */
+> > +	for (i = 0; pending && i < NR_SOFTIRQ_THREADS; i++) {
+> > +		mask = __get_cpu_var(ksoftirqd)[i].mask;
+> > +		if (!(pending & mask))
+> > +			continue;
+> > +		tsk = __get_cpu_var(ksoftirqd)[i].tsk;
+> > +		if (tsk && tsk->state != TASK_RUNNING)
+> > +			wake_up_process(tsk);
+> > +	}
+> >  }
+> 
+> Dammned serious is seems. :)
+
+Deadly serious :)
+
+For the problem at hand (timer wakeups), NR_SOFTIRQ_THREADS could be 2.
+
+> I was looking into that as well, though I did not want to inflict it
+> on 3.0 at this point.
+> 
+> Thanks,
+> 
+> 	tglx
