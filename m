@@ -1,164 +1,82 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH-RT] Fix for sleeping function called from invalid
- context when running gdb
-Date: Fri, 02 Dec 2011 10:46:03 -0500
-Message-ID: <1322840763.30977.39.camel@frodo>
-References: <1322833159-3846-1-git-send-email-jkacur@redhat.com>
+From: Thomas Schauss <schauss@tum.de>
+Subject: Re: 3.2-rc1 and nvidia drivers
+Date: Fri, 02 Dec 2011 18:41:29 +0100
+Message-ID: <4ED90DC9.9090206@tum.de>
+References: <CAOLSsAysHCVAHsSRMTXUpXm_qjK5D5DRagHCS0ZYrxGQ8mDkfw@mail.gmail.com>  <4EC384FD.1040106@tum.de> <alpine.LFD.2.02.1111161605580.4902@ionos>  <4ED35D9A.7090401@tum.de>  <CAONaPpE7Jgz0GhFUB41ZKoa8dUKOqKVFKj6jHfi3EAnPX0SRbQ@mail.gmail.com>  <alpine.LFD.2.00.1111291528590.5855@localhost6.localdomain6>  <1322620613.17003.110.camel@frodo>  <CAONaPpEp=bBJWZ4DzAem0TE+_2q5t+G=99_jdJxVsCwXZ4Mk9g@mail.gmail.com>  <1322651681.2921.247.camel@twins> <1322662465.17003.117.camel@frodo>  <1322662578.2921.275.camel@twins> <1322663502.17003.121.camel@frodo>  <4ED646B1.4020508@tum.de> <1322666431.24563.2.camel@frodo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	lkml <linux-kernel@vger.kernel.org>,
-	Andi Kleen <andi@firstfloor.org>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1322833159-3846-1-git-send-email-jkacur@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mailrelay1.lrz-muenchen.de ([129.187.254.106]:46434 "EHLO
+	mailrelay1.lrz-muenchen.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S932083Ab1LBRll (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Dec 2011 12:41:41 -0500
+Received: from scan5.mail.lrz.de (scan5.mail.lrz.de [10.156.6.39]) by mailrelay1.lrz-muenchen.de with ESMTP for linux-rt-users@vger.kernel.org; Fri, 2 Dec 2011 18:41:31 +0100
+Received: from mailrelay1.lrz-muenchen.de ([10.156.6.201])
+	by scan5.mail.lrz.de (scan5.mail.lrz.de [10.156.6.25]) (amavisd-new, port 10024)
+	with ESMTP id Ha6ohN5WJqLM for <linux-rt-users@vger.kernel.org>;
+	Fri,  2 Dec 2011 18:41:31 +0100 (CET)
+Received: from robusta.lsr.ei.tum.de (robusta.lsr.ei.tum.de [129.187.147.176]) by mailrelay1.lrz-muenchen.de with ESMTP for linux-rt-users@vger.kernel.org; Fri, 2 Dec 2011 18:41:30 +0100
+Received: from mail.lsr.ei.tum.de (mail.lsr.ei.tum.de [129.187.147.212])
+	by robusta.lsr.ei.tum.de (Postfix) with ESMTP id C3BF0150CB00
+	for <linux-rt-users@vger.kernel.org>; Fri,  2 Dec 2011 18:41:30 +0100 (CET)
+In-Reply-To: <1322666431.24563.2.camel@frodo>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2011-12-02 at 14:39 +0100, John Kacur wrote:
-> While running gdb on cyclictest on v3.2-rc2-rt3 I got the following error
-> 
-> [root@starship ~]# [11887.443716] BUG: sleeping function called from invalid con
-> text at /home/jkacur/linux-rt/kernel/rtmutex.c:645
-> [11887.443720] in_atomic(): 1, irqs_disabled(): 0, pid: 4859, name: cyclictest
-> [11887.443723] no locks held by cyclictest/4859.
-> [11887.443726] Pid: 4859, comm: cyclictest Not tainted 3.2.0-rc2-rt3-debug-expr+
->  #1
-> [11887.443728] Call Trace:
-> [11887.443737]  [<ffffffff81035543>] __might_sleep+0x185/0x18d
-> [11887.443743]  [<ffffffff8107c3ed>] rt_spin_lock_fastlock.clone.0+0x24/0x31
-> [11887.443749]  [<ffffffff813fba9b>] rt_spin_lock+0x16/0x40
-> [11887.443754]  [<ffffffff81053eee>] force_sig_info+0x3d/0xeb
-> [11887.443758]  [<ffffffff81053fb2>] force_sig+0x16/0x18
-> [11887.443761]  [<ffffffff813fd0a1>] do_trap+0xef/0x130
-> [11887.443766]  [<ffffffff81076525>] ? trace_hardirqs_on_caller+0x12a/0x161
-> [11887.443771]  [<ffffffff813fd16f>] do_int3+0x8d/0x9a
-> [11887.443774]  [<ffffffff813fc9e7>] int3+0x27/0x40
-> 
-> I found that there is a patch for this in v2.6.33.9-rt31 that I forward-ported
-> to v3.2-rc2-rt3
-> 
-> I believe that Thomas Gleixner is the original author, but I'm not sure.
-> Thomas - can you provide your signed-off-by if you are the author?
-
-Actually, the author was Andi. It's in the 2.6.24-rt patch set too.
-Here's the change log:
-
-
->From ak@suse.de Sat Oct 27 10:32:13 2007
-Date: Sat, 27 Oct 2007 12:39:33 +0200
-From: Andi Kleen <ak@suse.de>
-To: linux-rt-users@vger.kernel.org
-Subject: [PATCH] Don't disable preemption in exception handlers without IST
-
-
-Some of the exception handlers that run on an IST in a normal kernel
-still disable preemption. This causes might_sleep warning when sending signals
-for debugging in PREEMPT-RT because sending signals can take a lock.
-Since the ISTs are disabled now for those don't disable the preemption.
-
-This completes the remove IST patch I sent some time ago and fixes
-another case where using gdb caused warnings.
-
-Also it will likely improve latency a little bit.
-
-Signed-off-by: Andi Kleen <ak@suse.de>
+On 11/30/2011 04:20 PM, Steven Rostedt wrote:
+> On Wed, 2011-11-30 at 16:07 +0100, Thomas Schauss wrote:
+>
+>> On 3.0.9-rt25 (which I have been using here) patch 30765b92 is already
+>> applied. And it is also present in patch-3.0.10-rt27.patch.
+>
+> I'm such a fscking idiot!
+>
+> I've been working on a port of a patch in 2.6.33-rt, and I didn't
+> realize that I was still in that kernel, applying these patches. As I
+> said, I thought the one Peter had was already applied. It was, I'm the
+> idiot that didn't realize I was in the wrong kernel!
+>
+>>
+>> So the original patch from Peter
+>> (http://article.gmane.org/gmane.linux.kernel.mm/70863/match=) applies
+>> cleanly here.
+>
+> Yeah, thanks. That's the patch you want.
+>
+> -- Steve
+>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 
-Thomas, I think this patch is worth adding, unless you have a better
-work around.
+Hello,
 
+this patch does indeed get rid of the lockdep-splat.
 
--- Steve
+Regarding the original subject of the post:
 
+Running startx with the nvidia binary driver fails on 3.0.9-rt25 and 
+3.2-rc2-rt3 when CONFIG_PREEMPT_RT_FULL=y and works fine for 
+CONFIG_PREEMPT_RTB=y. There is no lockdep-warning, kernel oops/bug, 
+etc., neither in any log-files nor on the serial console.
 
+This happens on several machines which ran fine with 2.6.33-rt29.
 
-> 
-> Forward-ported from v2.6.33.9-rt31 to v3.2-rc2-rt3
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  arch/x86/kernel/traps.c |   24 +++++++++++++-----------
->  1 files changed, 13 insertions(+), 11 deletions(-)
-> 
-> diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-> index a8e3eb8..3654390 100644
-> --- a/arch/x86/kernel/traps.c
-> +++ b/arch/x86/kernel/traps.c
-> @@ -87,9 +87,10 @@ static inline void conditional_sti(struct pt_regs *regs)
->  		local_irq_enable();
->  }
->  
-> -static inline void preempt_conditional_sti(struct pt_regs *regs)
-> +static inline void preempt_conditional_sti(struct pt_regs *regs, int stack)
->  {
-> -	inc_preempt_count();
-> +	if (stack)
-> +		inc_preempt_count();
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_enable();
->  }
-> @@ -100,11 +101,12 @@ static inline void conditional_cli(struct pt_regs *regs)
->  		local_irq_disable();
->  }
->  
-> -static inline void preempt_conditional_cli(struct pt_regs *regs)
-> +static inline void preempt_conditional_cli(struct pt_regs *regs, int stack)
->  {
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_disable();
-> -	dec_preempt_count();
-> +	if (stack)
-> +		dec_preempt_count();
->  }
->  
->  static void __kprobes
-> @@ -222,9 +224,9 @@ dotraplinkage void do_stack_segment(struct pt_regs *regs, long error_code)
->  	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
->  			12, SIGBUS) == NOTIFY_STOP)
->  		return;
-> -	preempt_conditional_sti(regs);
-> +	preempt_conditional_sti(regs, STACKFAULT_STACK);
->  	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
-> -	preempt_conditional_cli(regs);
-> +	preempt_conditional_cli(regs, STACKFAULT_STACK);
->  }
->  
->  dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
-> @@ -316,9 +318,9 @@ dotraplinkage void __kprobes do_int3(struct pt_regs *regs, long error_code)
->  		return;
->  #endif
->  
-> -	preempt_conditional_sti(regs);
-> +	preempt_conditional_sti(regs, DEBUG_STACK);
->  	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
-> -	preempt_conditional_cli(regs);
-> +	preempt_conditional_cli(regs, DEBUG_STACK);
->  }
->  
->  #ifdef CONFIG_X86_64
-> @@ -412,12 +414,12 @@ dotraplinkage void __kprobes do_debug(struct pt_regs *regs, long error_code)
->  		return;
->  
->  	/* It's safe to allow irq's after DR6 has been saved */
-> -	preempt_conditional_sti(regs);
-> +	preempt_conditional_sti(regs, DEBUG_STACK);
->  
->  	if (regs->flags & X86_VM_MASK) {
->  		handle_vm86_trap((struct kernel_vm86_regs *) regs,
->  				error_code, 1);
-> -		preempt_conditional_cli(regs);
-> +		preempt_conditional_cli(regs, DEBUG_STACK);
->  		return;
->  	}
->  
-> @@ -436,7 +438,7 @@ dotraplinkage void __kprobes do_debug(struct pt_regs *regs, long error_code)
->  	si_code = get_si_code(tsk->thread.debugreg6);
->  	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
->  		send_sigtrap(tsk, regs, error_code, si_code);
-> -	preempt_conditional_cli(regs);
-> +	preempt_conditional_cli(regs, DEBUG_STACK);
->  
->  	return;
->  }
+I know many people here are no big fans of the nvidia driver (and 
+rightly so). Unfortunately we really need this.
+
+If anyone has any further ideas on debugging this issue I would be 
+really thankful.
+
+Best Regards,
+Thomas
