@@ -1,147 +1,133 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 04/10] KVM: Sanitize cpuid
-Date: Fri, 02 Dec 2011 20:46:45 -0500
-Message-ID: <20111203014745.894197548@goodmis.org>
-References: <20111203014641.165123482@goodmis.org>
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, Avi Kivity <avi@redhat.com>,
-	Joerg Roedel <joerg.roedel@amd.com>,
-	Marcelo Tosatti <mtosatti@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-KVM-Sanitize-cpuid.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Chris Edwards <cedwards@ripples.dyndns.org>
+Subject: Re: IRQ "nobody cared...Disabling" errors on linux-3.0.10-rt27 on
+ SMP AMD64 system
+Date: Sat, 03 Dec 2011 22:41:06 +1300
+Message-ID: <4ED9EEB2.6070401@ripples.dyndns.org>
+References: <4ECCE979.5080109@cedwards.geek.nz>	 <1322056363.20742.45.camel@frodo>  <4ECD7DCC.3000505@ripples.dyndns.org> <1322691017.24563.9.camel@frodo>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.kinect.co.nz ([202.74.33.69]:42260 "EHLO kinect.co.nz"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1753446Ab1LCJl0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 3 Dec 2011 04:41:26 -0500
+In-Reply-To: <1322691017.24563.9.camel@frodo>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---00GvhwF7k39YY
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+On 01/12/11 11:10, Steven Rostedt wrote:
+> On Thu, 2011-11-24 at 12:12 +1300, Chris Edwards wrote:
+>> Thanks for the quick reply, Steven.  Booting with "noapic" does seem to
+>> avoid the problem with IRQs 17 and 18, and the Firewire audio now works,
+>> but the "nobody cared" error now appears for IRQ 7:
+> A couple of things:
+>
+> Could you also try mainline, with "threadirqs" on the command line and
+> see if it gives you the same issue. It should also tell you if it is a
+> chipset problem or not. Try v3.0, and then v3.2.
+>
 
-From: Avi Kivity <avi@redhat.com>
 
-Instead of blacklisting known-unsupported cpuid leaves, whitelist known-
-supported leaves.  This is more conservative and prevents us from reporting
-features we don't support.  Also whitelist a few more leaves while at it.
+Thanks - and sorry it's taken a while to finish testing these!  I had 
+some problems building and running some of the 3.2 versions.
 
-Signed-off-by: Avi Kivity <avi@redhat.com>
-Acked-by: Joerg Roedel <joerg.roedel@amd.com>
-Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
----
- arch/x86/kvm/x86.c |   37 +++++++++++++++++++++++++++++++++++--
- 1 files changed, 35 insertions(+), 2 deletions(-)
+(BTW, one (possibly useful) thing I found during testing was that the 
+burst of interrupt activity on the Firewire IRQ (IRQ 17 when running in 
+APIC mode) coincided with network activity, with interrupts on IRQ 26 
+apparently being duplicated on IRQ 17.  The Ethernet controller is an 
+Intel 82545GM card, on the 64-bit PCI (not the PCI-X) bus on the AMD 8131.)
 
-diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 545c61b..f168c61 100644
---- a/arch/x86/kvm/x86.c
-+++ b/arch/x86/kvm/x86.c
-@@ -2283,6 +2283,13 @@ static void do_cpuid_1_ent(struct kvm_cpuid_entry2 *=
-entry, u32 function,
- 	entry->flags =3D 0;
- }
-=20
-+static bool supported_xcr0_bit(unsigned bit)
-+{
-+	u64 mask =3D ((u64)1 << bit);
-+
-+	return mask & (XSTATE_FP | XSTATE_SSE | XSTATE_YMM) & host_xcr0;
-+}
-+
- #define F(x) bit(X86_FEATURE_##x)
-=20
- static void do_cpuid_ent(struct kvm_cpuid_entry2 *entry, u32 function,
-@@ -2393,6 +2400,8 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *ent=
-ry, u32 function,
- 		}
- 		break;
- 	}
-+	case 9:
-+		break;
- 	case 0xb: {
- 		int i, level_type;
-=20
-@@ -2414,7 +2423,7 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *ent=
-ry, u32 function,
-=20
- 		entry->flags |=3D KVM_CPUID_FLAG_SIGNIFCANT_INDEX;
- 		for (i =3D 1; *nent < maxnent && i < 64; ++i) {
--			if (entry[i].eax =3D=3D 0)
-+			if (entry[i].eax =3D=3D 0 || !supported_xcr0_bit(i))
- 				continue;
- 			do_cpuid_1_ent(&entry[i], function, i);
- 			entry[i].flags |=3D
-@@ -2451,6 +2460,24 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *en=
-try, u32 function,
- 		entry->ecx &=3D kvm_supported_word6_x86_features;
- 		cpuid_mask(&entry->ecx, 6);
- 		break;
-+	case 0x80000008: {
-+		unsigned g_phys_as =3D (entry->eax >> 16) & 0xff;
-+		unsigned virt_as =3D max((entry->eax >> 8) & 0xff, 48U);
-+		unsigned phys_as =3D entry->eax & 0xff;
-+
-+		if (!g_phys_as)
-+			g_phys_as =3D phys_as;
-+		entry->eax =3D g_phys_as | (virt_as << 8);
-+		entry->ebx =3D entry->edx =3D 0;
-+		break;
-+	}
-+	case 0x80000019:
-+		entry->ecx =3D entry->edx =3D 0;
-+		break;
-+	case 0x8000001a:
-+		break;
-+	case 0x8000001d:
-+		break;
- 	/*Add support for Centaur's CPUID instruction*/
- 	case 0xC0000000:
- 		/*Just support up to 0xC0000004 now*/
-@@ -2460,10 +2487,16 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *e=
-ntry, u32 function,
- 		entry->edx &=3D kvm_supported_word5_x86_features;
- 		cpuid_mask(&entry->edx, 5);
- 		break;
-+	case 3: /* Processor serial number */
-+	case 5: /* MONITOR/MWAIT */
-+	case 6: /* Thermal management */
-+	case 0xA: /* Architectural Performance Monitoring */
-+	case 0x80000007: /* Advanced power management */
- 	case 0xC0000002:
- 	case 0xC0000003:
- 	case 0xC0000004:
--		/*Now nothing to do, reserved for the future*/
-+	default:
-+		entry->eax =3D entry->ebx =3D entry->ecx =3D entry->edx =3D 0;
- 		break;
- 	}
-=20
---=20
-1.7.7.1
+
+Here are my testing results:
+
+
+linux-3.0.9 mainline (no "noapic" or "threadirqs"):
+
+     IRQs:
+         17    Firewire
+         18    Radeon
+         19    Gina24
+
+     Almost no interrupts on IRQ 17 (only 126 in total after 4 minutes 
+uptime).
+
+     JACK/FFADO runs OK, ~3200 interrupts/s on IRQ 17 (--rate 96000 
+--period 128 --nperiods 3).  DSP load 30%.
+
+     No CAL interrupt storms on GTK text redrawing (which I'd seen on 
+2.6), or "irq ... nobody cared" errors.
+
+     Ardour plays nicely.
 
 
 
---00GvhwF7k39YY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+linux-3.0.9 mainline, with "threadirqs":
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
+     IRQs:
+         17    Firewire
+         18    Radeon
+         19    Gina24
 
-iQIcBAABAgAGBQJO2X/CAAoJEIy3vGnGbaoA7ZAQAOvBU6tjWmq8F+Zw08LC8Wvi
-ZcxAyKpzO20aPnjUZGsyS4UgnKJp9YDTq79xxHzNtkS9p8NVbY7kcae7u+g1tfSZ
-7l7l/DGN2BVjW/RQzX49hCnpiuQoHqYlK8d1Clty/U0sqrqF3vVyCzzJU8aiPUsX
-rf0BFcojL+vwTLTuq3ThlXUaxL/6nTpZexetHttqYFxyG3YoASk0y5wE1PhfqGU/
-H3jZK0NszUpnFq3Zbq5N2vkpYCLXIxFGM8FNOXq5LRLHMSEYwWmQF0C95xyP4dQB
-qGP0TFuX7k52czWf+t02A9OC94gyin649DYOYKWn5xNMrplC7gn2CgR/klgTa+Fa
-LdqR+h8orDMa1XedKIu/Girt9+bPuce8+87CO7vDtQbdYsM6m8l/4FZY0fZ5pMM8
-9/Xy9vs5iyQSMm1sjjmk1ly6Bg2AyS2NBD4JdjfuZ10/49PHo7caGKb4JafohrK3
-3mASNd4Ygtl13d1P+A4TEnVqMkqKngMFYY/r7FN9lCWp2O+fLfdXVgqOOH4sBlqW
-MJQCwY+JCvvuswTzik/2fqzTLiD/H1MRgfPKImtbaIVV+WbRpoTLl2B8lX41qryu
-wb3UtpUvyYqndkjZK2X+v+P3oBAu/how7jXLEJ2BjoK8oUnpMgYXztCjLFKJc4Km
-J3BrnXC4SHY0ryTP+K1R
-=+28J
------END PGP SIGNATURE-----
+     IRQ 17 is definitely noisier now, with ~500,000 interrupts during 4 
+mins uptime without JACK running, but no "nobody cared" errors observed.
 
---00GvhwF7k39YY--
+     JACK/FFADO runs OK, ~3200 interrupts/s on IRQ 17 (--rate 96000 
+--period 128 --nperiods 3).  DSP load 30%.
+
+     PROBLEM: Audio drop-outs and JACK XRUNs while playing back in 
+Ardour.  These seem to coincide with extra bursts of interrupt activity 
+on IRQ 17 (4,000-10,000 per second, above the 3,200 baseline).  Same 
+problem observed using mplayer with JACK playback.
+
+
+
+linux-3.2.0-rc4:
+
+     Seemingly OK; same behaviour as for 3.0.9 without "threadirqs".
+
+
+
+linux-3.2.0-rc4 with "threadirqs":
+
+     ~40,000 interrupts on IRQ 17 (Firewire) in 4 minutes.
+
+     "nobody cared" message after running NetPIPE to exercise the 
+Ethernet controller, having finally identified that as a/the source of 
+extraneous IRQs.
+
+
+
+linux-3.0.12-rt30-rc1:
+
+     This looks to have the back-ported changes for 3.0-rt that you sent 
+as a patch already applied.
+
+     This one seems to have fixed things!  No sign of spurious interrupt 
+activity on IRQ 17, and no "nobody cared" messages, even when running 
+NetPIPE and gtkperf.  JACK/FFADO and Ardour run pretty reliably.
+
+     I do still have some problems with scratchy audio and excessive CPU 
+use when running Pure Data when its graphics get busy, but it seems 
+likely this is a Pure Data (or maybe Tk) issue.
+
+     I also fired up LatencyTop to see what sorts of figures it was 
+reporting.  The one unusual thing it showed was latencies on the order 
+of 50-90 ms for "drm_mode_cursor_ioctl" in Xorg - similar behaviour to 
+that described here:
+
+     
+http://lists.linuxfoundation.org/pipermail/bugme-new/2011-August/027897.html
+
+     I may have to do some more testing to identify if that's an -rt 
+thing or a kernel version thing...
+
+
+Hope this is helpful. :)  It is for me - I have a pretty usable system 
+now. :)
+
+Thanks again,
+Chris
