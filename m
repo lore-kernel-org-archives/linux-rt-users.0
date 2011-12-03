@@ -1,113 +1,91 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 00/10] [ANNOUNCE] 3.0.12-rt30-rc1
-Date: Fri, 02 Dec 2011 20:46:41 -0500
-Message-ID: <20111203014641.165123482@goodmis.org>
+Subject: [PATCH 08/10] slab, lockdep: Fix silly bug
+Date: Fri, 02 Dec 2011 20:46:49 -0500
+Message-ID: <20111203014755.214257772@goodmis.org>
+References: <20111203014641.165123482@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+ Carsten Emde <C.Emde@osadl.org>,
+ John Kacur <jkacur@redhat.com>,
+ stable@kernel.org,
+ Peter Zijlstra <a.p.zijlstra@chello.nl>,
+ Hans Schillstrom <hans@schillstrom.com>,
+ Christoph Lameter <cl@gentwo.org>,
+ Pekka Enberg <penberg@cs.helsinki.fi>,
+ Matt Mackall <mpm@selenic.com>,
+ Sitsofe Wheeler <sitsofe@yahoo.com>,
+ linux-mm@kvack.org,
+ David Rientjes <rientjes@google.com>
 To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:59391 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753901Ab1LCBrk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Dec 2011 20:47:40 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+ linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline; filename=0008-slab-lockdep-Fix-silly-bug.patch
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
 --00GvhwF7k39YY
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-[ Sorry for the duplicates, this one has the correct Cc's attached ]
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 
-Dear RT Folks,
+Commit 30765b92 ("slab, lockdep: Annotate the locks before using
+them") moves the init_lock_keys() call from after g_cpucache_up =3D
+FULL, to before it. And overlooks the fact that init_node_lock_keys()
+tests for it and ignores everything !FULL.
 
-This is the RT stable review cycle of patch 3.0.12-rt30-rc1.
+Introduce a LATE stage and change the lockdep test to be <LATE.
 
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candida=
-te).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the main release
-next on Wednesday (12/7/2011).
-
-Enjoy,
-
--- Steve
-
-
-To build 3.0.12-rt30-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.12.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.12-rt30-=
-rc1.patch.xz
-
-You can also build from 3.0.12-rt29 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.12-rt=
-29-rt30-rc1.patch.xz
-
-
-Changes from 3.0.12-rt29:
-
+Cc: stable@kernel.org
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Hans Schillstrom <hans@schillstrom.com>
+Cc: Christoph Lameter <cl@gentwo.org>
+Cc: Pekka Enberg <penberg@cs.helsinki.fi>
+Cc: Matt Mackall <mpm@selenic.com>
+Cc: Sitsofe Wheeler <sitsofe@yahoo.com>
+Cc: linux-mm@kvack.org
+Cc: David Rientjes <rientjes@google.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/n/tip-gadqbdfxorhia1w5ewmoiodd@git.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ mm/slab.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-Avi Kivity (1):
-      KVM: Sanitize cpuid
+diff --git a/mm/slab.c b/mm/slab.c
+index 015cd76..433b9a2 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -594,6 +594,7 @@ static enum {
+ 	PARTIAL_AC,
+ 	PARTIAL_L3,
+ 	EARLY,
++	LATE,
+ 	FULL
+ } g_cpucache_up;
+=20
+@@ -670,7 +671,7 @@ static void init_node_lock_keys(int q)
+ {
+ 	struct cache_sizes *s =3D malloc_sizes;
+=20
+-	if (g_cpucache_up !=3D FULL)
++	if (g_cpucache_up < LATE)
+ 		return;
+=20
+ 	for (s =3D malloc_sizes; s->cs_size !=3D ULONG_MAX; s++) {
+@@ -1725,6 +1726,8 @@ void __init kmem_cache_init_late(void)
+ {
+ 	struct kmem_cache *cachep;
+=20
++	g_cpucache_up =3D LATE;
++
+ 	/* Annotate slab for lockdep -- annotate the malloc caches */
+ 	init_lock_keys();
+=20
+--=20
+1.7.7.1
 
-Edward Donovan (1):
-      genirq: fix regression in irqfixup, irqpoll
 
-Ingo Molnar (1):
-      tasklet/rt: Prevent tasklets from going into infinite spin in RT
-
-Peter Zijlstra (2):
-      slab, lockdep: Fix silly bug
-      slab, lockdep: Annotate all slab caches
-
-Roland Dreier (1):
-      intel-iommu: Fix AB-BA lockdep report
-
-Steven Rostedt (1):
-      Linux v3.0.12-rt30-rc1
-
-Thomas Gleixner (3):
-      wait: Provide __wake_up_all_locked
-      pci: Use __wake_up_all_locked pci_unblock_user_cfg_access()
-      acpi: Make gbl_[hardware|gpe]_lock raw
-
-----
- arch/x86/kvm/x86.c              |   37 +++++++-
- drivers/acpi/acpica/acglobal.h  |    4 +-
- drivers/acpi/acpica/evgpe.c     |    4 +-
- drivers/acpi/acpica/evgpeblk.c  |    8 +-
- drivers/acpi/acpica/evgpeutil.c |   12 +-
- drivers/acpi/acpica/evxface.c   |   10 +-
- drivers/acpi/acpica/evxfgpe.c   |   24 +++---
- drivers/acpi/acpica/hwregs.c    |    4 +-
- drivers/acpi/acpica/hwxface.c   |    4 +-
- drivers/acpi/acpica/utmutex.c   |   21 +----
- drivers/pci/access.c            |    2 +-
- drivers/pci/intel-iommu.c       |    4 +-
- include/linux/interrupt.h       |   39 ++++----
- include/linux/wait.h            |    5 +-
- kernel/irq/spurious.c           |    4 +-
- kernel/sched.c                  |    4 +-
- kernel/softirq.c                |  208 ++++++++++++++++++++++++++++-------=
-----
- localversion-rt                 |    2 +-
- mm/slab.c                       |   55 ++++++-----
- 19 files changed, 286 insertions(+), 165 deletions(-)
 
 --00GvhwF7k39YY
 Content-Type: application/pgp-signature; name="signature.asc"
@@ -116,19 +94,26 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJO2X+4AAoJEIy3vGnGbaoAAn0P/38/GUkfPZDs8YW3x+48jvFk
-xb8wD4480TprCOkmkoBGs9nH9Kx05pMfE6slijIWehiQqgk6Z0u1I3jI8UpN8XJB
-WwGalBRWghL7CjQYI3CTTdrqMbsCTziHKvnOXc6aduNqbGniIyvFbYYiCF+rwN+g
-2t9CXyXsGP5doAFvfVjIGTBImq9kys5vwwtDUTE9hp91ey0osCJnRfKNGCP7oE9u
-gE1TY3Qt+624eTKYfyydXTnsh/38SfU+e1WnM7BlfJ95jvm5sOY0PW/0oXLw101a
-hPBCRRprqBKgF/7ypjvTzyEuMUVEilXZpbuhbZ5XTJh7IOPxwikjZNbEiq/S2CTS
-3k8MpkPXFMlbHTIAXU/d3AKO+zBKVdc2hJlardqKkPNypCLTFxjtOxyKtWYMZYMk
-DuNUYea/cZ+87gaSZm2fW+ol/YrSjlHPv0xQGRfFW96Th6fpll5wDkjIh8tp6X3w
-hQEfCEXSMWRS8CGBALsn8rdzCiTjkmwKL6I8J1gOS6/bGCi3yI6fyRvSvEM7eB24
-JmdzEmbmS3SfblI+Gy+gBtNEWke9Ohl9ZPlF2kTWaAEE0B2cut19Pt90r3qoq9n/
-0zNUtMLBX5Qta9K5zd3rB3hGSwvdXkY/C0pulO3fh/xSrRaMo0eBjoUED/kBYxuX
-GC6JytjB3u0OyN9Z0y0A
-=DPWx
+iQIcBAABAgAGBQJO2X/LAAoJEIy3vGnGbaoAAakQALIaYLRzYWHnxmLDJLB/F+V6
+BdEYC929d/NO/j5xFgnvWc198nuwxRD2nkojIQ5hvikRaE/H2Yhq32zEkQtSnyXh
+FCe5I6aAF1LE6mN6uek5uJ6xWwJ09MPDiJrwldrB6aLrLxZZNg9Pl5P3jaCYD724
+p81d5o/Qv8PjIM++WizDq2G6QoiZwxkeMOO52eSUjUdtxuTmTQSDlcWOGZPnB4l1
+7OjffArfQhFZV5YJv5brrd09xMKJ+coj8CXPlAE7MPOdNKZhvNewREmWEsbmLI6M
+id1W/H3x22WObUQHVSPvM1xTzhX9ZB0+IykjbBjpSMXykBfnnA3rgGqNUKPHy2rJ
+Kqps1/GDSYPaHZ/QSeV6pXy+CC/D+rrTC/54n+C5p55ALRav7gYVkMJ6/ubSVY7Z
+4G17zgcPzjVQ6jzvC2DQJVYo2FcYCPgZxUV6OCEJCi+HaH/RzPHSUmadYAq87+Pq
+KK5qlqcMq6EcFNsnK4VNcmp9bkI3Pu5OcJpNPnboNCEMO+RXEtgf0oOHEJu1MuLO
+LGF/hG6jIXkRru8bygIWuvvAsNjfOsp4hIO/xVbg5KUXHwgdZWgoP2i8ZWcYoxpz
+8IxSKfc1zantrhMdv17HNEjtocUuFsrDTbZlYnzyWhd4xvoT3A0R5hWDXR76ngYw
+wAXuZpE/PiUAU6q6NXHp
+=4OyZ
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
