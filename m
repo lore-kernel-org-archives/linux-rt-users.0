@@ -1,147 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 04/11] KVM: Sanitize cpuid
-Date: Sun, 04 Dec 2011 13:54:48 -0500
-Message-ID: <20111204190011.156778105@goodmis.org>
+From: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+Subject: Re: [PATCH 00/11] [ANNOUNCE] 3.0.12-rt30-rc2
+Date: Sun, 4 Dec 2011 21:13:36 +0100
+Message-ID: <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de>
 References: <20111204185444.411298317@goodmis.org>
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, Avi Kivity <avi@redhat.com>,
-	Joerg Roedel <joerg.roedel@amd.com>,
-	Marcelo Tosatti <mtosatti@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-KVM-Sanitize-cpuid.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Mime-Version: 1.0
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lnx141.hrz.tu-darmstadt.de ([130.83.156.236]:58502 "EHLO
+	lnx141.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1755307Ab1LDUen (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 4 Dec 2011 15:34:43 -0500
+In-Reply-To: <20111204185444.411298317@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---00GvhwF7k39YY
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Hi Steven
+> This is the RT stable review cycle of patch 3.0.12-rt30-rc2.
+> 
+> Please scream at me if I messed something up. Please test the patches too.
+Ok, this is a nearly blind shot, but i was expieriencing strange idle time 
+behaviour with this Ingo Molnar patch. The idle time was never incremented as 
+read from /proc/stat for several minutes. The system itself was behaving fine
+and had definetly not 100% load which was also verified with top.
 
-From: Avi Kivity <avi@redhat.com>
+I hadn't had the time to investigate further and my tests where with an ealier 
+release with the Ingo Molnar Tasklet patch on top.
 
-Instead of blacklisting known-unsupported cpuid leaves, whitelist known-
-supported leaves.  This is more conservative and prevents us from reporting
-features we don't support.  Also whitelist a few more leaves while at it.
+Hopefully i will find some time to test this stuff further but it will 
+probably tuesday CET.
 
-Signed-off-by: Avi Kivity <avi@redhat.com>
-Acked-by: Joerg Roedel <joerg.roedel@amd.com>
-Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
----
- arch/x86/kvm/x86.c |   37 +++++++++++++++++++++++++++++++++++--
- 1 files changed, 35 insertions(+), 2 deletions(-)
-
-diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 545c61b..f168c61 100644
---- a/arch/x86/kvm/x86.c
-+++ b/arch/x86/kvm/x86.c
-@@ -2283,6 +2283,13 @@ static void do_cpuid_1_ent(struct kvm_cpuid_entry2 *=
-entry, u32 function,
- 	entry->flags =3D 0;
- }
-=20
-+static bool supported_xcr0_bit(unsigned bit)
-+{
-+	u64 mask =3D ((u64)1 << bit);
-+
-+	return mask & (XSTATE_FP | XSTATE_SSE | XSTATE_YMM) & host_xcr0;
-+}
-+
- #define F(x) bit(X86_FEATURE_##x)
-=20
- static void do_cpuid_ent(struct kvm_cpuid_entry2 *entry, u32 function,
-@@ -2393,6 +2400,8 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *ent=
-ry, u32 function,
- 		}
- 		break;
- 	}
-+	case 9:
-+		break;
- 	case 0xb: {
- 		int i, level_type;
-=20
-@@ -2414,7 +2423,7 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *ent=
-ry, u32 function,
-=20
- 		entry->flags |=3D KVM_CPUID_FLAG_SIGNIFCANT_INDEX;
- 		for (i =3D 1; *nent < maxnent && i < 64; ++i) {
--			if (entry[i].eax =3D=3D 0)
-+			if (entry[i].eax =3D=3D 0 || !supported_xcr0_bit(i))
- 				continue;
- 			do_cpuid_1_ent(&entry[i], function, i);
- 			entry[i].flags |=3D
-@@ -2451,6 +2460,24 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *en=
-try, u32 function,
- 		entry->ecx &=3D kvm_supported_word6_x86_features;
- 		cpuid_mask(&entry->ecx, 6);
- 		break;
-+	case 0x80000008: {
-+		unsigned g_phys_as =3D (entry->eax >> 16) & 0xff;
-+		unsigned virt_as =3D max((entry->eax >> 8) & 0xff, 48U);
-+		unsigned phys_as =3D entry->eax & 0xff;
-+
-+		if (!g_phys_as)
-+			g_phys_as =3D phys_as;
-+		entry->eax =3D g_phys_as | (virt_as << 8);
-+		entry->ebx =3D entry->edx =3D 0;
-+		break;
-+	}
-+	case 0x80000019:
-+		entry->ecx =3D entry->edx =3D 0;
-+		break;
-+	case 0x8000001a:
-+		break;
-+	case 0x8000001d:
-+		break;
- 	/*Add support for Centaur's CPUID instruction*/
- 	case 0xC0000000:
- 		/*Just support up to 0xC0000004 now*/
-@@ -2460,10 +2487,16 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *e=
-ntry, u32 function,
- 		entry->edx &=3D kvm_supported_word5_x86_features;
- 		cpuid_mask(&entry->edx, 5);
- 		break;
-+	case 3: /* Processor serial number */
-+	case 5: /* MONITOR/MWAIT */
-+	case 6: /* Thermal management */
-+	case 0xA: /* Architectural Performance Monitoring */
-+	case 0x80000007: /* Advanced power management */
- 	case 0xC0000002:
- 	case 0xC0000003:
- 	case 0xC0000004:
--		/*Now nothing to do, reserved for the future*/
-+	default:
-+		entry->eax =3D entry->ebx =3D entry->ecx =3D entry->edx =3D 0;
- 		break;
- 	}
-=20
---=20
-1.7.7.1
-
-
-
---00GvhwF7k39YY
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAABAgAGBQJO28M7AAoJEIy3vGnGbaoAIA0QAIrB/Oxxxx6D9GyEzUN5avQU
-kO9QhGPfBMsq4dS56E3IN9Hrzqv8E5fPK1/wyYOAU3XAls3AfXdljh2v2ar/jFmK
-0u1icwpplJIrFQ7SJDY18byriEimF6WxNS2l2VxdCOmNLN+59QJClGFv3Rc0BewE
-vR5PZbg8vsEDY5kQQT7QhUy7xHAd3DwZcA1SMRZ+OcY3AzxtnY0d3crX3eNp1iDH
-FR39AcJIDSBoC6jAcUNmT6qYymsMbzXkIx53RlA6i+YfN/3pKJiwlHGlITolFSJL
-OcJ4uZ0ETG4AWIT4ZpXzWigGTyKKEh51XUcMkMBbuqrQxlEQSg6hUVGNEn8+LEIC
-Tw+70tgh39Zi1TDPf1hHQmSBm6Sl8EZhvGaf7PvDbXwzYRkP2PJtK7h1hf7lkz7c
-igwHqW5+glvB/dz9dfLvvlNO2WcE4GJYn8wGVuNXXRpkvJdkJWpKD6cBKNa7Gvzj
-RraL3pBwIQkdhfYtNfa/CRG7w78pTInJMASzcDfZK/wUQb2hjOXXAh7ZFwETa9yH
-uhwk2CzUTffTgzwhsbfmHoKSk24QcIIR+fQxK6exz3uHnwsFEsMPtFvSTCFaIT91
-36bA7FhwvYSPm844jPn9k18nbWDiYGbRmJpPoHzoaK69nABvGu0W0FIGQqh0YRFp
-TH9rs8uWrQe+UOTVdI3L
-=vukS
------END PGP SIGNATURE-----
-
---00GvhwF7k39YY--
+Best regards
+Tim
