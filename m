@@ -1,118 +1,79 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Where can I get the latest cyclictest or the version 0.72
-Date: Mon, 5 Dec 2011 10:36:09 -0600
-Message-ID: <20111205103609.1ad7b373@redhat.com>
-References: <CAEQjb-TXX8bUULQVWOAQZjAxj7DVrA2ehs039qEH5zSe2BSfLA@mail.gmail.com>
-	<1323096173.30977.77.camel@frodo>
-	<20111205085950.751ffea3@redhat.com>
-	<CAEQjb-S6Ezy=d4k6p93uUcj+Osovc0kE6POmbYfjyS=dAARc8w@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: IRQ "nobody cared...Disabling" errors on linux-3.0.10-rt27 on
+ SMP AMD64 system
+Date: Mon, 5 Dec 2011 17:56:01 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1112051740510.2735@ionos>
+References: <4ECCE979.5080109@cedwards.geek.nz>  <1322056363.20742.45.camel@frodo>  <4ECD7DCC.3000505@ripples.dyndns.org> <1322691017.24563.9.camel@frodo> <4ED9EEB2.6070401@ripples.dyndns.org> <alpine.LFD.2.02.1112031726370.2735@ionos> <4EDAAEFD.9060209@ripples.dyndns.org>
+ <alpine.LFD.2.02.1112041428560.2735@ionos> <4EDCC978.3060401@cedwards.geek.nz>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/szsafC0rA_g+5MVRBUM0CRu"; protocol="application/pgp-signature"
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Bei Guan <gbtju85@gmail.com>
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Borislav Petkov <borislav.petkov@amd.com>
+To: Chris Edwards <cedwards.linux@cedwards.geek.nz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:57630 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932499Ab1LEQgN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Dec 2011 11:36:13 -0500
-In-Reply-To: <CAEQjb-S6Ezy=d4k6p93uUcj+Osovc0kE6POmbYfjyS=dAARc8w@mail.gmail.com>
+Received: from www.linutronix.de ([62.245.132.108]:56341 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932436Ab1LEQ4G (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Dec 2011 11:56:06 -0500
+In-Reply-To: <4EDCC978.3060401@cedwards.geek.nz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/szsafC0rA_g+5MVRBUM0CRu
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Tue, 6 Dec 2011, Chris Edwards wrote:
 
-Bei,=20
+> On 05/12/11 02:32, Thomas Gleixner wrote:
+> > On Sun, 4 Dec 2011, Chris Edwards wrote:
+> > > On 04/12/11 05:29, Thomas Gleixner wrote:
+> > > > Ok, that tells us something. So there is something unhappy in your
+> > > > system about the way how the threaded irq handling works. Can you
+> > > > please provide the output of lspci -vvv and a full boot log (any
+> > > > 3.0/3.2 kernel you have handy)?
+> > > Attached. :)
+> > Could you disable the e1000 for a test? Just boot up and bring the
+> > interface down.
+> > 
+> > Does that change the situation?
+> 
+> Yes - I tested with 3.2.0-rc4-rt5 (and it actually is an RT kernel this time -
+> see below!) and with the Ethernet interface down, it seems to be working
+> properly.  Even Pure Data didn't cause any crackling or stuttering (other than
+> when starting up).
+> 
+> [    0.000000] Linux version 3.2.0-rc4-rt5 (root@babelfish) (gcc version 4.4.3
+> (Ubuntu 4.4.3-4ubuntu5) ) #1 SMP PREEMPT RT Tue Dec 6 01:22:11 NZDT 2011
+> [    0.000000] Command line: BOOT_IMAGE=/vmlinuz-3.2.0-rc4-rt5
+> root=UUID=ca21e0bf-b7f8-45c3-8fc9-066c4dd6052e ro quiet splash
+> 
+> What next?  Should I try moving the Ethernet card to other slots and see if
+> anything changes?
 
-That's a git tree. You'll need to compile the images from there.=20
+That card hangs on the AMD bridge and that bridge has nasty interrupt
+related erratas. Your "feature" is undocumented so far. It looks like
+it sends interrupts which are masked, but pending over and over to a
+different interrupt line :( We've seen this before. It's a legacy mode
+feature, but your chip is excluded from the fixup.
 
-What distro are you using? Debian delivers rt-tests as a .deb, so you
-could just apt-get it from there. I don't think Fedora delivers
-rt-tests as an RPM.
+Boris, any idea ?
 
-Clark
+You could try the following patch. Be aware that it might not work at
+all, but I don't expect that you need a fire extinguisher :)
 
-On Mon, 5 Dec 2011 23:30:44 +0800
-Bei Guan <gbtju85@gmail.com> wrote:
+Thanks,
 
-> Thank all of you very much.
->=20
-> Hi Clark,
->=20
-> How to install this new version? Could you give me
-> some instructions? Thanks.
->=20
->=20
-> Best Wishes,
-> Bei Guan
->=20
->=20
->=20
->=20
-> 2011/12/5 Clark Williams <williams@redhat.com>
->=20
-> > On Mon, 05 Dec 2011 09:42:53 -0500
-> > Steven Rostedt <rostedt@goodmis.org> wrote:
-> >
-> > > On Mon, 2011-12-05 at 21:32 +0800, Bei Guan wrote:
-> > > > Hi,
-> > > >
-> > > >
-> > > > I am very sorry to disturb you, but I find the mails I delivered
-> > > > to linux-rt-users mailing list are all failed. So maybe you can help
-> > > > me out of my question or forward my question to a correct man. Thank
-> > > > you very much.
-> > > >
-> > > >
-> > > > Where can I get the latest cyclictest or the version 0.72? I try the
-> > > > following links, but it seems not available now.
-> > > > http://www.kernel.org/pub/linux//kernel/people/clrkwllms/rt-tests/
-> > > >
-> > >
-> > >
-> > > Clark,
-> > >
-> > > Can you answer this.
-> > >
-> > > Thanks,
-> > >
-> > > -- Steve
-> > >
-> > >
-> > >
-> >
-> > Currently (until I get my kernel.org account set back up) I'm keeping
-> > it on github:
-> >
-> >        git://github.com/clrkwllms/rt-tests.git
-> >
-> > No tarballs available, just the git tree.
-> >
-> > Hopefully I'll get my k.o. account back up this week and will be back
-> > to the old spot.
-> >
-> > Clark
-> >
->=20
->=20
->=20
-> --=20
-> Best Regards,
-> Bei Guan
+	tglx
+---
+--- a/drivers/pci/quirks.c
++++ b/drivers/pci/quirks.c
+@@ -1791,8 +1791,7 @@ static void quirk_disable_amd_813x_boot_interrupt(struct pci_dev *dev)
+ 
+ 	if (noioapicquirk)
+ 		return;
+-	if ((dev->revision == AMD_813X_REV_B1) ||
+-	    (dev->revision == AMD_813X_REV_B2))
++	if (dev->revision == AMD_813X_REV_B2)
+ 		return;
+ 
+ 	pci_read_config_dword(dev, AMD_813X_MISC, &pci_config_dword);
 
---Sig_/szsafC0rA_g+5MVRBUM0CRu
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iEYEARECAAYFAk7c8vkACgkQHyuj/+TTEp2EQgCff2K6xdes236FG8jj4cvIVguF
-Fv4AoOJ3gsr8PHusdQG3wiTND2MDzq7Y
-=61eH
------END PGP SIGNATURE-----
-
---Sig_/szsafC0rA_g+5MVRBUM0CRu--
