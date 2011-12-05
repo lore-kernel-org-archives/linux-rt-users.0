@@ -1,54 +1,63 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [PATCH 00/11] [ANNOUNCE] 3.0.12-rt30-rc2
-Date: Mon, 5 Dec 2011 10:11:59 +0100
-Message-ID: <201112051011.59858.tim.sander@hbm.com>
-References: <20111204185444.411298317@goodmis.org> <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de> <alpine.LFD.2.02.1112042145440.2735@ionos>
+From: Pekka Enberg <penberg@kernel.org>
+Subject: Re: [PATCH 09/11] slab, lockdep: Fix silly bug
+Date: Mon, 5 Dec 2011 15:04:43 +0200 (EET)
+Message-ID: <alpine.LFD.2.02.1112051503400.8257@tux.localdomain>
+References: <20111204185444.411298317@goodmis.org> <20111204190021.812654254@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Tim Sander" <tim01@vlsi.informatik.tu-darmstadt.de>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	<linux-kernel@vger.kernel.org>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Thomas Gleixner" <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Class: urn:content-classes:message
-In-Reply-To: <alpine.LFD.2.02.1112042145440.2735@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; format=flowed; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, stable@kernel.org,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Hans Schillstrom <hans@schillstrom.com>,
+	Christoph Lameter <cl@gentwo.org>,
+	Pekka Enberg <penberg@cs.helsinki.fi>,
+	Matt Mackall <mpm@selenic.com>,
+	Sitsofe Wheeler <sitsofe@yahoo.com>, linux-mm@kvack.org,
+	David Rientjes <rientjes@google.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lpp01m010-f46.google.com ([209.85.215.46]:45844 "EHLO
+	mail-lpp01m010-f46.google.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756300Ab1LENE5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Dec 2011 08:04:57 -0500
+In-Reply-To: <20111204190021.812654254@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi=20
-> Did some other time accounting increase instead ?
-Yes, the other time seemed to be increasing normally.
+On Sun, 4 Dec 2011, Steven Rostedt wrote:
+> --00GvhwF7k39YY
+> Content-Type: text/plain; charset="UTF-8"
+> Content-Transfer-Encoding: quoted-printable
+>
+> From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+>
+> Commit 30765b92 ("slab, lockdep: Annotate the locks before using
+> them") moves the init_lock_keys() call from after g_cpucache_up =3D
+> FULL, to before it. And overlooks the fact that init_node_lock_keys()
+> tests for it and ignores everything !FULL.
+>
+> Introduce a LATE stage and change the lockdep test to be <LATE.
+>
+> Cc: stable@kernel.org
+> Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+> Cc: Hans Schillstrom <hans@schillstrom.com>
+> Cc: Christoph Lameter <cl@gentwo.org>
+> Cc: Pekka Enberg <penberg@cs.helsinki.fi>
+> Cc: Matt Mackall <mpm@selenic.com>
+> Cc: Sitsofe Wheeler <sitsofe@yahoo.com>
+> Cc: linux-mm@kvack.org
+> Cc: David Rientjes <rientjes@google.com>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Link: http://lkml.kernel.org/n/tip-gadqbdfxorhia1w5ewmoiodd@git.kernel.org
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-I should also point out, that this phenomen was not always happening, b=
-ut only=20
-sometimes and then again disapeared without any known reason.
+Your emails seem to be damaged in interesting ways.
 
-Best regards=20
-Tim
+I assume the patch is going through the lockdep tree? If so, please make 
+sure you include Christoph's ACK in the changelog.
 
-Please ignore:
-
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
-Germany | www.hbm.com=20
-
-Registered as GmbH (German limited liability corporation) in the commer=
-cial register at the local court of Darmstadt, HRB 1147 =20
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
-the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
-er des Amtsgerichts Darmstadt unter HRB 1147=20
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
-st | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely fo=
-r the addressee. If you are not the intended recipient, please let me k=
-now and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
-faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
-=2E
+ 			Pekka
