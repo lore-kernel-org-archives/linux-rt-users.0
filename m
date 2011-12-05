@@ -1,53 +1,41 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 09/11] slab, lockdep: Fix silly bug
-Date: Mon, 05 Dec 2011 08:15:20 -0500
-Message-ID: <1323090920.30977.72.camel@frodo>
+Subject: Re: [PATCH 00/11] [ANNOUNCE] 3.0.12-rt30-rc2
+Date: Mon, 05 Dec 2011 08:23:18 -0500
+Message-ID: <1323091398.30977.74.camel@frodo>
 References: <20111204185444.411298317@goodmis.org>
-	 <20111204190021.812654254@goodmis.org>
-	 <alpine.LFD.2.02.1112051503400.8257@tux.localdomain>
+	 <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de>
+	 <alpine.LFD.2.02.1112042145440.2735@ionos>
+	 <201112051011.59858.tim.sander@hbm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>,
+	linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, stable@kernel.org,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Hans Schillstrom <hans@schillstrom.com>,
-	Christoph Lameter <cl@gentwo.org>,
-	Pekka Enberg <penberg@cs.helsinki.fi>,
-	Matt Mackall <mpm@selenic.com>,
-	Sitsofe Wheeler <sitsofe@yahoo.com>, linux-mm@kvack.org,
-	David Rientjes <rientjes@google.com>
-To: Pekka Enberg <penberg@kernel.org>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:33991 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:50793 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932175Ab1LENP0 (ORCPT
+	with ESMTP id S932202Ab1LENXU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Dec 2011 08:15:26 -0500
-In-Reply-To: <alpine.LFD.2.02.1112051503400.8257@tux.localdomain>
+	Mon, 5 Dec 2011 08:23:20 -0500
+In-Reply-To: <201112051011.59858.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2011-12-05 at 15:04 +0200, Pekka Enberg wrote:
-
-> Your emails seem to be damaged in interesting ways.
-
-Really? I'm using quilt mail to send.
-
+On Mon, 2011-12-05 at 10:11 +0100, Tim Sander wrote:
+> Hi 
+> > Did some other time accounting increase instead ?
+> Yes, the other time seemed to be increasing normally.
 > 
-> I assume the patch is going through the lockdep tree? If so, please make 
-> sure you include Christoph's ACK in the changelog.
+> I should also point out, that this phenomen was not always happening, but only 
+> sometimes and then again disapeared without any known reason.
 
-This is for the stable-rt tree. This patch is on its way, but you'll
-have to talk to Peter about Acks and such.
-
-But this brings up a point. I'll start adding [RT] to the subject of the
-patches as well to not confuse people.
-
-Thanks,
+Hmm, then are you sure that the tasklet patch causes the bug? Or perhaps
+it only changes the timing to cause it. The bug may be without the patch
+too.
 
 -- Steve
 
