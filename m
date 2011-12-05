@@ -1,148 +1,140 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.2-rc4-rt6
-Date: Mon, 5 Dec 2011 22:09:37 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1112052205350.2735@ionos>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57444 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755586Ab1LEVJj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Dec 2011 16:09:39 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 00/12 rc3] [ANNOUNCE] 3.0.12-rt30-rc3
+Date: Mon, 05 Dec 2011 18:00:46 -0500
+Message-ID: <20111205230046.736851081@goodmis.org>
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+--00GvhwF7k39YY
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2-rc4-rt6 release.
+This is the RT stable review cycle of patch 3.0.12-rt30-rc3.
 
-NOTE: Releases are back to www.kernel.org - the intermediate tglx.de
-      release URL is history!
+Please scream at me if I messed something up. Please test the patches too.
 
-Changes vs. 3.2-rc4-rt5:
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candida=
+te).
 
-  * more acpi raw spinlock annotations (Clark)
-    	[acpi-make-ec-lock-raw-as-well.patch] -> stable
+The difference between rc2 and rc3, is the addition of Clark Williams patch:
+ACPI: Convert embedded controller lock to raw spinlock
 
-The incremental patch against 3.2-rc4-rt5 can be found here:
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2-rc4-rt5-rt6.patch.bz2    
-
-and is also appended below.
-
-
-The RT patch against 3.2-rc4 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2-rc4-rt6.patch.bz2 
-
-
-The split quilt queue is available at:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patches-3.2-rc4-rt6.tar.bz2 
-
+If all goes well, this patch will be converted to the main release
+next on Wednesday (12/7/2011).
 
 Enjoy,
 
-	tglx
+-- Steve
+
+
+To build 3.0.12-rt30-rc3 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.12.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.12-rt30-=
+rc3.patch.xz
+
+You can also build from 3.0.12-rt29 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.12-rt=
+29-rt30-rc3.patch.xz
+
+
+Changes from 3.0.12-rt29:
+
 ---
-Index: linux-3.2/localversion-rt
-===================================================================
---- linux-3.2.orig/localversion-rt
-+++ linux-3.2/localversion-rt
-@@ -1 +1 @@
---rt5
-+-rt6
-Index: linux-3.2/drivers/acpi/ec.c
-===================================================================
---- linux-3.2.orig/drivers/acpi/ec.c
-+++ linux-3.2/drivers/acpi/ec.c
-@@ -152,10 +152,10 @@ static int ec_transaction_done(struct ac
- {
- 	unsigned long flags;
- 	int ret = 0;
--	spin_lock_irqsave(&ec->curr_lock, flags);
-+	raw_spin_lock_irqsave(&ec->curr_lock, flags);
- 	if (!ec->curr || ec->curr->done)
- 		ret = 1;
--	spin_unlock_irqrestore(&ec->curr_lock, flags);
-+	raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
- 	return ret;
- }
- 
-@@ -169,7 +169,7 @@ static void start_transaction(struct acp
- static void advance_transaction(struct acpi_ec *ec, u8 status)
- {
- 	unsigned long flags;
--	spin_lock_irqsave(&ec->curr_lock, flags);
-+	raw_spin_lock_irqsave(&ec->curr_lock, flags);
- 	if (!ec->curr)
- 		goto unlock;
- 	if (ec->curr->wlen > ec->curr->wi) {
-@@ -194,7 +194,7 @@ err:
- 	if (in_interrupt())
- 		++ec->curr->irq_count;
- unlock:
--	spin_unlock_irqrestore(&ec->curr_lock, flags);
-+	raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
- }
- 
- static int acpi_ec_sync_query(struct acpi_ec *ec);
-@@ -232,9 +232,9 @@ static int ec_poll(struct acpi_ec *ec)
- 		if (acpi_ec_read_status(ec) & ACPI_EC_FLAG_IBF)
- 			break;
- 		pr_debug(PREFIX "controller reset, restart transaction\n");
--		spin_lock_irqsave(&ec->curr_lock, flags);
-+		raw_spin_lock_irqsave(&ec->curr_lock, flags);
- 		start_transaction(ec);
--		spin_unlock_irqrestore(&ec->curr_lock, flags);
-+		raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
- 	}
- 	return -ETIME;
- }
-@@ -247,17 +247,17 @@ static int acpi_ec_transaction_unlocked(
- 	if (EC_FLAGS_MSI)
- 		udelay(ACPI_EC_MSI_UDELAY);
- 	/* start transaction */
--	spin_lock_irqsave(&ec->curr_lock, tmp);
-+	raw_spin_lock_irqsave(&ec->curr_lock, tmp);
- 	/* following two actions should be kept atomic */
- 	ec->curr = t;
- 	start_transaction(ec);
- 	if (ec->curr->command == ACPI_EC_COMMAND_QUERY)
- 		clear_bit(EC_FLAGS_QUERY_PENDING, &ec->flags);
--	spin_unlock_irqrestore(&ec->curr_lock, tmp);
-+	raw_spin_unlock_irqrestore(&ec->curr_lock, tmp);
- 	ret = ec_poll(ec);
--	spin_lock_irqsave(&ec->curr_lock, tmp);
-+	raw_spin_lock_irqsave(&ec->curr_lock, tmp);
- 	ec->curr = NULL;
--	spin_unlock_irqrestore(&ec->curr_lock, tmp);
-+	raw_spin_unlock_irqrestore(&ec->curr_lock, tmp);
- 	return ret;
- }
- 
-@@ -678,7 +678,7 @@ static struct acpi_ec *make_acpi_ec(void
- 	mutex_init(&ec->lock);
- 	init_waitqueue_head(&ec->wait);
- 	INIT_LIST_HEAD(&ec->list);
--	spin_lock_init(&ec->curr_lock);
-+	raw_spin_lock_init(&ec->curr_lock);
- 	return ec;
- }
- 
-Index: linux-3.2/drivers/acpi/internal.h
-===================================================================
---- linux-3.2.orig/drivers/acpi/internal.h
-+++ linux-3.2/drivers/acpi/internal.h
-@@ -62,7 +62,7 @@ struct acpi_ec {
- 	wait_queue_head_t wait;
- 	struct list_head list;
- 	struct transaction *curr;
--	spinlock_t curr_lock;
-+	raw_spinlock_t curr_lock;
- };
- 
- extern struct acpi_ec *first_ec;
+
+
+Andre Przywara (1):
+      KVM: fix XSAVE bit scanning (now properly)
+
+Avi Kivity (1):
+      KVM: Sanitize cpuid
+
+Clark Williams (1):
+      ACPI: Convert embedded controller lock to raw spinlock
+
+Edward Donovan (1):
+      genirq: fix regression in irqfixup, irqpoll
+
+Ingo Molnar (1):
+      tasklet/rt: Prevent tasklets from going into infinite spin in RT
+
+Peter Zijlstra (2):
+      slab, lockdep: Fix silly bug
+      slab, lockdep: Annotate all slab caches
+
+Roland Dreier (1):
+      intel-iommu: Fix AB-BA lockdep report
+
+Steven Rostedt (1):
+      Linux v3.0.12-rt30-rc3
+
+Thomas Gleixner (3):
+      wait: Provide __wake_up_all_locked
+      pci: Use __wake_up_all_locked pci_unblock_user_cfg_access()
+      acpi: Make gbl_[hardware|gpe]_lock raw
+
+----
+ arch/x86/kvm/x86.c              |   44 +++++++-
+ drivers/acpi/acpica/acglobal.h  |    4 +-
+ drivers/acpi/acpica/evgpe.c     |    4 +-
+ drivers/acpi/acpica/evgpeblk.c  |    8 +-
+ drivers/acpi/acpica/evgpeutil.c |   12 +-
+ drivers/acpi/acpica/evxface.c   |   10 +-
+ drivers/acpi/acpica/evxfgpe.c   |   24 +++---
+ drivers/acpi/acpica/hwregs.c    |    4 +-
+ drivers/acpi/acpica/hwxface.c   |    4 +-
+ drivers/acpi/acpica/utmutex.c   |   21 +----
+ drivers/acpi/ec.c               |   22 ++--
+ drivers/acpi/internal.h         |    2 +-
+ drivers/pci/access.c            |    2 +-
+ drivers/pci/intel-iommu.c       |    4 +-
+ include/linux/interrupt.h       |   39 ++++----
+ include/linux/wait.h            |    5 +-
+ kernel/irq/spurious.c           |    4 +-
+ kernel/sched.c                  |    4 +-
+ kernel/softirq.c                |  208 ++++++++++++++++++++++++++++-------=
+----
+ localversion-rt                 |    2 +-
+ mm/slab.c                       |   55 ++++++-----
+ 21 files changed, 302 insertions(+), 180 deletions(-)
+
+--00GvhwF7k39YY
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iQIcBAABAgAGBQJO3U2TAAoJEIy3vGnGbaoAXCAP/j3pSp78SpQt4UWi+s8MsoGJ
+iag4pVU4UwjM8gvp/sUuSvS/JIgEubRa+FOsasqCz4cqtRv9/8Te++Mh+8lkmgjW
+V5upxqxic1fJiSXNP8Kj33WoOa7umhOfYKiIe4xQovBHMJSSbjYB3HhPVT78i5Dj
+id3F0LGHs/VrVZHAXx+UV8sOiFtaXy916XtwbfUdvZe9Zg8rVX4IpYfyCTAhfWrr
+yyApBzixu+/rTA139Ygp5zBZndzLC4fmUPWx07KxiRnIPScFN0D3uIgEWgzLHCgY
+im0kZYKyR9/DtpT5ndl6z+UlN2kRl6CiPvALZ/g5GkyHPrYRB2S3gmsFdCkDtQSY
+N7dKsoWDW5OkOD82zCv6Vmh/WwUdHqsBjIsPkrO1SiCQGk6IKIuns+XLAmCjNGIj
+oD1eDou8abbUtBTJopdoVXLJUQ4VFFocep4FEHM1EG0u7BNt51cST+chQyFlDNNG
+MkYsaSGcOnv3SzePFSC1OguSfGA3ls+Ga0fNIOOIMqMFzMhXxNPOcjvbG4JOXE8G
+jGwc2bQi34vBmbkgIjUBRXvYPIw+FgrRiWqZsJ3ALy6T1ybcGTdKeKYJOS5oFFw2
+f2OEL21o58XEzyfK5Ifsk15yE4+lBehS1anB1odI3BbK8rs7Jst/kxAoKx4OJkcJ
+Hgk0YdXoTFAVzRY1bdJL
+=i5sq
+-----END PGP SIGNATURE-----
+
+--00GvhwF7k39YY--
