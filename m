@@ -1,51 +1,54 @@
-From: Mike Galbraith <efault@gmx.de>
+From: "Tim Sander" <tim.sander@hbm.com>
 Subject: Re: [PATCH 00/11] [ANNOUNCE] 3.0.12-rt30-rc2
-Date: Mon, 05 Dec 2011 03:58:19 +0100
-Message-ID: <1323053899.5151.7.camel@marge.simson.net>
-References: <20111204185444.411298317@goodmis.org>
-	 <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de>
+Date: Mon, 5 Dec 2011 10:11:59 +0100
+Message-ID: <201112051011.59858.tim.sander@hbm.com>
+References: <20111204185444.411298317@goodmis.org> <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de> <alpine.LFD.2.02.1112042145440.2735@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+Content-Type: text/Plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "Tim Sander" <tim01@vlsi.informatik.tu-darmstadt.de>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	<linux-kernel@vger.kernel.org>,
+	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
+	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
+To: "Thomas Gleixner" <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201112042113.37047.tim01@vlsi.informatik.tu-darmstadt.de>
+Content-Class: urn:content-classes:message
+In-Reply-To: <alpine.LFD.2.02.1112042145440.2735@ionos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 2011-12-04 at 21:13 +0100, Tim Sander wrote:
-> Hi Steven
-> > This is the RT stable review cycle of patch 3.0.12-rt30-rc2.
-> > 
-> > Please scream at me if I messed something up. Please test the patches too.
-> Ok, this is a nearly blind shot, but i was expieriencing strange idle time 
-> behaviour with this Ingo Molnar patch. The idle time was never incremented as 
-> read from /proc/stat for several minutes. The system itself was behaving fine
-> and had definetly not 100% load which was also verified with top.
-> 
-> I hadn't had the time to investigate further and my tests where with an ealier 
-> release with the Ingo Molnar Tasklet patch on top.
+Hi=20
+> Did some other time accounting increase instead ?
+Yes, the other time seemed to be increasing normally.
 
-Must be either config related, or something got fixed meanwhile.
-rt30-rc1..
+I should also point out, that this phenomen was not always happening, b=
+ut only=20
+sometimes and then again disapeared without any known reason.
 
-marge:~ # while sleep 1; do  grep cpu /proc/stat|grep -v cpu[0-3]; done
-cpu  33066 90 10762 519426 36625 0 597 0 0 0
-cpu  33110 90 10792 519643 36723 0 601 0 0 0
-cpu  33149 91 10819 519869 36817 0 604 0 0 0
-cpu  33189 91 10849 520099 36906 0 609 0 0 0
-cpu  33231 92 10879 520329 36994 0 614 0 0 0
-cpu  33273 92 10906 520561 37083 0 619 0 0 0
-cpu  33312 93 10935 520789 37176 0 624 0 0 0
-cpu  33356 93 10963 521017 37264 0 628 0 0 0
-cpu  33394 94 10991 521250 37352 0 632 0 0 0
-cpu  33435 95 11016 521478 37445 0 634 0 0 0
-cpu  33480 96 11040 521700 37539 0 638 0 0 0
-cpu  33517 96 11068 521911 37650 0 643 0 0 0
-cpu  33551 97 11096 522113 37776 0 647 0 0 0
-^C
-marge:~ # 
+Best regards=20
+Tim
+
+Please ignore:
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
+Germany | www.hbm.com=20
+
+Registered as GmbH (German limited liability corporation) in the commer=
+cial register at the local court of Darmstadt, HRB 1147 =20
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
+the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
+er des Amtsgerichts Darmstadt unter HRB 1147=20
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
+st | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely fo=
+r the addressee. If you are not the intended recipient, please let me k=
+now and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
+ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
+faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
+=2E
