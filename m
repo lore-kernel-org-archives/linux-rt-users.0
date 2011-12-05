@@ -1,72 +1,148 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: IRQ "nobody cared...Disabling" errors on linux-3.0.10-rt27 on
- SMP AMD64 system
-Date: Mon, 5 Dec 2011 22:02:27 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1112052200190.2735@ionos>
-References: <4ECCE979.5080109@cedwards.geek.nz> <1322056363.20742.45.camel@frodo> <4ECD7DCC.3000505@ripples.dyndns.org> <1322691017.24563.9.camel@frodo> <4ED9EEB2.6070401@ripples.dyndns.org> <alpine.LFD.2.02.1112031726370.2735@ionos> <4EDAAEFD.9060209@ripples.dyndns.org>
- <alpine.LFD.2.02.1112041428560.2735@ionos> <4EDCC978.3060401@cedwards.geek.nz> <alpine.LFD.2.02.1112051740510.2735@ionos> <20111205181450.GK7834@aftab>
+Subject: [ANNOUNCE] 3.2-rc4-rt6
+Date: Mon, 5 Dec 2011 22:09:37 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1112052205350.2735@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Chris Edwards <cedwards.linux@cedwards.geek.nz>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Borislav Petkov <borislav.petkov@amd.com>
-To: Borislav Petkov <bp@amd64.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57426 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:57444 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754004Ab1LEVCh (ORCPT
+	with ESMTP id S1755586Ab1LEVJj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Dec 2011 16:02:37 -0500
-In-Reply-To: <20111205181450.GK7834@aftab>
+	Mon, 5 Dec 2011 16:09:39 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 5 Dec 2011, Borislav Petkov wrote:
-> On Mon, Dec 05, 2011 at 05:56:01PM +0100, Thomas Gleixner wrote:
-> > That card hangs on the AMD bridge and that bridge has nasty interrupt
-> > related erratas. Your "feature" is undocumented so far. It looks like
-> > it sends interrupts which are masked, but pending over and over to a
-> > different interrupt line :( We've seen this before. It's a legacy mode
-> > feature, but your chip is excluded from the fixup.
-> > 
-> > Boris, any idea ?
-> 
-> Hmm, that's the old 8131 chipset, correct?
-> 
-> > You could try the following patch. Be aware that it might not work at
-> > all, but I don't expect that you need a fire extinguisher :)
-> > 
-> > Thanks,
-> > 
-> > 	tglx
-> > ---
-> > --- a/drivers/pci/quirks.c
-> > +++ b/drivers/pci/quirks.c
-> > @@ -1791,8 +1791,7 @@ static void quirk_disable_amd_813x_boot_interrupt(struct pci_dev *dev)
-> >  
-> >  	if (noioapicquirk)
-> >  		return;
-> > -	if ((dev->revision == AMD_813X_REV_B1) ||
-> > -	    (dev->revision == AMD_813X_REV_B2))
-> > +	if (dev->revision == AMD_813X_REV_B2)
-> >  		return;
-> 
-> Ok, according to my docs, this erratum you're addressing here is
-> supposed to be fixed in revision B1 of the chipset but your test patch
-> enables the quirk for B1 too.
-> 
-> What is dev->revision on that board, 0x12?
+Dear RT Folks,
 
-Yep:
+I'm pleased to announce the 3.2-rc4-rt6 release.
 
-[    0.716126] pci 0000:03:01.0: AMD8131 rev 12 detected; disabling PCI-X MMRBC
-[    0.716138] pci 0000:03:02.0: AMD8131 rev 12 detected; disabling PCI-X MMRBC
+NOTE: Releases are back to www.kernel.org - the intermediate tglx.de
+      release URL is history!
 
-But that interrupt behaviour is exaclty the same which we saw with the
-other pre rev 12 versions. So I just wanted Edward to try that quirk
-and see whether it solves his issues.
+Changes vs. 3.2-rc4-rt5:
 
-Thanks,
+  * more acpi raw spinlock annotations (Clark)
+    	[acpi-make-ec-lock-raw-as-well.patch] -> stable
+
+The incremental patch against 3.2-rc4-rt5 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2-rc4-rt5-rt6.patch.bz2    
+
+and is also appended below.
+
+
+The RT patch against 3.2-rc4 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2-rc4-rt6.patch.bz2 
+
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patches-3.2-rc4-rt6.tar.bz2 
+
+
+Enjoy,
 
 	tglx
+---
+Index: linux-3.2/localversion-rt
+===================================================================
+--- linux-3.2.orig/localversion-rt
++++ linux-3.2/localversion-rt
+@@ -1 +1 @@
+--rt5
++-rt6
+Index: linux-3.2/drivers/acpi/ec.c
+===================================================================
+--- linux-3.2.orig/drivers/acpi/ec.c
++++ linux-3.2/drivers/acpi/ec.c
+@@ -152,10 +152,10 @@ static int ec_transaction_done(struct ac
+ {
+ 	unsigned long flags;
+ 	int ret = 0;
+-	spin_lock_irqsave(&ec->curr_lock, flags);
++	raw_spin_lock_irqsave(&ec->curr_lock, flags);
+ 	if (!ec->curr || ec->curr->done)
+ 		ret = 1;
+-	spin_unlock_irqrestore(&ec->curr_lock, flags);
++	raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
+ 	return ret;
+ }
+ 
+@@ -169,7 +169,7 @@ static void start_transaction(struct acp
+ static void advance_transaction(struct acpi_ec *ec, u8 status)
+ {
+ 	unsigned long flags;
+-	spin_lock_irqsave(&ec->curr_lock, flags);
++	raw_spin_lock_irqsave(&ec->curr_lock, flags);
+ 	if (!ec->curr)
+ 		goto unlock;
+ 	if (ec->curr->wlen > ec->curr->wi) {
+@@ -194,7 +194,7 @@ err:
+ 	if (in_interrupt())
+ 		++ec->curr->irq_count;
+ unlock:
+-	spin_unlock_irqrestore(&ec->curr_lock, flags);
++	raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
+ }
+ 
+ static int acpi_ec_sync_query(struct acpi_ec *ec);
+@@ -232,9 +232,9 @@ static int ec_poll(struct acpi_ec *ec)
+ 		if (acpi_ec_read_status(ec) & ACPI_EC_FLAG_IBF)
+ 			break;
+ 		pr_debug(PREFIX "controller reset, restart transaction\n");
+-		spin_lock_irqsave(&ec->curr_lock, flags);
++		raw_spin_lock_irqsave(&ec->curr_lock, flags);
+ 		start_transaction(ec);
+-		spin_unlock_irqrestore(&ec->curr_lock, flags);
++		raw_spin_unlock_irqrestore(&ec->curr_lock, flags);
+ 	}
+ 	return -ETIME;
+ }
+@@ -247,17 +247,17 @@ static int acpi_ec_transaction_unlocked(
+ 	if (EC_FLAGS_MSI)
+ 		udelay(ACPI_EC_MSI_UDELAY);
+ 	/* start transaction */
+-	spin_lock_irqsave(&ec->curr_lock, tmp);
++	raw_spin_lock_irqsave(&ec->curr_lock, tmp);
+ 	/* following two actions should be kept atomic */
+ 	ec->curr = t;
+ 	start_transaction(ec);
+ 	if (ec->curr->command == ACPI_EC_COMMAND_QUERY)
+ 		clear_bit(EC_FLAGS_QUERY_PENDING, &ec->flags);
+-	spin_unlock_irqrestore(&ec->curr_lock, tmp);
++	raw_spin_unlock_irqrestore(&ec->curr_lock, tmp);
+ 	ret = ec_poll(ec);
+-	spin_lock_irqsave(&ec->curr_lock, tmp);
++	raw_spin_lock_irqsave(&ec->curr_lock, tmp);
+ 	ec->curr = NULL;
+-	spin_unlock_irqrestore(&ec->curr_lock, tmp);
++	raw_spin_unlock_irqrestore(&ec->curr_lock, tmp);
+ 	return ret;
+ }
+ 
+@@ -678,7 +678,7 @@ static struct acpi_ec *make_acpi_ec(void
+ 	mutex_init(&ec->lock);
+ 	init_waitqueue_head(&ec->wait);
+ 	INIT_LIST_HEAD(&ec->list);
+-	spin_lock_init(&ec->curr_lock);
++	raw_spin_lock_init(&ec->curr_lock);
+ 	return ec;
+ }
+ 
+Index: linux-3.2/drivers/acpi/internal.h
+===================================================================
+--- linux-3.2.orig/drivers/acpi/internal.h
++++ linux-3.2/drivers/acpi/internal.h
+@@ -62,7 +62,7 @@ struct acpi_ec {
+ 	wait_queue_head_t wait;
+ 	struct list_head list;
+ 	struct transaction *curr;
+-	spinlock_t curr_lock;
++	raw_spinlock_t curr_lock;
+ };
+ 
+ extern struct acpi_ec *first_ec;
