@@ -1,166 +1,81 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/12 rc3] slab, lockdep: Annotate all slab caches
-Date: Mon, 05 Dec 2011 18:00:56 -0500
-Message-ID: <20111205230305.723773088@goodmis.org>
+Subject: [PATCH RT 06/12 rc3] wait: Provide __wake_up_all_locked
+Date: Mon, 05 Dec 2011 18:00:52 -0500
+Message-ID: <20111205230258.031501328@goodmis.org>
 References: <20111205230046.736851081@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
- Carsten Emde <C.Emde@osadl.org>,
- John Kacur <jkacur@redhat.com>,
- Peter Zijlstra <a.p.zijlstra@chello.nl>,
- Hans Schillstrom <hans@schillstrom.com>,
- Christoph Lameter <cl@gentwo.org>,
- Pekka Enberg <penberg@cs.helsinki.fi>,
- Matt Mackall <mpm@selenic.com>,
- Sitsofe Wheeler <sitsofe@yahoo.com>,
- linux-mm@kvack.org,
- David Rientjes <rientjes@google.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
- linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline; filename=0010-slab-lockdep-Annotate-all-slab-caches.patch
-Sender: owner-linux-mm@kvack.org
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0006-wait-Provide-__wake_up_all_locked.patch
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 --00GvhwF7k39YY
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-From: Peter Zijlstra <a.p.zijlstra@chello.nl>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Currently we only annotate the kmalloc caches, annotate all of them.
+For code which protects the waitqueue itself with another lock it
+makes no sense to acquire the waitqueue lock for wakeup all. Provide
+__wake_up_all_locked.
 
-Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: Hans Schillstrom <hans@schillstrom.com>
-Cc: Christoph Lameter <cl@gentwo.org>
-Cc: Pekka Enberg <penberg@cs.helsinki.fi>
-Cc: Matt Mackall <mpm@selenic.com>
-Cc: Sitsofe Wheeler <sitsofe@yahoo.com>
-Cc: linux-mm@kvack.org
-Cc: David Rientjes <rientjes@google.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Link: http://lkml.kernel.org/n/tip-10bey2cgpcvtbdkgigaoab8w@git.kernel.org
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/slab.c |   52 ++++++++++++++++++++++++++++------------------------
- 1 files changed, 28 insertions(+), 24 deletions(-)
+ include/linux/wait.h |    5 +++--
+ kernel/sched.c       |    4 ++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/mm/slab.c b/mm/slab.c
-index 433b9a2..5251b99 100644
---- a/mm/slab.c
-+++ b/mm/slab.c
-@@ -606,6 +606,12 @@ int slab_is_available(void)
- 	return g_cpucache_up >=3D EARLY;
- }
+diff --git a/include/linux/wait.h b/include/linux/wait.h
+index 3efc9f3..1e904b8 100644
+--- a/include/linux/wait.h
++++ b/include/linux/wait.h
+@@ -157,7 +157,7 @@ void __wake_up(wait_queue_head_t *q, unsigned int mode,=
+ int nr, void *key);
+ void __wake_up_locked_key(wait_queue_head_t *q, unsigned int mode, void *k=
+ey);
+ void __wake_up_sync_key(wait_queue_head_t *q, unsigned int mode, int nr,
+ 			void *key);
+-void __wake_up_locked(wait_queue_head_t *q, unsigned int mode);
++void __wake_up_locked(wait_queue_head_t *q, unsigned int mode, int nr);
+ void __wake_up_sync(wait_queue_head_t *q, unsigned int mode, int nr);
+ void __wake_up_bit(wait_queue_head_t *, void *, int);
+ int __wait_on_bit(wait_queue_head_t *, struct wait_bit_queue *, int (*)(vo=
+id *), unsigned);
+@@ -170,7 +170,8 @@ wait_queue_head_t *bit_waitqueue(void *, int);
+ #define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
+ #define wake_up_nr(x, nr)		__wake_up(x, TASK_NORMAL, nr, NULL)
+ #define wake_up_all(x)			__wake_up(x, TASK_NORMAL, 0, NULL)
+-#define wake_up_locked(x)		__wake_up_locked((x), TASK_NORMAL)
++#define wake_up_locked(x)		__wake_up_locked((x), TASK_NORMAL, 1)
++#define wake_up_all_locked(x)		__wake_up_locked((x), TASK_NORMAL, 0)
 =20
-+/*
-+ * Guard access to the cache-chain.
-+ */
-+static DEFINE_MUTEX(cache_chain_mutex);
-+static struct list_head cache_chain;
-+
- #ifdef CONFIG_LOCKDEP
-=20
+ #define wake_up_interruptible(x)	__wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
+ #define wake_up_interruptible_nr(x, nr)	__wake_up(x, TASK_INTERRUPTIBLE, n=
+r, NULL)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 640f740..63aeba0 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -4642,9 +4642,9 @@ EXPORT_SYMBOL(__wake_up);
  /*
-@@ -667,38 +673,41 @@ static void slab_set_debugobj_lock_classes(struct kme=
-m_cache *cachep)
- 		slab_set_debugobj_lock_classes_node(cachep, node);
- }
-=20
--static void init_node_lock_keys(int q)
-+static void init_lock_keys(struct kmem_cache *cachep, int node)
+  * Same as __wake_up but called with the spinlock in wait_queue_head_t hel=
+d.
+  */
+-void __wake_up_locked(wait_queue_head_t *q, unsigned int mode)
++void __wake_up_locked(wait_queue_head_t *q, unsigned int mode, int nr)
  {
--	struct cache_sizes *s =3D malloc_sizes;
-+	struct kmem_list3 *l3;
-=20
- 	if (g_cpucache_up < LATE)
- 		return;
-=20
--	for (s =3D malloc_sizes; s->cs_size !=3D ULONG_MAX; s++) {
--		struct kmem_list3 *l3;
-+	l3 =3D cachep->nodelists[node];
-+	if (!l3 || OFF_SLAB(cachep))
-+		return;
-=20
--		l3 =3D s->cs_cachep->nodelists[q];
--		if (!l3 || OFF_SLAB(s->cs_cachep))
--			continue;
-+	slab_set_lock_classes(cachep, &on_slab_l3_key, &on_slab_alc_key, node);
-+}
-=20
--		slab_set_lock_classes(s->cs_cachep, &on_slab_l3_key,
--				&on_slab_alc_key, q);
--	}
-+static void init_node_lock_keys(int node)
-+{
-+	struct kmem_cache *cachep;
-+
-+	list_for_each_entry(cachep, &cache_chain, next)
-+		init_lock_keys(cachep, node);
+-	__wake_up_common(q, mode, 1, 0, NULL);
++	__wake_up_common(q, mode, nr, 0, NULL);
  }
+ EXPORT_SYMBOL_GPL(__wake_up_locked);
 =20
--static inline void init_lock_keys(void)
-+static inline void init_cachep_lock_keys(struct kmem_cache *cachep)
- {
- 	int node;
-=20
- 	for_each_node(node)
--		init_node_lock_keys(node);
-+		init_lock_keys(cachep, node);
- }
- #else
--static void init_node_lock_keys(int q)
-+static void init_node_lock_keys(int node)
- {
- }
-=20
--static inline void init_lock_keys(void)
-+static void init_cachep_lock_keys(struct kmem_cache *cachep)
- {
- }
-=20
-@@ -711,12 +720,6 @@ static void slab_set_debugobj_lock_classes(struct kmem=
-_cache *cachep)
- }
- #endif
-=20
--/*
-- * Guard access to the cache-chain.
-- */
--static DEFINE_MUTEX(cache_chain_mutex);
--static struct list_head cache_chain;
--
- static DEFINE_PER_CPU(struct delayed_work, slab_reap_work);
- static DEFINE_PER_CPU(struct list_head, slab_free_list);
- static DEFINE_LOCAL_IRQ_LOCK(slab_lock);
-@@ -1728,14 +1731,13 @@ void __init kmem_cache_init_late(void)
-=20
- 	g_cpucache_up =3D LATE;
-=20
--	/* Annotate slab for lockdep -- annotate the malloc caches */
--	init_lock_keys();
--
- 	/* 6) resize the head arrays to their final sizes */
- 	mutex_lock(&cache_chain_mutex);
--	list_for_each_entry(cachep, &cache_chain, next)
-+	list_for_each_entry(cachep, &cache_chain, next) {
-+		init_cachep_lock_keys(cachep);
- 		if (enable_cpucache(cachep, GFP_NOWAIT))
- 			BUG();
-+	}
- 	mutex_unlock(&cache_chain_mutex);
-=20
- 	/* Done! */
-@@ -2546,6 +2548,8 @@ kmem_cache_create (const char *name, size_t size, siz=
-e_t align,
- 		slab_set_debugobj_lock_classes(cachep);
- 	}
-=20
-+	init_cachep_lock_keys(cachep);
-+
- 	/* cache setup completed, link it into the list */
- 	list_add(&cachep->next, &cache_chain);
- oops:
 --=20
 1.7.7.1
 
@@ -173,26 +88,19 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJO3U2pAAoJEIy3vGnGbaoAGMgP/RQTtz4hfVPII4oopKDxPKZj
-pstWMSFh9TLFhTd2rQJvG7EcE93myoRm7z7iQjiJuRFFhYdjn4r6ipsaXfx1Sdz9
-ma4TrknUPy8BDUldwtuwri/mMuW3uANA4UBzThEQLM9wkXtXsSIsI/pOwBQCgrpL
-RW5R24TQNekPZe1tgURx56ri2oGLfgp8eMagZ8/hb0EHQS1lGA0XFoIjszj3z5eC
-rYn0KUUjzpt06Amd7bItu92vG9By0dhauY/GhIO6gwngI2Oe6BdtYU9xpkj6yD2h
-EtQNByXTkcT3KB0xc24lKE4TBjya5rRdwqY6yOxi3WfqYcY1Mn36Psd4On6Hx9bH
-BA980/SXVjT4mFslWDooyjGJL8eXoBWJ4J7pppp4TRaUCKVEeIfniW0mQtoFrdCd
-FqVjGe/0iD7tdA6kNYJ+VRGUb7FHP5+lUEboh0hn2aCV6NIUoKrp/NdJ2la+H8UY
-GKKFB/XFv0UEyEy8+i8lr/Z70GrEVg52WEpZbyx8xU3tTywDwVKIDbEthGYJ5qzz
-wA1knGg4WahtpLYkO83W22VXcgbz/NK8DsZ0ctLzTGre8/VI/YIwpWvzkWUmfP+l
-dH+V7j7mqcfLDJ7k5pPToYIpHTlOt6w56zOKm//xrbEriAQOPWZXJ9+OZX/TNnrZ
-tH5Vs85cO4h5MVcCqvHZ
-=UxZI
+iQIcBAABAgAGBQJO3U2iAAoJEIy3vGnGbaoAAyIQALaIi2U0gSNaRPFsUrmFHAZM
+AbsXQBWq7l/KcLGYOH9Z7V1a5F500JaDnUSt65u9wj5iMLFHkwJR+v352VRMc/7k
+iZ16UvXeuDL/ar+XF84u6DiJd9guOtSGRPcpMY01Tr8GH39pQhcM/NKvfFtugR0K
+au2/TcMekMq/ndCSNP0Md5+yYr8+Pq37BldMU2Oma0dt/MAyqwfBzSCk2p6Sv6Mz
+nokYSVh+oPLDWzwdGcd+/i2fxTtL6AjN9/5Xsh0SoTgfQ/+nsZHIpDJf8v6A0AYr
+Z0hNV8e52XHBnLEC28ZVOdHVg0ieAgTnPMLvQoyZn8bltPry+ESSieA78J0lHWsz
+SmkMHAHIswBfKoJ/fY2YMU5nDjIInaZ4vBcESnLKyL09tBMMTUrx2tJH0zZzuKkG
+7cDr35sVxSvCSAJ7KXOeSP70u+J38qusN1iSfVHI0AKLHkIOHFflTq2NcJXQ2vRx
+5Tqe8d0lU6Vn8QNogB/q47ayYKw1mAjHPV6+03JsvFeQ3ts2++2yy8Qz8VdRVjfS
+qduHzBb3cc3B4UVT0ccT34e5q65ovXRyKWxqjuc1Tc8+/wM4kxbZznUJdFpDwj+k
+5sjm1660nmLbDVdoHLFF/Y4oQDLvMuj9u6uQvdz8RRc8SYDtEuu7rN+bTfl/WGtg
+rRstVki+d5hEk+09tJrq
+=APCr
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
