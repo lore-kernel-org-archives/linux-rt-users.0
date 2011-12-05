@@ -1,64 +1,87 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/12 rc3] genirq: fix regression in irqfixup, irqpoll
-Date: Mon, 05 Dec 2011 18:00:48 -0500
-Message-ID: <20111205230250.165366297@goodmis.org>
+Subject: [PATCH RT 09/12 rc3] slab, lockdep: Fix silly bug
+Date: Mon, 05 Dec 2011 18:00:55 -0500
+Message-ID: <20111205230303.833140083@goodmis.org>
 References: <20111205230046.736851081@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Edward Donovan <edward.donovan@numble.net>,
-	stable@kernel.org ("2.6.39+")
+ Carsten Emde <C.Emde@osadl.org>,
+ John Kacur <jkacur@redhat.com>,
+ stable@kernel.org,
+ Peter Zijlstra <a.p.zijlstra@chello.nl>,
+ Hans Schillstrom <hans@schillstrom.com>,
+ Christoph Lameter <cl@gentwo.org>,
+ Pekka Enberg <penberg@cs.helsinki.fi>,
+ Matt Mackall <mpm@selenic.com>,
+ Sitsofe Wheeler <sitsofe@yahoo.com>,
+ linux-mm@kvack.org,
+ David Rientjes <rientjes@google.com>
 To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-genirq-fix-regression-in-irqfixup-irqpoll.patch
-Sender: linux-kernel-owner@vger.kernel.org
+ linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline; filename=0009-slab-lockdep-Fix-silly-bug.patch
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
 --00GvhwF7k39YY
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-From: Edward Donovan <edward.donovan@numble.net>
+From: Peter Zijlstra <a.p.zijlstra@chello.nl>
 
-Commit fa27271bc8d2("genirq: Fixup poll handling") introduced a
-regression that broke irqfixup/irqpoll for some hardware configurations.
+Commit 30765b92 ("slab, lockdep: Annotate the locks before using
+them") moves the init_lock_keys() call from after g_cpucache_up =3D
+FULL, to before it. And overlooks the fact that init_node_lock_keys()
+tests for it and ignores everything !FULL.
 
-Amidst reorganizing 'try_one_irq', that patch removed a test that
-checked for 'action->handler' returning IRQ_HANDLED, before acting on
-the interrupt.  Restoring this test back returns the functionality lost
-since 2.6.39.  In the current set of tests, after 'action' is set, it
-must precede '!action->next' to take effect.
+Introduce a LATE stage and change the lockdep test to be <LATE.
 
-With this and my previous patch to irq/spurious.c, c75d720fca8a, all
-IRQ regressions that I have encountered are fixed.
-
-Signed-off-by: Edward Donovan <edward.donovan@numble.net>
-Reported-and-tested-by: Rog=C3=A9rio Brito <rbrito@ime.usp.br>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable@kernel.org (2.6.39+)
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: stable@kernel.org
+Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Hans Schillstrom <hans@schillstrom.com>
+Cc: Christoph Lameter <cl@gentwo.org>
+Cc: Pekka Enberg <penberg@cs.helsinki.fi>
+Cc: Matt Mackall <mpm@selenic.com>
+Cc: Sitsofe Wheeler <sitsofe@yahoo.com>
+Cc: linux-mm@kvack.org
+Cc: David Rientjes <rientjes@google.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Link: http://lkml.kernel.org/n/tip-gadqbdfxorhia1w5ewmoiodd@git.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/irq/spurious.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ mm/slab.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-diff --git a/kernel/irq/spurious.c b/kernel/irq/spurious.c
-index bfe1004..d09e0f5 100644
---- a/kernel/irq/spurious.c
-+++ b/kernel/irq/spurious.c
-@@ -84,7 +84,9 @@ static int try_one_irq(int irq, struct irq_desc *desc, bo=
-ol force)
- 	 */
- 	action =3D desc->action;
- 	if (!action || !(action->flags & IRQF_SHARED) ||
--	    (action->flags & __IRQF_TIMER) || !action->next)
-+	    (action->flags & __IRQF_TIMER) ||
-+	    (action->handler(irq, action->dev_id) =3D=3D IRQ_HANDLED) ||
-+	    !action->next)
- 		goto out;
+diff --git a/mm/slab.c b/mm/slab.c
+index 015cd76..433b9a2 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -594,6 +594,7 @@ static enum {
+ 	PARTIAL_AC,
+ 	PARTIAL_L3,
+ 	EARLY,
++	LATE,
+ 	FULL
+ } g_cpucache_up;
 =20
- 	/* Already running on another processor */
+@@ -670,7 +671,7 @@ static void init_node_lock_keys(int q)
+ {
+ 	struct cache_sizes *s =3D malloc_sizes;
+=20
+-	if (g_cpucache_up !=3D FULL)
++	if (g_cpucache_up < LATE)
+ 		return;
+=20
+ 	for (s =3D malloc_sizes; s->cs_size !=3D ULONG_MAX; s++) {
+@@ -1725,6 +1726,8 @@ void __init kmem_cache_init_late(void)
+ {
+ 	struct kmem_cache *cachep;
+=20
++	g_cpucache_up =3D LATE;
++
+ 	/* Annotate slab for lockdep -- annotate the malloc caches */
+ 	init_lock_keys();
+=20
 --=20
 1.7.7.1
 
@@ -71,19 +94,26 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJO3U2aAAoJEIy3vGnGbaoAwSkP/3eccOCoTn+jyWWcWu2LDVqt
-/5XANWMG7Ry1Yc87AzH0nB2HQ6tGjPcHgAcYOejwudvlzqMcA0NS740Dkhkk1Clc
-VOsG93lMgSqBhJgpkK9TmOWHraXn5zI4ORR5Rmjx6etXECBB4hNi7/grvynKCpYh
-3LTH5MTdcpaOvyUdc3D8zJgaYAzdfq3RvwROuQrVOgFIKR0W3r1qo1KhD597pvUh
-HFTJDHhANl6pmTj+3XM6UGw5Y1Sa3w3MNPBdiMjXJhiLwMm+kogfP9lcUmsyEdPi
-JWf/tiEoqM2bv2utWMYKkEv2PwsJL8lLlpWflhYb15Cw5cvI+jUdzJTot9z3ViTC
-mNGNmxERQNsnlaSzMkZGPfNddI1Fwb2hRrIHJgg7HNmZywO4EqeYhc9HI1N+k1VP
-yZln21kK5+eKp8t+sdE5PMyb/77DHkyKR/VWvuLLaiZ3HmJd+zhET/POhSXenmiE
-2Ec2zY+xgP0gmKKn46BvdmA1DktPxYYrxSkEHdh4iZdYloaxNH9KJPXrFDiO9I/9
-MZMg5WX7YM29dxLk/Y+7U2XSxxGouY6gZgzww1MR7hrW0bQnFGd1pzlPkMcgavNy
-Z3vYYzC4NIcLsdBX8Lxz8tpB5jn7Ei8OIYUCJ+s6G6Pde5Lc0wa3AC8njH9NbC48
-Q7noF69VkuYW1JrbhCve
-=ZIKv
+iQIcBAABAgAGBQJO3U2oAAoJEIy3vGnGbaoAEFYP/1BvpfHZ9O9irTl1k36AAWM7
+v8ZpZ8sxClYd25BDIfwA4gTaT3RKrJjsi2HZcd/lGYWRaZmktTR4YMZCgDdrLcYl
+oqVx6oelp54rb6pDgm6ydbpf8cqHBHzY+e5feud8tvZyZglILknha1Gfv2QMSs1/
+GpGs19ypQRI+oWGp68b4R2znn+b5qubewmRXsmnNAb6iZGiYD3yf3Zsh3iV3HTY0
+3q2S4zFx/1LhhcEyuD7NLKHrhrfp6jYCZhRLnzIZNbxHMagvywQ161TGtNpaK6bx
+h7AthQ3xXzUbJhPj7A5bLPuXxu2SsfbjFicp491liYr/nLUoQkbKKqedpGbQCiMR
+6aLwPmD2PCPne4gdzxzE2YdLpsPdelN6jEVamhfS1QfOarLZpe5O6XThiMWiAR7A
+VSh+HJhZw/1kvA3lkTKKEx0XfDL8mqkmGAlANNA7EwsyifGBjbZ3x4oJ2cjjVJ7e
+ZSQtSHi8j23SwsZ0Cqz0suHBdV0dY1+wd0hBdbdnLloyeMIgU3/j3gth9L37bIsB
+PWyQxG4r/eL8Oim7XiUI0qax1NgabxtazLg6Lp+DtsW0gH0XF2qBd/2e/VywVWa5
+XExM+9K7aeL7xeKdxC4LWaXemyZD8OiGpN/b4PxelxO3Qm90WMf81Igz0CuiYhEO
+p3ogUs4dsSj2nTkCUv6M
+=vK3a
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Fight unfair telecom internet charges in Canada: sign http://stopthemeter.ca/
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
