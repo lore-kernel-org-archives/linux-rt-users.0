@@ -1,87 +1,83 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [PATCH 00/11] [ANNOUNCE] 3.0.12-rt30-rc2
-Date: Wed, 7 Dec 2011 09:09:56 +0100
-Message-ID: <201112070909.56992.tim.sander@hbm.com>
-References: <20111204185444.411298317@goodmis.org> <201112051011.59858.tim.sander@hbm.com> <1323091398.30977.74.camel@frodo>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [patch] intel_idle: convert i7300_idle_lock to raw spinlock
+Date: Wed, 07 Dec 2011 12:48:42 +0100
+Message-ID: <1323258522.5057.73.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Thomas Gleixner" <tglx@linutronix.de>,
-	"Tim Sander" <tim01@vlsi.informatik.tu-darmstadt.de>,
-	<linux-kernel@vger.kernel.org>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:50293 "HELO
-	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752100Ab1LGIKb convert rfc822-to-8bit (ORCPT
+Received: from mailout-de.gmx.net ([213.165.64.23]:49426 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1755357Ab1LGLsr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Dec 2011 03:10:31 -0500
-Content-Class: urn:content-classes:message
-In-Reply-To: <1323091398.30977.74.camel@frodo>
+	Wed, 7 Dec 2011 06:48:47 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve
-> > I should also point out, that this phenomen was not always happenin=
-g, but
-> > only sometimes and then again disapeared without any known reason.
->=20
-> Hmm, then are you sure that the tasklet patch causes the bug? Or perh=
-aps
-> it only changes the timing to cause it. The bug may be without the pa=
-tch
-> too.
-Well, we are running the preempt rt patchset 3.0 since the rt-9 release=
- and we=20
-have not seen this kind of error. It just started popping up after i ap=
-plied=20
-the patch which i took directly from the mailing list when it was poste=
-d,=20
-since we had this ksoftirq issue especially after firmware update when =
-ubifs=20
-has been updated.
+24 core Intel box's first exposure to 3.0.12-rt30-rc3 didn't go well.
 
-The bad thing is that it is not happening deterministic but seemingly a=
-t=20
-random. But i will try your next prerelease and will report any results=
-=2E
+[   27.104159] i7300_idle: loaded v1.55
+[   27.104192] BUG: scheduling while atomic: swapper/2/0/0x00000002
+[   27.104309] Pid: 0, comm: swapper/2 Tainted: G           N  3.0.12-rt30-rc3-rt #1
+[   27.104317] Call Trace:
+[   27.104338]  [<ffffffff810046a5>] dump_trace+0x85/0x2e0
+[   27.104372]  [<ffffffff8144eb00>] thread_return+0x12b/0x30b
+[   27.104381]  [<ffffffff8144f1b9>] schedule+0x29/0xb0
+[   27.104389]  [<ffffffff814506e5>] rt_spin_lock_slowlock+0xc5/0x240
+[   27.104401]  [<ffffffffa01f818f>] i7300_idle_notifier+0x3f/0x360 [i7300_idle]
+[   27.104415]  [<ffffffff814546c7>] notifier_call_chain+0x37/0x70
+[   27.104426]  [<ffffffff81454748>] __atomic_notifier_call_chain+0x48/0x70
+[   27.104439]  [<ffffffff81001a39>] cpu_idle+0x89/0xb0
+[   27.104449] bad: scheduling from the idle thread!
 
-My patch is also not completly vanilla mainline. I am using the recomen=
-ded=20
-patch from ubifs/master, some small platform patches and some timer pat=
-ches=20
-Thomas Gleixner knows best about.
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 
-Best regards
-Tim
+---
+ drivers/idle/i7300_idle.c |    8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Please ignore:
+Index: linux-3.2-rt/drivers/idle/i7300_idle.c
+===================================================================
+--- linux-3.2-rt.orig/drivers/idle/i7300_idle.c
++++ linux-3.2-rt/drivers/idle/i7300_idle.c
+@@ -75,7 +75,7 @@ static unsigned long past_skip;
+ 
+ static struct pci_dev *fbd_dev;
+ 
+-static spinlock_t i7300_idle_lock;
++static raw_spinlock_t i7300_idle_lock;
+ static int i7300_idle_active;
+ 
+ static u8 i7300_idle_thrtctl_saved;
+@@ -457,7 +457,7 @@ static int i7300_idle_notifier(struct no
+ 		idle_begin_time = ktime_get();
+ 	}
+ 
+-	spin_lock_irqsave(&i7300_idle_lock, flags);
++	raw_spin_lock_irqsave(&i7300_idle_lock, flags);
+ 	if (val == IDLE_START) {
+ 
+ 		cpumask_set_cpu(smp_processor_id(), idle_cpumask);
+@@ -506,7 +506,7 @@ static int i7300_idle_notifier(struct no
+ 		}
+ 	}
+ end:
+-	spin_unlock_irqrestore(&i7300_idle_lock, flags);
++	raw_spin_unlock_irqrestore(&i7300_idle_lock, flags);
+ 	return 0;
+ }
+ 
+@@ -554,7 +554,7 @@ struct debugfs_file_info {
+ 
+ static int __init i7300_idle_init(void)
+ {
+-	spin_lock_init(&i7300_idle_lock);
++	raw_spin_lock_init(&i7300_idle_lock);
+ 	total_us = 0;
+ 
+ 	if (i7300_idle_platform_probe(&fbd_dev, &ioat_dev, forceload))
 
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
-Germany | www.hbm.com=20
 
-Registered as GmbH (German limited liability corporation) in the commer=
-cial register at the local court of Darmstadt, HRB 1147 =20
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
-the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
-er des Amtsgerichts Darmstadt unter HRB 1147=20
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
-st | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely fo=
-r the addressee. If you are not the intended recipient, please let me k=
-now and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=C3=BCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche =
-Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-M=
-ail.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
