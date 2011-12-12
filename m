@@ -1,39 +1,52 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [ANNOUNCE] 3.2-rc4-rt6
-Date: Wed, 7 Dec 2011 17:01:05 -0800
-Message-ID: <4EE00C51.5080509@am.sony.com>
-References: <alpine.LFD.2.02.1112052205350.2735@ionos>
+Subject: Re: [ANNOUNCE] 3.0.12-rt30
+Date: Mon, 12 Dec 2011 15:59:21 -0800
+Message-ID: <4EE69559.8030200@am.sony.com>
+References: <1323302027.30977.117.camel@frodo>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe002.messaging.microsoft.com ([65.55.88.12]:25801 "EHLO
-	TX2EHSOBE003.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756946Ab1LHBB1 (ORCPT
+Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:27941 "EHLO
+	TX2EHSOBE001.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753180Ab1LLX7f (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Dec 2011 20:01:27 -0500
-In-Reply-To: <alpine.LFD.2.02.1112052205350.2735@ionos>
+	Mon, 12 Dec 2011 18:59:35 -0500
+In-Reply-To: <1323302027.30977.117.camel@frodo>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/05/11 13:09, Thomas Gleixner wrote:
+On 12/07/11 15:53, Steven Rostedt wrote:
+> 
 > Dear RT Folks,
 > 
-> I'm pleased to announce the 3.2-rc4-rt6 release.
+> I'm pleased to announce the 3.0.12-rt30 stable release.
+ 
+Builds and boots on some ARM boards
 
-Builds and boots on some ARM boards (PandaBoard, Realview) for:
+  In tree boards:
+
+    PandaBoard
+    Realview
+
+  Out of tree boards:
+
+    NaviEngine
+
+for the following configurations:
 
   - SMP, PREEMPT_RT_FULL
   - SMP, PREEMPT_NONE
   - UP, PREEMPT_RT_FULL
   - UP, PREEMPT_NONE
 
-I'm still fighting with my out of mainline ARM board to move it
-to 3.2-rc and boot SMP.
-
 -Frank
+
 
