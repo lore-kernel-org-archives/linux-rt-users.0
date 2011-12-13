@@ -1,52 +1,55 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [ANNOUNCE] 3.0.12-rt30
-Date: Mon, 12 Dec 2011 15:59:21 -0800
-Message-ID: <4EE69559.8030200@am.sony.com>
-References: <1323302027.30977.117.camel@frodo>
-Reply-To: <frank.rowand@am.sony.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Scheduler model, revisited
+Date: Tue, 13 Dec 2011 11:17:07 -0800
+Message-ID: <20111213191707.GA10771@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: pjt@google.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:27941 "EHLO
-	TX2EHSOBE001.bigfish.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753180Ab1LLX7f (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 12 Dec 2011 18:59:35 -0500
-In-Reply-To: <1323302027.30977.117.camel@frodo>
+Received: from e3.ny.us.ibm.com ([32.97.182.143]:53977 "EHLO e3.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752318Ab1LMTTK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Dec 2011 14:19:10 -0500
+Received: from /spool/local
+	by e3.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Tue, 13 Dec 2011 14:19:09 -0500
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by d01relay03.pok.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id pBDJIj4u208472
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Dec 2011 14:18:45 -0500
+Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id pBDJH8ct024424
+	for <linux-rt-users@vger.kernel.org>; Tue, 13 Dec 2011 12:17:09 -0700
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/07/11 15:53, Steven Rostedt wrote:
-> 
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.0.12-rt30 stable release.
- 
-Builds and boots on some ARM boards
+Hello, Paul,
 
-  In tree boards:
+Back in Prague, you mentioned that a number of your scheduler-parameter
+measurements were poor fits for the exponential distribution.  Are they
+a reasonable fit for a series of exponentially distributed Markov states?
 
-    PandaBoard
-    Realview
+For example, would they fit something of the following form?
 
-  Out of tree boards:
+	a^2*t*e^(-a*t)
 
-    NaviEngine
+Or would a three-step series fit better?
 
-for the following configurations:
+	(a^3*t^2*e^(-a*t))/2
 
-  - SMP, PREEMPT_RT_FULL
-  - SMP, PREEMPT_NONE
-  - UP, PREEMPT_RT_FULL
-  - UP, PREEMPT_NONE
+And there is always the four-step series:
 
--Frank
+	(a^4*t^3*e^(-a*t))/6
 
+Or, in general:
+
+	(a^n*t^(n-1)*e^(-a*t))/(n-1)!
+
+But please keep in mind that higher orders multiply my state space by
+the number of steps in the series.  ;-)
+
+							Thanx, Paul
 
