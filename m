@@ -1,183 +1,62 @@
-From: Monica Puig-Pey <puigpeym@unican.es>
-Subject: Problem: plist_add undefined!
-Date: Tue, 20 Dec 2011 10:24:53 +0100
-Message-ID: <4EF05465.7050507@unican.es>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
+From: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Subject: Re: where is cyclictest git repo ?
+Date: Tue, 20 Dec 2011 11:46:56 -0800
+Message-ID: <8A720414-5C6F-4113-B8E3-63443F833121@thebigcorporation.com>
+References: <CAPB=Z-paTAw-zbvA27dkP7u+ckEdLstewc=b2uNw=SfrA-GxXw@mail.gmail.com> <20111220084724.GY24496@pengutronix.de>
+Mime-Version: 1.0 (Apple Message framework v1251.1)
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Cc: Raz <raziebe@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: =?iso-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ccserver2.unican.es ([130.206.5.101]:58584 "EHLO
-	ccserver2.unican.es" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751944Ab1LTJqb (ORCPT
+Received: from mail-iy0-f174.google.com ([209.85.210.174]:45959 "EHLO
+	mail-iy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751669Ab1LTTqw convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Dec 2011 04:46:31 -0500
+	Tue, 20 Dec 2011 14:46:52 -0500
+Received: by iaeh11 with SMTP id h11so10685236iae.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Dec 2011 11:46:52 -0800 (PST)
+In-Reply-To: <20111220084724.GY24496@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-Hi there,
+There is also an issue with 0.83 on Suse 3.x Kernels, patches to follow=
+=2E
 
-As I told in previous posts in this list I'm developing drivers for the
+On Dec 20, 2011, at 12:47 AM, Uwe Kleine-K=F6nig wrote:
 
-linux-rt kernel version in Ubuntu 10.04, based on 2.6.31 with rt_preemp=
-t=20
-patch.
+> Hello Raz,
+>=20
+> On Tue, Dec 20, 2011 at 10:06:54AM +0200, Raz wrote:
+>> My current rt version  is 3.2 and I am getting this irritating messa=
+ge :
+>>=20
+>> "WARNING: Most functions require kernel 2.6"
+>>=20
+>> I am using V 0.73.
+> git://github.com/clrkwllms/rt-tests.git is the current place to get
+> rt-tests (including cyclictest).
+>=20
+> If you're using Debian you can find rt-tests 0.83 (which is the most
+> recent release) in testing.
+>=20
+> Best regards
+> Uwe
+>=20
+> --=20
+> Pengutronix e.K.                           | Uwe Kleine-K=F6nig      =
+      |
+> Industrial Linux Solutions                 | http://www.pengutronix.d=
+e/  |
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Currently I'm studying how to use priority lists (linux/plist.h) in a=20
-module. I read some pages from the Linux Kernel Development book to=20
-learn how linked list work in the kernel.
-
-I made and easy example, shown below, trying to put three elements, wit=
-h=20
-their priorities, in a plist_head.
-
-Then, I had two problems:
-
-* First error:
-
-   An error is produced when using the MACROs:
-     - PLIST_HEAD_INIT(head, _lock)
-     - PLIST_NODE_INIT(node, __prio)
-
-   it says :
-
-
-/home/monica/Escritorio/plists/priolist.c: In function 'init_module':=20
-/home/monica/Escritorio/plists/priolist.c:67: error: expected expressio=
-n=20
-before '.' token
-
-
-   --> To solve this I used the functions:
-
-
-- static inline void plist_head_init(struct plist_head *head, struct=20
-spinlock *lock)
-
-- static inline void plist_node_init(struct plist_node *node, int prio)
-
-   But I still have the problem with the MACRO
-
-
-
-
-* Second error, problem using plist_add:
-
-   It says:
-
-
-=93WARNING: "plist_add" [/home/monica/Escritorio/plists/priolist.ko]=20
-undefined! =94
-
-   I made the module GPL, I don't know what am I doing wrong.
-
-Does anybody have an idea what is happening?
-
-Thanks in advance for any help,
-
-Cheers,
-
-         Monica
-
-CODE:
-
-#include <linux/module.h>=09
-#include <linux/kernel.h>
-#include <linux/ioport.h>
-#include <linux/plist.h>
-#include <linux/spinlock.h>
-
-
-MODULE_LICENSE("GPL");
-
-#define pid_miguel 1
-#define fichero_miguel 1
-#define prio_miguel 10
-
-
-#define pid_monica 2
-#define fichero_monica 1
-#define prio_monica 30
-
-#define pid_hector 3
-#define fichero_hector 1
-#define prio_hector 20
-
-
-
-static DEFINE_SPINLOCK(lock);
-
-
-struct misdatos
-{
-   int pid;
-   int fichero;
-   struct plist_node token_del_plist;
-};
-
-
-int init_module(void)
-{
-
-
-   struct plist_head mi_lista_de_datos;
-   //struct spinlock lock;
-   struct misdatos datos_miguel;
-   struct misdatos datos_monica;
-   struct misdatos datos_hector;
-
-   struct misdatos *elemento_iterador;
-
-   // Inicializo mi lista
-   //PLIST_HEAD_INIT( mi_lista_de_datos, lock);
-   plist_head_init( &mi_lista_de_datos, &lock);
-
-   // Creo mis datos
-   datos_miguel.pid =3D pid_miguel;
-   datos_miguel.fichero =3D fichero_miguel;
-
-   datos_monica.pid =3D pid_monica;
-   datos_monica.fichero =3D fichero_monica;
-
-   datos_hector.pid =3D pid_hector;
-   datos_hector.fichero =3D fichero_hector;
-
-   // Inicializamos los nodos CON LA PRIORIDAD
-   //PLIST_NODE_INIT(datos_miguel.token_del_plist, prio_miguel);
-   //PLIST_NODE_INIT(datos_monica.token_del_plist, prio_monica);
-   //PLIST_NODE_INIT(datos_hector.token_del_plist, prio_hector);
-   plist_node_init(&datos_miguel.token_del_plist, prio_miguel);
-   plist_node_init(&datos_monica.token_del_plist, prio_monica);
-   plist_node_init(&datos_hector.token_del_plist, prio_hector);
-
-
-   // Los agnadimos
-   plist_add(&(datos_miguel.token_del_plist), &mi_lista_de_datos);
-   plist_add(&(datos_monica.token_del_plist), &mi_lista_de_datos);
-   plist_add(&(datos_hector.token_del_plist), &mi_lista_de_datos);
-
-
-
-
-plist_for_each_entry(elemento_iterador, &mi_lista_de_datos, token_del_p=
-list)
-
-   {
-
-printk(KERN_INFO "El pid es : %d, con prioridad %d\n",=20
-elemento_iterador->pid, elemento_iterador->token_del_plist.prio);
-
-   }
-   return 0;
-}
-
-void cleanup_module(void)
-{
-printk(KERN_INFO "cleanup_module() called\n");
-
-}
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
