@@ -1,114 +1,62 @@
-From: raz ben yehuda <raziebe@gmail.com>
-Subject: Subject: [PATCH 1/2] priority System V Semaphores
-Date: Wed, 21 Dec 2011 00:26:38 +0200
-Message-ID: <1324419998.20886.8.camel@raz>
+From: Geunsik Lim <leemgs1@gmail.com>
+Subject: Re: Cyclictest source
+Date: Wed, 21 Dec 2011 08:19:14 +0900
+Message-ID: <CABiHV1Rr=_sYDdnRJ+p2bm8vFCj+e6-c_pvbFhk9VXBEv7grTA@mail.gmail.com>
+References: <4EF109CB.2040904@gnu.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: jacobo@gnu.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f174.google.com ([74.125.82.174]:58125 "EHLO
-	mail-we0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752230Ab1LTW0m (ORCPT
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:62066 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753205Ab1LTXTQ convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Dec 2011 17:26:42 -0500
-Received: by werm1 with SMTP id m1so2310417wer.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 20 Dec 2011 14:26:41 -0800 (PST)
+	Tue, 20 Dec 2011 18:19:16 -0500
+Received: by eekc4 with SMTP id c4so7057656eek.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 20 Dec 2011 15:19:15 -0800 (PST)
+In-Reply-To: <4EF109CB.2040904@gnu.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->From bf3cbcb4d90bdd0b06048091ff516e1dfd61e349 Mon Sep 17 00:00:00 2001
-From: raz <raziebe@gmail.com>
-Date: Tue, 20 Dec 2011 22:38:14 +0200
+Please, Connect to https://github.com/clrkwllms/rt-tests to download
+cyclictest source.
+It mean that rt-test package consists of cyclictest.
+Append Clark Williams <williams@redhat.com> to this mailing list.
 
 
-Currnet Linux implementation for System V semaphores is FIFO.
-Meaning, first task to sleep on the semaphore is the first
-task to awake.
-This patch (and the one follows) makes it possible to
-have the higher (rt) priority task awake first.
-
-For user space usage i present SETFIFO and SETPRIO
-new options for semctl.
-To define a priority semaphore do:
-
-...
-semid = semget(..)
-..
-semctl(semid, semnum, SETPRIO)
-
-semctl marks semnum semaphore in a semaphore array
-as priority semaphore.
-
-Signed-off-by: raz <raziebe@gmail.com>
----
- include/linux/sem.h |    4 ++++
- ipc/sem.c           |   17 +++++++++++++++++
- 2 files changed, 21 insertions(+), 0 deletions(-)
-
-diff --git a/include/linux/sem.h b/include/linux/sem.h
-index 10d6b22..d553406 100644
---- a/include/linux/sem.h
-+++ b/include/linux/sem.h
-@@ -19,6 +19,10 @@
- #define SEM_STAT 18
- #define SEM_INFO 19
- 
-+/* semctl Additional Command Definitions. */
-+#define SETPRIO 20	 /* priority semaphore */
-+#define SETFIFO	21	 /* fifo based semahphore */
-+
- /* Obsolete, used only for backwards compatibility and libc5 compiles */
- struct semid_ds {
- 	struct ipc_perm	sem_perm;		/* permissions .. see ipc.h */
-diff --git a/ipc/sem.c b/ipc/sem.c
-index 5215a81..90dc5a1 100644
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -90,10 +90,13 @@
- #include <asm/uaccess.h>
- #include "util.h"
- 
-+#define PRIO_SEM	1
-+
- /* One semaphore structure for each semaphore in the system. */
- struct sem {
- 	int	semval;		/* current value */
- 	int	sempid;		/* pid of last operation */
-+	int	flags;		/* PRIO of FIFO, defaults to FIFO */
- 	struct list_head sem_pending; /* pending single-sop operations */
- };
- 
-@@ -1009,6 +1012,18 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
- 	case GETNCNT:
- 		err = count_semncnt(sma,semnum);
- 		goto out_unlock;
-+	case SETPRIO:
-+	{
-+		curr->flags |= PRIO_SEM;
-+		err = 0;
-+		goto out_unlock;
-+	}
-+	case SETFIFO:
-+	{
-+		curr->flags &= ~PRIO_SEM;
-+		err = 0;
-+		goto out_unlock;
-+	}
- 	case GETZCNT:
- 		err = count_semzcnt(sma,semnum);
- 		goto out_unlock;
-@@ -1144,6 +1159,8 @@ SYSCALL_DEFINE(semctl)(int semid, int semnum, int cmd, union semun arg)
- 	case GETZCNT:
- 	case SETVAL:
- 	case SETALL:
-+	case SETFIFO:
-+	case SETPRIO:
- 		err = semctl_main(ns,semid,semnum,cmd,version,arg);
- 		return err;
- 	case IPC_RMID:
--- 
-1.7.5.4
+On Wed, Dec 21, 2011 at 7:18 AM, Jacobo N=C3=A1jera <jacobo@gnu.org> wr=
+ote:
+>
+> Hi
+>
+> Where I can download Cyclictest source?
+>
+>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
 
 
 
+--=20
+Best regards,
+Geunsik Lim ( Samsung Electronics )
+Blog : http://blog.naver.com/invain/
+Homepage: http://leemgs.fedorapeople.org
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at=C2=A0 http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at=C2=A0 http://www.tux.org/lkml/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
