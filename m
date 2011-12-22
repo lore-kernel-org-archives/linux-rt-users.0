@@ -1,56 +1,29 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: Subject: [PATCH 2/2] priority System V Semaphores
-Date: Wed, 21 Dec 2011 22:58:28 -0500
-Message-ID: <1324526308.5916.123.camel@gandalf.stny.rr.com>
+Date: Thu, 22 Dec 2011 09:59:12 +0100
+Message-ID: <1324544352.24803.9.camel@twins>
 References: <1324419795.20886.3.camel@raz>
 	 <4EF2261F.4050002@colorfullife.com> <1324500515.5467.18.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
 Cc: Manfred Spraul <manfred@colorfullife.com>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Lior Brafman <LBrafman@manz.com>,
 	Torsten Scherer <TScherer@manz.com>,
-	Rasty Slutsker <RSlutsker@manz.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
+	Rasty Slutsker <RSlutsker@manz.com>
 To: raz ben yehuda <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:46061 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753117Ab1LVD6a (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:58157 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753536Ab1LVI7Z convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Dec 2011 22:58:30 -0500
+	Thu, 22 Dec 2011 03:59:25 -0500
 In-Reply-To: <1324500515.5467.18.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Wed, 2011-12-21 at 22:48 +0200, raz ben yehuda wrote:
-> On Wed, 2011-12-21 at 19:31 +0100, Manfred Spraul wrote:
-> > Hi raz,
-> > 
-> > 
-> > On 12/20/2011 11:23 PM, raz ben yehuda wrote:
-> > > > From 25aa166505aff2561dd715c927c654d0bbb432ba Mon Sep 17 00:00:00 2001
-> > > From: raz<raziebe@gmail.com>
-> > > Date: Tue, 20 Dec 2011 22:54:56 +0200
-> > >
-> > >
-> > > Add positioning routine find_pos. find_pos returns
-> > > the place where to put the sleeper before.
-> > > I sort only rt tasks, OTHER policy is pushed back in
-> > > queue. I do not distinct between SCHED_RR and SCHED_FIFO
-> > > policies and they are treated as a single policy
-> > > for the sorting algorithm.
-> > >
-> > > SETPRIO operates only when user issues a single semop
-> > > operation and not an array of opretions.
-> > As far as I can see, the advantages of sysvsem are backward 
-> > compatibility and the ability to use complex ops.
-> > You propose to add a new feature that doesn't work on complex ops.
-> > 
-> > Are there any apps that use SETPRIO?
-> > What is the use case?
 > Vxworks is the use case. And there are plenty of companies with
 > vxWorks software and in i believe they will migrate sooner or later to
 > PreemptRT.  My current company uses old wrapper software that implements
@@ -59,86 +32,13 @@ On Wed, 2011-12-21 at 22:48 +0200, raz ben yehuda wrote:
 > I will probably change it some time in the future to posix semaphores , but posix 
 > semaphores are implemented in glibc with futexes and atomic ops and i rather 
 > mess with kernel and not glibc. funny , but true. glibc is harder. 
-> 
-> > > SETFIFO is the default for backward compatbility.
-> > >
-> > > Signed-off-by: raz<raziebe@gmail.com>
-> > > ---
-> > >   ipc/sem.c |   51 +++++++++++++++++++++++++++++++++++++++++++++++++--
-> > >   1 files changed, 49 insertions(+), 2 deletions(-)
-> > >e
-> > > diff --git a/ipc/sem.c b/ipc/sem.c
-> > > index 90dc5a1..921056d 100644
-> > > --- a/ipc/sem.c
-> > > +++ b/ipc/sem.c
-> > > @@ -1343,6 +1343,51 @@ static int get_queue_result(struct sem_queue *q)
-> > >   	return error;
-> > >   }
-> > >
-> > > +/*
-> > > + * find the best place to put the task sorted by rt prio
-> > > +*/
-> > > +static struct list_head *find_pos(struct sem *curr, int alter,
-> > > +		struct task_struct *p)
-> > > +{
-> > > +	struct sem_queue *q;
-> > > +	struct sem_queue *ret_pos = NULL;
-> > > +	struct list_head *tasks_queue =&curr->sem_pending;
-> > > +
-> > > +	if (!alter)
-> > > +		return tasks_queue;
-> > > +
-> > Tasks that do not alter anything end up first - IMHO correct.
-> > 
-> > > +	if (!(curr->flags&  PRIO_SEM))
-> > > +		return tasks_queue;
-> > > +	/*
-> > > +	 *  make no effort to sort SCHED_OTHER,
-> > > +	 *  just push task to the back of the queue.
-> > > +	*/
-> > > +	if (!(p->policy == SCHED_FIFO || p->policy == SCHED_RR))
-> > > +		return tasks_queue;
-> > > +	/*
-> > > +	 *  make no distinction between SCHED_FIFO
-> > > +	 *  and SCHED_RR policies.
-> > > +	 */
-> > > +	list_for_each_entry(q, tasks_queue, simple_list) {
-> > > +		struct task_struct *t;
-> > > +
-> > > +		t  = q->sleeper;
-> > > +		if (current->rt_priority == t->rt_priority) {
-> > > +			/*
-> > > +			* push in a FIFO manner
-> > > +			* tasks in same priority
-> > > +			*/
-> > > +			ret_pos = q;
-> > > +			continue;
-> > > +		}
-> > > +		if (current->rt_priority<  t->rt_priority)
-> > > +			continue;
-> > > +		return&q->simple_list;
-> > > +	}
-> > Here in the loop, non-alter tasks are evaluated as well.
-> > I think that's wrong, it could starve non-alter tasks.
-> > e.g. queue:
-> > - high prio non-alter
-> > - low prio non-alter.
-> > 
-> > Now a medium prio alter task is added.
-> > I think it will end up in the wrong position (before the low-prio 
-> > non-alter task), correct?
-> hammm.. correct. thanks. I did not check non-alter tasks at all. The entire queue might be a total mess. 
-> I will sort non alter tasks as well.
-> Also, this patch is missing scenario where a task priority is changed whilst it is waiting. 
-> I fixed that already. 
-> 
-> Who maintains this code ? 
-> 
 
-It's mainly core kernel code and only changes when true changes are
-made. An update could be done to extend its use as long as it doesn't
-break any tools in the process. IOW, it must stay backward compatible.
+Semaphores are a fscking trainwreck for real-time programming. Don't use
+them, full stop. If you do, you're doing it wrong, it's really that
+simple.
 
--- Steve
+Use PI mutexes, which are already fully supported in glibc, no extra
+patching needed.
 
-
+Full NAK for any and all priority fudging for any semaphore
+implementation.
