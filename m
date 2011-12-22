@@ -1,44 +1,64 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: Subject: [PATCH 2/2] priority System V Semaphores
-Date: Thu, 22 Dec 2011 09:59:12 +0100
-Message-ID: <1324544352.24803.9.camel@twins>
-References: <1324419795.20886.3.camel@raz>
-	 <4EF2261F.4050002@colorfullife.com> <1324500515.5467.18.camel@raz>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: Kernel panic with PREEMPT_RT_FULL and UIO driver
+Date: Thu, 22 Dec 2011 11:31:14 +0100
+Message-ID: <20111222103114.GE24496@pengutronix.de>
+References: <4EF1B984.4010102@x2e.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Manfred Spraul <manfred@colorfullife.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Lior Brafman <LBrafman@manz.com>,
-	Torsten Scherer <TScherer@manz.com>,
-	Rasty Slutsker <RSlutsker@manz.com>
-To: raz ben yehuda <raziebe@gmail.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Lukas Erlinghagen <lukas.erlinghagen@x2e.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:58157 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753536Ab1LVI7Z convert rfc822-to-8bit (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:48572 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752416Ab1LVKbQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Dec 2011 03:59:25 -0500
-In-Reply-To: <1324500515.5467.18.camel@raz>
+	Thu, 22 Dec 2011 05:31:16 -0500
+Content-Disposition: inline
+In-Reply-To: <4EF1B984.4010102@x2e.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-12-21 at 22:48 +0200, raz ben yehuda wrote:
-> Vxworks is the use case. And there are plenty of companies with
-> vxWorks software and in i believe they will migrate sooner or later to
-> PreemptRT.  My current company uses old wrapper software that implements
-> vxWorks semaphores as system V semaphores. vxWorks semaphores have a priority
-> feature which is widely used.
-> I will probably change it some time in the future to posix semaphores , but posix 
-> semaphores are implemented in glibc with futexes and atomic ops and i rather 
-> mess with kernel and not glibc. funny , but true. glibc is harder. 
+On Wed, Dec 21, 2011 at 11:48:36AM +0100, Lukas Erlinghagen wrote:
+> Dear list,
+>=20
+> we're getting the kernel panic postet below on our system (Kernel
+> version is 3.0.3-rt11, the platform is an embedded PowerPC 440 in a
+Are you aware that there are newer versions available? 3.0.14-rt31 is
+the most recent 3.0 release. Don't know if it has any uio fixes though.
 
-Semaphores are a fscking trainwreck for real-time programming. Don't use
-them, full stop. If you do, you're doing it wrong, it's really that
-simple.
+> Virtex 5 FPGA, the device controlled by the UIO driver is a
+> Freescale MFR4310 controller, and the interrupt is triggered by a
+> high-active interrupt pin). This panic only occurs when using
+> CONFIG_PREEMPT_RT_FULL, and only under high interrupt load on the
+> MFR.
+>=20
+> I've also included our IRQ handler (registered with IRQF_ONESHOT)
+> and IRQ control function.
+>=20
+> Is there something fundamentally wrong we're doing, and if so, where
+> can I find information on The Right Way to write UIO drivers for the
+> RT kernel?
+>=20
+> Thanks in advance for any insight you can provide.
+>=20
+> Kernel panic:
+>=20
+> ------------[ cut here ]------------
+> kernel BUG at kernel/rtmutex.c:724!
+That's a recursive spinlock. Try enabling CONFIG_PROVE_LOCKING.
 
-Use PI mutexes, which are already fully supported in glibc, no extra
-patching needed.
+Best regards
+Uwe
 
-Full NAK for any and all priority fudging for any semaphore
-implementation.
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
