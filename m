@@ -1,58 +1,89 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.2-rc6-rt9
-Date: Wed, 21 Dec 2011 23:44:50 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1112212310390.3020@ionos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.0.14-rt31
+Date: Wed, 21 Dec 2011 22:40:37 -0500
+Message-ID: <1324525237.5916.114.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-htTxv/uGNZ57wdpXou9J"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60974 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751214Ab1LUWow (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:61359 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753519Ab1LVDkm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Dec 2011 17:44:52 -0500
+	Wed, 21 Dec 2011 22:40:42 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+
+--=-htTxv/uGNZ57wdpXou9J
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: quoted-printable
+
+
 Dear RT Folks,
 
-I'm pleased to announce the 3.2-rc6-rt9 release.
-
-3.2-rc6-rt9 is a not any different from 3.2-rc5-rt8, it merily bumps
-the version numbers.
-
-I leave out the usual pointers. You know where to find it and if not,
-you can just apply the 3.2-rc5-rt8 patch to 3.2-rc6. It won't be any
-different except for the version number. I'll catch you when you send
-bug reports against 3.2-rc6-rt8! :)
-
-The only purpose of this release is to say:
-
-     Thanks! 
-
-Thanks, to all of you who have supported the RT project in the last
-year - be it with patches, bug reports, testing, success stories or
-whatever form of contribution.
-
-As an extra bonus for my beloved roadmap enthusiasts I'm revealing my
-RT plans for the near future:
-
-    RT won't have any further updates before Jan / 9 / 2012
-
-As always, I stronlgy recommend _not_ to put any bets on that. :)
+I'm pleased to announce the 3.0.14-rt31 stable release.
 
 
-That said, I wish you all a Merry Christmas and a Happy New Year!
+This release is just an update to the new stable 3.0.14 version
+and no RT specific changes have been made.
 
-     Thomas
 
----
+You can get this release via the git tree at:
 
-But I am sure that I have always thought of Christmas time, when it
-has come round... as a good time; a kind, forgiving, charitable,
-pleasant time; the only time I know of, in the long calendar of the
-year, when men and women seem by one consent to open their shut-up
-hearts freely.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-       Charles Dickens, A Christmas Carol
+  Head SHA1: 6aaac97b2b5e0750a2739c3a247d79d4fadac43e
+
+
+Or to build 3.0.14-rt31 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.14.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.14-rt31.=
+patch.xz
+
+
+The broken out patches are available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patches-3.0.14-rt3=
+1.tar.xz
+
+Enjoy,
+
+-- Steve
+
+
+
+--=-htTxv/uGNZ57wdpXou9J
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iQIcBAABAgAGBQJO8qa1AAoJEIy3vGnGbaoAEdsP/2ZxYkwQwLXCZjlA87oJ2VsP
+cuF7B7xulhKXcuC9dn4+5opg4THBuOnpvao1pQheFYOOTm9kKsj0homhqUCValmJ
+4ZK4TXh52kOFEbCne5FJx60f7kruFuiqoPkibn09eclD6mEXkI3B56ipuWVQqAgl
+5jVtfqI5Cmm7iQcqEsshk6s2ZylWQwbaynu9fv+XLFlFJBFIfrd7YbY0IXiCzxym
+uUxIlmbsHM6+7yQSpHr79nXDfw1WRfGYZhYTfWbiSShLzWacKPIl1DJsIzOpwrjP
+CayfnUZ2OnS5+CO5+8bxl9kOvZqIj4sn5aNoSDxXCK1HPkgeM0mr1xlJH6nxZc1l
+wTrsl/G8e5GOUmX7qDYWi5ud829NxH1/PoTpNTouktJTl1XnTTkA4VMmMKlhwSON
+SzJ/BfDMzrp8oJghfyHi+HEfygHqOlVlidzTWzi4xBkI+mNQq222oEnAvATmBpNG
+I4Bab3HsYyJkRQuQ+aDejDQeKRPv8j9ACG5Ccisaq4Tp4hxq61PqxpE8yrRJwgmj
+w3yjSz4Xr8ZRj144G/xYwMmQJlo6Smz1iZupqW+UutLsrmUc/PRnYxmQrads4Xr+
+aYQPwiBZLr7QGz2E51ppSVSnWQv4yLjMCGnxzCQZTI4nj8Y6ZKNitTOH2BiKD3Mr
+CVR2hu9NXjRbvyoZXGmW
+=etIN
+-----END PGP SIGNATURE-----
+
+--=-htTxv/uGNZ57wdpXou9J--
+
