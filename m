@@ -1,54 +1,45 @@
-From: Lars Segerlund <lars.segerlund@gmail.com>
-Subject: Re: [ANNOUNCE] 3.0.14-rt31
-Date: Thu, 22 Dec 2011 13:08:13 +0100
-Message-ID: <CAF-VNaoTVxWfprjnBLavpJyOsV=10=bJkJexVU0bAtk4o5-sDA@mail.gmail.com>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
-	<CAPB=Z-rrMLyFAJXUBC+BCqegr2bNB4on0gNaTWY-ddMWsMGJpA@mail.gmail.com>
-	<1324554620.8892.1.camel@acer.local.home>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Kernel panic with PREEMPT_RT_FULL and UIO driver
+Date: Thu, 22 Dec 2011 13:58:21 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1112221246350.3020@ionos>
+References: <4EF1B984.4010102@x2e.de> <20111222103114.GE24496@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-64323086-1324558702=:3020"
+Cc: Lukas Erlinghagen <lukas.erlinghagen@x2e.de>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lpp01m010-f46.google.com ([209.85.215.46]:60160 "EHLO
-	mail-lpp01m010-f46.google.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752642Ab1LVMIP convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Dec 2011 07:08:15 -0500
-Received: by lahd3 with SMTP id d3so899299lah.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Dec 2011 04:08:14 -0800 (PST)
-In-Reply-To: <1324554620.8892.1.camel@acer.local.home>
+Received: from www.linutronix.de ([62.245.132.108]:34637 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751900Ab1LVM6X (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 22 Dec 2011 07:58:23 -0500
+In-Reply-To: <20111222103114.GE24496@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
- Another question, on the osadl.org site it shows 2.6.33.7.2-rt30 as
-latest stable , is this thus misleading ? ie. 3.0-rt something is the
-latest stable ?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
- / regards, Lars Segerlund
+--8323328-64323086-1324558702=:3020
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
 
-2011/12/22 Steven Rostedt <rostedt@goodmis.org>:
-> On Thu, 2011-12-22 at 13:08 +0200, Raz wrote:
->> Hey steven
->>
->> what is the relation between 3.2 rt patches and 3.0 rt patches ? bac=
-k
->> portability or anything else ?
->
-> 3.0-rt is the stable release. 3.2-rt is active development. Only fixe=
-s
-> go into 3.0-rt.
->
-> -- Steve
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Thu, 22 Dec 2011, Uwe Kleine-König wrote:
+
+> On Wed, Dec 21, 2011 at 11:48:36AM +0100, Lukas Erlinghagen wrote:
+> > ------------[ cut here ]------------
+> > kernel BUG at kernel/rtmutex.c:724!
+> That's a recursive spinlock. Try enabling CONFIG_PROVE_LOCKING.
+
+News at eleven. I already explained Lukas, _why_ this happens. So what
+the heck will CONFIG_PROVE_LOCKING provide as extra value?
+
+We all appreciate your helpfulness, but your signal to noise ratio is
+approaching zero.
+
+Thanks,
+
+	tglx
+--8323328-64323086-1324558702=:3020--
