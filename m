@@ -1,64 +1,65 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: Kernel panic with PREEMPT_RT_FULL and UIO driver
-Date: Thu, 22 Dec 2011 11:31:14 +0100
-Message-ID: <20111222103114.GE24496@pengutronix.de>
-References: <4EF1B984.4010102@x2e.de>
+From: Raz <raziebe@gmail.com>
+Subject: Re: [ANNOUNCE] 3.0.14-rt31
+Date: Thu, 22 Dec 2011 13:08:40 +0200
+Message-ID: <CAPB=Z-rrMLyFAJXUBC+BCqegr2bNB4on0gNaTWY-ddMWsMGJpA@mail.gmail.com>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Lukas Erlinghagen <lukas.erlinghagen@x2e.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:48572 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752416Ab1LVKbQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Dec 2011 05:31:16 -0500
-Content-Disposition: inline
-In-Reply-To: <4EF1B984.4010102@x2e.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1324525237.5916.114.camel@gandalf.stny.rr.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Dec 21, 2011 at 11:48:36AM +0100, Lukas Erlinghagen wrote:
-> Dear list,
->=20
-> we're getting the kernel panic postet below on our system (Kernel
-> version is 3.0.3-rt11, the platform is an embedded PowerPC 440 in a
-Are you aware that there are newer versions available? 3.0.14-rt31 is
-the most recent 3.0 release. Don't know if it has any uio fixes though.
+Hey steven
 
-> Virtex 5 FPGA, the device controlled by the UIO driver is a
-> Freescale MFR4310 controller, and the interrupt is triggered by a
-> high-active interrupt pin). This panic only occurs when using
-> CONFIG_PREEMPT_RT_FULL, and only under high interrupt load on the
-> MFR.
->=20
-> I've also included our IRQ handler (registered with IRQF_ONESHOT)
-> and IRQ control function.
->=20
-> Is there something fundamentally wrong we're doing, and if so, where
-> can I find information on The Right Way to write UIO drivers for the
-> RT kernel?
->=20
-> Thanks in advance for any insight you can provide.
->=20
-> Kernel panic:
->=20
-> ------------[ cut here ]------------
-> kernel BUG at kernel/rtmutex.c:724!
-That's a recursive spinlock. Try enabling CONFIG_PROVE_LOCKING.
+what is the relation between 3.2 rt patches and 3.0 rt patches ? back
+portability or anything else ?
 
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Thu, Dec 22, 2011 at 5:40 AM, Steven Rostedt <rostedt@goodmis.org> w=
+rote:
+>
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.0.14-rt31 stable release.
+>
+>
+> This release is just an update to the new stable 3.0.14 version
+> and no RT specific changes have been made.
+>
+>
+> You can get this release via the git tree at:
+>
+> =A0git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.g=
+it
+>
+> =A0Head SHA1: 6aaac97b2b5e0750a2739c3a247d79d4fadac43e
+>
+>
+> Or to build 3.0.14-rt31 directly, the following patches should be app=
+lied:
+>
+> =A0http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+>
+> =A0http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.14.xz
+>
+> =A0http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.1=
+4-rt31.patch.xz
+>
+>
+> The broken out patches are available at:
+>
+> =A0http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patches-3.0=
+=2E14-rt31.tar.xz
+>
+> Enjoy,
+>
+> -- Steve
+>
+>
