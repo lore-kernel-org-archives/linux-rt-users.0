@@ -1,135 +1,144 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Problem: plist_add undefined!
-Date: Wed, 21 Dec 2011 22:51:02 -0500
-Message-ID: <1324525862.5916.121.camel@gandalf.stny.rr.com>
-References: <4EF05465.7050507@unican.es>
+Subject: Re: Subject: [PATCH 2/2] priority System V Semaphores
+Date: Wed, 21 Dec 2011 22:58:28 -0500
+Message-ID: <1324526308.5916.123.camel@gandalf.stny.rr.com>
+References: <1324419795.20886.3.camel@raz>
+	 <4EF2261F.4050002@colorfullife.com> <1324500515.5467.18.camel@raz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Monica Puig-Pey <puigpeym@unican.es>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Manfred Spraul <manfred@colorfullife.com>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Lior Brafman <LBrafman@manz.com>,
+	Torsten Scherer <TScherer@manz.com>,
+	Rasty Slutsker <RSlutsker@manz.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
+To: raz ben yehuda <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:33256 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:46061 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752956Ab1LVDvE (ORCPT
+	with ESMTP id S1753117Ab1LVD6a (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Dec 2011 22:51:04 -0500
-In-Reply-To: <4EF05465.7050507@unican.es>
+	Wed, 21 Dec 2011 22:58:30 -0500
+In-Reply-To: <1324500515.5467.18.camel@raz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2011-12-20 at 10:24 +0100, Monica Puig-Pey wrote:
-> Hi there,
->=20
-> As I told in previous posts in this list I'm developing drivers for t=
-he
->=20
-> linux-rt kernel version in Ubuntu 10.04, based on 2.6.31 with rt_pree=
-mpt=20
-> patch.
->=20
-> Currently I'm studying how to use priority lists (linux/plist.h) in a=
-=20
-> module. I read some pages from the Linux Kernel Development book to=20
-> learn how linked list work in the kernel.
->=20
-> I made and easy example, shown below, trying to put three elements, w=
-ith=20
-> their priorities, in a plist_head.
->=20
-> Then, I had two problems:
->=20
-> * First error:
->=20
->    An error is produced when using the MACROs:
->      - PLIST_HEAD_INIT(head, _lock)
->      - PLIST_NODE_INIT(node, __prio)
+On Wed, 2011-12-21 at 22:48 +0200, raz ben yehuda wrote:
+> On Wed, 2011-12-21 at 19:31 +0100, Manfred Spraul wrote:
+> > Hi raz,
+> > 
+> > 
+> > On 12/20/2011 11:23 PM, raz ben yehuda wrote:
+> > > > From 25aa166505aff2561dd715c927c654d0bbb432ba Mon Sep 17 00:00:00 2001
+> > > From: raz<raziebe@gmail.com>
+> > > Date: Tue, 20 Dec 2011 22:54:56 +0200
+> > >
+> > >
+> > > Add positioning routine find_pos. find_pos returns
+> > > the place where to put the sleeper before.
+> > > I sort only rt tasks, OTHER policy is pushed back in
+> > > queue. I do not distinct between SCHED_RR and SCHED_FIFO
+> > > policies and they are treated as a single policy
+> > > for the sorting algorithm.
+> > >
+> > > SETPRIO operates only when user issues a single semop
+> > > operation and not an array of opretions.
+> > As far as I can see, the advantages of sysvsem are backward 
+> > compatibility and the ability to use complex ops.
+> > You propose to add a new feature that doesn't work on complex ops.
+> > 
+> > Are there any apps that use SETPRIO?
+> > What is the use case?
+> Vxworks is the use case. And there are plenty of companies with
+> vxWorks software and in i believe they will migrate sooner or later to
+> PreemptRT.  My current company uses old wrapper software that implements
+> vxWorks semaphores as system V semaphores. vxWorks semaphores have a priority
+> feature which is widely used.
+> I will probably change it some time in the future to posix semaphores , but posix 
+> semaphores are implemented in glibc with futexes and atomic ops and i rather 
+> mess with kernel and not glibc. funny , but true. glibc is harder. 
+> 
+> > > SETFIFO is the default for backward compatbility.
+> > >
+> > > Signed-off-by: raz<raziebe@gmail.com>
+> > > ---
+> > >   ipc/sem.c |   51 +++++++++++++++++++++++++++++++++++++++++++++++++--
+> > >   1 files changed, 49 insertions(+), 2 deletions(-)
+> > >e
+> > > diff --git a/ipc/sem.c b/ipc/sem.c
+> > > index 90dc5a1..921056d 100644
+> > > --- a/ipc/sem.c
+> > > +++ b/ipc/sem.c
+> > > @@ -1343,6 +1343,51 @@ static int get_queue_result(struct sem_queue *q)
+> > >   	return error;
+> > >   }
+> > >
+> > > +/*
+> > > + * find the best place to put the task sorted by rt prio
+> > > +*/
+> > > +static struct list_head *find_pos(struct sem *curr, int alter,
+> > > +		struct task_struct *p)
+> > > +{
+> > > +	struct sem_queue *q;
+> > > +	struct sem_queue *ret_pos = NULL;
+> > > +	struct list_head *tasks_queue =&curr->sem_pending;
+> > > +
+> > > +	if (!alter)
+> > > +		return tasks_queue;
+> > > +
+> > Tasks that do not alter anything end up first - IMHO correct.
+> > 
+> > > +	if (!(curr->flags&  PRIO_SEM))
+> > > +		return tasks_queue;
+> > > +	/*
+> > > +	 *  make no effort to sort SCHED_OTHER,
+> > > +	 *  just push task to the back of the queue.
+> > > +	*/
+> > > +	if (!(p->policy == SCHED_FIFO || p->policy == SCHED_RR))
+> > > +		return tasks_queue;
+> > > +	/*
+> > > +	 *  make no distinction between SCHED_FIFO
+> > > +	 *  and SCHED_RR policies.
+> > > +	 */
+> > > +	list_for_each_entry(q, tasks_queue, simple_list) {
+> > > +		struct task_struct *t;
+> > > +
+> > > +		t  = q->sleeper;
+> > > +		if (current->rt_priority == t->rt_priority) {
+> > > +			/*
+> > > +			* push in a FIFO manner
+> > > +			* tasks in same priority
+> > > +			*/
+> > > +			ret_pos = q;
+> > > +			continue;
+> > > +		}
+> > > +		if (current->rt_priority<  t->rt_priority)
+> > > +			continue;
+> > > +		return&q->simple_list;
+> > > +	}
+> > Here in the loop, non-alter tasks are evaluated as well.
+> > I think that's wrong, it could starve non-alter tasks.
+> > e.g. queue:
+> > - high prio non-alter
+> > - low prio non-alter.
+> > 
+> > Now a medium prio alter task is added.
+> > I think it will end up in the wrong position (before the low-prio 
+> > non-alter task), correct?
+> hammm.. correct. thanks. I did not check non-alter tasks at all. The entire queue might be a total mess. 
+> I will sort non alter tasks as well.
+> Also, this patch is missing scenario where a task priority is changed whilst it is waiting. 
+> I fixed that already. 
+> 
+> Who maintains this code ? 
+> 
 
-Right, the macros are for static declarations. Either global variables
-or a variable marked as static:
-
-struct plist_head myhead =3D PLIST_HEAD_INIT(myhead, mylock);
-
-or
-
-int foo() {
-	static struct plist_head bar =3D PLIST_HEAD_INIT(bar, mylock);
-
-	[...]
-}
-
-or
-
-struct foo bar =3D {
-	.zoop =3D PLIST_HEAD_INIT(bar.zoop, mylock),
-};
-
-
->=20
->    it says :
->=20
->=20
-> /home/monica/Escritorio/plists/priolist.c: In function 'init_module':=
-=20
-> /home/monica/Escritorio/plists/priolist.c:67: error: expected express=
-ion=20
-> before '.' token
->=20
->=20
->    --> To solve this I used the functions:
->=20
->=20
-> - static inline void plist_head_init(struct plist_head *head, struct=20
-> spinlock *lock)
->=20
-> - static inline void plist_node_init(struct plist_node *node, int pri=
-o)
-
-Right, for runtime code you must use these.
-
-
->=20
->    But I still have the problem with the MACRO
->=20
->=20
->=20
->=20
-> * Second error, problem using plist_add:
->=20
->    It says:
->=20
->=20
-> =E2=80=9CWARNING: "plist_add" [/home/monica/Escritorio/plists/priolis=
-t.ko]=20
-> undefined! =E2=80=9D
-
-Simple, plist_add() isn't exported to modules.
-
-Hmm, none of the plist functions are. I guess it wouldn't hurt to make
-them EXPORT_SYMBOL_GPL()
-
-Maybe we'll do that. Is this just for learning or are you planing on
-adding a real GPL module to Linux that uses plists. For learning, it ma=
-y
-not be worth adding these symbols, but if you have a legit reason for
-modules to use plists, than I don't see any harm in exporting them.
+It's mainly core kernel code and only changes when true changes are
+made. An update could be done to extend its use as long as it doesn't
+break any tools in the process. IOW, it must stay backward compatible.
 
 -- Steve
 
->=20
->    I made the module GPL, I don't know what am I doing wrong.
->=20
-> Does anybody have an idea what is happening?
->=20
-> Thanks in advance for any help,
->=20
-> Cheers,
->=20
 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
