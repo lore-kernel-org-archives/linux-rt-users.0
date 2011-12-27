@@ -1,117 +1,142 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 3.0.14-rt31 + 64 cores = very bad jitter == highly
- synchronized tick?
-Date: Mon, 26 Dec 2011 09:04:22 +0100
-Message-ID: <1324886662.4855.29.camel@marge.simson.net>
-References: <1324717569.5025.73.camel@marge.simson.net>
-	 <1324798319.9168.22.camel@marge.simson.net>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: pca953x - warning on irq
+Date: Tue, 27 Dec 2011 14:02:23 +0800
+Message-ID: <CAM2zO=DdGSJm0J2RNaWQ4ROx2-sK8_qT9QBbT5po9uW=SHR8ng@mail.gmail.com>
+References: <201112251740.11066.m.gruber@unverspurt.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	Ingo Molnar <mingo@elte.hu>
-To: RT <linux-rt-users@vger.kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>
+To: Manfred Gruber <m.gruber@unverspurt.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:57576 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1753808Ab1LZIE2 (ORCPT
+Received: from mail-we0-f174.google.com ([74.125.82.174]:39949 "EHLO
+	mail-we0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750784Ab1L0GCY convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Dec 2011 03:04:28 -0500
-In-Reply-To: <1324798319.9168.22.camel@marge.simson.net>
+	Tue, 27 Dec 2011 01:02:24 -0500
+Received: by werm1 with SMTP id m1so5186619wer.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 26 Dec 2011 22:02:23 -0800 (PST)
+In-Reply-To: <201112251740.11066.m.gruber@unverspurt.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2011-12-25 at 08:31 +0100, Mike Galbraith wrote:
+On Mon, Dec 26, 2011 at 12:40 AM, Manfred Gruber <m.gruber@unverspurt.a=
+t> wrote:
+> Hello RT developers!
+>
+> Great work on Preempt RT!
+>
+> I get a warning at 3.0.9-rt25+ in a i2c pca953x chip when using IRQs =
+at the
+> gpio lines. It appears only once when the first irq happens, after th=
+at the
+> warning is away. On 3.2.0-rc7 the warning does not happen.
+>
+> I do not know how to remove/solve the warning, has someone an idea wh=
+at I do
+> wrong?
 
-> Guess I need to fight fire with fire.  Make ticks jitter a little
-> somehow, so they don't make itimer wakeup jitter a truckload when it
-> collides with tick that is busy colliding with zillion other ticks.
+Could you please try upstream commit [6dd599f8: gpio/pca953x: Fix warni=
+ng
+of enabled interrupts in handler] ?
 
-Yup.  Perfect is the enemy of good.
+BTW, I think that commit should go to -stable.
 
-non-virgin:
-vogelweide:/abuild/mike/:[1]# sh -c 'echo $$ > /cpusets/rtcpus/tasks;./jitter -c 63 -f 960 -p 99 -t 10 -d 300'
-CPU63 priority: 99 timer freq: 960 Hz (1041666 ns) tolerance: 10 usecs, stats interval: 300 secs
+Thanks,
+Yong
 
-jitter:   8.87  min:      3.08 max:     11.95 mean:      4.92 stddev:    0.56
-4 > 10 us hits  min:     11.01 max:     11.95 mean:     11.35 stddev:    0.37
 
-jitter:   8.68  min:      3.09 max:     11.77 mean:      4.91 stddev:    0.56
-2 > 10 us hits  min:     11.10 max:     11.77 mean:     11.44 stddev:    0.33
+>
+>
+>
+> [ =C2=A0 28.616000] sd 1:0:0:0: [sdb] Attached SCSI removable disk
+> [ =C2=A0 45.240000] ------------[ cut here ]------------
+> [ =C2=A0 45.240000] WARNING: at kernel/irq/handle.c:130
+> handle_irq_event_percpu+0x68/0x168()
+> [ =C2=A0 45.240000] irq 130 handler irq_default_primary_handler+0x0/0=
+x8 enabled
+> interrupts
+> [ =C2=A0 45.242000] Modules linked in:
+> [ =C2=A0 45.242000] [<c0039cd8>] (unwind_backtrace+0x0/0xec) from [<c=
+00473d4>]
+> (warn_slowpath_common+0x4c/)
+> [ =C2=A0 45.242000] [<c00473d4>] (warn_slowpath_common+0x4c/0x64) fro=
+m [<c0047480>]
+> (warn_slowpath_fmt+0x3)
+> [ =C2=A0 45.242000] [<c0047480>] (warn_slowpath_fmt+0x30/0x40) from [=
+<c0078264>]
+> (handle_irq_event_percpu+)
+> [ =C2=A0 45.242000] [<c0078264>] (handle_irq_event_percpu+0x68/0x168)=
+ from
+> [<c00783b8>] (handle_irq_event+)
+> [ =C2=A0 45.242000] [<c00783b8>] (handle_irq_event+0x54/0x78) from [<=
+c007a828>]
+> (handle_simple_irq+0x84/0x)
+> [ =C2=A0 45.242000] [<c007a828>] (handle_simple_irq+0x84/0xac) from [=
+<c0077eb0>]
+> (generic_handle_irq+0x30/)
+> [ =C2=A0 45.242000] [<c0077eb0>] (generic_handle_irq+0x30/0x48) from =
+[<c0168508>]
+> (pca953x_irq_handler+0x9)
+> [ =C2=A0 45.242000] [<c0168508>] (pca953x_irq_handler+0x98/0xac) from=
+ [<c0078930>]
+> (irq_thread_fn+0x1c/0x3)
+> [ =C2=A0 45.242000] [<c0078930>] (irq_thread_fn+0x1c/0x38) from [<c00=
+787ec>]
+> (irq_thread+0xc8/0x1f0)
+> [ =C2=A0 45.242000] [<c00787ec>] (irq_thread+0xc8/0x1f0) from [<c0060=
+82c>]
+> (kthread+0x7c/0x84)
+> [ =C2=A0 45.242000] [<c006082c>] (kthread+0x7c/0x84) from [<c00358dc>=
+]
+> (kernel_thread_exit+0x0/0x8)
+> [ =C2=A0 45.242000] ---[ end trace 0000000000000002 ]---
+>
+> # cat /proc/interrupts
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 CPU0
+> =C2=A01: =C2=A0 =C2=A0 =C2=A0 8340 =C2=A0 =C2=A0 =C2=A0 AIC =C2=A0tty=
+S0
+> =C2=A07: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =C2=A0 =C2=A0 =C2=A0 AIC=
+ =C2=A0ttyS2
+> =C2=A09: =C2=A0 =C2=A0 =C2=A0 =C2=A0327 =C2=A0 =C2=A0 =C2=A0 AIC =C2=A0=
+mmc0
+> =C2=A012: =C2=A0 =C2=A0 =C2=A022381 =C2=A0 =C2=A0 =C2=A0 AIC =C2=A0at=
+mel_spi.0
+> =C2=A013: =C2=A0 =C2=A0 =C2=A074311 =C2=A0 =C2=A0 =C2=A0 AIC =C2=A0at=
+mel_spi.1
+> =C2=A019: =C2=A0 =C2=A0 245940 =C2=A0 =C2=A0 =C2=A0 AIC =C2=A0tc_clke=
+vt
+> =C2=A020: =C2=A0 =C2=A0 =C2=A0 =C2=A0541 =C2=A0 =C2=A0 =C2=A0 AIC =C2=
+=A0ohci_hcd:usb1
+> =C2=A021: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =C2=A0 =C2=A0 =C2=A0 AI=
+C =C2=A0eth0
+> 103: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A05 =C2=A0 =C2=A0 =C2=A0GPIO =C2=
+=A00-0070
+> 128: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00 =C2=A0 pca953x =C2=A0gpiolib
+> 129: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00 =C2=A0 pca953x =C2=A0gpiolib
+> 130: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A02 =C2=A0 pca953x =C2=A0gpiolib
+> 131: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00 =C2=A0 pca953x =C2=A0gpiolib
+> 132: =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00 =C2=A0 pca953x =C2=A0gpiolib
+>
+> thx, regards manfred gruber
+>
+> --
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
 
-jitter:   7.90  min:      3.12 max:     11.02 mean:      4.91 stddev:    0.56
-1 > 10 us hits  min:     11.02 max:     11.02 mean:     11.02 stddev:    0.00
 
-virgin:
-vogelweide:/abuild/mike/:[1]# sh -c 'echo $$ > /cpusets/rtcpus/tasks;./jitter -c 63 -f 960 -p 99 -t 10 -d 300'
-CPU63 priority: 99 timer freq: 960 Hz (1041666 ns) tolerance: 10 usecs, stats interval: 300 secs
 
-jitter:  68.30  min:      2.43 max:     70.72 mean:      6.22 stddev:    6.41
-16668 > 10 us hits      min:     11.00 max:     70.72 mean:     28.57 stddev:   13.08
-
-jitter:  71.76  min:      2.56 max:     74.32 mean:      6.29 stddev:    6.61
-17257 > 10 us hits      min:     11.00 max:     74.32 mean:     28.95 stddev:   13.24
-
-jitter:  70.51  min:      2.50 max:     73.01 mean:      6.17 stddev:    6.26
-16368 > 10 us hits      min:     11.00 max:     73.01 mean:     28.29 stddev:   12.76
-
-I'm still colliding a bit, and overhead is still too high, but poking
-tick in the eye with a sharp stick made it crawl under it's rock, so
-methinks the tail has been pinned on the right donkey.
-
-	-Mike
-
-64 core DL980 idling, nohz=1, cores 4-63 isolated
-
-non-virgin:
-top - 08:26:35 up  2:04,  2 users,  load average: 0.00, 0.01, 0.41
-Tasks: 1051 total,   2 running, 1049 sleeping,   0 stopped,   0 zombie
-Cpu(s):  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Mem:   7911876k total,  1004812k used,  6907064k free,    12836k buffers
-Swap:  1959924k total,        0k used,  1959924k free,   802324k cached
-
-   PID USER      PR  NI  VIRT  RES  SHR S   %CPU %MEM    TIME+   P COMMAND                                                                                             
- 22210 root      20   0  9680 2032  928 R      1  0.0   0:00.50  0 top                                                                                                 
-     4 root     -41   0     0    0    0 S      0  0.0   0:07.85  0 sirq-timer/0                                                                                        
-    22 root     -41   0     0    0    0 S      0  0.0   0:13.24  1 sirq-timer/1                                                                                        
-    37 root     -41   0     0    0    0 S      0  0.0   0:13.32  2 sirq-timer/2                                                                                        
-    51 root     -41   0     0    0    0 S      0  0.0   0:12.29  3 sirq-timer/3                                                                                        
-    65 root     -41   0     0    0    0 S      0  0.0   0:12.07  4 sirq-timer/4                                                                                        
-    79 root     -41   0     0    0    0 S      0  0.0   0:12.20  5 sirq-timer/5                                                                                        
-    93 root     -41   0     0    0    0 S      0  0.0   0:12.07  6 sirq-timer/6                                                                                        
-   121 root     -41   0     0    0    0 S      0  0.0   0:12.32  8 sirq-timer/8                                                                                        
-   163 root     -41   0     0    0    0 S      0  0.0   0:12.22 11 sirq-timer/11                                                                                       
-   177 root     -41   0     0    0    0 S      0  0.0   0:12.22 12 sirq-timer/12                                                                                       
-   191 root     -41   0     0    0    0 S      0  0.0   0:12.25 13 sirq-timer/13                                                                                       
-   205 root     -41   0     0    0    0 S      0  0.0   0:12.21 14 sirq-timer/14                                                                                       
-   219 root     -41   0     0    0    0 S      0  0.0   0:12.21 15 sirq-timer/15                                                                                       
-   233 root     -41   0     0    0    0 S      0  0.0   0:13.54 16 sirq-timer/16
-
-virgin:
-top - 08:57:39 up 23 min,  1 user,  load average: 0.00, 0.02, 0.10
-Tasks: 468 total,   2 running, 466 sleeping,   0 stopped,   0 zombie
-Cpu(s):  0.0%us,  0.0%sy,  0.0%ni,100.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st
-Mem:   7914276k total,   471268k used,  7443008k free,    84040k buffers
-Swap:  1959924k total,        0k used,  1959924k free,   243072k cached
-
-   PID USER      PR  NI  VIRT  RES  SHR S   %CPU %MEM    TIME+   P COMMAND      
-   179 root      RT   0     0    0    0 S      3  0.0   0:45.89 32 ksoftirqd/32 
-   231 root      RT   0     0    0    0 S      3  0.0   0:46.48 40 ksoftirqd/40 
-   241 root      RT   0     0    0    0 S      3  0.0   0:46.53 42 ksoftirqd/42 
-   246 root      RT   0     0    0    0 S      3  0.0   0:46.27 43 ksoftirqd/43 
-   184 root      RT   0     0    0    0 S      3  0.0   0:44.16 33 ksoftirqd/33 
-   206 root      RT   0     0    0    0 S      3  0.0   0:44.48 35 ksoftirqd/35 
-   211 root      RT   0     0    0    0 R      3  0.0   0:45.19 36 ksoftirqd/36 
-   216 root      RT   0     0    0    0 S      3  0.0   0:44.83 37 ksoftirqd/37 
-   221 root      RT   0     0    0    0 S      3  0.0   0:43.73 38 ksoftirqd/38 
-   226 root      RT   0     0    0    0 S      3  0.0   0:44.73 39 ksoftirqd/39 
-   236 root      RT   0     0    0    0 S      3  0.0   0:45.86 41 ksoftirqd/41 
-   251 root      RT   0     0    0    0 S      3  0.0   0:43.64 44 ksoftirqd/44 
-   323 root      RT   0     0    0    0 S      3  0.0   0:40.69 56 ksoftirqd/56 
-   345 root      RT   0     0    0    0 S      3  0.0   0:40.83 58 ksoftirqd/58 
-   201 root      RT   0     0    0    0 S      3  0.0   0:44.86 34 ksoftirqd/34 
-   256 root      RT   0     0    0    0 S      3  0.0   0:41.62 45 ksoftirqd/45 
-   273 root      RT   0     0    0    0 S      3  0.0   0:41.09 46 ksoftirqd/46
-
+--=20
+Only stand for myself
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
