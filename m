@@ -1,48 +1,41 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [patch] clockevents: Reinstate the per cpu tick skew
-Date: Wed, 28 Dec 2011 18:28:34 +0100
-Message-ID: <1325093314.16165.40.camel@marge.simson.net>
-References: <1324717569.5025.73.camel@marge.simson.net>
-	 <1324968044.5217.103.camel@marge.simson.net>
-	 <1324977605.5217.132.camel@marge.simson.net>
-	 <1325049448.4726.16.camel@marge.simson.net>
-	 <4EFB1B28.7090203@linux.intel.com>
-	 <1325084349.16165.22.camel@marge.simson.net>
-	 <1325091444.2651.1.camel@laptop>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: RT wiki problem
+Date: Wed, 28 Dec 2011 17:44:08 -0500
+Message-ID: <20111228224408.GA30796@thunk.org>
+References: <8762h0xqvm.fsf@steelpick.2x.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Arjan van de Ven <arjan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@elte.hu>
-To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Content-Type: text/plain; charset=us-ascii
+Cc: dvhart@linux.intel.com, jkacur@redhat.com,
+	linux-rt-users@vger.kernel.org
+To: Michal Sojka <sojkam1@fel.cvut.cz>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:39849 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1753864Ab1L1R2j (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Dec 2011 12:28:39 -0500
-In-Reply-To: <1325091444.2651.1.camel@laptop>
+Received: from li9-11.members.linode.com ([67.18.176.11]:37483 "EHLO
+	test.thunk.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754631Ab1L1WoR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 28 Dec 2011 17:44:17 -0500
+Content-Disposition: inline
+In-Reply-To: <8762h0xqvm.fsf@steelpick.2x.cz>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2011-12-28 at 17:57 +0100, Peter Zijlstra wrote:
-> On Wed, 2011-12-28 at 15:59 +0100, Mike Galbraith wrote:
-> > 
-> > > (and are you using a system where tsc/lapic can be used, or are you
-> > > using one of those boatanchors that need hpet?)
-> > 
-> > Box is an HP DL980, 64 x X7560. 
+On Wed, Dec 28, 2011 at 11:39:41PM +0100, Michal Sojka wrote:
+> Hi -rt wiki admins,
 > 
-> That smells like NHM-EX, aka boatanchor.
+> when trying to "log in/create account" at https://rt.wiki.kernel.org, I get
+> https://rt.wiki.kernel.org/articles/u/s/e/Special~UserLogin_94cd.html,
+> which currently reads:
+> 
+>   Not Found
+> 
+>   The requested URL /articles/u/s/e/Special~UserLogin_94cd.html was not found on this server.
+> 
+>   Apache/2.2.21 (Fedora) Server at rt.wiki.kernel.org Port 443
+> 
+> How should I edit the wiki?
 
-I have a 32 core test box that has a minimum itimer fires -> task runs
-of 6.79 usecs.. now _that_ box would make a great boat anchor.  DL980
-may be a work horse, but it ain't a broken down old nag that should be
-sent off to the glue factory.. yet.
+All of the wiki's hosted on kernel.org are still read-only, after the
+security incident that we had on kernel.org. I haven't received a date
+yet regarding when read/write access will be restored, unfortunately.
+Hopefully it will be soon!
 
-	-Mike
-
-
+			- Ted
