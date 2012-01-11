@@ -1,114 +1,96 @@
 From: Karsten Wiese <fzuuzf@googlemail.com>
 Subject: Re: [ANNOUNCE] 3.0.14-rt31
-Date: Wed, 11 Jan 2012 00:56:20 +0100
-Message-ID: <201201110056.21589.fzuuzf@googlemail.com>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <CAM=nh0S1zNoR7WHgQDQ2rspc3qGcKxF8nQ-VyLPhcCCGV+5gEA@mail.gmail.com> <1326221586.7642.47.camel@gandalf.stny.rr.com>
+Date: Wed, 11 Jan 2012 12:10:31 +0100
+Message-ID: <201201111210.31965.fzuuzf@googlemail.com>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain;
-  charset="iso-8859-15"
+  charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Georgiewskiy Yuriy <bottleman@icf.org.ru>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:42903 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752714Ab2AJX42 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 10 Jan 2012 18:56:28 -0500
-In-Reply-To: <1326221586.7642.47.camel@gandalf.stny.rr.com>
+Received: from mout4.freenet.de ([195.4.92.94]:55707 "EHLO mout4.freenet.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753040Ab2AKLNH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Jan 2012 06:13:07 -0500
+In-Reply-To: <1324525237.5916.114.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Dienstag 10 Januar 2012 schrieb Steven Rostedt:
-> On Sat, 2011-12-24 at 01:02 +0100, Karsten Wiese wrote:
-> > Hi Steven,
-> > below trace shows regularly here:
-> > 
-> > [ 3560.172428] BUG: sleeping function called from invalid context at
-> > kernel/rtmutex.c:645
-> > [ 3560.172431] in_atomic(): 1, irqs_disabled(): 1, pid: 28, name: irq/9-acpi
-> > [ 3560.172434] 1 lock held by irq/9-acpi/28:
-> > [ 3560.172436]  #0:  (acpi_gbl_gpe_lock){+.+...}, at: [<c0644c8e>]
-> > acpi_ev_gpe_detect+0x29/0x12f
-> > [ 3560.172447] irq event stamp: 9680
-> > [ 3560.172449] hardirqs last  enabled at (9679): [<c0850a19>]
-> > _raw_spin_unlock_irq+0x27/0x48
-> > [ 3560.172455] hardirqs last disabled at (9680): [<c0850831>]
-> > _raw_spin_lock_irqsave+0x1c/0x82
-> > [ 3560.172460] softirqs last  enabled at (0): [<c043ed99>]
-> > copy_process+0x530/0x1086
-> > [ 3560.172464] softirqs last disabled at (0): [<  (null)>]   (null)
-> > [ 3560.172469] Pid: 28, comm: irq/9-acpi Not tainted
-> > 3.0.14-1.rt31.1.fc16.ccrma.i686.rt #1
-> > [ 3560.172471] Call Trace:
-> > [ 3560.172476]  [<c0432ad7>] __might_sleep+0xf4/0xfb
-> > [ 3560.172479]  [<c085004e>] rt_spin_lock+0x1f/0x56
-> > [ 3560.172483]  [<c04f5c71>] __local_lock_irq+0x1e/0x5b
-> > [ 3560.172486]  [<c04f5cc7>] __local_lock_irqsave+0x19/0x27
-> > [ 3560.172490]  [<c04f75ce>] kmem_cache_alloc_trace+0x67/0xf5
-> > [ 3560.172493]  [<c0644833>] ? acpi_os_allocate_zeroed+0x2f/0x2f
-> > [ 3560.172497]  [<c0632a9f>] __acpi_os_execute+0x66/0x15b
-> > [ 3560.172501]  [<c0644833>] ? acpi_os_allocate_zeroed+0x2f/0x2f
-> > [ 3560.172504]  [<c0632bab>] acpi_os_execute+0x17/0x19
-> > [ 3560.172508]  [<c0644c0c>] acpi_ev_gpe_dispatch+0xe4/0x13d
-> > [ 3560.172511]  [<c0644d54>] acpi_ev_gpe_detect+0xef/0x12f
-> > [ 3560.172516]  [<c064314e>] acpi_ev_sci_xrupt_handler+0x1a/0x20
-> > [ 3560.172519]  [<c0632c22>] acpi_irq+0x13/0x2e
-> > [ 3560.172522]  [<c049c730>] irq_forced_thread_fn+0x1d/0x36
-> > [ 3560.172525]  [<c049c607>] irq_thread+0xc0/0x1a0
-> > [ 3560.172529]  [<c0439b19>] ? migrate_enable+0x124/0x133
-> > [ 3560.172532]  [<c049c713>] ? irq_thread_fn+0x2c/0x2c
-> > [ 3560.172535]  [<c049c547>] ? irq_finalize_oneshot+0x94/0x94
-> > [ 3560.172539]  [<c045b336>] kthread+0x76/0x7b
-> > [ 3560.172544]  [<c05f24b4>] ? trace_hardirqs_on_thunk+0xc/0x10
-> > [ 3560.172548]  [<c0850cbd>] ? restore_all+0xf/0xf
-> > [ 3560.172551]  [<c045b2c0>] ? __init_kthread_worker+0x67/0x67
-> > [ 3560.172555]  [<c0856802>] kernel_thread_helper+0x6/0x10
+Am Donnerstag 22 Dezember 2011 schrieb Steven Rostedt:
 > 
-> Seems the back traces that have been currently reported have been for
-> i386. Although Clark Williams has been saying he's been seeing it on
-> x86_64, but only when he does a suspend and resume on his laptop.
+> Dear RT Folks,
 > 
-> Does this just happen randomly? Or do you do something in particular
-> when this happens, (like a suspend and resume)?
-
-It happens rythmically on a hp compaq 6710s laptop bought in ~2007.
-BIOS updated in 2011.
-With kernels 3.0.14-1.rt31.1.fc16.ccrma.i686 and .x86_64
-and self built i386 3.0.14.rt31.
-
-rt25 is ok on the hp compaq 6710s except for occasional ext3 corruption past 
-hibernate/resume, which also happens with latest fedora16 stock kernel.
-
-My understanding is the bug above is caused by kmalloc being called from
-__acpi_os_execute under the raw_spin_lock_irqsave(&acpi_gbl_gpe_lock, flags)
-aquired in acpi_ev_gpe_detect:
-The bug triggers depending on acpi implementation. If __acpi_os_execute
-isn't needed, it doesn't.
-
-In rt25 acpi_gbl_gpe_lock was a mutex. I didn't notice any bad behaviour on
-the laptop except the hibernate/resume issue.
-Is there an easy way to trigger the bug resulting in the change of
-acpi_gbl_gpe_lock to a raw_spin_lock?
-
-Could rt31 be fixed for the laptop by preallocating the struct acpi_os_dpc
-instances it allocates in __acpi_os_execute? How many needed to be
-preallocated then?
-Maybe the queue_work_on(0,...) called in __acpi_os_execute wouldn't be needed
-in PREEMPT_RT if the acpi-irq thread would be bound to cpu 0?
-Dunno...
+> I'm pleased to announce the 3.0.14-rt31 stable release.
 
 
-Thanks,
-      Karsten
+Filed as:
+https://bugzilla.redhat.com/show_bug.cgi?id=773266
 
+Happens while shutting down from KDE on VMWare.
 
-
-
-
-
+[ INFO: possible recursive locking detected ]
+3.0.14-1.rt31.1.fc16.ccrma.x86_64.rt #1
+---------------------------------------------
+krunner/2402 is trying to acquire lock:
+ (l3_key){+.+...}, at: [<ffffffff81133172>] ____cache_alloc+0xab/0x212
+but task is already holding lock:
+ (l3_key){+.+...}, at: [<ffffffff811325ae>] __cache_free+0x145/0x1e8
+other info that might help us debug this:
+ Possible unsafe locking scenario:
+       CPU0
+       ----
+  lock(l3_key);
+  lock(l3_key);
+ *** DEADLOCK ***
+ May be due to missing lock nesting notation
+2 locks held by krunner/2402:
+ #0:  (&per_cpu(slab_lock, __cpu).lock){+.+...}, at: [<ffffffff81131468>]
+__local_lock_irq+0x26/0x79
+ #1:  (l3_key){+.+...}, at: [<ffffffff811325ae>] __cache_free+0x145/0x1e8
+stack backtrace:
+Pid: 2402, comm: krunner Not tainted 3.0.14-1.rt31.1.fc16.ccrma.x86_64.rt #1
+Call Trace:
+ [<ffffffff8108e8fe>] __lock_acquire+0x917/0xcf7
+ [<ffffffff814f20bd>] ? _raw_spin_unlock+0x41/0x4e
+ [<ffffffff814f0d54>] ? rt_spin_lock_slowlock+0x96/0x288
+ [<ffffffff8108bd5b>] ? look_up_lock_class+0x5f/0xc3
+ [<ffffffff81133172>] ? ____cache_alloc+0xab/0x212
+ [<ffffffff8108f1d4>] lock_acquire+0xf3/0x13e
+ [<ffffffff81133172>] ? ____cache_alloc+0xab/0x212
+ [<ffffffff814f157b>] rt_spin_lock+0x4f/0x56
+ [<ffffffff81133172>] ? ____cache_alloc+0xab/0x212
+ [<ffffffff8108e4d7>] ? __lock_acquire+0x4f0/0xcf7
+ [<ffffffff81133172>] ____cache_alloc+0xab/0x212
+ [<ffffffff81134351>] kmem_cache_alloc+0xbf/0x1b4
+ [<ffffffff812576db>] __debug_object_init+0x61/0x2e1
+ [<ffffffff8125796f>] debug_object_init+0x14/0x16
+ [<ffffffff8107725c>] rcuhead_fixup_activate+0x29/0xbb
+ [<ffffffff8125740e>] debug_object_fixup+0x1c/0x28
+ [<ffffffff81257a57>] debug_object_activate+0xcd/0xda
+ [<ffffffff81132868>] ? drain_freelist+0xfd/0xfd
+ [<ffffffff810c86d9>] __call_rcu+0x4f/0x197
+ [<ffffffff810c8836>] call_rcu+0x15/0x17
+ [<ffffffff811321cb>] slab_destroy+0x3a/0x64
+ [<ffffffff811322a8>] free_block+0xb3/0xea
+ [<ffffffff81132603>] __cache_free+0x19a/0x1e8
+ [<ffffffff81132110>] kmem_cache_free+0x84/0x105
+ [<ffffffff8111d445>] anon_vma_free+0x48/0x4d
+ [<ffffffff8111e467>] __put_anon_vma+0x38/0x3d
+ [<ffffffff8111e492>] put_anon_vma+0x26/0x2b
+ [<ffffffff8111e5b3>] unlink_anon_vmas+0xb9/0xed
+ [<ffffffff81113c4e>] free_pgtables+0x6c/0xcb
+ [<ffffffff8111a4e8>] exit_mmap+0xc7/0x100
+ [<ffffffff81058516>] mmput+0x60/0xdd
+ [<ffffffff8105eaab>] exit_mm+0x147/0x154
+ [<ffffffff8105ed2f>] do_exit+0x277/0x876
+ [<ffffffff8108f5de>] ? trace_hardirqs_on_caller+0x10b/0x12f
+ [<ffffffff814f1f9c>] ? _raw_spin_unlock_irqrestore+0x65/0x73
+ [<ffffffff8105f5ed>] do_group_exit+0x92/0xc0
+ [<ffffffff8105f632>] sys_exit_group+0x17/0x17
+ [<ffffffff814f7f42>] system_call_fastpath+0x16/0x1b
