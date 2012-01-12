@@ -1,51 +1,126 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Tim Sander" <tim.sander@hbm.com>
 Subject: Re: [ANNOUNCE] 3.0.14-rt31
-Date: Thu, 12 Jan 2012 08:54:44 -0500
-Message-ID: <1326376484.7642.65.camel@gandalf.stny.rr.com>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
-	 <201201121118.34776.tim.sander@hbm.com>
+Date: Thu, 12 Jan 2012 17:57:25 +0100
+Message-ID: <201201121757.25467.tim.sander@hbm.com>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <201201121118.34776.tim.sander@hbm.com> <1326376484.7642.65.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: Tim Sander <tim.sander@hbm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201201121118.34776.tim.sander@hbm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/Plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "LKML" <linux-kernel@vger.kernel.org>,
+	"RT" <linux-rt-users@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from relay.medianet-world.de ([213.157.0.172]:63735 "HELO
+	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1753252Ab2ALQ6M convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Jan 2012 11:58:12 -0500
+Content-Class: urn:content-classes:message
+In-Reply-To: <1326376484.7642.65.camel@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-01-12 at 11:18 +0100, Tim Sander wrote:
-> Hi Steven
-> 
-> I have just tested 3.0.14 with some local adaptions. Unfortunatly there we 
-> have still two errors here:
-> Reboot ( of upstart) fails sometimes fails with the following message:
-> "reboot: Unable to execute shutdown: Bad address"
+Hi Steven
 
-What's the bad address? Was there a kernel oops?
+Thanks for your reply.
 
-> This problem can probably easily worked around by catching a failed execution 
-> and retry, but i am afraid that execution fails more often in other places and 
-> leads to silent functionality failures.
-> 
-> and the running wild ksoftirqd0 most probably after the kernel message:
-> "sched: RT throttling activated"
+> > I have just tested 3.0.14 with some local adaptions. Unfortunatly t=
+here
+> > we have still two errors here:
+> > Reboot ( of upstart) fails sometimes fails with the following messa=
+ge:
+> > "reboot: Unable to execute shutdown: Bad address"
+>=20
+> What's the bad address? Was there a kernel oops?
+Well i traced it down to the error message of reboot from upstart.
+(upstart-1.3/util/reboot.c:211). Presumably it was a "bad page" error o=
+ut of=20
+the memory from the developer who reported that. Unfortunatly this erro=
+r does=20
+not happen to often. I am not aware of a kernel oops.
+(My other mail to this list: https://lkml.org/lkml/2011/12/7/657)
 
-Hmm, that's not good. It means that an RT task is spinning too much.
+> > This problem can probably easily worked around by catching a failed
+> > execution and retry, but i am afraid that execution fails more ofte=
+n in
+> > other places and leads to silent functionality failures.
+> >=20
+> > and the running wild ksoftirqd0 most probably after the kernel mess=
+age:
+> > "sched: RT throttling activated"
+>=20
+> Hmm, that's not good. It means that an RT task is spinning too much.
+Mh, sorry i was to terse on that. This only happens after first boot on=
+ UBIFS
+update, but it shows that somehow there seems to be a corner case when
+throtteling is activated. Since this seems to be the reason for ksoftir=
+q0=20
+running as much cpu as it gets. I just patched out switch to rt throtte=
+ling
+and i will ask the mtd guys about the work they presumably do in interr=
+upt
+context which causes this throtteling in the first place.
 
-> It also seems as if the system looks up after running ifconfig. But it seems as 
-> if the error only shows up most of the times if i am not around.
+> > It also seems as if the system looks up after running ifconfig. But=
+ it
+> > seems as if the error only shows up most of the times if i am not
+> > around.
+>=20
+> s/looks/locks/ ?
+Ups yes.=20
 
-s/looks/locks/ ?
+> If it happens after ifconfig, then obviously that looks to be somethi=
+ng
+> to do with either the network driver or the network stack.
+Strangely top,dmesg works. We have a second avahi autoip network interf=
+ace=20
+(eth0:avahi). Probably there is s.t. in this codepath.
+=20
+> But there's really nothing I can do to look into this without more
+> information.
+It would be good if i could get some advice how to get useful informati=
+on out=20
+of the system to pinpoint these errors (e.g. special sysrequests or s.t=
+=2E like=20
+that). For the reboot case i will try to find the exact return value on=
+=20
+failure, but for the ksoftirq0 case i currently try to work around that=
+=20
+problem (by patching out the switch to throtteling) but currently i don=
+'t see=20
+a way to tackle the root of this behaviour.
 
-If it happens after ifconfig, then obviously that looks to be something
-to do with either the network driver or the network stack.
+Best regards
+Tim
 
-But there's really nothing I can do to look into this without more
-information.
+Please ignore:
 
--- Steve
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
+Germany | www.hbm.com=20
+
+Registered as GmbH (German limited liability corporation) in the commer=
+cial register at the local court of Darmstadt, HRB 1147 =20
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
+the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
+er des Amtsgerichts Darmstadt unter HRB 1147=20
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
+st | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely fo=
+r the addressee. If you are not the intended recipient, please let me k=
+now and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
+ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
+faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
+=2E
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
