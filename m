@@ -1,28 +1,38 @@
-From: "William M. Quarles" <walrus@bellsouth.net>
-Subject: Planet CCRMA rt kernel errors
-Date: Wed, 11 Jan 2012 12:35:16 -0800 (PST)
-Message-ID: <1326314116.56239.YahooMailRC@web180714.mail.sp1.yahoo.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Need complete Patch 3.0.12-rt30
+Date: Wed, 11 Jan 2012 20:50:33 -0500
+Message-ID: <1326333033.7642.62.camel@gandalf.stny.rr.com>
+References: <CACpc7pfbSrqbtucWMYKyDY_mEeWsq1FQKjruTv4nZMPT1YDd_g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	planetccrma <planetccrma@ccrma.stanford.edu>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Priyanka Gupta Jain <p.priyankagupta@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from nm3.access.bullet.mail.sp2.yahoo.com ([98.139.44.130]:27377
-	"HELO nm3.access.bullet.mail.sp2.yahoo.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1757543Ab2AKUfR (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:41249 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751890Ab2ALBuf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Jan 2012 15:35:17 -0500
+	Wed, 11 Jan 2012 20:50:35 -0500
+In-Reply-To: <CACpc7pfbSrqbtucWMYKyDY_mEeWsq1FQKjruTv4nZMPT1YDd_g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello linux-rt-users list,
+On Wed, 2012-01-11 at 16:52 +0530, Priyanka Gupta Jain wrote:
+> hi,
+> 
+> I have Linux base version of Linux 3.0.12 with some in-house patches on it.
+> Now, I want to add RT support in it. From where can I get the complete
+> patch set.
+> 
+> Patch present at
+> "http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/" is sort
+> of incremental patch.
 
-Fernando at CCRMA asked me to forward these bugs on to you. I hope that you can 
-find the information useful.
+incr is not the directory you want. Try "older".
 
-https://bugzilla.redhat.com/show_bug.cgi?id=773169
-https://bugzilla.redhat.com/show_bug.cgi?id=773170
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/older/patch-3.0.12-rt30.patch.xz
 
-Peace,
-William
+-- Steve
+
+
