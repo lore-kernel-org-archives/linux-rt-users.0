@@ -1,47 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.0.14-rt31
-Date: Fri, 13 Jan 2012 18:51:48 -0500
-Message-ID: <1326498708.7642.128.camel@gandalf.stny.rr.com>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
-	 <1326376484.7642.65.camel@gandalf.stny.rr.com>
-	 <201201121757.25467.tim.sander@hbm.com>
-	 <201201131042.08323.tim.sander@hbm.com>
-	 <CAOEEKGXUJC9Mmu7azKSvQNkoB3Z_aLPTCDWABOE5WpHRKR=YNg@mail.gmail.com>
+From: =?ISO-8859-1?Q?Matthias_S=F6llner?= <m.soellner@haw-aw.de>
+Subject: Problem with Realtime Kernel and Ethernet Card
+Date: Mon, 16 Jan 2012 15:56:50 +0100
+Message-ID: <4F143AB2.6070404@haw-aw.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Tim Sander <tim.sander@hbm.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: Bernardo Barros <bernardobarros2@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:37221 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751195Ab2AMXvv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Jan 2012 18:51:51 -0500
-In-Reply-To: <CAOEEKGXUJC9Mmu7azKSvQNkoB3Z_aLPTCDWABOE5WpHRKR=YNg@mail.gmail.com>
+Received: from smtp.haw-aw.de ([195.37.42.4]:47001 "EHLO smtp.haw-aw.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754067Ab2APPHj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jan 2012 10:07:39 -0500
+Received: from [10.10.132.78] ([10.10.132.78])
+	(authenticated bits=0)
+	by smtp.haw-aw.de  with ESMTP id q0GEupRe008650-q0GEupRf008650
+	for <linux-rt-users@vger.kernel.org>; Mon, 16 Jan 2012 15:56:51 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2012-01-13 at 10:45 -0800, Bernardo Barros wrote:
-> Will 3.0-rt continue to receive bugfixes in parallel with 3.2-rt? Will
-> it be a LTS kernel as 3.0 is?
+Hello,
+I installed a RT-Preempt Kernel in Debian 6
+as shown on
+http://pengutronix.de/software/linux-rt/debian_en.html
+
+I have a DELL Precision T1600 with onboard network card and additional
+PCI network-card.
+
+The onboard card is a Intel=AE 82579LM Gigabit-LAN.
+
+I used linux-image-2.6-rt-686 from Pengutronix APT repository.
+
+Installation worked fine, I can boot my debian with both kernels.
+
+If I boot normal debian kernel i have eth0 and eth1. both cards work fi=
+ne.
+
+But if I boot RT-Preempt-Kernel the  internal network card is not shown
+and I only have eth0.
+
+With normal debian kernel intel e1000e driver is loaded.
+
+What can I do to make my internal network card function properly with
+realtime kernel ?
 
 
-Yes, I will still be maintaining it.
+I tried to compile the intel network driver myself. But where to I get
+the right kernel-headers for my RT-Preempt-Kernel?
 
-But as with mainline stable, there's some rules I follow. I do not add
-any patch that is not yet in 3.2-rt (or whatever is the latest rt),
-Linux mainline, or Linux stable. A patch must be in one of the above
-before I add it.
-
-With the exception if the patch only pertains to fix a bug in 3.0-rt and
-that code no longer exists in 3.2-rt.
-
--- Steve
-
-
+Any hints?
+Thanks a lot
+Matthias
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
