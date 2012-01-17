@@ -1,92 +1,55 @@
-From: Tim Sander <tstone@iss.tu-darmstadt.de>
-Subject: Re: [ANNOUNCE] 3.0.14-rt31 - ksoftirq running wild - FEC ethernet driver to blame?
-Date: Tue, 17 Jan 2012 15:27:14 +0100
-Message-ID: <201201171527.19165.tstone@iss.tu-darmstadt.de>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <201201121757.25467.tim.sander@hbm.com> <201201131042.08323.tim.sander@hbm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.0.14-rt31 - ksoftirq running wild - FEC ethernet
+ driver to blame?
+Date: Tue, 17 Jan 2012 09:42:05 -0500
+Message-ID: <1326811325.17534.48.camel@gandalf.stny.rr.com>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com>
+	 <201201121757.25467.tim.sander@hbm.com>
+	 <201201131042.08323.tim.sander@hbm.com>
+	 <201201171527.19165.tstone@iss.tu-darmstadt.de>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-15"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	"LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Clark Williams" <williams@redhat.com>,
-	"John Kacur" <jkacur@redhat.com>
-To: Tim Sander <tim.sander@hbm.com>
+Cc: Tim Sander <tim.sander@hbm.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: Tim Sander <tstone@iss.tu-darmstadt.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lnx141.hrz.tu-darmstadt.de ([130.83.156.236]:41718 "EHLO
-	lnx141.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754395Ab2AQOiF (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:46658 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753958Ab2AQOmI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jan 2012 09:38:05 -0500
-In-Reply-To: <201201131042.08323.tim.sander@hbm.com>
+	Tue, 17 Jan 2012 09:42:08 -0500
+In-Reply-To: <201201171527.19165.tstone@iss.tu-darmstadt.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+On Tue, 2012-01-17 at 15:27 +0100, Tim Sander wrote:
+> Hi
+> 
+> I have further input to the ksoftirq/0 using as much cpu as available on a
+> arm i.mx pcm043 platform without load with a 3.0.14-rt31 kernel and some local 
+> platform adaptions.
+> 
+> > I was thinking about this ksoftirq0 running on max cpu. The context:
+> > > > > and the running wild ksoftirqd0 most probably after the kernel
+> > > > > message: "sched: RT throttling activated"
 
-I have further input to the ksoftirq/0 using as much cpu as available on a
-arm i.mx pcm043 platform without load with a 3.0.14-rt31 kernel and some local 
-platform adaptions.
+> I think that the message  "sched: RT throttling activated" and the ksoftirqd 
+> running on full cpu are possibly to seperate errors. Btw. is there a way to 
+> find out which processes where conuming this timeframe. It would be nice to add 
+> info output which processes caused the throtteling. Is it possible to get this 
+> information out of the scheduler structure?
+> 
 
-> I was thinking about this ksoftirq0 running on max cpu. The context:
-> > > > and the running wild ksoftirqd0 most probably after the kernel
-> > > > message: "sched: RT throttling activated"
-I think that the message  "sched: RT throttling activated" and the ksoftirqd 
-running on full cpu are possibly to seperate errors. Btw. is there a way to 
-find out which processes where conuming this timeframe. It would be nice to add 
-info output which processes caused the throtteling. Is it possible to get this 
-information out of the scheduler structure?
+Peter,
 
-> > > Hmm, that's not good. It means that an RT task is spinning too much.
-> > 
-> > Mh, sorry i was to terse on that. This only happens after first boot on
-> > UBIFS update, but it shows that somehow there seems to be a corner case
-> > when throtteling is activated. Since this seems to be the reason for
-> > ksoftirq0 running as much cpu as it gets. I just patched out switch to rt
-> > throtteling and i will ask the mtd guys about the work they presumably do
-> > in interrupt context which causes this throtteling in the first place.
-Ok, by taking a detour to the UBI stuff i an now convinced that the UBI 
-subsystem seems not to be the culprit, of this throtteling message. Its just 
-that right after UBI has been attached the network setting is restored after a 
-firmware update so it seems that this triggers the error.
+This is your territory.
 
-I have been toying around with connman (connman.net) which manages network
-connections on embedded devices and stopping this daemon which seems to do a 
-"ifconfig eth0 down" when terminated. After doing a manual "ifconfig eth0 up" 
-ksoftirq/0 uses as much cpu as it gets. Just doing a "ifconfig eth0 down && 
-ifconfig eth0 up" does not create 100% cpu load, so somehow connman triggers 
-this error pretty reliably. 
+-- Steve
 
-Also the dmesg output seems to point to the FEC ethernet driver as culprit for 
-this throtteling message:
-eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
-sched: RT throttling activated
-PHY: 1:00 - Link is Up - 100/Full
 
-Other output in dmesg right before the ksoftirq is running wild:
-eth0: no IPv6 routers present
-ADDRCONF(NETDEV_UP): eth0: link is not ready
-eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
-eth0: no IPv6 routers present
-PHY: 1:00 - Link is Up - 100/Full
-eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
-FEC: MDIO read timeout
-PHY: 1:00 - Link is Up - 100/Full
-eth0: no IPv6 routers present
-ADDRCONF(NETDEV_UP): eth0: link is not ready
-eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
-FEC: MDIO read timeout
-PHY: 1:00 - Link is Up - 100/Full
-
-It seems as if the polling of the phy might be a interfering with the above 
-problem so i'd like to test if the problems go away with a phy irq defined:. I 
-have the interrupt line of the phy connected but somehow i got stuck in all 
-these layers how to set
- phy_dev->irq = gpio_to_irq(IMX_GPIO_NR(2,7) 
-in the board definition mach-pcm043.c. So there must be an example how to define 
-the phy irq?
-
-Best regards
-Tim
