@@ -1,78 +1,92 @@
-From: Austin Hendrix <ahendrix@willowgarage.com>
-Subject: Re: Problem with Realtime Kernel and Ethernet Card
-Date: Mon, 16 Jan 2012 17:15:29 -0800
-Message-ID: <CAOY97VZbk27gfpb-vV6xrKrj_3jqMP0Q01KUwwA9qjsZNyRCsQ@mail.gmail.com>
-References: <4F143AB2.6070404@haw-aw.de>
+From: Tim Sander <tstone@iss.tu-darmstadt.de>
+Subject: Re: [ANNOUNCE] 3.0.14-rt31 - ksoftirq running wild - FEC ethernet driver to blame?
+Date: Tue, 17 Jan 2012 15:27:14 +0100
+Message-ID: <201201171527.19165.tstone@iss.tu-darmstadt.de>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <201201121757.25467.tim.sander@hbm.com> <201201131042.08323.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: =?ISO-8859-1?Q?Matthias_S=F6llner?= <m.soellner@haw-aw.de>
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: "Steven Rostedt" <rostedt@goodmis.org>,
+	"LKML" <linux-kernel@vger.kernel.org>,
+	"RT" <linux-rt-users@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-tul01m020-f174.google.com ([209.85.214.174]:55834 "EHLO
-	mail-tul01m020-f174.google.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750766Ab2AQBPa convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Jan 2012 20:15:30 -0500
-Received: by obcva7 with SMTP id va7so5247724obc.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Jan 2012 17:15:29 -0800 (PST)
-In-Reply-To: <4F143AB2.6070404@haw-aw.de>
+Received: from lnx141.hrz.tu-darmstadt.de ([130.83.156.236]:41718 "EHLO
+	lnx141.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754395Ab2AQOiF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Jan 2012 09:38:05 -0500
+In-Reply-To: <201201131042.08323.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-It looks like you're using an old version of the realtime kernel, and
-the maintainer has neglected to package headers for it. (see:
-http://debian.pengutronix.de/debian/pool/contrib/l/linuxrt-latest/ ).
-If your CPU will support a 64-bit kernel, I suggest trying one of the
-3.0 kernels. It's more likely to have your network driver built in,
-and there's a matching linux-headers package if you need it.
+Hi
 
--Austin
+I have further input to the ksoftirq/0 using as much cpu as available on a
+arm i.mx pcm043 platform without load with a 3.0.14-rt31 kernel and some local 
+platform adaptions.
 
-2012/1/16 Matthias S=F6llner <m.soellner@haw-aw.de>
->
-> Hello,
-> I installed a RT-Preempt Kernel in Debian 6
-> as shown on
-> http://pengutronix.de/software/linux-rt/debian_en.html
->
-> I have a DELL Precision T1600 with onboard network card and additiona=
-l
-> PCI network-card.
->
-> The onboard card is a Intel=AE 82579LM Gigabit-LAN.
->
-> I used linux-image-2.6-rt-686 from Pengutronix APT repository.
->
-> Installation worked fine, I can boot my debian with both kernels.
->
-> If I boot normal debian kernel i have eth0 and eth1. both cards work =
-fine.
->
-> But if I boot RT-Preempt-Kernel the =A0internal network card is not s=
-hown
-> and I only have eth0.
->
-> With normal debian kernel intel e1000e driver is loaded.
->
-> What can I do to make my internal network card function properly with
-> realtime kernel ?
->
->
-> I tried to compile the intel network driver myself. But where to I ge=
-t
-> the right kernel-headers for my RT-Preempt-Kernel?
->
-> Any hints?
-> Thanks a lot
-> Matthias
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> I was thinking about this ksoftirq0 running on max cpu. The context:
+> > > > and the running wild ksoftirqd0 most probably after the kernel
+> > > > message: "sched: RT throttling activated"
+I think that the message  "sched: RT throttling activated" and the ksoftirqd 
+running on full cpu are possibly to seperate errors. Btw. is there a way to 
+find out which processes where conuming this timeframe. It would be nice to add 
+info output which processes caused the throtteling. Is it possible to get this 
+information out of the scheduler structure?
+
+> > > Hmm, that's not good. It means that an RT task is spinning too much.
+> > 
+> > Mh, sorry i was to terse on that. This only happens after first boot on
+> > UBIFS update, but it shows that somehow there seems to be a corner case
+> > when throtteling is activated. Since this seems to be the reason for
+> > ksoftirq0 running as much cpu as it gets. I just patched out switch to rt
+> > throtteling and i will ask the mtd guys about the work they presumably do
+> > in interrupt context which causes this throtteling in the first place.
+Ok, by taking a detour to the UBI stuff i an now convinced that the UBI 
+subsystem seems not to be the culprit, of this throtteling message. Its just 
+that right after UBI has been attached the network setting is restored after a 
+firmware update so it seems that this triggers the error.
+
+I have been toying around with connman (connman.net) which manages network
+connections on embedded devices and stopping this daemon which seems to do a 
+"ifconfig eth0 down" when terminated. After doing a manual "ifconfig eth0 up" 
+ksoftirq/0 uses as much cpu as it gets. Just doing a "ifconfig eth0 down && 
+ifconfig eth0 up" does not create 100% cpu load, so somehow connman triggers 
+this error pretty reliably. 
+
+Also the dmesg output seems to point to the FEC ethernet driver as culprit for 
+this throtteling message:
+eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
+sched: RT throttling activated
+PHY: 1:00 - Link is Up - 100/Full
+
+Other output in dmesg right before the ksoftirq is running wild:
+eth0: no IPv6 routers present
+ADDRCONF(NETDEV_UP): eth0: link is not ready
+eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
+eth0: no IPv6 routers present
+PHY: 1:00 - Link is Up - 100/Full
+eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
+FEC: MDIO read timeout
+PHY: 1:00 - Link is Up - 100/Full
+eth0: no IPv6 routers present
+ADDRCONF(NETDEV_UP): eth0: link is not ready
+eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=-1)
+FEC: MDIO read timeout
+PHY: 1:00 - Link is Up - 100/Full
+
+It seems as if the polling of the phy might be a interfering with the above 
+problem so i'd like to test if the problems go away with a phy irq defined:. I 
+have the interrupt line of the phy connected but somehow i got stuck in all 
+these layers how to set
+ phy_dev->irq = gpio_to_irq(IMX_GPIO_NR(2,7) 
+in the board definition mach-pcm043.c. So there must be an example how to define 
+the phy irq?
+
+Best regards
+Tim
