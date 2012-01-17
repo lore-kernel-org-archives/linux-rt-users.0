@@ -1,80 +1,59 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: Problem with Realtime Kernel and Ethernet Card
-Date: Tue, 17 Jan 2012 21:01:22 +0100
-Message-ID: <20120117200122.GL14252@pengutronix.de>
-References: <4F143AB2.6070404@haw-aw.de>
+From: John Kacur <jkacur@redhat.com>
+Subject: rt-kernel 3.0.14-rt31: BUG: sleeping function called from invalid context
+Date: Wed, 18 Jan 2012 00:22:05 +0100
+Message-ID: <CAONaPpFjfGiKKGAzrQNk+MF4k50nRf+wMU8H9491NgHyJrUkyw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Matthias =?iso-8859-1?Q?S=F6llner?= <m.soellner@haw-aw.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:58368 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751959Ab2AQUBY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jan 2012 15:01:24 -0500
-Content-Disposition: inline
-In-Reply-To: <4F143AB2.6070404@haw-aw.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jan 16, 2012 at 03:56:50PM +0100, Matthias S=F6llner wrote:
-> Hello,
-> I installed a RT-Preempt Kernel in Debian 6
-> as shown on
-> http://pengutronix.de/software/linux-rt/debian_en.html
->=20
-> I have a DELL Precision T1600 with onboard network card and additiona=
-l
-> PCI network-card.
->=20
-> The onboard card is a Intel=AE 82579LM Gigabit-LAN.
->=20
-> I used linux-image-2.6-rt-686 from Pengutronix APT repository.
-That's an 2.6.33.7.2-rt30 kernel. For amd64 there are also newer kernel=
-s
-available on debian.pengutronix.de (3.0 series) and Debian experimental
-(3.2 series). If possible I'd recommend the newer versions.
+I got a whole bunch of these in 3.0.14-rt31 that basically look alike.
+Will try to drill deeper down. In the meantime, I'm happy to provide
+more information if anyone would like.
+Thanks, John
 
-> Installation worked fine, I can boot my debian with both kernels.
->=20
-> If I boot normal debian kernel i have eth0 and eth1. both cards work =
-fine.
-Normal Debian kernel means 2.6.32 I guess? 2.6.32-36 added a backport o=
-f
-the e1000e driver from 2.6.38 and this backport is not included in the
-2.6.33.7.2-rt30 package because it branched from the Debian kernel
-before 2.6.32-36.
-
-> But if I boot RT-Preempt-Kernel the  internal network card is not sho=
-wn
-> and I only have eth0.
->=20
-> With normal debian kernel intel e1000e driver is loaded.
->=20
-> What can I do to make my internal network card function properly with
-> realtime kernel ?
-=20
-> I tried to compile the intel network driver myself. But where to I ge=
-t
-> the right kernel-headers for my RT-Preempt-Kernel?
-They should be available on debian.pengutronix.de, too. Just install th=
-e
-matching headers package, in your case probably
-linux-headers-2.6.33.7.2-rt30-1-686.
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+[ 4251.928097] BUG: sleeping function called from invalid context at
+/home/jkacur/rt.linux.git/kernel/rtmutex.c:645
+[ 4251.928100] in_atomic(): 1, irqs_disabled(): 1, pid: 168, name: irq/9-acpi
+[ 4251.928102] INFO: lockdep is turned off.
+[ 4251.928103] irq event stamp: 5888
+[ 4251.928104] hardirqs last  enabled at (5887): [<ffffffff810b2a69>]
+rcu_preempt_note_context_switch+0x1c8/0x1d9
+[ 4251.928109] hardirqs last disabled at (5888): [<ffffffff813e4326>]
+_raw_spin_lock_irq+0x19/0x79
+[ 4251.928113] softirqs last  enabled at (0): [<ffffffff81041c88>]
+copy_process+0x517/0xfbd
+[ 4251.928116] softirqs last disabled at (0): [<          (null)>]
+      (null)
+[ 4251.928119] Pid: 168, comm: irq/9-acpi Not tainted
+3.0.14-rt31-debug-00322-g6aaac97b #1
+[ 4251.928121] Call Trace:
+[ 4251.928125]  [<ffffffff81037b06>] __might_sleep+0xf4/0xf9
+[ 4251.928128]  [<ffffffff8107e4f5>] rt_spin_lock_fastlock.clone.0+0x24/0x31
+[ 4251.928130]  [<ffffffff813e3b33>] rt_spin_lock+0x16/0x40
+[ 4251.928133]  [<ffffffff8103eb60>] __wake_up+0x28/0x50
+[ 4251.928136]  [<ffffffff8122ca51>] acpi_ec_gpe_handler+0x72/0xc4
+[ 4251.928145]  [<ffffffff81238443>] acpi_ev_gpe_dispatch+0xbd/0x12e
+[ 4251.928147]  [<ffffffff81238727>] acpi_ev_gpe_detect+0xbb/0x110
+[ 4251.928150]  [<ffffffff81236e88>] acpi_ev_sci_xrupt_handler+0x22/0x2b
+[ 4251.928152]  [<ffffffff81226e5e>] acpi_irq+0x16/0x31
+[ 4251.928155]  [<ffffffff810adcab>] irq_forced_thread_fn+0x25/0x45
+[ 4251.928157]  [<ffffffff813e45d1>] ? _raw_spin_unlock_irq+0x50/0x5e
+[ 4251.928159]  [<ffffffff810adaee>] irq_thread+0xff/0x1e9
+[ 4251.928162]  [<ffffffff810adc86>] ? exit_irq_thread+0x74/0x74
+[ 4251.928164]  [<ffffffff810ad9ef>] ? irq_finalize_oneshot+0xaf/0xaf
+[ 4251.928166]  [<ffffffff810ad9ef>] ? irq_finalize_oneshot+0xaf/0xaf
+[ 4251.928169]  [<ffffffff81062b48>] kthread+0x94/0x9c
+[ 4251.928171]  [<ffffffff813e1f99>] ? preempt_schedule+0x4b/0x53
+[ 4251.928174]  [<ffffffff813e45da>] ? _raw_spin_unlock_irq+0x59/0x5e
+[ 4251.928177]  [<ffffffff813ebb54>] kernel_thread_helper+0x4/0x10
+[ 4251.928180]  [<ffffffff813e4984>] ? retint_restore_args+0xe/0xe
+[ 4251.928182]  [<ffffffff81062ab4>] ? kthreadd+0x168/0x168
+[ 4251.928184]  [<ffffffff813ebb50>] ? gs_change+0xb/0xb
