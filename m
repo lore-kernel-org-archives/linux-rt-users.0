@@ -1,48 +1,55 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 0/4] [ANNOUNCE] 3.0.14-rt32-rc1
-Date: Wed, 18 Jan 2012 10:41:54 -0500
-Message-ID: <1326901314.17534.81.camel@gandalf.stny.rr.com>
-References: <20120118034531.335521323@goodmis.org>
-	 <201201181450.17680.tim.sander@hbm.com>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: Problem with Realtime Kernel and Ethernet Card
+Date: Wed, 18 Jan 2012 20:19:55 +0100
+Message-ID: <20120118191955.GA4066@pengutronix.de>
+References: <4F143AB2.6070404@haw-aw.de>
+ <CAOY97VZGuFz=txi1HnXjh_WqK+UVNiqRCifrnSxin7x2osbP5g@mail.gmail.com>
+ <4F16D7E9.9070707@haw-aw.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Tim Sander <tim.sander@hbm.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Austin Hendrix <ahendrix@willowgarage.com>,
+	linux-rt-users@vger.kernel.org
+To: Matthias =?iso-8859-1?Q?S=F6llner?= <m.soellner@haw-aw.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:54656 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755445Ab2ARPl4 (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:56605 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751068Ab2ARTUD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Jan 2012 10:41:56 -0500
-In-Reply-To: <201201181450.17680.tim.sander@hbm.com>
+	Wed, 18 Jan 2012 14:20:03 -0500
+Content-Disposition: inline
+In-Reply-To: <4F16D7E9.9070707@haw-aw.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-01-18 at 14:50 +0100, Tim Sander wrote:
-> Hi Steve
-> > This is the RT stable review cycle of patch 3.0.14-rt32-rc1.
-> > 
-> > Please scream at me if I messed something up. Please test the patches too.
-> Well the error i described in other mails to this list are still persistent:
-> * ksoftirq running wild due to fec ethernet tx interrupt.
-> 
+On Wed, Jan 18, 2012 at 03:32:09PM +0100, Matthias S=F6llner wrote:
+> Ok.
+> Where do I get a 3.0 Kernel with included preempt-Patch for installin=
+g
+> in Debian 6.0?
+if you're on amd64 install linux-image-3.0.0-2-rt-amd64 from
+http://debian.pengutronix.de/debian sid main. That is what was in Debia=
+n
+while it had 3.0 and updated to 3.0.12-rt30 and 3.0.14 which IIRC
+matches 3.0.14-rt31.
+=20
+> By the way, is there any package which includes a Kernel with include=
+d
+> Preempt-Patch for use in Ubuntu 11.10 as it was available for ubuntu
+> 8.04 (linux-rt)?
+Nothing I'm aware of. Maybe the debian kernels just work?!
 
-I would be surprised if it went away, as none of these patches would
-have touched that code.
+Best regards
+Uwe
 
-> Does patch nr 2 possibly fix the error reboot fails with "Unable to execute 
-> shutdown: Bad address". The error occurs not to often so it is hard to say if 
-> this 3.0.14-rt32 is still showing this error.
-
-Honestly I don't know about that error. But wait queues have been a
-thorn in -rt for a while, and this patch fixes a few areas I'm sure.
-That being one of them, I guess you'll find out if you see the bug
-again ;-)
-
--- Steve
-
-
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
