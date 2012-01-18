@@ -1,100 +1,111 @@
-From: Antonio Barbalace <antoniob@vt.edu>
-Subject: Re: 3.0.10-rt27 arch/arm/kernel/smp.c bug
-Date: Wed, 18 Jan 2012 09:29:12 -0500
-Message-ID: <20120118092912.77420k7p4wwjg37c@webmail.vt.edu>
-References: <20120113141757.12301lfyl3g6enad@webmail.vt.edu>
- <1326861125.17534.74.camel@gandalf.stny.rr.com>
+From: =?ISO-8859-1?Q?Matthias_S=F6llner?= <m.soellner@haw-aw.de>
+Subject: Re: Problem with Realtime Kernel and Ethernet Card
+Date: Wed, 18 Jan 2012 15:32:09 +0100
+Message-ID: <4F16D7E9.9070707@haw-aw.de>
+References: <4F143AB2.6070404@haw-aw.de> <CAOY97VZGuFz=txi1HnXjh_WqK+UVNiqRCifrnSxin7x2osbP5g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8;
- DelSp="Yes";
- format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Austin Hendrix <ahendrix@willowgarage.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lennier.cc.vt.edu ([198.82.162.213]:47955 "EHLO
-	lennier.cc.vt.edu" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757609Ab2ARO3O (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Jan 2012 09:29:14 -0500
-In-Reply-To: <1326861125.17534.74.camel@gandalf.stny.rr.com>
-Content-Disposition: inline
+Received: from smtp.haw-aw.de ([195.37.42.4]:32340 "EHLO smtp.haw-aw.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757654Ab2AROcN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 18 Jan 2012 09:32:13 -0500
+In-Reply-To: <CAOY97VZGuFz=txi1HnXjh_WqK+UVNiqRCifrnSxin7x2osbP5g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve,
+Ok.
+Where do I get a 3.0 Kernel with included preempt-Patch for installing
+in Debian 6.0?
 
-the problem always happen putting the cpu to sleep on ARM OMAP  
-platform (I am currently using a Pandaboard), i.e. after
-echo 0 > /sys/devices/system/cpu/cpu1/online
+By the way, is there any package which includes a Kernel with included
+Preempt-Patch for use in Ubuntu 11.10 as it was available for ubuntu
+8.04 (linux-rt)?
 
-Thanks a lot for your help,
-Antonio
+Thanks
 
----
+Matthias
 
-Quoting Steven Rostedt <rostedt@goodmis.org>:
 
-> Hi Antonio,
->
-> On Fri, 2012-01-13 at 14:17 -0500, Antonio Barbalace wrote:
->> I would like to report the following bug that is not still solved in
->> the current 3.0.14 ver.
+On 17.01.2012 02:03, Austin Hendrix wrote:
+> It looks like you're using an old version of the realtime kernel, and=
+ the
+> maintainer has neglected to package headers for it. (see:
+> http://debian.pengutronix.de/debian/pool/contrib/l/linuxrt-latest/ ).=
+ If
+> your CPU will support a 64-bit kernel, I suggest trying one of the 3.=
+0
+> kernels. It's more likely to have your network driver built in, and t=
+here's
+> a matching linux-headers package if you need it.
+>=20
+> -Austin
+>=20
+> 2012/1/16 Matthias S=F6llner <m.soellner@haw-aw.de>
+>=20
+>> Hello,
+>> I installed a RT-Preempt Kernel in Debian 6
+>> as shown on
+>> http://pengutronix.de/software/linux-rt/debian_en.html
 >>
->> [  300.459960] BUG: sleeping function called from invalid context at
->> kernel/rtm5
->> [  300.459991] in_atomic(): 1, irqs_disabled(): 128, pid: 9, name:  
->> migration/1
->> [  300.459991] 1 lock held by migration/1/9:
->> [  300.459991]  #0:  (tasklist_lock){++++..}, at: [<c0064fe8>]
->> __cpu_disable+0x0
->> [  300.460021] irq event stamp: 1887
->> [  300.460052] hardirqs last  enabled at (1886): [<c04e5878>]
->> _raw_spin_unlock_8
->> [  300.460052] hardirqs last disabled at (1887): [<c00efd10>]
->> stop_machine_cpu_4
->> [  300.460083] softirqs last  enabled at (0): [<c009f628>]
->> copy_process+0x3b4/00
->> [  300.460113] softirqs last disabled at (0): [<  (null)>]   (null)
->> [  300.460144] [<c00670e4>] (unwind_backtrace+0x0/0xf4) from
->> [<c04e4c88>] (__rt)
->> [  300.460174] [<c04e4c88>] (__rt_spin_lock+0x18/0x2c) from
->> [<c04e51e0>] (rt_re)
->> [  300.460174] [<c04e51e0>] (rt_read_lock+0x54/0x68) from [<c0064fe8>]
->> (__cpu_d)
->> [  300.460235] [<c0064fe8>] (__cpu_disable+0xdc/0x170) from
->> [<c04d4b7c>] (take_)
->> [  300.460235] [<c04d4b7c>] (take_cpu_down+0xc/0x30) from [<c00efd28>]
->> (stop_ma)
->> [  300.460235] [<c00efd28>] (stop_machine_cpu_stop+0xd8/0x114) from
->> [<c00efad4>)
->> [  300.460266] [<c00efad4>] (cpu_stopper_thread+0xb8/0x1ac) from
->> [<c00c29f8>] ()
->> [  300.460327] [<c00c29f8>] (kthread+0x88/0x90) from [<c0060914>]
->> (kernel_threa)
->> [  300.464385] CPU1: shutdown
+>> I have a DELL Precision T1600 with onboard network card and addition=
+al
+>> PCI network-card.
 >>
->> This is due to the following arch/arm/kernel/smp.c @ __cpu_disable code:
+>> The onboard card is a Intel=AE 82579LM Gigabit-LAN.
 >>
->> 169         read_lock(&tasklist_lock);
->> 170         for_each_process(p) {
->> 171                 if (p->mm)
->> 172                         cpumask_clear_cpu(cpu, mm_cpumask(p->mm));
->> 173         }
->> 174         read_unlock(&tasklist_lock);
+>> I used linux-image-2.6-rt-686 from Pengutronix APT repository.
 >>
->> I am not a rt expert, do you have any clue on how to solve this problem?
->
-> Hmm, I'll need to look at this code deeper. The read_lock() in -rt can
-> sleep, and this is being called to shutdown a CPU, which I'm sure
-> disables interrupts along the way.
->
-> What did you do to cause this? Does this happen when you take CPU 1
-> offline?
->
-> -- Steve
->
->
->
+>> Installation worked fine, I can boot my debian with both kernels.
+>>
+>> If I boot normal debian kernel i have eth0 and eth1. both cards work=
+ fine.
+>>
+>> But if I boot RT-Preempt-Kernel the  internal network card is not sh=
+own
+>> and I only have eth0.
+>>
+>> With normal debian kernel intel e1000e driver is loaded.
+>>
+>> What can I do to make my internal network card function properly wit=
+h
+>> realtime kernel ?
+>>
+>>
+>> I tried to compile the intel network driver myself. But where to I g=
+et
+>> the right kernel-headers for my RT-Preempt-Kernel?
+>>
+>> Any hints?
+>> Thanks a lot
+>> Matthias
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
+sers"
+>> in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>
+>=20
 
+--=20
+
+
+Matthias S=F6llner, M.Sc.
+Laboringenieur
+Hochschule Amberg - Weiden (HAW)
+=46akult=E4t f=FCr Elektro- und Informationstechnik
+Kaiser-Wilhelm-Ring 23
+92224 Amberg
+
+Tel. 09621 482-3709
+=46ax. 09621 482-4709
+e-mail m.soellner@haw-aw.de
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
