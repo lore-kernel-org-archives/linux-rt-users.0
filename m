@@ -1,23 +1,17 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/4] sched: ttwu: Return success when only changing the saved_state value
-Date: Tue, 17 Jan 2012 22:45:32 -0500
-Message-ID: <20120118034659.876968220@goodmis.org>
+Subject: [PATCH RT 3/4] acpi-gpe-use-wait-simple.patch
+Date: Tue, 17 Jan 2012 22:45:34 -0500
+Message-ID: <20120118034700.688011222@goodmis.org>
 References: <20120118034531.335521323@goodmis.org>
 Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="00GvhwF7k39YY"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:56198 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755226Ab2ARDrB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jan 2012 22:47:01 -0500
-Content-Disposition: inline; filename=0001-sched-ttwu-Return-success-when-only-changing-the-sav.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-acpi-gpe-use-wait-simple.patch.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 --00GvhwF7k39YY
 Content-Type: text/plain; charset="UTF-8"
@@ -25,40 +19,75 @@ Content-Transfer-Encoding: quoted-printable
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-When a task blocks on a rt lock, it saves the current state in
-p->saved_state, so a lock related wake up will not destroy the
-original state.
-
-When a real wakeup happens, while the task is running due to a lock
-wakeup already, we update p->saved_state to TASK_RUNNING, but we do
-not return success, which might cause another wakeup in the waitqueue
-code and the task remains in the waitqueue list. Return success in
-that case as well.
-
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ drivers/acpi/ec.c       |    8 ++++----
+ drivers/acpi/internal.h |    4 +++-
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 63aeba0..e5ef7a8 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -2693,8 +2693,10 @@ try_to_wake_up(struct task_struct *p, unsigned int s=
-tate, int wake_flags)
- 		 * if the wakeup condition is true.
- 		 */
- 		if (!(wake_flags & WF_LOCK_SLEEPER)) {
--			if (p->saved_state & state)
-+			if (p->saved_state & state) {
- 				p->saved_state =3D TASK_RUNNING;
-+				success =3D 1;
-+			}
- 		}
- 		goto out;
+diff --git a/drivers/acpi/ec.c b/drivers/acpi/ec.c
+index 5812e01..db0e6c3 100644
+--- a/drivers/acpi/ec.c
++++ b/drivers/acpi/ec.c
+@@ -222,7 +222,7 @@ static int ec_poll(struct acpi_ec *ec)
+ 				if (ec_transaction_done(ec))
+ 					return 0;
+ 			} else {
+-				if (wait_event_timeout(ec->wait,
++				if (swait_event_timeout(ec->wait,
+ 						ec_transaction_done(ec),
+ 						msecs_to_jiffies(1)))
+ 					return 0;
+@@ -272,7 +272,7 @@ static int ec_wait_ibf0(struct acpi_ec *ec)
+ 	unsigned long delay =3D jiffies + msecs_to_jiffies(ec_delay);
+ 	/* interrupt wait manually if GPE mode is not active */
+ 	while (time_before(jiffies, delay))
+-		if (wait_event_timeout(ec->wait, ec_check_ibf0(ec),
++		if (swait_event_timeout(ec->wait, ec_check_ibf0(ec),
+ 					msecs_to_jiffies(1)))
+ 			return 0;
+ 	return -ETIME;
+@@ -612,7 +612,7 @@ static u32 acpi_ec_gpe_handler(acpi_handle gpe_device,
+ 	advance_transaction(ec, acpi_ec_read_status(ec));
+ 	if (ec_transaction_done(ec) &&
+ 	    (acpi_ec_read_status(ec) & ACPI_EC_FLAG_IBF) =3D=3D 0) {
+-		wake_up(&ec->wait);
++		swait_wake(&ec->wait);
+ 		ec_check_sci(ec, acpi_ec_read_status(ec));
  	}
+ 	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
+@@ -676,7 +676,7 @@ static struct acpi_ec *make_acpi_ec(void)
+ 		return NULL;
+ 	ec->flags =3D 1 << EC_FLAGS_QUERY_PENDING;
+ 	mutex_init(&ec->lock);
+-	init_waitqueue_head(&ec->wait);
++	init_swait_head(&ec->wait);
+ 	INIT_LIST_HEAD(&ec->list);
+ 	raw_spin_lock_init(&ec->curr_lock);
+ 	return ec;
+diff --git a/drivers/acpi/internal.h b/drivers/acpi/internal.h
+index 68ed95f..2519b6e 100644
+--- a/drivers/acpi/internal.h
++++ b/drivers/acpi/internal.h
+@@ -23,6 +23,8 @@
+=20
+ #define PREFIX "ACPI: "
+=20
++#include <linux/wait-simple.h>
++
+ int init_acpi_device_notify(void);
+ int acpi_scan_init(void);
+ int acpi_sysfs_init(void);
+@@ -59,7 +61,7 @@ struct acpi_ec {
+ 	unsigned long global_lock;
+ 	unsigned long flags;
+ 	struct mutex lock;
+-	wait_queue_head_t wait;
++	struct swait_head wait;
+ 	struct list_head list;
+ 	struct transaction *curr;
+ 	raw_spinlock_t curr_lock;
 --=20
 1.7.8.3
 
@@ -71,19 +100,19 @@ Content-Description: This is a digitally signed message part
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.11 (GNU/Linux)
 
-iQIcBAABAgAGBQJPFkCzAAoJEIy3vGnGbaoA/yMP/3Ffp7A8zsu++5Q/sV1iqNjA
-QvLF0FMPUCcnxWTqhz5f9QkKpxuSMmixnMQ66F/Q8jWDxr9DvdhZ3Oz1zvfBaY1J
-HFEKHswoiTVvo43KLgmvW/tyQF2wfq/jck9a+Wzg8e8oRjkMGwbH9SCTL3yr3W6Y
-FhjvfXeRxz/47MlLOaCUVk+miTxKUiCrl57+sPSQ5JRw8aIuu0Gl5FK03/BeC/3G
-UA2/VJgGutsYSOS+7x6bElh/1tpSJUD1JfPaVuGnpF20fgxJunhGo/YdfLthcNVI
-B0ApbXbPB12r+w9BLwdzxWEdF6hJEKCNi4JgJqbCCbMHtX20VUQ70LhXglhPrL27
-uK8/Xlqrab5BadbQv6e+Mhu/7PBRyNZG5fyFfmyW4HG5pwGgYxT24qiFUTutFxar
-4sZnIL4qaNGgJ8VBgpKmtIa7qcp8l90NrZ56Ape3Ry/C9snfGcREI2By4E+bsELN
-U5w2YHIjhPPEAUYj4zMVf8Qb56KO20TmSqbbVtIKT+E8Oj/BKvvaLM6vM/m1uxuZ
-RAFlu098e8gQ9qAnqTKwdTi05uSVcafj6+/uK4CZ8y31wVDSjY/p1Xp99jbsuerw
-k5rgrFzAKyrq4hrd77hy99D4ikZok5Uf/fkQkrJo/dEbROo/xEYaZ30XCMtUuVUc
-kmvpBQHD26w03zfv7Oa4
-=UI7h
+iQIcBAABAgAGBQJPFkC0AAoJEIy3vGnGbaoAlJsP/0MfHMifSJrjfT0WG81uLCgI
+yPlQ1lQdNsFN8g6uPGjjRaKoQSWRjd7+FQJPdAfmkzF3Qu7wTCEBc27lbmCDlPlZ
+EfcojMRYcq/c/yOyUDobQDf9QMJGIusWXCD0bfJkZyYxm7bXnoSTTuKNI6zNP+P7
+2NVUu7NcX4jhYlKEDKEGKfYamSaR958BhWtzTt8IzomCFQpBDCPqG0qRBWBX5r12
+Jvdy21g5P94Tl4eInffvbCfM3VPVJ4KQ2MeCZ9CsvZRgF+eZh9vxmwh4fMHKWSe8
+VpRwYbYpddmpKNg6CUGzr5klHDNGM9IVZwsWyyw2brLEIQ+k3BtoKrfytUxuXLWe
+X6c7LSejGIHqdRJ7oNmx314p+VIQWvJZ3Np1nx6yz2OVjFpWHV2k1ad7FZZecxSC
+qdBg/DeUcPDBuvDOovy6Em+l0AAHuATEyIBJQAX9OwNK25ByVfHUwgOqIVRx4WlD
+b1VWBAEkGLb/ZIuJQ6e8RirsAofRRpunfCvVpuMgLCegr9of3TNJjw5qBbUyxRsd
+n8XIJDQVP0UznkumAd5ypJwmkA17E2EYq8eSzKvbmyLpZVj9BJXUzxgWiwkFU5iI
+q5IQOO0LD5vWS/a2G/PzgX4eAvpVBhJ//AB3m+h9m0iGJfkwrZ0ZSUMbGMpfBtMl
+d0BK0HCHFHXuaiNDdPEX
+=ooxK
 -----END PGP SIGNATURE-----
 
 --00GvhwF7k39YY--
