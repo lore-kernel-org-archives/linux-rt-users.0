@@ -1,29 +1,29 @@
 From: Forconi <forconi@wavecomm.it>
 Subject: RT_PREEMPT with RS232 and USB-RS232 adapter
-Date: Thu, 19 Jan 2012 10:34:05 -0000 (UTC)
-Message-ID: <38e80508-f150-4e9a-b0d4-303a391e8007@zmail.sgconsulting.it>
-References: <f599ebee-26a6-4db9-a47a-58524ee29b99@zmail.sgconsulting.it>
+Date: Thu, 19 Jan 2012 11:08:52 -0000 (UTC)
+Message-ID: <ed83733c-89f4-4d0e-87ed-9ba618c6d2b0@zmail.sgconsulting.it>
+References: <ed1899ce-3cdb-4826-8a35-8b0e9ae1ed01@zmail.sgconsulting.it>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from zmail.sgconsulting.it ([174.143.207.116]:33911 "EHLO
+Received: from zmail.sgconsulting.it ([174.143.207.116]:33552 "EHLO
 	zmail.sgconsulting.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750978Ab2ASKlM (ORCPT
+	with ESMTP id S1752757Ab2ASLIz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Jan 2012 05:41:12 -0500
+	Thu, 19 Jan 2012 06:08:55 -0500
 Received: from localhost (localhost [127.0.0.1])
-	by zmail.sgconsulting.it (Postfix) with ESMTP id 62C66584054
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2012 10:34:06 +0000 (UTC)
+	by zmail.sgconsulting.it (Postfix) with ESMTP id 4CFD6584059
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2012 11:08:54 +0000 (UTC)
 Received: from zmail.sgconsulting.it ([127.0.0.1])
 	by localhost (zmail.sgconsulting.it [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id UmC1wZSUtKcL for <linux-rt-users@vger.kernel.org>;
-	Thu, 19 Jan 2012 10:34:05 +0000 (UTC)
+	with ESMTP id g+M2pIdMwpO6 for <linux-rt-users@vger.kernel.org>;
+	Thu, 19 Jan 2012 11:08:53 +0000 (UTC)
 Received: from zmail.sgconsulting.it (zmail.sgconsulting.it [174.143.207.116])
-	by zmail.sgconsulting.it (Postfix) with ESMTP id 8ACD7584095
-	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2012 10:34:05 +0000 (UTC)
-In-Reply-To: <f599ebee-26a6-4db9-a47a-58524ee29b99@zmail.sgconsulting.it>
+	by zmail.sgconsulting.it (Postfix) with ESMTP id 5D941584055
+	for <linux-rt-users@vger.kernel.org>; Thu, 19 Jan 2012 11:08:53 +0000 (UTC)
+In-Reply-To: <ed1899ce-3cdb-4826-8a35-8b0e9ae1ed01@zmail.sgconsulting.it>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
         char buf[39];
 
         /* Declare ourself as a real time task */
-	printf("[1]\n");
+        printf("[1]\n");
 
         param.sched_priority = MY_PRIORITY;
         if(sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
         }
 
         /* Pre-fault our stack */
-	printf("[2]\n");
+        printf("[2]\n");
 
         stack_prefault();
 
@@ -106,8 +106,8 @@ int main(int argc, char* argv[])
         /* open serial port */
         fd = open(argv[1], O_WRONLY | O_NOCTTY); 
         if (fd <0) { 
-        	perror(argv[1]); 
-        	exit(-1); 
+                perror(argv[1]); 
+                exit(-1); 
         }
         
         tcgetattr(fd, &oldtio); /* save current port settings */
@@ -124,17 +124,17 @@ int main(int argc, char* argv[])
         newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
         newtio.c_cc[VMIN]     = 1;   /* blocking read until 1 chars received */
         
-	printf("[3]\n");
+        printf("[3]\n");
 
         tcflush(fd, TCIFLUSH);
         tcsetattr(fd, TCSANOW, &newtio);
 
-	printf("[4]\n");        
+        printf("[4]\n");        
 
         for(c = 0; c < 39; c++)
-        	buf[c] = 0xFF;
+                buf[c] = 0xFF;
 
-	printf("writing 39B to serial port %s\n",argv[1]);
+        printf("writing 39B to serial port %s\n",argv[1]);
         while(1) {
                 /* wait until next shot */
                 clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
