@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2][RFC] x86: Do not disable preemption in int3 on 32bit
-Date: Tue, 24 Jan 2012 13:53:51 -0500
-Message-ID: <20120124191454.114144050@goodmis.org>
-References: <20120124185350.092483803@goodmis.org>
+Subject: [PATCH RT 0/2][RFC] preempt-rt/x86: Handle sending signals from do_trap() by gdb
+Date: Tue, 24 Jan 2012 13:53:50 -0500
+Message-ID: <20120124185350.092483803@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
@@ -17,46 +16,64 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=fix-rt-int3-x86_32.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Preemption must be disabled before enabling interrupts in do_trap
-on x86_64 because the stack in use for int3 and debug is a per CPU
-stack set by th IST. But in 32bit, the stack still belongs to the
-current task and there is no problem in scheduling out the task.
+Note, this patchset is focused on PREEMPT_RT, but as it affects some of
+the x86 code, so I wanted a wider audience. The first patch is not PREEMPT_RT
+specific and can go into mainline now.
 
-Keep preemption enabled on X86_32 when enabling interrupts for
-do_trap().
+Here's the issue:
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+In PREEMPT_RT, every spin_lock() in the kernel turns into a mutex. I wont
+go into the details of why this is done, but it helps with latencies, and
+we do it in a manner that it just works, except for when it doesn't (like
+this patch series is to correct).
 
-Index: linux-rt.git/arch/x86/kernel/traps.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/traps.c
-+++ linux-rt.git/arch/x86/kernel/traps.c
-@@ -89,7 +89,14 @@ static inline void conditional_sti(struc
- 
- static inline void preempt_conditional_sti(struct pt_regs *regs)
- {
-+#ifdef CONFIG_X86_64
-+	/*
-+	 * X86_64 uses a per CPU stack for certain traps like int3.
-+	 * We must disable preemption, otherwise we can corrupt the
-+	 * stack if the task is scheduled out with this stack.
-+	 */
- 	inc_preempt_count();
-+#endif
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_enable();
- }
-@@ -104,7 +111,9 @@ static inline void preempt_conditional_c
- {
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_disable();
-+#ifdef CONFIG_X86_64
- 	dec_preempt_count();
-+#endif
- }
- 
- static void __kprobes
+When int3 is triggered by gdb, the int3 trap will call do_trap(), and
+the do_trap() will call force_sig() to send a SIG_TRAP to the process.
+
+The do_int3() code (as well as do_debug() which gdb also triggers)
+calls preempt_conditional_sti() and preemp_conditional_cli() which
+will increment/decrement the preempt count to disable preemption, and
+will conditionally enable/disable interrupts, depending on if the code
+that triggered the trap had interrupts disabled.
+
+Now, that force_sig() that is called grabs a signal spin_lock, which in
+PREEMPT_RT happens to be a mutex. If that mutex is under contention, the
+task will schedule, and we hit the scheduling while atomic code.
+
+What's worse, in x86_64 the int3 and debug traps switch to a per CPU debug
+stack set by the IST. If we schedule with this stack, and another task comes
+in and uses the debug stack, the kernel stack can become corrupted and we
+crash the system.
+
+On x86_32, the stack is the same as the task's kernel stack and scheduling
+should not be an issue. The first patch solves this bug by just not
+disabling preemption for x86_32.
+
+The second patch is a bit more involed, and is used to solve the issue on
+x86_64. Since we can not simply enable preemption because the current task
+is using a per CPU debug stack, we need to postpone the force_sig() and
+force_sig_info() calls.
+
+I created a wrapper of these calls with an _rt() extension. This version
+will do some checks and if we need to send the SIG_TRAP, it will store the
+signal information in the current tasks task_struct and set a new TIF flag
+TIF_FORCE_SIG_TRAP.
+
+I added to the paranoid_exit routine in entry_64.S, where it switches the
+stack back to the user stack and then enables interrupts and may call schedule
+if NEED_RESCHED is set.
+
+In order to not make that code more complex, when the signal needs to be
+delayed, the NEED_RESCHED flag is set to force us into that code path.
+With the FORCE_SIG_TRAP also set, we can do a check and call a routine to
+do the delayed force_sig() after the task's stack is switched back to its
+kernel stack and interrupts are reenabled.
+
+Comments? Also anyone see holes in this code?
+
+Thanks,
+
+-- Steve
