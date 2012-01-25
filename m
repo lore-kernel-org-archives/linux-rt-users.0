@@ -1,65 +1,78 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: rt-kernel 3.0.14-rt31: BUG: sleeping function called from invalid
- context
-Date: Wed, 25 Jan 2012 12:02:19 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1201251156310.2716@ionos>
-References: <CAONaPpFjfGiKKGAzrQNk+MF4k50nRf+wMU8H9491NgHyJrUkyw@mail.gmail.com> <201201180053.52617.fzuuzf@googlemail.com> <1326848525.17534.66.camel@gandalf.stny.rr.com> <CAONaPpGHULxDZXBTprkCy9vKPH46gHOiQs6GM_ysfP2znDqqXg@mail.gmail.com>
- <1326991117.17534.132.camel@gandalf.stny.rr.com> <CAONaPpHJM1GKdRCdvw97AsBSRQk1oHUt6u2bGJRoin+e59Wbzg@mail.gmail.com>
+From: Venkat Subbiah <vsubbiah@caviumnetworks.com>
+Subject: Re: task switch from net-rx to idle when there is napi processing
+ to be done
+Date: Wed, 25 Jan 2012 03:30:51 -0800
+Message-ID: <4F1FE7EB.3030601@caviumnetworks.com>
+References: <4F1F6B66.5010005@caviumnetworks.com> <20120125085523.GG6305@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1286624960-1327489340=:2716"
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Karsten Wiese <fzuuzf@googlemail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "Subbiah, Venkat" <Venkat.Subbiah@caviumnetworks.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57900 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751637Ab2AYLCY (ORCPT
+Received: from mail3.caviumnetworks.com ([12.108.191.235]:8745 "EHLO
+	mail3.caviumnetworks.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751614Ab2AYLbp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jan 2012 06:02:24 -0500
-In-Reply-To: <CAONaPpHJM1GKdRCdvw97AsBSRQk1oHUt6u2bGJRoin+e59Wbzg@mail.gmail.com>
+	Wed, 25 Jan 2012 06:31:45 -0500
+In-Reply-To: <20120125085523.GG6305@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On 01/25/2012 12:55 AM, Uwe Kleine-K=F6nig wrote:
+> Hello,
+>
+> On Tue, Jan 24, 2012 at 06:39:34PM -0800, Venkat Subbiah wrote:
+>> In the process of debugging a napi ethernet driver performance
+>> issue, what I am noticing is
+>>
+>> 1. While the driver is in the middle of a napi packet processing
+>> loop, there is a task switch from
+>> sirq-net-rx to idle even though there is pending napi processing to =
+be done.
+> I didn't check your logs below, but maybe this is related to the defa=
+ult
+> settings in /proc/sys/kernel/sched_rt_period_us and
+> /proc/sys/kernel/sched_rt_runtime_us? That is 0.05s per second is
+> reserved for non-RT tasks tasks such that a run-away realtime process
+> will not lock up the machine.
+>
+> To verify that, try
+>
+> 	echo -1>  /proc/sys/kernel/sched_rt_runtime_us
+>
+> .
+Thanks for you response. That was it. Setting this to -1 does the expec=
+ted.
 
---8323328-1286624960-1327489340=:2716
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
+Then  I tried playing with these settings and set
 
-On Thu, 19 Jan 2012, John Kacur wrote:
+/proc/sys/kernel/sched_rt_runtime_us to   95000
+/proc/sys/kernel/sched_rt_period_us    to 100000
 
-> On Thu, Jan 19, 2012 at 5:38 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> > On Thu, 2012-01-19 at 17:16 +0100, John Kacur wrote:
-> > 
-> >> I'm testing v3.0.14-rt32-rc1, and it greatly reduced the number of
-> >> these, but I still got one during boot.
-> >>
-> >> [   11.938649] BUG: sleeping function called from invalid context at
-> >> /home/jkacur/rt.linux.git/kernel/rtmutex.c:645
-> >> [   11.938651] in_atomic(): 1, irqs_disabled(): 1, pid: 168, name: irq/9-acpi
-> >> [   11.938653] 1 lock held by irq/9-acpi/168:
-> >> [   11.938653]  #0:  (acpi_gbl_gpe_lock){......}, at:
-> >> [<ffffffff8123881d>] acpi_ev_gpe_detect+0x31/0x110
-> >
-> > Could you test 3.2-rt. If that has the issue then we know we have more
-> > to fix. If not, we know I missed a patch.
-> >
-> 
-> I tested with v3.2-rt10 and the issue is not there.
+And even with  the switch from sirq-net-rx to idle happens every second=
+s=20
+and stays in idle for 0.05 seconds.  Are they any restrictions on what=20
+these can be set to? I guess these setting may not be reasonable. I did=
+=20
+verify by doing a cat of these files and read back the expected values.
 
-I'm surprised. I know already what the problem is and according to the
-code it should be visible in 3.2 as well. I'm still twisting my head
-around that acpi maze to fix that particular one.
+Then I tried
 
-> I also examined your patches and couldn't find anything wrong with
-> them, and for larks tried applying
-> cpumask-disable-offstack-on-rt.patch from v3.2-rt10
-> all to no avail, the problem is still there.
+/proc/sys/kernel/sched_rt_period_us     to 1000000
+/proc/sys/kernel/sched_rt_runtime_us   to 980000
 
-What a surprise, it's completely unrelated.
---8323328-1286624960-1327489340=:2716--
+Even here the idle is for 0.05 seconds
+
+> Best regards
+> Uwe
+>
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
