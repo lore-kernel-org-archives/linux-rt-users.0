@@ -1,54 +1,113 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: task switch from net-rx to idle when there is napi processing
- to be done
-Date: Wed, 25 Jan 2012 10:18:13 +0100
-Message-ID: <1327483093.6973.10.camel@marge.simson.net>
-References: <4F1F6B66.5010005@caviumnetworks.com>
-	 <20120125085523.GG6305@pengutronix.de>
+From: "Tim Sander" <tim.sander@hbm.com>
+Subject: Re: [ANNOUNCE] 3.0.14-rt31 - ksoftirq running wild - FEC ethernet driver to blame? Yep
+Date: Wed, 25 Jan 2012 10:31:48 +0100
+Message-ID: <201201251031.48983.tim.sander@hbm.com>
+References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <201201181211.45011.tim.sander@hbm.com> <201201241152.21472.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/Plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Venkat Subbiah <vsubbiah@caviumnetworks.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Cc: "Mike Galbraith" <efault@gmx.de>,
+	"Tim Sander" <tstone@iss.tu-darmstadt.de>,
+	"Steven Rostedt" <rostedt@goodmis.org>,
+	"LKML" <linux-kernel@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Clark Williams" <williams@redhat.com>,
+	"John Kacur" <jkacur@redhat.com>,
+	"Gerlando Falauto" <gerlando.falauto@keymile.com>,
+	"Micha Nelissen" <micha@neli.hopto.org>,
+	"Holger Brunck" <holger.brunck@keymile.com>
+To: "RT" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.23]:33484 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752664Ab2AYJST (ORCPT
+Received: from relay.medianet-world.de ([213.157.0.172]:63488 "HELO
+	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1754240Ab2AYJcx convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jan 2012 04:18:19 -0500
-In-Reply-To: <20120125085523.GG6305@pengutronix.de>
+	Wed, 25 Jan 2012 04:32:53 -0500
+Content-Class: urn:content-classes:message
+In-reply-to: <201201241152.21472.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-01-25 at 09:55 +0100, Uwe Kleine-K=C3=B6nig wrote:
-> Hello,
->=20
-> On Tue, Jan 24, 2012 at 06:39:34PM -0800, Venkat Subbiah wrote:
-> > In the process of debugging a napi ethernet driver performance
-> > issue, what I am noticing is
+Hi
+
+> > Well thanks for your patch. It didn't apply cleanly due to some mov=
+ed
+> > lines, but nothing to serious. I now have a machine where top just =
+shows
+> > me the culprit:
+> > sirq-net-tx/0
 > >=20
-> > 1. While the driver is in the middle of a napi packet processing
-> > loop, there is a task switch from
-> > sirq-net-rx to idle even though there is pending napi processing to=
- be done.
-> I didn't check your logs below, but maybe this is related to the defa=
-ult
-> settings in /proc/sys/kernel/sched_rt_period_us and
-> /proc/sys/kernel/sched_rt_runtime_us? That is 0.05s per second is
-> reserved for non-RT tasks tasks such that a run-away realtime process
-> will not lock up the machine.
+> > It seems to be triggered not as often as the mainline rt kernel tho=
+ugh.
+> > But after some starts and stops of "connmand" and "ifconfig eth0 do=
+wn" i
+> > got back this errornous behaviour. The only question is what next? =
+Still
+> > i have some more observations which might help to nail down this bu=
+g: *
+> > ifconfig does not return when sirq-net-tx/0 eats all cpu
+> > * sometimes sirq-net-tx/0 sits on the cpu for a couple of seconds a=
+nd
+> > goes away, somtimes it just stays there when "ifconfig eth0 up" is
+> > issued. * There are suspicious "FEC: MDIO read timeout" kernel log
+> > messages from the ethernet driver.
+> > * The ethernet phy uses polling since i do not know how to set the =
+phy
+> > irq in the board definition. I tried using "phy_register_fixup_for_=
+uid"
+> > and then setting the phy_dev->irq int the fixup routine but that se=
+ems
+> > to be to late and the interrupt is deregisterd but has not been
+> > registered when the network device is shut down.
+> > I also didn't found a example in the source and there has been no w=
+ord in
+> > the phy.txt documentation about it? So input on how to set the phy =
+irq in
+> > the board config of the pcm043 would be really nice.
 >=20
-> To verify that, try
->=20
-> 	echo -1 > /proc/sys/kernel/sched_rt_runtime_us
+> I would like to point out that the running wild softirq seems to bee =
+fixed
+> by 9ec14c04ec6be93ff397adf250bc91ee77742bfb of the stable git tree.
+> At least i could not reproduce the ksoftirq error with 3.0.17-rt33. W=
+ith
+> the above commit reverted i could reproduce this error. As this runni=
+ng
+> wild ksoftirq did not occur regularly there is a small chance that th=
+is
+> error just didn't show up with the new kernel but i doubt it.
 
-Hm, makes sense if this is a UP box.  SMP would just go borrow a cup of
-runtime from a neighbor.
+Bad news, the ksoftirq(sirq-net-tx) error seems to happen not so often =
+any=20
+more but it still happens :-(.
 
-	-Mike
+So any input on that is highly apreciated.
+Tim
 
+Please ignore:
+
+
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
+Germany | www.hbm.com=20
+
+Registered as GmbH (German limited liability corporation) in the commer=
+cial register at the local court of Darmstadt, HRB 1147 =20
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
+the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
+er des Amtsgerichts Darmstadt unter HRB 1147=20
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
+st | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely fo=
+r the addressee. If you are not the intended recipient, please let me k=
+now and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
+ch f=C3=BCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche =
+Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-M=
+ail.
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
