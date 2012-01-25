@@ -1,34 +1,65 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: RT_PREEMPT with RS232 and USB-RS232 adapter
-Date: Wed, 25 Jan 2012 11:56:15 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1201251153260.2716@ionos>
-References: <38e80508-f150-4e9a-b0d4-303a391e8007@zmail.sgconsulting.it>
+Subject: Re: rt-kernel 3.0.14-rt31: BUG: sleeping function called from invalid
+ context
+Date: Wed, 25 Jan 2012 12:02:19 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1201251156310.2716@ionos>
+References: <CAONaPpFjfGiKKGAzrQNk+MF4k50nRf+wMU8H9491NgHyJrUkyw@mail.gmail.com> <201201180053.52617.fzuuzf@googlemail.com> <1326848525.17534.66.camel@gandalf.stny.rr.com> <CAONaPpGHULxDZXBTprkCy9vKPH46gHOiQs6GM_ysfP2znDqqXg@mail.gmail.com>
+ <1326991117.17534.132.camel@gandalf.stny.rr.com> <CAONaPpHJM1GKdRCdvw97AsBSRQk1oHUt6u2bGJRoin+e59Wbzg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Forconi <forconi@wavecomm.it>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1286624960-1327489340=:2716"
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Karsten Wiese <fzuuzf@googlemail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57867 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:57900 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751815Ab2AYK4Q (ORCPT
+	with ESMTP id S1751637Ab2AYLCY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jan 2012 05:56:16 -0500
-In-Reply-To: <38e80508-f150-4e9a-b0d4-303a391e8007@zmail.sgconsulting.it>
+	Wed, 25 Jan 2012 06:02:24 -0500
+In-Reply-To: <CAONaPpHJM1GKdRCdvw97AsBSRQk1oHUt6u2bGJRoin+e59Wbzg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 19 Jan 2012, Forconi wrote:
-> I'm working on an RT_PREEMPT patched kernel to test a small C
-> program that sends 39B of data on the serial line every 50ms.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> I'm testing the timing accuracy using a scope on the TX pin of the
-> serial cable.
+--8323328-1286624960-1327489340=:2716
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
 
-> When I run the application using /dev/ttyS0 as serial port I see
-> data starting every 50ms, but when I run the application using a
-> Prolific PL2303 USB-RS232 adapter on /dev/ttyUSB0 I see data out
-> every 250ms.
+On Thu, 19 Jan 2012, John Kacur wrote:
 
-> Is this possible or I'm doing something wrong?
+> On Thu, Jan 19, 2012 at 5:38 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> > On Thu, 2012-01-19 at 17:16 +0100, John Kacur wrote:
+> > 
+> >> I'm testing v3.0.14-rt32-rc1, and it greatly reduced the number of
+> >> these, but I still got one during boot.
+> >>
+> >> [   11.938649] BUG: sleeping function called from invalid context at
+> >> /home/jkacur/rt.linux.git/kernel/rtmutex.c:645
+> >> [   11.938651] in_atomic(): 1, irqs_disabled(): 1, pid: 168, name: irq/9-acpi
+> >> [   11.938653] 1 lock held by irq/9-acpi/168:
+> >> [   11.938653]  #0:  (acpi_gbl_gpe_lock){......}, at:
+> >> [<ffffffff8123881d>] acpi_ev_gpe_detect+0x31/0x110
+> >
+> > Could you test 3.2-rt. If that has the issue then we know we have more
+> > to fix. If not, we know I missed a patch.
+> >
+> 
+> I tested with v3.2-rt10 and the issue is not there.
 
-Why do you expect that USB is in any way deterministic?
+I'm surprised. I know already what the problem is and according to the
+code it should be visible in 3.2 as well. I'm still twisting my head
+around that acpi maze to fix that particular one.
+
+> I also examined your patches and couldn't find anything wrong with
+> them, and for larks tried applying
+> cpumask-disable-offstack-on-rt.patch from v3.2-rt10
+> all to no avail, the problem is still there.
+
+What a surprise, it's completely unrelated.
+--8323328-1286624960-1327489340=:2716--
