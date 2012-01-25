@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/2 v2] preempt-rt/x86: Handle sending signals from do_trap() by gdb
-Date: Wed, 25 Jan 2012 09:32:31 -0500
-Message-ID: <20120125143231.196670014@goodmis.org>
+Subject: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on 32bit
+Date: Wed, 25 Jan 2012 09:32:32 -0500
+Message-ID: <20120125143520.086175333@goodmis.org>
+References: <20120125143231.196670014@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
@@ -15,22 +16,47 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Luis Goncalves <lgoncalv@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:38545 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750754Ab2AYOfW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jan 2012 09:35:22 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=fix-rt-int3-x86_32-3.2-rt.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-This is an updated version that cleaned up some of the code and added
-some more comments.
+Preemption must be disabled before enabling interrupts in do_trap
+on x86_64 because the stack in use for int3 and debug is a per CPU
+stack set by th IST. But in 32bit, the stack still belongs to the
+current task and there is no problem in scheduling out the task.
 
-If no one has any complaints about these, then I would suggest that they
-go into both 3.2-rt as well as the stable 3.0-rt.
+Keep preemption enabled on X86_32 when enabling interrupts for
+do_trap().
 
-Thanks!
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
--- Steve
-
+Index: linux-rt.git/arch/x86/kernel/traps.c
+===================================================================
+--- linux-rt.git.orig/arch/x86/kernel/traps.c
++++ linux-rt.git/arch/x86/kernel/traps.c
+@@ -89,7 +89,14 @@ static inline void conditional_sti(struc
+ 
+ static inline void preempt_conditional_sti(struct pt_regs *regs)
+ {
++#ifdef CONFIG_X86_64
++	/*
++	 * X86_64 uses a per CPU stack for certain traps like int3.
++	 * We must disable preemption, otherwise we can corrupt the
++	 * stack if the task is scheduled out with this stack.
++	 */
+ 	inc_preempt_count();
++#endif
+ 	if (regs->flags & X86_EFLAGS_IF)
+ 		local_irq_enable();
+ }
+@@ -104,7 +111,9 @@ static inline void preempt_conditional_c
+ {
+ 	if (regs->flags & X86_EFLAGS_IF)
+ 		local_irq_disable();
++#ifdef CONFIG_X86_64
+ 	dec_preempt_count();
++#endif
+ }
+ 
+ static void __kprobes
