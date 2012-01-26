@@ -1,11 +1,12 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on
  32bit
-Date: Thu, 26 Jan 2012 17:39:02 +0900
-Message-ID: <4F211126.1090204@hitachi.com>
-References: <20120125143231.196670014@goodmis.org> <20120125143520.086175333@goodmis.org>
+Date: Thu, 26 Jan 2012 08:33:31 -0500
+Message-ID: <1327584811.22710.80.camel@gandalf.stny.rr.com>
+References: <20120125143231.196670014@goodmis.org>
+	 <20120125143520.086175333@goodmis.org> <4F211126.1090204@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -19,63 +20,41 @@ Cc: linux-kernel@vger.kernel.org,
 	Oleg Nesterov <oleg@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Luis Goncalves <lgoncalv@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120125143520.086175333@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:50155 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751258Ab2AZNde (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jan 2012 08:33:34 -0500
+In-Reply-To: <4F211126.1090204@hitachi.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-(2012/01/25 23:32), Steven Rostedt wrote:
-> Preemption must be disabled before enabling interrupts in do_trap
-> on x86_64 because the stack in use for int3 and debug is a per CPU
-> stack set by th IST. But in 32bit, the stack still belongs to the
-> current task and there is no problem in scheduling out the task.
+On Thu, 2012-01-26 at 17:39 +0900, Masami Hiramatsu wrote:
+> (2012/01/25 23:32), Steven Rostedt wrote:
+> > Preemption must be disabled before enabling interrupts in do_trap
+> > on x86_64 because the stack in use for int3 and debug is a per CPU
+> > stack set by th IST. But in 32bit, the stack still belongs to the
+> > current task and there is no problem in scheduling out the task.
+> > 
+> > Keep preemption enabled on X86_32 when enabling interrupts for
+> > do_trap().
+> > 
+> > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 > 
-> Keep preemption enabled on X86_32 when enabling interrupts for
-> do_trap().
-> 
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> Hmm, I think you'd better change caller side, because the
+> function itself has "preempt" in its name. I think it can
+> easily mislead other people.
 
-Hmm, I think you'd better change caller side, because the
-function itself has "preempt" in its name. I think it can
-easily mislead other people.
+How about if we rename it to
 
-Thank you,
+conditional_preempt_sti/cli() ?
 
-> 
-> Index: linux-rt.git/arch/x86/kernel/traps.c
-> ===================================================================
-> --- linux-rt.git.orig/arch/x86/kernel/traps.c
-> +++ linux-rt.git/arch/x86/kernel/traps.c
-> @@ -89,7 +89,14 @@ static inline void conditional_sti(struc
->  
->  static inline void preempt_conditional_sti(struct pt_regs *regs)
->  {
-> +#ifdef CONFIG_X86_64
-> +	/*
-> +	 * X86_64 uses a per CPU stack for certain traps like int3.
-> +	 * We must disable preemption, otherwise we can corrupt the
-> +	 * stack if the task is scheduled out with this stack.
-> +	 */
->  	inc_preempt_count();
-> +#endif
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_enable();
->  }
-> @@ -104,7 +111,9 @@ static inline void preempt_conditional_c
->  {
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_disable();
-> +#ifdef CONFIG_X86_64
->  	dec_preempt_count();
-> +#endif
->  }
->  
->  static void __kprobes
-> 
+Then it can be both a conditional preempt as well as interrupts being
+disabled. The condition on preempt is "is 32 bits? don't preempt :
+preempt";
 
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt@hitachi.com
+-- Steve
+
+
