@@ -1,39 +1,81 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: timerfd functions hang on both x86 and ARM with RT patch and
- RT scheduling policies
-Date: Thu, 26 Jan 2012 03:01:55 +0100
-Message-ID: <1327543315.6343.35.camel@marge.simson.net>
-References: <CAFQPvXdTb-=oo8OC6MAa++X6u4ZoWM2XXmKog-WK6DPookJyvg@mail.gmail.com>
-	 <CAFQPvXd13=B+mJGtoGLGuw4PXhBUgWVsxd7sS9PAN2oz+3HUcQ@mail.gmail.com>
-	 <1327478618.6973.2.camel@marge.simson.net>
-	 <alpine.LFD.2.02.1201251110190.2716@ionos>
-	 <CAFQPvXcGJ4oad3domH48NT3i=PhCwG7W4Zn=7NWmARhQoonRMA@mail.gmail.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on
+ 32bit
+Date: Thu, 26 Jan 2012 17:39:02 +0900
+Message-ID: <4F211126.1090204@hitachi.com>
+References: <20120125143231.196670014@goodmis.org> <20120125143520.086175333@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sankara Muthukrishnan <sankara.m@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:44622 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1751328Ab2AZCB7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jan 2012 21:01:59 -0500
-In-Reply-To: <CAFQPvXcGJ4oad3domH48NT3i=PhCwG7W4Zn=7NWmARhQoonRMA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Oleg Nesterov <oleg@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120125143520.086175333@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2012-01-25 at 18:22 -0600, Sankara Muthukrishnan wrote:
+(2012/01/25 23:32), Steven Rostedt wrote:
+> Preemption must be disabled before enabling interrupts in do_trap
+> on x86_64 because the stack in use for int3 and debug is a per CPU
+> stack set by th IST. But in 32bit, the stack still belongs to the
+> current task and there is no problem in scheduling out the task.
+> 
+> Keep preemption enabled on X86_32 when enabling interrupts for
+> do_trap().
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-> I wonder why my test worked for priority 1 alone before (without this
-> fix) and I did not see any other threads using RT scheduler in the
-> system with priority 1 or 2.
+Hmm, I think you'd better change caller side, because the
+function itself has "preempt" in its name. I think it can
+easily mislead other people.
 
-It worked at priority 1 because ksoftirqd was also at priority 1.  The
-user task can't preempt ksoftirqd, ksoftirqd does it's thing and rides
-off into the sunset before the user task arrives at the bad idea spot.
+Thank you,
 
-	-Mike
+> 
+> Index: linux-rt.git/arch/x86/kernel/traps.c
+> ===================================================================
+> --- linux-rt.git.orig/arch/x86/kernel/traps.c
+> +++ linux-rt.git/arch/x86/kernel/traps.c
+> @@ -89,7 +89,14 @@ static inline void conditional_sti(struc
+>  
+>  static inline void preempt_conditional_sti(struct pt_regs *regs)
+>  {
+> +#ifdef CONFIG_X86_64
+> +	/*
+> +	 * X86_64 uses a per CPU stack for certain traps like int3.
+> +	 * We must disable preemption, otherwise we can corrupt the
+> +	 * stack if the task is scheduled out with this stack.
+> +	 */
+>  	inc_preempt_count();
+> +#endif
+>  	if (regs->flags & X86_EFLAGS_IF)
+>  		local_irq_enable();
+>  }
+> @@ -104,7 +111,9 @@ static inline void preempt_conditional_c
+>  {
+>  	if (regs->flags & X86_EFLAGS_IF)
+>  		local_irq_disable();
+> +#ifdef CONFIG_X86_64
+>  	dec_preempt_count();
+> +#endif
+>  }
+>  
+>  static void __kprobes
+> 
 
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
