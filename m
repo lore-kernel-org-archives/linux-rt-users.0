@@ -1,10 +1,14 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Subject: Re: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on 32bit
-Date: Thu, 26 Jan 2012 22:59:58 +0900
-Message-ID: <4F215C5E.4090006@hitachi.com>
-References: <20120125143231.196670014@goodmis.org>  <20120125143520.086175333@goodmis.org> <4F211126.1090204@hitachi.com> <1327584811.22710.80.camel@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on
+ 32bit
+Date: Thu, 26 Jan 2012 09:21:59 -0500
+Message-ID: <1327587719.22710.95.camel@gandalf.stny.rr.com>
+References: <20120125143231.196670014@goodmis.org>
+	  <20120125143520.086175333@goodmis.org> <4F211126.1090204@hitachi.com>
+	 <1327584811.22710.80.camel@gandalf.stny.rr.com>
+	 <4F215C5E.4090006@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -18,51 +22,37 @@ Cc: linux-kernel@vger.kernel.org,
 	Oleg Nesterov <oleg@redhat.com>,
 	Clark Williams <williams@redhat.com>,
 	Luis Goncalves <lgoncalv@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail9.hitachi.co.jp ([133.145.228.44]:45565 "EHLO
-	mail9.hitachi.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751544Ab2AZOAG (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:47538 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751318Ab2AZOWE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jan 2012 09:00:06 -0500
-In-Reply-To: <1327584811.22710.80.camel@gandalf.stny.rr.com>
+	Thu, 26 Jan 2012 09:22:04 -0500
+In-Reply-To: <4F215C5E.4090006@hitachi.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-(2012/01/26 22:33), Steven Rostedt wrote:
-> On Thu, 2012-01-26 at 17:39 +0900, Masami Hiramatsu wrote:
->> (2012/01/25 23:32), Steven Rostedt wrote:
->>> Preemption must be disabled before enabling interrupts in do_trap
->>> on x86_64 because the stack in use for int3 and debug is a per CPU
->>> stack set by th IST. But in 32bit, the stack still belongs to the
->>> current task and there is no problem in scheduling out the task.
->>>
->>> Keep preemption enabled on X86_32 when enabling interrupts for
->>> do_trap().
->>>
->>> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
->>
->> Hmm, I think you'd better change caller side, because the
->> function itself has "preempt" in its name. I think it can
->> easily mislead other people.
+On Thu, 2012-01-26 at 22:59 +0900, Masami Hiramatsu wrote:
+
+> Better. If the functions are only for signaling, how
+> about using the "signal" in name? :)
 > 
-> How about if we rename it to
-> 
-> conditional_preempt_sti/cli() ?
-> 
-> Then it can be both a conditional preempt as well as interrupts being
-> disabled. The condition on preempt is "is 32 bits? don't preempt :
-> preempt";
+> conditional_sti/cli_for_signal()
 
-Better. If the functions are only for signaling, how
-about using the "signal" in name? :)
+I don't think they are only for signals. The conditional_sti/cli is for
+all callers of do_trap(). But those callers that run on an IST stack use
+the preempt_conditional_sti/cli() code. Perhaps we should call it:
 
-conditional_sti/cli_for_signal()
+conditional_sti/cli_ist() ?
 
-Thanks,
+Actually, I think this is the best name. The "preempt_" one, didn't give
+any annotation about why it was disabling preemption. It was done
+because the stack is on the IST and we can not schedule out. Thus, if we
+add the "_ist()" to it, not only does it annotate why this call is
+special, but also allows x86_32, which does not have an IST, not to have
+to disable preemption.
 
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt@hitachi.com
+-- Steve
+
+
