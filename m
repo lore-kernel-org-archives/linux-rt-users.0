@@ -1,296 +1,82 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2 v2] preempt-rt/x86: Delay calling signals in int3
-Date: Wed, 25 Jan 2012 09:32:33 -0500
-Message-ID: <20120125143520.321343607@goodmis.org>
-References: <20120125143231.196670014@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=fix-rt-int3_x86_64-3.2-rt.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sankara Muthukrishnan <sankara.m@gmail.com>
+Subject: Re: timerfd functions hang on both x86 and ARM with RT patch and RT
+ scheduling policies
+Date: Wed, 25 Jan 2012 18:22:57 -0600
+Message-ID: <CAFQPvXcGJ4oad3domH48NT3i=PhCwG7W4Zn=7NWmARhQoonRMA@mail.gmail.com>
+References: <CAFQPvXdTb-=oo8OC6MAa++X6u4ZoWM2XXmKog-WK6DPookJyvg@mail.gmail.com>
+	<CAFQPvXd13=B+mJGtoGLGuw4PXhBUgWVsxd7sS9PAN2oz+3HUcQ@mail.gmail.com>
+	<1327478618.6973.2.camel@marge.simson.net>
+	<alpine.LFD.2.02.1201251110190.2716@ionos>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Mike Galbraith <efault@gmx.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pz0-f46.google.com ([209.85.210.46]:61161 "EHLO
+	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751120Ab2AZAW5 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jan 2012 19:22:57 -0500
+Received: by dadi2 with SMTP id i2so17835dad.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 25 Jan 2012 16:22:57 -0800 (PST)
+In-Reply-To: <alpine.LFD.2.02.1201251110190.2716@ionos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On x86_64 we must disable preemption before we enable interrupts
-for int3 and debugging, because the current task is using a per CPU
-debug stack defined by the IST. If we schedule out, another task
-can come in and use the same stack and cause the stack to be corrupted
-and crash the kernel on return.
+I tested it on ARM Cortex-A9 dual core with different priorities and
+with and without CPU affinities and it works like a charm. Thanks a
+bunch, Thomas and Mike.
+I wonder why my test worked for priority 1 alone before (without this
+fix) and I did not see any other threads using RT scheduler in the
+system with priority 1 or 2.
 
-When CONFIG_PREEMPT_RT_FULL is enabled, spin_locks become mutexes, and
-one of these is the spin lock used in signal handling.
-
-Some of the debug code (int3) causes do_trap() to send a signal.
-This function calls a spin lock that has been converted to a mutex
-and has the possibility to sleep. If this happens, the above issues with
-the corrupted stack is possible.
-
-Instead of calling the signal right away, for PREEMPT_RT and x86_64,
-the signal information is stored on the stacks task_struct and a
-new TIF flag is set (TIF_FORCE_SIG_TRAP). On exit of the exception,
-in paranoid_exit, if NEED_RESCHED is set, the task stack is switched
-back to the kernel stack and interrupts is enabled. In this code
-the TIF_FORCE_SIG_TRAP is also checked and a function is called to
-do the force_sig() in a context that may schedule.
-
-Note, to get into this path, the NEED_RESCHED flag is also set.
-But as this only happens in debug context, an extra schedule should not
-be an issue.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-rt.git/arch/x86/include/asm/thread_info.h
-===================================================================
---- linux-rt.git.orig/arch/x86/include/asm/thread_info.h
-+++ linux-rt.git/arch/x86/include/asm/thread_info.h
-@@ -95,6 +95,7 @@ struct thread_info {
- #define TIF_BLOCKSTEP		25	/* set when we want DEBUGCTLMSR_BTF */
- #define TIF_LAZY_MMU_UPDATES	27	/* task is updating the mmu lazily */
- #define TIF_SYSCALL_TRACEPOINT	28	/* syscall tracepoint instrumentation */
-+#define TIF_FORCE_SIG_TRAP	29	/* force a signal coming back from trap */
- 
- #define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
- #define _TIF_NOTIFY_RESUME	(1 << TIF_NOTIFY_RESUME)
-@@ -117,6 +118,7 @@ struct thread_info {
- #define _TIF_BLOCKSTEP		(1 << TIF_BLOCKSTEP)
- #define _TIF_LAZY_MMU_UPDATES	(1 << TIF_LAZY_MMU_UPDATES)
- #define _TIF_SYSCALL_TRACEPOINT	(1 << TIF_SYSCALL_TRACEPOINT)
-+#define _TIF_FORCE_SIG_TRAP	(1 << TIF_FORCE_SIG_TRAP)
- 
- /* work to do in syscall_trace_enter() */
- #define _TIF_WORK_SYSCALL_ENTRY	\
-@@ -266,5 +268,14 @@ extern void arch_task_cache_init(void);
- extern void free_thread_info(struct thread_info *ti);
- extern int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
- #define arch_task_cache_init arch_task_cache_init
-+
-+struct siginfo;
-+/*
-+ * Hacks for RT to get around signal processing with int3 and do_debug.
-+ */
-+void
-+force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt);
-+void send_sigtrap_rt(struct task_struct *tsk, struct pt_regs *regs,
-+		     int error_code, int si_code);
- #endif
- #endif /* _ASM_X86_THREAD_INFO_H */
-Index: linux-rt.git/arch/x86/kernel/entry_64.S
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/entry_64.S
-+++ linux-rt.git/arch/x86/kernel/entry_64.S
-@@ -1391,6 +1391,13 @@ paranoid_userspace:
- paranoid_schedule:
- 	TRACE_IRQS_ON
- 	ENABLE_INTERRUPTS(CLBR_ANY)
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	movl TI_flags(%rcx),%ebx
-+	testl $_TIF_FORCE_SIG_TRAP,%ebx
-+	jz paranoid_do_schedule
-+	call do_force_sig_trap
-+paranoid_do_schedule:
-+#endif
- 	call schedule
- 	DISABLE_INTERRUPTS(CLBR_ANY)
- 	TRACE_IRQS_OFF
-Index: linux-rt.git/arch/x86/kernel/ptrace.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/ptrace.c
-+++ linux-rt.git/arch/x86/kernel/ptrace.c
-@@ -1341,14 +1341,31 @@ void user_single_step_siginfo(struct tas
- 	fill_sigtrap_info(tsk, regs, 0, TRAP_BRKPT, info);
- }
- 
--void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
--					 int error_code, int si_code)
-+static void __send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code, int rt)
- {
- 	struct siginfo info;
- 
- 	fill_sigtrap_info(tsk, regs, error_code, si_code, &info);
- 	/* Send us the fake SIGTRAP */
--	force_sig_info(SIGTRAP, &info, tsk);
-+	force_sig_info_rt(SIGTRAP, &info, tsk, rt);
-+}
-+
-+void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code)
-+{
-+	__send_sigtrap(tsk, regs, error_code, si_code, 0);
-+}
-+
-+void send_sigtrap_rt(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code)
-+{
-+#if defined(CONFIG_X86_64) && defined(CONFIG_PREEMPT_RT_FULL)
-+	int rt = 1;
-+#else
-+	int rt = 0;
-+#endif
-+	__send_sigtrap(tsk, regs, error_code, si_code, rt);
- }
- 
- 
-Index: linux-rt.git/arch/x86/kernel/traps.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/traps.c
-+++ linux-rt.git/arch/x86/kernel/traps.c
-@@ -116,9 +116,83 @@ static inline void preempt_conditional_c
- #endif
- }
- 
-+#if defined(CONFIG_X86_64) && defined(CONFIG_PREEMPT_RT_FULL)
-+/*
-+ * In PREEMP_RT_FULL, the signal spinlocks are mutexes. But if
-+ * do_int3 calls do_trap, we are running on the debug stack, and
-+ * not the task struct stack. We must keep preemption disabled
-+ * because the current stack is per CPU not per task.
-+ *
-+ * Instead, we set the
-+
-+ */
-+void
-+__force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	if (!rt) {
-+		/* simple case */
-+		if (info)
-+			force_sig_info(sig, info, p);
-+		else
-+			force_sig(sig, p);
-+		return;
-+	}
-+	trace_printk("doing delayed force_sig info=%p\n", info);
-+	/*
-+	 * Sad, but to make things easier we set need resched,
-+	 * this forces the paranoid exit in traps to swap out
-+	 * of the debug stack and back to the users stack.
-+	 * Then there we call do_force_sig_trap() which does
-+	 * the delayed force_sig() with interrupts enabled and
-+	 * a thread stack that we can schedule on.
-+	 */
-+	set_need_resched();
-+	set_thread_flag(TIF_FORCE_SIG_TRAP);
-+	if (info) {
-+		memcpy(&p->stored_info, info, sizeof(p->stored_info));
-+		p->stored_info_set = 1;
-+	} else
-+		p->stored_info_set = 0;
-+
-+}
-+
-+void force_sig_rt(int sig, struct task_struct *p, int rt)
-+{
-+	__force_sig_info_rt(sig, NULL, p, rt);
-+}
-+
-+void
-+force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	__force_sig_info_rt(sig, info, p, rt);
-+}
-+
-+void do_force_sig_trap(void)
-+{
-+	struct task_struct *p = current;
-+
-+	trace_printk("forced sig! (set=%d)\n", p->stored_info_set);
-+	if (p->stored_info_set)
-+		force_sig_info(SIGTRAP, &p->stored_info, p);
-+	else
-+		force_sig(SIGTRAP, p);
-+	p->stored_info_set = 0;
-+	clear_thread_flag(TIF_FORCE_SIG_TRAP);
-+}
-+#else
-+void force_sig_rt(int sig, struct task_struct *p, int rt)
-+{
-+	force_sig(sig, p);
-+}
-+void force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	force_sig_info(sig, info, p);
-+}
-+#endif
-+
- static void __kprobes
--do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
--	long error_code, siginfo_t *info)
-+__do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
-+	  long error_code, siginfo_t *info, int rt)
- {
- 	struct task_struct *tsk = current;
- 
-@@ -167,7 +241,7 @@ trap_signal:
- 	if (info)
- 		force_sig_info(signr, info, tsk);
- 	else
--		force_sig(signr, tsk);
-+		force_sig_rt(signr, tsk, rt);
- 	return;
- 
- kernel_trap:
-@@ -187,6 +261,13 @@ vm86_trap:
- #endif
- }
- 
-+static void __kprobes
-+do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
-+	long error_code, siginfo_t *info)
-+{
-+	__do_trap(trapnr, signr, str, regs, error_code, info, 0);
-+}
-+
- #define DO_ERROR(trapnr, signr, str, name)				\
- dotraplinkage void do_##name(struct pt_regs *regs, long error_code)	\
- {									\
-@@ -326,7 +407,7 @@ dotraplinkage void __kprobes do_int3(str
- #endif
- 
- 	preempt_conditional_sti(regs);
--	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
-+	__do_trap(3, SIGTRAP, "int3", regs, error_code, NULL, 1);
- 	preempt_conditional_cli(regs);
- }
- 
-@@ -444,7 +525,7 @@ dotraplinkage void __kprobes do_debug(st
- 	}
- 	si_code = get_si_code(tsk->thread.debugreg6);
- 	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
--		send_sigtrap(tsk, regs, error_code, si_code);
-+		send_sigtrap_rt(tsk, regs, error_code, si_code);
- 	preempt_conditional_cli(regs);
- 
- 	return;
-Index: linux-rt.git/include/linux/sched.h
-===================================================================
---- linux-rt.git.orig/include/linux/sched.h
-+++ linux-rt.git/include/linux/sched.h
-@@ -1600,10 +1600,16 @@ struct task_struct {
- 	struct rcu_head put_rcu;
- 	int softirq_nestcnt;
- #endif
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#if defined CONFIG_PREEMPT_RT_FULL
-+#ifdef CONFIG_X86_64
-+	struct siginfo stored_info;
-+	int stored_info_set;
-+#endif
-+#ifdef CONFIG_HIGHMEM
- 	int kmap_idx;
- 	pte_t kmap_pte[KM_TYPE_NR];
- #endif
-+#endif /* CONFIG_PREEMPT_RT_FULL */
- };
- 
- #ifdef CONFIG_PREEMPT_RT_FULL
+On Wed, Jan 25, 2012 at 4:11 AM, Thomas Gleixner <tglx@linutronix.de> w=
+rote:
+> On Wed, 25 Jan 2012, Mike Galbraith wrote:
+>> On Tue, 2012-01-24 at 10:04 -0600, Sankara Muthukrishnan wrote:
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 spin_unlock_irq(&ctx->wqh.lock);
+>> +#ifndef CONFIG_PREEMPT_RT_BASE
+>
+> Bah.
+>
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 cpu_relax();
+>> +#else
+>> + =A0 =A0 =A0 =A0 =A0 =A0 /*
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0* Current may be an RT task with priori=
+ty high enough
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0* to prevent the thread currently _want=
+ing_ to execute
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0* the timer callback function from rece=
+iving the CPU.
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0*/
+>> + =A0 =A0 =A0 =A0 =A0 =A0 usleep_range(1, 10);
+>
+> Even more bah.
+>
+>> +#endif
+>> =A0 =A0 =A0 }
+>
+> Index: linux-3.2/fs/timerfd.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-3.2.orig/fs/timerfd.c
+> +++ linux-3.2/fs/timerfd.c
+> @@ -313,7 +313,7 @@ SYSCALL_DEFINE4(timerfd_settime, int, uf
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (hrtimer_try_to_cancel(&ctx->tmr) >=
+=3D 0)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0break;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0spin_unlock_irq(&ctx->wqh.lock);
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 cpu_relax();
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 hrtimer_wait_for_timer(&ctx->tmr);
+> =A0 =A0 =A0 =A0}
+>
+> =A0 =A0 =A0 =A0/*
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
