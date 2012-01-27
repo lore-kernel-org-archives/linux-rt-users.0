@@ -1,68 +1,61 @@
-From: Venkat Subbiah <vsubbiah@caviumnetworks.com>
-Subject: Re: task switch from net-rx to idle when there is napi processing
- to be done
-Date: Thu, 26 Jan 2012 12:35:40 -0800
-Message-ID: <4F21B91C.7080206@caviumnetworks.com>
-References: <4F1F6B66.5010005@caviumnetworks.com>  <20120125085523.GG6305@pengutronix.de>  <4F1FE7EB.3030601@caviumnetworks.com> <1327591757.22710.101.camel@gandalf.stny.rr.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH RT 1/2 v2] x86: Do not disable preemption in int3 on 32bit
+Date: Fri, 27 Jan 2012 18:36:38 +0900
+Message-ID: <4F227026.3000508@hitachi.com>
+References: <20120125143231.196670014@goodmis.org>   <20120125143520.086175333@goodmis.org> <4F211126.1090204@hitachi.com>  <1327584811.22710.80.camel@gandalf.stny.rr.com>  <4F215C5E.4090006@hitachi.com> <1327587719.22710.95.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Subbiah, Venkat" <Venkat.Subbiah@caviumnetworks.com>,
-	=?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Oleg Nesterov <oleg@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	Luis Goncalves <lgoncalv@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail3.caviumnetworks.com ([12.108.191.235]:8796 "EHLO
-	mail3.caviumnetworks.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752186Ab2AZUfl (ORCPT
+Received: from mail9.hitachi.co.jp ([133.145.228.44]:37175 "EHLO
+	mail9.hitachi.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752017Ab2A0Jgq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Jan 2012 15:35:41 -0500
-In-Reply-To: <1327591757.22710.101.camel@gandalf.stny.rr.com>
+	Fri, 27 Jan 2012 04:36:46 -0500
+In-Reply-To: <1327587719.22710.95.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/26/2012 07:29 AM, Steven Rostedt wrote:
-> On Wed, 2012-01-25 at 03:30 -0800, Venkat Subbiah wrote:
->> On 01/25/2012 12:55 AM, Uwe Kleine-K=F6nig wrote:
->>> Hello,
->>>
->>> On Tue, Jan 24, 2012 at 06:39:34PM -0800, Venkat Subbiah wrote:
->>>> In the process of debugging a napi ethernet driver performance
->>>> issue, what I am noticing is
->>>>
->>>> 1. While the driver is in the middle of a napi packet processing
->>>> loop, there is a task switch from
->>>> sirq-net-rx to idle even though there is pending napi processing t=
-o be done.
->>> I didn't check your logs below, but maybe this is related to the de=
-fault
->>> settings in /proc/sys/kernel/sched_rt_period_us and
->>> /proc/sys/kernel/sched_rt_runtime_us? That is 0.05s per second is
->>> reserved for non-RT tasks tasks such that a run-away realtime proce=
-ss
->>> will not lock up the machine.
->>>
->>> To verify that, try
->>>
->>> 	echo -1>   /proc/sys/kernel/sched_rt_runtime_us
->>>
->>> .
->> Thanks for you response. That was it. Setting this to -1 does the ex=
-pected.
-> Note, you should also have seen a warning in the logs when an RT task=
- is
-> throttled. Did you see such a thing?
-I didn't get to the console,but it is in the kernel logs.
->
-> -- Steve
->
->
->
+(2012/01/26 23:21), Steven Rostedt wrote:
+> On Thu, 2012-01-26 at 22:59 +0900, Masami Hiramatsu wrote:
+> 
+>> Better. If the functions are only for signaling, how
+>> about using the "signal" in name? :)
+>>
+>> conditional_sti/cli_for_signal()
+> 
+> I don't think they are only for signals. The conditional_sti/cli is for
+> all callers of do_trap(). But those callers that run on an IST stack use
+> the preempt_conditional_sti/cli() code. Perhaps we should call it:
+> 
+> conditional_sti/cli_ist() ?
+> 
+> Actually, I think this is the best name. The "preempt_" one, didn't give
+> any annotation about why it was disabling preemption. It was done
+> because the stack is on the IST and we can not schedule out. Thus, if we
+> add the "_ist()" to it, not only does it annotate why this call is
+> special, but also allows x86_32, which does not have an IST, not to have
+> to disable preemption.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I agree with your opinion :)
+
+Thanks,
+
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
