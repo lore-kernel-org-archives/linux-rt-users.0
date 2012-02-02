@@ -1,98 +1,85 @@
-From: "Tim Sander" <tim.sander@hbm.com>
+From: Hector Palacios <hector.palacios@digi.com>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 2 Feb 2012 13:38:44 +0100
-Message-ID: <201202021338.44950.tim.sander@hbm.com>
-References: <4F292FE0.7090302@digi.com>
+Date: Thu, 2 Feb 2012 13:57:52 +0100
+Message-ID: <4F2A8850.4080201@digi.com>
+References: <4F292FE0.7090302@digi.com> <201202021338.44950.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/Plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: <linux-rt-users@vger.kernel.org>, <lclaudio@uudg.org>,
-	<rostedt@goodmis.org>, <efault@gmx.de>
-To: "Hector Palacios" <hector.palacios@digi.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"lclaudio@uudg.org" <lclaudio@uudg.org>,
+	"rostedt@goodmis.org" <rostedt@goodmis.org>,
+	"efault@gmx.de" <efault@gmx.de>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:43722 "HELO
-	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1751249Ab2BBMjm convert rfc822-to-8bit (ORCPT
+Received: from mail37.messagelabs.com ([216.82.241.83]:29051 "EHLO
+	mail37.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752348Ab2BBM56 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 07:39:42 -0500
-Content-Class: urn:content-classes:message
-In-reply-to: <4F292FE0.7090302@digi.com>
+	Thu, 2 Feb 2012 07:57:58 -0500
+In-Reply-To: <201202021338.44950.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
-> When booting my platform with DHCP on, the DHCP request is sent by th=
-e
-> network driver before the PHY has even started the autonegotiation.
-> Since the PHY is not ready, the TX interrupt returns with NETDEV_TX_B=
-USY
-> but the softirq [sirq-net-tx] seems to have entered an infinite spin,=
- as
-> my system is practically hung and 'top' reveals [sirq-net-tx/0] is
-> consuming 95% of CPU. This is preventing the PHY autonegotiation (whi=
-ch is
-> scheduled as a delayed work) to start, so the PHY is never ready and =
-the
-> packet never reaches the network.
-Mh, i think i am hit by the same problem. I have a i.mx 35 and when dhc=
-p is
-enabled the ksoftirq is also running wild with 3.0-rt. This also happen=
-s when
-static ip is configured and the probably during network transfer the ne=
-twork
-interface is reconfigured. Basically it seems the sirq-net-tx thread tr=
-ies to
-send a packet on a non configured interface.
+Hello,
 
-But one thing that makes me thinking, is that this thing is only happen=
-ing on
-arm and not on x86. So Hector what platform are you working on. Are you=
- by
-chance using the same fec.c ethernet driver?
+On 02/02/2012 01:38 PM, Tim Sander wrote:
+ > Mh, i think i am hit by the same problem. I have a i.mx 35 and when =
+dhcp is
+ > enabled the ksoftirq is also running wild with 3.0-rt. This also hap=
+pens when
+ > static ip is configured and the probably during network transfer the=
+ network
+ > interface is reconfigured. Basically it seems the sirq-net-tx thread=
+ tries to
+ > send a packet on a non configured interface.
+ >
+ > But one thing that makes me thinking, is that this thing is only hap=
+pening on
+ > arm and not on x86. So Hector what platform are you working on. Are =
+you by
+ > chance using the same fec.c ethernet driver?
 
-I have verified that in my case the driver takes always the return stat=
-ement in
-line fec.c:247: return NETXDEV_TX_BUSY; =20
-It never stops on a breakpoint set on line 250 which shows that the int=
-erface
-gets never configured.
+I'm working on an i.MX51 and using the fec.c driver as well. Interestin=
+g that it is=20
+not happening on x86.
 
-I have taken some screenshots of my hw debugger:
+ > I have verified that in my case the driver takes always the return s=
+tatement in
+ > line fec.c:247: return NETXDEV_TX_BUSY;
+ > It never stops on a breakpoint set on line 250 which shows that the =
+interface
+ > gets never configured.
 
+Autonegotiation is triggered by phy_state_machine() at phy.c which is s=
+cheduled as a=20
+delayed work by phy_device.c upon PHY device creation.
+This is not even started when the fec_enet_start_xmit() function is cal=
+led.
+
+ > I have taken some screenshots of my hw debugger:
+ >
+ >=20
 trace:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_e=
 net_start_xmit.png
+ >=20
 stack:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_e=
 net_start_xmit_stacktrace.png
+ >=20
 locals:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_=
 enet_start_xmit_stack+locals.png
+ >
+ > Whats interesting to note is that phy_dev and mii_dev are both null =
+pointers.
 
-Whats interesting to note is that phy_dev and mii_dev are both null poi=
-nters.
+I'll check this but it is probably because the PHY device is not yet cr=
+eated or=20
+initialized.
 
-Best regards
-Tim
-
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
-Germany | www.hbm.com=20
-
-Registered as GmbH (German limited liability corporation) in the commer=
-cial register at the local court of Darmstadt, HRB 1147 =20
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
-the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
-er des Amtsgerichts Darmstadt unter HRB 1147=20
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
-st | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely fo=
-r the addressee. If you are not the intended recipient, please let me k=
-now and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
-ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
-faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
-=2E
+Best regards,
+--=20
+H=E9ctor Palacios
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
