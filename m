@@ -1,141 +1,117 @@
-From: Hector Palacios <hector.palacios@digi.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 2 Feb 2012 16:53:15 +0100
-Message-ID: <4F2AB16B.4090305@digi.com>
-References: <4F292FE0.7090302@digi.com> <4F2A8850.4080201@digi.com> <201202021525.05606.tim.sander@hbm.com> <201202021632.50065.tim.sander@hbm.com>
+Date: Thu, 02 Feb 2012 12:33:28 -0500
+Message-ID: <1328204008.5882.109.camel@gandalf.stny.rr.com>
+References: <4F292FE0.7090302@digi.com>
+	 <201202021338.44950.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	"efault@gmx.de" <efault@gmx.de>
+Cc: Hector Palacios <hector.palacios@digi.com>,
+	linux-rt-users@vger.kernel.org, lclaudio@uudg.org, efault@gmx.de,
+	Thomas Gleixner <tglx@linutronix.de>
 To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail210.messagelabs.com ([216.82.250.179]:55030 "EHLO
-	mail210.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932138Ab2BBPxZ (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:45803 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753534Ab2BBRdb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 10:53:25 -0500
-In-Reply-To: <201202021632.50065.tim.sander@hbm.com>
+	Thu, 2 Feb 2012 12:33:31 -0500
+In-Reply-To: <201202021338.44950.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tim,
+On Thu, 2012-02-02 at 13:38 +0100, Tim Sander wrote:
 
-On 02/02/2012 04:32 PM, Tim Sander wrote:
-> Attached you will find a hacky patch which should just verify that the problem
-> hypothesis can be validated.
-> It just initializes the phy with driver initialisation and should work around
-> this ksoftirq/sirq-net-tx problem.
+> I have verified that in my case the driver takes always the return statement in
+> line fec.c:247: return NETXDEV_TX_BUSY;  
 
-Confirmed, this hack works around the problem.
+Thank you!  I think I found the problem. That return of NETXDEV_TX_BUSY
+was key.
+
+> It never stops on a breakpoint set on line 250 which shows that the interface
+> gets never configured.
+> 
+> I have taken some screenshots of my hw debugger:
+> 
+> trace:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit.png
+> stack:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit_stacktrace.png
+> locals:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit_stack+locals.png
+> 
+
+As I suspected, this looks to be another case of the ksoftirqd starving
+the rest of the processes.
+
+We have the following code:
+
+net/core/dev.c: __dev_xmit_skb()
+
+I'm assuming we're hitting this path:
+
+	} else if ((q->flags & TCQ_F_CAN_BYPASS) && !qdisc_qlen(q) &&
+		   qdisc_run_begin(q)) {
+		/*
+		 * This is a work-conserving queue; there are no old skbs
+		 * waiting to be sent out; and the qdisc is not running -
+		 * xmit the skb directly.
+		 */
+		if (!(dev->priv_flags & IFF_XMIT_DST_RELEASE))
+			skb_dst_force(skb);
+
+		qdisc_bstats_update(q, skb);
+
+		if (sch_direct_xmit(skb, q, dev, txq, root_lock)) {
+			if (unlikely(contended)) {
+				spin_unlock(&q->busylock);
+				contended = false;
+			}
+			__qdisc_run(q);
+		} else
+			qdisc_run_end(q);
+
+		rc = NET_XMIT_SUCCESS;
 
 
-> ---
->   drivers/net/fec.c |   58 ++++++++++++++++++++++++++++------------------------
->   1 files changed, 31 insertions(+), 27 deletions(-)
->
-> diff --git a/drivers/net/fec.c b/drivers/net/fec.c
-> index 885d8ba..292ae7e 100644
-> --- a/drivers/net/fec.c
-> +++ b/drivers/net/fec.c
-> @@ -231,6 +231,7 @@ static void *swap_buffer(void *bufaddr, int len)
->          return bufaddr;
->   }
->
-> +
->   static netdev_tx_t
->   fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
->   {
-> @@ -1135,24 +1136,6 @@ static int
->   fec_enet_open(struct net_device *ndev)
->   {
->          struct fec_enet_private *fep = netdev_priv(ndev);
-> -       int ret;
-> -
-> -       /* I should reset the ring buffers here, but I don't yet know
-> -        * a simple way to do that.
-> -        */
-> -
-> -       ret = fec_enet_alloc_buffers(ndev);
-> -       if (ret)
-> -               return ret;
-> -
-> -       /* Probe and connect to PHY when open the interface */
-> -       ret = fec_enet_mii_probe(ndev);
-> -       if (ret) {
-> -               fec_enet_free_buffers(ndev);
-> -               return ret;
-> -       }
-> -       phy_start(fep->phy_dev);
-> -       netif_start_queue(ndev);
->          fep->opened = 1;
->          return 0;
->   }
-> @@ -1164,15 +1147,6 @@ fec_enet_close(struct net_device *ndev)
->
->          /* Don't know what to do yet. */
->          fep->opened = 0;
-> -       netif_stop_queue(ndev);
-> -       fec_stop(ndev);
-> -
-> -       if (fep->phy_dev) {
-> -               phy_stop(fep->phy_dev);
-> -               phy_disconnect(fep->phy_dev);
-> -       }
-> -
-> -       fec_enet_free_buffers(ndev);
->
->          return 0;
->   }
-> @@ -1432,10 +1406,32 @@ fec_probe(struct platform_device *pdev)
->          netif_carrier_off(ndev);
->
->          ret = register_netdev(ndev);
-> +
->          if (ret)
->                  goto failed_register;
->
-> +// Tim: very hacky for testing
-> +       /* I should reset the ring buffers here, but I don't yet know
-> +        * a simple way to do that.
-> +        */
-> +
-> +       ret = fec_enet_alloc_buffers(ndev);
-> +       if (ret)
-> +               return ret;
-> +
-> +       /* Probe and connect to PHY when open the interface */
-> +       ret = fec_enet_mii_probe(ndev);
-> +       if (ret) {
-> +               fec_enet_free_buffers(ndev);
-> +               return ret;
-> +       }
-> +       phy_start(fep->phy_dev);
-> +       netif_start_queue(ndev);
-> +       fep->opened = 1;
-> +// end hacky
-> +
->          return 0;
-> +
->
->   failed_register:
->          fec_enet_mii_remove(fep);
-> @@ -1466,7 +1462,15 @@ fec_drv_remove(struct platform_device *pdev)
->          struct fec_enet_private *fep = netdev_priv(ndev);
->          struct resource *r;
->
-> +       netif_stop_queue(ndev);
->          fec_stop(ndev);
-> +
-> +       if (fep->phy_dev) {
-> +               phy_stop(fep->phy_dev);
-> +               phy_disconnect(fep->phy_dev);
-> +       }
-> +
-> +       fec_enet_free_buffers(ndev);
->          fec_enet_mii_remove(fep);
->          clk_disable(fep->clk);
->          clk_put(fep->clk);
+net/sched/sch_generic.c: sch_direct_xmit()
+
+	if (!netif_tx_queue_frozen_or_stopped(txq))
+		ret = dev_hard_start_xmit(skb, dev, txq);
+
+
+net/core/dev.c: dev_hard_start_xmit()
+
+		rc = ops->ndo_start_xmit(nskb, dev);
+		trace_net_dev_xmit(nskb, rc, dev, skb_len);
+		if (unlikely(rc != NETDEV_TX_OK)) {
+			if (rc & ~NETDEV_TX_MASK)
+				goto out_kfree_gso_skb;
+			nskb->next = skb->next;
+			skb->next = nskb;
+			return rc;
+		}
+
+
+ops->ndo_start_xmit == fec_enet_start_xmit
+
+drivers/net/fec.c: fec_enet_start_xmit()
+
+	if (!fep->link) {
+		/* Link is down or autonegotiation is in progress. */
+		return NETDEV_TX_BUSY;
+	}
+
+NETDEV_TX_BUSY is part of NET_TX_MASK thus the packet is requeued (the
+skb->next = nskb) in dev_hard_start_xmit(). And the NETDEV_TX_BUSY is
+passed back to sch_derect_xmit() which calls dev_requeue_skb() which
+then calls __netif_schedule(q) which will call __netif_reschedule(q)
+which will then do raise_softirq_irqoff(NET_TX_SOFTIRQ).
+
+Thus, as soon as ksoftirq exits this routine, it will restart the
+process over again. As the fec driver never finished with its
+negotiations, the process starts over again and we never move forward.
+
+I'm not sure what the best way to handle this is.
+
+-- Steve
+
 
