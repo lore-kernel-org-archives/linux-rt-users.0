@@ -1,9 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 02 Feb 2012 12:33:28 -0500
-Message-ID: <1328204008.5882.109.camel@gandalf.stny.rr.com>
+Date: Thu, 02 Feb 2012 13:10:45 -0500
+Message-ID: <1328206245.5882.113.camel@gandalf.stny.rr.com>
 References: <4F292FE0.7090302@digi.com>
-	 <201202021338.44950.tim.sander@hbm.com>
+	 <201202021338.44950.tim.sander@hbm.com> <4F2A8850.4080201@digi.com>
+	 <201202021525.05606.tim.sander@hbm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -12,106 +13,75 @@ Cc: Hector Palacios <hector.palacios@digi.com>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:45803 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:35084 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753534Ab2BBRdb (ORCPT
+	with ESMTP id S932503Ab2BBSKr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 12:33:31 -0500
-In-Reply-To: <201202021338.44950.tim.sander@hbm.com>
+	Thu, 2 Feb 2012 13:10:47 -0500
+In-Reply-To: <201202021525.05606.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-02-02 at 13:38 +0100, Tim Sander wrote:
-
-> I have verified that in my case the driver takes always the return statement in
-> line fec.c:247: return NETXDEV_TX_BUSY;  
-
-Thank you!  I think I found the problem. That return of NETXDEV_TX_BUSY
-was key.
-
-> It never stops on a breakpoint set on line 250 which shows that the interface
-> gets never configured.
-> 
-> I have taken some screenshots of my hw debugger:
-> 
-> trace:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit.png
-> stack:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit_stacktrace.png
-> locals:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_enet_start_xmit_stack+locals.png
+On Thu, 2012-02-02 at 15:25 +0100, Tim Sander wrote:
+> > 
+> > I'm working on an i.MX51 and using the fec.c driver as well. Interesting
+> > that it is not happening on x86.
+> Well, at least no one else spoke out on this problem before
 > 
 
-As I suspected, this looks to be another case of the ksoftirqd starving
-the rest of the processes.
+I'm thinking that fec.c is not available for x86, as it seems that the
+dependencies don't allow it to be enabled.
 
-We have the following code:
-
-net/core/dev.c: __dev_xmit_skb()
-
-I'm assuming we're hitting this path:
-
-	} else if ((q->flags & TCQ_F_CAN_BYPASS) && !qdisc_qlen(q) &&
-		   qdisc_run_begin(q)) {
-		/*
-		 * This is a work-conserving queue; there are no old skbs
-		 * waiting to be sent out; and the qdisc is not running -
-		 * xmit the skb directly.
-		 */
-		if (!(dev->priv_flags & IFF_XMIT_DST_RELEASE))
-			skb_dst_force(skb);
-
-		qdisc_bstats_update(q, skb);
-
-		if (sch_direct_xmit(skb, q, dev, txq, root_lock)) {
-			if (unlikely(contended)) {
-				spin_unlock(&q->busylock);
-				contended = false;
-			}
-			__qdisc_run(q);
-		} else
-			qdisc_run_end(q);
-
-		rc = NET_XMIT_SUCCESS;
-
-
-net/sched/sch_generic.c: sch_direct_xmit()
-
-	if (!netif_tx_queue_frozen_or_stopped(txq))
-		ret = dev_hard_start_xmit(skb, dev, txq);
-
-
-net/core/dev.c: dev_hard_start_xmit()
-
-		rc = ops->ndo_start_xmit(nskb, dev);
-		trace_net_dev_xmit(nskb, rc, dev, skb_len);
-		if (unlikely(rc != NETDEV_TX_OK)) {
-			if (rc & ~NETDEV_TX_MASK)
-				goto out_kfree_gso_skb;
-			nskb->next = skb->next;
-			skb->next = nskb;
-			return rc;
-		}
-
-
-ops->ndo_start_xmit == fec_enet_start_xmit
-
-drivers/net/fec.c: fec_enet_start_xmit()
-
-	if (!fep->link) {
-		/* Link is down or autonegotiation is in progress. */
-		return NETDEV_TX_BUSY;
-	}
-
-NETDEV_TX_BUSY is part of NET_TX_MASK thus the packet is requeued (the
-skb->next = nskb) in dev_hard_start_xmit(). And the NETDEV_TX_BUSY is
-passed back to sch_derect_xmit() which calls dev_requeue_skb() which
-then calls __netif_schedule(q) which will call __netif_reschedule(q)
-which will then do raise_softirq_irqoff(NET_TX_SOFTIRQ).
-
-Thus, as soon as ksoftirq exits this routine, it will restart the
-process over again. As the fec driver never finished with its
-negotiations, the process starts over again and we never move forward.
-
-I'm not sure what the best way to handle this is.
+That said, as I think I know the problem, can you try this patch to see
+if it fixes things. This patch is a TOTAL HACK! Not for inclusion. It's
+racy and buggy. I didn't even compile it because I couldn't get the
+configs to enable FEC, and I was too lazy to set up my cross compiler to
+test it. ;-)
 
 -- Steve
+
+diff --git a/drivers/net/fec.c b/drivers/net/fec.c
+index 885d8ba..9368dc2 100644
+--- a/drivers/net/fec.c
++++ b/drivers/net/fec.c
+@@ -231,6 +231,9 @@ static void *swap_buffer(void *bufaddr, int len)
+ 	return bufaddr;
+ }
+ 
++static DECLARE_COMPLETION(kick_ksoftirq);
++static int comp_set;
++
+ static netdev_tx_t
+ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+ {
+@@ -243,6 +246,9 @@ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+ 	unsigned long flags;
+ 
+ 	if (!fep->link) {
++		if (comp_set)
++			wait_for_completion(&kick_ksoftirq);
++
+ 		/* Link is down or autonegotiation is in progress. */
+ 		return NETDEV_TX_BUSY;
+ 	}
+@@ -794,6 +800,8 @@ static void fec_enet_adjust_link(struct net_device *ndev)
+ 	/* Link on or off change */
+ 	if (phy_dev->link != fep->link) {
+ 		fep->link = phy_dev->link;
++		complete(&kick_ksoftirq);
++		comp_set = 0;
+ 		if (phy_dev->link)
+ 			fec_restart(ndev, phy_dev->duplex);
+ 		else
+@@ -914,6 +922,9 @@ static int fec_enet_mii_probe(struct net_device *ndev)
+ 	fep->link = 0;
+ 	fep->full_duplex = 0;
+ 
++	init_completion(&kick_ksoftirq);
++	comp_set = 1;
++
+ 	printk(KERN_INFO "%s: Freescale FEC PHY driver [%s] "
+ 		"(mii_bus:phy_addr=%s, irq=%d)\n", ndev->name,
+ 		fep->phy_dev->drv->name, dev_name(&fep->phy_dev->dev),
 
 
