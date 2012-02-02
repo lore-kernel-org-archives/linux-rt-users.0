@@ -1,79 +1,146 @@
-From: Tim Sander <tstone@vlsi.informatik.tu-darmstadt.de>
-Subject: Re: [ANNOUNCE] 3.0.14-rt31 - ksoftirq running wild - FEC ethernet driver to blame? Yep
-Date: Thu, 2 Feb 2012 00:11:02 +0100
-Message-ID: <201202020011.03253.tstone@vlsi.informatik.tu-darmstadt.de>
-References: <1324525237.5916.114.camel@gandalf.stny.rr.com> <201201251031.48983.tim.sander@hbm.com> <1328128063.5882.80.camel@gandalf.stny.rr.com>
+From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+Subject: Re: [PATCH RT 1/2 v3] x86: Do not disable preemption in int3 on
+ 32bit
+Date: Thu, 02 Feb 2012 11:24:55 +0900
+Message-ID: <4F29F3F7.5000802@hitachi.com>
+References: <20120201210612.730595791@goodmis.org> <20120201210748.397671856@goodmis.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-15"
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Cc: Tim Sander <tim.sander@hbm.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <efault@gmx.de>,
-	Tim Sander <tstone@iss.tu-darmstadt.de>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Oleg Nesterov <oleg@redhat.com>,
 	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Gerlando Falauto <gerlando.falauto@keymile.com>,
-	Micha Nelissen <micha@neli.hopto.org>,
-	Holger Brunck <holger.brunck@keymile.com>
+	Luis Goncalves <lgoncalv@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1328128063.5882.80.camel@gandalf.stny.rr.com>
+In-Reply-To: <20120201210748.397671856@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven
-> Is the system still usable when this happens? If so, can you configure
-> in ftrace, and run a trace on what ksoftirq is doing:
-Well its slooooooooooooooooow since its only 5% of a 500Mhz arm v6 cpu.
-So i can easy type faster than this thing echo characters on a serial console :-)
-> mkdir /debug
-> mount -t debugfs nodev /debug
-> cd /debug/tracing
-> echo <pid-of-ksoftirq> > set_ftrace_pid
-> echo function > current_tracer
-> cat trace
-Well i tried the complete function tracer and i think systemload is just to high 
-for this system but i will give it a try as soon as i see this error again.
+(2012/02/02 6:06), Steven Rostedt wrote:
+> Preemption must be disabled before enabling interrupts in do_trap
+> on x86_64 because the stack in use for int3 and debug is a per CPU
+> stack set by th IST. But 32bit does not have an IST and the stack
+> still belongs to the current task and there is no problem in scheduling
+> out the task.
+> 
+> Keep preemption enabled on X86_32 when enabling interrupts for
+> do_trap().
+> 
+> The name of the function is changed from preempt_conditional_sti/cli()
+> to conditional_sti/cli_ist(), to annotate that this function is used
+> when the stack is on the IST.
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org
 
-When toying around with the hw debugger i think it runs somehow into do_coredump 
-when this error hits and then somehow loops but since i was feeding the wrong 
-symbol table to my hw debugger all this stuff looked even weirder today 8-/.
+Reviewed-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
 
-I was also toying around with setting the phy timeout in the driver and 
-hacking in the phy interrupt, but nothing conclusive.
+Thanks!
 
-Best regards
-Tim
+> 
+> Index: linux-rt.git/arch/x86/kernel/traps.c
+> ===================================================================
+> --- linux-rt.git.orig/arch/x86/kernel/traps.c
+> +++ linux-rt.git/arch/x86/kernel/traps.c
+> @@ -87,9 +87,21 @@ static inline void conditional_sti(struc
+>  		local_irq_enable();
+>  }
+>  
+> -static inline void preempt_conditional_sti(struct pt_regs *regs)
+> +static inline void conditional_sti_ist(struct pt_regs *regs)
+>  {
+> +#ifdef CONFIG_X86_64
+> +	/*
+> +	 * X86_64 uses a per CPU stack on the IST for certain traps
+> +	 * like int3. The task can not be preempted when using one
+> +	 * of these stacks, thus preemption must be disabled, otherwise
+> +	 * the stack can be corrupted if the task is scheduled out,
+> +	 * and another task comes in and uses this stack.
+> +	 *
+> +	 * On x86_32 the task keeps its own stack and it is OK if the
+> +	 * task schedules out.
+> +	 */
+>  	inc_preempt_count();
+> +#endif
+>  	if (regs->flags & X86_EFLAGS_IF)
+>  		local_irq_enable();
+>  }
+> @@ -100,11 +112,13 @@ static inline void conditional_cli(struc
+>  		local_irq_disable();
+>  }
+>  
+> -static inline void preempt_conditional_cli(struct pt_regs *regs)
+> +static inline void conditional_cli_ist(struct pt_regs *regs)
+>  {
+>  	if (regs->flags & X86_EFLAGS_IF)
+>  		local_irq_disable();
+> +#ifdef CONFIG_X86_64
+>  	dec_preempt_count();
+> +#endif
+>  }
+>  
+>  static void __kprobes
+> @@ -222,9 +236,9 @@ dotraplinkage void do_stack_segment(stru
+>  	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
+>  			12, SIGBUS) == NOTIFY_STOP)
+>  		return;
+> -	preempt_conditional_sti(regs);
+> +	conditional_sti_ist(regs);
+>  	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
+> -	preempt_conditional_cli(regs);
+> +	conditional_cli_ist(regs);
+>  }
+>  
+>  dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
+> @@ -316,9 +330,9 @@ dotraplinkage void __kprobes do_int3(str
+>  		return;
+>  #endif
+>  
+> -	preempt_conditional_sti(regs);
+> +	conditional_sti_ist(regs);
+>  	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
+> -	preempt_conditional_cli(regs);
+> +	conditional_cli_ist(regs);
+>  }
+>  
+>  #ifdef CONFIG_X86_64
+> @@ -412,12 +426,12 @@ dotraplinkage void __kprobes do_debug(st
+>  		return;
+>  
+>  	/* It's safe to allow irq's after DR6 has been saved */
+> -	preempt_conditional_sti(regs);
+> +	conditional_sti_ist(regs);
+>  
+>  	if (regs->flags & X86_VM_MASK) {
+>  		handle_vm86_trap((struct kernel_vm86_regs *) regs,
+>  				error_code, 1);
+> -		preempt_conditional_cli(regs);
+> +		conditional_cli_ist(regs);
+>  		return;
+>  	}
+>  
+> @@ -436,7 +450,7 @@ dotraplinkage void __kprobes do_debug(st
+>  	si_code = get_si_code(tsk->thread.debugreg6);
+>  	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
+>  		send_sigtrap(tsk, regs, error_code, si_code);
+> -	preempt_conditional_cli(regs);
+> +	conditional_cli_ist(regs);
+>  
+>  	return;
+>  }
+> 
 
-dmesg output with phy irq enabled, either my hackish interrupt setting is not
-working or the fec driver has a problem with phy interrupts... dunno:
 
-nf_conntrack version 0.5.0 (1979 buckets, 7916 max)
-fec_stop : Graceful transmit stop did not complete !
-sched: RT throttling activated
-FEC: MDIO read timeout
-PHY: 1:00 - Link is Down
-irq 103: nobody cared (try booting with the "irqpoll" option)
-Backtrace: 
-[<c002de30>] (dump_backtrace+0x0/0x110) from [<c024d780>] (dump_stack+0x18/0x1c)
- r6:00000000 r5:c794a2e0 r4:c031856c r3:00000000
-[<c024d768>] (dump_stack+0x0/0x1c) from [<c0070930>] (__report_bad_irq.clone.5+0x2c/0xdc)
-[<c0070904>] (__report_bad_irq.clone.5+0x0/0xdc) from [<c0070bf0>] (note_interrupt+0x19c/0x244)
- r5:c794a2e0 r4:c0318544
-[<c0070a54>] (note_interrupt+0x0/0x244) from [<c006f724>] (irq_thread+0xf0/0x1f4)
-[<c006f634>] (irq_thread+0x0/0x1f4) from [<c0057298>] (kthread+0x8c/0x94)
-[<c005720c>] (kthread+0x0/0x94) from [<c00413d4>] (do_exit+0x0/0x2d8)
- r7:00000013 r6:c00413d4 r5:c005720c r4:c7bd9904
-handlers:
-[<c006f4c8>] irq_default_primary_handler threaded [<c01a1660>] phy_interrupt
-Disabling IRQ #103
-FEC: MDIO write timeout
-init: avahi-autoip main process (423) terminated with status 1
-init: avahi-autoip main process ended, respawning
-eth0: Freescale FEC PHY driver [Micrel KS8041] (mii_bus:phy_addr=1:00, irq=103)
-ADDRCONF(NETDEV_UP): eth0: link is not ready
-PHY: 1:00 - Link is Up - 100/Full
-ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+-- 
+Masami HIRAMATSU
+Software Platform Research Dept. Linux Technology Center
+Hitachi, Ltd., Yokohama Research Laboratory
+E-mail: masami.hiramatsu.pt@hitachi.com
