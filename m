@@ -1,8 +1,8 @@
 From: "Tim Sander" <tim.sander@hbm.com>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 2 Feb 2012 15:25:05 +0100
-Message-ID: <201202021525.05606.tim.sander@hbm.com>
-References: <4F292FE0.7090302@digi.com> <201202021338.44950.tim.sander@hbm.com> <4F2A8850.4080201@digi.com>
+Date: Thu, 2 Feb 2012 16:32:49 +0100
+Message-ID: <201202021632.50065.tim.sander@hbm.com>
+References: <4F292FE0.7090302@digi.com> <4F2A8850.4080201@digi.com> <201202021525.05606.tim.sander@hbm.com>
 Mime-Version: 1.0
 Content-Type: text/Plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -10,77 +10,31 @@ Cc: <linux-rt-users@vger.kernel.org>, <lclaudio@uudg.org>,
 	<rostedt@goodmis.org>, <efault@gmx.de>
 To: "Hector Palacios" <hector.palacios@digi.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:55024 "HELO
+Received: from relay.medianet-world.de ([213.157.0.172]:24498 "HELO
 	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1756251Ab2BBO2O convert rfc822-to-8bit (ORCPT
+	with SMTP id S932081Ab2BBPeA convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 09:28:14 -0500
+	Thu, 2 Feb 2012 10:34:00 -0500
 Content-Class: urn:content-classes:message
-In-reply-to: <4F2A8850.4080201@digi.com>
+In-reply-to: <201202021525.05606.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi
-> On 02/02/2012 01:38 PM, Tim Sander wrote:
->  > Mh, i think i am hit by the same problem. I have a i.mx 35 and whe=
-n dhcp
->  > is enabled the ksoftirq is also running wild with 3.0-rt. This als=
-o
->  > happens when static ip is configured and the probably during netwo=
-rk
->  > transfer the network interface is reconfigured. Basically it seems=
- the
->  > sirq-net-tx thread tries to send a packet on a non configured
->  > interface.
->  >=20
->  > But one thing that makes me thinking, is that this thing is only
->  > happening on arm and not on x86. So Hector what platform are you
->  > working on. Are you by chance using the same fec.c ethernet driver=
-?
->=20
-> I'm working on an i.MX51 and using the fec.c driver as well. Interest=
-ing
-> that it is not happening on x86.
-Well, at least no one else spoke out on this problem before
 
->  > I have verified that in my case the driver takes always the return
->  > statement in line fec.c:247: return NETXDEV_TX_BUSY;
->  > It never stops on a breakpoint set on line 250 which shows that th=
-e
->  > interface gets never configured.
->=20
-> Autonegotiation is triggered by phy_state_machine() at phy.c which is
-> scheduled as a delayed work by phy_device.c upon PHY device creation.
-> This is not even started when the fec_enet_start_xmit() function is c=
-alled.
->=20
->  > I have taken some screenshots of my hw debugger:
-> trace:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec=
-_enet_
-> start_xmit.png
->=20
-> stack:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec=
-_enet_
-> start_xmit_stacktrace.png
->=20
-> locals:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fe=
-c_enet
-> _start_xmit_stack+locals.png
->=20
->  > Whats interesting to note is that phy_dev and mii_dev are both nul=
-l
->  > pointers.
->=20
-> I'll check this but it is probably because the PHY device is not yet
-> created or initialized.
-Well the phy seems to be initialized in fec_enet_open->fec_enet_mii_pro=
-be.
-But opened is set to 0 so this codepath has not been run, so not initia=
-lized.
-If the device is not opended how does it tries to send packets?
+Attached you will find a hacky patch which should just verify that the =
+problem=20
+hypothesis can be validated.
+It just initializes the phy with driver initialisation and should work =
+around=20
+this ksoftirq/sirq-net-tx problem.
 
 Best regards
 Tim
+
+
+=46rom 5dda8d2f7d068ca2534441215d9437f3bbb0c652 Mon Sep 17 00:00:00 200=
+1
 
 Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
 Germany | www.hbm.com=20
@@ -103,6 +57,120 @@ Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
 ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
 faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
 =2E
+=46rom: Tim Sander <tim.sander@hbm.com>
+Date: Thu, 2 Feb 2012 15:51:06 +0100
+Subject: [PATCH] fec: hack around ksoftirqd problem
+
+---
+ drivers/net/fec.c |   58 ++++++++++++++++++++++++++++-----------------=
+-------
+ 1 files changed, 31 insertions(+), 27 deletions(-)
+
+diff --git a/drivers/net/fec.c b/drivers/net/fec.c
+index 885d8ba..292ae7e 100644
+--- a/drivers/net/fec.c
++++ b/drivers/net/fec.c
+@@ -231,6 +231,7 @@ static void *swap_buffer(void *bufaddr, int len)
+        return bufaddr;
+ }
+=20
++
+ static netdev_tx_t
+ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+ {
+@@ -1135,24 +1136,6 @@ static int
+ fec_enet_open(struct net_device *ndev)
+ {
+        struct fec_enet_private *fep =3D netdev_priv(ndev);
+-       int ret;
+-
+-       /* I should reset the ring buffers here, but I don't yet know
+-        * a simple way to do that.
+-        */
+-
+-       ret =3D fec_enet_alloc_buffers(ndev);
+-       if (ret)
+-               return ret;
+-
+-       /* Probe and connect to PHY when open the interface */
+-       ret =3D fec_enet_mii_probe(ndev);
+-       if (ret) {
+-               fec_enet_free_buffers(ndev);
+-               return ret;
+-       }
+-       phy_start(fep->phy_dev);
+-       netif_start_queue(ndev);
+        fep->opened =3D 1;
+        return 0;
+ }
+@@ -1164,15 +1147,6 @@ fec_enet_close(struct net_device *ndev)
+=20
+        /* Don't know what to do yet. */
+        fep->opened =3D 0;
+-       netif_stop_queue(ndev);
+-       fec_stop(ndev);
+-
+-       if (fep->phy_dev) {
+-               phy_stop(fep->phy_dev);
+-               phy_disconnect(fep->phy_dev);
+-       }
+-
+-       fec_enet_free_buffers(ndev);
+=20
+        return 0;
+ }
+@@ -1432,10 +1406,32 @@ fec_probe(struct platform_device *pdev)
+        netif_carrier_off(ndev);
+=20
+        ret =3D register_netdev(ndev);
++
+        if (ret)
+                goto failed_register;
+=20
++// Tim: very hacky for testing
++       /* I should reset the ring buffers here, but I don't yet know
++        * a simple way to do that.
++        */
++
++       ret =3D fec_enet_alloc_buffers(ndev);
++       if (ret)
++               return ret;
++
++       /* Probe and connect to PHY when open the interface */
++       ret =3D fec_enet_mii_probe(ndev);
++       if (ret) {
++               fec_enet_free_buffers(ndev);
++               return ret;
++       }
++       phy_start(fep->phy_dev);
++       netif_start_queue(ndev);
++       fep->opened =3D 1;
++// end hacky=20
++
+        return 0;
++
+=20
+ failed_register:
+        fec_enet_mii_remove(fep);
+@@ -1466,7 +1462,15 @@ fec_drv_remove(struct platform_device *pdev)
+        struct fec_enet_private *fep =3D netdev_priv(ndev);
+        struct resource *r;
+=20
++       netif_stop_queue(ndev);
+        fec_stop(ndev);
++
++       if (fep->phy_dev) {
++               phy_stop(fep->phy_dev);
++               phy_disconnect(fep->phy_dev);
++       }
++
++       fec_enet_free_buffers(ndev);
+        fec_enet_mii_remove(fep);
+        clk_disable(fep->clk);
+        clk_put(fep->clk);
+--=20
+1.7.0.4
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
