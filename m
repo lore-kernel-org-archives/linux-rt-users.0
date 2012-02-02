@@ -1,146 +1,49 @@
-From: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
-Subject: Re: [PATCH RT 1/2 v3] x86: Do not disable preemption in int3 on
- 32bit
-Date: Thu, 02 Feb 2012 11:24:55 +0900
-Message-ID: <4F29F3F7.5000802@hitachi.com>
-References: <20120201210612.730595791@goodmis.org> <20120201210748.397671856@goodmis.org>
+From: Raz <raziebe@gmail.com>
+Subject: preempt-rt: Real Time hogging task
+Date: Thu, 2 Feb 2012 12:52:46 +0200
+Message-ID: <CAPB=Z-r+3ht0Au3mvrUBQ7-g+r=QfLao19BF7n97662q52fxKg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120201210748.397671856@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:44941 "EHLO
+	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754061Ab2BBKxH convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 2 Feb 2012 05:53:07 -0500
+Received: by bkcjm19 with SMTP id jm19so1915595bkc.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 02 Feb 2012 02:53:06 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-(2012/02/02 6:06), Steven Rostedt wrote:
-> Preemption must be disabled before enabling interrupts in do_trap
-> on x86_64 because the stack in use for int3 and debug is a per CPU
-> stack set by th IST. But 32bit does not have an IST and the stack
-> still belongs to the current task and there is no problem in scheduling
-> out the task.
-> 
-> Keep preemption enabled on X86_32 when enabling interrupts for
-> do_trap().
-> 
-> The name of the function is changed from preempt_conditional_sti/cli()
-> to conditional_sti/cli_ist(), to annotate that this function is used
-> when the stack is on the IST.
-> 
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org
+hey
 
-Reviewed-by: Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
+I am trying to understand why a user space MT process behaves in an
+unexpected manner.
+I have real time process, which executes most of its threads in RT prio=
+rity,
+and from time to time a task ( medium priority ) is executing without
+trying to stop.
 
-Thanks!
+There are times, that this task is hogging the entire process and no
+other **higher*** rt priority
+task is getting any cpu time.
 
-> 
-> Index: linux-rt.git/arch/x86/kernel/traps.c
-> ===================================================================
-> --- linux-rt.git.orig/arch/x86/kernel/traps.c
-> +++ linux-rt.git/arch/x86/kernel/traps.c
-> @@ -87,9 +87,21 @@ static inline void conditional_sti(struc
->  		local_irq_enable();
->  }
->  
-> -static inline void preempt_conditional_sti(struct pt_regs *regs)
-> +static inline void conditional_sti_ist(struct pt_regs *regs)
->  {
-> +#ifdef CONFIG_X86_64
-> +	/*
-> +	 * X86_64 uses a per CPU stack on the IST for certain traps
-> +	 * like int3. The task can not be preempted when using one
-> +	 * of these stacks, thus preemption must be disabled, otherwise
-> +	 * the stack can be corrupted if the task is scheduled out,
-> +	 * and another task comes in and uses this stack.
-> +	 *
-> +	 * On x86_32 the task keeps its own stack and it is OK if the
-> +	 * task schedules out.
-> +	 */
->  	inc_preempt_count();
-> +#endif
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_enable();
->  }
-> @@ -100,11 +112,13 @@ static inline void conditional_cli(struc
->  		local_irq_disable();
->  }
->  
-> -static inline void preempt_conditional_cli(struct pt_regs *regs)
-> +static inline void conditional_cli_ist(struct pt_regs *regs)
->  {
->  	if (regs->flags & X86_EFLAGS_IF)
->  		local_irq_disable();
-> +#ifdef CONFIG_X86_64
->  	dec_preempt_count();
-> +#endif
->  }
->  
->  static void __kprobes
-> @@ -222,9 +236,9 @@ dotraplinkage void do_stack_segment(stru
->  	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
->  			12, SIGBUS) == NOTIFY_STOP)
->  		return;
-> -	preempt_conditional_sti(regs);
-> +	conditional_sti_ist(regs);
->  	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
-> -	preempt_conditional_cli(regs);
-> +	conditional_cli_ist(regs);
->  }
->  
->  dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
-> @@ -316,9 +330,9 @@ dotraplinkage void __kprobes do_int3(str
->  		return;
->  #endif
->  
-> -	preempt_conditional_sti(regs);
-> +	conditional_sti_ist(regs);
->  	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
-> -	preempt_conditional_cli(regs);
-> +	conditional_cli_ist(regs);
->  }
->  
->  #ifdef CONFIG_X86_64
-> @@ -412,12 +426,12 @@ dotraplinkage void __kprobes do_debug(st
->  		return;
->  
->  	/* It's safe to allow irq's after DR6 has been saved */
-> -	preempt_conditional_sti(regs);
-> +	conditional_sti_ist(regs);
->  
->  	if (regs->flags & X86_VM_MASK) {
->  		handle_vm86_trap((struct kernel_vm86_regs *) regs,
->  				error_code, 1);
-> -		preempt_conditional_cli(regs);
-> +		conditional_cli_ist(regs);
->  		return;
->  	}
->  
-> @@ -436,7 +450,7 @@ dotraplinkage void __kprobes do_debug(st
->  	si_code = get_si_code(tsk->thread.debugreg6);
->  	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
->  		send_sigtrap(tsk, regs, error_code, si_code);
-> -	preempt_conditional_cli(regs);
-> +	conditional_cli_ist(regs);
->  
->  	return;
->  }
-> 
+Linux is **not** getting hogged. when setting the serial console (
+irq/serial ) and its shell ( /bin/sh )
+to a higher priority linux is responsive.
 
+Observing the task list=A0 through ps command i can see that this task'=
+s
+threads when
+to un-interruptible sleep.
 
--- 
-Masami HIRAMATSU
-Software Platform Research Dept. Linux Technology Center
-Hitachi, Ltd., Yokohama Research Laboratory
-E-mail: masami.hiramatsu.pt@hitachi.com
+Any idea why is it happening ?
+kernel is 3.2.0-rc5-rt8.
+raz
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
