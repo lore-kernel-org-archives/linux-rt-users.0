@@ -1,10 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 02 Feb 2012 13:10:45 -0500
-Message-ID: <1328206245.5882.113.camel@gandalf.stny.rr.com>
+Date: Thu, 02 Feb 2012 13:21:39 -0500
+Message-ID: <1328206899.5882.117.camel@gandalf.stny.rr.com>
 References: <4F292FE0.7090302@digi.com>
-	 <201202021338.44950.tim.sander@hbm.com> <4F2A8850.4080201@digi.com>
-	 <201202021525.05606.tim.sander@hbm.com>
+	 <201202021338.44950.tim.sander@hbm.com>
+	 <1328204008.5882.109.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -13,75 +13,37 @@ Cc: Hector Palacios <hector.palacios@digi.com>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:35084 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:52471 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932503Ab2BBSKr (ORCPT
+	with ESMTP id S1754823Ab2BBSVk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 13:10:47 -0500
-In-Reply-To: <201202021525.05606.tim.sander@hbm.com>
+	Thu, 2 Feb 2012 13:21:40 -0500
+In-Reply-To: <1328204008.5882.109.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-02-02 at 15:25 +0100, Tim Sander wrote:
-> > 
-> > I'm working on an i.MX51 and using the fec.c driver as well. Interesting
-> > that it is not happening on x86.
-> Well, at least no one else spoke out on this problem before
+On Thu, 2012-02-02 at 12:33 -0500, Steven Rostedt wrote:
+
+> NETDEV_TX_BUSY is part of NET_TX_MASK thus the packet is requeued (the
+> skb->next = nskb) in dev_hard_start_xmit(). And the NETDEV_TX_BUSY is
+> passed back to sch_derect_xmit() which calls dev_requeue_skb() which
+> then calls __netif_schedule(q) which will call __netif_reschedule(q)
+> which will then do raise_softirq_irqoff(NET_TX_SOFTIRQ).
+> 
+> Thus, as soon as ksoftirq exits this routine, it will restart the
+> process over again. As the fec driver never finished with its
+> negotiations, the process starts over again and we never move forward.
 > 
 
-I'm thinking that fec.c is not available for x86, as it seems that the
-dependencies don't allow it to be enabled.
+I'm thinking this bug exists in mainline too. If you set the ksoftirqd
+threads to a real-time task on mainline, and then enable this driver,
+you may also get it to starve.
 
-That said, as I think I know the problem, can you try this patch to see
-if it fixes things. This patch is a TOTAL HACK! Not for inclusion. It's
-racy and buggy. I didn't even compile it because I couldn't get the
-configs to enable FEC, and I was too lazy to set up my cross compiler to
-test it. ;-)
+Right now, the softirq will detect the requeueing, and push it off to
+the ksoftirqd thread. But in mainline, that runs as a normal process,
+and it will let the worker thread finish the negotiations. But if that
+was a RT task, it might not.
 
 -- Steve
-
-diff --git a/drivers/net/fec.c b/drivers/net/fec.c
-index 885d8ba..9368dc2 100644
---- a/drivers/net/fec.c
-+++ b/drivers/net/fec.c
-@@ -231,6 +231,9 @@ static void *swap_buffer(void *bufaddr, int len)
- 	return bufaddr;
- }
- 
-+static DECLARE_COMPLETION(kick_ksoftirq);
-+static int comp_set;
-+
- static netdev_tx_t
- fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
- {
-@@ -243,6 +246,9 @@ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
- 	unsigned long flags;
- 
- 	if (!fep->link) {
-+		if (comp_set)
-+			wait_for_completion(&kick_ksoftirq);
-+
- 		/* Link is down or autonegotiation is in progress. */
- 		return NETDEV_TX_BUSY;
- 	}
-@@ -794,6 +800,8 @@ static void fec_enet_adjust_link(struct net_device *ndev)
- 	/* Link on or off change */
- 	if (phy_dev->link != fep->link) {
- 		fep->link = phy_dev->link;
-+		complete(&kick_ksoftirq);
-+		comp_set = 0;
- 		if (phy_dev->link)
- 			fec_restart(ndev, phy_dev->duplex);
- 		else
-@@ -914,6 +922,9 @@ static int fec_enet_mii_probe(struct net_device *ndev)
- 	fep->link = 0;
- 	fep->full_duplex = 0;
- 
-+	init_completion(&kick_ksoftirq);
-+	comp_set = 1;
-+
- 	printk(KERN_INFO "%s: Freescale FEC PHY driver [%s] "
- 		"(mii_bus:phy_addr=%s, irq=%d)\n", ndev->name,
- 		fep->phy_dev->drv->name, dev_name(&fep->phy_dev->dev),
 
 
