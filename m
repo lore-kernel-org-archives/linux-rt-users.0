@@ -1,87 +1,64 @@
-From: Hector Palacios <hector.palacios@digi.com>
-Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 2 Feb 2012 13:57:52 +0100
-Message-ID: <4F2A8850.4080201@digi.com>
-References: <4F292FE0.7090302@digi.com> <201202021338.44950.tim.sander@hbm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: preempt-rt: Real Time hogging task
+Date: Thu, 02 Feb 2012 09:12:04 -0500
+Message-ID: <1328191924.5882.86.camel@gandalf.stny.rr.com>
+References: <CAPB=Z-r+3ht0Au3mvrUBQ7-g+r=QfLao19BF7n97662q52fxKg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	"efault@gmx.de" <efault@gmx.de>
-To: Tim Sander <tim.sander@hbm.com>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Raz <raziebe@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail37.messagelabs.com ([216.82.241.83]:29051 "EHLO
-	mail37.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752348Ab2BBM56 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:56615 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756132Ab2BBOMG (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 07:57:58 -0500
-In-Reply-To: <201202021338.44950.tim.sander@hbm.com>
+	Thu, 2 Feb 2012 09:12:06 -0500
+In-Reply-To: <CAPB=Z-r+3ht0Au3mvrUBQ7-g+r=QfLao19BF7n97662q52fxKg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Thu, 2012-02-02 at 12:52 +0200, Raz wrote:
+> hey
+> 
+> I am trying to understand why a user space MT process behaves in an
+> unexpected manner.
+> I have real time process, which executes most of its threads in RT priority,
+> and from time to time a task ( medium priority ) is executing without
+> trying to stop.
+> 
+> There are times, that this task is hogging the entire process and no
+> other **higher*** rt priority
+> task is getting any cpu time.
+> 
+> Linux is **not** getting hogged. when setting the serial console (
+> irq/serial ) and its shell ( /bin/sh )
+> to a higher priority linux is responsive.
+> 
+> Observing the task list  through ps command i can see that this task's
+> threads when
+> to un-interruptible sleep.
+> 
+> Any idea why is it happening ?
 
-On 02/02/2012 01:38 PM, Tim Sander wrote:
- > Mh, i think i am hit by the same problem. I have a i.mx 35 and when =
-dhcp is
- > enabled the ksoftirq is also running wild with 3.0-rt. This also hap=
-pens when
- > static ip is configured and the probably during network transfer the=
- network
- > interface is reconfigured. Basically it seems the sirq-net-tx thread=
- tries to
- > send a packet on a non configured interface.
- >
- > But one thing that makes me thinking, is that this thing is only hap=
-pening on
- > arm and not on x86. So Hector what platform are you working on. Are =
-you by
- > chance using the same fec.c ethernet driver?
+Some ideas, but I need a lot more information.
 
-I'm working on an i.MX51 and using the fec.c driver as well. Interestin=
-g that it is=20
-not happening on x86.
+> kernel is 3.2.0-rc5-rt8.
 
- > I have verified that in my case the driver takes always the return s=
-tatement in
- > line fec.c:247: return NETXDEV_TX_BUSY;
- > It never stops on a breakpoint set on line 250 which shows that the =
-interface
- > gets never configured.
+Is this a x86 box?
 
-Autonegotiation is triggered by phy_state_machine() at phy.c which is s=
-cheduled as a=20
-delayed work by phy_device.c upon PHY device creation.
-This is not even started when the fec_enet_start_xmit() function is cal=
-led.
+Can you run a trace on the task that is going berserk?
 
- > I have taken some screenshots of my hw debugger:
- >
- >=20
-trace:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_e=
-net_start_xmit.png
- >=20
-stack:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_e=
-net_start_xmit_stacktrace.png
- >=20
-locals:http://private.vlsi.informatik.tu-darmstadt.de/tstone/linux/fec_=
-enet_start_xmit_stack+locals.png
- >
- > Whats interesting to note is that phy_dev and mii_dev are both null =
-pointers.
+Enable CONFIG_FUNCTION_TRACER in your kernel and do the following:
 
-I'll check this but it is probably because the PHY device is not yet cr=
-eated or=20
-initialized.
+# mount -t debugfs nodev /sys/kernel/debug
+# cd /sys/kernel/debug/tracing
+# echo <pid-of-berserk-task> > set_ftrace_pid
+# echo function > current_tracer
+# cat trace
 
-Best regards,
---=20
-H=E9ctor Palacios
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks!
+
+-- Steve
+
+
