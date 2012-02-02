@@ -1,49 +1,67 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Thu, 02 Feb 2012 13:21:39 -0500
-Message-ID: <1328206899.5882.117.camel@gandalf.stny.rr.com>
+Date: Thu, 2 Feb 2012 21:13:36 +0100
+Message-ID: <20120202201336.GF25594@pengutronix.de>
 References: <4F292FE0.7090302@digi.com>
-	 <201202021338.44950.tim.sander@hbm.com>
-	 <1328204008.5882.109.camel@gandalf.stny.rr.com>
+ <201202021338.44950.tim.sander@hbm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Hector Palacios <hector.palacios@digi.com>,
-	linux-rt-users@vger.kernel.org, lclaudio@uudg.org, efault@gmx.de,
-	Thomas Gleixner <tglx@linutronix.de>
+	linux-rt-users@vger.kernel.org, lclaudio@uudg.org,
+	rostedt@goodmis.org, efault@gmx.de
 To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:52471 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754823Ab2BBSVk (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:45924 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750797Ab2BBUNo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Feb 2012 13:21:40 -0500
-In-Reply-To: <1328204008.5882.109.camel@gandalf.stny.rr.com>
+	Thu, 2 Feb 2012 15:13:44 -0500
+Content-Disposition: inline
+In-Reply-To: <201202021338.44950.tim.sander@hbm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-02-02 at 12:33 -0500, Steven Rostedt wrote:
+Hello Tim,
 
-> NETDEV_TX_BUSY is part of NET_TX_MASK thus the packet is requeued (the
-> skb->next = nskb) in dev_hard_start_xmit(). And the NETDEV_TX_BUSY is
-> passed back to sch_derect_xmit() which calls dev_requeue_skb() which
-> then calls __netif_schedule(q) which will call __netif_reschedule(q)
-> which will then do raise_softirq_irqoff(NET_TX_SOFTIRQ).
-> 
-> Thus, as soon as ksoftirq exits this routine, it will restart the
-> process over again. As the fec driver never finished with its
-> negotiations, the process starts over again and we never move forward.
-> 
+On Thu, Feb 02, 2012 at 01:38:44PM +0100, Tim Sander wrote:
+> Hi
+> > When booting my platform with DHCP on, the DHCP request is sent by =
+the
+> > network driver before the PHY has even started the autonegotiation.
+> > Since the PHY is not ready, the TX interrupt returns with NETDEV_TX=
+_BUSY
+> > but the softirq [sirq-net-tx] seems to have entered an infinite spi=
+n, as
+> > my system is practically hung and 'top' reveals [sirq-net-tx/0] is
+> > consuming 95% of CPU. This is preventing the PHY autonegotiation (w=
+hich is
+> > scheduled as a delayed work) to start, so the PHY is never ready an=
+d the
+> > packet never reaches the network.
+> Mh, i think i am hit by the same problem. I have a i.mx 35 and when d=
+hcp is
+> enabled the ksoftirq is also running wild with 3.0-rt. This also happ=
+ens when
+I fail to reproduce that on a pcm043 machine using 3.0.18-rt34. Can you
+provide me your config. Does the problem occur on every boot for you? I=
+f
+not, how often do I need to reboot?
 
-I'm thinking this bug exists in mainline too. If you set the ksoftirqd
-threads to a real-time task on mainline, and then enable this driver,
-you may also get it to starve.
+@Hector: Greeting to Spain. I don't have an imx51 machine handy, but
+your config and your answers on my questions might help, too.
 
-Right now, the softirq will detect the requeueing, and push it off to
-the ksoftirqd thread. But in mainline, that runs as a normal process,
-and it will let the worker thread finish the negotiations. But if that
-was a RT task, it might not.
+Best regards
+Uwe
 
--- Steve
-
-
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
