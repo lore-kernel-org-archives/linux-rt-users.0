@@ -1,136 +1,62 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] futex: Fix bug on when a requeued RT task times out
-Date: Fri, 03 Feb 2012 13:43:47 -0500
-Message-ID: <1328294627.5882.170.camel@gandalf.stny.rr.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH RT 2/2 v4] preempt-rt/x86: Delay calling signals in int3
+Date: Fri, 3 Feb 2012 19:40:16 +0100
+Message-ID: <20120203184016.GA10413@redhat.com>
+References: <20120203182853.547078531@goodmis.org> <20120203183041.427463295@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>, niv <niv@us.ibm.com>,
-	John Kacur <jkacur@redhat.com>, Carsten Emde <cbe@osadl.org>,
-	Darren Hart <dvhart@linux.intel.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, stable-rt@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:36946 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756215Ab2BCSnt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Feb 2012 13:43:49 -0500
+Received: from mx1.redhat.com ([209.132.183.28]:37239 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757449Ab2BCSrS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 Feb 2012 13:47:18 -0500
+Content-Disposition: inline
+In-Reply-To: <20120203183041.427463295@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Steven, I guess I need to actually read the patch before asking the
+questions... I'll try later, but
 
-Requeue with timeout causes a bug with PREEMPT_RT_FULL.
+On 02/03, Steven Rostedt wrote:
+>
+> --- linux-rt.git.orig/arch/x86/kernel/entry_64.S
+> +++ linux-rt.git/arch/x86/kernel/entry_64.S
+> @@ -1391,6 +1391,14 @@ paranoid_userspace:
+>  paranoid_schedule:
+>  	TRACE_IRQS_ON
+>  	ENABLE_INTERRUPTS(CLBR_ANY)
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +	GET_THREAD_INFO(%rcx)
+> +	movl TI_flags(%rcx),%ebx
+> +	testl $_TIF_FORCE_SIG_TRAP,%ebx
+> +	jz paranoid_do_schedule
+> +	call do_force_sig_trap
+> +paranoid_do_schedule:
+> +#endif
 
-The bug comes from a timed out condition.
+Stupid question. Do we really need to send the signal from here?
 
+Why force_sig(rt => T) can't set TIF_NOTIFY_RESUME instead? Then
+we can change do_notify_resume() to check TIF_FORCE_SIG_TRAP. And
+perhaps we can even avoid the new TIF_FORCE_SIG_TRAP, we could
+check task->stored_info_set.
 
-	TASK 1				TASK 2
-	------				------
-    futex_wait_requeue_pi()
-	futex_wait_queue_me()
-	<timed out>
+In fact I feel this can be simplified even more, but I am not sure.
 
-					double_lock_hb();
-
-	raw_spin_lock(pi_lock);
-	if (current->pi_blocked_on) { 
-	} else {
-	    current->pi_blocked_on = PI_WAKE_INPROGRESS;
-	    run_spin_unlock(pi_lock);
-	    spin_lock(hb->lock); <-- blocked!
-
-
-					plist_for_each_entry_safe(this) {
-					    rt_mutex_start_proxy_lock();
-						task_blocks_on_rt_mutex();
-						BUG_ON(task->pi_blocked_on)!!!!
-
-The BUG_ON() actually has a check for PI_WAKE_INPROGRESS, but the
-problem is that, after TASK 1 sets PI_WAKE_INPROGRESS, it then tries to
-grab the hb->lock, which it fails to do so. As the hb->lock is a mutex,
-it will block and set the "pi_blocked_on" to the hb->lock.
-
-When TASK 2 goes to requeue it, the check for PI_WAKE_INPROGESS fails
-because the task1's pi_blocked_on is no longer set to that, but instead,
-set to the hb->lock.
-
-The fix:
-
-When calling rt_mutex_start_proxy_lock() a check is made to see
-if the proxy tasks pi_blocked_on is set. If so, exit out early.
-Otherwise set it to a new flag PI_REQUEUE_INPROGRESS, which notifies
-the proxy task that it is being requeued, and will handle things
-appropriately.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 991bc7f..9850dc0 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -75,7 +75,8 @@ static void fixup_rt_mutex_waiters(struct rt_mutex *lock)
- 
- static int rt_mutex_real_waiter(struct rt_mutex_waiter *waiter)
- {
--	return waiter && waiter != PI_WAKEUP_INPROGRESS;
-+	return waiter && waiter != PI_WAKEUP_INPROGRESS &&
-+		waiter != PI_REQUEUE_INPROGRESS;
- }
- 
- /*
-@@ -1353,6 +1354,35 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 		return 1;
- 	}
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	/*
-+	 * In PREEMPT_RT there's an added race.
-+	 * If the task, that we are about to requeue, times out,
-+	 * it can set the PI_WAKEUP_INPROGRESS. This tells the requeue
-+	 * to skip this task. But right after the task sets
-+	 * its pi_blocked_on to PI_WAKEUP_INPROGRESS it can then
-+	 * block on the spin_lock(&hb->lock), which in RT is an rtmutex.
-+	 * This will replace the PI_WAKEUP_INPROGRESS with the actual
-+	 * lock that it blocks on. We *must not* place this task
-+	 * on this proxy lock in that case.
-+	 *
-+	 * To prevent this race, we first take the task's pi_lock
-+	 * and check if it has updated its pi_blocked_on. If it has,
-+	 * we assume that it woke up and we return -EAGAIN.
-+	 * Otherwise, we set the task's pi_blocked_on to
-+	 * PI_REQUEUE_INPROGRESS, so that if the task is waking up
-+	 * it will know that we are in the process of requeuing it.
-+	 */
-+	raw_spin_lock(&task->pi_lock);
-+	if (task->pi_blocked_on) {
-+		raw_spin_unlock(&task->pi_lock);
-+		raw_spin_unlock(&lock->wait_lock);
-+		return -EAGAIN;
-+	}
-+	task->pi_blocked_on = PI_REQUEUE_INPROGRESS;
-+	raw_spin_unlock(&task->pi_lock);
-+#endif
-+
- 	ret = task_blocks_on_rt_mutex(lock, waiter, task, detect_deadlock);
- 
- 	if (ret && !rt_mutex_owner(lock)) {
-diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
-index a688a29..6ec3dc1 100644
---- a/kernel/rtmutex_common.h
-+++ b/kernel/rtmutex_common.h
-@@ -105,6 +105,7 @@ static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
-  * PI-futex support (proxy locking functions, etc.):
-  */
- #define PI_WAKEUP_INPROGRESS	((struct rt_mutex_waiter *) 1)
-+#define PI_REQUEUE_INPROGRESS	((struct rt_mutex_waiter *) 2)
- 
- extern struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock);
- extern void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
-
-
-
+Oleg.
 
