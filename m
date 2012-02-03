@@ -1,49 +1,60 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Fri, 03 Feb 2012 15:04:09 -0500
-Message-ID: <1328299449.5882.205.camel@gandalf.stny.rr.com>
-References: <4F292FE0.7090302@digi.com>
-	 <201202021338.44950.tim.sander@hbm.com>
-	 <20120202201336.GF25594@pengutronix.de> <4F2BB59C.4080206@digi.com>
-	 <20120203103520.GI25594@pengutronix.de> <4F2C07EE.10408@digi.com>
-	 <1328287427.5882.159.camel@gandalf.stny.rr.com> <4F2C1885.8030301@digi.com>
-	 <1328290789.5882.166.camel@gandalf.stny.rr.com>
-	 <20120203192509.GR25594@pengutronix.de>
+Subject: Re: [PATCH RT 2/2 v4] preempt-rt/x86: Delay calling signals in int3
+Date: Fri, 03 Feb 2012 15:10:33 -0500
+Message-ID: <1328299833.5882.211.camel@gandalf.stny.rr.com>
+References: <20120203182853.547078531@goodmis.org>
+	 <20120203183041.427463295@goodmis.org> <20120203184016.GA10413@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Hector Palacios <hector.palacios@digi.com>,
-	Tim Sander <tim.sander@hbm.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>,
-	"efault@gmx.de" <efault@gmx.de>
-To: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:52477 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:40776 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755109Ab2BCUEK (ORCPT
+	with ESMTP id S1755938Ab2BCUKf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Feb 2012 15:04:10 -0500
-In-Reply-To: <20120203192509.GR25594@pengutronix.de>
+	Fri, 3 Feb 2012 15:10:35 -0500
+In-Reply-To: <20120203184016.GA10413@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2012-02-03 at 20:25 +0100, Uwe Kleine-K=F6nig wrote:
+On Fri, 2012-02-03 at 19:40 +0100, Oleg Nesterov wrote:
 
-> AFAICT Hector found the patch in a Vendor BSP. I guess they never
-> forwarded it and so none of the open source guys is to blame. (Note I
-> didn't check that, but I'd be surprised if I were wrong.)
+> Stupid question. Do we really need to send the signal from here?
 
-I'm not blaming anyone. But the list I gave are those that would be
-involved with the patch. Just asking why it wasn't included in mainline
-is not a bad thing.
+If we can do it correctly elsewhere, I'm fine with that too :-)
+
+> 
+> Why force_sig(rt => T) can't set TIF_NOTIFY_RESUME instead? Then
+> we can change do_notify_resume() to check TIF_FORCE_SIG_TRAP. And
+> perhaps we can even avoid the new TIF_FORCE_SIG_TRAP, we could
+> check task->stored_info_set.
+
+You know the signal code much better than I do. If that works, I'm all
+for that too. I really don't like the entry_64 solution, but it was what
+I knew would work.
+
+> 
+> In fact I feel this can be simplified even more, but I am not sure.
+
+My strengths are in the entry_64.S code, not the signal code, so I fixed
+it the best way that I felt. This does not imply my fix is the best. If
+we can solve this in a clean way using the existing signal
+infrastructure, I'm all for that.
 
 -- Steve
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
