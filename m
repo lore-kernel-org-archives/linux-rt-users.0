@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2 v4] preempt-rt/x86: Delay calling signals in int3
-Date: Fri, 03 Feb 2012 13:28:55 -0500
-Message-ID: <20120203183041.427463295@goodmis.org>
+Subject: [PATCH RT 1/2 v4] x86: Do not disable preemption in int3 on 32bit
+Date: Fri, 03 Feb 2012 13:28:54 -0500
+Message-ID: <20120203183041.213933469@goodmis.org>
 References: <20120203182853.547078531@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -18,289 +18,113 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=fix-rt-int3_x86_64-3.2-rt.patch
+Content-Disposition: inline; filename=fix-rt-int3-x86_32-3.2-rt.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On x86_64 we must disable preemption before we enable interrupts
-for int3 and debugging, because the current task is using a per CPU
-debug stack defined by the IST. If we schedule out, another task
-can come in and use the same stack and cause the stack to be corrupted
-and crash the kernel on return.
+Preemption must be disabled before enabling interrupts in do_trap
+on x86_64 because the stack in use for int3 and debug is a per CPU
+stack set by th IST. But 32bit does not have an IST and the stack
+still belongs to the current task and there is no problem in scheduling
+out the task.
 
-When CONFIG_PREEMPT_RT_FULL is enabled, spin_locks become mutexes, and
-one of these is the spin lock used in signal handling.
+Keep preemption enabled on X86_32 when enabling interrupts for
+do_trap().
 
-Some of the debug code (int3) causes do_trap() to send a signal.
-This function calls a spin lock that has been converted to a mutex
-and has the possibility to sleep. If this happens, the above issues with
-the corrupted stack is possible.
-
-Instead of calling the signal right away, for PREEMPT_RT and x86_64,
-the signal information is stored on the stacks task_struct and a
-new TIF flag is set (TIF_FORCE_SIG_TRAP). On exit of the exception,
-in paranoid_exit, if NEED_RESCHED is set, the task stack is switched
-back to the kernel stack and interrupts is enabled. In this code
-the TIF_FORCE_SIG_TRAP is also checked and a function is called to
-do the force_sig() in a context that may schedule.
-
-Note, to get into this path, the NEED_RESCHED flag is also set.
-But as this only happens in debug context, an extra schedule should not
-be an issue.
+The name of the function is changed from preempt_conditional_sti/cli()
+to conditional_sti/cli_ist(), to annotate that this function is used
+when the stack is on the IST.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-rt.git/arch/x86/include/asm/thread_info.h
-===================================================================
---- linux-rt.git.orig/arch/x86/include/asm/thread_info.h
-+++ linux-rt.git/arch/x86/include/asm/thread_info.h
-@@ -95,6 +95,7 @@ struct thread_info {
- #define TIF_BLOCKSTEP		25	/* set when we want DEBUGCTLMSR_BTF */
- #define TIF_LAZY_MMU_UPDATES	27	/* task is updating the mmu lazily */
- #define TIF_SYSCALL_TRACEPOINT	28	/* syscall tracepoint instrumentation */
-+#define TIF_FORCE_SIG_TRAP	29	/* force a signal coming back from trap */
- 
- #define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
- #define _TIF_NOTIFY_RESUME	(1 << TIF_NOTIFY_RESUME)
-@@ -117,6 +118,7 @@ struct thread_info {
- #define _TIF_BLOCKSTEP		(1 << TIF_BLOCKSTEP)
- #define _TIF_LAZY_MMU_UPDATES	(1 << TIF_LAZY_MMU_UPDATES)
- #define _TIF_SYSCALL_TRACEPOINT	(1 << TIF_SYSCALL_TRACEPOINT)
-+#define _TIF_FORCE_SIG_TRAP	(1 << TIF_FORCE_SIG_TRAP)
- 
- /* work to do in syscall_trace_enter() */
- #define _TIF_WORK_SYSCALL_ENTRY	\
-@@ -266,5 +268,14 @@ extern void arch_task_cache_init(void);
- extern void free_thread_info(struct thread_info *ti);
- extern int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
- #define arch_task_cache_init arch_task_cache_init
-+
-+struct siginfo;
-+/*
-+ * Hacks for RT to get around signal processing with int3 and do_debug.
-+ */
-+void
-+force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt);
-+void send_sigtrap_rt(struct task_struct *tsk, struct pt_regs *regs,
-+		     int error_code, int si_code);
- #endif
- #endif /* _ASM_X86_THREAD_INFO_H */
-Index: linux-rt.git/arch/x86/kernel/entry_64.S
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/entry_64.S
-+++ linux-rt.git/arch/x86/kernel/entry_64.S
-@@ -1391,6 +1391,14 @@ paranoid_userspace:
- paranoid_schedule:
- 	TRACE_IRQS_ON
- 	ENABLE_INTERRUPTS(CLBR_ANY)
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	GET_THREAD_INFO(%rcx)
-+	movl TI_flags(%rcx),%ebx
-+	testl $_TIF_FORCE_SIG_TRAP,%ebx
-+	jz paranoid_do_schedule
-+	call do_force_sig_trap
-+paranoid_do_schedule:
-+#endif
- 	call schedule
- 	DISABLE_INTERRUPTS(CLBR_ANY)
- 	TRACE_IRQS_OFF
-Index: linux-rt.git/arch/x86/kernel/ptrace.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/ptrace.c
-+++ linux-rt.git/arch/x86/kernel/ptrace.c
-@@ -1341,14 +1341,31 @@ void user_single_step_siginfo(struct tas
- 	fill_sigtrap_info(tsk, regs, 0, TRAP_BRKPT, info);
- }
- 
--void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
--					 int error_code, int si_code)
-+static void __send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code, int rt)
- {
- 	struct siginfo info;
- 
- 	fill_sigtrap_info(tsk, regs, error_code, si_code, &info);
- 	/* Send us the fake SIGTRAP */
--	force_sig_info(SIGTRAP, &info, tsk);
-+	force_sig_info_rt(SIGTRAP, &info, tsk, rt);
-+}
-+
-+void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code)
-+{
-+	__send_sigtrap(tsk, regs, error_code, si_code, 0);
-+}
-+
-+void send_sigtrap_rt(struct task_struct *tsk, struct pt_regs *regs,
-+		  int error_code, int si_code)
-+{
-+#if defined(CONFIG_X86_64) && defined(CONFIG_PREEMPT_RT_FULL)
-+	int rt = 1;
-+#else
-+	int rt = 0;
-+#endif
-+	__send_sigtrap(tsk, regs, error_code, si_code, rt);
- }
- 
- 
 Index: linux-rt.git/arch/x86/kernel/traps.c
 ===================================================================
 --- linux-rt.git.orig/arch/x86/kernel/traps.c
 +++ linux-rt.git/arch/x86/kernel/traps.c
-@@ -121,9 +121,83 @@ static inline void conditional_cli_ist(s
- #endif
+@@ -87,9 +87,21 @@ static inline void conditional_sti(struc
+ 		local_irq_enable();
  }
  
-+#if defined(CONFIG_X86_64) && defined(CONFIG_PREEMPT_RT_FULL)
-+/*
-+ * In PREEMP_RT_FULL, the signal spinlocks are mutexes. But if
-+ * do_int3 calls do_trap, we are running on the debug stack, and
-+ * not the task struct stack. We must keep preemption disabled
-+ * because the current stack is per CPU not per task.
-+ *
-+ * Instead, we set the
-+
-+ */
-+void
-+__force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	if (!rt) {
-+		/* simple case */
-+		if (info)
-+			force_sig_info(sig, info, p);
-+		else
-+			force_sig(sig, p);
-+		return;
-+	}
-+	trace_printk("doing delayed force_sig info=%p\n", info);
-+	/*
-+	 * Sad, but to make things easier we set need resched,
-+	 * this forces the paranoid exit in traps to swap out
-+	 * of the debug stack and back to the users stack.
-+	 * Then there we call do_force_sig_trap() which does
-+	 * the delayed force_sig() with interrupts enabled and
-+	 * a thread stack that we can schedule on.
-+	 */
-+	set_need_resched();
-+	set_thread_flag(TIF_FORCE_SIG_TRAP);
-+	if (info) {
-+		memcpy(&p->stored_info, info, sizeof(p->stored_info));
-+		p->stored_info_set = 1;
-+	} else
-+		p->stored_info_set = 0;
-+
-+}
-+
-+void force_sig_rt(int sig, struct task_struct *p, int rt)
-+{
-+	__force_sig_info_rt(sig, NULL, p, rt);
-+}
-+
-+void
-+force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	__force_sig_info_rt(sig, info, p, rt);
-+}
-+
-+void do_force_sig_trap(void)
-+{
-+	struct task_struct *p = current;
-+
-+	trace_printk("forced sig! (set=%d)\n", p->stored_info_set);
-+	if (p->stored_info_set)
-+		force_sig_info(SIGTRAP, &p->stored_info, p);
-+	else
-+		force_sig(SIGTRAP, p);
-+	p->stored_info_set = 0;
-+	clear_thread_flag(TIF_FORCE_SIG_TRAP);
-+}
-+#else
-+void force_sig_rt(int sig, struct task_struct *p, int rt)
-+{
-+	force_sig(sig, p);
-+}
-+void force_sig_info_rt(int sig, struct siginfo *info, struct task_struct *p, int rt)
-+{
-+	force_sig_info(sig, info, p);
-+}
-+#endif
-+
- static void __kprobes
--do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
--	long error_code, siginfo_t *info)
-+__do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
-+	  long error_code, siginfo_t *info, int rt)
+-static inline void preempt_conditional_sti(struct pt_regs *regs)
++static inline void conditional_sti_ist(struct pt_regs *regs)
  {
- 	struct task_struct *tsk = current;
- 
-@@ -172,7 +246,7 @@ trap_signal:
- 	if (info)
- 		force_sig_info(signr, info, tsk);
- 	else
--		force_sig(signr, tsk);
-+		force_sig_rt(signr, tsk, rt);
- 	return;
- 
- kernel_trap:
-@@ -192,6 +266,20 @@ vm86_trap:
- #endif
++#ifdef CONFIG_X86_64
++	/*
++	 * X86_64 uses a per CPU stack on the IST for certain traps
++	 * like int3. The task can not be preempted when using one
++	 * of these stacks, thus preemption must be disabled, otherwise
++	 * the stack can be corrupted if the task is scheduled out,
++	 * and another task comes in and uses this stack.
++	 *
++	 * On x86_32 the task keeps its own stack and it is OK if the
++	 * task schedules out.
++	 */
+ 	inc_preempt_count();
++#endif
+ 	if (regs->flags & X86_EFLAGS_IF)
+ 		local_irq_enable();
+ }
+@@ -100,11 +112,13 @@ static inline void conditional_cli(struc
+ 		local_irq_disable();
  }
  
-+static void __kprobes
-+do_trap(int trapnr, int signr, char *str, struct pt_regs *regs,
-+	long error_code, siginfo_t *info)
-+{
-+	__do_trap(trapnr, signr, str, regs, error_code, info, 0);
-+}
-+
-+static void __kprobes
-+do_trap_rt(int trapnr, int signr, char *str, struct pt_regs *regs,
-+	long error_code, siginfo_t *info)
-+{
-+	__do_trap(trapnr, signr, str, regs, error_code, info, 1);
-+}
-+
- #define DO_ERROR(trapnr, signr, str, name)				\
- dotraplinkage void do_##name(struct pt_regs *regs, long error_code)	\
- {									\
-@@ -331,7 +419,7 @@ dotraplinkage void __kprobes do_int3(str
- #endif
- 
- 	conditional_sti_ist(regs);
--	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
-+	do_trap_rt(3, SIGTRAP, "int3", regs, error_code, NULL);
- 	conditional_cli_ist(regs);
+-static inline void preempt_conditional_cli(struct pt_regs *regs)
++static inline void conditional_cli_ist(struct pt_regs *regs)
+ {
+ 	if (regs->flags & X86_EFLAGS_IF)
+ 		local_irq_disable();
++#ifdef CONFIG_X86_64
+ 	dec_preempt_count();
++#endif
  }
  
-@@ -449,7 +537,7 @@ dotraplinkage void __kprobes do_debug(st
+ static void __kprobes
+@@ -222,9 +236,9 @@ dotraplinkage void do_stack_segment(stru
+ 	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
+ 			12, SIGBUS) == NOTIFY_STOP)
+ 		return;
+-	preempt_conditional_sti(regs);
++	conditional_sti_ist(regs);
+ 	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
+-	preempt_conditional_cli(regs);
++	conditional_cli_ist(regs);
+ }
+ 
+ dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
+@@ -316,9 +330,9 @@ dotraplinkage void __kprobes do_int3(str
+ 		return;
+ #endif
+ 
+-	preempt_conditional_sti(regs);
++	conditional_sti_ist(regs);
+ 	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
+-	preempt_conditional_cli(regs);
++	conditional_cli_ist(regs);
+ }
+ 
+ #ifdef CONFIG_X86_64
+@@ -412,12 +426,12 @@ dotraplinkage void __kprobes do_debug(st
+ 		return;
+ 
+ 	/* It's safe to allow irq's after DR6 has been saved */
+-	preempt_conditional_sti(regs);
++	conditional_sti_ist(regs);
+ 
+ 	if (regs->flags & X86_VM_MASK) {
+ 		handle_vm86_trap((struct kernel_vm86_regs *) regs,
+ 				error_code, 1);
+-		preempt_conditional_cli(regs);
++		conditional_cli_ist(regs);
+ 		return;
  	}
+ 
+@@ -436,7 +450,7 @@ dotraplinkage void __kprobes do_debug(st
  	si_code = get_si_code(tsk->thread.debugreg6);
  	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
--		send_sigtrap(tsk, regs, error_code, si_code);
-+		send_sigtrap_rt(tsk, regs, error_code, si_code);
- 	conditional_cli_ist(regs);
+ 		send_sigtrap(tsk, regs, error_code, si_code);
+-	preempt_conditional_cli(regs);
++	conditional_cli_ist(regs);
  
  	return;
-Index: linux-rt.git/include/linux/sched.h
-===================================================================
---- linux-rt.git.orig/include/linux/sched.h
-+++ linux-rt.git/include/linux/sched.h
-@@ -1600,10 +1600,16 @@ struct task_struct {
- 	struct rcu_head put_rcu;
- 	int softirq_nestcnt;
- #endif
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#if defined CONFIG_PREEMPT_RT_FULL
-+#ifdef CONFIG_X86_64
-+	struct siginfo stored_info;
-+	int stored_info_set;
-+#endif
-+#ifdef CONFIG_HIGHMEM
- 	int kmap_idx;
- 	pte_t kmap_pte[KM_TYPE_NR];
- #endif
-+#endif /* CONFIG_PREEMPT_RT_FULL */
- };
- 
- #ifdef CONFIG_PREEMPT_RT_FULL
+ }
