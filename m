@@ -1,130 +1,136 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2 v4] x86: Do not disable preemption in int3 on 32bit
-Date: Fri, 03 Feb 2012 13:28:54 -0500
-Message-ID: <20120203183041.213933469@goodmis.org>
-References: <20120203182853.547078531@goodmis.org>
+Subject: [PATCH RT] futex: Fix bug on when a requeued RT task times out
+Date: Fri, 03 Feb 2012 13:43:47 -0500
+Message-ID: <1328294627.5882.170.camel@gandalf.stny.rr.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=fix-rt-int3-x86_32-3.2-rt.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Clark Williams <clark@redhat.com>, niv <niv@us.ibm.com>,
+	John Kacur <jkacur@redhat.com>, Carsten Emde <cbe@osadl.org>,
+	Darren Hart <dvhart@linux.intel.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>, stable-rt@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:36946 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756215Ab2BCSnt (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 Feb 2012 13:43:49 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Preemption must be disabled before enabling interrupts in do_trap
-on x86_64 because the stack in use for int3 and debug is a per CPU
-stack set by th IST. But 32bit does not have an IST and the stack
-still belongs to the current task and there is no problem in scheduling
-out the task.
 
-Keep preemption enabled on X86_32 when enabling interrupts for
-do_trap().
+Requeue with timeout causes a bug with PREEMPT_RT_FULL.
 
-The name of the function is changed from preempt_conditional_sti/cli()
-to conditional_sti/cli_ist(), to annotate that this function is used
-when the stack is on the IST.
+The bug comes from a timed out condition.
+
+
+	TASK 1				TASK 2
+	------				------
+    futex_wait_requeue_pi()
+	futex_wait_queue_me()
+	<timed out>
+
+					double_lock_hb();
+
+	raw_spin_lock(pi_lock);
+	if (current->pi_blocked_on) { 
+	} else {
+	    current->pi_blocked_on = PI_WAKE_INPROGRESS;
+	    run_spin_unlock(pi_lock);
+	    spin_lock(hb->lock); <-- blocked!
+
+
+					plist_for_each_entry_safe(this) {
+					    rt_mutex_start_proxy_lock();
+						task_blocks_on_rt_mutex();
+						BUG_ON(task->pi_blocked_on)!!!!
+
+The BUG_ON() actually has a check for PI_WAKE_INPROGRESS, but the
+problem is that, after TASK 1 sets PI_WAKE_INPROGRESS, it then tries to
+grab the hb->lock, which it fails to do so. As the hb->lock is a mutex,
+it will block and set the "pi_blocked_on" to the hb->lock.
+
+When TASK 2 goes to requeue it, the check for PI_WAKE_INPROGESS fails
+because the task1's pi_blocked_on is no longer set to that, but instead,
+set to the hb->lock.
+
+The fix:
+
+When calling rt_mutex_start_proxy_lock() a check is made to see
+if the proxy tasks pi_blocked_on is set. If so, exit out early.
+Otherwise set it to a new flag PI_REQUEUE_INPROGRESS, which notifies
+the proxy task that it is being requeued, and will handle things
+appropriately.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-rt.git/arch/x86/kernel/traps.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/traps.c
-+++ linux-rt.git/arch/x86/kernel/traps.c
-@@ -87,9 +87,21 @@ static inline void conditional_sti(struc
- 		local_irq_enable();
- }
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 991bc7f..9850dc0 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -75,7 +75,8 @@ static void fixup_rt_mutex_waiters(struct rt_mutex *lock)
  
--static inline void preempt_conditional_sti(struct pt_regs *regs)
-+static inline void conditional_sti_ist(struct pt_regs *regs)
+ static int rt_mutex_real_waiter(struct rt_mutex_waiter *waiter)
  {
-+#ifdef CONFIG_X86_64
-+	/*
-+	 * X86_64 uses a per CPU stack on the IST for certain traps
-+	 * like int3. The task can not be preempted when using one
-+	 * of these stacks, thus preemption must be disabled, otherwise
-+	 * the stack can be corrupted if the task is scheduled out,
-+	 * and another task comes in and uses this stack.
-+	 *
-+	 * On x86_32 the task keeps its own stack and it is OK if the
-+	 * task schedules out.
-+	 */
- 	inc_preempt_count();
-+#endif
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_enable();
- }
-@@ -100,11 +112,13 @@ static inline void conditional_cli(struc
- 		local_irq_disable();
+-	return waiter && waiter != PI_WAKEUP_INPROGRESS;
++	return waiter && waiter != PI_WAKEUP_INPROGRESS &&
++		waiter != PI_REQUEUE_INPROGRESS;
  }
  
--static inline void preempt_conditional_cli(struct pt_regs *regs)
-+static inline void conditional_cli_ist(struct pt_regs *regs)
- {
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_disable();
-+#ifdef CONFIG_X86_64
- 	dec_preempt_count();
-+#endif
- }
- 
- static void __kprobes
-@@ -222,9 +236,9 @@ dotraplinkage void do_stack_segment(stru
- 	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
- 			12, SIGBUS) == NOTIFY_STOP)
- 		return;
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
- }
- 
- dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
-@@ -316,9 +330,9 @@ dotraplinkage void __kprobes do_int3(str
- 		return;
- #endif
- 
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
- }
- 
- #ifdef CONFIG_X86_64
-@@ -412,12 +426,12 @@ dotraplinkage void __kprobes do_debug(st
- 		return;
- 
- 	/* It's safe to allow irq's after DR6 has been saved */
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 
- 	if (regs->flags & X86_VM_MASK) {
- 		handle_vm86_trap((struct kernel_vm86_regs *) regs,
- 				error_code, 1);
--		preempt_conditional_cli(regs);
-+		conditional_cli_ist(regs);
- 		return;
+ /*
+@@ -1353,6 +1354,35 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+ 		return 1;
  	}
  
-@@ -436,7 +450,7 @@ dotraplinkage void __kprobes do_debug(st
- 	si_code = get_si_code(tsk->thread.debugreg6);
- 	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
- 		send_sigtrap(tsk, regs, error_code, si_code);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
++#ifdef CONFIG_PREEMPT_RT_FULL
++	/*
++	 * In PREEMPT_RT there's an added race.
++	 * If the task, that we are about to requeue, times out,
++	 * it can set the PI_WAKEUP_INPROGRESS. This tells the requeue
++	 * to skip this task. But right after the task sets
++	 * its pi_blocked_on to PI_WAKEUP_INPROGRESS it can then
++	 * block on the spin_lock(&hb->lock), which in RT is an rtmutex.
++	 * This will replace the PI_WAKEUP_INPROGRESS with the actual
++	 * lock that it blocks on. We *must not* place this task
++	 * on this proxy lock in that case.
++	 *
++	 * To prevent this race, we first take the task's pi_lock
++	 * and check if it has updated its pi_blocked_on. If it has,
++	 * we assume that it woke up and we return -EAGAIN.
++	 * Otherwise, we set the task's pi_blocked_on to
++	 * PI_REQUEUE_INPROGRESS, so that if the task is waking up
++	 * it will know that we are in the process of requeuing it.
++	 */
++	raw_spin_lock(&task->pi_lock);
++	if (task->pi_blocked_on) {
++		raw_spin_unlock(&task->pi_lock);
++		raw_spin_unlock(&lock->wait_lock);
++		return -EAGAIN;
++	}
++	task->pi_blocked_on = PI_REQUEUE_INPROGRESS;
++	raw_spin_unlock(&task->pi_lock);
++#endif
++
+ 	ret = task_blocks_on_rt_mutex(lock, waiter, task, detect_deadlock);
  
- 	return;
- }
+ 	if (ret && !rt_mutex_owner(lock)) {
+diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
+index a688a29..6ec3dc1 100644
+--- a/kernel/rtmutex_common.h
++++ b/kernel/rtmutex_common.h
+@@ -105,6 +105,7 @@ static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
+  * PI-futex support (proxy locking functions, etc.):
+  */
+ #define PI_WAKEUP_INPROGRESS	((struct rt_mutex_waiter *) 1)
++#define PI_REQUEUE_INPROGRESS	((struct rt_mutex_waiter *) 2)
+ 
+ extern struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock);
+ extern void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
+
+
+
+
