@@ -1,62 +1,60 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH RT 2/2 v4] preempt-rt/x86: Delay calling signals in int3
-Date: Fri, 3 Feb 2012 19:40:16 +0100
-Message-ID: <20120203184016.GA10413@redhat.com>
-References: <20120203182853.547078531@goodmis.org> <20120203183041.427463295@goodmis.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: infinite spin in RT when booting with DHCP on
+Date: Fri, 3 Feb 2012 20:25:09 +0100
+Message-ID: <20120203192509.GR25594@pengutronix.de>
+References: <4F292FE0.7090302@digi.com>
+ <201202021338.44950.tim.sander@hbm.com>
+ <20120202201336.GF25594@pengutronix.de>
+ <4F2BB59C.4080206@digi.com>
+ <20120203103520.GI25594@pengutronix.de>
+ <4F2C07EE.10408@digi.com>
+ <1328287427.5882.159.camel@gandalf.stny.rr.com>
+ <4F2C1885.8030301@digi.com>
+ <1328290789.5882.166.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Hector Palacios <hector.palacios@digi.com>,
+	Tim Sander <tim.sander@hbm.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"lclaudio@uudg.org" <lclaudio@uudg.org>,
+	"efault@gmx.de" <efault@gmx.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:37239 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1757449Ab2BCSrS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Feb 2012 13:47:18 -0500
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:53785 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754779Ab2BCTZP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 Feb 2012 14:25:15 -0500
 Content-Disposition: inline
-In-Reply-To: <20120203183041.427463295@goodmis.org>
+In-Reply-To: <1328290789.5882.166.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven, I guess I need to actually read the patch before asking the
-questions... I'll try later, but
+Hi,
 
-On 02/03, Steven Rostedt wrote:
->
-> --- linux-rt.git.orig/arch/x86/kernel/entry_64.S
-> +++ linux-rt.git/arch/x86/kernel/entry_64.S
-> @@ -1391,6 +1391,14 @@ paranoid_userspace:
->  paranoid_schedule:
->  	TRACE_IRQS_ON
->  	ENABLE_INTERRUPTS(CLBR_ANY)
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +	GET_THREAD_INFO(%rcx)
-> +	movl TI_flags(%rcx),%ebx
-> +	testl $_TIF_FORCE_SIG_TRAP,%ebx
-> +	jz paranoid_do_schedule
-> +	call do_force_sig_trap
-> +paranoid_do_schedule:
-> +#endif
+On Fri, Feb 03, 2012 at 12:39:49PM -0500, Steven Rostedt wrote:
+> > There doesn't seem to be a maintainer for this driver... should I t=
+ake the action of=20
+> > posting this to the mainline kernel list?
+>=20
+> I would send a note to LKML asking why this hasn't been included in
+> mainline, and Cc the following:
+AFAICT Hector found the patch in a Vendor BSP. I guess they never
+forwarded it and so none of the open source guys is to blame. (Note I
+didn't check that, but I'd be surprised if I were wrong.)
 
-Stupid question. Do we really need to send the signal from here?
+Best regards
+Uwe
 
-Why force_sig(rt => T) can't set TIF_NOTIFY_RESUME instead? Then
-we can change do_notify_resume() to check TIF_FORCE_SIG_TRAP. And
-perhaps we can even avoid the new TIF_FORCE_SIG_TRAP, we could
-check task->stored_info_set.
-
-In fact I feel this can be simplified even more, but I am not sure.
-
-Oleg.
-
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
