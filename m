@@ -1,75 +1,60 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: preempt-rt: Real Time hogging task
-Date: Mon, 06 Feb 2012 11:03:56 -0500
-Message-ID: <1328544236.2200.4.camel@gandalf.stny.rr.com>
-References: <CAPB=Z-r+3ht0Au3mvrUBQ7-g+r=QfLao19BF7n97662q52fxKg@mail.gmail.com>
-	 <1328191924.5882.86.camel@gandalf.stny.rr.com>
-	 <CAPB=Z-pbkg1mp+WFjQUAyWAU+c8CuM8WoAN4==h-FNVaZYJmzQ@mail.gmail.com>
-	 <CAPB=Z-qNCq9kuqsgrC5vdF9q4tpXnZuH+17c378GmaZD3P9FVQ@mail.gmail.com>
-	 <CAPB=Z-qu+T0Zy0YFWP5YyPstGK+FsWqwqpx8PU8jorC_sWi=ow@mail.gmail.com>
+Subject: Re: [PATCH RT 2/2 v4] preempt-rt/x86: Delay calling signals in int3
+Date: Mon, 06 Feb 2012 11:12:24 -0500
+Message-ID: <1328544744.2200.11.camel@gandalf.stny.rr.com>
+References: <20120203182853.547078531@goodmis.org>
+	 <20120203183041.427463295@goodmis.org> <20120203184016.GA10413@redhat.com>
+	 <1328299833.5882.211.camel@gandalf.stny.rr.com>
+	 <20120205192305.GB12183@redhat.com> <20120205193146.GC12183@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Raz <raziebe@gmail.com>
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
+	Ingo Molnar <mingo@elte.hu>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	Alexander van Heukelum <heukelum@fastmail.fm>,
+	Andi Kleen <ak@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:46538 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.125]:57686 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755353Ab2BFQD6 (ORCPT
+	with ESMTP id S1754671Ab2BFQM1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Feb 2012 11:03:58 -0500
-In-Reply-To: <CAPB=Z-qu+T0Zy0YFWP5YyPstGK+FsWqwqpx8PU8jorC_sWi=ow@mail.gmail.com>
+	Mon, 6 Feb 2012 11:12:27 -0500
+In-Reply-To: <20120205193146.GC12183@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2012-02-05 at 14:49 +0200, Raz wrote:
-> I think it would be nice if load_module in ftrace mode will report that
-> the driver should be recompiled. same as where it screams about version
-> or license.
-
-Did you have CONFIG_MODVERSIONS enabled?
-
-> So, i managed to use ftrace, problem is that i cannot get the trace
-> out of the machine,
-> neither by scp nor by sz. i cannot cp it since it will flush to drive.
-> ( even though i set
-> flush to RT 99).
-
-Why doesn't scp work?
-
-You can also use trace-cmd to send the trace to another box.
-
-On another host run:
-
-	trace-cmd listen -p <port>
-
-On this box run:
-
-	trace-cmd record -p function -N <host>:<port>
-
-
-The you can send me the "trace.*.dat" file generated.
-
-> Here is part of the trace  file.
+On Sun, 2012-02-05 at 20:31 +0100, Oleg Nesterov wrote:
+> Damn. Sorry for noise...
 > 
->       tEthernInp-1173  [000]   133.002614: sub_preempt_count <-unmask_8259A_irq
->       tEthernInp-1173  [000]   133.002614: sub_preempt_count <-handle_level_irq
->       tEthernInp-1173  [000]   133.002614: irq_exit <-do_IRQ
->       tEthernInp-1173  [000]   133.002615: sub_preempt_count <-irq_exit
->       tEthernInp-1173  [000]   133.002615: wakeup_softirqd <-irq_exit
->       tEthernInp-1173  [000]   133.002615: wake_up_process <-wakeup_softirqd
->       tEthernInp-1173  [000]   133.002616: try_to_wake_up <-wake_up_process
->       tEthernInp-1173  [000]   133.002616: add_preempt_count <-try_to_wake_up
->       tEthernInp-1173  [000]   133.002616: add_preempt_count <-try_to_wake_up
->       tEthernInp-1173  [000]   133.002617: activate_task <-try_to_wake_up
->       tEthernInp-1173  [000]   133.002617: enqueue_task <-activate_task
->       tEthernInp-1173  [000]   133.002617: update_rq_clock <-enqueue_task
->       tEthernInp-1173  [000]   133.002618: enqueue_task_rt <-enqueue_task
->       tEthernInp-1173  [000]   133.002618: dequeue_rt_stack <-enqueue_task_rt
->       tEthernInp-1173  [000]   133.002618: ttwu_do_wakeup.clone.139 <-try_to_wa
+> On 02/05, Oleg Nesterov wrote:
+> >
+> > +int force_sig_info(int sig, struct siginfo *info, struct task_struct *t)
+> > +{
+> > +#ifdef CONFIG_PREEMPT_RT_FULL
+> > +	if (in_atomic()) {
+> > +		if (WARN_ON_ONCE(t != current))
+> 
+> This is certainly wrong in upstream kernel. It does use force_
+> this way although it shouldn't imho.
 
-Would you be able to send more than this?
+It's wrong in upstream even with the #ifdef define here?
 
+> 
+> But _probably_ this is fine for rt? We are going to take the mutex,
+> we shouldn't do this in atomic context. But, once again, I do not
+> really know what in_atomic() means in rt.
+
+in_atomic() is the same in rt as in mainline. It should still work.
 
 -- Steve
 
