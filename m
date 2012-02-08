@@ -1,49 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 0/2 v5] preempt-rt/x86: Handle sending signals from
- do_trap() by gdb
-Date: Wed, 08 Feb 2012 08:46:29 -0500
-Message-ID: <1328708789.2200.117.camel@gandalf.stny.rr.com>
-References: <20120208005612.852040607@goodmis.org>
-	 <20120208115754.GA30029@redhat.com>
+From: =?ISO-8859-1?Q?Matthias_S=F6llner?= <m.soellner@haw-aw.de>
+Subject: Re: Problem with Realtime Kernel and Ethernet Card
+Date: Wed, 08 Feb 2012 16:46:48 +0100
+Message-ID: <4F3298E8.9090303@haw-aw.de>
+References: <4F143AB2.6070404@haw-aw.de> <CAOY97VZGuFz=txi1HnXjh_WqK+UVNiqRCifrnSxin7x2osbP5g@mail.gmail.com> <4F16D7E9.9070707@haw-aw.de> <20120118191955.GA4066@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>
-To: Oleg Nesterov <oleg@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Austin Hendrix <ahendrix@willowgarage.com>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.123]:52382 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750764Ab2BHNqc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Feb 2012 08:46:32 -0500
-In-Reply-To: <20120208115754.GA30029@redhat.com>
+Received: from smtp.haw-aw.de ([195.37.42.4]:37545 "EHLO smtp.haw-aw.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756689Ab2BHPqx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Feb 2012 10:46:53 -0500
+In-Reply-To: <20120118191955.GA4066@pengutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-02-08 at 12:57 +0100, Oleg Nesterov wrote:
-> On 02/07, Steven Rostedt wrote:
-> >
-> > Oleg, please take a look at the modifications I made to your patch,
-> > and if you are fine with it, please ack it.
-> 
-> Yes, I believe the modifications are fine.
+On 18.01.2012 20:19, Uwe Kleine-K=F6nig wrote:
+> On Wed, Jan 18, 2012 at 03:32:09PM +0100, Matthias wrote:
+>> Ok.
+>> Where do I get a 3.0 Kernel with included preempt-Patch for installi=
+ng
+>> in Debian 6.0?
+> if you're on amd64 install linux-image-3.0.0-2-rt-amd64 from
+> http://debian.pengutronix.de/debian sid main.=20
 
-Thanks Oleg,
+I can't find the package in
+http://debian.pengutronix.de/debian sid main
 
-Thomas, can you add these to the 3.2-rt series.
+Added it to /etc/apt/sources.list, and made a sudo apt-get update.
+But the package is not there.
 
--- Steve
+What am I doing wrong?
+
+Thanks
+Matthias
 
 
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
