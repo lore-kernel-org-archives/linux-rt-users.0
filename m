@@ -1,136 +1,31 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2 v5] x86: Do not disable preemption in int3 on 32bit
-Date: Tue, 07 Feb 2012 19:56:13 -0500
-Message-ID: <20120208005849.862925283@goodmis.org>
-References: <20120208005612.852040607@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>,
-	Ingo Molnar <mingo@elte.hu>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Alexander van Heukelum <heukelum@fastmail.fm>,
-	Andi Kleen <ak@linux.intel.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Luis Goncalves <lgoncalv@redhat.com>, stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Sankara Muthukrishnan <sankara.m@gmail.com>
+Subject: Suggesting to include timerfd patch
+Date: Tue, 7 Feb 2012 22:56:41 -0600
+Message-ID: <CAFQPvXf7JS98_FH_nwHsEa0WX7H6QT8vBAJwo2Yt-r--aO6mcA@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.124]:55924 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757055Ab2BHA6x (ORCPT
+Received: from mail-pz0-f46.google.com ([209.85.210.46]:33692 "EHLO
+	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754513Ab2BHE4m (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Feb 2012 19:58:53 -0500
-Content-Disposition: inline; filename=fix-rt-int3-x86_32-3.2-rt.patch
+	Tue, 7 Feb 2012 23:56:42 -0500
+Received: by daed14 with SMTP id d14so166064dae.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Feb 2012 20:56:41 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Preemption must be disabled before enabling interrupts in do_trap
-on x86_64 because the stack in use for int3 and debug is a per CPU
-stack set by th IST. But 32bit does not have an IST and the stack
-still belongs to the current task and there is no problem in scheduling
-out the task.
+Steven,
 
-Keep preemption enabled on X86_32 when enabling interrupts for
-do_trap().
+Could you please include the patch that Thomas suggested for the
+timerfd hangs in the email thread (link below), if Thomas is fine with
+the patch? I did verify that that patch fixed the hangs that I saw on
+a panda board (ARM Cortex A9 dual core).
 
-The name of the function is changed from preempt_conditional_sti/cli()
-to conditional_sti/cli_ist(), to annotate that this function is used
-when the stack is on the IST.
+http://marc.info/?l=linux-rt-users&m=132753755612168&w=2
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-rt.git/arch/x86/kernel/traps.c
-===================================================================
---- linux-rt.git.orig/arch/x86/kernel/traps.c
-+++ linux-rt.git/arch/x86/kernel/traps.c
-@@ -87,9 +87,21 @@ static inline void conditional_sti(struc
- 		local_irq_enable();
- }
- 
--static inline void preempt_conditional_sti(struct pt_regs *regs)
-+static inline void conditional_sti_ist(struct pt_regs *regs)
- {
-+#ifdef CONFIG_X86_64
-+	/*
-+	 * X86_64 uses a per CPU stack on the IST for certain traps
-+	 * like int3. The task can not be preempted when using one
-+	 * of these stacks, thus preemption must be disabled, otherwise
-+	 * the stack can be corrupted if the task is scheduled out,
-+	 * and another task comes in and uses this stack.
-+	 *
-+	 * On x86_32 the task keeps its own stack and it is OK if the
-+	 * task schedules out.
-+	 */
- 	inc_preempt_count();
-+#endif
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_enable();
- }
-@@ -100,11 +112,13 @@ static inline void conditional_cli(struc
- 		local_irq_disable();
- }
- 
--static inline void preempt_conditional_cli(struct pt_regs *regs)
-+static inline void conditional_cli_ist(struct pt_regs *regs)
- {
- 	if (regs->flags & X86_EFLAGS_IF)
- 		local_irq_disable();
-+#ifdef CONFIG_X86_64
- 	dec_preempt_count();
-+#endif
- }
- 
- static void __kprobes
-@@ -222,9 +236,9 @@ dotraplinkage void do_stack_segment(stru
- 	if (notify_die(DIE_TRAP, "stack segment", regs, error_code,
- 			12, SIGBUS) == NOTIFY_STOP)
- 		return;
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 	do_trap(12, SIGBUS, "stack segment", regs, error_code, NULL);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
- }
- 
- dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code)
-@@ -316,9 +330,9 @@ dotraplinkage void __kprobes do_int3(str
- 		return;
- #endif
- 
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 	do_trap(3, SIGTRAP, "int3", regs, error_code, NULL);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
- }
- 
- #ifdef CONFIG_X86_64
-@@ -412,12 +426,12 @@ dotraplinkage void __kprobes do_debug(st
- 		return;
- 
- 	/* It's safe to allow irq's after DR6 has been saved */
--	preempt_conditional_sti(regs);
-+	conditional_sti_ist(regs);
- 
- 	if (regs->flags & X86_VM_MASK) {
- 		handle_vm86_trap((struct kernel_vm86_regs *) regs,
- 				error_code, 1);
--		preempt_conditional_cli(regs);
-+		conditional_cli_ist(regs);
- 		return;
- 	}
- 
-@@ -436,7 +450,7 @@ dotraplinkage void __kprobes do_debug(st
- 	si_code = get_si_code(tsk->thread.debugreg6);
- 	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
- 		send_sigtrap(tsk, regs, error_code, si_code);
--	preempt_conditional_cli(regs);
-+	conditional_cli_ist(regs);
- 
- 	return;
- }
-
+Thanks,
+Sankara
