@@ -1,45 +1,74 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Suggesting to include timerfd patch
-Date: Wed, 8 Feb 2012 21:09:41 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1202082109250.2794@ionos>
-References: <CAFQPvXf7JS98_FH_nwHsEa0WX7H6QT8vBAJwo2Yt-r--aO6mcA@mail.gmail.com> <1328678109.2200.116.camel@gandalf.stny.rr.com>
+Subject: Re: infinite spin in RT when booting with DHCP on
+Date: Wed, 8 Feb 2012 21:41:13 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1202082112460.2794@ionos>
+References: <4F292FE0.7090302@digi.com>    <201202021338.44950.tim.sander@hbm.com>    <20120202201336.GF25594@pengutronix.de> <4F2BB59C.4080206@digi.com>    <20120203103520.GI25594@pengutronix.de> <4F2C07EE.10408@digi.com>   <1328287427.5882.159.camel@gandalf.stny.rr.com>
+  <4F2C1885.8030301@digi.com> <1328290789.5882.166.camel@gandalf.stny.rr.com>  <4F2F9478.10809@digi.com> <1328534873.5882.227.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sankara Muthukrishnan <sankara.m@gmail.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Hector Palacios <hector.palacios@digi.com>,
+	=?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>, Tim Sander <tim.sander@hbm.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"lclaudio@uudg.org" <lclaudio@uudg.org>,
+	"efault@gmx.de" <efault@gmx.de>, netdev@veger.kernel.org,
+	Shawn Guo <shawn.guo@linaro.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60486 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:60571 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755825Ab2BHUJo (ORCPT
+	with ESMTP id S1750956Ab2BHUlT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Feb 2012 15:09:44 -0500
-In-Reply-To: <1328678109.2200.116.camel@gandalf.stny.rr.com>
+	Wed, 8 Feb 2012 15:41:19 -0500
+In-Reply-To: <1328534873.5882.227.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 8 Feb 2012, Steven Rostedt wrote:
+On Mon, 6 Feb 2012, Steven Rostedt wrote:
 
-> On Tue, 2012-02-07 at 22:56 -0600, Sankara Muthukrishnan wrote:
-> > Steven,
+> On Mon, 2012-02-06 at 09:51 +0100, Hector Palacios wrote:
+> > On 02/03/2012 06:39 PM, Steven Rostedt wrote:
+> > > Note that you see that this causes a hang in the system if ksoftirqd is
+> > > a real time task.
 > > 
-> > Could you please include the patch that Thomas suggested for the
-> > timerfd hangs in the email thread (link below), if Thomas is fine with
-> > the patch? I did verify that that patch fixed the hangs that I saw on
-> > a panda board (ARM Cortex A9 dual core).
+> > This is true.
 > > 
-> > http://marc.info/?l=linux-rt-users&m=132753755612168&w=2
+> > > Not to mention, that ksoftirqd spins in an infinite
+> > > loop if the cable isn't connected (regardless of ksoftirqd's priority).
+> > 
+> > This is not true. The infinite loop is only hit when ksoftirqd is a real time task. I 
+> > think you got confused by the different patches we tried. That dirty hack of yours 
+> > with the workqueue was the one hanging with the cable disconnected. ;o)
 > > 
 > 
-> Hi Sankara,
+> I didn't say it was going to hang the box, I said it was going to spin.
 > 
-> I follow the same stable rules that the stable mainline follows. I will
-> not add any patch to the stable release that is not in either mainline,
-> or in Thomas's -rt development branch. This keeps the stable tree from
-> forking and getting a fix that is not upstream. A fix to stable that is
-> not included upstream, may be forgotten about.
-> 
-> If Thomas adds it, or if this patch is in mainline (which it is
-> obviously not, as it is -rt specific), then I will be happy to apply it.
+> With the cable disconnected, did you run top to see if ksoftirqd was
+> running at near 100%?  It wont lock up the box because ksoftirqd is not
+> a real time task in mainline.
 
-It's on the way.
+NETDEV_TX_BUSY has always been a source of trouble and we carry a
+bunch of patches in RT which handle the obvious candidates since we
+encountered the first spinning lockup on RT.
+
+Mainline does not notice as it falls back to the SCHED_OTHER softirq
+thread after trying to reschedule the same thing over and
+over.
+
+NETDEV_TX_BUSY simply should die. It's a bad design decision (invented
+for mitigation of SMP lock contention problems) and it's abuse by
+driver writers to bridge the gap of hardware bringup is just a
+consequence of that decision.
+
+        if (!fep->link) {
+                /* Link is down or autonegotiation is in progress. */
+                return NETDEV_TX_BUSY;
+        }
+
+So instead of handling link down and autonegotiation gracefully this
+code relies on the fact that a 2 seconds spinning loop goes unnoticed
+in mainline because ksoftirqd runs with SCHED_OTHER.
+
+Oh well,
+
+	tglx
