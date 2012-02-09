@@ -1,74 +1,89 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: infinite spin in RT when booting with DHCP on
-Date: Wed, 8 Feb 2012 21:41:13 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1202082112460.2794@ionos>
-References: <4F292FE0.7090302@digi.com>    <201202021338.44950.tim.sander@hbm.com>    <20120202201336.GF25594@pengutronix.de> <4F2BB59C.4080206@digi.com>    <20120203103520.GI25594@pengutronix.de> <4F2C07EE.10408@digi.com>   <1328287427.5882.159.camel@gandalf.stny.rr.com>
-  <4F2C1885.8030301@digi.com> <1328290789.5882.166.camel@gandalf.stny.rr.com>  <4F2F9478.10809@digi.com> <1328534873.5882.227.camel@gandalf.stny.rr.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Hector Palacios <hector.palacios@digi.com>,
-	=?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>, Tim Sander <tim.sander@hbm.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>,
-	"efault@gmx.de" <efault@gmx.de>, netdev@veger.kernel.org,
-	Shawn Guo <shawn.guo@linaro.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 1/8] genirq: Unmask oneshot irqs when thread was not woken
+Date: Wed, 08 Feb 2012 20:59:27 -0500
+Message-ID: <20120209020159.095037912@goodmis.org>
+References: <20120209015926.851312665@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org,
+	Lothar Wassmann <lw@karo-electronics.de>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60571 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750956Ab2BHUlT (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:49691 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756928Ab2BICCB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Feb 2012 15:41:19 -0500
-In-Reply-To: <1328534873.5882.227.camel@gandalf.stny.rr.com>
+	Wed, 8 Feb 2012 21:02:01 -0500
+Content-Disposition: inline; filename=0001-genirq-Unmask-oneshot-irqs-when-thread-was-not-woken.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 6 Feb 2012, Steven Rostedt wrote:
+From: Thomas Gleixner <tglx@linutronix.de>
 
-> On Mon, 2012-02-06 at 09:51 +0100, Hector Palacios wrote:
-> > On 02/03/2012 06:39 PM, Steven Rostedt wrote:
-> > > Note that you see that this causes a hang in the system if ksoftirqd is
-> > > a real time task.
-> > 
-> > This is true.
-> > 
-> > > Not to mention, that ksoftirqd spins in an infinite
-> > > loop if the cable isn't connected (regardless of ksoftirqd's priority).
-> > 
-> > This is not true. The infinite loop is only hit when ksoftirqd is a real time task. I 
-> > think you got confused by the different patches we tried. That dirty hack of yours 
-> > with the workqueue was the one hanging with the cable disconnected. ;o)
-> > 
-> 
-> I didn't say it was going to hang the box, I said it was going to spin.
-> 
-> With the cable disconnected, did you run top to see if ksoftirqd was
-> running at near 100%?  It wont lock up the box because ksoftirqd is not
-> a real time task in mainline.
+When the primary handler of an interrupt which is marked IRQ_ONESHOT
+does not wake the thread (e.g. due to a spurious interrupt) then
+nothing ever unmasks the interrupt line again. Handle it gracefully.
 
-NETDEV_TX_BUSY has always been a source of trouble and we carry a
-bunch of patches in RT which handle the obvious candidates since we
-encountered the first spinning lockup on RT.
+Cc: stable-rt@vger.kernel.org
+Reported-by: Lothar Wassmann <lw@karo-electronics.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ kernel/irq/chip.c |   25 +++++++++++++++++++++++--
+ 1 files changed, 23 insertions(+), 2 deletions(-)
 
-Mainline does not notice as it falls back to the SCHED_OTHER softirq
-thread after trying to reschedule the same thing over and
-over.
+diff --git a/kernel/irq/chip.c b/kernel/irq/chip.c
+index dc5114b..3322a34 100644
+--- a/kernel/irq/chip.c
++++ b/kernel/irq/chip.c
+@@ -312,6 +312,24 @@ out_unlock:
+ }
+ EXPORT_SYMBOL_GPL(handle_simple_irq);
+ 
++/*
++ * Called unconditionally from handle_level_irq() and only for oneshot
++ * interrupts from handle_fasteoi_irq()
++ */
++static void cond_unmask_irq(struct irq_desc *desc)
++{
++	/*
++	 * We need to unmask in the following cases:
++	 * - Standard level irq (IRQF_ONESHOT is not set)
++	 * - Oneshot irq which did not wake the thread (caused by a
++	 *   spurious interrupt or a primary handler handling it
++	 *   completely).
++	 */
++	if (!irqd_irq_disabled(&desc->irq_data) &&
++	    irqd_irq_masked(&desc->irq_data) && !desc->threads_oneshot)
++		unmask_irq(desc);
++}
++
+ /**
+  *	handle_level_irq - Level type irq handler
+  *	@irq:	the interrupt number
+@@ -344,8 +362,8 @@ handle_level_irq(unsigned int irq, struct irq_desc *desc)
+ 
+ 	handle_irq_event(desc);
+ 
+-	if (!irqd_irq_disabled(&desc->irq_data) && !(desc->istate & IRQS_ONESHOT))
+-		unmask_irq(desc);
++	cond_unmask_irq(desc);
++
+ out_unlock:
+ 	raw_spin_unlock(&desc->lock);
+ }
+@@ -399,6 +417,9 @@ handle_fasteoi_irq(unsigned int irq, struct irq_desc *desc)
+ 	preflow_handler(desc);
+ 	handle_irq_event(desc);
+ 
++	if (desc->istate & IRQS_ONESHOT)
++		cond_unmask_irq(desc);
++
+ out_eoi:
+ 	desc->irq_data.chip->irq_eoi(&desc->irq_data);
+ out_unlock:
+-- 
+1.7.8.3
 
-NETDEV_TX_BUSY simply should die. It's a bad design decision (invented
-for mitigation of SMP lock contention problems) and it's abuse by
-driver writers to bridge the gap of hardware bringup is just a
-consequence of that decision.
 
-        if (!fep->link) {
-                /* Link is down or autonegotiation is in progress. */
-                return NETDEV_TX_BUSY;
-        }
-
-So instead of handling link down and autonegotiation gracefully this
-code relies on the fact that a 2 seconds spinning loop goes unnoticed
-in mainline because ksoftirqd runs with SCHED_OTHER.
-
-Oh well,
-
-	tglx
