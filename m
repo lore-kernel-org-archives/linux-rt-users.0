@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 7/8] futex: Fix bug on when a requeued RT task times out
-Date: Wed, 08 Feb 2012 20:59:33 -0500
-Message-ID: <20120209020200.518106959@goodmis.org>
+Subject: [PATCH RT 6/8] genirq: Allow disabling of softirq processing in irq thread context
+Date: Wed, 08 Feb 2012 20:59:32 -0500
+Message-ID: <20120209020200.293883108@goodmis.org>
 References: <20120209015926.851312665@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -9,124 +9,161 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-futex-Fix-bug-on-when-a-requeued-RT-task-times-out.patch
+Content-Disposition: inline; filename=0006-genirq-Allow-disabling-of-softirq-processing-in-irq-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Requeue with timeout causes a bug with PREEMPT_RT_FULL.
+The processing of softirqs in irq thread context is a performance gain
+for the non-rt workloads of a system, but it's counterproductive for
+interrupts which are explicitely related to the realtime
+workload. Allow such interrupts to prevent softirq processing in their
+thread context.
 
-The bug comes from a timed out condition.
-
-
-	TASK 1				TASK 2
-	------				------
-    futex_wait_requeue_pi()
-	futex_wait_queue_me()
-	<timed out>
-
-					double_lock_hb();
-
-	raw_spin_lock(pi_lock);
-	if (current->pi_blocked_on) {
-	} else {
-	    current->pi_blocked_on = PI_WAKE_INPROGRESS;
-	    run_spin_unlock(pi_lock);
-	    spin_lock(hb->lock); <-- blocked!
-
-
-					plist_for_each_entry_safe(this) {
-					    rt_mutex_start_proxy_lock();
-						task_blocks_on_rt_mutex();
-						BUG_ON(task->pi_blocked_on)!!!!
-
-The BUG_ON() actually has a check for PI_WAKE_INPROGRESS, but the
-problem is that, after TASK 1 sets PI_WAKE_INPROGRESS, it then tries to
-grab the hb->lock, which it fails to do so. As the hb->lock is a mutex,
-it will block and set the "pi_blocked_on" to the hb->lock.
-
-When TASK 2 goes to requeue it, the check for PI_WAKE_INPROGESS fails
-because the task1's pi_blocked_on is no longer set to that, but instead,
-set to the hb->lock.
-
-The fix:
-
-When calling rt_mutex_start_proxy_lock() a check is made to see
-if the proxy tasks pi_blocked_on is set. If so, exit out early.
-Otherwise set it to a new flag PI_REQUEUE_INPROGRESS, which notifies
-the proxy task that it is being requeued, and will handle things
-appropriately.
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/rtmutex.c        |   32 +++++++++++++++++++++++++++++++-
- kernel/rtmutex_common.h |    1 +
- 2 files changed, 32 insertions(+), 1 deletions(-)
+ include/linux/interrupt.h |    2 ++
+ include/linux/irq.h       |    4 +++-
+ kernel/irq/manage.c       |   13 ++++++++++++-
+ kernel/irq/settings.h     |   12 ++++++++++++
+ kernel/softirq.c          |    7 +++++++
+ 5 files changed, 36 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 15eaf30..789744a 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -75,7 +75,8 @@ static void fixup_rt_mutex_waiters(struct rt_mutex *lock)
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 3142442..71c2c0b 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -61,6 +61,7 @@
+  * IRQF_NO_THREAD - Interrupt cannot be threaded
+  * IRQF_EARLY_RESUME - Resume IRQ early during syscore instead of at device
+  *                resume time.
++ * IRQF_NO_SOFTIRQ_CALL - Do not process softirqs in the irq thread context (RT)
+  */
+ #define IRQF_DISABLED		0x00000020
+ #define IRQF_SAMPLE_RANDOM	0x00000040
+@@ -75,6 +76,7 @@
+ #define IRQF_FORCE_RESUME	0x00008000
+ #define IRQF_NO_THREAD		0x00010000
+ #define IRQF_EARLY_RESUME	0x00020000
++#define IRQF_NO_SOFTIRQ_CALL	0x00040000
  
- static int rt_mutex_real_waiter(struct rt_mutex_waiter *waiter)
- {
--	return waiter && waiter != PI_WAKEUP_INPROGRESS;
-+	return waiter && waiter != PI_WAKEUP_INPROGRESS &&
-+		waiter != PI_REQUEUE_INPROGRESS;
+ #define IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
+ 
+diff --git a/include/linux/irq.h b/include/linux/irq.h
+index baa397e..2df0acc 100644
+--- a/include/linux/irq.h
++++ b/include/linux/irq.h
+@@ -65,6 +65,7 @@ typedef	void (*irq_preflow_handler_t)(struct irq_data *data);
+  * IRQ_NO_BALANCING		- Interrupt cannot be balanced (affinity set)
+  * IRQ_MOVE_PCNTXT		- Interrupt can be migrated from process context
+  * IRQ_NESTED_TRHEAD		- Interrupt nests into another thread
++ * IRQ_NO_SOFTIRQ_CALL		- No softirq processing in the irq thread context (RT)
+  */
+ enum {
+ 	IRQ_TYPE_NONE		= 0x00000000,
+@@ -87,12 +88,13 @@ enum {
+ 	IRQ_MOVE_PCNTXT		= (1 << 14),
+ 	IRQ_NESTED_THREAD	= (1 << 15),
+ 	IRQ_NOTHREAD		= (1 << 16),
++	IRQ_NO_SOFTIRQ_CALL	= (1 << 18),
+ };
+ 
+ #define IRQF_MODIFY_MASK	\
+ 	(IRQ_TYPE_SENSE_MASK | IRQ_NOPROBE | IRQ_NOREQUEST | \
+ 	 IRQ_NOAUTOEN | IRQ_MOVE_PCNTXT | IRQ_LEVEL | IRQ_NO_BALANCING | \
+-	 IRQ_PER_CPU | IRQ_NESTED_THREAD)
++	 IRQ_PER_CPU | IRQ_NESTED_THREAD | IRQ_NO_SOFTIRQ_CALL)
+ 
+ #define IRQ_NO_BALANCING_MASK	(IRQ_PER_CPU | IRQ_NO_BALANCING)
+ 
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 3eb233e..cd98592 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -739,7 +739,15 @@ irq_forced_thread_fn(struct irq_desc *desc, struct irqaction *action)
+ 	local_bh_disable();
+ 	ret = action->thread_fn(action->irq, action->dev_id);
+ 	irq_finalize_oneshot(desc, action, false);
+-	local_bh_enable();
++	/*
++	 * Interrupts which have real time requirements can be set up
++	 * to avoid softirq processing in the thread handler. This is
++	 * safe as these interrupts do not raise soft interrupts.
++	 */
++	if (irq_settings_no_softirq_call(desc))
++		_local_bh_enable();
++	else
++		local_bh_enable();
+ 	return ret;
  }
  
- /*
-@@ -1345,6 +1346,35 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 		return 1;
- 	}
+@@ -1031,6 +1039,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 			irqd_set(&desc->irq_data, IRQD_NO_BALANCING);
+ 		}
  
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	/*
-+	 * In PREEMPT_RT there's an added race.
-+	 * If the task, that we are about to requeue, times out,
-+	 * it can set the PI_WAKEUP_INPROGRESS. This tells the requeue
-+	 * to skip this task. But right after the task sets
-+	 * its pi_blocked_on to PI_WAKEUP_INPROGRESS it can then
-+	 * block on the spin_lock(&hb->lock), which in RT is an rtmutex.
-+	 * This will replace the PI_WAKEUP_INPROGRESS with the actual
-+	 * lock that it blocks on. We *must not* place this task
-+	 * on this proxy lock in that case.
-+	 *
-+	 * To prevent this race, we first take the task's pi_lock
-+	 * and check if it has updated its pi_blocked_on. If it has,
-+	 * we assume that it woke up and we return -EAGAIN.
-+	 * Otherwise, we set the task's pi_blocked_on to
-+	 * PI_REQUEUE_INPROGRESS, so that if the task is waking up
-+	 * it will know that we are in the process of requeuing it.
-+	 */
-+	raw_spin_lock(&task->pi_lock);
-+	if (task->pi_blocked_on) {
-+		raw_spin_unlock(&task->pi_lock);
-+		raw_spin_unlock(&lock->wait_lock);
-+		return -EAGAIN;
-+	}
-+	task->pi_blocked_on = PI_REQUEUE_INPROGRESS;
-+	raw_spin_unlock(&task->pi_lock);
-+#endif
++		if (new->flags & IRQF_NO_SOFTIRQ_CALL)
++			irq_settings_set_no_softirq_call(desc);
 +
- 	ret = task_blocks_on_rt_mutex(lock, waiter, task, detect_deadlock);
+ 		/* Set default affinity mask once everything is setup */
+ 		setup_affinity(irq, desc, mask);
  
- 	if (ret && !rt_mutex_owner(lock)) {
-diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
-index a688a29..6ec3dc1 100644
---- a/kernel/rtmutex_common.h
-+++ b/kernel/rtmutex_common.h
-@@ -105,6 +105,7 @@ static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
-  * PI-futex support (proxy locking functions, etc.):
-  */
- #define PI_WAKEUP_INPROGRESS	((struct rt_mutex_waiter *) 1)
-+#define PI_REQUEUE_INPROGRESS	((struct rt_mutex_waiter *) 2)
+diff --git a/kernel/irq/settings.h b/kernel/irq/settings.h
+index f166783..e1f617f 100644
+--- a/kernel/irq/settings.h
++++ b/kernel/irq/settings.h
+@@ -13,6 +13,7 @@ enum {
+ 	_IRQ_MOVE_PCNTXT	= IRQ_MOVE_PCNTXT,
+ 	_IRQ_NO_BALANCING	= IRQ_NO_BALANCING,
+ 	_IRQ_NESTED_THREAD	= IRQ_NESTED_THREAD,
++	_IRQ_NO_SOFTIRQ_CALL	= IRQ_NO_SOFTIRQ_CALL,
+ 	_IRQF_MODIFY_MASK	= IRQF_MODIFY_MASK,
+ };
  
- extern struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock);
- extern void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
+@@ -24,6 +25,7 @@ enum {
+ #define IRQ_NOTHREAD		GOT_YOU_MORON
+ #define IRQ_NOAUTOEN		GOT_YOU_MORON
+ #define IRQ_NESTED_THREAD	GOT_YOU_MORON
++#define IRQ_NO_SOFTIRQ_CALL	GOT_YOU_MORON
+ #undef IRQF_MODIFY_MASK
+ #define IRQF_MODIFY_MASK	GOT_YOU_MORON
+ 
+@@ -34,6 +36,16 @@ irq_settings_clr_and_set(struct irq_desc *desc, u32 clr, u32 set)
+ 	desc->status_use_accessors |= (set & _IRQF_MODIFY_MASK);
+ }
+ 
++static inline bool irq_settings_no_softirq_call(struct irq_desc *desc)
++{
++	return desc->status_use_accessors & _IRQ_NO_SOFTIRQ_CALL;
++}
++
++static inline void irq_settings_set_no_softirq_call(struct irq_desc *desc)
++{
++	desc->status_use_accessors |= _IRQ_NO_SOFTIRQ_CALL;
++}
++
+ static inline bool irq_settings_is_per_cpu(struct irq_desc *desc)
+ {
+ 	return desc->status_use_accessors & _IRQ_PER_CPU;
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 3489d06..729cd0c 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -431,6 +431,13 @@ void local_bh_enable_ip(unsigned long ip)
+ }
+ EXPORT_SYMBOL(local_bh_enable_ip);
+ 
++void _local_bh_enable(void)
++{
++	current->softirq_nestcnt--;
++	migrate_enable();
++}
++EXPORT_SYMBOL(_local_bh_enable);
++
+ /* For tracing */
+ int notrace __in_softirq(void)
+ {
 -- 
 1.7.8.3
