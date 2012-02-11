@@ -1,65 +1,74 @@
-From: Brian Norris <computersforpeace@gmail.com>
-Subject: Re: jffs2 filesystem: possible circular locking dependency detected
-Date: Fri, 10 Feb 2012 22:57:54 -0800
-Message-ID: <CAN8TOE8xLdawRm9i6oTXJOE5T+MUEinkQysH9_ossikdW+8ZhA@mail.gmail.com>
-References: <D61182AC8012EA4EBC531B3AF23BE109B3C6C6@tranzeo-mail2.12stewart.tranzeo.com>
-	<alpine.LFD.2.02.1202082104470.2794@ionos>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: cyclictest problem/bug as non-root
+Date: Sat, 11 Feb 2012 09:45:59 -0600
+Message-ID: <20120211094559.0a0edcb1@redhat.com>
+References: <20120210115721.GA13313@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Darcy Watkins <DWatkins@tranzeo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	David Woodhouse <dwmw2@infradead.org>,
-	linux-mtd@lists.infradead.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Josh Cartwright <joshc@linux.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/jcVdcP=s.qYZp76dxklA_IB"; protocol="application/pgp-signature"
+Cc: linux-rt-users@vger.kernel.org
+To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gx0-f174.google.com ([209.85.161.174]:57082 "EHLO
-	mail-gx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751021Ab2BKG5y convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 11 Feb 2012 01:57:54 -0500
-Received: by ggnh1 with SMTP id h1so1841201ggn.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Feb 2012 22:57:54 -0800 (PST)
-In-Reply-To: <alpine.LFD.2.02.1202082104470.2794@ionos>
+Received: from mx1.redhat.com ([209.132.183.28]:61626 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754182Ab2BKPqI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 11 Feb 2012 10:46:08 -0500
+In-Reply-To: <20120210115721.GA13313@opentech.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Feb 8, 2012 at 12:09 PM, Thomas Gleixner <tglx@linutronix.de> w=
-rote:
-> On Wed, 8 Feb 2012, Darcy Watkins wrote:
->> [ =A0 20.932000] =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> [ =A0 20.932000] [ INFO: possible circular locking dependency detect=
-ed ]
->> [ =A0 20.932000] 3.0.18-rt34 #41
->> [ =A0 20.932000] ---------------------------------------------------=
-----
->> [ =A0 20.932000] depmod/734 is trying to acquire lock:
->> [ =A0 20.932000] =A0(&mm->mmap_sem){++++++}, at: [<800e82d0>] might_=
-fault+0x4c/0xa4
->> [ =A0 20.932000]
->> [ =A0 20.932000] but task is already holding lock:
->> [ =A0 20.932000] =A0(&f->sem){+.+.+.}, at: [<80184f88>] jffs2_readdi=
-r+0x108/0x1c0
->> [ =A0 20.932000]
->> [ =A0 20.932000] which lock already depends on the new lock.
->
-> Classic ABBA deadlock. I don't think it's RT specific, but I might be
-> wrong as usual. Will have a look later this week, when noone beats me=
-=2E
+--Sig_/jcVdcP=s.qYZp76dxklA_IB
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Looks like someone beat you :) Josh Cartwright has a patch here:
-http://lists.infradead.org/pipermail/linux-mtd/2012-February/039787.htm=
-l
+On Fri, 10 Feb 2012 12:57:21 +0100
+Nicholas Mc Guire <der.herr@hofr.at> wrote:
 
-Testing is always helpful to the MTD maintainers!
+>=20
+> HI !
+>=20
+>  minor bug in cyclictest but potential causing confusion on cyclictest=20
+>  resuults when running as non-root user.
+>=20
+> Setup:
+>  if one sets the rtprio in /etc/security/limits.conf to something below
+>  prio max - like:
+>=20
+>  @hofrat          hard    rtprio          10
+>  @hofrat          soft    rtprio          10
+>=20
+>  but then starts cylictest with -p 80 cyclictest will not fuss and also
+>  display priority 80 (as it uses par->prio in print_stat) but effectively=
+=20
+>  runs with prio 0 as the return value of sched_setscheduler is not being
+>  checked in timerthread), resulting in semingly bad scheduling jitter val=
+ues.
+>=20
+>  So maybe cyclictest should take the effective maximum schduling priority
+>  of the user and not the scheduling policy maximum. Not sur if the check
+>  in timerthread is actually really needed - but it should not hurt ither.
+>  patch below (against current git) at "works for me" quality.
+>=20
+> thx!
+> hofrat
+>=20
+>=20
 
-Brian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks Nicholas, I'll apply it and run it through some tests. Looks
+good at first glance though.
+
+Clark
+
+--Sig_/jcVdcP=s.qYZp76dxklA_IB
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
+
+iEYEARECAAYFAk82jTcACgkQHyuj/+TTEp11dACeKUKJUXdtHQgXqQC3IotmtAX5
+DRAAoMlulwiQCO30z91IQYRdZoForA1N
+=LaV+
+-----END PGP SIGNATURE-----
+
+--Sig_/jcVdcP=s.qYZp76dxklA_IB--
