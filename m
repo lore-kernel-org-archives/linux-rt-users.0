@@ -1,90 +1,109 @@
-From: Tim Blechmann <tim@klingt.org>
-Subject: Re: possible problem with sem_post
-Date: Tue, 14 Feb 2012 19:51:46 +0100
-Message-ID: <jheag2$26b$1@dough.gmane.org>
-References: <201202131342.q1DDgG7p001794@klingt.org> <jhbor4$ngh$1@dough.gmane.org>
+From: Lukasz Majewski <majess1982@gmail.com>
+Subject: [Vortex86] External SPI
+Date: Sun, 19 Feb 2012 23:17:47 +0100
+Message-ID: <20120219231747.12c66365@jawa>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Andy O'Brien <aobrien@greenseainc.com>,
+	platform-driver-x86@vger.kernel.org, linux-8086@vger.kernel.org,
+	linux-iio@vger.kernel.org, Lukasz Majewski <majess1982@gmail.com>,
+	linux-embedded@vger.kernel.org, soc@dmp.com.tw
 To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:38309 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754001Ab2BNSwD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Feb 2012 13:52:03 -0500
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1RxNTq-0001zx-8H
-	for linux-rt-users@vger.kernel.org; Tue, 14 Feb 2012 19:51:58 +0100
-Received: from 85-127-90-215.dynamic.xdsl-line.inode.at ([85.127.90.215])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Feb 2012 19:51:58 +0100
-Received: from tim by 85-127-90-215.dynamic.xdsl-line.inode.at with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Feb 2012 19:51:58 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-8086-owner@vger.kernel.org>
+Sender: linux-8086-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
->> i am experiencing a strange issue with lockups of my application. have
->> multiple high-priority real-time threads (as many threads as there are
->> physical cpus) and one of the threads seems to lock inside sem_post(). these
->> lookups only occur very rarely, after stressing the application (and the
->> semaphore) for a rather long time.
->> 
->> sem_post seems to call sys_futex with FUTEX_WAKE. this issue only occurred
->> recently after installing the 3.0 rt kernel (currently 3.0.20-rt35). but
->> haven't seen this behavior on any non-rt kernel (currently running another
->> stress-test). the machine is a thinkpad t410, x86_64.
->> 
->> if this is a problem of the rt-kernel, is there any way to debug it? or is it
->> in general unsafe to call sem_post from real-time threads?
-> 
-> ok, i ran the same test on a stock ubuntu kernel for a few hours without any
-> problem.
-> 
-> the situation: 2 cpus, 2 high-priority SCHED_FIFO threads. several
-> low-priority threads, one of them waiting for a semaphore, that is posted by
-> the rt threads. my guess is that the low-priority thread acquires a spinlock
-> but then gets preempted, but the high-priority thread waits for this spinlock
-> ... is this possible?
+Hi all,
 
-for the record:
+I posses a Vortex86DX SoC based computer.
 
-[  999.660730] BUG: sleeping function called from invalid context at kernel/rtmutex.c:646
-[  999.660735] in_atomic(): 1, irqs_disabled(): 1, pid: 22, name: irq/9-acpi
-[  999.660738] 1 lock held by irq/9-acpi/22:
-[  999.660739]  #0:  (acpi_gbl_gpe_lock){......}, at: [<ffffffff812c2c1c>] acpi_ev_gpe_detect+0x2c/0x108
-[  999.660752] irq event stamp: 84018
-[  999.660753] hardirqs last  enabled at (84017): [<ffffffff8158bb5b>] _raw_spin_unlock_irq+0x2b/0x60
-[  999.660761] hardirqs last disabled at (84018): [<ffffffff8158b974>] _raw_spin_lock_irqsave+0x24/0x70
-[  999.660765] softirqs last  enabled at (0): [<ffffffff8104e1f4>] copy_process+0x6c4/0x1680
-[  999.660772] softirqs last disabled at (0): [<          (null)>]           (null)
-[  999.660776] Pid: 22, comm: irq/9-acpi Not tainted 3.0.20-rt36+ #76
-[  999.660778] Call Trace:
-[  999.660787]  [<ffffffff81085330>] ? print_irqtrace_events+0xd0/0xe0
-[  999.660791]  [<ffffffff8103ec7a>] __might_sleep+0xea/0x120
-[  999.660795]  [<ffffffff8158b1af>] rt_spin_lock+0x1f/0x60
-[  999.660802]  [<ffffffff81108b13>] kmem_cache_alloc+0x83/0x210
-[  999.660807]  [<ffffffff812b7cef>] ? acpi_ec_sync_query+0xbf/0xbf
-[  999.660813]  [<ffffffff812b26db>] __acpi_os_execute+0x2c/0x10c
-[  999.660817]  [<ffffffff812b27c6>] acpi_os_execute+0xb/0xd
-[  999.660820]  [<ffffffff812b8389>] acpi_ec_gpe_handler+0x69/0x72
-[  999.660824]  [<ffffffff812c2b77>] acpi_ev_gpe_dispatch+0xc0/0x139
-[  999.660827]  [<ffffffff812c2ca0>] acpi_ev_gpe_detect+0xb0/0x108
-[  999.660834]  [<ffffffff810ba070>] ? irq_thread_fn+0x50/0x50
-[  999.660838]  [<ffffffff812c137d>] acpi_ev_sci_xrupt_handler+0x1d/0x26
-[  999.660841]  [<ffffffff812b2831>] acpi_irq+0x11/0x2c
-[  999.660845]  [<ffffffff810ba099>] irq_forced_thread_fn+0x29/0x70
-[  999.660848]  [<ffffffff810b9fa2>] irq_thread+0x172/0x1f0
-[  999.660853]  [<ffffffff810b9e30>] ? irq_finalize_oneshot+0x120/0x120
-[  999.660858]  [<ffffffff810706fc>] kthread+0x9c/0xb0
-[  999.660865]  [<ffffffff81592964>] kernel_thread_helper+0x4/0x10
-[  999.660869]  [<ffffffff8103ea67>] ? finish_task_switch+0x87/0x110
-[  999.660873]  [<ffffffff8158bfd8>] ? retint_restore_args+0x13/0x13
-[  999.660877]  [<ffffffff81070660>] ? __init_kthread_worker+0xa0/0xa0
-[  999.660881]  [<ffffffff81592960>] ? gs_change+0x13/0x13
+According to the spec it has two SPI interfaces - namely: internal -
+access to BIOS and external, which is connected to serial memory
+(MX25L3205 [1])
 
-thnx, tim
+My application requires reading data from SPI sensor. I've given a shot
+for a bitbang SPI driver. It worked, but slow access to
+GPIOs caused a very slow transmission. 
 
+For speed up I've decided to unsolder the memory [1] and solder the
+sensor (via 8cm cables).
+
+Unfortunately, documents provided from DM&P[2]:  [3] , [4] give some
+hints on setting up a base address to get access to the SPI memory
+region, and proper GPIO configuration.
+
+What they DO NOT tell is how to perform the SPI transmission.
+
+SPI controller address map:
+BA is the Base Address
+
+BA + 08h External SPI Output Data Register (8 bit transfer)
+BA + 09h External SPI Input Register
+BA + 0Ah External SPI Control Register
+BA + 0Bh External SPI Status Register
+BA + 0Ch External SPI Chip Select Register
+BA + 0Dh External SPI Error Status Register
+
+I've discovered that:
+ - Access (read/write) to control register (CS) is not causing the clock
+   generation
+ - The Chip Select line is directly controlled by bit 0 (1 << 0) in the
+   "Chip Select Regsiter". It must be explicitly changed (by writing
+   data to the register) to toggle CS line state. After that the WCTE
+   bit at "Error Status Register" is set to 1 (which means "controller
+   busy")
+ - To send data via SPI, one needs to write the data to the 8 bit
+   "Output Data Register". It seems, that writing data starts clock
+   generation. For correct transmission one needs to wait until the ODC
+   bit at "Status Register" is set to 1.
+
+The _problem_ is with reading data (with full or half duplex):
+
+Inserting:
+rx = inb(addr + 0x09); // "SPI Input Register" is not causing
+reading data.
+
+However:
+Writing data to the "SPI Input Register":
+   outb(0x00, addr + 0x09) // the CLK generation starts
+   and waiting for IDR bit at "Status Register" set to 1, causes
+   operation:
+   rx = inb(addr + 0x09); 
+   to read correct data.
+
+
+The above only works when FIFO is enabled (bit FIEN - 4 at "Control
+Register")
+
+The problem is, that the sent data seems to be
+somewhat random (e.g. the first/last send data) and
+I don't have a feeling that I'm fully controlling the operation of SPI.
+
+Conclusion:
+ - outb is needed to force SPI block to start generating SCLK (also
+   when one wants to read data).
+ - FIFO is involved in reading data from SPI - I don't know how to
+   control it.
+ - It seems, that the controller is half-duplex.
+
+I suspect, that this simple type of controller has been also used at
+other SoC's. Maybe it is an FPGA based design, or some standard Intel's
+chip (like 8255). I was asking "uncle google" but with no satisfactory
+results.
+
+
+Has someone dealt with a similar controller? Any advice? Hint?
+
+
+links:
+[1] MX25L3205 - SPI flash memory
+http://www.mxic.com.tw/QuickPlace/hq/Main.nsf/h_Toc/5c179475fbb1d010482574440028bdf4/?OpenDocument
+[2] http://www.dmp.com.tw/tech/vortex86dx/
+[3] "DM&P Vortex86 Series (SX/DX/MX) Software Programming Reference"
+[4] "Vortex86DX Fact Sheet 32-BIT x86 SoC"
+
+
+Best regards,
+Lukasz Majewski
 
