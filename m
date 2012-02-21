@@ -1,78 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.22-rt37
-Date: Tue, 21 Feb 2012 11:45:51 -0500
-Message-ID: <1329842751.25686.65.camel@gandalf.stny.rr.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: [PATCH RFC -rt] Alleged fix for CPU-hotplug deadlock
+Date: Tue, 21 Feb 2012 12:00:09 -0800
+Message-ID: <20120221200009.GA14368@linux.vnet.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-a5oG4MPOO0l+2i8lOJIx"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: rostedt@goodmis.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e36.co.us.ibm.com ([32.97.110.154]:56031 "EHLO
+	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756120Ab2BUUAf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 21 Feb 2012 15:00:35 -0500
+Received: from /spool/local
+	by e36.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Tue, 21 Feb 2012 13:00:31 -0700
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+This patch is intended to fix a deadlock seen in -rt.  Untested, might
+not even compile.  The intent is to move kthread_stop() outside of
+the CPU-hotplug lock, thus preventing deadlocks involving sleeping
+spinlocks.
 
---=-a5oG4MPOO0l+2i8lOJIx
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 8c26a49..e0d514b 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -2041,8 +2041,7 @@ static int __cpuinit rcu_cpu_notify(struct notifier_block *self,
+ 		rcu_send_cbs_to_online(&rcu_sched_state);
+ 		rcu_preempt_send_cbs_to_online();
+ 		break;
+-	case CPU_DEAD:
+-	case CPU_DEAD_FROZEN:
++	case CPU_POST_DEAD:
+ 	case CPU_UP_CANCELED:
+ 	case CPU_UP_CANCELED_FROZEN:
+ 		rcu_offline_cpu(cpu);
 
-Dear RT Folks,
-
-I'm pleased to announce the 3.0.22-rt37 stable release.
-
-
-This release is just an update to the new stable 3.0.22 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: efc2e7db8c8c870833bb8cf692601e3769efce9d
-
-
-Or to build 3.0.22-rt37 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.22.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.22-rt37.=
-patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
---=-a5oG4MPOO0l+2i8lOJIx
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAABAgAGBQJPQ8o/AAoJEIy3vGnGbaoA/9IQALOxAOPJDOl+iLZXkb7diQzv
-AAsbTgo31pOHph/lFCBKhtgVxc08tcycRc1Jv5+38rOSbfbsrrxAlkctputRoH3/
-n0VhSKFhT/Y/x22XIvSEXgrxTf5PIFz3Q2ILaGiJkm2m017XGbTAHXFuqyakZ9+c
-EabqmXCSaPSYy+1uSykgQ3BW2DdQUUNDgvR1x51D1UIvU+m9MR6/MVWmQwkqE7s5
-EEviTw77Dc3NuZJhyjZ4T7MgzuJNdGSIkxhJixvHyK2uXtmmnZiUb4G4U/09YSGy
-X6XCIjr/oNR39rVxEm6Cq4/FBQRBj1v81e4zq5rxibNNM5XcJLCSWkjLyV7vQsGW
-X2CF0Mh4LM7as7vIg8LLSumRJFZwC6KA9bykep6QiVRJGmiw7hmSr/JroZ3lzfgY
-a/chTqcR44t3POeIg0b4LSLfk7as9mlD48EBosvgDYaBL6uUt5FQMgNhXVGT+X/Y
-SoB9MtMKUR4uPN3daeiFsGwiyE+ieI2ptczOqXLImebnsnhcR/E/yL97PbBcaTjU
-2QYR5shxYt18+801Htog5drH5G84nspRQX5Ifg3C1cv4Squ1eRGPIlZQ5Zuj6zso
-817qjbwBQZqJExyfdYvNOEmFgwrrx9DP0KR3N2/MkCON4O4uYU3G7hRk28cBruyf
-ohj2REdfP86UrPYKAEEb
-=3ZWU
------END PGP SIGNATURE-----
-
---=-a5oG4MPOO0l+2i8lOJIx--
