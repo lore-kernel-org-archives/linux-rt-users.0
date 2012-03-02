@@ -1,84 +1,153 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.23-rt38
-Date: Thu, 01 Mar 2012 16:14:48 -0500
-Message-ID: <1330636488.25686.238.camel@gandalf.stny.rr.com>
+From: "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>
+Subject: Re: [PATCH RT 3/9][RFC] [PATCH 3/9] lglock/rt: Use non-rt for_each_cpu()
+ in -rt code
+Date: Fri, 02 Mar 2012 12:55:09 +0530
+Message-ID: <4F5075D5.9090201@linux.vnet.ibm.com>
+References: <20120301185527.064629423@goodmis.org> <20120301190345.374756214@goodmis.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-BgMxyavNc51b5wBdS8ol"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	"mingo@elte.hu" <mingo@elte.hu>, Andi Kleen <ak@linux.intel.com>,
+	"akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+	"rusty@rustcorp.com.au" <rusty@rustcorp.com.au>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:30819 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757854Ab2CAVOz (ORCPT
+Received: from e23smtp09.au.ibm.com ([202.81.31.142]:41729 "EHLO
+	e23smtp09.au.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753229Ab2CBHZW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Mar 2012 16:14:55 -0500
+	Fri, 2 Mar 2012 02:25:22 -0500
+Received: from /spool/local
+	by e23smtp09.au.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <srivatsa.bhat@linux.vnet.ibm.com>;
+	Fri, 2 Mar 2012 08:16:09 +1000
+In-Reply-To: <20120301190345.374756214@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On 03/02/2012 12:25 AM, Steven Rostedt wrote:
 
---=-BgMxyavNc51b5wBdS8ol
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
+> Currently the RT version of the lglocks() does a for_each_online_cpu()
+> in the name##_global_lock_online() functions. Non-rt uses its own
+> mask for this, and for good reason.
+> 
+> A task may grab a *_global_lock_online(), and in the mean time, one
+> of the CPUs goes offline. Now when that task does a *_global_unlock_online()
+> it releases all the locks *except* the one that went offline.
+> 
+> Now if that CPU were to come back on line, its lock is now owned by a
+> task that never released it when it should have.
+> 
+> This causes all sorts of fun errors. Like owners of a lock no longer
+> existing, or sleeping on IO, waiting to be woken up by a task that
+> happens to be blocked on the lock it never released.
+> 
+> Convert the RT versions to use the lglock specific cpumasks. As once
+> a CPU comes on line, the mask is set, and never cleared even when the
+> CPU goes offline. The locks for that CPU will still be taken and released.
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> ---
+>  include/linux/lglock.h |   35 ++++++++++++++++++++++++++++++++---
+>  1 files changed, 32 insertions(+), 3 deletions(-)
+> 
+> diff --git a/include/linux/lglock.h b/include/linux/lglock.h
+> index 52b289f..cdfcef3 100644
+> --- a/include/linux/lglock.h
+> +++ b/include/linux/lglock.h
+> @@ -203,9 +203,31 @@
+>  #else /* !PREEMPT_RT_FULL */
+>  #define DEFINE_LGLOCK(name)						\
+>  									\
+> - DEFINE_PER_CPU(struct rt_mutex, name##_lock);					\
+> + DEFINE_PER_CPU(struct rt_mutex, name##_lock);				\
+> + DEFINE_SPINLOCK(name##_cpu_lock);					\
+> + cpumask_t name##_cpus __read_mostly;					\
+>   DEFINE_LGLOCK_LOCKDEP(name);						\
+>  									\
+> + static int								\
+> + name##_lg_cpu_callback(struct notifier_block *nb,			\
+> +				unsigned long action, void *hcpu)	\
+> + {									\
+> +	switch (action & ~CPU_TASKS_FROZEN) {				\
+> +	case CPU_UP_PREPARE:						\
+> +		spin_lock(&name##_cpu_lock);				\
+> +		cpu_set((unsigned long)hcpu, name##_cpus);		\
+> +		spin_unlock(&name##_cpu_lock);				\
+> +		break;							\
+> +	case CPU_UP_CANCELED: case CPU_DEAD:				\
+> +		spin_lock(&name##_cpu_lock);				\
+> +		cpu_clear((unsigned long)hcpu, name##_cpus);		\
+> +		spin_unlock(&name##_cpu_lock);				\
+> +	}								\
+> +	return NOTIFY_OK;						\
+> + }									\
+> + static struct notifier_block name##_lg_cpu_notifier = {		\
+> +	.notifier_call = name##_lg_cpu_callback,			\
+> + };									\
+>   void name##_lock_init(void) {						\
+>  	int i;								\
+>  	LOCKDEP_INIT_MAP(&name##_lock_dep_map, #name, &name##_lock_key, 0); \
+> @@ -214,6 +236,11 @@
+>  		lock = &per_cpu(name##_lock, i);			\
+>  		rt_mutex_init(lock);					\
+>  	}								\
+> +	register_hotcpu_notifier(&name##_lg_cpu_notifier);		\
+> +	get_online_cpus();						\
+> +	for_each_online_cpu(i)						\
+> +		cpu_set(i, name##_cpus);				\
 
 
-Dear RT Folks,
+This can be further improved. We don't really need this loop. We can replace
+it with:
 
-I'm pleased to announce the 3.0.23-rt38 stable release.
+cpumask_copy(&name##_cpus, cpu_online_mask);
 
+(as pointed out by Ingo. See: https://lkml.org/lkml/2012/2/29/93 and
+https://lkml.org/lkml/2012/2/29/153).
 
-This release is just an update to the new stable 3.0.23 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: a60fb29b526aeaa34482a062ba4244948c0b9bf1
+I will try sending a patch for this to non-RT after the numerous patches
+currently flying around this code (in non-RT) settle down..
 
 
-Or to build 3.0.23-rt38 directly, the following patches should be applied:
+> +	put_online_cpus();						\
+>   }									\
+>   EXPORT_SYMBOL(name##_lock_init);					\
+>  									\
+> @@ -254,7 +281,8 @@
+>   void name##_global_lock_online(void) {					\
+>  	int i;								\
+>  	rwlock_acquire(&name##_lock_dep_map, 0, 0, _RET_IP_);		\
+> -	for_each_online_cpu(i) {					\
+> +	spin_lock(&name##_cpu_lock);					\
+> +	for_each_cpu(i, &name##_cpus) {					\
+>  		struct rt_mutex *lock;					\
+>  		lock = &per_cpu(name##_lock, i);			\
+>  		__rt_spin_lock(lock);					\
+> @@ -265,11 +293,12 @@
+>   void name##_global_unlock_online(void) {				\
+>  	int i;								\
+>  	rwlock_release(&name##_lock_dep_map, 1, _RET_IP_);		\
+> -	for_each_online_cpu(i) {					\
+> +	for_each_cpu(i, &name##_cpus) {					\
+>  		struct rt_mutex *lock;					\
+>  		lock = &per_cpu(name##_lock, i);			\
+>  		__rt_spin_unlock(lock);					\
+>  	}								\
+> +	spin_unlock(&name##_cpu_lock);					\
+>   }									\
+>   EXPORT_SYMBOL(name##_global_unlock_online);				\
+>  									\
 
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.23.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.23-rt38.=
-patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
---=-BgMxyavNc51b5wBdS8ol
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iQIcBAABAgAGBQJPT+bIAAoJEIy3vGnGbaoAbA0QANTsaxmJFTynUOD7hor3ym1z
-7C6gztjk04YD/Bl/MbaABTGFmcu+S3yWBB0rfEguJ0uEXPDhInyR+Z6dzpVATD3E
-TSWKwcw9G4DjSbitpvvlQ9j/4cQ5wjdf+ic7G4762/XQQuGx71gDdzJeHeq5mMsk
-Iv84IlVjF3/TEqi+3ZE1/LG2lAsKuXJosgJF9g/Bu5Kn+x74EEOVxsBZGffX/Mov
-Wr3m3cWTLIQV6Lod/fQLggzqK0WU7yaBaGOnaF1bx875opBSEMKmavqfcmwIsyWY
-LmCEKv7Siapp77NimQ9C0YkWU+Tma4O1EsKKHNpxGV8db0xuxWVlH424idVYNlJ7
-jtTMpBhjX+2d3B0xex4NFXETmWlolczq18TBfzzkznc5P4nC5jqaSQd6uSNR/kwl
-Iid7K1h8f1PHvMg6k9dMSD1yoYIhajR8dY06o7fzoJaaYxk+4WIvp8Dt7RCe0NCF
-6Ny2Dyj2QYfeHHumjciGvXyVlYZ9FsoJOxtXSIB+7QphoCMPMAKc9To/J6wbNfPQ
-MvAmgRq0S4kB+r5nciWGI2VzOLN2wy5cSpOrt6ke2d5V10uHMX9zaIqrAN/kVI8O
-fTgQ/z5BB9cdwLN+xDQVOdodXmI9iMzhhJ95Xelf0yLZjkPU8sH7aHN84GraSXcV
-BpYCEDK1HmA0gk8cgSaT
-=c9uH
------END PGP SIGNATURE-----
-
---=-BgMxyavNc51b5wBdS8ol--
+Regards,
+Srivatsa S. Bhat
+IBM Linux Technology Center
 
