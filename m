@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 7/9][RFC] [PATCH 7/9] cpu/rt: Rework cpu down for
  PREEMPT_RT
-Date: Fri, 02 Mar 2012 10:11:52 -0500
-Message-ID: <1330701112.25686.257.camel@gandalf.stny.rr.com>
+Date: Fri, 02 Mar 2012 10:15:23 -0500
+Message-ID: <1330701323.25686.260.camel@gandalf.stny.rr.com>
 References: <20120301185527.064629423@goodmis.org>
 	 <20120301190346.172835662@goodmis.org>
 	 <alpine.LFD.2.02.1203021518501.2742@ionos>
@@ -17,76 +17,26 @@ Cc: linux-kernel@vger.kernel.org,
 	Clark Williams <clark.williams@gmail.com>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6447 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:16521 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1030201Ab2CBPLx (ORCPT
+	with ESMTP id S1758411Ab2CBPPZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Mar 2012 10:11:53 -0500
+	Fri, 2 Mar 2012 10:15:25 -0500
 In-Reply-To: <alpine.LFD.2.02.1203021518501.2742@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Fri, 2012-03-02 at 15:52 +0100, Thomas Gleixner wrote:
-> On Thu, 1 Mar 2012, Steven Rostedt wrote:
-> > Bringing a CPU down is a pain with the PREEMPT_RT kernel because
-> > tasks can be preempted in many more places than in non-RT. In
-> > order to handle per_cpu variables, tasks may be pinned to a CPU
-> > for a while, and even sleep. But these tasks need to be off the CPU
-> > if that CPU is going down.
-> > 
-> > Several synchronization methods have been tried, but when stressed
-> > they failed. This is a new approach.
-> 
-> OMG! That hotplug stuff has been ugly as hell already, but you managed
-> to make it exponentially worse. That's really an achievement.
 
-*Blush*  Oh no, I don't deserve the credit for that. Adding the
-migrate_disable() and friends in -rt did most the work for me.
-
-
->  
-> Instead of adding more mess, we should simply fix hotplug. 
-> 
-> We can migrate away all tasks _before_ we run stomp-machine and
-
-Well, that's what this patch pretty much tried to do. But I agree, not
-so nicely.
-
-Should we call into the scheduler and tell it to do the migrate all
-tasks off and add no new ones? But note, the migrate is done with
-stomp_machine too. (per cpu, and on the CPU that's going down). Then we
-need to let the scheduler allow stomp_machine to enter the CPU, which
-shouldn't be that hard.
-
-
-> prevent that any new tasks go on the cpu which is about to be taken
-> down. Once all migratable tasks are gone, we only have to deal with
-> the cpu bound ones, which is not causing such headaches.
-
-Also, the headaches came mostly from the tasks that were bound to the
-CPU. Moving everything off after the notifiers is what's best. I may be
-able to have that happen. We need a way to call into the scheduler and
-tell it to migrate everything off then.
-
-
-> 
 > So no, I rather keep the current problem than applying that insanity.
 
-Note, the sync daemon was already added in -rt, I just modified it to be
-a little different. What is currently there introduced lots of races
-(especially that grabbing of the mutex). And is completely broken.
+Note, patches 1,2,3,5 and 6, were bugs I found while debugging hotplug.
+Please add them, they are not insanity fixes but real bug fixes.
 
-I'm willing to take another shot at it, but I'm burnt out from this
-hotplug crap and I'm way behind in my other duties because of it. As for
-now we have a fix (yes it's crappy), for those that need hotplug
-working, they can use this mess.
+And can you mark them as stable-rt fixes too.
 
-I'm going to go off and catch up on my other work and when I get time
-again I'll take another shot at it. Unless someone else beats me to it
-(I can only hope so).
+Thanks,
 
 -- Steve
-
-
 
 
