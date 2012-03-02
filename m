@@ -1,66 +1,54 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: traceback on 3.2.7-rt13
-Date: Fri, 2 Mar 2012 12:29:20 +0100
-Message-ID: <CAONaPpFGL6wMzij1obwL6x8SWbcXsOnRcruG48DVem-Dg66ObA@mail.gmail.com>
-References: <20120225105502.0f4553a3@gmail.com>
-	<alpine.LFD.2.02.1203011619530.2742@ionos>
-	<CAONaPpFqas6RK1PNbiuzCg=LcVf1J9DuBxqxZDc2gHPgbDU91g@mail.gmail.com>
-	<alpine.LFD.2.02.1203021134340.2742@ionos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 3/9][RFC] [PATCH 3/9] lglock/rt: Use non-rt
+ for_each_cpu() in -rt code
+Date: Fri, 02 Mar 2012 09:20:48 -0500
+Message-ID: <1330698048.25686.246.camel@gandalf.stny.rr.com>
+References: <20120301185527.064629423@goodmis.org>
+	 <20120301190345.374756214@goodmis.org>
+	 <4F5075D5.9090201@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <clark.williams@gmail.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qw0-f46.google.com ([209.85.216.46]:33950 "EHLO
-	mail-qw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965041Ab2CBL3V convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Mar 2012 06:29:21 -0500
-Received: by qaeb19 with SMTP id b19so160118qae.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 Mar 2012 03:29:20 -0800 (PST)
-In-Reply-To: <alpine.LFD.2.02.1203021134340.2742@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	"mingo@elte.hu" <mingo@elte.hu>, Andi Kleen <ak@linux.intel.com>,
+	"akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+	"rusty@rustcorp.com.au" <rusty@rustcorp.com.au>
+To: "Srivatsa S. Bhat" <srivatsa.bhat@linux.vnet.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4F5075D5.9090201@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Mar 2, 2012 at 11:41 AM, Thomas Gleixner <tglx@linutronix.de> w=
-rote:
-> On Thu, 1 Mar 2012, John Kacur wrote:
->> On Thu, Mar 1, 2012 at 4:23 PM, Thomas Gleixner <tglx@linutronix.de>=
- wrote:
->> > That's why I asked to revert the
->> >
->> > =A0 =A0 =A0 acpi-make-gbl-hardware-lock-raw.patch
->> > =A0 =A0 =A0 acpi-make-ec-lock-raw-as-well.patch
->> >
->> > patches, so we can get that information.
->> >
->> > It might be a non issue on 3.2 and only a 3.0 problem, but as I ca=
-n't
->> > find anything I'm going to drop those patches from the next 3.2
->> > release and wait for proper bugreports coming again :)
->> >
->>
->> FWIW
->> I believe the latter comes from here: https://lkml.org/lkml/2011/12/=
-3/53
->
-> And how does that help? I know that the ec lock conversion was a
-> follow up to the gbl hardware lock conversion, but I need to see the
-> backtrace again which made us convert gbl lock.
->
+On Fri, 2012-03-02 at 12:55 +0530, Srivatsa S. Bhat wrote:
+> On 03/02/2012 12:25 AM, Steven Rostedt wrote:
+>  	}								\
+> > +	register_hotcpu_notifier(&name##_lg_cpu_notifier);		\
+> > +	get_online_cpus();						\
+> > +	for_each_online_cpu(i)						\
+> > +		cpu_set(i, name##_cpus);				\
+> 
+> 
+> This can be further improved. We don't really need this loop. We can replace
+> it with:
+> 
+> cpumask_copy(&name##_cpus, cpu_online_mask);
+> 
+> (as pointed out by Ingo. See: https://lkml.org/lkml/2012/2/29/93 and
+> https://lkml.org/lkml/2012/2/29/153).
+> 
+> I will try sending a patch for this to non-RT after the numerous patches
+> currently flying around this code (in non-RT) settle down..
+> 
+> 
 
-So, if I can read between the lines here, you're saying the posted
-traceback in the ml link wouldn't occur without the the gbl lock?
-Unfortunately I don't think the original backtrace was posted on the
-ml, otherwise somebody could have hunted it down. Ok, FWIW turned out
-to be not much.
+Yeah, I thought that was funny too, but I wanted RT to be close to
+mainline. My thoughts were to fix the broken hotplug code at the time
+and I wasn't thinking too much on improving mainline ;-)
 
-John
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- Steve
