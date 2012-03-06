@@ -1,69 +1,98 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/25][RFC 3.0.23-rt39-rc1] x86-64-remove-vsyscall-number-3
-Date: Tue, 06 Mar 2012 11:16:41 -0500
-Message-ID: <20120306161945.989840517@goodmis.org>
+Subject: [PATCH RT 09/25][RFC 3.0.23-rt39-rc1] ia64: vsyscall: Use seqcount instead of seqlock
+Date: Tue, 06 Mar 2012 11:16:45 -0500
+Message-ID: <20120306161946.789821696@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Tony Luck <tony.luck@intel.com>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14848 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32910 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755562Ab2CFQTt (ORCPT
+	with ESMTP id S1755534Ab2CFQTs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Mar 2012 11:19:49 -0500
-Content-Disposition: inline; filename=0005-x86-64-remove-vsyscall-number-3.patch
+	Tue, 6 Mar 2012 11:19:48 -0500
+Content-Disposition: inline; filename=0009-ia64-vsyscall-Use-seqcount-instead-of-seqlock.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Andy Lutomirski <luto@mit.edu>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-commit bb5fe2f78eadf5a52d8dcbf9a57728fd107af97b
-Author: Andy Lutomirski <luto@mit.edu>
-Date:   Sun Jun 5 13:50:22 2011 -0400
+The update of the vdso data happens under xtime_lock, so adding a
+nested lock is pointless. Just use a seqcount to sync the readers.
 
-    x86-64: Remove vsyscall number 3 (venosys)
-
-    It just segfaults since April 2008 (a4928cff), so I'm pretty
-    sure that nothing uses it.  And having an empty section makes
-    the linker script a bit fragile.
-
-    Signed-off-by: Andy Lutomirski <luto@mit.edu>
-    Link: http://lkml.kernel.org/r/4a4abcf47ecadc269f2391a313576fe6d06acef7.1307292171.git.luto@mit.edu
-
-backport by:
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Tony Luck <tony.luck@intel.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/vmlinux.lds.S |    4 ----
- arch/x86/kernel/vsyscall_64.c |    5 -----
- 2 files changed, 0 insertions(+), 9 deletions(-)
+ arch/ia64/kernel/asm-offsets.c        |    4 ++--
+ arch/ia64/kernel/fsys.S               |    2 +-
+ arch/ia64/kernel/fsyscall_gtod_data.h |    2 +-
+ arch/ia64/kernel/time.c               |   10 +++-------
+ 4 files changed, 7 insertions(+), 11 deletions(-)
 
-diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
-index 89aed99..85d4a06 100644
---- a/arch/x86/kernel/vmlinux.lds.S
-+++ b/arch/x86/kernel/vmlinux.lds.S
-@@ -188,10 +188,6 @@ SECTIONS
- 		*(.vsyscall_2)
- 	}
+diff --git a/arch/ia64/kernel/asm-offsets.c b/arch/ia64/kernel/asm-offsets.c
+index af56501..106aeb6 100644
+--- a/arch/ia64/kernel/asm-offsets.c
++++ b/arch/ia64/kernel/asm-offsets.c
+@@ -269,8 +269,8 @@ void foo(void)
+ 	BLANK();
  
--	.vsyscall_3 ADDR(.vsyscall_0) + 3072: AT(VLOAD(.vsyscall_3)) {
--		*(.vsyscall_3)
--	}
--
- #define __VVAR_KERNEL_LDS
- #include <asm/vvar.h>
- #undef __VVAR_KERNEL_LDS
-diff --git a/arch/x86/kernel/vsyscall_64.c b/arch/x86/kernel/vsyscall_64.c
-index 3e68218..a2d96c7 100644
---- a/arch/x86/kernel/vsyscall_64.c
-+++ b/arch/x86/kernel/vsyscall_64.c
-@@ -222,11 +222,6 @@ vgetcpu(unsigned *cpu, unsigned *node, struct getcpu_cache *tcache)
- 	return 0;
- }
+ 	/* used by fsys_gettimeofday in arch/ia64/kernel/fsys.S */
+-	DEFINE(IA64_GTOD_LOCK_OFFSET,
+-		offsetof (struct fsyscall_gtod_data_t, lock));
++	DEFINE(IA64_GTOD_SEQ_OFFSET,
++		offsetof (struct fsyscall_gtod_data_t, seq);
+ 	DEFINE(IA64_GTOD_WALL_TIME_OFFSET,
+ 		offsetof (struct fsyscall_gtod_data_t, wall_time));
+ 	DEFINE(IA64_GTOD_MONO_TIME_OFFSET,
+diff --git a/arch/ia64/kernel/fsys.S b/arch/ia64/kernel/fsys.S
+index 331d42b..fa77de7 100644
+--- a/arch/ia64/kernel/fsys.S
++++ b/arch/ia64/kernel/fsys.S
+@@ -174,7 +174,7 @@ ENTRY(fsys_set_tid_address)
+ 	FSYS_RETURN
+ END(fsys_set_tid_address)
  
--static long __vsyscall(3) venosys_1(void)
--{
--	return -ENOSYS;
--}
+-#if IA64_GTOD_LOCK_OFFSET !=0
++#if IA64_GTOD_SEQ_OFFSET !=0
+ #error fsys_gettimeofday incompatible with changes to struct fsyscall_gtod_data_t
+ #endif
+ #if IA64_ITC_JITTER_OFFSET !=0
+diff --git a/arch/ia64/kernel/fsyscall_gtod_data.h b/arch/ia64/kernel/fsyscall_gtod_data.h
+index 57d2ee6..146b15b 100644
+--- a/arch/ia64/kernel/fsyscall_gtod_data.h
++++ b/arch/ia64/kernel/fsyscall_gtod_data.h
+@@ -6,7 +6,7 @@
+  */
+ 
+ struct fsyscall_gtod_data_t {
+-	seqlock_t	lock;
++	seqcount_t	seq;
+ 	struct timespec	wall_time;
+ 	struct timespec monotonic_time;
+ 	cycle_t		clk_mask;
+diff --git a/arch/ia64/kernel/time.c b/arch/ia64/kernel/time.c
+index 85118df..15823ed 100644
+--- a/arch/ia64/kernel/time.c
++++ b/arch/ia64/kernel/time.c
+@@ -35,9 +35,7 @@
+ 
+ static cycle_t itc_get_cycles(struct clocksource *cs);
+ 
+-struct fsyscall_gtod_data_t fsyscall_gtod_data = {
+-	.lock = __SEQLOCK_UNLOCKED(fsyscall_gtod_data.lock),
+-};
++struct fsyscall_gtod_data_t fsyscall_gtod_data;
+ 
+ struct itc_jitter_data_t itc_jitter_data;
+ 
+@@ -460,9 +458,7 @@ void update_vsyscall_tz(void)
+ void update_vsyscall(struct timespec *wall, struct timespec *wtm,
+ 			struct clocksource *c, u32 mult)
+ {
+-        unsigned long flags;
