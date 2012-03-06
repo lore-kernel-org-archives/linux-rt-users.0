@@ -1,142 +1,233 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/25][RFC 3.0.23-rt39-rc1] x86: vdso: Use seqcount instead of seqlock
-Date: Tue, 06 Mar 2012 11:16:44 -0500
-Message-ID: <20120306161946.596382093@goodmis.org>
+Subject: [PATCH RT 03/25][RFC 3.0.23-rt39-rc1] revert-seqlock-use-seqcount
+Date: Tue, 06 Mar 2012 11:16:39 -0500
+Message-ID: <20120306161945.553560237@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-x86-vdso-Use-seqcount-instead-of-seqlock.patch
+Content-Disposition: inline; filename=0003-revert-seqlock-use-seqcount.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-The update of the vdso data happens under xtime_lock, so adding a
-nested lock is pointless. Just use a seqcount to sync the readers.
+revert: seqlock-use-seqcount.patch
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
+Revert:
+
+Author: Thomas Gleixner <tglx@linutronix.de>
+Date:   Sat Jul 16 18:40:26 2011 +0200
+
+    seqlock-use-seqcount.patch
+
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/include/asm/vgtod.h   |    2 +-
- arch/x86/kernel/vsyscall_64.c  |   11 +++--------
- arch/x86/vdso/vclock_gettime.c |   16 ++++++++--------
- 3 files changed, 12 insertions(+), 17 deletions(-)
+ include/linux/seqlock.h |  166 +++++++++++++++++++++++-----------------------
+ 1 files changed, 83 insertions(+), 83 deletions(-)
 
-diff --git a/arch/x86/include/asm/vgtod.h b/arch/x86/include/asm/vgtod.h
-index 646b4c1..10e09fc 100644
---- a/arch/x86/include/asm/vgtod.h
-+++ b/arch/x86/include/asm/vgtod.h
-@@ -5,7 +5,7 @@
- #include <linux/clocksource.h>
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index 11a9073..b990f6e 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -30,12 +30,81 @@
+ #include <linux/preempt.h>
+ #include <asm/processor.h>
  
- struct vsyscall_gtod_data {
--	seqlock_t	lock;
-+	seqcount_t	seq;
++typedef struct {
++	unsigned sequence;
++	spinlock_t lock;
++} seqlock_t;
++
++/*
++ * These macros triggered gcc-3.x compile-time problems.  We think these are
++ * OK now.  Be cautious.
++ */
++#define __SEQLOCK_UNLOCKED(lockname) \
++		 { 0, __SPIN_LOCK_UNLOCKED(lockname) }
++
++#define seqlock_init(x)					\
++	do {						\
++		(x)->sequence = 0;			\
++		spin_lock_init(&(x)->lock);		\
++	} while (0)
++
++#define DEFINE_SEQLOCK(x) \
++		seqlock_t x = __SEQLOCK_UNLOCKED(x)
++
++/* Lock out other writers and update the count.
++ * Acts like a normal spin_lock/unlock.
++ * Don't need preempt_disable() because that is in the spin_lock already.
++ */
++static inline void write_seqlock(seqlock_t *sl)
++{
++	spin_lock(&sl->lock);
++	++sl->sequence;
++	smp_wmb();
++}
++
++static inline void write_sequnlock(seqlock_t *sl)
++{
++	smp_wmb();
++	sl->sequence++;
++	spin_unlock(&sl->lock);
++}
++
++/* Start of read calculation -- fetch last complete writer token */
++static __always_inline unsigned read_seqbegin(const seqlock_t *sl)
++{
++	unsigned ret;
++
++repeat:
++	ret = ACCESS_ONCE(sl->sequence);
++	if (unlikely(ret & 1)) {
++		cpu_relax();
++		goto repeat;
++	}
++	smp_rmb();
++
++	return ret;
++}
++
++/*
++ * Test if reader processed invalid data.
++ *
++ * If sequence value changed then writer changed data while in section.
++ */
++static __always_inline int read_seqretry(const seqlock_t *sl, unsigned start)
++{
++	smp_rmb();
++
++	return unlikely(sl->sequence != start);
++}
++
++
+ /*
+  * Version using sequence counter only.
+  * This can be used when code has its own mutex protecting the
+  * updating starting before the write_seqcountbeqin() and ending
+  * after the write_seqcount_end().
+  */
++
+ typedef struct seqcount {
+ 	unsigned sequence;
+ } seqcount_t;
+@@ -117,6 +186,7 @@ static inline int __read_seqcount_retry(const seqcount_t *s, unsigned start)
+ static inline int read_seqcount_retry(const seqcount_t *s, unsigned start)
+ {
+ 	smp_rmb();
++
+ 	return __read_seqcount_retry(s, start);
+ }
  
- 	/* open coded 'struct timespec' */
- 	time_t		wall_time_sec;
-diff --git a/arch/x86/kernel/vsyscall_64.c b/arch/x86/kernel/vsyscall_64.c
-index c378a18..c1fe684 100644
---- a/arch/x86/kernel/vsyscall_64.c
-+++ b/arch/x86/kernel/vsyscall_64.c
-@@ -50,11 +50,7 @@
- #include <asm/traps.h>
+@@ -150,91 +220,21 @@ static inline void write_seqcount_barrier(seqcount_t *s)
+ 	s->sequence+=2;
+ }
  
- DEFINE_VVAR(int, vgetcpu_mode);
--DEFINE_VVAR(struct vsyscall_gtod_data, vsyscall_gtod_data) =
+-typedef struct {
+-	struct seqcount seqcount;
+-	spinlock_t lock;
+-} seqlock_t;
+-
+ /*
+- * These macros triggered gcc-3.x compile-time problems.  We think these are
+- * OK now.  Be cautious.
++ * Possible sw/hw IRQ protected versions of the interfaces.
+  */
+-#define __SEQLOCK_UNLOCKED(lockname)			\
+-	{						\
+-		.seqcount = SEQCNT_ZERO,		\
+-		.lock =	__SPIN_LOCK_UNLOCKED(lockname)	\
+-	}
+-
+-#define seqlock_init(x)					\
+-	do {						\
+-		seqcount_init(&(x)->seqcount);		\
+-		spin_lock_init(&(x)->lock);		\
+-	} while (0)
+-
+-#define DEFINE_SEQLOCK(x) \
+-		seqlock_t x = __SEQLOCK_UNLOCKED(x)
+-
+-#define read_seqbegin(sl)		read_seqcount_begin(&(sl)->seqcount)
+-#define read_seqretry(sl, start)	read_seqcount_retry(&(sl)->seqcount, start)
+-
+-/*
+- * Lock out other writers and update the count.
+- * Acts like a normal spin_lock/unlock.
+- * Don't need preempt_disable() because that is in the spin_lock already.
+- */
+-static inline void write_seqlock(seqlock_t *sl)
 -{
--	.lock = __SEQLOCK_UNLOCKED(__vsyscall_gtod_data.lock),
--	.sysctl_enabled = 1,
--};
-+DEFINE_VVAR(struct vsyscall_gtod_data, vsyscall_gtod_data);
- 
- void update_vsyscall_tz(void)
- {
-@@ -64,9 +60,8 @@ void update_vsyscall_tz(void)
- void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
- 			struct clocksource *clock, u32 mult)
- {
+-	spin_lock(&sl->lock);
+-	write_seqcount_begin(&sl->seqcount);
+-}
+-
+-static inline void write_sequnlock(seqlock_t *sl)
+-{
+-	write_seqcount_end(&sl->seqcount);
+-	spin_unlock(&sl->lock);
+-}
+-
+-static inline void write_seqlock_bh(seqlock_t *sl)
+-{
+-	spin_lock_bh(&sl->lock);
+-	write_seqcount_begin(&sl->seqcount);
+-}
+-
+-static inline void write_sequnlock_bh(seqlock_t *sl)
+-{
+-	write_seqcount_end(&sl->seqcount);
+-	spin_unlock_bh(&sl->lock);
+-}
+-
+-static inline void write_seqlock_irq(seqlock_t *sl)
+-{
+-	spin_lock_irq(&sl->lock);
+-	write_seqcount_begin(&sl->seqcount);
+-}
+-
+-static inline void write_sequnlock_irq(seqlock_t *sl)
+-{
+-	write_seqcount_end(&sl->seqcount);
+-	spin_unlock_irq(&sl->lock);
+-}
+-
+-static inline unsigned long __write_seqlock_irqsave(seqlock_t *sl)
+-{
 -	unsigned long flags;
-+	write_seqcount_begin(&vsyscall_gtod_data.seq);
+-
+-	spin_lock_irqsave(&sl->lock, flags);
+-	write_seqcount_begin(&sl->seqcount);
+-	return flags;
+-}
+-
+ #define write_seqlock_irqsave(lock, flags)				\
+-	do { flags = __write_seqlock_irqsave(lock); } while (0)
+-
+-static inline void
+-write_sequnlock_irqrestore(seqlock_t *sl, unsigned long flags)
+-{
+-	write_seqcount_end(&sl->seqcount);
+-	spin_unlock_irqrestore(&sl->lock, flags);
+-}
++	do { local_irq_save(flags); write_seqlock(lock); } while (0)
++#define write_seqlock_irq(lock)						\
++	do { local_irq_disable();   write_seqlock(lock); } while (0)
++#define write_seqlock_bh(lock)						\
++        do { local_bh_disable();    write_seqlock(lock); } while (0)
++
++#define write_sequnlock_irqrestore(lock, flags)				\
++	do { write_sequnlock(lock); local_irq_restore(flags); } while(0)
++#define write_sequnlock_irq(lock)					\
++	do { write_sequnlock(lock); local_irq_enable(); } while(0)
++#define write_sequnlock_bh(lock)					\
++	do { write_sequnlock(lock); local_bh_enable(); } while(0)
  
--	write_seqlock_irqsave(&vsyscall_gtod_data.lock, flags);
- 
- 	/* copy vsyscall data */
- 	vsyscall_gtod_data.clock.vread		= clock->vread;
-@@ -79,7 +74,7 @@ void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
- 	vsyscall_gtod_data.wall_to_monotonic	= *wtm;
- 	vsyscall_gtod_data.wall_time_coarse	= __current_kernel_time();
- 
--	write_sequnlock_irqrestore(&vsyscall_gtod_data.lock, flags);
-+	write_seqcount_end(&vsyscall_gtod_data.seq);
- }
- 
- static void warn_bad_vsyscall(const char *level, struct pt_regs *regs,
-diff --git a/arch/x86/vdso/vclock_gettime.c b/arch/x86/vdso/vclock_gettime.c
-index a724905..117e6cf 100644
---- a/arch/x86/vdso/vclock_gettime.c
-+++ b/arch/x86/vdso/vclock_gettime.c
-@@ -46,11 +46,11 @@ notrace static noinline int do_realtime(struct timespec *ts)
- {
- 	unsigned long seq, ns;
- 	do {
--		seq = read_seqbegin(&gtod->lock);
-+		seq = read_seqcount_begin(&gtod->seq);
- 		ts->tv_sec = gtod->wall_time_sec;
- 		ts->tv_nsec = gtod->wall_time_nsec;
- 		ns = vgetns();
--	} while (unlikely(read_seqretry(&gtod->lock, seq)));
-+	} while (unlikely(read_seqcount_retry(&gtod->seq, seq)));
- 	timespec_add_ns(ts, ns);
- 	return 0;
- }
-@@ -59,12 +59,12 @@ notrace static noinline int do_monotonic(struct timespec *ts)
- {
- 	unsigned long seq, ns, secs;
- 	do {
--		seq = read_seqbegin(&gtod->lock);
-+		seq = read_seqcount_begin(&gtod->seq);
- 		secs = gtod->wall_time_sec;
- 		ns = gtod->wall_time_nsec + vgetns();
- 		secs += gtod->wall_to_monotonic.tv_sec;
- 		ns += gtod->wall_to_monotonic.tv_nsec;
--	} while (unlikely(read_seqretry(&gtod->lock, seq)));
-+	} while (unlikely(read_seqcount_retry(&gtod->seq, seq)));
- 
- 	/* wall_time_nsec, vgetns(), and wall_to_monotonic.tv_nsec
- 	 * are all guaranteed to be nonnegative.
-@@ -83,10 +83,10 @@ notrace static noinline int do_realtime_coarse(struct timespec *ts)
- {
- 	unsigned long seq;
- 	do {
--		seq = read_seqbegin(&gtod->lock);
-+		seq = read_seqcount_begin(&gtod->seq);
- 		ts->tv_sec = gtod->wall_time_coarse.tv_sec;
- 		ts->tv_nsec = gtod->wall_time_coarse.tv_nsec;
--	} while (unlikely(read_seqretry(&gtod->lock, seq)));
-+	} while (unlikely(read_seqcount_retry(&gtod->seq, seq)));
- 	return 0;
- }
- 
-@@ -94,12 +94,12 @@ notrace static noinline int do_monotonic_coarse(struct timespec *ts)
- {
- 	unsigned long seq, ns, secs;
- 	do {
--		seq = read_seqbegin(&gtod->lock);
-+		seq = read_seqcount_begin(&gtod->seq);
- 		secs = gtod->wall_time_coarse.tv_sec;
- 		ns = gtod->wall_time_coarse.tv_nsec;
- 		secs += gtod->wall_to_monotonic.tv_sec;
- 		ns += gtod->wall_to_monotonic.tv_nsec;
--	} while (unlikely(read_seqretry(&gtod->lock, seq)));
-+	} while (unlikely(read_seqcount_retry(&gtod->seq, seq)));
- 
- 	/* wall_time_nsec and wall_to_monotonic.tv_nsec are
- 	 * guaranteed to be between 0 and NSEC_PER_SEC.
+ #endif /* __LINUX_SEQLOCK_H */
 -- 
 1.7.8.3
