@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/25][RFC 3.0.23-rt39-rc1] lglock/rt: Use non-rt for_each_cpu() in -rt code
-Date: Tue, 06 Mar 2012 11:16:59 -0500
-Message-ID: <20120306161952.081930351@goodmis.org>
+Subject: [PATCH RT 22/25][RFC 3.0.23-rt39-rc1] sched/rt: Fix wait_task_interactive() to test rt_spin_lock state
+Date: Tue, 06 Mar 2012 11:16:58 -0500
+Message-ID: <20120306161951.684521420@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -12,30 +12,19 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0023-lglock-rt-Use-non-rt-for_each_cpu-in-rt-code.patch
+Content-Disposition: inline; filename=0022-sched-rt-Fix-wait_task_interactive-to-test-rt_spin_l.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Steven Rostedt <rostedt@goodmis.org>
 
-Currently the RT version of the lglocks() does a for_each_online_cpu()
-in the name##_global_lock_online() functions. Non-rt uses its own
-mask for this, and for good reason.
+The wait_task_interactive() will have a task sleep waiting for another
+task to have a certain state. But it ignores the rt_spin_locks state
+and can return with an incorrect result if the task it is waiting
+for is blocked on a rt_spin_lock() and is waking up.
 
-A task may grab a *_global_lock_online(), and in the mean time, one
-of the CPUs goes offline. Now when that task does a *_global_unlock_online()
-it releases all the locks *except* the one that went offline.
-
-Now if that CPU were to come back on line, its lock is now owned by a
-task that never released it when it should have.
-
-This causes all sorts of fun errors. Like owners of a lock no longer
-existing, or sleeping on IO, waiting to be woken up by a task that
-happens to be blocked on the lock it never released.
-
-Convert the RT versions to use the lglock specific cpumasks. As once
-a CPU comes on line, the mask is set, and never cleared even when the
-CPU goes offline. The locks for that CPU will still be taken and released.
+The rt_spin_locks save the tasks state in the saved_state field
+and the wait_task_interactive() must also test that state.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 Cc: Carsten Emde <C.Emde@osadl.org>
@@ -43,84 +32,35 @@ Cc: John Kacur <jkacur@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Clark Williams <clark.williams@gmail.com>
 Cc: stable-rt@vger.kernel.org
-Link: http://lkml.kernel.org/r/20120301190345.374756214@goodmis.org
+Link: http://lkml.kernel.org/r/20120301190345.979435764@goodmis.org
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- include/linux/lglock.h |   35 ++++++++++++++++++++++++++++++++---
- 1 files changed, 32 insertions(+), 3 deletions(-)
+ kernel/sched.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/lglock.h b/include/linux/lglock.h
-index d8acbcc..9cfab36 100644
---- a/include/linux/lglock.h
-+++ b/include/linux/lglock.h
-@@ -204,9 +204,31 @@
- #else /* !PREEMPT_RT_FULL */
- #define DEFINE_LGLOCK(name)						\
- 									\
-- DEFINE_PER_CPU(struct rt_mutex, name##_lock);					\
-+ DEFINE_PER_CPU(struct rt_mutex, name##_lock);				\
-+ DEFINE_SPINLOCK(name##_cpu_lock);					\
-+ cpumask_t name##_cpus __read_mostly;					\
-  DEFINE_LGLOCK_LOCKDEP(name);						\
- 									\
-+ static int								\
-+ name##_lg_cpu_callback(struct notifier_block *nb,			\
-+				unsigned long action, void *hcpu)	\
-+ {									\
-+	switch (action & ~CPU_TASKS_FROZEN) {				\
-+	case CPU_UP_PREPARE:						\
-+		spin_lock(&name##_cpu_lock);				\
-+		cpu_set((unsigned long)hcpu, name##_cpus);		\
-+		spin_unlock(&name##_cpu_lock);				\
-+		break;							\
-+	case CPU_UP_CANCELED: case CPU_DEAD:				\
-+		spin_lock(&name##_cpu_lock);				\
-+		cpu_clear((unsigned long)hcpu, name##_cpus);		\
-+		spin_unlock(&name##_cpu_lock);				\
-+	}								\
-+	return NOTIFY_OK;						\
-+ }									\
-+ static struct notifier_block name##_lg_cpu_notifier = {		\
-+	.notifier_call = name##_lg_cpu_callback,			\
-+ };									\
-  void name##_lock_init(void) {						\
- 	int i;								\
- 	LOCKDEP_INIT_MAP(&name##_lock_dep_map, #name, &name##_lock_key, 0); \
-@@ -215,6 +237,11 @@
- 		lock = &per_cpu(name##_lock, i);			\
- 		rt_mutex_init(lock);					\
- 	}								\
-+	register_hotcpu_notifier(&name##_lg_cpu_notifier);		\
-+	get_online_cpus();						\
-+	for_each_online_cpu(i)						\
-+		cpu_set(i, name##_cpus);				\
-+	put_online_cpus();						\
-  }									\
-  EXPORT_SYMBOL(name##_lock_init);					\
- 									\
-@@ -255,7 +282,8 @@
-  void name##_global_lock_online(void) {					\
- 	int i;								\
- 	rwlock_acquire(&name##_lock_dep_map, 0, 0, _RET_IP_);		\
--	for_each_online_cpu(i) {					\
-+	spin_lock(&name##_cpu_lock);					\
-+	for_each_cpu(i, &name##_cpus) {					\
- 		struct rt_mutex *lock;					\
- 		lock = &per_cpu(name##_lock, i);			\
- 		__rt_spin_lock(lock);					\
-@@ -266,11 +294,12 @@
-  void name##_global_unlock_online(void) {				\
- 	int i;								\
- 	rwlock_release(&name##_lock_dep_map, 1, _RET_IP_);		\
--	for_each_online_cpu(i) {					\
-+	for_each_cpu(i, &name##_cpus) {					\
- 		struct rt_mutex *lock;					\
- 		lock = &per_cpu(name##_lock, i);			\
- 		__rt_spin_unlock(lock);					\
- 	}								\
-+	spin_unlock(&name##_cpu_lock);					\
-  }									\
-  EXPORT_SYMBOL(name##_global_unlock_online);				\
- 									\
+diff --git a/kernel/sched.c b/kernel/sched.c
+index e5ef7a8..df30481 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -2284,7 +2284,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
+-			if (match_state && unlikely(p->state != match_state))
++			if (match_state && unlikely(p->state != match_state)
++			    && unlikely(p->saved_state != match_state))
+ 				return 0;
+ 			cpu_relax();
+ 		}
+@@ -2299,7 +2300,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+ 		running = task_running(rq, p);
+ 		on_rq = p->on_rq;
+ 		ncsw = 0;
+-		if (!match_state || p->state == match_state)
++		if (!match_state || p->state == match_state
++		    || p->saved_state == match_state)
+ 			ncsw = p->nvcsw | LONG_MIN; /* sets MSB */
+ 		task_rq_unlock(rq, p, &flags);
+ 
 -- 
 1.7.8.3
