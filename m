@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/25][RFC 3.0.23-rt39-rc1] x86: vdso: Remove bogus locking in update_vsyscall_tz()
-Date: Tue, 06 Mar 2012 11:16:43 -0500
-Message-ID: <20120306161946.377520329@goodmis.org>
+Subject: [PATCH RT 16/25][RFC 3.0.23-rt39-rc1] seqlock: Prevent rt starvation
+Date: Tue, 06 Mar 2012 11:16:52 -0500
+Message-ID: <20120306161950.357072870@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -9,41 +9,77 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-x86-vdso-Remove-bogus-locking-in-update_vsyscall_tz.patch
+Content-Disposition: inline; filename=0016-seqlock-Prevent-rt-starvation.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Changing the sequence count in update_vsyscall_tz() is completely
-pointless.
+If a low prio writer gets preempted while holding the seqlock write
+locked, a high prio reader spins forever on RT.
 
-The vdso code copies the data unprotected. There is no point to change
-this as sys_tz is nowhere protected at all. See sys_gettimeofday().
+To prevent this let the reader grab the spinlock, so it blocks and
+eventually boosts the writer. This way the writer can proceed and
+endless spinning is prevented.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/vsyscall_64.c |    5 -----
- 1 files changed, 0 insertions(+), 5 deletions(-)
+ include/linux/seqlock.h |   23 +++++++++++++++++++++++
+ include/net/neighbour.h |    2 +-
+ 2 files changed, 24 insertions(+), 1 deletions(-)
 
-diff --git a/arch/x86/kernel/vsyscall_64.c b/arch/x86/kernel/vsyscall_64.c
-index 0a7dc13..c378a18 100644
---- a/arch/x86/kernel/vsyscall_64.c
-+++ b/arch/x86/kernel/vsyscall_64.c
-@@ -58,12 +58,7 @@ DEFINE_VVAR(struct vsyscall_gtod_data, vsyscall_gtod_data) =
- 
- void update_vsyscall_tz(void)
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index b44048d..29ffd4f 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -177,10 +177,33 @@ typedef struct {
+ /*
+  * Read side functions for starting and finalizing a read side section.
+  */
++#ifndef CONFIG_PREEMPT_RT_FULL
+ static inline unsigned read_seqbegin(const seqlock_t *sl)
  {
--	unsigned long flags;
--
--	write_seqlock_irqsave(&vsyscall_gtod_data.lock, flags);
--	/* sys_tz has changed */
- 	vsyscall_gtod_data.sys_tz = sys_tz;
--	write_sequnlock_irqrestore(&vsyscall_gtod_data.lock, flags);
+ 	return read_seqcount_begin(&sl->seqcount);
  }
++#else
++/*
++ * Starvation safe read side for RT
++ */
++static inline unsigned read_seqbegin(seqlock_t *sl)
++{
++	unsigned ret;
++
++repeat:
++	ret = sl->seqcount.sequence;
++	if (unlikely(ret & 1)) {
++		/*
++		 * Take the lock and let the writer proceed (i.e. evtl
++		 * boost it), otherwise we could loop here forever.
++		 */
++		spin_lock(&sl->lock);
++		spin_unlock(&sl->lock);
++		goto repeat;
++	}
++	return ret;
++}
++#endif
  
- void update_vsyscall(struct timespec *wall_time, struct timespec *wtm,
+ static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
+ {
+diff --git a/include/net/neighbour.h b/include/net/neighbour.h
+index 4014b62..9c1cb97 100644
+--- a/include/net/neighbour.h
++++ b/include/net/neighbour.h
+@@ -377,7 +377,7 @@ struct neighbour_cb {
+ 
+ #define NEIGH_CB(skb)	((struct neighbour_cb *)(skb)->cb)
+ 
+-static inline void neigh_ha_snapshot(char *dst, const struct neighbour *n,
++static inline void neigh_ha_snapshot(char *dst, struct neighbour *n,
+ 				     const struct net_device *dev)
+ {
+ 	unsigned int seq;
 -- 
 1.7.8.3
