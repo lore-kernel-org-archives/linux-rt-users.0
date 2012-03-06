@@ -1,208 +1,77 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] seqlock/rt: Prevent livelocks with seqlocks in RT
-Date: Mon, 05 Mar 2012 23:03:04 -0500
-Message-ID: <1331006584.25686.362.camel@gandalf.stny.rr.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 3.2.9-rt15
+Date: Mon, 05 Mar 2012 20:15:48 -0800
+Message-ID: <4F558F74.5050704@localhost>
+References: <alpine.LFD.2.02.1203021743040.2742@ionos> <1330985640.25686.342.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@redhat.com>, Carsten Emde <cbe@osadl.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11730 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757895Ab2CFEDH (ORCPT
+Received: from smtp1.Stanford.EDU ([171.67.219.81]:40910 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S964934Ab2CFEPw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Mar 2012 23:03:07 -0500
+	Mon, 5 Mar 2012 23:15:52 -0500
+In-Reply-To: <1330985640.25686.342.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas,
+On 03/05/2012 02:14 PM, Steven Rostedt wrote:
+> Thomas,
+>
+> Please fold this change into
+>
+>     cpu-rt-make-hotplug-lock-a-sleeping-spinlock-on-rt.patch
 
-I was running my cpu hotplug stress test along with a kernel compile and
-after about 40 minutes of running it locked up. It happened in the
-read_seqcount_begin() that is called by d_lookup().
-
-ksoftirqd was caught here:
-
-static __always_inline unsigned read_seqbegin(const seqlock_t *sl)
-{
-	unsigned ret;
-
-repeat:
-	ret = ACCESS_ONCE(sl->sequence);
-	if (unlikely(ret & 1)) {
-		cpu_relax();
-		goto repeat;
-	}
-	smp_rmb();
-
-	return ret;
-}
-
-It preempted the holder of the seqlock that was held for write, and as
-that holder had migrate disabled, it couldn't be scheduled. Then
-ksoftirqd went into this infinite loop and the system locked up.
-
-This patch fixes the issue by grabbing and releasing the write lock when
-it detects contention. It only works with seqlocks and not seqcounts
-that have their own locking. But we could add an api to include those
-too if needed.
-
--- Steve
+Thanks, this fixed the panic on shutdown I was experiencing!
+-- Fernando
 
 
-
->From b4c0fe13e4e54f20f9e5975a39fb37efd0736333 Mon Sep 17 00:00:00 2001
-From: Steven Rostedt <srostedt@redhat.com>
-Date: Thu, 1 Mar 2012 09:38:12 -0500
-Subject: seqlock/rt: Prevent livelocks with seqlocks in RT
-
-With RT, seqlocks can be preempted. Worse yet, when holding a
-write_seqlock, migration is disabled. If an high priority task
-preempts a task holding a write_seqlock, and that high priority
-task uses the associated read_seqlock(), it can go into an infinite
-spin waiting for the write_seqlock() to finish. But since the holder
-of that lock has migration disabled, and is of lower priority than
-the task using the read_seqlock() we end up with a live lock.
-
-To prevent this, when the read_seqcount_begin() detects that a
-write lock is being held, it will grab that lock and release it.
-This will cause the holder of the lock to wake up and finish.
-The priority inheritance will help it as well.
-
-Because read_seqlocks are used in the VDSO area, a raw_read_seqcount_begin()
-was created to allow userspace tasks to access read_seqcount().
-As the grabbing of the write_lock() is not allowed in VDSO, nor
-is even referencing it.
-
-Note, a live lock can still happen if the userspace task that
-does the read_seqlock is of higher priority than a user doing
-the write_lock, so userspace needs to be careful.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- arch/x86/vdso/vclock_gettime.c |    8 +++---
- include/linux/seqlock.h        |   59 +++++++++++++++++++++++++++++++++------
- 2 files changed, 54 insertions(+), 13 deletions(-)
-
-diff --git a/arch/x86/vdso/vclock_gettime.c b/arch/x86/vdso/vclock_gettime.c
-index d8511fb..01d0c2c 100644
---- a/arch/x86/vdso/vclock_gettime.c
-+++ b/arch/x86/vdso/vclock_gettime.c
-@@ -86,7 +86,7 @@ notrace static noinline int do_realtime(struct timespec *ts)
- {
- 	unsigned long seq, ns;
- 	do {
--		seq = read_seqcount_begin(&gtod->seq);
-+		seq = raw_read_seqcount_begin(&gtod->seq);
- 		ts->tv_sec = gtod->wall_time_sec;
- 		ts->tv_nsec = gtod->wall_time_nsec;
- 		ns = vgetns();
-@@ -99,7 +99,7 @@ notrace static noinline int do_monotonic(struct timespec *ts)
- {
- 	unsigned long seq, ns, secs;
- 	do {
--		seq = read_seqcount_begin(&gtod->seq);
-+		seq = raw_read_seqcount_begin(&gtod->seq);
- 		secs = gtod->wall_time_sec;
- 		ns = gtod->wall_time_nsec + vgetns();
- 		secs += gtod->wall_to_monotonic.tv_sec;
-@@ -123,7 +123,7 @@ notrace static noinline int do_realtime_coarse(struct timespec *ts)
- {
- 	unsigned long seq;
- 	do {
--		seq = read_seqcount_begin(&gtod->seq);
-+		seq = raw_read_seqcount_begin(&gtod->seq);
- 		ts->tv_sec = gtod->wall_time_coarse.tv_sec;
- 		ts->tv_nsec = gtod->wall_time_coarse.tv_nsec;
- 	} while (unlikely(read_seqcount_retry(&gtod->seq, seq)));
-@@ -134,7 +134,7 @@ notrace static noinline int do_monotonic_coarse(struct timespec *ts)
- {
- 	unsigned long seq, ns, secs;
- 	do {
--		seq = read_seqcount_begin(&gtod->seq);
-+		seq = raw_read_seqcount_begin(&gtod->seq);
- 		secs = gtod->wall_time_coarse.tv_sec;
- 		ns = gtod->wall_time_coarse.tv_nsec;
- 		secs += gtod->wall_to_monotonic.tv_sec;
-diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
-index 723274d..6d93b72 100644
---- a/include/linux/seqlock.h
-+++ b/include/linux/seqlock.h
-@@ -38,10 +38,32 @@
-  */
- typedef struct seqcount {
- 	unsigned sequence;
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	int has_lock;
-+#endif
- } seqcount_t;
- 
--#define SEQCNT_ZERO { 0 }
--#define seqcount_init(x)	do { *(x) = (seqcount_t) SEQCNT_ZERO; } while (0)
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+# define SEQCNT_ZERO		{ 0, 0 }
-+# define SEQCNT_ZERO_LOCK	{ 0, 1 }
-+# define seqcount_init(x)	do { *(x) = (seqcount_t) SEQCNT_ZERO; } while (0)
-+# define seqcount_init_lock(x)	do { *(x) = (seqcount_t) SEQCNT_ZERO_LOCK; } while (0)
-+#else
-+# define SEQCNT_ZERO		{ 0 }
-+# define SEQCNT_ZERO_LOCK	SEQCNT_ZERO
-+# define seqcount_init(x)	do { *(x) = (seqcount_t) SEQCNT_ZERO; } while (0)
-+# define seqcount_init_lock(x)	seqcount_init(x)
-+#endif
-+
-+typedef struct {
-+	struct seqcount seqcount;
-+	raw_spinlock_t lock;
-+} raw_seqlock_t;
-+
-+typedef struct {
-+	struct seqcount seqcount;
-+	spinlock_t lock;
-+} seqlock_t;
- 
- /**
-  * __read_seqcount_begin - begin a seq-read critical section (without barrier)
-@@ -63,6 +85,30 @@ static inline unsigned __read_seqcount_begin(const seqcount_t *s)
- repeat:
- 	ret = s->sequence;
- 	if (unlikely(ret & 1)) {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		if (s->has_lock) {
-+			seqlock_t *sl;
-+
-+			sl = container_of(s, seqlock_t, seqcount);
-+			/* This process may be blocking the writer, kick it */
-+			spin_lock(&sl->lock);
-+			spin_unlock(&sl->lock);
-+		}
-+#endif
-+		cpu_relax();
-+		goto repeat;
-+	}
-+	return ret;
-+}
-+
-+/* Needed for VDSO areas */
-+static inline unsigned raw_read_seqcount_begin(const seqcount_t *s)
-+{
-+	unsigned ret;
-+
-+repeat:
-+	ret = s->sequence;
-+	if (unlikely(ret & 1)) {
- 		cpu_relax();
- 		goto repeat;
- 	}
-@@ -150,24 +196,19 @@ static inline void write_seqcount_barrier(seqcount_t *s)
- 	s->sequence+=2;
- }
- 
--typedef struct {
--	struct seqcount seqcount;
--	spinlock_t lock;
--} seqlock_t;
+> As the patch was never tested (nor even compiled) it introduced a nasty
+> bug into taking a CPU down instead of fixing one.
+>
+> Thanks,
+>
+> -- Steve
+>
+> diff --git a/kernel/cpu.c b/kernel/cpu.c
+> index c25b5ff..66dfb74 100644
+> --- a/kernel/cpu.c
+> +++ b/kernel/cpu.c
+> @@ -59,16 +59,20 @@ static struct {
+>   	int refcount;
+>   } cpu_hotplug = {
+>   	.active_writer = NULL,
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +	.lock = __SPIN_LOCK_UNLOCKED(cpu_hotplug.lock),
+> +#else
+>   	.lock = __MUTEX_INITIALIZER(cpu_hotplug.lock),
+> +#endif
+>   	.refcount = 0,
+>   };
+>
+>   #ifdef CONFIG_PREEMPT_RT_FULL
+> -# define hotplug_lock() spin_lock(&cpu_hotplug.lock)
+> -# define hotplug_unlock() spin_unlock(&cpu_hotplug.lock)
+> +# define hotplug_lock() rt_spin_lock(&cpu_hotplug.lock)
+> +# define hotplug_unlock() rt_spin_unlock(&cpu_hotplug.lock)
+>   #else
+>   # define hotplug_lock() mutex_lock(&cpu_hotplug.lock)
+> -# define hotplug_lock() mutex_unlock(&cpu_hotplug.lock)
+> +# define hotplug_unlock() mutex_unlock(&cpu_hotplug.lock)
+>   #endif
+>
+>   struct hotplug_pcp {
+>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
