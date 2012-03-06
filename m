@@ -1,103 +1,41 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3][FYI only] workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
-Date: Mon, 05 Mar 2012 21:38:37 -0500
-Message-ID: <20120306024521.393424824@goodmis.org>
-References: <20120306023835.775610473@goodmis.org>
+Subject: [PATCH RT 0/3][FYI only] 3.2-rt cpu hotplug fix (hack)
+Date: Mon, 05 Mar 2012 21:38:35 -0500
+Message-ID: <20120306023835.775610473@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Clark Williams <clark.williams@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-workqueue-Revert-workqueue-Fix-PF_THREAD_BOUND-abuse.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3939 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1030235Ab2CFCpX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Mar 2012 21:45:23 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Revert commit
+This is an FYI patch set only. It fixes a lot of the races that the
+current -rt patch has with stressing hotplug.
 
-    Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
-    Date:   Mon Oct 3 12:43:25 2011 +0200
-    workqueue: Fix PF_THREAD_BOUND abuse
+Although this patch set (well patch one really) does prove to solve a
+lot of the race conditions caused by notifiers waiting on tasks
+that may be on the CPU going down, the patch itself is not at the
+state that it should be accepted.
 
-As TREAD_BOUND no longer affects cpu down, and this code introduced
-a lot of races with taking down a CPU.
+I'm posting this only for those that need a current fix while we work
+on a real fix. Again, this patch set is an actual fix to several issues
+with hotplug. But it makes the code even more hacky and there's
+better ways to solve the issues.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/workqueue.c |   29 +++++++++--------------------
- 1 files changed, 9 insertions(+), 20 deletions(-)
+I've been running my CPU hotplug stress test and a distcc kernel
+compile (-j20) on a 4 way machine for the last 30 minutes (both in a
+while loop) and it's still going strong.
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index e7f3e79..3b53135 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1286,14 +1286,8 @@ __acquires(&gcwq->lock)
- 			return false;
- 		if (task_cpu(task) == gcwq->cpu &&
- 		    cpumask_equal(&current->cpus_allowed,
--				  get_cpu_mask(gcwq->cpu))) {
--			/*
--			 * Since we're binding to a particular cpu and need to
--			 * stay there for correctness, mark us PF_THREAD_BOUND.
--			 */
--			task->flags |= PF_THREAD_BOUND;
-+				  get_cpu_mask(gcwq->cpu)))
- 			return true;
--		}
- 		spin_unlock_irq(&gcwq->lock);
- 
- 		/*
-@@ -1307,18 +1301,6 @@ __acquires(&gcwq->lock)
- 	}
- }
- 
--static void worker_unbind_and_unlock(struct worker *worker)
--{
--	struct global_cwq *gcwq = worker->gcwq;
--	struct task_struct *task = worker->task;
--
--	/*
--	 * Its no longer required we're PF_THREAD_BOUND, the work is done.
--	 */
--	task->flags &= ~PF_THREAD_BOUND;
--	spin_unlock_irq(&gcwq->lock);
--}
--
- static struct worker *alloc_worker(void)
- {
- 	struct worker *worker;
-@@ -1381,9 +1363,15 @@ static struct worker *create_worker(struct global_cwq *gcwq, bool bind)
- 	if (IS_ERR(worker->task))
- 		goto fail;
- 
-+	/*
-+	 * A rogue worker will become a regular one if CPU comes
-+	 * online later on.  Make sure every worker has
-+	 * PF_THREAD_BOUND set.
-+	 */
- 	if (bind && !on_unbound_cpu)
- 		kthread_bind(worker->task, gcwq->cpu);
- 	else {
-+		worker->task->flags |= PF_THREAD_BOUND;
- 		if (on_unbound_cpu)
- 			worker->flags |= WORKER_UNBOUND;
- 	}
-@@ -2060,7 +2048,7 @@ repeat:
- 		if (keep_working(gcwq))
- 			wake_up_worker(gcwq);
- 
--		worker_unbind_and_unlock(rescuer);
-+		spin_unlock_irq(&gcwq->lock);
- 	}
- 
- 	schedule();
-@@ -3009,6 +2997,7 @@ struct workqueue_struct *__alloc_workqueue_key(const char *name,
- 		if (IS_ERR(rescuer->task))
- 			goto err;
- 
-+		rescuer->task->flags |= PF_THREAD_BOUND;
- 		wake_up_process(rescuer->task);
- 	}
- 
--- 
-1.7.3.4
+This patch set goes on top of 3.2.9-rt15
+
+Have fun,
+
+-- Steve
+
