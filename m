@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT] seqlock/rt: Prevent livelocks with seqlocks in RT
-Date: Tue, 06 Mar 2012 07:17:37 -0500
-Message-ID: <1331036257.25686.365.camel@gandalf.stny.rr.com>
+Date: Tue, 06 Mar 2012 07:47:28 -0500
+Message-ID: <1331038048.25686.368.camel@gandalf.stny.rr.com>
 References: <1331006584.25686.362.camel@gandalf.stny.rr.com>
 	 <alpine.LFD.2.02.1203060911000.2742@ionos>
 Mime-Version: 1.0
@@ -13,56 +13,43 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	John Kacur <jkacur@redhat.com>, Carsten Emde <cbe@osadl.org>,
 	Peter Zijlstra <peterz@infradead.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:19197 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751163Ab2CFMr3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 6 Mar 2012 07:47:29 -0500
 In-Reply-To: <alpine.LFD.2.02.1203060911000.2742@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 On Tue, 2012-03-06 at 09:18 +0100, Thomas Gleixner wrote:
 
-> Errm. rt15 has 
+> > Because read_seqlocks are used in the VDSO area, a raw_read_seqcount_begin()
+> > was created to allow userspace tasks to access read_seqcount().
+> > As the grabbing of the write_lock() is not allowed in VDSO, nor
+> > is even referencing it.
 > 
-> /*
->  * Starvation safe read side for RT
->  */
-> static inline unsigned read_seqbegin(seqlock_t *sl)
-> {
->         unsigned ret;
+> This is completely bogus. The VDSO update write side runs with
+> interrupts disabled, so it cannot be preempted at all.
 > 
-> repeat:
->         ret = sl->seqcount.sequence;
->         if (unlikely(ret & 1)) {
->                 /*
->                  * Take the lock and let the writer proceed (i.e. evtl
->                  * boost it), otherwise we could loop here forever.
->                  */
->                 spin_lock(&sl->lock);
->                 spin_unlock(&sl->lock);
->                 goto repeat;
->         }
->         return ret;
-> }
-> #endif
+> > Note, a live lock can still happen if the userspace task that
+> > does the read_seqlock is of higher priority than a user doing
+> > the write_lock, so userspace needs to be careful.
+> 
+> What the hell are you smoking?
 
-You're right it does!
+Cherries.
 
-I didn't see this as the lock up showed it was locked up in
-read_seqcount_begin(), it was late and I was tired.
 
-Here's the real fix then:
+I forgot I still had that in my changelog. I wrote this code before I
+had your changes. I noticed later that the vdso seqlocks were raw
+spinlocks and shouldn't be an issue. As you told me that you had this
+fixed, I never bothered to change the log.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Then last night when I hit this bug, I simply cherry picked this fixed
+and posted it.
 
-diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
-index 723274d..29ffd4f 100644
---- a/include/linux/seqlock.h
-+++ b/include/linux/seqlock.h
-@@ -177,7 +177,7 @@ typedef struct {
- /*
-  * Read side functions for starting and finalizing a read side section.
-  */
--#ifndef CONFIG_PREEMPT_RT
-+#ifndef CONFIG_PREEMPT_RT_FULL
- static inline unsigned read_seqbegin(const seqlock_t *sl)
- {
- 	return read_seqcount_begin(&sl->seqcount);
+-- Steve
+
+
