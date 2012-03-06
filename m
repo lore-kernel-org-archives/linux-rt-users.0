@@ -1,98 +1,71 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/25][RFC 3.0.23-rt39-rc1] ia64: vsyscall: Use seqcount instead of seqlock
-Date: Tue, 06 Mar 2012 11:16:45 -0500
-Message-ID: <20120306161946.789821696@goodmis.org>
+Subject: [PATCH RT 04/25][RFC 3.0.23-rt39-rc1] revert-seqlock-remove-unused-functions
+Date: Tue, 06 Mar 2012 11:16:40 -0500
+Message-ID: <20120306161945.770871645@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Tony Luck <tony.luck@intel.com>, stable-rt@vger.kernel.org
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32910 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755534Ab2CFQTs (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Mar 2012 11:19:48 -0500
-Content-Disposition: inline; filename=0009-ia64-vsyscall-Use-seqcount-instead-of-seqlock.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-revert-seqlock-remove-unused-functions.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-The update of the vdso data happens under xtime_lock, so adding a
-nested lock is pointless. Just use a seqcount to sync the readers.
+revert: seqlock-remove-unused-functions.patch
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Tony Luck <tony.luck@intel.com>
-Cc: stable-rt@vger.kernel.org
+Revert:
+
+Author: Thomas Gleixner <tglx@linutronix.de>
+Date:   Sat Jul 16 18:38:22 2011 +0200
+
+    seqlock-remove-unused-functions.patch
+
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/ia64/kernel/asm-offsets.c        |    4 ++--
- arch/ia64/kernel/fsys.S               |    2 +-
- arch/ia64/kernel/fsyscall_gtod_data.h |    2 +-
- arch/ia64/kernel/time.c               |   10 +++-------
- 4 files changed, 7 insertions(+), 11 deletions(-)
+ include/linux/seqlock.h |   21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+), 0 deletions(-)
 
-diff --git a/arch/ia64/kernel/asm-offsets.c b/arch/ia64/kernel/asm-offsets.c
-index af56501..106aeb6 100644
---- a/arch/ia64/kernel/asm-offsets.c
-+++ b/arch/ia64/kernel/asm-offsets.c
-@@ -269,8 +269,8 @@ void foo(void)
- 	BLANK();
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index b990f6e..c6db9fb 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -69,6 +69,17 @@ static inline void write_sequnlock(seqlock_t *sl)
+ 	spin_unlock(&sl->lock);
+ }
  
- 	/* used by fsys_gettimeofday in arch/ia64/kernel/fsys.S */
--	DEFINE(IA64_GTOD_LOCK_OFFSET,
--		offsetof (struct fsyscall_gtod_data_t, lock));
-+	DEFINE(IA64_GTOD_SEQ_OFFSET,
-+		offsetof (struct fsyscall_gtod_data_t, seq);
- 	DEFINE(IA64_GTOD_WALL_TIME_OFFSET,
- 		offsetof (struct fsyscall_gtod_data_t, wall_time));
- 	DEFINE(IA64_GTOD_MONO_TIME_OFFSET,
-diff --git a/arch/ia64/kernel/fsys.S b/arch/ia64/kernel/fsys.S
-index 331d42b..fa77de7 100644
---- a/arch/ia64/kernel/fsys.S
-+++ b/arch/ia64/kernel/fsys.S
-@@ -174,7 +174,7 @@ ENTRY(fsys_set_tid_address)
- 	FSYS_RETURN
- END(fsys_set_tid_address)
- 
--#if IA64_GTOD_LOCK_OFFSET !=0
-+#if IA64_GTOD_SEQ_OFFSET !=0
- #error fsys_gettimeofday incompatible with changes to struct fsyscall_gtod_data_t
- #endif
- #if IA64_ITC_JITTER_OFFSET !=0
-diff --git a/arch/ia64/kernel/fsyscall_gtod_data.h b/arch/ia64/kernel/fsyscall_gtod_data.h
-index 57d2ee6..146b15b 100644
---- a/arch/ia64/kernel/fsyscall_gtod_data.h
-+++ b/arch/ia64/kernel/fsyscall_gtod_data.h
-@@ -6,7 +6,7 @@
-  */
- 
- struct fsyscall_gtod_data_t {
--	seqlock_t	lock;
-+	seqcount_t	seq;
- 	struct timespec	wall_time;
- 	struct timespec monotonic_time;
- 	cycle_t		clk_mask;
-diff --git a/arch/ia64/kernel/time.c b/arch/ia64/kernel/time.c
-index 85118df..15823ed 100644
---- a/arch/ia64/kernel/time.c
-+++ b/arch/ia64/kernel/time.c
-@@ -35,9 +35,7 @@
- 
- static cycle_t itc_get_cycles(struct clocksource *cs);
- 
--struct fsyscall_gtod_data_t fsyscall_gtod_data = {
--	.lock = __SEQLOCK_UNLOCKED(fsyscall_gtod_data.lock),
--};
-+struct fsyscall_gtod_data_t fsyscall_gtod_data;
- 
- struct itc_jitter_data_t itc_jitter_data;
- 
-@@ -460,9 +458,7 @@ void update_vsyscall_tz(void)
- void update_vsyscall(struct timespec *wall, struct timespec *wtm,
- 			struct clocksource *c, u32 mult)
++static inline int write_tryseqlock(seqlock_t *sl)
++{
++	int ret = spin_trylock(&sl->lock);
++
++	if (ret) {
++		++sl->sequence;
++		smp_wmb();
++	}
++	return ret;
++}
++
+ /* Start of read calculation -- fetch last complete writer token */
+ static __always_inline unsigned read_seqbegin(const seqlock_t *sl)
  {
--        unsigned long flags;
+@@ -237,4 +248,14 @@ static inline void write_seqcount_barrier(seqcount_t *s)
+ #define write_sequnlock_bh(lock)					\
+ 	do { write_sequnlock(lock); local_bh_enable(); } while(0)
+ 
++#define read_seqbegin_irqsave(lock, flags)				\
++	({ local_irq_save(flags);   read_seqbegin(lock); })
++
++#define read_seqretry_irqrestore(lock, iv, flags)			\
++	({								\
++		int ret = read_seqretry(lock, iv);			\
++		local_irq_restore(flags);				\
++		ret;							\
++	})
++
+ #endif /* __LINUX_SEQLOCK_H */
+-- 
+1.7.8.3
