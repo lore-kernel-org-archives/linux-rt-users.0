@@ -1,86 +1,237 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 19/25][RFC 3.0.23-rt39-rc1] timer: Fix hotplug for -rt
-Date: Tue, 06 Mar 2012 11:16:55 -0500
-Message-ID: <20120306161950.996376388@goodmis.org>
+Subject: [PATCH RT 11/25][RFC 3.0.23-rt39-rc1] seqlock: Use seqcount
+Date: Tue, 06 Mar 2012 11:16:47 -0500
+Message-ID: <20120306161947.277814493@goodmis.org>
 References: <20120306161636.491172179@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	stable-rt@vger.kernel.org
+	John Kacur <jkacur@redhat.com>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14866 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755745Ab2CFQTx (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Mar 2012 11:19:53 -0500
-Content-Disposition: inline; filename=0019-timer-Fix-hotplug-for-rt.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0011-seqlock-Use-seqcount.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Revert the RT patch:
-    Author: Ingo Molnar <mingo@elte.hu>
-    Date:   Fri Jul 3 08:30:32 2009 -0500
-    timers: fix timer hotplug on -rt
+No point in having different implementations for the same thing.
 
-    Here we are in the CPU_DEAD notifier, and we must not sleep nor
-    enable interrupts.
-
-There's no problem with sleeping in this notifier.
-
-But the get_cpu_var() had to be converted to a get_local_var().
-
-Replace the previous fix with the get_local_var() convert.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-Cc: Carsten Emde <C.Emde@osadl.org>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Clark Williams <clark.williams@gmail.com>
-Cc: stable-rt@vger.kernel.org
-Link: http://lkml.kernel.org/r/20120301190344.948157137@goodmis.org
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c |   16 +++++-----------
- 1 files changed, 5 insertions(+), 11 deletions(-)
+ include/linux/seqlock.h |  176 +++++++++++++++++++++++++----------------------
+ 1 files changed, 93 insertions(+), 83 deletions(-)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 937799f..a319c6a 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1743,21 +1743,17 @@ static void __cpuinit migrate_timers(int cpu)
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index b990f6e..3e1f3f9 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -30,81 +30,12 @@
+ #include <linux/preempt.h>
+ #include <asm/processor.h>
+ 
+-typedef struct {
+-	unsigned sequence;
+-	spinlock_t lock;
+-} seqlock_t;
+-
+-/*
+- * These macros triggered gcc-3.x compile-time problems.  We think these are
+- * OK now.  Be cautious.
+- */
+-#define __SEQLOCK_UNLOCKED(lockname) \
+-		 { 0, __SPIN_LOCK_UNLOCKED(lockname) }
+-
+-#define seqlock_init(x)					\
+-	do {						\
+-		(x)->sequence = 0;			\
+-		spin_lock_init(&(x)->lock);		\
+-	} while (0)
+-
+-#define DEFINE_SEQLOCK(x) \
+-		seqlock_t x = __SEQLOCK_UNLOCKED(x)
+-
+-/* Lock out other writers and update the count.
+- * Acts like a normal spin_lock/unlock.
+- * Don't need preempt_disable() because that is in the spin_lock already.
+- */
+-static inline void write_seqlock(seqlock_t *sl)
+-{
+-	spin_lock(&sl->lock);
+-	++sl->sequence;
+-	smp_wmb();
+-}
+-
+-static inline void write_sequnlock(seqlock_t *sl)
+-{
+-	smp_wmb();
+-	sl->sequence++;
+-	spin_unlock(&sl->lock);
+-}
+-
+-/* Start of read calculation -- fetch last complete writer token */
+-static __always_inline unsigned read_seqbegin(const seqlock_t *sl)
+-{
+-	unsigned ret;
+-
+-repeat:
+-	ret = ACCESS_ONCE(sl->sequence);
+-	if (unlikely(ret & 1)) {
+-		cpu_relax();
+-		goto repeat;
+-	}
+-	smp_rmb();
+-
+-	return ret;
+-}
+-
+-/*
+- * Test if reader processed invalid data.
+- *
+- * If sequence value changed then writer changed data while in section.
+- */
+-static __always_inline int read_seqretry(const seqlock_t *sl, unsigned start)
+-{
+-	smp_rmb();
+-
+-	return unlikely(sl->sequence != start);
+-}
+-
+-
+ /*
+  * Version using sequence counter only.
+  * This can be used when code has its own mutex protecting the
+  * updating starting before the write_seqcountbeqin() and ending
+  * after the write_seqcount_end().
+  */
+-
+ typedef struct seqcount {
+ 	unsigned sequence;
+ } seqcount_t;
+@@ -186,7 +117,6 @@ static inline int __read_seqcount_retry(const seqcount_t *s, unsigned start)
+ static inline int read_seqcount_retry(const seqcount_t *s, unsigned start)
  {
- 	struct tvec_base *old_base;
- 	struct tvec_base *new_base;
--	unsigned long flags;
- 	int i;
+ 	smp_rmb();
+-
+ 	return __read_seqcount_retry(s, start);
+ }
  
- 	BUG_ON(cpu_online(cpu));
- 	old_base = per_cpu(tvec_bases, cpu);
--	new_base = get_cpu_var(tvec_bases);
-+	new_base = get_local_var(tvec_bases);
- 	/*
- 	 * The caller is globally serialized and nobody else
- 	 * takes two locks at once, deadlock is not possible.
- 	 */
--	local_irq_save(flags);
--	while (!spin_trylock(&new_base->lock))
--		cpu_relax();
--	while (!spin_trylock(&old_base->lock))
--		cpu_relax();
-+	spin_lock_irq(&new_base->lock);
-+	spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+@@ -220,21 +150,101 @@ static inline void write_seqcount_barrier(seqcount_t *s)
+ 	s->sequence+=2;
+ }
  
- 	BUG_ON(old_base->running_timer);
++typedef struct {
++	struct seqcount seqcount;
++	spinlock_t lock;
++} seqlock_t;
++
+ /*
+- * Possible sw/hw IRQ protected versions of the interfaces.
++ * These macros triggered gcc-3.x compile-time problems.  We think these are
++ * OK now.  Be cautious.
+  */
++#define __SEQLOCK_UNLOCKED(lockname)			\
++	{						\
++		.seqcount = SEQCNT_ZERO,		\
++		.lock =	__SPIN_LOCK_UNLOCKED(lockname)	\
++	}
++
++#define seqlock_init(x)					\
++	do {						\
++		seqcount_init(&(x)->seqcount);		\
++		spin_lock_init(&(x)->lock);		\
++	} while (0)
++
++#define DEFINE_SEQLOCK(x) \
++		seqlock_t x = __SEQLOCK_UNLOCKED(x)
++
++/*
++ * Read side functions for starting and finalizing a read side section.
++ */
++static inline unsigned read_seqbegin(const seqlock_t *sl)
++{
++	return read_seqcount_begin(&sl->seqcount);
++}
++
++static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
++{
++	return read_seqcount_retry(&sl->seqcount, start);
++}
++
++/*
++ * Lock out other writers and update the count.
++ * Acts like a normal spin_lock/unlock.
++ * Don't need preempt_disable() because that is in the spin_lock already.
++ */
++static inline void write_seqlock(seqlock_t *sl)
++{
++	spin_lock(&sl->lock);
++	write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_sequnlock(seqlock_t *sl)
++{
++	write_seqcount_end(&sl->seqcount);
++	spin_unlock(&sl->lock);
++}
++
++static inline void write_seqlock_bh(seqlock_t *sl)
++{
++	spin_lock_bh(&sl->lock);
++	write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_sequnlock_bh(seqlock_t *sl)
++{
++	write_seqcount_end(&sl->seqcount);
++	spin_unlock_bh(&sl->lock);
++}
++
++static inline void write_seqlock_irq(seqlock_t *sl)
++{
++	spin_lock_irq(&sl->lock);
++	write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_sequnlock_irq(seqlock_t *sl)
++{
++	write_seqcount_end(&sl->seqcount);
++	spin_unlock_irq(&sl->lock);
++}
++
++static inline unsigned long __write_seqlock_irqsave(seqlock_t *sl)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&sl->lock, flags);
++	write_seqcount_begin(&sl->seqcount);
++	return flags;
++}
++
+ #define write_seqlock_irqsave(lock, flags)				\
+-	do { local_irq_save(flags); write_seqlock(lock); } while (0)
+-#define write_seqlock_irq(lock)						\
+-	do { local_irq_disable();   write_seqlock(lock); } while (0)
+-#define write_seqlock_bh(lock)						\
+-        do { local_bh_disable();    write_seqlock(lock); } while (0)
+-
+-#define write_sequnlock_irqrestore(lock, flags)				\
+-	do { write_sequnlock(lock); local_irq_restore(flags); } while(0)
+-#define write_sequnlock_irq(lock)					\
+-	do { write_sequnlock(lock); local_irq_enable(); } while(0)
+-#define write_sequnlock_bh(lock)					\
+-	do { write_sequnlock(lock); local_bh_enable(); } while(0)
++	do { flags = __write_seqlock_irqsave(lock); } while (0)
++
++static inline void
++write_sequnlock_irqrestore(seqlock_t *sl, unsigned long flags)
++{
++	write_seqcount_end(&sl->seqcount);
++	spin_unlock_irqrestore(&sl->lock, flags);
++}
  
-@@ -1771,10 +1767,8 @@ static void __cpuinit migrate_timers(int cpu)
- 	}
- 
- 	spin_unlock(&old_base->lock);
--	spin_unlock(&new_base->lock);
--	local_irq_restore(flags);
+ #endif /* __LINUX_SEQLOCK_H */
+-- 
+1.7.8.3
