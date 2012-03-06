@@ -1,36 +1,76 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RT] seqlock/rt: Prevent livelocks with seqlocks in RT
-Date: Tue, 6 Mar 2012 14:19:53 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1203061418570.2742@ionos>
-References: <1331006584.25686.362.camel@gandalf.stny.rr.com>  <alpine.LFD.2.02.1203060911000.2742@ionos> <1331036257.25686.365.camel@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.2.9-rt16
+Date: Tue, 06 Mar 2012 08:50:18 -0500
+Message-ID: <1331041818.25686.375.camel@gandalf.stny.rr.com>
+References: <alpine.LFD.2.02.1203061118050.2742@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@redhat.com>, Carsten Emde <cbe@osadl.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57886 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752264Ab2CFNT4 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3366 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753987Ab2CFNuU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Mar 2012 08:19:56 -0500
-In-Reply-To: <1331036257.25686.365.camel@gandalf.stny.rr.com>
+	Tue, 6 Mar 2012 08:50:20 -0500
+In-Reply-To: <alpine.LFD.2.02.1203061118050.2742@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 6 Mar 2012, Steven Rostedt wrote:
-> On Tue, 2012-03-06 at 09:18 +0100, Thomas Gleixner wrote:
-> Here's the real fix then:
-> -#ifndef CONFIG_PREEMPT_RT
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  static inline unsigned read_seqbegin(const seqlock_t *sl)
+On Tue, 2012-03-06 at 11:20 +0100, Thomas Gleixner wrote:
+> Dear RT Folks,
+> 
+> I'm pleased to announce the 3.2.9-rt16 release.
+> 
+> Changes vs. 3.2.9-rt15:
+> 
+>   * cpu hotplug lock init fix [ Steven ]
+> 
+>   * seqlock fix CONFIG typo
+> 
 
-It's in rt16 already along with a missing fix for a networking inline
-function.
+Note, yesterday while running some stress tests I hit a live lock here:
 
-Thanks,
+static inline struct dentry *dentry_kill(struct dentry *dentry, int ref)
+        __releases(dentry->d_lock)
+{
+        struct inode *inode;
+        struct dentry *parent;
 
-	tglx
+        inode = dentry->d_inode;
+        if (inode && !spin_trylock(&inode->i_lock)) {
+relock:
+                seq_spin_unlock(&dentry->d_lock);
+                cpu_relax();
+                return dentry; /* try again with same dentry */
+        }
+        if (IS_ROOT(dentry))
+                parent = NULL;
+        else
+                parent = dentry->d_parent;
+        if (parent && !seq_spin_trylock(&parent->d_lock)) {
+                if (inode)
+                        spin_unlock(&inode->i_lock);
+                goto relock;
+        }
+
+
+When it fails to grab either the inode->i_lock or the parent->d_lock it
+returns back to dput() and dput() will retry. We get into another one of
+these cases where we can spin blocking the holder of the locks.
+
+I experimented with adding a grab lock of the inode->i_lock or
+parent->d_lock if they existed (required initializing parent to NULL),
+which seemed to help a lot, but then eventually it locked up. As I'm not
+sure its safe to grab them straight here even after we release the
+dentry->d_lock. I'll have to enable full lockdep to see if this breaks
+the ordering.
+
+I haven't looked too deeply into this code yet, but I'm assuming that
+dput() can be called where we can't just take the inode or parent lock?
+
+-- Steve
+
+
