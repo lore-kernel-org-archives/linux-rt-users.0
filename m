@@ -1,69 +1,69 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [PATCH-RT] preempt.h: Fix implicit declaration of
  'preempt_check_resched_rt'
-Date: Thu, 08 Mar 2012 15:17:20 -0500
-Message-ID: <1331237840.25686.470.camel@gandalf.stny.rr.com>
+Date: Thu, 8 Mar 2012 14:22:57 -0600
+Message-ID: <20120308142257.145e0968@redhat.com>
 References: <1331237591-4406-1-git-send-email-jkacur@redhat.com>
+	<1331237840.25686.470.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/LuFE.LJSrYG2aSfCDYHFWHE"; protocol="application/pgp-signature"
+Cc: John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>,
-	lkml <linux-kernel@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
+	lkml <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:33388 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757740Ab2CHURW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 15:17:22 -0500
-In-Reply-To: <1331237591-4406-1-git-send-email-jkacur@redhat.com>
+Received: from mx1.redhat.com ([209.132.183.28]:7291 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1758638Ab2CHUXF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 8 Mar 2012 15:23:05 -0500
+In-Reply-To: <1331237840.25686.470.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 21:13 +0100, John Kacur wrote:
-> When building a non-preempt kernel where CONFIG_PREEMPT_COUNT is not
-> defined the following build break occurs.
+--Sig_/LuFE.LJSrYG2aSfCDYHFWHE
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, 08 Mar 2012 15:17:20 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
+
+> On Thu, 2012-03-08 at 21:13 +0100, John Kacur wrote:
+> > When building a non-preempt kernel where CONFIG_PREEMPT_COUNT is not
+> > defined the following build break occurs.
+> >=20
+> > /home/jkacur/linux-rt/block/blk-softirq.c: In function =E2=80=98trigger=
+_softirq=E2=80=99:
+> > /home/jkacur/linux-rt/block/blk-softirq.c:54: error: implicit declarati=
+on of function =E2=80=98preempt_check_resched_rt=E2=80=99
+> > make[2]: *** [block/blk-softirq.o] Error 1
+> > make[1]: *** [block/blk-softirq.o] Error 2
+> > make: *** [sub-make] Error 2
+> >=20
+> > This patch fixes the build error by adding a define to the
+> > !CONFIG_PREEMPT_COUNT section.
+> >=20
+> > Signed-off-by: Clark Williams <williams@redhat.com>
 >=20
-> /home/jkacur/linux-rt/block/blk-softirq.c: In function =E2=80=98trigg=
-er_softirq=E2=80=99:
-> /home/jkacur/linux-rt/block/blk-softirq.c:54: error: implicit declara=
-tion of function =E2=80=98preempt_check_resched_rt=E2=80=99
-> make[2]: *** [block/blk-softirq.o] Error 1
-> make[1]: *** [block/blk-softirq.o] Error 2
-> make: *** [sub-make] Error 2
->=20
-> This patch fixes the build error by adding a define to the
-> !CONFIG_PREEMPT_COUNT section.
->=20
-> Signed-off-by: Clark Williams <williams@redhat.com>
+> Why Clark's SOB? Did he write it and send it to you?
 
-Why Clark's SOB? Did he write it and send it to you?
+I suppose to be technically correct it should have been a Tested-by:
 
--- Steve
+John found it while I was working on it and I tested it for him.
 
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  include/linux/preempt.h |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
->=20
-> diff --git a/include/linux/preempt.h b/include/linux/preempt.h
-> index fa40695..58d8982 100644
-> --- a/include/linux/preempt.h
-> +++ b/include/linux/preempt.h
-> @@ -107,6 +107,7 @@ do { \
->  #define preempt_disable_notrace()		do { } while (0)
->  #define preempt_enable_no_resched_notrace()	do { } while (0)
->  #define preempt_enable_notrace()		do { } while (0)
-> +#define preempt_check_resched_rt()	do { } while (0)
-> =20
->  #endif /* CONFIG_PREEMPT_COUNT */
-> =20
+Clark
 
+--Sig_/LuFE.LJSrYG2aSfCDYHFWHE
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
+
+iEYEARECAAYFAk9ZFSEACgkQHyuj/+TTEp3kIACguH7BwiC80rl9qQadE+vH802s
+gOQAnje4VOoe66LvE/Pyh77qa8CbU4Ys
+=+k8L
+-----END PGP SIGNATURE-----
+
+--Sig_/LuFE.LJSrYG2aSfCDYHFWHE--
