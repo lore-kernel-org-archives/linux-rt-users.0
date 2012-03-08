@@ -1,68 +1,77 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 21:26:09 +0100
-Message-ID: <1331238369.11248.426.camel@twins>
-References: <alpine.LFD.2.02.1203072225020.2742@ionos>
-	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
-	 <1331231287.11248.396.camel@twins>
-	 <1331232159.25686.456.camel@gandalf.stny.rr.com>
-	 <1331235579.11248.402.camel@twins>
-	 <1331237441.25686.469.camel@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH-RT] preempt.h: Fix implicit declaration of
+ 'preempt_check_resched_rt'
+Date: Thu, 08 Mar 2012 15:34:25 -0500
+Message-ID: <1331238865.25686.474.camel@gandalf.stny.rr.com>
+References: <1331237591-4406-1-git-send-email-jkacur@redhat.com>
+	 <1331237840.25686.470.camel@gandalf.stny.rr.com>
+	 <20120308142257.145e0968@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	lkml <linux-kernel@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:56664 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753369Ab2CHU0R convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31292 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753698Ab2CHUe0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 15:26:17 -0500
-In-Reply-To: <1331237441.25686.469.camel@gandalf.stny.rr.com>
+	Thu, 8 Mar 2012 15:34:26 -0500
+In-Reply-To: <20120308142257.145e0968@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 15:10 -0500, Steven Rostedt wrote:
-> 
-> By doing a spin_trydeadlock() while still holding the d_lock, if the
-> holder of the i_lock was blocked on that d_lock then it would detect the
-> failure, and release the lock and continue the loop. This doesn't solve
-> anything. Just because we released the lock, we are still preempting the
-> holder of the d_lock
+On Thu, 2012-03-08 at 14:22 -0600, Clark Williams wrote:
+> On Thu, 08 Mar 2012 15:17:20 -0500
+> Steven Rostedt <rostedt@goodmis.org> wrote:
+>=20
+> > On Thu, 2012-03-08 at 21:13 +0100, John Kacur wrote:
+> > > When building a non-preempt kernel where CONFIG_PREEMPT_COUNT is =
+not
+> > > defined the following build break occurs.
+> > >=20
+> > > /home/jkacur/linux-rt/block/blk-softirq.c: In function =E2=80=98t=
+rigger_softirq=E2=80=99:
+> > > /home/jkacur/linux-rt/block/blk-softirq.c:54: error: implicit dec=
+laration of function =E2=80=98preempt_check_resched_rt=E2=80=99
+> > > make[2]: *** [block/blk-softirq.o] Error 1
+> > > make[1]: *** [block/blk-softirq.o] Error 2
+> > > make: *** [sub-make] Error 2
+> > >=20
+> > > This patch fixes the build error by adding a define to the
+> > > !CONFIG_PREEMPT_COUNT section.
+> > >=20
+> > > Signed-off-by: Clark Williams <williams@redhat.com>
+> >=20
+> > Why Clark's SOB? Did he write it and send it to you?
+>=20
+> I suppose to be technically correct it should have been a Tested-by:
+>=20
+> John found it while I was working on it and I tested it for him.
 
-->i_lock, right?
+Either a "Reported-by" if you mentioned it to John and he fixed it, or =
+a
+"Tested-by" if he fixed it and you tested it. You can have both if that
+is true too.
 
-> , and if we are higher in priority, we will never let the owner run.
+But "Signed-off-by" has supposed legal significance. It means that you
+are responsible for this patch. Either you authored it, or it went
+through you to get to the git repo (ie. you are the maintainer that too=
+k
+the patch).
 
-So, suppose:
+All other tags are FYI only. Only the SOB is required and has real
+meaning. Also, you should *never* add a SOB to a patch without the
+person explicitly giving it to you.
 
-task-A				task-B
+-- Steve
 
-lock ->i_lock
-				lock ->d_lock
-lock ->d_lock <blocks>
-				trylock ->i_lock
 
-In this case B's trylock will insta-fail (with -EDEADLK) and we unlock
-->d_lock in the existing retry logic. That dropping of ->d_lock will
-then wake A, but since B is higher prio A we don't actually run A and
-B's retry loop will re-acquire ->d_lock.
-
-Crap.. there's also the fact that A doesn't get (or stays) boosted.
-
-I can only think of ugly things to do, like on the deadlock scan, force
-assign the first waiter of the inverted lock to owner (in this case the
-deadlock is on ->d_lock so assign A), so that the moment we release
-->d_lock our re-acquisition fails because its already owned by A, at
-that point B will block and boost A.
-
-There's just the little detail of having two owners for a little while..
-
-> But just sleeping a tick sounds like a heuristic that may someday fail.
-
-Oh absolutely agreed, ideally someone would find a way to implement the
--EDEADLK stuff for rt-mutex in a way that doesn't make tglx sad and
-actually works.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
