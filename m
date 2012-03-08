@@ -1,96 +1,43 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 13:23:11 -0500
-Message-ID: <1331230991.25686.452.camel@gandalf.stny.rr.com>
+Date: Thu, 08 Mar 2012 19:28:07 +0100
+Message-ID: <1331231287.11248.396.camel@twins>
 References: <alpine.LFD.2.02.1203072225020.2742@ionos>
+	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1203072225020.2742@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from merlin.infradead.org ([205.233.59.134]:51088 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754006Ab2CHS2S convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 8 Mar 2012 13:28:18 -0500
+In-Reply-To: <1331230991.25686.452.camel@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-03-07 at 22:49 +0100, Thomas Gleixner wrote:
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.2.9-rt17 release.
-> 
-> Changes vs. 3.2.9-rt17:
-> 
->   * Cherry-picked a scheduled for 3.2.10 genirq fix
-> 
->   * Add missing preemption checks for softirqd wakeups
-> 
->   * Implement cpu_chill() and use it in dcache and networking
-> 
->     RT suffers from trylock or other busywait loops. When the lock
->     holder / updater is preempted. This is basically the same problem
->     as we experienced with seqlocks and especially their open coded
->     variants. Though it's way harder to solve. 
-> 
->     The trylock loops are usually implemented to deal with reverse
->     lock ordering. On !RT this only needs to loop when one of the
->     locks is held on another cpu. On RT the lock holder can be
->     preempted which in turn puts the preempting task into an eternal
->     retry loop.
-> 
->     I tried to implement spin_trydeadlock() - thanks Peter for the
->     brilliant function name - which basically boosts the lock holder
->     w/o deadlocking, but it turned out to become a quite horrible mess
->     close to the infamous multiple reader boosting code.
+On Thu, 2012-03-08 at 13:23 -0500, Steven Rostedt wrote:
+> So basically what you tried to do was just set the owner of the lock to
+> have the priority of the task that wants the lock, until it releases it?
+> But by doing it without having this task sleep? 
 
-Thanks for the reference :-p
+No, by having it sleep ;-)
 
-> 
->     Before my brain deadlocked on trylocks I took the easy way out and
->     replaced the cpu_relax() calls in those retry loops with
->     cpu_chill() calls.
-> 
->     cpu_chill() defaults to cpu_relax() for !RT. On RT is simply puts
->     the task to sleep for a tick, so the preempted lock holder/updater
->     can make progress.
-> 
->     I think that's reasonable as the affected code pathes are not RT
->     critical and not likely to hit. fs operations have no RT
->     guarantees at all, so it might affect random fs scanners which get
->     blocked on a rename or delete operation going on. I don't think
->     that's a real issue. Feel free to yell if you find out that it
->     hurts, but be aware that I might ask _you_ to twist _your_ brain
->     around implementing spin_trydeadlock().
-> 
+So you do the full PI sleeping lock thing, except you return fail if you
+loose the acquisition race on wakeup and you mark this waiter as
+'special'.
 
-So basically what you tried to do was just set the owner of the lock to
-have the priority of the task that wants the lock, until it releases it?
-But by doing it without having this task sleep?
+Then on every rt_mutex block you have to do a deadlock analysis on the
+PI blocking chain (preferably shared with PI boost traversal of said
+chain), during that scan you collect all special tagged waiters.
 
-I'm guessing the difficulty came with the "waiter"? That's because the
-waiter is on the stack of the process that is waiting. If the waiter
-isn't waiting, then you can't create the waiter structure, as the stack
-isn't available to use.
+If you find a deadlock, wake all these special waiters and have them
+return -EDEADLK.
 
-Did you try it so that it blocks only if the owner is not blocked, and
-if the owner blocks, it wakes up the one waiting it on a
-spin_trydeadlock()? But this probably has issues if the owner is blocked
-on the lock the task has, you would have to do the sleep anyway.
-
-What if you moved the "trydeadlock" into the cpu_chill()? Thus you can
-have:
-
-cpu_chill(&parent->d-lock);
-
-on !RT it's still just a cpu_relax(), but on RT it will boost the owner
-of the lock, and will block only as long as the owner chain is running.
-The difference between cpu_chill() blocking and doing the blocking at
-the spin_trydeadlock(), is that here we release a lock which should make
-something have forward progress. Doing it before the release of the lock
-probably doesn't help. Unless you had spin_trydeadlock() do the release
-of the lock too?
-
-It would be interesting to see what was tried.
-
--- Steve
+I guess you could also do the full spin_deadlock() and do away with the
+try part and purely rely on the deadlock detection.
