@@ -1,7 +1,7 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 22:28:24 +0100
-Message-ID: <1331242104.11248.432.camel@twins>
+Date: Thu, 08 Mar 2012 16:36:14 -0500
+Message-ID: <1331242574.25686.505.camel@gandalf.stny.rr.com>
 References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
 	 <1331231287.11248.396.camel@twins>
@@ -12,28 +12,44 @@ References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331240882.25686.499.camel@gandalf.stny.rr.com>
 	 <1331241627.11248.430.camel@twins>
 	 <1331241940.25686.502.camel@gandalf.stny.rr.com>
+	 <1331242104.11248.432.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:40823 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755402Ab2CHV2d convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:26039 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755035Ab2CHVgQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 16:28:33 -0500
-In-Reply-To: <1331241940.25686.502.camel@gandalf.stny.rr.com>
+	Thu, 8 Mar 2012 16:36:16 -0500
+In-Reply-To: <1331242104.11248.432.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 16:25 -0500, Steven Rostedt wrote:
+On Thu, 2012-03-08 at 22:28 +0100, Peter Zijlstra wrote:
+> On Thu, 2012-03-08 at 16:25 -0500, Steven Rostedt wrote:
+> > 
+> > How would this be different than what mainline does? When the lock is
+> > released, it will wake up the other task. 
 > 
-> How would this be different than what mainline does? When the lock is
-> released, it will wake up the other task. 
+> mainline has ticket locks, the rt-mutex stuff has equal priority lock
+> stealing, waking up the blocked task will take so long our running loop
+> will have re-acquired ->d_lock again before it even gets to trying.
 
-mainline has ticket locks, the rt-mutex stuff has equal priority lock
-stealing, waking up the blocked task will take so long our running loop
-will have re-acquired ->d_lock again before it even gets to trying.
+And we have adaptive mutexes.
+
+So we wake up the task (now with the higher priority), by the time it
+wakes up, the original task retook the lock. But because of adaptive
+mutexes, as this task takes the lock it notices that the owner is still
+running, and it will spin and not sleep.
+
+Now when the original task releases the lock again, the other task can
+take it just like it does on mainline.
+
+-- Steve
+
+
