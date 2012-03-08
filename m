@@ -1,7 +1,7 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 23:20:13 +0100
-Message-ID: <1331245213.11248.446.camel@twins>
+Date: Thu, 08 Mar 2012 17:27:45 -0500
+Message-ID: <1331245665.25686.521.camel@gandalf.stny.rr.com>
 References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
 	 <1331231287.11248.396.camel@twins>
@@ -18,63 +18,38 @@ References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331243078.25686.510.camel@gandalf.stny.rr.com>
 	 <1331243642.11248.441.camel@twins>
 	 <1331244812.25686.518.camel@gandalf.stny.rr.com>
+	 <1331245213.11248.446.camel@twins>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:36042 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758728Ab2CHWUX convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:10449 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753889Ab2CHW1r (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 17:20:23 -0500
-In-Reply-To: <1331244812.25686.518.camel@gandalf.stny.rr.com>
+	Thu, 8 Mar 2012 17:27:47 -0500
+In-Reply-To: <1331245213.11248.446.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 17:13 -0500, Steven Rostedt wrote:
-> > task-A (cpu0) task-B (cpu1)           task-C (cpu1)
-> > 
-> >               lock ->d_lock
-> > lock ->i_lock
-> > lock ->d_lock
-> >                       <-------------- preempts B
-> >               trylock ->i_lock
-> > 
-> > 
-> > While is is perfectly normal, the result is that A stops spinning and
-> > goes to sleep. Now B continues and loops ad infinitum because it keeps
-> > getting ->d_lock before A because its cache hot on cpu1 and waking A
-> > takes a while etc..
+On Thu, 2012-03-08 at 23:20 +0100, Peter Zijlstra wrote:
+
+> and with rt-mutex having the equal priority lock stealing this reverts
+> to a plain test-and-set lock. There's only a tiny window in which A can
+> actually get the lock and that is hampered by B's cpu owning the
+> cacheline in exclusive mode.
 > 
-> I'm confused? As A isn't doing a loop. B is doing the loop because it's
-> trying to grab the locks in reverse order and can't take the i_lock.
-> Your example above would have A go to sleep when it tries to take
-> d_lock. 
+> I simply cannot see guaranteed progress here.
 
-Right, but what guarantees that A will ever get ->d_lock when B releases
-it before B again acquires it?
+This can be easily fixed by not having the lateral steal when a lock has
+a priority.
 
-B is in a very tight:
+-- Steve
 
-1:
- lock ->d_lock
- trylock ->i_lock
- unlock ->d_lock
- goto 1
 
-loop, while A is doing:
 
-1:
-  trylock ->d_lock
-  goto 1
 
-and with rt-mutex having the equal priority lock stealing this reverts
-to a plain test-and-set lock. There's only a tiny window in which A can
-actually get the lock and that is hampered by B's cpu owning the
-cacheline in exclusive mode.
-
-I simply cannot see guaranteed progress here.
