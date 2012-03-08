@@ -1,69 +1,68 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH-RT] preempt.h: Fix implicit declaration of
- 'preempt_check_resched_rt'
-Date: Thu, 8 Mar 2012 14:22:57 -0600
-Message-ID: <20120308142257.145e0968@redhat.com>
-References: <1331237591-4406-1-git-send-email-jkacur@redhat.com>
-	<1331237840.25686.470.camel@gandalf.stny.rr.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [ANNOUNCE] 3.2.9-rt17
+Date: Thu, 08 Mar 2012 21:26:09 +0100
+Message-ID: <1331238369.11248.426.camel@twins>
+References: <alpine.LFD.2.02.1203072225020.2742@ionos>
+	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
+	 <1331231287.11248.396.camel@twins>
+	 <1331232159.25686.456.camel@gandalf.stny.rr.com>
+	 <1331235579.11248.402.camel@twins>
+	 <1331237441.25686.469.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/LuFE.LJSrYG2aSfCDYHFWHE"; protocol="application/pgp-signature"
-Cc: John Kacur <jkacur@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	lkml <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:7291 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758638Ab2CHUXF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 15:23:05 -0500
-In-Reply-To: <1331237840.25686.470.camel@gandalf.stny.rr.com>
+Received: from casper.infradead.org ([85.118.1.10]:56664 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753369Ab2CHU0R convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 8 Mar 2012 15:26:17 -0500
+In-Reply-To: <1331237441.25686.469.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/LuFE.LJSrYG2aSfCDYHFWHE
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Thu, 2012-03-08 at 15:10 -0500, Steven Rostedt wrote:
+> 
+> By doing a spin_trydeadlock() while still holding the d_lock, if the
+> holder of the i_lock was blocked on that d_lock then it would detect the
+> failure, and release the lock and continue the loop. This doesn't solve
+> anything. Just because we released the lock, we are still preempting the
+> holder of the d_lock
 
-On Thu, 08 Mar 2012 15:17:20 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+->i_lock, right?
 
-> On Thu, 2012-03-08 at 21:13 +0100, John Kacur wrote:
-> > When building a non-preempt kernel where CONFIG_PREEMPT_COUNT is not
-> > defined the following build break occurs.
-> >=20
-> > /home/jkacur/linux-rt/block/blk-softirq.c: In function =E2=80=98trigger=
-_softirq=E2=80=99:
-> > /home/jkacur/linux-rt/block/blk-softirq.c:54: error: implicit declarati=
-on of function =E2=80=98preempt_check_resched_rt=E2=80=99
-> > make[2]: *** [block/blk-softirq.o] Error 1
-> > make[1]: *** [block/blk-softirq.o] Error 2
-> > make: *** [sub-make] Error 2
-> >=20
-> > This patch fixes the build error by adding a define to the
-> > !CONFIG_PREEMPT_COUNT section.
-> >=20
-> > Signed-off-by: Clark Williams <williams@redhat.com>
->=20
-> Why Clark's SOB? Did he write it and send it to you?
+> , and if we are higher in priority, we will never let the owner run.
 
-I suppose to be technically correct it should have been a Tested-by:
+So, suppose:
 
-John found it while I was working on it and I tested it for him.
+task-A				task-B
 
-Clark
+lock ->i_lock
+				lock ->d_lock
+lock ->d_lock <blocks>
+				trylock ->i_lock
 
---Sig_/LuFE.LJSrYG2aSfCDYHFWHE
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+In this case B's trylock will insta-fail (with -EDEADLK) and we unlock
+->d_lock in the existing retry logic. That dropping of ->d_lock will
+then wake A, but since B is higher prio A we don't actually run A and
+B's retry loop will re-acquire ->d_lock.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
+Crap.. there's also the fact that A doesn't get (or stays) boosted.
 
-iEYEARECAAYFAk9ZFSEACgkQHyuj/+TTEp3kIACguH7BwiC80rl9qQadE+vH802s
-gOQAnje4VOoe66LvE/Pyh77qa8CbU4Ys
-=+k8L
------END PGP SIGNATURE-----
+I can only think of ugly things to do, like on the deadlock scan, force
+assign the first waiter of the inverted lock to owner (in this case the
+deadlock is on ->d_lock so assign A), so that the moment we release
+->d_lock our re-acquisition fails because its already owned by A, at
+that point B will block and boost A.
 
---Sig_/LuFE.LJSrYG2aSfCDYHFWHE--
+There's just the little detail of having two owners for a little while..
+
+> But just sleeping a tick sounds like a heuristic that may someday fail.
+
+Oh absolutely agreed, ideally someone would find a way to implement the
+-EDEADLK stuff for rt-mutex in a way that doesn't make tglx sad and
+actually works.
