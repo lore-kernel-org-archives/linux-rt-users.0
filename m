@@ -1,7 +1,7 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 16:25:40 -0500
-Message-ID: <1331241940.25686.502.camel@gandalf.stny.rr.com>
+Date: Thu, 08 Mar 2012 22:28:24 +0100
+Message-ID: <1331242104.11248.432.camel@twins>
 References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
 	 <1331231287.11248.396.camel@twins>
@@ -11,29 +11,29 @@ References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	 <1331238369.11248.426.camel@twins>
 	 <1331240882.25686.499.camel@gandalf.stny.rr.com>
 	 <1331241627.11248.430.camel@twins>
+	 <1331241940.25686.502.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1331241627.11248.430.camel@twins>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from merlin.infradead.org ([205.233.59.134]:40823 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755402Ab2CHV2d convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 8 Mar 2012 16:28:33 -0500
+In-Reply-To: <1331241940.25686.502.camel@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 22:20 +0100, Peter Zijlstra wrote:
+On Thu, 2012-03-08 at 16:25 -0500, Steven Rostedt wrote:
+> 
+> How would this be different than what mainline does? When the lock is
+> released, it will wake up the other task. 
 
-> Now put the thing on 2 cpus and both tasks can endlessly chase each
-> other's tail, no? 
-
-How would this be different than what mainline does? When the lock is
-released, it will wake up the other task.
-
-> The yield will be useless there.. 
-
-If there's no task with the same priority, it should be a nop. I don't
-see anything wrong with it.
-
--- Steve
+mainline has ticket locks, the rt-mutex stuff has equal priority lock
+stealing, waking up the blocked task will take so long our running loop
+will have re-acquired ->d_lock again before it even gets to trying.
