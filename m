@@ -1,63 +1,62 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 15:10:41 -0500
-Message-ID: <1331237441.25686.469.camel@gandalf.stny.rr.com>
-References: <alpine.LFD.2.02.1203072225020.2742@ionos>
-	 <1331230991.25686.452.camel@gandalf.stny.rr.com>
-	 <1331231287.11248.396.camel@twins>
-	 <1331232159.25686.456.camel@gandalf.stny.rr.com>
-	 <1331235579.11248.402.camel@twins>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH-RT] preempt.h: Fix implicit declaration of 'preempt_check_resched_rt'
+Date: Thu,  8 Mar 2012 21:13:11 +0100
+Message-ID: <1331237591-4406-1-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11270 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753299Ab2CHUKm (ORCPT
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:43536 "EHLO
+	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753299Ab2CHUNU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 15:10:42 -0500
-In-Reply-To: <1331235579.11248.402.camel@twins>
+	Thu, 8 Mar 2012 15:13:20 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-03-08 at 20:39 +0100, Peter Zijlstra wrote:
+When building a non-preempt kernel where CONFIG_PREEMPT_COUNT is not
+defined the following build break occurs.
 
-> > For example, we have:
-> > 
-> > @@ -410,7 +411,7 @@ static inline struct dentry *dentry_kill
-> >         if (inode && !spin_trylock(&inode->i_lock)) {
-> >  relock:
-> >                 seq_spin_unlock(&dentry->d_lock);
-> > -               cpu_relax();
-> > +               cpu_chill();
-> >                 return dentry; /* try again with same dentry */
-> >         }
-> > 
-> > By doing the test at the trylock, we can easily hit the deadlock,
-> > because we still hold dentry->d_lock. But by moving the block to the
-> > cpu_chill(), then we are less likely to hit the deadlock.
-> 
-> Actually hitting the deadlock isn't a problem, and doing it in the place
-> of the trylock has the distinct advantage that you can actually get the
-> lock and continue like you want.
+/home/jkacur/linux-rt/block/blk-softirq.c: In function =E2=80=98trigger=
+_softirq=E2=80=99:
+/home/jkacur/linux-rt/block/blk-softirq.c:54: error: implicit declarati=
+on of function =E2=80=98preempt_check_resched_rt=E2=80=99
+make[2]: *** [block/blk-softirq.o] Error 1
+make[1]: *** [block/blk-softirq.o] Error 2
+make: *** [sub-make] Error 2
 
-By doing a spin_trydeadlock() while still holding the d_lock, if the
-holder of the i_lock was blocked on that d_lock then it would detect the
-failure, and release the lock and continue the loop. This doesn't solve
-anything. Just because we released the lock, we are still preempting the
-holder of the d_lock, and if we are higher in priority, we will never
-let the owner run.
+This patch fixes the build error by adding a define to the
+!CONFIG_PREEMPT_COUNT section.
 
-That's why I recommended doing it after releasing the lock. Of course
-the d_put() is so screwed up because it's not just two locks involved,
-it's a reverse chain, where this probably wont help.
+Signed-off-by: Clark Williams <williams@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ include/linux/preempt.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-But just sleeping a tick sounds like a heuristic that may someday fail.
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index fa40695..58d8982 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -107,6 +107,7 @@ do { \
+ #define preempt_disable_notrace()		do { } while (0)
+ #define preempt_enable_no_resched_notrace()	do { } while (0)
+ #define preempt_enable_notrace()		do { } while (0)
++#define preempt_check_resched_rt()	do { } while (0)
+=20
+ #endif /* CONFIG_PREEMPT_COUNT */
+=20
+--=20
+1.7.2.3
 
--- Steve
-
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
