@@ -1,14 +1,18 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Thu, 08 Mar 2012 21:50:25 -0500
-Message-ID: <1331261425.25686.527.camel@gandalf.stny.rr.com>
+Date: Thu, 08 Mar 2012 22:08:02 -0500
+Message-ID: <1331262482.25686.540.camel@gandalf.stny.rr.com>
 References: <alpine.LFD.2.02.1203072225020.2742@ionos>
 	  <1331230991.25686.452.camel@gandalf.stny.rr.com>
 	  <1331231287.11248.396.camel@twins>
 	  <1331232159.25686.456.camel@gandalf.stny.rr.com>
 	  <1331235579.11248.402.camel@twins>
-	 <1331237441.25686.469.camel@gandalf.stny.rr.com>
-	 <alpine.LFD.2.02.1203090111240.2742@ionos>
+	  <1331237441.25686.469.camel@gandalf.stny.rr.com>
+	 <1331238369.11248.426.camel@twins>
+	  <1331240882.25686.499.camel@gandalf.stny.rr.com>
+	  <1331241627.11248.430.camel@twins>
+	 <1331241940.25686.502.camel@gandalf.stny.rr.com>
+	 <alpine.LFD.2.02.1203090124160.2742@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -17,94 +21,88 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13946 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:29878 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751526Ab2CICu1 (ORCPT
+	with ESMTP id S1751009Ab2CIDIE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 21:50:27 -0500
-In-Reply-To: <alpine.LFD.2.02.1203090111240.2742@ionos>
+	Thu, 8 Mar 2012 22:08:04 -0500
+In-Reply-To: <alpine.LFD.2.02.1203090124160.2742@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2012-03-09 at 01:20 +0100, Thomas Gleixner wrote:
+On Fri, 2012-03-09 at 01:33 +0100, Thomas Gleixner wrote:
 > On Thu, 8 Mar 2012, Steven Rostedt wrote:
 > 
-> > On Thu, 2012-03-08 at 20:39 +0100, Peter Zijlstra wrote:
+> > On Thu, 2012-03-08 at 22:20 +0100, Peter Zijlstra wrote:
 > > 
-> > > > For example, we have:
-> > > > 
-> > > > @@ -410,7 +411,7 @@ static inline struct dentry *dentry_kill
-> > > >         if (inode && !spin_trylock(&inode->i_lock)) {
-> > > >  relock:
-> > > >                 seq_spin_unlock(&dentry->d_lock);
-> > > > -               cpu_relax();
-> > > > +               cpu_chill();
-> > > >                 return dentry; /* try again with same dentry */
-> > > >         }
-> > > > 
-> > > > By doing the test at the trylock, we can easily hit the deadlock,
-> > > > because we still hold dentry->d_lock. But by moving the block to the
-> > > > cpu_chill(), then we are less likely to hit the deadlock.
-> > > 
-> > > Actually hitting the deadlock isn't a problem, and doing it in the place
-> > > of the trylock has the distinct advantage that you can actually get the
-> > > lock and continue like you want.
+> > > Now put the thing on 2 cpus and both tasks can endlessly chase each
+> > > other's tail, no? 
 > > 
-> > By doing a spin_trydeadlock() while still holding the d_lock, if the
-> > holder of the i_lock was blocked on that d_lock then it would detect the
-> > failure, and release the lock and continue the loop. This doesn't solve
-> > anything. Just because we released the lock, we are still preempting the
-> > holder of the d_lock, and if we are higher in priority, we will never
-> > let the owner run.
-> > 
-> > That's why I recommended doing it after releasing the lock. Of course
-> > the d_put() is so screwed up because it's not just two locks involved,
-> > it's a reverse chain, where this probably wont help.
-> > 
-> > But just sleeping a tick sounds like a heuristic that may someday fail.
+> > How would this be different than what mainline does? When the lock is
+> > released, it will wake up the other task.
 > 
-> And it's the only way to deal with it sanely simply because after
-> dropping d_lock you CANNOT dereference inode->i_lock anymore. Care to
-> read the fricking locking rules of dcache and friends ?
+> Nonsense. That code is not causing any headache in mainline simply
+> because the lock holder cannot be preempted. So the contention case
+> runs on different cpus. On RT the failure case is when the trylocker
+> preempts the lock holder, which cannot be moved to a different cpu due
+> to the implicit migrate disable. Aside of that cpu_relax() and ticket
+> locks are there for a reason. They allow the other cpu to make
+> progress instead of allowing the trylocking cpu to monopolize the
+> cache line forever.
 
-Right, and the solution I proposed does not need to.
+I understand that, I was replying to the "both tasks can endlessly chase
+each other's tail". And I gave responses to that. The current solution
+of having the task sleep for a tick still doesn't solve the issue of a
+the owner being preempted by a higher priority task.
 
-> 
-> So yopu need to replace the trylock by try_deadlock() and boost the
-> lock owner w/o blocking on the lock. That means that you need some
-> other means to tell the lock owner that you are waiting for it w/o
-> actually waiting. 
+At least the solution I proposed wouldn't cause priority inversion,
+where as the current solution can.
 
-Actually, you don't need to tell the lock owner you are waiting for it,
-you only need to make the lock itself have a priority, and the owner
-will inherit that priority as long as it holds the lock.
+task-a (cpu 0)                     task-b(cpu1)        task-c(cpu1)
+--------------                     ------------        ------------
+
+retry:                             lock(y);
+
+    lock(x);
+                                        <<-------------  preempt task-b
+    if (!try_lock(y)) {
+	unlock(x);
+	sleep(1);
+	goto retry;
+    }
 
 
+Now task-a can be of the highest priority task in the system, and task-b
+the lowest, but task-c is higher than task-b and lower than task-a. If c
+is a CPU hog, then task-a will never get out of this loop.
 
-> After you return from try_deadlock() you drop d_lock
-> and wait for some magic event which is associated to the unlock of
-> i_lock. There is no other way to deal with reverse lock ordering,
-> period.
+With the lock inheritance, b will get to run over c.
 
-No magic event, the owner of the lock will inherit the priority you just
-gave it. All the task needs to do next is a sched_yield(), and if the
-other task is on the same CPU, it will have the same priority and run.
-
-The boosted priority of the lock and the owner will only last as long as
-the owner has the lock. As soon as the owner drops it, the priority is
-reset for both the lock and the owner.
 
 > 
-> Now go and imagine the mess you have to create to make this work under
-> all circumstances. My reference to the multiple reader boosting was
-> not for fun. Though I consider that try_deadlock() idea to be in the
-> same category of insanity as the original attempts of implementing
-> requeue_pi with ownerless but boosted rtmutexes ....
+> The only case where mainline can fail is when a high prio task does a
+> mutex_trylock() loop and the mutex owner and the trylocker are pinned
+> on the same core. Though I have not yet found code like that, but I
+> have not looked too hard either :)
+> 
+> It's a simple RT problem, which has been there forever, but obviously
+> nobody did stress tests such code pathes on UP systems or if someone
+> did he was not able to trigger it. On SMP this was not a big issue
+> when task migration was almost always enabled. Due to the implicit
+> migrate disable withing spinlocked regions we just made it more likely
+> to happen.
 
-And the solution I proposed has nothing to do with the mess needed to do
-the multi priority boost. As it had a waiter on it. This isn't waiting,
-it's simulating more what happens in non-rt. That is, the owner of the
-lock will have a chance to run.
+Right, and I mentioned that the migrate disable causes new issues.
+
+I'm trying to come up with a solution that doesn't "wait for some magic
+event which is associated to the unlock of i_lock". Because that's what
+we are doing right now. The magic event is the sleep hoping that it will
+unlock the lock. And a solution that isn't as nasty as the multiple
+readers lock.
+
+Maybe the lock inheritance isn't the best solution, but I believe it's
+better than the sleep and hope solution that's there now. And I don't
+think it would be that complex to implement.
 
 -- Steve
 
