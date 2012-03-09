@@ -1,9 +1,9 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.2.9-rt17
-Date: Fri, 9 Mar 2012 01:20:30 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1203090111240.2742@ionos>
-References: <alpine.LFD.2.02.1203072225020.2742@ionos>  <1331230991.25686.452.camel@gandalf.stny.rr.com>  <1331231287.11248.396.camel@twins>  <1331232159.25686.456.camel@gandalf.stny.rr.com>  <1331235579.11248.402.camel@twins>
- <1331237441.25686.469.camel@gandalf.stny.rr.com>
+Date: Fri, 9 Mar 2012 01:33:08 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1203090124160.2742@ionos>
+References: <alpine.LFD.2.02.1203072225020.2742@ionos>  <1331230991.25686.452.camel@gandalf.stny.rr.com>  <1331231287.11248.396.camel@twins>  <1331232159.25686.456.camel@gandalf.stny.rr.com>  <1331235579.11248.402.camel@twins>  <1331237441.25686.469.camel@gandalf.stny.rr.com>
+  <1331238369.11248.426.camel@twins>  <1331240882.25686.499.camel@gandalf.stny.rr.com>  <1331241627.11248.430.camel@twins> <1331241940.25686.502.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Peter Zijlstra <peterz@infradead.org>,
@@ -11,68 +11,45 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44548 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:44578 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756334Ab2CIAUg (ORCPT
+	with ESMTP id S1753895Ab2CIAdL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Mar 2012 19:20:36 -0500
-In-Reply-To: <1331237441.25686.469.camel@gandalf.stny.rr.com>
+	Thu, 8 Mar 2012 19:33:11 -0500
+In-Reply-To: <1331241940.25686.502.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Thu, 8 Mar 2012, Steven Rostedt wrote:
 
-> On Thu, 2012-03-08 at 20:39 +0100, Peter Zijlstra wrote:
+> On Thu, 2012-03-08 at 22:20 +0100, Peter Zijlstra wrote:
 > 
-> > > For example, we have:
-> > > 
-> > > @@ -410,7 +411,7 @@ static inline struct dentry *dentry_kill
-> > >         if (inode && !spin_trylock(&inode->i_lock)) {
-> > >  relock:
-> > >                 seq_spin_unlock(&dentry->d_lock);
-> > > -               cpu_relax();
-> > > +               cpu_chill();
-> > >                 return dentry; /* try again with same dentry */
-> > >         }
-> > > 
-> > > By doing the test at the trylock, we can easily hit the deadlock,
-> > > because we still hold dentry->d_lock. But by moving the block to the
-> > > cpu_chill(), then we are less likely to hit the deadlock.
-> > 
-> > Actually hitting the deadlock isn't a problem, and doing it in the place
-> > of the trylock has the distinct advantage that you can actually get the
-> > lock and continue like you want.
+> > Now put the thing on 2 cpus and both tasks can endlessly chase each
+> > other's tail, no? 
 > 
-> By doing a spin_trydeadlock() while still holding the d_lock, if the
-> holder of the i_lock was blocked on that d_lock then it would detect the
-> failure, and release the lock and continue the loop. This doesn't solve
-> anything. Just because we released the lock, we are still preempting the
-> holder of the d_lock, and if we are higher in priority, we will never
-> let the owner run.
-> 
-> That's why I recommended doing it after releasing the lock. Of course
-> the d_put() is so screwed up because it's not just two locks involved,
-> it's a reverse chain, where this probably wont help.
-> 
-> But just sleeping a tick sounds like a heuristic that may someday fail.
+> How would this be different than what mainline does? When the lock is
+> released, it will wake up the other task.
 
-And it's the only way to deal with it sanely simply because after
-dropping d_lock you CANNOT dereference inode->i_lock anymore. Care to
-read the fricking locking rules of dcache and friends ?
+Nonsense. That code is not causing any headache in mainline simply
+because the lock holder cannot be preempted. So the contention case
+runs on different cpus. On RT the failure case is when the trylocker
+preempts the lock holder, which cannot be moved to a different cpu due
+to the implicit migrate disable. Aside of that cpu_relax() and ticket
+locks are there for a reason. They allow the other cpu to make
+progress instead of allowing the trylocking cpu to monopolize the
+cache line forever.
 
-So yopu need to replace the trylock by try_deadlock() and boost the
-lock owner w/o blocking on the lock. That means that you need some
-other means to tell the lock owner that you are waiting for it w/o
-actually waiting. After you return from try_deadlock() you drop d_lock
-and wait for some magic event which is associated to the unlock of
-i_lock. There is no other way to deal with reverse lock ordering,
-period.
+The only case where mainline can fail is when a high prio task does a
+mutex_trylock() loop and the mutex owner and the trylocker are pinned
+on the same core. Though I have not yet found code like that, but I
+have not looked too hard either :)
 
-Now go and imagine the mess you have to create to make this work under
-all circumstances. My reference to the multiple reader boosting was
-not for fun. Though I consider that try_deadlock() idea to be in the
-same category of insanity as the original attempts of implementing
-requeue_pi with ownerless but boosted rtmutexes ....
+It's a simple RT problem, which has been there forever, but obviously
+nobody did stress tests such code pathes on UP systems or if someone
+did he was not able to trigger it. On SMP this was not a big issue
+when task migration was almost always enabled. Due to the implicit
+migrate disable withing spinlocked regions we just made it more likely
+to happen.
 
 Thanks,
 
