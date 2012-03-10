@@ -1,47 +1,57 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: 3.0.23-rt39 BUG: scheduling while atomic, _cpu_down()
-Date: Fri, 9 Mar 2012 17:51:50 -0800
-Message-ID: <4F5AB3B6.2040705@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 3.0.23-rt39 BUG: scheduling while atomic, _cpu_down()
+Date: Fri, 09 Mar 2012 21:03:12 -0500
+Message-ID: <1331344992.25686.612.camel@gandalf.stny.rr.com>
+References: <4F5AB3B6.2040705@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: <tglx@linutronix.de>, <rostedt@goodmis.org>
+Cc: tglx@linutronix.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: frank.rowand@am.sony.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:30130
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755868Ab2CJBwM (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:18487 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755868Ab2CJCDO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Mar 2012 20:52:12 -0500
+	Fri, 9 Mar 2012 21:03:14 -0500
+In-Reply-To: <4F5AB3B6.2040705@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas,
-(and Steve, since you've been mucking about in the hotplug code,)
+On Fri, 2012-03-09 at 17:51 -0800, Frank Rowand wrote:
+> Hi Thomas,
+> (and Steve, since you've been mucking about in the hotplug code,)
+> 
+> Yet another bit of fallout related to hotplug.
+> 
+> This appears to affect 3.0-rt1, 3.0.23-rt29, and 3.2.9-rt17.
+> (Thus probably all 3.x versions, but I haven't been masochistic
+> enough to check.)
+> 
+> If not defined CONFIG_PREEMPT_RT_FULL then
 
-Yet another bit of fallout related to hotplug.
+So you're saying that there's a bug with PREEMPT_RT off?
 
-This appears to affect 3.0-rt1, 3.0.23-rt29, and 3.2.9-rt17.
-(Thus probably all 3.x versions, but I haven't been masochistic
-enough to check.)
+> 
+>   - hotplug_lock() is a mutex_lock()
+>   - cpu_hotplug_begin() calls hotplug_lock()
+>   - _cpu_down() calls cpu_hotplug_begin() with preemption
+>     disabled (disabled by the migrate_disable())
+> 
+> The call to cpu_hotplug_begin() is not in a preempt disabled
+> region until hotplug-use-migrate-disable.patch.  This patch
+> moves the preempt_enable() (aka migrate_enable()) from just
+> before calling cpu_hotplug_begin() to after "out_cancel:".
+> 
+> The BUG can be triggered by:
+> 
+>    echo 0 > /sys/devices/system/cpu/cpu1/online 
 
-If not defined CONFIG_PREEMPT_RT_FULL then
+Note, there's a lot more wrong with hotplug in rt than this. The hotplug
+code really needs a total rewrite for RT to work with it. It probably
+should have a total rewrite in mainline anyway.
 
-  - hotplug_lock() is a mutex_lock()
-  - cpu_hotplug_begin() calls hotplug_lock()
-  - _cpu_down() calls cpu_hotplug_begin() with preemption
-    disabled (disabled by the migrate_disable())
+-- Steve
 
-The call to cpu_hotplug_begin() is not in a preempt disabled
-region until hotplug-use-migrate-disable.patch.  This patch
-moves the preempt_enable() (aka migrate_enable()) from just
-before calling cpu_hotplug_begin() to after "out_cancel:".
-
-The BUG can be triggered by:
-
-   echo 0 > /sys/devices/system/cpu/cpu1/online 
-
-
--Frank
 
