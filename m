@@ -1,39 +1,48 @@
-From: Mark Hounschell <dmarkh@cfl.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: timer signal loss on RT
-Date: Sat, 10 Mar 2012 06:53:31 -0500
-Message-ID: <4F5B40BB.9080305@cfl.rr.com>
-References: <4F5B2C50.2090907@cfl.rr.com> <alpine.LFD.2.02.1203101231230.2742@ionos>
-Reply-To: dmarkh@cfl.rr.com
+Date: Sat, 10 Mar 2012 14:44:17 -0500
+Message-ID: <1331408658.23363.5.camel@frodo>
+References: <4F5B2C50.2090907@cfl.rr.com>
+	 <alpine.LFD.2.02.1203101231230.2742@ionos>  <4F5B40BB.9080305@cfl.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel-rt <linux-rt-users@vger.kernel.org>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-kernel-rt <linux-rt-users@vger.kernel.org>,
 	Mark Hounschell <markh@compro.net>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: dmarkh@cfl.rr.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-omtalb.mail.rr.com ([75.180.132.120]:22632 "EHLO
-	cdptpa-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752484Ab2CJLxd (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:18269 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751146Ab2CJToX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 10 Mar 2012 06:53:33 -0500
-In-Reply-To: <alpine.LFD.2.02.1203101231230.2742@ionos>
+	Sat, 10 Mar 2012 14:44:23 -0500
+In-Reply-To: <4F5B40BB.9080305@cfl.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 03/10/2012 06:34 AM, Thomas Gleixner wrote:
-> On Sat, 10 Mar 2012, Mark Hounschell wrote:
->> I'm sure you can find many things wrong with this test case but I'm not
->> sending it for discussion on the merits, or certainly the lack of, an
->> application that contains a cpu hog, but only to show what I think is a
->> problem with RT kernels.
->
-> Nope, PEBKAC.
->
-> Timer signals are delivered via ksoftirqd, so your cpu hog prevents
-> ksoftirqd frum running.
->
+On Sat, 2012-03-10 at 06:53 -0500, Mark Hounschell wrote:
+> >
+> 
+> Does ksoftirqd deliver timer signals in vanilla?
 
-Does ksoftirqd deliver timer signals in vanilla?
+Sometimes :-)
 
-Thanks
-Mark
+Softirqs in vanilla run in interrupt context. Mostly on return from an
+hardware interrupt handler, the softirqs are called and run anytime
+interrupts are enabled (and bottom halves enabled). But if there's too
+much work to do from the soft interrupt, then it pushes the rest of the
+work to ksoftirqd. Which on vanilla runs as a normal SCHED_OTHER task.
+
+In -rt, the hardware handlers are run as thread, and all softirqs are
+handled by ksoftirqd. -rt does not process any softirqs in interrupt
+context.
+
+The answer to your question is, the timerd softirq runs mostly from
+interrupt context, which will preempt your high priority CPU hog, but if
+too much work is being done, it may defer it to ksoftirqd, where your
+thread might block it. But chances are it wont.
+
+-- Steve
+
+
