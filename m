@@ -1,61 +1,66 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: Different priorities for different softirqs
-Date: Wed, 21 Mar 2012 10:08:24 -0300
-Message-ID: <20120321130824.GC6028@uudg.org>
-References: <013401cd0763$1bd93970$538bac50$@gmx.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 3/3] rt-tests: Remove unused status variable
+Date: Wed, 21 Mar 2012 14:35:58 +0100
+Message-ID: <CAONaPpE-C4W3v1hazzr-gw=4BRCEVuF+5crJCY1gi6N+syxZ_w@mail.gmail.com>
+References: <3343440fb02872debc8b49be5261aec530a205f3.1332270303.git.dvhart@linux.intel.com>
+	<c85461ecd2a73b044d01ec1880e583764e28492a.1332270303.git.dvhart@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: Christian Meier <chmeie@gmx.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>
+To: Darren Hart <dvhart@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gy0-f174.google.com ([209.85.160.174]:62476 "EHLO
-	mail-gy0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S964964Ab2CUNLb (ORCPT
+Received: from mail-pz0-f46.google.com ([209.85.210.46]:38259 "EHLO
+	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753199Ab2CUNf7 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Mar 2012 09:11:31 -0400
-Received: by ghrr11 with SMTP id r11so877437ghr.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 21 Mar 2012 06:11:30 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <013401cd0763$1bd93970$538bac50$@gmx.com>
+	Wed, 21 Mar 2012 09:35:59 -0400
+Received: by dajr28 with SMTP id r28so1616388daj.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 21 Mar 2012 06:35:58 -0700 (PDT)
+In-Reply-To: <c85461ecd2a73b044d01ec1880e583764e28492a.1332270303.git.dvhart@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 21, 2012 at 02:04:10PM +0100, Christian Meier wrote:
-| Hi,
-| 
-| On https://rt.wiki.kernel.org/articles/r/t/_/RT_PREEMPT_HOWTO_6bc9.html I
-| noticed that there are different softirq kthreads for every softirq. So they
-| could be prioritized differently.
-| In my rt-patched kernels 3.2.11-rt20 and 3.0.24-rt42 I can only see one
-| ksoftirqd instance per cpu.
-| 
-| I did not find any hints in kernel/softirq.c where each of those kthreads is
-| generated. I only see ksoftirqd.
-| 
-| >From RT_PREEMPT_HOWTO_6bc9.html:
-| ...
-| 2 ?        S      0:00 [softirq-high/0] 
-| 3 ?        S      0:00 [softirq-timer/0] 
-| 4 ?        S      0:00 [softirq-net-tx/] 
-| 5 ?        S      0:00 [softirq-net-rx/] 
-| 6 ?        S      0:00 [softirq-block/0] 
-| 7 ?        S      0:00 [softirq-tasklet] 
-| 8 ?        S      0:00 [softirq-hrtreal] 
-| 9 ?        S      0:00 [softirq-hrtmono]
-| ...
-| 
-| How can I get these softirq different threads? Did I miss a configuration
-| option?
+On Tue, Mar 20, 2012 at 8:05 PM, Darren Hart <dvhart@linux.intel.com> w=
+rote:
+> The status variable is not used. Remove it and avoid the warning from=
+ gcc.
+>
+> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+> CC: Clark Williams <williams@redhat.com>
+> CC: John Kacur <jkacur@redhat.com>
+> ---
+> =A0src/pi_tests/pi_stress.c | =A0 =A03 +--
+> =A01 files changed, 1 insertions(+), 2 deletions(-)
+>
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index 0940567..b89dec8 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -596,10 +596,9 @@ void *reporter(void *arg)
+>
+> =A0int verify_cpu(int cpu)
+> =A0{
+> - =A0 =A0 =A0 int status;
+> =A0 =A0 =A0 =A0cpu_set_t mask;
+>
+> - =A0 =A0 =A0 status =3D sched_getaffinity(0, sizeof(cpu_set_t), &mas=
+k);
+> + =A0 =A0 =A0 sched_getaffinity(0, sizeof(cpu_set_t), &mask);
+>
+> =A0 =A0 =A0 =A0if (CPU_ISSET(cpu, &mask))
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0return SUCCESS;
+> --
 
-The examples there are from older kernels (probably 2.6.18 and 2.6.23).
-Several changes happened since then, to the kernels and even to the general
-model of the RT patch. Among these changes, more than once softirqs have
-been folded inside ksoftirqd and later unfolded. As of now, they are folded
-and it seems to have helped to minimize a performance loss someone (tglx?)
-observed in the early 3.0.x-rt days.
+Don't you think it would be smarter to test the return status of
+sched_getaffinity, than to shut-up the warning by removing the status
+variable? I say we leave the variable in to remind us that we're not
+finished.
 
-Luis
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
-
+Thanks
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
