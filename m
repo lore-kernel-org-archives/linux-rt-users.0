@@ -1,38 +1,48 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Different priorities for different softirqs
-Date: Wed, 21 Mar 2012 09:59:53 -0400
-Message-ID: <1332338393.23924.35.camel@gandalf.stny.rr.com>
-References: <013401cd0763$1bd93970$538bac50$@gmx.com>
-	 <20120321130824.GC6028@uudg.org>
+Subject: Re: [PATCH 2/3] rt-tests: Silence unused-but-set warning in
+ rt-migrate-test
+Date: Wed, 21 Mar 2012 10:05:31 -0400
+Message-ID: <1332338731.23924.40.camel@gandalf.stny.rr.com>
+References: <3343440fb02872debc8b49be5261aec530a205f3.1332270303.git.dvhart@linux.intel.com>
+	 <b1216a51f76a038623057621a737d02a4ab441e4.1332270303.git.dvhart@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Christian Meier <chmeie@gmx.com>, linux-rt-users@vger.kernel.org
-To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Cc: linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: Darren Hart <dvhart@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:17053 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14579 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1031058Ab2CUN7y (ORCPT
+	with ESMTP id S1030943Ab2CUOFc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Mar 2012 09:59:54 -0400
-In-Reply-To: <20120321130824.GC6028@uudg.org>
+	Wed, 21 Mar 2012 10:05:32 -0400
+In-Reply-To: <b1216a51f76a038623057621a737d02a4ab441e4.1332270303.git.dvhart@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-03-21 at 10:08 -0300, Luis Claudio R. Goncalves wrote:
-> he examples there are from older kernels (probably 2.6.18 and 2.6.23).
-> Several changes happened since then, to the kernels and even to the general
-> model of the RT patch. Among these changes, more than once softirqs have
-> been folded inside ksoftirqd and later unfolded. As of now, they are folded
-> and it seems to have helped to minimize a performance loss someone (tglx?)
-> observed in the early 3.0.x-rt days.
+On Tue, 2012-03-20 at 12:05 -0700, Darren Hart wrote:
 
-I discussed this in Chemnitz, and will be working to at least pull the
-timer softirq out into its own thread.
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index 1963641..d2ac400 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -532,7 +532,7 @@ int main (int argc, char **argv)
+>  	logdev_switch_set(1);
+>  
+>  	for (loop=0; loop < nr_runs; loop++) {
+> -		unsigned long long end;
+> +		unsigned long long __attribute__ ((unused)) end;
 
-We need to look at this again and see how we can fix it in a clean
-fashion.
+I don't like this. It seems to be a gcc bug. What version of gcc is
+this?
 
 -- Steve
+
+
+>  
+>  		now = get_time();
+>  
 
 
