@@ -1,91 +1,60 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 1/3] rt-tests: Support user supplied CFLAGS and LDFLAGS
-Date: Wed, 21 Mar 2012 21:16:04 +0100
-Message-ID: <CAONaPpH7UgxeLXVcm2dqRwzGyFRs6yY8OiLw-Ocq_BQO7C7zJA@mail.gmail.com>
-References: <3343440fb02872debc8b49be5261aec530a205f3.1332270303.git.dvhart@linux.intel.com>
-	<CAONaPpH2Cr-k=NviUhnkf6j-dk5J6aY_9mmZT17ixGLsb5h2mw@mail.gmail.com>
-	<4F691C88.2020907@linux.intel.com>
-	<20120321191022.GA6857@denix.org>
-	<4F6A27FF.5020107@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Denys Dmytriyenko <denis@denix.org>,
-	linux-rt-users@vger.kernel.org,
-	Clark Williams <williams@redhat.com>
-To: Darren Hart <dvhart@linux.intel.com>
+Subject: [PATCH rt-tests] pi_stress: Check the status of sched_getaffinity
+Date: Wed, 21 Mar 2012 23:17:53 +0100
+Message-ID: <1332368273-6343-1-git-send-email-jkacur@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>
+To: Darren Hart <dvhltc@linux.intel.com>,
+	Clark Williams <williams@redhat.com>,
+	=rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:55800 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758171Ab2CUUQF (ORCPT
+Received: from mail-wi0-f172.google.com ([209.85.212.172]:47954 "EHLO
+	mail-wi0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S964935Ab2CUWSw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Mar 2012 16:16:05 -0400
-Received: by dajr28 with SMTP id r28so2042531daj.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 21 Mar 2012 13:16:04 -0700 (PDT)
-In-Reply-To: <4F6A27FF.5020107@linux.intel.com>
+	Wed, 21 Mar 2012 18:18:52 -0400
+Received: by wibhj6 with SMTP id hj6so12668wib.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 21 Mar 2012 15:18:51 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 21, 2012 at 8:11 PM, Darren Hart <dvhart@linux.intel.com> wrote:
->
->
-> On 03/21/2012 12:10 PM, Denys Dmytriyenko wrote:
->> On Tue, Mar 20, 2012 at 05:10:48PM -0700, Darren Hart wrote:
->>>
->>>
->>> On 03/20/2012 04:58 PM, John Kacur wrote:
->>>> On Tue, Mar 20, 2012 at 8:05 PM, Darren Hart <dvhart@linux.intel.com> wrote:
->>>>> Accept user supplied CFLAGS and LDFLAGS, overwriting the
->>>>> Makefile supplied versions. This can cause the build to
->>>>> fail if the user does not provide at least what the Makefile
->>>>> defines, but so be it.
->>>>>
->>>>> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
->>>>> CC: Clark Williams <williams@redhat.com>
->>>>> CC: John Kacur <jkacur@redhat.com>
->>>>> CC: Denys Dmytriyenko <denis@denix.org>
->>>>> ---
->>>>
->>>> I was just wondering what you need LDFLAGS for? Chatting with Darren
->>>> on IRC, it seems like you're using -Wl to pass options via gcc to the
->>>> linker, and we don't have loadable libs either. Maybe you could resend
->>>> the patch with just the CFLAGS change until we have a real world
->>>> reason for LDFLAGS
->>>
->>> Denys,
->>>
->>> Am I missing a reason why we need LDFLAGS? With the current Makefile. we
->>> could just add anything we want to CFLAGS in a pinch anyway...
->>
->> Darren,
->>
->> From OE-Core config files:
->>
->> LINKER_HASH_STYLE ??= "gnu"
->> TARGET_LINK_HASH_STYLE ?= "${@['-Wl,--hash-style=gnu',''][d.getVar('LINKER_HASH_STYLE', True) != 'gnu']}"
->> export TARGET_LDFLAGS = "-Wl,-O1 ${TARGET_LINK_HASH_STYLE}"
->> ASNEEDED = "-Wl,--as-needed"
->> TARGET_LDFLAGS += "${ASNEEDED}"
->> export LDFLAGS = "${TARGET_LDFLAGS}"
->>
->>
->> So, those are still linker flags (altough passed through -Wl to gcc), hence
->> they belong to LDFLAGS, not CFLAGS. Arguably, you only need to pass CFLAGS
->> during compile stage and LDFLAGS during link stage. On the other hand, as a
->> workaround, I was passing them to TARGET_CC_ARCH, which gets embedded into CC
->> and won't distinguish between compile/link stages...
->>
->> So rt-tests just gets away not using LDFLAGS and re-using CFLAGS for the link
->> stage. :) But the current Makefile as it is now won't honor CFLAGS being set
->> from outside, unless you pass them explicitly on the command line to make, or
->> call make with -e flag.
->
-> Right, at the very least I'll resubmit the patch allowing override of
-> CFLAGS. But I wanted to know if you felt there was any need to support
-> overriding of LDFLAGS for rt-tests which doesn't build any shared libs.
->
+Check the status of sched_getaffinity and exit upon error.
 
-Okay, never mind, you've convinced me, and your changes don't look
-like they will break anything, so I'll give you my approval as is.
+CPU_ISSET only checks whether a cpu is in a mask, and not whether the
+mask is valid. Checking the status ensures we aren't working with garbage
+values.
 
-Thanks.
-John
+This also removes the warning from gcc about the status variable being unused
+as reported by Darren Hart.
+
+Reported-by: Darren Hart <dvhart@linux.intel.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/pi_tests/pi_stress.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index 0940567..e273d62 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -597,9 +597,17 @@ void *reporter(void *arg)
+ int verify_cpu(int cpu)
+ {
+ 	int status;
++	int err;
+ 	cpu_set_t mask;
+ 
++	CPU_ZERO(&mask);
++
+ 	status = sched_getaffinity(0, sizeof(cpu_set_t), &mask);
++	if (status == -1) {
++		err = errno;
++		fprintf(stderr, "sched_getaffinity %s\n", strerror(err));
++		exit(-1);
++	}
+ 
+ 	if (CPU_ISSET(cpu, &mask))
+ 		return SUCCESS;
+-- 
+1.7.7.6
+
