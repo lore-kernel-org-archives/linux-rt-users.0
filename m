@@ -1,58 +1,82 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 2/3] rt-tests: Silence unused-but-set warning in rt-migrate-test
-Date: Wed, 21 Mar 2012 18:46:49 +0100
-Message-ID: <CAONaPpE0SEeQL4fnLMasPruBjTKZEYudd_DV14vP5CPgRtNVzA@mail.gmail.com>
-References: <3343440fb02872debc8b49be5261aec530a205f3.1332270303.git.dvhart@linux.intel.com>
-	<b1216a51f76a038623057621a737d02a4ab441e4.1332270303.git.dvhart@linux.intel.com>
-	<1332338731.23924.40.camel@gandalf.stny.rr.com>
-	<4F69E940.9060808@linux.intel.com>
-	<CAONaPpHsCHG6QS+k9QRnQr7e1ZLEqFPHUf=-V6cw8bN+XWZPUA@mail.gmail.com>
-	<1332346704.23924.42.camel@gandalf.stny.rr.com>
-	<1332349901.23924.51.camel@gandalf.stny.rr.com>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Re: [PATCH 1/3] rt-tests: Support user supplied CFLAGS and LDFLAGS
+Date: Wed, 21 Mar 2012 12:11:59 -0700
+Message-ID: <4F6A27FF.5020107@linux.intel.com>
+References: <3343440fb02872debc8b49be5261aec530a205f3.1332270303.git.dvhart@linux.intel.com> <CAONaPpH2Cr-k=NviUhnkf6j-dk5J6aY_9mmZT17ixGLsb5h2mw@mail.gmail.com> <4F691C88.2020907@linux.intel.com> <20120321191022.GA6857@denix.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Darren Hart <dvhart@linux.intel.com>,
-	linux-rt-users@vger.kernel.org,
+Content-Transfer-Encoding: 7bit
+Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
 	Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Denys Dmytriyenko <denis@denix.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:58709 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751424Ab2CURqt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Mar 2012 13:46:49 -0400
-Received: by dajr28 with SMTP id r28so1881485daj.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 21 Mar 2012 10:46:49 -0700 (PDT)
-In-Reply-To: <1332349901.23924.51.camel@gandalf.stny.rr.com>
+Received: from mga01.intel.com ([192.55.52.88]:43832 "EHLO mga01.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756459Ab2CUTMp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Mar 2012 15:12:45 -0400
+In-Reply-To: <20120321191022.GA6857@denix.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 21, 2012 at 6:11 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> On Wed, 2012-03-21 at 12:18 -0400, Steven Rostedt wrote:
->> On Wed, 2012-03-21 at 15:56 +0100, John Kacur wrote:
->> > >
->> >
->> > Yup, shows up on my F16 machine too, with a slightly different gcc version.
->> > gcc --version
->> > gcc (GCC) 4.6.2 20111027 (Red Hat 4.6.2-1)
+
+
+On 03/21/2012 12:10 PM, Denys Dmytriyenko wrote:
+> On Tue, Mar 20, 2012 at 05:10:48PM -0700, Darren Hart wrote:
 >>
->> Egad! This is an old version. It still uses *gasp* logdev!
->
-> Oops, sorry for the confusion.
->
-> I started to reply about the compiler (working) and then I saw that
-> logdev was being used by rt-migrate-test. I was so shocked by the
-> rt-migrate-test using logdev, I didn't start a new email and just
-> replied where I left off.
->
-> I didn't even notice that I left the version of gcc in my email :-p
->
+>>
+>> On 03/20/2012 04:58 PM, John Kacur wrote:
+>>> On Tue, Mar 20, 2012 at 8:05 PM, Darren Hart <dvhart@linux.intel.com> wrote:
+>>>> Accept user supplied CFLAGS and LDFLAGS, overwriting the
+>>>> Makefile supplied versions. This can cause the build to
+>>>> fail if the user does not provide at least what the Makefile
+>>>> defines, but so be it.
+>>>>
+>>>> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+>>>> CC: Clark Williams <williams@redhat.com>
+>>>> CC: John Kacur <jkacur@redhat.com>
+>>>> CC: Denys Dmytriyenko <denis@denix.org>
+>>>> ---
+>>>
+>>> I was just wondering what you need LDFLAGS for? Chatting with Darren
+>>> on IRC, it seems like you're using -Wl to pass options via gcc to the
+>>> linker, and we don't have loadable libs either. Maybe you could resend
+>>> the patch with just the CFLAGS change until we have a real world
+>>> reason for LDFLAGS
+>>
+>> Denys,
+>>
+>> Am I missing a reason why we need LDFLAGS? With the current Makefile. we
+>> could just add anything we want to CFLAGS in a pinch anyway...
+> 
+> Darren,
+> 
+> From OE-Core config files:
+> 
+> LINKER_HASH_STYLE ??= "gnu"
+> TARGET_LINK_HASH_STYLE ?= "${@['-Wl,--hash-style=gnu',''][d.getVar('LINKER_HASH_STYLE', True) != 'gnu']}"
+> export TARGET_LDFLAGS = "-Wl,-O1 ${TARGET_LINK_HASH_STYLE}"
+> ASNEEDED = "-Wl,--as-needed"
+> TARGET_LDFLAGS += "${ASNEEDED}"
+> export LDFLAGS = "${TARGET_LDFLAGS}"
+> 
+> 
+> So, those are still linker flags (altough passed through -Wl to gcc), hence 
+> they belong to LDFLAGS, not CFLAGS. Arguably, you only need to pass CFLAGS 
+> during compile stage and LDFLAGS during link stage. On the other hand, as a 
+> workaround, I was passing them to TARGET_CC_ARCH, which gets embedded into CC 
+> and won't distinguish between compile/link stages...
+> 
+> So rt-tests just gets away not using LDFLAGS and re-using CFLAGS for the link 
+> stage. :) But the current Makefile as it is now won't honor CFLAGS being set 
+> from outside, unless you pass them explicitly on the command line to make, or 
+> call make with -e flag.
 
-Yeah, after I already hit the sent button, I thought, wait a minute,
-"logdev", "ftrace", he's talking about the kernel. But once you hit
-return, it's out there forever. Sigh.
-My question to Darren is still valid though, assuming it is really
-gcc, and he already answered that.
+Right, at the very least I'll resubmit the patch allowing override of
+CFLAGS. But I wanted to know if you felt there was any need to support
+overriding of LDFLAGS for rt-tests which doesn't build any shared libs.
 
-Thanks
-John
+
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
