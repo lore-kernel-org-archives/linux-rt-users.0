@@ -1,67 +1,53 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/3] [ANNOUNCE] 3.0.25-rt44-rc2
-Date: Wed, 21 Mar 2012 22:33:09 -0400
-Message-ID: <20120322023309.083011587@goodmis.org>
+Subject: [PATCH RT 1/3] Revert "kprobes: adjust "fix a memory leak in function
+ pre_handler_kretprobe()""
+Date: Wed, 21 Mar 2012 22:33:10 -0400
+Message-ID: <20120322023454.688981968@goodmis.org>
+References: <20120322023309.083011587@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-Revert-kprobes-adjust-fix-a-memory-leak-in-function-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Steven Rostedt <srostedt@redhat.com>
 
-Dear RT Folks,
+This reverts commit b8a0040ef7112439ad2efac6f1a79aa842b5924f.
 
-This is the RT stable review cycle of patch 3.0.25-rt44-rc2.
+As pointed out by John Kacur, the patch breaks 3.0-rt.
 
-This release added the patch from 3.2-rt:
-   printk-disable-migration-instead-of-preemption.patch
-as Luis Claudio R. Goncalves pointed out as missing.
- 
-Please scream at me if I messed something up. Please test the patches too.
+Because rt pulls in 7b8d0e5, the above fix which comes from v3.0.24
+should not be applied. kretprobe is a raw_spinlock_t for real-time.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+Before the revert we get the following compile errors
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+kernel/kprobes.c:1664: warning: passing argument 1 of 'rt_spin_lock' from incompatible pointer type
+kernel/kprobes.c:1666: warning: passing argument 1 of 'rt_spin_unlock' from incompatible pointer type
 
-If all goes well, this patch will be converted to the next main release
-on 3/23/2012.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.0.25-rt44-rc2 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.25.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.25-rt44-rc2.patch.xz
-
-You can also build from 3.0.25-rt43 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.25-rt43-rt44-rc2.patch.xz
-
-
-Changes from 3.0.25-rt43:
-
+Signed-off-by: John Kacur <jkacur@redhat.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Richard Weinberger (1):
-      printk: Disable migration instead of preemption
-
-Steven Rostedt (2):
-      Revert "kprobes: adjust "fix a memory leak in function pre_handler_kretprobe()""
-      Linux 3.0.25-rt44-rc2
-
-----
  kernel/kprobes.c |    4 ++--
- kernel/printk.c  |    4 ++--
- localversion-rt  |    2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/kprobes.c b/kernel/kprobes.c
+index a7dcf06..9cdbf26 100644
+--- a/kernel/kprobes.c
++++ b/kernel/kprobes.c
+@@ -1661,9 +1661,9 @@ static int __kprobes pre_handler_kretprobe(struct kprobe *p,
+ 		ri->task = current;
+ 
+ 		if (rp->entry_handler && rp->entry_handler(ri, regs)) {
+-			spin_lock_irqsave(&rp->lock, flags);
++			raw_spin_lock_irqsave(&rp->lock, flags);
+ 			hlist_add_head(&ri->hlist, &rp->free_instances);
+-			spin_unlock_irqrestore(&rp->lock, flags);
++			raw_spin_unlock_irqrestore(&rp->lock, flags);
+ 			return 0;
+ 		}
+ 
+-- 
+1.7.8.3
