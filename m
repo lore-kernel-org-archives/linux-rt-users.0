@@ -1,132 +1,84 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.4-rc2-rt2
-Date: Wed, 11 Apr 2012 12:17:43 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1204111212440.2542@ionos>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rcutree: Fix v3.4-rc2-rt2 build break
+Date: Wed, 11 Apr 2012 16:42:59 +0200
+Message-ID: <1334155379-18088-1-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	Paul McKenney <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57955 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756144Ab2DKKRo (ORCPT
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:49183 "EHLO
+	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754622Ab2DKOnV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Apr 2012 06:17:44 -0400
+	Wed, 11 Apr 2012 10:43:21 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+=46ix build break of the following types.
 
-I'm pleased to announce the 3.4-rc2-rt2 release.
+linux-rt/kernel/rcutree_plugin.h: In function =E2=80=98print_cpu_stall_=
+fast_no_hz=E2=80=99:
+linux-rt/kernel/rcutree_plugin.h:2195: error: =E2=80=98rcu_idle_gp_time=
+r=E2=80=99 undeclared (first use in this function)
+linux-rt/kernel/rcutree_plugin.h:2195: error: (Each undeclared identifi=
+er is reported only once
+linux-rt/kernel/rcutree_plugin.h:2195: error: for each function it appe=
+ars in.)
 
-Changes since 3.4-rc2-rt1:
+The build break only occurs with the PREEMPT_RT_FULL patch applied, how=
+ever
+the patch is meant to go upstream and be applied to v3.4-rc2 as well be=
+cause
+it makes the code more legible there, and will reduce the number of pla=
+ces
+where #ifdef PREEMPT_RT_FULL is required should that go upstream someda=
+y.
 
-	* Fix cpumask fallout (Carsten)
-
-	* Convert omap wakeupgen_lock to raw
-
-The delta patch to 3.4-rc2-rt1 is appended below and can be found
-here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4-rc2-rt1-rt2.patch.xz
-
-
-The RT patch against 3.4-rc2 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4-rc2-rt2.patch.xz
-
-
-The split quilt queue is available at:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.4-rc2-rt2.tar.xz
-
-Enjoy,
-
-	tglx
+Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
-Index: linux-3.4/kernel/posix-cpu-timers.c
-===================================================================
---- linux-3.4.orig/kernel/posix-cpu-timers.c
-+++ linux-3.4/kernel/posix-cpu-timers.c
-@@ -1483,8 +1483,8 @@ static int posix_cpu_thread_call(struct 
- #ifdef CONFIG_HOTPLUG_CPU
- 	case CPU_UP_CANCELED:
- 		/* Unbind it from offline cpu so it can run.  Fall thru. */
--		kthread_bind(per_cpu(posix_timer_task,cpu),
--			     any_online_cpu(cpu_online_map));
-+		kthread_bind(per_cpu(posix_timer_task, cpu),
-+			     cpumask_any(cpu_online_mask));
- 		kthread_stop(per_cpu(posix_timer_task,cpu));
- 		per_cpu(posix_timer_task,cpu) = NULL;
- 		break;
-@@ -1512,7 +1512,7 @@ static int __init posix_cpu_thread_init(
- 	unsigned long cpu;
- 
- 	/* init the per-cpu posix_timer_tasklets */
--	for_each_cpu_mask(cpu, cpu_possible_map)
-+	for_each_possible_cpu(cpu)
- 		per_cpu(posix_timer_tasklist, cpu) = NULL;
- 
- 	posix_cpu_thread_call(&posix_cpu_thread_notifier, CPU_UP_PREPARE, hcpu);
-Index: linux-3.4/localversion-rt
-===================================================================
---- linux-3.4.orig/localversion-rt
-+++ linux-3.4/localversion-rt
-@@ -1 +1 @@
---rt1
-+-rt2
-Index: linux-3.4/arch/arm/mach-omap2/omap-wakeupgen.c
-===================================================================
---- linux-3.4.orig/arch/arm/mach-omap2/omap-wakeupgen.c
-+++ linux-3.4/arch/arm/mach-omap2/omap-wakeupgen.c
-@@ -43,7 +43,7 @@
- 
- static void __iomem *wakeupgen_base;
- static void __iomem *sar_base;
--static DEFINE_SPINLOCK(wakeupgen_lock);
-+static DEFINE_RAW_SPINLOCK(wakeupgen_lock);
- static unsigned int irq_target_cpu[NR_IRQS];
- 
+ kernel/rcutree_plugin.h |   19 +++++++++----------
+ 1 files changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
+index 14acafc..1db9471 100644
+--- a/kernel/rcutree_plugin.h
++++ b/kernel/rcutree_plugin.h
+@@ -1938,6 +1938,12 @@ static void rcu_prepare_for_idle(int cpu)
+ {
+ }
+=20
++#ifdef CONFIG_RCU_CPU_STALL_INFO
++static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
++{
++}
++#endif /* #ifdef CONFIG_RCU_CPU_STALL_INFO */
++
+ #else /* #if !defined(CONFIG_RCU_FAST_NO_HZ) */
+=20
  /*
-@@ -128,9 +128,9 @@ static void wakeupgen_mask(struct irq_da
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&wakeupgen_lock, flags);
-+	raw_spin_lock_irqsave(&wakeupgen_lock, flags);
- 	_wakeupgen_clear(d->irq, irq_target_cpu[d->irq]);
--	spin_unlock_irqrestore(&wakeupgen_lock, flags);
-+	raw_spin_unlock_irqrestore(&wakeupgen_lock, flags);
+@@ -2184,12 +2190,8 @@ static void rcu_prepare_for_idle(int cpu)
+ 		trace_rcu_prep_idle("Callbacks drained");
  }
- 
- /*
-@@ -140,9 +140,9 @@ static void wakeupgen_unmask(struct irq_
+=20
+-#endif /* #else #if !defined(CONFIG_RCU_FAST_NO_HZ) */
+=20
+ #ifdef CONFIG_RCU_CPU_STALL_INFO
+-
+-#ifdef CONFIG_RCU_FAST_NO_HZ
+-
+ static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
  {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&wakeupgen_lock, flags);
-+	raw_spin_lock_irqsave(&wakeupgen_lock, flags);
- 	_wakeupgen_set(d->irq, irq_target_cpu[d->irq]);
--	spin_unlock_irqrestore(&wakeupgen_lock, flags);
-+	raw_spin_unlock_irqrestore(&wakeupgen_lock, flags);
+ 	struct hrtimer *hrtp =3D &per_cpu(rcu_idle_gp_timer, cpu);
+@@ -2201,14 +2203,11 @@ static void print_cpu_stall_fast_no_hz(char *cp=
+, int cpu)
+ 			? ktime_to_us(hrtimer_get_remaining(hrtp))
+ 			: -1);
  }
- 
- #ifdef CONFIG_HOTPLUG_CPU
-@@ -183,7 +183,7 @@ static void wakeupgen_irqmask_all(unsign
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&wakeupgen_lock, flags);
-+	raw_spin_lock_irqsave(&wakeupgen_lock, flags);
- 	if (set) {
- 		_wakeupgen_save_masks(cpu);
- 		_wakeupgen_set_all(cpu, WKG_MASK_ALL);
-@@ -191,7 +191,7 @@ static void wakeupgen_irqmask_all(unsign
- 		_wakeupgen_set_all(cpu, WKG_UNMASK_ALL);
- 		_wakeupgen_restore_masks(cpu);
- 	}
--	spin_unlock_irqrestore(&wakeupgen_lock, flags);
-+	raw_spin_unlock_irqrestore(&wakeupgen_lock, flags);
- }
- #endif
- 
++#endif /* #ifdef CONFIG_RCU_CPU_STALL_INFO */
+=20
+-#else /* #ifdef CONFIG_RCU_FAST_NO_HZ */
