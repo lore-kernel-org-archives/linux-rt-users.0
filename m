@@ -1,84 +1,47 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rcutree: Fix v3.4-rc2-rt2 build break
-Date: Wed, 11 Apr 2012 16:42:59 +0200
-Message-ID: <1334155379-18088-1-git-send-email-jkacur@redhat.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [ANNOUNCE] 3.4-rc2-rt2
+Date: Wed, 11 Apr 2012 13:54:02 -0700
+Message-ID: <4F85EF6A.8040301@am.sony.com>
+References: <alpine.LFD.2.02.1204111212440.2542@ionos>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Paul McKenney <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f46.google.com ([209.85.214.46]:49183 "EHLO
-	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754622Ab2DKOnV (ORCPT
+Received: from va3ehsobe006.messaging.microsoft.com ([216.32.180.16]:43765
+	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1760165Ab2DKUy3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Apr 2012 10:43:21 -0400
+	Wed, 11 Apr 2012 16:54:29 -0400
+In-Reply-To: <alpine.LFD.2.02.1204111212440.2542@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-=46ix build break of the following types.
+On 04/11/12 03:17, Thomas Gleixner wrote:
+> Dear RT Folks,
+> 
+> I'm pleased to announce the 3.4-rc2-rt2 release.
 
-linux-rt/kernel/rcutree_plugin.h: In function =E2=80=98print_cpu_stall_=
-fast_no_hz=E2=80=99:
-linux-rt/kernel/rcutree_plugin.h:2195: error: =E2=80=98rcu_idle_gp_time=
-r=E2=80=99 undeclared (first use in this function)
-linux-rt/kernel/rcutree_plugin.h:2195: error: (Each undeclared identifi=
-er is reported only once
-linux-rt/kernel/rcutree_plugin.h:2195: error: for each function it appe=
-ars in.)
+< snip >
 
-The build break only occurs with the PREEMPT_RT_FULL patch applied, how=
-ever
-the patch is meant to go upstream and be applied to v3.4-rc2 as well be=
-cause
-it makes the code more legible there, and will reduce the number of pla=
-ces
-where #ifdef PREEMPT_RT_FULL is required should that go upstream someda=
-y.
+3.4-rc2-rt2 builds and boots on some ARM boards (PandaBoard, Realview) for:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- kernel/rcutree_plugin.h |   19 +++++++++----------
- 1 files changed, 9 insertions(+), 10 deletions(-)
+  - SMP, PREEMPT_RT_FULL
+  - SMP, PREEMPT_NONE
+  - UP, PREEMPT_RT_FULL
+  - UP, PREEMPT_NONE
 
-diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
-index 14acafc..1db9471 100644
---- a/kernel/rcutree_plugin.h
-+++ b/kernel/rcutree_plugin.h
-@@ -1938,6 +1938,12 @@ static void rcu_prepare_for_idle(int cpu)
- {
- }
-=20
-+#ifdef CONFIG_RCU_CPU_STALL_INFO
-+static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
-+{
-+}
-+#endif /* #ifdef CONFIG_RCU_CPU_STALL_INFO */
-+
- #else /* #if !defined(CONFIG_RCU_FAST_NO_HZ) */
-=20
- /*
-@@ -2184,12 +2190,8 @@ static void rcu_prepare_for_idle(int cpu)
- 		trace_rcu_prep_idle("Callbacks drained");
- }
-=20
--#endif /* #else #if !defined(CONFIG_RCU_FAST_NO_HZ) */
-=20
- #ifdef CONFIG_RCU_CPU_STALL_INFO
--
--#ifdef CONFIG_RCU_FAST_NO_HZ
--
- static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
- {
- 	struct hrtimer *hrtp =3D &per_cpu(rcu_idle_gp_timer, cpu);
-@@ -2201,14 +2203,11 @@ static void print_cpu_stall_fast_no_hz(char *cp=
-, int cpu)
- 			? ktime_to_us(hrtimer_get_remaining(hrtp))
- 			: -1);
- }
-+#endif /* #ifdef CONFIG_RCU_CPU_STALL_INFO */
-=20
--#else /* #ifdef CONFIG_RCU_FAST_NO_HZ */
+
+A patch is required to resolve a mainline NULL pointer dereference on boot
+of Realview.  The patch is in linux-next and should make it to Linus by the
+end of this week.
+
+The patch is available at http://marc.info/?l=linux-serial&m=133235774423240&w=2
+
+-Frank
+
+
+
