@@ -1,32 +1,25 @@
-From: =?utf-8?B?57u/6Imy5YeP6IKl?= <admin@zdit.cn>
-Subject: =?utf-8?B?57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jA==?=
-	=?utf-8?B?5peg5pWI6YCA5qy+77yB?=
-Date: Thu, 12 Apr 2012 11:06:36 +0000 (UTC)
-Message-ID: <3E8B7ED84E0D2379E4A7D1E08C636029@ximggf>
+From: "Moore, Thomas (FtWorth)" <Thomas.Moore2@ATK.COM>
+Subject: File I/O in a Realtime Process
+Date: Thu, 12 Apr 2012 16:21:48 +0000
+Message-ID: <7B6FE55CD594D7478CED8A39DF3BFC0A02B4FE@UT40SEM2.atk.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="utf-8"
-Content-Transfer-Encoding: base64
-To: <898055007@qq.com>, <linux-rt-users@vger.kernel.org>,
-	<tianwang1986@126.com>, <zhaozifang1955@163.com>,
-	<philipfang@21cn.com>, <651886767@qq.com>, <jnlssy168@163.com>,
-	<303@406406.htm>, <zhouyilu888@163.com>, <dongshishan@sohu.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [61.139.77.53] ([61.139.77.53]:3867 "HELO zdit.cn"
-	rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with SMTP
-	id S1757419Ab2DLLGZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Apr 2012 07:06:25 -0400
-Date: Tue, 12 Apr 2016 19:01:09 +0800
+Received: from mx-ut1.atk.com ([192.112.60.130]:52649 "EHLO atk.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1757840Ab2DLQg4 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Apr 2012 12:36:56 -0400
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jOaXoOaViOmAgOas
-vuOAgg0K57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jOaXoOaV
-iOmAgOasvuOAgg0KDQrnu7/oibLlh4/ogqXnrKzkuIDlk4HniYzvvIzorqnohILogqoyNOmUgOWU
-ruS4jemXtOaWrei/kOWKqO+8jOWHj+iCpeabtOiHqueEtuOAgg0KDQrml6DmlYjpgIDmrL7vvIzl
-h4/ogqUw6aOO6Zmp44CCDQrml6DmlYjpgIDmrL7vvIzlh4/ogqUw6aOO6Zmp44CCDQoNCuivpuaD
-heivt+afpeecizogDQpodHRwOi8venp0LnNvL3FxYmUNCmh0dHA6Ly96enQuc28vcXFiZQ0KaHR0
-cDovL3p6dC5zby9xcWJlDQpodHRwOi8venp0LnNvL3FxYmUNCg0K5aSH55So572R5Z2AOg0KaHR0
-cDovLzFzdS5uZXQvYUF0DQpodHRwOi8vMXN1Lm5ldC9hQXQNCg==
+Hello,
 
+In reviewing the documentation for the PREEMPT_RT patch, it's made pretty clear that performing file I/O (or page faults in general) will degrade realtime performance. The "HOWTO: Build an RT-application" on the wiki also states that page faults from one application will not interfere with the realtime performance of an application. Based on this understanding, if a system utilizing the PREEMPT_RT patch had requirements to perform file I/O, would it be required to have a separate non-realtime process that performs this task or would it be possible to use a low priority thread in the realtime process?
 
+Thanks,
+
+Thomas Moore
