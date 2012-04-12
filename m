@@ -1,47 +1,32 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [ANNOUNCE] 3.4-rc2-rt2
-Date: Wed, 11 Apr 2012 13:54:02 -0700
-Message-ID: <4F85EF6A.8040301@am.sony.com>
-References: <alpine.LFD.2.02.1204111212440.2542@ionos>
-Reply-To: <frank.rowand@am.sony.com>
+From: =?utf-8?B?57u/6Imy5YeP6IKl?= <admin@zdit.cn>
+Subject: =?utf-8?B?57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jA==?=
+	=?utf-8?B?5peg5pWI6YCA5qy+77yB?=
+Date: Thu, 12 Apr 2012 11:06:36 +0000 (UTC)
+Message-ID: <3E8B7ED84E0D2379E4A7D1E08C636029@ximggf>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain;
+	charset="utf-8"
+Content-Transfer-Encoding: base64
+To: <898055007@qq.com>, <linux-rt-users@vger.kernel.org>,
+	<tianwang1986@126.com>, <zhaozifang1955@163.com>,
+	<philipfang@21cn.com>, <651886767@qq.com>, <jnlssy168@163.com>,
+	<303@406406.htm>, <zhouyilu888@163.com>, <dongshishan@sohu.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe006.messaging.microsoft.com ([216.32.180.16]:43765
-	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1760165Ab2DKUy3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Apr 2012 16:54:29 -0400
-In-Reply-To: <alpine.LFD.2.02.1204111212440.2542@ionos>
+Received: from [61.139.77.53] ([61.139.77.53]:3867 "HELO zdit.cn"
+	rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with SMTP
+	id S1757419Ab2DLLGZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Apr 2012 07:06:25 -0400
+Date: Tue, 12 Apr 2016 19:01:09 +0800
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/11/12 03:17, Thomas Gleixner wrote:
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.4-rc2-rt2 release.
-
-< snip >
-
-3.4-rc2-rt2 builds and boots on some ARM boards (PandaBoard, Realview) for:
-
-  - SMP, PREEMPT_RT_FULL
-  - SMP, PREEMPT_NONE
-  - UP, PREEMPT_RT_FULL
-  - UP, PREEMPT_NONE
-
-
-A patch is required to resolve a mainline NULL pointer dereference on boot
-of Realview.  The patch is in linux-next and should make it to Linus by the
-end of this week.
-
-The patch is available at http://marc.info/?l=linux-serial&m=133235774423240&w=2
-
--Frank
-
+57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jOaXoOaViOmAgOas
+vuOAgg0K57u/6Imy5YeP6IKl77yMMzDlpKnovbvmnb7lh4/ogqU3LTI1IOWFrOaWpO+8jOaXoOaV
+iOmAgOasvuOAgg0KDQrnu7/oibLlh4/ogqXnrKzkuIDlk4HniYzvvIzorqnohILogqoyNOmUgOWU
+ruS4jemXtOaWrei/kOWKqO+8jOWHj+iCpeabtOiHqueEtuOAgg0KDQrml6DmlYjpgIDmrL7vvIzl
+h4/ogqUw6aOO6Zmp44CCDQrml6DmlYjpgIDmrL7vvIzlh4/ogqUw6aOO6Zmp44CCDQoNCuivpuaD
+heivt+afpeecizogDQpodHRwOi8venp0LnNvL3FxYmUNCmh0dHA6Ly96enQuc28vcXFiZQ0KaHR0
+cDovL3p6dC5zby9xcWJlDQpodHRwOi8venp0LnNvL3FxYmUNCg0K5aSH55So572R5Z2AOg0KaHR0
+cDovLzFzdS5uZXQvYUF0DQpodHRwOi8vMXN1Lm5ldC9hQXQNCg==
 
 
