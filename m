@@ -1,92 +1,137 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH RT] rcu: Fix build break
-Date: Fri, 13 Apr 2012 12:54:21 +0200
-Message-ID: <1334314461-8937-1-git-send-email-jkacur@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.4-rc2-rt4
+Date: Fri, 13 Apr 2012 14:11:16 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1204131033240.2542@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Paul McKenney <paulmck@linux.vnet.ibm.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f46.google.com ([209.85.214.46]:64125 "EHLO
-	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751074Ab2DMKy0 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:41482 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750966Ab2DMMLS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Apr 2012 06:54:26 -0400
+	Fri, 13 Apr 2012 08:11:18 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-A build break can occur with the following config options enabled
+Dear RT Folks,
 
-CONFIG_PREEMPT_RT_FULL
-CONFIG_RCU_FAST_NO_HZ
-CONFIG_RCU_CPU_STALL_INFO
+I'm pleased to announce the 3.4-rc2-rt4 release. -rt3 is an
+intermediate release which has an earlier version of the RCU build
+wreckage fix.
 
-This occurs because symbols in print_cpu_stall_fast_no_hz() such as
-rcu_idle_gp_timer are not accessible with CONFIG_PREEMPT_RT_FULL
-and results in the following type of build errors:
+Changes since 3.4-rc2-rt2:
 
-kernel/rcutree_plugin.h: In function =E2=80=98print_cpu_stall_fast_no_h=
-z=E2=80=99:
-kernel/rcutree_plugin.h:2195: error: =E2=80=98rcu_idle_gp_timer=E2=80=99=
- undeclared (first use in this function)
+  * Fix RCU build wreckage (jkacur)
 
-This patch fixes the build break by limiting the
-to the function rcu_needs_cpu() instead of to the entire
-!defined(CONFIG_RCU_FAST_NO_NZ) section
+  * Remove the _GPL restriction from a few exports
 
-as was intended in the original rcu: Make ksoftirqd do RCU quiescent st=
-ates
-patch.
+    This restores the status quo of pre 3.0 RT versions. 
+	  
+    I fundamentally hate this change, but the point is, that RT
+    replaces non GPL exports with GPL ones and therefor breaks
+    "legitimate" abuses of the kernel.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+    OTOH I've been exposed to source code of some secret sauce
+    drivers. That makes me believe that in a lot of cases the reason
+    for not disclosing the driver code is that publishing might put
+    the innocent and unprepared reader in danger of gastric ulcer and
+    eyecancer.
+
+    So I commit this change for health protection reasons.
+
+
+The delta patch to 3.4-rc2-rt2 is appended below and can be found
+here as incremental patches:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4-rc2-rt2-rt3.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4-rc2-rt3-rt4.patch.xz
+
+
+The RT patch against 3.4-rc2 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4-rc2-rt4.patch.xz
+
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.4-rc2-rt4.tar.xz
+
+
+Enjoy,
+
+	tglx
 ---
- kernel/rcutree_plugin.h |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
-index 14acafc..2844d7d 100644
---- a/kernel/rcutree_plugin.h
-+++ b/kernel/rcutree_plugin.h
+Index: linux-3.4/kernel/rcutree_plugin.h
+===================================================================
+--- linux-3.4.orig/kernel/rcutree_plugin.h
++++ linux-3.4/kernel/rcutree_plugin.h
 @@ -1914,6 +1914,9 @@ int rcu_needs_cpu(int cpu)
  {
  	return rcu_cpu_has_callbacks(cpu);
  }
-+#endif	/* !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT=
-_FULL) */
++#endif	/* !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT_FULL) */
 +
 +#if !defined(CONFIG_RCU_FAST_NO_HZ)
-=20
+ 
  /*
-  * Because we do not have RCU_FAST_NO_HZ, don't bother initializing fo=
-r it.
-@@ -1984,6 +1987,7 @@ static DEFINE_PER_CPU(struct hrtimer, rcu_idle_gp=
-_timer);
+  * Because we do not have RCU_FAST_NO_HZ, don't bother initializing for it.
+@@ -1984,6 +1987,7 @@ static DEFINE_PER_CPU(struct hrtimer, rc
  static ktime_t rcu_idle_gp_wait;	/* If some non-lazy callbacks. */
  static ktime_t rcu_idle_lazy_gp_wait;	/* If only lazy callbacks. */
-=20
+ 
 +#ifndef CONFIG_PREEMPT_RT_FULL
  /*
-  * Allow the CPU to enter dyntick-idle mode if either: (1) There are n=
-o
+  * Allow the CPU to enter dyntick-idle mode if either: (1) There are no
   * callbacks on this CPU, (2) this CPU has not yet attempted to enter
 @@ -2001,6 +2005,7 @@ int rcu_needs_cpu(int cpu)
- 	/* Otherwise, RCU needs the CPU only if it recently tried and failed.=
- */
- 	return per_cpu(rcu_dyntick_holdoff, cpu) =3D=3D jiffies;
+ 	/* Otherwise, RCU needs the CPU only if it recently tried and failed. */
+ 	return per_cpu(rcu_dyntick_holdoff, cpu) == jiffies;
  }
 +#endif	/* #ifndef CONFIG_PREEMPT_RT_FULL */
-=20
+ 
  /*
   * Does the specified flavor of RCU have non-lazy callbacks pending on
---=20
-1.7.2.3
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Index: linux-3.4/kernel/rtmutex.c
+===================================================================
+--- linux-3.4.orig/kernel/rtmutex.c
++++ linux-3.4/kernel/rtmutex.c
+@@ -1282,7 +1282,7 @@ void __rt_mutex_init(struct rt_mutex *lo
+ 
+ 	debug_rt_mutex_init(lock, name);
+ }
+-EXPORT_SYMBOL_GPL(__rt_mutex_init);
++EXPORT_SYMBOL(__rt_mutex_init);
+ 
+ /**
+  * rt_mutex_init_proxy_locked - initialize and lock a rt_mutex on behalf of a
+Index: linux-3.4/kernel/sched/core.c
+===================================================================
+--- linux-3.4.orig/kernel/sched/core.c
++++ linux-3.4/kernel/sched/core.c
+@@ -3206,7 +3206,7 @@ void migrate_disable(void)
+ 	p->migrate_disable = 1;
+ 	preempt_enable();
+ }
+-EXPORT_SYMBOL_GPL(migrate_disable);
++EXPORT_SYMBOL(migrate_disable);
+ 
+ void migrate_enable(void)
+ {
+@@ -3258,7 +3258,7 @@ void migrate_enable(void)
+ 	unpin_current_cpu();
+ 	preempt_enable();
+ }
+-EXPORT_SYMBOL_GPL(migrate_enable);
++EXPORT_SYMBOL(migrate_enable);
+ #else
+ static inline void update_migrate_disable(struct task_struct *p) { }
+ #define migrate_disabled_updated(p)		0
+Index: linux-3.4/localversion-rt
+===================================================================
+--- linux-3.4.orig/localversion-rt
++++ linux-3.4/localversion-rt
+@@ -1 +1 @@
+--rt2
++-rt4
