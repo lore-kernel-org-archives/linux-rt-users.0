@@ -1,44 +1,44 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: spin locks and migrate_disable()
-Date: Fri, 13 Apr 2012 09:52:59 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1204130950190.2542@ionos>
-References: <4F762C59.4050008@am.sony.com>
+Subject: Re: Guidelines to make RT patch for driver
+Date: Fri, 13 Apr 2012 10:21:58 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1204131019290.2542@ionos>
+References: <4F75DDBF.7050204@softerra.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org
-To: Frank Rowand <frank.rowand@am.sony.com>
+To: Mikhail Lodigin <mishal@softerra.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39966 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:40072 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756871Ab2DMHxB (ORCPT
+	with ESMTP id S932287Ab2DMIWC (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Apr 2012 03:53:01 -0400
-In-Reply-To: <4F762C59.4050008@am.sony.com>
+	Fri, 13 Apr 2012 04:22:02 -0400
+In-Reply-To: <4F75DDBF.7050204@softerra.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 30 Mar 2012, Frank Rowand wrote:
+On Fri, 30 Mar 2012, Mikhail Lodigin wrote:
 
-> Hi Thomas,
-> 
-> Two questions about spin_lock() in include/linux/spinlock_rt.h.
-> 
-> (1) spin_lock() and related functions invoke migrate_disable() and
-> migrate_enable().  These functions are created by your patch,
-> sched-migrate-disable.patch, and are EXPORT_SYMBOL_GPL().  Would
-> you be willing to change these to EXPORT_SYMBOL()?
+> Hello,
+> on my AT91SAM9263 based board RT patched kernel works great! Thanks to all
+> involved. But when ethernet is in use - latency, measured by cyclictest, reach
+> 7000000 and beyond.
+> The ethernet driver for this processor is macb.c. (in 3.2 it is in
+> drivers/net/ethernet/cadence, in 3.0 it is in drivers/net/).
+> I'm ready to find out how to RT-patch it and of course share the resulted
+> patch, but I need some starting point for patching drivers besides general
+> RT-stuff.  I've noticed that some network drivers patched in one way and
+> others a in another. Maybe some discussion existed which I didn't found. So
+> any help would be greatly appreciated.
 
-Sigh. Yes.
- 
-> (2) What is the purpose of the migrate_disable() in the spin lock?
-> Is it a correctness issue, or a performance issue, or something else?
+There is no general recipe. The best way to do it is to use the
+tracer. cyclictest has a commandline option for stopping the trace
+when the latency exceeds a given treshold.
 
-Correctness. spinlocks disable preemption in mainline and therefor
-migration. So you can access per cpu data in a spinlocked section. Now
-with RT the section becomes preemptible. The lock prevents reentrancy,
-but we could be migrated away so the task might access parts of the
-per cpu data on one and then on the other cpu. Not really a good
-idea. Therefor we disable migration.
+     cyclictest -p80 -n -f -b 1000
+
+will start the function tracer and stop it once the latency exceeds
+1000us.
 
 Thanks,
 
