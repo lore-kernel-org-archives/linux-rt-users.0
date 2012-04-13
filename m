@@ -1,137 +1,57 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.4-rc2-rt4
-Date: Fri, 13 Apr 2012 14:11:16 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1204131033240.2542@ionos>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: SUSE question wrt RT locking primitives
+Date: Fri, 13 Apr 2012 08:58:15 -0400
+Message-ID: <1334321895.23924.356.camel@gandalf.stny.rr.com>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
+	 <1321303871.5011.6.camel@frodo>
+	 <1334295256.9525.60.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <mgalbraith@suse.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:41482 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750966Ab2DMMLS (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:9925 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932074Ab2DMM6S (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Apr 2012 08:11:18 -0400
+	Fri, 13 Apr 2012 08:58:18 -0400
+In-Reply-To: <1334295256.9525.60.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+On Fri, 2012-04-13 at 07:34 +0200, Mike Galbraith wrote:
+> Greetings,
+> 
+> SUSE is looking for a straight up answer, I've been tasked with asking
+> the question: can RT maintainers be convinced to fix the RT tree such
+> that locking primitives do not switch from 'OK' to TABOO' at the flick
+> of a config switch?  It is understood that "yes" may have undesirable
+> side-effects :)
+> 
+> Background:
+> 
+> The migrate_enable/disable() EXPORT_SYMBOL_GPL thing came up yesterday
+> again with yet another customer stuck using yet another proprietary
+> driver for proprietary hardware.  The choice for the customer/user is
+> use what exists, knock on proprietary doors, or go look at platforms
+> where the proprietary gizmo they need or want to use just works.
+> 
+> So that's where the question comes from.  Life would be easier if RT
+> didn't trigger the Dr. Jeckle -> Mr. Hyde thing.  You know all about
+> where what happens to which locks, so I'll just snip what I had quoted
+> and needlessly commented on to keep this as short as possible ;-)
 
-I'm pleased to announce the 3.4-rc2-rt4 release. -rt3 is an
-intermediate release which has an earlier version of the RCU build
-wreckage fix.
+I have no problem with making those non-GPL, as the original stance of
+-rt back in 2005 was to not have -rt be any different than the vanilla
+kernel in that regards. But I don't know if that policy changed since
+then, nor am I the one that has the authority to remove the GPL tags
+from those functions.
 
-Changes since 3.4-rc2-rt2:
-
-  * Fix RCU build wreckage (jkacur)
-
-  * Remove the _GPL restriction from a few exports
-
-    This restores the status quo of pre 3.0 RT versions. 
-	  
-    I fundamentally hate this change, but the point is, that RT
-    replaces non GPL exports with GPL ones and therefor breaks
-    "legitimate" abuses of the kernel.
-
-    OTOH I've been exposed to source code of some secret sauce
-    drivers. That makes me believe that in a lot of cases the reason
-    for not disclosing the driver code is that publishing might put
-    the innocent and unprepared reader in danger of gastric ulcer and
-    eyecancer.
-
-    So I commit this change for health protection reasons.
-
-
-The delta patch to 3.4-rc2-rt2 is appended below and can be found
-here as incremental patches:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4-rc2-rt2-rt3.patch.xz
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4-rc2-rt3-rt4.patch.xz
+-- Steve
 
 
-The RT patch against 3.4-rc2 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4-rc2-rt4.patch.xz
-
-
-The split quilt queue is available at:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.4-rc2-rt4.tar.xz
-
-
-Enjoy,
-
-	tglx
----
-Index: linux-3.4/kernel/rcutree_plugin.h
-===================================================================
---- linux-3.4.orig/kernel/rcutree_plugin.h
-+++ linux-3.4/kernel/rcutree_plugin.h
-@@ -1914,6 +1914,9 @@ int rcu_needs_cpu(int cpu)
- {
- 	return rcu_cpu_has_callbacks(cpu);
- }
-+#endif	/* !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT_FULL) */
-+
-+#if !defined(CONFIG_RCU_FAST_NO_HZ)
- 
- /*
-  * Because we do not have RCU_FAST_NO_HZ, don't bother initializing for it.
-@@ -1984,6 +1987,7 @@ static DEFINE_PER_CPU(struct hrtimer, rc
- static ktime_t rcu_idle_gp_wait;	/* If some non-lazy callbacks. */
- static ktime_t rcu_idle_lazy_gp_wait;	/* If only lazy callbacks. */
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Allow the CPU to enter dyntick-idle mode if either: (1) There are no
-  * callbacks on this CPU, (2) this CPU has not yet attempted to enter
-@@ -2001,6 +2005,7 @@ int rcu_needs_cpu(int cpu)
- 	/* Otherwise, RCU needs the CPU only if it recently tried and failed. */
- 	return per_cpu(rcu_dyntick_holdoff, cpu) == jiffies;
- }
-+#endif	/* #ifndef CONFIG_PREEMPT_RT_FULL */
- 
- /*
-  * Does the specified flavor of RCU have non-lazy callbacks pending on
-Index: linux-3.4/kernel/rtmutex.c
-===================================================================
---- linux-3.4.orig/kernel/rtmutex.c
-+++ linux-3.4/kernel/rtmutex.c
-@@ -1282,7 +1282,7 @@ void __rt_mutex_init(struct rt_mutex *lo
- 
- 	debug_rt_mutex_init(lock, name);
- }
--EXPORT_SYMBOL_GPL(__rt_mutex_init);
-+EXPORT_SYMBOL(__rt_mutex_init);
- 
- /**
-  * rt_mutex_init_proxy_locked - initialize and lock a rt_mutex on behalf of a
-Index: linux-3.4/kernel/sched/core.c
-===================================================================
---- linux-3.4.orig/kernel/sched/core.c
-+++ linux-3.4/kernel/sched/core.c
-@@ -3206,7 +3206,7 @@ void migrate_disable(void)
- 	p->migrate_disable = 1;
- 	preempt_enable();
- }
--EXPORT_SYMBOL_GPL(migrate_disable);
-+EXPORT_SYMBOL(migrate_disable);
- 
- void migrate_enable(void)
- {
-@@ -3258,7 +3258,7 @@ void migrate_enable(void)
- 	unpin_current_cpu();
- 	preempt_enable();
- }
--EXPORT_SYMBOL_GPL(migrate_enable);
-+EXPORT_SYMBOL(migrate_enable);
- #else
- static inline void update_migrate_disable(struct task_struct *p) { }
- #define migrate_disabled_updated(p)		0
-Index: linux-3.4/localversion-rt
-===================================================================
---- linux-3.4.orig/localversion-rt
-+++ linux-3.4/localversion-rt
-@@ -1 +1 @@
---rt2
-+-rt4
