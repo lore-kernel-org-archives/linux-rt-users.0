@@ -1,90 +1,47 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rcutree: Fix v3.4-rc2-rt2 build break
-Date: Fri, 13 Apr 2012 01:13:38 +0200
-Message-ID: <CAONaPpGwD6DK8BcTN0BOybx-kLPBEHpMKitohLN9UVtRRYpaZg@mail.gmail.com>
-References: <1334155379-18088-1-git-send-email-jkacur@redhat.com>
-	<alpine.LFD.2.02.1204122142180.2542@ionos>
+From: Mike Galbraith <mgalbraith@suse.de>
+Subject: SUSE question wrt RT locking primitives
+Date: Fri, 13 Apr 2012 07:34:16 +0200
+Message-ID: <1334295256.9525.60.camel@marge.simpson.net>
+References: <1321235083-21756-1-git-send-email-jkacur@redhat.com>
+	 <1321235083-21756-2-git-send-email-jkacur@redhat.com>
+	 <20111114165148.GB2372@linux.vnet.ibm.com>
+	 <alpine.LFD.2.00.1111141837100.6707@localhost6.localdomain6>
+	 <1321303871.5011.6.camel@frodo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>,
-	lkml <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vb0-f46.google.com ([209.85.212.46]:64715 "EHLO
-	mail-vb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933138Ab2DLXNj convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Apr 2012 19:13:39 -0400
-In-Reply-To: <alpine.LFD.2.02.1204122142180.2542@ionos>
+Received: from cantor2.suse.de ([195.135.220.15]:47413 "EHLO mx2.suse.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751790Ab2DMFeU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Apr 2012 01:34:20 -0400
+In-Reply-To: <1321303871.5011.6.camel@frodo>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Apr 12, 2012 at 9:46 PM, Thomas Gleixner <tglx@linutronix.de> w=
-rote:
->
-> On Wed, 11 Apr 2012, John Kacur wrote:
->
-> > Fix build break of the following types.
-> >
-> > linux-rt/kernel/rcutree_plugin.h: In function
-> > =91print_cpu_stall_fast_no_hz=92:
-> > linux-rt/kernel/rcutree_plugin.h:2195: error: =91rcu_idle_gp_timer=92
-> > undeclared (first use in this function)
-> > linux-rt/kernel/rcutree_plugin.h:2195: error: (Each undeclared
-> > identifier is reported only once
-> > linux-rt/kernel/rcutree_plugin.h:2195: error: for each function it
-> > appears in.)
-> >
-> > The build break only occurs with the PREEMPT_RT_FULL patch applied,
-> > however
-> > the patch is meant to go upstream and be applied to v3.4-rc2 as wel=
-l
-> > because
-> > it makes the code more legible there, and will reduce the number of
-> > places
-> > where #ifdef PREEMPT_RT_FULL is required should that go upstream
-> > someday.
->
-> -ENOPARSE
->
-> I really have no idea what the patch is solving and which particular
-> combination of config items is causing the above.
+Greetings,
 
-The config combination that causes a build break is
+SUSE is looking for a straight up answer, I've been tasked with asking
+the question: can RT maintainers be convinced to fix the RT tree such
+that locking primitives do not switch from 'OK' to TABOO' at the flick
+of a config switch?  It is understood that "yes" may have undesirable
+side-effects :)
 
-CONFIG_RCU_FAST_NO_HZ
-CONFIG_PREEMPT_RT_FULL
-CONFIG_RCU_CPU_STALL_INFO
+Background:
 
-The patch does the following
+The migrate_enable/disable() EXPORT_SYMBOL_GPL thing came up yesterday
+again with yet another customer stuck using yet another proprietary
+driver for proprietary hardware.  The choice for the customer/user is
+use what exists, knock on proprietary doors, or go look at platforms
+where the proprietary gizmo they need or want to use just works.
 
-#if !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT_FULL
-        The patch moves the skeleton versions of the functions to this =
-section
-#else
-        Versions of the functions that were causing a build break.
-#endif
+So that's where the question comes from.  Life would be easier if RT
+didn't trigger the Dr. Jeckle -> Mr. Hyde thing.  You know all about
+where what happens to which locks, so I'll just snip what I had quoted
+and needlessly commented on to keep this as short as possible ;-)
 
->
-> If you think that the patch should go upstream then please send a
-> separate one with a changelog which explains the simplifcation.
+-Mike
 
-Applying the patch upstream causes no functional changes there.
-I can try resubmitting a patch for upstream with a clearer changelog.
-Or I perhaps I should dig deeper and try to simplify more for
-upstream, but this is the simplest way I saw to fix the build break
-for rt
-
->
-> I agree that this ifdef maze can do with simplification, but providin=
-g
-> a changelog which tells nothing at all does not make it easier to gro=
-k
-> the problem and understand what's simplified.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
