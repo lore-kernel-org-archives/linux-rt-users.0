@@ -1,45 +1,67 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 Subject: Re: [ANNOUNCE] 3.4-rc2-rt4
-Date: Fri, 13 Apr 2012 13:52:56 -0700
-Message-ID: <4F889228.8050301@am.sony.com>
+Date: Sun, 15 Apr 2012 16:20:39 -0400
+Message-ID: <CAP=VYLqQf0ZmYPATyE2q=9QtK+eDb8SeRbkusdCjg93fzy2cqA@mail.gmail.com>
 References: <alpine.LFD.2.02.1204131033240.2542@ionos>
-Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:6873 "EHLO
-	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755981Ab2DMUxX (ORCPT
+Received: from mail-lpp01m010-f46.google.com ([209.85.215.46]:64122 "EHLO
+	mail-lpp01m010-f46.google.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751378Ab2DOUVM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Apr 2012 16:53:23 -0400
+	Sun, 15 Apr 2012 16:21:12 -0400
 In-Reply-To: <alpine.LFD.2.02.1204131033240.2542@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/13/12 05:11, Thomas Gleixner wrote:
+On Fri, Apr 13, 2012 at 8:11 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
 > Dear RT Folks,
-> 
+>
 > I'm pleased to announce the 3.4-rc2-rt4 release.
 
-< snip >
+[...]
 
-3.4-rc2-rt4 builds and boots on some ARM boards (PandaBoard, Realview) for:
+I've made four largely trivial changes to the broken out queue
+so that the commits can all be reliably fed to "git am" on
+a patch-by-patch basis without warnings or errors.
 
-  - SMP, PREEMPT_RT_FULL
-  - SMP, PREEMPT_NONE
-  - UP, PREEMPT_RT_FULL
-  - UP, PREEMPT_NONE
+Not sure what is the most convenient for you to get "patches of
+patches" from people, but the ones I've made are here:
 
+http://git.kernel.org/?p=linux/kernel/git/paulg/3.4-rt-patches.git;a=shortlog;h=refs/heads/3.4-rc2-rt4-git-am-fixes
 
-A patch is required to resolve a mainline NULL pointer dereference on boot
-of Realview.  The patch is in linux-next and should make it to Linus by the
-end of this week.
+I've created a git repo of your rt patches, akin to what is done for stable,
+and put the cleanups on a branch.  I'll keep master reserved for tracking
+your actual releases, and will tag accordingly.
 
-The patch is available at http://marc.info/?l=linux-serial&m=133235774423240&w=2
+If you can think of something that better matches your workflow, let
+me know and I'll adapt accordingly.
 
--Frank
+Thanks,
+Paul.
+----
 
+The following changes since commit f99f81e7ddc08d220dd03a51cae06f59cfa021b7:
+
+  patches-3.4-rc2-rt4.tar.xz (2012-04-15 15:14:55 -0400)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/paulg/3.4-rt-patches.git
+3.4-rc2-rt4-git-am-fixes
+
+for you to fetch changes up to 2d3671bebaea24768cf443822959122efaeb8208:
+
+  git-am: whitespace fixes. (2012-04-15 15:28:57 -0400)
+
+----------------------------------------------------------------
+Paul Gortmaker (4):
+      delete dup mail header from
+sched-teach-migrate_disable-about-atomic-contexts.patch
+      fix subjectless patches
+      git-am: ensure Subject: follows From:
+      git-am: whitespace fixes.
