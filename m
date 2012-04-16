@@ -1,50 +1,38 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH] rt/ARM: spinlock_rt.h uses BUG_ON and needs bug.h
-Date: Sun, 15 Apr 2012 17:03:55 -0400
-Message-ID: <1334523835-24475-1-git-send-email-paul.gortmaker@windriver.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: tglx@linutronix.de
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH 0/2 -rt] make locckdep selftest work on -rt
+Date: Mon, 16 Apr 2012 15:01:54 +0800
+Message-ID: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
+Cc: tglx@linutronix.de
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:54902 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751469Ab2DOVEQ (ORCPT
+Received: from mail-qc0-f174.google.com ([209.85.216.174]:41775 "EHLO
+	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750845Ab2DPHCE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Apr 2012 17:04:16 -0400
+	Mon, 16 Apr 2012 03:02:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Seen on an RT_FULL enabled ARM stamp9g20_defconfig:
+On -rt,
+1) There is no softirq context any more;
+2) rwlock can not be used in harirq context;
 
-  CC      arch/arm/kernel/asm-offsets.s
-In file included from include/linux/spinlock.h:273,
-                 from include/linux/seqlock.h:29,
-                 from include/linux/time.h:8,
-                 from include/linux/timex.h:56,
-                 from include/linux/sched.h:57,
-                 from arch/arm/kernel/asm-offsets.c:13:
-include/linux/spinlock_rt.h: In function 'assert_spin_locked':
-include/linux/spinlock_rt.h:160: error: implicit declaration of function 'BUG_ON'
-make[2]: *** [arch/arm/kernel/asm-offsets.s] Error 1
+Wrt that, convert spinlock to raw spinlock to make spinlock+hardirq
+work, and discard the test for rwlock+hardirq and softirq.
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+BTW, I think patch#1 can go to upstream.
+
+Thanks,
+Yong
+
 ---
+Yong Zhang (2):
+  lockdep: selftest: convert spinlock to raw spinlock
+  lockdep: selftest: Only do hardirq context test for raw spinlock
 
-[feel free to squash this into patches/rt-add-rt-locks.patch]
+ lib/locking-selftest.c |   57 +++++++++++++++++++++++++++++++++--------------
+ 1 files changed, 40 insertions(+), 17 deletions(-)
 
-diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-index 3b555b4..0618387 100644
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -5,6 +5,8 @@
- #error Do not include directly. Use spinlock.h
- #endif
- 
-+#include <linux/bug.h>
-+
- extern void
- __rt_spin_lock_init(spinlock_t *lock, char *name, struct lock_class_key *key);
- 
 -- 
-1.7.9.1
+1.7.5.4
 
