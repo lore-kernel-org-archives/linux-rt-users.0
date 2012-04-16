@@ -1,38 +1,71 @@
 From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH 0/2 -rt] make locckdep selftest work on -rt
-Date: Mon, 16 Apr 2012 15:01:54 +0800
-Message-ID: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
-Cc: tglx@linutronix.de
+Subject: [PATCH 2/2 -rt] lockdep: selftest: Only do hardirq context test for raw spinlock
+Date: Mon, 16 Apr 2012 15:01:56 +0800
+Message-ID: <1334559716-18447-3-git-send-email-yong.zhang0@gmail.com>
+References: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
+Cc: tglx@linutronix.de, Yong Zhang <yong.zhang@windriver.com>
 To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f174.google.com ([209.85.216.174]:41775 "EHLO
-	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750845Ab2DPHCE (ORCPT
+Received: from mail-qa0-f42.google.com ([209.85.216.42]:36889 "EHLO
+	mail-qa0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750993Ab2DPHCY (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Apr 2012 03:02:04 -0400
+	Mon, 16 Apr 2012 03:02:24 -0400
+In-Reply-To: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On -rt,
-1) There is no softirq context any more;
-2) rwlock can not be used in harirq context;
+From: Yong Zhang <yong.zhang@windriver.com>
 
-Wrt that, convert spinlock to raw spinlock to make spinlock+hardirq
-work, and discard the test for rwlock+hardirq and softirq.
+On -rt there is no softirq context any more and rwlock is sleepable,
+disable softirq context test and rwlock+irq test.
 
-BTW, I think patch#1 can go to upstream.
-
-Thanks,
-Yong
-
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
 ---
-Yong Zhang (2):
-  lockdep: selftest: convert spinlock to raw spinlock
-  lockdep: selftest: Only do hardirq context test for raw spinlock
+ lib/locking-selftest.c |   23 +++++++++++++++++++++++
+ 1 files changed, 23 insertions(+), 0 deletions(-)
 
- lib/locking-selftest.c |   57 +++++++++++++++++++++++++++++++++--------------
- 1 files changed, 40 insertions(+), 17 deletions(-)
-
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index c3eb261..23b8564 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -1175,6 +1175,7 @@ void locking_selftest(void)
+ 
+ 	printk("  --------------------------------------------------------------------------\n");
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ 	/*
+ 	 * irq-context testcases:
+ 	 */
+@@ -1187,6 +1188,28 @@ void locking_selftest(void)
+ 
+ 	DO_TESTCASE_6x2("irq read-recursion", irq_read_recursion);
+ //	DO_TESTCASE_6x2B("irq read-recursion #2", irq_read_recursion2);
++#else
++	/* On -rt, we only do hardirq context test for raw spinlock */
++	DO_TESTCASE_1B("hard-irqs-on + irq-safe-A", irqsafe1_hard_spin, 12);
++	DO_TESTCASE_1B("hard-irqs-on + irq-safe-A", irqsafe1_hard_spin, 21);
++
++	DO_TESTCASE_1B("hard-safe-A + irqs-on", irqsafe2B_hard_spin, 12);
++	DO_TESTCASE_1B("hard-safe-A + irqs-on", irqsafe2B_hard_spin, 21);
++
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 123);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 132);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 213);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 231);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 312);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #1", irqsafe3_hard_spin, 321);
++
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 123);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 132);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 213);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 231);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 312);
++	DO_TESTCASE_1B("hard-safe-A + unsafe-B #2", irqsafe4_hard_spin, 321);
++#endif
+ 
+ 	if (unexpected_testcase_failures) {
+ 		printk("-----------------------------------------------------------------\n");
 -- 
 1.7.5.4
 
