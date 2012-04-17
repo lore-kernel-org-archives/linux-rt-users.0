@@ -1,99 +1,84 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH 1/2 -rt] lockdep: selftest: convert spinlock to raw spinlock
-Date: Mon, 16 Apr 2012 15:01:55 +0800
-Message-ID: <1334559716-18447-2-git-send-email-yong.zhang0@gmail.com>
-References: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
-Cc: tglx@linutronix.de, Yong Zhang <yong.zhang@windriver.com>
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.15-rt25
+Date: Mon, 16 Apr 2012 23:55:41 -0400
+Message-ID: <1334634941.28106.14.camel@gandalf.stny.rr.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-N4Zfl+elcy3pIhJkRFEX"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:16203 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755382Ab2DQDzq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Apr 2012 23:55:46 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Yong Zhang <yong.zhang@windriver.com>
 
-spinlock is sleepable on -rt and can not be used in
-interrupt context.
+--=-N4Zfl+elcy3pIhJkRFEX
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
----
- lib/locking-selftest.c |   34 +++++++++++++++++-----------------
- 1 files changed, 17 insertions(+), 17 deletions(-)
 
-diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
-index 7aae0f2..c3eb261 100644
---- a/lib/locking-selftest.c
-+++ b/lib/locking-selftest.c
-@@ -47,10 +47,10 @@ __setup("debug_locks_verbose=", setup_debug_locks_verbose);
-  * Normal standalone locks, for the circular and irq-context
-  * dependency tests:
-  */
--static DEFINE_SPINLOCK(lock_A);
--static DEFINE_SPINLOCK(lock_B);
--static DEFINE_SPINLOCK(lock_C);
--static DEFINE_SPINLOCK(lock_D);
-+static DEFINE_RAW_SPINLOCK(lock_A);
-+static DEFINE_RAW_SPINLOCK(lock_B);
-+static DEFINE_RAW_SPINLOCK(lock_C);
-+static DEFINE_RAW_SPINLOCK(lock_D);
- 
- static DEFINE_RWLOCK(rwlock_A);
- static DEFINE_RWLOCK(rwlock_B);
-@@ -73,12 +73,12 @@ static DECLARE_RWSEM(rwsem_D);
-  * but X* and Y* are different classes. We do this so that
-  * we do not trigger a real lockup:
-  */
--static DEFINE_SPINLOCK(lock_X1);
--static DEFINE_SPINLOCK(lock_X2);
--static DEFINE_SPINLOCK(lock_Y1);
--static DEFINE_SPINLOCK(lock_Y2);
--static DEFINE_SPINLOCK(lock_Z1);
--static DEFINE_SPINLOCK(lock_Z2);
-+static DEFINE_RAW_SPINLOCK(lock_X1);
-+static DEFINE_RAW_SPINLOCK(lock_X2);
-+static DEFINE_RAW_SPINLOCK(lock_Y1);
-+static DEFINE_RAW_SPINLOCK(lock_Y2);
-+static DEFINE_RAW_SPINLOCK(lock_Z1);
-+static DEFINE_RAW_SPINLOCK(lock_Z2);
- 
- static DEFINE_RWLOCK(rwlock_X1);
- static DEFINE_RWLOCK(rwlock_X2);
-@@ -107,10 +107,10 @@ static DECLARE_RWSEM(rwsem_Z2);
-  */
- #define INIT_CLASS_FUNC(class) 				\
- static noinline void					\
--init_class_##class(spinlock_t *lock, rwlock_t *rwlock, struct mutex *mutex, \
--		 struct rw_semaphore *rwsem)		\
-+init_class_##class(raw_spinlock_t *lock, rwlock_t *rwlock, \
-+	struct mutex *mutex, struct rw_semaphore *rwsem)\
- {							\
--	spin_lock_init(lock);				\
-+	raw_spin_lock_init(lock);			\
- 	rwlock_init(rwlock);				\
- 	mutex_init(mutex);				\
- 	init_rwsem(rwsem);				\
-@@ -168,10 +168,10 @@ static void init_shared_classes(void)
-  * Shortcuts for lock/unlock API variants, to keep
-  * the testcases compact:
-  */
--#define L(x)			spin_lock(&lock_##x)
--#define U(x)			spin_unlock(&lock_##x)
-+#define L(x)			raw_spin_lock(&lock_##x)
-+#define U(x)			raw_spin_unlock(&lock_##x)
- #define LU(x)			L(x); U(x)
--#define SI(x)			spin_lock_init(&lock_##x)
-+#define SI(x)			raw_spin_lock_init(&lock_##x)
- 
- #define WL(x)			write_lock(&rwlock_##x)
- #define WU(x)			write_unlock(&rwlock_##x)
-@@ -911,7 +911,7 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
- 
- #define I2(x)					\
- 	do {					\
--		spin_lock_init(&lock_##x);	\
-+		raw_spin_lock_init(&lock_##x);	\
- 		rwlock_init(&rwlock_##x);	\
- 		mutex_init(&mutex_##x);		\
- 		init_rwsem(&rwsem_##x);		\
--- 
-1.7.5.4
+Dear RT Folks,
+
+I'm pleased to announce the 3.2.15-rt25 stable release.
+
+
+This release is just an update to the new stable 3.2.15 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: dce4487ac419e135b1e77871488304a1c1c319d7
+
+
+Or to build 3.2.15-rt25 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.15.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.15-rt25.=
+patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+
+--=-N4Zfl+elcy3pIhJkRFEX
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAABAgAGBQJPjOm9AAoJEIy3vGnGbaoA3W4QAIgyWxHcfq/wSxiMCDx6tORs
+uCFp/x3NzOT5dligVBofJeZlcxBOweRsS0Me7Rne+gYU1Q+pQBo5xgvJ394KVH95
+g62VR+Dtse5ygi1S/GZc8cb2xt6HRw3/0VE6la/5a8RUwYp5LYnmmyf9BEL3Tkso
+bF+OiR/r4NmXzY4M6N6GrskoJhUyAr6HZhi5HUkxgq9gFKaWVDA6QKQtlxBJmzwU
+RpfdE5EimsYiK87z9THdui1z/jC6+LBb+EfXDBvy+hNG+6XN1VkRWdZ+ER81GKfp
+/6z314WQL5TR45e41yEfus5mDGuFH6vst4SRN9/IMxFEpDIdIMzU2s05BeSZt++2
+hQmLLkBdD7NdQe7HFUux+QSpEJnhkL6KgbDM/rbLcx6XA3WE2hjwSCDgWK49eW7R
++cjc1T0EqTV7OMNcRfYC1MHPeDLeJ6D31bqF3vRH/mAnhbGNnyaLKn9aCkhwfoQc
+s2TuXw0GucAuTbXo3xBN9aor2I1GrmP51L1S/8ZaItRkl/JXIr+4BKtE/TocCHRs
+TPk98wl6qEg2vWwZkf+VVH/lDeQbFLkWZYYt5Qj5w0FhxKBo3GMONSVYkC1kIhuk
+YbhYofA0ghrHbfrD2Yf686Rq+CCLmr5aM3JCuRQl/1+G6apn5K5rnYnsDVZ0v7le
+EIh0qzamBPiXh2XWPY8N
+=4nzI
+-----END PGP SIGNATURE-----
+
+--=-N4Zfl+elcy3pIhJkRFEX--
+
