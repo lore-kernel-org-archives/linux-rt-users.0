@@ -1,84 +1,67 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.15-rt25
-Date: Mon, 16 Apr 2012 23:55:41 -0400
-Message-ID: <1334634941.28106.14.camel@gandalf.stny.rr.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
-	boundary="=-N4Zfl+elcy3pIhJkRFEX"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH 3/3 -rt] lockdep: selftest: save/restore migrate_disable count
+Date: Tue, 17 Apr 2012 15:23:39 +0800
+Message-ID: <1334647419-10337-1-git-send-email-yong.zhang0@gmail.com>
+References: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
+Cc: tglx@linutronix.de, Yong Zhang <yong.zhang@windriver.com>
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:16203 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755382Ab2DQDzq (ORCPT
+Received: from mail-qc0-f174.google.com ([209.85.216.174]:54826 "EHLO
+	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752990Ab2DQHXs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Apr 2012 23:55:46 -0400
+	Tue, 17 Apr 2012 03:23:48 -0400
+In-Reply-To: <1334559716-18447-1-git-send-email-yong.zhang0@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Yong Zhang <yong.zhang@windriver.com>
 
---=-N4Zfl+elcy3pIhJkRFEX
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
+->migrate_disable_atomic will corrupt when doing some
+case, such as double lock...
 
+->migrate_disable will not be affected for now since
+we have preempt disabled when doing seft test.
+Just record it also for safe.
 
-Dear RT Folks,
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+---
+Found it when enable CONFIG_SCHED_DEBUG.
 
-I'm pleased to announce the 3.2.15-rt25 stable release.
+ lib/locking-selftest.c |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-
-This release is just an update to the new stable 3.2.15 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: dce4487ac419e135b1e77871488304a1c1c319d7
-
-
-Or to build 3.2.15-rt25 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.15.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.15-rt25.=
-patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
---=-N4Zfl+elcy3pIhJkRFEX
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAABAgAGBQJPjOm9AAoJEIy3vGnGbaoA3W4QAIgyWxHcfq/wSxiMCDx6tORs
-uCFp/x3NzOT5dligVBofJeZlcxBOweRsS0Me7Rne+gYU1Q+pQBo5xgvJ394KVH95
-g62VR+Dtse5ygi1S/GZc8cb2xt6HRw3/0VE6la/5a8RUwYp5LYnmmyf9BEL3Tkso
-bF+OiR/r4NmXzY4M6N6GrskoJhUyAr6HZhi5HUkxgq9gFKaWVDA6QKQtlxBJmzwU
-RpfdE5EimsYiK87z9THdui1z/jC6+LBb+EfXDBvy+hNG+6XN1VkRWdZ+ER81GKfp
-/6z314WQL5TR45e41yEfus5mDGuFH6vst4SRN9/IMxFEpDIdIMzU2s05BeSZt++2
-hQmLLkBdD7NdQe7HFUux+QSpEJnhkL6KgbDM/rbLcx6XA3WE2hjwSCDgWK49eW7R
-+cjc1T0EqTV7OMNcRfYC1MHPeDLeJ6D31bqF3vRH/mAnhbGNnyaLKn9aCkhwfoQc
-s2TuXw0GucAuTbXo3xBN9aor2I1GrmP51L1S/8ZaItRkl/JXIr+4BKtE/TocCHRs
-TPk98wl6qEg2vWwZkf+VVH/lDeQbFLkWZYYt5Qj5w0FhxKBo3GMONSVYkC1kIhuk
-YbhYofA0ghrHbfrD2Yf686Rq+CCLmr5aM3JCuRQl/1+G6apn5K5rnYnsDVZ0v7le
-EIh0qzamBPiXh2XWPY8N
-=4nzI
------END PGP SIGNATURE-----
-
---=-N4Zfl+elcy3pIhJkRFEX--
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index 23b8564..a9cb9e4 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -939,6 +939,12 @@ static void dotest(void (*testcase_fn)(void), int expected, int lockclass_mask)
+ {
+ 	unsigned long saved_preempt_count = preempt_count();
+ 	int expected_failure = 0;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	int saved_migrate_disable = current->migrate_disable;
++# ifdef CONFIG_SCHED_DEBUG
++	int saved_migrate_disable_atomic = current->migrate_disable_atomic;
++# endif
++#endif
+ 
+ 	WARN_ON(irqs_disabled());
+ 
+@@ -980,6 +986,13 @@ static void dotest(void (*testcase_fn)(void), int expected, int lockclass_mask)
+ 	 * count, so restore it:
+ 	 */
+ 	preempt_count() = saved_preempt_count;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	current->migrate_disable = saved_migrate_disable;
++# ifdef CONFIG_SCHED_DEBUG
++	current->migrate_disable_atomic = saved_migrate_disable_atomic;
++# endif
++#endif
++
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ 	if (softirq_count())
+ 		current->softirqs_enabled = 0;
+-- 
+1.7.5.4
 
